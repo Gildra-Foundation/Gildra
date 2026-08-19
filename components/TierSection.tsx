@@ -1,0 +1,401 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import { SpecSlot } from "./SpecSlot";
+import { classIcon } from "@/lib/gameAssets";
+import { tierTable, classChips, builds, liveStats } from "@/data/site";
+import type { TableRow } from "@/data/site";
+
+const DIR = { up: "▲", down: "▼", flat: "—" } as const;
+
+function TrendCell({ t }: { t: TableRow["trend"] }) {
+  if (t.dir === "flat") return <span className="flat">—</span>;
+  return (
+    <span className={t.dir}>
+      {DIR[t.dir]} {t.val}
+    </span>
+  );
+}
+
+function Radar() {
+  return (
+    <svg
+      width="330"
+      height="248"
+      viewBox="0 0 330 248"
+      role="img"
+      aria-label="Radar: Performance 9.6, Survivability 9.1, Utility 7.3, Representation 9.4, Consistency 9.4"
+    >
+      <defs>
+        <linearGradient id="rfill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#6f9ceb" stopOpacity=".42" />
+          <stop offset="1" stopColor="#3a5fae" stopOpacity=".16" />
+        </linearGradient>
+      </defs>
+      <g stroke="#252c3d" fill="none">
+        <polygon points="165,36 254.4,101 220.3,206 109.7,206 75.6,101" />
+        <polygon
+          points="165,59.5 231.4,107.8 206,185.8 124,185.8 98.6,107.8"
+          strokeDasharray="3 3"
+          opacity=".8"
+        />
+        <polygon
+          points="165,83 208.5,114.6 191.9,165.7 138.1,165.7 121.5,114.6"
+          strokeDasharray="3 3"
+          opacity=".6"
+        />
+        <polygon
+          points="165,106.5 185.5,121.4 177.7,145.5 152.3,145.5 144.5,121.4"
+          opacity=".45"
+        />
+        <line x1="165" y1="130" x2="165" y2="36" />
+        <line x1="165" y1="130" x2="254.4" y2="101" />
+        <line x1="165" y1="130" x2="220.3" y2="206" />
+        <line x1="165" y1="130" x2="109.7" y2="206" />
+        <line x1="165" y1="130" x2="75.6" y2="101" />
+      </g>
+      <polygon
+        points="165,39.8 247.3,103.9 205.4,191.5 115.5,201.5 80.9,102.7"
+        fill="url(#rfill)"
+        stroke="#7ba6ee"
+        strokeWidth="1.6"
+      />
+      <g fill="#a8c6f5">
+        <circle cx="165" cy="39.8" r="2.8" />
+        <circle cx="247.3" cy="103.9" r="2.8" />
+        <circle cx="205.4" cy="191.5" r="2.8" />
+        <circle cx="115.5" cy="201.5" r="2.8" />
+        <circle cx="80.9" cy="102.7" r="2.8" />
+      </g>
+      <g fontFamily="var(--ui)" fontSize="9.5" letterSpacing=".07em" fill="#7a86a0">
+        <text x="165" y="20" textAnchor="middle">PERFORMANCE</text>
+        <text x="165" y="31" textAnchor="middle" fill="#e9ecf3" fontWeight="700" fontSize="11">9.6</text>
+        <text x="252" y="92" textAnchor="start">SURVIVABILITY</text>
+        <text x="252" y="103" textAnchor="start" fill="#e9ecf3" fontWeight="700" fontSize="11">9.1</text>
+        <text x="224" y="223" textAnchor="middle">UTILITY</text>
+        <text x="224" y="234" textAnchor="middle" fill="#e9ecf3" fontWeight="700" fontSize="11">7.3</text>
+        <text x="105" y="223" textAnchor="middle">REPRESENTATION</text>
+        <text x="105" y="234" textAnchor="middle" fill="#e9ecf3" fontWeight="700" fontSize="11">9.4</text>
+        <text x="71" y="92" textAnchor="end">CONSISTENCY</text>
+        <text x="71" y="103" textAnchor="end" fill="#e9ecf3" fontWeight="700" fontSize="11">9.4</text>
+      </g>
+    </svg>
+  );
+}
+
+export function TierSection() {
+  const [cls, setCls] = useState("all");
+  const [q, setQ] = useState("");
+
+  const query = q.trim().toLowerCase();
+  const matches = (name: string, rowCls: string) =>
+    (cls === "all" || rowCls === cls) &&
+    (!query || name.toLowerCase().includes(query));
+
+  return (
+    <div className="tierpage">
+      <aside className="tp-side">
+        <div className="tp-brand">
+          <div className="logo-mark">G</div>
+          <span className="t">TIER LISTS</span>
+        </div>
+        <div className="tp-nav">
+          <a className="active" href="#">
+            <svg className="i">
+              <use href="#ic-sword" />
+            </svg>{" "}
+            Mythic+
+          </a>
+          <a href="#">
+            <svg className="i">
+              <use href="#ic-shield" />
+            </svg>{" "}
+            Raid
+          </a>
+        </div>
+        <div>
+          <div className="cap" style={{ marginBottom: 12 }}>
+            Filters
+          </div>
+          <div className="fgroup">
+            <label>Season</label>
+            <select defaultValue="Season 1">
+              <option>Season 1</option>
+              <option>Season 2</option>
+            </select>
+          </div>
+          <div className="fgroup">
+            <label>Patch</label>
+            <select defaultValue="12.0.5">
+              <option>12.0.5</option>
+              <option>12.0</option>
+            </select>
+          </div>
+          <div className="fgroup">
+            <label>Level Range</label>
+            <select defaultValue="All Keys">
+              <option>All Keys</option>
+              <option>+2 – +11</option>
+              <option>+12 – +16</option>
+              <option>+17+</option>
+            </select>
+          </div>
+          <div className="fgroup">
+            <label>Region</label>
+            <select defaultValue="All Regions">
+              <option>All Regions</option>
+              <option>EU</option>
+              <option>US</option>
+              <option>Asia</option>
+            </select>
+          </div>
+          <div className="fgroup">
+            <label>Group Size</label>
+            <div className="seg">
+              <button className="on">All</button>
+              <button>Solo</button>
+              <button>2–5</button>
+            </div>
+          </div>
+        </div>
+        <div className="about">
+          <b>
+            <svg className="i" style={{ width: 13, height: 13 }}>
+              <use href="#ic-info" />
+            </svg>{" "}
+            About Tier Lists
+          </b>
+          Learn how we calculate our tier lists.
+        </div>
+        <div className="side-live">
+          <span className="pulse" /> Data refreshed {liveStats.updated}
+        </div>
+      </aside>
+
+      <div className="tp-center">
+        <div className="crumbs">
+          <a href="#">Tier Lists</a>
+          <span className="sep">›</span>
+          <a href="#">Mythic+</a>
+          <span className="sep">›</span>
+          <span style={{ color: "var(--ink-2)" }}>Overall</span>
+        </div>
+        <div className="tp-title">
+          <h2>MYTHIC+ TIER LIST</h2>
+          <span className="dia">◆</span>
+          <span className="rule" />
+        </div>
+        <div className="tp-sub">
+          Ranked by weighted score across timed runs, popularity and
+          consistency. For raw dungeon speed, see <a href="#">Push Rankings →</a>
+        </div>
+        <div className="tp-toolbar">
+          <div className="tabs">
+            <button className="on">Overall</button>
+            <button>DPS</button>
+            <button>Healers</button>
+            <button>Tanks</button>
+          </div>
+          <button className="tool">
+            Last 7 Days{" "}
+            <svg className="i" style={{ width: 11, height: 11 }}>
+              <use href="#ic-chev" />
+            </svg>
+          </button>
+          <button className="tool">
+            <svg className="i" style={{ width: 12, height: 12 }}>
+              <use href="#ic-share" />
+            </svg>{" "}
+            Share
+          </button>
+        </div>
+
+        <div className="filterbar">
+          <label className="fsearch">
+            <svg className="i" style={{ width: 13, height: 13 }}>
+              <use href="#ic-search" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search spec..."
+              aria-label="Search spec"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </label>
+          <div className="chips">
+            {classChips.map((c) => {
+              const icon = c.key === "all" ? null : classIcon(c.key);
+              return (
+                <button
+                  key={c.key}
+                  className={`chip${cls === c.key ? " on" : ""}`}
+                  onClick={() => setCls(c.key)}
+                >
+                  {icon && (
+                    <span className={`coct ${c.key}`}>
+                      <Image src={icon} alt="" width={56} height={56} />
+                    </span>
+                  )}
+                  {c.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <table className="tt">
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Spec</th>
+              <th className="num">Score</th>
+              <th className="num">Pop.</th>
+              <th className="num">Avg Key</th>
+              <th className="num">Top 1%</th>
+              <th className="num">Trend</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tierTable.map((group) =>
+              group.rows.map((row, i) => (
+                <tr
+                  key={row.spec.name}
+                  className={[
+                    row.hl ? "hl" : "",
+                    matches(row.spec.name, row.spec.cls) ? "" : "dim",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {i === 0 && (
+                    <td className="tcell" rowSpan={group.rows.length}>
+                      <div className={`in tc-${group.tier}`}>
+                        <span className="big">{group.tier.toUpperCase()}</span>
+                        <span className="lbl">TIER</span>
+                      </div>
+                    </td>
+                  )}
+                  <td>
+                    <div className="scell">
+                      <SpecSlot name={row.spec.name} cls={row.spec.cls} size="sm" />
+                      <a href="#">{row.spec.name}</a>
+                    </div>
+                  </td>
+                  <td className="num score">
+                    {row.score}
+                    <span className="sbar">
+                      <i style={{ width: `${row.bar}%` }} />
+                    </span>
+                  </td>
+                  <td className="num">{row.pop}</td>
+                  <td className="num">{row.key}</td>
+                  <td className="num">
+                    {row.top1}
+                    {row.star && <span className="star">◆</span>}
+                  </td>
+                  <td className="num">
+                    <TrendCell t={row.trend} />
+                  </td>
+                </tr>
+              )),
+            )}
+          </tbody>
+        </table>
+        <div className="tfoot">
+          Based on {liveStats.runs}+ Mythic+ runs · Updated 2 hours ago
+        </div>
+        <div className="faq-note">
+          <b>How are scores calculated?</b> Timed-run performance (50%),
+          consistency (30%) and popularity (20%), weighted over the selected
+          period. <a href="#">Full methodology →</a>
+        </div>
+
+        <div className="bhead">
+          <span className="t">FEATURED BUILDS</span>
+          <span className="dia">◆</span>
+          <span className="rule" />
+          <a className="view" href="#">
+            All Builds →
+          </a>
+        </div>
+        <div className="builds">
+          {builds.map((b) => (
+            <div
+              key={b.title}
+              className={`bcard${matches(b.spec.name, b.spec.cls) ? "" : " dim"}`}
+            >
+              <SpecSlot name={b.spec.name} cls={b.spec.cls} />
+              <div className="binfo">
+                <div className="bname">{b.title}</div>
+                <div className="bauthor">{b.meta}</div>
+              </div>
+              <span className={`bpill ${b.tier}`}>{b.tier.toUpperCase()}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <aside className="tp-detail">
+        <div className="dhero">
+          <div className="dhead">
+            <div className="dicon">
+              <b>
+                <Image
+                  src="/assets/specs/frost-dk.jpg"
+                  alt="Frost Death Knight"
+                  width={56}
+                  height={56}
+                />
+              </b>
+            </div>
+            <div className="name">
+              <h2>Frost Death Knight</h2>
+              <div className="tier-line">S TIER · 94.2 SCORE</div>
+            </div>
+            <button className="fav" aria-label="Favorite">
+              <svg className="i" style={{ width: 16, height: 16 }}>
+                <use href="#ic-star" />
+              </svg>
+            </button>
+          </div>
+          <div className="dtabs">
+            <button className="on">Overview</button>
+            <button>Stats</button>
+            <button>Talents</button>
+            <button>Covenants</button>
+            <button>Trends</button>
+          </div>
+        </div>
+        <div className="dbody">
+          <div className="radar-wrap">
+            <Radar />
+          </div>
+          <div className="dgrid">
+            <div className="dcard">
+              <h4>Score Breakdown</h4>
+              <div className="dline"><span>Performance</span><b>9.6 <span className="max">/ 10</span></b></div>
+              <div className="dline"><span>Survivability</span><b>9.1 <span className="max">/ 10</span></b></div>
+              <div className="dline"><span>Utility</span><b>7.3 <span className="max">/ 10</span></b></div>
+              <div className="dline"><span>Representation</span><b>9.4 <span className="max">/ 10</span></b></div>
+              <div className="dline"><span>Consistency</span><b>9.4 <span className="max">/ 10</span></b></div>
+            </div>
+            <div className="dcard">
+              <h4>Quick Stats</h4>
+              <div className="dline"><span>Popularity</span><b>16.4%</b></div>
+              <div className="dline"><span>Avg Key</span><b>+14.7</b></div>
+              <div className="dline"><span>Top 1%</span><b>+18</b></div>
+              <div className="dline"><span>Weekly Change</span><b className="pos">▲ 2</b></div>
+              <div className="dline"><span>Data Sample</span><b>42,841</b></div>
+            </div>
+          </div>
+          <div className="dactions">
+            <button className="btn btn-primary">View Full Guide</button>
+            <button className="btn btn-dim">View Builds</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  );
+}
