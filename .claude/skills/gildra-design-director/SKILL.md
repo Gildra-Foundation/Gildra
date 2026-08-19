@@ -24,8 +24,9 @@ Gildra is a **gaming product first and analytics product second**. Every visual 
 
 ## Architecture facts
 
-- The site is a **single static `index.html`** (embedded CSS/JS), no framework. Do not introduce a build step without an explicit request.
-- Deploy = `git push` to `master` of `Zulut30/gildra` (Vercel auto-deploys to gildra.vercel.app). Repo working copy lives in the session scratchpad; sync `index.html`, `bg.jpg`, `assets/` before committing.
-- Fonts: Chakra Petch (display, max weight 700) + Inter (body) via Google Fonts.
+- The site is a **Next.js 15 + React 19 + TypeScript** App Router project, statically prerendered. Structure: `app/` (layout, page, globals.css), `components/` (TopNav, Hero, MythicMeta, MetaTrends, RaidFeature, GuidesSection, TierSection — client component with filters/search, Footer, Reveal, SpecSlot, Icons), `data/site.ts` (the single dataset), `lib/gameAssets.ts` (asset resolver), `public/` (bg.jpg + assets/specs + assets/classes).
+- All styling lives in `app/globals.css` (token-based, class names shared with components). No Tailwind, no CSS-in-JS — keep it that way unless asked.
+- Fonts via `next/font/google` (Chakra Petch → `--font-display`, Inter → `--font-ui`); artwork and icons via `next/image`.
+- Deploy = `git push` to `master` of `Gildra-Foundation/design` (Vercel auto-builds Next.js → gildra.vercel.app). Verify locally first: `npm run build` must pass with zero TS errors.
 - Tokens live in `:root`; tier colors (S red / A amber / B green / C blue) are data semantics — never restyle them as decoration.
-- Full token reference: [design.md](../../design.md).
+- Full token reference: [design.md](../../../design.md). Legacy static version preserved locally in `legacy/index.html`.
