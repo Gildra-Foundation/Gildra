@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gildra — Master the Meta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   GILDRA v2 — «золотая гравировка»
+   Слои: фон → панель → приподнятое. Один акцент: золото.
+   Синий — только данные и ссылки. Классовые цвета — только спеки.
+   ============================================================ */
+:root{
+  --bg:#0b0d13;
+  --panel:#12151e;
+  --panel-2:#171b26;
+  --raise:#1c2130;
+  --line:#232837;
+  --line-soft:#1c212e;
+  --ink:#e9ecf3;
+  --ink-2:#98a2b6;
+  --ink-3:#7a86a0;
+  --gold:#c8a24b;
+  --gold-2:#e9cd7a;
+  --gold-dim:#8a7136;
+  --gold-line:linear-gradient(90deg,transparent,rgba(200,162,75,.55) 18%,rgba(200,162,75,.55) 82%,transparent);
+  --blue:#4d7dd6;
+  --blue-2:#7ba6ee;
+  --green:#57ab63;
+  --red:#d95c55;
+  --ts-bg:#42191b; --ts-tx:#e88f80; --ts-ln:#6b2b28;
+  --ta-bg:#3c2f12; --ta-tx:#dfc06a; --ta-ln:#5d4a1e;
+  --tb-bg:#16331d; --tb-tx:#82c08c; --tb-ln:#28512f;
+  --tc-bg:#16283e; --tc-tx:#7fa9d6; --tc-ln:#28425f;
+  --c-dk:#c41e3a; --c-mage:#3fc7eb; --c-evoker:#33937f; --c-pal:#f48cba;
+  --c-rogue:#fff468; --c-druid:#ff7c0a; --c-priest:#dfe3e8; --c-hunter:#aad372;
+  --c-shaman:#0070dd; --c-lock:#8788ee; --c-monk:#00ff98; --c-war:#c69b6d; --c-dh:#a330c9;
+  --r-lg:12px; --r-md:8px; --r-sm:5px;
+  --display:'Cinzel',serif;
+  --ui:'Inter',system-ui,sans-serif;
+  --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  font-family:var(--ui);
+  background:
+    radial-gradient(90% 40% at 50% 0%, #10141f 0%, var(--bg) 70%);
+  color:var(--ink);
+  font-size:13px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--blue-2);text-decoration:none}
+a:hover{color:#a8c6f5}
+button{font-family:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px;border-radius:2px}
+svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* --- малые заглавные ярлыки — системный приём всего макета --- */
+.cap{
+  font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-3);
+}
+.cap.gold{color:var(--gold)}
+
+/* --- орнаментный заголовок: ◆ между тонких линеек --- */
+.ornhead{display:flex;align-items:center;gap:12px}
+.ornhead .t{
+  font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.14em;
+  color:var(--gold-2);white-space:nowrap;
+}
+.ornhead::before,.ornhead::after{
+  content:"";height:1px;flex:1;
+  background:linear-gradient(90deg,transparent,rgba(200,162,75,.4));
+}
+.ornhead::after{background:linear-gradient(90deg,rgba(200,162,75,.4),transparent)}
+
+/* ============ TOP NAV ============ */
+.topnav{
+  display:flex;align-items:center;gap:20px;height:54px;padding:0 22px;
+  background:linear-gradient(180deg,#0e1118,#0c0e15);
+  border-bottom:1px solid var(--line-soft);
+  box-shadow:0 1px 0 rgba(233,205,122,.05);
+  position:sticky;top:0;z-index:50;
+}
+.logo{display:flex;align-items:center;gap:10px;margin-right:8px}
+.logo-mark{
+  width:30px;height:30px;flex:none;
+  clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+  background:linear-gradient(160deg,#f2da92 0%,#c8a24b 45%,#7d6128 100%);
+  display:grid;place-items:center;
+  font-family:var(--display);font-weight:800;font-size:15px;color:#231a06;
+}
+.logo-text{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.18em;color:#efe6cd}
+.nav-links{display:flex;height:100%}
+.nav-links a{
+  position:relative;display:flex;align-items:center;padding:0 13px;height:100%;
+  color:var(--ink-2);font-weight:600;font-size:11.5px;letter-spacing:.09em;
+}
+.nav-links a:hover{color:var(--ink)}
+.nav-links a.active{color:var(--gold-2)}
+.nav-links a.active::after{
+  content:"";position:absolute;left:13px;right:13px;bottom:-1px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.caret{font-size:8px;margin-left:5px;opacity:.55}
+.nav-spacer{flex:1}
+.search{
+  display:flex;align-items:center;gap:8px;width:230px;height:32px;padding:0 11px;
+  background:#10131c;border:1px solid var(--line);border-radius:var(--r-md);
+  color:var(--ink-3);font-size:12px;
+}
+.search .kbd{margin-left:auto;border:1px solid #2a3143;border-radius:4px;padding:1px 5px;font-size:9.5px;color:var(--ink-3)}
+.icon-btn{
+  width:32px;height:32px;border:none;background:none;border-radius:var(--r-md);
+  display:grid;place-items:center;color:var(--ink-2);
+}
+.icon-btn:hover{background:var(--raise);color:var(--ink)}
+.user{display:flex;align-items:center;gap:9px;font-weight:600;font-size:12px}
+.avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:radial-gradient(circle at 32% 28%,#e0a06e,#7d472a);
+  box-shadow:0 0 0 1px var(--gold-dim);
+}
+
+/* ============ LAYOUT ============ */
+.app{display:grid;grid-template-columns:212px 1fr;min-height:100vh}
+.sidebar{
+  background:#0d1017;border-right:1px solid var(--line-soft);
+  padding:22px 16px;display:flex;flex-direction:column;gap:26px;
+}
+.side-season h2{
+  font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:.08em;
+  margin:3px 0 12px;color:#efe6cd;
+}
+.side-meta{display:flex;flex-direction:column;gap:7px;font-size:11.5px;color:var(--ink-2)}
+.side-meta .row{display:flex;align-items:center;gap:8px}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.side-links{display:flex;flex-direction:column;gap:1px;margin-top:10px}
+.side-links a{
+  display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:var(--r-sm);
+  color:var(--ink-2);font-size:12.5px;font-weight:500;
+  border-left:2px solid transparent;
+}
+.side-links a:hover{background:var(--raise);color:var(--ink);border-left-color:var(--gold-dim)}
+.side-links .i{color:var(--ink-3)}
+.side-links a:hover .i{color:var(--gold)}
+.premium{
+  margin-top:auto;padding:15px;border-radius:var(--r-md);position:relative;
+  background:linear-gradient(165deg,#1c1810,#12141c 70%);
+  border:1px solid #33301f;
+}
+.premium::before,.premium::after{ /* угловые скобы */
+  content:"";position:absolute;width:12px;height:12px;
+  border:1px solid rgba(200,162,75,.5);
+}
+.premium::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
+.premium::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
+.premium h4{font-size:12.5px;display:flex;align-items:center;gap:7px;color:#efe6cd}
+.premium h4 .i{color:var(--gold-2)}
+.premium p{font-size:11px;color:var(--ink-2);margin:7px 0 12px;line-height:1.55}
+.btn-gold{
+  width:100%;padding:9px 0;border-radius:var(--r-sm);
+  font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.12em;
+  color:#241b06;border:1px solid #6e5620;
+  background:linear-gradient(180deg,#efd383,#c8a24b 52%,#98782f);
+  box-shadow:inset 0 1px 0 rgba(255,243,205,.55), 0 3px 10px rgba(0,0,0,.4);
+}
+.btn-gold:hover{filter:brightness(1.07)}
+
+/* ============ HERO ============ */
+.main{padding-bottom:44px;min-width:0}
+.hero{position:relative;overflow:hidden;min-height:420px}
+.hero-art{position:absolute;inset:0}
+.hero-art svg{width:100%;height:100%;display:block}
+.hero-art::after{ /* зерно только на hero — без blend-режимов */
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:var(--noise);opacity:.05;
+}
+.hero::after{ /* виньетка + шов к контенту */
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(11,13,19,.35),transparent 30%,transparent 62%,var(--bg) 97%),
+    radial-gradient(120% 90% at 50% 30%,transparent 55%,rgba(11,13,19,.55));
+}
+.hero-inner{
+  position:relative;z-index:2;display:grid;grid-template-columns:1fr 296px;gap:34px;
+  padding:64px 34px 52px;max-width:1210px;
+}
+.hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.hero-eyebrow .rule{width:34px;height:1px;background:var(--gold)}
+.hero h1{
+  font-family:var(--display);font-weight:700;font-size:46px;line-height:1.08;
+  letter-spacing:.045em;color:#f3f0e6;
+  text-shadow:0 1px 0 rgba(0,0,0,.6),0 0 46px rgba(120,150,255,.25);
+}
+.hero h1 em{font-style:normal;color:var(--gold-2)}
+.hero .sub{
+  font-size:14.5px;color:#b9c2d4;margin:16px 0 30px;max-width:350px;line-height:1.65;
+}
+.hero-actions{display:flex;align-items:center;gap:14px}
+.btn{
+  font-family:var(--display);
+  border-radius:var(--r-sm);padding:12px 22px;font-weight:700;font-size:11.5px;
+  letter-spacing:.11em;border:1px solid transparent;transition:filter .15s,border-color .15s,background .15s;
+}
+.btn-primary{
+  font-family:var(--display);color:#241b06;border-color:#6e5620;
+  background:linear-gradient(180deg,#efd383,#c8a24b 52%,#98782f);
+  box-shadow:inset 0 1px 0 rgba(255,243,205,.55),0 6px 20px rgba(200,162,75,.22);
+}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-ghost{
+  background:rgba(12,15,23,.45);border-color:#39435a;color:#dbe2ee;backdrop-filter:blur(3px);
+}
+.btn-ghost:hover{border-color:var(--gold-dim);color:var(--gold-2)}
+.hero-side{display:flex;flex-direction:column}
+.hero-stats{margin-top:auto;display:flex;justify-content:flex-end;gap:26px;padding-top:24px}
+.hstat{text-align:right}
+.hstat b{display:block;font-family:var(--display);font-weight:700;font-size:17px;color:#f3f0e6;letter-spacing:.03em}
+.hstat span{font-size:9px;font-weight:600;letter-spacing:.14em;color:var(--ink-3);text-transform:uppercase}
+.patch{
+  position:relative;padding:18px;border-radius:var(--r-md);
+  background:rgba(13,16,24,.82);border:1px solid var(--line);backdrop-filter:blur(6px);
+}
+.patch::before,.patch::after{
+  content:"";position:absolute;width:14px;height:14px;border:1px solid rgba(200,162,75,.55);
+}
+.patch::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
+.patch::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
+.patch h3{
+  font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:.13em;
+  color:var(--gold-2);margin-bottom:13px;
+}
+.patch ul{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:13px}
+.patch li{font-size:11.5px;color:var(--ink-2);padding-left:15px;position:relative;line-height:1.5}
+.patch li::before{
+  content:"";position:absolute;left:1px;top:7px;width:5px;height:5px;
+  background:var(--gold);transform:rotate(45deg);
+}
+.patch .more{font-size:11.5px;font-weight:600}
+
+/* ============ SECTION WRAP ============ */
+.section{max-width:1210px;padding:0 34px}
+.cards-row{
+  display:grid;grid-template-columns:1fr 1fr .94fr;gap:18px;
+  margin-top:-46px;position:relative;z-index:3;
+}
+.panel{
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,var(--panel-2),var(--panel) 40px);
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;
+  box-shadow:0 12px 32px rgba(0,0,0,.35);
+}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.panel-head .t{
+  font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.11em;color:var(--gold-2);
+}
+.panel-head .view{font-size:11px;font-weight:600;white-space:nowrap}
+.panel-sub{font-size:11px;color:var(--ink-3);margin:3px 0 14px}
+.panel-rule{height:1px;background:var(--gold-line);opacity:.35;margin:0 -18px 14px}
+
+/* тир-строки на карточках */
+.tier-rows{display:flex;flex-direction:column;gap:8px}
+.tier-row{display:flex;align-items:center;gap:12px}
+.tbadge{
+  width:36px;height:36px;flex:none;display:grid;place-items:center;
+  font-family:var(--display);font-weight:800;font-size:16px;
+  clip-path:polygon(26% 0,74% 0,100% 26%,100% 74%,74% 100%,26% 100%,0 74%,0 26%);
+}
+.tbadge.s{background:linear-gradient(165deg,#5a2023,var(--ts-bg));color:var(--ts-tx);box-shadow:inset 0 0 0 1px var(--ts-ln)}
+.tbadge.a{background:linear-gradient(165deg,#514016,var(--ta-bg));color:var(--ta-tx);box-shadow:inset 0 0 0 1px var(--ta-ln)}
+.tbadge.b{background:linear-gradient(165deg,#1e4527,var(--tb-bg));color:var(--tb-tx);box-shadow:inset 0 0 0 1px var(--tb-ln)}
+.tbadge.c{background:linear-gradient(165deg,#1e3a58,var(--tc-bg));color:var(--tc-tx);box-shadow:inset 0 0 0 1px var(--tc-ln)}
+.specs{display:flex;gap:7px;flex-wrap:wrap}
+
+/* грaнёный слот спека — фирменный элемент */
+.spec{
+  --oct:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+  width:32px;height:32px;flex:none;position:relative;
+  clip-path:var(--oct);
+  background:linear-gradient(150deg,#4a5468,#232a3a 65%);
+  display:grid;place-items:center;
+  cursor:pointer;transition:transform .13s;
+}
+.spec > b{
+  width:26px;height:26px;clip-path:var(--oct);
+  display:grid;place-items:center;
+  font-size:8.5px;font-weight:700;color:#0d1017;font-style:normal;
+  box-shadow:inset 0 -8px 10px rgba(0,0,0,.35);
+}
+.spec:hover{transform:translateY(-2px)}
+.spec.sm{width:26px;height:26px}
+.spec.sm > b{width:21px;height:21px;font-size:7.5px}
+.spec.dk>b{background:linear-gradient(150deg,#ef7188,var(--c-dk))}
+.spec.mage>b{background:linear-gradient(150deg,#b6ecf9,var(--c-mage))}
+.spec.evoker>b{background:linear-gradient(150deg,#8fdcc8,var(--c-evoker))}
+.spec.pal>b{background:linear-gradient(150deg,#fccde2,var(--c-pal))}
+.spec.rogue>b{background:linear-gradient(150deg,#fffcd0,var(--c-rogue))}
+.spec.druid>b{background:linear-gradient(150deg,#ffb473,var(--c-druid))}
+.spec.priest>b{background:linear-gradient(150deg,#ffffff,#b4bcc8)}
+.spec.hunter>b{background:linear-gradient(150deg,#ddf0bc,var(--c-hunter))}
+.spec.shaman>b{background:linear-gradient(150deg,#74b3f2,var(--c-shaman));color:#eef4fd}
+.spec.lock>b{background:linear-gradient(150deg,#cccdfa,var(--c-lock))}
+.spec.monk>b{background:linear-gradient(150deg,#96ffd6,var(--c-monk))}
+.spec.war>b{background:linear-gradient(150deg,#ecd2b0,var(--c-war))}
+.spec.dh>b{background:linear-gradient(150deg,#d896ec,var(--c-dh));color:#f6ecfb}
+.spec b svg,.dicon b svg{
+  width:62%;height:62%;display:block;
+  stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;
+}
+.panel-foot{
+  font-size:10.5px;color:var(--ink-3);margin-top:auto;padding-top:11px;
+  border-top:1px solid var(--line-soft);
+}
+.tier-rows{margin-bottom:14px}
+
+/* мета-тренды */
+.trend-list{display:flex;flex-direction:column;margin-bottom:12px}
+.trend{
+  display:flex;align-items:center;gap:10px;padding:8px 2px;
+  border-bottom:1px solid var(--line-soft);font-size:12px;
+}
+.trend:last-child{border-bottom:none}
+.trend .rank{
+  width:16px;text-align:center;font-family:var(--display);font-weight:700;
+  font-size:11px;color:var(--ink-3);
+}
+.trend .name{flex:1;font-weight:600;color:var(--ink)}
+.trend a.name:hover{color:var(--blue-2)}
+.trend .pct{color:var(--ink-2);font-variant-numeric:tabular-nums;font-size:11.5px}
+.dir{font-size:9px;width:20px;text-align:right}
+.dir.up{color:var(--green)}.dir.down{color:var(--red)}.dir.flat{color:var(--ink-3)}
+.btn-line{
+  width:100%;margin-top:auto;padding:9px 0;background:none;
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  color:var(--ink-2);font-weight:600;font-size:11.5px;letter-spacing:.02em;
+}
+.btn-line:hover{border-color:var(--gold-dim);color:var(--gold-2)}
+
+/* ============ GUIDES ============ */
+.guides-head{display:flex;align-items:center;gap:14px;margin:32px 0 16px}
+.guides-head .t{
+  font-family:var(--display);font-size:14px;font-weight:700;letter-spacing:.13em;color:#efe6cd;
+  display:flex;align-items:center;gap:10px;white-space:nowrap;
+}
+.guides-head .t .i{color:var(--gold)}
+.guides-head .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,162,75,.35),transparent)}
+.guides-head .view{font-size:11.5px;font-weight:600;white-space:nowrap}
+.guides-row{display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
+.gcard{
+  display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+  overflow:hidden;cursor:pointer;position:relative;
+  transition:transform .16s,border-color .16s;
+}
+.gcard:hover{transform:translateY(-3px);border-color:#3d4053}
+.gcard:hover .gart svg{transform:scale(1.06)}
+.gart{height:92px;position:relative;overflow:hidden}
+.gart svg{position:absolute;inset:0;width:100%;height:100%;transition:transform .4s ease}
+.gart::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 30%,rgba(18,21,30,.92));
+}
+.gbody{padding:12px 13px 14px;position:relative;flex:1;display:flex;flex-direction:column}
+.gbody::before{ /* тонкая золотая засечка */
+  content:"";position:absolute;top:0;left:13px;width:26px;height:1px;background:var(--gold);opacity:.6;
+}
+.gcat{font-size:9px;font-weight:600;letter-spacing:.15em;color:var(--gold);margin-bottom:6px;text-transform:uppercase}
+.gtitle{font-size:12.5px;font-weight:600;line-height:1.4;margin-bottom:8px;color:var(--ink)}
+.gmeta{font-size:10.5px;color:var(--ink-3);margin-top:auto;padding-top:8px}
+
+/* ============ TIER PAGE ============ */
+.tierpage{
+  display:grid;grid-template-columns:200px minmax(0,1fr) 352px;
+  margin:38px -34px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  overflow:hidden;background:var(--panel);
+  box-shadow:0 16px 44px rgba(0,0,0,.4);
+}
+.tp-side{
+  background:#0d1017;border-right:1px solid var(--line-soft);
+  padding:20px 16px;display:flex;flex-direction:column;gap:22px;
+}
+.tp-brand{display:flex;align-items:center;gap:9px}
+.tp-brand .logo-mark{width:24px;height:24px;font-size:12px}
+.tp-brand .t{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.14em;color:#efe6cd}
+.tp-nav{display:flex;flex-direction:column;gap:3px}
+.tp-nav a{
+  display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:var(--r-sm);
+  color:var(--ink-2);font-size:12.5px;font-weight:600;border:1px solid transparent;
+}
+.tp-nav a .i{color:var(--ink-3)}
+.tp-nav a.active{
+  background:linear-gradient(180deg,rgba(200,162,75,.13),rgba(200,162,75,.06));
+  border-color:rgba(200,162,75,.4);color:var(--gold-2);
+}
+.tp-nav a.active .i{color:var(--gold)}
+.tp-nav a:hover:not(.active){background:var(--raise);color:var(--ink)}
+.fgroup{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
+.fgroup:last-child{margin-bottom:0}
+.fgroup label{font-size:10px;color:var(--ink-3);font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.fgroup select{
+  appearance:none;-webkit-appearance:none;
+  background:#10131c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' stroke='%235c6679' fill='none' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 9px center;
+  border:1px solid var(--line);color:var(--ink);
+  border-radius:var(--r-sm);height:33px;padding:0 24px 0 10px;font-size:12px;font-family:inherit;
+}
+.fgroup select:hover{border-color:#333c50}
+.seg{display:flex;gap:5px}
+.seg button{
+  flex:1;height:29px;background:#10131c;border:1px solid var(--line);
+  color:var(--ink-2);border-radius:var(--r-sm);font-size:11px;font-weight:600;
+}
+.seg button.on{
+  background:linear-gradient(180deg,rgba(200,162,75,.22),rgba(200,162,75,.1));
+  border-color:var(--gold-dim);color:var(--gold-2);
+}
+.side-live{margin-top:auto;padding-top:16px;display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--ink-2)}
+.about{
+  margin-top:6px;padding:13px;border-radius:var(--r-md);
+  background:var(--panel);border:1px solid var(--line);
+  font-size:11px;color:var(--ink-2);line-height:1.55;
+}
+.about b{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink);margin-bottom:5px}
+
+/* центр */
+.tp-center{padding:22px 20px;min-width:0}
+.crumbs{font-size:11px;color:var(--ink-3);margin-bottom:10px}
+.crumbs a{color:var(--ink-3)}
+.crumbs a:hover{color:var(--ink-2)}
+.crumbs .sep{margin:0 6px;color:#39404f}
+.tp-title{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.tp-title h2{
+  font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:.06em;color:#f3f0e6;
+}
+.tp-title .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,162,75,.4),transparent)}
+.tp-sub{font-size:11.5px;color:var(--ink-3);margin-bottom:16px}
+.tp-toolbar{
+  display:flex;align-items:flex-end;gap:10px;
+  border-bottom:1px solid var(--line);margin-bottom:0;
+}
+.tabs{display:flex;flex:1}
+.tabs button{
+  background:none;border:none;color:var(--ink-2);font-weight:600;font-size:12.5px;
+  padding:10px 15px;border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.tabs button.on{color:var(--gold-2);border-bottom-color:var(--gold)}
+.tabs button:hover:not(.on){color:var(--ink)}
+.tool{
+  display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;margin-bottom:8px;
+  background:#10131c;border:1px solid var(--line);border-radius:var(--r-sm);
+  color:var(--ink);font-size:11.5px;font-weight:500;white-space:nowrap;flex:none;
+}
+.tool:hover{border-color:#333c50}
+
+table.tt{width:100%;border-collapse:collapse;font-size:12.5px}
+.tt thead th{
+  text-align:left;font-size:9.5px;color:var(--ink-3);font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
+  padding:12px 7px 8px;border-bottom:1px solid var(--line);
+}
+.tt thead th.num{text-align:right}
+.tt td{padding:9px 7px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+.tt td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.tt td.score{font-weight:700;color:var(--ink);font-size:13px}
+td.tcell{border-bottom:none;padding:6px 12px 6px 0;width:52px}
+.tcell .in{
+  height:100%;min-height:100%;border-radius:var(--r-sm);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:14px 0;position:relative;overflow:hidden;
+}
+.tcell .in::after{content:"";position:absolute;inset:0;background-image:var(--noise);opacity:.06}
+.tcell .big{font-family:var(--display);font-weight:800;font-size:22px;line-height:1}
+.tcell .lbl{font-size:7.5px;letter-spacing:.22em;font-weight:600;opacity:.7}
+.tc-s{background:linear-gradient(170deg,#54201f,#33161a);color:var(--ts-tx);box-shadow:inset 0 0 0 1px var(--ts-ln)}
+.tc-a{background:linear-gradient(170deg,#4c3c14,#2a2110);color:var(--ta-tx);box-shadow:inset 0 0 0 1px var(--ta-ln)}
+.tc-b{background:linear-gradient(170deg,#1d4023,#122414);color:var(--tb-tx);box-shadow:inset 0 0 0 1px var(--tb-ln)}
+.scell{display:flex;align-items:center;gap:10px;font-weight:600;white-space:nowrap}
+.scell a{color:var(--ink)}
+.scell a:hover{color:var(--blue-2)}
+tr.hl{background:linear-gradient(90deg,rgba(196,30,58,.09),transparent 70%)}
+tr.hl .scell a{color:#f0a89e}
+tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
+.star{color:var(--gold);font-size:8px;vertical-align:4px;margin-left:2px}
+.up{color:var(--green);font-weight:700;font-size:11px}
+.down{color:var(--red);font-weight:700;font-size:11px}
+.flat{color:var(--ink-3)}
+.tfoot{font-size:10.5px;color:var(--ink-3);margin-top:13px}
+.faq-note{
+  margin-top:15px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:13px 16px;font-size:11.5px;color:var(--ink-2);line-height:1.65;
+}
+.faq-note b{color:var(--ink);font-weight:600;margin-right:6px}
+
+/* правая панель */
+.tp-detail{
+  border-left:1px solid var(--line);
+  background:linear-gradient(180deg,var(--panel-2),var(--panel) 220px);
+  display:flex;flex-direction:column;
+}
+.dhero{
+  position:relative;padding:24px 22px 0;overflow:hidden;
+}
+.dhero::before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(85% 70% at 82% 8%,rgba(96,60,160,.28),transparent 60%),
+    radial-gradient(60% 55% at 12% 0%,rgba(60,110,200,.16),transparent 55%);
+}
+.dhero::after{
+  content:"";position:absolute;top:10px;right:10px;width:14px;height:14px;
+  border-top:1px solid rgba(200,162,75,.55);border-right:1px solid rgba(200,162,75,.55);
+}
+.dhead{position:relative;display:flex;align-items:center;gap:14px}
+.dicon{
+  width:54px;height:54px;flex:none;position:relative;
+  clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+  background:linear-gradient(160deg,#e9cd7a,#8a7136 70%);
+  display:grid;place-items:center;
+}
+.dicon > b{
+  width:46px;height:46px;
+  clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+  background:linear-gradient(150deg,#ef7188,var(--c-dk) 60%,#5e1224);
+  display:grid;place-items:center;font-size:12px;font-weight:700;color:#fbe9ec;font-style:normal;
+}
+.dhead .name h2{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:.02em;color:#f3f0e6}
+.dhead .tier-line{font-size:11.5px;color:var(--gold-2);font-weight:600;margin-top:4px;letter-spacing:.04em}
+.dhead .fav{margin-left:auto;background:none;border:none;color:var(--ink-3);align-self:flex-start}
+.dhead .fav:hover{color:var(--gold-2)}
+.dtabs{position:relative;display:flex;margin-top:18px;border-bottom:1px solid var(--line)}
+.dtabs button{
+  flex:1;background:none;border:none;color:var(--ink-2);font-weight:600;font-size:11px;
+  padding:9px 2px;border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.dtabs button.on{color:var(--gold-2);border-bottom-color:var(--gold)}
+.dbody{padding:18px 22px 22px;display:flex;flex-direction:column;gap:17px}
+.radar-wrap{display:flex;justify-content:center}
+.radar-wrap svg{max-width:100%;height:auto}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.dcard{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:13px 14px;
+}
+.dcard h4{
+  font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:10px;
+}
+.dline{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:10.5px;padding:3.5px 0;color:var(--ink-2)}
+.dline b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dline b .max{color:var(--ink-3);font-weight:500}
+.dline .pos{color:var(--green);font-weight:700}
+.dactions{display:flex;gap:10px}
+.dactions .btn{flex:1;text-align:center;padding:11px 0}
+.btn-dim{background:none;border:1px solid var(--line);color:var(--ink)}
+.btn-dim:hover{border-color:var(--gold-dim);color:var(--gold-2)}
+
+/* ============ RESPONSIVE / MOTION ============ */
+@media (max-width:1120px){
+  .cards-row{grid-template-columns:1fr 1fr}
+  .guides-row{grid-template-columns:repeat(3,1fr)}
+  .tierpage{grid-template-columns:1fr}
+  .tp-side{flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid var(--line-soft)}
+  .tp-detail{border-left:none;border-top:1px solid var(--line)}
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+}
+@media (max-width:720px){
+  .cards-row{grid-template-columns:1fr;margin-top:18px}
+  .guides-row{grid-template-columns:1fr 1fr}
+  .hero-inner{grid-template-columns:1fr}
+  .nav-links,.search{display:none}
+  .hero h1{font-size:34px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- SVG-иконки (спрайт) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.6"/><path d="M10.6 10.6 14 14"/></symbol>
+  <symbol id="ic-bell" viewBox="0 0 16 16"><path d="M8 2.2a4 4 0 0 0-4 4v2.6L2.6 11h10.8L12 8.8V6.2a4 4 0 0 0-4-4z"/><path d="M6.6 13.4a1.5 1.5 0 0 0 2.8 0"/></symbol>
+  <symbol id="ic-sword" viewBox="0 0 16 16"><path d="M13.5 2.5 6.8 9.2"/><path d="m5 8 3 3-1.6 1.6-3-3z"/><path d="M3.2 12.8 2 14"/><path d="M13.5 2.5c-1.6 0-3.2.5-4.4 1.4"/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 16 16"><path d="M8 1.8 13 3.6v4.2c0 3-2 5.1-5 6.4-3-1.3-5-3.4-5-6.4V3.6z"/></symbol>
+  <symbol id="ic-chart" viewBox="0 0 16 16"><path d="M3 13V8.5"/><path d="M7 13V4.5"/><path d="M11 13V7"/><path d="M2 14h12"/></symbol>
+  <symbol id="ic-trend" viewBox="0 0 16 16"><path d="m2 11 4-4 2.5 2.5L13.5 4"/><path d="M10.5 4h3v3"/></symbol>
+  <symbol id="ic-chat" viewBox="0 0 16 16"><path d="M2.5 3.5h11v7h-6l-3 3v-3h-2z"/></symbol>
+  <symbol id="ic-heart" viewBox="0 0 16 16"><path d="M8 13.5C4.5 11 2.5 8.8 2.5 6.4 2.5 4.8 3.8 3.5 5.4 3.5c1 0 2 .5 2.6 1.4.6-.9 1.6-1.4 2.6-1.4 1.6 0 2.9 1.3 2.9 2.9 0 2.4-2 4.6-5.5 7.1z"/></symbol>
+  <symbol id="ic-star" viewBox="0 0 16 16"><path d="m8 1.8 1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></symbol>
+  <symbol id="ic-share" viewBox="0 0 16 16"><path d="M8 9.5V2.5"/><path d="M5.5 4.5 8 2l2.5 2.5"/><path d="M3 8v5.5h10V8"/></symbol>
+  <symbol id="ic-crown" viewBox="0 0 16 16"><path d="m2.5 11.5-.8-6 3.4 2.4L8 3.5l2.9 4.4 3.4-2.4-.8 6z"/><path d="M2.5 13.5h11"/></symbol>
+  <symbol id="ic-book" viewBox="0 0 16 16"><path d="M8 3.6C7 2.8 5.6 2.5 3.9 2.5H2.5v10h1.4c1.7 0 3.1.3 4.1 1.1 1-.8 2.4-1.1 4.1-1.1h1.4v-10h-1.4C10.4 2.5 9 2.8 8 3.6z"/><path d="M8 3.6v10"/></symbol>
+  <symbol id="ic-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 7.4v3.2"/><path d="M8 5.2v.1"/></symbol>
+  <symbol id="ic-chev" viewBox="0 0 16 16"><path d="m4 6.5 4 4 4-4"/></symbol>
+  <!-- глифы классов WoW -->
+  <symbol id="g-dk" viewBox="0 0 16 16"><path d="M8 2v12"/><path d="m3.2 5 9.6 6"/><path d="M12.8 5 3.2 11"/></symbol>
+  <symbol id="g-mage" viewBox="0 0 16 16"><path d="M8 2l1.6 4.4L14 8l-4.4 1.6L8 14l-1.6-4.4L2 8l4.4-1.6z"/></symbol>
+  <symbol id="g-evoker" viewBox="0 0 16 16"><path d="M2 8q6-5.5 12 0q-6 5.5-12 0z"/><circle cx="8" cy="8" r="1.7"/></symbol>
+  <symbol id="g-pal" viewBox="0 0 16 16"><path d="M5 3h6v4H5z"/><path d="M8 7v7"/></symbol>
+  <symbol id="g-rogue" viewBox="0 0 16 16"><path d="M8 2l1.5 6L8 10.5 6.5 8z"/><path d="M5.5 9.5h5"/><path d="M8 10.5V14"/></symbol>
+  <symbol id="g-druid" viewBox="0 0 16 16"><path d="M13 3C6.5 3 3.5 7.5 3.5 13 9 13 13 9.5 13 3z"/><path d="M4.5 12C7 9.5 9.5 7 12 4.5"/></symbol>
+  <symbol id="g-priest" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2"/><path d="M8 2v2.5M8 11.5V14M2 8h2.5M11.5 8H14M4 4l1.8 1.8M10.2 10.2 12 12M4 12l1.8-1.8M10.2 5.8 12 4"/></symbol>
+  <symbol id="g-hunter" viewBox="0 0 16 16"><path d="M3 13 13 3"/><path d="M8.5 3H13v4.5"/></symbol>
+  <symbol id="g-shaman" viewBox="0 0 16 16"><path d="M9 2 4 9h3l-1 5 5-7H8z"/></symbol>
+  <symbol id="g-lock" viewBox="0 0 16 16"><path d="M8 2c2 3 4 4.3 4 7a4 4 0 0 1-8 0c0-2.7 2-4 4-7z"/></symbol>
+  <symbol id="g-monk" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.2"/><circle cx="8" cy="8" r="1.4"/></symbol>
+  <symbol id="g-war" viewBox="0 0 16 16"><path d="M6 3c3 0 5 2 5 5H8C8 5.5 7 4.2 6 3z"/><path d="M8 6v8"/><path d="M6.2 12h3.6"/></symbol>
+  <symbol id="g-dh" viewBox="0 0 16 16"><path d="M3 9.5a5.5 5.5 0 0 1 10 0"/><path d="M2 9.5a7 7 0 0 1 12 0"/></symbol>
+</svg>
+
+<!-- ============ NAV ============ -->
+<header class="topnav">
+  <div class="logo"><div class="logo-mark">G</div><span class="logo-text">GILDRA</span></div>
+  <nav class="nav-links">
+    <a class="active" href="#">TIER LISTS</a>
+    <a href="#">MYTHIC+</a>
+    <a href="#">RAIDS</a>
+    <a href="#">CLASSES<span class="caret">▾</span></a>
+    <a href="#">GUIDES</a>
+    <a href="#">TOOLS<span class="caret">▾</span></a>
+  </nav>
+  <div class="nav-spacer"></div>
+  <div class="search"><svg class="i"><use href="#ic-search"/></svg> Search Gildra... <span class="kbd">⌘K</span></div>
+  <button class="icon-btn" aria-label="Notifications"><svg class="i" style="width:16px;height:16px"><use href="#ic-bell"/></svg></button>
+  <div class="user"><div class="avatar"></div>Alexandér <span class="caret">▾</span></div>
+</header>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="side-season">
+      <div class="cap gold">The War Within</div>
+      <h2>SEASON 1</h2>
+      <div class="side-meta">
+        <span class="row"><svg class="i" style="width:12px;height:12px"><use href="#ic-shield"/></svg> Patch 12.0.5</span>
+        <span class="row"><span class="pulse"></span> Live — updated 2h ago</span>
+      </div>
+    </div>
+    <div>
+      <div class="cap">Quick Links</div>
+      <div class="side-links">
+        <a href="#"><svg class="i"><use href="#ic-sword"/></svg> Mythic+ Tier List</a>
+        <a href="#"><svg class="i"><use href="#ic-shield"/></svg> Raid Tier List</a>
+        <a href="#"><svg class="i"><use href="#ic-chart"/></svg> Most Popular Specs</a>
+        <a href="#"><svg class="i"><use href="#ic-trend"/></svg> Meta Trends</a>
+        <a href="#"><svg class="i"><use href="#ic-chat"/></svg> Discord</a>
+        <a href="#"><svg class="i"><use href="#ic-heart"/></svg> Support Us</a>
+      </div>
+    </div>
+    <div class="premium">
+      <h4><svg class="i"><use href="#ic-crown"/></svg> Remove Ads</h4>
+      <p>Support Gildra and get an ad-free experience.</p>
+      <button class="btn-gold">GO PREMIUM</button>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 1200 420" preserveAspectRatio="xMidYMax slice">
+          <defs>
+            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#131a2e"/>
+              <stop offset=".55" stop-color="#0e1424"/>
+              <stop offset="1" stop-color="#0b0d16"/>
+            </linearGradient>
+            <radialGradient id="glow" cx=".5" cy=".82" r=".62">
+              <stop offset="0" stop-color="#7fa8ff" stop-opacity=".34"/>
+              <stop offset=".45" stop-color="#4a6ecc" stop-opacity=".14"/>
+              <stop offset="1" stop-color="#4a6ecc" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#cfe4ff" stop-opacity="0"/>
+              <stop offset=".6" stop-color="#a9cdff" stop-opacity=".3"/>
+              <stop offset="1" stop-color="#e8f3ff" stop-opacity=".75"/>
+            </linearGradient>
+            <linearGradient id="far" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#121a2c"/><stop offset="1" stop-color="#0d1220"/>
+            </linearGradient>
+            <linearGradient id="near" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#0f1526"/><stop offset="1" stop-color="#0a0d16"/>
+            </linearGradient>
+          </defs>
+          <rect width="1200" height="420" fill="url(#sky)"/>
+          <g fill="#d8e4ff">
+            <circle cx="120" cy="70" r="1.1" opacity=".6"/><circle cx="270" cy="130" r=".9" opacity=".4"/>
+            <circle cx="420" cy="50" r="1.2" opacity=".7"/><circle cx="760" cy="88" r=".9" opacity=".45"/>
+            <circle cx="930" cy="60" r="1.2" opacity=".65"/><circle cx="1080" cy="140" r="1" opacity=".5"/>
+            <circle cx="640" cy="36" r=".9" opacity=".4"/><circle cx="200" cy="200" r=".9" opacity=".3"/>
+            <circle cx="1010" cy="230" r=".9" opacity=".35"/><circle cx="520" cy="110" r=".8" opacity=".4"/>
+          </g>
+          <ellipse cx="600" cy="345" rx="380" ry="260" fill="url(#glow)"/>
+          <!-- дальний хребет -->
+          <path d="M0,330 L130,282 L250,318 L390,262 L520,308 L600,286 L700,252 L830,306 L960,268 L1080,312 L1200,284 L1200,420 L0,420 Z" fill="url(#far)"/>
+          <!-- цитадель -->
+          <g fill="url(#near)">
+            <path d="M535,420 L543,240 L552,206 L561,240 L567,420 Z"/>
+            <path d="M633,420 L639,240 L648,206 L657,240 L665,420 Z"/>
+            <path d="M566,420 L574,180 L600,112 L626,180 L634,420 Z"/>
+            <path d="M470,420 L479,308 L490,282 L501,308 L509,420 Z"/>
+            <path d="M691,420 L699,308 L710,282 L721,308 L730,420 Z"/>
+            <path d="M430,420 L430,352 Q600,332 770,352 L770,420 Z"/>
+          </g>
+          <!-- луч -->
+          <polygon points="588,84 612,84 636,420 564,420" fill="url(#beam)"/>
+          <!-- окна -->
+          <g fill="#8fc0ff" opacity=".75">
+            <rect x="596" y="158" width="7" height="12" rx="3"/>
+            <rect x="597.5" y="208" width="5" height="9" rx="2.5"/>
+            <rect x="549" y="252" width="4" height="8" rx="2"/>
+            <rect x="645" y="252" width="4" height="8" rx="2"/>
+            <rect x="487" y="316" width="3.5" height="7" rx="1.75"/>
+            <rect x="707" y="316" width="3.5" height="7" rx="1.75"/>
+          </g>
+          <!-- тонкая золотая линия горизонта -->
+          <path d="M0,330 L130,282 L250,318 L390,262 L520,308 L600,286 L700,252 L830,306 L960,268 L1080,312 L1200,284" stroke="#c8a24b" stroke-opacity=".22" stroke-width="1" fill="none"/>
+        </svg>
+      </div>
+      <div class="hero-inner">
+        <div>
+          <div class="hero-eyebrow"><span class="rule"></span><span class="cap gold">Season 1 · Patch 12.0.5</span></div>
+          <h1>MASTER<br>THE <em>META</em></h1>
+          <p class="sub">Live statistics, tier lists, and guides to help you dominate Azeroth.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary">MYTHIC+ TIER LIST</button>
+            <button class="btn btn-ghost">RAID TIER LIST</button>
+          </div>
+        </div>
+        <div class="hero-side">
+        <div class="patch">
+          <h3>PATCH 12.0.5 HIGHLIGHTS</h3>
+          <ul>
+            <li>Class tuning updates</li>
+            <li>Manaforge Omega raid open</li>
+            <li>New Mythic+ affix rotation</li>
+            <li>PvP balance adjustments</li>
+          </ul>
+          <a class="more" href="#">View full patch notes →</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hstat"><b>42,841</b><span>Runs analyzed</span></div>
+          <div class="hstat"><b>39</b><span>Specs tracked</span></div>
+          <div class="hstat"><b>4</b><span>Regions</span></div>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CARDS -->
+    <div class="section">
+      <div class="cards-row">
+        <div class="panel">
+          <div class="panel-head"><span class="t">MYTHIC+ TOP SPECS</span><a class="view" href="#">View All →</a></div>
+          <div class="panel-sub">All Keys · Overall</div>
+          <div class="panel-rule"></div>
+          <div class="tier-rows">
+            <div class="tier-row"><div class="tbadge s">S</div>
+              <div class="specs">
+                <div class="spec dk" title="Frost Death Knight"><b><svg><use href="#g-dk"/></svg></b></div>
+                <div class="spec mage" title="Arcane Mage"><b><svg><use href="#g-mage"/></svg></b></div>
+                <div class="spec evoker" title="Augmentation Evoker"><b><svg><use href="#g-evoker"/></svg></b></div>
+                <div class="spec hunter" title="Beast Mastery Hunter"><b><svg><use href="#g-hunter"/></svg></b></div>
+              </div>
+            </div>
+            <div class="tier-row"><div class="tbadge a">A</div>
+              <div class="specs">
+                <div class="spec pal" title="Retribution Paladin"><b><svg><use href="#g-pal"/></svg></b></div>
+                <div class="spec rogue" title="Outlaw Rogue"><b><svg><use href="#g-rogue"/></svg></b></div>
+                <div class="spec druid" title="Balance Druid"><b><svg><use href="#g-druid"/></svg></b></div>
+                <div class="spec shaman" title="Elemental Shaman"><b><svg><use href="#g-shaman"/></svg></b></div>
+                <div class="spec priest" title="Shadow Priest"><b><svg><use href="#g-priest"/></svg></b></div>
+              </div>
+            </div>
+            <div class="tier-row"><div class="tbadge b">B</div>
+              <div class="specs">
+                <div class="spec lock" title="Affliction Warlock"><b><svg><use href="#g-lock"/></svg></b></div>
+                <div class="spec monk" title="Windwalker Monk"><b><svg><use href="#g-monk"/></svg></b></div>
+                <div class="spec war" title="Fury Warrior"><b><svg><use href="#g-war"/></svg></b></div>
+                <div class="spec hunter" title="Marksmanship Hunter"><b><svg><use href="#g-hunter"/></svg></b></div>
+              </div>
+            </div>
+            <div class="tier-row"><div class="tbadge c">C</div>
+              <div class="specs">
+                <div class="spec dh" title="Havoc Demon Hunter"><b><svg><use href="#g-dh"/></svg></b></div>
+                <div class="spec shaman" title="Enhancement Shaman"><b><svg><use href="#g-shaman"/></svg></b></div>
+                <div class="spec mage" title="Frost Mage"><b><svg><use href="#g-mage"/></svg></b></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-foot">Based on 42,841+ runs · Updated 2h ago</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="t">RAID TOP SPECS</span><a class="view" href="#">View All →</a></div>
+          <div class="panel-sub">Manaforge Omega · Overall</div>
+          <div class="panel-rule"></div>
+          <div class="tier-rows">
+            <div class="tier-row"><div class="tbadge s">S</div>
+              <div class="specs">
+                <div class="spec evoker" title="Devastation Evoker"><b><svg><use href="#g-evoker"/></svg></b></div>
+                <div class="spec hunter" title="Marksmanship Hunter"><b><svg><use href="#g-hunter"/></svg></b></div>
+                <div class="spec dk" title="Unholy Death Knight"><b><svg><use href="#g-dk"/></svg></b></div>
+              </div>
+            </div>
+            <div class="tier-row"><div class="tbadge a">A</div>
+              <div class="specs">
+                <div class="spec mage" title="Fire Mage"><b><svg><use href="#g-mage"/></svg></b></div>
+                <div class="spec shaman" title="Elemental Shaman"><b><svg><use href="#g-shaman"/></svg></b></div>
+                <div class="spec lock" title="Demonology Warlock"><b><svg><use href="#g-lock"/></svg></b></div>
+                <div class="spec priest" title="Shadow Priest"><b><svg><use href="#g-priest"/></svg></b></div>
+              </div>
+            </div>
+            <div class="tier-row"><div class="tbadge b">B</div>
+              <div class="specs">
+                <div class="spec pal" title="Retribution Paladin"><b><svg><use href="#g-pal"/></svg></b></div>
+                <div class="spec druid" title="Balance Druid"><b><svg><use href="#g-druid"/></svg></b></div>
+                <div class="spec war" title="Arms Warrior"><b><svg><use href="#g-war"/></svg></b></div>
+                <div class="spec monk" title="Windwalker Monk"><b><svg><use href="#g-monk"/></svg></b></div>
+              </div>
+            </div>
+            <div class="tier-row"><div class="tbadge c">C</div>
+              <div class="specs">
+                <div class="spec rogue" title="Subtlety Rogue"><b><svg><use href="#g-rogue"/></svg></b></div>
+                <div class="spec dh" title="Havoc Demon Hunter"><b><svg><use href="#g-dh"/></svg></b></div>
+                <div class="spec dk" title="Frost Death Knight"><b><svg><use href="#g-dk"/></svg></b></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-foot">Based on 23,671+ parses · Updated 2h ago</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="t" style="color:#efe6cd">META TRENDS</span><a class="view" href="#">View All →</a></div>
+          <div class="panel-sub">Specs popularity · Last 7 Days</div>
+          <div class="panel-rule"></div>
+          <div class="trend-list">
+            <div class="trend"><span class="rank">I</span><div class="spec sm dk"><b><svg><use href="#g-dk"/></svg></b></div><a class="name" href="#">Frost Death Knight</a><span class="pct">16.4%</span><span class="dir up">▲</span></div>
+            <div class="trend"><span class="rank">II</span><div class="spec sm mage"><b><svg><use href="#g-mage"/></svg></b></div><a class="name" href="#">Arcane Mage</a><span class="pct">15.7%</span><span class="dir flat">—</span></div>
+            <div class="trend"><span class="rank">III</span><div class="spec sm evoker"><b><svg><use href="#g-evoker"/></svg></b></div><a class="name" href="#">Augmentation Evoker</a><span class="pct">13.1%</span><span class="dir up">▲</span></div>
+            <div class="trend"><span class="rank">IV</span><div class="spec sm shaman"><b><svg><use href="#g-shaman"/></svg></b></div><a class="name" href="#">Restoration Shaman</a><span class="pct">8.7%</span><span class="dir down">▼</span></div>
+            <div class="trend"><span class="rank">V</span><div class="spec sm rogue"><b><svg><use href="#g-rogue"/></svg></b></div><a class="name" href="#">Assassination Rogue</a><span class="pct">7.9%</span><span class="dir flat">—</span></div>
+          </div>
+          <button class="btn-line">View Full Meta Trends</button>
+        </div>
+      </div>
+
+      <!-- GUIDES -->
+      <div class="guides-head">
+        <span class="t"><svg class="i" style="width:15px;height:15px"><use href="#ic-book"/></svg> LATEST GUIDES</span>
+        <span class="rule"></span>
+        <a class="view" href="#">View All Guides →</a>
+      </div>
+      <div class="guides-row">
+        <article class="gcard">
+          <div class="gart">
+            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
+              <rect width="220" height="92" fill="#101a2e"/>
+              <circle cx="110" cy="30" r="70" fill="#1d3a66" opacity=".5"/>
+              <circle cx="110" cy="24" r="34" fill="#3fc7eb" opacity=".14"/>
+              <g stroke="#7db6e8" stroke-width="1.4" fill="none" opacity=".8">
+                <path d="M110 8 v36 M96 16 l28 20 M124 16 l-28 20 M92 28 h36"/>
+                <circle cx="110" cy="26" r="4" fill="#bfe4ff" stroke="none"/>
+              </g>
+            </svg>
+          </div>
+          <div class="gbody">
+            <div class="gcat">Frost Death Knight</div>
+            <div class="gtitle">Frost DK Mythic+ Guide</div>
+            <div class="gmeta">By Alexandér · 3h ago</div>
+          </div>
+        </article>
+        <article class="gcard">
+          <div class="gart">
+            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
+              <rect width="220" height="92" fill="#1c1208"/>
+              <circle cx="110" cy="34" r="64" fill="#4a2a10" opacity=".55"/>
+              <g stroke="#e0a050" stroke-width="1.4" fill="none" opacity=".85" transform="translate(22 6) scale(1.15)">
+                <path d="M82 66 V38 a28 28 0 0 1 56 0 V66"/>
+                <path d="M94 66 V42 a16 16 0 0 1 32 0 V66"/>
+                <path d="M104 66 V48 a6 6 0 0 1 12 0 V66"/>
+              </g>
+              <circle cx="110" cy="22" r="3" fill="#ffcf8a"/>
+            </svg>
+          </div>
+          <div class="gbody">
+            <div class="gcat">Raid Guide</div>
+            <div class="gtitle">Manaforge Omega Complete Boss Guide</div>
+            <div class="gmeta">By Velyne · 5h ago</div>
+          </div>
+        </article>
+        <article class="gcard">
+          <div class="gart">
+            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
+              <rect width="220" height="92" fill="#171204"/>
+              <circle cx="110" cy="36" r="60" fill="#4a3c12" opacity=".5"/>
+              <g stroke="#e6c667" stroke-width="1.4" fill="none" opacity=".85">
+                <path d="M110 10 l10 18 -10 34 -10 -34 z"/>
+                <path d="M88 46 l22 -8 22 8"/>
+                <circle cx="110" cy="64" r="7"/>
+              </g>
+            </svg>
+          </div>
+          <div class="gbody">
+            <div class="gcat">Mythic+ Guide</div>
+            <div class="gtitle">Best Talents for +12–16</div>
+            <div class="gmeta">By Shyra · 8h ago</div>
+          </div>
+        </article>
+        <article class="gcard">
+          <div class="gart">
+            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
+              <rect width="220" height="92" fill="#160b22"/>
+              <circle cx="110" cy="32" r="66" fill="#3a1a5e" opacity=".5"/>
+              <g stroke="#c085ec" stroke-width="1.3" fill="none" opacity=".85" transform="translate(-40 -6) scale(1.22)">
+                <circle cx="110" cy="34" r="22"/>
+                <circle cx="110" cy="34" r="14"/>
+                <path d="M110 12 v8 M110 48 v8 M88 34 h8 M124 34 h8"/>
+                <path d="M95 19 l5.5 5.5 M125 49 l-5.5 -5.5 M95 49 l5.5 -5.5 M125 19 l-5.5 5.5"/>
+              </g>
+              <circle cx="110" cy="34" r="4" fill="#e0c1f8"/>
+            </svg>
+          </div>
+          <div class="gbody">
+            <div class="gcat">Class Guide</div>
+            <div class="gtitle">Arcane Mage Guide Patch 12.0.5</div>
+            <div class="gmeta">By Neri · 10h ago</div>
+          </div>
+        </article>
+        <article class="gcard">
+          <div class="gart">
+            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
+              <rect width="220" height="92" fill="#0d1b12"/>
+              <circle cx="110" cy="34" r="62" fill="#1d4527" opacity=".5"/>
+              <g stroke="#8fd49c" stroke-width="1.4" fill="none" opacity=".85" transform="translate(30 8) scale(1.08)">
+                <path d="M92 64 c0 -10 4 -14 8 -18 -6 -8 -4 -18 2 -24 0 8 3 11 8 13 5 -2 8 -5 8 -13 6 6 8 16 2 24 4 4 8 8 8 18"/>
+                <path d="M86 64 h48"/>
+              </g>
+            </svg>
+          </div>
+          <div class="gbody">
+            <div class="gcat">Gear Guide</div>
+            <div class="gtitle">Best Items for Healers Season 1</div>
+            <div class="gmeta">By Lyra · 12h ago</div>
+          </div>
+        </article>
+      </div>
+
+      <!-- ============ TIER PAGE ============ -->
+      <div class="tierpage">
+        <aside class="tp-side">
+          <div class="tp-brand"><div class="logo-mark">G</div><span class="t">TIER LISTS</span></div>
+          <div class="tp-nav">
+            <a class="active" href="#"><svg class="i"><use href="#ic-sword"/></svg> Mythic+</a>
+            <a href="#"><svg class="i"><use href="#ic-shield"/></svg> Raid</a>
+          </div>
+          <div>
+            <div class="cap" style="margin-bottom:12px">Filters</div>
+            <div class="fgroup"><label>Season</label>
+              <select><option>Season 1</option><option>Season 2</option></select></div>
+            <div class="fgroup"><label>Patch</label>
+              <select><option>12.0.5</option><option>12.0</option></select></div>
+            <div class="fgroup"><label>Level Range</label>
+              <select><option>All Keys</option><option>+2 – +11</option><option>+12 – +16</option><option>+17+</option></select></div>
+            <div class="fgroup"><label>Region</label>
+              <select><option>All Regions</option><option>EU</option><option>US</option><option>Asia</option></select></div>
+            <div class="fgroup"><label>Group Size</label>
+              <div class="seg"><button class="on">All</button><button>Solo</button><button>2–5</button></div>
+            </div>
+          </div>
+          <div class="about">
+            <b><svg class="i" style="width:13px;height:13px"><use href="#ic-info"/></svg> About Tier Lists</b>
+            Learn how we calculate our tier lists.
+          </div>
+          <div class="side-live"><span class="pulse"></span> Data refreshed 2h ago</div>
+        </aside>
+
+        <div class="tp-center">
+          <div class="crumbs"><a href="#">Tier Lists</a><span class="sep">›</span><a href="#">Mythic+</a><span class="sep">›</span><span style="color:var(--ink-2)">Overall</span></div>
+          <div class="tp-title"><h2>MYTHIC+ TIER LIST</h2><span class="rule"></span></div>
+          <div class="tp-sub">Ranked by weighted score across timed runs, popularity and consistency</div>
+          <div class="tp-toolbar">
+            <div class="tabs">
+              <button class="on">Overall</button><button>DPS</button><button>Healers</button><button>Tanks</button>
+            </div>
+            <button class="tool">Last 7 Days <svg class="i" style="width:11px;height:11px"><use href="#ic-chev"/></svg></button>
+            <button class="tool"><svg class="i" style="width:12px;height:12px"><use href="#ic-share"/></svg> Share</button>
+          </div>
+
+          <table class="tt">
+            <thead>
+              <tr><th>Tier</th><th>Spec</th><th class="num">Score</th><th class="num">Pop.</th><th class="num">Avg Key</th><th class="num">Top 1%</th><th class="num">Trend</th></tr>
+            </thead>
+            <tbody>
+              <tr class="hl">
+                <td class="tcell" rowspan="3"><div class="in tc-s"><span class="big">S</span><span class="lbl">TIER</span></div></td>
+                <td><div class="scell"><div class="spec sm dk"><b><svg><use href="#g-dk"/></svg></b></div><a href="#">Frost Death Knight</a></div></td>
+                <td class="num score">94.2</td><td class="num">16.4%</td><td class="num">+14.7</td><td class="num">+18<span class="star">◆</span></td>
+                <td class="num"><span class="up">▲ 2</span></td>
+              </tr>
+              <tr>
+                <td><div class="scell"><div class="spec sm mage"><b><svg><use href="#g-mage"/></svg></b></div><a href="#">Arcane Mage</a></div></td>
+                <td class="num score">92.7</td><td class="num">15.7%</td><td class="num">+14.1</td><td class="num">+17<span class="star">◆</span></td>
+                <td class="num"><span class="flat">—</span></td>
+              </tr>
+              <tr>
+                <td><div class="scell"><div class="spec sm evoker"><b><svg><use href="#g-evoker"/></svg></b></div><a href="#">Augmentation Evoker</a></div></td>
+                <td class="num score">91.8</td><td class="num">13.1%</td><td class="num">+13.9</td><td class="num">+17</td>
+                <td class="num"><span class="up">▲ 1</span></td>
+              </tr>
+              <tr>
+                <td class="tcell" rowspan="4"><div class="in tc-a"><span class="big">A</span><span class="lbl">TIER</span></div></td>
+                <td><div class="scell"><div class="spec sm pal"><b><svg><use href="#g-pal"/></svg></b></div><a href="#">Retribution Paladin</a></div></td>
+                <td class="num score">88.4</td><td class="num">6.3%</td><td class="num">+13.2</td><td class="num">+16</td>
+                <td class="num"><span class="up">▲ 1</span></td>
+              </tr>
+              <tr>
+                <td><div class="scell"><div class="spec sm rogue"><b><svg><use href="#g-rogue"/></svg></b></div><a href="#">Outlaw Rogue</a></div></td>
+                <td class="num score">86.9</td><td class="num">6.8%</td><td class="num">+13.0</td><td class="num">+15</td>
+                <td class="num"><span class="down">▼ 1</span></td>
+              </tr>
+              <tr>
+                <td><div class="scell"><div class="spec sm druid"><b><svg><use href="#g-druid"/></svg></b></div><a href="#">Balance Druid</a></div></td>
+                <td class="num score">86.1</td><td class="num">5.4%</td><td class="num">+12.8</td><td class="num">+15<span class="star">◆</span></td>
+                <td class="num"><span class="flat">—</span></td>
+              </tr>
+              <tr>
+                <td><div class="scell"><div class="spec sm priest"><b><svg><use href="#g-priest"/></svg></b></div><a href="#">Shadow Priest</a></div></td>
+                <td class="num score">85.7</td><td class="num">4.1%</td><td class="num">+12.6</td><td class="num">+15</td>
+                <td class="num"><span class="up">▲ 2</span></td>
+              </tr>
+              <tr>
+                <td class="tcell" rowspan="3"><div class="in tc-b"><span class="big">B</span><span class="lbl">TIER</span></div></td>
+                <td><div class="scell"><div class="spec sm hunter"><b><svg><use href="#g-hunter"/></svg></b></div><a href="#">Marksmanship Hunter</a></div></td>
+                <td class="num score">81.3</td><td class="num">3.9%</td><td class="num">+12.1</td><td class="num">+14<span class="star">◆</span></td>
+                <td class="num"><span class="down">▼ 1</span></td>
+              </tr>
+              <tr>
+                <td><div class="scell"><div class="spec sm shaman"><b><svg><use href="#g-shaman"/></svg></b></div><a href="#">Elemental Shaman</a></div></td>
+                <td class="num score">80.6</td><td class="num">3.6%</td><td class="num">+12.0</td><td class="num">+14<span class="star">◆</span></td>
+                <td class="num"><span class="flat">—</span></td>
+              </tr>
+              <tr>
+                <td><div class="scell"><div class="spec sm lock"><b><svg><use href="#g-lock"/></svg></b></div><a href="#">Affliction Warlock</a></div></td>
+                <td class="num score">79.8</td><td class="num">2.9%</td><td class="num">+11.7</td><td class="num">+14<span class="star">◆</span></td>
+                <td class="num"><span class="down">▼ 1</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="tfoot">Based on 42,841+ Mythic+ runs · Updated 2 hours ago</div>
+          <div class="faq-note"><b>How are scores calculated?</b> Timed-run performance (50%), consistency (30%) and popularity (20%), weighted over the selected period. <a href="#">Full methodology →</a></div>
+        </div>
+
+        <aside class="tp-detail">
+          <div class="dhero">
+            <div class="dhead">
+              <div class="dicon"><b><svg><use href="#g-dk"/></svg></b></div>
+              <div class="name">
+                <h2>Frost Death Knight</h2>
+                <div class="tier-line">S TIER · 94.2 SCORE</div>
+              </div>
+              <button class="fav" aria-label="Favorite"><svg class="i" style="width:16px;height:16px"><use href="#ic-star"/></svg></button>
+            </div>
+            <div class="dtabs">
+              <button class="on">Overview</button><button>Stats</button><button>Talents</button><button>Covenants</button><button>Trends</button>
+            </div>
+          </div>
+          <div class="dbody">
+            <div class="radar-wrap">
+              <svg width="330" height="248" viewBox="0 0 330 248" role="img" aria-label="Radar: Performance 9.6, Survivability 9.1, Utility 7.3, Representation 9.4, Consistency 9.4">
+                <defs>
+                  <linearGradient id="rfill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#6f9ceb" stop-opacity=".42"/>
+                    <stop offset="1" stop-color="#3a5fae" stop-opacity=".16"/>
+                  </linearGradient>
+                </defs>
+                <g stroke="#252c3d" fill="none">
+                  <polygon points="165,36 254.4,101 220.3,206 109.7,206 75.6,101"/>
+                  <polygon points="165,59.5 231.4,107.8 206,185.8 124,185.8 98.6,107.8" stroke-dasharray="3 3" opacity=".8"/>
+                  <polygon points="165,83 208.5,114.6 191.9,165.7 138.1,165.7 121.5,114.6" stroke-dasharray="3 3" opacity=".6"/>
+                  <polygon points="165,106.5 185.5,121.4 177.7,145.5 152.3,145.5 144.5,121.4" opacity=".45"/>
+                  <line x1="165" y1="130" x2="165" y2="36"/>
+                  <line x1="165" y1="130" x2="254.4" y2="101"/>
+                  <line x1="165" y1="130" x2="220.3" y2="206"/>
+                  <line x1="165" y1="130" x2="109.7" y2="206"/>
+                  <line x1="165" y1="130" x2="75.6" y2="101"/>
+                </g>
+                <polygon points="165,39.8 247.3,103.9 205.4,191.5 115.5,201.5 80.9,102.7"
+                  fill="url(#rfill)" stroke="#7ba6ee" stroke-width="1.6"/>
+                <g fill="#a8c6f5">
+                  <circle cx="165" cy="39.8" r="2.8"/><circle cx="247.3" cy="103.9" r="2.8"/>
+                  <circle cx="205.4" cy="191.5" r="2.8"/><circle cx="115.5" cy="201.5" r="2.8"/>
+                  <circle cx="80.9" cy="102.7" r="2.8"/>
+                </g>
+                <g font-family="Inter,sans-serif" font-size="9.5" letter-spacing=".07em" fill="#7a86a0">
+                  <text x="165" y="20" text-anchor="middle">PERFORMANCE</text>
+                  <text x="165" y="31" text-anchor="middle" fill="#e9ecf3" font-weight="700" font-size="11">9.6</text>
+                  <text x="252" y="92" text-anchor="start">SURVIVABILITY</text>
+                  <text x="252" y="103" text-anchor="start" fill="#e9ecf3" font-weight="700" font-size="11">9.1</text>
+                  <text x="224" y="223" text-anchor="middle">UTILITY</text>
+                  <text x="224" y="234" text-anchor="middle" fill="#e9ecf3" font-weight="700" font-size="11">7.3</text>
+                  <text x="105" y="223" text-anchor="middle">REPRESENTATION</text>
+                  <text x="105" y="234" text-anchor="middle" fill="#e9ecf3" font-weight="700" font-size="11">9.4</text>
+                  <text x="71" y="92" text-anchor="end">CONSISTENCY</text>
+                  <text x="71" y="103" text-anchor="end" fill="#e9ecf3" font-weight="700" font-size="11">9.4</text>
+                </g>
+              </svg>
+            </div>
+            <div class="dgrid">
+              <div class="dcard">
+                <h4>Score Breakdown</h4>
+                <div class="dline"><span>Performance</span><b>9.6 <span class="max">/ 10</span></b></div>
+                <div class="dline"><span>Survivability</span><b>9.1 <span class="max">/ 10</span></b></div>
+                <div class="dline"><span>Utility</span><b>7.3 <span class="max">/ 10</span></b></div>
+                <div class="dline"><span>Representation</span><b>9.4 <span class="max">/ 10</span></b></div>
+                <div class="dline"><span>Consistency</span><b>9.4 <span class="max">/ 10</span></b></div>
+              </div>
+              <div class="dcard">
+                <h4>Quick Stats</h4>
+                <div class="dline"><span>Popularity</span><b>16.4%</b></div>
+                <div class="dline"><span>Avg Key</span><b>+14.7</b></div>
+                <div class="dline"><span>Top 1%</span><b>+18</b></div>
+                <div class="dline"><span>Weekly Change</span><b class="pos">▲ 2</b></div>
+                <div class="dline"><span>Data Sample</span><b>42,841</b></div>
+              </div>
+            </div>
+            <div class="dactions">
+              <button class="btn btn-primary">VIEW FULL GUIDE</button>
+              <button class="btn btn-dim">VIEW BUILDS</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
