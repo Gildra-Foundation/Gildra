@@ -38,7 +38,7 @@
   --c-dk:#c41e3a; --c-mage:#3fc7eb; --c-evoker:#33937f; --c-pal:#f48cba;
   --c-rogue:#fff468; --c-druid:#ff7c0a; --c-priest:#dfe3e8; --c-hunter:#aad372;
   --c-shaman:#0070dd; --c-lock:#8788ee; --c-monk:#00ff98; --c-war:#c69b6d; --c-dh:#a330c9;
-  --r-lg:12px; --r-md:8px; --r-sm:5px;
+  --r-lg:3px; --r-md:2px; --r-sm:2px;
   --display:'Cinzel',serif;
   --ui:'Inter',system-ui,sans-serif;
   --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
@@ -83,7 +83,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   display:flex;align-items:center;gap:20px;height:54px;padding:0 22px;
   background:linear-gradient(180deg,#0e1118,#0c0e15);
   border-bottom:1px solid var(--line-soft);
-  box-shadow:0 1px 0 rgba(233,205,122,.05);
+  box-shadow:0 1px 0 rgba(233,205,122,.12),0 4px 14px rgba(0,0,0,.35);
   position:sticky;top:0;z-index:50;
 }
 .logo{display:flex;align-items:center;gap:10px;margin-right:8px}
@@ -127,10 +127,14 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 }
 
 /* ============ LAYOUT ============ */
-.app{display:grid;grid-template-columns:212px 1fr;min-height:100vh}
+.app{
+  display:grid;grid-template-columns:212px 1fr;min-height:100vh;
+  background:linear-gradient(90deg,#0d1017 211px,#1c212e 211px,#1c212e 212px,transparent 212px);
+}
 .sidebar{
   background:#0d1017;border-right:1px solid var(--line-soft);
   padding:22px 16px;display:flex;flex-direction:column;gap:26px;
+  position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;
 }
 .side-season h2{
   font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:.08em;
@@ -163,7 +167,8 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .premium h4 .i{color:var(--gold-2)}
 .premium p{font-size:11px;color:var(--ink-2);margin:7px 0 12px;line-height:1.55}
 .btn-gold{
-  width:100%;padding:9px 0;border-radius:var(--r-sm);
+  width:100%;padding:9px 0;
+  clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);
   font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.12em;
   color:#241b06;border:1px solid #6e5620;
   background:linear-gradient(180deg,#efd383,#c8a24b 52%,#98782f);
@@ -199,12 +204,20 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 }
 .hero h1 em{font-style:normal;color:var(--gold-2)}
 .hero .sub{
-  font-size:14.5px;color:#b9c2d4;margin:16px 0 30px;max-width:350px;line-height:1.65;
+  font-size:14.5px;color:#b9c2d4;margin:14px 0 30px;max-width:350px;line-height:1.65;
 }
+.flourish{display:flex;align-items:center;gap:9px;width:212px;margin-top:16px}
+.flourish i{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,162,75,.12),rgba(200,162,75,.6))}
+.flourish i:last-child{background:linear-gradient(90deg,rgba(200,162,75,.6),rgba(200,162,75,.12))}
+.flourish b{width:6px;height:6px;flex:none;background:var(--gold);transform:rotate(45deg)}
+.dia{color:var(--gold);font-size:8px;line-height:1}
+.sbar{display:block;height:2px;background:#20263a;margin-top:4px}
+.sbar i{display:block;height:100%;background:linear-gradient(90deg,#8a7136,#e9cd7a)}
 .hero-actions{display:flex;align-items:center;gap:14px}
 .btn{
   font-family:var(--display);
-  border-radius:var(--r-sm);padding:12px 22px;font-weight:700;font-size:11.5px;
+  padding:12px 22px;font-weight:700;font-size:11.5px;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
   letter-spacing:.11em;border:1px solid transparent;transition:filter .15s,border-color .15s,background .15s;
 }
 .btn-primary{
@@ -250,10 +263,16 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   margin-top:-46px;position:relative;z-index:3;
 }
 .panel{
-  display:flex;flex-direction:column;
+  display:flex;flex-direction:column;position:relative;
   background:linear-gradient(180deg,var(--panel-2),var(--panel) 40px);
-  border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;
-  box-shadow:0 12px 32px rgba(0,0,0,.35);
+  border:1px solid #2b3145;padding:18px;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),inset 0 -1px 0 rgba(0,0,0,.45);
+}
+.panel::after{ /* внутренняя гравированная рамка */
+  content:"";position:absolute;inset:4px;pointer-events:none;
+  border:1px solid rgba(200,162,75,.13);
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);
 }
 .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .panel-head .t{
@@ -353,7 +372,8 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .guides-row{display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
 .gcard{
   display:flex;flex-direction:column;
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+  background:var(--panel);border:1px solid #2b3145;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
   overflow:hidden;cursor:pointer;position:relative;
   transition:transform .16s,border-color .16s;
 }
@@ -378,7 +398,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   display:grid;grid-template-columns:200px minmax(0,1fr) 352px;
   margin:38px -34px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
   overflow:hidden;background:var(--panel);
-  box-shadow:0 16px 44px rgba(0,0,0,.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
 }
 .tp-side{
   background:#0d1017;border-right:1px solid var(--line-soft);
@@ -728,6 +748,7 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
         <div>
           <div class="hero-eyebrow"><span class="rule"></span><span class="cap gold">Season 1 · Patch 12.0.5</span></div>
           <h1>MASTER<br>THE <em>META</em></h1>
+          <div class="flourish"><i></i><b></b><i></i></div>
           <p class="sub">Live statistics, tier lists, and guides to help you dominate Azeroth.</p>
           <div class="hero-actions">
             <button class="btn btn-primary">MYTHIC+ TIER LIST</button>
@@ -855,6 +876,7 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
       <!-- GUIDES -->
       <div class="guides-head">
         <span class="t"><svg class="i" style="width:15px;height:15px"><use href="#ic-book"/></svg> LATEST GUIDES</span>
+        <span class="dia">◆</span>
         <span class="rule"></span>
         <a class="view" href="#">View All Guides →</a>
       </div>
@@ -984,7 +1006,7 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
 
         <div class="tp-center">
           <div class="crumbs"><a href="#">Tier Lists</a><span class="sep">›</span><a href="#">Mythic+</a><span class="sep">›</span><span style="color:var(--ink-2)">Overall</span></div>
-          <div class="tp-title"><h2>MYTHIC+ TIER LIST</h2><span class="rule"></span></div>
+          <div class="tp-title"><h2>MYTHIC+ TIER LIST</h2><span class="dia">◆</span><span class="rule"></span></div>
           <div class="tp-sub">Ranked by weighted score across timed runs, popularity and consistency</div>
           <div class="tp-toolbar">
             <div class="tabs">
@@ -1002,54 +1024,54 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
               <tr class="hl">
                 <td class="tcell" rowspan="3"><div class="in tc-s"><span class="big">S</span><span class="lbl">TIER</span></div></td>
                 <td><div class="scell"><div class="spec sm dk"><b><svg><use href="#g-dk"/></svg></b></div><a href="#">Frost Death Knight</a></div></td>
-                <td class="num score">94.2</td><td class="num">16.4%</td><td class="num">+14.7</td><td class="num">+18<span class="star">◆</span></td>
+                <td class="num score">94.2<span class="sbar"><i style="width:96.8%"></i></span></td><td class="num">16.4%</td><td class="num">+14.7</td><td class="num">+18<span class="star">◆</span></td>
                 <td class="num"><span class="up">▲ 2</span></td>
               </tr>
               <tr>
                 <td><div class="scell"><div class="spec sm mage"><b><svg><use href="#g-mage"/></svg></b></div><a href="#">Arcane Mage</a></div></td>
-                <td class="num score">92.7</td><td class="num">15.7%</td><td class="num">+14.1</td><td class="num">+17<span class="star">◆</span></td>
+                <td class="num score">92.7<span class="sbar"><i style="width:90.8%"></i></span></td><td class="num">15.7%</td><td class="num">+14.1</td><td class="num">+17<span class="star">◆</span></td>
                 <td class="num"><span class="flat">—</span></td>
               </tr>
               <tr>
                 <td><div class="scell"><div class="spec sm evoker"><b><svg><use href="#g-evoker"/></svg></b></div><a href="#">Augmentation Evoker</a></div></td>
-                <td class="num score">91.8</td><td class="num">13.1%</td><td class="num">+13.9</td><td class="num">+17</td>
+                <td class="num score">91.8<span class="sbar"><i style="width:87.2%"></i></span></td><td class="num">13.1%</td><td class="num">+13.9</td><td class="num">+17</td>
                 <td class="num"><span class="up">▲ 1</span></td>
               </tr>
               <tr>
                 <td class="tcell" rowspan="4"><div class="in tc-a"><span class="big">A</span><span class="lbl">TIER</span></div></td>
                 <td><div class="scell"><div class="spec sm pal"><b><svg><use href="#g-pal"/></svg></b></div><a href="#">Retribution Paladin</a></div></td>
-                <td class="num score">88.4</td><td class="num">6.3%</td><td class="num">+13.2</td><td class="num">+16</td>
+                <td class="num score">88.4<span class="sbar"><i style="width:73.6%"></i></span></td><td class="num">6.3%</td><td class="num">+13.2</td><td class="num">+16</td>
                 <td class="num"><span class="up">▲ 1</span></td>
               </tr>
               <tr>
                 <td><div class="scell"><div class="spec sm rogue"><b><svg><use href="#g-rogue"/></svg></b></div><a href="#">Outlaw Rogue</a></div></td>
-                <td class="num score">86.9</td><td class="num">6.8%</td><td class="num">+13.0</td><td class="num">+15</td>
+                <td class="num score">86.9<span class="sbar"><i style="width:67.6%"></i></span></td><td class="num">6.8%</td><td class="num">+13.0</td><td class="num">+15</td>
                 <td class="num"><span class="down">▼ 1</span></td>
               </tr>
               <tr>
                 <td><div class="scell"><div class="spec sm druid"><b><svg><use href="#g-druid"/></svg></b></div><a href="#">Balance Druid</a></div></td>
-                <td class="num score">86.1</td><td class="num">5.4%</td><td class="num">+12.8</td><td class="num">+15<span class="star">◆</span></td>
+                <td class="num score">86.1<span class="sbar"><i style="width:64.4%"></i></span></td><td class="num">5.4%</td><td class="num">+12.8</td><td class="num">+15<span class="star">◆</span></td>
                 <td class="num"><span class="flat">—</span></td>
               </tr>
               <tr>
                 <td><div class="scell"><div class="spec sm priest"><b><svg><use href="#g-priest"/></svg></b></div><a href="#">Shadow Priest</a></div></td>
-                <td class="num score">85.7</td><td class="num">4.1%</td><td class="num">+12.6</td><td class="num">+15</td>
+                <td class="num score">85.7<span class="sbar"><i style="width:62.8%"></i></span></td><td class="num">4.1%</td><td class="num">+12.6</td><td class="num">+15</td>
                 <td class="num"><span class="up">▲ 2</span></td>
               </tr>
               <tr>
                 <td class="tcell" rowspan="3"><div class="in tc-b"><span class="big">B</span><span class="lbl">TIER</span></div></td>
                 <td><div class="scell"><div class="spec sm hunter"><b><svg><use href="#g-hunter"/></svg></b></div><a href="#">Marksmanship Hunter</a></div></td>
-                <td class="num score">81.3</td><td class="num">3.9%</td><td class="num">+12.1</td><td class="num">+14<span class="star">◆</span></td>
+                <td class="num score">81.3<span class="sbar"><i style="width:45.2%"></i></span></td><td class="num">3.9%</td><td class="num">+12.1</td><td class="num">+14<span class="star">◆</span></td>
                 <td class="num"><span class="down">▼ 1</span></td>
               </tr>
               <tr>
                 <td><div class="scell"><div class="spec sm shaman"><b><svg><use href="#g-shaman"/></svg></b></div><a href="#">Elemental Shaman</a></div></td>
-                <td class="num score">80.6</td><td class="num">3.6%</td><td class="num">+12.0</td><td class="num">+14<span class="star">◆</span></td>
+                <td class="num score">80.6<span class="sbar"><i style="width:42.4%"></i></span></td><td class="num">3.6%</td><td class="num">+12.0</td><td class="num">+14<span class="star">◆</span></td>
                 <td class="num"><span class="flat">—</span></td>
               </tr>
               <tr>
                 <td><div class="scell"><div class="spec sm lock"><b><svg><use href="#g-lock"/></svg></b></div><a href="#">Affliction Warlock</a></div></td>
-                <td class="num score">79.8</td><td class="num">2.9%</td><td class="num">+11.7</td><td class="num">+14<span class="star">◆</span></td>
+                <td class="num score">79.8<span class="sbar"><i style="width:39.2%"></i></span></td><td class="num">2.9%</td><td class="num">+11.7</td><td class="num">+14<span class="star">◆</span></td>
                 <td class="num"><span class="down">▼ 1</span></td>
               </tr>
             </tbody>
