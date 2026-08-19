@@ -222,7 +222,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 
 /* ============ HERO ============ */
 .main{padding-bottom:44px;min-width:0}
-.hero{position:relative;overflow:hidden;min-height:320px}
+.hero{position:relative;overflow:hidden;min-height:470px}
 .hero-art{position:absolute;inset:0}
 .hero-art svg{width:100%;height:100%;display:block}
 .hero-art::after{ /* зерно только на hero — без blend-режимов */
@@ -232,8 +232,8 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .hero::after{ /* виньетка + шов к контенту */
   content:"";position:absolute;inset:0;pointer-events:none;
   background:
-    linear-gradient(180deg,rgba(11,13,19,.35),transparent 30%,transparent 62%,var(--bg) 97%),
-    radial-gradient(120% 90% at 50% 30%,transparent 55%,rgba(11,13,19,.55));
+    linear-gradient(180deg,rgba(11,13,19,.35),transparent 28%,transparent 74%,var(--bg) 100%),
+    radial-gradient(120% 90% at 50% 30%,transparent 58%,rgba(11,13,19,.5));
 }
 .hero-inner{
   position:relative;z-index:2;display:grid;grid-template-columns:1fr 296px;gap:34px;
@@ -304,7 +304,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .section{max-width:1210px;padding:0 34px;margin:0 auto}
 .cards-row{
   display:grid;grid-template-columns:1fr 1fr .94fr;gap:18px;
-  margin-top:-46px;position:relative;z-index:3;
+  margin-top:-150px;position:relative;z-index:3;
 }
 .panel{
   display:flex;flex-direction:column;position:relative;
@@ -436,6 +436,50 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .gcat{font-size:9px;font-weight:600;letter-spacing:.15em;color:var(--gold);margin-bottom:6px;text-transform:uppercase}
 .gtitle{font-size:12.5px;font-weight:600;line-height:1.4;margin-bottom:8px;color:var(--ink)}
 .gmeta{font-size:10.5px;color:var(--ink-3);margin-top:auto;padding-top:8px}
+
+/* ===== редакционный блок статей: избранная + список ===== */
+.news{display:grid;grid-template-columns:1.05fr 1fr;gap:18px;align-items:stretch}
+.nfeat{
+  position:relative;min-height:280px;overflow:hidden;cursor:pointer;
+  background:#101321;border:1px solid #2b3145;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+}
+.nfeat .art{position:absolute;inset:0;width:100%;height:100%;transition:transform .5s ease}
+.nfeat:hover .art{transform:scale(1.04)}
+.nfeat::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 35%,rgba(13,15,24,.94) 82%);
+}
+.nfeat-body{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:20px}
+.ncat{
+  display:inline-flex;align-items:center;padding:4px 9px;
+  background:rgba(143,127,242,.14);border:1px solid rgba(143,127,242,.42);
+  color:var(--gold-2);font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;
+  clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+}
+.nfeat-body .t{
+  font-family:var(--display);font-weight:600;font-size:19px;line-height:1.3;
+  color:#eef0f8;margin:11px 0 7px;
+}
+.nfeat-body .nmeta{color:var(--ink-2)}
+.nmeta{font-size:10.5px;color:var(--ink-3)}
+.nlist{display:flex;flex-direction:column}
+.nrow{
+  flex:1;display:flex;gap:14px;align-items:center;padding:11px 4px;cursor:pointer;
+  border-bottom:1px solid var(--line-soft);
+}
+.nrow:last-child{border-bottom:none}
+.nrow .t{font-size:13px;font-weight:600;color:var(--ink);line-height:1.35;transition:color .13s}
+.nrow:hover .t{color:var(--gold-2)}
+.nrow .cap{margin-bottom:3px}
+.nrow .nmeta{margin-top:3px}
+.nthumb{
+  width:60px;height:60px;flex:none;position:relative;overflow:hidden;
+  border:1px solid #2b3145;
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);
+}
+.nthumb svg{position:absolute;inset:0;width:100%;height:100%}
+@media (max-width:1120px){.news{grid-template-columns:1fr}}
 
 /* ============ TIER PAGE ============ */
 .tierpage{
@@ -1015,99 +1059,64 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
         <span class="rule"></span>
         <a class="view" href="#">View All Guides →</a>
       </div>
-      <div class="guides-row">
-        <article class="gcard">
-          <div class="gart">
-            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
-              <rect width="220" height="92" fill="#101a2e"/>
-              <circle cx="110" cy="30" r="70" fill="#1d3a66" opacity=".5"/>
-              <circle cx="110" cy="24" r="34" fill="#3fc7eb" opacity=".14"/>
-              <g stroke="#7db6e8" stroke-width="1.4" fill="none" opacity=".8">
-                <path d="M110 8 v36 M96 16 l28 20 M124 16 l-28 20 M92 28 h36"/>
-                <circle cx="110" cy="26" r="4" fill="#bfe4ff" stroke="none"/>
-              </g>
-            </svg>
-          </div>
-          <div class="gbody">
-            <div class="gcat">Frost Death Knight</div>
-            <div class="gtitle">Frost DK Mythic+ Guide</div>
-            <div class="gmeta">By Alexandér · 3h ago</div>
-          </div>
-        </article>
-        <article class="gcard">
-          <div class="gart">
-            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
-              <rect width="220" height="92" fill="#1c1208"/>
-              <circle cx="110" cy="34" r="64" fill="#4a2a10" opacity=".55"/>
-              <g stroke="#e0a050" stroke-width="1.4" fill="none" opacity=".85" transform="translate(22 6) scale(1.15)">
-                <path d="M82 66 V38 a28 28 0 0 1 56 0 V66"/>
-                <path d="M94 66 V42 a16 16 0 0 1 32 0 V66"/>
-                <path d="M104 66 V48 a6 6 0 0 1 12 0 V66"/>
-              </g>
-              <circle cx="110" cy="22" r="3" fill="#ffcf8a"/>
-            </svg>
-          </div>
-          <div class="gbody">
-            <div class="gcat">Raid Guide</div>
-            <div class="gtitle">Manaforge Omega Complete Boss Guide</div>
-            <div class="gmeta">By Velyne · 5h ago</div>
+      <div class="news">
+        <article class="nfeat">
+          <svg class="art" viewBox="0 0 560 280" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <rect width="560" height="280" fill="#170f07"/>
+            <circle cx="300" cy="120" r="200" fill="#4a2a10" opacity=".42"/>
+            <circle cx="300" cy="105" r="95" fill="#e0a050" opacity=".08"/>
+            <g fill="#ffd9a0" opacity=".5">
+              <circle cx="120" cy="60" r="1.4"/><circle cx="450" cy="90" r="1.2"/>
+              <circle cx="500" cy="40" r="1.5"/><circle cx="80" cy="150" r="1.2"/>
+              <circle cx="410" cy="180" r="1.1"/>
+            </g>
+            <g stroke="#e0a050" stroke-width="2" fill="none" opacity=".85">
+              <path d="M210 236 V130 a90 90 0 0 1 180 0 V236"/>
+              <path d="M246 236 V142 a54 54 0 0 1 108 0 V236"/>
+              <path d="M279 236 V160 a21 21 0 0 1 42 0 V236"/>
+            </g>
+            <circle cx="300" cy="58" r="5.5" fill="#ffcf8a"/>
+          </svg>
+          <div class="nfeat-body">
+            <span class="ncat">Raid Guide</span>
+            <div class="t">Manaforge Omega — Complete Boss Guide</div>
+            <div class="nmeta">By Velyne · 5h ago · 14 min read</div>
           </div>
         </article>
-        <article class="gcard">
-          <div class="gart">
-            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
-              <rect width="220" height="92" fill="#171204"/>
-              <circle cx="110" cy="36" r="60" fill="#4a3c12" opacity=".5"/>
-              <g stroke="#e6c667" stroke-width="1.4" fill="none" opacity=".85">
-                <path d="M110 10 l10 18 -10 34 -10 -34 z"/>
-                <path d="M88 46 l22 -8 22 8"/>
-                <circle cx="110" cy="64" r="7"/>
-              </g>
-            </svg>
+        <div class="nlist">
+          <div class="nrow">
+            <div class="nthumb"><svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice"><rect width="220" height="92" fill="#101a2e"/><circle cx="110" cy="46" r="60" fill="#1d3a66" opacity=".5"/><g stroke="#7db6e8" stroke-width="2.2" fill="none" opacity=".85"><path d="M110 18 v56 M88 30 l44 32 M132 30 l-44 32 M84 46 h52"/></g></svg></div>
+            <div>
+              <div class="cap gold">Frost Death Knight</div>
+              <div class="t">Frost DK Mythic+ Guide — Season 1</div>
+              <div class="nmeta">By Alexandér · 3h ago</div>
+            </div>
           </div>
-          <div class="gbody">
-            <div class="gcat">Mythic+ Guide</div>
-            <div class="gtitle">Best Talents for +12–16</div>
-            <div class="gmeta">By Shyra · 8h ago</div>
+          <div class="nrow">
+            <div class="nthumb"><svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice"><rect width="220" height="92" fill="#171204"/><circle cx="110" cy="46" r="56" fill="#4a3c12" opacity=".55"/><g stroke="#e6c667" stroke-width="2" fill="none" opacity=".85"><path d="M110 12 l13 22 -13 44 -13 -44 z"/><path d="M82 58 l28 -10 28 10"/></g></svg></div>
+            <div>
+              <div class="cap gold">Mythic+ Guide</div>
+              <div class="t">Best Talents for +12–16 Keys</div>
+              <div class="nmeta">By Shyra · 8h ago</div>
+            </div>
           </div>
-        </article>
-        <article class="gcard">
-          <div class="gart">
-            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
-              <rect width="220" height="92" fill="#160b22"/>
-              <circle cx="110" cy="32" r="66" fill="#3a1a5e" opacity=".5"/>
-              <g stroke="#c085ec" stroke-width="1.3" fill="none" opacity=".85" transform="translate(-40 -6) scale(1.22)">
-                <circle cx="110" cy="34" r="22"/>
-                <circle cx="110" cy="34" r="14"/>
-                <path d="M110 12 v8 M110 48 v8 M88 34 h8 M124 34 h8"/>
-                <path d="M95 19 l5.5 5.5 M125 49 l-5.5 -5.5 M95 49 l5.5 -5.5 M125 19 l-5.5 5.5"/>
-              </g>
-              <circle cx="110" cy="34" r="4" fill="#e0c1f8"/>
-            </svg>
+          <div class="nrow">
+            <div class="nthumb"><svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice"><rect width="220" height="92" fill="#160b22"/><circle cx="110" cy="46" r="58" fill="#3a1a5e" opacity=".55"/><g stroke="#c085ec" stroke-width="2" fill="none" opacity=".85"><circle cx="110" cy="46" r="26"/><circle cx="110" cy="46" r="16"/><path d="M110 12 v10 M110 70 v10 M84 46 h-10 M146 46 h-10"/></g><circle cx="110" cy="46" r="5" fill="#e0c1f8"/></svg></div>
+            <div>
+              <div class="cap gold">Class Guide</div>
+              <div class="t">Arcane Mage Guide — Patch 12.0.5</div>
+              <div class="nmeta">By Neri · 10h ago</div>
+            </div>
           </div>
-          <div class="gbody">
-            <div class="gcat">Class Guide</div>
-            <div class="gtitle">Arcane Mage Guide Patch 12.0.5</div>
-            <div class="gmeta">By Neri · 10h ago</div>
+          <div class="nrow">
+            <div class="nthumb"><svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice"><rect width="220" height="92" fill="#0d1b12"/><circle cx="110" cy="46" r="56" fill="#1d4527" opacity=".55"/><g stroke="#8fd49c" stroke-width="2" fill="none" opacity=".85"><path d="M88 70 c0 -12 5 -17 10 -22 -7 -10 -5 -22 2 -29 0 10 4 13 10 16 6 -3 10 -6 10 -16 7 7 9 19 2 29 5 5 10 10 10 22"/><path d="M82 70 h56"/></g></svg></div>
+            <div>
+              <div class="cap gold">Gear Guide</div>
+              <div class="t">Best Items for Healers — Season 1</div>
+              <div class="nmeta">By Lyra · 12h ago</div>
+            </div>
           </div>
-        </article>
-        <article class="gcard">
-          <div class="gart">
-            <svg viewBox="0 0 220 92" preserveAspectRatio="xMidYMid slice">
-              <rect width="220" height="92" fill="#0d1b12"/>
-              <circle cx="110" cy="34" r="62" fill="#1d4527" opacity=".5"/>
-              <g stroke="#8fd49c" stroke-width="1.4" fill="none" opacity=".85" transform="translate(30 8) scale(1.08)">
-                <path d="M92 64 c0 -10 4 -14 8 -18 -6 -8 -4 -18 2 -24 0 8 3 11 8 13 5 -2 8 -5 8 -13 6 6 8 16 2 24 4 4 8 8 8 18"/>
-                <path d="M86 64 h48"/>
-              </g>
-            </svg>
-          </div>
-          <div class="gbody">
-            <div class="gcat">Gear Guide</div>
-            <div class="gtitle">Best Items for Healers Season 1</div>
-            <div class="gmeta">By Lyra · 12h ago</div>
-          </div>
-        </article>
+        </div>
       </div>
 
       <!-- ============ TIER PAGE ============ -->
