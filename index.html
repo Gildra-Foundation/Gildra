@@ -47,11 +47,25 @@
 html{background:var(--bg)}
 body{
   font-family:var(--ui);
-  background:
-    radial-gradient(90% 40% at 50% 0%, #10141f 0%, var(--bg) 70%);
+  background-color:var(--bg);
+  /* арт на заднем фоне: закреплён и затемнён */
+  background-image:
+    linear-gradient(rgba(8,10,16,.68), rgba(8,10,16,.88)),
+    url('bg.jpg');
+  background-size:cover;
+  background-position:center top;
+  background-repeat:no-repeat;
+  background-attachment:fixed;
   color:var(--ink);
   font-size:13px;line-height:1.5;
   -webkit-font-smoothing:antialiased;
+}
+/* центрированный «шелл» — макет по центру, по бокам виден арт */
+.shell{
+  max-width:1320px;margin:0 auto;min-height:100vh;position:relative;
+  background:var(--bg);
+  border-left:1px solid #232837;border-right:1px solid #232837;
+  box-shadow:0 0 90px rgba(0,0,0,.7);
 }
 a{color:var(--blue-2);text-decoration:none}
 a:hover{color:#a8c6f5}
@@ -635,6 +649,7 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
 </svg>
 
 <!-- ============ NAV ============ -->
+<div class="shell">
 <header class="topnav">
   <div class="logo"><div class="logo-mark">G</div><span class="logo-text">GILDRA</span></div>
   <nav class="nav-links">
@@ -1162,6 +1177,7 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
       </div>
     </div>
   </main>
+</div>
 </div>
 </body>
 </html>
