@@ -85,6 +85,43 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 }
 .ornhead::after{background:linear-gradient(90deg,rgba(143,127,242,.4),transparent)}
 
+/* ============ GAME SWITCHER ============ */
+.gamebar{
+  display:flex;align-items:center;height:38px;padding:0 22px;
+  background:#080a10;border-bottom:1px solid #141824;
+  overflow-x:auto;scrollbar-width:none;
+}
+.gamebar::-webkit-scrollbar{display:none}
+.gamebar a{
+  position:relative;display:flex;align-items:center;gap:7px;height:100%;
+  padding:0 13px;white-space:nowrap;
+  font-size:10px;font-weight:600;letter-spacing:.11em;color:var(--ink-3);
+}
+.gamebar a:hover{color:var(--ink-2)}
+.gamebar a .i{width:13px;height:13px;color:var(--ink-3)}
+.gamebar a:hover .i{color:inherit}
+.gamebar a.on{color:#e9ecf7}
+.gamebar a.on .i{color:var(--gold-2)}
+.gamebar a.on::after{
+  content:"";position:absolute;left:13px;right:13px;bottom:-1px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.gb-spacer{flex:1}
+.gb-more{color:var(--ink-3)}
+
+/* ============ HERO TICKER ============ */
+.ticker{
+  position:absolute;top:0;left:0;right:0;z-index:3;
+  display:flex;align-items:center;gap:13px;flex-wrap:wrap;
+  padding:9px 34px;
+  background:rgba(10,12,18,.66);backdrop-filter:blur(4px);
+  border-bottom:1px solid rgba(143,127,242,.16);
+  font-size:10px;font-weight:600;letter-spacing:.13em;color:var(--ink-2);
+  text-transform:uppercase;
+}
+.ticker .tsep{color:var(--gold);font-size:7px}
+.ticker b{color:#e9ecf7;font-weight:700}
+
 /* ============ TOP NAV ============ */
 .topnav{
   display:flex;align-items:center;gap:20px;height:54px;padding:0 22px;
@@ -185,7 +222,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 
 /* ============ HERO ============ */
 .main{padding-bottom:44px;min-width:0}
-.hero{position:relative;overflow:hidden;min-height:360px}
+.hero{position:relative;overflow:hidden;min-height:320px}
 .hero-art{position:absolute;inset:0}
 .hero-art svg{width:100%;height:100%;display:block}
 .hero-art::after{ /* зерно только на hero — без blend-режимов */
@@ -200,18 +237,18 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 }
 .hero-inner{
   position:relative;z-index:2;display:grid;grid-template-columns:1fr 296px;gap:34px;
-  padding:50px 34px 44px;max-width:1210px;margin:0 auto;
+  padding:70px 34px 60px;max-width:1210px;margin:0 auto;
 }
 .hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .hero-eyebrow .rule{width:34px;height:1px;background:var(--gold)}
 .hero h1{
-  font-family:var(--display);font-weight:700;font-size:40px;line-height:1.12;
-  letter-spacing:.02em;color:#eef0f8;
-  text-shadow:0 1px 0 rgba(0,0,0,.6),0 0 46px rgba(120,150,255,.25);
+  font-family:var(--display);font-weight:700;font-size:27px;line-height:1.2;
+  letter-spacing:.05em;color:#eef0f8;
+  text-shadow:0 1px 0 rgba(0,0,0,.6);
 }
 .hero h1 em{font-style:normal;color:var(--gold-2)}
 .hero .sub{
-  font-size:14.5px;color:#b9c2d4;margin:14px 0 30px;max-width:350px;line-height:1.65;
+  font-size:13.5px;color:#b9c2d4;margin:12px 0 24px;max-width:420px;line-height:1.6;
 }
 .flourish{display:flex;align-items:center;gap:9px;width:212px;margin-top:16px}
 .flourish i{flex:1;height:1px;background:linear-gradient(90deg,rgba(143,127,242,.12),rgba(143,127,242,.6))}
@@ -714,7 +751,22 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
   <symbol id="g-monk" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.2"/><circle cx="8" cy="8" r="1.4"/></symbol>
   <symbol id="g-war" viewBox="0 0 16 16"><path d="M6 3c3 0 5 2 5 5H8C8 5.5 7 4.2 6 3z"/><path d="M8 6v8"/><path d="M6.2 12h3.6"/></symbol>
   <symbol id="g-dh" viewBox="0 0 16 16"><path d="M3 9.5a5.5 5.5 0 0 1 10 0"/><path d="M2 9.5a7 7 0 0 1 12 0"/></symbol>
+  <!-- глифы игр -->
+  <symbol id="gm-wow" viewBox="0 0 16 16"><path d="M3 3l10 10"/><path d="M13 3 3 13"/><path d="M2 6V2h4"/><path d="M14 10v4h-4"/></symbol>
+  <symbol id="gm-d4" viewBox="0 0 16 16"><path d="M8 2c2 3 4 4.3 4 7a4 4 0 0 1-8 0c0-2.7 2-4 4-7z"/></symbol>
+  <symbol id="gm-hs" viewBox="0 0 16 16"><rect x="4.2" y="2.5" width="7.6" height="11" rx="2"/><circle cx="8" cy="8" r="1.6"/></symbol>
+  <symbol id="gm-ow" viewBox="0 0 16 16"><path d="M12.6 5.2a5.5 5.5 0 0 0-9.2 0"/><path d="M3.4 10.8a5.5 5.5 0 0 0 9.2 0"/></symbol>
 </svg>
+
+<!-- ============ GAME SWITCHER ============ -->
+<nav class="gamebar" aria-label="Games">
+  <a class="on" href="#"><svg class="i"><use href="#gm-wow"/></svg> WORLD OF WARCRAFT</a>
+  <a href="#"><svg class="i" style="color:#d95c55"><use href="#gm-d4"/></svg> DIABLO IV</a>
+  <a href="#"><svg class="i" style="color:#dfc06a"><use href="#gm-hs"/></svg> HEARTHSTONE</a>
+  <a href="#"><svg class="i" style="color:#e8975a"><use href="#gm-ow"/></svg> OVERWATCH 2</a>
+  <span class="gb-spacer"></span>
+  <a href="#" class="gb-more">MORE GAMES <span class="caret">▾</span></a>
+</nav>
 
 <!-- ============ NAV ============ -->
 <header class="topnav">
@@ -826,11 +878,18 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
           <path d="M0,330 L130,282 L250,318 L390,262 L520,308 L600,286 L700,252 L830,306 L960,268 L1080,312 L1200,284" stroke="#8272e8" stroke-opacity=".22" stroke-width="1" fill="none"/>
         </svg>
       </div>
+      <div class="ticker">
+        <span class="pulse"></span> Live
+        <span class="tsep">◆</span> <b>42,841</b> runs analyzed
+        <span class="tsep">◆</span> <b>39</b> specs tracked
+        <span class="tsep">◆</span> <b>4</b> regions
+        <span class="tsep">◆</span> data updated 2h ago
+      </div>
       <div class="hero-inner">
         <div>
-          <div class="hero-eyebrow"><span class="rule"></span><span class="cap gold">Season 1 · Patch 12.0.5</span></div>
-          <h1>MASTER THE <em>META</em></h1>
-          <p class="sub">Live statistics, tier lists, and guides to help you dominate Azeroth.</p>
+          <div class="hero-eyebrow"><span class="rule"></span><span class="cap gold">The War Within · Patch 12.0.5</span></div>
+          <h1>SEASON 1 <em>META OVERVIEW</em></h1>
+          <p class="sub">Live tier lists, statistics and guides for Mythic+ and Manaforge Omega.</p>
           <div class="hero-actions">
             <button class="btn btn-primary">MYTHIC+ TIER LIST</button>
             <button class="btn btn-ghost">RAID TIER LIST</button>
@@ -846,11 +905,6 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
             <li>PvP balance adjustments</li>
           </ul>
           <a class="more" href="#">View full patch notes →</a>
-        </div>
-        <div class="hero-stats">
-          <div class="hstat"><b>42,841</b><span>Runs analyzed</span></div>
-          <div class="hstat"><b>39</b><span>Specs tracked</span></div>
-          <div class="hstat"><b>4</b><span>Regions</span></div>
         </div>
         </div>
       </div>
