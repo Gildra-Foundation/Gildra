@@ -522,6 +522,81 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
 }
 .faq-note b{color:var(--ink);font-weight:600;margin-right:6px}
 
+/* ===== фильтры: поиск + чипсы классов ===== */
+.filterbar{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin:14px 0 2px}
+.fsearch{
+  display:flex;align-items:center;gap:7px;height:32px;padding:0 11px;flex:none;
+  background:#10131c;border:1px solid var(--line);color:var(--ink-3);
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
+}
+.fsearch:focus-within{border-color:var(--gold-dim)}
+.fsearch input{
+  background:none;border:none;outline:none;color:var(--ink);
+  font-family:inherit;font-size:12px;width:128px;
+}
+.fsearch input::placeholder{color:var(--ink-3)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
+.chip{
+  display:flex;align-items:center;gap:7px;height:32px;padding:0 12px;
+  background:#10131c;border:1px solid var(--line);color:var(--ink-2);
+  font-size:11.5px;font-weight:600;
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
+  transition:border-color .13s,color .13s;
+}
+.chip:hover{border-color:var(--gold-dim);color:var(--gold-2)}
+.chip.on{
+  background:linear-gradient(180deg,rgba(200,162,75,.2),rgba(200,162,75,.08));
+  border-color:var(--gold-dim);color:var(--gold-2);
+}
+.coct{
+  --oct:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+  width:18px;height:18px;flex:none;clip-path:var(--oct);
+  display:grid;place-items:center;color:#0d1017;
+}
+.coct svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.coct.dk{background:linear-gradient(150deg,#ef7188,var(--c-dk))}
+.coct.mage{background:linear-gradient(150deg,#b6ecf9,var(--c-mage))}
+.coct.evoker{background:linear-gradient(150deg,#8fdcc8,var(--c-evoker))}
+.coct.pal{background:linear-gradient(150deg,#fccde2,var(--c-pal))}
+.coct.rogue{background:linear-gradient(150deg,#fffcd0,var(--c-rogue))}
+.coct.druid{background:linear-gradient(150deg,#ffb473,var(--c-druid))}
+.coct.priest{background:linear-gradient(150deg,#ffffff,#b4bcc8)}
+.coct.hunter{background:linear-gradient(150deg,#ddf0bc,var(--c-hunter))}
+.coct.shaman{background:linear-gradient(150deg,#74b3f2,var(--c-shaman));color:#eef4fd}
+.coct.lock{background:linear-gradient(150deg,#cccdfa,var(--c-lock))}
+.tt tbody tr{transition:opacity .25s}
+.tt tbody tr.dim{opacity:.14}
+.tt tbody tr.dim td{background:none}
+
+/* ===== featured builds ===== */
+.bhead{display:flex;align-items:center;gap:12px;margin:26px 0 0}
+.bhead .t{
+  font-family:var(--display);font-size:12.5px;font-weight:700;letter-spacing:.13em;color:#efe6cd;
+  white-space:nowrap;
+}
+.bhead .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,162,75,.35),transparent)}
+.bhead .view{font-size:11px;font-weight:600;white-space:nowrap}
+.builds{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.bcard{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;min-width:0;
+  background:var(--panel-2);border:1px solid #2b3145;cursor:pointer;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
+  transition:border-color .14s,transform .14s,opacity .25s;
+}
+.bcard:hover{border-color:var(--gold-dim);transform:translateY(-2px)}
+.bcard.dim{opacity:.14}
+.binfo{flex:1;min-width:0}
+.bname{font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bauthor{font-size:10.5px;color:var(--ink-3);margin-top:3px}
+.bpill{
+  flex:none;width:24px;height:24px;display:grid;place-items:center;
+  font-family:var(--display);font-weight:800;font-size:11px;
+  clip-path:polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
+}
+.bpill.s{background:linear-gradient(165deg,#5a2023,var(--ts-bg));color:var(--ts-tx)}
+.bpill.a{background:linear-gradient(165deg,#514016,var(--ta-bg));color:var(--ta-tx)}
+@media (max-width:1120px){.builds{grid-template-columns:1fr}}
+
 /* правая панель */
 .tp-detail{
   border-left:1px solid var(--line);
@@ -1014,13 +1089,30 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
         <div class="tp-center">
           <div class="crumbs"><a href="#">Tier Lists</a><span class="sep">›</span><a href="#">Mythic+</a><span class="sep">›</span><span style="color:var(--ink-2)">Overall</span></div>
           <div class="tp-title"><h2>MYTHIC+ TIER LIST</h2><span class="dia">◆</span><span class="rule"></span></div>
-          <div class="tp-sub">Ranked by weighted score across timed runs, popularity and consistency</div>
+          <div class="tp-sub">Ranked by weighted score across timed runs, popularity and consistency. For raw dungeon speed, see <a href="#">Push Rankings →</a></div>
           <div class="tp-toolbar">
             <div class="tabs">
               <button class="on">Overall</button><button>DPS</button><button>Healers</button><button>Tanks</button>
             </div>
             <button class="tool">Last 7 Days <svg class="i" style="width:11px;height:11px"><use href="#ic-chev"/></svg></button>
             <button class="tool"><svg class="i" style="width:12px;height:12px"><use href="#ic-share"/></svg> Share</button>
+          </div>
+
+          <div class="filterbar">
+            <label class="fsearch"><svg class="i" style="width:13px;height:13px"><use href="#ic-search"/></svg><input type="text" id="specSearch" placeholder="Search spec..." aria-label="Search spec"></label>
+            <div class="chips" id="classChips">
+              <button class="chip on" data-cls="all">All Classes</button>
+              <button class="chip" data-cls="dk"><span class="coct dk"><svg><use href="#g-dk"/></svg></span>Death Knight</button>
+              <button class="chip" data-cls="mage"><span class="coct mage"><svg><use href="#g-mage"/></svg></span>Mage</button>
+              <button class="chip" data-cls="evoker"><span class="coct evoker"><svg><use href="#g-evoker"/></svg></span>Evoker</button>
+              <button class="chip" data-cls="pal"><span class="coct pal"><svg><use href="#g-pal"/></svg></span>Paladin</button>
+              <button class="chip" data-cls="rogue"><span class="coct rogue"><svg><use href="#g-rogue"/></svg></span>Rogue</button>
+              <button class="chip" data-cls="druid"><span class="coct druid"><svg><use href="#g-druid"/></svg></span>Druid</button>
+              <button class="chip" data-cls="priest"><span class="coct priest"><svg><use href="#g-priest"/></svg></span>Priest</button>
+              <button class="chip" data-cls="hunter"><span class="coct hunter"><svg><use href="#g-hunter"/></svg></span>Hunter</button>
+              <button class="chip" data-cls="shaman"><span class="coct shaman"><svg><use href="#g-shaman"/></svg></span>Shaman</button>
+              <button class="chip" data-cls="lock"><span class="coct lock"><svg><use href="#g-lock"/></svg></span>Warlock</button>
+            </div>
           </div>
 
           <table class="tt">
@@ -1085,6 +1177,45 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
           </table>
           <div class="tfoot">Based on 42,841+ Mythic+ runs · Updated 2 hours ago</div>
           <div class="faq-note"><b>How are scores calculated?</b> Timed-run performance (50%), consistency (30%) and popularity (20%), weighted over the selected period. <a href="#">Full methodology →</a></div>
+
+          <div class="bhead">
+            <span class="t">FEATURED BUILDS</span>
+            <span class="dia">◆</span>
+            <span class="rule"></span>
+            <a class="view" href="#">All Builds →</a>
+          </div>
+          <div class="builds" id="buildGrid">
+            <div class="bcard" data-cls="dk">
+              <div class="spec dk"><b><svg><use href="#g-dk"/></svg></b></div>
+              <div class="binfo"><div class="bname">Breath of Sindragosa — Frost DK</div><div class="bauthor">By Alexandér · updated 3h ago</div></div>
+              <span class="bpill s">S</span>
+            </div>
+            <div class="bcard" data-cls="mage">
+              <div class="spec mage"><b><svg><use href="#g-mage"/></svg></b></div>
+              <div class="binfo"><div class="bname">Sunfury Arcane Burst</div><div class="bauthor">By Neri · updated 6h ago</div></div>
+              <span class="bpill s">S</span>
+            </div>
+            <div class="bcard" data-cls="evoker">
+              <div class="spec evoker"><b><svg><use href="#g-evoker"/></svg></b></div>
+              <div class="binfo"><div class="bname">Chrono Flight — Augmentation</div><div class="bauthor">By Velyne · updated 9h ago</div></div>
+              <span class="bpill s">S</span>
+            </div>
+            <div class="bcard" data-cls="pal">
+              <div class="spec pal"><b><svg><use href="#g-pal"/></svg></b></div>
+              <div class="binfo"><div class="bname">Templar's Verdict Cleave</div><div class="bauthor">By Shyra · updated 12h ago</div></div>
+              <span class="bpill a">A</span>
+            </div>
+            <div class="bcard" data-cls="druid">
+              <div class="spec druid"><b><svg><use href="#g-druid"/></svg></b></div>
+              <div class="binfo"><div class="bname">Elune's Chosen — Starfall</div><div class="bauthor">By Lyra · updated 1d ago</div></div>
+              <span class="bpill a">A</span>
+            </div>
+            <div class="bcard" data-cls="priest">
+              <div class="spec priest"><b><svg><use href="#g-priest"/></svg></b></div>
+              <div class="binfo"><div class="bname">Voidweaver Shadow</div><div class="bauthor">By Kael · updated 1d ago</div></div>
+              <span class="bpill a">A</span>
+            </div>
+          </div>
         </div>
 
         <aside class="tp-detail">
@@ -1170,5 +1301,44 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
     </div>
   </main>
 </div>
+<script>
+(function(){
+  var q = document.getElementById('specSearch');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('#classChips .chip'));
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.tt tbody tr'));
+  var cards = Array.prototype.slice.call(document.querySelectorAll('#buildGrid .bcard'));
+  var cls = 'all';
+  var CLASSES = ['dk','mage','evoker','pal','rogue','druid','priest','hunter','shaman','lock','monk','war','dh'];
+  function rowClass(r){
+    var s = r.querySelector('.spec');
+    if (!s) return null;
+    for (var i = 0; i < CLASSES.length; i++) if (s.classList.contains(CLASSES[i])) return CLASSES[i];
+    return null;
+  }
+  function apply(){
+    var s = (q.value || '').trim().toLowerCase();
+    rows.forEach(function(r){
+      var a = r.querySelector('.scell a');
+      var name = a ? a.textContent.toLowerCase() : '';
+      var ok = (cls === 'all' || rowClass(r) === cls) && (!s || name.indexOf(s) !== -1);
+      r.classList.toggle('dim', !ok);
+    });
+    cards.forEach(function(c){
+      var ok = (cls === 'all' || c.dataset.cls === cls) &&
+               (!s || c.textContent.toLowerCase().indexOf(s) !== -1);
+      c.classList.toggle('dim', !ok);
+    });
+  }
+  chips.forEach(function(ch){
+    ch.addEventListener('click', function(){
+      chips.forEach(function(x){ x.classList.remove('on'); });
+      ch.classList.add('on');
+      cls = ch.dataset.cls;
+      apply();
+    });
+  });
+  q.addEventListener('input', apply);
+})();
+</script>
 </body>
 </html>
