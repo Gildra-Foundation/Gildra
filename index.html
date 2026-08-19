@@ -328,7 +328,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 /* ============ SECTION WRAP ============ */
 .section{max-width:1210px;padding:0 34px;margin:0 auto}
 .cards-row{
-  display:grid;grid-template-columns:1fr 1fr .94fr;gap:18px;
+  display:grid;grid-template-columns:1.75fr 1fr;gap:18px;
   margin-top:-150px;position:relative;z-index:3;
 }
 .panel{
@@ -400,6 +400,58 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   width:62%;height:62%;display:block;
   stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;
 }
+.spec.lg{width:48px;height:48px}
+.spec.lg > b{width:40px;height:40px}
+.mspot{
+  display:flex;align-items:center;gap:14px;padding:13px 14px;margin-bottom:4px;
+  background:linear-gradient(90deg,rgba(196,30,58,.14),rgba(196,30,58,.03) 70%);
+  border-left:3px solid #c41e3a;
+  box-shadow:inset 0 0 0 1px rgba(196,30,58,.22);
+}
+.mspot-info{flex:1;min-width:0}
+.mspot-name{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:600;color:#eef0f8}
+.mspot-sub{font-size:11px;color:var(--ink-2);margin-top:4px}
+.mspot-score{text-align:right}
+.mspot-score b{display:block;font-family:var(--display);font-weight:700;font-size:26px;color:#eef0f8;line-height:1}
+.mspot-score span{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.tpill{
+  display:inline-grid;place-items:center;width:20px;height:20px;flex:none;
+  font-family:var(--display);font-weight:700;font-size:11px;
+  clip-path:polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
+}
+.tpill.s{background:linear-gradient(165deg,#5a2023,var(--ts-bg));color:var(--ts-tx)}
+.tpill.sm{width:17px;height:17px;font-size:9.5px}
+.mrows{margin:6px 0 14px}
+.mrow{
+  display:flex;align-items:center;gap:10px;padding:8px 4px;
+  border-bottom:1px solid var(--line-soft);font-size:12.5px;
+}
+.mrow:last-child{border-bottom:none}
+.mname{flex:1;font-weight:600;color:var(--ink)}
+.mval{font-family:var(--display);font-weight:600;font-size:14px;color:#eef0f8}
+.raidfeat{
+  position:relative;overflow:hidden;margin-top:26px;min-height:230px;
+  border:1px solid #2b3145;background:#0e1119;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+}
+.rf-art{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 62%;
+}
+.raidfeat::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(10,12,18,.93) 22%,rgba(10,12,18,.6) 55%,rgba(10,12,18,.25));
+}
+.rf-in{
+  position:relative;z-index:2;display:flex;gap:40px;align-items:center;
+  padding:30px 30px;min-height:230px;
+}
+.rf-main{flex:1;max-width:520px}
+.rf-main h2{font-family:var(--display);font-weight:700;font-size:27px;color:#eef0f8;margin:8px 0 8px}
+.rf-main p{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-bottom:14px}
+.rf-links{display:flex;align-items:center;gap:11px;flex-wrap:wrap;font-size:12.5px;font-weight:600}
+.rf-specs{display:flex;flex-direction:column;gap:9px;min-width:230px}
+.rf-row{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;color:var(--ink)}
+.rf-row .tpill{margin-left:auto}
 .panel-foot{
   font-size:10.5px;color:var(--ink-3);margin-top:auto;padding-top:11px;
   border-top:1px solid var(--line-soft);
@@ -897,18 +949,33 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
     <div class="section">
       <div class="cards-row">
         <div class="panel">
-          <div class="panel-head"><span class="t">MYTHIC+ TOP SPECS</span><a class="view" href="#">View All →</a></div>
-          <div class="panel-sub">All Keys · Overall</div>
+          <div class="panel-head"><span class="t">Mythic+ Meta</span><a class="view" href="#">View All →</a></div>
+          <div class="panel-sub">All Keys · Overall · Last 7 Days</div>
           <div class="panel-rule"></div>
-          <div class="tier-rows">
-            <div class="tier-row"><div class="tbadge s">S</div>
-              <div class="specs">
-                <div class="spec dk" title="Frost Death Knight"><b><svg><use href="#g-dk"/></svg></b></div>
-                <div class="spec mage" title="Arcane Mage"><b><svg><use href="#g-mage"/></svg></b></div>
-                <div class="spec evoker" title="Augmentation Evoker"><b><svg><use href="#g-evoker"/></svg></b></div>
-                <div class="spec hunter" title="Beast Mastery Hunter"><b><svg><use href="#g-hunter"/></svg></b></div>
-              </div>
+
+          <div class="mspot">
+            <div class="spec lg dk" title="Frost Death Knight"><b><svg><use href="#g-dk"/></svg></b></div>
+            <div class="mspot-info">
+              <div class="mspot-name"><span class="tpill s">S</span> Frost Death Knight <span class="up">▲ 2</span></div>
+              <div class="mspot-sub">Death Knight · DPS · 16.4% played · +14.7 avg key</div>
             </div>
+            <div class="mspot-score"><b>94.2</b><span>score</span></div>
+          </div>
+
+          <div class="mrows">
+            <div class="mrow">
+              <div class="spec sm mage" title="Arcane Mage"><b><svg><use href="#g-mage"/></svg></b></div>
+              <span class="mname">Arcane Mage</span><span class="tpill s sm">S</span>
+              <span class="mval">92.7</span><span class="flat">—</span>
+            </div>
+            <div class="mrow">
+              <div class="spec sm evoker" title="Augmentation Evoker"><b><svg><use href="#g-evoker"/></svg></b></div>
+              <span class="mname">Augmentation Evoker</span><span class="tpill s sm">S</span>
+              <span class="mval">91.8</span><span class="up">▲ 1</span>
+            </div>
+          </div>
+
+          <div class="tier-rows">
             <div class="tier-row"><div class="tbadge a">A</div>
               <div class="specs">
                 <div class="spec pal" title="Retribution Paladin"><b><svg><use href="#g-pal"/></svg></b></div>
@@ -938,46 +1005,7 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
         </div>
 
         <div class="panel">
-          <div class="panel-head"><span class="t">RAID TOP SPECS</span><a class="view" href="#">View All →</a></div>
-          <div class="panel-sub">Manaforge Omega · Overall</div>
-          <div class="panel-rule"></div>
-          <div class="tier-rows">
-            <div class="tier-row"><div class="tbadge s">S</div>
-              <div class="specs">
-                <div class="spec evoker" title="Devastation Evoker"><b><svg><use href="#g-evoker"/></svg></b></div>
-                <div class="spec hunter" title="Marksmanship Hunter"><b><svg><use href="#g-hunter"/></svg></b></div>
-                <div class="spec dk" title="Unholy Death Knight"><b><svg><use href="#g-dk"/></svg></b></div>
-              </div>
-            </div>
-            <div class="tier-row"><div class="tbadge a">A</div>
-              <div class="specs">
-                <div class="spec mage" title="Fire Mage"><b><svg><use href="#g-mage"/></svg></b></div>
-                <div class="spec shaman" title="Elemental Shaman"><b><svg><use href="#g-shaman"/></svg></b></div>
-                <div class="spec lock" title="Demonology Warlock"><b><svg><use href="#g-lock"/></svg></b></div>
-                <div class="spec priest" title="Shadow Priest"><b><svg><use href="#g-priest"/></svg></b></div>
-              </div>
-            </div>
-            <div class="tier-row"><div class="tbadge b">B</div>
-              <div class="specs">
-                <div class="spec pal" title="Retribution Paladin"><b><svg><use href="#g-pal"/></svg></b></div>
-                <div class="spec druid" title="Balance Druid"><b><svg><use href="#g-druid"/></svg></b></div>
-                <div class="spec war" title="Arms Warrior"><b><svg><use href="#g-war"/></svg></b></div>
-                <div class="spec monk" title="Windwalker Monk"><b><svg><use href="#g-monk"/></svg></b></div>
-              </div>
-            </div>
-            <div class="tier-row"><div class="tbadge c">C</div>
-              <div class="specs">
-                <div class="spec rogue" title="Subtlety Rogue"><b><svg><use href="#g-rogue"/></svg></b></div>
-                <div class="spec dh" title="Havoc Demon Hunter"><b><svg><use href="#g-dh"/></svg></b></div>
-                <div class="spec dk" title="Frost Death Knight"><b><svg><use href="#g-dk"/></svg></b></div>
-              </div>
-            </div>
-          </div>
-          <div class="panel-foot">Based on 23,671+ parses · Updated 2h ago</div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head"><span class="t" style="color:#e9ecf7">META TRENDS</span><a class="view" href="#">View All →</a></div>
+          <div class="panel-head"><span class="t">Meta Trends</span><a class="view" href="#">View All →</a></div>
           <div class="panel-sub">Specs popularity · Last 7 Days</div>
           <div class="panel-rule"></div>
           <div class="trend-list">
@@ -992,6 +1020,29 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
       </div>
 
       <!-- GUIDES -->
+      <section class="raidfeat">
+        <img class="rf-art" src="bg.jpg" alt="Manaforge Omega artwork" loading="lazy" decoding="async">
+        <div class="rf-in">
+          <div class="rf-main">
+            <span class="cap gold">Current Raid</span>
+            <h2>Manaforge Omega</h2>
+            <p>Boss rankings, spec performance and encounter guides — updated 2h ago from 23,671+ logged parses.</p>
+            <div class="rf-links">
+              <a href="#">Boss Rankings</a><span class="dia">◆</span>
+              <a href="#">Tier List</a><span class="dia">◆</span>
+              <a href="#">Guides</a><span class="dia">◆</span>
+              <a href="#">Best Specs</a>
+            </div>
+          </div>
+          <div class="rf-specs">
+            <span class="cap">Top raid specs</span>
+            <div class="rf-row"><div class="spec sm evoker" title="Devastation Evoker"><b><svg><use href="#g-evoker"/></svg></b></div> Devastation Evoker <span class="tpill s sm">S</span></div>
+            <div class="rf-row"><div class="spec sm hunter" title="Marksmanship Hunter"><b><svg><use href="#g-hunter"/></svg></b></div> Marksmanship Hunter <span class="tpill s sm">S</span></div>
+            <div class="rf-row"><div class="spec sm dk" title="Unholy Death Knight"><b><svg><use href="#g-dk"/></svg></b></div> Unholy Death Knight <span class="tpill s sm">S</span></div>
+          </div>
+        </div>
+      </section>
+
       <div class="guides-head">
         <span class="t"><svg class="i" style="width:15px;height:15px"><use href="#ic-book"/></svg> LATEST GUIDES</span>
         <span class="dia">◆</span>
