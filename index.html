@@ -23,10 +23,10 @@
   --ink:#e9ecf3;
   --ink-2:#98a2b6;
   --ink-3:#7a86a0;
-  --gold:#8272e8;
-  --gold-2:#b9adff;
-  --gold-dim:#5e51b5;
-  --gold-line:linear-gradient(90deg,transparent,rgba(143,127,242,.55) 18%,rgba(143,127,242,.55) 82%,transparent);
+  --gold:#c9a24f;
+  --gold-2:#e6c77a;
+  --gold-dim:#8a733c;
+  --gold-line:linear-gradient(90deg,transparent,rgba(201,162,79,.55) 18%,rgba(201,162,79,.55) 82%,transparent);
   --blue:#4d7dd6;
   --blue-2:#7ba6ee;
   --green:#57ab63;
@@ -81,33 +81,56 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 }
 .ornhead::before,.ornhead::after{
   content:"";height:1px;flex:1;
-  background:linear-gradient(90deg,transparent,rgba(143,127,242,.4));
+  background:linear-gradient(90deg,transparent,rgba(201,162,79,.4));
 }
-.ornhead::after{background:linear-gradient(90deg,rgba(143,127,242,.4),transparent)}
+.ornhead::after{background:linear-gradient(90deg,rgba(201,162,79,.4),transparent)}
 
-/* ============ GAME SWITCHER ============ */
-.gamebar{
-  display:flex;align-items:center;height:38px;padding:0 22px;
-  background:#080a10;border-bottom:1px solid #141824;
-  overflow-x:auto;scrollbar-width:none;
+/* ============ GAME SWITCHER (дропдаун) ============ */
+.gsw{position:relative;height:100%;display:flex;align-items:center}
+.gsw-btn{
+  display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;
+  background:#10131c;border:1px solid var(--line);color:var(--ink);
+  font-size:12px;font-weight:600;
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
 }
-.gamebar::-webkit-scrollbar{display:none}
-.gamebar a{
-  position:relative;display:flex;align-items:center;gap:7px;height:100%;
-  padding:0 13px;white-space:nowrap;
-  font-size:10px;font-weight:600;letter-spacing:.11em;color:var(--ink-3);
+.gsw-btn .i{width:13px;height:13px;color:var(--gold-2)}
+.gsw-btn:hover{border-color:var(--gold-dim)}
+.gsw-menu{
+  position:absolute;top:calc(100% - 8px);left:0;min-width:196px;z-index:60;
+  background:#10131c;border:1px solid var(--line);padding:6px;
+  display:none;flex-direction:column;
+  box-shadow:0 14px 34px rgba(0,0,0,.5);
 }
-.gamebar a:hover{color:var(--ink-2)}
-.gamebar a .i{width:13px;height:13px;color:var(--ink-3)}
-.gamebar a:hover .i{color:inherit}
-.gamebar a.on{color:#e9ecf7}
-.gamebar a.on .i{color:var(--gold-2)}
-.gamebar a.on::after{
-  content:"";position:absolute;left:13px;right:13px;bottom:-1px;height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+.gsw:hover .gsw-menu,.gsw:focus-within .gsw-menu{display:flex}
+.gsw-menu a{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;
+  color:var(--ink-2);font-size:12.5px;font-weight:500;
 }
-.gb-spacer{flex:1}
-.gb-more{color:var(--ink-3)}
+.gsw-menu a:hover{background:var(--raise);color:var(--ink)}
+.gsw-menu .i{width:13px;height:13px}
+.gsw-more{border-top:1px solid var(--line-soft);color:var(--ink-3)}
+
+/* ============ FOOTER ============ */
+.foot{border-top:1px solid var(--line);background:#0c0e15;margin-top:44px}
+.foot-in{
+  max-width:1210px;margin:0 auto;padding:34px 34px 26px;
+  display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start;
+}
+.foot-brand{max-width:250px}
+.foot-brand .logo{margin-bottom:10px}
+.foot-brand p{font-size:12px;color:var(--ink-3);line-height:1.6}
+.foot-cols{display:flex;gap:52px;flex:1;flex-wrap:wrap}
+.fcol h5{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:11px}
+.fcol a{display:block;padding:4px 0;font-size:12.5px;color:var(--ink-2)}
+.fcol a:hover{color:var(--gold-2)}
+.foot-prem{max-width:220px}
+.foot-prem p{font-size:11.5px;color:var(--ink-3);margin-bottom:10px;line-height:1.55}
+.foot-prem .btn-gold{width:auto;padding:9px 18px}
+.foot-legal{
+  max-width:1210px;margin:0 auto;padding:14px 34px 22px;
+  border-top:1px solid var(--line-soft);
+  font-size:10.5px;color:#5d6880;line-height:1.6;
+}
 
 /* ============ HERO TICKER ============ */
 .ticker{
@@ -115,7 +138,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   display:flex;align-items:center;gap:13px;flex-wrap:wrap;
   padding:9px 34px;
   background:rgba(10,12,18,.66);backdrop-filter:blur(4px);
-  border-bottom:1px solid rgba(143,127,242,.16);
+  border-bottom:1px solid rgba(201,162,79,.16);
   font-size:10px;font-weight:600;letter-spacing:.13em;color:var(--ink-2);
   text-transform:uppercase;
 }
@@ -127,22 +150,22 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   display:flex;align-items:center;gap:20px;height:54px;padding:0 22px;
   background:linear-gradient(180deg,#0e1118,#0c0e15);
   border-bottom:1px solid var(--line-soft);
-  box-shadow:0 1px 0 rgba(183,169,255,.12),0 4px 14px rgba(0,0,0,.35);
+  box-shadow:0 1px 0 rgba(230,199,122,.12),0 4px 14px rgba(0,0,0,.35);
   position:sticky;top:0;z-index:50;
 }
 .logo{display:flex;align-items:center;gap:10px;margin-right:8px}
 .logo-mark{
   width:30px;height:30px;flex:none;
   clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
-  background:linear-gradient(160deg,#c3b6ff 0%,#8272e8 45%,#4a3f96 100%);
+  background:linear-gradient(160deg,#f2da92 0%,#c9a24f 45%,#7d6128 100%);
   display:grid;place-items:center;
-  font-family:var(--display);font-weight:700;font-size:15px;color:#171232;
+  font-family:var(--display);font-weight:700;font-size:15px;color:#231a06;
 }
 .logo-text{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.18em;color:#e9ecf7}
 .nav-links{display:flex;height:100%}
 .nav-links a{
   position:relative;display:flex;align-items:center;padding:0 13px;height:100%;
-  color:var(--ink-2);font-weight:600;font-size:11.5px;letter-spacing:.09em;
+  color:var(--ink-2);font-weight:600;font-size:13px;letter-spacing:.01em;
 }
 .nav-links a:hover{color:var(--ink)}
 .nav-links a.active{color:var(--gold-2)}
@@ -171,10 +194,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 }
 
 /* ============ LAYOUT ============ */
-.app{
-  display:grid;grid-template-columns:212px 1fr;min-height:100vh;
-  background:linear-gradient(90deg,#0d1017 211px,#1c212e 211px,#1c212e 212px,transparent 212px);
-}
+.app{display:block;min-height:100vh}
 .sidebar{
   background:#0d1017;border-right:1px solid var(--line-soft);
   padding:22px 16px;display:flex;flex-direction:column;gap:26px;
@@ -198,12 +218,12 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .side-links a:hover .i{color:var(--gold)}
 .premium{
   margin-top:auto;padding:15px;border-radius:var(--r-md);position:relative;
-  background:linear-gradient(165deg,#151329,#12141c 70%);
-  border:1px solid #2c2950;
+  background:linear-gradient(165deg,#1c1810,#12141c 70%);
+  border:1px solid #33301f;
 }
 .premium::before,.premium::after{ /* угловые скобы */
   content:"";position:absolute;width:12px;height:12px;
-  border:1px solid rgba(143,127,242,.5);
+  border:1px solid rgba(201,162,79,.5);
 }
 .premium::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
 .premium::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
@@ -214,9 +234,9 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   width:100%;padding:9px 0;
   clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);
   font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.12em;
-  color:#ffffff;border:1px solid #453a9e;
-  background:linear-gradient(180deg,#a99bff,#8272e8 52%,#5c4dc4);
-  box-shadow:inset 0 1px 0 rgba(235,230,255,.55), 0 3px 10px rgba(0,0,0,.4);
+  color:#251c07;border:1px solid #6b571f;
+  background:linear-gradient(180deg,#edd28a,#c9a24f 52%,#99793a);
+  box-shadow:inset 0 1px 0 rgba(255,243,205,.55), 0 3px 10px rgba(0,0,0,.4);
 }
 .btn-gold:hover{filter:brightness(1.07)}
 
@@ -251,12 +271,12 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   font-size:13.5px;color:#b9c2d4;margin:12px 0 24px;max-width:420px;line-height:1.6;
 }
 .flourish{display:flex;align-items:center;gap:9px;width:212px;margin-top:16px}
-.flourish i{flex:1;height:1px;background:linear-gradient(90deg,rgba(143,127,242,.12),rgba(143,127,242,.6))}
-.flourish i:last-child{background:linear-gradient(90deg,rgba(143,127,242,.6),rgba(143,127,242,.12))}
+.flourish i{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,162,79,.12),rgba(201,162,79,.6))}
+.flourish i:last-child{background:linear-gradient(90deg,rgba(201,162,79,.6),rgba(201,162,79,.12))}
 .flourish b{width:6px;height:6px;flex:none;background:var(--gold);transform:rotate(45deg)}
 .dia{color:var(--gold);font-size:8px;line-height:1}
 .sbar{display:block;height:2px;background:#20263a;margin-top:4px}
-.sbar i{display:block;height:100%;background:linear-gradient(90deg,#5e51b5,#b9adff)}
+.sbar i{display:block;height:100%;background:linear-gradient(90deg,#8a733c,#e6c77a)}
 .hero-actions{display:flex;align-items:center;gap:14px}
 .btn{
   font-family:var(--display);
@@ -265,9 +285,9 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   letter-spacing:.11em;border:1px solid transparent;transition:filter .15s,border-color .15s,background .15s;
 }
 .btn-primary{
-  font-family:var(--display);color:#ffffff;border-color:#453a9e;
-  background:linear-gradient(180deg,#a99bff,#8272e8 52%,#5c4dc4);
-  box-shadow:inset 0 1px 0 rgba(235,230,255,.55),0 6px 20px rgba(143,127,242,.22);
+  font-family:var(--display);color:#251c07;border-color:#6b571f;
+  background:linear-gradient(180deg,#edd28a,#c9a24f 52%,#99793a);
+  box-shadow:inset 0 1px 0 rgba(255,243,205,.55),0 6px 20px rgba(201,162,79,.22);
 }
 .btn-primary:hover{filter:brightness(1.07)}
 .btn-ghost{
@@ -284,13 +304,13 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   background:rgba(13,16,24,.82);border:1px solid var(--line);backdrop-filter:blur(6px);
 }
 .patch::before,.patch::after{
-  content:"";position:absolute;width:14px;height:14px;border:1px solid rgba(143,127,242,.55);
+  content:"";position:absolute;width:14px;height:14px;border:1px solid rgba(201,162,79,.55);
 }
 .patch::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
 .patch::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
 .patch h3{
-  font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:.13em;
-  color:var(--gold-2);margin-bottom:13px;
+  font-family:var(--display);font-size:12px;font-weight:600;letter-spacing:.1em;
+  color:#e9ecf7;margin-bottom:13px;
 }
 .patch ul{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:13px}
 .patch li{font-size:11.5px;color:var(--ink-2);padding-left:15px;position:relative;line-height:1.5}
@@ -315,12 +335,12 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 }
 .panel::after{ /* внутренняя гравированная рамка */
   content:"";position:absolute;inset:4px;pointer-events:none;
-  border:1px solid rgba(143,127,242,.13);
+  border:1px solid rgba(201,162,79,.13);
   clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);
 }
 .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .panel-head .t{
-  font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.11em;color:var(--gold-2);
+  font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.08em;color:#e9ecf7;
 }
 .panel-head .view{font-size:11px;font-weight:600;white-space:nowrap}
 .panel-sub{font-size:11px;color:var(--ink-3);margin:3px 0 14px}
@@ -411,7 +431,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   display:flex;align-items:center;gap:10px;white-space:nowrap;
 }
 .guides-head .t .i{color:var(--gold)}
-.guides-head .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(143,127,242,.35),transparent)}
+.guides-head .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,162,79,.35),transparent)}
 .guides-head .view{font-size:11.5px;font-weight:600;white-space:nowrap}
 .guides-row{display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
 .gcard{
@@ -453,7 +473,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .nfeat-body{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:20px}
 .ncat{
   display:inline-flex;align-items:center;padding:4px 9px;
-  background:rgba(143,127,242,.14);border:1px solid rgba(143,127,242,.42);
+  background:rgba(201,162,79,.14);border:1px solid rgba(201,162,79,.42);
   color:var(--gold-2);font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;
   clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
 }
@@ -502,8 +522,8 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 }
 .tp-nav a .i{color:var(--ink-3)}
 .tp-nav a.active{
-  background:linear-gradient(180deg,rgba(143,127,242,.13),rgba(143,127,242,.06));
-  border-color:rgba(143,127,242,.4);color:var(--gold-2);
+  background:linear-gradient(180deg,rgba(201,162,79,.13),rgba(201,162,79,.06));
+  border-color:rgba(201,162,79,.4);color:var(--gold-2);
 }
 .tp-nav a.active .i{color:var(--gold)}
 .tp-nav a:hover:not(.active){background:var(--raise);color:var(--ink)}
@@ -523,7 +543,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   color:var(--ink-2);border-radius:var(--r-sm);font-size:11px;font-weight:600;
 }
 .seg button.on{
-  background:linear-gradient(180deg,rgba(143,127,242,.22),rgba(143,127,242,.1));
+  background:linear-gradient(180deg,rgba(201,162,79,.22),rgba(201,162,79,.1));
   border-color:var(--gold-dim);color:var(--gold-2);
 }
 .side-live{margin-top:auto;padding-top:16px;display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--ink-2)}
@@ -544,7 +564,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .tp-title h2{
   font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:.06em;color:#eef0f8;
 }
-.tp-title .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(143,127,242,.4),transparent)}
+.tp-title .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,162,79,.4),transparent)}
 .tp-sub{font-size:11.5px;color:var(--ink-3);margin-bottom:16px}
 .tp-toolbar{
   display:flex;align-items:flex-end;gap:10px;
@@ -626,7 +646,7 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
 }
 .chip:hover{border-color:var(--gold-dim);color:var(--gold-2)}
 .chip.on{
-  background:linear-gradient(180deg,rgba(143,127,242,.2),rgba(143,127,242,.08));
+  background:linear-gradient(180deg,rgba(201,162,79,.2),rgba(201,162,79,.08));
   border-color:var(--gold-dim);color:var(--gold-2);
 }
 .coct{
@@ -655,7 +675,7 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
   font-family:var(--display);font-size:12.5px;font-weight:700;letter-spacing:.13em;color:#e9ecf7;
   white-space:nowrap;
 }
-.bhead .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(143,127,242,.35),transparent)}
+.bhead .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,162,79,.35),transparent)}
 .bhead .view{font-size:11px;font-weight:600;white-space:nowrap}
 .builds{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
 .bcard{
@@ -695,13 +715,13 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
 }
 .dhero::after{
   content:"";position:absolute;top:10px;right:10px;width:14px;height:14px;
-  border-top:1px solid rgba(143,127,242,.55);border-right:1px solid rgba(143,127,242,.55);
+  border-top:1px solid rgba(201,162,79,.55);border-right:1px solid rgba(201,162,79,.55);
 }
 .dhead{position:relative;display:flex;align-items:center;gap:14px}
 .dicon{
   width:54px;height:54px;flex:none;position:relative;
   clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
-  background:linear-gradient(160deg,#b9adff,#5e51b5 70%);
+  background:linear-gradient(160deg,#e6c77a,#8a733c 70%);
   display:grid;place-items:center;
 }
 .dicon > b{
@@ -802,62 +822,32 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
   <symbol id="gm-ow" viewBox="0 0 16 16"><path d="M12.6 5.2a5.5 5.5 0 0 0-9.2 0"/><path d="M3.4 10.8a5.5 5.5 0 0 0 9.2 0"/></symbol>
 </svg>
 
-<!-- ============ GAME SWITCHER ============ -->
-<nav class="gamebar" aria-label="Games">
-  <a class="on" href="#"><svg class="i"><use href="#gm-wow"/></svg> WORLD OF WARCRAFT</a>
-  <a href="#"><svg class="i" style="color:#d95c55"><use href="#gm-d4"/></svg> DIABLO IV</a>
-  <a href="#"><svg class="i" style="color:#dfc06a"><use href="#gm-hs"/></svg> HEARTHSTONE</a>
-  <a href="#"><svg class="i" style="color:#e8975a"><use href="#gm-ow"/></svg> OVERWATCH 2</a>
-  <span class="gb-spacer"></span>
-  <a href="#" class="gb-more">MORE GAMES <span class="caret">▾</span></a>
-</nav>
 
 <!-- ============ NAV ============ -->
 <header class="topnav">
   <div class="logo"><div class="logo-mark">G</div><span class="logo-text">GILDRA</span></div>
+  <div class="gsw">
+    <button class="gsw-btn" aria-haspopup="true"><svg class="i"><use href="#gm-wow"/></svg> World of Warcraft <span class="caret">▾</span></button>
+    <div class="gsw-menu" role="menu">
+      <a href="#" role="menuitem"><svg class="i" style="color:#d95c55"><use href="#gm-d4"/></svg> Diablo IV</a>
+      <a href="#" role="menuitem"><svg class="i" style="color:#dfc06a"><use href="#gm-hs"/></svg> Hearthstone</a>
+      <a href="#" role="menuitem"><svg class="i" style="color:#e8975a"><use href="#gm-ow"/></svg> Overwatch 2</a>
+      <a href="#" role="menuitem" class="gsw-more">All games →</a>
+    </div>
+  </div>
   <nav class="nav-links">
-    <a class="active" href="#">TIER LISTS</a>
-    <a href="#">MYTHIC+</a>
-    <a href="#">RAIDS</a>
-    <a href="#">CLASSES<span class="caret">▾</span></a>
-    <a href="#">GUIDES</a>
-    <a href="#">TOOLS<span class="caret">▾</span></a>
+    <a class="active" href="#">Tier Lists</a>
+    <a href="#">Mythic+</a>
+    <a href="#">Raid</a>
+    <a href="#">Builds</a>
+    <a href="#">Guides</a>
   </nav>
   <div class="nav-spacer"></div>
   <div class="search"><svg class="i"><use href="#ic-search"/></svg> Search Gildra... <span class="kbd">⌘K</span></div>
-  <button class="icon-btn" aria-label="Notifications"><svg class="i" style="width:16px;height:16px"><use href="#ic-bell"/></svg></button>
   <div class="user"><div class="avatar"></div>Alexandér <span class="caret">▾</span></div>
 </header>
 
 <div class="app">
-  <!-- ============ SIDEBAR ============ -->
-  <aside class="sidebar">
-    <div class="side-season">
-      <div class="cap gold">The War Within</div>
-      <h2>SEASON 1</h2>
-      <div class="side-meta">
-        <span class="row"><svg class="i" style="width:12px;height:12px"><use href="#ic-shield"/></svg> Patch 12.0.5</span>
-        <span class="row"><span class="pulse"></span> Live — updated 2h ago</span>
-      </div>
-    </div>
-    <div>
-      <div class="cap">Quick Links</div>
-      <div class="side-links">
-        <a href="#"><svg class="i"><use href="#ic-sword"/></svg> Mythic+ Tier List</a>
-        <a href="#"><svg class="i"><use href="#ic-shield"/></svg> Raid Tier List</a>
-        <a href="#"><svg class="i"><use href="#ic-chart"/></svg> Most Popular Specs</a>
-        <a href="#"><svg class="i"><use href="#ic-trend"/></svg> Meta Trends</a>
-        <a href="#"><svg class="i"><use href="#ic-chat"/></svg> Discord</a>
-        <a href="#"><svg class="i"><use href="#ic-heart"/></svg> Support Us</a>
-      </div>
-    </div>
-    <div class="premium">
-      <h4><svg class="i"><use href="#ic-crown"/></svg> Remove Ads</h4>
-      <p>Support Gildra and get an ad-free experience.</p>
-      <button class="btn-gold">GO PREMIUM</button>
-    </div>
-  </aside>
-
   <!-- ============ MAIN ============ -->
   <main class="main">
     <!-- HERO -->
@@ -919,7 +909,7 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
             <rect x="707" y="316" width="3.5" height="7" rx="1.75"/>
           </g>
           <!-- тонкая золотая линия горизонта -->
-          <path d="M0,330 L130,282 L250,318 L390,262 L520,308 L600,286 L700,252 L830,306 L960,268 L1080,312 L1200,284" stroke="#8272e8" stroke-opacity=".22" stroke-width="1" fill="none"/>
+          <path d="M0,330 L130,282 L250,318 L390,262 L520,308 L600,286 L700,252 L830,306 L960,268 L1080,312 L1200,284" stroke="#c9a24f" stroke-opacity=".22" stroke-width="1" fill="none"/>
         </svg>
       </div>
       <div class="ticker">
@@ -1362,6 +1352,31 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
       </div>
     </div>
   </main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <div class="foot-brand">
+      <div class="logo"><div class="logo-mark">G</div><span class="logo-text">GILDRA</span></div>
+      <p>Gaming intelligence for Azeroth — live tier lists, meta statistics and guides.</p>
+    </div>
+    <div class="foot-cols">
+      <div class="fcol">
+        <h5>Content</h5>
+        <a href="#">Tier Lists</a><a href="#">Mythic+</a><a href="#">Raid</a><a href="#">Builds</a><a href="#">Guides</a>
+      </div>
+      <div class="fcol">
+        <h5>Community</h5>
+        <a href="#">Discord</a><a href="#">Support Us</a><a href="#">Contact</a>
+      </div>
+      <div class="fcol foot-prem">
+        <h5>Premium</h5>
+        <p>Remove ads and support Gildra development.</p>
+        <button class="btn-gold">Go Premium</button>
+      </div>
+    </div>
+  </div>
+  <div class="foot-legal">World of Warcraft® and all related artwork are trademarks or registered trademarks of Blizzard Entertainment, Inc. Gildra is an unofficial fan-made concept and is not affiliated with or endorsed by Blizzard Entertainment.</div>
+</footer>
 </div>
 <script>
 (function(){
