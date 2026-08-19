@@ -246,7 +246,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .hero{position:relative;overflow:hidden;min-height:470px}
 .hero-art{position:absolute;inset:0;overflow:hidden}
 .hero-art img{
-  width:100%;height:100%;object-fit:cover;object-position:center 24%;
+  width:100%;height:100%;object-fit:cover;object-position:63% 22%;
   animation:heroZoom 38s ease-in-out infinite alternate;will-change:transform;
 }
 @keyframes heroZoom{from{transform:scale(1)}to{transform:scale(1.07)}}
@@ -833,8 +833,8 @@ tr:hover:not(.hl) td{background:rgba(28,33,48,.35)}
   .sidebar{display:none}
 }
 @media (max-width:720px){
-  .cards-row{grid-template-columns:1fr;margin-top:-70px}
-  .hero-inner{grid-template-columns:1fr;padding:64px 20px 40px}
+  .cards-row{grid-template-columns:1fr;margin-top:16px}
+  .hero-inner{grid-template-columns:1fr;padding:64px 20px 28px}
   .nav-links,.search{display:none}
   .hero h1{font-size:31px}
   .hero{min-height:400px}
@@ -1449,8 +1449,10 @@ var GameAssets=(function(){
     var toReveal = document.querySelectorAll('.panel, .raidfeat, .nfeat, .nlist, .tierpage, .foot-in');
     var io = new IntersectionObserver(function(es){
       es.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-    }, {rootMargin: '0px 0px -8% 0px'});
+    }, {rootMargin: '250px 0px 250px 0px'});
     toReveal.forEach(function(el){ el.classList.add('reveal'); io.observe(el); });
+    // страховка: контент никогда не остаётся скрытым
+    setTimeout(function(){ toReveal.forEach(function(el){ el.classList.add('in'); }); }, 2200);
   }
 })();
 </script>
