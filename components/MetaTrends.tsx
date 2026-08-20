@@ -8,7 +8,7 @@ export function MetaTrends() {
     <div className="trendside">
       <div className="panel-head">
         <span className="t">Meta Trends</span>
-        <a className="view" href="#">
+        <a className="view" href="/tier-lists">
           View All →
         </a>
       </div>

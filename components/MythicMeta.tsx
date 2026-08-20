@@ -18,7 +18,7 @@ export function MythicMeta() {
     <div className="panel">
       <div className="panel-head">
         <span className="t">Mythic+ Meta</span>
-        <a className="view" href="#">
+        <a className="view" href="/tier-lists">
           View All →
         </a>
       </div>
