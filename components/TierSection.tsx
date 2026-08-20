@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { SpecSlot } from "./SpecSlot";
 import { classIcon } from "@/lib/gameAssets";
 import { tierTable, classChips, builds, liveStats } from "@/data/site";
@@ -17,6 +18,32 @@ function TrendCell({ t }: { t: TableRow["trend"] }) {
     </span>
   );
 }
+
+const FILTER_DEFAULTS = {
+  season: "Season 1",
+  patch: "12.0.5",
+  range: "All Keys",
+  region: "All Regions",
+  size: "All",
+} as const;
+
+type Filters = { [K in keyof typeof FILTER_DEFAULTS]: string };
+
+const FILTER_OPTIONS: Record<keyof Filters, string[]> = {
+  season: ["Season 1", "Season 2"],
+  patch: ["12.0.5", "12.0"],
+  range: ["All Keys", "+2 – +11", "+12 – +16", "+17+"],
+  region: ["All Regions", "EU", "US", "Asia"],
+  size: ["All", "Solo", "2–5"],
+};
+
+const FILTER_LABELS: Record<keyof Filters, string> = {
+  season: "Season",
+  patch: "Patch",
+  range: "Level Range",
+  region: "Region",
+  size: "Group Size",
+};
 
 function Radar() {
   return (
@@ -87,11 +114,71 @@ function Radar() {
 export function TierSection() {
   const [cls, setCls] = useState("all");
   const [q, setQ] = useState("");
+  const [filters, setFilters] = useState<Filters>({ ...FILTER_DEFAULTS });
+  const [mobFilters, setMobFilters] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const query = q.trim().toLowerCase();
   const matches = (name: string, rowCls: string) =>
     (cls === "all" || rowCls === cls) &&
     (!query || name.toLowerCase().includes(query));
+
+  const activeFilters = (
+    Object.keys(FILTER_DEFAULTS) as (keyof Filters)[]
+  ).filter((k) => filters[k] !== FILTER_DEFAULTS[k]);
+
+  const setFilter = (k: keyof Filters, v: string) =>
+    setFilters((f) => ({ ...f, [k]: v }));
+
+  const share = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* clipboard недоступен — молча пропускаем */
+    }
+  };
+
+  const filtersPanel = (
+    <div className="filters-panel">
+      {(Object.keys(FILTER_OPTIONS) as (keyof Filters)[]).map((k) =>
+        k === "size" ? (
+          <div className="fgroup" key={k}>
+            <label>{FILTER_LABELS[k]}</label>
+            <div className="seg">
+              {FILTER_OPTIONS.size.map((v) => (
+                <button
+                  key={v}
+                  className={filters.size === v ? "on" : undefined}
+                  onClick={() => setFilter("size", v)}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="fgroup" key={k}>
+            <label htmlFor={`f-${k}`}>{FILTER_LABELS[k]}</label>
+            <select
+              id={`f-${k}`}
+              value={filters[k]}
+              onChange={(e) => setFilter(k, e.target.value)}
+            >
+              {FILTER_OPTIONS[k].map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+          </div>
+        ),
+      )}
+      <div className="soon-note">
+        Demo dataset — filters are not wired to data yet.
+      </div>
+    </div>
+  );
 
   return (
     <div className="tierpage" id="tierlist">
@@ -101,74 +188,34 @@ export function TierSection() {
           <span className="t">TIER LISTS</span>
         </div>
         <div className="tp-nav">
-          <a className="active" href="#">
-            <svg className="i">
+          <a className="active" href="/tier-lists" aria-current="page">
+            <svg className="i" aria-hidden="true">
               <use href="#ic-sword" />
             </svg>{" "}
             Mythic+
           </a>
-          <a href="#">
-            <svg className="i">
+          <span className="tp-nav-soon">
+            <svg className="i" aria-hidden="true">
               <use href="#ic-shield" />
             </svg>{" "}
-            Raid
-          </a>
+            Raid <span className="soon">soon</span>
+          </span>
         </div>
         <div>
           <div className="cap" style={{ marginBottom: 12 }}>
             Filters
           </div>
-          <div className="fgroup">
-            <label>Season</label>
-            <select defaultValue="Season 1">
-              <option>Season 1</option>
-              <option>Season 2</option>
-            </select>
-          </div>
-          <div className="fgroup">
-            <label>Patch</label>
-            <select defaultValue="12.0.5">
-              <option>12.0.5</option>
-              <option>12.0</option>
-            </select>
-          </div>
-          <div className="fgroup">
-            <label>Level Range</label>
-            <select defaultValue="All Keys">
-              <option>All Keys</option>
-              <option>+2 – +11</option>
-              <option>+12 – +16</option>
-              <option>+17+</option>
-            </select>
-          </div>
-          <div className="fgroup">
-            <label>Region</label>
-            <select defaultValue="All Regions">
-              <option>All Regions</option>
-              <option>EU</option>
-              <option>US</option>
-              <option>Asia</option>
-            </select>
-          </div>
-          <div className="fgroup">
-            <label>Group Size</label>
-            <div className="seg">
-              <button className="on">All</button>
-              <button>Solo</button>
-              <button>2–5</button>
-            </div>
-          </div>
+          {filtersPanel}
         </div>
         <div className="about">
           <b>
-            <svg className="i" style={{ width: 13, height: 13 }}>
+            <svg className="i" style={{ width: 13, height: 13 }} aria-hidden="true">
               <use href="#ic-info" />
             </svg>{" "}
             About Tier Lists
           </b>
           Learn how we calculate our tier lists.
         </div>
-        <div className="soon-note">Demo dataset — season and region filters are not wired yet.</div>
         <div className="side-live">
           <span className="pulse" /> Data refreshed {liveStats.updated}
         </div>
@@ -176,45 +223,79 @@ export function TierSection() {
 
       <div className="tp-center">
         <div className="crumbs">
-          <a href="/">Home</a>
+          <Link href="/">Home</Link>
           <span className="sep">›</span>
-          <a href="/tier-lists">Tier Lists</a>
-          <span className="sep">›</span>
-          <span style={{ color: "var(--ink-2)" }}>Mythic+ · Overall</span>
+          <span style={{ color: "var(--ink-2)" }}>
+            Tier Lists · Mythic+ · Overall
+          </span>
         </div>
         <div className="tp-title">
-          <h2>MYTHIC+ TIER LIST</h2>
+          <h1>MYTHIC+ TIER LIST</h1>
           <span className="dia">◆</span>
           <span className="rule" />
         </div>
         <div className="tp-sub">
           Ranked by weighted score across timed runs, popularity and
-          consistency. For raw dungeon speed, see <a href="#">Push Rankings →</a>
+          consistency.
         </div>
         <div className="tp-toolbar">
           <div className="tabs">
-            <button className="on">Overall</button>
-            <button aria-disabled="true" title="Available with live data">DPS</button>
-            <button aria-disabled="true" title="Available with live data">Healers</button>
-            <button aria-disabled="true" title="Available with live data">Tanks</button>
+            <button className="on" aria-current="true">
+              Overall
+            </button>
+            <button aria-disabled="true" title="Available with live data">
+              DPS
+            </button>
+            <button aria-disabled="true" title="Available with live data">
+              Healers
+            </button>
+            <button aria-disabled="true" title="Available with live data">
+              Tanks
+            </button>
           </div>
-          <button className="tool">
-            Last 7 Days{" "}
-            <svg className="i" style={{ width: 11, height: 11 }}>
-              <use href="#ic-chev" />
-            </svg>
-          </button>
-          <button className="tool">
-            <svg className="i" style={{ width: 12, height: 12 }}>
+          <span className="tool tool-static" title="Demo dataset period">
+            Last 7 Days
+          </span>
+          <button className="tool" onClick={share}>
+            <svg className="i" style={{ width: 12, height: 12 }} aria-hidden="true">
               <use href="#ic-share" />
             </svg>{" "}
-            Share
+            {copied ? "Copied ✓" : "Share"}
           </button>
         </div>
 
+        <div className="mfil">
+          <button
+            className="tool"
+            aria-expanded={mobFilters}
+            aria-controls="mobile-filters"
+            onClick={() => setMobFilters((v) => !v)}
+          >
+            Filters{activeFilters.length > 0 && ` · ${activeFilters.length}`}
+            <svg className="i" style={{ width: 11, height: 11 }} aria-hidden="true">
+              <use href="#ic-chev" />
+            </svg>
+          </button>
+          {activeFilters.map((k) => (
+            <button
+              key={k}
+              className="fchip"
+              onClick={() => setFilter(k, FILTER_DEFAULTS[k])}
+              aria-label={`Reset ${FILTER_LABELS[k]}`}
+            >
+              {filters[k]} ✕
+            </button>
+          ))}
+        </div>
+        {mobFilters && (
+          <div className="mfil-panel" id="mobile-filters">
+            {filtersPanel}
+          </div>
+        )}
+
         <div className="filterbar">
           <label className="fsearch">
-            <svg className="i" style={{ width: 13, height: 13 }}>
+            <svg className="i" style={{ width: 13, height: 13 }} aria-hidden="true">
               <use href="#ic-search" />
             </svg>
             <input
@@ -253,8 +334,8 @@ export function TierSection() {
               <th>Spec</th>
               <th className="num">Score</th>
               <th className="num">Pop.</th>
-              <th className="num">Avg Key</th>
-              <th className="num">Top 1%</th>
+              <th className="num col-key">Avg Key</th>
+              <th className="num col-top">Top 1%</th>
               <th className="num">Trend</th>
             </tr>
           </thead>
@@ -281,7 +362,7 @@ export function TierSection() {
                   <td>
                     <div className="scell">
                       <SpecSlot name={row.spec.name} cls={row.spec.cls} size="sm" />
-                      <a href="#">{row.spec.name}</a>
+                      <span className="scell-name">{row.spec.name}</span>
                     </div>
                   </td>
                   <td className="num score">
@@ -291,8 +372,8 @@ export function TierSection() {
                     </span>
                   </td>
                   <td className="num">{row.pop}</td>
-                  <td className="num">{row.key}</td>
-                  <td className="num">
+                  <td className="num col-key">{row.key}</td>
+                  <td className="num col-top">
                     {row.top1}
                     {row.star && <span className="star">◆</span>}
                   </td>
@@ -310,22 +391,31 @@ export function TierSection() {
         <div className="faq-note">
           <b>How are scores calculated?</b> Timed-run performance (50%),
           consistency (30%) and popularity (20%), weighted over the selected
-          period. <a href="#">Full methodology →</a>
+          period.
         </div>
+
+        <button
+          className="dtoggle tool"
+          aria-expanded={detailOpen}
+          aria-controls="spec-detail"
+          onClick={() => setDetailOpen((v) => !v)}
+        >
+          {detailOpen ? "Hide" : "View"} Frost Death Knight details
+          <svg className="i" style={{ width: 11, height: 11 }} aria-hidden="true">
+            <use href="#ic-chev" />
+          </svg>
+        </button>
 
         <div className="bhead" id="builds">
           <span className="t">FEATURED BUILDS</span>
           <span className="dia">◆</span>
           <span className="rule" />
-          <a className="view" href="#">
-            All Builds →
-          </a>
         </div>
         <div className="builds">
           {builds.map((b) => (
             <div
               key={b.title}
-              className={`bcard${matches(b.spec.name, b.spec.cls) ? "" : " dim"}`}
+              className={`bcard bcard-static${matches(b.spec.name, b.spec.cls) ? "" : " dim"}`}
             >
               <SpecSlot name={b.spec.name} cls={b.spec.cls} />
               <div className="binfo">
@@ -338,7 +428,10 @@ export function TierSection() {
         </div>
       </div>
 
-      <aside className="tp-detail">
+      <aside
+        className={`tp-detail${detailOpen ? " open" : ""}`}
+        id="spec-detail"
+      >
         <div className="dhero">
           <div className="dhead">
             <div className="dicon">
@@ -356,17 +449,24 @@ export function TierSection() {
               <div className="tier-line">S TIER · 94.2 SCORE</div>
             </div>
             <button className="fav" aria-label="Favorite">
-              <svg className="i" style={{ width: 16, height: 16 }}>
+              <svg className="i" style={{ width: 16, height: 16 }} aria-hidden="true">
                 <use href="#ic-star" />
               </svg>
             </button>
           </div>
           <div className="dtabs">
-            <button className="on">Overview</button>
-            <button>Stats</button>
-            <button>Talents</button>
-            <button>Covenants</button>
-            <button>Trends</button>
+            <button className="on" aria-current="true">
+              Overview
+            </button>
+            <button aria-disabled="true" title="Coming soon">
+              Stats
+            </button>
+            <button aria-disabled="true" title="Coming soon">
+              Talents
+            </button>
+            <button aria-disabled="true" title="Coming soon">
+              Trends
+            </button>
           </div>
         </div>
         <div className="dbody">
@@ -392,8 +492,12 @@ export function TierSection() {
             </div>
           </div>
           <div className="dactions">
-            <button className="btn btn-primary">View Full Guide</button>
-            <button className="btn btn-dim">View Builds</button>
+            <Link className="btn btn-primary" href="/#guides">
+              View Guides
+            </Link>
+            <a className="btn btn-dim" href="#builds">
+              View Builds
+            </a>
           </div>
         </div>
       </aside>
