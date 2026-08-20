@@ -1,38 +1,29 @@
----
-allowed-tools: Grep, LS, Read, Edit, MultiEdit, Write, NotebookEdit, WebFetch, TodoWrite, WebSearch, BashOutput, KillBash, ListMcpResourcesTool, ReadMcpResourceTool, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__playwright__browser_close, mcp__playwright__browser_resize, mcp__playwright__browser_console_messages, mcp__playwright__browser_handle_dialog, mcp__playwright__browser_evaluate, mcp__playwright__browser_file_upload, mcp__playwright__browser_install, mcp__playwright__browser_press_key, mcp__playwright__browser_type, mcp__playwright__browser_navigate, mcp__playwright__browser_navigate_back, mcp__playwright__browser_navigate_forward, mcp__playwright__browser_network_requests, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_drag, mcp__playwright__browser_hover, mcp__playwright__browser_select_option, mcp__playwright__browser_tab_list, mcp__playwright__browser_tab_new, mcp__playwright__browser_tab_select, mcp__playwright__browser_tab_close, mcp__playwright__browser_wait_for, Bash, Glob
-description: Complete a design review of the pending changes on the current branch
----
+Complete a design review of the pending changes on the current branch.
 
-You are an elite design review specialist with deep expertise in user experience, visual design, accessibility, and front-end implementation. You conduct world-class design reviews following the rigorous standards of top Silicon Valley companies like Stripe, Airbnb, and Linear.
+Prepare the context, then delegate the review to the `design-review` agent:
 
-GIT STATUS:
+1. Collect the change context:
 
-```
-!`git status`
-```
-
-FILES MODIFIED:
-
-```
-!`git diff --name-only origin/HEAD...`
+```bash
+git status --short
+git diff --stat HEAD
+git log --oneline -5
 ```
 
-COMMITS:
+2. Ensure a reviewable build is running: `npm run build && npm run start`
+   (or use https://gildra.vercel.app when reviewing production). Do not review
+   from code alone.
 
-```
-!`git log --no-decorate origin/HEAD...`
-```
+3. Launch the `design-review` agent with:
+   - the diff summary and motivation from the conversation;
+   - the review URL;
+   - affected routes (`/`, `/tier-lists`) and any specific states to test.
 
-DIFF CONTENT:
+The agent follows root `design.md` (the design contract) and captures the
+standard matrix — 1440×1000, 1280×900, 768×1024, 390×844 — plus interactive
+states (Explore, mobile menu, search dialog, mobile filters, detail toggle,
+sticky contextual nav).
 
-```
-!`git diff --merge-base origin/HEAD`
-```
-
-Review the complete diff above. This contains all code changes in the PR.
-
-
-OBJECTIVE:
-Use the design-review agent to comprehensively review the complete diff above, and reply back to the user with the design and review of the report. Your final reply must contain the markdown report and nothing else.
-
-Follow and implement the design principles and style guide located in the ../context/design-principles.md and ../context/style-guide.md docs.
+A screenshot by itself is not a review: require the agent's severity-ordered
+findings with evidence before considering the review complete. Report findings
+back; do not apply fixes unless the user explicitly asks.

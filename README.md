@@ -27,8 +27,39 @@ npm run start # serve production build
 
 There is no separate `lint`/test script; `npm run build` is the required check.
 
+## Design workflow & AI tooling
+
+- [`design.md`](design.md) — the living design contract (identity, tokens,
+  patterns, states, Definition of Design Done).
+- [`CLAUDE.md`](CLAUDE.md) — always-on project guidance for Claude Code.
+- `gildra-design-director` (`.claude/skills/`) — implementation workflow for
+  any UI change; `design-review` (`.claude/agents/`, `/design-review-pro`) —
+  evidence-first audit workflow.
+- `.mcp.json` — project-scoped MCP servers: **Playwright** (pinned
+  `@playwright/mcp@0.0.79`, isolated, artifacts in `.artifacts/playwright/`)
+  and **Context7** (current Next/React/Playwright docs). First use requires a
+  one-time project trust approval; check with `/mcp` or `claude mcp list`.
+- `npm run design:capture` — deterministic screenshot matrix (`/` and
+  `/tier-lists` × 1440/1280/768/390, viewport + full-page) into `.artifacts/`.
+  Set `DESIGN_BASE_URL` to point at a running server (default
+  `http://127.0.0.1:3000`). Browsers install once via `npx playwright install chromium`.
+
+### Figma (optional, one-time user setup)
+
+The plugin needs OAuth and cannot be enabled by a repository commit:
+
+```bash
+claude plugin install figma@claude-plugins-official
+```
+
+Then: restart Claude Code → open `/plugin` → authorize Figma → verify the
+connection. For design-to-code, share a link to a **specific selected
+frame/node**, not just the file URL.
+
 ## Notes
 
-- Deploys automatically via Vercel on push to `master`.
-- Design rules live in `.claude/skills/gildra-design-director/SKILL.md`; design tokens reference in `design.md`.
-- A legacy pre-Next static prototype is preserved locally outside the repo (`legacy/index.html`); the current project does **not** run by opening an HTML file.
+- Deploys automatically via Vercel on push to `master` (with explicit user
+  permission).
+- A legacy pre-Next static prototype is preserved locally outside the repo
+  (`legacy/index.html`); the current project does **not** run by opening an
+  HTML file.
