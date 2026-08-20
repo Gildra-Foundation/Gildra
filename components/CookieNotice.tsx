@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { langOf, p, t } from "@/lib/i18n";
 
 const KEY = "gildra-consent";
 
@@ -10,6 +12,8 @@ const KEY = "gildra-consent";
  *  и анонимная статистика хостинга. */
 export function CookieNotice() {
   const [visible, setVisible] = useState(false);
+  const lang = langOf(usePathname());
+  const tt = t(lang);
 
   useEffect(() => {
     try {
@@ -33,9 +37,10 @@ export function CookieNotice() {
   return (
     <aside className="cookie" role="region" aria-label="Cookies">
       <p className="cookie-text">
-        Gildra stores your preferences in your browser and collects anonymous
-        usage statistics to improve the product. See the{" "}
-        <Link href="/privacy">privacy&nbsp;policy</Link>.
+        {tt(
+          "Gildra stores your preferences in your browser and collects anonymous usage statistics to improve the product. See the",
+        )}{" "}
+        <Link href={p(lang, "/privacy")}>{tt("privacy policy")}</Link>.
       </p>
       <div className="cookie-actions">
         <button
@@ -43,14 +48,14 @@ export function CookieNotice() {
           className="btn btn-primary cookie-ok"
           onClick={() => choose("accepted")}
         >
-          Accept
+          {tt("Accept")}
         </button>
         <button
           type="button"
           className="cookie-no"
           onClick={() => choose("declined")}
         >
-          Decline
+          {tt("Decline")}
         </button>
       </div>
     </aside>

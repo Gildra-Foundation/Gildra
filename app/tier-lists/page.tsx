@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Mythic+ Tier List — Gildra",
   description:
     "Full Mythic+ tier list with filters, class chips, featured builds and spec details.",
+  alternates: { languages: { en: "/tier-lists", ru: "/ru/tier-lists" } },
 };
 
 export default function TierListsPage() {

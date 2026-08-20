@@ -2,8 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { SpecSlot } from "./SpecSlot";
 import { raid } from "@/data/site";
+import { p, t, type Lang } from "@/lib/i18n";
 
-export function RaidFeature() {
+export function RaidFeature({ lang = "en" }: { lang?: Lang }) {
+  const tt = t(lang);
   return (
     <section className="raidfeat" id="raid">
       <Image
@@ -16,21 +18,21 @@ export function RaidFeature() {
       />
       <div className="rf-in">
         <div className="rf-main">
-          <span className="cap gold">{raid.label}</span>
+          <span className="cap gold">{tt(raid.label)}</span>
           <h2>{raid.name}</h2>
-          <p>{raid.blurb}</p>
+          <p>{tt(raid.blurb)}</p>
           <div className="rf-links">
-            <span className="dead-link" title="Coming soon">Boss Rankings</span>
+            <span className="dead-link" title={tt("Coming soon")}>{tt("Boss Rankings")}</span>
             <span className="dia">◆</span>
-            <Link href="/tier-lists">Tier List</Link>
+            <Link href={p(lang, "/tier-lists")}>{tt("Tier List")}</Link>
             <span className="dia">◆</span>
-            <a href="/#guides">Guides</a>
+            <a href={p(lang, "/#guides")}>{tt("Guides")}</a>
             <span className="dia">◆</span>
-            <Link href="/tier-lists">Best Specs</Link>
+            <Link href={p(lang, "/tier-lists")}>{tt("Best Specs")}</Link>
           </div>
         </div>
         <div className="rf-specs">
-          <span className="cap">Top raid specs</span>
+          <span className="cap">{tt("Top raid specs")}</span>
           {raid.topSpecs.map((sp) => (
             <div className="rf-row" key={sp.name}>
               <SpecSlot name={sp.name} cls={sp.cls} size="sm" /> {sp.name}{" "}

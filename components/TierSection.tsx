@@ -8,6 +8,8 @@ import { classIcon } from "@/lib/gameAssets";
 import { specHref } from "@/lib/specs";
 import { AdSlot } from "./AdSlot";
 import { tierTable, classChips, builds, liveStats } from "@/data/site";
+import { usePathname } from "next/navigation";
+import { langOf, p, t as tr } from "@/lib/i18n";
 import type { TableRow } from "@/data/site";
 
 const DIR = { up: "▲", down: "▼", flat: "—" } as const;
@@ -114,6 +116,8 @@ function Radar() {
 }
 
 export function TierSection() {
+  const lang = langOf(usePathname());
+  const tt = tr(lang);
   const [cls, setCls] = useState("all");
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<Filters>({ ...FILTER_DEFAULTS });
@@ -148,7 +152,7 @@ export function TierSection() {
       {(Object.keys(FILTER_OPTIONS) as (keyof Filters)[]).map((k) =>
         k === "size" ? (
           <div className="fgroup" key={k}>
-            <label>{FILTER_LABELS[k]}</label>
+            <label>{tt(FILTER_LABELS[k])}</label>
             <div className="seg">
               {FILTER_OPTIONS.size.map((v) => (
                 <button
@@ -156,28 +160,30 @@ export function TierSection() {
                   className={filters.size === v ? "on" : undefined}
                   onClick={() => setFilter("size", v)}
                 >
-                  {v}
+                  {tt(v)}
                 </button>
               ))}
             </div>
           </div>
         ) : (
           <div className="fgroup" key={k}>
-            <label htmlFor={`f-${k}`}>{FILTER_LABELS[k]}</label>
+            <label htmlFor={`f-${k}`}>{tt(FILTER_LABELS[k])}</label>
             <select
               id={`f-${k}`}
               value={filters[k]}
               onChange={(e) => setFilter(k, e.target.value)}
             >
               {FILTER_OPTIONS[k].map((o) => (
-                <option key={o}>{o}</option>
+                <option key={o} value={o}>
+                  {tt(o)}
+                </option>
               ))}
             </select>
           </div>
         ),
       )}
       <div className="soon-note">
-        Demo dataset — filters are not wired to data yet.
+        {tt("Demo dataset — filters are not wired to data yet.")}
       </div>
     </div>
   );
@@ -193,10 +199,10 @@ export function TierSection() {
             width={24}
             height={24}
           />
-          <span className="t">TIER LISTS</span>
+          <span className="t">{tt("TIER LISTS")}</span>
         </div>
         <div className="tp-nav">
-          <a className="active" href="/tier-lists" aria-current="page">
+          <a className="active" href={p(lang, "/tier-lists")} aria-current="page">
             <svg className="i" aria-hidden="true">
               <use href="#ic-sword" />
             </svg>{" "}
@@ -206,12 +212,12 @@ export function TierSection() {
             <svg className="i" aria-hidden="true">
               <use href="#ic-shield" />
             </svg>{" "}
-            Raid <span className="soon">soon</span>
+            {tt("Raid")} <span className="soon">{tt("soon")}</span>
           </span>
         </div>
         <div>
           <div className="cap" style={{ marginBottom: 12 }}>
-            Filters
+            {tt("Filters")}
           </div>
           {filtersPanel}
         </div>
@@ -220,56 +226,57 @@ export function TierSection() {
             <svg className="i" style={{ width: 13, height: 13 }} aria-hidden="true">
               <use href="#ic-info" />
             </svg>{" "}
-            About Tier Lists
+            {tt("About Tier Lists")}
           </b>
-          Learn how we calculate our tier lists.
+          {tt("Learn how we calculate our tier lists.")}
         </div>
-        <AdSlot variant="rect" />
+        <AdSlot variant="rect" lang={lang} />
         <div className="side-live">
-          <span className="pulse" /> Data refreshed {liveStats.updated}
+          <span className="pulse" /> {tt("Data refreshed")} {tt(liveStats.updated)}
         </div>
       </aside>
 
       <div className="tp-center">
         <div className="crumbs">
-          <Link href="/">Home</Link>
+          <Link href={p(lang, "/")}>{tt("Home")}</Link>
           <span className="sep">›</span>
           <span style={{ color: "var(--ink-2)" }}>
-            Tier Lists · Mythic+ · Overall
+            {tt("Tier Lists · Mythic+ · Overall")}
           </span>
         </div>
         <div className="tp-title">
-          <h1>MYTHIC+ TIER LIST</h1>
+          <h1>{tt("MYTHIC+ TIER LIST")}</h1>
           <span className="dia">◆</span>
           <span className="rule" />
         </div>
         <div className="tp-sub">
-          Ranked by weighted score across timed runs, popularity and
-          consistency.
+          {tt(
+            "Ranked by weighted score across timed runs, popularity and consistency.",
+          )}
         </div>
         <div className="tp-toolbar">
           <div className="tabs">
             <button className="on" aria-current="true">
-              Overall
+              {tt("Overall")}
             </button>
-            <button aria-disabled="true" title="Available with live data">
+            <button aria-disabled="true" title={tt("Available with live data")}>
               DPS
             </button>
-            <button aria-disabled="true" title="Available with live data">
-              Healers
+            <button aria-disabled="true" title={tt("Available with live data")}>
+              {tt("Healers")}
             </button>
-            <button aria-disabled="true" title="Available with live data">
-              Tanks
+            <button aria-disabled="true" title={tt("Available with live data")}>
+              {tt("Tanks")}
             </button>
           </div>
           <span className="tool tool-static" title="Demo dataset period">
-            Last 7 Days
+            {tt("Last 7 Days")}
           </span>
           <button className="tool" onClick={share}>
             <svg className="i" style={{ width: 12, height: 12 }} aria-hidden="true">
               <use href="#ic-share" />
             </svg>{" "}
-            {copied ? "Copied ✓" : "Share"}
+            {copied ? tt("Copied ✓") : tt("Share")}
           </button>
         </div>
 
@@ -280,7 +287,8 @@ export function TierSection() {
             aria-controls="mobile-filters"
             onClick={() => setMobFilters((v) => !v)}
           >
-            Filters{activeFilters.length > 0 && ` · ${activeFilters.length}`}
+            {tt("Filters")}
+            {activeFilters.length > 0 && ` · ${activeFilters.length}`}
             <svg className="i" style={{ width: 11, height: 11 }} aria-hidden="true">
               <use href="#ic-chev" />
             </svg>
@@ -292,7 +300,7 @@ export function TierSection() {
               onClick={() => setFilter(k, FILTER_DEFAULTS[k])}
               aria-label={`Reset ${FILTER_LABELS[k]}`}
             >
-              {filters[k]} ✕
+              {tt(filters[k])} ✕
             </button>
           ))}
         </div>
@@ -309,7 +317,7 @@ export function TierSection() {
             </svg>
             <input
               type="text"
-              placeholder="Search spec..."
+              placeholder={tt("Search spec...")}
               aria-label="Search spec"
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -329,7 +337,7 @@ export function TierSection() {
                       <Image src={icon} alt="" width={56} height={56} />
                     </span>
                   )}
-                  {c.label}
+                  {tt(c.label)}
                 </button>
               );
             })}
@@ -339,13 +347,13 @@ export function TierSection() {
         <table className="tt">
           <thead>
             <tr>
-              <th>Tier</th>
-              <th>Spec</th>
-              <th className="num">Score</th>
-              <th className="num">Pop.</th>
-              <th className="num col-key">Avg Key</th>
-              <th className="num col-top">Top 1%</th>
-              <th className="num">Trend</th>
+              <th>{tt("Tier")}</th>
+              <th>{tt("Spec")}</th>
+              <th className="num">{tt("Score")}</th>
+              <th className="num">{tt("Pop.")}</th>
+              <th className="num col-key">{tt("Avg Key")}</th>
+              <th className="num col-top">{tt("Top 1%")}</th>
+              <th className="num">{tt("Trend")}</th>
             </tr>
           </thead>
           <tbody>
@@ -364,14 +372,14 @@ export function TierSection() {
                     <td className="tcell" rowSpan={group.rows.length}>
                       <div className={`in tc-${group.tier}`}>
                         <span className="big">{group.tier.toUpperCase()}</span>
-                        <span className="lbl">TIER</span>
+                        <span className="lbl">{tt("Tier").toUpperCase()}</span>
                       </div>
                     </td>
                   )}
                   <td>
                     <div className="scell">
                       <SpecSlot name={row.spec.name} cls={row.spec.cls} size="sm" />
-                      <Link className="scell-name" href={specHref(row.spec.name)}>
+                      <Link className="scell-name" href={p(lang, specHref(row.spec.name))}>
                         {row.spec.name}
                       </Link>
                     </div>
@@ -397,12 +405,13 @@ export function TierSection() {
           </tbody>
         </table>
         <div className="tfoot">
-          Based on {liveStats.runs}+ Mythic+ runs · Updated 2 hours ago
+          {tt("Based on")} {liveStats.runs}+ {tt("Mythic+ runs · Updated 2 hours ago")}
         </div>
         <div className="faq-note">
-          <b>How are scores calculated?</b> Timed-run performance (50%),
-          consistency (30%) and popularity (20%), weighted over the selected
-          period.
+          <b>{tt("How are scores calculated?")}</b>{" "}
+          {tt(
+            "Timed-run performance (50%), consistency (30%) and popularity (20%), weighted over the selected period.",
+          )}
         </div>
 
         <button
@@ -411,16 +420,16 @@ export function TierSection() {
           aria-controls="spec-detail"
           onClick={() => setDetailOpen((v) => !v)}
         >
-          {detailOpen ? "Hide" : "View"} Frost Death Knight details
+          {detailOpen ? tt("Hide") : tt("View")} {tt("Frost Death Knight details")}
           <svg className="i" style={{ width: 11, height: 11 }} aria-hidden="true">
             <use href="#ic-chev" />
           </svg>
         </button>
 
-        <AdSlot />
+        <AdSlot lang={lang} />
 
         <div className="bhead" id="builds">
-          <span className="t">FEATURED BUILDS</span>
+          <span className="t">{tt("FEATURED BUILDS")}</span>
           <span className="dia">◆</span>
           <span className="rule" />
         </div>
@@ -459,7 +468,7 @@ export function TierSection() {
             </div>
             <div className="name">
               <h2>Frost Death Knight</h2>
-              <div className="tier-line">S TIER · 94.2 SCORE</div>
+              <div className="tier-line">{tt("S TIER · 94.2 SCORE")}</div>
             </div>
             <button className="fav" aria-label="Favorite">
               <svg className="i" style={{ width: 16, height: 16 }} aria-hidden="true">
@@ -469,16 +478,16 @@ export function TierSection() {
           </div>
           <div className="dtabs">
             <button className="on" aria-current="true">
-              Overview
+              {tt("Overview")}
             </button>
-            <button aria-disabled="true" title="Coming soon">
-              Stats
+            <button aria-disabled="true" title={tt("Coming soon")}>
+              {tt("Stats")}
             </button>
-            <button aria-disabled="true" title="Coming soon">
-              Talents
+            <button aria-disabled="true" title={tt("Coming soon")}>
+              {tt("Talents")}
             </button>
-            <button aria-disabled="true" title="Coming soon">
-              Trends
+            <button aria-disabled="true" title={tt("Coming soon")}>
+              {tt("Trends")}
             </button>
           </div>
         </div>
@@ -488,28 +497,28 @@ export function TierSection() {
           </div>
           <div className="dgrid">
             <div className="dcard">
-              <h4>Score Breakdown</h4>
-              <div className="dline"><span>Performance</span><b>9.6 <span className="max">/ 10</span></b></div>
-              <div className="dline"><span>Survivability</span><b>9.1 <span className="max">/ 10</span></b></div>
-              <div className="dline"><span>Utility</span><b>7.3 <span className="max">/ 10</span></b></div>
-              <div className="dline"><span>Representation</span><b>9.4 <span className="max">/ 10</span></b></div>
-              <div className="dline"><span>Consistency</span><b>9.4 <span className="max">/ 10</span></b></div>
+              <h4>{tt("Score Breakdown")}</h4>
+              <div className="dline"><span>{tt("Performance")}</span><b>9.6 <span className="max">/ 10</span></b></div>
+              <div className="dline"><span>{tt("Survivability")}</span><b>9.1 <span className="max">/ 10</span></b></div>
+              <div className="dline"><span>{tt("Utility")}</span><b>7.3 <span className="max">/ 10</span></b></div>
+              <div className="dline"><span>{tt("Representation")}</span><b>9.4 <span className="max">/ 10</span></b></div>
+              <div className="dline"><span>{tt("Consistency")}</span><b>9.4 <span className="max">/ 10</span></b></div>
             </div>
             <div className="dcard">
-              <h4>Quick Stats</h4>
-              <div className="dline"><span>Popularity</span><b>16.4%</b></div>
-              <div className="dline"><span>Avg Key</span><b>+14.7</b></div>
-              <div className="dline"><span>Top 1%</span><b>+18</b></div>
-              <div className="dline"><span>Weekly Change</span><b className="pos">▲ 2</b></div>
-              <div className="dline"><span>Data Sample</span><b>42,841</b></div>
+              <h4>{tt("Quick Stats")}</h4>
+              <div className="dline"><span>{tt("Popularity")}</span><b>16.4%</b></div>
+              <div className="dline"><span>{tt("Avg Key")}</span><b>+14.7</b></div>
+              <div className="dline"><span>{tt("Top 1%")}</span><b>+18</b></div>
+              <div className="dline"><span>{tt("Weekly Change")}</span><b className="pos">▲ 2</b></div>
+              <div className="dline"><span>{tt("Data Sample")}</span><b>42,841</b></div>
             </div>
           </div>
           <div className="dactions">
-            <Link className="btn btn-primary" href="/#guides">
-              View Guides
+            <Link className="btn btn-primary" href={p(lang, "/#guides")}>
+              {tt("View Guides")}
             </Link>
             <a className="btn btn-dim" href="#builds">
-              View Builds
+              {tt("View Builds")}
             </a>
           </div>
         </div>

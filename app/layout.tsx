@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Chakra_Petch, Inter } from "next/font/google";
 import { CookieNotice } from "@/components/CookieNotice";
+import { LangAttr } from "@/components/LangAttr";
 import "./globals.css";
 
 const display = Chakra_Petch({
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
   title: "Gildra — Master the Meta",
   description:
     "Live World of Warcraft tier lists, Mythic+ and raid meta statistics, builds and guides.",
+  alternates: { languages: { en: "/", ru: "/ru" } },
   openGraph: {
     siteName: "Gildra",
     type: "website",
@@ -42,6 +44,7 @@ export default function RootLayout({
       <body>
         {children}
         <CookieNotice />
+        <LangAttr />
       </body>
     </html>
   );

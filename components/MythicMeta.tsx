@@ -5,6 +5,7 @@ import {
   mythicTierRows,
   liveStats,
 } from "@/data/site";
+import { p, t, type Lang } from "@/lib/i18n";
 
 function Trend({ trend }: { trend: number }) {
   if (trend > 0) return <span className="up">▲ {trend}</span>;
@@ -14,17 +15,18 @@ function Trend({ trend }: { trend: number }) {
 
 /** Открытая мета-секция без рамки-карточки: spotlight → соседние спеки →
  *  компактный tier rail → подпись. */
-export function MythicMeta() {
+export function MythicMeta({ lang = "en" }: { lang?: Lang }) {
   const s = mythicSpotlight;
+  const tt = t(lang);
   return (
     <div className="metaopen">
       <div className="panel-head">
-        <span className="t">Mythic+ Meta</span>
-        <a className="view" href="/tier-lists">
-          View All →
+        <span className="t">{tt("Mythic+ Meta")}</span>
+        <a className="view" href={p(lang, "/tier-lists")}>
+          {tt("View All →")}
         </a>
       </div>
-      <div className="panel-sub">All Keys · Overall · Last 7 Days</div>
+      <div className="panel-sub">{tt("All Keys · Overall · Last 7 Days")}</div>
       <div className="panel-rule" />
 
       <div className="mspot">
@@ -35,12 +37,12 @@ export function MythicMeta() {
             <Trend trend={s.trend} />
           </div>
           <div className="mspot-sub">
-            {s.klass} · {s.role} · {s.played} played · {s.avgKey} avg key
+            {s.klass} · {s.role} · {s.played} {tt("played")} · {s.avgKey} {tt("avg key")}
           </div>
         </div>
         <div className="mspot-score">
           <b>{s.score}</b>
-          <span>score</span>
+          <span>{tt("score")}</span>
         </div>
       </div>
 
@@ -69,7 +71,8 @@ export function MythicMeta() {
         ))}
       </div>
       <div className="panel-foot">
-        Based on {liveStats.runs}+ runs · Updated {liveStats.updated}
+        {tt("Based on")} {liveStats.runs}+ {tt("runs")} · {tt("Updated")}{" "}
+        {tt(liveStats.updated)}
       </div>
     </div>
   );

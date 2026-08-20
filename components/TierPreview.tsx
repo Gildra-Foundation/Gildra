@@ -3,6 +3,7 @@ import { SpecSlot } from "./SpecSlot";
 import { tierTable, builds, liveStats } from "@/data/site";
 import type { TableRow } from "@/data/site";
 import { specHref } from "@/lib/specs";
+import { p, t, type Lang } from "@/lib/i18n";
 
 const DIR = { up: "▲", down: "▼", flat: "—" } as const;
 
@@ -17,7 +18,8 @@ function Trend({ t }: { t: TableRow["trend"] }) {
 
 /** Компактный preview тир-листа для homepage: топ-7 строк открытым
  *  списком + 4 избранных билда. Полный интерфейс живёт на /tier-lists. */
-export function TierPreview() {
+export function TierPreview({ lang = "en" }: { lang?: Lang }) {
+  const tt = t(lang);
   const rows = tierTable
     .flatMap((g) => g.rows.map((r) => ({ ...r, tier: g.tier })))
     .slice(0, 7);
@@ -26,14 +28,16 @@ export function TierPreview() {
     <>
       <div className="tpv-head">
         <div>
-          <h2>Mythic+ Tier List</h2>
+          <h2>{tt("Mythic+ Tier List")}</h2>
           <p className="tpv-sub">
-            Top specs by weighted score · All Keys · Last 7 Days · based on{" "}
-            {liveStats.runs}+ runs
+            {tt(
+              "Top specs by weighted score · All Keys · Last 7 Days · based on",
+            )}{" "}
+            {liveStats.runs}+ {tt("runs")}
           </p>
         </div>
-        <Link className="btn btn-primary tpv-cta" href="/tier-lists">
-          View full tier list
+        <Link className="btn btn-primary tpv-cta" href={p(lang, "/tier-lists")}>
+          {tt("View full tier list")}
         </Link>
       </div>
 
@@ -43,7 +47,7 @@ export function TierPreview() {
             <span className="tpv-rank">{i + 1}</span>
             <span className={`tpill ${r.tier} sm`}>{r.tier.toUpperCase()}</span>
             <SpecSlot name={r.spec.name} cls={r.spec.cls} size="sm" />
-            <Link className="tpv-name" href={specHref(r.spec.name)}>
+            <Link className="tpv-name" href={p(lang, specHref(r.spec.name))}>
               {r.spec.name}
             </Link>
             <span className="tpv-score">
@@ -61,11 +65,11 @@ export function TierPreview() {
       </div>
 
       <div className="bhead">
-        <span className="t">FEATURED BUILDS</span>
+        <span className="t">{tt("FEATURED BUILDS")}</span>
         <span className="dia">◆</span>
         <span className="rule" />
-        <Link className="view" href="/tier-lists#builds">
-          All Builds →
+        <Link className="view" href={p(lang, "/tier-lists#builds")}>
+          {tt("All Builds →")}
         </Link>
       </div>
       <div className="builds tpv-builds">
@@ -73,7 +77,7 @@ export function TierPreview() {
           <Link
             key={b.title}
             className="bcard"
-            href="/tier-lists#builds"
+            href={p(lang, "/tier-lists#builds")}
           >
             <SpecSlot name={b.spec.name} cls={b.spec.cls} />
             <span className="binfo">

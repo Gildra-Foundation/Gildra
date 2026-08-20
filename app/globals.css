@@ -1379,3 +1379,18 @@ a.logo{color:inherit}
   .pp-tx>span{display:none}
   .pp-cta{padding:8px 13px}
 }
+
+/* ============ LANGUAGE SWITCHER ============ */
+.lsw{
+  display:flex;align-items:center;gap:6px;margin:0 10px 0 2px;flex:none;
+  font-size:10.5px;font-weight:600;letter-spacing:.08em;
+}
+.lsw span{color:#2e3547}
+.lsw a{color:var(--ink-3);padding:3px 2px}
+.lsw a:hover{color:var(--ink)}
+.lsw a.on{color:var(--gold-2)}
+@media (max-width:980px){
+  /* компакт: только кнопка другого языка */
+  .lsw{margin:0 6px 0 0}
+  .lsw a.on,.lsw span{display:none}
+}

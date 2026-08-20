@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SearchCommand } from "./SearchCommand";
+import { altPath, langOf, p, t } from "@/lib/i18n";
 
 /** Task-based направления Explore — только реальные destinations. */
 const TASKS = [
@@ -82,6 +83,8 @@ export function TopNav() {
   const explore = useMenu();
   const game = useMenu();
   const pathname = usePathname();
+  const lang = langOf(pathname);
+  const tt = t(lang);
 
   useEffect(() => {
     document.body.style.overflow = mobOpen ? "hidden" : "";
@@ -90,7 +93,7 @@ export function TopNav() {
     };
   }, [mobOpen]);
 
-  const isCurrent = (href: string) => href === pathname;
+  const isCurrent = (href: string) => p(lang, href) === pathname;
 
   return (
     <header className="topnav">
@@ -106,7 +109,7 @@ export function TopNav() {
         <span />
       </button>
 
-      <Link className="logo" href="/" aria-label="Gildra home">
+      <Link className="logo" href={p(lang, "/")} aria-label="Gildra home">
         <Image
           className="logo-mark"
           src="/brand/helmet.png"
@@ -135,7 +138,7 @@ export function TopNav() {
         </button>
         {game.open && (
           <div className="gsw-menu game-menu" id="game-menu">
-            <div className="exp-cap">Switch game</div>
+            <div className="exp-cap">{tt("Switch game")}</div>
             <button
               type="button"
               className="gitem on"
@@ -164,7 +167,7 @@ export function TopNav() {
                     <use href={g.icon} />
                   </svg>
                 </span>
-                {g.label} <span className="soon">soon</span>
+                {g.label} <span className="soon">{tt("soon")}</span>
               </button>
             ))}
           </div>
@@ -179,7 +182,7 @@ export function TopNav() {
           aria-controls="explore-menu"
           onClick={() => explore.setOpen((v) => !v)}
         >
-          Explore <span className="caret">▾</span>
+          {tt("Explore")} <span className="caret">▾</span>
         </button>
         {explore.open && (
           <div className="gsw-menu exp-menu" id="explore-menu">
@@ -188,7 +191,7 @@ export function TopNav() {
                 <Link
                   key={t.title}
                   className={`exp-card${isCurrent(t.href) ? " on" : ""}`}
-                  href={t.href}
+                  href={p(lang, t.href)}
                   aria-current={isCurrent(t.href) ? "page" : undefined}
                   onClick={() => explore.setOpen(false)}
                 >
@@ -198,9 +201,9 @@ export function TopNav() {
                     </svg>
                   </span>
                   <span className="exp-tx">
-                    <span className="exp-task">{t.task}</span>
-                    <span className="exp-title">{t.title}</span>
-                    <span className="exp-desc">{t.desc}</span>
+                    <span className="exp-task">{tt(t.task)}</span>
+                    <span className="exp-title">{tt(t.title)}</span>
+                    <span className="exp-desc">{tt(t.desc)}</span>
                   </span>
                 </Link>
               ))}
@@ -216,7 +219,7 @@ export function TopNav() {
               <svg className="i" aria-hidden="true">
                 <use href="#ic-search" />
               </svg>
-              Looking for a spec or guide? Search Gildra
+              {tt("Looking for a spec or guide? Search Gildra")}
               <span className="kbd">⌘K</span>
             </button>
           </div>
@@ -234,8 +237,25 @@ export function TopNav() {
         <svg className="i" aria-hidden="true">
           <use href="#ic-search" />
         </svg>{" "}
-        Search Gildra... <span className="kbd">⌘K</span>
+        {tt("Search Gildra...")} <span className="kbd">⌘K</span>
       </button>
+      <nav className="lsw" aria-label="Language">
+        <Link
+          className={lang === "en" ? "on" : undefined}
+          href={altPath(pathname ?? "/", "en")}
+          aria-current={lang === "en" ? "true" : undefined}
+        >
+          EN
+        </Link>
+        <span aria-hidden="true">/</span>
+        <Link
+          className={lang === "ru" ? "on" : undefined}
+          href={altPath(pathname ?? "/", "ru")}
+          aria-current={lang === "ru" ? "true" : undefined}
+        >
+          RU
+        </Link>
+      </nav>
       <button className="user" type="button" aria-label="Account: Alexandér">
         <span className="avatar" aria-hidden="true" />
         <span className="user-name">Alexandér</span>{" "}
@@ -255,25 +275,25 @@ export function TopNav() {
             <svg className="i" aria-hidden="true">
               <use href="#ic-search" />
             </svg>
-            Search Gildra...
+            {tt("Search Gildra...")}
           </button>
           {TASKS.map((t) => (
             <Link
               key={t.title}
               className="mob-task"
-              href={t.href}
+              href={p(lang, t.href)}
               onClick={() => setMobOpen(false)}
             >
-              <span className="exp-task">{t.task}</span>
-              <span className="exp-title">{t.title}</span>
+              <span className="exp-task">{tt(t.task)}</span>
+              <span className="exp-title">{tt(t.title)}</span>
             </Link>
           ))}
           <Link
             className="mob-prem"
-            href="/#premium"
+            href={p(lang, "/#premium")}
             onClick={() => setMobOpen(false)}
           >
-            Go Premium
+            {tt("Go Premium")}
           </Link>
         </nav>
       )}

@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { specIcon, classIcon } from "@/lib/gameAssets";
 import { specHref } from "@/lib/specs";
 import { SPEC_ICONS } from "@/lib/gameAssets";
 import { classChips, builds, guidesList, featuredGuide, raid } from "@/data/site";
+import { langOf, p, t as tr } from "@/lib/i18n";
 
 type Item = {
   group: string;
@@ -66,6 +67,8 @@ export function SearchCommand({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const lang = langOf(usePathname());
+  const tt = tr(lang);
 
   // Cmd+K / Ctrl+K — глобально
   useEffect(() => {
@@ -113,7 +116,7 @@ export function SearchCommand({
 
   const go = (item: Item) => {
     onClose();
-    router.push(item.href);
+    router.push(p(lang, item.href));
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -161,7 +164,7 @@ export function SearchCommand({
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search specs, builds, guides..."
+            placeholder={tt("Search specs, builds, guides...")}
             aria-label="Search"
           />
           <span className="kbd">Esc</span>
@@ -175,14 +178,14 @@ export function SearchCommand({
                 width={44}
                 height={44}
               />
-              No results for “{q}”
+              {tt("No results for")} “{q}”
             </div>
           )}
           {results.map((r, i) => {
             const header =
               r.group !== lastGroup ? (
                 <div className="sc-group" key={`g-${r.group}`}>
-                  {r.group}
+                  {tt(r.group)}
                 </div>
               ) : null;
             lastGroup = r.group;
@@ -207,7 +210,7 @@ export function SearchCommand({
                       </svg>
                     </span>
                   )}
-                  <span className="sc-label">{r.label}</span>
+                  <span className="sc-label">{tt(r.label)}</span>
                   <span className="sc-go">↵</span>
                 </div>
               </div>
