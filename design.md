@@ -275,9 +275,11 @@ actionable data → footer.
   Overview are `aria-disabled`; builds here are static (`.bcard-static`).
 - **AdSlot** (`.adslot`) — reserved ad placements that never break the layout:
   cut-corner plate on a surface slightly darker than panels, faint diagonal
-  hatch, `Ad` chip, centered `Advertisement` placeholder and a `Remove ads →`
-  link to `#premium`. Fixed `min-height` (billboard 96 / 100 mobile, rect 250)
-  so a real network can load without layout shift. Placements are fixed: one
+  hatch and an honest `Ad` chip. Fixed `min-height` (billboard 96 / 100 mobile,
+  rect 250) so a real network can load without layout shift. Until a network is
+  wired, slots run the **house ad** (`.ad-house`): helmet + "Gildra Premium" +
+  gold CTA linking to `#premium` — the only creative allowed to use the brand
+  mark inside an ad. Placements are fixed: one
   billboard on the homepage (between Meta and the Raid break), one billboard
   before Featured Builds and one rect in the rail on `/tier-lists`, one
   billboard before Builds on spec pages. Never place ads inside the hero, the

@@ -1346,12 +1346,36 @@ a.logo{color:inherit}
   font-size:8px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
   color:var(--ink-3);border:1px solid var(--line);padding:2px 6px;
 }
-.ad-ph{
-  font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
-  color:#39415a;user-select:none;
+/* house-ad: самореклама Premium, пока не подключена рекламная сеть */
+.ad-house{
+  position:absolute;inset:0;display:flex;align-items:center;gap:16px;
+  padding:0 84px 0 22px;color:inherit;
+  background:radial-gradient(420px 120px at 18% 50%,rgba(201,162,79,.07),transparent 70%);
 }
-.ad-remove{position:absolute;right:11px;bottom:9px;font-size:10px;color:var(--ink-3)}
-.ad-remove:hover{color:var(--gold-2)}
+.ad-house:hover{color:inherit}
+.ah-helm{flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.ah-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ah-tx b{
+  font-family:var(--display);font-weight:700;font-size:15.5px;color:#eef0f8;
+  letter-spacing:.04em;
+}
+.ah-tx b em{font-style:normal;color:var(--gold-2)}
+.ah-tx>span{font-size:11px;color:var(--ink-2)}
+.ah-cta{
+  width:auto;flex:none;margin-left:auto;padding:9px 18px;
+  font-size:11px;letter-spacing:.1em;
+}
+.ad-house:hover .ah-cta{filter:brightness(1.07)}
+.ad-rect .ad-house{
+  flex-direction:column;justify-content:center;text-align:center;
+  gap:12px;padding:26px 18px;
+  background:radial-gradient(220px 180px at 50% 30%,rgba(201,162,79,.08),transparent 72%);
+}
+.ad-rect .ah-tx{align-items:center}
+.ad-rect .ah-cta{margin-left:0}
 @media (max-width:720px){
   .ad-billboard{min-height:100px;margin:22px 0}
+  .ad-house{gap:12px;padding:0 14px}
+  .ah-tx>span{display:none}
+  .ah-cta{padding:8px 13px}
 }
