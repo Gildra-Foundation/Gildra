@@ -129,6 +129,11 @@ Warlock `#8788ee`, Monk `#00ff98`, Warrior `#c69b6d`, DH `#a330c9`.
   reserved for small labels, tiers, season tags, contextual nav — never body copy.
 - Numbers: `font-variant-numeric: tabular-nums` wherever data aligns.
 
+### Dark-surface polish
+`::selection` is gold-tinted; scrollbars are thin and dark (`#242a3a` thumb on
+transparent track, webkit + `scrollbar-color`); native form controls inherit
+`accent-color: var(--gold)`.
+
 ### Geometry & rhythm
 - Radii 2–3px only (`--r-lg 3 / --r-md 2 / --r-sm 2`); plates use **cut corners**
   (clip-path bevels/octagons), not rounded cards.
@@ -170,6 +175,8 @@ Warlock `#8788ee`, Monk `#00ff98`, Warrior `#c69b6d`, DH `#a330c9`.
   transparent PNG; favicon `app/icon.png`). Used as `.logo-mark` in the header,
   footer and tier-list rail, always paired with the GILDRA wordmark (except the
   favicon). Never recolor it, put it on a light plate, or invent alternate marks.
+  The social card `app/opengraph-image.png` (helmet + wordmark + season line) is
+  regenerated with `node scripts/generate-og.mjs` — never hand-edit the PNG.
 - **Gildra gold** — primary actions, active/current markers, thin ornaments. Sparingly.
 - **Octagonal spec slots** (`.spec`: steel outer, class-gradient inner, real
   icon) — spec identity everywhere: meta, trends, pulse, table, builds, search.
@@ -202,7 +209,10 @@ actionable data → footer.
 | Guides `#guides` | editorial | featured art + 4-row list | stacked | not a uniform card grid |
 | Tier Preview `#tier-list-preview` | taste of ranking + CTA | 7 open rows + 4 builds + gold CTA | 5 rows + 2 builds | never the full workspace |
 | `/tier-lists` workspace | full comparison tool | rail + table + detail aside | h1 → tabs → rows → `Filters · N`; detail behind toggle | only place with filters/detail |
-| Footer | links, premium, legal | brand + columns + disclaimer | stacked | premium never dominates |
+| `/specs/[slug]` | permanent spec URL (10 pages from `tierTable` via `lib/specs.ts`) | crumb → class-edge hero (slot, h1, tier pill, score) → 5-cell stat strip → builds/guides → back link | stats 2×2+1, hero wraps | data identical to the table — never fork numbers |
+| `/privacy` (`.legal`) | honest data policy | narrow 640px column | same | linked from footer + cookie notice |
+| 404 (`.nf`) | branded dead-end | header + helmet, display "404", two exits | same | no artwork background |
+| Footer | links, premium, legal | brand + columns + disclaimer + Privacy link | stacked | premium never dominates |
 
 ## H. Component anatomy and states
 
@@ -251,7 +261,12 @@ actionable data → footer.
   safety); `col-key`/`col-top` hidden ≤720; detail panel: static aside on
   desktop, behind a `View … details` toggle on mobile; detail tabs beyond
   Overview are `aria-disabled`; builds here are static (`.bcard-static`).
-- **Footer** — real Content links, Community as `.dead-link`s, `#premium` anchor.
+- **Footer** — real Content links, Community as `.dead-link`s, `#premium` anchor,
+  Privacy Policy link in the legal line.
+- **CookieNotice** — fixed cut-corner plate (bottom-left, z 80): honest copy,
+  Accept (gold) / Decline (text), link to `/privacy`; the choice persists in
+  `localStorage["gildra-consent"]` and the notice never returns after either
+  choice. No trackers are loaded regardless of the answer today.
 
 States vocabulary: default · hover (`--raise` surface / gold text) ·
 `:focus-visible` (2px `--gold-2` outline; cut-corner controls with `clip-path`

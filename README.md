@@ -15,6 +15,11 @@ WoW gaming-intelligence concept: live tier lists, Mythic+/Raid meta statistics, 
 
 - `/` — homepage: cinematic hero, contextual section nav, Mythic+ meta snapshot, Current Raid feature, guides, compact tier-list preview
 - `/tier-lists` — full Mythic+ tier list experience (filters, class chips, search, table, featured builds, spec detail panel)
+- `/specs/[slug]` — permanent spec pages (statically generated from `data/site.ts` via `lib/specs.ts`)
+- `/privacy` — privacy policy (linked from the footer and the cookie notice)
+- custom branded 404 for everything else
+
+Social preview: `app/opengraph-image.png`, regenerated with `node scripts/generate-og.mjs`.
 
 ## Commands
 

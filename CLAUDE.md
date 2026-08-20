@@ -6,10 +6,12 @@ tool second → analytics dashboard third**. Production: https://gildra.vercel.a
 ## Stack & map
 
 - Next.js 15 App Router + React 19 + TypeScript, static prerender.
-- Routes: `app/page.tsx` (homepage) and `app/tier-lists/page.tsx` (full tier
-  list workspace). They have different roles: the homepage is an overview with
-  a compact Tier Preview; the full filters/table/detail experience lives only
-  on `/tier-lists`. Never embed the full workspace back into the homepage.
+- Routes: `app/page.tsx` (homepage), `app/tier-lists/page.tsx` (full tier list
+  workspace), `app/specs/[slug]/page.tsx` (10 static spec pages from
+  `lib/specs.ts`), `app/privacy/page.tsx`, `app/not-found.tsx` (branded 404).
+  Homepage stays an overview with a compact Tier Preview; the full
+  filters/table/detail experience lives only on `/tier-lists`. Never embed the
+  full workspace back into the homepage.
 - All styling: `app/globals.css` (plain CSS, tokens in `:root`). No Tailwind,
   no CSS-in-JS.
 - Components: `components/` (TopNav, Hero, PatchHighlights, SectionNav,
