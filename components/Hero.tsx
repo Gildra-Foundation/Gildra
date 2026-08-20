@@ -1,5 +1,7 @@
 import Image from "next/image";
-import { liveStats, season, patchHighlights } from "@/data/site";
+import Link from "next/link";
+import { liveStats, season } from "@/data/site";
+import { PatchHighlights } from "./PatchHighlights";
 
 export function Hero() {
   return (
@@ -30,29 +32,31 @@ export function Hero() {
             content.
           </p>
           <div className="hero-actions">
-            <button className="btn btn-primary">Explore Mythic+</button>
-            <button className="btn btn-ghost">Raid Rankings</button>
+            <Link className="btn btn-primary" href="/tier-lists">
+              Explore Mythic+
+            </Link>
+            <a className="btn-text" href="/#raid">
+              Raid rankings →
+            </a>
           </div>
           <div className="hero-live">
-            <span className="pulse" /> Live
-            <span className="tsep">◆</span> <b>{liveStats.runs}</b> runs
-            <span className="tsep">◆</span> <b>{liveStats.specs}</b> specs
-            <span className="tsep">◆</span> <b>{liveStats.regions}</b> regions
-            <span className="tsep">◆</span> updated {liveStats.updated}
+            <span className="hl-badge">
+              <span className="pulse" /> Live
+            </span>
+            <span className="hl-item">
+              <b>{liveStats.runs}</b> runs
+            </span>
+            <span className="hl-item">
+              <b>{liveStats.specs}</b> specs
+            </span>
+            <span className="hl-item">
+              <b>{liveStats.regions}</b> regions
+            </span>
+            <span className="hl-upd">updated {liveStats.updated}</span>
           </div>
         </div>
         <div className="hero-side">
-          <div className="patch">
-            <h3>PATCH {season.patch} HIGHLIGHTS</h3>
-            <ul>
-              {patchHighlights.map((h) => (
-                <li key={h}>{h}</li>
-              ))}
-            </ul>
-            <a className="more" href="#">
-              View full patch notes →
-            </a>
-          </div>
+          <PatchHighlights />
         </div>
       </div>
     </section>
