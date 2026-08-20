@@ -94,7 +94,7 @@ export function TierSection() {
     (!query || name.toLowerCase().includes(query));
 
   return (
-    <div className="tierpage">
+    <div className="tierpage" id="tierlist">
       <aside className="tp-side">
         <div className="tp-brand">
           <div className="logo-mark">G</div>
@@ -312,7 +312,7 @@ export function TierSection() {
           period. <a href="#">Full methodology →</a>
         </div>
 
-        <div className="bhead">
+        <div className="bhead" id="builds">
           <span className="t">FEATURED BUILDS</span>
           <span className="dia">◆</span>
           <span className="rule" />

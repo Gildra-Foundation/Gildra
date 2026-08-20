@@ -8,6 +8,7 @@ import { GuidesSection } from "@/components/GuidesSection";
 import { TierSection } from "@/components/TierSection";
 import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
+import { SectionNav } from "@/components/SectionNav";
 
 export default function Home() {
   return (
@@ -17,8 +18,9 @@ export default function Home() {
       <div className="app">
         <main className="main">
           <Hero />
+          <SectionNav />
           <div className="section">
-            <div className="cards-row">
+            <div className="cards-row" id="mythic">
               <MythicMeta />
               <MetaTrends />
             </div>

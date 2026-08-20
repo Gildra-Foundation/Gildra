@@ -5,7 +5,7 @@ import { raid } from "@/data/site";
 
 export function RaidFeature() {
   return (
-    <section className="raidfeat">
+    <section className="raidfeat" id="raid">
       <Image
         className="rf-art"
         src="/bg.jpg"
