@@ -207,9 +207,12 @@ actionable data → footer.
 - **TopNav** — burger (≤980: `aria-expanded`, body scroll-lock, closes on
   select), logo → `/`, game selector (disclosure: "Switch game" cap, current game on a
   gold octagon tile with a diamond marker, other games on steel tiles as honest
-  `soon` buttons), **Explore** (disclosure with 2×2 task cards: hover raise, `.on` for
-  the current route with `aria-current="page"`, Esc closes and returns focus,
-  outside click closes), search button (opens the dialog), profile button
+  `soon` buttons), **Explore** (disclosure with a 2×2 task grid in the open-row
+  style: octagon icon tiles, hairline cross divider with a center diamond —
+  no framed cards; hover raise + gold tile; `.on` = exact current route only,
+  with `aria-current="page"`, gold left edge and gold title; footer row is a
+  real search trigger with `⌘K` hint; Esc closes and returns focus, outside
+  click closes), search button (opens the dialog), profile button
   (labelled; no menu yet — do not fake one).
 - **SearchCommand** — `role="dialog"` + `aria-modal`; opens on click and
   ⌘/Ctrl+K; local index over `data/site.ts` + `gameAssets`, grouped

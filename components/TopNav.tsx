@@ -89,8 +89,7 @@ export function TopNav() {
     };
   }, [mobOpen]);
 
-  const isCurrent = (href: string) =>
-    href.startsWith("/tier-lists") && pathname === "/tier-lists";
+  const isCurrent = (href: string) => href === pathname;
 
   return (
     <header className="topnav">
@@ -185,17 +184,33 @@ export function TopNav() {
                   aria-current={isCurrent(t.href) ? "page" : undefined}
                   onClick={() => explore.setOpen(false)}
                 >
-                  <span className="exp-ico">
+                  <span className="exp-tile">
                     <svg className="i" aria-hidden="true">
                       <use href={t.icon} />
                     </svg>
                   </span>
-                  <span className="exp-task">{t.task}</span>
-                  <span className="exp-title">{t.title}</span>
-                  <span className="exp-desc">{t.desc}</span>
+                  <span className="exp-tx">
+                    <span className="exp-task">{t.task}</span>
+                    <span className="exp-title">{t.title}</span>
+                    <span className="exp-desc">{t.desc}</span>
+                  </span>
                 </Link>
               ))}
             </div>
+            <button
+              type="button"
+              className="exp-foot"
+              onClick={() => {
+                explore.setOpen(false);
+                setSearchOpen(true);
+              }}
+            >
+              <svg className="i" aria-hidden="true">
+                <use href="#ic-search" />
+              </svg>
+              Looking for a spec or guide? Search Gildra
+              <span className="kbd">⌘K</span>
+            </button>
           </div>
         )}
       </div>
