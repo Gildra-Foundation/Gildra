@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Chakra_Petch, Inter } from "next/font/google";
+import { CookieNotice } from "@/components/CookieNotice";
 import "./globals.css";
 
 const display = Chakra_Petch({
@@ -38,7 +39,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${display.variable} ${ui.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <CookieNotice />
+      </body>
     </html>
   );
 }

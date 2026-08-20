@@ -46,7 +46,7 @@ export function Footer() {
         World of Warcraft® and all related artwork are trademarks or registered
         trademarks of Blizzard Entertainment, Inc. Gildra is an unofficial
         fan-made concept and is not affiliated with or endorsed by Blizzard
-        Entertainment.
+        Entertainment. <a href="/privacy">Privacy Policy</a>
       </div>
     </footer>
   );
