@@ -12,10 +12,12 @@ function Trend({ trend }: { trend: number }) {
   return <span className="flat">—</span>;
 }
 
+/** Открытая мета-секция без рамки-карточки: spotlight → соседние спеки →
+ *  компактный tier rail → подпись. */
 export function MythicMeta() {
   const s = mythicSpotlight;
   return (
-    <div className="panel">
+    <div className="metaopen">
       <div className="panel-head">
         <span className="t">Mythic+ Meta</span>
         <a className="view" href="/tier-lists">

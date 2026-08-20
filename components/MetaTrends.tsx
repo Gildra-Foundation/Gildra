@@ -19,9 +19,7 @@ export function MetaTrends() {
           <div className="trend" key={t.spec.name}>
             <span className="rank">{t.rank}</span>
             <SpecSlot name={t.spec.name} cls={t.spec.cls} size="sm" />
-            <a className="name" href="#">
-              {t.spec.name}
-            </a>
+            <span className="name">{t.spec.name}</span>
             <span className="pct">{t.pct}</span>
             <span className={`dir ${t.dir}`}>{DIR[t.dir]}</span>
           </div>
