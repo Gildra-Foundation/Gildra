@@ -10,23 +10,26 @@ export function AdSlot({
   variant?: "billboard" | "rect";
 }) {
   return (
-    <aside className={`adslot ad-${variant}`} aria-label="Advertisement">
-      <span className="ad-cap">Ad</span>
-      <Link className="ad-house" href="/#premium">
+    <aside
+      className={`pslot ${variant === "rect" ? "pslot-tall" : "pslot-wide"}`}
+      aria-label="Advertisement"
+    >
+      <span className="pslot-cap">Ad</span>
+      <Link className="pslot-promo" href="/#premium">
         <Image
-          className="ah-helm"
+          className="pp-helm"
           src="/brand/helmet.png"
           alt=""
           width={variant === "rect" ? 64 : 46}
           height={variant === "rect" ? 64 : 46}
         />
-        <span className="ah-tx">
+        <span className="pp-tx">
           <b>
             Gildra <em>Premium</em>
           </b>
           <span>Ad-free experience · support development</span>
         </span>
-        <span className="btn-gold ah-cta">Go Premium</span>
+        <span className="btn-gold pp-cta">Go Premium</span>
       </Link>
     </aside>
   );

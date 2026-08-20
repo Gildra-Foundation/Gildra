@@ -273,11 +273,11 @@ actionable data → footer.
   safety); `col-key`/`col-top` hidden ≤720; detail panel: static aside on
   desktop, behind a `View … details` toggle on mobile; detail tabs beyond
   Overview are `aria-disabled`; builds here are static (`.bcard-static`).
-- **AdSlot** (`.adslot`) — reserved ad placements that never break the layout:
+- **AdSlot** (`.pslot`) — reserved ad placements that never break the layout:
   cut-corner plate on a surface slightly darker than panels, faint diagonal
   hatch and an honest `Ad` chip. Fixed `min-height` (billboard 96 / 100 mobile,
   rect 250) so a real network can load without layout shift. Until a network is
-  wired, slots run the **house ad** (`.ad-house`): helmet + "Gildra Premium" +
+  wired, slots run the **house ad** (`.pslot-promo`): helmet + "Gildra Premium" +
   gold CTA linking to `#premium` — the only creative allowed to use the brand
   mark inside an ad. Placements are fixed: one
   billboard on the homepage (between Meta and the Raid break), one billboard
