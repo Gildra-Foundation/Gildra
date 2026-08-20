@@ -127,17 +127,36 @@ export function TopNav() {
           <span className="caret">▾</span>
         </button>
         {game.open && (
-          <div className="gsw-menu" id="game-menu">
+          <div className="gsw-menu game-menu" id="game-menu">
+            <div className="exp-cap">Switch game</div>
+            <button
+              type="button"
+              className="gitem on"
+              aria-current="true"
+              onClick={() => game.setOpen(false)}
+            >
+              <span className="gtile gtile-on">
+                <svg className="i" aria-hidden="true">
+                  <use href="#gm-wow" />
+                </svg>
+              </span>
+              World of Warcraft
+              <span className="gmark" aria-hidden="true">◆</span>
+            </button>
+            <div className="gdiv" />
             {GAMES.map((g) => (
               <button
                 key={g.label}
                 type="button"
+                className="gitem"
                 aria-disabled="true"
                 title="Coming soon"
               >
-                <svg className="i" style={{ color: g.color }} aria-hidden="true">
-                  <use href={g.icon} />
-                </svg>{" "}
+                <span className="gtile">
+                  <svg className="i" style={{ color: g.color }} aria-hidden="true">
+                    <use href={g.icon} />
+                  </svg>
+                </span>
                 {g.label} <span className="soon">soon</span>
               </button>
             ))}

@@ -3,7 +3,7 @@
 ```text
 Status:            Active (living document — update together with the product)
 Applies to:        all Gildra product UI
-Code baseline:     working tree ahead of 1bf9bae (V2.2 pending commit approval)
+Code baseline:     c180299 (V2.2) + infra baa4564
 Last verified:     2026-08-20
 Figma:             https://www.figma.com/design/Vm1gZ9opYvUvxKCZIKY2Pq
 Executable tokens: app/globals.css
@@ -205,8 +205,9 @@ actionable data → footer.
 (Behavioral contract; implementation lives in `components/`.)
 
 - **TopNav** — burger (≤980: `aria-expanded`, body scroll-lock, closes on
-  select), logo → `/`, game selector (disclosure; other games are honest `soon`
-  buttons), **Explore** (disclosure with 2×2 task cards: hover raise, `.on` for
+  select), logo → `/`, game selector (disclosure: "Switch game" cap, current game on a
+  gold octagon tile with a diamond marker, other games on steel tiles as honest
+  `soon` buttons), **Explore** (disclosure with 2×2 task cards: hover raise, `.on` for
   the current route with `aria-current="page"`, Esc closes and returns focus,
   outside click closes), search button (opens the dialog), profile button
   (labelled; no menu yet — do not fake one).
