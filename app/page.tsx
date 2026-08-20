@@ -5,7 +5,7 @@ import { MythicMeta } from "@/components/MythicMeta";
 import { MetaTrends } from "@/components/MetaTrends";
 import { RaidFeature } from "@/components/RaidFeature";
 import { GuidesSection } from "@/components/GuidesSection";
-import { TierSection } from "@/components/TierSection";
+import { TierPreview } from "@/components/TierPreview";
 import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
 import { SectionNav } from "@/components/SectionNav";
@@ -20,13 +20,17 @@ export default function Home() {
           <Hero />
           <SectionNav />
           <div className="section">
-            <div className="cards-row" id="mythic">
+            <section id="meta" className="cards-row">
               <MythicMeta />
               <MetaTrends />
-            </div>
+            </section>
             <RaidFeature />
-            <GuidesSection />
-            <TierSection />
+            <section id="guides" className="guides-sec">
+              <GuidesSection />
+            </section>
+            <section id="tier-list-preview" className="tpv">
+              <TierPreview />
+            </section>
           </div>
         </main>
         <Footer />
