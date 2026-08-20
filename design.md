@@ -2,7 +2,7 @@
 
 Дашборд WoW-статистики. Тёмная тема; единственный бренд-акцент — золото Gildra (умеренно: лого, активная навигация, CTA, орнаменты); классовые цвета — контекстные вторичные акценты (кромки, тинты); синий — только данные и ссылки; классовые цвета — только иконки спеков. Фирменный элемент: гранёные восьмиугольные «слоты» спеков + тонкие арканные орнаменты (линейки, угловые скобы, ромбы-буллеты).
 
-Реализация: [index.html](index.html) · Figma: https://www.figma.com/design/Vm1gZ9opYvUvxKCZIKY2Pq
+Реализация: Next.js App Router (`app/`, `components/`) · Figma: https://www.figma.com/design/Vm1gZ9opYvUvxKCZIKY2Pq
 
 ## Цвета
 
@@ -56,7 +56,7 @@ DK `#c41e3a` · Mage `#3fc7eb` · Evoker `#33937f` · Paladin `#f48cba` · Rogue
 
 ## Сетка
 - Navbar 54 → сайдбар 212 + контент (max 1210, паддинг 34).
-- Карточки перекрывают hero на −46px.
+- Карточки НЕ перекрывают hero: после hero идёт sticky contextual nav (.secnav), затем контент; hero завершается tonal fade к --bg.
 - Страница тир-листа: full-bleed секция, 200 фильтры + центр + 352 панель спека.
 - Радиусы: 12 карточки / 8 средние / 5 кнопки-инпуты.
 - Радар: viewBox 330×248, центр (165,130), R=94; кольца dashed `#252c3d`; данные `url(#rfill)` сине-градиентные, обводка `#7ba6ee`.
@@ -76,3 +76,12 @@ DK `#c41e3a` · Mage `#3fc7eb` · Evoker `#33937f` · Paladin `#f48cba` · Rogue
 - Current Raid: полноширинный баннер с артом, ссылками и топ-спеками рейда — рейд визуально отличается от M+.
 - Футер с Blizzard-дисклеймером.
 - Motion: reveal секций (IntersectionObserver + fallback 2.2s), hero-зум; всё уважает prefers-reduced-motion.
+
+
+## v4 (Homepage V2.1)
+- Фоны разделены: hero — единственное место с артом `/bg.jpg` (плюс второй crop в Current Raid); `body` — спокойная поверхность `--bg` с лёгкой radial-подсветкой, БЕЗ full-page fixed artwork.
+- Навигация: global header = `GILDRA · [WoW ▾] · [Explore ▾] · Search · Profile`; Explore — единственное глобальное меню (группы Mythic+/Raid/Content, клик+клавиатура, aria-expanded/controls, Escape); contextual nav = только крупные секции homepage: Overview · Meta · Current Raid · Guides · Tier List (aria-current="location").
+- Homepage несёт компактный Tier List preview (топ-7 строк открытым списком + 4 билда + CTA); полный интерфейс — на route `/tier-lists`.
+- Patch Highlights: на desktop — лёгкая карточка без угловых скоб; на mobile — свёрнутая строка-кнопка с аккордеоном.
+- Live stats — часть hero-композиции (2×2 на mobile), отдельной ленты-тикера нет.
+- Несуществующие цели не маскируются под ссылки: `.dead-link` / `.soon`-чипы.
