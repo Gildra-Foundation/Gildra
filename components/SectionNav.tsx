@@ -4,14 +4,13 @@ import { useEffect, useState } from "react";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
-  { id: "mythic", label: "Mythic+" },
-  { id: "raid", label: "Raid" },
+  { id: "meta", label: "Meta" },
+  { id: "raid", label: "Current Raid" },
   { id: "guides", label: "Guides" },
-  { id: "tierlist", label: "Tier List" },
-  { id: "builds", label: "Builds" },
+  { id: "tier-list-preview", label: "Tier List" },
 ];
 
-/** Contextual navigation: липнет под global header; активный пункт —
+/** Contextual navigation по крупным секциям homepage. Активный пункт —
  *  последняя секция, чей верх прошёл отметку под липкими панелями
  *  (rAF-троттлинг, passive scroll). Плавный скролл — CSS scroll-behavior
  *  + scroll-margin-top; prefers-reduced-motion отключает анимацию. */
@@ -27,6 +26,13 @@ export function SectionNav() {
       for (const { id } of SECTIONS) {
         const el = document.getElementById(id);
         if (el && el.getBoundingClientRect().top <= threshold) current = id;
+      }
+      // у самого низа страницы активируем последнюю секцию
+      if (
+        window.innerHeight + window.scrollY >=
+        document.body.scrollHeight - 4
+      ) {
+        current = SECTIONS[SECTIONS.length - 1].id;
       }
       setActive(current);
     };
@@ -51,7 +57,7 @@ export function SectionNav() {
             key={s.id}
             href={`#${s.id}`}
             className={active === s.id ? "on" : undefined}
-            aria-current={active === s.id ? "true" : undefined}
+            aria-current={active === s.id ? "location" : undefined}
           >
             {s.label}
           </a>
