@@ -77,7 +77,7 @@ const THUMBS: Record<string, React.ReactNode> = {
 export function GuidesSection() {
   return (
     <>
-      <div className="guides-head" id="guides">
+      <div className="guides-head">
         <span className="t">
           <svg className="i" style={{ width: 15, height: 15 }}>
             <use href="#ic-book" />
@@ -86,9 +86,7 @@ export function GuidesSection() {
         </span>
         <span className="dia">◆</span>
         <span className="rule" />
-        <a className="view" href="#">
-          View All Guides →
-        </a>
+        <span className="view dead-link" title="Coming soon">View All Guides →</span>
       </div>
       <div className="news">
         <article className="nfeat">
