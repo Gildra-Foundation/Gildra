@@ -11,27 +11,36 @@ const SECTIONS = [
   { id: "builds", label: "Builds" },
 ];
 
-/** Contextual navigation: липнет под global header, активный пункт — по
- *  видимой секции (IntersectionObserver). Плавный скролл — через CSS
- *  scroll-behavior + scroll-margin-top, уважает prefers-reduced-motion. */
+/** Contextual navigation: липнет под global header; активный пункт —
+ *  последняя секция, чей верх прошёл отметку под липкими панелями
+ *  (rAF-троттлинг, passive scroll). Плавный скролл — CSS scroll-behavior
+ *  + scroll-margin-top; prefers-reduced-motion отключает анимацию. */
 export function SectionNav() {
   const [active, setActive] = useState("overview");
 
   useEffect(() => {
-    if (!("IntersectionObserver" in window)) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) setActive(e.target.id);
-        });
-      },
-      { rootMargin: "-35% 0px -60% 0px" },
-    );
-    SECTIONS.forEach(({ id }) => {
-      const el = document.getElementById(id);
-      if (el) io.observe(el);
-    });
-    return () => io.disconnect();
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const threshold = 130;
+      let current = SECTIONS[0].id;
+      for (const { id } of SECTIONS) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= threshold) current = id;
+      }
+      setActive(current);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   return (
