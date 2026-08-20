@@ -247,7 +247,10 @@ actionable data → footer.
 - **Footer** — real Content links, Community as `.dead-link`s, `#premium` anchor.
 
 States vocabulary: default · hover (`--raise` surface / gold text) ·
-`:focus-visible` (2px `--gold-2` outline) · active/current (gold + underline /
+`:focus-visible` (2px `--gold-2` outline; cut-corner controls with `clip-path`
+— `.gsw-btn`, `.btn`, chips — use an **inset** `box-shadow` ring instead, since
+`clip-path` crops an outer outline into fragments; on gold-filled buttons the
+ring is dark `#4a3a10`) · active/current (gold + underline /
 `.on`) · selected (gold-tinted chip) · disabled (`aria-disabled`, 45% opacity,
 `not-allowed`) · coming soon (`.soon` chip / `.dead-link`) · open/closed
 (`aria-expanded`) · empty (search “No results”). Loading/error states do not
