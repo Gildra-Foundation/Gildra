@@ -1238,3 +1238,35 @@ a.logo{color:inherit}
   .sp-score{margin-left:0;align-items:flex-start;text-align:left}
   .sp-guide{grid-template-columns:1fr;gap:3px}
 }
+
+/* ============ COOKIE NOTICE + LEGAL ============ */
+.cookie{
+  position:fixed;left:18px;bottom:18px;z-index:80;
+  width:min(420px,calc(100vw - 36px));
+  display:flex;flex-direction:column;gap:12px;
+  background:#0e1119;border:1px solid var(--line);padding:16px 18px;
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+  animation:cookie-in .3s ease both;
+}
+@keyframes cookie-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.cookie{animation:none}}
+.cookie-text{font-size:11.5px;line-height:1.55;color:var(--ink-2)}
+.cookie-text a{color:var(--blue-2)}
+.cookie-text a:hover{color:var(--gold-2)}
+.cookie-actions{display:flex;align-items:center;gap:14px}
+.cookie-ok{font-size:11px;padding:7px 16px}
+.cookie-no{
+  background:none;border:none;font-family:inherit;font-size:11px;font-weight:600;
+  color:var(--ink-3);cursor:pointer;
+}
+.cookie-no:hover{color:var(--ink)}
+.legal{max-width:640px}
+.legal h1{font-family:var(--display);font-weight:700;font-size:27px;color:#eef0f8}
+.legal-upd{font-size:10.5px;color:var(--ink-3);margin:6px 0 8px}
+.legal h2{
+  font-family:var(--display);font-weight:600;font-size:15px;color:var(--gold-2);
+  margin:26px 0 8px;
+}
+.legal p{font-size:13px;line-height:1.65;color:var(--ink-2)}
+.legal-back{margin-top:36px}
