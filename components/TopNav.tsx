@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SearchCommand } from "./SearchCommand";
@@ -106,7 +107,14 @@ export function TopNav() {
       </button>
 
       <Link className="logo" href="/" aria-label="Gildra home">
-        <div className="logo-mark">G</div>
+        <Image
+          className="logo-mark"
+          src="/brand/helmet.png"
+          alt=""
+          width={30}
+          height={30}
+          priority
+        />
         <span className="logo-text">GILDRA</span>
       </Link>
 

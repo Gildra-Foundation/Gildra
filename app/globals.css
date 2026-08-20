@@ -330,11 +330,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 }
 .logo{display:flex;align-items:center;gap:10px;margin-right:8px}
 .logo-mark{
-  width:30px;height:30px;flex:none;
-  clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
-  background:linear-gradient(160deg,#f2da92 0%,#c9a24f 45%,#7d6128 100%);
-  display:grid;place-items:center;
-  font-family:var(--display);font-weight:700;font-size:15px;color:#231a06;
+  width:30px;height:30px;flex:none;object-fit:contain;
 }
 .logo-text{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.18em;color:#e9ecf7}
 .nav-links{display:flex;height:100%}
@@ -755,7 +751,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   padding:20px 16px;display:flex;flex-direction:column;gap:22px;
 }
 .tp-brand{display:flex;align-items:center;gap:9px}
-.tp-brand .logo-mark{width:24px;height:24px;font-size:12px}
+.tp-brand .logo-mark{width:24px;height:24px}
 .tp-brand .t{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.14em;color:#e9ecf7}
 .tp-nav{display:flex;flex-direction:column;gap:3px}
 .tp-nav a{
