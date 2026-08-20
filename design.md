@@ -273,6 +273,15 @@ actionable data → footer.
   safety); `col-key`/`col-top` hidden ≤720; detail panel: static aside on
   desktop, behind a `View … details` toggle on mobile; detail tabs beyond
   Overview are `aria-disabled`; builds here are static (`.bcard-static`).
+- **AdSlot** (`.adslot`) — reserved ad placements that never break the layout:
+  cut-corner plate on a surface slightly darker than panels, faint diagonal
+  hatch, `Ad` chip, centered `Advertisement` placeholder and a `Remove ads →`
+  link to `#premium`. Fixed `min-height` (billboard 96 / 100 mobile, rect 250)
+  so a real network can load without layout shift. Placements are fixed: one
+  billboard on the homepage (between Meta and the Raid break), one billboard
+  before Featured Builds and one rect in the rail on `/tier-lists`, one
+  billboard before Builds on spec pages. Never place ads inside the hero, the
+  tier table, or between table rows; never more than one slot per viewport.
 - **Footer** — real Content links, Community as `.dead-link`s, `#premium` anchor,
   Privacy Policy link in the legal line.
 - **CookieNotice** — fixed cut-corner plate (bottom-left, z 80): honest copy,

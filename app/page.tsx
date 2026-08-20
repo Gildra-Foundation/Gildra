@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
 import { SectionNav } from "@/components/SectionNav";
 import { MetaPulse } from "@/components/MetaPulse";
+import { AdSlot } from "@/components/AdSlot";
 
 export default function Home() {
   return (
@@ -26,6 +27,7 @@ export default function Home() {
               <MythicMeta />
               <MetaTrends />
             </section>
+            <AdSlot />
             <RaidFeature />
             <section id="guides" className="guides-sec">
               <GuidesSection />
