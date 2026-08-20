@@ -13,7 +13,7 @@ export function Reveal() {
       return;
     }
     const els = document.querySelectorAll<HTMLElement>(
-      ".panel, .raidfeat, .nfeat, .nlist, .tierpage, .foot-in",
+      ".panel, .trendside, .raidfeat, .nfeat, .nlist, .tierpage, .foot-in",
     );
     const io = new IntersectionObserver(
       (entries) => {

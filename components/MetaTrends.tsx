@@ -5,7 +5,7 @@ const DIR = { up: "▲", down: "▼", flat: "—" } as const;
 
 export function MetaTrends() {
   return (
-    <div className="panel">
+    <div className="trendside">
       <div className="panel-head">
         <span className="t">Meta Trends</span>
         <a className="view" href="#">
