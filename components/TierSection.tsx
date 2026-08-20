@@ -184,7 +184,13 @@ export function TierSection() {
     <div className="tierpage" id="tierlist">
       <aside className="tp-side">
         <div className="tp-brand">
-          <div className="logo-mark">G</div>
+          <Image
+            className="logo-mark"
+            src="/brand/helmet.png"
+            alt=""
+            width={24}
+            height={24}
+          />
           <span className="t">TIER LISTS</span>
         </div>
         <div className="tp-nav">

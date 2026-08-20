@@ -166,6 +166,10 @@ Warlock `#8788ee`, Monk `#00ff98`, Warrior `#c69b6d`, DH `#a330c9`.
 
 ## F. Signature visual language
 
+- **Brand mark** — the black-and-gold spartan helmet (`public/brand/helmet.png`,
+  transparent PNG; favicon `app/icon.png`). Used as `.logo-mark` in the header,
+  footer and tier-list rail, always paired with the GILDRA wordmark (except the
+  favicon). Never recolor it, put it on a light plate, or invent alternate marks.
 - **Gildra gold** — primary actions, active/current markers, thin ornaments. Sparingly.
 - **Octagonal spec slots** (`.spec`: steel outer, class-gradient inner, real
   icon) — spec identity everywhere: meta, trends, pulse, table, builds, search.

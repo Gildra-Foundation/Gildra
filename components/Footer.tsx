@@ -1,10 +1,18 @@
+import Image from "next/image";
+
 export function Footer() {
   return (
     <footer className="foot">
       <div className="foot-in">
         <div className="foot-brand">
           <div className="logo">
-            <div className="logo-mark">G</div>
+            <Image
+              className="logo-mark"
+              src="/brand/helmet.png"
+              alt=""
+              width={30}
+              height={30}
+            />
             <span className="logo-text">GILDRA</span>
           </div>
           <p>
