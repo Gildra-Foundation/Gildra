@@ -1287,7 +1287,7 @@ a.logo{color:inherit}
 .sp-back{margin-top:34px}
 @media (max-width:900px){
   .sp-stats{grid-template-columns:repeat(2,1fr)}
-  .sp-stat:last-child{grid-column:span 2}
+  .sp-stat:last-of-type{grid-column:span 2}
 }
 @media (max-width:720px){
   .sp-hero{flex-wrap:wrap;padding:16px}
@@ -1328,3 +1328,30 @@ a.logo{color:inherit}
 }
 .legal p{font-size:13px;line-height:1.65;color:var(--ink-2)}
 .legal-back{margin-top:36px}
+
+/* ============ AD SLOTS ============ */
+/* Слоты зарезервированы дизайном: спокойная поверхность чуть темнее панелей,
+   фиксированная min-height (без сдвига вёрстки), честная маркировка. */
+.adslot{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  background:#0c0f16;border:1px solid var(--line-soft);
+  background-image:repeating-linear-gradient(
+    -45deg,rgba(233,236,243,.013) 0 10px,transparent 10px 20px);
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+}
+.ad-billboard{min-height:96px;margin:30px 0}
+.ad-rect{min-height:250px}
+.ad-cap{
+  position:absolute;top:8px;left:10px;
+  font-size:8px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);border:1px solid var(--line);padding:2px 6px;
+}
+.ad-ph{
+  font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  color:#39415a;user-select:none;
+}
+.ad-remove{position:absolute;right:11px;bottom:9px;font-size:10px;color:var(--ink-3)}
+.ad-remove:hover{color:var(--gold-2)}
+@media (max-width:720px){
+  .ad-billboard{min-height:100px;margin:22px 0}
+}

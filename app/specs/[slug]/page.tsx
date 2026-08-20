@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AdSlot } from "@/components/AdSlot";
 import { Icons } from "@/components/Icons";
 import { SpecSlot } from "@/components/SpecSlot";
 import { TopNav } from "@/components/TopNav";
@@ -161,6 +162,8 @@ export default async function SpecPage({
           {season.season} · demo data — based on {liveStats.runs}+ runs, updated{" "}
           {liveStats.updated}.
         </p>
+
+        <AdSlot />
 
         {specBuilds.length > 0 && (
           <>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { SpecSlot } from "./SpecSlot";
 import { classIcon } from "@/lib/gameAssets";
 import { specHref } from "@/lib/specs";
+import { AdSlot } from "./AdSlot";
 import { tierTable, classChips, builds, liveStats } from "@/data/site";
 import type { TableRow } from "@/data/site";
 
@@ -223,6 +224,7 @@ export function TierSection() {
           </b>
           Learn how we calculate our tier lists.
         </div>
+        <AdSlot variant="rect" />
         <div className="side-live">
           <span className="pulse" /> Data refreshed {liveStats.updated}
         </div>
@@ -414,6 +416,8 @@ export function TierSection() {
             <use href="#ic-chev" />
           </svg>
         </button>
+
+        <AdSlot />
 
         <div className="bhead" id="builds">
           <span className="t">FEATURED BUILDS</span>
