@@ -168,6 +168,7 @@ export function TierSection() {
           </b>
           Learn how we calculate our tier lists.
         </div>
+        <div className="soon-note">Demo dataset — season and region filters are not wired yet.</div>
         <div className="side-live">
           <span className="pulse" /> Data refreshed {liveStats.updated}
         </div>
@@ -175,11 +176,11 @@ export function TierSection() {
 
       <div className="tp-center">
         <div className="crumbs">
-          <a href="#">Tier Lists</a>
+          <a href="/">Home</a>
           <span className="sep">›</span>
-          <a href="#">Mythic+</a>
+          <a href="/tier-lists">Tier Lists</a>
           <span className="sep">›</span>
-          <span style={{ color: "var(--ink-2)" }}>Overall</span>
+          <span style={{ color: "var(--ink-2)" }}>Mythic+ · Overall</span>
         </div>
         <div className="tp-title">
           <h2>MYTHIC+ TIER LIST</h2>
@@ -193,9 +194,9 @@ export function TierSection() {
         <div className="tp-toolbar">
           <div className="tabs">
             <button className="on">Overall</button>
-            <button>DPS</button>
-            <button>Healers</button>
-            <button>Tanks</button>
+            <button aria-disabled="true" title="Available with live data">DPS</button>
+            <button aria-disabled="true" title="Available with live data">Healers</button>
+            <button aria-disabled="true" title="Available with live data">Tanks</button>
           </div>
           <button className="tool">
             Last 7 Days{" "}
