@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { season } from "@/data/site";
+import { langOf, p, t } from "@/lib/i18n";
 
 const SECTIONS = [
   { id: "meta", label: "Meta" },
@@ -17,7 +18,10 @@ const SECTIONS = [
  *  ведут на homepage-якоря. Scrollspy — rAF-троттлинг, passive scroll. */
 export function SectionNav() {
   const pathname = usePathname();
-  const onTierRoute = pathname === "/tier-lists";
+  const lang = langOf(pathname);
+  const tt = t(lang);
+  const onTierRoute =
+    pathname === "/tier-lists" || pathname === "/ru/tier-lists";
   const [active, setActive] = useState<string>(onTierRoute ? "tier" : "");
 
   useEffect(() => {
@@ -52,16 +56,16 @@ export function SectionNav() {
     };
   }, [onTierRoute]);
 
-  const href = (id: string) => (onTierRoute ? `/#${id}` : `#${id}`);
+  const href = (id: string) => (onTierRoute ? p(lang, `/#${id}`) : `#${id}`);
   const isOn = (id: string) =>
     onTierRoute ? id === "tier-list-preview" : active === id;
 
   return (
     <nav className="secnav" aria-label="Sections">
       <div className="secnav-in">
-        <Link className="sn-season" href={onTierRoute ? "/" : "#overview"}>
+        <Link className="sn-season" href={onTierRoute ? p(lang, "/") : "#overview"}>
           <span className="sn-season-full">
-            {season.expansion} · {season.season}
+            {season.expansion} · {tt(season.season)}
           </span>
           <span className="sn-season-sm">S1</span>
         </Link>
@@ -69,7 +73,7 @@ export function SectionNav() {
           const on = isOn(s.id);
           const to =
             onTierRoute && s.id === "tier-list-preview"
-              ? "/tier-lists"
+              ? p(lang, "/tier-lists")
               : href(s.id);
           return (
             <Link
@@ -78,7 +82,7 @@ export function SectionNav() {
               className={on ? "on" : undefined}
               aria-current={on ? "location" : undefined}
             >
-              {s.label}
+              {s.label === "Meta" && lang === "ru" ? "Мета" : tt(s.label)}
             </Link>
           );
         })}

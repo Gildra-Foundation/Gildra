@@ -18,15 +18,15 @@ export async function generateMetadata({
   if (!p) return {};
   const name = p.row.spec.name;
   return {
-    title: `${name} — Mythic+ ${p.tier.toUpperCase()}-Tier | Gildra`,
-    description: `${name} in ${season.expansion} ${season.season}: score ${p.row.score}, ${p.row.pop} popularity, avg key ${p.row.key}. Builds and guides on Gildra.`,
+    title: `${name} — ${p.tier.toUpperCase()}-тир Mythic+ | Gildra`,
+    description: `${name} в ${season.expansion} Сезон 1: очки ${p.row.score}, популярность ${p.row.pop}, средний ключ ${p.row.key}. Билды и гайды на Gildra.`,
     alternates: {
       languages: { en: `/specs/${p.slug}`, ru: `/ru/specs/${p.slug}` },
     },
   };
 }
 
-export default async function SpecPage({
+export default async function SpecPageRu({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -34,5 +34,5 @@ export default async function SpecPage({
   const { slug } = await params;
   const p = findSpecPage(slug);
   if (!p) notFound();
-  return <SpecPageBody p={p} lang="en" />;
+  return <SpecPageBody p={p} lang="ru" />;
 }

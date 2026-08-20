@@ -210,6 +210,14 @@ compact Tier Preview (+builds) → footer`.
 Rhythm: cinematic artwork → compact data → artwork break → editorial → compact
 actionable data → footer.
 
+**Localization:** every route has a static Russian mirror under `/ru` (same
+components, `lang` prop for server components, `langOf(usePathname())` for
+client ones). UI chrome translates through `lib/i18n.ts` — an EN-keyed
+dictionary — while game terms, spec/build/guide names and demo content stay
+English by design. Internal links go through `p(lang, href)`; all pages carry
+`hreflang` alternates; `<html lang>` is switched client-side by `LangAttr`.
+Never hard-code a translated string in a component — extend the dictionary.
+
 | Pattern | Purpose | Desktop | Mobile | Density / never duplicate |
 |---|---|---|---|---|
 | Global header | wayfinding: logo, game, Explore, search, profile | one 54px row | burger + logo + WoW + avatar | never a second link row |
@@ -231,7 +239,9 @@ actionable data → footer.
 (Behavioral contract; implementation lives in `components/`.)
 
 - **TopNav** — burger (≤980: `aria-expanded`, body scroll-lock, closes on
-  select), logo → `/`, game selector (disclosure: "Switch game" cap, current game on a
+  select), logo → `/`, language switcher (`.lsw`: EN / RU text links, gold
+  active, ≤980 only the other language shows; routes to the same page in the
+  other tree), game selector (disclosure: "Switch game" cap, current game on a
   gold octagon tile with a diamond marker, other games on steel tiles as honest
   `soon` buttons), **Explore** (disclosure with a 2×2 task grid in the open-row
   style: octagon icon tiles, hairline cross divider with a center diamond —

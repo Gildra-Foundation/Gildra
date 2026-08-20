@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { SpecSlot } from "./SpecSlot";
 import { tierTable } from "@/data/site";
+import { p, t, type Lang } from "@/lib/i18n";
 
 /** Фирменный Meta Pulse: движения меты из реального датасета
  *  (trend-поля тир-таблицы), без выдуманных причин и «live»-обещаний. */
-export function MetaPulse() {
+export function MetaPulse({ lang = "en" }: { lang?: Lang }) {
+  const tt = t(lang);
   const movers = tierTable
     .flatMap((g) => g.rows)
     .filter((r) => r.trend.dir !== "flat")
@@ -20,7 +22,7 @@ export function MetaPulse() {
     <aside className="mpulse" aria-label="Meta pulse">
       <span className="pulse-tag">
         <b>Meta Pulse</b>
-        <span>Season 1 · demo data</span>
+        <span>{tt("Season 1 · demo data")}</span>
       </span>
       <div className="pulse-movers">
         {top.map((m) => (
@@ -34,8 +36,8 @@ export function MetaPulse() {
           </span>
         ))}
       </div>
-      <Link className="pulse-link" href="/tier-lists">
-        {movers.length} rank changes →
+      <Link className="pulse-link" href={p(lang, "/tier-lists")}>
+        {movers.length} {tt("rank changes")} →
       </Link>
     </aside>
   );

@@ -2,8 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { liveStats, season } from "@/data/site";
 import { PatchHighlights } from "./PatchHighlights";
+import { p, t, type Lang } from "@/lib/i18n";
 
-export function Hero() {
+export function Hero({ lang = "en" }: { lang?: Lang }) {
+  const tt = t(lang);
   return (
     <section className="hero" id="overview">
       <div className="hero-art" aria-hidden="true">
@@ -21,38 +23,39 @@ export function Hero() {
           <div className="hero-eyebrow">
             <span className="rule" />
             <span className="cap gold">
-              {season.expansion} · {season.season} · Patch {season.patch}
+              {season.expansion} · {tt(season.season)} · {tt("Patch")} {season.patch}
             </span>
           </div>
           <h1>
-            Master the <em>Meta</em>
+            {tt("Master the")} <em>{tt("Meta")}</em>
           </h1>
           <p className="sub">
-            Builds, rankings and live data from high-level Mythic+ and Raid
-            content.
+            {tt(
+              "Builds, rankings and live data from high-level Mythic+ and Raid content.",
+            )}
           </p>
           <div className="hero-actions">
-            <Link className="btn btn-primary" href="/tier-lists">
-              Explore Mythic+
+            <Link className="btn btn-primary" href={p(lang, "/tier-lists")}>
+              {tt("Explore Mythic+")}
             </Link>
-            <a className="btn-text" href="/#raid">
-              Raid rankings →
+            <a className="btn-text" href={p(lang, "/#raid")}>
+              {tt("Raid rankings →")}
             </a>
           </div>
           <div className="hero-live">
             <span className="hl-badge">
-              <span className="pulse" /> Live
+              <span className="pulse" /> {tt("Live")}
             </span>
             <span className="hl-item">
-              <b>{liveStats.runs}</b> runs
+              <b>{liveStats.runs}</b> {tt("runs")}
             </span>
             <span className="hl-item">
-              <b>{liveStats.specs}</b> specs
+              <b>{liveStats.specs}</b> {tt("specs")}
             </span>
             <span className="hl-item">
-              <b>{liveStats.regions}</b> regions
+              <b>{liveStats.regions}</b> {tt("regions")}
             </span>
-            <span className="hl-upd">updated {liveStats.updated}</span>
+            <span className="hl-upd">{tt("updated")} {tt(liveStats.updated)}</span>
           </div>
         </div>
         <div className="hero-side">

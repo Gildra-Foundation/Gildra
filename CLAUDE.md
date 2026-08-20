@@ -8,7 +8,9 @@ tool second → analytics dashboard third**. Production: https://gildra.vercel.a
 - Next.js 15 App Router + React 19 + TypeScript, static prerender.
 - Routes: `app/page.tsx` (homepage), `app/tier-lists/page.tsx` (full tier list
   workspace), `app/specs/[slug]/page.tsx` (10 static spec pages from
-  `lib/specs.ts`), `app/privacy/page.tsx`, `app/not-found.tsx` (branded 404).
+  `lib/specs.ts`), `app/privacy/page.tsx`, `app/not-found.tsx` (branded 404),
+  plus a full static Russian mirror under `app/ru/**` (UI strings via
+  `lib/i18n.ts`; game terms stay English; links through `p(lang, href)`).
   Homepage stays an overview with a compact Tier Preview; the full
   filters/table/detail experience lives only on `/tier-lists`. Never embed the
   full workspace back into the homepage.

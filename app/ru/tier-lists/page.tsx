@@ -6,13 +6,13 @@ import { SectionNav } from "@/components/SectionNav";
 import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Mythic+ Tier List — Gildra",
+  title: "Тир-лист Mythic+ — Gildra",
   description:
-    "Full Mythic+ tier list with filters, class chips, featured builds and spec details.",
+    "Полный тир-лист Mythic+ с фильтрами, чипами классов, избранными билдами и деталями спеков.",
   alternates: { languages: { en: "/tier-lists", ru: "/ru/tier-lists" } },
 };
 
-export default function TierListsPage() {
+export default function TierListsPageRu() {
   return (
     <>
       <Icons />
@@ -24,7 +24,7 @@ export default function TierListsPage() {
             <TierSection />
           </div>
         </main>
-        <Footer />
+        <Footer lang="ru" />
       </div>
     </>
   );

@@ -26,6 +26,8 @@ export default function NotFound() {
       <h1 className="nf-title">This page fell in battle</h1>
       <p className="nf-sub">
         The page you are looking for was moved, renamed or never existed.
+        <br />
+        Страница, которую вы ищете, была перемещена или не существует.
       </p>
       <div className="nf-actions">
         <Link className="btn btn-primary" href="/">

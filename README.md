@@ -18,6 +18,7 @@ WoW gaming-intelligence concept: live tier lists, Mythic+/Raid meta statistics, 
 - `/specs/[slug]` — permanent spec pages (statically generated from `data/site.ts` via `lib/specs.ts`)
 - `/privacy` — privacy policy (linked from the footer and the cookie notice)
 - custom branded 404 for everything else
+- `/ru`, `/ru/tier-lists`, `/ru/specs/[slug]`, `/ru/privacy` — static Russian mirror (interface strings via `lib/i18n.ts`; game terms stay English); EN/RU switcher in the header
 
 Social preview: `app/opengraph-image.png`, regenerated with `node scripts/generate-og.mjs`.
 

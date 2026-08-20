@@ -1,4 +1,5 @@
 import { featuredGuide, guidesList } from "@/data/site";
+import { t, type Lang } from "@/lib/i18n";
 
 /* Иллюстрации статей — собственная графика (не игровые иконки). */
 
@@ -74,7 +75,8 @@ const THUMBS: Record<string, React.ReactNode> = {
   ),
 };
 
-export function GuidesSection() {
+export function GuidesSection({ lang = "en" }: { lang?: Lang }) {
+  const tt = t(lang);
   return (
     <>
       <div className="guides-head">
@@ -82,11 +84,11 @@ export function GuidesSection() {
           <svg className="i" style={{ width: 15, height: 15 }}>
             <use href="#ic-book" />
           </svg>{" "}
-          LATEST GUIDES
+          {tt("LATEST GUIDES")}
         </span>
         <span className="dia">◆</span>
         <span className="rule" />
-        <span className="view dead-link" title="Coming soon">View All Guides →</span>
+        <span className="view dead-link" title={tt("Coming soon")}>{tt("View All Guides →")}</span>
       </div>
       <div className="news">
         <article className="nfeat">
