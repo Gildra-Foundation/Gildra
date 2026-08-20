@@ -15,19 +15,19 @@ export function Footer() {
         <div className="foot-cols">
           <div className="fcol">
             <h5>Content</h5>
-            <a href="#">Tier Lists</a>
-            <a href="#">Mythic+</a>
-            <a href="#">Raid</a>
-            <a href="#">Builds</a>
-            <a href="#">Guides</a>
+            <a href="/tier-lists">Tier Lists</a>
+            <a href="/#meta">Mythic+</a>
+            <a href="/#raid">Raid</a>
+            <a href="/tier-lists#builds">Builds</a>
+            <a href="/#guides">Guides</a>
           </div>
           <div className="fcol">
             <h5>Community</h5>
-            <a href="#">Discord</a>
-            <a href="#">Support Us</a>
-            <a href="#">Contact</a>
+            <span className="dead-link" title="Coming soon">Discord</span>
+            <span className="dead-link" title="Coming soon">Support Us</span>
+            <span className="dead-link" title="Coming soon">Contact</span>
           </div>
-          <div className="fcol foot-prem">
+          <div className="fcol foot-prem" id="premium">
             <h5>Premium</h5>
             <p>Remove ads and support Gildra development.</p>
             <button className="btn-gold">Go Premium</button>
