@@ -99,10 +99,11 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .gsw-btn .i{width:13px;height:13px;color:var(--gold-2)}
 .gsw-btn:hover{border-color:var(--gold-dim)}
 .gsw-menu{
-  position:absolute;top:calc(100% - 8px);left:0;min-width:200px;z-index:60;
-  background:#10131c;border:1px solid var(--line);padding:6px;
+  position:absolute;top:calc(100% - 6px);left:0;min-width:212px;z-index:60;
+  background:#0e1119;border:1px solid var(--line);padding:7px;
   display:flex;flex-direction:column;
-  box-shadow:0 14px 34px rgba(0,0,0,.5);
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
 }
 .gsw-menu a,.gsw-menu button{
   display:flex;align-items:center;gap:9px;padding:10px 10px;width:100%;
@@ -117,6 +118,31 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   color:var(--ink-3);border:1px solid var(--line);padding:2px 5px;
 }
 .exp-menu{padding:8px}
+.exp-cap{
+  padding:8px 10px 3px;font-size:9px;font-weight:600;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.game-menu .exp-cap{padding:5px 9px 6px}
+.gitem{
+  display:flex;align-items:center;gap:10px;width:100%;padding:7px 9px;
+  font-size:12.5px;font-weight:500;color:var(--ink-2);text-align:left;
+  background:none;border:none;font-family:inherit;
+}
+.gitem:hover{background:var(--raise);color:var(--ink)}
+.gitem[aria-disabled="true"]:hover{background:none;color:var(--ink-2)}
+.gitem.on{color:#e9ecf7;font-weight:600}
+.gtile{
+  width:24px;height:24px;flex:none;display:grid;place-items:center;
+  background:#1e2434;color:var(--ink-2);
+  clip-path:polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
+}
+.gtile .i{width:13px;height:13px}
+.gtile-on{
+  background:linear-gradient(160deg,rgba(201,162,79,.35),rgba(201,162,79,.12));
+  color:var(--gold-2);
+}
+.gmark{margin-left:auto;color:var(--gold);font-size:8px}
+.gdiv{height:1px;background:var(--line-soft);margin:5px 7px}
 .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;min-width:430px}
 .exp-card{
   display:flex;flex-direction:column;gap:2px;padding:11px 12px;position:relative;
