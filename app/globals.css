@@ -34,7 +34,16 @@
   --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{background:var(--bg);scroll-behavior:smooth}
+html{background:var(--bg);scroll-behavior:smooth;accent-color:var(--gold)}
+::selection{background:rgba(201,162,79,.32);color:#f4ecd7}
+/* тонкие тёмные скроллбары вместо системных светлых */
+html{scrollbar-width:thin;scrollbar-color:#2a3143 transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{
+  background:#242a3a;border:2px solid var(--bg);border-radius:5px;
+}
+::-webkit-scrollbar-thumb:hover{background:#2f374b}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 #overview,#meta,#raid,#guides,#tier-list-preview,#tierlist,#builds{scroll-margin-top:104px}
 body{
@@ -1137,3 +1146,25 @@ a.logo{color:inherit}
   .hero-art img{animation:none!important}
   .reveal{opacity:1!important;transform:none!important}
 }
+
+/* ============ 404 ============ */
+.nf{
+  min-height:calc(100vh - 54px);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:60px 20px 90px;
+}
+.nf-helm{opacity:.9;filter:drop-shadow(0 14px 30px rgba(0,0,0,.5))}
+.nf-code{
+  font-family:var(--display);font-weight:700;font-size:64px;line-height:1;
+  color:var(--gold-2);letter-spacing:.06em;margin-top:26px;
+}
+.nf-code::after{
+  content:"";display:block;width:56px;height:1px;margin:18px auto 0;
+  background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);
+}
+.nf-title{
+  font-family:var(--display);font-weight:600;font-size:22px;color:#eef0f8;
+  margin-top:16px;
+}
+.nf-sub{font-size:13px;color:var(--ink-2);margin-top:8px;max-width:420px}
+.nf-actions{display:flex;align-items:center;gap:18px;margin-top:26px;flex-wrap:wrap;justify-content:center}

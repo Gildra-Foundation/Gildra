@@ -15,9 +15,20 @@ const ui = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://gildra.vercel.app"),
   title: "Gildra — Master the Meta",
   description:
     "Live World of Warcraft tier lists, Mythic+ and raid meta statistics, builds and guides.",
+  openGraph: {
+    siteName: "Gildra",
+    type: "website",
+    title: "Gildra — Master the Meta",
+    description:
+      "Live World of Warcraft tier lists, Mythic+ and raid meta statistics, builds and guides.",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({
