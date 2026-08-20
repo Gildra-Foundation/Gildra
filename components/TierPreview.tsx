@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SpecSlot } from "./SpecSlot";
 import { tierTable, builds, liveStats } from "@/data/site";
 import type { TableRow } from "@/data/site";
+import { specHref } from "@/lib/specs";
 
 const DIR = { up: "▲", down: "▼", flat: "—" } as const;
 
@@ -42,7 +43,7 @@ export function TierPreview() {
             <span className="tpv-rank">{i + 1}</span>
             <span className={`tpill ${r.tier} sm`}>{r.tier.toUpperCase()}</span>
             <SpecSlot name={r.spec.name} cls={r.spec.cls} size="sm" />
-            <Link className="tpv-name" href="/tier-lists">
+            <Link className="tpv-name" href={specHref(r.spec.name)}>
               {r.spec.name}
             </Link>
             <span className="tpv-score">

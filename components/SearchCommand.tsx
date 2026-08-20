@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { specIcon, classIcon } from "@/lib/gameAssets";
+import { specHref } from "@/lib/specs";
 import { SPEC_ICONS } from "@/lib/gameAssets";
 import { classChips, builds, guidesList, featuredGuide, raid } from "@/data/site";
 
@@ -24,7 +25,7 @@ const INDEX: Item[] = [
   ...Object.keys(SPEC_ICONS).map((name) => ({
     group: "Specs",
     label: name,
-    href: "/tier-lists",
+    href: specHref(name),
     img: specIcon(name),
   })),
   ...classChips

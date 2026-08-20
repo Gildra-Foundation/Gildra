@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SpecSlot } from "./SpecSlot";
 import { classIcon } from "@/lib/gameAssets";
+import { specHref } from "@/lib/specs";
 import { tierTable, classChips, builds, liveStats } from "@/data/site";
 import type { TableRow } from "@/data/site";
 
@@ -368,7 +369,9 @@ export function TierSection() {
                   <td>
                     <div className="scell">
                       <SpecSlot name={row.spec.name} cls={row.spec.cls} size="sm" />
-                      <span className="scell-name">{row.spec.name}</span>
+                      <Link className="scell-name" href={specHref(row.spec.name)}>
+                        {row.spec.name}
+                      </Link>
                     </div>
                   </td>
                   <td className="num score">
