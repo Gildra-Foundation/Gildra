@@ -47,6 +47,16 @@ export default async function SpecPage({
   );
   const t = row.trend;
 
+  /* Шкалы метрик — честные относительные значения: доля от лучшего
+   *  показателя среди спеков таблицы. */
+  const num = (v: string) => parseFloat(v.replace(/[^\d.]/g, ""));
+  const max = (pick: (r: typeof row) => string) =>
+    Math.max(...specPages.map((s) => num(pick(s.row))));
+  const rel = (v: string, m: number) => `${Math.round((num(v) / m) * 100)}%`;
+  const maxPop = max((r) => r.pop);
+  const maxKey = max((r) => r.key);
+  const maxTop1 = max((r) => r.top1);
+
   return (
     <>
       <Icons />
@@ -64,6 +74,26 @@ export default async function SpecPage({
           className="sp-hero"
           style={{ "--cc": `var(--c-${row.spec.cls})` } as React.CSSProperties}
         >
+          <svg className="sp-oct" viewBox="0 0 100 100" aria-hidden="true">
+            <polygon
+              points="30,2 70,2 98,30 98,70 70,98 30,98 2,70 2,30"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
+            <polygon
+              points="36,12 64,12 88,36 88,64 64,88 36,88 12,64 12,36"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth=".6"
+            />
+            <polygon
+              points="42,24 58,24 76,42 76,58 58,76 42,76 24,58 24,42"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth=".4"
+            />
+          </svg>
           <SpecSlot name={name} cls={row.spec.cls} size="lg" />
           <div className="sp-id">
             <h1>{name}</h1>
@@ -86,18 +116,34 @@ export default async function SpecPage({
           <div className="sp-stat">
             <b>#{rank}</b>
             <span>Overall rank</span>
+            <span className="sbar">
+              <i
+                style={{
+                  width: `${Math.round(((specPages.length - rank + 1) / specPages.length) * 100)}%`,
+                }}
+              />
+            </span>
           </div>
           <div className="sp-stat">
             <b>{row.pop}</b>
             <span>Popularity</span>
+            <span className="sbar">
+              <i style={{ width: rel(row.pop, maxPop) }} />
+            </span>
           </div>
           <div className="sp-stat">
             <b>{row.key}</b>
             <span>Avg key timed</span>
+            <span className="sbar">
+              <i style={{ width: rel(row.key, maxKey) }} />
+            </span>
           </div>
           <div className="sp-stat">
             <b>{row.top1}</b>
             <span>Top 1% key</span>
+            <span className="sbar">
+              <i style={{ width: rel(row.top1, maxTop1) }} />
+            </span>
           </div>
           <div className="sp-stat">
             <b className={t.dir}>
@@ -106,6 +152,9 @@ export default async function SpecPage({
             </b>
             <span>7-day trend</span>
           </div>
+          <span className="sp-emboss" aria-hidden="true">
+            {tier.toUpperCase()}
+          </span>
         </div>
 
         <p className="sp-note">

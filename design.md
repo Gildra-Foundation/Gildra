@@ -177,11 +177,23 @@ transparent track, webkit + `scrollbar-color`); native form controls inherit
   favicon). Never recolor it, put it on a light plate, or invent alternate marks.
   The social card `app/opengraph-image.png` (helmet + wordmark + season line) is
   regenerated with `node scripts/generate-og.mjs` — never hand-edit the PNG.
+  Ornamental uses (quiet, grayscale): footer watermark (`.foot::after`, ~5%
+  opacity), search empty state, the 404 page. Keep it to these — the mark loses
+  value if it is scattered everywhere.
 - **Gildra gold** — primary actions, active/current markers, thin ornaments. Sparingly.
 - **Octagonal spec slots** (`.spec`: steel outer, class-gradient inner, real
   icon) — spec identity everywhere: meta, trends, pulse, table, builds, search.
 - **Class-color contextual accents** — edges/tints only, never full fills.
-- **Tier pills/cells** — octagon S/A/B/C with tier gradients.
+- **Tier pills/cells** — octagon S/A/B/C with tier gradients; the big letters in
+  table tier cells are coined: gradient-filled via `background-clip:text` with a
+  soft drop shadow.
+- **Metal gold CTAs** — top light bevel + bottom dark bevel (`inset` shadows),
+  a single sheen sweep on hover (`::after`, disabled for reduced motion), 1px
+  press on `:active`; hover never changes the dark text color.
+- **Unified plate hover** — interactive rows/cards (`.tpv-row`, `.bcard`,
+  `.sp-guide`) raise their surface and show a gold left-edge inset.
+- **Engraved depth** — large quiet geometry on brand surfaces: concentric
+  class-colored octagons and an embossed tier letter on spec pages.
 - **Thin ornamental rules** — 1px gold-fade dividers under section heads.
 - **Diamond bullets** (`.dia`) — list markers and link separators.
 - **Cut-corner plates** — buttons, chips, menus, the search dialog.

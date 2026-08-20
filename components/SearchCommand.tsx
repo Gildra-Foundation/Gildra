@@ -168,7 +168,15 @@ export function SearchCommand({
         </div>
         <div className="sc-results" ref={listRef} role="listbox" aria-label="Results">
           {results.length === 0 && (
-            <div className="sc-empty">No results for “{q}”</div>
+            <div className="sc-empty">
+              <Image
+                src="/brand/helmet.png"
+                alt=""
+                width={44}
+                height={44}
+              />
+              No results for “{q}”
+            </div>
           )}
           {results.map((r, i) => {
             const header =
