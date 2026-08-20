@@ -9,6 +9,7 @@ import { TierPreview } from "@/components/TierPreview";
 import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
 import { SectionNav } from "@/components/SectionNav";
+import { MetaPulse } from "@/components/MetaPulse";
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
           <Hero />
           <SectionNav />
           <div className="section">
+            <MetaPulse />
             <section id="meta" className="cards-row">
               <MythicMeta />
               <MetaTrends />
