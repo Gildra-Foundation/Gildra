@@ -1,87 +1,323 @@
-# Gildra — дизайн-система v3 «Gaming first»
+# Gildra Design System — Gaming Intelligence for Azeroth
 
-Дашборд WoW-статистики. Тёмная тема; единственный бренд-акцент — золото Gildra (умеренно: лого, активная навигация, CTA, орнаменты); классовые цвета — контекстные вторичные акценты (кромки, тинты); синий — только данные и ссылки; классовые цвета — только иконки спеков. Фирменный элемент: гранёные восьмиугольные «слоты» спеков + тонкие арканные орнаменты (линейки, угловые скобы, ромбы-буллеты).
+```text
+Status:            Active (living document — update together with the product)
+Applies to:        all Gildra product UI
+Code baseline:     working tree ahead of 1bf9bae (V2.2 pending commit approval)
+Last verified:     2026-08-20
+Figma:             https://www.figma.com/design/Vm1gZ9opYvUvxKCZIKY2Pq
+Executable tokens: app/globals.css
+```
 
-Реализация: Next.js App Router (`app/`, `components/`) · Figma: https://www.figma.com/design/Vm1gZ9opYvUvxKCZIKY2Pq
+History lives in Git. This file describes the **current** product only.
 
-## Цвета
+---
 
-### Поверхности
-| Токен | Hex | Использование |
+## A. Product identity
+
+Gildra is a **premium World of Warcraft gaming-intelligence product** for players
+who need fast, trustworthy answers: *what is strong this season, what should I
+play, how do I build it, what changed*. Its users are Mythic+ and raid players
+making decisions between runs — not analysts studying dashboards.
+
+What separates Gildra from a generic analytics dashboard:
+
+- it opens like a game, not like a SaaS admin panel;
+- real game assets (official spec/class icons, expansion artwork) are structural
+  material, not decoration;
+- data is dense but ranked and opinionated — the product takes a position
+  (spotlight, tiers, pulse) instead of dumping tables.
+
+Formula, in priority order:
+
+> **gaming product first → fast decision tool second → analytics dashboard third.**
+
+## B. Design principles
+
+1. **Cinematic entry, calm data body.** The hero is the only full-artwork zone;
+   the body is a quiet solid surface for reading.
+   *Why:* atmosphere sells the game; calm surfaces sell the data.
+   **Do:** keep hero artwork + tonal fade into `--bg`.
+   **Do not:** put image backgrounds under long tables.
+
+2. **Information-dense, not card-dense.** Density comes from typography and
+   rows, not from boxes.
+   *Why:* frames multiply visual noise faster than content.
+   **Do:** open rows, dividers, section surfaces (`.metaopen`, `.trendside`, `.tpv-rows`).
+   **Do not:** wrap every block in a framed card; no card-inside-card.
+
+3. **Authentic game assets over invented decoration.**
+   *Why:* invented glyphs read as AI filler; real icons read as WoW.
+   **Do:** resolve every spec/class icon through `lib/gameAssets.ts`.
+   **Do not:** draw fake game icons, use emoji, or hotlink random images.
+
+4. **Task-first navigation.** Users pick an action (compare specs, find a
+   build), not a sitemap category.
+   *Why:* Gildra is a decision tool.
+   **Do:** keep Explore as the 2×2 task grid; contextual nav = real sections only.
+   **Do not:** render two parallel anchor rows or duplicate Explore in SectionNav.
+
+5. **Data honesty.** Every number is from `data/site.ts`; every control either
+   works or is visibly a prototype.
+   **Do:** label demo data (`Season 1 · demo data`), use `.soon`/`.dead-link`/`.tool-static`.
+   **Do not:** invent live metrics, fake `href="#"` links, or ARIA roles without behavior.
+
+6. **One focal point per major section.** Spotlight in Meta, artwork in Raid,
+   featured article in Guides, S-row in the tier table.
+   **Do:** let supporting content step back (smaller, open layout).
+   **Do not:** make every element equally loud.
+
+7. **Visual verification before completion.** A green build is not design-done.
+   **Do:** capture and critique the real render (see §M).
+   **Do not:** ship from JSX/CSS reading alone.
+
+## C. Source-of-truth hierarchy
+
+1. Current working product behavior and user flow.
+2. `design.md` — canonical intent and rules (this file).
+3. `app/globals.css` — executable token values.
+4. Existing components — current implementation patterns.
+5. Figma node/frame — visual target **only** when the user supplies a concrete link.
+6. External references (Blizzard, Archon, Maxroll) — inspiration level, never copied.
+
+If this file and the CSS disagree, do not silently pick one: determine which
+state is intentional, then synchronize the other inside the task at hand.
+
+## D. Foundations (extracted from `app/globals.css`)
+
+### Surfaces
+| Token | Value | Role |
 |---|---|---|
-| `--bg` | `#0b0d13` | фон страницы (+ radial подсветка `#10141f` сверху) |
-| `--panel` | `#12151e` | карточки |
-| `--panel-2` | `#171b26` | верх градиента карточек, вложенные карточки |
-| `--raise` | `#1c2130` | hover |
-| `#0d1017` | | сайдбары |
-| `#10131c` | | инпуты/селекты |
-| `--line` | `#232837` | рамки |
-| `--line-soft` | `#1c212e` | разделители |
+| `--bg` | `#0b0d13` | page/body base (plus faint top radial `#10141f`) |
+| `--panel` | `#12151e` | contained surfaces |
+| `--panel-2` | `#171b26` | nested/elevated surfaces, sheets |
+| `--raise` | `#1c2130` | hover surface |
+| `#0d1017` | — | rails/sidebars (tier workspace) |
+| `#10131c` | — | inputs, selects, menu panels |
+| `--line` / `--line-soft` | `#232837` / `#1c212e` | borders / dividers |
 
-### Текст: `--ink #e9ecf3` · `--ink-2 #98a2b6` · `--ink-3 #5c6679`
+### Text
+`--ink #e9ecf3` (primary) · `--ink-2 #98a2b6` (secondary) · `--ink-3 #7a86a0`
+(muted, AA on panels) · `#eef0f8` / `#e9ecf7` (display headings).
 
-### Акценты
-| Токен | Hex | Использование |
+### Accent
+| Token | Value | Role |
 |---|---|---|
-| `--gold` | `#c9a24f` | орнаменты, ромбы, категории (акцент) |
-| `--gold-2` | `#e6c77a` | заголовки панелей, активные табы, «META» в H1 |
-| `--gold-dim` | `#8a733c` | приглушённые золотые рамки |
-| золотая кнопка | `#edd28a → #c9a24f → #99793a` + рамка `#6b571f`, текст `#251c07` | primary CTA |
-| `--blue / --blue-2` | `#4d7dd6 / #7ba6ee` | ссылки, радар |
-| `--green / --red` | `#57ab63 / #d95c55` | тренды |
+| `--gold` | `#c9a24f` | ornaments, bullets, active markers |
+| `--gold-2` | `#e6c77a` | active nav, title accents, pulse tag |
+| `--gold-dim` | `#8a733c` | muted gold borders, selected chips |
+| gold CTA | `#edd28a→#c9a24f→#99793a`, border `#6b571f`, text `#251c07` | primary buttons |
+| `--blue` / `--blue-2` | `#4d7dd6` / `#7ba6ee` | links, radar data |
+| `--green` / `--red` | `#57ab63` / `#d95c55` | up/down trends only |
 
-### Тиры (октагоны и ячейки)
-S `#5a2023→#42191b` текст `#e88f80` · A `#514016→#3c2f12` текст `#dfc06a` · B `#1e4527→#16331d` текст `#82c08c` · C `#1e3a58→#16283e` текст `#7fa9d6`
+### Tier semantics (data, never decoration)
+S `#5a2023→#42191b`/`#e88f80` · A `#514016→#3c2f12`/`#dfc06a` ·
+B `#1e4527→#16331d`/`#82c08c` · C `#1e3a58→#16283e`/`#7fa9d6`.
 
-### Классовые цвета WoW — только внутри слотов спеков
-DK `#c41e3a` · Mage `#3fc7eb` · Evoker `#33937f` · Paladin `#f48cba` · Rogue `#fff468` · Druid `#ff7c0a` · Priest `#dfe3e8` · Hunter `#aad372` · Shaman `#0070dd` · Warlock `#8788ee` · Monk `#00ff98` · Warrior `#c69b6d` · DH `#a330c9`
+### Class colors
+Only inside spec slots and as contextual edge accents (e.g. `.mspot` red DK edge):
+DK `#c41e3a`, Mage `#3fc7eb`, Evoker `#33937f`, Paladin `#f48cba`, Rogue `#fff468`,
+Druid `#ff7c0a`, Priest `#dfe3e8`, Hunter `#aad372`, Shaman `#0070dd`,
+Warlock `#8788ee`, Monk `#00ff98`, Warrior `#c69b6d`, DH `#a330c9`.
 
-## Фирменные элементы
-1. **Октагон-слот спека**: внешний октагон «сталь» `#4a5468→#232a3a`, внутренний — классовый градиент (светлый→базовый), аббревиатура 27% размера, Bold. Clip: `polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%)`.
-2. **Орнаментные линейки**: 1px градиент к прозрачному с золотом 20–40%; под заголовками панелей и секций.
-3. **Угловые скобы**: 12–14px золотые уголки (opacity .5) на патч-карте и премиум-карте.
-4. **Ромб-буллет**: квадрат 5px, rotate 45°, золото — вместо всех маркеров списков.
-5. **Римские цифры** (Chakra Petch) в рейтинге мета-трендов.
-6. **Hero-арт**: слоёные горы + цитадель + луч; тонкая золотая линия горизонта поверх хребта; шум (feTurbulence, opacity .05) только на hero — без mix-blend-mode (вешает композитинг).
+### Typography
+- Display: **Chakra Petch** (`--font-display` via next/font, weights 500–700;
+  700 is the maximum — never fake 800). Roles: hero H1 44/40, section titles
+  22–27, tier letters, scores, CTAs, roman numerals.
+- UI/body: **Inter** (`--font-ui`, 400–700), base 13px.
+- Labels `.cap`: Inter 600 10px, tracking .16em, uppercase. Uppercase is
+  reserved for small labels, tiers, season tags, contextual nav — never body copy.
+- Numbers: `font-variant-numeric: tabular-nums` wherever data aligns.
 
-## Типографика
-| Роль | Шрифт |
-|---|---|
-| Display: H1 46/1.1, заголовки панелей 13–14, буквы тиров, кнопки-CTA, римские цифры | Chakra Petch Bold, letter-spacing 1–3px |
-| UI: всё остальное, база 13px | Inter 400–700 |
-| Ярлыки `.cap` | Inter 600 10px, letter-spacing .16em, uppercase |
-| Числа | tabular-nums |
+### Geometry & rhythm
+- Radii 2–3px only (`--r-lg 3 / --r-md 2 / --r-sm 2`); plates use **cut corners**
+  (clip-path bevels/octagons), not rounded cards.
+- Content `max-width:1210px`, side padding 34 (20 on mobile).
+- Header 54px; contextual nav 42px; anchor offset `scroll-margin-top:104px`.
+- Breakpoints: **980** (header collapses to burger), **1120** (single column;
+  tier workspace switches to mobile order), **720** (mobile refinements).
+- Z-layers: content < `.secnav` 40 < header dropdowns 60 < mobile menu 70 <
+  search dialog 90.
+- Motion: 130–300ms ease for UI; hero zoom 38s scale 1→1.07; reveal 450ms
+  opacity/translate with a 2.2s failsafe (content can never stay hidden); one
+  280ms scaleX sweep for the nav underline. `prefers-reduced-motion` disables
+  all of the above plus smooth scroll.
 
-Иконки — собственный SVG-спрайт (stroke 1.5, round caps): search, bell, sword, shield, chart, trend, chat, heart, star, share, crown, book, info, chevron. Эмодзи не используются.
+## E. Artwork system
 
-## Сетка
-- Navbar 54 → сайдбар 212 + контент (max 1210, паддинг 34).
-- Карточки НЕ перекрывают hero: после hero идёт sticky contextual nav (.secnav), затем контент; hero завершается tonal fade к --bg.
-- Страница тир-листа: full-bleed секция, 200 фильтры + центр + 352 панель спека.
-- Радиусы: 12 карточки / 8 средние / 5 кнопки-инпуты.
-- Радар: viewBox 330×248, центр (165,130), R=94; кольца dashed `#252c3d`; данные `url(#rfill)` сине-градиентные, обводка `#7ba6ee`.
+- **Allowed:** hero (`/bg.jpg`, `object-position: 63% 22%`, `priority`) and the
+  Current Raid chapter break (same asset today, crop `center 62%`, lazy).
+- **Forbidden:** artwork under body/data surfaces; `background-attachment:fixed`
+  full-page images; artwork behind the tier table.
+- Readability: hero uses a left-to-right dark gradient plus a bottom tonal fade
+  to `--bg`; text over art must stay AA.
+- Crop rule: the focal character/object must not be cut arbitrarily — verify at
+  1440 and 390 whenever a crop changes.
+- Sources: only assets already in `public/` or explicitly licensed additions.
+  Never download random images. Official spec/class icons are the Wowhead-CDN
+  copies in `public/assets/**`, resolved exclusively through
+  `lib/gameAssets.ts` (`specIcon`, `classIcon`) — never scatter asset paths.
+- Missing asset → keep an honest typographic composition and record the gap in
+  the task report. (Known gap: no dedicated raid artwork yet — RaidFeature
+  reuses `/bg.jpg` with a different crop.)
 
-## Запреты (анти-ИИшность)
-- Никаких эмодзи в UI.
-- Кнопки — только золотой бренд-акцент. Игровые иконки — только настоящие (assets/, GameAssets-резолвер); выдуманные глифы запрещены.
-- Плоские «блобы» градиентов запрещены: у арта всегда есть силуэт/эмблема + шум.
-- Числовые маркеры 01/02/03 не используются.
+> **Hard rule:** Hero and large editorial/raid breaks may use artwork; long
+> data surfaces and tables never get a full-page image background.
 
+## F. Signature visual language
 
-## v3 (gaming-first редизайн)
-- Иконки спеков/классов — официальные (Wowhead CDN → `assets/specs/*.jpg`, `assets/classes/*.jpg`), маппинг в JS `GameAssets`.
-- Hero: настоящий арт Midnight (`bg.jpg`, object-position 63% 22%, медленный зум 38s), градиент читабельности слева, лента LIVE-статистики сверху.
-- Навигация: один навбар — лого + game-switcher-дропдаун + Tier Lists/Mythic+/Raid/Builds/Guides + поиск/профиль. Левый сайдбар удалён; премиум — в футере.
-- Mythic+ Meta: спотлайт S-тира (крупная иконка, счёт 26px, кромка классового цвета) + компактные строки + ряды A/B/C.
-- Current Raid: полноширинный баннер с артом, ссылками и топ-спеками рейда — рейд визуально отличается от M+.
-- Футер с Blizzard-дисклеймером.
-- Motion: reveal секций (IntersectionObserver + fallback 2.2s), hero-зум; всё уважает prefers-reduced-motion.
+- **Gildra gold** — primary actions, active/current markers, thin ornaments. Sparingly.
+- **Octagonal spec slots** (`.spec`: steel outer, class-gradient inner, real
+  icon) — spec identity everywhere: meta, trends, pulse, table, builds, search.
+- **Class-color contextual accents** — edges/tints only, never full fills.
+- **Tier pills/cells** — octagon S/A/B/C with tier gradients.
+- **Thin ornamental rules** — 1px gold-fade dividers under section heads.
+- **Diamond bullets** (`.dia`) — list markers and link separators.
+- **Cut-corner plates** — buttons, chips, menus, the search dialog.
+- **Meta Pulse** (`.mpulse`) — gold bevel notch strip with top movers and an
+  honest demo label. (`.pulse` is the small live dot — never reuse that class.)
+- **Active navigation treatment** — gold text + gradient underline + one sweep.
+- **Display numerals** — Chakra Petch scores with gold micro-bars (`.sbar`).
 
+## G. Layout and page rhythm
 
-## v4 (Homepage V2.1)
-- Фоны разделены: hero — единственное место с артом `/bg.jpg` (плюс второй crop в Current Raid); `body` — спокойная поверхность `--bg` с лёгкой radial-подсветкой, БЕЗ full-page fixed artwork.
-- Навигация: global header = `GILDRA · [WoW ▾] · [Explore ▾] · Search · Profile`; Explore — единственное глобальное меню (группы Mythic+/Raid/Content, клик+клавиатура, aria-expanded/controls, Escape); contextual nav = только крупные секции homepage: Overview · Meta · Current Raid · Guides · Tier List (aria-current="location").
-- Homepage несёт компактный Tier List preview (топ-7 строк открытым списком + 4 билда + CTA); полный интерфейс — на route `/tier-lists`.
-- Patch Highlights: на desktop — лёгкая карточка без угловых скоб; на mobile — свёрнутая строка-кнопка с аккордеоном.
-- Live stats — часть hero-композиции (2×2 на mobile), отдельной ленты-тикера нет.
-- Несуществующие цели не маскируются под ссылки: `.dead-link` / `.soon`-чипы.
+Homepage: `header → cinematic hero → contextual nav → Meta Pulse → Meta
+snapshot (spotlight + open trends) → Raid artwork break → Guides editorial →
+compact Tier Preview (+builds) → footer`.
+Rhythm: cinematic artwork → compact data → artwork break → editorial → compact
+actionable data → footer.
+
+| Pattern | Purpose | Desktop | Mobile | Density / never duplicate |
+|---|---|---|---|---|
+| Global header | wayfinding: logo, game, Explore, search, profile | one 54px row | burger + logo + WoW + avatar | never a second link row |
+| Hero `#overview` | identity + value + CTA + live line | copy left, patch card right | patch = pill accordion; live stats 2×2 | one primary CTA |
+| SectionNav | on-page wayfinding | season label + META/RAID/GUIDES/TIER LIST, sticky | `S1` + items, right edge fade | must not mirror Explore |
+| Meta Pulse | movement at a glance | one strip: tag, 3 movers, count link | wraps to 2–3 lines | not a card; one per page |
+| Meta snapshot `#meta` | decide what to play | open spotlight + runners + A/B/C rail ‖ open trends | single column, tight paddings | spotlight is the only big element |
+| Raid break `#raid` | chapter change | artwork banner: links left, top specs right | stacked over art | second artwork moment, not third |
+| Guides `#guides` | editorial | featured art + 4-row list | stacked | not a uniform card grid |
+| Tier Preview `#tier-list-preview` | taste of ranking + CTA | 7 open rows + 4 builds + gold CTA | 5 rows + 2 builds | never the full workspace |
+| `/tier-lists` workspace | full comparison tool | rail + table + detail aside | h1 → tabs → rows → `Filters · N`; detail behind toggle | only place with filters/detail |
+| Footer | links, premium, legal | brand + columns + disclaimer | stacked | premium never dominates |
+
+## H. Component anatomy and states
+
+(Behavioral contract; implementation lives in `components/`.)
+
+- **TopNav** — burger (≤980: `aria-expanded`, body scroll-lock, closes on
+  select), logo → `/`, game selector (disclosure; other games are honest `soon`
+  buttons), **Explore** (disclosure with 2×2 task cards: hover raise, `.on` for
+  the current route with `aria-current="page"`, Esc closes and returns focus,
+  outside click closes), search button (opens the dialog), profile button
+  (labelled; no menu yet — do not fake one).
+- **SearchCommand** — `role="dialog"` + `aria-modal`; opens on click and
+  ⌘/Ctrl+K; local index over `data/site.ts` + `gameAssets`, grouped
+  Specs/Classes/Builds/Raid/Guides/Pages; ↑ ↓ Home End roam, Enter navigates,
+  Esc closes; focus trapped, then returned to the trigger; empty state; body
+  scroll-lock while open.
+- **Hero** — H1, sub, gold CTA → `/tier-lists`, text CTA → `/#raid`, live line
+  (`.hl-badge` / `.hl-item` / `.hl-upd`).
+- **PatchHighlights** — desktop: light card; mobile: collapsed pill button
+  (`aria-expanded`) → accordion list + link.
+- **SectionNav** — links with `aria-current="location"`; rAF scrollspy on `/`;
+  route-aware active Tier List on `/tier-lists`; bottom-of-page activates the
+  last section.
+- **MythicMeta** (`.metaopen`) — spotlight (class-edge tint, S pill, trend),
+  two runner rows, A/B/C octagon rail, foot line. No outer frame.
+- **MetaTrends** (`.trendside`) — open ranked column, roman numerals,
+  plain-text names (no fake links), bottom CTA.
+- **MetaPulse** — §F; the link leads to `/tier-lists`.
+- **RaidFeature** — artwork, title, honest links (`Tier List`, `Guides` real;
+  `Boss Rankings`, `Best Specs` are `.dead-link` until routes exist), top specs.
+- **GuidesSection** — featured card (hover art zoom) + rows; non-clickable
+  until article routes exist (`cursor:default`; View-All is `.dead-link`).
+- **TierPreview** — rank / tier pill / slot / name → `/tier-lists` /
+  score + `.sbar` / pop / trend; build cards are real links to
+  `/tier-lists#builds`.
+- **TierSection** — the route `h1`; tabs (Overall current, others
+  `aria-disabled` + title); period chip `.tool-static`; **Share** copies the
+  URL (`Copied ✓`); `Filters · N` toggle (`aria-expanded/controls`) with
+  removable `.fchip`s and a collapsible `filters-panel` (controlled selects and
+  segments, honest demo note); spec search + class chips (octagon class icons,
+  gold `.on`); table rows dim via opacity .14 (never `display:none` — rowSpan
+  safety); `col-key`/`col-top` hidden ≤720; detail panel: static aside on
+  desktop, behind a `View … details` toggle on mobile; detail tabs beyond
+  Overview are `aria-disabled`; builds here are static (`.bcard-static`).
+- **Footer** — real Content links, Community as `.dead-link`s, `#premium` anchor.
+
+States vocabulary: default · hover (`--raise` surface / gold text) ·
+`:focus-visible` (2px `--gold-2` outline) · active/current (gold + underline /
+`.on`) · selected (gold-tinted chip) · disabled (`aria-disabled`, 45% opacity,
+`not-allowed`) · coming soon (`.soon` chip / `.dead-link`) · open/closed
+(`aria-expanded`) · empty (search “No results”). Loading/error states do not
+exist yet (static prerender) — do not fake them.
+
+## I. Responsive rules
+
+- ≤980: header collapses — nav tasks and search move into the burger; game
+  label shortens to “WoW”; profile becomes avatar-only.
+- ≤1120: sections go single-column; the tier workspace hides its rail — order
+  becomes **h1 → tabs → first rows → `Filters · N` toggle**; the detail panel
+  hides behind its toggle.
+- ≤720: patch pill accordion; live stats 2×2; season label `S1`; preview trims
+  to 5 rows / 2 builds; the table drops Avg Key and Top 1%; secnav gets a right
+  edge fade; side padding 20.
+- Data priority on small screens: rank, spec identity, score, trend stay;
+  secondary metrics hide.
+- Touch targets ≥ ~44px for primary controls; chips ≥ 28px with spacing.
+- Horizontal page overflow at 390/768/1280/1440 is a release blocker; fix the
+  wide element — never mask with `overflow-x:hidden`.
+- Mobile tables: hide columns or compact the rows; never `transform: scale()`.
+
+QA matrix (minimum): `1440×1000`, `1280×900`, `768×1024`, `390×844`.
+
+## J. Data visualization and content rules
+
+- Tabular numerals; display-font scores with `.sbar` micro-bars
+  (width = (score − 70) / 25 × 100%).
+- Trends: ▲ green / ▼ red / — muted, always paired with a number or label —
+  color is never the only signal.
+- Tier letters are semantics; roman numerals mark popularity ranks.
+- Freshness labels come from data (`updated 2h ago`); demo data is labelled
+  (“Season 1 · demo data”, “Demo dataset — … not wired yet”). Never claim
+  “live” without a live source; never invent metrics, authors or timestamps.
+- Compact rows/tables for rankings; cards only for standalone interactive
+  entities (build links, featured guide).
+- Copy: sentence case, active verbs (“View full tier list”), consistent terms
+  (spec, tier, build, guide, season, patch). No slogans inside data UI.
+
+## K. Accessibility and interaction contract
+
+Semantic headings (one `h1` per route) · full keyboard flow for header, menus,
+search, filters and toggles · focus returns to the trigger on close ·
+dialog/menu semantics only where the behavior is implemented · Esc closes
+temporary surfaces · scroll-lock is always removed on close · visible
+`:focus-visible` everywhere · AA text contrast (muted text ≥ `--ink-3`) ·
+meaningful `alt`, decorative `alt=""` · `prefers-reduced-motion` honored ·
+the reveal failsafe keeps content visible · no `href="#"`; prototypes are
+`.soon` / `.dead-link` / `aria-disabled` with explanatory titles.
+
+## L. Anti-patterns (never ship)
+
+Generic SaaS hero · endless framed cards / card-in-card · purple AI glow ·
+glassmorphism everywhere · emoji UI · invented glyphs or fake game assets ·
+arbitrary gradient blobs · gold flooding · motion for its own sake · duplicated
+navigation rows · a full product workspace embedded in the homepage · desktop
+UI scaled down to mobile · numbered markers (01/02/03) as decoration.
+
+## M. Definition of design done
+
+```text
+inspect current render
+→ capture baseline (npm run design:capture or Playwright MCP)
+→ identify the hierarchy/flow problem
+→ implement the minimal change
+→ npm run build
+→ capture the same states/viewports
+→ critique the visible result (not the code)
+→ fix regressions
+→ keyboard/accessibility pass
+→ report with evidence (screenshots, measured heights, checks)
+```
+
+A green build without render verification is **not** design done.
