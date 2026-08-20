@@ -3,7 +3,7 @@ import { liveStats, season, patchHighlights } from "@/data/site";
 
 export function Hero() {
   return (
-    <section className="hero">
+    <section className="hero" id="overview">
       <div className="hero-art" aria-hidden="true">
         <Image
           src="/bg.jpg"
@@ -13,13 +13,6 @@ export function Hero() {
           sizes="100vw"
           style={{ objectFit: "cover", objectPosition: "63% 22%" }}
         />
-      </div>
-      <div className="ticker">
-        <span className="pulse" /> Live
-        <span className="tsep">◆</span> <b>{liveStats.runs}</b> runs analyzed
-        <span className="tsep">◆</span> <b>{liveStats.specs}</b> specs tracked
-        <span className="tsep">◆</span> <b>{liveStats.regions}</b> regions
-        <span className="tsep">◆</span> data updated {liveStats.updated}
       </div>
       <div className="hero-inner">
         <div>
@@ -39,6 +32,13 @@ export function Hero() {
           <div className="hero-actions">
             <button className="btn btn-primary">Explore Mythic+</button>
             <button className="btn btn-ghost">Raid Rankings</button>
+          </div>
+          <div className="hero-live">
+            <span className="pulse" /> Live
+            <span className="tsep">◆</span> <b>{liveStats.runs}</b> runs
+            <span className="tsep">◆</span> <b>{liveStats.specs}</b> specs
+            <span className="tsep">◆</span> <b>{liveStats.regions}</b> regions
+            <span className="tsep">◆</span> updated {liveStats.updated}
           </div>
         </div>
         <div className="hero-side">
