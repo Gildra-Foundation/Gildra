@@ -77,7 +77,7 @@ const THUMBS: Record<string, React.ReactNode> = {
 export function GuidesSection() {
   return (
     <>
-      <div className="guides-head">
+      <div className="guides-head" id="guides">
         <span className="t">
           <svg className="i" style={{ width: 15, height: 15 }}>
             <use href="#ic-book" />
