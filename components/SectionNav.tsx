@@ -1,33 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { season } from "@/data/site";
 
 const SECTIONS = [
-  { id: "overview", label: "Overview" },
   { id: "meta", label: "Meta" },
-  { id: "raid", label: "Current Raid" },
+  { id: "raid", label: "Raid" },
   { id: "guides", label: "Guides" },
   { id: "tier-list-preview", label: "Tier List" },
 ];
 
-/** Contextual navigation по крупным секциям homepage. Активный пункт —
- *  последняя секция, чей верх прошёл отметку под липкими панелями
- *  (rAF-троттлинг, passive scroll). Плавный скролл — CSS scroll-behavior
- *  + scroll-margin-top; prefers-reduced-motion отключает анимацию. */
+/** Contextual navigation — часть идентичности Gildra: сезонный ярлык +
+ *  крупные секции. Route-aware: на /tier-lists активен Tier List и пункты
+ *  ведут на homepage-якоря. Scrollspy — rAF-троттлинг, passive scroll. */
 export function SectionNav() {
-  const [active, setActive] = useState("overview");
+  const pathname = usePathname();
+  const onTierRoute = pathname === "/tier-lists";
+  const [active, setActive] = useState<string>(onTierRoute ? "tier" : "");
 
   useEffect(() => {
+    if (onTierRoute) return;
     let raf = 0;
     const update = () => {
       raf = 0;
       const threshold = 130;
-      let current = SECTIONS[0].id;
+      let current = "";
       for (const { id } of SECTIONS) {
         const el = document.getElementById(id);
         if (el && el.getBoundingClientRect().top <= threshold) current = id;
       }
-      // у самого низа страницы активируем последнюю секцию
       if (
         window.innerHeight + window.scrollY >=
         document.body.scrollHeight - 4
@@ -47,21 +50,38 @@ export function SectionNav() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, []);
+  }, [onTierRoute]);
+
+  const href = (id: string) => (onTierRoute ? `/#${id}` : `#${id}`);
+  const isOn = (id: string) =>
+    onTierRoute ? id === "tier-list-preview" : active === id;
 
   return (
-    <nav className="secnav" aria-label="Page sections">
+    <nav className="secnav" aria-label="Sections">
       <div className="secnav-in">
-        {SECTIONS.map((s) => (
-          <a
-            key={s.id}
-            href={`#${s.id}`}
-            className={active === s.id ? "on" : undefined}
-            aria-current={active === s.id ? "location" : undefined}
-          >
-            {s.label}
-          </a>
-        ))}
+        <Link className="sn-season" href={onTierRoute ? "/" : "#overview"}>
+          <span className="sn-season-full">
+            {season.expansion} · {season.season}
+          </span>
+          <span className="sn-season-sm">S1</span>
+        </Link>
+        {SECTIONS.map((s) => {
+          const on = isOn(s.id);
+          const to =
+            onTierRoute && s.id === "tier-list-preview"
+              ? "/tier-lists"
+              : href(s.id);
+          return (
+            <Link
+              key={s.id}
+              href={to}
+              className={on ? "on" : undefined}
+              aria-current={on ? "location" : undefined}
+            >
+              {s.label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

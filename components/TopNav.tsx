@@ -2,23 +2,38 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { SearchCommand } from "./SearchCommand";
 
-const EXPLORE = [
+/** Task-based направления Explore — только реальные destinations. */
+const TASKS = [
   {
-    group: "Mythic+",
-    items: [
-      { label: "Meta overview", href: "/#meta" },
-      { label: "Tier list", href: "/tier-lists" },
-      { label: "Featured builds", href: "/tier-lists#builds" },
-    ],
+    task: "Compare specs",
+    title: "Tier List",
+    desc: "Ranked Mythic+ specs with scores",
+    href: "/tier-lists",
+    icon: "#ic-sword",
   },
   {
-    group: "Raid",
-    items: [{ label: "Current raid", href: "/#raid" }],
+    task: "Find a build",
+    title: "Featured Builds",
+    desc: "Curated builds for top specs",
+    href: "/tier-lists#builds",
+    icon: "#ic-star",
   },
   {
-    group: "Content",
-    items: [{ label: "Latest guides", href: "/#guides" }],
+    task: "Prepare for raid",
+    title: "Raid Overview",
+    desc: "Manaforge Omega meta and specs",
+    href: "/#raid",
+    icon: "#ic-shield",
+  },
+  {
+    task: "Learn & improve",
+    title: "Latest Guides",
+    desc: "Fresh guides for the season",
+    href: "/#guides",
+    icon: "#ic-book",
   },
 ];
 
@@ -28,8 +43,8 @@ const GAMES = [
   { label: "Overwatch 2", icon: "#gm-ow", color: "#e8975a" },
 ];
 
-/** Дропдаун с корректной клавиатурой: клик/Enter/Space открывают,
- *  Escape закрывает и возвращает фокус на триггер, клик вне — закрывает. */
+/** Disclosure-меню: клик/Enter/Space открывают, Escape закрывает и
+ *  возвращает фокус на триггер, клик вне — закрывает. */
 function useMenu() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -61,16 +76,21 @@ function useMenu() {
 
 export function TopNav() {
   const [mobOpen, setMobOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchBtnRef = useRef<HTMLButtonElement>(null);
   const explore = useMenu();
   const game = useMenu();
+  const pathname = usePathname();
 
-  // scroll-lock под открытым мобильным меню
   useEffect(() => {
     document.body.style.overflow = mobOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [mobOpen]);
+
+  const isCurrent = (href: string) =>
+    href.startsWith("/tier-lists") && pathname === "/tier-lists";
 
   return (
     <header className="topnav">
@@ -95,7 +115,6 @@ export function TopNav() {
         <button
           ref={game.btnRef}
           className="gsw-btn"
-          aria-haspopup="menu"
           aria-expanded={game.open}
           aria-controls="game-menu"
           onClick={() => game.setOpen((v) => !v)}
@@ -108,12 +127,11 @@ export function TopNav() {
           <span className="caret">▾</span>
         </button>
         {game.open && (
-          <div className="gsw-menu" id="game-menu" role="menu">
+          <div className="gsw-menu" id="game-menu">
             {GAMES.map((g) => (
               <button
                 key={g.label}
                 type="button"
-                role="menuitem"
                 aria-disabled="true"
                 title="Coming soon"
               >
@@ -131,7 +149,6 @@ export function TopNav() {
         <button
           ref={explore.btnRef}
           className="gsw-btn exp-btn"
-          aria-haspopup="menu"
           aria-expanded={explore.open}
           aria-controls="explore-menu"
           onClick={() => explore.setOpen((v) => !v)}
@@ -139,28 +156,39 @@ export function TopNav() {
           Explore <span className="caret">▾</span>
         </button>
         {explore.open && (
-          <div className="gsw-menu exp-menu" id="explore-menu" role="menu">
-            {EXPLORE.map((g) => (
-              <div className="exp-group" key={g.group}>
-                <div className="exp-cap">{g.group}</div>
-                {g.items.map((it) => (
-                  <Link
-                    key={it.label}
-                    href={it.href}
-                    role="menuitem"
-                    onClick={() => explore.setOpen(false)}
-                  >
-                    {it.label}
-                  </Link>
-                ))}
-              </div>
-            ))}
+          <div className="gsw-menu exp-menu" id="explore-menu">
+            <div className="exp-grid">
+              {TASKS.map((t) => (
+                <Link
+                  key={t.title}
+                  className={`exp-card${isCurrent(t.href) ? " on" : ""}`}
+                  href={t.href}
+                  aria-current={isCurrent(t.href) ? "page" : undefined}
+                  onClick={() => explore.setOpen(false)}
+                >
+                  <span className="exp-ico">
+                    <svg className="i" aria-hidden="true">
+                      <use href={t.icon} />
+                    </svg>
+                  </span>
+                  <span className="exp-task">{t.task}</span>
+                  <span className="exp-title">{t.title}</span>
+                  <span className="exp-desc">{t.desc}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
       <div className="nav-spacer" />
-      <button className="search" type="button" aria-label="Search Gildra">
+      <button
+        ref={searchBtnRef}
+        className="search"
+        type="button"
+        aria-label="Search Gildra (Ctrl+K)"
+        onClick={() => setSearchOpen(true)}
+      >
         <svg className="i" aria-hidden="true">
           <use href="#ic-search" />
         </svg>{" "}
@@ -174,35 +202,48 @@ export function TopNav() {
 
       {mobOpen && (
         <nav className="mobmenu" id="mobile-menu" aria-label="Mobile">
-          <div className="mobsearch">
+          <button
+            className="mobsearch"
+            type="button"
+            onClick={() => {
+              setMobOpen(false);
+              setSearchOpen(true);
+            }}
+          >
             <svg className="i" aria-hidden="true">
               <use href="#ic-search" />
             </svg>
-            <input
-              type="text"
-              placeholder="Search Gildra..."
-              aria-label="Search"
-            />
-          </div>
-          {EXPLORE.map((g) => (
-            <div className="mob-group" key={g.group}>
-              <div className="exp-cap">{g.group}</div>
-              {g.items.map((it) => (
-                <Link
-                  key={it.label}
-                  href={it.href}
-                  onClick={() => setMobOpen(false)}
-                >
-                  {it.label}
-                </Link>
-              ))}
-            </div>
+            Search Gildra...
+          </button>
+          {TASKS.map((t) => (
+            <Link
+              key={t.title}
+              className="mob-task"
+              href={t.href}
+              onClick={() => setMobOpen(false)}
+            >
+              <span className="exp-task">{t.task}</span>
+              <span className="exp-title">{t.title}</span>
+            </Link>
           ))}
-          <Link className="mob-prem" href="/#premium" onClick={() => setMobOpen(false)}>
+          <Link
+            className="mob-prem"
+            href="/#premium"
+            onClick={() => setMobOpen(false)}
+          >
             Go Premium
           </Link>
         </nav>
       )}
+
+      <SearchCommand
+        open={searchOpen}
+        onOpen={() => setSearchOpen(true)}
+        onClose={() => {
+          setSearchOpen(false);
+          searchBtnRef.current?.focus();
+        }}
+      />
     </header>
   );
 }
