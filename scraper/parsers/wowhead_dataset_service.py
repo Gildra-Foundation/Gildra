@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -22,6 +23,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from .wowhead_tier_details import collect_tierlist_dataset
+from .observability import event, safe_error, stage, update_context
 
 DATASET_SLUG = "tierlist-wowhead"
 DATASET_NAME = "Tierlist WoWHead"
@@ -168,11 +170,26 @@ def _safe_error(exc: BaseException) -> tuple[str, str]:
         code = "network_failed"
     else:
         code = "collection_failed"
-    summary = " ".join(str(exc).split())[:500] or exc.__class__.__name__
+    summary = safe_error(exc)
     return code, summary
 
 
-def _clickhouse_event(event: dict[str, Any]) -> None:
+def _clickhouse_event(payload: dict[str, Any]) -> None:
+    log_fields = {
+        key: payload.get(key)
+        for key in (
+            "run_id", "snapshot_id", "dataset", "status", "duration_ms",
+            "page_count", "record_count", "unique_spec_count", "lkg_preserved",
+            "error_code",
+        )
+        if key in payload
+    }
+    event(
+        logger,
+        "dataset_refresh_result_persisted",
+        level=logging.ERROR if payload.get("status") == "failed" else logging.INFO,
+        **log_fields,
+    )
     base_url = os.getenv("CLICKHOUSE_HTTP_URL", "http://clickhouse:8123")
     database = os.getenv("CLICKHOUSE_DATABASE", "gildra")
     query = f"INSERT INTO {database}.dataset_refresh_events FORMAT JSONEachRow"
@@ -181,7 +198,7 @@ def _clickhouse_event(event: dict[str, Any]) -> None:
     )
     request = urllib.request.Request(
         f"{base_url.rstrip('/')}?{params}",
-        data=_canonical_json(event) + b"\n",
+        data=_canonical_json(payload) + b"\n",
         method="POST",
         headers={"Content-Type": "application/x-ndjson"},
     )
@@ -261,6 +278,7 @@ def refresh_tierlist(
                         (dataset_id, run_key, trigger, scheduled_for, current_snapshot_id),
                     )
                     run_id = cursor.fetchone()[0]
+                    update_context(run_id=str(run_id))
                     cursor.execute(
                         "UPDATE datasets SET last_attempt_at = now(), updated_at = now() WHERE id = %s",
                         (dataset_id,),
@@ -274,10 +292,19 @@ def refresh_tierlist(
                         previous = cursor.fetchone()
                         previous_count = previous[0] if previous else None
 
-            payload = collect_tierlist_dataset()
-            records = validate_candidate(payload, previous_record_count=previous_count)
+            with stage(logger, "collect"):
+                payload = collect_tierlist_dataset()
+            with stage(
+                logger,
+                "validate",
+                page_count=payload.get("page_count"),
+                candidate_record_count=payload.get("record_count"),
+            ):
+                records = validate_candidate(payload, previous_record_count=previous_count)
             snapshot_hash = _sha256(_semantic_payload(payload))
             snapshot_id: UUID | None = None
+            publish_started = time.monotonic()
+            event(logger, "scrape_stage_started", stage="publish")
             with connection.transaction():
                 with connection.cursor() as cursor:
                     cursor.execute(
@@ -352,6 +379,14 @@ def refresh_tierlist(
                         """,
                         (snapshot_id, dataset_id),
                     )
+            event(
+                logger,
+                "scrape_stage_completed",
+                stage="publish",
+                duration_ms=int((time.monotonic() - publish_started) * 1_000),
+                snapshot_id=str(snapshot_id),
+                record_count=len(records),
+            )
 
             result = RefreshResult(
                 "succeeded", str(run_id), str(snapshot_id), scheduled_for.isoformat(),

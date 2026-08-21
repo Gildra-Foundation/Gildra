@@ -99,7 +99,7 @@ func (s *Service) Overview(ctx context.Context, hours int) (api.AnalyticsOvervie
 
 	from := time.Now().UTC().Add(-time.Duration(hours) * time.Hour)
 	rows, err := s.clickhouse.Query(ctx, `
-		SELECT hour, countMerge(events), uniqCombined64Merge(unique_users)
+			SELECT hour, toInt64(countMerge(events)), toInt64(uniqCombined64Merge(unique_users))
 		FROM analytics_events_hourly
 		WHERE hour >= ?
 		GROUP BY hour
@@ -122,7 +122,7 @@ func (s *Service) Overview(ctx context.Context, hours int) (api.AnalyticsOvervie
 	}
 	var totalEvents, totalUsers int64
 	if err := s.clickhouse.QueryRow(ctx, `
-		SELECT countMerge(events), uniqCombined64Merge(unique_users)
+			SELECT toInt64(countMerge(events)), toInt64(uniqCombined64Merge(unique_users))
 		FROM analytics_events_hourly
 		WHERE hour >= ?`, from).Scan(&totalEvents, &totalUsers); err != nil {
 		return api.AnalyticsOverview{}, fmt.Errorf("query analytics totals: %w", err)

@@ -98,6 +98,23 @@ func (s *Service) Login(ctx context.Context, email, password, userAgent string) 
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	if _, err = tx.Exec(ctx, `
+		UPDATE auth_sessions SET revoked_at = now()
+		WHERE id IN (
+			SELECT id FROM auth_sessions
+			WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now()
+			ORDER BY last_seen_at DESC, created_at DESC
+			OFFSET 4
+		)`, user.ID); err != nil {
+		return User{}, "", time.Time{}, fmt.Errorf("limit active sessions: %w", err)
+	}
+	if _, err = tx.Exec(ctx, `
+		DELETE FROM auth_sessions
+		WHERE user_id = $1
+		  AND (expires_at < now() - interval '30 days'
+		       OR revoked_at < now() - interval '30 days')`, user.ID); err != nil {
+		return User{}, "", time.Time{}, fmt.Errorf("prune old sessions: %w", err)
+	}
+	if _, err = tx.Exec(ctx, `
 		INSERT INTO auth_sessions (user_id, token_hash, expires_at, user_agent)
 		VALUES ($1, $2, $3, $4)`, user.ID, tokenHash[:], expiresAt, userAgent); err != nil {
 		return User{}, "", time.Time{}, fmt.Errorf("create session: %w", err)

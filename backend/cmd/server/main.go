@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	clickhouse "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/getsentry/sentry-go"
 	"github.com/getsentry/sentry-go/http"
@@ -30,9 +31,11 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpapi"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/indexnow"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/joberrors"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/observability"
 )
 
 func main() {
+	observability.Configure("gildra-api")
 	if err := run(); err != nil {
 		slog.Error("server stopped", "error", err)
 		os.Exit(1)
@@ -125,6 +128,7 @@ func run() error {
 	graphqlHandler := handler.NewDefaultServer(graphqlapi.NewExecutableSchema(graphqlapi.Config{
 		Resolvers: &graphqlapi.Resolver{Catalog: catalogService},
 	}))
+	graphqlHandler.Use(extension.FixedComplexityLimit(100))
 	router := http.NewServeMux()
 	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient).Register(router)
 	router.Handle("/graphql", graphqlHandler)
@@ -133,7 +137,7 @@ func run() error {
 	sentryHandler := sentryhttp.New(sentryhttp.Options{Repanic: true}).Handle(apiHandler)
 
 	httpServer := &http.Server{
-		Addr: cfg.HTTPAddr, Handler: sentryHandler,
+		Addr: cfg.HTTPAddr, Handler: observability.HTTP(sentryHandler),
 		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second,
 		WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second,
 	}
