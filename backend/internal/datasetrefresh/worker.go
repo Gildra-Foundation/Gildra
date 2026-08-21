@@ -15,11 +15,12 @@ import (
 )
 
 const (
-	QueueName           = "datasets"
-	refreshPath         = "/internal/v1/datasets/tierlist-wowhead/refresh"
-	archonRefreshPath   = "/internal/v1/datasets/tierlist-archon/refresh"
-	wowGGRefreshPath    = "/internal/v1/datasets/tierlist-wowgg/refresh"
-	icyVeinsRefreshPath = "/internal/v1/datasets/tierlist-icyveins/refresh"
+	QueueName              = "datasets"
+	refreshPath            = "/internal/v1/datasets/tierlist-wowhead/refresh"
+	archonRefreshPath      = "/internal/v1/datasets/tierlist-archon/refresh"
+	wowGGRefreshPath       = "/internal/v1/datasets/tierlist-wowgg/refresh"
+	icyVeinsRefreshPath    = "/internal/v1/datasets/tierlist-icyveins/refresh"
+	mythicStatsRefreshPath = "/internal/v1/datasets/tierlist-mythicstats/refresh"
 )
 
 type RefreshArgs struct {
@@ -46,6 +47,12 @@ type IcyVeinsRefreshArgs struct {
 
 func (IcyVeinsRefreshArgs) Kind() string { return "dataset_tierlist_icyveins_refresh" }
 
+type MythicStatsRefreshArgs struct {
+	ScheduledFor string `json:"scheduled_for" river:"unique"`
+}
+
+func (MythicStatsRefreshArgs) Kind() string { return "dataset_tierlist_mythicstats_refresh" }
+
 type Client interface {
 	Do(*http.Request) (*http.Response, error)
 }
@@ -70,6 +77,12 @@ type WowGGWorker struct {
 
 type IcyVeinsWorker struct {
 	river.WorkerDefaults[IcyVeinsRefreshArgs]
+	httpClient Client
+	endpoint   string
+}
+
+type MythicStatsWorker struct {
+	river.WorkerDefaults[MythicStatsRefreshArgs]
 	httpClient Client
 	endpoint   string
 }
@@ -102,6 +115,13 @@ func NewIcyVeinsWorker(httpClient Client, baseURL string) *IcyVeinsWorker {
 	}
 }
 
+func NewMythicStatsWorker(httpClient Client, baseURL string) *MythicStatsWorker {
+	return &MythicStatsWorker{
+		httpClient: httpClient,
+		endpoint:   strings.TrimRight(baseURL, "/") + mythicStatsRefreshPath,
+	}
+}
+
 func HTTPClient(timeout time.Duration) *http.Client {
 	return &http.Client{Timeout: timeout}
 }
@@ -120,6 +140,10 @@ func (w *WowGGWorker) Work(ctx context.Context, job *river.Job[WowGGRefreshArgs]
 
 func (w *IcyVeinsWorker) Work(ctx context.Context, job *river.Job[IcyVeinsRefreshArgs]) error {
 	return requestRefresh(ctx, w.httpClient, w.endpoint, "tierlist-icyveins", job.Args.ScheduledFor)
+}
+
+func (w *MythicStatsWorker) Work(ctx context.Context, job *river.Job[MythicStatsRefreshArgs]) error {
+	return requestRefresh(ctx, w.httpClient, w.endpoint, "tierlist-mythicstats", job.Args.ScheduledFor)
 }
 
 func requestRefresh(ctx context.Context, httpClient Client, endpoint, dataset, scheduledFor string) error {
@@ -274,6 +298,26 @@ func IcyVeinsPeriodicJob(now func() time.Time) *river.PeriodicJob {
 		},
 		&river.PeriodicJobOpts{
 			ID:         "tierlist-icyveins-daily",
+			RunOnStart: true,
+		},
+	)
+}
+
+func MythicStatsPeriodicJob(now func() time.Time) *river.PeriodicJob {
+	return river.NewPeriodicJob(
+		DailySchedule{Hour: 6, Minute: 15},
+		func() (river.JobArgs, *river.InsertOpts) {
+			return MythicStatsRefreshArgs{ScheduledFor: now().UTC().Format(time.DateOnly)}, &river.InsertOpts{
+				Queue:       QueueName,
+				MaxAttempts: 6,
+				UniqueOpts: river.UniqueOpts{
+					ByArgs:   true,
+					ByPeriod: 24 * time.Hour,
+				},
+			}
+		},
+		&river.PeriodicJobOpts{
+			ID:         "tierlist-mythicstats-daily",
 			RunOnStart: true,
 		},
 	)

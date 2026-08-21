@@ -79,6 +79,26 @@ export type IcyVeinsTierlistEntry = {
 export type IcyVeinsTierlistResponse = {
   snapshotId: string; pages: IcyVeinsTierlistPage[]; data: IcyVeinsTierlistEntry[]; count: number;
 };
+export type MythicStatsPage = {
+  contextKey: "performance" | "spec_tiers"; pageType: "performance" | "spec_tiers";
+  title: string; subtitle: string; sourceUrl: string; sourcePeriodId: string;
+  sourcePeriodName: string; keyRange: string; recordCount: number;
+};
+export type MythicStatsPerformanceEntry = {
+  role: "dps" | "tank" | "healer"; rank: number; rankChange: number; tier: string;
+  averageValue: number; topValue: number; runsLabel: string; runsEstimate: number;
+  keyRange: string; className: string; classSlug: string; specName: string;
+  specSlug: string; iconUrl: string; specUrl: string; sourceUrl: string;
+};
+export type MythicStatsTierEntry = {
+  category: "melee" | "ranged" | "tank" | "healer"; tier: string; rankInTier: number;
+  className: string; classSlug: string; specName: string; specSlug: string;
+  iconUrl: string; specUrl: string; sourceUrl: string;
+};
+export type MythicStatsResponse = {
+  snapshotId: string; sourceFetchedAt: string | null; pages: MythicStatsPage[];
+  performance: MythicStatsPerformanceEntry[]; tiers: MythicStatsTierEntry[]; count: number;
+};
 export type PageInfo = { offset: number; limit: number; total: number; hasMore: boolean };
 export type WowClassSummary = {
   className: string; classSlug: string; specCount: number; guideCount: number;

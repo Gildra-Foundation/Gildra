@@ -209,6 +209,50 @@ type icyVeinsTierlistEntry struct {
 	SourceUpdatedAt time.Time `json:"sourceUpdatedAt"`
 }
 
+type mythicStatsPage struct {
+	ContextKey       string `json:"contextKey"`
+	PageType         string `json:"pageType"`
+	Title            string `json:"title"`
+	Subtitle         string `json:"subtitle"`
+	SourceURL        string `json:"sourceUrl"`
+	SourcePeriodID   string `json:"sourcePeriodId"`
+	SourcePeriodName string `json:"sourcePeriodName"`
+	KeyRange         string `json:"keyRange"`
+	RecordCount      int    `json:"recordCount"`
+}
+
+type mythicStatsPerformanceEntry struct {
+	Role         string `json:"role"`
+	Rank         int    `json:"rank"`
+	RankChange   int    `json:"rankChange"`
+	Tier         string `json:"tier"`
+	AverageValue int64  `json:"averageValue"`
+	TopValue     int64  `json:"topValue"`
+	RunsLabel    string `json:"runsLabel"`
+	RunsEstimate int    `json:"runsEstimate"`
+	KeyRange     string `json:"keyRange"`
+	ClassName    string `json:"className"`
+	ClassSlug    string `json:"classSlug"`
+	SpecName     string `json:"specName"`
+	SpecSlug     string `json:"specSlug"`
+	IconURL      string `json:"iconUrl"`
+	SpecURL      string `json:"specUrl"`
+	SourceURL    string `json:"sourceUrl"`
+}
+
+type mythicStatsTierEntry struct {
+	Category   string `json:"category"`
+	Tier       string `json:"tier"`
+	RankInTier int    `json:"rankInTier"`
+	ClassName  string `json:"className"`
+	ClassSlug  string `json:"classSlug"`
+	SpecName   string `json:"specName"`
+	SpecSlug   string `json:"specSlug"`
+	IconURL    string `json:"iconUrl"`
+	SpecURL    string `json:"specUrl"`
+	SourceURL  string `json:"sourceUrl"`
+}
+
 var sourceWeekPattern = regexp.MustCompile(`^\d{4}-W\d{2}$`)
 
 func New(authService *auth.Service, analyticsService *analytics.Service, postgres *pgxpool.Pool, clickhouse driver.Conn, redisClient *redis.Client) *Handler {
@@ -226,6 +270,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/admin/tierlist-archon", h.archonTierlist)
 	mux.HandleFunc("GET /v1/admin/tierlist-wowgg", h.wowGGTierlist)
 	mux.HandleFunc("GET /v1/admin/tierlist-icyveins", h.icyVeinsTierlist)
+	mux.HandleFunc("GET /v1/admin/tierlist-mythicstats", h.mythicStatsTierlist)
 }
 
 func (h *Handler) datasetRunsAPI(w http.ResponseWriter, r *http.Request) {
@@ -233,7 +278,7 @@ func (h *Handler) datasetRunsAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	slug := r.PathValue("slug")
-	if slug != "tierlist-wowhead" && slug != "tierlist-archon" && slug != "tierlist-wowgg" && slug != "tierlist-icyveins" {
+	if slug != "tierlist-wowhead" && slug != "tierlist-archon" && slug != "tierlist-wowgg" && slug != "tierlist-icyveins" && slug != "tierlist-mythicstats" {
 		writeError(w, http.StatusNotFound, "dataset_not_found", "Датасет не найден")
 		return
 	}
@@ -243,6 +288,133 @@ func (h *Handler) datasetRunsAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"data": runs, "count": len(runs)})
+}
+
+func (h *Handler) mythicStatsTierlist(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.authorize(w, r); !ok {
+		return
+	}
+	role := r.URL.Query().Get("role")
+	category := r.URL.Query().Get("category")
+	if role != "" && role != "dps" && role != "tank" && role != "healer" {
+		writeError(w, http.StatusBadRequest, "invalid_role", "Неизвестная роль")
+		return
+	}
+	if category != "" && category != "melee" && category != "ranged" && category != "tank" && category != "healer" {
+		writeError(w, http.StatusBadRequest, "invalid_category", "Неизвестная категория")
+		return
+	}
+
+	var snapshotID string
+	var sourceFetchedAt time.Time
+	if err := h.postgres.QueryRow(r.Context(), `
+		SELECT d.current_snapshot_id::text, s.source_fetched_at
+		FROM datasets d
+		JOIN dataset_snapshots s ON s.id = d.current_snapshot_id
+		WHERE d.slug = 'tierlist-mythicstats'`).Scan(&snapshotID, &sourceFetchedAt); err != nil {
+		writeError(w, http.StatusNotFound, "dataset_not_ready", "У датасета ещё нет успешного снимка")
+		return
+	}
+
+	pageRows, err := h.postgres.Query(r.Context(), `
+		SELECT context_key, page_type, title, subtitle, source_url, source_period_id,
+		       source_period_name, key_range, record_count
+		FROM mythicstats_pages
+		WHERE snapshot_id = $1
+		ORDER BY CASE context_key WHEN 'performance' THEN 0 ELSE 1 END`, snapshotID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "dataset_unavailable", "Не удалось загрузить страницы MythicStats")
+		return
+	}
+	pages := make([]mythicStatsPage, 0, 2)
+	for pageRows.Next() {
+		var page mythicStatsPage
+		if err := pageRows.Scan(&page.ContextKey, &page.PageType, &page.Title, &page.Subtitle,
+			&page.SourceURL, &page.SourcePeriodID, &page.SourcePeriodName, &page.KeyRange,
+			&page.RecordCount); err != nil {
+			pageRows.Close()
+			writeError(w, http.StatusInternalServerError, "dataset_unavailable", "Не удалось прочитать страницы MythicStats")
+			return
+		}
+		pages = append(pages, page)
+	}
+	if err := pageRows.Err(); err != nil {
+		pageRows.Close()
+		writeError(w, http.StatusInternalServerError, "dataset_unavailable", "Не удалось загрузить страницы MythicStats")
+		return
+	}
+	pageRows.Close()
+
+	performanceRows, err := h.postgres.Query(r.Context(), `
+		SELECT role, rank, rank_change, tier, average_value, top_value, runs_label,
+		       runs_estimate, key_range, class_name, class_slug, spec_name, spec_slug,
+		       icon_url, spec_url, source_url
+		FROM mythicstats_performance_entries
+		WHERE snapshot_id = $1 AND ($2 = '' OR role = $2)
+		ORDER BY CASE role WHEN 'dps' THEN 0 WHEN 'tank' THEN 1 ELSE 2 END, rank`, snapshotID, role)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "dataset_unavailable", "Не удалось загрузить рейтинги MythicStats")
+		return
+	}
+	performance := make([]mythicStatsPerformanceEntry, 0, 40)
+	for performanceRows.Next() {
+		var entry mythicStatsPerformanceEntry
+		if err := performanceRows.Scan(&entry.Role, &entry.Rank, &entry.RankChange, &entry.Tier,
+			&entry.AverageValue, &entry.TopValue, &entry.RunsLabel, &entry.RunsEstimate,
+			&entry.KeyRange, &entry.ClassName, &entry.ClassSlug, &entry.SpecName, &entry.SpecSlug,
+			&entry.IconURL, &entry.SpecURL, &entry.SourceURL); err != nil {
+			performanceRows.Close()
+			writeError(w, http.StatusInternalServerError, "dataset_unavailable", "Не удалось прочитать рейтинги MythicStats")
+			return
+		}
+		performance = append(performance, entry)
+	}
+	if err := performanceRows.Err(); err != nil {
+		performanceRows.Close()
+		writeError(w, http.StatusInternalServerError, "dataset_unavailable", "Не удалось загрузить рейтинги MythicStats")
+		return
+	}
+	performanceRows.Close()
+
+	tierRows, err := h.postgres.Query(r.Context(), `
+		SELECT category, tier, rank_in_tier, class_name, class_slug, spec_name, spec_slug,
+		       icon_url, spec_url, source_url
+		FROM mythicstats_spec_tier_entries
+		WHERE snapshot_id = $1 AND ($2 = '' OR category = $2)
+		ORDER BY CASE category WHEN 'melee' THEN 0 WHEN 'ranged' THEN 1 WHEN 'tank' THEN 2 ELSE 3 END,
+		         CASE tier WHEN 'S' THEN 0 WHEN 'A' THEN 1 WHEN 'B' THEN 2 WHEN 'C' THEN 3 WHEN 'D' THEN 4 ELSE 5 END,
+		         rank_in_tier`, snapshotID, category)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "dataset_unavailable", "Не удалось загрузить тир-лист MythicStats")
+		return
+	}
+	tiers := make([]mythicStatsTierEntry, 0, 40)
+	for tierRows.Next() {
+		var entry mythicStatsTierEntry
+		if err := tierRows.Scan(&entry.Category, &entry.Tier, &entry.RankInTier, &entry.ClassName,
+			&entry.ClassSlug, &entry.SpecName, &entry.SpecSlug, &entry.IconURL, &entry.SpecURL,
+			&entry.SourceURL); err != nil {
+			tierRows.Close()
+			writeError(w, http.StatusInternalServerError, "dataset_unavailable", "Не удалось прочитать тир-лист MythicStats")
+			return
+		}
+		tiers = append(tiers, entry)
+	}
+	if err := tierRows.Err(); err != nil {
+		tierRows.Close()
+		writeError(w, http.StatusInternalServerError, "dataset_unavailable", "Не удалось загрузить тир-лист MythicStats")
+		return
+	}
+	tierRows.Close()
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"snapshotId":      snapshotID,
+		"sourceFetchedAt": sourceFetchedAt,
+		"pages":           pages,
+		"performance":     performance,
+		"tiers":           tiers,
+		"count":           len(performance) + len(tiers),
+	})
 }
 
 func (h *Handler) icyVeinsTierlist(w http.ResponseWriter, r *http.Request) {
@@ -597,6 +769,7 @@ func (h *Handler) dashboard(w http.ResponseWriter, r *http.Request) {
 			{"method": "GET", "path": "/v1/game/entities", "description": "Каталог игровых сущностей"},
 			{"method": "GET", "path": "/v1/admin/tierlist-wowgg", "description": "Все срезы и фильтры Tierlist — wow.gg"},
 			{"method": "GET", "path": "/v1/admin/tierlist-icyveins", "description": "Тиры, разборы и гайды Tierlist — Icy Veins"},
+			{"method": "GET", "path": "/v1/admin/tierlist-mythicstats", "description": "Рейтинги DPS, танков, лекарей и тиры MythicStats"},
 			{"method": "POST", "path": "/v1/analytics/events", "description": "Приём событий аналитики"},
 			{"method": "POST", "path": "/v1/indexnow", "description": "Отправка URL в IndexNow"},
 			{"method": "POST", "path": "/graphql", "description": "GraphQL API каталога"},
