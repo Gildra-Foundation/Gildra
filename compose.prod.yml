@@ -1,0 +1,18 @@
+services:
+  api:
+    image: ${API_IMAGE}
+  web:
+    image: ${WEB_IMAGE}
+  cms:
+    image: ${CMS_IMAGE}
+  scraper:
+    image: ${SCRAPER_IMAGE:-gildra-scraper:local}
+  scraper-worker:
+    image: ${SCRAPER_IMAGE:-gildra-scraper:local}
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/certs:/etc/nginx/certs:ro

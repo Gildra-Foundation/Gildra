@@ -1,0 +1,20 @@
+schema:
+  - internal/graphqlapi/schema.graphqls
+exec:
+  filename: internal/graphqlapi/generated.go
+  package: graphqlapi
+model:
+  filename: internal/graphqlapi/model/models_gen.go
+  package: model
+resolver:
+  layout: follow-schema
+  dir: internal/graphqlapi
+  package: graphqlapi
+  filename_template: "{name}.resolvers.go"
+models:
+  Time:
+    model:
+      - github.com/99designs/gqlgen/graphql.Time
+  JSON:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map

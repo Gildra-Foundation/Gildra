@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Chakra_Petch, Inter } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { CookieNotice } from "@/components/CookieNotice";
 import { LangAttr } from "@/components/LangAttr";
 import "./globals.css";
@@ -17,7 +19,7 @@ const ui = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://gildra.vercel.app"),
+  metadataBase: new URL("https://gildra.net"),
   title: "Gildra — Master the Meta",
   description:
     "Live World of Warcraft tier lists, Mythic+ and raid meta statistics, builds and guides.",
@@ -34,17 +36,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
+
   return (
-    <html lang="en" className={`${display.variable} ${ui.variable}`}>
+    <html lang={locale} className={`${display.variable} ${ui.variable}`}>
       <body>
-        {children}
-        <CookieNotice />
-        <LangAttr />
+        <NextIntlClientProvider messages={messages}>
+          {children}
+          <CookieNotice />
+          <LangAttr />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

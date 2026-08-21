@@ -1,11 +1,12 @@
 # Gildra — project guidance for Claude Code
 
 Gildra is a WoW gaming-intelligence product: **gaming product first → decision
-tool second → analytics dashboard third**. Production: https://gildra.vercel.app
+tool second → analytics dashboard third**. Production: https://gildra.net
 
 ## Stack & map
 
-- Next.js 15 App Router + React 19 + TypeScript, static prerender.
+- Next.js 16 App Router + React 19 + TypeScript, Go 1.26 API/River worker,
+  Payload CMS, PostgreSQL, ClickHouse and Redis.
 - Routes: `app/page.tsx` (homepage), `app/tier-lists/page.tsx` (full tier list
   workspace), `app/specs/[slug]/page.tsx` (10 static spec pages from
   `lib/specs.ts`), `app/privacy/page.tsx`, `app/not-found.tsx` (branded 404),
@@ -14,8 +15,8 @@ tool second → analytics dashboard third**. Production: https://gildra.vercel.a
   Homepage stays an overview with a compact Tier Preview; the full
   filters/table/detail experience lives only on `/tier-lists`. Never embed the
   full workspace back into the homepage.
-- All styling: `app/globals.css` (plain CSS, tokens in `:root`). No Tailwind,
-  no CSS-in-JS.
+- Styling: existing Gildra tokens and components remain in `app/globals.css`;
+  new UI uses Tailwind CSS and shadcn/ui without changing the visual language.
 - Components: `components/` (TopNav, Hero, PatchHighlights, SectionNav,
   MetaPulse, MythicMeta, MetaTrends, RaidFeature, GuidesSection, TierPreview,
   TierSection, SearchCommand, Footer, Reveal, SpecSlot, Icons).
@@ -47,9 +48,19 @@ tool second → analytics dashboard third**. Production: https://gildra.vercel.a
 
 ## Checks & permissions
 
-- Project checks: `npm run build` (includes typecheck; there is no separate
-  lint/test script). Dev: `npm run dev`; prod-like: `npm run start`;
+- Project checks: `npm run typecheck && npm run build`, CMS build in `cms/`,
+  and `go vet ./... && go test ./...` in `backend/`. Dev: `npm run dev`; prod-like: `npm run start`;
   screenshots: `npm run design:capture`.
 - Commit, push and deploy happen **only with the user's explicit permission**
-  (push to `master` auto-deploys via Vercel).
+  (successful CI on `master` deploys to OVHcloud).
 - More context: [README.md](README.md).
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

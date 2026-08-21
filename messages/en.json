@@ -1,0 +1,12 @@
+{
+  "Analytics": {
+    "title": "Live analytics",
+    "subtitle": "Product activity over the selected period",
+    "events": "Events",
+    "users": "Unique users",
+    "subscriptions": "Active subscriptions",
+    "activity": "Hourly activity",
+    "hours": "Last {hours} hours",
+    "empty": "Analytics will appear after the first events arrive."
+  }
+}
