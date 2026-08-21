@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import type { ArchonTierlistEntry, DashboardData, DatasetListItem, DatasetRun, IcyVeinsTierlistEntry, IcyVeinsTierlistResponse, PanelUser, TierlistEntry, WowClassListResponse, WowGGTierlistEntry, WowGGTierlistResponse, WowSpecializationResponse, WowSpecListResponse } from "./types";
+import type { ArchonTierlistEntry, DashboardData, DatasetListItem, DatasetRun, IcyVeinsTierlistEntry, IcyVeinsTierlistResponse, MythicStatsPerformanceEntry, MythicStatsResponse, MythicStatsTierEntry, PanelUser, TierlistEntry, WowClassListResponse, WowGGTierlistEntry, WowGGTierlistResponse, WowSpecializationResponse, WowSpecListResponse } from "./types";
 
 type View = "overview" | "datasets" | "api" | "system";
 
@@ -146,6 +146,7 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
   const [archonEntries, setArchonEntries] = useState<ArchonTierlistEntry[]>([]);
   const [wowGG, setWowGG] = useState<WowGGTierlistResponse>({ snapshotId: "", contexts: [], data: [], weeks: [], count: 0 });
   const [icyVeins, setIcyVeins] = useState<IcyVeinsTierlistResponse>({ snapshotId: "", pages: [], data: [], count: 0 });
+  const [mythicStats, setMythicStats] = useState<MythicStatsResponse>({ snapshotId: "", sourceFetchedAt: null, pages: [], performance: [], tiers: [], count: 0 });
   const [datasetRuns, setDatasetRuns] = useState<DatasetRun[]>([]);
   const [activityFilter, setActivityFilter] = useState("raid");
   const [roleFilter, setRoleFilter] = useState("dps");
@@ -163,6 +164,7 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
       const needsArchon = view === "datasets" && datasetSlug === "tierlist-archon";
       const needsWowGG = view === "datasets" && datasetSlug === "tierlist-wowgg";
       const needsIcyVeins = view === "datasets" && datasetSlug === "tierlist-icyveins";
+      const needsMythicStats = view === "datasets" && datasetSlug === "tierlist-mythicstats";
       const tierlistURL = classSlug
         ? "/v1/admin/tierlist-wowhead"
         : `/v1/admin/tierlist-wowhead?activity=${activityFilter}&role=${roleFilter}`;
@@ -172,19 +174,20 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
       const icyVeinsURL = classSlug
         ? "/v1/admin/tierlist-icyveins"
         : `/v1/admin/tierlist-icyveins?activity=${activityFilter}&role=${roleFilter}`;
-      const [dashboard, datasetList, tierlist, archon, wowgg, icyveins, runs] = await Promise.all([
+      const [dashboard, datasetList, tierlist, archon, wowgg, icyveins, mythicstats, runs] = await Promise.all([
         requestJSON<DashboardData>("/v1/admin/dashboard"),
         requestJSON<{ data: DatasetListItem[] }>("/v1/admin/datasets"),
         needsTierlist ? requestJSON<{ data: TierlistEntry[] }>(tierlistURL) : Promise.resolve({ data: [] }),
         needsArchon ? requestJSON<{ data: ArchonTierlistEntry[] }>(archonURL) : Promise.resolve({ data: [] }),
         needsWowGG ? requestJSON<WowGGTierlistResponse>(`/v1/admin/tierlist-wowgg${wowGGWeek ? `?week=${encodeURIComponent(wowGGWeek)}` : ""}`) : Promise.resolve({ snapshotId: "", contexts: [], data: [], weeks: [], count: 0 }),
         needsIcyVeins ? requestJSON<IcyVeinsTierlistResponse>(icyVeinsURL) : Promise.resolve({ snapshotId: "", pages: [], data: [], count: 0 }),
+        needsMythicStats ? requestJSON<MythicStatsResponse>("/v1/admin/tierlist-mythicstats") : Promise.resolve({ snapshotId: "", sourceFetchedAt: null, pages: [], performance: [], tiers: [], count: 0 }),
         view === "datasets" && datasetSlug
           ? requestJSON<{ data: DatasetRun[] }>(`/v1/admin/datasets/${datasetSlug}/runs`)
           : Promise.resolve({ data: [] }),
       ]);
       setData(dashboard); setDatasets(datasetList.data); setEntries(tierlist.data);
-      setArchonEntries(archon.data); setWowGG(wowgg); setIcyVeins(icyveins); setDatasetRuns(runs.data);
+      setArchonEntries(archon.data); setWowGG(wowgg); setIcyVeins(icyveins); setMythicStats(mythicstats); setDatasetRuns(runs.data);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Не удалось загрузить панель"); }
     finally { setRefreshing(false); }
   }, [activityFilter, classSlug, datasetSlug, difficultyFilter, roleFilter, view, wowGGWeek]);
@@ -217,7 +220,7 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
           {error && <Alert variant="destructive" className="mb-5 rounded-sm border-[#693b3e] bg-[#2a1518] text-[#ef9a9d]"><CircleAlert className="size-4" /><AlertTitle>Панель временно недоступна</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
           {!data ? <div className="grid min-h-[60vh] place-items-center"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : <>
             {view === "overview" && <Overview data={data} entries={filteredEntries} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} />}
-            {view === "datasets" && <DatasetSection data={data} datasets={datasets} datasetSlug={datasetSlug} classSlug={classSlug} entries={classSlug ? entries : filteredEntries} archonEntries={classSlug ? archonEntries : filteredArchonEntries} wowGG={{ ...wowGG, data: classSlug ? wowGG.data : filteredWowGGEntries }} icyVeins={{ ...icyVeins, data: classSlug ? icyVeins.data : filteredIcyVeinsEntries }} wowGGWeek={wowGGWeek} setWowGGWeek={setWowGGWeek} datasetRuns={datasetRuns} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} difficulty={difficultyFilter} setDifficulty={setDifficultyFilter} metric={metricFilter} setMetric={setMetricFilter} />}
+            {view === "datasets" && <DatasetSection data={data} datasets={datasets} datasetSlug={datasetSlug} classSlug={classSlug} entries={classSlug ? entries : filteredEntries} archonEntries={classSlug ? archonEntries : filteredArchonEntries} wowGG={{ ...wowGG, data: classSlug ? wowGG.data : filteredWowGGEntries }} icyVeins={{ ...icyVeins, data: classSlug ? icyVeins.data : filteredIcyVeinsEntries }} mythicStats={mythicStats} wowGGWeek={wowGGWeek} setWowGGWeek={setWowGGWeek} datasetRuns={datasetRuns} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} difficulty={difficultyFilter} setDifficulty={setDifficultyFilter} metric={metricFilter} setMetric={setMetricFilter} />}
             {view === "api" && <APIView data={data} />}
             {view === "system" && <SystemView data={data} />}
           </>}
@@ -322,6 +325,7 @@ type DatasetSectionProps = Parameters<typeof Overview>[0] & {
   archonEntries: ArchonTierlistEntry[];
   wowGG: WowGGTierlistResponse;
   icyVeins: IcyVeinsTierlistResponse;
+  mythicStats: MythicStatsResponse;
   wowGGWeek: string;
   setWowGGWeek: (value: string) => void;
   datasetRuns: DatasetRun[];
@@ -343,6 +347,7 @@ function DatasetSection(props: DatasetSectionProps) {
   if (dataset.slug === "tierlist-archon") return <ArchonDatasetDetail {...props} dataset={dataset} />;
   if (dataset.slug === "tierlist-wowgg") return <WowGGDatasetDetail {...props} dataset={dataset} />;
   if (dataset.slug === "tierlist-icyveins") return <IcyVeinsDatasetDetail {...props} dataset={dataset} />;
+  if (dataset.slug === "tierlist-mythicstats") return <MythicStatsDatasetDetail {...props} dataset={dataset} />;
   return <EmptyDataset />;
 }
 
@@ -421,6 +426,55 @@ function IcyVeinsTierlistTable({ entries, query, setQuery }: { entries: IcyVeins
   return <Panel title="Tierlist — Icy Veins" kicker={`${entries.length} записей в выборке`} icon={Database} action={<div className="relative w-full sm:w-56"><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#626d80]" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти класс или спек" className="h-9 rounded-sm border-[#303645] bg-[#0b0e14] pl-9 text-xs" /></div>}>
     <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-16 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="w-12"><span className="sr-only">Гайд</span></TableHead></TableRow></TableHeader><TableBody>{entries.map((entry) => <TableRow key={`${entry.contextKey}-${entry.classSlug}-${entry.specSlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(entry.tier))}>{entry.tier}</span></TableCell><TableCell><a href={`/datasets/tierlist-icyveins/classes/${entry.classSlug}`} className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</a><div className="mt-0.5 text-[10px] text-[#768196]">#{entry.rankInTier} в тире</div></TableCell><TableCell className="hidden text-xs md:table-cell"><a href={`/datasets/tierlist-icyveins/classes/${entry.classSlug}`} className="inline-flex items-center gap-1.5 text-[#9ca6b8] hover:text-[#dfbd69]">{entry.className}<ChevronRight className="size-3" /></a></TableCell><TableCell><a href={entry.guideUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть гайд ${entry.specName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>)}</TableBody></Table></div>
     {entries.length === 0 ? <div className="border-x border-b border-[#292f3c] py-10 text-center text-xs text-[#737e92]">Для этого формата данных нет. Последний успешный снимок сохранён.</div> : null}
+  </Panel>;
+}
+
+function MythicStatsDatasetDetail(props: DatasetSectionProps & { dataset: DatasetListItem }) {
+  const [viewMode, setViewMode] = useState("performance");
+  const [performanceRole, setPerformanceRole] = useState("dps");
+  const [tierCategory, setTierCategory] = useState("melee");
+  const normalizedQuery = props.query.trim().toLowerCase();
+  const performance = props.mythicStats.performance.filter((entry) =>
+    entry.role === performanceRole && `${entry.specName} ${entry.className}`.toLowerCase().includes(normalizedQuery)
+  );
+  const tiers = props.mythicStats.tiers.filter((entry) =>
+    entry.category === tierCategory && `${entry.specName} ${entry.className}`.toLowerCase().includes(normalizedQuery)
+  );
+  const performancePage = props.mythicStats.pages.find((page) => page.contextKey === "performance");
+  return <div className="flex flex-col gap-5">
+    <Breadcrumb items={[{ label: "Датасеты", href: "/datasets" }, { label: props.dataset.name }]} />
+    <div className="flex flex-col gap-4 border border-[#2d3341] bg-[#11151d] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+      <div><div className="flex flex-wrap items-center gap-3"><h2 className="font-[var(--display)] text-2xl font-semibold">{props.dataset.name}</h2><FreshnessBadge dataset={props.dataset} /></div><p className="mt-2 max-w-3xl text-sm leading-6 text-[#7f899d]">Ежедневный рейтинг Mythic+ для DPS, танков и лекарей с точными Avg, Top и числом прогонов, а также отдельный тир-лист специализаций по категориям.</p></div>
+      <div className="text-left text-xs text-[#7f899d] sm:text-right"><div>Последний успешный снимок</div><strong className="mt-1 block font-medium text-[#c5ccd7]">{formatDate(props.dataset.lastSuccessAt)}</strong></div>
+    </div>
+    <div className="grid grid-cols-3 gap-px border border-[#292f3c] bg-[#292f3c]"><DatasetMetric label="Страниц" value={props.dataset.pageCount} /><DatasetMetric label="Записей" value={props.dataset.recordCount} /><DatasetMetric label="Специализаций" value={props.dataset.uniqueSpecCount} /></div>
+    <Panel title="Представление данных" kicker={performancePage?.sourcePeriodName || "Текущий период Mythic+"} icon={Gauge}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-wrap gap-3">
+          <Tabs value={viewMode} onValueChange={setViewMode}><TabsList className="h-9 rounded-sm border border-[#303645] bg-[#0b0e14] p-0"><TabsTrigger value="performance" className="h-full rounded-sm px-4 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">Таблица эффективности</TabsTrigger><TabsTrigger value="spec_tiers" className="h-full rounded-sm px-4 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">Тир-лист спеков</TabsTrigger></TabsList></Tabs>
+          {viewMode === "performance" ? <Tabs value={performanceRole} onValueChange={setPerformanceRole}><TabsList className="h-9 rounded-sm border border-[#303645] bg-[#0b0e14] p-0">{[["dps", "DPS"], ["tank", "Танк"], ["healer", "Лекарь"]].map(([id, label]) => <TabsTrigger key={id} value={id} className="h-full rounded-sm px-4 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">{label}</TabsTrigger>)}</TabsList></Tabs> : <Tabs value={tierCategory} onValueChange={setTierCategory}><TabsList className="h-9 rounded-sm border border-[#303645] bg-[#0b0e14] p-0">{[["melee", "Ближний бой"], ["ranged", "Дальний бой"], ["tank", "Танк"], ["healer", "Лекарь"]].map(([id, label]) => <TabsTrigger key={id} value={id} className="h-full rounded-sm px-3 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">{label}</TabsTrigger>)}</TabsList></Tabs>}
+        </div>
+        <div className="relative w-full lg:w-64"><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#626d80]" /><Input value={props.query} onChange={(event) => props.setQuery(event.target.value)} placeholder="Найти класс или спек" className="h-9 rounded-sm border-[#303645] bg-[#0b0e14] pl-9 text-xs" /></div>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#292f3c] pt-4 text-[10px] text-[#7d879a]"><span>{performancePage?.title || "Mythic+"}</span>{performancePage?.keyRange ? <><span>·</span><span>Ключи {performancePage.keyRange}</span></> : null}<span>·</span><span>Получено {formatDate(props.mythicStats.sourceFetchedAt)}</span>{performancePage ? <><span>·</span><a href={performancePage.sourceUrl} target="_blank" rel="noreferrer" className="text-[#c6a451] hover:text-[#e2c471]">Открыть источник</a></> : null}</div>
+    </Panel>
+    {viewMode === "performance" ? <MythicStatsPerformanceTable entries={performance} /> : <MythicStatsTierTable entries={tiers} category={tierCategory} />}
+    <DatasetRunHistory runs={props.datasetRuns} />
+  </div>;
+}
+
+function MythicStatsPerformanceTable({ entries }: { entries: MythicStatsPerformanceEntry[] }) {
+  return <Panel title="Эффективность специализаций" kicker={`${entries.length} записей · ${entries[0] ? roleLabel(entries[0].role) : "выборка"}`} icon={BarChart3}>
+    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-12 text-center text-[9px] uppercase tracking-[.12em] text-[#6f798c]">#</TableHead><TableHead className="w-16 text-center text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Diff</TableHead><TableHead className="w-14 text-center text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Tier</TableHead><TableHead className="text-right text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Avg</TableHead><TableHead className="text-right text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Top</TableHead><TableHead className="text-right text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Runs</TableHead><TableHead className="min-w-64 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация</TableHead><TableHead className="w-12"><span className="sr-only">Источник</span></TableHead></TableRow></TableHeader><TableBody>{entries.map((entry) => <TableRow key={`${entry.role}-${entry.classSlug}-${entry.specSlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell className="text-center font-mono text-xs text-[#aab2c1]">{entry.rank}</TableCell><TableCell className={cn("text-center font-mono text-xs", entry.rankChange > 0 ? "text-[#65ba72]" : entry.rankChange < 0 ? "text-[#e46f73]" : "text-[#667086]")}>{entry.rankChange > 0 ? `↑${entry.rankChange}` : entry.rankChange < 0 ? `↓${Math.abs(entry.rankChange)}` : "—"}</TableCell><TableCell><span className={cn("mx-auto grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(entry.tier))}>{entry.tier}</span></TableCell><TableCell className="text-right font-mono text-xs text-[#b7d57b]">{entry.averageValue.toLocaleString("ru-RU")}</TableCell><TableCell className="text-right font-mono text-xs text-[#94c96e]">{entry.topValue.toLocaleString("ru-RU")}</TableCell><TableCell className="text-right font-mono text-xs text-[#c99a5d]" title={`Около ${entry.runsEstimate.toLocaleString("ru-RU")} прогонов`}>{entry.runsLabel}</TableCell><TableCell><div className="flex items-center gap-3"><img src={entry.iconUrl} alt="" className="size-8 border border-[#303645]" loading="lazy" /><div><a href={entry.specUrl} target="_blank" rel="noreferrer" className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName} {entry.className}</a><div className="mt-0.5 text-[10px] text-[#768196]">Ключи {entry.keyRange}</div></div></div></TableCell><TableCell><a href={entry.specUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть MythicStats для ${entry.specName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>)}</TableBody></Table></div>
+    {entries.length === 0 ? <div className="border-x border-b border-[#292f3c] py-10 text-center text-xs text-[#737e92]">В этой выборке записей нет. Последний успешный снимок сохранён.</div> : null}
+  </Panel>;
+}
+
+function MythicStatsTierTable({ entries, category }: { entries: MythicStatsTierEntry[]; category: string }) {
+  const labels: Record<string, string> = { melee: "Ближний бой", ranged: "Дальний бой", tank: "Танки", healer: "Лекари" };
+  return <Panel title="Тир-лист специализаций" kicker={`${labels[category] ?? category} · ${entries.length} записей`} icon={Database}>
+    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-16 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="w-20 text-center text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Место</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="w-12"><span className="sr-only">Источник</span></TableHead></TableRow></TableHeader><TableBody>{entries.map((entry) => <TableRow key={`${entry.category}-${entry.classSlug}-${entry.specSlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(entry.tier))}>{entry.tier}</span></TableCell><TableCell className="text-center font-mono text-xs text-[#8792a5]">#{entry.rankInTier}</TableCell><TableCell><div className="flex items-center gap-3"><img src={entry.iconUrl} alt="" className="size-8 border border-[#303645]" loading="lazy" /><a href={entry.specUrl} target="_blank" rel="noreferrer" className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</a></div></TableCell><TableCell className="hidden text-xs text-[#9ca6b8] md:table-cell">{entry.className}</TableCell><TableCell><a href={entry.specUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть MythicStats для ${entry.specName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>)}</TableBody></Table></div>
+    {entries.length === 0 ? <div className="border-x border-b border-[#292f3c] py-10 text-center text-xs text-[#737e92]">В этой категории данных нет. Последний успешный снимок сохранён.</div> : null}
   </Panel>;
 }
 

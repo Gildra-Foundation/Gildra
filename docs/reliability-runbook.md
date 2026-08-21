@@ -12,6 +12,8 @@ The critical data path is:
 
 The primary invariant is that a failed collection, validation, or database write must never replace the last-known-good snapshot. A refresh is successful only after all expected pages and records have been committed.
 
+Daily UTC schedules are staggered to keep the single dataset queue predictable: WowHead 03:15, Archon 04:15, Icy Veins 05:15, and MythicStats 06:15. MythicStats requires exactly two validated source pages (`/dps` and `/spec`), 35–60 rows in each table, all three performance roles, all four tier categories, and identical specialization coverage between the two views.
+
 ## Structured log events
 
 API and scraper logs are line-delimited JSON on stdout. Secrets, cookies, authorization headers, API keys, URL query strings, and passwords must never be logged.

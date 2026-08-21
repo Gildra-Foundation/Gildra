@@ -96,6 +96,10 @@ func run() error {
 		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
 		cfg.DatasetWorkerURL,
 	))
+	river.AddWorker(workers, datasetrefresh.NewMythicStatsWorker(
+		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
+		cfg.DatasetWorkerURL,
+	))
 	riverClient, err := river.NewClient(riverpgxv5.New(postgres), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault:       {MaxWorkers: 10},
@@ -106,6 +110,7 @@ func run() error {
 			datasetrefresh.ArchonPeriodicJob(time.Now),
 			datasetrefresh.WowGGPeriodicJob(time.Now),
 			datasetrefresh.IcyVeinsPeriodicJob(time.Now),
+			datasetrefresh.MythicStatsPeriodicJob(time.Now),
 		},
 		ErrorHandler: &joberrors.SentryHandler{},
 		Workers:      workers,

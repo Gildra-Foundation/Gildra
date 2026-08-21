@@ -90,10 +90,24 @@ func TestPostgresAndClickHouseMigrations(t *testing.T) {
 	if err := postgresDB.QueryRowContext(ctx, `SELECT to_regclass('public.icyveins_tierlist_entries')::text`).Scan(&icyVeinsEntriesTable); err != nil || icyVeinsEntriesTable != "icyveins_tierlist_entries" {
 		t.Fatalf("Icy Veins entry migration failed: table=%q error=%v", icyVeinsEntriesTable, err)
 	}
+	var mythicStatsDatasetName, mythicStatsPagesTable, mythicStatsPerformanceTable, mythicStatsTiersTable string
+	if err := postgresDB.QueryRowContext(ctx, `SELECT name FROM datasets WHERE slug = 'tierlist-mythicstats'`).Scan(&mythicStatsDatasetName); err != nil || mythicStatsDatasetName != "Tierlist — MythicStats" {
+		t.Fatalf("MythicStats dataset seed failed: name=%q error=%v", mythicStatsDatasetName, err)
+	}
+	if err := postgresDB.QueryRowContext(ctx, `SELECT to_regclass('public.mythicstats_pages')::text`).Scan(&mythicStatsPagesTable); err != nil || mythicStatsPagesTable != "mythicstats_pages" {
+		t.Fatalf("MythicStats page migration failed: table=%q error=%v", mythicStatsPagesTable, err)
+	}
+	if err := postgresDB.QueryRowContext(ctx, `SELECT to_regclass('public.mythicstats_performance_entries')::text`).Scan(&mythicStatsPerformanceTable); err != nil || mythicStatsPerformanceTable != "mythicstats_performance_entries" {
+		t.Fatalf("MythicStats performance migration failed: table=%q error=%v", mythicStatsPerformanceTable, err)
+	}
+	if err := postgresDB.QueryRowContext(ctx, `SELECT to_regclass('public.mythicstats_spec_tier_entries')::text`).Scan(&mythicStatsTiersTable); err != nil || mythicStatsTiersTable != "mythicstats_spec_tier_entries" {
+		t.Fatalf("MythicStats tier migration failed: table=%q error=%v", mythicStatsTiersTable, err)
+	}
 	assertLastKnownGoodSurvivesFailedRun(t, ctx, postgresDB, "tierlist-wowhead", 6, 80, 40)
 	assertLastKnownGoodSurvivesFailedRun(t, ctx, postgresDB, "tierlist-archon", 12, 139, 40)
 	assertLastKnownGoodSurvivesFailedRun(t, ctx, postgresDB, "tierlist-wowgg", 394, 3198, 41)
 	assertLastKnownGoodSurvivesFailedRun(t, ctx, postgresDB, "tierlist-icyveins", 8, 114, 40)
+	assertLastKnownGoodSurvivesFailedRun(t, ctx, postgresDB, "tierlist-mythicstats", 2, 80, 40)
 	assertLinkOnlyWowheadEntryIsAccepted(t, ctx, postgresDB)
 
 	clickhouse, err := chcontainer.Run(ctx, "clickhouse/clickhouse-server:26.7.3-alpine",
