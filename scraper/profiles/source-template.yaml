@@ -1,0 +1,36 @@
+profile_schema_version: 1
+profile_version: 1
+site: example.invalid
+
+authorization:
+  public_data_only: true
+
+url_classes:
+  entity:
+    match: '^https://example\.invalid/entities/'
+    expected_content_type: html
+    validation:
+      min_body_bytes: 500
+      canary: '<main'
+      fields:
+        name:
+          importance: critical
+    routes:
+      primary:
+        type: direct_http
+        level: L1
+    extractors:
+      - kind: json_ld
+      - kind: css
+        fields:
+          name: 'h1::text'
+    quorum_fields:
+      - name
+    freshness:
+      max_age_hours: 24
+      full_review_days: 7
+    promote:
+      min_completeness: 0.99
+    retry:
+      max_attempts: 2
+      backoff_seconds: 2

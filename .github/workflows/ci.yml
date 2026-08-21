@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22.23.2
+          cache: npm
+      - run: npm ci
+      - run: npm run generate:api
+      - run: git diff --exit-code -- lib/api/schema.d.ts
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          SENTRY_AUTH_TOKEN: ""
+
+  cms:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cms
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22.23.2
+          cache: npm
+          cache-dependency-path: cms/package-lock.json
+      - run: npm ci
+      - run: npm run build
+        env:
+          PAYLOAD_SECRET: ci-build-secret
+          PAYLOAD_DATABASE_URL: postgres://ci:ci@localhost/ci
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.6
+          cache-dependency-path: backend/go.sum
+      - run: go generate ./...
+      - run: go fix ./... && go fix ./...
+      - run: git diff --exit-code
+      - run: go tool goose -dir migrations/postgres validate
+      - run: go tool goose -dir migrations/clickhouse validate
+      - run: go vet ./...
+      - run: go test -race -coverprofile=coverage.out ./...
+
+  integration:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.6
+          cache-dependency-path: backend/go.sum
+      - run: go test -tags=integration -count=1 -timeout=10m ./integration
+
+  scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t gildra-scraper-ci ./scraper
+      - run: docker run --rm -e SCRAPE_DO_TOKEN=TESTTOKEN gildra-scraper-ci /app/config/production.json --preflight
+      - name: Run parser and snapshot safety tests
+        run: >-
+          docker run --rm --entrypoint python
+          -v "$PWD:/workspace:ro" -w /workspace
+          gildra-scraper-ci -m unittest discover
+          -s scraper/tests -p 'test_*.py' -v

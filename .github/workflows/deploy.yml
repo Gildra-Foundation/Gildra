@@ -1,0 +1,94 @@
+name: Deploy OVHcloud
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      matrix:
+        include:
+          - name: web
+            context: .
+            file: ./Dockerfile
+          - name: api
+            context: ./backend
+            file: ./backend/Dockerfile
+          - name: cms
+            context: ./cms
+            file: ./cms/Dockerfile
+          - name: scraper
+            context: ./scraper
+            file: ./scraper/Dockerfile
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/gildra-foundation/design-${{ matrix.name }}
+          tags: |
+            type=sha,format=long,prefix=
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Upload deployment configuration
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+        run: |
+          tar -czf - compose.yml compose.prod.yml compose.runtime.yml infra/nginx infra/postgres | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && sudo chown -R root:root /opt/gildra'
+      - name: Deploy immutable images
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          IMAGE_PREFIX: ghcr.io/gildra-foundation/design
+          IMAGE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          ssh "$OVH_USER@$OVH_HOST" "sudo sh -c 'cd /opt/gildra && WEB_IMAGE=$IMAGE_PREFIX-web:$IMAGE_SHA API_IMAGE=$IMAGE_PREFIX-api:$IMAGE_SHA CMS_IMAGE=$IMAGE_PREFIX-cms:$IMAGE_SHA SCRAPER_IMAGE=$IMAGE_PREFIX-scraper:$IMAGE_SHA docker compose --env-file .env -f compose.yml -f compose.prod.yml -f compose.runtime.yml pull && WEB_IMAGE=$IMAGE_PREFIX-web:$IMAGE_SHA API_IMAGE=$IMAGE_PREFIX-api:$IMAGE_SHA CMS_IMAGE=$IMAGE_PREFIX-cms:$IMAGE_SHA SCRAPER_IMAGE=$IMAGE_PREFIX-scraper:$IMAGE_SHA docker compose --env-file .env -f compose.yml -f compose.prod.yml -f compose.runtime.yml up -d --no-build --remove-orphans --wait --wait-timeout 240'"

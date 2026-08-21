@@ -12,10 +12,12 @@ const KEY = "gildra-consent";
  *  и анонимная статистика хостинга. */
 export function CookieNotice() {
   const [visible, setVisible] = useState(false);
-  const lang = langOf(usePathname());
+  const pathname = usePathname();
+  const lang = langOf(pathname);
   const tt = t(lang);
 
   useEffect(() => {
+    if (window.location.hostname === "api.gildra.net") return;
     try {
       if (!localStorage.getItem(KEY)) setVisible(true);
     } catch {
@@ -32,7 +34,7 @@ export function CookieNotice() {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!visible || pathname.startsWith("/api-console")) return null;
 
   return (
     <aside className="cookie" role="region" aria-label="Cookies">

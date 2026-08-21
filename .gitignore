@@ -5,3 +5,12 @@ next-env.d.ts
 .DS_Store
 *.tsbuildinfo
 .artifacts/
+.env
+.venv-parsesunix/
+scraper/state/
+scraper/reports/
+infra/certs/
+cms/media/
+__pycache__/
+*.py[cod]
+.pytest_cache/
