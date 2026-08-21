@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
+import time
 import urllib.error
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -17,6 +19,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from .icyveins_tierlist import SOURCES, collect_icyveins_dataset
+from .observability import event, safe_error, stage, update_context
 from .wowhead_dataset_service import RefreshBusy, RefreshResult, _clickhouse_event, _sha256
 
 DATASET_SLUG = "tierlist-icyveins"
@@ -24,6 +27,7 @@ DATASET_NAME = "Tierlist — Icy Veins"
 ADVISORY_LOCK_ID = 0x47696C6472614956
 EXPECTED_CONTEXTS = {(source["activity"], source["role"]) for source in SOURCES}
 TIER_RE = re.compile(r"^[SABCD][+-]?$")
+logger = logging.getLogger(__name__)
 
 
 class DatasetValidationError(ValueError):
@@ -85,7 +89,7 @@ def _safe_error(exc: BaseException) -> tuple[str, str]:
         code = "network_failed"
     else:
         code = "collection_failed"
-    return code, (" ".join(str(exc).split())[:500] or exc.__class__.__name__)
+    return code, safe_error(exc)
 
 
 def _semantic_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -128,6 +132,7 @@ def refresh_tierlist_icyveins(scheduled_for: date, *, trigger: str = "scheduled"
                         RETURNING id
                     """, (dataset_id, run_key, trigger, scheduled_for, current_snapshot_id))
                     run_id = cursor.fetchone()[0]
+                    update_context(run_id=str(run_id))
                     cursor.execute("UPDATE datasets SET last_attempt_at = now(), updated_at = now() WHERE id = %s", (dataset_id,))
                     previous_count = None
                     if current_snapshot_id:
@@ -135,10 +140,19 @@ def refresh_tierlist_icyveins(scheduled_for: date, *, trigger: str = "scheduled"
                         previous = cursor.fetchone()
                         previous_count = previous[0] if previous else None
 
-            payload = collect_icyveins_dataset()
-            records = validate_candidate(payload, previous_record_count=previous_count)
+            with stage(logger, "collect"):
+                payload = collect_icyveins_dataset()
+            with stage(
+                logger,
+                "validate",
+                page_count=payload.get("page_count"),
+                candidate_record_count=payload.get("record_count"),
+            ):
+                records = validate_candidate(payload, previous_record_count=previous_count)
             snapshot_hash = _sha256(_semantic_payload(payload))
             snapshot_id: UUID | None = None
+            publish_started = time.monotonic()
+            event(logger, "scrape_stage_started", stage="publish")
             with connection.transaction():
                 with connection.cursor() as cursor:
                     cursor.execute("""
@@ -179,6 +193,14 @@ def refresh_tierlist_icyveins(scheduled_for: date, *, trigger: str = "scheduled"
                         UPDATE datasets SET current_snapshot_id = %s, last_success_at = now(), last_error_code = '',
                             last_error_summary = '', updated_at = now() WHERE id = %s
                     """, (snapshot_id, dataset_id))
+            event(
+                logger,
+                "scrape_stage_completed",
+                stage="publish",
+                duration_ms=int((time.monotonic() - publish_started) * 1_000),
+                snapshot_id=str(snapshot_id),
+                record_count=len(records),
+            )
             result = RefreshResult("succeeded", str(run_id), str(snapshot_id), scheduled_for.isoformat(), len(records), payload["unique_spec_count"], False)
             _clickhouse_event({"run_id": str(run_id), "snapshot_id": str(snapshot_id), "occurred_at": datetime.now(UTC).isoformat(),
                                "dataset": DATASET_SLUG, "status": "succeeded", "duration_ms": int((datetime.now(UTC)-started_at).total_seconds()*1000),

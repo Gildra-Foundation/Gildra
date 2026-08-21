@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
+import time
 import urllib.error
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -17,6 +19,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from .archon_tierlist import SOURCES, collect_archon_dataset
+from .observability import event, safe_error, stage, update_context
 from .wowhead_dataset_service import RefreshBusy, RefreshResult, _clickhouse_event, _sha256
 
 DATASET_SLUG = "tierlist-archon"
@@ -26,6 +29,7 @@ EXPECTED_CONTEXTS = {
     (source["activity"], source["difficulty"], source["role"]) for source in SOURCES
 }
 TIER_RE = re.compile(r"^[A-FS][+]?$")
+logger = logging.getLogger(__name__)
 
 
 class DatasetValidationError(ValueError):
@@ -132,7 +136,7 @@ def _safe_error(exc: BaseException) -> tuple[str, str]:
         code = "network_failed"
     else:
         code = "collection_failed"
-    return code, (" ".join(str(exc).split())[:500] or exc.__class__.__name__)
+    return code, safe_error(exc)
 
 
 def _numeric(value: Any) -> Decimal | None:
@@ -192,6 +196,7 @@ def refresh_tierlist_archon(
                         (dataset_id, run_key, trigger, scheduled_for, current_snapshot_id),
                     )
                     run_id = cursor.fetchone()[0]
+                    update_context(run_id=str(run_id))
                     cursor.execute(
                         "UPDATE datasets SET last_attempt_at = now(), updated_at = now() WHERE id = %s",
                         (dataset_id,),
@@ -205,14 +210,23 @@ def refresh_tierlist_archon(
                         previous = cursor.fetchone()
                         previous_count = previous[0] if previous else None
 
-            payload = collect_archon_dataset()
-            records = validate_candidate(payload, previous_record_count=previous_count)
+            with stage(logger, "collect"):
+                payload = collect_archon_dataset()
+            with stage(
+                logger,
+                "validate",
+                page_count=payload.get("page_count"),
+                candidate_record_count=payload.get("record_count"),
+            ):
+                records = validate_candidate(payload, previous_record_count=previous_count)
             snapshot_hash = _sha256(_semantic_payload(payload))
             snapshot_id: UUID | None = None
             page_by_context = {
                 (page["activity"], page["difficulty"], page["role"]): page
                 for page in payload["pages"]
             }
+            publish_started = time.monotonic()
+            event(logger, "scrape_stage_started", stage="publish")
             with connection.transaction():
                 with connection.cursor() as cursor:
                     cursor.execute(
@@ -283,6 +297,14 @@ def refresh_tierlist_archon(
                         """,
                         (snapshot_id, dataset_id),
                     )
+            event(
+                logger,
+                "scrape_stage_completed",
+                stage="publish",
+                duration_ms=int((time.monotonic() - publish_started) * 1_000),
+                snapshot_id=str(snapshot_id),
+                record_count=len(records),
+            )
 
             result = RefreshResult(
                 "succeeded", str(run_id), str(snapshot_id), scheduled_for.isoformat(),

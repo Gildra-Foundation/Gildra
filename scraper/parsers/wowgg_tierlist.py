@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import json
+import logging
 import math
 import re
 import time
@@ -19,6 +20,7 @@ from web_scraper import ResponseContract
 from web_scraper.providers import ScrapeDoProvider
 
 from .wowhead_tier_lists import fetch_with_fallback
+from .observability import event, safe_error, safe_url
 
 BASE_URL = "https://wow.gg"
 LANDING_URL = f"{BASE_URL}/ru/meta/mythic-plus/dps"
@@ -44,6 +46,7 @@ RAID_DIFFICULTIES = {
 SCRIPT_RE = re.compile(r'<script[^>]+src="([^"]+)"')
 PUBLIC_KEY_RE = re.compile(r'let\s+\w+="([A-Za-z0-9]{32,})",\w+="session_token"')
 API_BASE_RE = re.compile(r'https://[A-Za-z0-9.-]+(?:up\.railway\.app|wow\.gg)')
+logger = logging.getLogger(__name__)
 
 
 def _slug(value: str) -> str:
@@ -65,6 +68,12 @@ def _fetch_landing() -> tuple[bytes, dict[str, Any]]:
             LANDING_URL, contract, providers=[(ScrapeDoProvider(), "normal")]
         )
     except RuntimeError as provider_error:
+        started = time.monotonic()
+        event(
+            logger,
+            "scrape_direct_fallback_started",
+            target_url=safe_url(LANDING_URL),
+        )
         request = urllib.request.Request(
             LANDING_URL,
             headers={
@@ -84,6 +93,14 @@ def _fetch_landing() -> tuple[bytes, dict[str, Any]]:
             or b"self.__next_f.push" not in body
         ):
             raise RuntimeError("wow.gg landing page failed validation") from provider_error
+        event(
+            logger,
+            "scrape_direct_fallback_completed",
+            target_url=safe_url(LANDING_URL),
+            target_status=status,
+            body_bytes=len(body),
+            duration_ms=int((time.monotonic() - started) * 1_000),
+        )
         return body, {
             "provider": "direct",
             "strategy": "https",
@@ -123,12 +140,29 @@ def _request_bytes(url: str, *, headers: dict[str, str] | None = None, limit: in
                     raise RuntimeError(
                         f"wow.gg dependency failed validation: status={response.status} bytes={len(body)}"
                     )
+                if attempt > 0:
+                    event(
+                        logger,
+                        "wowgg_dependency_retry_recovered",
+                        target_url=safe_url(url),
+                        attempt=attempt + 1,
+                        body_bytes=len(body),
+                    )
                 return body
         except (urllib.error.URLError, TimeoutError, RuntimeError) as exc:
             last_error = exc
+            event(
+                logger,
+                "wowgg_dependency_attempt_failed",
+                level=logging.WARNING,
+                target_url=safe_url(url),
+                attempt=attempt + 1,
+                error_type=type(exc).__name__,
+                error_summary=safe_error(exc),
+            )
             if attempt < 2:
                 time.sleep(0.4 * (2**attempt))
-    raise RuntimeError(f"wow.gg request failed: {url}") from last_error
+    raise RuntimeError(f"wow.gg request failed: {safe_url(url)}") from last_error
 
 
 def discover_public_api(landing_html: bytes) -> tuple[str, str]:

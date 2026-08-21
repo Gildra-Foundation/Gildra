@@ -3,6 +3,7 @@ package joberrors
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 
 	"github.com/getsentry/sentry-go"
@@ -12,7 +13,11 @@ import (
 
 type SentryHandler struct{}
 
-func (*SentryHandler) HandleError(_ context.Context, job *rivertype.JobRow, err error) *river.ErrorHandlerResult {
+func (*SentryHandler) HandleError(ctx context.Context, job *rivertype.JobRow, err error) *river.ErrorHandlerResult {
+	slog.ErrorContext(ctx, "river_job_failed",
+		"event", "river_job_failed", "job_kind", job.Kind, "queue", job.Queue,
+		"job_id", job.ID, "attempt", job.Attempt, "max_attempts", job.MaxAttempts,
+		"error", err)
 	sentry.WithScope(func(scope *sentry.Scope) {
 		scope.SetTag("river.kind", job.Kind)
 		scope.SetTag("river.queue", job.Queue)
@@ -26,7 +31,10 @@ func (*SentryHandler) HandleError(_ context.Context, job *rivertype.JobRow, err 
 	return nil
 }
 
-func (*SentryHandler) HandlePanic(_ context.Context, job *rivertype.JobRow, panicValue any, trace string) *river.ErrorHandlerResult {
+func (*SentryHandler) HandlePanic(ctx context.Context, job *rivertype.JobRow, panicValue any, trace string) *river.ErrorHandlerResult {
+	slog.ErrorContext(ctx, "river_job_panicked",
+		"event", "river_job_panicked", "job_kind", job.Kind, "queue", job.Queue,
+		"job_id", job.ID, "attempt", job.Attempt, "max_attempts", job.MaxAttempts)
 	sentry.WithScope(func(scope *sentry.Scope) {
 		scope.SetTag("river.kind", job.Kind)
 		scope.SetTag("river.queue", job.Queue)

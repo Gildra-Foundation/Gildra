@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import re
+import logging
+import time
 import urllib.request
 from datetime import UTC, datetime
 from html.parser import HTMLParser
@@ -14,6 +16,7 @@ from web_scraper import ResponseContract, validate_response
 from web_scraper.fetchers.base import RawResponse
 
 from .wowhead_tier_lists import fetch_with_fallback
+from .observability import event, safe_url
 
 BASE_URL = "https://www.icy-veins.com"
 SOURCES = (
@@ -30,6 +33,7 @@ ICON_RE = re.compile(
     r"/images/wow/spec-icons/round-without-border/(?P<class>[a-z-]+)/(?P<spec>[a-z-]+)[.]webp$"
 )
 TIER_RE = re.compile(r"^[SABCD][+-]?$", re.I)
+logger = logging.getLogger(__name__)
 
 
 def _classes(attrs: list[tuple[str, str | None]]) -> set[str]:
@@ -201,6 +205,8 @@ def parse_icyveins_page(html: bytes | str, source: dict[str, str]) -> dict[str, 
 
 
 def _direct_fetch(source_url: str, contract: ResponseContract) -> tuple[bytes, dict[str, Any]]:
+    started = time.monotonic()
+    event(logger, "scrape_direct_fallback_started", target_url=safe_url(source_url))
     request = urllib.request.Request(source_url, headers={
         "User-Agent": "GildraDatasetBot/1.0 (+https://gildra.net)",
         "Accept": "text/html,application/xhtml+xml", "Accept-Encoding": "identity",
@@ -215,6 +221,14 @@ def _direct_fetch(source_url: str, contract: ResponseContract) -> tuple[bytes, d
     validated = validate_response(raw, contract)
     if not validated.transport_validated:
         raise RuntimeError(f"Icy Veins direct response failed validation: {validated.telemetry()['reason']}")
+    event(
+        logger,
+        "scrape_direct_fallback_completed",
+        target_url=safe_url(source_url),
+        target_status=200,
+        body_bytes=len(body),
+        duration_ms=int((time.monotonic() - started) * 1_000),
+    )
     return body, {"provider": "direct", "strategy": "https", "target_status": 200,
                   "body_bytes": len(body), "credits_spent": "0"}
 

@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import re
 import tempfile
+import time
 from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
@@ -25,6 +27,8 @@ from web_scraper.providers import (
     ZyteProvider,
 )
 
+from .observability import event, safe_error, safe_url
+
 DEFAULT_SOURCE_URL = "https://www.wowhead.com/guides/classes/tier-lists"
 DEFAULT_OUTPUT = "/app/reports/wowhead-tier-lists.json"
 
@@ -34,6 +38,15 @@ _PATH_RE = re.compile(
 )
 _ROLE_ORDER = {"dps": 0, "healer": 1, "tank": 2}
 _ACTIVITY_ORDER = {"raid": 0, "mythic_plus": 1}
+logger = logging.getLogger(__name__)
+
+
+def _provider_attempts() -> int:
+    try:
+        configured = int(os.getenv("SCRAPER_PROVIDER_ATTEMPTS", "2"))
+    except ValueError:
+        configured = 2
+    return max(1, min(3, configured))
 
 
 class _AnchorCollector(HTMLParser):
@@ -102,9 +115,33 @@ def fetch_with_scrape_do(
     if not provider.configured:
         raise RuntimeError("Scrape.do is not configured in the process environment")
 
-    response = provider.fetch(
-        ProviderRequest(url=source_url, strategy_id="normal", timeout_seconds=60.0)
+    started = time.monotonic()
+    event(
+        logger,
+        "scrape_fetch_attempt_started",
+        provider=provider.name,
+        strategy="normal",
+        target_url=safe_url(source_url),
+        attempt=1,
     )
+    try:
+        response = provider.fetch(
+            ProviderRequest(url=source_url, strategy_id="normal", timeout_seconds=60.0)
+        )
+    except (ProviderError, OSError, TimeoutError) as exc:
+        event(
+            logger,
+            "scrape_fetch_attempt_failed",
+            level=logging.WARNING,
+            provider=provider.name,
+            strategy="normal",
+            target_url=safe_url(source_url),
+            attempt=1,
+            duration_ms=int((time.monotonic() - started) * 1_000),
+            error_type=type(exc).__name__,
+            error_summary=safe_error(exc),
+        )
+        raise
     raw = RawResponse(
         requested_url=source_url,
         final_url=response.final_url or source_url,
@@ -117,12 +154,36 @@ def fetch_with_scrape_do(
     validated = validate_response(raw, contract)
     if not validated.transport_validated:
         telemetry = validated.telemetry()
+        event(
+            logger,
+            "scrape_fetch_attempt_rejected",
+            level=logging.WARNING,
+            provider=provider.name,
+            strategy="normal",
+            target_url=safe_url(source_url),
+            attempt=1,
+            duration_ms=int((time.monotonic() - started) * 1_000),
+            target_status=telemetry["status"],
+            verdict=telemetry["verdict"],
+            reason=telemetry["reason"],
+        )
         raise RuntimeError(
             "Wowhead response failed validation: "
             f"verdict={telemetry['verdict']} status={telemetry['status']} "
             f"reason={telemetry['reason']}"
         )
 
+    event(
+        logger,
+        "scrape_fetch_attempt_completed",
+        provider=response.provider,
+        strategy=response.strategy_id,
+        target_url=safe_url(source_url),
+        attempt=1,
+        duration_ms=int((time.monotonic() - started) * 1_000),
+        target_status=response.target_status,
+        body_bytes=len(response.body),
+    )
     return response.body, {
         "provider": response.provider,
         "strategy": response.strategy_id,
@@ -146,41 +207,92 @@ def fetch_with_fallback(
         (BrightDataProvider(), "unlocker"),
     ]
     failed: list[str] = []
+    attempts_per_provider = _provider_attempts()
     for provider, strategy in candidates:
         if not provider.configured:
             continue
-        try:
-            response = provider.fetch(
-                ProviderRequest(
-                    url=source_url,
-                    strategy_id=strategy,
-                    timeout_seconds=60.0,
+        for attempt in range(1, attempts_per_provider + 1):
+            started = time.monotonic()
+            event(
+                logger,
+                "scrape_fetch_attempt_started",
+                provider=provider.name,
+                strategy=strategy,
+                target_url=safe_url(source_url),
+                attempt=attempt,
+            )
+            try:
+                response = provider.fetch(
+                    ProviderRequest(
+                        url=source_url,
+                        strategy_id=strategy,
+                        timeout_seconds=60.0,
+                    )
                 )
-            )
-            raw = RawResponse(
-                requested_url=source_url,
-                final_url=response.final_url or source_url,
-                status=response.target_status,
-                headers=response.headers,
-                body=response.body,
-                elapsed_ms=response.latency_ms,
-                truncated=response.truncated,
-            )
-            validated = validate_response(raw, contract)
-            if not validated.transport_validated:
+                raw = RawResponse(
+                    requested_url=source_url,
+                    final_url=response.final_url or source_url,
+                    status=response.target_status,
+                    headers=response.headers,
+                    body=response.body,
+                    elapsed_ms=response.latency_ms,
+                    truncated=response.truncated,
+                )
+                validated = validate_response(raw, contract)
+                if not validated.transport_validated:
+                    telemetry = validated.telemetry()
+                    event(
+                        logger,
+                        "scrape_fetch_attempt_rejected",
+                        level=logging.WARNING,
+                        provider=provider.name,
+                        strategy=strategy,
+                        target_url=safe_url(source_url),
+                        attempt=attempt,
+                        duration_ms=int((time.monotonic() - started) * 1_000),
+                        target_status=telemetry["status"],
+                        verdict=telemetry["verdict"],
+                        reason=telemetry["reason"],
+                    )
+                    failed.append(provider.name)
+                    break
+                event(
+                    logger,
+                    "scrape_fetch_attempt_completed",
+                    provider=response.provider,
+                    strategy=response.strategy_id,
+                    target_url=safe_url(source_url),
+                    attempt=attempt,
+                    duration_ms=int((time.monotonic() - started) * 1_000),
+                    target_status=response.target_status,
+                    body_bytes=len(response.body),
+                )
+                return response.body, {
+                    "provider": response.provider,
+                    "strategy": response.strategy_id,
+                    "target_status": response.target_status,
+                    "body_bytes": len(response.body),
+                    "credits_spent": (
+                        str(response.cost.credits) if response.cost.attributed else None
+                    ),
+                }
+            except (ProviderError, OSError, TimeoutError) as exc:
+                event(
+                    logger,
+                    "scrape_fetch_attempt_failed",
+                    level=logging.WARNING,
+                    provider=provider.name,
+                    strategy=strategy,
+                    target_url=safe_url(source_url),
+                    attempt=attempt,
+                    duration_ms=int((time.monotonic() - started) * 1_000),
+                    error_type=type(exc).__name__,
+                    error_summary=safe_error(exc),
+                )
+                if attempt < attempts_per_provider:
+                    time.sleep(0.5 * attempt)
+                    continue
                 failed.append(provider.name)
-                continue
-            return response.body, {
-                "provider": response.provider,
-                "strategy": response.strategy_id,
-                "target_status": response.target_status,
-                "body_bytes": len(response.body),
-                "credits_spent": (
-                    str(response.cost.credits) if response.cost.attributed else None
-                ),
-            }
-        except (ProviderError, OSError, TimeoutError):
-            failed.append(provider.name)
     if not failed:
         raise RuntimeError("no configured scraping provider is available")
     raise RuntimeError(f"all configured scraping providers failed: {', '.join(failed)}")

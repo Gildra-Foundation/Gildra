@@ -94,6 +94,7 @@ func TestPostgresAndClickHouseMigrations(t *testing.T) {
 	assertLastKnownGoodSurvivesFailedRun(t, ctx, postgresDB, "tierlist-archon", 12, 139, 40)
 	assertLastKnownGoodSurvivesFailedRun(t, ctx, postgresDB, "tierlist-wowgg", 394, 3198, 41)
 	assertLastKnownGoodSurvivesFailedRun(t, ctx, postgresDB, "tierlist-icyveins", 8, 114, 40)
+	assertLinkOnlyWowheadEntryIsAccepted(t, ctx, postgresDB)
 
 	clickhouse, err := chcontainer.Run(ctx, "clickhouse/clickhouse-server:26.7.3-alpine",
 		chcontainer.WithDatabase("gildra"), chcontainer.WithUsername("gildra"), chcontainer.WithPassword("test-password"))
@@ -128,6 +129,37 @@ func TestPostgresAndClickHouseMigrations(t *testing.T) {
 	var datasetRefreshTable string
 	if err := clickhouseDB.QueryRowContext(ctx, `SELECT name FROM system.tables WHERE database = 'gildra' AND name = 'dataset_refresh_events'`).Scan(&datasetRefreshTable); err != nil || datasetRefreshTable != "dataset_refresh_events" {
 		t.Fatalf("dataset refresh analytics migration failed: table=%q error=%v", datasetRefreshTable, err)
+	}
+	if _, err := clickhouseDB.ExecContext(ctx, `
+		INSERT INTO dataset_refresh_events (
+			run_id, dataset, status, page_count, record_count, unique_spec_count
+		) VALUES (generateUUIDv4(), 'tierlist-wowgg-test', 'succeeded', 394, 3198, 41)`); err != nil {
+		t.Fatalf("insert wide dataset refresh counters: %v", err)
+	}
+	var storedPageCount uint32
+	if err := clickhouseDB.QueryRowContext(ctx, `
+		SELECT page_count FROM dataset_refresh_events
+		WHERE dataset = 'tierlist-wowgg-test'`).Scan(&storedPageCount); err != nil || storedPageCount != 394 {
+		t.Fatalf("dataset refresh page count overflowed: count=%d error=%v", storedPageCount, err)
+	}
+}
+
+func assertLinkOnlyWowheadEntryIsAccepted(t *testing.T, ctx context.Context, database *sql.DB) {
+	t.Helper()
+	contentHash := make([]byte, 32)
+	_, err := database.ExecContext(ctx, `
+		INSERT INTO tierlist_entries (
+			snapshot_id, activity, role, tier, rank_in_tier, class_name, class_slug,
+			spec_name, spec_slug, badge_slug, guide_id, guide_title, guide_url,
+			source_url, description, description_paragraphs, description_markup, content_hash
+		) SELECT current_snapshot_id, 'raid', 'dps', 'S', 1, 'Warrior', 'warrior',
+			'Arms', 'arms', 'arms-warrior', 1, 'Arms guide',
+			'https://www.wowhead.com/guide/classes/warrior/arms/overview-pve-dps',
+			'https://www.wowhead.com/guide/classes/tier-lists/dps-rankings-raids',
+			'', ARRAY[]::text[], '', $1
+		FROM datasets WHERE slug = 'tierlist-wowhead'`, contentHash)
+	if err != nil {
+		t.Fatalf("link-only Wowhead entry rejected: %v", err)
 	}
 }
 

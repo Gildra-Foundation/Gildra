@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
+import time
 import urllib.error
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -16,12 +18,14 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from .wowgg_tierlist import collect_wowgg_dataset
+from .observability import event, safe_error, stage, update_context
 from .wowhead_dataset_service import RefreshBusy, RefreshResult, _clickhouse_event, _sha256
 
 DATASET_SLUG = "tierlist-wowgg"
 DATASET_NAME = "Tierlist — wow.gg"
 ADVISORY_LOCK_ID = 0x47696C6472615747
 TIERS = {"S", "A", "B", "C", "D"}
+logger = logging.getLogger(__name__)
 
 
 class DatasetValidationError(ValueError):
@@ -149,7 +153,7 @@ def _safe_error(exc: BaseException) -> tuple[str, str]:
         code = "network_failed"
     else:
         code = "collection_failed"
-    return code, (" ".join(str(exc).split())[:500] or exc.__class__.__name__)
+    return code, safe_error(exc)
 
 
 def _numeric(value: Any) -> Decimal | None:
@@ -210,6 +214,7 @@ def refresh_tierlist_wowgg(
                         (dataset_id, run_key, trigger, scheduled_for, current_snapshot_id),
                     )
                     run_id = cursor.fetchone()[0]
+                    update_context(run_id=str(run_id))
                     cursor.execute(
                         "UPDATE datasets SET last_attempt_at = now(), updated_at = now() WHERE id = %s",
                         (dataset_id,),
@@ -223,11 +228,20 @@ def refresh_tierlist_wowgg(
                         previous = cursor.fetchone()
                         previous_count = previous[0] if previous else None
 
-            payload = collect_wowgg_dataset()
-            records = validate_candidate(payload, previous_record_count=previous_count)
+            with stage(logger, "collect"):
+                payload = collect_wowgg_dataset()
+            with stage(
+                logger,
+                "validate",
+                page_count=payload.get("page_count"),
+                candidate_record_count=payload.get("record_count"),
+            ):
+                records = validate_candidate(payload, previous_record_count=previous_count)
             semantic_payload = {key: value for key, value in payload.items() if key != "fetch"}
             snapshot_hash = _sha256(semantic_payload)
             snapshot_id: UUID | None = None
+            publish_started = time.monotonic()
+            event(logger, "scrape_stage_started", stage="publish")
             with connection.transaction():
                 with connection.cursor() as cursor:
                     cursor.execute(
@@ -315,6 +329,14 @@ def refresh_tierlist_wowgg(
                         """,
                         (snapshot_id, dataset_id),
                     )
+            event(
+                logger,
+                "scrape_stage_completed",
+                stage="publish",
+                duration_ms=int((time.monotonic() - publish_started) * 1_000),
+                snapshot_id=str(snapshot_id),
+                record_count=len(records),
+            )
             result = RefreshResult(
                 "succeeded", str(run_id), str(snapshot_id), scheduled_for.isoformat(),
                 len(records), payload["unique_spec_count"], False,

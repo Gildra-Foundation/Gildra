@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
+import time
 import urllib.request
 from datetime import UTC, datetime
 from typing import Any, Iterator
@@ -14,6 +16,7 @@ from web_scraper import ResponseContract
 from web_scraper.providers import ScrapeDoProvider
 
 from .wowhead_tier_lists import fetch_with_fallback
+from .observability import event, safe_url
 
 BASE_URL = "https://www.archon.gg"
 NEXT_DATA_RE = re.compile(
@@ -27,6 +30,7 @@ ACTOR_RE = re.compile(
     r"<ActorIcon\s+type=['\"](?P<icon>[^'\"]+)['\"]>(?P<name>.*?)</ActorIcon>"
 )
 TIER_RE = re.compile(r"^[A-FS][+]?$")
+logger = logging.getLogger(__name__)
 
 _CLASS_NAMES = {
     "death-knight": "Death Knight",
@@ -69,6 +73,8 @@ def _fetch_archon(source_url: str, contract: ResponseContract) -> tuple[bytes, d
             providers=[(ScrapeDoProvider(), "normal")],
         )
     except RuntimeError as provider_error:
+        started = time.monotonic()
+        event(logger, "scrape_direct_fallback_started", target_url=safe_url(source_url))
         request = urllib.request.Request(
             source_url,
             headers={
@@ -89,6 +95,14 @@ def _fetch_archon(source_url: str, contract: ResponseContract) -> tuple[bytes, d
             raise RuntimeError(
                 f"Archon direct response failed validation: status={status} bytes={len(body)}"
             ) from provider_error
+        event(
+            logger,
+            "scrape_direct_fallback_completed",
+            target_url=safe_url(source_url),
+            target_status=status,
+            body_bytes=len(body),
+            duration_ms=int((time.monotonic() - started) * 1_000),
+        )
         return body, {
             "provider": "direct",
             "strategy": "https",

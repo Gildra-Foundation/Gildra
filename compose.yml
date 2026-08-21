@@ -1,9 +1,17 @@
 name: gildra
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+    compress: "true"
+
 services:
   postgres:
     image: postgres:17.10-alpine3.23
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_DB: gildra
       POSTGRES_USER: gildra
@@ -20,6 +28,7 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:26.7.3-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       CLICKHOUSE_DB: gildra
       CLICKHOUSE_USER: gildra
@@ -36,6 +45,7 @@ services:
   redis:
     image: redis:8.10.0-alpine3.23
     restart: unless-stopped
+    logging: *default-logging
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
@@ -51,7 +61,9 @@ services:
     image: ${API_IMAGE:-gildra-api:local}
     build: ./backend
     restart: unless-stopped
+    logging: *default-logging
     environment:
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra?sslmode=disable
       CLICKHOUSE_ADDR: clickhouse:9000
       CLICKHOUSE_DATABASE: gildra
@@ -78,6 +90,7 @@ services:
     image: ${WEB_IMAGE:-gildra-web:local}
     build: .
     restart: unless-stopped
+    logging: *default-logging
     environment:
       API_INTERNAL_URL: http://api:8080
       INDEXNOW_KEY: ${INDEXNOW_KEY}
@@ -90,6 +103,7 @@ services:
     image: ${CMS_IMAGE:-gildra-cms:local}
     build: ./cms
     restart: unless-stopped
+    logging: *default-logging
     environment:
       PAYLOAD_DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra_cms?sslmode=disable
       PAYLOAD_SECRET: ${PAYLOAD_SECRET}
@@ -104,7 +118,10 @@ services:
     profiles: ["scraping"]
     image: ${SCRAPER_IMAGE:-gildra-scraper:local}
     build: ./scraper
+    logging: *default-logging
     environment:
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SCRAPER_PROVIDER_ATTEMPTS: ${SCRAPER_PROVIDER_ATTEMPTS:-2}
       SCRAPE_DO_TOKEN: ${SCRAPE_DO_TOKEN:-}
       BRIGHTDATA_API_KEY: ${BRIGHTDATA_API_KEY:-}
       BRIGHTDATA_ZONE: ${BRIGHTDATA_ZONE:-}
@@ -125,8 +142,11 @@ services:
     image: ${SCRAPER_IMAGE:-gildra-scraper:local}
     build: ./scraper
     restart: unless-stopped
+    logging: *default-logging
     entrypoint: ["python", "-m", "parsers.wowhead_dataset_daemon"]
     environment:
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SCRAPER_PROVIDER_ATTEMPTS: ${SCRAPER_PROVIDER_ATTEMPTS:-2}
       DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra?sslmode=disable
       CLICKHOUSE_HTTP_URL: http://clickhouse:8123
       CLICKHOUSE_DATABASE: gildra
@@ -148,7 +168,7 @@ services:
       postgres: { condition: service_healthy }
       clickhouse: { condition: service_healthy }
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/healthz', timeout=2)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/readyz', timeout=3)"]
       interval: 10s
       timeout: 3s
       retries: 12
@@ -157,6 +177,7 @@ services:
   nginx:
     image: nginx:1.29.1-alpine
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - "127.0.0.1:8088:80"
     volumes:
