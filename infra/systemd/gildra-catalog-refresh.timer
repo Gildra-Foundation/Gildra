@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule Gildra World of Warcraft catalog refresh
+
+[Timer]
+OnCalendar=*-*-* 04:15:00
+RandomizedDelaySec=30m
+Persistent=true
+Unit=gildra-catalog-refresh.service
+
+[Install]
+WantedBy=timers.target
