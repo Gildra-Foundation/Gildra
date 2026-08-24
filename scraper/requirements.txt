@@ -1,0 +1,2 @@
+web-scraper-core[yaml] @ git+https://github.com/Manacost-Labs/ParsesUnix.git@6eb5e5fe5ca2676751aca993a30aaa6604f77bd9
+psycopg[binary]==3.3.4

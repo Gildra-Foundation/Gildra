@@ -1,0 +1,16 @@
+{
+  "profile": "/app/profiles/source-template.yaml",
+  "state_dir": "/app/state",
+  "run_id": "gildra-wow-import",
+  "seed_urls": [],
+  "batch_size": 100,
+  "deadline_seconds": 21600,
+  "sweep": true,
+  "adaptive_routing": true,
+  "browser_pool": false,
+  "max_browser_contexts": 2,
+  "free_canary": true,
+  "paid_canary": true,
+  "allowed_providers": ["scrape.do", "brightdata", "zenrows", "zyte", "firecrawl"],
+  "daily_credit_limit": "50000"
+}
