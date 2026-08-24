@@ -1,0 +1,1308 @@
+openapi: 3.1.0
+info:
+  title: Gildra API
+  version: 1.0.0
+  description: Contract shared by the Go backend and the Next.js frontend.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+security: []
+servers:
+  - url: https://api.gildra.net
+  - url: https://gildra.net/api
+paths:
+  /v1:
+    get:
+      operationId: getAPIIndex
+      summary: Discover the stable v1 API surfaces.
+      responses:
+        "200":
+          description: API entry point.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIIndex"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /v1/game/products:
+    get:
+      operationId: listGameProducts
+      summary: List supported World of Warcraft products.
+      responses:
+        "200":
+          description: Supported products.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GameProduct"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /v1/game/entity-types:
+    get:
+      operationId: listGameEntityTypes
+      summary: List entity types and public catalog coverage metrics.
+      parameters:
+        - in: query
+          name: product
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            default: wow
+        - in: query
+          name: locale
+          schema:
+            type: string
+            enum: [en_US, ru_RU]
+            default: en_US
+      responses:
+        "200":
+          description: Entity types with localized, tooltip and relationship coverage.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GameEntityTypeSummary"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /v1/game/entities:
+    get:
+      operationId: listGameEntities
+      summary: Search and page through versioned game entities.
+      parameters:
+        - in: query
+          name: product
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+        - in: query
+          name: type
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+        - in: query
+          name: locale
+          schema:
+            type: string
+            enum: [en_US, ru_RU]
+            default: en_US
+        - in: query
+          name: q
+          schema:
+            type: string
+            maxLength: 200
+        - in: query
+          name: category
+          description: Taxonomy path. Selecting a parent includes all descendants.
+          schema:
+            type: string
+            maxLength: 192
+        - in: query
+          name: cursor
+          description: Opaque cursor from the previous response.
+          schema:
+            type: string
+            maxLength: 128
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Cursor-paginated game entities.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameEntityPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+  /v1/game/entity-summaries:
+    get:
+      operationId: listGameEntitySummaries
+      summary: Search lightweight catalog cards without payloads or tooltips.
+      description: Use this endpoint for directories and search results. Fetch the full entity resource only when a user opens a detail view.
+      parameters:
+        - in: query
+          name: product
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            default: wow
+        - in: query
+          name: type
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+        - in: query
+          name: locale
+          schema:
+            type: string
+            enum: [en_US, ru_RU]
+            default: en_US
+        - in: query
+          name: q
+          schema:
+            type: string
+            maxLength: 200
+        - in: query
+          name: category
+          description: Taxonomy path. Selecting a parent includes all descendants.
+          schema:
+            type: string
+            maxLength: 192
+        - in: query
+          name: facet
+          description: Repeatable taxonomy paths combined with AND semantics. Use one value per facet, for example class plus specialization plus equipment slot.
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 8
+            items:
+              type: string
+              maxLength: 192
+        - in: query
+          name: minItemLevel
+          description: Minimum stored base item level. Applies to item records.
+          schema: { type: integer, minimum: 0, maximum: 9999 }
+        - in: query
+          name: maxItemLevel
+          description: Maximum stored base item level. Applies to item records.
+          schema: { type: integer, minimum: 0, maximum: 9999 }
+        - in: query
+          name: minRequiredLevel
+          description: Minimum character level required to use an item.
+          schema: { type: integer, minimum: 0, maximum: 9999 }
+        - in: query
+          name: maxRequiredLevel
+          description: Maximum character level required to use an item.
+          schema: { type: integer, minimum: 0, maximum: 9999 }
+        - in: query
+          name: cursor
+          description: Opaque cursor from the previous response.
+          schema:
+            type: string
+            maxLength: 128
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: includeTotal
+          description: Include an exact or cached total. Search totals may require an additional count query.
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: Cursor-paginated lightweight entity summaries.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameEntitySummaryPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+  /v1/game/sitemap-entries:
+    get:
+      operationId: listGameSitemapEntries
+      summary: List a stable UUID shard for segmented catalog sitemaps.
+      description: Intended for Gildra's sitemap renderer. Empty shard means the complete entity type and is capped at 50000 records.
+      parameters:
+        - in: query
+          name: product
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            default: wow
+        - in: query
+          name: type
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+        - in: query
+          name: shard
+          description: Zero, one, or two lowercase hexadecimal UUID prefix characters.
+          schema:
+            type: string
+            pattern: "^[0-9a-f]{0,2}$"
+            default: ""
+      responses:
+        "200":
+          description: Stable entity URLs for one sitemap shard.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    maxItems: 50000
+                    items:
+                      $ref: "#/components/schemas/GameSitemapEntry"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+  /v1/game/categories:
+    get:
+      operationId: listGameCategories
+      summary: List populated catalog categories and their active entity counts.
+      parameters:
+        - in: query
+          name: product
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            default: wow
+        - in: query
+          name: type
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+        - in: query
+          name: locale
+          schema:
+            type: string
+            enum: [en_US, ru_RU]
+            default: en_US
+      responses:
+        "200":
+          description: Hierarchical taxonomy with counts including descendants.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GameCategory"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+  /v1/game/entities/{id}:
+    get:
+      operationId: getGameEntity
+      summary: Get the latest version of a game entity.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: locale
+          schema:
+            type: string
+            enum: [en_US, ru_RU]
+            default: en_US
+      responses:
+        "200":
+          description: Game entity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameEntity"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+  /v1/game/entities/{id}/relationships:
+    get:
+      operationId: listGameEntityRelationships
+      summary: Page through the normalized relationship graph for an entity.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: locale
+          schema:
+            type: string
+            enum: [en_US, ru_RU]
+            default: en_US
+        - in: query
+          name: direction
+          schema:
+            type: string
+            enum: [outgoing, incoming, both]
+            default: both
+        - in: query
+          name: relation
+          description: Optional exact relation type such as owned_by, grants or obtained_from.
+          schema:
+            type: string
+            pattern: "^[a-z][a-z0-9_]{1,63}$"
+        - in: query
+          name: cursor
+          description: Opaque cursor from the previous response.
+          schema:
+            type: string
+            maxLength: 256
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Cursor-paginated relationships and related entity summaries.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameEntityRelationshipPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /v1/game/entities/{id}/quality:
+    get:
+      operationId: getGameEntityQuality
+      summary: Inspect completeness and provenance for the latest entity version.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: locale
+          schema: { type: string, enum: [en_US, ru_RU], default: en_US }
+      responses:
+        "200":
+          description: Entity quality report derived from stored catalog facts.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GameEntityQuality" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /v1/game/entities/{id}/versions:
+    get:
+      operationId: listGameEntityVersions
+      summary: List build-pinned versions of an entity, newest first.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: locale
+          schema: { type: string, enum: [en_US, ru_RU], default: en_US }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      responses:
+        "200":
+          description: Version history.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/GameEntityVersion" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /v1/game/entities/{id}/comparison:
+    get:
+      operationId: getGameEntityComparison
+      summary: Compare two stored versions, or the two latest versions when builds are omitted.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: locale
+          schema: { type: string, enum: [en_US, ru_RU], default: en_US }
+        - in: query
+          name: fromBuildId
+          schema: { type: integer, format: int64, minimum: 1 }
+        - in: query
+          name: toBuildId
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200":
+          description: Field-level comparison backed by stored versions.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GameEntityComparison" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /v1/game/coverage:
+    get:
+      operationId: listGameCoverage
+      summary: Inspect field coverage for the current catalog read model.
+      parameters:
+        - in: query
+          name: product
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            default: wow
+        - in: query
+          name: locale
+          schema:
+            type: string
+            enum: [en_US, ru_RU]
+            default: en_US
+        - in: query
+          name: type
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+      responses:
+        "200":
+          description: Coverage by entity type and field for the active build.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GameFieldCoverage"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+  /v1/game/source-policies:
+    get:
+      operationId: listGameSourcePolicies
+      summary: List reviewed source licensing and redistribution policy metadata.
+      responses:
+        "200":
+          description: Source policy registry. This metadata is operational guidance, not legal advice.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GameSourcePolicy"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/game/relation-types:
+    get:
+      operationId: listGameRelationTypes
+      summary: List the canonical relationship ontology.
+      parameters:
+        - in: query
+          name: locale
+          schema:
+            type: string
+            enum: [en_US, ru_RU]
+            default: en_US
+      responses:
+        "200":
+          description: Registered relationship types and constraints.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GameRelationType"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+  /livez:
+    get:
+      operationId: getLiveness
+      summary: Check whether the API process is alive.
+      responses:
+        "200":
+          description: Process is alive.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /readyz:
+    get:
+      operationId: getReadiness
+      summary: Check whether required datastores are ready.
+      responses:
+        "200":
+          description: Dependencies are ready.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: A required dependency is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /v1/analytics/overview:
+    get:
+      operationId: getAnalyticsOverview
+      summary: Read an aggregated analytics overview.
+      parameters:
+        - in: query
+          name: hours
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 720
+            default: 24
+      responses:
+        "200":
+          description: Aggregated product analytics.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverview"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /v1/analytics/events:
+    post:
+      operationId: ingestAnalyticsEvents
+      summary: Ingest a batch of product analytics events.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngestEventsRequest"
+      responses:
+        "202":
+          description: Events accepted for async insertion.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestEventsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/indexnow:
+    post:
+      operationId: submitIndexNow
+      summary: Queue URLs for IndexNow submission.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexNowRequest"
+      responses:
+        "202":
+          description: IndexNow submission queued.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueuedResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+components:
+  responses:
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+    InternalError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+    NotFound:
+      description: Resource not found.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    TooManyRequests:
+      description: Rate limit exceeded.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    CatalogPublicationUnavailable:
+      description: Catalog delivery is fail-closed because at least one contributing source lacks a current policy or explicit publication grant.
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    APIIndex:
+      type: object
+      required: [version, rest, graphql, catalog]
+      properties:
+        version:
+          type: string
+          const: v1
+        rest:
+          type: string
+          format: uri
+        graphql:
+          type: string
+          format: uri
+        catalog:
+          type: string
+          format: uri
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+    GameProduct:
+      type: object
+      required: [id, slug, name]
+      properties:
+        id:
+          type: integer
+          format: int32
+        slug:
+          type: string
+        name:
+          type: string
+    GameEntity:
+      type: object
+      required: [id, product, type, externalId, slug, locale, name, description, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        product:
+          type: string
+        type:
+          type: string
+        externalId:
+          type: integer
+          format: int64
+        slug:
+          type: string
+        locale:
+          type: string
+          enum: [en_US, ru_RU]
+        name:
+          type: string
+        description:
+          type: string
+        tooltip:
+          $ref: "#/components/schemas/GameTooltip"
+        iconName:
+          type: string
+        iconUrl:
+          type: string
+          format: uri
+        quality:
+          type: integer
+          minimum: 0
+          maximum: 7
+        buildId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+    GameEntityTypeSummary:
+      type: object
+      required: [type, label, description, group, iconSymbol, sortOrder, count, localizedCount, describedCount, tooltipCount, iconCount, relationshipCount, coverageUpdatedAt]
+      properties:
+        type:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        group:
+          type: string
+        iconSymbol:
+          type: string
+        sortOrder:
+          type: integer
+        count:
+          type: integer
+          format: int64
+          minimum: 0
+        localizedCount:
+          type: integer
+          format: int64
+          minimum: 0
+        describedCount:
+          type: integer
+          format: int64
+          minimum: 0
+        tooltipCount:
+          type: integer
+          format: int64
+          minimum: 0
+        iconCount:
+          type: integer
+          format: int64
+          minimum: 0
+        relationshipCount:
+          type: integer
+          format: int64
+          minimum: 0
+        coverageUpdatedAt:
+          type: string
+          format: date-time
+    GameEntitySummary:
+      type: object
+      required: [id, type, externalId, slug, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        externalId:
+          type: integer
+          format: int64
+        slug:
+          type: string
+        name:
+          type: string
+        product:
+          type: string
+        locale:
+          type: string
+          enum: [en_US, ru_RU]
+        localeFallback:
+          type: boolean
+        description:
+          type: string
+        iconName:
+          type: string
+        iconUrl:
+          type: string
+          format: uri
+        quality:
+          type: integer
+          minimum: 0
+          maximum: 7
+        itemLevel:
+          type: integer
+          minimum: 0
+        buildId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+        highlights:
+          type: array
+          items:
+            $ref: "#/components/schemas/GameEntityHighlight"
+    GameEntityHighlight:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    GameSitemapEntry:
+      type: object
+      required: [id, type, slug, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        slug:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    SummaryCursorPage:
+      type: object
+      required: [hasMore]
+      properties:
+        nextCursor:
+          type: string
+        hasMore:
+          type: boolean
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+    GameEntitySummaryPage:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GameEntitySummary"
+        pagination:
+          $ref: "#/components/schemas/SummaryCursorPage"
+    GameFieldCoverage:
+      type: object
+      required: [product, buildId, type, locale, field, source, entityCount, populatedCount, unresolvedCount, conflictCount, refreshedAt]
+      properties:
+        product:
+          type: string
+        buildId:
+          type: integer
+          format: int64
+        type:
+          type: string
+        locale:
+          type: string
+          enum: [en_US, ru_RU]
+        field:
+          type: string
+        source:
+          type: string
+        entityCount:
+          type: integer
+          format: int64
+        populatedCount:
+          type: integer
+          format: int64
+        unresolvedCount:
+          type: integer
+          format: int64
+        conflictCount:
+          type: integer
+          format: int64
+        refreshedAt:
+          type: string
+          format: date-time
+    GameSourcePolicy:
+      type: object
+      required: [source, displayName, homepageUrl, termsUrl, licenseIdentifier, commercialUseStatus, publicApiStatus, assetCachingStatus, attributionRequired, attributionText, reviewStatus, notes]
+      properties:
+        source:
+          type: string
+        displayName:
+          type: string
+        homepageUrl:
+          type: string
+        termsUrl:
+          type: string
+        licenseIdentifier:
+          type: string
+        commercialUseStatus:
+          type: string
+          enum: [allowed, restricted, permission_required, prohibited, unknown]
+        publicApiStatus:
+          type: string
+          enum: [allowed, restricted, permission_required, prohibited, unknown]
+        assetCachingStatus:
+          type: string
+          enum: [allowed, restricted, permission_required, prohibited, unknown]
+        retentionDays:
+          type: integer
+          minimum: 0
+        attributionRequired:
+          type: boolean
+        attributionText:
+          type: string
+        reviewedAt:
+          type: string
+          format: date-time
+        reviewStatus:
+          type: string
+          enum: [pending, reviewed, expired, blocked]
+        notes:
+          type: string
+    GameRelationType:
+      type: object
+      required: [relation, label, description, allowedSourceTypes, allowedTargetTypes, attributeSchema, schemaVersion]
+      properties:
+        relation:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        inverseRelation:
+          type: string
+        allowedSourceTypes:
+          type: array
+          items:
+            type: string
+        allowedTargetTypes:
+          type: array
+          items:
+            type: string
+        attributeSchema:
+          type: object
+          additionalProperties: true
+        schemaVersion:
+          type: integer
+    GameEntityRelationship:
+      type: object
+      required: [direction, relation, buildId, attributes, entity]
+      properties:
+        direction:
+          type: string
+          enum: [outgoing, incoming]
+        relation:
+          type: string
+        buildId:
+          type: integer
+          format: int64
+        attributes:
+          type: object
+          additionalProperties: true
+        entity:
+          $ref: "#/components/schemas/GameEntitySummary"
+    GameEntityRelationshipPage:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GameEntityRelationship"
+        pagination:
+          $ref: "#/components/schemas/CursorPage"
+    GameEntityQualityCheck:
+      type: object
+      required: [key, label, present, required]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        present: { type: boolean }
+        required: { type: boolean }
+        detail: { type: string }
+    GameEntitySource:
+      type: object
+      required: [source, displayName, documents]
+      properties:
+        source: { type: string }
+        displayName: { type: string }
+        documents: { type: integer, minimum: 0 }
+        sourceUrl: { type: string, format: uri }
+        importedAt: { type: string, format: date-time }
+    GameEntityQuality:
+      type: object
+      required: [entityId, score, status, buildId, buildNumber, buildVersion, updatedAt, checks, confirmed, missing, sources]
+      properties:
+        entityId: { type: string, format: uuid }
+        score: { type: integer, minimum: 0, maximum: 100 }
+        status: { type: string, enum: [verified, partial, minimal] }
+        buildId: { type: integer, format: int64 }
+        buildNumber: { type: integer }
+        buildVersion: { type: string }
+        updatedAt: { type: string, format: date-time }
+        checks:
+          type: array
+          items: { $ref: "#/components/schemas/GameEntityQualityCheck" }
+        confirmed:
+          type: array
+          items: { type: string }
+        missing:
+          type: array
+          items: { type: string }
+        sources:
+          type: array
+          items: { $ref: "#/components/schemas/GameEntitySource" }
+    GameEntityVersion:
+      type: object
+      required: [id, buildId, buildNumber, buildVersion, revision, name, description, sourceUrl, observedAt]
+      properties:
+        id: { type: string, format: uuid }
+        buildId: { type: integer, format: int64 }
+        buildNumber: { type: integer }
+        buildVersion: { type: string }
+        revision: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        sourceUrl: { type: string }
+        observedAt: { type: string, format: date-time }
+    GameEntityChange:
+      type: object
+      required: [field, label, changeType]
+      properties:
+        field: { type: string }
+        label: { type: string }
+        before: {}
+        after: {}
+        changeType: { type: string, enum: [added, removed, changed] }
+    GameEntityComparison:
+      type: object
+      required: [from, to, changes]
+      properties:
+        from: { $ref: "#/components/schemas/GameEntityVersion" }
+        to: { $ref: "#/components/schemas/GameEntityVersion" }
+        changes:
+          type: array
+          items: { $ref: "#/components/schemas/GameEntityChange" }
+    GameTooltip:
+      type: object
+      required: [plainText, blocks]
+      properties:
+        plainText:
+          type: string
+        blocks:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    GameCategory:
+      type: object
+      required: [id, type, facet, slug, path, name, count, sortOrder]
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+        facet:
+          type: string
+        slug:
+          type: string
+        path:
+          type: string
+        parentPath:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        count:
+          type: integer
+          format: int64
+        sortOrder:
+          type: integer
+    CursorPage:
+      type: object
+      required: [hasMore, total]
+      properties:
+        nextCursor:
+          type: string
+        hasMore:
+          type: boolean
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+    GameEntityPage:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GameEntity"
+        pagination:
+          $ref: "#/components/schemas/CursorPage"
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+    APIError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    AnalyticsPoint:
+      type: object
+      required: [hour, events, uniqueUsers]
+      properties:
+        hour:
+          type: string
+          format: date-time
+        events:
+          type: integer
+          format: int64
+        uniqueUsers:
+          type: integer
+          format: int64
+    AnalyticsOverview:
+      type: object
+      required: [hours, events, uniqueUsers, activeSubscriptions, series]
+      properties:
+        hours:
+          type: integer
+        events:
+          type: integer
+          format: int64
+        uniqueUsers:
+          type: integer
+          format: int64
+        activeSubscriptions:
+          type: integer
+          format: int64
+        series:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsPoint"
+    AnalyticsEvent:
+      type: object
+      required: [eventName, path, locale, sessionId]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        occurredAt:
+          type: string
+          format: date-time
+        userId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        path:
+          type: string
+          maxLength: 2048
+        locale:
+          type: string
+          enum: [en, ru]
+        value:
+          type: number
+          format: double
+        properties:
+          type: object
+          additionalProperties: true
+    IngestEventsRequest:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          minItems: 1
+          maxItems: 5000
+          items:
+            $ref: "#/components/schemas/AnalyticsEvent"
+    IngestEventsResponse:
+      type: object
+      required: [accepted]
+      properties:
+        accepted:
+          type: integer
+    IndexNowRequest:
+      type: object
+      required: [urls]
+      properties:
+        urls:
+          type: array
+          minItems: 1
+          maxItems: 10000
+          items:
+            type: string
+            format: uri
+    QueuedResponse:
+      type: object
+      required: [queued]
+      properties:
+        queued:
+          type: boolean

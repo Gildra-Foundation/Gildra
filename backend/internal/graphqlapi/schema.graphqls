@@ -1,0 +1,50 @@
+scalar JSON
+scalar Time
+
+enum Locale {
+  en_US
+  ru_RU
+}
+
+type GameProduct {
+  id: Int!
+  slug: String!
+  name: String!
+}
+
+type GameEntity {
+  id: ID!
+  product: String!
+  type: String!
+  externalId: String!
+  slug: String!
+  locale: Locale!
+  name: String!
+  description: String!
+  buildId: String
+  payload: JSON!
+  updatedAt: Time!
+}
+
+type PageInfo {
+  nextCursor: String
+  hasMore: Boolean!
+}
+
+type GameEntityConnection {
+  nodes: [GameEntity!]!
+  pageInfo: PageInfo!
+}
+
+type Query {
+  gameProducts: [GameProduct!]!
+  gameEntity(id: ID!, locale: Locale = en_US): GameEntity
+  gameEntities(
+    product: String
+    type: String
+    locale: Locale = en_US
+    query: String
+    cursor: String
+    limit: Int = 20
+  ): GameEntityConnection!
+}
