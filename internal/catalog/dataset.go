@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Shpuntyara/DataTest/internal/raidbots"
+	"github.com/Gildra-Foundation/Gildra/internal/raidbots"
 )
 
 type TreeRecord struct {

@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Shpuntyara/DataTest/internal/catalog"
-	"github.com/Shpuntyara/DataTest/internal/raidbots"
-	"github.com/Shpuntyara/DataTest/internal/wago"
+	"github.com/Gildra-Foundation/Gildra/internal/catalog"
+	"github.com/Gildra-Foundation/Gildra/internal/raidbots"
+	"github.com/Gildra-Foundation/Gildra/internal/wago"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
