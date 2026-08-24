@@ -1,0 +1,21 @@
+[Unit]
+Description=Gildra atomic World of Warcraft catalog refresh
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/gildra/.env
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/gildra
+ExecCondition=/usr/bin/docker compose --env-file .env -f compose.yml -f compose.prod.yml -f compose.runtime.yml run --rm --no-deps --entrypoint catalog-build-check api -require-update
+ExecStart=/usr/bin/docker compose --env-file .env -f compose.yml -f compose.prod.yml -f compose.runtime.yml run --rm --no-deps --entrypoint catalog-pipeline api -mode apply -trigger schedule -sources wago,raidbots,db2,battlenet,listfile -max-records 0 -publication-environment production -timeout 8h
+TimeoutStartSec=9h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

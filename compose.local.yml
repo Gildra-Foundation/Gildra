@@ -1,0 +1,11 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server@sha256:80a5d78b746f7b70631908b3aff2249002e174c3f0520342d7c1f1abc0cd6751
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /var/log/clickhouse-server:size=256m
+      - /var/run/clickhouse-server:size=16m
+    ports:
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9000:9000"
