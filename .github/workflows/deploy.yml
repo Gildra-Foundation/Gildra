@@ -51,7 +51,7 @@ jobs:
       - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         id: meta
         with:
-          images: ghcr.io/shpuntyara/gildra-${{ matrix.name }}
+          images: ghcr.io/gildra-foundation/gildra-${{ matrix.name }}
           tags: |
             type=sha,format=long,prefix=
       - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
@@ -91,7 +91,7 @@ jobs:
       - name: Resolve immutable image digests
         id: images
         env:
-          IMAGE_PREFIX: ghcr.io/shpuntyara/gildra
+          IMAGE_PREFIX: ghcr.io/gildra-foundation/gildra
           IMAGE_SHA: ${{ github.event.workflow_run.head_sha }}
         shell: bash
         run: |
