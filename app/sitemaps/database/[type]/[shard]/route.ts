@@ -4,7 +4,10 @@ import { siteOrigin, xmlEscape, xmlResponse } from "@/lib/sitemap";
 export const revalidate = 3600;
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, context: RouteContext<"/sitemaps/database/[type]/[shard]">) {
+export async function GET(
+  _request: Request,
+  context: { params: Promise<{ type: string; shard: string }> },
+) {
   const { type, shard } = await context.params;
   const prefix = shard === "all" ? "" : shard;
   if (!/^[a-z][a-z0-9_]{1,63}$/.test(type) || !/^[0-9a-f]{0,2}$/.test(prefix)) {
