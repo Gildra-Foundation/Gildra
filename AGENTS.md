@@ -1,4 +1,4 @@
-# DataTest agent contract
+# Gildra agent contract
 
 The agent may read and modify all files in this repository.
 

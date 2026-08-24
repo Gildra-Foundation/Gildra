@@ -11,10 +11,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Shpuntyara/DataTest/internal/catalog"
-	"github.com/Shpuntyara/DataTest/internal/raidbots"
-	"github.com/Shpuntyara/DataTest/internal/store"
-	"github.com/Shpuntyara/DataTest/internal/wago"
+	"github.com/Gildra-Foundation/Gildra/internal/catalog"
+	"github.com/Gildra-Foundation/Gildra/internal/raidbots"
+	"github.com/Gildra-Foundation/Gildra/internal/store"
+	"github.com/Gildra-Foundation/Gildra/internal/wago"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Shpuntyara/DataTest/internal/raidbots"
+	"github.com/Gildra-Foundation/Gildra/internal/raidbots"
 )
 
 func TestBuildKeepsSpecsSharingTraitTree(t *testing.T) {

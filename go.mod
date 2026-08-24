@@ -1,4 +1,4 @@
-module github.com/Shpuntyara/DataTest
+module github.com/Gildra-Foundation/Gildra
 
 go 1.26.0
 
