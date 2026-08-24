@@ -540,7 +540,7 @@ func (ec *executionContext) field_Query_gameEntities_args(ctx context.Context, r
 	args["type"] = arg1
 	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
 		func(ctx context.Context, v any) (*model.Locale, error) {
-			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -586,7 +586,7 @@ func (ec *executionContext) field_Query_gameEntity_args(ctx context.Context, raw
 	args["id"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
 		func(ctx context.Context, v any) (*model.Locale, error) {
-			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -783,7 +783,7 @@ func (ec *executionContext) _GameEntity_locale(ctx context.Context, field graphq
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v model.Locale) graphql.Marshaler {
-			return ec.marshalNLocale2githubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, selections, v)
+			return ec.marshalNLocale2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, selections, v)
 		},
 		true,
 		true,
@@ -921,7 +921,7 @@ func (ec *executionContext) _GameEntityConnection_nodes(ctx context.Context, fie
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameEntity) graphql.Marshaler {
-			return ec.marshalNGameEntity2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityᚄ(ctx, selections, v)
+			return ec.marshalNGameEntity2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityᚄ(ctx, selections, v)
 		},
 		true,
 		true,
@@ -953,7 +953,7 @@ func (ec *executionContext) _GameEntityConnection_pageInfo(ctx context.Context, 
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
-			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐPageInfo(ctx, selections, v)
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐPageInfo(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1100,7 +1100,7 @@ func (ec *executionContext) _Query_gameProducts(ctx context.Context, field graph
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameProduct) graphql.Marshaler {
-			return ec.marshalNGameProduct2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProductᚄ(ctx, selections, v)
+			return ec.marshalNGameProduct2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProductᚄ(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1133,7 +1133,7 @@ func (ec *executionContext) _Query_gameEntity(ctx context.Context, field graphql
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.GameEntity) graphql.Marshaler {
-			return ec.marshalOGameEntity2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntity(ctx, selections, v)
+			return ec.marshalOGameEntity2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntity(ctx, selections, v)
 		},
 		true,
 		false,
@@ -1177,7 +1177,7 @@ func (ec *executionContext) _Query_gameEntities(ctx context.Context, field graph
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.GameEntityConnection) graphql.Marshaler {
-			return ec.marshalNGameEntityConnection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityConnection(ctx, selections, v)
+			return ec.marshalNGameEntityConnection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityConnection(ctx, selections, v)
 		},
 		true,
 		true,
@@ -3101,11 +3101,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNGameEntity2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameEntity) graphql.Marshaler {
+func (ec *executionContext) marshalNGameEntity2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameEntity) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNGameEntity2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntity(ctx, sel, v[i])
+		return ec.marshalNGameEntity2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntity(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -3117,7 +3117,7 @@ func (ec *executionContext) marshalNGameEntity2ᚕᚖgithubᚗcomᚋGildraᚑFou
 	return ret
 }
 
-func (ec *executionContext) marshalNGameEntity2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntity(ctx context.Context, sel ast.SelectionSet, v *model.GameEntity) graphql.Marshaler {
+func (ec *executionContext) marshalNGameEntity2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntity(ctx context.Context, sel ast.SelectionSet, v *model.GameEntity) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -3127,11 +3127,11 @@ func (ec *executionContext) marshalNGameEntity2ᚖgithubᚗcomᚋGildraᚑFounda
 	return ec._GameEntity(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNGameEntityConnection2githubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityConnection(ctx context.Context, sel ast.SelectionSet, v model.GameEntityConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNGameEntityConnection2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityConnection(ctx context.Context, sel ast.SelectionSet, v model.GameEntityConnection) graphql.Marshaler {
 	return ec._GameEntityConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNGameEntityConnection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityConnection(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNGameEntityConnection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityConnection(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -3141,11 +3141,11 @@ func (ec *executionContext) marshalNGameEntityConnection2ᚖgithubᚗcomᚋGildr
 	return ec._GameEntityConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNGameProduct2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameProduct) graphql.Marshaler {
+func (ec *executionContext) marshalNGameProduct2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameProduct) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNGameProduct2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProduct(ctx, sel, v[i])
+		return ec.marshalNGameProduct2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProduct(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -3157,7 +3157,7 @@ func (ec *executionContext) marshalNGameProduct2ᚕᚖgithubᚗcomᚋGildraᚑFo
 	return ret
 }
 
-func (ec *executionContext) marshalNGameProduct2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProduct(ctx context.Context, sel ast.SelectionSet, v *model.GameProduct) graphql.Marshaler {
+func (ec *executionContext) marshalNGameProduct2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProduct(ctx context.Context, sel ast.SelectionSet, v *model.GameProduct) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -3221,17 +3221,17 @@ func (ec *executionContext) marshalNJSON2map(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) unmarshalNLocale2githubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx context.Context, v any) (model.Locale, error) {
+func (ec *executionContext) unmarshalNLocale2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx context.Context, v any) (model.Locale, error) {
 	var res model.Locale
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNLocale2githubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx context.Context, sel ast.SelectionSet, v model.Locale) graphql.Marshaler {
+func (ec *executionContext) marshalNLocale2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx context.Context, sel ast.SelectionSet, v model.Locale) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -3443,7 +3443,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOGameEntity2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntity(ctx context.Context, sel ast.SelectionSet, v *model.GameEntity) graphql.Marshaler {
+func (ec *executionContext) marshalOGameEntity2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntity(ctx context.Context, sel ast.SelectionSet, v *model.GameEntity) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3468,7 +3468,7 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx context.Context, v any) (*model.Locale, error) {
+func (ec *executionContext) unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx context.Context, v any) (*model.Locale, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3477,7 +3477,7 @@ func (ec *executionContext) unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundati
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋdesignᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx context.Context, sel ast.SelectionSet, v *model.Locale) graphql.Marshaler {
+func (ec *executionContext) marshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx context.Context, sel ast.SelectionSet, v *model.Locale) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

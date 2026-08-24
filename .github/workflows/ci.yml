@@ -59,7 +59,7 @@ jobs:
           go-version: 1.26.6
           cache-dependency-path: backend/go.sum
       - run: go generate ./...
-      - run: go fix ./... && go fix ./...
+      - run: go mod tidy
       - run: git diff --exit-code
       - run: go tool goose -dir migrations/postgres validate
       - run: go tool goose -dir migrations/clickhouse validate
