@@ -132,6 +132,11 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 	if request.Params.Facet != nil {
 		params.Facets = append([]string(nil), (*request.Params.Facet)...)
 	}
+	if request.Params.Acquisition != nil {
+		for _, method := range *request.Params.Acquisition {
+			params.Acquisition = append(params.Acquisition, string(method))
+		}
+	}
 	params.MinItemLevel = request.Params.MinItemLevel
 	params.MaxItemLevel = request.Params.MaxItemLevel
 	params.MinRequiredLevel = request.Params.MinRequiredLevel
@@ -147,7 +152,7 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 	}
 	page, err := s.catalog.Summaries(ctx, params)
 	if err != nil {
-		if strings.Contains(err.Error(), "cursor") || strings.Contains(err.Error(), "limit") || strings.Contains(err.Error(), "ItemLevel") || strings.Contains(err.Error(), "item level") || strings.Contains(err.Error(), "RequiredLevel") || strings.Contains(err.Error(), "required level") || strings.Contains(err.Error(), "facet") {
+		if strings.Contains(err.Error(), "cursor") || strings.Contains(err.Error(), "limit") || strings.Contains(err.Error(), "ItemLevel") || strings.Contains(err.Error(), "item level") || strings.Contains(err.Error(), "RequiredLevel") || strings.Contains(err.Error(), "required level") || strings.Contains(err.Error(), "facet") || strings.Contains(err.Error(), "acquisition") {
 			return api.ListGameEntitySummaries400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{
 				Code: "invalid_page", Message: err.Error(),
 			}}, nil
@@ -163,19 +168,27 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 		for _, highlight := range entity.Highlights {
 			highlights = append(highlights, api.GameEntityHighlight{Key: highlight.Key, Value: highlight.Value})
 		}
+		acquisitionMethods := make([]api.GameAcquisitionMethod, 0, len(entity.Acquisition))
+		for _, method := range entity.Acquisition {
+			acquisitionMethods = append(acquisitionMethods, api.GameAcquisitionMethod(method))
+		}
 		data = append(data, api.GameEntitySummary{
 			Id: entity.ID, Product: &entity.Product, Type: entity.Type, ExternalId: entity.ExternalID,
 			Slug: entity.Slug, Locale: &locale, LocaleFallback: &entity.LocaleFallback, Name: entity.Name,
 			Description: &entity.Description, IconName: entity.IconName, IconUrl: wowIconURL(entity.IconName),
 			Quality: entity.Quality, ItemLevel: entity.ItemLevel, BuildId: entity.BuildID,
-			UpdatedAt: &entity.UpdatedAt, Highlights: &highlights,
+			UpdatedAt: &entity.UpdatedAt, Highlights: &highlights, AcquisitionMethods: acquisitionMethods,
 		})
+	}
+	acquisition := make([]api.GameAcquisitionMethodCount, 0, len(page.Acquisition))
+	for _, count := range page.Acquisition {
+		acquisition = append(acquisition, api.GameAcquisitionMethodCount{Method: api.GameAcquisitionMethod(count.Method), Count: count.Count})
 	}
 	pagination := api.SummaryCursorPage{HasMore: page.HasMore, Total: page.Total}
 	if page.NextCursor != "" {
 		pagination.NextCursor = &page.NextCursor
 	}
-	return api.ListGameEntitySummaries200JSONResponse{Data: data, Pagination: pagination}, nil
+	return api.ListGameEntitySummaries200JSONResponse{Data: data, Pagination: pagination, Acquisition: acquisition}, nil
 }
 
 func (s *Server) ListGameSitemapEntries(ctx context.Context, request api.ListGameSitemapEntriesRequestObject) (api.ListGameSitemapEntriesResponseObject, error) {

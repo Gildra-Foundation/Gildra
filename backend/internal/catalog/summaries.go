@@ -34,7 +34,13 @@ type CardSummary struct {
 	BuildID        *int64
 	UpdatedAt      time.Time
 	Highlights     []Highlight
+	Acquisition    []string
 	SearchRank     int
+}
+
+type AcquisitionCount struct {
+	Method string
+	Count  int64
 }
 
 type SummaryParams struct {
@@ -44,6 +50,7 @@ type SummaryParams struct {
 	Query            string
 	Category         string
 	Facets           []string
+	Acquisition      []string
 	MinItemLevel     *int
 	MaxItemLevel     *int
 	MinRequiredLevel *int
@@ -54,10 +61,11 @@ type SummaryParams struct {
 }
 
 type SummaryPage struct {
-	Entities   []CardSummary
-	NextCursor string
-	HasMore    bool
-	Total      *int64
+	Entities    []CardSummary
+	NextCursor  string
+	HasMore     bool
+	Total       *int64
+	Acquisition []AcquisitionCount
 }
 
 func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryPage, error) {
@@ -74,7 +82,13 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if err != nil {
 		return SummaryPage{}, err
 	}
-	cursorID, cursorRank, err := decodeSummaryCursor(params.Cursor, strings.TrimSpace(params.Query) != "")
+	acquisitionMethods, err := summaryAcquisitionMethods(params.Acquisition)
+	if err != nil {
+		return SummaryPage{}, err
+	}
+	params.Acquisition = acquisitionMethods
+	summaryQuery := strings.TrimSpace(params.Query)
+	cursorID, cursorRank, err := decodeSummaryCursor(params.Cursor, summaryQuery != "")
 	if err != nil {
 		return SummaryPage{}, err
 	}
@@ -97,8 +111,22 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		}
 		total = &value
 	}
+	acquisitionCounts := []AcquisitionCount(nil)
+	if strings.TrimSpace(params.Type) == "item" {
+		acquisitionCounts, err = s.summaryAcquisitionCounts(ctx, product)
+		if err != nil {
+			return SummaryPage{}, err
+		}
+	}
+	if total != nil && *total == 0 {
+		return SummaryPage{Entities: []CardSummary{}, Total: total, Acquisition: acquisitionCounts}, nil
+	}
 
-	rows, err := s.postgres.Query(ctx, `
+	pageOrder := "search_match.rank DESC NULLS LAST,entity.id"
+	if summaryQuery == "" {
+		pageOrder = "entity.id"
+	}
+	summarySQL := strings.Replace(`
 		WITH RECURSIVE search_candidates(version_id,rank) AS MATERIALIZED (
 			SELECT candidate.version_id,max(candidate.rank)::int FROM (
 				SELECT candidate_locale.version_id,greatest(
@@ -139,6 +167,28 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			JOIN selected_categories selected ON selected.id=assignment.category_id
 			GROUP BY assignment.version_id
 			HAVING count(DISTINCT selected.root_path)=(SELECT count(*) FROM requested_paths)
+		), page_entities AS MATERIALIZED (
+			SELECT entity.id,entity.latest_version_id AS version_id,COALESCE(search_match.rank,0) AS rank
+			FROM game_entities entity
+			JOIN game_products product ON product.id=entity.product_id
+			JOIN game_entity_versions version ON version.id=entity.latest_version_id
+			LEFT JOIN search_candidates search_match ON search_match.version_id=version.id
+			LEFT JOIN selected_versions selected ON selected.version_id=version.id
+			LEFT JOIN catalog_items item ON item.version_id=version.id
+			WHERE entity.deleted_at IS NULL AND product.slug=$1
+				AND ($2='' OR entity.entity_type=$2)
+				AND (cardinality($7::text[])=0 OR selected.version_id IS NOT NULL)
+				AND ($8::int IS NULL OR item.item_level >= $8)
+				AND ($9::int IS NULL OR item.item_level <= $9)
+				AND ($10::int IS NULL OR item.required_level >= $10)
+				AND ($11::int IS NULL OR item.required_level <= $11)
+				AND (cardinality($13::text[])=0 OR EXISTS (
+					SELECT 1 FROM catalog_item_acquisition_methods selected_acquisition
+					WHERE selected_acquisition.entity_id=entity.id AND selected_acquisition.method=ANY($13::text[])
+				))
+				AND ($5='' OR search_match.rank>0)
+				AND (($5='' AND entity.id>$3) OR ($5<>'' AND ($12::int IS NULL OR search_match.rank<$12 OR (search_match.rank=$12 AND entity.id>$3))))
+			ORDER BY /*PAGE_ORDER*/ LIMIT $6
 		)
 		SELECT entity.id,product.slug,entity.entity_type,entity.external_id,entity.canonical_slug,$4::text,
 			(localized.version_id IS NULL OR NULLIF(localized.name,'') IS NULL) AS locale_fallback,
@@ -148,16 +198,20 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 				NULLIF(version.payload #>> '{raidbots,icon}',''),NULLIF(version.payload #>> '{raidbots,spellIcon}','')),
 			CASE WHEN item.quality ~ '^[0-9]+$' THEN item.quality::int END,
 			item.item_level,version.build_id,entity.updated_at,
-			item.required_level,item.inventory_type,spell.school,spell.cast_time,spell.cooldown_ms,COALESCE(search_match.rank,0)
-		FROM game_entities entity
+			item.required_level,item.inventory_type,spell.school,spell.cast_time,spell.cooldown_ms,page.rank,
+			COALESCE(acquisition.methods,'{}'::text[])
+		FROM page_entities page
+		JOIN game_entities entity ON entity.id=page.id
 		JOIN game_products product ON product.id=entity.product_id
-		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		JOIN game_entity_versions version ON version.id=page.version_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
-		LEFT JOIN search_candidates search_match ON search_match.version_id=version.id
-		LEFT JOIN selected_versions selected ON selected.version_id=version.id
 		LEFT JOIN catalog_items item ON item.version_id=version.id
 		LEFT JOIN catalog_spells spell ON spell.version_id=version.id
+		LEFT JOIN LATERAL (
+			SELECT array_agg(method.method ORDER BY method.method) AS methods
+			FROM catalog_item_acquisition_methods method WHERE method.entity_id=entity.id
+		) acquisition ON entity.entity_type='item'
 		LEFT JOIN catalog_entity_icons source_icon ON source_icon.build_id=version.build_id
 			AND source_icon.entity_type=entity.entity_type AND source_icon.external_id=entity.external_id
 		LEFT JOIN catalog_file_assets direct_icon ON direct_icon.file_data_id=CASE
@@ -167,18 +221,10 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 				version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}') ~ '^[0-9]+$'
 			THEN COALESCE(version.payload #>> '{db2,InventoryIconFileID}',version.payload #>> '{db2,IconFileID}',
 				version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}')::bigint END
-		WHERE entity.deleted_at IS NULL AND product.slug=$1
-			AND ($2='' OR entity.entity_type=$2)
-			AND (cardinality($7::text[])=0 OR selected.version_id IS NOT NULL)
-			AND ($8::int IS NULL OR item.item_level >= $8)
-			AND ($9::int IS NULL OR item.item_level <= $9)
-			AND ($10::int IS NULL OR item.required_level >= $10)
-			AND ($11::int IS NULL OR item.required_level <= $11)
-			AND ($5='' OR search_match.rank>0)
-			AND (($5='' AND entity.id>$3) OR ($5<>'' AND ($12::int IS NULL OR search_match.rank<$12 OR (search_match.rank=$12 AND entity.id>$3))))
-		ORDER BY search_match.rank DESC NULLS LAST,entity.id LIMIT $6`, product, strings.TrimSpace(params.Type), cursorID, locale,
-		strings.TrimSpace(params.Query), params.Limit+1, filterPaths, params.MinItemLevel, params.MaxItemLevel,
-		params.MinRequiredLevel, params.MaxRequiredLevel, cursorRank)
+		ORDER BY page.rank DESC,entity.id`, "/*PAGE_ORDER*/", pageOrder, 1)
+	rows, err := s.postgres.Query(ctx, summarySQL, product, strings.TrimSpace(params.Type), cursorID, locale,
+		summaryQuery, params.Limit+1, filterPaths, params.MinItemLevel, params.MaxItemLevel,
+		params.MinRequiredLevel, params.MaxRequiredLevel, cursorRank, acquisitionMethods)
 	if err != nil {
 		return SummaryPage{}, fmt.Errorf("list game entity summaries: %w", err)
 	}
@@ -193,7 +239,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		if err := rows.Scan(&entity.ID, &entity.Product, &entity.Type, &entity.ExternalID, &entity.Slug,
 			&entity.Locale, &entity.LocaleFallback, &entity.Name, &entity.Description, &entity.IconName,
 			&entity.Quality, &entity.ItemLevel, &entity.BuildID, &entity.UpdatedAt, &requiredLevel,
-			&inventoryType, &school, &castTime, &cooldown, &entity.SearchRank); err != nil {
+			&inventoryType, &school, &castTime, &cooldown, &entity.SearchRank, &entity.Acquisition); err != nil {
 			return SummaryPage{}, fmt.Errorf("scan game entity summary: %w", err)
 		}
 		entity.Highlights = summaryHighlights(locale, requiredLevel, inventoryType, school, castTime, cooldown)
@@ -209,9 +255,9 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	nextCursor := ""
 	if hasMore && len(entities) > 0 {
 		last := entities[len(entities)-1]
-		nextCursor = encodeSummaryCursor(last.ID, last.SearchRank, strings.TrimSpace(params.Query) != "")
+		nextCursor = encodeSummaryCursor(last.ID, last.SearchRank, summaryQuery != "")
 	}
-	return SummaryPage{Entities: entities, NextCursor: nextCursor, HasMore: hasMore, Total: total}, nil
+	return SummaryPage{Entities: entities, NextCursor: nextCursor, HasMore: hasMore, Total: total, Acquisition: acquisitionCounts}, nil
 }
 
 func (s *Service) summaryCount(ctx context.Context, params SummaryParams, product, locale string) (int64, error) {
@@ -222,7 +268,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 	if err != nil {
 		return 0, err
 	}
-	if query == "" && len(filterPaths) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil {
+	if query == "" && len(filterPaths) == 0 && len(params.Acquisition) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil {
 		var total int64
 		err := s.postgres.QueryRow(ctx, `
 			SELECT COALESCE(sum(stats.entity_count),0)
@@ -235,7 +281,19 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		}
 		return total, nil
 	}
-	if query == "" && category != "" && len(params.Facets) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil {
+	if query == "" && (entityType == "" || entityType == "item") && len(filterPaths) == 0 && len(params.Acquisition) > 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil {
+		var total int64
+		err := s.postgres.QueryRow(ctx, `
+			SELECT count(DISTINCT acquisition.entity_id)
+			FROM catalog_item_acquisition_methods acquisition
+			JOIN game_products product ON product.id=acquisition.product_id
+			WHERE product.slug=$1 AND acquisition.method=ANY($2::text[])`, product, params.Acquisition).Scan(&total)
+		if err != nil {
+			return 0, fmt.Errorf("read cached acquisition summary count: %w", err)
+		}
+		return total, nil
+	}
+	if query == "" && category != "" && len(params.Facets) == 0 && len(params.Acquisition) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil {
 		var total int64
 		err := s.postgres.QueryRow(ctx, `
 			SELECT COALESCE(stats.entity_count,0) FROM catalog_categories category
@@ -292,12 +350,46 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 			AND ($6::int IS NULL OR item.item_level <= $6)
 			AND ($7::int IS NULL OR item.required_level >= $7)
 			AND ($8::int IS NULL OR item.required_level <= $8)
-			AND ($3='' OR search.version_id IS NOT NULL)`, product, entityType, query, filterPaths, params.MinItemLevel, params.MaxItemLevel,
-		params.MinRequiredLevel, params.MaxRequiredLevel).Scan(&total)
+			AND ($3='' OR search.version_id IS NOT NULL)
+			AND (cardinality($9::text[])=0 OR EXISTS (
+				SELECT 1 FROM catalog_item_acquisition_methods acquisition
+				WHERE acquisition.entity_id=entity.id AND acquisition.method=ANY($9::text[])
+			))`, product, entityType, query, filterPaths, params.MinItemLevel, params.MaxItemLevel,
+		params.MinRequiredLevel, params.MaxRequiredLevel, params.Acquisition).Scan(&total)
 	if err != nil {
 		return 0, fmt.Errorf("count game entity summaries: %w", err)
 	}
 	return total, nil
+}
+
+func (s *Service) summaryAcquisitionCounts(ctx context.Context, product string) ([]AcquisitionCount, error) {
+	rows, err := s.postgres.Query(ctx, `
+		WITH method_order(method,sort_order) AS (VALUES
+			('drop'::text,1),('quest'::text,2),('vendor'::text,3),('crafting'::text,4)
+		), counts AS (
+			SELECT acquisition.method,count(*)::bigint AS entity_count
+			FROM catalog_item_acquisition_methods acquisition
+			JOIN game_products selected_product ON selected_product.id=acquisition.product_id AND selected_product.slug=$1
+			GROUP BY acquisition.method
+		)
+		SELECT method_order.method,COALESCE(counts.entity_count,0)
+		FROM method_order LEFT JOIN counts USING(method) ORDER BY method_order.sort_order`, product)
+	if err != nil {
+		return nil, fmt.Errorf("count item acquisition methods: %w", err)
+	}
+	defer rows.Close()
+	counts := make([]AcquisitionCount, 0, 4)
+	for rows.Next() {
+		var count AcquisitionCount
+		if err := rows.Scan(&count.Method, &count.Count); err != nil {
+			return nil, fmt.Errorf("scan item acquisition method count: %w", err)
+		}
+		counts = append(counts, count)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate item acquisition method counts: %w", err)
+	}
+	return counts, nil
 }
 
 func summaryFilterPaths(category string, facets []string) ([]string, error) {
@@ -321,6 +413,27 @@ func summaryFilterPaths(category string, facets []string) ([]string, error) {
 		return nil, errors.New("at most 8 facet paths are allowed")
 	}
 	return paths, nil
+}
+
+func summaryAcquisitionMethods(values []string) ([]string, error) {
+	allowed := map[string]struct{}{"drop": {}, "quest": {}, "vendor": {}, "crafting": {}}
+	seen := make(map[string]struct{}, len(values))
+	methods := make([]string, 0, len(values))
+	for _, raw := range values {
+		method := strings.ToLower(strings.TrimSpace(raw))
+		if method == "" {
+			continue
+		}
+		if _, ok := allowed[method]; !ok {
+			return nil, fmt.Errorf("unsupported acquisition method %q", method)
+		}
+		if _, ok := seen[method]; ok {
+			continue
+		}
+		seen[method] = struct{}{}
+		methods = append(methods, method)
+	}
+	return methods, nil
 }
 
 func encodeSummaryCursor(id uuid.UUID, rank int, ranked bool) string {
