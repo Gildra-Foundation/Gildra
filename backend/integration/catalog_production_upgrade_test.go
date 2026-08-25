@@ -4,6 +4,7 @@ package integration
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"io"
@@ -68,15 +69,15 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	if err := goose.UpContext(ctx, database, migrations); err != nil {
 		t.Fatalf("upgrade production baseline to Warcraft catalog: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, 70)
-	if err := goose.DownToContext(ctx, database, migrations, 69); err != nil {
+	assertMigrationVersion(t, ctx, database, 71)
+	if err := goose.DownToContext(ctx, database, migrations, 70); err != nil {
 		t.Fatalf("roll back newest catalog migration: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, 69)
-	if err := goose.UpToContext(ctx, database, migrations, 70); err != nil {
+	assertMigrationVersion(t, ctx, database, 70)
+	if err := goose.UpToContext(ctx, database, migrations, 71); err != nil {
 		t.Fatalf("reapply newest catalog migration: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, 70)
+	assertMigrationVersion(t, ctx, database, 71)
 	for _, table := range []string{
 		"catalog_completeness_expectations",
 		"catalog_entity_media",
@@ -126,7 +127,7 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 			component,backup_kind,status,storage_uri,content_hash,byte_size,database_version,
 			completed_at,restore_started_at,restore_completed_at,verification)
 		VALUES(
-			'postgres','logical','verified','file:///local-only.dump',decode(repeat('aa',32),'hex'),1,70,
+			'postgres','logical','verified','file:///local-only.dump',decode(repeat('aa',32),'hex'),1,71,
 			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`); err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +142,7 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 			component,backup_kind,status,storage_uri,content_hash,byte_size,database_version,
 			completed_at,restore_started_at,restore_completed_at,verification)
 		VALUES(
-			'postgres','logical','verified','r2://gildra-backups/catalog.dump',decode(repeat('bb',32),'hex'),1,70,
+			'postgres','logical','verified','r2://gildra-backups/catalog.dump',decode(repeat('bb',32),'hex'),1,71,
 			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`); err != nil {
 		t.Fatal(err)
 	}
@@ -242,9 +243,14 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err != nil {
 		t.Fatal(err)
 	}
-	listfileArtifactID, err := store.RegisterArtifact(ctx, listfile, "wow_listfile", "community-listfile.csv", "",
+	listfileArtifactID, err := store.RegisterPendingArtifact(ctx, listfile, "wow_listfile", "community-listfile.csv", "",
 		"https://github.com/wowdev/wow-listfile/releases/latest/download/community-listfile.csv", map[string]any{"test": "atomic assets"})
 	if err != nil {
+		t.Fatal(err)
+	}
+	listfileProof := []byte("987654321;Interface/Icons/inv_test.blp\n")
+	listfileDigest := sha256.Sum256(listfileProof)
+	if err := store.CompleteArtifact(ctx, listfileArtifactID, listfileDigest[:], int64(len(listfileProof)), `"integration-etag"`); err != nil {
 		t.Fatal(err)
 	}
 	const fileDataID int64 = 987654321
@@ -267,6 +273,16 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 		t.Fatalf("staged listfile asset leaked before release publication: count=%d", activeAssetCount)
 	}
 	assertCatalogName(t, ctx, service, entityID, "Published item")
+	if _, err := database.ExecContext(ctx, `UPDATE catalog_source_artifacts SET content_hash=NULL WHERE id=$1`, listfileArtifactID); err != nil {
+		t.Fatal(err)
+	}
+	if err := releases.Publish(ctx, publishedReleaseID); !errors.Is(err, catalogrelease.ErrReleaseNotPublishable) ||
+		!strings.Contains(err.Error(), "invalid_artifacts=1") {
+		t.Fatalf("unverified artifact error = %v, want invalid_artifacts=1", err)
+	}
+	if err := store.CompleteArtifact(ctx, listfileArtifactID, listfileDigest[:], int64(len(listfileProof)), `"integration-etag"`); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := database.ExecContext(ctx, `
 		UPDATE game_entity_versions SET source_artifact_id=NULL
 		WHERE id=(SELECT latest_version_id FROM game_entities WHERE id=$1)`, entityID); err != nil {

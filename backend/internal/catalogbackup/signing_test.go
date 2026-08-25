@@ -15,7 +15,7 @@ func TestSignedEvidenceRejectsTampering(t *testing.T) {
 	evidence := Evidence{
 		ManifestID: uuid.New(), ArtifactURI: "r2://bucket/archive.dump.age",
 		EvidenceURI: "r2://bucket/archive.dump.age.manifest.json",
-		SHA256:      "abcd", ByteSize: 42, Source: completeState(70, 1), Restore: completeState(70, 1),
+		SHA256:      "abcd", ByteSize: 42, Source: completeState(71, 1), Restore: completeState(71, 1),
 		BackupCompletedAt: time.Now().UTC(), RestoreStartedAt: time.Now().UTC(), RestoreCompletedAt: time.Now().UTC(),
 		VerificationVersion: 1,
 	}

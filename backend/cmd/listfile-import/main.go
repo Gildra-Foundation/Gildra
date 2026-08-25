@@ -30,6 +30,13 @@ type asset struct {
 	hash       []byte
 }
 
+type byteCounter int64
+
+func (counter *byteCounter) Write(payload []byte) (int, error) {
+	*counter += byteCounter(len(payload))
+	return len(payload), nil
+}
+
 func main() {
 	if err := run(); err != nil {
 		slog.Error("listfile import failed", "error", err)
@@ -95,18 +102,32 @@ func run() error {
 			slog.Error("finish listfile import", "error", finishErr)
 		}
 	}()
-	artifactID, err := store.RegisterArtifact(ctx, ic, "wow_listfile", "community-listfile.csv", "", sourceURL, map[string]any{
+	artifactID, err := store.RegisterPendingArtifact(ctx, ic, "wow_listfile", "community-listfile.csv", "", sourceURL, map[string]any{
 		"build_version": buildVersion,
 	})
 	if err != nil {
 		importErr = err
 		return err
 	}
+	artifactFinished := false
+	defer func() {
+		if artifactFinished {
+			return
+		}
+		cause := importErr
+		if cause == nil {
+			cause = errors.New("listfile import stopped before artifact verification")
+		}
+		if failErr := store.FailArtifact(context.WithoutCancel(ctx), artifactID, cause); failErr != nil {
+			slog.Error("fail listfile artifact", "error", failErr)
+		}
+	}()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sourceURL, nil)
 	if err != nil {
 		importErr = err
 		return err
 	}
+	req.Header.Set("Accept-Encoding", "identity")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		importErr = err
@@ -117,7 +138,9 @@ func run() error {
 		importErr = fmt.Errorf("listfile returned %s", resp.Status)
 		return importErr
 	}
-	reader := csv.NewReader(resp.Body)
+	hasher := sha256.New()
+	counter := byteCounter(0)
+	reader := csv.NewReader(io.TeeReader(resp.Body, io.MultiWriter(hasher, &counter)))
 	reader.Comma = ';'
 	reader.FieldsPerRecord = -1
 	reader.ReuseRecord = true
@@ -167,6 +190,11 @@ func run() error {
 		importErr = err
 		return err
 	}
+	if err := store.CompleteArtifact(ctx, artifactID, hasher.Sum(nil), int64(counter), resp.Header.Get("ETag")); err != nil {
+		importErr = err
+		return err
+	}
+	artifactFinished = true
 	if err := store.Finish(ctx, ic.RunID, "SUCCEEDED", seen, written, nil); err != nil {
 		importErr = fmt.Errorf("finish listfile snapshot: %w", err)
 		return importErr
