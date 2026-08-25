@@ -135,8 +135,11 @@ catalog-pipeline \
 
 ## Known blocker before production import
 
-The verified local dump proves that the current database can be restored and
-upgraded from migration 15 to 69. It is not an off-host encrypted backup.
-Therefore the production recovery gate must remain closed until the backup job
+The repository now includes `catalog-backup`, which creates an age-encrypted
+off-host PostgreSQL archive, restores the downloaded object into an isolated
+empty database, compares critical state, uploads signed evidence, and only then
+records a verified manifest. Its unit and disposable-database integration tests
+do not constitute a production recovery point. Therefore the production
+recovery gate must remain closed until the backup job
 uploads the artifact, verifies a restore from that remote copy, and registers
 the resulting manifest. Do not bypass the gate with a manual status change.
