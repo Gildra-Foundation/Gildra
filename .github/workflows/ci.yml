@@ -58,6 +58,8 @@ jobs:
         with:
           go-version: 1.26.6
           cache-dependency-path: backend/go.sum
+      - name: Verify immutable production migrations
+        run: ../scripts/check-production-migration-baseline.sh
       - run: go generate ./...
       - run: go mod tidy
       - run: git diff --exit-code
