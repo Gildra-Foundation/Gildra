@@ -192,37 +192,67 @@ func importWago(
 		for _, entityType := range opts.entityTypes {
 			table := map[string]string{"item": "ItemSparse", "spell": "SpellName"}[entityType]
 			sourceURL := client.CSVURL(table, opts.buildVersion, wagoLocale)
-			artifactID, err := store.RegisterArtifact(ctx, importContext, "wago_tools", table, locale, sourceURL, map[string]any{
+			metadata := map[string]any{
 				"table": table, "build": opts.buildVersion, "locale": locale, "entity_type": entityType,
-			})
+				"bounded": opts.maxRecords > 0, "max_records": opts.maxRecords,
+			}
+			var artifactID uuid.UUID
+			if opts.maxRecords == 0 {
+				artifactID, err = store.RegisterPendingArtifact(ctx, importContext, "wago_tools", table, locale, sourceURL, metadata)
+			} else {
+				artifactID, err = store.RegisterArtifact(ctx, importContext, "wago_tools", table, locale, sourceURL, metadata)
+			}
 			if err != nil {
 				return err
 			}
 			slog.Info("importing Wago table", "table", table, "locale", locale, "build", opts.buildVersion)
-			_, err = client.Rows(ctx, table, opts.buildVersion, wagoLocale, opts.maxRecords, func(row map[string]string) error {
-				(*seen)++
-				record, err := wagoRecordWithSpellText(entityType, locale, sourceURL, row, spellTexts)
-				if err != nil {
-					if errors.Is(err, errWagoRecordMissingName) {
-						slog.Warn("skipping unnamed Wago record", "type", entityType, "id", row["ID"], "locale", locale)
-						return nil
+			artifactErr := func() (resultErr error) {
+				finalized := false
+				defer func() {
+					if finalized {
+						return
 					}
-					return err
-				}
-				record.SourceArtifactID = &artifactID
-				if localeIndex == 0 {
-					err = store.UpsertCanonical(ctx, importContext, record)
-				} else {
-					err = store.UpsertLocalization(ctx, importContext, record)
-				}
+					if failErr := store.FailArtifact(context.WithoutCancel(ctx), artifactID, resultErr); failErr != nil {
+						slog.Error("fail Wago artifact", "table", table, "locale", locale, "error", failErr)
+					}
+				}()
+				_, proof, err := client.RowsWithProof(ctx, table, opts.buildVersion, wagoLocale, opts.maxRecords, func(row map[string]string) error {
+					(*seen)++
+					record, err := wagoRecordWithSpellText(entityType, locale, sourceURL, row, spellTexts)
+					if err != nil {
+						if errors.Is(err, errWagoRecordMissingName) {
+							slog.Warn("skipping unnamed Wago record", "type", entityType, "id", row["ID"], "locale", locale)
+							return nil
+						}
+						return err
+					}
+					record.SourceArtifactID = &artifactID
+					if localeIndex == 0 {
+						err = store.UpsertCanonical(ctx, importContext, record)
+					} else {
+						err = store.UpsertLocalization(ctx, importContext, record)
+					}
+					if err != nil {
+						return fmt.Errorf("store %s %d (%s): %w", entityType, record.ExternalID, locale, err)
+					}
+					(*written)++
+					return nil
+				})
 				if err != nil {
-					return fmt.Errorf("store %s %d (%s): %w", entityType, record.ExternalID, locale, err)
+					return fmt.Errorf("import Wago %s (%s): %w", table, locale, err)
 				}
-				(*written)++
+				if proof.Complete {
+					if err := store.CompleteArtifact(ctx, artifactID, proof.SHA256, proof.ByteSize, proof.ETag); err != nil {
+						return err
+					}
+				} else if opts.maxRecords == 0 {
+					return fmt.Errorf("Wago %s (%s) ended without a complete content proof", table, locale)
+				}
+				finalized = true
 				return nil
-			})
-			if err != nil {
-				return fmt.Errorf("import Wago %s (%s): %w", table, locale, err)
+			}()
+			if artifactErr != nil {
+				return artifactErr
 			}
 		}
 	}

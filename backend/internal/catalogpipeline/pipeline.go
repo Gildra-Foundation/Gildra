@@ -139,7 +139,10 @@ func normalizeOptions(options Options) (Options, error) {
 		if len(options.Sources) != 4 {
 			return Options{}, errors.New("production retail-foundation import requires the complete source profile")
 		}
-		if options.MaxRecords == 0 && !options.ConfirmFullImport {
+		if options.MaxRecords != 0 {
+			return Options{}, errors.New("production catalog publication requires an unbounded import")
+		}
+		if !options.ConfirmFullImport {
 			return Options{}, errors.New("unbounded production import requires -confirm-full-import")
 		}
 	}

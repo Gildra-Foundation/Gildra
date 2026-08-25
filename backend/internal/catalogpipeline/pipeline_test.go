@@ -87,6 +87,9 @@ func TestProductionImportSafetyRequiresPinnedBuildAndExplicitFullConfirmation(t 
 		t.Fatalf("expected incomplete source profile rejection, got %v", err)
 	}
 	base.Sources = nil
+	if _, err := BuildPlan(base); err == nil || !strings.Contains(err.Error(), "requires an unbounded import") {
+		t.Fatalf("expected bounded production import rejection, got %v", err)
+	}
 	base.MaxRecords = 0
 	if _, err := BuildPlan(base); err == nil || !strings.Contains(err.Error(), "-confirm-full-import") {
 		t.Fatalf("expected unbounded import rejection, got %v", err)
