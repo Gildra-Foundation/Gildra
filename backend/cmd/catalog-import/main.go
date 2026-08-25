@@ -192,8 +192,14 @@ func importWago(
 		for _, entityType := range opts.entityTypes {
 			table := map[string]string{"item": "ItemSparse", "spell": "SpellName"}[entityType]
 			sourceURL := client.CSVURL(table, opts.buildVersion, wagoLocale)
+			artifactID, err := store.RegisterArtifact(ctx, importContext, "wago_tools", table, locale, sourceURL, map[string]any{
+				"table": table, "build": opts.buildVersion, "locale": locale, "entity_type": entityType,
+			})
+			if err != nil {
+				return err
+			}
 			slog.Info("importing Wago table", "table", table, "locale", locale, "build", opts.buildVersion)
-			_, err := client.Rows(ctx, table, opts.buildVersion, wagoLocale, opts.maxRecords, func(row map[string]string) error {
+			_, err = client.Rows(ctx, table, opts.buildVersion, wagoLocale, opts.maxRecords, func(row map[string]string) error {
 				(*seen)++
 				record, err := wagoRecordWithSpellText(entityType, locale, sourceURL, row, spellTexts)
 				if err != nil {
@@ -203,6 +209,7 @@ func importWago(
 					}
 					return err
 				}
+				record.SourceArtifactID = &artifactID
 				if localeIndex == 0 {
 					err = store.UpsertCanonical(ctx, importContext, record)
 				} else {
