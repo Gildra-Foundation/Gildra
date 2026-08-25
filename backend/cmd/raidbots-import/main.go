@@ -366,11 +366,12 @@ func projectEncounterItem(ctx context.Context, db *pgxpool.Pool, store *catalogi
 				continue
 			}
 			if _, err := tx.Exec(ctx, `INSERT INTO catalog_item_acquisition_sources(
-				version_id,source_type,source_id,context_id,journal_instance_id,attributes,source_url)
-				VALUES($1,'encounter',$2,$3,$4,$5,$6)
+				version_id,source_type,source_id,context_id,journal_instance_id,attributes,source_url,source_artifact_id)
+				VALUES($1,'encounter',$2,$3,$4,$5,$6,$7)
 				ON CONFLICT(version_id,source_type,source_id,context_id) DO UPDATE SET
-				journal_instance_id=EXCLUDED.journal_instance_id,attributes=EXCLUDED.attributes,source_url=EXCLUDED.source_url`,
-				versionID, encounterID, index, numericID(source["instanceId"]), source, sourceURL); err != nil {
+				journal_instance_id=EXCLUDED.journal_instance_id,attributes=EXCLUDED.attributes,
+				source_url=EXCLUDED.source_url,source_artifact_id=EXCLUDED.source_artifact_id`,
+				versionID, encounterID, index, numericID(source["instanceId"]), source, sourceURL, artifactID); err != nil {
 				return err
 			}
 		}
