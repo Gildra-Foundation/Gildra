@@ -737,6 +737,12 @@ func fetchAndStoreBattleNetMediaHref(
 	if _, err := store.UpsertSourceDocument(ctx, importContext, mediaRecord, "blizzard_api"); err != nil {
 		return err
 	}
+	for _, asset := range battleNetMediaAssets(mediaPayload) {
+		if err := store.UpsertEntityMedia(ctx, importContext, entityType, id, locale,
+			"blizzard_api", asset, artifactID); err != nil {
+			return fmt.Errorf("store %s media asset %d %s: %w", entityType, id, asset.AssetKey, err)
+		}
+	}
 	iconName := battleNetMediaIconName(mediaPayload)
 	if iconName == "" {
 		return nil
@@ -745,6 +751,89 @@ func fetchAndStoreBattleNetMediaHref(
 		return fmt.Errorf("store %s media icon %d: %w", entityType, id, err)
 	}
 	return nil
+}
+
+func battleNetMediaAssets(payload json.RawMessage) []catalogimport.EntityMedia {
+	var document struct {
+		Assets []struct {
+			Key        string `json:"key"`
+			Value      string `json:"value"`
+			FileDataID int64  `json:"file_data_id"`
+			Width      int    `json:"width"`
+			Height     int    `json:"height"`
+		} `json:"assets"`
+	}
+	if json.Unmarshal(payload, &document) != nil {
+		return nil
+	}
+	assets := make([]catalogimport.EntityMedia, 0, len(document.Assets))
+	for _, candidate := range document.Assets {
+		assetKey := strings.TrimSpace(candidate.Key)
+		parsed, err := url.Parse(strings.TrimSpace(candidate.Value))
+		if assetKey == "" || err != nil || parsed.Scheme != "https" ||
+			!strings.HasSuffix(strings.ToLower(parsed.Hostname()), ".worldofwarcraft.com") {
+			continue
+		}
+		kind := normalizeMediaKind(assetKey)
+		if kind == "" {
+			continue
+		}
+		media := catalogimport.EntityMedia{
+			Kind: kind, AssetKey: assetKey, SourceURL: parsed.String(),
+			MIMEType:   mediaMIMEType(parsed.Path),
+			Primary:    strings.EqualFold(assetKey, "icon") || strings.EqualFold(assetKey, "main"),
+			Attributes: map[string]any{"host": strings.ToLower(parsed.Hostname())},
+		}
+		if candidate.FileDataID > 0 {
+			media.FileDataID = &candidate.FileDataID
+		}
+		if candidate.Width > 0 {
+			media.Width = &candidate.Width
+		}
+		if candidate.Height > 0 {
+			media.Height = &candidate.Height
+		}
+		assets = append(assets, media)
+	}
+	return assets
+}
+
+func normalizeMediaKind(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	var result strings.Builder
+	result.Grow(len(value))
+	previousSeparator := false
+	for _, char := range value {
+		if (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9') {
+			result.WriteRune(char)
+			previousSeparator = false
+			continue
+		}
+		if result.Len() > 0 && !previousSeparator {
+			result.WriteByte('_')
+			previousSeparator = true
+		}
+	}
+	normalized := strings.Trim(result.String(), "_")
+	if len(normalized) < 2 || len(normalized) > 64 || normalized[0] < 'a' || normalized[0] > 'z' {
+		return ""
+	}
+	return normalized
+}
+
+func mediaMIMEType(assetPath string) string {
+	switch strings.ToLower(path.Ext(assetPath)) {
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".webp":
+		return "image/webp"
+	case ".gif":
+		return "image/gif"
+	default:
+		return ""
+	}
 }
 
 func battleNetMediaHref(payload json.RawMessage) string {
@@ -842,7 +931,7 @@ func storeBattleNetRecord(
 		if err != nil {
 			return fmt.Errorf("normalize quest %d rewards (%s): %w", id, locale, err)
 		}
-		if err := store.ReplaceBattleNetQuestRewards(ctx, importContext, id, locale, rewards); err != nil {
+		if err := store.ReplaceBattleNetQuestRewards(ctx, importContext, id, locale, rewards, artifactID); err != nil {
 			return err
 		}
 	}

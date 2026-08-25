@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/google/uuid"
@@ -40,6 +41,18 @@ type MediaCandidate struct {
 	Href       string
 }
 
+type EntityMedia struct {
+	Kind       string
+	AssetKey   string
+	SourceURL  string
+	FileDataID *int64
+	MIMEType   string
+	Width      *int
+	Height     *int
+	Primary    bool
+	Attributes map[string]any
+}
+
 type QuestReward struct {
 	Type       string         `json:"reward_type"`
 	Index      int16          `json:"reward_index"`
@@ -63,6 +76,7 @@ func (s *Store) ReplaceBattleNetQuestRewards(
 	questID int64,
 	locale string,
 	rewards []QuestReward,
+	artifactID uuid.UUID,
 ) error {
 	if questID <= 0 {
 		return errors.New("quest ID must be positive")
@@ -109,11 +123,11 @@ func (s *Store) ReplaceBattleNetQuestRewards(
 		)
 		INSERT INTO catalog_quest_rewards(
 			build_id,quest_id,reward_type,reward_index,external_id,item_entity_id,
-			amount,is_choice,source,attributes
+			amount,is_choice,source,attributes,source_artifact_id
 		)
 		SELECT $1,$2,incoming.reward_type,incoming.reward_index,incoming.external_id,
 			CASE WHEN incoming.reward_type='item' THEN item.id END,
-			incoming.amount,incoming.is_choice,'blizzard_api',incoming.attributes
+			incoming.amount,incoming.is_choice,'blizzard_api',incoming.attributes,$5
 		FROM incoming
 		LEFT JOIN game_entities item ON item.product_id=$3 AND item.entity_type='item'
 			AND item.external_id=incoming.external_id AND item.deleted_at IS NULL
@@ -123,11 +137,12 @@ func (s *Store) ReplaceBattleNetQuestRewards(
 			amount=EXCLUDED.amount,
 			is_choice=EXCLUDED.is_choice,
 			source=EXCLUDED.source,
+			source_artifact_id=EXCLUDED.source_artifact_id,
 			attributes=(catalog_quest_rewards.attributes || EXCLUDED.attributes)
 				|| jsonb_build_object('names',
 					COALESCE(catalog_quest_rewards.attributes->'names','{}'::jsonb)
 					|| COALESCE(EXCLUDED.attributes->'names','{}'::jsonb))`,
-			ic.BuildID, questID, ic.ProductID, json.RawMessage(encoded))
+			ic.BuildID, questID, ic.ProductID, json.RawMessage(encoded), artifactID)
 		if err != nil {
 			return fmt.Errorf("replace Battle.net quest %d rewards (%s): %w", questID, locale, err)
 		}
@@ -299,6 +314,68 @@ func (s *Store) UpsertEntityIcon(
 		ic.BuildID, entityType, externalID, iconName, artifactID, ic.ProductID)
 	if err != nil {
 		return fmt.Errorf("upsert entity icon %s %d: %w", entityType, externalID, err)
+	}
+	return nil
+}
+
+// UpsertEntityMedia preserves every official media asset advertised for an
+// entity. It records the remote URL and provenance without implying that the
+// bytes were cached; byte mirroring is governed separately by source policy.
+func (s *Store) UpsertEntityMedia(
+	ctx context.Context,
+	ic ImportContext,
+	entityType string,
+	externalID int64,
+	locale, source string,
+	media EntityMedia,
+	artifactID uuid.UUID,
+) error {
+	entityType = strings.TrimSpace(entityType)
+	media.Kind = strings.TrimSpace(media.Kind)
+	media.AssetKey = strings.TrimSpace(media.AssetKey)
+	media.SourceURL = strings.TrimSpace(media.SourceURL)
+	locale = strings.TrimSpace(locale)
+	source = strings.TrimSpace(source)
+	parsedURL, err := url.Parse(media.SourceURL)
+	if err != nil || parsedURL.Scheme != "https" || parsedURL.Hostname() == "" {
+		return errors.New("entity media source URL must be an absolute HTTPS URL")
+	}
+	if entityType == "" || externalID <= 0 || media.Kind == "" || media.AssetKey == "" || source == "" {
+		return errors.New("entity type, positive external ID, media kind, asset key, and source are required")
+	}
+	if media.Attributes == nil {
+		media.Attributes = make(map[string]any)
+	}
+	attributes, err := json.Marshal(media.Attributes)
+	if err != nil {
+		return fmt.Errorf("encode entity media attributes: %w", err)
+	}
+	_, err = s.db.Exec(ctx, `
+		WITH target_entity AS (
+			SELECT entity.id
+			FROM game_entities entity
+			JOIN game_builds build ON build.id=$1 AND build.product_id=entity.product_id
+			WHERE entity.entity_type=$2 AND entity.external_id=$3 AND entity.deleted_at IS NULL
+			LIMIT 1
+		)
+		INSERT INTO catalog_entity_media(
+			build_id,entity_id,entity_type,external_id,media_kind,asset_key,locale,
+			source,source_url,file_data_id,mime_type,width,height,source_artifact_id,
+			is_primary,attributes
+		) VALUES(
+			$1,(SELECT id FROM target_entity),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15
+		)
+		ON CONFLICT(build_id,entity_type,external_id,media_kind,asset_key,locale,source)
+		DO UPDATE SET entity_id=EXCLUDED.entity_id,source_url=EXCLUDED.source_url,
+			file_data_id=EXCLUDED.file_data_id,mime_type=EXCLUDED.mime_type,
+			width=EXCLUDED.width,height=EXCLUDED.height,
+			source_artifact_id=EXCLUDED.source_artifact_id,is_primary=EXCLUDED.is_primary,
+			attributes=EXCLUDED.attributes,updated_at=now()`,
+		ic.BuildID, entityType, externalID, media.Kind, media.AssetKey, locale,
+		source, media.SourceURL, media.FileDataID, media.MIMEType, media.Width,
+		media.Height, artifactID, media.Primary, json.RawMessage(attributes))
+	if err != nil {
+		return fmt.Errorf("upsert entity media %s %d %s: %w", entityType, externalID, media.AssetKey, err)
 	}
 	return nil
 }
