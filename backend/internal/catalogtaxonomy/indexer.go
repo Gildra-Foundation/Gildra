@@ -48,7 +48,7 @@ func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 		}
 		command, err := tx.Exec(ctx, `INSERT INTO catalog_spell_effects(
 			spell_version_id,effect_index,difficulty_id,effect_type,aura_type,base_points,coefficient,
-			attack_power_coefficient,amplitude_ms,radius_index,chain_targets,mechanic_id,source,attributes)
+			attack_power_coefficient,amplitude_ms,radius_index,chain_targets,mechanic_id,source,attributes,source_artifact_id)
 		SELECT version.id,COALESCE(NULLIF(raw.payload->>'EffectIndex','')::smallint,0),
 			COALESCE(NULLIF(raw.payload->>'DifficultyID','')::int,0),COALESCE(NULLIF(raw.payload->>'Effect','')::int,0),
 			COALESCE(NULLIF(raw.payload->>'EffectAura','')::int,0),NULLIF(raw.payload->>'EffectBasePointsF','')::numeric,
@@ -63,7 +63,7 @@ func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 				'misc_value_1',COALESCE(NULLIF(raw.payload->>'EffectMiscValue_1','')::bigint,0),
 				'raw_coefficient',COALESCE(NULLIF(raw.payload->>'Coefficient','')::numeric,0),
 				'variance',COALESCE(NULLIF(raw.payload->>'Variance','')::numeric,0),
-				'pvp_multiplier',COALESCE(NULLIF(raw.payload->>'PvpMultiplier','')::numeric,1))
+				'pvp_multiplier',COALESCE(NULLIF(raw.payload->>'PvpMultiplier','')::numeric,1)),raw.source_artifact_id
 		FROM catalog_db2_rows raw
 		JOIN game_entities entity ON entity.entity_type='spell' AND entity.external_id=(raw.payload->>'SpellID')::bigint AND entity.deleted_at IS NULL
 		JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=raw.build_id
@@ -72,7 +72,8 @@ func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 			effect_type=EXCLUDED.effect_type,aura_type=EXCLUDED.aura_type,base_points=EXCLUDED.base_points,
 			coefficient=EXCLUDED.coefficient,attack_power_coefficient=EXCLUDED.attack_power_coefficient,
 			amplitude_ms=EXCLUDED.amplitude_ms,radius_index=EXCLUDED.radius_index,chain_targets=EXCLUDED.chain_targets,
-			mechanic_id=EXCLUDED.mechanic_id,attributes=EXCLUDED.attributes`)
+			mechanic_id=EXCLUDED.mechanic_id,attributes=EXCLUDED.attributes,
+			source_artifact_id=EXCLUDED.source_artifact_id`)
 		if err != nil {
 			return fmt.Errorf("rebuild DB2 spell effects: %w", err)
 		}

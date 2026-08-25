@@ -330,7 +330,7 @@ func projectSpells(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Impor
 	err := pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `
 			CREATE TEMP TABLE projected_spells ON COMMIT DROP AS
-			SELECT names.row_id AS external_id, names.source_url,
+			SELECT names.row_id AS external_id, names.source_url,names.source_artifact_id,
 				names.payload->>'Name_lang' AS name_en,
 				COALESCE(NULLIF(names_ru.payload->>'Name_lang',''),names.payload->>'Name_lang') AS name_ru,
 				COALESCE(text_en.payload->>'Description_lang','') AS description_en,
@@ -366,9 +366,9 @@ func projectSpells(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Impor
 			return fmt.Errorf("upsert spell entities: %w", err)
 		}
 		command, err := tx.Exec(ctx, `
-			INSERT INTO game_entity_versions (entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id)
+			INSERT INTO game_entity_versions (entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id)
 			SELECT e.id,$2,COALESCE((SELECT MAX(old.revision) FROM game_entity_versions old WHERE old.entity_id=e.id AND old.build_id=$2),0)+1,
-				p.content_hash,p.payload_en,p.source_url,$3
+				p.content_hash,p.payload_en,p.source_url,$3,p.source_artifact_id
 			FROM projected_spells p JOIN game_entities e ON e.product_id=$1 AND e.entity_type='spell' AND e.external_id=p.external_id
 			WHERE NOT EXISTS (SELECT 1 FROM game_entity_versions old WHERE old.entity_id=e.id AND old.build_id=$2 AND old.content_hash=p.content_hash)`, ic.ProductID, ic.BuildID, ic.SnapshotID)
 		if err != nil {
@@ -413,7 +413,7 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 		if _, err := tx.Exec(ctx, `
 			CREATE TEMP TABLE projected_professions ON COMMIT DROP AS
 			SELECT skill.row_id AS external_id,skill.payload AS db2_en,
-				COALESCE(skill_ru.payload,skill.payload) AS db2_ru,skill.content_hash,skill.source_url
+				COALESCE(skill_ru.payload,skill.payload) AS db2_ru,skill.content_hash,skill.source_url,skill.source_artifact_id
 			FROM catalog_db2_rows skill
 			LEFT JOIN catalog_db2_rows skill_ru ON skill_ru.build_id=skill.build_id
 				AND skill_ru.table_name='SkillLine' AND skill_ru.locale='ru_RU' AND skill_ru.row_id=skill.row_id
@@ -439,9 +439,9 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			return fmt.Errorf("upsert profession entities: %w", err)
 		}
 		command, err := tx.Exec(ctx, `
-			INSERT INTO game_entity_versions(entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id)
+			INSERT INTO game_entity_versions(entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id)
 			SELECT e.id,$2,COALESCE((SELECT max(old.revision) FROM game_entity_versions old WHERE old.entity_id=e.id AND old.build_id=$2),0)+1,
-				p.content_hash,p.db2_en,p.source_url,$3
+				p.content_hash,p.db2_en,p.source_url,$3,p.source_artifact_id
 			FROM projected_professions p
 			JOIN game_entities e ON e.product_id=$1 AND e.entity_type='profession' AND e.external_id=p.external_id
 			WHERE NOT EXISTS(SELECT 1 FROM game_entity_versions old WHERE old.entity_id=e.id AND old.build_id=$2 AND old.content_hash=p.content_hash)`,
@@ -511,36 +511,37 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			SELECT DISTINCT recipe_version_id,(payload->>'Spell')::int FROM mapped
 			ON CONFLICT(version_id) DO UPDATE SET spell_id=EXCLUDED.spell_id;
 			WITH abilities AS (
-				SELECT row.payload FROM catalog_db2_rows row
+				SELECT row.payload,row.source_artifact_id FROM catalog_db2_rows row
 				WHERE row.build_id=$2 AND row.table_name='SkillLineAbility' AND row.locale='en_US'
 				  AND COALESCE(NULLIF(row.payload->>'TradeSkillCategoryID','')::int,0)>0
 			), mapped AS (
 				SELECT profession_version.version_id AS profession_version_id,recipe.latest_version_id AS recipe_version_id,
-					category.id AS category_id,ability.payload
+					category.id AS category_id,ability.payload,ability.source_artifact_id
 				FROM abilities ability
 				JOIN projected_profession_versions profession_version ON profession_version.external_id=(ability.payload->>'SkillLine')::bigint
 				JOIN game_entities recipe ON recipe.product_id=$1 AND recipe.entity_type='spell' AND recipe.external_id=(ability.payload->>'Spell')::bigint
 				LEFT JOIN catalog_trade_skill_categories category ON category.build_id=$2 AND category.external_id=NULLIF(ability.payload->>'TradeSkillCategoryID','')::int
 			)
-			INSERT INTO catalog_profession_recipes(profession_version_id,recipe_version_id,trade_skill_category_id,min_skill_rank,trivial_rank_low,trivial_rank_high,acquire_method,supercedes_spell_id,flags)
+			INSERT INTO catalog_profession_recipes(profession_version_id,recipe_version_id,trade_skill_category_id,min_skill_rank,trivial_rank_low,trivial_rank_high,acquire_method,supercedes_spell_id,flags,source_artifact_id)
 			SELECT profession_version_id,recipe_version_id,min(category_id),min(COALESCE(NULLIF(payload->>'MinSkillLineRank','')::int,0)),
 				min(COALESCE(NULLIF(payload->>'TrivialSkillLineRankLow','')::int,0)),max(COALESCE(NULLIF(payload->>'TrivialSkillLineRankHigh','')::int,0)),
-				min(COALESCE(NULLIF(payload->>'AcquireMethod','')::int,0)),max(NULLIF(payload->>'SupercedesSpell','')::int),bit_or(COALESCE(NULLIF(payload->>'Flags','')::bigint,0))
+				min(COALESCE(NULLIF(payload->>'AcquireMethod','')::int,0)),max(NULLIF(payload->>'SupercedesSpell','')::int),bit_or(COALESCE(NULLIF(payload->>'Flags','')::bigint,0)),source_artifact_id
 			FROM mapped WHERE recipe_version_id IS NOT NULL
-			GROUP BY profession_version_id,recipe_version_id
+			GROUP BY profession_version_id,recipe_version_id,source_artifact_id
 			ON CONFLICT(profession_version_id,recipe_version_id) DO UPDATE SET trade_skill_category_id=EXCLUDED.trade_skill_category_id,
 				min_skill_rank=EXCLUDED.min_skill_rank,trivial_rank_low=EXCLUDED.trivial_rank_low,trivial_rank_high=EXCLUDED.trivial_rank_high,
-				acquire_method=EXCLUDED.acquire_method,supercedes_spell_id=EXCLUDED.supercedes_spell_id,flags=EXCLUDED.flags`, pgx.QueryExecModeSimpleProtocol, ic.ProductID, ic.BuildID)
+				acquire_method=EXCLUDED.acquire_method,supercedes_spell_id=EXCLUDED.supercedes_spell_id,flags=EXCLUDED.flags,
+				source_artifact_id=EXCLUDED.source_artifact_id`, pgx.QueryExecModeSimpleProtocol, ic.ProductID, ic.BuildID)
 		if err != nil {
 			return fmt.Errorf("project profession recipes: %w", err)
 		}
 		projected += command.RowsAffected()
 		if _, err := tx.Exec(ctx, `
-			INSERT INTO catalog_recipe_reagents(recipe_version_id,slot,item_entity_id,item_external_id,quantity,recraft_quantity,source_type)
+			INSERT INTO catalog_recipe_reagents(recipe_version_id,slot,item_entity_id,item_external_id,quantity,recraft_quantity,source_type,source_artifact_id)
 			SELECT recipe.latest_version_id,slot.slot,item.id,(reagents.payload->>format('Reagent_%s',slot.slot))::int,
 				(reagents.payload->>format('ReagentCount_%s',slot.slot))::int,
 				COALESCE(NULLIF(reagents.payload->>format('ReagentReCraftCount_%s',slot.slot),'')::int,0),
-				COALESCE(NULLIF(reagents.payload->>format('ReagentSource_%s',slot.slot),'')::int,0)
+				COALESCE(NULLIF(reagents.payload->>format('ReagentSource_%s',slot.slot),'')::int,0),reagents.source_artifact_id
 			FROM catalog_db2_rows reagents CROSS JOIN generate_series(0,7) AS slot(slot)
 			JOIN game_entities recipe ON recipe.product_id=$1 AND recipe.entity_type='spell' AND recipe.external_id=(reagents.payload->>'SpellID')::bigint
 			JOIN catalog_recipes typed_recipe ON typed_recipe.version_id=recipe.latest_version_id
@@ -550,25 +551,28 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			  AND COALESCE(NULLIF(reagents.payload->>format('Reagent_%s',slot.slot),'')::int,0)>0
 			  AND COALESCE(NULLIF(reagents.payload->>format('ReagentCount_%s',slot.slot),'')::int,0)>0
 			ON CONFLICT(recipe_version_id,slot) DO UPDATE SET item_entity_id=EXCLUDED.item_entity_id,item_external_id=EXCLUDED.item_external_id,
-				quantity=EXCLUDED.quantity,recraft_quantity=EXCLUDED.recraft_quantity,source_type=EXCLUDED.source_type;
-			INSERT INTO catalog_recipe_currencies(recipe_version_id,currency_external_id,quantity,recraft_quantity,order_index)
+				quantity=EXCLUDED.quantity,recraft_quantity=EXCLUDED.recraft_quantity,source_type=EXCLUDED.source_type,
+				source_artifact_id=EXCLUDED.source_artifact_id;
+			INSERT INTO catalog_recipe_currencies(recipe_version_id,currency_external_id,quantity,recraft_quantity,order_index,source_artifact_id)
 			SELECT recipe.latest_version_id,(currency.payload->>'CurrencyTypesID')::int,(currency.payload->>'CurrencyCount')::int,
-				COALESCE(NULLIF(currency.payload->>'OverrideRecraftCurrencyCount','')::int,0),COALESCE(NULLIF(currency.payload->>'OrderSource','')::int,0)
+				COALESCE(NULLIF(currency.payload->>'OverrideRecraftCurrencyCount','')::int,0),COALESCE(NULLIF(currency.payload->>'OrderSource','')::int,0),currency.source_artifact_id
 			FROM catalog_db2_rows currency
 			JOIN game_entities recipe ON recipe.product_id=$1 AND recipe.entity_type='spell' AND recipe.external_id=(currency.payload->>'SpellID')::bigint
 			JOIN catalog_recipes typed_recipe ON typed_recipe.version_id=recipe.latest_version_id
 			WHERE currency.build_id=$2 AND currency.table_name='SpellReagentsCurrency' AND currency.locale='en_US'
 			  AND COALESCE(NULLIF(currency.payload->>'CurrencyTypesID','')::int,0)>0 AND COALESCE(NULLIF(currency.payload->>'CurrencyCount','')::int,0)>0
-			ON CONFLICT(recipe_version_id,currency_external_id) DO UPDATE SET quantity=EXCLUDED.quantity,recraft_quantity=EXCLUDED.recraft_quantity,order_index=EXCLUDED.order_index;
-			INSERT INTO catalog_recipe_outputs(recipe_version_id,item_entity_id,item_external_id,source)
-			SELECT DISTINCT recipe.latest_version_id,item.id,(effect.payload->>'EffectItemType')::int,'spell_effect'
+			ON CONFLICT(recipe_version_id,currency_external_id) DO UPDATE SET quantity=EXCLUDED.quantity,recraft_quantity=EXCLUDED.recraft_quantity,
+				order_index=EXCLUDED.order_index,source_artifact_id=EXCLUDED.source_artifact_id;
+			INSERT INTO catalog_recipe_outputs(recipe_version_id,item_entity_id,item_external_id,source,source_artifact_id)
+			SELECT DISTINCT recipe.latest_version_id,item.id,(effect.payload->>'EffectItemType')::int,'spell_effect',effect.source_artifact_id
 			FROM catalog_db2_rows effect
 			JOIN game_entities recipe ON recipe.product_id=$1 AND recipe.entity_type='spell' AND recipe.external_id=(effect.payload->>'SpellID')::bigint
 			JOIN catalog_recipes typed_recipe ON typed_recipe.version_id=recipe.latest_version_id
 			LEFT JOIN game_entities item ON item.product_id=$1 AND item.entity_type='item' AND item.external_id=(effect.payload->>'EffectItemType')::bigint
 			WHERE effect.build_id=$2 AND effect.table_name='SpellEffect' AND effect.locale='en_US'
 			  AND COALESCE(NULLIF(effect.payload->>'EffectItemType','')::int,0)>0
-			ON CONFLICT(recipe_version_id,item_external_id,source) DO UPDATE SET item_entity_id=EXCLUDED.item_entity_id`, pgx.QueryExecModeSimpleProtocol, ic.ProductID, ic.BuildID); err != nil {
+			ON CONFLICT(recipe_version_id,item_external_id,source) DO UPDATE SET item_entity_id=EXCLUDED.item_entity_id,
+				source_artifact_id=EXCLUDED.source_artifact_id`, pgx.QueryExecModeSimpleProtocol, ic.ProductID, ic.BuildID); err != nil {
 			return fmt.Errorf("project recipe components: %w", err)
 		}
 		return nil
@@ -582,7 +586,7 @@ func projectCreatures(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Im
 		if _, err := tx.Exec(ctx, `
 			CREATE TEMP TABLE projected_creatures ON COMMIT DROP AS
 			SELECT creature.row_id AS external_id,creature.payload AS db2_en,
-				COALESCE(creature_ru.payload,creature.payload) AS db2_ru,creature.content_hash,creature.source_url
+				COALESCE(creature_ru.payload,creature.payload) AS db2_ru,creature.content_hash,creature.source_url,creature.source_artifact_id
 			FROM catalog_db2_rows creature
 			LEFT JOIN catalog_db2_rows creature_ru ON creature_ru.build_id=creature.build_id
 				AND creature_ru.table_name='Creature' AND creature_ru.locale='ru_RU' AND creature_ru.row_id=creature.row_id
@@ -602,9 +606,9 @@ func projectCreatures(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Im
 			return fmt.Errorf("upsert creature entities: %w", err)
 		}
 		command, err := tx.Exec(ctx, `
-			INSERT INTO game_entity_versions(entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id)
+			INSERT INTO game_entity_versions(entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id)
 			SELECT e.id,$2,COALESCE((SELECT max(old.revision) FROM game_entity_versions old WHERE old.entity_id=e.id AND old.build_id=$2),0)+1,
-				p.content_hash,p.db2_en,p.source_url,$3
+				p.content_hash,p.db2_en,p.source_url,$3,p.source_artifact_id
 			FROM projected_creatures p JOIN game_entities e ON e.product_id=$1 AND e.entity_type='creature' AND e.external_id=p.external_id
 			WHERE NOT EXISTS(SELECT 1 FROM game_entity_versions old WHERE old.entity_id=e.id AND old.build_id=$2 AND old.content_hash=p.content_hash)`,
 			ic.ProductID, ic.BuildID, ic.SnapshotID)
@@ -835,7 +839,7 @@ const questDetailsProjectionSQL = `
 
 const questEntitiesProjectionSQL = `
 	CREATE TEMP TABLE projected_named_quests ON COMMIT DROP AS
-	SELECT task.row_id AS external_id,task.source_url,task.payload AS db2_en,
+	SELECT task.row_id AS external_id,task.source_url,task.source_artifact_id,task.payload AS db2_en,
 		COALESCE(task_ru.payload,task.payload) AS db2_ru,task.payload->>'QuestTitle_lang' AS name_en,
 		COALESCE(NULLIF(task_ru.payload->>'QuestTitle_lang',''),task.payload->>'QuestTitle_lang') AS name_ru,
 		COALESCE(task.payload->>'BulletText_lang','') AS description_en,
@@ -858,9 +862,9 @@ const questEntitiesProjectionSQL = `
 	ON CONFLICT(product_id,entity_type,external_id) DO UPDATE SET namespace_id=EXCLUDED.namespace_id,
 		canonical_slug=EXCLUDED.canonical_slug,last_seen_build_id=EXCLUDED.last_seen_build_id,deleted_at=NULL,updated_at=now();
 
-	INSERT INTO game_entity_versions(entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id)
+	INSERT INTO game_entity_versions(entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id)
 	SELECT entity.id,$1,COALESCE((SELECT MAX(old.revision) FROM game_entity_versions old WHERE old.entity_id=entity.id AND old.build_id=$1),0)+1,
-		projected.content_hash,projected.payload_en,projected.source_url,$4
+		projected.content_hash,projected.payload_en,projected.source_url,$4,projected.source_artifact_id
 	FROM projected_named_quests projected
 	JOIN game_entities entity ON entity.product_id=$2 AND entity.entity_type='quest' AND entity.external_id=projected.external_id
 	WHERE NOT EXISTS (SELECT 1 FROM game_entity_versions old WHERE old.entity_id=entity.id AND old.build_id=$1 AND old.content_hash=projected.content_hash);
@@ -1088,7 +1092,7 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 	err := pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `
 			CREATE TEMP TABLE projected_items ON COMMIT DROP AS
-			SELECT sparse.row_id AS external_id,sparse.source_url,
+			SELECT sparse.row_id AS external_id,sparse.source_url,sparse.source_artifact_id,
 				sparse.payload->>'Display_lang' AS name_en,
 				COALESCE(NULLIF(sparse_ru.payload->>'Display_lang',''),sparse.payload->>'Display_lang') AS name_ru,
 				COALESCE(sparse.payload->>'Description_lang','') AS description_en,
@@ -1132,8 +1136,8 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 			return fmt.Errorf("upsert item entities: %w", err)
 		}
 		command, err := tx.Exec(ctx, `
-			INSERT INTO game_entity_versions (entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id)
-			SELECT e.id,$2,1,p.content_hash,p.payload_en,p.source_url,$3
+			INSERT INTO game_entity_versions (entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id)
+			SELECT e.id,$2,1,p.content_hash,p.payload_en,p.source_url,$3,p.source_artifact_id
 			FROM projected_items p JOIN game_entities e ON e.product_id=$1 AND e.entity_type='item' AND e.external_id=p.external_id
 			WHERE NOT EXISTS (SELECT 1 FROM game_entity_versions old WHERE old.entity_id=e.id AND old.build_id=$2)`, ic.ProductID, ic.BuildID, ic.SnapshotID)
 		if err != nil {
@@ -1232,9 +1236,9 @@ const itemDetailsProjectionSQL = `
 
 	DELETE FROM catalog_item_acquisition_sources source USING game_entity_versions version
 	WHERE source.version_id=version.id AND version.build_id=$1 AND source.source_type IN ('encounter','crafting_recipe');
-	INSERT INTO catalog_item_acquisition_sources(version_id,source_type,source_id,context_id,journal_instance_id,difficulty_mask,attributes)
+	INSERT INTO catalog_item_acquisition_sources(version_id,source_type,source_id,context_id,journal_instance_id,difficulty_mask,attributes,source_artifact_id)
 	SELECT item_version.id,'encounter',(journal_item.payload->>'JournalEncounterID')::bigint,journal_item.row_id,
-		encounter.journal_instance_id,COALESCE(NULLIF(journal_item.payload->>'DifficultyMask','')::bigint,0),journal_item.payload
+		encounter.journal_instance_id,COALESCE(NULLIF(journal_item.payload->>'DifficultyMask','')::bigint,0),journal_item.payload,journal_item.source_artifact_id
 	FROM catalog_db2_rows journal_item
 	JOIN game_entities item ON item.product_id=$2 AND item.entity_type='item'
 		AND item.external_id=(journal_item.payload->>'ItemID')::bigint AND item.deleted_at IS NULL
@@ -1244,11 +1248,11 @@ const itemDetailsProjectionSQL = `
 		AND encounter.journal_encounter_id=(journal_item.payload->>'JournalEncounterID')::bigint
 	WHERE journal_item.build_id=$1 AND journal_item.table_name='JournalEncounterItem' AND journal_item.locale='en_US'
 	ON CONFLICT(version_id,source_type,source_id,context_id) DO UPDATE SET journal_instance_id=EXCLUDED.journal_instance_id,
-		difficulty_mask=EXCLUDED.difficulty_mask,attributes=EXCLUDED.attributes;
+		difficulty_mask=EXCLUDED.difficulty_mask,attributes=EXCLUDED.attributes,source_artifact_id=EXCLUDED.source_artifact_id;
 
-	INSERT INTO catalog_item_acquisition_sources(version_id,source_type,source_id,context_id,source_entity_id,attributes)
+	INSERT INTO catalog_item_acquisition_sources(version_id,source_type,source_id,context_id,source_entity_id,attributes,source_artifact_id)
 	SELECT item_version.id,'crafting_recipe',recipe.external_id,0,recipe.id,
-		jsonb_build_object('output_source',output.source)
+		jsonb_build_object('output_source',output.source),output.source_artifact_id
 	FROM catalog_recipe_outputs output
 	JOIN game_entities item ON item.product_id=$2 AND item.entity_type='item' AND item.external_id=output.item_external_id
 		AND item.deleted_at IS NULL
@@ -1257,7 +1261,7 @@ const itemDetailsProjectionSQL = `
 	JOIN game_entity_versions recipe_version ON recipe_version.id=output.recipe_version_id
 	JOIN game_entities recipe ON recipe.id=recipe_version.entity_id AND recipe.entity_type='spell'
 	ON CONFLICT(version_id,source_type,source_id,context_id) DO UPDATE SET source_entity_id=EXCLUDED.source_entity_id,
-		attributes=EXCLUDED.attributes;
+		attributes=EXCLUDED.attributes,source_artifact_id=EXCLUDED.source_artifact_id;
 
 	INSERT INTO catalog_item_classes(build_id,class_id,db2_row_id,price_modifier,flags)
 	SELECT build_id,(payload->>'ClassID')::int,row_id,COALESCE(NULLIF(payload->>'PriceModifier','')::numeric,0),
@@ -1350,14 +1354,14 @@ const itemDetailsProjectionSQL = `
 	DELETE FROM catalog_item_effects effects USING game_entity_versions version
 	WHERE effects.version_id=version.id AND version.build_id=$1;
 	INSERT INTO catalog_item_effects(version_id,item_effect_id,slot,spell_id,trigger_type,charges,cooldown_ms,
-		category_cooldown_ms,spell_category_id,specialization_id,player_condition_id)
+		category_cooldown_ms,spell_category_id,specialization_id,player_condition_id,source_artifact_id)
 	SELECT entity.latest_version_id,effect.row_id,COALESCE(NULLIF(effect.payload->>'LegacySlotIndex','')::smallint,0),
 		(effect.payload->>'SpellID')::bigint,COALESCE(NULLIF(effect.payload->>'TriggerType','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'Charges','')::int,0),COALESCE(NULLIF(effect.payload->>'CoolDownMSec','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'CategoryCoolDownMSec','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'SpellCategoryID','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'ChrSpecializationID','')::int,0),
-		COALESCE(NULLIF(effect.payload->>'PlayerConditionID','')::int,0)
+		COALESCE(NULLIF(effect.payload->>'PlayerConditionID','')::int,0),link.source_artifact_id
 	FROM catalog_db2_rows link
 	JOIN catalog_db2_rows effect ON effect.build_id=link.build_id AND effect.table_name='ItemEffect'
 		AND effect.locale='en_US' AND effect.row_id=(link.payload->>'ItemEffectID')::bigint
@@ -1369,7 +1373,8 @@ const itemDetailsProjectionSQL = `
 	ON CONFLICT(version_id,item_effect_id) DO UPDATE SET slot=EXCLUDED.slot,spell_id=EXCLUDED.spell_id,
 		trigger_type=EXCLUDED.trigger_type,charges=EXCLUDED.charges,cooldown_ms=EXCLUDED.cooldown_ms,
 		category_cooldown_ms=EXCLUDED.category_cooldown_ms,spell_category_id=EXCLUDED.spell_category_id,
-		specialization_id=EXCLUDED.specialization_id,player_condition_id=EXCLUDED.player_condition_id;`
+		specialization_id=EXCLUDED.specialization_id,player_condition_id=EXCLUDED.player_condition_id,
+		source_artifact_id=EXCLUDED.source_artifact_id;`
 
 const journalEntityProjectionSQL = `
 	INSERT INTO game_entities(product_id,namespace_id,entity_type,external_id,canonical_slug,
