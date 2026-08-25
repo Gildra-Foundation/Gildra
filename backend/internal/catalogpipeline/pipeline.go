@@ -15,20 +15,29 @@ import (
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var ErrAlreadyRunning = errors.New("catalog pipeline is already running for this product")
 var ErrPublicationBlocked = errors.New("catalog refresh succeeded but public release is blocked by source policy")
+var ErrRecoveryGate = errors.New("production catalog import requires a recent verified off-host PostgreSQL backup and restore proof")
+
+const (
+	ProfileRetailFoundation = "retail-foundation"
+	minimumCatalogSchema    = 66
+)
 
 type Options struct {
 	PipelineKey            string
 	Trigger                string
 	Mode                   string
+	Profile                string
 	Product                string
 	Sources                []string
 	BuildVersion           string
 	MaxRecords             int
+	ConfirmFullImport      bool
 	BinaryDirectory        string
 	PublicationEnvironment string
 }
@@ -55,10 +64,40 @@ type Runner struct {
 }
 
 func BuildPlan(options Options) ([]Stage, error) {
+	options, err := normalizeOptions(options)
+	if err != nil {
+		return nil, err
+	}
+	return buildPlan(options), nil
+}
+
+func normalizeOptions(options Options) (Options, error) {
 	if options.MaxRecords < 0 {
-		return nil, errors.New("max-records cannot be negative")
+		return Options{}, errors.New("max-records cannot be negative")
+	}
+	options.Product = strings.ToLower(strings.TrimSpace(options.Product))
+	if options.Product == "" {
+		return Options{}, errors.New("product is required")
+	}
+	options.Profile = strings.ToLower(strings.TrimSpace(options.Profile))
+	if options.Profile == "" {
+		if len(options.Sources) == 0 {
+			options.Profile = ProfileRetailFoundation
+		} else {
+			options.Profile = "custom"
+		}
+	}
+	if options.Profile != ProfileRetailFoundation && options.Profile != "custom" {
+		return Options{}, fmt.Errorf("unsupported catalog profile %q", options.Profile)
+	}
+	if options.Profile == ProfileRetailFoundation && options.Product != "wow" {
+		return Options{}, fmt.Errorf("profile %q only supports the Retail product \"wow\"", ProfileRetailFoundation)
+	}
+	if options.Profile == ProfileRetailFoundation && len(options.Sources) == 0 {
+		options.Sources = []string{"wago", "db2", "battlenet", "listfile"}
 	}
 	allowed := map[string]bool{"wago": true, "raidbots": true, "db2": true, "battlenet": true, "listfile": true}
+	foundation := map[string]bool{"wago": true, "db2": true, "battlenet": true, "listfile": true}
 	seen := make(map[string]bool)
 	sources := make([]string, 0, len(options.Sources))
 	for _, raw := range options.Sources {
@@ -67,16 +106,47 @@ func BuildPlan(options Options) ([]Stage, error) {
 			continue
 		}
 		if !allowed[source] {
-			return nil, fmt.Errorf("unsupported catalog source %q", source)
+			return Options{}, fmt.Errorf("unsupported catalog source %q", source)
+		}
+		if options.Profile == ProfileRetailFoundation && !foundation[source] {
+			return Options{}, fmt.Errorf("source %q is outside the %s profile", source, ProfileRetailFoundation)
 		}
 		seen[source] = true
 		sources = append(sources, source)
 	}
 	if len(sources) == 0 {
-		return nil, errors.New("at least one catalog source is required")
+		return Options{}, errors.New("at least one catalog source is required")
 	}
-	plan := make([]Stage, 0, len(sources)+8)
-	for _, source := range sources {
+	options.Sources = sources
+	options.BuildVersion = strings.TrimSpace(options.BuildVersion)
+	if options.Mode == "apply" && options.PublicationEnvironment == "production" {
+		if options.Profile != ProfileRetailFoundation {
+			return Options{}, errors.New("production catalog imports must use the retail-foundation profile")
+		}
+		if options.BuildVersion == "" {
+			return Options{}, errors.New("production catalog imports require an explicit -version")
+		}
+		for _, required := range []string{"wago", "db2", "battlenet", "listfile"} {
+			if !seen[required] {
+				return Options{}, fmt.Errorf("production retail-foundation import requires source %q", required)
+			}
+		}
+		if len(options.Sources) != 4 {
+			return Options{}, errors.New("production retail-foundation import requires the complete source profile")
+		}
+		if options.MaxRecords == 0 && !options.ConfirmFullImport {
+			return Options{}, errors.New("unbounded production import requires -confirm-full-import")
+		}
+	}
+	return options, nil
+}
+
+func buildPlan(options Options) []Stage {
+	plan := make([]Stage, 0, len(options.Sources)+9)
+	if options.Mode == "apply" && options.PublicationEnvironment == "production" {
+		plan = append(plan, Stage{Key: "recovery-gate"})
+	}
+	for _, source := range options.Sources {
 		switch source {
 		case "wago":
 			args := []string{"-source", "wago", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "item,spell", "-max-records", fmt.Sprint(options.MaxRecords)}
@@ -111,14 +181,15 @@ func BuildPlan(options Options) ([]Stage, error) {
 		Stage{Key: "validate-catalog"},
 		Stage{Key: "publication-gate"},
 	)
-	return plan, nil
+	return plan
 }
 
 func (r *Runner) Run(ctx context.Context, options Options) (result Result, runErr error) {
-	plan, err := BuildPlan(options)
+	options, err := normalizeOptions(options)
 	if err != nil {
 		return Result{}, err
 	}
+	plan := buildPlan(options)
 	result.Mode, result.Stages = options.Mode, plan
 	connection, err := r.DB.Acquire(ctx)
 	if err != nil {
@@ -176,6 +247,11 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		result.Status = "succeeded"
 		return result, nil
 	}
+	if options.PublicationEnvironment == "production" {
+		if err := r.verifyRecoveryGate(ctx, result.RunID, options.Product); err != nil {
+			return result, err
+		}
+	}
 
 	for _, stage := range plan {
 		if stage.Executable == "" {
@@ -220,6 +296,55 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		return result, ErrPublicationBlocked
 	}
 	return result, nil
+}
+
+func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product string) error {
+	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_runs SET current_stage='recovery-gate' WHERE id=$1`, runID)
+	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='recovery-gate'`, runID)
+	var manifestID, storageURI string
+	var databaseVersion int64
+	var restoredAt time.Time
+	err := r.DB.QueryRow(ctx, `
+		WITH applied_schema_version AS (
+			SELECT max(version_id) AS version
+			FROM goose_db_version
+			WHERE is_applied
+		)
+		SELECT manifest.id::text, manifest.storage_uri, manifest.database_version, manifest.restore_completed_at
+		FROM catalog_backup_manifests manifest
+		CROSS JOIN applied_schema_version
+		WHERE manifest.component='postgres'
+		  AND manifest.status='verified'
+		  AND manifest.storage_uri ~ '^(s3|r2|swift)://'
+		  AND manifest.content_hash IS NOT NULL
+		  AND manifest.byte_size > 0
+		  AND applied_schema_version.version >= $2
+		  AND manifest.database_version = applied_schema_version.version
+		  AND manifest.restore_completed_at >= now() - interval '24 hours'
+		  AND manifest.verification @> '{"restore_verified":true,"source_restore_match":true}'::jsonb
+		  AND (
+			manifest.product_id IS NULL OR
+			manifest.product_id = (SELECT id FROM game_products WHERE slug=$1)
+		  )
+		ORDER BY manifest.restore_completed_at DESC, manifest.id DESC
+		LIMIT 1`, product, minimumCatalogSchema).Scan(&manifestID, &storageURI, &databaseVersion, &restoredAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return r.failStage(ctx, runID, "recovery-gate", "verified_backup_missing", ErrRecoveryGate)
+	}
+	if err != nil {
+		return r.failStage(ctx, runID, "recovery-gate", "backup_verification_failed", fmt.Errorf("verify recovery evidence: %w", err))
+	}
+	counters := map[string]any{
+		"backup_manifest_id":  manifestID,
+		"database_version":    databaseVersion,
+		"restore_verified_at": restoredAt.UTC().Format(time.RFC3339),
+		"storage_scheme":      strings.SplitN(storageURI, ":", 2)[0],
+	}
+	_, err = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`, runID, "recovery-gate", jsonObject(counters))
+	if err != nil {
+		return fmt.Errorf("record recovery gate evidence: %w", err)
+	}
+	return nil
 }
 
 func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory string, stage Stage) error {
