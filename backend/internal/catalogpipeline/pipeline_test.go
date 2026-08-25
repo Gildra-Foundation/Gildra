@@ -30,6 +30,9 @@ func TestBuildPlanIsDeterministicAndNeverContainsDatabaseCredentials(t *testing.
 				t.Fatal("database credentials must only be inherited through the environment")
 			}
 		}
+		if stage.Key == "import-listfile" && !strings.Contains(strings.Join(stage.Arguments, " "), "-version 12.1.0.69404") {
+			t.Fatalf("listfile import is not pinned to the release build: %#v", stage.Arguments)
+		}
 	}
 }
 

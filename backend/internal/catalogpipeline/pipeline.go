@@ -26,7 +26,7 @@ var ErrRecoveryGate = errors.New("production catalog import requires a recent ve
 
 const (
 	ProfileRetailFoundation = "retail-foundation"
-	minimumCatalogSchema    = 69
+	minimumCatalogSchema    = 70
 )
 
 type Options struct {
@@ -176,7 +176,11 @@ func buildPlan(options Options) []Stage {
 				Stage{Key: "import-battlenet-media", Executable: "catalog-import", Arguments: []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "class,specialization,profession,instance,battle_pet,achievement", "-media-only", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}},
 			)
 		case "listfile":
-			plan = append(plan, Stage{Key: "import-listfile", Executable: "listfile-import", Arguments: []string{"-confirm"}})
+			args := []string{"-confirm"}
+			if options.BuildVersion != "" {
+				args = append(args, "-version", options.BuildVersion)
+			}
+			plan = append(plan, Stage{Key: "import-listfile", Executable: "listfile-import", Arguments: args})
 		}
 	}
 	plan = append(plan,

@@ -20,7 +20,7 @@ func TestRunnerEncryptsUploadsRestoresComparesAndSigns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	state := completeState(69, 4)
+	state := completeState(70, 4)
 	database := &fakeDatabase{source: state, restore: state, archive: []byte("real PostgreSQL custom archive")}
 	store := newMemoryStore("r2://gildra-backups/")
 	manifests := &memoryManifests{}
@@ -39,7 +39,7 @@ func TestRunnerEncryptsUploadsRestoresComparesAndSigns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !result.RestoreVerified || !result.SourceRestoreMatch || result.DatabaseVersion != 69 {
+	if !result.RestoreVerified || !result.SourceRestoreMatch || result.DatabaseVersion != 70 {
 		t.Fatalf("unexpected result: %#v", result)
 	}
 	if manifests.status != "verified" || manifests.failed != "" {
@@ -74,8 +74,8 @@ func TestRunnerRejectsRestoreMismatchAndKeepsLastGoodDataUntouched(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	source := completeState(69, 10)
-	restore := completeState(69, 10)
+	source := completeState(70, 10)
+	restore := completeState(70, 10)
 	restore.Counts["game_entities"] = 9
 	database := &fakeDatabase{source: source, restore: restore, archive: []byte("archive")}
 	store := newMemoryStore("s3://gildra-backups/")
@@ -101,7 +101,7 @@ func TestRunnerFailsClosedWhenRemoteObjectIsChanged(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	state := completeState(69, 1)
+	state := completeState(70, 1)
 	store := newMemoryStore("r2://gildra-backups/")
 	store.tamperDownload = true
 	manifests := &memoryManifests{}
