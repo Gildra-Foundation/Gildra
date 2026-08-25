@@ -87,15 +87,25 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		if status != "staging" || buildID == nil {
 			return fmt.Errorf("%w: status=%s build_bound=%t", ErrReleaseNotPublishable, status, buildID != nil)
 		}
-		var snapshots, invalidSnapshots int64
+		var snapshots, invalidSnapshots, invalidArtifacts int64
 		if err := tx.QueryRow(ctx, `
-			SELECT count(*),count(*) FILTER (WHERE status<>'validated')
-			FROM catalog_snapshots WHERE release_id=$1`, releaseID).
-			Scan(&snapshots, &invalidSnapshots); err != nil {
+			SELECT
+				count(*),
+				count(*) FILTER (WHERE snapshot.status<>'validated'),
+				(SELECT count(*)
+				 FROM catalog_source_artifacts artifact
+				 JOIN catalog_snapshots artifact_snapshot ON artifact_snapshot.id=artifact.snapshot_id
+				 WHERE artifact_snapshot.release_id=$1
+				   AND (artifact.status<>'ready' OR (
+					artifact.source='wow_listfile' AND (artifact.content_hash IS NULL OR artifact.byte_size IS NULL)
+				   )))
+			FROM catalog_snapshots snapshot WHERE snapshot.release_id=$1`, releaseID).
+			Scan(&snapshots, &invalidSnapshots, &invalidArtifacts); err != nil {
 			return fmt.Errorf("validate release snapshots: %w", err)
 		}
-		if snapshots == 0 || invalidSnapshots != 0 {
-			return fmt.Errorf("%w: snapshots=%d invalid=%d", ErrReleaseNotPublishable, snapshots, invalidSnapshots)
+		if snapshots == 0 || invalidSnapshots != 0 || invalidArtifacts != 0 {
+			return fmt.Errorf("%w: snapshots=%d invalid=%d invalid_artifacts=%d",
+				ErrReleaseNotPublishable, snapshots, invalidSnapshots, invalidArtifacts)
 		}
 		if err := validateReleaseProvenance(ctx, tx, releaseID, *buildID); err != nil {
 			return err

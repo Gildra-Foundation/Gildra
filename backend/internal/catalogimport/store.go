@@ -204,6 +204,24 @@ func (s *Store) RegisterArtifact(
 	source, artifactKey, locale, sourceURL string,
 	metadata any,
 ) (uuid.UUID, error) {
+	return s.registerArtifact(ctx, ic, source, artifactKey, locale, sourceURL, "ready", metadata)
+}
+
+func (s *Store) RegisterPendingArtifact(
+	ctx context.Context,
+	ic ImportContext,
+	source, artifactKey, locale, sourceURL string,
+	metadata any,
+) (uuid.UUID, error) {
+	return s.registerArtifact(ctx, ic, source, artifactKey, locale, sourceURL, "fetching", metadata)
+}
+
+func (s *Store) registerArtifact(
+	ctx context.Context,
+	ic ImportContext,
+	source, artifactKey, locale, sourceURL, status string,
+	metadata any,
+) (uuid.UUID, error) {
 	encoded, err := json.Marshal(metadata)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("encode source artifact metadata: %w", err)
@@ -212,14 +230,62 @@ func (s *Store) RegisterArtifact(
 	err = s.db.QueryRow(ctx, `
 		INSERT INTO catalog_source_artifacts (
 			snapshot_id,build_id,source,artifact_key,locale,source_url,status,metadata
-		) VALUES ($1,$2,$3,$4,$5,$6,'ready',$7)
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
 		ON CONFLICT (snapshot_id,artifact_key,locale) DO UPDATE SET
-			source_url=EXCLUDED.source_url,status='ready',metadata=EXCLUDED.metadata,fetched_at=now()
-		RETURNING id`, ic.SnapshotID, ic.BuildID, source, artifactKey, locale, sourceURL, encoded).Scan(&artifactID)
+			source_url=EXCLUDED.source_url,
+			status=EXCLUDED.status,
+			content_hash=CASE WHEN EXCLUDED.status='fetching' THEN NULL ELSE catalog_source_artifacts.content_hash END,
+			byte_size=CASE WHEN EXCLUDED.status='fetching' THEN NULL ELSE catalog_source_artifacts.byte_size END,
+			etag=CASE WHEN EXCLUDED.status='fetching' THEN NULL ELSE catalog_source_artifacts.etag END,
+			metadata=EXCLUDED.metadata,
+			fetched_at=now()
+		RETURNING id`, ic.SnapshotID, ic.BuildID, source, artifactKey, locale, sourceURL, status, encoded).Scan(&artifactID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("register source artifact %q: %w", artifactKey, err)
 	}
 	return artifactID, nil
+}
+
+func (s *Store) CompleteArtifact(ctx context.Context, artifactID uuid.UUID, contentHash []byte, byteSize int64, etag string) error {
+	if artifactID == uuid.Nil || len(contentHash) != sha256.Size || byteSize < 0 {
+		return errors.New("artifact ID, SHA-256 content hash, and non-negative byte size are required")
+	}
+	command, err := s.db.Exec(ctx, `
+		UPDATE catalog_source_artifacts
+		SET status='ready',content_hash=$2,byte_size=$3,etag=NULLIF(BTRIM($4),''),fetched_at=now(),
+			metadata=metadata - 'error'
+		WHERE id=$1`, artifactID, contentHash, byteSize, etag)
+	if err != nil {
+		return fmt.Errorf("complete source artifact %s: %w", artifactID, err)
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("complete source artifact %s: artifact does not exist", artifactID)
+	}
+	return nil
+}
+
+func (s *Store) FailArtifact(ctx context.Context, artifactID uuid.UUID, cause error) error {
+	if artifactID == uuid.Nil {
+		return nil
+	}
+	errorSummary := "artifact fetch failed"
+	if cause != nil {
+		errorSummary = cause.Error()
+	}
+	if len(errorSummary) > 2000 {
+		errorSummary = errorSummary[:2000]
+	}
+	command, err := s.db.Exec(ctx, `
+		UPDATE catalog_source_artifacts
+		SET status='failed',metadata=metadata || jsonb_build_object('error',$2::text),fetched_at=now()
+		WHERE id=$1`, artifactID, errorSummary)
+	if err != nil {
+		return fmt.Errorf("fail source artifact %s: %w", artifactID, err)
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("fail source artifact %s: artifact does not exist", artifactID)
+	}
+	return nil
 }
 
 func (s *Store) UpsertSourceRecord(ctx context.Context, artifactID uuid.UUID, recordKey string, payload json.RawMessage) (bool, error) {
