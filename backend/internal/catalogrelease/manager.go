@@ -97,6 +97,9 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		if snapshots == 0 || invalidSnapshots != 0 {
 			return fmt.Errorf("%w: snapshots=%d invalid=%d", ErrReleaseNotPublishable, snapshots, invalidSnapshots)
 		}
+		if err := validateReleaseProvenance(ctx, tx, releaseID, *buildID); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx, `
 			UPDATE catalog_releases
 			SET status='validating',validated_at=now(),updated_at=now()
@@ -170,6 +173,64 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		}
 		return nil
 	})
+}
+
+func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UUID, buildID int64) error {
+	var unprovenVersions, unprovenFacts int64
+	err := tx.QueryRow(ctx, `
+		WITH release_artifacts AS (
+			SELECT artifact.id
+			FROM catalog_source_artifacts artifact
+			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
+			WHERE snapshot.release_id=$1 AND artifact.status='ready'
+		), candidate_versions AS (
+			SELECT version.id,version.source_artifact_id
+			FROM game_entity_versions version
+			JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
+			WHERE snapshot.release_id=$1
+		), normalized_facts AS (
+			SELECT role.version_id,role.source_artifact_id FROM catalog_npc_roles role
+			UNION ALL SELECT location.version_id,location.source_artifact_id FROM catalog_npc_locations location
+			UNION ALL SELECT acquisition.version_id,acquisition.source_artifact_id FROM catalog_item_acquisition_sources acquisition
+			UNION ALL SELECT effect.version_id,effect.source_artifact_id FROM catalog_item_effects effect
+			UNION ALL SELECT effect.spell_version_id,effect.source_artifact_id FROM catalog_spell_effects effect
+			UNION ALL SELECT recipe.profession_version_id,recipe.source_artifact_id FROM catalog_profession_recipes recipe
+			UNION ALL SELECT reagent.recipe_version_id,reagent.source_artifact_id FROM catalog_recipe_reagents reagent
+			UNION ALL SELECT currency.recipe_version_id,currency.source_artifact_id FROM catalog_recipe_currencies currency
+			UNION ALL SELECT output.recipe_version_id,output.source_artifact_id FROM catalog_recipe_outputs output
+			UNION ALL
+			SELECT variant.item_version_id,effect.source_artifact_id
+			FROM catalog_item_variant_effects effect
+			JOIN catalog_item_variants variant ON variant.id=effect.variant_id
+		), unproven_versions AS (
+			SELECT candidate.id
+			FROM candidate_versions candidate
+			LEFT JOIN release_artifacts artifact ON artifact.id=candidate.source_artifact_id
+			WHERE artifact.id IS NULL
+		), unproven_normalized_facts AS (
+			SELECT fact.version_id
+			FROM normalized_facts fact
+			JOIN candidate_versions candidate ON candidate.id=fact.version_id
+			LEFT JOIN release_artifacts artifact ON artifact.id=fact.source_artifact_id
+			WHERE artifact.id IS NULL
+		), unproven_quest_rewards AS (
+			SELECT reward.quest_id
+			FROM catalog_quest_rewards reward
+			LEFT JOIN release_artifacts artifact ON artifact.id=reward.source_artifact_id
+			WHERE reward.build_id=$2 AND artifact.id IS NULL
+		)
+		SELECT
+			(SELECT count(*) FROM unproven_versions),
+			(SELECT count(*) FROM unproven_normalized_facts) +
+			(SELECT count(*) FROM unproven_quest_rewards)`, releaseID, buildID).Scan(&unprovenVersions, &unprovenFacts)
+	if err != nil {
+		return fmt.Errorf("validate catalog release provenance: %w", err)
+	}
+	if unprovenVersions != 0 || unprovenFacts != 0 {
+		return fmt.Errorf("%w: missing_provenance versions=%d normalized_facts=%d",
+			ErrReleaseNotPublishable, unprovenVersions, unprovenFacts)
+	}
+	return nil
 }
 
 func (m *Manager) Fail(ctx context.Context, releaseID uuid.UUID, cause error) error {

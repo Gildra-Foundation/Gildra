@@ -215,13 +215,50 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.UpsertCanonical(ctx, candidate, catalogTestItem("Released item", "1.0.0.100003")); err != nil {
+	artifactID, err := store.RegisterArtifact(ctx, candidate, "wago_tools", "ItemSparse", "en_US",
+		"https://wago.tools/db2/ItemSparse/csv?build=1.0.0.100003", map[string]any{"test": "atomic release"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	releasedItem := catalogTestItem("Released item", "1.0.0.100003")
+	releasedItem.SourceArtifactID = &artifactID
+	if err := store.UpsertCanonical(ctx, candidate, releasedItem); err != nil {
 		t.Fatal(err)
 	}
 	if err := store.Finish(ctx, candidate.RunID, "SUCCEEDED", 1, 1, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertCatalogName(t, ctx, service, entityID, "Published item")
+	if _, err := database.ExecContext(ctx, `
+		UPDATE game_entity_versions SET source_artifact_id=NULL
+		WHERE id=(SELECT latest_version_id FROM game_entities WHERE id=$1)`, entityID); err != nil {
+		t.Fatal(err)
+	}
+	if err := releases.Publish(ctx, publishedReleaseID); !errors.Is(err, catalogrelease.ErrReleaseNotPublishable) ||
+		!strings.Contains(err.Error(), "versions=1") {
+		t.Fatalf("unproven version error = %v, want versions=1", err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		UPDATE game_entity_versions SET source_artifact_id=$2
+		WHERE id=(SELECT latest_version_id FROM game_entities WHERE id=$1)`, entityID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_item_acquisition_sources(version_id,source_type,source_id,attributes)
+		SELECT latest_version_id,'world_drop',1,'{"test":"missing provenance"}'::jsonb
+		FROM game_entities WHERE id=$1`, entityID); err != nil {
+		t.Fatal(err)
+	}
+	if err := releases.Publish(ctx, publishedReleaseID); !errors.Is(err, catalogrelease.ErrReleaseNotPublishable) ||
+		!strings.Contains(err.Error(), "normalized_facts=1") {
+		t.Fatalf("unproven fact error = %v, want normalized_facts=1", err)
+	}
+	assertCatalogName(t, ctx, service, entityID, "Published item")
+	if _, err := database.ExecContext(ctx, `
+		UPDATE catalog_item_acquisition_sources SET source_artifact_id=$2
+		WHERE version_id=(SELECT latest_version_id FROM game_entities WHERE id=$1)`, entityID, artifactID); err != nil {
+		t.Fatal(err)
+	}
 	if err := releases.Publish(ctx, publishedReleaseID); err != nil {
 		t.Fatal(err)
 	}
