@@ -24,6 +24,7 @@ type ImportContext struct {
 	BuildID     int64
 	RunID       uuid.UUID
 	SnapshotID  uuid.UUID
+	ReleaseID   *uuid.UUID
 }
 
 type Record struct {
@@ -403,9 +404,10 @@ func (s *Store) Enrich(ctx context.Context, ic ImportContext, record Record, sou
 		LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
 		WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.external_id=$3
 		  AND entity.deleted_at IS NULL
-		  AND (version.snapshot_id=$5 OR version.snapshot_id IS NULL OR snapshot.status='published')
+		  AND (version.snapshot_id=$5 OR version.snapshot_id IS NULL OR snapshot.status='published'
+			OR ($6::uuid IS NOT NULL AND snapshot.release_id=$6))
 		ORDER BY version.revision DESC
-		LIMIT 1`, ic.ProductID, record.Type, record.ExternalID, ic.BuildID, ic.SnapshotID).Scan(&versionID)
+		LIMIT 1`, ic.ProductID, record.Type, record.ExternalID, ic.BuildID, ic.SnapshotID, ic.ReleaseID).Scan(&versionID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return s.UpsertCanonical(ctx, ic, record)
 	}
@@ -432,8 +434,16 @@ func (s *Store) Enrich(ctx context.Context, ic ImportContext, record Record, sou
 	})
 }
 
-func (s *Store) Begin(ctx context.Context, product string, buildNumber int, buildVersion, region, source string, parameters any) (ImportContext, error) {
+func (s *Store) Begin(
+	ctx context.Context,
+	product string,
+	buildNumber int,
+	buildVersion, region, source string,
+	releaseID *uuid.UUID,
+	parameters any,
+) (ImportContext, error) {
 	var result ImportContext
+	result.ReleaseID = releaseID
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		if err := tx.QueryRow(ctx, `SELECT id FROM game_products WHERE slug = $1`, product).Scan(&result.ProductID); err != nil {
 			return fmt.Errorf("find product %q: %w", product, err)
@@ -454,14 +464,27 @@ func (s *Store) Begin(ctx context.Context, product string, buildNumber int, buil
 			RETURNING id`, result.ProductID, buildNumber, buildVersion).Scan(&result.BuildID); err != nil {
 			return fmt.Errorf("upsert build: %w", err)
 		}
+		if releaseID != nil {
+			command, err := tx.Exec(ctx, `
+				UPDATE catalog_releases
+				SET build_id=COALESCE(build_id,$3),updated_at=now()
+				WHERE id=$1 AND product_id=$2 AND build_version=$4 AND status='staging'
+				  AND (build_id IS NULL OR build_id=$3)`, *releaseID, result.ProductID, result.BuildID, buildVersion)
+			if err != nil {
+				return fmt.Errorf("bind catalog release build: %w", err)
+			}
+			if command.RowsAffected() != 1 {
+				return fmt.Errorf("catalog release %s does not accept product %s build %s", releaseID.String(), product, buildVersion)
+			}
+		}
 		encoded, err := json.Marshal(parameters)
 		if err != nil {
 			return fmt.Errorf("encode import parameters: %w", err)
 		}
 		if err := tx.QueryRow(ctx, `
-			INSERT INTO catalog_snapshots (product_id, build_id, source, metadata)
-			VALUES ($1, $2, $3, $4)
-			RETURNING id`, result.ProductID, result.BuildID, source, encoded).Scan(&result.SnapshotID); err != nil {
+			INSERT INTO catalog_snapshots (product_id, build_id, source, metadata, release_id)
+			VALUES ($1, $2, $3, $4, $5)
+			RETURNING id`, result.ProductID, result.BuildID, source, encoded, releaseID).Scan(&result.SnapshotID); err != nil {
 			return fmt.Errorf("start catalog snapshot: %w", err)
 		}
 		if err := tx.QueryRow(ctx, `
@@ -497,19 +520,20 @@ func (s *Store) UpsertCanonical(ctx context.Context, ic ImportContext, record Re
 			) VALUES ($1, $2, $3, $4, $5, $6, $6, NULL, now())
 			ON CONFLICT (product_id, entity_type, external_id) DO UPDATE SET
 				namespace_id = EXCLUDED.namespace_id,
-				canonical_slug = EXCLUDED.canonical_slug,
-				last_seen_build_id = EXCLUDED.last_seen_build_id,
-				deleted_at = NULL,
+				canonical_slug = CASE WHEN $7::uuid IS NULL THEN EXCLUDED.canonical_slug ELSE game_entities.canonical_slug END,
+				last_seen_build_id = CASE WHEN $7::uuid IS NULL THEN EXCLUDED.last_seen_build_id ELSE game_entities.last_seen_build_id END,
+				deleted_at = CASE WHEN $7::uuid IS NULL THEN NULL ELSE game_entities.deleted_at END,
 				updated_at = now()
-			RETURNING id`, ic.ProductID, ic.NamespaceID, record.Type, record.ExternalID, slug, ic.BuildID).Scan(&entityID); err != nil {
+			RETURNING id`, ic.ProductID, ic.NamespaceID, record.Type, record.ExternalID, slug, ic.BuildID, ic.ReleaseID).Scan(&entityID); err != nil {
 			return fmt.Errorf("upsert entity: %w", err)
 		}
 		err := tx.QueryRow(ctx, `
 			SELECT version.id FROM game_entity_versions version
 			LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
 			WHERE version.entity_id=$1 AND version.build_id=$2 AND version.content_hash=$3
-			  AND (version.snapshot_id=$4 OR version.snapshot_id IS NULL OR snapshot.status='published')
-			ORDER BY version.revision DESC LIMIT 1`, entityID, ic.BuildID, hash[:], ic.SnapshotID).Scan(&versionID)
+			  AND (version.snapshot_id=$4 OR version.snapshot_id IS NULL OR snapshot.status='published'
+				OR ($5::uuid IS NOT NULL AND snapshot.release_id=$5))
+			ORDER BY version.revision DESC LIMIT 1`, entityID, ic.BuildID, hash[:], ic.SnapshotID, ic.ReleaseID).Scan(&versionID)
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = tx.QueryRow(ctx, `
 				UPDATE game_entity_versions version SET
@@ -581,11 +605,18 @@ func (s *Store) Finish(ctx context.Context, runID uuid.UUID, status string, seen
 	return pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		var snapshotID uuid.UUID
 		var productID int16
+		var releaseID *uuid.UUID
 		if err := tx.QueryRow(ctx, `
-			UPDATE catalog_import_runs SET status = $2, records_seen = $3, records_written = $4,
-				error_summary = $5, finished_at = now()
-			WHERE id = $1
-			RETURNING snapshot_id,product_id`, runID, status, seen, written, errorSummary).Scan(&snapshotID, &productID); err != nil {
+			WITH finished AS (
+				UPDATE catalog_import_runs
+				SET status=$2,records_seen=$3,records_written=$4,error_summary=$5,finished_at=now()
+				WHERE id=$1
+				RETURNING snapshot_id,product_id
+			)
+			SELECT finished.snapshot_id,finished.product_id,snapshot.release_id
+			FROM finished
+			JOIN catalog_snapshots snapshot ON snapshot.id=finished.snapshot_id`,
+			runID, status, seen, written, errorSummary).Scan(&snapshotID, &productID, &releaseID); err != nil {
 			return err
 		}
 		if status != "SUCCEEDED" {
@@ -630,7 +661,9 @@ func (s *Store) Finish(ctx context.Context, runID uuid.UUID, status string, seen
 				ORDER BY v.entity_id,b.build_number DESC,v.revision DESC
 			)
 			UPDATE game_entities e
-			SET latest_version_id=c.version_id,updated_at=now()
+			SET latest_version_id=c.version_id,
+				published_version_id=CASE WHEN $2::uuid IS NULL THEN c.version_id ELSE e.published_version_id END,
+				updated_at=now()
 			FROM candidates c
 			WHERE e.id=c.entity_id
 			  AND COALESCE((
@@ -638,8 +671,11 @@ func (s *Store) Finish(ctx context.Context, runID uuid.UUID, status string, seen
 				FROM game_entity_versions current_version
 				JOIN game_builds current_build ON current_build.id=current_version.build_id
 				WHERE current_version.id=e.latest_version_id
-			  ),0) <= c.build_number`, snapshotID); err != nil {
+			  ),0) <= c.build_number`, snapshotID, releaseID); err != nil {
 			return fmt.Errorf("publish catalog snapshot entities: %w", err)
+		}
+		if releaseID != nil {
+			return nil
 		}
 		if _, err := tx.Exec(ctx, `
 			UPDATE catalog_snapshots

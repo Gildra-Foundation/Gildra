@@ -40,6 +40,25 @@ The full command is deliberately hard to run accidentally:
 docker compose run --rm --entrypoint catalog-pipeline api -mode apply -profile retail-foundation -version 12.1.0.69404 -max-records 0 -confirm-full-import
 ```
 
+Writable pipeline runs create a private row in `catalog_releases` before the
+first importer starts. Each importer receives that release ID through the
+process environment and leaves its snapshot in `validated` state. Public reads
+continue to use the previous `published_version_id` while normalization,
+indexing, validation, and source-policy checks run. Only the final
+`release-publish` transaction moves all public pointers and activates the new
+build. A failed or blocked run restores candidate pointers to the last
+published versions; candidate snapshots and errors remain available for audit.
+
+Direct importer commands are retained for bounded local diagnostics. They do
+not provide the multi-source atomicity of `catalog-pipeline` and must not be
+used as a production publication shortcut.
+
+The structured client catalog is immutable for a pinned WoW build. If that
+exact build is already public, a scheduled pipeline run records a successful
+no-op and does not rewrite shared DB2 projections. Server-side enrichments that
+can change without a client build require their own versioned release path;
+they must not be forced through the client-build pipeline.
+
 ## Optional Battle.net credentials
 
 Create a Battle.net API client at <https://develop.battle.net/access>. Put the

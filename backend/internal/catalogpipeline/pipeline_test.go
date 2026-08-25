@@ -97,3 +97,16 @@ func TestProductionImportSafetyRequiresPinnedBuildAndExplicitFullConfirmation(t 
 		t.Fatalf("first production stage = %q, want recovery-gate", plan[0].Key)
 	}
 }
+
+func TestApplyPlanWrapsImportersInAtomicReleaseStages(t *testing.T) {
+	plan, err := BuildPlan(Options{
+		Mode: "apply", PublicationEnvironment: "development", Product: "wow",
+		Profile: "custom", Sources: []string{"wago"}, BuildVersion: "12.1.0.69404", MaxRecords: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan) < 3 || plan[0].Key != "release-start" || plan[len(plan)-1].Key != "release-publish" {
+		t.Fatalf("apply plan is not release-wrapped: %#v", plan)
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -56,7 +57,7 @@ func (s *PublicationService) Status(ctx context.Context, environment, surface st
 		return cached, nil
 	}
 
-	status, err := s.load(ctx, environment, surface)
+	status, err := s.load(ctx, environment, surface, nil)
 	if err != nil {
 		return PublicationStatus{}, err
 	}
@@ -66,19 +67,51 @@ func (s *PublicationService) Status(ctx context.Context, environment, surface st
 	return status, nil
 }
 
+// ReleaseStatus evaluates the sources requested by a staging release rather
+// than the sources in the currently published catalog. This prevents a new,
+// unapproved source from passing the gate merely because it is not public yet.
+func (s *PublicationService) ReleaseStatus(
+	ctx context.Context,
+	environment, surface string,
+	releaseID uuid.UUID,
+) (PublicationStatus, error) {
+	if releaseID == uuid.Nil {
+		return PublicationStatus{}, fmt.Errorf("catalog release ID is required")
+	}
+	var exists bool
+	if err := s.postgres.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM catalog_releases WHERE id=$1)`, releaseID).Scan(&exists); err != nil {
+		return PublicationStatus{}, fmt.Errorf("find catalog release: %w", err)
+	}
+	if !exists {
+		return PublicationStatus{}, fmt.Errorf("catalog release %s does not exist", releaseID)
+	}
+	return s.load(ctx, environment, surface, &releaseID)
+}
+
 func (s *PublicationService) Invalidate() {
 	s.mu.Lock()
 	s.cache = make(map[string]PublicationStatus)
 	s.mu.Unlock()
 }
 
-func (s *PublicationService) load(ctx context.Context, environment, surface string) (PublicationStatus, error) {
+func (s *PublicationService) load(ctx context.Context, environment, surface string, releaseID *uuid.UUID) (PublicationStatus, error) {
 	rows, err := s.postgres.Query(ctx, `
 		WITH active_sources AS (
 			SELECT DISTINCT version.source
 			FROM game_entities entity
-			JOIN game_entity_versions version ON version.id=entity.latest_version_id
-			WHERE entity.deleted_at IS NULL
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			WHERE $3::uuid IS NULL AND entity.deleted_at IS NULL
+			UNION
+			SELECT DISTINCT CASE requested.source
+				WHEN 'wago' THEN 'wago_tools'
+				WHEN 'db2' THEN 'wago_tools'
+				WHEN 'battlenet' THEN 'blizzard_api'
+				WHEN 'listfile' THEN 'wow_listfile'
+				ELSE requested.source
+			END
+			FROM catalog_releases catalog_release
+			CROSS JOIN LATERAL unnest(catalog_release.requested_sources) AS requested(source)
+			WHERE catalog_release.id=$3
 		)
 		SELECT active.source,COALESCE(policy.display_name,active.source),
 			COALESCE(policy.public_api_status,'unknown'),COALESCE(policy.commercial_use_status,'unknown'),
@@ -88,7 +121,7 @@ func (s *PublicationService) load(ctx context.Context, environment, surface stri
 		LEFT JOIN catalog_source_policies policy ON policy.source=active.source
 		LEFT JOIN catalog_publication_grants grant_record ON grant_record.source=active.source
 			AND grant_record.environment=$1 AND grant_record.surface=$2
-		ORDER BY active.source`, environment, surface)
+		ORDER BY active.source`, environment, surface, releaseID)
 	if err != nil {
 		return PublicationStatus{}, fmt.Errorf("load catalog publication status: %w", err)
 	}

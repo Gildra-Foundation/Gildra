@@ -90,7 +90,11 @@ func run() error {
 		return fmt.Errorf("ping database: %w", err)
 	}
 	store := catalogimport.NewStore(db)
-	ic, err := store.Begin(ctx, "wow", buildNumber, opts.version, "us", "wago_tools", map[string]any{
+	releaseID, err := catalogimport.ReleaseIDFromEnvironment()
+	if err != nil {
+		return err
+	}
+	ic, err := store.Begin(ctx, "wow", buildNumber, opts.version, "us", "wago_tools", releaseID, map[string]any{
 		"tables": opts.tables, "locales": opts.locales, "max_records_per_table": opts.maxRecords, "batch_size": opts.batchSize,
 	})
 	if err != nil {

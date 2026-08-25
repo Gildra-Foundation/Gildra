@@ -108,6 +108,10 @@ func run() error {
 	}
 
 	store := catalogimport.NewStore(db)
+	releaseID, err := catalogimport.ReleaseIDFromEnvironment()
+	if err != nil {
+		return err
+	}
 	parameters := map[string]any{
 		"environment":          metadata.Environment,
 		"content_hash":         metadata.ContentHash,
@@ -115,7 +119,7 @@ func run() error {
 		"files":                opts.files,
 		"max_records_per_file": opts.maxRecords,
 	}
-	importContext, err := store.Begin(ctx, "wow", buildNumber, metadata.WoWBuild, "us", "raidbots", parameters)
+	importContext, err := store.Begin(ctx, "wow", buildNumber, metadata.WoWBuild, "us", "raidbots", releaseID, parameters)
 	if err != nil {
 		return err
 	}

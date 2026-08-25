@@ -31,9 +31,11 @@ func (s *Service) enrichTalentOwners(ctx context.Context, entities []Entity) err
 			COALESCE(class_source_icon.icon_name,class_icon.icon_name)
 		FROM game_entity_links link
 		JOIN game_entities talent ON talent.id=link.source_entity_id
+		JOIN game_entity_versions talent_version ON talent_version.id=talent.published_version_id
 		JOIN game_entities specialization ON specialization.id=link.target_entity_id
 			AND specialization.entity_type='specialization' AND specialization.deleted_at IS NULL
-		JOIN game_entity_versions spec_version ON spec_version.id=specialization.latest_version_id
+		JOIN game_entity_versions spec_version ON spec_version.id=specialization.published_version_id
+			AND spec_version.build_id=link.build_id AND talent_version.build_id=link.build_id
 		LEFT JOIN game_entity_localizations spec_name ON spec_name.version_id=spec_version.id AND spec_name.locale=$2
 		LEFT JOIN game_entity_localizations spec_fallback ON spec_fallback.version_id=spec_version.id AND spec_fallback.locale='en_US'
 		LEFT JOIN catalog_entity_icons spec_source_icon ON spec_source_icon.build_id=spec_version.build_id
@@ -42,7 +44,8 @@ func (s *Service) enrichTalentOwners(ctx context.Context, entities []Entity) err
 			WHEN spec_version.payload #>> '{db2,SpellIconFileID}' ~ '^[0-9]+$' THEN (spec_version.payload #>> '{db2,SpellIconFileID}')::bigint END
 		LEFT JOIN game_entities class ON class.product_id=specialization.product_id AND class.entity_type='class'
 			AND class.external_id=NULLIF(spec_version.payload #>> '{db2,ClassID}','')::bigint AND class.deleted_at IS NULL
-		LEFT JOIN game_entity_versions class_version ON class_version.id=class.latest_version_id
+		LEFT JOIN game_entity_versions class_version ON class_version.id=class.published_version_id
+			AND class_version.build_id=spec_version.build_id
 		LEFT JOIN game_entity_localizations class_name ON class_name.version_id=class_version.id AND class_name.locale=$2
 		LEFT JOIN game_entity_localizations class_fallback ON class_fallback.version_id=class_version.id AND class_fallback.locale='en_US'
 		LEFT JOIN catalog_entity_icons class_source_icon ON class_source_icon.build_id=class_version.build_id

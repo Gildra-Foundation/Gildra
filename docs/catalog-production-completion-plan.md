@@ -34,6 +34,15 @@ every fact that exists on Blizzard's private servers.
   datasets. Production applies require a pinned build, explicit confirmation
   for an unbounded run, and a fresh verified off-host restore manifest before
   the first importer process starts.
+- Schema 69 adds release candidates and a separate public version pointer.
+  Source snapshots remain private until all stages validate and one transaction
+  publishes the snapshots, entity versions, active build, and product release
+  state. Failure restores the previous entity pointers instead of exposing a
+  partial refresh.
+- Public entity, relationship, mention, history, summary, and sitemap reads use
+  published versions. Graph edges are restricted to the published build.
+- The publication gate now evaluates sources requested by the candidate release,
+  so a newly introduced unapproved source cannot hide behind the old catalog.
 
 ## Source hierarchy
 

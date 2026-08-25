@@ -31,9 +31,11 @@ func (s *Service) SitemapEntries(ctx context.Context, product, entityType, shard
 		return nil, err
 	}
 	rows, err := s.postgres.Query(ctx, `
-		SELECT entity.id,entity.entity_type,entity.canonical_slug,entity.updated_at
+		SELECT entity.id,entity.entity_type,COALESCE(NULLIF(localized.slug,''),entity.canonical_slug),entity.updated_at
 		FROM game_entities entity
 		JOIN game_products product ON product.id=entity.product_id
+		JOIN game_entity_versions version ON version.id=entity.published_version_id
+		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale='en_US'
 		JOIN catalog_entity_type_registry registry ON registry.product_id=entity.product_id
 			AND registry.entity_type=entity.entity_type AND registry.is_public
 		WHERE product.slug=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
