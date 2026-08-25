@@ -247,6 +247,39 @@ func TestBattleNetMediaIconNameRejectsThirdPartyAsset(t *testing.T) {
 	}
 }
 
+func TestBattleNetMediaAssetsPreservesOfficialImages(t *testing.T) {
+	t.Parallel()
+	payload := json.RawMessage(`{"assets":[
+		{"key":"icon","value":"https://render.worldofwarcraft.com/us/icons/56/inv_sword_04.jpg","file_data_id":134328,"width":56,"height":56},
+		{"key":"main-raw","value":"https://render.worldofwarcraft.com/us/npcs/zoom/creature-display-1.webp"},
+		{"key":"tracking","value":"https://example.test/pixel.gif"}
+	]}`)
+	assets := battleNetMediaAssets(payload)
+	if len(assets) != 2 {
+		t.Fatalf("asset count = %d, want 2: %#v", len(assets), assets)
+	}
+	if assets[0].Kind != "icon" || assets[0].MIMEType != "image/jpeg" ||
+		assets[0].FileDataID == nil || *assets[0].FileDataID != 134328 ||
+		assets[0].Width == nil || *assets[0].Width != 56 || !assets[0].Primary {
+		t.Fatalf("icon asset = %#v", assets[0])
+	}
+	if assets[1].Kind != "main_raw" || assets[1].MIMEType != "image/webp" || assets[1].Primary {
+		t.Fatalf("render asset = %#v", assets[1])
+	}
+}
+
+func TestBattleNetMediaAssetsRejectsInvalidKeysAndHosts(t *testing.T) {
+	t.Parallel()
+	payload := json.RawMessage(`{"assets":[
+		{"key":"1","value":"https://render.worldofwarcraft.com/us/icon.jpg"},
+		{"key":"icon","value":"http://render.worldofwarcraft.com/us/icon.jpg"},
+		{"key":"icon","value":"https://worldofwarcraft.com.example.test/icon.jpg"}
+	]}`)
+	if assets := battleNetMediaAssets(payload); len(assets) != 0 {
+		t.Fatalf("unexpected assets: %#v", assets)
+	}
+}
+
 func TestWagoRecordRejectsUnnamedTechnicalRowsWithSkippableError(t *testing.T) {
 	t.Parallel()
 	_, err := wagoRecord("spell", "en_US", "https://example.test/spell.csv", map[string]string{
