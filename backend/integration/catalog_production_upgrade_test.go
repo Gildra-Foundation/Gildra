@@ -68,7 +68,15 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	if err := goose.UpContext(ctx, database, migrations); err != nil {
 		t.Fatalf("upgrade production baseline to Warcraft catalog: %v", err)
 	}
+	assertMigrationVersion(t, ctx, database, 70)
+	if err := goose.DownToContext(ctx, database, migrations, 69); err != nil {
+		t.Fatalf("roll back newest catalog migration: %v", err)
+	}
 	assertMigrationVersion(t, ctx, database, 69)
+	if err := goose.UpToContext(ctx, database, migrations, 70); err != nil {
+		t.Fatalf("reapply newest catalog migration: %v", err)
+	}
+	assertMigrationVersion(t, ctx, database, 70)
 	for _, table := range []string{
 		"catalog_completeness_expectations",
 		"catalog_entity_media",
@@ -78,6 +86,7 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 		"catalog_quest_rewards",
 		"catalog_releases",
 		"catalog_public_release_state",
+		"catalog_file_asset_versions",
 	} {
 		assertTablePresent(t, ctx, database, table)
 	}
@@ -117,7 +126,7 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 			component,backup_kind,status,storage_uri,content_hash,byte_size,database_version,
 			completed_at,restore_started_at,restore_completed_at,verification)
 		VALUES(
-			'postgres','logical','verified','file:///local-only.dump',decode(repeat('aa',32),'hex'),1,69,
+			'postgres','logical','verified','file:///local-only.dump',decode(repeat('aa',32),'hex'),1,70,
 			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`); err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +141,7 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 			component,backup_kind,status,storage_uri,content_hash,byte_size,database_version,
 			completed_at,restore_started_at,restore_completed_at,verification)
 		VALUES(
-			'postgres','logical','verified','r2://gildra-backups/catalog.dump',decode(repeat('bb',32),'hex'),1,69,
+			'postgres','logical','verified','r2://gildra-backups/catalog.dump',decode(repeat('bb',32),'hex'),1,70,
 			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`); err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +207,7 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	assertCatalogPointersDiffer(t, ctx, database, entityID, false)
 
 	publishedRunID := insertPipelineRun(t, ctx, database, "1.0.0.100003")
-	publishedReleaseID, err := releases.Start(ctx, publishedRunID, "wow", "1.0.0.100003", []string{"wago"})
+	publishedReleaseID, err := releases.Start(ctx, publishedRunID, "wow", "1.0.0.100003", []string{"wago", "listfile"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,8 +217,9 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err != nil {
 		t.Fatal(err)
 	}
-	if publication.Ready || len(publication.Sources) != 1 || publication.Sources[0].Source != "wago_tools" {
-		t.Fatalf("candidate publication sources = %#v, want blocked wago_tools", publication)
+	if publication.Ready || len(publication.Sources) != 2 ||
+		publication.Sources[0].Source != "wago_tools" || publication.Sources[1].Source != "wow_listfile" {
+		t.Fatalf("candidate publication sources = %#v, want blocked wago_tools and wow_listfile", publication)
 	}
 	candidate, err := store.Begin(ctx, "wow", 100003, "1.0.0.100003", "us", "wago_tools", &publishedReleaseID, map[string]any{"test": "publish"})
 	if err != nil {
@@ -227,6 +237,34 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	}
 	if err := store.Finish(ctx, candidate.RunID, "SUCCEEDED", 1, 1, nil); err != nil {
 		t.Fatal(err)
+	}
+	listfile, err := store.Begin(ctx, "wow", 100003, "1.0.0.100003", "us", "wow_listfile", &publishedReleaseID, map[string]any{"test": "atomic assets"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	listfileArtifactID, err := store.RegisterArtifact(ctx, listfile, "wow_listfile", "community-listfile.csv", "",
+		"https://github.com/wowdev/wow-listfile/releases/latest/download/community-listfile.csv", map[string]any{"test": "atomic assets"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const fileDataID int64 = 987654321
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_file_asset_versions(
+			snapshot_id,file_data_id,path,icon_name,source_url,content_hash,source_artifact_id
+		) VALUES($1,$2,'Interface/Icons/inv_test.blp','inv_test',
+			'https://github.com/wowdev/wow-listfile/releases/latest/download/community-listfile.csv',
+			decode(repeat('cc',32),'hex'),$3)`, listfile.SnapshotID, fileDataID, listfileArtifactID); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Finish(ctx, listfile.RunID, "SUCCEEDED", 1, 1, nil); err != nil {
+		t.Fatal(err)
+	}
+	var activeAssetCount int
+	if err := database.QueryRowContext(ctx, `SELECT count(*) FROM catalog_file_assets WHERE file_data_id=$1`, fileDataID).Scan(&activeAssetCount); err != nil {
+		t.Fatal(err)
+	}
+	if activeAssetCount != 0 {
+		t.Fatalf("staged listfile asset leaked before release publication: count=%d", activeAssetCount)
 	}
 	assertCatalogName(t, ctx, service, entityID, "Published item")
 	if _, err := database.ExecContext(ctx, `
@@ -264,6 +302,16 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	}
 	assertCatalogName(t, ctx, service, entityID, "Released item")
 	assertCatalogPointersDiffer(t, ctx, database, entityID, false)
+	var activeAssetPath string
+	var activeAssetArtifactID uuid.UUID
+	if err := database.QueryRowContext(ctx, `
+		SELECT path,source_artifact_id FROM catalog_file_assets WHERE file_data_id=$1`, fileDataID).
+		Scan(&activeAssetPath, &activeAssetArtifactID); err != nil {
+		t.Fatal(err)
+	}
+	if activeAssetPath != "Interface/Icons/inv_test.blp" || activeAssetArtifactID != listfileArtifactID {
+		t.Fatalf("published listfile asset = (%q,%s), want source artifact %s", activeAssetPath, activeAssetArtifactID, listfileArtifactID)
+	}
 
 	var releaseStatus, snapshotStatus string
 	var publicReleaseID uuid.UUID

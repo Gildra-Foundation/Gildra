@@ -112,6 +112,11 @@ func (s *PublicationService) load(ctx context.Context, environment, surface stri
 			FROM catalog_releases catalog_release
 			CROSS JOIN LATERAL unnest(catalog_release.requested_sources) AS requested(source)
 			WHERE catalog_release.id=$3
+			UNION
+			SELECT DISTINCT artifact.source
+			FROM catalog_source_artifacts artifact
+			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
+			WHERE snapshot.release_id=$3
 		)
 		SELECT active.source,COALESCE(policy.display_name,active.source),
 			COALESCE(policy.public_api_status,'unknown'),COALESCE(policy.commercial_use_status,'unknown'),

@@ -106,6 +106,27 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 			WHERE id=$1`, releaseID); err != nil {
 			return fmt.Errorf("validate catalog release: %w", err)
 		}
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO catalog_file_assets(
+				file_data_id,path,icon_name,source_url,content_hash,snapshot_id,source_artifact_id,imported_at
+			)
+			SELECT DISTINCT ON (candidate.file_data_id)
+				candidate.file_data_id,candidate.path,candidate.icon_name,candidate.source_url,
+				candidate.content_hash,candidate.snapshot_id,candidate.source_artifact_id,candidate.imported_at
+			FROM catalog_file_asset_versions candidate
+			JOIN catalog_snapshots snapshot ON snapshot.id=candidate.snapshot_id
+			WHERE snapshot.release_id=$1
+			ORDER BY candidate.file_data_id,snapshot.created_at DESC,candidate.imported_at DESC
+			ON CONFLICT(file_data_id) DO UPDATE SET
+				path=EXCLUDED.path,
+				icon_name=EXCLUDED.icon_name,
+				source_url=EXCLUDED.source_url,
+				content_hash=EXCLUDED.content_hash,
+				snapshot_id=EXCLUDED.snapshot_id,
+				source_artifact_id=EXCLUDED.source_artifact_id,
+				imported_at=EXCLUDED.imported_at`, releaseID); err != nil {
+			return fmt.Errorf("publish catalog file assets: %w", err)
+		}
 		command, err := tx.Exec(ctx, `
 			UPDATE game_entities entity
 			SET published_version_id=entity.latest_version_id,
@@ -218,11 +239,18 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 			FROM catalog_quest_rewards reward
 			LEFT JOIN release_artifacts artifact ON artifact.id=reward.source_artifact_id
 			WHERE reward.build_id=$2 AND artifact.id IS NULL
+		), unproven_file_assets AS (
+			SELECT candidate.file_data_id
+			FROM catalog_file_asset_versions candidate
+			JOIN catalog_snapshots snapshot ON snapshot.id=candidate.snapshot_id
+			LEFT JOIN release_artifacts artifact ON artifact.id=candidate.source_artifact_id
+			WHERE snapshot.release_id=$1 AND artifact.id IS NULL
 		)
 		SELECT
 			(SELECT count(*) FROM unproven_versions),
 			(SELECT count(*) FROM unproven_normalized_facts) +
-			(SELECT count(*) FROM unproven_quest_rewards)`, releaseID, buildID).Scan(&unprovenVersions, &unprovenFacts)
+			(SELECT count(*) FROM unproven_quest_rewards) +
+			(SELECT count(*) FROM unproven_file_assets)`, releaseID, buildID).Scan(&unprovenVersions, &unprovenFacts)
 	if err != nil {
 		return fmt.Errorf("validate catalog release provenance: %w", err)
 	}
