@@ -1,0 +1,16 @@
+-- +goose Up
+ALTER TABLE catalog_quest_rewards VALIDATE CONSTRAINT catalog_quest_rewards_source_artifact_fk;
+ALTER TABLE catalog_npc_roles VALIDATE CONSTRAINT catalog_npc_roles_source_artifact_fk;
+ALTER TABLE catalog_npc_locations VALIDATE CONSTRAINT catalog_npc_locations_source_artifact_fk;
+ALTER TABLE catalog_item_acquisition_sources VALIDATE CONSTRAINT catalog_item_acquisition_sources_source_artifact_fk;
+ALTER TABLE catalog_item_effects VALIDATE CONSTRAINT catalog_item_effects_source_artifact_fk;
+ALTER TABLE catalog_spell_effects VALIDATE CONSTRAINT catalog_spell_effects_source_artifact_fk;
+ALTER TABLE catalog_profession_recipes VALIDATE CONSTRAINT catalog_profession_recipes_source_artifact_fk;
+ALTER TABLE catalog_recipe_reagents VALIDATE CONSTRAINT catalog_recipe_reagents_source_artifact_fk;
+ALTER TABLE catalog_recipe_currencies VALIDATE CONSTRAINT catalog_recipe_currencies_source_artifact_fk;
+ALTER TABLE catalog_recipe_outputs VALIDATE CONSTRAINT catalog_recipe_outputs_source_artifact_fk;
+ALTER TABLE catalog_item_variant_effects VALIDATE CONSTRAINT catalog_item_variant_effects_source_artifact_fk;
+
+-- +goose Down
+-- Validation changes no schema shape. Migration 00061 owns the constraints.
+SELECT 1;
