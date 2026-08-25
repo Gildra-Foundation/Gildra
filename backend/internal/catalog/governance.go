@@ -138,7 +138,7 @@ func (s *Service) RelationTypes(ctx context.Context, locale string) ([]RelationT
 }
 
 func (s *Service) RefreshReadModels(ctx context.Context, productID *int16) error {
-	if _, err := s.postgres.Exec(ctx, `SELECT refresh_catalog_read_models($1)`, productID); err != nil {
+	if _, err := s.postgres.Exec(ctx, `SELECT refresh_all_catalog_read_models($1)`, productID); err != nil {
 		return fmt.Errorf("refresh catalog read models: %w", err)
 	}
 	return nil

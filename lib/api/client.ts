@@ -14,9 +14,12 @@ export type CatalogEntityQuality = components["schemas"]["GameEntityQuality"];
 export type CatalogEntityVersion = components["schemas"]["GameEntityVersion"];
 export type CatalogEntityComparison = components["schemas"]["GameEntityComparison"];
 export type CatalogSitemapEntry = components["schemas"]["GameSitemapEntry"];
+export type CatalogAcquisitionMethod = components["schemas"]["GameAcquisitionMethod"];
+export type CatalogAcquisitionCount = components["schemas"]["GameAcquisitionMethodCount"];
 export type CatalogPage = {
   data: CatalogRecord[];
   pagination: { hasMore: boolean; nextCursor?: string; total?: number };
+  acquisition: CatalogAcquisitionCount[];
 };
 
 const emptyOverview = (hours: number): AnalyticsOverview => ({
@@ -79,6 +82,7 @@ export async function getCatalogPage({
   cursor = "",
   category = "",
   facets = [],
+  acquisition = [],
   minItemLevel,
   maxItemLevel,
   minRequiredLevel,
@@ -92,6 +96,7 @@ export async function getCatalogPage({
   cursor?: string;
   category?: string;
   facets?: string[];
+  acquisition?: CatalogAcquisitionMethod[];
   minItemLevel?: number;
   maxItemLevel?: number;
   minRequiredLevel?: number;
@@ -106,12 +111,13 @@ export async function getCatalogPage({
   for (const facet of facets) {
     if (facet) params.append("facet", facet);
   }
+  for (const method of acquisition) params.append("acquisition", method);
   if (minItemLevel !== undefined) params.set("minItemLevel", String(minItemLevel));
   if (maxItemLevel !== undefined) params.set("maxItemLevel", String(maxItemLevel));
   if (minRequiredLevel !== undefined) params.set("minRequiredLevel", String(minRequiredLevel));
   if (maxRequiredLevel !== undefined) params.set("maxRequiredLevel", String(maxRequiredLevel));
   const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`);
-  return { data: page.data, pagination: page.pagination };
+  return { data: page.data, pagination: page.pagination, acquisition: page.acquisition };
 }
 
 export async function getCatalogCategories(

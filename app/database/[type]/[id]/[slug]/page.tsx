@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EntityDetailPage } from "@/components/database/EntityDetailPage";
 import { getCatalogEntity, getCatalogEntityComparison, getCatalogEntityQuality, getCatalogEntityTypes, getCatalogEntityVersions, getCatalogRelationships } from "@/lib/api/client";
-import { formatQuestText } from "@/lib/gameText";
+import { cleanWowText, formatQuestText } from "@/lib/gameText";
 
 type Props = { params: Promise<{ type: string; id: string; slug: string }>; searchParams?: Promise<{ fromBuildId?: string; toBuildId?: string }> };
 
@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const entity = await getCatalogEntity(id, "en_US");
   if (!entity || entity.type !== type) return {};
   const rawDescription = entity.description || entity.tooltip?.plainText || `${entity.name} — World of Warcraft database entry.`;
-  const description = entity.type === "quest" ? formatQuestText(rawDescription, "en") : rawDescription;
+  const description = entity.type === "quest" ? formatQuestText(rawDescription, "en") : cleanWowText(rawDescription, "en");
   const canonical = `/database/${type}/${id}/${entity.slug}`;
   return { title: `${entity.name} — Gildra Database`, description: description.slice(0, 160), alternates: { canonical, languages: { en: canonical, ru: `/ru/database/${type}/${id}/${entity.slug}` } }, robots: entity.name && (entity.description || entity.tooltip) ? "index, follow" : "noindex, follow" };
 }

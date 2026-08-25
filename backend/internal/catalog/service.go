@@ -175,7 +175,7 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 			v.build_id, COALESCE(v.payload, '{}'::jsonb), e.updated_at,
 			COALESCE(t.plain_text, fallback_t.plain_text),
 			COALESCE(t.blocks,fallback_t.blocks,'[]'::jsonb)
-			|| COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
+			|| COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(item_quest_sources.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
 			COALESCE(fa.icon_name, spell_fa.icon_name, source_icon.icon_name, db2_fa.icon_name,
 				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}','')),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
 		FROM game_entities e
@@ -234,7 +234,33 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 			FROM catalog_item_requirements requirements WHERE e.entity_type='item' AND requirements.version_id=v.id
 		) item_context ON e.entity_type='item'
 		LEFT JOIN LATERAL (
+			SELECT COALESCE(jsonb_agg(jsonb_build_object(
+				'type','acquisition','source_type','quest','source_id',reward.quest_id,
+				'name',COALESCE(NULLIF(quest_name.name,''),NULLIF(quest_text.title,''),NULLIF(quest_fallback.name,''),NULLIF(quest_text_fallback.title,''),'Quest #' || reward.quest_id::text),
+				'location','','is_choice',reward.is_choice,'evidence_source',reward.source,
+				'source_build',reward_build.version,'source_build_number',reward_build.build_number,
+				'historical',reward.build_id<>v.build_id
+			) ORDER BY reward.quest_id,reward.reward_index),'[]'::jsonb) AS blocks
+			FROM catalog_quest_rewards reward
+			JOIN game_builds current_build ON current_build.id=v.build_id
+			JOIN game_builds reward_build ON reward_build.id=reward.build_id
+			LEFT JOIN game_entities quest_entity ON quest_entity.product_id=e.product_id AND quest_entity.entity_type='quest' AND quest_entity.external_id=reward.quest_id AND quest_entity.deleted_at IS NULL
+			LEFT JOIN LATERAL (SELECT candidate.id FROM game_entity_versions candidate WHERE candidate.entity_id=quest_entity.id AND candidate.build_id=reward.build_id ORDER BY candidate.revision DESC LIMIT 1) quest_version ON true
+			LEFT JOIN game_entity_localizations quest_name ON quest_name.version_id=quest_version.id AND quest_name.locale=$2
+			LEFT JOIN game_entity_localizations quest_fallback ON quest_fallback.version_id=quest_version.id AND quest_fallback.locale='en_US'
+			LEFT JOIN catalog_quest_localizations quest_text ON quest_text.build_id=reward.build_id AND quest_text.quest_id=reward.quest_id AND quest_text.locale=$2
+			LEFT JOIN catalog_quest_localizations quest_text_fallback ON quest_text_fallback.build_id=reward.build_id AND quest_text_fallback.quest_id=reward.quest_id AND quest_text_fallback.locale='en_US'
+			WHERE e.entity_type='item' AND reward.reward_type='item' AND reward.build_id=(
+				SELECT candidate_reward.build_id FROM catalog_quest_rewards candidate_reward
+				JOIN game_builds candidate_build ON candidate_build.id=candidate_reward.build_id
+				WHERE candidate_reward.reward_type='item' AND candidate_build.build_number<=current_build.build_number
+				  AND (candidate_reward.item_entity_id=e.id OR (candidate_reward.item_entity_id IS NULL AND candidate_reward.external_id=e.external_id))
+				ORDER BY candidate_build.build_number DESC LIMIT 1)
+			  AND (reward.item_entity_id=e.id OR (reward.item_entity_id IS NULL AND reward.external_id=e.external_id))
+		) item_quest_sources ON e.entity_type='item'
+		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','quest_info','status',registry.enrichment_status,
+				'source_build',quest_build.version,'source_build_number',quest_build.build_number,'historical',registry.build_id<>v.build_id,
 				'bullet_text',COALESCE(quest_text.bullet_text,''),
 				'objectives',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',objective.objective_id,'type',objective.objective_type,'object_id',objective.object_id,'amount',objective.amount,'description',COALESCE(objective_text.description,'')) ORDER BY objective.order_index,objective.objective_id) FROM catalog_quest_objectives objective LEFT JOIN catalog_quest_objective_localizations objective_text ON objective_text.build_id=objective.build_id AND objective_text.quest_id=objective.quest_id AND objective_text.objective_id=objective.objective_id AND objective_text.locale=$4 WHERE objective.build_id=registry.build_id AND objective.quest_id=registry.quest_id),'[]'::jsonb),
 				'quest_lines',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',line.quest_line_id,'name',COALESCE(line_text.name,''),'order',line.order_index) ORDER BY line.order_index) FROM catalog_quest_line_entries line LEFT JOIN catalog_quest_line_localizations line_text ON line_text.build_id=line.build_id AND line_text.quest_line_id=line.quest_line_id AND line_text.locale=$4 WHERE line.build_id=registry.build_id AND line.quest_id=registry.quest_id),'[]'::jsonb),
@@ -259,8 +285,12 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 				LEFT JOIN catalog_items reward_item ON reward_item.version_id=reward_version.id
 				WHERE reward.build_id=registry.build_id AND reward.quest_id=registry.quest_id),'[]'::jsonb),
 				'poi_count',(SELECT count(*) FROM catalog_quest_poi_blobs poi WHERE poi.build_id=registry.build_id AND poi.quest_id=registry.quest_id))) AS blocks
-			FROM catalog_quest_registry registry LEFT JOIN catalog_quest_localizations quest_text ON quest_text.build_id=registry.build_id AND quest_text.quest_id=registry.quest_id AND quest_text.locale=$4
-			WHERE e.entity_type='quest' AND registry.build_id=v.build_id AND registry.quest_id=e.external_id
+			FROM catalog_quest_registry registry
+			JOIN game_builds current_build ON current_build.id=v.build_id
+			JOIN game_builds quest_build ON quest_build.id=registry.build_id AND quest_build.product_id=e.product_id
+			LEFT JOIN catalog_quest_localizations quest_text ON quest_text.build_id=registry.build_id AND quest_text.quest_id=registry.quest_id AND quest_text.locale=$4
+			WHERE e.entity_type='quest' AND registry.quest_id=e.external_id AND quest_build.build_number<=current_build.build_number
+			ORDER BY (registry.enrichment_status='blizzard_api') DESC,quest_build.build_number DESC LIMIT 1
 		) quest_info ON e.entity_type='quest'
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','creature_info','classification_id',creature.classification_id,
@@ -428,7 +458,7 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 			v.build_id, COALESCE(v.payload, '{}'::jsonb), e.updated_at,
 			COALESCE(t.plain_text, fallback_t.plain_text),
 			COALESCE(t.blocks,fallback_t.blocks,'[]'::jsonb)
-			|| COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
+			|| COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(item_quest_sources.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
 			COALESCE(fa.icon_name, spell_fa.icon_name, source_icon.icon_name, db2_fa.icon_name,
 				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}','')),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
 		FROM game_entities e
@@ -483,7 +513,34 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 			FROM catalog_item_requirements requirements WHERE e.entity_type='item' AND requirements.version_id=v.id
 		) item_context ON e.entity_type='item'
 		LEFT JOIN LATERAL (
-			SELECT jsonb_build_array(jsonb_build_object('type','quest_info','status',registry.enrichment_status,'bullet_text',COALESCE(quest_text.bullet_text,''),
+			SELECT COALESCE(jsonb_agg(jsonb_build_object(
+				'type','acquisition','source_type','quest','source_id',reward.quest_id,
+				'name',COALESCE(NULLIF(quest_name.name,''),NULLIF(quest_text.title,''),NULLIF(quest_fallback.name,''),NULLIF(quest_text_fallback.title,''),'Quest #' || reward.quest_id::text),
+				'location','','is_choice',reward.is_choice,'evidence_source',reward.source,
+				'source_build',reward_build.version,'source_build_number',reward_build.build_number,
+				'historical',reward.build_id<>v.build_id
+			) ORDER BY reward.quest_id,reward.reward_index),'[]'::jsonb) AS blocks
+			FROM catalog_quest_rewards reward
+			JOIN game_builds current_build ON current_build.id=v.build_id
+			JOIN game_builds reward_build ON reward_build.id=reward.build_id
+			LEFT JOIN game_entities quest_entity ON quest_entity.product_id=e.product_id AND quest_entity.entity_type='quest' AND quest_entity.external_id=reward.quest_id AND quest_entity.deleted_at IS NULL
+			LEFT JOIN LATERAL (SELECT candidate.id FROM game_entity_versions candidate WHERE candidate.entity_id=quest_entity.id AND candidate.build_id=reward.build_id ORDER BY candidate.revision DESC LIMIT 1) quest_version ON true
+			LEFT JOIN game_entity_localizations quest_name ON quest_name.version_id=quest_version.id AND quest_name.locale=$2
+			LEFT JOIN game_entity_localizations quest_fallback ON quest_fallback.version_id=quest_version.id AND quest_fallback.locale='en_US'
+			LEFT JOIN catalog_quest_localizations quest_text ON quest_text.build_id=reward.build_id AND quest_text.quest_id=reward.quest_id AND quest_text.locale=$2
+			LEFT JOIN catalog_quest_localizations quest_text_fallback ON quest_text_fallback.build_id=reward.build_id AND quest_text_fallback.quest_id=reward.quest_id AND quest_text_fallback.locale='en_US'
+			WHERE e.entity_type='item' AND reward.reward_type='item' AND reward.build_id=(
+				SELECT candidate_reward.build_id FROM catalog_quest_rewards candidate_reward
+				JOIN game_builds candidate_build ON candidate_build.id=candidate_reward.build_id
+				WHERE candidate_reward.reward_type='item' AND candidate_build.build_number<=current_build.build_number
+				  AND (candidate_reward.item_entity_id=e.id OR (candidate_reward.item_entity_id IS NULL AND candidate_reward.external_id=e.external_id))
+				ORDER BY candidate_build.build_number DESC LIMIT 1)
+			  AND (reward.item_entity_id=e.id OR (reward.item_entity_id IS NULL AND reward.external_id=e.external_id))
+		) item_quest_sources ON e.entity_type='item'
+		LEFT JOIN LATERAL (
+			SELECT jsonb_build_array(jsonb_build_object('type','quest_info','status',registry.enrichment_status,
+				'source_build',quest_build.version,'source_build_number',quest_build.build_number,'historical',registry.build_id<>v.build_id,
+				'bullet_text',COALESCE(quest_text.bullet_text,''),
 				'objectives',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',objective.objective_id,'type',objective.objective_type,'object_id',objective.object_id,'amount',objective.amount,'description',COALESCE(objective_text.description,'')) ORDER BY objective.order_index,objective.objective_id) FROM catalog_quest_objectives objective LEFT JOIN catalog_quest_objective_localizations objective_text ON objective_text.build_id=objective.build_id AND objective_text.quest_id=objective.quest_id AND objective_text.objective_id=objective.objective_id AND objective_text.locale=$2 WHERE objective.build_id=registry.build_id AND objective.quest_id=registry.quest_id),'[]'::jsonb),
 				'quest_lines',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',line.quest_line_id,'name',COALESCE(line_text.name,''),'order',line.order_index) ORDER BY line.order_index) FROM catalog_quest_line_entries line LEFT JOIN catalog_quest_line_localizations line_text ON line_text.build_id=line.build_id AND line_text.quest_line_id=line.quest_line_id AND line_text.locale=$2 WHERE line.build_id=registry.build_id AND line.quest_id=registry.quest_id),'[]'::jsonb),
 				'rewards',COALESCE((SELECT jsonb_agg(jsonb_build_object(
@@ -506,8 +563,12 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 				LEFT JOIN catalog_file_assets reward_db2_file ON reward_db2_file.file_data_id=CASE WHEN COALESCE(reward_version.payload #>> '{db2,InventoryIconFileID}',reward_version.payload #>> '{db2,IconFileID}',reward_version.payload #>> '{db2,IconFileDataID}') ~ '^[0-9]+$' THEN COALESCE(reward_version.payload #>> '{db2,InventoryIconFileID}',reward_version.payload #>> '{db2,IconFileID}',reward_version.payload #>> '{db2,IconFileDataID}')::bigint END
 				LEFT JOIN catalog_items reward_item ON reward_item.version_id=reward_version.id
 				WHERE reward.build_id=registry.build_id AND reward.quest_id=registry.quest_id),'[]'::jsonb),'poi_count',(SELECT count(*) FROM catalog_quest_poi_blobs poi WHERE poi.build_id=registry.build_id AND poi.quest_id=registry.quest_id))) AS blocks
-			FROM catalog_quest_registry registry LEFT JOIN catalog_quest_localizations quest_text ON quest_text.build_id=registry.build_id AND quest_text.quest_id=registry.quest_id AND quest_text.locale=$2
-			WHERE e.entity_type='quest' AND registry.build_id=v.build_id AND registry.quest_id=e.external_id
+			FROM catalog_quest_registry registry
+			JOIN game_builds current_build ON current_build.id=v.build_id
+			JOIN game_builds quest_build ON quest_build.id=registry.build_id AND quest_build.product_id=e.product_id
+			LEFT JOIN catalog_quest_localizations quest_text ON quest_text.build_id=registry.build_id AND quest_text.quest_id=registry.quest_id AND quest_text.locale=$2
+			WHERE e.entity_type='quest' AND registry.quest_id=e.external_id AND quest_build.build_number<=current_build.build_number
+			ORDER BY (registry.enrichment_status='blizzard_api') DESC,quest_build.build_number DESC LIMIT 1
 		) quest_info ON e.entity_type='quest'
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','creature_info','classification_id',creature.classification_id,'creature_type_id',creature.creature_type_id,

@@ -5,9 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type 
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { t, type Lang } from "@/lib/i18n";
-import { formatQuestText } from "@/lib/gameText";
+import { cleanWowText, formatQuestText } from "@/lib/gameText";
 import { trackCatalogEvent } from "@/lib/catalogAnalytics";
-import type { CatalogCategory, CatalogEntityType, CatalogPage, CatalogProduct, CatalogRecord, GameEntity } from "@/lib/api/client";
+import type { CatalogAcquisitionMethod, CatalogCategory, CatalogEntityType, CatalogPage, CatalogProduct, CatalogRecord, GameEntity } from "@/lib/api/client";
 import { RichDescription, TooltipOwners, wowIconURL } from "@/components/database/TooltipRelations";
 
 const SOURCES = [
@@ -34,9 +34,20 @@ const FACET_LABELS: Record<string, [string, string]> = {
 };
 const FACET_ORDER = ["class", "specialization", "race", "profession", "equipment_slot", "armor_type", "weapon_type", "item_class"];
 
-export function DatabaseDirectory({ lang = "en", catalog, categories, entityTypes, products, query = "", selectedProduct = "wow", selectedType = "", selectedCategory = "", selectedFacets = [], cursor = "", minItemLevel = "", maxItemLevel = "", minRequiredLevel = "", maxRequiredLevel = "" }: {
+const ACQUISITION_OPTIONS: { method: CatalogAcquisitionMethod; label: [string, string]; description: [string, string] }[] = [
+  { method: "drop", label: ["Enemy drop", "Дроп"], description: ["Bosses, creatures and containers", "Боссы, существа и контейнеры"] },
+  { method: "quest", label: ["Quest reward", "Награда за задание"], description: ["Confirmed official quest rewards", "Подтверждённые награды заданий"] },
+  { method: "vendor", label: ["NPC vendor", "Продавец NPC"], description: ["Items sold by known NPCs", "Предметы у известных продавцов"] },
+  { method: "crafting", label: ["Crafting", "Изготовление"], description: ["Professions and recipes", "Профессии и рецепты"] },
+];
+
+function acquisitionMethodLabel(method: CatalogAcquisitionMethod, lang: Lang) {
+  return ACQUISITION_OPTIONS.find((option) => option.method === method)?.label[lang === "ru" ? 1 : 0] ?? method;
+}
+
+export function DatabaseDirectory({ lang = "en", catalog, categories, entityTypes, products, query = "", selectedProduct = "wow", selectedType = "", selectedCategory = "", selectedFacets = [], selectedAcquisition = [], cursor = "", minItemLevel = "", maxItemLevel = "", minRequiredLevel = "", maxRequiredLevel = "" }: {
   lang?: Lang; catalog: CatalogPage; categories: CatalogCategory[]; entityTypes: CatalogEntityType[]; products: CatalogProduct[];
-  query?: string; selectedProduct?: string; selectedType?: string; selectedCategory?: string; selectedFacets?: string[]; cursor?: string; minItemLevel?: string; maxItemLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string;
+  query?: string; selectedProduct?: string; selectedType?: string; selectedCategory?: string; selectedFacets?: string[]; selectedAcquisition?: CatalogAcquisitionMethod[]; cursor?: string; minItemLevel?: string; maxItemLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string;
 }) {
   const [searchValue, setSearchValue] = useState(query);
   const [openTooltip, setOpenTooltip] = useState("");
@@ -67,18 +78,20 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
     }
     return Array.from(grouped.entries()).sort(([left], [right]) => FACET_ORDER.indexOf(left) - FACET_ORDER.indexOf(right));
   }, [categories]);
+  const acquisitionCounts = useMemo(() => new Map(catalog.acquisition.map((entry) => [entry.method, entry.count])), [catalog.acquisition]);
+  const hasStructuredFilters = Boolean(selectedCategory || selectedFacets.length || selectedAcquisition.length || minItemLevel || maxItemLevel || minRequiredLevel || maxRequiredLevel);
 
   useEffect(() => setSearchValue(query), [query]);
   useEffect(() => {
     if (selectedType || query) setBrowseOpen(false);
   }, [query, selectedType]);
   useEffect(() => {
-    if (!catalog.data.length && (query || selectedType || selectedCategory || selectedFacets.length)) {
-      trackCatalogEvent("catalog_zero_results", lang, { query, type: selectedType, category: selectedCategory, facets: selectedFacets.join(",") });
+    if (!catalog.data.length && (query || selectedType || selectedCategory || selectedFacets.length || selectedAcquisition.length)) {
+      trackCatalogEvent("catalog_zero_results", lang, { query, type: selectedType, category: selectedCategory, facets: selectedFacets.join(","), acquisition: selectedAcquisition.join(",") });
     }
-  }, [catalog.data.length, lang, query, selectedCategory, selectedFacets, selectedType]);
+  }, [catalog.data.length, lang, query, selectedAcquisition, selectedCategory, selectedFacets, selectedType]);
 
-  function navigate(type: string, nextQuery = query, nextCursor = "", category = selectedCategory, product = selectedProduct, minLevel = minItemLevel, maxLevel = maxItemLevel, facets = selectedFacets, requiredMin = minRequiredLevel, requiredMax = maxRequiredLevel) {
+  function navigate(type: string, nextQuery = query, nextCursor = "", category = selectedCategory, product = selectedProduct, minLevel = minItemLevel, maxLevel = maxItemLevel, facets = selectedFacets, requiredMin = minRequiredLevel, requiredMax = maxRequiredLevel, acquisition = selectedAcquisition) {
     const params = new URLSearchParams();
     if (product && product !== "wow") params.set("product", product);
     if (type) params.set("type", type);
@@ -86,6 +99,7 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
     if (nextCursor) params.set("cursor", nextCursor);
     if (category) params.set("category", category);
     for (const facet of facets) if (facet) params.append("facet", facet);
+    if (type === "item") for (const method of acquisition) params.append("acquisition", method);
     if (type === "item" && minLevel) params.set("minLevel", minLevel);
     if (type === "item" && maxLevel) params.set("maxLevel", maxLevel);
     if (type === "item" && requiredMin) params.set("minRequiredLevel", requiredMin);
@@ -151,7 +165,7 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
       <section className="db-live" aria-labelledby="database-live-title">
         <div className="db-live-head">
           <div><p className="cap">{tt("Catalog search")}</p><h2 id="database-live-title">{tt("Explore imported game data")}</h2></div>
-          <span className={catalog.data.length ? "db-live-state is-live" : "db-live-state"}>{catalog.pagination.total?.toLocaleString(lang === "ru" ? "ru-RU" : "en-US") ?? "—"} {tt("records")}</span>
+          <span className={catalog.data.length ? "db-live-state is-live" : "db-live-state"} role="status" aria-live="polite">{catalog.pagination.total?.toLocaleString(lang === "ru" ? "ru-RU" : "en-US") ?? "—"} {tt("records")}</span>
         </div>
         {products.length > 1 ? <label className="db-product-select"><span>{lang === "ru" ? "Версия игры" : "Game version"}</span><select value={selectedProduct} onChange={(event) => navigate("", "", "", "", event.target.value, "", "", [])}>{products.map((product) => <option key={product.slug} value={product.slug}>{product.name}</option>)}</select></label> : null}
         <form className="db-catalog-search" onSubmit={submitSearch}>
@@ -160,11 +174,25 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
           <input id="database-search" type="search" value={searchValue} onChange={(event) => setSearchValue(event.target.value)} placeholder={tt("Search by name or game ID...")} />
           <button type="submit">{tt("Search")}</button>
         </form>
-        {(facetGroups.length || selectedType === "item") ? <form className="db-quick-filters" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); navigate(selectedType, query, "", selectedCategory, selectedProduct, String(data.get("minLevel") ?? ""), String(data.get("maxLevel") ?? ""), data.getAll("facet").map(String).filter(Boolean), String(data.get("minRequiredLevel") ?? ""), String(data.get("maxRequiredLevel") ?? "")); }}>
+        {(facetGroups.length || selectedType === "item") ? <form className="db-quick-filters" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); navigate(selectedType, query, "", selectedCategory, selectedProduct, String(data.get("minLevel") ?? ""), String(data.get("maxLevel") ?? ""), data.getAll("facet").map(String).filter(Boolean), String(data.get("minRequiredLevel") ?? ""), String(data.get("maxRequiredLevel") ?? ""), data.getAll("acquisition").map(String) as CatalogAcquisitionMethod[]); }}>
           <div className="db-facet-grid">{facetGroups.map(([facet, entries]) => <label key={`${facet}:${selectedFacets.join(",")}`}><span>{FACET_LABELS[facet][lang === "ru" ? 1 : 0]}</span><select name="facet" defaultValue={selectedFacets.find((path) => entries.some((entry) => entry.path === path)) ?? ""}><option value="">{lang === "ru" ? "Любой" : "Any"}</option>{entries.map((category) => <option key={category.id} value={category.path}>{category.name} · {category.count.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</option>)}</select></label>)}</div>
+          {selectedType === "item" ? <fieldset className="db-acquisition-filter" aria-describedby="acquisition-filter-help">
+            <legend>{lang === "ru" ? "Как можно получить" : "How to obtain"}</legend>
+            <p id="acquisition-filter-help">{lang === "ru" ? "Можно выбрать несколько вариантов — будут показаны предметы, подходящие хотя бы под один." : "Choose one or more methods — items matching any selected method will be shown."}</p>
+            <div>{ACQUISITION_OPTIONS.map((option) => {
+              const count = acquisitionCounts.get(option.method) ?? 0;
+              const selected = selectedAcquisition.includes(option.method);
+              const unavailable = count === 0 && !selected;
+              return <label key={`${option.method}:${selectedAcquisition.join(",")}`} className={unavailable ? "is-disabled" : undefined}>
+                <input type="checkbox" name="acquisition" value={option.method} defaultChecked={selected} disabled={unavailable} />
+                <span><strong>{option.label[lang === "ru" ? 1 : 0]}</strong><small>{option.description[lang === "ru" ? 1 : 0]}</small></span>
+                <b>{count.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</b>
+              </label>;
+            })}</div>
+          </fieldset> : null}
           {selectedType === "item" ? <div className="db-level-grid"><label><span>{lang === "ru" ? "Уровень предмета от" : "Item level from"}</span><input name="minLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={minItemLevel} /></label><label><span>{lang === "ru" ? "Уровень предмета до" : "Item level to"}</span><input name="maxLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={maxItemLevel} /></label><label><span>{lang === "ru" ? "Уровень персонажа от" : "Character level from"}</span><input name="minRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={minRequiredLevel} /></label><label><span>{lang === "ru" ? "Уровень персонажа до" : "Character level to"}</span><input name="maxRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={maxRequiredLevel} /></label></div> : null}
-          <button type="submit">{lang === "ru" ? "Применить" : "Apply"}</button>
-          {(selectedCategory || selectedFacets.length || minItemLevel || maxItemLevel || minRequiredLevel || maxRequiredLevel) ? <button type="button" className="is-clear" onClick={() => navigate(selectedType, query, "", "", selectedProduct, "", "", [], "", "")}>{lang === "ru" ? "Сбросить" : "Reset"}</button> : null}
+          <button type="submit">{lang === "ru" ? "Применить фильтры" : "Apply filters"}</button>
+          {hasStructuredFilters ? <button type="button" className="is-clear" onClick={() => navigate(selectedType, query, "", "", selectedProduct, "", "", [], "", "", [])}>{lang === "ru" ? "Очистить фильтры" : "Clear filters"}</button> : null}
         </form> : null}
         <div className="db-type-filters" aria-label={tt("Catalog type")}><button type="button" className={!selectedType ? "is-active" : ""} aria-pressed={!selectedType} onClick={() => navigate("", query, "", "", selectedProduct, "", "", [])}>{tt("All records")}</button>{entityTypes.map((entityType) => <button type="button" key={entityType.type} className={selectedType === entityType.type ? "is-active" : ""} aria-pressed={selectedType === entityType.type} onClick={() => { trackCatalogEvent("catalog_type_selected", lang, { type: entityType.type }); navigate(entityType.type, query, "", "", selectedProduct, "", "", []); }}>{entityType.label}<b>{entityType.count.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</b></button>)}</div>
 
@@ -203,6 +231,7 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
                           <span>{tt("Game record ID")}</span> <b>{entity.externalId}</b>
                         </span>
                         {entity.highlights?.length ? <span className="db-record-highlights">{entity.highlights.map((highlight) => <span key={highlight.key}>{highlight.value}</span>)}</span> : null}
+                        {entity.acquisitionMethods?.length ? <span className="db-record-acquisition" aria-label={lang === "ru" ? "Способы получения" : "Acquisition methods"}>{entity.acquisitionMethods.map((method) => <span key={method}>{acquisitionMethodLabel(method, lang)}</span>)}</span> : null}
                       </span>
                       <button type="button" className="db-record-preview" aria-haspopup="dialog" aria-expanded={openTooltip === entity.id} onPointerEnter={() => void loadEntity(entity)} onFocus={() => void loadEntity(entity)} onClick={() => openPreview(entity)}>{lang === "ru" ? "Tooltip" : "Tooltip"}</button>
                     </div>
@@ -213,7 +242,7 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
                 );})}
               </div>
             ) : (
-              <div className="db-live-empty"><span aria-hidden="true">◇</span><div><h3>{tt("No matching records")}</h3><p>{tt("Try another search term or choose a different data type.")}</p></div></div>
+              <div className="db-live-empty"><span aria-hidden="true">◇</span><div><h3>{tt("No matching records")}</h3><p>{lang === "ru" ? "Измените запрос или снимите часть фильтров." : "Try another search term or remove some filters."}</p>{(query || hasStructuredFilters) ? <button type="button" onClick={() => navigate(selectedType, "", "", "", selectedProduct, "", "", [], "", "", [])}>{lang === "ru" ? "Очистить поиск и фильтры" : "Clear search and filters"}</button> : null}</div></div>
             )}
           </div>
         </div>
@@ -312,7 +341,7 @@ export function DatabaseEntityDetail({ entity, lang, iconSymbol }: { entity: Gam
 		id: entity.id, product: entity.product, type: entity.type, externalId: entity.externalId,
 		slug: entity.slug, locale: entity.locale, name: entity.name, description: entity.description,
 		iconName: entity.iconName, iconUrl: entity.iconUrl, quality: entity.quality,
-		buildId: entity.buildId, updatedAt: entity.updatedAt, tooltip: entity.tooltip,
+		buildId: entity.buildId, updatedAt: entity.updatedAt, acquisitionMethods: [], tooltip: entity.tooltip,
 	};
 	return <div className="db-entity-detail-tooltip"><EntityTooltip entity={record} lang={lang} expanded={false} detailPage iconSymbol={iconSymbol} onClose={() => undefined} /></div>;
 }
@@ -359,6 +388,7 @@ function EntityTooltip({ entity, lang, expanded, detailPage = false, iconSymbol 
 	}, [expanded, mounted]);
 	if (!tooltip) return null;
 	const seenAcquisition = new Set<string>();
+	const acquisitionBlocks: Record<string, unknown>[] = [];
 	const descriptionMentions = tooltip.blocks.find((block) => String(block.type ?? "") === "description_mentions")?.entries;
 	const mentions = Array.isArray(descriptionMentions) ? descriptionMentions as Record<string, unknown>[] : [];
 	const blocks = tooltip.blocks.filter((block) => {
@@ -367,11 +397,15 @@ function EntityTooltip({ entity, lang, expanded, detailPage = false, iconSymbol 
 	  if ((entity.type === "spell" || entity.type === "talent") && !text.trim()) return false;
 	}
 		if (String(block.type ?? "") !== "acquisition") return true;
-    const key = `${String(block.source_type ?? "")}:${String(block.name ?? "")}:${String(block.location ?? "")}`;
-    if (seenAcquisition.has(key)) return false;
-    seenAcquisition.add(key);
-    return true;
+    const key = `${String(block.source_type ?? "")}:${String(block.source_id ?? "")}:${String(block.name ?? "")}:${String(block.location ?? "")}`;
+    if (!seenAcquisition.has(key)) {
+      seenAcquisition.add(key);
+      acquisitionBlocks.push(block);
+    }
+    return false;
   });
+	const provenanceBlocks = blocks.filter((block) => String(block.type ?? "") === "provenance");
+	const contentBlocks = blocks.filter((block) => String(block.type ?? "") !== "provenance");
 	const content = (
 		<div ref={dialogRef} className={`db-wow-tooltip quality-${entity.quality ?? 0}${expanded ? " is-expanded" : ""}${detailPage ? " is-detail-page" : ""}`} id={`tooltip-${entity.id}`} role={expanded ? "dialog" : detailPage ? "region" : "tooltip"} aria-modal={expanded ? true : undefined} aria-labelledby={expanded || detailPage ? `tooltip-name-${entity.id}` : undefined} tabIndex={expanded ? -1 : undefined}>
 			{expanded ? <button ref={closeRef} type="button" className="db-tooltip-close" aria-label={lang === "ru" ? "Закрыть подсказку" : "Close tooltip"} onClick={onClose}>×</button> : null}
@@ -380,9 +414,11 @@ function EntityTooltip({ entity, lang, expanded, detailPage = false, iconSymbol 
       </span>
       <div className="db-tooltip-panel">
         <div className="db-tooltip-name" id={`tooltip-name-${entity.id}`}>{entity.name}</div>
-        {blocks.map((block, index) => (
+        {contentBlocks.map((block, index) => (
           <TooltipBlock key={`${String(block.type)}-${index}`} block={block} entityType={entity.type} lang={lang} mentions={mentions} />
         ))}
+        {entity.type === "item" ? <ItemAcquisitionSummary entries={acquisitionBlocks} lang={lang} /> : acquisitionBlocks.map((block, index) => <TooltipBlock key={`acquisition-${index}`} block={block} entityType={entity.type} lang={lang} mentions={mentions} />)}
+        {provenanceBlocks.map((block, index) => <TooltipBlock key={`provenance-${index}`} block={block} entityType={entity.type} lang={lang} mentions={mentions} />)}
       </div>
 		</div>
 	);
@@ -401,11 +437,11 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
   if (type === "stack_limit") return <div>{lang === "ru" ? "Максимум в стопке" : "Maximum stack"}: {String(block.value ?? "")}</div>;
   if (type === "container_slots") return <div>{lang === "ru" ? "Ячеек в сумке" : "Bag slots"}: {String(block.value ?? "")}</div>;
   if (type === "price") return <TooltipPrice buy={Number(block.buy ?? 0)} sell={Number(block.sell ?? 0)} lang={lang} />;
-  if (type === "name_description") return <div className="db-tooltip-muted">{String(block.text ?? "")}</div>;
+  if (type === "name_description") return <div className="db-tooltip-muted">{cleanWowText(String(block.text ?? ""), lang)}</div>;
   if (type === "item_set") return <div className="db-tooltip-set">{lang === "ru" ? "Комплект" : "Set"}: {String(block.name ?? "")}</div>;
   if (type === "limit_category") return <div>{String(block.name ?? "")}{Number(block.quantity ?? 0) > 0 ? ` (${String(block.quantity)})` : ""}</div>;
   if (type === "stats" && Array.isArray(block.entries)) return <TooltipStats entries={block.entries as Record<string, unknown>[]} lang={lang} />;
-  if (type === "subtext" && typeof block.text === "string") return <div className="db-tooltip-subtext">{block.text}</div>;
+  if (type === "subtext" && typeof block.text === "string") return <div className="db-tooltip-subtext">{cleanWowText(block.text, lang)}</div>;
   if (type === "cast_time") return <div className="db-tooltip-mechanic">{formatCastTime(Number(block.milliseconds), lang)}</div>;
   if (type === "range") return <div className="db-tooltip-mechanic">{String(block.yards ?? "")} {lang === "ru" ? "м" : "yd range"}</div>;
   if (type === "cooldown") return <div className="db-tooltip-mechanic">{formatDuration(Number(block.milliseconds), lang)} {lang === "ru" ? "восстановление" : "cooldown"}</div>;
@@ -427,14 +463,77 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
 	if (type === "provenance") return <TooltipProvenance block={block} lang={lang} />;
 	if (type === "spell_effects" && Array.isArray(block.entries)) return <SpellEffects entries={block.entries as Record<string, unknown>[]} lang={lang} />;
   if (type === "unique_equipped") return <div>{lang === "ru" ? "Уникальный использующийся" : "Unique-Equipped"}</div>;
-  if (type === "use" || type === "equip") return <div className="db-tooltip-effect">{String(block.text ?? "")}</div>;
+  if (type === "use" || type === "equip") return <div className="db-tooltip-effect">{cleanWowText(String(block.text ?? ""), lang)}</div>;
   if (type === "effect") return <div className="db-tooltip-effect">{effectPrefix(Number(block.trigger), lang)}{cleanWowText(String(block.text ?? ""), lang)}</div>;
   if (type === "description" && typeof block.text === "string") {
     return entityType === "spell" || entityType === "talent" || entityType === "pvp_talent"
-		? <RichDescription text={block.text} mentions={mentions} lang={lang} />
-		: <div className="db-tooltip-description">“{entityType === "quest" ? formatQuestText(block.text, lang) : block.text}”</div>;
+		? <RichDescription text={cleanWowText(block.text, lang)} mentions={mentions} lang={lang} />
+		: <div className="db-tooltip-description">“{entityType === "quest" ? formatQuestText(block.text, lang) : cleanWowText(block.text, lang)}”</div>;
   }
   return null;
+}
+
+function ItemAcquisitionSummary({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
+	const byType = (types: string[]) => entries.filter((entry) => types.includes(String(entry.source_type ?? "")));
+	const quests = byType(["quest"]);
+	const vendors = byType(["vendor"]);
+	const drops = byType(["encounter", "creature", "container", "world_drop"]);
+	const crafting = byType(["crafting_recipe", "profession"]);
+	const knownTypes = new Set(["quest", "vendor", "encounter", "creature", "container", "world_drop", "crafting_recipe", "profession"]);
+	const other = entries.filter((entry) => !knownTypes.has(String(entry.source_type ?? "")));
+	return <section className="db-tooltip-acquisition-summary" aria-label={lang === "ru" ? "Способы получения" : "Acquisition methods"}>
+		<b>{lang === "ru" ? "Как получить" : "How to obtain"}</b>
+		<AcquisitionGroup kind="quest" entries={quests} lang={lang} emptyText={lang === "ru" ? "Нельзя получить за задание — подтверждённый квест не найден в текущей базе." : "Not available from a quest — no confirmed quest was found in the current catalog."} />
+		<AcquisitionGroup kind="vendor" entries={vendors} lang={lang} emptyText={lang === "ru" ? "Нельзя купить у NPC — подтверждённый продавец не найден в текущей базе." : "Not sold by an NPC — no confirmed vendor was found in the current catalog."} />
+		<AcquisitionGroup kind="drop" entries={drops} lang={lang} emptyText={lang === "ru" ? "Подтверждённый дроп с противника не найден в текущей базе." : "No confirmed enemy drop was found in the current catalog."} />
+		{crafting.length ? <AcquisitionGroup kind="craft" entries={crafting} lang={lang} /> : null}
+		{other.length ? <AcquisitionGroup kind="other" entries={other} lang={lang} /> : null}
+		<small>{lang === "ru" ? "Показываются только источники с подтверждённым происхождением данных. Если источник относится к более ранней сборке, это указано отдельно." : "Only sources with traceable provenance are shown. Sources from an earlier build are labeled separately."}</small>
+	</section>;
+}
+
+function AcquisitionGroup({ kind, entries, lang, emptyText }: { kind: "quest" | "vendor" | "drop" | "craft" | "other"; entries: Record<string, unknown>[]; lang: Lang; emptyText?: string }) {
+	const labels: Record<typeof kind, [string, string]> = {
+		quest: ["Quest reward", "Награда за задание"], vendor: ["NPC vendor", "Продавец NPC"],
+		drop: ["Enemy drop", "Дроп с противника"], craft: ["Crafting", "Изготовление"], other: ["Other source", "Другой источник"],
+	};
+	return <div className={`db-tooltip-acquisition-group is-${kind}`}>
+		<strong>{labels[kind][lang === "ru" ? 1 : 0]}</strong>
+		{entries.length ? <ul>{entries.map((entry, index) => <AcquisitionEntry entry={entry} kind={kind} lang={lang} key={`${String(entry.source_type)}-${String(entry.source_id)}-${index}`} />)}</ul> : <p>{emptyText}</p>}
+	</div>;
+}
+
+function AcquisitionEntry({ entry, kind, lang }: { entry: Record<string, unknown>; kind: "quest" | "vendor" | "drop" | "craft" | "other"; lang: Lang }) {
+	const sourceID = String(entry.source_id ?? "");
+	const fallbacks = {
+		quest: `${lang === "ru" ? "Задание" : "Quest"} #${sourceID}`,
+		vendor: `NPC #${sourceID}`,
+		drop: `${lang === "ru" ? "Источник" : "Source"} #${sourceID}`,
+		craft: `${lang === "ru" ? "Рецепт" : "Recipe"} #${sourceID}`,
+		other: `${lang === "ru" ? "Источник" : "Source"} #${sourceID}`,
+	};
+	const name = String(entry.name || fallbacks[kind]);
+	const location = String(entry.location ?? "");
+	const npc = String(entry.quest_giver_name || entry.npc_name || "");
+	const difficulty = String(entry.difficulty_name || entry.difficulty || "");
+	const difficultyMask = Number(entry.difficulty_mask ?? 0);
+	const chance = Number(entry.chance_percent ?? 0);
+	const sourceBuild = String(entry.source_build || entry.source_build_number || "");
+	const historical = Boolean(entry.historical);
+	const details = [
+		location ? `${lang === "ru" ? "Локация / подземелье / рейд" : "Location / dungeon / raid"}: ${location}` : "",
+		!location && (kind === "drop" || kind === "vendor") ? (lang === "ru" ? "Локация: нет подтверждённых данных" : "Location: no confirmed data") : "",
+		kind === "quest" ? `${lang === "ru" ? "Выдаёт NPC" : "Quest giver"}: ${npc || (lang === "ru" ? "нет подтверждённых данных" : "no confirmed data")}` : "",
+		kind === "quest" && sourceBuild ? (historical
+			? `${lang === "ru" ? "Официальные данные сборки" : "Official source build"}: ${sourceBuild} (${lang === "ru" ? "раньше текущей сборки предмета" : "earlier than the current item build"})`
+			: `${lang === "ru" ? "Официальные данные сборки" : "Official source build"}: ${sourceBuild}`) : "",
+		difficulty ? `${lang === "ru" ? "Сложность" : "Difficulty"}: ${difficulty}` : "",
+		kind === "drop" && !difficulty ? (difficultyMask !== 0
+			? (lang === "ru" ? "Сложность: режим есть в исходной маске, но его название не расшифровано" : "Difficulty: the source has a mode mask, but no verified label")
+			: (lang === "ru" ? "Сложность: не указана источником" : "Difficulty: not specified by the source")) : "",
+		chance > 0 ? `${lang === "ru" ? "Шанс" : "Chance"}: ${chance}%` : "",
+	].filter(Boolean);
+	return <li><span>{name}</span>{details.map((detail) => <small key={detail}>{detail}</small>)}</li>;
 }
 
 function ProfessionInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
@@ -494,12 +593,21 @@ function QuestInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang
 	const objectives = Array.isArray(block.objectives) ? block.objectives as Record<string, unknown>[] : [];
 	const lines = Array.isArray(block.quest_lines) ? block.quest_lines as Record<string, unknown>[] : [];
 	const rewards = Array.isArray(block.rewards) ? block.rewards as Record<string, unknown>[] : [];
+	const bulletText = String(block.bullet_text ?? "");
+	const poiCount = Number(block.poi_count ?? 0);
+	const sourceBuild = String(block.source_build || block.source_build_number || "");
+	const historical = Boolean(block.historical);
+	const hasDetails = Boolean(bulletText || objectives.length || lines.length || rewards.length || poiCount);
 	return <div className="db-tooltip-quest-info">
-		{String(block.bullet_text ?? "") ? <div>{formatQuestText(String(block.bullet_text), lang)}</div> : null}
-		{objectives.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Цели" : "Objectives"}:</b>{objectives.map((objective) => <span key={String(objective.id)}>• {String(objective.description || `${lang === "ru" ? "Объект" : "Object"} ${objective.object_id ?? ""}`)}{Number(objective.amount ?? 0) > 1 ? ` ×${String(objective.amount)}` : ""}</span>)}</div> : null}
-		{lines.length ? <div>{lang === "ru" ? "Цепочка" : "Quest line"}: {lines.map((line) => String(line.name || line.id)).join(", ")}</div> : null}
+		{sourceBuild ? <small className="db-tooltip-source-note">{historical
+			? `${lang === "ru" ? "Официальные данные сборки" : "Official source build"}: ${sourceBuild} (${lang === "ru" ? "раньше текущей записи" : "earlier than the current record"})`
+			: `${lang === "ru" ? "Данные сборки" : "Source build"}: ${sourceBuild}`}</small> : null}
+		{bulletText ? <div>{formatQuestText(bulletText, lang)}</div> : null}
+		{objectives.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Цели" : "Objectives"}:</b>{objectives.map((objective) => <span key={String(objective.id)}>• {formatQuestText(String(objective.description || `${lang === "ru" ? "Объект" : "Object"} ${objective.object_id ?? ""}`), lang)}{Number(objective.amount ?? 0) > 1 ? ` ×${String(objective.amount)}` : ""}</span>)}</div> : null}
+		{lines.length ? <div>{lang === "ru" ? "Цепочка" : "Quest line"}: {lines.map((line) => cleanWowText(String(line.name || line.id), lang)).join(", ")}</div> : null}
 		{rewards.length ? <QuestRewards rewards={rewards} lang={lang} /> : null}
-		{Number(block.poi_count ?? 0) > 0 ? <div>{lang === "ru" ? "Точек на карте" : "Map points"}: {String(block.poi_count)}</div> : null}
+		{poiCount > 0 ? <div>{lang === "ru" ? "Точек на карте" : "Map points"}: {poiCount}</div> : null}
+		{!hasDetails ? <p>{lang === "ru" ? "Подробности этого задания пока не опубликованы официальным источником." : "Detailed quest data has not been published by the official source yet."}</p> : null}
 	</div>;
 }
 
@@ -514,7 +622,7 @@ function QuestRewards({ rewards, lang }: { rewards: Record<string, unknown>[]; l
 		const slug = String(reward.slug || externalID || "reward");
 		const icon = wowIconURL(String(reward.icon_name ?? ""));
 		const quality = Number(reward.quality ?? 0);
-		const label = String(reward.name || questRewardTypeLabel(type, lang, externalID));
+		const label = cleanWowText(String(reward.name || questRewardTypeLabel(type, lang, externalID)), lang);
 		const amount = Number(reward.amount ?? 0);
 		const details = [questRewardAmount(type, amount, lang), Boolean(reward.choice) ? (lang === "ru" ? "на выбор" : "choice") : ""].filter(Boolean).join(" · ");
 		const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong className={`quality-${quality}`}>{label}</strong>{details ? <small>{details}</small> : null}</span></>;
@@ -727,24 +835,6 @@ function effectPrefix(trigger: number, lang: Lang) {
     0: ["Use: ", "Использование: "], 1: ["Equip: ", "Если на персонаже: "], 2: ["Chance on hit: ", "Вероятность при попадании: "],
   };
   return labels[trigger]?.[lang === "ru" ? 1 : 0] ?? "";
-}
-
-function cleanWowText(value: string, lang: Lang) {
-  const scaling = lang === "ru" ? "масштабируемое количество" : "a scaling amount";
-  return value
-    .replace(/\|c[0-9a-f]{8}/gi, "")
-    .replace(/\|r/gi, "")
-    .replace(/\$@spelldesc(\d+)/gi, "Spell #$1")
-    .replace(/\$z\b/g, lang === "ru" ? "место привязки" : "your home location")
-    .replace(/\$\d+s\d+/gi, scaling)
-    .replace(/\$s\d+/gi, scaling)
-    .replace(/\$w\d+/gi, scaling)
-    .replace(/\$d\b/gi, lang === "ru" ? "указанного времени" : "the listed duration")
-    .replace(/\$t\d+/gi, lang === "ru" ? "указанный интервал" : "the listed interval")
-    .replace(/\$x\d+/gi, lang === "ru" ? "несколько" : "several")
-    .replace(/\$\?[^[]+\[/g, "")
-    .replace(/\]\[\]/g, "")
-    .trim();
 }
 
 function formatCastTime(milliseconds: number, lang: Lang) {

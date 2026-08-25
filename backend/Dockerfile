@@ -22,6 +22,6 @@ WORKDIR /app
 COPY --from=builder /out/server /out/catalog-import /out/raidbots-import /out/catalog-index /out/catalog-audit /out/db2-import /out/listfile-import /out/catalog-pipeline /out/catalog-build-check /out/goose /out/river /usr/local/bin/
 COPY migrations /app/migrations
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 EXPOSE 8080
 ENTRYPOINT ["/app/entrypoint.sh"]

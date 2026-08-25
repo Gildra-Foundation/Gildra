@@ -7,4 +7,6 @@ cms/node_modules
 .env
 infra/certs
 .artifacts
+.codex-local
+.codex-tmp-*
 *.tsbuildinfo

@@ -446,10 +446,18 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
             highlights?: components["schemas"]["GameEntityHighlight"][];
+            acquisitionMethods: components["schemas"]["GameAcquisitionMethod"][];
         };
         GameEntityHighlight: {
             key: string;
             value: string;
+        };
+        /** @enum {string} */
+        GameAcquisitionMethod: "drop" | "quest" | "vendor" | "crafting";
+        GameAcquisitionMethodCount: {
+            method: components["schemas"]["GameAcquisitionMethod"];
+            /** Format: int64 */
+            count: number;
         };
         GameSitemapEntry: {
             /** Format: uuid */
@@ -468,6 +476,7 @@ export interface components {
         GameEntitySummaryPage: {
             data: components["schemas"]["GameEntitySummary"][];
             pagination: components["schemas"]["SummaryCursorPage"];
+            acquisition: components["schemas"]["GameAcquisitionMethodCount"][];
         };
         GameFieldCoverage: {
             product: string;
@@ -859,6 +868,8 @@ export interface operations {
                 category?: string;
                 /** @description Repeatable taxonomy paths combined with AND semantics. Use one value per facet, for example class plus specialization plus equipment slot. */
                 facet?: string[];
+                /** @description Repeatable item acquisition methods combined with OR semantics. */
+                acquisition?: components["schemas"]["GameAcquisitionMethod"][];
                 /** @description Minimum stored base item level. Applies to item records. */
                 minItemLevel?: number;
                 /** @description Maximum stored base item level. Applies to item records. */

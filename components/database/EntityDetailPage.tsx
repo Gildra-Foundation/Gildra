@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Icons } from "@/components/Icons";
 import { TopNav } from "@/components/TopNav";
 import type { CatalogEntityComparison, CatalogEntityQuality, CatalogEntityType, CatalogEntityVersion, CatalogRelationship, GameEntity } from "@/lib/api/client";
-import { formatQuestText } from "@/lib/gameText";
+import { cleanWowText, formatQuestText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
 
 type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships: CatalogRelationship[]; quality: CatalogEntityQuality | null; versions: CatalogEntityVersion[]; comparison: CatalogEntityComparison | null; selectedFromBuildId?: number; selectedToBuildId?: number; lang: Lang };
@@ -55,7 +55,7 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
   const groups = Map.groupBy(relationships, (relationship) => `${relationship.direction}:${relationship.relation}`);
   const builds = Array.from(new Map(versions.map((version) => [version.buildId, version])).values());
   const statusText = quality?.status === "verified" ? (lang === "ru" ? "Проверено" : "Verified") : quality?.status === "partial" ? (lang === "ru" ? "Частично" : "Partial") : (lang === "ru" ? "Минимум данных" : "Minimal data");
-  const description = entity.type === "quest" ? formatQuestText(entity.description, lang) : entity.description;
+  const description = entity.type === "quest" ? formatQuestText(entity.description, lang) : cleanWowText(entity.description, lang);
 
   return <>
     <Icons /><TopNav />
