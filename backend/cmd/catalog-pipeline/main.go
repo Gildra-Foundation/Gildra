@@ -29,11 +29,13 @@ func main() {
 }
 
 func run() (catalogpipeline.Result, error) {
-	var databaseURL, sources, mode, trigger, product, version, binaryDirectory, publicationEnvironment string
+	var databaseURL, sources, mode, trigger, profile, product, version, binaryDirectory, publicationEnvironment string
 	var maxRecords int
+	var confirmFullImport bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
-	flag.StringVar(&sources, "sources", "wago,raidbots,db2,battlenet,listfile", "comma-separated source stages")
+	flag.StringVar(&profile, "profile", catalogpipeline.ProfileRetailFoundation, "catalog source profile: retail-foundation or custom")
+	flag.StringVar(&sources, "sources", "", "optional comma-separated source stages; the profile default is used when empty")
 	flag.StringVar(&mode, "mode", "dry_run", "dry_run or apply")
 	flag.StringVar(&trigger, "trigger", "manual", "manual, schedule, or retry")
 	flag.StringVar(&product, "product", "wow", "game product slug")
@@ -41,6 +43,7 @@ func run() (catalogpipeline.Result, error) {
 	flag.StringVar(&binaryDirectory, "bin-dir", "", "directory containing importer executables")
 	flag.StringVar(&publicationEnvironment, "publication-environment", "production", "development, staging, or production")
 	flag.IntVar(&maxRecords, "max-records", 0, "records per source dataset; 0 imports all")
+	flag.BoolVar(&confirmFullImport, "confirm-full-import", false, "confirm an unbounded production import")
 	flag.DurationVar(&timeout, "timeout", 6*time.Hour, "whole pipeline timeout")
 	flag.Parse()
 	if databaseURL == "" {
@@ -68,9 +71,9 @@ func run() (catalogpipeline.Result, error) {
 		return catalogpipeline.Result{}, fmt.Errorf("ping catalog database: %w", err)
 	}
 	options := catalogpipeline.Options{
-		PipelineKey: "catalog-refresh", Trigger: trigger, Mode: mode, Product: strings.TrimSpace(product),
+		PipelineKey: "catalog-refresh", Trigger: trigger, Mode: mode, Profile: strings.TrimSpace(profile), Product: strings.TrimSpace(product),
 		Sources: catalogpipeline.SortedSources(sources), BuildVersion: strings.TrimSpace(version),
-		MaxRecords: maxRecords, BinaryDirectory: strings.TrimSpace(binaryDirectory),
+		MaxRecords: maxRecords, ConfirmFullImport: confirmFullImport, BinaryDirectory: strings.TrimSpace(binaryDirectory),
 		PublicationEnvironment: publicationEnvironment,
 	}
 	return (&catalogpipeline.Runner{DB: db, Stdout: os.Stdout, Stderr: os.Stderr}).Run(ctx, options)

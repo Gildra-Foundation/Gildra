@@ -1,6 +1,9 @@
 package catalogpipeline
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestBuildPlanIsDeterministicAndNeverContainsDatabaseCredentials(t *testing.T) {
 	plan, err := BuildPlan(Options{Product: "wow", Sources: []string{"wago", "raidbots", "db2", "battlenet", "listfile"}, BuildVersion: "12.1.0.69404", MaxRecords: 0})
@@ -43,5 +46,54 @@ func TestSortedSourcesPlacesOfficialImportBeforeListfile(t *testing.T) {
 func TestBuildPlanRejectsUnknownSource(t *testing.T) {
 	if _, err := BuildPlan(Options{Product: "wow", Sources: []string{"invented"}}); err == nil {
 		t.Fatal("expected unknown source to be rejected")
+	}
+}
+
+func TestRetailFoundationProfileExcludesCommunityEnrichment(t *testing.T) {
+	plan, err := BuildPlan(Options{Product: "wow", Profile: ProfileRetailFoundation})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantImports := []string{"import-wago", "import-db2", "import-battlenet", "import-battlenet-media", "import-listfile"}
+	for index, key := range wantImports {
+		if plan[index].Key != key {
+			t.Fatalf("foundation stage %d = %q, want %q", index, plan[index].Key, key)
+		}
+	}
+	for _, stage := range plan {
+		if stage.Key == "import-raidbots" {
+			t.Fatal("retail foundation must not include Raidbots community enrichment")
+		}
+	}
+	if _, err := BuildPlan(Options{Product: "wow", Profile: ProfileRetailFoundation, Sources: []string{"raidbots"}}); err == nil {
+		t.Fatal("expected foundation profile to reject a source outside the profile")
+	}
+}
+
+func TestProductionImportSafetyRequiresPinnedBuildAndExplicitFullConfirmation(t *testing.T) {
+	base := Options{
+		Mode: "apply", PublicationEnvironment: "production", Product: "wow",
+		Profile: ProfileRetailFoundation, MaxRecords: 100,
+	}
+	if _, err := BuildPlan(base); err == nil || !strings.Contains(err.Error(), "explicit -version") {
+		t.Fatalf("expected missing build rejection, got %v", err)
+	}
+	base.BuildVersion = "12.1.0.69404"
+	base.Sources = []string{"wago"}
+	if _, err := BuildPlan(base); err == nil || !strings.Contains(err.Error(), "requires source") {
+		t.Fatalf("expected incomplete source profile rejection, got %v", err)
+	}
+	base.Sources = nil
+	base.MaxRecords = 0
+	if _, err := BuildPlan(base); err == nil || !strings.Contains(err.Error(), "-confirm-full-import") {
+		t.Fatalf("expected unbounded import rejection, got %v", err)
+	}
+	base.ConfirmFullImport = true
+	plan, err := BuildPlan(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan[0].Key != "recovery-gate" {
+		t.Fatalf("first production stage = %q, want recovery-gate", plan[0].Key)
 	}
 }

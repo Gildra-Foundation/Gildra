@@ -10,6 +10,36 @@ an optional enrichment source with `-source battlenet`.
 For Wago.Tools, the current Retail build is detected from the CSV response and
 pinned for the complete run. You can override it with `-version 12.1.0.69404`.
 
+## Retail foundation profile
+
+`catalog-pipeline` defaults to the `retail-foundation` profile. It contains only
+the sources needed to build the structured Retail catalog: Wago DB2 transport,
+the complete DB2 projection, Blizzard Game Data/Media APIs, and the verified
+listfile. Raidbots and every tier-list dataset are outside this profile. They
+cannot be selected by a production foundation run.
+
+Preview the exact stages without importing data:
+
+```powershell
+docker compose run --rm --entrypoint catalog-pipeline api -mode dry_run -profile retail-foundation -version 12.1.0.69404 -max-records 100
+```
+
+A production apply is fail-closed. It requires an explicit build, a recent
+off-host PostgreSQL backup whose restore was verified, and a matching database
+manifest. An unbounded import additionally requires `-confirm-full-import`.
+The bounded proof run is therefore the first writable step after the recovery
+gate:
+
+```powershell
+docker compose run --rm --entrypoint catalog-pipeline api -mode apply -profile retail-foundation -version 12.1.0.69404 -max-records 100
+```
+
+The full command is deliberately hard to run accidentally:
+
+```powershell
+docker compose run --rm --entrypoint catalog-pipeline api -mode apply -profile retail-foundation -version 12.1.0.69404 -max-records 0 -confirm-full-import
+```
+
 ## Optional Battle.net credentials
 
 Create a Battle.net API client at <https://develop.battle.net/access>. Put the
@@ -59,9 +89,11 @@ build number, source build version, and source URL in localization attributes.
 
 Official media can be refreshed independently without downloading entity
 details again. Raw Media API documents are retained beside the entity source
-documents. Only an asset whose key is exactly `icon` becomes an entity icon;
-zone `tile` images and other artwork remain source data rather than being
-mislabelled as icons.
+documents. An asset whose key is exactly `icon` also becomes the primary entity
+icon. Other official assets, including portraits and zone artwork, are stored
+separately in `catalog_entity_media` with their original asset key and kind, so
+they are available without being mislabelled as icons. Copying image bytes to
+our object storage remains a separate source-policy-gated operation.
 
 ```powershell
 docker compose run --rm --entrypoint catalog-import api -source battlenet -types class,specialization,profession,instance -media-only -max-records 0
