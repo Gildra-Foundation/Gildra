@@ -84,7 +84,12 @@ func TestBoundedLiveWagoCatalogImport(t *testing.T) {
 	var seen, written int64
 	for localeIndex, locale := range []struct{ storage, source string }{{"en_US", "enUS"}, {"ru_RU", "ruRU"}} {
 		sourceURL := client.CSVURL("ItemSparse", buildVersion, locale.source)
-		_, err := client.Rows(ctx, "ItemSparse", buildVersion, locale.source, 5, func(row map[string]string) error {
+		artifactID, err := store.RegisterArtifact(ctx, importContext, "wago_tools", "ItemSparse", locale.storage, sourceURL,
+			map[string]any{"live_contract_probe": true, "bounded": true, "max_records": 5})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, _, err = client.RowsWithProof(ctx, "ItemSparse", buildVersion, locale.source, 5, func(row map[string]string) error {
 			seen++
 			externalID, parseErr := strconv.ParseInt(row["ID"], 10, 64)
 			if parseErr != nil || externalID <= 0 || strings.TrimSpace(row["Display_lang"]) == "" {
@@ -98,7 +103,7 @@ func TestBoundedLiveWagoCatalogImport(t *testing.T) {
 			}
 			record := catalogimport.Record{
 				Type: "item", ExternalID: externalID, Locale: locale.storage,
-				Payload: payload, SourceURL: sourceURL,
+				Payload: payload, SourceURL: sourceURL, SourceArtifactID: &artifactID,
 			}
 			if localeIndex == 0 {
 				if err := store.UpsertCanonical(ctx, importContext, record); err != nil {
@@ -134,7 +139,7 @@ func TestBoundedLiveWagoCatalogImport(t *testing.T) {
 		SELECT count(*)
 		FROM game_entity_versions
 		WHERE source='wago_tools' AND source_url LIKE 'https://wago.tools/%'
-		  AND source_url LIKE '%' || $1 || '%'`, buildVersion).Scan(&provenanced); err != nil {
+		  AND source_url LIKE '%' || $1 || '%' AND source_artifact_id IS NOT NULL`, buildVersion).Scan(&provenanced); err != nil {
 		t.Fatal(err)
 	}
 	if err := database.QueryRowContext(ctx, `

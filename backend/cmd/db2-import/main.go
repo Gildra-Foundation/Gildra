@@ -163,48 +163,79 @@ func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, st
 		for _, locale := range locales {
 			wagoLocale := map[string]string{"en_US": "enUS", "ru_RU": "ruRU"}[locale]
 			sourceURL := client.CSVURL(table, opts.version, wagoLocale)
-			artifactID, err := store.RegisterArtifact(ctx, ic, "wago_tools", table, locale, sourceURL, map[string]any{
+			metadata := map[string]any{
 				"table": table, "build": opts.version, "locale": locale,
-			})
+				"bounded": opts.maxRecords > 0, "max_records": opts.maxRecords,
+			}
+			var artifactID uuid.UUID
+			var err error
+			if opts.maxRecords == 0 {
+				artifactID, err = store.RegisterPendingArtifact(ctx, ic, "wago_tools", table, locale, sourceURL, metadata)
+			} else {
+				artifactID, err = store.RegisterArtifact(ctx, ic, "wago_tools", table, locale, sourceURL, metadata)
+			}
 			if err != nil {
 				return err
 			}
-			batch := make([]row, 0, opts.batchSize)
-			flush := func() error {
-				if len(batch) == 0 {
+			artifactErr := func() (resultErr error) {
+				finalized := false
+				defer func() {
+					if finalized {
+						return
+					}
+					if failErr := store.FailArtifact(context.WithoutCancel(ctx), artifactID, resultErr); failErr != nil {
+						slog.Error("fail DB2 artifact", "table", table, "locale", locale, "error", failErr)
+					}
+				}()
+				batch := make([]row, 0, opts.batchSize)
+				flush := func() error {
+					if len(batch) == 0 {
+						return nil
+					}
+					count, err := upsertBatch(ctx, db, ic, artifactID, table, locale, sourceURL, batch)
+					if err != nil {
+						return err
+					}
+					*written += count
+					batch = batch[:0]
 					return nil
 				}
-				count, err := upsertBatch(ctx, db, ic, artifactID, table, locale, sourceURL, batch)
-				if err != nil {
-					return err
-				}
-				*written += count
-				batch = batch[:0]
-				return nil
-			}
-			slog.Info("importing DB2 table", "table", table, "locale", locale, "build", opts.version)
-			_, err = client.Rows(ctx, table, opts.version, wagoLocale, opts.maxRecords, func(values map[string]string) error {
-				id, err := strconv.ParseInt(values["ID"], 10, 64)
-				if err != nil || id <= 0 {
+				slog.Info("importing DB2 table", "table", table, "locale", locale, "build", opts.version)
+				_, proof, err := client.RowsWithProof(ctx, table, opts.version, wagoLocale, opts.maxRecords, func(values map[string]string) error {
+					id, err := strconv.ParseInt(values["ID"], 10, 64)
+					if err != nil || id <= 0 {
+						return nil
+					}
+					canonical, err := json.Marshal(values)
+					if err != nil {
+						return err
+					}
+					digest := sha256.Sum256(canonical)
+					batch = append(batch, row{id: id, payload: string(canonical), hash: digest[:]})
+					*seen++
+					if len(batch) >= opts.batchSize {
+						return flush()
+					}
 					return nil
-				}
-				canonical, err := json.Marshal(values)
+				})
 				if err != nil {
-					return err
+					return fmt.Errorf("import %s (%s): %w", table, locale, err)
 				}
-				digest := sha256.Sum256(canonical)
-				batch = append(batch, row{id: id, payload: string(canonical), hash: digest[:]})
-				*seen++
-				if len(batch) >= opts.batchSize {
-					return flush()
+				if err := flush(); err != nil {
+					return fmt.Errorf("flush %s (%s): %w", table, locale, err)
 				}
+				if proof.Complete {
+					if err := store.CompleteArtifact(ctx, artifactID, proof.SHA256, proof.ByteSize, proof.ETag); err != nil {
+						return err
+					}
+				} else if opts.maxRecords == 0 {
+					return fmt.Errorf("DB2 %s (%s) ended without a complete content proof", table, locale)
+				}
+				finalized = true
 				return nil
-			})
-			if err != nil {
-				return fmt.Errorf("import %s (%s): %w", table, locale, err)
-			}
-			if err := flush(); err != nil {
-				return fmt.Errorf("flush %s (%s): %w", table, locale, err)
+			}()
+			if artifactErr != nil {
+				return artifactErr
 			}
 		}
 	}

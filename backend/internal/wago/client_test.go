@@ -2,6 +2,7 @@ package wago
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -66,5 +67,34 @@ func TestRowsStreamsAndLimits(t *testing.T) {
 	}
 	if count != 2 || len(names) != 2 || names[1] != "Beta" {
 		t.Fatalf("count=%d names=%v", count, names)
+	}
+}
+
+func TestRowsWithProofOnlyCertifiesCompleteResponses(t *testing.T) {
+	t.Parallel()
+	const body = "ID,Name_lang\n1,Alpha\n2,Beta\n3,Gamma\n"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("ETag", `"proof-etag"`)
+		fmt.Fprint(w, body)
+	}))
+	t.Cleanup(server.Close)
+	client := New(Config{BaseURL: server.URL})
+
+	count, bounded, err := client.RowsWithProof(t.Context(), "SpellName", "12.1.0.69404", "enUS", 1, func(map[string]string) error { return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 || bounded.Complete || len(bounded.SHA256) != 0 {
+		t.Fatalf("bounded proof = (%d,%#v), want an explicitly incomplete proof", count, bounded)
+	}
+
+	count, complete, err := client.RowsWithProof(t.Context(), "SpellName", "12.1.0.69404", "enUS", 0, func(map[string]string) error { return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantHash := sha256.Sum256([]byte(body))
+	if count != 3 || !complete.Complete || complete.ByteSize != int64(len(body)) || complete.ETag != `"proof-etag"` ||
+		string(complete.SHA256) != string(wantHash[:]) {
+		t.Fatalf("complete proof = (%d,%#v), want SHA-256 and byte size for all response bytes", count, complete)
 	}
 }

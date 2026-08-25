@@ -2,6 +2,7 @@ package wago
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -29,6 +30,20 @@ type Config struct {
 	HTTPClient *http.Client
 	RetryMax   int
 	RetryDelay time.Duration
+}
+
+type ContentProof struct {
+	SHA256   []byte
+	ByteSize int64
+	ETag     string
+	Complete bool
+}
+
+type byteCounter int64
+
+func (counter *byteCounter) Write(payload []byte) (int, error) {
+	*counter += byteCounter(len(payload))
+	return len(payload), nil
 }
 
 func New(cfg Config) *Client {
@@ -95,40 +110,55 @@ func (c *Client) Rows(
 	limit int,
 	consume func(map[string]string) error,
 ) (int, error) {
+	count, _, err := c.RowsWithProof(ctx, table, build, locale, limit, consume)
+	return count, err
+}
+
+func (c *Client) RowsWithProof(
+	ctx context.Context,
+	table, build, locale string,
+	limit int,
+	consume func(map[string]string) error,
+) (int, ContentProof, error) {
 	if !buildPattern.MatchString(build) {
-		return 0, fmt.Errorf("invalid Wago build %q", build)
+		return 0, ContentProof{}, fmt.Errorf("invalid Wago build %q", build)
 	}
 	endpoint := c.csvURL(table, build, locale)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return 0, fmt.Errorf("create Wago CSV request: %w", err)
+		return 0, ContentProof{}, fmt.Errorf("create Wago CSV request: %w", err)
 	}
+	req.Header.Set("Accept-Encoding", "identity")
 	resp, err := c.do(req)
 	if err != nil {
-		return 0, fmt.Errorf("request Wago CSV: %w", err)
+		return 0, ContentProof{}, fmt.Errorf("request Wago CSV: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		_, _ = io.CopyN(io.Discard, resp.Body, 4096)
-		return 0, fmt.Errorf("Wago CSV returned %s", resp.Status)
+		return 0, ContentProof{}, fmt.Errorf("Wago CSV returned %s", resp.Status)
 	}
 
-	reader := csv.NewReader(resp.Body)
+	hasher := sha256.New()
+	counter := byteCounter(0)
+	reader := csv.NewReader(io.TeeReader(resp.Body, io.MultiWriter(hasher, &counter)))
 	reader.ReuseRecord = true
 	reader.FieldsPerRecord = -1
 	headers, err := reader.Read()
 	if err != nil {
-		return 0, fmt.Errorf("read Wago CSV headers: %w", err)
+		return 0, ContentProof{}, fmt.Errorf("read Wago CSV headers: %w", err)
 	}
 	headers = append([]string(nil), headers...)
 	count := 0
+	complete := false
 	for limit == 0 || count < limit {
 		values, err := reader.Read()
 		if errors.Is(err, io.EOF) {
+			complete = true
 			break
 		}
 		if err != nil {
-			return count, fmt.Errorf("read Wago CSV row %d: %w", count+1, err)
+			return count, ContentProof{}, fmt.Errorf("read Wago CSV row %d: %w", count+1, err)
 		}
 		row := make(map[string]string, len(headers))
 		for index, header := range headers {
@@ -137,11 +167,15 @@ func (c *Client) Rows(
 			}
 		}
 		if err := consume(row); err != nil {
-			return count, err
+			return count, ContentProof{}, err
 		}
 		count++
 	}
-	return count, nil
+	proof := ContentProof{ByteSize: int64(counter), ETag: resp.Header.Get("ETag"), Complete: complete}
+	if complete {
+		proof.SHA256 = hasher.Sum(nil)
+	}
+	return count, proof, nil
 }
 
 func (c *Client) do(req *http.Request) (*http.Response, error) {

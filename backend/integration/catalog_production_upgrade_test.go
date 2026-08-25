@@ -113,7 +113,7 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 	options := catalogpipeline.Options{
 		PipelineKey: "catalog-refresh-test", Trigger: "manual", Mode: "apply",
 		Profile: catalogpipeline.ProfileRetailFoundation, Product: "wow",
-		BuildVersion: "12.1.0.69404", MaxRecords: 1,
+		BuildVersion: "12.1.0.69404", MaxRecords: 0, ConfirmFullImport: true,
 		BinaryDirectory: t.TempDir(), PublicationEnvironment: "production",
 	}
 	result, err := runner.Run(ctx, options)
