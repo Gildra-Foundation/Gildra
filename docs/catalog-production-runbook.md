@@ -79,6 +79,13 @@ catalog-pipeline \
   -max-records 100
 ```
 
+Optional live contract proof in a disposable PostgreSQL container (never part
+of ordinary CI because it depends on an external service):
+
+```bash
+go test -tags=integration,live ./integration -run TestBoundedLiveWagoCatalogImport -count=1 -v
+```
+
 Bounded production proof after the recovery manifest exists:
 
 ```bash
