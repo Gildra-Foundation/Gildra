@@ -72,3 +72,21 @@ func TestSummaryFilterPathsRejectsTooMany(t *testing.T) {
 		t.Fatal("expected too many facets to be rejected")
 	}
 }
+
+func TestSummaryAcquisitionMethodsDeduplicate(t *testing.T) {
+	t.Parallel()
+	got, err := summaryAcquisitionMethods([]string{"quest", " DROP ", "quest", ""})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[0] != "quest" || got[1] != "drop" {
+		t.Fatalf("summaryAcquisitionMethods() = %#v", got)
+	}
+}
+
+func TestSummaryAcquisitionMethodsRejectUnknown(t *testing.T) {
+	t.Parallel()
+	if _, err := summaryAcquisitionMethods([]string{"auction_house"}); err == nil {
+		t.Fatal("expected an unsupported acquisition method to fail")
+	}
+}
