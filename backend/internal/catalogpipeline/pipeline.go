@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogrelease"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -25,7 +26,7 @@ var ErrRecoveryGate = errors.New("production catalog import requires a recent ve
 
 const (
 	ProfileRetailFoundation = "retail-foundation"
-	minimumCatalogSchema    = 66
+	minimumCatalogSchema    = 69
 )
 
 type Options struct {
@@ -50,6 +51,7 @@ type Stage struct {
 
 type Result struct {
 	RunID            int64                     `json:"run_id"`
+	ReleaseID        string                    `json:"release_id,omitempty"`
 	Mode             string                    `json:"mode"`
 	Status           string                    `json:"status"`
 	PublicationReady bool                      `json:"publication_ready"`
@@ -119,6 +121,9 @@ func normalizeOptions(options Options) (Options, error) {
 	}
 	options.Sources = sources
 	options.BuildVersion = strings.TrimSpace(options.BuildVersion)
+	if options.Mode == "apply" && options.BuildVersion == "" {
+		return Options{}, errors.New("catalog apply requires an explicit -version")
+	}
 	if options.Mode == "apply" && options.PublicationEnvironment == "production" {
 		if options.Profile != ProfileRetailFoundation {
 			return Options{}, errors.New("production catalog imports must use the retail-foundation profile")
@@ -145,6 +150,9 @@ func buildPlan(options Options) []Stage {
 	plan := make([]Stage, 0, len(options.Sources)+9)
 	if options.Mode == "apply" && options.PublicationEnvironment == "production" {
 		plan = append(plan, Stage{Key: "recovery-gate"})
+	}
+	if options.Mode == "apply" {
+		plan = append(plan, Stage{Key: "release-start"})
 	}
 	for _, source := range options.Sources {
 		switch source {
@@ -181,6 +189,9 @@ func buildPlan(options Options) []Stage {
 		Stage{Key: "validate-catalog"},
 		Stage{Key: "publication-gate"},
 	)
+	if options.Mode == "apply" {
+		plan = append(plan, Stage{Key: "release-publish"})
+	}
 	return plan
 }
 
@@ -252,12 +263,56 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 			return result, err
 		}
 	}
+	releaseManager := catalogrelease.NewManager(r.DB)
+	if _, err := r.DB.Exec(ctx, `UPDATE catalog_pipeline_runs SET current_stage='release-start' WHERE id=$1`, result.RunID); err != nil {
+		return result, fmt.Errorf("select release start stage: %w", err)
+	}
+	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='release-start'`, result.RunID)
+	releaseID, err := releaseManager.Start(ctx, result.RunID, options.Product, options.BuildVersion, options.Sources)
+	if err != nil {
+		if errors.Is(err, catalogrelease.ErrBuildAlreadyPublished) {
+			publication, publicationErr := catalog.NewPublicationService(r.DB, time.Second).
+				Status(ctx, options.PublicationEnvironment, "public_api")
+			if publicationErr != nil {
+				return result, r.failStage(ctx, result.RunID, "release-start", "publication_status_failed", publicationErr)
+			}
+			result.Publication, result.PublicationReady, result.Status = publication, publication.Ready, "succeeded"
+			_, _ = r.DB.Exec(ctx, `
+				UPDATE catalog_pipeline_stages
+				SET status='skipped',started_at=COALESCE(started_at,now()),finished_at=now(),
+					counters=CASE WHEN stage_key='release-start' THEN $2 ELSE counters END
+				WHERE run_id=$1 AND status IN ('queued','running')`, result.RunID,
+				jsonObject(map[string]any{"reason": "build_already_published", "build_version": options.BuildVersion}))
+			if _, finishErr := r.DB.Exec(ctx, `
+				UPDATE catalog_pipeline_runs
+				SET status='succeeded',publication_ready=$2,current_stage='complete',finished_at=now(),
+					error_code='',error_summary=''
+				WHERE id=$1`, result.RunID, publication.Ready); finishErr != nil {
+				return result, fmt.Errorf("finish unchanged catalog pipeline: %w", finishErr)
+			}
+			return result, nil
+		}
+		return result, r.failStage(ctx, result.RunID, "release-start", "release_start_failed", err)
+	}
+	result.ReleaseID = releaseID.String()
+	if _, err := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
+		result.RunID, "release-start", jsonObject(map[string]any{"release_id": result.ReleaseID})); err != nil {
+		return result, fmt.Errorf("finish release start stage: %w", err)
+	}
+	releasePublished := false
+	defer func() {
+		if runErr != nil && !releasePublished {
+			if failErr := releaseManager.Fail(context.Background(), releaseID, runErr); failErr != nil {
+				runErr = errors.Join(runErr, fmt.Errorf("fail catalog release: %w", failErr))
+			}
+		}
+	}()
 
 	for _, stage := range plan {
 		if stage.Executable == "" {
 			continue
 		}
-		if err := r.executeStage(ctx, result.RunID, options.BinaryDirectory, stage); err != nil {
+		if err := r.executeStage(ctx, result.RunID, options.BinaryDirectory, result.ReleaseID, stage); err != nil {
 			return result, err
 		}
 	}
@@ -266,7 +321,7 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	}
 
 	publicationService := catalog.NewPublicationService(r.DB, time.Second)
-	publication, err := publicationService.Status(ctx, options.PublicationEnvironment, "public_api")
+	publication, err := publicationService.ReleaseStatus(ctx, options.PublicationEnvironment, "public_api", releaseID)
 	if err != nil {
 		return result, r.failStage(ctx, result.RunID, "publication-gate", "publication_status_failed", err)
 	}
@@ -277,6 +332,19 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	}
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status=$3,started_at=COALESCE(started_at,now()),finished_at=now(),counters=$4 WHERE run_id=$1 AND stage_key=$2`,
 		result.RunID, "publication-gate", stageStatus, jsonObject(map[string]any{"sources": len(publication.Sources), "ready": publication.Ready}))
+	if publication.Ready {
+		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_runs SET current_stage='release-publish' WHERE id=$1`, result.RunID)
+		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='release-publish'`, result.RunID)
+		if err := releaseManager.Publish(ctx, releaseID); err != nil {
+			return result, r.failStage(ctx, result.RunID, "release-publish", "release_publish_failed", err)
+		}
+		releasePublished = true
+		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
+			result.RunID, "release-publish", jsonObject(map[string]any{"release_id": result.ReleaseID}))
+	} else {
+		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='blocked',started_at=COALESCE(started_at,now()),finished_at=now(),error_code='publication_blocked',error_summary=$3 WHERE run_id=$1 AND stage_key=$2`,
+			result.RunID, "release-publish", ErrPublicationBlocked.Error())
+	}
 	var generationAfter *int64
 	_ = r.DB.QueryRow(ctx, `SELECT generation FROM catalog_read_model_state state JOIN game_products product ON product.id=state.product_id WHERE product.slug=$1`, options.Product).Scan(&generationAfter)
 	result.Status = "succeeded"
@@ -347,7 +415,7 @@ func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product st
 	return nil
 }
 
-func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory string, stage Stage) error {
+func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory, releaseID string, stage Stage) error {
 	if _, err := r.DB.Exec(ctx, `UPDATE catalog_pipeline_runs SET current_stage=$2 WHERE id=$1`, runID, stage.Key); err != nil {
 		return fmt.Errorf("select pipeline stage %s: %w", stage.Key, err)
 	}
@@ -360,6 +428,9 @@ func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory 
 	}
 	command := exec.CommandContext(ctx, executable, stage.Arguments...)
 	command.Env = os.Environ()
+	if releaseID != "" {
+		command.Env = append(command.Env, "CATALOG_RELEASE_ID="+releaseID)
+	}
 	command.Stdout = r.Stdout
 	command.Stderr = r.Stderr
 	if err := command.Run(); err != nil {

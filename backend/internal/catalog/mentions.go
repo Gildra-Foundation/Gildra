@@ -24,12 +24,12 @@ func (s *Service) enrichMentions(ctx context.Context, entities []Entity) error {
 		WITH description_sources AS (
 			SELECT entity.id AS display_entity_id,version.id AS source_version_id
 			FROM game_entities entity
-			JOIN game_entity_versions version ON version.id=entity.latest_version_id
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
 			WHERE entity.id=ANY($1) AND entity.entity_type='spell'
 			UNION ALL
 			SELECT entity.id,link.spell_version_id
 			FROM game_entities entity
-			JOIN game_entity_versions version ON version.id=entity.latest_version_id
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
 			JOIN catalog_talent_spell_links link ON link.talent_version_id=version.id
 			WHERE entity.id=ANY($1) AND entity.entity_type IN ('talent','pvp_talent')
 		)
@@ -40,7 +40,7 @@ func (s *Service) enrichMentions(ctx context.Context, entities []Entity) error {
 		FROM description_sources source
 		JOIN catalog_entity_mentions mention ON mention.source_version_id=source.source_version_id AND mention.locale=$2
 		JOIN game_entities target ON target.id=mention.target_entity_id AND target.deleted_at IS NULL
-		JOIN game_entity_versions target_version ON target_version.id=target.latest_version_id
+		JOIN game_entity_versions target_version ON target_version.id=target.published_version_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=target_version.id AND localized.locale=$2
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=target_version.id AND fallback.locale='en_US'
 		LEFT JOIN catalog_entity_icons source_icon ON source_icon.build_id=target_version.build_id

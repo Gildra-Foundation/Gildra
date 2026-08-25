@@ -29,7 +29,7 @@ Production foundation runs reject custom profiles and sources outside this list.
 No catalog import may start until all of these are true:
 
 1. the exact Retail build version is supplied;
-2. PostgreSQL is on catalog schema version 66 or newer;
+2. PostgreSQL is on catalog schema version 69 or newer;
 3. a compressed PostgreSQL backup is encrypted and stored off-host in R2, S3,
    or Swift;
 4. its SHA-256 and byte size are recorded;
@@ -58,6 +58,7 @@ read-only inventory
 -> full import with explicit confirmation
 -> rebuild read models
 -> publication gate
+-> atomically move the public release pointer
 -> post-release backup and restore drill
 ```
 
@@ -109,8 +110,18 @@ catalog-pipeline \
   `recovery-gate` stage before any importer process starts.
 - Every stage records its status, safe arguments, bounded error summary, and
   timestamps in `catalog_pipeline_runs` and `catalog_pipeline_stages`.
-- Failed source snapshots remain diagnostic records and must not replace the
-  last-known-good public snapshot.
+- Every source snapshot is attached to one `catalog_releases` candidate. The
+  importer may advance its private `latest_version_id`, but the website and
+  public API read only `published_version_id`.
+- Failed or policy-blocked releases are marked failed, their candidate pointers
+  are rolled back, and the last-known-good public release remains selected.
+- A release is published in one PostgreSQL transaction: all validated snapshots
+  become published, entity public pointers move, the build becomes active, and
+  `catalog_public_release_state` selects the release together.
+- The publication gate evaluates the candidate release's requested sources,
+  including sources not present in the old public catalog.
+- A run for the exact build already selected in `catalog_public_release_state`
+  is recorded as a successful no-op. It does not rewrite same-build DB2 facts.
 - Recovery means restoring the verified backup and checking the catalog build,
   snapshots, entities, versions, relations, normalized facts, media, users, and
   migration version before reopening writes.
@@ -118,7 +129,7 @@ catalog-pipeline \
 ## Known blocker before production import
 
 The verified local dump proves that the current database can be restored and
-upgraded from migration 15 to 66. It is not an off-host encrypted backup.
+upgraded from migration 15 to 69. It is not an off-host encrypted backup.
 Therefore the production recovery gate must remain closed until the backup job
 uploads the artifact, verifies a restore from that remote copy, and registers
 the resulting manifest. Do not bypass the gate with a manual status change.

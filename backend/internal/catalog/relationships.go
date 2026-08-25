@@ -109,20 +109,27 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 		return RelationshipPage{}, err
 	}
 	var exists bool
-	if err := s.postgres.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM game_entities WHERE id=$1 AND deleted_at IS NULL)`, params.EntityID).Scan(&exists); err != nil {
+	if err := s.postgres.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM game_entities WHERE id=$1 AND deleted_at IS NULL AND published_version_id IS NOT NULL)`, params.EntityID).Scan(&exists); err != nil {
 		return RelationshipPage{}, fmt.Errorf("find relationship entity: %w", err)
 	}
 	if !exists {
 		return RelationshipPage{}, ErrNotFound
 	}
 	baseSQL := `
-		WITH links AS (
+		WITH selected_entity AS (
+			SELECT version.build_id
+			FROM game_entities entity
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			WHERE entity.id=$1 AND entity.deleted_at IS NULL
+		), links AS (
 			SELECT 'outgoing'::text AS direction,link.relation_type,link.target_entity_id AS related_entity_id,
 				link.build_id,link.attributes
-			FROM game_entity_links link WHERE link.source_entity_id=$1
+			FROM game_entity_links link
+			WHERE link.source_entity_id=$1 AND link.build_id=(SELECT build_id FROM selected_entity)
 			UNION ALL
 			SELECT 'incoming'::text,link.relation_type,link.source_entity_id,link.build_id,link.attributes
-			FROM game_entity_links link WHERE link.target_entity_id=$1
+			FROM game_entity_links link
+			WHERE link.target_entity_id=$1 AND link.build_id=(SELECT build_id FROM selected_entity)
 		)`
 	var total int64
 	if err := s.postgres.QueryRow(ctx, baseSQL+`
@@ -133,12 +140,13 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 	}
 	rows, err := s.postgres.Query(ctx, baseSQL+`
 		SELECT links.direction,links.relation_type,links.build_id,links.attributes,entity.id,entity.entity_type,
-			entity.external_id,entity.canonical_slug,COALESCE(NULLIF(localized.name,''),fallback.name,''),
+			entity.external_id,COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),
+			COALESCE(NULLIF(localized.name,''),fallback.name,''),
 			COALESCE(source_icon.icon_name,direct_icon.icon_name,db2_icon.icon_name,spell_icon.icon_name,
 				NULLIF(version.payload #>> '{raidbots,icon}',''))
 		FROM links
 		JOIN game_entities entity ON entity.id=links.related_entity_id AND entity.deleted_at IS NULL
-		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		JOIN game_entity_versions version ON version.id=entity.published_version_id AND version.build_id=links.build_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 		LEFT JOIN catalog_entity_icons source_icon ON source_icon.build_id=version.build_id

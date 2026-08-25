@@ -120,7 +120,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 				FROM catalog_entity_aliases alias
 				WHERE $5<>'' AND $5!~'^[0-9]+$' AND (alias.alias ILIKE $5||'%' OR alias.alias % $5)
 				UNION ALL
-				SELECT numeric_entity.latest_version_id,10000 FROM game_entities numeric_entity
+				SELECT numeric_entity.published_version_id,10000 FROM game_entities numeric_entity
 				WHERE $5~'^[0-9]+$' AND numeric_entity.external_id=$5::bigint AND numeric_entity.deleted_at IS NULL
 			) candidate WHERE candidate.rank>0 GROUP BY candidate.version_id
 		), requested_paths(path) AS (
@@ -140,7 +140,8 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			GROUP BY assignment.version_id
 			HAVING count(DISTINCT selected.root_path)=(SELECT count(*) FROM requested_paths)
 		)
-		SELECT entity.id,product.slug,entity.entity_type,entity.external_id,entity.canonical_slug,$4::text,
+		SELECT entity.id,product.slug,entity.entity_type,entity.external_id,
+			COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),$4::text,
 			(localized.version_id IS NULL OR NULLIF(localized.name,'') IS NULL) AS locale_fallback,
 			COALESCE(NULLIF(localized.name,''),fallback.name,''),
 			COALESCE(NULLIF(localized.description,''),fallback.description,''),
@@ -151,7 +152,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			item.required_level,item.inventory_type,spell.school,spell.cast_time,spell.cooldown_ms,COALESCE(search_match.rank,0)
 		FROM game_entities entity
 		JOIN game_products product ON product.id=entity.product_id
-		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		JOIN game_entity_versions version ON version.id=entity.published_version_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 		LEFT JOIN search_candidates search_match ON search_match.version_id=version.id
@@ -262,7 +263,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 				SELECT alias.version_id FROM catalog_entity_aliases alias
 				WHERE $3<>'' AND $3!~'^[0-9]+$' AND alias.alias % $3
 				UNION ALL
-				SELECT numeric_entity.latest_version_id FROM game_entities numeric_entity
+				SELECT numeric_entity.published_version_id FROM game_entities numeric_entity
 				WHERE $3~'^[0-9]+$' AND numeric_entity.external_id=$3::bigint AND numeric_entity.deleted_at IS NULL
 			) candidate GROUP BY candidate.version_id
 		), requested_paths(path) AS (
@@ -282,7 +283,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		)
 		SELECT count(*) FROM game_entities entity
 		JOIN game_products product ON product.id=entity.product_id
-		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		JOIN game_entity_versions version ON version.id=entity.published_version_id
 		LEFT JOIN catalog_items item ON item.version_id=version.id
 		LEFT JOIN search_candidates search ON search.version_id=version.id
 		LEFT JOIN selected_versions selected ON selected.version_id=version.id

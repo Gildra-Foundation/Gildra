@@ -74,7 +74,9 @@ func (s *Service) Quality(ctx context.Context, id uuid.UUID, locale string) (Ent
 			EXISTS(SELECT 1 FROM catalog_entity_icons icon WHERE icon.build_id=version.build_id
 				AND icon.entity_type=entity.entity_type AND icon.external_id=entity.external_id)
 				OR COALESCE(version.payload->>'icon_file_data_id',version.payload #>> '{raidbots,icon}') IS NOT NULL,
-			EXISTS(SELECT 1 FROM game_entity_links link WHERE link.source_entity_id=entity.id OR link.target_entity_id=entity.id),
+			EXISTS(SELECT 1 FROM game_entity_links link
+				WHERE link.build_id=version.build_id
+				  AND (link.source_entity_id=entity.id OR link.target_entity_id=entity.id)),
 			CASE entity.entity_type
 				WHEN 'item' THEN EXISTS(SELECT 1 FROM catalog_items facts WHERE facts.version_id=version.id)
 				WHEN 'spell' THEN EXISTS(SELECT 1 FROM catalog_spells facts WHERE facts.version_id=version.id)
@@ -89,7 +91,7 @@ func (s *Service) Quality(ctx context.Context, id uuid.UUID, locale string) (Ent
 			version.source_url<>'' OR EXISTS(SELECT 1 FROM catalog_entity_source_documents doc
 				WHERE doc.build_id=version.build_id AND doc.entity_type=entity.entity_type AND doc.external_id=entity.external_id)
 		FROM game_entities entity
-		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		JOIN game_entity_versions version ON version.id=entity.published_version_id
 		JOIN game_builds build ON build.id=version.build_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$2
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
@@ -140,7 +142,7 @@ func (s *Service) Quality(ctx context.Context, id uuid.UUID, locale string) (Ent
 	rows, err := s.postgres.Query(ctx, `
 		WITH selected AS (
 			SELECT entity.entity_type,entity.external_id,version.build_id,version.source,version.source_url,version.source_artifact_id,version.observed_at
-			FROM game_entities entity JOIN game_entity_versions version ON version.id=entity.latest_version_id WHERE entity.id=$1
+			FROM game_entities entity JOIN game_entity_versions version ON version.id=entity.published_version_id WHERE entity.id=$1
 		), sources AS (
 			SELECT doc.source,doc.source_url,doc.imported_at FROM selected
 			JOIN catalog_entity_source_documents doc ON doc.build_id=selected.build_id AND doc.entity_type=selected.entity_type
@@ -180,7 +182,7 @@ func (s *Service) Versions(ctx context.Context, id uuid.UUID, locale string, lim
 		return nil, errors.New("limit must be between 1 and 50")
 	}
 	var exists bool
-	if err := s.postgres.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM game_entities WHERE id=$1 AND deleted_at IS NULL)`, id).Scan(&exists); err != nil {
+	if err := s.postgres.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM game_entities WHERE id=$1 AND deleted_at IS NULL AND published_version_id IS NOT NULL)`, id).Scan(&exists); err != nil {
 		return nil, fmt.Errorf("find version entity: %w", err)
 	}
 	if !exists {
@@ -190,10 +192,14 @@ func (s *Service) Versions(ctx context.Context, id uuid.UUID, locale string, lim
 		SELECT version.id,version.build_id,build.build_number,build.version,version.revision,
 			COALESCE(NULLIF(localized.name,''),fallback.name,''),COALESCE(NULLIF(localized.description,''),fallback.description,''),
 			version.source_url,version.observed_at,version.payload
-		FROM game_entity_versions version JOIN game_builds build ON build.id=version.build_id
+		FROM game_entity_versions version
+		JOIN game_builds build ON build.id=version.build_id
+		LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$2
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
-		WHERE version.entity_id=$1 ORDER BY build.build_number DESC,version.revision DESC LIMIT $3`, id, normalizeLocale(locale), limit)
+		WHERE version.entity_id=$1
+		  AND (version.snapshot_id IS NULL OR snapshot.status='published')
+		ORDER BY build.build_number DESC,version.revision DESC LIMIT $3`, id, normalizeLocale(locale), limit)
 	if err != nil {
 		return nil, fmt.Errorf("list entity versions: %w", err)
 	}

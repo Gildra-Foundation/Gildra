@@ -133,12 +133,16 @@ func run() error {
 	}
 
 	store := catalogimport.NewStore(db)
+	releaseID, err := catalogimport.ReleaseIDFromEnvironment()
+	if err != nil {
+		return err
+	}
 	parameters := map[string]any{
 		"source": opts.source, "locales": opts.locales, "entity_types": opts.entityTypes,
 		"page_size": opts.pageSize, "max_records_per_type": opts.maxRecords,
 		"detail_workers": opts.detailWorkers, "media_only": opts.mediaOnly,
 	}
-	importContext, err := store.Begin(ctx, opts.product, opts.buildNumber, opts.buildVersion, "us", sourceName(opts.source), parameters)
+	importContext, err := store.Begin(ctx, opts.product, opts.buildNumber, opts.buildVersion, "us", sourceName(opts.source), releaseID, parameters)
 	if err != nil {
 		return err
 	}

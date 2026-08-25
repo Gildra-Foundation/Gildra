@@ -2,6 +2,7 @@ package catalogimport
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -32,5 +33,23 @@ func TestSlugify(t *testing.T) {
 	t.Parallel()
 	if got := slugify("  Громовая Ярость, благословенный клинок  "); got != "громовая-ярость-благословенный-клинок" {
 		t.Fatalf("slugify = %q", got)
+	}
+}
+
+func TestReleaseIDFromEnvironment(t *testing.T) {
+	t.Setenv(releaseIDEnvironment, "7280d437-f27a-4354-9876-b672285611c7")
+	releaseID, err := ReleaseIDFromEnvironment()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if releaseID == nil || releaseID.String() != "7280d437-f27a-4354-9876-b672285611c7" {
+		t.Fatalf("release ID = %v", releaseID)
+	}
+}
+
+func TestReleaseIDFromEnvironmentRejectsInvalidValue(t *testing.T) {
+	t.Setenv(releaseIDEnvironment, "not-a-uuid")
+	if _, err := ReleaseIDFromEnvironment(); err == nil || !strings.Contains(err.Error(), releaseIDEnvironment) {
+		t.Fatalf("expected a named environment parse error, got %v", err)
 	}
 }
