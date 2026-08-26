@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -52,6 +54,17 @@ type EntityMedia struct {
 	Height     *int
 	Primary    bool
 	Attributes map[string]any
+}
+
+type ArtifactProof struct {
+	SHA256      [sha256.Size]byte
+	ByteSize    int64
+	RecordCount int64
+}
+
+type sourceRecordProofEntry struct {
+	Key         string
+	ContentHash []byte
 }
 
 type QuestReward struct {
@@ -262,6 +275,69 @@ func (s *Store) CompleteArtifact(ctx context.Context, artifactID uuid.UUID, cont
 		return fmt.Errorf("complete source artifact %s: artifact does not exist", artifactID)
 	}
 	return nil
+}
+
+// CompleteArtifactFromRecords proves a logical API artifact as a deterministic
+// manifest of the canonical source documents preserved for it. Battle.net
+// collections span an index, detail, and media responses rather than one file;
+// the manifest hash makes the preserved response set reproducible and auditable.
+func (s *Store) CompleteArtifactFromRecords(ctx context.Context, artifactID uuid.UUID) (ArtifactProof, error) {
+	if artifactID == uuid.Nil {
+		return ArtifactProof{}, errors.New("artifact ID is required")
+	}
+	rows, err := s.db.Query(ctx, `
+		SELECT record_key,content_hash
+		FROM catalog_source_records
+		WHERE artifact_id=$1
+		ORDER BY record_key`, artifactID)
+	if err != nil {
+		return ArtifactProof{}, fmt.Errorf("read source records for artifact %s: %w", artifactID, err)
+	}
+	defer rows.Close()
+	records := make([]sourceRecordProofEntry, 0)
+	for rows.Next() {
+		var record sourceRecordProofEntry
+		if err := rows.Scan(&record.Key, &record.ContentHash); err != nil {
+			return ArtifactProof{}, fmt.Errorf("scan source record proof for artifact %s: %w", artifactID, err)
+		}
+		records = append(records, record)
+	}
+	if err := rows.Err(); err != nil {
+		return ArtifactProof{}, fmt.Errorf("read source record proofs for artifact %s: %w", artifactID, err)
+	}
+	proof, err := sourceRecordManifestProof(records)
+	if err != nil {
+		return ArtifactProof{}, fmt.Errorf("prove source records for artifact %s: %w", artifactID, err)
+	}
+	if err := s.CompleteArtifact(ctx, artifactID, proof.SHA256[:], proof.ByteSize, ""); err != nil {
+		return ArtifactProof{}, err
+	}
+	return proof, nil
+}
+
+func sourceRecordManifestProof(records []sourceRecordProofEntry) (ArtifactProof, error) {
+	records = append([]sourceRecordProofEntry(nil), records...)
+	sort.Slice(records, func(i, j int) bool { return records[i].Key < records[j].Key })
+	digest := sha256.New()
+	var byteSize int64
+	writeManifestPart(digest, &byteSize, []byte("gildra-source-record-manifest-v1\n"))
+	for _, record := range records {
+		if strings.TrimSpace(record.Key) == "" || len(record.ContentHash) != sha256.Size {
+			return ArtifactProof{}, errors.New("source record key and SHA-256 content hash are required")
+		}
+		line := fmt.Appendf(nil, "%d:%s:%x\n", len(record.Key), record.Key, record.ContentHash)
+		writeManifestPart(digest, &byteSize, line)
+	}
+	var result ArtifactProof
+	copy(result.SHA256[:], digest.Sum(nil))
+	result.ByteSize = byteSize
+	result.RecordCount = int64(len(records))
+	return result, nil
+}
+
+func writeManifestPart(target hash.Hash, byteSize *int64, value []byte) {
+	_, _ = target.Write(value)
+	*byteSize += int64(len(value))
 }
 
 func (s *Store) FailArtifact(ctx context.Context, artifactID uuid.UUID, cause error) error {

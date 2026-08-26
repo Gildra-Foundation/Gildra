@@ -2,6 +2,7 @@ package battlenet
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,45 @@ import (
 	"sync/atomic"
 	"testing"
 )
+
+func TestOAuthErrorDoesNotExposeResponseDescriptionOrCredentials(t *testing.T) {
+	t.Parallel()
+	const secret = "must-not-appear"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, `{"error":"invalid_client","error_description":"rejected %s"}`, secret)
+	}))
+	t.Cleanup(server.Close)
+
+	client, err := New(Config{
+		ClientID: "id", ClientSecret: secret, TokenURL: server.URL,
+		APIBaseURL: func(string) string { return server.URL },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Search(context.Background(), "us", "static-us", "en_US", "item", 1, 1)
+	if err == nil {
+		t.Fatal("expected OAuth failure")
+	}
+	if strings.Contains(err.Error(), secret) || strings.Contains(err.Error(), "error_description") {
+		t.Fatalf("OAuth error exposed sensitive response content: %v", err)
+	}
+	var oauthErr *OAuthError
+	if !errors.As(err, &oauthErr) {
+		t.Fatalf("error type = %T, want *OAuthError", err)
+	}
+	if oauthErr.StatusCode != http.StatusUnauthorized || oauthErr.Code != "invalid_client" {
+		t.Fatalf("OAuth error = %#v", oauthErr)
+	}
+}
+
+func TestOAuthErrorRejectsUnsafeMachineCode(t *testing.T) {
+	t.Parallel()
+	if got := safeOAuthErrorCode([]byte(`{"error":"secret value"}`)); got != "" {
+		t.Fatalf("unsafe OAuth code = %q", got)
+	}
+}
 
 func TestSearchAuthenticatesAndBuildsQuery(t *testing.T) {
 	t.Parallel()

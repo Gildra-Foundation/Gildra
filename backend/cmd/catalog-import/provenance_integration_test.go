@@ -120,4 +120,40 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 		t.Fatalf("Wago provenance counts = versions:%d unproven:%d artifacts:%d localizations:%d",
 			versions, unproven, artifacts, localizations)
 	}
+
+	manifestArtifactID, err := store.RegisterPendingArtifact(ctx, ic, "blizzard_api",
+		"battlenet/test", "en_US", server.URL+"/battle-net-test", map[string]any{
+			"proof_scope": "source_record_manifest_v1",
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for key, payload := range map[string]string{"1": `{"id":1}`, "2": `{"id":2}`} {
+		if _, err := store.UpsertSourceRecord(ctx, manifestArtifactID, key, []byte(payload)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	proof, err := store.CompleteArtifactFromRecords(ctx, manifestArtifactID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if proof.RecordCount != 2 || proof.ByteSize <= 0 {
+		t.Fatalf("Battle.net manifest proof = %#v", proof)
+	}
+	var manifestStatus string
+	var manifestHashBytes, manifestByteSize, manifestRecords int64
+	if err := pool.QueryRow(ctx, `
+		SELECT artifact.status,octet_length(artifact.content_hash),artifact.byte_size,count(record.record_key)
+		FROM catalog_source_artifacts artifact
+		LEFT JOIN catalog_source_records record ON record.artifact_id=artifact.id
+		WHERE artifact.id=$1
+		GROUP BY artifact.id`, manifestArtifactID).Scan(
+		&manifestStatus, &manifestHashBytes, &manifestByteSize, &manifestRecords,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if manifestStatus != "ready" || manifestHashBytes != 32 || manifestByteSize != proof.ByteSize || manifestRecords != 2 {
+		t.Fatalf("persisted Battle.net proof = status:%s hash:%d bytes:%d records:%d",
+			manifestStatus, manifestHashBytes, manifestByteSize, manifestRecords)
+	}
 }

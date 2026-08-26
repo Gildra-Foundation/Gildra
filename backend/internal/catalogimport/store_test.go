@@ -1,10 +1,41 @@
 package catalogimport
 
 import (
+	"crypto/sha256"
 	"encoding/json"
+	"slices"
 	"strings"
 	"testing"
 )
+
+func TestSourceRecordManifestProofIsOrderIndependent(t *testing.T) {
+	t.Parallel()
+	first := sha256.Sum256([]byte("first"))
+	second := sha256.Sum256([]byte("second"))
+	records := []sourceRecordProofEntry{
+		{Key: "2", ContentHash: second[:]},
+		{Key: "1", ContentHash: first[:]},
+	}
+	proof, err := sourceRecordManifestProof(records)
+	if err != nil {
+		t.Fatal(err)
+	}
+	slices.Reverse(records)
+	reversed, err := sourceRecordManifestProof(records)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if proof.SHA256 != reversed.SHA256 || proof.ByteSize != reversed.ByteSize || proof.RecordCount != 2 {
+		t.Fatalf("manifest proof changed with record order: %#v != %#v", proof, reversed)
+	}
+}
+
+func TestSourceRecordManifestProofRejectsInvalidHash(t *testing.T) {
+	t.Parallel()
+	if _, err := sourceRecordManifestProof([]sourceRecordProofEntry{{Key: "1", ContentHash: []byte("short")}}); err == nil {
+		t.Fatal("expected invalid source record hash rejection")
+	}
+}
 
 func TestLocalizedString(t *testing.T) {
 	t.Parallel()
