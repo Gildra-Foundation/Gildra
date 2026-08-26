@@ -32,6 +32,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/clickhouse v0.44.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.44.0
 	github.com/vektah/gqlparser/v2 v2.5.36
+	github.com/yuin/gopher-lua v1.1.2
 	golang.org/x/crypto v0.55.0
 	golang.org/x/sync v0.22.0
 )
