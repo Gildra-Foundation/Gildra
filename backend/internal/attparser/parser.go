@@ -315,7 +315,7 @@ func (ex *extractor) walkConstructor(call *ast.FuncCallExpr, spec constructorSpe
 	recordKey := fmt.Sprintf("%s:%d:%d", ex.fileName, line, ex.lineOrdinals[line])
 	node := Node{
 		RecordKey: recordKey, Kind: spec.Kind, SourceID: sourceID, SourceLine: line,
-		AncestorPath: append([]Identity(nil), ancestors...), Fields: map[string]any{},
+		AncestorPath: append([]Identity{}, ancestors...), Fields: map[string]any{},
 		RawSource: ex.sourceLine(line),
 	}
 	if sourceID > 0 {

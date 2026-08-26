@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -13,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Gildra-Foundation/Gildra/backend/internal/attimport"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/attparser"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/wago"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -155,5 +158,60 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 	if manifestStatus != "ready" || manifestHashBytes != 32 || manifestByteSize != proof.ByteSize || manifestRecords != 2 {
 		t.Fatalf("persisted Battle.net proof = status:%s hash:%d bytes:%d records:%d",
 			manifestStatus, manifestHashBytes, manifestByteSize, manifestRecords)
+	}
+
+	attContext, err := store.Begin(ctx, "wow", 69497, "12.1.0.69497", "us", "all_the_things", nil,
+		map[string]any{"integration_test": "att_staged_graph"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	attSource := []byte("local i,n=_.CreateItem,_.CreateNPC\nn(42,{g={i(100,{providers={{\"n\",42}}})}})\n")
+	attNodes, err := attparser.Parse(attSource, "db/Standard/Categories/Test.lua")
+	if err != nil {
+		t.Fatal(err)
+	}
+	attArtifactID, err := store.RegisterPendingArtifact(ctx, attContext, "all_the_things",
+		"att/db/Standard/Categories/Test.lua", "", "https://example.test/Test.lua", map[string]any{
+			"revision": "integration-test", "parser": "att_static_ast_v1",
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	attResult, err := attimport.NewStore(pool).ReplaceFile(ctx, attContext, attArtifactID, "all_the_things", attNodes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	attHash := sha256.Sum256(attSource)
+	if err := store.CompleteArtifact(ctx, attArtifactID, attHash[:], int64(len(attSource)), ""); err != nil {
+		t.Fatal(err)
+	}
+	var stagedNodes, stagedReferences int64
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM catalog_staged_source_nodes WHERE source_artifact_id=$1`, attArtifactID).Scan(&stagedNodes); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*) FROM catalog_staged_source_references reference
+		JOIN catalog_staged_source_nodes node ON node.id=reference.node_id
+		WHERE node.source_artifact_id=$1`, attArtifactID).Scan(&stagedReferences); err != nil {
+		t.Fatal(err)
+	}
+	if attResult.Nodes != 2 || attResult.References != 1 || stagedNodes != 2 || stagedReferences != 1 {
+		t.Fatalf("ATT staged graph = result:%#v nodes:%d references:%d", attResult, stagedNodes, stagedReferences)
+	}
+	if err := store.FinishStaged(ctx, attContext.RunID, "SUCCEEDED", attResult.Nodes,
+		attResult.Nodes+attResult.References, nil); err != nil {
+		t.Fatal(err)
+	}
+	var attSnapshotStatus string
+	var attBuildActive bool
+	if err := pool.QueryRow(ctx, `
+		SELECT snapshot.status,build.is_active
+		FROM catalog_snapshots snapshot
+		JOIN game_builds build ON build.id=snapshot.build_id
+		WHERE snapshot.id=$1`, attContext.SnapshotID).Scan(&attSnapshotStatus, &attBuildActive); err != nil {
+		t.Fatal(err)
+	}
+	if attSnapshotStatus != "validated" || attBuildActive {
+		t.Fatalf("ATT snapshot = status:%s build_active:%t", attSnapshotStatus, attBuildActive)
 	}
 }
