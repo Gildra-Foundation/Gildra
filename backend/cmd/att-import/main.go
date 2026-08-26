@@ -25,7 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const attSource = "all_the_things"
+const attSource = attimport.Source
 
 type options struct {
 	databaseURL  string

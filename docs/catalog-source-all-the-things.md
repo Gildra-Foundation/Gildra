@@ -94,5 +94,54 @@ after the staged nodes and references commit and its SHA-256 and byte size are
 recorded. The completed snapshot remains `validated`; this command never marks
 the snapshot published, advances public entity versions or activates a build.
 
+## Same-build identity resolution
+
+Resolution is a separate fail-closed step. It accepts an explicit validated
+ATT snapshot UUID and first produces a read-only classification report. A node
+or reference resolves only when the canonical identity has a non-failed entity
+version for the same product and build. When that version names a source
+artifact, the artifact must be `ready` and have both a SHA-256 hash and byte
+size. Legacy build versions without an artifact pointer remain eligible so
+older canonical imports can be audited and upgraded incrementally.
+
+Preview without changing any row:
+
+```bash
+att-resolve -database-url "$DATABASE_URL" -snapshot-id "$ATT_SNAPSHOT_ID"
+```
+
+Persist exactly the previewed classifications:
+
+```bash
+att-resolve \
+  -database-url "$DATABASE_URL" \
+  -snapshot-id "$ATT_SNAPSHOT_ID" \
+  -confirm
+```
+
+The confirmed resolver runs in one repeatable-read transaction and records an
+audit row in `catalog_source_resolution_runs`. Results remain in the staging
+tables. If canonical data changes after the operator reviewed the preview, the
+confirmed run stops without changing staged rows and requires a new preview.
+
+Resolution statuses are:
+
+- `resolved` — a source type maps to one canonical identity proven for the
+  same build;
+- `unresolved` — the type is recognized, but no build-proven canonical entity
+  exists yet;
+- `excluded` — the source node has no usable ID or is a non-game header or
+  another unsupported type;
+- `ambiguous` — reserved as a fail-closed state if a future identity model can
+  produce multiple candidates.
+
+Type mappings are explicit and reviewable in
+`catalog_source_entity_type_mappings`; unknown types are never guessed. ATT
+recipe IDs intentionally resolve to canonical `spell` entities because the
+normalized recipe model uses profession spell IDs. Re-running the resolver is
+idempotent and can turn prior `unresolved` rows into `resolved` after official
+same-build entities are loaded. It still cannot create public relationships,
+publish a snapshot, advance entity pointers or activate a build.
+
 This source is best used as a relationship layer below Blizzard and DB2 field
 precedence, not as a replacement canonical catalog.

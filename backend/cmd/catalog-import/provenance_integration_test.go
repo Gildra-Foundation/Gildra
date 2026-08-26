@@ -159,13 +159,26 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 		t.Fatalf("persisted Battle.net proof = status:%s hash:%d bytes:%d records:%d",
 			manifestStatus, manifestHashBytes, manifestByteSize, manifestRecords)
 	}
+	// The bounded fixture does not download complete CSV bodies. Mark its
+	// synthetic artifacts with deterministic fixture proofs so the resolver can
+	// verify that same-build canonical versions are source-backed.
+	if _, err := pool.Exec(ctx, `
+		UPDATE catalog_source_artifacts
+		SET content_hash=decode(repeat('01',32),'hex'),byte_size=1
+		WHERE snapshot_id=$1 AND source='wago_tools'`, ic.SnapshotID); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.FinishStaged(ctx, ic.RunID, "SUCCEEDED", seen, written, nil); err != nil {
+		t.Fatal(err)
+	}
 
 	attContext, err := store.Begin(ctx, "wow", 69497, "12.1.0.69497", "us", "all_the_things", nil,
 		map[string]any{"integration_test": "att_staged_graph"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	attSource := []byte("local i,n=_.CreateItem,_.CreateNPC\nn(42,{g={i(100,{providers={{\"n\",42}}})}})\n")
+	attSource := []byte("local i,n,h=_.CreateItem,_.CreateNPC,_.CreateCustomHeader\n" +
+		"h(-1,{g={n(42,{g={i(25,{providers={{\"n\",42}},spellID=133})}})}})\n")
 	attNodes, err := attparser.Parse(attSource, "db/Standard/Categories/Test.lua")
 	if err != nil {
 		t.Fatal(err)
@@ -195,7 +208,7 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 		WHERE node.source_artifact_id=$1`, attArtifactID).Scan(&stagedReferences); err != nil {
 		t.Fatal(err)
 	}
-	if attResult.Nodes != 2 || attResult.References != 1 || stagedNodes != 2 || stagedReferences != 1 {
+	if attResult.Nodes != 3 || attResult.References != 2 || stagedNodes != 3 || stagedReferences != 2 {
 		t.Fatalf("ATT staged graph = result:%#v nodes:%d references:%d", attResult, stagedNodes, stagedReferences)
 	}
 	if err := store.FinishStaged(ctx, attContext.RunID, "SUCCEEDED", attResult.Nodes,
@@ -213,5 +226,97 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 	}
 	if attSnapshotStatus != "validated" || attBuildActive {
 		t.Fatalf("ATT snapshot = status:%s build_active:%t", attSnapshotStatus, attBuildActive)
+	}
+
+	resolver := attimport.NewStore(pool)
+	preview, err := resolver.PreviewSnapshot(ctx, attContext.SnapshotID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertATTResolutionReport(t, preview)
+	var previewRuns, pendingAfterPreview int64
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM catalog_source_resolution_runs WHERE snapshot_id=$1`,
+		attContext.SnapshotID).Scan(&previewRuns); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*) FROM catalog_staged_source_nodes
+		WHERE source_artifact_id=$1 AND resolution_status='pending'`, attArtifactID).Scan(&pendingAfterPreview); err != nil {
+		t.Fatal(err)
+	}
+	if previewRuns != 0 || pendingAfterPreview != 3 {
+		t.Fatalf("ATT preview mutated state: runs=%d pending_nodes=%d", previewRuns, pendingAfterPreview)
+	}
+	changedPreview := preview
+	changedPreview.Nodes.Resolved++
+	if _, err := resolver.ResolveSnapshotIfMatches(ctx, attContext.SnapshotID, changedPreview); err == nil ||
+		!strings.Contains(err.Error(), "preview changed") {
+		t.Fatalf("changed ATT preview error = %v", err)
+	}
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*) FROM catalog_staged_source_nodes
+		WHERE source_artifact_id=$1 AND resolution_status='pending'`, attArtifactID).Scan(&pendingAfterPreview); err != nil {
+		t.Fatal(err)
+	}
+	if pendingAfterPreview != 3 {
+		t.Fatalf("changed ATT preview mutated %d pending nodes", pendingAfterPreview)
+	}
+	report, err := resolver.ResolveSnapshot(ctx, attContext.SnapshotID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertATTResolutionReport(t, report)
+	// Re-resolution must be idempotent and may pick up newly imported canonical
+	// entities in future runs without deleting last-known staging data.
+	repeated, err := resolver.ResolveSnapshot(ctx, attContext.SnapshotID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertATTResolutionReport(t, repeated)
+
+	var resolvedNodes, unresolvedNodes, excludedNodes, resolvedReferences, unresolvedReferences, runCount int64
+	if err := pool.QueryRow(ctx, `
+		SELECT
+			count(*) FILTER (WHERE resolution_status='resolved' AND resolved_entity_id IS NOT NULL),
+			count(*) FILTER (WHERE resolution_status='unresolved' AND resolved_entity_id IS NULL),
+			count(*) FILTER (WHERE resolution_status='excluded' AND resolved_entity_id IS NULL)
+		FROM catalog_staged_source_nodes WHERE source_artifact_id=$1`, attArtifactID).Scan(
+		&resolvedNodes, &unresolvedNodes, &excludedNodes,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `
+		SELECT
+			count(*) FILTER (WHERE reference.resolution_status='resolved' AND reference.target_entity_id IS NOT NULL),
+			count(*) FILTER (WHERE reference.resolution_status='unresolved' AND reference.target_entity_id IS NULL)
+		FROM catalog_staged_source_references reference
+		JOIN catalog_staged_source_nodes node ON node.id=reference.node_id
+		WHERE node.source_artifact_id=$1`, attArtifactID).Scan(
+		&resolvedReferences, &unresolvedReferences,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*) FROM catalog_source_resolution_runs
+		WHERE snapshot_id=$1 AND status='succeeded'`, attContext.SnapshotID).Scan(&runCount); err != nil {
+		t.Fatal(err)
+	}
+	if resolvedNodes != 1 || unresolvedNodes != 1 || excludedNodes != 1 ||
+		resolvedReferences != 1 || unresolvedReferences != 1 || runCount != 2 {
+		t.Fatalf("stored ATT resolution = nodes:%d/%d/%d references:%d/%d runs:%d",
+			resolvedNodes, unresolvedNodes, excludedNodes, resolvedReferences, unresolvedReferences, runCount)
+	}
+}
+
+func assertATTResolutionReport(t *testing.T, report attimport.ResolutionReport) {
+	t.Helper()
+	if report.Nodes.Total != 3 || report.Nodes.Resolved != 1 || report.Nodes.Unresolved != 1 ||
+		report.Nodes.Ambiguous != 0 || report.Nodes.Excluded != 1 {
+		t.Fatalf("ATT node resolution report = %#v", report.Nodes)
+	}
+	if report.References.Total != 2 || report.References.Resolved != 1 ||
+		report.References.Unresolved != 1 || report.References.Ambiguous != 0 ||
+		report.References.Excluded != 0 {
+		t.Fatalf("ATT reference resolution report = %#v", report.References)
 	}
 }
