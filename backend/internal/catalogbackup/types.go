@@ -17,7 +17,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const MinimumSchemaVersion int64 = 71
+const MinimumSchemaVersion int64 = 75
 
 var CriticalTables = []string{
 	"users",
@@ -25,7 +25,9 @@ var CriticalTables = []string{
 	"game_builds",
 	"game_entities",
 	"game_entity_versions",
+	"catalog_entity_version_artifacts",
 	"game_entity_localizations",
+	"catalog_entity_localization_artifacts",
 	"game_entity_links",
 	"catalog_snapshots",
 	"catalog_import_runs",

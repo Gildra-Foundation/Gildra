@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/battlenet"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
@@ -25,6 +26,8 @@ import (
 )
 
 var errWagoRecordMissingName = errors.New("Wago record has no localized name")
+
+const defaultWagoTableTimeout = 2 * time.Hour
 
 type battleNetEntitySpec struct {
 	Resource        string
@@ -61,19 +64,20 @@ var battleNetAllEntityTypes = []string{
 }
 
 type options struct {
-	source        string
-	databaseURL   string
-	clientID      string
-	clientSecret  string
-	product       string
-	buildNumber   int
-	buildVersion  string
-	locales       []string
-	entityTypes   []string
-	pageSize      int
-	maxRecords    int
-	detailWorkers int
-	mediaOnly     bool
+	source           string
+	databaseURL      string
+	clientID         string
+	clientSecret     string
+	product          string
+	buildNumber      int
+	buildVersion     string
+	locales          []string
+	entityTypes      []string
+	pageSize         int
+	maxRecords       int
+	detailWorkers    int
+	mediaOnly        bool
+	wagoTableTimeout time.Duration
 }
 
 func main() {
@@ -141,6 +145,7 @@ func run() error {
 		"source": opts.source, "locales": opts.locales, "entity_types": opts.entityTypes,
 		"page_size": opts.pageSize, "max_records_per_type": opts.maxRecords,
 		"detail_workers": opts.detailWorkers, "media_only": opts.mediaOnly,
+		"wago_table_timeout": effectiveWagoTableTimeout(opts.wagoTableTimeout).String(),
 	}
 	importContext, err := store.Begin(ctx, opts.product, opts.buildNumber, opts.buildVersion, "us", sourceName(opts.source), releaseID, parameters)
 	if err != nil {
@@ -177,17 +182,20 @@ func importWago(
 	opts options,
 	seen, written *int64,
 ) error {
-	for localeIndex, locale := range opts.locales {
+	for _, locale := range opts.locales {
 		wagoLocale, err := wagoLocale(locale)
 		if err != nil {
 			return err
 		}
 		var spellTexts map[int64]spellText
+		var spellArtifactID *uuid.UUID
 		if contains(opts.entityTypes, "spell") {
-			spellTexts, err = loadSpellTexts(ctx, client, opts.buildVersion, wagoLocale, opts.maxRecords)
+			var artifactID uuid.UUID
+			spellTexts, artifactID, err = importWagoSpellTexts(ctx, client, store, importContext, opts, locale, wagoLocale)
 			if err != nil {
 				return fmt.Errorf("load Wago spell text (%s): %w", locale, err)
 			}
+			spellArtifactID = &artifactID
 		}
 		for _, entityType := range opts.entityTypes {
 			table := map[string]string{"item": "ItemSparse", "spell": "SpellName"}[entityType]
@@ -216,18 +224,23 @@ func importWago(
 						slog.Error("fail Wago artifact", "table", table, "locale", locale, "error", failErr)
 					}
 				}()
-				_, proof, err := client.RowsWithProof(ctx, table, opts.buildVersion, wagoLocale, opts.maxRecords, func(row map[string]string) error {
+				tableContext, cancel := context.WithTimeout(ctx, effectiveWagoTableTimeout(opts.wagoTableTimeout))
+				defer cancel()
+				_, proof, err := client.RowsWithProof(tableContext, table, opts.buildVersion, wagoLocale, opts.maxRecords, func(row map[string]string) error {
 					(*seen)++
 					record, err := wagoRecordWithSpellText(entityType, locale, sourceURL, row, spellTexts)
 					if err != nil {
 						if errors.Is(err, errWagoRecordMissingName) {
 							slog.Warn("skipping unnamed Wago record", "type", entityType, "id", row["ID"], "locale", locale)
-							return nil
+							return reportWagoProgress(ctx, store, importContext.RunID, table, locale, *seen, *written)
 						}
 						return err
 					}
 					record.SourceArtifactID = &artifactID
-					if localeIndex == 0 {
+					if entityType == "spell" && spellArtifactID != nil {
+						record.SupportingSourceArtifactIDs = []uuid.UUID{*spellArtifactID}
+					}
+					if locale == "en_US" {
 						err = store.UpsertCanonical(ctx, importContext, record)
 					} else {
 						err = store.UpsertLocalization(ctx, importContext, record)
@@ -236,7 +249,7 @@ func importWago(
 						return fmt.Errorf("store %s %d (%s): %w", entityType, record.ExternalID, locale, err)
 					}
 					(*written)++
-					return nil
+					return reportWagoProgress(ctx, store, importContext.RunID, table, locale, *seen, *written)
 				})
 				if err != nil {
 					return fmt.Errorf("import Wago %s (%s): %w", table, locale, err)
@@ -247,6 +260,9 @@ func importWago(
 					}
 				} else if opts.maxRecords == 0 {
 					return fmt.Errorf("Wago %s (%s) ended without a complete content proof", table, locale)
+				}
+				if err := store.UpdateProgress(ctx, importContext.RunID, *seen, *written); err != nil {
+					return err
 				}
 				finalized = true
 				return nil
@@ -259,15 +275,84 @@ func importWago(
 	return nil
 }
 
+func reportWagoProgress(
+	ctx context.Context,
+	store *catalogimport.Store,
+	runID uuid.UUID,
+	table, locale string,
+	seen, written int64,
+) error {
+	if seen == 0 || seen%10_000 != 0 {
+		return nil
+	}
+	slog.Info("catalog import progress", "table", table, "locale", locale, "seen", seen, "written", written)
+	return store.UpdateProgress(ctx, runID, seen, written)
+}
+
+func importWagoSpellTexts(
+	ctx context.Context,
+	client *wago.Client,
+	store *catalogimport.Store,
+	importContext catalogimport.ImportContext,
+	opts options,
+	locale, wagoLocale string,
+) (texts map[int64]spellText, artifactID uuid.UUID, resultErr error) {
+	table := "Spell"
+	sourceURL := client.CSVURL(table, opts.buildVersion, wagoLocale)
+	metadata := map[string]any{
+		"table": table, "build": opts.buildVersion, "locale": locale, "entity_type": "spell",
+		"projection": "localized_spell_text", "bounded": opts.maxRecords > 0, "max_records": opts.maxRecords,
+	}
+	var err error
+	if opts.maxRecords == 0 {
+		artifactID, err = store.RegisterPendingArtifact(ctx, importContext, "wago_tools", table, locale, sourceURL, metadata)
+	} else {
+		artifactID, err = store.RegisterArtifact(ctx, importContext, "wago_tools", table, locale, sourceURL, metadata)
+	}
+	if err != nil {
+		return nil, uuid.Nil, err
+	}
+	finalized := false
+	defer func() {
+		if finalized {
+			return
+		}
+		if failErr := store.FailArtifact(context.WithoutCancel(ctx), artifactID, resultErr); failErr != nil {
+			slog.Error("fail Wago artifact", "table", table, "locale", locale, "error", failErr)
+		}
+	}()
+	slog.Info("importing Wago table", "table", table, "locale", locale, "build", opts.buildVersion)
+	tableContext, cancel := context.WithTimeout(ctx, effectiveWagoTableTimeout(opts.wagoTableTimeout))
+	defer cancel()
+	texts, proof, err := loadSpellTexts(tableContext, client, opts.buildVersion, wagoLocale, opts.maxRecords)
+	if err != nil {
+		return nil, artifactID, fmt.Errorf("import Wago %s (%s): %w", table, locale, err)
+	}
+	if proof.Complete {
+		if err := store.CompleteArtifact(ctx, artifactID, proof.SHA256, proof.ByteSize, proof.ETag); err != nil {
+			return nil, artifactID, err
+		}
+	} else if opts.maxRecords == 0 {
+		return nil, artifactID, fmt.Errorf("Wago %s (%s) ended without a complete content proof", table, locale)
+	}
+	finalized = true
+	return texts, artifactID, nil
+}
+
 type spellText struct {
 	Subtext         string
 	Description     string
 	AuraDescription string
 }
 
-func loadSpellTexts(ctx context.Context, client *wago.Client, build, locale string, limit int) (map[int64]spellText, error) {
+func loadSpellTexts(
+	ctx context.Context,
+	client *wago.Client,
+	build, locale string,
+	limit int,
+) (map[int64]spellText, wago.ContentProof, error) {
 	texts := make(map[int64]spellText)
-	_, err := client.Rows(ctx, "Spell", build, locale, limit, func(row map[string]string) error {
+	_, proof, err := client.RowsWithProof(ctx, "Spell", build, locale, limit, func(row map[string]string) error {
 		id, err := strconv.ParseInt(row["ID"], 10, 64)
 		if err != nil || id <= 0 {
 			return nil
@@ -279,7 +364,7 @@ func loadSpellTexts(ctx context.Context, client *wago.Client, build, locale stri
 		}
 		return nil
 	})
-	return texts, err
+	return texts, proof, err
 }
 
 func wagoRecord(entityType, locale, sourceURL string, row map[string]string) (catalogimport.Record, error) {
@@ -1288,6 +1373,7 @@ func parseOptions() (options, error) {
 	flag.IntVar(&opts.pageSize, "page-size", 100, "Battle.net search page size")
 	flag.IntVar(&opts.maxRecords, "max-records", 100, "maximum records per type and locale; 0 imports all")
 	flag.IntVar(&opts.detailWorkers, "detail-workers", 8, "maximum concurrent Battle.net detail requests")
+	flag.DurationVar(&opts.wagoTableTimeout, "wago-table-timeout", defaultWagoTableTimeout, "maximum time to stream and project one Wago DB2 table")
 	flag.BoolVar(&opts.mediaOnly, "media-only", false, "fetch official media for previously imported Battle.net documents")
 	flag.Parse()
 	opts.source = strings.ToLower(strings.TrimSpace(opts.source))
@@ -1314,6 +1400,8 @@ func parseOptions() (options, error) {
 		return options{}, errors.New("max-records cannot be negative")
 	case opts.detailWorkers < 1 || opts.detailWorkers > 32:
 		return options{}, errors.New("detail-workers must be between 1 and 32")
+	case opts.wagoTableTimeout <= 0:
+		return options{}, errors.New("wago-table-timeout must be positive")
 	}
 	for _, locale := range opts.locales {
 		if _, err := regionForLocale(locale); err != nil {
@@ -1331,6 +1419,13 @@ func parseOptions() (options, error) {
 		}
 	}
 	return opts, nil
+}
+
+func effectiveWagoTableTimeout(value time.Duration) time.Duration {
+	if value <= 0 {
+		return defaultWagoTableTimeout
+	}
+	return value
 }
 
 func buildNumber(version string) (int, error) {

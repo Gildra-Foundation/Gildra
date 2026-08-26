@@ -30,12 +30,13 @@ type ImportContext struct {
 }
 
 type Record struct {
-	Type             string
-	ExternalID       int64
-	Locale           string
-	Payload          json.RawMessage
-	SourceURL        string
-	SourceArtifactID *uuid.UUID
+	Type                        string
+	ExternalID                  int64
+	Locale                      string
+	Payload                     json.RawMessage
+	SourceURL                   string
+	SourceArtifactID            *uuid.UUID
+	SupportingSourceArtifactIDs []uuid.UUID
 }
 
 type MediaCandidate struct {
@@ -697,7 +698,14 @@ func (s *Store) UpsertCanonical(ctx context.Context, ic ImportContext, record Re
 		if err != nil {
 			return fmt.Errorf("upsert entity version: %w", err)
 		}
+		artifactIDs := recordArtifactIDs(record)
+		if err := observeVersionArtifacts(ctx, tx, versionID, artifactIDs); err != nil {
+			return err
+		}
 		if err := upsertLocalization(ctx, tx, versionID, record.Locale, slug, name, description, canonical); err != nil {
+			return err
+		}
+		if err := observeLocalizationArtifacts(ctx, tx, versionID, record.Locale, artifactIDs); err != nil {
 			return err
 		}
 		if err := upsertTyped(ctx, tx, record.Type, versionID, doc); err != nil {
@@ -734,9 +742,91 @@ func (s *Store) UpsertLocalization(ctx context.Context, ic ImportContext, record
 		return fmt.Errorf("find canonical %s %d: %w", record.Type, record.ExternalID, err)
 	}
 	return pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		return upsertLocalization(ctx, tx, versionID, record.Locale, slugify(name), name,
-			localizedString(doc["description"], record.Locale), canonical)
+		if err := upsertLocalization(ctx, tx, versionID, record.Locale, slugify(name), name,
+			localizedString(doc["description"], record.Locale), canonical); err != nil {
+			return err
+		}
+		return observeLocalizationArtifacts(ctx, tx, versionID, record.Locale, recordArtifactIDs(record))
 	})
+}
+
+func recordArtifactIDs(record Record) []uuid.UUID {
+	capacity := len(record.SupportingSourceArtifactIDs)
+	if record.SourceArtifactID != nil {
+		capacity++
+	}
+	result := make([]uuid.UUID, 0, capacity)
+	seen := make(map[uuid.UUID]struct{}, capacity)
+	appendUnique := func(id uuid.UUID) {
+		if id == uuid.Nil {
+			return
+		}
+		if _, exists := seen[id]; exists {
+			return
+		}
+		seen[id] = struct{}{}
+		result = append(result, id)
+	}
+	if record.SourceArtifactID != nil {
+		appendUnique(*record.SourceArtifactID)
+	}
+	for _, id := range record.SupportingSourceArtifactIDs {
+		appendUnique(id)
+	}
+	return result
+}
+
+func observeVersionArtifacts(ctx context.Context, tx pgx.Tx, versionID uuid.UUID, artifactIDs []uuid.UUID) error {
+	if len(artifactIDs) == 0 {
+		return nil
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO catalog_entity_version_artifacts(version_id,source_artifact_id)
+		SELECT $1,artifact_id FROM unnest($2::uuid[]) AS observed(artifact_id)
+		ON CONFLICT(version_id,source_artifact_id) DO NOTHING`, versionID, artifactIDs); err != nil {
+		return fmt.Errorf("record entity version artifacts: %w", err)
+	}
+	return nil
+}
+
+func observeLocalizationArtifacts(
+	ctx context.Context,
+	tx pgx.Tx,
+	versionID uuid.UUID,
+	locale string,
+	artifactIDs []uuid.UUID,
+) error {
+	if len(artifactIDs) == 0 {
+		return nil
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+		SELECT $1,$2,artifact_id FROM unnest($3::uuid[]) AS observed(artifact_id)
+		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING`, versionID, locale, artifactIDs); err != nil {
+		return fmt.Errorf("record %s localization artifacts: %w", locale, err)
+	}
+	return nil
+}
+
+// UpdateProgress publishes a monotonic checkpoint for operators while a long
+// streamed import is still running. Finish remains authoritative for the final
+// status and totals.
+func (s *Store) UpdateProgress(ctx context.Context, runID uuid.UUID, seen, written int64) error {
+	if seen < 0 || written < 0 || written > seen {
+		return fmt.Errorf("invalid import progress: seen=%d written=%d", seen, written)
+	}
+	command, err := s.db.Exec(ctx, `
+		UPDATE catalog_import_runs
+		SET records_seen=GREATEST(records_seen,$2),
+			records_written=GREATEST(records_written,$3)
+		WHERE id=$1 AND status='RUNNING'`, runID, seen, written)
+	if err != nil {
+		return fmt.Errorf("update import progress: %w", err)
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("update import progress: running import %s does not exist", runID)
+	}
+	return nil
 }
 
 func (s *Store) Finish(ctx context.Context, runID uuid.UUID, status string, seen, written int64, importErr error) error {

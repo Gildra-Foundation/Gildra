@@ -27,6 +27,13 @@ every fact that exists on Blizzard's private servers.
   `*.worldofwarcraft.com` image rather than discarding everything except icon.
 - Normalized rewards, NPC facts, acquisition facts, effects, and recipe facts
   now have additive artifact provenance columns and online indexes.
+- `catalog_entity_version_artifacts` records every immutable artifact that
+  observed an entity version. A complete import can therefore prove a version
+  first seen by a bounded diagnostic without creating a duplicate revision or
+  rewriting last-known-good provenance.
+- `catalog_entity_localization_artifacts` records the immutable inputs for each
+  locale. Compound Wago spell projections retain both `SpellName` and `Spell`
+  proofs instead of attributing the text to only one file.
 - Battle.net quest reward writes now set their direct artifact reference.
 - `catalog_backup_manifests` records dump hashes, sizes, build/snapshot IDs, and
   isolated restore evidence. A JSON copy must live beside each backup.
