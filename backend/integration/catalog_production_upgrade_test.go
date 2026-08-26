@@ -24,6 +24,8 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
+const latestCatalogSchemaVersion int64 = 73
+
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
 	migrations, err := filepath.Abs("../migrations/postgres")
@@ -69,15 +71,15 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	if err := goose.UpContext(ctx, database, migrations); err != nil {
 		t.Fatalf("upgrade production baseline to Warcraft catalog: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, 71)
-	if err := goose.DownToContext(ctx, database, migrations, 70); err != nil {
+	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion)
+	if err := goose.DownToContext(ctx, database, migrations, latestCatalogSchemaVersion-1); err != nil {
 		t.Fatalf("roll back newest catalog migration: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, 70)
-	if err := goose.UpToContext(ctx, database, migrations, 71); err != nil {
+	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion-1)
+	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion); err != nil {
 		t.Fatalf("reapply newest catalog migration: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, 71)
+	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion)
 	for _, table := range []string{
 		"catalog_completeness_expectations",
 		"catalog_entity_media",
@@ -88,6 +90,9 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 		"catalog_releases",
 		"catalog_public_release_state",
 		"catalog_file_asset_versions",
+		"catalog_staged_source_nodes",
+		"catalog_source_entity_type_mappings",
+		"catalog_source_resolution_runs",
 	} {
 		assertTablePresent(t, ctx, database, table)
 	}
@@ -127,8 +132,8 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 			component,backup_kind,status,storage_uri,content_hash,byte_size,database_version,
 			completed_at,restore_started_at,restore_completed_at,verification)
 		VALUES(
-			'postgres','logical','verified','file:///local-only.dump',decode(repeat('aa',32),'hex'),1,71,
-			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`); err != nil {
+			'postgres','logical','verified','file:///local-only.dump',decode(repeat('aa',32),'hex'),1,$1,
+			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`, latestCatalogSchemaVersion); err != nil {
 		t.Fatal(err)
 	}
 	result, err = runner.Run(ctx, options)
@@ -142,8 +147,8 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 			component,backup_kind,status,storage_uri,content_hash,byte_size,database_version,
 			completed_at,restore_started_at,restore_completed_at,verification)
 		VALUES(
-			'postgres','logical','verified','r2://gildra-backups/catalog.dump',decode(repeat('bb',32),'hex'),1,71,
-			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`); err != nil {
+			'postgres','logical','verified','r2://gildra-backups/catalog.dump',decode(repeat('bb',32),'hex'),1,$1,
+			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`, latestCatalogSchemaVersion); err != nil {
 		t.Fatal(err)
 	}
 	result, err = runner.Run(ctx, options)

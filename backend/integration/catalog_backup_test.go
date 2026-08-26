@@ -80,7 +80,7 @@ func TestCatalogBackupRestoresRealPostgresArchive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !result.RestoreVerified || !result.SourceRestoreMatch || result.DatabaseVersion != 71 {
+	if !result.RestoreVerified || !result.SourceRestoreMatch || result.DatabaseVersion != latestCatalogSchemaVersion {
 		t.Fatalf("unexpected backup result: %#v", result)
 	}
 	restoredDatabase, err := sql.Open("pgx", restoreURL)
