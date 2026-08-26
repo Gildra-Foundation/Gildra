@@ -65,6 +65,22 @@ type RemoteError struct {
 	RetryAfter time.Duration
 }
 
+// OAuthError deliberately excludes the response body. OAuth providers can
+// include request-derived values in error descriptions, so importer logs must
+// only contain the HTTP status and a tightly validated machine error code.
+type OAuthError struct {
+	StatusCode int
+	Status     string
+	Code       string
+}
+
+func (e *OAuthError) Error() string {
+	if e.Code == "" {
+		return fmt.Sprintf("Battle.net OAuth returned %s", e.Status)
+	}
+	return fmt.Sprintf("Battle.net OAuth returned %s (%s)", e.Status, e.Code)
+}
+
 func (e *RemoteError) Error() string {
 	return fmt.Sprintf("Battle.net returned %s: %s", e.Status, e.Body)
 }
@@ -256,7 +272,7 @@ func (c *Client) Detail(ctx context.Context, region, namespace, locale, entityTy
 }
 
 func (c *Client) getJSON(ctx context.Context, endpoint string, target any) error {
-	for attempt := 0; attempt < requestAttempts; attempt++ {
+	for attempt := range requestAttempts {
 		err := c.getJSONOnce(ctx, endpoint, target)
 		if err == nil {
 			return nil
@@ -269,10 +285,7 @@ func (c *Client) getJSON(ctx context.Context, endpoint string, target any) error
 			if !retryableRequestError(err) || attempt == requestAttempts-1 {
 				return err
 			}
-			delay := time.Duration(1<<attempt) * time.Second
-			if delay > maxRetryDelay {
-				delay = maxRetryDelay
-			}
+			delay := min(time.Duration(1<<attempt)*time.Second, maxRetryDelay)
 			timer := time.NewTimer(delay)
 			select {
 			case <-ctx.Done():
@@ -377,7 +390,11 @@ func (c *Client) token(ctx context.Context) (string, error) {
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return "", fmt.Errorf("OAuth returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
+		return "", &OAuthError{
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+			Code:       safeOAuthErrorCode(body),
+		}
 	}
 	var result struct {
 		AccessToken string `json:"access_token"`
@@ -395,6 +412,26 @@ func (c *Client) token(ctx context.Context) (string, error) {
 	c.accessToken = result.AccessToken
 	c.tokenExpiry = time.Now().Add(time.Duration(result.ExpiresIn) * time.Second)
 	return c.accessToken, nil
+}
+
+func safeOAuthErrorCode(body []byte) string {
+	var payload struct {
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return ""
+	}
+	code := strings.TrimSpace(payload.Error)
+	if code == "" || len(code) > 64 {
+		return ""
+	}
+	for _, char := range code {
+		if (char < 'a' || char > 'z') && (char < 'A' || char > 'Z') &&
+			(char < '0' || char > '9') && char != '_' && char != '-' && char != '.' {
+			return ""
+		}
+	}
+	return code
 }
 
 func (c *Client) invalidateToken() {

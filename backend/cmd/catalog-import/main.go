@@ -357,29 +357,62 @@ func importBattleNet(
 			if err != nil {
 				return err
 			}
-			artifactID, err := store.RegisterArtifact(ctx, importContext, "blizzard_api",
+			artifactID, err := store.RegisterPendingArtifact(ctx, importContext, "blizzard_api",
 				"battlenet/"+entityType, locale, collectionURL, map[string]any{
 					"entity_type": entityType, "namespace": namespace, "locale": locale,
-					"page_size": opts.pageSize,
+					"page_size": opts.pageSize, "proof_scope": "source_record_manifest_v1",
+					"bounded": opts.maxRecords > 0, "max_records": opts.maxRecords,
 				})
 			if err != nil {
 				return err
 			}
-			if spec.Search {
-				err = importSearchType(ctx, client, store, importContext, region, namespace, locale,
-					entityType, spec, opts.pageSize, opts.maxRecords, opts.detailWorkers, artifactID, seen, written)
-			} else if spec.QuestCategories {
-				err = importQuestType(ctx, client, store, importContext, region, namespace, locale,
-					entityType, spec, opts.maxRecords, opts.detailWorkers, artifactID, seen, written)
-			} else {
-				err = importIndexType(ctx, client, store, importContext, region, namespace, locale,
+			err = runBattleNetArtifact(ctx, store, artifactID, entityType, locale, func() error {
+				if spec.Search {
+					return importSearchType(ctx, client, store, importContext, region, namespace, locale,
+						entityType, spec, opts.pageSize, opts.maxRecords, opts.detailWorkers, artifactID, seen, written)
+				}
+				if spec.QuestCategories {
+					return importQuestType(ctx, client, store, importContext, region, namespace, locale,
+						entityType, spec, opts.maxRecords, opts.detailWorkers, artifactID, seen, written)
+				}
+				return importIndexType(ctx, client, store, importContext, region, namespace, locale,
 					entityType, spec, opts.maxRecords, artifactID, seen, written)
-			}
+			})
 			if err != nil {
 				return err
 			}
 		}
 	}
+	return nil
+}
+
+func runBattleNetArtifact(
+	ctx context.Context,
+	store *catalogimport.Store,
+	artifactID uuid.UUID,
+	entityType, locale string,
+	importArtifact func() error,
+) (resultErr error) {
+	finalized := false
+	defer func() {
+		if finalized {
+			return
+		}
+		if failErr := store.FailArtifact(context.WithoutCancel(ctx), artifactID, resultErr); failErr != nil {
+			slog.Error("fail Battle.net artifact", "type", entityType, "locale", locale, "error", failErr)
+		}
+	}()
+	if err := importArtifact(); err != nil {
+		return err
+	}
+	proof, err := store.CompleteArtifactFromRecords(ctx, artifactID)
+	if err != nil {
+		return fmt.Errorf("complete Battle.net artifact %s (%s): %w", entityType, locale, err)
+	}
+	finalized = true
+	slog.Info("proved Battle.net artifact", "type", entityType, "locale", locale,
+		"records", proof.RecordCount, "manifest_bytes", proof.ByteSize,
+		"sha256", fmt.Sprintf("%x", proof.SHA256))
 	return nil
 }
 
@@ -390,21 +423,43 @@ func importBattleNetMedia(
 	importContext catalogimport.ImportContext,
 	opts options,
 	seen, written *int64,
-) error {
+) (resultErr error) {
 	candidates, err := store.BattleNetMediaCandidates(ctx, importContext.BuildID, opts.entityTypes)
 	if err != nil {
 		return err
 	}
 	artifacts := make(map[string]uuid.UUID)
+	defer func() {
+		for entityType, artifactID := range artifacts {
+			if failErr := store.FailArtifact(context.WithoutCancel(ctx), artifactID, resultErr); failErr != nil {
+				slog.Error("fail Battle.net media artifact", "type", entityType, "error", failErr)
+			}
+		}
+	}()
+	completeArtifacts := func() error {
+		for entityType, artifactID := range artifacts {
+			proof, err := store.CompleteArtifactFromRecords(ctx, artifactID)
+			if err != nil {
+				return fmt.Errorf("complete Battle.net media artifact %s: %w", entityType, err)
+			}
+			delete(artifacts, entityType)
+			slog.Info("proved Battle.net media artifact", "type", entityType,
+				"records", proof.RecordCount, "manifest_bytes", proof.ByteSize,
+				"sha256", fmt.Sprintf("%x", proof.SHA256))
+		}
+		return nil
+	}
 	for _, candidate := range candidates {
 		if opts.maxRecords > 0 && int(*seen) >= opts.maxRecords {
-			return nil
+			return completeArtifacts()
 		}
 		artifactID, exists := artifacts[candidate.EntityType]
 		if !exists {
-			artifactID, err = store.RegisterArtifact(ctx, importContext, "blizzard_api",
+			artifactID, err = store.RegisterPendingArtifact(ctx, importContext, "blizzard_api",
 				"battlenet-media/"+candidate.EntityType, "en_US", candidate.Href, map[string]any{
 					"entity_type": candidate.EntityType, "locale": "en_US", "media_only": true,
+					"proof_scope": "source_record_manifest_v1",
+					"bounded":     opts.maxRecords > 0, "max_records": opts.maxRecords,
 				})
 			if err != nil {
 				return err
@@ -419,7 +474,7 @@ func importBattleNetMedia(
 		(*written)++
 		logBattleNetProgress(candidate.EntityType, "en_US", int(*seen), *seen, *written)
 	}
-	return nil
+	return completeArtifacts()
 }
 
 func importSearchType(
@@ -548,7 +603,6 @@ func fetchBattleNetSearchDetails(
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.SetLimit(workers)
 	for i, result := range results {
-		i, result := i, result
 		group.Go(func() error {
 			payload, sourceURL, err := client.FetchLink(groupCtx, region, locale, result.Key.Href)
 			if err != nil {
