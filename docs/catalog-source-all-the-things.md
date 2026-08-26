@@ -60,5 +60,17 @@ Any importer must:
    explicitly approved;
 8. never use ATT to overwrite official names, descriptions, stats or DB2 facts.
 
+The static parser writes only to `catalog_staged_source_nodes` and
+`catalog_staged_source_references`. Each staged node retains its immutable file
+artifact, record key, ancestor path, source line, raw source text and SHA-256
+hash. References such as providers, costs, quests, maps and coordinates remain
+unresolved or explicitly resolved in staging. These tables have no public API
+projection and cannot make a catalog release publishable by themselves.
+
+Promotion is a separate reviewed operation: the source policy must permit the
+intended use, the target IDs must resolve within the same build, and a dedicated
+projection must copy only the approved fact type into its normalized table. A
+missing or ambiguous target stays in staging; it is never guessed.
+
 This source is best used as a relationship layer below Blizzard and DB2 field
 precedence, not as a replacement canonical catalog.
