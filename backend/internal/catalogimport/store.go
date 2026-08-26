@@ -740,6 +740,16 @@ func (s *Store) UpsertLocalization(ctx context.Context, ic ImportContext, record
 }
 
 func (s *Store) Finish(ctx context.Context, runID uuid.UUID, status string, seen, written int64, importErr error) error {
+	return s.finish(ctx, runID, status, seen, written, importErr, true)
+}
+
+// FinishStaged records a successful non-public import without publishing its
+// snapshot, advancing entity pointers, or activating its build.
+func (s *Store) FinishStaged(ctx context.Context, runID uuid.UUID, status string, seen, written int64, importErr error) error {
+	return s.finish(ctx, runID, status, seen, written, importErr, false)
+}
+
+func (s *Store) finish(ctx context.Context, runID uuid.UUID, status string, seen, written int64, importErr error, publish bool) error {
 	errorSummary := ""
 	if importErr != nil {
 		errorSummary = importErr.Error()
@@ -793,6 +803,9 @@ func (s *Store) Finish(ctx context.Context, runID uuid.UUID, status string, seen
 			SET status='validated',validated_at=now()
 			WHERE id=$1 AND status='staging'`, snapshotID); err != nil {
 			return err
+		}
+		if !publish {
+			return nil
 		}
 		if _, err := tx.Exec(ctx, `
 			WITH candidates AS (

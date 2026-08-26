@@ -3,6 +3,12 @@
 -- graph first. Nothing in these tables is exposed by the public catalog or
 -- considered by release publication checks until a separate reviewed
 -- projection explicitly resolves and approves it.
+ALTER TABLE catalog_import_runs
+    DROP CONSTRAINT catalog_import_runs_source_check;
+ALTER TABLE catalog_import_runs
+    ADD CONSTRAINT catalog_import_runs_source_check
+    CHECK (source IN ('battlenet','casc_db2','wago_tools','raidbots','wow_listfile','all_the_things'));
+
 CREATE TABLE catalog_staged_source_nodes (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     build_id BIGINT NOT NULL REFERENCES game_builds(id) ON DELETE CASCADE,
@@ -58,3 +64,8 @@ CREATE INDEX catalog_staged_source_references_entity_idx
 -- +goose Down
 DROP TABLE IF EXISTS catalog_staged_source_references;
 DROP TABLE IF EXISTS catalog_staged_source_nodes;
+ALTER TABLE catalog_import_runs
+    DROP CONSTRAINT catalog_import_runs_source_check;
+ALTER TABLE catalog_import_runs
+    ADD CONSTRAINT catalog_import_runs_source_check
+    CHECK (source IN ('battlenet','casc_db2','wago_tools','raidbots','wow_listfile'));

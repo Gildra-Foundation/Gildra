@@ -72,5 +72,27 @@ intended use, the target IDs must resolve within the same build, and a dedicated
 projection must copy only the approved fact type into its normalized table. A
 missing or ambiguous target stays in staging; it is never guessed.
 
+## Staging import
+
+The importer verifies that the local repository is at the exact requested Git
+revision and that tracked source files are unmodified. Its default is one sorted
+Lua file. A complete snapshot requires the explicit `-confirm` gate:
+
+```bash
+go run ./cmd/att-import \
+  -database-url "$DATABASE_URL" \
+  -source-root /srv/sources/all-the-things/db/Standard/Categories \
+  -revision 77b0b6e5cbc39dab31746c21e7c68964414e76e5 \
+  -build 69497 \
+  -version 12.1.0.69497 \
+  -max-files 0 \
+  -confirm
+```
+
+Each file is replaced in one transaction. Its artifact becomes `ready` only
+after the staged nodes and references commit and its SHA-256 and byte size are
+recorded. The completed snapshot remains `validated`; this command never marks
+the snapshot published, advances public entity versions or activates a build.
+
 This source is best used as a relationship layer below Blizzard and DB2 field
 precedence, not as a replacement canonical catalog.
