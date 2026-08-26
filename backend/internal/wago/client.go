@@ -18,6 +18,8 @@ import (
 
 var buildPattern = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+$`)
 
+const defaultResponseHeaderTimeout = 2 * time.Minute
+
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
@@ -51,13 +53,21 @@ func New(cfg Config) *Client {
 		cfg.BaseURL = "https://wago.tools"
 	}
 	if cfg.HTTPClient == nil {
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.MaxIdleConns = 10
+		transport.MaxIdleConnsPerHost = 4
+		transport.IdleConnTimeout = 90 * time.Second
+		// Wago can generate a large locale-specific export before sending the
+		// response headers. Keep this bounded independently from the longer
+		// whole-table context without treating normal export preparation as a
+		// stalled request.
+		transport.ResponseHeaderTimeout = defaultResponseHeaderTimeout
 		cfg.HTTPClient = &http.Client{
-			Timeout: 10 * time.Minute,
-			Transport: &http.Transport{
-				MaxIdleConns:        10,
-				MaxIdleConnsPerHost: 4,
-				IdleConnTimeout:     90 * time.Second,
-			},
+			// DB2 CSV bodies are intentionally streamed and can take longer than
+			// a conventional request timeout to project. Callers provide a
+			// bounded context for the whole table while the transport separately
+			// bounds the connection and response-header phases.
+			Transport: transport,
 		}
 	}
 	if cfg.RetryMax == 0 {

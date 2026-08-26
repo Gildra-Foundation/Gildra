@@ -98,3 +98,18 @@ func TestRowsWithProofOnlyCertifiesCompleteResponses(t *testing.T) {
 		t.Fatalf("complete proof = (%d,%#v), want SHA-256 and byte size for all response bytes", count, complete)
 	}
 }
+
+func TestDefaultClientLeavesStreamingBodyDeadlineToContext(t *testing.T) {
+	t.Parallel()
+	client := New(Config{})
+	if client.httpClient.Timeout != 0 {
+		t.Fatalf("HTTP client timeout = %s, want context-bounded streaming", client.httpClient.Timeout)
+	}
+	transport, ok := client.httpClient.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("HTTP transport = %T, want *http.Transport", client.httpClient.Transport)
+	}
+	if transport.ResponseHeaderTimeout != defaultResponseHeaderTimeout {
+		t.Fatalf("response header timeout = %s, want %s", transport.ResponseHeaderTimeout, defaultResponseHeaderTimeout)
+	}
+}

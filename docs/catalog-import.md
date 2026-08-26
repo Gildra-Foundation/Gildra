@@ -76,6 +76,22 @@ pins that build for the run. Configured build values are treated only as a
 diagnostic expectation; the importer warns when Blizzard is publishing a
 different namespace.
 
+Large Wago DB2 CSV responses are streamed without an `http.Client` whole-body
+deadline. Each table is instead bounded by `-wago-table-timeout` (two hours by
+default), while connection and TLS phases retain short transport timeouts and
+locale export preparation has a separate two-minute response-header bound. A
+timeout fails only the candidate artifact and snapshot; the last
+published snapshot remains selected.
+
+For Wago projections, `records_seen` and `records_written` are checkpointed in
+`catalog_import_runs` every 10,000 source rows and at each artifact boundary.
+The same checkpoints are emitted as structured logs, so an operator can tell a
+live import from a stalled download without running expensive count queries.
+`en_US` is always the canonical projection regardless of flag order; a later
+`-locales ru_RU` run can therefore retry localization without rewriting the
+canonical version, provided that the pinned build was imported in English
+first.
+
 The official importer supports `item`, `spell`, `creature`, `quest`, `talent`,
 `pvp_talent`, `profession`, `mount`, `battle_pet`, `class`, `specialization`,
 `achievement`, `item_set`, `instance`, `encounter`, and `faction`. Use `all` to
@@ -331,8 +347,10 @@ docker compose run --rm --entrypoint catalog-index api -confirm
 ```
 
 The importer joins localized `Spell` descriptions, aura descriptions and
-subtexts to the canonical `SpellName` rows. Exact calculated item stats and
-some server-side hotfix values are not derivable from a single static table.
+subtexts to the canonical `SpellName` rows. Both streamed files are registered
+and receive independent SHA-256/size proofs. Their artifact IDs are attached
+to the canonical version and to each localized projection. Exact calculated
+item stats and some server-side hotfix values are not derivable from a single static table.
 When Battle.net credentials are configured, use its build-matched item detail
 and `preview_item` response as an additional source rather than guessing those
 numbers from Raidbots allocation coefficients.
@@ -340,7 +358,10 @@ numbers from Raidbots allocation coefficients.
 ## Atomic snapshots and relationship rebuilds
 
 Every complete Wago or Raidbots run creates a staging `catalog_snapshots` row and
-registers each downloaded file as a `catalog_source_artifact`. Canonical entity
+registers each downloaded file as a `catalog_source_artifact`.
+`catalog_entity_version_artifacts` and
+`catalog_entity_localization_artifacts` preserve every contributing file when
+a projection combines tables or locales. Canonical entity
 versions become current only when the complete snapshot is published. A failed
 snapshot remains queryable for diagnostics but cannot expose a half-imported
 build.

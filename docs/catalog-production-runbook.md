@@ -29,7 +29,7 @@ Production foundation runs reject custom profiles and sources outside this list.
 No catalog import may start until all of these are true:
 
 1. the exact Retail build version is supplied;
-2. PostgreSQL is on catalog schema version 69 or newer;
+2. PostgreSQL is on catalog schema version 75 or newer;
 3. a compressed PostgreSQL backup is encrypted and stored off-host in R2, S3,
    or Swift;
 4. its SHA-256 and byte size are recorded;

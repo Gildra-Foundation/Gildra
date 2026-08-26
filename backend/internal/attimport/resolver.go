@@ -264,6 +264,16 @@ const canonicalEntityJoin = `
 					AND version_artifact.content_hash IS NOT NULL
 					AND version_artifact.byte_size IS NOT NULL
 				)
+				OR EXISTS (
+					SELECT 1
+					FROM catalog_entity_version_artifacts observation
+					JOIN catalog_source_artifacts observed_artifact
+						ON observed_artifact.id=observation.source_artifact_id
+					WHERE observation.version_id=version.id
+					  AND observed_artifact.status='ready'
+					  AND observed_artifact.content_hash IS NOT NULL
+					  AND observed_artifact.byte_size IS NOT NULL
+				)
 			  )
 		)`
 

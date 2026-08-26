@@ -24,7 +24,7 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-const latestCatalogSchemaVersion int64 = 73
+const latestCatalogSchemaVersion int64 = 75
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -93,6 +93,8 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 		"catalog_staged_source_nodes",
 		"catalog_source_entity_type_mappings",
 		"catalog_source_resolution_runs",
+		"catalog_entity_version_artifacts",
+		"catalog_entity_localization_artifacts",
 	} {
 		assertTablePresent(t, ctx, database, table)
 	}
