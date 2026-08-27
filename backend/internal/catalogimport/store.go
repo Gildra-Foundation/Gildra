@@ -585,6 +585,10 @@ func (s *Store) Enrich(ctx context.Context, ic ImportContext, record Record, sou
 	}
 
 	return pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		artifactIDs := recordArtifactIDs(record)
+		if err := observeVersionArtifacts(ctx, tx, versionID, artifactIDs); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx, `
 			INSERT INTO game_entity_localizations (version_id,locale,slug,name,description,attributes)
 			VALUES ($1,$2,$3,$4,$5,jsonb_build_object($6::text,$7::jsonb))
@@ -599,7 +603,7 @@ func (s *Store) Enrich(ctx context.Context, ic ImportContext, record Record, sou
 		if err := upsertTyped(ctx, tx, record.Type, versionID, doc); err != nil {
 			return err
 		}
-		return nil
+		return observeLocalizationArtifacts(ctx, tx, versionID, record.Locale, artifactIDs)
 	})
 }
 

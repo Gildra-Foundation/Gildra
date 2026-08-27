@@ -170,6 +170,9 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	if _, err := projectItems(ctx, pool, ic); err != nil {
 		t.Fatalf("rebuild item acquisition: %v", err)
 	}
+	if err := observeDB2LocalizationArtifacts(ctx, pool, ic); err != nil {
+		t.Fatalf("observe DB2 localization artifacts: %v", err)
+	}
 
 	assertEntityArtifact(t, ctx, pool, "spell", 100, artifacts["SpellName"])
 	assertEntityArtifact(t, ctx, pool, "item", 200, artifacts["ItemSparse"])
@@ -177,6 +180,22 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	assertEntityArtifact(t, ctx, pool, "recipe", 100, artifacts["SkillLineAbility"])
 	assertEntityArtifact(t, ctx, pool, "creature", 900, artifacts["Creature"])
 	assertEntityArtifact(t, ctx, pool, "quest", 1000, artifacts["QuestV2CliTask"])
+	for _, proof := range []struct {
+		entityType string
+		externalID int64
+		locale     string
+		artifact   uuid.UUID
+	}{
+		{"item", 200, "en_US", artifacts["ItemSparse"]},
+		{"spell", 100, "en_US", artifacts["SpellName"]},
+		{"profession", 500, "en_US", artifacts["SkillLine"]},
+		{"creature", 900, "en_US", artifacts["Creature"]},
+		{"quest", 1000, "en_US", artifacts["QuestV2CliTask"]},
+		{"recipe", 100, "en_US", artifacts["SpellName"]},
+	} {
+		assertLocalizationArtifact(t, ctx, pool, proof.entityType, proof.externalID,
+			proof.locale, proof.artifact)
+	}
 
 	assertFactArtifact(t, ctx, pool, "profession recipe", `SELECT source_artifact_id FROM catalog_profession_recipes LIMIT 1`, artifacts["SkillLineAbility"])
 	assertFactArtifact(t, ctx, pool, "recipe reagent", `SELECT source_artifact_id FROM catalog_recipe_reagents LIMIT 1`, artifacts["SpellReagents"])
@@ -408,5 +427,32 @@ func assertIconProvenance(
 		actualReferenceArtifact != referenceArtifact || actualAssetArtifact != assetArtifact {
 		t.Fatalf("unexpected %s icon provenance: name=%s file=%d reference=%s asset=%s",
 			entityType, actualName, actualFileDataID, actualReferenceArtifact, actualAssetArtifact)
+	}
+}
+
+func assertLocalizationArtifact(
+	t *testing.T,
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	entityType string,
+	externalID int64,
+	locale string,
+	expected uuid.UUID,
+) {
+	t.Helper()
+	var exists bool
+	if err := pool.QueryRow(ctx, `
+		SELECT EXISTS(
+			SELECT 1
+			FROM game_entities entity
+			JOIN catalog_entity_localization_artifacts observation
+			  ON observation.version_id=entity.latest_version_id AND observation.locale=$3
+			WHERE entity.entity_type=$1 AND entity.external_id=$2
+			  AND observation.source_artifact_id=$4
+		)`, entityType, externalID, locale, expected).Scan(&exists); err != nil {
+		t.Fatalf("read %s %s localization provenance: %v", entityType, locale, err)
+	}
+	if !exists {
+		t.Fatalf("missing %s %d %s localization artifact %s", entityType, externalID, locale, expected)
 	}
 }

@@ -148,6 +148,9 @@ func run() error {
 		projected, importErr = projectCollections(ctx, db, ic)
 		written += projected
 	}
+	if importErr == nil {
+		importErr = observeDB2LocalizationArtifacts(ctx, db, ic)
+	}
 	status := "SUCCEEDED"
 	if importErr != nil {
 		status = "FAILED"
@@ -159,6 +162,52 @@ func run() error {
 		return importErr
 	}
 	slog.Info("DB2 import completed", "build", opts.version, "seen", seen, "written", written)
+	return nil
+}
+
+func observeDB2LocalizationArtifacts(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext) error {
+	_, err := db.Exec(ctx, `
+		WITH mappings(entity_type,table_name) AS (VALUES
+			('item'::text,'ItemSparse'::text),('spell','SpellName'),('spell','Spell'),
+			('creature','Creature'),('quest','QuestV2CliTask'),('profession','SkillLine'),
+			('pvp_talent','PvpTalent'),('class','ChrClasses'),('specialization','ChrSpecialization'),
+			('currency','CurrencyTypes'),('mount','Mount'),('battle_pet','BattlePetSpecies'),
+			('toy','Toy'),('map','Map'),('area','AreaTable'),('faction','Faction'),
+			('transmog_set','TransmogSet'),('achievement','Achievement'),
+			('instance','JournalInstance'),('encounter','JournalEncounter')
+		), direct_observations AS (
+			SELECT DISTINCT version.id AS version_id,localized.locale,raw.source_artifact_id
+			FROM mappings mapping
+			JOIN game_entities entity ON entity.product_id=$1 AND entity.entity_type=mapping.entity_type
+				AND entity.deleted_at IS NULL
+			JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=$2
+			JOIN game_entity_localizations localized ON localized.version_id=version.id
+			JOIN catalog_db2_rows raw ON raw.build_id=version.build_id AND raw.table_name=mapping.table_name
+				AND raw.locale=localized.locale AND raw.row_id=entity.external_id
+			WHERE raw.source_artifact_id IS NOT NULL
+		), recipe_observations AS (
+			SELECT DISTINCT recipe_version.id AS version_id,localized.locale,raw.source_artifact_id
+			FROM game_entities recipe_entity
+			JOIN game_entity_versions recipe_version ON recipe_version.id=recipe_entity.latest_version_id
+				AND recipe_version.build_id=$2
+			JOIN catalog_recipes recipe ON recipe.version_id=recipe_version.id
+			JOIN game_entity_versions spell_version ON spell_version.id=recipe.source_spell_version_id
+			JOIN game_entities spell_entity ON spell_entity.id=spell_version.entity_id
+			JOIN game_entity_localizations localized ON localized.version_id=recipe_version.id
+			JOIN catalog_db2_rows raw ON raw.build_id=recipe_version.build_id
+				AND raw.table_name IN ('SpellName','Spell') AND raw.locale=localized.locale
+				AND raw.row_id=spell_entity.external_id
+			WHERE recipe_entity.product_id=$1 AND recipe_entity.entity_type='recipe'
+			  AND recipe_entity.deleted_at IS NULL AND raw.source_artifact_id IS NOT NULL
+		)
+		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+		SELECT version_id,locale,source_artifact_id FROM direct_observations
+		UNION
+		SELECT version_id,locale,source_artifact_id FROM recipe_observations
+		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING`, ic.ProductID, ic.BuildID)
+	if err != nil {
+		return fmt.Errorf("observe DB2 localization artifacts: %w", err)
+	}
 	return nil
 }
 
