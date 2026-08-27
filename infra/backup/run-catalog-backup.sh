@@ -25,6 +25,12 @@ if [ ! -r "$release_environment_file" ]; then
   echo "catalog backup release manifest is not readable" >&2
   exit 1
 fi
+for compose_file in compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml; do
+  if [ ! -r "$deployment_directory/$compose_file" ]; then
+    echo "catalog backup Compose file is not readable: $compose_file" >&2
+    exit 1
+  fi
+done
 
 for command in date docker flock grep install mktemp openssl; do
   if ! command -v "$command" >/dev/null 2>&1; then
@@ -63,6 +69,7 @@ compose() {
     -f "$deployment_directory/compose.yml" \
     -f "$deployment_directory/compose.prod.yml" \
     -f "$deployment_directory/compose.runtime.yml" \
+    -f "$deployment_directory/compose.backup.yml" \
     "$@"
 }
 

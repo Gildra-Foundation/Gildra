@@ -45,20 +45,29 @@ CATALOG_BACKUP_RESTORE_DATABASE_URL=postgres://backup-user:secret@isolated-postg
 CATALOG_BACKUP_S3_ENDPOINT=https://s3.example-region.example
 CATALOG_BACKUP_S3_REGION=example-region
 CATALOG_BACKUP_S3_BUCKET=gildra-backups
-CATALOG_BACKUP_S3_ACCESS_KEY_ID=replace-in-secret-store
-CATALOG_BACKUP_S3_SECRET_ACCESS_KEY=replace-in-secret-store
+CATALOG_BACKUP_S3_ACCESS_KEY_ID_FILE=/etc/gildra/catalog-backup/r2-access-key-id
+CATALOG_BACKUP_S3_SECRET_ACCESS_KEY_FILE=/etc/gildra/catalog-backup/r2-secret-access-key
 CATALOG_BACKUP_S3_PATH_STYLE=true
 CATALOG_BACKUP_URI_SCHEME=s3
 
 CATALOG_BACKUP_AGE_RECIPIENT=age1replace-with-public-recipient
-CATALOG_BACKUP_AGE_IDENTITY=AGE-SECRET-KEY-1REPLACE-IN-SECRET-STORE
-CATALOG_BACKUP_SIGNING_KEY=base64-encoded-32-byte-ed25519-seed
+CATALOG_BACKUP_AGE_IDENTITY_FILE=/etc/gildra/catalog-backup/age-identity
+CATALOG_BACKUP_SIGNING_KEY_FILE=/etc/gildra/catalog-backup/signing-key
 ```
 
-Use `CATALOG_BACKUP_URI_SCHEME=r2` for Cloudflare R2. The access policy should
-be limited to read/write access on the dedicated bucket and prefix. Enable
-bucket versioning or object retention independently so compromised application
-credentials cannot silently replace the only recovery point.
+Use `CATALOG_BACKUP_URI_SCHEME=r2` for Cloudflare R2. Create a private dedicated
+bucket and an [Object Read & Write R2 token](https://developers.cloudflare.com/r2/api/tokens/)
+scoped only to that bucket. Do not use a Global API key or an account-wide R2
+administration token in the application.
+R2 credentials are shown only once; place each value directly into its
+root-owned referenced file without copying it into `.env`, shell history, logs,
+or Terraform state. Configure object retention independently so compromised
+application credentials cannot silently remove the only recovery point.
+
+The backup-only Compose overlay mounts the four referenced files as runtime
+secrets. The application accepts either a direct value or a `_FILE` reference
+for compatibility, refuses ambiguous dual configuration, and production uses
+only the file-reference path.
 
 Generate the age identity on a trusted workstation and store a separate
 offline copy:

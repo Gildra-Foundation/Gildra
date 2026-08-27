@@ -13,7 +13,7 @@ state_directory=$test_directory/state
 fake_state=$test_directory/fake-state
 mkdir -p "$fake_bin" "$deployment_directory" "$fake_state"
 
-for file in .env current-release.env compose.yml compose.prod.yml compose.runtime.yml; do
+for file in .env current-release.env compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml; do
   : > "$deployment_directory/$file"
 done
 

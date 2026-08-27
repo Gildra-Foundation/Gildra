@@ -44,7 +44,7 @@ Create the `production` environment and add these secrets:
 - `OVH_SSH_PRIVATE_KEY`: private key for that user.
 - `OVH_SSH_KNOWN_HOSTS`: verified host key from the OVHcloud console or a trusted first connection.
 
-The deploy workflow publishes four commit-addressed GHCR images after CI succeeds, uploads only non-secret Compose, Nginx, PostgreSQL initialization, and deployment configuration, and rolls the stack forward over SSH. Runtime secrets and origin certificates remain only on the server.
+The deploy workflow publishes four commit-addressed GHCR images after CI succeeds, uploads only non-secret Compose, Nginx, PostgreSQL initialization, and deployment configuration, and rolls the stack forward over SSH. Runtime secrets, backup credential files, and origin certificates remain only on the server.
 
 Set the repository variable `PRODUCTION_DEPLOY_ENABLED=true` only after the production environment has required reviewers and the first release baseline described below. Keep the variable unset or `false` while preparing the host.
 
