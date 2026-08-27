@@ -24,7 +24,7 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-const latestCatalogSchemaVersion int64 = 82
+const latestCatalogSchemaVersion int64 = 83
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
