@@ -20,8 +20,11 @@ jobs:
       - name: Validate operations scripts
         run: |
           sh -n infra/backup/run-catalog-backup.sh
+          sh -n infra/backup/test-run-catalog-backup.sh
           sh -n infra/deploy/deploy-immutable-release.sh
           sh -n infra/deploy/test-deploy-immutable-release.sh
+      - name: Verify backup wrapper evidence
+        run: infra/backup/test-run-catalog-backup.sh
       - name: Validate immutable release policy
         env:
           WEB_IMAGE: ghcr.io/gildra-foundation/gildra-web@sha256:0000000000000000000000000000000000000000000000000000000000000000
