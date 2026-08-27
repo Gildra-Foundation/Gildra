@@ -113,6 +113,19 @@ The source PostgreSQL container is never stopped and the restore target is never
 reachable through a published host port. Do not point the restore URL at the
 source database or reuse a restored database between drills.
 
+Before allocating the restore container, the wrapper runs a configuration-only
+preflight. It validates the pinned restore image, S3/R2 settings, database URLs,
+age recipient/identity pair, Ed25519 signing key, and object prefix without
+accessing either database or object storage. This preflight is an early error
+check, not proof that remote credentials can read and write the bucket.
+
+Only one manual or scheduled drill can run at a time. The lock and non-secret
+state are stored under `/opt/gildra/var/catalog-backup` by default. Every attempt
+atomically updates `last-run.env`; a successful remote download and isolated
+restore additionally updates `last-success.json` with the command's recovery
+evidence. These local files aid monitoring, but the signed remote sidecar and
+the verified PostgreSQL manifest remain the authoritative recovery proof.
+
 Install `infra/systemd/gildra-catalog-backup.service` and its timer only after
 all backup secrets have been placed in `/opt/gildra/.env` and one manual run has
 produced a `verified` manifest. The timer runs before the daily catalog refresh,

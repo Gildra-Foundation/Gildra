@@ -28,14 +28,21 @@ func main() {
 func run() error {
 	var product, prefix, temporaryDirectory string
 	var timeout time.Duration
+	var preflight bool
 	flag.StringVar(&product, "product", "wow", "game product slug recorded with the backup")
 	flag.StringVar(&prefix, "object-prefix", "catalog-backups", "clean relative object-store prefix")
 	flag.StringVar(&temporaryDirectory, "temp-directory", "", "directory for the encrypted temporary archive")
 	flag.DurationVar(&timeout, "timeout", 2*time.Hour, "whole backup and restore-verification timeout")
+	flag.BoolVar(&preflight, "preflight", false, "validate backup configuration without accessing databases or object storage")
 	flag.Parse()
 	if timeout <= 0 {
 		return errors.New("timeout must be positive")
 	}
+	preflightEnvironment, err := boolEnvironment("CATALOG_BACKUP_PREFLIGHT", false)
+	if err != nil {
+		return err
+	}
+	preflight = preflight || preflightEnvironment
 
 	identity, err := age.ParseX25519Identity(strings.TrimSpace(os.Getenv("CATALOG_BACKUP_AGE_IDENTITY")))
 	if err != nil {
@@ -75,6 +82,11 @@ func run() error {
 	}
 	if err := options.Validate(); err != nil {
 		return err
+	}
+	if preflight {
+		return json.NewEncoder(os.Stdout).Encode(map[string]string{
+			"mode": "configuration", "product": options.Product, "status": "ok",
+		})
 	}
 	database, err := pgxpool.New(ctx, sourceDatabaseURL)
 	if err != nil {
