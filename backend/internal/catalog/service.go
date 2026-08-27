@@ -23,20 +23,22 @@ type Product struct {
 }
 
 type Entity struct {
-	ID          uuid.UUID
-	Product     string
-	Type        string
-	ExternalID  int64
-	Slug        string
-	Locale      string
-	Name        string
-	Description string
-	Tooltip     *Tooltip
-	IconName    *string
-	Quality     *int
-	BuildID     *int64
-	Payload     map[string]any
-	UpdatedAt   time.Time
+	ID             uuid.UUID
+	Product        string
+	Type           string
+	ExternalID     int64
+	Slug           string
+	Locale         string
+	ResolvedLocale string
+	LocaleFallback bool
+	Name           string
+	Description    string
+	Tooltip        *Tooltip
+	IconName       *string
+	Quality        *int
+	BuildID        *int64
+	Payload        map[string]any
+	UpdatedAt      time.Time
 }
 
 type Tooltip struct {
@@ -171,7 +173,13 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 		SELECT
 			e.id, p.slug, e.entity_type, e.external_id,
 			COALESCE(NULLIF(l.slug,''),NULLIF(fallback.slug,''),e.canonical_slug),
-			$4::text AS locale, COALESCE(NULLIF(l.name, ''), fallback.name, ''),
+			$4::text AS locale,
+			CASE WHEN $4='ru_RU' AND NULLIF(fallback.name,'') IS NOT NULL
+				AND (NULLIF(l.name,'') IS NULL OR (l.name=fallback.name AND localization_proof.proven IS NULL))
+				THEN 'en_US' ELSE $4::text END AS resolved_locale,
+			($4='ru_RU' AND NULLIF(fallback.name,'') IS NOT NULL
+				AND (NULLIF(l.name,'') IS NULL OR (l.name=fallback.name AND localization_proof.proven IS NULL))) AS locale_fallback,
+			COALESCE(NULLIF(l.name, ''), fallback.name, ''),
 			COALESCE(NULLIF(l.description, ''), fallback.description, ''),
 			v.build_id, COALESCE(v.payload, '{}'::jsonb), e.updated_at,
 			COALESCE(t.plain_text, fallback_t.plain_text),
@@ -188,6 +196,15 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 		LEFT JOIN game_entity_versions v ON v.id = e.published_version_id
 		LEFT JOIN game_entity_localizations l ON l.version_id = v.id AND l.locale = $4
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id = v.id AND fallback.locale = 'en_US'
+		LEFT JOIN LATERAL (
+			SELECT true AS proven
+			FROM catalog_entity_localization_artifacts observation
+			JOIN catalog_source_artifacts artifact ON artifact.id=observation.source_artifact_id
+			WHERE observation.version_id=v.id AND observation.locale=$4
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			  AND (artifact.locale='' OR artifact.locale=observation.locale)
+			LIMIT 1
+		) localization_proof ON true
 		LEFT JOIN catalog_entity_tooltips t ON t.version_id = v.id AND t.locale = $4
 		LEFT JOIN catalog_entity_tooltips fallback_t ON fallback_t.version_id = v.id AND fallback_t.locale = 'en_US'
 		LEFT JOIN LATERAL (
@@ -221,9 +238,9 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','recipe_info','spell_id',recipe.spell_id,
 				'professions',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',profession_entity.id,'external_id',profession_entity.external_id,'name',COALESCE(profession_name.name,profession_fallback.name,''),'min_skill_rank',link.min_skill_rank,'category_id',link.trade_skill_category_id) ORDER BY profession_entity.external_id) FROM catalog_profession_recipes link JOIN game_entity_versions profession_version ON profession_version.id=link.profession_version_id JOIN game_entities profession_entity ON profession_entity.id=profession_version.entity_id LEFT JOIN game_entity_localizations profession_name ON profession_name.version_id=link.profession_version_id AND profession_name.locale=$4 LEFT JOIN game_entity_localizations profession_fallback ON profession_fallback.version_id=link.profession_version_id AND profession_fallback.locale='en_US' WHERE link.recipe_version_id=v.id),'[]'::jsonb),
-				'reagents',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',reagent.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'quantity',reagent.quantity,'recraft_quantity',reagent.recraft_quantity,'slot',reagent.slot) ORDER BY reagent.slot) FROM catalog_recipe_reagents reagent LEFT JOIN game_entities item ON item.id=reagent.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale=$4 LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE reagent.recipe_version_id=v.id),'[]'::jsonb),
+				'reagents',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',reagent.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'quantity',reagent.quantity,'recraft_quantity',reagent.recraft_quantity,'slot',reagent.slot,'resolution_status',CASE WHEN reagent.item_external_id IS NULL THEN 'not_applicable' WHEN item.id IS NOT NULL THEN 'resolved' ELSE 'source_missing' END,'resolution_reason',CASE WHEN reagent.item_external_id IS NOT NULL AND item.id IS NULL THEN 'item_id_absent_from_source_catalog' ELSE '' END) ORDER BY reagent.slot) FROM catalog_recipe_reagents reagent LEFT JOIN game_entities item ON item.id=reagent.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale=$4 LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE reagent.recipe_version_id=v.id),'[]'::jsonb),
 				'currencies',COALESCE((SELECT jsonb_agg(jsonb_build_object('external_id',currency.currency_external_id,'quantity',currency.quantity,'recraft_quantity',currency.recraft_quantity) ORDER BY currency.order_index,currency.currency_external_id) FROM catalog_recipe_currencies currency WHERE currency.recipe_version_id=v.id),'[]'::jsonb),
-				'outputs',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',output.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'source',output.source) ORDER BY output.item_external_id) FROM catalog_recipe_outputs output LEFT JOIN game_entities item ON item.id=output.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale=$4 LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE output.recipe_version_id=v.id),'[]'::jsonb))) AS blocks
+				'outputs',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',output.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'source',output.source,'resolution_status',CASE WHEN output.item_external_id IS NULL THEN 'not_applicable' WHEN item.id IS NOT NULL THEN 'resolved' ELSE 'source_missing' END,'resolution_reason',CASE WHEN output.item_external_id IS NOT NULL AND item.id IS NULL THEN 'item_id_absent_from_source_catalog' ELSE '' END) ORDER BY output.item_external_id) FROM catalog_recipe_outputs output LEFT JOIN game_entities item ON item.id=output.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale=$4 LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE output.recipe_version_id=v.id),'[]'::jsonb))) AS blocks
 			FROM catalog_recipes recipe WHERE e.entity_type='recipe' AND recipe.version_id=v.id
 		) recipe_info ON e.entity_type='recipe'
 		LEFT JOIN LATERAL (
@@ -426,7 +443,13 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 		SELECT
 			e.id, p.slug, e.entity_type, e.external_id,
 			COALESCE(NULLIF(l.slug,''),NULLIF(fallback.slug,''),e.canonical_slug),
-			$2::text AS locale, COALESCE(NULLIF(l.name, ''), fallback.name, ''),
+			$2::text AS locale,
+			CASE WHEN $2='ru_RU' AND NULLIF(fallback.name,'') IS NOT NULL
+				AND (NULLIF(l.name,'') IS NULL OR (l.name=fallback.name AND localization_proof.proven IS NULL))
+				THEN 'en_US' ELSE $2::text END AS resolved_locale,
+			($2='ru_RU' AND NULLIF(fallback.name,'') IS NOT NULL
+				AND (NULLIF(l.name,'') IS NULL OR (l.name=fallback.name AND localization_proof.proven IS NULL))) AS locale_fallback,
+			COALESCE(NULLIF(l.name, ''), fallback.name, ''),
 			COALESCE(NULLIF(l.description, ''), fallback.description, ''),
 			v.build_id, COALESCE(v.payload, '{}'::jsonb), e.updated_at,
 			COALESCE(t.plain_text, fallback_t.plain_text),
@@ -439,6 +462,15 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 		LEFT JOIN game_entity_versions v ON v.id = e.published_version_id
 		LEFT JOIN game_entity_localizations l ON l.version_id = v.id AND l.locale = $2
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id = v.id AND fallback.locale = 'en_US'
+		LEFT JOIN LATERAL (
+			SELECT true AS proven
+			FROM catalog_entity_localization_artifacts observation
+			JOIN catalog_source_artifacts artifact ON artifact.id=observation.source_artifact_id
+			WHERE observation.version_id=v.id AND observation.locale=$2
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			  AND (artifact.locale='' OR artifact.locale=observation.locale)
+			LIMIT 1
+		) localization_proof ON true
 		LEFT JOIN catalog_entity_tooltips t ON t.version_id = v.id AND t.locale = $2
 		LEFT JOIN catalog_entity_tooltips fallback_t ON fallback_t.version_id = v.id AND fallback_t.locale = 'en_US'
 		LEFT JOIN LATERAL (
@@ -472,9 +504,9 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','recipe_info','spell_id',recipe.spell_id,
 				'professions',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',profession_entity.id,'external_id',profession_entity.external_id,'name',COALESCE(profession_name.name,profession_fallback.name,''),'min_skill_rank',link.min_skill_rank,'category_id',link.trade_skill_category_id) ORDER BY profession_entity.external_id) FROM catalog_profession_recipes link JOIN game_entity_versions profession_version ON profession_version.id=link.profession_version_id JOIN game_entities profession_entity ON profession_entity.id=profession_version.entity_id LEFT JOIN game_entity_localizations profession_name ON profession_name.version_id=link.profession_version_id AND profession_name.locale=$2 LEFT JOIN game_entity_localizations profession_fallback ON profession_fallback.version_id=link.profession_version_id AND profession_fallback.locale='en_US' WHERE link.recipe_version_id=v.id),'[]'::jsonb),
-				'reagents',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',reagent.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'quantity',reagent.quantity,'recraft_quantity',reagent.recraft_quantity,'slot',reagent.slot) ORDER BY reagent.slot) FROM catalog_recipe_reagents reagent LEFT JOIN game_entities item ON item.id=reagent.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale=$2 LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE reagent.recipe_version_id=v.id),'[]'::jsonb),
+				'reagents',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',reagent.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'quantity',reagent.quantity,'recraft_quantity',reagent.recraft_quantity,'slot',reagent.slot,'resolution_status',CASE WHEN reagent.item_external_id IS NULL THEN 'not_applicable' WHEN item.id IS NOT NULL THEN 'resolved' ELSE 'source_missing' END,'resolution_reason',CASE WHEN reagent.item_external_id IS NOT NULL AND item.id IS NULL THEN 'item_id_absent_from_source_catalog' ELSE '' END) ORDER BY reagent.slot) FROM catalog_recipe_reagents reagent LEFT JOIN game_entities item ON item.id=reagent.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale=$2 LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE reagent.recipe_version_id=v.id),'[]'::jsonb),
 				'currencies',COALESCE((SELECT jsonb_agg(jsonb_build_object('external_id',currency.currency_external_id,'quantity',currency.quantity,'recraft_quantity',currency.recraft_quantity) ORDER BY currency.order_index,currency.currency_external_id) FROM catalog_recipe_currencies currency WHERE currency.recipe_version_id=v.id),'[]'::jsonb),
-				'outputs',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',output.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'source',output.source) ORDER BY output.item_external_id) FROM catalog_recipe_outputs output LEFT JOIN game_entities item ON item.id=output.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale=$2 LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE output.recipe_version_id=v.id),'[]'::jsonb))) AS blocks
+				'outputs',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',output.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'source',output.source,'resolution_status',CASE WHEN output.item_external_id IS NULL THEN 'not_applicable' WHEN item.id IS NOT NULL THEN 'resolved' ELSE 'source_missing' END,'resolution_reason',CASE WHEN output.item_external_id IS NOT NULL AND item.id IS NULL THEN 'item_id_absent_from_source_catalog' ELSE '' END) ORDER BY output.item_external_id) FROM catalog_recipe_outputs output LEFT JOIN game_entities item ON item.id=output.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale=$2 LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE output.recipe_version_id=v.id),'[]'::jsonb))) AS blocks
 			FROM catalog_recipes recipe WHERE e.entity_type='recipe' AND recipe.version_id=v.id
 		) recipe_info ON e.entity_type='recipe'
 		LEFT JOIN LATERAL (
@@ -583,7 +615,8 @@ func scanEntity(row rowScanner) (Entity, error) {
 	var tooltipBlocks []byte
 	if err := row.Scan(
 		&entity.ID, &entity.Product, &entity.Type, &entity.ExternalID, &entity.Slug,
-		&entity.Locale, &entity.Name, &entity.Description, &entity.BuildID,
+		&entity.Locale, &entity.ResolvedLocale, &entity.LocaleFallback,
+		&entity.Name, &entity.Description, &entity.BuildID,
 		&encodedPayload, &entity.UpdatedAt, &tooltipPlain, &tooltipBlocks, &entity.IconName, &entity.Quality,
 	); err != nil {
 		return Entity{}, fmt.Errorf("scan game entity: %w", err)

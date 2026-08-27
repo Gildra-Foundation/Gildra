@@ -281,7 +281,9 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 				SELECT 1
 				FROM catalog_entity_localization_artifacts observation
 				JOIN release_artifacts artifact ON artifact.id=observation.source_artifact_id
+				JOIN catalog_source_artifacts source_artifact ON source_artifact.id=observation.source_artifact_id
 				WHERE observation.version_id=candidate.id AND observation.locale=localized.locale
+				  AND (source_artifact.locale='' OR source_artifact.locale=observation.locale)
 			) AND NOT (localized.locale='ru_RU' AND localized.name=english.name)
 		), invalid_entity_icons AS (
 			SELECT icon.external_id

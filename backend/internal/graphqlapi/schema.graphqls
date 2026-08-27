@@ -19,6 +19,8 @@ type GameEntity {
   externalId: String!
   slug: String!
   locale: Locale!
+  resolvedLocale: Locale!
+  localeFallback: Boolean!
   name: String!
   description: String!
   buildId: String

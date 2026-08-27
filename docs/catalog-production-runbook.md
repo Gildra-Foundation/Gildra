@@ -13,6 +13,22 @@ The production history still contains older tier-list migrations because an
 applied migration is immutable. Preserving those files is database compatibility,
 not permission to use those datasets in the Warcraft foundation pipeline.
 
+The machine-readable launch contract is `retail-foundation-v1` in
+`catalog_release_profiles`. Its required entity types must all meet their
+minimum counts for the exact candidate build. Optional types may be represented
+through normalized item or spell facts, and deferred types are explicitly not
+part of the v1 completeness claim. Changing that profile requires a new
+forward-only migration and review; operators must not edit it directly in a
+running database.
+
+Retail v1 requires first-class entities for achievements, areas, battle pets,
+classes, creatures/NPCs, currencies, encounters, factions, instances, items,
+maps, mounts, professions, PvP talents, quests, recipes, specializations,
+spells, toys, and transmog sets. Canonical talent and talent-tree entities are
+deferred until a build-pinned denominator is proven. Armor, weapons, reagents,
+consumables, gems, enchantments, food, flasks, and potions remain queryable as
+typed item facts and categories rather than separate completeness denominators.
+
 ## Source profile
 
 The production profile is `retail-foundation`:
@@ -29,7 +45,7 @@ Production foundation runs reject custom profiles and sources outside this list.
 No catalog import may start until all of these are true:
 
 1. the exact Retail build version is supplied;
-2. PostgreSQL is on catalog schema version 75 or newer;
+2. PostgreSQL is on catalog schema version 85 or newer;
 3. a compressed PostgreSQL backup is encrypted and stored off-host in R2, S3,
    or Swift;
 4. its SHA-256 and byte size are recorded;
@@ -143,3 +159,8 @@ do not constitute a production recovery point. Therefore the production
 recovery gate must remain closed until the backup job
 uploads the artifact, verifies a restore from that remote copy, and registers
 the resulting manifest. Do not bypass the gate with a manual status change.
+
+The API exposes both `locale` (requested) and `resolvedLocale` (actual source)
+plus `localeFallback`. Recipe reagent and output blocks expose
+`resolution_status` and `resolution_reason`, so known source gaps are not
+presented as valid empty data.

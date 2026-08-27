@@ -389,6 +389,13 @@ export interface components {
             slug: string;
             /** @enum {string} */
             locale: "en_US" | "ru_RU";
+            /**
+             * @description Locale that actually supplied the canonical displayed name.
+             * @enum {string}
+             */
+            resolvedLocale: "en_US" | "ru_RU";
+            /** @description True when the requested locale was unavailable and the English source value was returned. */
+            localeFallback: boolean;
             name: string;
             description: string;
             tooltip?: components["schemas"]["GameTooltip"];

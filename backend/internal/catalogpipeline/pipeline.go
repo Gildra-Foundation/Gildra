@@ -27,7 +27,7 @@ var ErrRecoveryGate = errors.New("production catalog import requires a recent ve
 
 const (
 	ProfileRetailFoundation = "retail-foundation"
-	minimumCatalogSchema    = 75
+	minimumCatalogSchema    = 85
 )
 
 type Options struct {

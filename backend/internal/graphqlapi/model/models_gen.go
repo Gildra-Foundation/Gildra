@@ -11,17 +11,19 @@ import (
 )
 
 type GameEntity struct {
-	ID          string         `json:"id"`
-	Product     string         `json:"product"`
-	Type        string         `json:"type"`
-	ExternalID  string         `json:"externalId"`
-	Slug        string         `json:"slug"`
-	Locale      Locale         `json:"locale"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	BuildID     *string        `json:"buildId,omitempty"`
-	Payload     map[string]any `json:"payload"`
-	UpdatedAt   time.Time      `json:"updatedAt"`
+	ID             string         `json:"id"`
+	Product        string         `json:"product"`
+	Type           string         `json:"type"`
+	ExternalID     string         `json:"externalId"`
+	Slug           string         `json:"slug"`
+	Locale         Locale         `json:"locale"`
+	ResolvedLocale Locale         `json:"resolvedLocale"`
+	LocaleFallback bool           `json:"localeFallback"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	BuildID        *string        `json:"buildId,omitempty"`
+	Payload        map[string]any `json:"payload"`
+	UpdatedAt      time.Time      `json:"updatedAt"`
 }
 
 type GameEntityConnection struct {
