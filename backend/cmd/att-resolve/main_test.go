@@ -45,3 +45,15 @@ func TestParseOptionsAcceptsExplicitConfirmation(t *testing.T) {
 		t.Fatal("expected explicit confirmation")
 	}
 }
+
+func TestParseOptionsRequiresConfirmationForNPCProjection(t *testing.T) {
+	t.Parallel()
+	_, err := parseOptions([]string{
+		"-database-url", "postgres://example.test/gildra",
+		"-snapshot-id", "a2dfadbb-c166-4634-a329-34db945477a2",
+		"-project-npc-facts",
+	}, func(string) string { return "" })
+	if err == nil {
+		t.Fatal("NPC fact projection must require explicit confirmation")
+	}
+}
