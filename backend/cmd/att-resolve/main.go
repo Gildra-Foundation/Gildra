@@ -21,6 +21,7 @@ type options struct {
 	databaseURL string
 	snapshotID  uuid.UUID
 	confirm     bool
+	projectNPC  bool
 }
 
 func main() {
@@ -64,6 +65,14 @@ func run(args []string, getenv func(string) string) error {
 		return err
 	}
 	logReport("ATT resolution completed", report)
+	if opts.projectNPC {
+		facts, err := store.ProjectNPCFacts(ctx, opts.snapshotID)
+		if err != nil {
+			return err
+		}
+		slog.Info("ATT NPC facts projected", "snapshot_id", facts.SnapshotID,
+			"build_id", facts.BuildID, "roles", facts.Roles, "locations", facts.Locations)
+	}
 	return nil
 }
 
@@ -73,9 +82,11 @@ func parseOptions(args []string, getenv func(string) string) (options, error) {
 	databaseURL := strings.TrimSpace(getenv("DATABASE_URL"))
 	snapshotValue := strings.TrimSpace(getenv("ATT_SNAPSHOT_ID"))
 	confirm := false
+	projectNPC := false
 	flags.StringVar(&databaseURL, "database-url", databaseURL, "PostgreSQL connection string")
 	flags.StringVar(&snapshotValue, "snapshot-id", snapshotValue, "validated ATT catalog snapshot UUID")
 	flags.BoolVar(&confirm, "confirm", false, "persist the previewed resolution classifications")
+	flags.BoolVar(&projectNPC, "project-npc-facts", false, "project resolved quest-giver roles and coordinates")
 	if err := flags.Parse(args); err != nil {
 		return options{}, err
 	}
@@ -90,7 +101,10 @@ func parseOptions(args []string, getenv func(string) string) (options, error) {
 	if err != nil || snapshotID == uuid.Nil {
 		return options{}, errors.New("ATT_SNAPSHOT_ID or -snapshot-id must be a non-zero UUID")
 	}
-	return options{databaseURL: databaseURL, snapshotID: snapshotID, confirm: confirm}, nil
+	if projectNPC && !confirm {
+		return options{}, errors.New("-project-npc-facts requires -confirm")
+	}
+	return options{databaseURL: databaseURL, snapshotID: snapshotID, confirm: confirm, projectNPC: projectNPC}, nil
 }
 
 func logReport(message string, report attimport.ResolutionReport) {
