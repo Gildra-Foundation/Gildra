@@ -71,6 +71,10 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	rows := []db2ProofRow{
 		{"SpellName", 100, map[string]any{"Name_lang": "Provenance Recipe"}},
 		{"Spell", 100, map[string]any{"Description_lang": "Creates a provenanced item."}},
+		{"SpellMisc", 9000, map[string]any{"SpellID": "100", "DifficultyID": "0", "SchoolMask": "4", "CastingTimeIndex": "1", "RangeIndex": "1"}},
+		{"SpellCastTimes", 1, map[string]any{"Base": "1500", "Minimum": "1500"}},
+		{"SpellRange", 1, map[string]any{"RangeMin_0": "0", "RangeMax_0": "40"}},
+		{"SpellCooldowns", 9001, map[string]any{"SpellID": "100", "DifficultyID": "0", "RecoveryTime": "3000", "StartRecoveryTime": "1500", "CategoryRecoveryTime": "0"}},
 		{"SpellEffect", 800, map[string]any{"SpellID": "100", "EffectIndex": "0", "DifficultyID": "0", "Effect": "24", "EffectItemType": "200"}},
 		{"ItemSparse", 200, proofItem("Provenance Output")},
 		{"ItemSparse", 201, proofItem("Provenance Reagent")},
@@ -157,6 +161,30 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	assertFactArtifact(t, ctx, pool, "recipe output", `SELECT source_artifact_id FROM catalog_recipe_outputs LIMIT 1`, artifacts["SpellEffect"])
 	assertFactArtifact(t, ctx, pool, "item effect", `SELECT source_artifact_id FROM catalog_item_effects LIMIT 1`, artifacts["ItemXItemEffect"])
 	assertFactArtifact(t, ctx, pool, "spell effect", `SELECT source_artifact_id FROM catalog_spell_effects WHERE source='db2' LIMIT 1`, artifacts["SpellEffect"])
+	var school string
+	var schoolMask, castTimeMS, cooldownMS int
+	var maxRange float64
+	var miscArtifact, castArtifact, cooldownArtifact, rangeArtifact uuid.UUID
+	if err := pool.QueryRow(ctx, `
+		SELECT detail.school,detail.school_mask,detail.cast_time_ms,detail.cooldown_ms,detail.max_range,
+			detail.misc_source_artifact_id,detail.cast_time_source_artifact_id,
+			detail.cooldown_source_artifact_id,detail.range_source_artifact_id
+		FROM catalog_spells detail
+		JOIN game_entities entity ON entity.latest_version_id=detail.version_id
+		WHERE entity.entity_type='spell' AND entity.external_id=100`).Scan(
+		&school, &schoolMask, &castTimeMS, &cooldownMS, &maxRange,
+		&miscArtifact, &castArtifact, &cooldownArtifact, &rangeArtifact,
+	); err != nil {
+		t.Fatalf("read spell mechanics: %v", err)
+	}
+	if school != "fire" || schoolMask != 4 || castTimeMS != 1500 || cooldownMS != 3000 || maxRange != 40 {
+		t.Fatalf("unexpected spell mechanics: school=%s mask=%d cast=%d cooldown=%d range=%v",
+			school, schoolMask, castTimeMS, cooldownMS, maxRange)
+	}
+	if miscArtifact != artifacts["SpellMisc"] || castArtifact != artifacts["SpellCastTimes"] ||
+		cooldownArtifact != artifacts["SpellCooldowns"] || rangeArtifact != artifacts["SpellRange"] {
+		t.Fatal("spell mechanic artifact provenance does not match source DB2 tables")
+	}
 	assertFactArtifact(t, ctx, pool, "crafting acquisition", `SELECT source_artifact_id FROM catalog_item_acquisition_sources WHERE source_type='crafting_recipe' LIMIT 1`, artifacts["SpellEffect"])
 }
 
