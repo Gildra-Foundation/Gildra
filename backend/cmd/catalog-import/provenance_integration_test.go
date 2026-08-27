@@ -119,7 +119,7 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 		WHERE version.snapshot_id=$1`, ic.SnapshotID).Scan(&localizations); err != nil {
 		t.Fatal(err)
 	}
-	if versions != 2 || unproven != 0 || artifacts != 4 || localizations != 4 {
+	if versions != 2 || unproven != 0 || artifacts != 6 || localizations != 4 {
 		t.Fatalf("Wago provenance counts = versions:%d unproven:%d artifacts:%d localizations:%d",
 			versions, unproven, artifacts, localizations)
 	}
@@ -158,6 +158,35 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 	if manifestStatus != "ready" || manifestHashBytes != 32 || manifestByteSize != proof.ByteSize || manifestRecords != 2 {
 		t.Fatalf("persisted Battle.net proof = status:%s hash:%d bytes:%d records:%d",
 			manifestStatus, manifestHashBytes, manifestByteSize, manifestRecords)
+	}
+	enrichment := catalogimport.Record{
+		Type:             "item",
+		ExternalID:       25,
+		Locale:           "ru_RU",
+		Payload:          []byte(`{"id":25,"name":"Предмет из официального API"}`),
+		SourceURL:        server.URL + "/battle-net-test/1",
+		SourceArtifactID: &manifestArtifactID,
+	}
+	if err := store.Enrich(ctx, ic, enrichment, "blizzard_api"); err != nil {
+		t.Fatalf("enrich localized item: %v", err)
+	}
+	var localizationProofs, versionProofs int64
+	if err := pool.QueryRow(ctx, `
+		SELECT
+			(SELECT count(*) FROM catalog_entity_localization_artifacts proof
+			 JOIN game_entity_versions version ON version.id=proof.version_id AND version.build_id=$2
+			 JOIN game_entities entity ON entity.id=version.entity_id
+			 WHERE entity.entity_type='item' AND entity.external_id=25
+			   AND proof.locale='ru_RU' AND proof.source_artifact_id=$1),
+			(SELECT count(*) FROM catalog_entity_version_artifacts proof
+			 JOIN game_entity_versions version ON version.id=proof.version_id AND version.build_id=$2
+			 JOIN game_entities entity ON entity.id=version.entity_id
+			 WHERE entity.entity_type='item' AND entity.external_id=25
+			   AND proof.source_artifact_id=$1)`, manifestArtifactID, ic.BuildID).Scan(&localizationProofs, &versionProofs); err != nil {
+		t.Fatal(err)
+	}
+	if localizationProofs != 1 || versionProofs != 1 {
+		t.Fatalf("enrichment proof counts = localization:%d version:%d", localizationProofs, versionProofs)
 	}
 	// The bounded fixture does not download complete CSV bodies. Mark its
 	// synthetic artifacts with deterministic fixture proofs so the resolver can
