@@ -80,6 +80,34 @@ services:
       redis: { condition: service_healthy }
       scraper-worker: { condition: service_healthy }
 
+  catalog-backup:
+    profiles: ["operations"]
+    image: ${API_IMAGE:-gildra-api:local}
+    build: ./backend
+    entrypoint: ["catalog-backup"]
+    command:
+      - -product
+      - wow
+      - -object-prefix
+      - ${CATALOG_BACKUP_OBJECT_PREFIX:-catalog-backups}
+      - -timeout
+      - ${CATALOG_BACKUP_TIMEOUT:-2h}
+    environment:
+      DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra?sslmode=disable
+      CATALOG_BACKUP_RESTORE_DATABASE_URL: ${CATALOG_BACKUP_RESTORE_DATABASE_URL:-}
+      CATALOG_BACKUP_S3_ENDPOINT: ${CATALOG_BACKUP_S3_ENDPOINT:-}
+      CATALOG_BACKUP_S3_REGION: ${CATALOG_BACKUP_S3_REGION:-auto}
+      CATALOG_BACKUP_S3_BUCKET: ${CATALOG_BACKUP_S3_BUCKET:-}
+      CATALOG_BACKUP_S3_ACCESS_KEY_ID: ${CATALOG_BACKUP_S3_ACCESS_KEY_ID:-}
+      CATALOG_BACKUP_S3_SECRET_ACCESS_KEY: ${CATALOG_BACKUP_S3_SECRET_ACCESS_KEY:-}
+      CATALOG_BACKUP_S3_PATH_STYLE: ${CATALOG_BACKUP_S3_PATH_STYLE:-true}
+      CATALOG_BACKUP_URI_SCHEME: ${CATALOG_BACKUP_URI_SCHEME:-r2}
+      CATALOG_BACKUP_AGE_RECIPIENT: ${CATALOG_BACKUP_AGE_RECIPIENT:-}
+      CATALOG_BACKUP_AGE_IDENTITY: ${CATALOG_BACKUP_AGE_IDENTITY:-}
+      CATALOG_BACKUP_SIGNING_KEY: ${CATALOG_BACKUP_SIGNING_KEY:-}
+    depends_on:
+      postgres: { condition: service_healthy }
+
   web:
     image: ${WEB_IMAGE:-gildra-web:local}
     build: .
