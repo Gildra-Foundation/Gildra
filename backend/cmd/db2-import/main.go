@@ -199,11 +199,18 @@ func observeDB2LocalizationArtifacts(ctx context.Context, db *pgxpool.Pool, ic c
 				AND raw.row_id=spell_entity.external_id
 			WHERE recipe_entity.product_id=$1 AND recipe_entity.entity_type='recipe'
 			  AND recipe_entity.deleted_at IS NULL AND raw.source_artifact_id IS NOT NULL
+		), observations AS (
+			SELECT version_id,locale,source_artifact_id FROM direct_observations
+			UNION
+			SELECT version_id,locale,source_artifact_id FROM recipe_observations
+		), version_observations AS (
+			INSERT INTO catalog_entity_version_artifacts(version_id,source_artifact_id)
+			SELECT DISTINCT version_id,source_artifact_id FROM observations
+			ON CONFLICT(version_id,source_artifact_id) DO NOTHING
+			RETURNING version_id
 		)
 		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
-		SELECT version_id,locale,source_artifact_id FROM direct_observations
-		UNION
-		SELECT version_id,locale,source_artifact_id FROM recipe_observations
+		SELECT version_id,locale,source_artifact_id FROM observations
 		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING`, ic.ProductID, ic.BuildID)
 	if err != nil {
 		return fmt.Errorf("observe DB2 localization artifacts: %w", err)

@@ -79,7 +79,13 @@ jobs:
         with:
           go-version: 1.26.6
           cache-dependency-path: backend/go.sum
-      - run: go test -tags=integration -count=1 -timeout=10m ./integration
+      - name: Verify PostgreSQL migrations, importers, projections, and provenance
+        run: >-
+          go test -tags=integration -count=1 -timeout=10m
+          ./integration
+          ./cmd/catalog-import
+          ./cmd/db2-import
+          ./cmd/listfile-import
 
   scraper:
     runs-on: ubuntu-latest

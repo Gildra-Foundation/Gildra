@@ -96,9 +96,7 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 				 FROM catalog_source_artifacts artifact
 				 JOIN catalog_snapshots artifact_snapshot ON artifact_snapshot.id=artifact.snapshot_id
 				 WHERE artifact_snapshot.release_id=$1
-				   AND (artifact.status<>'ready' OR (
-					artifact.source='wow_listfile' AND (artifact.content_hash IS NULL OR artifact.byte_size IS NULL)
-				   )))
+				   AND (artifact.status<>'ready' OR artifact.content_hash IS NULL OR artifact.byte_size IS NULL))
 			FROM catalog_snapshots snapshot WHERE snapshot.release_id=$1`, releaseID).
 			Scan(&snapshots, &invalidSnapshots, &invalidArtifacts); err != nil {
 			return fmt.Errorf("validate release snapshots: %w", err)
@@ -207,13 +205,14 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 }
 
 func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UUID, buildID int64) error {
-	var unprovenVersions, unprovenFacts int64
+	var unprovenVersions, unprovenFacts, unprovenLocalizations, invalidIcons int64
 	err := tx.QueryRow(ctx, `
 		WITH release_artifacts AS (
 			SELECT artifact.id
 			FROM catalog_source_artifacts artifact
 			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
 			WHERE snapshot.release_id=$1 AND artifact.status='ready'
+			  AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
 		), candidate_versions AS (
 			SELECT version.id,version.source_artifact_id
 			FROM game_entity_versions version
@@ -229,6 +228,8 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 			UNION ALL SELECT reagent.recipe_version_id,reagent.source_artifact_id FROM catalog_recipe_reagents reagent
 			UNION ALL SELECT currency.recipe_version_id,currency.source_artifact_id FROM catalog_recipe_currencies currency
 			UNION ALL SELECT output.recipe_version_id,output.source_artifact_id FROM catalog_recipe_outputs output
+			UNION ALL SELECT display.version_id,display.source_artifact_id FROM catalog_creature_displays display
+			UNION ALL SELECT difficulty.version_id,difficulty.source_artifact_id FROM catalog_creature_difficulties difficulty
 			UNION ALL
 			SELECT variant.item_version_id,effect.source_artifact_id
 			FROM catalog_item_variant_effects effect
@@ -248,25 +249,63 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 			SELECT reward.quest_id
 			FROM catalog_quest_rewards reward
 			LEFT JOIN release_artifacts artifact ON artifact.id=reward.source_artifact_id
-			WHERE reward.build_id=$2 AND artifact.id IS NULL
+			WHERE reward.build_id=$2 AND (artifact.id IS NULL OR reward.source_build_id IS NULL
+			  OR (reward.reward_type='item' AND reward.external_id IS NOT NULL AND reward.item_entity_id IS NULL))
 		), unproven_file_assets AS (
 			SELECT candidate.file_data_id
 			FROM catalog_file_asset_versions candidate
 			JOIN catalog_snapshots snapshot ON snapshot.id=candidate.snapshot_id
 			LEFT JOIN release_artifacts artifact ON artifact.id=candidate.source_artifact_id
 			WHERE snapshot.release_id=$1 AND artifact.id IS NULL
+		), unproven_creature_build_facts AS (
+			SELECT info.external_id
+			FROM catalog_creature_display_info info
+			LEFT JOIN release_artifacts artifact ON artifact.id=info.source_artifact_id
+			WHERE info.build_id=$2 AND artifact.id IS NULL
+			UNION ALL
+			SELECT model.external_id
+			FROM catalog_creature_models model
+			LEFT JOIN release_artifacts artifact ON artifact.id=model.source_artifact_id
+			WHERE model.build_id=$2 AND artifact.id IS NULL
+			UNION ALL
+			SELECT taxon.external_id
+			FROM catalog_creature_taxa taxon
+			LEFT JOIN release_artifacts artifact ON artifact.id=taxon.source_artifact_id
+			WHERE taxon.build_id=$2 AND artifact.id IS NULL
+		), unproven_localizations AS (
+			SELECT localized.version_id
+			FROM candidate_versions candidate
+			JOIN game_entity_localizations localized ON localized.version_id=candidate.id
+			LEFT JOIN game_entity_localizations english ON english.version_id=candidate.id AND english.locale='en_US'
+			WHERE NOT EXISTS (
+				SELECT 1
+				FROM catalog_entity_localization_artifacts observation
+				JOIN release_artifacts artifact ON artifact.id=observation.source_artifact_id
+				WHERE observation.version_id=candidate.id AND observation.locale=localized.locale
+			) AND NOT (localized.locale='ru_RU' AND localized.name=english.name)
+		), invalid_entity_icons AS (
+			SELECT icon.external_id
+			FROM catalog_entity_icons icon
+			LEFT JOIN release_artifacts reference ON reference.id=icon.source_artifact_id
+			LEFT JOIN release_artifacts asset ON asset.id=icon.asset_source_artifact_id
+			WHERE icon.build_id=$2 AND (reference.id IS NULL OR (icon.file_data_id IS NOT NULL AND asset.id IS NULL))
 		)
 		SELECT
 			(SELECT count(*) FROM unproven_versions),
 			(SELECT count(*) FROM unproven_normalized_facts) +
 			(SELECT count(*) FROM unproven_quest_rewards) +
-			(SELECT count(*) FROM unproven_file_assets)`, releaseID, buildID).Scan(&unprovenVersions, &unprovenFacts)
+			(SELECT count(*) FROM unproven_file_assets) +
+			(SELECT count(*) FROM unproven_creature_build_facts),
+			(SELECT count(*) FROM unproven_localizations),
+			(SELECT count(*) FROM invalid_entity_icons)`, releaseID, buildID).Scan(
+		&unprovenVersions, &unprovenFacts, &unprovenLocalizations, &invalidIcons,
+	)
 	if err != nil {
 		return fmt.Errorf("validate catalog release provenance: %w", err)
 	}
-	if unprovenVersions != 0 || unprovenFacts != 0 {
-		return fmt.Errorf("%w: missing_provenance versions=%d normalized_facts=%d",
-			ErrReleaseNotPublishable, unprovenVersions, unprovenFacts)
+	if unprovenVersions != 0 || unprovenFacts != 0 || unprovenLocalizations != 0 || invalidIcons != 0 {
+		return fmt.Errorf("%w: missing_provenance versions=%d normalized_facts=%d localizations=%d icons=%d",
+			ErrReleaseNotPublishable, unprovenVersions, unprovenFacts, unprovenLocalizations, invalidIcons)
 	}
 	return nil
 }

@@ -180,6 +180,8 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	assertEntityArtifact(t, ctx, pool, "recipe", 100, artifacts["SkillLineAbility"])
 	assertEntityArtifact(t, ctx, pool, "creature", 900, artifacts["Creature"])
 	assertEntityArtifact(t, ctx, pool, "quest", 1000, artifacts["QuestV2CliTask"])
+	assertVersionObservation(t, ctx, pool, "item", 200, artifacts["ItemSparse"])
+	assertVersionObservation(t, ctx, pool, "recipe", 100, artifacts["SpellName"])
 	for _, proof := range []struct {
 		entityType string
 		externalID int64
@@ -387,6 +389,25 @@ func assertEntityArtifact(t *testing.T, ctx context.Context, pool *pgxpool.Pool,
 		FROM game_entities entity
 		JOIN game_entity_versions version ON version.id=entity.latest_version_id
 		WHERE entity.entity_type=$1 AND entity.external_id=$2`, expected, entityType, externalID)
+}
+
+func assertVersionObservation(t *testing.T, ctx context.Context, pool *pgxpool.Pool, entityType string, externalID int64, expected uuid.UUID) {
+	t.Helper()
+	var exists bool
+	if err := pool.QueryRow(ctx, `
+		SELECT EXISTS(
+			SELECT 1
+			FROM game_entities entity
+			JOIN catalog_entity_version_artifacts observation
+			  ON observation.version_id=entity.latest_version_id
+			WHERE entity.entity_type=$1 AND entity.external_id=$2
+			  AND observation.source_artifact_id=$3
+		)`, entityType, externalID, expected).Scan(&exists); err != nil {
+		t.Fatalf("read %s version provenance: %v", entityType, err)
+	}
+	if !exists {
+		t.Fatalf("missing %s %d version artifact %s", entityType, externalID, expected)
+	}
 }
 
 func assertFactArtifact(t *testing.T, ctx context.Context, pool *pgxpool.Pool, label, query string, expected uuid.UUID, args ...any) {

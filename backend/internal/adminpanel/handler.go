@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -17,9 +18,13 @@ import (
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/analytics"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/auth"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
 )
 
-const sessionCookie = "gildra_admin_session"
+const (
+	sessionCookie     = "gildra_admin_session"
+	readinessCacheTTL = 5 * time.Minute
+)
 
 type Handler struct {
 	auth       *auth.Service
@@ -27,6 +32,10 @@ type Handler struct {
 	postgres   *pgxpool.Pool
 	clickhouse driver.Conn
 	redis      *redis.Client
+
+	readinessMu       sync.Mutex
+	readinessCached   catalogquality.ReadinessReport
+	readinessCachedAt time.Time
 }
 
 type statusItem struct {
@@ -256,12 +265,41 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /v1/auth/logout", h.logout)
 	mux.HandleFunc("GET /v1/auth/me", h.me)
 	mux.HandleFunc("GET /v1/admin/dashboard", h.dashboard)
+	mux.HandleFunc("GET /v1/admin/catalog-readiness", h.catalogReadiness)
 	mux.HandleFunc("GET /v1/admin/datasets", h.datasets)
 	mux.HandleFunc("GET /v1/admin/datasets/{slug}/runs", h.datasetRunsAPI)
 	mux.HandleFunc("GET /v1/admin/tierlist-wowhead", h.tierlist)
 	mux.HandleFunc("GET /v1/admin/tierlist-archon", h.archonTierlist)
 	mux.HandleFunc("GET /v1/admin/tierlist-wowgg", h.wowGGTierlist)
 	mux.HandleFunc("GET /v1/admin/tierlist-icyveins", h.icyVeinsTierlist)
+}
+
+func (h *Handler) catalogReadiness(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.authorize(w, r); !ok {
+		return
+	}
+	report, err := h.cachedCatalogReadiness(r.Context())
+	if err != nil {
+		slog.Error("evaluate catalog readiness", "error", err)
+		writeError(w, http.StatusInternalServerError, "catalog_readiness_unavailable", "Не удалось проверить готовность каталога")
+		return
+	}
+	writeJSON(w, http.StatusOK, report)
+}
+
+func (h *Handler) cachedCatalogReadiness(ctx context.Context) (catalogquality.ReadinessReport, error) {
+	h.readinessMu.Lock()
+	defer h.readinessMu.Unlock()
+	if !h.readinessCachedAt.IsZero() && time.Since(h.readinessCachedAt) < readinessCacheTTL {
+		return h.readinessCached, nil
+	}
+	report, err := catalogquality.EvaluateReadiness(ctx, h.postgres, "wow", "")
+	if err != nil {
+		return catalogquality.ReadinessReport{}, err
+	}
+	h.readinessCached = report
+	h.readinessCachedAt = time.Now()
+	return report, nil
 }
 
 func (h *Handler) datasetRunsAPI(w http.ResponseWriter, r *http.Request) {
@@ -629,9 +667,15 @@ func (h *Handler) dashboard(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Warn("load catalog health", "error", err)
 	}
+	readiness, err := h.cachedCatalogReadiness(ctx)
+	if err != nil {
+		slog.Warn("load catalog readiness", "error", err)
+		readiness.Checks = make([]catalogquality.ReadinessCheck, 0)
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"generatedAt": time.Now().UTC(), "user": user, "systems": h.systemStatuses(ctx),
 		"dataset": dataset, "runs": runs, "analytics": overview, "catalog": catalogStatus,
+		"catalogReadiness": readiness,
 		"endpoints": []map[string]string{
 			{"method": "GET", "path": "/v1/game/products", "description": "Список игровых продуктов"},
 			{"method": "GET", "path": "/v1/game/entity-types", "description": "Полнота каталога по типам данных"},
@@ -644,6 +688,7 @@ func (h *Handler) dashboard(w http.ResponseWriter, r *http.Request) {
 			{"method": "GET", "path": "/v1/game/source-policies", "description": "Правила использования источников"},
 			{"method": "GET", "path": "/v1/game/relation-types", "description": "Онтология связей каталога"},
 			{"method": "GET", "path": "/v1/game/sitemap-entries", "description": "Сегментированный SEO read-model"},
+			{"method": "GET", "path": "/v1/admin/catalog-readiness", "description": "Проверки готовности базы к production"},
 			{"method": "GET", "path": "/v1/admin/tierlist-wowgg", "description": "Все срезы и фильтры Tierlist — wow.gg"},
 			{"method": "GET", "path": "/v1/admin/tierlist-icyveins", "description": "Тиры, разборы и гайды Tierlist — Icy Veins"},
 			{"method": "POST", "path": "/v1/analytics/events", "description": "Приём событий аналитики"},

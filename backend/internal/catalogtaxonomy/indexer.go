@@ -1087,13 +1087,31 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 		), candidates AS MATERIALIZED (
 			SELECT entity.id,entity.entity_type,entity.external_id,version.build_id,
 				COALESCE(item.source_artifact_id,
-					CASE WHEN direct.file_data_id IS NOT NULL THEN version.source_artifact_id END,
+					CASE WHEN direct.file_data_id IS NOT NULL THEN direct_proof.source_artifact_id END,
 					spell.source_artifact_id,creature.source_artifact_id,version.source_artifact_id) AS source_artifact_id,
 				COALESCE(direct.file_data_id,item.file_data_id,spell.file_data_id,creature.file_data_id) AS file_data_id,
 				NULLIF(BTRIM(version.payload #>> '{raidbots,icon}'),'') AS raidbots_icon,
 				NULLIF(BTRIM(version.payload #>> '{raidbots,spellIcon}'),'') AS raidbots_spell_icon
 			FROM game_entities entity
 			JOIN game_entity_versions version ON version.id=entity.latest_version_id
+			LEFT JOIN catalog_source_artifacts version_artifact ON version_artifact.id=version.source_artifact_id
+			LEFT JOIN LATERAL (
+				SELECT artifact.id AS source_artifact_id
+				FROM catalog_entity_version_artifacts observation
+				JOIN catalog_source_artifacts artifact ON artifact.id=observation.source_artifact_id
+				WHERE observation.version_id=version.id AND artifact.status='ready'
+				  AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+				ORDER BY (artifact.artifact_key=version_artifact.artifact_key) DESC,
+					(artifact.locale=version_artifact.locale) DESC,artifact.fetched_at DESC
+				LIMIT 1
+			) observed_proof ON true
+			CROSS JOIN LATERAL (
+				SELECT CASE
+					WHEN version_artifact.status='ready' AND version_artifact.content_hash IS NOT NULL
+						AND version_artifact.byte_size IS NOT NULL THEN version_artifact.id
+					ELSE observed_proof.source_artifact_id
+				END AS source_artifact_id
+			) direct_proof
 			CROSS JOIN LATERAL (SELECT CASE
 				WHEN COALESCE(NULLIF(version.payload->>'icon_file_data_id',''),
 					NULLIF(version.payload->>'InventoryIconFileID',''),NULLIF(version.payload->>'IconFileID',''),
