@@ -558,7 +558,9 @@ func toAPIEntity(entity catalog.Entity) api.GameEntity {
 		Id: entity.ID, Product: entity.Product, Type: entity.Type,
 		ExternalId: entity.ExternalID, Slug: entity.Slug,
 		Locale: api.GameEntityLocale(entity.Locale), Name: entity.Name,
-		Description: entity.Description, BuildId: entity.BuildID,
+		ResolvedLocale: api.GameEntityResolvedLocale(entity.ResolvedLocale),
+		LocaleFallback: entity.LocaleFallback,
+		Description:    entity.Description, BuildId: entity.BuildID,
 		UpdatedAt: entity.UpdatedAt,
 	}
 	if entity.Tooltip != nil {

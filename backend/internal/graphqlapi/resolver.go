@@ -24,7 +24,8 @@ func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 	result := &model.GameEntity{
 		ID: entity.ID.String(), Product: entity.Product, Type: entity.Type,
 		ExternalID: strconv.FormatInt(entity.ExternalID, 10), Slug: entity.Slug,
-		Locale: model.Locale(entity.Locale), Name: entity.Name, Description: entity.Description,
+		Locale: model.Locale(entity.Locale), ResolvedLocale: model.Locale(entity.ResolvedLocale),
+		LocaleFallback: entity.LocaleFallback, Name: entity.Name, Description: entity.Description,
 		Payload: entity.Payload, UpdatedAt: entity.UpdatedAt,
 	}
 	if entity.BuildID != nil {

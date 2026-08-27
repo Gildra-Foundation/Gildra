@@ -52,7 +52,7 @@ func EvaluateReadiness(
 
 	report := ReadinessReport{
 		Product: product, GeneratedAt: time.Now().UTC(), DataReady: true, ProductionReady: true,
-		Checks: make([]ReadinessCheck, 0, 14),
+		Checks: make([]ReadinessCheck, 0, 20),
 	}
 	if err := loadReadinessBuild(ctx, db, product, buildVersion, &report); err != nil {
 		return ReadinessReport{}, err
@@ -68,6 +68,39 @@ func EvaluateReadiness(
 	}
 	report.add("entities", ScopeData, entityCount == 0 || missingVersions != 0, missingVersions,
 		fmt.Sprintf("%d active entities; %d without a current version", entityCount, missingVersions))
+
+	var activeProfiles, requiredTypes, missingRequiredTypes int64
+	if err := db.QueryRow(ctx, `
+		WITH profile AS (
+			SELECT profile_key FROM catalog_release_profiles profile
+			JOIN game_products product ON product.id=profile.product_id
+			WHERE product.slug=$1 AND profile.profile_key='retail-foundation-v1' AND profile.status='active'
+		), required_types AS (
+			SELECT scope.entity_type,scope.minimum_count
+			FROM catalog_release_profile_entity_types scope
+			JOIN profile ON profile.profile_key=scope.profile_key
+			WHERE scope.requirement='required'
+		), entity_counts AS (
+			SELECT entity.entity_type,count(*) AS entity_count
+			FROM game_entities entity
+			JOIN game_entity_versions version ON version.id=entity.latest_version_id
+			WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+			  AND entity.deleted_at IS NULL AND version.build_id=$2
+			GROUP BY entity.entity_type
+		)
+		SELECT
+			(SELECT count(*) FROM profile),
+			(SELECT count(*) FROM required_types),
+			(SELECT count(*) FROM required_types required
+			 LEFT JOIN entity_counts actual ON actual.entity_type=required.entity_type
+			 WHERE COALESCE(actual.entity_count,0)<required.minimum_count)`, product, report.BuildID).
+		Scan(&activeProfiles, &requiredTypes, &missingRequiredTypes); err != nil {
+		return ReadinessReport{}, fmt.Errorf("check Retail v1 release profile: %w", err)
+	}
+	report.add("retail_v1_scope", ScopeData,
+		activeProfiles != 1 || requiredTypes == 0 || missingRequiredTypes != 0,
+		missingRequiredTypes,
+		fmt.Sprintf("%d active profile; %d required entity types; %d below minimum", activeProfiles, requiredTypes, missingRequiredTypes))
 
 	var completenessScopes, incompleteScopes int64
 	if err := db.QueryRow(ctx, `
@@ -110,6 +143,7 @@ func EvaluateReadiness(
 			FROM catalog_entity_localization_artifacts proof
 			JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
 			WHERE artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			  AND (artifact.locale='' OR artifact.locale=proof.locale)
 		), current_versions AS (
 			SELECT entity.latest_version_id AS version_id
 			FROM game_entities entity
@@ -267,17 +301,23 @@ func EvaluateReadiness(
 
 	var blockedSources int64
 	if err := db.QueryRow(ctx, `
-		WITH used_sources AS (
+		WITH required_sources AS (
+			SELECT unnest(profile.publication_sources) AS source
+			FROM catalog_release_profiles profile
+			JOIN game_products product ON product.id=profile.product_id
+			WHERE product.slug=$2 AND profile.profile_key='retail-foundation-v1' AND profile.status='active'
+		), used_sources AS (
 			SELECT DISTINCT artifact.source
 			FROM catalog_source_artifacts artifact
 			WHERE artifact.build_id=$1 AND artifact.status IN ('ready','sampled')
+			UNION SELECT source FROM required_sources
 		)
 		SELECT count(*)
 		FROM used_sources used
 		LEFT JOIN catalog_source_policies policy ON policy.source=used.source
 		WHERE policy.source IS NULL OR policy.review_status<>'reviewed'
 		   OR policy.public_api_status NOT IN ('allowed','restricted')
-		   OR policy.commercial_use_status NOT IN ('allowed','restricted')`, report.BuildID).Scan(&blockedSources); err != nil {
+		   OR policy.commercial_use_status NOT IN ('allowed','restricted')`, report.BuildID, product).Scan(&blockedSources); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check source publication policy: %w", err)
 	}
 	report.add("source_publication_policy", ScopeProduction, blockedSources != 0, blockedSources,

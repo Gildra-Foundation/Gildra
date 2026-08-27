@@ -24,7 +24,7 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-const latestCatalogSchemaVersion int64 = 83
+const latestCatalogSchemaVersion int64 = 85
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -95,8 +95,23 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 		"catalog_source_resolution_runs",
 		"catalog_entity_version_artifacts",
 		"catalog_entity_localization_artifacts",
+		"catalog_release_profiles",
+		"catalog_release_profile_entity_types",
 	} {
 		assertTablePresent(t, ctx, database, table)
+	}
+	var activeProfileCount, requiredEntityTypeCount int
+	if err := database.QueryRowContext(ctx, `
+		SELECT
+			count(*) FILTER (WHERE profile.status='active'),
+			count(scope.entity_type) FILTER (WHERE scope.requirement='required')
+		FROM catalog_release_profiles profile
+		LEFT JOIN catalog_release_profile_entity_types scope ON scope.profile_key=profile.profile_key
+		WHERE profile.profile_key='retail-foundation-v1'`).Scan(&activeProfileCount, &requiredEntityTypeCount); err != nil {
+		t.Fatal(err)
+	}
+	if activeProfileCount == 0 || requiredEntityTypeCount == 0 {
+		t.Fatalf("Retail v1 release profile was not seeded: active=%d required_types=%d", activeProfileCount, requiredEntityTypeCount)
 	}
 	var restoredUserID string
 	if err := database.QueryRowContext(ctx, `SELECT id::text FROM users WHERE email=$1`, proofEmail).Scan(&restoredUserID); err != nil {
@@ -359,6 +374,7 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if releaseStatus != "published" || snapshotStatus != "published" || publicReleaseID != publishedReleaseID {
 		t.Fatalf("release state = (%s,%s,%s), want published release %s", releaseStatus, snapshotStatus, publicReleaseID, publishedReleaseID)
 	}
+	assertLocaleFallbackContract(t, ctx, database, service, store, candidate, entityID)
 	sameBuildRunID := insertPipelineRun(t, ctx, database, "1.0.0.100003")
 	if _, err := releases.Start(ctx, sameBuildRunID, "wow", "1.0.0.100003", []string{"wago"}); !errors.Is(err, catalogrelease.ErrBuildAlreadyPublished) {
 		t.Fatalf("same-build release error = %v, want ErrBuildAlreadyPublished", err)
@@ -372,6 +388,57 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 		t.Fatalf("same-build pipeline = (%#v,%v), want successful no-op", unchanged, err)
 	}
 	assertPipelineStage(t, ctx, database, unchanged.RunID, "release-start", "skipped", "")
+}
+
+func assertLocaleFallbackContract(
+	t *testing.T,
+	ctx context.Context,
+	database *sql.DB,
+	service *catalog.Service,
+	store *catalogimport.Store,
+	run catalogimport.ImportContext,
+	entityID uuid.UUID,
+) {
+	t.Helper()
+	var versionID uuid.UUID
+	if err := database.QueryRowContext(ctx, `SELECT published_version_id FROM game_entities WHERE id=$1`, entityID).Scan(&versionID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO game_entity_localizations(version_id,locale,slug,name,description)
+		VALUES($1,'ru_RU','released-item-ru','Released item','Atomic release test')
+		ON CONFLICT (version_id,locale) DO UPDATE SET name=EXCLUDED.name,description=EXCLUDED.description`, versionID); err != nil {
+		t.Fatal(err)
+	}
+	entity, err := service.Get(ctx, entityID, "ru_RU")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !entity.LocaleFallback || entity.ResolvedLocale != "en_US" {
+		t.Fatalf("unproven Russian value must be an English fallback: %#v", entity)
+	}
+	ruArtifactID, err := store.RegisterArtifact(ctx, run, "wago_tools", "ItemSparse", "ru_RU",
+		"https://wago.tools/db2/ItemSparse/csv?build=1.0.0.100003&locale=ru_RU", map[string]any{"test": "Russian proof"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	proof := []byte("25,Released item\n")
+	digest := sha256.Sum256(proof)
+	if err := store.CompleteArtifact(ctx, ruArtifactID, digest[:], int64(len(proof)), `"integration-ru-etag"`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+		VALUES($1,'ru_RU',$2) ON CONFLICT DO NOTHING`, versionID, ruArtifactID); err != nil {
+		t.Fatal(err)
+	}
+	entity, err = service.Get(ctx, entityID, "ru_RU")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entity.LocaleFallback || entity.ResolvedLocale != "ru_RU" {
+		t.Fatalf("proven Russian value must remain Russian: %#v", entity)
+	}
 }
 
 func catalogTestItem(name, build string) catalogimport.Record {

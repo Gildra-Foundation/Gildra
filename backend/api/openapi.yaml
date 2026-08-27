@@ -768,7 +768,7 @@ components:
           type: string
     GameEntity:
       type: object
-      required: [id, product, type, externalId, slug, locale, name, description, updatedAt]
+      required: [id, product, type, externalId, slug, locale, resolvedLocale, localeFallback, name, description, updatedAt]
       properties:
         id:
           type: string
@@ -785,6 +785,13 @@ components:
         locale:
           type: string
           enum: [en_US, ru_RU]
+        resolvedLocale:
+          type: string
+          enum: [en_US, ru_RU]
+          description: Locale that actually supplied the canonical displayed name.
+        localeFallback:
+          type: boolean
+          description: True when the requested locale was unavailable and the English source value was returned.
         name:
           type: string
         description:

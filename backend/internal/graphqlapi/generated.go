@@ -38,17 +38,19 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	GameEntity struct {
-		BuildID     func(childComplexity int) int
-		Description func(childComplexity int) int
-		ExternalID  func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Locale      func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Payload     func(childComplexity int) int
-		Product     func(childComplexity int) int
-		Slug        func(childComplexity int) int
-		Type        func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
+		BuildID        func(childComplexity int) int
+		Description    func(childComplexity int) int
+		ExternalID     func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Locale         func(childComplexity int) int
+		LocaleFallback func(childComplexity int) int
+		Name           func(childComplexity int) int
+		Payload        func(childComplexity int) int
+		Product        func(childComplexity int) int
+		ResolvedLocale func(childComplexity int) int
+		Slug           func(childComplexity int) int
+		Type           func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
 	}
 
 	GameEntityConnection struct {
@@ -132,6 +134,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.GameEntity.Locale(childComplexity), true
+	case "GameEntity.localeFallback":
+		if e.ComplexityRoot.GameEntity.LocaleFallback == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntity.LocaleFallback(childComplexity), true
 	case "GameEntity.name":
 		if e.ComplexityRoot.GameEntity.Name == nil {
 			break
@@ -150,6 +158,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.GameEntity.Product(childComplexity), true
+	case "GameEntity.resolvedLocale":
+		if e.ComplexityRoot.GameEntity.ResolvedLocale == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntity.ResolvedLocale(childComplexity), true
 	case "GameEntity.slug":
 		if e.ComplexityRoot.GameEntity.Slug == nil {
 			break
@@ -343,6 +357,10 @@ func (ec *executionContext) childFields_GameEntity(ctx context.Context, field gr
 		return ec.fieldContext_GameEntity_slug(ctx, field)
 	case "locale":
 		return ec.fieldContext_GameEntity_locale(ctx, field)
+	case "resolvedLocale":
+		return ec.fieldContext_GameEntity_resolvedLocale(ctx, field)
+	case "localeFallback":
+		return ec.fieldContext_GameEntity_localeFallback(ctx, field)
 	case "name":
 		return ec.fieldContext_GameEntity_name(ctx, field)
 	case "description":
@@ -791,6 +809,52 @@ func (ec *executionContext) _GameEntity_locale(ctx context.Context, field graphq
 }
 func (ec *executionContext) fieldContext_GameEntity_locale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("GameEntity", field, false, false, errors.New("field of type Locale does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntity_resolvedLocale(ctx context.Context, field graphql.CollectedField, obj *model.GameEntity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntity_resolvedLocale(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ResolvedLocale, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.Locale) graphql.Marshaler {
+			return ec.marshalNLocale2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntity_resolvedLocale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntity", field, false, false, errors.New("field of type Locale does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntity_localeFallback(ctx context.Context, field graphql.CollectedField, obj *model.GameEntity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntity_localeFallback(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocaleFallback, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntity_localeFallback(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntity", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _GameEntity_name(ctx context.Context, field graphql.CollectedField, obj *model.GameEntity) (ret graphql.Marshaler) {
@@ -2389,6 +2453,16 @@ func (ec *executionContext) _GameEntity(ctx context.Context, sel ast.SelectionSe
 			}
 		case "locale":
 			out.Values[i] = ec._GameEntity_locale(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resolvedLocale":
+			out.Values[i] = ec._GameEntity_resolvedLocale(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "localeFallback":
+			out.Values[i] = ec._GameEntity_localeFallback(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
