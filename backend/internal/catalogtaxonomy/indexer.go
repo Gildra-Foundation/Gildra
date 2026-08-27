@@ -643,6 +643,17 @@ func rebuildEntityGraph(ctx context.Context, tx pgx.Tx) (int64, error) {
 		ON CONFLICT DO NOTHING;
 
 		INSERT INTO game_entity_links(source_entity_id,target_entity_id,build_id,relation_type,attributes)
+		SELECT recipe_entity.id,spell_entity.id,recipe_version.build_id,'teaches',
+			jsonb_build_object('kind','recipe_spell')
+		FROM catalog_recipes recipe
+		JOIN game_entity_versions recipe_version ON recipe_version.id=recipe.version_id
+		JOIN game_entities recipe_entity ON recipe_entity.id=recipe_version.entity_id
+		JOIN game_entity_versions spell_version ON spell_version.id=recipe.source_spell_version_id
+		JOIN game_entities spell_entity ON spell_entity.id=spell_version.entity_id
+		WHERE recipe.source_spell_version_id IS NOT NULL
+		ON CONFLICT DO NOTHING;
+
+		INSERT INTO game_entity_links(source_entity_id,target_entity_id,build_id,relation_type,attributes)
 		SELECT quest.id,target.id,reward.build_id,'rewards',jsonb_build_object(
 			'reward_type',reward.reward_type,'reward_index',reward.reward_index,'amount',reward.amount,
 			'is_choice',reward.is_choice,'source',reward.source)
@@ -1066,7 +1077,8 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			('mount'::text,'SourceSpellID'::text,'spell'::text),
 			('toy'::text,'ItemID'::text,'item'::text),
 			('talent'::text,'SpellID'::text,'spell'::text),
-			('pvp_talent'::text,'SpellID'::text,'spell'::text)
+			('pvp_talent'::text,'SpellID'::text,'spell'::text),
+			('recipe'::text,'SpellID'::text,'spell'::text)
 		)
 		INSERT INTO catalog_entity_icons(
 			build_id,entity_type,external_id,icon_name,file_data_id,source_artifact_id,asset_source_artifact_id)
@@ -1405,7 +1417,7 @@ func (i *Indexer) definitions(ctx context.Context, tx pgx.Tx) ([]Definition, err
 		return nil, fmt.Errorf("read profession recipe taxonomy: %w", err)
 	}
 	defer professionRows.Close()
-	definitions = appendUnique(definitions, Definition{EntityType: "spell", Facet: "group", Slug: "professions", Path: "professions", NameEN: "Professions & Crafting", NameRU: "Профессии и ремесло", SortOrder: 30})
+	definitions = appendUnique(definitions, Definition{EntityType: "recipe", Facet: "group", Slug: "professions", Path: "professions", NameEN: "Professions & Crafting", NameRU: "Профессии и ремесло", SortOrder: 30})
 	for professionRows.Next() {
 		var skillLineID, sortOrder int64
 		var nameEN, nameRU string
@@ -1413,7 +1425,7 @@ func (i *Indexer) definitions(ctx context.Context, tx pgx.Tx) ([]Definition, err
 			return nil, fmt.Errorf("scan profession recipe taxonomy: %w", err)
 		}
 		slug := slugify(nameEN)
-		definitions = appendUnique(definitions, Definition{EntityType: "spell", Facet: "profession", Slug: slug,
+		definitions = appendUnique(definitions, Definition{EntityType: "recipe", Facet: "profession", Slug: slug,
 			Path: "professions/" + slug, ParentPath: "professions", NameEN: nameEN, NameRU: nameRU,
 			SortOrder: int16(sortOrder), Attributes: map[string]any{"skill_line_id": skillLineID}})
 	}
@@ -1642,7 +1654,7 @@ func classify(ctx context.Context, tx pgx.Tx, categoryID int64, definition Defin
 			  AND ($2::bigint IS NULL OR COALESCE(NULLIF(specialization_version.payload #>> '{db2,ClassID}','')::bigint,0)=$2)
 			  AND ($3::bigint IS NULL OR COALESCE(NULLIF(version.payload #>> '{db2,SpecID}','')::bigint,0)=$3)
 			ON CONFLICT(version_id,category_id) DO NOTHING`, categoryID, nullableIntAttribute(attributes, "class_id"), nullableIntAttribute(attributes, "spec_id"))
-	case "spell":
+	case "recipe":
 		if definition.Facet == "profession" {
 			command, err = tx.Exec(ctx, categoryInsertPrefix+`
 				SELECT link.recipe_version_id,$1::bigint,'gildra_classifier'
@@ -1652,6 +1664,7 @@ func classify(ctx context.Context, tx pgx.Tx, categoryID int64, definition Defin
 				ON CONFLICT(version_id,category_id) DO NOTHING`, categoryID, intAttribute(attributes, "skill_line_id"))
 			break
 		}
+	case "spell":
 		if definition.Facet == "race" {
 			command, err = tx.Exec(ctx, categoryInsertPrefix+`
 				SELECT DISTINCT spell.latest_version_id,$1::bigint,'gildra_classifier'
