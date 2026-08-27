@@ -41,6 +41,18 @@ type Indexer struct {
 
 func New(db *pgxpool.Pool) *Indexer { return &Indexer{db: db} }
 
+// RebuildIcons refreshes the canonical entity icon projection without running
+// the substantially more expensive taxonomy and tooltip rebuilds.
+func (i *Indexer) RebuildIcons(ctx context.Context) (Result, error) {
+	var result Result
+	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+		var err error
+		result.Icons, err = rebuildEntityIcons(ctx, tx)
+		return err
+	})
+	return result, err
+}
+
 func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 	var result Result
 	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
@@ -962,14 +974,50 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 		return 0, err
 	}
 	command, err := tx.Exec(ctx, `
-		WITH candidates AS (
-			SELECT entity.id,entity.entity_type,entity.external_id,version.build_id,version.source_artifact_id,
-				asset.icon_name AS file_icon,
+		WITH spell_icons AS MATERIALIZED (
+			SELECT DISTINCT ON (raw.build_id,(raw.payload->>'SpellID')::bigint)
+				raw.build_id,(raw.payload->>'SpellID')::bigint AS spell_id,
+				NULLIF(raw.payload->>'SpellIconFileDataID','')::bigint AS file_data_id,
+				raw.source_artifact_id
+			FROM catalog_db2_rows raw
+			WHERE raw.table_name='SpellMisc' AND raw.locale='en_US'
+			  AND raw.payload->>'SpellID' ~ '^[1-9][0-9]*$'
+			  AND raw.payload->>'SpellIconFileDataID' ~ '^[1-9][0-9]*$'
+			ORDER BY raw.build_id,(raw.payload->>'SpellID')::bigint,
+				COALESCE(NULLIF(raw.payload->>'DifficultyID','')::int,0),raw.row_id
+		), item_icons AS MATERIALIZED (
+			SELECT raw.build_id,raw.row_id AS item_id,
+				NULLIF(raw.payload->>'IconFileDataID','')::bigint AS file_data_id,
+				raw.source_artifact_id
+			FROM catalog_db2_rows raw
+			WHERE raw.table_name='Item' AND raw.locale='en_US'
+			  AND raw.payload->>'IconFileDataID' ~ '^[1-9][0-9]*$'
+		), creature_icons AS MATERIALIZED (
+			SELECT DISTINCT ON (version.build_id,entity.external_id)
+				version.build_id,entity.external_id,info.portrait_file_data_id AS file_data_id,
+				COALESCE(raw_info.source_artifact_id,version.source_artifact_id) AS source_artifact_id
+			FROM game_entities entity
+			JOIN game_entity_versions version ON version.id=entity.latest_version_id
+			JOIN catalog_creature_displays display ON display.version_id=version.id
+			JOIN catalog_creature_display_info info ON info.build_id=version.build_id
+				AND info.external_id=display.display_external_id
+			LEFT JOIN catalog_db2_rows raw_info ON raw_info.build_id=version.build_id
+				AND raw_info.table_name='CreatureDisplayInfo' AND raw_info.locale='en_US'
+				AND raw_info.row_id=info.external_id
+			WHERE entity.entity_type='creature' AND entity.deleted_at IS NULL
+			  AND info.portrait_file_data_id IS NOT NULL
+			ORDER BY version.build_id,entity.external_id,display.probability DESC,display.slot,info.external_id
+		), candidates AS MATERIALIZED (
+			SELECT entity.id,entity.entity_type,entity.external_id,version.build_id,
+				COALESCE(item.source_artifact_id,
+					CASE WHEN direct.file_data_id IS NOT NULL THEN version.source_artifact_id END,
+					spell.source_artifact_id,creature.source_artifact_id,version.source_artifact_id) AS source_artifact_id,
+				COALESCE(direct.file_data_id,item.file_data_id,spell.file_data_id,creature.file_data_id) AS file_data_id,
 				NULLIF(BTRIM(version.payload #>> '{raidbots,icon}'),'') AS raidbots_icon,
 				NULLIF(BTRIM(version.payload #>> '{raidbots,spellIcon}'),'') AS raidbots_spell_icon
 			FROM game_entities entity
 			JOIN game_entity_versions version ON version.id=entity.latest_version_id
-			LEFT JOIN catalog_file_assets asset ON asset.file_data_id=CASE
+			CROSS JOIN LATERAL (SELECT CASE
 				WHEN COALESCE(NULLIF(version.payload->>'icon_file_data_id',''),
 					NULLIF(version.payload->>'InventoryIconFileID',''),NULLIF(version.payload->>'IconFileID',''),
 					NULLIF(version.payload->>'IconFileDataID',''),NULLIF(version.payload->>'SpellIconFileID',''),
@@ -979,14 +1027,30 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 					NULLIF(version.payload->>'InventoryIconFileID',''),NULLIF(version.payload->>'IconFileID',''),
 					NULLIF(version.payload->>'IconFileDataID',''),NULLIF(version.payload->>'SpellIconFileID',''),
 					NULLIF(version.payload #>> '{db2,InventoryIconFileID}',''),NULLIF(version.payload #>> '{db2,IconFileID}',''),
-					NULLIF(version.payload #>> '{db2,IconFileDataID}',''),NULLIF(version.payload #>> '{db2,SpellIconFileID}',''))::bigint END
+					NULLIF(version.payload #>> '{db2,IconFileDataID}',''),NULLIF(version.payload #>> '{db2,SpellIconFileID}',''))::bigint END AS file_data_id) direct
+			LEFT JOIN spell_icons spell ON entity.entity_type='spell' AND spell.build_id=version.build_id
+				AND spell.spell_id=entity.external_id
+			LEFT JOIN item_icons item ON entity.entity_type='item' AND item.build_id=version.build_id
+				AND item.item_id=entity.external_id
+			LEFT JOIN creature_icons creature ON entity.entity_type='creature' AND creature.build_id=version.build_id
+				AND creature.external_id=entity.external_id
 			WHERE entity.deleted_at IS NULL
+		), resolved AS MATERIALIZED (
+			SELECT candidates.*,asset.icon_name AS file_icon,
+				asset.source_artifact_id AS asset_source_artifact_id
+			FROM candidates
+			LEFT JOIN catalog_file_assets asset ON asset.file_data_id=candidates.file_data_id
 		)
-		INSERT INTO catalog_entity_icons(build_id,entity_type,external_id,icon_name,source_artifact_id)
-		SELECT build_id,entity_type,external_id,COALESCE(file_icon,raidbots_icon,raidbots_spell_icon),source_artifact_id
-		FROM candidates WHERE COALESCE(file_icon,raidbots_icon,raidbots_spell_icon) IS NOT NULL
+		INSERT INTO catalog_entity_icons(
+			build_id,entity_type,external_id,icon_name,file_data_id,source_artifact_id,asset_source_artifact_id)
+		SELECT build_id,entity_type,external_id,COALESCE(file_icon,raidbots_icon,raidbots_spell_icon),
+			CASE WHEN file_icon IS NOT NULL THEN file_data_id END,source_artifact_id,
+			CASE WHEN file_icon IS NOT NULL THEN asset_source_artifact_id END
+		FROM resolved WHERE COALESCE(file_icon,raidbots_icon,raidbots_spell_icon) IS NOT NULL
 		ON CONFLICT(build_id,entity_type,external_id) DO UPDATE SET
-			icon_name=EXCLUDED.icon_name,source_artifact_id=EXCLUDED.source_artifact_id
+			icon_name=EXCLUDED.icon_name,file_data_id=EXCLUDED.file_data_id,
+			source_artifact_id=EXCLUDED.source_artifact_id,
+			asset_source_artifact_id=EXCLUDED.asset_source_artifact_id
 		WHERE NOT EXISTS (
 			SELECT 1 FROM catalog_source_artifacts official
 			WHERE official.id=catalog_entity_icons.source_artifact_id
@@ -1000,10 +1064,14 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 	command, err = tx.Exec(ctx, `
 		WITH icon_refs(entity_type,payload_key,target_type) AS (VALUES
 			('mount'::text,'SourceSpellID'::text,'spell'::text),
-			('toy'::text,'ItemID'::text,'item'::text)
+			('toy'::text,'ItemID'::text,'item'::text),
+			('talent'::text,'SpellID'::text,'spell'::text),
+			('pvp_talent'::text,'SpellID'::text,'spell'::text)
 		)
-		INSERT INTO catalog_entity_icons(build_id,entity_type,external_id,icon_name,source_artifact_id)
-		SELECT version.build_id,entity.entity_type,entity.external_id,target_icon.icon_name,target_icon.source_artifact_id
+		INSERT INTO catalog_entity_icons(
+			build_id,entity_type,external_id,icon_name,file_data_id,source_artifact_id,asset_source_artifact_id)
+		SELECT version.build_id,entity.entity_type,entity.external_id,target_icon.icon_name,
+			target_icon.file_data_id,target_icon.source_artifact_id,target_icon.asset_source_artifact_id
 		FROM game_entities entity
 		JOIN game_entity_versions version ON version.id=entity.latest_version_id
 		JOIN icon_refs reference ON reference.entity_type=entity.entity_type
@@ -1015,7 +1083,9 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			AND target_icon.entity_type=target.entity_type AND target_icon.external_id=target.external_id
 		WHERE entity.deleted_at IS NULL
 		ON CONFLICT(build_id,entity_type,external_id) DO UPDATE SET
-			icon_name=EXCLUDED.icon_name,source_artifact_id=EXCLUDED.source_artifact_id`)
+			icon_name=EXCLUDED.icon_name,file_data_id=EXCLUDED.file_data_id,
+			source_artifact_id=EXCLUDED.source_artifact_id,
+			asset_source_artifact_id=EXCLUDED.asset_source_artifact_id`)
 	if err != nil {
 		return 0, fmt.Errorf("rebuild referenced entity icons: %w", err)
 	}
@@ -1027,7 +1097,8 @@ func carryForwardOfficialIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 		WITH candidates AS (
 			SELECT DISTINCT ON (target_version.build_id,entity.entity_type,entity.external_id)
 				target_version.build_id,entity.entity_type,entity.external_id,
-				source_icon.icon_name,source_icon.source_artifact_id,source_build.build_number
+				source_icon.icon_name,source_icon.file_data_id,source_icon.source_artifact_id,
+				source_icon.asset_source_artifact_id,source_build.build_number
 			FROM game_entities entity
 			JOIN game_entity_versions target_version ON target_version.id=entity.latest_version_id
 			JOIN game_builds target_build ON target_build.id=target_version.build_id
@@ -1040,10 +1111,14 @@ func carryForwardOfficialIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			  AND source_build.build_number<=target_build.build_number
 			ORDER BY target_version.build_id,entity.entity_type,entity.external_id,source_build.build_number DESC
 		)
-		INSERT INTO catalog_entity_icons(build_id,entity_type,external_id,icon_name,source_artifact_id)
-		SELECT build_id,entity_type,external_id,icon_name,source_artifact_id FROM candidates
+		INSERT INTO catalog_entity_icons(
+			build_id,entity_type,external_id,icon_name,file_data_id,source_artifact_id,asset_source_artifact_id)
+		SELECT build_id,entity_type,external_id,icon_name,file_data_id,source_artifact_id,
+			asset_source_artifact_id FROM candidates
 		ON CONFLICT(build_id,entity_type,external_id) DO UPDATE SET
-			icon_name=EXCLUDED.icon_name,source_artifact_id=EXCLUDED.source_artifact_id`)
+			icon_name=EXCLUDED.icon_name,file_data_id=EXCLUDED.file_data_id,
+			source_artifact_id=EXCLUDED.source_artifact_id,
+			asset_source_artifact_id=EXCLUDED.asset_source_artifact_id`)
 	if err != nil {
 		return 0, fmt.Errorf("carry official icons to active build: %w", err)
 	}
