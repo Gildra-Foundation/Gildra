@@ -103,6 +103,16 @@ jobs:
             key="$(printf '%s_IMAGE' "$name" | tr '[:lower:]' '[:upper:]')"
             printf '%s=%s\n' "$key" "$IMAGE_PREFIX-$name@$digest" >> "$GITHUB_OUTPUT"
           done
+      - name: Validate immutable release contract
+        env:
+          WEB_IMAGE: ${{ steps.images.outputs.WEB_IMAGE }}
+          API_IMAGE: ${{ steps.images.outputs.API_IMAGE }}
+          CMS_IMAGE: ${{ steps.images.outputs.CMS_IMAGE }}
+          SCRAPER_IMAGE: ${{ steps.images.outputs.SCRAPER_IMAGE }}
+          GILDRA_SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
+          GILDRA_RELEASE_ID: ${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.head_sha }}
+          GILDRA_ROLLBACK_COMPATIBLE: "true"
+        run: infra/deploy/deploy-immutable-release.sh --validate-only
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
@@ -117,7 +127,7 @@ jobs:
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
         run: |
-          tar -czf - compose.yml compose.prod.yml compose.runtime.yml infra/nginx infra/postgres | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && sudo chown -R root:root /opt/gildra'
+          tar -czf - compose.yml compose.prod.yml compose.runtime.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && sudo chown -R root:root /opt/gildra'
       - name: Deploy immutable images
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
@@ -126,29 +136,11 @@ jobs:
           API_IMAGE: ${{ steps.images.outputs.API_IMAGE }}
           CMS_IMAGE: ${{ steps.images.outputs.CMS_IMAGE }}
           SCRAPER_IMAGE: ${{ steps.images.outputs.SCRAPER_IMAGE }}
+          GILDRA_SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
+          GILDRA_RELEASE_ID: ${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.head_sha }}
         run: |
           ssh "$OVH_USER@$OVH_HOST" \
-            "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' sh -s" <<'REMOTE'
-          set -eu
-          cd /opt/gildra
-          if [ -f current-release.env ]; then
-            cp -f current-release.env previous-release.env
-          fi
-          docker compose --env-file .env -f compose.yml -f compose.prod.yml -f compose.runtime.yml pull
-          docker compose --env-file .env -f compose.yml -f compose.prod.yml -f compose.runtime.yml up -d --no-build --remove-orphans --wait --wait-timeout 240
-          curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/livez >/dev/null
-          curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/readyz >/dev/null
-          curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 --resolve gildra.net:443:127.0.0.1 https://gildra.net/database >/dev/null
-          curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/database >/dev/null
-          umask 077
-          {
-            printf 'WEB_IMAGE=%s\n' "$WEB_IMAGE"
-            printf 'API_IMAGE=%s\n' "$API_IMAGE"
-            printf 'CMS_IMAGE=%s\n' "$CMS_IMAGE"
-            printf 'SCRAPER_IMAGE=%s\n' "$SCRAPER_IMAGE"
-          } > current-release.env.tmp
-          mv -f current-release.env.tmp current-release.env
-          REMOTE
+            "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
       - name: Verify public production paths
         shell: bash
         run: |

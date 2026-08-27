@@ -4,6 +4,7 @@ Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target
 ConditionPathExists=/opt/gildra/.env
+ConditionPathExists=/opt/gildra/current-release.env
 
 [Service]
 Type=oneshot

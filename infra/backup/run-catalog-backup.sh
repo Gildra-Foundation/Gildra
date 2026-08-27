@@ -3,6 +3,7 @@ set -eu
 
 deployment_directory="${GILDRA_DEPLOYMENT_DIRECTORY:-/opt/gildra}"
 environment_file="${GILDRA_ENV_FILE:-$deployment_directory/.env}"
+release_environment_file="${GILDRA_RELEASE_ENV_FILE:-$deployment_directory/current-release.env}"
 compose_files="-f compose.yml -f compose.prod.yml -f compose.runtime.yml"
 restore_image="${CATALOG_BACKUP_RESTORE_IMAGE:-postgres@sha256:8189a1f6e40904781fc9e2612687877791d21679866db58b1de996b31fc312e4}"
 restore_network="${CATALOG_BACKUP_DOCKER_NETWORK:-gildra_default}"
@@ -13,6 +14,10 @@ restore_container="gildra-catalog-restore-$run_token"
 
 if [ ! -r "$environment_file" ]; then
   echo "catalog backup environment file is not readable" >&2
+  exit 1
+fi
+if [ ! -r "$release_environment_file" ]; then
+  echo "catalog backup release manifest is not readable" >&2
   exit 1
 fi
 
@@ -62,5 +67,5 @@ until docker exec "$restore_container" pg_isready -U "$restore_user" -d "$restor
 done
 
 # shellcheck disable=SC2086
-docker compose --env-file "$environment_file" --env-file "$runtime_environment" $compose_files \
+docker compose --env-file "$environment_file" --env-file "$release_environment_file" --env-file "$runtime_environment" $compose_files \
   run --rm --no-deps catalog-backup
