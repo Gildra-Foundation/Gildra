@@ -39,6 +39,7 @@ func run() error {
 	var pvpTalentsOnly bool
 	var spellEffectsOnly bool
 	var iconsOnly bool
+	var questRewardsOnly bool
 	var graphOnly bool
 	var statsOnly bool
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
@@ -56,6 +57,7 @@ func run() error {
 	flag.BoolVar(&pvpTalentsOnly, "pvp-talents-only", false, "rebuild PvP talent taxonomy, relationships, and tooltips")
 	flag.BoolVar(&spellEffectsOnly, "spell-effects-only", false, "rebuild normalized DB2 spell effects only")
 	flag.BoolVar(&iconsOnly, "icons-only", false, "rebuild canonical entity icons only")
+	flag.BoolVar(&questRewardsOnly, "quest-rewards-only", false, "carry official quest rewards into the active DB2 build")
 	flag.BoolVar(&graphOnly, "graph-only", false, "rebuild normalized entity relationships only")
 	flag.BoolVar(&statsOnly, "stats-only", false, "refresh cached catalog counts and coverage only")
 	flag.Parse()
@@ -82,7 +84,7 @@ func run() error {
 	indexer := catalogtaxonomy.New(db)
 	var result catalogtaxonomy.Result
 	selectedModes := 0
-	for _, selected := range []bool{tooltipsOnly, itemsOnly, itemsTaxonomyOnly, variantsOnly, descriptionsOnly, taxonomyOnly, racesOnly, classesOnly, professionsOnly, talentsOnly, pvpTalentsOnly, spellEffectsOnly, iconsOnly, graphOnly, statsOnly} {
+	for _, selected := range []bool{tooltipsOnly, itemsOnly, itemsTaxonomyOnly, variantsOnly, descriptionsOnly, taxonomyOnly, racesOnly, classesOnly, professionsOnly, talentsOnly, pvpTalentsOnly, spellEffectsOnly, iconsOnly, questRewardsOnly, graphOnly, statsOnly} {
 		if selected {
 			selectedModes++
 		}
@@ -120,6 +122,8 @@ func run() error {
 		result, err = indexer.RebuildSpellEffects(ctx)
 	} else if iconsOnly {
 		result, err = indexer.RebuildIcons(ctx)
+	} else if questRewardsOnly {
+		result, err = indexer.RebuildQuestRewards(ctx)
 	} else if graphOnly {
 		result, err = indexer.RebuildGraph(ctx)
 	} else {
@@ -145,6 +149,8 @@ func run() error {
 		projector = "catalog_spell_effects"
 	case iconsOnly:
 		projector = "catalog_entity_icons"
+	case questRewardsOnly:
+		projector = "catalog_quest_rewards"
 	case graphOnly:
 		projector = "catalog_entity_graph"
 	case statsOnly:

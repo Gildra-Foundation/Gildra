@@ -30,6 +30,7 @@ type Result struct {
 	Icons        int64 `json:"icons,omitempty"`
 	SpellEffects int64 `json:"spellEffects,omitempty"`
 	SpellDetails int64 `json:"spellDetails,omitempty"`
+	QuestRewards int64 `json:"questRewards,omitempty"`
 	Links        int64 `json:"links,omitempty"`
 	Variants     int64 `json:"variants,omitempty"`
 	Descriptions int64 `json:"descriptions,omitempty"`
@@ -49,6 +50,71 @@ func (i *Indexer) RebuildIcons(ctx context.Context) (Result, error) {
 		var err error
 		result.Icons, err = rebuildEntityIcons(ctx, tx)
 		return err
+	})
+	return result, err
+}
+
+// RebuildQuestRewards carries the newest official reward facts into a newer
+// active DB2 build without pretending that Battle.net published that build.
+// source_build_id and source_artifact_id retain both provenance dimensions.
+func (i *Indexer) RebuildQuestRewards(ctx context.Context) (Result, error) {
+	var result Result
+	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, `
+			UPDATE catalog_quest_rewards
+			SET source_build_id=build_id
+			WHERE source='blizzard_api' AND source_build_id IS NULL`); err != nil {
+			return fmt.Errorf("backfill native quest reward build: %w", err)
+		}
+		command, err := tx.Exec(ctx, `
+			WITH target_builds AS MATERIALIZED (
+				SELECT build.id,build.product_id,build.build_number,build.version
+				FROM game_builds build
+				WHERE build.is_active
+			), candidates AS MATERIALIZED (
+				SELECT DISTINCT ON (target.id,reward.quest_id,reward.reward_type,reward.reward_index)
+					target.id AS build_id,reward.quest_id,reward.reward_type,reward.reward_index,
+					reward.external_id,reward.item_entity_id,reward.amount,reward.is_choice,reward.source,
+					reward.attributes || jsonb_build_object(
+						'carried_from_build_id',source_build.id,
+						'carried_from_build_number',source_build.build_number,
+						'carried_from_build_version',source_build.version) AS attributes,
+					reward.source_artifact_id,source_build.id AS source_build_id
+				FROM target_builds target
+				JOIN catalog_quest_registry registry ON registry.build_id=target.id
+				JOIN game_builds source_build ON source_build.product_id=target.product_id
+					AND source_build.build_number<=target.build_number
+				JOIN catalog_quest_rewards reward ON reward.build_id=source_build.id
+					AND reward.quest_id=registry.quest_id AND reward.source='blizzard_api'
+					AND reward.source_build_id=reward.build_id
+				ORDER BY target.id,reward.quest_id,reward.reward_type,reward.reward_index,
+					source_build.build_number DESC
+			), removed AS (
+				DELETE FROM catalog_quest_rewards stored
+				USING target_builds target
+				WHERE stored.build_id=target.id AND stored.source='blizzard_api'
+				  AND stored.source_build_id IS DISTINCT FROM stored.build_id
+				  AND NOT EXISTS (SELECT 1 FROM candidates candidate
+					WHERE candidate.build_id=stored.build_id AND candidate.quest_id=stored.quest_id
+					  AND candidate.reward_type=stored.reward_type AND candidate.reward_index=stored.reward_index)
+			)
+			INSERT INTO catalog_quest_rewards(
+				build_id,quest_id,reward_type,reward_index,external_id,item_entity_id,
+				amount,is_choice,source,attributes,source_artifact_id,source_build_id)
+			SELECT build_id,quest_id,reward_type,reward_index,external_id,item_entity_id,
+				amount,is_choice,source,attributes,source_artifact_id,source_build_id
+			FROM candidates
+			WHERE source_build_id<>build_id
+			ON CONFLICT(build_id,quest_id,reward_type,reward_index) DO UPDATE SET
+				external_id=EXCLUDED.external_id,item_entity_id=EXCLUDED.item_entity_id,
+				amount=EXCLUDED.amount,is_choice=EXCLUDED.is_choice,source=EXCLUDED.source,
+				attributes=EXCLUDED.attributes,source_artifact_id=EXCLUDED.source_artifact_id,
+				source_build_id=EXCLUDED.source_build_id`)
+		if err != nil {
+			return fmt.Errorf("carry official quest rewards: %w", err)
+		}
+		result.QuestRewards = command.RowsAffected()
+		return nil
 	})
 	return result, err
 }
