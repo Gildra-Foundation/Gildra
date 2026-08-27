@@ -87,7 +87,10 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		{"SkillLineAbility", 700, map[string]any{"SkillLine": "500", "Spell": "100", "TradeSkillCategoryID": "600", "MinSkillLineRank": "1"}},
 		{"SpellReagents", 701, map[string]any{"SpellID": "100", "Reagent_0": "201", "ReagentCount_0": "2"}},
 		{"SpellReagentsCurrency", 702, map[string]any{"SpellID": "100", "CurrencyTypesID": "1", "CurrencyCount": "3"}},
-		{"Creature", 900, map[string]any{"Name_lang": "Provenance Keeper", "Title_lang": "Source guardian"}},
+		{"Creature", 900, map[string]any{"Name_lang": "Provenance Keeper", "Title_lang": "Source guardian", "DisplayID_0": "901", "DisplayProbability_0": "1"}},
+		{"CreatureDisplayInfo", 901, map[string]any{"ModelID": "902", "PortraitTextureFileDataID": "134402", "CreatureModelScale": "1", "CreatureModelAlpha": "255"}},
+		{"CreatureModelData", 902, map[string]any{"FileDataID": "134403", "ModelScale": "1"}},
+		{"CreatureDifficulty", 903, map[string]any{"CreatureID": "900", "FactionTemplateID": "35", "ContentTuningID": "1"}},
 		{"QuestV2", 1000, map[string]any{"UniqueBitFlag": "1"}},
 		{"QuestV2CliTask", 1000, map[string]any{"QuestTitle_lang": "Prove the Source", "BulletText_lang": "Keep the artifact link."}},
 	}
@@ -181,6 +184,10 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	assertFactArtifact(t, ctx, pool, "recipe output", `SELECT source_artifact_id FROM catalog_recipe_outputs LIMIT 1`, artifacts["SpellEffect"])
 	assertFactArtifact(t, ctx, pool, "item effect", `SELECT source_artifact_id FROM catalog_item_effects LIMIT 1`, artifacts["ItemXItemEffect"])
 	assertFactArtifact(t, ctx, pool, "spell effect", `SELECT source_artifact_id FROM catalog_spell_effects WHERE source='db2' LIMIT 1`, artifacts["SpellEffect"])
+	assertFactArtifact(t, ctx, pool, "creature display", `SELECT source_artifact_id FROM catalog_creature_displays LIMIT 1`, artifacts["Creature"])
+	assertFactArtifact(t, ctx, pool, "creature display info", `SELECT source_artifact_id FROM catalog_creature_display_info LIMIT 1`, artifacts["CreatureDisplayInfo"])
+	assertFactArtifact(t, ctx, pool, "creature model", `SELECT source_artifact_id FROM catalog_creature_models LIMIT 1`, artifacts["CreatureModelData"])
+	assertFactArtifact(t, ctx, pool, "creature difficulty", `SELECT source_artifact_id FROM catalog_creature_difficulties LIMIT 1`, artifacts["CreatureDifficulty"])
 	var school string
 	var schoolMask, castTimeMS, cooldownMS int
 	var maxRange float64
