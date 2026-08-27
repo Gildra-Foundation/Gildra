@@ -13,6 +13,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  operations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Validate operations scripts
+        run: |
+          sh -n infra/backup/run-catalog-backup.sh
+          sh -n infra/deploy/deploy-immutable-release.sh
+          sh -n infra/deploy/test-deploy-immutable-release.sh
+      - name: Validate immutable release policy
+        env:
+          WEB_IMAGE: ghcr.io/gildra-foundation/gildra-web@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          API_IMAGE: ghcr.io/gildra-foundation/gildra-api@sha256:1111111111111111111111111111111111111111111111111111111111111111
+          CMS_IMAGE: ghcr.io/gildra-foundation/gildra-cms@sha256:2222222222222222222222222222222222222222222222222222222222222222
+          SCRAPER_IMAGE: ghcr.io/gildra-foundation/gildra-scraper@sha256:3333333333333333333333333333333333333333333333333333333333333333
+          GILDRA_SOURCE_REVISION: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          GILDRA_RELEASE_ID: ci-contract-test
+          GILDRA_ROLLBACK_COMPATIBLE: "true"
+        run: infra/deploy/deploy-immutable-release.sh --validate-only
+      - name: Verify failed release rollback
+        run: infra/deploy/test-deploy-immutable-release.sh
+
   frontend:
     runs-on: ubuntu-latest
     steps:

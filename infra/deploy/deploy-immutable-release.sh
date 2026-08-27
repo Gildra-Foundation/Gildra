@@ -1,0 +1,268 @@
+#!/bin/sh
+
+set -eu
+
+deployment_directory=${GILDRA_DEPLOY_DIR:-/opt/gildra}
+environment_file=${GILDRA_ENV_FILE:-$deployment_directory/.env}
+lock_file=${GILDRA_DEPLOY_LOCK_FILE:-/run/lock/gildra-deploy.lock}
+current_manifest=$deployment_directory/current-release.env
+previous_manifest=$deployment_directory/previous-release.env
+rollback_manifest=$deployment_directory/last-rollback.env
+validate_only=false
+rollback_armed=false
+
+if [ "${1:-}" = "--validate-only" ]; then
+  validate_only=true
+elif [ "$#" -ne 0 ]; then
+  printf 'usage: %s [--validate-only]\n' "$0" >&2
+  exit 64
+fi
+
+fail() {
+  printf 'deploy: %s\n' "$*" >&2
+  exit 1
+}
+
+validate_revision() {
+  revision=$1
+  printf '%s\n' "$revision" | grep -Eq '^[0-9a-f]{40}$' ||
+    fail 'GILDRA_SOURCE_REVISION must be a lowercase 40-character Git commit SHA'
+}
+
+validate_release_id() {
+  release_id=$1
+  printf '%s\n' "$release_id" | grep -Eq '^[0-9A-Za-z._-]+$' ||
+    fail 'GILDRA_RELEASE_ID may contain only letters, numbers, dots, underscores, and hyphens'
+}
+
+validate_image() {
+  label=$1
+  image=$2
+  pattern=$3
+
+  [ -n "$image" ] || fail "$label is required"
+  printf '%s\n' "$image" | grep -Eq "$pattern" ||
+    fail "$label must be an approved GHCR image pinned by sha256 digest"
+}
+
+validate_release_inputs() {
+  : "${WEB_IMAGE:?WEB_IMAGE is required}"
+  : "${API_IMAGE:?API_IMAGE is required}"
+  : "${CMS_IMAGE:?CMS_IMAGE is required}"
+  : "${SCRAPER_IMAGE:?SCRAPER_IMAGE is required}"
+  : "${GILDRA_SOURCE_REVISION:?GILDRA_SOURCE_REVISION is required}"
+  : "${GILDRA_RELEASE_ID:?GILDRA_RELEASE_ID is required}"
+
+  validate_image WEB_IMAGE "$WEB_IMAGE" '^ghcr\.io/gildra-foundation/gildra-web@sha256:[0-9a-f]{64}$'
+  validate_image API_IMAGE "$API_IMAGE" '^ghcr\.io/gildra-foundation/gildra-api@sha256:[0-9a-f]{64}$'
+  validate_image CMS_IMAGE "$CMS_IMAGE" '^ghcr\.io/gildra-foundation/gildra-cms@sha256:[0-9a-f]{64}$'
+  validate_image SCRAPER_IMAGE "$SCRAPER_IMAGE" '^ghcr\.io/gildra-foundation/gildra-scraper@sha256:[0-9a-f]{64}$'
+  validate_revision "$GILDRA_SOURCE_REVISION"
+  validate_release_id "$GILDRA_RELEASE_ID"
+  [ "${GILDRA_ROLLBACK_COMPATIBLE:-}" = true ] ||
+    fail 'GILDRA_ROLLBACK_COMPATIBLE=true is required; automated rollback never reverts database migrations'
+}
+
+manifest_value() {
+  key=$1
+  file=$2
+  count=$(grep -c "^${key}=" "$file" || true)
+  [ "$count" -eq 1 ] || fail "$file must contain exactly one $key entry"
+  sed -n "s/^${key}=//p" "$file"
+}
+
+manifest_optional_value() {
+  key=$1
+  file=$2
+  count=$(grep -c "^${key}=" "$file" || true)
+  [ "$count" -le 1 ] || fail "$file contains more than one $key entry"
+  if [ "$count" -eq 1 ]; then
+    sed -n "s/^${key}=//p" "$file"
+  fi
+}
+
+load_previous_release() {
+  file=$1
+  rollback_web_image=$(manifest_value WEB_IMAGE "$file")
+  rollback_api_image=$(manifest_value API_IMAGE "$file")
+  rollback_cms_image=$(manifest_value CMS_IMAGE "$file")
+  rollback_scraper_image=$(manifest_value SCRAPER_IMAGE "$file")
+  rollback_source_revision=$(manifest_optional_value SOURCE_REVISION "$file")
+  rollback_release_id=$(manifest_optional_value RELEASE_ID "$file")
+
+  validate_image WEB_IMAGE "$rollback_web_image" '^ghcr\.io/gildra-foundation/gildra-web@sha256:[0-9a-f]{64}$'
+  validate_image API_IMAGE "$rollback_api_image" '^ghcr\.io/gildra-foundation/gildra-api@sha256:[0-9a-f]{64}$'
+  validate_image CMS_IMAGE "$rollback_cms_image" '^ghcr\.io/gildra-foundation/gildra-cms@sha256:[0-9a-f]{64}$'
+  validate_image SCRAPER_IMAGE "$rollback_scraper_image" '^ghcr\.io/gildra-foundation/gildra-scraper@sha256:[0-9a-f]{64}$'
+
+  if [ -n "$rollback_source_revision" ]; then
+    validate_revision "$rollback_source_revision"
+  else
+    rollback_source_revision=legacy
+  fi
+  if [ -n "$rollback_release_id" ]; then
+    validate_release_id "$rollback_release_id"
+  else
+    rollback_release_id=legacy
+  fi
+}
+
+compose() {
+  docker compose \
+    --env-file "$environment_file" \
+    -f "$deployment_directory/compose.yml" \
+    -f "$deployment_directory/compose.prod.yml" \
+    -f "$deployment_directory/compose.runtime.yml" \
+    "$@"
+}
+
+verify_service_image() {
+  service=$1
+  expected=$2
+  container_id=$(compose ps -q "$service")
+  [ -n "$container_id" ] || fail "service $service has no running container"
+  actual=$(docker inspect --format '{{.Config.Image}}' "$container_id")
+  [ "$actual" = "$expected" ] ||
+    fail "service $service is running an unexpected image: $actual"
+}
+
+verify_running_images() {
+  verify_service_image web "$WEB_IMAGE"
+  verify_service_image api "$API_IMAGE"
+  verify_service_image cms "$CMS_IMAGE"
+  verify_service_image scraper-worker "$SCRAPER_IMAGE"
+}
+
+verify_local_health() {
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/livez >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/readyz >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve gildra.net:443:127.0.0.1 https://gildra.net/database >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/database >/dev/null
+}
+
+write_release_manifest() {
+  destination=$1
+  source_revision=$2
+  release_id=$3
+  deployed_at=$4
+  temporary=$destination.tmp.$$
+
+  umask 077
+  {
+    printf 'SOURCE_REVISION=%s\n' "$source_revision"
+    printf 'RELEASE_ID=%s\n' "$release_id"
+    printf 'WEB_IMAGE=%s\n' "$WEB_IMAGE"
+    printf 'API_IMAGE=%s\n' "$API_IMAGE"
+    printf 'CMS_IMAGE=%s\n' "$CMS_IMAGE"
+    printf 'SCRAPER_IMAGE=%s\n' "$SCRAPER_IMAGE"
+    printf 'DEPLOYED_AT=%s\n' "$deployed_at"
+  } > "$temporary"
+  chmod 600 "$temporary"
+  mv -f "$temporary" "$destination"
+}
+
+rollback_release() {
+  printf 'deploy: release failed; restoring the previous immutable images\n' >&2
+  load_previous_release "$previous_manifest"
+
+  failed_source_revision=$GILDRA_SOURCE_REVISION
+  failed_release_id=$GILDRA_RELEASE_ID
+  WEB_IMAGE=$rollback_web_image
+  API_IMAGE=$rollback_api_image
+  CMS_IMAGE=$rollback_cms_image
+  SCRAPER_IMAGE=$rollback_scraper_image
+  export WEB_IMAGE API_IMAGE CMS_IMAGE SCRAPER_IMAGE
+
+  compose pull web api catalog-backup cms scraper scraper-worker || return 1
+  compose up -d --no-build --remove-orphans --wait --wait-timeout 240 || return 1
+  verify_running_images || return 1
+  verify_local_health || return 1
+  cp -f "$previous_manifest" "$current_manifest" || return 1
+  chmod 600 "$current_manifest" || return 1
+
+  temporary=$rollback_manifest.tmp.$$
+  rolled_back_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+  umask 077
+  {
+    printf 'FAILED_SOURCE_REVISION=%s\n' "$failed_source_revision"
+    printf 'FAILED_RELEASE_ID=%s\n' "$failed_release_id"
+    printf 'RESTORED_SOURCE_REVISION=%s\n' "$rollback_source_revision"
+    printf 'RESTORED_RELEASE_ID=%s\n' "$rollback_release_id"
+    printf 'ROLLED_BACK_AT=%s\n' "$rolled_back_at"
+  } > "$temporary" || return 1
+  chmod 600 "$temporary" || return 1
+  mv -f "$temporary" "$rollback_manifest" || return 1
+  printf 'deploy: rollback completed and verified\n' >&2
+}
+
+on_exit() {
+  status=$?
+  trap - EXIT HUP INT TERM
+  if [ "$status" -ne 0 ] && [ "$rollback_armed" = true ]; then
+    if ! rollback_release; then
+      printf 'deploy: CRITICAL: automatic rollback failed\n' >&2
+      status=2
+    fi
+  fi
+  exit "$status"
+}
+
+validate_release_inputs
+
+if [ "$validate_only" = true ]; then
+  printf 'deploy: immutable release inputs are valid\n'
+  exit 0
+fi
+
+for command_name in docker curl flock grep sed date; do
+  command -v "$command_name" >/dev/null 2>&1 || fail "required command is missing: $command_name"
+done
+
+[ -f "$environment_file" ] || fail "runtime environment file does not exist: $environment_file"
+for compose_file in compose.yml compose.prod.yml compose.runtime.yml; do
+  [ -f "$deployment_directory/$compose_file" ] ||
+    fail "deployment file does not exist: $deployment_directory/$compose_file"
+done
+[ -f "$current_manifest" ] ||
+  fail "current release manifest is missing; create a reviewed baseline before enabling automated deployment"
+
+umask 077
+lock_directory=$(dirname "$lock_file")
+[ -d "$lock_directory" ] || fail "deployment lock directory does not exist: $lock_directory"
+exec 9>"$lock_file"
+flock -n 9 || fail 'another deployment is already running on this host'
+
+load_previous_release "$current_manifest"
+if [ "$rollback_web_image" = "$WEB_IMAGE" ] &&
+   [ "$rollback_api_image" = "$API_IMAGE" ] &&
+   [ "$rollback_cms_image" = "$CMS_IMAGE" ] &&
+   [ "$rollback_scraper_image" = "$SCRAPER_IMAGE" ]; then
+  verify_running_images
+  verify_local_health
+  write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+  printf 'deploy: requested immutable images are already running and healthy\n'
+  exit 0
+fi
+
+cp -f "$current_manifest" "$previous_manifest"
+chmod 600 "$previous_manifest"
+load_previous_release "$previous_manifest"
+rollback_armed=true
+trap on_exit EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+compose pull web api catalog-backup cms scraper scraper-worker
+compose up -d --no-build --remove-orphans --wait --wait-timeout 240
+verify_running_images
+verify_local_health
+write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+rollback_armed=false
+trap - EXIT HUP INT TERM
+printf 'deploy: immutable release is running and verified\n'
