@@ -1,0 +1,26 @@
+services:
+  catalog-backup:
+    environment:
+      CATALOG_BACKUP_S3_ACCESS_KEY_ID: ""
+      CATALOG_BACKUP_S3_ACCESS_KEY_ID_FILE: /run/secrets/catalog_backup_s3_access_key_id
+      CATALOG_BACKUP_S3_SECRET_ACCESS_KEY: ""
+      CATALOG_BACKUP_S3_SECRET_ACCESS_KEY_FILE: /run/secrets/catalog_backup_s3_secret_access_key
+      CATALOG_BACKUP_AGE_IDENTITY: ""
+      CATALOG_BACKUP_AGE_IDENTITY_FILE: /run/secrets/catalog_backup_age_identity
+      CATALOG_BACKUP_SIGNING_KEY: ""
+      CATALOG_BACKUP_SIGNING_KEY_FILE: /run/secrets/catalog_backup_signing_key
+    secrets:
+      - catalog_backup_s3_access_key_id
+      - catalog_backup_s3_secret_access_key
+      - catalog_backup_age_identity
+      - catalog_backup_signing_key
+
+secrets:
+  catalog_backup_s3_access_key_id:
+    file: ${CATALOG_BACKUP_S3_ACCESS_KEY_ID_FILE:?set CATALOG_BACKUP_S3_ACCESS_KEY_ID_FILE}
+  catalog_backup_s3_secret_access_key:
+    file: ${CATALOG_BACKUP_S3_SECRET_ACCESS_KEY_FILE:?set CATALOG_BACKUP_S3_SECRET_ACCESS_KEY_FILE}
+  catalog_backup_age_identity:
+    file: ${CATALOG_BACKUP_AGE_IDENTITY_FILE:?set CATALOG_BACKUP_AGE_IDENTITY_FILE}
+  catalog_backup_signing_key:
+    file: ${CATALOG_BACKUP_SIGNING_KEY_FILE:?set CATALOG_BACKUP_SIGNING_KEY_FILE}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -44,7 +45,11 @@ func run() error {
 	}
 	preflight = preflight || preflightEnvironment
 
-	identity, err := age.ParseX25519Identity(strings.TrimSpace(os.Getenv("CATALOG_BACKUP_AGE_IDENTITY")))
+	identityValue, err := secretEnvironment("CATALOG_BACKUP_AGE_IDENTITY")
+	if err != nil {
+		return err
+	}
+	identity, err := age.ParseX25519Identity(identityValue)
 	if err != nil {
 		return fmt.Errorf("parse CATALOG_BACKUP_AGE_IDENTITY: %w", err)
 	}
@@ -52,7 +57,11 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("parse CATALOG_BACKUP_AGE_RECIPIENT: %w", err)
 	}
-	signingKey, err := catalogbackup.ParseSigningKey(strings.TrimSpace(os.Getenv("CATALOG_BACKUP_SIGNING_KEY")))
+	signingKeyValue, err := secretEnvironment("CATALOG_BACKUP_SIGNING_KEY")
+	if err != nil {
+		return err
+	}
+	signingKey, err := catalogbackup.ParseSigningKey(signingKeyValue)
 	if err != nil {
 		return fmt.Errorf("parse CATALOG_BACKUP_SIGNING_KEY: %w", err)
 	}
@@ -64,10 +73,18 @@ func run() error {
 	defer stop()
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+	accessKeyID, err := secretEnvironment("CATALOG_BACKUP_S3_ACCESS_KEY_ID")
+	if err != nil {
+		return err
+	}
+	secretAccessKey, err := secretEnvironment("CATALOG_BACKUP_S3_SECRET_ACCESS_KEY")
+	if err != nil {
+		return err
+	}
 	store, err := catalogbackup.NewS3Store(ctx, catalogbackup.S3Config{
 		Endpoint: os.Getenv("CATALOG_BACKUP_S3_ENDPOINT"), Region: os.Getenv("CATALOG_BACKUP_S3_REGION"),
-		Bucket: os.Getenv("CATALOG_BACKUP_S3_BUCKET"), AccessKeyID: os.Getenv("CATALOG_BACKUP_S3_ACCESS_KEY_ID"),
-		SecretAccessKey: os.Getenv("CATALOG_BACKUP_S3_SECRET_ACCESS_KEY"),
+		Bucket: os.Getenv("CATALOG_BACKUP_S3_BUCKET"), AccessKeyID: accessKeyID,
+		SecretAccessKey: secretAccessKey,
 		URIScheme:       environmentOr("CATALOG_BACKUP_URI_SCHEME", "s3"), UsePathStyle: pathStyle,
 	})
 	if err != nil {
@@ -129,4 +146,37 @@ func environmentOr(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func secretEnvironment(key string) (string, error) {
+	direct := strings.TrimSpace(os.Getenv(key))
+	file := strings.TrimSpace(os.Getenv(key + "_FILE"))
+	if direct != "" && file != "" {
+		return "", fmt.Errorf("configure only one of %s or %s_FILE", key, key)
+	}
+	if file == "" {
+		if direct == "" {
+			return "", fmt.Errorf("%s or %s_FILE is required", key, key)
+		}
+		return direct, nil
+	}
+	if !filepath.IsAbs(file) {
+		return "", fmt.Errorf("%s_FILE must be an absolute path", key)
+	}
+	info, err := os.Stat(file)
+	if err != nil {
+		return "", fmt.Errorf("read %s_FILE: %w", key, err)
+	}
+	if !info.Mode().IsRegular() || info.Size() > 64*1024 {
+		return "", fmt.Errorf("%s_FILE must reference a regular file no larger than 64 KiB", key)
+	}
+	payload, err := os.ReadFile(file)
+	if err != nil {
+		return "", fmt.Errorf("read %s_FILE: %w", key, err)
+	}
+	value := strings.TrimSpace(string(payload))
+	if value == "" {
+		return "", fmt.Errorf("%s_FILE is empty", key)
+	}
+	return value, nil
 }
