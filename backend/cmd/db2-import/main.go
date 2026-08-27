@@ -1297,9 +1297,13 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 		}
 		command, err := tx.Exec(ctx, `
 			INSERT INTO game_entity_versions (entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id)
-			SELECT e.id,$2,1,p.content_hash,p.payload_en,p.source_url,$3,p.source_artifact_id
+			SELECT e.id,$2,COALESCE((SELECT MAX(old.revision) FROM game_entity_versions old
+				WHERE old.entity_id=e.id AND old.build_id=$2),0)+1,
+				p.content_hash,p.payload_en,p.source_url,$3,p.source_artifact_id
 			FROM projected_items p JOIN game_entities e ON e.product_id=$1 AND e.entity_type='item' AND e.external_id=p.external_id
-			WHERE NOT EXISTS (SELECT 1 FROM game_entity_versions old WHERE old.entity_id=e.id AND old.build_id=$2)`, ic.ProductID, ic.BuildID, ic.SnapshotID)
+			WHERE NOT EXISTS (SELECT 1 FROM game_entity_versions old
+				WHERE old.entity_id=e.id AND old.build_id=$2 AND old.content_hash=p.content_hash)`,
+			ic.ProductID, ic.BuildID, ic.SnapshotID)
 		if err != nil {
 			return fmt.Errorf("insert missing item versions: %w", err)
 		}
@@ -1309,7 +1313,10 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 			SELECT p.*,e.id AS entity_id,v.id AS version_id
 			FROM projected_items p
 			JOIN game_entities e ON e.product_id=$1 AND e.entity_type='item' AND e.external_id=p.external_id
-			JOIN LATERAL (SELECT latest.id FROM game_entity_versions latest WHERE latest.entity_id=e.id AND latest.build_id=$2 ORDER BY latest.revision DESC LIMIT 1) v ON true`, ic.ProductID, ic.BuildID); err != nil {
+			JOIN LATERAL (SELECT candidate.id FROM game_entity_versions candidate
+				WHERE candidate.entity_id=e.id AND candidate.build_id=$2 AND candidate.content_hash=p.content_hash
+				ORDER BY candidate.revision DESC LIMIT 1) v ON true`,
+			ic.ProductID, ic.BuildID); err != nil {
 			return fmt.Errorf("map projected item versions: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `

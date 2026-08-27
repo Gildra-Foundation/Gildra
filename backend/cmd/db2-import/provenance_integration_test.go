@@ -71,7 +71,7 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	rows := []db2ProofRow{
 		{"SpellName", 100, map[string]any{"Name_lang": "Provenance Recipe"}},
 		{"Spell", 100, map[string]any{"Description_lang": "Creates a provenanced item."}},
-		{"SpellMisc", 9000, map[string]any{"SpellID": "100", "DifficultyID": "0", "SchoolMask": "4", "CastingTimeIndex": "1", "RangeIndex": "1"}},
+		{"SpellMisc", 9000, map[string]any{"SpellID": "100", "DifficultyID": "0", "SchoolMask": "4", "CastingTimeIndex": "1", "RangeIndex": "1", "SpellIconFileDataID": "134399"}},
 		{"SpellCastTimes", 1, map[string]any{"Base": "1500", "Minimum": "1500"}},
 		{"SpellRange", 1, map[string]any{"RangeMin_0": "0", "RangeMax_0": "40"}},
 		{"SpellCooldowns", 9001, map[string]any{"SpellID": "100", "DifficultyID": "0", "RecoveryTime": "3000", "StartRecoveryTime": "1500", "CategoryRecoveryTime": "0"}},
@@ -103,6 +103,25 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 			artifacts[proof.table] = artifactID
 		}
 		insertDB2ProofRow(t, ctx, pool, ic, artifactID, proof)
+	}
+	listfileArtifact, err := store.RegisterArtifact(ctx, ic, "wow_listfile", "community-listfile", "",
+		"https://github.com/wowdev/wow-listfile/blob/master/community-listfile.csv", map[string]any{"test": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	listfileHash := sha256.Sum256([]byte("integration-listfile"))
+	if err := store.CompleteArtifact(ctx, listfileArtifact, listfileHash[:], int64(len("integration-listfile")), ""); err != nil {
+		t.Fatal(err)
+	}
+	for fileDataID, iconName := range map[int64]string{134399: "spell_test_provenance", 999999: "inv_test_provenance"} {
+		if _, err := pool.Exec(ctx, `
+			INSERT INTO catalog_file_assets(
+				file_data_id,path,icon_name,source_url,content_hash,snapshot_id,source_artifact_id)
+			VALUES($1,$2,$3,'https://github.com/wowdev/wow-listfile/blob/master/community-listfile.csv',
+				$4,$5,$6)`, fileDataID, "interface/icons/"+iconName+".blp", iconName,
+			listfileHash[:], ic.SnapshotID, listfileArtifact); err != nil {
+			t.Fatalf("insert listfile asset %d: %v", fileDataID, err)
+		}
 	}
 	itemProofHash := sha256.Sum256([]byte("complete-item-artifact"))
 	if err := recordDB2Completeness(ctx, pool, ic, artifacts["Item"], "Item", "en_US",
@@ -186,6 +205,38 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		t.Fatal("spell mechanic artifact provenance does not match source DB2 tables")
 	}
 	assertFactArtifact(t, ctx, pool, "crafting acquisition", `SELECT source_artifact_id FROM catalog_item_acquisition_sources WHERE source_type='crafting_recipe' LIMIT 1`, artifacts["SpellEffect"])
+
+	if _, err := pool.Exec(ctx, `
+		UPDATE catalog_db2_rows
+		SET payload=payload || '{"IconFileDataID":"999999"}'::jsonb,
+			content_hash=digest(convert_to((payload || '{"IconFileDataID":"999999"}'::jsonb)::text,'UTF8'),'sha256')
+		WHERE build_id=$1 AND table_name='Item' AND locale='en_US' AND row_id=200`, ic.BuildID); err != nil {
+		t.Fatalf("change item icon source fact: %v", err)
+	}
+	if _, err := projectItems(ctx, pool, ic); err != nil {
+		t.Fatalf("reproject changed item: %v", err)
+	}
+	var itemRevisions int
+	var latestIconID int64
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*),MAX(CASE WHEN version.id=entity.latest_version_id
+			THEN (version.payload->>'icon_file_data_id')::bigint END)
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.entity_id=entity.id AND version.build_id=$1
+		WHERE entity.entity_type='item' AND entity.external_id=200
+		GROUP BY entity.id`, ic.BuildID).Scan(&itemRevisions, &latestIconID); err != nil {
+		t.Fatalf("read reprojected item revisions: %v", err)
+	}
+	if itemRevisions != 2 || latestIconID != 999999 {
+		t.Fatalf("item revisions=%d latest icon=%d, want 2 and 999999", itemRevisions, latestIconID)
+	}
+	if _, err := catalogtaxonomy.New(pool).RebuildIcons(ctx); err != nil {
+		t.Fatalf("rebuild icons: %v", err)
+	}
+	assertIconProvenance(t, ctx, pool, "spell", 100, "spell_test_provenance", 134399,
+		artifacts["SpellMisc"], listfileArtifact)
+	assertIconProvenance(t, ctx, pool, "item", 200, "inv_test_provenance", 999999,
+		artifacts["Item"], listfileArtifact)
 }
 
 type db2ProofRow struct {
@@ -244,5 +295,35 @@ func assertFactArtifact(t *testing.T, ctx context.Context, pool *pgxpool.Pool, l
 	}
 	if actual != expected {
 		t.Fatalf("%s artifact = %s, want %s", label, actual, expected)
+	}
+}
+
+func assertIconProvenance(
+	t *testing.T,
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	entityType string,
+	externalID int64,
+	iconName string,
+	fileDataID int64,
+	referenceArtifact uuid.UUID,
+	assetArtifact uuid.UUID,
+) {
+	t.Helper()
+	var actualName string
+	var actualFileDataID int64
+	var actualReferenceArtifact, actualAssetArtifact uuid.UUID
+	if err := pool.QueryRow(ctx, `
+		SELECT icon_name,file_data_id,source_artifact_id,asset_source_artifact_id
+		FROM catalog_entity_icons
+		WHERE entity_type=$1 AND external_id=$2`, entityType, externalID).Scan(
+		&actualName, &actualFileDataID, &actualReferenceArtifact, &actualAssetArtifact,
+	); err != nil {
+		t.Fatalf("read %s icon provenance: %v", entityType, err)
+	}
+	if actualName != iconName || actualFileDataID != fileDataID ||
+		actualReferenceArtifact != referenceArtifact || actualAssetArtifact != assetArtifact {
+		t.Fatalf("unexpected %s icon provenance: name=%s file=%d reference=%s asset=%s",
+			entityType, actualName, actualFileDataID, actualReferenceArtifact, actualAssetArtifact)
 	}
 }
