@@ -22,6 +22,7 @@ type options struct {
 	snapshotID  uuid.UUID
 	confirm     bool
 	projectNPC  bool
+	projectAcq  bool
 }
 
 func main() {
@@ -73,6 +74,14 @@ func run(args []string, getenv func(string) string) error {
 		slog.Info("ATT NPC facts projected", "snapshot_id", facts.SnapshotID,
 			"build_id", facts.BuildID, "roles", facts.Roles, "locations", facts.Locations)
 	}
+	if opts.projectAcq {
+		facts, err := store.ProjectAcquisitionFacts(ctx, opts.snapshotID)
+		if err != nil {
+			return err
+		}
+		slog.Info("ATT acquisition facts projected", "snapshot_id", facts.SnapshotID,
+			"build_id", facts.BuildID, "acquisitions", facts.Acquisitions)
+	}
 	return nil
 }
 
@@ -83,10 +92,12 @@ func parseOptions(args []string, getenv func(string) string) (options, error) {
 	snapshotValue := strings.TrimSpace(getenv("ATT_SNAPSHOT_ID"))
 	confirm := false
 	projectNPC := false
+	projectAcq := false
 	flags.StringVar(&databaseURL, "database-url", databaseURL, "PostgreSQL connection string")
 	flags.StringVar(&snapshotValue, "snapshot-id", snapshotValue, "validated ATT catalog snapshot UUID")
 	flags.BoolVar(&confirm, "confirm", false, "persist the previewed resolution classifications")
 	flags.BoolVar(&projectNPC, "project-npc-facts", false, "project resolved quest-giver roles and coordinates")
+	flags.BoolVar(&projectAcq, "project-acquisition-facts", false, "project neutral resolved provider evidence")
 	if err := flags.Parse(args); err != nil {
 		return options{}, err
 	}
@@ -101,10 +112,11 @@ func parseOptions(args []string, getenv func(string) string) (options, error) {
 	if err != nil || snapshotID == uuid.Nil {
 		return options{}, errors.New("ATT_SNAPSHOT_ID or -snapshot-id must be a non-zero UUID")
 	}
-	if projectNPC && !confirm {
-		return options{}, errors.New("-project-npc-facts requires -confirm")
+	if (projectNPC || projectAcq) && !confirm {
+		return options{}, errors.New("fact projection requires -confirm")
 	}
-	return options{databaseURL: databaseURL, snapshotID: snapshotID, confirm: confirm, projectNPC: projectNPC}, nil
+	return options{databaseURL: databaseURL, snapshotID: snapshotID, confirm: confirm,
+		projectNPC: projectNPC, projectAcq: projectAcq}, nil
 }
 
 func logReport(message string, report attimport.ResolutionReport) {
