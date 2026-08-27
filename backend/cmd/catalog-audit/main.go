@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -48,11 +49,12 @@ type importReport struct {
 }
 
 type report struct {
-	GeneratedAt time.Time        `json:"generatedAt"`
-	Build       buildReport      `json:"build"`
-	Coverage    []coverageReport `json:"coverage"`
-	Facts       factReport       `json:"facts"`
-	Imports     importReport     `json:"imports"`
+	GeneratedAt time.Time                      `json:"generatedAt"`
+	Build       buildReport                    `json:"build"`
+	Coverage    []coverageReport               `json:"coverage"`
+	Facts       factReport                     `json:"facts"`
+	Imports     importReport                   `json:"imports"`
+	Readiness   catalogquality.ReadinessReport `json:"readiness"`
 }
 
 func main() {
@@ -162,6 +164,10 @@ func run() error {
 		JOIN game_products product ON product.id=run.product_id
 		WHERE product.slug=$1`, product).Scan(&result.Imports.Running, &result.Imports.Failed); err != nil {
 		return fmt.Errorf("query import state: %w", err)
+	}
+	result.Readiness, err = catalogquality.EvaluateReadiness(ctx, db, product, result.Build.Version)
+	if err != nil {
+		return fmt.Errorf("evaluate catalog readiness: %w", err)
 	}
 
 	encoder := json.NewEncoder(os.Stdout)

@@ -238,6 +238,11 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err != nil {
 		t.Fatal(err)
 	}
+	wagoProof := []byte("25,Released item\n")
+	wagoDigest := sha256.Sum256(wagoProof)
+	if err := store.CompleteArtifact(ctx, artifactID, wagoDigest[:], int64(len(wagoProof)), `"integration-wago-etag"`); err != nil {
+		t.Fatal(err)
+	}
 	releasedItem := catalogTestItem("Released item", "1.0.0.100003")
 	releasedItem.SourceArtifactID = &artifactID
 	if err := store.UpsertCanonical(ctx, candidate, releasedItem); err != nil {

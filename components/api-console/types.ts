@@ -34,10 +34,18 @@ export type CatalogImportStatus = {
   liveSourceRecords: number; startedAt: string; finishedAt: string | null;
   lastActivityAt: string | null; errorSummary: string;
 };
+export type CatalogReadinessCheck = {
+  key: string; scope: "data" | "production"; status: "pass" | "warning" | "fail";
+  count: number; message: string; blocking: boolean;
+};
+export type CatalogReadiness = {
+  product: string; buildId: number; buildVersion: string; generatedAt: string;
+  dataReady: boolean; productionReady: boolean; checks: CatalogReadinessCheck[];
+};
 export type DashboardData = {
   generatedAt: string; user: PanelUser; systems: SystemStatus[]; dataset: DatasetSummary;
   runs: DatasetRun[]; analytics: { hours: number; events: number; uniqueUsers: number; activeSubscriptions: number; series: AnalyticsPoint[] };
-  catalog: CatalogHealth;
+  catalog: CatalogHealth; catalogReadiness: CatalogReadiness;
   endpoints: { method: string; path: string; description: string }[];
 };
 export type TierlistEntry = {

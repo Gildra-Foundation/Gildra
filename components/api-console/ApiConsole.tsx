@@ -239,6 +239,8 @@ function Overview({ data, entries, query, setQuery, activity, setActivity, role,
 
 function CatalogHealthPanel({ data }: { data: DashboardData }) {
   const catalog = data.catalog;
+  const readiness = data.catalogReadiness;
+  const actionableChecks = readiness.checks.filter((check) => check.status !== "pass");
   const percent = (value: number) => catalog.entityCount ? `${(value / catalog.entityCount * 100).toFixed(1)}%` : "—";
   const activeImport = catalog.imports.find((item) => item.status === "RUNNING");
   return <Panel title="Полнота каталога" kicker={`Read-model #${catalog.generation} · ${catalog.readModelStatus}`} icon={Database}>
@@ -254,6 +256,13 @@ function CatalogHealthPanel({ data }: { data: DashboardData }) {
       <span>Последнее атомарное обновление: {catalog.refreshedAt ? new Date(catalog.refreshedAt).toLocaleString("ru-RU") : "не выполнялось"}</span>
       <span>Pipeline: {catalog.lastPipelineRunId ? `#${catalog.lastPipelineRunId} · ${catalog.pipelineStatus} · ${catalog.pipelineStage || "complete"}` : "не запускался"}</span>
       <span className={catalog.publicationReady ? "text-[#7fc493]" : "text-[#d99a68]"}>Публикация: {catalog.publicationReady == null ? "не проверена" : catalog.publicationReady ? "разрешена" : "заблокирована политикой источников"}</span>
+    </div>
+    <div className="mt-4 border border-[#292f3c] bg-[#0d1118] p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><div className="text-[9px] uppercase tracking-[.14em] text-[#687286]">Production readiness · {readiness.buildVersion}</div><div className="mt-1 text-sm font-semibold text-[#dce1eb]">Автоматические проверки фундамента WoW</div></div>
+        <div className="flex gap-2 text-[9px] uppercase tracking-[.1em]"><span className={cn("border px-2 py-1", readiness.dataReady ? "border-[#355b42] text-[#7fc493]" : "border-[#673b3f] text-[#e58b8f]")}>Данные: {readiness.dataReady ? "готовы" : "блок"}</span><span className={cn("border px-2 py-1", readiness.productionReady ? "border-[#355b42] text-[#7fc493]" : "border-[#6a5730] text-[#d9ad57]")}>Production: {readiness.productionReady ? "готов" : "блок"}</span></div>
+      </div>
+      {actionableChecks.length ? <div className="mt-3 grid gap-2 lg:grid-cols-2">{actionableChecks.map((check) => <div key={check.key} className={cn("border px-3 py-2 text-[10px]", check.status === "fail" ? "border-[#5f3539] bg-[#1b1013]" : "border-[#51452b] bg-[#17140d]")}><div className="flex items-center justify-between gap-3"><span className={check.status === "fail" ? "text-[#e58b8f]" : "text-[#d9ad57]"}>{check.status === "fail" ? "Блокирует" : "Предупреждение"} · {check.scope}</span><span className="font-mono text-[#a9b1c0]">{check.count.toLocaleString("ru-RU")}</span></div><div className="mt-1 text-[#858fa2]">{check.message}</div></div>)}</div> : <div className="mt-3 text-xs text-[#7fc493]">Все проверки пройдены.</div>}
     </div>
     {activeImport ? <div className="mt-4 border border-[#4a402a] bg-[#17140d] p-4" role="status" aria-live="polite">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

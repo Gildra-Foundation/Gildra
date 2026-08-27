@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogrelease"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -323,7 +324,7 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 			return result, err
 		}
 	}
-	if err := r.validate(ctx, result.RunID, options.Product); err != nil {
+	if err := r.validate(ctx, result.RunID, options.Product, options.BuildVersion, options.PublicationEnvironment); err != nil {
 		return result, err
 	}
 
@@ -450,7 +451,13 @@ func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory,
 	return nil
 }
 
-func (r *Runner) validate(ctx context.Context, runID int64, product string) error {
+func (r *Runner) validate(
+	ctx context.Context,
+	runID int64,
+	product string,
+	buildVersion string,
+	publicationEnvironment string,
+) error {
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_runs SET current_stage='validate-catalog' WHERE id=$1`, runID)
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='validate-catalog'`, runID)
 	var entities, missingLatest, registryOnlyQuests, invalidRelations, staleReadModels int64
@@ -467,6 +474,15 @@ func (r *Runner) validate(ctx context.Context, runID int64, product string) erro
 	counts := map[string]any{"active_entities": entities, "missing_latest_versions": missingLatest, "registry_only_quests": registryOnlyQuests, "invalid_relations": invalidRelations, "stale_read_models": staleReadModels}
 	if entities == 0 || missingLatest != 0 || invalidRelations != 0 || staleReadModels != 0 {
 		return r.failStage(ctx, runID, "validate-catalog", "catalog_invariants_failed", fmt.Errorf("catalog validation failed: %v", counts))
+	}
+	readiness, err := catalogquality.EvaluateReadiness(ctx, r.DB, product, buildVersion)
+	if err != nil {
+		return r.failStage(ctx, runID, "validate-catalog", "readiness_query_failed", err)
+	}
+	counts["readiness"] = readiness
+	if !readiness.DataReady || (publicationEnvironment == "production" && !readiness.ProductionReady) {
+		return r.failStage(ctx, runID, "validate-catalog", "catalog_readiness_failed",
+			fmt.Errorf("catalog readiness failed: data_ready=%t production_ready=%t", readiness.DataReady, readiness.ProductionReady))
 	}
 	_, err = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`, runID, "validate-catalog", jsonObject(counts))
 	return err
