@@ -171,6 +171,7 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	assertEntityArtifact(t, ctx, pool, "spell", 100, artifacts["SpellName"])
 	assertEntityArtifact(t, ctx, pool, "item", 200, artifacts["ItemSparse"])
 	assertEntityArtifact(t, ctx, pool, "profession", 500, artifacts["SkillLine"])
+	assertEntityArtifact(t, ctx, pool, "recipe", 100, artifacts["SkillLineAbility"])
 	assertEntityArtifact(t, ctx, pool, "creature", 900, artifacts["Creature"])
 	assertEntityArtifact(t, ctx, pool, "quest", 1000, artifacts["QuestV2CliTask"])
 
@@ -205,6 +206,33 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		t.Fatal("spell mechanic artifact provenance does not match source DB2 tables")
 	}
 	assertFactArtifact(t, ctx, pool, "crafting acquisition", `SELECT source_artifact_id FROM catalog_item_acquisition_sources WHERE source_type='crafting_recipe' LIMIT 1`, artifacts["SpellEffect"])
+	var recipeSpellID int64
+	var recipeEntityType, recipeSpellEntityType string
+	if err := pool.QueryRow(ctx, `
+		SELECT recipe.spell_id,recipe_entity.entity_type,spell_entity.entity_type
+		FROM catalog_recipes recipe
+		JOIN game_entity_versions recipe_version ON recipe_version.id=recipe.version_id
+		JOIN game_entities recipe_entity ON recipe_entity.id=recipe_version.entity_id
+		JOIN game_entity_versions spell_version ON spell_version.id=recipe.source_spell_version_id
+		JOIN game_entities spell_entity ON spell_entity.id=spell_version.entity_id
+		WHERE recipe_entity.external_id=100`).Scan(&recipeSpellID, &recipeEntityType, &recipeSpellEntityType); err != nil {
+		t.Fatalf("read normalized recipe identity: %v", err)
+	}
+	if recipeSpellID != 100 || recipeEntityType != "recipe" || recipeSpellEntityType != "spell" {
+		t.Fatalf("unexpected recipe identity: spell=%d recipe_type=%s source_type=%s",
+			recipeSpellID, recipeEntityType, recipeSpellEntityType)
+	}
+	var acquisitionSourceType string
+	if err := pool.QueryRow(ctx, `
+		SELECT source_entity.entity_type
+		FROM catalog_item_acquisition_sources acquisition
+		JOIN game_entities source_entity ON source_entity.id=acquisition.source_entity_id
+		WHERE acquisition.source_type='crafting_recipe' LIMIT 1`).Scan(&acquisitionSourceType); err != nil {
+		t.Fatalf("read crafting acquisition entity: %v", err)
+	}
+	if acquisitionSourceType != "recipe" {
+		t.Fatalf("crafting acquisition source type=%s, want recipe", acquisitionSourceType)
+	}
 
 	if _, err := pool.Exec(ctx, `
 		UPDATE catalog_db2_rows
@@ -234,6 +262,8 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		t.Fatalf("rebuild icons: %v", err)
 	}
 	assertIconProvenance(t, ctx, pool, "spell", 100, "spell_test_provenance", 134399,
+		artifacts["SpellMisc"], listfileArtifact)
+	assertIconProvenance(t, ctx, pool, "recipe", 100, "spell_test_provenance", 134399,
 		artifacts["SpellMisc"], listfileArtifact)
 	assertIconProvenance(t, ctx, pool, "item", 200, "inv_test_provenance", 999999,
 		artifacts["Item"], listfileArtifact)
