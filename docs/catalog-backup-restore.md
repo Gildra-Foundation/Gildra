@@ -99,6 +99,25 @@ URIs, SHA-256, byte size, schema version, restore duration, and signer
 fingerprint. `pg_dump` and `pg_restore` receive connection strings via their
 process environment instead of command-line arguments.
 
+For the OVH Docker deployment, use the bounded wrapper instead of maintaining
+a permanent restore database:
+
+```bash
+sudo /opt/gildra/infra/backup/run-catalog-backup.sh
+```
+
+The wrapper creates a uniquely named PostgreSQL container on the private Compose
+network, stores its data only in a size-bounded `tmpfs`, waits for readiness,
+runs `catalog-backup`, and removes the restore container on success or failure.
+The source PostgreSQL container is never stopped and the restore target is never
+reachable through a published host port. Do not point the restore URL at the
+source database or reuse a restored database between drills.
+
+Install `infra/systemd/gildra-catalog-backup.service` and its timer only after
+all backup secrets have been placed in `/opt/gildra/.env` and one manual run has
+produced a `verified` manifest. The timer runs before the daily catalog refresh,
+so a fresh recovery proof is available to the production publication gate.
+
 ## Scheduling and retention
 
 Before the first unbounded production import, run this command and confirm a

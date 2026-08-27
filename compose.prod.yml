@@ -1,6 +1,8 @@
 services:
   api:
     image: ${API_IMAGE}
+  catalog-backup:
+    image: ${API_IMAGE}
   web:
     image: ${WEB_IMAGE}
   cms:
