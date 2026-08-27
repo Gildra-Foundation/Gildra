@@ -278,6 +278,31 @@ func (s *Store) CompleteArtifact(ctx context.Context, artifactID uuid.UUID, cont
 	return nil
 }
 
+// MarkArtifactSampled records an intentionally bounded diagnostic download.
+// A sample has no whole-file content proof and therefore cannot satisfy a
+// completeness or publication gate.
+func (s *Store) MarkArtifactSampled(ctx context.Context, artifactID uuid.UUID, records, limit int) error {
+	if artifactID == uuid.Nil || records < 0 || limit <= 0 || records > limit {
+		return errors.New("artifact ID, non-negative record count, and positive sample limit are required")
+	}
+	command, err := s.db.Exec(ctx, `
+		UPDATE catalog_source_artifacts
+		SET status='sampled',content_hash=NULL,byte_size=NULL,etag=NULL,
+			metadata=metadata || jsonb_build_object(
+				'sampled_records',$2::int,
+				'sample_limit',$3::int,
+				'complete',false
+			),fetched_at=now()
+		WHERE id=$1`, artifactID, records, limit)
+	if err != nil {
+		return fmt.Errorf("mark source artifact %s sampled: %w", artifactID, err)
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("mark source artifact %s sampled: artifact does not exist", artifactID)
+	}
+	return nil
+}
+
 // CompleteArtifactFromRecords proves a logical API artifact as a deterministic
 // manifest of the canonical source documents preserved for it. Battle.net
 // collections span an index, detail, and media responses rather than one file;

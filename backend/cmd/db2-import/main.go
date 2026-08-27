@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 	"os/signal"
 	"regexp"
@@ -49,6 +50,13 @@ type row struct {
 	id      int64
 	payload string
 	hash    []byte
+}
+
+type completenessExclusion struct {
+	externalKey string
+	reasonCode  string
+	reason      string
+	attributes  map[string]any
 }
 
 func main() {
@@ -169,11 +177,7 @@ func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, st
 			}
 			var artifactID uuid.UUID
 			var err error
-			if opts.maxRecords == 0 {
-				artifactID, err = store.RegisterPendingArtifact(ctx, ic, "wago_tools", table, locale, sourceURL, metadata)
-			} else {
-				artifactID, err = store.RegisterArtifact(ctx, ic, "wago_tools", table, locale, sourceURL, metadata)
-			}
+			artifactID, err = store.RegisterPendingArtifact(ctx, ic, "wago_tools", table, locale, sourceURL, metadata)
 			if err != nil {
 				return err
 			}
@@ -201,18 +205,37 @@ func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, st
 					return nil
 				}
 				slog.Info("importing DB2 table", "table", table, "locale", locale, "build", opts.version)
-				_, proof, err := client.RowsWithProof(ctx, table, opts.version, wagoLocale, opts.maxRecords, func(values map[string]string) error {
-					id, err := strconv.ParseInt(values["ID"], 10, 64)
+				sourceOrdinal := int64(0)
+				seenIDs := make(map[int64]struct{})
+				exclusions := make([]completenessExclusion, 0)
+				sourceRows, proof, err := client.RowsWithProof(ctx, table, opts.version, wagoLocale, opts.maxRecords, func(values map[string]string) error {
+					sourceOrdinal++
+					*seen++
+					rawID := strings.TrimSpace(values["ID"])
+					id, err := strconv.ParseInt(rawID, 10, 64)
 					if err != nil || id <= 0 {
+						exclusions = append(exclusions, completenessExclusion{
+							externalKey: fmt.Sprintf("row:%d", sourceOrdinal), reasonCode: "invalid_id",
+							reason:     "source row has no positive DB2 ID",
+							attributes: map[string]any{"raw_id": rawID, "source_ordinal": sourceOrdinal},
+						})
 						return nil
 					}
+					if _, duplicate := seenIDs[id]; duplicate {
+						exclusions = append(exclusions, completenessExclusion{
+							externalKey: fmt.Sprintf("row:%d", sourceOrdinal), reasonCode: "duplicate_id",
+							reason:     "source file repeats a DB2 ID already seen in this artifact",
+							attributes: map[string]any{"db2_id": id, "source_ordinal": sourceOrdinal},
+						})
+						return nil
+					}
+					seenIDs[id] = struct{}{}
 					canonical, err := json.Marshal(values)
 					if err != nil {
 						return err
 					}
 					digest := sha256.Sum256(canonical)
 					batch = append(batch, row{id: id, payload: string(canonical), hash: digest[:]})
-					*seen++
 					if len(batch) >= opts.batchSize {
 						return flush()
 					}
@@ -228,8 +251,16 @@ func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, st
 					if err := store.CompleteArtifact(ctx, artifactID, proof.SHA256, proof.ByteSize, proof.ETag); err != nil {
 						return err
 					}
-				} else if opts.maxRecords == 0 {
-					return fmt.Errorf("DB2 %s (%s) ended without a complete content proof", table, locale)
+					if err := recordDB2Completeness(ctx, db, ic, artifactID, table, locale, sourceURL, int64(sourceRows), proof, exclusions); err != nil {
+						return err
+					}
+				} else {
+					if opts.maxRecords == 0 {
+						return fmt.Errorf("DB2 %s (%s) ended without a complete content proof", table, locale)
+					}
+					if err := store.MarkArtifactSampled(ctx, artifactID, sourceRows, opts.maxRecords); err != nil {
+						return err
+					}
 				}
 				finalized = true
 				return nil
@@ -240,6 +271,104 @@ func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, st
 		}
 	}
 	return nil
+}
+
+func recordDB2Completeness(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	ic catalogimport.ImportContext,
+	artifactID uuid.UUID,
+	table, locale, sourceURL string,
+	expected int64,
+	proof wago.ContentProof,
+	exclusions []completenessExclusion,
+) error {
+	if !proof.Complete || len(proof.SHA256) != sha256.Size || expected < 0 {
+		return errors.New("complete DB2 content proof and non-negative denominator are required")
+	}
+	scopeKey := "db2." + strings.ToLower(table)
+	return pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
+		var expectationID uuid.UUID
+		if err := tx.QueryRow(ctx, `
+			INSERT INTO catalog_completeness_expectations(
+				product_id,build_id,scope_key,entity_type,locale,source,expected_count,
+				source_artifact_id,expected_content_hash,attributes,observed_at
+			) VALUES($1,$2,$3,'db2_row',$4,'wago_tools',$5,$6,$7,
+				jsonb_build_object('count_mode','db2_rows','table',$8::text,'source_url',$9::text),now())
+			ON CONFLICT(build_id,scope_key,locale,source) DO UPDATE SET
+				product_id=EXCLUDED.product_id,entity_type=EXCLUDED.entity_type,
+				expected_count=EXCLUDED.expected_count,source_artifact_id=EXCLUDED.source_artifact_id,
+				expected_content_hash=EXCLUDED.expected_content_hash,attributes=EXCLUDED.attributes,
+				observed_at=now()
+			RETURNING id`, ic.ProductID, ic.BuildID, scopeKey, locale, expected, artifactID,
+			proof.SHA256, table, sourceURL).Scan(&expectationID); err != nil {
+			return fmt.Errorf("record DB2 completeness expectation for %s (%s): %w", table, locale, err)
+		}
+		if _, err := tx.Exec(ctx, `
+			DELETE FROM catalog_completeness_exclusions
+			WHERE expectation_id=$1 AND attributes->>'managed_by'='db2-import'`, expectationID); err != nil {
+			return fmt.Errorf("clear DB2 completeness exclusions for %s (%s): %w", table, locale, err)
+		}
+		for _, exclusion := range exclusions {
+			attributes := exclusion.attributes
+			if attributes == nil {
+				attributes = make(map[string]any)
+			}
+			attributes["managed_by"] = "db2-import"
+			encoded, err := json.Marshal(attributes)
+			if err != nil {
+				return fmt.Errorf("encode DB2 exclusion %s: %w", exclusion.externalKey, err)
+			}
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO catalog_completeness_exclusions(
+					expectation_id,external_key,reason_code,reason,source_artifact_id,attributes
+				) VALUES($1,$2,$3,$4,$5,$6)
+				ON CONFLICT(expectation_id,external_key) DO UPDATE SET
+					reason_code=EXCLUDED.reason_code,reason=EXCLUDED.reason,
+					source_artifact_id=EXCLUDED.source_artifact_id,attributes=EXCLUDED.attributes`,
+				expectationID, exclusion.externalKey, exclusion.reasonCode, exclusion.reason,
+				artifactID, encoded); err != nil {
+				return fmt.Errorf("record DB2 exclusion %s: %w", exclusion.externalKey, err)
+			}
+		}
+		var imported, excluded int64
+		if err := tx.QueryRow(ctx, `
+			SELECT count(*) FROM catalog_db2_rows
+			WHERE build_id=$1 AND table_name=$2 AND locale=$3 AND source_artifact_id=$4`,
+			ic.BuildID, table, locale, artifactID).Scan(&imported); err != nil {
+			return fmt.Errorf("measure imported DB2 rows for %s (%s): %w", table, locale, err)
+		}
+		if err := tx.QueryRow(ctx, `SELECT count(*) FROM catalog_completeness_exclusions WHERE expectation_id=$1`,
+			expectationID).Scan(&excluded); err != nil {
+			return fmt.Errorf("measure DB2 exclusions for %s (%s): %w", table, locale, err)
+		}
+		accounted := imported + excluded
+		missing := expected - accounted
+		status := "complete"
+		if missing < 0 {
+			missing, status = 0, "overfull"
+		} else if missing > 0 {
+			status = "incomplete"
+		}
+		coverage := float64(100)
+		if expected > 0 {
+			coverage = math.Round((float64(accounted)/float64(expected))*1000000) / 10000
+		} else if accounted > 0 {
+			coverage = 0
+		}
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO catalog_completeness_measurements(
+				expectation_id,imported_count,excluded_count,missing_count,invalid_count,
+				status,coverage_percent,details
+			) VALUES($1,$2,$3,$4,0,$5,$6,
+				jsonb_build_object('count_mode','db2_rows','table',$7::text,
+					'source_artifact_id',$8::text,'source_rows',$9::bigint))`,
+			expectationID, imported, excluded, missing, status, coverage, table,
+			artifactID.String(), expected); err != nil {
+			return fmt.Errorf("record DB2 completeness measurement for %s (%s): %w", table, locale, err)
+		}
+		return nil
+	})
 }
 
 func upsertBatch(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext, artifactID uuid.UUID, table, locale, sourceURL string, rows []row) (int64, error) {

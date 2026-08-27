@@ -13,6 +13,7 @@ import (
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogtaxonomy"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/wago"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -98,6 +99,26 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 			artifacts[proof.table] = artifactID
 		}
 		insertDB2ProofRow(t, ctx, pool, ic, artifactID, proof)
+	}
+	itemProofHash := sha256.Sum256([]byte("complete-item-artifact"))
+	if err := recordDB2Completeness(ctx, pool, ic, artifacts["Item"], "Item", "en_US",
+		"https://wago.tools/db2/Item/csv?build=99.0.0.990001", 2,
+		wago.ContentProof{SHA256: itemProofHash[:], ByteSize: 42, Complete: true}, nil); err != nil {
+		t.Fatalf("record DB2 completeness: %v", err)
+	}
+	var completenessStatus string
+	var expectedCount, importedCount, excludedCount, missingCount int64
+	if err := pool.QueryRow(ctx, `
+		SELECT status,expected_count,imported_count,excluded_count,missing_count
+		FROM catalog_completeness_latest
+		WHERE build_id=$1 AND scope_key='db2.item' AND locale='en_US'`, ic.BuildID).Scan(
+		&completenessStatus, &expectedCount, &importedCount, &excludedCount, &missingCount,
+	); err != nil {
+		t.Fatalf("read DB2 completeness: %v", err)
+	}
+	if completenessStatus != "complete" || expectedCount != 2 || importedCount != 2 || excludedCount != 0 || missingCount != 0 {
+		t.Fatalf("unexpected DB2 completeness: status=%s expected=%d imported=%d excluded=%d missing=%d",
+			completenessStatus, expectedCount, importedCount, excludedCount, missingCount)
 	}
 
 	projectors := []struct {
