@@ -267,6 +267,52 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		artifacts["SpellMisc"], listfileArtifact)
 	assertIconProvenance(t, ctx, pool, "item", 200, "inv_test_provenance", 999999,
 		artifacts["Item"], listfileArtifact)
+
+	officialContext, err := store.Begin(ctx, "wow", 990000, "99.0.0.990000", "us", "battlenet", nil,
+		map[string]any{"integration_test": "quest_reward_carry_forward"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	officialArtifact, err := store.RegisterArtifact(ctx, officialContext, "blizzard_api", "quest", "en_US",
+		"https://us.api.blizzard.com/data/wow/quest/1000", map[string]any{"test": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	itemID := int64(200)
+	if err := store.ReplaceBattleNetQuestRewards(ctx, officialContext, 1000, "en_US", []catalogimport.QuestReward{{
+		Type: "item", Index: 0, ExternalID: &itemID, Amount: 1, Name: "Provenance Output",
+	}}, officialArtifact); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+		UPDATE game_builds SET is_active=(build_number=990001)
+		WHERE product_id=$1`, ic.ProductID); err != nil {
+		t.Fatal(err)
+	}
+	rewardResult, err := catalogtaxonomy.New(pool).RebuildQuestRewards(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rewardResult.QuestRewards != 1 {
+		t.Fatalf("carried quest rewards=%d, want 1", rewardResult.QuestRewards)
+	}
+	var rewardSourceBuild int64
+	var rewardArtifact uuid.UUID
+	if err := pool.QueryRow(ctx, `
+		SELECT source_build.build_number,reward.source_artifact_id
+		FROM catalog_quest_rewards reward
+		JOIN game_builds target_build ON target_build.id=reward.build_id
+		JOIN game_builds source_build ON source_build.id=reward.source_build_id
+		WHERE target_build.build_number=990001 AND reward.quest_id=1000
+		  AND reward.reward_type='item' AND reward.reward_index=0`).Scan(
+		&rewardSourceBuild, &rewardArtifact,
+	); err != nil {
+		t.Fatalf("read carried quest reward: %v", err)
+	}
+	if rewardSourceBuild != 990000 || rewardArtifact != officialArtifact {
+		t.Fatalf("quest reward source build=%d artifact=%s, want 990000 and %s",
+			rewardSourceBuild, rewardArtifact, officialArtifact)
+	}
 }
 
 type db2ProofRow struct {

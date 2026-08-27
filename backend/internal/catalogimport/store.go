@@ -138,11 +138,11 @@ func (s *Store) ReplaceBattleNetQuestRewards(
 		)
 		INSERT INTO catalog_quest_rewards(
 			build_id,quest_id,reward_type,reward_index,external_id,item_entity_id,
-			amount,is_choice,source,attributes,source_artifact_id
+			amount,is_choice,source,attributes,source_artifact_id,source_build_id
 		)
 		SELECT $1,$2,incoming.reward_type,incoming.reward_index,incoming.external_id,
 			CASE WHEN incoming.reward_type='item' THEN item.id END,
-			incoming.amount,incoming.is_choice,'blizzard_api',incoming.attributes,$5
+			incoming.amount,incoming.is_choice,'blizzard_api',incoming.attributes,$5,$1
 		FROM incoming
 		LEFT JOIN game_entities item ON item.product_id=$3 AND item.entity_type='item'
 			AND item.external_id=incoming.external_id AND item.deleted_at IS NULL
@@ -153,6 +153,7 @@ func (s *Store) ReplaceBattleNetQuestRewards(
 			is_choice=EXCLUDED.is_choice,
 			source=EXCLUDED.source,
 			source_artifact_id=EXCLUDED.source_artifact_id,
+			source_build_id=EXCLUDED.source_build_id,
 			attributes=(catalog_quest_rewards.attributes || EXCLUDED.attributes)
 				|| jsonb_build_object('names',
 					COALESCE(catalog_quest_rewards.attributes->'names','{}'::jsonb)
