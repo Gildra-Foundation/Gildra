@@ -3,6 +3,8 @@ services:
     image: ${API_IMAGE}
   catalog-backup:
     image: ${API_IMAGE}
+  catalog-media-cache:
+    image: ${API_IMAGE}
   web:
     image: ${WEB_IMAGE}
   cms:

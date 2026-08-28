@@ -12,6 +12,7 @@ restore_user="gildra_restore"
 restore_database="gildra_restore"
 run_token="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 restore_container="gildra-catalog-restore-$run_token"
+restore_volume="gildra-catalog-restore-$run_token-data"
 started_at="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 runtime_environment=""
 result_output=""
@@ -77,6 +78,7 @@ cleanup() {
   status=$?
   trap - EXIT HUP INT TERM
   docker rm -f "$restore_container" >/dev/null 2>&1 || true
+  docker volume rm -f "$restore_volume" >/dev/null 2>&1 || true
   [ -z "$runtime_environment" ] || rm -f "$runtime_environment"
   [ -z "$result_output" ] || rm -f "$result_output"
 
@@ -108,11 +110,15 @@ cd "$deployment_directory"
 
 compose run --rm --no-deps -e CATALOG_BACKUP_PREFLIGHT=true catalog-backup >/dev/null
 docker network inspect "$restore_network" >/dev/null
+docker volume create \
+  --label gildra.component=catalog-backup-restore \
+  --label "gildra.run-token=$run_token" \
+  "$restore_volume" >/dev/null
 docker run --detach --rm \
   --name "$restore_container" \
   --network "$restore_network" \
   --env-file "$runtime_environment" \
-  --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid,size=8g \
+  --mount "type=volume,src=$restore_volume,dst=/var/lib/postgresql/data" \
   --security-opt no-new-privileges:true \
   "$restore_image" >/dev/null
 

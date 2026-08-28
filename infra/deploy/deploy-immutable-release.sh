@@ -81,6 +81,14 @@ manifest_optional_value() {
   fi
 }
 
+require_environment_value() {
+  key=$1
+  value=$(manifest_value "$key" "$environment_file")
+  case $value in
+    ""|'""'|"''") fail "$environment_file must contain a non-empty $key value" ;;
+  esac
+}
+
 load_previous_release() {
   file=$1
   rollback_web_image=$(manifest_value WEB_IMAGE "$file")
@@ -139,9 +147,46 @@ verify_local_health() {
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/readyz >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 \
+    'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US' >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/library >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/ru/library >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve gildra.net:443:127.0.0.1 https://gildra.net/database >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/database >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve gildra.net:443:127.0.0.1 https://gildra.net/library >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/library >/dev/null
+}
+
+verify_catalog_load() {
+  api_container=$(compose ps -q api)
+  [ -n "$api_container" ] || fail 'api service has no running container for the load gate'
+  for locale in en_US ru_RU; do
+    docker exec "$api_container" catalog-load-check \
+      -base-url http://127.0.0.1:8080 \
+      -product wow \
+      -locale "$locale" \
+      -dataset items \
+      -requests 60 \
+      -concurrency 4 \
+      -datasets-p95 1s \
+      -summaries-p95 500ms \
+      -detail-p95 1s
+  done
+}
+
+verify_catalog_readiness() {
+  api_container=$(compose ps -q api)
+  [ -n "$api_container" ] || fail 'api service has no running container for the readiness gate'
+  docker exec "$api_container" catalog-audit \
+    -product wow \
+    -recovery-policy verified_same_host \
+    -require-production-ready
 }
 
 write_release_manifest() {
@@ -223,6 +268,9 @@ for command_name in docker curl flock grep sed date; do
 done
 
 [ -f "$environment_file" ] || fail "runtime environment file does not exist: $environment_file"
+require_environment_value SENTRY_GO_DSN
+require_environment_value NEXT_PUBLIC_SENTRY_DSN
+require_environment_value CATALOG_BACKUP_LOCAL_DIRECTORY
 for compose_file in compose.yml compose.prod.yml compose.runtime.yml; do
   [ -f "$deployment_directory/$compose_file" ] ||
     fail "deployment file does not exist: $deployment_directory/$compose_file"
@@ -243,6 +291,8 @@ if [ "$rollback_web_image" = "$WEB_IMAGE" ] &&
    [ "$rollback_scraper_image" = "$SCRAPER_IMAGE" ]; then
   verify_running_images
   verify_local_health
+  verify_catalog_readiness
+  verify_catalog_load
   write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
   printf 'deploy: requested immutable images are already running and healthy\n'
   exit 0
@@ -261,6 +311,8 @@ compose pull web api catalog-backup cms scraper scraper-worker
 compose up -d --no-build --remove-orphans --wait --wait-timeout 240
 verify_running_images
 verify_local_health
+verify_catalog_readiness
+verify_catalog_load
 write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
 rollback_armed=false

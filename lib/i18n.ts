@@ -47,6 +47,8 @@ const RU: Record<string, string> = {
   "Fresh guides for the season": "Свежие гайды сезона",
   "Explore game data": "Изучить данные игры",
   Database: "База данных",
+  Library: "Библиотека",
+  "Verified datasets, images and tooltips": "Проверенные датасеты, изображения и tooltip",
   "Items, spells, quests and more": "Предметы, заклинания, задания и другое",
   "Switch game": "Сменить игру",
   soon: "скоро",

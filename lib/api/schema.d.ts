@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/library/datasets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List curated public Warcraft datasets and their freshness and coverage. */
+        get: operations["listLibraryDatasets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/game/entity-types": {
         parameters: {
             query?: never;
@@ -363,6 +380,8 @@ export interface components {
             graphql: string;
             /** Format: uri */
             catalog: string;
+            /** Format: uri */
+            library: string;
         };
         Problem: {
             /** Format: uri */
@@ -378,6 +397,53 @@ export interface components {
             id: number;
             slug: string;
             name: string;
+        };
+        LibraryDataset: {
+            slug: string;
+            product: string;
+            entityType: string;
+            /** @description Taxonomy path used by the entity listing. Empty for an entire entity type. */
+            categoryPath: string;
+            /** @description Stable game item class filter used by item datasets such as Weapons and Armor. */
+            itemClassId?: number;
+            group: string;
+            iconSymbol: string;
+            sortOrder: number;
+            name: string;
+            description: string;
+            buildVersion?: string;
+            /**
+             * Format: uri
+             * @description Source-backed game icon selected for the dataset card when one is available.
+             */
+            previewImageUrl?: string;
+            /** Format: int64 */
+            entityCount: number;
+            /**
+             * Format: int64
+             * @description Records with a localization row available for the requested locale.
+             */
+            localizedCount: number;
+            /**
+             * Format: int64
+             * @description Localizations backed by a ready source artifact with content proof.
+             */
+            verifiedLocalizedCount: number;
+            /** Format: int64 */
+            tooltipCount: number;
+            /** Format: int64 */
+            imageCount: number;
+            /**
+             * @description Whether the dataset belongs to this game product, or is waiting for a permitted source.
+             * @enum {string}
+             */
+            applicability: "applicable" | "pending_source" | "not_applicable";
+            applicabilityReason: string;
+            /** @enum {string} */
+            freshness: "fresh" | "stale" | "empty" | "refreshing" | "failed";
+            freshnessReason: string;
+            /** Format: date-time */
+            coverageUpdatedAt?: string;
         };
         GameEntity: {
             /** Format: uuid */
@@ -399,6 +465,8 @@ export interface components {
             name: string;
             description: string;
             tooltip?: components["schemas"]["GameTooltip"];
+            /** @description Source-backed media for the published entity build. Empty or absent when no publishable media exists. */
+            media?: components["schemas"]["GameEntityMedia"][];
             iconName?: string;
             /** Format: uri */
             iconUrl?: string;
@@ -407,6 +475,32 @@ export interface components {
             buildId?: number;
             /** Format: date-time */
             updatedAt: string;
+        };
+        GameEntityMedia: {
+            /** @example icon */
+            kind: string;
+            /** @example icon */
+            assetKey: string;
+            /**
+             * Format: uri
+             * @description Cached URL when available, otherwise the verified remote asset URL.
+             */
+            url: string;
+            /** @example blizzard_api */
+            source: string;
+            /** Format: uri */
+            sourceUrl: string;
+            /** @example en_US */
+            locale: string;
+            /** @example image/jpeg */
+            mimeType: string;
+            /** @enum {string} */
+            cacheStatus: "remote" | "cached" | "blocked" | "failed";
+            /** Format: int64 */
+            fileDataId?: number;
+            width?: number;
+            height?: number;
+            primary: boolean;
         };
         GameEntityTypeSummary: {
             type: string;
@@ -794,6 +888,34 @@ export interface operations {
             503: components["responses"]["CatalogPublicationUnavailable"];
         };
     };
+    listLibraryDatasets: {
+        parameters: {
+            query?: {
+                product?: string;
+                locale?: "en_US" | "ru_RU";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public library datasets backed by published catalog versions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["LibraryDataset"][];
+                    };
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["CatalogPublicationUnavailable"];
+        };
+    };
     listGameEntityTypes: {
         parameters: {
             query?: {
@@ -860,12 +982,16 @@ export interface operations {
             query?: {
                 product?: string;
                 type?: string;
+                /** @description Public library dataset slug. The server resolves its entity type and membership filters from the dataset registry. */
+                dataset?: string;
                 locale?: "en_US" | "ru_RU";
                 q?: string;
                 /** @description Taxonomy path. Selecting a parent includes all descendants. */
                 category?: string;
                 /** @description Repeatable taxonomy paths combined with AND semantics. Use one value per facet, for example class plus specialization plus equipment slot. */
                 facet?: string[];
+                /** @description Stable game item class identifier, for example 2 for weapons and 4 for armor. */
+                itemClassId?: number;
                 /** @description Minimum stored base item level. Applies to item records. */
                 minItemLevel?: number;
                 /** @description Maximum stored base item level. Applies to item records. */
@@ -963,6 +1089,8 @@ export interface operations {
         parameters: {
             query?: {
                 locale?: "en_US" | "ru_RU";
+                /** @description Optional public library dataset scope. Returns 404 when the entity is not a member. */
+                dataset?: string;
             };
             header?: never;
             path: {

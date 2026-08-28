@@ -2,7 +2,7 @@ import { siteOrigin, xmlEscape, xmlResponse } from "@/lib/sitemap";
 
 export const revalidate = 86400;
 
-const paths = ["/", "/ru", "/database", "/ru/database", "/tier-lists", "/ru/tier-lists"];
+const paths = ["/", "/ru", "/library", "/ru/library", "/database", "/ru/database", "/tier-lists", "/ru/tier-lists"];
 
 export function GET() {
   const urls = paths.map((path) => `<url><loc>${xmlEscape(`${siteOrigin}${path}`)}</loc></url>`).join("");

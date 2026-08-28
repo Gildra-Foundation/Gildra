@@ -5,10 +5,12 @@ RUN npm ci
 
 FROM node:22.23.2-alpine AS builder
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1 PAYLOAD_SECRET=build-only-secret PAYLOAD_DATABASE_URL=postgres://build:build@localhost/build
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN PAYLOAD_SECRET=build-only-placeholder \
+    PAYLOAD_DATABASE_URL=postgres://build:build@localhost/build \
+    npm run build
 
 FROM node:22.23.2-alpine AS runner
 WORKDIR /app

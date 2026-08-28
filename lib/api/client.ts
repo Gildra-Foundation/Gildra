@@ -8,6 +8,7 @@ export type CatalogRecord = components["schemas"]["GameEntitySummary"] & {
 export type CatalogCategory = components["schemas"]["GameCategory"];
 export type CatalogEntityType = components["schemas"]["GameEntityTypeSummary"];
 export type CatalogProduct = components["schemas"]["GameProduct"];
+export type LibraryDataset = components["schemas"]["LibraryDataset"];
 export type CatalogCoverage = components["schemas"]["GameFieldCoverage"];
 export type CatalogRelationship = components["schemas"]["GameEntityRelationship"];
 export type CatalogEntityQuality = components["schemas"]["GameEntityQuality"];
@@ -74,6 +75,7 @@ export async function getCatalogPreview(locale: "en_US" | "ru_RU"): Promise<Cata
 export async function getCatalogPage({
   locale,
   product = "wow",
+  dataset = "",
   type = "",
   query = "",
   cursor = "",
@@ -84,9 +86,12 @@ export async function getCatalogPage({
   minRequiredLevel,
   maxRequiredLevel,
   limit = 24,
+  includeTotal = true,
+  itemClassId,
 }: {
   locale: "en_US" | "ru_RU";
   product?: string;
+  dataset?: string;
   type?: string;
   query?: string;
   cursor?: string;
@@ -97,8 +102,11 @@ export async function getCatalogPage({
   minRequiredLevel?: number;
   maxRequiredLevel?: number;
   limit?: number;
+  includeTotal?: boolean;
+  itemClassId?: number;
 }): Promise<CatalogPage> {
-  const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: "true" });
+  const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: String(includeTotal) });
+  if (dataset) params.set("dataset", dataset);
   if (type) params.set("type", type);
   if (query) params.set("q", query);
   if (cursor) params.set("cursor", cursor);
@@ -110,6 +118,7 @@ export async function getCatalogPage({
   if (maxItemLevel !== undefined) params.set("maxItemLevel", String(maxItemLevel));
   if (minRequiredLevel !== undefined) params.set("minRequiredLevel", String(minRequiredLevel));
   if (maxRequiredLevel !== undefined) params.set("maxRequiredLevel", String(maxRequiredLevel));
+  if (itemClassId !== undefined) params.set("itemClassId", String(itemClassId));
   const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`);
   return { data: page.data, pagination: page.pagination };
 }
@@ -139,8 +148,18 @@ export async function getCatalogProducts(): Promise<CatalogProduct[]> {
   return page.data;
 }
 
-export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU"): Promise<GameEntity | null> {
+export async function getLibraryDatasets(
+  locale: "en_US" | "ru_RU",
+  product = "wow",
+): Promise<LibraryDataset[]> {
+  const params = new URLSearchParams({ product, locale });
+  const page = await catalogRequest<{ data: LibraryDataset[] }>(`/v1/library/datasets?${params}`);
+  return page.data;
+}
+
+export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", dataset = ""): Promise<GameEntity | null> {
   const params = new URLSearchParams({ locale });
+  if (dataset) params.set("dataset", dataset);
   const response = await fetch(`${apiURL()}/v1/game/entities/${encodeURIComponent(id)}?${params}`, {
     cache: "force-cache",
     next: { revalidate: 300, tags: [`catalog-entity-${id}`] },

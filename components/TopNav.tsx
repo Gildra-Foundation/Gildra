@@ -18,9 +18,9 @@ const TASKS = [
   },
   {
     task: "Explore game data",
-    title: "Database",
-    desc: "Items, spells, quests and more",
-    href: "/database",
+    title: "Library",
+    desc: "Verified datasets, images and tooltips",
+    href: "/library",
     icon: "#ic-database",
   },
   {
