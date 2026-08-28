@@ -45,27 +45,31 @@ Production foundation runs reject custom profiles and sources outside this list.
 No catalog import may start until all of these are true:
 
 1. the exact Retail build version is supplied;
-2. PostgreSQL is on catalog schema version 85 or newer;
+2. PostgreSQL is on catalog schema version 90 or newer;
 3. a compressed PostgreSQL backup is encrypted and stored off-host in R2, S3,
-   or Swift;
+   or Swift, unless the operator explicitly selects the
+   `verified_same_host` recovery policy and accepts loss of both database and
+   backup when the server is lost;
 4. its SHA-256 and byte size are recorded;
 5. that exact backup was restored into an isolated disposable database within
    the last 24 hours;
 6. critical table counts and migration version matched the source database;
-7. `catalog_backup_manifests` records the evidence with status `verified`, an
-   off-host URI, and verification flags `restore_verified=true` and
+7. `catalog_backup_manifests` records the evidence with status `verified`, a
+   URI allowed by the selected recovery policy, and verification flags `restore_verified=true` and
    `source_restore_match=true`;
 8. a bounded proof import and all validation checks pass before the unbounded
    import is approved.
 
-A local-only dump does not satisfy the production gate. It is useful recovery
-evidence, but loss of the server could destroy both the database and the dump.
+Off-host recovery remains the default. A local-only dump satisfies the gate
+only when `-recovery-policy verified_same_host` is supplied explicitly and the
+same checksum, schema, recency, and isolated-restore checks pass. Loss of the
+server can still destroy both the database and this backup.
 
 ## Safe sequence
 
 ```text
 read-only inventory
--> off-host backup
+-> verified backup under the selected recovery policy
 -> isolated restore and count comparison
 -> schema migration
 -> dry-run plan for one pinned build
@@ -149,18 +153,122 @@ catalog-pipeline \
   snapshots, entities, versions, relations, normalized facts, media, users, and
   migration version before reopening writes.
 
-## Known blocker before production import
+## Recovery implementation
 
 The repository now includes `catalog-backup`, which creates an age-encrypted
-off-host PostgreSQL archive, restores the downloaded object into an isolated
+server-local or off-host PostgreSQL archive, restores the stored object into an isolated
 empty database, compares critical state, uploads signed evidence, and only then
 records a verified manifest. Its unit and disposable-database integration tests
-do not constitute a production recovery point. Therefore the production
-recovery gate must remain closed until the backup job
-uploads the artifact, verifies a restore from that remote copy, and registers
-the resulting manifest. Do not bypass the gate with a manual status change.
+do not constitute a production recovery point. The default production recovery
+gate remains closed until that remote-copy drill succeeds. A server-local
+installation may instead select `verified_same_host`, but it must still restore
+the exact archive into an isolated database, compare critical state, and
+register the resulting manifest. The target single-server deployment uses the
+protected server-local backend; S3/R2 is not required. Do not bypass either policy with a manual
+status change.
+
+## Local media cache
+
+Image bytes live on this server under the absolute directory configured by
+`CATALOG_MEDIA_DIRECTORY`; the database stores only the immutable cache key,
+SHA-256, byte size, MIME type, observation proof and public API URL. The API
+serves a cached object through `/v1/media/{media-id}` only while the source has
+reviewed, unexpired `asset_cache=allowed` and `public_api=allowed` grants for
+the active environment.
+Missing, blocked, expired or revoked permission returns `404` and never falls
+back to the upstream host.
+
+Before enabling a source, review the immutable evidence already recorded in
+`catalog_source_policy_reviews`. An allow must reference the exact evidence
+SHA-256, identify the accountable owner or legal reviewer, state a precise
+reason and expire within 366 days. Do not update
+`catalog_publication_grants` directly. Validate the decision first, then repeat
+with `-confirm` only after the accountable reviewer has approved it:
+
+```bash
+catalog-source-approval \
+  -source blizzard_api \
+  -environment production \
+  -surface public_api \
+  -decision allowed \
+  -approved-by owner@example.com \
+  -reason 'approved for the registered application and documented controls' \
+  -evidence-sha256 <reviewed-terms-sha256> \
+  -expires-at 2026-09-27T12:00:00Z
+```
+
+The command is dry-run by default. `-confirm` records an append-only owner
+approval, links the grant to it and emits an immutable grant event. Revocation
+uses `-decision blocked` with no evidence hash or expiry and takes effect
+immediately. After approval, run a bounded cache batch and review
+`catalog_media_cache_runs` before increasing the limit:
+
+```bash
+catalog-media-cache \
+  -environment staging \
+  -limit 100 \
+  -confirm
+```
+
+The downloader accepts HTTPS only, refuses private and special-purpose
+addresses, disables proxy inheritance, limits each file to 32 MiB and accepts
+only JPEG, PNG, WebP or GIF after inspecting the actual bytes. Objects are
+deduplicated by SHA-256. Per-object failures produce a `partial` run and remain
+eligible for a later retry; they do not replace the previous published media.
+Public selection carries forward only the newest ready media observation whose
+build is not newer than the entity's published build. Future candidate media
+is never returned, and revoking either grant immediately closes local delivery.
+
+The server-local release backup must cover both PostgreSQL and the media
+directory. Store the media archive/manifest beside the protected local catalog
+backup, record a sorted cache-key/SHA-256 manifest, and test-restore both into
+an isolated database and directory before a release is eligible. S3/R2 is not
+required for this deployment, but loss of the server can destroy both copies
+and is an explicitly accepted recovery limitation.
 
 The API exposes both `locale` (requested) and `resolvedLocale` (actual source)
 plus `localeFallback`. Recipe reagent and output blocks expose
 `resolution_status` and `resolution_reason`, so known source gaps are not
 presented as valid empty data.
+
+## Safe projection of existing complete DB2 facts
+
+Projection-only maintenance must never call the normal importer with
+`-download=false`: the normal importer begins a new snapshot and would create
+an empty import run. Use a dedicated completeness-gated mode instead. For
+quest reward packages:
+
+```bash
+db2-import \
+  -product wow \
+  -version 12.1.0.69497 \
+  -download=false \
+  -project-existing-quest-packages \
+  -confirm
+```
+
+The command refuses to run unless `db2.questpackageitem` is `complete` for the
+exact product/build/locale. It creates only canonical package candidates and
+does not publish them. `PackageID` is not a quest ID; the public tooltip labels
+the result `package_only` until a separate proved relationship is imported.
+
+## Production observability and source isolation
+
+- Production deployment requires non-empty backend and browser Sentry DSNs.
+  A missing DSN stops the release before containers are changed.
+- The API writes one structured completion event per request using only method,
+  fixed route template, status, duration and response byte count. Raw URLs,
+  query strings, authorization headers, cookies, request bodies, remote
+  addresses and user identifiers are never included. HTTP 5xx responses are
+  also reported to Sentry using the fixed route template.
+- `/livez` proves that the process can serve HTTP. `/readyz` independently
+  pings PostgreSQL, ClickHouse and Redis; container health alone is not accepted
+  as proof of service readiness.
+- Release validation exercises the dataset directory, an entity list and a
+  real detail page in both locales. The release gate requires zero HTTP errors,
+  dataset p95 at most 1 second, summary p95 at most 500 ms and detail p95 at
+  most 1 second before rollback is disarmed.
+- The daily canonical Warcraft refresh uses Wago only as DB2 transport, direct
+  DB2 projection, Blizzard Game Data/Media and the verified listfile. Raidbots,
+  Wowhead, wow.gg, Archon, Icy Veins and every tier-list dataset are excluded
+  from this foundation pipeline.

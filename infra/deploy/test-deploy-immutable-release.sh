@@ -26,6 +26,12 @@ for file in .env compose.yml compose.prod.yml compose.runtime.yml; do
 done
 
 {
+  printf 'SENTRY_GO_DSN=https://public@example.invalid/1\n'
+  printf 'NEXT_PUBLIC_SENTRY_DSN=https://public@example.invalid/2\n'
+  printf 'CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups\n'
+} > "$deployment_directory/.env"
+
+{
   printf 'WEB_IMAGE=%s\n' "$old_web"
   printf 'API_IMAGE=%s\n' "$old_api"
   printf 'CMS_IMAGE=%s\n' "$old_cms"
@@ -132,5 +138,35 @@ grep -q "WEB_IMAGE=$old_web" "$deployment_directory/current-release.env"
 grep -q '^FAILED_RELEASE_ID=test-release$' "$deployment_directory/last-rollback.env"
 grep -q '^RESTORED_RELEASE_ID=legacy$' "$deployment_directory/last-rollback.env"
 grep -q 'rollback completed and verified' "$test_directory/deploy.log"
+
+# Keep the public-library journey inside the rollback-armed deployment script.
+# A separate workflow smoke step is too late: by then the previous release has
+# already been disarmed as an automatic rollback target.
+grep -Fq "'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US'" "$deployment_script"
+grep -Fq 'https://api.gildra.net/library' "$deployment_script"
+grep -Fq 'https://api.gildra.net/ru/library' "$deployment_script"
+grep -Fq 'https://gildra.net/library' "$deployment_script"
+grep -Fq 'https://gildra.net/ru/library' "$deployment_script"
+grep -Fq 'verify_catalog_load' "$deployment_script"
+grep -Fq 'catalog-load-check' "$deployment_script"
+grep -Fq 'verify_catalog_readiness' "$deployment_script"
+grep -Fq -- '-require-production-ready' "$deployment_script"
+grep -Fq 'require_environment_value SENTRY_GO_DSN' "$deployment_script"
+grep -Fq 'require_environment_value NEXT_PUBLIC_SENTRY_DSN' "$deployment_script"
+grep -Fq 'require_environment_value CATALOG_BACKUP_LOCAL_DIRECTORY' "$deployment_script"
+if grep '^ExecStart=.*catalog-pipeline' "$script_directory/../systemd/gildra-catalog-refresh.service" | grep -q 'raidbots'; then
+  printf 'test: canonical catalog refresh still imports Raidbots data\n' >&2
+  exit 1
+fi
+
+load_gate_line=$(grep -n '^verify_catalog_load$' "$deployment_script" | tail -n 1 | cut -d: -f1)
+readiness_gate_line=$(grep -n '^verify_catalog_readiness$' "$deployment_script" | tail -n 1 | cut -d: -f1)
+rollback_disarm_line=$(grep -n '^rollback_armed=false$' "$deployment_script" | tail -n 1 | cut -d: -f1)
+[ -n "$load_gate_line" ] && [ -n "$readiness_gate_line" ] && [ -n "$rollback_disarm_line" ] &&
+  [ "$readiness_gate_line" -lt "$rollback_disarm_line" ] &&
+  [ "$load_gate_line" -lt "$rollback_disarm_line" ] || {
+  printf 'test: catalog readiness and load gates must execute before rollback is disarmed\n' >&2
+  exit 1
+}
 
 printf 'test: failed release restored and verified the previous immutable images\n'

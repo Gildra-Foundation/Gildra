@@ -65,6 +65,8 @@ services:
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       CATALOG_PUBLICATION_MODE: ${CATALOG_PUBLICATION_MODE:-enforce}
       CATALOG_PUBLICATION_ENVIRONMENT: ${CATALOG_PUBLICATION_ENVIRONMENT:-production}
+      CATALOG_RECOVERY_POLICY: ${CATALOG_RECOVERY_POLICY:-off_host}
+      CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
       DATASET_WORKER_URL: http://scraper-worker:8081
       DATASET_WORKER_TIMEOUT: 25m
       ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-}
@@ -74,6 +76,8 @@ services:
       BATTLENET_CLIENT_SECRET: ${BATTLENET_CLIENT_SECRET:-}
       BATTLENET_BUILD_NUMBER: ${BATTLENET_BUILD_NUMBER:-}
       BATTLENET_BUILD_VERSION: ${BATTLENET_BUILD_VERSION:-}
+    volumes:
+      - catalog_media:/var/lib/gildra/catalog-media:ro
     depends_on:
       postgres: { condition: service_healthy }
       clickhouse: { condition: service_healthy }
@@ -95,6 +99,7 @@ services:
     environment:
       DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra?sslmode=disable
       CATALOG_BACKUP_RESTORE_DATABASE_URL: ${CATALOG_BACKUP_RESTORE_DATABASE_URL:-}
+      CATALOG_BACKUP_LOCAL_DIRECTORY: ${CATALOG_BACKUP_LOCAL_DIRECTORY:-/var/lib/gildra/catalog-backups}
       CATALOG_BACKUP_S3_ENDPOINT: ${CATALOG_BACKUP_S3_ENDPOINT:-}
       CATALOG_BACKUP_S3_REGION: ${CATALOG_BACKUP_S3_REGION:-auto}
       CATALOG_BACKUP_S3_BUCKET: ${CATALOG_BACKUP_S3_BUCKET:-}
@@ -105,6 +110,30 @@ services:
       CATALOG_BACKUP_AGE_RECIPIENT: ${CATALOG_BACKUP_AGE_RECIPIENT:-}
       CATALOG_BACKUP_AGE_IDENTITY: ${CATALOG_BACKUP_AGE_IDENTITY:-}
       CATALOG_BACKUP_SIGNING_KEY: ${CATALOG_BACKUP_SIGNING_KEY:-}
+      CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
+    volumes:
+      - catalog_media:/var/lib/gildra/catalog-media:ro
+      - catalog_backups:/var/lib/gildra/catalog-backups
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  catalog-media-cache:
+    profiles: ["operations"]
+    image: ${API_IMAGE:-gildra-api:local}
+    build: ./backend
+    entrypoint: ["catalog-media-cache"]
+    command:
+      - -environment
+      - ${CATALOG_PUBLICATION_ENVIRONMENT:-production}
+      - -limit
+      - "100"
+    environment:
+      DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra?sslmode=disable
+      CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
+      CATALOG_MEDIA_PUBLIC_BASE_URL: ${CATALOG_MEDIA_PUBLIC_BASE_URL:-https://api.gildra.net}
+      CATALOG_PUBLICATION_ENVIRONMENT: ${CATALOG_PUBLICATION_ENVIRONMENT:-production}
+    volumes:
+      - catalog_media:/var/lib/gildra/catalog-media
     depends_on:
       postgres: { condition: service_healthy }
 
@@ -205,3 +234,5 @@ volumes:
   redis_data:
   cms_media:
   scraper_state:
+  catalog_media:
+  catalog_backups:

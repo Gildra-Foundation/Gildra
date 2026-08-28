@@ -34,6 +34,23 @@ require the protected `production` environment and its approval policy.
   valid constraints and fresh graph/read-model projection watermarks.
 - Smoke-test a quest with no rewards, an ordinary quest and a large choice
   reward set in both `en_US` and `ru_RU`.
+- Run the bounded, read-only catalog journey gate against the candidate API.
+  It discovers a real entity from the selected dataset and measures the
+  dataset list, directory and detail endpoints without embedding an ID:
+
+  ```text
+  catalog-load-check -base-url https://candidate-api.example \
+    -product wow -locale en_US -dataset items \
+    -requests 60 -concurrency 4
+  ```
+
+  For a non-mutating preflight against an isolated candidate database, set
+  `DATABASE_URL` in the environment and use `-in-process`. This starts only the
+  public catalog handler; it does not run migrations, workers or imports.
+
+  Require zero HTTP/request failures, dataset-list p95 at or below 1 s,
+  summary p95 at or below 500 ms and detail p95 at or below 1 s. Store its JSON
+  output with the release evidence. Repeat for `ru_RU` before promotion.
 
 ## 4. Images and Compose
 
@@ -53,6 +70,20 @@ require the protected `production` environment and its approval policy.
 
 - Deploy the same image digests that passed CI; do not rebuild on the target.
 - Require `/livez` and `/readyz` to return 2xx after Compose reports healthy.
+- Before disarming automatic rollback, require the dataset API plus `/library`
+  and `/ru/library` to return 2xx through `api.gildra.net`, and require the same
+  library routes through `gildra.net`.
+- Require the immutable deployment script's bounded `catalog-load-check` to
+  pass for both `en_US` and `ru_RU`; its JSON report is retained in the deploy
+  log as release evidence.
+- Require `catalog-audit -require-production-ready` to pass with the selected
+  same-server recovery policy. This is a fail-closed deployment gate: missing
+  source reviews, linked owner/legal evidence, or publication grants must abort
+  and roll back the candidate.
+- Verify every allowed production grant points to an unexpired immutable
+  `owner_approval` or `legal` review for the same source and surface. Direct
+  grant updates are prohibited; use `catalog-source-approval` and retain its
+  JSON result as release evidence.
 - Verify `/database`, `/ru/database`, one EN quest and one RU quest through the
   public HTTPS path.
 - Verify catalog pagination, invalid-cursor handling and reward links.
@@ -61,8 +92,10 @@ require the protected `production` environment and its approval policy.
 ## 6. Abort and rollback
 
 Abort promotion if migrations fail, `/readyz` is not healthy, catalog
-projections are stale, reward invariants regress, or the public smoke test
-fails.
+projections are stale, reward invariants regress, the dataset API fails, or an
+English/Russian public library route fails. These checks run while automatic
+rollback is still armed; a later workflow smoke step is additional evidence,
+not the rollback boundary.
 
 For an application rollback, redeploy the previously recorded immutable image
 digests with the unchanged Compose revision. Migration 59 only registers the

@@ -8,7 +8,7 @@ import { t, type Lang } from "@/lib/i18n";
 import { formatQuestText } from "@/lib/gameText";
 import { trackCatalogEvent } from "@/lib/catalogAnalytics";
 import type { CatalogCategory, CatalogEntityType, CatalogPage, CatalogProduct, CatalogRecord, GameEntity } from "@/lib/api/client";
-import { RichDescription, TooltipOwners, wowIconURL } from "@/components/database/TooltipRelations";
+import { RichDescription, TooltipOwners, verifiedMediaURL } from "@/components/database/TooltipRelations";
 
 const SOURCES = [
   { label: "Raidbots", href: "https://www.raidbots.com/developers" },
@@ -34,9 +34,10 @@ const FACET_LABELS: Record<string, [string, string]> = {
 };
 const FACET_ORDER = ["class", "specialization", "race", "profession", "equipment_slot", "armor_type", "weapon_type", "item_class"];
 
-export function DatabaseDirectory({ lang = "en", catalog, categories, entityTypes, products, query = "", selectedProduct = "wow", selectedType = "", selectedCategory = "", selectedFacets = [], cursor = "", minItemLevel = "", maxItemLevel = "", minRequiredLevel = "", maxRequiredLevel = "" }: {
+export function DatabaseDirectory({ lang = "en", catalog, categories, entityTypes, products, query = "", selectedProduct = "wow", selectedType = "", selectedCategory = "", selectedFacets = [], cursor = "", minItemLevel = "", maxItemLevel = "", minRequiredLevel = "", maxRequiredLevel = "", libraryDataset }: {
   lang?: Lang; catalog: CatalogPage; categories: CatalogCategory[]; entityTypes: CatalogEntityType[]; products: CatalogProduct[];
   query?: string; selectedProduct?: string; selectedType?: string; selectedCategory?: string; selectedFacets?: string[]; cursor?: string; minItemLevel?: string; maxItemLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string;
+  libraryDataset?: { slug: string; name: string; description: string; itemClassId?: number };
 }) {
   const [searchValue, setSearchValue] = useState(query);
   const [openTooltip, setOpenTooltip] = useState("");
@@ -90,6 +91,7 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
     if (type === "item" && maxLevel) params.set("maxLevel", maxLevel);
     if (type === "item" && requiredMin) params.set("minRequiredLevel", requiredMin);
     if (type === "item" && requiredMax) params.set("maxRequiredLevel", requiredMax);
+    if (libraryDataset?.itemClassId !== undefined) params.set("itemClassId", String(libraryDataset.itemClassId));
     startTransition(() => router.push(params.size ? `${pathname}?${params}` : pathname));
   }
 
@@ -140,9 +142,9 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
     <div className="db-page">
       <header className="db-hero db-hero-compact" aria-labelledby="database-title">
         <div className="db-intro">
-          <p className="cap gold">{tt("Azeroth reference index")}</p>
-          <h1 id="database-title">{tt("World of Warcraft Database")}</h1>
-          <p className="db-lede">{tt("A structured catalog of items, spells, quests, creatures and every system that shapes World of Warcraft.")}</p>
+          <p className="cap gold">{libraryDataset ? (lang === "ru" ? "Публичная библиотека" : "Public library") : tt("Azeroth reference index")}</p>
+          <h1 id="database-title">{libraryDataset?.name ?? tt("World of Warcraft Database")}</h1>
+          <p className="db-lede">{libraryDataset?.description ?? tt("A structured catalog of items, spells, quests, creatures and every system that shapes World of Warcraft.")}</p>
           <div className="db-scope" aria-label={tt("Catalog scope")}><span>{products.find((product) => product.slug === selectedProduct)?.name ?? "World of Warcraft"}</span><span>{tt("Build-aware")}</span><span>{tt("English & Russian")}</span></div>
         </div>
         <details className="db-source-panel"><summary>{tt("Built from traceable data")}</summary><div className="db-source-links">{SOURCES.map((source) => <a key={source.label} href={source.href} target="_blank" rel="noreferrer">{source.label}<span aria-hidden="true">↗</span></a>)}</div></details>
@@ -166,12 +168,12 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
           <button type="submit">{lang === "ru" ? "Применить" : "Apply"}</button>
           {(selectedCategory || selectedFacets.length || minItemLevel || maxItemLevel || minRequiredLevel || maxRequiredLevel) ? <button type="button" className="is-clear" onClick={() => navigate(selectedType, query, "", "", selectedProduct, "", "", [], "", "")}>{lang === "ru" ? "Сбросить" : "Reset"}</button> : null}
         </form> : null}
-        <div className="db-type-filters" aria-label={tt("Catalog type")}><button type="button" className={!selectedType ? "is-active" : ""} aria-pressed={!selectedType} onClick={() => navigate("", query, "", "", selectedProduct, "", "", [])}>{tt("All records")}</button>{entityTypes.map((entityType) => <button type="button" key={entityType.type} className={selectedType === entityType.type ? "is-active" : ""} aria-pressed={selectedType === entityType.type} onClick={() => { trackCatalogEvent("catalog_type_selected", lang, { type: entityType.type }); navigate(entityType.type, query, "", "", selectedProduct, "", "", []); }}>{entityType.label}<b>{entityType.count.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</b></button>)}</div>
+        {!libraryDataset ? <div className="db-type-filters" aria-label={tt("Catalog type")}><button type="button" className={!selectedType ? "is-active" : ""} aria-pressed={!selectedType} onClick={() => navigate("", query, "", "", selectedProduct, "", "", [])}>{tt("All records")}</button>{entityTypes.map((entityType) => <button type="button" key={entityType.type} className={selectedType === entityType.type ? "is-active" : ""} aria-pressed={selectedType === entityType.type} onClick={() => { trackCatalogEvent("catalog_type_selected", lang, { type: entityType.type }); navigate(entityType.type, query, "", "", selectedProduct, "", "", []); }}>{entityType.label}<b>{entityType.count.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</b></button>)}</div> : null}
 
-        <details className="db-category-section db-category-disclosure" open={browseOpen} onToggle={(event) => setBrowseOpen(event.currentTarget.open)}>
+        {!libraryDataset ? <details className="db-category-section db-category-disclosure" open={browseOpen} onToggle={(event) => setBrowseOpen(event.currentTarget.open)}>
           <summary><span><span className="cap">{tt("Browse the catalog")}</span><strong id="database-categories">{tt("Choose a category")}</strong></span><span>{browseOpen ? (lang === "ru" ? "Скрыть" : "Hide") : (lang === "ru" ? "Показать разделы" : "Show sections")}</span></summary>
           <div className="db-category-grid">{groups.map(([group, types]) => { const primary = types[0]; const active = types.some((entry) => entry.type === selectedType); return <button className={`db-category-card${active ? " is-active" : ""}`} type="button" key={group} aria-pressed={active} onClick={() => navigate(primary.type, "", "", "")}><span className="db-category-icon" aria-hidden="true"><svg className="i"><use href={primary.iconSymbol} /></svg></span><span className="db-category-copy"><strong>{GROUP_LABELS[group]?.[lang === "ru" ? 1 : 0] ?? group}</strong><small>{types.map((entry) => entry.label).slice(0, 3).join(" · ")}</small></span><span className="db-category-state is-live">{types.reduce((sum, entry) => sum + entry.count, 0).toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</span></button>; })}</div>
-        </details>
+        </details> : null}
 
         <div className={categories.length ? "db-catalog-layout has-taxonomy" : "db-catalog-layout"}>
           {categories.length ? (
@@ -188,7 +190,10 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
                 {catalog.data.map((entity) => {
                   const registeredType = typeRegistry.get(entity.type);
                   const detail = entityDetails[entity.id];
-                  const detailHref = `${lang === "ru" ? "/ru" : ""}/database/${encodeURIComponent(entity.type)}/${entity.id}/${encodeURIComponent(entity.slug || String(entity.externalId))}`;
+                  const detailRoot = libraryDataset
+                    ? `${lang === "ru" ? "/ru" : ""}/library/${encodeURIComponent(libraryDataset.slug)}`
+                    : `${lang === "ru" ? "/ru" : ""}/database`;
+                  const detailHref = `${detailRoot}/${encodeURIComponent(entity.type)}/${entity.id}/${encodeURIComponent(entity.slug || String(entity.externalId))}${selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`}`;
                   return (
                   <article className={`db-record quality-${entity.quality ?? 0}${openTooltip === entity.id ? " is-open" : ""}`} key={entity.id}>
                     <div className="db-record-trigger">
@@ -379,7 +384,7 @@ function EntityTooltip({ entity, lang, expanded, detailPage = false, iconSymbol 
         {entity.iconUrl ? <img src={entity.iconUrl} alt="" /> : <svg className="i"><use href={iconSymbol} /></svg>}
       </span>
       <div className="db-tooltip-panel">
-        <div className="db-tooltip-name" id={`tooltip-name-${entity.id}`}>{entity.name}</div>
+        <div className="db-tooltip-name" id={`tooltip-name-${entity.id}`}>{entity.name || `${entity.type.replaceAll("_", " ")} #${entity.externalId}`}</div>
         {blocks.map((block, index) => (
           <TooltipBlock key={`${String(block.type)}-${index}`} block={block} entityType={entity.type} lang={lang} mentions={mentions} />
         ))}
@@ -421,8 +426,11 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
 	if (type === "profession_info") return <ProfessionInfo block={block} lang={lang} />;
 	if (type === "recipe_info") return <RecipeInfo block={block} lang={lang} />;
 	if (type === "item_requirements") return <ItemRequirements block={block} lang={lang} />;
+	if (type === "item_registry") return <ItemRegistry block={block} lang={lang} />;
 	if (type === "item_effect_metadata" && Array.isArray(block.entries)) return <ItemEffectMetadata entries={block.entries as Record<string, unknown>[]} lang={lang} />;
+	if (type === "item_variants" && Array.isArray(block.entries)) return <ItemVariants entries={block.entries as Record<string, unknown>[]} lang={lang} />;
 	if (type === "quest_info") return <QuestInfo block={block} lang={lang} />;
+	if (type === "quest_reward_package") return <QuestRewardPackage block={block} lang={lang} />;
 	if (type === "creature_info") return <CreatureInfo block={block} lang={lang} />;
 	if (type === "provenance") return <TooltipProvenance block={block} lang={lang} />;
 	if (type === "spell_effects" && Array.isArray(block.entries)) return <SpellEffects entries={block.entries as Record<string, unknown>[]} lang={lang} />;
@@ -435,6 +443,19 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
 		: <div className="db-tooltip-description">“{entityType === "quest" ? formatQuestText(block.text, lang) : block.text}”</div>;
   }
   return null;
+}
+
+function ItemRegistry({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
+	const fields = [
+		[lang === "ru" ? "Класс предмета" : "Item class", block.class_id],
+		[lang === "ru" ? "Подкласс" : "Subclass", block.subclass_id],
+		[lang === "ru" ? "Тип экипировки" : "Inventory type", block.inventory_type],
+		["FileDataID", block.icon_file_data_id],
+	].filter((entry) => entry[1] !== null && entry[1] !== undefined && entry[1] !== "");
+	return <div className="db-tooltip-item-context">
+		{Boolean(block.registry_only) ? <div className="db-tooltip-muted">{lang === "ru" ? "Запись реестра игрового клиента" : "Game client registry record"}</div> : null}
+		{fields.map(([label, value]) => <div key={String(label)}><b>{String(label)}:</b> {String(value)}</div>)}
+	</div>;
 }
 
 function ProfessionInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
@@ -490,6 +511,22 @@ function ItemEffectMetadata({ entries, lang }: { entries: Record<string, unknown
 	</div>)}</div>;
 }
 
+function ItemVariants({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
+	return <div className="db-tooltip-variants">
+		<b>{lang === "ru" ? "Варианты предмета" : "Item variants"}</b>
+		{entries.map((variant, variantIndex) => {
+			const stats = Array.isArray(variant.stats) ? variant.stats as Record<string, unknown>[] : [];
+			const effects = Array.isArray(variant.effects) ? variant.effects as Record<string, unknown>[] : [];
+			return <details key={`${String(variant.key)}-${variantIndex}`} open={entries.length === 1}>
+				<summary>{String(variant.key || "base")}{Number(variant.item_level ?? 0) > 0 ? ` · ${lang === "ru" ? "уровень" : "level"} ${String(variant.item_level)}` : ""}</summary>
+				{stats.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Характеристики" : "Stats"}:</b>{stats.map((stat, index) => <span key={`${String(stat.index)}-${index}`}>{String(stat.label || stat.key || `Stat ${stat.type}`)}{stat.value !== null && stat.value !== undefined ? `: ${String(stat.value)}` : ""}{Number(stat.allocation ?? 0) !== 0 ? ` · ${lang === "ru" ? "масштаб" : "allocation"} ${String(stat.allocation)}` : ""}</span>)}</div> : null}
+				{effects.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Эффекты" : "Effects"}:</b>{effects.map((effect, index) => <span key={`${String(effect.index)}-${index}`}>{lang === "ru" ? "Заклинание" : "Spell"} #{String(effect.spell_id || "—")}{Number(effect.cooldown_ms ?? 0) > 0 ? ` · ${formatDuration(Number(effect.cooldown_ms), lang)}` : ""}</span>)}</div> : null}
+				{String(variant.source_artifact_id ?? "") ? <small>{lang === "ru" ? "Источник" : "Source proof"}: {String(variant.source_artifact_id)}</small> : null}
+			</details>;
+		})}
+	</div>;
+}
+
 function QuestInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
 	const objectives = Array.isArray(block.objectives) ? block.objectives as Record<string, unknown>[] : [];
 	const lines = Array.isArray(block.quest_lines) ? block.quest_lines as Record<string, unknown>[] : [];
@@ -503,6 +540,32 @@ function QuestInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang
 	</div>;
 }
 
+function QuestRewardPackage({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
+	const items = Array.isArray(block.items) ? block.items as Record<string, unknown>[] : [];
+	const prefix = lang === "ru" ? "/ru" : "";
+	return <div className="db-tooltip-quest-info">
+		<div><b>{lang === "ru" ? "Пакет" : "Package"}:</b> #{String(block.package_id ?? "—")}</div>
+		<div className="db-tooltip-muted">{lang === "ru"
+			? "Клиентский набор предметов. Связь с конкретным заданием пока не подтверждена источником."
+			: "Client item package. A link to a specific quest is not yet proved by a source."}</div>
+		{items.length ? <div className="db-tooltip-related db-tooltip-rewards">
+			<b>{lang === "ru" ? "Предметы в пакете" : "Package items"}:</b>
+			<div className="db-tooltip-reward-group">{items.map((item, index) => {
+				const externalID = Number(item.item_external_id ?? 0);
+				const entityID = String(item.entity_id ?? "");
+				const icon = verifiedMediaURL(String(item.icon_url ?? ""));
+				const label = String(item.name || `Item #${externalID || "—"}`);
+				const quantity = Number(item.quantity ?? 0);
+				const displayType = Number(item.display_type ?? 0);
+				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong>{label}</strong><small>{quantity > 0 ? `×${quantity.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}` : ""}{displayType > 0 ? ` · DisplayType ${displayType}` : ""}</small></span></>;
+				return entityID
+					? <Link className="db-tooltip-reward" href={`${prefix}/database/item/${encodeURIComponent(entityID)}/${encodeURIComponent(String(externalID || "item"))}`} key={`${externalID}-${index}`}>{content}</Link>
+					: <span className="db-tooltip-reward" key={`${externalID}-${index}`}>{content}</span>;
+			})}</div>
+		</div> : <div className="db-tooltip-muted">{lang === "ru" ? "В пакете нет подтверждённых строк предметов." : "The package has no proved item rows."}</div>}
+	</div>;
+}
+
 function QuestRewards({ rewards, lang }: { rewards: Record<string, unknown>[]; lang: Lang }) {
 	const guaranteed = rewards.filter((reward) => !Boolean(reward.choice));
 	const choices = rewards.filter((reward) => Boolean(reward.choice));
@@ -512,7 +575,7 @@ function QuestRewards({ rewards, lang }: { rewards: Record<string, unknown>[]; l
 		const externalID = Number(reward.external_id ?? 0);
 		const entityID = String(reward.entity_id ?? "");
 		const slug = String(reward.slug || externalID || "reward");
-		const icon = wowIconURL(String(reward.icon_name ?? ""));
+		const icon = verifiedMediaURL(String(reward.icon_url ?? ""));
 		const quality = Number(reward.quality ?? 0);
 		const label = String(reward.name || questRewardTypeLabel(type, lang, externalID));
 		const amount = Number(reward.amount ?? 0);
@@ -568,13 +631,41 @@ function formatQuestMoney(copper: number, lang: Lang) {
 function CreatureInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
 	const roles = Array.isArray(block.roles) ? block.roles as Record<string, unknown>[] : [];
 	const locations = Array.isArray(block.locations) ? block.locations as Record<string, unknown>[] : [];
+	const lootTables = Array.isArray(block.loot_tables) ? block.loot_tables as Record<string, unknown>[] : [];
 	return <div className="db-tooltip-creature-info">
 		{String(block.creature_type ?? "") ? <div>{lang === "ru" ? "Тип" : "Type"}: {String(block.creature_type)}</div> : null}
 		{String(block.creature_family ?? "") ? <div>{lang === "ru" ? "Семейство" : "Family"}: {String(block.creature_family)}</div> : null}
 		{Number(block.difficulty_count ?? 0) > 0 ? <div>{lang === "ru" ? "Вариантов сложности" : "Difficulty variants"}: {String(block.difficulty_count)}</div> : null}
 		{roles.length ? <div>{lang === "ru" ? "Роли" : "Roles"}: {roles.map((role) => String(role.role)).join(", ")}</div> : null}
 		{locations.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Местоположение" : "Location"}:</b>{locations.map((location, index) => <span key={`${String(location.ui_map_id)}-${index}`}>{lang === "ru" ? "Карта" : "Map"} {String(location.ui_map_id || location.map_id || "—")}: {Number(location.x).toFixed(1)}, {Number(location.y).toFixed(1)}</span>)}</div> : null}
+		{lootTables.length ? <LootTables tables={lootTables} lang={lang} /> : null}
 	</div>;
+}
+
+function LootTables({ tables, lang }: { tables: Record<string, unknown>[]; lang: Lang }) {
+	const prefix = lang === "ru" ? "/ru" : "";
+	const kindLabels: Record<string, [string, string]> = {
+		creature: ["Loot", "Добыча"], pickpocket: ["Pickpocket", "Карманная кража"],
+		skinning: ["Skinning", "Снятие шкур"], vendor: ["Vendor inventory", "Товары продавца"],
+		container: ["Container", "Контейнер"], fishing: ["Fishing", "Рыбалка"], other: ["Other", "Другое"],
+	};
+	return <div className="db-tooltip-loot-tables"><b>{lang === "ru" ? "Подтверждённые источником предметы" : "Source-verified items"}</b>{tables.map((table) => {
+		const entries = Array.isArray(table.entries) ? table.entries as Record<string, unknown>[] : [];
+		const kind = String(table.kind ?? "other");
+		return <section key={String(table.id)}>
+			<header><span>{kindLabels[kind]?.[lang === "ru" ? 1 : 0] ?? kind}</span>{Number(table.difficulty_id ?? 0) > 0 ? <small>{lang === "ru" ? "Сложность" : "Difficulty"} {String(table.difficulty_id)}</small> : null}</header>
+			{entries.map((entry) => {
+				const icon = verifiedMediaURL(String(entry.icon_url ?? ""));
+				const chance = entry.chance_percent === null || entry.chance_percent === undefined ? "" : `${formatGameNumber(Number(entry.chance_percent))}%`;
+				const hasQuantity = entry.min_quantity !== null && entry.min_quantity !== undefined && entry.max_quantity !== null && entry.max_quantity !== undefined;
+				const min = hasQuantity ? Number(entry.min_quantity) : 0;
+				const max = hasQuantity ? Number(entry.max_quantity) : 0;
+				const quantity = !hasQuantity || (min === 1 && max === 1) ? "" : min === max ? ` ×${min}` : ` ×${min}–${max}`;
+				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-loot-icon-fallback" aria-hidden="true">◇</span>}<span><strong>{String(entry.name || `Item #${String(entry.item_external_id)}`)}{quantity}</strong><small>{chance || (lang === "ru" ? "Шанс не указан источником" : "Chance not stated by source")}</small></span></>;
+				return entry.item_entity_id ? <a key={`${String(table.id)}-${String(entry.index)}`} href={`${prefix}/database/item/${encodeURIComponent(String(entry.item_entity_id))}/${encodeURIComponent(String(entry.item_external_id))}`}>{content}</a> : <span className="db-tooltip-loot-unresolved" key={`${String(table.id)}-${String(entry.index)}`}>{content}</span>;
+			})}
+		</section>;
+	})}</div>;
 }
 
 function TooltipProvenance({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
@@ -604,7 +695,7 @@ function SpellTalents({ entries, lang }: { entries: Record<string, unknown>[]; l
 	const unique = Array.from(new Map(entries.filter((entry) => String(entry.name ?? "")).map((entry) => [String(entry.talent_id), entry])).values());
 	if (!unique.length) return null;
 	return <div className="db-tooltip-talent-link"><b>{lang === "ru" ? "Связанные таланты:" : "Related talents:"}</b><span className="db-tooltip-related-inline">{unique.map((entry) => {
-		const icon = wowIconURL(String(entry.icon_name ?? ""));
+		const icon = verifiedMediaURL(String(entry.icon_url ?? ""));
 		const relation = String(entry.relationship ?? "grants");
 		return <span className="db-tooltip-owner-badge" key={String(entry.talent_id)}>{icon ? <img src={icon} alt="" loading="lazy" /> : null}<span>{String(entry.name)}{relation !== "grants" ? ` (${relation})` : ""}</span></span>;
 	})}</span></div>;
@@ -620,7 +711,7 @@ function TalentSpells({ entries, lang }: { entries: Record<string, unknown>[]; l
 	const localePrefix = lang === "ru" ? "/ru" : "";
 	return <div className="db-tooltip-talent-spells"><b>{lang === "ru" ? "Связанные заклинания и эффекты" : "Related spells and effects"}</b>{entries.map((entry) => {
 		const relation = String(entry.relationship ?? "grants");
-		const icon = wowIconURL(String(entry.icon_name ?? ""));
+		const icon = verifiedMediaURL(String(entry.icon_url ?? ""));
 		const effects = Array.isArray(entry.effects) ? entry.effects as Record<string, unknown>[] : [];
 		return <div className="db-tooltip-talent-spell" key={`${relation}-${String(entry.entity_id)}`}>
 			<a className="db-tooltip-owner-badge" href={`${localePrefix}/database/spell/${encodeURIComponent(String(entry.entity_id ?? ""))}/${encodeURIComponent(String(entry.external_id ?? "spell"))}`}>
