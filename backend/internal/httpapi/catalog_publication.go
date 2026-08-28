@@ -54,6 +54,9 @@ func isCatalogDeliveryPath(path string) bool {
 	if path == "/graphql" {
 		return true
 	}
+	if strings.HasPrefix(path, "/v1/library/") {
+		return true
+	}
 	return strings.HasPrefix(path, "/v1/game/") && path != "/v1/game/source-policies"
 }
 

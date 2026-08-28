@@ -17,15 +17,20 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/serve
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-build-check ./cmd/catalog-build-check \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-completeness ./cmd/catalog-completeness \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-backup ./cmd/catalog-backup \
+ && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-media-cache ./cmd/catalog-media-cache \
+ && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-source-approval ./cmd/catalog-source-approval \
+ && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-load-check ./cmd/catalog-load-check \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/goose github.com/pressly/goose/v3/cmd/goose \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/river github.com/riverqueue/river/cmd/river
 
 FROM alpine:3.23
 RUN apk add --no-cache ca-certificates tzdata postgresql17-client
 WORKDIR /app
-COPY --from=builder /out/server /out/catalog-import /out/att-import /out/att-resolve /out/raidbots-import /out/catalog-index /out/catalog-audit /out/db2-import /out/listfile-import /out/catalog-pipeline /out/catalog-build-check /out/catalog-completeness /out/catalog-backup /out/goose /out/river /usr/local/bin/
+COPY --from=builder /out/server /out/catalog-import /out/att-import /out/att-resolve /out/raidbots-import /out/catalog-index /out/catalog-audit /out/db2-import /out/listfile-import /out/catalog-pipeline /out/catalog-build-check /out/catalog-completeness /out/catalog-backup /out/catalog-media-cache /out/catalog-source-approval /out/catalog-load-check /out/goose /out/river /usr/local/bin/
 COPY migrations /app/migrations
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh \
+ && install -d -o 65532 -g 65532 -m 0750 /var/lib/gildra/catalog-media \
+ && install -d -o 65532 -g 65532 -m 0700 /var/lib/gildra/catalog-backups
 EXPOSE 8080
 ENTRYPOINT ["/app/entrypoint.sh"]

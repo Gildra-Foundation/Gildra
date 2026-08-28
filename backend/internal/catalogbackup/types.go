@@ -17,7 +17,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const MinimumSchemaVersion int64 = 85
+const MinimumSchemaVersion int64 = 105
 
 var CriticalTables = []string{
 	"users",
@@ -33,16 +33,29 @@ var CriticalTables = []string{
 	"catalog_import_runs",
 	"catalog_entity_source_documents",
 	"catalog_entity_media",
+	"catalog_entity_icons",
 	"catalog_file_assets",
 	"catalog_file_asset_versions",
+	"catalog_library_dataset_definitions",
+	"catalog_library_dataset_localizations",
+	"catalog_library_dataset_stats",
+	"catalog_source_policy_reviews",
+	"catalog_publication_grants",
+	"catalog_publication_grant_events",
+	"catalog_item_variants",
+	"catalog_item_variant_stats",
+	"catalog_item_variant_effects",
 	"catalog_item_stats",
 	"catalog_item_effects",
 	"catalog_item_acquisition_sources",
+	"catalog_loot_tables",
+	"catalog_loot_entries",
 	"catalog_spell_effects",
 	"catalog_profession_recipes",
 	"catalog_recipe_reagents",
 	"catalog_recipe_outputs",
 	"catalog_quest_rewards",
+	"catalog_quest_registry",
 	"catalog_npc_roles",
 	"catalog_npc_locations",
 	"catalog_verified_item_drops",

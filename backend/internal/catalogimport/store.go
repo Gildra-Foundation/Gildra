@@ -40,9 +40,10 @@ type Record struct {
 }
 
 type MediaCandidate struct {
-	EntityType string
-	ExternalID int64
-	Href       string
+	EntityType  string
+	ExternalID  int64
+	Href        string
+	AssetPrefix string
 }
 
 type EntityMedia struct {
@@ -188,13 +189,29 @@ func (s *Store) BattleNetMediaCandidates(
 	entityTypes []string,
 ) ([]MediaCandidate, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT DISTINCT ON (entity_type,external_id)
-			entity_type,external_id,payload #>> '{media,key,href}'
-		FROM catalog_entity_source_documents
-		WHERE build_id=$1 AND source='blizzard_api' AND locale='en_US'
-		  AND entity_type=ANY($2::text[])
-		  AND NULLIF(BTRIM(payload #>> '{media,key,href}'),'') IS NOT NULL
-		ORDER BY entity_type,external_id,imported_at DESC`, buildID, entityTypes)
+		WITH latest_documents AS (
+			SELECT DISTINCT ON (entity_type,external_id)
+				entity_type,external_id,payload
+			FROM catalog_entity_source_documents
+			WHERE build_id=$1 AND source='blizzard_api' AND locale='en_US'
+			  AND entity_type=ANY($2::text[])
+			ORDER BY entity_type,external_id,imported_at DESC
+		), candidates AS (
+			SELECT entity_type,external_id,payload #>> '{media,key,href}' AS href,''::text AS asset_prefix
+			FROM latest_documents
+			UNION ALL
+			SELECT document.entity_type,document.external_id,display #>> '{key,href}',
+				'creature_display_' || COALESCE(NULLIF(display->>'id',''),'unknown')
+			FROM latest_documents document
+			CROSS JOIN LATERAL jsonb_array_elements(
+				CASE WHEN jsonb_typeof(document.payload->'creature_displays')='array'
+					THEN document.payload->'creature_displays' ELSE '[]'::jsonb END
+			) display
+		)
+		SELECT DISTINCT entity_type,external_id,href,asset_prefix
+		FROM candidates
+		WHERE NULLIF(BTRIM(href),'') IS NOT NULL
+		ORDER BY entity_type,external_id,asset_prefix,href`, buildID, entityTypes)
 	if err != nil {
 		return nil, fmt.Errorf("list Battle.net media candidates: %w", err)
 	}
@@ -202,7 +219,7 @@ func (s *Store) BattleNetMediaCandidates(
 	result := make([]MediaCandidate, 0)
 	for rows.Next() {
 		var candidate MediaCandidate
-		if err := rows.Scan(&candidate.EntityType, &candidate.ExternalID, &candidate.Href); err != nil {
+		if err := rows.Scan(&candidate.EntityType, &candidate.ExternalID, &candidate.Href, &candidate.AssetPrefix); err != nil {
 			return nil, fmt.Errorf("scan Battle.net media candidate: %w", err)
 		}
 		result = append(result, candidate)
@@ -535,7 +552,7 @@ func (s *Store) UpsertEntityMedia(
 		) VALUES(
 			$1,(SELECT id FROM target_entity),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15
 		)
-		ON CONFLICT(build_id,entity_type,external_id,media_kind,asset_key,locale,source)
+		ON CONFLICT(build_id,entity_type,external_id,media_kind,asset_key,locale,source,source_artifact_id)
 		DO UPDATE SET entity_id=EXCLUDED.entity_id,source_url=EXCLUDED.source_url,
 			file_data_id=EXCLUDED.file_data_id,mime_type=EXCLUDED.mime_type,
 			width=EXCLUDED.width,height=EXCLUDED.height,
@@ -1022,9 +1039,9 @@ func upsertTyped(ctx context.Context, tx pgx.Tx, entityType string, versionID uu
 				sell_price=COALESCE(EXCLUDED.sell_price,catalog_items.sell_price),
 				is_equippable=COALESCE(EXCLUDED.is_equippable,catalog_items.is_equippable),
 				is_stackable=COALESCE(EXCLUDED.is_stackable,catalog_items.is_stackable)`, versionID,
-			pathString(doc, "quality", "type"), integer(doc["level"]), integer(doc["required_level"]),
-			pathString(doc, "inventory_type", "type"), pathInt(doc, "item_class", "id"),
-			pathInt(doc, "item_subclass", "id"), integer(doc["max_count"]), integer(doc["purchase_price"]),
+			pathString(doc, "quality", "type"), integer32(doc["level"]), integer32(doc["required_level"]),
+			pathString(doc, "inventory_type", "type"), pathInt32(doc, "item_class", "id"),
+			pathInt32(doc, "item_subclass", "id"), integer32(doc["max_count"]), integer(doc["purchase_price"]),
 			integer(doc["sell_price"]), boolean(doc["is_equippable"]), boolean(doc["is_stackable"]))
 		if err != nil {
 			return fmt.Errorf("upsert typed item: %w", err)
@@ -1090,6 +1107,18 @@ func pathInt(doc map[string]any, keys ...string) *int64 {
 	return integer(current)
 }
 
+func pathInt32(doc map[string]any, keys ...string) *int64 {
+	var current any = doc
+	for _, key := range keys {
+		object, ok := current.(map[string]any)
+		if !ok {
+			return nil
+		}
+		current = object[key]
+	}
+	return integer32(current)
+}
+
 func integer(value any) *int64 {
 	number, ok := value.(float64)
 	if !ok {
@@ -1097,6 +1126,16 @@ func integer(value any) *int64 {
 	}
 	result := int64(number)
 	return &result
+}
+
+// integer32 keeps raw out-of-range source values in the canonical JSON while
+// excluding protocol sentinels such as UINT32_MAX from typed PostgreSQL facts.
+func integer32(value any) *int64 {
+	result := integer(value)
+	if result == nil || *result < -1<<31 || *result > 1<<31-1 {
+		return nil
+	}
+	return result
 }
 
 func number(value any) *float64 {

@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -22,6 +23,8 @@ const (
 	requestAttempts = 12
 	maxRetryDelay   = 60 * time.Second
 )
+
+var staticNamespacePattern = regexp.MustCompile(`^static-([0-9]+(?:\.[0-9]+)*)_([0-9]+)(?:-([a-z0-9]+))?-([a-z]{2})$`)
 
 type Client struct {
 	clientID     string
@@ -141,6 +144,42 @@ func (c *Client) SearchRange(ctx context.Context, region, namespace, locale, ent
 	return result, nil
 }
 
+// MaxExternalID returns the highest ID exposed by the official search index.
+// Blizzard caps search pagination, so importers must not infer the upper bound
+// by walking pages. Sorting a single result by id:desc gives a stable bound
+// that can then be consumed through small, inclusive ID ranges.
+func (c *Client) MaxExternalID(ctx context.Context, region, namespace, locale, entityType string) (int64, error) {
+	endpoint, err := c.SearchURL(region, namespace, locale, entityType, 1, 1)
+	if err != nil {
+		return 0, err
+	}
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
+		return 0, err
+	}
+	query := parsed.Query()
+	query.Set("orderby", "id:desc")
+	parsed.RawQuery = query.Encode()
+
+	var page SearchPage
+	if err := c.getJSON(ctx, parsed.String(), &page); err != nil {
+		return 0, err
+	}
+	if len(page.Results) == 0 {
+		return 0, nil
+	}
+	var document struct {
+		ID int64 `json:"id"`
+	}
+	if err := json.Unmarshal(page.Results[0].Data, &document); err != nil {
+		return 0, fmt.Errorf("decode highest %s ID: %w", entityType, err)
+	}
+	if document.ID <= 0 {
+		return 0, fmt.Errorf("official %s search returned invalid highest ID %d", entityType, document.ID)
+	}
+	return document.ID, nil
+}
+
 func (c *Client) SearchURL(region, namespace, locale, entityType string, page, pageSize int) (string, error) {
 	if entityType != "item" && entityType != "spell" && entityType != "creature" {
 		return "", fmt.Errorf("unsupported entity type %q", entityType)
@@ -222,7 +261,14 @@ func (c *Client) FetchLink(ctx context.Context, region, locale, href string) (js
 // static namespace alias. The public API can lag behind the newest game client,
 // so callers must record this value instead of assuming the client build.
 func (c *Client) CurrentBuild(ctx context.Context, region, locale string) (int, string, error) {
-	page, err := c.Search(ctx, region, "static-"+region, locale, "item", 1, 1)
+	return c.CurrentBuildForNamespace(ctx, region, locale, "static-"+region)
+}
+
+func (c *Client) CurrentBuildForNamespace(ctx context.Context, region, locale, namespace string) (int, string, error) {
+	if strings.TrimSpace(namespace) == "" {
+		return 0, "", errors.New("Battle.net discovery namespace is required")
+	}
+	page, err := c.Search(ctx, region, namespace, locale, "item", 1, 1)
 	if err != nil {
 		return 0, "", fmt.Errorf("resolve current Battle.net build: %w", err)
 	}
@@ -238,24 +284,15 @@ func buildFromResourceLink(href string) (int, string, error) {
 		return 0, "", fmt.Errorf("parse Battle.net build link: %w", err)
 	}
 	namespace := parsed.Query().Get("namespace")
-	if !strings.HasPrefix(namespace, "static-") {
-		return 0, "", fmt.Errorf("Battle.net resource namespace %q is not static", namespace)
-	}
-	value := strings.TrimPrefix(namespace, "static-")
-	separator := strings.LastIndex(value, "-")
-	if separator <= 0 {
+	match := staticNamespacePattern.FindStringSubmatch(namespace)
+	if match == nil {
 		return 0, "", fmt.Errorf("invalid Battle.net static namespace %q", namespace)
 	}
-	versionAndBuild := value[:separator]
-	separator = strings.LastIndex(versionAndBuild, "_")
-	if separator <= 0 || separator == len(versionAndBuild)-1 {
-		return 0, "", fmt.Errorf("invalid Battle.net static namespace %q", namespace)
-	}
-	build, err := strconv.Atoi(versionAndBuild[separator+1:])
+	build, err := strconv.Atoi(match[2])
 	if err != nil || build <= 0 {
 		return 0, "", fmt.Errorf("invalid Battle.net build in namespace %q", namespace)
 	}
-	return build, versionAndBuild[:separator] + "." + strconv.Itoa(build), nil
+	return build, match[1] + "." + strconv.Itoa(build), nil
 }
 
 func (c *Client) Detail(ctx context.Context, region, namespace, locale, entityType string, id int64) (json.RawMessage, string, error) {

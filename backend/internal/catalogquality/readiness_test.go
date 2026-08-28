@@ -23,3 +23,26 @@ func TestReadinessWarningsNeverBlock(t *testing.T) {
 		t.Fatalf("warning changed readiness: %#v", report)
 	}
 }
+
+func TestRecoveryPolicyKeepsOffHostAsDefault(t *testing.T) {
+	pattern, key, _, err := RecoveryPolicySettings("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pattern != `^(s3|r2|swift)://` || key != "off_host_restore_proof" {
+		t.Fatalf("unexpected default recovery settings: pattern=%q key=%q", pattern, key)
+	}
+}
+
+func TestRecoveryPolicyAllowsSameHostOnlyWhenExplicit(t *testing.T) {
+	pattern, key, _, err := RecoveryPolicySettings(RecoveryPolicyVerifiedSameHost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pattern != `^(file|s3|r2|swift)://` || key != "verified_restore_proof" {
+		t.Fatalf("unexpected same-host recovery settings: pattern=%q key=%q", pattern, key)
+	}
+	if _, _, _, err := RecoveryPolicySettings("local"); err == nil {
+		t.Fatal("unknown recovery policy must fail closed")
+	}
+}

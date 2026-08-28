@@ -47,6 +47,43 @@ paths:
           $ref: "#/components/responses/CatalogPublicationUnavailable"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+  /v1/library/datasets:
+    get:
+      operationId: listLibraryDatasets
+      summary: List curated public Warcraft datasets and their freshness and coverage.
+      parameters:
+        - in: query
+          name: product
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            default: wow
+        - in: query
+          name: locale
+          schema:
+            type: string
+            enum: [en_US, ru_RU]
+            default: en_US
+      responses:
+        "200":
+          description: Public library datasets backed by published catalog versions.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LibraryDataset"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/CatalogPublicationUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
   /v1/game/entity-types:
     get:
       operationId: listGameEntityTypes
@@ -164,6 +201,13 @@ paths:
             minLength: 2
             maxLength: 64
         - in: query
+          name: dataset
+          description: Public library dataset slug. The server resolves its entity type and membership filters from the dataset registry.
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+        - in: query
           name: locale
           schema:
             type: string
@@ -191,6 +235,10 @@ paths:
             items:
               type: string
               maxLength: 192
+        - in: query
+          name: itemClassId
+          description: Stable game item class identifier, for example 2 for weapons and 4 for armor.
+          schema: { type: integer, minimum: 0, maximum: 99 }
         - in: query
           name: minItemLevel
           description: Minimum stored base item level. Applies to item records.
@@ -347,6 +395,13 @@ paths:
             type: string
             enum: [en_US, ru_RU]
             default: en_US
+        - in: query
+          name: dataset
+          description: Optional public library dataset scope. Returns 404 when the entity is not a member.
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
       responses:
         "200":
           description: Game entity.
@@ -725,7 +780,7 @@ components:
   schemas:
     APIIndex:
       type: object
-      required: [version, rest, graphql, catalog]
+      required: [version, rest, graphql, catalog, library]
       properties:
         version:
           type: string
@@ -737,6 +792,9 @@ components:
           type: string
           format: uri
         catalog:
+          type: string
+          format: uri
+        library:
           type: string
           format: uri
     Problem:
@@ -766,6 +824,75 @@ components:
           type: string
         name:
           type: string
+    LibraryDataset:
+      type: object
+      required: [slug, product, entityType, categoryPath, group, iconSymbol, sortOrder, name, description, entityCount, localizedCount, verifiedLocalizedCount, tooltipCount, imageCount, applicability, applicabilityReason, freshness, freshnessReason]
+      properties:
+        slug:
+          type: string
+        product:
+          type: string
+        entityType:
+          type: string
+        categoryPath:
+          type: string
+          description: Taxonomy path used by the entity listing. Empty for an entire entity type.
+        itemClassId:
+          type: integer
+          minimum: 0
+          description: Stable game item class filter used by item datasets such as Weapons and Armor.
+        group:
+          type: string
+        iconSymbol:
+          type: string
+        sortOrder:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        buildVersion:
+          type: string
+        previewImageUrl:
+          type: string
+          format: uri
+          description: Source-backed game icon selected for the dataset card when one is available.
+        entityCount:
+          type: integer
+          format: int64
+          minimum: 0
+        localizedCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Records with a localization row available for the requested locale.
+        verifiedLocalizedCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Localizations backed by a ready source artifact with content proof.
+        tooltipCount:
+          type: integer
+          format: int64
+          minimum: 0
+        imageCount:
+          type: integer
+          format: int64
+          minimum: 0
+        applicability:
+          type: string
+          enum: [applicable, pending_source, not_applicable]
+          description: Whether the dataset belongs to this game product, or is waiting for a permitted source.
+        applicabilityReason:
+          type: string
+        freshness:
+          type: string
+          enum: [fresh, stale, empty, refreshing, failed]
+        freshnessReason:
+          type: string
+        coverageUpdatedAt:
+          type: string
+          format: date-time
     GameEntity:
       type: object
       required: [id, product, type, externalId, slug, locale, resolvedLocale, localeFallback, name, description, updatedAt]
@@ -798,6 +925,11 @@ components:
           type: string
         tooltip:
           $ref: "#/components/schemas/GameTooltip"
+        media:
+          type: array
+          description: Source-backed media for the published entity build. Empty or absent when no publishable media exists.
+          items:
+            $ref: "#/components/schemas/GameEntityMedia"
         iconName:
           type: string
         iconUrl:
@@ -813,6 +945,46 @@ components:
         updatedAt:
           type: string
           format: date-time
+    GameEntityMedia:
+      type: object
+      required: [kind, assetKey, url, source, sourceUrl, locale, mimeType, cacheStatus, primary]
+      properties:
+        kind:
+          type: string
+          example: icon
+        assetKey:
+          type: string
+          example: icon
+        url:
+          type: string
+          format: uri
+          description: Cached URL when available, otherwise the verified remote asset URL.
+        source:
+          type: string
+          example: blizzard_api
+        sourceUrl:
+          type: string
+          format: uri
+        locale:
+          type: string
+          example: en_US
+        mimeType:
+          type: string
+          example: image/jpeg
+        cacheStatus:
+          type: string
+          enum: [remote, cached, blocked, failed]
+        fileDataId:
+          type: integer
+          format: int64
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        primary:
+          type: boolean
     GameEntityTypeSummary:
       type: object
       required: [type, label, description, group, iconSymbol, sortOrder, count, localizedCount, describedCount, tooltipCount, iconCount, relationshipCount, coverageUpdatedAt]

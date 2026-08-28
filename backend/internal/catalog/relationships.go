@@ -34,6 +34,7 @@ type EntitySummary struct {
 	Slug       string
 	Name       string
 	IconName   *string
+	IconURL    *string
 }
 
 type Relationship struct {
@@ -184,6 +185,19 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 	}
 	if err := rows.Err(); err != nil {
 		return RelationshipPage{}, fmt.Errorf("iterate entity relationships: %w", err)
+	}
+	ids := make([]uuid.UUID, 0, len(relationships))
+	for _, relationship := range relationships {
+		ids = append(ids, relationship.Entity.ID)
+	}
+	iconURLs, err := s.cachedIconURLs(ctx, ids)
+	if err != nil {
+		return RelationshipPage{}, err
+	}
+	for index := range relationships {
+		if value, ok := iconURLs[relationships[index].Entity.ID]; ok {
+			relationships[index].Entity.IconURL = &value
+		}
 	}
 	hasMore := len(relationships) > params.Limit
 	if hasMore {

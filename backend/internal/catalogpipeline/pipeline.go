@@ -23,11 +23,11 @@ import (
 
 var ErrAlreadyRunning = errors.New("catalog pipeline is already running for this product")
 var ErrPublicationBlocked = errors.New("catalog refresh succeeded but public release is blocked by source policy")
-var ErrRecoveryGate = errors.New("production catalog import requires a recent verified off-host PostgreSQL backup and restore proof")
+var ErrRecoveryGate = errors.New("production catalog import requires a recent verified PostgreSQL backup and exact restore proof")
 
 const (
 	ProfileRetailFoundation = "retail-foundation"
-	minimumCatalogSchema    = 85
+	minimumCatalogSchema    = 92
 )
 
 type Options struct {
@@ -42,6 +42,7 @@ type Options struct {
 	ConfirmFullImport      bool
 	BinaryDirectory        string
 	PublicationEnvironment string
+	RecoveryPolicy         string
 }
 
 type Stage struct {
@@ -126,6 +127,12 @@ func normalizeOptions(options Options) (Options, error) {
 		return Options{}, errors.New("catalog apply requires an explicit -version")
 	}
 	if options.Mode == "apply" && options.PublicationEnvironment == "production" {
+		if _, _, _, err := catalogquality.RecoveryPolicySettings(options.RecoveryPolicy); err != nil {
+			return Options{}, err
+		}
+		if strings.TrimSpace(options.RecoveryPolicy) == "" {
+			options.RecoveryPolicy = catalogquality.RecoveryPolicyOffHost
+		}
 		if options.Profile != ProfileRetailFoundation {
 			return Options{}, errors.New("production catalog imports must use the retail-foundation profile")
 		}
@@ -169,7 +176,7 @@ func buildPlan(options Options) []Stage {
 		case "raidbots":
 			plan = append(plan, Stage{Key: "import-raidbots", Executable: "raidbots-import", Arguments: []string{"-environment", "live", "-max-records", fmt.Sprint(options.MaxRecords)}})
 		case "db2":
-			args := []string{"-max-records", fmt.Sprint(options.MaxRecords), "-confirm"}
+			args := []string{"-product", options.Product, "-max-records", fmt.Sprint(options.MaxRecords), "-confirm"}
 			if options.BuildVersion != "" {
 				args = append(args, "-version", options.BuildVersion)
 			}
@@ -177,10 +184,10 @@ func buildPlan(options Options) []Stage {
 		case "battlenet":
 			plan = append(plan,
 				Stage{Key: "import-battlenet", Executable: "catalog-import", Arguments: []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "all", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}},
-				Stage{Key: "import-battlenet-media", Executable: "catalog-import", Arguments: []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "class,specialization,profession,instance,battle_pet,achievement", "-media-only", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}},
+				Stage{Key: "import-battlenet-media", Executable: "catalog-import", Arguments: []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "class,specialization,profession,instance,mount,battle_pet,achievement", "-media-only", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}},
 			)
 		case "listfile":
-			args := []string{"-confirm"}
+			args := []string{"-product", options.Product, "-confirm"}
 			if options.BuildVersion != "" {
 				args = append(args, "-version", options.BuildVersion)
 			}
@@ -267,7 +274,7 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		return result, nil
 	}
 	if options.PublicationEnvironment == "production" {
-		if err := r.verifyRecoveryGate(ctx, result.RunID, options.Product); err != nil {
+		if err := r.verifyRecoveryGate(ctx, result.RunID, options.Product, options.RecoveryPolicy); err != nil {
 			return result, err
 		}
 	}
@@ -324,7 +331,7 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 			return result, err
 		}
 	}
-	if err := r.validate(ctx, result.RunID, options.Product, options.BuildVersion, options.PublicationEnvironment); err != nil {
+	if err := r.validate(ctx, result.RunID, options.Product, options.BuildVersion, options.PublicationEnvironment, options.RecoveryPolicy); err != nil {
 		return result, err
 	}
 
@@ -374,12 +381,16 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	return result, nil
 }
 
-func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product string) error {
+func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product, recoveryPolicy string) error {
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_runs SET current_stage='recovery-gate' WHERE id=$1`, runID)
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='recovery-gate'`, runID)
 	var manifestID, storageURI string
 	var databaseVersion int64
 	var restoredAt time.Time
+	storagePattern, _, _, settingsErr := catalogquality.RecoveryPolicySettings(recoveryPolicy)
+	if settingsErr != nil {
+		return r.failStage(ctx, runID, "recovery-gate", "recovery_policy_invalid", settingsErr)
+	}
 	err := r.DB.QueryRow(ctx, `
 		WITH applied_schema_version AS (
 			SELECT max(version_id) AS version
@@ -391,7 +402,7 @@ func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product st
 		CROSS JOIN applied_schema_version
 		WHERE manifest.component='postgres'
 		  AND manifest.status='verified'
-		  AND manifest.storage_uri ~ '^(s3|r2|swift)://'
+		  AND manifest.storage_uri ~ $3
 		  AND manifest.content_hash IS NOT NULL
 		  AND manifest.byte_size > 0
 		  AND applied_schema_version.version >= $2
@@ -403,7 +414,7 @@ func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product st
 			manifest.product_id = (SELECT id FROM game_products WHERE slug=$1)
 		  )
 		ORDER BY manifest.restore_completed_at DESC, manifest.id DESC
-		LIMIT 1`, product, minimumCatalogSchema).Scan(&manifestID, &storageURI, &databaseVersion, &restoredAt)
+		LIMIT 1`, product, minimumCatalogSchema, storagePattern).Scan(&manifestID, &storageURI, &databaseVersion, &restoredAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return r.failStage(ctx, runID, "recovery-gate", "verified_backup_missing", ErrRecoveryGate)
 	}
@@ -413,6 +424,7 @@ func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product st
 	counters := map[string]any{
 		"backup_manifest_id":  manifestID,
 		"database_version":    databaseVersion,
+		"recovery_policy":     recoveryPolicy,
 		"restore_verified_at": restoredAt.UTC().Format(time.RFC3339),
 		"storage_scheme":      strings.SplitN(storageURI, ":", 2)[0],
 	}
@@ -457,6 +469,7 @@ func (r *Runner) validate(
 	product string,
 	buildVersion string,
 	publicationEnvironment string,
+	recoveryPolicy string,
 ) error {
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_runs SET current_stage='validate-catalog' WHERE id=$1`, runID)
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='validate-catalog'`, runID)
@@ -475,7 +488,7 @@ func (r *Runner) validate(
 	if entities == 0 || missingLatest != 0 || invalidRelations != 0 || staleReadModels != 0 {
 		return r.failStage(ctx, runID, "validate-catalog", "catalog_invariants_failed", fmt.Errorf("catalog validation failed: %v", counts))
 	}
-	readiness, err := catalogquality.EvaluateReadiness(ctx, r.DB, product, buildVersion)
+	readiness, err := catalogquality.EvaluateReadinessWithRecoveryPolicy(ctx, r.DB, product, buildVersion, recoveryPolicy)
 	if err != nil {
 		return r.failStage(ctx, runID, "validate-catalog", "readiness_query_failed", err)
 	}

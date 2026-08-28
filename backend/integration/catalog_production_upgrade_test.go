@@ -24,7 +24,7 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-const latestCatalogSchemaVersion int64 = 85
+const latestCatalogSchemaVersion int64 = 105
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -80,6 +80,15 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 		t.Fatalf("reapply newest catalog migration: %v", err)
 	}
 	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion)
+
+	if err := goose.DownToContext(ctx, database, migrations, 96); err != nil {
+		t.Fatalf("prepare UI map migration proof: %v", err)
+	}
+	seedStaleATTMapResolution(t, ctx, database)
+	if err := goose.UpToContext(ctx, database, migrations, 97); err != nil {
+		t.Fatalf("apply UI map migration: %v", err)
+	}
+	assertMigrationVersion(t, ctx, database, 97)
 	for _, table := range []string{
 		"catalog_completeness_expectations",
 		"catalog_entity_media",
@@ -97,6 +106,13 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 		"catalog_entity_localization_artifacts",
 		"catalog_release_profiles",
 		"catalog_release_profile_entity_types",
+		"catalog_library_dataset_definitions",
+		"catalog_library_dataset_stats",
+		"catalog_loot_tables",
+		"catalog_loot_entries",
+		"catalog_fact_projection_runs",
+		"catalog_library_dataset_applicability",
+		"catalog_published_source_dependencies",
 	} {
 		assertTablePresent(t, ctx, database, table)
 	}
@@ -113,6 +129,71 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	if activeProfileCount == 0 || requiredEntityTypeCount == 0 {
 		t.Fatalf("Retail v1 release profile was not seeded: active=%d required_types=%d", activeProfileCount, requiredEntityTypeCount)
 	}
+	var attMapTarget string
+	var uiMapDatasets, uiMapRegistries, uiMapProfileTypes int
+	if err := database.QueryRowContext(ctx, `
+		SELECT canonical_entity_type
+		FROM catalog_source_entity_type_mappings
+		WHERE source='all_the_things' AND source_type='map' AND disposition='resolve'`).Scan(&attMapTarget); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.QueryRowContext(ctx, `
+		SELECT
+			(SELECT count(*) FROM catalog_library_dataset_definitions
+			 WHERE slug='ui-maps' AND entity_type='ui_map' AND is_public),
+			(SELECT count(*) FROM catalog_entity_type_registry
+			 WHERE entity_type='ui_map' AND is_public),
+			(SELECT count(*) FROM catalog_release_profile_entity_types
+			 WHERE profile_key='retail-foundation-v1' AND entity_type='ui_map'
+			   AND requirement='required' AND minimum_count=1)`).Scan(
+		&uiMapDatasets, &uiMapRegistries, &uiMapProfileTypes,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if attMapTarget != "ui_map" || uiMapDatasets != 1 || uiMapRegistries != 4 || uiMapProfileTypes != 1 {
+		t.Fatalf("UI map semantics are incomplete: ATT target=%q datasets=%d registries=%d profile_types=%d",
+			attMapTarget, uiMapDatasets, uiMapRegistries, uiMapProfileTypes)
+	}
+	var staleNodes, staleReferences int
+	if err := database.QueryRowContext(ctx, `
+		SELECT
+			(SELECT count(*) FROM catalog_staged_source_nodes
+			 WHERE source='all_the_things' AND node_kind='map'
+			   AND (resolution_status<>'pending' OR resolved_entity_id IS NOT NULL)),
+			(SELECT count(*) FROM catalog_staged_source_references reference
+			 JOIN catalog_staged_source_nodes node ON node.id=reference.node_id
+			 WHERE node.source='all_the_things' AND reference.target_type='map'
+			   AND (reference.resolution_status<>'pending' OR reference.target_entity_id IS NOT NULL))`).Scan(
+		&staleNodes, &staleReferences,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if staleNodes != 0 || staleReferences != 0 {
+		t.Fatalf("stale ATT map resolutions survived mapping change: nodes=%d references=%d",
+			staleNodes, staleReferences)
+	}
+	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion); err != nil {
+		t.Fatalf("apply media cache migrations: %v", err)
+	}
+	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion)
+	assertTablePresent(t, ctx, database, "catalog_media_cache_runs")
+	var previewColumn, rewardPackageDataset int
+	if err := database.QueryRowContext(ctx, `
+		SELECT
+			(SELECT count(*) FROM information_schema.columns
+			 WHERE table_schema='public' AND table_name='catalog_library_dataset_stats'
+			   AND column_name='preview_media_id'),
+			(SELECT count(*) FROM catalog_library_dataset_definitions
+			 WHERE slug='quest-reward-packages' AND entity_type='quest_reward_package' AND is_public)`).Scan(
+		&previewColumn, &rewardPackageDataset,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if previewColumn != 1 || rewardPackageDataset != 1 {
+		t.Fatalf("latest library migrations are incomplete: preview_column=%d reward_dataset=%d",
+			previewColumn, rewardPackageDataset)
+	}
+	assertSourceApprovalEvidenceGate(t, ctx, database)
 	var restoredUserID string
 	if err := database.QueryRowContext(ctx, `SELECT id::text FROM users WHERE email=$1`, proofEmail).Scan(&restoredUserID); err != nil {
 		t.Fatalf("read baseline row after upgrade: %v", err)
@@ -122,6 +203,136 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	}
 	assertProductionRecoveryGate(t, ctx, database, postgresURL)
 	assertAtomicCatalogRelease(t, ctx, database, postgresURL)
+}
+
+func seedStaleATTMapResolution(t *testing.T, ctx context.Context, database *sql.DB) {
+	t.Helper()
+	if _, err := database.ExecContext(ctx, `
+		WITH product AS (
+			SELECT id FROM game_products WHERE slug='wow'
+		), namespace AS (
+			INSERT INTO game_namespaces(product_id,region,kind,slug)
+			SELECT id,'us','static','static-us' FROM product
+			ON CONFLICT(product_id,slug) DO UPDATE SET region=EXCLUDED.region
+			RETURNING id,product_id
+		), build AS (
+			INSERT INTO game_builds(product_id,build_number,version,is_active)
+			SELECT product_id,999997,'99.0.0.999997',false FROM namespace
+			RETURNING id,product_id
+		), snapshot AS (
+			INSERT INTO catalog_snapshots(product_id,build_id,source,status,validated_at,metadata)
+			SELECT product_id,id,'all_the_things','validated',now(),'{"migration_test":true}'::jsonb FROM build
+			RETURNING id,build_id,product_id
+		), artifact AS (
+			INSERT INTO catalog_source_artifacts(
+				snapshot_id,build_id,source,artifact_key,source_url,content_hash,byte_size,status
+			)
+			SELECT id,build_id,'all_the_things','migration-ui-map-proof',
+				'https://github.com/ATT/repository',decode(repeat('ab',32),'hex'),1,'ready'
+			FROM snapshot
+			RETURNING id,build_id
+		), entity AS (
+			INSERT INTO game_entities(
+				product_id,namespace_id,entity_type,external_id,canonical_slug,
+				first_seen_build_id,last_seen_build_id
+			)
+			SELECT snapshot.product_id,namespace.id,'map',424242,'stale-map',snapshot.build_id,snapshot.build_id
+			FROM snapshot CROSS JOIN namespace
+			RETURNING id
+		), node AS (
+			INSERT INTO catalog_staged_source_nodes(
+				build_id,source,source_artifact_id,record_key,node_kind,external_id,
+				source_line,raw_source,content_hash,resolution_status,resolved_entity_id
+			)
+			SELECT artifact.build_id,'all_the_things',artifact.id,'map:424242','map',424242,
+				1,'map proof',decode(repeat('cd',32),'hex'),'resolved',entity.id
+			FROM artifact CROSS JOIN entity
+			RETURNING id
+		)
+		INSERT INTO catalog_staged_source_references(
+			node_id,reference_kind,target_type,target_external_id,content_hash,
+			target_entity_id,resolution_status
+		)
+		SELECT node.id,'map','map',424242,decode(repeat('ef',32),'hex'),entity.id,'resolved'
+		FROM node CROSS JOIN entity`,
+	); err != nil {
+		t.Fatalf("seed stale ATT map resolution: %v", err)
+	}
+}
+
+func assertSourceApprovalEvidenceGate(t *testing.T, ctx context.Context, database *sql.DB) {
+	t.Helper()
+	var evidenceCount int
+	if err := database.QueryRowContext(ctx, `
+		SELECT count(*) FROM catalog_source_policy_reviews
+		WHERE review_kind='evidence' AND decision='blocked'`).Scan(&evidenceCount); err != nil {
+		t.Fatal(err)
+	}
+	if evidenceCount != 5 {
+		t.Fatalf("source-policy evidence rows=%d, want 5", evidenceCount)
+	}
+
+	if _, err := database.ExecContext(ctx, `
+		UPDATE catalog_publication_grants
+		SET decision='allowed',approved_by='migration-test',reviewed_at=now(),reason='missing review must fail'
+		WHERE source='blizzard_api' AND environment='production' AND surface='public_api'`); err == nil {
+		t.Fatal("publication grant without a linked owner/legal review unexpectedly succeeded")
+	}
+
+	var blizzardEvidenceID string
+	if err := database.QueryRowContext(ctx, `
+		SELECT id::text FROM catalog_source_policy_reviews
+		WHERE source='blizzard_api' AND environment='production' AND surface='public_api'
+		  AND review_kind='evidence' ORDER BY created_at DESC,id DESC LIMIT 1`).Scan(&blizzardEvidenceID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_source_policy_reviews(
+			source,environment,surface,review_kind,decision,reviewer,reason,observed_at,parent_review_id
+		) VALUES('wago_tools','production','public_api','owner_approval','allowed',
+			'migration-test','mismatched evidence must fail',now(),$1)`, blizzardEvidenceID); err == nil {
+		t.Fatal("owner approval with mismatched evidence unexpectedly succeeded")
+	}
+
+	transaction, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer transaction.Rollback()
+	var approvalID string
+	if err := transaction.QueryRowContext(ctx, `
+		INSERT INTO catalog_source_policy_reviews(
+			source,environment,surface,review_kind,decision,reviewer,reason,observed_at,expires_at,parent_review_id
+		) VALUES('blizzard_api','production','public_api','owner_approval','allowed',
+			'migration-test','explicit integration approval',now(),now()+interval '1 day',$1)
+		RETURNING id::text`, blizzardEvidenceID).Scan(&approvalID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := transaction.ExecContext(ctx, `
+		UPDATE catalog_publication_grants
+		SET decision='allowed',approved_by='migration-test',reviewed_at=now(),expires_at=now()+interval '1 day',
+			reason='explicit integration approval',policy_review_id=$1
+		WHERE source='blizzard_api' AND environment='production' AND surface='public_api'`, approvalID); err != nil {
+		t.Fatal(err)
+	}
+	var eventCount int
+	if err := transaction.QueryRowContext(ctx, `
+		SELECT count(*) FROM catalog_publication_grant_events
+		WHERE source='blizzard_api' AND environment='production' AND surface='public_api'
+		  AND operation='update' AND actor='migration-test'`).Scan(&eventCount); err != nil {
+		t.Fatal(err)
+	}
+	if eventCount != 1 {
+		t.Fatalf("publication grant audit events=%d, want 1", eventCount)
+	}
+	if err := transaction.Rollback(); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := database.ExecContext(ctx, `
+		UPDATE catalog_source_policy_reviews SET reason='mutation must fail' WHERE id=$1`, blizzardEvidenceID); err == nil {
+		t.Fatal("immutable source-policy evidence unexpectedly changed")
+	}
 }
 
 func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *sql.DB, postgresURL string) {
@@ -193,11 +404,74 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err := store.UpsertCanonical(ctx, legacy, catalogTestItem("Published item", "1.0.0.100001")); err != nil {
 		t.Fatal(err)
 	}
+	readyMediaArtifact, err := store.RegisterArtifact(ctx, legacy, "blizzard_api", "battlenet-media/item", "en_US",
+		"https://us.api.blizzard.com/data/wow/media/item/900001", map[string]any{"test": "proved media"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	readyMediaProof := []byte("proved-media")
+	readyMediaDigest := sha256.Sum256(readyMediaProof)
+	if err := store.CompleteArtifact(ctx, readyMediaArtifact, readyMediaDigest[:], int64(len(readyMediaProof)), ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.UpsertEntityMedia(ctx, legacy, "item", 900001, "en_US", "blizzard_api", catalogimport.EntityMedia{
+		Kind: "icon", AssetKey: "icon", SourceURL: "https://render.worldofwarcraft.com/us/icons/56/proved.jpg",
+		MIMEType: "image/jpeg", Primary: true,
+	}, readyMediaArtifact); err != nil {
+		t.Fatal(err)
+	}
 	if err := store.Finish(ctx, legacy.RunID, "SUCCEEDED", 1, 1, nil); err != nil {
 		t.Fatal(err)
 	}
 	entityID := catalogEntityID(t, ctx, database, 900001)
 	assertCatalogName(t, ctx, service, entityID, "Published item")
+
+	failedMedia, err := store.Begin(ctx, "wow", 100001, "1.0.0.100001", "us", "battlenet", nil, map[string]any{"test": "failed media refresh"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	failedMediaArtifact, err := store.RegisterPendingArtifact(ctx, failedMedia, "blizzard_api", "battlenet-media/item", "en_US",
+		"https://us.api.blizzard.com/data/wow/media/item/900001", map[string]any{"test": "failed media"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.UpsertEntityMedia(ctx, failedMedia, "item", 900001, "en_US", "blizzard_api", catalogimport.EntityMedia{
+		Kind: "icon", AssetKey: "icon", SourceURL: "https://render.worldofwarcraft.com/us/icons/56/unproved.jpg",
+		MIMEType: "image/jpeg", Primary: true,
+	}, failedMediaArtifact); err != nil {
+		t.Fatal(err)
+	}
+	failedMediaErr := errors.New("synthetic media refresh failure")
+	if err := store.FailArtifact(ctx, failedMediaArtifact, failedMediaErr); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Finish(ctx, failedMedia.RunID, "FAILED", 1, 0, failedMediaErr); err != nil {
+		t.Fatal(err)
+	}
+	mediaEntity, err := service.Get(ctx, entityID, "en_US")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(mediaEntity.Media) != 0 || mediaEntity.IconURL != nil {
+		t.Fatalf("uncached source media became public: media=%#v icon_url=%v", mediaEntity.Media, mediaEntity.IconURL)
+	}
+	var readyObservations, failedObservations int
+	if err := database.QueryRowContext(ctx, `
+		SELECT
+			count(*) FILTER (WHERE artifact.status='ready' AND media.source_url LIKE '%/proved.jpg'),
+			count(*) FILTER (WHERE artifact.status='failed' AND media.source_url LIKE '%/unproved.jpg')
+		FROM catalog_entity_media media
+		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
+		WHERE media.entity_id=$1`, entityID).Scan(&readyObservations, &failedObservations); err != nil {
+		t.Fatal(err)
+	}
+	if readyObservations != 1 || failedObservations != 1 {
+		t.Fatalf("media observations were not preserved: ready=%d failed=%d", readyObservations, failedObservations)
+	}
+	if err := service.RefreshReadModels(ctx, nil); err != nil {
+		t.Fatal(err)
+	}
+	assertPublishedItemReadModelCount(t, ctx, database, 1)
 
 	failedRunID := insertPipelineRun(t, ctx, database, "1.0.0.100002")
 	failedReleaseID, err := releases.Start(ctx, failedRunID, "wow", "1.0.0.100002", []string{"wago"})
@@ -211,9 +485,16 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err := store.UpsertCanonical(ctx, staging, catalogTestItem("Unpublished item", "1.0.0.100002")); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Finish(ctx, staging.RunID, "SUCCEEDED", 1, 1, nil); err != nil {
+	if err := store.UpsertCanonical(ctx, staging, catalogTestItemWithID(900002, "Candidate-only item", "1.0.0.100002")); err != nil {
 		t.Fatal(err)
 	}
+	if err := store.Finish(ctx, staging.RunID, "SUCCEEDED", 2, 2, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := service.RefreshReadModels(ctx, nil); err != nil {
+		t.Fatal(err)
+	}
+	assertPublishedItemReadModelCount(t, ctx, database, 1)
 	assertCatalogName(t, ctx, service, entityID, "Published item")
 	assertCatalogPointersDiffer(t, ctx, database, entityID, true)
 	versions, err := service.Versions(ctx, entityID, "en_US", 50)
@@ -340,8 +621,28 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 		WHERE version_id=(SELECT latest_version_id FROM game_entities WHERE id=$1)`, entityID, artifactID); err != nil {
 		t.Fatal(err)
 	}
+	var generationBeforePublish int64
+	if err := database.QueryRowContext(ctx, `
+		SELECT state.generation
+		FROM catalog_read_model_state state
+		JOIN game_products product ON product.id=state.product_id
+		WHERE product.slug='wow'`).Scan(&generationBeforePublish); err != nil {
+		t.Fatal(err)
+	}
 	if err := releases.Publish(ctx, publishedReleaseID); err != nil {
 		t.Fatal(err)
+	}
+	var generationAfterPublish int64
+	if err := database.QueryRowContext(ctx, `
+		SELECT state.generation
+		FROM catalog_read_model_state state
+		JOIN game_products product ON product.id=state.product_id
+		WHERE product.slug='wow'`).Scan(&generationAfterPublish); err != nil {
+		t.Fatal(err)
+	}
+	if generationAfterPublish <= generationBeforePublish {
+		t.Fatalf("published read-model generation did not advance: before=%d after=%d",
+			generationBeforePublish, generationAfterPublish)
 	}
 	assertCatalogName(t, ctx, service, entityID, "Released item")
 	assertCatalogPointersDiffer(t, ctx, database, entityID, false)
@@ -442,10 +743,29 @@ func assertLocaleFallbackContract(
 }
 
 func catalogTestItem(name, build string) catalogimport.Record {
+	return catalogTestItemWithID(900001, name, build)
+}
+
+func catalogTestItemWithID(externalID int64, name, build string) catalogimport.Record {
 	payload := `{"name":{"en_US":"` + name + `"},"description":{"en_US":"Atomic release test"},"level":100}`
 	return catalogimport.Record{
-		Type: "item", ExternalID: 900001, Locale: "en_US", Payload: []byte(payload),
+		Type: "item", ExternalID: externalID, Locale: "en_US", Payload: []byte(payload),
 		SourceURL: "https://wago.tools/db2/ItemSparse/csv?build=" + build,
+	}
+}
+
+func assertPublishedItemReadModelCount(t *testing.T, ctx context.Context, database *sql.DB, want int64) {
+	t.Helper()
+	var count int64
+	if err := database.QueryRowContext(ctx, `
+		SELECT stats.entity_count
+		FROM catalog_entity_type_stats stats
+		JOIN game_products product ON product.id=stats.product_id
+		WHERE product.slug='wow' AND stats.entity_type='item' AND stats.locale='en_US'`).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != want {
+		t.Fatalf("published item read-model count = %d, want %d", count, want)
 	}
 }
 

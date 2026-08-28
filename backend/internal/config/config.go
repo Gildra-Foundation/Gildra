@@ -33,6 +33,8 @@ type Config struct {
 	AdminSessionTTL        time.Duration
 	CatalogPublicationMode string
 	CatalogPublicationEnv  string
+	CatalogRecoveryPolicy  string
+	CatalogMediaDirectory  string
 }
 
 func Load() (Config, error) {
@@ -55,6 +57,7 @@ func Load() (Config, error) {
 
 	sentryEnvironment := envOr("SENTRY_ENVIRONMENT", "development")
 	publicationEnvironment := envOr("CATALOG_PUBLICATION_ENVIRONMENT", normalizedPublicationEnvironment(sentryEnvironment))
+	recoveryPolicy := envOr("CATALOG_RECOVERY_POLICY", "off_host")
 	publicationMode := os.Getenv("CATALOG_PUBLICATION_MODE")
 	if publicationMode == "" {
 		publicationMode = "report"
@@ -84,6 +87,8 @@ func Load() (Config, error) {
 		AdminSessionTTL:        adminSessionTTL,
 		CatalogPublicationMode: publicationMode,
 		CatalogPublicationEnv:  publicationEnvironment,
+		CatalogRecoveryPolicy:  recoveryPolicy,
+		CatalogMediaDirectory:  os.Getenv("CATALOG_MEDIA_DIRECTORY"),
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -100,6 +105,9 @@ func Load() (Config, error) {
 	}
 	if cfg.CatalogPublicationEnv != "development" && cfg.CatalogPublicationEnv != "staging" && cfg.CatalogPublicationEnv != "production" {
 		return Config{}, errors.New("CATALOG_PUBLICATION_ENVIRONMENT must be development, staging, or production")
+	}
+	if cfg.CatalogRecoveryPolicy != "off_host" && cfg.CatalogRecoveryPolicy != "verified_same_host" {
+		return Config{}, errors.New("CATALOG_RECOVERY_POLICY must be off_host or verified_same_host")
 	}
 
 	return cfg, nil

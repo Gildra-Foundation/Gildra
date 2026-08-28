@@ -33,6 +33,9 @@ func TestBuildPlanIsDeterministicAndNeverContainsDatabaseCredentials(t *testing.
 		if stage.Key == "import-listfile" && !strings.Contains(strings.Join(stage.Arguments, " "), "-version 12.1.0.69404") {
 			t.Fatalf("listfile import is not pinned to the release build: %#v", stage.Arguments)
 		}
+		if (stage.Key == "import-db2" || stage.Key == "import-listfile") && !strings.Contains(strings.Join(stage.Arguments, " "), "-product wow") {
+			t.Fatalf("%s is not product-scoped: %#v", stage.Key, stage.Arguments)
+		}
 	}
 }
 
@@ -101,6 +104,25 @@ func TestProductionImportSafetyRequiresPinnedBuildAndExplicitFullConfirmation(t 
 	}
 	if plan[0].Key != "recovery-gate" {
 		t.Fatalf("first production stage = %q, want recovery-gate", plan[0].Key)
+	}
+}
+
+func TestProductionSameHostRecoveryRequiresExplicitKnownPolicy(t *testing.T) {
+	base := Options{
+		Mode: "apply", PublicationEnvironment: "production", Product: "wow",
+		Profile: ProfileRetailFoundation, BuildVersion: "12.1.0.69404",
+		MaxRecords: 0, ConfirmFullImport: true,
+	}
+	if _, err := BuildPlan(base); err != nil {
+		t.Fatalf("default off-host recovery policy should remain valid: %v", err)
+	}
+	base.RecoveryPolicy = "local"
+	if _, err := BuildPlan(base); err == nil || !strings.Contains(err.Error(), "unsupported recovery policy") {
+		t.Fatalf("expected unknown recovery policy rejection, got %v", err)
+	}
+	base.RecoveryPolicy = "verified_same_host"
+	if _, err := BuildPlan(base); err != nil {
+		t.Fatalf("explicit verified same-host policy should be accepted: %v", err)
 	}
 }
 
