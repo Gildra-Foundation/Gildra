@@ -45,15 +45,19 @@ func main() {
 }
 
 func run() error {
-	var databaseURL, sourceURL, buildVersion string
+	var databaseURL, sourceURL, buildVersion, product string
 	var confirm bool
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
 	flag.StringVar(&sourceURL, "url", defaultURL, "wow-listfile CSV release URL")
+	flag.StringVar(&product, "product", "wow", "game_products slug")
 	flag.StringVar(&buildVersion, "version", "", "WoW build version (for example 12.1.0.69497)")
 	flag.BoolVar(&confirm, "confirm", false, "download and import icon paths")
 	flag.Parse()
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL or -database-url is required")
+	}
+	if !supportedProduct(product) {
+		return fmt.Errorf("unsupported product %q", product)
 	}
 	if !strings.HasPrefix(sourceURL, "https://github.com/wowdev/wow-listfile/") {
 		return errors.New("url must be an official wowdev/wow-listfile GitHub release")
@@ -81,8 +85,8 @@ func run() error {
 		return err
 	}
 	store := catalogimport.NewStore(db)
-	ic, err := store.Begin(ctx, "wow", buildNumber, buildVersion, "us", "wow_listfile", releaseID, map[string]any{
-		"source_url": sourceURL,
+	ic, err := store.Begin(ctx, product, buildNumber, buildVersion, "us", "wow_listfile", releaseID, map[string]any{
+		"product": product, "source_url": sourceURL,
 	})
 	if err != nil {
 		return fmt.Errorf("start listfile import: %w", err)
@@ -208,6 +212,15 @@ func run() error {
 	}
 	slog.Info("listfile import completed", "seen", seen, "written", written)
 	return nil
+}
+
+func supportedProduct(product string) bool {
+	switch product {
+	case "wow", "wow_classic", "wow_classic_era", "wow_classic_hardcore":
+		return true
+	default:
+		return false
+	}
 }
 
 func parseBuildNumber(version string) (int, error) {

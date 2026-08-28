@@ -8,18 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestWowIconURL(t *testing.T) {
-	icon := "Ability_Warrior_SavageBlow"
-	got := wowIconURL(&icon)
-	if got == nil || *got != "https://render.worldofwarcraft.com/us/icons/56/ability_warrior_savageblow.jpg" {
-		t.Fatalf("unexpected icon URL: %v", got)
-	}
-	unsafe := "../secret"
-	if got := wowIconURL(&unsafe); got != nil {
-		t.Fatalf("unsafe icon name must be rejected: %q", *got)
-	}
-}
-
 func TestAPIEntityExposesRequestedAndResolvedLocales(t *testing.T) {
 	entity := catalog.Entity{
 		ID: uuid.New(), Product: "wow", Type: "item", ExternalID: 25, Slug: "worn-shortsword",
@@ -29,5 +17,59 @@ func TestAPIEntityExposesRequestedAndResolvedLocales(t *testing.T) {
 	got := toAPIEntity(entity)
 	if got.Locale != "ru_RU" || got.ResolvedLocale != "en_US" || !got.LocaleFallback {
 		t.Fatalf("locale provenance was lost in API mapping: %#v", got)
+	}
+}
+
+func TestAPIEntityExposesLocallyCachedSourceBackedMedia(t *testing.T) {
+	localURL := "https://api.gildra.net/v1/media/" + uuid.NewString()
+	entity := catalog.Entity{
+		ID: uuid.New(), Product: "wow", Type: "achievement", ExternalID: 6, Slug: "level-10",
+		Locale: "en_US", ResolvedLocale: "en_US", Name: "Level 10", UpdatedAt: time.Unix(1, 0).UTC(),
+		IconURL: &localURL,
+		Media: []catalog.Media{{
+			Kind: "icon", AssetKey: "icon", URL: localURL,
+			Source: "blizzard_api", SourceURL: "https://render.worldofwarcraft.com/us/icons/56/example.jpg",
+			Locale: "en_US", MIMEType: "image/jpeg", CacheStatus: "cached", Primary: true,
+		}},
+	}
+	got := toAPIEntity(entity)
+	if got.Media == nil || len(*got.Media) != 1 {
+		t.Fatalf("media mapping = %#v", got.Media)
+	}
+	asset := (*got.Media)[0]
+	if asset.Kind != "icon" || asset.Source != "blizzard_api" || !asset.Primary {
+		t.Fatalf("media provenance was lost in API mapping: %#v", asset)
+	}
+	if asset.Url != localURL || got.IconUrl == nil || *got.IconUrl != localURL {
+		t.Fatalf("public media must use local cache URL: media=%q icon=%#v", asset.Url, got.IconUrl)
+	}
+}
+
+func TestAPILibraryDatasetPreservesFreshnessAndCoverage(t *testing.T) {
+	updatedAt := time.Unix(10, 0).UTC()
+	build := "12.0.1.65000"
+	previewIcon := "inv_sword_04"
+	previewURL := "https://api.gildra.net/v1/media/79be8de3-77ba-436d-afd0-91a38146611a"
+	itemClassID := 2
+	got := toAPILibraryDataset(catalog.LibraryDataset{
+		Slug: "weapons", Product: "wow", EntityType: "item", CategoryPath: "equipment/weapons",
+		ItemClassID: &itemClassID,
+		Group:       "equipment", IconSymbol: "#ic-sword", SortOrder: 20, Name: "Оружие",
+		Description: "Оружие по типам", BuildVersion: &build, PreviewIconName: &previewIcon, PreviewImageURL: &previewURL, EntityCount: 100,
+		LocalizedCount: 90, VerifiedLocalizedCount: 85, TooltipCount: 80, ImageCount: 70, Freshness: "fresh",
+		Applicability: "applicable", ApplicabilityReason: "",
+		FreshnessReason: "published data and coverage are current", CoverageUpdatedAt: &updatedAt,
+	})
+	if got.Slug != "weapons" || got.CategoryPath != "equipment/weapons" || got.ItemClassId == nil || *got.ItemClassId != 2 || got.Freshness != "fresh" {
+		t.Fatalf("dataset identity or freshness was lost: %#v", got)
+	}
+	if got.TooltipCount != 80 || got.ImageCount != 70 || got.VerifiedLocalizedCount != 85 || got.CoverageUpdatedAt == nil {
+		t.Fatalf("dataset coverage was lost: %#v", got)
+	}
+	if got.Applicability != "applicable" || got.ApplicabilityReason != "" {
+		t.Fatalf("dataset applicability was lost: %#v", got)
+	}
+	if got.PreviewImageUrl == nil || *got.PreviewImageUrl != previewURL {
+		t.Fatalf("dataset preview was lost: %#v", got.PreviewImageUrl)
 	}
 }

@@ -29,6 +29,7 @@ type CardSummary struct {
 	Name           string
 	Description    string
 	IconName       *string
+	IconURL        *string
 	Quality        *int
 	ItemLevel      *int
 	BuildID        *int64
@@ -42,8 +43,10 @@ type SummaryParams struct {
 	Type             string
 	Locale           string
 	Query            string
+	Dataset          string
 	Category         string
 	Facets           []string
+	ItemClassID      *int
 	MinItemLevel     *int
 	MaxItemLevel     *int
 	MinRequiredLevel *int
@@ -60,6 +63,43 @@ type SummaryPage struct {
 	Total      *int64
 }
 
+const summaryFastQuery = `
+	SELECT entity.id,$1::text,entity.entity_type,entity.external_id,
+		COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),$4::text,
+		(localized.version_id IS NULL OR NULLIF(localized.name,'') IS NULL) AS locale_fallback,
+		COALESCE(NULLIF(localized.name,''),fallback.name,''),
+		COALESCE(NULLIF(localized.description,''),fallback.description,''),
+		COALESCE(source_icon.icon_name,direct_icon.icon_name,db2_icon.icon_name,
+			NULLIF(version.payload #>> '{raidbots,icon}',''),NULLIF(version.payload #>> '{raidbots,spellIcon}','')),
+		CASE WHEN item.quality ~ '^[0-9]+$' THEN item.quality::int END,
+		item.item_level,version.build_id,entity.updated_at,
+		item.required_level,item.inventory_type,spell.school,spell.cast_time,spell.cooldown_ms,0
+	FROM game_entities entity
+	JOIN game_entity_versions version ON version.id=entity.published_version_id
+	LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
+	LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
+	LEFT JOIN catalog_items item ON item.version_id=version.id
+	LEFT JOIN catalog_spells spell ON spell.version_id=version.id
+	LEFT JOIN catalog_entity_icons source_icon ON source_icon.build_id=version.build_id
+		AND source_icon.entity_type=entity.entity_type AND source_icon.external_id=entity.external_id
+	LEFT JOIN catalog_file_assets direct_icon ON direct_icon.file_data_id=CASE
+		WHEN version.payload->>'icon_file_data_id' ~ '^[0-9]+$' THEN (version.payload->>'icon_file_data_id')::bigint END
+	LEFT JOIN catalog_file_assets db2_icon ON db2_icon.file_data_id=CASE
+		WHEN COALESCE(version.payload #>> '{db2,InventoryIconFileID}',version.payload #>> '{db2,IconFileID}',
+			version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}') ~ '^[0-9]+$'
+		THEN COALESCE(version.payload #>> '{db2,InventoryIconFileID}',version.payload #>> '{db2,IconFileID}',
+			version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}')::bigint END
+	WHERE entity.deleted_at IS NULL
+		AND entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+		AND ($2='' OR entity.entity_type=$2)
+		AND ($6::int IS NULL OR item.item_level >= $6)
+		AND ($7::int IS NULL OR item.item_level <= $7)
+		AND ($8::int IS NULL OR item.required_level >= $8)
+		AND ($9::int IS NULL OR item.required_level <= $9)
+		AND ($10::int IS NULL OR item.item_class_id=$10)
+		AND entity.id>$3
+	ORDER BY entity.id LIMIT $5`
+
 func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryPage, error) {
 	if params.Limit < 1 || params.Limit > 100 {
 		return SummaryPage{}, errors.New("limit must be between 1 and 100")
@@ -69,6 +109,38 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	}
 	if params.MinItemLevel != nil && params.MaxItemLevel != nil && *params.MinItemLevel > *params.MaxItemLevel {
 		return SummaryPage{}, errors.New("minItemLevel must not exceed maxItemLevel")
+	}
+	dataset := strings.TrimSpace(params.Dataset)
+	datasetTotalCached := dataset != "" && strings.TrimSpace(params.Query) == "" && strings.TrimSpace(params.Category) == "" && len(params.Facets) == 0 && params.ItemClassID == nil && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil
+	if dataset != "" {
+		if len(dataset) < 2 || len(dataset) > 64 {
+			return SummaryPage{}, errors.New("dataset must be between 2 and 64 characters")
+		}
+		var datasetType, datasetCategory string
+		var datasetItemClass *int
+		err := s.postgres.QueryRow(ctx, `
+			SELECT entity_type,category_path,item_class_id
+			FROM catalog_library_dataset_definitions
+			WHERE slug=$1 AND is_public`, dataset).Scan(&datasetType, &datasetCategory, &datasetItemClass)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return SummaryPage{}, errors.New("dataset is not public")
+		}
+		if err != nil {
+			return SummaryPage{}, fmt.Errorf("resolve public dataset: %w", err)
+		}
+		if params.Type != "" && strings.TrimSpace(params.Type) != datasetType {
+			return SummaryPage{}, errors.New("dataset conflicts with the requested entity type")
+		}
+		if params.ItemClassID != nil && datasetItemClass != nil && *params.ItemClassID != *datasetItemClass {
+			return SummaryPage{}, errors.New("dataset conflicts with the requested item class")
+		}
+		params.Type = datasetType
+		params.Dataset = dataset
+		if datasetItemClass != nil {
+			params.ItemClassID = datasetItemClass
+		} else if datasetCategory != "" {
+			params.Facets = append(params.Facets, datasetCategory)
+		}
 	}
 	filterPaths, err := summaryFilterPaths(params.Category, params.Facets)
 	if err != nil {
@@ -84,6 +156,9 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if params.MinRequiredLevel != nil && params.MaxRequiredLevel != nil && *params.MinRequiredLevel > *params.MaxRequiredLevel {
 		return SummaryPage{}, errors.New("minRequiredLevel must not exceed maxRequiredLevel")
 	}
+	if params.ItemClassID != nil && (*params.ItemClassID < 0 || *params.ItemClassID > 99) {
+		return SummaryPage{}, errors.New("itemClassId must be between 0 and 99")
+	}
 	product := strings.TrimSpace(params.Product)
 	if product == "" {
 		product = "wow"
@@ -91,14 +166,21 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	locale := normalizeLocale(params.Locale)
 	var total *int64
 	if params.IncludeTotal {
-		value, err := s.summaryCount(ctx, params, product, locale)
+		var value int64
+		var err error
+		if datasetTotalCached {
+			value, err = s.datasetSummaryCount(ctx, dataset, product, locale)
+		} else {
+			value, err = s.summaryCount(ctx, params, product, locale)
+		}
 		if err != nil {
 			return SummaryPage{}, err
 		}
 		total = &value
 	}
 
-	rows, err := s.postgres.Query(ctx, `
+	query := strings.TrimSpace(params.Query)
+	summaryQuery := `
 		WITH RECURSIVE search_candidates(version_id,rank) AS MATERIALIZED (
 			SELECT candidate.version_id,max(candidate.rank)::int FROM (
 				SELECT candidate_locale.version_id,greatest(
@@ -175,11 +257,20 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			AND ($9::int IS NULL OR item.item_level <= $9)
 			AND ($10::int IS NULL OR item.required_level >= $10)
 			AND ($11::int IS NULL OR item.required_level <= $11)
+			AND ($13::int IS NULL OR item.item_class_id=$13)
 			AND ($5='' OR search_match.rank>0)
 			AND (($5='' AND entity.id>$3) OR ($5<>'' AND ($12::int IS NULL OR search_match.rank<$12 OR (search_match.rank=$12 AND entity.id>$3))))
-		ORDER BY search_match.rank DESC NULLS LAST,entity.id LIMIT $6`, product, strings.TrimSpace(params.Type), cursorID, locale,
-		strings.TrimSpace(params.Query), params.Limit+1, filterPaths, params.MinItemLevel, params.MaxItemLevel,
-		params.MinRequiredLevel, params.MaxRequiredLevel, cursorRank)
+		ORDER BY ` + summaryOrderBy(query) + ` LIMIT $6`
+	queryArgs := []any{product, strings.TrimSpace(params.Type), cursorID, locale,
+		query, params.Limit + 1, filterPaths, params.MinItemLevel, params.MaxItemLevel,
+		params.MinRequiredLevel, params.MaxRequiredLevel, cursorRank, params.ItemClassID}
+	var rows pgx.Rows
+	if query == "" && len(filterPaths) == 0 {
+		rows, err = s.postgres.Query(ctx, summaryFastQuery, product, strings.TrimSpace(params.Type), cursorID, locale,
+			params.Limit+1, params.MinItemLevel, params.MaxItemLevel, params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID)
+	} else {
+		rows, err = s.postgres.Query(ctx, summaryQuery, queryArgs...)
+	}
 	if err != nil {
 		return SummaryPage{}, fmt.Errorf("list game entity summaries: %w", err)
 	}
@@ -203,6 +294,15 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if err := rows.Err(); err != nil {
 		return SummaryPage{}, fmt.Errorf("iterate game entity summaries: %w", err)
 	}
+	iconURLs, err := s.cachedIconURLs(ctx, cardSummaryIDs(entities))
+	if err != nil {
+		return SummaryPage{}, err
+	}
+	for index := range entities {
+		if value, ok := iconURLs[entities[index].ID]; ok {
+			entities[index].IconURL = &value
+		}
+	}
 	hasMore := len(entities) > params.Limit
 	if hasMore {
 		entities = entities[:params.Limit]
@@ -215,6 +315,36 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	return SummaryPage{Entities: entities, NextCursor: nextCursor, HasMore: hasMore, Total: total}, nil
 }
 
+func summaryOrderBy(query string) string {
+	if query == "" {
+		return "entity.id"
+	}
+	return "search_match.rank DESC NULLS LAST,entity.id"
+}
+
+func cardSummaryIDs(entities []CardSummary) []uuid.UUID {
+	ids := make([]uuid.UUID, 0, len(entities))
+	for _, entity := range entities {
+		ids = append(ids, entity.ID)
+	}
+	return ids
+}
+
+func (s *Service) datasetSummaryCount(ctx context.Context, dataset, product, locale string) (int64, error) {
+	var total int64
+	err := s.postgres.QueryRow(ctx, `
+		SELECT COALESCE(stats.entity_count,0)
+		FROM catalog_library_dataset_definitions definition
+		JOIN game_products product ON product.slug=$2
+		LEFT JOIN catalog_library_dataset_stats stats
+			ON stats.dataset_slug=definition.slug AND stats.product_id=product.id AND stats.locale=$3
+		WHERE definition.slug=$1 AND definition.is_public`, dataset, product, locale).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("read cached dataset summary count: %w", err)
+	}
+	return total, nil
+}
+
 func (s *Service) summaryCount(ctx context.Context, params SummaryParams, product, locale string) (int64, error) {
 	query := strings.TrimSpace(params.Query)
 	category := strings.TrimSpace(params.Category)
@@ -223,7 +353,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 	if err != nil {
 		return 0, err
 	}
-	if query == "" && len(filterPaths) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil {
+	if query == "" && len(filterPaths) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil {
 		var total int64
 		err := s.postgres.QueryRow(ctx, `
 			SELECT COALESCE(sum(stats.entity_count),0)
@@ -236,7 +366,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		}
 		return total, nil
 	}
-	if query == "" && category != "" && len(params.Facets) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil {
+	if query == "" && category != "" && len(params.Facets) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil {
 		var total int64
 		err := s.postgres.QueryRow(ctx, `
 			SELECT COALESCE(stats.entity_count,0) FROM catalog_categories category
@@ -293,8 +423,9 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 			AND ($6::int IS NULL OR item.item_level <= $6)
 			AND ($7::int IS NULL OR item.required_level >= $7)
 			AND ($8::int IS NULL OR item.required_level <= $8)
+			AND ($9::int IS NULL OR item.item_class_id=$9)
 			AND ($3='' OR search.version_id IS NOT NULL)`, product, entityType, query, filterPaths, params.MinItemLevel, params.MaxItemLevel,
-		params.MinRequiredLevel, params.MaxRequiredLevel).Scan(&total)
+		params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID).Scan(&total)
 	if err != nil {
 		return 0, fmt.Errorf("count game entity summaries: %w", err)
 	}

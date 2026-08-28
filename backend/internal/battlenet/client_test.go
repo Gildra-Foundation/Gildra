@@ -114,6 +114,58 @@ func TestSearchRangeEncodesInclusiveIDBounds(t *testing.T) {
 	}
 }
 
+func TestMaxExternalIDUsesDescendingOfficialSearch(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/token" {
+			fmt.Fprint(w, `{"access_token":"token"}`)
+			return
+		}
+		if got := r.URL.Query().Get("orderby"); got != "id:desc" {
+			t.Fatalf("orderby = %q", got)
+		}
+		if got := r.URL.Query().Get("_pageSize"); got != "1" {
+			t.Fatalf("page size = %q", got)
+		}
+		fmt.Fprint(w, `{"page":1,"pageCount":1000,"results":[{"data":{"id":246062}}]}`)
+	}))
+	t.Cleanup(server.Close)
+	client, err := New(Config{ClientID: "id", ClientSecret: "secret", TokenURL: server.URL + "/token", APIBaseURL: func(string) string { return server.URL }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	maxID, err := client.MaxExternalID(context.Background(), "us", "static-classic1x-us", "en_US", "item")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if maxID != 246062 {
+		t.Fatalf("max ID = %d", maxID)
+	}
+}
+
+func TestMaxExternalIDAllowsEmptyOfficialIndex(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/token" {
+			fmt.Fprint(w, `{"access_token":"token"}`)
+			return
+		}
+		fmt.Fprint(w, `{"page":1,"pageCount":0,"results":[]}`)
+	}))
+	t.Cleanup(server.Close)
+	client, err := New(Config{ClientID: "id", ClientSecret: "secret", TokenURL: server.URL + "/token", APIBaseURL: func(string) string { return server.URL }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	maxID, err := client.MaxExternalID(context.Background(), "us", "static-classic-us", "en_US", "spell")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if maxID != 0 {
+		t.Fatalf("max ID = %d", maxID)
+	}
+}
+
 func TestDetailReportsRemoteError(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -204,6 +256,17 @@ func TestBuildFromResourceLink(t *testing.T) {
 		t.Fatal(err)
 	}
 	if build != 68914 || version != "12.1.0.68914" {
+		t.Fatalf("build = %d, version = %q", build, version)
+	}
+}
+
+func TestBuildFromClassicResourceLink(t *testing.T) {
+	t.Parallel()
+	build, version, err := buildFromResourceLink("https://us.api.blizzard.com/data/wow/item/25?namespace=static-1.15.9_68185-classic1x-us")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if build != 68185 || version != "1.15.9.68185" {
 		t.Fatalf("build = %d, version = %q", build, version)
 	}
 }

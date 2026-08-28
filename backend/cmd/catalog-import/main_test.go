@@ -218,6 +218,46 @@ func TestFetchBattleNetIndexDetailsPreservesQuestIDs(t *testing.T) {
 	}
 }
 
+func TestBattleNetIndexBatchSize(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		workers int
+		want    int
+	}{
+		{workers: 0, want: 1},
+		{workers: 1, want: 32},
+		{workers: 8, want: 128},
+		{workers: 32, want: 512},
+	}
+	for _, test := range tests {
+		if got := battleNetIndexBatchSize(test.workers); got != test.want {
+			t.Fatalf("batch size for %d workers = %d, want %d", test.workers, got, test.want)
+		}
+	}
+}
+
+func TestBattleNetNamespaceByProduct(t *testing.T) {
+	t.Parallel()
+	tests := map[string]string{
+		"wow":                  "static-us",
+		"wow_classic":          "static-classic-us",
+		"wow_classic_era":      "static-classic1x-us",
+		"wow_classic_hardcore": "static-classic1x-us",
+	}
+	for product, want := range tests {
+		got, err := battleNetNamespace(product, "us")
+		if err != nil {
+			t.Fatalf("namespace for %s: %v", product, err)
+		}
+		if got != want {
+			t.Fatalf("namespace for %s = %q, want %q", product, got, want)
+		}
+	}
+	if _, err := battleNetNamespace("unknown", "us"); err == nil {
+		t.Fatal("expected unsupported product error")
+	}
+}
+
 func TestBattleNetMediaHref(t *testing.T) {
 	t.Parallel()
 	href := battleNetMediaHref(json.RawMessage(`{
@@ -225,6 +265,23 @@ func TestBattleNetMediaHref(t *testing.T) {
 	}`))
 	if href != "https://us.api.blizzard.com/data/wow/media/playable-class/1?namespace=static-12.1.0_68914-us" {
 		t.Fatalf("href = %q", href)
+	}
+}
+
+func TestBattleNetMediaLinksPreserveMountDisplays(t *testing.T) {
+	t.Parallel()
+	links := battleNetMediaLinks(json.RawMessage(`{
+		"creature_displays":[
+			{"id":144855,"key":{"href":"https://us.api.blizzard.com/data/wow/media/creature-display/144855"}},
+			{"id":144856,"key":{"href":"https://us.api.blizzard.com/data/wow/media/creature-display/144856"}},
+			{"id":144855,"key":{"href":"https://us.api.blizzard.com/data/wow/media/creature-display/144855"}}
+		]
+	}`))
+	if len(links) != 2 {
+		t.Fatalf("mount media links = %#v", links)
+	}
+	if links[0].AssetPrefix != "creature_display_144855" || links[1].AssetPrefix != "creature_display_144856" {
+		t.Fatalf("mount asset prefixes = %#v", links)
 	}
 }
 

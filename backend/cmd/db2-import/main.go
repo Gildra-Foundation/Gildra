@@ -29,21 +29,25 @@ const defaultTables = "Item,ItemSparse,ItemClass,ItemSubClass,ItemEffect,ItemXIt
 var tablePattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{1,63}$`)
 
 type options struct {
-	databaseURL        string
-	version            string
-	tables             []string
-	locales            []string
-	maxRecords         int
-	batchSize          int
-	confirm            bool
-	projectSpells      bool
-	projectItems       bool
-	projectProfessions bool
-	projectCreatures   bool
-	projectQuests      bool
-	projectPvpTalents  bool
-	projectCollections bool
-	download           bool
+	databaseURL                  string
+	product                      string
+	version                      string
+	tables                       []string
+	locales                      []string
+	maxRecords                   int
+	batchSize                    int
+	confirm                      bool
+	projectSpells                bool
+	projectItems                 bool
+	projectExistingItems         bool
+	projectExistingQuestPackages bool
+	projectItemDetailsOnly       bool
+	projectProfessions           bool
+	projectCreatures             bool
+	projectQuests                bool
+	projectPvpTalents            bool
+	projectCollections           bool
+	download                     bool
 }
 
 type row struct {
@@ -85,6 +89,10 @@ func run() error {
 		fmt.Println(string(encoded))
 		return nil
 	}
+	if opts.download && opts.maxRecords > 0 && (opts.projectSpells || opts.projectItems || opts.projectProfessions ||
+		opts.projectCreatures || opts.projectQuests || opts.projectPvpTalents || opts.projectCollections) {
+		return errors.New("sampled DB2 downloads cannot be projected; use -max-records=0 for a complete import or disable every projection")
+	}
 	buildNumber, err := parseBuildNumber(opts.version)
 	if err != nil {
 		return err
@@ -98,12 +106,40 @@ func run() error {
 		return fmt.Errorf("ping database: %w", err)
 	}
 	store := catalogimport.NewStore(db)
+	if opts.projectExistingItems {
+		ic, resolveErr := existingItemProjectionContext(ctx, db, opts.product, buildNumber)
+		if resolveErr != nil {
+			return resolveErr
+		}
+		projected, projectErr := projectItems(ctx, db, ic)
+		if projectErr != nil {
+			return projectErr
+		}
+		if observeErr := observeDB2LocalizationArtifactsForTables(ctx, db, ic, []string{"ItemSparse"}); observeErr != nil {
+			return observeErr
+		}
+		slog.Info("existing Item build projected", "build", opts.version, "versions_created", projected)
+		return nil
+	}
+	if opts.projectExistingQuestPackages {
+		ic, resolveErr := existingCompleteProjectionContext(ctx, db, opts.product, buildNumber, "db2.questpackageitem")
+		if resolveErr != nil {
+			return resolveErr
+		}
+		projected, projectErr := projectQuestRewardPackages(ctx, db, ic)
+		if projectErr != nil {
+			return projectErr
+		}
+		slog.Info("existing QuestPackageItem build projected", "build", opts.version, "packages", projected)
+		return nil
+	}
 	releaseID, err := catalogimport.ReleaseIDFromEnvironment()
 	if err != nil {
 		return err
 	}
-	ic, err := store.Begin(ctx, "wow", buildNumber, opts.version, "us", "wago_tools", releaseID, map[string]any{
-		"tables": opts.tables, "locales": opts.locales, "max_records_per_table": opts.maxRecords, "batch_size": opts.batchSize,
+	ic, err := store.Begin(ctx, opts.product, buildNumber, opts.version, "us", "wago_tools", releaseID, map[string]any{
+		"product": opts.product, "tables": opts.tables, "locales": opts.locales,
+		"max_records_per_table": opts.maxRecords, "batch_size": opts.batchSize,
 	})
 	if err != nil {
 		return err
@@ -113,10 +149,15 @@ func run() error {
 	if opts.download {
 		importErr = importTables(ctx, db, client, store, ic, opts, &seen, &written)
 	}
-	if importErr == nil && opts.projectItems && contains(opts.tables, "ItemSparse") {
+	if importErr == nil && opts.projectItemDetailsOnly {
+		importErr = projectItemDetails(ctx, db, ic)
+	} else if importErr == nil && opts.projectItems && (contains(opts.tables, "ItemSparse") || contains(opts.tables, "Item")) {
 		var projected int64
 		projected, importErr = projectItems(ctx, db, ic)
 		written += projected
+	}
+	if importErr == nil && contains(opts.tables, "JournalInstance") && contains(opts.tables, "JournalEncounter") {
+		importErr = projectJournalEntities(ctx, db, ic)
 	}
 	if importErr == nil && opts.projectSpells && contains(opts.tables, "SpellName") {
 		var projected int64
@@ -145,11 +186,11 @@ func run() error {
 	}
 	if importErr == nil && opts.projectCollections {
 		var projected int64
-		projected, importErr = projectCollections(ctx, db, ic)
+		projected, importErr = projectCollectionsForTables(ctx, db, ic, opts.tables)
 		written += projected
 	}
 	if importErr == nil {
-		importErr = observeDB2LocalizationArtifacts(ctx, db, ic)
+		importErr = observeDB2LocalizationArtifactsForTables(ctx, db, ic, opts.tables)
 	}
 	status := "SUCCEEDED"
 	if importErr != nil {
@@ -166,18 +207,63 @@ func run() error {
 }
 
 func observeDB2LocalizationArtifacts(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext) error {
+	return observeDB2LocalizationArtifactsForTables(ctx, db, ic, nil)
+}
+
+func existingItemProjectionContext(ctx context.Context, db *pgxpool.Pool, product string, buildNumber int) (catalogimport.ImportContext, error) {
+	return existingCompleteProjectionContext(ctx, db, product, buildNumber, "db2.item")
+}
+
+func existingCompleteProjectionContext(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	product string,
+	buildNumber int,
+	scopeKey string,
+) (catalogimport.ImportContext, error) {
+	var ic catalogimport.ImportContext
+	err := db.QueryRow(ctx, `
+		SELECT product.id,namespace.id,build.id
+		FROM game_products product
+		JOIN game_namespaces namespace ON namespace.product_id=product.id AND namespace.slug='static-us'
+		JOIN game_builds build ON build.product_id=product.id AND build.build_number=$2
+		WHERE product.slug=$1`, product, buildNumber).Scan(&ic.ProductID, &ic.NamespaceID, &ic.BuildID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return catalogimport.ImportContext{}, fmt.Errorf("existing build %d for product %q was not found", buildNumber, product)
+	}
+	if err != nil {
+		return catalogimport.ImportContext{}, fmt.Errorf("resolve existing build: %w", err)
+	}
+	var ready bool
+	if err := db.QueryRow(ctx, `
+		SELECT EXISTS(
+			SELECT 1 FROM catalog_completeness_latest
+			WHERE build_id=$1 AND scope_key=$2 AND locale='en_US' AND status='complete'
+		)`, ic.BuildID, scopeKey).Scan(&ready); err != nil {
+		return catalogimport.ImportContext{}, fmt.Errorf("verify existing %s completeness: %w", scopeKey, err)
+	}
+	if !ready {
+		return catalogimport.ImportContext{}, fmt.Errorf("existing build %d scope %s is not proven complete", buildNumber, scopeKey)
+	}
+	return ic, nil
+}
+
+func observeDB2LocalizationArtifactsForTables(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext, tables []string) error {
 	_, err := db.Exec(ctx, `
 		WITH mappings(entity_type,table_name) AS (VALUES
 			('item'::text,'ItemSparse'::text),('spell','SpellName'),('spell','Spell'),
 			('creature','Creature'),('quest','QuestV2CliTask'),('profession','SkillLine'),
 			('pvp_talent','PvpTalent'),('class','ChrClasses'),('specialization','ChrSpecialization'),
 			('currency','CurrencyTypes'),('mount','Mount'),('battle_pet','BattlePetSpecies'),
-			('toy','Toy'),('map','Map'),('area','AreaTable'),('faction','Faction'),
+			('toy','Toy'),('map','Map'),('ui_map','UiMap'),('area','AreaTable'),('faction','Faction'),
 			('transmog_set','TransmogSet'),('achievement','Achievement'),
 			('instance','JournalInstance'),('encounter','JournalEncounter')
+		), selected_mappings AS (
+			SELECT * FROM mappings
+			WHERE COALESCE(cardinality($3::text[]),0)=0 OR table_name=ANY($3::text[])
 		), direct_observations AS (
 			SELECT DISTINCT version.id AS version_id,localized.locale,raw.source_artifact_id
-			FROM mappings mapping
+			FROM selected_mappings mapping
 			JOIN game_entities entity ON entity.product_id=$1 AND entity.entity_type=mapping.entity_type
 				AND entity.deleted_at IS NULL
 			JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=$2
@@ -199,6 +285,7 @@ func observeDB2LocalizationArtifacts(ctx context.Context, db *pgxpool.Pool, ic c
 				AND raw.row_id=spell_entity.external_id
 			WHERE recipe_entity.product_id=$1 AND recipe_entity.entity_type='recipe'
 			  AND recipe_entity.deleted_at IS NULL AND raw.source_artifact_id IS NOT NULL
+			  AND (COALESCE(cardinality($3::text[]),0)=0 OR $3::text[] && ARRAY['SpellName','Spell']::text[])
 		), observations AS (
 			SELECT version_id,locale,source_artifact_id FROM direct_observations
 			UNION
@@ -211,7 +298,7 @@ func observeDB2LocalizationArtifacts(ctx context.Context, db *pgxpool.Pool, ic c
 		)
 		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
 		SELECT version_id,locale,source_artifact_id FROM observations
-		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING`, ic.ProductID, ic.BuildID)
+		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING`, ic.ProductID, ic.BuildID, tables)
 	if err != nil {
 		return fmt.Errorf("observe DB2 localization artifacts: %w", err)
 	}
@@ -464,6 +551,7 @@ func parseOptions() (options, error) {
 	var tables, locales string
 	opts := options{}
 	flag.StringVar(&opts.databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&opts.product, "product", "wow", "game_products slug")
 	flag.StringVar(&opts.version, "version", "", "WoW build version; auto-detected when empty")
 	flag.StringVar(&tables, "tables", defaultTables, "comma-separated Wago DB2 tables")
 	flag.StringVar(&locales, "locales", "en_US,ru_RU", "comma-separated localized variants")
@@ -471,7 +559,10 @@ func parseOptions() (options, error) {
 	flag.IntVar(&opts.batchSize, "batch-size", 2000, "rows per COPY batch")
 	flag.BoolVar(&opts.confirm, "confirm", false, "download and store DB2 rows")
 	flag.BoolVar(&opts.projectSpells, "project-spells", true, "project SpellName rows into searchable entities")
-	flag.BoolVar(&opts.projectItems, "project-items", true, "project ItemSparse rows into searchable entities")
+	flag.BoolVar(&opts.projectItems, "project-items", true, "project ItemSparse text and Item registry facts into item entities")
+	flag.BoolVar(&opts.projectExistingItems, "project-existing-items", false, "project only item entities from an already imported complete build without creating an import run")
+	flag.BoolVar(&opts.projectExistingQuestPackages, "project-existing-quest-packages", false, "project only quest reward package entities from an already imported complete build without creating an import run")
+	flag.BoolVar(&opts.projectItemDetailsOnly, "project-item-details-only", false, "rebuild typed item details for an already projected build without reprojecting entities")
 	flag.BoolVar(&opts.projectProfessions, "project-professions", true, "project professions, recipes, reagents, and outputs")
 	flag.BoolVar(&opts.projectCreatures, "project-creatures", true, "project creatures, display models, and taxonomy")
 	flag.BoolVar(&opts.projectQuests, "project-quests", true, "project quest registry, objectives, lines, and map POIs")
@@ -479,10 +570,29 @@ func parseOptions() (options, error) {
 	flag.BoolVar(&opts.projectCollections, "project-collections", true, "project classes, specializations, currencies, mounts, pets, toys, maps, factions, transmogs, and achievements")
 	flag.BoolVar(&opts.download, "download", true, "download tables before projection")
 	flag.Parse()
+	if opts.projectItemDetailsOnly {
+		opts.download = false
+		opts.projectItems = false
+		opts.projectSpells = false
+		opts.projectProfessions = false
+		opts.projectCreatures = false
+		opts.projectQuests = false
+		opts.projectPvpTalents = false
+		opts.projectCollections = false
+	}
 	opts.tables = splitList(tables)
 	opts.locales = splitList(locales)
 	if opts.databaseURL == "" {
 		return options{}, errors.New("DATABASE_URL or -database-url is required")
+	}
+	if (opts.projectExistingItems || opts.projectExistingQuestPackages) && opts.download {
+		return options{}, errors.New("project-existing modes require -download=false")
+	}
+	if opts.projectExistingItems && opts.projectExistingQuestPackages {
+		return options{}, errors.New("select only one project-existing mode")
+	}
+	if !validProduct(opts.product) {
+		return options{}, fmt.Errorf("unsupported product %q", opts.product)
 	}
 	if opts.maxRecords < 0 || opts.batchSize < 100 || opts.batchSize > 10000 {
 		return options{}, errors.New("invalid max-records or batch-size")
@@ -498,6 +608,15 @@ func parseOptions() (options, error) {
 		}
 	}
 	return opts, nil
+}
+
+func validProduct(product string) bool {
+	switch product {
+	case "wow", "wow_classic", "wow_classic_era", "wow_classic_hardcore":
+		return true
+	default:
+		return false
+	}
 }
 
 func isLocalized(table string) bool {
@@ -635,11 +754,15 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				AND skill_ru.table_name='SkillLine' AND skill_ru.locale='ru_RU' AND skill_ru.row_id=skill.row_id
 			WHERE skill.build_id=$1 AND skill.table_name='SkillLine' AND skill.locale='en_US'
 			  AND NULLIF(BTRIM(skill.payload->>'DisplayName_lang'),'') IS NOT NULL
-			  AND EXISTS (
+			  AND (
+				COALESCE(NULLIF(skill.payload->>'CategoryID','')::int,0)=11
+				OR skill.row_id IN (129,185,356,2851)
+				OR EXISTS (
 				SELECT 1 FROM catalog_db2_rows ability
 				WHERE ability.build_id=skill.build_id AND ability.table_name='SkillLineAbility' AND ability.locale='en_US'
 				  AND NULLIF(ability.payload->>'SkillLine','')::bigint=skill.row_id
 				  AND COALESCE(NULLIF(ability.payload->>'TradeSkillCategoryID','')::int,0)>0
+				)
 			  );
 			CREATE UNIQUE INDEX projected_professions_id_idx ON projected_professions(external_id)`, pgx.QueryExecModeSimpleProtocol, ic.BuildID); err != nil {
 			return fmt.Errorf("stage professions: %w", err)
@@ -725,7 +848,13 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				JOIN projected_profession_versions profession
 					ON profession.external_id=(ability.payload->>'SkillLine')::bigint
 				WHERE ability.build_id=$2 AND ability.table_name='SkillLineAbility' AND ability.locale='en_US'
-				  AND COALESCE(NULLIF(ability.payload->>'TradeSkillCategoryID','')::int,0)>0
+				  AND (COALESCE(NULLIF(ability.payload->>'TradeSkillCategoryID','')::int,0)>0 OR (
+					NOT EXISTS (SELECT 1 FROM catalog_db2_rows category
+						WHERE category.build_id=$2 AND category.table_name='TradeSkillCategory')
+					AND EXISTS (SELECT 1 FROM catalog_db2_rows reagents
+						WHERE reagents.build_id=$2 AND reagents.table_name='SpellReagents' AND reagents.locale='en_US'
+						  AND COALESCE(NULLIF(reagents.payload->>'SpellID','')::bigint,0)=(ability.payload->>'Spell')::bigint)
+				  ))
 				  AND COALESCE(NULLIF(ability.payload->>'Spell','')::bigint,0)>0
 				GROUP BY (ability.payload->>'Spell')::bigint
 			)
@@ -803,7 +932,13 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			WITH abilities AS (
 				SELECT row.payload FROM catalog_db2_rows row
 				WHERE row.build_id=$2 AND row.table_name='SkillLineAbility' AND row.locale='en_US'
-				  AND COALESCE(NULLIF(row.payload->>'TradeSkillCategoryID','')::int,0)>0
+				  AND (COALESCE(NULLIF(row.payload->>'TradeSkillCategoryID','')::int,0)>0 OR (
+					NOT EXISTS (SELECT 1 FROM catalog_db2_rows category
+						WHERE category.build_id=$2 AND category.table_name='TradeSkillCategory')
+					AND EXISTS (SELECT 1 FROM catalog_db2_rows reagents
+						WHERE reagents.build_id=$2 AND reagents.table_name='SpellReagents' AND reagents.locale='en_US'
+						  AND COALESCE(NULLIF(reagents.payload->>'SpellID','')::bigint,0)=(row.payload->>'Spell')::bigint)
+				  ))
 			), mapped AS (
 				SELECT profession_version.version_id AS profession_version_id,recipe_version.version_id AS recipe_version_id,
 					category.id AS category_id,ability.payload
@@ -824,7 +959,13 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			WITH abilities AS (
 				SELECT row.payload,row.source_artifact_id FROM catalog_db2_rows row
 				WHERE row.build_id=$2 AND row.table_name='SkillLineAbility' AND row.locale='en_US'
-				  AND COALESCE(NULLIF(row.payload->>'TradeSkillCategoryID','')::int,0)>0
+				  AND (COALESCE(NULLIF(row.payload->>'TradeSkillCategoryID','')::int,0)>0 OR (
+					NOT EXISTS (SELECT 1 FROM catalog_db2_rows category
+						WHERE category.build_id=$2 AND category.table_name='TradeSkillCategory')
+					AND EXISTS (SELECT 1 FROM catalog_db2_rows reagents
+						WHERE reagents.build_id=$2 AND reagents.table_name='SpellReagents' AND reagents.locale='en_US'
+						  AND COALESCE(NULLIF(reagents.payload->>'SpellID','')::bigint,0)=(row.payload->>'Spell')::bigint)
+				  ))
 			), mapped AS (
 				SELECT profession_version.version_id AS profession_version_id,recipe.version_id AS recipe_version_id,
 					category.id AS category_id,ability.payload,ability.source_artifact_id
@@ -1052,6 +1193,10 @@ func projectQuests(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Impor
 		if _, err := tx.Exec(ctx, questEntitiesProjectionSQL, pgx.QueryExecModeSimpleProtocol, ic.BuildID, ic.ProductID, ic.NamespaceID, ic.SnapshotID); err != nil {
 			return fmt.Errorf("project named quest entities: %w", err)
 		}
+		if _, err := tx.Exec(ctx, questPackageEntitiesProjectionSQL, pgx.QueryExecModeSimpleProtocol,
+			ic.BuildID, ic.ProductID, ic.NamespaceID); err != nil {
+			return fmt.Errorf("project quest reward package entities: %w", err)
+		}
 		return nil
 	})
 	return projected, err
@@ -1213,7 +1358,160 @@ const questEntitiesProjectionSQL = `
 		description=EXCLUDED.description,attributes=EXCLUDED.attributes;
 
 	UPDATE game_entities entity SET latest_version_id=projected.version_id,updated_at=now()
-	FROM projected_named_quest_versions projected WHERE entity.id=projected.entity_id;`
+	FROM projected_named_quest_versions projected WHERE entity.id=projected.entity_id;
+
+	-- QuestV2 is the authoritative client registry even when the client does
+	-- not ship a localized title. Preserve those quests as source-backed
+	-- entities instead of hiding them or inventing a name. A later permitted
+	-- localization source can attach text to the same stable identity.
+	CREATE TEMP TABLE projected_registry_quests ON COMMIT DROP AS
+	SELECT registry.quest_id AS external_id,row.source_url,row.source_artifact_id,
+		jsonb_build_object(
+			'id',registry.quest_id,
+			'registry_only',true,
+			'enrichment_status',registry.enrichment_status,
+			'unique_bit_flag',registry.unique_bit_flag,
+			'ui_details_theme_id',registry.ui_details_theme_id,
+			'has_client_task',registry.has_client_task,
+			'db2',row.payload
+		) AS payload
+	FROM catalog_quest_registry registry
+	JOIN catalog_db2_rows row ON row.build_id=registry.build_id
+		AND row.table_name='QuestV2' AND row.locale='en_US' AND row.row_id=registry.quest_id
+	LEFT JOIN projected_named_quests named ON named.external_id=registry.quest_id
+	WHERE registry.build_id=$1 AND named.external_id IS NULL
+		AND row.source_artifact_id IS NOT NULL;
+	ALTER TABLE projected_registry_quests ADD COLUMN content_hash BYTEA;
+	UPDATE projected_registry_quests SET content_hash=digest(convert_to(payload::text,'UTF8'),'sha256');
+	CREATE UNIQUE INDEX projected_registry_quests_id_idx ON projected_registry_quests(external_id);
+
+	INSERT INTO game_entities(product_id,namespace_id,entity_type,external_id,canonical_slug,first_seen_build_id,last_seen_build_id)
+	SELECT $2,$3,'quest',external_id,'quest-'||external_id,$1,$1
+	FROM projected_registry_quests
+	ON CONFLICT(product_id,entity_type,external_id) DO UPDATE SET namespace_id=EXCLUDED.namespace_id,
+		last_seen_build_id=EXCLUDED.last_seen_build_id,deleted_at=NULL,updated_at=now();
+
+	INSERT INTO game_entity_versions(entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id)
+	SELECT entity.id,$1,COALESCE((SELECT MAX(old.revision) FROM game_entity_versions old WHERE old.entity_id=entity.id AND old.build_id=$1),0)+1,
+		projected.content_hash,projected.payload,projected.source_url,$4,projected.source_artifact_id
+	FROM projected_registry_quests projected
+	JOIN game_entities entity ON entity.product_id=$2 AND entity.entity_type='quest' AND entity.external_id=projected.external_id
+	WHERE NOT EXISTS (SELECT 1 FROM game_entity_versions old WHERE old.entity_id=entity.id AND old.build_id=$1 AND old.content_hash=projected.content_hash);
+
+	UPDATE game_entities entity SET latest_version_id=version.id,updated_at=now()
+	FROM projected_registry_quests projected,game_entity_versions version
+	WHERE entity.product_id=$2 AND entity.entity_type='quest' AND entity.external_id=projected.external_id
+		AND version.entity_id=entity.id AND version.build_id=$1 AND version.content_hash=projected.content_hash;`
+
+const questPackageEntitiesProjectionSQL = `
+	CREATE TEMP TABLE projected_quest_reward_packages ON COMMIT DROP AS
+	SELECT package.package_id AS external_id,
+		jsonb_build_object(
+			'id',package.package_id,
+			'kind','quest_reward_package',
+			'items',jsonb_agg(jsonb_build_object(
+				'row_id',package.row_id,
+				'item_external_id',package.item_external_id,
+				'quantity',package.quantity,
+				'display_type',package.display_type,
+				'source_artifact_id',package.source_artifact_id
+			) ORDER BY package.display_type,package.row_id)
+		) AS payload,
+		(array_agg(artifact.source_url ORDER BY package.row_id))[1] AS source_url,
+		(array_agg(package.source_artifact_id ORDER BY package.row_id))[1] AS source_artifact_id,
+		(array_agg(artifact.snapshot_id ORDER BY package.row_id))[1] AS snapshot_id
+	FROM catalog_quest_package_items package
+	JOIN catalog_source_artifacts artifact ON artifact.id=package.source_artifact_id
+	WHERE package.build_id=$1
+	GROUP BY package.package_id;
+	ALTER TABLE projected_quest_reward_packages ADD COLUMN content_hash BYTEA;
+	UPDATE projected_quest_reward_packages
+	SET content_hash=digest(convert_to(payload::text,'UTF8'),'sha256');
+	CREATE UNIQUE INDEX projected_quest_reward_packages_id_idx
+	ON projected_quest_reward_packages(external_id);
+
+	INSERT INTO game_entities(
+		product_id,namespace_id,entity_type,external_id,canonical_slug,first_seen_build_id,last_seen_build_id
+	)
+	SELECT $2,$3,'quest_reward_package',external_id,'quest-reward-package-'||external_id,$1,$1
+	FROM projected_quest_reward_packages
+	ON CONFLICT(product_id,entity_type,external_id) DO UPDATE SET
+		namespace_id=EXCLUDED.namespace_id,
+		last_seen_build_id=EXCLUDED.last_seen_build_id,
+		deleted_at=NULL,
+		updated_at=now();
+
+	INSERT INTO game_entity_versions(
+		entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id
+	)
+	SELECT entity.id,$1,
+		COALESCE((SELECT max(previous.revision) FROM game_entity_versions previous
+			WHERE previous.entity_id=entity.id AND previous.build_id=$1),0)+1,
+		projected.content_hash,projected.payload,projected.source_url,projected.snapshot_id,projected.source_artifact_id
+	FROM projected_quest_reward_packages projected
+	JOIN game_entities entity ON entity.product_id=$2
+		AND entity.entity_type='quest_reward_package'
+		AND entity.external_id=projected.external_id
+	WHERE NOT EXISTS (
+		SELECT 1 FROM game_entity_versions previous
+		WHERE previous.entity_id=entity.id AND previous.build_id=$1
+		  AND previous.content_hash=projected.content_hash
+	);
+
+	CREATE TEMP TABLE projected_quest_reward_package_versions ON COMMIT DROP AS
+	SELECT projected.*,entity.id AS entity_id,version.id AS version_id
+	FROM projected_quest_reward_packages projected
+	JOIN game_entities entity ON entity.product_id=$2
+		AND entity.entity_type='quest_reward_package'
+		AND entity.external_id=projected.external_id
+	JOIN LATERAL (
+		SELECT candidate.id
+		FROM game_entity_versions candidate
+		WHERE candidate.entity_id=entity.id AND candidate.build_id=$1
+		  AND candidate.content_hash=projected.content_hash
+		ORDER BY candidate.revision DESC
+		LIMIT 1
+	) version ON true;
+
+	INSERT INTO catalog_entity_version_artifacts(version_id,source_artifact_id)
+	SELECT DISTINCT projected.version_id,package.source_artifact_id
+	FROM projected_quest_reward_package_versions projected
+	JOIN catalog_quest_package_items package ON package.build_id=$1
+		AND package.package_id=projected.external_id
+	WHERE package.source_artifact_id IS NOT NULL
+	ON CONFLICT(version_id,source_artifact_id) DO NOTHING;
+
+	UPDATE game_entities entity
+	SET latest_version_id=projected.version_id,updated_at=now()
+	FROM projected_quest_reward_package_versions projected
+	WHERE entity.id=projected.entity_id
+	  AND COALESCE((
+		SELECT build.build_number
+		FROM game_entity_versions current_version
+		JOIN game_builds build ON build.id=current_version.build_id
+		WHERE current_version.id=entity.latest_version_id
+	  ),0)<=(SELECT build.build_number FROM game_builds build WHERE build.id=$1);`
+
+func projectQuestRewardPackages(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	ic catalogimport.ImportContext,
+) (int64, error) {
+	var projected int64
+	err := pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, questPackageEntitiesProjectionSQL, pgx.QueryExecModeSimpleProtocol,
+			ic.BuildID, ic.ProductID, ic.NamespaceID); err != nil {
+			return fmt.Errorf("project quest reward package entities: %w", err)
+		}
+		return tx.QueryRow(ctx, `
+			SELECT count(*)
+			FROM game_entities entity
+			JOIN game_entity_versions version ON version.entity_id=entity.id AND version.build_id=$1
+			WHERE entity.product_id=$2 AND entity.entity_type='quest_reward_package'`,
+			ic.BuildID, ic.ProductID).Scan(&projected)
+	})
+	return projected, err
+}
 
 func projectPvpTalents(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext) (int64, error) {
 	var projected int64
@@ -1303,6 +1601,15 @@ func projectPvpTalents(ctx context.Context, db *pgxpool.Pool, ic catalogimport.I
 }
 
 func projectCollections(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext) (int64, error) {
+	return projectCollectionsForTables(ctx, db, ic, nil)
+}
+
+func projectCollectionsForTables(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	ic catalogimport.ImportContext,
+	tables []string,
+) (int64, error) {
 	var projected int64
 	err := pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `
@@ -1315,6 +1622,7 @@ func projectCollections(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				('TransmogSet','transmog_set','Name_lang',''),
 				('Achievement','achievement','Title_lang','Description_lang'),
 				('Map','map','MapName_lang','MapDescription0_lang'),
+				('UiMap','ui_map','Name_lang',''),
 				('AreaTable','area','AreaName_lang',''),
 				('Faction','faction','Name_lang','Description_lang')
 			)
@@ -1324,6 +1632,7 @@ func projectCollections(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				raw.payload AS db2,raw.content_hash,raw.source_url,raw.source_artifact_id
 			FROM catalog_db2_rows raw JOIN definitions definition ON definition.table_name=raw.table_name
 			WHERE raw.build_id=$1 AND raw.locale IN ('en_US','ru_RU')
+			  AND (COALESCE(cardinality($2::text[]),0)=0 OR raw.table_name=ANY($2::text[]))
 			  AND NULLIF(BTRIM(raw.payload->>definition.name_field),'') IS NOT NULL
 			UNION ALL
 			SELECT toy.row_id,'toy',toy.locale,item.payload->>'Display_lang','',
@@ -1331,6 +1640,7 @@ func projectCollections(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			FROM catalog_db2_rows toy JOIN catalog_db2_rows item ON item.build_id=toy.build_id
 				AND item.table_name='ItemSparse' AND item.locale=toy.locale AND item.row_id=(toy.payload->>'ItemID')::bigint
 			WHERE toy.build_id=$1 AND toy.table_name='Toy' AND toy.locale IN ('en_US','ru_RU')
+			  AND (COALESCE(cardinality($2::text[]),0)=0 OR toy.table_name=ANY($2::text[]))
 			  AND NULLIF(BTRIM(item.payload->>'Display_lang'),'') IS NOT NULL
 			UNION ALL
 			SELECT pet.row_id,'battle_pet',pet.locale,creature.payload->>'Name_lang',COALESCE(pet.payload->>'Description_lang',''),
@@ -1338,15 +1648,28 @@ func projectCollections(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			FROM catalog_db2_rows pet JOIN catalog_db2_rows creature ON creature.build_id=pet.build_id
 				AND creature.table_name='Creature' AND creature.locale=pet.locale AND creature.row_id=(pet.payload->>'CreatureID')::bigint
 			WHERE pet.build_id=$1 AND pet.table_name='BattlePetSpecies' AND pet.locale IN ('en_US','ru_RU')
-			  AND NULLIF(BTRIM(creature.payload->>'Name_lang'),'') IS NOT NULL`, ic.BuildID); err != nil {
+			  AND (COALESCE(cardinality($2::text[]),0)=0 OR pet.table_name=ANY($2::text[]))
+			  AND NULLIF(BTRIM(creature.payload->>'Name_lang'),'') IS NOT NULL`, ic.BuildID, tables); err != nil {
 			return fmt.Errorf("stage DB2 collections: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `
 			CREATE TEMP TABLE projected_collections ON COMMIT DROP AS
+			WITH candidates AS (
+				SELECT external_id,entity_type,name,description,db2,
+					content_hash,source_url,source_artifact_id
+				FROM projected_collection_localizations
+				WHERE locale='en_US' AND entity_type<>'ui_map'
+				UNION ALL
+				SELECT raw.row_id,'ui_map',COALESCE(raw.payload->>'Name_lang',''),'',raw.payload,
+					raw.content_hash,raw.source_url,raw.source_artifact_id
+				FROM catalog_db2_rows raw
+				WHERE raw.build_id=$1 AND raw.table_name='UiMap' AND raw.locale='en_US'
+				  AND (COALESCE(cardinality($2::text[]),0)=0 OR raw.table_name=ANY($2::text[]))
+			)
 			SELECT DISTINCT ON (entity_type,external_id) external_id,entity_type,name,description,db2,
 				content_hash,source_url,source_artifact_id
-			FROM projected_collection_localizations WHERE locale='en_US'
-			ORDER BY entity_type,external_id`); err != nil {
+			FROM candidates
+			ORDER BY entity_type,external_id`, ic.BuildID, tables); err != nil {
 			return err
 		}
 		if _, err := tx.Exec(ctx, `
@@ -1364,7 +1687,8 @@ func projectCollections(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			INSERT INTO game_entity_versions(entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id)
 			SELECT entity.id,$2,COALESCE((SELECT max(old.revision) FROM game_entity_versions old
 				WHERE old.entity_id=entity.id AND old.build_id=$2),0)+1,projected.content_hash,
-				jsonb_build_object('name',projected.name,'description',projected.description,'db2',projected.db2),
+				jsonb_build_object('name',projected.name,'description',projected.description,'db2',projected.db2,
+					'registry_only',projected.entity_type='ui_map' AND btrim(projected.name)=''),
 				projected.source_url,$3,projected.source_artifact_id
 			FROM projected_collections projected JOIN game_entities entity ON entity.product_id=$1
 				AND entity.entity_type=projected.entity_type AND entity.external_id=projected.external_id
@@ -1380,9 +1704,18 @@ func projectCollections(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			FROM projected_collections projected JOIN game_entities entity ON entity.product_id=$1
 				AND entity.entity_type=projected.entity_type AND entity.external_id=projected.external_id
 			JOIN LATERAL(SELECT candidate.id FROM game_entity_versions candidate WHERE candidate.entity_id=entity.id
-				AND candidate.build_id=$2 ORDER BY (candidate.snapshot_id=$3) DESC,candidate.revision DESC LIMIT 1) version ON true`,
-			ic.ProductID, ic.BuildID, ic.SnapshotID); err != nil {
+				AND candidate.build_id=$2 AND candidate.content_hash=projected.content_hash
+				ORDER BY candidate.revision DESC LIMIT 1) version ON true`,
+			ic.ProductID, ic.BuildID); err != nil {
 			return err
+		}
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO catalog_entity_version_artifacts(version_id,source_artifact_id)
+			SELECT DISTINCT version_id,source_artifact_id
+			FROM projected_collection_versions
+			WHERE source_artifact_id IS NOT NULL
+			ON CONFLICT(version_id,source_artifact_id) DO NOTHING`); err != nil {
+			return fmt.Errorf("observe collection version artifacts: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `
 			INSERT INTO game_entity_localizations(version_id,locale,slug,name,description,attributes)
@@ -1408,6 +1741,20 @@ func projectCollections(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				icon_name=EXCLUDED.icon_name,source_artifact_id=EXCLUDED.source_artifact_id`, ic.BuildID); err != nil {
 			return fmt.Errorf("project class and specialization icons: %w", err)
 		}
+		if _, err := tx.Exec(ctx, `
+			UPDATE game_entities entity
+			SET latest_version_id=projected.version_id,updated_at=now()
+			FROM projected_collection_versions projected
+			WHERE entity.id=projected.entity_id
+			  AND COALESCE((
+				SELECT current_build.build_number
+				FROM game_entity_versions current_version
+				JOIN game_builds current_build ON current_build.id=current_version.build_id
+				WHERE current_version.id=entity.latest_version_id
+			  ),0) <= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$1)`,
+			ic.BuildID); err != nil {
+			return fmt.Errorf("activate staged collection entities: %w", err)
+		}
 		return nil
 	})
 	return projected, err
@@ -1418,36 +1765,69 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 	err := pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `
 			CREATE TEMP TABLE projected_items ON COMMIT DROP AS
-			SELECT sparse.row_id AS external_id,sparse.source_url,sparse.source_artifact_id,
+			SELECT sparse.row_id AS external_id,sparse.source_url,sparse.source_artifact_id,sparse.snapshot_id AS source_snapshot_id,
+				sparse.source_artifact_id AS sparse_source_artifact_id,core.source_artifact_id AS core_source_artifact_id,
+				false AS registry_only,
 				sparse.payload->>'Display_lang' AS name_en,
 				COALESCE(NULLIF(sparse_ru.payload->>'Display_lang',''),sparse.payload->>'Display_lang') AS name_ru,
 				COALESCE(sparse.payload->>'Description_lang','') AS description_en,
 				COALESCE(NULLIF(sparse_ru.payload->>'Description_lang',''),sparse.payload->>'Description_lang','') AS description_ru,
 				sparse.payload AS db2_en,COALESCE(sparse_ru.payload,sparse.payload) AS db2_ru,
-				COALESCE(NULLIF(core.payload->>'ClassID','')::int,0) AS class_id,
-				COALESCE(NULLIF(core.payload->>'SubclassID','')::int,0) AS subclass_id,
+				COALESCE(core.payload,'{}'::jsonb) AS db2_core,
+				CASE WHEN COALESCE(NULLIF(core.payload->>'ClassID','')::int,-1)>=0
+					THEN NULLIF(core.payload->>'ClassID','')::int ELSE NULL END AS class_id,
+				CASE WHEN COALESCE(NULLIF(core.payload->>'SubclassID','')::int,-1)>=0
+					THEN NULLIF(core.payload->>'SubclassID','')::int ELSE NULL END AS subclass_id,
+				CASE WHEN COALESCE(NULLIF(core.payload->>'InventoryType','')::int,-1)>=0
+					THEN NULLIF(core.payload->>'InventoryType','')::int ELSE NULL END AS core_inventory_type,
 				COALESCE(NULLIF(core.payload->>'IconFileDataID','')::bigint,0) AS icon_file_data_id
 			FROM catalog_db2_rows sparse
 			LEFT JOIN catalog_db2_rows sparse_ru ON sparse_ru.build_id=sparse.build_id AND sparse_ru.table_name='ItemSparse' AND sparse_ru.locale='ru_RU' AND sparse_ru.row_id=sparse.row_id
 			LEFT JOIN catalog_db2_rows core ON core.build_id=sparse.build_id AND core.table_name='Item' AND core.locale='en_US' AND core.row_id=sparse.row_id
 			WHERE sparse.build_id=$1 AND sparse.table_name='ItemSparse' AND sparse.locale='en_US'
-			  AND NULLIF(BTRIM(sparse.payload->>'Display_lang'),'') IS NOT NULL`, ic.BuildID); err != nil {
+			  AND NULLIF(BTRIM(sparse.payload->>'Display_lang'),'') IS NOT NULL
+			UNION ALL
+			SELECT core.row_id,core.source_url,core.source_artifact_id,core.snapshot_id,
+				NULL::uuid,core.source_artifact_id,true,
+				''::text,''::text,''::text,''::text,'{}'::jsonb,'{}'::jsonb,core.payload,
+				CASE WHEN COALESCE(NULLIF(core.payload->>'ClassID','')::int,-1)>=0
+					THEN NULLIF(core.payload->>'ClassID','')::int ELSE NULL END,
+				CASE WHEN COALESCE(NULLIF(core.payload->>'SubclassID','')::int,-1)>=0
+					THEN NULLIF(core.payload->>'SubclassID','')::int ELSE NULL END,
+				CASE WHEN COALESCE(NULLIF(core.payload->>'InventoryType','')::int,-1)>=0
+					THEN NULLIF(core.payload->>'InventoryType','')::int ELSE NULL END,
+				COALESCE(NULLIF(core.payload->>'IconFileDataID','')::bigint,0)
+			FROM catalog_db2_rows core
+			WHERE core.build_id=$1 AND core.table_name='Item' AND core.locale='en_US'
+			  AND NOT EXISTS (SELECT 1 FROM catalog_db2_rows sparse
+				WHERE sparse.build_id=core.build_id AND sparse.table_name='ItemSparse'
+				  AND sparse.locale='en_US' AND sparse.row_id=core.row_id
+				  AND NULLIF(BTRIM(sparse.payload->>'Display_lang'),'') IS NOT NULL)`, ic.BuildID); err != nil {
 			return fmt.Errorf("stage items: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `
 			ALTER TABLE projected_items ADD COLUMN payload_en JSONB;
-			UPDATE projected_items SET payload_en=jsonb_build_object(
+			UPDATE projected_items SET payload_en=CASE WHEN registry_only THEN jsonb_build_object(
+				'id',external_id,'registry_only',true,'enrichment_status','client_registry',
+				'item_class',jsonb_build_object('id',class_id),'item_subclass',jsonb_build_object('id',subclass_id),
+				'inventory_type',jsonb_build_object('type',core_inventory_type),
+				'icon_file_data_id',icon_file_data_id,'db2',db2_core
+			) ELSE jsonb_build_object(
 				'id',external_id,'name',name_en,'description',description_en,
 				'level',COALESCE(NULLIF(db2_en->>'ItemLevel','')::int,0),
-				'required_level',COALESCE(NULLIF(db2_en->>'RequiredLevel','')::int,0),
+				'required_level',CASE
+					WHEN COALESCE(NULLIF(db2_en->>'RequiredLevel','')::int,-1)>=0
+					THEN NULLIF(db2_en->>'RequiredLevel','')::int
+					ELSE NULL
+				END,
 				'max_count',COALESCE(NULLIF(db2_en->>'MaxCount','')::int,0),
 				'purchase_price',COALESCE(NULLIF(db2_en->>'BuyPrice','')::bigint,0),
 				'sell_price',COALESCE(NULLIF(db2_en->>'SellPrice','')::bigint,0),
 				'inventory_type',jsonb_build_object('type',COALESCE(db2_en->>'InventoryType','0')),
 				'quality',jsonb_build_object('type',COALESCE(db2_en->>'OverallQualityID','0')),
 				'item_class',jsonb_build_object('id',class_id),'item_subclass',jsonb_build_object('id',subclass_id),
-				'icon_file_data_id',icon_file_data_id,'db2',db2_en
-			);
+				'icon_file_data_id',icon_file_data_id,'db2',db2_en,'db2_item',db2_core
+			) END;
 			ALTER TABLE projected_items ADD COLUMN content_hash BYTEA;
 			UPDATE projected_items SET content_hash=digest(convert_to(payload_en::text,'UTF8'),'sha256');
 			CREATE UNIQUE INDEX projected_items_id_idx ON projected_items(external_id)`); err != nil {
@@ -1465,11 +1845,11 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 			INSERT INTO game_entity_versions (entity_id,build_id,revision,content_hash,payload,source_url,snapshot_id,source_artifact_id)
 			SELECT e.id,$2,COALESCE((SELECT MAX(old.revision) FROM game_entity_versions old
 				WHERE old.entity_id=e.id AND old.build_id=$2),0)+1,
-				p.content_hash,p.payload_en,p.source_url,$3,p.source_artifact_id
+				p.content_hash,p.payload_en,p.source_url,p.source_snapshot_id,p.source_artifact_id
 			FROM projected_items p JOIN game_entities e ON e.product_id=$1 AND e.entity_type='item' AND e.external_id=p.external_id
 			WHERE NOT EXISTS (SELECT 1 FROM game_entity_versions old
 				WHERE old.entity_id=e.id AND old.build_id=$2 AND old.content_hash=p.content_hash)`,
-			ic.ProductID, ic.BuildID, ic.SnapshotID)
+			ic.ProductID, ic.BuildID)
 		if err != nil {
 			return fmt.Errorf("insert missing item versions: %w", err)
 		}
@@ -1489,19 +1869,26 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 			INSERT INTO game_entity_localizations (version_id,locale,slug,name,description,attributes)
 			SELECT version_id,'en_US',COALESCE(NULLIF(TRIM(BOTH '-' FROM LOWER(regexp_replace(name_en,'[^[:alnum:]]+','-','g'))),''),'item-'||external_id),
 				name_en,description_en,jsonb_build_object('id',external_id,'name',name_en,'description',description_en,'db2',db2_en)
-			FROM projected_item_versions
+			FROM projected_item_versions WHERE NOT registry_only
 			UNION ALL
 			SELECT version_id,'ru_RU',COALESCE(NULLIF(TRIM(BOTH '-' FROM LOWER(regexp_replace(name_ru,'[^[:alnum:]]+','-','g'))),''),'item-'||external_id),
 				name_ru,description_ru,jsonb_build_object('id',external_id,'name',name_ru,'description',description_ru,'db2',db2_ru)
-			FROM projected_item_versions
+			FROM projected_item_versions WHERE NOT registry_only
 			ON CONFLICT (version_id,locale) DO UPDATE SET slug=EXCLUDED.slug,name=EXCLUDED.name,description=EXCLUDED.description,attributes=EXCLUDED.attributes`); err != nil {
 			return fmt.Errorf("localize projected items: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `
 			INSERT INTO catalog_items (version_id,quality,item_level,required_level,inventory_type,item_class_id,item_subclass_id,max_count,purchase_price,sell_price,is_equippable,is_stackable)
-			SELECT version_id,db2_en->>'OverallQualityID',COALESCE(NULLIF(db2_en->>'ItemLevel','')::int,0),COALESCE(NULLIF(db2_en->>'RequiredLevel','')::int,0),
-				db2_en->>'InventoryType',class_id,subclass_id,COALESCE(NULLIF(db2_en->>'MaxCount','')::int,0),COALESCE(NULLIF(db2_en->>'BuyPrice','')::bigint,0),
-				COALESCE(NULLIF(db2_en->>'SellPrice','')::bigint,0),COALESCE(NULLIF(db2_en->>'InventoryType','')::int,0)>0,COALESCE(NULLIF(db2_en->>'Stackable','')::int,0)>1
+			SELECT version_id,CASE WHEN registry_only THEN NULL ELSE db2_en->>'OverallQualityID' END,
+				CASE WHEN registry_only THEN NULL ELSE COALESCE(NULLIF(db2_en->>'ItemLevel','')::int,0) END,
+				CASE WHEN COALESCE(NULLIF(db2_en->>'RequiredLevel','')::int,-1)>=0
+					THEN NULLIF(db2_en->>'RequiredLevel','')::int ELSE NULL END,
+				COALESCE(db2_en->>'InventoryType',core_inventory_type::text),class_id,subclass_id,
+				CASE WHEN registry_only THEN NULL ELSE COALESCE(NULLIF(db2_en->>'MaxCount','')::int,0) END,
+				CASE WHEN registry_only THEN NULL ELSE COALESCE(NULLIF(db2_en->>'BuyPrice','')::bigint,0) END,
+				CASE WHEN registry_only THEN NULL ELSE COALESCE(NULLIF(db2_en->>'SellPrice','')::bigint,0) END,
+				CASE WHEN registry_only THEN core_inventory_type>0 ELSE COALESCE(NULLIF(db2_en->>'InventoryType','')::int,0)>0 END,
+				CASE WHEN registry_only THEN NULL ELSE COALESCE(NULLIF(db2_en->>'Stackable','')::int,0)>1 END
 			FROM projected_item_versions
 			ON CONFLICT (version_id) DO UPDATE SET quality=EXCLUDED.quality,item_level=EXCLUDED.item_level,required_level=EXCLUDED.required_level,
 				inventory_type=EXCLUDED.inventory_type,item_class_id=EXCLUDED.item_class_id,item_subclass_id=EXCLUDED.item_subclass_id,
@@ -1509,12 +1896,20 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 				is_equippable=EXCLUDED.is_equippable,is_stackable=EXCLUDED.is_stackable`); err != nil {
 			return fmt.Errorf("project typed items: %w", err)
 		}
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO catalog_entity_version_artifacts(version_id,source_artifact_id)
+			SELECT DISTINCT version_id,source_artifact_id
+			FROM (
+				SELECT version_id,sparse_source_artifact_id AS source_artifact_id FROM projected_item_versions
+				UNION ALL
+				SELECT version_id,core_source_artifact_id FROM projected_item_versions
+			) observations
+			WHERE source_artifact_id IS NOT NULL
+			ON CONFLICT(version_id,source_artifact_id) DO NOTHING`); err != nil {
+			return fmt.Errorf("observe item version artifacts: %w", err)
+		}
 		if _, err := tx.Exec(ctx, itemDetailsProjectionSQL, pgx.QueryExecModeSimpleProtocol, ic.BuildID, ic.ProductID); err != nil {
 			return fmt.Errorf("project item details: %w", err)
-		}
-		if _, err := tx.Exec(ctx, journalEntityProjectionSQL, pgx.QueryExecModeSimpleProtocol,
-			ic.BuildID, ic.ProductID, ic.SnapshotID, ic.NamespaceID); err != nil {
-			return fmt.Errorf("project journal entities: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `
 			UPDATE game_entities e SET latest_version_id=p.version_id,updated_at=now()
@@ -1526,6 +1921,24 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 		return nil
 	})
 	return projected, err
+}
+
+func projectJournalEntities(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext) error {
+	_, err := db.Exec(ctx, journalEntityProjectionSQL, pgx.QueryExecModeSimpleProtocol,
+		ic.BuildID, ic.ProductID, ic.SnapshotID, ic.NamespaceID)
+	if err != nil {
+		return fmt.Errorf("project journal entities: %w", err)
+	}
+	return nil
+}
+
+func projectItemDetails(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext) error {
+	return pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, itemDetailsProjectionSQL, pgx.QueryExecModeSimpleProtocol, ic.BuildID, ic.ProductID); err != nil {
+			return fmt.Errorf("project item details: %w", err)
+		}
+		return nil
+	})
 }
 
 const itemDetailsProjectionSQL = `
@@ -1591,8 +2004,8 @@ const itemDetailsProjectionSQL = `
 		AND item.deleted_at IS NULL
 	JOIN LATERAL (SELECT version.id FROM game_entity_versions version
 		WHERE version.entity_id=item.id AND version.build_id=$1 ORDER BY version.revision DESC LIMIT 1) item_version ON true
-	JOIN game_entity_versions recipe_version ON recipe_version.id=output.recipe_version_id
-	JOIN game_entities recipe ON recipe.id=recipe_version.entity_id AND recipe.entity_type='recipe'
+	JOIN game_entity_versions recipe_version ON recipe_version.id=output.recipe_version_id AND recipe_version.build_id=$1
+	JOIN game_entities recipe ON recipe.id=recipe_version.entity_id AND recipe.entity_type='recipe' AND recipe.product_id=$2
 	ON CONFLICT(version_id,source_type,source_id,context_id) DO UPDATE SET source_entity_id=EXCLUDED.source_entity_id,
 		attributes=EXCLUDED.attributes,source_artifact_id=EXCLUDED.source_artifact_id;
 
@@ -1620,6 +2033,8 @@ const itemDetailsProjectionSQL = `
 		COALESCE(NULLIF(payload->>'Flags','')::bigint,0),COALESCE(NULLIF(payload->>'DisplayFlags','')::bigint,0)
 	FROM catalog_db2_rows
 	WHERE build_id=$1 AND table_name='ItemSubClass' AND locale='en_US'
+	  AND COALESCE(NULLIF(payload->>'ClassID','')::int,-1)>=0
+	  AND COALESCE(NULLIF(payload->>'SubClassID','')::int,-1)>=0
 	ON CONFLICT(build_id,class_id,subclass_id) DO UPDATE SET db2_row_id=EXCLUDED.db2_row_id,
 		auction_house_sort_order=EXCLUDED.auction_house_sort_order,
 		prerequisite_proficiency=EXCLUDED.prerequisite_proficiency,
@@ -1631,18 +2046,23 @@ const itemDetailsProjectionSQL = `
 		COALESCE(payload->>'VerboseName_lang','')
 	FROM catalog_db2_rows
 	WHERE build_id=$1 AND table_name='ItemSubClass' AND locale IN ('en_US','ru_RU')
+	  AND COALESCE(NULLIF(payload->>'ClassID','')::int,-1)>=0
+	  AND COALESCE(NULLIF(payload->>'SubClassID','')::int,-1)>=0
 	  AND COALESCE(NULLIF(BTRIM(payload->>'DisplayName_lang'),''),NULLIF(BTRIM(payload->>'VerboseName_lang'),'')) IS NOT NULL
 	ON CONFLICT(build_id,class_id,subclass_id,locale) DO UPDATE SET name=EXCLUDED.name,verbose_name=EXCLUDED.verbose_name;
 
 	DELETE FROM catalog_item_stats stats USING game_entity_versions version
 	WHERE stats.version_id=version.id AND version.build_id=$1;
-	INSERT INTO catalog_item_stats(version_id,slot,stat_type,percent_editor,socket_percentage)
-	SELECT entity.latest_version_id,slot::smallint,(sparse.payload->>('StatModifier_bonusStat_'||slot))::int,
+	INSERT INTO catalog_item_stats(version_id,slot,stat_type,percent_editor,socket_percentage,source_artifact_id)
+	SELECT item_version.id,slot::smallint,(sparse.payload->>('StatModifier_bonusStat_'||slot))::int,
 		COALESCE(NULLIF(sparse.payload->>('StatPercentEditor_'||slot),'')::numeric,0),
-		COALESCE(NULLIF(sparse.payload->>('StatPercentageOfSocket_'||slot),'')::numeric,0)
+		COALESCE(NULLIF(sparse.payload->>('StatPercentageOfSocket_'||slot),'')::numeric,0),
+		sparse.source_artifact_id
 	FROM catalog_db2_rows sparse
 	JOIN game_entities entity ON entity.product_id=$2 AND entity.entity_type='item' AND entity.external_id=sparse.row_id
-	JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=$1
+	JOIN LATERAL (SELECT candidate.id FROM game_entity_versions candidate
+		WHERE candidate.entity_id=entity.id AND candidate.build_id=$1
+		ORDER BY candidate.revision DESC LIMIT 1) item_version ON true
 	CROSS JOIN generate_series(0,9) slot
 	WHERE sparse.build_id=$1 AND sparse.table_name='ItemSparse' AND sparse.locale='en_US'
 	  AND COALESCE(NULLIF(sparse.payload->>('StatModifier_bonusStat_'||slot),'')::int,-1)>=0;
@@ -1650,10 +2070,12 @@ const itemDetailsProjectionSQL = `
 	DELETE FROM catalog_item_sockets sockets USING game_entity_versions version
 	WHERE sockets.version_id=version.id AND version.build_id=$1;
 	INSERT INTO catalog_item_sockets(version_id,slot,socket_type)
-	SELECT entity.latest_version_id,slot::smallint,(sparse.payload->>('SocketType_'||slot))::int
+	SELECT item_version.id,slot::smallint,(sparse.payload->>('SocketType_'||slot))::int
 	FROM catalog_db2_rows sparse
 	JOIN game_entities entity ON entity.product_id=$2 AND entity.entity_type='item' AND entity.external_id=sparse.row_id
-	JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=$1
+	JOIN LATERAL (SELECT candidate.id FROM game_entity_versions candidate
+		WHERE candidate.entity_id=entity.id AND candidate.build_id=$1
+		ORDER BY candidate.revision DESC LIMIT 1) item_version ON true
 	CROSS JOIN generate_series(0,2) slot
 	WHERE sparse.build_id=$1 AND sparse.table_name='ItemSparse' AND sparse.locale='en_US'
 	  AND COALESCE(NULLIF(sparse.payload->>('SocketType_'||slot),'')::int,0)>0;
@@ -1661,7 +2083,7 @@ const itemDetailsProjectionSQL = `
 	INSERT INTO catalog_item_requirements(version_id,required_level,required_skill_id,required_skill_rank,
 		required_ability_id,min_faction_id,min_reputation,required_holiday_id,required_transmog_holiday_id,
 		allowable_class_mask,allowable_race_mask_0,allowable_race_mask_1)
-	SELECT entity.latest_version_id,COALESCE(NULLIF(sparse.payload->>'RequiredLevel','')::int,0),
+	SELECT item_version.id,GREATEST(COALESCE(NULLIF(sparse.payload->>'RequiredLevel','')::int,0),0),
 		NULLIF(COALESCE(NULLIF(sparse.payload->>'RequiredSkill','')::int,0),0),
 		COALESCE(NULLIF(sparse.payload->>'RequiredSkillRank','')::int,0),
 		NULLIF(COALESCE(NULLIF(sparse.payload->>'RequiredAbility','')::bigint,0),0),
@@ -1674,7 +2096,9 @@ const itemDetailsProjectionSQL = `
 		COALESCE(NULLIF(sparse.payload->>'AllowableRaces_1','')::bigint,0)
 	FROM catalog_db2_rows sparse
 	JOIN game_entities entity ON entity.product_id=$2 AND entity.entity_type='item' AND entity.external_id=sparse.row_id
-	JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=$1
+	JOIN LATERAL (SELECT candidate.id FROM game_entity_versions candidate
+		WHERE candidate.entity_id=entity.id AND candidate.build_id=$1
+		ORDER BY candidate.revision DESC LIMIT 1) item_version ON true
 	WHERE sparse.build_id=$1 AND sparse.table_name='ItemSparse' AND sparse.locale='en_US'
 	ON CONFLICT(version_id) DO UPDATE SET required_level=EXCLUDED.required_level,
 		required_skill_id=EXCLUDED.required_skill_id,required_skill_rank=EXCLUDED.required_skill_rank,
@@ -1686,23 +2110,42 @@ const itemDetailsProjectionSQL = `
 
 	DELETE FROM catalog_item_effects effects USING game_entity_versions version
 	WHERE effects.version_id=version.id AND version.build_id=$1;
+	WITH item_effect_links AS (
+		SELECT (link.payload->>'ItemID')::bigint AS item_id,effect.row_id AS item_effect_id,
+			effect.payload,link.source_artifact_id
+		FROM catalog_db2_rows link
+		JOIN catalog_db2_rows effect ON effect.build_id=link.build_id AND effect.table_name='ItemEffect'
+			AND effect.locale='en_US' AND effect.row_id=(link.payload->>'ItemEffectID')::bigint
+		WHERE link.build_id=$1 AND link.table_name='ItemXItemEffect' AND link.locale='en_US'
+		  AND link.payload->>'ItemID' ~ '^[1-9][0-9]*$'
+		UNION ALL
+		SELECT (effect.payload->>'ParentItemID')::bigint,effect.row_id,effect.payload,effect.source_artifact_id
+		FROM catalog_db2_rows effect
+		WHERE effect.build_id=$1 AND effect.table_name='ItemEffect' AND effect.locale='en_US'
+		  AND effect.payload->>'ParentItemID' ~ '^[1-9][0-9]*$'
+		  AND NOT EXISTS (
+			SELECT 1 FROM catalog_db2_rows link
+			WHERE link.build_id=effect.build_id AND link.table_name='ItemXItemEffect' AND link.locale='en_US'
+			  AND link.payload->>'ItemEffectID' ~ '^[1-9][0-9]*$'
+			  AND (link.payload->>'ItemEffectID')::bigint=effect.row_id
+		  )
+	)
 	INSERT INTO catalog_item_effects(version_id,item_effect_id,slot,spell_id,trigger_type,charges,cooldown_ms,
 		category_cooldown_ms,spell_category_id,specialization_id,player_condition_id,source_artifact_id)
-	SELECT entity.latest_version_id,effect.row_id,COALESCE(NULLIF(effect.payload->>'LegacySlotIndex','')::smallint,0),
+	SELECT item_version.id,effect.item_effect_id,COALESCE(NULLIF(effect.payload->>'LegacySlotIndex','')::smallint,0),
 		(effect.payload->>'SpellID')::bigint,COALESCE(NULLIF(effect.payload->>'TriggerType','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'Charges','')::int,0),COALESCE(NULLIF(effect.payload->>'CoolDownMSec','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'CategoryCoolDownMSec','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'SpellCategoryID','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'ChrSpecializationID','')::int,0),
-		COALESCE(NULLIF(effect.payload->>'PlayerConditionID','')::int,0),link.source_artifact_id
-	FROM catalog_db2_rows link
-	JOIN catalog_db2_rows effect ON effect.build_id=link.build_id AND effect.table_name='ItemEffect'
-		AND effect.locale='en_US' AND effect.row_id=(link.payload->>'ItemEffectID')::bigint
+		COALESCE(NULLIF(effect.payload->>'PlayerConditionID','')::int,0),effect.source_artifact_id
+	FROM item_effect_links effect
 	JOIN game_entities entity ON entity.product_id=$2 AND entity.entity_type='item'
-		AND entity.external_id=(link.payload->>'ItemID')::bigint
-	JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=$1
-	WHERE link.build_id=$1 AND link.table_name='ItemXItemEffect' AND link.locale='en_US'
-	  AND COALESCE(NULLIF(effect.payload->>'SpellID','')::bigint,0)>0
+		AND entity.external_id=effect.item_id
+	JOIN LATERAL (SELECT candidate.id FROM game_entity_versions candidate
+		WHERE candidate.entity_id=entity.id AND candidate.build_id=$1
+		ORDER BY candidate.revision DESC LIMIT 1) item_version ON true
+	WHERE COALESCE(NULLIF(effect.payload->>'SpellID','')::bigint,0)>0
 	ON CONFLICT(version_id,item_effect_id) DO UPDATE SET slot=EXCLUDED.slot,spell_id=EXCLUDED.spell_id,
 		trigger_type=EXCLUDED.trigger_type,charges=EXCLUDED.charges,cooldown_ms=EXCLUDED.cooldown_ms,
 		category_cooldown_ms=EXCLUDED.category_cooldown_ms,spell_category_id=EXCLUDED.spell_category_id,

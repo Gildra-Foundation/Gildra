@@ -24,6 +24,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/api"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/auth"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogmedia"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/config"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/datasetrefresh"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/graphqlapi"
@@ -127,10 +128,19 @@ func run() error {
 		Resolvers: &graphqlapi.Resolver{Catalog: catalogService},
 	}))
 	router := http.NewServeMux()
-	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient).Register(router)
+	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient, cfg.CatalogRecoveryPolicy).Register(router)
+	if cfg.CatalogMediaDirectory != "" {
+		mediaHandler, mediaErr := catalogmedia.NewHandler(postgres, cfg.CatalogMediaDirectory, cfg.CatalogPublicationEnv)
+		if mediaErr != nil {
+			return mediaErr
+		}
+		defer mediaHandler.Close() //nolint:errcheck
+		router.Handle("/v1/media/", mediaHandler)
+	}
 	router.Handle("/graphql", httpapi.EnforceCatalogPublication(graphqlHandler, publicationService, cfg.CatalogPublicationMode, cfg.CatalogPublicationEnv))
 	router.Handle("/", httpapi.EnforceCatalogPublication(restHandler, publicationService, cfg.CatalogPublicationMode, cfg.CatalogPublicationEnv))
 	apiHandler := http.MaxBytesHandler(router, 8<<20)
+	apiHandler = httpapi.ObserveRequests(apiHandler, slog.Default())
 	sentryHandler := sentryhttp.New(sentryhttp.Options{Repanic: true}).Handle(apiHandler)
 
 	httpServer := &http.Server{

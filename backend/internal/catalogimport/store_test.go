@@ -45,6 +45,17 @@ func TestLocalizedString(t *testing.T) {
 	}
 }
 
+func TestInteger32RejectsUnsignedProtocolSentinel(t *testing.T) {
+	t.Parallel()
+	if got := integer32(float64(4294967295)); got != nil {
+		t.Fatalf("UINT32_MAX sentinel = %d, want nil", *got)
+	}
+	want := int64(70)
+	if got := integer32(float64(want)); got == nil || *got != want {
+		t.Fatalf("ordinary int32 = %v, want %d", got, want)
+	}
+}
+
 func TestDecodePayloadIsCanonical(t *testing.T) {
 	t.Parallel()
 	_, first, err := decodePayload(json.RawMessage(`{"name":"A","id":1}`))

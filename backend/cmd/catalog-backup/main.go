@@ -49,7 +49,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	identity, err := age.ParseX25519Identity(identityValue)
+	identity, err := parseAgeIdentity(identityValue)
 	if err != nil {
 		return fmt.Errorf("parse CATALOG_BACKUP_AGE_IDENTITY: %w", err)
 	}
@@ -73,20 +73,26 @@ func run() error {
 	defer stop()
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	accessKeyID, err := secretEnvironment("CATALOG_BACKUP_S3_ACCESS_KEY_ID")
-	if err != nil {
-		return err
+	var store catalogbackup.ObjectStore
+	localDirectory := strings.TrimSpace(os.Getenv("CATALOG_BACKUP_LOCAL_DIRECTORY"))
+	if localDirectory != "" {
+		store, err = catalogbackup.NewLocalStore(localDirectory)
+	} else {
+		accessKeyID, accessErr := secretEnvironment("CATALOG_BACKUP_S3_ACCESS_KEY_ID")
+		if accessErr != nil {
+			return accessErr
+		}
+		secretAccessKey, secretErr := secretEnvironment("CATALOG_BACKUP_S3_SECRET_ACCESS_KEY")
+		if secretErr != nil {
+			return secretErr
+		}
+		store, err = catalogbackup.NewS3Store(ctx, catalogbackup.S3Config{
+			Endpoint: os.Getenv("CATALOG_BACKUP_S3_ENDPOINT"), Region: os.Getenv("CATALOG_BACKUP_S3_REGION"),
+			Bucket: os.Getenv("CATALOG_BACKUP_S3_BUCKET"), AccessKeyID: accessKeyID,
+			SecretAccessKey: secretAccessKey,
+			URIScheme:       environmentOr("CATALOG_BACKUP_URI_SCHEME", "s3"), UsePathStyle: pathStyle,
+		})
 	}
-	secretAccessKey, err := secretEnvironment("CATALOG_BACKUP_S3_SECRET_ACCESS_KEY")
-	if err != nil {
-		return err
-	}
-	store, err := catalogbackup.NewS3Store(ctx, catalogbackup.S3Config{
-		Endpoint: os.Getenv("CATALOG_BACKUP_S3_ENDPOINT"), Region: os.Getenv("CATALOG_BACKUP_S3_REGION"),
-		Bucket: os.Getenv("CATALOG_BACKUP_S3_BUCKET"), AccessKeyID: accessKeyID,
-		SecretAccessKey: secretAccessKey,
-		URIScheme:       environmentOr("CATALOG_BACKUP_URI_SCHEME", "s3"), UsePathStyle: pathStyle,
-	})
 	if err != nil {
 		return err
 	}
@@ -101,8 +107,12 @@ func run() error {
 		return err
 	}
 	if preflight {
+		storage := "s3"
+		if localDirectory != "" {
+			storage = "local"
+		}
 		return json.NewEncoder(os.Stdout).Encode(map[string]string{
-			"mode": "configuration", "product": options.Product, "status": "ok",
+			"mode": "configuration", "product": options.Product, "status": "ok", "storage": storage,
 		})
 	}
 	database, err := pgxpool.New(ctx, sourceDatabaseURL)
@@ -146,6 +156,17 @@ func environmentOr(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func parseAgeIdentity(value string) (age.Identity, error) {
+	identities, err := age.ParseIdentities(strings.NewReader(value))
+	if err != nil {
+		return nil, err
+	}
+	if len(identities) != 1 {
+		return nil, fmt.Errorf("expected exactly one age identity, found %d", len(identities))
+	}
+	return identities[0], nil
 }
 
 func secretEnvironment(key string) (string, error) {

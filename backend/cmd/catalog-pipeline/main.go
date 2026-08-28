@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogpipeline"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -29,7 +30,7 @@ func main() {
 }
 
 func run() (catalogpipeline.Result, error) {
-	var databaseURL, sources, mode, trigger, profile, product, version, binaryDirectory, publicationEnvironment string
+	var databaseURL, sources, mode, trigger, profile, product, version, binaryDirectory, publicationEnvironment, recoveryPolicy string
 	var maxRecords int
 	var confirmFullImport bool
 	var timeout time.Duration
@@ -42,6 +43,7 @@ func run() (catalogpipeline.Result, error) {
 	flag.StringVar(&version, "version", "", "optional WoW build version")
 	flag.StringVar(&binaryDirectory, "bin-dir", "", "directory containing importer executables")
 	flag.StringVar(&publicationEnvironment, "publication-environment", "production", "development, staging, or production")
+	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
 	flag.IntVar(&maxRecords, "max-records", 0, "records per source dataset; 0 imports all")
 	flag.BoolVar(&confirmFullImport, "confirm-full-import", false, "confirm an unbounded production import")
 	flag.DurationVar(&timeout, "timeout", 6*time.Hour, "whole pipeline timeout")
@@ -75,6 +77,7 @@ func run() (catalogpipeline.Result, error) {
 		Sources: catalogpipeline.SortedSources(sources), BuildVersion: strings.TrimSpace(version),
 		MaxRecords: maxRecords, ConfirmFullImport: confirmFullImport, BinaryDirectory: strings.TrimSpace(binaryDirectory),
 		PublicationEnvironment: publicationEnvironment,
+		RecoveryPolicy:         strings.TrimSpace(recoveryPolicy),
 	}
 	return (&catalogpipeline.Runner{DB: db, Stdout: os.Stdout, Stderr: os.Stderr}).Run(ctx, options)
 }

@@ -200,6 +200,24 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 			WHERE id=$1`, releaseID); err != nil {
 			return fmt.Errorf("finish catalog release publication: %w", err)
 		}
+		// Public read models must observe the pointers selected in this same
+		// transaction. Refreshing before Publish leaves newly released entity
+		// types and library datasets stale until a later maintenance run.
+		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_read_models($1)`, productID); err != nil {
+			return fmt.Errorf("refresh published catalog read models: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
+			return fmt.Errorf("refresh published library datasets: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_published_source_dependencies()`); err != nil {
+			return fmt.Errorf("refresh published source dependencies: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_media_coverage($1)`, productID); err != nil {
+			return fmt.Errorf("refresh published library media coverage: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_media_previews($1)`, productID); err != nil {
+			return fmt.Errorf("refresh published library media previews: %w", err)
+		}
 		return nil
 	})
 }
@@ -222,6 +240,7 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 			SELECT role.version_id,role.source_artifact_id FROM catalog_npc_roles role
 			UNION ALL SELECT location.version_id,location.source_artifact_id FROM catalog_npc_locations location
 			UNION ALL SELECT acquisition.version_id,acquisition.source_artifact_id FROM catalog_item_acquisition_sources acquisition
+			UNION ALL SELECT stat.version_id,stat.source_artifact_id FROM catalog_item_stats stat
 			UNION ALL SELECT effect.version_id,effect.source_artifact_id FROM catalog_item_effects effect
 			UNION ALL SELECT effect.spell_version_id,effect.source_artifact_id FROM catalog_spell_effects effect
 			UNION ALL SELECT recipe.profession_version_id,recipe.source_artifact_id FROM catalog_profession_recipes recipe
@@ -230,6 +249,10 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 			UNION ALL SELECT output.recipe_version_id,output.source_artifact_id FROM catalog_recipe_outputs output
 			UNION ALL SELECT display.version_id,display.source_artifact_id FROM catalog_creature_displays display
 			UNION ALL SELECT difficulty.version_id,difficulty.source_artifact_id FROM catalog_creature_difficulties difficulty
+			UNION ALL
+			SELECT variant.item_version_id,stat.source_artifact_id
+			FROM catalog_item_variant_stats stat
+			JOIN catalog_item_variants variant ON variant.id=stat.variant_id
 			UNION ALL
 			SELECT variant.item_version_id,effect.source_artifact_id
 			FROM catalog_item_variant_effects effect

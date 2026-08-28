@@ -27,11 +27,12 @@ const (
 )
 
 type Handler struct {
-	auth       *auth.Service
-	analytics  *analytics.Service
-	postgres   *pgxpool.Pool
-	clickhouse driver.Conn
-	redis      *redis.Client
+	auth           *auth.Service
+	analytics      *analytics.Service
+	postgres       *pgxpool.Pool
+	clickhouse     driver.Conn
+	redis          *redis.Client
+	recoveryPolicy string
 
 	readinessMu       sync.Mutex
 	readinessCached   catalogquality.ReadinessReport
@@ -256,8 +257,8 @@ type icyVeinsTierlistEntry struct {
 
 var sourceWeekPattern = regexp.MustCompile(`^\d{4}-W\d{2}$`)
 
-func New(authService *auth.Service, analyticsService *analytics.Service, postgres *pgxpool.Pool, clickhouse driver.Conn, redisClient *redis.Client) *Handler {
-	return &Handler{auth: authService, analytics: analyticsService, postgres: postgres, clickhouse: clickhouse, redis: redisClient}
+func New(authService *auth.Service, analyticsService *analytics.Service, postgres *pgxpool.Pool, clickhouse driver.Conn, redisClient *redis.Client, recoveryPolicy string) *Handler {
+	return &Handler{auth: authService, analytics: analyticsService, postgres: postgres, clickhouse: clickhouse, redis: redisClient, recoveryPolicy: recoveryPolicy}
 }
 
 func (h *Handler) Register(mux *http.ServeMux) {
@@ -293,7 +294,7 @@ func (h *Handler) cachedCatalogReadiness(ctx context.Context) (catalogquality.Re
 	if !h.readinessCachedAt.IsZero() && time.Since(h.readinessCachedAt) < readinessCacheTTL {
 		return h.readinessCached, nil
 	}
-	report, err := catalogquality.EvaluateReadiness(ctx, h.postgres, "wow", "")
+	report, err := catalogquality.EvaluateReadinessWithRecoveryPolicy(ctx, h.postgres, "wow", "", h.recoveryPolicy)
 	if err != nil {
 		return catalogquality.ReadinessReport{}, err
 	}

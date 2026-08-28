@@ -31,6 +31,7 @@ func (s *Server) GetAPIIndex(context.Context, api.GetAPIIndexRequestObject) (api
 		Rest:    "https://api.gildra.net/v1/",
 		Graphql: "https://api.gildra.net/graphql",
 		Catalog: "https://api.gildra.net/v1/game/entities",
+		Library: "https://api.gildra.net/v1/library/datasets",
 	}, nil
 }
 
@@ -46,6 +47,28 @@ func (s *Server) ListGameProducts(ctx context.Context, _ api.ListGameProductsReq
 		response = append(response, api.GameProduct{Id: product.ID, Slug: product.Slug, Name: product.Name})
 	}
 	return api.ListGameProducts200JSONResponse{Data: response}, nil
+}
+
+func (s *Server) ListLibraryDatasets(ctx context.Context, request api.ListLibraryDatasetsRequestObject) (api.ListLibraryDatasetsResponseObject, error) {
+	product := "wow"
+	if request.Params.Product != nil {
+		product = *request.Params.Product
+	}
+	locale := "en_US"
+	if request.Params.Locale != nil {
+		locale = string(*request.Params.Locale)
+	}
+	datasets, err := s.catalog.LibraryDatasets(ctx, product, locale)
+	if err != nil {
+		return api.ListLibraryDatasets500JSONResponse{InternalErrorJSONResponse: api.InternalErrorJSONResponse{
+			Code: "catalog_unavailable", Message: "public library is temporarily unavailable",
+		}}, nil
+	}
+	data := make([]api.LibraryDataset, 0, len(datasets))
+	for _, dataset := range datasets {
+		data = append(data, toAPILibraryDataset(dataset))
+	}
+	return api.ListLibraryDatasets200JSONResponse{Data: data}, nil
 }
 
 func (s *Server) ListGameCategories(ctx context.Context, request api.ListGameCategoriesRequestObject) (api.ListGameCategoriesResponseObject, error) {
@@ -120,6 +143,9 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 	if request.Params.Type != nil {
 		params.Type = *request.Params.Type
 	}
+	if request.Params.Dataset != nil {
+		params.Dataset = *request.Params.Dataset
+	}
 	if request.Params.Locale != nil {
 		params.Locale = string(*request.Params.Locale)
 	}
@@ -132,6 +158,7 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 	if request.Params.Facet != nil {
 		params.Facets = append([]string(nil), (*request.Params.Facet)...)
 	}
+	params.ItemClassID = request.Params.ItemClassId
 	params.MinItemLevel = request.Params.MinItemLevel
 	params.MaxItemLevel = request.Params.MaxItemLevel
 	params.MinRequiredLevel = request.Params.MinRequiredLevel
@@ -147,7 +174,7 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 	}
 	page, err := s.catalog.Summaries(ctx, params)
 	if err != nil {
-		if strings.Contains(err.Error(), "cursor") || strings.Contains(err.Error(), "limit") || strings.Contains(err.Error(), "ItemLevel") || strings.Contains(err.Error(), "item level") || strings.Contains(err.Error(), "RequiredLevel") || strings.Contains(err.Error(), "required level") || strings.Contains(err.Error(), "facet") {
+		if strings.Contains(err.Error(), "cursor") || strings.Contains(err.Error(), "limit") || strings.Contains(err.Error(), "ItemLevel") || strings.Contains(err.Error(), "item level") || strings.Contains(err.Error(), "RequiredLevel") || strings.Contains(err.Error(), "required level") || strings.Contains(err.Error(), "itemClassId") || strings.Contains(err.Error(), "dataset") || strings.Contains(err.Error(), "facet") {
 			return api.ListGameEntitySummaries400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{
 				Code: "invalid_page", Message: err.Error(),
 			}}, nil
@@ -166,7 +193,7 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 		data = append(data, api.GameEntitySummary{
 			Id: entity.ID, Product: &entity.Product, Type: entity.Type, ExternalId: entity.ExternalID,
 			Slug: entity.Slug, Locale: &locale, LocaleFallback: &entity.LocaleFallback, Name: entity.Name,
-			Description: &entity.Description, IconName: entity.IconName, IconUrl: wowIconURL(entity.IconName),
+			Description: &entity.Description, IconName: entity.IconName, IconUrl: entity.IconURL,
 			Quality: entity.Quality, ItemLevel: entity.ItemLevel, BuildId: entity.BuildID,
 			UpdatedAt: &entity.UpdatedAt, Highlights: &highlights,
 		})
@@ -346,6 +373,19 @@ func (s *Server) GetGameEntity(ctx context.Context, request api.GetGameEntityReq
 			Code: "catalog_unavailable", Message: "game catalog is temporarily unavailable",
 		}}, nil
 	}
+	if request.Params.Dataset != nil {
+		contains, membershipErr := s.catalog.DatasetContainsEntity(ctx, *request.Params.Dataset, entity.ID)
+		if membershipErr != nil {
+			return api.GetGameEntity500JSONResponse{InternalErrorJSONResponse: api.InternalErrorJSONResponse{
+				Code: "catalog_unavailable", Message: "game catalog is temporarily unavailable",
+			}}, nil
+		}
+		if !contains {
+			return api.GetGameEntity404ApplicationProblemPlusJSONResponse{
+				NotFoundApplicationProblemPlusJSONResponse: notFoundProblem("The requested game entity is not part of this public dataset."),
+			}, nil
+		}
+	}
 	return api.GetGameEntity200JSONResponse(toAPIEntity(entity)), nil
 }
 
@@ -390,7 +430,7 @@ func (s *Server) ListGameEntityRelationships(ctx context.Context, request api.Li
 		entity := api.GameEntitySummary{
 			Id: relationship.Entity.ID, Type: relationship.Entity.Type, ExternalId: relationship.Entity.ExternalID,
 			Slug: relationship.Entity.Slug, Name: relationship.Entity.Name, IconName: relationship.Entity.IconName,
-			IconUrl: wowIconURL(relationship.Entity.IconName),
+			IconUrl: relationship.Entity.IconURL,
 		}
 		data = append(data, api.GameEntityRelationship{
 			Direction: api.GameEntityRelationshipDirection(relationship.Direction), Relation: relationship.Relation,
@@ -566,23 +606,39 @@ func toAPIEntity(entity catalog.Entity) api.GameEntity {
 	if entity.Tooltip != nil {
 		result.Tooltip = &api.GameTooltip{PlainText: entity.Tooltip.PlainText, Blocks: entity.Tooltip.Blocks}
 	}
+	if len(entity.Media) > 0 {
+		media := make([]api.GameEntityMedia, 0, len(entity.Media))
+		for _, asset := range entity.Media {
+			media = append(media, api.GameEntityMedia{
+				Kind: asset.Kind, AssetKey: asset.AssetKey, Url: asset.URL,
+				Source: asset.Source, SourceUrl: asset.SourceURL, Locale: asset.Locale,
+				MimeType: asset.MIMEType, CacheStatus: api.GameEntityMediaCacheStatus(asset.CacheStatus),
+				FileDataId: asset.FileDataID, Width: asset.Width, Height: asset.Height, Primary: asset.Primary,
+			})
+		}
+		result.Media = &media
+	}
 	result.IconName = entity.IconName
-	result.IconUrl = wowIconURL(entity.IconName)
+	result.IconUrl = entity.IconURL
 	result.Quality = entity.Quality
 	return result
 }
 
-func wowIconURL(iconName *string) *string {
-	if iconName == nil {
-		return nil
+func toAPILibraryDataset(dataset catalog.LibraryDataset) api.LibraryDataset {
+	return api.LibraryDataset{
+		Slug: dataset.Slug, Product: dataset.Product, EntityType: dataset.EntityType,
+		CategoryPath: dataset.CategoryPath, ItemClassId: dataset.ItemClassID, Group: dataset.Group, IconSymbol: dataset.IconSymbol,
+		SortOrder: dataset.SortOrder, Name: dataset.Name, Description: dataset.Description,
+		BuildVersion: dataset.BuildVersion, PreviewImageUrl: dataset.PreviewImageURL, EntityCount: dataset.EntityCount,
+		LocalizedCount: dataset.LocalizedCount, VerifiedLocalizedCount: dataset.VerifiedLocalizedCount,
+		TooltipCount:  dataset.TooltipCount,
+		ImageCount:    dataset.ImageCount,
+		Applicability: api.LibraryDatasetApplicability(dataset.Applicability), ApplicabilityReason: dataset.ApplicabilityReason,
+		Freshness:       api.LibraryDatasetFreshness(dataset.Freshness),
+		FreshnessReason: dataset.FreshnessReason, CoverageUpdatedAt: dataset.CoverageUpdatedAt,
 	}
-	icon := strings.ToLower(strings.TrimSpace(*iconName))
-	if icon == "" || strings.ContainsAny(icon, "/\\") {
-		return nil
-	}
-	value := "https://render.worldofwarcraft.com/us/icons/56/" + icon + ".jpg"
-	return &value
 }
+
 
 //go:fix inline
 func pointer[T any](value T) *T { return new(value) }

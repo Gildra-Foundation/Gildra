@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -16,6 +17,21 @@ func TestSummaryHighlightsAreBoundedAndSourceBacked(t *testing.T) {
 	}
 	if got[0].Key != "required_level" || got[0].Value != "Requires level 80" {
 		t.Fatalf("unexpected first highlight: %#v", got[0])
+	}
+}
+
+func TestSummariesRejectsInvalidItemClassBeforeQuery(t *testing.T) {
+	invalid := -1
+	_, err := NewService(nil).Summaries(context.Background(), SummaryParams{Limit: 20, ItemClassID: &invalid})
+	if err == nil || err.Error() != "itemClassId must be between 0 and 99" {
+		t.Fatalf("unexpected validation result: %v", err)
+	}
+}
+
+func TestSummariesRejectsInvalidDatasetBeforeQuery(t *testing.T) {
+	_, err := NewService(nil).Summaries(context.Background(), SummaryParams{Limit: 20, Dataset: "x"})
+	if err == nil || err.Error() != "dataset must be between 2 and 64 characters" {
+		t.Fatalf("unexpected validation result: %v", err)
 	}
 }
 
@@ -70,5 +86,14 @@ func TestSummaryFilterPathsRejectsTooMany(t *testing.T) {
 	facets := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i"}
 	if _, err := summaryFilterPaths("", facets); err == nil {
 		t.Fatal("expected too many facets to be rejected")
+	}
+}
+
+func TestSummaryOrderByUsesIndexFriendlyOrderWithoutSearch(t *testing.T) {
+	if got := summaryOrderBy(""); got != "entity.id" {
+		t.Fatalf("empty-query order=%q", got)
+	}
+	if got := summaryOrderBy("frost"); got != "search_match.rank DESC NULLS LAST,entity.id" {
+		t.Fatalf("ranked-query order=%q", got)
 	}
 }

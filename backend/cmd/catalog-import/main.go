@@ -46,7 +46,7 @@ var battleNetEntitySpecs = map[string]battleNetEntitySpec{
 	"talent":         {Resource: "talent", IndexFields: []string{"talents"}},
 	"pvp_talent":     {Resource: "pvp-talent", IndexFields: []string{"pvp_talents"}},
 	"profession":     {Resource: "profession", IndexFields: []string{"professions"}, FetchMedia: true},
-	"mount":          {Resource: "mount", IndexFields: []string{"mounts"}},
+	"mount":          {Resource: "mount", IndexFields: []string{"mounts"}, FetchMedia: true},
 	"battle_pet":     {Resource: "pet", IndexFields: []string{"pets"}, FetchMedia: true},
 	"class":          {Resource: "playable-class", IndexFields: []string{"classes"}, FetchMedia: true},
 	"specialization": {Resource: "playable-specialization", IndexFields: []string{"character_specializations"}, FetchMedia: true},
@@ -117,7 +117,11 @@ func run() error {
 		if err != nil {
 			return err
 		}
-		detectedBuild, detectedVersion, err := battleNetClient.CurrentBuild(ctx, "us", "en_US")
+		discoveryNamespace, err := battleNetNamespace(opts.product, "us")
+		if err != nil {
+			return err
+		}
+		detectedBuild, detectedVersion, err := battleNetClient.CurrentBuildForNamespace(ctx, "us", "en_US", discoveryNamespace)
 		if err != nil {
 			return err
 		}
@@ -429,7 +433,10 @@ func importBattleNet(
 		if err != nil {
 			return err
 		}
-		namespace := "static-" + region
+		namespace, err := battleNetNamespace(opts.product, region)
+		if err != nil {
+			return err
+		}
 		for _, entityType := range opts.entityTypes {
 			spec := battleNetEntitySpecs[entityType]
 			slog.Info("importing catalog type", "type", entityType, "locale", locale, "region", region)
@@ -461,7 +468,7 @@ func importBattleNet(
 						entityType, spec, opts.maxRecords, opts.detailWorkers, artifactID, seen, written)
 				}
 				return importIndexType(ctx, client, store, importContext, region, namespace, locale,
-					entityType, spec, opts.maxRecords, artifactID, seen, written)
+					entityType, spec, opts.maxRecords, opts.detailWorkers, artifactID, seen, written)
 			})
 			if err != nil {
 				return err
@@ -552,8 +559,9 @@ func importBattleNetMedia(
 			artifacts[candidate.EntityType] = artifactID
 		}
 		(*seen)++
-		if err := fetchAndStoreBattleNetMediaHref(ctx, client, store, importContext, artifactID,
-			"us", candidate.EntityType, "en_US", candidate.ExternalID, candidate.Href); err != nil {
+		if err := fetchAndStoreBattleNetMediaLink(ctx, client, store, importContext, artifactID,
+			"us", candidate.EntityType, "en_US", candidate.ExternalID,
+			battleNetMediaLink{Href: candidate.Href, AssetPrefix: candidate.AssetPrefix}); err != nil {
 			return err
 		}
 		(*written)++
@@ -577,8 +585,23 @@ func importSearchType(
 	if err != nil {
 		return err
 	}
+	if maxRecords == 0 {
+		officialMaxID, err := client.MaxExternalID(ctx, region, namespace, locale, spec.Resource)
+		if err != nil {
+			return fmt.Errorf("discover highest official Battle.net %s ID (%s): %w", entityType, locale, err)
+		}
+		if officialMaxID > maxID {
+			maxID = officialMaxID
+		}
+		slog.Info("discovered official catalog boundary", "type", entityType, "locale", locale, "max_id", officialMaxID)
+	}
 	if maxID <= 0 {
-		return fmt.Errorf("cannot partition Battle.net %s search: catalog has no external IDs", entityType)
+		if maxRecords == 0 {
+			slog.Info("official catalog index is empty", "type", entityType, "locale", locale)
+			return nil
+		}
+		return importBoundedSearchBootstrap(ctx, client, store, importContext, region, namespace, locale,
+			entityType, spec, pageSize, maxRecords, artifactID, seen, written)
 	}
 	const rangeSize int64 = 1000
 	processed := 0
@@ -652,6 +675,59 @@ func importSearchType(
 	return nil
 }
 
+func importBoundedSearchBootstrap(
+	ctx context.Context,
+	client *battlenet.Client,
+	store *catalogimport.Store,
+	importContext catalogimport.ImportContext,
+	region, namespace, locale, entityType string,
+	spec battleNetEntitySpec,
+	pageSize, maxRecords int,
+	artifactID uuid.UUID,
+	seen, written *int64,
+) error {
+	processed := 0
+	for pageNumber := 1; processed < maxRecords; pageNumber++ {
+		page, err := client.Search(ctx, region, namespace, locale, spec.Resource, pageNumber, min(pageSize, maxRecords-processed))
+		if err != nil {
+			return fmt.Errorf("bootstrap search %s page %d (%s): %w", entityType, pageNumber, locale, err)
+		}
+		for _, result := range page.Results {
+			if processed >= maxRecords {
+				return nil
+			}
+			id, err := searchResultID(result.Data)
+			if err != nil {
+				return fmt.Errorf("read %s bootstrap search result: %w", entityType, err)
+			}
+			(*seen)++
+			if strings.TrimSpace(result.Key.Href) == "" {
+				return fmt.Errorf("read %s bootstrap search result %d: missing build-pinned resource link", entityType, id)
+			}
+			payload, sourceURL := result.Data, result.Key.Href
+			if spec.FetchDetail {
+				payload, sourceURL, err = client.FetchLink(ctx, region, locale, result.Key.Href)
+				if err != nil {
+					if battlenet.IsNotFound(err) {
+						slog.Warn("skipping missing Battle.net bootstrap detail", "type", entityType, "id", id, "locale", locale)
+						continue
+					}
+					return fmt.Errorf("fetch %s bootstrap detail %d (%s): %w", entityType, id, locale, err)
+				}
+			}
+			if err := storeBattleNetRecord(ctx, store, importContext, artifactID, entityType, locale, id, payload, sourceURL); err != nil {
+				return err
+			}
+			(*written)++
+			processed++
+		}
+		if len(page.Results) == 0 || page.PageCount > 0 && pageNumber >= page.PageCount {
+			break
+		}
+	}
+	return nil
+}
+
 type battleNetDetailFetcher interface {
 	FetchLink(context.Context, string, string, string) (json.RawMessage, string, error)
 }
@@ -716,6 +792,7 @@ func importIndexType(
 	region, namespace, locale, entityType string,
 	spec battleNetEntitySpec,
 	maxRecords int,
+	detailWorkers int,
 	artifactID uuid.UUID,
 	seen, written *int64,
 ) error {
@@ -730,38 +807,65 @@ func importIndexType(
 	if err != nil {
 		return fmt.Errorf("read %s index (%s): %w", entityType, locale, err)
 	}
+	if maxRecords > 0 && len(entries) > maxRecords {
+		entries = entries[:maxRecords]
+	}
 	processed := 0
-	for _, entry := range entries {
-		if maxRecords > 0 && processed >= maxRecords {
-			return nil
+	batchSize := battleNetIndexBatchSize(detailWorkers)
+	for offset := 0; offset < len(entries); offset += batchSize {
+		end := min(offset+batchSize, len(entries))
+		batch := entries[offset:end]
+		for _, entry := range batch {
+			if strings.TrimSpace(entry.Href) == "" {
+				return fmt.Errorf("read %s index entry %d: missing build-pinned resource link", entityType, entry.ID)
+			}
 		}
-		id := entry.ID
-		(*seen)++
-		processed++
-		if strings.TrimSpace(entry.Href) == "" {
-			return fmt.Errorf("read %s index entry %d: missing build-pinned resource link", entityType, id)
-		}
-		payload, sourceURL, err := client.FetchLink(ctx, region, locale, entry.Href)
+		*seen += int64(len(batch))
+		details, err := fetchBattleNetIndexDetails(ctx, client, region, locale, batch, detailWorkers)
 		if err != nil {
-			if battlenet.IsNotFound(err) {
-				slog.Warn("skipping missing Battle.net detail", "type", entityType, "id", id, "locale", locale)
+			return fmt.Errorf("fetch %s index details (%s): %w", entityType, locale, err)
+		}
+		previousProcessed := processed
+		persisted := make([]battleNetSearchDetail, 0, len(details))
+		for _, detail := range details {
+			processed++
+			if detail.Missing {
+				slog.Warn("skipping missing Battle.net detail", "type", entityType, "id", detail.ID, "locale", locale)
 				continue
 			}
-			return fmt.Errorf("fetch %s %d (%s): %w", entityType, id, locale, err)
-		}
-		if err := storeBattleNetRecord(ctx, store, importContext, artifactID, entityType, locale, id, payload, sourceURL); err != nil {
-			return err
+			if err := storeBattleNetRecord(ctx, store, importContext, artifactID, entityType, locale,
+				detail.ID, detail.Payload, detail.SourceURL); err != nil {
+				return err
+			}
+			persisted = append(persisted, detail)
 		}
 		if spec.FetchMedia && locale == "en_US" {
-			if err := fetchAndStoreBattleNetMedia(ctx, client, store, importContext, artifactID,
-				region, entityType, locale, id, payload); err != nil {
+			group, groupCtx := errgroup.WithContext(ctx)
+			group.SetLimit(detailWorkers)
+			for _, detail := range persisted {
+				group.Go(func() error {
+					return fetchAndStoreBattleNetMedia(groupCtx, client, store, importContext, artifactID,
+						region, entityType, locale, detail.ID, detail.Payload)
+				})
+			}
+			if err := group.Wait(); err != nil {
 				return err
 			}
 		}
-		(*written)++
-		logBattleNetProgress(entityType, locale, processed, *seen, *written)
+		*written += int64(len(persisted))
+		if processed/1000 > previousProcessed/1000 || processed == len(entries) {
+			slog.Info("catalog import progress", "type", entityType, "locale", locale,
+				"processed", processed, "seen", *seen, "written", *written)
+		}
 	}
 	return nil
+}
+
+func battleNetIndexBatchSize(detailWorkers int) int {
+	if detailWorkers < 1 {
+		return 1
+	}
+	return min(max(detailWorkers*16, 32), 512)
 }
 
 func importQuestType(
@@ -881,12 +985,14 @@ func fetchAndStoreBattleNetMedia(
 	id int64,
 	entityPayload json.RawMessage,
 ) error {
-	href := battleNetMediaHref(entityPayload)
-	if href == "" {
-		return nil
+	links := battleNetMediaLinks(entityPayload)
+	for _, link := range links {
+		if err := fetchAndStoreBattleNetMediaLink(ctx, client, store, importContext, artifactID,
+			region, entityType, locale, id, link); err != nil {
+			return err
+		}
 	}
-	return fetchAndStoreBattleNetMediaHref(ctx, client, store, importContext, artifactID,
-		region, entityType, locale, id, href)
+	return nil
 }
 
 func fetchAndStoreBattleNetMediaHref(
@@ -899,6 +1005,29 @@ func fetchAndStoreBattleNetMediaHref(
 	id int64,
 	href string,
 ) error {
+	return fetchAndStoreBattleNetMediaLink(ctx, client, store, importContext, artifactID,
+		region, entityType, locale, id, battleNetMediaLink{Href: href})
+}
+
+type battleNetMediaLink struct {
+	Href        string
+	AssetPrefix string
+}
+
+func fetchAndStoreBattleNetMediaLink(
+	ctx context.Context,
+	client *battlenet.Client,
+	store *catalogimport.Store,
+	importContext catalogimport.ImportContext,
+	artifactID uuid.UUID,
+	region, entityType, locale string,
+	id int64,
+	link battleNetMediaLink,
+) error {
+	href := strings.TrimSpace(link.Href)
+	if href == "" {
+		return nil
+	}
 	mediaPayload, sourceURL, err := client.FetchLink(ctx, region, locale, href)
 	if err != nil {
 		if battlenet.IsNotFound(err) {
@@ -907,7 +1036,11 @@ func fetchAndStoreBattleNetMediaHref(
 		}
 		return fmt.Errorf("fetch %s media %d: %w", entityType, id, err)
 	}
-	if _, err := store.UpsertSourceRecord(ctx, artifactID, fmt.Sprintf("media/%d", id), mediaPayload); err != nil {
+	recordKey := fmt.Sprintf("media/%d", id)
+	if link.AssetPrefix != "" {
+		recordKey += "/" + link.AssetPrefix
+	}
+	if _, err := store.UpsertSourceRecord(ctx, artifactID, recordKey, mediaPayload); err != nil {
 		return fmt.Errorf("preserve %s media %d: %w", entityType, id, err)
 	}
 	mediaRecord := catalogimport.Record{
@@ -918,6 +1051,9 @@ func fetchAndStoreBattleNetMediaHref(
 		return err
 	}
 	for _, asset := range battleNetMediaAssets(mediaPayload) {
+		if link.AssetPrefix != "" {
+			asset.AssetKey = link.AssetPrefix + "_" + asset.AssetKey
+		}
 		if err := store.UpsertEntityMedia(ctx, importContext, entityType, id, locale,
 			"blizzard_api", asset, artifactID); err != nil {
 			return fmt.Errorf("store %s media asset %d %s: %w", entityType, id, asset.AssetKey, err)
@@ -1017,17 +1153,52 @@ func mediaMIMEType(assetPath string) string {
 }
 
 func battleNetMediaHref(payload json.RawMessage) string {
+	links := battleNetMediaLinks(payload)
+	if len(links) == 0 {
+		return ""
+	}
+	return links[0].Href
+}
+
+func battleNetMediaLinks(payload json.RawMessage) []battleNetMediaLink {
 	var document struct {
 		Media struct {
 			Key struct {
 				Href string `json:"href"`
 			} `json:"key"`
 		} `json:"media"`
+		CreatureDisplays []struct {
+			ID  int64 `json:"id"`
+			Key struct {
+				Href string `json:"href"`
+			} `json:"key"`
+		} `json:"creature_displays"`
 	}
 	if json.Unmarshal(payload, &document) != nil {
-		return ""
+		return nil
 	}
-	return strings.TrimSpace(document.Media.Key.Href)
+	links := make([]battleNetMediaLink, 0, 1+len(document.CreatureDisplays))
+	seen := make(map[string]struct{}, 1+len(document.CreatureDisplays))
+	appendLink := func(href, prefix string) {
+		href = strings.TrimSpace(href)
+		if href == "" {
+			return
+		}
+		if _, exists := seen[href]; exists {
+			return
+		}
+		seen[href] = struct{}{}
+		links = append(links, battleNetMediaLink{Href: href, AssetPrefix: prefix})
+	}
+	appendLink(document.Media.Key.Href, "")
+	for _, display := range document.CreatureDisplays {
+		prefix := "creature_display"
+		if display.ID > 0 {
+			prefix += "_" + strconv.FormatInt(display.ID, 10)
+		}
+		appendLink(display.Key.Href, prefix)
+	}
+	return links
 }
 
 func battleNetMediaIconName(payload json.RawMessage) string {
@@ -1099,7 +1270,7 @@ func storeBattleNetRecord(
 		return fmt.Errorf("read normalized %s %d (%s): %w", entityType, id, locale, err)
 	}
 	if strings.TrimSpace(localizedTextForLocale(normalizedDocument["name"], locale)) == "" {
-		slog.Warn("preserved Battle.net source document without publishing an empty localization",
+		slog.Debug("preserved Battle.net source document without publishing an empty localization",
 			"type", entityType, "id", id, "locale", locale)
 		return nil
 	}
@@ -1386,6 +1557,8 @@ func parseOptions() (options, error) {
 	switch {
 	case opts.source != "wago" && opts.source != "battlenet":
 		return options{}, fmt.Errorf("unsupported source %q", opts.source)
+	case opts.source == "wago" && opts.product != "wow":
+		return options{}, errors.New("Wago imports currently support only the wow Retail product")
 	case opts.databaseURL == "":
 		return options{}, errors.New("DATABASE_URL or -database-url is required")
 	case opts.source == "battlenet" && (opts.clientID == "" || opts.clientSecret == ""):
@@ -1402,6 +1575,11 @@ func parseOptions() (options, error) {
 		return options{}, errors.New("detail-workers must be between 1 and 32")
 	case opts.wagoTableTimeout <= 0:
 		return options{}, errors.New("wago-table-timeout must be positive")
+	}
+	if opts.source == "battlenet" {
+		if _, err := battleNetNamespace(opts.product, "us"); err != nil {
+			return options{}, err
+		}
 	}
 	for _, locale := range opts.locales {
 		if _, err := regionForLocale(locale); err != nil {
@@ -1466,6 +1644,23 @@ func regionForLocale(locale string) (string, error) {
 		return "eu", nil
 	default:
 		return "", fmt.Errorf("unsupported locale %q", locale)
+	}
+}
+
+func battleNetNamespace(product, region string) (string, error) {
+	region = strings.ToLower(strings.TrimSpace(region))
+	if region != "us" && region != "eu" {
+		return "", fmt.Errorf("unsupported Battle.net region %q", region)
+	}
+	switch strings.TrimSpace(product) {
+	case "wow":
+		return "static-" + region, nil
+	case "wow_classic":
+		return "static-classic-" + region, nil
+	case "wow_classic_era", "wow_classic_hardcore":
+		return "static-classic1x-" + region, nil
+	default:
+		return "", fmt.Errorf("unsupported Battle.net product %q", product)
 	}
 }
 

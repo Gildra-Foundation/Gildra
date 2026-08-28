@@ -22,7 +22,7 @@ func (f fakePublicationEvaluator) Status(context.Context, string, string) (catal
 func TestEnforceCatalogPublicationBlocksCatalogAndGraphQL(t *testing.T) {
 	evaluator := fakePublicationEvaluator{status: catalog.PublicationStatus{Ready: false, Sources: []catalog.PublicationSource{{Source: "wago_tools", Allowed: false}}}}
 	handler := EnforceCatalogPublication(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }), evaluator, "enforce", "production")
-	for _, path := range []string{"/v1/game/entity-summaries", "/graphql"} {
+	for _, path := range []string{"/v1/game/entity-summaries", "/v1/library/datasets", "/graphql"} {
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
 		if response.Code != http.StatusServiceUnavailable {

@@ -12,8 +12,10 @@ import (
 )
 
 const (
-	ScopeData       = "data"
-	ScopeProduction = "production"
+	ScopeData                      = "data"
+	ScopeProduction                = "production"
+	RecoveryPolicyOffHost          = "off_host"
+	RecoveryPolicyVerifiedSameHost = "verified_same_host"
 )
 
 type ReadinessCheck struct {
@@ -44,10 +46,27 @@ func EvaluateReadiness(
 	product string,
 	buildVersion string,
 ) (ReadinessReport, error) {
+	return EvaluateReadinessWithRecoveryPolicy(ctx, db, product, buildVersion, RecoveryPolicyOffHost)
+}
+
+// EvaluateReadinessWithRecoveryPolicy keeps off-host recovery as the safe
+// default while allowing an explicitly selected, restore-tested same-host
+// backup for installations that accept host-loss risk.
+func EvaluateReadinessWithRecoveryPolicy(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	product string,
+	buildVersion string,
+	recoveryPolicy string,
+) (ReadinessReport, error) {
 	product = strings.TrimSpace(strings.ToLower(product))
 	buildVersion = strings.TrimSpace(buildVersion)
 	if product == "" {
 		return ReadinessReport{}, errors.New("product is required")
+	}
+	storagePattern, recoveryKey, recoveryMessage, err := RecoveryPolicySettings(recoveryPolicy)
+	if err != nil {
+		return ReadinessReport{}, err
 	}
 
 	report := ReadinessReport{
@@ -189,6 +208,7 @@ func EvaluateReadiness(
 			SELECT role.version_id,role.source_artifact_id FROM catalog_npc_roles role
 			UNION ALL SELECT location.version_id,location.source_artifact_id FROM catalog_npc_locations location
 			UNION ALL SELECT acquisition.version_id,acquisition.source_artifact_id FROM catalog_item_acquisition_sources acquisition
+			UNION ALL SELECT stat.version_id,stat.source_artifact_id FROM catalog_item_stats stat
 			UNION ALL SELECT effect.version_id,effect.source_artifact_id FROM catalog_item_effects effect
 			UNION ALL SELECT effect.spell_version_id,effect.source_artifact_id FROM catalog_spell_effects effect
 			UNION ALL SELECT recipe.profession_version_id,recipe.source_artifact_id FROM catalog_profession_recipes recipe
@@ -197,6 +217,10 @@ func EvaluateReadiness(
 			UNION ALL SELECT output.recipe_version_id,output.source_artifact_id FROM catalog_recipe_outputs output
 			UNION ALL SELECT display.version_id,display.source_artifact_id FROM catalog_creature_displays display
 			UNION ALL SELECT difficulty.version_id,difficulty.source_artifact_id FROM catalog_creature_difficulties difficulty
+			UNION ALL
+			SELECT variant.item_version_id,stat.source_artifact_id
+			FROM catalog_item_variant_stats stat
+			JOIN catalog_item_variants variant ON variant.id=stat.variant_id
 		), invalid AS (
 			SELECT fact.version_id
 			FROM facts fact
@@ -316,29 +340,124 @@ func EvaluateReadiness(
 		FROM used_sources used
 		LEFT JOIN catalog_source_policies policy ON policy.source=used.source
 		WHERE policy.source IS NULL OR policy.review_status<>'reviewed'
-		   OR policy.public_api_status NOT IN ('allowed','restricted')
-		   OR policy.commercial_use_status NOT IN ('allowed','restricted')`, report.BuildID, product).Scan(&blockedSources); err != nil {
+		   OR policy.public_api_status NOT IN ('allowed','restricted','permission_required')
+		   OR policy.commercial_use_status NOT IN ('allowed','restricted','permission_required')`, report.BuildID, product).Scan(&blockedSources); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check source publication policy: %w", err)
 	}
 	report.add("source_publication_policy", ScopeProduction, blockedSources != 0, blockedSources,
 		"used sources without a reviewed, publication-compatible policy")
 
+	blockedPublicAPIGrants, err := countBlockedProductionPublicAPIGrants(ctx, db, report.BuildID, product)
+	if err != nil {
+		return ReadinessReport{}, err
+	}
+	report.add("production_public_api_grants", ScopeProduction, blockedPublicAPIGrants != 0, blockedPublicAPIGrants,
+		"used sources without an active explicit production public-API grant")
+
+	blockedAssetCacheGrants, err := countBlockedProductionAssetCacheGrants(ctx, db, report.BuildID)
+	if err != nil {
+		return ReadinessReport{}, err
+	}
+	report.add("production_asset_cache_grants", ScopeProduction, blockedAssetCacheGrants != 0, blockedAssetCacheGrants,
+		"media sources without an active explicit production asset-cache grant")
+
 	var verifiedBackups int64
 	if err := db.QueryRow(ctx, `
 		SELECT count(*) FROM catalog_backup_manifests manifest
 		WHERE manifest.component='postgres' AND manifest.status='verified'
-		  AND manifest.storage_uri ~ '^(s3|r2|swift)://'
+		  AND manifest.storage_uri ~ $2
+		  AND manifest.database_version=(
+			SELECT max(version_id) FROM goose_db_version WHERE is_applied
+		  )
 		  AND manifest.content_hash IS NOT NULL AND manifest.byte_size>0
 		  AND manifest.restore_completed_at>=now()-interval '24 hours'
 		  AND manifest.verification @> '{"restore_verified":true,"source_restore_match":true}'::jsonb
-		  AND (manifest.product_id IS NULL OR manifest.product_id=(SELECT id FROM game_products WHERE slug=$1))`, product).
+		  AND (manifest.product_id IS NULL OR manifest.product_id=(SELECT id FROM game_products WHERE slug=$1))`, product, storagePattern).
 		Scan(&verifiedBackups); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check recovery evidence: %w", err)
 	}
-	report.add("off_host_restore_proof", ScopeProduction, verifiedBackups == 0, verifiedBackups,
-		"recent verified off-host backup and restore proof")
+	report.add(recoveryKey, ScopeProduction, verifiedBackups == 0, verifiedBackups, recoveryMessage)
 
 	return report, nil
+}
+
+func countBlockedProductionPublicAPIGrants(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	buildID int64,
+	product string,
+) (int64, error) {
+	var blocked int64
+	if err := db.QueryRow(ctx, `
+		WITH required_sources AS (
+			SELECT unnest(profile.publication_sources) AS source
+			FROM catalog_release_profiles profile
+			JOIN game_products product ON product.id=profile.product_id
+			WHERE product.slug=$2 AND profile.profile_key='retail-foundation-v1' AND profile.status='active'
+		), used_sources AS (
+			SELECT DISTINCT artifact.source
+			FROM catalog_source_artifacts artifact
+			WHERE artifact.build_id=$1 AND artifact.status IN ('ready','sampled')
+			UNION SELECT source FROM required_sources
+		)
+		SELECT count(*)
+		FROM used_sources used
+		LEFT JOIN catalog_publication_grants permission ON permission.source=used.source
+			AND permission.environment='production' AND permission.surface='public_api'
+		LEFT JOIN catalog_source_policy_reviews review ON review.id=permission.policy_review_id
+		WHERE permission.decision IS DISTINCT FROM 'allowed'
+		   OR permission.expires_at IS NOT NULL AND permission.expires_at<=now()
+		   OR review.id IS NULL OR review.source<>used.source
+		   OR review.environment<>'production' OR review.surface<>'public_api'
+		   OR review.decision<>'allowed' OR review.review_kind NOT IN ('owner_approval','legal')
+		   OR review.expires_at IS NOT NULL AND review.expires_at<=now()`, buildID, product).
+		Scan(&blocked); err != nil {
+		return 0, fmt.Errorf("check production public API grants: %w", err)
+	}
+	return blocked, nil
+}
+
+func countBlockedProductionAssetCacheGrants(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	buildID int64,
+) (int64, error) {
+	var blocked int64
+	if err := db.QueryRow(ctx, `
+		WITH media_sources AS (
+			SELECT DISTINCT media.source
+			FROM catalog_entity_media media
+			JOIN game_builds source_build ON source_build.id=media.build_id
+			JOIN game_builds target_build ON target_build.id=$1
+			WHERE source_build.product_id=target_build.product_id
+			  AND source_build.build_number<=target_build.build_number
+		)
+		SELECT count(*)
+		FROM media_sources source
+		LEFT JOIN catalog_publication_grants permission ON permission.source=source.source
+			AND permission.environment='production' AND permission.surface='asset_cache'
+		LEFT JOIN catalog_source_policy_reviews review ON review.id=permission.policy_review_id
+		WHERE permission.decision IS DISTINCT FROM 'allowed'
+		   OR permission.expires_at IS NOT NULL AND permission.expires_at<=now()
+		   OR review.id IS NULL OR review.source<>source.source
+		   OR review.environment<>'production' OR review.surface<>'asset_cache'
+		   OR review.decision<>'allowed' OR review.review_kind NOT IN ('owner_approval','legal')
+		   OR review.expires_at IS NOT NULL AND review.expires_at<=now()`, buildID).
+		Scan(&blocked); err != nil {
+		return 0, fmt.Errorf("check production asset-cache grants: %w", err)
+	}
+	return blocked, nil
+}
+
+func RecoveryPolicySettings(policy string) (storagePattern, checkKey, message string, err error) {
+	switch strings.TrimSpace(strings.ToLower(policy)) {
+	case "", RecoveryPolicyOffHost:
+		return `^(s3|r2|swift)://`, "off_host_restore_proof", "recent verified off-host backup and restore proof", nil
+	case RecoveryPolicyVerifiedSameHost:
+		return `^(file|s3|r2|swift)://`, "verified_restore_proof", "recent verified backup and exact restore proof; same-host storage accepts host-loss risk", nil
+	default:
+		return "", "", "", fmt.Errorf("unsupported recovery policy %q", policy)
+	}
 }
 
 func loadReadinessBuild(

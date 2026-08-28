@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -158,7 +160,11 @@ func (p ProcessArchiveTool) Dump(ctx context.Context, databaseURL, snapshotID st
 		"--no-privileges",
 		"--snapshot="+snapshotID,
 	)
-	command.Env = databaseEnvironment(databaseURL)
+	environment, err := databaseEnvironment(databaseURL)
+	if err != nil {
+		return err
+	}
+	command.Env = environment
 	command.Stdout = destination
 	stderr := &boundedBuffer{limit: 8192}
 	command.Stderr = stderr
@@ -173,12 +179,21 @@ func (p ProcessArchiveTool) Restore(ctx context.Context, databaseURL string, sou
 	if binary == "" {
 		binary = "pg_restore"
 	}
+	target, err := parseDatabaseTarget(databaseURL)
+	if err != nil {
+		return err
+	}
 	command := exec.CommandContext(ctx, binary,
 		"--exit-on-error",
 		"--no-owner",
 		"--no-privileges",
+		"--dbname="+target.database,
 	)
-	command.Env = databaseEnvironment(databaseURL)
+	environment, err := databaseEnvironment(databaseURL)
+	if err != nil {
+		return err
+	}
+	command.Env = environment
 	command.Stdin = source
 	stderr := &boundedBuffer{limit: 8192}
 	command.Stderr = stderr
@@ -188,8 +203,13 @@ func (p ProcessArchiveTool) Restore(ctx context.Context, databaseURL string, sou
 	return nil
 }
 
-func databaseEnvironment(databaseURL string) []string {
-	environment := make([]string, 0, len(os.Environ())+2)
+func databaseEnvironment(databaseURL string) ([]string, error) {
+	target, err := parseDatabaseTarget(databaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	environment := make([]string, 0, len(os.Environ())+16)
 	for _, value := range os.Environ() {
 		key, _, _ := strings.Cut(value, "=")
 		if isLibPQConnectionEnvironment(key) {
@@ -197,7 +217,87 @@ func databaseEnvironment(databaseURL string) []string {
 		}
 		environment = append(environment, value)
 	}
-	return append(environment, "PGDATABASE="+databaseURL, "PGCONNECT_TIMEOUT=15")
+	environment = append(environment,
+		"PGHOST="+target.host,
+		"PGPORT="+strconv.Itoa(target.port),
+		"PGDATABASE="+target.database,
+		"PGUSER="+target.user,
+		"PGPASSWORD="+target.password,
+		"PGAPPNAME=gildra-catalog-backup",
+	)
+
+	query := target.url.Query()
+	sslMode := strings.TrimSpace(query.Get("sslmode"))
+	if sslMode == "" {
+		sslMode = "prefer"
+	}
+	environment = append(environment, "PGSSLMODE="+sslMode)
+	libPQOptions := map[string]string{
+		"sslcert": "PGSSLCERT", "sslkey": "PGSSLKEY", "sslrootcert": "PGSSLROOTCERT",
+		"sslcrl": "PGSSLCRL", "sslcrldir": "PGSSLCRLDIR", "sslsni": "PGSSLSNI",
+		"sslnegotiation": "PGSSLNEGOTIATION", "channel_binding": "PGCHANNELBINDING",
+		"require_auth": "PGREQUIREAUTH", "target_session_attrs": "PGTARGETSESSIONATTRS",
+		"gssencmode": "PGGSSENCMODE", "krbsrvname": "PGKRBSRVNAME",
+		"connect_timeout": "PGCONNECT_TIMEOUT", "options": "PGOPTIONS",
+	}
+	for parameter, key := range libPQOptions {
+		if value := strings.TrimSpace(query.Get(parameter)); value != "" {
+			environment = append(environment, key+"="+value)
+		}
+	}
+	if strings.TrimSpace(query.Get("connect_timeout")) == "" {
+		environment = append(environment, "PGCONNECT_TIMEOUT=15")
+	}
+	return environment, nil
+}
+
+type databaseTarget struct {
+	url      *url.URL
+	host     string
+	port     int
+	database string
+	user     string
+	password string
+}
+
+func parseDatabaseTarget(databaseURL string) (databaseTarget, error) {
+	parsedURL, err := url.Parse(databaseURL)
+	if err != nil {
+		return databaseTarget{}, fmt.Errorf("parse PostgreSQL connection URL: %w", err)
+	}
+	if parsedURL.Scheme != "postgres" && parsedURL.Scheme != "postgresql" {
+		return databaseTarget{}, errors.New("backup PostgreSQL connection must use a postgres URL")
+	}
+	host := strings.TrimSpace(parsedURL.Hostname())
+	if host == "" {
+		return databaseTarget{}, errors.New("backup PostgreSQL connection host is required")
+	}
+	port := 5432
+	if value := parsedURL.Port(); value != "" {
+		port, err = strconv.Atoi(value)
+		if err != nil || port < 1 || port > 65535 {
+			return databaseTarget{}, errors.New("backup PostgreSQL connection port is invalid")
+		}
+	}
+	database, err := url.PathUnescape(strings.TrimPrefix(parsedURL.EscapedPath(), "/"))
+	if err != nil {
+		return databaseTarget{}, fmt.Errorf("parse PostgreSQL database name: %w", err)
+	}
+	if database == "" {
+		return databaseTarget{}, errors.New("backup PostgreSQL connection database is required")
+	}
+	if parsedURL.User == nil || strings.TrimSpace(parsedURL.User.Username()) == "" {
+		return databaseTarget{}, errors.New("backup PostgreSQL connection user is required")
+	}
+	password, _ := parsedURL.User.Password()
+	return databaseTarget{
+		url:      parsedURL,
+		host:     host,
+		port:     port,
+		database: database,
+		user:     parsedURL.User.Username(),
+		password: password,
+	}, nil
 }
 
 func isLibPQConnectionEnvironment(key string) bool {
@@ -205,7 +305,8 @@ func isLibPQConnectionEnvironment(key string) bool {
 	case "PGDATABASE", "PGHOST", "PGHOSTADDR", "PGPORT", "PGUSER", "PGPASSWORD", "PGPASSFILE",
 		"PGSERVICE", "PGSERVICEFILE", "PGOPTIONS", "PGAPPNAME", "PGCONNECT_TIMEOUT",
 		"PGSSLMODE", "PGREQUIRESSL", "PGSSLCERT", "PGSSLKEY", "PGSSLROOTCERT", "PGSSLCRL",
-		"PGSSLCRLDIR", "PGSSLSNI", "PGREQUIREPEER", "PGCHANNELBINDING", "PGTARGETSESSIONATTRS":
+		"PGSSLCRLDIR", "PGSSLSNI", "PGSSLNEGOTIATION", "PGREQUIREPEER", "PGCHANNELBINDING",
+		"PGREQUIREAUTH", "PGTARGETSESSIONATTRS", "PGGSSENCMODE", "PGKRBSRVNAME":
 		return true
 	default:
 		return false
@@ -214,8 +315,10 @@ func isLibPQConnectionEnvironment(key string) bool {
 
 func redactDatabaseURL(value, databaseURL string) string {
 	value = strings.ReplaceAll(value, databaseURL, "[REDACTED_DATABASE_URL]")
-	if parsed, err := pgx.ParseConfig(databaseURL); err == nil && parsed.Password != "" {
-		value = strings.ReplaceAll(value, parsed.Password, "[REDACTED]")
+	if parsed, err := url.Parse(databaseURL); err == nil && parsed.User != nil {
+		if password, present := parsed.User.Password(); present && password != "" {
+			value = strings.ReplaceAll(value, password, "[REDACTED]")
+		}
 	}
 	return strings.TrimSpace(value)
 }

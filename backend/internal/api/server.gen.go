@@ -114,6 +114,30 @@ func (e GameEntityChangeChangeType) Valid() bool {
 	}
 }
 
+// Defines values for GameEntityMediaCacheStatus.
+const (
+	GameEntityMediaCacheStatusBlocked GameEntityMediaCacheStatus = "blocked"
+	GameEntityMediaCacheStatusCached  GameEntityMediaCacheStatus = "cached"
+	GameEntityMediaCacheStatusFailed  GameEntityMediaCacheStatus = "failed"
+	GameEntityMediaCacheStatusRemote  GameEntityMediaCacheStatus = "remote"
+)
+
+// Valid indicates whether the value is a known member of the GameEntityMediaCacheStatus enum.
+func (e GameEntityMediaCacheStatus) Valid() bool {
+	switch e {
+	case GameEntityMediaCacheStatusBlocked:
+		return true
+	case GameEntityMediaCacheStatusCached:
+		return true
+	case GameEntityMediaCacheStatusFailed:
+		return true
+	case GameEntityMediaCacheStatusRemote:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GameEntityQualityStatus.
 const (
 	Minimal  GameEntityQualityStatus = "minimal"
@@ -272,22 +296,22 @@ func (e GameSourcePolicyPublicApiStatus) Valid() bool {
 
 // Defines values for GameSourcePolicyReviewStatus.
 const (
-	Blocked  GameSourcePolicyReviewStatus = "blocked"
-	Expired  GameSourcePolicyReviewStatus = "expired"
-	Pending  GameSourcePolicyReviewStatus = "pending"
-	Reviewed GameSourcePolicyReviewStatus = "reviewed"
+	GameSourcePolicyReviewStatusBlocked  GameSourcePolicyReviewStatus = "blocked"
+	GameSourcePolicyReviewStatusExpired  GameSourcePolicyReviewStatus = "expired"
+	GameSourcePolicyReviewStatusPending  GameSourcePolicyReviewStatus = "pending"
+	GameSourcePolicyReviewStatusReviewed GameSourcePolicyReviewStatus = "reviewed"
 )
 
 // Valid indicates whether the value is a known member of the GameSourcePolicyReviewStatus enum.
 func (e GameSourcePolicyReviewStatus) Valid() bool {
 	switch e {
-	case Blocked:
+	case GameSourcePolicyReviewStatusBlocked:
 		return true
-	case Expired:
+	case GameSourcePolicyReviewStatusExpired:
 		return true
-	case Pending:
+	case GameSourcePolicyReviewStatusPending:
 		return true
-	case Reviewed:
+	case GameSourcePolicyReviewStatusReviewed:
 		return true
 	default:
 		return false
@@ -303,6 +327,54 @@ const (
 func (e HealthResponseStatus) Valid() bool {
 	switch e {
 	case Ok:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LibraryDatasetApplicability.
+const (
+	Applicable    LibraryDatasetApplicability = "applicable"
+	NotApplicable LibraryDatasetApplicability = "not_applicable"
+	PendingSource LibraryDatasetApplicability = "pending_source"
+)
+
+// Valid indicates whether the value is a known member of the LibraryDatasetApplicability enum.
+func (e LibraryDatasetApplicability) Valid() bool {
+	switch e {
+	case Applicable:
+		return true
+	case NotApplicable:
+		return true
+	case PendingSource:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LibraryDatasetFreshness.
+const (
+	LibraryDatasetFreshnessEmpty      LibraryDatasetFreshness = "empty"
+	LibraryDatasetFreshnessFailed     LibraryDatasetFreshness = "failed"
+	LibraryDatasetFreshnessFresh      LibraryDatasetFreshness = "fresh"
+	LibraryDatasetFreshnessRefreshing LibraryDatasetFreshness = "refreshing"
+	LibraryDatasetFreshnessStale      LibraryDatasetFreshness = "stale"
+)
+
+// Valid indicates whether the value is a known member of the LibraryDatasetFreshness enum.
+func (e LibraryDatasetFreshness) Valid() bool {
+	switch e {
+	case LibraryDatasetFreshnessEmpty:
+		return true
+	case LibraryDatasetFreshnessFailed:
+		return true
+	case LibraryDatasetFreshnessFresh:
+		return true
+	case LibraryDatasetFreshnessRefreshing:
+		return true
+	case LibraryDatasetFreshnessStale:
 		return true
 	default:
 		return false
@@ -528,6 +600,24 @@ func (e ListGameRelationTypesParamsLocale) Valid() bool {
 	}
 }
 
+// Defines values for ListLibraryDatasetsParamsLocale.
+const (
+	ListLibraryDatasetsParamsLocaleEnUS ListLibraryDatasetsParamsLocale = "en_US"
+	ListLibraryDatasetsParamsLocaleRuRU ListLibraryDatasetsParamsLocale = "ru_RU"
+)
+
+// Valid indicates whether the value is a known member of the ListLibraryDatasetsParamsLocale enum.
+func (e ListLibraryDatasetsParamsLocale) Valid() bool {
+	switch e {
+	case ListLibraryDatasetsParamsLocaleEnUS:
+		return true
+	case ListLibraryDatasetsParamsLocaleRuRU:
+		return true
+	default:
+		return false
+	}
+}
+
 // APIError defines model for APIError.
 type APIError struct {
 	Code    string `json:"code"`
@@ -538,6 +628,7 @@ type APIError struct {
 type APIIndex struct {
 	Catalog string          `json:"catalog"`
 	Graphql string          `json:"graphql"`
+	Library string          `json:"library"`
 	Rest    string          `json:"rest"`
 	Version APIIndexVersion `json:"version"`
 }
@@ -609,10 +700,13 @@ type GameEntity struct {
 	Locale      GameEntityLocale   `json:"locale"`
 
 	// LocaleFallback True when the requested locale was unavailable and the English source value was returned.
-	LocaleFallback bool   `json:"localeFallback"`
-	Name           string `json:"name"`
-	Product        string `json:"product"`
-	Quality        *int   `json:"quality,omitempty"`
+	LocaleFallback bool `json:"localeFallback"`
+
+	// Media Source-backed media for the published entity build. Empty or absent when no publishable media exists.
+	Media   *[]GameEntityMedia `json:"media,omitempty"`
+	Name    string             `json:"name"`
+	Product string             `json:"product"`
+	Quality *int               `json:"quality,omitempty"`
 
 	// ResolvedLocale Locale that actually supplied the canonical displayed name.
 	ResolvedLocale GameEntityResolvedLocale `json:"resolvedLocale"`
@@ -652,6 +746,27 @@ type GameEntityHighlight struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
+
+// GameEntityMedia defines model for GameEntityMedia.
+type GameEntityMedia struct {
+	AssetKey    string                     `json:"assetKey"`
+	CacheStatus GameEntityMediaCacheStatus `json:"cacheStatus"`
+	FileDataId  *int64                     `json:"fileDataId,omitempty"`
+	Height      *int                       `json:"height,omitempty"`
+	Kind        string                     `json:"kind"`
+	Locale      string                     `json:"locale"`
+	MimeType    string                     `json:"mimeType"`
+	Primary     bool                       `json:"primary"`
+	Source      string                     `json:"source"`
+	SourceUrl   string                     `json:"sourceUrl"`
+
+	// Url Cached URL when available, otherwise the verified remote asset URL.
+	Url   string `json:"url"`
+	Width *int   `json:"width,omitempty"`
+}
+
+// GameEntityMediaCacheStatus defines model for GameEntityMedia.CacheStatus.
+type GameEntityMediaCacheStatus string
 
 // GameEntityPage defines model for GameEntityPage.
 type GameEntityPage struct {
@@ -876,6 +991,49 @@ type IngestEventsResponse struct {
 	Accepted int `json:"accepted"`
 }
 
+// LibraryDataset defines model for LibraryDataset.
+type LibraryDataset struct {
+	// Applicability Whether the dataset belongs to this game product, or is waiting for a permitted source.
+	Applicability       LibraryDatasetApplicability `json:"applicability"`
+	ApplicabilityReason string                      `json:"applicabilityReason"`
+	BuildVersion        *string                     `json:"buildVersion,omitempty"`
+
+	// CategoryPath Taxonomy path used by the entity listing. Empty for an entire entity type.
+	CategoryPath      string                  `json:"categoryPath"`
+	CoverageUpdatedAt *time.Time              `json:"coverageUpdatedAt,omitempty"`
+	Description       string                  `json:"description"`
+	EntityCount       int64                   `json:"entityCount"`
+	EntityType        string                  `json:"entityType"`
+	Freshness         LibraryDatasetFreshness `json:"freshness"`
+	FreshnessReason   string                  `json:"freshnessReason"`
+	Group             string                  `json:"group"`
+	IconSymbol        string                  `json:"iconSymbol"`
+	ImageCount        int64                   `json:"imageCount"`
+
+	// ItemClassId Stable game item class filter used by item datasets such as Weapons and Armor.
+	ItemClassId *int `json:"itemClassId,omitempty"`
+
+	// LocalizedCount Records with a localization row available for the requested locale.
+	LocalizedCount int64  `json:"localizedCount"`
+	Name           string `json:"name"`
+
+	// PreviewImageUrl Source-backed game icon selected for the dataset card when one is available.
+	PreviewImageUrl *string `json:"previewImageUrl,omitempty"`
+	Product         string  `json:"product"`
+	Slug            string  `json:"slug"`
+	SortOrder       int     `json:"sortOrder"`
+	TooltipCount    int64   `json:"tooltipCount"`
+
+	// VerifiedLocalizedCount Localizations backed by a ready source artifact with content proof.
+	VerifiedLocalizedCount int64 `json:"verifiedLocalizedCount"`
+}
+
+// LibraryDatasetApplicability Whether the dataset belongs to this game product, or is waiting for a permitted source.
+type LibraryDatasetApplicability string
+
+// LibraryDatasetFreshness defines model for LibraryDataset.Freshness.
+type LibraryDatasetFreshness string
+
 // Problem defines model for Problem.
 type Problem struct {
 	Detail   *string `json:"detail,omitempty"`
@@ -958,6 +1116,9 @@ type ListGameEntitiesParamsLocale string
 // GetGameEntityParams defines parameters for GetGameEntity.
 type GetGameEntityParams struct {
 	Locale *GetGameEntityParamsLocale `form:"locale,omitempty" json:"locale,omitempty"`
+
+	// Dataset Optional public library dataset scope. Returns 404 when the entity is not a member.
+	Dataset *string `form:"dataset,omitempty" json:"dataset,omitempty"`
 }
 
 // GetGameEntityParamsLocale defines parameters for GetGameEntity.
@@ -1011,8 +1172,11 @@ type ListGameEntityVersionsParamsLocale string
 
 // ListGameEntitySummariesParams defines parameters for ListGameEntitySummaries.
 type ListGameEntitySummariesParams struct {
-	Product *string                              `form:"product,omitempty" json:"product,omitempty"`
-	Type    *string                              `form:"type,omitempty" json:"type,omitempty"`
+	Product *string `form:"product,omitempty" json:"product,omitempty"`
+	Type    *string `form:"type,omitempty" json:"type,omitempty"`
+
+	// Dataset Public library dataset slug. The server resolves its entity type and membership filters from the dataset registry.
+	Dataset *string                              `form:"dataset,omitempty" json:"dataset,omitempty"`
 	Locale  *ListGameEntitySummariesParamsLocale `form:"locale,omitempty" json:"locale,omitempty"`
 	Q       *string                              `form:"q,omitempty" json:"q,omitempty"`
 
@@ -1021,6 +1185,9 @@ type ListGameEntitySummariesParams struct {
 
 	// Facet Repeatable taxonomy paths combined with AND semantics. Use one value per facet, for example class plus specialization plus equipment slot.
 	Facet *[]string `form:"facet,omitempty" json:"facet,omitempty"`
+
+	// ItemClassId Stable game item class identifier, for example 2 for weapons and 4 for armor.
+	ItemClassId *int `form:"itemClassId,omitempty" json:"itemClassId,omitempty"`
 
 	// MinItemLevel Minimum stored base item level. Applies to item records.
 	MinItemLevel *int `form:"minItemLevel,omitempty" json:"minItemLevel,omitempty"`
@@ -1070,6 +1237,15 @@ type ListGameSitemapEntriesParams struct {
 	// Shard Zero, one, or two lowercase hexadecimal UUID prefix characters.
 	Shard *string `form:"shard,omitempty" json:"shard,omitempty"`
 }
+
+// ListLibraryDatasetsParams defines parameters for ListLibraryDatasets.
+type ListLibraryDatasetsParams struct {
+	Product *string                          `form:"product,omitempty" json:"product,omitempty"`
+	Locale  *ListLibraryDatasetsParamsLocale `form:"locale,omitempty" json:"locale,omitempty"`
+}
+
+// ListLibraryDatasetsParamsLocale defines parameters for ListLibraryDatasets.
+type ListLibraryDatasetsParamsLocale string
 
 // IngestAnalyticsEventsJSONRequestBody defines body for IngestAnalyticsEvents for application/json ContentType.
 type IngestAnalyticsEventsJSONRequestBody = IngestEventsRequest
@@ -1139,6 +1315,9 @@ type ServerInterface interface {
 	// SubmitIndexNow Queue URLs for IndexNow submission.
 	// (POST /v1/indexnow)
 	SubmitIndexNow(w http.ResponseWriter, r *http.Request)
+	// ListLibraryDatasets List curated public Warcraft datasets and their freshness and coverage.
+	// (GET /v1/library/datasets)
+	ListLibraryDatasets(w http.ResponseWriter, r *http.Request, params ListLibraryDatasetsParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -1499,6 +1678,19 @@ func (siw *ServerInterfaceWrapper) GetGameEntity(w http.ResponseWriter, r *http.
 		return
 	}
 
+	// ------------- Optional query parameter "dataset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dataset", r.URL.Query(), &params.Dataset, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dataset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dataset", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetGameEntity(w, r, id, params)
 	}))
@@ -1804,6 +1996,19 @@ func (siw *ServerInterfaceWrapper) ListGameEntitySummaries(w http.ResponseWriter
 		return
 	}
 
+	// ------------- Optional query parameter "dataset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dataset", r.URL.Query(), &params.Dataset, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dataset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dataset", Err: err})
+		}
+		return
+	}
+
 	// ------------- Optional query parameter "locale" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "locale", r.URL.Query(), &params.Locale, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
@@ -1852,6 +2057,19 @@ func (siw *ServerInterfaceWrapper) ListGameEntitySummaries(w http.ResponseWriter
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "facet"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "facet", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "itemClassId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "itemClassId", r.URL.Query(), &params.ItemClassId, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "itemClassId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemClassId", Err: err})
 		}
 		return
 	}
@@ -2138,6 +2356,52 @@ func (siw *ServerInterfaceWrapper) SubmitIndexNow(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListLibraryDatasets operation middleware
+func (siw *ServerInterfaceWrapper) ListLibraryDatasets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListLibraryDatasetsParams
+
+	// ------------- Optional query parameter "product" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "product", r.URL.Query(), &params.Product, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "product"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "locale" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "locale", r.URL.Query(), &params.Locale, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "locale"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "locale", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLibraryDatasets(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -2260,6 +2524,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1", wrapper.GetAPIIndex)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/game/products", wrapper.ListGameProducts)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/library/datasets", wrapper.ListLibraryDatasets)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/game/entity-types", wrapper.ListGameEntityTypes)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/game/entities", wrapper.ListGameEntities)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/game/entity-summaries", wrapper.ListGameEntitySummaries)
@@ -3543,6 +3808,82 @@ func (response SubmitIndexNow500JSONResponse) VisitSubmitIndexNowResponse(w http
 	return err
 }
 
+type ListLibraryDatasetsRequestObject struct {
+	Params ListLibraryDatasetsParams
+}
+
+type ListLibraryDatasetsResponseObject interface {
+	VisitListLibraryDatasetsResponse(w http.ResponseWriter) error
+}
+
+type ListLibraryDatasets200JSONResponse struct {
+	Data []LibraryDataset `json:"data"`
+}
+
+func (response ListLibraryDatasets200JSONResponse) VisitListLibraryDatasetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLibraryDatasets429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response ListLibraryDatasets429ApplicationProblemPlusJSONResponse) VisitListLibraryDatasetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLibraryDatasets500JSONResponse struct{ InternalErrorJSONResponse }
+
+func (response ListLibraryDatasets500JSONResponse) VisitListLibraryDatasetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLibraryDatasets503ApplicationProblemPlusJSONResponse struct {
+	CatalogPublicationUnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListLibraryDatasets503ApplicationProblemPlusJSONResponse) VisitListLibraryDatasetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// GetLiveness Check whether the API process is alive.
@@ -3605,6 +3946,9 @@ type StrictServerInterface interface {
 	// SubmitIndexNow Queue URLs for IndexNow submission.
 	// (POST /v1/indexnow)
 	SubmitIndexNow(ctx context.Context, request SubmitIndexNowRequestObject) (SubmitIndexNowResponseObject, error)
+	// ListLibraryDatasets List curated public Warcraft datasets and their freshness and coverage.
+	// (GET /v1/library/datasets)
+	ListLibraryDatasets(ctx context.Context, request ListLibraryDatasetsRequestObject) (ListLibraryDatasetsResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -4171,91 +4515,131 @@ func (sh *strictHandler) SubmitIndexNow(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// ListLibraryDatasets operation middleware
+func (sh *strictHandler) ListLibraryDatasets(w http.ResponseWriter, r *http.Request, params ListLibraryDatasetsParams) {
+	var request ListLibraryDatasetsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListLibraryDatasets(ctx, request.(ListLibraryDatasetsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListLibraryDatasets")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListLibraryDatasetsResponseObject); ok {
+		if err := validResponse.VisitListLibraryDatasetsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
-	"3Ye7fwcAAP//",
+	"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",
+	"//8=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

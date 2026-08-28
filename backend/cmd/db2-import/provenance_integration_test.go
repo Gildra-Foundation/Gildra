@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	catalogservice "github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogtaxonomy"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/wago"
@@ -52,6 +53,7 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	if err := goose.SetDialect("postgres"); err != nil {
 		t.Fatal(err)
 	}
+	goose.SetLogger(goose.NopLogger())
 	if err := goose.UpContext(ctx, database, migrations); err != nil {
 		t.Fatal(err)
 	}
@@ -80,8 +82,9 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		{"ItemSparse", 201, proofItem("Provenance Reagent")},
 		{"Item", 200, map[string]any{"ClassID": "7", "SubclassID": "0", "IconFileDataID": "134400"}},
 		{"Item", 201, map[string]any{"ClassID": "7", "SubclassID": "0", "IconFileDataID": "134401"}},
+		{"Item", 202, map[string]any{"ClassID": "2", "SubclassID": "7", "InventoryType": "13", "IconFileDataID": "134404"}},
 		{"ItemXItemEffect", 301, map[string]any{"ItemID": "200", "ItemEffectID": "300"}},
-		{"ItemEffect", 300, map[string]any{"SpellID": "100", "LegacySlotIndex": "0", "TriggerType": "0"}},
+		{"ItemEffect", 300, map[string]any{"SpellID": "100", "LegacySlotIndex": "0", "TriggerType": "0", "CoolDownMSec": "-1"}},
 		{"SkillLine", 500, map[string]any{"DisplayName_lang": "Provenance Craft", "Description_lang": "Integration profession", "CategoryID": "11"}},
 		{"TradeSkillCategory", 600, map[string]any{"SkillLineID": "500", "Name_lang": "Proof Recipes", "OrderIndex": "1"}},
 		{"SkillLineAbility", 700, map[string]any{"SkillLine": "500", "Spell": "100", "TradeSkillCategoryID": "600", "MinSkillLineRank": "1"}},
@@ -92,7 +95,12 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		{"CreatureModelData", 902, map[string]any{"FileDataID": "134403", "ModelScale": "1"}},
 		{"CreatureDifficulty", 903, map[string]any{"CreatureID": "900", "FactionTemplateID": "35", "ContentTuningID": "1"}},
 		{"QuestV2", 1000, map[string]any{"UniqueBitFlag": "1"}},
+		{"QuestV2", 1001, map[string]any{"UniqueBitFlag": "2", "UiQuestDetailsThemeID": "3"}},
 		{"QuestV2CliTask", 1000, map[string]any{"QuestTitle_lang": "Prove the Source", "BulletText_lang": "Keep the artifact link."}},
+		{"QuestPackageItem", 1100, map[string]any{"PackageID": "77", "ItemID": "200", "ItemQuantity": "2", "DisplayType": "1"}},
+		{"Map", 2000, map[string]any{"MapName_lang": "Numerically Colliding Map", "MapDescription0_lang": "Must not be projected by a UiMap-only run."}},
+		{"UiMap", 2000, map[string]any{"Name_lang": "Provenance UI Map", "ParentUiMapID": "0", "Type": "3", "Flags": "0", "System": "0"}},
+		{"UiMap", 2001, map[string]any{"Name_lang": "", "ParentUiMapID": "2000", "Type": "4", "Flags": "0", "System": "0"}},
 	}
 	artifacts := make(map[string]uuid.UUID)
 	for _, proof := range rows {
@@ -107,6 +115,11 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		}
 		insertDB2ProofRow(t, ctx, pool, ic, artifactID, proof)
 	}
+	questPackageHash := sha256.Sum256([]byte("integration-quest-package"))
+	if err := store.CompleteArtifact(ctx, artifacts["QuestPackageItem"], questPackageHash[:],
+		int64(len("integration-quest-package")), ""); err != nil {
+		t.Fatalf("complete quest package artifact: %v", err)
+	}
 	listfileArtifact, err := store.RegisterArtifact(ctx, ic, "wow_listfile", "community-listfile", "",
 		"https://github.com/wowdev/wow-listfile/blob/master/community-listfile.csv", map[string]any{"test": true})
 	if err != nil {
@@ -116,7 +129,7 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	if err := store.CompleteArtifact(ctx, listfileArtifact, listfileHash[:], int64(len("integration-listfile")), ""); err != nil {
 		t.Fatal(err)
 	}
-	for fileDataID, iconName := range map[int64]string{134399: "spell_test_provenance", 999999: "inv_test_provenance"} {
+	for fileDataID, iconName := range map[int64]string{134399: "spell_test_provenance", 134404: "inv_test_registry", 999999: "inv_test_provenance"} {
 		if _, err := pool.Exec(ctx, `
 			INSERT INTO catalog_file_assets(
 				file_data_id,path,icon_name,source_url,content_hash,snapshot_id,source_artifact_id)
@@ -128,7 +141,7 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	}
 	itemProofHash := sha256.Sum256([]byte("complete-item-artifact"))
 	if err := recordDB2Completeness(ctx, pool, ic, artifacts["Item"], "Item", "en_US",
-		"https://wago.tools/db2/Item/csv?build=99.0.0.990001", 2,
+		"https://wago.tools/db2/Item/csv?build=99.0.0.990001", 3,
 		wago.ContentProof{SHA256: itemProofHash[:], ByteSize: 42, Complete: true}, nil); err != nil {
 		t.Fatalf("record DB2 completeness: %v", err)
 	}
@@ -142,7 +155,7 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	); err != nil {
 		t.Fatalf("read DB2 completeness: %v", err)
 	}
-	if completenessStatus != "complete" || expectedCount != 2 || importedCount != 2 || excludedCount != 0 || missingCount != 0 {
+	if completenessStatus != "complete" || expectedCount != 3 || importedCount != 3 || excludedCount != 0 || missingCount != 0 {
 		t.Fatalf("unexpected DB2 completeness: status=%s expected=%d imported=%d excluded=%d missing=%d",
 			completenessStatus, expectedCount, importedCount, excludedCount, missingCount)
 	}
@@ -156,6 +169,9 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		{"professions", projectProfessions},
 		{"creatures", projectCreatures},
 		{"quests", projectQuests},
+		{"collections", func(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext) (int64, error) {
+			return projectCollectionsForTables(ctx, db, ic, []string{"UiMap"})
+		}},
 	}
 	for _, projector := range projectors {
 		if _, err := projector.run(ctx, pool, ic); err != nil {
@@ -170,18 +186,166 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	if _, err := projectItems(ctx, pool, ic); err != nil {
 		t.Fatalf("rebuild item acquisition: %v", err)
 	}
+	variantResult, err := catalogtaxonomy.New(pool).RebuildItemVariants(ctx)
+	if err != nil {
+		t.Fatalf("rebuild item variants: %v", err)
+	}
+	if variantResult.Variants != 3 || variantResult.VariantStats != 2 || variantResult.VariantEffects != 1 {
+		t.Fatalf("base variants=%d stats=%d effects=%d, want 3, 2 and 1",
+			variantResult.Variants, variantResult.VariantStats, variantResult.VariantEffects)
+	}
 	if err := observeDB2LocalizationArtifacts(ctx, pool, ic); err != nil {
 		t.Fatalf("observe DB2 localization artifacts: %v", err)
 	}
 
 	assertEntityArtifact(t, ctx, pool, "spell", 100, artifacts["SpellName"])
 	assertEntityArtifact(t, ctx, pool, "item", 200, artifacts["ItemSparse"])
+	assertVersionObservation(t, ctx, pool, "item", 200, artifacts["ItemSparse"])
+	assertVersionObservation(t, ctx, pool, "item", 200, artifacts["Item"])
+	assertEntityArtifact(t, ctx, pool, "item", 202, artifacts["Item"])
+	assertVersionObservation(t, ctx, pool, "item", 202, artifacts["Item"])
+	assertEntityArtifact(t, ctx, pool, "quest_reward_package", 77, artifacts["QuestPackageItem"])
+	assertVersionObservation(t, ctx, pool, "quest_reward_package", 77, artifacts["QuestPackageItem"])
+	var packageItems int
+	var packageItemEntity uuid.UUID
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*),(array_agg(item_entity_id ORDER BY row_id))[1]
+		FROM catalog_quest_package_items
+		WHERE build_id=$1 AND package_id=77`, ic.BuildID).Scan(&packageItems, &packageItemEntity); err != nil {
+		t.Fatalf("read quest reward package items: %v", err)
+	}
+	if packageItems != 1 || packageItemEntity == uuid.Nil {
+		t.Fatalf("quest reward package items=%d item_entity=%s, want 1 resolved item", packageItems, packageItemEntity)
+	}
+	var packageEntity uuid.UUID
+	if err := pool.QueryRow(ctx, `
+		SELECT id FROM game_entities
+		WHERE product_id=$1 AND entity_type='quest_reward_package' AND external_id=77`, ic.ProductID).Scan(&packageEntity); err != nil {
+		t.Fatalf("read quest reward package entity: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `
+		UPDATE game_entities SET published_version_id=latest_version_id
+		WHERE id=ANY($1::uuid[])`, []uuid.UUID{packageEntity, packageItemEntity}); err != nil {
+		t.Fatalf("publish integration package entities: %v", err)
+	}
+	packageDetail, err := catalogservice.NewService(pool).Get(ctx, packageEntity, "en_US")
+	if err != nil {
+		t.Fatalf("read quest reward package detail: %v", err)
+	}
+	if packageDetail.Tooltip == nil {
+		t.Fatal("quest reward package detail has no structured tooltip")
+	}
+	packageBlockFound := false
+	for _, block := range packageDetail.Tooltip.Blocks {
+		if block["type"] == "quest_reward_package" && block["link_status"] == "package_only" {
+			packageBlockFound = true
+		}
+	}
+	if !packageBlockFound {
+		t.Fatalf("quest reward package tooltip is missing package_only block: %#v", packageDetail.Tooltip.Blocks)
+	}
+	var itemRegistryOnly bool
+	var itemRegistryLocalizations int
+	var itemRegistryClass, itemRegistrySubclass int
+	var itemRegistryInventory string
+	var itemRegistryQuality *string
+	var itemRegistryLevel *int
+	if err := pool.QueryRow(ctx, `
+		SELECT COALESCE((version.payload->>'registry_only')::boolean,false),
+			(SELECT count(*) FROM game_entity_localizations localization WHERE localization.version_id=version.id),
+			item.item_class_id,item.item_subclass_id,item.inventory_type,item.quality,item.item_level
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		JOIN catalog_items item ON item.version_id=version.id
+		WHERE entity.entity_type='item' AND entity.external_id=202`).Scan(
+		&itemRegistryOnly, &itemRegistryLocalizations, &itemRegistryClass, &itemRegistrySubclass,
+		&itemRegistryInventory, &itemRegistryQuality, &itemRegistryLevel,
+	); err != nil {
+		t.Fatalf("read Item-only registry projection: %v", err)
+	}
+	if !itemRegistryOnly || itemRegistryLocalizations != 0 || itemRegistryClass != 2 || itemRegistrySubclass != 7 ||
+		itemRegistryInventory != "13" || itemRegistryQuality != nil || itemRegistryLevel != nil {
+		t.Fatalf("unexpected Item-only registry projection: registry=%v localizations=%d class=%d subclass=%d inventory=%q quality=%v level=%v",
+			itemRegistryOnly, itemRegistryLocalizations, itemRegistryClass, itemRegistrySubclass,
+			itemRegistryInventory, itemRegistryQuality, itemRegistryLevel)
+	}
 	assertEntityArtifact(t, ctx, pool, "profession", 500, artifacts["SkillLine"])
 	assertEntityArtifact(t, ctx, pool, "recipe", 100, artifacts["SkillLineAbility"])
 	assertEntityArtifact(t, ctx, pool, "creature", 900, artifacts["Creature"])
 	assertEntityArtifact(t, ctx, pool, "quest", 1000, artifacts["QuestV2CliTask"])
+	assertEntityArtifact(t, ctx, pool, "quest", 1001, artifacts["QuestV2"])
+	assertEntityArtifact(t, ctx, pool, "ui_map", 2000, artifacts["UiMap"])
+	assertEntityArtifact(t, ctx, pool, "ui_map", 2001, artifacts["UiMap"])
+	var collidingMapExists bool
+	if err := pool.QueryRow(ctx, `
+		SELECT EXISTS(SELECT 1 FROM game_entities WHERE entity_type='map' AND external_id=2000)`).Scan(
+		&collidingMapExists,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if collidingMapExists {
+		t.Fatal("UiMap-only collection projection unexpectedly projected the colliding Map row")
+	}
+	var registryOnly bool
+	var registryLocalizationCount int
+	if err := pool.QueryRow(ctx, `
+		SELECT COALESCE((version.payload->>'registry_only')::boolean,false),
+			(SELECT count(*) FROM game_entity_localizations localization
+			 WHERE localization.version_id=version.id)
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		WHERE entity.entity_type='quest' AND entity.external_id=1001`).Scan(
+		&registryOnly, &registryLocalizationCount,
+	); err != nil {
+		t.Fatalf("read registry-only quest: %v", err)
+	}
+	if !registryOnly || registryLocalizationCount != 0 {
+		t.Fatalf("registry-only quest flag=%v localizations=%d, want true and 0",
+			registryOnly, registryLocalizationCount)
+	}
 	assertVersionObservation(t, ctx, pool, "item", 200, artifacts["ItemSparse"])
 	assertVersionObservation(t, ctx, pool, "recipe", 100, artifacts["SpellName"])
+	assertVersionObservation(t, ctx, pool, "ui_map", 2000, artifacts["UiMap"])
+	assertVersionObservation(t, ctx, pool, "ui_map", 2001, artifacts["UiMap"])
+	var unnamedUIMapRegistryOnly bool
+	var unnamedUIMapLocalizations int
+	if err := pool.QueryRow(ctx, `
+		SELECT COALESCE((version.payload->>'registry_only')::boolean,false),
+			(SELECT count(*) FROM game_entity_localizations localization
+			 WHERE localization.version_id=version.id)
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		WHERE entity.entity_type='ui_map' AND entity.external_id=2001`).Scan(
+		&unnamedUIMapRegistryOnly, &unnamedUIMapLocalizations,
+	); err != nil {
+		t.Fatalf("read registry-only UI map: %v", err)
+	}
+	if !unnamedUIMapRegistryOnly || unnamedUIMapLocalizations != 0 {
+		t.Fatalf("registry-only UI map flag=%v localizations=%d, want true and 0",
+			unnamedUIMapRegistryOnly, unnamedUIMapLocalizations)
+	}
+	var uiMapRevisionsBefore, uiMapRevisionsAfter int
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*)
+		FROM game_entity_versions version
+		JOIN game_entities entity ON entity.id=version.entity_id
+		WHERE entity.entity_type='ui_map'`).Scan(&uiMapRevisionsBefore); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := projectCollectionsForTables(ctx, pool, ic, []string{"UiMap"}); err != nil {
+		t.Fatalf("repeat UiMap projection: %v", err)
+	}
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*)
+		FROM game_entity_versions version
+		JOIN game_entities entity ON entity.id=version.entity_id
+		WHERE entity.entity_type='ui_map'`).Scan(&uiMapRevisionsAfter); err != nil {
+		t.Fatal(err)
+	}
+	if uiMapRevisionsAfter != uiMapRevisionsBefore {
+		t.Fatalf("repeated UiMap projection created revisions: before=%d after=%d",
+			uiMapRevisionsBefore, uiMapRevisionsAfter)
+	}
 	for _, proof := range []struct {
 		entityType string
 		externalID int64
@@ -194,6 +358,7 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		{"creature", 900, "en_US", artifacts["Creature"]},
 		{"quest", 1000, "en_US", artifacts["QuestV2CliTask"]},
 		{"recipe", 100, "en_US", artifacts["SpellName"]},
+		{"ui_map", 2000, "en_US", artifacts["UiMap"]},
 	} {
 		assertLocalizationArtifact(t, ctx, pool, proof.entityType, proof.externalID,
 			proof.locale, proof.artifact)
@@ -204,6 +369,19 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	assertFactArtifact(t, ctx, pool, "recipe currency", `SELECT source_artifact_id FROM catalog_recipe_currencies LIMIT 1`, artifacts["SpellReagentsCurrency"])
 	assertFactArtifact(t, ctx, pool, "recipe output", `SELECT source_artifact_id FROM catalog_recipe_outputs LIMIT 1`, artifacts["SpellEffect"])
 	assertFactArtifact(t, ctx, pool, "item effect", `SELECT source_artifact_id FROM catalog_item_effects LIMIT 1`, artifacts["ItemXItemEffect"])
+	assertFactArtifact(t, ctx, pool, "item stat", `SELECT source_artifact_id FROM catalog_item_stats LIMIT 1`, artifacts["ItemSparse"])
+	assertFactArtifact(t, ctx, pool, "base variant stat", `SELECT source_artifact_id FROM catalog_item_variant_stats LIMIT 1`, artifacts["ItemSparse"])
+	assertFactArtifact(t, ctx, pool, "base variant effect", `SELECT source_artifact_id FROM catalog_item_variant_effects LIMIT 1`, artifacts["ItemXItemEffect"])
+	var normalizedCooldown *int
+	var rawCooldown int
+	if err := pool.QueryRow(ctx, `
+		SELECT cooldown_ms,(attributes->>'raw_cooldown_ms')::int
+		FROM catalog_item_variant_effects LIMIT 1`).Scan(&normalizedCooldown, &rawCooldown); err != nil {
+		t.Fatalf("read base variant cooldown: %v", err)
+	}
+	if normalizedCooldown != nil || rawCooldown != -1 {
+		t.Fatalf("base variant cooldown=%v raw=%d, want NULL and -1", normalizedCooldown, rawCooldown)
+	}
 	assertFactArtifact(t, ctx, pool, "spell effect", `SELECT source_artifact_id FROM catalog_spell_effects WHERE source='db2' LIMIT 1`, artifacts["SpellEffect"])
 	assertFactArtifact(t, ctx, pool, "creature display", `SELECT source_artifact_id FROM catalog_creature_displays LIMIT 1`, artifacts["Creature"])
 	assertFactArtifact(t, ctx, pool, "creature display info", `SELECT source_artifact_id FROM catalog_creature_display_info LIMIT 1`, artifacts["CreatureDisplayInfo"])
@@ -343,6 +521,88 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	}
 }
 
+func TestQuestRegistryOnlyProjectionPreservesProvenance(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	migrations, err := filepath.Abs("../../migrations/postgres")
+	if err != nil {
+		t.Fatal(err)
+	}
+	postgres, err := pgcontainer.Run(ctx, "postgres:17.10-alpine3.23",
+		pgcontainer.WithDatabase("gildra"),
+		pgcontainer.WithUsername("gildra"),
+		pgcontainer.WithPassword("test-password"),
+		pgcontainer.BasicWaitStrategies(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testcontainers.CleanupContainer(t, postgres)
+	postgresURL, err := postgres.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		t.Fatal(err)
+	}
+	database, err := sql.Open("pgx", postgresURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	if err := goose.SetDialect("postgres"); err != nil {
+		t.Fatal(err)
+	}
+	if err := goose.UpContext(ctx, database, migrations); err != nil {
+		t.Fatal(err)
+	}
+	pool, err := pgxpool.New(ctx, postgresURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+
+	store := catalogimport.NewStore(pool)
+	ic, err := store.Begin(ctx, "wow_classic_era", 199001, "1.99.0.199001", "us", "wago_tools", nil,
+		map[string]any{"integration_test": "registry_only_quest"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	artifactID, err := store.RegisterArtifact(ctx, ic, "wago_tools", "QuestV2", "en_US",
+		"https://wago.tools/db2/QuestV2/csv?build=1.99.0.199001", map[string]any{"test": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	insertDB2ProofRow(t, ctx, pool, ic, artifactID, db2ProofRow{
+		table: "QuestV2", rowID: 4242,
+		payload: map[string]any{"UniqueBitFlag": "7", "UiQuestDetailsThemeID": "3"},
+	})
+
+	if _, err := projectQuests(ctx, pool, ic); err != nil {
+		t.Fatal(err)
+	}
+	assertEntityArtifact(t, ctx, pool, "quest", 4242, artifactID)
+
+	var product, slug string
+	var registryOnly bool
+	var localizationCount int
+	if err := pool.QueryRow(ctx, `
+		SELECT product.slug,entity.canonical_slug,
+			COALESCE((version.payload->>'registry_only')::boolean,false),
+			(SELECT count(*) FROM game_entity_localizations localization
+			 WHERE localization.version_id=version.id)
+		FROM game_entities entity
+		JOIN game_products product ON product.id=entity.product_id
+		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		WHERE entity.entity_type='quest' AND entity.external_id=4242`).Scan(
+		&product, &slug, &registryOnly, &localizationCount,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if product != "wow_classic_era" || slug != "quest-4242" || !registryOnly || localizationCount != 0 {
+		t.Fatalf("registry quest product=%s slug=%s flag=%v localizations=%d",
+			product, slug, registryOnly, localizationCount)
+	}
+}
+
 type db2ProofRow struct {
 	table   string
 	rowID   int64
@@ -353,6 +613,7 @@ func proofItem(name string) map[string]any {
 	return map[string]any{
 		"Display_lang": name, "Description_lang": "Integration test item",
 		"OverallQualityID": "1", "ItemLevel": "10", "RequiredLevel": "1",
+		"StatModifier_bonusStat_0": "7", "StatPercentEditor_0": "100", "StatPercentageOfSocket_0": "0",
 		"InventoryType": "0", "Stackable": "20", "MaxCount": "0",
 		"BuyPrice": "0", "SellPrice": "0",
 	}

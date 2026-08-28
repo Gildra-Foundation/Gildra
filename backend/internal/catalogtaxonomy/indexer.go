@@ -24,16 +24,18 @@ type Definition struct {
 }
 
 type Result struct {
-	Categories   int64 `json:"categories"`
-	Assignments  int64 `json:"assignments"`
-	Tooltips     int64 `json:"tooltips"`
-	Icons        int64 `json:"icons,omitempty"`
-	SpellEffects int64 `json:"spellEffects,omitempty"`
-	SpellDetails int64 `json:"spellDetails,omitempty"`
-	QuestRewards int64 `json:"questRewards,omitempty"`
-	Links        int64 `json:"links,omitempty"`
-	Variants     int64 `json:"variants,omitempty"`
-	Descriptions int64 `json:"descriptions,omitempty"`
+	Categories     int64 `json:"categories"`
+	Assignments    int64 `json:"assignments"`
+	Tooltips       int64 `json:"tooltips"`
+	Icons          int64 `json:"icons,omitempty"`
+	SpellEffects   int64 `json:"spellEffects,omitempty"`
+	SpellDetails   int64 `json:"spellDetails,omitempty"`
+	QuestRewards   int64 `json:"questRewards,omitempty"`
+	Links          int64 `json:"links,omitempty"`
+	Variants       int64 `json:"variants,omitempty"`
+	VariantStats   int64 `json:"variantStats,omitempty"`
+	VariantEffects int64 `json:"variantEffects,omitempty"`
+	Descriptions   int64 `json:"descriptions,omitempty"`
 }
 
 type Indexer struct {
@@ -538,7 +540,7 @@ func (i *Indexer) RebuildItemVariants(ctx context.Context) (Result, error) {
 	var result Result
 	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
 		var err error
-		result.Variants, err = rebuildBaseItemVariants(ctx, tx)
+		result.Variants, result.VariantStats, result.VariantEffects, err = rebuildBaseItemVariants(ctx, tx)
 		return err
 	})
 	return result, err
@@ -570,7 +572,7 @@ func (i *Indexer) rebuildItems(ctx context.Context, includeTooltips bool) (Resul
 			}
 			result.Assignments += written
 		}
-		result.Variants, err = rebuildBaseItemVariants(ctx, tx)
+		result.Variants, result.VariantStats, result.VariantEffects, err = rebuildBaseItemVariants(ctx, tx)
 		if err != nil {
 			return err
 		}
@@ -602,7 +604,7 @@ func (i *Indexer) rebuildItems(ctx context.Context, includeTooltips bool) (Resul
 	return result, err
 }
 
-func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, error) {
+func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, int64, int64, error) {
 	command, err := tx.Exec(ctx, `
 		INSERT INTO catalog_item_variants(item_version_id,snapshot_id,source_artifact_id,variant_key,
 			item_level,quality,content_hash,attributes)
@@ -617,22 +619,96 @@ func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, error) {
 			source_artifact_id=EXCLUDED.source_artifact_id,item_level=EXCLUDED.item_level,quality=EXCLUDED.quality,
 			content_hash=EXCLUDED.content_hash,attributes=EXCLUDED.attributes,updated_at=now()`)
 	if err != nil {
-		return 0, fmt.Errorf("rebuild base item variants: %w", err)
+		return 0, 0, 0, fmt.Errorf("rebuild base item variants: %w", err)
 	}
-	if _, err := tx.Exec(ctx, `
+	stats, err := tx.Exec(ctx, `
+		UPDATE catalog_item_stats stat SET source_artifact_id=version.source_artifact_id
+		FROM game_entity_versions version
+		WHERE version.id=stat.version_id AND stat.source_artifact_id IS NULL
+		  AND version.source_artifact_id IS NOT NULL;
+
 		DELETE FROM catalog_item_variant_stats stats USING catalog_item_variants variant
 		WHERE stats.variant_id=variant.id AND variant.variant_key='base';
+
+		WITH current_items AS MATERIALIZED (
+			SELECT item.id AS entity_id,item_version.id AS item_version_id,item_version.build_id,
+				variant.id AS variant_id
+			FROM game_entities item
+			JOIN game_entity_versions item_version ON item_version.id=item.latest_version_id
+			JOIN catalog_item_variants variant ON variant.item_version_id=item_version.id
+				AND variant.variant_key='base'
+			WHERE item.entity_type='item' AND item.deleted_at IS NULL
+		), current_stats AS MATERIALIZED (
+			SELECT DISTINCT ON (current.item_version_id,stat.slot)
+				current.variant_id,stat.slot,stat.stat_type,stat.percent_editor,stat.socket_percentage,
+				stat.source_artifact_id,fact_version.source
+			FROM current_items current
+			JOIN game_entity_versions fact_version ON fact_version.entity_id=current.entity_id
+				AND fact_version.build_id=current.build_id
+			JOIN catalog_item_stats stat ON stat.version_id=fact_version.id
+			ORDER BY current.item_version_id,stat.slot,fact_version.revision DESC
+		)
 		INSERT INTO catalog_item_variant_stats(variant_id,stat_index,stat_type,value,allocation,socket_cost_rate,
-			stat_key,stat_label,locale,source,attributes)
-		SELECT variant.id,stat.slot,stat.stat_type,NULL,stat.percent_editor,stat.socket_percentage,
-			'stat_'||stat.stat_type,NULL,NULL,CASE WHEN version.source='raidbots' THEN 'raidbots' ELSE 'db2' END,
-			jsonb_build_object('value_kind','scaling_allocation','source_version',version.source)
-		FROM catalog_item_stats stat
-		JOIN game_entity_versions version ON version.id=stat.version_id
-		JOIN catalog_item_variants variant ON variant.item_version_id=stat.version_id AND variant.variant_key='base'`, pgx.QueryExecModeSimpleProtocol); err != nil {
-		return 0, fmt.Errorf("rebuild canonical item variant stats: %w", err)
+			stat_key,stat_label,locale,source,attributes,source_artifact_id)
+		SELECT stat.variant_id,stat.slot,stat.stat_type,NULL,stat.percent_editor,stat.socket_percentage,
+			'stat_'||stat.stat_type,NULL,NULL,CASE WHEN stat.source='raidbots' THEN 'raidbots' ELSE 'db2' END,
+			jsonb_build_object('value_kind','scaling_allocation','source_version',stat.source),
+			stat.source_artifact_id
+		FROM current_stats stat`, pgx.QueryExecModeSimpleProtocol)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("rebuild canonical item variant stats: %w", err)
 	}
-	return command.RowsAffected(), nil
+	effects, err := tx.Exec(ctx, `
+		DELETE FROM catalog_item_variant_effects stored USING catalog_item_variants variant
+		WHERE stored.variant_id=variant.id AND variant.variant_key='base';
+
+		WITH current_items AS MATERIALIZED (
+			SELECT item.id AS entity_id,item.product_id,item_version.id AS item_version_id,
+				item_version.build_id,variant.id AS variant_id
+			FROM game_entities item
+			JOIN game_entity_versions item_version ON item_version.id=item.latest_version_id
+			JOIN catalog_item_variants variant ON variant.item_version_id=item_version.id
+				AND variant.variant_key='base'
+			WHERE item.entity_type='item' AND item.deleted_at IS NULL
+		), current_effects AS MATERIALIZED (
+			SELECT DISTINCT ON (current.item_version_id,effect.item_effect_id)
+				current.product_id,current.item_version_id,current.build_id,current.variant_id,
+				effect.item_effect_id,effect.slot,effect.spell_id,effect.trigger_type,effect.charges,
+				effect.cooldown_ms,effect.category_cooldown_ms,effect.spell_category_id,
+				effect.specialization_id,effect.player_condition_id,effect.source_artifact_id
+			FROM current_items current
+			JOIN game_entity_versions fact_version ON fact_version.entity_id=current.entity_id
+				AND fact_version.build_id=current.build_id
+			JOIN catalog_item_effects effect ON effect.version_id=fact_version.id
+			ORDER BY current.item_version_id,effect.item_effect_id,fact_version.revision DESC
+		)
+		INSERT INTO catalog_item_variant_effects(
+			variant_id,effect_index,spell_entity_id,spell_external_id,trigger_type,cooldown_ms,
+			attributes,source_artifact_id)
+		SELECT effect.variant_id,
+			(row_number() OVER (PARTITION BY effect.item_version_id ORDER BY effect.slot,effect.item_effect_id)-1)::smallint,
+			spell.id,effect.spell_id,effect.trigger_type,
+			CASE WHEN effect.cooldown_ms<0 THEN NULL ELSE effect.cooldown_ms END,
+			jsonb_build_object(
+				'item_effect_id',effect.item_effect_id,
+				'slot',effect.slot,
+				'charges',effect.charges,
+				'raw_cooldown_ms',effect.cooldown_ms,
+				'category_cooldown_ms',effect.category_cooldown_ms,
+				'spell_category_id',effect.spell_category_id,
+				'specialization_id',effect.specialization_id,
+				'player_condition_id',effect.player_condition_id,
+				'projection','canonical_base'),
+			effect.source_artifact_id
+		FROM current_effects effect
+		LEFT JOIN game_entities spell ON spell.product_id=effect.product_id AND spell.entity_type='spell'
+			AND spell.external_id=effect.spell_id AND spell.deleted_at IS NULL
+		LEFT JOIN game_entity_versions spell_version ON spell_version.id=spell.latest_version_id
+			AND spell_version.build_id=effect.build_id`, pgx.QueryExecModeSimpleProtocol)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("rebuild canonical item variant effects: %w", err)
+	}
+	return command.RowsAffected(), stats.RowsAffected(), effects.RowsAffected(), nil
 }
 
 func rebuildEntityGraph(ctx context.Context, tx pgx.Tx) (int64, error) {
