@@ -1,0 +1,21 @@
+[Unit]
+Description=Refresh Gildra private catalog media cache
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/gildra/.env
+ConditionPathExists=/opt/gildra/current-release.env
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/gildra
+ExecStart=/usr/bin/docker compose --env-file .env --env-file current-release.env -f compose.yml -f compose.prod.yml -f compose.runtime.yml run --rm --no-deps catalog-media-cache -access-mode private -environment production -seed-icon-limit 2000 -limit 2000 -confirm
+TimeoutStartSec=2h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
