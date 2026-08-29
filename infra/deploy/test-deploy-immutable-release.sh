@@ -27,6 +27,8 @@ done
 
 {
   printf 'CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups\n'
+  printf 'CATALOG_ACCESS_MODE=private\n'
+  printf 'CATALOG_RECOVERY_POLICY=verified_same_host\n'
 } > "$deployment_directory/.env"
 
 {
@@ -98,6 +100,12 @@ current=$(cat "$TEST_STATE_DIR/web.image")
 if [ "$current" = "$TEST_NEW_WEB" ]; then
   exit 22
 fi
+for argument in "$@"; do
+  if [ "$argument" = '--write-out' ]; then
+    printf '401'
+    break
+  fi
+done
 exit 0
 FAKE_CURL
 
@@ -150,6 +158,10 @@ grep -Fq 'catalog-load-check' "$deployment_script"
 grep -Fq 'verify_catalog_readiness' "$deployment_script"
 grep -Fq -- '-require-production-ready' "$deployment_script"
 grep -Fq 'require_environment_value CATALOG_BACKUP_LOCAL_DIRECTORY' "$deployment_script"
+grep -Fq 'require_environment_value CATALOG_ACCESS_MODE' "$deployment_script"
+grep -Fq 'require_environment_value CATALOG_RECOVERY_POLICY' "$deployment_script"
+grep -Fq -- '-require-data-ready' "$deployment_script"
+grep -Fq 'private catalog allowed an anonymous request' "$deployment_script"
 if grep -Fq 'require_environment_value SENTRY_GO_DSN' "$deployment_script" ||
   grep -Fq 'require_environment_value NEXT_PUBLIC_SENTRY_DSN' "$deployment_script"; then
   printf 'test: optional Sentry configuration still blocks a release\n' >&2

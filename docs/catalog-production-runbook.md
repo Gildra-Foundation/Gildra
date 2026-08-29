@@ -231,6 +231,28 @@ plus `localeFallback`. Recipe reagent and output blocks expose
 `resolution_status` and `resolution_reason`, so known source gaps are not
 presented as valid empty data.
 
+## Private production library
+
+The single-server production deployment uses `CATALOG_ACCESS_MODE=private`.
+Catalog REST routes under `/v1/game/` and `/v1/library/`, GraphQL and
+`/v1/media/` require the same valid administrator session as the API console.
+Anonymous catalog requests return `401`; their bodies and authenticated
+responses are marked `private, no-store`. The public catalog response cache and
+public-source publication gate are not used in this mode. Data-readiness,
+artifact proof, active-build and verified same-host recovery gates remain
+mandatory.
+
+`https://api.gildra.net/library` is routed to the authenticated catalog view in
+the API console. Public `/database` and `/library` paths on `gildra.net`
+redirect to that login-protected surface. Do not change the access mode to
+`public` while Wago.Tools or wow-listfile contribute to the selected release
+without recording current public-API grants.
+
+Cached media with a configured source retention period is not returned after
+that period. The hourly media job re-fetches expired observations; a failed
+refresh retains the previous content-addressed bytes for recovery but leaves
+the expired observation unavailable until a later successful refresh.
+
 ## Safe projection of existing complete DB2 facts
 
 Projection-only maintenance must never call the normal importer with

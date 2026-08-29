@@ -63,6 +63,17 @@ validate_release_inputs() {
     fail 'GILDRA_ROLLBACK_COMPATIBLE=true is required; automated rollback never reverts database migrations'
 }
 
+validate_runtime_policy() {
+  catalog_access_mode=$(manifest_value CATALOG_ACCESS_MODE "$environment_file")
+  case $catalog_access_mode in
+    public|private) ;;
+    *) fail 'CATALOG_ACCESS_MODE must be public or private' ;;
+  esac
+  catalog_recovery_policy=$(manifest_value CATALOG_RECOVERY_POLICY "$environment_file")
+  [ "$catalog_recovery_policy" = verified_same_host ] ||
+    fail 'this single-server release requires CATALOG_RECOVERY_POLICY=verified_same_host'
+}
+
 manifest_value() {
   key=$1
   file=$2
@@ -146,9 +157,17 @@ verify_local_health() {
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/livez >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/readyz >/dev/null
-  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 \
-    'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US' >/dev/null
+  if [ "$catalog_access_mode" = private ]; then
+    catalog_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+      --output /dev/null --write-out '%{http_code}' \
+      --resolve api.gildra.net:443:127.0.0.1 \
+      'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US')
+    [ "$catalog_status" = 401 ] || fail "private catalog allowed an anonymous request: HTTP $catalog_status"
+  else
+    curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+      --resolve api.gildra.net:443:127.0.0.1 \
+      'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US' >/dev/null
+  fi
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/library >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
@@ -167,8 +186,12 @@ verify_catalog_load() {
   api_container=$(compose ps -q api)
   [ -n "$api_container" ] || fail 'api service has no running container for the load gate'
   for locale in en_US ru_RU; do
+    load_target='-base-url=http://127.0.0.1:8080'
+    if [ "$catalog_access_mode" = private ]; then
+      load_target='-in-process'
+    fi
     docker exec "$api_container" catalog-load-check \
-      -base-url http://127.0.0.1:8080 \
+      "$load_target" \
       -product wow \
       -locale "$locale" \
       -dataset items \
@@ -183,10 +206,17 @@ verify_catalog_load() {
 verify_catalog_readiness() {
   api_container=$(compose ps -q api)
   [ -n "$api_container" ] || fail 'api service has no running container for the readiness gate'
-  docker exec "$api_container" catalog-audit \
-    -product wow \
-    -recovery-policy verified_same_host \
-    -require-production-ready
+  if [ "$catalog_access_mode" = private ]; then
+    docker exec "$api_container" catalog-audit \
+      -product wow \
+      -recovery-policy verified_same_host \
+      -require-data-ready
+  else
+    docker exec "$api_container" catalog-audit \
+      -product wow \
+      -recovery-policy verified_same_host \
+      -require-production-ready
+  fi
 }
 
 write_release_manifest() {
@@ -268,7 +298,10 @@ for command_name in docker curl flock grep sed date; do
 done
 
 [ -f "$environment_file" ] || fail "runtime environment file does not exist: $environment_file"
+require_environment_value CATALOG_ACCESS_MODE
+require_environment_value CATALOG_RECOVERY_POLICY
 require_environment_value CATALOG_BACKUP_LOCAL_DIRECTORY
+validate_runtime_policy
 for compose_file in compose.yml compose.prod.yml compose.runtime.yml; do
   [ -f "$deployment_directory/$compose_file" ] ||
     fail "deployment file does not exist: $deployment_directory/$compose_file"

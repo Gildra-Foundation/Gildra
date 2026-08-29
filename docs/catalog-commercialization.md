@@ -59,6 +59,20 @@ The existing permission joins already stop serving media when a grant is
 missing, expired or revoked. That fail-closed behavior must be preserved when
 retention is added.
 
+## Private-library owner decision on 2026-08-29
+
+The product owner approved Wago.Tools and wow-listfile for the free internal
+Gildra library only. This is not a public-API, bulk-export, asset-cache or
+commercial-use grant. The production runtime must therefore use
+`CATALOG_ACCESS_MODE=private` and require a valid administrator session for
+REST catalog routes, GraphQL and local media. Anonymous requests must return
+`401` with a private, non-cacheable response.
+
+This internal decision does not change the fail-closed
+`production/public_api` grants in the database. Moving the library to public
+access, adding paid access or exporting source-derived data requires a new
+source review and an explicit owner/legal grant before the access mode changes.
+
 ## Safe product value
 
 The defensible product value is Gildra's own work: normalized relationships,

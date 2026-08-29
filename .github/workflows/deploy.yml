@@ -141,13 +141,14 @@ jobs:
         run: |
           ssh "$OVH_USER@$OVH_HOST" \
             "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
-      - name: Verify public production paths
+      - name: Verify private production paths
         shell: bash
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/livez >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/readyz >/dev/null
-          curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US' >/dev/null
+          catalog_status="$(curl --silent --show-error --retry 6 --retry-delay 5 --max-time 15 --output /dev/null --write-out '%{http_code}' 'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US')"
+          test "$catalog_status" = 401
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/library >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/ru/library >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://gildra.net/database >/dev/null
