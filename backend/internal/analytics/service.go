@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -112,21 +113,26 @@ func (s *Service) Overview(ctx context.Context, hours int) (api.AnalyticsOvervie
 	series := make([]api.AnalyticsPoint, 0, hours)
 	for rows.Next() {
 		var point api.AnalyticsPoint
-		if err := rows.Scan(&point.Hour, &point.Events, &point.UniqueUsers); err != nil {
+		var events, uniqueUsers uint64
+		if err := rows.Scan(&point.Hour, &events, &uniqueUsers); err != nil {
 			return api.AnalyticsOverview{}, fmt.Errorf("scan analytics overview: %w", err)
 		}
+		point.Events = analyticsCount(events)
+		point.UniqueUsers = analyticsCount(uniqueUsers)
 		series = append(series, point)
 	}
 	if err := rows.Err(); err != nil {
 		return api.AnalyticsOverview{}, fmt.Errorf("iterate analytics overview: %w", err)
 	}
-	var totalEvents, totalUsers int64
+	var totalEventsRaw, totalUsersRaw uint64
 	if err := s.clickhouse.QueryRow(ctx, `
 		SELECT countMerge(events), uniqCombined64Merge(unique_users)
 		FROM analytics_events_hourly
-		WHERE hour >= ?`, from).Scan(&totalEvents, &totalUsers); err != nil {
+		WHERE hour >= ?`, from).Scan(&totalEventsRaw, &totalUsersRaw); err != nil {
 		return api.AnalyticsOverview{}, fmt.Errorf("query analytics totals: %w", err)
 	}
+	totalEvents := analyticsCount(totalEventsRaw)
+	totalUsers := analyticsCount(totalUsersRaw)
 
 	var activeSubscriptions int64
 	if err := s.postgres.QueryRow(ctx, `SELECT count(*) FROM subscriptions WHERE status IN ('active', 'trialing')`).Scan(&activeSubscriptions); err != nil {
@@ -141,6 +147,13 @@ func (s *Service) Overview(ctx context.Context, hours int) (api.AnalyticsOvervie
 		_ = s.redis.Set(ctx, cacheKey, encoded, s.cacheTTL).Err()
 	}
 	return overview, nil
+}
+
+func analyticsCount(value uint64) int64 {
+	if value > math.MaxInt64 {
+		return math.MaxInt64
+	}
+	return int64(value)
 }
 
 func (s *Service) Ready(ctx context.Context) error {
