@@ -6,8 +6,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -16,6 +19,7 @@ import (
 )
 
 const officialIconOrigin = "https://render.worldofwarcraft.com/eu/icons/56/"
+const wagoCASCOrigin = "https://wago.tools/api/casc/"
 const officialIconWorkers = 8
 const officialIconFailureSampleLimit = 25
 
@@ -25,12 +29,14 @@ type IconFailure struct {
 }
 
 type IconSeedResult struct {
-	Eligible      int64         `json:"eligible"`
-	IconsCached   int64         `json:"iconsCached"`
-	Entities      int64         `json:"entitiesLinked"`
-	Failed        int64         `json:"failed"`
-	Bytes         int64         `json:"bytes"`
-	FailureSample []IconFailure `json:"failureSample,omitempty"`
+	Eligible               int64         `json:"eligible"`
+	IconsCached            int64         `json:"iconsCached"`
+	Entities               int64         `json:"entitiesLinked"`
+	Failed                 int64         `json:"failed"`
+	Bytes                  int64         `json:"bytes"`
+	FallbackCached         int64         `json:"fallbackCached"`
+	UnpinnedFallbackCached int64         `json:"unpinnedFallbackCached"`
+	FailureSample          []IconFailure `json:"failureSample,omitempty"`
 }
 
 type iconCandidate struct {
@@ -40,11 +46,19 @@ type iconCandidate struct {
 
 type cachedIcon struct {
 	iconCandidate
-	SourceURL string
-	CacheKey  string
-	MIMEType  string
-	Size      int64
-	Hash      []byte
+	Source         string
+	AssetKey       string
+	ArtifactKey    string
+	SourceURL      string
+	SourceSize     int64
+	SourceHash     []byte
+	CacheKey       string
+	CachedMIMEType string
+	CachedSize     int64
+	CachedHash     []byte
+	Width          int
+	Height         int
+	Conversion     string
 }
 
 type iconFetchResult struct {
@@ -68,17 +82,18 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 
 	var productID int16
 	var buildID int64
+	var buildVersion string
 	if err := c.db.QueryRow(ctx, `
-		SELECT product.id,build.id
+		SELECT product.id,build.id,build.version
 		FROM game_products product
 		JOIN LATERAL (
-			SELECT candidate.id
+			SELECT candidate.id,candidate.version
 			FROM game_builds candidate
 			WHERE candidate.product_id=product.id
 			ORDER BY candidate.build_number DESC,candidate.id DESC
 			LIMIT 1
 		) build ON true
-		WHERE product.slug=$1`, product).Scan(&productID, &buildID); err != nil {
+		WHERE product.slug=$1`, product).Scan(&productID, &buildID, &buildVersion); err != nil {
 		return IconSeedResult{}, fmt.Errorf("find current %s build: %w", product, err)
 	}
 
@@ -108,7 +123,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 				count(DISTINCT media.entity_id) AS entity_count
 			FROM catalog_entity_media media
 			WHERE media.build_id=$2 AND media.media_kind='icon'
-			  AND media.asset_key='official_render_56' AND media.source='blizzard_api'
+			  AND ((media.asset_key='official_render_56' AND media.source='blizzard_api')
+			    OR (media.asset_key='wago_casc_icon_png' AND media.source='wago_tools'))
 			  AND media.cache_status='cached' AND media.cached_content_hash IS NOT NULL
 			  AND media.cached_byte_size IS NOT NULL AND media.attributes ? 'icon_name'
 			GROUP BY lower(media.attributes->>'icon_name')
@@ -146,7 +162,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 	}
 
 	icons := make([]cachedIcon, 0, len(candidates))
-	for outcome := range c.fetchOfficialIcons(ctx, candidates) {
+	for outcome := range c.fetchOfficialIcons(ctx, candidates, product, buildVersion) {
 		if outcome.Err != nil {
 			result.Failed++
 			if len(result.FailureSample) < officialIconFailureSampleLimit {
@@ -159,7 +175,13 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 		}
 		icons = append(icons, outcome.Icon)
 		result.IconsCached++
-		result.Bytes += outcome.Icon.Size
+		result.Bytes += outcome.Icon.CachedSize
+		if outcome.Icon.Source == "wago_tools" {
+			result.FallbackCached++
+			if outcome.Icon.Conversion == "blp2_to_png_unpinned_casc" {
+				result.UnpinnedFallbackCached++
+			}
+		}
 	}
 	if err := ctx.Err(); err != nil {
 		return result, err
@@ -168,51 +190,90 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 		return result, nil
 	}
 
-	sort.Slice(icons, func(i, j int) bool { return icons[i].Name < icons[j].Name })
-	manifest := sha256.New()
-	_, _ = manifest.Write([]byte("gildra-official-icon-manifest-v1\n"))
+	sort.Slice(icons, func(i, j int) bool {
+		if icons[i].Source == icons[j].Source {
+			return icons[i].Name < icons[j].Name
+		}
+		return icons[i].Source < icons[j].Source
+	})
+	iconsBySource := make(map[string][]cachedIcon, 2)
 	for _, icon := range icons {
-		_, _ = fmt.Fprintf(manifest, "%s:%x:%d\n", icon.Name, icon.Hash, icon.Size)
+		iconsBySource[icon.Source] = append(iconsBySource[icon.Source], icon)
 	}
-	snapshotHash := hex.EncodeToString(manifest.Sum(nil))
 
 	err = pgx.BeginFunc(ctx, c.db, func(tx pgx.Tx) error {
-		var snapshotID uuid.UUID
-		if err := tx.QueryRow(ctx, `
-			INSERT INTO catalog_snapshots(product_id,build_id,source,status,content_hash,metadata,validated_at,published_at)
-			VALUES($1,$2,'blizzard_api','published',$3,
-				jsonb_build_object('projection','official_render_icons_56','icon_count',$4::int,'complete',$5::boolean),now(),now())
-			ON CONFLICT(product_id,build_id,source,content_hash) WHERE content_hash IS NOT NULL
-			DO UPDATE SET metadata=EXCLUDED.metadata,validated_at=now(),published_at=now()
-			RETURNING id`, productID, buildID, snapshotHash, len(icons),
-			result.Failed == 0 && result.Eligible <= int64(limit)).Scan(&snapshotID); err != nil {
-			return fmt.Errorf("create official icon snapshot: %w", err)
+		snapshotIDs := make(map[string]uuid.UUID, len(iconsBySource))
+		for _, source := range []string{"blizzard_api", "wago_tools"} {
+			sourceIcons := iconsBySource[source]
+			if len(sourceIcons) == 0 {
+				continue
+			}
+			manifest := sha256.New()
+			_, _ = fmt.Fprintf(manifest, "gildra-icon-manifest-v2:%s\n", source)
+			for _, icon := range sourceIcons {
+				_, _ = fmt.Fprintf(manifest, "%s:%x:%d\n", icon.Name, icon.SourceHash, icon.SourceSize)
+			}
+			projection := "official_render_icons_56"
+			if source == "wago_tools" {
+				projection = "wago_casc_icons_png"
+			}
+			var snapshotID uuid.UUID
+			if err := tx.QueryRow(ctx, `
+				INSERT INTO catalog_snapshots(product_id,build_id,source,status,content_hash,metadata,validated_at,published_at)
+				VALUES($1,$2,$3,'published',$4,
+					jsonb_build_object('projection',$5::text,'icon_count',$6::int,'complete',$7::boolean),now(),now())
+				ON CONFLICT(product_id,build_id,source,content_hash) WHERE content_hash IS NOT NULL
+				DO UPDATE SET metadata=EXCLUDED.metadata,validated_at=now(),published_at=now()
+				RETURNING id`, productID, buildID, source, hex.EncodeToString(manifest.Sum(nil)),
+				projection, len(sourceIcons), result.Failed == 0 && result.Eligible <= int64(limit)).Scan(&snapshotID); err != nil {
+				return fmt.Errorf("create %s icon snapshot: %w", source, err)
+			}
+			snapshotIDs[source] = snapshotID
 		}
 
 		if _, err := tx.Exec(ctx, `
 			CREATE TEMP TABLE official_icon_seed(
 				icon_name text PRIMARY KEY,
 				file_data_id bigint,
+				snapshot_id uuid NOT NULL,
+				source text NOT NULL,
+				asset_key text NOT NULL,
+				projection text NOT NULL,
+				artifact_key text NOT NULL,
 				source_url text NOT NULL,
+				source_byte_size bigint NOT NULL,
+				source_content_hash bytea NOT NULL,
 				cache_key text NOT NULL,
-				mime_type text NOT NULL,
-				byte_size bigint NOT NULL,
-				content_hash bytea NOT NULL,
+				cached_mime_type text NOT NULL,
+				cached_byte_size bigint NOT NULL,
+				cached_content_hash bytea NOT NULL,
+				width integer NOT NULL,
+				height integer NOT NULL,
+				conversion text NOT NULL,
 				artifact_id uuid NOT NULL,
-				artifact_key text NOT NULL
+				CHECK(width>0 AND height>0)
 			) ON COMMIT DROP`); err != nil {
 			return fmt.Errorf("create official icon seed table: %w", err)
 		}
 		seedRows := make([][]any, 0, len(icons))
 		for _, icon := range icons {
+			projection := "official_render_icon_56"
+			if icon.Source == "wago_tools" {
+				projection = "wago_casc_icon_blp2"
+			}
 			seedRows = append(seedRows, []any{
-				icon.Name, icon.FileDataID, icon.SourceURL, icon.CacheKey, icon.MIMEType,
-				icon.Size, icon.Hash, uuid.New(), "icons/56/" + icon.Name + ".jpg",
+				icon.Name, icon.FileDataID, snapshotIDs[icon.Source], icon.Source,
+				icon.AssetKey, projection, icon.ArtifactKey, icon.SourceURL,
+				icon.SourceSize, icon.SourceHash, icon.CacheKey, icon.CachedMIMEType,
+				icon.CachedSize, icon.CachedHash, icon.Width, icon.Height,
+				icon.Conversion, uuid.New(),
 			})
 		}
 		if copied, err := tx.CopyFrom(ctx, pgx.Identifier{"official_icon_seed"}, []string{
-			"icon_name", "file_data_id", "source_url", "cache_key", "mime_type",
-			"byte_size", "content_hash", "artifact_id", "artifact_key",
+			"icon_name", "file_data_id", "snapshot_id", "source", "asset_key", "projection",
+			"artifact_key", "source_url", "source_byte_size", "source_content_hash",
+			"cache_key", "cached_mime_type", "cached_byte_size", "cached_content_hash",
+			"width", "height", "conversion", "artifact_id",
 		}, pgx.CopyFromRows(seedRows)); err != nil {
 			return fmt.Errorf("stage official icons: %w", err)
 		} else if copied != int64(len(seedRows)) {
@@ -225,19 +286,22 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 					id,snapshot_id,build_id,source,artifact_key,locale,source_url,
 					content_hash,byte_size,status,metadata,fetched_at
 				)
-				SELECT seed.artifact_id,$1,$2,'blizzard_api',seed.artifact_key,'',seed.source_url,
-					seed.content_hash,seed.byte_size,'ready',jsonb_build_object(
-						'projection','official_render_icon_56','icon_name',seed.icon_name,
-						'file_data_id',seed.file_data_id
+				SELECT DISTINCT ON (seed.snapshot_id,seed.artifact_key)
+					seed.artifact_id,seed.snapshot_id,$1,seed.source,seed.artifact_key,'',seed.source_url,
+					seed.source_content_hash,seed.source_byte_size,'ready',jsonb_build_object(
+						'projection',seed.projection,'icon_name',seed.icon_name,
+						'file_data_id',seed.file_data_id,'conversion',seed.conversion
 					),now()
 				FROM official_icon_seed seed
+				ORDER BY seed.snapshot_id,seed.artifact_key,seed.icon_name
 				ON CONFLICT(snapshot_id,artifact_key,locale)
 				DO UPDATE SET source_url=EXCLUDED.source_url,byte_size=EXCLUDED.byte_size,
 					content_hash=EXCLUDED.content_hash,status='ready',metadata=EXCLUDED.metadata,fetched_at=now()
-				RETURNING id,artifact_key
+				RETURNING id,snapshot_id,artifact_key
 			)
 			UPDATE official_icon_seed seed SET artifact_id=upserted.id
-			FROM upserted WHERE upserted.artifact_key=seed.artifact_key`, snapshotID, buildID); err != nil {
+			FROM upserted WHERE upserted.snapshot_id=seed.snapshot_id
+			  AND upserted.artifact_key=seed.artifact_key`, buildID); err != nil {
 			return fmt.Errorf("record official icon provenance batch: %w", err)
 		}
 
@@ -246,8 +310,9 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 				SELECT DISTINCT ON (entity.id)
 					entity.id AS entity_id,entity.entity_type,entity.external_id,
 					seed.icon_name,COALESCE(icon.file_data_id,seed.file_data_id) AS file_data_id,
-					seed.source_url,seed.cache_key,seed.mime_type,seed.byte_size,
-					seed.content_hash,seed.artifact_id
+					seed.source,seed.asset_key,seed.source_url,seed.source_content_hash,
+					seed.cache_key,seed.cached_mime_type,seed.cached_byte_size,
+					seed.cached_content_hash,seed.width,seed.height,seed.conversion,seed.artifact_id
 				FROM official_icon_seed seed
 				JOIN catalog_entity_icons icon ON icon.build_id=$2
 					AND lower(icon.icon_name)=seed.icon_name
@@ -258,8 +323,9 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 				WHERE entity.deleted_at IS NULL AND NOT EXISTS (
 					SELECT 1 FROM catalog_entity_media existing
 					WHERE existing.entity_id=entity.id AND existing.build_id=icon.build_id
-					  AND existing.media_kind='icon' AND existing.asset_key='official_render_56'
-					  AND existing.source='blizzard_api' AND existing.cache_status='cached'
+					  AND existing.media_kind='icon' AND existing.cache_status='cached'
+					  AND ((existing.asset_key='official_render_56' AND existing.source='blizzard_api')
+					    OR (existing.asset_key='wago_casc_icon_png' AND existing.source='wago_tools'))
 					  AND existing.cached_content_hash IS NOT NULL AND existing.cached_byte_size IS NOT NULL
 				)
 				ORDER BY entity.id,icon.file_data_id NULLS LAST
@@ -273,13 +339,14 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 				cached_content_hash,cached_byte_size,cached_at,cache_error
 			)
 			SELECT prepared.id,$2,prepared.entity_id,prepared.entity_type,prepared.external_id,
-				'icon','official_render_56','','blizzard_api',prepared.source_url,
+				'icon',prepared.asset_key,'',prepared.source,prepared.source_url,
 				$3 || '/v1/media/' || prepared.id::text,prepared.file_data_id,
-				prepared.content_hash,prepared.mime_type,56,56,'cached',prepared.artifact_id,true,
+				prepared.source_content_hash,prepared.cached_mime_type,prepared.width,prepared.height,
+				'cached',prepared.artifact_id,true,
 				jsonb_build_object(
 					'icon_name',prepared.icon_name,'file_data_id',prepared.file_data_id,
-					'discovery','build_proven_icon_name_render_template'
-				),prepared.cache_key,prepared.content_hash,prepared.byte_size,now(),''
+					'discovery','build_proven_icon_mapping','conversion',prepared.conversion
+				),prepared.cache_key,prepared.cached_content_hash,prepared.cached_byte_size,now(),''
 			FROM prepared
 			ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO NOTHING`,
 			productID, buildID, c.publicBase)
@@ -301,7 +368,12 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 	return result, nil
 }
 
-func (c *Cache) fetchOfficialIcons(ctx context.Context, candidates []iconCandidate) <-chan iconFetchResult {
+func (c *Cache) fetchOfficialIcons(
+	ctx context.Context,
+	candidates []iconCandidate,
+	product string,
+	buildVersion string,
+) <-chan iconFetchResult {
 	results := make(chan iconFetchResult)
 	jobs := make(chan iconCandidate)
 	workerCount := min(officialIconWorkers, len(candidates))
@@ -321,16 +393,36 @@ func (c *Cache) fetchOfficialIcons(ctx context.Context, candidates []iconCandida
 					continue
 				}
 				key, mimeType, size, hash, err := c.fetch(ctx, sourceURL)
-				outcome := iconFetchResult{Candidate: candidate, Err: err}
+				outcome := iconFetchResult{Candidate: candidate}
 				if err == nil {
 					outcome.Icon = cachedIcon{
-						iconCandidate: candidate,
-						SourceURL:     sourceURL,
-						CacheKey:      key,
-						MIMEType:      mimeType,
-						Size:          size,
-						Hash:          hash,
+						iconCandidate:  candidate,
+						Source:         "blizzard_api",
+						AssetKey:       "official_render_56",
+						ArtifactKey:    "icons/56/" + candidate.Name + ".jpg",
+						SourceURL:      sourceURL,
+						SourceSize:     size,
+						SourceHash:     hash,
+						CacheKey:       key,
+						CachedMIMEType: mimeType,
+						CachedSize:     size,
+						CachedHash:     hash,
+						Width:          56,
+						Height:         56,
+						Conversion:     "identity",
 					}
+				} else if candidate.FileDataID != nil {
+					fallback, fallbackErr := c.fetchWagoCASCIcon(ctx, candidate, product, buildVersion)
+					if fallbackErr == nil {
+						outcome.Icon = fallback
+					} else {
+						outcome.Err = errors.Join(
+							fmt.Errorf("official render: %w", err),
+							fmt.Errorf("Wago CASC fallback: %w", fallbackErr),
+						)
+					}
+				} else {
+					outcome.Err = err
 				}
 				select {
 				case results <- outcome:
@@ -355,6 +447,101 @@ func (c *Cache) fetchOfficialIcons(ctx context.Context, candidates []iconCandida
 		close(results)
 	}()
 	return results
+}
+
+func (c *Cache) fetchWagoCASCIcon(
+	ctx context.Context,
+	candidate iconCandidate,
+	product string,
+	buildVersion string,
+) (cachedIcon, error) {
+	if candidate.FileDataID == nil || *candidate.FileDataID <= 0 {
+		return cachedIcon{}, errors.New("positive FileDataID is required")
+	}
+	sourceURL, err := wagoCASCIconURL(*candidate.FileDataID, product, buildVersion)
+	if err != nil {
+		return cachedIcon{}, err
+	}
+	conversion := "blp2_to_png"
+	raw, err := c.downloadWagoCASC(ctx, sourceURL)
+	if err != nil {
+		unpinnedURL := wagoCASCOrigin + strconv.FormatInt(*candidate.FileDataID, 10)
+		raw, err = c.downloadWagoCASC(ctx, unpinnedURL)
+		if err != nil {
+			return cachedIcon{}, err
+		}
+		sourceURL = unpinnedURL
+		conversion = "blp2_to_png_unpinned_casc"
+	}
+	pngData, width, height, err := decodeBLP2PNG(raw)
+	if err != nil {
+		return cachedIcon{}, err
+	}
+	cacheKey, cachedSize, cachedHash, err := c.cacheImageBytes(pngData, "image/png")
+	if err != nil {
+		return cachedIcon{}, err
+	}
+	sourceHash := sha256.Sum256(raw)
+	return cachedIcon{
+		iconCandidate:  candidate,
+		Source:         "wago_tools",
+		AssetKey:       "wago_casc_icon_png",
+		ArtifactKey:    "casc/" + buildVersion + "/" + strconv.FormatInt(*candidate.FileDataID, 10) + ".blp",
+		SourceURL:      sourceURL,
+		SourceSize:     int64(len(raw)),
+		SourceHash:     sourceHash[:],
+		CacheKey:       cacheKey,
+		CachedMIMEType: "image/png",
+		CachedSize:     cachedSize,
+		CachedHash:     cachedHash,
+		Width:          width,
+		Height:         height,
+		Conversion:     conversion,
+	}, nil
+}
+
+func (c *Cache) downloadWagoCASC(ctx context.Context, sourceURL string) ([]byte, error) {
+	parsed, err := validateRemoteURL(sourceURL)
+	if err != nil {
+		return nil, err
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	response, err := c.client.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("download BLP2: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("download BLP2: HTTP %d", response.StatusCode)
+	}
+	raw, err := io.ReadAll(io.LimitReader(response.Body, maxAssetBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("read BLP2: %w", err)
+	}
+	if len(raw) == 0 || len(raw) > maxAssetBytes {
+		return nil, errors.New("BLP2 is empty or exceeds 32 MiB")
+	}
+	return raw, nil
+}
+
+func wagoCASCIconURL(fileDataID int64, product, buildVersion string) (string, error) {
+	product = strings.TrimSpace(product)
+	buildVersion = strings.TrimSpace(buildVersion)
+	if fileDataID <= 0 || product == "" || buildVersion == "" {
+		return "", errors.New("FileDataID, product, and build version are required")
+	}
+	endpoint, err := url.Parse(wagoCASCOrigin + strconv.FormatInt(fileDataID, 10))
+	if err != nil {
+		return "", err
+	}
+	query := endpoint.Query()
+	query.Set("product", product)
+	query.Set("version", buildVersion)
+	endpoint.RawQuery = query.Encode()
+	return endpoint.String(), nil
 }
 
 func officialIconURL(name string) (string, error) {
