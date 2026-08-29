@@ -78,3 +78,32 @@ func TestNewRejectsNonOriginPublicBase(t *testing.T) {
 		}
 	}
 }
+
+func TestOfficialIconURL(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr bool
+	}{
+		{name: "normalizes", input: " Spell_Fire_Flamebolt ", want: "https://render.worldofwarcraft.com/eu/icons/56/spell_fire_flamebolt.jpg"},
+		{name: "rejects path", input: "../secret", wantErr: true},
+		{name: "rejects empty", input: " ", wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := officialIconURL(test.input)
+			if test.wantErr {
+				if err == nil {
+					t.Fatalf("officialIconURL(%q) unexpectedly succeeded with %q", test.input, got)
+				}
+				return
+			}
+			if err != nil || got != test.want {
+				t.Fatalf("officialIconURL(%q)=%q error=%v, want %q", test.input, got, err, test.want)
+			}
+		})
+	}
+}

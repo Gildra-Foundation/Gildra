@@ -16,6 +16,7 @@ const blockTitles: Record<string, string> = {
   provenance: "Источник данных",
   quest_info: "Задание",
   recipe_info: "Рецепт",
+  spell_info: "Параметры заклинания",
   spell_effects: "Эффекты заклинания",
   talent_spells: "Связанные заклинания",
 };
@@ -23,12 +24,13 @@ const blockTitles: Record<string, string> = {
 const fieldTitles: Record<string, string> = {
   amount: "Количество", attack_power_coefficient: "Коэффициент силы атаки", base_points: "Базовое значение",
   build: "Версия игры", build_number: "Номер сборки", category_count: "Категорий", charges: "Заряды",
+  cast_time: "Время применения", cast_time_ms: "Время применения, мс", chain_targets: "Целей в цепочке",
   class_mask: "Классы", coefficient: "Коэффициент", cooldown_ms: "Перезарядка, мс", difficulty_count: "Сложностей",
   class_id: "Класс предмета", effect_type: "Тип эффекта", entries: "Записи", external_id: "ID", faction_id: "Фракция", icon_file_data_id: "FileDataID", inventory_type: "Тип экипировки", locations: "Места",
-  map_id: "Карта", name: "Название", outputs: "Результаты", poi_count: "Точек на карте", professions: "Профессии",
+  map_id: "Карта", max_range: "Максимальная дальность", min_range: "Минимальная дальность", name: "Название", outputs: "Результаты", poi_count: "Точек на карте", professions: "Профессии",
   quest_lines: "Цепочки заданий", reagents: "Реагенты", recipe_count: "Рецептов", recipes: "Примеры рецептов",
   required_ability_id: "Требуемая способность", rewards: "Награды", roles: "Роли NPC", source: "Источник",
-  registry_only: "Только реестр", source_url: "Исходный документ", spell_id: "Заклинание", status: "Статус", subclass_id: "Подкласс", text: "Текст", type: "Тип",
+  registry_only: "Только реестр", school: "Школа магии", school_mask: "Маска школы", source_url: "Исходный документ", spell_id: "Заклинание", status: "Статус", subclass_id: "Подкласс", text: "Текст", type: "Тип",
   ui_map_id: "Игровая карта", updated_at: "Обновлено", x: "X", y: "Y", z: "Z",
 };
 
