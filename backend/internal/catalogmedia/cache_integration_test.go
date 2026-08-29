@@ -413,6 +413,41 @@ func TestSeedOfficialIconsCachesOnceAndLinksSharedEntities(t *testing.T) {
 	if result.Eligible != 1 || result.IconsCached != 1 || result.Entities != 2 || result.Failed != 0 || calls != 1 {
 		t.Fatalf("icon seed result=%#v calls=%d, want one download linked to two entities", result, calls)
 	}
+	result, err = cache.SeedOfficialIcons(ctx, "wow", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Eligible != 0 || result.IconsCached != 0 || result.Entities != 0 || calls != 1 {
+		t.Fatalf("repeat icon seed result=%#v calls=%d, want no remaining work", result, calls)
+	}
+
+	var lateEntityID, lateVersionID uuid.UUID
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_entities(product_id,entity_type,external_id,canonical_slug,first_seen_build_id,last_seen_build_id)
+		VALUES($1,'spell',700003,'shared-icon-spell-late',$2,$2) RETURNING id`, productID, buildID).Scan(&lateEntityID); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_entity_versions(entity_id,build_id,content_hash,payload,source_url,snapshot_id,source_artifact_id,source)
+		VALUES($1,$2,digest('spell-700003','sha256'),'{}','https://wago.tools/test',$3,$4,'wago_tools') RETURNING id`,
+		lateEntityID, buildID, snapshotID, artifactID).Scan(&lateVersionID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `UPDATE game_entities SET latest_version_id=$2,published_version_id=$2 WHERE id=$1`, lateEntityID, lateVersionID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_entity_icons(build_id,entity_type,external_id,icon_name,source_artifact_id,file_data_id,asset_source_artifact_id)
+		VALUES($1,'spell',700003,'spell_fire_flamebolt',$2,135812,$2)`, buildID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	result, err = cache.SeedOfficialIcons(ctx, "wow", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Eligible != 1 || result.IconsCached != 1 || result.Entities != 1 || result.Failed != 0 || calls != 2 {
+		t.Fatalf("late entity icon seed result=%#v calls=%d, want one repeated download linked once", result, calls)
+	}
 	var observations, distinctObjects int
 	if err := database.QueryRowContext(ctx, `
 		SELECT count(*),count(DISTINCT cache_key)
@@ -420,8 +455,8 @@ func TestSeedOfficialIconsCachesOnceAndLinksSharedEntities(t *testing.T) {
 		WHERE source='blizzard_api' AND asset_key='official_render_56' AND cache_status='cached'`).Scan(&observations, &distinctObjects); err != nil {
 		t.Fatal(err)
 	}
-	if observations != 2 || distinctObjects != 1 {
-		t.Fatalf("cached media observations=%d objects=%d, want 2 and 1", observations, distinctObjects)
+	if observations != 3 || distinctObjects != 1 {
+		t.Fatalf("cached media observations=%d objects=%d, want 3 and 1", observations, distinctObjects)
 	}
 }
 
