@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule Gildra private catalog media refresh
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=10m
+Persistent=true
+Unit=gildra-catalog-media-cache.service
+
+[Install]
+WantedBy=timers.target

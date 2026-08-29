@@ -65,6 +65,7 @@ services:
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       CATALOG_PUBLICATION_MODE: ${CATALOG_PUBLICATION_MODE:-enforce}
       CATALOG_PUBLICATION_ENVIRONMENT: ${CATALOG_PUBLICATION_ENVIRONMENT:-production}
+      CATALOG_ACCESS_MODE: ${CATALOG_ACCESS_MODE:-public}
       CATALOG_RECOVERY_POLICY: ${CATALOG_RECOVERY_POLICY:-off_host}
       CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
       DATASET_WORKER_URL: http://scraper-worker:8081
@@ -132,6 +133,7 @@ services:
       CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
       CATALOG_MEDIA_PUBLIC_BASE_URL: ${CATALOG_MEDIA_PUBLIC_BASE_URL:-https://api.gildra.net}
       CATALOG_PUBLICATION_ENVIRONMENT: ${CATALOG_PUBLICATION_ENVIRONMENT:-production}
+      CATALOG_ACCESS_MODE: ${CATALOG_ACCESS_MODE:-public}
     volumes:
       - catalog_media:/var/lib/gildra/catalog-media
     depends_on:
