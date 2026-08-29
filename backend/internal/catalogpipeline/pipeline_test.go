@@ -55,6 +55,12 @@ func TestBuildPlanRejectsUnknownSource(t *testing.T) {
 	}
 }
 
+func TestBuildPlanRejectsUnknownCatalogAccessMode(t *testing.T) {
+	if _, err := BuildPlan(Options{Product: "wow", Sources: []string{"wago"}, CatalogAccessMode: "partner"}); err == nil || !strings.Contains(err.Error(), "access mode") {
+		t.Fatalf("expected unknown catalog access mode to be rejected, got %v", err)
+	}
+}
+
 func TestRetailFoundationProfileExcludesCommunityEnrichment(t *testing.T) {
 	plan, err := BuildPlan(Options{Product: "wow", Profile: ProfileRetailFoundation})
 	if err != nil {

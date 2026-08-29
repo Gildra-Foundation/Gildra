@@ -92,6 +92,48 @@ func (s *PublicationService) ReleaseStatus(
 	return s.load(ctx, environment, surface, &releaseID)
 }
 
+// PrivateStatus evaluates the currently published catalog for an authenticated,
+// internal-only surface. A reviewed source policy is still mandatory, while
+// public redistribution grants deliberately do not apply to this surface.
+func (s *PublicationService) PrivateStatus(ctx context.Context, environment string) (PublicationStatus, error) {
+	status, err := s.Status(ctx, environment, "public_api")
+	if err != nil {
+		return PublicationStatus{}, err
+	}
+	return privatePublicationStatus(status), nil
+}
+
+// PrivateReleaseStatus applies the same internal-only policy to a staged
+// release. This keeps private refreshes governed without pretending that an
+// internal deployment has a public redistribution grant.
+func (s *PublicationService) PrivateReleaseStatus(
+	ctx context.Context,
+	environment string,
+	releaseID uuid.UUID,
+) (PublicationStatus, error) {
+	status, err := s.ReleaseStatus(ctx, environment, "public_api", releaseID)
+	if err != nil {
+		return PublicationStatus{}, err
+	}
+	return privatePublicationStatus(status), nil
+}
+
+func privatePublicationStatus(status PublicationStatus) PublicationStatus {
+	status.Surface = "private_api"
+	status.Ready = true
+	status.Sources = append([]PublicationSource(nil), status.Sources...)
+	for index := range status.Sources {
+		source := &status.Sources[index]
+		source.Allowed = source.ReviewStatus == "reviewed"
+		source.BlockingReasons = nil
+		if !source.Allowed {
+			status.Ready = false
+			source.BlockingReasons = []string{"source policy is not reviewed"}
+		}
+	}
+	return status
+}
+
 func (s *PublicationService) Invalidate() {
 	s.mu.Lock()
 	s.cache = make(map[string]PublicationStatus)

@@ -23,13 +23,14 @@ func main() {
 }
 
 func run() error {
-	var databaseURL, root, publicBase, environment string
+	var databaseURL, root, publicBase, environment, accessMode string
 	var limit int
 	var confirm bool
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
 	flag.StringVar(&root, "directory", os.Getenv("CATALOG_MEDIA_DIRECTORY"), "absolute local media cache directory")
 	flag.StringVar(&publicBase, "public-base-url", envOr("CATALOG_MEDIA_PUBLIC_BASE_URL", "https://api.gildra.net"), "public HTTPS API origin")
 	flag.StringVar(&environment, "environment", envOr("CATALOG_PUBLICATION_ENVIRONMENT", "development"), "grant environment")
+	flag.StringVar(&accessMode, "access-mode", envOr("CATALOG_ACCESS_MODE", "public"), "catalog access mode: public or private")
 	flag.IntVar(&limit, "limit", 100, "maximum assets per run")
 	flag.BoolVar(&confirm, "confirm", false, "download eligible assets")
 	flag.Parse()
@@ -51,9 +52,9 @@ func run() error {
 	}
 	defer cache.Close() //nolint:errcheck
 	if !confirm {
-		return json.NewEncoder(os.Stdout).Encode(map[string]any{"dry_run": true, "environment": environment, "limit": limit})
+		return json.NewEncoder(os.Stdout).Encode(map[string]any{"dry_run": true, "environment": environment, "access_mode": accessMode, "limit": limit})
 	}
-	result, err := cache.Run(ctx, environment, limit)
+	result, err := cache.RunWithAccessMode(ctx, environment, limit, accessMode)
 	if err != nil {
 		return err
 	}

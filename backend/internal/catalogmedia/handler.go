@@ -17,14 +17,22 @@ type Handler struct {
 	db          *pgxpool.Pool
 	root        *os.Root
 	environment string
+	accessMode  string
 }
 
 func NewHandler(db *pgxpool.Pool, root, environment string) (*Handler, error) {
+	return NewHandlerWithAccessMode(db, root, environment, "public")
+}
+
+func NewHandlerWithAccessMode(db *pgxpool.Pool, root, environment, accessMode string) (*Handler, error) {
 	if db == nil || !filepath.IsAbs(root) {
 		return nil, errors.New("media handler requires a database and absolute cache directory")
 	}
 	if environment != "development" && environment != "staging" && environment != "production" {
 		return nil, errors.New("media handler environment is invalid")
+	}
+	if accessMode != "public" && accessMode != "private" {
+		return nil, errors.New("media handler access mode is invalid")
 	}
 	resolved, err := filepath.EvalSymlinks(root)
 	if err != nil {
@@ -34,7 +42,7 @@ func NewHandler(db *pgxpool.Pool, root, environment string) (*Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Handler{db: db, root: rootHandle, environment: environment}, nil
+	return &Handler{db: db, root: rootHandle, environment: environment, accessMode: accessMode}, nil
 }
 
 func (h *Handler) Close() error {
@@ -57,7 +65,7 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 	}
 	var key, mimeType string
 	var hash []byte
-	err = h.db.QueryRow(request.Context(), `
+	query := `
 		SELECT media.cache_key,media.mime_type,media.cached_content_hash
 		FROM catalog_entity_media media
 		JOIN game_entities entity ON entity.id=media.entity_id
@@ -96,7 +104,29 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		  AND public_review.surface=public_permission.surface
 		  AND public_review.decision='allowed'
 		  AND public_review.review_kind IN ('owner_approval','legal')
-		  AND (public_review.expires_at IS NULL OR public_review.expires_at>now())`, id, h.environment).Scan(&key, &mimeType, &hash)
+		  AND (public_review.expires_at IS NULL OR public_review.expires_at>now())
+		  AND (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))`
+	args := []any{id, h.environment}
+	if h.accessMode == "private" {
+		query = `
+		SELECT media.cache_key,media.mime_type,media.cached_content_hash
+		FROM catalog_entity_media media
+		JOIN game_entities entity ON entity.id=media.entity_id
+		JOIN game_entity_versions published ON published.id=entity.published_version_id
+		JOIN game_builds published_build ON published_build.id=published.build_id
+		  AND published_build.product_id=entity.product_id
+		JOIN game_builds media_build ON media_build.id=media.build_id
+		  AND media_build.product_id=entity.product_id
+		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
+		JOIN catalog_published_source_dependencies dependency ON dependency.source=media.source
+		JOIN catalog_source_policies policy ON policy.source=media.source
+		WHERE media.id=$1 AND media.cache_status='cached' AND policy.review_status='reviewed'
+		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+		  AND media_build.build_number<=published_build.build_number
+		  AND (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))`
+		args = []any{id}
+	}
+	err = h.db.QueryRow(request.Context(), query, args...).Scan(&key, &mimeType, &hash)
 	if errors.Is(err, pgx.ErrNoRows) {
 		http.NotFound(response, request)
 		return
@@ -117,7 +147,11 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		return
 	}
 	response.Header().Set("Content-Type", mimeType)
-	response.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	if h.accessMode == "private" {
+		response.Header().Set("Cache-Control", "private, no-store")
+	} else {
+		response.Header().Set("Cache-Control", "public, max-age=300, must-revalidate")
+	}
 	response.Header().Set("ETag", `"sha256-`+hex.EncodeToString(hash)+`"`)
 	response.Header().Set("X-Content-Type-Options", "nosniff")
 	http.ServeContent(response, request, filepath.Base(key), info.ModTime(), file)

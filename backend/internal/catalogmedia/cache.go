@@ -39,6 +39,7 @@ type Result struct {
 type candidate struct {
 	id        uuid.UUID
 	sourceURL string
+	status    string
 }
 
 func New(db *pgxpool.Pool, root, publicBase string, client *http.Client) (*Cache, error) {
@@ -78,8 +79,15 @@ func (c *Cache) Close() error {
 }
 
 func (c *Cache) Run(ctx context.Context, environment string, limit int) (Result, error) {
+	return c.RunWithAccessMode(ctx, environment, limit, "public")
+}
+
+func (c *Cache) RunWithAccessMode(ctx context.Context, environment string, limit int, accessMode string) (Result, error) {
 	if environment != "development" && environment != "staging" && environment != "production" {
 		return Result{}, errors.New("invalid media cache environment")
+	}
+	if accessMode != "public" && accessMode != "private" {
+		return Result{}, errors.New("invalid media cache access mode")
 	}
 	if limit < 1 || limit > 10000 {
 		return Result{}, errors.New("media cache limit must be between 1 and 10000")
@@ -97,7 +105,7 @@ func (c *Cache) Run(ctx context.Context, environment string, limit int) (Result,
 	if _, err := c.db.Exec(ctx, `INSERT INTO catalog_media_cache_runs(id,environment,status,requested_limit) VALUES($1,$2,'running',$3)`, runID, environment, limit); err != nil {
 		return Result{}, fmt.Errorf("start media cache run: %w", err)
 	}
-	result, runErr := c.runCandidates(ctx, environment, limit)
+	result, runErr := c.runCandidates(ctx, environment, limit, accessMode)
 	if runErr == nil && result.Cached > 0 {
 		if _, err := c.db.Exec(ctx, `SELECT refresh_catalog_library_media_previews(NULL)`); err != nil {
 			runErr = fmt.Errorf("refresh library media previews: %w", err)
@@ -113,15 +121,18 @@ func (c *Cache) Run(ctx context.Context, environment string, limit int) (Result,
 	return result, errors.Join(runErr, finishErr)
 }
 
-func (c *Cache) runCandidates(ctx context.Context, environment string, limit int) (Result, error) {
-	rows, err := c.db.Query(ctx, `
-		SELECT media.id,media.source_url,count(*) OVER()
+func (c *Cache) runCandidates(ctx context.Context, environment string, limit int, accessMode string) (Result, error) {
+	query := `
+		SELECT media.id,media.source_url,media.cache_status,count(*) OVER()
 		FROM catalog_entity_media media
 		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
 		JOIN catalog_source_policies policy ON policy.source=media.source
 		JOIN catalog_publication_grants permission ON permission.source=media.source AND permission.environment=$1 AND permission.surface='asset_cache'
 		JOIN catalog_source_policy_reviews permission_review ON permission_review.id=permission.policy_review_id
-		WHERE media.cache_status IN ('remote','failed') AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+		WHERE (media.cache_status IN ('remote','failed') OR
+		       media.cache_status='cached' AND policy.retention_days IS NOT NULL AND
+		       media.cached_at<=now()-make_interval(days=>policy.retention_days))
+		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
 		  AND policy.review_status='reviewed' AND policy.asset_caching_status IN ('allowed','restricted','permission_required')
 		  AND permission.decision='allowed' AND permission.reviewed_at IS NOT NULL
 		  AND (permission.expires_at IS NULL OR permission.expires_at>now())
@@ -131,7 +142,23 @@ func (c *Cache) runCandidates(ctx context.Context, environment string, limit int
 		  AND permission_review.decision='allowed'
 		  AND permission_review.review_kind IN ('owner_approval','legal')
 		  AND (permission_review.expires_at IS NULL OR permission_review.expires_at>now())
-		ORDER BY media.updated_at,media.id LIMIT $2`, environment, limit)
+		ORDER BY COALESCE(media.cached_at,'-infinity'::timestamptz),media.updated_at,media.id LIMIT $2`
+	args := []any{environment, limit}
+	if accessMode == "private" {
+		query = `
+		SELECT media.id,media.source_url,media.cache_status,count(*) OVER()
+		FROM catalog_entity_media media
+		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
+		JOIN catalog_source_policies policy ON policy.source=media.source
+		WHERE (media.cache_status IN ('remote','failed') OR
+		       media.cache_status='cached' AND policy.retention_days IS NOT NULL AND
+		       media.cached_at<=now()-make_interval(days=>policy.retention_days))
+		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+		  AND policy.review_status='reviewed'
+		ORDER BY COALESCE(media.cached_at,'-infinity'::timestamptz),media.updated_at,media.id LIMIT $1`
+		args = []any{limit}
+	}
+	rows, err := c.db.Query(ctx, query, args...)
 	if err != nil {
 		return Result{}, fmt.Errorf("list eligible media: %w", err)
 	}
@@ -140,7 +167,7 @@ func (c *Cache) runCandidates(ctx context.Context, environment string, limit int
 	result := Result{}
 	for rows.Next() {
 		var item candidate
-		if err := rows.Scan(&item.id, &item.sourceURL, &result.Eligible); err != nil {
+		if err := rows.Scan(&item.id, &item.sourceURL, &item.status, &result.Eligible); err != nil {
 			return result, fmt.Errorf("scan eligible media: %w", err)
 		}
 		candidates = append(candidates, item)
@@ -152,11 +179,15 @@ func (c *Cache) runCandidates(ctx context.Context, environment string, limit int
 		key, mimeType, size, hash, err := c.fetch(ctx, item.sourceURL)
 		if err != nil {
 			result.Failed++
-			_, _ = c.db.Exec(context.WithoutCancel(ctx), `UPDATE catalog_entity_media SET cache_status='failed',cache_error=$2,updated_at=now() WHERE id=$1 AND cache_status IN ('remote','failed')`, item.id, truncateError(err))
+			if item.status == "cached" {
+				_, _ = c.db.Exec(context.WithoutCancel(ctx), `UPDATE catalog_entity_media SET cache_error=$2,updated_at=now() WHERE id=$1 AND cache_status='cached'`, item.id, truncateError(err))
+			} else {
+				_, _ = c.db.Exec(context.WithoutCancel(ctx), `UPDATE catalog_entity_media SET cache_status='failed',cache_error=$2,updated_at=now() WHERE id=$1 AND cache_status IN ('remote','failed')`, item.id, truncateError(err))
+			}
 			continue
 		}
 		publicURL := c.publicBase + "/v1/media/" + item.id.String()
-		command, err := c.db.Exec(ctx, `UPDATE catalog_entity_media SET cache_status='cached',cache_key=$2,cached_url=$3,cached_content_hash=$4,cached_byte_size=$5,cached_at=now(),cache_error='',mime_type=$6,updated_at=now() WHERE id=$1 AND cache_status IN ('remote','failed')`, item.id, key, publicURL, hash, size, mimeType)
+		command, err := c.db.Exec(ctx, `UPDATE catalog_entity_media SET cache_status='cached',cache_key=$2,cached_url=$3,cached_content_hash=$4,cached_byte_size=$5,cached_at=now(),cache_error='',mime_type=$6,updated_at=now() WHERE id=$1 AND cache_status IN ('remote','failed','cached')`, item.id, key, publicURL, hash, size, mimeType)
 		if err != nil {
 			return result, fmt.Errorf("publish cached media metadata: %w", err)
 		}

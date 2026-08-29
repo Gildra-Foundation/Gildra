@@ -42,6 +42,7 @@ type Options struct {
 	ConfirmFullImport      bool
 	BinaryDirectory        string
 	PublicationEnvironment string
+	CatalogAccessMode      string
 	RecoveryPolicy         string
 }
 
@@ -123,6 +124,13 @@ func normalizeOptions(options Options) (Options, error) {
 	}
 	options.Sources = sources
 	options.BuildVersion = strings.TrimSpace(options.BuildVersion)
+	options.CatalogAccessMode = strings.ToLower(strings.TrimSpace(options.CatalogAccessMode))
+	if options.CatalogAccessMode == "" {
+		options.CatalogAccessMode = "public"
+	}
+	if options.CatalogAccessMode != "public" && options.CatalogAccessMode != "private" {
+		return Options{}, fmt.Errorf("unsupported catalog access mode %q", options.CatalogAccessMode)
+	}
 	if options.Mode == "apply" && options.BuildVersion == "" {
 		return Options{}, errors.New("catalog apply requires an explicit -version")
 	}
@@ -286,8 +294,14 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	releaseID, err := releaseManager.Start(ctx, result.RunID, options.Product, options.BuildVersion, options.Sources)
 	if err != nil {
 		if errors.Is(err, catalogrelease.ErrBuildAlreadyPublished) {
-			publication, publicationErr := catalog.NewPublicationService(r.DB, time.Second).
-				Status(ctx, options.PublicationEnvironment, "public_api")
+			publicationService := catalog.NewPublicationService(r.DB, time.Second)
+			var publication catalog.PublicationStatus
+			var publicationErr error
+			if options.CatalogAccessMode == "private" {
+				publication, publicationErr = publicationService.PrivateStatus(ctx, options.PublicationEnvironment)
+			} else {
+				publication, publicationErr = publicationService.Status(ctx, options.PublicationEnvironment, "public_api")
+			}
 			if publicationErr != nil {
 				return result, r.failStage(ctx, result.RunID, "release-start", "publication_status_failed", publicationErr)
 			}
@@ -331,12 +345,17 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 			return result, err
 		}
 	}
-	if err := r.validate(ctx, result.RunID, options.Product, options.BuildVersion, options.PublicationEnvironment, options.RecoveryPolicy); err != nil {
+	if err := r.validate(ctx, result.RunID, options.Product, options.BuildVersion, options.PublicationEnvironment, options.CatalogAccessMode, options.RecoveryPolicy); err != nil {
 		return result, err
 	}
 
 	publicationService := catalog.NewPublicationService(r.DB, time.Second)
-	publication, err := publicationService.ReleaseStatus(ctx, options.PublicationEnvironment, "public_api", releaseID)
+	var publication catalog.PublicationStatus
+	if options.CatalogAccessMode == "private" {
+		publication, err = publicationService.PrivateReleaseStatus(ctx, options.PublicationEnvironment, releaseID)
+	} else {
+		publication, err = publicationService.ReleaseStatus(ctx, options.PublicationEnvironment, "public_api", releaseID)
+	}
 	if err != nil {
 		return result, r.failStage(ctx, result.RunID, "publication-gate", "publication_status_failed", err)
 	}
@@ -469,6 +488,7 @@ func (r *Runner) validate(
 	product string,
 	buildVersion string,
 	publicationEnvironment string,
+	catalogAccessMode string,
 	recoveryPolicy string,
 ) error {
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_runs SET current_stage='validate-catalog' WHERE id=$1`, runID)
@@ -493,7 +513,7 @@ func (r *Runner) validate(
 		return r.failStage(ctx, runID, "validate-catalog", "readiness_query_failed", err)
 	}
 	counts["readiness"] = readiness
-	if !readiness.DataReady || (publicationEnvironment == "production" && !readiness.ProductionReady) {
+	if !readiness.DataReady || (publicationEnvironment == "production" && catalogAccessMode == "public" && !readiness.ProductionReady) {
 		return r.failStage(ctx, runID, "validate-catalog", "catalog_readiness_failed",
 			fmt.Errorf("catalog readiness failed: data_ready=%t production_ready=%t", readiness.DataReady, readiness.ProductionReady))
 	}

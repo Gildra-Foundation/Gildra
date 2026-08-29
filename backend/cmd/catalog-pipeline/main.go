@@ -30,9 +30,9 @@ func main() {
 }
 
 func run() (catalogpipeline.Result, error) {
-	var databaseURL, sources, mode, trigger, profile, product, version, binaryDirectory, publicationEnvironment, recoveryPolicy string
+	var databaseURL, sources, mode, trigger, profile, product, version, binaryDirectory, publicationEnvironment, catalogAccessMode, recoveryPolicy string
 	var maxRecords int
-	var confirmFullImport bool
+	var confirmFullImport, useCheckedBuild bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
 	flag.StringVar(&profile, "profile", catalogpipeline.ProfileRetailFoundation, "catalog source profile: retail-foundation or custom")
@@ -43,9 +43,11 @@ func run() (catalogpipeline.Result, error) {
 	flag.StringVar(&version, "version", "", "optional WoW build version")
 	flag.StringVar(&binaryDirectory, "bin-dir", "", "directory containing importer executables")
 	flag.StringVar(&publicationEnvironment, "publication-environment", "production", "development, staging, or production")
+	flag.StringVar(&catalogAccessMode, "access-mode", envOr("CATALOG_ACCESS_MODE", "public"), "public or private")
 	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
 	flag.IntVar(&maxRecords, "max-records", 0, "records per source dataset; 0 imports all")
 	flag.BoolVar(&confirmFullImport, "confirm-full-import", false, "confirm an unbounded production import")
+	flag.BoolVar(&useCheckedBuild, "use-checked-build", false, "pin the import to a recent successful Wago build check")
 	flag.DurationVar(&timeout, "timeout", 6*time.Hour, "whole pipeline timeout")
 	flag.Parse()
 	if databaseURL == "" {
@@ -60,6 +62,9 @@ func run() (catalogpipeline.Result, error) {
 	if publicationEnvironment != "development" && publicationEnvironment != "staging" && publicationEnvironment != "production" {
 		return catalogpipeline.Result{}, errors.New("publication-environment must be development, staging, or production")
 	}
+	if catalogAccessMode != "public" && catalogAccessMode != "private" {
+		return catalogpipeline.Result{}, errors.New("access-mode must be public or private")
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -72,12 +77,34 @@ func run() (catalogpipeline.Result, error) {
 	if err := db.Ping(ctx); err != nil {
 		return catalogpipeline.Result{}, fmt.Errorf("ping catalog database: %w", err)
 	}
+	if useCheckedBuild {
+		if strings.TrimSpace(version) != "" {
+			return catalogpipeline.Result{}, errors.New("version and use-checked-build cannot be combined")
+		}
+		if err := db.QueryRow(ctx, `
+			SELECT check.observed_build
+			FROM catalog_build_update_checks check
+			JOIN game_products product ON product.id=check.product_id
+			WHERE product.slug=$1 AND check.source='wago_tools' AND check.channel='live'
+			  AND check.status='update_available' AND check.checked_at>=now()-interval '15 minutes'
+			ORDER BY check.checked_at DESC LIMIT 1`, strings.TrimSpace(product)).Scan(&version); err != nil {
+			return catalogpipeline.Result{}, fmt.Errorf("resolve recently checked Wago build: %w", err)
+		}
+	}
 	options := catalogpipeline.Options{
 		PipelineKey: "catalog-refresh", Trigger: trigger, Mode: mode, Profile: strings.TrimSpace(profile), Product: strings.TrimSpace(product),
 		Sources: catalogpipeline.SortedSources(sources), BuildVersion: strings.TrimSpace(version),
 		MaxRecords: maxRecords, ConfirmFullImport: confirmFullImport, BinaryDirectory: strings.TrimSpace(binaryDirectory),
 		PublicationEnvironment: publicationEnvironment,
+		CatalogAccessMode:      catalogAccessMode,
 		RecoveryPolicy:         strings.TrimSpace(recoveryPolicy),
 	}
 	return (&catalogpipeline.Runner{DB: db, Stdout: os.Stdout, Stderr: os.Stderr}).Run(ctx, options)
+}
+
+func envOr(key, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+		return strings.ToLower(value)
+	}
+	return fallback
 }

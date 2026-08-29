@@ -2,15 +2,23 @@ package catalog
 
 import "testing"
 
-func TestPolicyStatusCanBeGranted(t *testing.T) {
-	for _, status := range []string{"allowed", "restricted", "permission_required"} {
-		if !policyStatusCanBeGranted(status) {
-			t.Fatalf("status %q should permit an explicit grant", status)
-		}
+func TestPrivatePublicationStatusRequiresReviewedPoliciesButNotPublicGrants(t *testing.T) {
+	status := privatePublicationStatus(PublicationStatus{
+		Environment: "production",
+		Surface:     "public_api",
+		Ready:       false,
+		Sources: []PublicationSource{
+			{Source: "wago_tools", ReviewStatus: "reviewed", Allowed: false, BlockingReasons: []string{"grant missing"}},
+			{Source: "wow_listfile", ReviewStatus: "pending", Allowed: true},
+		},
+	})
+	if status.Surface != "private_api" || status.Ready {
+		t.Fatalf("private status = %#v", status)
 	}
-	for _, status := range []string{"unknown", "prohibited", "pending", ""} {
-		if policyStatusCanBeGranted(status) {
-			t.Fatalf("status %q unexpectedly permits a grant", status)
-		}
+	if !status.Sources[0].Allowed || len(status.Sources[0].BlockingReasons) != 0 {
+		t.Fatalf("reviewed private source should be allowed: %#v", status.Sources[0])
+	}
+	if status.Sources[1].Allowed || len(status.Sources[1].BlockingReasons) != 1 {
+		t.Fatalf("unreviewed private source should be blocked: %#v", status.Sources[1])
 	}
 }
