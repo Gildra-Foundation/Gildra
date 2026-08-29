@@ -4,14 +4,15 @@
 
 `All The Things` is an audited candidate source for relations that client DB2
 and the Battle.net Game Data API do not fully publish. It is not currently a
-public catalog source. The source policy is fail-closed (`review_status=pending`,
-commercial/public API status `unknown`) until the product owner reviews use of
-the derived database for a commercial website.
+public catalog source. The evidence review is complete, but the production
+publication grant remains fail-closed until an accountable product owner or
+legal reviewer approves the exact public surface.
 
-The repository declares the MIT license. That is strong evidence that its code
-and included database files may be processed, but Gildra still records a
-separate publication decision because a software license alone is not proof of
-every underlying game-data right.
+The repository declares the MIT license, which expressly permits use,
+modification and distribution of the repository material when its copyright
+and permission notice are retained. Gildra still records a separate publication
+decision because it must preserve attribution, avoid claiming Blizzard IP and
+limit ATT to a derived relationship layer below official field precedence.
 
 ## Audited snapshot
 

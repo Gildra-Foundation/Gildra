@@ -26,8 +26,6 @@ for file in .env compose.yml compose.prod.yml compose.runtime.yml; do
 done
 
 {
-  printf 'SENTRY_GO_DSN=https://public@example.invalid/1\n'
-  printf 'NEXT_PUBLIC_SENTRY_DSN=https://public@example.invalid/2\n'
   printf 'CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups\n'
 } > "$deployment_directory/.env"
 
@@ -151,9 +149,12 @@ grep -Fq 'verify_catalog_load' "$deployment_script"
 grep -Fq 'catalog-load-check' "$deployment_script"
 grep -Fq 'verify_catalog_readiness' "$deployment_script"
 grep -Fq -- '-require-production-ready' "$deployment_script"
-grep -Fq 'require_environment_value SENTRY_GO_DSN' "$deployment_script"
-grep -Fq 'require_environment_value NEXT_PUBLIC_SENTRY_DSN' "$deployment_script"
 grep -Fq 'require_environment_value CATALOG_BACKUP_LOCAL_DIRECTORY' "$deployment_script"
+if grep -Fq 'require_environment_value SENTRY_GO_DSN' "$deployment_script" ||
+  grep -Fq 'require_environment_value NEXT_PUBLIC_SENTRY_DSN' "$deployment_script"; then
+  printf 'test: optional Sentry configuration still blocks a release\n' >&2
+  exit 1
+fi
 if grep '^ExecStart=.*catalog-pipeline' "$script_directory/../systemd/gildra-catalog-refresh.service" | grep -q 'raidbots'; then
   printf 'test: canonical catalog refresh still imports Raidbots data\n' >&2
   exit 1
