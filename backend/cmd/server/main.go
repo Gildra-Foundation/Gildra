@@ -123,22 +123,31 @@ func run() error {
 	catalogService := catalog.NewService(postgres)
 	publicationService := catalog.NewPublicationService(postgres, time.Minute)
 	server := httpapi.NewServer(analyticsService, catalogService, indexnow.NewQueue(riverClient, cfg.IndexNowHost))
-	restHandler := httpapi.CachePublicCatalog(api.Handler(api.NewStrictHandler(server, nil)))
+	restHandler := http.Handler(api.Handler(api.NewStrictHandler(server, nil)))
 	graphqlHandler := handler.NewDefaultServer(graphqlapi.NewExecutableSchema(graphqlapi.Config{
 		Resolvers: &graphqlapi.Resolver{Catalog: catalogService},
 	}))
+	graphqlCatalogHandler := http.Handler(graphqlHandler)
+	if cfg.CatalogAccessMode == "private" {
+		restHandler = httpapi.RequireCatalogAuthentication(restHandler, authService, cfg.CatalogAccessMode)
+		graphqlCatalogHandler = httpapi.RequireCatalogAuthentication(graphqlCatalogHandler, authService, cfg.CatalogAccessMode)
+	} else {
+		restHandler = httpapi.CachePublicCatalog(restHandler)
+		restHandler = httpapi.EnforceCatalogPublication(restHandler, publicationService, cfg.CatalogPublicationMode, cfg.CatalogPublicationEnv)
+		graphqlCatalogHandler = httpapi.EnforceCatalogPublication(graphqlCatalogHandler, publicationService, cfg.CatalogPublicationMode, cfg.CatalogPublicationEnv)
+	}
 	router := http.NewServeMux()
 	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient, cfg.CatalogRecoveryPolicy).Register(router)
 	if cfg.CatalogMediaDirectory != "" {
-		mediaHandler, mediaErr := catalogmedia.NewHandler(postgres, cfg.CatalogMediaDirectory, cfg.CatalogPublicationEnv)
+		mediaHandler, mediaErr := catalogmedia.NewHandlerWithAccessMode(postgres, cfg.CatalogMediaDirectory, cfg.CatalogPublicationEnv, cfg.CatalogAccessMode)
 		if mediaErr != nil {
 			return mediaErr
 		}
 		defer mediaHandler.Close() //nolint:errcheck
-		router.Handle("/v1/media/", mediaHandler)
+		router.Handle("/v1/media/", httpapi.RequireCatalogAuthentication(mediaHandler, authService, cfg.CatalogAccessMode))
 	}
-	router.Handle("/graphql", httpapi.EnforceCatalogPublication(graphqlHandler, publicationService, cfg.CatalogPublicationMode, cfg.CatalogPublicationEnv))
-	router.Handle("/", httpapi.EnforceCatalogPublication(restHandler, publicationService, cfg.CatalogPublicationMode, cfg.CatalogPublicationEnv))
+	router.Handle("/graphql", graphqlCatalogHandler)
+	router.Handle("/", restHandler)
 	apiHandler := http.MaxBytesHandler(router, 8<<20)
 	apiHandler = httpapi.ObserveRequests(apiHandler, slog.Default())
 	sentryHandler := sentryhttp.New(sentryhttp.Options{Repanic: true}).Handle(apiHandler)

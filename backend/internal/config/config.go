@@ -33,6 +33,7 @@ type Config struct {
 	AdminSessionTTL        time.Duration
 	CatalogPublicationMode string
 	CatalogPublicationEnv  string
+	CatalogAccessMode      string
 	CatalogRecoveryPolicy  string
 	CatalogMediaDirectory  string
 }
@@ -87,6 +88,7 @@ func Load() (Config, error) {
 		AdminSessionTTL:        adminSessionTTL,
 		CatalogPublicationMode: publicationMode,
 		CatalogPublicationEnv:  publicationEnvironment,
+		CatalogAccessMode:      envOr("CATALOG_ACCESS_MODE", "public"),
 		CatalogRecoveryPolicy:  recoveryPolicy,
 		CatalogMediaDirectory:  os.Getenv("CATALOG_MEDIA_DIRECTORY"),
 	}
@@ -105,6 +107,9 @@ func Load() (Config, error) {
 	}
 	if cfg.CatalogPublicationEnv != "development" && cfg.CatalogPublicationEnv != "staging" && cfg.CatalogPublicationEnv != "production" {
 		return Config{}, errors.New("CATALOG_PUBLICATION_ENVIRONMENT must be development, staging, or production")
+	}
+	if cfg.CatalogAccessMode != "public" && cfg.CatalogAccessMode != "private" {
+		return Config{}, errors.New("CATALOG_ACCESS_MODE must be public or private")
 	}
 	if cfg.CatalogRecoveryPolicy != "off_host" && cfg.CatalogRecoveryPolicy != "verified_same_host" {
 		return Config{}, errors.New("CATALOG_RECOVERY_POLICY must be off_host or verified_same_host")

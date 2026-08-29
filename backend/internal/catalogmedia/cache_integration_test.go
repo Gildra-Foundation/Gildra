@@ -139,6 +139,56 @@ func TestCacheRequiresGrantRetriesAndRevokesServing(t *testing.T) {
 	if objectCount != 1 {
 		t.Fatalf("content-addressed object count=%d, want one deduplicated file", objectCount)
 	}
+	privateHandler, err := NewHandlerWithAccessMode(pool, root, "staging", "private")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = privateHandler.Close() })
+	privateRequest := httptest.NewRequest(http.MethodGet, "/v1/media/"+media.published.String(), nil)
+	privateResponse := httptest.NewRecorder()
+	privateHandler.ServeHTTP(privateResponse, privateRequest)
+	if privateResponse.Code != http.StatusOK || privateResponse.Header().Get("Cache-Control") != "private, no-store" {
+		t.Fatalf("private media status=%d cache=%q", privateResponse.Code, privateResponse.Header().Get("Cache-Control"))
+	}
+	if _, err := database.ExecContext(ctx, `UPDATE catalog_entity_media SET cached_at=now()-interval '31 days' WHERE cache_status='cached'`); err != nil {
+		t.Fatal(err)
+	}
+	privateResponse = httptest.NewRecorder()
+	privateHandler.ServeHTTP(privateResponse, privateRequest)
+	if privateResponse.Code != http.StatusNotFound {
+		t.Fatalf("expired private media status=%d, want 404", privateResponse.Code)
+	}
+	staleFailureCache, err := New(pool, root, "https://api.gildra.net", failingClient)
+	if err != nil {
+		t.Fatal(err)
+	}
+	caches = append(caches, staleFailureCache)
+	failedRefresh, err := staleFailureCache.RunWithAccessMode(ctx, "staging", 10, "private")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if failedRefresh.Eligible != 3 || failedRefresh.Failed != 3 {
+		t.Fatalf("failed private refresh=%#v, want three retained failures", failedRefresh)
+	}
+	var retainedCached int
+	if err := database.QueryRowContext(ctx, `SELECT count(*) FROM catalog_entity_media WHERE cache_status='cached' AND cache_key IS NOT NULL`).Scan(&retainedCached); err != nil {
+		t.Fatal(err)
+	}
+	if retainedCached != 3 {
+		t.Fatalf("cached observations retained after refresh failure=%d, want 3", retainedCached)
+	}
+	result, err = cache.RunWithAccessMode(ctx, "staging", 10, "private")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Eligible != 3 || result.Cached != 3 {
+		t.Fatalf("private refresh run=%#v, want three refreshed observations", result)
+	}
+	privateResponse = httptest.NewRecorder()
+	privateHandler.ServeHTTP(privateResponse, privateRequest)
+	if privateResponse.Code != http.StatusOK {
+		t.Fatalf("refreshed private media status=%d, want 200", privateResponse.Code)
+	}
 
 	handler, err := NewHandler(pool, root, "staging")
 	if err != nil {

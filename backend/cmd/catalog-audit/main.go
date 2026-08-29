@@ -66,11 +66,12 @@ func main() {
 
 func run() error {
 	var databaseURL, product, recoveryPolicy string
-	var requireProductionReady bool
+	var requireProductionReady, requireDataReady bool
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
 	flag.StringVar(&product, "product", "wow", "game product slug")
 	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
 	flag.BoolVar(&requireProductionReady, "require-production-ready", false, "exit non-zero unless every data and production readiness check passes")
+	flag.BoolVar(&requireDataReady, "require-data-ready", false, "exit non-zero unless every catalog data-readiness check passes")
 	flag.Parse()
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL or -database-url is required")
@@ -178,13 +179,16 @@ func run() error {
 	if err := encoder.Encode(result); err != nil {
 		return fmt.Errorf("encode audit report: %w", err)
 	}
-	if err := enforceReadiness(result.Readiness, requireProductionReady); err != nil {
+	if err := enforceReadiness(result.Readiness, requireDataReady, requireProductionReady); err != nil {
 		return err
 	}
 	return nil
 }
 
-func enforceReadiness(readiness catalogquality.ReadinessReport, requireProductionReady bool) error {
+func enforceReadiness(readiness catalogquality.ReadinessReport, requireDataReady, requireProductionReady bool) error {
+	if requireDataReady && !readiness.DataReady {
+		return errors.New("catalog data readiness gate failed")
+	}
 	if requireProductionReady && !readiness.ProductionReady {
 		return errors.New("catalog production readiness gate failed")
 	}

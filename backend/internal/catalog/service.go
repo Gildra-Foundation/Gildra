@@ -820,11 +820,14 @@ func (s *Service) enrichMedia(ctx context.Context, entities []*Entity) error {
 				AND media_build.product_id=entity.product_id
 			JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
 			JOIN catalog_published_source_dependencies dependency ON dependency.source=media.source
+			JOIN catalog_source_policies policy ON policy.source=media.source
 			WHERE media.entity_id=ANY($1::uuid[])
 			  AND media_build.build_number<=published_build.build_number
 			  AND artifact.status='ready'
 			  AND artifact.content_hash IS NOT NULL
 			  AND artifact.byte_size IS NOT NULL
+			  AND policy.review_status='reviewed'
+			  AND (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))
 			ORDER BY media.entity_id,media.media_kind,media.asset_key,media.locale,media.source,
 				media_build.build_number DESC,artifact.fetched_at DESC,media.updated_at DESC,media.id DESC
 		)

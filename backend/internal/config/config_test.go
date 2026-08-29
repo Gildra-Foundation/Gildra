@@ -17,6 +17,35 @@ func TestLoadValidatesRequiredSettings(t *testing.T) {
 	if cfg.CatalogRecoveryPolicy != "off_host" {
 		t.Fatalf("unexpected default recovery policy: %s", cfg.CatalogRecoveryPolicy)
 	}
+	if cfg.CatalogAccessMode != "public" {
+		t.Fatalf("unexpected default catalog access mode: %s", cfg.CatalogAccessMode)
+	}
+}
+
+func TestLoadAcceptsPrivateCatalogAccess(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://gildra:test@localhost:5432/gildra")
+	t.Setenv("CLICKHOUSE_PASSWORD", "test")
+	t.Setenv("INDEXNOW_KEY", "00000000000000000000000000000000")
+	t.Setenv("CATALOG_ACCESS_MODE", "private")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.CatalogAccessMode != "private" {
+		t.Fatalf("unexpected catalog access mode: %s", cfg.CatalogAccessMode)
+	}
+}
+
+func TestLoadRejectsUnknownCatalogAccessMode(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://gildra:test@localhost:5432/gildra")
+	t.Setenv("CLICKHOUSE_PASSWORD", "test")
+	t.Setenv("INDEXNOW_KEY", "00000000000000000000000000000000")
+	t.Setenv("CATALOG_ACCESS_MODE", "partner")
+
+	if _, err := Load(); err == nil {
+		t.Fatal("expected invalid catalog access mode to be rejected")
+	}
 }
 
 func TestLoadAcceptsExplicitVerifiedSameHostRecovery(t *testing.T) {
