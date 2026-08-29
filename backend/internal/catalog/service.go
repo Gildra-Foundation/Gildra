@@ -201,7 +201,7 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 			v.build_id, COALESCE(v.payload, '{}'::jsonb), e.updated_at,
 			COALESCE(t.plain_text, fallback_t.plain_text),
 			COALESCE(t.blocks,fallback_t.blocks,'[]'::jsonb)
-			|| COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(item_registry.blocks,'[]'::jsonb) || COALESCE(item_variants.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(quest_package_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
+			|| COALESCE(spell_info.blocks,'[]'::jsonb) || COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(item_registry.blocks,'[]'::jsonb) || COALESCE(item_variants.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(quest_package_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
 			COALESCE(fa.icon_name, spell_fa.icon_name, source_icon.icon_name, db2_fa.icon_name,
 				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}','')),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
 		FROM game_entities e
@@ -224,6 +224,14 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 		) localization_proof ON true
 		LEFT JOIN catalog_entity_tooltips t ON t.version_id = v.id AND t.locale = $4
 		LEFT JOIN catalog_entity_tooltips fallback_t ON fallback_t.version_id = v.id AND fallback_t.locale = 'en_US'
+		LEFT JOIN LATERAL (
+			SELECT jsonb_build_array(jsonb_strip_nulls(jsonb_build_object(
+				'type','spell_info','school',NULLIF(spell.school,''),'school_mask',spell.school_mask,
+				'cast_time',NULLIF(spell.cast_time,''),'cast_time_ms',spell.cast_time_ms,
+				'cooldown_ms',spell.cooldown_ms,'min_range',spell.min_range,'max_range',spell.max_range
+			))) AS blocks
+			FROM catalog_spells spell WHERE e.entity_type='spell' AND spell.version_id=v.id
+		) spell_info ON e.entity_type='spell'
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','spell_effects','entries',jsonb_agg(jsonb_build_object('index',effect.effect_index,'difficulty_id',effect.difficulty_id,'effect_type',effect.effect_type,'aura_type',effect.aura_type,'base_points',effect.base_points,'coefficient',effect.coefficient,'attack_power_coefficient',effect.attack_power_coefficient,'amplitude_ms',effect.amplitude_ms,'chain_targets',effect.chain_targets,'attributes',effect.attributes) ORDER BY effect.effect_index,effect.difficulty_id))) AS blocks
 			FROM catalog_spell_effects effect WHERE e.entity_type='spell' AND effect.spell_version_id=v.id
@@ -558,7 +566,7 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 			v.build_id, COALESCE(v.payload, '{}'::jsonb), e.updated_at,
 			COALESCE(t.plain_text, fallback_t.plain_text),
 			COALESCE(t.blocks,fallback_t.blocks,'[]'::jsonb)
-			|| COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(item_registry.blocks,'[]'::jsonb) || COALESCE(item_variants.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(quest_package_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
+			|| COALESCE(spell_info.blocks,'[]'::jsonb) || COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(item_registry.blocks,'[]'::jsonb) || COALESCE(item_variants.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(quest_package_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
 			COALESCE(fa.icon_name, spell_fa.icon_name, source_icon.icon_name, db2_fa.icon_name,
 				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}','')),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
 		FROM game_entities e
@@ -577,6 +585,14 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 		) localization_proof ON true
 		LEFT JOIN catalog_entity_tooltips t ON t.version_id = v.id AND t.locale = $2
 		LEFT JOIN catalog_entity_tooltips fallback_t ON fallback_t.version_id = v.id AND fallback_t.locale = 'en_US'
+		LEFT JOIN LATERAL (
+			SELECT jsonb_build_array(jsonb_strip_nulls(jsonb_build_object(
+				'type','spell_info','school',NULLIF(spell.school,''),'school_mask',spell.school_mask,
+				'cast_time',NULLIF(spell.cast_time,''),'cast_time_ms',spell.cast_time_ms,
+				'cooldown_ms',spell.cooldown_ms,'min_range',spell.min_range,'max_range',spell.max_range
+			))) AS blocks
+			FROM catalog_spells spell WHERE e.entity_type='spell' AND spell.version_id=v.id
+		) spell_info ON e.entity_type='spell'
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','spell_effects','entries',jsonb_agg(jsonb_build_object('index',effect.effect_index,'difficulty_id',effect.difficulty_id,'effect_type',effect.effect_type,'aura_type',effect.aura_type,'base_points',effect.base_points,'coefficient',effect.coefficient,'attack_power_coefficient',effect.attack_power_coefficient,'amplitude_ms',effect.amplitude_ms,'chain_targets',effect.chain_targets,'attributes',effect.attributes) ORDER BY effect.effect_index,effect.difficulty_id))) AS blocks
 			FROM catalog_spell_effects effect WHERE e.entity_type='spell' AND effect.spell_version_id=v.id
