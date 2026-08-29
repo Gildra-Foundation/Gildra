@@ -261,6 +261,40 @@ func (c *Cache) fetch(ctx context.Context, sourceURL string) (string, string, in
 	return key, mimeType, size, hash, nil
 }
 
+func (c *Cache) cacheImageBytes(content []byte, mimeType string) (string, int64, []byte, error) {
+	if len(content) == 0 || len(content) > maxAssetBytes {
+		return "", 0, nil, errors.New("generated media asset is empty or exceeds 32 MiB")
+	}
+	extension, ok := imageExtension(mimeType)
+	if !ok {
+		return "", 0, nil, fmt.Errorf("unsupported generated media MIME type %q", mimeType)
+	}
+	hashArray := sha256.Sum256(content)
+	hash := hashArray[:]
+	hexHash := hex.EncodeToString(hash)
+	key := filepath.ToSlash(filepath.Join(hexHash[:2], hexHash+extension))
+	if err := c.root.MkdirAll(hexHash[:2], 0o750); err != nil {
+		return "", 0, nil, err
+	}
+	temporary, err := os.CreateTemp(c.rootPath, ".gildra-generated-media-*.tmp")
+	if err != nil {
+		return "", 0, nil, err
+	}
+	temporaryName := temporary.Name()
+	defer os.Remove(temporaryName)
+	if _, writeErr := temporary.Write(content); writeErr != nil {
+		_ = temporary.Close()
+		return "", 0, nil, writeErr
+	}
+	if err := temporary.Close(); err != nil {
+		return "", 0, nil, err
+	}
+	if err := c.root.Link(filepath.Base(temporaryName), filepath.FromSlash(key)); err != nil && !errors.Is(err, os.ErrExist) {
+		return "", 0, nil, fmt.Errorf("publish generated media object: %w", err)
+	}
+	return key, int64(len(content)), hash, nil
+}
+
 func imageExtension(mimeType string) (string, bool) {
 	switch strings.ToLower(strings.TrimSpace(strings.Split(mimeType, ";")[0])) {
 	case "image/jpeg":

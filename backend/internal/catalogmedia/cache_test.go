@@ -107,3 +107,92 @@ func TestOfficialIconURL(t *testing.T) {
 		})
 	}
 }
+
+func TestWagoCASCIconURL(t *testing.T) {
+	t.Parallel()
+	got, err := wagoCASCIconURL(5351060, "wow", "12.1.0.69497")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "https://wago.tools/api/casc/5351060?product=wow&version=12.1.0.69497"
+	if got != want {
+		t.Fatalf("wagoCASCIconURL=%q, want %q", got, want)
+	}
+	if _, err := wagoCASCIconURL(0, "wow", "12.1.0.69497"); err == nil {
+		t.Fatal("wagoCASCIconURL unexpectedly accepted FileDataID 0")
+	}
+}
+
+func TestFetchWagoCASCIconConvertsAndCachesPNG(t *testing.T) {
+	t.Parallel()
+	raw := syntheticBLP2(2, 0, 0, []byte{0x00, 0xf8, 0x00, 0x00, 0, 0, 0, 0})
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		want := "https://wago.tools/api/casc/5351060?product=wow&version=12.1.0.69497"
+		if request.URL.String() != want {
+			t.Fatalf("fallback URL=%q, want %q", request.URL, want)
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(raw)),
+			Header:     make(http.Header),
+		}, nil
+	})}
+	root := t.TempDir()
+	rootHandle, err := os.OpenRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = rootHandle.Close() })
+	cache := &Cache{rootPath: root, root: rootHandle, client: client}
+	fileDataID := int64(5351060)
+	icon, err := cache.fetchWagoCASCIcon(context.Background(), iconCandidate{
+		Name: "10_2_raidability_flamingtree", FileDataID: &fileDataID,
+	}, "wow", "12.1.0.69497")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if icon.Source != "wago_tools" || icon.AssetKey != "wago_casc_icon_png" ||
+		icon.CachedMIMEType != "image/png" || icon.Width != 4 || icon.Height != 4 ||
+		icon.Conversion != "blp2_to_png" || len(icon.SourceHash) != 32 || len(icon.CachedHash) != 32 {
+		t.Fatalf("unexpected cached fallback: %#v", icon)
+	}
+	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(icon.CacheKey))); err != nil {
+		t.Fatalf("cached fallback object: %v", err)
+	}
+}
+
+func TestFetchWagoCASCIconFallsBackToExactUnpinnedFileDataID(t *testing.T) {
+	t.Parallel()
+	raw := syntheticBLP2(2, 0, 0, []byte{0x00, 0xf8, 0x00, 0x00, 0, 0, 0, 0})
+	calls := 0
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		calls++
+		body := []byte{}
+		if request.URL.String() == "https://wago.tools/api/casc/7578215" {
+			body = raw
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+			Header:     make(http.Header),
+		}, nil
+	})}
+	root := t.TempDir()
+	rootHandle, err := os.OpenRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = rootHandle.Close() })
+	cache := &Cache{rootPath: root, root: rootHandle, client: client}
+	fileDataID := int64(7578215)
+	icon, err := cache.fetchWagoCASCIcon(context.Background(), iconCandidate{
+		Name: "inv_12_jewelryandtrinkets_raid_darkwell_tank2_phoenixegg", FileDataID: &fileDataID,
+	}, "wow", "12.1.0.69497")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if calls != 2 || icon.SourceURL != "https://wago.tools/api/casc/7578215" ||
+		icon.Conversion != "blp2_to_png_unpinned_casc" {
+		t.Fatalf("calls=%d source=%q conversion=%q", calls, icon.SourceURL, icon.Conversion)
+	}
+}

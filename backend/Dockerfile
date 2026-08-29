@@ -28,6 +28,7 @@ RUN apk add --no-cache ca-certificates tzdata postgresql17-client
 WORKDIR /app
 COPY --from=builder /out/server /out/catalog-import /out/att-import /out/att-resolve /out/raidbots-import /out/catalog-index /out/catalog-audit /out/db2-import /out/listfile-import /out/catalog-pipeline /out/catalog-build-check /out/catalog-completeness /out/catalog-backup /out/catalog-media-cache /out/catalog-source-approval /out/catalog-load-check /out/goose /out/river /usr/local/bin/
 COPY migrations /app/migrations
+COPY THIRD_PARTY_NOTICES.txt /app/THIRD_PARTY_NOTICES.txt
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh \
  && install -d -o 65532 -g 65532 -m 0750 /var/lib/gildra/catalog-media \

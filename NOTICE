@@ -25,3 +25,11 @@ their respective owners.
 Gildra is an independent portfolio and fan project. It is not affiliated with,
 sponsored by, or endorsed by Blizzard Entertainment or the other referenced
 services.
+
+Bundled third-party software
+----------------------------
+
+The backend uses github.com/zeozeozeo/dxt at revision f47a38b8bbfc to decode
+DXT-compressed BLP2 interface textures. That package is Copyright (c) 2022
+Soma Rádóczi and is distributed under the MIT License. Its license text is
+available in the module source and dependency metadata.
