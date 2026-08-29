@@ -268,8 +268,6 @@ for command_name in docker curl flock grep sed date; do
 done
 
 [ -f "$environment_file" ] || fail "runtime environment file does not exist: $environment_file"
-require_environment_value SENTRY_GO_DSN
-require_environment_value NEXT_PUBLIC_SENTRY_DSN
 require_environment_value CATALOG_BACKUP_LOCAL_DIRECTORY
 for compose_file in compose.yml compose.prod.yml compose.runtime.yml; do
   [ -f "$deployment_directory/$compose_file" ] ||

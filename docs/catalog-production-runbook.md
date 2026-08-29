@@ -254,13 +254,14 @@ the result `package_only` until a separate proved relationship is imported.
 
 ## Production observability and source isolation
 
-- Production deployment requires non-empty backend and browser Sentry DSNs.
-  A missing DSN stops the release before containers are changed.
+- Backend and browser Sentry DSNs are optional. When either DSN is absent, the
+  corresponding SDK remains disabled and does not block a production release.
+  Request completion events still go to the structured container logs.
 - The API writes one structured completion event per request using only method,
   fixed route template, status, duration and response byte count. Raw URLs,
   query strings, authorization headers, cookies, request bodies, remote
   addresses and user identifiers are never included. HTTP 5xx responses are
-  also reported to Sentry using the fixed route template.
+  also reported to Sentry using the fixed route template when Sentry is enabled.
 - `/livez` proves that the process can serve HTTP. `/readyz` independently
   pings PostgreSQL, ClickHouse and Redis; container health alone is not accepted
   as proof of service readiness.
