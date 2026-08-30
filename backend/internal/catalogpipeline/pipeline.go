@@ -1,6 +1,7 @@
 package catalogpipeline
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -262,11 +263,15 @@ func buildPlan(options Options) []Stage {
 			}
 			plan = append(plan, Stage{Key: "import-db2", Executable: "db2-import", Arguments: args})
 		case "battlenet":
-			battleNetArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "all", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}
+			// Battle.net can publish a build after Wago/DB2 (or briefly lag it).
+			// Keep the release pinned to one target build while allowing the
+			// importer to consume the API's current build and record that
+			// source-build divergence in artifact provenance.
+			battleNetArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "all", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
 			if options.BuildVersion != "" {
 				battleNetArgs = append(battleNetArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			}
-			battleNetMediaArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "class,specialization,profession,instance,mount,battle_pet,achievement", "-media-only", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}
+			battleNetMediaArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "class,specialization,profession,instance,mount,battle_pet,achievement", "-media-only", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
 			if options.BuildVersion != "" {
 				battleNetMediaArgs = append(battleNetMediaArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			}
@@ -582,8 +587,12 @@ func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory,
 		command.Env = append(command.Env, "CATALOG_RELEASE_ID="+releaseID)
 	}
 	command.Stdout = r.Stdout
-	command.Stderr = r.Stderr
+	var stageStderr bytes.Buffer
+	command.Stderr = io.MultiWriter(r.Stderr, &stageStderr)
 	if err := command.Run(); err != nil {
+		if detail := boundedStageError(stageStderr.String()); detail != "" {
+			err = fmt.Errorf("%w: %s", err, detail)
+		}
 		return r.failStage(ctx, runID, stage.Key, "stage_command_failed", err)
 	}
 	_, err = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now() WHERE run_id=$1 AND stage_key=$2`, runID, stage.Key)
@@ -591,6 +600,18 @@ func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory,
 		return fmt.Errorf("finish pipeline stage %s: %w", stage.Key, err)
 	}
 	return nil
+}
+
+// boundedStageError keeps the actionable tail of a failed importer in the
+// pipeline record without allowing command output to grow the error column
+// indefinitely. Importers must never print credentials; this is only a
+// bounded copy of their already-redacted stderr stream.
+func boundedStageError(value string) string {
+	value = strings.TrimSpace(value)
+	if len(value) <= 4096 {
+		return value
+	}
+	return "…" + value[len(value)-4095:]
 }
 
 func (r *Runner) validate(
