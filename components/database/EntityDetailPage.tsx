@@ -24,6 +24,10 @@ function displayValue(value: unknown, lang: Lang) {
   return typeof value === "object" ? JSON.stringify(value) : String(value);
 }
 
+function hasUnresolvedTemplate(value: string) {
+  return /\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)/.test(value);
+}
+
 function relationshipAttributes(attributes: Record<string, unknown>, lang: Lang) {
   const labels: Record<string, [string, string]> = {
     chance_percent: ["Drop chance", "Шанс добычи"], quantity: ["Quantity", "Количество"],
@@ -69,7 +73,7 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
       </nav>
 
       <header className="db-detail-header">
-        <div className="db-detail-title"><span className="db-detail-main-icon">{entity.iconUrl ? <img src={entity.iconUrl} alt="" /> : <svg className="i" aria-hidden="true"><use href={`#${entityType?.iconSymbol ?? "ic-gem"}`} /></svg>}</span><div><p className="cap gold">{entityType?.label ?? entity.type}</p><h1>{displayName}</h1>{description ? <p>{description}</p> : null}</div></div>
+        <div className="db-detail-title"><span className="db-detail-main-icon">{entity.iconUrl ? <img src={entity.iconUrl} alt="" /> : <svg className="i" aria-hidden="true"><use href={`#${entityType?.iconSymbol ?? "ic-gem"}`} /></svg>}</span><div><p className="cap gold">{entityType?.label ?? entity.type}</p><h1>{displayName}</h1>{description ? <p>{description}</p> : null}{hasUnresolvedTemplate(description) ? <p className="db-detail-warning" role="status">{lang === "ru" ? "В описании остались переменные источника — значение ещё не разрешено." : "Source template variables remain in this description; the value is not resolved yet."}</p> : null}</div></div>
         <dl><div><dt>{lang === "ru" ? "ID в игре" : "Game ID"}</dt><dd>{entity.externalId}</dd></div>{quality ? <div><dt>{lang === "ru" ? "Сборка" : "Build"}</dt><dd>{quality.buildVersion} · {quality.buildNumber}</dd></div> : entity.buildId ? <div><dt>{lang === "ru" ? "Сборка" : "Build"}</dt><dd>{entity.buildId}</dd></div> : null}<div><dt>{lang === "ru" ? "Обновлено" : "Updated"}</dt><dd>{new Date(entity.updatedAt).toLocaleDateString(locale)}</dd></div></dl>
       </header>
 
@@ -79,7 +83,7 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
 
       <section className="db-detail-section" id="localizations" aria-labelledby="entity-localizations-title">
         <div className="db-section-heading"><div><p className="cap">Source-backed locales</p><h2 id="entity-localizations-title">{lang === "ru" ? "Названия и описания" : "Names and descriptions"}</h2></div><p>{lang === "ru" ? "Без искусственного перевода" : "No synthetic translations"}</p></div>
-        <div className="db-localization-grid">{["en_US", "ru_RU"].map((localeKey) => { const localized = entity.localizations?.[localeKey]; const localeName = localeKey === "ru_RU" ? "Русский" : "English"; const missing = lang === "ru" ? "Нет значения в источнике" : "No source value"; return <article key={localeKey} className="db-localization-card"><div><strong>{localeName}</strong><small>{localeKey}</small></div><dl><div><dt>{lang === "ru" ? "Название" : "Name"}</dt><dd>{localized?.name || missing}</dd></div><div><dt>{lang === "ru" ? "Исходное описание" : "Raw description"}</dt><dd>{localized?.description || missing}</dd></div><div><dt>{lang === "ru" ? "Разрешённое описание" : "Resolved description"}</dt><dd>{localized?.resolvedDescription || localized?.description || missing}</dd></div></dl></article>; })}</div>
+        <div className="db-localization-grid">{["en_US", "ru_RU"].map((localeKey) => { const localized = entity.localizations?.[localeKey]; const localeName = localeKey === "ru_RU" ? "Русский" : "English"; const missing = lang === "ru" ? "Нет значения в источнике" : "No source value"; return <article key={localeKey} className="db-localization-card"><div><strong>{localeName}</strong><small>{localeKey}</small></div><dl><div><dt>{lang === "ru" ? "Название" : "Name"}</dt><dd>{localized?.name || missing}</dd></div><div><dt>{lang === "ru" ? "Исходное описание" : "Raw description"}</dt><dd>{localized?.description || missing}</dd>{localized?.description && hasUnresolvedTemplate(localized.description) ? <small className="db-detail-warning">{lang === "ru" ? "Есть неразрешённые переменные" : "Unresolved source variables"}</small> : null}</div><div><dt>{lang === "ru" ? "Разрешённое описание" : "Resolved description"}</dt><dd>{localized?.resolvedDescription || localized?.description || missing}</dd></div></dl></article>; })}</div>
       </section>
 
       <section className="db-detail-section" id="media" aria-labelledby="entity-media-title">
