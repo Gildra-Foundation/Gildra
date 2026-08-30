@@ -18,6 +18,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogrelease"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -72,6 +73,8 @@ type Options struct {
 	PublicationEnvironment string
 	CatalogAccessMode      string
 	RecoveryPolicy         string
+	ResumeReleaseID        string
+	ResumeFrom             string
 }
 
 type Stage struct {
@@ -203,6 +206,18 @@ func normalizeOptions(options Options) (Options, error) {
 			return Options{}, errors.New("unbounded production import requires -confirm-full-import")
 		}
 	}
+	if strings.TrimSpace(options.ResumeReleaseID) != "" {
+		if options.Mode != "apply" {
+			return Options{}, errors.New("resume-release requires apply mode")
+		}
+		if _, err := uuid.Parse(strings.TrimSpace(options.ResumeReleaseID)); err != nil {
+			return Options{}, fmt.Errorf("invalid resume release ID: %w", err)
+		}
+		options.ResumeFrom = strings.TrimSpace(options.ResumeFrom)
+		if options.ResumeFrom == "" {
+			options.ResumeFrom = "import-battlenet"
+		}
+	}
 	return options, nil
 }
 
@@ -266,7 +281,7 @@ func buildPlan(options Options) []Stage {
 			// Keep the release pinned to one target build while allowing the
 			// importer to consume the API's current build and record that
 			// source-build divergence in artifact provenance.
-			battleNetArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "all", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
+			battleNetArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "quest,talent,pvp_talent,profession,mount,battle_pet,class,specialization,achievement,item_set,instance,encounter,faction", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
 			if options.BuildVersion != "" {
 				battleNetArgs = append(battleNetArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			}
@@ -396,7 +411,22 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		return result, fmt.Errorf("select release start stage: %w", err)
 	}
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='release-start'`, result.RunID)
-	releaseID, err := releaseManager.Start(ctx, result.RunID, options.Product, options.BuildVersion, options.Sources)
+	var releaseID uuid.UUID
+	resuming := strings.TrimSpace(options.ResumeReleaseID) != ""
+	if resuming {
+		releaseID, err = uuid.Parse(strings.TrimSpace(options.ResumeReleaseID))
+		if err == nil {
+			// A failed stage can leave an incomplete source snapshot. Remove only
+			// failed snapshots; validated Wago/DB2 snapshots are retained for a
+			// true stage-level retry.
+			_, err = r.DB.Exec(ctx, `DELETE FROM catalog_snapshots WHERE release_id=$1 AND status='failed'`, releaseID)
+		}
+		if err == nil {
+			err = releaseManager.Resume(ctx, releaseID, result.RunID, options.Product, options.BuildVersion, options.Sources)
+		}
+	} else {
+		releaseID, err = releaseManager.Start(ctx, result.RunID, options.Product, options.BuildVersion, options.Sources)
+	}
 	if err != nil {
 		if errors.Is(err, catalogrelease.ErrBuildAlreadyPublished) {
 			publicationService := catalog.NewPublicationService(r.DB, time.Second)
@@ -442,9 +472,21 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		}
 	}()
 
+	resumeReached := !resuming
 	for _, stage := range plan {
 		if stage.Executable == "" {
 			continue
+		}
+		if resuming && !resumeReached {
+			if stage.Key == options.ResumeFrom {
+				resumeReached = true
+			} else {
+				_, skipErr := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='skipped',started_at=COALESCE(started_at,now()),finished_at=now(),error_code='resume_skip',error_summary='retained from previous release attempt' WHERE run_id=$1 AND stage_key=$2`, result.RunID, stage.Key)
+				if skipErr != nil {
+					return result, fmt.Errorf("skip retained stage %s: %w", stage.Key, skipErr)
+				}
+				continue
+			}
 		}
 		if err := r.executeStage(ctx, result.RunID, options.BinaryDirectory, result.ReleaseID, stage); err != nil {
 			return result, err
