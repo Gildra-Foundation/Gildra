@@ -196,6 +196,21 @@ func EvaluateReadinessWithRecoveryPolicy(
 	report.warn("russian_translation_fallbacks", ScopeData, russianFallbacks,
 		"Russian source text is absent; the API must expose these exact English fallbacks as fallback data")
 
+	var unresolvedDescriptionTemplates int64
+	if err := db.QueryRow(ctx, `
+		SELECT count(*)
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		JOIN game_entity_localizations localization ON localization.version_id=version.id
+		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+		  AND entity.deleted_at IS NULL
+		  AND localization.description ~ '\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)'`, product).
+		Scan(&unresolvedDescriptionTemplates); err != nil {
+		return ReadinessReport{}, fmt.Errorf("check unresolved description templates: %w", err)
+	}
+	report.warn("description_template_tokens", ScopeData, unresolvedDescriptionTemplates,
+		"source descriptions still contain unresolved Blizzard template tokens; resolved output must be verified before a complete badge is shown")
+
 	var unprovenFacts int64
 	if err := db.QueryRow(ctx, `
 		WITH current_versions AS (

@@ -21,14 +21,16 @@ type buildReport struct {
 }
 
 type coverageReport struct {
-	EntityType       string `json:"entityType"`
-	Entities         int64  `json:"entities"`
-	EnglishNames     int64  `json:"englishNames"`
-	RussianNames     int64  `json:"russianNames"`
-	EnglishDescribed int64  `json:"englishDescribed"`
-	RussianDescribed int64  `json:"russianDescribed"`
-	Icons            int64  `json:"icons"`
-	OfficialDocs     int64  `json:"officialDocuments"`
+	EntityType                 string `json:"entityType"`
+	Entities                   int64  `json:"entities"`
+	EnglishNames               int64  `json:"englishNames"`
+	RussianNames               int64  `json:"russianNames"`
+	EnglishDescribed           int64  `json:"englishDescribed"`
+	RussianDescribed           int64  `json:"russianDescribed"`
+	EnglishUnresolvedTemplates int64  `json:"englishUnresolvedTemplates"`
+	RussianUnresolvedTemplates int64  `json:"russianUnresolvedTemplates"`
+	Icons                      int64  `json:"icons"`
+	OfficialDocs               int64  `json:"officialDocuments"`
 }
 
 type factReport struct {
@@ -115,6 +117,8 @@ func run() error {
 			count(*) FILTER (WHERE NULLIF(BTRIM(ru.name),'') IS NOT NULL),
 			count(*) FILTER (WHERE NULLIF(BTRIM(en.description),'') IS NOT NULL),
 			count(*) FILTER (WHERE NULLIF(BTRIM(ru.description),'') IS NOT NULL),
+			count(*) FILTER (WHERE en.description ~ '\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)'),
+			count(*) FILTER (WHERE ru.description ~ '\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)'),
 			count(*) FILTER (WHERE icon.external_id IS NOT NULL),
 			count(*) FILTER (WHERE official.external_id IS NOT NULL)
 		FROM game_entities entity
@@ -135,7 +139,8 @@ func run() error {
 	for rows.Next() {
 		var item coverageReport
 		if err := rows.Scan(&item.EntityType, &item.Entities, &item.EnglishNames, &item.RussianNames,
-			&item.EnglishDescribed, &item.RussianDescribed, &item.Icons, &item.OfficialDocs); err != nil {
+			&item.EnglishDescribed, &item.RussianDescribed, &item.EnglishUnresolvedTemplates,
+			&item.RussianUnresolvedTemplates, &item.Icons, &item.OfficialDocs); err != nil {
 			return fmt.Errorf("scan catalog coverage: %w", err)
 		}
 		result.Coverage = append(result.Coverage, item)

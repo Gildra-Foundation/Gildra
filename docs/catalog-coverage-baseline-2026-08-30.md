@@ -34,10 +34,12 @@ spell effects, 8,423 recipe outputs, 25,684 reagents and 40,750 quest rewards
 were measured for retail. The denominator for each relation must be added to
 the quality report before a product can claim full graph coverage.
 
-Approximately 104,000–105,000 English and Russian spell descriptions still
-contain unresolved client template tokens such as `$s`, `$d` and
-`$@spelldesc`. They remain source text with an explicit unresolved state; the
-renderer must not label them as resolved descriptions.
+The published raw localization audit currently finds 113,659 English and
+113,965 Russian rows containing a client template token such as `$s`, `$d` or
+`$@spelldesc` (the broad detector also includes token-bearing non-spell rows).
+They remain source text with an explicit unresolved state; the renderer must
+not label them as resolved descriptions. The post-resolver count must be
+reported separately before a complete badge is allowed.
 
 ## Release interpretation
 
