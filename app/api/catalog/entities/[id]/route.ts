@@ -11,9 +11,14 @@ export async function GET(
   }
   const locale = request.nextUrl.searchParams.get("locale") === "ru_RU" ? "ru_RU" : "en_US";
   const apiURL = process.env.API_INTERNAL_URL ?? "http://api:8080";
+  const session = request.cookies.get("gildra_admin_session")?.value;
+  const headers = session ? { Cookie: `gildra_admin_session=${encodeURIComponent(session)}` } : undefined;
   const response = await fetch(`${apiURL}/v1/game/entities/${id}?locale=${locale}`, {
-    cache: "force-cache",
-    next: { revalidate: 300, tags: [`catalog-entity-${id}`] },
+    // Catalog access is private in production. Do not cache an authenticated
+    // response in the Next data cache or a shared CDN, and forward only the
+    // session cookie required by the Go API.
+    cache: "no-store",
+    headers,
     signal: AbortSignal.timeout(15_000),
   });
   const body = await response.text();
@@ -21,9 +26,7 @@ export async function GET(
     status: response.status,
     headers: {
       "Content-Type": response.headers.get("Content-Type") ?? "application/json",
-      "Cache-Control": response.ok
-        ? "public, max-age=60, s-maxage=300, stale-while-revalidate=3600"
-        : "no-store",
+      "Cache-Control": "private, no-store",
     },
   });
 }

@@ -173,6 +173,10 @@ verify_local_health() {
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/ru/library >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/library/items >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/ru/library/items >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve gildra.net:443:127.0.0.1 https://gildra.net/database >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/database >/dev/null

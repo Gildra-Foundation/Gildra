@@ -31,10 +31,23 @@ const navItems = [
 ];
 
 async function requestJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, { credentials: "include", ...init });
+  const timeout = AbortSignal.timeout(15_000);
+  const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+  let response: Response;
+  try {
+    response = await fetch(path, { credentials: "include", ...init, signal });
+  } catch (reason) {
+    if (reason instanceof DOMException && reason.name === "TimeoutError") {
+      throw new Error("Сервис не ответил за 15 секунд. Повторите запрос.");
+    }
+    throw reason;
+  }
   if (!response.ok) {
     let message = "Запрос не выполнен";
-    try { message = (await response.json()).message ?? message; } catch { /* empty response */ }
+    try {
+      const problem = await response.json() as { message?: string; detail?: string; code?: string };
+      message = problem.detail ?? problem.message ?? (problem.code ? `${problem.code}: ${message}` : message);
+    } catch { /* empty response */ }
     throw new Error(message);
   }
   return response.json() as Promise<T>;
