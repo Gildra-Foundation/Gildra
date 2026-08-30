@@ -10,13 +10,15 @@ an optional enrichment source with `-source battlenet`.
 For Wago.Tools, the current Retail build is detected from the CSV response and
 pinned for the complete run. You can override it with `-version 12.1.0.69404`.
 
-## Retail foundation profile
+## Foundation profiles
 
-`catalog-pipeline` defaults to the `retail-foundation` profile. It contains only
-the sources needed to build the structured Retail catalog: Wago DB2 transport,
-the complete DB2 projection, Blizzard Game Data/Media APIs, and the verified
-listfile. Raidbots and every tier-list dataset are outside this profile. They
-cannot be selected by a production foundation run.
+`catalog-pipeline` defaults to a product-aware foundation profile. Retail uses
+`retail-foundation` with Wago DB2 transport, the complete DB2 projection,
+Blizzard Game Data/Media APIs and the verified listfile. Classic, Classic Era
+and Hardcore use independent `classic-foundation`, `classic-era-foundation`
+and `classic-hardcore-foundation` profiles with their own pinned DB2/listfile
+builds. Raidbots and every tier-list dataset are outside all foundation
+profiles and cannot be selected by a production foundation run.
 
 Preview the exact stages without importing data:
 
