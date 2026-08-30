@@ -31,6 +31,7 @@ func main() {
 
 func run() (catalogpipeline.Result, error) {
 	var databaseURL, sources, mode, trigger, profile, product, version, binaryDirectory, publicationEnvironment, catalogAccessMode, recoveryPolicy string
+	var resumeReleaseID, resumeFrom string
 	var maxRecords int
 	var confirmFullImport, useCheckedBuild bool
 	var timeout time.Duration
@@ -49,6 +50,8 @@ func run() (catalogpipeline.Result, error) {
 	flag.BoolVar(&confirmFullImport, "confirm-full-import", false, "confirm an unbounded production import")
 	flag.BoolVar(&useCheckedBuild, "use-checked-build", false, "pin the import to a recent successful Wago build check")
 	flag.DurationVar(&timeout, "timeout", 6*time.Hour, "whole pipeline timeout")
+	flag.StringVar(&resumeReleaseID, "resume-release", "", "resume a failed staging release without repeating validated source stages")
+	flag.StringVar(&resumeFrom, "resume-from", "import-battlenet", "first executable stage to run when resuming a release")
 	flag.Parse()
 	if databaseURL == "" {
 		return catalogpipeline.Result{}, errors.New("DATABASE_URL or -database-url is required")
@@ -98,6 +101,8 @@ func run() (catalogpipeline.Result, error) {
 		PublicationEnvironment: publicationEnvironment,
 		CatalogAccessMode:      catalogAccessMode,
 		RecoveryPolicy:         strings.TrimSpace(recoveryPolicy),
+		ResumeReleaseID:        strings.TrimSpace(resumeReleaseID),
+		ResumeFrom:             strings.TrimSpace(resumeFrom),
 	}
 	return (&catalogpipeline.Runner{DB: db, Stdout: os.Stdout, Stderr: os.Stderr}).Run(ctx, options)
 }

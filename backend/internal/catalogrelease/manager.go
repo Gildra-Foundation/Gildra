@@ -66,6 +66,40 @@ func (m *Manager) Start(
 	return releaseID, nil
 }
 
+// Resume re-attaches a previously failed staging release to a new pipeline
+// run. Validated snapshots are retained; failed snapshots from the interrupted
+// stage are discarded by the caller before the next source snapshot is built.
+// Keeping this operation in the release manager makes retries explicit and
+// prevents a partial import from ever moving the published pointer.
+func (m *Manager) Resume(
+	ctx context.Context,
+	releaseID uuid.UUID,
+	pipelineRunID int64,
+	product, buildVersion string,
+	sources []string,
+) error {
+	if releaseID == uuid.Nil || pipelineRunID <= 0 || strings.TrimSpace(product) == "" || strings.TrimSpace(buildVersion) == "" || len(sources) == 0 {
+		return errors.New("release, pipeline run, product, build version, and sources are required")
+	}
+	command, err := m.db.Exec(ctx, `
+		UPDATE catalog_releases release
+		SET pipeline_run_id=$2,status='staging',error_summary='',failed_at=NULL,updated_at=now()
+		FROM game_products game_product
+		WHERE release.id=$1
+		  AND release.product_id=game_product.id
+		  AND game_product.slug=$3
+		  AND release.build_version=$4
+		  AND release.requested_sources=$5
+		  AND release.status='failed'`, releaseID, pipelineRunID, strings.TrimSpace(product), strings.TrimSpace(buildVersion), sources)
+	if err != nil {
+		return fmt.Errorf("resume catalog release: %w", err)
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("resume catalog release %s: release is missing or does not match the requested build/profile", releaseID)
+	}
+	return nil
+}
+
 func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 	if releaseID == uuid.Nil {
 		return errors.New("release ID is required")
@@ -417,7 +451,7 @@ func (m *Manager) Fail(ctx context.Context, releaseID uuid.UUID, cause error) er
 		if _, err := tx.Exec(ctx, `
 			UPDATE catalog_snapshots
 			SET status='failed',failed_at=COALESCE(failed_at,now())
-			WHERE release_id=$1 AND status IN ('staging','validated')`, releaseID); err != nil {
+			WHERE release_id=$1 AND status='staging'`, releaseID); err != nil {
 			return fmt.Errorf("fail catalog release snapshots: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `
