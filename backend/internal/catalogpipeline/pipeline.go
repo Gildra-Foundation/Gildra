@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -124,6 +125,9 @@ func normalizeOptions(options Options) (Options, error) {
 	}
 	options.Sources = sources
 	options.BuildVersion = strings.TrimSpace(options.BuildVersion)
+	if options.BuildVersion != "" && buildNumber(options.BuildVersion) == 0 {
+		return Options{}, fmt.Errorf("invalid catalog build version %q", options.BuildVersion)
+	}
 	options.CatalogAccessMode = strings.ToLower(strings.TrimSpace(options.CatalogAccessMode))
 	if options.CatalogAccessMode == "" {
 		options.CatalogAccessMode = "public"
@@ -178,7 +182,11 @@ func buildPlan(options Options) []Stage {
 		case "wago":
 			args := []string{"-source", "wago", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "item,spell", "-max-records", fmt.Sprint(options.MaxRecords)}
 			if options.BuildVersion != "" {
-				args = append(args, "-version", options.BuildVersion)
+				// catalog-import also reads BATTLENET_BUILD_NUMBER from the
+				// runtime environment.  Pin the Wago importer explicitly so a
+				// stale Blizzard namespace cannot bind this stage to another
+				// build with the same version string.
+				args = append(args, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			}
 			plan = append(plan, Stage{Key: "import-wago", Executable: "catalog-import", Arguments: args})
 		case "raidbots":
@@ -216,6 +224,21 @@ func buildPlan(options Options) []Stage {
 		plan = append(plan, Stage{Key: "release-publish"})
 	}
 	return plan
+}
+
+// buildNumber extracts the immutable fourth component used by Wago/DB2
+// snapshots.  normalizeOptions validates the release version before a plan is
+// executed, so this helper can stay deliberately small and deterministic.
+func buildNumber(version string) int {
+	parts := strings.Split(strings.TrimSpace(version), ".")
+	if len(parts) != 4 {
+		return 0
+	}
+	value, err := strconv.Atoi(parts[3])
+	if err != nil || value <= 0 {
+		return 0
+	}
+	return value
 }
 
 func (r *Runner) Run(ctx context.Context, options Options) (result Result, runErr error) {
