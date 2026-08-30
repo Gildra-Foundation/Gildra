@@ -281,7 +281,7 @@ func buildPlan(options Options) []Stage {
 			// Keep the release pinned to one target build while allowing the
 			// importer to consume the API's current build and record that
 			// source-build divergence in artifact provenance.
-			battleNetArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "quest,talent,pvp_talent,profession,mount,battle_pet,class,specialization,achievement,item_set,instance,encounter,faction", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
+			battleNetArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "talent,pvp_talent,profession,mount,battle_pet,class,specialization,achievement,item_set,instance,encounter,faction", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
 			if options.BuildVersion != "" {
 				battleNetArgs = append(battleNetArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			}
