@@ -35,8 +35,17 @@ const fieldTitles: Record<string, string> = {
 };
 
 async function catalogRequest<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(path, { credentials: "include", signal });
-  if (!response.ok) throw new Error(`Каталог недоступен (${response.status})`);
+  const deadline = AbortSignal.timeout(15_000);
+  const requestSignal = signal ? AbortSignal.any([signal, deadline]) : deadline;
+  const response = await fetch(path, { credentials: "include", signal: requestSignal });
+  if (!response.ok) {
+    let message = `Каталог недоступен (${response.status})`;
+    try {
+      const problem = await response.json() as { message?: string; detail?: string };
+      message = problem.detail ?? problem.message ?? message;
+    } catch { /* keep status-based message */ }
+    throw new Error(message);
+  }
   return response.json() as Promise<T>;
 }
 
@@ -70,7 +79,9 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
       setProducts(productPage.data); setTypes(typePage.data); setPage(records);
     } catch (reason) {
       if (reason instanceof DOMException && reason.name === "AbortError") return;
-      setError(reason instanceof Error ? reason.message : "Не удалось загрузить каталог");
+      setError(reason instanceof DOMException && reason.name === "TimeoutError"
+        ? "Каталог не ответил за 15 секунд. Повторите запрос."
+        : reason instanceof Error ? reason.message : "Не удалось загрузить каталог");
     } finally { setLoading(false); }
   }, [cursor, product, query, type]);
 

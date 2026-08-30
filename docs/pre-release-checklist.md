@@ -73,6 +73,10 @@ require the protected `production` environment and its approval policy.
 - Before disarming automatic rollback, require the dataset API plus `/library`
   and `/ru/library` to return 2xx through `api.gildra.net`, and require the same
   library routes through `gildra.net`.
+- In the private owner-approved mode, also exercise an authenticated nested
+  bookmark such as `/library/items` and `/ru/library/items`. It must resolve to
+  the same API-console catalog shell; it must not fall through to the separate
+  Next renderer or return a catalog 500.
 - Require the immutable deployment script's bounded `catalog-load-check` to
   pass for both `en_US` and `ru_RU`; its JSON report is retained in the deploy
   log as release evidence.
