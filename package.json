@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "qa:talents": "node scripts/qa-talents.mjs",
     "generate:api": "openapi-typescript backend/api/openapi.yaml -o lib/api/schema.d.ts",
     "design:capture": "node scripts/capture-design.mjs"
   },

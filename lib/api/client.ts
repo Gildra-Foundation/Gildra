@@ -31,11 +31,10 @@ function apiURL() {
   return process.env.API_INTERNAL_URL ?? "http://api:8080";
 }
 
-async function catalogRequest<T>(path: string, revalidate = 300): Promise<T> {
-  const response = await fetch(`${apiURL()}${path}`, {
-    cache: "force-cache",
-    next: { revalidate, tags: ["catalog"] },
-  });
+async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestCache = "force-cache"): Promise<T> {
+  const response = await fetch(`${apiURL()}${path}`, cache === "no-store"
+    ? { cache: "no-store" }
+    : { cache: "force-cache", next: { revalidate, tags: ["catalog"] } });
   if (!response.ok) {
     let message = `Catalog request failed (${response.status})`;
     try {
@@ -84,6 +83,8 @@ export async function getCatalogPage({
   minRequiredLevel,
   maxRequiredLevel,
   limit = 24,
+  includeTotal = true,
+  fresh = false,
 }: {
   locale: "en_US" | "ru_RU";
   product?: string;
@@ -97,8 +98,10 @@ export async function getCatalogPage({
   minRequiredLevel?: number;
   maxRequiredLevel?: number;
   limit?: number;
+  includeTotal?: boolean;
+  fresh?: boolean;
 }): Promise<CatalogPage> {
-  const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: "true" });
+  const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: String(includeTotal) });
   if (type) params.set("type", type);
   if (query) params.set("q", query);
   if (cursor) params.set("cursor", cursor);
@@ -110,7 +113,7 @@ export async function getCatalogPage({
   if (maxItemLevel !== undefined) params.set("maxItemLevel", String(maxItemLevel));
   if (minRequiredLevel !== undefined) params.set("minRequiredLevel", String(minRequiredLevel));
   if (maxRequiredLevel !== undefined) params.set("maxRequiredLevel", String(maxRequiredLevel));
-  const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`);
+  const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`, fresh ? 0 : 300, fresh ? "no-store" : "force-cache");
   return { data: page.data, pagination: page.pagination };
 }
 
@@ -139,16 +142,16 @@ export async function getCatalogProducts(): Promise<CatalogProduct[]> {
   return page.data;
 }
 
-export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU"): Promise<GameEntity | null> {
+export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", fresh = false): Promise<GameEntity | null> {
   const params = new URLSearchParams({ locale });
-  const response = await fetch(`${apiURL()}/v1/game/entities/${encodeURIComponent(id)}?${params}`, {
-    cache: "force-cache",
-    next: { revalidate: 300, tags: [`catalog-entity-${id}`] },
-  });
+  const response = await fetch(`${apiURL()}/v1/game/entities/${encodeURIComponent(id)}?${params}`, fresh
+    ? { cache: "no-store" }
+    : { cache: "force-cache", next: { revalidate: 300, tags: [`catalog-entity-${id}`] } });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Catalog entity request failed (${response.status})`);
   return await response.json() as GameEntity;
 }
+
 
 export async function getCatalogCoverage(
   locale: "en_US" | "ru_RU",

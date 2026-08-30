@@ -34,7 +34,7 @@ export function CookieNotice() {
     setVisible(false);
   };
 
-  if (!visible || pathname.startsWith("/api-console")) return null;
+  if (!visible || pathname.startsWith("/api-console") || pathname.includes("/talents")) return null;
 
   return (
     <aside className="cookie" role="region" aria-label="Cookies">
