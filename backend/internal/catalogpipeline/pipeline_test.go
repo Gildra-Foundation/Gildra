@@ -203,18 +203,31 @@ func TestClassicProfilesPinDB2AndListfileToTheirProductBuild(t *testing.T) {
 	}
 }
 
-func TestProductionRetailGateRejectsClassicProfiles(t *testing.T) {
-	_, err := BuildPlan(Options{
+func TestProductionProfilesAcceptTheirCompleteSourceSets(t *testing.T) {
+	for _, test := range []struct {
+		name, product, profile, version string
+		sources []string
+	}{
+		{name: "retail", product: "wow", profile: ProfileRetailFoundation, version: "12.1.0.69404", sources: []string{"wago", "db2", "battlenet", "listfile"}},
+		{name: "classic", product: "wow_classic", profile: ProfileClassicFoundation, version: "4.4.2.69900", sources: []string{"db2", "listfile"}},
+		{name: "era", product: "wow_classic_era", profile: ProfileClassicEraFoundation, version: "1.15.8.69901", sources: []string{"db2", "listfile"}},
+		{name: "hardcore", product: "wow_classic_hardcore", profile: ProfileClassicHardcoreFoundation, version: "1.15.8.69902", sources: []string{"db2", "listfile"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := BuildPlan(Options{
 		Mode:                   "apply",
 		PublicationEnvironment: "production",
-		Product:                "wow_classic",
-		Profile:                ProfileClassicFoundation,
-		BuildVersion:           "4.4.2.69900",
+		Product:                test.product,
+		Profile:                test.profile,
+		Sources:                test.sources,
+		BuildVersion:           test.version,
 		MaxRecords:             0,
 		ConfirmFullImport:      true,
-	})
-	if err == nil || !strings.Contains(err.Error(), "must use the retail-foundation profile") {
-		t.Fatalf("expected production retail gate rejection, got %v", err)
+			})
+			if err != nil {
+				t.Fatalf("expected complete %s profile to pass production normalization, got %v", test.name, err)
+			}
+		})
 	}
 }
 

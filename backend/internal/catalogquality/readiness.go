@@ -37,7 +37,7 @@ type ReadinessReport struct {
 	Checks          []ReadinessCheck `json:"checks"`
 }
 
-// EvaluateReadiness verifies the source-backed Retail catalog foundation.
+// EvaluateReadiness verifies the source-backed product catalog foundation.
 // Missing source translations may be represented as an exact English fallback;
 // an unexplained localized value is always a blocking data-quality failure.
 func EvaluateReadiness(
@@ -93,7 +93,8 @@ func EvaluateReadinessWithRecoveryPolicy(
 		WITH profile AS (
 			SELECT profile_key FROM catalog_release_profiles profile
 			JOIN game_products product ON product.id=profile.product_id
-			WHERE product.slug=$1 AND profile.profile_key='retail-foundation-v1' AND profile.status='active'
+			WHERE product.slug=$1 AND profile.status='active'
+			ORDER BY profile.profile_key LIMIT 1
 		), required_types AS (
 			SELECT scope.entity_type,scope.minimum_count
 			FROM catalog_release_profile_entity_types scope
@@ -340,11 +341,15 @@ func EvaluateReadinessWithRecoveryPolicy(
 
 	var blockedSources int64
 	if err := db.QueryRow(ctx, `
-		WITH required_sources AS (
-			SELECT unnest(profile.publication_sources) AS source
+		WITH active_profile AS (
+			SELECT profile.*
 			FROM catalog_release_profiles profile
 			JOIN game_products product ON product.id=profile.product_id
-			WHERE product.slug=$2 AND profile.profile_key='retail-foundation-v1' AND profile.status='active'
+			WHERE product.slug=$2 AND profile.status='active'
+			ORDER BY profile.profile_key LIMIT 1
+		), required_sources AS (
+			SELECT unnest(profile.publication_sources) AS source
+			FROM active_profile profile
 		), used_sources AS (
 			SELECT DISTINCT artifact.source
 			FROM catalog_source_artifacts artifact
@@ -404,11 +409,15 @@ func countBlockedProductionPublicAPIGrants(
 ) (int64, error) {
 	var blocked int64
 	if err := db.QueryRow(ctx, `
-		WITH required_sources AS (
-			SELECT unnest(profile.publication_sources) AS source
+		WITH active_profile AS (
+			SELECT profile.*
 			FROM catalog_release_profiles profile
 			JOIN game_products product ON product.id=profile.product_id
-			WHERE product.slug=$2 AND profile.profile_key='retail-foundation-v1' AND profile.status='active'
+			WHERE product.slug=$2 AND profile.status='active'
+			ORDER BY profile.profile_key LIMIT 1
+		), required_sources AS (
+			SELECT unnest(profile.publication_sources) AS source
+			FROM active_profile profile
 		), used_sources AS (
 			SELECT DISTINCT artifact.source
 			FROM catalog_source_artifacts artifact

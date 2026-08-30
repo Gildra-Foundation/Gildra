@@ -182,19 +182,19 @@ func normalizeOptions(options Options) (Options, error) {
 		if strings.TrimSpace(options.RecoveryPolicy) == "" {
 			options.RecoveryPolicy = catalogquality.RecoveryPolicyOffHost
 		}
-		if options.Profile != ProfileRetailFoundation {
-			return Options{}, errors.New("production catalog imports must use the retail-foundation profile")
+		if !isStandardProfile {
+			return Options{}, errors.New("production catalog imports require a standard product foundation profile")
 		}
 		if options.BuildVersion == "" {
 			return Options{}, errors.New("production catalog imports require an explicit -version")
 		}
-		for _, required := range []string{"wago", "db2", "battlenet", "listfile"} {
+		for _, required := range profile.Sources {
 			if !seen[required] {
-				return Options{}, fmt.Errorf("production retail-foundation import requires source %q", required)
+				return Options{}, fmt.Errorf("production %s import requires source %q", options.Profile, required)
 			}
 		}
-		if len(options.Sources) != 4 {
-			return Options{}, errors.New("production retail-foundation import requires the complete source profile")
+		if len(options.Sources) != len(profile.Sources) {
+			return Options{}, fmt.Errorf("production %s import requires the complete source profile", options.Profile)
 		}
 		if options.MaxRecords != 0 {
 			return Options{}, errors.New("production catalog publication requires an unbounded import")

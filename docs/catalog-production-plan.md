@@ -144,6 +144,13 @@
 запросе к каталогу и исключает расхождение двух библиотек. Публичный режим и
 публичные URL остаются отдельным решением после source/public-api review.
 
+Миграция `00110_seed_classic_release_profiles.sql` добавляет независимые
+release-профили для Classic, Classic Era и Classic Hardcore. Production-пайплайн
+принимает только полный стандартный профиль конкретного продукта: его точный
+build, все обязательные источники и unbounded import. Наличие профиля не делает
+старые Classic-снимки готовыми к публикации — каждый кандидат должен пройти
+проверки данных, медиа, связей и backup отдельно.
+
 ## Команда выполнения и критерии приёмки
 
 Задачи разбиты между параллельными исполнителями, но изменения попадают в общий
@@ -176,7 +183,7 @@ Library возвращают одну и ту же опубликованную 
 
 ## Подтверждённые блокеры Classic-линеек
 
-- Retail уже имеет рабочий foundation-профиль, но `catalog-pipeline` пока не имеет отдельных профилей `classic`, `classic-era` и `classic-hardcore`.
+- Retail имеет рабочий foundation-профиль; отдельные профили `classic`, `classic-era` и `classic-hardcore` добавлены миграцией 00110, но ещё не заполнены и не прошли quality-gate.
 - Для Classic/Era/Hardcore отсутствуют полноценные tooltip/read-model, typed spell effects, NPC roles/locations, loot/acquisition-граф и полные quest projections.
 - Era и Hardcore содержат версии со старыми build; Hardcore сейчас фактически повторяет Era и требует независимого snapshot, а не копирования данных.
 - Статистика `tooltip_count` должна считать реальные tooltip-строки, а не membership-строки датасета; этот показатель включён в отдельный quality-gate.
