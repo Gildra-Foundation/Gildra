@@ -128,24 +128,29 @@ func removeFailedReleaseArtifactReferences(ctx context.Context, tx pgx.Tx, relea
 	if err != nil {
 		return fmt.Errorf("inspect failed release artifact references: %w", err)
 	}
-	defer rows.Close()
+	type artifactReference struct{ schema, table, column string }
+	references := make([]artifactReference, 0)
 	for rows.Next() {
-		var schema, table, column string
-		if err := rows.Scan(&schema, &table, &column); err != nil {
+		var reference artifactReference
+		if err := rows.Scan(&reference.schema, &reference.table, &reference.column); err != nil {
 			return fmt.Errorf("read failed release artifact reference: %w", err)
 		}
+		references = append(references, reference)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate failed release artifact references: %w", err)
+	}
+	rows.Close()
+	for _, reference := range references {
 		statement := fmt.Sprintf(`DELETE FROM %s WHERE %s IN (
 			SELECT artifact.id
 			FROM catalog_source_artifacts artifact
 			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
 			WHERE snapshot.release_id=$1 AND snapshot.status='failed'
-		)`, pgx.Identifier{schema, table}.Sanitize(), pgx.Identifier{column}.Sanitize())
+		)`, pgx.Identifier{reference.schema, reference.table}.Sanitize(), pgx.Identifier{reference.column}.Sanitize())
 		if _, err := tx.Exec(ctx, statement, releaseID); err != nil {
-			return fmt.Errorf("remove failed release artifact references from %s.%s: %w", schema, table, err)
+			return fmt.Errorf("remove failed release artifact references from %s.%s: %w", reference.schema, reference.table, err)
 		}
-	}
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("iterate failed release artifact references: %w", err)
 	}
 	return nil
 }
