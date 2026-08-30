@@ -70,7 +70,10 @@ services:
       CATALOG_PUBLICATION_MODE: ${CATALOG_PUBLICATION_MODE:-enforce}
       CATALOG_PUBLICATION_ENVIRONMENT: ${CATALOG_PUBLICATION_ENVIRONMENT:-production}
       CATALOG_ACCESS_MODE: ${CATALOG_ACCESS_MODE:-public}
-      CATALOG_RECOVERY_POLICY: ${CATALOG_RECOVERY_POLICY:-off_host}
+      # The current deployment keeps its verified backup on this OVH host.
+      # Operators can opt into an off-host policy explicitly once remote
+      # storage is configured; do not make R2/S3 a hidden prerequisite.
+      CATALOG_RECOVERY_POLICY: ${CATALOG_RECOVERY_POLICY:-verified_same_host}
       CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
       DATASET_WORKER_URL: http://scraper-worker:8081
       DATASET_WORKER_TIMEOUT: 25m
