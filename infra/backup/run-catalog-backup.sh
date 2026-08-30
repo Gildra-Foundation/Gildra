@@ -10,6 +10,7 @@ restore_image="${CATALOG_BACKUP_RESTORE_IMAGE:-postgres@sha256:8189a1f6e40904781
 restore_network="${CATALOG_BACKUP_DOCKER_NETWORK:-gildra_default}"
 restore_user="gildra_restore"
 restore_database="gildra_restore"
+temporary_directory="${CATALOG_BACKUP_TEMP_DIRECTORY:-/var/lib/gildra/catalog-backups}"
 run_token="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 restore_container="gildra-catalog-restore-$run_token"
 restore_volume="gildra-catalog-restore-$run_token-data"
@@ -66,7 +67,6 @@ compose() {
   docker compose \
     --env-file "$environment_file" \
     --env-file "$release_environment_file" \
-    --env-file "$runtime_environment" \
     -f "$deployment_directory/compose.yml" \
     -f "$deployment_directory/compose.prod.yml" \
     -f "$deployment_directory/compose.runtime.yml" \
@@ -108,7 +108,10 @@ EOF
 
 cd "$deployment_directory"
 
-compose run --rm --no-deps -e CATALOG_BACKUP_PREFLIGHT=true catalog-backup >/dev/null
+compose run --rm --no-deps \
+  -e CATALOG_BACKUP_PREFLIGHT=true \
+  -e "CATALOG_BACKUP_RESTORE_DATABASE_URL=postgres://$restore_user:$restore_password@$restore_container:5432/$restore_database?sslmode=disable" \
+  catalog-backup -temp-directory "$temporary_directory" >/dev/null
 docker network inspect "$restore_network" >/dev/null
 docker volume create \
   --label gildra.component=catalog-backup-restore \
@@ -132,7 +135,9 @@ until docker exec "$restore_container" pg_isready -U "$restore_user" -d "$restor
   sleep 1
 done
 
-compose run --rm --no-deps catalog-backup > "$result_output"
+compose run --rm --no-deps \
+  -e "CATALOG_BACKUP_RESTORE_DATABASE_URL=postgres://$restore_user:$restore_password@$restore_container:5432/$restore_database?sslmode=disable" \
+  catalog-backup -temp-directory "$temporary_directory" > "$result_output"
 [ -s "$result_output" ] || {
   echo "catalog backup returned empty recovery evidence" >&2
   exit 1

@@ -102,6 +102,8 @@ services:
       - wow
       - -object-prefix
       - ${CATALOG_BACKUP_OBJECT_PREFIX:-catalog-backups}
+      - -temp-directory
+      - ${CATALOG_BACKUP_TEMP_DIRECTORY:-/var/lib/gildra/catalog-backups}
       - -timeout
       - ${CATALOG_BACKUP_TIMEOUT:-2h}
     environment:
