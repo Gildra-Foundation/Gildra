@@ -101,6 +101,14 @@ select the complete supported set. Start with a bounded proof run:
 docker compose run --rm --entrypoint catalog-import api -source battlenet -types all -max-records 25
 ```
 
+Detail documents are required for the canonical item, spell and creature
+records; the search response is only a discovery index. Their official media
+links are fetched with bounded workers as optional enrichment. A missing or
+forbidden individual media link is recorded as a structured warning and does
+not discard the entity detail. Authentication, rate-limit and transport errors
+remain fatal to the candidate run, while the release quality gate reports the
+resulting media coverage explicitly.
+
 After checking both locales and source provenance, remove the cap:
 
 ```powershell
