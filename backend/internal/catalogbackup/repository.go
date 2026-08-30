@@ -14,6 +14,8 @@ type PostgresManifestRepository struct {
 	DB *pgxpool.Pool
 }
 
+var _ MediaManifestRepository = PostgresManifestRepository{}
+
 func (r PostgresManifestRepository) Create(ctx context.Context, start ManifestStart) error {
 	if r.DB == nil {
 		return fmt.Errorf("manifest database is required")
@@ -30,6 +32,30 @@ func (r PostgresManifestRepository) Create(ctx context.Context, start ManifestSt
 	}
 	if tag.RowsAffected() != 1 {
 		return fmt.Errorf("create backup manifest: expected one row, got %d", tag.RowsAffected())
+	}
+	return nil
+}
+
+// CreateMedia creates the sidecar manifest row for a full catalog_media
+// volume archive. It deliberately does not alter the existing PostgreSQL
+// manifest path; callers must mark this row verified only after the media
+// archive has been restored and its cache keys have been checked.
+func (r PostgresManifestRepository) CreateMedia(ctx context.Context, start ManifestStart) error {
+	if r.DB == nil {
+		return fmt.Errorf("manifest database is required")
+	}
+	tag, err := r.DB.Exec(ctx, `
+		INSERT INTO catalog_backup_manifests(
+			id,component,backup_kind,status,storage_uri,product_id
+		)
+		SELECT $1,'media','full','creating',$2,product.id
+		FROM game_products product
+		WHERE product.slug=$3`, start.ID, start.StorageURI, start.Product)
+	if err != nil {
+		return fmt.Errorf("create media backup manifest: %w", err)
+	}
+	if tag.RowsAffected() != 1 {
+		return fmt.Errorf("create media backup manifest: expected one row, got %d", tag.RowsAffected())
 	}
 	return nil
 }

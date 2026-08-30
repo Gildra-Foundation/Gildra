@@ -89,6 +89,15 @@ type MediaArchive struct {
 	Manifest []byte
 }
 
+// MediaReference is the minimal projection of a catalog_entity_media row
+// needed to prove that the restored volume contains the exact bytes referenced
+// by PostgreSQL.
+type MediaReference struct {
+	CacheKey string
+	SHA256   string
+	Bytes    int64
+}
+
 // MediaSnapshotter is intentionally independent from Runner. The existing
 // PostgreSQL runner can adopt it after the caller has acquired the media-cache
 // advisory lock and is ready to atomically publish a component='media'
@@ -297,6 +306,56 @@ func VerifyReferencedMediaKeys(ctx context.Context, root string, keys []string) 
 		}
 		if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
 			return missing, fmt.Errorf("referenced media key %q is not a regular file", key)
+		}
+	}
+	return missing, nil
+}
+
+// VerifyReferencedMedia verifies cache_key, cached_byte_size and
+// cached_content_hash values read from the restored catalog database. Missing
+// keys are returned as a count so the caller can include that count in signed
+// restore evidence without exposing entity data in an error message.
+func VerifyReferencedMedia(ctx context.Context, root string, references []MediaReference) (int64, error) {
+	if err := validateMediaRoot(root); err != nil {
+		return 0, err
+	}
+	missing := int64(0)
+	seen := make(map[string]struct{}, len(references))
+	for _, reference := range references {
+		if err := ctx.Err(); err != nil {
+			return missing, err
+		}
+		if _, ok := seen[reference.CacheKey]; ok {
+			continue
+		}
+		seen[reference.CacheKey] = struct{}{}
+		if err := validateArchivePath(reference.CacheKey); err != nil {
+			return missing, fmt.Errorf("invalid referenced media key %q: %w", reference.CacheKey, err)
+		}
+		if reference.Bytes < 1 || !isSHA256Hex(reference.SHA256) {
+			return missing, fmt.Errorf("referenced media proof for %q is invalid", reference.CacheKey)
+		}
+		path := filepath.Join(root, filepath.FromSlash(reference.CacheKey))
+		info, err := os.Lstat(path)
+		if errors.Is(err, os.ErrNotExist) {
+			missing++
+			continue
+		}
+		if err != nil {
+			return missing, fmt.Errorf("inspect referenced media key %q: %w", reference.CacheKey, err)
+		}
+		if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
+			return missing, fmt.Errorf("referenced media key %q is not a regular file", reference.CacheKey)
+		}
+		if info.Size() != reference.Bytes {
+			return missing, fmt.Errorf("referenced media key %q size mismatch", reference.CacheKey)
+		}
+		hash, size, err := hashMediaFile(ctx, root, reference.CacheKey, reference.Bytes)
+		if err != nil {
+			return missing, fmt.Errorf("verify referenced media key %q: %w", reference.CacheKey, err)
+		}
+		if size != reference.Bytes || hex.EncodeToString(hash) != reference.SHA256 {
+			return missing, fmt.Errorf("referenced media key %q hash mismatch", reference.CacheKey)
 		}
 	}
 	return missing, nil
