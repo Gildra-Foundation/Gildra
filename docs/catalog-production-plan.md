@@ -128,6 +128,14 @@
 - Каноническим сопоставлением иконки должен стать `file_data_id → catalog_file_assets`; числовой `icon_name` и недоступный URL являются fallback, а не доказательством наличия картинки.
 - Icon seeding должен быть идемпотентным и запускаться планировщиком для всех четырёх продуктов; отсутствие `seed-icon-limit` в scheduler считается ошибкой конфигурации.
 
+## Подтверждённые блокеры Classic-линеек
+
+- Retail уже имеет рабочий foundation-профиль, но `catalog-pipeline` пока не имеет отдельных профилей `classic`, `classic-era` и `classic-hardcore`.
+- Для Classic/Era/Hardcore отсутствуют полноценные tooltip/read-model, typed spell effects, NPC roles/locations, loot/acquisition-граф и полные quest projections.
+- Era и Hardcore содержат версии со старыми build; Hardcore сейчас фактически повторяет Era и требует независимого snapshot, а не копирования данных.
+- Статистика `tooltip_count` должна считать реальные tooltip-строки, а не membership-строки датасета; этот показатель включён в отдельный quality-gate.
+- Для каждого Classic-продукта импорт выполняется unbounded на актуальном build, затем отдельно строятся descriptions, tooltips, media и графы связей до создания candidate release.
+
 ## Критерий готовности
 
 База считается production-ready не по числу строк, а когда каждый опубликованный объект имеет каноническую identity, build, источник, доступные локализации, проверенную структуру, видимый статус полноты и корректную карточку в Library; при неудаче нового импорта пользователь продолжает видеть последний проверенный release.
