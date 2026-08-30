@@ -562,12 +562,36 @@ func toAPIEntity(entity catalog.Entity) api.GameEntity {
 		UpdatedAt: entity.UpdatedAt,
 	}
 	if entity.Tooltip != nil {
-		result.Tooltip = &api.GameTooltip{PlainText: entity.Tooltip.PlainText, Blocks: entity.Tooltip.Blocks}
+		blocks := append([]map[string]any(nil), entity.Tooltip.Blocks...)
+		if entity.Type == "talent_tree" {
+			if topology := talentTreeTopologyBlock(entity.Payload); topology != nil {
+				blocks = append(blocks, topology)
+			}
+		}
+		result.Tooltip = &api.GameTooltip{PlainText: entity.Tooltip.PlainText, Blocks: blocks}
 	}
 	result.IconName = entity.IconName
 	result.IconUrl = wowIconURL(entity.IconName)
 	result.Quality = entity.Quality
 	return result
+}
+
+
+func talentTreeTopologyBlock(payload map[string]any) map[string]any {
+	raw, ok := payload["raidbots"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	block := map[string]any{"type": "talent_tree_topology"}
+	for _, key := range []string{"traitTreeId", "classId", "className", "specId", "specName", "classNodes", "heroNodes", "specNodes", "subTreeNodes", "fullNodeOrder"} {
+		if value, exists := raw[key]; exists {
+			block[key] = value
+		}
+	}
+	if len(block) == 1 {
+		return nil
+	}
+	return block
 }
 
 func wowIconURL(iconName *string) *string {

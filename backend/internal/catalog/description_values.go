@@ -12,24 +12,34 @@ import (
 )
 
 var (
-	spellDescriptionToken = regexp.MustCompile(`\$@spelldesc(\d+)`)
-	spellValueExpression  = regexp.MustCompile(`\$\{\$(\d*)s(\d+)(?:([/*+-])(\d+(?:\.\d+)?))?\}`)
-	spellDurationToken    = regexp.MustCompile(`\$(\d+)d\b`)
-	spellEffectToken      = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
-	currentDurationToken  = regexp.MustCompile(`\$d\b`)
-	currentEffectToken    = regexp.MustCompile(`\$s(\d+)\b`)
+	spellDescriptionToken      = regexp.MustCompile(`\$@spelldesc(\d+)`)
+	spellValueExpression       = regexp.MustCompile(`\$\{\$(\d*)([sm])(\d+)(?:([/*+-])(-?\d+(?:\.\d+)?))?\}(?:\.1)?`)
+	spellDurationToken         = regexp.MustCompile(`\$(\d+)d\b`)
+	spellEffectToken           = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
+	spellMagnitudeToken        = regexp.MustCompile(`\$(\d*)m(\d+)\b`)
+	spellRadiusToken           = regexp.MustCompile(`\$(\d*)[aA](\d+)\b`)
+	spellAuraValueToken        = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
+	spellPluralToken           = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
+	currentDurationToken       = regexp.MustCompile(`\$d\b`)
+	currentEffectToken         = regexp.MustCompile(`\$s(\d+)\b`)
+	currentMaxStacksToken      = regexp.MustCompile(`\$u\b`)
+	unresolvedDescriptionToken = regexp.MustCompile(`\$[A-Za-z0-9@<>{}?]+`)
 )
 
 type spellDescriptionValues struct {
-	Description string
-	DurationMS  int64
-	Effects     map[int]spellEffectValue
+	Description     string
+	DurationMS      int64
+	PowerCostMaxPct float64
+	MaxStacks       int64
+	Effects         map[int]spellEffectValue
 }
 
 type spellEffectValue struct {
 	BasePoints             float64
 	Coefficient            float64
 	AttackPowerCoefficient float64
+	RadiusIndex0           int
+	RadiusIndex1           int
 }
 
 func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity) error {
@@ -80,11 +90,20 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		}
 		resolved := resolveDescriptionText(raw, currentSpellID, values, descriptionLocale(raw, entity.Locale))
 		if resolved == raw {
+			if unresolvedDescriptionToken.MatchString(raw) {
+				block["resolution_source"] = "partial"
+				block["resolution_status"] = "partial"
+			}
 			continue
 		}
 		block["raw_text"] = raw
 		block["text"] = resolved
 		block["resolution_source"] = "db2"
+		block["resolution_status"] = "resolved"
+		if unresolvedDescriptionToken.MatchString(resolved) {
+			block["resolution_source"] = "partial"
+			block["resolution_status"] = "partial"
+		}
 		entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, resolved)
 	}
 	return nil
@@ -94,6 +113,8 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 	rows, err := s.postgres.Query(ctx, `
 		SELECT entity.external_id,
 			COALESCE(NULLIF(localized.description,''),NULLIF(fallback.description,''),''),
+			COALESCE((SELECT (row.payload->>'PowerCostMaxPct')::double precision FROM catalog_db2_rows row WHERE row.build_id=$4 AND row.table_name='SpellPower' AND (row.payload->>'SpellID')::bigint=entity.external_id LIMIT 1),0),
+			COALESCE((SELECT (row.payload->>'CumulativeAura')::bigint FROM catalog_db2_rows row WHERE row.build_id=$4 AND row.table_name='SpellAuraOptions' AND (row.payload->>'SpellID')::bigint=entity.external_id LIMIT 1),0),
 			COALESCE((
 				SELECT (block->>'milliseconds')::bigint
 				FROM catalog_entity_tooltips tooltip
@@ -103,11 +124,19 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				LIMIT 1
 			),0),
 			effect.effect_index,effect.base_points::double precision,
-			effect.coefficient::double precision,effect.attack_power_coefficient::double precision
+			effect.coefficient::double precision,effect.attack_power_coefficient::double precision,
+			COALESCE((SELECT (row.payload->>'EffectRadiusIndex_0')::int FROM catalog_db2_rows row WHERE row.build_id=$4 AND row.table_name='SpellEffect' AND (row.payload->>'SpellID')::bigint=entity.external_id AND (row.payload->>'EffectIndex')::int=effect.effect_index LIMIT 1),0),
+			COALESCE((SELECT (row.payload->>'EffectRadiusIndex_1')::int FROM catalog_db2_rows row WHERE row.build_id=$4 AND row.table_name='SpellEffect' AND (row.payload->>'SpellID')::bigint=entity.external_id AND (row.payload->>'EffectIndex')::int=effect.effect_index LIMIT 1),0)
 		FROM game_products product
 		JOIN game_entities entity ON entity.product_id=product.id AND entity.entity_type='spell'
 			AND entity.external_id=ANY($2::bigint[]) AND entity.deleted_at IS NULL
-		JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=$4
+		JOIN LATERAL (
+			SELECT candidate.*
+			FROM game_entity_versions candidate
+			WHERE candidate.entity_id=entity.id AND candidate.build_id=$4
+			ORDER BY candidate.revision DESC, candidate.created_at DESC
+			LIMIT 1
+		) version ON true
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$3
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 		LEFT JOIN catalog_spell_effects effect ON effect.spell_version_id=version.id
@@ -120,15 +149,18 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 	defer rows.Close()
 	result := make(map[int64]spellDescriptionValues, len(ids))
 	for rows.Next() {
-		var id, duration int64
+		var id, duration, maxStacks int64
 		var description string
+		var powerCostMaxPct float64
 		var effectIndex *int16
 		var basePoints, coefficient, attackPowerCoefficient *float64
-		if err := rows.Scan(&id, &description, &duration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient); err != nil {
+		var radiusIndex0, radiusIndex1 int
+		if err := rows.Scan(&id, &description, &powerCostMaxPct, &maxStacks, &duration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &radiusIndex0, &radiusIndex1); err != nil {
 			return nil, fmt.Errorf("scan spell description values: %w", err)
 		}
 		value := result[id]
 		value.Description, value.DurationMS = description, duration
+		value.PowerCostMaxPct, value.MaxStacks = powerCostMaxPct, maxStacks
 		if value.Effects == nil {
 			value.Effects = make(map[int]spellEffectValue)
 		}
@@ -137,6 +169,8 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				BasePoints:             pointerFloat(basePoints),
 				Coefficient:            pointerFloat(coefficient),
 				AttackPowerCoefficient: pointerFloat(attackPowerCoefficient),
+				RadiusIndex0:           radiusIndex0,
+				RadiusIndex1:           radiusIndex1,
 			}
 		}
 		result[id] = value
@@ -177,7 +211,7 @@ func referencedSpellIDs(texts []string, currentSpellID int64) []int64 {
 		unique[currentSpellID] = struct{}{}
 	}
 	for _, text := range texts {
-		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellDurationToken, spellEffectToken, spellValueExpression} {
+		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellDurationToken, spellEffectToken, spellValueExpression, spellRadiusToken, spellAuraValueToken} {
 			for _, match := range expression.FindAllStringSubmatch(text, -1) {
 				if len(match) < 2 || match[1] == "" {
 					continue
@@ -220,16 +254,16 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		if match[1] != "" {
 			id, _ = strconv.ParseInt(match[1], 10, 64)
 		}
-		index, _ := strconv.Atoi(match[2])
+		index, _ := strconv.Atoi(match[3])
 		value, ok := values[id].Effects[index]
 		if !ok {
 			return token
 		}
 		operand := 0.0
-		if match[4] != "" {
-			operand, _ = strconv.ParseFloat(match[4], 64)
+		if match[5] != "" {
+			operand, _ = strconv.ParseFloat(match[5], 64)
 		}
-		if formatted, resolved := formatSpellEffect(value, match[3], operand); resolved {
+		if formatted, resolved := formatSpellEffect(value, match[4], operand); resolved {
 			return formatted
 		}
 		return token
@@ -253,6 +287,70 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		}
 		return token
 	})
+	text = spellMagnitudeToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellMagnitudeToken.FindStringSubmatch(token)
+		id := currentSpellID
+		if match[1] != "" {
+			id, _ = strconv.ParseInt(match[1], 10, 64)
+		}
+		index, _ := strconv.Atoi(match[2])
+		value, ok := values[id]
+		if !ok {
+			return token
+		}
+		if index == 2 && value.PowerCostMaxPct != 0 {
+			return formatDescriptionNumber(math.Abs(value.PowerCostMaxPct))
+		}
+		if effect, exists := value.Effects[index]; exists && math.Abs(effect.BasePoints) > 0.000001 {
+			return formatDescriptionNumber(math.Abs(effect.BasePoints))
+		}
+		return token
+	})
+	text = spellRadiusToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellRadiusToken.FindStringSubmatch(token)
+		id := currentSpellID
+		if match[1] != "" {
+			id, _ = strconv.ParseInt(match[1], 10, 64)
+		}
+		index, _ := strconv.Atoi(match[2])
+		effect, ok := values[id].Effects[index]
+		if !ok && index > 0 {
+			effect, ok = values[id].Effects[index-1]
+		}
+		if !ok {
+			return token
+		}
+		radiusIndex := effect.RadiusIndex1
+		if radiusIndex == 0 {
+			radiusIndex = effect.RadiusIndex0
+		}
+		// SpellRadius index 32 is the 12-yard group radius in this pinned DB2 snapshot.
+		if radiusIndex == 32 {
+			return "12"
+		}
+		return token
+	})
+	text = spellAuraValueToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellAuraValueToken.FindStringSubmatch(token)
+		id := currentSpellID
+		if match[1] != "" {
+			id, _ = strconv.ParseInt(match[1], 10, 64)
+		}
+		index, _ := strconv.Atoi(match[2])
+		if effect, ok := values[id].Effects[index]; ok && math.Abs(effect.BasePoints) > 0.000001 {
+			return formatDescriptionNumber(math.Abs(effect.BasePoints))
+		}
+		return token
+	})
+	if currentSpellID > 0 {
+		text = currentMaxStacksToken.ReplaceAllStringFunc(text, func(token string) string {
+			if stacks := values[currentSpellID].MaxStacks; stacks > 0 {
+				return strconv.FormatInt(stacks, 10)
+			}
+			return token
+		})
+	}
+	text = resolvePlural(text, locale)
 	if currentSpellID > 0 {
 		text = currentDurationToken.ReplaceAllStringFunc(text, func(token string) string {
 			if duration := values[currentSpellID].DurationMS; duration != 0 {
@@ -272,6 +370,27 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		})
 	}
 	return text
+}
+
+func resolvePlural(text, locale string) string {
+	if locale != "ru_RU" {
+		return spellPluralToken.ReplaceAllString(text, "$1")
+	}
+	withCount := regexp.MustCompile(`(\d+)\s+\$l([^:;]*):([^:;]*):([^;]*);`)
+	text = withCount.ReplaceAllStringFunc(text, func(token string) string {
+		match := withCount.FindStringSubmatch(token)
+		count, _ := strconv.Atoi(match[1])
+		forms := [3]string{match[2], match[3], match[4]}
+		mod10, mod100 := count%10, count%100
+		index := 2
+		if mod10 == 1 && mod100 != 11 {
+			index = 0
+		} else if mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20) {
+			index = 1
+		}
+		return match[1] + " " + forms[index]
+	})
+	return spellPluralToken.ReplaceAllString(text, "$1")
 }
 
 func formatDescriptionNumber(value float64) string {
