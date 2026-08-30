@@ -38,3 +38,21 @@ func TestToGraphQLEntityExposesFullCatalogContract(t *testing.T) {
 		t.Fatalf("graphql raw/resolved descriptions = %#v", got)
 	}
 }
+
+func TestToGraphQLDatasetExposesFreshnessAndCoverage(t *testing.T) {
+	build := "12.1.0.69497"
+	preview := "https://api.gildra.net/v1/media/preview"
+	dataset := catalog.LibraryDataset{
+		Slug: "items", Product: "wow", EntityType: "item", Group: "equipment", IconSymbol: "#ic-item",
+		Name: "Items", Description: "All items", BuildVersion: &build, PreviewImageURL: &preview,
+		EntityCount: 100, LocalizedCount: 95, VerifiedLocalizedCount: 90, TooltipCount: 80, ImageCount: 75,
+		Applicability: "applicable", Freshness: "fresh", FreshnessReason: "published data and coverage are current",
+	}
+	got := toGraphQLDataset(dataset)
+	if got.Slug != dataset.Slug || got.EntityCount != 100 || got.Freshness != "fresh" || got.BuildVersion == nil || *got.BuildVersion != build {
+		t.Fatalf("graphql dataset mapping lost coverage fields: %#v", got)
+	}
+	if got.PreviewImageURL == nil || *got.PreviewImageURL != preview {
+		t.Fatalf("graphql dataset mapping lost preview image: %#v", got)
+	}
+}

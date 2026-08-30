@@ -72,6 +72,29 @@ type GameTooltip struct {
 	Blocks    []map[string]any `json:"blocks"`
 }
 
+type LibraryDataset struct {
+	Slug                   string     `json:"slug"`
+	Product                string     `json:"product"`
+	EntityType             string     `json:"entityType"`
+	Group                  string     `json:"group"`
+	IconSymbol             string     `json:"iconSymbol"`
+	Name                   string     `json:"name"`
+	Description            string     `json:"description"`
+	BuildVersion           *string    `json:"buildVersion,omitempty"`
+	PreviewIconName        *string    `json:"previewIconName,omitempty"`
+	PreviewImageURL        *string    `json:"previewImageUrl,omitempty"`
+	EntityCount            int        `json:"entityCount"`
+	LocalizedCount         int        `json:"localizedCount"`
+	VerifiedLocalizedCount int        `json:"verifiedLocalizedCount"`
+	TooltipCount           int        `json:"tooltipCount"`
+	ImageCount             int        `json:"imageCount"`
+	Applicability          string     `json:"applicability"`
+	ApplicabilityReason    string     `json:"applicabilityReason"`
+	Freshness              string     `json:"freshness"`
+	FreshnessReason        string     `json:"freshnessReason"`
+	CoverageUpdatedAt      *time.Time `json:"coverageUpdatedAt,omitempty"`
+}
+
 type PageInfo struct {
 	NextCursor *string `json:"nextCursor,omitempty"`
 	HasMore    bool    `json:"hasMore"`

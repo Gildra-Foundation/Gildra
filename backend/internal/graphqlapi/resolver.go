@@ -64,3 +64,20 @@ func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 	}
 	return result
 }
+
+func toGraphQLDataset(dataset catalog.LibraryDataset) *model.LibraryDataset {
+	result := &model.LibraryDataset{
+		Slug: dataset.Slug, Product: dataset.Product, EntityType: dataset.EntityType,
+		Group: dataset.Group, IconSymbol: dataset.IconSymbol, Name: dataset.Name,
+		Description: dataset.Description, EntityCount: int(dataset.EntityCount),
+		LocalizedCount: int(dataset.LocalizedCount), VerifiedLocalizedCount: int(dataset.VerifiedLocalizedCount),
+		TooltipCount: int(dataset.TooltipCount), ImageCount: int(dataset.ImageCount),
+		Applicability: dataset.Applicability, ApplicabilityReason: dataset.ApplicabilityReason,
+		Freshness: dataset.Freshness, FreshnessReason: dataset.FreshnessReason,
+		CoverageUpdatedAt: dataset.CoverageUpdatedAt,
+	}
+	result.BuildVersion = dataset.BuildVersion
+	result.PreviewIconName = dataset.PreviewIconName
+	result.PreviewImageURL = dataset.PreviewImageURL
+	return result
+}

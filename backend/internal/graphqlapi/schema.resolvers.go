@@ -27,6 +27,23 @@ func (r *queryResolver) GameProducts(ctx context.Context) ([]*model.GameProduct,
 	return result, nil
 }
 
+// LibraryDatasets is the resolver for the libraryDatasets field.
+func (r *queryResolver) LibraryDatasets(ctx context.Context, product *string, locale *model.Locale) ([]*model.LibraryDataset, error) {
+	productSlug := "wow"
+	if product != nil {
+		productSlug = *product
+	}
+	datasets, err := r.Catalog.LibraryDatasets(ctx, productSlug, localeValue(locale))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.LibraryDataset, 0, len(datasets))
+	for _, dataset := range datasets {
+		result = append(result, toGraphQLDataset(dataset))
+	}
+	return result, nil
+}
+
 // GameEntity is the resolver for the gameEntity field.
 func (r *queryResolver) GameEntity(ctx context.Context, id string, locale *model.Locale) (*model.GameEntity, error) {
 	entityID, err := uuid.Parse(id)
