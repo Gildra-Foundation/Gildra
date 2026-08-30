@@ -26,7 +26,7 @@ func TestPrivateCatalogRequiresValidAdminSession(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	}), fakeCatalogAuthenticator{token: "valid-token"}, "private")
 
-	for _, path := range []string{"/v1/game/entities", "/v1/library/datasets", "/v1/media/asset-id", "/graphql"} {
+	for _, path := range []string{"/v1/game/products", "/v1/game/entities", "/v1/library/datasets", "/v1/media/asset-id", "/graphql"} {
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
 		if response.Code != http.StatusUnauthorized || response.Header().Get("Cache-Control") != "private, no-store" {
