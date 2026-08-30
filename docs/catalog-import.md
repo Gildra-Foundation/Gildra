@@ -25,8 +25,9 @@ docker compose run --rm --entrypoint catalog-pipeline api -mode dry_run -profile
 ```
 
 A production apply is fail-closed. It requires an explicit build, a recent
-off-host PostgreSQL backup whose restore was verified, and a matching database
-manifest. An unbounded import additionally requires `-confirm-full-import`.
+PostgreSQL backup whose restore was verified under the configured recovery
+policy, and a matching database manifest. An unbounded import additionally
+requires `-confirm-full-import`.
 The bounded proof run is therefore the first writable step after the recovery
 gate:
 
