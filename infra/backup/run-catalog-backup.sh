@@ -19,6 +19,13 @@ runtime_environment=""
 result_output=""
 job_status="failed"
 
+# docker compose interpolates service commands before starting the container.
+# Export the resolved path and let compose.yml supply the CLI flag; passing a
+# dash-prefixed flag after `compose run SERVICE` is parsed as a compose option
+# and silently drops the service command override, sending large dumps to the
+# container's small /tmp tmpfs.
+export CATALOG_BACKUP_TEMP_DIRECTORY="$temporary_directory"
+
 if [ ! -r "$environment_file" ]; then
   echo "catalog backup environment file is not readable" >&2
   exit 1
@@ -111,7 +118,7 @@ cd "$deployment_directory"
 compose run --rm --no-deps \
   -e CATALOG_BACKUP_PREFLIGHT=true \
   -e "CATALOG_BACKUP_RESTORE_DATABASE_URL=postgres://$restore_user:$restore_password@$restore_container:5432/$restore_database?sslmode=disable" \
-  catalog-backup -temp-directory "$temporary_directory" >/dev/null
+  catalog-backup >/dev/null
 docker network inspect "$restore_network" >/dev/null
 docker volume create \
   --label gildra.component=catalog-backup-restore \
@@ -137,7 +144,7 @@ done
 
 compose run --rm --no-deps \
   -e "CATALOG_BACKUP_RESTORE_DATABASE_URL=postgres://$restore_user:$restore_password@$restore_container:5432/$restore_database?sslmode=disable" \
-  catalog-backup -temp-directory "$temporary_directory" > "$result_output"
+  catalog-backup > "$result_output"
 [ -s "$result_output" ] || {
   echo "catalog backup returned empty recovery evidence" >&2
   exit 1
