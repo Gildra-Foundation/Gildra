@@ -82,12 +82,12 @@ func run() (catalogpipeline.Result, error) {
 			return catalogpipeline.Result{}, errors.New("version and use-checked-build cannot be combined")
 		}
 		if err := db.QueryRow(ctx, `
-			SELECT check.observed_build
-			FROM catalog_build_update_checks check
-			JOIN game_products product ON product.id=check.product_id
-			WHERE product.slug=$1 AND check.source='wago_tools' AND check.channel='live'
-			  AND check.status='update_available' AND check.checked_at>=now()-interval '15 minutes'
-			ORDER BY check.checked_at DESC LIMIT 1`, strings.TrimSpace(product)).Scan(&version); err != nil {
+			SELECT build_check.observed_build
+			FROM catalog_build_update_checks build_check
+			JOIN game_products product ON product.id=build_check.product_id
+			WHERE product.slug=$1 AND build_check.source='wago_tools' AND build_check.channel='live'
+			  AND build_check.status='update_available' AND build_check.checked_at>=now()-interval '15 minutes'
+			ORDER BY build_check.checked_at DESC LIMIT 1`, strings.TrimSpace(product)).Scan(&version); err != nil {
 			return catalogpipeline.Result{}, fmt.Errorf("resolve recently checked Wago build: %w", err)
 		}
 	}
