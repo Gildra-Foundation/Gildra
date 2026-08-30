@@ -293,7 +293,13 @@ func buildPlan(options Options) []Stage {
 		Stage{Key: "publication-gate"},
 	)
 	if options.Mode == "apply" {
-		plan = append(plan, Stage{Key: "release-publish"})
+		plan = append(plan,
+			Stage{Key: "release-publish"},
+			// This marker is completed only after the atomic release pointer has
+			// moved. Read models contain build-scoped aggregates, so refreshing
+			// before Publish can leave the public library one generation behind.
+			Stage{Key: "refresh-post-publish"},
+		)
 	}
 	return plan
 }
@@ -470,9 +476,19 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		releasePublished = true
 		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
 			result.RunID, "release-publish", jsonObject(map[string]any{"release_id": result.ReleaseID}))
+		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='refresh-post-publish'`, result.RunID)
+		if err := catalog.NewService(r.DB).RefreshReadModels(ctx, nil); err != nil {
+			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "post_publish_read_model_refresh_failed", err)
+		}
+		if _, err := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
+			result.RunID, "refresh-post-publish", jsonObject(map[string]any{"release_id": result.ReleaseID, "read_models_refreshed": true})); err != nil {
+			return result, fmt.Errorf("finish post-publish read model stage: %w", err)
+		}
 	} else {
 		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='blocked',started_at=COALESCE(started_at,now()),finished_at=now(),error_code='publication_blocked',error_summary=$3 WHERE run_id=$1 AND stage_key=$2`,
 			result.RunID, "release-publish", ErrPublicationBlocked.Error())
+		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='skipped',started_at=COALESCE(started_at,now()),finished_at=now(),error_code='publication_blocked',error_summary=$3 WHERE run_id=$1 AND stage_key='refresh-post-publish'`,
+			result.RunID, ErrPublicationBlocked.Error())
 	}
 	var generationAfter *int64
 	_ = r.DB.QueryRow(ctx, `SELECT generation FROM catalog_read_model_state state JOIN game_products product ON product.id=state.product_id WHERE product.slug=$1`, options.Product).Scan(&generationAfter)
