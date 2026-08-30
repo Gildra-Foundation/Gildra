@@ -115,9 +115,9 @@ func EvaluateReadinessWithRecoveryPolicy(
 			 LEFT JOIN entity_counts actual ON actual.entity_type=required.entity_type
 			 WHERE COALESCE(actual.entity_count,0)<required.minimum_count)`, product, report.BuildID).
 		Scan(&activeProfiles, &requiredTypes, &missingRequiredTypes); err != nil {
-		return ReadinessReport{}, fmt.Errorf("check Retail v1 release profile: %w", err)
+		return ReadinessReport{}, fmt.Errorf("check product release profile: %w", err)
 	}
-	report.add("retail_v1_scope", ScopeData,
+	report.add("release_profile_scope", ScopeData,
 		activeProfiles != 1 || requiredTypes == 0 || missingRequiredTypes != 0,
 		missingRequiredTypes,
 		fmt.Sprintf("%d active profile; %d required entity types; %d below minimum", activeProfiles, requiredTypes, missingRequiredTypes))
