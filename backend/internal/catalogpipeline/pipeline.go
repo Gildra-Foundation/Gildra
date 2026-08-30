@@ -1,7 +1,6 @@
 package catalogpipeline
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -587,7 +586,7 @@ func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory,
 		command.Env = append(command.Env, "CATALOG_RELEASE_ID="+releaseID)
 	}
 	command.Stdout = r.Stdout
-	var stageStderr bytes.Buffer
+	var stageStderr boundedStageErrorBuffer
 	command.Stderr = io.MultiWriter(r.Stderr, &stageStderr)
 	if err := command.Run(); err != nil {
 		if detail := boundedStageError(stageStderr.String()); detail != "" {
@@ -612,6 +611,22 @@ func boundedStageError(value string) string {
 		return value
 	}
 	return "…" + value[len(value)-4095:]
+}
+
+type boundedStageErrorBuffer struct {
+	data []byte
+}
+
+func (b *boundedStageErrorBuffer) Write(value []byte) (int, error) {
+	b.data = append(b.data, value...)
+	if len(b.data) > 4096 {
+		b.data = b.data[len(b.data)-4096:]
+	}
+	return len(value), nil
+}
+
+func (b *boundedStageErrorBuffer) String() string {
+	return string(b.data)
 }
 
 func (r *Runner) validate(
