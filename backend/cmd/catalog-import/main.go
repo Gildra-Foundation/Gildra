@@ -64,20 +64,23 @@ var battleNetAllEntityTypes = []string{
 }
 
 type options struct {
-	source           string
-	databaseURL      string
-	clientID         string
-	clientSecret     string
-	product          string
-	buildNumber      int
-	buildVersion     string
-	locales          []string
-	entityTypes      []string
-	pageSize         int
-	maxRecords       int
-	detailWorkers    int
-	mediaOnly        bool
-	wagoTableTimeout time.Duration
+	source             string
+	databaseURL        string
+	clientID           string
+	clientSecret       string
+	product            string
+	buildNumber        int
+	buildVersion       string
+	locales            []string
+	entityTypes        []string
+	pageSize           int
+	maxRecords         int
+	detailWorkers      int
+	mediaOnly          bool
+	allowBuildMismatch bool
+	sourceBuildNumber  int
+	sourceBuildVersion string
+	wagoTableTimeout   time.Duration
 }
 
 func main() {
@@ -125,13 +128,17 @@ func run() error {
 		if err != nil {
 			return err
 		}
+		opts.sourceBuildNumber, opts.sourceBuildVersion = detectedBuild, detectedVersion
 		if opts.buildNumber != 0 || opts.buildVersion != "" {
 			if opts.buildNumber == 0 || opts.buildVersion == "" {
 				return errors.New("Battle.net imports require both -build and -version when pinning a build")
 			}
 			if opts.buildNumber != detectedBuild || opts.buildVersion != detectedVersion {
-				return fmt.Errorf("configured Battle.net build %s (%d) differs from current API build %s (%d)",
-					opts.buildVersion, opts.buildNumber, detectedVersion, detectedBuild)
+				if !opts.allowBuildMismatch {
+					return fmt.Errorf("configured Battle.net build %s (%d) differs from current API build %s (%d)",
+						opts.buildVersion, opts.buildNumber, detectedVersion, detectedBuild)
+				}
+				slog.Warn("configured Battle.net build differs from the currently published API namespace; retaining the pinned release build", "configured_version", opts.buildVersion, "configured_build", opts.buildNumber, "published_version", detectedVersion, "published_build", detectedBuild)
 			}
 		} else {
 			opts.buildNumber, opts.buildVersion = detectedBuild, detectedVersion
@@ -156,6 +163,11 @@ func run() error {
 		"page_size": opts.pageSize, "max_records_per_type": opts.maxRecords,
 		"detail_workers": opts.detailWorkers, "media_only": opts.mediaOnly,
 		"wago_table_timeout": effectiveWagoTableTimeout(opts.wagoTableTimeout).String(),
+	}
+	if opts.source == "battlenet" {
+		parameters["source_build_number"] = opts.sourceBuildNumber
+		parameters["source_build_version"] = opts.sourceBuildVersion
+		parameters["build_mismatch_allowed"] = opts.allowBuildMismatch
 	}
 	importContext, err := store.Begin(ctx, opts.product, opts.buildNumber, opts.buildVersion, "us", sourceName(opts.source), releaseID, parameters)
 	if err != nil {
@@ -459,7 +471,9 @@ func importBattleNet(
 				"battlenet/"+entityType, locale, collectionURL, map[string]any{
 					"entity_type": entityType, "namespace": namespace, "locale": locale,
 					"page_size": opts.pageSize, "proof_scope": "source_record_manifest_v1",
-					"bounded": opts.maxRecords > 0, "max_records": opts.maxRecords,
+					"source_build_number": opts.sourceBuildNumber, "source_build_version": opts.sourceBuildVersion,
+					"build_mismatch_allowed": opts.allowBuildMismatch,
+					"bounded":                opts.maxRecords > 0, "max_records": opts.maxRecords,
 				})
 			if err != nil {
 				return err
@@ -556,8 +570,10 @@ func importBattleNetMedia(
 			artifactID, err = store.RegisterPendingArtifact(ctx, importContext, "blizzard_api",
 				"battlenet-media/"+candidate.EntityType, "en_US", candidate.Href, map[string]any{
 					"entity_type": candidate.EntityType, "locale": "en_US", "media_only": true,
-					"proof_scope": "source_record_manifest_v1",
-					"bounded":     opts.maxRecords > 0, "max_records": opts.maxRecords,
+					"proof_scope":         "source_record_manifest_v1",
+					"source_build_number": opts.sourceBuildNumber, "source_build_version": opts.sourceBuildVersion,
+					"build_mismatch_allowed": opts.allowBuildMismatch,
+					"bounded":                opts.maxRecords > 0, "max_records": opts.maxRecords,
 				})
 			if err != nil {
 				return err
@@ -1610,6 +1626,7 @@ func parseOptions() (options, error) {
 	flag.IntVar(&opts.detailWorkers, "detail-workers", 8, "maximum concurrent Battle.net detail requests")
 	flag.DurationVar(&opts.wagoTableTimeout, "wago-table-timeout", defaultWagoTableTimeout, "maximum time to stream and project one Wago DB2 table")
 	flag.BoolVar(&opts.mediaOnly, "media-only", false, "fetch official media for previously imported Battle.net documents")
+	flag.BoolVar(&opts.allowBuildMismatch, "allow-build-mismatch", false, "allow a pinned release build to differ from the currently published Battle.net API build; source build is recorded in provenance")
 	flag.Parse()
 	opts.source = strings.ToLower(strings.TrimSpace(opts.source))
 	opts.locales = splitList(locales)
