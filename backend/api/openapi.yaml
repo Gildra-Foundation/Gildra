@@ -30,7 +30,6 @@ paths:
     get:
       operationId: listGameProducts
       summary: List supported World of Warcraft products.
-      security: []
       responses:
         "200":
           description: Supported products.

@@ -56,7 +56,8 @@ replace them with zero or a guessed number.
 
 ## Discovery and quality
 
-- `GET /v1/game/products` lists imported products/build families.
+- `GET /v1/game/products` lists imported products/build families. It requires
+  the administrator session while `CATALOG_ACCESS_MODE=private` is active.
 - `GET /v1/game/entity-types` returns the registry-driven UI order, localized
   labels, count and coverage totals.
 - `GET /v1/game/categories` returns the many-to-many taxonomy and cached
