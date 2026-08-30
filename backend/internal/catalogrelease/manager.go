@@ -84,16 +84,11 @@ func (m *Manager) Resume(
 	return pgx.BeginFunc(ctx, m.db, func(tx pgx.Tx) error {
 		// A killed media/import process can leave source artifacts referenced by
 		// catalog_entity_media (RESTRICT). Remove only those failed-attempt media
-		// rows before cascading the failed snapshot and its artifacts.
-		if _, err := tx.Exec(ctx, `
-			DELETE FROM catalog_entity_media
-			WHERE source_artifact_id IN (
-				SELECT artifact.id
-				FROM catalog_source_artifacts artifact
-				JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
-				WHERE snapshot.release_id=$1 AND snapshot.status='failed'
-			)`, releaseID); err != nil {
-			return fmt.Errorf("remove failed release media: %w", err)
+		// rows before cascading the failed snapshot and its artifacts. All
+		// source-artifact foreign keys are discovered from the catalog, so new
+		// typed tables cannot accidentally strand a failed artifact on retry.
+		if err := removeFailedReleaseArtifactReferences(ctx, tx, releaseID); err != nil {
+			return err
 		}
 		if _, err := tx.Exec(ctx, `DELETE FROM catalog_snapshots WHERE release_id=$1 AND status='failed'`, releaseID); err != nil {
 			return fmt.Errorf("remove failed release snapshots: %w", err)
@@ -116,6 +111,43 @@ func (m *Manager) Resume(
 		}
 		return nil
 	})
+}
+
+func removeFailedReleaseArtifactReferences(ctx context.Context, tx pgx.Tx, releaseID uuid.UUID) error {
+	rows, err := tx.Query(ctx, `
+		SELECT child_ns.nspname,child.relname,child_attr.attname
+		FROM pg_constraint foreign_key
+		JOIN pg_class child ON child.oid=foreign_key.conrelid
+		JOIN pg_namespace child_ns ON child_ns.oid=child.relnamespace
+		JOIN pg_attribute child_attr
+		  ON child_attr.attrelid=child.oid AND child_attr.attnum=foreign_key.conkey[1]
+		WHERE foreign_key.contype='f'
+		  AND foreign_key.confrelid='catalog_source_artifacts'::regclass
+		  AND array_length(foreign_key.conkey,1)=1
+		ORDER BY child_ns.nspname,child.relname,child_attr.attname`)
+	if err != nil {
+		return fmt.Errorf("inspect failed release artifact references: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var schema, table, column string
+		if err := rows.Scan(&schema, &table, &column); err != nil {
+			return fmt.Errorf("read failed release artifact reference: %w", err)
+		}
+		statement := fmt.Sprintf(`DELETE FROM %s WHERE %s IN (
+			SELECT artifact.id
+			FROM catalog_source_artifacts artifact
+			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
+			WHERE snapshot.release_id=$1 AND snapshot.status='failed'
+		)`, pgx.Identifier{schema, table}.Sanitize(), pgx.Identifier{column}.Sanitize())
+		if _, err := tx.Exec(ctx, statement, releaseID); err != nil {
+			return fmt.Errorf("remove failed release artifact references from %s.%s: %w", schema, table, err)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate failed release artifact references: %w", err)
+	}
+	return nil
 }
 
 func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
