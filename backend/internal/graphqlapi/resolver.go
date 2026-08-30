@@ -26,7 +26,37 @@ func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 		ExternalID: strconv.FormatInt(entity.ExternalID, 10), Slug: entity.Slug,
 		Locale: model.Locale(entity.Locale), ResolvedLocale: model.Locale(entity.ResolvedLocale),
 		LocaleFallback: entity.LocaleFallback, Name: entity.Name, Description: entity.Description,
+		RawDescription: entity.RawDescription, ResolvedDescription: entity.ResolvedDescription,
+		Localizations: make([]*model.GameEntityLocalization, 0, len(entity.Localizations)),
+		Media:         make([]*model.GameEntityMedia, 0, len(entity.Media)),
+		IconName:      entity.IconName, IconURL: entity.IconURL, Quality: entity.Quality,
 		Payload: entity.Payload, UpdatedAt: entity.UpdatedAt,
+	}
+	for _, locale := range []string{"en_US", "ru_RU"} {
+		localization, ok := entity.Localizations[locale]
+		if !ok {
+			continue
+		}
+		result.Localizations = append(result.Localizations, &model.GameEntityLocalization{
+			Locale: model.Locale(locale), Name: localization.Name, Description: localization.Description,
+			ResolvedDescription: localization.ResolvedDescription,
+		})
+	}
+	if entity.Tooltip != nil {
+		result.Tooltip = &model.GameTooltip{PlainText: entity.Tooltip.PlainText, Blocks: entity.Tooltip.Blocks}
+	}
+	for _, asset := range entity.Media {
+		media := &model.GameEntityMedia{
+			Kind: asset.Kind, AssetKey: asset.AssetKey, URL: asset.URL,
+			Source: asset.Source, SourceURL: asset.SourceURL, Locale: asset.Locale,
+			MimeType: asset.MIMEType, CacheStatus: asset.CacheStatus, Primary: asset.Primary,
+			Width: asset.Width, Height: asset.Height,
+		}
+		if asset.FileDataID != nil {
+			value := strconv.FormatInt(*asset.FileDataID, 10)
+			media.FileDataID = &value
+		}
+		result.Media = append(result.Media, media)
 	}
 	if entity.BuildID != nil {
 		buildID := strconv.FormatInt(*entity.BuildID, 10)

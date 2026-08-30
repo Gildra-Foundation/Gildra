@@ -24,7 +24,7 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-const latestCatalogSchemaVersion int64 = 105
+const latestCatalogSchemaVersion int64 = 106
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -581,6 +581,114 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 		t.Fatalf("staged listfile asset leaked before release publication: count=%d", activeAssetCount)
 	}
 	assertCatalogName(t, ctx, service, entityID, "Published item")
+	var previousVersionID, candidateVersionID uuid.UUID
+	if err := database.QueryRowContext(ctx, `
+		SELECT published_version_id,latest_version_id
+		FROM game_entities WHERE id=$1`, entityID).Scan(&previousVersionID, &candidateVersionID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_item_stats(version_id,slot,stat_type,source_artifact_id)
+		VALUES($1,0,1,$2)`, previousVersionID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	if err := releases.Publish(ctx, publishedReleaseID); !errors.Is(err, catalogrelease.ErrReleaseNotPublishable) ||
+		!strings.Contains(err.Error(), "item_stats_regression=1") {
+		t.Fatalf("item stats regression error = %v, want item_stats_regression=1", err)
+	}
+	assertCatalogName(t, ctx, service, entityID, "Published item")
+	assertCatalogPointersDiffer(t, ctx, database, entityID, false)
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_item_stats(version_id,slot,stat_type,source_artifact_id)
+		VALUES($1,0,1,$2)`, candidateVersionID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_item_effects(version_id,item_effect_id,slot,spell_id,source_artifact_id)
+		VALUES($1,1,0,1337,$2)`, previousVersionID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_item_acquisition_sources(version_id,source_type,source_id,source_artifact_id)
+		VALUES($1,'blizzard_api',900001,$2)`, previousVersionID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	if err := releases.Publish(ctx, publishedReleaseID); !errors.Is(err, catalogrelease.ErrReleaseNotPublishable) ||
+		!strings.Contains(err.Error(), "item_acquisition_regression=1") ||
+		!strings.Contains(err.Error(), "item_effects_regression=1") {
+		t.Fatalf("item enrichment regression error = %v, want acquisition and effects regressions", err)
+	}
+	assertCatalogName(t, ctx, service, entityID, "Published item")
+	assertCatalogPointersDiffer(t, ctx, database, entityID, false)
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_item_effects(version_id,item_effect_id,slot,spell_id,source_artifact_id)
+		VALUES($1,1,0,1337,$2)`, candidateVersionID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_item_acquisition_sources(version_id,source_type,source_id,source_artifact_id)
+		VALUES($1,'blizzard_api',900001,$2)`, candidateVersionID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	spell := catalogTestSpell("Test spell", "1.0.0.100001", nil)
+	if err := store.UpsertCanonical(ctx, legacy, spell); err != nil {
+		t.Fatal(err)
+	}
+	candidateSpell := catalogTestSpell("Test spell", "1.0.0.100003", &artifactID)
+	if err := store.UpsertCanonical(ctx, candidate, candidateSpell); err != nil {
+		t.Fatal(err)
+	}
+	var previousSpellVersionID, candidateSpellVersionID uuid.UUID
+	if err := database.QueryRowContext(ctx, `
+		SELECT published_version_id,latest_version_id
+		FROM game_entities WHERE entity_type='spell' AND external_id=900010`).Scan(&previousSpellVersionID, &candidateSpellVersionID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_spells(version_id,school,cast_time,cooldown_ms)
+		VALUES($1,'Fire','1.5 sec',1000)`, previousSpellVersionID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_spell_effects(spell_version_id,effect_index,effect_type,source,source_artifact_id)
+		VALUES($1,0,2,'db2',$2)`, previousSpellVersionID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	if err := releases.Publish(ctx, publishedReleaseID); !errors.Is(err, catalogrelease.ErrReleaseNotPublishable) ||
+		!strings.Contains(err.Error(), "spell_effects_regression=1") ||
+		!strings.Contains(err.Error(), "spell_registry_regression=1") {
+		t.Fatalf("spell enrichment regression error = %v, want spell facts and effects regressions", err)
+	}
+	var publishedSpellName string
+	if err := database.QueryRowContext(ctx, `
+		SELECT localized.name
+		FROM game_entities entity
+		JOIN game_entity_localizations localized ON localized.version_id=entity.published_version_id
+		WHERE entity.entity_type='spell' AND entity.external_id=900010 AND localized.locale='en_US'`).Scan(&publishedSpellName); err != nil {
+		t.Fatal(err)
+	}
+	if publishedSpellName != "Test spell" {
+		t.Fatalf("spell candidate leaked through failed quality gate: %q", publishedSpellName)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_spells(version_id,school,cast_time,cooldown_ms)
+		VALUES($1,'Fire','1.5 sec',1000)`, candidateSpellVersionID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_spell_effects(spell_version_id,effect_index,effect_type,source,source_artifact_id)
+		VALUES($1,0,2,'db2',$2)`, candidateSpellVersionID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	var missingCachedMedia int64
+	if err := database.QueryRowContext(ctx, `
+		SELECT COALESCE((SELECT failed_count FROM catalog_release_quality_gate($1)
+			WHERE check_key='missing_cached_media'),0)`, publishedReleaseID).Scan(&missingCachedMedia); err != nil {
+		t.Fatal(err)
+	}
+	if missingCachedMedia == 0 {
+		t.Fatal("release quality gate did not report missing cached media warning")
+	}
 	if _, err := database.ExecContext(ctx, `UPDATE catalog_source_artifacts SET content_hash=NULL WHERE id=$1`, listfileArtifactID); err != nil {
 		t.Fatal(err)
 	}
@@ -751,6 +859,15 @@ func catalogTestItemWithID(externalID int64, name, build string) catalogimport.R
 	return catalogimport.Record{
 		Type: "item", ExternalID: externalID, Locale: "en_US", Payload: []byte(payload),
 		SourceURL: "https://wago.tools/db2/ItemSparse/csv?build=" + build,
+	}
+}
+
+func catalogTestSpell(name, build string, sourceArtifactID *uuid.UUID) catalogimport.Record {
+	return catalogimport.Record{
+		Type: "spell", ExternalID: 900010, Locale: "en_US",
+		Payload:          []byte(`{"name":{"en_US":"` + name + `"},"description":{"en_US":"Atomic release spell"}}`),
+		SourceURL:        "https://wago.tools/db2/SpellName?build=" + build,
+		SourceArtifactID: sourceArtifactID,
 	}
 }
 

@@ -33,14 +33,33 @@ type Entity struct {
 	LocaleFallback bool
 	Name           string
 	Description    string
-	Tooltip        *Tooltip
-	Media          []Media
-	IconName       *string
-	IconURL        *string
-	Quality        *int
-	BuildID        *int64
-	Payload        map[string]any
-	UpdatedAt      time.Time
+	// RawDescription is the source-backed description before DB2 value
+	// substitution. ResolvedDescription is the display-ready value after
+	// substitutions; keeping both prevents clients from losing provenance.
+	RawDescription      string
+	ResolvedDescription string
+	// Localizations contains the source-backed name and description for each
+	// requested catalog locale. It intentionally does not fall back: clients
+	// can distinguish a missing translation from an English fallback shown in
+	// the top-level name/description fields.
+	Localizations map[string]EntityLocalization
+	Tooltip       *Tooltip
+	Media         []Media
+	IconName      *string
+	IconURL       *string
+	Quality       *int
+	BuildID       *int64
+	Payload       map[string]any
+	UpdatedAt     time.Time
+}
+
+// EntityLocalization is the unmodified localized content stored for an
+// entity version. Empty values are preserved so the API can report exactly
+// which field is absent instead of manufacturing translated text.
+type EntityLocalization struct {
+	Name                string
+	Description         string
+	ResolvedDescription string
 }
 
 type Media struct {
@@ -471,6 +490,9 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 	for index := range entities {
 		entityPointers = append(entityPointers, &entities[index])
 	}
+	if err := s.enrichLocalizations(ctx, entityPointers); err != nil {
+		return Page{}, err
+	}
 	if err := s.enrichMedia(ctx, entityPointers); err != nil {
 		return Page{}, err
 	}
@@ -793,6 +815,9 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 		return Entity{}, err
 	}
 	entity = entities[0]
+	if err := s.enrichLocalizations(ctx, []*Entity{&entity}); err != nil {
+		return Entity{}, err
+	}
 	if err := s.resolveEntityDescriptions(ctx, &entity); err != nil {
 		return Entity{}, err
 	}
@@ -803,6 +828,52 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 		return Entity{}, err
 	}
 	return entity, nil
+}
+
+// enrichLocalizations loads both supported locales for the published version
+// in one query. This keeps the full entity contract bilingual without making
+// callers issue two requests or forcing a locale fallback to look complete.
+func (s *Service) enrichLocalizations(ctx context.Context, entities []*Entity) error {
+	ids := make([]uuid.UUID, 0, len(entities))
+	byID := make(map[uuid.UUID]*Entity, len(entities))
+	for _, entity := range entities {
+		if entity == nil {
+			continue
+		}
+		ids = append(ids, entity.ID)
+		byID[entity.ID] = entity
+		entity.Localizations = make(map[string]EntityLocalization, 2)
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	rows, err := s.postgres.Query(ctx, `
+		SELECT entity.id, localization.locale, COALESCE(localization.name, ''), COALESCE(localization.description, '')
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.id=entity.published_version_id
+		JOIN game_entity_localizations localization ON localization.version_id=version.id
+		WHERE entity.id=ANY($1::uuid[]) AND localization.locale IN ('en_US','ru_RU')
+		ORDER BY entity.id, localization.locale`, ids)
+	if err != nil {
+		return fmt.Errorf("list entity localizations: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var entityID uuid.UUID
+		var locale string
+		var localization EntityLocalization
+		if err := rows.Scan(&entityID, &locale, &localization.Name, &localization.Description); err != nil {
+			return fmt.Errorf("scan entity localization: %w", err)
+		}
+		if entity := byID[entityID]; entity != nil {
+			localization.ResolvedDescription = localization.Description
+			entity.Localizations[locale] = localization
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate entity localizations: %w", err)
+	}
+	return nil
 }
 
 func (s *Service) enrichMedia(ctx context.Context, entities []*Entity) error {
@@ -902,6 +973,8 @@ func scanEntity(row rowScanner) (Entity, error) {
 	if err := json.Unmarshal(encodedPayload, &entity.Payload); err != nil {
 		return Entity{}, fmt.Errorf("decode game entity payload: %w", err)
 	}
+	entity.RawDescription = entity.Description
+	entity.ResolvedDescription = entity.Description
 	if len(tooltipBlocks) > 0 {
 		var blocks []map[string]any
 		if err := json.Unmarshal(tooltipBlocks, &blocks); err != nil {

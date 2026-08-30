@@ -1941,6 +1941,18 @@ button.db-category-card:hover{
 .db-media-gallery figcaption{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-top:1px solid var(--line-soft)}
 .db-media-gallery figcaption strong{overflow:hidden;color:var(--ink);font:700 11px var(--ui);text-transform:capitalize;text-overflow:ellipsis;white-space:nowrap}
 .db-media-gallery figcaption span{flex:none;color:var(--ink-3);font:600 9px var(--ui);text-transform:uppercase;letter-spacing:.06em}
+.db-localization-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.db-localization-card{padding:16px;border:1px solid var(--line-soft);background:#0a0e15}
+.db-localization-card>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line-soft)}
+.db-localization-card strong{font:700 13px var(--display);color:var(--ink)}
+.db-localization-card small{color:var(--ink-3);font:600 9px var(--ui);letter-spacing:.08em}
+.db-localization-card dl{display:grid;gap:12px;margin:14px 0 0}
+.db-localization-card dt{color:var(--ink-3);font:600 9px var(--ui);letter-spacing:.08em;text-transform:uppercase}
+.db-localization-card dd{margin-top:5px;color:var(--ink-2);font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.db-raw-payload{border:1px solid var(--line-soft);background:#0a0e15}
+.db-raw-payload summary{padding:13px 15px;color:var(--gold);font-size:12px;cursor:pointer}
+.db-raw-payload pre{max-height:620px;margin:0;padding:15px;overflow:auto;border-top:1px solid var(--line-soft);color:var(--ink-2);font:11px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:700px){.db-localization-grid{grid-template-columns:1fr}}
 
 /* Public Warcraft library */
 .library-page{display:grid;gap:18px}

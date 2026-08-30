@@ -75,15 +75,25 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
 
       <div className="db-evidence-ribbon" aria-label={lang === "ru" ? "Паспорт данных" : "Data evidence"}><span><small>{lang === "ru" ? "Сборка" : "Build"}</small><strong>{quality?.buildVersion || quality?.buildNumber || entity.buildId || "—"}</strong></span><span><small>{lang === "ru" ? "Полнота" : "Completeness"}</small><strong>{quality ? `${quality.score}%` : "—"}</strong></span><span><small>{lang === "ru" ? "Источники" : "Sources"}</small><strong>{quality?.sources.length ?? 0}</strong></span><span><small>{lang === "ru" ? "Связи" : "Relations"}</small><strong>{relationships.length}</strong></span></div>
 
-      <div className="db-detail-jump" aria-label={lang === "ru" ? "Разделы страницы" : "Page sections"}>{media.length > 0 ? <a href="#media">{lang === "ru" ? "Изображения" : "Media"}</a> : null}<a href="#tooltip">Tooltip</a><a href="#quality">{lang === "ru" ? "Качество" : "Quality"}</a><a href="#relations">{lang === "ru" ? "Связи" : "Graph"}</a><a href="#versions">{lang === "ru" ? "Версии" : "Versions"}</a></div>
+      <div className="db-detail-jump" aria-label={lang === "ru" ? "Разделы страницы" : "Page sections"}><a href="#localizations">{lang === "ru" ? "Локализации" : "Locales"}</a><a href="#media">{lang === "ru" ? "Изображения" : "Media"}</a><a href="#tooltip">Tooltip</a><a href="#payload">Payload</a><a href="#quality">{lang === "ru" ? "Качество" : "Quality"}</a><a href="#relations">{lang === "ru" ? "Связи" : "Graph"}</a><a href="#versions">{lang === "ru" ? "Версии" : "Versions"}</a></div>
 
-      {media.length > 0 ? <section className="db-detail-section" id="media" aria-labelledby="entity-media-title">
+      <section className="db-detail-section" id="localizations" aria-labelledby="entity-localizations-title">
+        <div className="db-section-heading"><div><p className="cap">Source-backed locales</p><h2 id="entity-localizations-title">{lang === "ru" ? "Названия и описания" : "Names and descriptions"}</h2></div><p>{lang === "ru" ? "Без искусственного перевода" : "No synthetic translations"}</p></div>
+        <div className="db-localization-grid">{["en_US", "ru_RU"].map((localeKey) => { const localized = entity.localizations?.[localeKey]; const localeName = localeKey === "ru_RU" ? "Русский" : "English"; const missing = lang === "ru" ? "Нет значения в источнике" : "No source value"; return <article key={localeKey} className="db-localization-card"><div><strong>{localeName}</strong><small>{localeKey}</small></div><dl><div><dt>{lang === "ru" ? "Название" : "Name"}</dt><dd>{localized?.name || missing}</dd></div><div><dt>{lang === "ru" ? "Исходное описание" : "Raw description"}</dt><dd>{localized?.description || missing}</dd></div><div><dt>{lang === "ru" ? "Разрешённое описание" : "Resolved description"}</dt><dd>{localized?.resolvedDescription || localized?.description || missing}</dd></div></dl></article>; })}</div>
+      </section>
+
+      <section className="db-detail-section" id="media" aria-labelledby="entity-media-title">
         <div className="db-section-heading"><div><p className="cap">Verified media</p><h2 id="entity-media-title">{lang === "ru" ? "Изображения из источника" : "Source-backed media"}</h2></div><p>{lang === "ru" ? `${media.length} подтверждённых файлов` : `${media.length} verified assets`}</p></div>
-        <div className="db-media-gallery">{media.map((asset, index) => <figure key={`${asset.kind}-${asset.assetKey}-${asset.url}`}>
+        {media.length > 0 ? <div className="db-media-gallery">{media.map((asset, index) => <figure key={`${asset.kind}-${asset.assetKey}-${asset.url}`}>
           <a href={asset.url} target="_blank" rel="noreferrer"><img src={asset.url} alt={`${displayName} — ${asset.kind}`} width={asset.width} height={asset.height} loading={index === 0 ? "eager" : "lazy"} /></a>
           <figcaption><strong>{asset.kind.replaceAll("_", " ")}</strong><span>{asset.source === "blizzard_api" ? "Battle.net" : asset.source}{asset.width && asset.height ? ` · ${asset.width}×${asset.height}` : ""}</span></figcaption>
-        </figure>)}</div>
-      </section> : null}
+        </figure>)}</div> : <div className="db-live-empty"><span aria-hidden="true">◇</span><div><h3>{lang === "ru" ? "Изображение пока не сохранено" : "No cached image yet"}</h3><p>{lang === "ru" ? "Источник или FileDataID известен, но проверенный файл ещё не доступен для выдачи." : "The source or FileDataID is known, but a verified file is not available for delivery yet."}</p></div></div>}
+      </section>
+
+      <section className="db-detail-section" id="payload" aria-labelledby="entity-payload-title">
+        <div className="db-section-heading"><div><p className="cap">Raw source record</p><h2 id="entity-payload-title">{lang === "ru" ? "Полные исходные данные" : "Full source data"}</h2></div><p>{lang === "ru" ? "Версия, из которой построена запись" : "Build-pinned record payload"}</p></div>
+        <details className="db-raw-payload"><summary>{lang === "ru" ? "Показать JSON payload" : "Show JSON payload"}</summary><pre>{JSON.stringify(entity.payload ?? {}, null, 2)}</pre></details>
+      </section>
 
       <section className="db-detail-section" id="tooltip" aria-labelledby="entity-tooltip-title">
         <div className="db-section-heading"><div><p className="cap">Tooltip</p><h2 id="entity-tooltip-title">{lang === "ru" ? "Игровая информация" : "Game information"}</h2></div><p>{lang === "ru" ? "Только поля, подтверждённые источниками." : "Only source-backed fields are shown."}</p></div>

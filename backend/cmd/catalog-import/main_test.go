@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/battlenet"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
+	"github.com/google/uuid"
 )
 
 func TestSearchResultID(t *testing.T) {
@@ -255,6 +257,33 @@ func TestBattleNetNamespaceByProduct(t *testing.T) {
 	}
 	if _, err := battleNetNamespace("unknown", "us"); err == nil {
 		t.Fatal("expected unsupported product error")
+	}
+}
+
+func TestBattleNetSearchSpecsFetchDetailsAndMedia(t *testing.T) {
+	t.Parallel()
+	for _, entityType := range []string{"item", "spell", "creature"} {
+		spec, ok := battleNetEntitySpecs[entityType]
+		if !ok {
+			t.Fatalf("missing Battle.net spec for %s", entityType)
+		}
+		if !spec.Search {
+			t.Errorf("%s is not configured for the search endpoint", entityType)
+		}
+		if !spec.FetchDetail {
+			t.Errorf("%s search records do not fetch official details", entityType)
+		}
+		if !spec.FetchMedia {
+			t.Errorf("%s details do not fetch official media", entityType)
+		}
+	}
+}
+
+func TestFetchBattleNetSearchMediaRejectsInvalidWorkers(t *testing.T) {
+	t.Parallel()
+	if err := fetchBattleNetSearchMedia(context.Background(), nil, nil, catalogimport.ImportContext{}, uuid.Nil,
+		"us", "item", "en_US", nil, 0); err == nil {
+		t.Fatal("expected invalid media worker count error")
 	}
 }
 

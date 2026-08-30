@@ -20,6 +20,30 @@ func TestAPIEntityExposesRequestedAndResolvedLocales(t *testing.T) {
 	}
 }
 
+func TestAPIEntityExposesBothSourceLocalizationsAndPayload(t *testing.T) {
+	entity := catalog.Entity{
+		ID: uuid.New(), Product: "wow", Type: "spell", ExternalID: 133, Slug: "fireball",
+		Locale: "ru_RU", ResolvedLocale: "ru_RU", Name: "Огненный шар", Description: "Описание",
+		RawDescription: "Бросает $s1 ед. урона.", ResolvedDescription: "Бросает 100 ед. урона.",
+		Localizations: map[string]catalog.EntityLocalization{
+			"en_US": {Name: "Fireball", Description: "Hurls a fiery ball.", ResolvedDescription: "Hurls a fiery ball."},
+			"ru_RU": {Name: "Огненный шар", Description: "Бросает $s1 ед. урона.", ResolvedDescription: "Бросает 100 ед. урона."},
+		},
+		Payload:   map[string]any{"spell_id": int64(133), "cast_time_ms": int64(1500)},
+		UpdatedAt: time.Unix(1, 0).UTC(),
+	}
+	got := toAPIEntity(entity)
+	if len(got.Localizations) != 2 || got.Localizations["en_US"].Name != "Fireball" || got.Localizations["ru_RU"].Description == "" {
+		t.Fatalf("source localizations were lost in API mapping: %#v", got.Localizations)
+	}
+	if got.Payload["spell_id"] != int64(133) {
+		t.Fatalf("raw payload was lost in API mapping: %#v", got.Payload)
+	}
+	if got.RawDescription != entity.RawDescription || got.ResolvedDescription != entity.ResolvedDescription || got.Localizations["ru_RU"].ResolvedDescription != "Бросает 100 ед. урона." {
+		t.Fatalf("raw/resolved descriptions were lost in API mapping: %#v", got)
+	}
+}
+
 func TestAPIEntityExposesLocallyCachedSourceBackedMedia(t *testing.T) {
 	localURL := "https://api.gildra.net/v1/media/" + uuid.NewString()
 	entity := catalog.Entity{
