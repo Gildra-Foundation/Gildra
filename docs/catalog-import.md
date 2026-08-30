@@ -53,6 +53,11 @@ Direct importer commands are retained for bounded local diagnostics. They do
 not provide the multi-source atomicity of `catalog-pipeline` and must not be
 used as a production publication shortcut.
 
+Catalog backup archives use the local `catalog_backups` volume for temporary
+encrypted files by default (`-temp-directory /var/lib/gildra/catalog-backups`).
+This keeps large production dumps off the container's small `/tmp` tmpfs while
+remaining on the same server, as required by the current recovery policy.
+
 The structured client catalog is immutable for a pinned WoW build. If that
 exact build is already public, a scheduled pipeline run records a successful
 no-op and does not rewrite shared DB2 projections. Server-side enrichments that

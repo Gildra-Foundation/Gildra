@@ -276,8 +276,8 @@ checks AS (
         count(*) FILTER (WHERE release_record.build_number IS NULL
             OR release_record.previous_build_number IS NOT NULL
             AND release_record.build_number<=release_record.previous_build_number),
-        TRUE,jsonb_build_object('build_number',release_record.build_number,
-            'previous_build_number',release_record.previous_build_number)
+        TRUE,jsonb_build_object('build_number',max(release_record.build_number),
+            'previous_build_number',max(release_record.previous_build_number))
     FROM release_context release_record
     UNION ALL
     SELECT 'missing_russian_names',
