@@ -81,23 +81,41 @@ func (m *Manager) Resume(
 	if releaseID == uuid.Nil || pipelineRunID <= 0 || strings.TrimSpace(product) == "" || strings.TrimSpace(buildVersion) == "" || len(sources) == 0 {
 		return errors.New("release, pipeline run, product, build version, and sources are required")
 	}
-	command, err := m.db.Exec(ctx, `
-		UPDATE catalog_releases release
-		SET pipeline_run_id=$2,status='staging',error_summary='',failed_at=NULL,updated_at=now()
-		FROM game_products game_product
-		WHERE release.id=$1
-		  AND release.product_id=game_product.id
-		  AND game_product.slug=$3
-		  AND release.build_version=$4
-		  AND release.requested_sources=$5
-		  AND release.status='failed'`, releaseID, pipelineRunID, strings.TrimSpace(product), strings.TrimSpace(buildVersion), sources)
-	if err != nil {
-		return fmt.Errorf("resume catalog release: %w", err)
-	}
-	if command.RowsAffected() != 1 {
-		return fmt.Errorf("resume catalog release %s: release is missing or does not match the requested build/profile", releaseID)
-	}
-	return nil
+	return pgx.BeginFunc(ctx, m.db, func(tx pgx.Tx) error {
+		// A killed media/import process can leave source artifacts referenced by
+		// catalog_entity_media (RESTRICT). Remove only those failed-attempt media
+		// rows before cascading the failed snapshot and its artifacts.
+		if _, err := tx.Exec(ctx, `
+			DELETE FROM catalog_entity_media
+			WHERE source_artifact_id IN (
+				SELECT artifact.id
+				FROM catalog_source_artifacts artifact
+				JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
+				WHERE snapshot.release_id=$1 AND snapshot.status='failed'
+			)`, releaseID); err != nil {
+			return fmt.Errorf("remove failed release media: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM catalog_snapshots WHERE release_id=$1 AND status='failed'`, releaseID); err != nil {
+			return fmt.Errorf("remove failed release snapshots: %w", err)
+		}
+		command, err := tx.Exec(ctx, `
+			UPDATE catalog_releases release
+			SET pipeline_run_id=$2,status='staging',error_summary='',failed_at=NULL,updated_at=now()
+			FROM game_products game_product
+			WHERE release.id=$1
+			  AND release.product_id=game_product.id
+			  AND game_product.slug=$3
+			  AND release.build_version=$4
+			  AND release.requested_sources=$5
+			  AND release.status='failed'`, releaseID, pipelineRunID, strings.TrimSpace(product), strings.TrimSpace(buildVersion), sources)
+		if err != nil {
+			return fmt.Errorf("resume catalog release: %w", err)
+		}
+		if command.RowsAffected() != 1 {
+			return fmt.Errorf("resume catalog release %s: release is missing or does not match the requested build/profile", releaseID)
+		}
+		return nil
+	})
 }
 
 func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {

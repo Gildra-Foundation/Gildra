@@ -416,12 +416,8 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	if resuming {
 		releaseID, err = uuid.Parse(strings.TrimSpace(options.ResumeReleaseID))
 		if err == nil {
-			// A failed stage can leave an incomplete source snapshot. Remove only
-			// failed snapshots; validated Wago/DB2 snapshots are retained for a
-			// true stage-level retry.
-			_, err = r.DB.Exec(ctx, `DELETE FROM catalog_snapshots WHERE release_id=$1 AND status='failed'`, releaseID)
-		}
-		if err == nil {
+			// Resume owns cleanup of failed snapshots and re-attaches the release
+			// atomically, while retaining validated source snapshots.
 			err = releaseManager.Resume(ctx, releaseID, result.RunID, options.Product, options.BuildVersion, options.Sources)
 		}
 	} else {
