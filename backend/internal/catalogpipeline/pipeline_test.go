@@ -36,6 +36,11 @@ func TestBuildPlanIsDeterministicAndNeverContainsDatabaseCredentials(t *testing.
 		if stage.Key == "import-wago" && !strings.Contains(strings.Join(stage.Arguments, " "), "-build 69404") {
 			t.Fatalf("Wago import is not pinned to the release build number: %#v", stage.Arguments)
 		}
+		if (stage.Key == "import-battlenet" || stage.Key == "import-battlenet-media") &&
+			(!strings.Contains(strings.Join(stage.Arguments, " "), "-version 12.1.0.69404") ||
+				!strings.Contains(strings.Join(stage.Arguments, " "), "-build 69404")) {
+			t.Fatalf("%s is not pinned to the release build: %#v", stage.Key, stage.Arguments)
+		}
 		if (stage.Key == "import-db2" || stage.Key == "import-listfile") && !strings.Contains(strings.Join(stage.Arguments, " "), "-product wow") {
 			t.Fatalf("%s is not product-scoped: %#v", stage.Key, stage.Arguments)
 		}

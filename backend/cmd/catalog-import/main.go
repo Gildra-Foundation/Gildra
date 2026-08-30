@@ -125,11 +125,17 @@ func run() error {
 		if err != nil {
 			return err
 		}
-		if opts.buildNumber != 0 && (opts.buildNumber != detectedBuild || opts.buildVersion != detectedVersion) {
-			slog.Warn("configured Battle.net build differs from the currently published API namespace",
-				"configured", opts.buildVersion, "published", detectedVersion)
+		if opts.buildNumber != 0 || opts.buildVersion != "" {
+			if opts.buildNumber == 0 || opts.buildVersion == "" {
+				return errors.New("Battle.net imports require both -build and -version when pinning a build")
+			}
+			if opts.buildNumber != detectedBuild || opts.buildVersion != detectedVersion {
+				return fmt.Errorf("configured Battle.net build %s (%d) differs from current API build %s (%d)",
+					opts.buildVersion, opts.buildNumber, detectedVersion, detectedBuild)
+			}
+		} else {
+			opts.buildNumber, opts.buildVersion = detectedBuild, detectedVersion
 		}
-		opts.buildNumber, opts.buildVersion = detectedBuild, detectedVersion
 	}
 	db, err := pgxpool.New(ctx, opts.databaseURL)
 	if err != nil {

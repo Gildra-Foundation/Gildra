@@ -262,9 +262,17 @@ func buildPlan(options Options) []Stage {
 			}
 			plan = append(plan, Stage{Key: "import-db2", Executable: "db2-import", Arguments: args})
 		case "battlenet":
+			battleNetArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "all", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}
+			if options.BuildVersion != "" {
+				battleNetArgs = append(battleNetArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
+			}
+			battleNetMediaArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "class,specialization,profession,instance,mount,battle_pet,achievement", "-media-only", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}
+			if options.BuildVersion != "" {
+				battleNetMediaArgs = append(battleNetMediaArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
+			}
 			plan = append(plan,
-				Stage{Key: "import-battlenet", Executable: "catalog-import", Arguments: []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "all", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}},
-				Stage{Key: "import-battlenet-media", Executable: "catalog-import", Arguments: []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "class,specialization,profession,instance,mount,battle_pet,achievement", "-media-only", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords)}},
+				Stage{Key: "import-battlenet", Executable: "catalog-import", Arguments: battleNetArgs},
+				Stage{Key: "import-battlenet-media", Executable: "catalog-import", Arguments: battleNetMediaArgs},
 			)
 		case "listfile":
 			args := []string{"-product", options.Product, "-confirm"}
