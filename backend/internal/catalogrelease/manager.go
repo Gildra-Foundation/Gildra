@@ -74,11 +74,12 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		var productID int16
 		var buildID *int64
 		var previousReleaseID *uuid.UUID
+		var requestedSources []string
 		var status string
 		if err := tx.QueryRow(ctx, `
-			SELECT product_id,build_id,previous_release_id,status
+			SELECT product_id,build_id,previous_release_id,requested_sources,status
 			FROM catalog_releases WHERE id=$1 FOR UPDATE`, releaseID).
-			Scan(&productID, &buildID, &previousReleaseID, &status); err != nil {
+			Scan(&productID, &buildID, &previousReleaseID, &requestedSources, &status); err != nil {
 			return fmt.Errorf("lock catalog release: %w", err)
 		}
 		if status == "published" {
@@ -212,6 +213,11 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
 			return fmt.Errorf("refresh published library datasets: %w", err)
 		}
+		if releaseUsesSource(requestedSources, "db2") {
+			if _, err := tx.Exec(ctx, `SELECT assert_catalog_ui_map_read_model($1,$2)`, productID, *buildID); err != nil {
+				return fmt.Errorf("verify published ui_map read model: %w", err)
+			}
+		}
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_published_source_dependencies()`); err != nil {
 			return fmt.Errorf("refresh published source dependencies: %w", err)
 		}
@@ -223,6 +229,16 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		}
 		return nil
 	})
+}
+
+func releaseUsesSource(sources []string, expected string) bool {
+	expected = strings.ToLower(strings.TrimSpace(expected))
+	for _, source := range sources {
+		if strings.ToLower(strings.TrimSpace(source)) == expected {
+			return true
+		}
+	}
+	return false
 }
 
 // validateReleaseQuality is intentionally evaluated in the same transaction

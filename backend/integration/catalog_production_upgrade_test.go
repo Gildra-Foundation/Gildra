@@ -24,7 +24,7 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-const latestCatalogSchemaVersion int64 = 107
+const latestCatalogSchemaVersion int64 = 109
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -194,6 +194,7 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 			previewColumn, rewardPackageDataset)
 	}
 	assertSourceApprovalEvidenceGate(t, ctx, database)
+	assertUIMapReadModelBuildGuard(t, ctx, database)
 	var restoredUserID string
 	if err := database.QueryRowContext(ctx, `SELECT id::text FROM users WHERE email=$1`, proofEmail).Scan(&restoredUserID); err != nil {
 		t.Fatalf("read baseline row after upgrade: %v", err)
@@ -203,6 +204,62 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	}
 	assertProductionRecoveryGate(t, ctx, database, postgresURL)
 	assertAtomicCatalogRelease(t, ctx, database, postgresURL)
+}
+
+func assertUIMapReadModelBuildGuard(t *testing.T, ctx context.Context, database *sql.DB) {
+	t.Helper()
+	var productID int16
+	var buildID int64
+	if err := database.QueryRowContext(ctx, `
+		WITH product AS (
+			SELECT id FROM game_products WHERE slug='wow'
+		), namespace AS (
+			INSERT INTO game_namespaces(product_id,region,kind,slug)
+			SELECT id,'us','static','static-us' FROM product
+			ON CONFLICT(product_id,slug) DO UPDATE SET region=EXCLUDED.region
+			RETURNING id,product_id
+		), build AS (
+			INSERT INTO game_builds(product_id,build_number,version,is_active)
+			SELECT product_id,999998,'99.0.0.999998',false FROM namespace
+			RETURNING id,product_id
+		), entity AS (
+			INSERT INTO game_entities(
+				product_id,namespace_id,entity_type,external_id,canonical_slug,
+				first_seen_build_id,last_seen_build_id
+			)
+			SELECT build.product_id,namespace.id,'ui_map',424243,'ui-map-424243',build.id,build.id
+			FROM build JOIN namespace ON namespace.product_id=build.product_id
+			RETURNING id,product_id
+		), version AS (
+			INSERT INTO game_entity_versions(entity_id,build_id,content_hash,payload,source_url)
+			SELECT entity.id,build.id,decode(repeat('aa',32),'hex'),
+				'{"registry_only":true,"db2":{"Name_lang":""}}'::jsonb,
+				'https://wago.tools/db2/UiMap/csv?build=99.0.0.999998'
+			FROM entity JOIN build ON build.product_id=entity.product_id
+			RETURNING id,entity_id,build_id
+		), published AS (
+			UPDATE game_entities entity SET latest_version_id=version.id,published_version_id=version.id
+			FROM version WHERE entity.id=version.entity_id
+			RETURNING entity.product_id
+		)
+		SELECT product_id,(SELECT build_id FROM version LIMIT 1) FROM published LIMIT 1`).Scan(&productID, &buildID); err != nil {
+		t.Fatalf("seed ui_map read model guard: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `UPDATE game_builds SET is_active=(id=$2) WHERE product_id=$1`, productID, buildID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `SELECT refresh_catalog_read_models($1)`, productID); err != nil {
+		t.Fatalf("refresh ui_map entity read model: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
+		t.Fatalf("refresh ui-maps dataset read model: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `SELECT assert_catalog_ui_map_read_model($1,$2)`, productID, buildID); err != nil {
+		t.Fatalf("validate ui_map read model: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `SELECT assert_catalog_ui_map_read_model($1,$2)`, productID, buildID+1); err == nil {
+		t.Fatal("ui_map read model guard accepted a non-active build")
+	}
 }
 
 func seedStaleATTMapResolution(t *testing.T, ctx context.Context, database *sql.DB) {
