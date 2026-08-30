@@ -119,6 +119,27 @@
 6. Проверить `api.gildra.net/library` (EN) и `/ru/library`, карточки item/spell/creature/quest, tooltip и media.
 7. После накопления доказательств по лицензиям отдельно решить, какие поля можно открыть публично.
 
+## Команда выполнения и критерии приёмки
+
+Задачи разбиты между параллельными исполнителями, но изменения попадают в общий
+репозиторий только после ревью и тестов:
+
+| Исполнитель | Сейчас закрывает | Приёмка |
+|---|---|---|
+| Pipeline/DB2 | retail foundation и отдельные Classic-профили; pin build | unbounded run, checkpoint в БД, source artifact hash, no build regression |
+| Media/backup | official icon backfill и зашифрованный media snapshot | MIME + размер + SHA-256, restore в изолированный каталог, проверка всех `cache_key` |
+| Classic/карты | `Map` и `UiMap` как разные identity spaces | отдельный `ui-maps` read model, активный build guard, ATT collision не публикуется |
+| API/Library | REST/GraphQL payload и карточки | EN/RU, raw/resolved text, tooltip blocks, relations, provenance и media URL |
+| Release/quality | quality-gate, migration и rollback | предыдущий release не меняется при любой ошибке candidate |
+
+Публикация считается успешной только если одновременно выполнены следующие
+проверки: pipeline завершён; read-model свежий; нет orphan-связей или потерянных
+source artifacts; локализации и unresolved placeholders отражены в отчёте;
+изображения имеют подтверждённый статус или явную причину отсутствия; API и
+Library возвращают одну и ту же опубликованную версию; backup восстановлен и
+сверен по контрольным числам. Если хотя бы один пункт не выполнен, остаётся
+последний проверенный release.
+
 ## Подтверждённые блокеры из аудита media
 
 - В production найдено 122 655 media-наблюдений: 122 630 закешированы, 25 ответов Blizzard завершились HTTP 403. Это не должно скрываться под пустой иконкой.
