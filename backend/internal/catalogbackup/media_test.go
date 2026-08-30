@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -113,9 +114,37 @@ func TestMediaArchiveRoundTripAndManifestRecord(t *testing.T) {
 	if err := validateMediaManifest(sidecar); err != nil {
 		t.Fatal(err)
 	}
+	backupRoot := t.TempDir()
+	if err := os.Chmod(backupRoot, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	backupStore, err := NewLocalStore(backupRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const archiveKey = "catalog/wow/2026/08/30/media.tar.gz.age"
+	const sidecarKey = "catalog/wow/2026/08/30/media.manifest.json"
+	if err := backupStore.Put(ctx, archiveKey, bytes.NewReader(archive.Bytes()), int64(archive.Len()), "application/octet-stream", nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := backupStore.Put(ctx, sidecarKey, bytes.NewReader(result.Manifest), int64(len(result.Manifest)), "application/json", nil); err != nil {
+		t.Fatal(err)
+	}
+	storedArchive, err := backupStore.Get(ctx, archiveKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	storedBytes, err := io.ReadAll(storedArchive.Body)
+	storedArchive.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(storedBytes, archive.Bytes()) {
+		t.Fatal("local object store changed the encrypted media archive")
+	}
 
 	restored := t.TempDir()
-	got, err := (MediaSnapshotter{}).RestoreAndVerify(ctx, restored, bytes.NewReader(archive.Bytes()), identity, result.Snapshot)
+	got, err := (MediaSnapshotter{}).RestoreAndVerify(ctx, restored, bytes.NewReader(storedBytes), identity, result.Snapshot)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,6 +155,19 @@ func TestMediaArchiveRoundTripAndManifestRecord(t *testing.T) {
 	missing, err := VerifyReferencedMediaKeys(ctx, restored, []string{"00/icon.jpg", "missing.jpg"})
 	if err != nil || missing != 1 {
 		t.Fatalf("referenced keys missing=%d err=%v, want 1 nil", missing, err)
+	}
+	missing, err = VerifyReferencedMedia(ctx, restored, []MediaReference{
+		{CacheKey: "00/icon.jpg", SHA256: sha256Hex("icon-payload"), Bytes: int64(len("icon-payload"))},
+		{CacheKey: "missing.jpg", SHA256: sha256Hex("missing"), Bytes: int64(len("missing"))},
+	})
+	if err != nil || missing != 1 {
+		t.Fatalf("referenced media missing=%d err=%v, want 1 nil", missing, err)
+	}
+	_, err = VerifyReferencedMedia(ctx, restored, []MediaReference{{
+		CacheKey: "00/icon.jpg", SHA256: sha256Hex("tampered"), Bytes: int64(len("icon-payload")),
+	}})
+	if err == nil || !strings.Contains(err.Error(), "hash mismatch") {
+		t.Fatalf("referenced media hash error=%v", err)
 	}
 
 	record := MediaManifestRecord{
@@ -245,15 +287,6 @@ func encryptedTestArchive(t *testing.T, recipient age.Recipient, manifest MediaM
 		t.Fatal(err)
 	}
 	return archive.Bytes()
-}
-
-func mustJSONManifest(t *testing.T, manifest MediaManifest) []byte {
-	t.Helper()
-	value, err := marshalMediaManifest(manifest)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return value
 }
 
 func rawJSONManifest(t *testing.T, manifest MediaManifest) []byte {
