@@ -1,3 +1,5 @@
+import "server-only";
+import { cookies } from "next/headers";
 import type { components } from "./schema";
 
 export type AnalyticsOverview = components["schemas"]["AnalyticsOverview"];
@@ -32,11 +34,19 @@ function apiURL() {
   return process.env.API_INTERNAL_URL ?? "http://api:8080";
 }
 
+async function catalogFetchOptions(revalidate: number, tags: string[] = []) {
+  const session = (await cookies()).get("gildra_admin_session")?.value;
+  if (session) {
+    return {
+      cache: "no-store" as const,
+      headers: { Cookie: `gildra_admin_session=${encodeURIComponent(session)}` },
+    };
+  }
+  return { cache: "force-cache" as const, next: { revalidate, tags } };
+}
+
 async function catalogRequest<T>(path: string, revalidate = 300): Promise<T> {
-  const response = await fetch(`${apiURL()}${path}`, {
-    cache: "force-cache",
-    next: { revalidate, tags: ["catalog"] },
-  });
+  const response = await fetch(`${apiURL()}${path}`, await catalogFetchOptions(revalidate, ["catalog"]));
   if (!response.ok) {
     let message = `Catalog request failed (${response.status})`;
     try {
@@ -160,10 +170,10 @@ export async function getLibraryDatasets(
 export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", dataset = ""): Promise<GameEntity | null> {
   const params = new URLSearchParams({ locale });
   if (dataset) params.set("dataset", dataset);
-  const response = await fetch(`${apiURL()}/v1/game/entities/${encodeURIComponent(id)}?${params}`, {
-    cache: "force-cache",
-    next: { revalidate: 300, tags: [`catalog-entity-${id}`] },
-  });
+  const response = await fetch(
+    `${apiURL()}/v1/game/entities/${encodeURIComponent(id)}?${params}`,
+    await catalogFetchOptions(300, [`catalog-entity-${id}`]),
+  );
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Catalog entity request failed (${response.status})`);
   return await response.json() as GameEntity;
