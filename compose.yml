@@ -4,6 +4,10 @@ services:
   postgres:
     image: postgres:17.10-alpine3.23
     restart: unless-stopped
+    # Keep enough POSIX shared memory for the catalog quality gates and
+    # enrichment projections. The Docker default (64 MiB) can make otherwise
+    # read-only joins fail with "No space left on device".
+    shm_size: "256m"
     environment:
       POSTGRES_DB: gildra
       POSTGRES_USER: gildra
