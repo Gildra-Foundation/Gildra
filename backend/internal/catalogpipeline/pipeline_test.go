@@ -33,8 +33,22 @@ func TestBuildPlanIsDeterministicAndNeverContainsDatabaseCredentials(t *testing.
 		if stage.Key == "import-listfile" && !strings.Contains(strings.Join(stage.Arguments, " "), "-version 12.1.0.69404") {
 			t.Fatalf("listfile import is not pinned to the release build: %#v", stage.Arguments)
 		}
+		if stage.Key == "import-wago" && !strings.Contains(strings.Join(stage.Arguments, " "), "-build 69404") {
+			t.Fatalf("Wago import is not pinned to the release build number: %#v", stage.Arguments)
+		}
 		if (stage.Key == "import-db2" || stage.Key == "import-listfile") && !strings.Contains(strings.Join(stage.Arguments, " "), "-product wow") {
 			t.Fatalf("%s is not product-scoped: %#v", stage.Key, stage.Arguments)
+		}
+	}
+}
+
+func TestBuildNumberRejectsUnpinnedVersions(t *testing.T) {
+	if got := buildNumber("12.1.0.69404"); got != 69404 {
+		t.Fatalf("buildNumber() = %d, want 69404", got)
+	}
+	for _, version := range []string{"", "12.1.0", "12.1.0.bad", "12.1.0.0"} {
+		if got := buildNumber(version); got != 0 {
+			t.Fatalf("buildNumber(%q) = %d, want 0", version, got)
 		}
 	}
 }
