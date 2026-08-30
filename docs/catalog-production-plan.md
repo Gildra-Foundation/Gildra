@@ -116,7 +116,7 @@
 3. Исправить найденные блокирующие связи (в первую очередь UiMap, recipe item links и отсутствующие source grants для public режима).
 4. Выполнить отдельные Classic/Era/Hardcore импорты и повторить quality-gate.
 5. Собрать digest-pinned API/web images, прогнать CI и развернуть закрытый production release.
-6. Проверить `api.gildra.net/ru/library` и `/en/library`, карточки item/spell/creature/quest, tooltip и media.
+6. Проверить `api.gildra.net/library` (EN) и `/ru/library`, карточки item/spell/creature/quest, tooltip и media.
 7. После накопления доказательств по лицензиям отдельно решить, какие поля можно открыть публично.
 
 ## Критерий готовности
