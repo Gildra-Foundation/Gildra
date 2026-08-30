@@ -12,6 +12,29 @@ type GameProduct {
   name: String!
 }
 
+type LibraryDataset {
+  slug: String!
+  product: String!
+  entityType: String!
+  group: String!
+  iconSymbol: String!
+  name: String!
+  description: String!
+  buildVersion: String
+  previewIconName: String
+  previewImageUrl: String
+  entityCount: Int!
+  localizedCount: Int!
+  verifiedLocalizedCount: Int!
+  tooltipCount: Int!
+  imageCount: Int!
+  applicability: String!
+  applicabilityReason: String!
+  freshness: String!
+  freshnessReason: String!
+  coverageUpdatedAt: Time
+}
+
 type GameEntity {
   id: ID!
   product: String!
@@ -75,6 +98,7 @@ type GameEntityConnection {
 
 type Query {
   gameProducts: [GameProduct!]!
+  libraryDatasets(product: String = "wow", locale: Locale = en_US): [LibraryDataset!]!
   gameEntity(id: ID!, locale: Locale = en_US): GameEntity
   gameEntities(
     product: String
