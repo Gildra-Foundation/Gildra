@@ -35,7 +35,7 @@ func run() (catalogpipeline.Result, error) {
 	var confirmFullImport, useCheckedBuild bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
-	flag.StringVar(&profile, "profile", catalogpipeline.ProfileRetailFoundation, "catalog source profile: retail-foundation or custom")
+	flag.StringVar(&profile, "profile", "", "catalog source profile; defaults by product, or use custom")
 	flag.StringVar(&sources, "sources", "", "optional comma-separated source stages; the profile default is used when empty")
 	flag.StringVar(&mode, "mode", "dry_run", "dry_run or apply")
 	flag.StringVar(&trigger, "trigger", "manual", "manual, schedule, or retry")

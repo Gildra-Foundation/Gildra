@@ -27,9 +27,36 @@ var ErrPublicationBlocked = errors.New("catalog refresh succeeded but public rel
 var ErrRecoveryGate = errors.New("production catalog import requires a recent verified PostgreSQL backup and exact restore proof")
 
 const (
-	ProfileRetailFoundation = "retail-foundation"
-	minimumCatalogSchema    = 92
+	ProfileRetailFoundation          = "retail-foundation"
+	ProfileClassicFoundation         = "classic-foundation"
+	ProfileClassicEraFoundation      = "classic-era-foundation"
+	ProfileClassicHardcoreFoundation = "classic-hardcore-foundation"
+	minimumCatalogSchema             = 92
 )
+
+type profileDefinition struct {
+	Product string
+	Sources []string
+}
+
+var catalogProfiles = map[string]profileDefinition{
+	ProfileRetailFoundation: {
+		Product: "wow",
+		Sources: []string{"wago", "db2", "battlenet", "listfile"},
+	},
+	ProfileClassicFoundation: {
+		Product: "wow_classic",
+		Sources: []string{"db2", "listfile"},
+	},
+	ProfileClassicEraFoundation: {
+		Product: "wow_classic_era",
+		Sources: []string{"db2", "listfile"},
+	},
+	ProfileClassicHardcoreFoundation: {
+		Product: "wow_classic_hardcore",
+		Sources: []string{"db2", "listfile"},
+	},
+}
 
 type Options struct {
 	PipelineKey            string
@@ -85,25 +112,32 @@ func normalizeOptions(options Options) (Options, error) {
 	if options.Product == "" {
 		return Options{}, errors.New("product is required")
 	}
+	if !supportedProduct(options.Product) {
+		return Options{}, fmt.Errorf("unsupported catalog product %q", options.Product)
+	}
 	options.Profile = strings.ToLower(strings.TrimSpace(options.Profile))
 	if options.Profile == "" {
 		if len(options.Sources) == 0 {
-			options.Profile = ProfileRetailFoundation
+			options.Profile = defaultProfile(options.Product)
 		} else {
 			options.Profile = "custom"
 		}
 	}
-	if options.Profile != ProfileRetailFoundation && options.Profile != "custom" {
+	profile, isStandardProfile := catalogProfiles[options.Profile]
+	if !isStandardProfile && options.Profile != "custom" {
 		return Options{}, fmt.Errorf("unsupported catalog profile %q", options.Profile)
 	}
-	if options.Profile == ProfileRetailFoundation && options.Product != "wow" {
-		return Options{}, fmt.Errorf("profile %q only supports the Retail product \"wow\"", ProfileRetailFoundation)
+	if isStandardProfile && options.Product != profile.Product {
+		return Options{}, fmt.Errorf("profile %q only supports product %q", options.Profile, profile.Product)
 	}
-	if options.Profile == ProfileRetailFoundation && len(options.Sources) == 0 {
-		options.Sources = []string{"wago", "db2", "battlenet", "listfile"}
+	if isStandardProfile && len(options.Sources) == 0 {
+		options.Sources = append([]string(nil), profile.Sources...)
 	}
 	allowed := map[string]bool{"wago": true, "raidbots": true, "db2": true, "battlenet": true, "listfile": true}
-	foundation := map[string]bool{"wago": true, "db2": true, "battlenet": true, "listfile": true}
+	profileSources := make(map[string]bool, len(profile.Sources))
+	for _, source := range profile.Sources {
+		profileSources[source] = true
+	}
 	seen := make(map[string]bool)
 	sources := make([]string, 0, len(options.Sources))
 	for _, raw := range options.Sources {
@@ -114,8 +148,8 @@ func normalizeOptions(options Options) (Options, error) {
 		if !allowed[source] {
 			return Options{}, fmt.Errorf("unsupported catalog source %q", source)
 		}
-		if options.Profile == ProfileRetailFoundation && !foundation[source] {
-			return Options{}, fmt.Errorf("source %q is outside the %s profile", source, ProfileRetailFoundation)
+		if isStandardProfile && !profileSources[source] {
+			return Options{}, fmt.Errorf("source %q is outside the %s profile", source, options.Profile)
 		}
 		seen[source] = true
 		sources = append(sources, source)
@@ -127,6 +161,9 @@ func normalizeOptions(options Options) (Options, error) {
 	options.BuildVersion = strings.TrimSpace(options.BuildVersion)
 	if options.BuildVersion != "" && buildNumber(options.BuildVersion) == 0 {
 		return Options{}, fmt.Errorf("invalid catalog build version %q", options.BuildVersion)
+	}
+	if isClassicProduct(options.Product) && (seen["db2"] || seen["listfile"]) && options.BuildVersion == "" {
+		return Options{}, errors.New("Classic DB2 and listfile imports require an explicit -version")
 	}
 	options.CatalogAccessMode = strings.ToLower(strings.TrimSpace(options.CatalogAccessMode))
 	if options.CatalogAccessMode == "" {
@@ -167,6 +204,33 @@ func normalizeOptions(options Options) (Options, error) {
 		}
 	}
 	return options, nil
+}
+
+func defaultProfile(product string) string {
+	for profile, definition := range catalogProfiles {
+		if definition.Product == product {
+			return profile
+		}
+	}
+	return ""
+}
+
+func supportedProduct(product string) bool {
+	switch product {
+	case "wow", "wow_classic", "wow_classic_era", "wow_classic_hardcore":
+		return true
+	default:
+		return false
+	}
+}
+
+func isClassicProduct(product string) bool {
+	switch product {
+	case "wow_classic", "wow_classic_era", "wow_classic_hardcore":
+		return true
+	default:
+		return false
+	}
 }
 
 func buildPlan(options Options) []Stage {
