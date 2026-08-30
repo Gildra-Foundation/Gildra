@@ -1073,8 +1073,13 @@ func fetchAndStoreBattleNetMediaLink(
 	}
 	mediaPayload, sourceURL, err := client.FetchLink(ctx, region, locale, href)
 	if err != nil {
-		if battlenet.IsNotFound(err) {
-			slog.Warn("skipping missing Battle.net media", "type", entityType, "id", id)
+		if battlenet.IsNotFound(err) || battlenet.IsForbidden(err) {
+			// Media is an optional enrichment. Blizzard may omit an asset or
+			// reject a legacy media link while the entity detail remains valid;
+			// retain the omission in the run log and let the release quality
+			// gate report the coverage gap instead of aborting the whole page.
+			slog.Warn("skipping unavailable Battle.net media", "type", entityType,
+				"id", id, "status", mediaStatus(err))
 			return nil
 		}
 		return fmt.Errorf("fetch %s media %d: %w", entityType, id, err)
@@ -1110,6 +1115,16 @@ func fetchAndStoreBattleNetMediaLink(
 		return fmt.Errorf("store %s media icon %d: %w", entityType, id, err)
 	}
 	return nil
+}
+
+func mediaStatus(err error) string {
+	if battlenet.IsNotFound(err) {
+		return "not_found"
+	}
+	if battlenet.IsForbidden(err) {
+		return "forbidden"
+	}
+	return "error"
 }
 
 func battleNetMediaAssets(payload json.RawMessage) []catalogimport.EntityMedia {

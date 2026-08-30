@@ -93,6 +93,16 @@ func IsNotFound(err error) bool {
 	return errors.As(err, &remote) && remote.StatusCode == http.StatusNotFound
 }
 
+// IsForbidden reports an expected access/policy response from a resource
+// endpoint. Media links are optional for an entity, so callers can record the
+// omission and continue the import instead of discarding an otherwise valid
+// detail record. Authentication failures on the primary detail endpoint still
+// remain fatal to the import.
+func IsForbidden(err error) bool {
+	var remote *RemoteError
+	return errors.As(err, &remote) && remote.StatusCode == http.StatusForbidden
+}
+
 func New(cfg Config) (*Client, error) {
 	if strings.TrimSpace(cfg.ClientID) == "" || strings.TrimSpace(cfg.ClientSecret) == "" {
 		return nil, errors.New("Battle.net client ID and secret are required")

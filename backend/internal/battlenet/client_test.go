@@ -186,6 +186,16 @@ func TestDetailReportsRemoteError(t *testing.T) {
 	}
 }
 
+func TestIsForbiddenRecognizesOptionalMediaAccessFailure(t *testing.T) {
+	t.Parallel()
+	if !IsForbidden(&RemoteError{StatusCode: http.StatusForbidden, Status: "403 Forbidden"}) {
+		t.Fatal("expected forbidden response to be classified")
+	}
+	if IsForbidden(&RemoteError{StatusCode: http.StatusNotFound, Status: "404 Not Found"}) {
+		t.Fatal("not-found response must not be classified as forbidden")
+	}
+}
+
 func TestIndexBuildsOfficialResourceURL(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
