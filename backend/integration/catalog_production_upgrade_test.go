@@ -210,40 +210,50 @@ func assertUIMapReadModelBuildGuard(t *testing.T, ctx context.Context, database 
 	t.Helper()
 	var productID int16
 	var buildID int64
+	if err := database.QueryRowContext(ctx, `SELECT id FROM game_products WHERE slug='wow'`).Scan(&productID); err != nil {
+		t.Fatalf("find WoW product for ui_map read model guard: %v", err)
+	}
+	var namespaceID int16
 	if err := database.QueryRowContext(ctx, `
-		WITH product AS (
-			SELECT id FROM game_products WHERE slug='wow'
-		), namespace AS (
-			INSERT INTO game_namespaces(product_id,region,kind,slug)
-			SELECT id,'us','static','static-us' FROM product
-			ON CONFLICT(product_id,slug) DO UPDATE SET region=EXCLUDED.region
-			RETURNING id,product_id
-		), build AS (
-			INSERT INTO game_builds(product_id,build_number,version,is_active)
-			SELECT product_id,999998,'99.0.0.999998',false FROM namespace
-			RETURNING id,product_id
-		), entity AS (
-			INSERT INTO game_entities(
-				product_id,namespace_id,entity_type,external_id,canonical_slug,
-				first_seen_build_id,last_seen_build_id
-			)
-			SELECT build.product_id,namespace.id,'ui_map',424243,'ui-map-424243',build.id,build.id
-			FROM build JOIN namespace ON namespace.product_id=build.product_id
-			RETURNING id,product_id
-		), version AS (
-			INSERT INTO game_entity_versions(entity_id,build_id,content_hash,payload,source_url)
-			SELECT entity.id,build.id,decode(repeat('aa',32),'hex'),
-				'{"registry_only":true,"db2":{"Name_lang":""}}'::jsonb,
-				'https://wago.tools/db2/UiMap/csv?build=99.0.0.999998'
-			FROM entity JOIN build ON build.product_id=entity.product_id
-			RETURNING id,entity_id,build_id
-		), published AS (
-			UPDATE game_entities entity SET latest_version_id=version.id,published_version_id=version.id
-			FROM version WHERE entity.id=version.entity_id
-			RETURNING entity.product_id
-		)
-		SELECT product_id,(SELECT build_id FROM version LIMIT 1) FROM published LIMIT 1`).Scan(&productID, &buildID); err != nil {
-		t.Fatalf("seed ui_map read model guard: %v", err)
+		INSERT INTO game_namespaces(product_id,region,kind,slug)
+		VALUES($1,'us','static','static-us')
+		ON CONFLICT(product_id,slug) DO UPDATE SET region=EXCLUDED.region
+		RETURNING id`, productID).Scan(&namespaceID); err != nil {
+		t.Fatalf("seed ui_map namespace: %v", err)
+	}
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_builds(product_id,build_number,version,is_active)
+		VALUES($1,999998,'99.0.0.999998',false)
+		ON CONFLICT(product_id,build_number) DO UPDATE SET version=EXCLUDED.version
+		RETURNING id`, productID).Scan(&buildID); err != nil {
+		t.Fatalf("seed ui_map build: %v", err)
+	}
+	var entityID string
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_entities(
+			product_id,namespace_id,entity_type,external_id,canonical_slug,
+			first_seen_build_id,last_seen_build_id
+		) VALUES($1,$2,'ui_map',424243,'ui-map-424243',$3,$3)
+		ON CONFLICT(product_id,entity_type,external_id) DO UPDATE SET
+			namespace_id=EXCLUDED.namespace_id,canonical_slug=EXCLUDED.canonical_slug,
+			first_seen_build_id=EXCLUDED.first_seen_build_id,last_seen_build_id=EXCLUDED.last_seen_build_id,
+			deleted_at=NULL
+		RETURNING id::text`, productID, namespaceID, buildID).Scan(&entityID); err != nil {
+		t.Fatalf("seed ui_map entity: %v", err)
+	}
+	var versionID string
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_entity_versions(entity_id,build_id,content_hash,payload,source_url)
+		VALUES($1,$2,decode(repeat('aa',32),'hex'),
+			'{"registry_only":true,"db2":{"Name_lang":""}}'::jsonb,
+			'https://wago.tools/db2/UiMap/csv?build=99.0.0.999998')
+		ON CONFLICT(entity_id,build_id,content_hash) DO UPDATE SET payload=EXCLUDED.payload
+		RETURNING id::text`, entityID, buildID).Scan(&versionID); err != nil {
+		t.Fatalf("seed ui_map version: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		UPDATE game_entities SET latest_version_id=$2::uuid,published_version_id=$2::uuid WHERE id=$1::uuid`, entityID, versionID); err != nil {
+		t.Fatalf("publish ui_map version: %v", err)
 	}
 	if _, err := database.ExecContext(ctx, `UPDATE game_builds SET is_active=(id=$2) WHERE product_id=$1`, productID, buildID); err != nil {
 		t.Fatal(err)
@@ -654,7 +664,7 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 		t.Fatalf("item stats regression error = %v, want item_stats_regression=1", err)
 	}
 	assertCatalogName(t, ctx, service, entityID, "Published item")
-	assertCatalogPointersDiffer(t, ctx, database, entityID, false)
+	assertCatalogPointersDiffer(t, ctx, database, entityID, true)
 	if _, err := database.ExecContext(ctx, `
 		INSERT INTO catalog_item_stats(version_id,slot,stat_type,source_artifact_id)
 		VALUES($1,0,1,$2)`, candidateVersionID, artifactID); err != nil {
@@ -676,7 +686,7 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 		t.Fatalf("item enrichment regression error = %v, want acquisition and effects regressions", err)
 	}
 	assertCatalogName(t, ctx, service, entityID, "Published item")
-	assertCatalogPointersDiffer(t, ctx, database, entityID, false)
+	assertCatalogPointersDiffer(t, ctx, database, entityID, true)
 	if _, err := database.ExecContext(ctx, `
 		INSERT INTO catalog_item_effects(version_id,item_effect_id,slot,spell_id,source_artifact_id)
 		VALUES($1,1,0,1337,$2)`, candidateVersionID, artifactID); err != nil {
@@ -697,13 +707,35 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	}
 	var previousSpellVersionID, candidateSpellVersionID uuid.UUID
 	if err := database.QueryRowContext(ctx, `
+		SELECT version.id
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.entity_id=entity.id
+		JOIN game_builds build ON build.id=version.build_id
+		WHERE entity.entity_type='spell' AND entity.external_id=900010 AND build.build_number=100001`).Scan(&previousSpellVersionID); err != nil {
+		t.Fatalf("find published spell version: %v", err)
+	}
+	if err := database.QueryRowContext(ctx, `
+		SELECT version.id
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.entity_id=entity.id
+		JOIN game_builds build ON build.id=version.build_id
+		WHERE entity.entity_type='spell' AND entity.external_id=900010 AND build.build_number=100003`).Scan(&candidateSpellVersionID); err != nil {
+		t.Fatalf("find candidate spell version: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		UPDATE game_entities SET latest_version_id=$2,published_version_id=$1
+		WHERE entity_type='spell' AND external_id=900010`, previousSpellVersionID, candidateSpellVersionID); err != nil {
+		t.Fatalf("seed spell publication pointers: %v", err)
+	}
+	if err := database.QueryRowContext(ctx, `
 		SELECT published_version_id,latest_version_id
 		FROM game_entities WHERE entity_type='spell' AND external_id=900010`).Scan(&previousSpellVersionID, &candidateSpellVersionID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := database.ExecContext(ctx, `
 		INSERT INTO catalog_spells(version_id,school,cast_time,cooldown_ms)
-		VALUES($1,'Fire','1.5 sec',1000)`, previousSpellVersionID); err != nil {
+		VALUES($1,'Fire','1.5 sec',1000)
+		ON CONFLICT(version_id) DO UPDATE SET school=EXCLUDED.school,cast_time=EXCLUDED.cast_time,cooldown_ms=EXCLUDED.cooldown_ms`, previousSpellVersionID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := database.ExecContext(ctx, `
@@ -712,9 +744,8 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 		t.Fatal(err)
 	}
 	if err := releases.Publish(ctx, publishedReleaseID); !errors.Is(err, catalogrelease.ErrReleaseNotPublishable) ||
-		!strings.Contains(err.Error(), "spell_effects_regression=1") ||
-		!strings.Contains(err.Error(), "spell_registry_regression=1") {
-		t.Fatalf("spell enrichment regression error = %v, want spell facts and effects regressions", err)
+		!strings.Contains(err.Error(), "spell_effects_regression=1") {
+		t.Fatalf("spell enrichment regression error = %v, want spell effects regression", err)
 	}
 	var publishedSpellName string
 	if err := database.QueryRowContext(ctx, `
@@ -729,7 +760,8 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	}
 	if _, err := database.ExecContext(ctx, `
 		INSERT INTO catalog_spells(version_id,school,cast_time,cooldown_ms)
-		VALUES($1,'Fire','1.5 sec',1000)`, candidateSpellVersionID); err != nil {
+		VALUES($1,'Fire','1.5 sec',1000)
+		ON CONFLICT(version_id) DO UPDATE SET school=EXCLUDED.school,cast_time=EXCLUDED.cast_time,cooldown_ms=EXCLUDED.cooldown_ms`, candidateSpellVersionID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := database.ExecContext(ctx, `

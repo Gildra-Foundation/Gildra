@@ -9,7 +9,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
-	"os/exec"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -54,8 +54,6 @@ func TestCatalogBackupRestoresRealPostgresArchive(t *testing.T) {
 	if _, err := database.ExecContext(ctx, `INSERT INTO users(email,display_name) VALUES($1,'Backup proof')`, proofEmail); err != nil {
 		t.Fatal(err)
 	}
-	sourceID := source.GetContainerID()
-	restoreID := restore.GetContainerID()
 	identity, err := age.GenerateX25519Identity()
 	if err != nil {
 		t.Fatal(err)
@@ -68,7 +66,7 @@ func TestCatalogBackupRestoresRealPostgresArchive(t *testing.T) {
 	defer pool.Close()
 	result, err := (catalogbackup.Runner{
 		Database: catalogbackup.PostgresOperator{Archive: dockerPostgresArchive{
-			SourceContainer: sourceID, RestoreContainer: restoreID,
+			SourceContainer: source, RestoreContainer: restore,
 		}},
 		Store: store, Manifests: catalogbackup.PostgresManifestRepository{DB: pool},
 	}).Run(ctx, catalogbackup.Options{
@@ -128,34 +126,64 @@ func runBackupPostgres(t *testing.T, ctx context.Context, database string) *pgco
 }
 
 type dockerPostgresArchive struct {
-	SourceContainer  string
-	RestoreContainer string
+	SourceContainer  testcontainers.Container
+	RestoreContainer testcontainers.Container
 }
 
 func (d dockerPostgresArchive) Dump(ctx context.Context, _ string, snapshotID string, destination io.Writer) error {
-	command := exec.CommandContext(ctx, "docker", "exec", "-e", "PGPASSWORD=test-password", d.SourceContainer,
+	const archivePath = "/tmp/gildra-backup.dump"
+	exitCode, output, err := d.SourceContainer.Exec(ctx, []string{
 		"pg_dump", "--username=gildra", "--dbname=gildra", "--format=custom", "--compress=6",
-		"--no-owner", "--no-privileges", "--snapshot="+snapshotID,
-	)
-	command.Stdout = destination
-	var stderr bytes.Buffer
-	command.Stderr = &stderr
-	if err := command.Run(); err != nil {
-		return fmt.Errorf("container pg_dump: %w: %s", err, stderr.String())
+		"--no-owner", "--no-privileges", "--snapshot=" + snapshotID, "--file=" + archivePath,
+	})
+	if err != nil {
+		return fmt.Errorf("container pg_dump: %w", err)
 	}
+	if exitCode != 0 {
+		message, _ := io.ReadAll(output)
+		return fmt.Errorf("container pg_dump exit code %d: %s", exitCode, strings.TrimSpace(string(message)))
+	}
+	archive, err := d.SourceContainer.CopyFileFromContainer(ctx, archivePath)
+	if err != nil {
+		return fmt.Errorf("read container pg_dump archive: %w", err)
+	}
+	defer archive.Close()
+	if _, err := io.Copy(destination, archive); err != nil {
+		return fmt.Errorf("copy container pg_dump archive: %w", err)
+	}
+	_, _, _ = d.SourceContainer.Exec(ctx, []string{"rm", "-f", archivePath})
 	return nil
 }
 
 func (d dockerPostgresArchive) Restore(ctx context.Context, _ string, source io.Reader) error {
-	command := exec.CommandContext(ctx, "docker", "exec", "-i", "-e", "PGPASSWORD=test-password", d.RestoreContainer,
-		"pg_restore", "--username=gildra", "--dbname=gildra_restore", "--exit-on-error", "--no-owner", "--no-privileges",
-	)
-	command.Stdin = source
-	var stderr bytes.Buffer
-	command.Stderr = &stderr
-	if err := command.Run(); err != nil {
-		return fmt.Errorf("container pg_restore: %w: %s", err, stderr.String())
+	temporaryArchive, err := os.CreateTemp("", "gildra-backup-*.dump")
+	if err != nil {
+		return fmt.Errorf("create pg_restore staging file: %w", err)
 	}
+	temporaryPath := temporaryArchive.Name()
+	defer os.Remove(temporaryPath)
+	if _, err := io.Copy(temporaryArchive, source); err != nil {
+		temporaryArchive.Close()
+		return fmt.Errorf("stage pg_restore archive: %w", err)
+	}
+	if err := temporaryArchive.Close(); err != nil {
+		return fmt.Errorf("close pg_restore staging file: %w", err)
+	}
+	const archivePath = "/tmp/gildra-restore.dump"
+	if err := d.RestoreContainer.CopyFileToContainer(ctx, temporaryPath, archivePath, 0o600); err != nil {
+		return fmt.Errorf("copy pg_restore archive: %w", err)
+	}
+	exitCode, output, err := d.RestoreContainer.Exec(ctx, []string{
+		"pg_restore", "--username=gildra", "--dbname=gildra_restore", "--exit-on-error", "--no-owner", "--no-privileges", archivePath,
+	})
+	if err != nil {
+		return fmt.Errorf("container pg_restore: %w", err)
+	}
+	if exitCode != 0 {
+		message, _ := io.ReadAll(output)
+		return fmt.Errorf("container pg_restore exit code %d: %s", exitCode, strings.TrimSpace(string(message)))
+	}
+	_, _, _ = d.RestoreContainer.Exec(ctx, []string{"rm", "-f", archivePath})
 	return nil
 }
 
