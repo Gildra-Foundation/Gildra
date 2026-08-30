@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	clickhouse "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/getsentry/sentry-go"
 	"github.com/getsentry/sentry-go/http"
@@ -127,6 +128,10 @@ func run() error {
 	graphqlHandler := handler.NewDefaultServer(graphqlapi.NewExecutableSchema(graphqlapi.Config{
 		Resolvers: &graphqlapi.Resolver{Catalog: catalogService},
 	}))
+	// Keep GraphQL requests bounded independently of HTTP body limits. The
+	// catalog payload is intentionally rich, but an unbounded selection tree
+	// must not turn one authenticated request into an expensive database fanout.
+	graphqlHandler.Use(extension.FixedComplexityLimit(1000))
 	graphqlCatalogHandler := http.Handler(graphqlHandler)
 	if cfg.CatalogAccessMode == "private" {
 		restHandler = httpapi.RequireCatalogAuthentication(restHandler, authService, cfg.CatalogAccessMode)
