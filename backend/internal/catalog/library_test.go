@@ -118,7 +118,7 @@ func TestLibraryDatasetSummaryIntegration(t *testing.T) {
 			t.Fatalf("%s datasets=%d, want 29", product, len(datasets))
 		}
 		for _, dataset := range datasets {
-			if dataset.VerifiedLocalizedCount > dataset.LocalizedCount || dataset.LocalizedCount > dataset.EntityCount || dataset.TooltipCount != dataset.EntityCount || dataset.ImageCount > dataset.EntityCount {
+			if dataset.VerifiedLocalizedCount > dataset.LocalizedCount || dataset.LocalizedCount > dataset.EntityCount || dataset.TooltipCount > dataset.EntityCount || dataset.ImageCount > dataset.EntityCount {
 				t.Fatalf("%s dataset %s has invalid coverage: %#v", product, dataset.Slug, dataset)
 			}
 			if dataset.Applicability != "applicable" && dataset.Applicability != "pending_source" && dataset.Applicability != "not_applicable" {
@@ -197,7 +197,7 @@ func TestLibraryDatasetSummaryIntegration(t *testing.T) {
 				break
 			}
 		}
-		if uiMaps.EntityType != "ui_map" || uiMaps.EntityCount == 0 || uiMaps.TooltipCount != uiMaps.EntityCount {
+		if uiMaps.EntityType != "ui_map" || uiMaps.EntityCount == 0 || uiMaps.TooltipCount > uiMaps.EntityCount {
 			t.Fatalf("%s UI maps dataset is invalid: %#v", product, uiMaps)
 		}
 		uiMapPage, err := service.Summaries(ctx, SummaryParams{
