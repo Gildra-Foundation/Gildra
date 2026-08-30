@@ -53,9 +53,9 @@ async function catalogFetchOptions(revalidate: number, tags: string[] = []) {
   return { cache: "force-cache" as const, next: { revalidate, tags } };
 }
 
-async function catalogRequest<T>(path: string, revalidate = 300): Promise<T> {
+async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestCache = "force-cache"): Promise<T> {
   const response = await fetch(`${apiURL()}${path}`, {
-    ...(await catalogFetchOptions(revalidate, ["catalog"])),
+    ...(cache === "no-store" ? { cache: "no-store" as const } : await catalogFetchOptions(revalidate, ["catalog"])),
     signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) {
@@ -109,6 +109,7 @@ export async function getCatalogPage({
   limit = 24,
   includeTotal = true,
   itemClassId,
+  fresh = false,
 }: {
   locale: "en_US" | "ru_RU";
   product?: string;
@@ -125,6 +126,7 @@ export async function getCatalogPage({
   limit?: number;
   includeTotal?: boolean;
   itemClassId?: number;
+  fresh?: boolean;
 }): Promise<CatalogPage> {
   const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: String(includeTotal) });
   if (dataset) params.set("dataset", dataset);
@@ -140,7 +142,7 @@ export async function getCatalogPage({
   if (minRequiredLevel !== undefined) params.set("minRequiredLevel", String(minRequiredLevel));
   if (maxRequiredLevel !== undefined) params.set("maxRequiredLevel", String(maxRequiredLevel));
   if (itemClassId !== undefined) params.set("itemClassId", String(itemClassId));
-  const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`);
+  const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`, fresh ? 0 : 300, fresh ? "no-store" : "force-cache");
   return { data: page.data, pagination: page.pagination };
 }
 
@@ -178,13 +180,14 @@ export async function getLibraryDatasets(
   return page.data;
 }
 
-export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", dataset = ""): Promise<GameEntity | null> {
+/** `fresh` bypasses the ISR cache (talent calculator reads live catalog data). */
+export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", dataset = "", fresh = false): Promise<GameEntity | null> {
   const params = new URLSearchParams({ locale });
   if (dataset) params.set("dataset", dataset);
   const response = await fetch(
     `${apiURL()}/v1/game/entities/${encodeURIComponent(id)}?${params}`,
     {
-      ...(await catalogFetchOptions(300, [`catalog-entity-${id}`])),
+      ...(fresh ? { cache: "no-store" as const } : await catalogFetchOptions(300, [`catalog-entity-${id}`])),
       signal: AbortSignal.timeout(15_000),
     },
   );
@@ -192,6 +195,7 @@ export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", da
   if (!response.ok) throw new Error(`Catalog entity request failed (${response.status})`);
   return await response.json() as GameEntity;
 }
+
 
 export async function getCatalogCoverage(
   locale: "en_US" | "ru_RU",
