@@ -36,6 +36,9 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 	if entity == nil || entity.BuildID == nil || (entity.Type != "spell" && entity.Type != "talent" && entity.Type != "pvp_talent") {
 		return nil
 	}
+	if entity.RawDescription == "" {
+		entity.RawDescription = entity.Description
+	}
 	currentSpellID := descriptionSpellID(*entity)
 	texts := []string{entity.Description}
 	if entity.Tooltip != nil {
@@ -70,6 +73,11 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 	}
 
 	entity.Description = resolveDescriptionText(entity.Description, currentSpellID, values, descriptionLocale(entity.Description, entity.Locale))
+	entity.ResolvedDescription = entity.Description
+	if localized, ok := entity.Localizations[entity.Locale]; ok {
+		localized.ResolvedDescription = entity.Description
+		entity.Localizations[entity.Locale] = localized
+	}
 	if entity.Tooltip == nil {
 		return nil
 	}

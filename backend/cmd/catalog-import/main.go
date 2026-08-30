@@ -39,9 +39,9 @@ type battleNetEntitySpec struct {
 }
 
 var battleNetEntitySpecs = map[string]battleNetEntitySpec{
-	"item":           {Resource: "item", Search: true},
-	"spell":          {Resource: "spell", Search: true, FetchDetail: true},
-	"creature":       {Resource: "creature", Search: true},
+	"item":           {Resource: "item", Search: true, FetchDetail: true, FetchMedia: true},
+	"spell":          {Resource: "spell", Search: true, FetchDetail: true, FetchMedia: true},
+	"creature":       {Resource: "creature", Search: true, FetchDetail: true, FetchMedia: true},
 	"quest":          {Resource: "quest", QuestCategories: true},
 	"talent":         {Resource: "talent", IndexFields: []string{"talents"}},
 	"pvp_talent":     {Resource: "pvp-talent", IndexFields: []string{"pvp_talents"}},
@@ -632,6 +632,13 @@ func importSearchType(
 					processed++
 					logBattleNetProgress(entityType, locale, processed, *seen, *written)
 				}
+				if spec.FetchMedia && locale == "en_US" {
+					if err := fetchBattleNetSearchMedia(ctx, client, store, importContext, artifactID,
+						region, entityType, locale, details, detailWorkers); err != nil {
+						return fmt.Errorf("fetch %s search media range [%d,%d] page %d (%s): %w",
+							entityType, rangeStart, rangeEnd, pageNumber, locale, err)
+					}
+				}
 				if len(page.Results) == 0 || page.PageCount > 0 && pageNumber >= page.PageCount {
 					break
 				}
@@ -662,6 +669,12 @@ func importSearchType(
 				}
 				if err := storeBattleNetRecord(ctx, store, importContext, artifactID, entityType, locale, id, payload, sourceURL); err != nil {
 					return err
+				}
+				if spec.FetchMedia && locale == "en_US" {
+					if err := fetchAndStoreBattleNetMedia(ctx, client, store, importContext, artifactID,
+						region, entityType, locale, id, payload); err != nil {
+						return err
+					}
 				}
 				(*written)++
 				processed++
@@ -718,6 +731,12 @@ func importBoundedSearchBootstrap(
 			if err := storeBattleNetRecord(ctx, store, importContext, artifactID, entityType, locale, id, payload, sourceURL); err != nil {
 				return err
 			}
+			if spec.FetchMedia && locale == "en_US" {
+				if err := fetchAndStoreBattleNetMedia(ctx, client, store, importContext, artifactID,
+					region, entityType, locale, id, payload); err != nil {
+					return err
+				}
+			}
 			(*written)++
 			processed++
 		}
@@ -726,6 +745,37 @@ func importBoundedSearchBootstrap(
 		}
 	}
 	return nil
+}
+
+func fetchBattleNetSearchMedia(
+	ctx context.Context,
+	client *battlenet.Client,
+	store *catalogimport.Store,
+	importContext catalogimport.ImportContext,
+	artifactID uuid.UUID,
+	region, entityType, locale string,
+	details []battleNetSearchDetail,
+	workers int,
+) error {
+	if workers < 1 {
+		return errors.New("media worker count must be positive")
+	}
+	persisted := make([]battleNetSearchDetail, 0, len(details))
+	for _, detail := range details {
+		if !detail.Missing {
+			persisted = append(persisted, detail)
+		}
+	}
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(workers)
+	for _, detail := range persisted {
+		detail := detail
+		group.Go(func() error {
+			return fetchAndStoreBattleNetMedia(groupCtx, client, store, importContext, artifactID,
+				region, entityType, locale, detail.ID, detail.Payload)
+		})
+	}
+	return group.Wait()
 }
 
 type battleNetDetailFetcher interface {
@@ -840,15 +890,8 @@ func importIndexType(
 			persisted = append(persisted, detail)
 		}
 		if spec.FetchMedia && locale == "en_US" {
-			group, groupCtx := errgroup.WithContext(ctx)
-			group.SetLimit(detailWorkers)
-			for _, detail := range persisted {
-				group.Go(func() error {
-					return fetchAndStoreBattleNetMedia(groupCtx, client, store, importContext, artifactID,
-						region, entityType, locale, detail.ID, detail.Payload)
-				})
-			}
-			if err := group.Wait(); err != nil {
+			if err := fetchBattleNetSearchMedia(ctx, client, store, importContext, artifactID,
+				region, entityType, locale, details, detailWorkers); err != nil {
 				return err
 			}
 		}

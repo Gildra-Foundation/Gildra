@@ -6,7 +6,8 @@ info:
   license:
     name: Proprietary
     identifier: LicenseRef-Proprietary
-security: []
+security:
+  - CatalogSession: []
 servers:
   - url: https://api.gildra.net
   - url: https://gildra.net/api
@@ -15,6 +16,7 @@ paths:
     get:
       operationId: getAPIIndex
       summary: Discover the stable v1 API surfaces.
+      security: []
       responses:
         "200":
           description: API entry point.
@@ -28,6 +30,7 @@ paths:
     get:
       operationId: listGameProducts
       summary: List supported World of Warcraft products.
+      security: []
       responses:
         "200":
           description: Supported products.
@@ -51,6 +54,8 @@ paths:
     get:
       operationId: listLibraryDatasets
       summary: List curated public Warcraft datasets and their freshness and coverage.
+      security:
+        - CatalogSession: []
       parameters:
         - in: query
           name: product
@@ -88,6 +93,8 @@ paths:
     get:
       operationId: listGameEntityTypes
       summary: List entity types and public catalog coverage metrics.
+      security:
+        - CatalogSession: []
       parameters:
         - in: query
           name: product
@@ -125,6 +132,8 @@ paths:
     get:
       operationId: listGameEntities
       summary: Search and page through versioned game entities.
+      security:
+        - CatalogSession: []
       parameters:
         - in: query
           name: product
@@ -185,6 +194,8 @@ paths:
     get:
       operationId: listGameEntitySummaries
       summary: Search lightweight catalog cards without payloads or tooltips.
+      security:
+        - CatalogSession: []
       description: Use this endpoint for directories and search results. Fetch the full entity resource only when a user opens a detail view.
       parameters:
         - in: query
@@ -291,6 +302,8 @@ paths:
     get:
       operationId: listGameSitemapEntries
       summary: List a stable UUID shard for segmented catalog sitemaps.
+      security:
+        - CatalogSession: []
       description: Intended for Gildra's sitemap renderer. Empty shard means the complete entity type and is capped at 50000 records.
       parameters:
         - in: query
@@ -338,6 +351,8 @@ paths:
     get:
       operationId: listGameCategories
       summary: List populated catalog categories and their active entity counts.
+      security:
+        - CatalogSession: []
       parameters:
         - in: query
           name: product
@@ -382,6 +397,8 @@ paths:
     get:
       operationId: getGameEntity
       summary: Get the latest version of a game entity.
+      security:
+        - CatalogSession: []
       parameters:
         - in: path
           name: id
@@ -419,6 +436,8 @@ paths:
     get:
       operationId: listGameEntityRelationships
       summary: Page through the normalized relationship graph for an entity.
+      security:
+        - CatalogSession: []
       parameters:
         - in: path
           name: id
@@ -478,6 +497,8 @@ paths:
     get:
       operationId: getGameEntityQuality
       summary: Inspect completeness and provenance for the latest entity version.
+      security:
+        - CatalogSession: []
       parameters:
         - in: path
           name: id
@@ -498,6 +519,8 @@ paths:
     get:
       operationId: listGameEntityVersions
       summary: List build-pinned versions of an entity, newest first.
+      security:
+        - CatalogSession: []
       parameters:
         - in: path
           name: id
@@ -528,6 +551,8 @@ paths:
     get:
       operationId: getGameEntityComparison
       summary: Compare two stored versions, or the two latest versions when builds are omitted.
+      security:
+        - CatalogSession: []
       parameters:
         - in: path
           name: id
@@ -555,6 +580,8 @@ paths:
     get:
       operationId: listGameCoverage
       summary: Inspect field coverage for the current catalog read model.
+      security:
+        - CatalogSession: []
       parameters:
         - in: query
           name: product
@@ -592,10 +619,14 @@ paths:
           $ref: "#/components/responses/InternalError"
         "503":
           $ref: "#/components/responses/CatalogPublicationUnavailable"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /v1/game/source-policies:
     get:
       operationId: listGameSourcePolicies
       summary: List reviewed source licensing and redistribution policy metadata.
+      security:
+        - CatalogSession: []
       responses:
         "200":
           description: Source policy registry. This metadata is operational guidance, not legal advice.
@@ -611,10 +642,14 @@ paths:
                       $ref: "#/components/schemas/GameSourcePolicy"
         "500":
           $ref: "#/components/responses/InternalError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /v1/game/relation-types:
     get:
       operationId: listGameRelationTypes
       summary: List the canonical relationship ontology.
+      security:
+        - CatalogSession: []
       parameters:
         - in: query
           name: locale
@@ -639,10 +674,13 @@ paths:
           $ref: "#/components/responses/InternalError"
         "503":
           $ref: "#/components/responses/CatalogPublicationUnavailable"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /livez:
     get:
       operationId: getLiveness
       summary: Check whether the API process is alive.
+      security: []
       responses:
         "200":
           description: Process is alive.
@@ -656,6 +694,7 @@ paths:
     get:
       operationId: getReadiness
       summary: Check whether required datastores are ready.
+      security: []
       responses:
         "200":
           description: Dependencies are ready.
@@ -675,6 +714,7 @@ paths:
     get:
       operationId: getAnalyticsOverview
       summary: Read an aggregated analytics overview.
+      security: []
       parameters:
         - in: query
           name: hours
@@ -698,6 +738,7 @@ paths:
     post:
       operationId: ingestAnalyticsEvents
       summary: Ingest a batch of product analytics events.
+      security: []
       requestBody:
         required: true
         content:
@@ -719,6 +760,7 @@ paths:
     post:
       operationId: submitIndexNow
       summary: Queue URLs for IndexNow submission.
+      security: []
       requestBody:
         required: true
         content:
@@ -736,7 +778,74 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalError"
+  /v1/media/{id}:
+    get:
+      operationId: getCatalogMedia
+      summary: Serve a verified, locally cached catalog media object.
+      description: Media is exposed only when its source artifact, publication grant, cache integrity and retention window are valid. In private mode this endpoint requires the catalog session cookie.
+      security:
+        - CatalogSession: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Binary media object.
+          headers:
+            ETag:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          description: Only GET and HEAD are supported.
+        "503":
+          $ref: "#/components/responses/MediaUnavailable"
+  /graphql:
+    post:
+      operationId: executeGraphQL
+      summary: Execute a read-only GraphQL catalog query.
+      description: GraphQL uses the same catalog session cookie and publication gate as REST. Query complexity and response size are bounded by the server.
+      security:
+        - CatalogSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GraphQLRequest"
+      responses:
+        "200":
+          description: GraphQL response envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GraphQLResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 components:
+  securitySchemes:
+    CatalogSession:
+      type: apiKey
+      in: cookie
+      name: gildra_admin_session
+      description: Administrator session cookie required while catalog access mode is private.
   responses:
     BadRequest:
       description: Invalid request.
@@ -777,6 +886,18 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+    MediaUnavailable:
+      description: Verified media is temporarily unavailable.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: Catalog authentication is required in private mode.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
   schemas:
     APIIndex:
       type: object
@@ -813,6 +934,30 @@ components:
         instance:
           type: string
           format: uri
+    GraphQLRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 100000
+        operationName:
+          type: string
+        variables:
+          type: object
+          additionalProperties: true
+    GraphQLResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
     GameProduct:
       type: object
       required: [id, slug, name]
@@ -893,9 +1038,22 @@ components:
         coverageUpdatedAt:
           type: string
           format: date-time
+    GameEntityLocalization:
+      type: object
+      required: [name, description, resolvedDescription]
+      properties:
+        name:
+          type: string
+          description: Source-backed name in the requested locale. Empty means the source has no value.
+        description:
+          type: string
+          description: Source-backed description in the requested locale. Empty means the source has no value.
+        resolvedDescription:
+          type: string
+          description: Display-ready description after resolving build-pinned DB2 value tokens. Empty means no source value.
     GameEntity:
       type: object
-      required: [id, product, type, externalId, slug, locale, resolvedLocale, localeFallback, name, description, updatedAt]
+      required: [id, product, type, externalId, slug, locale, resolvedLocale, localeFallback, name, description, rawDescription, resolvedDescription, payload, localizations, updatedAt]
       properties:
         id:
           type: string
@@ -923,6 +1081,21 @@ components:
           type: string
         description:
           type: string
+        rawDescription:
+          type: string
+          description: Exact source-backed description before DB2 token resolution.
+        resolvedDescription:
+          type: string
+          description: Display-ready description after resolving build-pinned DB2 value tokens.
+        payload:
+          type: object
+          additionalProperties: true
+          description: Raw, build-pinned source payload for the published entity version.
+        localizations:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/GameEntityLocalization"
+          description: Source-backed English and Russian fields. No synthetic translations are added.
         tooltip:
           $ref: "#/components/schemas/GameTooltip"
         media:

@@ -11,19 +11,27 @@ import (
 )
 
 type GameEntity struct {
-	ID             string         `json:"id"`
-	Product        string         `json:"product"`
-	Type           string         `json:"type"`
-	ExternalID     string         `json:"externalId"`
-	Slug           string         `json:"slug"`
-	Locale         Locale         `json:"locale"`
-	ResolvedLocale Locale         `json:"resolvedLocale"`
-	LocaleFallback bool           `json:"localeFallback"`
-	Name           string         `json:"name"`
-	Description    string         `json:"description"`
-	BuildID        *string        `json:"buildId,omitempty"`
-	Payload        map[string]any `json:"payload"`
-	UpdatedAt      time.Time      `json:"updatedAt"`
+	ID                  string                    `json:"id"`
+	Product             string                    `json:"product"`
+	Type                string                    `json:"type"`
+	ExternalID          string                    `json:"externalId"`
+	Slug                string                    `json:"slug"`
+	Locale              Locale                    `json:"locale"`
+	ResolvedLocale      Locale                    `json:"resolvedLocale"`
+	LocaleFallback      bool                      `json:"localeFallback"`
+	Name                string                    `json:"name"`
+	Description         string                    `json:"description"`
+	RawDescription      string                    `json:"rawDescription"`
+	ResolvedDescription string                    `json:"resolvedDescription"`
+	Localizations       []*GameEntityLocalization `json:"localizations"`
+	Tooltip             *GameTooltip              `json:"tooltip,omitempty"`
+	Media               []*GameEntityMedia        `json:"media"`
+	IconName            *string                   `json:"iconName,omitempty"`
+	IconURL             *string                   `json:"iconUrl,omitempty"`
+	Quality             *int                      `json:"quality,omitempty"`
+	BuildID             *string                   `json:"buildId,omitempty"`
+	Payload             map[string]any            `json:"payload"`
+	UpdatedAt           time.Time                 `json:"updatedAt"`
 }
 
 type GameEntityConnection struct {
@@ -31,10 +39,37 @@ type GameEntityConnection struct {
 	PageInfo *PageInfo     `json:"pageInfo"`
 }
 
+type GameEntityLocalization struct {
+	Locale              Locale `json:"locale"`
+	Name                string `json:"name"`
+	Description         string `json:"description"`
+	ResolvedDescription string `json:"resolvedDescription"`
+}
+
+type GameEntityMedia struct {
+	Kind        string  `json:"kind"`
+	AssetKey    string  `json:"assetKey"`
+	URL         string  `json:"url"`
+	Source      string  `json:"source"`
+	SourceURL   string  `json:"sourceUrl"`
+	Locale      string  `json:"locale"`
+	MimeType    string  `json:"mimeType"`
+	CacheStatus string  `json:"cacheStatus"`
+	FileDataID  *string `json:"fileDataId,omitempty"`
+	Width       *int    `json:"width,omitempty"`
+	Height      *int    `json:"height,omitempty"`
+	Primary     bool    `json:"primary"`
+}
+
 type GameProduct struct {
 	ID   int    `json:"id"`
 	Slug string `json:"slug"`
 	Name string `json:"name"`
+}
+
+type GameTooltip struct {
+	PlainText string           `json:"plainText"`
+	Blocks    []map[string]any `json:"blocks"`
 }
 
 type PageInfo struct {

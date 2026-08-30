@@ -21,6 +21,19 @@ type Server struct {
 	indexnow  IndexNowQueue
 }
 
+// ExecuteGraphQL and GetCatalogMedia are mounted by the server bootstrap as
+// dedicated handlers (GraphQL's gqlgen handler and the integrity-checked
+// media handler). They still satisfy the generated OpenAPI interface so the
+// contract can document those routes without allowing the generic REST
+// router to bypass their middleware.
+func (s *Server) ExecuteGraphQL(context.Context, api.ExecuteGraphQLRequestObject) (api.ExecuteGraphQLResponseObject, error) {
+	return nil, errors.New("graphql is served by the dedicated GraphQL handler")
+}
+
+func (s *Server) GetCatalogMedia(context.Context, api.GetCatalogMediaRequestObject) (api.GetCatalogMediaResponseObject, error) {
+	return nil, errors.New("media is served by the dedicated media handler")
+}
+
 func NewServer(analyticsService *analytics.Service, catalogService *catalog.Service, indexnowQueue IndexNowQueue) *Server {
 	return &Server{analytics: analyticsService, catalog: catalogService, indexnow: indexnowQueue}
 }
@@ -594,14 +607,25 @@ func (s *Server) SubmitIndexNow(ctx context.Context, request api.SubmitIndexNowR
 }
 
 func toAPIEntity(entity catalog.Entity) api.GameEntity {
+	// Keep localized source values and the raw payload in the full entity
+	// response so API consumers can render complete records without guessing.
 	result := api.GameEntity{
 		Id: entity.ID, Product: entity.Product, Type: entity.Type,
 		ExternalId: entity.ExternalID, Slug: entity.Slug,
 		Locale: api.GameEntityLocale(entity.Locale), Name: entity.Name,
 		ResolvedLocale: api.GameEntityResolvedLocale(entity.ResolvedLocale),
 		LocaleFallback: entity.LocaleFallback,
-		Description:    entity.Description, BuildId: entity.BuildID,
-		UpdatedAt: entity.UpdatedAt,
+		Description:    entity.Description, RawDescription: entity.RawDescription,
+		ResolvedDescription: entity.ResolvedDescription, BuildId: entity.BuildID,
+		Localizations: make(map[string]api.GameEntityLocalization, len(entity.Localizations)),
+		Payload:       entity.Payload,
+		UpdatedAt:     entity.UpdatedAt,
+	}
+	for locale, localization := range entity.Localizations {
+		result.Localizations[locale] = api.GameEntityLocalization{
+			Name: localization.Name, Description: localization.Description,
+			ResolvedDescription: localization.ResolvedDescription,
+		}
 	}
 	if entity.Tooltip != nil {
 		result.Tooltip = &api.GameTooltip{PlainText: entity.Tooltip.PlainText, Blocks: entity.Tooltip.Blocks}
@@ -638,7 +662,6 @@ func toAPILibraryDataset(dataset catalog.LibraryDataset) api.LibraryDataset {
 		FreshnessReason: dataset.FreshnessReason, CoverageUpdatedAt: dataset.CoverageUpdatedAt,
 	}
 }
-
 
 //go:fix inline
 func pointer[T any](value T) *T { return new(value) }

@@ -108,6 +108,9 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		if err := validateReleaseProvenance(ctx, tx, releaseID, *buildID); err != nil {
 			return err
 		}
+		if err := validateReleaseQuality(ctx, tx, releaseID); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx, `
 			UPDATE catalog_releases
 			SET status='validating',validated_at=now(),updated_at=now()
@@ -220,6 +223,44 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		}
 		return nil
 	})
+}
+
+// validateReleaseQuality is intentionally evaluated in the same transaction
+// as publication.  A candidate version may be newer than the public version,
+// but it must not make already published facts disappear from the API.  The
+// SQL function also reports non-blocking enrichment warnings. The publication
+// transaction deliberately enforces only blocking rows; operators can query
+// the same function to see missing enrichment without making a release appear
+// complete by silently discarding the warning.
+func validateReleaseQuality(ctx context.Context, tx pgx.Tx, releaseID uuid.UUID) error {
+	rows, err := tx.Query(ctx, `
+		SELECT check_key,failed_count,blocking
+		FROM catalog_release_quality_gate($1)
+		WHERE blocking AND failed_count>0
+		ORDER BY check_key`, releaseID)
+	if err != nil {
+		return fmt.Errorf("run catalog release quality gate: %w", err)
+	}
+	defer rows.Close()
+	failures := make([]string, 0, 4)
+	for rows.Next() {
+		var checkKey string
+		var failedCount int64
+		var blocking bool
+		if err := rows.Scan(&checkKey, &failedCount, &blocking); err != nil {
+			return fmt.Errorf("read catalog release quality gate: %w", err)
+		}
+		if blocking && failedCount > 0 {
+			failures = append(failures, fmt.Sprintf("%s=%d", checkKey, failedCount))
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate catalog release quality gate: %w", err)
+	}
+	if len(failures) != 0 {
+		return fmt.Errorf("%w: quality_gate %s", ErrReleaseNotPublishable, strings.Join(failures, ", "))
+	}
+	return nil
 }
 
 func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UUID, buildID int64) error {

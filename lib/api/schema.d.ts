@@ -367,6 +367,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/media/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Serve a verified, locally cached catalog media object.
+         * @description Media is exposed only when its source artifact, publication grant, cache integrity and retention window are valid. In private mode this endpoint requires the catalog session cookie.
+         */
+        get: operations["getCatalogMedia"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/graphql": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute a read-only GraphQL catalog query.
+         * @description GraphQL uses the same catalog session cookie and publication gate as REST. Query complexity and response size are bounded by the server.
+         */
+        post: operations["executeGraphQL"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -391,6 +431,21 @@ export interface components {
             detail?: string;
             /** Format: uri */
             instance?: string;
+        };
+        GraphQLRequest: {
+            query: string;
+            operationName?: string;
+            variables?: {
+                [key: string]: unknown;
+            };
+        };
+        GraphQLResponse: {
+            data?: {
+                [key: string]: unknown;
+            };
+            errors?: {
+                [key: string]: unknown;
+            }[];
         };
         GameProduct: {
             /** Format: int32 */
@@ -445,6 +500,14 @@ export interface components {
             /** Format: date-time */
             coverageUpdatedAt?: string;
         };
+        GameEntityLocalization: {
+            /** @description Source-backed name in the requested locale. Empty means the source has no value. */
+            name: string;
+            /** @description Source-backed description in the requested locale. Empty means the source has no value. */
+            description: string;
+            /** @description Display-ready description after resolving build-pinned DB2 value tokens. Empty means no source value. */
+            resolvedDescription: string;
+        };
         GameEntity: {
             /** Format: uuid */
             id: string;
@@ -464,6 +527,18 @@ export interface components {
             localeFallback: boolean;
             name: string;
             description: string;
+            /** @description Exact source-backed description before DB2 token resolution. */
+            rawDescription: string;
+            /** @description Display-ready description after resolving build-pinned DB2 value tokens. */
+            resolvedDescription: string;
+            /** @description Raw, build-pinned source payload for the published entity version. */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** @description Source-backed English and Russian fields. No synthetic translations are added. */
+            localizations: {
+                [key: string]: components["schemas"]["GameEntityLocalization"];
+            };
             tooltip?: components["schemas"]["GameTooltip"];
             /** @description Source-backed media for the published entity build. Empty or absent when no publishable media exists. */
             media?: components["schemas"]["GameEntityMedia"][];
@@ -828,6 +903,24 @@ export interface components {
         CatalogPublicationUnavailable: {
             headers: {
                 "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Verified media is temporarily unavailable. */
+        MediaUnavailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Catalog authentication is required in private mode. */
+        Unauthorized: {
+            headers: {
                 [name: string]: unknown;
             };
             content: {
@@ -1258,6 +1351,7 @@ export interface operations {
                     };
                 };
             };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["CatalogPublicationUnavailable"];
         };
@@ -1282,6 +1376,7 @@ export interface operations {
                     };
                 };
             };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalError"];
         };
     };
@@ -1307,6 +1402,7 @@ export interface operations {
                     };
                 };
             };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["CatalogPublicationUnavailable"];
         };
@@ -1436,6 +1532,66 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             500: components["responses"]["InternalError"];
+        };
+    };
+    getCatalogMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Binary media object. */
+            200: {
+                headers: {
+                    ETag?: string;
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/*": string;
+                };
+            };
+            404: components["responses"]["NotFound"];
+            /** @description Only GET and HEAD are supported. */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            503: components["responses"]["MediaUnavailable"];
+        };
+    };
+    executeGraphQL: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GraphQLRequest"];
+            };
+        };
+        responses: {
+            /** @description GraphQL response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphQLResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
 }

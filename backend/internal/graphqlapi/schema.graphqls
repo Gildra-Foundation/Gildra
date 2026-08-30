@@ -23,9 +23,44 @@ type GameEntity {
   localeFallback: Boolean!
   name: String!
   description: String!
+  rawDescription: String!
+  resolvedDescription: String!
+  localizations: [GameEntityLocalization!]!
+  tooltip: GameTooltip
+  media: [GameEntityMedia!]!
+  iconName: String
+  iconUrl: String
+  quality: Int
   buildId: String
   payload: JSON!
   updatedAt: Time!
+}
+
+type GameEntityLocalization {
+  locale: Locale!
+  name: String!
+  description: String!
+  resolvedDescription: String!
+}
+
+type GameTooltip {
+  plainText: String!
+  blocks: [JSON!]!
+}
+
+type GameEntityMedia {
+  kind: String!
+  assetKey: String!
+  url: String!
+  source: String!
+  sourceUrl: String!
+  locale: String!
+  mimeType: String!
+  cacheStatus: String!
+  fileDataId: String
+  width: Int
+  height: Int
+  primary: Boolean!
 }
 
 type PageInfo {
