@@ -217,7 +217,7 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
 
         <div className="mx-auto max-w-[1480px] p-4 sm:p-6 lg:p-8">
           {error && <Alert variant="destructive" className="mb-5 rounded-sm border-[#693b3e] bg-[#2a1518] text-[#ef9a9d]"><CircleAlert className="size-4" /><AlertTitle>Панель временно недоступна</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-          {view === "catalog" ? <WarcraftCatalog buildVersion={data?.catalog.activeBuildVersion ?? ""} /> : !data ? <div className="grid min-h-[60vh] place-items-center"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : <>
+          {view === "catalog" ? <WarcraftCatalog buildVersion={data?.catalog.activeBuildVersion ?? ""} /> : !data ? error ? <PanelLoadError message={error} onRetry={() => void load()} /> : <div className="grid min-h-[60vh] place-items-center"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : <>
             {view === "overview" && <Overview data={data} entries={filteredEntries} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} />}
             {view === "datasets" && <DatasetSection data={data} datasets={datasets} datasetSlug={datasetSlug} classSlug={classSlug} entries={classSlug ? entries : filteredEntries} archonEntries={classSlug ? archonEntries : filteredArchonEntries} wowGG={{ ...wowGG, data: classSlug ? wowGG.data : filteredWowGGEntries }} icyVeins={{ ...icyVeins, data: classSlug ? icyVeins.data : filteredIcyVeinsEntries }} wowGGWeek={wowGGWeek} setWowGGWeek={setWowGGWeek} datasetRuns={datasetRuns} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} difficulty={difficultyFilter} setDifficulty={setDifficultyFilter} metric={metricFilter} setMetric={setMetricFilter} />}
             {view === "api" && <APIView data={data} />}
@@ -227,6 +227,18 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
       </section>
     </main>
   );
+}
+
+function PanelLoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return <div className="grid min-h-[60vh] place-items-center">
+    <Card className="w-full max-w-xl rounded-sm border-[#693b3e] bg-[#171116]">
+      <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+        <CircleAlert className="size-8 text-[#e88787]" />
+        <div><h2 className="font-[var(--display)] text-lg font-semibold text-[#f0b0b0]">Не удалось загрузить данные</h2><p className="mt-2 text-sm text-[#9e8790]">{message}</p></div>
+        <Button onClick={onRetry} className="rounded-sm bg-[#c8a14d] text-[#171205] hover:bg-[#e0bd68]"><RefreshCw className="size-4" />Повторить</Button>
+      </CardContent>
+    </Card>
+  </div>;
 }
 
 function Overview({ data, entries, query, setQuery, activity, setActivity, role, setRole }: { data: DashboardData; entries: TierlistEntry[]; query: string; setQuery: (v: string) => void; activity: string; setActivity: (v: string) => void; role: string; setRole: (v: string) => void }) {
