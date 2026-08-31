@@ -114,9 +114,12 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				WHERE tooltip.version_id=version.id AND tooltip.locale='en_US'
 				  AND block->>'type'='duration'
 				LIMIT 1
-			),NULLIF(duration.payload->>'Duration','')::bigint,0),
-			COALESCE(NULLIF(duration.payload->>'MaxDuration','')::bigint,
-				NULLIF(duration.payload->>'Duration','')::bigint,0),
+			),CASE WHEN duration.payload->>'Duration' ~ '^-?[0-9]+$'
+				THEN (duration.payload->>'Duration')::bigint END,0),
+			COALESCE(CASE WHEN duration.payload->>'MaxDuration' ~ '^-?[0-9]+$'
+				THEN (duration.payload->>'MaxDuration')::bigint END,
+				CASE WHEN duration.payload->>'Duration' ~ '^-?[0-9]+$'
+					THEN (duration.payload->>'Duration')::bigint END,0),
 			effect.effect_index,effect.base_points::double precision,
 			effect.coefficient::double precision,effect.attack_power_coefficient::double precision,
 			COALESCE(effect.amplitude_ms,0)
@@ -127,10 +130,12 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$3
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 		LEFT JOIN LATERAL (
-			SELECT NULLIF(misc.payload->>'DurationIndex','')::bigint AS duration_index
+			SELECT CASE WHEN misc.payload->>'DurationIndex' ~ '^[0-9]+$'
+				THEN (misc.payload->>'DurationIndex')::bigint END AS duration_index
 			FROM catalog_db2_rows misc
 			WHERE misc.build_id=version.build_id AND misc.table_name='SpellMisc' AND misc.locale='en_US'
-			  AND NULLIF(misc.payload->>'SpellID','')::bigint=entity.external_id
+			  AND misc.payload->>'SpellID' ~ '^[0-9]+$'
+			  AND (misc.payload->>'SpellID')::bigint=entity.external_id
 			ORDER BY (COALESCE(NULLIF(misc.payload->>'DifficultyID','')::int,0)=0) DESC,misc.row_id
 			LIMIT 1
 		) misc ON true
