@@ -39,12 +39,20 @@ func NewServer(analyticsService *analytics.Service, catalogService *catalog.Serv
 }
 
 func (s *Server) GetAPIIndex(context.Context, api.GetAPIIndexRequestObject) (api.GetAPIIndexResponseObject, error) {
+	const apiOrigin = "https://api.gildra.net/world-of-warcraft/"
+	editions := []api.APIIndexEdition{
+		{Edition: api.Retail, Product: "wow", Base: apiOrigin + "retail/v1"},
+		{Edition: api.Classic, Product: "wow_classic", Base: apiOrigin + "classic/v1"},
+		{Edition: api.ClassicEra, Product: "wow_classic_era", Base: apiOrigin + "classic-era/v1"},
+		{Edition: api.Hardcore, Product: "wow_classic_hardcore", Base: apiOrigin + "hardcore/v1"},
+	}
 	return api.GetAPIIndex200JSONResponse{
-		Version: api.V1,
-		Rest:    "https://api.gildra.net/world-of-warcraft/retail/v1/",
-		Graphql: "https://api.gildra.net/graphql",
-		Catalog: "https://api.gildra.net/world-of-warcraft/retail/v1/game/entities",
-		Library: "https://api.gildra.net/world-of-warcraft/retail/v1/library/datasets",
+		Version:  api.V1,
+		Rest:     apiOrigin + "retail/v1/",
+		Graphql:  "https://api.gildra.net/graphql",
+		Catalog:  apiOrigin + "retail/v1/game/entities",
+		Library:  apiOrigin + "retail/v1/library/datasets",
+		Editions: &editions,
 	}, nil
 }
 

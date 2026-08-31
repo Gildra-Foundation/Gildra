@@ -20,4 +20,12 @@ func TestAPIIndexAdvertisesCanonicalRetailBase(t *testing.T) {
 	if index.Rest != base+"/" || index.Catalog != base+"/game/entities" || index.Library != base+"/library/datasets" {
 		t.Fatalf("API index does not advertise canonical retail base: %#v", index)
 	}
+	if index.Editions == nil || len(*index.Editions) != 4 {
+		t.Fatalf("API index editions = %#v, want four products", index.Editions)
+	}
+	for index, edition := range *index.Editions {
+		if edition.Base == "" || edition.Product == "" || !edition.Edition.Valid() {
+			t.Fatalf("edition %d is incomplete: %#v", index, edition)
+		}
+	}
 }
