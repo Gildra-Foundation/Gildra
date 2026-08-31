@@ -49,6 +49,29 @@ function unresolvedLabel() {
   return "Описание ещё не разрешено для этой сборки";
 }
 
+type SummarySource = {
+  description?: string | null;
+  resolvedDescription?: string | null;
+  tooltip?: { plainText?: string | null } | null;
+};
+
+function entitySummaryText(entity: SummarySource): { text: string; unresolved: boolean } {
+  const candidates = [entity.resolvedDescription, entity.description, entity.tooltip?.plainText];
+  let unresolved = false;
+  for (const candidate of candidates) {
+    const value = candidate?.trim();
+    if (!value) continue;
+    if (hasUnresolvedTemplate(value)) {
+      unresolved = true;
+      continue;
+    }
+    // Item tooltips often contain the useful stat/effect text when the short
+    // description field is empty. Keep cards compact; detail still shows all.
+    return { text: value.length > 240 ? `${value.slice(0, 237).trimEnd()}…` : value, unresolved: false };
+  }
+  return { text: "", unresolved };
+}
+
 async function catalogRequest<T>(path: string, signal?: AbortSignal): Promise<T> {
   const deadline = AbortSignal.timeout(15_000);
   const requestSignal = signal ? AbortSignal.any([signal, deadline]) : deadline;
@@ -137,8 +160,8 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
     </section>
 
     {error ? <div className="border border-[#693b3e] bg-[#2a1518] p-4 text-sm text-[#ef9a9d]">{error}</div> : null}
-    {loading ? <div className="grid min-h-64 place-items-center border border-[#2d3341] bg-[#11151d]"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : page.data.length > 0 ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{page.data.map((entity) => { const unresolved = hasUnresolvedTemplate(entity.description); return <button type="button" key={entity.id} onClick={() => void openEntity(entity.id)} className="group flex min-h-28 items-center gap-4 border border-[#2d3341] bg-[#11151d] p-4 text-left hover:border-[#78663c] hover:bg-[#151a23]">
-      <span className="grid size-14 shrink-0 place-items-center overflow-hidden border border-[#343b49] bg-[#090d13]">{entity.iconUrl ? <img src={entity.iconUrl} alt="" className="size-full object-cover" loading="lazy" /> : <Database className="size-5 text-[#5f697c]" />}</span><span className="min-w-0 flex-1"><span className="block truncate font-[var(--display)] text-base font-semibold text-[#e2e6ee] group-hover:text-[#dfbd69]">{entity.name || `${entity.type} #${entity.externalId}`}</span><span className="mt-1 block text-[9px] uppercase tracking-[.12em] text-[#707b90]">{entity.type} · ID {entity.externalId}</span>{entity.description && !unresolved ? <span className="mt-2 line-clamp-2 block text-xs leading-5 text-[#828da1]">{entity.description}</span> : unresolved ? <span className="mt-2 block text-[10px] leading-4 text-[#b69a59]">{unresolvedLabel()}</span> : null}</span><ChevronRight className="size-4 shrink-0 text-[#5f697c] group-hover:text-[#d2ad57]" />
+    {loading ? <div className="grid min-h-64 place-items-center border border-[#2d3341] bg-[#11151d]"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : page.data.length > 0 ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{page.data.map((entity) => { const summary = entitySummaryText(entity); return <button type="button" key={entity.id} onClick={() => void openEntity(entity.id)} className="group flex min-h-28 items-center gap-4 border border-[#2d3341] bg-[#11151d] p-4 text-left hover:border-[#78663c] hover:bg-[#151a23]">
+      <span className="grid size-14 shrink-0 place-items-center overflow-hidden border border-[#343b49] bg-[#090d13]">{entity.iconUrl ? <img src={entity.iconUrl} alt="" className="size-full object-cover" loading="lazy" /> : <Database className="size-5 text-[#5f697c]" />}</span><span className="min-w-0 flex-1"><span className="block truncate font-[var(--display)] text-base font-semibold text-[#e2e6ee] group-hover:text-[#dfbd69]">{entity.name || `${entity.type} #${entity.externalId}`}</span><span className="mt-1 block text-[9px] uppercase tracking-[.12em] text-[#707b90]">{entity.type} · ID {entity.externalId}</span>{summary.text ? <span className="mt-2 line-clamp-2 block text-xs leading-5 text-[#828da1]">{summary.text}</span> : summary.unresolved ? <span className="mt-2 block text-[10px] leading-4 text-[#b69a59]">{unresolvedLabel()}</span> : null}</span><ChevronRight className="size-4 shrink-0 text-[#5f697c] group-hover:text-[#d2ad57]" />
     </button>; })}</div> : <div className="grid min-h-64 place-items-center border border-[#2d3341] bg-[#11151d] text-center"><div><Database className="mx-auto size-7 text-[#606b7e]" /><p className="mt-3 text-sm text-[#8c96a8]">Для выбранного раздела данных пока нет.</p></div></div>}
 
     <div className="flex items-center justify-between border border-[#2d3341] bg-[#11151d] p-3"><button type="button" disabled={history.length === 0} onClick={() => { const previous = history.at(-1) ?? ""; setHistory((items) => items.slice(0, -1)); setCursor(previous); }} className="inline-flex h-9 items-center gap-2 border border-[#343b49] px-3 text-xs text-[#9ca6b8] disabled:opacity-35"><ArrowLeft className="size-3.5" />Назад</button><span className="text-[10px] text-[#687286]">{page.data.length} записей на странице</span><button type="button" disabled={!page.pagination.hasMore || !page.pagination.nextCursor} onClick={() => { setHistory((items) => [...items, cursor]); setCursor(page.pagination.nextCursor ?? ""); }} className="inline-flex h-9 items-center gap-2 border border-[#8f7540] px-3 text-xs text-[#dfbd69] disabled:opacity-35">Дальше<ChevronRight className="size-3.5" /></button></div>
@@ -150,8 +173,9 @@ function CatalogEntityDetail({ entity, onBack }: { entity: GameEntity; onBack: (
   const media = entity.media ?? [];
   const structuredBlocks = (entity.tooltip?.blocks ?? []) as StructuredBlock[];
   const localizations = entity.localizations ?? {};
-  const unresolvedDescription = hasUnresolvedTemplate(entity.description) || hasUnresolvedTemplate(entity.resolvedDescription);
-  const displayDescription = unresolvedDescription ? "" : entity.description;
+  const summary = entitySummaryText(entity);
+  const unresolvedDescription = summary.unresolved;
+  const displayDescription = summary.text;
   return <div className="flex flex-col gap-5">
     <button type="button" onClick={onBack} className="inline-flex w-fit items-center gap-2 text-xs text-[#b69a59] hover:text-[#e0bd68]"><ArrowLeft className="size-4" />Вернуться к каталогу</button>
     <section className="border border-[#2d3341] bg-[#11151d] p-5 sm:p-6"><div className="flex flex-col gap-5 sm:flex-row sm:items-start"><span className="grid size-20 shrink-0 place-items-center overflow-hidden border border-[#3a4252] bg-[#090d13]">{entity.iconUrl ? <img src={entity.iconUrl} alt="" className="size-full object-cover" /> : <Database className="size-7 text-[#667185]" />}</span><div className="min-w-0 flex-1"><p className="text-[9px] uppercase tracking-[.14em] text-[#9a824a]">{entity.type} · ID {entity.externalId}</p><h2 className="mt-2 font-[var(--display)] text-3xl font-semibold text-[#eceff5]">{entity.name || `${entity.type} #${entity.externalId}`}</h2>{displayDescription ? <p className="mt-3 max-w-4xl text-sm leading-6 text-[#929bad]">{displayDescription}</p> : unresolvedDescription ? <p className="mt-3 max-w-4xl text-xs leading-5 text-[#b69a59]">{unresolvedLabel()}</p> : null}<div className="mt-4 flex flex-wrap gap-2 text-[9px] uppercase tracking-[.1em] text-[#788397]"><span className="border border-[#343b49] px-2 py-1">{entity.product}</span><span className="border border-[#343b49] px-2 py-1">build #{entity.buildId ?? "—"}</span><span className="border border-[#343b49] px-2 py-1">локаль {entity.resolvedLocale}</span></div></div></div></section>
