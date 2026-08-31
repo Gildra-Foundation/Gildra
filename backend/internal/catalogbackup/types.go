@@ -17,7 +17,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const MinimumSchemaVersion int64 = 116
+const MinimumSchemaVersion int64 = 117
 
 var CriticalTables = []string{
 	"users",
@@ -61,6 +61,21 @@ var CriticalTables = []string{
 	"catalog_verified_item_drops",
 	"catalog_releases",
 	"catalog_public_release_state",
+	"genshin_catalog_releases",
+	"genshin_media_assets",
+	"genshin_characters",
+	"genshin_character_localizations",
+	"genshin_character_talents",
+	"genshin_character_talent_localizations",
+	"genshin_character_constellations",
+	"genshin_character_constellation_localizations",
+	"genshin_weapons",
+	"genshin_weapon_localizations",
+	"genshin_weapon_level_stats",
+	"genshin_artifact_sets",
+	"genshin_artifact_set_localizations",
+	"genshin_artifact_pieces",
+	"genshin_artifact_piece_localizations",
 }
 
 type State struct {

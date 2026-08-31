@@ -210,6 +210,10 @@ verify_local_health() {
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/livez >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/readyz >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/genshin-impact/v1/status >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/genshin-impact >/dev/null
   if [ "$catalog_access_mode" = private ]; then
     catalog_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
       --output /dev/null --write-out '%{http_code}' \
@@ -423,6 +427,10 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+# Prove that the currently running schema can be recovered before the new API
+# starts and its entrypoint applies pending Goose migrations. The second gate
+# below captures and restore-tests the newly migrated schema as well.
+ensure_recovery_backup
 compose pull web api catalog-backup cms scraper scraper-worker
 compose up -d --no-build --remove-orphans --wait --wait-timeout 240
 verify_running_images
