@@ -513,6 +513,24 @@ Run an approved full refresh:
 docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode apply -trigger manual -profile retail-foundation -sources wago,db2,battlenet,listfile -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
 ```
 
+For the scheduled multi-edition refresh, use the dedicated coordinator. It
+checks Retail, Classic, Classic Era and Hardcore independently and starts a
+full pipeline only for editions whose upstream build changed:
+
+```sh
+docker compose run --rm --no-deps --entrypoint catalog-refresh-all api \
+  -mode check -require-update -timeout 2h
+
+docker compose run --rm --no-deps --entrypoint catalog-refresh-all api \
+  -mode apply -publication-environment production -access-mode private \
+  -recovery-policy verified_same_host -timeout 24h
+```
+
+Use `-products retail,classic` to limit a maintenance run. The coordinator
+accepts the aliases above or the canonical product slugs (`wow`,
+`wow_classic`, `wow_classic_era`, `wow_classic_hardcore`) and records every
+check in `catalog_build_update_checks`.
+
 For a build that is already published, do not bypass the monotonic-build
 guard with ad-hoc SQL. Use the explicit same-build repair wrapper after an
 approved production backup:
@@ -548,10 +566,18 @@ review timestamp, exact environment/surface and any expiration date recorded.
 
 The optional host scheduler is in `infra/systemd/gildra-catalog-refresh.*`. It
 runs at 04:15 with randomized delay and `Persistent=true`. Its `ExecCondition`
-runs `catalog-build-check`, persists the observed build and skips the expensive
-pipeline when no new build exists. Installing/enabling those units and
-performing the first apply are production changes and require a separate
-approved operation with a verified backup and rollback plan.
+runs `catalog-refresh-all` for all four independent products and skips the
+expensive pipeline when every edition is current. The apply command refreshes
+only editions with a newer build, in a fixed order, while retaining the
+per-product advisory lock and atomic publication gate. Retail (`wow`), Classic
+(`wow_classic`), Classic Era (`wow_classic_era`) and Hardcore
+(`wow_classic_hardcore`) each keep their own build, release pointer, source
+check and read model; no Classic data can be published through the Retail
+pointer. Battle.net credentials are read only from `BATTLENET_CLIENT_ID` and
+`BATTLENET_CLIENT_SECRET`, and never appear in arguments or logs.
+Installing/enabling those units and performing the first apply are production
+changes and require a separate approved operation with a verified backup and
+rollback plan.
 
 When an immutable deployment applies new PostgreSQL migrations, the deploy
 script checks the running schema against the latest verified same-host backup
