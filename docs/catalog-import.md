@@ -564,6 +564,14 @@ state. Update `catalog_source_policies` after a current terms review and add an
 `allowed` row to `catalog_publication_grants` only with the approver, reason,
 review timestamp, exact environment/surface and any expiration date recorded.
 
+Public publication is also fail-closed on content quality. A release with
+unresolved Blizzard description/tooltip tokens or unverified remote/failed
+media remains available only to the private repair surface; it cannot move to
+the public API until the resolver and media cache have produced build-pinned
+proof. This keeps the public library from displaying `$s1`, `$d` or broken
+image placeholders while still allowing an operator to inspect and repair the
+staged release.
+
 The optional host scheduler is in `infra/systemd/gildra-catalog-refresh.*`. It
 runs at 04:15 with randomized delay and `Persistent=true`. Its `ExecCondition`
 runs `catalog-refresh-all` for all four independent products and skips the
