@@ -244,12 +244,12 @@ func (i *Indexer) RebuildTooltips(ctx context.Context) (Result, error) {
 	return i.rebuildTooltips(ctx, nil)
 }
 
-// RebuildTooltipsForProduct refreshes only the requested product's published
-// tooltip projection.  The catalog is multi-product; running the unscoped
-// projection for a Retail refresh needlessly joins Classic/Era/Hardcore rows
-// and can exceed the worker deadline.  A product-scoped run is safe because it
-// only upserts rows for that product and leaves the other published pointers
-// untouched.
+// RebuildTooltipsForProduct refreshes only the requested product's candidate
+// (latest-version) tooltip projection. The pipeline runs this stage before an
+// atomic release publish, so it must prepare the new version rather than
+// rewriting the already-public pointer. The catalog is multi-product; running
+// the unscoped projection needlessly joins Classic/Era/Hardcore rows and can
+// exceed the worker deadline.
 func (i *Indexer) RebuildTooltipsForProduct(ctx context.Context, productID int16) (Result, error) {
 	if productID <= 0 {
 		return Result{}, errors.New("product id must be positive")
@@ -2095,10 +2095,7 @@ func localizedClass(name string) string {
 }
 
 func scopedTooltipSQL() string {
-	sql := strings.Replace(tooltipSQL,
-		"JOIN game_entity_versions v ON v.id=e.latest_version_id",
-		"JOIN game_entity_versions v ON v.id=e.published_version_id", 1)
-	return strings.Replace(sql,
+	return strings.Replace(tooltipSQL,
 		"WHERE e.entity_type IN ('item','spell','talent','pvp_talent') AND e.deleted_at IS NULL",
 		"WHERE e.product_id=$1 AND e.entity_type IN ('item','spell','talent','pvp_talent') AND e.deleted_at IS NULL", 1)
 }
