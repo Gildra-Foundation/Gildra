@@ -99,7 +99,7 @@ services:
     entrypoint: ["catalog-backup"]
     command:
       - -product
-      - wow
+      - ${CATALOG_BACKUP_PRODUCT:-wow}
       - -object-prefix
       - ${CATALOG_BACKUP_OBJECT_PREFIX:-catalog-backups}
       - -temp-directory

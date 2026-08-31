@@ -143,6 +143,14 @@ a permanent restore database:
 sudo /opt/gildra/infra/backup/run-catalog-backup.sh
 ```
 
+The Compose wrapper defaults to the Retail product (`wow`). To produce a
+separate verified recovery proof for another product, set
+`CATALOG_BACKUP_PRODUCT` in the deployment environment before invoking the
+wrapper (for example `wow_classic`, `wow_classic_era`, or
+`wow_classic_hardcore`). Keep one verified manifest per product; the
+publication gate is intentionally product-scoped and will not treat a Retail
+backup as proof for a Classic release.
+
 The wrapper creates a uniquely named PostgreSQL container and a dedicated local
 Docker volume on the private Compose network, waits for readiness, runs
 `catalog-backup`, and removes both the restore container and its volume on
