@@ -9,7 +9,7 @@ ConditionPathExists=/opt/gildra/current-release.env
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/gildra
-ExecStart=/usr/bin/docker compose --env-file .env --env-file current-release.env -f compose.yml -f compose.prod.yml -f compose.runtime.yml run --rm --no-deps catalog-media-cache -access-mode private -environment production -limit 10000 -seed-icon-limit 10000 -confirm
+ExecStart=/usr/bin/docker compose --env-file .env --env-file current-release.env -f compose.yml -f compose.prod.yml -f compose.runtime.yml run --rm --no-deps catalog-media-cache -access-mode private -environment production -products wow,wow_classic,wow_classic_era,wow_classic_hardcore -limit 10000 -seed-icon-limit 10000 -confirm
 TimeoutStartSec=2h
 Nice=10
 IOSchedulingClass=best-effort
