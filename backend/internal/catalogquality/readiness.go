@@ -132,16 +132,41 @@ func EvaluateReadinessWithRecoveryPolicy(
 	report.add("db2_completeness", ScopeData, completenessScopes == 0 || incompleteScopes != 0, incompleteScopes,
 		fmt.Sprintf("%d DB2 scopes measured; %d incomplete", completenessScopes, incompleteScopes))
 
-	var unavailableDB2Artifacts int64
+	var unavailableDB2Artifacts, approvedUnavailableDB2Artifacts int64
 	if err := db.QueryRow(ctx, `
-		SELECT count(*)
+		SELECT
+			count(*) FILTER (WHERE NOT EXISTS (
+				SELECT 1
+				FROM catalog_release_profiles profile
+				JOIN catalog_release_profile_artifact_rules rule
+				  ON rule.profile_key=profile.profile_key
+				 AND rule.source=artifact.source
+				 AND rule.artifact_key=artifact.artifact_key
+				 AND (rule.locale='' OR rule.locale=artifact.locale)
+				 AND rule.requirement='not_applicable'
+				WHERE profile.product_id=build.product_id AND profile.status='active'
+			)),
+			count(*) FILTER (WHERE EXISTS (
+				SELECT 1
+				FROM catalog_release_profiles profile
+				JOIN catalog_release_profile_artifact_rules rule
+				  ON rule.profile_key=profile.profile_key
+				 AND rule.source=artifact.source
+				 AND rule.artifact_key=artifact.artifact_key
+				 AND (rule.locale='' OR rule.locale=artifact.locale)
+				 AND rule.requirement='not_applicable'
+				WHERE profile.product_id=build.product_id AND profile.status='active'
+			))
 		FROM catalog_source_artifacts artifact
+		JOIN game_builds build ON build.id=artifact.build_id
 		WHERE artifact.build_id=$1 AND artifact.source='wago_tools' AND artifact.status='unavailable'`, report.BuildID).
-		Scan(&unavailableDB2Artifacts); err != nil {
+		Scan(&unavailableDB2Artifacts, &approvedUnavailableDB2Artifacts); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check unavailable DB2 artifacts: %w", err)
 	}
-	report.warn("db2_unavailable_tables", ScopeData, unavailableDB2Artifacts,
-		"Wago does not publish these build/table/locale exports; the gap is explicit and must remain visible in the API")
+	report.add("db2_unavailable_tables", ScopeData, unavailableDB2Artifacts != 0, unavailableDB2Artifacts,
+		"Wago does not publish these build/table/locale exports and no active release profile marks them not_applicable")
+	report.warn("db2_not_applicable_tables", ScopeData, approvedUnavailableDB2Artifacts,
+		"Wago does not publish these exports because the active product profile explicitly marks them not_applicable")
 
 	var unprovenVersions int64
 	if err := db.QueryRow(ctx, `

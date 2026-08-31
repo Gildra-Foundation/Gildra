@@ -50,6 +50,21 @@ every fact that exists on Blizzard's private servers.
   published versions. Graph edges are restricted to the published build.
 - The publication gate now evaluates sources requested by the candidate release,
   so a newly introduced unapproved source cannot hide behind the old catalog.
+- Classic DB2 gaps are now profile-scoped. A Wago artifact marked
+  `unavailable` is still a publication blocker unless the active product
+  profile has an explicit `not_applicable` rule for that exact table/source;
+  the approved exceptions are surfaced as warnings in the readiness API.
+  This prevents a missing export from being mistaken for an empty table.
+
+### Current Classic availability policy
+
+The Classic, Classic Era, and Hardcore profiles currently mark only the
+Dragonflight crafting tables (`CraftingData*`), PvP talent data, and the
+modern Trait talent tables as `not_applicable`. Item bonus/level tables,
+quest lines/objectives, and all other unavailable exports remain blocking
+until their applicability is verified for the exact client build. This is
+intentional: the catalog must not publish an apparently complete Classic
+release while silently dropping item, quest, or relationship data.
 
 ## Source hierarchy
 
@@ -70,14 +85,17 @@ the catalog must key assets by FileDataID and hash rather than filename alone.
 ### Wave 0 — recovery gate (2–3 days)
 
 - Add an operations job that creates a compressed PostgreSQL dump and
-  ClickHouse backup, calculates SHA-256, uploads encrypted copies off-host, and
-  writes both DB and sidecar JSON manifests.
+  ClickHouse backup, calculates SHA-256, and writes encrypted copies plus
+  sidecar JSON manifests. Production may temporarily use a verified same-host
+  backup when `CATALOG_RECOVERY_POLICY=verified_same_host` is explicit; this
+  accepts total-loss risk if the OVH server fails and must be replaced by
+  off-host storage before a high-availability launch.
 - Restore each backup into isolated disposable containers, apply read-only
   integrity queries, compare build/snapshot IDs and critical row counts, then
   mark the manifest `verified`.
 - Keep daily backups for 14 days, weekly for 8 weeks, monthly for 12 months.
 - Block publication when the newest successful catalog import has no verified
-  backup within 24 hours.
+  backup within 24 hours (under the selected recovery policy).
 
 Acceptance: one-button restore has measured RTO, zero missing migrations, and
 matching counts for entities, versions, source records, relations, and media.
