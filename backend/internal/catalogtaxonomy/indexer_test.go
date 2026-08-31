@@ -10,10 +10,10 @@ func TestScopedTooltipSQLFiltersCandidateProduct(t *testing.T) {
 	if !strings.Contains(sql, "JOIN game_entity_versions v ON v.id=e.latest_version_id") {
 		t.Fatal("scoped tooltip SQL does not use the candidate version")
 	}
-	if !strings.Contains(sql, "WHERE e.product_id=$1 AND e.entity_type IN ('item','spell','talent','pvp_talent')") {
+	if !strings.Contains(sql, "WHERE e.product_id=$1 AND e.deleted_at IS NULL") {
 		t.Fatal("scoped tooltip SQL does not constrain the product")
 	}
-	if strings.Count(sql, "WHERE e.product_id=$1 AND e.entity_type IN ('item','spell','talent','pvp_talent')") != 1 {
+	if strings.Count(sql, "WHERE e.product_id=$1 AND e.deleted_at IS NULL") != 1 {
 		t.Fatal("scoped tooltip SQL changed more than the renderer scope")
 	}
 }
