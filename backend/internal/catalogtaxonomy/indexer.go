@@ -2096,8 +2096,8 @@ func localizedClass(name string) string {
 
 func scopedTooltipSQL() string {
 	return strings.Replace(tooltipSQL,
-		"WHERE e.entity_type IN ('item','spell','talent','pvp_talent') AND e.deleted_at IS NULL",
-		"WHERE e.product_id=$1 AND e.entity_type IN ('item','spell','talent','pvp_talent') AND e.deleted_at IS NULL", 1)
+		"WHERE e.deleted_at IS NULL",
+		"WHERE e.product_id=$1 AND e.deleted_at IS NULL", 1)
 }
 
 const tooltipSQL = `
@@ -2306,7 +2306,7 @@ const tooltipSQL = `
 			AND spell_duration.table_name='SpellDuration' AND spell_duration.locale='en_US'
 			AND spell_duration.row_id=COALESCE((NULLIF(spell_misc.payload->>'DurationIndex',''))::bigint,0)
 		LEFT JOIN spell_power_rows spell_power ON e.entity_type='spell' AND spell_power.build_id=v.build_id AND spell_power.spell_id=e.external_id
-		WHERE e.entity_type IN ('item','spell','talent','pvp_talent') AND e.deleted_at IS NULL
+		WHERE e.deleted_at IS NULL
 	), rendered AS (
 		SELECT version_id, entity_type, locale, source_url,
 			concat_ws(E'\n', name, NULLIF(description,'')) AS plain_text,
