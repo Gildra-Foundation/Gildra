@@ -360,6 +360,9 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_media_previews($1)`, productID); err != nil {
 			return fmt.Errorf("refresh library media previews: %w", err)
 		}
+		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_media_coverage($1)`, productID); err != nil {
+			return fmt.Errorf("refresh library media coverage: %w", err)
+		}
 		return nil
 	})
 	if err != nil {
