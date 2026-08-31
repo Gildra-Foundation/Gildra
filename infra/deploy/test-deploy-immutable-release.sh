@@ -117,6 +117,8 @@ for argument in "$@"; do
     --dump-header) expect_dump_file=true ;;
     https://api.gildra.net/v1/library/datasets*) status=401 ;;
     https://api.gildra.net/library*|https://api.gildra.net/ru/library*) status=307; location='/api-console?next=%2Flibrary' ;;
+    https://gildra.net/library/items) status=302; location='https://api.gildra.net/library/items' ;;
+    https://gildra.net/ru/library/items) status=302; location='https://api.gildra.net/ru/library/items' ;;
   esac
 done
 [ -z "$dump_file" ] || printf 'HTTP/2 307\nLocation: %s\n\n' "$location" > "$dump_file"
@@ -170,6 +172,8 @@ grep -Fq 'verify_library_route /library/items' "$deployment_script"
 grep -Fq 'verify_library_route /ru/library/items' "$deployment_script"
 grep -Fq 'https://gildra.net/library' "$deployment_script"
 grep -Fq 'https://gildra.net/ru/library' "$deployment_script"
+grep -Fq 'verify_library_redirect /library/items' "$deployment_script"
+grep -Fq 'verify_library_redirect /ru/library/items' "$deployment_script"
 grep -Fq 'verify_catalog_load' "$deployment_script"
 grep -Fq 'catalog-load-check' "$deployment_script"
 grep -Fq 'verify_catalog_readiness' "$deployment_script"

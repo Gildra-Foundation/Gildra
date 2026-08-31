@@ -205,6 +205,25 @@ verify_local_health() {
     --resolve gildra.net:443:127.0.0.1 https://gildra.net/library >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/library >/dev/null
+  verify_library_redirect /library/items
+  verify_library_redirect /ru/library/items
+}
+
+verify_library_redirect() {
+  route_path=$1
+  response_headers=$(mktemp)
+  route_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --dump-header "$response_headers" --output /dev/null --write-out '%{http_code}' \
+    --resolve gildra.net:443:127.0.0.1 "https://gildra.net$route_path") || {
+    rm -f "$response_headers"
+    fail "library redirect failed: $route_path"
+  }
+  route_location=$(sed -n 's/^[Ll][Oo][Cc][Aa][Tt][Ii][Oo][Nn]:[[:space:]]*//p' "$response_headers" | head -n 1 | tr -d '\r')
+  rm -f "$response_headers"
+  case "$route_status:$route_location" in
+    3??:https://api.gildra.net$route_path) ;;
+    *) fail "library redirect does not preserve path: $route_path (HTTP $route_status, Location $route_location)" ;;
+  esac
 }
 
 verify_catalog_load() {
