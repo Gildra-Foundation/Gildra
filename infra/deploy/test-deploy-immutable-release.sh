@@ -127,7 +127,7 @@ for argument in "$@"; do
     --write-out) write_status=true ;;
     --dump-header) expect_dump_file=true ;;
     https://api.gildra.net/v1/library/datasets*) status=401 ;;
-    https://api.gildra.net/world-of-warcraft/retail/v1/library/datasets*) status=401 ;;
+    https://api.gildra.net/world-of-warcraft/*/v1/library/datasets*) status=401 ;;
     https://api.gildra.net/library*|https://api.gildra.net/ru/library*) status=307; location='/api-console?next=%2Flibrary' ;;
     https://gildra.net/library/items) status=302; location='https://api.gildra.net/library/items' ;;
     https://gildra.net/ru/library/items) status=302; location='https://api.gildra.net/ru/library/items' ;;
@@ -178,7 +178,7 @@ grep -q 'rollback completed and verified' "$test_directory/deploy.log"
 # A separate workflow smoke step is too late: by then the previous release has
 # already been disarmed as an automatic rollback target.
 grep -Fq "'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US'" "$deployment_script"
-grep -Fq "'https://api.gildra.net/world-of-warcraft/retail/v1/library/datasets?product=wow&locale=en_US'" "$deployment_script"
+grep -Fq 'https://api.gildra.net/world-of-warcraft/$edition/v1/library/datasets?locale=en_US' "$deployment_script"
 grep -Fq 'verify_library_route /library' "$deployment_script"
 grep -Fq 'verify_library_route /ru/library' "$deployment_script"
 grep -Fq 'verify_library_route /library/items' "$deployment_script"

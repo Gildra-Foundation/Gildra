@@ -5,6 +5,13 @@ historical `/v1/game` paths remain compatible aliases. The OpenAPI 3.1 source
 of truth is `backend/api/openapi.yaml`; generated Go and TypeScript files must
 not be edited by hand.
 
+Edition prefixes select the product without a query parameter:
+
+- `/world-of-warcraft/retail/v1` → `wow` (current retail client)
+- `/world-of-warcraft/classic/v1` → `wow_classic`
+- `/world-of-warcraft/classic-era/v1` → `wow_classic_era`
+- `/world-of-warcraft/hardcore/v1` → `wow_classic_hardcore`
+
 ## Read pattern
 
 Use the lightweight collection resource for navigation and search:
