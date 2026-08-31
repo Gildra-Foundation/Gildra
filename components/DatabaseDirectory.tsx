@@ -34,6 +34,21 @@ const FACET_LABELS: Record<string, [string, string]> = {
 };
 const FACET_ORDER = ["class", "specialization", "race", "profession", "equipment_slot", "armor_type", "weapon_type", "item_class"];
 
+// Blizzard DB2 descriptions can contain value placeholders that are only
+// meaningful after a build-specific lookup. Never render those tokens as if
+// they were player-facing text; the API keeps the raw value for diagnostics.
+const UNRESOLVED_TEMPLATE = /\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)/;
+
+function safeTooltipText(value: unknown, lang: Lang) {
+  const text = String(value ?? "");
+  if (!text || UNRESOLVED_TEMPLATE.test(text)) {
+    return UNRESOLVED_TEMPLATE.test(text)
+      ? (lang === "ru" ? "Описание ещё не разрешено для этой сборки." : "Description is not resolved for this build yet.")
+      : "";
+  }
+  return text;
+}
+
 export function DatabaseDirectory({ lang = "en", catalog, categories, entityTypes, products, query = "", selectedProduct = "wow", selectedType = "", selectedCategory = "", selectedFacets = [], cursor = "", minItemLevel = "", maxItemLevel = "", minRequiredLevel = "", maxRequiredLevel = "", libraryDataset }: {
   lang?: Lang; catalog: CatalogPage; categories: CatalogCategory[]; entityTypes: CatalogEntityType[]; products: CatalogProduct[];
   query?: string; selectedProduct?: string; selectedType?: string; selectedCategory?: string; selectedFacets?: string[]; cursor?: string; minItemLevel?: string; maxItemLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string;
@@ -406,11 +421,11 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
   if (type === "stack_limit") return <div>{lang === "ru" ? "Максимум в стопке" : "Maximum stack"}: {String(block.value ?? "")}</div>;
   if (type === "container_slots") return <div>{lang === "ru" ? "Ячеек в сумке" : "Bag slots"}: {String(block.value ?? "")}</div>;
   if (type === "price") return <TooltipPrice buy={Number(block.buy ?? 0)} sell={Number(block.sell ?? 0)} lang={lang} />;
-  if (type === "name_description") return <div className="db-tooltip-muted">{String(block.text ?? "")}</div>;
+	  if (type === "name_description") { const text = safeTooltipText(block.text, lang); return text ? <div className="db-tooltip-muted">{text}</div> : null; }
   if (type === "item_set") return <div className="db-tooltip-set">{lang === "ru" ? "Комплект" : "Set"}: {String(block.name ?? "")}</div>;
   if (type === "limit_category") return <div>{String(block.name ?? "")}{Number(block.quantity ?? 0) > 0 ? ` (${String(block.quantity)})` : ""}</div>;
   if (type === "stats" && Array.isArray(block.entries)) return <TooltipStats entries={block.entries as Record<string, unknown>[]} lang={lang} />;
-  if (type === "subtext" && typeof block.text === "string") return <div className="db-tooltip-subtext">{block.text}</div>;
+	  if (type === "subtext" && typeof block.text === "string") { const text = safeTooltipText(block.text, lang); return text ? <div className="db-tooltip-subtext">{text}</div> : null; }
   if (type === "cast_time") return <div className="db-tooltip-mechanic">{formatCastTime(Number(block.milliseconds), lang)}</div>;
   if (type === "range") return <div className="db-tooltip-mechanic">{String(block.yards ?? "")} {lang === "ru" ? "м" : "yd range"}</div>;
   if (type === "cooldown") return <div className="db-tooltip-mechanic">{formatDuration(Number(block.milliseconds), lang)} {lang === "ru" ? "восстановление" : "cooldown"}</div>;
@@ -435,12 +450,14 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
 	if (type === "provenance") return <TooltipProvenance block={block} lang={lang} />;
 	if (type === "spell_effects" && Array.isArray(block.entries)) return <SpellEffects entries={block.entries as Record<string, unknown>[]} lang={lang} />;
   if (type === "unique_equipped") return <div>{lang === "ru" ? "Уникальный использующийся" : "Unique-Equipped"}</div>;
-  if (type === "use" || type === "equip") return <div className="db-tooltip-effect">{String(block.text ?? "")}</div>;
-  if (type === "effect") return <div className="db-tooltip-effect">{effectPrefix(Number(block.trigger), lang)}{cleanWowText(String(block.text ?? ""), lang)}</div>;
-  if (type === "description" && typeof block.text === "string") {
-    return entityType === "spell" || entityType === "talent" || entityType === "pvp_talent"
-		? <RichDescription text={block.text} mentions={mentions} lang={lang} />
-		: <div className="db-tooltip-description">“{entityType === "quest" ? formatQuestText(block.text, lang) : block.text}”</div>;
+	  if (type === "use" || type === "equip") { const text = safeTooltipText(block.text, lang); return text ? <div className="db-tooltip-effect">{text}</div> : null; }
+	  if (type === "effect") { const text = safeTooltipText(cleanWowText(String(block.text ?? ""), lang), lang); return text ? <div className="db-tooltip-effect">{effectPrefix(Number(block.trigger), lang)}{text}</div> : null; }
+	  if (type === "description" && typeof block.text === "string") {
+	    const text = safeTooltipText(block.text, lang);
+	    if (!text) return null;
+	    return entityType === "spell" || entityType === "talent" || entityType === "pvp_talent"
+			? <RichDescription text={text} mentions={mentions} lang={lang} />
+			: <div className="db-tooltip-description">“{entityType === "quest" ? formatQuestText(text, lang) : text}”</div>;
   }
   return null;
 }
