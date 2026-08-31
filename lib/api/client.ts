@@ -46,7 +46,10 @@ async function catalogFetchOptions(revalidate: number, tags: string[] = []) {
 }
 
 async function catalogRequest<T>(path: string, revalidate = 300): Promise<T> {
-  const response = await fetch(`${apiURL()}${path}`, await catalogFetchOptions(revalidate, ["catalog"]));
+  const response = await fetch(`${apiURL()}${path}`, {
+    ...(await catalogFetchOptions(revalidate, ["catalog"])),
+    signal: AbortSignal.timeout(15_000),
+  });
   if (!response.ok) {
     let message = `Catalog request failed (${response.status})`;
     try {
@@ -172,7 +175,10 @@ export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", da
   if (dataset) params.set("dataset", dataset);
   const response = await fetch(
     `${apiURL()}/v1/game/entities/${encodeURIComponent(id)}?${params}`,
-    await catalogFetchOptions(300, [`catalog-entity-${id}`]),
+    {
+      ...(await catalogFetchOptions(300, [`catalog-entity-${id}`])),
+      signal: AbortSignal.timeout(15_000),
+    },
   );
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Catalog entity request failed (${response.status})`);
