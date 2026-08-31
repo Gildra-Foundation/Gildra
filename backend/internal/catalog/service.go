@@ -17,12 +17,14 @@ import (
 var ErrNotFound = errors.New("game entity not found")
 
 type Product struct {
-	ID            int32
-	Slug          string
-	Name          string
-	BuildNumber   *int32
-	BuildVersion  *string
-	PublicRelease bool
+	ID             int32
+	Slug           string
+	Name           string
+	BuildNumber    *int32
+	BuildVersion   *string
+	EntityCount    int64
+	PublishedCount int64
+	PublicRelease  bool
 }
 
 type Entity struct {
@@ -127,6 +129,8 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 	rows, err := s.postgres.Query(ctx, `
 		SELECT product.id, product.slug, product.name,
 			active_build.build_number, active_build.version,
+			COALESCE(entity_counts.entity_count, 0),
+			COALESCE(entity_counts.published_count, 0),
 			EXISTS (
 				SELECT 1 FROM catalog_public_release_state public_state
 				WHERE public_state.product_id=product.id
@@ -134,6 +138,13 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 		FROM game_products product
 		LEFT JOIN game_builds active_build
 			ON active_build.product_id=product.id AND active_build.is_active
+		LEFT JOIN (
+			SELECT entity.product_id, count(*) AS entity_count,
+				count(*) FILTER (WHERE entity.published_version_id IS NOT NULL) AS published_count
+			FROM game_entities entity
+			WHERE entity.deleted_at IS NULL
+			GROUP BY entity.product_id
+		) entity_counts ON entity_counts.product_id=product.id
 		ORDER BY product.id`)
 	if err != nil {
 		return nil, fmt.Errorf("list game products: %w", err)
@@ -144,7 +155,8 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 	for rows.Next() {
 		var product Product
 		if err := rows.Scan(&product.ID, &product.Slug, &product.Name, &product.BuildNumber,
-			&product.BuildVersion, &product.PublicRelease); err != nil {
+			&product.BuildVersion, &product.EntityCount, &product.PublishedCount,
+			&product.PublicRelease); err != nil {
 			return nil, fmt.Errorf("scan game product: %w", err)
 		}
 		products = append(products, product)

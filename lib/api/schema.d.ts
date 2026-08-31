@@ -467,6 +467,16 @@ export interface components {
             buildNumber?: number;
             /** @description Active client version pinned to the product. */
             buildVersion?: string;
+            /**
+             * Format: int64
+             * @description Number of non-deleted entities imported for the product.
+             */
+            entityCount: number;
+            /**
+             * Format: int64
+             * @description Number of imported entities with a current published version pointer.
+             */
+            publishedEntityCount: number;
             /** @description True only when an atomic catalog release is currently selected for public reads. */
             publicRelease?: boolean;
         };
