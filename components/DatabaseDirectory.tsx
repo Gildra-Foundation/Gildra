@@ -37,7 +37,7 @@ const FACET_ORDER = ["class", "specialization", "race", "profession", "equipment
 // Blizzard DB2 descriptions can contain value placeholders that are only
 // meaningful after a build-specific lookup. Never render those tokens as if
 // they were player-facing text; the API keeps the raw value for diagnostics.
-const UNRESOLVED_TEMPLATE = /\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)/;
+const UNRESOLVED_TEMPLATE = /\$(?:@spelldesc|[0-9]*[dD]|[0-9]*s[0-9]+|[st][0-9]+|[dD]|[A-Za-z]|[<{])/;
 
 function safeTooltipText(value: unknown, lang: Lang) {
   const text = String(value ?? "");

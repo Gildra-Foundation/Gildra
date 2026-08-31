@@ -25,7 +25,7 @@ function displayValue(value: unknown, lang: Lang) {
 }
 
 function hasUnresolvedTemplate(value: string) {
-  return /\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)/.test(value);
+  return /\$(?:@spelldesc|[0-9]*[dD]|[0-9]*s[0-9]+|[st][0-9]+|[dD]|[A-Za-z]|[<{])/.test(value);
 }
 
 function relationshipAttributes(attributes: Record<string, unknown>, lang: Lang) {
