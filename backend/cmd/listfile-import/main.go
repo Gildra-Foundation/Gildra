@@ -47,12 +47,15 @@ func main() {
 func run() error {
 	var databaseURL, sourceURL, buildVersion, product string
 	var confirm bool
-	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&sourceURL, "url", defaultURL, "wow-listfile CSV release URL")
 	flag.StringVar(&product, "product", "wow", "game_products slug")
 	flag.StringVar(&buildVersion, "version", "", "WoW build version (for example 12.1.0.69497)")
 	flag.BoolVar(&confirm, "confirm", false, "download and import icon paths")
 	flag.Parse()
+	if databaseURL == "" {
+		databaseURL = os.Getenv("DATABASE_URL")
+	}
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL or -database-url is required")
 	}

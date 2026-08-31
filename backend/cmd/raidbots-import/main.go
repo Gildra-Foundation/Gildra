@@ -650,12 +650,15 @@ func raidbotsRecord(sourceURL string, spec datasetSpec, raw json.RawMessage) (ca
 func parseOptions() (options, error) {
 	var files, factFiles string
 	opts := options{}
-	flag.StringVar(&opts.databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&opts.databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&opts.environment, "environment", "live", "Raidbots environment")
 	flag.StringVar(&files, "files", defaultFiles, "comma-separated Raidbots datasets")
 	flag.StringVar(&factFiles, "fact-files", defaultFactFiles, "comma-separated Raidbots fact datasets stored as source records")
 	flag.IntVar(&opts.maxRecords, "max-records", 1000, "maximum records per dataset; 0 imports all")
 	flag.Parse()
+	if opts.databaseURL == "" {
+		opts.databaseURL = os.Getenv("DATABASE_URL")
+	}
 	opts.environment = strings.TrimSpace(opts.environment)
 	opts.files = splitList(files)
 	opts.factFiles = splitList(factFiles)

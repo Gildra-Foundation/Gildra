@@ -44,7 +44,7 @@ func run() error {
 	var questRewardsOnly bool
 	var graphOnly bool
 	var statsOnly bool
-	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&product, "product", "wow", "game_products slug to refresh")
 	flag.BoolVar(&confirm, "confirm", false, "rebuild taxonomy and tooltips")
 	flag.BoolVar(&tooltipsOnly, "tooltips-only", false, "rebuild tooltip projections without taxonomy")
@@ -64,6 +64,9 @@ func run() error {
 	flag.BoolVar(&graphOnly, "graph-only", false, "rebuild normalized entity relationships only")
 	flag.BoolVar(&statsOnly, "stats-only", false, "refresh cached catalog counts and coverage only")
 	flag.Parse()
+	if databaseURL == "" {
+		databaseURL = os.Getenv("DATABASE_URL")
+	}
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL or -database-url is required")
 	}

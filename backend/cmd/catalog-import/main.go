@@ -1756,9 +1756,12 @@ func parseOptions() (options, error) {
 	var locales, entityTypes string
 	opts := options{}
 	flag.StringVar(&opts.source, "source", "wago", "catalog source: wago or battlenet")
-	flag.StringVar(&opts.databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
-	flag.StringVar(&opts.clientID, "client-id", os.Getenv("BATTLENET_CLIENT_ID"), "Battle.net OAuth client ID")
-	flag.StringVar(&opts.clientSecret, "client-secret", os.Getenv("BATTLENET_CLIENT_SECRET"), "Battle.net OAuth client secret")
+	// Keep credentials and connection strings out of `-h` output.  The flag
+	// package prints default values verbatim, so using environment values as
+	// defaults would disclose passwords/secrets to logs and support bundles.
+	flag.StringVar(&opts.databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
+	flag.StringVar(&opts.clientID, "client-id", "", "Battle.net OAuth client ID (defaults to BATTLENET_CLIENT_ID)")
+	flag.StringVar(&opts.clientSecret, "client-secret", "", "Battle.net OAuth client secret (defaults to BATTLENET_CLIENT_SECRET)")
 	flag.StringVar(&opts.product, "product", "wow", "game_products slug")
 	flag.IntVar(&opts.buildNumber, "build", intEnv("BATTLENET_BUILD_NUMBER"), "positive WoW build number")
 	flag.StringVar(&opts.buildVersion, "version", os.Getenv("BATTLENET_BUILD_VERSION"), "WoW version; Wago auto-detects when empty")
@@ -1772,6 +1775,15 @@ func parseOptions() (options, error) {
 	flag.BoolVar(&opts.missingOnly, "missing-only", false, "enrich only build records with missing descriptions or icons")
 	flag.BoolVar(&opts.allowBuildMismatch, "allow-build-mismatch", false, "allow a pinned release build to differ from the currently published Battle.net API build; source build is recorded in provenance")
 	flag.Parse()
+	if opts.databaseURL == "" {
+		opts.databaseURL = os.Getenv("DATABASE_URL")
+	}
+	if opts.clientID == "" {
+		opts.clientID = os.Getenv("BATTLENET_CLIENT_ID")
+	}
+	if opts.clientSecret == "" {
+		opts.clientSecret = os.Getenv("BATTLENET_CLIENT_SECRET")
+	}
 	opts.source = strings.ToLower(strings.TrimSpace(opts.source))
 	opts.locales = splitList(locales)
 	opts.entityTypes = splitList(entityTypes)

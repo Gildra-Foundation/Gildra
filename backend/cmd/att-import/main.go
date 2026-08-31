@@ -168,7 +168,7 @@ func importArtifact(
 
 func parseOptions() (options, error) {
 	opts := options{}
-	flag.StringVar(&opts.databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&opts.databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&opts.sourceRoot, "source-root", os.Getenv("ATT_SOURCE_ROOT"), "ATT db/Standard/Categories directory")
 	flag.StringVar(&opts.revision, "revision", os.Getenv("ATT_SOURCE_REVISION"), "pinned 40-character ATT Git revision")
 	flag.StringVar(&opts.product, "product", "wow", "game_products slug")
@@ -179,6 +179,9 @@ func parseOptions() (options, error) {
 	flag.BoolVar(&opts.confirm, "confirm", false, "confirm an unbounded full source import")
 	flag.Parse()
 
+	if opts.databaseURL == "" {
+		opts.databaseURL = os.Getenv("DATABASE_URL")
+	}
 	opts.databaseURL = strings.TrimSpace(opts.databaseURL)
 	opts.sourceRoot = strings.TrimSpace(opts.sourceRoot)
 	opts.revision = strings.ToLower(strings.TrimSpace(opts.revision))

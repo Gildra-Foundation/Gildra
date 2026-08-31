@@ -602,7 +602,7 @@ func upsertBatch(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportC
 func parseOptions() (options, error) {
 	var tables, locales string
 	opts := options{}
-	flag.StringVar(&opts.databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&opts.databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&opts.product, "product", "wow", "game_products slug")
 	flag.StringVar(&opts.version, "version", "", "WoW build version; auto-detected when empty")
 	flag.StringVar(&tables, "tables", defaultTables, "comma-separated Wago DB2 tables")
@@ -622,6 +622,9 @@ func parseOptions() (options, error) {
 	flag.BoolVar(&opts.projectCollections, "project-collections", true, "project classes, specializations, currencies, mounts, pets, toys, maps, factions, transmogs, and achievements")
 	flag.BoolVar(&opts.download, "download", true, "download tables before projection")
 	flag.Parse()
+	if opts.databaseURL == "" {
+		opts.databaseURL = os.Getenv("DATABASE_URL")
+	}
 	if opts.projectItemDetailsOnly {
 		opts.download = false
 		opts.projectItems = false

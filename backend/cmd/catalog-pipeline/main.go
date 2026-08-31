@@ -35,7 +35,9 @@ func run() (catalogpipeline.Result, error) {
 	var maxRecords int
 	var confirmFullImport, useCheckedBuild, forceRebuild bool
 	var timeout time.Duration
-	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	// Do not put DATABASE_URL in flag defaults: the flag package echoes
+	// defaults in `-h`, which would leak the database password into logs.
+	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&profile, "profile", "", "catalog source profile; defaults by product, or use custom")
 	flag.StringVar(&sources, "sources", "", "optional comma-separated source stages; the profile default is used when empty")
 	flag.StringVar(&mode, "mode", "dry_run", "dry_run or apply")
@@ -54,6 +56,9 @@ func run() (catalogpipeline.Result, error) {
 	flag.StringVar(&resumeReleaseID, "resume-release", "", "resume a failed staging release without repeating validated source stages")
 	flag.StringVar(&resumeFrom, "resume-from", "import-battlenet", "first executable stage to run when resuming a release")
 	flag.Parse()
+	if databaseURL == "" {
+		databaseURL = os.Getenv("DATABASE_URL")
+	}
 	if databaseURL == "" {
 		return catalogpipeline.Result{}, errors.New("DATABASE_URL or -database-url is required")
 	}

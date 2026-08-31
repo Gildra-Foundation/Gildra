@@ -26,7 +26,7 @@ func run() error {
 	var databaseURL, root, publicBase, environment, accessMode, product string
 	var limit, seedIconLimit int
 	var confirm, skipMediaCache bool
-	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&root, "directory", os.Getenv("CATALOG_MEDIA_DIRECTORY"), "absolute local media cache directory")
 	flag.StringVar(&publicBase, "public-base-url", envOr("CATALOG_MEDIA_PUBLIC_BASE_URL", "https://api.gildra.net"), "public HTTPS API origin")
 	flag.StringVar(&environment, "environment", envOr("CATALOG_PUBLICATION_ENVIRONMENT", "development"), "grant environment")
@@ -37,6 +37,9 @@ func run() error {
 	flag.BoolVar(&skipMediaCache, "skip-media-cache", false, "seed official icons without processing other remote media")
 	flag.BoolVar(&confirm, "confirm", false, "download eligible assets")
 	flag.Parse()
+	if databaseURL == "" {
+		databaseURL = os.Getenv("DATABASE_URL")
+	}
 	if databaseURL == "" || root == "" {
 		return errors.New("DATABASE_URL and CATALOG_MEDIA_DIRECTORY are required")
 	}

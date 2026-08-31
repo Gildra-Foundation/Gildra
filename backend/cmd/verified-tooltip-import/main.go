@@ -73,7 +73,7 @@ func run() error {
 	var limit int
 	var delay time.Duration
 	var confirm bool
-	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&locale, "locale", "ru_RU", "en_US or ru_RU")
 	flag.StringVar(&ids, "ids", "", "optional comma-separated item IDs")
 	flag.StringVar(&entityType, "entity-type", "item", "item or talent-spell")
@@ -81,6 +81,9 @@ func run() error {
 	flag.DurationVar(&delay, "delay", 200*time.Millisecond, "delay between requests")
 	flag.BoolVar(&confirm, "confirm", false, "fetch and persist verified tooltips")
 	flag.Parse()
+	if databaseURL == "" {
+		databaseURL = os.Getenv("DATABASE_URL")
+	}
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL or -database-url is required")
 	}
