@@ -46,6 +46,20 @@ func TestResolveDescriptionTextResolvesSpellDescriptionReferences(t *testing.T) 
 	}
 }
 
+func TestResolveDescriptionTextResolvesMaxDurationAndTick(t *testing.T) {
+	values := map[int64]spellDescriptionValues{
+		42: {
+			DurationMS:    2000,
+			MaxDurationMS: 8000,
+			Effects:       map[int]spellEffectValue{2: {AmplitudeMS: 3000}},
+		},
+	}
+	got := resolveDescriptionText("Lasts $d (up to $D); ticks every $t2.", 42, values, "en_US")
+	if got != "Lasts 2 sec (up to 8 sec); ticks every 3 sec." {
+		t.Fatalf("unexpected duration resolution: %q", got)
+	}
+}
+
 func TestDescriptionLocaleDoesNotMixFallbackEnglishWithRussianUnits(t *testing.T) {
 	if got := descriptionLocale("Deals damage for $10d.", "ru_RU"); got != "en_US" {
 		t.Fatalf("expected English fallback, got %q", got)
