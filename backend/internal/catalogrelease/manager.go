@@ -109,6 +109,29 @@ func (m *Manager) Resume(
 		if command.RowsAffected() != 1 {
 			return fmt.Errorf("resume catalog release %s: release is missing or does not match the requested build/profile", releaseID)
 		}
+		// Fail restores affected entities to their published pointer.  When a
+		// retry starts after validation, the validated snapshots are still the
+		// candidate and must be made current again before the validation and
+		// publish stages run (this also reactivates entities that had no prior
+		// published version, such as quest reward packages).
+		if _, err := tx.Exec(ctx, `
+			WITH candidate_versions AS (
+				SELECT DISTINCT ON (version.entity_id)
+					version.entity_id,version.id AS version_id,version.build_id
+				FROM game_entity_versions version
+				JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
+				WHERE snapshot.release_id=$1 AND snapshot.status='validated'
+				ORDER BY version.entity_id,snapshot.created_at DESC,version.revision DESC
+			)
+			UPDATE game_entities entity
+			SET latest_version_id=candidate.version_id,
+				last_seen_build_id=candidate.build_id,
+				deleted_at=NULL,
+				updated_at=now()
+			FROM candidate_versions candidate
+			WHERE entity.id=candidate.entity_id`, releaseID); err != nil {
+			return fmt.Errorf("restore validated catalog pointers on resume: %w", err)
+		}
 		return nil
 	})
 }
@@ -372,10 +395,27 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 	var unprovenVersions, unprovenFacts, unprovenLocalizations, invalidIcons int64
 	err := tx.QueryRow(ctx, `
 		WITH release_artifacts AS (
+			-- Source artifacts are immutable evidence.  A retry may legitimately
+			-- carry a fact forward from an earlier validated snapshot (for example
+			-- quest data when the optional Battle.net endpoint is unavailable), so
+			-- provenance must not require every reused artifact to be copied into
+			-- the new release.  Failed/fetching snapshots are intentionally
+			-- excluded; only ready artifacts from the candidate or a validated /
+			-- published snapshot for the same product and build are trusted.
 			SELECT artifact.id
 			FROM catalog_source_artifacts artifact
 			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
 			WHERE snapshot.release_id=$1 AND artifact.status='ready'
+			  AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			UNION
+			SELECT artifact.id
+			FROM catalog_source_artifacts artifact
+			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
+			JOIN catalog_releases candidate ON candidate.id=$1
+			WHERE snapshot.product_id=candidate.product_id
+			  AND snapshot.build_id=$2
+			  AND snapshot.status IN ('validated','published')
+			  AND artifact.status='ready'
 			  AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
 		), candidate_versions AS (
 			SELECT version.id,version.source_artifact_id
@@ -414,10 +454,23 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 			JOIN candidate_versions candidate ON candidate.id=fact.version_id
 			LEFT JOIN release_artifacts artifact ON artifact.id=fact.source_artifact_id
 			WHERE artifact.id IS NULL
+		), trusted_quest_artifacts AS (
+			-- Quest rewards keep an explicit source_build_id because the official
+			-- endpoint can lag the active client build.  Accept a ready artifact
+			-- from a validated/published snapshot of this product (regardless of
+			-- its source build) only for this explicitly versioned relation.
+			SELECT artifact.id
+			FROM catalog_source_artifacts artifact
+			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
+			JOIN catalog_releases candidate ON candidate.id=$1
+			WHERE snapshot.product_id=candidate.product_id
+			  AND snapshot.status IN ('validated','published')
+			  AND artifact.status='ready'
+			  AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
 		), unproven_quest_rewards AS (
 			SELECT reward.quest_id
 			FROM catalog_quest_rewards reward
-			LEFT JOIN release_artifacts artifact ON artifact.id=reward.source_artifact_id
+			LEFT JOIN trusted_quest_artifacts artifact ON artifact.id=reward.source_artifact_id
 			WHERE reward.build_id=$2 AND (artifact.id IS NULL OR reward.source_build_id IS NULL
 			  OR (reward.reward_type='item' AND reward.external_id IS NOT NULL AND reward.item_entity_id IS NULL))
 		), unproven_file_assets AS (
