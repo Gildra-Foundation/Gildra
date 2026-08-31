@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -355,6 +356,9 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		// types and library datasets stale until a later maintenance run.
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_read_models($1)`, productID); err != nil {
 			return fmt.Errorf("refresh published catalog read models: %w", err)
+		}
+		if err := catalog.RefreshFieldCoverageQuality(ctx, tx, &productID); err != nil {
+			return fmt.Errorf("refresh published catalog field coverage quality: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
 			return fmt.Errorf("refresh published library datasets: %w", err)
