@@ -32,6 +32,9 @@ type coverageReport struct {
 	EnglishTooltips            int64  `json:"englishTooltips"`
 	RussianTooltips            int64  `json:"russianTooltips"`
 	Icons                      int64  `json:"icons"`
+	MediaRecords               int64  `json:"mediaRecords"`
+	CachedMedia                int64  `json:"cachedMedia"`
+	FailedMedia                int64  `json:"failedMedia"`
 	OfficialDocs               int64  `json:"officialDocuments"`
 }
 
@@ -106,6 +109,12 @@ func run() error {
 	// Audit the published projection, not the latest staging version.  A fresh
 	// import may legitimately have a newer latest_version_id while the public
 	// library still serves the previous atomically published version.
+	// Keep the wide coverage aggregation deterministic on small production
+	// hosts where PostgreSQL's parallel workers can exhaust the container's
+	// shared-memory budget.
+	if _, err := db.Exec(ctx, `SET max_parallel_workers_per_gather=0`); err != nil {
+		return fmt.Errorf("configure coverage query: %w", err)
+	}
 	rows, err := db.Query(ctx, `
 		WITH official AS (
 			SELECT document.entity_type,document.external_id,count(*) AS document_count
@@ -116,6 +125,21 @@ func run() error {
 			  AND source_build.product_id=target_build.product_id
 			  AND source_build.build_number<=target_build.build_number
 			GROUP BY document.entity_type,document.external_id
+		), media AS (
+			SELECT entity.entity_type,
+				count(media.id) AS media_records,
+				count(media.id) FILTER (WHERE media.cache_status='cached'
+					AND NULLIF(media.cached_url,'') IS NOT NULL
+					AND media.cached_content_hash IS NOT NULL
+					AND media.cached_byte_size IS NOT NULL) AS cached_media,
+				count(media.id) FILTER (WHERE media.cache_status='failed') AS failed_media
+			FROM game_entities entity
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			LEFT JOIN catalog_entity_media media ON media.entity_id=entity.id
+				AND media.build_id=version.build_id
+			WHERE entity.product_id=(SELECT product.id FROM game_products product WHERE product.slug=$2)
+			  AND entity.deleted_at IS NULL
+			GROUP BY entity.entity_type
 		)
 		SELECT entity.entity_type,count(*),
 			count(*) FILTER (WHERE NULLIF(BTRIM(en.name),'') IS NOT NULL),
@@ -135,6 +159,7 @@ func run() error {
 				  AND (NULLIF(BTRIM(tooltip.plain_text),'') IS NOT NULL OR jsonb_array_length(tooltip.blocks)>0)
 			)),
 			count(*) FILTER (WHERE icon.external_id IS NOT NULL),
+			MAX(COALESCE(media.media_records,0)),MAX(COALESCE(media.cached_media,0)),MAX(COALESCE(media.failed_media,0)),
 			count(*) FILTER (WHERE official.external_id IS NOT NULL)
 		FROM game_entities entity
 		JOIN game_products product ON product.id=entity.product_id AND product.slug=$2
@@ -144,6 +169,7 @@ func run() error {
 		LEFT JOIN catalog_entity_icons icon ON icon.build_id=version.build_id
 			AND icon.entity_type=entity.entity_type AND icon.external_id=entity.external_id
 		LEFT JOIN official ON official.entity_type=entity.entity_type AND official.external_id=entity.external_id
+		LEFT JOIN media ON media.entity_type=entity.entity_type
 		WHERE entity.deleted_at IS NULL
 		GROUP BY entity.entity_type
 		ORDER BY entity.entity_type`, result.Build.ID, product)
@@ -156,7 +182,7 @@ func run() error {
 		if err := rows.Scan(&item.EntityType, &item.Entities, &item.EnglishNames, &item.RussianNames,
 			&item.EnglishDescribed, &item.RussianDescribed, &item.EnglishUnresolvedTemplates,
 			&item.RussianUnresolvedTemplates, &item.EnglishTooltips, &item.RussianTooltips,
-			&item.Icons, &item.OfficialDocs); err != nil {
+			&item.Icons, &item.MediaRecords, &item.CachedMedia, &item.FailedMedia, &item.OfficialDocs); err != nil {
 			return fmt.Errorf("scan catalog coverage: %w", err)
 		}
 		result.Coverage = append(result.Coverage, item)
