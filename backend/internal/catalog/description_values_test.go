@@ -46,6 +46,33 @@ func TestResolveDescriptionTextResolvesSpellDescriptionReferences(t *testing.T) 
 	}
 }
 
+func TestResolveDescriptionTextRendersBothConditionalBranches(t *testing.T) {
+	got := resolveDescriptionText("Base.$?a157642[Empowered $s1.][]", 157642, map[int64]spellDescriptionValues{
+		157642: {Name: "Improved Fireball", Effects: map[int]spellEffectValue{1: {BasePoints: 20}}},
+	}, "en_US")
+	want := "Base. If «Improved Fireball»: Empowered 20."
+	if got != want {
+		t.Fatalf("unexpected conditional description\nwant: %s\n got: %s", want, got)
+	}
+}
+
+func TestResolveDescriptionTextRendersRussianConditionalBranches(t *testing.T) {
+	values := map[int64]spellDescriptionValues{42: {Name: "Улучшение"}}
+	got := resolveDescriptionText("База.$?s42[Усиление][Без усиления]", 0, values, "ru_RU")
+	want := "База. Если доступно «Улучшение»: Усиление; иначе: Без усиления"
+	if got != want {
+		t.Fatalf("unexpected Russian conditional description\nwant: %s\n got: %s", want, got)
+	}
+}
+
+func TestResolveDescriptionTextKeepsNonSpellConditionsReadable(t *testing.T) {
+	got := resolveDescriptionText("Value.$?diff15|diff16[Heroic][Normal]", 0, nil, "en_US")
+	want := "Value. If «condition diff15|diff16»: Heroic; otherwise: Normal"
+	if got != want {
+		t.Fatalf("unexpected generic conditional description\nwant: %s\n got: %s", want, got)
+	}
+}
+
 func TestResolveDescriptionTextResolvesMaxDurationAndTick(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
 		42: {
