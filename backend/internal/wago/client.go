@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -19,6 +21,8 @@ import (
 var buildPattern = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+$`)
 
 const defaultResponseHeaderTimeout = 2 * time.Minute
+
+const maxBuildManifestBytes = 8 << 20
 
 // ErrUnavailable identifies a build/table/locale combination that Wago does
 // not publish. A missing DB2 export is different from a transient network
@@ -58,6 +62,10 @@ type ContentProof struct {
 	ByteSize int64
 	ETag     string
 	Complete bool
+}
+
+type buildManifestEntry struct {
+	Version string `json:"version"`
 }
 
 type byteCounter int64
@@ -131,6 +139,70 @@ func (c *Client) CurrentBuild(ctx context.Context, table, locale string) (string
 		return "", fmt.Errorf("invalid Wago build %q", build)
 	}
 	return build, nil
+}
+
+// CurrentBuildForProduct resolves the newest build that Wago publishes for a
+// product key (for example wow_classic or wow_classic_era). The CSV endpoint
+// itself does not accept a product selector, so using its unpinned HEAD URL
+// for Classic would silently select Retail. The manifest is small and
+// build-pinned versions are validated before being returned.
+func (c *Client) CurrentBuildForProduct(ctx context.Context, product string) (string, error) {
+	product = strings.TrimSpace(strings.ToLower(product))
+	if product == "" {
+		return "", errors.New("Wago product is required")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/api/builds", nil)
+	if err != nil {
+		return "", fmt.Errorf("create Wago build manifest request: %w", err)
+	}
+	resp, err := c.do(req)
+	if err != nil {
+		return "", fmt.Errorf("request Wago build manifest: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		_, _ = io.CopyN(io.Discard, resp.Body, 4096)
+		return "", fmt.Errorf("Wago build manifest returned %s", resp.Status)
+	}
+	var manifest map[string][]buildManifestEntry
+	decoder := json.NewDecoder(io.LimitReader(resp.Body, maxBuildManifestBytes))
+	if err := decoder.Decode(&manifest); err != nil {
+		return "", fmt.Errorf("decode Wago build manifest: %w", err)
+	}
+	entries, ok := manifest[product]
+	if !ok || len(entries) == 0 {
+		return "", fmt.Errorf("Wago has no builds for product %q", product)
+	}
+	var newest string
+	for _, entry := range entries {
+		version := strings.TrimSpace(entry.Version)
+		if !buildPattern.MatchString(version) {
+			continue
+		}
+		if newest == "" || compareBuildVersions(version, newest) > 0 {
+			newest = version
+		}
+	}
+	if newest == "" {
+		return "", fmt.Errorf("Wago has no valid builds for product %q", product)
+	}
+	return newest, nil
+}
+
+func compareBuildVersions(left, right string) int {
+	leftParts := strings.Split(left, ".")
+	rightParts := strings.Split(right, ".")
+	for index := 0; index < len(leftParts) && index < len(rightParts); index++ {
+		leftValue, _ := strconv.Atoi(leftParts[index])
+		rightValue, _ := strconv.Atoi(rightParts[index])
+		if leftValue < rightValue {
+			return -1
+		}
+		if leftValue > rightValue {
+			return 1
+		}
+	}
+	return len(leftParts) - len(rightParts)
 }
 
 func (c *Client) Rows(

@@ -3,6 +3,7 @@ package wago
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -25,6 +26,42 @@ func TestCurrentBuild(t *testing.T) {
 	}
 	if build != "12.1.0.69404" {
 		t.Fatalf("build = %q", build)
+	}
+}
+
+func TestCurrentBuildForProductUsesNewestManifestVersion(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/builds" {
+			http.NotFound(w, r)
+			return
+		}
+		manifest := map[string][]map[string]string{
+			"wow_classic": {
+				{"version": "5.5.4.69155"},
+				{"version": "not-a-build"},
+				{"version": "5.5.4.69383"},
+				{"version": "5.5.4.69078"},
+			},
+			"wow_classic_era": {{"version": "1.15.9.69547"}},
+		}
+		if err := json.NewEncoder(w).Encode(manifest); err != nil {
+			t.Errorf("encode manifest: %v", err)
+		}
+	}))
+	t.Cleanup(server.Close)
+	client := New(Config{BaseURL: server.URL})
+
+	build, err := client.CurrentBuildForProduct(t.Context(), "WOW_CLASSIC")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if build != "5.5.4.69383" {
+		t.Fatalf("build = %q, want newest valid manifest version", build)
+	}
+
+	if _, err := client.CurrentBuildForProduct(t.Context(), "unknown"); err == nil {
+		t.Fatal("expected missing product manifest error")
 	}
 }
 
