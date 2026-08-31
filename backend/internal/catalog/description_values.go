@@ -98,6 +98,11 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 	if entity.Tooltip == nil {
 		return nil
 	}
+	// The list and detail clients render Tooltip.PlainText directly. Keep it
+	// in sync with the resolved description instead of exposing raw source
+	// variables in the main tooltip paragraph. Effect blocks below are handled
+	// separately because each block can refer to a different spell.
+	entity.Tooltip.PlainText = resolveDescriptionText(entity.Tooltip.PlainText, currentSpellID, values, descriptionLocale(entity.Tooltip.PlainText, entity.Locale))
 	for _, block := range entity.Tooltip.Blocks {
 		raw, ok := block["text"].(string)
 		if !ok || raw == "" {
