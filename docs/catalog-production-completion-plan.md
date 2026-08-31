@@ -277,3 +277,12 @@ hash, record key, and build identity.
 5. Implement quest denominator/reward closure.
 6. Add source-specific NPC role/location/acquisition importers.
 7. Parameterize every importer for Classic products.
+
+For an already published build, the explicit `-force-rebuild` repair operation
+re-runs the complete pinned source profile with the same atomic, provenance,
+backup, and quality gates. The daily timer does not enable this expensive mode
+automatically. Trigger it through the reviewed `Repair published WoW catalog`
+workflow (or `/opt/gildra/infra/deploy/run-catalog-repair.sh` on the host) with
+an explicit four-component build version. The immutable deploy script refreshes
+same-host recovery evidence after a schema migration when the previous proof
+is stale, so the readiness gate always evaluates the active schema version.

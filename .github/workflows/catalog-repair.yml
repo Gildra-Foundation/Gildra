@@ -1,0 +1,81 @@
+name: Repair published WoW catalog
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_version:
+        description: 'Published WoW build to re-import (for example 12.1.0.69497)'
+        required: true
+        type: string
+      confirm_repair:
+        description: 'I understand this is a full, several-hour same-build import'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Validate repair confirmation and build version
+        env:
+          BUILD_VERSION: ${{ inputs.build_version }}
+          CONFIRM_REPAIR: ${{ inputs.confirm_repair }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$CONFIRM_REPAIR" = true || {
+            echo 'The repair must be explicitly confirmed.' >&2
+            exit 1
+          }
+          printf '%s\n' "$BUILD_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' || {
+            echo 'build_version must contain exactly four numeric components.' >&2
+            exit 1
+          }
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Run repair on OVHcloud
+        env:
+          BUILD_VERSION: ${{ inputs.build_version }}
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # BUILD_VERSION was validated above and contains only digits/dots;
+          # passing it as an environment value keeps shell interpolation safe.
+          ssh "$OVH_USER@$OVH_HOST" \
+            "sudo env CATALOG_REPAIR_BUILD_VERSION='$BUILD_VERSION' /opt/gildra/infra/deploy/run-catalog-repair.sh"
+
+      - name: Verify production after repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/livez >/dev/null
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/readyz >/dev/null
+          catalog_status="$(curl --silent --show-error --retry 6 --retry-delay 5 --max-time 15 --output /dev/null --write-out '%{http_code}' 'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US')"
+          test "$catalog_status" = 401
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/library/items >/dev/null
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/ru/library/items >/dev/null

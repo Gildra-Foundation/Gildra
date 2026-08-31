@@ -152,6 +152,34 @@ verify_running_images() {
   verify_service_image scraper-worker "$SCRAPER_IMAGE"
 }
 
+ensure_recovery_backup() {
+  api_container=$(compose ps -q api)
+  [ -n "$api_container" ] || fail 'api service has no running container for the recovery backup gate'
+
+  schema_state=$(docker exec "$api_container" sh -c 'psql "$DATABASE_URL" -Atqc "SELECT COALESCE(max(version_id),0) FROM goose_db_version WHERE is_applied"')
+  backup_state=$(docker exec "$api_container" sh -c 'psql "$DATABASE_URL" -Atqc "SELECT COALESCE((SELECT database_version::bigint || '"'"'|'"'"' || floor(extract(epoch FROM restore_completed_at))::bigint FROM catalog_backup_manifests WHERE component='"'"'postgres'"'"' AND status='"'"'verified'"'"' AND storage_uri ~ '"'"'^(file|s3|r2|swift)://'"'"' AND content_hash IS NOT NULL AND byte_size>0 AND verification @> '"'"'{\"restore_verified\":true,\"source_restore_match\":true}'"'"'::jsonb ORDER BY restore_completed_at DESC,id DESC LIMIT 1), '"'"'0|0'"'"')"')
+  printf '%s\n' "$schema_state" | grep -Eq '^[0-9]+$' || fail "api returned an invalid catalog schema version: $schema_state"
+  printf '%s\n' "$backup_state" | grep -Eq '^[0-9]+\|[0-9]+$' || fail "api returned invalid recovery evidence state: $backup_state"
+
+  current_schema=$schema_state
+  backup_version=${backup_state%%|*}
+  backup_epoch=${backup_state#*|}
+  now_epoch=$(date +%s)
+  backup_deadline=$((now_epoch - 86400))
+  if [ "$backup_version" -ge "$current_schema" ] && [ "$backup_epoch" -ge "$backup_deadline" ]; then
+    return
+  fi
+
+  backup_script="$deployment_directory/infra/backup/run-catalog-backup.sh"
+  [ -x "$backup_script" ] || fail 'catalog schema changed or recovery evidence is stale, but the local backup runner is missing'
+  printf 'deploy: refreshing verified local recovery evidence (schema=%s, previous_backup=%s|%s)\n' \
+    "$current_schema" "$backup_version" "$backup_epoch" >&2
+  GILDRA_DEPLOYMENT_DIRECTORY="$deployment_directory" \
+    GILDRA_ENV_FILE="$environment_file" \
+    GILDRA_RELEASE_ENV_FILE="$current_manifest" \
+    "$backup_script"
+}
+
 verify_library_route() {
   route_path=$1
   if [ "$catalog_access_mode" = private ]; then
@@ -365,6 +393,7 @@ if [ "$rollback_web_image" = "$WEB_IMAGE" ] &&
    [ "$rollback_cms_image" = "$CMS_IMAGE" ] &&
    [ "$rollback_scraper_image" = "$SCRAPER_IMAGE" ]; then
   verify_running_images
+  ensure_recovery_backup
   verify_local_health
   verify_catalog_readiness
   verify_catalog_load
@@ -385,6 +414,8 @@ trap 'exit 143' TERM
 compose pull web api catalog-backup cms scraper scraper-worker
 compose up -d --no-build --remove-orphans --wait --wait-timeout 240
 verify_running_images
+write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+ensure_recovery_backup
 verify_local_health
 verify_catalog_readiness
 verify_catalog_load

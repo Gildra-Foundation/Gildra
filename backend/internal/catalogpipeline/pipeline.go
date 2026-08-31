@@ -69,6 +69,7 @@ type Options struct {
 	BuildVersion           string
 	MaxRecords             int
 	ConfirmFullImport      bool
+	ForceRebuild           bool
 	BinaryDirectory        string
 	PublicationEnvironment string
 	CatalogAccessMode      string
@@ -110,6 +111,15 @@ func BuildPlan(options Options) ([]Stage, error) {
 func normalizeOptions(options Options) (Options, error) {
 	if options.MaxRecords < 0 {
 		return Options{}, errors.New("max-records cannot be negative")
+	}
+	if options.ForceRebuild && options.Mode != "apply" {
+		return Options{}, errors.New("force-rebuild requires apply mode")
+	}
+	if options.ForceRebuild && strings.TrimSpace(options.ResumeReleaseID) != "" {
+		return Options{}, errors.New("force-rebuild cannot be combined with resume-release")
+	}
+	if options.ForceRebuild && options.MaxRecords != 0 {
+		return Options{}, errors.New("force-rebuild requires an unbounded import")
 	}
 	options.Product = strings.ToLower(strings.TrimSpace(options.Product))
 	if options.Product == "" {
@@ -441,7 +451,11 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 			err = releaseManager.Resume(ctx, releaseID, result.RunID, options.Product, options.BuildVersion, options.Sources)
 		}
 	} else {
-		releaseID, err = releaseManager.Start(ctx, result.RunID, options.Product, options.BuildVersion, options.Sources)
+		if options.ForceRebuild {
+			releaseID, err = releaseManager.StartAllowSameBuild(ctx, result.RunID, options.Product, options.BuildVersion, options.Sources)
+		} else {
+			releaseID, err = releaseManager.Start(ctx, result.RunID, options.Product, options.BuildVersion, options.Sources)
+		}
 	}
 	if err != nil {
 		if errors.Is(err, catalogrelease.ErrBuildAlreadyPublished) {

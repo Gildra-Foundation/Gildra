@@ -296,3 +296,33 @@ func TestApplyPlanWrapsImportersInAtomicReleaseStages(t *testing.T) {
 		t.Fatalf("apply plan is not release-wrapped: %#v", plan)
 	}
 }
+
+func TestForceRebuildRequiresApplyMode(t *testing.T) {
+	_, err := BuildPlan(Options{
+		Mode: "dry_run", Product: "wow", Profile: ProfileRetailFoundation,
+		BuildVersion: "12.1.0.69404", ForceRebuild: true,
+	})
+	if err == nil || !strings.Contains(err.Error(), "force-rebuild requires apply mode") {
+		t.Fatalf("expected force-rebuild mode guard, got %v", err)
+	}
+	_, err = BuildPlan(Options{
+		Mode: "apply", Product: "wow", Profile: ProfileRetailFoundation,
+		BuildVersion: "12.1.0.69404", ForceRebuild: true, MaxRecords: 1,
+	})
+	if err == nil || !strings.Contains(err.Error(), "force-rebuild requires an unbounded import") {
+		t.Fatalf("expected bounded force-rebuild rejection, got %v", err)
+	}
+}
+
+func TestProductionForceRebuildAcceptsCompletePinnedProfile(t *testing.T) {
+	_, err := BuildPlan(Options{
+		Mode: "apply", PublicationEnvironment: "production", Product: "wow",
+		Profile:      ProfileRetailFoundation,
+		Sources:      []string{"wago", "db2", "battlenet", "listfile"},
+		BuildVersion: "12.1.0.69404", MaxRecords: 0,
+		ConfirmFullImport: true, ForceRebuild: true,
+	})
+	if err != nil {
+		t.Fatalf("expected explicit production repair profile to pass normalization, got %v", err)
+	}
+}

@@ -28,7 +28,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 114
+const latestCatalogSchemaVersion int64 = 116
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -880,6 +880,18 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	sameBuildRunID := insertPipelineRun(t, ctx, database, "1.0.0.100003")
 	if _, err := releases.Start(ctx, sameBuildRunID, "wow", "1.0.0.100003", []string{"wago"}); !errors.Is(err, catalogrelease.ErrBuildAlreadyPublished) {
 		t.Fatalf("same-build release error = %v, want ErrBuildAlreadyPublished", err)
+	}
+	repairRunID := insertPipelineRun(t, ctx, database, "1.0.0.100003")
+	repairReleaseID, err := releases.StartAllowSameBuild(ctx, repairRunID, "wow", "1.0.0.100003", []string{"wago"})
+	if err != nil {
+		t.Fatalf("same-build repair release = %v, want success", err)
+	}
+	var repairRelease bool
+	if err := database.QueryRowContext(ctx, `SELECT is_repair FROM catalog_releases WHERE id=$1`, repairReleaseID).Scan(&repairRelease); err != nil {
+		t.Fatal(err)
+	}
+	if !repairRelease {
+		t.Fatal("same-build repair release was not marked is_repair")
 	}
 	unchanged, err := (&catalogpipeline.Runner{DB: pool, Stdout: io.Discard, Stderr: io.Discard}).Run(ctx, catalogpipeline.Options{
 		PipelineKey: "same-build-test", Trigger: "manual", Mode: "apply", Profile: "custom",
