@@ -91,15 +91,7 @@ func run() error {
 	}
 
 	result := report{GeneratedAt: time.Now().UTC(), Coverage: make([]coverageReport, 0)}
-	factTx, err := db.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("begin normalized facts query: %w", err)
-	}
-	defer factTx.Rollback(ctx)
-	if _, err := factTx.Exec(ctx, `SET LOCAL max_parallel_workers_per_gather=0`); err != nil {
-		return fmt.Errorf("configure normalized facts query: %w", err)
-	}
-	if err := factTx.QueryRow(ctx, `
+	if err := db.QueryRow(ctx, `
 		SELECT build.id,build.build_number,build.version,build.is_active
 		FROM game_builds build
 		JOIN game_products product ON product.id=build.product_id
@@ -157,7 +149,15 @@ func run() error {
 		return fmt.Errorf("read catalog coverage: %w", err)
 	}
 
-	if err := db.QueryRow(ctx, `
+	factTx, err := db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin normalized facts query: %w", err)
+	}
+	defer factTx.Rollback(ctx)
+	if _, err := factTx.Exec(ctx, `SET LOCAL max_parallel_workers_per_gather=0`); err != nil {
+		return fmt.Errorf("configure normalized facts query: %w", err)
+	}
+	if err := factTx.QueryRow(ctx, `
 		SELECT
 			(SELECT count(*) FROM catalog_item_stats fact
 				JOIN game_entity_versions version ON version.id=fact.version_id AND version.build_id=$1
