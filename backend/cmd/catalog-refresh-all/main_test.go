@@ -63,3 +63,27 @@ func TestContainsBattleNetProduct(t *testing.T) {
 		t.Fatal("Classic should require Battle.net")
 	}
 }
+
+func TestProductSpecsPinEditionBuildSources(t *testing.T) {
+	t.Parallel()
+	want := map[string]struct {
+		product string
+		wagoKey string
+	}{
+		"retail":      {product: "wow", wagoKey: "wow"},
+		"classic":     {product: "wow_classic", wagoKey: "wow_classic"},
+		"classic-era": {product: "wow_classic_era", wagoKey: "wow_classic_era"},
+		// Wago publishes the Era client under the same manifest key; the
+		// Hardcore catalog remains a separate product and release pointer.
+		"hardcore": {product: "wow_classic_hardcore", wagoKey: "wow_classic_era"},
+	}
+	for _, spec := range productSpecs {
+		expected, ok := want[spec.Alias]
+		if !ok {
+			t.Fatalf("unexpected edition %q", spec.Alias)
+		}
+		if spec.Source != "wago_tools" || spec.Product != expected.product || spec.WagoKey != expected.wagoKey {
+			t.Errorf("%s spec = %#v, want Wago source/product/key %#v", spec.Alias, spec, expected)
+		}
+	}
+}

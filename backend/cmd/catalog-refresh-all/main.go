@@ -30,15 +30,16 @@ type productSpec struct {
 	Product   string
 	Profile   string
 	Source    string
+	WagoKey   string
 	Edition   string
 	Namespace string
 }
 
 var productSpecs = []productSpec{
-	{Alias: "retail", Product: "wow", Profile: catalogpipeline.ProfileRetailFoundation, Source: "wago_tools", Edition: "retail"},
-	{Alias: "classic", Product: "wow_classic", Profile: catalogpipeline.ProfileClassicFoundation, Source: "blizzard_api", Edition: "classic", Namespace: "static-classic-us"},
-	{Alias: "classic-era", Product: "wow_classic_era", Profile: catalogpipeline.ProfileClassicEraFoundation, Source: "blizzard_api", Edition: "classic-era", Namespace: "static-classic1x-us"},
-	{Alias: "hardcore", Product: "wow_classic_hardcore", Profile: catalogpipeline.ProfileClassicHardcoreFoundation, Source: "blizzard_api", Edition: "hardcore", Namespace: "static-classic1x-us"},
+	{Alias: "retail", Product: "wow", Profile: catalogpipeline.ProfileRetailFoundation, Source: "wago_tools", WagoKey: "wow", Edition: "retail"},
+	{Alias: "classic", Product: "wow_classic", Profile: catalogpipeline.ProfileClassicFoundation, Source: "wago_tools", WagoKey: "wow_classic", Edition: "classic", Namespace: "static-classic-us"},
+	{Alias: "classic-era", Product: "wow_classic_era", Profile: catalogpipeline.ProfileClassicEraFoundation, Source: "wago_tools", WagoKey: "wow_classic_era", Edition: "classic-era", Namespace: "static-classic1x-us"},
+	{Alias: "hardcore", Product: "wow_classic_hardcore", Profile: catalogpipeline.ProfileClassicHardcoreFoundation, Source: "wago_tools", WagoKey: "wow_classic_era", Edition: "hardcore", Namespace: "static-classic1x-us"},
 }
 
 type refreshOptions struct {
@@ -301,7 +302,11 @@ func observeBuild(ctx context.Context, db *pgxpool.Pool, spec productSpec, wagoC
 	var remote string
 	if spec.Source == "wago_tools" {
 		var err error
-		remote, err = wagoClient.CurrentBuild(ctx, "ItemSparse", "enUS")
+		if spec.WagoKey == "wow" {
+			remote, err = wagoClient.CurrentBuild(ctx, "ItemSparse", "enUS")
+		} else {
+			remote, err = wagoClient.CurrentBuildForProduct(ctx, spec.WagoKey)
+		}
 		if err != nil {
 			return buildObservation{}, fmt.Errorf("resolve Wago build: %w", err)
 		}
@@ -433,7 +438,11 @@ func aliases(specs []productSpec) []string {
 }
 
 func containsBattleNetProduct(specs []productSpec) bool {
-	return slices.ContainsFunc(specs, func(spec productSpec) bool { return spec.Source == "blizzard_api" })
+	// Battle.net remains a required enrichment source for every non-Retail
+	// edition even though Wago is the build-discovery source. The two sources
+	// serve different purposes: Wago pins DB2 rows, while Battle.net supplies
+	// official localized details and media where the client export is sparse.
+	return slices.ContainsFunc(specs, func(spec productSpec) bool { return spec.Product != "wow" })
 }
 
 func splitList(value string) []string {
