@@ -18,6 +18,20 @@ func TestScopedTooltipSQLFiltersCandidateProduct(t *testing.T) {
 	}
 }
 
+func TestTooltipSQLForEntityTypesScopesRenderer(t *testing.T) {
+	talentSQL := tooltipSQLForEntityTypes("talent", "pvp_talent")
+	if !strings.Contains(talentSQL, "WHERE e.entity_type IN ('talent','pvp_talent') AND e.deleted_at IS NULL") {
+		t.Fatal("talent tooltip SQL does not constrain entity types")
+	}
+	if strings.Contains(talentSQL, "WHERE e.entity_type IN ('item','spell','talent','pvp_talent')") {
+		t.Fatal("talent tooltip SQL retained the broad entity filter")
+	}
+	pvpSQL := tooltipSQLForEntityTypes("pvp_talent")
+	if !strings.Contains(pvpSQL, "WHERE e.entity_type IN ('pvp_talent') AND e.deleted_at IS NULL") {
+		t.Fatal("PvP tooltip SQL does not constrain entity types")
+	}
+}
+
 func TestItemDefinitionsHaveResolvedUniquePaths(t *testing.T) {
 	t.Parallel()
 	definitions := itemDefinitions()
