@@ -41,13 +41,16 @@ func run() (bool, error) {
 	var databaseURL, product, table, locale string
 	var requireUpdate bool
 	var timeout time.Duration
-	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&product, "product", "wow", "game product slug")
 	flag.StringVar(&table, "table", "ItemSparse", "small canonical DB2 table used for the build HEAD check")
 	flag.StringVar(&locale, "locale", "enUS", "Wago locale used for the build HEAD check")
 	flag.BoolVar(&requireUpdate, "require-update", false, "return exit code 1 when the active build is already current")
 	flag.DurationVar(&timeout, "timeout", 90*time.Second, "remote build-check timeout")
 	flag.Parse()
+	if databaseURL == "" {
+		databaseURL = os.Getenv("DATABASE_URL")
+	}
 	if databaseURL == "" {
 		return false, errors.New("DATABASE_URL or -database-url is required")
 	}

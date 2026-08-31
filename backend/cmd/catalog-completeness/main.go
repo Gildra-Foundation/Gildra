@@ -26,7 +26,7 @@ func run() error {
 	var databaseURL string
 	var input catalogquality.MeasurementInput
 	var timeout time.Duration
-	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&input.Product, "product", "wow", "game product slug")
 	flag.StringVar(&input.BuildVersion, "build", "", "build version; defaults to the active/latest build")
 	flag.StringVar(&input.ScopeKey, "scope", "", "stable completeness scope key")
@@ -38,6 +38,9 @@ func run() error {
 	flag.BoolVar(&input.Record, "record", false, "persist the expectation and measurement")
 	flag.DurationVar(&timeout, "timeout", 2*time.Minute, "operation timeout")
 	flag.Parse()
+	if databaseURL == "" {
+		databaseURL = os.Getenv("DATABASE_URL")
+	}
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL or -database-url is required")
 	}

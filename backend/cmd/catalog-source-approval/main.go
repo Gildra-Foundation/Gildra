@@ -50,7 +50,7 @@ func main() {
 
 func run() error {
 	var input options
-	flag.StringVar(&input.databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&input.databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&input.source, "source", "", "registered catalog source")
 	flag.StringVar(&input.environment, "environment", "production", "development, staging, or production")
 	flag.StringVar(&input.surface, "surface", "", "website, public_api, bulk_export, or asset_cache")
@@ -61,6 +61,9 @@ func run() error {
 	flag.StringVar(&input.expiresAtText, "expires-at", "", "approval expiry in RFC3339 format")
 	flag.BoolVar(&input.confirm, "confirm", false, "apply the decision; without this flag the command only validates input")
 	flag.Parse()
+	if input.databaseURL == "" {
+		input.databaseURL = os.Getenv("DATABASE_URL")
+	}
 	input.source = strings.TrimSpace(input.source)
 	input.environment = strings.TrimSpace(input.environment)
 	input.surface = strings.TrimSpace(input.surface)
