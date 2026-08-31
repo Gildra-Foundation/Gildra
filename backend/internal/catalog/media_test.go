@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestTooltipMediaUsesOnlyCachedEntityURLs(t *testing.T) {
+func TestTooltipMediaUsesResolvedEntityURLs(t *testing.T) {
 	entityID := uuid.New()
 	unknownID := uuid.New()
 	blocks := []map[string]any{{
