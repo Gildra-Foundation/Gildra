@@ -1,15 +1,16 @@
 # Catalog API contract
 
-The public catalog API is versioned under `/v1/game`. The OpenAPI 3.1 source of
-truth is `backend/api/openapi.yaml`; generated Go and TypeScript files must not
-be edited by hand.
+The catalog API is versioned under `/world-of-warcraft/retail/v1/game`. The
+historical `/v1/game` paths remain compatible aliases. The OpenAPI 3.1 source
+of truth is `backend/api/openapi.yaml`; generated Go and TypeScript files must
+not be edited by hand.
 
 ## Read pattern
 
 Use the lightweight collection resource for navigation and search:
 
 ```http
-GET /v1/game/entity-summaries?product=wow&type=item&locale=ru_RU&limit=24&includeTotal=true
+GET /world-of-warcraft/retail/v1/game/entity-summaries?product=wow&type=item&locale=ru_RU&limit=24&includeTotal=true
 ```
 
 It returns identity, name, icon, item quality/level and a few high-signal facts,
@@ -17,8 +18,8 @@ but deliberately excludes raw payloads and tooltip blocks. Fetch the complete
 public projection only when the user opens a tooltip or detail page:
 
 ```http
-GET /v1/game/entities/{uuid}?locale=ru_RU
-GET /v1/game/entities/{uuid}/relationships?locale=ru_RU&direction=both&limit=50
+GET /world-of-warcraft/retail/v1/game/entities/{uuid}?locale=ru_RU
+GET /world-of-warcraft/retail/v1/game/entities/{uuid}/relationships?locale=ru_RU&direction=both&limit=50
 ```
 
 Search accepts names in either supported language, aliases, game IDs and

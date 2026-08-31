@@ -41,10 +41,10 @@ func NewServer(analyticsService *analytics.Service, catalogService *catalog.Serv
 func (s *Server) GetAPIIndex(context.Context, api.GetAPIIndexRequestObject) (api.GetAPIIndexResponseObject, error) {
 	return api.GetAPIIndex200JSONResponse{
 		Version: api.V1,
-		Rest:    "https://api.gildra.net/v1/",
+		Rest:    "https://api.gildra.net/world-of-warcraft/retail/v1/",
 		Graphql: "https://api.gildra.net/graphql",
-		Catalog: "https://api.gildra.net/v1/game/entities",
-		Library: "https://api.gildra.net/v1/library/datasets",
+		Catalog: "https://api.gildra.net/world-of-warcraft/retail/v1/game/entities",
+		Library: "https://api.gildra.net/world-of-warcraft/retail/v1/library/datasets",
 	}, nil
 }
 
