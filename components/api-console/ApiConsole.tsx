@@ -53,7 +53,7 @@ async function requestJSON<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function ApiConsole({ consolePath }: { consolePath: string[] }) {
+export function ApiConsole({ consolePath, returnTo }: { consolePath: string[]; returnTo?: string }) {
   const [user, setUser] = useState<PanelUser | null>(null);
   const [checking, setChecking] = useState(true);
 
@@ -65,7 +65,7 @@ export function ApiConsole({ consolePath }: { consolePath: string[] }) {
   }, []);
 
   if (checking) return <LoadingScreen />;
-  if (!user) return <LoginScreen onLogin={setUser} />;
+  if (!user) return <LoginScreen onLogin={setUser} returnTo={returnTo} />;
   return <Dashboard user={user} consolePath={consolePath} onLogout={() => setUser(null)} />;
 }
 
@@ -84,7 +84,7 @@ function LoadingScreen() {
   return <main className="grid min-h-screen place-items-center bg-[#090b10] text-[#c9a24f]"><RefreshCw className="size-6 animate-spin" aria-label="Загрузка" /></main>;
 }
 
-function LoginScreen({ onLogin }: { onLogin: (user: PanelUser) => void }) {
+function LoginScreen({ onLogin, returnTo }: { onLogin: (user: PanelUser) => void; returnTo?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -107,6 +107,7 @@ function LoginScreen({ onLogin }: { onLogin: (user: PanelUser) => void }) {
         body: JSON.stringify({ email: submittedEmail, password: submittedPassword }),
       });
       onLogin(result.user);
+      if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) window.location.assign(returnTo);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Не удалось выполнить вход");
     } finally { setSubmitting(false); }

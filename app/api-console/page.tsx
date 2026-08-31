@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ApiConsolePage() {
-  return <ApiConsole consolePath={[]} />;
+export default async function ApiConsolePage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
+  return <ApiConsole consolePath={[]} returnTo={next} />;
 }

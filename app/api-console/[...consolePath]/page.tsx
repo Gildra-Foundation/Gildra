@@ -8,9 +8,12 @@ export const metadata: Metadata = {
 
 export default async function ApiConsoleSectionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ consolePath: string[] }>;
+  searchParams: Promise<{ next?: string }>;
 }) {
   const { consolePath } = await params;
-  return <ApiConsole consolePath={consolePath} />;
+  const { next } = await searchParams;
+  return <ApiConsole consolePath={consolePath} returnTo={next} />;
 }

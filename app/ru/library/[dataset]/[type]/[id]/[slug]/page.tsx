@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EntityDetailPage } from "@/components/database/EntityDetailPage";
 import { getCatalogEntity, getCatalogEntityComparison, getCatalogEntityQuality, getCatalogEntityTypes, getCatalogEntityVersions, getCatalogRelationships, getLibraryDatasets } from "@/lib/api/client";
+import { catalogSessionPresent, requireCatalogSession } from "@/lib/library/server";
 
 type Props = { params: Promise<{ dataset: string; type: string; id: string; slug: string }>; searchParams?: Promise<{ fromBuildId?: string; toBuildId?: string; product?: string }> };
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  if (!(await catalogSessionPresent())) return { title: "Библиотека Gildra" };
   const [{ id, type, dataset }, filters] = await Promise.all([params, searchParams]);
   const entity = await getCatalogEntity(id, "ru_RU", dataset);
   if (!entity || entity.type !== type) return {};
@@ -17,8 +19,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 }
 
 export default async function Page({ params, searchParams }: Props) {
-  const [{ dataset: datasetSlug, id, type }, filters] = await Promise.all([params, searchParams]);
+  const [routeParams, filters] = await Promise.all([params, searchParams]);
+  const { dataset: datasetSlug, id, type } = routeParams;
   const product = filters?.product ?? "wow";
+  await requireCatalogSession(`/ru/library/${encodeURIComponent(datasetSlug)}/${encodeURIComponent(type)}/${encodeURIComponent(id)}/${encodeURIComponent(routeParams.slug)}${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
   const fromBuildId = optionalBuildID(filters?.fromBuildId);
   const toBuildId = optionalBuildID(filters?.toBuildId);
   const [entity, datasets, entityTypes, relationships, quality, versions, comparison] = await Promise.all([
