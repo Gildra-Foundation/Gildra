@@ -157,6 +157,11 @@ The readiness index uses the same broad residual-token classifier as the API
 source description with any such token remains visible in raw fields but is
 reported as unresolved until a build-pinned resolver can prove its value.
 
+The DB2 baseline also includes `SpellRadius`. Radius placeholders (`$a`,
+`$a1`, `$A1`) are resolved only from the matching build's `SpellEffect` and
+`SpellRadius` rows; if either row is absent, the original token remains marked
+as unresolved.
+
 ### Wave 3 — quests and rewards (5–10 days)
 
 - Import the complete quest registry denominator for each product/build.

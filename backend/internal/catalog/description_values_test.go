@@ -87,6 +87,19 @@ func TestResolveDescriptionTextResolvesMaxDurationAndTick(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextResolvesSpellRadius(t *testing.T) {
+	values := map[int64]spellDescriptionValues{
+		42: {Effects: map[int]spellEffectValue{
+			1: {Radius: 12},
+			2: {Radius: 7.5},
+		}},
+	}
+	got := resolveDescriptionText("Affects enemies within $A1 yards and $a2 yards.", 42, values, "en_US")
+	if got != "Affects enemies within 12 yards and 7.5 yards." {
+		t.Fatalf("unexpected radius resolution: %q", got)
+	}
+}
+
 func TestDescriptionLocaleDoesNotMixFallbackEnglishWithRussianUnits(t *testing.T) {
 	if got := descriptionLocale("Deals damage for $10d.", "ru_RU"); got != "en_US" {
 		t.Fatalf("expected English fallback, got %q", got)
