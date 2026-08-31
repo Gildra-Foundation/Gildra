@@ -507,9 +507,7 @@ func (i *Indexer) RebuildTalentTooltips(ctx context.Context) (Result, error) {
 		if err != nil {
 			return err
 		}
-		talentSQL := strings.Replace(tooltipSQL,
-			"WHERE e.entity_type IN ('item','spell','talent','pvp_talent') AND e.deleted_at IS NULL",
-			"WHERE e.entity_type IN ('talent','pvp_talent') AND e.deleted_at IS NULL", 1)
+		talentSQL := tooltipSQLForEntityTypes("talent", "pvp_talent")
 		command, err := tx.Exec(ctx, talentSQL)
 		if err != nil {
 			return fmt.Errorf("rebuild talent tooltips: %w", err)
@@ -565,9 +563,7 @@ func (i *Indexer) RebuildPvpTalents(ctx context.Context) (Result, error) {
 		if err != nil {
 			return err
 		}
-		pvpTooltipSQL := strings.Replace(tooltipSQL,
-			"WHERE e.entity_type IN ('item','spell','talent','pvp_talent') AND e.deleted_at IS NULL",
-			"WHERE e.entity_type='pvp_talent' AND e.deleted_at IS NULL", 1)
+		pvpTooltipSQL := tooltipSQLForEntityTypes("pvp_talent")
 		command, err := tx.Exec(ctx, pvpTooltipSQL)
 		if err != nil {
 			return fmt.Errorf("rebuild PvP talent tooltips: %w", err)
@@ -2098,6 +2094,24 @@ func scopedTooltipSQL() string {
 	return strings.Replace(tooltipSQL,
 		"WHERE e.deleted_at IS NULL",
 		"WHERE e.product_id=$1 AND e.deleted_at IS NULL", 1)
+}
+
+// tooltipSQLForEntityTypes narrows the renderer to the requested entity types.
+// Keep the values internal constants: this helper is used to select rebuild
+// modes, not to interpolate user input into SQL.
+func tooltipSQLForEntityTypes(entityTypes ...string) string {
+	quoted := make([]string, 0, len(entityTypes))
+	for _, entityType := range entityTypes {
+		if strings.TrimSpace(entityType) == "" {
+			continue
+		}
+		quoted = append(quoted, "'"+strings.ReplaceAll(entityType, "'", "''")+"'")
+	}
+	if len(quoted) == 0 {
+		return tooltipSQL
+	}
+	filter := "WHERE e.entity_type IN (" + strings.Join(quoted, ",") + ") AND e.deleted_at IS NULL"
+	return strings.Replace(tooltipSQL, "WHERE e.deleted_at IS NULL", filter, 1)
 }
 
 const tooltipSQL = `
