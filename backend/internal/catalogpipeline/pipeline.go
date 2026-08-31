@@ -47,15 +47,18 @@ var catalogProfiles = map[string]profileDefinition{
 	},
 	ProfileClassicFoundation: {
 		Product: "wow_classic",
-		Sources: []string{"db2", "listfile"},
+		// DB2 establishes the build-pinned identity set first; Battle.net then
+		// enriches Classic records (including quests and localized descriptions)
+		// before the verified listfile closes the source manifest.
+		Sources: []string{"db2", "battlenet", "listfile"},
 	},
 	ProfileClassicEraFoundation: {
 		Product: "wow_classic_era",
-		Sources: []string{"db2", "listfile"},
+		Sources: []string{"db2", "battlenet", "listfile"},
 	},
 	ProfileClassicHardcoreFoundation: {
 		Product: "wow_classic_hardcore",
-		Sources: []string{"db2", "listfile"},
+		Sources: []string{"db2", "battlenet", "listfile"},
 	},
 }
 
