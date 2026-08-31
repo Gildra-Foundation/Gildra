@@ -152,6 +152,11 @@ jobs:
           test "$catalog_status" = 401
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/library >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/ru/library >/dev/null
+          # The dataset/detail paths use a separate proxy branch in nginx and
+          # must be exercised explicitly. A root-page check alone would let a
+          # broken nested rewrite reach production unnoticed (HTTP 500).
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/library/items >/dev/null
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/ru/library/items >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://gildra.net/database >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://gildra.net/ru/database >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://gildra.net/library >/dev/null
