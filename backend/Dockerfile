@@ -14,6 +14,7 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/serve
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/db2-import ./cmd/db2-import \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/listfile-import ./cmd/listfile-import \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-pipeline ./cmd/catalog-pipeline \
+ && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-refresh-all ./cmd/catalog-refresh-all \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-build-check ./cmd/catalog-build-check \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-completeness ./cmd/catalog-completeness \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-backup ./cmd/catalog-backup \
@@ -26,7 +27,7 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/serve
 FROM alpine:3.23
 RUN apk add --no-cache ca-certificates tzdata postgresql17-client
 WORKDIR /app
-COPY --from=builder /out/server /out/catalog-import /out/att-import /out/att-resolve /out/raidbots-import /out/catalog-index /out/catalog-audit /out/db2-import /out/listfile-import /out/catalog-pipeline /out/catalog-build-check /out/catalog-completeness /out/catalog-backup /out/catalog-media-cache /out/catalog-source-approval /out/catalog-load-check /out/goose /out/river /usr/local/bin/
+COPY --from=builder /out/server /out/catalog-import /out/att-import /out/att-resolve /out/raidbots-import /out/catalog-index /out/catalog-audit /out/db2-import /out/listfile-import /out/catalog-pipeline /out/catalog-refresh-all /out/catalog-build-check /out/catalog-completeness /out/catalog-backup /out/catalog-media-cache /out/catalog-source-approval /out/catalog-load-check /out/goose /out/river /usr/local/bin/
 COPY migrations /app/migrations
 COPY THIRD_PARTY_NOTICES.txt /app/THIRD_PARTY_NOTICES.txt
 COPY entrypoint.sh /app/entrypoint.sh

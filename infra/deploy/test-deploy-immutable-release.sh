@@ -211,6 +211,12 @@ if grep '^ExecStart=.*catalog-pipeline' "$script_directory/../systemd/gildra-cat
   printf 'test: canonical catalog refresh still imports Raidbots data\n' >&2
   exit 1
 fi
+grep -Fq -- '--entrypoint catalog-refresh-all api -mode check -require-update' "$script_directory/../systemd/gildra-catalog-refresh.service"
+grep -Fq -- '--entrypoint catalog-refresh-all api -mode apply' "$script_directory/../systemd/gildra-catalog-refresh.service"
+if grep '^ExecStart=.*catalog-build-check\|^ExecStart=.*catalog-pipeline' "$script_directory/../systemd/gildra-catalog-refresh.service"; then
+  printf 'test: scheduled catalog refresh must use the all-edition coordinator\n' >&2
+  exit 1
+fi
 
 load_gate_line=$(grep -n '^verify_catalog_load$' "$deployment_script" | tail -n 1 | cut -d: -f1)
 readiness_gate_line=$(grep -n '^verify_catalog_readiness$' "$deployment_script" | tail -n 1 | cut -d: -f1)
