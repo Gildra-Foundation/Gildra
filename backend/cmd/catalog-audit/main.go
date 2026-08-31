@@ -91,7 +91,15 @@ func run() error {
 	}
 
 	result := report{GeneratedAt: time.Now().UTC(), Coverage: make([]coverageReport, 0)}
-	if err := db.QueryRow(ctx, `
+	factTx, err := db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin normalized facts query: %w", err)
+	}
+	defer factTx.Rollback(ctx)
+	if _, err := factTx.Exec(ctx, `SET LOCAL max_parallel_workers_per_gather=0`); err != nil {
+		return fmt.Errorf("configure normalized facts query: %w", err)
+	}
+	if err := factTx.QueryRow(ctx, `
 		SELECT build.id,build.build_number,build.version,build.is_active
 		FROM game_builds build
 		JOIN game_products product ON product.id=build.product_id
@@ -150,32 +158,42 @@ func run() error {
 	}
 
 	if err := db.QueryRow(ctx, `
-		WITH current_versions AS (
-			SELECT version.id
-			FROM game_entity_versions version
-			JOIN game_entities entity ON entity.id=version.entity_id
-			WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$2)
-			  AND entity.deleted_at IS NULL AND version.build_id=$1
-		)
 		SELECT
-			(SELECT count(*) FROM catalog_item_stats fact WHERE fact.version_id IN (SELECT id FROM current_versions)),
-			(SELECT count(*) FROM catalog_item_effects fact WHERE fact.version_id IN (SELECT id FROM current_versions)),
-			(SELECT count(*) FROM catalog_item_acquisition_sources fact WHERE fact.version_id IN (SELECT id FROM current_versions)),
-			(SELECT count(*) FROM catalog_spell_effects fact WHERE fact.spell_version_id IN (SELECT id FROM current_versions)),
+			(SELECT count(*) FROM catalog_item_stats fact
+				JOIN game_entity_versions version ON version.id=fact.version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
+			(SELECT count(*) FROM catalog_item_effects fact
+				JOIN game_entity_versions version ON version.id=fact.version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
+			(SELECT count(*) FROM catalog_item_acquisition_sources fact
+				JOIN game_entity_versions version ON version.id=fact.version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
+			(SELECT count(*) FROM catalog_spell_effects fact
+				JOIN game_entity_versions version ON version.id=fact.spell_version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
 			(SELECT count(*) FROM catalog_talent_spell_relations fact
-				WHERE fact.talent_version_id IN (SELECT id FROM current_versions)
-				   OR fact.spell_version_id IN (SELECT id FROM current_versions)),
-			(SELECT count(*) FROM catalog_spell_owners fact WHERE fact.spell_version_id IN (SELECT id FROM current_versions)),
+				JOIN game_entity_versions version ON version.id=fact.talent_version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
+			(SELECT count(*) FROM catalog_spell_owners fact
+				JOIN game_entity_versions version ON version.id=fact.spell_version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
 			(SELECT count(*) FROM catalog_profession_recipes fact
-				WHERE fact.profession_version_id IN (SELECT id FROM current_versions)
-				   OR fact.recipe_version_id IN (SELECT id FROM current_versions)),
-			(SELECT count(*) FROM catalog_recipe_reagents fact WHERE fact.recipe_version_id IN (SELECT id FROM current_versions)),
-			(SELECT count(*) FROM catalog_recipe_outputs fact WHERE fact.recipe_version_id IN (SELECT id FROM current_versions))`, result.Build.ID, product).Scan(
+				JOIN game_entity_versions version ON version.id=fact.profession_version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
+			(SELECT count(*) FROM catalog_recipe_reagents fact
+				JOIN game_entity_versions version ON version.id=fact.recipe_version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
+			(SELECT count(*) FROM catalog_recipe_outputs fact
+				JOIN game_entity_versions version ON version.id=fact.recipe_version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL)`, result.Build.ID, product).Scan(
 		&result.Facts.ItemStats, &result.Facts.ItemEffects, &result.Facts.AcquisitionSources,
 		&result.Facts.SpellEffects, &result.Facts.TalentSpellLinks, &result.Facts.SpellOwners,
 		&result.Facts.ProfessionRecipes, &result.Facts.RecipeReagents, &result.Facts.RecipeOutputs,
 	); err != nil {
 		return fmt.Errorf("query normalized facts: %w", err)
+	}
+	if err := factTx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit normalized facts query: %w", err)
 	}
 
 	if err := db.QueryRow(ctx, `
