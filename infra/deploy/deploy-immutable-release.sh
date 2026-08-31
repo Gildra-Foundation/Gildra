@@ -216,10 +216,18 @@ verify_local_health() {
       --resolve api.gildra.net:443:127.0.0.1 \
       'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US')
     [ "$catalog_status" = 401 ] || fail "private catalog allowed an anonymous request: HTTP $catalog_status"
+    prefixed_catalog_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+      --output /dev/null --write-out '%{http_code}' \
+      --resolve api.gildra.net:443:127.0.0.1 \
+      'https://api.gildra.net/world-of-warcraft/retail/v1/library/datasets?product=wow&locale=en_US')
+    [ "$prefixed_catalog_status" = 401 ] || fail "prefixed private catalog allowed an anonymous request: HTTP $prefixed_catalog_status"
   else
     curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
       --resolve api.gildra.net:443:127.0.0.1 \
       'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US' >/dev/null
+    curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+      --resolve api.gildra.net:443:127.0.0.1 \
+      'https://api.gildra.net/world-of-warcraft/retail/v1/library/datasets?product=wow&locale=en_US' >/dev/null
   fi
   verify_library_route /library
   verify_library_route /ru/library
