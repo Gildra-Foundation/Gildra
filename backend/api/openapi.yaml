@@ -9,9 +9,9 @@ info:
 security:
   - CatalogSession: []
 servers:
-  - url: https://api.gildra.net/world-of-warcraft/retail
-    description: Canonical product-scoped retail API base. Historical /v1 URLs remain supported.
-  - url: https://api.gildra.net/world-of-warcraft/{edition}
+  - url: https://api.gildra.net/world-of-warcraft/retail/v1
+    description: Canonical product-scoped retail API base.
+  - url: https://api.gildra.net/world-of-warcraft/{edition}/v1
     description: Product-scoped API base for retail, Classic, Classic Era or Hardcore.
     variables:
       edition:
