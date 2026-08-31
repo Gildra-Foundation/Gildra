@@ -141,6 +141,9 @@ func (s *Service) RefreshReadModels(ctx context.Context, productID *int16) error
 	if _, err := s.postgres.Exec(ctx, `SELECT refresh_catalog_read_models($1)`, productID); err != nil {
 		return fmt.Errorf("refresh catalog read models: %w", err)
 	}
+	if err := RefreshFieldCoverageQuality(ctx, s.postgres, productID); err != nil {
+		return err
+	}
 	if _, err := s.postgres.Exec(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
 		return fmt.Errorf("refresh catalog library datasets: %w", err)
 	}
