@@ -249,6 +249,22 @@ func EvaluateReadinessWithRecoveryPolicy(
 	report.warn("description_template_tokens", ScopeData, unresolvedDescriptionTemplates,
 		"source descriptions still contain unresolved Blizzard template tokens; resolved output must be verified before a complete badge is shown")
 
+	var unresolvedTooltipTemplates int64
+	if err := db.QueryRow(ctx, `
+		SELECT count(*)
+		FROM catalog_entity_tooltips tooltip
+		JOIN game_entity_versions version ON version.id=tooltip.version_id
+		JOIN game_entities entity ON entity.id=version.entity_id
+		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+		  AND entity.deleted_at IS NULL
+		  AND (tooltip.plain_text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'
+		       OR tooltip.blocks::text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])')`, product).
+		Scan(&unresolvedTooltipTemplates); err != nil {
+		return ReadinessReport{}, fmt.Errorf("check unresolved tooltip templates: %w", err)
+	}
+	report.warn("tooltip_template_tokens", ScopeData, unresolvedTooltipTemplates,
+		"generated tooltip projections still contain unresolved Blizzard template tokens; these records stay visibly incomplete")
+
 	var unprovenFacts int64
 	if err := db.QueryRow(ctx, `
 		WITH current_versions AS (
