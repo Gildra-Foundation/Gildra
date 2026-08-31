@@ -195,6 +195,7 @@ grep -Fq 'require_environment_value CATALOG_RECOVERY_POLICY' "$deployment_script
 grep -Fq 'ensure_recovery_backup' "$deployment_script"
 grep -Fq 'run-catalog-backup.sh' "$deployment_script"
 grep -Fq 'run-catalog-repair.sh' "$repository_directory/.github/workflows/catalog-repair.yml"
+grep -Fq 'CATALOG_ACCESS_MODE: ${CATALOG_ACCESS_MODE:-public}' "$repository_directory/compose.yml"
 grep -Fq -- '-require-data-ready' "$deployment_script"
 grep -Fq 'private catalog allowed an anonymous request' "$deployment_script"
 grep -Fq 'https://api.gildra.net/library/items' "$repository_directory/.github/workflows/deploy.yml"
