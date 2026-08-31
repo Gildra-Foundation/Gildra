@@ -24,7 +24,11 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-const latestCatalogSchemaVersion int64 = 111
+// Keep this assertion aligned with the highest numbered production migration.
+// The test intentionally upgrades from the immutable v15 baseline through the
+// full catalog schema so newly added quality/read-model migrations cannot be
+// skipped silently.
+const latestCatalogSchemaVersion int64 = 114
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
