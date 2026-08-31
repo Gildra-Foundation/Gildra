@@ -14,9 +14,10 @@ exec_line=$(grep '^ExecStart=' "$service_file")
 printf '%s\n' "$exec_line" | grep -Fq 'catalog-media-cache'
 printf '%s\n' "$exec_line" | grep -Fq -- '-limit 10000'
 printf '%s\n' "$exec_line" | grep -Fq -- '-seed-icon-limit 10000'
+printf '%s\n' "$exec_line" | grep -Fq -- '-products wow,wow_classic,wow_classic_era,wow_classic_hardcore'
 printf '%s\n' "$exec_line" | grep -Fq -- '-confirm'
 
 grep -Fxq 'OnCalendar=hourly' "$timer_file"
 grep -Fxq 'Unit=gildra-catalog-media-cache.service' "$timer_file"
 
-printf '%s\n' 'test: hourly media cache explicitly seeds up to 10000 icons'
+printf '%s\n' 'test: hourly media cache explicitly seeds up to 10000 icons for every WoW edition'

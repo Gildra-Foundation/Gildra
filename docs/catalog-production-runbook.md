@@ -206,9 +206,14 @@ immediately. After approval, run a bounded cache batch and review
 ```bash
 catalog-media-cache \
   -environment staging \
+  -products wow,wow_classic,wow_classic_era,wow_classic_hardcore \
   -limit 100 \
   -confirm
 ```
+
+The hourly production unit uses the same four-product list and seeds official
+icons for each edition before processing the shared media queue. The legacy
+`-product wow` form remains supported for a focused maintenance run.
 
 The downloader accepts HTTPS only, refuses private and special-purpose
 addresses, disables proxy inheritance, limits each file to 32 MiB and accepts
