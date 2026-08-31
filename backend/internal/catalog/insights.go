@@ -67,7 +67,7 @@ func (s *Service) Quality(ctx context.Context, id uuid.UUID, locale string) (Ent
 		SELECT entity.id,version.build_id,build.build_number,build.version,entity.updated_at,entity.entity_type,
 			COALESCE(NULLIF(localized.name,''),NULLIF(fallback.name,'')) IS NOT NULL,
 			COALESCE(NULLIF(localized.description,''),NULLIF(fallback.description,'')) IS NOT NULL
-				AND COALESCE(NULLIF(localized.description,''),NULLIF(fallback.description,'')) !~ '\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)',
+				AND COALESCE(NULLIF(localized.description,''),NULLIF(fallback.description,'')) !~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])',
 			EXISTS(SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=version.id
 				AND tooltip.locale IN ($2,'en_US') AND (tooltip.plain_text<>'' OR jsonb_array_length(tooltip.blocks)>0))
 				OR (entity.entity_type='quest' AND EXISTS(SELECT 1 FROM catalog_quest_registry registry

@@ -241,7 +241,7 @@ func EvaluateReadinessWithRecoveryPolicy(
 		JOIN game_entity_localizations localization ON localization.version_id=version.id
 		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
 		  AND entity.deleted_at IS NULL
-		  AND localization.description ~ '\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)'`, product).
+		  AND localization.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'`, product).
 		Scan(&unresolvedDescriptionTemplates); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check unresolved description templates: %w", err)
 	}
