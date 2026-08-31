@@ -13,14 +13,23 @@ export async function GET(
   const apiURL = process.env.API_INTERNAL_URL ?? "http://api:8080";
   const session = request.cookies.get("gildra_admin_session")?.value;
   const headers = session ? { Cookie: `gildra_admin_session=${encodeURIComponent(session)}` } : undefined;
-  const response = await fetch(`${apiURL}/v1/game/entities/${id}?locale=${locale}`, {
-    // Catalog access is private in production. Do not cache an authenticated
-    // response in the Next data cache or a shared CDN, and forward only the
-    // session cookie required by the Go API.
-    cache: "no-store",
-    headers,
-    signal: AbortSignal.timeout(15_000),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${apiURL}/v1/game/entities/${id}?locale=${locale}`, {
+      // Catalog access is private in production. Do not cache an authenticated
+      // response in the Next data cache or a shared CDN, and forward only the
+      // session cookie required by the Go API.
+      cache: "no-store",
+      headers,
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (reason) {
+    const timedOut = reason instanceof DOMException && reason.name === "TimeoutError";
+    return NextResponse.json(
+      { message: timedOut ? "Catalog service did not respond within 15 seconds" : "Catalog service is temporarily unavailable" },
+      { status: timedOut ? 504 : 502, headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
   const body = await response.text();
   return new NextResponse(body, {
     status: response.status,
