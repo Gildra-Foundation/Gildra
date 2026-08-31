@@ -133,15 +133,20 @@ DB2 payload remains unchanged. The pass can be run locally or retried after a
 partial import with:
 
 ```powershell
-docker compose run --rm --entrypoint catalog-import api -source battlenet -product wow -version 12.1.0.69497 -build 69497 -types item,spell,creature,quest -locales en_US,ru_RU -missing-only -max-records 0 -allow-build-mismatch
+CATALOG_RELEASE_ID=<staging-release-uuid> docker compose run --rm --entrypoint catalog-import api -source battlenet -product wow -version 12.1.0.69497 -build 69497 -types item,spell,creature,quest -locales en_US,ru_RU -missing-only -max-records 0 -allow-build-mismatch
 ```
 
 `-missing-only` is mutually exclusive with `-media-only`, requires the
-Battle.net source, and fails closed on transport/authentication errors. A
-not-found detail is logged and skipped because Blizzard can omit retired IDs;
-the previous localized value is never deleted. The pipeline records the
-targeted artifact and refreshes tooltip/media projections only after the
-enrichment stage completes.
+Battle.net source and a `CATALOG_RELEASE_ID` for a staging release, and fails
+closed on transport/authentication errors. The release ID is injected by the
+catalog pipeline; a local invocation must point at an existing `staging`
+release with the same product and build. The target query includes all
+snapshots belonging to that release, so DB2/Wago versions produced by earlier
+stages are enriched instead of accidentally falling back to the last
+published version. A not-found detail is logged and skipped because Blizzard
+can omit retired IDs; the previous localized value is never deleted. The
+pipeline records the targeted artifact and refreshes tooltip/media projections
+only after the enrichment stage completes.
 
 Each localized response is hashed and retained in
 `catalog_entity_source_documents`, linked to its snapshot and artifact. For an
