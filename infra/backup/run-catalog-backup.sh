@@ -19,6 +19,23 @@ runtime_environment=""
 result_output=""
 job_status="failed"
 
+# The production host keeps the age identity and signing key in the local
+# deployment backup directory.  Older releases required operators to export
+# these paths manually; infer the standard locations when they are present so
+# the systemd timer and an interactive run use the same verified configuration.
+if [ -z "${CATALOG_BACKUP_AGE_IDENTITY_FILE:-}" ] && [ -r "$deployment_directory/backups/catalog_backup_age_identity" ]; then
+  CATALOG_BACKUP_AGE_IDENTITY_FILE="$deployment_directory/backups/catalog_backup_age_identity"
+  export CATALOG_BACKUP_AGE_IDENTITY_FILE
+fi
+if [ -z "${CATALOG_BACKUP_SIGNING_KEY_FILE:-}" ] && [ -r "$deployment_directory/backups/catalog_backup_signing_key" ]; then
+  CATALOG_BACKUP_SIGNING_KEY_FILE="$deployment_directory/backups/catalog_backup_signing_key"
+  export CATALOG_BACKUP_SIGNING_KEY_FILE
+fi
+if [ -z "${CATALOG_BACKUP_AGE_RECIPIENT:-}" ] && [ -n "${CATALOG_BACKUP_AGE_IDENTITY_FILE:-}" ] && [ -r "$CATALOG_BACKUP_AGE_IDENTITY_FILE" ]; then
+  CATALOG_BACKUP_AGE_RECIPIENT="$(awk '/^# public key:/{print $4; exit}' "$CATALOG_BACKUP_AGE_IDENTITY_FILE")"
+  export CATALOG_BACKUP_AGE_RECIPIENT
+fi
+
 # docker compose interpolates service commands before starting the container.
 # Export the resolved path and let compose.yml supply the CLI flag; passing a
 # dash-prefixed flag after `compose run SERVICE` is parsed as a compose option
