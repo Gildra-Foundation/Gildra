@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -77,6 +78,7 @@ type options struct {
 	maxRecords         int
 	detailWorkers      int
 	mediaOnly          bool
+	missingOnly        bool
 	allowBuildMismatch bool
 	sourceBuildNumber  int
 	sourceBuildVersion string
@@ -158,10 +160,14 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	if opts.missingOnly && releaseID == nil {
+		return errors.New("-missing-only requires CATALOG_RELEASE_ID so enrichment stays inside an atomic release")
+	}
 	parameters := map[string]any{
 		"source": opts.source, "locales": opts.locales, "entity_types": opts.entityTypes,
 		"page_size": opts.pageSize, "max_records_per_type": opts.maxRecords,
 		"detail_workers": opts.detailWorkers, "media_only": opts.mediaOnly,
+		"missing_only":       opts.missingOnly,
 		"wago_table_timeout": effectiveWagoTableTimeout(opts.wagoTableTimeout).String(),
 	}
 	if opts.source == "battlenet" {
@@ -457,6 +463,31 @@ func importBattleNet(
 		}
 		for _, entityType := range opts.entityTypes {
 			spec := battleNetEntitySpecs[entityType]
+			if opts.missingOnly {
+				collectionURL, urlErr := client.SearchURL(region, namespace, locale, spec.Resource, 1, opts.pageSize)
+				if entityType == "quest" {
+					collectionURL, urlErr = client.IndexURL(region, namespace, locale, spec.Resource)
+				}
+				if urlErr != nil {
+					return urlErr
+				}
+				artifactID, registerErr := store.RegisterPendingArtifact(ctx, importContext, "blizzard_api",
+					"battlenet-missing/"+entityType, locale, collectionURL, map[string]any{
+						"entity_type": entityType, "namespace": namespace, "locale": locale,
+						"proof_scope": "source_record_manifest_v1", "missing_only": true,
+						"source_build_number": opts.sourceBuildNumber, "source_build_version": opts.sourceBuildVersion,
+					})
+				if registerErr != nil {
+					return registerErr
+				}
+				if err := runBattleNetArtifact(ctx, store, artifactID, entityType, locale, func() error {
+					return importBattleNetMissingType(ctx, client, store, importContext, opts,
+						region, namespace, locale, entityType, spec, artifactID, seen, written)
+				}); err != nil {
+					return err
+				}
+				continue
+			}
 			slog.Info("importing catalog type", "type", entityType, "locale", locale, "region", region)
 			var collectionURL string
 			if spec.Search {
@@ -496,6 +527,118 @@ func importBattleNet(
 		}
 	}
 	return nil
+}
+
+// importBattleNetMissingType enriches already imported build versions with
+// official localized details. It deliberately avoids a wildcard search: the
+// catalog itself is the denominator, so only records with a missing or
+// unresolved description (and, for English, a missing icon observation) are
+// requested. This keeps the recurring pass bounded and idempotent.
+func importBattleNetMissingType(
+	ctx context.Context,
+	client *battlenet.Client,
+	store *catalogimport.Store,
+	importContext catalogimport.ImportContext,
+	opts options,
+	region, namespace, locale, entityType string,
+	spec battleNetEntitySpec,
+	artifactID uuid.UUID,
+	seen, written *int64,
+) error {
+	includeMedia := locale == "en_US" && spec.FetchMedia
+	targets, err := store.MissingBattleNetIDs(ctx, importContext, entityType, locale, includeMedia, opts.maxRecords)
+	if err != nil {
+		return err
+	}
+	slog.Info("enriching missing Battle.net catalog fields", "type", entityType, "locale", locale,
+		"targets", len(targets), "include_media", includeMedia)
+	if len(targets) == 0 {
+		return nil
+	}
+	// Resource links returned by search are build-pinned. Construct the same
+	// namespace for direct detail requests so a moving static alias cannot mix
+	// source data from another client build into this release.
+	detailNamespace := namespace
+	if pinned, pinErr := pinnedBattleNetNamespace(opts.sourceBuildVersion, region); pinErr == nil {
+		detailNamespace = pinned
+	} else {
+		slog.Warn("using moving Battle.net namespace for missing-field enrichment", "type", entityType, "locale", locale, "error", pinErr)
+	}
+	workers := opts.detailWorkers
+	if workers > len(targets) {
+		workers = len(targets)
+	}
+	jobs := make(chan int64)
+	group, groupCtx := errgroup.WithContext(ctx)
+	for range workers {
+		group.Go(func() error {
+			for {
+				select {
+				case <-groupCtx.Done():
+					return groupCtx.Err()
+				case id, ok := <-jobs:
+					if !ok {
+						return nil
+					}
+					atomic.AddInt64(seen, 1)
+					payload, sourceURL, fetchErr := client.Detail(groupCtx, region, detailNamespace, locale, spec.Resource, id)
+					if fetchErr != nil {
+						if battlenet.IsNotFound(fetchErr) {
+							slog.Warn("Battle.net enrichment target is not available", "type", entityType, "id", id, "locale", locale)
+							continue
+						}
+						return fmt.Errorf("fetch missing %s %d (%s): %w", entityType, id, locale, fetchErr)
+					}
+					if err := storeBattleNetRecord(groupCtx, store, importContext, artifactID, entityType, locale, id, payload, sourceURL); err != nil {
+						return err
+					}
+					if includeMedia {
+						if err := fetchAndStoreBattleNetMedia(groupCtx, client, store, importContext, artifactID,
+							region, entityType, locale, id, payload); err != nil {
+							return err
+						}
+					}
+					atomic.AddInt64(written, 1)
+				}
+			}
+		})
+	}
+	group.Go(func() error {
+		defer close(jobs)
+		for _, id := range targets {
+			select {
+			case jobs <- id:
+			case <-groupCtx.Done():
+				return groupCtx.Err()
+			}
+		}
+		return nil
+	})
+	if err := group.Wait(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func pinnedBattleNetNamespace(version, region string) (string, error) {
+	parts := strings.Split(strings.TrimSpace(version), ".")
+	if len(parts) != 4 || strings.TrimSpace(region) == "" {
+		return "", fmt.Errorf("invalid source build version %q", version)
+	}
+	for index, part := range parts {
+		if part == "" {
+			return "", fmt.Errorf("invalid source build version %q", version)
+		}
+		for _, character := range part {
+			if character < '0' || character > '9' {
+				return "", fmt.Errorf("invalid source build version %q", version)
+			}
+		}
+		if index == len(parts)-1 && strings.TrimLeft(part, "0") == "" {
+			return "", fmt.Errorf("invalid source build version %q", version)
+		}
+	}
+	return fmt.Sprintf("static-%s_%s-%s", strings.Join(parts[:3], "."), parts[3], strings.ToLower(strings.TrimSpace(region))), nil
 }
 
 func runBattleNetArtifact(
@@ -1626,6 +1769,7 @@ func parseOptions() (options, error) {
 	flag.IntVar(&opts.detailWorkers, "detail-workers", 8, "maximum concurrent Battle.net detail requests")
 	flag.DurationVar(&opts.wagoTableTimeout, "wago-table-timeout", defaultWagoTableTimeout, "maximum time to stream and project one Wago DB2 table")
 	flag.BoolVar(&opts.mediaOnly, "media-only", false, "fetch official media for previously imported Battle.net documents")
+	flag.BoolVar(&opts.missingOnly, "missing-only", false, "enrich only build records with missing descriptions or icons")
 	flag.BoolVar(&opts.allowBuildMismatch, "allow-build-mismatch", false, "allow a pinned release build to differ from the currently published Battle.net API build; source build is recorded in provenance")
 	flag.Parse()
 	opts.source = strings.ToLower(strings.TrimSpace(opts.source))
@@ -1646,6 +1790,10 @@ func parseOptions() (options, error) {
 		return options{}, errors.New("BATTLENET_CLIENT_ID and BATTLENET_CLIENT_SECRET are required for -source battlenet")
 	case opts.mediaOnly && opts.source != "battlenet":
 		return options{}, errors.New("-media-only requires -source battlenet")
+	case opts.missingOnly && opts.source != "battlenet":
+		return options{}, errors.New("-missing-only requires -source battlenet")
+	case opts.mediaOnly && opts.missingOnly:
+		return options{}, errors.New("-media-only and -missing-only cannot be combined")
 	case len(opts.locales) == 0 || opts.locales[0] != "en_US":
 		return options{}, errors.New("en_US must be the first canonical locale")
 	case opts.pageSize < 1 || opts.pageSize > 1000:

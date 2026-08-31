@@ -250,6 +250,7 @@ func isClassicProduct(product string) bool {
 
 func buildPlan(options Options) []Stage {
 	plan := make([]Stage, 0, len(options.Sources)+9)
+	needsBattleNetMissingEnrichment := false
 	if options.Mode == "apply" && options.PublicationEnvironment == "production" {
 		plan = append(plan, Stage{Key: "recovery-gate"})
 	}
@@ -277,6 +278,7 @@ func buildPlan(options Options) []Stage {
 			}
 			plan = append(plan, Stage{Key: "import-db2", Executable: "db2-import", Arguments: args})
 		case "battlenet":
+			needsBattleNetMissingEnrichment = true
 			// Battle.net can publish a build after Wago/DB2 (or briefly lag it).
 			// Keep the release pinned to one target build while allowing the
 			// importer to consume the API's current build and record that
@@ -300,6 +302,13 @@ func buildPlan(options Options) []Stage {
 			}
 			plan = append(plan, Stage{Key: "import-listfile", Executable: "listfile-import", Arguments: args})
 		}
+	}
+	if needsBattleNetMissingEnrichment {
+		battleNetMissingArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "item,spell,creature,quest", "-missing-only", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
+		if options.BuildVersion != "" {
+			battleNetMissingArgs = append(battleNetMissingArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
+		}
+		plan = append(plan, Stage{Key: "enrich-battlenet-missing", Executable: "catalog-import", Arguments: battleNetMissingArgs})
 	}
 	indexArgs := func(mode string) []string {
 		return []string{mode, "-confirm", "-product", options.Product}

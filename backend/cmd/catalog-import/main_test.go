@@ -60,6 +60,18 @@ func TestIndexResultEntriesPreservesBuildPinnedLink(t *testing.T) {
 	}
 }
 
+func TestPinnedBattleNetNamespace(t *testing.T) {
+	t.Parallel()
+	if got, err := pinnedBattleNetNamespace("12.1.0.69497", "US"); err != nil || got != "static-12.1.0_69497-us" {
+		t.Fatalf("namespace = %q, err = %v", got, err)
+	}
+	for _, version := range []string{"", "12.1.0", "12.1.0.bad", "12.1.0.0"} {
+		if _, err := pinnedBattleNetNamespace(version, "us"); err == nil {
+			t.Fatalf("version %q should be rejected", version)
+		}
+	}
+}
+
 func TestNormalizeBattleNetQuestUsesOfficialTitleAsName(t *testing.T) {
 	t.Parallel()
 	payload, err := normalizeBattleNetPayload("quest", json.RawMessage(`{
