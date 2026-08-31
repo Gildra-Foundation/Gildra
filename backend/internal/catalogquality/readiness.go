@@ -339,6 +339,27 @@ func EvaluateReadinessWithRecoveryPolicy(
 	report.add("icon_provenance", ScopeData, invalidIcons != 0, invalidIcons,
 		"icon references or file mappings without complete source proof")
 
+	// Media downloads are deliberately asynchronous and a transient CDN error
+	// must not invalidate an otherwise source-complete release. Expose the
+	// backlog explicitly, however, so the admin panel cannot claim that every
+	// image is healthy while the cache worker still has work to retry.
+	var failedMedia, remoteMedia int64
+	if err := db.QueryRow(ctx, `
+		SELECT count(*) FILTER (WHERE media.cache_status='failed'),
+			count(*) FILTER (WHERE media.cache_status='remote')
+		FROM catalog_entity_media media
+		JOIN game_entities entity ON entity.id=media.entity_id
+		JOIN game_entity_versions published ON published.id=entity.published_version_id
+		JOIN game_builds published_build ON published_build.id=published.build_id
+		JOIN game_builds media_build ON media_build.id=media.build_id
+		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+		  AND entity.deleted_at IS NULL AND media_build.product_id=entity.product_id
+		  AND media_build.build_number<=published_build.build_number`, product).Scan(&failedMedia, &remoteMedia); err != nil {
+		return ReadinessReport{}, fmt.Errorf("check media cache backlog: %w", err)
+	}
+	report.warn("media_cache_backlog", ScopeData, failedMedia+remoteMedia,
+		fmt.Sprintf("%d media assets failed and %d remain remote; the cache worker will retry them", failedMedia, remoteMedia))
+
 	var unresolvedReagents, unresolvedOutputs int64
 	if err := db.QueryRow(ctx, `
 		SELECT
