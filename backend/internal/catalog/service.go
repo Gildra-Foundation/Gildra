@@ -222,7 +222,9 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 			COALESCE(t.blocks,fallback_t.blocks,'[]'::jsonb)
 			|| COALESCE(spell_info.blocks,'[]'::jsonb) || COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(item_registry.blocks,'[]'::jsonb) || COALESCE(item_variants.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(quest_package_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
 			COALESCE(fa.icon_name, spell_fa.icon_name, source_icon.icon_name, db2_fa.icon_name,
-				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}','')),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
+				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}',''),
+				CASE WHEN v.payload->>'icon_file_data_id' ~ '^[0-9]+$' THEN v.payload->>'icon_file_data_id' END,
+				CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN spell_misc.payload->>'SpellIconFileDataID' END),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
 		FROM game_entities e
 		JOIN game_products p ON p.id = e.product_id
 		LEFT JOIN (
@@ -598,7 +600,9 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 			COALESCE(t.blocks,fallback_t.blocks,'[]'::jsonb)
 			|| COALESCE(spell_info.blocks,'[]'::jsonb) || COALESCE(spell_effects.blocks,'[]'::jsonb) || COALESCE(talent_spells.blocks,'[]'::jsonb) || COALESCE(profession_info.blocks,'[]'::jsonb) || COALESCE(recipe_info.blocks,'[]'::jsonb) || COALESCE(item_context.blocks,'[]'::jsonb) || COALESCE(item_registry.blocks,'[]'::jsonb) || COALESCE(item_variants.blocks,'[]'::jsonb) || COALESCE(quest_info.blocks,'[]'::jsonb) || COALESCE(quest_package_info.blocks,'[]'::jsonb) || COALESCE(creature_info.blocks,'[]'::jsonb) || COALESCE(generic_description.blocks,'[]'::jsonb) || COALESCE(provenance.blocks,'[]'::jsonb),
 			COALESCE(fa.icon_name, spell_fa.icon_name, source_icon.icon_name, db2_fa.icon_name,
-				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}','')),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
+				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}',''),
+				CASE WHEN v.payload->>'icon_file_data_id' ~ '^[0-9]+$' THEN v.payload->>'icon_file_data_id' END,
+				CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN spell_misc.payload->>'SpellIconFileDataID' END),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
 		FROM game_entities e
 		JOIN game_products p ON p.id = e.product_id
 		LEFT JOIN game_entity_versions v ON v.id = e.published_version_id
