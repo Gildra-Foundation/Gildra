@@ -241,33 +241,64 @@ func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 }
 
 func (i *Indexer) RebuildTooltips(ctx context.Context) (Result, error) {
+	return i.rebuildTooltips(ctx, nil)
+}
+
+// RebuildTooltipsForProduct refreshes only the requested product's published
+// tooltip projection.  The catalog is multi-product; running the unscoped
+// projection for a Retail refresh needlessly joins Classic/Era/Hardcore rows
+// and can exceed the worker deadline.  A product-scoped run is safe because it
+// only upserts rows for that product and leaves the other published pointers
+// untouched.
+func (i *Indexer) RebuildTooltipsForProduct(ctx context.Context, productID int16) (Result, error) {
+	if productID <= 0 {
+		return Result{}, errors.New("product id must be positive")
+	}
+	return i.rebuildTooltips(ctx, &productID)
+}
+
+func (i *Indexer) rebuildTooltips(ctx context.Context, productID *int16) (Result, error) {
 	var result Result
 	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
-		carried, err := carryForwardOfficialLocalizations(ctx, tx)
-		if err != nil {
-			return err
+		var err error
+		if productID == nil {
+			carried, carryErr := carryForwardOfficialLocalizations(ctx, tx)
+			if carryErr != nil {
+				return carryErr
+			}
+			result.Descriptions += carried
+			if err := rebuildSpellRelationships(ctx, tx); err != nil {
+				return err
+			}
+			result.Icons, err = rebuildEntityIcons(ctx, tx)
+			if err != nil {
+				return err
+			}
+			descriptions, descriptionErr := rebuildCanonicalDescriptions(ctx, tx)
+			if descriptionErr != nil {
+				return descriptionErr
+			}
+			result.Descriptions += descriptions
 		}
-		result.Descriptions += carried
-		if err := rebuildSpellRelationships(ctx, tx); err != nil {
-			return err
+		sql := tooltipSQL
+		var args []any
+		if productID != nil {
+			// The localized CTE is the single write-producing scope.  Keep the
+			// SQL text shared with the full rebuild while constraining all rows
+			// that reach the renderer to one product.
+			sql = scopedTooltipSQL()
+			args = append(args, *productID)
 		}
-		result.Icons, err = rebuildEntityIcons(ctx, tx)
-		if err != nil {
-			return err
-		}
-		descriptions, err := rebuildCanonicalDescriptions(ctx, tx)
-		if err != nil {
-			return err
-		}
-		result.Descriptions += descriptions
-		command, err := tx.Exec(ctx, tooltipSQL)
+		command, err := tx.Exec(ctx, sql, args...)
 		if err != nil {
 			return fmt.Errorf("rebuild entity tooltips: %w", err)
 		}
 		result.Tooltips = command.RowsAffected()
-		result.Links, err = rebuildEntityGraph(ctx, tx)
-		if err != nil {
-			return err
+		if productID == nil {
+			result.Links, err = rebuildEntityGraph(ctx, tx)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})
@@ -622,7 +653,8 @@ func (i *Indexer) rebuildItems(ctx context.Context, includeTooltips bool) (Resul
 				return err
 			}
 			result.Descriptions += descriptions
-			command, err := tx.Exec(ctx, tooltipSQL)
+			itemTooltipSQL := scopedTooltipSQL()
+			command, err := tx.Exec(ctx, itemTooltipSQL, productID)
 			if err != nil {
 				return fmt.Errorf("rebuild entity tooltips: %w", err)
 			}
@@ -2062,26 +2094,35 @@ func localizedClass(name string) string {
 	return name
 }
 
+func scopedTooltipSQL() string {
+	sql := strings.Replace(tooltipSQL,
+		"JOIN game_entity_versions v ON v.id=e.latest_version_id",
+		"JOIN game_entity_versions v ON v.id=e.published_version_id", 1)
+	return strings.Replace(sql,
+		"WHERE e.entity_type IN ('item','spell','talent','pvp_talent') AND e.deleted_at IS NULL",
+		"WHERE e.product_id=$1 AND e.entity_type IN ('item','spell','talent','pvp_talent') AND e.deleted_at IS NULL", 1)
+}
+
 const tooltipSQL = `
-	WITH spell_misc_rows AS MATERIALIZED (
+	WITH spell_misc_rows AS (
 		SELECT DISTINCT ON (build_id,(payload->>'SpellID')::bigint)
 			build_id,(payload->>'SpellID')::bigint AS spell_id,payload
 		FROM catalog_db2_rows
 		WHERE table_name='SpellMisc' AND locale='en_US' AND payload ? 'SpellID'
 		ORDER BY build_id,(payload->>'SpellID')::bigint,COALESCE(NULLIF(payload->>'DifficultyID','')::int,0),row_id
-	), spell_cooldown_rows AS MATERIALIZED (
+	), spell_cooldown_rows AS (
 		SELECT DISTINCT ON (build_id,(payload->>'SpellID')::bigint)
 			build_id,(payload->>'SpellID')::bigint AS spell_id,payload
 		FROM catalog_db2_rows
 		WHERE table_name='SpellCooldowns' AND locale='en_US' AND payload ? 'SpellID'
 		ORDER BY build_id,(payload->>'SpellID')::bigint,COALESCE(NULLIF(payload->>'DifficultyID','')::int,0),row_id
-	), spell_power_rows AS MATERIALIZED (
+	), spell_power_rows AS (
 		SELECT DISTINCT ON (build_id,(payload->>'SpellID')::bigint)
 			build_id,(payload->>'SpellID')::bigint AS spell_id,payload
 		FROM catalog_db2_rows
 		WHERE table_name='SpellPower' AND locale='en_US' AND payload ? 'SpellID'
 		ORDER BY build_id,(payload->>'SpellID')::bigint,COALESCE(NULLIF(payload->>'OrderIndex','')::int,0),row_id
-	), item_effect_rows AS MATERIALIZED (
+	), item_effect_rows AS (
 		SELECT links.build_id,(links.payload->>'ItemID')::bigint AS item_id,spell_text.locale,
 			jsonb_agg(jsonb_build_object(
 				'type','effect','trigger',COALESCE(NULLIF(effect.payload->>'TriggerType','')::int,0),
@@ -2096,7 +2137,7 @@ const tooltipSQL = `
 		WHERE links.table_name='ItemXItemEffect' AND links.locale='en_US'
 			AND NULLIF(spell_text.payload->>'Description_lang','') IS NOT NULL
 		GROUP BY links.build_id,(links.payload->>'ItemID')::bigint,spell_text.locale
-	), item_acquisition_rows AS MATERIALIZED (
+	), item_acquisition_rows AS (
 		SELECT source.version_id,locale.code AS locale,
 			jsonb_agg(jsonb_build_object(
 				'type','acquisition','source_type',source.source_type,'source_id',source.source_id,
@@ -2125,7 +2166,7 @@ const tooltipSQL = `
 		LEFT JOIN catalog_journal_instance_localizations instance_fallback ON instance_fallback.build_id=item_version.build_id
 			AND instance_fallback.journal_instance_id=source.journal_instance_id AND instance_fallback.locale='en_US'
 		GROUP BY source.version_id,locale.code
-	), spell_owner_rows AS MATERIALIZED (
+	), spell_owner_rows AS (
 		SELECT owner.spell_version_id,locale.code AS locale,
 			jsonb_agg(jsonb_build_object('owner_type',owner.owner_type,'owner_id',owner.owner_id,
 				'entity_id',owner_entity.id,
@@ -2168,7 +2209,7 @@ const tooltipSQL = `
 		LEFT JOIN catalog_db2_rows race_name ON owner.owner_type='race' AND race_name.build_id=spell_version.build_id
 			AND race_name.table_name='ChrRaces' AND race_name.locale=locale.code AND race_name.row_id=owner.owner_id
 		GROUP BY owner.spell_version_id,locale.code
-	), spell_talent_rows AS MATERIALIZED (
+	), spell_talent_rows AS (
 		SELECT link.spell_version_id,locale.code AS locale,
 			jsonb_agg(jsonb_build_object('talent_id',talent.external_id,'name',COALESCE(talent_name.name,talent_fallback.name,''),
 				'entity_id',talent.id,'icon_name',COALESCE(talent_source_icon.icon_name,talent_direct_icon.icon_name,

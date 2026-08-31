@@ -162,6 +162,19 @@ The DB2 baseline also includes `SpellRadius`. Radius placeholders (`$a`,
 `SpellRadius` rows; if either row is absent, the original token remains marked
 as unresolved.
 
+Item effect blocks now resolve current-spell placeholders (`$s1`, `$d`, etc.)
+against the block's build-pinned `spell_id` when an item tooltip is requested.
+This keeps on-use and enchantment text useful without rewriting the original
+source payload; unresolved values remain explicitly visible in the quality
+state rather than being replaced with fabricated zeros.
+
+`catalog-audit` reports `englishTooltips` and `russianTooltips` per entity type.
+These counters require a non-empty materialized tooltip (text or blocks) on the
+published version; dataset membership alone is not counted. Run the audit
+against the published pointer before calling a release complete. A zero count
+therefore means that the source row exists but its public tooltip projection
+still needs to be built or enriched.
+
 ### Wave 3 — quests and rewards (5–10 days)
 
 - Import the complete quest registry denominator for each product/build.

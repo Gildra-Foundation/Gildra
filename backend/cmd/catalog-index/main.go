@@ -108,7 +108,7 @@ func run() error {
 			return err
 		}
 	} else if tooltipsOnly {
-		result, err = indexer.RebuildTooltips(ctx)
+		result, err = indexer.RebuildTooltipsForProduct(ctx, productID)
 	} else if itemsOnly {
 		result, err = indexer.RebuildItemsAndTooltips(ctx)
 	} else if itemsTaxonomyOnly {
