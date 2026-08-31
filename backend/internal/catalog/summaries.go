@@ -68,7 +68,7 @@ const summaryFastQuery = `
 		COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),$4::text,
 		(localized.version_id IS NULL OR NULLIF(localized.name,'') IS NULL) AS locale_fallback,
 		COALESCE(NULLIF(localized.name,''),fallback.name,''),
-		CASE WHEN COALESCE(NULLIF(localized.description,''),fallback.description,'') ~ '\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)' THEN ''
+		CASE WHEN COALESCE(NULLIF(localized.description,''),fallback.description,'') ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' THEN ''
 			ELSE COALESCE(NULLIF(localized.description,''),fallback.description,'') END,
 		COALESCE(source_icon.icon_name,direct_icon.icon_name,db2_icon.icon_name,
 			NULLIF(version.payload #>> '{raidbots,icon}',''),NULLIF(version.payload #>> '{raidbots,spellIcon}','')),
@@ -227,7 +227,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),$4::text,
 			(localized.version_id IS NULL OR NULLIF(localized.name,'') IS NULL) AS locale_fallback,
 			COALESCE(NULLIF(localized.name,''),fallback.name,''),
-		CASE WHEN COALESCE(NULLIF(localized.description,''),fallback.description,'') ~ '\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)' THEN ''
+		CASE WHEN COALESCE(NULLIF(localized.description,''),fallback.description,'') ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' THEN ''
 			ELSE COALESCE(NULLIF(localized.description,''),fallback.description,'') END,
 			COALESCE(source_icon.icon_name,direct_icon.icon_name,db2_icon.icon_name,
 				NULLIF(version.payload #>> '{raidbots,icon}',''),NULLIF(version.payload #>> '{raidbots,spellIcon}','')),

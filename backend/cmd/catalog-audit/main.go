@@ -117,8 +117,8 @@ func run() error {
 			count(*) FILTER (WHERE NULLIF(BTRIM(ru.name),'') IS NOT NULL),
 			count(*) FILTER (WHERE NULLIF(BTRIM(en.description),'') IS NOT NULL),
 			count(*) FILTER (WHERE NULLIF(BTRIM(ru.description),'') IS NOT NULL),
-			count(*) FILTER (WHERE en.description ~ '\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)'),
-			count(*) FILTER (WHERE ru.description ~ '\$(?:@spelldesc|[0-9]*d|[0-9]*s[0-9]+|d|s[0-9]+|\{)'),
+			count(*) FILTER (WHERE en.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'),
+			count(*) FILTER (WHERE ru.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'),
 			count(*) FILTER (WHERE icon.external_id IS NOT NULL),
 			count(*) FILTER (WHERE official.external_id IS NOT NULL)
 		FROM game_entities entity

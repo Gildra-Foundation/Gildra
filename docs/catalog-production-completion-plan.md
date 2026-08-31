@@ -152,6 +152,11 @@ know which talent or aura a player has active. The source-backed text remains in
 `rawDescription`/`localizations.*.description`, and unresolved client tokens
 never receive a “complete” quality state.
 
+The readiness index uses the same broad residual-token classifier as the API
+(`$A1`, `$ec1`, `$o1`, `$?diff15`, `$@spelldesc…` and numeric variants). A
+source description with any such token remains visible in raw fields but is
+reported as unresolved until a build-pinned resolver can prove its value.
+
 ### Wave 3 — quests and rewards (5–10 days)
 
 - Import the complete quest registry denominator for each product/build.
