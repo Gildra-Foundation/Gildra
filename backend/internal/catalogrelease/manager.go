@@ -208,8 +208,20 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 				(SELECT count(*)
 				 FROM catalog_source_artifacts artifact
 				 JOIN catalog_snapshots artifact_snapshot ON artifact_snapshot.id=artifact.snapshot_id
+				 JOIN catalog_releases candidate_release ON candidate_release.id=$1
 				 WHERE artifact_snapshot.release_id=$1
-				   AND (artifact.status<>'ready' OR artifact.content_hash IS NULL OR artifact.byte_size IS NULL))
+				   AND (artifact.status<>'ready' OR artifact.content_hash IS NULL OR artifact.byte_size IS NULL)
+				   AND NOT EXISTS (
+					   SELECT 1
+					   FROM catalog_release_profiles profile
+					   JOIN catalog_release_profile_artifact_rules rule
+						 ON rule.profile_key=profile.profile_key
+						AND rule.source=artifact.source
+						AND rule.artifact_key=artifact.artifact_key
+						AND (rule.locale='' OR rule.locale=artifact.locale)
+						AND rule.requirement='not_applicable'
+					   WHERE profile.product_id=candidate_release.product_id
+						 AND profile.status='active'))
 			FROM catalog_snapshots snapshot WHERE snapshot.release_id=$1`, releaseID).
 			Scan(&snapshots, &invalidSnapshots, &invalidArtifacts); err != nil {
 			return fmt.Errorf("validate release snapshots: %w", err)
