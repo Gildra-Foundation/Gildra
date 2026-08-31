@@ -150,16 +150,27 @@ func run() error {
 	}
 
 	if err := db.QueryRow(ctx, `
+		WITH current_versions AS (
+			SELECT version.id
+			FROM game_entity_versions version
+			JOIN game_entities entity ON entity.id=version.entity_id
+			WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$2)
+			  AND entity.deleted_at IS NULL AND version.build_id=$1
+		)
 		SELECT
-			(SELECT count(*) FROM catalog_item_stats),
-			(SELECT count(*) FROM catalog_item_effects),
-			(SELECT count(*) FROM catalog_item_acquisition_sources),
-			(SELECT count(*) FROM catalog_spell_effects),
-			(SELECT count(*) FROM catalog_talent_spell_relations),
-			(SELECT count(*) FROM catalog_spell_owners),
-			(SELECT count(*) FROM catalog_profession_recipes),
-			(SELECT count(*) FROM catalog_recipe_reagents),
-			(SELECT count(*) FROM catalog_recipe_outputs)`).Scan(
+			(SELECT count(*) FROM catalog_item_stats fact WHERE fact.version_id IN (SELECT id FROM current_versions)),
+			(SELECT count(*) FROM catalog_item_effects fact WHERE fact.version_id IN (SELECT id FROM current_versions)),
+			(SELECT count(*) FROM catalog_item_acquisition_sources fact WHERE fact.version_id IN (SELECT id FROM current_versions)),
+			(SELECT count(*) FROM catalog_spell_effects fact WHERE fact.spell_version_id IN (SELECT id FROM current_versions)),
+			(SELECT count(*) FROM catalog_talent_spell_relations fact
+				WHERE fact.talent_version_id IN (SELECT id FROM current_versions)
+				   OR fact.spell_version_id IN (SELECT id FROM current_versions)),
+			(SELECT count(*) FROM catalog_spell_owners fact WHERE fact.spell_version_id IN (SELECT id FROM current_versions)),
+			(SELECT count(*) FROM catalog_profession_recipes fact
+				WHERE fact.profession_version_id IN (SELECT id FROM current_versions)
+				   OR fact.recipe_version_id IN (SELECT id FROM current_versions)),
+			(SELECT count(*) FROM catalog_recipe_reagents fact WHERE fact.recipe_version_id IN (SELECT id FROM current_versions)),
+			(SELECT count(*) FROM catalog_recipe_outputs fact WHERE fact.recipe_version_id IN (SELECT id FROM current_versions))`, result.Build.ID, product).Scan(
 		&result.Facts.ItemStats, &result.Facts.ItemEffects, &result.Facts.AcquisitionSources,
 		&result.Facts.SpellEffects, &result.Facts.TalentSpellLinks, &result.Facts.SpellOwners,
 		&result.Facts.ProfessionRecipes, &result.Facts.RecipeReagents, &result.Facts.RecipeOutputs,
