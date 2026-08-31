@@ -385,6 +385,18 @@ func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, st
 					return nil
 				})
 				if err != nil {
+					var unavailable *wago.UnavailableError
+					if errors.As(err, &unavailable) {
+						if markErr := store.MarkArtifactUnavailable(context.WithoutCancel(ctx), artifactID, unavailable.Error()); markErr != nil {
+							return markErr
+						}
+						if recordErr := recordDB2Unavailable(context.WithoutCancel(ctx), db, ic, artifactID, table, locale, sourceURL, unavailable.Error()); recordErr != nil {
+							return recordErr
+						}
+						finalized = true
+						slog.Warn("DB2 table is unavailable for build; recorded explicit source gap", "table", table, "locale", locale, "build", opts.version, "error", unavailable)
+						return nil
+					}
 					return fmt.Errorf("import %s (%s): %w", table, locale, err)
 				}
 				if err := flush(); err != nil {
@@ -414,6 +426,46 @@ func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, st
 		}
 	}
 	return nil
+}
+
+// recordDB2Unavailable keeps a denominator row for a source export that is
+// explicitly absent. The zero denominator is marked with availability metadata
+// so completeness reports cannot mistake it for a successful non-empty export.
+func recordDB2Unavailable(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	ic catalogimport.ImportContext,
+	artifactID uuid.UUID,
+	table, locale, sourceURL, reason string,
+) error {
+	return pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
+		var expectationID uuid.UUID
+		if err := tx.QueryRow(ctx, `
+			INSERT INTO catalog_completeness_expectations(
+				product_id,build_id,scope_key,entity_type,locale,source,expected_count,
+				source_artifact_id,attributes,observed_at
+			) VALUES($1,$2,$3,'db2_row',$4,'wago_tools',0,$5,
+				jsonb_build_object('availability','unavailable','table',$6::text,'source_url',$7::text,'reason',$8::text),now())
+			ON CONFLICT(build_id,scope_key,locale,source) DO UPDATE SET
+				product_id=EXCLUDED.product_id,expected_count=0,source_artifact_id=EXCLUDED.source_artifact_id,
+				expected_content_hash=NULL,attributes=EXCLUDED.attributes,observed_at=now()
+			RETURNING id`, ic.ProductID, ic.BuildID, "db2."+strings.ToLower(table), locale, artifactID, table, sourceURL, reason).Scan(&expectationID); err != nil {
+			return fmt.Errorf("record unavailable DB2 expectation for %s (%s): %w", table, locale, err)
+		}
+		if _, err := tx.Exec(ctx, `
+			DELETE FROM catalog_completeness_exclusions
+			WHERE expectation_id=$1 AND attributes->>'managed_by'='db2-import'`, expectationID); err != nil {
+			return fmt.Errorf("clear unavailable DB2 exclusions for %s (%s): %w", table, locale, err)
+		}
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO catalog_completeness_measurements(
+				expectation_id,imported_count,excluded_count,missing_count,invalid_count,status,coverage_percent,details
+			) VALUES($1,0,0,0,0,'complete',100,
+				jsonb_build_object('availability','unavailable','table',$2::text,'source_url',$3::text,'reason',$4::text))`, expectationID, table, sourceURL, reason); err != nil {
+			return fmt.Errorf("record unavailable DB2 measurement for %s (%s): %w", table, locale, err)
+		}
+		return nil
+	})
 }
 
 func recordDB2Completeness(

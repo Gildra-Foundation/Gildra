@@ -306,6 +306,8 @@ func carryForwardOfficialLocalizations(ctx context.Context, tx pgx.Tx) (int64, e
 			JOIN game_entities target ON target.entity_type=document.entity_type
 				AND target.external_id=document.external_id AND target.deleted_at IS NULL
 			JOIN game_entity_versions target_version ON target_version.id=target.latest_version_id
+			JOIN game_entity_localizations localized ON localized.version_id=target_version.id
+				AND localized.locale=document.locale
 			JOIN game_builds target_build ON target_build.id=target_version.build_id
 			WHERE document.source='blizzard_api' AND document.locale IN ('en_US','ru_RU')
 			  AND source_build.product_id=target.product_id
@@ -346,6 +348,8 @@ func carryForwardOfficialLocalizations(ctx context.Context, tx pgx.Tx) (int64, e
 			JOIN game_entities target ON target.entity_type=document.entity_type
 				AND target.external_id=document.external_id AND target.deleted_at IS NULL
 			JOIN game_entity_versions target_version ON target_version.id=target.latest_version_id
+			JOIN game_entity_localizations localized ON localized.version_id=target_version.id
+				AND localized.locale=document.locale
 			JOIN game_builds target_build ON target_build.id=target_version.build_id
 			WHERE document.source='blizzard_api' AND document.locale IN ('en_US','ru_RU')
 			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL

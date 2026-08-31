@@ -20,6 +20,25 @@ var buildPattern = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+$`)
 
 const defaultResponseHeaderTimeout = 2 * time.Minute
 
+// ErrUnavailable identifies a build/table/locale combination that Wago does
+// not publish. A missing DB2 export is different from a transient network
+// failure: callers may record it as an explicit source gap and continue with
+// the remaining tables while keeping the gap visible to quality reports.
+var ErrUnavailable = errors.New("wago artifact unavailable")
+
+type UnavailableError struct {
+	Table      string
+	Build      string
+	Locale     string
+	StatusCode int
+}
+
+func (e *UnavailableError) Error() string {
+	return fmt.Sprintf("Wago DB2 export unavailable: table=%s build=%s locale=%s status=%d", e.Table, e.Build, e.Locale, e.StatusCode)
+}
+
+func (e *UnavailableError) Unwrap() error { return ErrUnavailable }
+
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
@@ -146,6 +165,11 @@ func (c *Client) RowsWithProof(
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		_, _ = io.CopyN(io.Discard, resp.Body, 4096)
+		if resp.StatusCode == http.StatusNotFound {
+			return 0, ContentProof{}, &UnavailableError{
+				Table: table, Build: build, Locale: locale, StatusCode: resp.StatusCode,
+			}
+		}
 		return 0, ContentProof{}, fmt.Errorf("Wago CSV returned %s", resp.Status)
 	}
 

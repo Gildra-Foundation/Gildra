@@ -3,6 +3,7 @@ package wago
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -47,6 +48,25 @@ func TestRowsRetriesTransientStatus(t *testing.T) {
 	}
 	if count != 1 || requests.Load() != 2 {
 		t.Fatalf("count=%d requests=%d", count, requests.Load())
+	}
+}
+
+func TestRowsReportsUnavailableExport(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "no export for this build", http.StatusNotFound)
+	}))
+	t.Cleanup(server.Close)
+	client := New(Config{BaseURL: server.URL, RetryDelay: time.Millisecond})
+	_, err := client.Rows(t.Context(), "ItemXItemEffect", "5.5.4.67732", "enUS", 0, func(map[string]string) error {
+		return nil
+	})
+	if err == nil || !errors.Is(err, ErrUnavailable) {
+		t.Fatalf("error = %v, want ErrUnavailable", err)
+	}
+	var unavailable *UnavailableError
+	if !errors.As(err, &unavailable) || unavailable.Table != "ItemXItemEffect" || unavailable.Build != "5.5.4.67732" {
+		t.Fatalf("unavailable error = %#v", unavailable)
 	}
 }
 
