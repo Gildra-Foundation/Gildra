@@ -154,6 +154,7 @@ services:
     restart: unless-stopped
     environment:
       API_INTERNAL_URL: http://api:8080
+      CATALOG_ACCESS_MODE: ${CATALOG_ACCESS_MODE:-public}
       INDEXNOW_KEY: ${INDEXNOW_KEY}
       NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
