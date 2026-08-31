@@ -9,6 +9,17 @@ an optional enrichment source with `-source battlenet`.
 
 For Wago.Tools, the current Retail build is detected from the CSV response and
 pinned for the complete run. You can override it with `-version 12.1.0.69404`.
+Classic builds are always explicitly pinned because each edition has its own
+client line. Example repair/refresh plans are:
+
+```powershell
+docker compose run --rm --entrypoint catalog-pipeline api -mode dry_run -profile classic-foundation -product wow_classic -version 5.5.4.67732
+docker compose run --rm --entrypoint catalog-pipeline api -mode dry_run -profile classic-era-foundation -product wow_classic_era -version 1.15.9.69109
+docker compose run --rm --entrypoint catalog-pipeline api -mode dry_run -profile classic-hardcore-foundation -product wow_classic_hardcore -version 1.15.9.69109
+```
+
+The version is not shared between products even when Era and Hardcore currently
+use the same client build; their entity and release histories remain separate.
 
 ## Foundation profiles
 
@@ -16,9 +27,12 @@ pinned for the complete run. You can override it with `-version 12.1.0.69404`.
 `retail-foundation` with Wago DB2 transport, the complete DB2 projection,
 Blizzard Game Data/Media APIs and the verified listfile. Classic, Classic Era
 and Hardcore use independent `classic-foundation`, `classic-era-foundation`
-and `classic-hardcore-foundation` profiles with their own pinned DB2/listfile
-builds. Raidbots and every tier-list dataset are outside all foundation
-profiles and cannot be selected by a production foundation run.
+and `classic-hardcore-foundation` profiles with their own pinned DB2 builds,
+the official Blizzard Game Data/Media API and the verified listfile. This
+keeps the four editions in separate product identities while allowing the
+Classic profiles to enrich registry-only quests, localized descriptions and
+official media. Raidbots and every tier-list dataset are outside all
+foundation profiles and cannot be selected by a production foundation run.
 
 Preview the exact stages without importing data:
 
