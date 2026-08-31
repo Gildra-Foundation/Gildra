@@ -984,7 +984,7 @@ components:
             additionalProperties: true
     GameProduct:
       type: object
-      required: [id, slug, name]
+      required: [id, slug, name, entityCount, publishedEntityCount]
       properties:
         id:
           type: integer
@@ -1001,6 +1001,16 @@ components:
         buildVersion:
           type: string
           description: Active client version pinned to the product.
+        entityCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of non-deleted entities imported for the product.
+        publishedEntityCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of imported entities with a current published version pointer.
         publicRelease:
           type: boolean
           description: True only when an atomic catalog release is currently selected for public reads.

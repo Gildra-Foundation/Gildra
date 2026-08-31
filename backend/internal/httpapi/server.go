@@ -72,12 +72,14 @@ func (s *Server) ListGameProducts(ctx context.Context, _ api.ListGameProductsReq
 
 func toAPIProduct(product catalog.Product) api.GameProduct {
 	return api.GameProduct{
-		Id:            product.ID,
-		Slug:          product.Slug,
-		Name:          product.Name,
-		BuildNumber:   product.BuildNumber,
-		BuildVersion:  product.BuildVersion,
-		PublicRelease: pointer(product.PublicRelease),
+		Id:                   product.ID,
+		Slug:                 product.Slug,
+		Name:                 product.Name,
+		BuildNumber:          product.BuildNumber,
+		BuildVersion:         product.BuildVersion,
+		EntityCount:          product.EntityCount,
+		PublishedEntityCount: product.PublishedCount,
+		PublicRelease:        pointer(product.PublicRelease),
 	}
 }
 
