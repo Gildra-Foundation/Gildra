@@ -44,7 +44,14 @@ type spellEffectValue struct {
 }
 
 func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity) error {
-	if entity == nil || entity.BuildID == nil || (entity.Type != "spell" && entity.Type != "talent" && entity.Type != "pvp_talent") {
+	if entity == nil || entity.BuildID == nil {
+		return nil
+	}
+	// Items can carry effect blocks whose text belongs to a referenced spell
+	// (for example an on-use enchantment). Resolve those blocks too; without
+	// this branch the public item tooltip keeps raw `$s1`/`$d` tokens even when
+	// the spell's build-pinned values are available.
+	if entity.Type != "spell" && entity.Type != "talent" && entity.Type != "pvp_talent" && entity.Tooltip == nil {
 		return nil
 	}
 	if entity.RawDescription == "" {
@@ -93,7 +100,28 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		if !ok || raw == "" {
 			continue
 		}
-		resolved := resolveDescriptionText(raw, currentSpellID, values, descriptionLocale(raw, entity.Locale))
+		blockSpellID := int64Value(block["spell_id"])
+		blockValues := values
+		if blockSpellID > 0 {
+			// A block may use current-spell tokens (`$s1`, `$d`) without an
+			// explicit ID in the text. Load the referenced spell as the current
+			// context while retaining all values already discovered for nested
+			// `$123s1`/`$@spelldesc123` expressions.
+			loaded := map[int64]spellDescriptionValues(nil)
+			var err error
+			if _, alreadyLoaded := values[blockSpellID]; !alreadyLoaded {
+				loaded, err = s.loadReferencedSpellDescriptionValues(ctx, entity.Product, entity.Locale, *entity.BuildID, blockSpellID, []string{raw})
+			}
+			if err != nil {
+				return err
+			}
+			if len(loaded) > 0 {
+				blockValues = make(map[int64]spellDescriptionValues, len(values)+len(loaded))
+				maps.Copy(blockValues, values)
+				maps.Copy(blockValues, loaded)
+			}
+		}
+		resolved := resolveDescriptionText(raw, blockSpellIDOrDefault(blockSpellID, currentSpellID), blockValues, descriptionLocale(raw, entity.Locale))
 		if resolved == raw {
 			continue
 		}
@@ -103,6 +131,13 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, resolved)
 	}
 	return nil
+}
+
+func blockSpellIDOrDefault(blockSpellID, fallback int64) int64 {
+	if blockSpellID > 0 {
+		return blockSpellID
+	}
+	return fallback
 }
 
 func (s *Service) loadReferencedSpellDescriptionValues(ctx context.Context, product, locale string, buildID, currentSpellID int64, texts []string) (map[int64]spellDescriptionValues, error) {

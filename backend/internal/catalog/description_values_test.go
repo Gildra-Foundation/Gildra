@@ -100,6 +100,15 @@ func TestResolveDescriptionTextResolvesSpellRadius(t *testing.T) {
 	}
 }
 
+func TestBlockSpellIDOverridesEntityContext(t *testing.T) {
+	if got := blockSpellIDOrDefault(214870, 0); got != 214870 {
+		t.Fatalf("block spell id was not selected: %d", got)
+	}
+	if got := blockSpellIDOrDefault(0, 133); got != 133 {
+		t.Fatalf("entity spell id fallback was not selected: %d", got)
+	}
+}
+
 func TestDescriptionLocaleDoesNotMixFallbackEnglishWithRussianUnits(t *testing.T) {
 	if got := descriptionLocale("Deals damage for $10d.", "ru_RU"); got != "en_US" {
 		t.Fatalf("expected English fallback, got %q", got)

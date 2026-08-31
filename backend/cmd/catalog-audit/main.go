@@ -29,6 +29,8 @@ type coverageReport struct {
 	RussianDescribed           int64  `json:"russianDescribed"`
 	EnglishUnresolvedTemplates int64  `json:"englishUnresolvedTemplates"`
 	RussianUnresolvedTemplates int64  `json:"russianUnresolvedTemplates"`
+	EnglishTooltips            int64  `json:"englishTooltips"`
+	RussianTooltips            int64  `json:"russianTooltips"`
 	Icons                      int64  `json:"icons"`
 	OfficialDocs               int64  `json:"officialDocuments"`
 }
@@ -101,6 +103,9 @@ func run() error {
 		return fmt.Errorf("find current build: %w", err)
 	}
 
+	// Audit the published projection, not the latest staging version.  A fresh
+	// import may legitimately have a newer latest_version_id while the public
+	// library still serves the previous atomically published version.
 	rows, err := db.Query(ctx, `
 		WITH official AS (
 			SELECT document.entity_type,document.external_id,count(*) AS document_count
@@ -119,11 +124,21 @@ func run() error {
 			count(*) FILTER (WHERE NULLIF(BTRIM(ru.description),'') IS NOT NULL),
 			count(*) FILTER (WHERE en.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'),
 			count(*) FILTER (WHERE ru.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'),
+			count(*) FILTER (WHERE EXISTS (
+				SELECT 1 FROM catalog_entity_tooltips tooltip
+				WHERE tooltip.version_id=version.id AND tooltip.locale='en_US'
+				  AND (NULLIF(BTRIM(tooltip.plain_text),'') IS NOT NULL OR jsonb_array_length(tooltip.blocks)>0)
+			)),
+			count(*) FILTER (WHERE EXISTS (
+				SELECT 1 FROM catalog_entity_tooltips tooltip
+				WHERE tooltip.version_id=version.id AND tooltip.locale='ru_RU'
+				  AND (NULLIF(BTRIM(tooltip.plain_text),'') IS NOT NULL OR jsonb_array_length(tooltip.blocks)>0)
+			)),
 			count(*) FILTER (WHERE icon.external_id IS NOT NULL),
 			count(*) FILTER (WHERE official.external_id IS NOT NULL)
 		FROM game_entities entity
 		JOIN game_products product ON product.id=entity.product_id AND product.slug=$2
-		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		JOIN game_entity_versions version ON version.id=entity.published_version_id
 		LEFT JOIN game_entity_localizations en ON en.version_id=version.id AND en.locale='en_US'
 		LEFT JOIN game_entity_localizations ru ON ru.version_id=version.id AND ru.locale='ru_RU'
 		LEFT JOIN catalog_entity_icons icon ON icon.build_id=version.build_id
@@ -140,7 +155,8 @@ func run() error {
 		var item coverageReport
 		if err := rows.Scan(&item.EntityType, &item.Entities, &item.EnglishNames, &item.RussianNames,
 			&item.EnglishDescribed, &item.RussianDescribed, &item.EnglishUnresolvedTemplates,
-			&item.RussianUnresolvedTemplates, &item.Icons, &item.OfficialDocs); err != nil {
+			&item.RussianUnresolvedTemplates, &item.EnglishTooltips, &item.RussianTooltips,
+			&item.Icons, &item.OfficialDocs); err != nil {
 			return fmt.Errorf("scan catalog coverage: %w", err)
 		}
 		result.Coverage = append(result.Coverage, item)
