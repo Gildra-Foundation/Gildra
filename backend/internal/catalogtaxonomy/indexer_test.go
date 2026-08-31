@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-func TestScopedTooltipSQLFiltersPublishedProduct(t *testing.T) {
+func TestScopedTooltipSQLFiltersCandidateProduct(t *testing.T) {
 	sql := scopedTooltipSQL()
-	if !strings.Contains(sql, "JOIN game_entity_versions v ON v.id=e.published_version_id") {
-		t.Fatal("scoped tooltip SQL does not use the published version")
+	if !strings.Contains(sql, "JOIN game_entity_versions v ON v.id=e.latest_version_id") {
+		t.Fatal("scoped tooltip SQL does not use the candidate version")
 	}
 	if !strings.Contains(sql, "WHERE e.product_id=$1 AND e.entity_type IN ('item','spell','talent','pvp_talent')") {
 		t.Fatal("scoped tooltip SQL does not constrain the product")
