@@ -301,13 +301,24 @@ func buildPlan(options Options) []Stage {
 			plan = append(plan, Stage{Key: "import-listfile", Executable: "listfile-import", Arguments: args})
 		}
 	}
+	indexArgs := func(mode string) []string {
+		return []string{mode, "-confirm", "-product", options.Product}
+	}
+	projectionMode := "-confirm"
+	if isClassicProduct(options.Product) {
+		// The historical taxonomy classifier is Retail-specific (it derives
+		// class/spec and collection facets from Retail datasets). Classic
+		// products still receive the product-neutral tooltip/icon/relationship
+		// projection, while avoiding an accidental Retail category rewrite.
+		projectionMode = "-tooltips-only"
+	}
 	plan = append(plan,
-		Stage{Key: "rebuild-descriptions", Executable: "catalog-index", Arguments: []string{"-descriptions-only", "-confirm"}},
-		Stage{Key: "rebuild-item-variants", Executable: "catalog-index", Arguments: []string{"-variants-only", "-confirm"}},
-		Stage{Key: "rebuild-spell-effects", Executable: "catalog-index", Arguments: []string{"-spell-effects-only", "-confirm"}},
-		Stage{Key: "rebuild-projections", Executable: "catalog-index", Arguments: []string{"-confirm"}},
-		Stage{Key: "rebuild-entity-graph", Executable: "catalog-index", Arguments: []string{"-graph-only", "-confirm"}},
-		Stage{Key: "refresh-coverage", Executable: "catalog-index", Arguments: []string{"-stats-only", "-confirm"}},
+		Stage{Key: "rebuild-descriptions", Executable: "catalog-index", Arguments: indexArgs("-descriptions-only")},
+		Stage{Key: "rebuild-item-variants", Executable: "catalog-index", Arguments: indexArgs("-variants-only")},
+		Stage{Key: "rebuild-spell-effects", Executable: "catalog-index", Arguments: indexArgs("-spell-effects-only")},
+		Stage{Key: "rebuild-projections", Executable: "catalog-index", Arguments: indexArgs(projectionMode)},
+		Stage{Key: "rebuild-entity-graph", Executable: "catalog-index", Arguments: indexArgs("-graph-only")},
+		Stage{Key: "refresh-coverage", Executable: "catalog-index", Arguments: indexArgs("-stats-only")},
 		Stage{Key: "validate-catalog"},
 		Stage{Key: "publication-gate"},
 	)
@@ -519,7 +530,11 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
 			result.RunID, "release-publish", jsonObject(map[string]any{"release_id": result.ReleaseID}))
 		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='refresh-post-publish'`, result.RunID)
-		if err := catalog.NewService(r.DB).RefreshReadModels(ctx, nil); err != nil {
+		productID, productErr := r.productID(ctx, options.Product)
+		if productErr != nil {
+			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "product_lookup_failed", productErr)
+		}
+		if err := catalog.NewService(r.DB).RefreshReadModels(ctx, &productID); err != nil {
 			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "post_publish_read_model_refresh_failed", err)
 		}
 		if _, err := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
@@ -551,6 +566,14 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		return result, ErrPublicationBlocked
 	}
 	return result, nil
+}
+
+func (r *Runner) productID(ctx context.Context, product string) (int16, error) {
+	var productID int16
+	if err := r.DB.QueryRow(ctx, `SELECT id FROM game_products WHERE slug=$1`, strings.TrimSpace(strings.ToLower(product))).Scan(&productID); err != nil {
+		return 0, fmt.Errorf("resolve product %q: %w", product, err)
+	}
+	return productID, nil
 }
 
 func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product, recoveryPolicy string) error {

@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
@@ -25,6 +26,7 @@ func main() {
 
 func run() error {
 	var databaseURL string
+	var product string
 	var confirm bool
 	var tooltipsOnly bool
 	var itemsOnly bool
@@ -43,6 +45,7 @@ func run() error {
 	var graphOnly bool
 	var statsOnly bool
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&product, "product", "wow", "game_products slug to refresh")
 	flag.BoolVar(&confirm, "confirm", false, "rebuild taxonomy and tooltips")
 	flag.BoolVar(&tooltipsOnly, "tooltips-only", false, "rebuild tooltip projections without taxonomy")
 	flag.BoolVar(&itemsOnly, "items-only", false, "rebuild item taxonomy and tooltip projections")
@@ -74,6 +77,14 @@ func run() error {
 	if err := db.Ping(ctx); err != nil {
 		return fmt.Errorf("ping catalog database: %w", err)
 	}
+	product = strings.TrimSpace(strings.ToLower(product))
+	if product == "" {
+		return errors.New("product is required")
+	}
+	var productID int16
+	if err := db.QueryRow(ctx, `SELECT id FROM game_products WHERE slug=$1`, product).Scan(&productID); err != nil {
+		return fmt.Errorf("resolve product %q: %w", product, err)
+	}
 	if !confirm {
 		var items, trees int64
 		if err := db.QueryRow(ctx, `SELECT count(*) FILTER (WHERE entity_type='item'), count(*) FILTER (WHERE entity_type='talent_tree') FROM game_entities WHERE deleted_at IS NULL`).Scan(&items, &trees); err != nil {
@@ -93,7 +104,7 @@ func run() error {
 		return errors.New("index rebuild modes are mutually exclusive")
 	}
 	if statsOnly {
-		if err := catalog.NewService(db).RefreshReadModels(ctx, nil); err != nil {
+		if err := catalog.NewService(db).RefreshReadModels(ctx, &productID); err != nil {
 			return err
 		}
 	} else if tooltipsOnly {
@@ -133,7 +144,7 @@ func run() error {
 		return err
 	}
 	if !statsOnly {
-		if err := catalog.NewService(db).RefreshReadModels(ctx, nil); err != nil {
+		if err := catalog.NewService(db).RefreshReadModels(ctx, &productID); err != nil {
 			return err
 		}
 	}
@@ -167,9 +178,9 @@ func run() error {
 		FROM game_products product
 		JOIN LATERAL (SELECT candidate.id FROM game_builds candidate WHERE candidate.product_id=product.id AND candidate.is_active ORDER BY candidate.build_number DESC LIMIT 1) build ON true
 		LEFT JOIN LATERAL (SELECT candidate.id FROM catalog_snapshots candidate WHERE candidate.product_id=product.id AND candidate.build_id=build.id AND candidate.status='published' ORDER BY candidate.published_at DESC NULLS LAST,candidate.created_at DESC LIMIT 1) snapshot ON true
-		WHERE product.slug='wow'
+		WHERE product.slug=$3
 		ON CONFLICT(product_id,projector) DO UPDATE SET build_id=EXCLUDED.build_id,snapshot_id=EXCLUDED.snapshot_id,
-			status='succeeded',metadata=EXCLUDED.metadata,started_at=EXCLUDED.started_at,completed_at=EXCLUDED.completed_at`, projector, metadata); err != nil {
+			status='succeeded',metadata=EXCLUDED.metadata,started_at=EXCLUDED.started_at,completed_at=EXCLUDED.completed_at`, projector, metadata, product); err != nil {
 		return fmt.Errorf("record projection watermark: %w", err)
 	}
 	return printJSON(output)
