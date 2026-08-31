@@ -422,6 +422,14 @@ export interface components {
             catalog: string;
             /** Format: uri */
             library: string;
+            editions?: components["schemas"]["APIIndexEdition"][];
+        };
+        APIIndexEdition: {
+            /** @enum {string} */
+            edition: "retail" | "classic" | "classic-era" | "hardcore";
+            product: string;
+            /** Format: uri */
+            base: string;
         };
         Problem: {
             /** Format: uri */
@@ -452,6 +460,15 @@ export interface components {
             id: number;
             slug: string;
             name: string;
+            /**
+             * Format: int32
+             * @description Active client build number for this product, when a build has been imported.
+             */
+            buildNumber?: number;
+            /** @description Active client version pinned to the product. */
+            buildVersion?: string;
+            /** @description True only when an atomic catalog release is currently selected for public reads. */
+            publicRelease?: boolean;
         };
         LibraryDataset: {
             slug: string;

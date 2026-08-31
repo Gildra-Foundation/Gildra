@@ -17,9 +17,12 @@ import (
 var ErrNotFound = errors.New("game entity not found")
 
 type Product struct {
-	ID   int32
-	Slug string
-	Name string
+	ID            int32
+	Slug          string
+	Name          string
+	BuildNumber   *int32
+	BuildVersion  *string
+	PublicRelease bool
 }
 
 type Entity struct {
@@ -122,9 +125,16 @@ func NewService(postgres *pgxpool.Pool) *Service {
 
 func (s *Service) Products(ctx context.Context) ([]Product, error) {
 	rows, err := s.postgres.Query(ctx, `
-		SELECT id, slug, name
-		FROM game_products
-		ORDER BY id`)
+		SELECT product.id, product.slug, product.name,
+			active_build.build_number, active_build.version,
+			EXISTS (
+				SELECT 1 FROM catalog_public_release_state public_state
+				WHERE public_state.product_id=product.id
+			) AS public_release
+		FROM game_products product
+		LEFT JOIN game_builds active_build
+			ON active_build.product_id=product.id AND active_build.is_active
+		ORDER BY product.id`)
 	if err != nil {
 		return nil, fmt.Errorf("list game products: %w", err)
 	}
@@ -133,7 +143,8 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 	products := make([]Product, 0, 8)
 	for rows.Next() {
 		var product Product
-		if err := rows.Scan(&product.ID, &product.Slug, &product.Name); err != nil {
+		if err := rows.Scan(&product.ID, &product.Slug, &product.Name, &product.BuildNumber,
+			&product.BuildVersion, &product.PublicRelease); err != nil {
 			return nil, fmt.Errorf("scan game product: %w", err)
 		}
 		products = append(products, product)

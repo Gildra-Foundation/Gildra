@@ -993,6 +993,17 @@ components:
           type: string
         name:
           type: string
+        buildNumber:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Active client build number for this product, when a build has been imported.
+        buildVersion:
+          type: string
+          description: Active client version pinned to the product.
+        publicRelease:
+          type: boolean
+          description: True only when an atomic catalog release is currently selected for public reads.
     LibraryDataset:
       type: object
       required: [slug, product, entityType, categoryPath, group, iconSymbol, sortOrder, name, description, entityCount, localizedCount, verifiedLocalizedCount, tooltipCount, imageCount, applicability, applicabilityReason, freshness, freshnessReason]

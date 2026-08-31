@@ -103,6 +103,9 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const selectedProduct = products.find((item) => item.slug === product);
+  const selectedBuildVersion = selectedProduct?.buildVersion || (product === "wow" ? buildVersion : "");
+
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true); setError("");
     const params = new URLSearchParams({ product, locale: "ru_RU", limit: "24", includeTotal: "true" });
@@ -155,7 +158,7 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
   return <div className="flex flex-col gap-5">
     <section className="border border-[#2d3341] bg-[#11151d] p-5 sm:p-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div><p className="text-[9px] uppercase tracking-[.16em] text-[#9a824a]">World of Warcraft · {buildVersion || "сборка не определена"}</p><h2 className="mt-2 font-[var(--display)] text-2xl font-semibold">Структурированная база Warcraft</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-[#7f899d]">Предметы, заклинания, задания, NPC, рецепты, маунты и другие сущности. В интерфейс попадают только опубликованные версии данных.</p></div>
+        <div><p className="text-[9px] uppercase tracking-[.16em] text-[#9a824a]">World of Warcraft · {selectedProduct?.name || "редакция не определена"}{selectedBuildVersion ? ` · ${selectedBuildVersion}` : ""}</p><h2 className="mt-2 font-[var(--display)] text-2xl font-semibold">Структурированная база Warcraft</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-[#7f899d]">Предметы, заклинания, задания, NPC, рецепты, маунты и другие сущности. В интерфейс попадают только опубликованные версии данных.</p></div>
         <div className="grid gap-2 sm:grid-cols-2">
           <label className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Версия игры<select value={product} onChange={(event) => { setProduct(event.target.value); setType(""); setCursor(""); setHistory([]); }} className="mt-1 block h-10 min-w-52 border border-[#343b4a] bg-[#0b0f16] px-3 text-xs normal-case tracking-normal text-[#d8dde7] outline-none focus:border-[#9c8044]">{products.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}</select></label>
           <div className="border border-[#343b4a] bg-[#0b0f16] px-4 py-2"><span className="block text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Найдено</span><strong className="mt-1 block font-mono text-sm text-[#d8bd79]">{(page.pagination.total ?? 0).toLocaleString("ru-RU")}</strong></div>
