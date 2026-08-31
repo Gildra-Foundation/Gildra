@@ -49,8 +49,12 @@ type MediaCandidate struct {
 // MissingBattleNetIDs returns build-pinned entities whose localized description
 // still needs official API enrichment. When includeMedia is true (the canonical
 // English pass), entities without a verified icon observation are included as
-// well. The query is deliberately scoped to the import snapshot so an
-// enrichment run cannot accidentally update a different build or product.
+// well. The query is deliberately scoped to the import snapshot (or, for a
+// staged release, every snapshot belonging to that release) so an enrichment
+// run cannot accidentally update a different build or product. Falling back
+// to the published version keeps this command useful for an isolated import
+// without a release while still allowing the production pipeline to enrich
+// the versions produced by earlier stages of the same release.
 func (s *Store) MissingBattleNetIDs(
 	ctx context.Context,
 	ic ImportContext,
@@ -71,23 +75,33 @@ func (s *Store) MissingBattleNetIDs(
 		return nil, errors.New("limit cannot be negative")
 	}
 	rows, err := s.db.Query(ctx, `
-		WITH candidate_versions AS (
-			SELECT entity.id,entity.external_id,version.id AS version_id
+		WITH candidate_versions_raw AS (
+			SELECT entity.id,entity.external_id,version.id AS version_id,
+				version.revision,snapshot.created_at AS snapshot_created_at,0 AS source_rank
 			FROM game_entity_versions version
 			JOIN game_entities entity ON entity.id=version.entity_id
+			LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
 			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
-			  AND version.build_id=$3 AND version.snapshot_id=$4
+			  AND version.build_id=$3
+			  AND (version.snapshot_id=$4 OR ($5::uuid IS NOT NULL AND snapshot.release_id=$5))
 			UNION ALL
-			SELECT entity.id,entity.external_id,version.id AS version_id
+			SELECT entity.id,entity.external_id,version.id AS version_id,
+				version.revision,snapshot.created_at AS snapshot_created_at,1 AS source_rank
 			FROM game_entities entity
 			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
 			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
 			  AND version.build_id=$3
 			  AND NOT EXISTS (
 				SELECT 1 FROM game_entity_versions candidate
+				LEFT JOIN catalog_snapshots candidate_snapshot ON candidate_snapshot.id=candidate.snapshot_id
 				WHERE candidate.entity_id=entity.id AND candidate.build_id=$3
-				  AND candidate.snapshot_id=$4
+				  AND (candidate.snapshot_id=$4 OR ($5::uuid IS NOT NULL AND candidate_snapshot.release_id=$5))
 				  )
+		), candidate_versions AS (
+			SELECT DISTINCT ON (id) id,external_id,version_id
+			FROM candidate_versions_raw
+			ORDER BY id,source_rank,snapshot_created_at DESC NULLS LAST,revision DESC
 		), cached_icons AS (
 			SELECT DISTINCT media.entity_id
 			FROM catalog_entity_media media
@@ -97,16 +111,16 @@ func (s *Store) MissingBattleNetIDs(
 		SELECT candidate.external_id
 		FROM candidate_versions candidate
 		LEFT JOIN game_entity_localizations localization
-		  ON localization.version_id=candidate.version_id AND localization.locale=$5
+		  ON localization.version_id=candidate.version_id AND localization.locale=$6
 		LEFT JOIN cached_icons ON cached_icons.entity_id=candidate.id
 		WHERE (
 			NULLIF(BTRIM(localization.description),'') IS NULL
 			OR localization.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'
-			OR ($6::boolean AND cached_icons.entity_id IS NULL)
+			OR ($7::boolean AND cached_icons.entity_id IS NULL)
 		)
 		ORDER BY candidate.external_id
-		LIMIT CASE WHEN $7::int > 0 THEN $7::int ELSE 2147483647 END`,
-		ic.ProductID, entityType, ic.BuildID, ic.SnapshotID, locale, includeMedia, limit)
+		LIMIT CASE WHEN $8::int > 0 THEN $8::int ELSE 2147483647 END`,
+		ic.ProductID, entityType, ic.BuildID, ic.SnapshotID, ic.ReleaseID, locale, includeMedia, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list missing Battle.net %s enrichment targets: %w", entityType, err)
 	}
