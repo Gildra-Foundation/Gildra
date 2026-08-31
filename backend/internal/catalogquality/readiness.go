@@ -194,18 +194,19 @@ func EvaluateReadinessWithRecoveryPolicy(
 
 	var unprovenEnglish, russianFallbacks, unexplainedRussian int64
 	if err := db.QueryRow(ctx, `
-		WITH ready_localizations AS (
-			SELECT DISTINCT proof.version_id,proof.locale
-			FROM catalog_entity_localization_artifacts proof
-			JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
-			WHERE artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
-			  AND (artifact.locale='' OR artifact.locale=proof.locale)
-		), current_versions AS (
-			SELECT entity.latest_version_id AS version_id
-			FROM game_entities entity
-			WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
-			  AND entity.deleted_at IS NULL AND entity.latest_version_id IS NOT NULL
-		), english_missing AS (
+	WITH current_versions AS MATERIALIZED (
+		SELECT entity.latest_version_id AS version_id
+		FROM game_entities entity
+		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+		  AND entity.deleted_at IS NULL AND entity.latest_version_id IS NOT NULL
+	), ready_localizations AS (
+		SELECT DISTINCT proof.version_id,proof.locale
+		FROM current_versions current
+		JOIN catalog_entity_localization_artifacts proof ON proof.version_id=current.version_id
+		JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
+		WHERE artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+		  AND (artifact.locale='' OR artifact.locale=proof.locale)
+	), english_missing AS (
 			SELECT current.version_id
 			FROM current_versions current
 			JOIN game_entity_localizations english ON english.version_id=current.version_id AND english.locale='en_US'
