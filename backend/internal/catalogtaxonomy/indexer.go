@@ -1275,10 +1275,13 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 		)
 		INSERT INTO catalog_entity_icons(
 			build_id,entity_type,external_id,icon_name,file_data_id,source_artifact_id,asset_source_artifact_id)
-		SELECT build_id,entity_type,external_id,COALESCE(file_icon,raidbots_icon,raidbots_spell_icon),
+		SELECT build_id,entity_type,external_id,
+			COALESCE(file_icon,raidbots_icon,raidbots_spell_icon,
+				CASE WHEN file_data_id IS NOT NULL THEN file_data_id::text END),
 			CASE WHEN file_icon IS NOT NULL THEN file_data_id END,source_artifact_id,
 			CASE WHEN file_icon IS NOT NULL THEN asset_source_artifact_id END
-		FROM resolved WHERE COALESCE(file_icon,raidbots_icon,raidbots_spell_icon) IS NOT NULL
+		FROM resolved
+		WHERE COALESCE(file_icon,raidbots_icon,raidbots_spell_icon,file_data_id::text) IS NOT NULL
 		ON CONFLICT(build_id,entity_type,external_id) DO UPDATE SET
 			icon_name=EXCLUDED.icon_name,file_data_id=EXCLUDED.file_data_id,
 			source_artifact_id=EXCLUDED.source_artifact_id,
