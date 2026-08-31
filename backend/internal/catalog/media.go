@@ -106,16 +106,18 @@ func tooltipEntityID(value any) (uuid.UUID, bool) {
 	}
 }
 
-// cachedIconURLs returns only immutable, locally cached media observations
-// that are valid for each entity's published build. Source URLs remain
-// provenance metadata and are never promoted to public image delivery URLs.
+// cachedIconURLs returns the best verified icon observation for each entity.
+// Locally cached bytes win; when caching has not completed yet, the reviewed
+// HTTPS source URL is returned so authenticated consumers can still render an
+// icon while the media worker retries the local copy.
 func (s *Service) cachedIconURLs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]string, error) {
 	result := make(map[uuid.UUID]string)
 	if len(ids) == 0 {
 		return result, nil
 	}
 	rows, err := s.postgres.Query(ctx, `
-		SELECT DISTINCT ON (media.entity_id) media.entity_id,media.cached_url
+		SELECT DISTINCT ON (media.entity_id) media.entity_id,
+			COALESCE(NULLIF(media.cached_url,''),media.source_url)
 		FROM catalog_entity_media media
 		JOIN game_entities entity ON entity.id=media.entity_id
 		JOIN game_entity_versions published ON published.id=entity.published_version_id
@@ -125,9 +127,12 @@ func (s *Service) cachedIconURLs(ctx context.Context, ids []uuid.UUID) (map[uuid
 		  AND media_build.product_id=entity.product_id
 		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
 		JOIN catalog_published_source_dependencies dependency ON dependency.source=media.source
-		WHERE media.entity_id=ANY($1::uuid[]) AND media.cache_status='cached'
-		  AND NULLIF(media.cached_url,'') IS NOT NULL
-		  AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL
+		WHERE media.entity_id=ANY($1::uuid[])
+		  AND (
+			(media.cache_status='cached' AND NULLIF(media.cached_url,'') IS NOT NULL
+			 AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL)
+			OR (media.cache_status='remote' AND media.source_url ~ '^https://')
+		  )
 		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL
 		  AND artifact.byte_size IS NOT NULL
 		  AND media_build.build_number<=published_build.build_number

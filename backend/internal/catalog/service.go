@@ -914,17 +914,21 @@ func (s *Service) enrichMedia(ctx context.Context, entities []*Entity) error {
 			  AND artifact.content_hash IS NOT NULL
 			  AND artifact.byte_size IS NOT NULL
 			  AND policy.review_status='reviewed'
-			  AND (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))
+			  AND (media.cache_status='remote' OR policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))
 			ORDER BY media.entity_id,media.media_kind,media.asset_key,media.locale,media.source,
 				media_build.build_number DESC,artifact.fetched_at DESC,media.updated_at DESC,media.id DESC
 		)
 		SELECT media.entity_id,media.media_kind,media.asset_key,
-			media.cached_url,media.source,media.source_url,
+			COALESCE(NULLIF(media.cached_url,''),media.source_url),media.source,media.source_url,
 			media.locale,media.mime_type,media.cache_status,media.file_data_id,
 			media.width,media.height,media.is_primary
 		FROM proved_media media
-		WHERE media.cache_status='cached' AND NULLIF(media.cached_url,'') IS NOT NULL
-		  AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL
+		WHERE (
+			media.cache_status='cached' AND NULLIF(media.cached_url,'') IS NOT NULL
+			AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL
+		) OR (
+			media.cache_status='remote' AND media.source_url ~ '^https://'
+		)
 		ORDER BY media.entity_id,(media.media_kind='icon') DESC,media.is_primary DESC,
 			media.media_kind,media.asset_key,media.id`, ids)
 	if err != nil {
