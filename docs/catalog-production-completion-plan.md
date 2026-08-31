@@ -118,14 +118,20 @@ gaps are visible and trend toward zero.
 - Continue collecting official remote URLs immediately.
 - Add a separate streaming media worker. It must enforce HTTPS host allowlists,
   response size and MIME limits, timeouts, retries, and SHA-256 while streaming.
-- Store image bytes in S3-compatible object storage, not PostgreSQL. PostgreSQL
-  stores FileDataID, dimensions, MIME, hash, remote URL, and object key.
+- Store image bytes outside PostgreSQL on the dedicated encrypted media volume
+  (`/var/lib/gildra/catalog-media`) used by the current OVH production host.
+  PostgreSQL stores FileDataID, dimensions, MIME, hash, remote URL, and object
+  key. S3/R2 remains an optional disaster-recovery target, not a production
+  prerequisite for this deployment.
 - Generate WebP/AVIF derivatives for UI only; retain the original hash and never
   rewrite the source record.
 - Cache Blizzard assets only after the `asset_cache` publication grant and
   current terms review permit it. Until then, use the recorded official URL.
 - Resolve DB2 portrait/model/texture FileDataIDs through verified listfile and
   CASC extraction. Unknown filenames remain addressable by FileDataID.
+- Treat operator cancellation/timeouts as an interrupted run: leave `remote`
+  and previously `cached` observations intact so retries do not manufacture
+  false `failed` media rows.
 
 Acceptance: media coverage is measured per entity type; broken URLs are queued
 for retry; the UI always has a deterministic placeholder and never shows a
