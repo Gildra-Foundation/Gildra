@@ -152,6 +152,31 @@ verify_running_images() {
   verify_service_image scraper-worker "$SCRAPER_IMAGE"
 }
 
+verify_library_route() {
+  route_path=$1
+  if [ "$catalog_access_mode" = private ]; then
+    response_headers=$(mktemp)
+    route_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+      --dump-header "$response_headers" --output /dev/null --write-out '%{http_code}' \
+      --resolve api.gildra.net:443:127.0.0.1 "https://api.gildra.net$route_path") || {
+      rm -f "$response_headers"
+      fail "private library route failed: $route_path"
+    }
+    route_location=$(sed -n 's/^[Ll][Oo][Cc][Aa][Tt][Ii][Oo][Nn]:[[:space:]]*//p' "$response_headers" | head -n 1 | tr -d '\r')
+    rm -f "$response_headers"
+    case "$route_status" in
+      3??) case "$route_location" in
+        /api-console\?next=*) ;;
+        *) fail "private library route does not redirect to login: $route_path (HTTP $route_status)" ;;
+      esac ;;
+      *) fail "private library route returned HTTP $route_status: $route_path" ;;
+    esac
+    return
+  fi
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 "https://api.gildra.net$route_path" >/dev/null
+}
+
 verify_local_health() {
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/livez >/dev/null
@@ -168,14 +193,10 @@ verify_local_health() {
       --resolve api.gildra.net:443:127.0.0.1 \
       'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US' >/dev/null
   fi
-  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/library >/dev/null
-  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/ru/library >/dev/null
-  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/library/items >/dev/null
-  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/ru/library/items >/dev/null
+  verify_library_route /library
+  verify_library_route /ru/library
+  verify_library_route /library/items
+  verify_library_route /ru/library/items
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve gildra.net:443:127.0.0.1 https://gildra.net/database >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \

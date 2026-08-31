@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Icons } from "@/components/Icons";
 import { TopNav } from "@/components/TopNav";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
+import { requireCatalogSession } from "@/lib/library/server";
 
 type Filters = { q?: string; product?: string; facet?: string | string[]; cursor?: string; minLevel?: string; maxLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string };
 
@@ -16,6 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ dataset: 
 export default async function LibraryDatasetPageRu({ params, searchParams }: { params: Promise<{ dataset: string }>; searchParams: Promise<Filters> }) {
   const [{ dataset: slug }, filters] = await Promise.all([params, searchParams]);
   const product = filters.product ?? "wow";
+  await requireCatalogSession(`/ru/library/${encodeURIComponent(slug)}${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
   const datasets = await getLibraryDatasets("ru_RU", product);
   const dataset = datasets.find((entry) => entry.slug === slug);
   if (!dataset) notFound();

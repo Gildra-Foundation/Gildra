@@ -100,12 +100,26 @@ current=$(cat "$TEST_STATE_DIR/web.image")
 if [ "$current" = "$TEST_NEW_WEB" ]; then
   exit 22
 fi
+status=200
+location=''
+write_status=false
+dump_file=''
+expect_dump_file=false
 for argument in "$@"; do
-  if [ "$argument" = '--write-out' ]; then
-    printf '401'
-    break
+  if [ "$expect_dump_file" = true ]; then
+    dump_file=$argument
+    expect_dump_file=false
+    continue
   fi
+  case "$argument" in
+    --write-out) write_status=true ;;
+    --dump-header) expect_dump_file=true ;;
+    https://api.gildra.net/v1/library/datasets*) status=401 ;;
+    https://api.gildra.net/library*|https://api.gildra.net/ru/library*) status=307; location='/api-console?next=%2Flibrary' ;;
+  esac
 done
+[ -z "$dump_file" ] || printf 'HTTP/2 307\nLocation: %s\n\n' "$location" > "$dump_file"
+[ "$write_status" = true ] && printf '%s' "$status"
 exit 0
 FAKE_CURL
 
@@ -149,10 +163,10 @@ grep -q 'rollback completed and verified' "$test_directory/deploy.log"
 # A separate workflow smoke step is too late: by then the previous release has
 # already been disarmed as an automatic rollback target.
 grep -Fq "'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US'" "$deployment_script"
-grep -Fq 'https://api.gildra.net/library' "$deployment_script"
-grep -Fq 'https://api.gildra.net/ru/library' "$deployment_script"
-grep -Fq 'https://api.gildra.net/library/items' "$deployment_script"
-grep -Fq 'https://api.gildra.net/ru/library/items' "$deployment_script"
+grep -Fq 'verify_library_route /library' "$deployment_script"
+grep -Fq 'verify_library_route /ru/library' "$deployment_script"
+grep -Fq 'verify_library_route /library/items' "$deployment_script"
+grep -Fq 'verify_library_route /ru/library/items' "$deployment_script"
 grep -Fq 'https://gildra.net/library' "$deployment_script"
 grep -Fq 'https://gildra.net/ru/library' "$deployment_script"
 grep -Fq 'verify_catalog_load' "$deployment_script"
