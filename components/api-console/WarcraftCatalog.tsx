@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ChevronRight, Database, ExternalLink, ImageIcon, RefreshCw, Search } from "lucide-react";
-import type { CatalogEntityType, CatalogPage, CatalogProduct, GameEntity } from "@/lib/api/client";
+import type { CatalogEntityQuality, CatalogEntityType, CatalogPage, CatalogProduct, GameEntity } from "@/lib/api/client";
 
 type StructuredBlock = Record<string, unknown>;
 
@@ -98,6 +98,7 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
   const [cursor, setCursor] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [selected, setSelected] = useState<GameEntity | null>(null);
+  const [selectedQuality, setSelectedQuality] = useState<CatalogEntityQuality | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
@@ -136,12 +137,20 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
 
   async function openEntity(id: string) {
     setDetailLoading(true); setError("");
-    try { setSelected(await catalogRequest<GameEntity>(`/v1/game/entities/${encodeURIComponent(id)}?locale=ru_RU`)); }
+    try {
+      const [entityResult, qualityResult] = await Promise.allSettled([
+        catalogRequest<GameEntity>(`/v1/game/entities/${encodeURIComponent(id)}?locale=ru_RU`),
+        catalogRequest<CatalogEntityQuality>(`/v1/game/entities/${encodeURIComponent(id)}/quality?locale=ru_RU`),
+      ]);
+      if (entityResult.status === "rejected") throw entityResult.reason;
+      setSelected(entityResult.value);
+      setSelectedQuality(qualityResult.status === "fulfilled" ? qualityResult.value : null);
+    }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Не удалось открыть запись"); }
     finally { setDetailLoading(false); }
   }
 
-  if (selected) return <CatalogEntityDetail entity={selected} onBack={() => setSelected(null)} />;
+  if (selected) return <CatalogEntityDetail entity={selected} quality={selectedQuality} onBack={() => { setSelected(null); setSelectedQuality(null); }} />;
 
   return <div className="flex flex-col gap-5">
     <section className="border border-[#2d3341] bg-[#11151d] p-5 sm:p-6">
@@ -169,7 +178,7 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
   </div>;
 }
 
-function CatalogEntityDetail({ entity, onBack }: { entity: GameEntity; onBack: () => void }) {
+function CatalogEntityDetail({ entity, quality, onBack }: { entity: GameEntity; quality: CatalogEntityQuality | null; onBack: () => void }) {
   const media = entity.media ?? [];
   const structuredBlocks = (entity.tooltip?.blocks ?? []) as StructuredBlock[];
   const localizations = entity.localizations ?? {};
@@ -182,6 +191,7 @@ function CatalogEntityDetail({ entity, onBack }: { entity: GameEntity; onBack: (
     <section className="border border-[#2d3341] bg-[#11151d] p-5"><div className="mb-4 flex items-baseline gap-3"><h3 className="font-[var(--display)] text-lg font-semibold">Названия и описания</h3><span className="text-[10px] uppercase tracking-[.12em] text-[#788397]">EN / RU · из источника</span></div><div className="grid gap-3 md:grid-cols-2">{["en_US", "ru_RU"].map((locale) => { const value = localizations[locale]; const unresolved = hasUnresolvedTemplate(value?.description) || hasUnresolvedTemplate(value?.resolvedDescription); return <article key={locale} className="border border-[#303745] bg-[#0a0e15] p-4"><div className="flex items-baseline justify-between"><strong className="text-sm text-[#d8dde7]">{locale === "ru_RU" ? "Русский" : "English"}</strong><span className="font-mono text-[10px] text-[#788397]">{locale}</span></div><dl className="mt-3 grid gap-3 text-xs"><div><dt className="text-[9px] uppercase tracking-[.1em] text-[#69758a]">Название</dt><dd className="mt-1 text-[#b7bfcd]">{value?.name || "Нет значения в источнике"}</dd></div><div><dt className="text-[9px] uppercase tracking-[.1em] text-[#69758a]">Исходное описание</dt><dd className="mt-1 whitespace-pre-wrap text-[#b7bfcd]">{unresolved ? unresolvedLabel() : value?.description || "Нет значения в источнике"}</dd></div><div><dt className="text-[9px] uppercase tracking-[.1em] text-[#69758a]">Разрешённое описание</dt><dd className="mt-1 whitespace-pre-wrap text-[#b7bfcd]">{unresolved ? unresolvedLabel() : value?.resolvedDescription || value?.description || "Нет значения в источнике"}</dd></div></dl></article>; })}</div></section>
     <section className="border border-[#2d3341] bg-[#11151d] p-5"><div className="mb-4 flex items-center gap-2"><ImageIcon className="size-4 text-[#c9a24f]" /><h3 className="font-[var(--display)] text-lg font-semibold">Подтверждённые изображения</h3><span className="ml-auto font-mono text-xs text-[#788397]">{media.length || (entity.iconUrl ? 1 : 0)}</span></div>{media.length > 0 ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{media.map((asset) => <a key={`${asset.assetKey}-${asset.url}`} href={asset.url} target="_blank" rel="noreferrer" className="group border border-[#303745] bg-[#0a0e15] hover:border-[#78663c]"><span className="grid min-h-48 place-items-center overflow-hidden p-3"><img src={asset.url} alt={`${entity.name} — ${asset.kind}`} className="max-h-80 max-w-full object-contain" loading="lazy" /></span><span className="flex items-center gap-2 border-t border-[#303745] px-3 py-2 text-[10px] text-[#8590a4]"><strong className="mr-auto capitalize text-[#d8dde7]">{asset.kind.replaceAll("_", " ")}</strong>{asset.source === "blizzard_api" ? "Battle.net" : asset.source}<ExternalLink className="size-3" /></span></a>)}</div> : entity.iconUrl ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"><a href={entity.iconUrl} target="_blank" rel="noreferrer" className="group border border-[#303745] bg-[#0a0e15] hover:border-[#78663c]"><span className="grid min-h-48 place-items-center overflow-hidden p-3"><img src={entity.iconUrl} alt={`${entity.name} — icon`} className="max-h-80 max-w-full object-contain" loading="lazy" /></span><span className="flex items-center gap-2 border-t border-[#303745] px-3 py-2 text-[10px] text-[#8590a4]"><strong className="mr-auto text-[#d8dde7]">Иконка</strong>Официальный render CDN<ExternalLink className="size-3" /></span></a></div> : <p className="border border-[#303745] bg-[#0a0e15] p-4 text-sm leading-6 text-[#8590a4]">Изображения отсутствуют: источник или FileDataID может быть известен, но проверенный файл ещё не сохранён.</p>}</section>
     {entity.tooltip?.plainText ? <section className="border border-[#2d3341] bg-[#11151d] p-5"><h3 className="font-[var(--display)] text-lg font-semibold">Игровая информация</h3>{hasUnresolvedTemplate(entity.tooltip.plainText) ? <p className="mt-3 text-xs leading-5 text-[#b69a59]">{unresolvedLabel()}</p> : <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#a0a8b7]">{entity.tooltip.plainText}</p>}</section> : null}
+    {quality ? <section className="border border-[#2d3341] bg-[#11151d] p-5"><div className="flex flex-wrap items-baseline justify-between gap-3"><div><p className="text-[9px] uppercase tracking-[.14em] text-[#9a824a]">Паспорт записи</p><h3 className="mt-1 font-[var(--display)] text-lg font-semibold">Качество и происхождение</h3></div><span className={`border px-3 py-1 text-xs font-semibold ${quality.status === "verified" ? "border-[#367455] bg-[#0d2118] text-[#78d69d]" : quality.status === "partial" ? "border-[#74622f] bg-[#211c0d] text-[#e1c36b]" : "border-[#744343] bg-[#211010] text-[#e18b8b]"}`}>{quality.score}% · {quality.status === "verified" ? "Проверено" : quality.status === "partial" ? "Частично" : "Минимум данных"}</span></div><div className="mt-4 h-1.5 overflow-hidden bg-[#252c38]"><span className="block h-full bg-[#c9a24f]" style={{ width: `${Math.max(0, Math.min(100, quality.score))}%` }} /></div><div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{quality.checks.map((check) => <div key={check.key} className="border border-[#303745] bg-[#0a0e15] p-3"><div className="flex items-center gap-2 text-xs"><span className={check.present ? "text-[#78d69d]" : "text-[#e18b8b]"}>{check.present ? "✓" : "—"}</span><strong className="text-[#d8dde7]">{check.label}</strong></div><p className="mt-1 text-[10px] leading-4 text-[#788397]">{check.detail || (check.present ? "Подтверждено" : "Пока отсутствует")}</p></div>)}</div>{quality.sources.length > 0 ? <div className="mt-4 border-t border-[#303745] pt-3"><p className="text-[9px] uppercase tracking-[.12em] text-[#69758a]">Источники</p><div className="mt-2 flex flex-wrap gap-2">{quality.sources.map((source) => <a key={source.source} href={source.sourceUrl || undefined} target={source.sourceUrl ? "_blank" : undefined} rel={source.sourceUrl ? "noreferrer" : undefined} className="border border-[#343b49] px-2 py-1 text-[10px] text-[#b7bfcd] hover:border-[#78663c] hover:text-[#dfbd69]">{source.displayName} · {source.documents}</a>)}</div></div> : null}</section> : null}
     {structuredBlocks.length > 0 ? <section className="border border-[#2d3341] bg-[#11151d] p-5"><h3 className="font-[var(--display)] text-lg font-semibold">Структурированные данные</h3><div className="mt-4 grid gap-4">{structuredBlocks.map((block, index) => <StructuredDataBlock key={`${String(block.type ?? "data")}-${index}`} block={block} />)}</div></section> : null}
     <details className="border border-[#2d3341] bg-[#11151d] p-5"><summary className="cursor-pointer font-[var(--display)] text-lg font-semibold">Полный исходный payload</summary><pre className="mt-4 max-h-[620px] overflow-auto border border-[#303745] bg-[#0a0e15] p-4 text-[11px] leading-5 text-[#b7bfcd]">{JSON.stringify(entity.payload ?? {}, null, 2)}</pre></details>
   </div>;
