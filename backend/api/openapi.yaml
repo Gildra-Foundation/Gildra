@@ -11,6 +11,13 @@ security:
 servers:
   - url: https://api.gildra.net/world-of-warcraft/retail
     description: Canonical product-scoped retail API base. Historical /v1 URLs remain supported.
+  - url: https://api.gildra.net/world-of-warcraft/{edition}
+    description: Product-scoped API base for retail, Classic, Classic Era or Hardcore.
+    variables:
+      edition:
+        default: retail
+        enum: [retail, classic, classic-era, hardcore]
+        description: Edition mapped to wow, wow_classic, wow_classic_era or wow_classic_hardcore.
   - url: https://api.gildra.net
   - url: https://gildra.net/api
 paths:
