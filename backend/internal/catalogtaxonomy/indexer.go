@@ -300,7 +300,7 @@ func carryForwardOfficialLocalizations(ctx context.Context, tx pgx.Tx) (int64, e
 					NULLIF(BTRIM(document.payload #>> ARRAY['description',document.locale]),''),
 					NULLIF(BTRIM(document.payload #>> '{rank_descriptions,0,description}'),'')) AS description,
 				source_build.build_number AS source_build_number,source_build.version AS source_build_version,
-				document.source_url
+				document.source_url,document.source_artifact_id
 			FROM catalog_entity_source_documents document
 			JOIN game_builds source_build ON source_build.id=document.build_id
 			JOIN game_entities target ON target.entity_type=document.entity_type
@@ -331,6 +331,33 @@ func carryForwardOfficialLocalizations(ctx context.Context, tx pgx.Tx) (int64, e
 		   OR (NULLIF(game_entity_localizations.description,'') IS NULL AND NULLIF(EXCLUDED.description,'') IS NOT NULL)`)
 	if err != nil {
 		return 0, fmt.Errorf("carry official localizations to active build: %w", err)
+	}
+	// Carry the proof along with the text.  A new DB2 version can reuse an
+	// older, still-valid Blizzard localization; without this observation the
+	// text is useful but the release gate quite correctly treats it as
+	// unproven.
+	_, err = tx.Exec(ctx, `
+		WITH source_documents AS (
+			SELECT DISTINCT ON (target_version.id,document.locale)
+				target_version.id AS version_id,document.locale,document.source_artifact_id
+			FROM catalog_entity_source_documents document
+			JOIN catalog_source_artifacts artifact ON artifact.id=document.source_artifact_id
+			JOIN game_builds source_build ON source_build.id=document.build_id
+			JOIN game_entities target ON target.entity_type=document.entity_type
+				AND target.external_id=document.external_id AND target.deleted_at IS NULL
+			JOIN game_entity_versions target_version ON target_version.id=target.latest_version_id
+			JOIN game_builds target_build ON target_build.id=target_version.build_id
+			WHERE document.source='blizzard_api' AND document.locale IN ('en_US','ru_RU')
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			  AND source_build.product_id=target.product_id
+			  AND source_build.build_number<=target_build.build_number
+			ORDER BY target_version.id,document.locale,source_build.build_number DESC,document.imported_at DESC
+		)
+		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+		SELECT version_id,locale,source_artifact_id FROM source_documents
+		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING`)
+	if err != nil {
+		return 0, fmt.Errorf("carry official localization proof to active build: %w", err)
 	}
 	return command.RowsAffected(), nil
 }
@@ -1226,6 +1253,9 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			SELECT 1 FROM catalog_source_artifacts official
 			WHERE official.id=catalog_entity_icons.source_artifact_id
 			  AND official.source='blizzard_api'
+			  AND official.status='ready'
+			  AND official.content_hash IS NOT NULL
+			  AND official.byte_size IS NOT NULL
 		)`)
 	if err != nil {
 		return 0, fmt.Errorf("rebuild direct entity icons: %w", err)
