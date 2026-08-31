@@ -17,7 +17,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const MinimumSchemaVersion int64 = 110
+const MinimumSchemaVersion int64 = 111
 
 var CriticalTables = []string{
 	"users",
