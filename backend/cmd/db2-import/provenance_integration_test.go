@@ -79,10 +79,11 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		{"SpellCooldowns", 9001, map[string]any{"SpellID": "100", "DifficultyID": "0", "RecoveryTime": "3000", "StartRecoveryTime": "1500", "CategoryRecoveryTime": "0"}},
 		{"SpellEffect", 800, map[string]any{"SpellID": "100", "EffectIndex": "0", "DifficultyID": "0", "Effect": "24", "EffectItemType": "200"}},
 		{"ItemSparse", 200, proofItem("Provenance Output")},
-		{"ItemSparse", 201, proofItem("Provenance Reagent")},
+		{"ItemSparse", 201, proofItemWithNameDescription("Provenance Reagent")},
 		{"Item", 200, map[string]any{"ClassID": "7", "SubclassID": "0", "IconFileDataID": "134400"}},
 		{"Item", 201, map[string]any{"ClassID": "7", "SubclassID": "0", "IconFileDataID": "134401"}},
 		{"Item", 202, map[string]any{"ClassID": "2", "SubclassID": "7", "InventoryType": "13", "IconFileDataID": "134404"}},
+		{"ItemNameDescription", 700, map[string]any{"Description_lang": "Description from ItemNameDescription"}},
 		{"ItemXItemEffect", 301, map[string]any{"ItemID": "200", "ItemEffectID": "300"}},
 		{"ItemEffect", 300, map[string]any{"SpellID": "100", "LegacySlotIndex": "0", "TriggerType": "0", "CoolDownMSec": "-1"}},
 		{"SkillLine", 500, map[string]any{"DisplayName_lang": "Provenance Craft", "Description_lang": "Integration profession", "CategoryID": "11"}},
@@ -202,6 +203,19 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	assertEntityArtifact(t, ctx, pool, "item", 200, artifacts["ItemSparse"])
 	assertVersionObservation(t, ctx, pool, "item", 200, artifacts["ItemSparse"])
 	assertVersionObservation(t, ctx, pool, "item", 200, artifacts["Item"])
+	var fallbackDescription string
+	if err := pool.QueryRow(ctx, `
+		SELECT localization.description
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		JOIN game_entity_localizations localization ON localization.version_id=version.id
+		WHERE entity.entity_type='item' AND entity.external_id=201 AND localization.locale='en_US'`).Scan(&fallbackDescription); err != nil {
+		t.Fatalf("read ItemNameDescription fallback: %v", err)
+	}
+	if fallbackDescription != "Description from ItemNameDescription" {
+		t.Fatalf("item description fallback=%q", fallbackDescription)
+	}
+	assertVersionObservation(t, ctx, pool, "item", 201, artifacts["ItemNameDescription"])
 	assertEntityArtifact(t, ctx, pool, "item", 202, artifacts["Item"])
 	assertVersionObservation(t, ctx, pool, "item", 202, artifacts["Item"])
 	assertEntityArtifact(t, ctx, pool, "quest_reward_package", 77, artifacts["QuestPackageItem"])
@@ -617,6 +631,13 @@ func proofItem(name string) map[string]any {
 		"InventoryType": "0", "Stackable": "20", "MaxCount": "0",
 		"BuyPrice": "0", "SellPrice": "0",
 	}
+}
+
+func proofItemWithNameDescription(name string) map[string]any {
+	item := proofItem(name)
+	delete(item, "Description_lang")
+	item["ItemNameDescriptionID"] = "700"
+	return item
 }
 
 func insertDB2ProofRow(

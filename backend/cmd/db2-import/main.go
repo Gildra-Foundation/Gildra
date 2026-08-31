@@ -1845,14 +1845,15 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 	err := pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `
 			CREATE TEMP TABLE projected_items ON COMMIT DROP AS
-			SELECT sparse.row_id AS external_id,sparse.source_url,sparse.source_artifact_id,sparse.snapshot_id AS source_snapshot_id,
-				sparse.source_artifact_id AS sparse_source_artifact_id,core.source_artifact_id AS core_source_artifact_id,
-				false AS registry_only,
-				sparse.payload->>'Display_lang' AS name_en,
-				COALESCE(NULLIF(sparse_ru.payload->>'Display_lang',''),sparse.payload->>'Display_lang') AS name_ru,
-				COALESCE(sparse.payload->>'Description_lang','') AS description_en,
-				COALESCE(NULLIF(sparse_ru.payload->>'Description_lang',''),sparse.payload->>'Description_lang','') AS description_ru,
-				sparse.payload AS db2_en,COALESCE(sparse_ru.payload,sparse.payload) AS db2_ru,
+				SELECT sparse.row_id AS external_id,sparse.source_url,sparse.source_artifact_id,sparse.snapshot_id AS source_snapshot_id,
+					sparse.source_artifact_id AS sparse_source_artifact_id,core.source_artifact_id AS core_source_artifact_id,
+					item_description.source_artifact_id AS item_description_source_artifact_id,
+					false AS registry_only,
+					sparse.payload->>'Display_lang' AS name_en,
+					COALESCE(NULLIF(sparse_ru.payload->>'Display_lang',''),sparse.payload->>'Display_lang') AS name_ru,
+					COALESCE(NULLIF(sparse.payload->>'Description_lang',''),item_description.payload->>'Description_lang','') AS description_en,
+					COALESCE(NULLIF(sparse_ru.payload->>'Description_lang',''),NULLIF(item_description_ru.payload->>'Description_lang',''),NULLIF(item_description.payload->>'Description_lang',''),sparse.payload->>'Description_lang','') AS description_ru,
+					sparse.payload AS db2_en,COALESCE(sparse_ru.payload,sparse.payload) AS db2_ru,
 				COALESCE(core.payload,'{}'::jsonb) AS db2_core,
 				CASE WHEN COALESCE(NULLIF(core.payload->>'ClassID','')::int,-1)>=0
 					THEN NULLIF(core.payload->>'ClassID','')::int ELSE NULL END AS class_id,
@@ -1861,14 +1862,16 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 				CASE WHEN COALESCE(NULLIF(core.payload->>'InventoryType','')::int,-1)>=0
 					THEN NULLIF(core.payload->>'InventoryType','')::int ELSE NULL END AS core_inventory_type,
 				COALESCE(NULLIF(core.payload->>'IconFileDataID','')::bigint,0) AS icon_file_data_id
-			FROM catalog_db2_rows sparse
-			LEFT JOIN catalog_db2_rows sparse_ru ON sparse_ru.build_id=sparse.build_id AND sparse_ru.table_name='ItemSparse' AND sparse_ru.locale='ru_RU' AND sparse_ru.row_id=sparse.row_id
-			LEFT JOIN catalog_db2_rows core ON core.build_id=sparse.build_id AND core.table_name='Item' AND core.locale='en_US' AND core.row_id=sparse.row_id
+				FROM catalog_db2_rows sparse
+				LEFT JOIN catalog_db2_rows sparse_ru ON sparse_ru.build_id=sparse.build_id AND sparse_ru.table_name='ItemSparse' AND sparse_ru.locale='ru_RU' AND sparse_ru.row_id=sparse.row_id
+				LEFT JOIN catalog_db2_rows core ON core.build_id=sparse.build_id AND core.table_name='Item' AND core.locale='en_US' AND core.row_id=sparse.row_id
+				LEFT JOIN catalog_db2_rows item_description ON item_description.build_id=sparse.build_id AND item_description.table_name='ItemNameDescription' AND item_description.locale='en_US' AND item_description.row_id=NULLIF(sparse.payload->>'ItemNameDescriptionID','')::bigint
+				LEFT JOIN catalog_db2_rows item_description_ru ON item_description_ru.build_id=sparse.build_id AND item_description_ru.table_name='ItemNameDescription' AND item_description_ru.locale='ru_RU' AND item_description_ru.row_id=NULLIF(sparse.payload->>'ItemNameDescriptionID','')::bigint
 			WHERE sparse.build_id=$1 AND sparse.table_name='ItemSparse' AND sparse.locale='en_US'
 			  AND NULLIF(BTRIM(sparse.payload->>'Display_lang'),'') IS NOT NULL
 			UNION ALL
-			SELECT core.row_id,core.source_url,core.source_artifact_id,core.snapshot_id,
-				NULL::uuid,core.source_artifact_id,true,
+				SELECT core.row_id,core.source_url,core.source_artifact_id,core.snapshot_id,
+					NULL::uuid,core.source_artifact_id,NULL::uuid,true,
 				''::text,''::text,''::text,''::text,'{}'::jsonb,'{}'::jsonb,core.payload,
 				CASE WHEN COALESCE(NULLIF(core.payload->>'ClassID','')::int,-1)>=0
 					THEN NULLIF(core.payload->>'ClassID','')::int ELSE NULL END,
@@ -1983,6 +1986,8 @@ func projectItems(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Import
 				SELECT version_id,sparse_source_artifact_id AS source_artifact_id FROM projected_item_versions
 				UNION ALL
 				SELECT version_id,core_source_artifact_id FROM projected_item_versions
+				UNION ALL
+				SELECT version_id,item_description_source_artifact_id FROM projected_item_versions
 			) observations
 			WHERE source_artifact_id IS NOT NULL
 			ON CONFLICT(version_id,source_artifact_id) DO NOTHING`); err != nil {
