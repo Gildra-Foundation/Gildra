@@ -213,6 +213,8 @@ func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 			COALESCE(NULLIF(raw.payload->>'EffectChainTargets','')::int,0),NULLIF(raw.payload->>'EffectMechanic','')::int,'db2',
 			jsonb_build_object('implicit_target_0',COALESCE(NULLIF(raw.payload->>'ImplicitTarget_0','')::int,0),
 				'implicit_target_1',COALESCE(NULLIF(raw.payload->>'ImplicitTarget_1','')::int,0),
+				'radius_index_0',COALESCE(NULLIF(raw.payload->>'EffectRadiusIndex_0','')::int,0),
+				'radius_index_1',COALESCE(NULLIF(raw.payload->>'EffectRadiusIndex_1','')::int,0),
 				'trigger_spell_id',COALESCE(NULLIF(raw.payload->>'EffectTriggerSpell','')::bigint,0),
 				'misc_value_0',COALESCE(NULLIF(raw.payload->>'EffectMiscValue_0','')::bigint,0),
 				'misc_value_1',COALESCE(NULLIF(raw.payload->>'EffectMiscValue_1','')::bigint,0),

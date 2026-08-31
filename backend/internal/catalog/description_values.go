@@ -19,6 +19,7 @@ var (
 	spellDurationToken      = regexp.MustCompile(`\$(\d+)d\b`)
 	spellMaxDurationToken   = regexp.MustCompile(`\$(\d+)D\b`)
 	spellEffectToken        = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
+	spellRadiusToken        = regexp.MustCompile(`\$[aA](\d*)\b`)
 	spellTickToken          = regexp.MustCompile(`\$t(\d+)\b`)
 	currentDurationToken    = regexp.MustCompile(`\$d\b`)
 	currentMaxDurationToken = regexp.MustCompile(`\$D\b`)
@@ -38,6 +39,7 @@ type spellEffectValue struct {
 	Coefficient            float64
 	AttackPowerCoefficient float64
 	AmplitudeMS            int64
+	Radius                 float64
 }
 
 func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity) error {
@@ -148,7 +150,12 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 					THEN (duration.payload->>'Duration')::bigint END,0),
 			effect.effect_index,effect.base_points::double precision,
 			effect.coefficient::double precision,effect.attack_power_coefficient::double precision,
-			COALESCE(effect.amplitude_ms,0)
+			COALESCE(effect.amplitude_ms,0),
+			COALESCE(CASE WHEN radius.payload->>'RadiusMax' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				AND (radius.payload->>'RadiusMax')::double precision > 0
+				THEN (radius.payload->>'RadiusMax')::double precision END,
+				CASE WHEN radius.payload->>'Radius' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (radius.payload->>'Radius')::double precision END,0)
 		FROM game_products product
 		JOIN game_entities entity ON entity.product_id=product.id AND entity.entity_type='spell'
 			AND entity.external_id=ANY($2::bigint[]) AND entity.deleted_at IS NULL
@@ -170,6 +177,27 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 			AND duration.row_id=misc.duration_index
 		LEFT JOIN catalog_spell_effects effect ON effect.spell_version_id=version.id
 			AND effect.difficulty_id=0 AND effect.source='db2'
+		LEFT JOIN LATERAL (
+			SELECT COALESCE(
+				CASE WHEN effect.attributes->>'radius_index_1' ~ '^[0-9]+$'
+					THEN (effect.attributes->>'radius_index_1')::bigint END,
+				CASE WHEN effect.attributes->>'radius_index_0' ~ '^[0-9]+$'
+					THEN (effect.attributes->>'radius_index_0')::bigint END,
+				(SELECT COALESCE(
+					CASE WHEN raw.payload->>'EffectRadiusIndex_1' ~ '^[0-9]+$'
+						THEN (raw.payload->>'EffectRadiusIndex_1')::bigint END,
+					CASE WHEN raw.payload->>'EffectRadiusIndex_0' ~ '^[0-9]+$'
+						THEN (raw.payload->>'EffectRadiusIndex_0')::bigint END)
+				 FROM catalog_db2_rows raw
+				 WHERE raw.build_id=version.build_id AND raw.table_name='SpellEffect' AND raw.locale='en_US'
+				   AND raw.payload->>'SpellID'=entity.external_id::text
+				   AND raw.payload->>'EffectIndex'=effect.effect_index::text
+				 ORDER BY (COALESCE(NULLIF(raw.payload->>'DifficultyID','')::int,0)=0) DESC,raw.row_id
+				 LIMIT 1)
+			) AS radius_ref(radius_index) ON true
+		LEFT JOIN catalog_db2_rows radius ON radius.build_id=version.build_id
+			AND radius.table_name='SpellRadius' AND radius.locale='en_US'
+			AND radius.row_id=radius_ref.radius_index
 		WHERE product.slug=$1
 		ORDER BY entity.external_id,effect.effect_index`, product, ids, normalizeLocale(locale), buildID)
 	if err != nil {
@@ -183,7 +211,8 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		var effectIndex *int16
 		var basePoints, coefficient, attackPowerCoefficient *float64
 		var amplitude int64
-		if err := rows.Scan(&id, &name, &description, &duration, &maxDuration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude); err != nil {
+		var radius *float64
+		if err := rows.Scan(&id, &name, &description, &duration, &maxDuration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude, &radius); err != nil {
 			return nil, fmt.Errorf("scan spell description values: %w", err)
 		}
 		value := result[id]
@@ -197,6 +226,7 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				Coefficient:            pointerFloat(coefficient),
 				AttackPowerCoefficient: pointerFloat(attackPowerCoefficient),
 				AmplitudeMS:            amplitude,
+				Radius:                 pointerFloat(radius),
 			}
 		}
 		result[id] = value
@@ -327,6 +357,21 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 			if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
 				return formatted
 			}
+		}
+		return token
+	})
+	text = spellRadiusToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellRadiusToken.FindStringSubmatch(token)
+		index := 1
+		if match[1] != "" {
+			parsed, err := strconv.Atoi(match[1])
+			if err != nil || parsed < 1 {
+				return token
+			}
+			index = parsed
+		}
+		if value, ok := values[currentSpellID].Effects[index]; ok && value.Radius > 0 {
+			return formatDescriptionNumber(value.Radius)
 		}
 		return token
 	})
