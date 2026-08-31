@@ -46,6 +46,85 @@ type MediaCandidate struct {
 	AssetPrefix string
 }
 
+// MissingBattleNetIDs returns build-pinned entities whose localized description
+// still needs official API enrichment. When includeMedia is true (the canonical
+// English pass), entities without a verified icon observation are included as
+// well. The query is deliberately scoped to the import snapshot so an
+// enrichment run cannot accidentally update a different build or product.
+func (s *Store) MissingBattleNetIDs(
+	ctx context.Context,
+	ic ImportContext,
+	entityType, locale string,
+	includeMedia bool,
+	limit int,
+) ([]int64, error) {
+	if ic.ProductID <= 0 || ic.BuildID <= 0 || ic.SnapshotID == uuid.Nil {
+		return nil, errors.New("product, build, and snapshot are required")
+	}
+	if strings.TrimSpace(entityType) == "" {
+		return nil, errors.New("entity type is required")
+	}
+	if locale != "en_US" && locale != "ru_RU" {
+		return nil, fmt.Errorf("unsupported locale %q", locale)
+	}
+	if limit < 0 {
+		return nil, errors.New("limit cannot be negative")
+	}
+	rows, err := s.db.Query(ctx, `
+		WITH candidate_versions AS (
+			SELECT entity.id,entity.external_id,version.id AS version_id
+			FROM game_entity_versions version
+			JOIN game_entities entity ON entity.id=version.entity_id
+			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
+			  AND version.build_id=$3 AND version.snapshot_id=$4
+			UNION ALL
+			SELECT entity.id,entity.external_id,version.id AS version_id
+			FROM game_entities entity
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
+			  AND version.build_id=$3
+			  AND NOT EXISTS (
+				SELECT 1 FROM game_entity_versions candidate
+				WHERE candidate.entity_id=entity.id AND candidate.build_id=$3
+				  AND candidate.snapshot_id=$4
+				  )
+		), cached_icons AS (
+			SELECT DISTINCT media.entity_id
+			FROM catalog_entity_media media
+			WHERE media.build_id=$3 AND media.media_kind='icon'
+			  AND media.cache_status IN ('cached','remote')
+		)
+		SELECT candidate.external_id
+		FROM candidate_versions candidate
+		LEFT JOIN game_entity_localizations localization
+		  ON localization.version_id=candidate.version_id AND localization.locale=$5
+		LEFT JOIN cached_icons ON cached_icons.entity_id=candidate.id
+		WHERE (
+			NULLIF(BTRIM(localization.description),'') IS NULL
+			OR localization.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'
+			OR ($6::boolean AND cached_icons.entity_id IS NULL)
+		)
+		ORDER BY candidate.external_id
+		LIMIT CASE WHEN $7::int > 0 THEN $7::int ELSE 2147483647 END`,
+		ic.ProductID, entityType, ic.BuildID, ic.SnapshotID, locale, includeMedia, limit)
+	if err != nil {
+		return nil, fmt.Errorf("list missing Battle.net %s enrichment targets: %w", entityType, err)
+	}
+	defer rows.Close()
+	result := make([]int64, 0)
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan missing Battle.net %s target: %w", entityType, err)
+		}
+		result = append(result, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate missing Battle.net %s targets: %w", entityType, err)
+	}
+	return result, nil
+}
+
 type EntityMedia struct {
 	Kind       string
 	AssetKey   string
