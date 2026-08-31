@@ -54,6 +54,9 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 	if entity.Type != "spell" && entity.Type != "talent" && entity.Type != "pvp_talent" && entity.Tooltip == nil {
 		return nil
 	}
+	if !entityHasDescriptionTemplates(entity) {
+		return nil
+	}
 	if entity.RawDescription == "" {
 		entity.RawDescription = entity.Description
 	}
@@ -131,6 +134,30 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, resolved)
 	}
 	return nil
+}
+
+var descriptionTemplateToken = regexp.MustCompile(`\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])`)
+
+func entityHasDescriptionTemplates(entity *Entity) bool {
+	if entity == nil {
+		return false
+	}
+	if descriptionTemplateToken.MatchString(entity.Description) {
+		return true
+	}
+	for _, localized := range entity.Localizations {
+		if descriptionTemplateToken.MatchString(localized.Description) {
+			return true
+		}
+	}
+	if entity.Tooltip != nil {
+		for _, block := range entity.Tooltip.Blocks {
+			if text, ok := block["text"].(string); ok && descriptionTemplateToken.MatchString(text) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func blockSpellIDOrDefault(blockSpellID, fallback int64) int64 {

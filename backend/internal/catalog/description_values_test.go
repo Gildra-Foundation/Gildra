@@ -109,6 +109,20 @@ func TestBlockSpellIDOverridesEntityContext(t *testing.T) {
 	}
 }
 
+func TestEntityHasDescriptionTemplates(t *testing.T) {
+	if !entityHasDescriptionTemplates(&Entity{Description: "Deals $s1 damage."}) {
+		t.Fatal("expected description token to be detected")
+	}
+	if !entityHasDescriptionTemplates(&Entity{Localizations: map[string]EntityLocalization{
+		"ru_RU": {Description: "Урон на $d."},
+	}}) {
+		t.Fatal("expected localized token to be detected")
+	}
+	if entityHasDescriptionTemplates(&Entity{Description: "Deals damage."}) {
+		t.Fatal("did not expect a clean description to require resolution")
+	}
+}
+
 func TestDescriptionLocaleDoesNotMixFallbackEnglishWithRussianUnits(t *testing.T) {
 	if got := descriptionLocale("Deals damage for $10d.", "ru_RU"); got != "en_US" {
 		t.Fatalf("expected English fallback, got %q", got)
