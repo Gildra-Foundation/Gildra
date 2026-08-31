@@ -28,6 +28,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogmedia"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/config"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/datasetrefresh"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/genshin"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/graphqlapi"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpapi"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/indexnow"
@@ -143,6 +144,7 @@ func run() error {
 	}
 	router := http.NewServeMux()
 	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient, cfg.CatalogRecoveryPolicy).Register(router)
+	genshin.NewHandler(genshin.NewService(postgres)).Register(router)
 	if cfg.CatalogMediaDirectory != "" {
 		mediaHandler, mediaErr := catalogmedia.NewHandlerWithAccessMode(postgres, cfg.CatalogMediaDirectory, cfg.CatalogPublicationEnv, cfg.CatalogAccessMode)
 		if mediaErr != nil {

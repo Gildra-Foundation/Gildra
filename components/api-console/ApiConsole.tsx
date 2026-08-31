@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity, ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, CircleAlert, Clock3,
-  Code2, Database, ExternalLink, Eye, EyeOff, FileJson2, Gauge, LogOut,
+  Code2, Database, ExternalLink, Eye, EyeOff, FileJson2, Gauge, Gem, LogOut,
   Menu, RefreshCw, Search, Server, ShieldCheck, Swords, X,
 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -17,14 +17,16 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { GenshinImpactCatalog } from "./GenshinImpactCatalog";
 import { WarcraftCatalog } from "./WarcraftCatalog";
 import type { ArchonTierlistEntry, DashboardData, DatasetListItem, DatasetRun, IcyVeinsTierlistEntry, IcyVeinsTierlistResponse, PanelUser, TierlistEntry, WowClassListResponse, WowGGTierlistEntry, WowGGTierlistResponse, WowSpecializationResponse, WowSpecListResponse } from "./types";
 
-type View = "overview" | "catalog" | "datasets" | "api" | "system";
+type View = "overview" | "catalog" | "genshin-impact" | "datasets" | "api" | "system";
 
 const navItems = [
   { id: "overview" as const, label: "Обзор", icon: Gauge, href: "/" },
   { id: "catalog" as const, label: "База Warcraft", icon: BookOpen, href: "/catalog" },
+  { id: "genshin-impact" as const, label: "Genshin Impact", icon: Gem, href: "/genshin-impact" },
   { id: "datasets" as const, label: "Датасеты", icon: Database, href: "/datasets" },
   { id: "api" as const, label: "API", icon: Code2, href: "/api" },
   { id: "system" as const, label: "Система", icon: Server, href: "/system" },
@@ -152,7 +154,7 @@ function LoginScreen({ onLogin, returnTo }: { onLogin: (user: PanelUser) => void
 
 function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePath: string[]; onLogout: () => void }) {
   const pathKey = consolePath.join("/");
-  const view: View = consolePath[0] === "catalog" ? "catalog" : consolePath[0] === "datasets" ? "datasets" : consolePath[0] === "api" ? "api" : consolePath[0] === "system" ? "system" : "overview";
+  const view: View = consolePath[0] === "catalog" ? "catalog" : consolePath[0] === "genshin-impact" ? "genshin-impact" : consolePath[0] === "datasets" ? "datasets" : consolePath[0] === "api" ? "api" : consolePath[0] === "system" ? "system" : "overview";
   const datasetSlug = view === "datasets" ? consolePath[1] ?? "" : "";
   const classSlug = view === "datasets" && consolePath[2] === "classes" ? consolePath[3] ?? "" : "";
   const [mobileNav, setMobileNav] = useState(false);
@@ -174,6 +176,10 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
 
   const load = useCallback(async () => {
     setRefreshing(true); setError("");
+    if (view === "genshin-impact") {
+      setRefreshing(false);
+      return;
+    }
     try {
       const needsTierlist = view === "overview" || (view === "datasets" && datasetSlug === "tierlist-wowhead");
       const needsArchon = view === "datasets" && datasetSlug === "tierlist-archon";
@@ -227,11 +233,11 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
       {mobileNav && <button className="fixed inset-0 z-30 bg-black/70 lg:hidden" onClick={() => setMobileNav(false)} aria-label="Закрыть меню" />}
 
       <section className="min-w-0 lg:col-start-2">
-        <header className="sticky top-0 z-20 flex h-[64px] items-center justify-between border-b border-[#252a37] bg-[#0b0e14]/95 px-4 backdrop-blur sm:px-6 lg:h-[76px] lg:px-8"><div className="flex items-center gap-3"><button type="button" onClick={() => setMobileNav(true)} className="grid size-9 place-items-center border border-[#303645] lg:hidden" aria-label="Открыть меню"><Menu className="size-5" /></button><div><p className="text-[9px] uppercase tracking-[.16em] text-[#687286]">Gildra API / {pathKey || "обзор"}</p><h1 className="font-[var(--display)] text-lg font-semibold sm:text-xl">{view === "overview" ? "Обзор API" : view === "catalog" ? "База Warcraft" : view === "datasets" ? classSlug ? "Информация о классе" : datasetSlug ? "Данные датасета" : "Датасеты" : view === "api" ? "Документация API" : "Состояние системы"}</h1></div></div><Button variant="outline" disabled={refreshing} onClick={() => void load()} className="h-9 rounded-sm border-[#3a404f] bg-[#11151d] text-xs text-[#abb3c2] hover:border-[#8d7540] hover:bg-[#181a1d] hover:text-[#e4c574]"><RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">Обновить</span></Button></header>
+        <header className="sticky top-0 z-20 flex h-[64px] items-center justify-between border-b border-[#252a37] bg-[#0b0e14]/95 px-4 backdrop-blur sm:px-6 lg:h-[76px] lg:px-8"><div className="flex items-center gap-3"><button type="button" onClick={() => setMobileNav(true)} className="grid size-9 place-items-center border border-[#303645] lg:hidden" aria-label="Открыть меню"><Menu className="size-5" /></button><div><p className="text-[9px] uppercase tracking-[.16em] text-[#687286]">Gildra API / {pathKey || "обзор"}</p><h1 className="font-[var(--display)] text-lg font-semibold sm:text-xl">{view === "overview" ? "Обзор API" : view === "catalog" ? "База Warcraft" : view === "genshin-impact" ? "База Genshin Impact" : view === "datasets" ? classSlug ? "Информация о классе" : datasetSlug ? "Данные датасета" : "Датасеты" : view === "api" ? "Документация API" : "Состояние системы"}</h1></div></div>{view !== "genshin-impact" ? <Button variant="outline" disabled={refreshing} onClick={() => void load()} className="h-9 rounded-sm border-[#3a404f] bg-[#11151d] text-xs text-[#abb3c2] hover:border-[#8d7540] hover:bg-[#181a1d] hover:text-[#e4c574]"><RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">Обновить</span></Button> : null}</header>
 
         <div className="mx-auto max-w-[1480px] p-4 sm:p-6 lg:p-8">
           {error && <Alert variant="destructive" className="mb-5 rounded-sm border-[#693b3e] bg-[#2a1518] text-[#ef9a9d]"><CircleAlert className="size-4" /><AlertTitle>Панель временно недоступна</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-          {view === "catalog" ? <WarcraftCatalog buildVersion={data?.catalog.activeBuildVersion ?? ""} /> : !data ? error ? <PanelLoadError message={error} onRetry={() => void load()} /> : <div className="grid min-h-[60vh] place-items-center"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : <>
+          {view === "catalog" ? <WarcraftCatalog buildVersion={data?.catalog.activeBuildVersion ?? ""} /> : view === "genshin-impact" ? <GenshinImpactCatalog /> : !data ? error ? <PanelLoadError message={error} onRetry={() => void load()} /> : <div className="grid min-h-[60vh] place-items-center"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : <>
             {view === "overview" && <Overview data={data} entries={filteredEntries} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} />}
             {view === "datasets" && <DatasetSection data={data} datasets={datasets} datasetSlug={datasetSlug} classSlug={classSlug} entries={classSlug ? entries : filteredEntries} archonEntries={classSlug ? archonEntries : filteredArchonEntries} wowGG={{ ...wowGG, data: classSlug ? wowGG.data : filteredWowGGEntries }} icyVeins={{ ...icyVeins, data: classSlug ? icyVeins.data : filteredIcyVeinsEntries }} wowGGWeek={wowGGWeek} setWowGGWeek={setWowGGWeek} datasetRuns={datasetRuns} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} difficulty={difficultyFilter} setDifficulty={setDifficultyFilter} metric={metricFilter} setMetric={setMetricFilter} />}
             {view === "api" && <APIView data={data} />}

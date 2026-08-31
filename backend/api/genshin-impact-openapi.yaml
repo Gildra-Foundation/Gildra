@@ -1,0 +1,325 @@
+openapi: 3.1.0
+info:
+  title: Gildra Genshin Impact API
+  version: 1.0.0
+  description: Read-only bilingual catalog backed by atomic local PostgreSQL releases.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: https://api.gildra.net/genshin-impact/v1
+paths:
+  /:
+    get:
+      operationId: getGenshinAPIIndex
+      summary: Discover Genshin Impact API resources.
+      security: []
+      responses:
+        "200":
+          description: API resource links and supported locales.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIIndex"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /status:
+    get:
+      operationId: getGenshinCatalogStatus
+      summary: Get the active release and catalog coverage.
+      security: []
+      responses:
+        "200":
+          description: Current publication state and entity counts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogStatus"
+        "503":
+          $ref: "#/components/responses/CatalogUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /characters:
+    get:
+      operationId: listGenshinCharacters
+      summary: Search and filter characters from the active release.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Locale"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Rarity"
+        - name: element
+          in: query
+          schema:
+            $ref: "#/components/schemas/Element"
+        - $ref: "#/components/parameters/WeaponType"
+      responses:
+        "200":
+          description: Cursor-paginated characters.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/CursorPage"
+                  - type: object
+                    required: [data]
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/CharacterSummary"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "503":
+          $ref: "#/components/responses/CatalogUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /weapons:
+    get:
+      operationId: listGenshinWeapons
+      summary: Search and filter weapons from the active release.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Locale"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Rarity"
+        - $ref: "#/components/parameters/WeaponType"
+      responses:
+        "200":
+          description: Cursor-paginated weapons.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/CursorPage"
+                  - type: object
+                    required: [data]
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/WeaponSummary"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "503":
+          $ref: "#/components/responses/CatalogUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /artifact-sets:
+    get:
+      operationId: listGenshinArtifactSets
+      summary: Search and filter artifact sets from the active release.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Locale"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Rarity"
+      responses:
+        "200":
+          description: Cursor-paginated artifact sets.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/CursorPage"
+                  - type: object
+                    required: [data]
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ArtifactSetSummary"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "503":
+          $ref: "#/components/responses/CatalogUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+components:
+  parameters:
+    Locale:
+      name: locale
+      in: query
+      description: Requested localization. English is used only as an explicit field-level fallback.
+      schema:
+        $ref: "#/components/schemas/Locale"
+    Search:
+      name: q
+      in: query
+      schema:
+        type: string
+        maxLength: 200
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque nextCursor from the previous response.
+      schema:
+        type: string
+        maxLength: 256
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 24
+    Rarity:
+      name: rarity
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 5
+    WeaponType:
+      name: weaponType
+      in: query
+      schema:
+        $ref: "#/components/schemas/WeaponType"
+  responses:
+    InvalidQuery:
+      description: One or more query parameters are invalid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    CatalogUnavailable:
+      description: PostgreSQL catalog data could not be read.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    TooManyRequests:
+      description: The public API rate limit was exceeded.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    Locale:
+      type: string
+      enum: [en_US, ru_RU]
+      default: en_US
+    Element:
+      type: string
+      enum: [anemo, geo, electro, dendro, hydro, pyro, cryo]
+    WeaponType:
+      type: string
+      enum: [sword, claymore, polearm, bow, catalyst]
+    APIIndex:
+      type: object
+      required: [version, status, resources, locales]
+      properties:
+        version:
+          const: v1
+        status:
+          type: string
+        resources:
+          type: object
+          required: [characters, weapons, artifactSets]
+          properties:
+            characters: { type: string }
+            weapons: { type: string }
+            artifactSets: { type: string }
+        locales:
+          type: array
+          items:
+            $ref: "#/components/schemas/Locale"
+    CatalogStatus:
+      type: object
+      required: [ready, characters, weapons, artifactSets, talents, mediaAssets, locales]
+      properties:
+        ready: { type: boolean }
+        releaseId: { type: string, format: uuid }
+        sourceRevision: { type: string }
+        gameVersion: { type: string }
+        publishedAt: { type: string, format: date-time }
+        characters: { type: integer, format: int64, minimum: 0 }
+        weapons: { type: integer, format: int64, minimum: 0 }
+        artifactSets: { type: integer, format: int64, minimum: 0 }
+        talents: { type: integer, format: int64, minimum: 0 }
+        mediaAssets: { type: integer, format: int64, minimum: 0 }
+        locales:
+          type: array
+          items:
+            $ref: "#/components/schemas/Locale"
+    CursorPage:
+      type: object
+      required: [pagination]
+      properties:
+        pagination:
+          type: object
+          required: [hasMore, limit]
+          properties:
+            nextCursor: { type: string }
+            hasMore: { type: boolean }
+            limit: { type: integer, minimum: 1, maximum: 100 }
+    CharacterSummary:
+      type: object
+      required: [id, externalId, slug, name, title, rarity, element, weaponType, region, locale, localeFallback, talentCount]
+      properties:
+        id: { type: integer, format: int64 }
+        externalId: { type: integer, format: int32 }
+        slug: { type: string }
+        name: { type: string }
+        title: { type: string }
+        rarity: { type: integer, minimum: 4, maximum: 5 }
+        element: { $ref: "#/components/schemas/Element" }
+        weaponType: { $ref: "#/components/schemas/WeaponType" }
+        region: { type: string }
+        iconUrl: { type: [string, "null"] }
+        portraitUrl: { type: [string, "null"] }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
+        talentCount: { type: integer, format: int64, minimum: 0 }
+    WeaponSummary:
+      type: object
+      required: [id, externalId, slug, name, rarity, weaponType, secondaryStat, locale, localeFallback]
+      properties:
+        id: { type: integer, format: int64 }
+        externalId: { type: integer, format: int32 }
+        slug: { type: string }
+        name: { type: string }
+        rarity: { type: integer, minimum: 1, maximum: 5 }
+        weaponType: { $ref: "#/components/schemas/WeaponType" }
+        baseAttack: { type: [number, "null"] }
+        secondaryStat: { type: string }
+        secondaryStatValue: { type: [number, "null"] }
+        iconUrl: { type: [string, "null"] }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
+    ArtifactSetSummary:
+      type: object
+      required: [id, externalId, slug, name, minRarity, maxRarity, twoPieceBonus, fourPieceBonus, locale, localeFallback, pieceCount]
+      properties:
+        id: { type: integer, format: int64 }
+        externalId: { type: integer, format: int32 }
+        slug: { type: string }
+        name: { type: string }
+        minRarity: { type: integer, minimum: 1, maximum: 5 }
+        maxRarity: { type: integer, minimum: 1, maximum: 5 }
+        twoPieceBonus: { type: string }
+        fourPieceBonus: { type: string }
+        iconUrl: { type: [string, "null"] }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
+        pieceCount: { type: integer, format: int64, minimum: 0 }
+    Problem:
+      type: object
+      required: [type, title, status, detail, instance]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
