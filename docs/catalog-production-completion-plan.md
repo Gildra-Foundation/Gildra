@@ -132,10 +132,25 @@ gaps are visible and trend toward zero.
 - Treat operator cancellation/timeouts as an interrupted run: leave `remote`
   and previously `cached` observations intact so retries do not manufacture
   false `failed` media rows.
+- The API resolves every validated icon name to the same official render URL
+  used by the worker while a local object is still `remote`; cached media always
+  wins and malformed names are rejected. This is a temporary display fallback,
+  not a claim that bytes were retained locally.
 
 Acceptance: media coverage is measured per entity type; broken URLs are queued
 for retry; the UI always has a deterministic placeholder and never shows a
 broken image element.
+
+### Description rendering contract
+
+DB2 descriptions can contain numeric formulas and player-context conditionals.
+The API resolves values that are provable from the selected build (effects,
+durations, ticks and nested spell descriptions) and exposes the resolved value
+for both `en_US` and `ru_RU`. A conditional block is rendered as both labelled
+branches (for example “If …; otherwise …”) because static catalog data cannot
+know which talent or aura a player has active. The source-backed text remains in
+`rawDescription`/`localizations.*.description`, and unresolved client tokens
+never receive a “complete” quality state.
 
 ### Wave 3 — quests and rewards (5–10 days)
 
