@@ -65,9 +65,20 @@ func (s *Server) ListGameProducts(ctx context.Context, _ api.ListGameProductsReq
 	}
 	response := make([]api.GameProduct, 0, len(products))
 	for _, product := range products {
-		response = append(response, api.GameProduct{Id: product.ID, Slug: product.Slug, Name: product.Name})
+		response = append(response, toAPIProduct(product))
 	}
 	return api.ListGameProducts200JSONResponse{Data: response}, nil
+}
+
+func toAPIProduct(product catalog.Product) api.GameProduct {
+	return api.GameProduct{
+		Id:            product.ID,
+		Slug:          product.Slug,
+		Name:          product.Name,
+		BuildNumber:   product.BuildNumber,
+		BuildVersion:  product.BuildVersion,
+		PublicRelease: pointer(product.PublicRelease),
+	}
 }
 
 func (s *Server) ListLibraryDatasets(ctx context.Context, request api.ListLibraryDatasetsRequestObject) (api.ListLibraryDatasetsResponseObject, error) {
