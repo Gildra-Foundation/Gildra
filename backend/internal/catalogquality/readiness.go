@@ -246,8 +246,13 @@ func EvaluateReadinessWithRecoveryPolicy(
 		Scan(&unresolvedDescriptionTemplates); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check unresolved description templates: %w", err)
 	}
-	report.warn("description_template_tokens", ScopeData, unresolvedDescriptionTemplates,
-		"source descriptions still contain unresolved Blizzard template tokens; resolved output must be verified before a complete badge is shown")
+	// Unresolved client templates are not a structural import failure, so the
+	// private catalog may still be inspected and repaired. They are, however,
+	// a hard production-publication failure: exposing `$s1`, `$d` or
+	// `$@spelldesc...` is worse than withholding the record from the public
+	// library and falsely presenting an incomplete description as finished.
+	report.add("description_template_tokens", ScopeProduction, unresolvedDescriptionTemplates != 0, unresolvedDescriptionTemplates,
+		"source descriptions still contain unresolved Blizzard template tokens; public publication waits for build-pinned resolution")
 
 	var unresolvedTooltipTemplates int64
 	if err := db.QueryRow(ctx, `
@@ -262,8 +267,8 @@ func EvaluateReadinessWithRecoveryPolicy(
 		Scan(&unresolvedTooltipTemplates); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check unresolved tooltip templates: %w", err)
 	}
-	report.warn("tooltip_template_tokens", ScopeData, unresolvedTooltipTemplates,
-		"generated tooltip projections still contain unresolved Blizzard template tokens; these records stay visibly incomplete")
+	report.add("tooltip_template_tokens", ScopeProduction, unresolvedTooltipTemplates != 0, unresolvedTooltipTemplates,
+		"generated tooltip projections still contain unresolved Blizzard template tokens; public publication waits for build-pinned resolution")
 
 	var unprovenFacts int64
 	if err := db.QueryRow(ctx, `
@@ -373,8 +378,8 @@ func EvaluateReadinessWithRecoveryPolicy(
 		  AND media_build.build_number<=published_build.build_number`, product).Scan(&failedMedia, &remoteMedia); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check media cache backlog: %w", err)
 	}
-	report.warn("media_cache_backlog", ScopeData, failedMedia+remoteMedia,
-		fmt.Sprintf("%d media assets failed and %d remain remote; the cache worker will retry them", failedMedia, remoteMedia))
+	report.add("media_cache_backlog", ScopeProduction, failedMedia+remoteMedia != 0, failedMedia+remoteMedia,
+		fmt.Sprintf("%d media assets failed and %d remain remote; public publication waits for verified local media", failedMedia, remoteMedia))
 
 	var unresolvedReagents, unresolvedOutputs int64
 	if err := db.QueryRow(ctx, `
