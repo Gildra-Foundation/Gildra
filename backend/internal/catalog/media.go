@@ -227,5 +227,57 @@ func (s *Service) cachedIconURLs(ctx context.Context, ids []uuid.UUID) (map[uuid
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate icon-name fallbacks: %w", err)
 	}
+	// Talent records often identify their gameplay spell through the normalized
+	// relation graph instead of carrying a duplicate icon field. Reuse that
+	// build-pinned spell icon as a presentation fallback so talent cards do not
+	// degrade to the generic database glyph while the media worker catches up.
+	missing = missing[:0]
+	for _, id := range ids {
+		if _, ok := result[id]; !ok {
+			missing = append(missing, id)
+		}
+	}
+	if len(missing) == 0 {
+		return result, nil
+	}
+	rows, err = s.postgres.Query(ctx, `
+		SELECT DISTINCT ON (talent.id) talent.id,
+			COALESCE(spell_icon.icon_name,spell_file.icon_name)
+		FROM game_entities talent
+		JOIN game_entity_versions talent_version ON talent_version.id=talent.published_version_id
+		JOIN catalog_talent_spell_relations relation ON relation.talent_version_id=talent_version.id
+		JOIN game_entity_versions spell_version ON spell_version.id=relation.spell_version_id
+		JOIN game_entities spell ON spell.id=spell_version.entity_id AND spell.entity_type='spell'
+		LEFT JOIN catalog_entity_icons spell_icon ON spell_icon.build_id=spell_version.build_id
+			AND spell_icon.entity_type='spell' AND spell_icon.external_id=spell.external_id
+		LEFT JOIN catalog_file_assets spell_file ON spell_file.file_data_id=CASE
+			WHEN spell_version.payload->>'icon_file_data_id' ~ '^[0-9]+$'
+			THEN (spell_version.payload->>'icon_file_data_id')::bigint END
+		WHERE talent.id=ANY($1::uuid[])
+		  AND talent.entity_type IN ('talent','pvp_talent')
+		  AND talent.deleted_at IS NULL AND spell.deleted_at IS NULL
+		  AND COALESCE(spell_icon.icon_name,spell_file.icon_name) IS NOT NULL
+		ORDER BY talent.id,(relation.relationship='grants') DESC,
+			(spell_icon.icon_name IS NOT NULL) DESC,spell.external_id`, missing)
+	if err != nil {
+		return nil, fmt.Errorf("list talent spell icon fallbacks: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var entityID uuid.UUID
+		var iconName *string
+		if err := rows.Scan(&entityID, &iconName); err != nil {
+			return nil, fmt.Errorf("scan talent spell icon fallback: %w", err)
+		}
+		if iconName == nil {
+			continue
+		}
+		if value, ok := iconURLFromName(*iconName); ok {
+			result[entityID] = value
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate talent spell icon fallbacks: %w", err)
+	}
 	return result, nil
 }
