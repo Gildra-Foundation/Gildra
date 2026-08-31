@@ -45,44 +45,40 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		entity.RawDescription = entity.Description
 	}
 	currentSpellID := descriptionSpellID(*entity)
-	texts := []string{entity.Description}
-	if entity.Tooltip != nil {
-		for _, block := range entity.Tooltip.Blocks {
-			if text, ok := block["text"].(string); ok {
-				texts = append(texts, text)
+	// Resolve every stored locale independently. A requested Russian detail
+	// page must not leave the English localization marked as display-ready (or
+	// vice versa), and each locale can reference a different spell text.
+	valuesByLocale := make(map[string]map[int64]spellDescriptionValues, 2)
+	for _, locale := range []string{"en_US", "ru_RU"} {
+		raw := ""
+		if localized, ok := entity.Localizations[locale]; ok {
+			raw = localized.Description
+		}
+		if raw == "" && locale == entity.Locale {
+			raw = entity.Description
+		}
+		texts := []string{raw}
+		if locale == entity.Locale && entity.Tooltip != nil {
+			for _, block := range entity.Tooltip.Blocks {
+				if text, ok := block["text"].(string); ok {
+					texts = append(texts, text)
+				}
 			}
 		}
-	}
-
-	values := make(map[int64]spellDescriptionValues)
-	pending := referencedSpellIDs(texts, currentSpellID)
-	for depth := 0; depth < 4 && len(pending) > 0; depth++ {
-		loaded, err := s.loadSpellDescriptionValues(ctx, entity.Product, entity.Locale, *entity.BuildID, pending)
+		values, err := s.loadReferencedSpellDescriptionValues(ctx, entity.Product, locale, *entity.BuildID, currentSpellID, texts)
 		if err != nil {
 			return err
 		}
-		for id, value := range loaded {
-			values[id] = value
-		}
-		newTexts := make([]string, 0, len(loaded))
-		for _, value := range loaded {
-			newTexts = append(newTexts, value.Description)
-		}
-		candidates := referencedSpellIDs(newTexts, 0)
-		pending = pending[:0]
-		for _, id := range candidates {
-			if _, seen := values[id]; !seen {
-				pending = append(pending, id)
-			}
+		valuesByLocale[locale] = values
+		if localized, ok := entity.Localizations[locale]; ok {
+			localized.ResolvedDescription = resolveDescriptionText(localized.Description, currentSpellID, values, descriptionLocale(localized.Description, locale))
+			entity.Localizations[locale] = localized
 		}
 	}
 
+	values := valuesByLocale[entity.Locale]
 	entity.Description = resolveDescriptionText(entity.Description, currentSpellID, values, descriptionLocale(entity.Description, entity.Locale))
 	entity.ResolvedDescription = entity.Description
-	if localized, ok := entity.Localizations[entity.Locale]; ok {
-		localized.ResolvedDescription = entity.Description
-		entity.Localizations[entity.Locale] = localized
-	}
 	if entity.Tooltip == nil {
 		return nil
 	}
@@ -101,6 +97,32 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, resolved)
 	}
 	return nil
+}
+
+func (s *Service) loadReferencedSpellDescriptionValues(ctx context.Context, product, locale string, buildID, currentSpellID int64, texts []string) (map[int64]spellDescriptionValues, error) {
+	values := make(map[int64]spellDescriptionValues)
+	pending := referencedSpellIDs(texts, currentSpellID)
+	for depth := 0; depth < 4 && len(pending) > 0; depth++ {
+		loaded, err := s.loadSpellDescriptionValues(ctx, product, locale, buildID, pending)
+		if err != nil {
+			return nil, err
+		}
+		for id, value := range loaded {
+			values[id] = value
+		}
+		newTexts := make([]string, 0, len(loaded))
+		for _, value := range loaded {
+			newTexts = append(newTexts, value.Description)
+		}
+		candidates := referencedSpellIDs(newTexts, 0)
+		pending = pending[:0]
+		for _, id := range candidates {
+			if _, seen := values[id]; !seen {
+				pending = append(pending, id)
+			}
+		}
+	}
+	return values, nil
 }
 
 func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, locale string, buildID int64, ids []int64) (map[int64]spellDescriptionValues, error) {

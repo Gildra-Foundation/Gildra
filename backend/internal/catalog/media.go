@@ -3,10 +3,31 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/google/uuid"
 )
+
+const officialIconOrigin = "https://render.worldofwarcraft.com/eu/icons/56/"
+
+// iconURLFromName returns the official render URL for a build-backed icon
+// name. The name is validated before it is placed in a URL path so malformed
+// source data cannot turn this fallback into an open redirect or path escape.
+// Local media objects remain preferred; this is only used while the media
+// worker has not cached an otherwise valid icon yet.
+func iconURLFromName(name string) (string, bool) {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if name == "" {
+		return "", false
+	}
+	for _, character := range name {
+		if (character < 'a' || character > 'z') && (character < '0' || character > '9') && character != '_' {
+			return "", false
+		}
+	}
+	return officialIconOrigin + url.PathEscape(name) + ".jpg", true
+}
 
 func (s *Service) enrichTooltipMedia(ctx context.Context, tooltip *Tooltip) error {
 	if tooltip == nil || len(tooltip.Blocks) == 0 {
@@ -152,6 +173,59 @@ func (s *Service) cachedIconURLs(ctx context.Context, ids []uuid.UUID) (map[uuid
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate cached entity icons: %w", err)
+	}
+	// The icon registry is populated from build-pinned DB2/Wago artifacts, but
+	// media caching is intentionally asynchronous. Fill only still-missing
+	// icons with the same official render URL used by the media worker so cards
+	// and tooltip relations remain useful during a cache backfill.
+	missing := make([]uuid.UUID, 0, len(ids))
+	for _, id := range ids {
+		if _, ok := result[id]; !ok {
+			missing = append(missing, id)
+		}
+	}
+	if len(missing) == 0 {
+		return result, nil
+	}
+	rows, err = s.postgres.Query(ctx, `
+		SELECT DISTINCT ON (entity.id) entity.id,
+			COALESCE(NULLIF(icon.icon_name,''),NULLIF(direct.icon_name,''),NULLIF(db2.icon_name,''),
+				NULLIF(version.payload #>> '{raidbots,icon}',''),
+				NULLIF(version.payload #>> '{raidbots,spellIcon}',''))
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.id=entity.published_version_id
+		LEFT JOIN catalog_entity_icons icon ON icon.build_id=version.build_id
+			AND icon.entity_type=entity.entity_type AND icon.external_id=entity.external_id
+		LEFT JOIN catalog_file_assets direct ON direct.file_data_id=CASE
+			WHEN version.payload->>'icon_file_data_id' ~ '^[0-9]+$'
+			THEN (version.payload->>'icon_file_data_id')::bigint END
+		LEFT JOIN catalog_file_assets db2 ON db2.file_data_id=CASE
+			WHEN COALESCE(version.payload #>> '{db2,InventoryIconFileID}',version.payload #>> '{db2,IconFileID}',
+				version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}') ~ '^[0-9]+$'
+			THEN COALESCE(version.payload #>> '{db2,InventoryIconFileID}',version.payload #>> '{db2,IconFileID}',
+				version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}')::bigint END
+		WHERE entity.id=ANY($1::uuid[]) AND entity.deleted_at IS NULL
+		ORDER BY entity.id,(icon.icon_name IS NOT NULL) DESC,(direct.icon_name IS NOT NULL) DESC,
+			(db2.icon_name IS NOT NULL) DESC`, missing)
+	if err != nil {
+		return nil, fmt.Errorf("list icon-name fallbacks: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var entityID uuid.UUID
+		var iconName *string
+		if err := rows.Scan(&entityID, &iconName); err != nil {
+			return nil, fmt.Errorf("scan icon-name fallback: %w", err)
+		}
+		if iconName == nil {
+			continue
+		}
+		if value, ok := iconURLFromName(*iconName); ok {
+			result[entityID] = value
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate icon-name fallbacks: %w", err)
 	}
 	return result, nil
 }

@@ -44,3 +44,28 @@ func TestTooltipMediaDoesNotGuessBetweenTwoEntityIDs(t *testing.T) {
 		t.Fatalf("ambiguous relationship object must not receive one guessed icon: %#v", object)
 	}
 }
+
+func TestIconURLFromName(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		input string
+		want  string
+		ok    bool
+	}{
+		{name: "normalizes", input: " Spell_Fire_Flamebolt ", want: "https://render.worldofwarcraft.com/eu/icons/56/spell_fire_flamebolt.jpg", ok: true},
+		{name: "allows digits", input: "inv_sword_93", want: "https://render.worldofwarcraft.com/eu/icons/56/inv_sword_93.jpg", ok: true},
+		{name: "rejects path", input: "../secret", ok: false},
+		{name: "rejects query", input: "spell?x=1", ok: false},
+		{name: "rejects empty", input: " ", ok: false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			got, ok := iconURLFromName(test.input)
+			if ok != test.ok || (ok && got != test.want) {
+				t.Fatalf("iconURLFromName(%q)=(%q,%v), want (%q,%v)", test.input, got, ok, test.want, test.ok)
+			}
+		})
+	}
+}
