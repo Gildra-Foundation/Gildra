@@ -13,6 +13,8 @@ import (
 
 var (
 	spellDescriptionToken   = regexp.MustCompile(`\$@spelldesc(\d+)`)
+	spellConditionalToken   = regexp.MustCompile(`\$\?([A-Za-z][A-Za-z0-9_|-]*)`)
+	spellConditionalSpellID = regexp.MustCompile(`^[as]([0-9]+)$`)
 	spellValueExpression    = regexp.MustCompile(`\$\{\$(\d*)s(\d+)(?:([/*+-])(\d+(?:\.\d+)?))?\}`)
 	spellDurationToken      = regexp.MustCompile(`\$(\d+)d\b`)
 	spellMaxDurationToken   = regexp.MustCompile(`\$(\d+)D\b`)
@@ -24,6 +26,7 @@ var (
 )
 
 type spellDescriptionValues struct {
+	Name          string
 	Description   string
 	DurationMS    int64
 	MaxDurationMS int64
@@ -128,6 +131,7 @@ func (s *Service) loadReferencedSpellDescriptionValues(ctx context.Context, prod
 func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, locale string, buildID int64, ids []int64) (map[int64]spellDescriptionValues, error) {
 	rows, err := s.postgres.Query(ctx, `
 		SELECT entity.external_id,
+			COALESCE(NULLIF(localized.name,''),NULLIF(fallback.name,''),''),
 			COALESCE(NULLIF(localized.description,''),NULLIF(fallback.description,''),''),
 			COALESCE((
 				SELECT (block->>'milliseconds')::bigint
@@ -175,15 +179,15 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 	result := make(map[int64]spellDescriptionValues, len(ids))
 	for rows.Next() {
 		var id, duration, maxDuration int64
-		var description string
+		var name, description string
 		var effectIndex *int16
 		var basePoints, coefficient, attackPowerCoefficient *float64
 		var amplitude int64
-		if err := rows.Scan(&id, &description, &duration, &maxDuration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude); err != nil {
+		if err := rows.Scan(&id, &name, &description, &duration, &maxDuration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude); err != nil {
 			return nil, fmt.Errorf("scan spell description values: %w", err)
 		}
 		value := result[id]
-		value.Description, value.DurationMS, value.MaxDurationMS = description, duration, maxDuration
+		value.Name, value.Description, value.DurationMS, value.MaxDurationMS = name, description, duration, maxDuration
 		if value.Effects == nil {
 			value.Effects = make(map[int]spellEffectValue)
 		}
@@ -243,6 +247,14 @@ func referencedSpellIDs(texts []string, currentSpellID int64) []int64 {
 				}
 			}
 		}
+		for _, match := range spellConditionalToken.FindAllStringSubmatch(text, -1) {
+			if len(match) != 2 {
+				continue
+			}
+			if id, ok := conditionalSpellID(match[1]); ok {
+				unique[id] = struct{}{}
+			}
+		}
 	}
 	ids := make([]int64, 0, len(unique))
 	for id := range unique {
@@ -256,6 +268,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 	if text == "" {
 		return text
 	}
+	text = resolveConditionalDescriptionTokens(text, currentSpellID, values, locale)
 	for depth := 0; depth < 4; depth++ {
 		resolved := spellDescriptionToken.ReplaceAllStringFunc(text, func(token string) string {
 			match := spellDescriptionToken.FindStringSubmatch(token)
@@ -350,6 +363,127 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		return token
 	})
 	return text
+}
+
+// resolveConditionalDescriptionTokens keeps both branches of a Blizzard
+// conditional in the public text. The active branch depends on a player's
+// known spell/aura and cannot be selected from static DB2 data, so silently
+// choosing one would make the catalog factually wrong. The source condition
+// is still made readable and branch contents continue through normal value
+// substitution below.
+func resolveConditionalDescriptionTokens(text string, currentSpellID int64, values map[int64]spellDescriptionValues, locale string) string {
+	for {
+		start := strings.Index(text, "$?")
+		if start < 0 {
+			return text
+		}
+		match := spellConditionalToken.FindStringSubmatch(text[start:])
+		if len(match) != 2 {
+			return text
+		}
+		prefixLen := len(match[0])
+		open := start + prefixLen
+		if open >= len(text) || text[open] != '[' {
+			return text
+		}
+		trueText, next, ok := bracketText(text, open)
+		if !ok || next >= len(text) || text[next] != '[' {
+			return text
+		}
+		falseText, end, ok := bracketText(text, next)
+		if !ok {
+			return text
+		}
+		condition := match[1]
+		trueText = resolveConditionalDescriptionTokens(trueText, currentSpellID, values, locale)
+		falseText = resolveConditionalDescriptionTokens(falseText, currentSpellID, values, locale)
+		trueText = resolveDescriptionTextWithoutConditionals(trueText, currentSpellID, values, locale)
+		falseText = resolveDescriptionTextWithoutConditionals(falseText, currentSpellID, values, locale)
+		label := conditionalLabel(condition, values)
+		replacement := formatConditionalDescription(label, trueText, falseText, locale)
+		if start > 0 {
+			previous := rune(text[start-1])
+			if !unicode.IsSpace(previous) && previous != '(' && previous != '[' {
+				replacement = " " + replacement
+			}
+		}
+		text = text[:start] + replacement + text[end:]
+	}
+}
+
+func conditionalSpellID(condition string) (int64, bool) {
+	match := spellConditionalSpellID.FindStringSubmatch(strings.ToLower(strings.TrimSpace(condition)))
+	if len(match) != 2 {
+		return 0, false
+	}
+	id, err := strconv.ParseInt(match[1], 10, 64)
+	return id, err == nil && id > 0
+}
+
+func conditionalLabel(condition string, values map[int64]spellDescriptionValues) string {
+	condition = strings.TrimSpace(condition)
+	if id, ok := conditionalSpellID(condition); ok {
+		if value := values[id]; value.Name != "" {
+			return value.Name
+		}
+		return fmt.Sprintf("spell #%d", id)
+	}
+	return "condition " + condition
+}
+
+func resolveDescriptionTextWithoutConditionals(text string, currentSpellID int64, values map[int64]spellDescriptionValues, locale string) string {
+	// Branches can contain ordinary DB2 variables. Calling the full resolver
+	// would recurse into this function only when another conditional exists;
+	// those nested conditionals were already handled above.
+	return spellDescriptionToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellDescriptionToken.FindStringSubmatch(token)
+		id, _ := strconv.ParseInt(match[1], 10, 64)
+		if value := values[id]; value.Description != "" && value.Description != token {
+			return value.Description
+		}
+		return token
+	})
+}
+
+func bracketText(text string, open int) (string, int, bool) {
+	if open < 0 || open >= len(text) || text[open] != '[' {
+		return "", open, false
+	}
+	depth := 0
+	for index := open; index < len(text); index++ {
+		switch text[index] {
+		case '[':
+			depth++
+		case ']':
+			depth--
+			if depth == 0 {
+				return text[open+1 : index], index + 1, true
+			}
+		}
+	}
+	return "", open, false
+}
+
+func formatConditionalDescription(label, trueText, falseText, locale string) string {
+	switch {
+	case trueText != "" && falseText != "":
+		if locale == "ru_RU" {
+			return fmt.Sprintf("Если доступно «%s»: %s; иначе: %s", label, trueText, falseText)
+		}
+		return fmt.Sprintf("If «%s»: %s; otherwise: %s", label, trueText, falseText)
+	case trueText != "":
+		if locale == "ru_RU" {
+			return fmt.Sprintf("Если доступно «%s»: %s", label, trueText)
+		}
+		return fmt.Sprintf("If «%s»: %s", label, trueText)
+	case falseText != "":
+		if locale == "ru_RU" {
+			return fmt.Sprintf("Если недоступно «%s»: %s", label, falseText)
+		}
+		return fmt.Sprintf("If «%s» is unavailable: %s", label, falseText)
+	default:
+		return ""
+	}
 }
 
 func formatDescriptionNumber(value float64) string {
