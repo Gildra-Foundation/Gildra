@@ -926,6 +926,22 @@ components:
         library:
           type: string
           format: uri
+        editions:
+          type: array
+          items:
+            $ref: "#/components/schemas/APIIndexEdition"
+    APIIndexEdition:
+      type: object
+      required: [edition, product, base]
+      properties:
+        edition:
+          type: string
+          enum: [retail, classic, classic-era, hardcore]
+        product:
+          type: string
+        base:
+          type: string
+          format: uri
     Problem:
       type: object
       required: [type, title, status]
