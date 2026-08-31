@@ -178,6 +178,12 @@ func (c *Cache) runCandidates(ctx context.Context, environment string, limit int
 	for _, item := range candidates {
 		key, mimeType, size, hash, err := c.fetch(ctx, item.sourceURL)
 		if err != nil {
+			// A canceled run is an operational interruption, not a bad asset.
+			// Keep remote/cached state intact so a retry can pick it up without
+			// turning thousands of in-flight downloads into false failures.
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return result, err
+			}
 			result.Failed++
 			if item.status == "cached" {
 				_, _ = c.db.Exec(context.WithoutCancel(ctx), `UPDATE catalog_entity_media SET cache_error=$2,updated_at=now() WHERE id=$1 AND cache_status='cached'`, item.id, truncateError(err))
