@@ -3,9 +3,10 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -112,9 +113,7 @@ func (s *Service) loadReferencedSpellDescriptionValues(ctx context.Context, prod
 		if err != nil {
 			return nil, err
 		}
-		for id, value := range loaded {
-			values[id] = value
-		}
+		maps.Copy(values, loaded)
 		newTexts := make([]string, 0, len(loaded))
 		for _, value := range loaded {
 			newTexts = append(newTexts, value.Description)
@@ -290,7 +289,7 @@ func referencedSpellIDs(texts []string, currentSpellID int64) []int64 {
 	for id := range unique {
 		ids = append(ids, id)
 	}
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	slices.Sort(ids)
 	return ids
 }
 
@@ -299,7 +298,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		return text
 	}
 	text = resolveConditionalDescriptionTokens(text, currentSpellID, values, locale)
-	for depth := 0; depth < 4; depth++ {
+	for range 4 {
 		resolved := spellDescriptionToken.ReplaceAllStringFunc(text, func(token string) string {
 			match := spellDescriptionToken.FindStringSubmatch(token)
 			id, _ := strconv.ParseInt(match[1], 10, 64)
