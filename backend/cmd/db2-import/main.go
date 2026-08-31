@@ -1481,6 +1481,31 @@ const questPackageEntitiesProjectionSQL = `
 	WHERE package.source_artifact_id IS NOT NULL
 	ON CONFLICT(version_id,source_artifact_id) DO NOTHING;
 
+	-- Packages are client entities but have no localized title column in
+	-- QuestPackageItem.  Expose a deterministic, source-backed label instead
+	-- of leaving them nameless in the public library.  Russian uses the exact
+	-- English fallback until a permitted localized source is available.
+	INSERT INTO game_entity_localizations(version_id,locale,slug,name,description,attributes)
+	SELECT projected.version_id,'en_US','quest-reward-package-'||projected.external_id,
+		'Quest reward package #'||projected.external_id,'',
+		jsonb_build_object('generated_label',true,'source','QuestPackageItem')
+	FROM projected_quest_reward_package_versions projected
+	UNION ALL
+	SELECT projected.version_id,'ru_RU','quest-reward-package-'||projected.external_id,
+		'Quest reward package #'||projected.external_id,'',
+		jsonb_build_object('generated_label',true,'source','QuestPackageItem','fallback_locale','en_US')
+	FROM projected_quest_reward_package_versions projected
+	ON CONFLICT(version_id,locale) DO UPDATE SET
+		slug=EXCLUDED.slug,name=EXCLUDED.name,description=EXCLUDED.description,
+		attributes=EXCLUDED.attributes;
+
+	INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+	SELECT DISTINCT projected.version_id,localized.locale,projected.source_artifact_id
+	FROM projected_quest_reward_package_versions projected
+	CROSS JOIN (VALUES ('en_US'::text),('ru_RU'::text)) localized(locale)
+	WHERE projected.source_artifact_id IS NOT NULL
+	ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING;
+
 	UPDATE game_entities entity
 	SET latest_version_id=projected.version_id,updated_at=now()
 	FROM projected_quest_reward_package_versions projected
