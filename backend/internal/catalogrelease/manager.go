@@ -28,6 +28,28 @@ func (m *Manager) Start(
 	product, buildVersion string,
 	sources []string,
 ) (uuid.UUID, error) {
+	return m.start(ctx, pipelineRunID, product, buildVersion, sources, false)
+}
+
+// StartAllowSameBuild creates an explicit repair release for a build that is
+// already published. A repair still runs the complete source profile and all
+// publication gates; only the normal monotonic build check is relaxed.
+func (m *Manager) StartAllowSameBuild(
+	ctx context.Context,
+	pipelineRunID int64,
+	product, buildVersion string,
+	sources []string,
+) (uuid.UUID, error) {
+	return m.start(ctx, pipelineRunID, product, buildVersion, sources, true)
+}
+
+func (m *Manager) start(
+	ctx context.Context,
+	pipelineRunID int64,
+	product, buildVersion string,
+	sources []string,
+	allowSameBuild bool,
+) (uuid.UUID, error) {
 	product = strings.TrimSpace(product)
 	buildVersion = strings.TrimSpace(buildVersion)
 	if pipelineRunID <= 0 || product == "" || buildVersion == "" || len(sources) == 0 {
@@ -47,19 +69,19 @@ func (m *Manager) Start(
 	if !productExists {
 		return uuid.Nil, fmt.Errorf("start catalog release: product %q does not exist", product)
 	}
-	if buildAlreadyPublished {
+	if buildAlreadyPublished && !allowSameBuild {
 		return uuid.Nil, fmt.Errorf("%w: %s", ErrBuildAlreadyPublished, buildVersion)
 	}
 	var releaseID uuid.UUID
 	err := m.db.QueryRow(ctx, `
 		INSERT INTO catalog_releases(
-			product_id,pipeline_run_id,previous_release_id,build_version,requested_sources
+			product_id,pipeline_run_id,previous_release_id,build_version,requested_sources,is_repair
 		)
-		SELECT product.id,$2,public_state.release_id,$3,$4
+		SELECT product.id,$2,public_state.release_id,$3,$4,$5
 		FROM game_products product
 		LEFT JOIN catalog_public_release_state public_state ON public_state.product_id=product.id
 		WHERE product.slug=$1
-		RETURNING id`, product, pipelineRunID, buildVersion, sources).Scan(&releaseID)
+		RETURNING id`, product, pipelineRunID, buildVersion, sources, allowSameBuild).Scan(&releaseID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("start catalog release: %w", err)
 	}

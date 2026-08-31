@@ -148,6 +148,21 @@ can omit retired IDs; the previous localized value is never deleted. The
 pipeline records the targeted artifact and refreshes tooltip/media projections
 only after the enrichment stage completes.
 
+If the active build is already published and a one-time full repair is needed,
+the pipeline supports an explicit same-build rebuild. It still downloads every
+source in the standard profile, runs the normal backup, provenance and quality
+gates, and moves the public pointer only after the complete candidate is
+validated:
+
+```powershell
+docker compose run --rm --entrypoint catalog-pipeline api -mode apply -trigger manual -profile retail-foundation -product wow -sources wago,db2,battlenet,listfile -version 12.1.0.69497 -force-rebuild -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
+```
+
+`-force-rebuild` is deliberately opt-in and cannot be combined with a resumed
+release or a bounded import. The regular daily timer keeps its cheaper
+new-build-only behavior; use this command through the approved deployment
+workflow for a controlled backfill of an already published build.
+
 Each localized response is hashed and retained in
 `catalog_entity_source_documents`, linked to its snapshot and artifact. For an
 entity already created from build-pinned DB2, Battle.net enriches official names,
@@ -475,14 +490,30 @@ errors.
 Inspect a complete plan without downloading or changing catalog data:
 
 ```powershell
-docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode dry_run -sources wago,raidbots,db2,battlenet,listfile -publication-environment production
+docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode dry_run -profile retail-foundation -sources wago,db2,battlenet,listfile -publication-environment production -access-mode private -recovery-policy verified_same_host
 ```
 
 Run an approved full refresh:
 
 ```powershell
-docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode apply -trigger manual -sources wago,raidbots,db2,battlenet,listfile -max-records 0 -publication-environment production -timeout 8h
+docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode apply -trigger manual -profile retail-foundation -sources wago,db2,battlenet,listfile -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
 ```
+
+For a build that is already published, do not bypass the monotonic-build
+guard with ad-hoc SQL. Use the explicit same-build repair wrapper after an
+approved production backup:
+
+```sh
+sudo env CATALOG_REPAIR_BUILD_VERSION=12.1.0.69497 \
+  /opt/gildra/infra/deploy/run-catalog-repair.sh
+```
+
+The wrapper runs the complete pinned `retail-foundation` profile with
+`-force-rebuild`, keeps the import atomic, and uses the same provenance,
+quality, publication and read-model gates as a normal release. It is also
+available as the manually approved **Repair published WoW catalog** GitHub
+Actions workflow. The workflow validates the four-component build version and
+serializes with normal deployments.
 
 The `battlenet` source runs the official index/detail import first and then a
 media-only pass for entity families that expose official icons. The importer
@@ -507,3 +538,9 @@ runs `catalog-build-check`, persists the observed build and skips the expensive
 pipeline when no new build exists. Installing/enabling those units and
 performing the first apply are production changes and require a separate
 approved operation with a verified backup and rollback plan.
+
+When an immutable deployment applies new PostgreSQL migrations, the deploy
+script checks the running schema against the latest verified same-host backup
+and refreshes that backup before readiness checks if it is stale or predates
+the schema. This keeps recovery evidence aligned with the image being
+activated without storing anything in R2/S3.

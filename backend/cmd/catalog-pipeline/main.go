@@ -33,7 +33,7 @@ func run() (catalogpipeline.Result, error) {
 	var databaseURL, sources, mode, trigger, profile, product, version, binaryDirectory, publicationEnvironment, catalogAccessMode, recoveryPolicy string
 	var resumeReleaseID, resumeFrom string
 	var maxRecords int
-	var confirmFullImport, useCheckedBuild bool
+	var confirmFullImport, useCheckedBuild, forceRebuild bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
 	flag.StringVar(&profile, "profile", "", "catalog source profile; defaults by product, or use custom")
@@ -48,6 +48,7 @@ func run() (catalogpipeline.Result, error) {
 	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
 	flag.IntVar(&maxRecords, "max-records", 0, "records per source dataset; 0 imports all")
 	flag.BoolVar(&confirmFullImport, "confirm-full-import", false, "confirm an unbounded production import")
+	flag.BoolVar(&forceRebuild, "force-rebuild", false, "rebuild and publish an already published build (explicit repair operation)")
 	flag.BoolVar(&useCheckedBuild, "use-checked-build", false, "pin the import to a recent successful Wago build check")
 	flag.DurationVar(&timeout, "timeout", 6*time.Hour, "whole pipeline timeout")
 	flag.StringVar(&resumeReleaseID, "resume-release", "", "resume a failed staging release without repeating validated source stages")
@@ -97,7 +98,7 @@ func run() (catalogpipeline.Result, error) {
 	options := catalogpipeline.Options{
 		PipelineKey: "catalog-refresh", Trigger: trigger, Mode: mode, Profile: strings.TrimSpace(profile), Product: strings.TrimSpace(product),
 		Sources: catalogpipeline.SortedSources(sources), BuildVersion: strings.TrimSpace(version),
-		MaxRecords: maxRecords, ConfirmFullImport: confirmFullImport, BinaryDirectory: strings.TrimSpace(binaryDirectory),
+		MaxRecords: maxRecords, ConfirmFullImport: confirmFullImport, ForceRebuild: forceRebuild, BinaryDirectory: strings.TrimSpace(binaryDirectory),
 		PublicationEnvironment: publicationEnvironment,
 		CatalogAccessMode:      catalogAccessMode,
 		RecoveryPolicy:         strings.TrimSpace(recoveryPolicy),

@@ -62,6 +62,17 @@ if [ "$1" = inspect ]; then
   exit 0
 fi
 
+if [ "$1" = exec ]; then
+  # The deployment recovery gate asks the running API for the current schema
+  # and the latest verified backup. Keep the fake state current and fresh so
+  # this test remains focused on immutable image rollback behaviour.
+  case "$*" in
+    *goose_db_version*) printf '116\n' ;;
+    *) printf '116|9999999999\n' ;;
+  esac
+  exit 0
+fi
+
 [ "$1" = compose ] || exit 64
 shift
 while [ "$#" -gt 0 ]; do
@@ -181,6 +192,9 @@ grep -Fq -- '-require-production-ready' "$deployment_script"
 grep -Fq 'require_environment_value CATALOG_BACKUP_LOCAL_DIRECTORY' "$deployment_script"
 grep -Fq 'require_environment_value CATALOG_ACCESS_MODE' "$deployment_script"
 grep -Fq 'require_environment_value CATALOG_RECOVERY_POLICY' "$deployment_script"
+grep -Fq 'ensure_recovery_backup' "$deployment_script"
+grep -Fq 'run-catalog-backup.sh' "$deployment_script"
+grep -Fq 'run-catalog-repair.sh' "$repository_directory/.github/workflows/catalog-repair.yml"
 grep -Fq -- '-require-data-ready' "$deployment_script"
 grep -Fq 'private catalog allowed an anonymous request' "$deployment_script"
 grep -Fq 'https://api.gildra.net/library/items' "$repository_directory/.github/workflows/deploy.yml"

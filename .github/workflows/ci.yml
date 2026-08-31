@@ -24,6 +24,7 @@ jobs:
           sh -n infra/backup/test-run-catalog-backup.sh
           sh -n infra/deploy/deploy-immutable-release.sh
           sh -n infra/deploy/test-deploy-immutable-release.sh
+          sh -n infra/deploy/run-catalog-repair.sh
           sh -n infra/systemd/test-gildra-catalog-media-cache.sh
       - name: Verify backup wrapper evidence
         run: infra/backup/test-run-catalog-backup.sh
