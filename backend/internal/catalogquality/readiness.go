@@ -132,6 +132,17 @@ func EvaluateReadinessWithRecoveryPolicy(
 	report.add("db2_completeness", ScopeData, completenessScopes == 0 || incompleteScopes != 0, incompleteScopes,
 		fmt.Sprintf("%d DB2 scopes measured; %d incomplete", completenessScopes, incompleteScopes))
 
+	var unavailableDB2Artifacts int64
+	if err := db.QueryRow(ctx, `
+		SELECT count(*)
+		FROM catalog_source_artifacts artifact
+		WHERE artifact.build_id=$1 AND artifact.source='wago_tools' AND artifact.status='unavailable'`, report.BuildID).
+		Scan(&unavailableDB2Artifacts); err != nil {
+		return ReadinessReport{}, fmt.Errorf("check unavailable DB2 artifacts: %w", err)
+	}
+	report.warn("db2_unavailable_tables", ScopeData, unavailableDB2Artifacts,
+		"Wago does not publish these build/table/locale exports; the gap is explicit and must remain visible in the API")
+
 	var unprovenVersions int64
 	if err := db.QueryRow(ctx, `
 		WITH ready_artifacts AS (

@@ -321,6 +321,28 @@ func (s *Store) MarkArtifactSampled(ctx context.Context, artifactID uuid.UUID, r
 	return nil
 }
 
+// MarkArtifactUnavailable records a deterministic source gap such as a 404
+// for a DB2 table that is not exported for a product/build. It deliberately
+// carries no content proof, so it cannot satisfy provenance for rows that were
+// supposedly imported from the missing artifact.
+func (s *Store) MarkArtifactUnavailable(ctx context.Context, artifactID uuid.UUID, reason string) error {
+	if artifactID == uuid.Nil || strings.TrimSpace(reason) == "" {
+		return errors.New("artifact ID and unavailable reason are required")
+	}
+	command, err := s.db.Exec(ctx, `
+		UPDATE catalog_source_artifacts
+		SET status='unavailable',content_hash=NULL,byte_size=NULL,etag=NULL,
+			metadata=metadata || jsonb_build_object('availability','unavailable','error',$2::text,'complete',false),fetched_at=now()
+		WHERE id=$1`, artifactID, strings.TrimSpace(reason))
+	if err != nil {
+		return fmt.Errorf("mark source artifact %s unavailable: %w", artifactID, err)
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("mark source artifact %s unavailable: artifact does not exist", artifactID)
+	}
+	return nil
+}
+
 // CompleteArtifactFromRecords proves a logical API artifact as a deterministic
 // manifest of the canonical source documents preserved for it. Battle.net
 // collections span an index, detail, and media responses rather than one file;
