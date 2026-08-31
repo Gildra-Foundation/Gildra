@@ -493,6 +493,14 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 	if err := s.enrichLocalizations(ctx, entityPointers); err != nil {
 		return Page{}, err
 	}
+	for index := range entities {
+		// Lists carry the same tooltip payload as detail pages. Resolve the
+		// build-pinned Blizzard templates here as well, otherwise cards expose
+		// raw `$s1`/`$d` tokens while the detail endpoint shows clean text.
+		if err := s.resolveEntityDescriptions(ctx, &entities[index]); err != nil {
+			return Page{}, err
+		}
+	}
 	if err := s.enrichMedia(ctx, entityPointers); err != nil {
 		return Page{}, err
 	}
