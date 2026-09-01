@@ -95,10 +95,11 @@ func run() error {
 		return fmt.Errorf("ping genshin database: %w", err)
 	}
 	release, err := genshinimport.NewStore(database).Publish(ctx, dataset, assets, genshinimport.PublishOptions{
-		SourceRevision:   opts.sourceRevision,
-		GameVersion:      opts.gameVersion,
-		SourceRepository: opts.sourceRepository,
-		MediaBaseURL:     opts.mediaBaseURL,
+		SourceRevision:        opts.sourceRevision,
+		GameVersion:           opts.gameVersion,
+		SourceRepository:      opts.sourceRepository,
+		MediaBaseURL:          opts.mediaBaseURL,
+		AlternateMediaBaseURL: opts.alternateMediaBaseURL,
 	})
 	if err != nil {
 		return err
