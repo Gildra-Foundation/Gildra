@@ -88,6 +88,19 @@ replace them with zero or a guessed number.
 - `GET /v1/game/sitemap-entries` is a bounded, UUID-sharded SEO read model used
   by the website's segmented sitemaps.
 
+GraphQL exposes the same edition freshness signal through `gameProducts`:
+
+```graphql
+query Editions {
+  gameProducts {
+    slug
+    name
+    freshness
+    freshnessReason
+  }
+}
+```
+
 ## HTTP caching and errors
 
 Successful catalog GET responses include an `ETag` plus:
