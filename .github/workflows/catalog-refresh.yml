@@ -1,0 +1,45 @@
+name: Refresh WoW catalogs
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_full_import:
+        description: "I understand this runs a full multi-edition import and keeps the last verified release on failure"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: vars.PRODUCTION_DEPLOY_ENABLED == 'true' && inputs.confirm_full_import == true
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Run all WoW edition imports on OVHcloud
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes -o ServerAliveInterval=60 -o ServerAliveCountMax=30 "$OVH_USER@$OVH_HOST" \
+            'sudo env GILDRA_DEPLOY_DIR=/opt/gildra /opt/gildra/infra/systemd/run-gildra-catalog-refresh-all.sh'
