@@ -1206,28 +1206,42 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			FROM catalog_db2_rows raw
 			WHERE raw.table_name='Item' AND raw.locale='en_US'
 			  AND raw.payload->>'IconFileDataID' ~ '^[1-9][0-9]*$'
+		), item_modified_appearance_rows AS MATERIALIZED (
+			SELECT raw.build_id,raw.row_id,raw.source_artifact_id,
+				CASE WHEN raw.payload->>'ItemID' ~ '^[1-9][0-9]*$'
+					THEN (raw.payload->>'ItemID')::bigint END AS item_id,
+				CASE WHEN raw.payload->>'ItemAppearanceID' ~ '^[1-9][0-9]*$'
+					THEN (raw.payload->>'ItemAppearanceID')::bigint END AS appearance_id,
+				raw.payload->>'ItemAppearanceModifierID' AS modifier_id,
+				raw.payload->>'OrderIndex' AS order_index
+			FROM catalog_db2_rows raw
+			WHERE raw.table_name='ItemModifiedAppearance' AND raw.locale='en_US'
+		), item_appearance_rows AS MATERIALIZED (
+			SELECT raw.build_id,raw.row_id,raw.source_artifact_id,
+				CASE WHEN raw.payload->>'DefaultIconFileDataID' ~ '^[1-9][0-9]*$'
+					THEN (raw.payload->>'DefaultIconFileDataID')::bigint END AS file_data_id
+			FROM catalog_db2_rows raw
+			WHERE raw.table_name='ItemAppearance' AND raw.locale='en_US'
 		), item_appearance_icons AS MATERIALIZED (
 			-- Item rows often have IconFileDataID=0.  The authoritative fallback
 			-- is ItemModifiedAppearance -> ItemAppearance.DefaultIconFileDataID.
 			-- Keep this build-scoped and deterministic so Retail and Classic rows
 			-- can never be mixed when the same item ID exists in both products.
-			SELECT DISTINCT ON (modified.build_id,(modified.payload->>'ItemID')::bigint)
+			SELECT DISTINCT ON (modified.build_id,modified.item_id)
 				modified.build_id,
-				(modified.payload->>'ItemID')::bigint AS item_id,
-				(appearance.payload->>'DefaultIconFileDataID')::bigint AS file_data_id,
+				modified.item_id,
+				appearance.file_data_id,
 				COALESCE(appearance.source_artifact_id,modified.source_artifact_id) AS source_artifact_id
-			FROM catalog_db2_rows modified
-			JOIN catalog_db2_rows appearance
+			FROM item_modified_appearance_rows modified
+			JOIN item_appearance_rows appearance
 			  ON appearance.build_id=modified.build_id
-			 AND appearance.table_name='ItemAppearance' AND appearance.locale='en_US'
-			 AND appearance.row_id=(modified.payload->>'ItemAppearanceID')::bigint
-			WHERE modified.table_name='ItemModifiedAppearance' AND modified.locale='en_US'
-			  AND modified.payload->>'ItemID' ~ '^[1-9][0-9]*$'
-			  AND modified.payload->>'ItemAppearanceID' ~ '^[1-9][0-9]*$'
-			  AND appearance.payload->>'DefaultIconFileDataID' ~ '^[1-9][0-9]*$'
-			ORDER BY modified.build_id,(modified.payload->>'ItemID')::bigint,
-				COALESCE(NULLIF(modified.payload->>'ItemAppearanceModifierID','')::int,0),
-				COALESCE(NULLIF(modified.payload->>'OrderIndex','')::int,0),modified.row_id
+			 AND appearance.row_id=modified.appearance_id
+			WHERE modified.item_id IS NOT NULL AND modified.appearance_id IS NOT NULL
+			  AND appearance.file_data_id IS NOT NULL
+			ORDER BY modified.build_id,modified.item_id,
+				CASE WHEN modified.modifier_id ~ '^[0-9]+$' THEN modified.modifier_id::int ELSE 0 END,
+				CASE WHEN modified.order_index ~ '^[0-9]+$' THEN modified.order_index::int ELSE 0 END,
+				modified.row_id
 		), creature_icons AS MATERIALIZED (
 			SELECT DISTINCT ON (version.build_id,entity.external_id)
 				version.build_id,entity.external_id,info.portrait_file_data_id AS file_data_id,
