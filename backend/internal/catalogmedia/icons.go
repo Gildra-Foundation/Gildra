@@ -20,6 +20,7 @@ import (
 
 const officialIconOrigin = "https://render.worldofwarcraft.com/eu/icons/56/"
 const wagoCASCOrigin = "https://wago.tools/api/casc/"
+const catalogMediaUserAgent = "GildraCatalog/1.0 (+https://api.gildra.net)"
 const officialIconWorkers = 8
 const officialIconFailureSampleLimit = 25
 
@@ -512,6 +513,7 @@ func (c *Cache) downloadWagoCASC(ctx context.Context, sourceURL string) ([]byte,
 	if err != nil {
 		return nil, err
 	}
+	request.Header.Set("User-Agent", catalogMediaUserAgent)
 	response, err := c.client.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("download BLP2: %w", err)

@@ -216,6 +216,7 @@ func (c *Cache) fetch(ctx context.Context, sourceURL string) (string, string, in
 	if err != nil {
 		return "", "", 0, nil, err
 	}
+	request.Header.Set("User-Agent", catalogMediaUserAgent)
 	response, err := c.client.Do(request)
 	if err != nil {
 		return "", "", 0, nil, fmt.Errorf("download media: %w", err)
