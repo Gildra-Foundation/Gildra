@@ -21,7 +21,10 @@ GET /world-of-warcraft/retail/v1/game/entity-summaries?product=wow&type=item&loc
 ```
 
 It returns identity, name, icon, item quality/level and a few high-signal facts,
-but deliberately excludes raw payloads and tooltip blocks. Fetch the complete
+but deliberately excludes raw payloads and tooltip blocks. When a source has no
+short description, the `description` field may use the verified plain-text
+tooltip as a compact card summary; unresolved client placeholders are omitted.
+Fetch the complete
 public projection only when the user opens a tooltip or detail page:
 
 ```http
