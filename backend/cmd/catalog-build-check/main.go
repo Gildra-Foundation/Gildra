@@ -63,7 +63,11 @@ func run() (bool, error) {
 		return false, fmt.Errorf("open catalog database: %w", err)
 	}
 	defer db.Close()
-	remoteBuild, err := wago.New(wago.Config{RetryMax: 2, RetryDelay: time.Second}).CurrentBuild(ctx, table, locale)
+	wagoProduct, err := wagoProductKey(product)
+	if err != nil {
+		return false, err
+	}
+	remoteBuild, err := wago.New(wago.Config{RetryMax: 2, RetryDelay: time.Second}).CurrentBuildForProduct(ctx, wagoProduct)
 	if err != nil {
 		return false, err
 	}
@@ -106,6 +110,25 @@ func run() (bool, error) {
 		return true, nil
 	}
 	return changed, nil
+}
+
+// wagoProductKey maps our catalog product slugs to the product keys exposed
+// by Wago's build manifest. Hardcore currently has no distinct Wago manifest;
+// it uses the Era client data source but remains a separate catalog product
+// and release pointer everywhere else.
+func wagoProductKey(product string) (string, error) {
+	switch strings.ToLower(strings.TrimSpace(product)) {
+	case "wow":
+		return "wow", nil
+	case "wow_classic":
+		return "wow_classic", nil
+	case "wow_classic_era":
+		return "wow_classic_era", nil
+	case "wow_classic_hardcore":
+		return "wow_classic_era", nil
+	default:
+		return "", fmt.Errorf("unsupported Wago catalog product %q", product)
+	}
 }
 
 func parseBuildNumber(version string) (int64, error) {
