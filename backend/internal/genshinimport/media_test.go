@@ -78,3 +78,35 @@ func TestMediaFetcherUsesFallbackOnlyForNotFound(t *testing.T) {
 		t.Fatalf("asset = %+v", asset)
 	}
 }
+
+func TestMediaFetcherUsesAlternateLocalMirrorForOptionalAssets(t *testing.T) {
+	var content bytes.Buffer
+	if err := png.Encode(&content, image.NewRGBA(image.Rect(0, 0, 4, 5))); err != nil {
+		t.Fatal(err)
+	}
+	primary := httptest.NewServer(http.NotFoundHandler())
+	t.Cleanup(primary.Close)
+	alternate := t.TempDir()
+	if err := os.WriteFile(filepath.Join(alternate, "UI_Optional.png"), content.Bytes(), 0o640); err != nil {
+		t.Fatal(err)
+	}
+
+	fetcher, err := NewMediaFetcher(t.TempDir(), primary.URL, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := fetcher.SetAlternateMediaSource(alternate, "https://example.test/genshin"); err != nil {
+		t.Fatal(err)
+	}
+	assets, err := fetcher.FetchOptional(t.Context(), []string{"UI_Optional"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	asset := assets["UI_Optional"]
+	if asset.Width != 4 || asset.Height != 5 || asset.FetchedAs != "UI_Optional" {
+		t.Fatalf("asset = %+v", asset)
+	}
+	if asset.SourceURL != "https://example.test/genshin/UI_Optional.png" {
+		t.Fatalf("source URL = %q", asset.SourceURL)
+	}
+}

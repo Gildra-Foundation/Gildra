@@ -162,6 +162,10 @@ services:
       - ${GENSHIN_GAME_VERSION:-}
       - -media-directory
       - /var/lib/gildra/catalog-media
+      - -alternate-media-directory
+      - /var/lib/gildra/genshin-alt-media
+      - -alternate-media-base-url
+      - ${GENSHIN_ALTERNATE_MEDIA_BASE_URL:-https://raw.githubusercontent.com/PathOfGenshin/resources/015a2493b5672b28576ab78ffbcffde2ea0c9844/resources/gi/Sprite}
       - -media-workers
       - ${GENSHIN_MEDIA_WORKERS:-12}
     environment:
@@ -170,6 +174,7 @@ services:
     volumes:
       - catalog_media:/var/lib/gildra/catalog-media
       - ${GENSHIN_SOURCE_DIRECTORY:-./.artifacts/genshin-db-source}:/var/lib/gildra/genshin-source:ro
+      - ${GENSHIN_ALTERNATE_MEDIA_DIRECTORY:-./.artifacts/genshin-alt-media}:/var/lib/gildra/genshin-alt-media:ro
     depends_on:
       postgres: { condition: service_healthy }
 

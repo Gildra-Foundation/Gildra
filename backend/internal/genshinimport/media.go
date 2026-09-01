@@ -39,10 +39,12 @@ type MediaAsset struct {
 }
 
 type MediaFetcher struct {
-	root    string
-	baseURL *url.URL
-	client  *http.Client
-	workers int
+	root             string
+	baseURL          *url.URL
+	alternateRoot    string
+	alternateBaseURL *url.URL
+	client           *http.Client
+	workers          int
 }
 
 func NewMediaFetcher(root, baseURL string, workers int) (*MediaFetcher, error) {
@@ -73,6 +75,27 @@ func NewMediaFetcher(root, baseURL string, workers int) (*MediaFetcher, error) {
 			},
 		},
 	}, nil
+}
+
+// SetAlternateMediaSource configures an optional local mirror used for
+// client-only catalog assets that are not published by the primary provider.
+// The mirror is intentionally used only by FetchOptional; strict core assets
+// continue to come from the primary source and fail the import when missing.
+func (f *MediaFetcher) SetAlternateMediaSource(root, baseURL string) error {
+	if root == "" {
+		return errors.New("alternate genshin media directory is required")
+	}
+	absoluteRoot, err := filepath.Abs(root)
+	if err != nil {
+		return fmt.Errorf("resolve alternate genshin media directory: %w", err)
+	}
+	parsedBase, err := url.Parse(baseURL)
+	if err != nil || parsedBase.Host == "" || (parsedBase.Scheme != "https" && parsedBase.Scheme != "http") {
+		return fmt.Errorf("invalid alternate genshin media base URL %q", baseURL)
+	}
+	f.alternateRoot = absoluteRoot
+	f.alternateBaseURL = parsedBase
+	return nil
 }
 
 func (f *MediaFetcher) Fetch(ctx context.Context, filenames []string, fallbacks map[string]string) (map[string]MediaAsset, error) {
@@ -116,6 +139,15 @@ func (f *MediaFetcher) FetchOptional(ctx context.Context, filenames []string) (m
 	group.SetLimit(f.workers)
 	for index, filename := range filenames {
 		group.Go(func() error {
+			asset, found, err := f.downloadAlternate(groupCtx, directory, filename)
+			if found {
+				if err != nil {
+					slog.Warn("genshin alternate media unavailable", "filename", filename, "error", err)
+				} else {
+					assets[index] = asset
+					return nil
+				}
+			}
 			asset, notFound, err := f.download(groupCtx, directory, filename, filename)
 			if err != nil {
 				// Generic records include client-only assets as well as files
@@ -141,6 +173,31 @@ func (f *MediaFetcher) FetchOptional(ctx context.Context, filenames []string) (m
 		}
 	}
 	return byFilename, nil
+}
+
+func (f *MediaFetcher) downloadAlternate(ctx context.Context, directory, filename string) (MediaAsset, bool, error) {
+	if f.alternateRoot == "" || f.alternateBaseURL == nil {
+		return MediaAsset{}, false, nil
+	}
+	if !mediaFilename.MatchString(filename) {
+		return MediaAsset{}, true, fmt.Errorf("unsafe media filename %q", filename)
+	}
+	localName := filename + ".png"
+	localPath := filepath.Join(f.alternateRoot, localName)
+	content, err := os.ReadFile(localPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return MediaAsset{}, false, nil
+		}
+		return MediaAsset{}, true, fmt.Errorf("read alternate media %q: %w", filename, err)
+	}
+	if len(content) == 0 || len(content) > maxMediaBytes {
+		return MediaAsset{}, true, fmt.Errorf("alternate media size %d is outside the allowed range", len(content))
+	}
+	mediaURL := *f.alternateBaseURL
+	mediaURL.Path = path.Join(f.alternateBaseURL.Path, localName)
+	asset, err := f.persist(directory, filename, filename, mediaURL.String(), content)
+	return asset, true, err
 }
 
 func (f *MediaFetcher) fetchOne(ctx context.Context, directory, filename, fallback string) (MediaAsset, error) {
@@ -190,16 +247,21 @@ func (f *MediaFetcher) download(ctx context.Context, directory, requested, fetch
 	if len(content) == 0 || len(content) > maxMediaBytes {
 		return MediaAsset{}, false, fmt.Errorf("media size %d is outside the allowed range", len(content))
 	}
+	asset, err := f.persist(directory, requested, fetched, mediaURL.String(), content)
+	return asset, false, err
+}
+
+func (f *MediaFetcher) persist(directory, requested, fetched, sourceURL string, content []byte) (MediaAsset, error) {
 	config, err := png.DecodeConfig(bytes.NewReader(content))
 	if err != nil {
-		return MediaAsset{}, false, fmt.Errorf("decode PNG metadata: %w", err)
+		return MediaAsset{}, fmt.Errorf("decode PNG metadata: %w", err)
 	}
 	digest := sha256.Sum256(content)
 	digestText := hex.EncodeToString(digest[:])
 	storageKey := "genshin/" + digestText + ".png"
 	destination := filepath.Join(directory, digestText+".png")
 	if err := persistMedia(destination, content, digest); err != nil {
-		return MediaAsset{}, false, err
+		return MediaAsset{}, err
 	}
 	return MediaAsset{
 		Filename:   requested,
@@ -209,9 +271,9 @@ func (f *MediaFetcher) download(ctx context.Context, directory, requested, fetch
 		ByteSize:   int64(len(content)),
 		Width:      config.Width,
 		Height:     config.Height,
-		SourceURL:  mediaURL.String(),
+		SourceURL:  sourceURL,
 		FetchedAs:  fetched,
-	}, false, nil
+	}, nil
 }
 
 func persistMedia(destination string, content []byte, expected [sha256.Size]byte) (returnErr error) {
