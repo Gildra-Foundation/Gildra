@@ -18,6 +18,7 @@ import (
 
 type options struct {
 	sourceDirectory         string
+	supplementalDirectory   string
 	mediaDirectory          string
 	mediaBaseURL            string
 	alternateMediaDirectory string
@@ -47,7 +48,7 @@ func run() error {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Hour)
 	defer cancel()
 
-	dataset, err := genshinimport.LoadSource(opts.sourceDirectory)
+	dataset, err := genshinimport.LoadSourceWithOverlay(opts.sourceDirectory, opts.supplementalDirectory)
 	if err != nil {
 		return fmt.Errorf("load genshin source: %w", err)
 	}
@@ -110,6 +111,7 @@ func run() error {
 func parseOptions() (options, error) {
 	var opts options
 	flag.StringVar(&opts.sourceDirectory, "source-directory", "", "genshin-db checkout directory")
+	flag.StringVar(&opts.supplementalDirectory, "supplemental-directory", os.Getenv("GENSHIN_SUPPLEMENTAL_DIRECTORY"), "optional additive source overlay directory")
 	flag.StringVar(&opts.mediaDirectory, "media-directory", os.Getenv("CATALOG_MEDIA_DIRECTORY"), "local catalog media directory")
 	flag.StringVar(&opts.mediaBaseURL, "media-base-url", "https://enka.network/ui", "source base URL for PNG game assets")
 	flag.StringVar(&opts.alternateMediaDirectory, "alternate-media-directory", os.Getenv("GENSHIN_ALTERNATE_MEDIA_DIRECTORY"), "optional local mirror for client-only PNG assets")

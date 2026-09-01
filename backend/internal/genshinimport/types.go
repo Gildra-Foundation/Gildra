@@ -134,11 +134,22 @@ type ContentEntry struct {
 	Localizations map[string]ContentLocalization
 }
 
+// SupplementalSource identifies an additive dataset layered on top of the
+// primary genshin-db checkout. The digest makes a locally cached fetch
+// reproducible without exposing the server's filesystem layout.
+type SupplementalSource struct {
+	Name      string `json:"name"`
+	URL       string `json:"url"`
+	SHA256    string `json:"sha256"`
+	FetchedAt string `json:"fetchedAt,omitempty"`
+}
+
 type Dataset struct {
-	Characters   []Character
-	Weapons      []Weapon
-	ArtifactSets []ArtifactSet
-	Content      []ContentEntry
+	Characters          []Character
+	Weapons             []Weapon
+	ArtifactSets        []ArtifactSet
+	Content             []ContentEntry
+	SupplementalSources []SupplementalSource
 }
 
 type Counts struct {

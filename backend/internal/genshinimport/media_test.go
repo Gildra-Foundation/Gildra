@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"image"
 	"image/color"
+	"image/jpeg"
 	"image/png"
 	"net/http"
 	"net/http/httptest"
@@ -125,7 +126,8 @@ func TestMediaFetcherDownloadsOptionalExternalPNGURL(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	fetcher, err := NewMediaFetcher(t.TempDir(), "https://primary.example/ui", 1)
+	root := t.TempDir()
+	fetcher, err := NewMediaFetcher(root, "https://primary.example/ui", 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,5 +139,42 @@ func TestMediaFetcherDownloadsOptionalExternalPNGURL(t *testing.T) {
 	asset := assets[source]
 	if asset.Width != 3 || asset.Height != 2 || asset.SourceURL != source {
 		t.Fatalf("asset = %+v", asset)
+	}
+}
+
+func TestMediaFetcherNormalizesOptionalExternalJPEGURL(t *testing.T) {
+	var content bytes.Buffer
+	if err := jpeg.Encode(&content, image.NewRGBA(image.Rect(0, 0, 5, 4)), &jpeg.Options{Quality: 90}); err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/event.jpg" {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write(content.Bytes())
+	}))
+	t.Cleanup(server.Close)
+
+	root := t.TempDir()
+	fetcher, err := NewMediaFetcher(root, "https://primary.example/ui", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := server.URL + "/event.jpg"
+	assets, err := fetcher.FetchOptional(t.Context(), []string{source})
+	if err != nil {
+		t.Fatal(err)
+	}
+	asset := assets[source]
+	if asset.Width != 5 || asset.Height != 4 || asset.MIMEType != "image/png" {
+		t.Fatalf("asset = %+v", asset)
+	}
+	stored, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(asset.StorageKey)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := png.DecodeConfig(bytes.NewReader(stored)); err != nil {
+		t.Fatalf("stored JPEG was not normalized to PNG: %v", err)
 	}
 }
