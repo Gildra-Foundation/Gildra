@@ -21,6 +21,7 @@ var (
 	spellMaxDurationToken   = regexp.MustCompile(`\$(\d+)D\b`)
 	spellEffectToken        = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
 	spellRadiusToken        = regexp.MustCompile(`\$[aA](\d*)\b`)
+	spellRangeToken         = regexp.MustCompile(`\$[rR]\b`)
 	spellTickToken          = regexp.MustCompile(`\$t(\d+)\b`)
 	currentDurationToken    = regexp.MustCompile(`\$d\b`)
 	currentMaxDurationToken = regexp.MustCompile(`\$D\b`)
@@ -32,6 +33,8 @@ type spellDescriptionValues struct {
 	Description   string
 	DurationMS    int64
 	MaxDurationMS int64
+	MinRange      float64
+	MaxRange      float64
 	Effects       map[int]spellEffectValue
 }
 
@@ -214,6 +217,10 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				THEN (duration.payload->>'MaxDuration')::bigint END,
 				CASE WHEN duration.payload->>'Duration' ~ '^-?[0-9]+$'
 					THEN (duration.payload->>'Duration')::bigint END,0),
+			COALESCE(CASE WHEN spell_range.payload->>'RangeMin_0' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (spell_range.payload->>'RangeMin_0')::double precision END,0),
+			COALESCE(CASE WHEN spell_range.payload->>'RangeMax_0' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (spell_range.payload->>'RangeMax_0')::double precision END,0),
 			effect.effect_index,effect.base_points::double precision,
 			effect.coefficient::double precision,effect.attack_power_coefficient::double precision,
 			COALESCE(effect.amplitude_ms,0),
@@ -230,7 +237,9 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 		LEFT JOIN LATERAL (
 			SELECT CASE WHEN misc.payload->>'DurationIndex' ~ '^[0-9]+$'
-				THEN (misc.payload->>'DurationIndex')::bigint END AS duration_index
+				THEN (misc.payload->>'DurationIndex')::bigint END AS duration_index,
+				CASE WHEN misc.payload->>'RangeIndex' ~ '^[0-9]+$'
+					THEN (misc.payload->>'RangeIndex')::bigint END AS range_index
 			FROM catalog_db2_rows misc
 			WHERE misc.build_id=version.build_id AND misc.table_name='SpellMisc' AND misc.locale='en_US'
 			  AND misc.payload->>'SpellID' ~ '^[0-9]+$'
@@ -241,6 +250,9 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		LEFT JOIN catalog_db2_rows duration ON duration.build_id=version.build_id
 			AND duration.table_name='SpellDuration' AND duration.locale='en_US'
 			AND duration.row_id=misc.duration_index
+		LEFT JOIN catalog_db2_rows spell_range ON spell_range.build_id=version.build_id
+			AND spell_range.table_name='SpellRange' AND spell_range.locale='en_US'
+			AND spell_range.row_id=misc.range_index
 		LEFT JOIN catalog_spell_effects effect ON effect.spell_version_id=version.id
 			AND effect.difficulty_id=0 AND effect.source='db2'
 		LEFT JOIN LATERAL (
@@ -274,15 +286,17 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 	for rows.Next() {
 		var id, duration, maxDuration int64
 		var name, description string
+		var minRange, maxRange float64
 		var effectIndex *int16
 		var basePoints, coefficient, attackPowerCoefficient *float64
 		var amplitude int64
 		var radius *float64
-		if err := rows.Scan(&id, &name, &description, &duration, &maxDuration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude, &radius); err != nil {
+		if err := rows.Scan(&id, &name, &description, &duration, &maxDuration, &minRange, &maxRange, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude, &radius); err != nil {
 			return nil, fmt.Errorf("scan spell description values: %w", err)
 		}
 		value := result[id]
 		value.Name, value.Description, value.DurationMS, value.MaxDurationMS = name, description, duration, maxDuration
+		value.MinRange, value.MaxRange = minRange, maxRange
 		if value.Effects == nil {
 			value.Effects = make(map[int]spellEffectValue)
 		}
@@ -438,6 +452,17 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		}
 		if value, ok := spellEffectValueAt(values[currentSpellID].Effects, index); ok && value.Radius > 0 {
 			return formatDescriptionNumber(value.Radius)
+		}
+		return token
+	})
+	text = spellRangeToken.ReplaceAllStringFunc(text, func(token string) string {
+		if currentSpellID > 0 {
+			if value := values[currentSpellID]; value.MaxRange > 0 {
+				return formatDescriptionNumber(value.MaxRange)
+			}
+			if value := values[currentSpellID]; value.MinRange > 0 {
+				return formatDescriptionNumber(value.MinRange)
+			}
 		}
 		return token
 	})
