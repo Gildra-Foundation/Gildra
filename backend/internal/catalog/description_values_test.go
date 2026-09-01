@@ -63,6 +63,34 @@ func TestResolveDescriptionTextUsesBuildPinnedMinPeriodicAndChainValues(t *testi
 	}
 }
 
+func TestResolveDescriptionTextResolvesBracedSpellValuesAndArithmetic(t *testing.T) {
+	t.Parallel()
+
+	values := map[int64]spellDescriptionValues{
+		42: {
+			DurationMS: 10000,
+			Effects: map[int]spellEffectValue{
+				0: {BasePoints: 20},
+				1: {BasePoints: 27},
+			},
+		},
+	}
+	got := resolveDescriptionText("Heals {$s1} over ${$s1*$d/5} sec; grants ${$s2%10} stacks.", 42, values, "en_US")
+	want := "Heals 20 over 40 sec; grants 7 stacks."
+	if got != want {
+		t.Fatalf("unexpected braced/arithmetic resolution\nwant: %s\n got: %s", want, got)
+	}
+}
+
+func TestResolveDescriptionTextPreservesUnknownBracedVariables(t *testing.T) {
+	t.Parallel()
+
+	raw := "Uses {$@versadmg} and ${$<rolemult>*$s1}."
+	if got := resolveDescriptionText(raw, 42, map[int64]spellDescriptionValues{}, "en_US"); got != raw {
+		t.Fatalf("unknown braced variables must remain source-visible: %q", got)
+	}
+}
+
 func TestResolveDescriptionTextPreservesUnprovenMaxEffectValue(t *testing.T) {
 	t.Parallel()
 
