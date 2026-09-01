@@ -1071,13 +1071,13 @@ func (s *Service) artifactPieces(ctx context.Context, artifactID int64, slug, lo
 
 func (s *Service) artifactSources(ctx context.Context, artifactSlug, artifactName, locale string) ([]ArtifactSourceSummary, error) {
 	rows, err := s.postgres.Query(ctx, `
-		SELECT entry.slug,
-		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), entry.slug),
-		       COALESCE(NULLIF(localized.source_payload->>'regionName', ''), NULLIF(english.source_payload->>'regionName', ''), ''),
-		       COALESCE(NULLIF(localized.source_payload->>'entranceName', ''), NULLIF(english.source_payload->>'entranceName', ''), ''),
-		       COALESCE(NULLIF(localized.source_payload->>'unlockRank', '')::smallint, NULLIF(english.source_payload->>'unlockRank', '')::smallint, 0),
-		       COALESCE(NULLIF(localized.source_payload->>'recommendedLevel', '')::smallint, NULLIF(english.source_payload->>'recommendedLevel', '')::smallint, 0),
-		       'domain', ''
+		SELECT entry.slug AS slug,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), entry.slug) AS name,
+		       COALESCE(NULLIF(localized.source_payload->>'regionName', ''), NULLIF(english.source_payload->>'regionName', ''), '') AS region,
+		       COALESCE(NULLIF(localized.source_payload->>'entranceName', ''), NULLIF(english.source_payload->>'entranceName', ''), '') AS entrance_name,
+		       COALESCE(NULLIF(localized.source_payload->>'unlockRank', '')::smallint, NULLIF(english.source_payload->>'unlockRank', '')::smallint, 0) AS unlock_rank,
+		       COALESCE(NULLIF(localized.source_payload->>'recommendedLevel', '')::smallint, NULLIF(english.source_payload->>'recommendedLevel', '')::smallint, 0) AS recommended_level,
+		       'domain' AS source_kind, '' AS note
 		FROM genshin_content_entries entry
 		JOIN genshin_current_release release ON release.id = entry.release_id
 		LEFT JOIN genshin_content_localizations localized
