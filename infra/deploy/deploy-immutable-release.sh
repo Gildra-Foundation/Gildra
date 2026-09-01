@@ -214,6 +214,13 @@ verify_local_health() {
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/genshin-impact/v1/status >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/genshin-impact >/dev/null
+  for edition in retail classic classic-era hardcore; do
+    prefixed_index_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+      --output /dev/null --write-out '%{http_code}' \
+      --resolve api.gildra.net:443:127.0.0.1 \
+      "https://api.gildra.net/world-of-warcraft/$edition/v1")
+    [ "$prefixed_index_status" = "200" ] || fail "product API index failed for $edition: HTTP $prefixed_index_status"
+  done
   if [ "$catalog_access_mode" = private ]; then
     catalog_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
       --output /dev/null --write-out '%{http_code}' \
