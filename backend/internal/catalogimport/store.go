@@ -118,6 +118,21 @@ func (s *Store) MissingBattleNetIDs(
 			OR localization.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'
 			OR ($7::boolean AND cached_icons.entity_id IS NULL)
 		)
+		-- A successful Battle.net detail response can legitimately contain no
+		-- description (for example, a purely mechanical item).  Retrying the
+		-- same empty response on every daily run wastes the API budget and can
+		-- starve records that actually changed.  Recheck such observations after
+		-- a bounded cooldown while still allowing a new build to be enriched.
+		AND NOT EXISTS (
+			SELECT 1
+			FROM catalog_entity_source_documents attempted
+			WHERE attempted.build_id=$3
+			  AND attempted.entity_type=$2
+			  AND attempted.external_id=candidate.external_id
+			  AND attempted.source='blizzard_api'
+			  AND attempted.locale=$6
+			  AND attempted.imported_at >= now() - interval '7 days'
+		)
 		ORDER BY candidate.external_id
 		LIMIT CASE WHEN $8::int > 0 THEN $8::int ELSE 2147483647 END`,
 		ic.ProductID, entityType, ic.BuildID, ic.SnapshotID, ic.ReleaseID, locale, includeMedia, limit)
