@@ -259,8 +259,10 @@ func EvaluateReadinessWithRecoveryPolicy(
 	// description pass the production gate just because the DB2 row itself was
 	// imported successfully.  The query deliberately scopes descriptions to
 	// item, spell and quest records: those are the entities for which the
-	// library promises explanatory text.  Other entity types may legitimately
-	// be registry-only and remain covered by the provenance checks above.
+	// library promises explanatory text.  A materialized item/spell tooltip is
+	// accepted when the short Description_lang field is legitimately empty;
+	// quests still require their narrative description. Other entity types may
+	// legitimately be registry-only and remain covered by provenance checks.
 	var missingEnglishNames, missingRussianNames int64
 	var missingEnglishDescriptions, missingRussianDescriptions int64
 	if err := db.QueryRow(ctx, `
@@ -275,18 +277,28 @@ func EvaluateReadinessWithRecoveryPolicy(
 				COALESCE(NULLIF(btrim(english.name),''),'') AS english_name,
 				COALESCE(NULLIF(btrim(russian.name),''),NULLIF(btrim(english.name),''),'') AS russian_name,
 				COALESCE(NULLIF(btrim(english.description),''),'') AS english_description,
-				COALESCE(NULLIF(btrim(russian.description),''),NULLIF(btrim(english.description),''),'') AS russian_description
+				COALESCE(NULLIF(btrim(russian.description),''),NULLIF(btrim(english.description),''),'') AS russian_description,
+				(COALESCE(NULLIF(btrim(english_tooltip.plain_text),''),'')<>'' OR
+					COALESCE(jsonb_array_length(english_tooltip.blocks),0)>0) AS english_tooltip_present,
+				(COALESCE(NULLIF(btrim(russian_tooltip.plain_text),''),'')<>'' OR
+					COALESCE(jsonb_array_length(russian_tooltip.blocks),0)>0) AS russian_tooltip_present
 			FROM current_versions current
 			LEFT JOIN game_entity_localizations english
 				ON english.version_id=current.version_id AND english.locale='en_US'
 			LEFT JOIN game_entity_localizations russian
 				ON russian.version_id=current.version_id AND russian.locale='ru_RU'
+			LEFT JOIN catalog_entity_tooltips english_tooltip
+				ON english_tooltip.version_id=current.version_id AND english_tooltip.locale='en_US'
+			LEFT JOIN catalog_entity_tooltips russian_tooltip
+				ON russian_tooltip.version_id=current.version_id AND russian_tooltip.locale='ru_RU'
 		)
 		SELECT
 			count(*) FILTER (WHERE btrim(english_name)=''),
 			count(*) FILTER (WHERE btrim(russian_name)=''),
-			count(*) FILTER (WHERE entity_type IN ('item','spell','quest') AND btrim(english_description)=''),
-			count(*) FILTER (WHERE entity_type IN ('item','spell','quest') AND btrim(russian_description)='')
+			count(*) FILTER (WHERE (entity_type='quest' AND btrim(english_description)='') OR
+				(entity_type IN ('item','spell') AND btrim(english_description)='' AND NOT english_tooltip_present)),
+			count(*) FILTER (WHERE (entity_type='quest' AND btrim(russian_description)='') OR
+				(entity_type IN ('item','spell') AND btrim(russian_description)='' AND NOT russian_tooltip_present))
 		FROM localized`, product).Scan(
 		&missingEnglishNames, &missingRussianNames,
 		&missingEnglishDescriptions, &missingRussianDescriptions); err != nil {
@@ -297,9 +309,9 @@ func EvaluateReadinessWithRecoveryPolicy(
 	report.add("required_russian_names", ScopeProduction, missingRussianNames != 0, missingRussianNames,
 		"every current catalog entity must have a non-empty Russian name or an explicit English fallback")
 	report.add("required_english_descriptions", ScopeProduction, missingEnglishDescriptions != 0, missingEnglishDescriptions,
-		"items, spells and quests must have an English description before public publication")
+		"items and spells must have an English description or tooltip; quests require an English description before public publication")
 	report.add("required_russian_descriptions", ScopeProduction, missingRussianDescriptions != 0, missingRussianDescriptions,
-		"items, spells and quests must have a Russian description or an explicit English fallback")
+		"items and spells must have a Russian description or tooltip; quests require a Russian description or an explicit English fallback")
 
 	var unresolvedTooltipTemplates int64
 	if err := db.QueryRow(ctx, `
