@@ -21,6 +21,7 @@ import (
 var buildPattern = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+$`)
 
 const defaultResponseHeaderTimeout = 2 * time.Minute
+const defaultUserAgent = "GildraCatalog/1.0 (+https://api.gildra.net)"
 
 const maxBuildManifestBytes = 8 << 20
 
@@ -285,6 +286,12 @@ func (c *Client) RowsWithProof(
 }
 
 func (c *Client) do(req *http.Request) (*http.Response, error) {
+	// Wago's edge rejects requests without an identifying User-Agent. Set a
+	// stable service identity for every endpoint (including /api/builds and
+	// HEAD build probes), while preserving an explicitly supplied caller value.
+	if strings.TrimSpace(req.Header.Get("User-Agent")) == "" {
+		req.Header.Set("User-Agent", defaultUserAgent)
+	}
 	for attempt := 0; ; attempt++ {
 		resp, err := c.httpClient.Do(req.Clone(req.Context()))
 		if err == nil && !retryableStatus(resp.StatusCode) {
