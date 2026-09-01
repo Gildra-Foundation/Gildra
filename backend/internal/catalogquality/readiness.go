@@ -254,6 +254,53 @@ func EvaluateReadinessWithRecoveryPolicy(
 	report.add("description_template_tokens", ScopeProduction, unresolvedDescriptionTemplates != 0, unresolvedDescriptionTemplates,
 		"source descriptions still contain unresolved Blizzard template tokens; public publication waits for build-pinned resolution")
 
+	// A source artifact can be complete while the user-facing record is still
+	// unusable.  Do not let a candidate with an empty locale or an absent core
+	// description pass the production gate just because the DB2 row itself was
+	// imported successfully.  The query deliberately scopes descriptions to
+	// item, spell and quest records: those are the entities for which the
+	// library promises explanatory text.  Other entity types may legitimately
+	// be registry-only and remain covered by the provenance checks above.
+	var missingEnglishNames, missingRussianNames int64
+	var missingEnglishDescriptions, missingRussianDescriptions int64
+	if err := db.QueryRow(ctx, `
+		WITH current_versions AS MATERIALIZED (
+			SELECT entity.id,entity.entity_type,version.id AS version_id
+			FROM game_entities entity
+			JOIN game_entity_versions version ON version.id=entity.latest_version_id
+			WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+			  AND entity.deleted_at IS NULL
+		), localized AS MATERIALIZED (
+			SELECT current.entity_type,
+				COALESCE(NULLIF(btrim(english.name),''),'') AS english_name,
+				COALESCE(NULLIF(btrim(russian.name),''),NULLIF(btrim(english.name),''),'') AS russian_name,
+				COALESCE(NULLIF(btrim(english.description),''),'') AS english_description,
+				COALESCE(NULLIF(btrim(russian.description),''),NULLIF(btrim(english.description),''),'') AS russian_description
+			FROM current_versions current
+			LEFT JOIN game_entity_localizations english
+				ON english.version_id=current.version_id AND english.locale='en_US'
+			LEFT JOIN game_entity_localizations russian
+				ON russian.version_id=current.version_id AND russian.locale='ru_RU'
+		)
+		SELECT
+			count(*) FILTER (WHERE btrim(english_name)=''),
+			count(*) FILTER (WHERE btrim(russian_name)=''),
+			count(*) FILTER (WHERE entity_type IN ('item','spell','quest') AND btrim(english_description)=''),
+			count(*) FILTER (WHERE entity_type IN ('item','spell','quest') AND btrim(russian_description)='')
+		FROM localized`, product).Scan(
+		&missingEnglishNames, &missingRussianNames,
+		&missingEnglishDescriptions, &missingRussianDescriptions); err != nil {
+		return ReadinessReport{}, fmt.Errorf("check required localized catalog fields: %w", err)
+	}
+	report.add("required_english_names", ScopeProduction, missingEnglishNames != 0, missingEnglishNames,
+		"every current catalog entity must have a non-empty English name")
+	report.add("required_russian_names", ScopeProduction, missingRussianNames != 0, missingRussianNames,
+		"every current catalog entity must have a non-empty Russian name or an explicit English fallback")
+	report.add("required_english_descriptions", ScopeProduction, missingEnglishDescriptions != 0, missingEnglishDescriptions,
+		"items, spells and quests must have an English description before public publication")
+	report.add("required_russian_descriptions", ScopeProduction, missingRussianDescriptions != 0, missingRussianDescriptions,
+		"items, spells and quests must have a Russian description or an explicit English fallback")
+
 	var unresolvedTooltipTemplates int64
 	if err := db.QueryRow(ctx, `
 		SELECT count(*)
@@ -372,12 +419,12 @@ func EvaluateReadinessWithRecoveryPolicy(
 			count(*) FILTER (WHERE media.cache_status='remote' AND NOT (media.media_kind='icon' AND media.is_primary))
 		FROM catalog_entity_media media
 		JOIN game_entities entity ON entity.id=media.entity_id
-		JOIN game_entity_versions published ON published.id=entity.published_version_id
-		JOIN game_builds published_build ON published_build.id=published.build_id
+		JOIN game_entity_versions selected ON selected.id=COALESCE(entity.latest_version_id,entity.published_version_id)
+		JOIN game_builds selected_build ON selected_build.id=selected.build_id
 		JOIN game_builds media_build ON media_build.id=media.build_id
 		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
 		  AND entity.deleted_at IS NULL AND media_build.product_id=entity.product_id
-		  AND media_build.build_number<=published_build.build_number`, product).
+		  AND media_build.build_number<=selected_build.build_number`, product).
 		Scan(&failedMedia, &remoteMedia, &optionalFailedMedia, &optionalRemoteMedia); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check media cache backlog: %w", err)
 	}
@@ -385,6 +432,43 @@ func EvaluateReadinessWithRecoveryPolicy(
 		fmt.Sprintf("%d primary icons failed and %d remain remote; public publication waits for verified local media", failedMedia, remoteMedia))
 	report.warn("optional_media_cache_backlog", ScopeData, optionalFailedMedia+optionalRemoteMedia,
 		fmt.Sprintf("%d optional media assets failed and %d remain remote; tile/zoom media continues retrying without blocking the release", optionalFailedMedia, optionalRemoteMedia))
+
+	// The backlog query above only sees media rows that already exist.  A fresh
+	// candidate can otherwise publish with no media observation at all, leaving
+	// the UI to render a generic database glyph.  Count missing primary icons
+	// against the current (candidate when present) version and keep this check
+	// production-blocking.  The media worker is able to seed these rows before
+	// the release is published; a missing source therefore remains visible as a
+	// real publication failure instead of being silently accepted.
+	var missingPrimaryMedia int64
+	if err := db.QueryRow(ctx, `
+		WITH candidates AS MATERIALIZED (
+			SELECT entity.id,entity.entity_type
+			FROM game_entities entity
+			JOIN game_entity_versions version ON version.id=entity.latest_version_id
+			WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+			  AND entity.deleted_at IS NULL
+			  AND entity.entity_type IN (
+				'item','spell','currency','mount','battle_pet','achievement','toy',
+				'class','specialization','profession','talent','pvp_talent'
+			  )
+		), cached AS MATERIALIZED (
+			SELECT DISTINCT media.entity_id
+			FROM catalog_entity_media media
+			JOIN candidates candidate ON candidate.id=media.entity_id
+			WHERE media.media_kind='icon' AND media.is_primary
+			  AND media.cache_status='cached'
+			  AND NULLIF(media.cached_url,'') IS NOT NULL
+			  AND media.cached_content_hash IS NOT NULL
+			  AND media.cached_byte_size IS NOT NULL
+		)
+		SELECT count(*) FROM candidates candidate
+		WHERE NOT EXISTS (SELECT 1 FROM cached WHERE cached.entity_id=candidate.id)`, product).
+		Scan(&missingPrimaryMedia); err != nil {
+		return ReadinessReport{}, fmt.Errorf("check missing primary media: %w", err)
+	}
+	report.add("required_primary_media", ScopeProduction, missingPrimaryMedia != 0, missingPrimaryMedia,
+		"every item, spell and other icon-bearing entity must have a verified cached primary image")
 
 	var unresolvedReagents, unresolvedOutputs int64
 	if err := db.QueryRow(ctx, `
