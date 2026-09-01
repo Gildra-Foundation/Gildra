@@ -6,11 +6,14 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
 const apiBase = "/genshin-impact/v1"
+
+var contentCategoryValue = regexp.MustCompile(`^[a-z0-9]{1,64}$`)
 
 type Catalog interface {
 	Status(context.Context) (Status, error)
@@ -18,6 +21,7 @@ type Catalog interface {
 	ListWeapons(context.Context, ListParams) (Page[WeaponSummary], error)
 	ListArtifactSets(context.Context, ListParams) (Page[ArtifactSetSummary], error)
 	ListTalents(context.Context, ListParams) (Page[TalentSummary], error)
+	ListContent(context.Context, string, ListParams) (Page[ContentSummary], error)
 }
 
 type Handler struct {
@@ -44,6 +48,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET "+apiBase+"/weapons", h.weapons)
 	mux.HandleFunc("GET "+apiBase+"/artifact-sets", h.artifactSets)
 	mux.HandleFunc("GET "+apiBase+"/talents", h.talents)
+	mux.HandleFunc("GET "+apiBase+"/content/{category}", h.content)
 }
 
 func (h *Handler) index(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +64,7 @@ func (h *Handler) index(w http.ResponseWriter, r *http.Request) {
 			"weapons":      apiBase + "/weapons",
 			"artifactSets": apiBase + "/artifact-sets",
 			"talents":      apiBase + "/talents",
+			"content":      apiBase + "/content/{category}",
 		},
 		"locales": []string{"en_US", "ru_RU"},
 	})
@@ -119,6 +125,20 @@ func (h *Handler) talents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	page, err := h.catalog.ListTalents(r.Context(), params)
+	handlePage(w, r, page, err)
+}
+
+func (h *Handler) content(w http.ResponseWriter, r *http.Request) {
+	category := r.PathValue("category")
+	if !contentCategoryValue.MatchString(category) {
+		writeProblem(w, r, http.StatusBadRequest, "invalid-category", "Invalid category", "Category must contain only lowercase letters and numbers.")
+		return
+	}
+	params, ok := parseListParams(w, r)
+	if !ok {
+		return
+	}
+	page, err := h.catalog.ListContent(r.Context(), category, params)
 	handlePage(w, r, page, err)
 }
 

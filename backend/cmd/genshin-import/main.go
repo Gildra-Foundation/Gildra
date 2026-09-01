@@ -51,12 +51,13 @@ func run() error {
 	}
 	filenames := dataset.MediaFilenames()
 	preview := map[string]any{
-		"dryRun":         !opts.confirm,
-		"sourceRevision": opts.sourceRevision,
-		"gameVersion":    opts.gameVersion,
-		"counts":         dataset.Counts(),
-		"mediaFiles":     len(filenames),
-		"locales":        []string{genshinimport.LocaleEnglish, genshinimport.LocaleRussian},
+		"dryRun":             !opts.confirm,
+		"sourceRevision":     opts.sourceRevision,
+		"gameVersion":        opts.gameVersion,
+		"counts":             dataset.Counts(),
+		"mediaFiles":         len(filenames),
+		"optionalMediaFiles": len(dataset.OptionalMediaFilenames()),
+		"locales":            []string{genshinimport.LocaleEnglish, genshinimport.LocaleRussian},
 	}
 	if !opts.confirm {
 		return writeJSON(preview)
@@ -68,6 +69,15 @@ func run() error {
 	assets, err := fetcher.Fetch(ctx, filenames, dataset.MediaFallbacks())
 	if err != nil {
 		return err
+	}
+	optionalAssets, err := fetcher.FetchOptional(ctx, dataset.OptionalMediaFilenames())
+	if err != nil {
+		return err
+	}
+	for filename, asset := range optionalAssets {
+		if _, exists := assets[filename]; !exists {
+			assets[filename] = asset
+		}
 	}
 	database, err := pgxpool.New(ctx, opts.databaseURL)
 	if err != nil {

@@ -3,6 +3,7 @@ package genshin
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -24,17 +25,19 @@ type Service struct {
 }
 
 type Status struct {
-	Ready          bool       `json:"ready"`
-	ReleaseID      string     `json:"releaseId,omitempty"`
-	SourceRevision string     `json:"sourceRevision,omitempty"`
-	GameVersion    string     `json:"gameVersion,omitempty"`
-	PublishedAt    *time.Time `json:"publishedAt,omitempty"`
-	Characters     int64      `json:"characters"`
-	Weapons        int64      `json:"weapons"`
-	ArtifactSets   int64      `json:"artifactSets"`
-	Talents        int64      `json:"talents"`
-	MediaAssets    int64      `json:"mediaAssets"`
-	Locales        []string   `json:"locales"`
+	Ready             bool             `json:"ready"`
+	ReleaseID         string           `json:"releaseId,omitempty"`
+	SourceRevision    string           `json:"sourceRevision,omitempty"`
+	GameVersion       string           `json:"gameVersion,omitempty"`
+	PublishedAt       *time.Time       `json:"publishedAt,omitempty"`
+	Characters        int64            `json:"characters"`
+	Weapons           int64            `json:"weapons"`
+	ArtifactSets      int64            `json:"artifactSets"`
+	Talents           int64            `json:"talents"`
+	ContentEntries    int64            `json:"contentEntries"`
+	ContentByCategory map[string]int64 `json:"contentByCategory"`
+	MediaAssets       int64            `json:"mediaAssets"`
+	Locales           []string         `json:"locales"`
 }
 
 type ListParams struct {
@@ -114,6 +117,27 @@ type TalentSummary struct {
 	LocaleFallback bool    `json:"localeFallback"`
 }
 
+type ContentMediaSummary struct {
+	Role     string `json:"role"`
+	Filename string `json:"filename"`
+	URL      string `json:"url"`
+}
+
+type ContentSummary struct {
+	ID               int64                 `json:"id"`
+	ExternalID       *int64                `json:"externalId,omitempty"`
+	Category         string                `json:"category"`
+	Slug             string                `json:"slug"`
+	Name             string                `json:"name"`
+	Description      string                `json:"description"`
+	IconURL          *string               `json:"iconUrl"`
+	Media            []ContentMediaSummary `json:"media"`
+	SourcePayload    json.RawMessage       `json:"sourcePayload"`
+	LocalizedPayload json.RawMessage       `json:"localizedPayload"`
+	Locale           string                `json:"locale"`
+	LocaleFallback   bool                  `json:"localeFallback"`
+}
+
 type Page[T any] struct {
 	Data       []T        `json:"data"`
 	Pagination Pagination `json:"pagination"`
@@ -124,7 +148,7 @@ func NewService(postgres *pgxpool.Pool) *Service {
 }
 
 func (s *Service) Status(ctx context.Context) (Status, error) {
-	status := Status{Locales: []string{"en_US", "ru_RU"}}
+	status := Status{Locales: []string{"en_US", "ru_RU"}, ContentByCategory: make(map[string]int64)}
 	err := s.postgres.QueryRow(ctx, `
 		SELECT release.id::text, release.source_revision, release.game_version, release.published_at,
 		       (SELECT count(*) FROM genshin_characters WHERE release_id = release.id),
@@ -133,16 +157,38 @@ func (s *Service) Status(ctx context.Context) (Status, error) {
 		       (SELECT count(*) FROM genshin_character_talents talent
 		          JOIN genshin_characters character ON character.id = talent.character_id
 		         WHERE character.release_id = release.id),
+		       (SELECT count(*) FROM genshin_content_entries entry WHERE entry.release_id = release.id),
 		       (SELECT count(*) FROM genshin_media_assets)
 		FROM genshin_current_release release`).Scan(
 		&status.ReleaseID, &status.SourceRevision, &status.GameVersion, &status.PublishedAt,
-		&status.Characters, &status.Weapons, &status.ArtifactSets, &status.Talents, &status.MediaAssets,
+		&status.Characters, &status.Weapons, &status.ArtifactSets, &status.Talents, &status.ContentEntries, &status.MediaAssets,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return status, nil
 	}
 	if err != nil {
 		return Status{}, fmt.Errorf("read genshin catalog status: %w", err)
+	}
+	categoryRows, err := s.postgres.Query(ctx, `
+		SELECT entry.category, count(*)
+		FROM genshin_content_entries entry
+		JOIN genshin_current_release release ON release.id = entry.release_id
+		GROUP BY entry.category
+		ORDER BY entry.category`)
+	if err != nil {
+		return Status{}, fmt.Errorf("read genshin content category status: %w", err)
+	}
+	defer categoryRows.Close()
+	for categoryRows.Next() {
+		var category string
+		var count int64
+		if err := categoryRows.Scan(&category, &count); err != nil {
+			return Status{}, fmt.Errorf("scan genshin content category status: %w", err)
+		}
+		status.ContentByCategory[category] = count
+	}
+	if err := categoryRows.Err(); err != nil {
+		return Status{}, fmt.Errorf("iterate genshin content category status: %w", err)
 	}
 	status.Ready = true
 	return status, nil
@@ -336,6 +382,73 @@ func (s *Service) ListTalents(ctx context.Context, params ListParams) (Page[Tale
 		return Page[TalentSummary]{}, fmt.Errorf("iterate genshin talents: %w", err)
 	}
 	return makePage(items, params.Limit, func(item TalentSummary) string { return strconv.FormatInt(item.ID, 10) }), nil
+}
+
+func (s *Service) ListContent(ctx context.Context, category string, params ListParams) (Page[ContentSummary], error) {
+	after, err := decodeCursor(params.Cursor)
+	if err != nil {
+		return Page[ContentSummary]{}, err
+	}
+	rows, err := s.postgres.Query(ctx, `
+		SELECT entry.id, entry.external_id, entry.category, entry.slug,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), entry.slug),
+		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
+		       icon.storage_key,
+		       entry.source_payload, localized.source_payload,
+		       COALESCE(jsonb_agg(jsonb_build_object(
+		           'role', content_media.media_role,
+		           'filename', content_media.source_filename,
+		           'url', '/genshin-impact/media/' || media.storage_key
+		       ) ORDER BY content_media.media_role) FILTER (WHERE content_media.entry_id IS NOT NULL), '[]'::jsonb),
+		       $1, localized.entry_id IS NULL
+		FROM genshin_content_entries entry
+		JOIN genshin_current_release release ON release.id = entry.release_id
+		LEFT JOIN genshin_content_localizations localized
+		       ON localized.entry_id = entry.id AND localized.locale = $1
+		LEFT JOIN genshin_content_localizations english
+		       ON english.entry_id = entry.id AND english.locale = 'en_US'
+		LEFT JOIN genshin_media_assets icon ON icon.id = entry.icon_asset_id
+		LEFT JOIN genshin_content_media content_media ON content_media.entry_id = entry.id
+		LEFT JOIN genshin_media_assets media ON media.id = content_media.asset_id
+		WHERE entry.category = $2
+		  AND ($3 = '' OR lower(COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), entry.slug)) LIKE '%' || lower($3) || '%'
+		                   OR lower(COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), '')) LIKE '%' || lower($3) || '%')
+		  AND ($4 = '' OR entry.slug > $4)
+		GROUP BY entry.id, localized.name, localized.description, english.name, english.description,
+		         localized.source_payload, entry.source_payload, localized.entry_id, icon.storage_key
+		ORDER BY entry.slug
+		LIMIT $5`, params.Locale, category, params.Query, after, params.Limit+1)
+	if err != nil {
+		return Page[ContentSummary]{}, fmt.Errorf("list genshin content %s: %w", category, err)
+	}
+	defer rows.Close()
+	items := make([]ContentSummary, 0, params.Limit+1)
+	for rows.Next() {
+		var item ContentSummary
+		var sourcePayload, localizedPayload, mediaPayload []byte
+		var iconStorageKey *string
+		if err := rows.Scan(&item.ID, &item.ExternalID, &item.Category, &item.Slug, &item.Name, &item.Description,
+			&iconStorageKey, &sourcePayload, &localizedPayload, &mediaPayload, &item.Locale, &item.LocaleFallback); err != nil {
+			return Page[ContentSummary]{}, fmt.Errorf("scan genshin content %s: %w", category, err)
+		}
+		item.SourcePayload = append(json.RawMessage(nil), sourcePayload...)
+		item.LocalizedPayload = append(json.RawMessage(nil), localizedPayload...)
+		if len(mediaPayload) == 0 {
+			mediaPayload = []byte(`[]`)
+		}
+		if err := json.Unmarshal(mediaPayload, &item.Media); err != nil {
+			return Page[ContentSummary]{}, fmt.Errorf("decode genshin content media %s: %w", category, err)
+		}
+		if iconStorageKey != nil {
+			url := "/genshin-impact/media/" + *iconStorageKey
+			item.IconURL = &url
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return Page[ContentSummary]{}, fmt.Errorf("iterate genshin content %s: %w", category, err)
+	}
+	return makePage(items, params.Limit, func(item ContentSummary) string { return item.Slug }), nil
 }
 
 func decodeTalentCursor(cursor string) (int64, error) {

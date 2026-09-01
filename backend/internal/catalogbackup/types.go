@@ -17,7 +17,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const MinimumSchemaVersion int64 = 118
+const MinimumSchemaVersion int64 = 119
 
 var CriticalTables = []string{
 	"users",
@@ -76,6 +76,9 @@ var CriticalTables = []string{
 	"genshin_artifact_set_localizations",
 	"genshin_artifact_pieces",
 	"genshin_artifact_piece_localizations",
+	"genshin_content_entries",
+	"genshin_content_localizations",
+	"genshin_content_media",
 }
 
 type State struct {

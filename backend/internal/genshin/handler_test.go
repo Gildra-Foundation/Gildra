@@ -33,6 +33,10 @@ func (stubCatalog) ListTalents(context.Context, ListParams) (Page[TalentSummary]
 	return Page[TalentSummary]{Data: []TalentSummary{}, Pagination: Pagination{Limit: 24}}, nil
 }
 
+func (stubCatalog) ListContent(context.Context, string, ListParams) (Page[ContentSummary], error) {
+	return Page[ContentSummary]{Data: []ContentSummary{}, Pagination: Pagination{Limit: 24}}, nil
+}
+
 func TestStatusReturnsCatalogState(t *testing.T) {
 	t.Parallel()
 	mux := http.NewServeMux()

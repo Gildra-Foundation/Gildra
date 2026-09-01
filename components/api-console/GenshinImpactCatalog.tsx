@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type Locale = "en_US" | "ru_RU";
-type Section = "characters" | "talents" | "weapons" | "artifact-sets";
+type Section = "characters" | "talents" | "weapons" | "artifact-sets" | "content";
 
 type CatalogStatus = {
   ready: boolean;
@@ -22,6 +22,8 @@ type CatalogStatus = {
   weapons: number;
   artifactSets: number;
   talents: number;
+  contentEntries: number;
+  contentByCategory: Record<string, number>;
   mediaAssets: number;
   locales: string[];
 };
@@ -52,7 +54,14 @@ type Talent = {
   iconUrl: string | null; locale: Locale; localeFallback: boolean;
 };
 
-type CatalogItem = Character | Talent | Weapon | ArtifactSet;
+type ContentMedia = { role: string; filename: string; url?: string | null };
+type Content = {
+  id: number; externalId?: number | null; category: string; slug: string; name: string; description: string;
+  iconUrl: string | null; media: ContentMedia[]; sourcePayload: Record<string, unknown>;
+  localizedPayload: Record<string, unknown>; locale: Locale; localeFallback: boolean;
+};
+
+type CatalogItem = Character | Talent | Weapon | ArtifactSet | Content;
 type CatalogPage<T> = { data: T[]; pagination: { nextCursor?: string; hasMore: boolean; limit: number } };
 
 const sectionOptions: { id: Section; label: string; icon: typeof Swords }[] = [
@@ -97,6 +106,7 @@ async function requestJSON<T>(path: string): Promise<T> {
 
 export function GenshinImpactCatalog() {
   const [section, setSection] = useState<Section>("characters");
+  const [contentCategory, setContentCategory] = useState("");
   const [locale, setLocale] = useState<Locale>("ru_RU");
   const [query, setQuery] = useState("");
   const [rarity, setRarity] = useState("");
@@ -114,11 +124,12 @@ export function GenshinImpactCatalog() {
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({ locale, limit: "24" });
     if (query.trim()) params.set("q", query.trim());
-    if (rarity && section !== "talents") params.set("rarity", rarity);
+    if (rarity && section !== "talents" && section !== "content") params.set("rarity", rarity);
     if (section === "characters" && element) params.set("element", element);
     if ((section === "characters" || section === "weapons") && weaponType) params.set("weaponType", weaponType);
-    return `/genshin-impact/v1/${section}?${params}`;
-  }, [element, locale, query, rarity, section, weaponType]);
+    const path = section === "content" ? `content/${encodeURIComponent(contentCategory)}` : section;
+    return `/genshin-impact/v1/${path}?${params}`;
+  }, [contentCategory, element, locale, query, rarity, section, weaponType]);
 
   const load = useCallback(async () => {
     setLoading(true); setError(""); setItems([]); setNextCursor("");
@@ -160,11 +171,12 @@ export function GenshinImpactCatalog() {
           <h2 className="mt-3 font-[var(--display)] text-2xl font-semibold tracking-tight text-[#edf0f5] sm:text-3xl">Genshin Impact</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#8792a5]">Персонажи, таланты, оружие и наборы артефактов в едином двуязычном каталоге. Изображения хранятся на сервере Gildra.</p>
         </div>
-        <div className="grid grid-cols-2 gap-px border border-[#2b3240] bg-[#2b3240] sm:grid-cols-5 lg:min-w-[520px]">
+        <div className="grid grid-cols-2 gap-px border border-[#2b3240] bg-[#2b3240] sm:grid-cols-3 lg:grid-cols-6 lg:min-w-[620px]">
           <Metric label="Персонажи" value={status?.characters ?? 0} />
           <Metric label="Таланты" value={status?.talents ?? 0} />
           <Metric label="Оружие" value={status?.weapons ?? 0} />
           <Metric label="Наборы" value={status?.artifactSets ?? 0} />
+          <Metric label="Все записи" value={status?.contentEntries ?? 0} />
           <Metric label="Медиа" value={status?.mediaAssets ?? 0} />
         </div>
       </div>
@@ -180,6 +192,7 @@ export function GenshinImpactCatalog() {
       <div className="flex flex-col gap-4 border-b border-[#2b313e] p-4 sm:p-5 xl:flex-row xl:items-center">
         <div className="flex min-w-0 flex-1 overflow-x-auto" role="tablist" aria-label="Раздел каталога">
           {sectionOptions.map((option) => <button key={option.id} type="button" role="tab" aria-selected={section === option.id} onClick={() => { setSection(option.id); if (option.id === "artifact-sets" || option.id === "talents") { setElement(""); setWeaponType(""); } if (option.id === "talents") setRarity(""); }} className={cn("flex h-10 shrink-0 items-center gap-2 border-b-2 px-4 text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c9a24f]", section === option.id ? "border-[#d1aa53] bg-[#191a1b] text-[#e6c778]" : "border-transparent text-[#7f899d] hover:bg-[#151a23] hover:text-[#d5dbe5]")}><option.icon className="size-3.5" />{option.label}</button>)}
+          <label className={cn("flex h-10 shrink-0 items-center border-b-2 px-3 text-xs", section === "content" ? "border-[#d1aa53] bg-[#191a1b] text-[#e6c778]" : "border-transparent text-[#7f899d]")}><span className="sr-only">Все разделы данных</span><select value={section === "content" ? contentCategory : ""} onChange={(event) => { const value = event.target.value; if (value) { setContentCategory(value); setSection("content"); setRarity(""); setElement(""); setWeaponType(""); } }} className="max-w-52 bg-transparent text-xs outline-none"><option value="">Все разделы данных</option>{Object.entries(status?.contentByCategory ?? {}).sort(([a], [b]) => a.localeCompare(b)).map(([category, count]) => <option key={category} value={category}>{contentCategoryLabel(category)} ({count.toLocaleString("ru-RU")})</option>)}</select></label>
         </div>
         <div className="flex items-center gap-2">
           <Languages className="size-4 text-[#7d889b]" />
@@ -190,8 +203,8 @@ export function GenshinImpactCatalog() {
       </div>
 
       <div className="grid gap-3 border-b border-[#2b313e] bg-[#0d1118] p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[minmax(260px,1fr)_170px_190px_210px]">
-        <label className="relative"><span className="sr-only">Поиск</span><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#657185]" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={section === "characters" ? "Найти персонажа" : section === "talents" ? "Найти талант или героя" : section === "weapons" ? "Найти оружие" : "Найти набор"} className="h-10 rounded-none border-[#303746] bg-[#090d13] pl-9 text-xs placeholder:text-[#566175] focus-visible:border-[#9b8148]" /></label>
-        {section !== "talents" ? <FilterSelect label="Редкость" value={rarity} onChange={setRarity} options={[["", "Любая редкость"], ["5", "5 звёзд"], ["4", "4 звезды"], ...(section === "weapons" ? [["3", "3 звезды"], ["2", "2 звезды"], ["1", "1 звезда"]] : [])]} /> : <div className="hidden sm:block" />}
+        <label className="relative"><span className="sr-only">Поиск</span><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#657185]" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={section === "characters" ? "Найти персонажа" : section === "talents" ? "Найти талант или героя" : section === "weapons" ? "Найти оружие" : section === "artifact-sets" ? "Найти набор" : "Найти запись"} className="h-10 rounded-none border-[#303746] bg-[#090d13] pl-9 text-xs placeholder:text-[#566175] focus-visible:border-[#9b8148]" /></label>
+        {section !== "talents" && section !== "content" ? <FilterSelect label="Редкость" value={rarity} onChange={setRarity} options={[["", "Любая редкость"], ["5", "5 звёзд"], ["4", "4 звезды"], ...(section === "weapons" ? [["3", "3 звезды"], ["2", "2 звезды"], ["1", "1 звезда"]] : [])]} /> : <div className="hidden sm:block" />}
         {section === "characters" ? <FilterSelect label="Элемент" value={element} onChange={setElement} options={elementOptions} /> : <div className="hidden xl:block" />}
         {section === "characters" || section === "weapons" ? <FilterSelect label="Тип оружия" value={weaponType} onChange={setWeaponType} options={weaponOptions} /> : <div className="hidden xl:block" />}
       </div>
@@ -219,7 +232,7 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
 }
 
 function CatalogCard({ section, item }: { section: Section; item: CatalogItem }) {
-  const imageURL = "portraitUrl" in item ? item.portraitUrl ?? item.iconUrl : item.iconUrl;
+  const imageURL = "portraitUrl" in item ? item.portraitUrl ?? item.iconUrl : item.iconUrl ?? ("media" in item ? item.media.find((media) => media.url)?.url ?? null : null);
   const rarityValue = "rarity" in item ? item.rarity : "maxRarity" in item ? item.maxRarity : 0;
   return <article className="group flex min-h-64 flex-col overflow-hidden border border-[#2b323f] bg-[#0d1118] transition-colors hover:border-[#6e603e]">
     <div className="relative grid h-40 place-items-center overflow-hidden border-b border-[#28303d] bg-[radial-gradient(circle_at_50%_35%,rgba(201,162,79,.12),transparent_52%),linear-gradient(135deg,#111721,#090d13)]">
@@ -230,10 +243,11 @@ function CatalogCard({ section, item }: { section: Section; item: CatalogItem })
     <div className="flex flex-1 flex-col p-4">
       <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate font-[var(--display)] text-base font-semibold text-[#e2e6ed]">{item.name}</h3>{"title" in item && item.title ? <p className="mt-1 truncate text-[10px] text-[#7a8599]">{item.title}</p> : null}</div>{item.localeFallback ? <span className="shrink-0 border border-[#51452e] px-1.5 py-0.5 text-[8px] text-[#c3a258]">EN</span> : null}</div>
       <div className="mt-4 grid grid-cols-2 gap-px border border-[#262d39] bg-[#262d39] text-[9px]">
-        {section === "characters" ? <CharacterFacts item={item as Character} /> : section === "talents" ? <TalentFacts item={item as Talent} /> : section === "weapons" ? <WeaponFacts item={item as Weapon} /> : <ArtifactFacts item={item as ArtifactSet} />}
+        {section === "characters" ? <CharacterFacts item={item as Character} /> : section === "talents" ? <TalentFacts item={item as Talent} /> : section === "weapons" ? <WeaponFacts item={item as Weapon} /> : section === "artifact-sets" ? <ArtifactFacts item={item as ArtifactSet} /> : <ContentFacts item={item as Content} />}
       </div>
       {section === "artifact-sets" ? <div className="mt-3 line-clamp-3 text-[10px] leading-4 text-[#7d899b]">{(item as ArtifactSet).twoPieceBonus || "Бонус комплекта появится после импорта локализации."}</div> : null}
       {section === "talents" ? <div className="mt-3 line-clamp-4 text-[10px] leading-4 text-[#7d899b]">{(item as Talent).description}</div> : null}
+      {section === "content" ? <div className="mt-3 line-clamp-4 whitespace-pre-line text-[10px] leading-4 text-[#7d899b]">{(item as Content).description || "Полное содержимое доступно в sourcePayload API."}</div> : null}
     </div>
   </article>;
 }
@@ -252,6 +266,10 @@ function WeaponFacts({ item }: { item: Weapon }) {
 
 function ArtifactFacts({ item }: { item: ArtifactSet }) {
   return <><Fact label="Предметов" value={String(item.pieceCount)} /><Fact label="Редкость" value={`${item.minRarity}–${item.maxRarity}`} /></>;
+}
+
+function ContentFacts({ item }: { item: Content }) {
+  return <><Fact label="Раздел" value={contentCategoryLabel(item.category)} /><Fact label="ID" value={item.externalId == null ? "—" : String(item.externalId)} mono /><Fact label="Медиа" value={item.media.length ? String(item.media.length) : "—"} /><Fact label="Ключ" value={item.slug} mono /></>;
 }
 
 function Fact({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
@@ -276,4 +294,19 @@ function talentKindLabel(value: string) {
 
 function weaponLabel(value: string) {
   return ({ sword: "Одноручное", claymore: "Двуручное", polearm: "Копьё", bow: "Лук", catalyst: "Катализатор" } as Record<string, string>)[value] ?? value;
+}
+
+function contentCategoryLabel(value: string) {
+  const labels: Record<string, string> = {
+    achievementgroups: "Группы достижений", achievements: "Достижения", adventureranks: "Ранги приключений",
+    animals: "Животные", artifacts: "Артефакты", characters: "Персонажи (полные данные)", constellations: "Созвездия",
+    crafts: "Рецепты создания", domains: "Подземелья", elements: "Элементы", emojis: "Эмодзи", enemies: "Противники",
+    foods: "Еда", geographies: "Локации", materials: "Материалы", namecards: "Именные карты", outfits: "Костюмы",
+    rarity: "Редкость", talentmaterialtypes: "Материалы талантов", talents: "Данные талантов", tcgactioncards: "Карты действий TCG",
+    tcgcardbacks: "Рубашки карт TCG", tcgcardboxes: "Столы TCG", tcgcharactercards: "Карты персонажей TCG",
+    tcgdetailedrules: "Правила TCG", tcgenemycards: "Карты противников TCG", tcgkeywords: "Ключевые слова TCG",
+    tcglevelrewards: "Награды уровней TCG", tcgstatuseffects: "Эффекты состояний TCG", tcgsummons: "Призываемые сущности TCG",
+    voiceovers: "Озвучка", weaponmaterialtypes: "Материалы оружия", weapons: "Оружие (полные данные)", windgliders: "Планеры",
+  };
+  return labels[value] ?? value;
 }
