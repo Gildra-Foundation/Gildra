@@ -527,7 +527,14 @@ SELECT prepared.id,$2,prepared.entity_id,prepared.entity_type,prepared.external_
 		'discovery','cross_build_cached_icon'),prepared.cache_key,
 	prepared.cached_content_hash,prepared.cached_byte_size,now(),''
 FROM prepared
-ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO NOTHING`
+ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO UPDATE SET
+	source=EXCLUDED.source,source_url=EXCLUDED.source_url,
+	cached_url=$3 || '/v1/media/' || catalog_entity_media.id::text,
+	file_data_id=EXCLUDED.file_data_id,content_hash=EXCLUDED.content_hash,
+	mime_type=EXCLUDED.mime_type,width=EXCLUDED.width,height=EXCLUDED.height,
+	cache_status='cached',attributes=EXCLUDED.attributes,cache_key=EXCLUDED.cache_key,
+	cached_content_hash=EXCLUDED.cached_content_hash,cached_byte_size=EXCLUDED.cached_byte_size,
+	cached_at=now(),cache_error=''`
 
 func (c *Cache) fetchWagoCASCIcon(
 	ctx context.Context,
