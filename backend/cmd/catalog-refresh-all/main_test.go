@@ -132,3 +132,21 @@ func TestCurrentWagoBuildUsesEditionManifest(t *testing.T) {
 		t.Fatalf("hardcore build = %q, want Era manifest build", hardcore)
 	}
 }
+
+func TestBuildCheckMetadataPreservesManifestProduct(t *testing.T) {
+	t.Parallel()
+	retail := buildCheckMetadata(productSpecs[0])
+	if got := retail["wago_product"]; got != "wow" {
+		t.Fatalf("Retail wago_product = %#v, want wow", got)
+	}
+	if _, shared := retail["shared_manifest"]; shared {
+		t.Fatal("Retail must not be marked as a shared manifest")
+	}
+	hardcore := buildCheckMetadata(productSpecs[3])
+	if got := hardcore["wago_product"]; got != "wow_classic_era" {
+		t.Fatalf("Hardcore wago_product = %#v, want wow_classic_era", got)
+	}
+	if got := hardcore["shared_manifest"]; got != true {
+		t.Fatalf("Hardcore shared_manifest = %#v, want true", got)
+	}
+}
