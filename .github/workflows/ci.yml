@@ -25,6 +25,7 @@ jobs:
           sh -n infra/deploy/deploy-immutable-release.sh
           sh -n infra/deploy/test-deploy-immutable-release.sh
           sh -n infra/deploy/run-catalog-repair.sh
+          sh -n infra/deploy/test-run-catalog-repair.sh
           sh -n infra/systemd/test-gildra-catalog-media-cache.sh
       - name: Verify backup wrapper evidence
         run: infra/backup/test-run-catalog-backup.sh
@@ -44,6 +45,8 @@ jobs:
         run: infra/deploy/deploy-immutable-release.sh --validate-only
       - name: Verify failed release rollback
         run: infra/deploy/test-deploy-immutable-release.sh
+      - name: Verify catalog repair edition mapping
+        run: infra/deploy/test-run-catalog-repair.sh
 
   frontend:
     runs-on: ubuntu-latest
