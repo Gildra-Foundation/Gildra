@@ -131,19 +131,19 @@ def write_overlay(
         if output.exists():
             shutil.copytree(output, temporary, dirs_exist_ok=True)
             for language in ("English", "Russian"):
-                for category in ("maps", "map_labels", "map_points"):
+                for category in ("maps", "maplabels", "mappoints"):
                     shutil.rmtree(temporary / "src" / "data" / language / category, ignore_errors=True)
             for path in temporary.glob("manifest-map-*.json"):
                 path.unlink()
             for path in temporary.glob("source-map-*.json"):
                 path.unlink()
-            (temporary / "src" / "data" / "image" / "map_labels.json").unlink(missing_ok=True)
+            (temporary / "src" / "data" / "image" / "maplabels.json").unlink(missing_ok=True)
 
         for language_code, locale, directory_name in LANGUAGES:
             language_dir = temporary / "src" / "data" / directory_name
             maps_dir = language_dir / "maps"
-            labels_dir = language_dir / "map_labels"
-            points_dir = language_dir / "map_points"
+            labels_dir = language_dir / "maplabels"
+            points_dir = language_dir / "mappoints"
             maps_dir.mkdir(parents=True, exist_ok=True)
             labels_dir.mkdir(parents=True, exist_ok=True)
             points_dir.mkdir(parents=True, exist_ok=True)
@@ -193,7 +193,7 @@ def write_overlay(
                 image_manifest[f"map-{map_id[0]}-label-{map_id[1]}"] = {"filename_icon": [icon]}
         image_dir = temporary / "src" / "data" / "image"
         image_dir.mkdir(parents=True, exist_ok=True)
-        (image_dir / "map_labels.json").write_text(json.dumps(image_manifest, indent=2) + "\n", encoding="utf-8")
+        (image_dir / "maplabels.json").write_text(json.dumps(image_manifest, indent=2) + "\n", encoding="utf-8")
 
         backup = output.with_name(output.name + ".previous")
         if backup.exists():
