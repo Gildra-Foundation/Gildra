@@ -65,6 +65,13 @@ func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 	return result
 }
 
+func toGraphQLProduct(product catalog.Product) *model.GameProduct {
+	return &model.GameProduct{
+		ID: int(product.ID), Slug: product.Slug, Name: product.Name,
+		Freshness: product.Freshness, FreshnessReason: product.FreshnessReason,
+	}
+}
+
 func toGraphQLDataset(dataset catalog.LibraryDataset) *model.LibraryDataset {
 	result := &model.LibraryDataset{
 		Slug: dataset.Slug, Product: dataset.Product, EntityType: dataset.EntityType,

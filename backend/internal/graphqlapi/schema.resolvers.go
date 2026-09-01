@@ -22,7 +22,7 @@ func (r *queryResolver) GameProducts(ctx context.Context) ([]*model.GameProduct,
 	}
 	result := make([]*model.GameProduct, 0, len(products))
 	for _, product := range products {
-		result = append(result, &model.GameProduct{ID: int(product.ID), Slug: product.Slug, Name: product.Name})
+		result = append(result, toGraphQLProduct(product))
 	}
 	return result, nil
 }
