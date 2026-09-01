@@ -50,9 +50,18 @@ func TestInteger32RejectsUnsignedProtocolSentinel(t *testing.T) {
 	if got := integer32(float64(4294967295)); got != nil {
 		t.Fatalf("UINT32_MAX sentinel = %d, want nil", *got)
 	}
+	if got := integer32(int64(4294967295)); got != nil {
+		t.Fatalf("int64 UINT32_MAX sentinel = %d, want nil", *got)
+	}
 	want := int64(70)
 	if got := integer32(float64(want)); got == nil || *got != want {
 		t.Fatalf("ordinary int32 = %v, want %d", got, want)
+	}
+	if got := integer32(int64(want)); got == nil || *got != want {
+		t.Fatalf("int64 ordinary int32 = %v, want %d", got, want)
+	}
+	if got := integer32(70.5); got != nil {
+		t.Fatalf("fractional int32 = %d, want nil", *got)
 	}
 }
 
