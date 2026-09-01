@@ -49,6 +49,61 @@ func TestFetchStoresContentAddressedImage(t *testing.T) {
 	}
 }
 
+func TestFetchRetriesTransientUpstreamFailure(t *testing.T) {
+	png, err := base64.StdEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
+	if err != nil {
+		t.Fatal(err)
+	}
+	attempts := 0
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		if request.UserAgent() != catalogMediaUserAgent {
+			return nil, fmt.Errorf("User-Agent = %q, want %q", request.UserAgent(), catalogMediaUserAgent)
+		}
+		attempts++
+		if attempts == 1 {
+			return &http.Response{StatusCode: http.StatusBadGateway, Body: io.NopCloser(bytes.NewReader(nil)), Header: make(http.Header)}, nil
+		}
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(png)), Header: make(http.Header)}, nil
+	})}
+	root := t.TempDir()
+	rootHandle, err := os.OpenRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = rootHandle.Close() })
+	cache := &Cache{rootPath: root, root: rootHandle, client: client}
+	if _, _, _, _, err := cache.fetch(context.Background(), "https://example.com/retry"); err != nil {
+		t.Fatal(err)
+	}
+	if attempts != 2 {
+		t.Fatalf("attempts=%d, want one retry", attempts)
+	}
+}
+
+func TestDoMediaRequestDoesNotRetryPermanentHTTPError(t *testing.T) {
+	attempts := 0
+	client := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		attempts++
+		return &http.Response{StatusCode: http.StatusNotFound, Body: io.NopCloser(bytes.NewReader(nil)), Header: make(http.Header)}, nil
+	})}
+	parsed, err := validateRemoteURL("https://example.com/missing")
+	if err != nil {
+		t.Fatal(err)
+	}
+	response, err := doMediaRequest(context.Background(), client, parsed)
+	if err != nil {
+		t.Fatalf("doMediaRequest returned error: %v", err)
+	}
+	if response.StatusCode != http.StatusNotFound {
+		response.Body.Close()
+		t.Fatalf("status=%d, want %d", response.StatusCode, http.StatusNotFound)
+	}
+	response.Body.Close()
+	if attempts != 1 {
+		t.Fatalf("attempts=%d, want no retry for 404", attempts)
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (function roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/netip"
@@ -17,6 +18,13 @@ var blockedNetworks = []netip.Prefix{
 	netip.MustParsePrefix("192.0.0.0/24"), netip.MustParsePrefix("198.18.0.0/15"),
 	netip.MustParsePrefix("224.0.0.0/4"), netip.MustParsePrefix("fc00::/7"), netip.MustParsePrefix("fe80::/10"),
 }
+
+const (
+	mediaRequestAttempts = 3
+	mediaRetryBaseDelay  = 250 * time.Millisecond
+	mediaRetryMaxDelay   = 2 * time.Second
+	mediaRetryDrainBytes = 1 << 20
+)
 
 func validateRemoteURL(raw string) (*url.URL, error) {
 	parsed, err := url.Parse(strings.TrimSpace(raw))
@@ -66,4 +74,76 @@ func SafeHTTPClient(timeout time.Duration) *http.Client {
 		_, err := validateRemoteURL(request.URL.String())
 		return err
 	}}
+}
+
+// doMediaRequest makes a bounded number of attempts for transient upstream
+// failures. A media cache run can process tens of thousands of assets, so a
+// single transient CDN error must not permanently turn an otherwise valid
+// asset into a failed observation. Permanent client errors (for example
+// missing assets or forbidden URLs) are returned immediately.
+//
+// The URL must already have passed validateRemoteURL. Redirects are still
+// checked by SafeHTTPClient.CheckRedirect, and response bodies from retryable
+// attempts are drained and closed before the next attempt.
+func doMediaRequest(ctx context.Context, client *http.Client, parsed *url.URL) (*http.Response, error) {
+	if client == nil {
+		return nil, errors.New("media HTTP client is required")
+	}
+	if parsed == nil {
+		return nil, errors.New("media URL is required")
+	}
+
+	var lastErr error
+	for attempt := 0; attempt < mediaRequestAttempts; attempt++ {
+		request, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
+		if err != nil {
+			return nil, err
+		}
+		request.Header.Set("User-Agent", catalogMediaUserAgent)
+		response, err := client.Do(request)
+		if err == nil && response == nil {
+			err = errors.New("media HTTP client returned a nil response")
+		}
+		if err == nil && !retryableMediaStatus(response.StatusCode) {
+			return response, nil
+		}
+
+		if err != nil {
+			if response != nil && response.Body != nil {
+				_ = response.Body.Close()
+			}
+			lastErr = fmt.Errorf("media request attempt %d/%d: %w", attempt+1, mediaRequestAttempts, err)
+		} else {
+			lastErr = fmt.Errorf("media request attempt %d/%d: HTTP %d", attempt+1, mediaRequestAttempts, response.StatusCode)
+			if response.Body != nil {
+				_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, mediaRetryDrainBytes))
+				_ = response.Body.Close()
+			}
+		}
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
+		if attempt == mediaRequestAttempts-1 {
+			break
+		}
+		delay := mediaRetryBaseDelay << attempt
+		if delay > mediaRetryMaxDelay {
+			delay = mediaRetryMaxDelay
+		}
+		timer := time.NewTimer(delay)
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			if !timer.Stop() {
+				<-timer.C
+			}
+			return nil, ctx.Err()
+		}
+	}
+	return nil, lastErr
+}
+
+func retryableMediaStatus(status int) bool {
+	return status == http.StatusRequestTimeout || status == http.StatusTooEarly ||
+		status == http.StatusTooManyRequests || status >= http.StatusInternalServerError
 }
