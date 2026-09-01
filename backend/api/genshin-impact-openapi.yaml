@@ -172,6 +172,43 @@ paths:
           $ref: "#/components/responses/CatalogUnavailable"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+  /content/{category}:
+    get:
+      operationId: listGenshinContent
+      summary: Read any complete genshin-db source category.
+      security: []
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9]{1,64}$'
+        - $ref: "#/components/parameters/Locale"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Cursor-paginated complete source-preserving records.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/CursorPage"
+                  - type: object
+                    required: [data]
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ContentSummary"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "503":
+          $ref: "#/components/responses/CatalogUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 components:
   parameters:
     Locale:
@@ -257,19 +294,20 @@ components:
           type: string
         resources:
           type: object
-          required: [characters, weapons, artifactSets, talents]
+          required: [characters, weapons, artifactSets, talents, content]
           properties:
             characters: { type: string }
             weapons: { type: string }
             artifactSets: { type: string }
             talents: { type: string }
+            content: { type: string }
         locales:
           type: array
           items:
             $ref: "#/components/schemas/Locale"
     CatalogStatus:
       type: object
-      required: [ready, characters, weapons, artifactSets, talents, mediaAssets, locales]
+      required: [ready, characters, weapons, artifactSets, talents, contentEntries, contentByCategory, mediaAssets, locales]
       properties:
         ready: { type: boolean }
         releaseId: { type: string, format: uuid }
@@ -280,6 +318,10 @@ components:
         weapons: { type: integer, format: int64, minimum: 0 }
         artifactSets: { type: integer, format: int64, minimum: 0 }
         talents: { type: integer, format: int64, minimum: 0 }
+        contentEntries: { type: integer, format: int64, minimum: 0 }
+        contentByCategory:
+          type: object
+          additionalProperties: { type: integer, format: int64, minimum: 0 }
         mediaAssets: { type: integer, format: int64, minimum: 0 }
         locales:
           type: array
@@ -346,6 +388,30 @@ components:
         locale: { $ref: "#/components/schemas/Locale" }
         localeFallback: { type: boolean }
         pieceCount: { type: integer, format: int64, minimum: 0 }
+    ContentSummary:
+      type: object
+      required: [id, category, slug, name, description, media, sourcePayload, localizedPayload, locale, localeFallback]
+      properties:
+        id: { type: integer, format: int64 }
+        externalId: { type: [integer, "null"], format: int64 }
+        category: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+        iconUrl: { type: [string, "null"] }
+        media:
+          type: array
+          items:
+            type: object
+            required: [role, filename, url]
+            properties:
+              role: { type: string }
+              filename: { type: string }
+              url: { type: [string, "null"] }
+        sourcePayload: { type: object, additionalProperties: true }
+        localizedPayload: { type: object, additionalProperties: true }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
     TalentSummary:
       type: object
       required: [id, characterSlug, characterName, externalKey, kind, displayOrder, name, description, locale, localeFallback]

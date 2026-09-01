@@ -107,30 +107,63 @@ type ArtifactSet struct {
 	Pieces        []ArtifactPiece
 }
 
+// ContentMedia is an image referenced by a source record. The role preserves
+// the original manifest key (for example filename_icon or filename_cardface)
+// so clients can choose the right presentation without losing source detail.
+type ContentMedia struct {
+	Role     string
+	Filename string
+}
+
+// ContentLocalization keeps the complete localized source record. The typed
+// tables above provide optimized views for the core catalogue, while these
+// records retain every other genshin-db category without throwing fields away.
+type ContentLocalization struct {
+	Name        string
+	Description string
+	Payload     json.RawMessage
+}
+
+type ContentEntry struct {
+	Category      string
+	Slug          string
+	ExternalID    *int64
+	IconFilename  string
+	Media         []ContentMedia
+	Payload       json.RawMessage
+	Localizations map[string]ContentLocalization
+}
+
 type Dataset struct {
 	Characters   []Character
 	Weapons      []Weapon
 	ArtifactSets []ArtifactSet
+	Content      []ContentEntry
 }
 
 type Counts struct {
-	Characters     int `json:"characters"`
-	Weapons        int `json:"weapons"`
-	ArtifactSets   int `json:"artifactSets"`
-	ArtifactPieces int `json:"artifactPieces"`
-	Talents        int `json:"talents"`
-	Constellations int `json:"constellations"`
-	MediaAssets    int `json:"mediaAssets"`
+	Characters        int            `json:"characters"`
+	Weapons           int            `json:"weapons"`
+	ArtifactSets      int            `json:"artifactSets"`
+	ArtifactPieces    int            `json:"artifactPieces"`
+	Talents           int            `json:"talents"`
+	Constellations    int            `json:"constellations"`
+	ContentEntries    int            `json:"contentEntries"`
+	ContentByCategory map[string]int `json:"contentByCategory,omitempty"`
+	MediaAssets       int            `json:"mediaAssets"`
 }
 
 func (d Dataset) Counts() Counts {
-	counts := Counts{Characters: len(d.Characters), Weapons: len(d.Weapons), ArtifactSets: len(d.ArtifactSets)}
+	counts := Counts{Characters: len(d.Characters), Weapons: len(d.Weapons), ArtifactSets: len(d.ArtifactSets), ContentEntries: len(d.Content), ContentByCategory: make(map[string]int)}
 	for _, character := range d.Characters {
 		counts.Talents += len(character.Talents)
 		counts.Constellations += len(character.Constellations)
 	}
 	for _, artifact := range d.ArtifactSets {
 		counts.ArtifactPieces += len(artifact.Pieces)
+	}
+	for _, entry := range d.Content {
+		counts.ContentByCategory[entry.Category]++
 	}
 	return counts
 }
@@ -159,6 +192,25 @@ func (d Dataset) MediaFilenames() []string {
 		add(artifact.IconFilename)
 		for _, piece := range artifact.Pieces {
 			add(piece.IconFilename)
+		}
+	}
+	filenames := make([]string, 0, len(unique))
+	for filename := range unique {
+		filenames = append(filenames, filename)
+	}
+	slices.Sort(filenames)
+	return filenames
+}
+
+// OptionalMediaFilenames returns one best-effort presentation image per
+// generic record. Some genshin-db image manifests refer to client-only TCG
+// and codex assets that the public provider does not expose; those references
+// remain in source_payload while available images are still cached locally.
+func (d Dataset) OptionalMediaFilenames() []string {
+	unique := make(map[string]struct{})
+	for _, entry := range d.Content {
+		if len(entry.Media) > 0 && entry.Media[0].Filename != "" {
+			unique[entry.Media[0].Filename] = struct{}{}
 		}
 	}
 	filenames := make([]string, 0, len(unique))

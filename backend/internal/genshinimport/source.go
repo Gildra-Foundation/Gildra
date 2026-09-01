@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -63,8 +64,13 @@ func LoadSource(root string) (Dataset, error) {
 	if err != nil {
 		return Dataset{}, err
 	}
+	content, err := loadAllContent(root)
+	if err != nil {
+		return Dataset{}, err
+	}
 
 	dataset := Dataset{}
+	dataset.Content = content
 	characterSlugs := sortedKeys(characters[LocaleEnglish])
 	for _, slug := range characterSlugs {
 		character, err := buildCharacter(slug, characters, talents, constellations, characterImages, talentImages, constellationImages)
@@ -103,6 +109,272 @@ func LoadSource(root string) (Dataset, error) {
 		return Dataset{}, err
 	}
 	return dataset, nil
+}
+
+// loadAllContent preserves every genshin-db category in a release. The
+// optimized character/weapon/artifact projections are still built below, but
+// this generic layer prevents newer or less common categories from being lost
+// when the source adds fields or folders.
+func loadAllContent(root string) ([]ContentEntry, error) {
+	englishRoot := filepath.Join(root, "src", "data", "English")
+	folders, err := os.ReadDir(englishRoot)
+	if err != nil {
+		return nil, fmt.Errorf("list genshin source categories: %w", err)
+	}
+	result := make([]ContentEntry, 0)
+	for _, folderEntry := range folders {
+		if !folderEntry.IsDir() {
+			continue
+		}
+		folder := folderEntry.Name()
+		localized, err := loadLocalizedObjectsAllowFallback(root, folder)
+		if err != nil {
+			return nil, err
+		}
+		images, err := loadGenericImageManifest(root, folder)
+		if err != nil {
+			return nil, err
+		}
+		for _, slug := range sortedKeys(localized[LocaleEnglish]) {
+			english := localized[LocaleEnglish][slug]
+			russian, exists := localized[LocaleRussian][slug]
+			if !exists {
+				return nil, fmt.Errorf("%s %q is missing Russian localization", folder, slug)
+			}
+			name := optionalString(english, "name")
+			if name == "" {
+				name = slug
+			}
+			russianLocalization := contentLocalization(russian, slug)
+			if folder == "rarity" {
+				russianLocalization.Name = rarityRussianName(slug, russianLocalization.Name)
+			}
+			entry := ContentEntry{
+				Category:   folder,
+				Slug:       slug,
+				ExternalID: optionalExternalID(english),
+				Media:      flattenContentMedia(images[slug]),
+				Payload:    english.raw,
+				Localizations: map[string]ContentLocalization{
+					LocaleEnglish: {Name: name, Description: optionalString(english, "description"), Payload: english.raw},
+					LocaleRussian: russianLocalization,
+				},
+			}
+			if len(entry.Media) > 0 {
+				entry.IconFilename = entry.Media[0].Filename
+			}
+			result = append(result, entry)
+		}
+	}
+	if err := appendSystemContent(root, &result); err != nil {
+		return nil, err
+	}
+	slices.SortFunc(result, func(a, b ContentEntry) int {
+		if category := strings.Compare(a.Category, b.Category); category != 0 {
+			return category
+		}
+		return strings.Compare(a.Slug, b.Slug)
+	})
+	return result, nil
+}
+
+// stats and curves are shipped outside the localized entity folders. Keep
+// those files as first-class source records so weapon, character, enemy and
+// talent progression data is queryable instead of being silently discarded.
+func appendSystemContent(root string, result *[]ContentEntry) error {
+	for _, source := range []struct {
+		category  string
+		directory string
+	}{
+		{category: "stats", directory: "stats"},
+		{category: "curves", directory: "curve"},
+	} {
+		category := source.category
+		directory := filepath.Join(root, "src", "data", source.directory)
+		files, err := os.ReadDir(directory)
+		if err != nil {
+			return fmt.Errorf("list genshin %s source files: %w", category, err)
+		}
+		for _, file := range files {
+			if file.IsDir() || filepath.Ext(file.Name()) != ".json" {
+				continue
+			}
+			content, err := os.ReadFile(filepath.Join(directory, file.Name()))
+			if err != nil {
+				return fmt.Errorf("read genshin %s/%s: %w", category, file.Name(), err)
+			}
+			var fields map[string]json.RawMessage
+			if err := json.Unmarshal(content, &fields); err != nil {
+				return fmt.Errorf("decode genshin %s/%s: %w", category, file.Name(), err)
+			}
+			slug := strings.TrimSuffix(file.Name(), ".json")
+			name := strings.ToUpper(category[:1]) + category[1:] + ": " + slug
+			*result = append(*result, ContentEntry{
+				Category: category,
+				Slug:     slug,
+				Payload:  bytes.Clone(content),
+				Localizations: map[string]ContentLocalization{
+					LocaleEnglish: {Name: name, Payload: bytes.Clone(content)},
+					LocaleRussian: {Name: name, Payload: bytes.Clone(content)},
+				},
+			})
+		}
+	}
+	return nil
+}
+
+func loadLocalizedObjectsAllowFallback(root, folder string) (map[string]map[string]sourceObject, error) {
+	result := make(map[string]map[string]sourceObject, 2)
+	english, err := loadObjectDirectory(filepath.Join(root, "src", "data", "English", folder))
+	if err != nil {
+		return nil, fmt.Errorf("load English %s: %w", folder, err)
+	}
+	russianDirectory := filepath.Join(root, "src", "data", "Russian", folder)
+	russian, err := loadObjectDirectory(russianDirectory)
+	if errors.Is(err, os.ErrNotExist) {
+		// A few source-only enums (currently rarity) are language-neutral. Keep
+		// their complete payload and provide an explicit localized display name.
+		russian = make(map[string]sourceObject, len(english))
+		maps.Copy(russian, english)
+	} else if err != nil {
+		return nil, fmt.Errorf("load Russian %s: %w", folder, err)
+	}
+	if err := requireSameSlugs(folder, english, russian); err != nil {
+		return nil, err
+	}
+	result[LocaleEnglish] = english
+	result[LocaleRussian] = russian
+	return result, nil
+}
+
+type genericImageManifest map[string]map[string]json.RawMessage
+
+func loadGenericImageManifest(root, folder string) (genericImageManifest, error) {
+	content, err := os.ReadFile(filepath.Join(root, "src", "data", "image", folder+".json"))
+	if errors.Is(err, os.ErrNotExist) {
+		return genericImageManifest{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read %s generic image manifest: %w", folder, err)
+	}
+	var manifest genericImageManifest
+	if err := json.Unmarshal(content, &manifest); err != nil {
+		return nil, fmt.Errorf("decode %s generic image manifest: %w", folder, err)
+	}
+	return manifest, nil
+}
+
+func flattenContentMedia(fields map[string]json.RawMessage) []ContentMedia {
+	if len(fields) == 0 {
+		return nil
+	}
+	roles := sortedKeys(fields)
+	slices.SortStableFunc(roles, func(a, b string) int {
+		if rank := contentMediaRoleRank(a) - contentMediaRoleRank(b); rank != 0 {
+			return rank
+		}
+		return strings.Compare(a, b)
+	})
+	result := make([]ContentMedia, 0, len(roles))
+	seen := make(map[string]struct{})
+	for _, role := range roles {
+		if role == "base64" || strings.HasPrefix(role, "data:") {
+			continue
+		}
+		var values []string
+		var value string
+		if json.Unmarshal(fields[role], &value) == nil {
+			values = []string{value}
+		} else if json.Unmarshal(fields[role], &values) != nil {
+			continue
+		}
+		for index, filename := range values {
+			filename = strings.TrimSpace(filename)
+			if filename == "" || strings.HasPrefix(filename, "data:") {
+				continue
+			}
+			if _, exists := seen[filename]; exists {
+				continue
+			}
+			seen[filename] = struct{}{}
+			mediaRole := role
+			if len(values) > 1 {
+				mediaRole = fmt.Sprintf("%s[%d]", role, index)
+			}
+			result = append(result, ContentMedia{Role: mediaRole, Filename: filename})
+		}
+	}
+	return result
+}
+
+func contentMediaRoleRank(role string) int {
+	switch role {
+	case "filename_icon":
+		return 0
+	case "filename_cardface":
+		return 1
+	case "filename_image":
+		return 2
+	case "filename_card":
+		return 3
+	case "filename_splash":
+		return 4
+	case "filename_background":
+		return 5
+	case "filename_iconCircle":
+		return 6
+	case "filename_gacha":
+		return 7
+	default:
+		return 10
+	}
+}
+
+func contentLocalization(object sourceObject, fallbackSlug string) ContentLocalization {
+	name := optionalString(object, "name")
+	if name == "" {
+		name = fallbackSlug
+	}
+	return ContentLocalization{Name: name, Description: optionalString(object, "description"), Payload: object.raw}
+}
+
+func optionalExternalID(object sourceObject) *int64 {
+	raw, ok := object.fields["id"]
+	if !ok {
+		return nil
+	}
+	var value int64
+	if json.Unmarshal(raw, &value) == nil && value != 0 {
+		return &value
+	}
+	var values []int64
+	if json.Unmarshal(raw, &values) == nil && len(values) > 0 && values[0] != 0 {
+		return &values[0]
+	}
+	var textValue string
+	if json.Unmarshal(raw, &textValue) == nil {
+		if parsed, err := strconv.ParseInt(textValue, 10, 64); err == nil && parsed != 0 {
+			return &parsed
+		}
+	}
+	return nil
+}
+
+func rarityRussianName(slug, fallback string) string {
+	switch slug {
+	case "onestar":
+		return "Одна звезда"
+	case "twostar":
+		return "Две звезды"
+	case "threestar":
+		return "Три звезды"
+	case "fourstar":
+		return "Четыре звезды"
+	case "fivestar":
+		return "Пять звёзд"
+	default:
+		return fallback
+	}
 }
 
 func loadLocalizedObjects(root, folder string) (map[string]map[string]sourceObject, error) {
@@ -696,6 +968,25 @@ func validateDataset(dataset Dataset) error {
 		for _, piece := range artifact.Pieces {
 			if err := requireLocales("artifact piece", artifact.Slug+"/"+piece.Slot, piece.Localizations); err != nil {
 				return err
+			}
+		}
+	}
+	contentKeys := make(map[string]struct{}, len(dataset.Content))
+	for _, entry := range dataset.Content {
+		if entry.Category == "" || entry.Slug == "" {
+			return errors.New("generic genshin content requires category and slug")
+		}
+		key := entry.Category + "\x00" + entry.Slug
+		if _, exists := contentKeys[key]; exists {
+			return fmt.Errorf("duplicate generic genshin content %s/%s", entry.Category, entry.Slug)
+		}
+		contentKeys[key] = struct{}{}
+		if err := requireLocales("content", entry.Category+"/"+entry.Slug, entry.Localizations); err != nil {
+			return err
+		}
+		for _, media := range entry.Media {
+			if media.Role == "" || media.Filename == "" {
+				return fmt.Errorf("content %s/%s contains invalid media reference", entry.Category, entry.Slug)
 			}
 		}
 	}

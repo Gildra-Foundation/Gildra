@@ -103,6 +103,42 @@ func (f *MediaFetcher) Fetch(ctx context.Context, filenames []string, fallbacks 
 	return byFilename, nil
 }
 
+// FetchOptional caches the first presentation image for generic source
+// records. Missing client-only assets are deliberately ignored; the source
+// JSON still retains their original filename for future providers.
+func (f *MediaFetcher) FetchOptional(ctx context.Context, filenames []string) (map[string]MediaAsset, error) {
+	directory := filepath.Join(f.root, "genshin")
+	if err := os.MkdirAll(directory, 0o750); err != nil {
+		return nil, fmt.Errorf("create genshin media directory: %w", err)
+	}
+	assets := make([]MediaAsset, len(filenames))
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(f.workers)
+	for index, filename := range filenames {
+		group.Go(func() error {
+			asset, notFound, err := f.download(groupCtx, directory, filename, filename)
+			if err != nil {
+				if notFound {
+					return nil
+				}
+				return fmt.Errorf("download optional genshin media %q: %w", filename, err)
+			}
+			assets[index] = asset
+			return nil
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+	byFilename := make(map[string]MediaAsset, len(assets))
+	for _, asset := range assets {
+		if asset.Filename != "" {
+			byFilename[asset.Filename] = asset
+		}
+	}
+	return byFilename, nil
+}
+
 func (f *MediaFetcher) fetchOne(ctx context.Context, directory, filename, fallback string) (MediaAsset, error) {
 	if !mediaFilename.MatchString(filename) {
 		return MediaAsset{}, fmt.Errorf("unsafe media filename %q", filename)

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"time"
 
@@ -105,6 +106,9 @@ func (s *Store) Publish(ctx context.Context, dataset Dataset, assets map[string]
 	if err := insertArtifacts(ctx, transaction, releaseID, dataset.ArtifactSets, mediaIDs); err != nil {
 		return Release{}, err
 	}
+	if err := insertContent(ctx, transaction, releaseID, dataset.Content, mediaIDs); err != nil {
+		return Release{}, err
+	}
 	if _, err := transaction.Exec(ctx, `UPDATE genshin_catalog_releases SET status='validating' WHERE id=$1`, releaseID); err != nil {
 		return Release{}, fmt.Errorf("mark genshin release validating: %w", err)
 	}
@@ -129,6 +133,47 @@ func (s *Store) Publish(ctx context.Context, dataset Dataset, assets map[string]
 		return Release{}, fmt.Errorf("commit genshin release: %w", err)
 	}
 	return Release{ID: releaseID, PublishedAt: publishedAt, Counts: counts}, nil
+}
+
+func insertContent(ctx context.Context, transaction pgx.Tx, releaseID uuid.UUID, entries []ContentEntry, mediaIDs map[string]uuid.UUID) error {
+	for _, entry := range entries {
+		var iconID *uuid.UUID
+		if entry.IconFilename != "" {
+			if asset, exists := mediaIDs[entry.IconFilename]; exists && asset != uuid.Nil {
+				iconID = &asset
+			}
+		}
+		var entryID int64
+		if err := transaction.QueryRow(ctx, `
+			INSERT INTO genshin_content_entries
+			    (release_id, category, slug, external_id, icon_asset_id, source_payload)
+			VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+			RETURNING id`, releaseID, entry.Category, entry.Slug, entry.ExternalID, iconID, string(entry.Payload)).Scan(&entryID); err != nil {
+			return fmt.Errorf("insert genshin content %s/%s: %w", entry.Category, entry.Slug, err)
+		}
+		for _, locale := range []string{LocaleEnglish, LocaleRussian} {
+			localized := entry.Localizations[locale]
+			if _, err := transaction.Exec(ctx, `
+				INSERT INTO genshin_content_localizations
+				    (entry_id, locale, name, description, source_payload)
+				VALUES ($1,$2,$3,$4,$5::jsonb)`, entryID, locale, localized.Name,
+				localized.Description, string(localized.Payload)); err != nil {
+				return fmt.Errorf("insert genshin content localization %s/%s/%s: %w", entry.Category, entry.Slug, locale, err)
+			}
+		}
+		for _, media := range entry.Media {
+			assetID, exists := mediaIDs[media.Filename]
+			if !exists || assetID == uuid.Nil {
+				continue
+			}
+			if _, err := transaction.Exec(ctx, `
+				INSERT INTO genshin_content_media (entry_id, media_role, source_filename, asset_id)
+				VALUES ($1,$2,$3,$4)`, entryID, media.Role, media.Filename, assetID); err != nil {
+				return fmt.Errorf("insert genshin content media %s/%s/%s: %w", entry.Category, entry.Slug, media.Role, err)
+			}
+		}
+	}
+	return nil
 }
 
 func upsertMedia(ctx context.Context, transaction pgx.Tx, assets map[string]MediaAsset) (map[string]uuid.UUID, error) {
@@ -350,7 +395,29 @@ func validateRelease(ctx context.Context, transaction pgx.Tx, releaseID uuid.UUI
 		return fmt.Errorf("read genshin release counts: %w", err)
 	}
 	actual.MediaAssets = expected.MediaAssets
-	if actual != expected {
+	if err := transaction.QueryRow(ctx, `SELECT count(*) FROM genshin_content_entries WHERE release_id=$1`, releaseID).Scan(&actual.ContentEntries); err != nil {
+		return fmt.Errorf("read genshin generic content count: %w", err)
+	}
+	actual.ContentByCategory = make(map[string]int)
+	categoryRows, err := transaction.Query(ctx, `SELECT category, count(*) FROM genshin_content_entries WHERE release_id=$1 GROUP BY category`, releaseID)
+	if err != nil {
+		return fmt.Errorf("read genshin generic content categories: %w", err)
+	}
+	for categoryRows.Next() {
+		var category string
+		var count int
+		if err := categoryRows.Scan(&category, &count); err != nil {
+			categoryRows.Close()
+			return fmt.Errorf("scan genshin generic content category: %w", err)
+		}
+		actual.ContentByCategory[category] = count
+	}
+	if err := categoryRows.Err(); err != nil {
+		categoryRows.Close()
+		return fmt.Errorf("iterate genshin generic content categories: %w", err)
+	}
+	categoryRows.Close()
+	if !reflect.DeepEqual(actual, expected) {
 		return fmt.Errorf("genshin release counts %+v do not match expected %+v", actual, expected)
 	}
 	var missingLocalizations, missingMedia int
@@ -360,8 +427,9 @@ func validateRelease(ctx context.Context, transaction pgx.Tx, releaseID uuid.UUI
 		  (SELECT count(*) FROM genshin_weapons w WHERE w.release_id=$1 AND (SELECT count(*) FROM genshin_weapon_localizations l WHERE l.weapon_id=w.id)<>2) +
 		  (SELECT count(*) FROM genshin_artifact_sets s WHERE s.release_id=$1 AND (SELECT count(*) FROM genshin_artifact_set_localizations l WHERE l.artifact_set_id=s.id)<>2) +
 		  (SELECT count(*) FROM genshin_character_talents t JOIN genshin_characters c ON c.id=t.character_id WHERE c.release_id=$1 AND (SELECT count(*) FROM genshin_character_talent_localizations l WHERE l.talent_id=t.id)<>2) +
-		  (SELECT count(*) FROM genshin_character_constellations n JOIN genshin_characters c ON c.id=n.character_id WHERE c.release_id=$1 AND (SELECT count(*) FROM genshin_character_constellation_localizations l WHERE l.constellation_id=n.id)<>2) +
-		  (SELECT count(*) FROM genshin_artifact_pieces p JOIN genshin_artifact_sets s ON s.id=p.artifact_set_id WHERE s.release_id=$1 AND (SELECT count(*) FROM genshin_artifact_piece_localizations l WHERE l.artifact_piece_id=p.id)<>2),
+			(SELECT count(*) FROM genshin_character_constellations n JOIN genshin_characters c ON c.id=n.character_id WHERE c.release_id=$1 AND (SELECT count(*) FROM genshin_character_constellation_localizations l WHERE l.constellation_id=n.id)<>2) +
+		  (SELECT count(*) FROM genshin_artifact_pieces p JOIN genshin_artifact_sets s ON s.id=p.artifact_set_id WHERE s.release_id=$1 AND (SELECT count(*) FROM genshin_artifact_piece_localizations l WHERE l.artifact_piece_id=p.id)<>2) +
+		  (SELECT count(*) FROM genshin_content_entries e WHERE e.release_id=$1 AND (SELECT count(*) FROM genshin_content_localizations l WHERE l.entry_id=e.id)<>2),
 		  (SELECT count(*) FROM genshin_characters WHERE release_id=$1 AND (icon_asset_id IS NULL OR portrait_asset_id IS NULL)) +
 		  (SELECT count(*) FROM genshin_weapons WHERE release_id=$1 AND icon_asset_id IS NULL) +
 		  (SELECT count(*) FROM genshin_artifact_sets WHERE release_id=$1 AND icon_asset_id IS NULL) +
