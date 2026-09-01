@@ -38,6 +38,15 @@ func TestResolveDescriptionTextUsesZeroBasedDB2EffectIndexes(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextUsesBuildPinnedSpellRange(t *testing.T) {
+	values := map[int64]spellDescriptionValues{
+		42: {MinRange: 5, MaxRange: 40},
+	}
+	if got := resolveDescriptionText("Launches up to $r yards away; maximum $R.", 42, values, "en_US"); got != "Launches up to 40 yards away; maximum 40." {
+		t.Fatalf("range token was not resolved: %q", got)
+	}
+}
+
 func TestResolveDescriptionTextPreservesUnknownTokens(t *testing.T) {
 	raw := "Deals $s4 damage over $999999d."
 	if got := resolveDescriptionText(raw, 123, map[int64]spellDescriptionValues{}, "en_US"); got != raw {
