@@ -196,7 +196,13 @@ func (s *Store) ProjectCreatureIdentities(ctx context.Context, snapshotID uuid.U
 		report.Observations = observationCommand.RowsAffected()
 		if _, err := tx.Exec(ctx, `
 			UPDATE game_entities entity SET latest_version_id=version.version_id,updated_at=now()
-			FROM att_creature_identity_versions version WHERE entity.id=version.entity_id`); err != nil {
+			FROM att_creature_identity_versions version
+			WHERE entity.id=version.entity_id
+			  AND COALESCE((SELECT current_build.build_number
+				FROM game_entity_versions current_version
+				JOIN game_builds current_build ON current_build.id=current_version.build_id
+				WHERE current_version.id=entity.latest_version_id),0)
+				<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$1)`, scope.BuildID); err != nil {
 			return fmt.Errorf("activate ATT creature candidate versions: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `
