@@ -364,10 +364,12 @@ func EvaluateReadinessWithRecoveryPolicy(
 	// must not invalidate an otherwise source-complete release. Expose the
 	// backlog explicitly, however, so the admin panel cannot claim that every
 	// image is healthy while the cache worker still has work to retry.
-	var failedMedia, remoteMedia int64
+	var failedMedia, remoteMedia, optionalFailedMedia, optionalRemoteMedia int64
 	if err := db.QueryRow(ctx, `
-		SELECT count(*) FILTER (WHERE media.cache_status='failed'),
-			count(*) FILTER (WHERE media.cache_status='remote')
+		SELECT count(*) FILTER (WHERE media.cache_status='failed' AND media.media_kind='icon' AND media.is_primary),
+			count(*) FILTER (WHERE media.cache_status='remote' AND media.media_kind='icon' AND media.is_primary),
+			count(*) FILTER (WHERE media.cache_status='failed' AND NOT (media.media_kind='icon' AND media.is_primary)),
+			count(*) FILTER (WHERE media.cache_status='remote' AND NOT (media.media_kind='icon' AND media.is_primary))
 		FROM catalog_entity_media media
 		JOIN game_entities entity ON entity.id=media.entity_id
 		JOIN game_entity_versions published ON published.id=entity.published_version_id
@@ -375,11 +377,14 @@ func EvaluateReadinessWithRecoveryPolicy(
 		JOIN game_builds media_build ON media_build.id=media.build_id
 		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
 		  AND entity.deleted_at IS NULL AND media_build.product_id=entity.product_id
-		  AND media_build.build_number<=published_build.build_number`, product).Scan(&failedMedia, &remoteMedia); err != nil {
+		  AND media_build.build_number<=published_build.build_number`, product).
+		Scan(&failedMedia, &remoteMedia, &optionalFailedMedia, &optionalRemoteMedia); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check media cache backlog: %w", err)
 	}
 	report.add("media_cache_backlog", ScopeProduction, failedMedia+remoteMedia != 0, failedMedia+remoteMedia,
-		fmt.Sprintf("%d media assets failed and %d remain remote; public publication waits for verified local media", failedMedia, remoteMedia))
+		fmt.Sprintf("%d primary icons failed and %d remain remote; public publication waits for verified local media", failedMedia, remoteMedia))
+	report.warn("optional_media_cache_backlog", ScopeData, optionalFailedMedia+optionalRemoteMedia,
+		fmt.Sprintf("%d optional media assets failed and %d remain remote; tile/zoom media continues retrying without blocking the release", optionalFailedMedia, optionalRemoteMedia))
 
 	var unresolvedReagents, unresolvedOutputs int64
 	if err := db.QueryRow(ctx, `
