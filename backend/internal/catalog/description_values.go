@@ -25,7 +25,6 @@ var (
 	spellMaxEffectToken      = regexp.MustCompile(`\$M(\d+)\b`)
 	spellPeriodicEffectToken = regexp.MustCompile(`\$o(\d+)\b`)
 	spellChainTargetsToken   = regexp.MustCompile(`\$x(\d+)\b`)
-	numericExpressionToken   = regexp.MustCompile(`\$\{([^{}]+)\}`)
 	spellDurationToken       = regexp.MustCompile(`\$(\d+)d\b`)
 	spellMaxDurationToken    = regexp.MustCompile(`\$(\d+)D\b`)
 	spellEffectToken         = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
@@ -35,6 +34,12 @@ var (
 	currentDurationToken     = regexp.MustCompile(`\$d\b`)
 	currentMaxDurationToken  = regexp.MustCompile(`\$D\b`)
 	currentEffectToken       = regexp.MustCompile(`\$s(\d+)\b`)
+	bracedDescriptionToken   = regexp.MustCompile(`\{(\$(?:@spelldesc[0-9]+|[0-9]+[sSmMoOxXaAdD]|[sSmMoOxXaAdD])[0-9]*)([.,%]*)\}`)
+	bracedSpellExpression    = regexp.MustCompile(`\$\{([^{}]+)\}`)
+	crossSpellEffectValue    = regexp.MustCompile(`\$(\d+)([mMoOxX])([0-9]+)\b`)
+	crossSpellDurationValue  = regexp.MustCompile(`\$(\d+)([dD])\b`)
+	crossSpellRadiusValue    = regexp.MustCompile(`\$(\d+)([aA])([0-9]+)\b`)
+	currentSpellNumericValue = regexp.MustCompile(`\$(s|m|M|o|x|X|t|a|A|d|D)([0-9]*)\b`)
 )
 
 type spellDescriptionValues struct {
@@ -428,6 +433,11 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		return text
 	}
 	text = resolveConditionalDescriptionTokens(text, currentSpellID, values, locale)
+	// Client strings commonly wrap one-token substitutions in braces (for
+	// example `{$s1}` or `{$d.}`). The braces are presentation syntax, not
+	// part of the value reference; remove only that unambiguous wrapper before
+	// applying the normal token resolvers below.
+	text = bracedDescriptionToken.ReplaceAllString(text, "$1$2")
 	for range 4 {
 		resolved := spellDescriptionToken.ReplaceAllStringFunc(text, func(token string) string {
 			match := spellDescriptionToken.FindStringSubmatch(token)
@@ -442,6 +452,23 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		}
 		text = resolved
 	}
+	// Resolve arithmetic expressions before formatting ordinary duration and
+	// effect tokens. Otherwise `$d` inside `${$s1*$d/5}` would first become
+	// the display string `10 sec`, making the expression impossible to parse.
+	text = bracedSpellExpression.ReplaceAllStringFunc(text, func(token string) string {
+		match := bracedSpellExpression.FindStringSubmatch(token)
+		if len(match) != 2 {
+			return token
+		}
+		if value, resolved := resolveSpellNumericExpression(match[1], currentSpellID, values); resolved {
+			return formatDescriptionNumber(value)
+		}
+		value, ok := evaluateNumericExpression(match[1])
+		if !ok {
+			return token
+		}
+		return formatDescriptionNumber(value)
+	})
 	text = spellValueExpression.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellValueExpression.FindStringSubmatch(token)
 		id := currentSpellID
@@ -607,23 +634,12 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		}
 		return token
 	})
-	text = numericExpressionToken.ReplaceAllStringFunc(text, func(token string) string {
-		match := numericExpressionToken.FindStringSubmatch(token)
-		if len(match) != 2 {
-			return token
-		}
-		value, ok := evaluateNumericExpression(match[1])
-		if !ok {
-			return token
-		}
-		return formatDescriptionNumber(value)
-	})
 	return text
 }
 
 func evaluateNumericExpression(expression string) (float64, bool) {
 	expression = strings.TrimSpace(expression)
-	if expression == "" || strings.ContainsAny(expression, "$%&|^<>=!,?:") {
+	if expression == "" || strings.ContainsAny(expression, "$&|^<>=!,?:") {
 		return 0, false
 	}
 	expr, err := parser.ParseExpr(expression)
@@ -631,6 +647,108 @@ func evaluateNumericExpression(expression string) (float64, bool) {
 		return 0, false
 	}
 	return evaluateNumericAST(expr)
+}
+
+// resolveSpellNumericExpression substitutes build-pinned spell values into a
+// Blizzard arithmetic expression and evaluates the resulting numeric AST. It
+// intentionally fails closed: a formula containing an unknown client
+// variable (for example $@versadmg or $<rolemult>) remains visible to the
+// quality gate instead of being replaced with a guessed zero.
+func resolveSpellNumericExpression(expression string, currentSpellID int64, values map[int64]spellDescriptionValues) (float64, bool) {
+	if strings.TrimSpace(expression) == "" {
+		return 0, false
+	}
+	resolveEffect := func(id int64, index int, kind byte) (string, bool) {
+		value, ok := spellEffectValueAt(values[id].Effects, index)
+		if !ok {
+			return "", false
+		}
+		switch kind {
+		case 's', 'm', 'o':
+			// Arithmetic formulas require a numeric base value. Scaling-only
+			// effects have no proven number and must remain unresolved.
+			if math.Abs(value.BasePoints) < 0.000001 {
+				return "", false
+			}
+			return formatDescriptionNumber(value.BasePoints), true
+		case 'M':
+			if math.Abs(value.MaxBasePoints) < 0.000001 {
+				return "", false
+			}
+			return formatDescriptionNumber(value.MaxBasePoints), true
+		case 'x', 'X':
+			if value.ChainTargets <= 0 {
+				return "", false
+			}
+			return strconv.FormatInt(value.ChainTargets, 10), true
+		case 't':
+			if value.AmplitudeMS <= 0 {
+				return "", false
+			}
+			return formatDescriptionNumber(float64(value.AmplitudeMS) / 1000), true
+		case 'a', 'A':
+			if value.Radius <= 0 {
+				return "", false
+			}
+			return formatDescriptionNumber(value.Radius), true
+		}
+		return "", false
+	}
+
+	resolved := crossSpellEffectValue.ReplaceAllStringFunc(expression, func(token string) string {
+		match := crossSpellEffectValue.FindStringSubmatch(token)
+		id, _ := strconv.ParseInt(match[1], 10, 64)
+		index, _ := strconv.Atoi(match[3])
+		value, ok := resolveEffect(id, index, match[2][0])
+		if !ok {
+			return token
+		}
+		return value
+	})
+	resolved = crossSpellRadiusValue.ReplaceAllStringFunc(resolved, func(token string) string {
+		match := crossSpellRadiusValue.FindStringSubmatch(token)
+		id, _ := strconv.ParseInt(match[1], 10, 64)
+		index, _ := strconv.Atoi(match[3])
+		value, ok := spellEffectValueAt(values[id].Effects, index)
+		if !ok || value.Radius <= 0 {
+			return token
+		}
+		return formatDescriptionNumber(value.Radius)
+	})
+	resolved = crossSpellDurationValue.ReplaceAllStringFunc(resolved, func(token string) string {
+		match := crossSpellDurationValue.FindStringSubmatch(token)
+		id, _ := strconv.ParseInt(match[1], 10, 64)
+		value := values[id]
+		if value.DurationMS == 0 {
+			return token
+		}
+		return formatDescriptionNumber(float64(value.DurationMS) / 1000)
+	})
+	resolved = currentSpellNumericValue.ReplaceAllStringFunc(resolved, func(token string) string {
+		match := currentSpellNumericValue.FindStringSubmatch(token)
+		index := 1
+		if match[2] != "" {
+			index, _ = strconv.Atoi(match[2])
+		}
+		if match[1] == "t" && index == 0 {
+			index = 1
+		}
+		value, ok := resolveEffect(currentSpellID, index, match[1][0])
+		if !ok && (match[1] == "d" || match[1] == "D") {
+			spell := values[currentSpellID]
+			if spell.DurationMS != 0 {
+				return formatDescriptionNumber(float64(spell.DurationMS) / 1000)
+			}
+		}
+		if !ok {
+			return token
+		}
+		return value
+	})
+	if strings.Contains(resolved, "$") {
+		return 0, false
+	}
+	return evaluateNumericExpression(resolved)
 }
 
 func evaluateNumericAST(expr ast.Expr) (float64, bool) {
@@ -674,6 +792,11 @@ func evaluateNumericAST(expr ast.Expr) (float64, bool) {
 				return 0, false
 			}
 			return left / right, true
+		case token.REM:
+			if math.Abs(right) < 0.000000000001 {
+				return 0, false
+			}
+			return math.Mod(left, right), true
 		default:
 			return 0, false
 		}
