@@ -87,13 +87,13 @@ func EvaluateReadinessWithRecoveryPolicy(
 	var freshBuildChecks int64
 	if err := db.QueryRow(ctx, `
 		SELECT count(*)
-		FROM catalog_build_update_checks check
-		JOIN game_products product ON product.id=check.product_id
+		FROM catalog_build_update_checks build_check
+		JOIN game_products product ON product.id=build_check.product_id
 		WHERE product.slug=$1
-		  AND check.source='wago_tools' AND check.channel='live'
-		  AND check.status IN ('current','update_available')
-		  AND check.observed_build=$2
-		  AND check.checked_at>=now()-interval '48 hours'`, product, buildVersion).
+		  AND build_check.source='wago_tools' AND build_check.channel='live'
+		  AND build_check.status IN ('current','update_available')
+		  AND build_check.observed_build=$2
+		  AND build_check.checked_at>=now()-interval '48 hours'`, product, buildVersion).
 		Scan(&freshBuildChecks); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check source build freshness: %w", err)
 	}
