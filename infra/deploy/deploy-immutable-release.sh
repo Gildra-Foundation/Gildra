@@ -323,11 +323,13 @@ verify_catalog_readiness() {
     docker exec "$api_container" catalog-audit \
       -product wow \
       -recovery-policy verified_same_host \
+      -timeout 15m \
       -require-data-ready
   else
     docker exec "$api_container" catalog-audit \
       -product wow \
       -recovery-policy verified_same_host \
+      -timeout 15m \
       -require-production-ready
   fi
 }

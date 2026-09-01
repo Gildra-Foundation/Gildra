@@ -74,12 +74,17 @@ func main() {
 func run() error {
 	var databaseURL, product, recoveryPolicy string
 	var requireProductionReady, requireDataReady bool
+	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&product, "product", "wow", "game product slug")
 	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
 	flag.BoolVar(&requireProductionReady, "require-production-ready", false, "exit non-zero unless every data and production readiness check passes")
 	flag.BoolVar(&requireDataReady, "require-data-ready", false, "exit non-zero unless every catalog data-readiness check passes")
+	flag.DurationVar(&timeout, "timeout", 15*time.Minute, "maximum time allowed for the complete audit")
 	flag.Parse()
+	if timeout <= 0 {
+		return errors.New("-timeout must be greater than zero")
+	}
 	if databaseURL == "" {
 		databaseURL = os.Getenv("DATABASE_URL")
 	}
@@ -87,7 +92,10 @@ func run() error {
 		return errors.New("DATABASE_URL or -database-url is required")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	// Coverage and normalized-fact checks intentionally scan the published
+	// projection.  On the production-sized database these are bounded by the
+	// audit timeout rather than the short request deadlines used by the API.
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	db, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
