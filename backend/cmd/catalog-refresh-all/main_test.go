@@ -1,6 +1,14 @@
 package main
 
-import "testing"
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/Gildra-Foundation/Gildra/backend/internal/wago"
+)
 
 func TestSelectProductsDefaultsToAllEditions(t *testing.T) {
 	t.Parallel()
@@ -88,5 +96,39 @@ func TestProductSpecsPinEditionBuildSources(t *testing.T) {
 		if spec.Source != "wago_tools" || spec.Product != expected.product || spec.WagoKey != expected.wagoKey {
 			t.Errorf("%s spec = %#v, want Wago source/product/key %#v", spec.Alias, spec, expected)
 		}
+	}
+}
+
+func TestCurrentWagoBuildUsesEditionManifest(t *testing.T) {
+	t.Parallel()
+	var requestedPath string
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		requestedPath = request.URL.Path
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(map[string][]map[string]string{
+			"wow":             {{"version": "12.1.0.69497"}},
+			"wow_classic":     {{"version": "5.5.4.69383"}},
+			"wow_classic_era": {{"version": "1.15.9.69547"}},
+		})
+	}))
+	defer server.Close()
+
+	client := wago.New(wago.Config{BaseURL: server.URL, HTTPClient: server.Client(), RetryMax: 1})
+	classic, err := currentWagoBuild(context.Background(), client, productSpecs[1])
+	if err != nil {
+		t.Fatalf("currentWagoBuild(classic) returned error: %v", err)
+	}
+	if classic != "5.5.4.69383" {
+		t.Fatalf("classic build = %q, want product manifest build", classic)
+	}
+	if requestedPath != "/api/builds" {
+		t.Fatalf("Wago request path = %q, want /api/builds", requestedPath)
+	}
+	hardcore, err := currentWagoBuild(context.Background(), client, productSpecs[3])
+	if err != nil {
+		t.Fatalf("currentWagoBuild(hardcore) returned error: %v", err)
+	}
+	if hardcore != "1.15.9.69547" {
+		t.Fatalf("hardcore build = %q, want Era manifest build", hardcore)
 	}
 }
