@@ -9,8 +9,7 @@ ConditionPathExists=/opt/gildra/current-release.env
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/gildra
-ExecCondition=/usr/bin/docker compose --env-file .env --env-file current-release.env -f compose.yml -f compose.prod.yml -f compose.runtime.yml run --rm --no-deps --entrypoint catalog-build-check api -require-update
-ExecStart=/usr/bin/docker compose --env-file .env --env-file current-release.env -f compose.yml -f compose.prod.yml -f compose.runtime.yml run --rm --no-deps --entrypoint catalog-pipeline api -mode apply -trigger schedule -profile retail-foundation -sources wago,db2,battlenet,listfile -use-checked-build -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
+ExecStart=/opt/gildra/infra/systemd/run-gildra-catalog-refresh-all.sh
 TimeoutStartSec=9h
 Nice=10
 IOSchedulingClass=best-effort
