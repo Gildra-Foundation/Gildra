@@ -141,6 +141,14 @@ jobs:
           OVH_USER: ${{ secrets.OVH_USER }}
         run: |
           ssh "$OVH_USER@$OVH_HOST" 'sudo /opt/gildra/infra/deploy/bootstrap-release-manifest.sh /opt/gildra/current-release.env'
+      - name: Authenticate target Docker to GHCR
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh "$OVH_USER@$OVH_HOST" "sudo docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin"
       - name: Deploy immutable images
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
