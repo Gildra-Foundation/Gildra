@@ -10,6 +10,19 @@ import (
 	"time"
 )
 
+type GameCategory struct {
+	ID          string `json:"id"`
+	Type        string `json:"type"`
+	Facet       string `json:"facet"`
+	Slug        string `json:"slug"`
+	Path        string `json:"path"`
+	ParentPath  string `json:"parentPath"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Count       int    `json:"count"`
+	SortOrder   int    `json:"sortOrder"`
+}
+
 type GameEntity struct {
 	ID                  string                    `json:"id"`
 	Product             string                    `json:"product"`
@@ -33,6 +46,40 @@ type GameEntity struct {
 	BuildID             *string                   `json:"buildId,omitempty"`
 	Payload             map[string]any            `json:"payload"`
 	UpdatedAt           time.Time                 `json:"updatedAt"`
+}
+
+type GameEntityCard struct {
+	ID             string           `json:"id"`
+	Product        string           `json:"product"`
+	Type           string           `json:"type"`
+	ExternalID     string           `json:"externalId"`
+	Slug           string           `json:"slug"`
+	Locale         Locale           `json:"locale"`
+	LocaleFallback bool             `json:"localeFallback"`
+	Name           string           `json:"name"`
+	Description    string           `json:"description"`
+	IconName       *string          `json:"iconName,omitempty"`
+	IconURL        *string          `json:"iconUrl,omitempty"`
+	Quality        *int             `json:"quality,omitempty"`
+	ItemLevel      *int             `json:"itemLevel,omitempty"`
+	BuildID        *string          `json:"buildId,omitempty"`
+	UpdatedAt      time.Time        `json:"updatedAt"`
+	Highlights     []*GameHighlight `json:"highlights"`
+	SearchRank     int              `json:"searchRank"`
+}
+
+type GameEntityChange struct {
+	Field      string         `json:"field"`
+	Label      string         `json:"label"`
+	ChangeType string         `json:"changeType"`
+	Before     map[string]any `json:"before,omitempty"`
+	After      map[string]any `json:"after,omitempty"`
+}
+
+type GameEntityComparison struct {
+	From    *GameEntityVersion  `json:"from"`
+	To      *GameEntityVersion  `json:"to"`
+	Changes []*GameEntityChange `json:"changes"`
 }
 
 type GameEntityConnection struct {
@@ -63,6 +110,20 @@ type GameEntityMedia struct {
 	Primary     bool    `json:"primary"`
 }
 
+type GameEntityQuality struct {
+	EntityID     string              `json:"entityId"`
+	Score        int                 `json:"score"`
+	Status       string              `json:"status"`
+	BuildID      string              `json:"buildId"`
+	BuildNumber  int                 `json:"buildNumber"`
+	BuildVersion string              `json:"buildVersion"`
+	UpdatedAt    time.Time           `json:"updatedAt"`
+	Checks       []*GameQualityCheck `json:"checks"`
+	Confirmed    []string            `json:"confirmed"`
+	Missing      []string            `json:"missing"`
+	Sources      []*GameEntitySource `json:"sources"`
+}
+
 type GameEntityRelationship struct {
 	Direction  RelationshipDirection `json:"direction"`
 	Relation   string                `json:"relation"`
@@ -77,6 +138,14 @@ type GameEntityRelationshipConnection struct {
 	Total    int                       `json:"total"`
 }
 
+type GameEntitySource struct {
+	Source      string     `json:"source"`
+	DisplayName string     `json:"displayName"`
+	Documents   int        `json:"documents"`
+	SourceURL   string     `json:"sourceUrl"`
+	ImportedAt  *time.Time `json:"importedAt,omitempty"`
+}
+
 type GameEntitySummary struct {
 	ID         string  `json:"id"`
 	Product    string  `json:"product"`
@@ -86,6 +155,60 @@ type GameEntitySummary struct {
 	Name       string  `json:"name"`
 	IconName   *string `json:"iconName,omitempty"`
 	IconURL    *string `json:"iconUrl,omitempty"`
+}
+
+type GameEntitySummaryConnection struct {
+	Nodes    []*GameEntityCard `json:"nodes"`
+	PageInfo *PageInfo         `json:"pageInfo"`
+	Total    *int              `json:"total,omitempty"`
+}
+
+type GameEntityType struct {
+	Type              string    `json:"type"`
+	Label             string    `json:"label"`
+	Description       string    `json:"description"`
+	Group             string    `json:"group"`
+	IconSymbol        string    `json:"iconSymbol"`
+	SortOrder         int       `json:"sortOrder"`
+	Count             int       `json:"count"`
+	LocalizedCount    int       `json:"localizedCount"`
+	DescribedCount    int       `json:"describedCount"`
+	TooltipCount      int       `json:"tooltipCount"`
+	IconCount         int       `json:"iconCount"`
+	RelationshipCount int       `json:"relationshipCount"`
+	CoverageUpdatedAt time.Time `json:"coverageUpdatedAt"`
+}
+
+type GameEntityVersion struct {
+	ID           string         `json:"id"`
+	BuildID      string         `json:"buildId"`
+	BuildNumber  int            `json:"buildNumber"`
+	Revision     int            `json:"revision"`
+	BuildVersion string         `json:"buildVersion"`
+	Name         string         `json:"name"`
+	Description  string         `json:"description"`
+	SourceURL    string         `json:"sourceUrl"`
+	ObservedAt   time.Time      `json:"observedAt"`
+	Payload      map[string]any `json:"payload"`
+}
+
+type GameFieldCoverage struct {
+	Product         string    `json:"product"`
+	BuildID         string    `json:"buildId"`
+	Type            string    `json:"type"`
+	Locale          Locale    `json:"locale"`
+	Field           string    `json:"field"`
+	Source          string    `json:"source"`
+	EntityCount     int       `json:"entityCount"`
+	PopulatedCount  int       `json:"populatedCount"`
+	UnresolvedCount int       `json:"unresolvedCount"`
+	ConflictCount   int       `json:"conflictCount"`
+	RefreshedAt     time.Time `json:"refreshedAt"`
+}
+
+type GameHighlight struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type GameProduct struct {
@@ -104,6 +227,42 @@ type GameProduct struct {
 	PublicRelease        bool       `json:"publicRelease"`
 	Freshness            string     `json:"freshness"`
 	FreshnessReason      string     `json:"freshnessReason"`
+}
+
+type GameQualityCheck struct {
+	Key      string `json:"key"`
+	Label    string `json:"label"`
+	Detail   string `json:"detail"`
+	Present  bool   `json:"present"`
+	Required bool   `json:"required"`
+}
+
+type GameRelationType struct {
+	Relation           string         `json:"relation"`
+	Label              string         `json:"label"`
+	Description        string         `json:"description"`
+	InverseRelation    *string        `json:"inverseRelation,omitempty"`
+	AllowedSourceTypes []string       `json:"allowedSourceTypes"`
+	AllowedTargetTypes []string       `json:"allowedTargetTypes"`
+	AttributeSchema    map[string]any `json:"attributeSchema"`
+	SchemaVersion      int            `json:"schemaVersion"`
+}
+
+type GameSourcePolicy struct {
+	Source              string     `json:"source"`
+	DisplayName         string     `json:"displayName"`
+	HomepageURL         string     `json:"homepageUrl"`
+	TermsURL            string     `json:"termsUrl"`
+	LicenseIdentifier   string     `json:"licenseIdentifier"`
+	CommercialUseStatus string     `json:"commercialUseStatus"`
+	PublicAPIStatus     string     `json:"publicApiStatus"`
+	AssetCachingStatus  string     `json:"assetCachingStatus"`
+	RetentionDays       *int       `json:"retentionDays,omitempty"`
+	AttributionRequired bool       `json:"attributionRequired"`
+	AttributionText     string     `json:"attributionText"`
+	ReviewedAt          *time.Time `json:"reviewedAt,omitempty"`
+	ReviewStatus        string     `json:"reviewStatus"`
+	Notes               string     `json:"notes"`
 }
 
 type GameTooltip struct {

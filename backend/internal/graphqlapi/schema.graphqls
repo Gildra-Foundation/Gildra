@@ -50,6 +50,35 @@ type LibraryDataset {
   coverageUpdatedAt: Time
 }
 
+type GameEntityType {
+  type: String!
+  label: String!
+  description: String!
+  group: String!
+  iconSymbol: String!
+  sortOrder: Int!
+  count: Int!
+  localizedCount: Int!
+  describedCount: Int!
+  tooltipCount: Int!
+  iconCount: Int!
+  relationshipCount: Int!
+  coverageUpdatedAt: Time!
+}
+
+type GameCategory {
+  id: ID!
+  type: String!
+  facet: String!
+  slug: String!
+  path: String!
+  parentPath: String!
+  name: String!
+  description: String!
+  count: Int!
+  sortOrder: Int!
+}
+
 type GameEntity {
   id: ID!
   product: String!
@@ -144,10 +173,165 @@ type GameEntityConnection {
   pageInfo: PageInfo!
 }
 
+type GameHighlight {
+  key: String!
+  value: String!
+}
+
+type GameEntityCard {
+  id: ID!
+  product: String!
+  type: String!
+  externalId: String!
+  slug: String!
+  locale: Locale!
+  localeFallback: Boolean!
+  name: String!
+  description: String!
+  iconName: String
+  iconUrl: String
+  quality: Int
+  itemLevel: Int
+  buildId: String
+  updatedAt: Time!
+  highlights: [GameHighlight!]!
+  searchRank: Int!
+}
+
+type GameEntitySummaryConnection {
+  nodes: [GameEntityCard!]!
+  pageInfo: PageInfo!
+  total: Int
+}
+
+type GameQualityCheck {
+  key: String!
+  label: String!
+  detail: String!
+  present: Boolean!
+  required: Boolean!
+}
+
+type GameEntitySource {
+  source: String!
+  displayName: String!
+  documents: Int!
+  sourceUrl: String!
+  importedAt: Time
+}
+
+type GameEntityQuality {
+  entityId: ID!
+  score: Int!
+  status: String!
+  buildId: String!
+  buildNumber: Int!
+  buildVersion: String!
+  updatedAt: Time!
+  checks: [GameQualityCheck!]!
+  confirmed: [String!]!
+  missing: [String!]!
+  sources: [GameEntitySource!]!
+}
+
+type GameEntityVersion {
+  id: ID!
+  buildId: String!
+  buildNumber: Int!
+  revision: Int!
+  buildVersion: String!
+  name: String!
+  description: String!
+  sourceUrl: String!
+  observedAt: Time!
+  payload: JSON!
+}
+
+type GameEntityChange {
+  field: String!
+  label: String!
+  changeType: String!
+  before: JSON
+  after: JSON
+}
+
+type GameEntityComparison {
+  from: GameEntityVersion!
+  to: GameEntityVersion!
+  changes: [GameEntityChange!]!
+}
+
+type GameFieldCoverage {
+  product: String!
+  buildId: String!
+  type: String!
+  locale: Locale!
+  field: String!
+  source: String!
+  entityCount: Int!
+  populatedCount: Int!
+  unresolvedCount: Int!
+  conflictCount: Int!
+  refreshedAt: Time!
+}
+
+type GameSourcePolicy {
+  source: String!
+  displayName: String!
+  homepageUrl: String!
+  termsUrl: String!
+  licenseIdentifier: String!
+  commercialUseStatus: String!
+  publicApiStatus: String!
+  assetCachingStatus: String!
+  retentionDays: Int
+  attributionRequired: Boolean!
+  attributionText: String!
+  reviewedAt: Time
+  reviewStatus: String!
+  notes: String!
+}
+
+type GameRelationType {
+  relation: String!
+  label: String!
+  description: String!
+  inverseRelation: String
+  allowedSourceTypes: [String!]!
+  allowedTargetTypes: [String!]!
+  attributeSchema: JSON!
+  schemaVersion: Int!
+}
+
 type Query {
   gameProducts: [GameProduct!]!
   libraryDatasets(product: String = "wow", locale: Locale = en_US): [LibraryDataset!]!
+  gameEntityTypes(product: String = "wow", locale: Locale = en_US): [GameEntityType!]!
+  gameCategories(product: String = "wow", type: String!, locale: Locale = en_US): [GameCategory!]!
+  gameEntitySummaries(
+    product: String = "wow"
+    type: String
+    locale: Locale = en_US
+    query: String
+    dataset: String
+    category: String
+    facets: [String!]
+    itemClassId: Int
+    minItemLevel: Int
+    maxItemLevel: Int
+    minRequiredLevel: Int
+    maxRequiredLevel: Int
+    cursor: String
+    limit: Int = 20
+    includeTotal: Boolean = false
+  ): GameEntitySummaryConnection!
   gameEntity(id: ID!, locale: Locale = en_US): GameEntity
+  gameEntityQuality(id: ID!, locale: Locale = en_US): GameEntityQuality
+  gameEntityVersions(id: ID!, locale: Locale = en_US, limit: Int = 20): [GameEntityVersion!]!
+  gameEntityComparison(id: ID!, locale: Locale = en_US, fromBuildId: String, toBuildId: String): GameEntityComparison
+  gameCoverage(product: String = "wow", locale: Locale = en_US, type: String): [GameFieldCoverage!]!
+  gameSourcePolicies: [GameSourcePolicy!]!
+  gameRelationTypes(locale: Locale = en_US): [GameRelationType!]!
   gameEntityRelationships(
     id: ID!
     locale: Locale = en_US
