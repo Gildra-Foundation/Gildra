@@ -354,10 +354,10 @@ After backup and capacity preflight, import the complete selected table set:
 docker compose run --rm --entrypoint db2-import api -version 12.1.0.69404 -max-records 0 -confirm
 ```
 
-The default manifest contains the complete supported set of 111 build-pinned
+The default manifest contains the complete supported set of 112 build-pinned
 tables, including `Item`, `ItemSparse`, `ItemEffect`, `ItemXItemEffect`, `SpellName`, `Spell`,
 `SpellMisc`, `SpellCooldowns`, `SpellRange`, `SpellCastTimes`, `SpellDuration`, `SpellRadius`,
-`SpellPower`, `SpellEffect`, `SpellDescriptionVariables`, `SkillLine`, `SkillLineAbility`,
+`SpellPower`, `SpellEffect`, `SpellDescriptionVariables`, `SpellXDescriptionVariables`, `SkillLine`, `SkillLineAbility`,
 `SkillRaceClassInfo`, `TradeSkillCategory`, `SpellReagents`, `SpellReagentsCurrency`,
 `CraftingData`, `Creature`, `CreatureDisplayInfo`, `CreatureModelData`,
 `CreatureType`, `CreatureFamily`, `CreatureDifficulty`, `ChrRaces`, journal,

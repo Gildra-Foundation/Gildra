@@ -24,6 +24,15 @@ func TestLocalizedTables(t *testing.T) {
 	}
 }
 
+func TestDefaultTablesIncludeSpellDescriptionVariableLinks(t *testing.T) {
+	t.Parallel()
+
+	if !strings.Contains(defaultTables, "SpellDescriptionVariables") ||
+		!strings.Contains(defaultTables, "SpellXDescriptionVariables") {
+		t.Fatal("default DB2 manifest must include spell description variable definitions and links")
+	}
+}
+
 func TestValidProduct(t *testing.T) {
 	t.Parallel()
 	for _, product := range []string{"wow", "wow_classic", "wow_classic_era", "wow_classic_hardcore"} {
