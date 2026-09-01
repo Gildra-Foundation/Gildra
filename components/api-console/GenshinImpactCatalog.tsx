@@ -247,7 +247,7 @@ function CatalogCard({ section, item }: { section: Section; item: CatalogItem })
       </div>
       {section === "artifact-sets" ? <div className="mt-3 line-clamp-3 text-[10px] leading-4 text-[#7d899b]">{(item as ArtifactSet).twoPieceBonus || "Бонус комплекта появится после импорта локализации."}</div> : null}
       {section === "talents" ? <div className="mt-3 line-clamp-4 text-[10px] leading-4 text-[#7d899b]">{(item as Talent).description}</div> : null}
-      {section === "content" ? <div className="mt-3 line-clamp-4 whitespace-pre-line text-[10px] leading-4 text-[#7d899b]">{(item as Content).description || "Полное содержимое доступно в sourcePayload API."}</div> : null}
+      {section === "content" ? <ContentDetails item={item as Content} /> : null}
     </div>
   </article>;
 }
@@ -270,6 +270,22 @@ function ArtifactFacts({ item }: { item: ArtifactSet }) {
 
 function ContentFacts({ item }: { item: Content }) {
   return <><Fact label="Раздел" value={contentCategoryLabel(item.category)} /><Fact label="ID" value={item.externalId == null ? "—" : String(item.externalId)} mono /><Fact label="Медиа" value={item.media.length ? String(item.media.length) : "—"} /><Fact label="Ключ" value={item.slug} mono /></>;
+}
+
+function ContentDetails({ item }: { item: Content }) {
+  return <div className="mt-3">
+    <div className="line-clamp-4 whitespace-pre-line text-[10px] leading-4 text-[#7d899b]">{item.description || "Полное содержимое доступно в исходном JSON ниже."}</div>
+    {item.media.length ? <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Изображения записи">{item.media.map((media) => media.url ? <img key={`${media.role}-${media.filename}`} src={media.url} alt={media.role} title={media.filename} className="size-12 shrink-0 rounded-sm border border-[#2b323f] bg-[#090d13] object-contain p-1" loading="lazy" /> : null)}</div> : null}
+    <details className="mt-3 border border-[#2b323f] bg-[#0a0e14]">
+      <summary className="cursor-pointer px-3 py-2 text-[10px] text-[#c9a24f]">Показать полный JSON</summary>
+      <div className="border-t border-[#2b323f] p-3">
+        <div className="mb-2 text-[9px] uppercase tracking-[.12em] text-[#68758a]">Локализованные данные</div>
+        <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words font-mono text-[9px] leading-4 text-[#aeb7c7]">{JSON.stringify(item.localizedPayload, null, 2)}</pre>
+        <div className="mb-2 mt-4 text-[9px] uppercase tracking-[.12em] text-[#68758a]">Исходные данные</div>
+        <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words font-mono text-[9px] leading-4 text-[#aeb7c7]">{JSON.stringify(item.sourcePayload, null, 2)}</pre>
+      </div>
+    </details>
+  </div>;
 }
 
 function Fact({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
