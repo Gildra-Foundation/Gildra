@@ -22,6 +22,8 @@ var (
 	ErrWeaponNotFound      = errors.New("genshin weapon not found")
 	ErrArtifactSetNotFound = errors.New("genshin artifact set not found")
 	cursorValue            = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+	genshinColorTag        = regexp.MustCompile(`</?color(?:=[^>]*)?>`)
+	genshinBreakTag        = regexp.MustCompile(`<br\s*/?>`)
 )
 
 type Service struct {
@@ -387,6 +389,7 @@ func (s *Service) GetCharacter(ctx context.Context, slug, locale string) (Charac
 	}
 	item.IconURL = storageURL(iconStorageKey)
 	item.PortraitURL = storageURL(portraitStorageKey)
+	item.Description = cleanGenshinMarkup(item.Description)
 	stats, err := s.characterStats(ctx, slug)
 	if err != nil {
 		return CharacterDetail{}, err
@@ -625,7 +628,10 @@ func (s *Service) GetWeapon(ctx context.Context, slug, locale string) (WeaponDet
 		return WeaponDetail{}, fmt.Errorf("read genshin weapon %s: %w", slug, err)
 	}
 	item.IconURL = storageURL(iconStorageKey)
-	item.Refinements = weaponRefinements(sourcePayload, refinementPayload)
+	item.Description = cleanGenshinMarkup(item.Description)
+	item.PassiveName = cleanGenshinMarkup(item.PassiveName)
+	item.PassiveDescription = cleanGenshinMarkup(item.PassiveDescription)
+	item.Refinements = weaponRefinements(sourcePayload, refinementPayload, item.PassiveDescription)
 	item.AscensionCosts, err = s.upgradeCosts(ctx, sourcePayload, locale, nil)
 	if err != nil {
 		return WeaponDetail{}, err
@@ -638,7 +644,7 @@ type weaponRefinementSource struct {
 	Description string   `json:"description"`
 }
 
-func weaponRefinements(sourcePayload, localizedPayload []byte) []WeaponRefinement {
+func weaponRefinements(sourcePayload, localizedPayload []byte, passiveDescription string) []WeaponRefinement {
 	var source map[string]weaponRefinementSource
 	_ = json.Unmarshal(sourcePayload, &source)
 	var localized []string
@@ -654,9 +660,21 @@ func weaponRefinements(sourcePayload, localizedPayload []byte) []WeaponRefinemen
 		if level <= len(localized) && localized[level-1] != "" {
 			description = localized[level-1]
 		}
+		if strings.Contains(passiveDescription, "{") && len(refinement.Values) > 0 {
+			description = passiveDescription
+			for index, value := range refinement.Values {
+				description = strings.ReplaceAll(description, "{"+strconv.Itoa(index)+"}", value)
+			}
+		}
+		description = cleanGenshinMarkup(description)
 		result = append(result, WeaponRefinement{Level: int16(level), Values: refinement.Values, Description: description})
 	}
 	return result
+}
+
+func cleanGenshinMarkup(value string) string {
+	value = genshinBreakTag.ReplaceAllString(value, "\n")
+	return genshinColorTag.ReplaceAllString(value, "")
 }
 
 func (s *Service) GetArtifactSet(ctx context.Context, slug, locale string) (ArtifactSetDetail, error) {
@@ -905,6 +923,9 @@ func (s *Service) ListWeapons(ctx context.Context, params ListParams) (Page[Weap
 			&item.LocaleFallback); err != nil {
 			return Page[WeaponSummary]{}, fmt.Errorf("scan genshin weapon: %w", err)
 		}
+		item.Description = cleanGenshinMarkup(item.Description)
+		item.PassiveName = cleanGenshinMarkup(item.PassiveName)
+		item.PassiveDescription = cleanGenshinMarkup(item.PassiveDescription)
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
@@ -951,6 +972,8 @@ func (s *Service) ListArtifactSets(ctx context.Context, params ListParams) (Page
 			&item.PieceCount); err != nil {
 			return Page[ArtifactSetSummary]{}, fmt.Errorf("scan genshin artifact set: %w", err)
 		}
+		item.TwoPieceBonus = cleanGenshinMarkup(item.TwoPieceBonus)
+		item.FourPieceBonus = cleanGenshinMarkup(item.FourPieceBonus)
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
