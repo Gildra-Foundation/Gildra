@@ -10,6 +10,8 @@ type GameProduct {
   id: Int!
   slug: String!
   name: String!
+  freshness: String!
+  freshnessReason: String!
 }
 
 type LibraryDataset {
