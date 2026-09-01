@@ -88,6 +88,32 @@ replace them with zero or a guessed number.
 - `GET /v1/game/sitemap-entries` is a bounded, UUID-sharded SEO read model used
   by the website's segmented sitemaps.
 
+The same published data is available through `POST /graphql`. `gameProducts`
+returns the four edition slugs (`wow`, `wow_classic`, `wow_classic_era` and
+`wow_classic_hardcore`) together with their active build, imported/published
+counts and `publicRelease` flag. `libraryDatasets(product:, locale:)` exposes
+dataset taxonomy and freshness, while `gameEntityRelationships` pages through
+the normalized graph without requiring clients to decode tooltip JSON:
+
+```graphql
+query Catalog($product: String!, $id: ID!, $locale: Locale!) {
+  gameProducts { slug buildVersion publishedEntityCount publicRelease }
+  libraryDatasets(product: $product, locale: $locale) {
+    slug categoryPath itemClassId entityCount freshness imageCount
+  }
+  gameEntityRelationships(id: $id, locale: $locale, limit: 50) {
+    nodes { direction relation buildId entity { id product type externalId name iconUrl } }
+    pageInfo { hasMore nextCursor }
+    total
+  }
+}
+```
+
+`gameEntityRelationships` is build-scoped to the selected published entity;
+`cursor` is opaque and must be passed back unchanged. As with REST, a private
+deployment requires the administrator session and never publishes a staging
+release by accident.
+
 ## HTTP caching and errors
 
 Successful catalog GET responses include an `ETag` plus:

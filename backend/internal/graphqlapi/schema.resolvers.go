@@ -60,6 +60,48 @@ func (r *queryResolver) GameEntity(ctx context.Context, id string, locale *model
 	return toGraphQLEntity(entity), nil
 }
 
+// GameEntityRelationships is the resolver for the gameEntityRelationships field.
+func (r *queryResolver) GameEntityRelationships(ctx context.Context, id string, locale *model.Locale, direction *model.RelationshipDirection, relation *string, cursor *string, limit *int) (*model.GameEntityRelationshipConnection, error) {
+	entityID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, errors.New("id must be a valid UUID")
+	}
+	params := catalog.RelationshipParams{
+		EntityID:  entityID,
+		Locale:    localeValue(locale),
+		Direction: "both",
+		Limit:     50,
+	}
+	if direction != nil {
+		params.Direction = direction.String()
+	}
+	if relation != nil {
+		params.Relation = *relation
+	}
+	if cursor != nil {
+		params.Cursor = *cursor
+	}
+	if limit != nil {
+		params.Limit = *limit
+	}
+	page, err := r.Catalog.Relationships(ctx, params)
+	if errors.Is(err, catalog.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	nodes := make([]*model.GameEntityRelationship, 0, len(page.Relationships))
+	for _, relationship := range page.Relationships {
+		nodes = append(nodes, toGraphQLRelationship(relationship))
+	}
+	pageInfo := &model.PageInfo{HasMore: page.HasMore}
+	if page.NextCursor != "" {
+		pageInfo.NextCursor = &page.NextCursor
+	}
+	return &model.GameEntityRelationshipConnection{Nodes: nodes, PageInfo: pageInfo, Total: int(page.Total)}, nil
+}
+
 // GameEntities is the resolver for the gameEntities field.
 func (r *queryResolver) GameEntities(ctx context.Context, product *string, typeArg *string, locale *model.Locale, query *string, cursor *string, limit *int) (*model.GameEntityConnection, error) {
 	params := catalog.ListParams{Locale: localeValue(locale), Limit: 20}

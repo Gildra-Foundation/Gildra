@@ -96,3 +96,18 @@ func toGraphQLDataset(dataset catalog.LibraryDataset) *model.LibraryDataset {
 	result.PreviewImageURL = dataset.PreviewImageURL
 	return result
 }
+
+func toGraphQLRelationship(relationship catalog.Relationship) *model.GameEntityRelationship {
+	return &model.GameEntityRelationship{
+		Direction:  model.RelationshipDirection(relationship.Direction),
+		Relation:   relationship.Relation,
+		BuildID:    strconv.FormatInt(relationship.BuildID, 10),
+		Attributes: relationship.Attributes,
+		Entity: &model.GameEntitySummary{
+			ID: relationship.Entity.ID.String(), Product: relationship.Entity.Product,
+			Type: relationship.Entity.Type, ExternalID: strconv.FormatInt(relationship.Entity.ExternalID, 10),
+			Slug: relationship.Entity.Slug, Name: relationship.Entity.Name,
+			IconName: relationship.Entity.IconName, IconURL: relationship.Entity.IconURL,
+		},
+	}
+}

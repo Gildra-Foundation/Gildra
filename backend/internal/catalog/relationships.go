@@ -29,6 +29,7 @@ type EntityTypeSummary struct {
 
 type EntitySummary struct {
 	ID         uuid.UUID
+	Product    string
 	Type       string
 	ExternalID int64
 	Slug       string
@@ -141,12 +142,13 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 	}
 	rows, err := s.postgres.Query(ctx, baseSQL+`
 		SELECT links.direction,links.relation_type,links.build_id,links.attributes,entity.id,entity.entity_type,
-			entity.external_id,COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),
+			related_product.slug,entity.external_id,COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),
 			COALESCE(NULLIF(localized.name,''),fallback.name,''),
 			COALESCE(source_icon.icon_name,direct_icon.icon_name,db2_icon.icon_name,spell_icon.icon_name,
 				NULLIF(version.payload #>> '{raidbots,icon}',''))
 		FROM links
 		JOIN game_entities entity ON entity.id=links.related_entity_id AND entity.deleted_at IS NULL
+		JOIN game_products related_product ON related_product.id=entity.product_id
 		JOIN game_entity_versions version ON version.id=entity.published_version_id AND version.build_id=links.build_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
@@ -177,7 +179,7 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 	for rows.Next() {
 		var relationship Relationship
 		if err := rows.Scan(&relationship.Direction, &relationship.Relation, &relationship.BuildID, &relationship.Attributes,
-			&relationship.Entity.ID, &relationship.Entity.Type, &relationship.Entity.ExternalID, &relationship.Entity.Slug,
+			&relationship.Entity.ID, &relationship.Entity.Type, &relationship.Entity.Product, &relationship.Entity.ExternalID, &relationship.Entity.Slug,
 			&relationship.Entity.Name, &relationship.Entity.IconName); err != nil {
 			return RelationshipPage{}, fmt.Errorf("scan entity relationship: %w", err)
 		}
