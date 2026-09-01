@@ -93,7 +93,7 @@ func EvaluateReadinessWithRecoveryPolicy(
 		  AND build_check.source='wago_tools' AND build_check.channel='live'
 		  AND build_check.status IN ('current','update_available')
 		  AND build_check.observed_build=$2
-		  AND build_check.checked_at>=now()-interval '48 hours'`, product, buildVersion).
+		  AND build_check.checked_at>=now()-interval '48 hours'`, product, report.BuildVersion).
 		Scan(&freshBuildChecks); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check source build freshness: %w", err)
 	}
