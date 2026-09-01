@@ -8,6 +8,7 @@ package graphqlapi
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/graphqlapi/model"
@@ -44,6 +45,88 @@ func (r *queryResolver) LibraryDatasets(ctx context.Context, product *string, lo
 	return result, nil
 }
 
+// GameEntityTypes is the resolver for the gameEntityTypes field.
+func (r *queryResolver) GameEntityTypes(ctx context.Context, product *string, locale *model.Locale) ([]*model.GameEntityType, error) {
+	productSlug := "wow"
+	if product != nil {
+		productSlug = *product
+	}
+	items, err := r.Catalog.EntityTypes(ctx, productSlug, localeValue(locale))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.GameEntityType, 0, len(items))
+	for _, item := range items {
+		result = append(result, toGraphQLEntityType(item))
+	}
+	return result, nil
+}
+
+// GameCategories is the resolver for the gameCategories field.
+func (r *queryResolver) GameCategories(ctx context.Context, product *string, typeArg string, locale *model.Locale) ([]*model.GameCategory, error) {
+	productSlug := "wow"
+	if product != nil {
+		productSlug = *product
+	}
+	items, err := r.Catalog.Categories(ctx, productSlug, typeArg, localeValue(locale))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.GameCategory, 0, len(items))
+	for _, item := range items {
+		result = append(result, toGraphQLCategory(item))
+	}
+	return result, nil
+}
+
+// GameEntitySummaries is the resolver for the gameEntitySummaries field.
+func (r *queryResolver) GameEntitySummaries(ctx context.Context, product *string, typeArg *string, locale *model.Locale, query *string, dataset *string, category *string, facets []string, itemClassID *int, minItemLevel *int, maxItemLevel *int, minRequiredLevel *int, maxRequiredLevel *int, cursor *string, limit *int, includeTotal *bool) (*model.GameEntitySummaryConnection, error) {
+	params := catalog.SummaryParams{Locale: localeValue(locale), Limit: 20, Facets: facets,
+		ItemClassID: itemClassID, MinItemLevel: minItemLevel, MaxItemLevel: maxItemLevel,
+		MinRequiredLevel: minRequiredLevel, MaxRequiredLevel: maxRequiredLevel}
+	if product != nil {
+		params.Product = *product
+	}
+	if typeArg != nil {
+		params.Type = *typeArg
+	}
+	if query != nil {
+		params.Query = *query
+	}
+	if dataset != nil {
+		params.Dataset = *dataset
+	}
+	if category != nil {
+		params.Category = *category
+	}
+	if cursor != nil {
+		params.Cursor = *cursor
+	}
+	if limit != nil {
+		params.Limit = *limit
+	}
+	if includeTotal != nil {
+		params.IncludeTotal = *includeTotal
+	}
+	page, err := r.Catalog.Summaries(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	result := &model.GameEntitySummaryConnection{Nodes: make([]*model.GameEntityCard, 0, len(page.Entities))}
+	for _, entity := range page.Entities {
+		result.Nodes = append(result.Nodes, toGraphQLCard(entity))
+	}
+	if page.Total != nil {
+		total := int(*page.Total)
+		result.Total = &total
+	}
+	result.PageInfo = &model.PageInfo{HasMore: page.HasMore}
+	if page.NextCursor != "" {
+		result.PageInfo.NextCursor = &page.NextCursor
+	}
+	return result, nil
+}
+
 // GameEntity is the resolver for the gameEntity field.
 func (r *queryResolver) GameEntity(ctx context.Context, id string, locale *model.Locale) (*model.GameEntity, error) {
 	entityID, err := uuid.Parse(id)
@@ -58,6 +141,124 @@ func (r *queryResolver) GameEntity(ctx context.Context, id string, locale *model
 		return nil, err
 	}
 	return toGraphQLEntity(entity), nil
+}
+
+// GameEntityQuality is the resolver for the gameEntityQuality field.
+func (r *queryResolver) GameEntityQuality(ctx context.Context, id string, locale *model.Locale) (*model.GameEntityQuality, error) {
+	entityID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, errors.New("id must be a valid UUID")
+	}
+	report, err := r.Catalog.Quality(ctx, entityID, localeValue(locale))
+	if errors.Is(err, catalog.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return toGraphQLQuality(report), nil
+}
+
+// GameEntityVersions is the resolver for the gameEntityVersions field.
+func (r *queryResolver) GameEntityVersions(ctx context.Context, id string, locale *model.Locale, limit *int) ([]*model.GameEntityVersion, error) {
+	entityID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, errors.New("id must be a valid UUID")
+	}
+	requestedLimit := 20
+	if limit != nil {
+		requestedLimit = *limit
+	}
+	items, err := r.Catalog.Versions(ctx, entityID, localeValue(locale), requestedLimit)
+	if errors.Is(err, catalog.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.GameEntityVersion, 0, len(items))
+	for _, item := range items {
+		result = append(result, toGraphQLVersion(item))
+	}
+	return result, nil
+}
+
+// GameEntityComparison is the resolver for the gameEntityComparison field.
+func (r *queryResolver) GameEntityComparison(ctx context.Context, id string, locale *model.Locale, fromBuildID *string, toBuildID *string) (*model.GameEntityComparison, error) {
+	entityID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, errors.New("id must be a valid UUID")
+	}
+	var from, to *int64
+	if fromBuildID != nil {
+		value, parseErr := strconv.ParseInt(*fromBuildID, 10, 64)
+		if parseErr != nil || value <= 0 {
+			return nil, errors.New("fromBuildId must be a positive integer")
+		}
+		from = &value
+	}
+	if toBuildID != nil {
+		value, parseErr := strconv.ParseInt(*toBuildID, 10, 64)
+		if parseErr != nil || value <= 0 {
+			return nil, errors.New("toBuildId must be a positive integer")
+		}
+		to = &value
+	}
+	comparison, err := r.Catalog.Compare(ctx, entityID, localeValue(locale), from, to)
+	if errors.Is(err, catalog.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return toGraphQLComparison(comparison), nil
+}
+
+// GameCoverage is the resolver for the gameCoverage field.
+func (r *queryResolver) GameCoverage(ctx context.Context, product *string, locale *model.Locale, typeArg *string) ([]*model.GameFieldCoverage, error) {
+	productSlug := "wow"
+	if product != nil {
+		productSlug = *product
+	}
+	entityType := ""
+	if typeArg != nil {
+		entityType = *typeArg
+	}
+	items, err := r.Catalog.Coverage(ctx, productSlug, localeValue(locale), entityType)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.GameFieldCoverage, 0, len(items))
+	for _, item := range items {
+		result = append(result, toGraphQLCoverage(item))
+	}
+	return result, nil
+}
+
+// GameSourcePolicies is the resolver for the gameSourcePolicies field.
+func (r *queryResolver) GameSourcePolicies(ctx context.Context) ([]*model.GameSourcePolicy, error) {
+	items, err := r.Catalog.SourcePolicies(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.GameSourcePolicy, 0, len(items))
+	for _, item := range items {
+		result = append(result, toGraphQLSourcePolicy(item))
+	}
+	return result, nil
+}
+
+// GameRelationTypes is the resolver for the gameRelationTypes field.
+func (r *queryResolver) GameRelationTypes(ctx context.Context, locale *model.Locale) ([]*model.GameRelationType, error) {
+	items, err := r.Catalog.RelationTypes(ctx, localeValue(locale))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.GameRelationType, 0, len(items))
+	for _, item := range items {
+		result = append(result, toGraphQLRelationType(item))
+	}
+	return result, nil
 }
 
 // GameEntityRelationships is the resolver for the gameEntityRelationships field.

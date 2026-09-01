@@ -114,6 +114,121 @@ func toGraphQLDataset(dataset catalog.LibraryDataset) *model.LibraryDataset {
 	return result
 }
 
+func toGraphQLEntityType(entityType catalog.EntityTypeSummary) *model.GameEntityType {
+	return &model.GameEntityType{
+		Type: entityType.Type, Label: entityType.Label, Description: entityType.Description,
+		Group: entityType.Group, IconSymbol: entityType.IconSymbol, SortOrder: entityType.SortOrder,
+		Count: int(entityType.Count), LocalizedCount: int(entityType.LocalizedCount),
+		DescribedCount: int(entityType.DescribedCount), TooltipCount: int(entityType.TooltipCount),
+		IconCount: int(entityType.IconCount), RelationshipCount: int(entityType.RelationshipCount),
+		CoverageUpdatedAt: entityType.CoverageUpdatedAt,
+	}
+}
+
+func toGraphQLCategory(category catalog.Category) *model.GameCategory {
+	return &model.GameCategory{
+		ID: strconv.FormatInt(category.ID, 10), Type: category.Type, Facet: category.Facet,
+		Slug: category.Slug, Path: category.Path, ParentPath: category.ParentPath,
+		Name: category.Name, Description: category.Description, Count: int(category.Count), SortOrder: category.SortOrder,
+	}
+}
+
+func toGraphQLCard(card catalog.CardSummary) *model.GameEntityCard {
+	result := &model.GameEntityCard{
+		ID: card.ID.String(), Product: card.Product, Type: card.Type,
+		ExternalID: strconv.FormatInt(card.ExternalID, 10), Slug: card.Slug,
+		Locale: model.Locale(card.Locale), LocaleFallback: card.LocaleFallback, Name: card.Name,
+		Description: card.Description, IconName: card.IconName, IconURL: card.IconURL,
+		Quality: card.Quality, ItemLevel: card.ItemLevel, UpdatedAt: card.UpdatedAt,
+		Highlights: make([]*model.GameHighlight, 0, len(card.Highlights)), SearchRank: card.SearchRank,
+	}
+	if card.BuildID != nil {
+		buildID := strconv.FormatInt(*card.BuildID, 10)
+		result.BuildID = &buildID
+	}
+	for _, highlight := range card.Highlights {
+		result.Highlights = append(result.Highlights, &model.GameHighlight{Key: highlight.Key, Value: highlight.Value})
+	}
+	return result
+}
+
+func toGraphQLQuality(report catalog.EntityQuality) *model.GameEntityQuality {
+	result := &model.GameEntityQuality{
+		EntityID: report.EntityID.String(), Score: report.Score, Status: report.Status,
+		BuildID: strconv.FormatInt(report.BuildID, 10), BuildNumber: report.BuildNumber,
+		BuildVersion: report.BuildVersion, UpdatedAt: report.UpdatedAt,
+		Checks: make([]*model.GameQualityCheck, 0, len(report.Checks)), Confirmed: report.Confirmed,
+		Missing: report.Missing, Sources: make([]*model.GameEntitySource, 0, len(report.Sources)),
+	}
+	for _, check := range report.Checks {
+		result.Checks = append(result.Checks, &model.GameQualityCheck{Key: check.Key, Label: check.Label, Detail: check.Detail, Present: check.Present, Required: check.Required})
+	}
+	for _, source := range report.Sources {
+		result.Sources = append(result.Sources, &model.GameEntitySource{Source: source.Source, DisplayName: source.DisplayName, Documents: source.Documents, SourceURL: source.SourceURL, ImportedAt: source.ImportedAt})
+	}
+	return result
+}
+
+func toGraphQLVersion(version catalog.EntityVersion) *model.GameEntityVersion {
+	return &model.GameEntityVersion{
+		ID: version.ID.String(), BuildID: strconv.FormatInt(version.BuildID, 10), BuildNumber: version.BuildNumber,
+		Revision: version.Revision, BuildVersion: version.BuildVersion, Name: version.Name,
+		Description: version.Description, SourceURL: version.SourceURL, ObservedAt: version.ObservedAt,
+		Payload: version.Payload,
+	}
+}
+
+func toGraphQLCoverage(coverage catalog.FieldCoverage) *model.GameFieldCoverage {
+	return &model.GameFieldCoverage{
+		Product: coverage.Product, BuildID: strconv.FormatInt(coverage.BuildID, 10), Type: coverage.Type,
+		Locale: model.Locale(coverage.Locale), Field: coverage.Field, Source: coverage.Source,
+		EntityCount: int(coverage.EntityCount), PopulatedCount: int(coverage.PopulatedCount),
+		UnresolvedCount: int(coverage.UnresolvedCount), ConflictCount: int(coverage.ConflictCount),
+		RefreshedAt: coverage.RefreshedAt,
+	}
+}
+
+func toGraphQLSourcePolicy(policy catalog.SourcePolicy) *model.GameSourcePolicy {
+	return &model.GameSourcePolicy{
+		Source: policy.Source, DisplayName: policy.DisplayName, HomepageURL: policy.HomepageURL,
+		TermsURL: policy.TermsURL, LicenseIdentifier: policy.LicenseIdentifier,
+		CommercialUseStatus: policy.CommercialUseStatus, PublicAPIStatus: policy.PublicAPIStatus,
+		AssetCachingStatus: policy.AssetCachingStatus, RetentionDays: policy.RetentionDays,
+		AttributionRequired: policy.AttributionRequired, AttributionText: policy.AttributionText,
+		ReviewedAt: policy.ReviewedAt, ReviewStatus: policy.ReviewStatus, Notes: policy.Notes,
+	}
+}
+
+func toGraphQLRelationType(relation catalog.RelationType) *model.GameRelationType {
+	return &model.GameRelationType{
+		Relation: relation.Relation, Label: relation.Label, Description: relation.Description,
+		InverseRelation: relation.InverseRelation, AllowedSourceTypes: relation.AllowedSourceTypes,
+		AllowedTargetTypes: relation.AllowedTargetTypes, AttributeSchema: relation.AttributeSchema,
+		SchemaVersion: relation.SchemaVersion,
+	}
+}
+
+func toGraphQLComparison(comparison catalog.EntityComparison) *model.GameEntityComparison {
+	result := &model.GameEntityComparison{From: toGraphQLVersion(comparison.From), To: toGraphQLVersion(comparison.To), Changes: make([]*model.GameEntityChange, 0, len(comparison.Changes))}
+	for _, change := range comparison.Changes {
+		result.Changes = append(result.Changes, &model.GameEntityChange{Field: change.Field, Label: change.Label, ChangeType: change.ChangeType, Before: jsonObject(change.Before), After: jsonObject(change.After)})
+	}
+	return result
+}
+
+// gqlgen's JSON scalar is intentionally object-shaped in the public schema.
+// Comparison values can also be strings, numbers, or arrays; wrap those values
+// instead of silently dropping them or making the whole comparison fail.
+func jsonObject(value any) map[string]any {
+	if value == nil {
+		return nil
+	}
+	if object, ok := value.(map[string]any); ok {
+		return object
+	}
+	return map[string]any{"value": value}
+}
+
 func toGraphQLRelationship(relationship catalog.Relationship) *model.GameEntityRelationship {
 	return &model.GameEntityRelationship{
 		Direction:  model.RelationshipDirection(relationship.Direction),

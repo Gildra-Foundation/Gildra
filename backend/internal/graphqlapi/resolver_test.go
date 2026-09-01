@@ -115,3 +115,30 @@ func TestToGraphQLDatasetExposesFreshnessAndCoverage(t *testing.T) {
 		t.Fatalf("graphql dataset mapping lost preview image: %#v", got)
 	}
 }
+
+func TestToGraphQLGovernanceMappingsPreserveCoverageAndSources(t *testing.T) {
+	updated := time.Unix(2, 0).UTC()
+	entityType := toGraphQLEntityType(catalog.EntityTypeSummary{
+		Type: "item", Label: "Items", Description: "Equipment", Group: "equipment", IconSymbol: "#item",
+		SortOrder: 3, Count: 10, LocalizedCount: 9, DescribedCount: 8, TooltipCount: 7, IconCount: 6,
+		RelationshipCount: 5, CoverageUpdatedAt: updated,
+	})
+	if entityType.Type != "item" || entityType.Count != 10 || entityType.TooltipCount != 7 || !entityType.CoverageUpdatedAt.Equal(updated) {
+		t.Fatalf("graphql entity type mapping = %#v", entityType)
+	}
+
+	before := map[string]any{"value": "old"}
+	comparison := toGraphQLComparison(catalog.EntityComparison{
+		From:    catalog.EntityVersion{ID: uuid.New(), BuildID: 1, BuildNumber: 1, BuildVersion: "1", ObservedAt: updated, Payload: map[string]any{}},
+		To:      catalog.EntityVersion{ID: uuid.New(), BuildID: 2, BuildNumber: 2, BuildVersion: "2", ObservedAt: updated, Payload: map[string]any{}},
+		Changes: []catalog.EntityChange{{Field: "name", Label: "Name", ChangeType: "changed", Before: before, After: "new"}},
+	})
+	if comparison == nil || len(comparison.Changes) != 1 || comparison.Changes[0].Before["value"] != "old" || comparison.Changes[0].After["value"] != "new" {
+		t.Fatalf("graphql comparison mapping = %#v", comparison)
+	}
+
+	policy := toGraphQLSourcePolicy(catalog.SourcePolicy{Source: "wago_tools", DisplayName: "Wago", HomepageURL: "https://wago.tools", TermsURL: "https://wago.tools/terms", LicenseIdentifier: "custom", CommercialUseStatus: "allowed", PublicAPIStatus: "allowed", AssetCachingStatus: "permission_required", AttributionRequired: true, AttributionText: "Wago", ReviewedAt: &updated, ReviewStatus: "reviewed"})
+	if policy.Source != "wago_tools" || !policy.AttributionRequired || policy.ReviewedAt == nil || !policy.ReviewedAt.Equal(updated) {
+		t.Fatalf("graphql source policy mapping = %#v", policy)
+	}
+}

@@ -37,6 +37,19 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	GameCategory struct {
+		Count       func(childComplexity int) int
+		Description func(childComplexity int) int
+		Facet       func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		ParentPath  func(childComplexity int) int
+		Path        func(childComplexity int) int
+		Slug        func(childComplexity int) int
+		SortOrder   func(childComplexity int) int
+		Type        func(childComplexity int) int
+	}
+
 	GameEntity struct {
 		BuildID             func(childComplexity int) int
 		Description         func(childComplexity int) int
@@ -60,6 +73,40 @@ type ComplexityRoot struct {
 		Tooltip             func(childComplexity int) int
 		Type                func(childComplexity int) int
 		UpdatedAt           func(childComplexity int) int
+	}
+
+	GameEntityCard struct {
+		BuildID        func(childComplexity int) int
+		Description    func(childComplexity int) int
+		ExternalID     func(childComplexity int) int
+		Highlights     func(childComplexity int) int
+		ID             func(childComplexity int) int
+		IconName       func(childComplexity int) int
+		IconURL        func(childComplexity int) int
+		ItemLevel      func(childComplexity int) int
+		Locale         func(childComplexity int) int
+		LocaleFallback func(childComplexity int) int
+		Name           func(childComplexity int) int
+		Product        func(childComplexity int) int
+		Quality        func(childComplexity int) int
+		SearchRank     func(childComplexity int) int
+		Slug           func(childComplexity int) int
+		Type           func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+	}
+
+	GameEntityChange struct {
+		After      func(childComplexity int) int
+		Before     func(childComplexity int) int
+		ChangeType func(childComplexity int) int
+		Field      func(childComplexity int) int
+		Label      func(childComplexity int) int
+	}
+
+	GameEntityComparison struct {
+		Changes func(childComplexity int) int
+		From    func(childComplexity int) int
+		To      func(childComplexity int) int
 	}
 
 	GameEntityConnection struct {
@@ -90,6 +137,20 @@ type ComplexityRoot struct {
 		Width       func(childComplexity int) int
 	}
 
+	GameEntityQuality struct {
+		BuildID      func(childComplexity int) int
+		BuildNumber  func(childComplexity int) int
+		BuildVersion func(childComplexity int) int
+		Checks       func(childComplexity int) int
+		Confirmed    func(childComplexity int) int
+		EntityID     func(childComplexity int) int
+		Missing      func(childComplexity int) int
+		Score        func(childComplexity int) int
+		Sources      func(childComplexity int) int
+		Status       func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+	}
+
 	GameEntityRelationship struct {
 		Attributes func(childComplexity int) int
 		BuildID    func(childComplexity int) int
@@ -104,6 +165,14 @@ type ComplexityRoot struct {
 		Total    func(childComplexity int) int
 	}
 
+	GameEntitySource struct {
+		DisplayName func(childComplexity int) int
+		Documents   func(childComplexity int) int
+		ImportedAt  func(childComplexity int) int
+		Source      func(childComplexity int) int
+		SourceURL   func(childComplexity int) int
+	}
+
 	GameEntitySummary struct {
 		ExternalID func(childComplexity int) int
 		ID         func(childComplexity int) int
@@ -113,6 +182,60 @@ type ComplexityRoot struct {
 		Product    func(childComplexity int) int
 		Slug       func(childComplexity int) int
 		Type       func(childComplexity int) int
+	}
+
+	GameEntitySummaryConnection struct {
+		Nodes    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+		Total    func(childComplexity int) int
+	}
+
+	GameEntityType struct {
+		Count             func(childComplexity int) int
+		CoverageUpdatedAt func(childComplexity int) int
+		DescribedCount    func(childComplexity int) int
+		Description       func(childComplexity int) int
+		Group             func(childComplexity int) int
+		IconCount         func(childComplexity int) int
+		IconSymbol        func(childComplexity int) int
+		Label             func(childComplexity int) int
+		LocalizedCount    func(childComplexity int) int
+		RelationshipCount func(childComplexity int) int
+		SortOrder         func(childComplexity int) int
+		TooltipCount      func(childComplexity int) int
+		Type              func(childComplexity int) int
+	}
+
+	GameEntityVersion struct {
+		BuildID      func(childComplexity int) int
+		BuildNumber  func(childComplexity int) int
+		BuildVersion func(childComplexity int) int
+		Description  func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Name         func(childComplexity int) int
+		ObservedAt   func(childComplexity int) int
+		Payload      func(childComplexity int) int
+		Revision     func(childComplexity int) int
+		SourceURL    func(childComplexity int) int
+	}
+
+	GameFieldCoverage struct {
+		BuildID         func(childComplexity int) int
+		ConflictCount   func(childComplexity int) int
+		EntityCount     func(childComplexity int) int
+		Field           func(childComplexity int) int
+		Locale          func(childComplexity int) int
+		PopulatedCount  func(childComplexity int) int
+		Product         func(childComplexity int) int
+		RefreshedAt     func(childComplexity int) int
+		Source          func(childComplexity int) int
+		Type            func(childComplexity int) int
+		UnresolvedCount func(childComplexity int) int
+	}
+
+	GameHighlight struct {
+		Key   func(childComplexity int) int
+		Value func(childComplexity int) int
 	}
 
 	GameProduct struct {
@@ -131,6 +254,42 @@ type ComplexityRoot struct {
 		SourceBuildVersion   func(childComplexity int) int
 		SourceCheckedAt      func(childComplexity int) int
 		SourceStatus         func(childComplexity int) int
+	}
+
+	GameQualityCheck struct {
+		Detail   func(childComplexity int) int
+		Key      func(childComplexity int) int
+		Label    func(childComplexity int) int
+		Present  func(childComplexity int) int
+		Required func(childComplexity int) int
+	}
+
+	GameRelationType struct {
+		AllowedSourceTypes func(childComplexity int) int
+		AllowedTargetTypes func(childComplexity int) int
+		AttributeSchema    func(childComplexity int) int
+		Description        func(childComplexity int) int
+		InverseRelation    func(childComplexity int) int
+		Label              func(childComplexity int) int
+		Relation           func(childComplexity int) int
+		SchemaVersion      func(childComplexity int) int
+	}
+
+	GameSourcePolicy struct {
+		AssetCachingStatus  func(childComplexity int) int
+		AttributionRequired func(childComplexity int) int
+		AttributionText     func(childComplexity int) int
+		CommercialUseStatus func(childComplexity int) int
+		DisplayName         func(childComplexity int) int
+		HomepageURL         func(childComplexity int) int
+		LicenseIdentifier   func(childComplexity int) int
+		Notes               func(childComplexity int) int
+		PublicAPIStatus     func(childComplexity int) int
+		RetentionDays       func(childComplexity int) int
+		ReviewStatus        func(childComplexity int) int
+		ReviewedAt          func(childComplexity int) int
+		Source              func(childComplexity int) int
+		TermsURL            func(childComplexity int) int
 	}
 
 	GameTooltip struct {
@@ -170,10 +329,19 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		GameCategories          func(childComplexity int, product *string, typeArg string, locale *model.Locale) int
+		GameCoverage            func(childComplexity int, product *string, locale *model.Locale, typeArg *string) int
 		GameEntities            func(childComplexity int, product *string, typeArg *string, locale *model.Locale, query *string, cursor *string, limit *int) int
 		GameEntity              func(childComplexity int, id string, locale *model.Locale) int
+		GameEntityComparison    func(childComplexity int, id string, locale *model.Locale, fromBuildID *string, toBuildID *string) int
+		GameEntityQuality       func(childComplexity int, id string, locale *model.Locale) int
 		GameEntityRelationships func(childComplexity int, id string, locale *model.Locale, direction *model.RelationshipDirection, relation *string, cursor *string, limit *int) int
+		GameEntitySummaries     func(childComplexity int, product *string, typeArg *string, locale *model.Locale, query *string, dataset *string, category *string, facets []string, itemClassID *int, minItemLevel *int, maxItemLevel *int, minRequiredLevel *int, maxRequiredLevel *int, cursor *string, limit *int, includeTotal *bool) int
+		GameEntityTypes         func(childComplexity int, product *string, locale *model.Locale) int
+		GameEntityVersions      func(childComplexity int, id string, locale *model.Locale, limit *int) int
 		GameProducts            func(childComplexity int) int
+		GameRelationTypes       func(childComplexity int, locale *model.Locale) int
+		GameSourcePolicies      func(childComplexity int) int
 		LibraryDatasets         func(childComplexity int, product *string, locale *model.Locale) int
 	}
 }
@@ -185,7 +353,16 @@ type ComplexityRoot struct {
 type QueryResolver interface {
 	GameProducts(ctx context.Context) ([]*model.GameProduct, error)
 	LibraryDatasets(ctx context.Context, product *string, locale *model.Locale) ([]*model.LibraryDataset, error)
+	GameEntityTypes(ctx context.Context, product *string, locale *model.Locale) ([]*model.GameEntityType, error)
+	GameCategories(ctx context.Context, product *string, typeArg string, locale *model.Locale) ([]*model.GameCategory, error)
+	GameEntitySummaries(ctx context.Context, product *string, typeArg *string, locale *model.Locale, query *string, dataset *string, category *string, facets []string, itemClassID *int, minItemLevel *int, maxItemLevel *int, minRequiredLevel *int, maxRequiredLevel *int, cursor *string, limit *int, includeTotal *bool) (*model.GameEntitySummaryConnection, error)
 	GameEntity(ctx context.Context, id string, locale *model.Locale) (*model.GameEntity, error)
+	GameEntityQuality(ctx context.Context, id string, locale *model.Locale) (*model.GameEntityQuality, error)
+	GameEntityVersions(ctx context.Context, id string, locale *model.Locale, limit *int) ([]*model.GameEntityVersion, error)
+	GameEntityComparison(ctx context.Context, id string, locale *model.Locale, fromBuildID *string, toBuildID *string) (*model.GameEntityComparison, error)
+	GameCoverage(ctx context.Context, product *string, locale *model.Locale, typeArg *string) ([]*model.GameFieldCoverage, error)
+	GameSourcePolicies(ctx context.Context) ([]*model.GameSourcePolicy, error)
+	GameRelationTypes(ctx context.Context, locale *model.Locale) ([]*model.GameRelationType, error)
 	GameEntityRelationships(ctx context.Context, id string, locale *model.Locale, direction *model.RelationshipDirection, relation *string, cursor *string, limit *int) (*model.GameEntityRelationshipConnection, error)
 	GameEntities(ctx context.Context, product *string, typeArg *string, locale *model.Locale, query *string, cursor *string, limit *int) (*model.GameEntityConnection, error)
 }
@@ -207,6 +384,67 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "GameCategory.count":
+		if e.ComplexityRoot.GameCategory.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.Count(childComplexity), true
+	case "GameCategory.description":
+		if e.ComplexityRoot.GameCategory.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.Description(childComplexity), true
+	case "GameCategory.facet":
+		if e.ComplexityRoot.GameCategory.Facet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.Facet(childComplexity), true
+	case "GameCategory.id":
+		if e.ComplexityRoot.GameCategory.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.ID(childComplexity), true
+	case "GameCategory.name":
+		if e.ComplexityRoot.GameCategory.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.Name(childComplexity), true
+	case "GameCategory.parentPath":
+		if e.ComplexityRoot.GameCategory.ParentPath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.ParentPath(childComplexity), true
+	case "GameCategory.path":
+		if e.ComplexityRoot.GameCategory.Path == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.Path(childComplexity), true
+	case "GameCategory.slug":
+		if e.ComplexityRoot.GameCategory.Slug == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.Slug(childComplexity), true
+	case "GameCategory.sortOrder":
+		if e.ComplexityRoot.GameCategory.SortOrder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.SortOrder(childComplexity), true
+	case "GameCategory.type":
+		if e.ComplexityRoot.GameCategory.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameCategory.Type(childComplexity), true
 
 	case "GameEntity.buildId":
 		if e.ComplexityRoot.GameEntity.BuildID == nil {
@@ -341,6 +579,159 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.GameEntity.UpdatedAt(childComplexity), true
 
+	case "GameEntityCard.buildId":
+		if e.ComplexityRoot.GameEntityCard.BuildID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.BuildID(childComplexity), true
+	case "GameEntityCard.description":
+		if e.ComplexityRoot.GameEntityCard.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.Description(childComplexity), true
+	case "GameEntityCard.externalId":
+		if e.ComplexityRoot.GameEntityCard.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.ExternalID(childComplexity), true
+	case "GameEntityCard.highlights":
+		if e.ComplexityRoot.GameEntityCard.Highlights == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.Highlights(childComplexity), true
+	case "GameEntityCard.id":
+		if e.ComplexityRoot.GameEntityCard.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.ID(childComplexity), true
+	case "GameEntityCard.iconName":
+		if e.ComplexityRoot.GameEntityCard.IconName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.IconName(childComplexity), true
+	case "GameEntityCard.iconUrl":
+		if e.ComplexityRoot.GameEntityCard.IconURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.IconURL(childComplexity), true
+	case "GameEntityCard.itemLevel":
+		if e.ComplexityRoot.GameEntityCard.ItemLevel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.ItemLevel(childComplexity), true
+	case "GameEntityCard.locale":
+		if e.ComplexityRoot.GameEntityCard.Locale == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.Locale(childComplexity), true
+	case "GameEntityCard.localeFallback":
+		if e.ComplexityRoot.GameEntityCard.LocaleFallback == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.LocaleFallback(childComplexity), true
+	case "GameEntityCard.name":
+		if e.ComplexityRoot.GameEntityCard.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.Name(childComplexity), true
+	case "GameEntityCard.product":
+		if e.ComplexityRoot.GameEntityCard.Product == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.Product(childComplexity), true
+	case "GameEntityCard.quality":
+		if e.ComplexityRoot.GameEntityCard.Quality == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.Quality(childComplexity), true
+	case "GameEntityCard.searchRank":
+		if e.ComplexityRoot.GameEntityCard.SearchRank == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.SearchRank(childComplexity), true
+	case "GameEntityCard.slug":
+		if e.ComplexityRoot.GameEntityCard.Slug == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.Slug(childComplexity), true
+	case "GameEntityCard.type":
+		if e.ComplexityRoot.GameEntityCard.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.Type(childComplexity), true
+	case "GameEntityCard.updatedAt":
+		if e.ComplexityRoot.GameEntityCard.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityCard.UpdatedAt(childComplexity), true
+
+	case "GameEntityChange.after":
+		if e.ComplexityRoot.GameEntityChange.After == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityChange.After(childComplexity), true
+	case "GameEntityChange.before":
+		if e.ComplexityRoot.GameEntityChange.Before == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityChange.Before(childComplexity), true
+	case "GameEntityChange.changeType":
+		if e.ComplexityRoot.GameEntityChange.ChangeType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityChange.ChangeType(childComplexity), true
+	case "GameEntityChange.field":
+		if e.ComplexityRoot.GameEntityChange.Field == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityChange.Field(childComplexity), true
+	case "GameEntityChange.label":
+		if e.ComplexityRoot.GameEntityChange.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityChange.Label(childComplexity), true
+
+	case "GameEntityComparison.changes":
+		if e.ComplexityRoot.GameEntityComparison.Changes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityComparison.Changes(childComplexity), true
+	case "GameEntityComparison.from":
+		if e.ComplexityRoot.GameEntityComparison.From == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityComparison.From(childComplexity), true
+	case "GameEntityComparison.to":
+		if e.ComplexityRoot.GameEntityComparison.To == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityComparison.To(childComplexity), true
+
 	case "GameEntityConnection.nodes":
 		if e.ComplexityRoot.GameEntityConnection.Nodes == nil {
 			break
@@ -458,6 +849,73 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.GameEntityMedia.Width(childComplexity), true
 
+	case "GameEntityQuality.buildId":
+		if e.ComplexityRoot.GameEntityQuality.BuildID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.BuildID(childComplexity), true
+	case "GameEntityQuality.buildNumber":
+		if e.ComplexityRoot.GameEntityQuality.BuildNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.BuildNumber(childComplexity), true
+	case "GameEntityQuality.buildVersion":
+		if e.ComplexityRoot.GameEntityQuality.BuildVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.BuildVersion(childComplexity), true
+	case "GameEntityQuality.checks":
+		if e.ComplexityRoot.GameEntityQuality.Checks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.Checks(childComplexity), true
+	case "GameEntityQuality.confirmed":
+		if e.ComplexityRoot.GameEntityQuality.Confirmed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.Confirmed(childComplexity), true
+	case "GameEntityQuality.entityId":
+		if e.ComplexityRoot.GameEntityQuality.EntityID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.EntityID(childComplexity), true
+	case "GameEntityQuality.missing":
+		if e.ComplexityRoot.GameEntityQuality.Missing == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.Missing(childComplexity), true
+	case "GameEntityQuality.score":
+		if e.ComplexityRoot.GameEntityQuality.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.Score(childComplexity), true
+	case "GameEntityQuality.sources":
+		if e.ComplexityRoot.GameEntityQuality.Sources == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.Sources(childComplexity), true
+	case "GameEntityQuality.status":
+		if e.ComplexityRoot.GameEntityQuality.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.Status(childComplexity), true
+	case "GameEntityQuality.updatedAt":
+		if e.ComplexityRoot.GameEntityQuality.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityQuality.UpdatedAt(childComplexity), true
+
 	case "GameEntityRelationship.attributes":
 		if e.ComplexityRoot.GameEntityRelationship.Attributes == nil {
 			break
@@ -508,6 +966,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.GameEntityRelationshipConnection.Total(childComplexity), true
 
+	case "GameEntitySource.displayName":
+		if e.ComplexityRoot.GameEntitySource.DisplayName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySource.DisplayName(childComplexity), true
+	case "GameEntitySource.documents":
+		if e.ComplexityRoot.GameEntitySource.Documents == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySource.Documents(childComplexity), true
+	case "GameEntitySource.importedAt":
+		if e.ComplexityRoot.GameEntitySource.ImportedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySource.ImportedAt(childComplexity), true
+	case "GameEntitySource.source":
+		if e.ComplexityRoot.GameEntitySource.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySource.Source(childComplexity), true
+	case "GameEntitySource.sourceUrl":
+		if e.ComplexityRoot.GameEntitySource.SourceURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySource.SourceURL(childComplexity), true
+
 	case "GameEntitySummary.externalId":
 		if e.ComplexityRoot.GameEntitySummary.ExternalID == nil {
 			break
@@ -556,6 +1045,245 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.GameEntitySummary.Type(childComplexity), true
+
+	case "GameEntitySummaryConnection.nodes":
+		if e.ComplexityRoot.GameEntitySummaryConnection.Nodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummaryConnection.Nodes(childComplexity), true
+	case "GameEntitySummaryConnection.pageInfo":
+		if e.ComplexityRoot.GameEntitySummaryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummaryConnection.PageInfo(childComplexity), true
+	case "GameEntitySummaryConnection.total":
+		if e.ComplexityRoot.GameEntitySummaryConnection.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummaryConnection.Total(childComplexity), true
+
+	case "GameEntityType.count":
+		if e.ComplexityRoot.GameEntityType.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.Count(childComplexity), true
+	case "GameEntityType.coverageUpdatedAt":
+		if e.ComplexityRoot.GameEntityType.CoverageUpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.CoverageUpdatedAt(childComplexity), true
+	case "GameEntityType.describedCount":
+		if e.ComplexityRoot.GameEntityType.DescribedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.DescribedCount(childComplexity), true
+	case "GameEntityType.description":
+		if e.ComplexityRoot.GameEntityType.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.Description(childComplexity), true
+	case "GameEntityType.group":
+		if e.ComplexityRoot.GameEntityType.Group == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.Group(childComplexity), true
+	case "GameEntityType.iconCount":
+		if e.ComplexityRoot.GameEntityType.IconCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.IconCount(childComplexity), true
+	case "GameEntityType.iconSymbol":
+		if e.ComplexityRoot.GameEntityType.IconSymbol == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.IconSymbol(childComplexity), true
+	case "GameEntityType.label":
+		if e.ComplexityRoot.GameEntityType.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.Label(childComplexity), true
+	case "GameEntityType.localizedCount":
+		if e.ComplexityRoot.GameEntityType.LocalizedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.LocalizedCount(childComplexity), true
+	case "GameEntityType.relationshipCount":
+		if e.ComplexityRoot.GameEntityType.RelationshipCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.RelationshipCount(childComplexity), true
+	case "GameEntityType.sortOrder":
+		if e.ComplexityRoot.GameEntityType.SortOrder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.SortOrder(childComplexity), true
+	case "GameEntityType.tooltipCount":
+		if e.ComplexityRoot.GameEntityType.TooltipCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.TooltipCount(childComplexity), true
+	case "GameEntityType.type":
+		if e.ComplexityRoot.GameEntityType.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityType.Type(childComplexity), true
+
+	case "GameEntityVersion.buildId":
+		if e.ComplexityRoot.GameEntityVersion.BuildID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.BuildID(childComplexity), true
+	case "GameEntityVersion.buildNumber":
+		if e.ComplexityRoot.GameEntityVersion.BuildNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.BuildNumber(childComplexity), true
+	case "GameEntityVersion.buildVersion":
+		if e.ComplexityRoot.GameEntityVersion.BuildVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.BuildVersion(childComplexity), true
+	case "GameEntityVersion.description":
+		if e.ComplexityRoot.GameEntityVersion.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.Description(childComplexity), true
+	case "GameEntityVersion.id":
+		if e.ComplexityRoot.GameEntityVersion.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.ID(childComplexity), true
+	case "GameEntityVersion.name":
+		if e.ComplexityRoot.GameEntityVersion.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.Name(childComplexity), true
+	case "GameEntityVersion.observedAt":
+		if e.ComplexityRoot.GameEntityVersion.ObservedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.ObservedAt(childComplexity), true
+	case "GameEntityVersion.payload":
+		if e.ComplexityRoot.GameEntityVersion.Payload == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.Payload(childComplexity), true
+	case "GameEntityVersion.revision":
+		if e.ComplexityRoot.GameEntityVersion.Revision == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.Revision(childComplexity), true
+	case "GameEntityVersion.sourceUrl":
+		if e.ComplexityRoot.GameEntityVersion.SourceURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityVersion.SourceURL(childComplexity), true
+
+	case "GameFieldCoverage.buildId":
+		if e.ComplexityRoot.GameFieldCoverage.BuildID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.BuildID(childComplexity), true
+	case "GameFieldCoverage.conflictCount":
+		if e.ComplexityRoot.GameFieldCoverage.ConflictCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.ConflictCount(childComplexity), true
+	case "GameFieldCoverage.entityCount":
+		if e.ComplexityRoot.GameFieldCoverage.EntityCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.EntityCount(childComplexity), true
+	case "GameFieldCoverage.field":
+		if e.ComplexityRoot.GameFieldCoverage.Field == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.Field(childComplexity), true
+	case "GameFieldCoverage.locale":
+		if e.ComplexityRoot.GameFieldCoverage.Locale == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.Locale(childComplexity), true
+	case "GameFieldCoverage.populatedCount":
+		if e.ComplexityRoot.GameFieldCoverage.PopulatedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.PopulatedCount(childComplexity), true
+	case "GameFieldCoverage.product":
+		if e.ComplexityRoot.GameFieldCoverage.Product == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.Product(childComplexity), true
+	case "GameFieldCoverage.refreshedAt":
+		if e.ComplexityRoot.GameFieldCoverage.RefreshedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.RefreshedAt(childComplexity), true
+	case "GameFieldCoverage.source":
+		if e.ComplexityRoot.GameFieldCoverage.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.Source(childComplexity), true
+	case "GameFieldCoverage.type":
+		if e.ComplexityRoot.GameFieldCoverage.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.Type(childComplexity), true
+	case "GameFieldCoverage.unresolvedCount":
+		if e.ComplexityRoot.GameFieldCoverage.UnresolvedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameFieldCoverage.UnresolvedCount(childComplexity), true
+
+	case "GameHighlight.key":
+		if e.ComplexityRoot.GameHighlight.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameHighlight.Key(childComplexity), true
+	case "GameHighlight.value":
+		if e.ComplexityRoot.GameHighlight.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameHighlight.Value(childComplexity), true
 
 	case "GameProduct.buildNumber":
 		if e.ComplexityRoot.GameProduct.BuildNumber == nil {
@@ -647,6 +1375,171 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.GameProduct.SourceStatus(childComplexity), true
+
+	case "GameQualityCheck.detail":
+		if e.ComplexityRoot.GameQualityCheck.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameQualityCheck.Detail(childComplexity), true
+	case "GameQualityCheck.key":
+		if e.ComplexityRoot.GameQualityCheck.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameQualityCheck.Key(childComplexity), true
+	case "GameQualityCheck.label":
+		if e.ComplexityRoot.GameQualityCheck.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameQualityCheck.Label(childComplexity), true
+	case "GameQualityCheck.present":
+		if e.ComplexityRoot.GameQualityCheck.Present == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameQualityCheck.Present(childComplexity), true
+	case "GameQualityCheck.required":
+		if e.ComplexityRoot.GameQualityCheck.Required == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameQualityCheck.Required(childComplexity), true
+
+	case "GameRelationType.allowedSourceTypes":
+		if e.ComplexityRoot.GameRelationType.AllowedSourceTypes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameRelationType.AllowedSourceTypes(childComplexity), true
+	case "GameRelationType.allowedTargetTypes":
+		if e.ComplexityRoot.GameRelationType.AllowedTargetTypes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameRelationType.AllowedTargetTypes(childComplexity), true
+	case "GameRelationType.attributeSchema":
+		if e.ComplexityRoot.GameRelationType.AttributeSchema == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameRelationType.AttributeSchema(childComplexity), true
+	case "GameRelationType.description":
+		if e.ComplexityRoot.GameRelationType.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameRelationType.Description(childComplexity), true
+	case "GameRelationType.inverseRelation":
+		if e.ComplexityRoot.GameRelationType.InverseRelation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameRelationType.InverseRelation(childComplexity), true
+	case "GameRelationType.label":
+		if e.ComplexityRoot.GameRelationType.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameRelationType.Label(childComplexity), true
+	case "GameRelationType.relation":
+		if e.ComplexityRoot.GameRelationType.Relation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameRelationType.Relation(childComplexity), true
+	case "GameRelationType.schemaVersion":
+		if e.ComplexityRoot.GameRelationType.SchemaVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameRelationType.SchemaVersion(childComplexity), true
+
+	case "GameSourcePolicy.assetCachingStatus":
+		if e.ComplexityRoot.GameSourcePolicy.AssetCachingStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.AssetCachingStatus(childComplexity), true
+	case "GameSourcePolicy.attributionRequired":
+		if e.ComplexityRoot.GameSourcePolicy.AttributionRequired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.AttributionRequired(childComplexity), true
+	case "GameSourcePolicy.attributionText":
+		if e.ComplexityRoot.GameSourcePolicy.AttributionText == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.AttributionText(childComplexity), true
+	case "GameSourcePolicy.commercialUseStatus":
+		if e.ComplexityRoot.GameSourcePolicy.CommercialUseStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.CommercialUseStatus(childComplexity), true
+	case "GameSourcePolicy.displayName":
+		if e.ComplexityRoot.GameSourcePolicy.DisplayName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.DisplayName(childComplexity), true
+	case "GameSourcePolicy.homepageUrl":
+		if e.ComplexityRoot.GameSourcePolicy.HomepageURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.HomepageURL(childComplexity), true
+	case "GameSourcePolicy.licenseIdentifier":
+		if e.ComplexityRoot.GameSourcePolicy.LicenseIdentifier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.LicenseIdentifier(childComplexity), true
+	case "GameSourcePolicy.notes":
+		if e.ComplexityRoot.GameSourcePolicy.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.Notes(childComplexity), true
+	case "GameSourcePolicy.publicApiStatus":
+		if e.ComplexityRoot.GameSourcePolicy.PublicAPIStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.PublicAPIStatus(childComplexity), true
+	case "GameSourcePolicy.retentionDays":
+		if e.ComplexityRoot.GameSourcePolicy.RetentionDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.RetentionDays(childComplexity), true
+	case "GameSourcePolicy.reviewStatus":
+		if e.ComplexityRoot.GameSourcePolicy.ReviewStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.ReviewStatus(childComplexity), true
+	case "GameSourcePolicy.reviewedAt":
+		if e.ComplexityRoot.GameSourcePolicy.ReviewedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.ReviewedAt(childComplexity), true
+	case "GameSourcePolicy.source":
+		if e.ComplexityRoot.GameSourcePolicy.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.Source(childComplexity), true
+	case "GameSourcePolicy.termsUrl":
+		if e.ComplexityRoot.GameSourcePolicy.TermsURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameSourcePolicy.TermsURL(childComplexity), true
 
 	case "GameTooltip.blocks":
 		if e.ComplexityRoot.GameTooltip.Blocks == nil {
@@ -813,6 +1706,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.PageInfo.NextCursor(childComplexity), true
 
+	case "Query.gameCategories":
+		if e.ComplexityRoot.Query.GameCategories == nil {
+			break
+		}
+
+		args, err := ec.field_Query_gameCategories_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GameCategories(childComplexity, args["product"].(*string), args["type"].(string), args["locale"].(*model.Locale)), true
+	case "Query.gameCoverage":
+		if e.ComplexityRoot.Query.GameCoverage == nil {
+			break
+		}
+
+		args, err := ec.field_Query_gameCoverage_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GameCoverage(childComplexity, args["product"].(*string), args["locale"].(*model.Locale), args["type"].(*string)), true
 	case "Query.gameEntities":
 		if e.ComplexityRoot.Query.GameEntities == nil {
 			break
@@ -835,6 +1750,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.GameEntity(childComplexity, args["id"].(string), args["locale"].(*model.Locale)), true
+	case "Query.gameEntityComparison":
+		if e.ComplexityRoot.Query.GameEntityComparison == nil {
+			break
+		}
+
+		args, err := ec.field_Query_gameEntityComparison_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GameEntityComparison(childComplexity, args["id"].(string), args["locale"].(*model.Locale), args["fromBuildId"].(*string), args["toBuildId"].(*string)), true
+	case "Query.gameEntityQuality":
+		if e.ComplexityRoot.Query.GameEntityQuality == nil {
+			break
+		}
+
+		args, err := ec.field_Query_gameEntityQuality_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GameEntityQuality(childComplexity, args["id"].(string), args["locale"].(*model.Locale)), true
 	case "Query.gameEntityRelationships":
 		if e.ComplexityRoot.Query.GameEntityRelationships == nil {
 			break
@@ -846,12 +1783,62 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.GameEntityRelationships(childComplexity, args["id"].(string), args["locale"].(*model.Locale), args["direction"].(*model.RelationshipDirection), args["relation"].(*string), args["cursor"].(*string), args["limit"].(*int)), true
+	case "Query.gameEntitySummaries":
+		if e.ComplexityRoot.Query.GameEntitySummaries == nil {
+			break
+		}
+
+		args, err := ec.field_Query_gameEntitySummaries_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GameEntitySummaries(childComplexity, args["product"].(*string), args["type"].(*string), args["locale"].(*model.Locale), args["query"].(*string), args["dataset"].(*string), args["category"].(*string), args["facets"].([]string), args["itemClassId"].(*int), args["minItemLevel"].(*int), args["maxItemLevel"].(*int), args["minRequiredLevel"].(*int), args["maxRequiredLevel"].(*int), args["cursor"].(*string), args["limit"].(*int), args["includeTotal"].(*bool)), true
+	case "Query.gameEntityTypes":
+		if e.ComplexityRoot.Query.GameEntityTypes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_gameEntityTypes_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GameEntityTypes(childComplexity, args["product"].(*string), args["locale"].(*model.Locale)), true
+	case "Query.gameEntityVersions":
+		if e.ComplexityRoot.Query.GameEntityVersions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_gameEntityVersions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GameEntityVersions(childComplexity, args["id"].(string), args["locale"].(*model.Locale), args["limit"].(*int)), true
 	case "Query.gameProducts":
 		if e.ComplexityRoot.Query.GameProducts == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Query.GameProducts(childComplexity), true
+	case "Query.gameRelationTypes":
+		if e.ComplexityRoot.Query.GameRelationTypes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_gameRelationTypes_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GameRelationTypes(childComplexity, args["locale"].(*model.Locale)), true
+	case "Query.gameSourcePolicies":
+		if e.ComplexityRoot.Query.GameSourcePolicies == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.GameSourcePolicies(childComplexity), true
 
 	case "Query.libraryDatasets":
 		if e.ComplexityRoot.Query.LibraryDatasets == nil {
@@ -951,6 +1938,32 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // Each function is generated once per unique object type, deduplicating the
 // switch statements that were previously inlined in every fieldContext_* function.
 
+func (ec *executionContext) childFields_GameCategory(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_GameCategory_id(ctx, field)
+	case "type":
+		return ec.fieldContext_GameCategory_type(ctx, field)
+	case "facet":
+		return ec.fieldContext_GameCategory_facet(ctx, field)
+	case "slug":
+		return ec.fieldContext_GameCategory_slug(ctx, field)
+	case "path":
+		return ec.fieldContext_GameCategory_path(ctx, field)
+	case "parentPath":
+		return ec.fieldContext_GameCategory_parentPath(ctx, field)
+	case "name":
+		return ec.fieldContext_GameCategory_name(ctx, field)
+	case "description":
+		return ec.fieldContext_GameCategory_description(ctx, field)
+	case "count":
+		return ec.fieldContext_GameCategory_count(ctx, field)
+	case "sortOrder":
+		return ec.fieldContext_GameCategory_sortOrder(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameCategory", field.Name)
+}
+
 func (ec *executionContext) childFields_GameEntity(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -999,6 +2012,74 @@ func (ec *executionContext) childFields_GameEntity(ctx context.Context, field gr
 		return ec.fieldContext_GameEntity_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type GameEntity", field.Name)
+}
+
+func (ec *executionContext) childFields_GameEntityCard(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_GameEntityCard_id(ctx, field)
+	case "product":
+		return ec.fieldContext_GameEntityCard_product(ctx, field)
+	case "type":
+		return ec.fieldContext_GameEntityCard_type(ctx, field)
+	case "externalId":
+		return ec.fieldContext_GameEntityCard_externalId(ctx, field)
+	case "slug":
+		return ec.fieldContext_GameEntityCard_slug(ctx, field)
+	case "locale":
+		return ec.fieldContext_GameEntityCard_locale(ctx, field)
+	case "localeFallback":
+		return ec.fieldContext_GameEntityCard_localeFallback(ctx, field)
+	case "name":
+		return ec.fieldContext_GameEntityCard_name(ctx, field)
+	case "description":
+		return ec.fieldContext_GameEntityCard_description(ctx, field)
+	case "iconName":
+		return ec.fieldContext_GameEntityCard_iconName(ctx, field)
+	case "iconUrl":
+		return ec.fieldContext_GameEntityCard_iconUrl(ctx, field)
+	case "quality":
+		return ec.fieldContext_GameEntityCard_quality(ctx, field)
+	case "itemLevel":
+		return ec.fieldContext_GameEntityCard_itemLevel(ctx, field)
+	case "buildId":
+		return ec.fieldContext_GameEntityCard_buildId(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_GameEntityCard_updatedAt(ctx, field)
+	case "highlights":
+		return ec.fieldContext_GameEntityCard_highlights(ctx, field)
+	case "searchRank":
+		return ec.fieldContext_GameEntityCard_searchRank(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntityCard", field.Name)
+}
+
+func (ec *executionContext) childFields_GameEntityChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "field":
+		return ec.fieldContext_GameEntityChange_field(ctx, field)
+	case "label":
+		return ec.fieldContext_GameEntityChange_label(ctx, field)
+	case "changeType":
+		return ec.fieldContext_GameEntityChange_changeType(ctx, field)
+	case "before":
+		return ec.fieldContext_GameEntityChange_before(ctx, field)
+	case "after":
+		return ec.fieldContext_GameEntityChange_after(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntityChange", field.Name)
+}
+
+func (ec *executionContext) childFields_GameEntityComparison(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "from":
+		return ec.fieldContext_GameEntityComparison_from(ctx, field)
+	case "to":
+		return ec.fieldContext_GameEntityComparison_to(ctx, field)
+	case "changes":
+		return ec.fieldContext_GameEntityComparison_changes(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntityComparison", field.Name)
 }
 
 func (ec *executionContext) childFields_GameEntityConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1057,6 +2138,34 @@ func (ec *executionContext) childFields_GameEntityMedia(ctx context.Context, fie
 	return nil, fmt.Errorf("no field named %q was found under type GameEntityMedia", field.Name)
 }
 
+func (ec *executionContext) childFields_GameEntityQuality(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "entityId":
+		return ec.fieldContext_GameEntityQuality_entityId(ctx, field)
+	case "score":
+		return ec.fieldContext_GameEntityQuality_score(ctx, field)
+	case "status":
+		return ec.fieldContext_GameEntityQuality_status(ctx, field)
+	case "buildId":
+		return ec.fieldContext_GameEntityQuality_buildId(ctx, field)
+	case "buildNumber":
+		return ec.fieldContext_GameEntityQuality_buildNumber(ctx, field)
+	case "buildVersion":
+		return ec.fieldContext_GameEntityQuality_buildVersion(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_GameEntityQuality_updatedAt(ctx, field)
+	case "checks":
+		return ec.fieldContext_GameEntityQuality_checks(ctx, field)
+	case "confirmed":
+		return ec.fieldContext_GameEntityQuality_confirmed(ctx, field)
+	case "missing":
+		return ec.fieldContext_GameEntityQuality_missing(ctx, field)
+	case "sources":
+		return ec.fieldContext_GameEntityQuality_sources(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntityQuality", field.Name)
+}
+
 func (ec *executionContext) childFields_GameEntityRelationship(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "direction":
@@ -1085,6 +2194,22 @@ func (ec *executionContext) childFields_GameEntityRelationshipConnection(ctx con
 	return nil, fmt.Errorf("no field named %q was found under type GameEntityRelationshipConnection", field.Name)
 }
 
+func (ec *executionContext) childFields_GameEntitySource(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "source":
+		return ec.fieldContext_GameEntitySource_source(ctx, field)
+	case "displayName":
+		return ec.fieldContext_GameEntitySource_displayName(ctx, field)
+	case "documents":
+		return ec.fieldContext_GameEntitySource_documents(ctx, field)
+	case "sourceUrl":
+		return ec.fieldContext_GameEntitySource_sourceUrl(ctx, field)
+	case "importedAt":
+		return ec.fieldContext_GameEntitySource_importedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntitySource", field.Name)
+}
+
 func (ec *executionContext) childFields_GameEntitySummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -1105,6 +2230,114 @@ func (ec *executionContext) childFields_GameEntitySummary(ctx context.Context, f
 		return ec.fieldContext_GameEntitySummary_iconUrl(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type GameEntitySummary", field.Name)
+}
+
+func (ec *executionContext) childFields_GameEntitySummaryConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "nodes":
+		return ec.fieldContext_GameEntitySummaryConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_GameEntitySummaryConnection_pageInfo(ctx, field)
+	case "total":
+		return ec.fieldContext_GameEntitySummaryConnection_total(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntitySummaryConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_GameEntityType(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "type":
+		return ec.fieldContext_GameEntityType_type(ctx, field)
+	case "label":
+		return ec.fieldContext_GameEntityType_label(ctx, field)
+	case "description":
+		return ec.fieldContext_GameEntityType_description(ctx, field)
+	case "group":
+		return ec.fieldContext_GameEntityType_group(ctx, field)
+	case "iconSymbol":
+		return ec.fieldContext_GameEntityType_iconSymbol(ctx, field)
+	case "sortOrder":
+		return ec.fieldContext_GameEntityType_sortOrder(ctx, field)
+	case "count":
+		return ec.fieldContext_GameEntityType_count(ctx, field)
+	case "localizedCount":
+		return ec.fieldContext_GameEntityType_localizedCount(ctx, field)
+	case "describedCount":
+		return ec.fieldContext_GameEntityType_describedCount(ctx, field)
+	case "tooltipCount":
+		return ec.fieldContext_GameEntityType_tooltipCount(ctx, field)
+	case "iconCount":
+		return ec.fieldContext_GameEntityType_iconCount(ctx, field)
+	case "relationshipCount":
+		return ec.fieldContext_GameEntityType_relationshipCount(ctx, field)
+	case "coverageUpdatedAt":
+		return ec.fieldContext_GameEntityType_coverageUpdatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntityType", field.Name)
+}
+
+func (ec *executionContext) childFields_GameEntityVersion(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_GameEntityVersion_id(ctx, field)
+	case "buildId":
+		return ec.fieldContext_GameEntityVersion_buildId(ctx, field)
+	case "buildNumber":
+		return ec.fieldContext_GameEntityVersion_buildNumber(ctx, field)
+	case "revision":
+		return ec.fieldContext_GameEntityVersion_revision(ctx, field)
+	case "buildVersion":
+		return ec.fieldContext_GameEntityVersion_buildVersion(ctx, field)
+	case "name":
+		return ec.fieldContext_GameEntityVersion_name(ctx, field)
+	case "description":
+		return ec.fieldContext_GameEntityVersion_description(ctx, field)
+	case "sourceUrl":
+		return ec.fieldContext_GameEntityVersion_sourceUrl(ctx, field)
+	case "observedAt":
+		return ec.fieldContext_GameEntityVersion_observedAt(ctx, field)
+	case "payload":
+		return ec.fieldContext_GameEntityVersion_payload(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntityVersion", field.Name)
+}
+
+func (ec *executionContext) childFields_GameFieldCoverage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "product":
+		return ec.fieldContext_GameFieldCoverage_product(ctx, field)
+	case "buildId":
+		return ec.fieldContext_GameFieldCoverage_buildId(ctx, field)
+	case "type":
+		return ec.fieldContext_GameFieldCoverage_type(ctx, field)
+	case "locale":
+		return ec.fieldContext_GameFieldCoverage_locale(ctx, field)
+	case "field":
+		return ec.fieldContext_GameFieldCoverage_field(ctx, field)
+	case "source":
+		return ec.fieldContext_GameFieldCoverage_source(ctx, field)
+	case "entityCount":
+		return ec.fieldContext_GameFieldCoverage_entityCount(ctx, field)
+	case "populatedCount":
+		return ec.fieldContext_GameFieldCoverage_populatedCount(ctx, field)
+	case "unresolvedCount":
+		return ec.fieldContext_GameFieldCoverage_unresolvedCount(ctx, field)
+	case "conflictCount":
+		return ec.fieldContext_GameFieldCoverage_conflictCount(ctx, field)
+	case "refreshedAt":
+		return ec.fieldContext_GameFieldCoverage_refreshedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameFieldCoverage", field.Name)
+}
+
+func (ec *executionContext) childFields_GameHighlight(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_GameHighlight_key(ctx, field)
+	case "value":
+		return ec.fieldContext_GameHighlight_value(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameHighlight", field.Name)
 }
 
 func (ec *executionContext) childFields_GameProduct(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1141,6 +2374,78 @@ func (ec *executionContext) childFields_GameProduct(ctx context.Context, field g
 		return ec.fieldContext_GameProduct_freshnessReason(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type GameProduct", field.Name)
+}
+
+func (ec *executionContext) childFields_GameQualityCheck(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_GameQualityCheck_key(ctx, field)
+	case "label":
+		return ec.fieldContext_GameQualityCheck_label(ctx, field)
+	case "detail":
+		return ec.fieldContext_GameQualityCheck_detail(ctx, field)
+	case "present":
+		return ec.fieldContext_GameQualityCheck_present(ctx, field)
+	case "required":
+		return ec.fieldContext_GameQualityCheck_required(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameQualityCheck", field.Name)
+}
+
+func (ec *executionContext) childFields_GameRelationType(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "relation":
+		return ec.fieldContext_GameRelationType_relation(ctx, field)
+	case "label":
+		return ec.fieldContext_GameRelationType_label(ctx, field)
+	case "description":
+		return ec.fieldContext_GameRelationType_description(ctx, field)
+	case "inverseRelation":
+		return ec.fieldContext_GameRelationType_inverseRelation(ctx, field)
+	case "allowedSourceTypes":
+		return ec.fieldContext_GameRelationType_allowedSourceTypes(ctx, field)
+	case "allowedTargetTypes":
+		return ec.fieldContext_GameRelationType_allowedTargetTypes(ctx, field)
+	case "attributeSchema":
+		return ec.fieldContext_GameRelationType_attributeSchema(ctx, field)
+	case "schemaVersion":
+		return ec.fieldContext_GameRelationType_schemaVersion(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameRelationType", field.Name)
+}
+
+func (ec *executionContext) childFields_GameSourcePolicy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "source":
+		return ec.fieldContext_GameSourcePolicy_source(ctx, field)
+	case "displayName":
+		return ec.fieldContext_GameSourcePolicy_displayName(ctx, field)
+	case "homepageUrl":
+		return ec.fieldContext_GameSourcePolicy_homepageUrl(ctx, field)
+	case "termsUrl":
+		return ec.fieldContext_GameSourcePolicy_termsUrl(ctx, field)
+	case "licenseIdentifier":
+		return ec.fieldContext_GameSourcePolicy_licenseIdentifier(ctx, field)
+	case "commercialUseStatus":
+		return ec.fieldContext_GameSourcePolicy_commercialUseStatus(ctx, field)
+	case "publicApiStatus":
+		return ec.fieldContext_GameSourcePolicy_publicApiStatus(ctx, field)
+	case "assetCachingStatus":
+		return ec.fieldContext_GameSourcePolicy_assetCachingStatus(ctx, field)
+	case "retentionDays":
+		return ec.fieldContext_GameSourcePolicy_retentionDays(ctx, field)
+	case "attributionRequired":
+		return ec.fieldContext_GameSourcePolicy_attributionRequired(ctx, field)
+	case "attributionText":
+		return ec.fieldContext_GameSourcePolicy_attributionText(ctx, field)
+	case "reviewedAt":
+		return ec.fieldContext_GameSourcePolicy_reviewedAt(ctx, field)
+	case "reviewStatus":
+		return ec.fieldContext_GameSourcePolicy_reviewStatus(ctx, field)
+	case "notes":
+		return ec.fieldContext_GameSourcePolicy_notes(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameSourcePolicy", field.Name)
 }
 
 func (ec *executionContext) childFields_GameTooltip(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1345,6 +2650,66 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_gameCategories_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "product",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["product"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "type",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
+		func(ctx context.Context, v any) (*model.Locale, error) {
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locale"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_gameCoverage_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "product",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["product"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
+		func(ctx context.Context, v any) (*model.Locale, error) {
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locale"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "type",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_gameEntities_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1396,6 +2761,66 @@ func (ec *executionContext) field_Query_gameEntities_args(ctx context.Context, r
 		return nil, err
 	}
 	args["limit"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_gameEntityComparison_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
+		func(ctx context.Context, v any) (*model.Locale, error) {
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locale"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "fromBuildId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["fromBuildId"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "toBuildId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["toBuildId"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_gameEntityQuality_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
+		func(ctx context.Context, v any) (*model.Locale, error) {
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locale"] = arg1
 	return args, nil
 }
 
@@ -1453,6 +2878,184 @@ func (ec *executionContext) field_Query_gameEntityRelationships_args(ctx context
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_gameEntitySummaries_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "product",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["product"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "type",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
+		func(ctx context.Context, v any) (*model.Locale, error) {
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locale"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "query",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["query"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "dataset",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["dataset"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "category",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["category"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "facets",
+		func(ctx context.Context, v any) ([]string, error) {
+			return ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["facets"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "itemClassId",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["itemClassId"] = arg7
+	arg8, err := graphql.ProcessArgField(ctx, rawArgs, "minItemLevel",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["minItemLevel"] = arg8
+	arg9, err := graphql.ProcessArgField(ctx, rawArgs, "maxItemLevel",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["maxItemLevel"] = arg9
+	arg10, err := graphql.ProcessArgField(ctx, rawArgs, "minRequiredLevel",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["minRequiredLevel"] = arg10
+	arg11, err := graphql.ProcessArgField(ctx, rawArgs, "maxRequiredLevel",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["maxRequiredLevel"] = arg11
+	arg12, err := graphql.ProcessArgField(ctx, rawArgs, "cursor",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["cursor"] = arg12
+	arg13, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg13
+	arg14, err := graphql.ProcessArgField(ctx, rawArgs, "includeTotal",
+		func(ctx context.Context, v any) (*bool, error) {
+			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["includeTotal"] = arg14
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_gameEntityTypes_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "product",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["product"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
+		func(ctx context.Context, v any) (*model.Locale, error) {
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locale"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_gameEntityVersions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
+		func(ctx context.Context, v any) (*model.Locale, error) {
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locale"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_gameEntity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1472,6 +3075,20 @@ func (ec *executionContext) field_Query_gameEntity_args(ctx context.Context, raw
 		return nil, err
 	}
 	args["locale"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_gameRelationTypes_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
+		func(ctx context.Context, v any) (*model.Locale, error) {
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locale"] = arg0
 	return args, nil
 }
 
@@ -1556,6 +3173,236 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ***************************** args.gotpl *****************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _GameCategory_id(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _GameCategory_type(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameCategory_facet(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_facet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Facet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_facet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameCategory_slug(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_slug(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Slug, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_slug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameCategory_path(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_path(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Path, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameCategory_parentPath(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_parentPath(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ParentPath, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_parentPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameCategory_name(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameCategory_description(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameCategory_count(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_count(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Count, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameCategory_sortOrder(ctx context.Context, field graphql.CollectedField, obj *model.GameCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameCategory_sortOrder(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SortOrder, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameCategory_sortOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameCategory", field, false, false, errors.New("field of type Int does not have child fields"))
+}
 
 func (ec *executionContext) _GameEntity_id(ctx context.Context, field graphql.CollectedField, obj *model.GameEntity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -2090,6 +3937,617 @@ func (ec *executionContext) fieldContext_GameEntity_updatedAt(_ context.Context,
 	return graphql.NewScalarFieldContext("GameEntity", field, false, false, errors.New("field of type Time does not have child fields"))
 }
 
+func (ec *executionContext) _GameEntityCard_id(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_product(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_product(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Product, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_product(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_type(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_externalId(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_externalId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_externalId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_slug(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_slug(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Slug, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_slug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_locale(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_locale(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Locale, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.Locale) graphql.Marshaler {
+			return ec.marshalNLocale2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_locale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type Locale does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_localeFallback(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_localeFallback(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocaleFallback, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_localeFallback(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_name(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_description(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_iconName(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_iconName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IconName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_iconName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_iconUrl(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_iconUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IconURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_iconUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_quality(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_quality(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Quality, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_quality(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_itemLevel(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_itemLevel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ItemLevel, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_itemLevel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_buildId(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_buildId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_buildId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityCard_highlights(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_highlights(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Highlights, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameHighlight) graphql.Marshaler {
+			return ec.marshalNGameHighlight2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameHighlightᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_highlights(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntityCard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameHighlight(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GameEntityCard_searchRank(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityCard_searchRank(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SearchRank, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityCard_searchRank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityCard", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityChange_field(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityChange_field(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Field, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityChange_field(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityChange_label(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityChange_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityChange_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityChange_changeType(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityChange_changeType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChangeType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityChange_changeType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityChange_before(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityChange_before(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Before, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityChange_before(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityChange", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityChange_after(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityChange_after(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.After, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityChange_after(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityChange", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityComparison_from(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityComparison) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityComparison_from(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.From, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.GameEntityVersion) graphql.Marshaler {
+			return ec.marshalNGameEntityVersion2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityVersion(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityComparison_from(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntityComparison",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityVersion(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GameEntityComparison_to(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityComparison) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityComparison_to(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.To, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.GameEntityVersion) graphql.Marshaler {
+			return ec.marshalNGameEntityVersion2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityVersion(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityComparison_to(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntityComparison",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityVersion(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GameEntityComparison_changes(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityComparison) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityComparison_changes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Changes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameEntityChange) graphql.Marshaler {
+			return ec.marshalNGameEntityChange2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityChangeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityComparison_changes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntityComparison",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityChange(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GameEntityConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2545,6 +5003,277 @@ func (ec *executionContext) fieldContext_GameEntityMedia_primary(_ context.Conte
 	return graphql.NewScalarFieldContext("GameEntityMedia", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _GameEntityQuality_entityId(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_entityId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EntityID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_entityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityQuality", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityQuality_score(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_score(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Score, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityQuality", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityQuality_status(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityQuality", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityQuality_buildId(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_buildId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_buildId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityQuality", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityQuality_buildNumber(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_buildNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_buildNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityQuality", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityQuality_buildVersion(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_buildVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_buildVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityQuality", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityQuality_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityQuality", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityQuality_checks(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_checks(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Checks, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameQualityCheck) graphql.Marshaler {
+			return ec.marshalNGameQualityCheck2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameQualityCheckᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_checks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntityQuality",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameQualityCheck(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GameEntityQuality_confirmed(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_confirmed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Confirmed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_confirmed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityQuality", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityQuality_missing(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_missing(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Missing, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_missing(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityQuality", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityQuality_sources(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityQuality) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityQuality_sources(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Sources, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameEntitySource) graphql.Marshaler {
+			return ec.marshalNGameEntitySource2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySourceᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityQuality_sources(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntityQuality",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntitySource(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GameEntityRelationship_direction(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityRelationship) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2756,6 +5485,121 @@ func (ec *executionContext) fieldContext_GameEntityRelationshipConnection_total(
 	return graphql.NewScalarFieldContext("GameEntityRelationshipConnection", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _GameEntitySource_source(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySource_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySource_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySource", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySource_displayName(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySource_displayName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisplayName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySource_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySource", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySource_documents(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySource_documents(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Documents, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySource_documents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySource", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySource_sourceUrl(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySource_sourceUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySource_sourceUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySource", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySource_importedAt(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySource_importedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ImportedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySource_importedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySource", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
 func (ec *executionContext) _GameEntitySummary_id(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummary) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2938,6 +5782,921 @@ func (ec *executionContext) _GameEntitySummary_iconUrl(ctx context.Context, fiel
 }
 func (ec *executionContext) fieldContext_GameEntitySummary_iconUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("GameEntitySummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySummaryConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummaryConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummaryConnection_nodes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Nodes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameEntityCard) graphql.Marshaler {
+			return ec.marshalNGameEntityCard2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityCardᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummaryConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntitySummaryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityCard(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GameEntitySummaryConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummaryConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummaryConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummaryConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntitySummaryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GameEntitySummaryConnection_total(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummaryConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummaryConnection_total(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Total, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummaryConnection_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySummaryConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_type(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_label(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_description(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_group(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_group(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Group, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_group(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_iconSymbol(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_iconSymbol(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IconSymbol, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_iconSymbol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_sortOrder(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_sortOrder(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SortOrder, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_sortOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_count(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_count(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Count, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_localizedCount(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_localizedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocalizedCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_localizedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_describedCount(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_describedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DescribedCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_describedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_tooltipCount(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_tooltipCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TooltipCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_tooltipCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_iconCount(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_iconCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IconCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_iconCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_relationshipCount(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_relationshipCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RelationshipCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_relationshipCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityType_coverageUpdatedAt(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityType_coverageUpdatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CoverageUpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityType_coverageUpdatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityType", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_id(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_buildId(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_buildId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_buildId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_buildNumber(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_buildNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_buildNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_revision(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_revision(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Revision, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_revision(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_buildVersion(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_buildVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_buildVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_name(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_description(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_sourceUrl(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_sourceUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_sourceUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_observedAt(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_observedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ObservedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_observedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityVersion_payload(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityVersion_payload(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Payload, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalNJSON2map(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityVersion_payload(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityVersion", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_product(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_product(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Product, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_product(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_buildId(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_buildId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_buildId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_type(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_locale(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_locale(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Locale, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.Locale) graphql.Marshaler {
+			return ec.marshalNLocale2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_locale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type Locale does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_field(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_field(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Field, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_field(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_source(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_entityCount(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_entityCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EntityCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_entityCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_populatedCount(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_populatedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PopulatedCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_populatedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_unresolvedCount(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_unresolvedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnresolvedCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_unresolvedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_conflictCount(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_conflictCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ConflictCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_conflictCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameFieldCoverage_refreshedAt(ctx context.Context, field graphql.CollectedField, obj *model.GameFieldCoverage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameFieldCoverage_refreshedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RefreshedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameFieldCoverage_refreshedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameFieldCoverage", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _GameHighlight_key(ctx context.Context, field graphql.CollectedField, obj *model.GameHighlight) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameHighlight_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameHighlight_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameHighlight", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameHighlight_value(ctx context.Context, field graphql.CollectedField, obj *model.GameHighlight) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameHighlight_value(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Value, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameHighlight_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameHighlight", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _GameProduct_id(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
@@ -3283,6 +7042,627 @@ func (ec *executionContext) _GameProduct_freshnessReason(ctx context.Context, fi
 }
 func (ec *executionContext) fieldContext_GameProduct_freshnessReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameQualityCheck_key(ctx context.Context, field graphql.CollectedField, obj *model.GameQualityCheck) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameQualityCheck_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameQualityCheck_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameQualityCheck", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameQualityCheck_label(ctx context.Context, field graphql.CollectedField, obj *model.GameQualityCheck) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameQualityCheck_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameQualityCheck_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameQualityCheck", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameQualityCheck_detail(ctx context.Context, field graphql.CollectedField, obj *model.GameQualityCheck) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameQualityCheck_detail(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Detail, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameQualityCheck_detail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameQualityCheck", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameQualityCheck_present(ctx context.Context, field graphql.CollectedField, obj *model.GameQualityCheck) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameQualityCheck_present(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Present, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameQualityCheck_present(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameQualityCheck", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _GameQualityCheck_required(ctx context.Context, field graphql.CollectedField, obj *model.GameQualityCheck) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameQualityCheck_required(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Required, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameQualityCheck_required(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameQualityCheck", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _GameRelationType_relation(ctx context.Context, field graphql.CollectedField, obj *model.GameRelationType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameRelationType_relation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Relation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameRelationType_relation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameRelationType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameRelationType_label(ctx context.Context, field graphql.CollectedField, obj *model.GameRelationType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameRelationType_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameRelationType_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameRelationType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameRelationType_description(ctx context.Context, field graphql.CollectedField, obj *model.GameRelationType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameRelationType_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameRelationType_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameRelationType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameRelationType_inverseRelation(ctx context.Context, field graphql.CollectedField, obj *model.GameRelationType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameRelationType_inverseRelation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InverseRelation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameRelationType_inverseRelation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameRelationType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameRelationType_allowedSourceTypes(ctx context.Context, field graphql.CollectedField, obj *model.GameRelationType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameRelationType_allowedSourceTypes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AllowedSourceTypes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameRelationType_allowedSourceTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameRelationType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameRelationType_allowedTargetTypes(ctx context.Context, field graphql.CollectedField, obj *model.GameRelationType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameRelationType_allowedTargetTypes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AllowedTargetTypes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameRelationType_allowedTargetTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameRelationType", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameRelationType_attributeSchema(ctx context.Context, field graphql.CollectedField, obj *model.GameRelationType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameRelationType_attributeSchema(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AttributeSchema, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalNJSON2map(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameRelationType_attributeSchema(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameRelationType", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _GameRelationType_schemaVersion(ctx context.Context, field graphql.CollectedField, obj *model.GameRelationType) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameRelationType_schemaVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SchemaVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameRelationType_schemaVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameRelationType", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_source(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_displayName(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_displayName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisplayName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_homepageUrl(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_homepageUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HomepageURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_homepageUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_termsUrl(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_termsUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TermsURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_termsUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_licenseIdentifier(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_licenseIdentifier(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LicenseIdentifier, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_licenseIdentifier(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_commercialUseStatus(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_commercialUseStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CommercialUseStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_commercialUseStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_publicApiStatus(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_publicApiStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PublicAPIStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_publicApiStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_assetCachingStatus(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_assetCachingStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssetCachingStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_assetCachingStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_retentionDays(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_retentionDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RetentionDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_retentionDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_attributionRequired(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_attributionRequired(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AttributionRequired, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_attributionRequired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_attributionText(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_attributionText(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AttributionText, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_attributionText(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_reviewedAt(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_reviewedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReviewedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_reviewedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_reviewStatus(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_reviewStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReviewStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_reviewStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameSourcePolicy_notes(ctx context.Context, field graphql.CollectedField, obj *model.GameSourcePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameSourcePolicy_notes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Notes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameSourcePolicy_notes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameSourcePolicy", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _GameTooltip_plainText(ctx context.Context, field graphql.CollectedField, obj *model.GameTooltip) (ret graphql.Marshaler) {
@@ -3982,6 +8362,138 @@ func (ec *executionContext) fieldContext_Query_libraryDatasets(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_gameEntityTypes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameEntityTypes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GameEntityTypes(ctx, fc.Args["product"].(*string), fc.Args["locale"].(*model.Locale))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameEntityType) graphql.Marshaler {
+			return ec.marshalNGameEntityType2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityTypeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameEntityTypes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityType(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_gameEntityTypes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_gameCategories(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameCategories(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GameCategories(ctx, fc.Args["product"].(*string), fc.Args["type"].(string), fc.Args["locale"].(*model.Locale))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameCategory) graphql.Marshaler {
+			return ec.marshalNGameCategory2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameCategoryᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameCategories(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameCategory(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_gameCategories_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_gameEntitySummaries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameEntitySummaries(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GameEntitySummaries(ctx, fc.Args["product"].(*string), fc.Args["type"].(*string), fc.Args["locale"].(*model.Locale), fc.Args["query"].(*string), fc.Args["dataset"].(*string), fc.Args["category"].(*string), fc.Args["facets"].([]string), fc.Args["itemClassId"].(*int), fc.Args["minItemLevel"].(*int), fc.Args["maxItemLevel"].(*int), fc.Args["minRequiredLevel"].(*int), fc.Args["maxRequiredLevel"].(*int), fc.Args["cursor"].(*string), fc.Args["limit"].(*int), fc.Args["includeTotal"].(*bool))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.GameEntitySummaryConnection) graphql.Marshaler {
+			return ec.marshalNGameEntitySummaryConnection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySummaryConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameEntitySummaries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntitySummaryConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_gameEntitySummaries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_gameEntity(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4020,6 +8532,258 @@ func (ec *executionContext) fieldContext_Query_gameEntity(ctx context.Context, f
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_gameEntity_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_gameEntityQuality(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameEntityQuality(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GameEntityQuality(ctx, fc.Args["id"].(string), fc.Args["locale"].(*model.Locale))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.GameEntityQuality) graphql.Marshaler {
+			return ec.marshalOGameEntityQuality2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityQuality(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameEntityQuality(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityQuality(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_gameEntityQuality_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_gameEntityVersions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameEntityVersions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GameEntityVersions(ctx, fc.Args["id"].(string), fc.Args["locale"].(*model.Locale), fc.Args["limit"].(*int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameEntityVersion) graphql.Marshaler {
+			return ec.marshalNGameEntityVersion2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityVersionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameEntityVersions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityVersion(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_gameEntityVersions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_gameEntityComparison(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameEntityComparison(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GameEntityComparison(ctx, fc.Args["id"].(string), fc.Args["locale"].(*model.Locale), fc.Args["fromBuildId"].(*string), fc.Args["toBuildId"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.GameEntityComparison) graphql.Marshaler {
+			return ec.marshalOGameEntityComparison2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityComparison(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameEntityComparison(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityComparison(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_gameEntityComparison_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_gameCoverage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameCoverage(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GameCoverage(ctx, fc.Args["product"].(*string), fc.Args["locale"].(*model.Locale), fc.Args["type"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameFieldCoverage) graphql.Marshaler {
+			return ec.marshalNGameFieldCoverage2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameFieldCoverageᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameCoverage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameFieldCoverage(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_gameCoverage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_gameSourcePolicies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameSourcePolicies(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().GameSourcePolicies(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameSourcePolicy) graphql.Marshaler {
+			return ec.marshalNGameSourcePolicy2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameSourcePolicyᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameSourcePolicies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameSourcePolicy(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_gameRelationTypes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameRelationTypes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GameRelationTypes(ctx, fc.Args["locale"].(*model.Locale))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameRelationType) graphql.Marshaler {
+			return ec.marshalNGameRelationType2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameRelationTypeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameRelationTypes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameRelationType(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_gameRelationTypes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5257,6 +10021,89 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** object.gotpl ****************************
 
+var gameCategoryImplementors = []string{"GameCategory"}
+
+func (ec *executionContext) _GameCategory(ctx context.Context, sel ast.SelectionSet, obj *model.GameCategory) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameCategoryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameCategory")
+		case "id":
+			out.Values[i] = ec._GameCategory_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._GameCategory_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "facet":
+			out.Values[i] = ec._GameCategory_facet(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._GameCategory_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "path":
+			out.Values[i] = ec._GameCategory_path(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "parentPath":
+			out.Values[i] = ec._GameCategory_parentPath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._GameCategory_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._GameCategory_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._GameCategory_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sortOrder":
+			out.Values[i] = ec._GameCategory_sortOrder(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var gameEntityImplementors = []string{"GameEntity"}
 
 func (ec *executionContext) _GameEntity(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntity) graphql.Marshaler {
@@ -5376,6 +10223,230 @@ func (ec *executionContext) _GameEntity(ctx context.Context, sel ast.SelectionSe
 			}
 		case "updatedAt":
 			out.Values[i] = ec._GameEntity_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameEntityCardImplementors = []string{"GameEntityCard"}
+
+func (ec *executionContext) _GameEntityCard(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntityCard) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntityCardImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntityCard")
+		case "id":
+			out.Values[i] = ec._GameEntityCard_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "product":
+			out.Values[i] = ec._GameEntityCard_product(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._GameEntityCard_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "externalId":
+			out.Values[i] = ec._GameEntityCard_externalId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._GameEntityCard_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "locale":
+			out.Values[i] = ec._GameEntityCard_locale(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "localeFallback":
+			out.Values[i] = ec._GameEntityCard_localeFallback(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._GameEntityCard_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._GameEntityCard_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "iconName":
+			out.Values[i] = ec._GameEntityCard_iconName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "iconUrl":
+			out.Values[i] = ec._GameEntityCard_iconUrl(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "quality":
+			out.Values[i] = ec._GameEntityCard_quality(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "itemLevel":
+			out.Values[i] = ec._GameEntityCard_itemLevel(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "buildId":
+			out.Values[i] = ec._GameEntityCard_buildId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._GameEntityCard_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "highlights":
+			out.Values[i] = ec._GameEntityCard_highlights(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "searchRank":
+			out.Values[i] = ec._GameEntityCard_searchRank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameEntityChangeImplementors = []string{"GameEntityChange"}
+
+func (ec *executionContext) _GameEntityChange(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntityChange) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntityChangeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntityChange")
+		case "field":
+			out.Values[i] = ec._GameEntityChange_field(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._GameEntityChange_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "changeType":
+			out.Values[i] = ec._GameEntityChange_changeType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "before":
+			out.Values[i] = ec._GameEntityChange_before(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "after":
+			out.Values[i] = ec._GameEntityChange_after(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameEntityComparisonImplementors = []string{"GameEntityComparison"}
+
+func (ec *executionContext) _GameEntityComparison(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntityComparison) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntityComparisonImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntityComparison")
+		case "from":
+			out.Values[i] = ec._GameEntityComparison_from(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "to":
+			out.Values[i] = ec._GameEntityComparison_to(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "changes":
+			out.Values[i] = ec._GameEntityComparison_changes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5594,6 +10665,94 @@ func (ec *executionContext) _GameEntityMedia(ctx context.Context, sel ast.Select
 	return out
 }
 
+var gameEntityQualityImplementors = []string{"GameEntityQuality"}
+
+func (ec *executionContext) _GameEntityQuality(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntityQuality) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntityQualityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntityQuality")
+		case "entityId":
+			out.Values[i] = ec._GameEntityQuality_entityId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "score":
+			out.Values[i] = ec._GameEntityQuality_score(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._GameEntityQuality_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "buildId":
+			out.Values[i] = ec._GameEntityQuality_buildId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "buildNumber":
+			out.Values[i] = ec._GameEntityQuality_buildNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "buildVersion":
+			out.Values[i] = ec._GameEntityQuality_buildVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._GameEntityQuality_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "checks":
+			out.Values[i] = ec._GameEntityQuality_checks(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "confirmed":
+			out.Values[i] = ec._GameEntityQuality_confirmed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "missing":
+			out.Values[i] = ec._GameEntityQuality_missing(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sources":
+			out.Values[i] = ec._GameEntityQuality_sources(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var gameEntityRelationshipImplementors = []string{"GameEntityRelationship"}
 
 func (ec *executionContext) _GameEntityRelationship(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntityRelationship) graphql.Marshaler {
@@ -5700,6 +10859,64 @@ func (ec *executionContext) _GameEntityRelationshipConnection(ctx context.Contex
 	return out
 }
 
+var gameEntitySourceImplementors = []string{"GameEntitySource"}
+
+func (ec *executionContext) _GameEntitySource(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntitySource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntitySourceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntitySource")
+		case "source":
+			out.Values[i] = ec._GameEntitySource_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "displayName":
+			out.Values[i] = ec._GameEntitySource_displayName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "documents":
+			out.Values[i] = ec._GameEntitySource_documents(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sourceUrl":
+			out.Values[i] = ec._GameEntitySource_sourceUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "importedAt":
+			out.Values[i] = ec._GameEntitySource_importedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var gameEntitySummaryImplementors = []string{"GameEntitySummary"}
 
 func (ec *executionContext) _GameEntitySummary(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntitySummary) graphql.Marshaler {
@@ -5750,6 +10967,366 @@ func (ec *executionContext) _GameEntitySummary(ctx context.Context, sel ast.Sele
 		case "iconUrl":
 			out.Values[i] = ec._GameEntitySummary_iconUrl(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameEntitySummaryConnectionImplementors = []string{"GameEntitySummaryConnection"}
+
+func (ec *executionContext) _GameEntitySummaryConnection(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntitySummaryConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntitySummaryConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntitySummaryConnection")
+		case "nodes":
+			out.Values[i] = ec._GameEntitySummaryConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._GameEntitySummaryConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "total":
+			out.Values[i] = ec._GameEntitySummaryConnection_total(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameEntityTypeImplementors = []string{"GameEntityType"}
+
+func (ec *executionContext) _GameEntityType(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntityType) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntityTypeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntityType")
+		case "type":
+			out.Values[i] = ec._GameEntityType_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._GameEntityType_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._GameEntityType_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "group":
+			out.Values[i] = ec._GameEntityType_group(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "iconSymbol":
+			out.Values[i] = ec._GameEntityType_iconSymbol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sortOrder":
+			out.Values[i] = ec._GameEntityType_sortOrder(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._GameEntityType_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "localizedCount":
+			out.Values[i] = ec._GameEntityType_localizedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "describedCount":
+			out.Values[i] = ec._GameEntityType_describedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tooltipCount":
+			out.Values[i] = ec._GameEntityType_tooltipCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "iconCount":
+			out.Values[i] = ec._GameEntityType_iconCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "relationshipCount":
+			out.Values[i] = ec._GameEntityType_relationshipCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "coverageUpdatedAt":
+			out.Values[i] = ec._GameEntityType_coverageUpdatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameEntityVersionImplementors = []string{"GameEntityVersion"}
+
+func (ec *executionContext) _GameEntityVersion(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntityVersion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntityVersionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntityVersion")
+		case "id":
+			out.Values[i] = ec._GameEntityVersion_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "buildId":
+			out.Values[i] = ec._GameEntityVersion_buildId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "buildNumber":
+			out.Values[i] = ec._GameEntityVersion_buildNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "revision":
+			out.Values[i] = ec._GameEntityVersion_revision(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "buildVersion":
+			out.Values[i] = ec._GameEntityVersion_buildVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._GameEntityVersion_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._GameEntityVersion_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sourceUrl":
+			out.Values[i] = ec._GameEntityVersion_sourceUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "observedAt":
+			out.Values[i] = ec._GameEntityVersion_observedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "payload":
+			out.Values[i] = ec._GameEntityVersion_payload(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameFieldCoverageImplementors = []string{"GameFieldCoverage"}
+
+func (ec *executionContext) _GameFieldCoverage(ctx context.Context, sel ast.SelectionSet, obj *model.GameFieldCoverage) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameFieldCoverageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameFieldCoverage")
+		case "product":
+			out.Values[i] = ec._GameFieldCoverage_product(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "buildId":
+			out.Values[i] = ec._GameFieldCoverage_buildId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._GameFieldCoverage_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "locale":
+			out.Values[i] = ec._GameFieldCoverage_locale(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "field":
+			out.Values[i] = ec._GameFieldCoverage_field(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._GameFieldCoverage_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "entityCount":
+			out.Values[i] = ec._GameFieldCoverage_entityCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "populatedCount":
+			out.Values[i] = ec._GameFieldCoverage_populatedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unresolvedCount":
+			out.Values[i] = ec._GameFieldCoverage_unresolvedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "conflictCount":
+			out.Values[i] = ec._GameFieldCoverage_conflictCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "refreshedAt":
+			out.Values[i] = ec._GameFieldCoverage_refreshedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameHighlightImplementors = []string{"GameHighlight"}
+
+func (ec *executionContext) _GameHighlight(ctx context.Context, sel ast.SelectionSet, obj *model.GameHighlight) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameHighlightImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameHighlight")
+		case "key":
+			out.Values[i] = ec._GameHighlight_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "value":
+			out.Values[i] = ec._GameHighlight_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:
@@ -5857,6 +11434,240 @@ func (ec *executionContext) _GameProduct(ctx context.Context, sel ast.SelectionS
 			}
 		case "freshnessReason":
 			out.Values[i] = ec._GameProduct_freshnessReason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameQualityCheckImplementors = []string{"GameQualityCheck"}
+
+func (ec *executionContext) _GameQualityCheck(ctx context.Context, sel ast.SelectionSet, obj *model.GameQualityCheck) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameQualityCheckImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameQualityCheck")
+		case "key":
+			out.Values[i] = ec._GameQualityCheck_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._GameQualityCheck_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "detail":
+			out.Values[i] = ec._GameQualityCheck_detail(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "present":
+			out.Values[i] = ec._GameQualityCheck_present(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "required":
+			out.Values[i] = ec._GameQualityCheck_required(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameRelationTypeImplementors = []string{"GameRelationType"}
+
+func (ec *executionContext) _GameRelationType(ctx context.Context, sel ast.SelectionSet, obj *model.GameRelationType) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameRelationTypeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameRelationType")
+		case "relation":
+			out.Values[i] = ec._GameRelationType_relation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._GameRelationType_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._GameRelationType_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "inverseRelation":
+			out.Values[i] = ec._GameRelationType_inverseRelation(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "allowedSourceTypes":
+			out.Values[i] = ec._GameRelationType_allowedSourceTypes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "allowedTargetTypes":
+			out.Values[i] = ec._GameRelationType_allowedTargetTypes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "attributeSchema":
+			out.Values[i] = ec._GameRelationType_attributeSchema(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "schemaVersion":
+			out.Values[i] = ec._GameRelationType_schemaVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameSourcePolicyImplementors = []string{"GameSourcePolicy"}
+
+func (ec *executionContext) _GameSourcePolicy(ctx context.Context, sel ast.SelectionSet, obj *model.GameSourcePolicy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameSourcePolicyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameSourcePolicy")
+		case "source":
+			out.Values[i] = ec._GameSourcePolicy_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "displayName":
+			out.Values[i] = ec._GameSourcePolicy_displayName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "homepageUrl":
+			out.Values[i] = ec._GameSourcePolicy_homepageUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "termsUrl":
+			out.Values[i] = ec._GameSourcePolicy_termsUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "licenseIdentifier":
+			out.Values[i] = ec._GameSourcePolicy_licenseIdentifier(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "commercialUseStatus":
+			out.Values[i] = ec._GameSourcePolicy_commercialUseStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "publicApiStatus":
+			out.Values[i] = ec._GameSourcePolicy_publicApiStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assetCachingStatus":
+			out.Values[i] = ec._GameSourcePolicy_assetCachingStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "retentionDays":
+			out.Values[i] = ec._GameSourcePolicy_retentionDays(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "attributionRequired":
+			out.Values[i] = ec._GameSourcePolicy_attributionRequired(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "attributionText":
+			out.Values[i] = ec._GameSourcePolicy_attributionText(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reviewedAt":
+			out.Values[i] = ec._GameSourcePolicy_reviewedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "reviewStatus":
+			out.Values[i] = ec._GameSourcePolicy_reviewStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "notes":
+			out.Values[i] = ec._GameSourcePolicy_notes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6179,6 +11990,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameEntityTypes":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameEntityTypes(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameCategories":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameCategories(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameEntitySummaries":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameEntitySummaries(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "gameEntity":
 			field := field
 
@@ -6190,6 +12067,138 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_gameEntity(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameEntityQuality":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameEntityQuality(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameEntityVersions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameEntityVersions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameEntityComparison":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameEntityComparison(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameCoverage":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameCoverage(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameSourcePolicies":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameSourcePolicies(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameRelationTypes":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameRelationTypes(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -6688,6 +12697,32 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNGameCategory2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameCategory) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameCategory2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameCategory(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameCategory2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameCategory(ctx context.Context, sel ast.SelectionSet, v *model.GameCategory) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameCategory(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNGameEntity2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameEntity) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -6712,6 +12747,58 @@ func (ec *executionContext) marshalNGameEntity2ᚖgithubᚗcomᚋGildraᚑFounda
 		return graphql.Null
 	}
 	return ec._GameEntity(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameEntityCard2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityCardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameEntityCard) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameEntityCard2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityCard(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameEntityCard2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityCard(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityCard) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameEntityCard(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameEntityChange2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityChangeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameEntityChange) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameEntityChange2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityChange(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameEntityChange2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityChange(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityChange) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameEntityChange(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNGameEntityConnection2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityConnection(ctx context.Context, sel ast.SelectionSet, v model.GameEntityConnection) graphql.Marshaler {
@@ -6820,6 +12907,32 @@ func (ec *executionContext) marshalNGameEntityRelationshipConnection2ᚖgithub�
 	return ec._GameEntityRelationshipConnection(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNGameEntitySource2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameEntitySource) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameEntitySource2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySource(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameEntitySource2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySource(ctx context.Context, sel ast.SelectionSet, v *model.GameEntitySource) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameEntitySource(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNGameEntitySummary2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySummary(ctx context.Context, sel ast.SelectionSet, v *model.GameEntitySummary) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -6828,6 +12941,124 @@ func (ec *executionContext) marshalNGameEntitySummary2ᚖgithubᚗcomᚋGildra�
 		return graphql.Null
 	}
 	return ec._GameEntitySummary(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameEntitySummaryConnection2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySummaryConnection(ctx context.Context, sel ast.SelectionSet, v model.GameEntitySummaryConnection) graphql.Marshaler {
+	return ec._GameEntitySummaryConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGameEntitySummaryConnection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySummaryConnection(ctx context.Context, sel ast.SelectionSet, v *model.GameEntitySummaryConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameEntitySummaryConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameEntityType2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameEntityType) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameEntityType2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityType(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameEntityType2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityType(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityType) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameEntityType(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameEntityVersion2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityVersionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameEntityVersion) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameEntityVersion2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityVersion(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameEntityVersion2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityVersion(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityVersion) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameEntityVersion(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameFieldCoverage2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameFieldCoverageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameFieldCoverage) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameFieldCoverage2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameFieldCoverage(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameFieldCoverage2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameFieldCoverage(ctx context.Context, sel ast.SelectionSet, v *model.GameFieldCoverage) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameFieldCoverage(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameHighlight2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameHighlightᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameHighlight) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameHighlight2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameHighlight(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameHighlight2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameHighlight(ctx context.Context, sel ast.SelectionSet, v *model.GameHighlight) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameHighlight(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNGameProduct2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameProduct) graphql.Marshaler {
@@ -6854,6 +13085,84 @@ func (ec *executionContext) marshalNGameProduct2ᚖgithubᚗcomᚋGildraᚑFound
 		return graphql.Null
 	}
 	return ec._GameProduct(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameQualityCheck2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameQualityCheckᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameQualityCheck) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameQualityCheck2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameQualityCheck(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameQualityCheck2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameQualityCheck(ctx context.Context, sel ast.SelectionSet, v *model.GameQualityCheck) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameQualityCheck(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameRelationType2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameRelationTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameRelationType) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameRelationType2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameRelationType(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameRelationType2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameRelationType(ctx context.Context, sel ast.SelectionSet, v *model.GameRelationType) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameRelationType(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameSourcePolicy2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameSourcePolicyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameSourcePolicy) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameSourcePolicy2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameSourcePolicy(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameSourcePolicy2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameSourcePolicy(ctx context.Context, sel ast.SelectionSet, v *model.GameSourcePolicy) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameSourcePolicy(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (string, error) {
@@ -7009,6 +13318,35 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
@@ -7204,6 +13542,20 @@ func (ec *executionContext) marshalOGameEntity2ᚖgithubᚗcomᚋGildraᚑFounda
 	return ec._GameEntity(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOGameEntityComparison2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityComparison(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityComparison) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._GameEntityComparison(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOGameEntityQuality2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityQuality(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityQuality) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._GameEntityQuality(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOGameTooltip2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameTooltip(ctx context.Context, sel ast.SelectionSet, v *model.GameTooltip) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -7226,6 +13578,24 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOJSON2map(ctx context.Context, v any) (map[string]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOJSON2map(ctx context.Context, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalMap(v)
 	return res
 }
 
@@ -7259,6 +13629,41 @@ func (ec *executionContext) marshalORelationshipDirection2ᚖgithubᚗcomᚋGild
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {
