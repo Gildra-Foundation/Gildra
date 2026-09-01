@@ -359,17 +359,7 @@ func recordBuildCheck(ctx context.Context, db *pgxpool.Pool, spec productSpec, c
 		observedNumber = number
 	}
 	hash := sha256.Sum256([]byte(observed))
-	metadata := map[string]any{
-		"edition": spec.Edition,
-		"product": spec.Product,
-		"source":  spec.Source,
-	}
-	if spec.Namespace != "" {
-		metadata["namespace"] = spec.Namespace
-	} else {
-		metadata["table"] = "ItemSparse"
-		metadata["locale"] = "enUS"
-	}
+	metadata := buildCheckMetadata(spec)
 	if observationErr != nil {
 		metadata["error"] = boundedError(observationErr)
 	}
@@ -384,6 +374,27 @@ func recordBuildCheck(ctx context.Context, db *pgxpool.Pool, spec productSpec, c
 		return fmt.Errorf("upsert build check: %w", err)
 	}
 	return nil
+}
+
+func buildCheckMetadata(spec productSpec) map[string]any {
+	metadata := map[string]any{
+		"edition": spec.Edition,
+		"product": spec.Product,
+		"source":  spec.Source,
+	}
+	if spec.Source == "wago_tools" && strings.TrimSpace(spec.WagoKey) != "" {
+		metadata["wago_product"] = spec.WagoKey
+		if !strings.EqualFold(strings.TrimSpace(spec.WagoKey), strings.TrimSpace(spec.Product)) {
+			metadata["shared_manifest"] = true
+		}
+	}
+	if spec.Namespace != "" {
+		metadata["namespace"] = spec.Namespace
+	} else {
+		metadata["table"] = "ItemSparse"
+		metadata["locale"] = "enUS"
+	}
+	return metadata
 }
 
 func acquireRefreshLock(ctx context.Context, db *pgxpool.Pool) (func(), bool, error) {
