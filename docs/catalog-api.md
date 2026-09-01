@@ -5,6 +5,11 @@ historical `/v1/game` paths remain compatible aliases. The OpenAPI 3.1 source
 of truth is `backend/api/openapi.yaml`; generated Go and TypeScript files must
 not be edited by hand.
 
+The edition root is self-describing: `GET /world-of-warcraft/classic/v1`
+returns links rooted at the Classic base. A direct `GET /v1` defaults to
+Retail; callers may pass `?product=wow_classic`, `wow_classic_era` or
+`wow_classic_hardcore` when they need the corresponding discovery document.
+
 Edition prefixes select the product without a query parameter:
 
 - `/world-of-warcraft/retail/v1` → `wow` (current retail client)
