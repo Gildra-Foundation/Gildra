@@ -56,6 +56,27 @@ func (s *Server) GetAPIIndex(context.Context, api.GetAPIIndexRequestObject) (api
 	}, nil
 }
 
+// GetAPIIndexTrailingSlash is the canonical index alias used when a reverse
+// proxy normalizes a product-scoped base URL to /v1/. Keep its payload and
+// status handling identical to GetAPIIndex so both documented forms remain
+// interchangeable.
+func (s *Server) GetAPIIndexTrailingSlash(ctx context.Context, _ api.GetAPIIndexTrailingSlashRequestObject) (api.GetAPIIndexTrailingSlashResponseObject, error) {
+	response, err := s.GetAPIIndex(ctx, api.GetAPIIndexRequestObject{})
+	if err != nil {
+		return nil, err
+	}
+	switch value := response.(type) {
+	case api.GetAPIIndex200JSONResponse:
+		return api.GetAPIIndexTrailingSlash200JSONResponse(value), nil
+	case api.GetAPIIndex429ApplicationProblemPlusJSONResponse:
+		return api.GetAPIIndexTrailingSlash429ApplicationProblemPlusJSONResponse{
+			TooManyRequestsApplicationProblemPlusJSONResponse: value.TooManyRequestsApplicationProblemPlusJSONResponse,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unexpected API index response type %T", response)
+	}
+}
+
 func (s *Server) ListGameProducts(ctx context.Context, _ api.ListGameProductsRequestObject) (api.ListGameProductsResponseObject, error) {
 	products, err := s.catalog.Products(ctx)
 	if err != nil {

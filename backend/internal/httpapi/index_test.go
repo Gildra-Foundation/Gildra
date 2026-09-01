@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/api"
@@ -45,5 +46,28 @@ func TestAPIIndexAdvertisesCanonicalRetailBase(t *testing.T) {
 	}
 	if len(seen) != len(want) {
 		t.Fatalf("API index edition mappings = %#v, want %#v", seen, want)
+	}
+}
+
+func TestAPIIndexTrailingSlashMatchesCanonicalIndex(t *testing.T) {
+	server := &Server{}
+	response, err := server.GetAPIIndexTrailingSlash(context.Background(), api.GetAPIIndexTrailingSlashRequestObject{})
+	if err != nil {
+		t.Fatalf("GetAPIIndexTrailingSlash returned error: %v", err)
+	}
+	alias, ok := response.(api.GetAPIIndexTrailingSlash200JSONResponse)
+	if !ok {
+		t.Fatalf("GetAPIIndexTrailingSlash response type = %T", response)
+	}
+	canonicalResponse, err := server.GetAPIIndex(context.Background(), api.GetAPIIndexRequestObject{})
+	if err != nil {
+		t.Fatalf("GetAPIIndex returned error: %v", err)
+	}
+	canonical, ok := canonicalResponse.(api.GetAPIIndex200JSONResponse)
+	if !ok {
+		t.Fatalf("GetAPIIndex response type = %T", canonicalResponse)
+	}
+	if !reflect.DeepEqual(api.APIIndex(alias), api.APIIndex(canonical)) {
+		t.Fatalf("trailing-slash index differs from canonical index: alias=%#v canonical=%#v", alias, canonical)
 	}
 }
