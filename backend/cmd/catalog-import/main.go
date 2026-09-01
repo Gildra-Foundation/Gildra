@@ -568,6 +568,7 @@ func importBattleNetMissingType(
 	if workers > len(targets) {
 		workers = len(targets)
 	}
+	var processed int64
 	jobs := make(chan int64)
 	group, groupCtx := errgroup.WithContext(ctx)
 	for range workers {
@@ -599,6 +600,9 @@ func importBattleNetMissingType(
 						}
 					}
 					atomic.AddInt64(written, 1)
+					processedCount := atomic.AddInt64(&processed, 1)
+					logBattleNetProgress(entityType, locale, int(processedCount),
+						atomic.LoadInt64(seen), atomic.LoadInt64(written))
 				}
 			}
 		})
