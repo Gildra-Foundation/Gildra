@@ -150,6 +150,14 @@ export function GenshinImpactCatalog() {
     return () => window.clearTimeout(timer);
   }, [load, revision, query]);
 
+  function switchSection(next: Section) {
+    setLoading(true);
+    setItems([]);
+    setSection(next);
+    if (next === "artifact-sets" || next === "talents") { setElement(""); setWeaponType(""); }
+    if (next === "talents") setRarity("");
+  }
+
   async function loadMore() {
     if (!nextCursor || loadingMore) return;
     setLoadingMore(true); setError("");
@@ -191,8 +199,8 @@ export function GenshinImpactCatalog() {
     <section className="border border-[#2d3341] bg-[#11151d]">
       <div className="flex flex-col gap-4 border-b border-[#2b313e] p-4 sm:p-5 xl:flex-row xl:items-center">
         <div className="flex min-w-0 flex-1 overflow-x-auto" role="tablist" aria-label="Раздел каталога">
-          {sectionOptions.map((option) => <button key={option.id} type="button" role="tab" aria-selected={section === option.id} onClick={() => { setSection(option.id); if (option.id === "artifact-sets" || option.id === "talents") { setElement(""); setWeaponType(""); } if (option.id === "talents") setRarity(""); }} className={cn("flex h-10 shrink-0 items-center gap-2 border-b-2 px-4 text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c9a24f]", section === option.id ? "border-[#d1aa53] bg-[#191a1b] text-[#e6c778]" : "border-transparent text-[#7f899d] hover:bg-[#151a23] hover:text-[#d5dbe5]")}><option.icon className="size-3.5" />{option.label}</button>)}
-          <label className={cn("flex h-10 shrink-0 items-center border-b-2 px-3 text-xs", section === "content" ? "border-[#d1aa53] bg-[#191a1b] text-[#e6c778]" : "border-transparent text-[#7f899d]")}><span className="sr-only">Все разделы данных</span><select value={section === "content" ? contentCategory : ""} onChange={(event) => { const value = event.target.value; if (value) { setContentCategory(value); setSection("content"); setRarity(""); setElement(""); setWeaponType(""); } }} className="max-w-52 bg-transparent text-xs outline-none"><option value="">Все разделы данных</option>{Object.entries(status?.contentByCategory ?? {}).sort(([a], [b]) => a.localeCompare(b)).map(([category, count]) => <option key={category} value={category}>{contentCategoryLabel(category)} ({count.toLocaleString("ru-RU")})</option>)}</select></label>
+          {sectionOptions.map((option) => <button key={option.id} type="button" role="tab" aria-selected={section === option.id} onClick={() => switchSection(option.id)} className={cn("flex h-10 shrink-0 items-center gap-2 border-b-2 px-4 text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c9a24f]", section === option.id ? "border-[#d1aa53] bg-[#191a1b] text-[#e6c778]" : "border-transparent text-[#7f899d] hover:bg-[#151a23] hover:text-[#d5dbe5]")}><option.icon className="size-3.5" />{option.label}</button>)}
+          <label className={cn("flex h-10 shrink-0 items-center border-b-2 px-3 text-xs", section === "content" ? "border-[#d1aa53] bg-[#191a1b] text-[#e6c778]" : "border-transparent text-[#7f899d]")}><span className="sr-only">Все разделы данных</span><select value={section === "content" ? contentCategory : ""} onChange={(event) => { const value = event.target.value; if (value) { setLoading(true); setItems([]); setContentCategory(value); setSection("content"); setRarity(""); setElement(""); setWeaponType(""); } }} className="max-w-52 bg-transparent text-xs outline-none"><option value="">Все разделы данных</option>{Object.entries(status?.contentByCategory ?? {}).sort(([a], [b]) => a.localeCompare(b)).map(([category, count]) => <option key={category} value={category}>{contentCategoryLabel(category)} ({count.toLocaleString("ru-RU")})</option>)}</select></label>
         </div>
         <div className="flex items-center gap-2">
           <Languages className="size-4 text-[#7d889b]" />
@@ -269,13 +277,15 @@ function ArtifactFacts({ item }: { item: ArtifactSet }) {
 }
 
 function ContentFacts({ item }: { item: Content }) {
-  return <><Fact label="Раздел" value={contentCategoryLabel(item.category)} /><Fact label="ID" value={item.externalId == null ? "—" : String(item.externalId)} mono /><Fact label="Медиа" value={item.media.length ? String(item.media.length) : "—"} /><Fact label="Ключ" value={item.slug} mono /></>;
+  const media = item.media ?? [];
+  return <><Fact label="Раздел" value={contentCategoryLabel(item.category)} /><Fact label="ID" value={item.externalId == null ? "—" : String(item.externalId)} mono /><Fact label="Медиа" value={media.length ? String(media.length) : "—"} /><Fact label="Ключ" value={item.slug} mono /></>;
 }
 
 function ContentDetails({ item }: { item: Content }) {
+  const media = item.media ?? [];
   return <div className="mt-3">
     <div className="line-clamp-4 whitespace-pre-line text-[10px] leading-4 text-[#7d899b]">{item.description || "Полное содержимое доступно в исходном JSON ниже."}</div>
-    {item.media.length ? <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Изображения записи">{item.media.map((media) => media.url ? <img key={`${media.role}-${media.filename}`} src={media.url} alt={media.role} title={media.filename} className="size-12 shrink-0 rounded-sm border border-[#2b323f] bg-[#090d13] object-contain p-1" loading="lazy" /> : null)}</div> : null}
+    {media.length ? <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Изображения записи">{media.map((media) => media.url ? <img key={`${media.role}-${media.filename}`} src={media.url} alt={media.role} title={media.filename} className="size-12 shrink-0 rounded-sm border border-[#2b323f] bg-[#090d13] object-contain p-1" loading="lazy" /> : null)}</div> : null}
     <details className="mt-3 border border-[#2b323f] bg-[#0a0e14]">
       <summary className="cursor-pointer px-3 py-2 text-[10px] text-[#c9a24f]">Показать полный JSON</summary>
       <div className="border-t border-[#2b323f] p-3">
