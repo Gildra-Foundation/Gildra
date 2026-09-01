@@ -16,6 +16,9 @@ import (
 func TestCurrentBuild(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.UserAgent() != defaultUserAgent {
+			t.Errorf("User-Agent = %q, want %q", r.UserAgent(), defaultUserAgent)
+		}
 		w.Header().Set("Content-Disposition", `attachment; filename="ItemSparse.12.1.0.69404.csv"`)
 	}))
 	t.Cleanup(server.Close)
