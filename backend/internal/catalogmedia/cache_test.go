@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -19,7 +20,10 @@ func TestFetchStoresContentAddressedImage(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := t.TempDir()
-	client := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		if request.UserAgent() != catalogMediaUserAgent {
+			return nil, fmt.Errorf("User-Agent = %q, want %q", request.UserAgent(), catalogMediaUserAgent)
+		}
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(png)), Header: make(http.Header)}, nil
 	})}
 	rootHandle, err := os.OpenRoot(root)
