@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/netip"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -108,6 +109,7 @@ func doMediaRequest(ctx context.Context, client *http.Client, parsed *url.URL) (
 			return response, nil
 		}
 
+		var retryAfter time.Duration
 		if err != nil {
 			if response != nil && response.Body != nil {
 				_ = response.Body.Close()
@@ -115,6 +117,7 @@ func doMediaRequest(ctx context.Context, client *http.Client, parsed *url.URL) (
 			lastErr = fmt.Errorf("media request attempt %d/%d: %w", attempt+1, mediaRequestAttempts, err)
 		} else {
 			lastErr = fmt.Errorf("media request attempt %d/%d: HTTP %d", attempt+1, mediaRequestAttempts, response.StatusCode)
+			retryAfter = mediaRetryAfter(response.Header.Get("Retry-After"), time.Now())
 			if response.Body != nil {
 				_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, mediaRetryDrainBytes))
 				_ = response.Body.Close()
@@ -127,6 +130,9 @@ func doMediaRequest(ctx context.Context, client *http.Client, parsed *url.URL) (
 			break
 		}
 		delay := mediaRetryBaseDelay << attempt
+		if retryAfter > 0 {
+			delay = retryAfter
+		}
 		if delay > mediaRetryMaxDelay {
 			delay = mediaRetryMaxDelay
 		}
@@ -146,4 +152,28 @@ func doMediaRequest(ctx context.Context, client *http.Client, parsed *url.URL) (
 func retryableMediaStatus(status int) bool {
 	return status == http.StatusRequestTimeout || status == http.StatusTooEarly ||
 		status == http.StatusTooManyRequests || status >= http.StatusInternalServerError
+}
+
+// mediaRetryAfter accepts both forms defined by RFC 9110: a number of
+// seconds or an HTTP date. The value is capped by the caller so a malicious
+// upstream cannot hold a worker indefinitely.
+func mediaRetryAfter(value string, now time.Time) time.Duration {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0
+	}
+	if seconds, err := strconv.Atoi(value); err == nil {
+		if seconds <= 0 {
+			return 0
+		}
+		return time.Duration(seconds) * time.Second
+	}
+	when, err := http.ParseTime(value)
+	if err != nil {
+		return 0
+	}
+	if delay := when.Sub(now); delay > 0 {
+		return delay
+	}
+	return 0
 }
