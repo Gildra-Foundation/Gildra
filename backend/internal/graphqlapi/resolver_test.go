@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/graphqlapi/model"
 	"github.com/google/uuid"
 )
 
@@ -52,6 +53,29 @@ func TestToGraphQLProductExposesEditionBuildAndPublication(t *testing.T) {
 	}
 	if got.EntityCount != 825913 || got.PublishedEntityCount != 743967 || !got.PublicRelease {
 		t.Fatalf("graphql product publication metadata = %#v", got)
+	}
+}
+
+func TestToGraphQLRelationshipPreservesTargetIdentityAndMedia(t *testing.T) {
+	iconName := "inv_sword_07"
+	iconURL := "https://api.gildra.net/v1/media/icon"
+	entityID := uuid.New()
+	got := toGraphQLRelationship(catalog.Relationship{
+		Direction: "outgoing", Relation: "drops", BuildID: 69497,
+		Attributes: map[string]any{"chance_percent": 12.5},
+		Entity: catalog.EntitySummary{
+			ID: entityID, Product: "wow", Type: "item", ExternalID: 19019,
+			Slug: "thunderfury", Name: "Thunderfury", IconName: &iconName, IconURL: &iconURL,
+		},
+	})
+	if got.Direction != model.RelationshipDirectionOutgoing || got.Relation != "drops" || got.BuildID != "69497" {
+		t.Fatalf("graphql relationship identity = %#v", got)
+	}
+	if got.Entity == nil || got.Entity.ID != entityID.String() || got.Entity.Product != "wow" || got.Entity.ExternalID != "19019" {
+		t.Fatalf("graphql relationship target = %#v", got.Entity)
+	}
+	if got.Entity.IconName == nil || *got.Entity.IconName != iconName || got.Entity.IconURL == nil || *got.Entity.IconURL != iconURL {
+		t.Fatalf("graphql relationship media = %#v", got.Entity)
 	}
 }
 

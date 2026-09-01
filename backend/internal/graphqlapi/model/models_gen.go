@@ -61,6 +61,31 @@ type GameEntityMedia struct {
 	Primary     bool    `json:"primary"`
 }
 
+type GameEntityRelationship struct {
+	Direction  RelationshipDirection `json:"direction"`
+	Relation   string                `json:"relation"`
+	BuildID    string                `json:"buildId"`
+	Attributes map[string]any        `json:"attributes"`
+	Entity     *GameEntitySummary    `json:"entity"`
+}
+
+type GameEntityRelationshipConnection struct {
+	Nodes    []*GameEntityRelationship `json:"nodes"`
+	PageInfo *PageInfo                 `json:"pageInfo"`
+	Total    int                       `json:"total"`
+}
+
+type GameEntitySummary struct {
+	ID         string  `json:"id"`
+	Product    string  `json:"product"`
+	Type       string  `json:"type"`
+	ExternalID string  `json:"externalId"`
+	Slug       string  `json:"slug"`
+	Name       string  `json:"name"`
+	IconName   *string `json:"iconName,omitempty"`
+	IconURL    *string `json:"iconUrl,omitempty"`
+}
+
 type GameProduct struct {
 	ID                   int     `json:"id"`
 	Slug                 string  `json:"slug"`
@@ -161,6 +186,63 @@ func (e *Locale) UnmarshalJSON(b []byte) error {
 }
 
 func (e Locale) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type RelationshipDirection string
+
+const (
+	RelationshipDirectionBoth     RelationshipDirection = "both"
+	RelationshipDirectionIncoming RelationshipDirection = "incoming"
+	RelationshipDirectionOutgoing RelationshipDirection = "outgoing"
+)
+
+var AllRelationshipDirection = []RelationshipDirection{
+	RelationshipDirectionBoth,
+	RelationshipDirectionIncoming,
+	RelationshipDirectionOutgoing,
+}
+
+func (e RelationshipDirection) IsValid() bool {
+	switch e {
+	case RelationshipDirectionBoth, RelationshipDirectionIncoming, RelationshipDirectionOutgoing:
+		return true
+	}
+	return false
+}
+
+func (e RelationshipDirection) String() string {
+	return string(e)
+}
+
+func (e *RelationshipDirection) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RelationshipDirection(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RelationshipDirection", str)
+	}
+	return nil
+}
+
+func (e RelationshipDirection) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RelationshipDirection) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RelationshipDirection) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

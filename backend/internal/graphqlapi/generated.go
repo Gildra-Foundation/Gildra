@@ -88,6 +88,31 @@ type ComplexityRoot struct {
 		Width       func(childComplexity int) int
 	}
 
+	GameEntityRelationship struct {
+		Attributes func(childComplexity int) int
+		BuildID    func(childComplexity int) int
+		Direction  func(childComplexity int) int
+		Entity     func(childComplexity int) int
+		Relation   func(childComplexity int) int
+	}
+
+	GameEntityRelationshipConnection struct {
+		Nodes    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+		Total    func(childComplexity int) int
+	}
+
+	GameEntitySummary struct {
+		ExternalID func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IconName   func(childComplexity int) int
+		IconURL    func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Product    func(childComplexity int) int
+		Slug       func(childComplexity int) int
+		Type       func(childComplexity int) int
+	}
+
 	GameProduct struct {
 		BuildNumber          func(childComplexity int) int
 		BuildVersion         func(childComplexity int) int
@@ -136,10 +161,11 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GameEntities    func(childComplexity int, product *string, typeArg *string, locale *model.Locale, query *string, cursor *string, limit *int) int
-		GameEntity      func(childComplexity int, id string, locale *model.Locale) int
-		GameProducts    func(childComplexity int) int
-		LibraryDatasets func(childComplexity int, product *string, locale *model.Locale) int
+		GameEntities            func(childComplexity int, product *string, typeArg *string, locale *model.Locale, query *string, cursor *string, limit *int) int
+		GameEntity              func(childComplexity int, id string, locale *model.Locale) int
+		GameEntityRelationships func(childComplexity int, id string, locale *model.Locale, direction *model.RelationshipDirection, relation *string, cursor *string, limit *int) int
+		GameProducts            func(childComplexity int) int
+		LibraryDatasets         func(childComplexity int, product *string, locale *model.Locale) int
 	}
 }
 
@@ -151,6 +177,7 @@ type QueryResolver interface {
 	GameProducts(ctx context.Context) ([]*model.GameProduct, error)
 	LibraryDatasets(ctx context.Context, product *string, locale *model.Locale) ([]*model.LibraryDataset, error)
 	GameEntity(ctx context.Context, id string, locale *model.Locale) (*model.GameEntity, error)
+	GameEntityRelationships(ctx context.Context, id string, locale *model.Locale, direction *model.RelationshipDirection, relation *string, cursor *string, limit *int) (*model.GameEntityRelationshipConnection, error)
 	GameEntities(ctx context.Context, product *string, typeArg *string, locale *model.Locale, query *string, cursor *string, limit *int) (*model.GameEntityConnection, error)
 }
 
@@ -410,6 +437,105 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.GameEntityMedia.Width(childComplexity), true
 
+	case "GameEntityRelationship.attributes":
+		if e.ComplexityRoot.GameEntityRelationship.Attributes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityRelationship.Attributes(childComplexity), true
+	case "GameEntityRelationship.buildId":
+		if e.ComplexityRoot.GameEntityRelationship.BuildID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityRelationship.BuildID(childComplexity), true
+	case "GameEntityRelationship.direction":
+		if e.ComplexityRoot.GameEntityRelationship.Direction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityRelationship.Direction(childComplexity), true
+	case "GameEntityRelationship.entity":
+		if e.ComplexityRoot.GameEntityRelationship.Entity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityRelationship.Entity(childComplexity), true
+	case "GameEntityRelationship.relation":
+		if e.ComplexityRoot.GameEntityRelationship.Relation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityRelationship.Relation(childComplexity), true
+
+	case "GameEntityRelationshipConnection.nodes":
+		if e.ComplexityRoot.GameEntityRelationshipConnection.Nodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityRelationshipConnection.Nodes(childComplexity), true
+	case "GameEntityRelationshipConnection.pageInfo":
+		if e.ComplexityRoot.GameEntityRelationshipConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityRelationshipConnection.PageInfo(childComplexity), true
+	case "GameEntityRelationshipConnection.total":
+		if e.ComplexityRoot.GameEntityRelationshipConnection.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityRelationshipConnection.Total(childComplexity), true
+
+	case "GameEntitySummary.externalId":
+		if e.ComplexityRoot.GameEntitySummary.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummary.ExternalID(childComplexity), true
+	case "GameEntitySummary.id":
+		if e.ComplexityRoot.GameEntitySummary.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummary.ID(childComplexity), true
+	case "GameEntitySummary.iconName":
+		if e.ComplexityRoot.GameEntitySummary.IconName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummary.IconName(childComplexity), true
+	case "GameEntitySummary.iconUrl":
+		if e.ComplexityRoot.GameEntitySummary.IconURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummary.IconURL(childComplexity), true
+	case "GameEntitySummary.name":
+		if e.ComplexityRoot.GameEntitySummary.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummary.Name(childComplexity), true
+	case "GameEntitySummary.product":
+		if e.ComplexityRoot.GameEntitySummary.Product == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummary.Product(childComplexity), true
+	case "GameEntitySummary.slug":
+		if e.ComplexityRoot.GameEntitySummary.Slug == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummary.Slug(childComplexity), true
+	case "GameEntitySummary.type":
+		if e.ComplexityRoot.GameEntitySummary.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntitySummary.Type(childComplexity), true
+
 	case "GameProduct.buildNumber":
 		if e.ComplexityRoot.GameProduct.BuildNumber == nil {
 			break
@@ -646,6 +772,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.GameEntity(childComplexity, args["id"].(string), args["locale"].(*model.Locale)), true
+	case "Query.gameEntityRelationships":
+		if e.ComplexityRoot.Query.GameEntityRelationships == nil {
+			break
+		}
+
+		args, err := ec.field_Query_gameEntityRelationships_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GameEntityRelationships(childComplexity, args["id"].(string), args["locale"].(*model.Locale), args["direction"].(*model.RelationshipDirection), args["relation"].(*string), args["cursor"].(*string), args["limit"].(*int)), true
 	case "Query.gameProducts":
 		if e.ComplexityRoot.Query.GameProducts == nil {
 			break
@@ -851,6 +988,56 @@ func (ec *executionContext) childFields_GameEntityMedia(ctx context.Context, fie
 		return ec.fieldContext_GameEntityMedia_primary(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type GameEntityMedia", field.Name)
+}
+
+func (ec *executionContext) childFields_GameEntityRelationship(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "direction":
+		return ec.fieldContext_GameEntityRelationship_direction(ctx, field)
+	case "relation":
+		return ec.fieldContext_GameEntityRelationship_relation(ctx, field)
+	case "buildId":
+		return ec.fieldContext_GameEntityRelationship_buildId(ctx, field)
+	case "attributes":
+		return ec.fieldContext_GameEntityRelationship_attributes(ctx, field)
+	case "entity":
+		return ec.fieldContext_GameEntityRelationship_entity(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntityRelationship", field.Name)
+}
+
+func (ec *executionContext) childFields_GameEntityRelationshipConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "nodes":
+		return ec.fieldContext_GameEntityRelationshipConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_GameEntityRelationshipConnection_pageInfo(ctx, field)
+	case "total":
+		return ec.fieldContext_GameEntityRelationshipConnection_total(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntityRelationshipConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_GameEntitySummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_GameEntitySummary_id(ctx, field)
+	case "product":
+		return ec.fieldContext_GameEntitySummary_product(ctx, field)
+	case "type":
+		return ec.fieldContext_GameEntitySummary_type(ctx, field)
+	case "externalId":
+		return ec.fieldContext_GameEntitySummary_externalId(ctx, field)
+	case "slug":
+		return ec.fieldContext_GameEntitySummary_slug(ctx, field)
+	case "name":
+		return ec.fieldContext_GameEntitySummary_name(ctx, field)
+	case "iconName":
+		return ec.fieldContext_GameEntitySummary_iconName(ctx, field)
+	case "iconUrl":
+		return ec.fieldContext_GameEntitySummary_iconUrl(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GameEntitySummary", field.Name)
 }
 
 func (ec *executionContext) childFields_GameProduct(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1112,6 +1299,60 @@ func (ec *executionContext) field_Query_gameEntities_args(ctx context.Context, r
 		return nil, err
 	}
 	args["query"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "cursor",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["cursor"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_gameEntityRelationships_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "locale",
+		func(ctx context.Context, v any) (*model.Locale, error) {
+			return ec.unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locale"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "direction",
+		func(ctx context.Context, v any) (*model.RelationshipDirection, error) {
+			return ec.unmarshalORelationshipDirection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐRelationshipDirection(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["direction"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "relation",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["relation"] = arg3
 	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "cursor",
 		func(ctx context.Context, v any) (*string, error) {
 			return ec.unmarshalOString2ᚖstring(ctx, v)
@@ -2177,6 +2418,401 @@ func (ec *executionContext) fieldContext_GameEntityMedia_primary(_ context.Conte
 	return graphql.NewScalarFieldContext("GameEntityMedia", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _GameEntityRelationship_direction(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityRelationship) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityRelationship_direction(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Direction, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.RelationshipDirection) graphql.Marshaler {
+			return ec.marshalNRelationshipDirection2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐRelationshipDirection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityRelationship_direction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityRelationship", field, false, false, errors.New("field of type RelationshipDirection does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityRelationship_relation(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityRelationship) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityRelationship_relation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Relation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityRelationship_relation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityRelationship", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityRelationship_buildId(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityRelationship) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityRelationship_buildId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityRelationship_buildId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityRelationship", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityRelationship_attributes(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityRelationship) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityRelationship_attributes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Attributes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalNJSON2map(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityRelationship_attributes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityRelationship", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityRelationship_entity(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityRelationship) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityRelationship_entity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Entity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.GameEntitySummary) graphql.Marshaler {
+			return ec.marshalNGameEntitySummary2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySummary(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityRelationship_entity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntityRelationship",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntitySummary(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GameEntityRelationshipConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityRelationshipConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityRelationshipConnection_nodes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Nodes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.GameEntityRelationship) graphql.Marshaler {
+			return ec.marshalNGameEntityRelationship2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityRelationshipᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityRelationshipConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntityRelationshipConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityRelationship(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GameEntityRelationshipConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityRelationshipConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityRelationshipConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityRelationshipConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GameEntityRelationshipConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GameEntityRelationshipConnection_total(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityRelationshipConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityRelationshipConnection_total(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Total, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityRelationshipConnection_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityRelationshipConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySummary_id(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummary_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummary_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySummary", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySummary_product(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummary_product(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Product, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummary_product(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySummary_type(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummary_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummary_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySummary_externalId(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummary_externalId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummary_externalId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySummary_slug(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummary_slug(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Slug, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummary_slug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySummary_name(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummary_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummary_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySummary_iconName(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummary_iconName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IconName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummary_iconName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntitySummary_iconUrl(ctx context.Context, field graphql.CollectedField, obj *model.GameEntitySummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntitySummary_iconUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IconURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntitySummary_iconUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntitySummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _GameProduct_id(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3096,6 +3732,50 @@ func (ec *executionContext) fieldContext_Query_gameEntity(ctx context.Context, f
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_gameEntity_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_gameEntityRelationships(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_gameEntityRelationships(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GameEntityRelationships(ctx, fc.Args["id"].(string), fc.Args["locale"].(*model.Locale), fc.Args["direction"].(*model.RelationshipDirection), fc.Args["relation"].(*string), fc.Args["cursor"].(*string), fc.Args["limit"].(*int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.GameEntityRelationshipConnection) graphql.Marshaler {
+			return ec.marshalNGameEntityRelationshipConnection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityRelationshipConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_gameEntityRelationships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_GameEntityRelationshipConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_gameEntityRelationships_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4616,6 +5296,185 @@ func (ec *executionContext) _GameEntityMedia(ctx context.Context, sel ast.Select
 	return out
 }
 
+var gameEntityRelationshipImplementors = []string{"GameEntityRelationship"}
+
+func (ec *executionContext) _GameEntityRelationship(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntityRelationship) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntityRelationshipImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntityRelationship")
+		case "direction":
+			out.Values[i] = ec._GameEntityRelationship_direction(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "relation":
+			out.Values[i] = ec._GameEntityRelationship_relation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "buildId":
+			out.Values[i] = ec._GameEntityRelationship_buildId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "attributes":
+			out.Values[i] = ec._GameEntityRelationship_attributes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "entity":
+			out.Values[i] = ec._GameEntityRelationship_entity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameEntityRelationshipConnectionImplementors = []string{"GameEntityRelationshipConnection"}
+
+func (ec *executionContext) _GameEntityRelationshipConnection(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntityRelationshipConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntityRelationshipConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntityRelationshipConnection")
+		case "nodes":
+			out.Values[i] = ec._GameEntityRelationshipConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._GameEntityRelationshipConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "total":
+			out.Values[i] = ec._GameEntityRelationshipConnection_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var gameEntitySummaryImplementors = []string{"GameEntitySummary"}
+
+func (ec *executionContext) _GameEntitySummary(ctx context.Context, sel ast.SelectionSet, obj *model.GameEntitySummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gameEntitySummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GameEntitySummary")
+		case "id":
+			out.Values[i] = ec._GameEntitySummary_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "product":
+			out.Values[i] = ec._GameEntitySummary_product(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._GameEntitySummary_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "externalId":
+			out.Values[i] = ec._GameEntitySummary_externalId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._GameEntitySummary_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._GameEntitySummary_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "iconName":
+			out.Values[i] = ec._GameEntitySummary_iconName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "iconUrl":
+			out.Values[i] = ec._GameEntitySummary_iconUrl(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var gameProductImplementors = []string{"GameProduct"}
 
 func (ec *executionContext) _GameProduct(ctx context.Context, sel ast.SelectionSet, obj *model.GameProduct) graphql.Marshaler {
@@ -4998,6 +5857,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_gameEntity(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "gameEntityRelationships":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_gameEntityRelationships(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -5566,6 +6447,56 @@ func (ec *executionContext) marshalNGameEntityMedia2ᚖgithubᚗcomᚋGildraᚑF
 	return ec._GameEntityMedia(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNGameEntityRelationship2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityRelationshipᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameEntityRelationship) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNGameEntityRelationship2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityRelationship(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGameEntityRelationship2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityRelationship(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityRelationship) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameEntityRelationship(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameEntityRelationshipConnection2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityRelationshipConnection(ctx context.Context, sel ast.SelectionSet, v model.GameEntityRelationshipConnection) graphql.Marshaler {
+	return ec._GameEntityRelationshipConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGameEntityRelationshipConnection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntityRelationshipConnection(ctx context.Context, sel ast.SelectionSet, v *model.GameEntityRelationshipConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameEntityRelationshipConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGameEntitySummary2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameEntitySummary(ctx context.Context, sel ast.SelectionSet, v *model.GameEntitySummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GameEntitySummary(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNGameProduct2ᚕᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐGameProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GameProduct) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -5719,6 +6650,16 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋGildraᚑFoundati
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRelationshipDirection2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐRelationshipDirection(ctx context.Context, v any) (model.RelationshipDirection, error) {
+	var res model.RelationshipDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRelationshipDirection2githubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐRelationshipDirection(ctx context.Context, sel ast.SelectionSet, v model.RelationshipDirection) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -5965,6 +6906,22 @@ func (ec *executionContext) unmarshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundati
 }
 
 func (ec *executionContext) marshalOLocale2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐLocale(ctx context.Context, sel ast.SelectionSet, v *model.Locale) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalORelationshipDirection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐRelationshipDirection(ctx context.Context, v any) (*model.RelationshipDirection, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.RelationshipDirection)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalORelationshipDirection2ᚖgithubᚗcomᚋGildraᚑFoundationᚋGildraᚋbackendᚋinternalᚋgraphqlapiᚋmodelᚐRelationshipDirection(ctx context.Context, sel ast.SelectionSet, v *model.RelationshipDirection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

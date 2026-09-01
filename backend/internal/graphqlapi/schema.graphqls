@@ -67,6 +67,37 @@ type GameEntity {
   updatedAt: Time!
 }
 
+type GameEntitySummary {
+  id: ID!
+  product: String!
+  type: String!
+  externalId: String!
+  slug: String!
+  name: String!
+  iconName: String
+  iconUrl: String
+}
+
+enum RelationshipDirection {
+  both
+  incoming
+  outgoing
+}
+
+type GameEntityRelationship {
+  direction: RelationshipDirection!
+  relation: String!
+  buildId: String!
+  attributes: JSON!
+  entity: GameEntitySummary!
+}
+
+type GameEntityRelationshipConnection {
+  nodes: [GameEntityRelationship!]!
+  pageInfo: PageInfo!
+  total: Int!
+}
+
 type GameEntityLocalization {
   locale: Locale!
   name: String!
@@ -108,6 +139,14 @@ type Query {
   gameProducts: [GameProduct!]!
   libraryDatasets(product: String = "wow", locale: Locale = en_US): [LibraryDataset!]!
   gameEntity(id: ID!, locale: Locale = en_US): GameEntity
+  gameEntityRelationships(
+    id: ID!
+    locale: Locale = en_US
+    direction: RelationshipDirection = both
+    relation: String
+    cursor: String
+    limit: Int = 50
+  ): GameEntityRelationshipConnection!
   gameEntities(
     product: String
     type: String
