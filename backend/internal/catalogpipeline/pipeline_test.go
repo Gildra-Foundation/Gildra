@@ -121,15 +121,15 @@ func TestNormalizeOptionsSelectsProductAwareProfiles(t *testing.T) {
 		},
 		{
 			name: "classic default", product: "wow_classic", buildVersion: "4.4.2.69900",
-			wantProfile: ProfileClassicFoundation, wantSources: []string{"db2", "battlenet", "listfile"},
+			wantProfile: ProfileClassicFoundation, wantSources: []string{"db2", "listfile"},
 		},
 		{
 			name: "classic era default", product: "wow_classic_era", buildVersion: "1.15.8.69901",
-			wantProfile: ProfileClassicEraFoundation, wantSources: []string{"db2", "battlenet", "listfile"},
+			wantProfile: ProfileClassicEraFoundation, wantSources: []string{"db2", "listfile"},
 		},
 		{
 			name: "classic hardcore default", product: "wow_classic_hardcore", buildVersion: "1.15.8.69902",
-			wantProfile: ProfileClassicHardcoreFoundation, wantSources: []string{"db2", "battlenet", "listfile"},
+			wantProfile: ProfileClassicHardcoreFoundation, wantSources: []string{"db2", "listfile"},
 		},
 		{
 			name: "classic requires pinned version", product: "wow_classic",
@@ -212,9 +212,9 @@ func TestProductionProfilesAcceptTheirCompleteSourceSets(t *testing.T) {
 		sources                         []string
 	}{
 		{name: "retail", product: "wow", profile: ProfileRetailFoundation, version: "12.1.0.69404", sources: []string{"wago", "db2", "battlenet", "listfile"}},
-		{name: "classic", product: "wow_classic", profile: ProfileClassicFoundation, version: "4.4.2.69900", sources: []string{"db2", "battlenet", "listfile"}},
-		{name: "era", product: "wow_classic_era", profile: ProfileClassicEraFoundation, version: "1.15.8.69901", sources: []string{"db2", "battlenet", "listfile"}},
-		{name: "hardcore", product: "wow_classic_hardcore", profile: ProfileClassicHardcoreFoundation, version: "1.15.8.69902", sources: []string{"db2", "battlenet", "listfile"}},
+		{name: "classic", product: "wow_classic", profile: ProfileClassicFoundation, version: "4.4.2.69900", sources: []string{"db2", "listfile"}},
+		{name: "era", product: "wow_classic_era", profile: ProfileClassicEraFoundation, version: "1.15.8.69901", sources: []string{"db2", "listfile"}},
+		{name: "hardcore", product: "wow_classic_hardcore", profile: ProfileClassicHardcoreFoundation, version: "1.15.8.69902", sources: []string{"db2", "listfile"}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			_, err := BuildPlan(Options{
