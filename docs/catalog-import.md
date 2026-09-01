@@ -559,6 +559,12 @@ from running. Installing/enabling those units and performing the first apply
 are production changes and require a separate approved operation with a
 verified backup and rollback plan.
 
+For an immediate first fill, use the `Refresh WoW catalogs` GitHub Actions
+workflow. It is manual-only, protected by the production environment and a
+required full-import confirmation. The workflow runs the same four-edition
+runner over SSH, so it follows the identical build checks, independent failure
+handling and verified-same-host recovery policy as the daily timer.
+
 When an immutable deployment applies new PostgreSQL migrations, the deploy
 script checks the running schema against the latest verified same-host backup
 and refreshes that backup before readiness checks if it is stale or predates
