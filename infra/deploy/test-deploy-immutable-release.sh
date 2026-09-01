@@ -4,6 +4,7 @@ set -eu
 
 script_directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 deployment_script=$script_directory/deploy-immutable-release.sh
+bootstrap_script=$script_directory/bootstrap-runtime-policy.sh
 repository_directory=$(CDPATH= cd -- "$script_directory/../.." && pwd)
 test_directory=$(mktemp -d)
 trap 'rm -rf "$test_directory"' EXIT HUP INT TERM
@@ -223,3 +224,16 @@ rollback_disarm_line=$(grep -n '^rollback_armed=false$' "$deployment_script" | t
 }
 
 printf 'test: failed release restored and verified the previous immutable images\n'
+
+bootstrap_env=$test_directory/bootstrap.env
+printf 'LEGACY_SETTING=kept\n' > "$bootstrap_env"
+"$bootstrap_script" "$bootstrap_env" > "$test_directory/bootstrap.log" 2>&1
+grep -q '^LEGACY_SETTING=kept$' "$bootstrap_env"
+grep -q '^CATALOG_ACCESS_MODE=private$' "$bootstrap_env"
+grep -q '^CATALOG_RECOVERY_POLICY=verified_same_host$' "$bootstrap_env"
+grep -q '^CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups$' "$bootstrap_env"
+"$bootstrap_script" "$bootstrap_env" >/dev/null 2>&1
+[ "$(grep -c '^CATALOG_ACCESS_MODE=' "$bootstrap_env")" -eq 1 ]
+[ "$(grep -c '^CATALOG_RECOVERY_POLICY=' "$bootstrap_env")" -eq 1 ]
+[ "$(grep -c '^CATALOG_BACKUP_LOCAL_DIRECTORY=' "$bootstrap_env")" -eq 1 ]
+grep -Fq 'bootstrap-runtime-policy.sh' "$repository_directory/.github/workflows/deploy.yml"

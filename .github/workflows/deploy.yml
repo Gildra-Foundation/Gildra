@@ -129,6 +129,12 @@ jobs:
           OVH_USER: ${{ secrets.OVH_USER }}
         run: |
           tar -czf - compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && sudo chown -R root:root /opt/gildra'
+      - name: Bootstrap catalog runtime policy
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+        run: |
+          ssh "$OVH_USER@$OVH_HOST" 'sudo /opt/gildra/infra/deploy/bootstrap-runtime-policy.sh /opt/gildra/.env'
       - name: Deploy immutable images
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
