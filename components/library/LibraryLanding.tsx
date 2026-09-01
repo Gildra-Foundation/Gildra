@@ -21,6 +21,11 @@ const productFreshnessText = {
   ru: { fresh: "Свежие", stale: "Устарели", failed: "Ошибка проверки", unknown: "Нет проверки" },
 };
 
+type ProductWithFreshness = CatalogProduct & {
+  freshness?: keyof typeof productFreshnessText.en;
+  freshnessReason?: string;
+};
+
 const applicabilityText = {
   en: { pending_source: "Source needed", not_applicable: "Not applicable" },
   ru: { pending_source: "Нужен источник", not_applicable: "Не применяется" },
@@ -65,9 +70,13 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
 
     {!unavailable ? <nav className="library-products" aria-label={lang === "ru" ? "Версия игры" : "Game version"}>
       {products.map((product) => {
-        const state = product.freshness ?? "unknown";
+        // Older API deployments return only id/slug/name for products. Keep
+        // the freshness decoration additive so the outage fallback can be
+        // deployed without coupling the web build to a schema migration.
+        const productStatus = product as ProductWithFreshness;
+        const state = productStatus.freshness ?? "unknown";
         const stateLabel = productFreshnessText[lang][state as keyof typeof productFreshnessText.en] ?? productFreshnessText[lang].unknown;
-        return <Link key={product.slug} className={product.slug === selectedProduct ? "is-active" : ""} href={`${localePrefix}/library${product.slug === "wow" ? "" : `?product=${encodeURIComponent(product.slug)}`}`} aria-label={`${product.name}: ${stateLabel}`} title={product.freshnessReason}>
+        return <Link key={product.slug} className={product.slug === selectedProduct ? "is-active" : ""} href={`${localePrefix}/library${product.slug === "wow" ? "" : `?product=${encodeURIComponent(product.slug)}`}`} aria-label={`${product.name}: ${stateLabel}`} title={productStatus.freshnessReason}>
           <span className="library-product-name">{product.name}</span>
           <small className={`library-product-freshness is-${state}`}>{stateLabel}</small>
         </Link>;
