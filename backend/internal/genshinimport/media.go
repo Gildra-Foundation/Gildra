@@ -118,10 +118,14 @@ func (f *MediaFetcher) FetchOptional(ctx context.Context, filenames []string) (m
 		group.Go(func() error {
 			asset, notFound, err := f.download(groupCtx, directory, filename, filename)
 			if err != nil {
-				if notFound {
-					return nil
+				// Generic records include client-only assets as well as files
+				// that can transiently disappear upstream. Keep the source
+				// reference in the database and let the rest of the import
+				// complete when an optional file is unavailable.
+				if !notFound {
+					slog.Warn("genshin optional media unavailable", "filename", filename, "error", err)
 				}
-				return fmt.Errorf("download optional genshin media %q: %w", filename, err)
+				return nil
 			}
 			assets[index] = asset
 			return nil
