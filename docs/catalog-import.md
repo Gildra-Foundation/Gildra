@@ -547,11 +547,17 @@ state. Update `catalog_source_policies` after a current terms review and add an
 review timestamp, exact environment/surface and any expiration date recorded.
 
 The optional host scheduler is in `infra/systemd/gildra-catalog-refresh.*`. It
-runs at 04:15 with randomized delay and `Persistent=true`. Its `ExecCondition`
-runs `catalog-build-check`, persists the observed build and skips the expensive
-pipeline when no new build exists. Installing/enabling those units and
-performing the first apply are production changes and require a separate
-approved operation with a verified backup and rollback plan.
+runs at 04:15 with randomized delay and `Persistent=true`. The runner checks
+and refreshes Retail (`wow`), Classic (`wow_classic`), Classic Era
+(`wow_classic_era`) and Hardcore (`wow_classic_hardcore`) independently. Wago
+publishes Hardcore through the Classic Era build stream, but the resulting
+catalog remains a separate product and API namespace. A build check records
+the edition-specific manifest before the expensive pipeline starts; an
+already-current edition is skipped, while a failure in one edition is reported
+without discarding the last verified release or preventing the other editions
+from running. Installing/enabling those units and performing the first apply
+are production changes and require a separate approved operation with a
+verified backup and rollback plan.
 
 When an immutable deployment applies new PostgreSQL migrations, the deploy
 script checks the running schema against the latest verified same-host backup
