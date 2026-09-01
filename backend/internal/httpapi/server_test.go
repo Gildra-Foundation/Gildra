@@ -97,3 +97,13 @@ func TestAPILibraryDatasetPreservesFreshnessAndCoverage(t *testing.T) {
 		t.Fatalf("dataset preview was lost: %#v", got.PreviewImageUrl)
 	}
 }
+
+func TestAPIProductPreservesFreshness(t *testing.T) {
+	freshness := "stale"
+	reason := "опубликована старая сборка"
+	product := catalog.Product{ID: 1, Slug: "wow_classic", Name: "World of Warcraft Classic", Freshness: freshness, FreshnessReason: reason}
+	got := toAPIProduct(product)
+	if got.Freshness == nil || string(*got.Freshness) != freshness || got.FreshnessReason == nil || *got.FreshnessReason != reason {
+		t.Fatalf("product freshness was lost: %#v", got)
+	}
+}
