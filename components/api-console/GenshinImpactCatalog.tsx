@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BookOpen, Box, ChevronRight, CircleAlert, Gem, ImageIcon, Languages,
-  RefreshCw, Search, Sparkles, Swords,
+  Maximize2, RefreshCw, Search, Sparkles, Swords, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,12 @@ type Character = {
   localeFallback: boolean; talentCount: number;
 };
 
+type CharacterDetail = Character & {
+  description: string;
+  talents: Talent[];
+  constellations: Constellation[];
+};
+
 type Weapon = {
   id: number; externalId: number; slug: string; name: string; rarity: number;
   weaponType: string; baseAttack: number | null; secondaryStat: string;
@@ -53,6 +59,14 @@ type Talent = {
   kind: string; displayOrder: number; name: string; description: string;
   iconUrl: string | null; locale: Locale; localeFallback: boolean;
 };
+
+type Constellation = {
+  id: number; characterSlug: string; externalKey: string; position: number;
+  name: string; description: string; iconUrl: string | null; locale: Locale;
+  localeFallback: boolean;
+};
+
+type ImagePreview = { url: string; label: string };
 
 type ContentMedia = { role: string; filename: string; url?: string | null };
 type Content = {
@@ -120,6 +134,11 @@ export function GenshinImpactCatalog() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [characterDetail, setCharacterDetail] = useState<CharacterDetail | null>(null);
+  const [characterDetailLoading, setCharacterDetailLoading] = useState(false);
+  const [characterDetailError, setCharacterDetailError] = useState("");
+  const [imagePreview, setImagePreview] = useState<ImagePreview | null>(null);
 
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({ locale, limit: "24" });
@@ -149,6 +168,42 @@ export function GenshinImpactCatalog() {
     const timer = window.setTimeout(() => { void load(); }, query ? 250 : 0);
     return () => window.clearTimeout(timer);
   }, [load, revision, query]);
+
+  useEffect(() => {
+    if (!selectedCharacter) {
+      setCharacterDetail(null);
+      setCharacterDetailError("");
+      return;
+    }
+    let cancelled = false;
+    setCharacterDetail(null);
+    setCharacterDetailError("");
+    setCharacterDetailLoading(true);
+    void requestJSON<CharacterDetail>(`/genshin-impact/v1/characters/${encodeURIComponent(selectedCharacter.slug)}?locale=${locale}`)
+      .then((detail) => { if (!cancelled) setCharacterDetail(detail); })
+      .catch((reason) => {
+        if (!cancelled) setCharacterDetailError(reason instanceof Error ? reason.message : "Не удалось загрузить профиль персонажа");
+      })
+      .finally(() => { if (!cancelled) setCharacterDetailLoading(false); });
+    return () => { cancelled = true; };
+  }, [locale, selectedCharacter]);
+
+  useEffect(() => {
+    if (!selectedCharacter && !imagePreview) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (imagePreview) setImagePreview(null);
+        else setSelectedCharacter(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [imagePreview, selectedCharacter]);
 
   function switchSection(next: Section) {
     setLoading(true);
@@ -220,10 +275,12 @@ export function GenshinImpactCatalog() {
       {error ? <div className="m-4 flex items-start gap-3 border border-[#693b3e] bg-[#211215] p-4 text-sm text-[#eba0a3] sm:m-5"><CircleAlert className="mt-0.5 size-4 shrink-0" /><div><strong className="block font-semibold">Каталог не загрузился</strong><span className="mt-1 block text-xs text-[#ad858d]">{error}</span></div></div> : null}
 
       <div className="p-4 sm:p-5">
-        {loading ? <CatalogSkeleton /> : items.length ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">{items.map((item) => <CatalogCard key={`${section}-${item.id}`} section={section} item={item} />)}</div> : <EmptyCatalog ready={status?.ready ?? false} query={query} />}
+        {loading ? <CatalogSkeleton /> : items.length ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">{items.map((item) => <CatalogCard key={`${section}-${item.id}`} section={section} item={item} onOpenCharacter={setSelectedCharacter} onOpenImage={setImagePreview} />)}</div> : <EmptyCatalog ready={status?.ready ?? false} query={query} />}
         {hasMore ? <div className="mt-5 flex justify-center border-t border-[#29303c] pt-5"><Button type="button" variant="outline" onClick={() => void loadMore()} disabled={loadingMore} className="rounded-none border-[#49422f] bg-[#15140f] px-6 text-xs text-[#d5b35f] hover:border-[#8e7540] hover:bg-[#1d1a11]">{loadingMore ? <RefreshCw className="size-3.5 animate-spin" /> : <ChevronRight className="size-3.5" />}Показать ещё</Button></div> : null}
       </div>
     </section>
+    <CharacterDialog character={selectedCharacter} detail={characterDetail} loading={characterDetailLoading} error={characterDetailError} onClose={() => setSelectedCharacter(null)} onOpenImage={setImagePreview} />
+    <ImageLightbox preview={imagePreview} onClose={() => setImagePreview(null)} />
   </div>;
 }
 
@@ -239,12 +296,30 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
   return <label><span className="sr-only">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full border border-[#303746] bg-[#090d13] px-3 text-xs text-[#abb4c3] outline-none focus:border-[#9b8148]">{options.map(([id, text]) => <option key={`${label}-${id}`} value={id}>{text}</option>)}</select></label>;
 }
 
-function CatalogCard({ section, item }: { section: Section; item: CatalogItem }) {
+function CatalogCard({ section, item, onOpenCharacter, onOpenImage }: {
+  section: Section;
+  item: CatalogItem;
+  onOpenCharacter: (character: Character) => void;
+  onOpenImage: (preview: ImagePreview) => void;
+}) {
   const imageURL = "portraitUrl" in item ? item.portraitUrl ?? item.iconUrl : item.iconUrl ?? ("media" in item ? item.media.find((media) => media.url)?.url ?? null : null);
   const rarityValue = "rarity" in item ? item.rarity : "maxRarity" in item ? item.maxRarity : 0;
-  return <article className="group flex min-h-64 flex-col overflow-hidden border border-[#2b323f] bg-[#0d1118] transition-colors hover:border-[#6e603e]">
-    <div className="relative grid h-40 place-items-center overflow-hidden border-b border-[#28303d] bg-[radial-gradient(circle_at_50%_35%,rgba(201,162,79,.12),transparent_52%),linear-gradient(135deg,#111721,#090d13)]">
-      {imageURL ? <img src={imageURL} alt="" className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none" loading="lazy" /> : <ImageIcon className="size-8 text-[#3f4a5d]" strokeWidth={1.25} />}
+  const interactive = section === "characters";
+  const character = interactive ? item as Character : null;
+  const activate = () => { if (character) onOpenCharacter(character); };
+  return <article
+    className={cn("group flex min-h-64 flex-col overflow-hidden border border-[#2b323f] bg-[#0d1118] transition-colors hover:border-[#6e603e]", interactive && "cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d1aa53]")}
+    onClick={interactive ? activate : undefined}
+    onKeyDown={interactive ? (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(); } } : undefined}
+    role={interactive ? "button" : undefined}
+    tabIndex={interactive ? 0 : undefined}
+    aria-label={interactive ? `Открыть профиль: ${item.name}` : undefined}
+  >
+    <div className="relative grid h-48 place-items-center overflow-hidden border-b border-[#28303d] bg-[radial-gradient(circle_at_50%_35%,rgba(201,162,79,.12),transparent_52%),linear-gradient(135deg,#111721,#090d13)] sm:h-52">
+      {imageURL ? <button type="button" className="relative grid h-full w-full place-items-center cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#e6c77a]" onClick={(event) => { event.stopPropagation(); onOpenImage({ url: imageURL, label: item.name }); }} aria-label={`Открыть изображение: ${item.name}`}>
+        <img src={imageURL} alt="" className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none" loading="lazy" />
+        <span className="absolute bottom-2 right-2 grid size-7 place-items-center border border-[#5b4c2b] bg-[#0a0d13]/85 text-[#d9b65e] opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100" aria-hidden="true"><Maximize2 className="size-3.5" /></span>
+      </button> : <ImageIcon className="size-8 text-[#3f4a5d]" strokeWidth={1.25} />}
       {rarityValue ? <div className="absolute left-3 top-3 flex gap-0.5 text-[#d9b65e]" aria-label={`${rarityValue} звёзд`}>{Array.from({ length: rarityValue }, (_, index) => <span key={index} className="text-[10px]">★</span>)}</div> : null}
       {"element" in item ? <span className={cn("absolute right-3 top-3 border px-2 py-1 text-[8px] font-semibold uppercase tracking-[.12em]", elementColors[item.element] ?? "border-[#394151] text-[#9ca6b8]")}>{elementLabel(item.element)}</span> : null}
     </div>
@@ -256,8 +331,65 @@ function CatalogCard({ section, item }: { section: Section; item: CatalogItem })
       {section === "artifact-sets" ? <div className="mt-3 line-clamp-3 text-[10px] leading-4 text-[#7d899b]">{(item as ArtifactSet).twoPieceBonus || "Бонус комплекта появится после импорта локализации."}</div> : null}
       {section === "talents" ? <div className="mt-3 line-clamp-4 text-[10px] leading-4 text-[#7d899b]">{(item as Talent).description}</div> : null}
       {section === "content" ? <ContentDetails item={item as Content} /> : null}
+      {interactive ? <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#262d39] pt-3 text-[9px] uppercase tracking-[.12em] text-[#8e7540]"><span>Открыть профиль</span><ChevronRight className="size-3.5" /></div> : null}
     </div>
   </article>;
+}
+
+function CharacterDialog({ character, detail, loading, error, onClose, onOpenImage }: {
+  character: Character | null;
+  detail: CharacterDetail | null;
+  loading: boolean;
+  error: string;
+  onClose: () => void;
+  onOpenImage: (preview: ImagePreview) => void;
+}) {
+  if (!character) return null;
+  const profile = detail ?? character;
+  const imageURL = profile.portraitUrl ?? profile.iconUrl;
+  return <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#05070b]/85 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-labelledby="genshin-character-dialog-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="my-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-6xl flex-col overflow-hidden border border-[#4b4029] bg-[#0d1118] shadow-[0_28px_90px_rgba(0,0,0,.65)] sm:max-h-[calc(100vh-3rem)]">
+      <div className="flex items-start justify-between gap-4 border-b border-[#2b313e] bg-[#11151d] px-4 py-4 sm:px-6">
+        <div className="min-w-0"><div className="text-[9px] uppercase tracking-[.18em] text-[#c9a24f]">Профиль персонажа</div><h2 id="genshin-character-dialog-title" className="mt-1 truncate font-[var(--display)] text-xl font-semibold text-[#edf0f5] sm:text-2xl">{profile.name}</h2><p className="mt-1 text-xs text-[#8290a4]">{profile.title || profile.region || "Genshin Impact"}</p></div>
+        <button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center border border-[#343b4a] text-[#9da7b7] transition-colors hover:border-[#8e7540] hover:text-[#e6c778]" aria-label="Закрыть профиль"><X className="size-4" /></button>
+      </div>
+      <div className="min-h-0 overflow-y-auto">
+        <div className="grid gap-5 border-b border-[#2b313e] bg-[radial-gradient(circle_at_18%_18%,rgba(201,162,79,.1),transparent_35%),#0b0f16] p-4 sm:grid-cols-[220px_minmax(0,1fr)] sm:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <div className="relative flex min-h-64 items-center justify-center overflow-hidden border border-[#343c4b] bg-[linear-gradient(145deg,#161d29,#090d13)] sm:min-h-80">
+            {imageURL ? <button type="button" className="relative h-full min-h-64 w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#e6c77a]" onClick={() => onOpenImage({ url: imageURL, label: profile.name })} aria-label={`Открыть изображение: ${profile.name}`}><img src={imageURL} alt={profile.name} className="h-full max-h-[28rem] w-full object-contain p-3" /><span className="absolute bottom-3 right-3 grid size-8 place-items-center border border-[#5b4c2b] bg-[#0a0d13]/85 text-[#d9b65e]"><Maximize2 className="size-4" /></span></button> : <ImageIcon className="size-10 text-[#4c586b]" strokeWidth={1.2} />}
+          </div>
+          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Stars count={profile.rarity} /><span className={cn("border px-2 py-1 text-[9px] font-semibold uppercase tracking-[.1em]", elementColors[profile.element] ?? "border-[#394151] text-[#9ca6b8]")}>{elementLabel(profile.element)}</span><span className="border border-[#343c4b] px-2 py-1 text-[9px] text-[#aeb7c7]">{weaponLabel(profile.weaponType)}</span></div><p className="mt-5 max-w-3xl whitespace-pre-line text-sm leading-6 text-[#b0bac9]">{detail?.description || "Описание персонажа загружается вместе с профилем."}</p><div className="mt-6 grid grid-cols-2 gap-px border border-[#2b3340] bg-[#2b3340] sm:grid-cols-4"><Fact label="Регион" value={profile.region || "—"} /><Fact label="Таланты" value={String(profile.talentCount)} /><Fact label="ID" value={String(profile.externalId)} mono /><Fact label="Язык" value={profile.locale === "ru_RU" ? "Русский" : "English"} /></div></div>
+        </div>
+        {loading ? <div className="grid min-h-56 place-items-center p-6"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /><span className="sr-only">Загрузка профиля</span></div> : error ? <div className="m-4 border border-[#693b3e] bg-[#211215] p-4 text-sm text-[#eba0a3] sm:m-6">{error}</div> : <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-2 lg:gap-10"><CharacterTalentList talents={detail?.talents ?? []} onOpenImage={onOpenImage} /><CharacterConstellationList constellations={detail?.constellations ?? []} onOpenImage={onOpenImage} /></div>}
+      </div>
+    </div>
+  </div>;
+}
+
+function CharacterTalentList({ talents, onOpenImage }: { talents: Talent[]; onOpenImage: (preview: ImagePreview) => void }) {
+  return <section aria-labelledby="genshin-character-talents-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Боевые навыки</div><h3 id="genshin-character-talents-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Таланты</h3></div><span className="text-[10px] tabular-nums text-[#7d899b]">{talents.length}</span></div><div className="mt-4 space-y-3">{talents.length ? talents.map((talent) => <div key={talent.id} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex gap-3"><SmallMediaButton url={talent.iconUrl} label={talent.name} onOpenImage={onOpenImage} /><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.1em] text-[#8e7540]">{talentKindLabel(talent.kind)}</div><h4 className="mt-1 text-sm font-medium text-[#dce2eb]">{talent.name}</h4><p className="mt-2 whitespace-pre-line text-[11px] leading-5 text-[#8894a7]">{talent.description || "Описание отсутствует."}</p></div></div></div>) : <EmptyDetail text="Для этого персонажа таланты не найдены." />}</div></section>;
+}
+
+function CharacterConstellationList({ constellations, onOpenImage }: { constellations: Constellation[]; onOpenImage: (preview: ImagePreview) => void }) {
+  return <section aria-labelledby="genshin-character-constellations-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Созвездие</div><h3 id="genshin-character-constellations-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Созвездия</h3></div><span className="text-[10px] tabular-nums text-[#7d899b]">{constellations.length}/6</span></div><div className="mt-4 space-y-3">{constellations.length ? constellations.map((constellation) => <div key={constellation.id} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex gap-3"><SmallMediaButton url={constellation.iconUrl} label={constellation.name} onOpenImage={onOpenImage} /><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.1em] text-[#8e7540]">C{constellation.position}</div><h4 className="mt-1 text-sm font-medium text-[#dce2eb]">{constellation.name}</h4><p className="mt-2 whitespace-pre-line text-[11px] leading-5 text-[#8894a7]">{constellation.description || "Описание отсутствует."}</p></div></div></div>) : <EmptyDetail text="Для этого персонажа созвездия не найдены." />}</div></section>;
+}
+
+function SmallMediaButton({ url, label, onOpenImage }: { url: string | null; label: string; onOpenImage: (preview: ImagePreview) => void }) {
+  if (!url) return <div className="grid size-12 shrink-0 place-items-center border border-[#303847] bg-[#0a0e14]"><ImageIcon className="size-4 text-[#536075]" /></div>;
+  return <button type="button" onClick={() => onOpenImage({ url, label })} className="relative size-12 shrink-0 cursor-zoom-in overflow-hidden border border-[#3b3d35] bg-[#0a0e14] p-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e6c77a]" aria-label={`Открыть изображение: ${label}`}><img src={url} alt="" className="h-full w-full object-contain" /></button>;
+}
+
+function EmptyDetail({ text }: { text: string }) {
+  return <div className="border border-dashed border-[#303847] bg-[#0c1017] p-5 text-center text-xs text-[#738095]">{text}</div>;
+}
+
+function ImageLightbox({ preview, onClose }: { preview: ImagePreview | null; onClose: () => void }) {
+  if (!preview) return null;
+  return <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#030407]/95 p-3 backdrop-blur-md sm:p-8" role="dialog" aria-modal="true" aria-labelledby="genshin-image-preview-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><div className="relative flex max-h-full max-w-6xl flex-col items-center gap-3"><button type="button" onClick={onClose} className="absolute -right-1 -top-1 z-10 grid size-9 place-items-center border border-[#51452e] bg-[#0b0e14]/95 text-[#e6c778] hover:bg-[#171a20]" aria-label="Закрыть изображение"><X className="size-4" /></button><img src={preview.url} alt={preview.label} className="max-h-[82vh] max-w-[94vw] object-contain sm:max-h-[86vh] sm:max-w-[88vw]" /><div id="genshin-image-preview-title" className="border border-[#343c4b] bg-[#0b0e14]/95 px-4 py-2 text-center text-xs text-[#cbd2de]">{preview.label}</div></div></div>;
+}
+
+function Stars({ count }: { count: number }) {
+  return <span className="flex gap-0.5 text-[#d9b65e]" aria-label={`${count} звёзд`}>{Array.from({ length: count }, (_, index) => <span key={index} className="text-[10px]">★</span>)}</span>;
 }
 
 function CharacterFacts({ item }: { item: Character }) {
