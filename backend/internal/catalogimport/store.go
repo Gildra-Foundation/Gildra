@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"math"
 	"net/url"
 	"sort"
 	"strings"
@@ -1235,11 +1236,54 @@ func pathInt32(doc map[string]any, keys ...string) *int64 {
 }
 
 func integer(value any) *int64 {
-	number, ok := value.(float64)
-	if !ok {
+	var result int64
+	switch number := value.(type) {
+	case float64:
+		if math.IsNaN(number) || math.IsInf(number, 0) || number != math.Trunc(number) || number < -float64(1<<63) || number >= float64(1<<63) {
+			return nil
+		}
+		result = int64(number)
+	case float32:
+		converted := float64(number)
+		if math.IsNaN(converted) || math.IsInf(converted, 0) || converted != math.Trunc(converted) || converted < -float64(1<<63) || converted >= float64(1<<63) {
+			return nil
+		}
+		result = int64(number)
+	case int:
+		result = int64(number)
+	case int8:
+		result = int64(number)
+	case int16:
+		result = int64(number)
+	case int32:
+		result = int64(number)
+	case int64:
+		result = number
+	case uint:
+		if uint64(number) > math.MaxInt64 {
+			return nil
+		}
+		result = int64(number)
+	case uint8:
+		result = int64(number)
+	case uint16:
+		result = int64(number)
+	case uint32:
+		result = int64(number)
+	case uint64:
+		if number > math.MaxInt64 {
+			return nil
+		}
+		result = int64(number)
+	case json.Number:
+		parsed, err := number.Int64()
+		if err != nil {
+			return nil
+		}
+		result = parsed
+	default:
 		return nil
 	}
-	result := int64(number)
 	return &result
 }
 
