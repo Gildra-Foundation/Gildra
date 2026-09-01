@@ -302,13 +302,7 @@ func observeBuild(ctx context.Context, db *pgxpool.Pool, spec productSpec, wagoC
 	var remote string
 	var err error
 	if spec.Source == "wago_tools" {
-		// Always resolve the manifest by product key.  The CSV endpoint's
-		// unpinned HEAD is not edition-aware and can select the Retail/test
-		// branch even while checking a Classic product (for example wowt).
-		// Keeping every edition on the manifest path prevents a false update
-		// signal and, more importantly, prevents apply from importing a build
-		// belonging to a different product namespace.
-		remote, err = wagoClient.CurrentBuildForProduct(ctx, spec.WagoKey)
+		remote, err = currentWagoBuild(ctx, wagoClient, spec)
 		if err != nil {
 			return buildObservation{}, fmt.Errorf("resolve Wago build: %w", err)
 		}
@@ -326,6 +320,19 @@ func observeBuild(ctx context.Context, db *pgxpool.Pool, spec productSpec, wagoC
 		return buildObservation{}, err
 	}
 	return buildObservation{Current: current, Remote: remote, Changed: strings.TrimSpace(current) != strings.TrimSpace(remote)}, nil
+}
+
+// currentWagoBuild intentionally uses the product manifest rather than an
+// unpinned CSV HEAD request. The latter is not edition-aware and can select a
+// Retail/test branch (for example wowt) while checking a Classic product.
+func currentWagoBuild(ctx context.Context, client *wago.Client, spec productSpec) (string, error) {
+	if client == nil {
+		return "", errors.New("Wago client is required")
+	}
+	if strings.TrimSpace(spec.WagoKey) == "" {
+		return "", fmt.Errorf("Wago product key is missing for %s", spec.Product)
+	}
+	return client.CurrentBuildForProduct(ctx, spec.WagoKey)
 }
 
 func recordBuildCheck(ctx context.Context, db *pgxpool.Pool, spec productSpec, current, remote string, changed bool, observationErr error) error {
