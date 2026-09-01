@@ -35,6 +35,21 @@ paths:
                 $ref: "#/components/schemas/APIIndex"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+  /v1/:
+    get:
+      operationId: getAPIIndexTrailingSlash
+      summary: Discover the stable v1 API surfaces (trailing-slash alias).
+      description: The trailing-slash form is kept as an explicit alias because reverse proxies may normalize a product-scoped base URL to /v1/.
+      security: []
+      responses:
+        "200":
+          description: API entry point.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIIndex"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
   /v1/game/products:
     get:
       operationId: listGameProducts
