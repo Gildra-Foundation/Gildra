@@ -454,7 +454,8 @@ function ArtifactEffectsPreview({ item }: { item: ArtifactSet }) {
 }
 
 function WeaponEffectPreview({ item }: { item: Weapon }) {
-  return item.passiveName || item.passiveDescription ? <div className="mt-3 line-clamp-4 text-[10px] leading-4 text-[#8995a8]"><span className="mr-1 uppercase tracking-[.08em] text-[#c9a24f]">{item.passiveName || "Пассивный эффект"}</span>{item.passiveDescription || "Описание эффекта отсутствует."}</div> : null;
+  const description = item.passiveDescription?.replace(/\{\d+\}/g, "…") ?? "";
+  return item.passiveName || description ? <div className="mt-3 line-clamp-4 text-[10px] leading-4 text-[#8995a8]"><span className="mr-1 uppercase tracking-[.08em] text-[#c9a24f]">{item.passiveName || "Пассивный эффект"}</span>{description || "Описание эффекта отсутствует."}</div> : null;
 }
 
 function CharacterDialog({ character, detail, loading, error, onClose, onOpenImage }: {
