@@ -17,10 +17,11 @@ import (
 var sourceRevisionPattern = regexp.MustCompile(`^[0-9a-f]{40}$`)
 
 type PublishOptions struct {
-	SourceRevision   string
-	GameVersion      string
-	SourceRepository string
-	MediaBaseURL     string
+	SourceRevision        string
+	GameVersion           string
+	SourceRepository      string
+	MediaBaseURL          string
+	AlternateMediaBaseURL string
 }
 
 type Release struct {
@@ -60,7 +61,7 @@ func (s *Store) Publish(ctx context.Context, dataset Dataset, assets map[string]
 			mediaFallbacks[filename] = asset.FetchedAs
 		}
 	}
-	manifest, err := json.Marshal(map[string]any{
+	manifestValues := map[string]any{
 		"provider":       "genshin-db",
 		"repository":     opts.SourceRepository,
 		"revision":       opts.SourceRevision,
@@ -69,7 +70,11 @@ func (s *Store) Publish(ctx context.Context, dataset Dataset, assets map[string]
 		"locales":        []string{LocaleEnglish, LocaleRussian},
 		"counts":         counts,
 		"mediaFallbacks": mediaFallbacks,
-	})
+	}
+	if opts.AlternateMediaBaseURL != "" {
+		manifestValues["alternateMediaBaseURL"] = opts.AlternateMediaBaseURL
+	}
+	manifest, err := json.Marshal(manifestValues)
 	if err != nil {
 		return Release{}, fmt.Errorf("encode source manifest: %w", err)
 	}

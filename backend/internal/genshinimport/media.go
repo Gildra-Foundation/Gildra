@@ -16,6 +16,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -139,6 +140,15 @@ func (f *MediaFetcher) FetchOptional(ctx context.Context, filenames []string) (m
 	group.SetLimit(f.workers)
 	for index, filename := range filenames {
 		group.Go(func() error {
+			if strings.HasPrefix(filename, "https://") || strings.HasPrefix(filename, "http://") {
+				asset, err := f.downloadExternal(groupCtx, directory, filename)
+				if err == nil {
+					assets[index] = asset
+					return nil
+				}
+				slog.Warn("genshin external media unavailable", "filename", filename, "error", err)
+				return nil
+			}
 			asset, found, err := f.downloadAlternate(groupCtx, directory, filename)
 			if found {
 				if err != nil {
@@ -173,6 +183,39 @@ func (f *MediaFetcher) FetchOptional(ctx context.Context, filenames []string) (m
 		}
 	}
 	return byFilename, nil
+}
+
+func (f *MediaFetcher) downloadExternal(ctx context.Context, directory, source string) (MediaAsset, error) {
+	parsed, err := url.ParseRequestURI(source)
+	if err != nil || parsed.Host == "" || (parsed.Scheme != "https" && parsed.Scheme != "http") {
+		return MediaAsset{}, fmt.Errorf("invalid external media URL %q", source)
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
+	if err != nil {
+		return MediaAsset{}, fmt.Errorf("create external media request: %w", err)
+	}
+	request.Header.Set("User-Agent", "Gildra-Genshin-Importer/1.0 (+https://api.gildra.net)")
+	response, err := f.client.Do(request)
+	if err != nil {
+		return MediaAsset{}, fmt.Errorf("request external media: %w", err)
+	}
+	defer response.Body.Close() //nolint:errcheck
+	if response.StatusCode != http.StatusOK {
+		_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 4096))
+		return MediaAsset{}, fmt.Errorf("external media server returned HTTP %d", response.StatusCode)
+	}
+	content, err := io.ReadAll(io.LimitReader(response.Body, maxMediaBytes+1))
+	if err != nil {
+		return MediaAsset{}, fmt.Errorf("read external media: %w", err)
+	}
+	if len(content) == 0 || len(content) > maxMediaBytes {
+		return MediaAsset{}, fmt.Errorf("external media size %d is outside the allowed range", len(content))
+	}
+	fetched := path.Base(parsed.Path)
+	if fetched == "." || fetched == "/" || fetched == "" {
+		fetched = "external"
+	}
+	return f.persist(directory, source, fetched, source, content)
 }
 
 func (f *MediaFetcher) downloadAlternate(ctx context.Context, directory, filename string) (MediaAsset, bool, error) {

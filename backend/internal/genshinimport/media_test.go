@@ -110,3 +110,32 @@ func TestMediaFetcherUsesAlternateLocalMirrorForOptionalAssets(t *testing.T) {
 		t.Fatalf("source URL = %q", asset.SourceURL)
 	}
 }
+
+func TestMediaFetcherDownloadsOptionalExternalPNGURL(t *testing.T) {
+	var content bytes.Buffer
+	if err := png.Encode(&content, image.NewRGBA(image.Rect(0, 0, 3, 2))); err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/UI_External.png" {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write(content.Bytes())
+	}))
+	t.Cleanup(server.Close)
+
+	fetcher, err := NewMediaFetcher(t.TempDir(), "https://primary.example/ui", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := server.URL + "/UI_External.png"
+	assets, err := fetcher.FetchOptional(t.Context(), []string{source})
+	if err != nil {
+		t.Fatal(err)
+	}
+	asset := assets[source]
+	if asset.Width != 3 || asset.Height != 2 || asset.SourceURL != source {
+		t.Fatalf("asset = %+v", asset)
+	}
+}
