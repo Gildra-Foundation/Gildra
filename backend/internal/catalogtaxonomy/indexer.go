@@ -1206,6 +1206,28 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			FROM catalog_db2_rows raw
 			WHERE raw.table_name='Item' AND raw.locale='en_US'
 			  AND raw.payload->>'IconFileDataID' ~ '^[1-9][0-9]*$'
+		), item_appearance_icons AS MATERIALIZED (
+			-- Item rows often have IconFileDataID=0.  The authoritative fallback
+			-- is ItemModifiedAppearance -> ItemAppearance.DefaultIconFileDataID.
+			-- Keep this build-scoped and deterministic so Retail and Classic rows
+			-- can never be mixed when the same item ID exists in both products.
+			SELECT DISTINCT ON (modified.build_id,(modified.payload->>'ItemID')::bigint)
+				modified.build_id,
+				(modified.payload->>'ItemID')::bigint AS item_id,
+				(appearance.payload->>'DefaultIconFileDataID')::bigint AS file_data_id,
+				COALESCE(appearance.source_artifact_id,modified.source_artifact_id) AS source_artifact_id
+			FROM catalog_db2_rows modified
+			JOIN catalog_db2_rows appearance
+			  ON appearance.build_id=modified.build_id
+			 AND appearance.table_name='ItemAppearance' AND appearance.locale='en_US'
+			 AND appearance.row_id=(modified.payload->>'ItemAppearanceID')::bigint
+			WHERE modified.table_name='ItemModifiedAppearance' AND modified.locale='en_US'
+			  AND modified.payload->>'ItemID' ~ '^[1-9][0-9]*$'
+			  AND modified.payload->>'ItemAppearanceID' ~ '^[1-9][0-9]*$'
+			  AND appearance.payload->>'DefaultIconFileDataID' ~ '^[1-9][0-9]*$'
+			ORDER BY modified.build_id,(modified.payload->>'ItemID')::bigint,
+				COALESCE(NULLIF(modified.payload->>'ItemAppearanceModifierID','')::int,0),
+				COALESCE(NULLIF(modified.payload->>'OrderIndex','')::int,0),modified.row_id
 		), creature_icons AS MATERIALIZED (
 			SELECT DISTINCT ON (version.build_id,entity.external_id)
 				version.build_id,entity.external_id,info.portrait_file_data_id AS file_data_id,
@@ -1223,10 +1245,11 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			ORDER BY version.build_id,entity.external_id,display.probability DESC,display.slot,info.external_id
 		), candidates AS MATERIALIZED (
 			SELECT entity.id,entity.entity_type,entity.external_id,version.build_id,
-				COALESCE(item.source_artifact_id,
+				COALESCE(item.source_artifact_id,item_appearance.source_artifact_id,
 					CASE WHEN direct.file_data_id IS NOT NULL THEN direct_proof.source_artifact_id END,
 					spell.source_artifact_id,creature.source_artifact_id,version.source_artifact_id) AS source_artifact_id,
-				COALESCE(direct.file_data_id,item.file_data_id,spell.file_data_id,creature.file_data_id) AS file_data_id,
+				COALESCE(direct.file_data_id,item.file_data_id,item_appearance.file_data_id,
+					spell.file_data_id,creature.file_data_id) AS file_data_id,
 				NULLIF(BTRIM(version.payload #>> '{raidbots,icon}'),'') AS raidbots_icon,
 				NULLIF(BTRIM(version.payload #>> '{raidbots,spellIcon}'),'') AS raidbots_spell_icon
 			FROM game_entities entity
@@ -1264,6 +1287,9 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 				AND spell.spell_id=entity.external_id
 			LEFT JOIN item_icons item ON entity.entity_type='item' AND item.build_id=version.build_id
 				AND item.item_id=entity.external_id
+			LEFT JOIN item_appearance_icons item_appearance ON entity.entity_type='item'
+				AND item_appearance.build_id=version.build_id
+				AND item_appearance.item_id=entity.external_id
 			LEFT JOIN creature_icons creature ON entity.entity_type='creature' AND creature.build_id=version.build_id
 				AND creature.external_id=entity.external_id
 			WHERE entity.deleted_at IS NULL
