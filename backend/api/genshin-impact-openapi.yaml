@@ -109,6 +109,38 @@ paths:
           $ref: "#/components/responses/CatalogUnavailable"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+  /weapons/{slug}:
+    get:
+      operationId: getGenshinWeapon
+      summary: Read one weapon with progression, refinements and ascension costs.
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+        - $ref: "#/components/parameters/Locale"
+      responses:
+        "200":
+          description: Localized weapon profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponDetail"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          description: Weapon slug was not found in the active release.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "503":
+          $ref: "#/components/responses/CatalogUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
   /artifact-sets:
     get:
       operationId: listGenshinArtifactSets
@@ -369,6 +401,81 @@ components:
         baseAttack: { type: [number, "null"] }
         secondaryStat: { type: string }
         secondaryStatValue: { type: [number, "null"] }
+        iconUrl: { type: [string, "null"] }
+        description: { type: string }
+        passiveName: { type: string }
+        passiveDescription: { type: string }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
+    WeaponDetail:
+      allOf:
+        - $ref: "#/components/schemas/WeaponSummary"
+        - type: object
+          required: [stats, refinements, ascensionCosts]
+          properties:
+            stats:
+              oneOf:
+                - $ref: "#/components/schemas/WeaponStats"
+                - type: "null"
+            refinements:
+              type: array
+              items:
+                $ref: "#/components/schemas/WeaponRefinement"
+            ascensionCosts:
+              type: array
+              items:
+                $ref: "#/components/schemas/UpgradeCostStage"
+    WeaponStats:
+      type: object
+      required: [base, curve, promotion, specialized]
+      properties:
+        base:
+          type: object
+          required: [attack, specialized]
+          properties:
+            attack: { type: number }
+            specialized: { type: number }
+        curve:
+          type: object
+          additionalProperties: { type: string }
+        promotion:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeaponPromotion"
+        specialized: { type: string }
+    WeaponPromotion:
+      type: object
+      required: [attack, maxLevel]
+      properties:
+        attack: { type: number }
+        maxLevel: { type: integer, minimum: 1, maximum: 90 }
+    WeaponRefinement:
+      type: object
+      required: [level, values, description]
+      properties:
+        level: { type: integer, minimum: 1, maximum: 5 }
+        values:
+          type: array
+          items: { type: string }
+        description: { type: string }
+    UpgradeCostStage:
+      type: object
+      required: [key, stage, items]
+      properties:
+        key: { type: string }
+        stage: { type: integer, minimum: 1, maximum: 6 }
+        maxLevel: { type: integer, minimum: 1, maximum: 90 }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpgradeCostItem"
+    UpgradeCostItem:
+      type: object
+      required: [id, name, count]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        count: { type: integer, minimum: 1 }
         iconUrl: { type: [string, "null"] }
         locale: { $ref: "#/components/schemas/Locale" }
         localeFallback: { type: boolean }
