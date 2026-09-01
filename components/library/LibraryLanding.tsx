@@ -7,6 +7,7 @@ type Props = {
   datasets: LibraryDataset[];
   products: CatalogProduct[];
   selectedProduct: string;
+  unavailable?: boolean;
 };
 
 const freshnessText = {
@@ -38,7 +39,7 @@ function percentage(value: number, total: number) {
   return Math.min(100, Math.round((value / total) * 100));
 }
 
-export function LibraryLanding({ lang, datasets, products, selectedProduct }: Props) {
+export function LibraryLanding({ lang, datasets, products, selectedProduct, unavailable = false }: Props) {
   const localePrefix = lang === "ru" ? "/ru" : "";
   const formatter = new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US");
   const total = datasets.reduce((sum, dataset) => sum + dataset.entityCount, 0);
@@ -56,10 +57,17 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct }: Pr
         <h1>{lang === "ru" ? "Библиотека World of Warcraft" : "World of Warcraft Library"}</h1>
         <p>{lang === "ru" ? "Публичная библиотека структурированных игровых данных: изображения, tooltip, связи и происхождение каждой опубликованной записи." : "A public library of structured game data with images, tooltips, relationships and provenance for every published record."}</p>
       </div>
-      <aside><strong>{formatter.format(total)}</strong><span>{lang === "ru" ? "записей в разделах" : "records across datasets"}</span></aside>
+      <aside><strong>{unavailable ? "—" : formatter.format(total)}</strong><span>{unavailable ? (lang === "ru" ? "каталог временно закрыт" : "catalog temporarily unavailable") : (lang === "ru" ? "записей в разделах" : "records across datasets")}</span></aside>
     </header>
 
-    <nav className="library-products" aria-label={lang === "ru" ? "Версия игры" : "Game version"}>
+    {unavailable ? <section className="library-unavailable" role="alert">
+      <p className="cap gold">{lang === "ru" ? "Каталог недоступен" : "Catalog unavailable"}</p>
+      <h2>{lang === "ru" ? "Публикация данных временно закрыта" : "Data publication is temporarily closed"}</h2>
+      <p>{lang === "ru" ? "Источники или API сейчас проходят проверку. Данные не удалены — повторите попытку позже или войдите в панель администратора." : "The sources or API are being checked. No data was deleted — try again later or sign in to the administrator console."}</p>
+      <Link href={`/api-console?next=${encodeURIComponent(lang === "ru" ? "/ru/library" : "/library")}`}>{lang === "ru" ? "Открыть панель" : "Open console"}</Link>
+    </section> : null}
+
+    {!unavailable ? <nav className="library-products" aria-label={lang === "ru" ? "Версия игры" : "Game version"}>
       {products.map((product) => {
         const state = product.freshness ?? "unknown";
         const stateLabel = productFreshnessText[lang][state as keyof typeof productFreshnessText.en] ?? productFreshnessText[lang].unknown;
@@ -68,9 +76,9 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct }: Pr
           <small className={`library-product-freshness is-${state}`}>{stateLabel}</small>
         </Link>;
       })}
-    </nav>
+    </nav> : null}
 
-    <section className="library-datasets" aria-labelledby="library-datasets-title">
+    {!unavailable ? <section className="library-datasets" aria-labelledby="library-datasets-title">
       <div className="library-section-head"><div><p className="cap">{lang === "ru" ? "Наборы данных" : "Datasets"}</p><h2 id="library-datasets-title">{lang === "ru" ? "Выберите раздел" : "Choose a dataset"}</h2></div><span>{freshest ? `${lang === "ru" ? "Проверено" : "Checked"} ${freshest.toLocaleString(lang === "ru" ? "ru-RU" : "en-US", { dateStyle: "medium", timeStyle: "short" })}` : (lang === "ru" ? "Ожидает первой проверки" : "Awaiting first verification")}</span></div>
       <div className="library-dataset-groups">
         {Array.from(groups, ([group, entries]) => <section className="library-dataset-group" key={group} aria-labelledby={`library-group-${group}`}>
@@ -97,6 +105,6 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct }: Pr
         })}</div>
         </section>)}
       </div>
-    </section>
+    </section> : null}
   </div>;
 }

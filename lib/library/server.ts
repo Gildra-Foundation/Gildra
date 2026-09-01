@@ -20,6 +20,15 @@ export async function requireCatalogSession(path: string) {
 }
 
 export async function getLibraryLandingData(locale: "en_US" | "ru_RU", product: string) {
-  const [datasets, products] = await Promise.all([getLibraryDatasets(locale, product), getCatalogProducts()]);
-  return { datasets, products };
+  try {
+    const [datasets, products] = await Promise.all([getLibraryDatasets(locale, product), getCatalogProducts()]);
+    return { datasets, products, unavailable: false as const };
+  } catch (error) {
+    // A blocked publication policy or a temporary upstream failure must not
+    // turn the server-rendered library into a generic 500 page. The detailed
+    // error stays in server logs; the browser receives a stable, actionable
+    // state without exposing internal URLs or policy internals.
+    console.error("library landing data unavailable", error);
+    return { datasets: [], products: [], unavailable: true as const };
+  }
 }
