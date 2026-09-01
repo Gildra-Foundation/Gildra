@@ -141,6 +141,37 @@ paths:
           $ref: "#/components/responses/CatalogUnavailable"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+  /talents:
+    get:
+      operationId: listGenshinTalents
+      summary: Search character talents from the active release.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Locale"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Cursor-paginated character talents.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/CursorPage"
+                  - type: object
+                    required: [data]
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/TalentSummary"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "503":
+          $ref: "#/components/responses/CatalogUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 components:
   parameters:
     Locale:
@@ -212,7 +243,7 @@ components:
       default: en_US
     Element:
       type: string
-      enum: [anemo, geo, electro, dendro, hydro, pyro, cryo]
+      enum: [none, anemo, geo, electro, dendro, hydro, pyro, cryo]
     WeaponType:
       type: string
       enum: [sword, claymore, polearm, bow, catalyst]
@@ -226,11 +257,12 @@ components:
           type: string
         resources:
           type: object
-          required: [characters, weapons, artifactSets]
+          required: [characters, weapons, artifactSets, talents]
           properties:
             characters: { type: string }
             weapons: { type: string }
             artifactSets: { type: string }
+            talents: { type: string }
         locales:
           type: array
           items:
@@ -314,6 +346,21 @@ components:
         locale: { $ref: "#/components/schemas/Locale" }
         localeFallback: { type: boolean }
         pieceCount: { type: integer, format: int64, minimum: 0 }
+    TalentSummary:
+      type: object
+      required: [id, characterSlug, characterName, externalKey, kind, displayOrder, name, description, locale, localeFallback]
+      properties:
+        id: { type: integer, format: int64 }
+        characterSlug: { type: string }
+        characterName: { type: string }
+        externalKey: { type: string }
+        kind: { type: string, enum: [normal_attack, elemental_skill, elemental_burst, alternate_sprint, passive] }
+        displayOrder: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        iconUrl: { type: [string, "null"] }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
     Problem:
       type: object
       required: [type, title, status, detail, instance]

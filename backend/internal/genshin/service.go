@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -97,6 +98,20 @@ type ArtifactSetSummary struct {
 	Locale         string  `json:"locale"`
 	LocaleFallback bool    `json:"localeFallback"`
 	PieceCount     int64   `json:"pieceCount"`
+}
+
+type TalentSummary struct {
+	ID             int64   `json:"id"`
+	CharacterSlug  string  `json:"characterSlug"`
+	CharacterName  string  `json:"characterName"`
+	ExternalKey    string  `json:"externalKey"`
+	Kind           string  `json:"kind"`
+	DisplayOrder   int16   `json:"displayOrder"`
+	Name           string  `json:"name"`
+	Description    string  `json:"description"`
+	IconURL        *string `json:"iconUrl"`
+	Locale         string  `json:"locale"`
+	LocaleFallback bool    `json:"localeFallback"`
 }
 
 type Page[T any] struct {
@@ -271,6 +286,71 @@ func (s *Service) ListArtifactSets(ctx context.Context, params ListParams) (Page
 		return Page[ArtifactSetSummary]{}, fmt.Errorf("iterate genshin artifact sets: %w", err)
 	}
 	return makePage(items, params.Limit, func(item ArtifactSetSummary) string { return item.Slug }), nil
+}
+
+func (s *Service) ListTalents(ctx context.Context, params ListParams) (Page[TalentSummary], error) {
+	afterID, err := decodeTalentCursor(params.Cursor)
+	if err != nil {
+		return Page[TalentSummary]{}, err
+	}
+	rows, err := s.postgres.Query(ctx, `
+		SELECT talent.id, character.slug,
+		       COALESCE(NULLIF(character_localized.name, ''), NULLIF(character_english.name, ''), character.slug),
+		       talent.external_key, talent.kind, talent.display_order,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), talent.external_key),
+		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
+		       CASE WHEN icon.storage_key IS NULL THEN NULL ELSE '/genshin-impact/media/' || icon.storage_key END,
+		       $1, localized.talent_id IS NULL
+		FROM genshin_character_talents talent
+		JOIN genshin_characters character ON character.id = talent.character_id
+		JOIN genshin_current_release release ON release.id = character.release_id
+		LEFT JOIN genshin_character_localizations character_localized
+		       ON character_localized.character_id = character.id AND character_localized.locale = $1
+		LEFT JOIN genshin_character_localizations character_english
+		       ON character_english.character_id = character.id AND character_english.locale = 'en_US'
+		LEFT JOIN genshin_character_talent_localizations localized
+		       ON localized.talent_id = talent.id AND localized.locale = $1
+		LEFT JOIN genshin_character_talent_localizations english
+		       ON english.talent_id = talent.id AND english.locale = 'en_US'
+		LEFT JOIN genshin_media_assets icon ON icon.id = talent.icon_asset_id
+		WHERE ($2 = '' OR lower(COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), talent.external_key)) LIKE '%' || lower($2) || '%'
+		                  OR lower(COALESCE(NULLIF(character_localized.name, ''), NULLIF(character_english.name, ''), character.slug)) LIKE '%' || lower($2) || '%')
+		  AND ($3 = 0 OR talent.id > $3)
+		ORDER BY talent.id
+		LIMIT $4`, params.Locale, params.Query, afterID, params.Limit+1)
+	if err != nil {
+		return Page[TalentSummary]{}, fmt.Errorf("list genshin talents: %w", err)
+	}
+	defer rows.Close()
+	items := make([]TalentSummary, 0, params.Limit+1)
+	for rows.Next() {
+		var item TalentSummary
+		if err := rows.Scan(&item.ID, &item.CharacterSlug, &item.CharacterName, &item.ExternalKey,
+			&item.Kind, &item.DisplayOrder, &item.Name, &item.Description, &item.IconURL,
+			&item.Locale, &item.LocaleFallback); err != nil {
+			return Page[TalentSummary]{}, fmt.Errorf("scan genshin talent: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return Page[TalentSummary]{}, fmt.Errorf("iterate genshin talents: %w", err)
+	}
+	return makePage(items, params.Limit, func(item TalentSummary) string { return strconv.FormatInt(item.ID, 10) }), nil
+}
+
+func decodeTalentCursor(cursor string) (int64, error) {
+	after, err := decodeCursor(cursor)
+	if err != nil {
+		return 0, err
+	}
+	if after == "" {
+		return 0, nil
+	}
+	afterID, err := strconv.ParseInt(after, 10, 64)
+	if err != nil || afterID < 1 {
+		return 0, ErrInvalidCursor
+	}
+	return afterID, nil
 }
 
 func makePage[T any](items []T, limit int, cursor func(T) string) Page[T] {
