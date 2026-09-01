@@ -70,8 +70,8 @@ type iconFetchResult struct {
 
 // SeedOfficialIcons converts build-proven icon-name mappings into locally
 // cached browser images. One official render asset is fetched per unique icon;
-// every published entity using that icon then points to the same content-
-// addressed object on disk.
+// every current entity version using that icon (including a not-yet-published
+// candidate release) then points to the same content-addressed object on disk.
 func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int) (IconSeedResult, error) {
 	product = strings.TrimSpace(product)
 	if product == "" {
@@ -114,8 +114,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 			FROM catalog_entity_icons icon
 			JOIN game_entities entity ON entity.product_id=$1
 				AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
-			JOIN game_entity_versions published ON published.id=entity.published_version_id
-				AND published.build_id=icon.build_id
+			JOIN game_entity_versions current_version ON current_version.id=entity.latest_version_id
+				AND current_version.build_id=icon.build_id
 			WHERE icon.build_id=$2 AND entity.deleted_at IS NULL
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
 			GROUP BY lower(icon.icon_name)

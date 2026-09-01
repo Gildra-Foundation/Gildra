@@ -433,7 +433,11 @@ func TestSeedOfficialIconsCachesOnceAndLinksSharedEntities(t *testing.T) {
 		lateEntityID, buildID, snapshotID, artifactID).Scan(&lateVersionID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := database.ExecContext(ctx, `UPDATE game_entities SET latest_version_id=$2,published_version_id=$2 WHERE id=$1`, lateEntityID, lateVersionID); err != nil {
+	// The media worker must also seed a current candidate that is not public
+	// yet.  Waiting for published_version_id would make a release deadlock:
+	// the production quality gate requires cached images before publication,
+	// while the candidate would never become eligible for this worker.
+	if _, err := database.ExecContext(ctx, `UPDATE game_entities SET latest_version_id=$2 WHERE id=$1`, lateEntityID, lateVersionID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := database.ExecContext(ctx, `
