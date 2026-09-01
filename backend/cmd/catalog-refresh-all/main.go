@@ -300,13 +300,15 @@ func observeBuild(ctx context.Context, db *pgxpool.Pool, spec productSpec, wagoC
 		return buildObservation{}, fmt.Errorf("load active build: %w", err)
 	}
 	var remote string
+	var err error
 	if spec.Source == "wago_tools" {
-		var err error
-		if spec.WagoKey == "wow" {
-			remote, err = wagoClient.CurrentBuild(ctx, "ItemSparse", "enUS")
-		} else {
-			remote, err = wagoClient.CurrentBuildForProduct(ctx, spec.WagoKey)
-		}
+		// Always resolve the manifest by product key.  The CSV endpoint's
+		// unpinned HEAD is not edition-aware and can select the Retail/test
+		// branch even while checking a Classic product (for example wowt).
+		// Keeping every edition on the manifest path prevents a false update
+		// signal and, more importantly, prevents apply from importing a build
+		// belonging to a different product namespace.
+		remote, err = wagoClient.CurrentBuildForProduct(ctx, spec.WagoKey)
 		if err != nil {
 			return buildObservation{}, fmt.Errorf("resolve Wago build: %w", err)
 		}
