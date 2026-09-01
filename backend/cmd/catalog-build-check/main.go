@@ -94,13 +94,25 @@ func run() (bool, error) {
 		status = "update_available"
 	}
 	hash := sha256.Sum256([]byte(remoteBuild))
+	metadata := map[string]any{
+		"table":        table,
+		"locale":       locale,
+		"wago_product": wagoProduct,
+	}
+	if wagoProduct != strings.ToLower(strings.TrimSpace(product)) {
+		metadata["shared_manifest"] = true
+	}
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		return false, fmt.Errorf("encode build check metadata: %w", err)
+	}
 	if _, err := db.Exec(ctx, `
 		INSERT INTO catalog_build_update_checks(product_id,source,channel,observed_build,observed_build_number,manifest_hash,status,metadata,checked_at)
-		VALUES($1,'wago_tools','live',$2,$3,$4,$5,jsonb_build_object('table',$6::text,'locale',$7::text),now())
+		VALUES($1,'wago_tools','live',$2,$3,$4,$5,$6::jsonb,now())
 		ON CONFLICT(product_id,source,channel) DO UPDATE SET observed_build=EXCLUDED.observed_build,
 			observed_build_number=EXCLUDED.observed_build_number,manifest_hash=EXCLUDED.manifest_hash,
 			status=EXCLUDED.status,metadata=EXCLUDED.metadata,checked_at=EXCLUDED.checked_at`,
-		productID, remoteBuild, remoteNumber, hash[:], status, table, locale); err != nil {
+		productID, remoteBuild, remoteNumber, hash[:], status, metadataJSON); err != nil {
 		return false, fmt.Errorf("record catalog build check: %w", err)
 	}
 	if err := json.NewEncoder(os.Stdout).Encode(result{Source: "wago_tools", CurrentBuild: currentBuild, RemoteBuild: remoteBuild, Update: changed}); err != nil {
