@@ -20,6 +20,20 @@ func localeValue(locale *model.Locale) string {
 	return "en_US"
 }
 
+func toGraphQLProduct(product catalog.Product) *model.GameProduct {
+	var buildNumber *int
+	if product.BuildNumber != nil {
+		value := int(*product.BuildNumber)
+		buildNumber = &value
+	}
+	return &model.GameProduct{
+		ID: int(product.ID), Slug: product.Slug, Name: product.Name,
+		BuildNumber: buildNumber, BuildVersion: product.BuildVersion,
+		EntityCount: int(product.EntityCount), PublishedEntityCount: int(product.PublishedCount),
+		PublicRelease: product.PublicRelease,
+	}
+}
+
 func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 	result := &model.GameEntity{
 		ID: entity.ID.String(), Product: entity.Product, Type: entity.Type,
@@ -68,7 +82,8 @@ func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 func toGraphQLDataset(dataset catalog.LibraryDataset) *model.LibraryDataset {
 	result := &model.LibraryDataset{
 		Slug: dataset.Slug, Product: dataset.Product, EntityType: dataset.EntityType,
-		Group: dataset.Group, IconSymbol: dataset.IconSymbol, Name: dataset.Name,
+		CategoryPath: dataset.CategoryPath, ItemClassID: dataset.ItemClassID,
+		Group: dataset.Group, IconSymbol: dataset.IconSymbol, SortOrder: dataset.SortOrder, Name: dataset.Name,
 		Description: dataset.Description, EntityCount: int(dataset.EntityCount),
 		LocalizedCount: int(dataset.LocalizedCount), VerifiedLocalizedCount: int(dataset.VerifiedLocalizedCount),
 		TooltipCount: int(dataset.TooltipCount), ImageCount: int(dataset.ImageCount),

@@ -89,9 +89,14 @@ type ComplexityRoot struct {
 	}
 
 	GameProduct struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
-		Slug func(childComplexity int) int
+		BuildNumber          func(childComplexity int) int
+		BuildVersion         func(childComplexity int) int
+		EntityCount          func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		PublicRelease        func(childComplexity int) int
+		PublishedEntityCount func(childComplexity int) int
+		Slug                 func(childComplexity int) int
 	}
 
 	GameTooltip struct {
@@ -103,6 +108,7 @@ type ComplexityRoot struct {
 		Applicability          func(childComplexity int) int
 		ApplicabilityReason    func(childComplexity int) int
 		BuildVersion           func(childComplexity int) int
+		CategoryPath           func(childComplexity int) int
 		CoverageUpdatedAt      func(childComplexity int) int
 		Description            func(childComplexity int) int
 		EntityCount            func(childComplexity int) int
@@ -112,12 +118,14 @@ type ComplexityRoot struct {
 		Group                  func(childComplexity int) int
 		IconSymbol             func(childComplexity int) int
 		ImageCount             func(childComplexity int) int
+		ItemClassID            func(childComplexity int) int
 		LocalizedCount         func(childComplexity int) int
 		Name                   func(childComplexity int) int
 		PreviewIconName        func(childComplexity int) int
 		PreviewImageURL        func(childComplexity int) int
 		Product                func(childComplexity int) int
 		Slug                   func(childComplexity int) int
+		SortOrder              func(childComplexity int) int
 		TooltipCount           func(childComplexity int) int
 		VerifiedLocalizedCount func(childComplexity int) int
 	}
@@ -402,6 +410,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.GameEntityMedia.Width(childComplexity), true
 
+	case "GameProduct.buildNumber":
+		if e.ComplexityRoot.GameProduct.BuildNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.BuildNumber(childComplexity), true
+	case "GameProduct.buildVersion":
+		if e.ComplexityRoot.GameProduct.BuildVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.BuildVersion(childComplexity), true
+	case "GameProduct.entityCount":
+		if e.ComplexityRoot.GameProduct.EntityCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.EntityCount(childComplexity), true
 	case "GameProduct.id":
 		if e.ComplexityRoot.GameProduct.ID == nil {
 			break
@@ -414,6 +440,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.GameProduct.Name(childComplexity), true
+	case "GameProduct.publicRelease":
+		if e.ComplexityRoot.GameProduct.PublicRelease == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.PublicRelease(childComplexity), true
+	case "GameProduct.publishedEntityCount":
+		if e.ComplexityRoot.GameProduct.PublishedEntityCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.PublishedEntityCount(childComplexity), true
 	case "GameProduct.slug":
 		if e.ComplexityRoot.GameProduct.Slug == nil {
 			break
@@ -452,6 +490,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.LibraryDataset.BuildVersion(childComplexity), true
+	case "LibraryDataset.categoryPath":
+		if e.ComplexityRoot.LibraryDataset.CategoryPath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LibraryDataset.CategoryPath(childComplexity), true
 	case "LibraryDataset.coverageUpdatedAt":
 		if e.ComplexityRoot.LibraryDataset.CoverageUpdatedAt == nil {
 			break
@@ -506,6 +550,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.LibraryDataset.ImageCount(childComplexity), true
+	case "LibraryDataset.itemClassId":
+		if e.ComplexityRoot.LibraryDataset.ItemClassID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LibraryDataset.ItemClassID(childComplexity), true
 	case "LibraryDataset.localizedCount":
 		if e.ComplexityRoot.LibraryDataset.LocalizedCount == nil {
 			break
@@ -542,6 +592,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.LibraryDataset.Slug(childComplexity), true
+	case "LibraryDataset.sortOrder":
+		if e.ComplexityRoot.LibraryDataset.SortOrder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LibraryDataset.SortOrder(childComplexity), true
 	case "LibraryDataset.tooltipCount":
 		if e.ComplexityRoot.LibraryDataset.TooltipCount == nil {
 			break
@@ -805,6 +861,16 @@ func (ec *executionContext) childFields_GameProduct(ctx context.Context, field g
 		return ec.fieldContext_GameProduct_slug(ctx, field)
 	case "name":
 		return ec.fieldContext_GameProduct_name(ctx, field)
+	case "buildNumber":
+		return ec.fieldContext_GameProduct_buildNumber(ctx, field)
+	case "buildVersion":
+		return ec.fieldContext_GameProduct_buildVersion(ctx, field)
+	case "entityCount":
+		return ec.fieldContext_GameProduct_entityCount(ctx, field)
+	case "publishedEntityCount":
+		return ec.fieldContext_GameProduct_publishedEntityCount(ctx, field)
+	case "publicRelease":
+		return ec.fieldContext_GameProduct_publicRelease(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type GameProduct", field.Name)
 }
@@ -827,10 +893,16 @@ func (ec *executionContext) childFields_LibraryDataset(ctx context.Context, fiel
 		return ec.fieldContext_LibraryDataset_product(ctx, field)
 	case "entityType":
 		return ec.fieldContext_LibraryDataset_entityType(ctx, field)
+	case "categoryPath":
+		return ec.fieldContext_LibraryDataset_categoryPath(ctx, field)
+	case "itemClassId":
+		return ec.fieldContext_LibraryDataset_itemClassId(ctx, field)
 	case "group":
 		return ec.fieldContext_LibraryDataset_group(ctx, field)
 	case "iconSymbol":
 		return ec.fieldContext_LibraryDataset_iconSymbol(ctx, field)
+	case "sortOrder":
+		return ec.fieldContext_LibraryDataset_sortOrder(ctx, field)
 	case "name":
 		return ec.fieldContext_LibraryDataset_name(ctx, field)
 	case "description":
@@ -2174,6 +2246,121 @@ func (ec *executionContext) fieldContext_GameProduct_name(_ context.Context, fie
 	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _GameProduct_buildNumber(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_buildNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_buildNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_buildVersion(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_buildVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BuildVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_buildVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_entityCount(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_entityCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EntityCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_entityCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_publishedEntityCount(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_publishedEntityCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PublishedEntityCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_publishedEntityCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_publicRelease(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_publicRelease(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PublicRelease, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_publicRelease(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _GameTooltip_plainText(ctx context.Context, field graphql.CollectedField, obj *model.GameTooltip) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2289,6 +2476,52 @@ func (ec *executionContext) fieldContext_LibraryDataset_entityType(_ context.Con
 	return graphql.NewScalarFieldContext("LibraryDataset", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _LibraryDataset_categoryPath(ctx context.Context, field graphql.CollectedField, obj *model.LibraryDataset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_LibraryDataset_categoryPath(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CategoryPath, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_LibraryDataset_categoryPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("LibraryDataset", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _LibraryDataset_itemClassId(ctx context.Context, field graphql.CollectedField, obj *model.LibraryDataset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_LibraryDataset_itemClassId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ItemClassID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_LibraryDataset_itemClassId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("LibraryDataset", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _LibraryDataset_group(ctx context.Context, field graphql.CollectedField, obj *model.LibraryDataset) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2333,6 +2566,29 @@ func (ec *executionContext) _LibraryDataset_iconSymbol(ctx context.Context, fiel
 }
 func (ec *executionContext) fieldContext_LibraryDataset_iconSymbol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("LibraryDataset", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _LibraryDataset_sortOrder(ctx context.Context, field graphql.CollectedField, obj *model.LibraryDataset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_LibraryDataset_sortOrder(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SortOrder, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_LibraryDataset_sortOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("LibraryDataset", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _LibraryDataset_name(ctx context.Context, field graphql.CollectedField, obj *model.LibraryDataset) (ret graphql.Marshaler) {
@@ -4387,6 +4643,31 @@ func (ec *executionContext) _GameProduct(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "buildNumber":
+			out.Values[i] = ec._GameProduct_buildNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "buildVersion":
+			out.Values[i] = ec._GameProduct_buildVersion(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "entityCount":
+			out.Values[i] = ec._GameProduct_entityCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "publishedEntityCount":
+			out.Values[i] = ec._GameProduct_publishedEntityCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "publicRelease":
+			out.Values[i] = ec._GameProduct_publicRelease(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4478,6 +4759,16 @@ func (ec *executionContext) _LibraryDataset(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "categoryPath":
+			out.Values[i] = ec._LibraryDataset_categoryPath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "itemClassId":
+			out.Values[i] = ec._LibraryDataset_itemClassId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "group":
 			out.Values[i] = ec._LibraryDataset_group(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4485,6 +4776,11 @@ func (ec *executionContext) _LibraryDataset(ctx context.Context, sel ast.Selecti
 			}
 		case "iconSymbol":
 			out.Values[i] = ec._LibraryDataset_iconSymbol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sortOrder":
+			out.Values[i] = ec._LibraryDataset_sortOrder(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

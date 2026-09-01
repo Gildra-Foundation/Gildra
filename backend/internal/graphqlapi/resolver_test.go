@@ -39,11 +39,29 @@ func TestToGraphQLEntityExposesFullCatalogContract(t *testing.T) {
 	}
 }
 
+func TestToGraphQLProductExposesEditionBuildAndPublication(t *testing.T) {
+	buildNumber := int32(69497)
+	buildVersion := "12.1.0.69497"
+	got := toGraphQLProduct(catalog.Product{
+		ID: 1, Slug: "wow", Name: "World of Warcraft",
+		BuildNumber: &buildNumber, BuildVersion: &buildVersion,
+		EntityCount: 825913, PublishedCount: 743967, PublicRelease: true,
+	})
+	if got.BuildNumber == nil || *got.BuildNumber != 69497 || got.BuildVersion == nil || *got.BuildVersion != buildVersion {
+		t.Fatalf("graphql product build metadata = %#v", got)
+	}
+	if got.EntityCount != 825913 || got.PublishedEntityCount != 743967 || !got.PublicRelease {
+		t.Fatalf("graphql product publication metadata = %#v", got)
+	}
+}
+
 func TestToGraphQLDatasetExposesFreshnessAndCoverage(t *testing.T) {
 	build := "12.1.0.69497"
 	preview := "https://api.gildra.net/v1/media/preview"
+	itemClassID := 2
 	dataset := catalog.LibraryDataset{
-		Slug: "items", Product: "wow", EntityType: "item", Group: "equipment", IconSymbol: "#ic-item",
+		Slug: "items", Product: "wow", EntityType: "item", CategoryPath: "equipment", ItemClassID: &itemClassID,
+		Group: "equipment", IconSymbol: "#ic-item", SortOrder: 10,
 		Name: "Items", Description: "All items", BuildVersion: &build, PreviewImageURL: &preview,
 		EntityCount: 100, LocalizedCount: 95, VerifiedLocalizedCount: 90, TooltipCount: 80, ImageCount: 75,
 		Applicability: "applicable", Freshness: "fresh", FreshnessReason: "published data and coverage are current",
@@ -51,6 +69,9 @@ func TestToGraphQLDatasetExposesFreshnessAndCoverage(t *testing.T) {
 	got := toGraphQLDataset(dataset)
 	if got.Slug != dataset.Slug || got.EntityCount != 100 || got.Freshness != "fresh" || got.BuildVersion == nil || *got.BuildVersion != build {
 		t.Fatalf("graphql dataset mapping lost coverage fields: %#v", got)
+	}
+	if got.CategoryPath != dataset.CategoryPath || got.ItemClassID == nil || *got.ItemClassID != 2 || got.SortOrder != dataset.SortOrder {
+		t.Fatalf("graphql dataset taxonomy fields = %#v", got)
 	}
 	if got.PreviewImageURL == nil || *got.PreviewImageURL != preview {
 		t.Fatalf("graphql dataset mapping lost preview image: %#v", got)

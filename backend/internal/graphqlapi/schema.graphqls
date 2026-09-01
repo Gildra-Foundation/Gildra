@@ -10,14 +10,22 @@ type GameProduct {
   id: Int!
   slug: String!
   name: String!
+  buildNumber: Int
+  buildVersion: String
+  entityCount: Int!
+  publishedEntityCount: Int!
+  publicRelease: Boolean!
 }
 
 type LibraryDataset {
   slug: String!
   product: String!
   entityType: String!
+  categoryPath: String!
+  itemClassId: Int
   group: String!
   iconSymbol: String!
+  sortOrder: Int!
   name: String!
   description: String!
   buildVersion: String

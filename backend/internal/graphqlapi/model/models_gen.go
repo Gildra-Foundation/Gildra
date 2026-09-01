@@ -62,9 +62,14 @@ type GameEntityMedia struct {
 }
 
 type GameProduct struct {
-	ID   int    `json:"id"`
-	Slug string `json:"slug"`
-	Name string `json:"name"`
+	ID                   int     `json:"id"`
+	Slug                 string  `json:"slug"`
+	Name                 string  `json:"name"`
+	BuildNumber          *int    `json:"buildNumber,omitempty"`
+	BuildVersion         *string `json:"buildVersion,omitempty"`
+	EntityCount          int     `json:"entityCount"`
+	PublishedEntityCount int     `json:"publishedEntityCount"`
+	PublicRelease        bool    `json:"publicRelease"`
 }
 
 type GameTooltip struct {
@@ -76,8 +81,11 @@ type LibraryDataset struct {
 	Slug                   string     `json:"slug"`
 	Product                string     `json:"product"`
 	EntityType             string     `json:"entityType"`
+	CategoryPath           string     `json:"categoryPath"`
+	ItemClassID            *int       `json:"itemClassId,omitempty"`
 	Group                  string     `json:"group"`
 	IconSymbol             string     `json:"iconSymbol"`
+	SortOrder              int        `json:"sortOrder"`
 	Name                   string     `json:"name"`
 	Description            string     `json:"description"`
 	BuildVersion           *string    `json:"buildVersion,omitempty"`
