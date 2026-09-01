@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	ErrInvalidCursor = errors.New("invalid cursor")
-	cursorValue      = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+	ErrInvalidCursor     = errors.New("invalid cursor")
+	ErrCharacterNotFound = errors.New("genshin character not found")
+	cursorValue          = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 )
 
 type Service struct {
@@ -71,6 +72,28 @@ type CharacterSummary struct {
 	Locale         string  `json:"locale"`
 	LocaleFallback bool    `json:"localeFallback"`
 	TalentCount    int64   `json:"talentCount"`
+}
+
+// CharacterDetail keeps the compact list projection while adding the
+// localized profile copy and the child records that make a character useful
+// as a single browsable unit in clients.
+type CharacterDetail struct {
+	CharacterSummary
+	Description    string                 `json:"description"`
+	Talents        []TalentSummary        `json:"talents"`
+	Constellations []ConstellationSummary `json:"constellations"`
+}
+
+type ConstellationSummary struct {
+	ID             int64   `json:"id"`
+	CharacterSlug  string  `json:"characterSlug"`
+	ExternalKey    string  `json:"externalKey"`
+	Position       int16   `json:"position"`
+	Name           string  `json:"name"`
+	Description    string  `json:"description"`
+	IconURL        *string `json:"iconUrl"`
+	Locale         string  `json:"locale"`
+	LocaleFallback bool    `json:"localeFallback"`
 }
 
 type WeaponSummary struct {
@@ -241,6 +264,140 @@ func (s *Service) ListCharacters(ctx context.Context, params ListParams) (Page[C
 		return Page[CharacterSummary]{}, fmt.Errorf("iterate genshin characters: %w", err)
 	}
 	return makePage(items, params.Limit, func(item CharacterSummary) string { return item.Slug }), nil
+}
+
+func (s *Service) GetCharacter(ctx context.Context, slug, locale string) (CharacterDetail, error) {
+	var item CharacterDetail
+	var iconStorageKey, portraitStorageKey *string
+	err := s.postgres.QueryRow(ctx, `
+		SELECT character.id, character.external_id, character.slug,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), character.slug),
+		       COALESCE(NULLIF(localized.title, ''), NULLIF(english.title, ''), ''),
+		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
+		       character.rarity, character.element, character.weapon_type, character.region,
+		       icon.storage_key, portrait.storage_key,
+		       $1, localized.character_id IS NULL,
+		       (SELECT count(*) FROM genshin_character_talents talent WHERE talent.character_id = character.id)
+		FROM genshin_characters character
+		JOIN genshin_current_release release ON release.id = character.release_id
+		LEFT JOIN genshin_character_localizations localized
+		       ON localized.character_id = character.id AND localized.locale = $1
+		LEFT JOIN genshin_character_localizations english
+		       ON english.character_id = character.id AND english.locale = 'en_US'
+		LEFT JOIN genshin_media_assets icon ON icon.id = character.icon_asset_id
+		LEFT JOIN genshin_media_assets portrait ON portrait.id = character.portrait_asset_id
+		WHERE character.slug = $2`, locale, slug).Scan(
+		&item.ID, &item.ExternalID, &item.Slug, &item.Name, &item.Title, &item.Description,
+		&item.Rarity, &item.Element, &item.WeaponType, &item.Region, &iconStorageKey,
+		&portraitStorageKey, &item.Locale, &item.LocaleFallback, &item.TalentCount,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return CharacterDetail{}, ErrCharacterNotFound
+	}
+	if err != nil {
+		return CharacterDetail{}, fmt.Errorf("read genshin character %s: %w", slug, err)
+	}
+	item.IconURL = storageURL(iconStorageKey)
+	item.PortraitURL = storageURL(portraitStorageKey)
+
+	talents, err := s.characterTalents(ctx, item.ID, slug, locale)
+	if err != nil {
+		return CharacterDetail{}, err
+	}
+	item.Talents = talents
+	constellations, err := s.characterConstellations(ctx, item.ID, slug, locale)
+	if err != nil {
+		return CharacterDetail{}, err
+	}
+	item.Constellations = constellations
+	return item, nil
+}
+
+func (s *Service) characterTalents(ctx context.Context, characterID int64, slug, locale string) ([]TalentSummary, error) {
+	rows, err := s.postgres.Query(ctx, `
+		SELECT talent.id, character.slug,
+		       COALESCE(NULLIF(character_localized.name, ''), NULLIF(character_english.name, ''), character.slug),
+		       talent.external_key, talent.kind, talent.display_order,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), talent.external_key),
+		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
+		       icon.storage_key, $1, localized.talent_id IS NULL
+		FROM genshin_character_talents talent
+		JOIN genshin_characters character ON character.id = talent.character_id
+		LEFT JOIN genshin_character_localizations character_localized
+		       ON character_localized.character_id = character.id AND character_localized.locale = $1
+		LEFT JOIN genshin_character_localizations character_english
+		       ON character_english.character_id = character.id AND character_english.locale = 'en_US'
+		LEFT JOIN genshin_character_talent_localizations localized
+		       ON localized.talent_id = talent.id AND localized.locale = $1
+		LEFT JOIN genshin_character_talent_localizations english
+		       ON english.talent_id = talent.id AND english.locale = 'en_US'
+		LEFT JOIN genshin_media_assets icon ON icon.id = talent.icon_asset_id
+		WHERE talent.character_id = $2
+		ORDER BY talent.display_order, talent.id`, locale, characterID)
+	if err != nil {
+		return nil, fmt.Errorf("list genshin character talents %s: %w", slug, err)
+	}
+	defer rows.Close()
+	items := make([]TalentSummary, 0, 8)
+	for rows.Next() {
+		var item TalentSummary
+		var iconStorageKey *string
+		if err := rows.Scan(&item.ID, &item.CharacterSlug, &item.CharacterName, &item.ExternalKey,
+			&item.Kind, &item.DisplayOrder, &item.Name, &item.Description, &iconStorageKey,
+			&item.Locale, &item.LocaleFallback); err != nil {
+			return nil, fmt.Errorf("scan genshin character talent %s: %w", slug, err)
+		}
+		item.IconURL = storageURL(iconStorageKey)
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate genshin character talents %s: %w", slug, err)
+	}
+	return items, nil
+}
+
+func (s *Service) characterConstellations(ctx context.Context, characterID int64, slug, locale string) ([]ConstellationSummary, error) {
+	rows, err := s.postgres.Query(ctx, `
+		SELECT constellation.id, character.slug, constellation.external_key, constellation.position,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), constellation.external_key),
+		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
+		       icon.storage_key, $1, localized.constellation_id IS NULL
+		FROM genshin_character_constellations constellation
+		JOIN genshin_characters character ON character.id = constellation.character_id
+		LEFT JOIN genshin_character_constellation_localizations localized
+		       ON localized.constellation_id = constellation.id AND localized.locale = $1
+		LEFT JOIN genshin_character_constellation_localizations english
+		       ON english.constellation_id = constellation.id AND english.locale = 'en_US'
+		LEFT JOIN genshin_media_assets icon ON icon.id = constellation.icon_asset_id
+		WHERE constellation.character_id = $2
+		ORDER BY constellation.position, constellation.id`, locale, characterID)
+	if err != nil {
+		return nil, fmt.Errorf("list genshin character constellations %s: %w", slug, err)
+	}
+	defer rows.Close()
+	items := make([]ConstellationSummary, 0, 6)
+	for rows.Next() {
+		var item ConstellationSummary
+		var iconStorageKey *string
+		if err := rows.Scan(&item.ID, &item.CharacterSlug, &item.ExternalKey, &item.Position,
+			&item.Name, &item.Description, &iconStorageKey, &item.Locale, &item.LocaleFallback); err != nil {
+			return nil, fmt.Errorf("scan genshin character constellation %s: %w", slug, err)
+		}
+		item.IconURL = storageURL(iconStorageKey)
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate genshin character constellations %s: %w", slug, err)
+	}
+	return items, nil
+}
+
+func storageURL(storageKey *string) *string {
+	if storageKey == nil || *storageKey == "" {
+		return nil
+	}
+	url := "/genshin-impact/media/" + *storageKey
+	return &url
 }
 
 func (s *Service) ListWeapons(ctx context.Context, params ListParams) (Page[WeaponSummary], error) {
