@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -42,5 +43,25 @@ func TestCachePublicCatalogDoesNotCacheMutations(t *testing.T) {
 	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/v1/game/source-policies", nil))
 	if response.Header().Get("ETag") != "" || response.Header().Get("Cache-Control") != "" {
 		t.Fatal("mutation response must not receive public cache headers")
+	}
+}
+
+func TestCachePublicCatalogPreservesPrivateResponses(t *testing.T) {
+	t.Parallel()
+	handler := CachePublicCatalog(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Cache-Control", "private, no-store")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":[{"id":"private"}]}`))
+	}))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/game/entities", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	if got := strings.ToLower(response.Header().Get("Cache-Control")); got != "private, no-store" {
+		t.Fatalf("Cache-Control = %q, want private, no-store", got)
+	}
+	if response.Header().Get("ETag") != "" {
+		t.Fatal("private response must not receive a shared-cache validator")
 	}
 }
