@@ -259,6 +259,8 @@ grep -q '^CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups$' "$boo
 [ "$(grep -c '^CATALOG_RECOVERY_POLICY=' "$bootstrap_env")" -eq 1 ]
 [ "$(grep -c '^CATALOG_BACKUP_LOCAL_DIRECTORY=' "$bootstrap_env")" -eq 1 ]
 grep -Fq 'bootstrap-runtime-policy.sh' "$repository_directory/.github/workflows/deploy.yml"
+grep -Fq 'chown root:65532' "$bootstrap_script"
+grep -Fq 'chmod 0640' "$bootstrap_script"
 
 bootstrap_manifest=$test_directory/legacy-release.env
 {
