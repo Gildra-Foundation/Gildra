@@ -467,6 +467,25 @@ export interface components {
             buildNumber?: number;
             /** @description Active client version pinned to the product. */
             buildVersion?: string;
+            /** @description Primary source used for the latest build freshness check. */
+            source?: string;
+            /**
+             * Format: int32
+             * @description Build number reported by the latest source check, when available.
+             */
+            sourceBuildNumber?: number;
+            /** @description Build version reported by the latest source check, when available. */
+            sourceBuildVersion?: string;
+            /**
+             * @description Raw status recorded by the latest source check.
+             * @enum {string}
+             */
+            sourceStatus?: "current" | "update_available" | "failed";
+            /**
+             * Format: date-time
+             * @description Time of the latest source check.
+             */
+            sourceCheckedAt?: string;
             /**
              * Format: int64
              * @description Number of non-deleted entities imported for the product.
@@ -479,6 +498,13 @@ export interface components {
             publishedEntityCount: number;
             /** @description True only when an atomic catalog release is currently selected for public reads. */
             publicRelease?: boolean;
+            /**
+             * @description Derived freshness of the imported active build versus the latest source check.
+             * @enum {string}
+             */
+            freshness: "fresh" | "stale" | "failed" | "unknown";
+            /** @description Human-readable explanation of the freshness state. */
+            freshnessReason: string;
         };
         LibraryDataset: {
             slug: string;

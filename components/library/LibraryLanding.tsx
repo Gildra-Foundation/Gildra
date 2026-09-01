@@ -14,6 +14,11 @@ const freshnessText = {
   ru: { fresh: "Свежие", stale: "Устарели", empty: "Нет данных", refreshing: "Обновляются", failed: "Ошибка обновления" },
 };
 
+const productFreshnessText = {
+  en: { fresh: "Fresh", stale: "Stale", failed: "Check failed", unknown: "Not checked" },
+  ru: { fresh: "Свежие", stale: "Устарели", failed: "Ошибка проверки", unknown: "Нет проверки" },
+};
+
 const applicabilityText = {
   en: { pending_source: "Source needed", not_applicable: "Not applicable" },
   ru: { pending_source: "Нужен источник", not_applicable: "Не применяется" },
@@ -55,7 +60,14 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct }: Pr
     </header>
 
     <nav className="library-products" aria-label={lang === "ru" ? "Версия игры" : "Game version"}>
-      {products.map((product) => <Link key={product.slug} className={product.slug === selectedProduct ? "is-active" : ""} href={`${localePrefix}/library${product.slug === "wow" ? "" : `?product=${encodeURIComponent(product.slug)}`}`}><span>{product.name}</span><small>{product.slug}</small></Link>)}
+      {products.map((product) => {
+        const state = product.freshness ?? "unknown";
+        const stateLabel = productFreshnessText[lang][state as keyof typeof productFreshnessText.en] ?? productFreshnessText[lang].unknown;
+        return <Link key={product.slug} className={product.slug === selectedProduct ? "is-active" : ""} href={`${localePrefix}/library${product.slug === "wow" ? "" : `?product=${encodeURIComponent(product.slug)}`}`} aria-label={`${product.name}: ${stateLabel}`} title={product.freshnessReason}>
+          <span className="library-product-name">{product.name}</span>
+          <small className={`library-product-freshness is-${state}`}>{stateLabel}</small>
+        </Link>;
+      })}
     </nav>
 
     <section className="library-datasets" aria-labelledby="library-datasets-title">

@@ -12,9 +12,16 @@ type GameProduct {
   name: String!
   buildNumber: Int
   buildVersion: String
+  source: String!
+  sourceBuildNumber: Int
+  sourceBuildVersion: String
+  sourceStatus: String
+  sourceCheckedAt: Time
   entityCount: Int!
   publishedEntityCount: Int!
   publicRelease: Boolean!
+  freshness: String!
+  freshnessReason: String!
 }
 
 type LibraryDataset {

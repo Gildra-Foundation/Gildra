@@ -17,14 +17,21 @@ import (
 var ErrNotFound = errors.New("game entity not found")
 
 type Product struct {
-	ID             int32
-	Slug           string
-	Name           string
-	BuildNumber    *int32
-	BuildVersion   *string
-	EntityCount    int64
-	PublishedCount int64
-	PublicRelease  bool
+	ID                 int32
+	Slug               string
+	Name               string
+	BuildNumber        *int32
+	BuildVersion       *string
+	Source             string
+	SourceBuildNumber  *int32
+	SourceBuildVersion *string
+	SourceStatus       *string
+	SourceCheckedAt    *time.Time
+	Freshness          string
+	FreshnessReason    string
+	EntityCount        int64
+	PublishedCount     int64
+	PublicRelease      bool
 }
 
 type Entity struct {
@@ -129,6 +136,8 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 	rows, err := s.postgres.Query(ctx, `
 		SELECT product.id, product.slug, product.name,
 			active_build.build_number, active_build.version,
+			COALESCE(source_check.source, ''), source_check.observed_build_number::int,
+			source_check.observed_build, source_check.status, source_check.checked_at,
 			COALESCE(entity_counts.entity_count, 0),
 			COALESCE(entity_counts.published_count, 0),
 			EXISTS (
@@ -138,6 +147,14 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 		FROM game_products product
 		LEFT JOIN game_builds active_build
 			ON active_build.product_id=product.id AND active_build.is_active
+		LEFT JOIN LATERAL (
+			SELECT build_check.source, build_check.observed_build_number, build_check.observed_build,
+				build_check.status, build_check.checked_at
+			FROM catalog_build_update_checks build_check
+			WHERE build_check.product_id=product.id AND build_check.channel='live'
+			ORDER BY (build_check.source='wago_tools') DESC, build_check.checked_at DESC
+			LIMIT 1
+		) source_check ON true
 		LEFT JOIN (
 			SELECT entity.product_id, count(*) AS entity_count,
 				count(*) FILTER (WHERE entity.published_version_id IS NOT NULL) AS published_count
@@ -155,16 +172,56 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 	for rows.Next() {
 		var product Product
 		if err := rows.Scan(&product.ID, &product.Slug, &product.Name, &product.BuildNumber,
-			&product.BuildVersion, &product.EntityCount, &product.PublishedCount,
+			&product.BuildVersion, &product.Source, &product.SourceBuildNumber,
+			&product.SourceBuildVersion, &product.SourceStatus, &product.SourceCheckedAt,
+			&product.EntityCount, &product.PublishedCount,
 			&product.PublicRelease); err != nil {
 			return nil, fmt.Errorf("scan game product: %w", err)
 		}
+		product.Freshness, product.FreshnessReason = productFreshness(product)
 		products = append(products, product)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate game products: %w", err)
 	}
 	return products, nil
+}
+
+// productFreshness deliberately requires both a successful source check and an
+// imported active build with the same version. A successful network check alone
+// must not make an empty or older local catalog look production-ready.
+func productFreshness(product Product) (string, string) {
+	if product.SourceStatus == nil || strings.TrimSpace(*product.SourceStatus) == "" {
+		return "unknown", "Источник ещё не проверялся"
+	}
+	status := strings.TrimSpace(*product.SourceStatus)
+	observed := ""
+	if product.SourceBuildVersion != nil {
+		observed = strings.TrimSpace(*product.SourceBuildVersion)
+	}
+	active := ""
+	if product.BuildVersion != nil {
+		active = strings.TrimSpace(*product.BuildVersion)
+	}
+	switch status {
+	case "failed":
+		return "failed", "Последняя проверка источника завершилась ошибкой"
+	case "update_available":
+		if observed != "" {
+			return "stale", fmt.Sprintf("Доступен новый билд %s", observed)
+		}
+		return "stale", "Источник сообщил о доступном обновлении"
+	case "current":
+		if active == "" {
+			return "unknown", "Источник проверен, но активный билд ещё не импортирован"
+		}
+		if observed != "" && observed != active {
+			return "stale", fmt.Sprintf("Импортирован %s, источник сообщает %s", active, observed)
+		}
+		return "fresh", "Импортированный билд совпадает с последней проверкой источника"
+	default:
+		return "unknown", fmt.Sprintf("Неизвестный статус проверки источника: %s", status)
+	}
 }
 
 func (s *Service) Categories(ctx context.Context, product, entityType, locale string) ([]Category, error) {

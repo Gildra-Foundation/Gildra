@@ -49,6 +49,13 @@ function unresolvedLabel() {
   return "Описание ещё не разрешено для этой сборки";
 }
 
+const productFreshnessLabels: Record<string, string> = {
+  fresh: "Источник и импорт совпадают",
+  stale: "Доступен более новый билд",
+  failed: "Последняя проверка источника завершилась ошибкой",
+  unknown: "Источник ещё не проверялся",
+};
+
 type SummarySource = {
   description?: string | null;
   resolvedDescription?: string | null;
@@ -160,7 +167,7 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div><p className="text-[9px] uppercase tracking-[.16em] text-[#9a824a]">World of Warcraft · {selectedProduct?.name || "редакция не определена"}{selectedBuildVersion ? ` · ${selectedBuildVersion}` : ""}</p><h2 className="mt-2 font-[var(--display)] text-2xl font-semibold">Структурированная база Warcraft</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-[#7f899d]">Предметы, заклинания, задания, NPC, рецепты, маунты и другие сущности. В интерфейс попадают только опубликованные версии данных.</p></div>
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Версия игры<select value={product} onChange={(event) => { setProduct(event.target.value); setType(""); setCursor(""); setHistory([]); }} className="mt-1 block h-10 min-w-52 border border-[#343b4a] bg-[#0b0f16] px-3 text-xs normal-case tracking-normal text-[#d8dde7] outline-none focus:border-[#9c8044]">{products.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}</select>{selectedProduct ? <span className={`mt-1 block text-[9px] normal-case tracking-normal ${selectedProduct.publicRelease ? "text-[#78d69d]" : "text-[#d1ae5d]"}`}>{selectedProduct.publicRelease ? "Публичный релиз активен" : "Данные импортированы, релиз ещё не опубликован"}</span> : null}{selectedProduct ? <span className="mt-1 block text-[9px] normal-case tracking-normal text-[#788397]">Импортировано: {selectedProduct.entityCount.toLocaleString("ru-RU")} · опубликовано: {selectedProduct.publishedEntityCount.toLocaleString("ru-RU")}</span> : null}</label>
+          <label className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Версия игры<select value={product} onChange={(event) => { setProduct(event.target.value); setType(""); setCursor(""); setHistory([]); }} className="mt-1 block h-10 min-w-52 border border-[#343b4a] bg-[#0b0f16] px-3 text-xs normal-case tracking-normal text-[#d8dde7] outline-none focus:border-[#9c8044]">{products.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}</select>{selectedProduct ? <span className={`mt-1 block text-[9px] normal-case tracking-normal ${selectedProduct.publicRelease ? "text-[#78d69d]" : "text-[#d1ae5d]"}`}>{selectedProduct.publicRelease ? "Публичный релиз активен" : "Данные импортированы, релиз ещё не опубликован"}</span> : null}{selectedProduct ? <span className={`mt-1 block text-[9px] normal-case tracking-normal ${selectedProduct.freshness === "fresh" ? "text-[#78d69d]" : selectedProduct.freshness === "failed" ? "text-[#ef9a9d]" : "text-[#d1ae5d]"}`} title={selectedProduct.freshnessReason}>{productFreshnessLabels[selectedProduct.freshness ?? "unknown"] ?? productFreshnessLabels.unknown}{selectedProduct.sourceBuildVersion ? ` · источник ${selectedProduct.sourceBuildVersion}` : ""}</span> : null}{selectedProduct ? <span className="mt-1 block text-[9px] normal-case tracking-normal text-[#788397]">Импортировано: {selectedProduct.entityCount.toLocaleString("ru-RU")} · опубликовано: {selectedProduct.publishedEntityCount.toLocaleString("ru-RU")}</span> : null}</label>
           <div className="border border-[#343b4a] bg-[#0b0f16] px-4 py-2"><span className="block text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Найдено</span><strong className="mt-1 block font-mono text-sm text-[#d8bd79]">{(page.pagination.total ?? 0).toLocaleString("ru-RU")}</strong></div>
         </div>
       </div>

@@ -71,16 +71,43 @@ func (s *Server) ListGameProducts(ctx context.Context, _ api.ListGameProductsReq
 }
 
 func toAPIProduct(product catalog.Product) api.GameProduct {
+	var sourceStatus *api.GameProductSourceStatus
+	if product.SourceStatus != nil {
+		value := api.GameProductSourceStatus(*product.SourceStatus)
+		sourceStatus = &value
+	}
+	freshness := product.Freshness
+	if strings.TrimSpace(freshness) == "" {
+		freshness = "unknown"
+	}
+	freshnessReason := product.FreshnessReason
+	if strings.TrimSpace(freshnessReason) == "" {
+		freshnessReason = "Источник ещё не проверялся"
+	}
 	return api.GameProduct{
 		Id:                   product.ID,
 		Slug:                 product.Slug,
 		Name:                 product.Name,
 		BuildNumber:          product.BuildNumber,
 		BuildVersion:         product.BuildVersion,
+		Source:               optionalString(product.Source),
+		SourceBuildNumber:    product.SourceBuildNumber,
+		SourceBuildVersion:   product.SourceBuildVersion,
+		SourceStatus:         sourceStatus,
+		SourceCheckedAt:      product.SourceCheckedAt,
 		EntityCount:          product.EntityCount,
 		PublishedEntityCount: product.PublishedCount,
 		PublicRelease:        pointer(product.PublicRelease),
+		Freshness:            api.GameProductFreshness(freshness),
+		FreshnessReason:      freshnessReason,
 	}
+}
+
+func optionalString(value string) *string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	return &value
 }
 
 func (s *Server) ListLibraryDatasets(ctx context.Context, request api.ListLibraryDatasetsRequestObject) (api.ListLibraryDatasetsResponseObject, error) {

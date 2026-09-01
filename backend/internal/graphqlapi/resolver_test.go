@@ -43,9 +43,14 @@ func TestToGraphQLEntityExposesFullCatalogContract(t *testing.T) {
 func TestToGraphQLProductExposesEditionBuildAndPublication(t *testing.T) {
 	buildNumber := int32(69497)
 	buildVersion := "12.1.0.69497"
+	sourceBuildNumber := int32(69497)
+	sourceBuildVersion := "12.1.0.69497"
+	sourceStatus := "current"
 	got := toGraphQLProduct(catalog.Product{
 		ID: 1, Slug: "wow", Name: "World of Warcraft",
 		BuildNumber: &buildNumber, BuildVersion: &buildVersion,
+		Source: "wago_tools", SourceBuildNumber: &sourceBuildNumber, SourceBuildVersion: &sourceBuildVersion,
+		SourceStatus: &sourceStatus, Freshness: "fresh", FreshnessReason: "build matches",
 		EntityCount: 825913, PublishedCount: 743967, PublicRelease: true,
 	})
 	if got.BuildNumber == nil || *got.BuildNumber != 69497 || got.BuildVersion == nil || *got.BuildVersion != buildVersion {
@@ -53,6 +58,11 @@ func TestToGraphQLProductExposesEditionBuildAndPublication(t *testing.T) {
 	}
 	if got.EntityCount != 825913 || got.PublishedEntityCount != 743967 || !got.PublicRelease {
 		t.Fatalf("graphql product publication metadata = %#v", got)
+	}
+	if got.Source != "wago_tools" || got.SourceBuildNumber == nil || *got.SourceBuildNumber != int(sourceBuildNumber) ||
+		got.SourceBuildVersion == nil || *got.SourceBuildVersion != sourceBuildVersion || got.SourceStatus == nil ||
+		*got.SourceStatus != sourceStatus || got.Freshness != "fresh" || got.FreshnessReason != "build matches" {
+		t.Fatalf("graphql product freshness metadata = %#v", got)
 	}
 }
 
