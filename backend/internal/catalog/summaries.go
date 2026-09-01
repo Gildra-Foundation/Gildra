@@ -68,8 +68,14 @@ const summaryFastQuery = `
 		COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),$4::text,
 		(localized.version_id IS NULL OR NULLIF(localized.name,'') IS NULL) AS locale_fallback,
 		COALESCE(NULLIF(localized.name,''),fallback.name,''),
-		CASE WHEN COALESCE(NULLIF(localized.description,''),fallback.description,'') ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' THEN ''
-			ELSE COALESCE(NULLIF(localized.description,''),fallback.description,'') END,
+		-- A large part of the item/spell catalog has no short description even
+		-- though the build-pinned tooltip is complete. Use that tooltip as a
+		-- card summary, but never expose unresolved client placeholders.
+		CASE WHEN COALESCE(NULLIF(localized.description,''),NULLIF(fallback.description,''),
+			NULLIF(localized_tooltip.plain_text,''),NULLIF(fallback_tooltip.plain_text,''),'')
+			~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' THEN ''
+			ELSE COALESCE(NULLIF(localized.description,''),NULLIF(fallback.description,''),
+				NULLIF(localized_tooltip.plain_text,''),NULLIF(fallback_tooltip.plain_text,''),'') END,
 		COALESCE(source_icon.icon_name,direct_icon.icon_name,db2_icon.icon_name,
 			NULLIF(version.payload #>> '{raidbots,icon}',''),NULLIF(version.payload #>> '{raidbots,spellIcon}','')),
 		CASE WHEN item.quality ~ '^[0-9]+$' THEN item.quality::int END,
@@ -79,6 +85,8 @@ const summaryFastQuery = `
 	JOIN game_entity_versions version ON version.id=entity.published_version_id
 	LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 	LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
+	LEFT JOIN catalog_entity_tooltips localized_tooltip ON localized_tooltip.version_id=version.id AND localized_tooltip.locale=$4
+	LEFT JOIN catalog_entity_tooltips fallback_tooltip ON fallback_tooltip.version_id=version.id AND fallback_tooltip.locale='en_US'
 	LEFT JOIN catalog_items item ON item.version_id=version.id
 	LEFT JOIN catalog_spells spell ON spell.version_id=version.id
 	LEFT JOIN catalog_entity_icons source_icon ON source_icon.build_id=version.build_id
@@ -227,8 +235,11 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),$4::text,
 			(localized.version_id IS NULL OR NULLIF(localized.name,'') IS NULL) AS locale_fallback,
 			COALESCE(NULLIF(localized.name,''),fallback.name,''),
-		CASE WHEN COALESCE(NULLIF(localized.description,''),fallback.description,'') ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' THEN ''
-			ELSE COALESCE(NULLIF(localized.description,''),fallback.description,'') END,
+		CASE WHEN COALESCE(NULLIF(localized.description,''),NULLIF(fallback.description,''),
+			NULLIF(localized_tooltip.plain_text,''),NULLIF(fallback_tooltip.plain_text,''),'')
+			~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' THEN ''
+			ELSE COALESCE(NULLIF(localized.description,''),NULLIF(fallback.description,''),
+				NULLIF(localized_tooltip.plain_text,''),NULLIF(fallback_tooltip.plain_text,''),'') END,
 			COALESCE(source_icon.icon_name,direct_icon.icon_name,db2_icon.icon_name,
 				NULLIF(version.payload #>> '{raidbots,icon}',''),NULLIF(version.payload #>> '{raidbots,spellIcon}','')),
 			CASE WHEN item.quality ~ '^[0-9]+$' THEN item.quality::int END,
@@ -239,6 +250,8 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		JOIN game_entity_versions version ON version.id=entity.published_version_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
+		LEFT JOIN catalog_entity_tooltips localized_tooltip ON localized_tooltip.version_id=version.id AND localized_tooltip.locale=$4
+		LEFT JOIN catalog_entity_tooltips fallback_tooltip ON fallback_tooltip.version_id=version.id AND fallback_tooltip.locale='en_US'
 		LEFT JOIN search_candidates search_match ON search_match.version_id=version.id
 		LEFT JOIN selected_versions selected ON selected.version_id=version.id
 		LEFT JOIN catalog_items item ON item.version_id=version.id
