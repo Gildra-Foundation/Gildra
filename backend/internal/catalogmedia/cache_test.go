@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -101,6 +102,21 @@ func TestDoMediaRequestDoesNotRetryPermanentHTTPError(t *testing.T) {
 	response.Body.Close()
 	if attempts != 1 {
 		t.Fatalf("attempts=%d, want no retry for 404", attempts)
+	}
+}
+
+func TestMediaRetryAfterParsesRFC9110Forms(t *testing.T) {
+	now := time.Date(2026, time.September, 1, 12, 0, 0, 0, time.UTC)
+	if got := mediaRetryAfter("3", now); got != 3*time.Second {
+		t.Fatalf("seconds Retry-After=%s, want 3s", got)
+	}
+	if got := mediaRetryAfter(now.Add(4*time.Second).Format(http.TimeFormat), now); got != 4*time.Second {
+		t.Fatalf("date Retry-After=%s, want 4s", got)
+	}
+	for _, value := range []string{"", "0", "invalid", now.Add(-time.Second).Format(http.TimeFormat)} {
+		if got := mediaRetryAfter(value, now); got != 0 {
+			t.Fatalf("Retry-After(%q)=%s, want zero", value, got)
+		}
 	}
 }
 
