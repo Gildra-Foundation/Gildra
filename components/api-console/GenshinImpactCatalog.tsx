@@ -543,7 +543,8 @@ function WeaponDialog({ weapon, detail, loading, error, onClose, onOpenImage }: 
 
 function WeaponEffect({ detail }: { detail: WeaponDetail | null }) {
   if (!detail?.passiveName && !detail?.passiveDescription) return <EmptyDetail text="Пассивный эффект для этого оружия не указан." />;
-  return <section aria-labelledby="genshin-weapon-effect-title"><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Уникальный эффект</div><h3 id="genshin-weapon-effect-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{detail.passiveName || "Пассивный эффект"}</h3><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#aeb7c7]">{detail.passiveDescription || "Описание отсутствует."}</p></section>;
+  const description = formatEffectDescription(detail.passiveDescription, detail.refinements[0]?.values);
+  return <section aria-labelledby="genshin-weapon-effect-title"><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Уникальный эффект · R1</div><h3 id="genshin-weapon-effect-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{detail.passiveName || "Пассивный эффект"}</h3><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#aeb7c7]">{description || "Описание отсутствует."}</p></section>;
 }
 
 function WeaponRefinementList({ refinements }: { refinements: WeaponRefinement[] }) {
@@ -684,6 +685,11 @@ function formatStat(value: number) {
 
 function formatPercent(value: number) {
   return `${(value * 100).toLocaleString("ru-RU", { maximumFractionDigits: 2 })}%`;
+}
+
+function formatEffectDescription(description: string | undefined, values: string[] | undefined) {
+  if (!description) return "";
+  return description.replace(/\{(\d+)\}/g, (_, index: string) => values?.[Number(index)] ?? "…");
 }
 
 function contentCategoryLabel(value: string) {
