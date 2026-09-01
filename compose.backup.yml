@@ -6,8 +6,16 @@ services:
       CATALOG_BACKUP_SIGNING_KEY: ""
       CATALOG_BACKUP_SIGNING_KEY_FILE: /run/secrets/catalog_backup_signing_key
     secrets:
-      - catalog_backup_age_identity
-      - catalog_backup_signing_key
+      - source: catalog_backup_age_identity
+        target: catalog_backup_age_identity
+        uid: "65532"
+        gid: "65532"
+        mode: 0440
+      - source: catalog_backup_signing_key
+        target: catalog_backup_signing_key
+        uid: "65532"
+        gid: "65532"
+        mode: 0440
 
 secrets:
   catalog_backup_age_identity:

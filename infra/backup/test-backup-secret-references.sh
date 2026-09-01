@@ -29,6 +29,12 @@ for path in \
   grep -q "$path" "$configuration"
 done
 
+for identity in catalog_backup_age_identity catalog_backup_signing_key; do
+  grep -q "uid: '65532'" "$configuration"
+  grep -q "gid: '65532'" "$configuration"
+  grep -q "mode: 0440" "$configuration"
+done
+
 if grep -q 'must-not-appear' "$configuration"; then
   printf 'test: rendered Compose configuration exposed secret contents\n' >&2
   exit 1
