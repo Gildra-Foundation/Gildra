@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -16,9 +17,11 @@ import (
 )
 
 var (
-	ErrInvalidCursor     = errors.New("invalid cursor")
-	ErrCharacterNotFound = errors.New("genshin character not found")
-	cursorValue          = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+	ErrInvalidCursor       = errors.New("invalid cursor")
+	ErrCharacterNotFound   = errors.New("genshin character not found")
+	ErrWeaponNotFound      = errors.New("genshin weapon not found")
+	ErrArtifactSetNotFound = errors.New("genshin artifact set not found")
+	cursorValue            = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 )
 
 type Service struct {
@@ -80,8 +83,49 @@ type CharacterSummary struct {
 type CharacterDetail struct {
 	CharacterSummary
 	Description    string                 `json:"description"`
+	Stats          *CharacterStats        `json:"stats,omitempty"`
+	AscensionCosts []UpgradeCostStage     `json:"ascensionCosts"`
 	Talents        []TalentSummary        `json:"talents"`
 	Constellations []ConstellationSummary `json:"constellations"`
+}
+
+type CharacterStats struct {
+	Base        CharacterStatValues  `json:"base"`
+	Curve       map[string]string    `json:"curve"`
+	Promotion   []CharacterPromotion `json:"promotion"`
+	Specialized string               `json:"specialized"`
+}
+
+type CharacterStatValues struct {
+	HP         float64 `json:"hp"`
+	Attack     float64 `json:"attack"`
+	Defense    float64 `json:"defense"`
+	CritRate   float64 `json:"critRate"`
+	CritDamage float64 `json:"critDamage"`
+}
+
+type CharacterPromotion struct {
+	HP          float64 `json:"hp"`
+	Attack      float64 `json:"attack"`
+	Defense     float64 `json:"defense"`
+	MaxLevel    int16   `json:"maxLevel"`
+	Specialized float64 `json:"specialized"`
+}
+
+type UpgradeCostStage struct {
+	Key      string            `json:"key"`
+	Stage    int16             `json:"stage"`
+	MaxLevel int16             `json:"maxLevel,omitempty"`
+	Items    []UpgradeCostItem `json:"items"`
+}
+
+type UpgradeCostItem struct {
+	ID             int64   `json:"id"`
+	Name           string  `json:"name"`
+	Count          int64   `json:"count"`
+	IconURL        *string `json:"iconUrl,omitempty"`
+	Locale         string  `json:"locale,omitempty"`
+	LocaleFallback bool    `json:"localeFallback,omitempty"`
 }
 
 type ConstellationSummary struct {
@@ -107,8 +151,26 @@ type WeaponSummary struct {
 	SecondaryStat      string   `json:"secondaryStat"`
 	SecondaryStatValue *float64 `json:"secondaryStatValue"`
 	IconURL            *string  `json:"iconUrl"`
+	Description        string   `json:"description"`
+	PassiveName        string   `json:"passiveName"`
+	PassiveDescription string   `json:"passiveDescription"`
 	Locale             string   `json:"locale"`
 	LocaleFallback     bool     `json:"localeFallback"`
+}
+
+type WeaponDetail struct {
+	WeaponSummary
+	Description        string             `json:"description"`
+	PassiveName        string             `json:"passiveName"`
+	PassiveDescription string             `json:"passiveDescription"`
+	Refinements        []WeaponRefinement `json:"refinements"`
+	AscensionCosts     []UpgradeCostStage `json:"ascensionCosts"`
+}
+
+type WeaponRefinement struct {
+	Level       int16    `json:"level"`
+	Values      []string `json:"values"`
+	Description string   `json:"description"`
 }
 
 type ArtifactSetSummary struct {
@@ -124,6 +186,31 @@ type ArtifactSetSummary struct {
 	Locale         string  `json:"locale"`
 	LocaleFallback bool    `json:"localeFallback"`
 	PieceCount     int64   `json:"pieceCount"`
+}
+
+type ArtifactSetDetail struct {
+	ArtifactSetSummary
+	Pieces  []ArtifactPieceSummary  `json:"pieces"`
+	Sources []ArtifactSourceSummary `json:"sources"`
+}
+
+type ArtifactPieceSummary struct {
+	ID             int64   `json:"id"`
+	Slot           string  `json:"slot"`
+	Name           string  `json:"name"`
+	Description    string  `json:"description"`
+	IconURL        *string `json:"iconUrl"`
+	Locale         string  `json:"locale"`
+	LocaleFallback bool    `json:"localeFallback"`
+}
+
+type ArtifactSourceSummary struct {
+	Slug             string `json:"slug"`
+	Name             string `json:"name"`
+	Region           string `json:"region"`
+	EntranceName     string `json:"entranceName"`
+	UnlockRank       int16  `json:"unlockRank"`
+	RecommendedLevel int16  `json:"recommendedLevel"`
 }
 
 type TalentSummary struct {
@@ -269,6 +356,7 @@ func (s *Service) ListCharacters(ctx context.Context, params ListParams) (Page[C
 func (s *Service) GetCharacter(ctx context.Context, slug, locale string) (CharacterDetail, error) {
 	var item CharacterDetail
 	var iconStorageKey, portraitStorageKey *string
+	var sourcePayload []byte
 	err := s.postgres.QueryRow(ctx, `
 		SELECT character.id, character.external_id, character.slug,
 		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), character.slug),
@@ -276,7 +364,7 @@ func (s *Service) GetCharacter(ctx context.Context, slug, locale string) (Charac
 		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
 		       character.rarity, character.element, character.weapon_type, character.region,
 		       icon.storage_key, portrait.storage_key,
-		       $1, localized.character_id IS NULL,
+		       character.source_payload, $1, localized.character_id IS NULL,
 		       (SELECT count(*) FROM genshin_character_talents talent WHERE talent.character_id = character.id)
 		FROM genshin_characters character
 		JOIN genshin_current_release release ON release.id = character.release_id
@@ -289,7 +377,7 @@ func (s *Service) GetCharacter(ctx context.Context, slug, locale string) (Charac
 		WHERE character.slug = $2`, locale, slug).Scan(
 		&item.ID, &item.ExternalID, &item.Slug, &item.Name, &item.Title, &item.Description,
 		&item.Rarity, &item.Element, &item.WeaponType, &item.Region, &iconStorageKey,
-		&portraitStorageKey, &item.Locale, &item.LocaleFallback, &item.TalentCount,
+		&portraitStorageKey, &sourcePayload, &item.Locale, &item.LocaleFallback, &item.TalentCount,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return CharacterDetail{}, ErrCharacterNotFound
@@ -299,6 +387,15 @@ func (s *Service) GetCharacter(ctx context.Context, slug, locale string) (Charac
 	}
 	item.IconURL = storageURL(iconStorageKey)
 	item.PortraitURL = storageURL(portraitStorageKey)
+	stats, err := s.characterStats(ctx, slug)
+	if err != nil {
+		return CharacterDetail{}, err
+	}
+	item.Stats = stats
+	item.AscensionCosts, err = s.upgradeCosts(ctx, sourcePayload, locale, promotionMaxLevels(stats))
+	if err != nil {
+		return CharacterDetail{}, err
+	}
 
 	talents, err := s.characterTalents(ctx, item.ID, slug, locale)
 	if err != nil {
@@ -311,6 +408,373 @@ func (s *Service) GetCharacter(ctx context.Context, slug, locale string) (Charac
 	}
 	item.Constellations = constellations
 	return item, nil
+}
+
+type characterStatsSource struct {
+	Base struct {
+		HP         float64 `json:"hp"`
+		Attack     float64 `json:"attack"`
+		Defense    float64 `json:"defense"`
+		CritRate   float64 `json:"critrate"`
+		CritDamage float64 `json:"critdmg"`
+	} `json:"base"`
+	Curve     map[string]string `json:"curve"`
+	Promotion []struct {
+		HP          float64 `json:"hp"`
+		Attack      float64 `json:"attack"`
+		Defense     float64 `json:"defense"`
+		MaxLevel    int16   `json:"maxlevel"`
+		Specialized float64 `json:"specialized"`
+	} `json:"promotion"`
+	Specialized string `json:"specialized"`
+}
+
+func (s *Service) characterStats(ctx context.Context, slug string) (*CharacterStats, error) {
+	var raw []byte
+	err := s.postgres.QueryRow(ctx, `
+		SELECT entry.source_payload -> $1
+		FROM genshin_content_entries entry
+		JOIN genshin_current_release release ON release.id = entry.release_id
+		WHERE entry.category = 'stats' AND entry.slug = 'characters'`, slug).Scan(&raw)
+	if errors.Is(err, pgx.ErrNoRows) || len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read genshin character stats %s: %w", slug, err)
+	}
+	var source characterStatsSource
+	if err := json.Unmarshal(raw, &source); err != nil {
+		return nil, fmt.Errorf("decode genshin character stats %s: %w", slug, err)
+	}
+	stats := &CharacterStats{
+		Base: CharacterStatValues{
+			HP: source.Base.HP, Attack: source.Base.Attack, Defense: source.Base.Defense,
+			CritRate: source.Base.CritRate, CritDamage: source.Base.CritDamage,
+		},
+		Curve: source.Curve, Specialized: source.Specialized,
+		Promotion: make([]CharacterPromotion, 0, len(source.Promotion)),
+	}
+	for _, promotion := range source.Promotion {
+		stats.Promotion = append(stats.Promotion, CharacterPromotion{
+			HP: promotion.HP, Attack: promotion.Attack, Defense: promotion.Defense,
+			MaxLevel: promotion.MaxLevel, Specialized: promotion.Specialized,
+		})
+	}
+	return stats, nil
+}
+
+type upgradeCostSource struct {
+	ID    int64  `json:"id"`
+	Name  string `json:"name"`
+	Count int64  `json:"count"`
+}
+
+func (s *Service) upgradeCosts(ctx context.Context, sourcePayload []byte, locale string, maxLevels []int16) ([]UpgradeCostStage, error) {
+	if len(sourcePayload) == 0 {
+		return []UpgradeCostStage{}, nil
+	}
+	var costs map[string][]upgradeCostSource
+	var source struct {
+		Costs map[string][]upgradeCostSource `json:"costs"`
+	}
+	if err := json.Unmarshal(sourcePayload, &source); err != nil {
+		return nil, fmt.Errorf("decode genshin upgrade costs: %w", err)
+	}
+	costs = source.Costs
+	if len(costs) == 0 {
+		return []UpgradeCostStage{}, nil
+	}
+	stages := make([]UpgradeCostStage, 0, len(costs))
+	ids := make([]int64, 0)
+	seenIDs := make(map[int64]struct{})
+	for key, rawItems := range costs {
+		stage := stageNumber(key)
+		if stage == 0 {
+			continue
+		}
+		items := make([]UpgradeCostItem, 0, len(rawItems))
+		for _, raw := range rawItems {
+			items = append(items, UpgradeCostItem{ID: raw.ID, Name: raw.Name, Count: raw.Count})
+			if _, seen := seenIDs[raw.ID]; !seen {
+				seenIDs[raw.ID] = struct{}{}
+				ids = append(ids, raw.ID)
+			}
+		}
+		maxLevel := int16(0)
+		if stage <= len(maxLevels) {
+			maxLevel = maxLevels[stage-1]
+		}
+		stages = append(stages, UpgradeCostStage{Key: key, Stage: int16(stage), MaxLevel: maxLevel, Items: items})
+	}
+	slices.SortFunc(stages, func(a, b UpgradeCostStage) int { return int(a.Stage - b.Stage) })
+	if len(ids) == 0 {
+		return stages, nil
+	}
+	localized, err := s.lookupMaterialNames(ctx, locale, ids)
+	if err != nil {
+		return nil, err
+	}
+	for stage := range stages {
+		for item := range stages[stage].Items {
+			if material, ok := localized[stages[stage].Items[item].ID]; ok {
+				stages[stage].Items[item].Name = material.Name
+				stages[stage].Items[item].IconURL = material.IconURL
+				stages[stage].Items[item].Locale = material.Locale
+				stages[stage].Items[item].LocaleFallback = material.LocaleFallback
+			}
+		}
+	}
+	return stages, nil
+}
+
+func stageNumber(key string) int {
+	if len(key) < 7 || !strings.HasPrefix(key, "ascend") {
+		return 0
+	}
+	value, err := strconv.Atoi(key[len("ascend"):])
+	if err != nil || value < 1 || value > 6 {
+		return 0
+	}
+	return value
+}
+
+func promotionMaxLevels(stats *CharacterStats) []int16 {
+	if stats == nil {
+		return nil
+	}
+	levels := make([]int16, 0, len(stats.Promotion))
+	for _, promotion := range stats.Promotion {
+		levels = append(levels, promotion.MaxLevel)
+	}
+	return levels
+}
+
+type localizedMaterial struct {
+	Name           string
+	IconURL        *string
+	Locale         string
+	LocaleFallback bool
+}
+
+func (s *Service) lookupMaterialNames(ctx context.Context, locale string, ids []int64) (map[int64]localizedMaterial, error) {
+	rows, err := s.postgres.Query(ctx, `
+		SELECT entry.external_id,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), entry.slug),
+		       icon.storage_key, $1, localized.entry_id IS NULL
+		FROM genshin_content_entries entry
+		JOIN genshin_current_release release ON release.id = entry.release_id
+		LEFT JOIN genshin_content_localizations localized
+		       ON localized.entry_id = entry.id AND localized.locale = $1
+		LEFT JOIN genshin_content_localizations english
+		       ON english.entry_id = entry.id AND english.locale = 'en_US'
+		LEFT JOIN genshin_media_assets icon ON icon.id = entry.icon_asset_id
+		WHERE entry.category IN ('materials', 'crafts')
+		  AND entry.external_id = ANY($2)`, locale, ids)
+	if err != nil {
+		return nil, fmt.Errorf("lookup genshin upgrade materials: %w", err)
+	}
+	defer rows.Close()
+	result := make(map[int64]localizedMaterial, len(ids))
+	for rows.Next() {
+		var id int64
+		var material localizedMaterial
+		var iconStorageKey *string
+		if err := rows.Scan(&id, &material.Name, &iconStorageKey, &material.Locale, &material.LocaleFallback); err != nil {
+			return nil, fmt.Errorf("scan genshin upgrade material: %w", err)
+		}
+		material.IconURL = storageURL(iconStorageKey)
+		result[id] = material
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate genshin upgrade materials: %w", err)
+	}
+	return result, nil
+}
+
+func (s *Service) GetWeapon(ctx context.Context, slug, locale string) (WeaponDetail, error) {
+	var item WeaponDetail
+	var iconStorageKey *string
+	var sourcePayload, refinementPayload []byte
+	err := s.postgres.QueryRow(ctx, `
+		SELECT weapon.id, weapon.external_id, weapon.slug,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), weapon.slug),
+		       weapon.rarity, weapon.weapon_type, weapon.base_attack::float8, weapon.secondary_stat,
+		       weapon.secondary_stat_value::float8, icon.storage_key,
+		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
+		       COALESCE(NULLIF(localized.passive_name, ''), NULLIF(english.passive_name, ''), ''),
+		       COALESCE(NULLIF(localized.passive_description, ''), NULLIF(english.passive_description, ''), ''),
+		       COALESCE(localized.refinement_descriptions, english.refinement_descriptions, '[]'::jsonb),
+		       weapon.source_payload, $1, localized.weapon_id IS NULL
+		FROM genshin_weapons weapon
+		JOIN genshin_current_release release ON release.id = weapon.release_id
+		LEFT JOIN genshin_weapon_localizations localized
+		       ON localized.weapon_id = weapon.id AND localized.locale = $1
+		LEFT JOIN genshin_weapon_localizations english
+		       ON english.weapon_id = weapon.id AND english.locale = 'en_US'
+		LEFT JOIN genshin_media_assets icon ON icon.id = weapon.icon_asset_id
+		WHERE weapon.slug = $2`, locale, slug).Scan(
+		&item.ID, &item.ExternalID, &item.Slug, &item.Name, &item.Rarity, &item.WeaponType,
+		&item.BaseAttack, &item.SecondaryStat, &item.SecondaryStatValue, &iconStorageKey,
+		&item.Description, &item.PassiveName, &item.PassiveDescription, &refinementPayload,
+		&sourcePayload, &item.Locale, &item.LocaleFallback,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return WeaponDetail{}, ErrWeaponNotFound
+	}
+	if err != nil {
+		return WeaponDetail{}, fmt.Errorf("read genshin weapon %s: %w", slug, err)
+	}
+	item.IconURL = storageURL(iconStorageKey)
+	item.Refinements = weaponRefinements(sourcePayload, refinementPayload)
+	item.AscensionCosts, err = s.upgradeCosts(ctx, sourcePayload, locale, nil)
+	if err != nil {
+		return WeaponDetail{}, err
+	}
+	return item, nil
+}
+
+type weaponRefinementSource struct {
+	Values      []string `json:"values"`
+	Description string   `json:"description"`
+}
+
+func weaponRefinements(sourcePayload, localizedPayload []byte) []WeaponRefinement {
+	var source map[string]weaponRefinementSource
+	_ = json.Unmarshal(sourcePayload, &source)
+	var localized []string
+	_ = json.Unmarshal(localizedPayload, &localized)
+	result := make([]WeaponRefinement, 0, 5)
+	for level := 1; level <= 5; level++ {
+		key := "r" + strconv.Itoa(level)
+		refinement, ok := source[key]
+		if !ok && level > len(localized) {
+			continue
+		}
+		description := refinement.Description
+		if level <= len(localized) && localized[level-1] != "" {
+			description = localized[level-1]
+		}
+		result = append(result, WeaponRefinement{Level: int16(level), Values: refinement.Values, Description: description})
+	}
+	return result
+}
+
+func (s *Service) GetArtifactSet(ctx context.Context, slug, locale string) (ArtifactSetDetail, error) {
+	var item ArtifactSetDetail
+	var iconStorageKey *string
+	var englishName string
+	err := s.postgres.QueryRow(ctx, `
+		SELECT artifact.id, artifact.external_id, artifact.slug,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), artifact.slug),
+		       artifact.min_rarity, artifact.max_rarity,
+		       COALESCE(NULLIF(localized.two_piece_bonus, ''), NULLIF(english.two_piece_bonus, ''), ''),
+		       COALESCE(NULLIF(localized.four_piece_bonus, ''), NULLIF(english.four_piece_bonus, ''), ''),
+		       icon.storage_key, $1, localized.artifact_set_id IS NULL,
+		       (SELECT count(*) FROM genshin_artifact_pieces piece WHERE piece.artifact_set_id = artifact.id),
+		       COALESCE(english.name, artifact.slug)
+		FROM genshin_artifact_sets artifact
+		JOIN genshin_current_release release ON release.id = artifact.release_id
+		LEFT JOIN genshin_artifact_set_localizations localized
+		       ON localized.artifact_set_id = artifact.id AND localized.locale = $1
+		LEFT JOIN genshin_artifact_set_localizations english
+		       ON english.artifact_set_id = artifact.id AND english.locale = 'en_US'
+		LEFT JOIN genshin_media_assets icon ON icon.id = artifact.icon_asset_id
+		WHERE artifact.slug = $2`, locale, slug).Scan(
+		&item.ID, &item.ExternalID, &item.Slug, &item.Name, &item.MinRarity, &item.MaxRarity,
+		&item.TwoPieceBonus, &item.FourPieceBonus, &iconStorageKey, &item.Locale, &item.LocaleFallback,
+		&item.PieceCount, &englishName,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ArtifactSetDetail{}, ErrArtifactSetNotFound
+	}
+	if err != nil {
+		return ArtifactSetDetail{}, fmt.Errorf("read genshin artifact set %s: %w", slug, err)
+	}
+	item.IconURL = storageURL(iconStorageKey)
+	item.Pieces, err = s.artifactPieces(ctx, item.ID, slug, locale)
+	if err != nil {
+		return ArtifactSetDetail{}, err
+	}
+	item.Sources, err = s.artifactSources(ctx, englishName, locale)
+	if err != nil {
+		return ArtifactSetDetail{}, err
+	}
+	return item, nil
+}
+
+func (s *Service) artifactPieces(ctx context.Context, artifactID int64, slug, locale string) ([]ArtifactPieceSummary, error) {
+	rows, err := s.postgres.Query(ctx, `
+		SELECT piece.id, piece.slot,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), piece.slot),
+		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
+		       icon.storage_key, $1, localized.artifact_piece_id IS NULL
+		FROM genshin_artifact_pieces piece
+		LEFT JOIN genshin_artifact_piece_localizations localized
+		       ON localized.artifact_piece_id = piece.id AND localized.locale = $1
+		LEFT JOIN genshin_artifact_piece_localizations english
+		       ON english.artifact_piece_id = piece.id AND english.locale = 'en_US'
+		LEFT JOIN genshin_media_assets icon ON icon.id = piece.icon_asset_id
+		WHERE piece.artifact_set_id = $2
+		ORDER BY CASE piece.slot WHEN 'flower' THEN 1 WHEN 'plume' THEN 2 WHEN 'sands' THEN 3 WHEN 'goblet' THEN 4 WHEN 'circlet' THEN 5 ELSE 6 END, piece.id`, locale, artifactID)
+	if err != nil {
+		return nil, fmt.Errorf("list genshin artifact pieces %s: %w", slug, err)
+	}
+	defer rows.Close()
+	items := make([]ArtifactPieceSummary, 0, 5)
+	for rows.Next() {
+		var item ArtifactPieceSummary
+		var iconStorageKey *string
+		if err := rows.Scan(&item.ID, &item.Slot, &item.Name, &item.Description, &iconStorageKey, &item.Locale, &item.LocaleFallback); err != nil {
+			return nil, fmt.Errorf("scan genshin artifact piece %s: %w", slug, err)
+		}
+		item.IconURL = storageURL(iconStorageKey)
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate genshin artifact pieces %s: %w", slug, err)
+	}
+	return items, nil
+}
+
+func (s *Service) artifactSources(ctx context.Context, artifactName, locale string) ([]ArtifactSourceSummary, error) {
+	rows, err := s.postgres.Query(ctx, `
+		SELECT entry.slug,
+		       COALESCE(NULLIF(localized.name, ''), NULLIF(english.name, ''), entry.slug),
+		       COALESCE(NULLIF(localized.source_payload->>'regionName', ''), NULLIF(english.source_payload->>'regionName', ''), ''),
+		       COALESCE(NULLIF(localized.source_payload->>'entranceName', ''), NULLIF(english.source_payload->>'entranceName', ''), ''),
+		       COALESCE(NULLIF(localized.source_payload->>'unlockRank', '')::smallint, NULLIF(english.source_payload->>'unlockRank', '')::smallint, 0),
+		       COALESCE(NULLIF(localized.source_payload->>'recommendedLevel', '')::smallint, NULLIF(english.source_payload->>'recommendedLevel', '')::smallint, 0)
+		FROM genshin_content_entries entry
+		JOIN genshin_current_release release ON release.id = entry.release_id
+		LEFT JOIN genshin_content_localizations localized
+		       ON localized.entry_id = entry.id AND localized.locale = $1
+		LEFT JOIN genshin_content_localizations english
+		       ON english.entry_id = entry.id AND english.locale = 'en_US'
+		WHERE entry.category = 'domains'
+		  AND entry.source_payload->>'domainType' = 'UI_ABYSSUS_RELIC'
+		  AND EXISTS (
+		      SELECT 1
+		      FROM jsonb_array_elements(COALESCE(entry.source_payload->'rewardPreview', '[]'::jsonb)) reward
+		      WHERE lower(reward->>'name') = lower($2)
+		  )
+		ORDER BY COALESCE(NULLIF(localized.source_payload->>'entranceName', ''), NULLIF(english.source_payload->>'entranceName', ''), entry.slug),
+		         COALESCE(NULLIF(localized.source_payload->>'unlockRank', '')::smallint, NULLIF(english.source_payload->>'unlockRank', '')::smallint, 0), entry.slug`, locale, artifactName)
+	if err != nil {
+		return nil, fmt.Errorf("list genshin artifact sources: %w", err)
+	}
+	defer rows.Close()
+	items := make([]ArtifactSourceSummary, 0, 8)
+	for rows.Next() {
+		var item ArtifactSourceSummary
+		if err := rows.Scan(&item.Slug, &item.Name, &item.Region, &item.EntranceName, &item.UnlockRank, &item.RecommendedLevel); err != nil {
+			return nil, fmt.Errorf("scan genshin artifact source: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate genshin artifact sources: %w", err)
+	}
+	return items, nil
 }
 
 func (s *Service) characterTalents(ctx context.Context, characterID int64, slug, locale string) ([]TalentSummary, error) {
@@ -411,6 +875,9 @@ func (s *Service) ListWeapons(ctx context.Context, params ListParams) (Page[Weap
 		       weapon.rarity, weapon.weapon_type, weapon.base_attack::float8, weapon.secondary_stat,
 		       weapon.secondary_stat_value::float8,
 		       CASE WHEN icon.storage_key IS NULL THEN NULL ELSE '/genshin-impact/media/' || icon.storage_key END,
+		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
+		       COALESCE(NULLIF(localized.passive_name, ''), NULLIF(english.passive_name, ''), ''),
+		       COALESCE(NULLIF(localized.passive_description, ''), NULLIF(english.passive_description, ''), ''),
 		       $1, localized.weapon_id IS NULL
 		FROM genshin_weapons weapon
 		JOIN genshin_current_release release ON release.id = weapon.release_id
@@ -433,7 +900,8 @@ func (s *Service) ListWeapons(ctx context.Context, params ListParams) (Page[Weap
 	for rows.Next() {
 		var item WeaponSummary
 		if err := rows.Scan(&item.ID, &item.ExternalID, &item.Slug, &item.Name, &item.Rarity, &item.WeaponType,
-			&item.BaseAttack, &item.SecondaryStat, &item.SecondaryStatValue, &item.IconURL, &item.Locale,
+			&item.BaseAttack, &item.SecondaryStat, &item.SecondaryStatValue, &item.IconURL, &item.Description,
+			&item.PassiveName, &item.PassiveDescription, &item.Locale,
 			&item.LocaleFallback); err != nil {
 			return Page[WeaponSummary]{}, fmt.Errorf("scan genshin weapon: %w", err)
 		}

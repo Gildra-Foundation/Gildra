@@ -21,6 +21,14 @@ func (stubCatalog) GetCharacter(context.Context, string, string) (CharacterDetai
 	return CharacterDetail{}, nil
 }
 
+func (stubCatalog) GetWeapon(context.Context, string, string) (WeaponDetail, error) {
+	return WeaponDetail{}, nil
+}
+
+func (stubCatalog) GetArtifactSet(context.Context, string, string) (ArtifactSetDetail, error) {
+	return ArtifactSetDetail{}, nil
+}
+
 func (stubCatalog) ListCharacters(context.Context, ListParams) (Page[CharacterSummary], error) {
 	return Page[CharacterSummary]{Data: []CharacterSummary{}, Pagination: Pagination{Limit: 24}}, nil
 }
