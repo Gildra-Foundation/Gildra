@@ -452,6 +452,13 @@ export interface components {
             id: number;
             slug: string;
             name: string;
+            /**
+             * @description Publication freshness for the edition relative to its active build.
+             * @enum {string}
+             */
+            freshness?: "fresh" | "stale" | "empty" | "refreshing" | "failed" | "unknown";
+            /** @description Human-readable explanation of the freshness state. */
+            freshnessReason?: string;
         };
         LibraryDataset: {
             slug: string;

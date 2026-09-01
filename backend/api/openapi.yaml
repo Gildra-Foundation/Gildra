@@ -977,6 +977,13 @@ components:
           type: string
         name:
           type: string
+        freshness:
+          type: string
+          enum: [fresh, stale, empty, refreshing, failed, unknown]
+          description: Publication freshness for the edition relative to its active build.
+        freshnessReason:
+          type: string
+          description: Human-readable explanation of the freshness state.
     LibraryDataset:
       type: object
       required: [slug, product, entityType, categoryPath, group, iconSymbol, sortOrder, name, description, entityCount, localizedCount, verifiedLocalizedCount, tooltipCount, imageCount, applicability, applicabilityReason, freshness, freshnessReason]
