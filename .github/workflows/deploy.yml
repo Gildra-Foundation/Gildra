@@ -135,6 +135,12 @@ jobs:
           OVH_USER: ${{ secrets.OVH_USER }}
         run: |
           ssh "$OVH_USER@$OVH_HOST" 'sudo /opt/gildra/infra/deploy/bootstrap-runtime-policy.sh /opt/gildra/.env'
+      - name: Normalize legacy release manifest
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+        run: |
+          ssh "$OVH_USER@$OVH_HOST" 'sudo /opt/gildra/infra/deploy/bootstrap-release-manifest.sh /opt/gildra/current-release.env'
       - name: Deploy immutable images
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}

@@ -5,6 +5,7 @@ set -eu
 script_directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 deployment_script=$script_directory/deploy-immutable-release.sh
 bootstrap_script=$script_directory/bootstrap-runtime-policy.sh
+bootstrap_manifest_script=$script_directory/bootstrap-release-manifest.sh
 repository_directory=$(CDPATH= cd -- "$script_directory/../.." && pwd)
 test_directory=$(mktemp -d)
 trap 'rm -rf "$test_directory"' EXIT HUP INT TERM
@@ -70,6 +71,27 @@ if [ "$1" = exec ]; then
   case "$*" in
     *goose_db_version*) printf '116\n' ;;
     *) printf '116|9999999999\n' ;;
+  esac
+  exit 0
+fi
+
+if [ "$1" = image ] && [ "$2" = inspect ]; then
+  shift 2
+  [ "$1" = --format ] && shift 2
+  case "$1" in
+    sha256:1111111111111111111111111111111111111111111111111111111111111111)
+      printf 'gildra-web:legacy\n'
+      ;;
+    sha256:2222222222222222222222222222222222222222222222222222222222222222)
+      printf 'gildra-api:legacy\n'
+      ;;
+    sha256:3333333333333333333333333333333333333333333333333333333333333333)
+      printf 'gildra-cms:legacy\n'
+      ;;
+    sha256:4444444444444444444444444444444444444444444444444444444444444444)
+      printf 'gildra-scraper:legacy\n'
+      ;;
+    *) exit 1 ;;
   esac
   exit 0
 fi
@@ -237,3 +259,16 @@ grep -q '^CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups$' "$boo
 [ "$(grep -c '^CATALOG_RECOVERY_POLICY=' "$bootstrap_env")" -eq 1 ]
 [ "$(grep -c '^CATALOG_BACKUP_LOCAL_DIRECTORY=' "$bootstrap_env")" -eq 1 ]
 grep -Fq 'bootstrap-runtime-policy.sh' "$repository_directory/.github/workflows/deploy.yml"
+
+bootstrap_manifest=$test_directory/legacy-release.env
+{
+  printf 'WEB_IMAGE=sha256:1111111111111111111111111111111111111111111111111111111111111111\n'
+  printf 'API_IMAGE=sha256:2222222222222222222222222222222222222222222222222222222222222222\n'
+  printf 'CMS_IMAGE=sha256:3333333333333333333333333333333333333333333333333333333333333333\n'
+  printf 'SCRAPER_IMAGE=sha256:4444444444444444444444444444444444444444444444444444444444444444\n'
+} > "$bootstrap_manifest"
+PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
+grep -q '^WEB_IMAGE=gildra-web:legacy$' "$bootstrap_manifest"
+grep -q '^API_IMAGE=gildra-api:legacy$' "$bootstrap_manifest"
+grep -q '^CMS_IMAGE=gildra-cms:legacy$' "$bootstrap_manifest"
+grep -q '^SCRAPER_IMAGE=gildra-scraper:legacy$' "$bootstrap_manifest"
