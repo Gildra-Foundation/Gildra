@@ -388,10 +388,16 @@ func (s *Service) GetCharacter(ctx context.Context, slug, locale string) (Charac
 		       COALESCE(NULLIF(localized.description, ''), NULLIF(english.description, ''), ''),
 		       character.rarity, character.element, character.weapon_type, character.region,
 		       icon.storage_key, portrait.storage_key,
-		       character.source_payload, $1, localized.character_id IS NULL,
+		       CASE
+		         WHEN character.source_payload ? 'costs' THEN character.source_payload
+		         WHEN character.slug LIKE 'traveler%' THEN COALESCE(base_character.source_payload, '{}'::jsonb)
+		         ELSE character.source_payload
+		       END, $1, localized.character_id IS NULL,
 		       (SELECT count(*) FROM genshin_character_talents talent WHERE talent.character_id = character.id)
 		FROM genshin_characters character
 		JOIN genshin_current_release release ON release.id = character.release_id
+		LEFT JOIN genshin_characters base_character
+		       ON base_character.release_id = character.release_id AND base_character.slug = 'aether'
 		LEFT JOIN genshin_character_localizations localized
 		       ON localized.character_id = character.id AND localized.locale = $1
 		LEFT JOIN genshin_character_localizations english
@@ -457,7 +463,10 @@ type characterStatsSource struct {
 func (s *Service) characterStats(ctx context.Context, slug string) (*CharacterStats, error) {
 	var raw []byte
 	err := s.postgres.QueryRow(ctx, `
-		SELECT entry.source_payload -> $1
+		SELECT COALESCE(
+		         entry.source_payload -> $1,
+		         CASE WHEN $1 LIKE 'traveler%' THEN entry.source_payload -> 'aether' END
+		       )
 		FROM genshin_content_entries entry
 		JOIN genshin_current_release release ON release.id = entry.release_id
 		WHERE entry.category = 'stats' AND entry.slug = 'characters'`, slug).Scan(&raw)
