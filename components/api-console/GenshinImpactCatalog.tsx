@@ -70,10 +70,18 @@ type Weapon = {
 
 type WeaponDetail = Weapon & {
   description: string; passiveName: string; passiveDescription: string;
+  stats?: WeaponStats | null;
   refinements: WeaponRefinement[]; ascensionCosts: UpgradeCostStage[];
 };
 
 type WeaponRefinement = { level: number; values: string[]; description: string };
+type WeaponStats = {
+  base: { attack: number; specialized: number };
+  curve: Record<string, string>;
+  promotion: WeaponPromotion[];
+  specialized: string;
+};
+type WeaponPromotion = { attack: number; maxLevel: number };
 
 type ArtifactSet = {
   id: number; externalId: number; slug: string; name: string; minRarity: number;
@@ -535,10 +543,23 @@ function WeaponDialog({ weapon, detail, loading, error, onClose, onOpenImage }: 
           <div className="relative flex min-h-56 items-center justify-center overflow-hidden border border-[#343c4b] bg-[linear-gradient(145deg,#161d29,#090d13)] sm:min-h-64">{profile.iconUrl ? <button type="button" className="relative h-full min-h-56 w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#e6c77a]" onClick={() => onOpenImage({ url: profile.iconUrl as string, label: profile.name })} aria-label={`Открыть изображение: ${profile.name}`}><img src={profile.iconUrl} alt={profile.name} className="h-full max-h-80 w-full object-contain p-6" /><span className="absolute bottom-3 right-3 grid size-8 place-items-center border border-[#5b4c2b] bg-[#0a0d13]/85 text-[#d9b65e]"><Maximize2 className="size-4" /></span></button> : <ImageIcon className="size-10 text-[#4c586b]" strokeWidth={1.2} />}</div>
           <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Stars count={profile.rarity} /><span className="border border-[#343c4b] px-2 py-1 text-[9px] text-[#aeb7c7]">{weaponLabel(profile.weaponType)}</span></div><div className="mt-5 grid grid-cols-2 gap-px border border-[#2b3340] bg-[#2b3340] sm:grid-cols-4"><Fact label="Базовая атака" value={profile.baseAttack == null ? "—" : formatStat(profile.baseAttack)} /><Fact label="Доп. стат" value={profile.secondaryStat || "—"} /><Fact label="Значение" value={profile.secondaryStatValue == null ? "—" : formatStat(profile.secondaryStatValue)} /><Fact label="ID" value={String(profile.externalId)} mono /></div><p className="mt-5 whitespace-pre-line text-sm leading-6 text-[#b0bac9]">{detail?.description || "Описание оружия загружается вместе с профилем."}</p></div>
         </div>
-        {loading ? <LoadingDetail /> : error ? <DetailError text={error} /> : <div className="space-y-8 p-4 sm:p-6"><WeaponEffect detail={detail} /><WeaponRefinementList refinements={detail?.refinements ?? []} /><UpgradeCostList title="Ресурсы для возвышения" stages={detail?.ascensionCosts ?? []} onOpenImage={onOpenImage} /></div>}
+        {loading ? <LoadingDetail /> : error ? <DetailError text={error} /> : <div className="space-y-8 p-4 sm:p-6"><WeaponProgression detail={detail} /><WeaponEffect detail={detail} /><WeaponRefinementList refinements={detail?.refinements ?? []} /><UpgradeCostList title="Ресурсы для возвышения" stages={detail?.ascensionCosts ?? []} onOpenImage={onOpenImage} /></div>}
       </div>
     </div>
   </div>;
+}
+
+function WeaponProgression({ detail }: { detail: WeaponDetail | null }) {
+  if (!detail) return null;
+  const stats = detail.stats;
+  const maxLevel = stats?.promotion.at(-1)?.maxLevel ?? detail.ascensionCosts.at(-1)?.maxLevel;
+  return <section className="space-y-6" aria-labelledby="genshin-weapon-progression-title">
+    <div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Развитие оружия</div><h3 id="genshin-weapon-progression-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Базовые характеристики и прокачка</h3></div><span className="text-[10px] text-[#7d899b]">{maxLevel ? `${maxLevel} ур.` : "—"}</span></div>
+    {stats ? <>
+      <div className="grid gap-3 sm:grid-cols-2"><StatTile label="Базовая атака" value={formatStat(stats.base.attack)} /><StatTile label={detail.secondaryStat || "Доп. характеристика"} value={formatWeaponSpecialized(stats.base.specialized)} /></div>
+      {stats.promotion.length ? <div className="overflow-x-auto border border-[#2b3340] bg-[#0c1017]"><table className="min-w-[420px] w-full text-left text-[10px]"><caption className="border-b border-[#2b3340] px-3 py-2 text-left text-[9px] uppercase tracking-[.12em] text-[#8e7540]">Прирост атаки по возвышениям</caption><thead className="bg-[#111720] text-[#68758a]"><tr><th className="px-3 py-2 font-medium">Макс. уровень</th><th className="px-3 py-2 font-medium">Прирост атаки</th></tr></thead><tbody>{stats.promotion.map((row, index) => <tr key={`${row.maxLevel}-${index}`} className="border-t border-[#252d3a] text-[#aeb7c7]"><td className="px-3 py-2 font-semibold text-[#d5b35f]">{row.maxLevel}</td><td className="px-3 py-2">{row.attack ? formatStat(row.attack) : "—"}</td></tr>)}</tbody></table></div> : null}
+    </> : <EmptyDetail text="Характеристики и уровни возвышения для этого оружия пока не опубликованы в источнике." />}
+  </section>;
 }
 
 function WeaponEffect({ detail }: { detail: WeaponDetail | null }) {
@@ -685,6 +706,11 @@ function formatStat(value: number) {
 
 function formatPercent(value: number) {
   return `${(value * 100).toLocaleString("ru-RU", { maximumFractionDigits: 2 })}%`;
+}
+
+function formatWeaponSpecialized(value: number) {
+  if (!value) return "—";
+  return value <= 1 ? formatPercent(value) : formatStat(value);
 }
 
 function formatEffectDescription(description: string | undefined, values: string[] | undefined) {

@@ -165,8 +165,30 @@ type WeaponDetail struct {
 	Description        string             `json:"description"`
 	PassiveName        string             `json:"passiveName"`
 	PassiveDescription string             `json:"passiveDescription"`
+	Stats              *WeaponStats       `json:"stats,omitempty"`
 	Refinements        []WeaponRefinement `json:"refinements"`
 	AscensionCosts     []UpgradeCostStage `json:"ascensionCosts"`
+}
+
+// WeaponStats is the source-backed level and ascension projection for a
+// weapon. The source stores the initial attack/special stat and the additive
+// attack values unlocked at each ascension cap; keeping both makes the API
+// useful for a profile without exposing the provider's raw JSON shape.
+type WeaponStats struct {
+	Base        WeaponStatValues  `json:"base"`
+	Curve       map[string]string `json:"curve"`
+	Promotion   []WeaponPromotion `json:"promotion"`
+	Specialized string            `json:"specialized"`
+}
+
+type WeaponStatValues struct {
+	Attack      float64 `json:"attack"`
+	Specialized float64 `json:"specialized"`
+}
+
+type WeaponPromotion struct {
+	Attack   float64 `json:"attack"`
+	MaxLevel int16   `json:"maxLevel"`
 }
 
 type WeaponRefinement struct {
@@ -637,12 +659,73 @@ func (s *Service) GetWeapon(ctx context.Context, slug, locale string) (WeaponDet
 	item.Description = cleanGenshinMarkup(item.Description)
 	item.PassiveName = cleanGenshinMarkup(item.PassiveName)
 	item.PassiveDescription = cleanGenshinMarkup(item.PassiveDescription)
+	stats, err := s.weaponStats(ctx, slug)
+	if err != nil {
+		return WeaponDetail{}, err
+	}
+	item.Stats = stats
 	item.Refinements = weaponRefinements(sourcePayload, refinementPayload, item.PassiveDescription)
-	item.AscensionCosts, err = s.upgradeCosts(ctx, sourcePayload, locale, nil)
+	item.AscensionCosts, err = s.upgradeCosts(ctx, sourcePayload, locale, weaponPromotionMaxLevels(stats))
 	if err != nil {
 		return WeaponDetail{}, err
 	}
 	return item, nil
+}
+
+type weaponStatsSource struct {
+	Base struct {
+		Attack      float64 `json:"attack"`
+		Specialized float64 `json:"specialized"`
+	} `json:"base"`
+	Curve     map[string]string `json:"curve"`
+	Promotion []struct {
+		Attack   float64 `json:"attack"`
+		MaxLevel int16   `json:"maxlevel"`
+	} `json:"promotion"`
+	Specialized string `json:"specialized"`
+}
+
+func (s *Service) weaponStats(ctx context.Context, slug string) (*WeaponStats, error) {
+	var raw []byte
+	err := s.postgres.QueryRow(ctx, `
+		SELECT entry.source_payload -> $1
+		FROM genshin_content_entries entry
+		JOIN genshin_current_release release ON release.id = entry.release_id
+		WHERE entry.category = 'stats' AND entry.slug = 'weapons'`, slug).Scan(&raw)
+	if errors.Is(err, pgx.ErrNoRows) || len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read genshin weapon stats %s: %w", slug, err)
+	}
+	var source weaponStatsSource
+	if err := json.Unmarshal(raw, &source); err != nil {
+		return nil, fmt.Errorf("decode genshin weapon stats %s: %w", slug, err)
+	}
+	stats := &WeaponStats{
+		Base:  WeaponStatValues{Attack: source.Base.Attack, Specialized: source.Base.Specialized},
+		Curve: source.Curve, Specialized: source.Specialized,
+		Promotion: make([]WeaponPromotion, 0, len(source.Promotion)),
+	}
+	for _, promotion := range source.Promotion {
+		stats.Promotion = append(stats.Promotion, WeaponPromotion{Attack: promotion.Attack, MaxLevel: promotion.MaxLevel})
+	}
+	return stats, nil
+}
+
+func weaponPromotionMaxLevels(stats *WeaponStats) []int16 {
+	if stats == nil {
+		return nil
+	}
+	start := 0
+	if len(stats.Promotion) > 1 && stats.Promotion[0].MaxLevel <= 20 {
+		start = 1
+	}
+	levels := make([]int16, 0, len(stats.Promotion)-start)
+	for _, promotion := range stats.Promotion[start:] {
+		levels = append(levels, promotion.MaxLevel)
+	}
+	return levels
 }
 
 type weaponRefinementSource struct {
