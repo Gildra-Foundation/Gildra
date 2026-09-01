@@ -540,12 +540,24 @@ sudo env CATALOG_REPAIR_BUILD_VERSION=12.1.0.69497 \
   /opt/gildra/infra/deploy/run-catalog-repair.sh
 ```
 
-The wrapper runs the complete pinned `retail-foundation` profile with
-`-force-rebuild`, keeps the import atomic, and uses the same provenance,
-quality, publication and read-model gates as a normal release. It is also
-available as the manually approved **Repair published WoW catalog** GitHub
-Actions workflow. The workflow validates the four-component build version and
-serializes with normal deployments.
+The wrapper defaults to Retail. Select another edition explicitly, for
+example:
+
+```sh
+sudo env CATALOG_REPAIR_EDITION=classic-era \
+  CATALOG_REPAIR_BUILD_VERSION=1.15.9.69547 \
+  /opt/gildra/infra/deploy/run-catalog-repair.sh
+```
+
+The accepted editions are `retail`, `classic`, `classic-era` and `hardcore`.
+Each maps to its own product, source profile and release pointer: Retail uses
+Wago/DB2/Battle.net/listfile, while Classic, Classic Era and Hardcore use their
+build-pinned DB2/listfile foundations. No Classic data is imported through the
+Retail product. The wrapper keeps the import atomic and uses the same
+provenance, quality, publication and read-model gates as a normal release. It
+is also available as the manually approved **Repair published WoW catalog**
+GitHub Actions workflow, which requires choosing the edition and validating the
+four-component build version before it can run.
 
 The `battlenet` source runs the official index/detail import first and then a
 media-only pass for entity families that expose official icons. The importer

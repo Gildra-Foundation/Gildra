@@ -6,6 +6,7 @@ deployment_directory=${GILDRA_DEPLOY_DIR:-/opt/gildra}
 environment_file=${GILDRA_ENV_FILE:-$deployment_directory/.env}
 release_environment_file=${GILDRA_RELEASE_ENV_FILE:-$deployment_directory/current-release.env}
 build_version=${CATALOG_REPAIR_BUILD_VERSION:-}
+edition=${CATALOG_REPAIR_EDITION:-retail}
 
 fail() {
   printf 'catalog-repair: %s\n' "$*" >&2
@@ -28,6 +29,32 @@ done
 
 printf '%s\n' "$build_version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' ||
   fail 'CATALOG_REPAIR_BUILD_VERSION must be a four-component numeric WoW build version'
+
+case "$edition" in
+  retail)
+    product=wow
+    profile=retail-foundation
+    sources=wago,db2,battlenet,listfile
+    ;;
+  classic)
+    product=wow_classic
+    profile=classic-foundation
+    sources=db2,listfile
+    ;;
+  classic-era)
+    product=wow_classic_era
+    profile=classic-era-foundation
+    sources=db2,listfile
+    ;;
+  hardcore)
+    product=wow_classic_hardcore
+    profile=classic-hardcore-foundation
+    sources=db2,listfile
+    ;;
+  *)
+    fail 'CATALOG_REPAIR_EDITION must be retail, classic, classic-era, or hardcore'
+    ;;
+esac
 
 catalog_access_mode=$(manifest_value CATALOG_ACCESS_MODE "$environment_file")
 case "$catalog_access_mode" in
@@ -53,13 +80,13 @@ compose() {
 }
 
 cd "$deployment_directory"
-printf 'catalog-repair: starting explicit same-build repair for WoW build %s\n' "$build_version" >&2
+printf 'catalog-repair: starting explicit same-build repair for %s (%s) build %s\n' "$edition" "$product" "$build_version" >&2
 compose run --rm --no-deps --entrypoint catalog-pipeline api \
   -mode apply \
   -trigger manual \
-  -profile retail-foundation \
-  -product wow \
-  -sources wago,db2,battlenet,listfile \
+  -profile "$profile" \
+  -product "$product" \
+  -sources "$sources" \
   -version "$build_version" \
   -force-rebuild \
   -max-records 0 \
@@ -68,4 +95,4 @@ compose run --rm --no-deps --entrypoint catalog-pipeline api \
   -access-mode "$catalog_access_mode" \
   -recovery-policy "$catalog_recovery_policy" \
   -timeout 8h
-printf 'catalog-repair: repair pipeline completed for WoW build %s\n' "$build_version" >&2
+printf 'catalog-repair: repair pipeline completed for %s (%s) build %s\n' "$edition" "$product" "$build_version" >&2

@@ -3,8 +3,18 @@ name: Repair published WoW catalog
 on:
   workflow_dispatch:
     inputs:
+      edition:
+        description: 'Edition to repair: retail, classic, classic-era or hardcore'
+        required: true
+        default: retail
+        type: choice
+        options:
+          - retail
+          - classic
+          - classic-era
+          - hardcore
       build_version:
-        description: 'Published WoW build to re-import (for example 12.1.0.69497)'
+        description: 'Edition build to re-import (for example 12.1.0.69497)'
         required: true
         type: string
       confirm_repair:
@@ -32,6 +42,7 @@ jobs:
 
       - name: Validate repair confirmation and build version
         env:
+          EDITION: ${{ inputs.edition }}
           BUILD_VERSION: ${{ inputs.build_version }}
           CONFIRM_REPAIR: ${{ inputs.confirm_repair }}
         shell: bash
@@ -41,6 +52,13 @@ jobs:
             echo 'The repair must be explicitly confirmed.' >&2
             exit 1
           }
+          case "$EDITION" in
+            retail|classic|classic-era|hardcore) ;;
+            *)
+              echo 'edition must be retail, classic, classic-era, or hardcore.' >&2
+              exit 1
+              ;;
+          esac
           printf '%s\n' "$BUILD_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' || {
             echo 'build_version must contain exactly four numeric components.' >&2
             exit 1
@@ -58,16 +76,18 @@ jobs:
 
       - name: Run repair on OVHcloud
         env:
+          EDITION: ${{ inputs.edition }}
           BUILD_VERSION: ${{ inputs.build_version }}
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
         shell: bash
         run: |
           set -euo pipefail
-          # BUILD_VERSION was validated above and contains only digits/dots;
-          # passing it as an environment value keeps shell interpolation safe.
+          # BUILD_VERSION was validated above and contains only digits/dots.
+          # EDITION is a fixed choice input validated above. Passing both as
+          # environment values keeps shell interpolation safe.
           ssh "$OVH_USER@$OVH_HOST" \
-            "sudo env CATALOG_REPAIR_BUILD_VERSION='$BUILD_VERSION' /opt/gildra/infra/deploy/run-catalog-repair.sh"
+            "sudo env CATALOG_REPAIR_EDITION='$EDITION' CATALOG_REPAIR_BUILD_VERSION='$BUILD_VERSION' /opt/gildra/infra/deploy/run-catalog-repair.sh"
 
       - name: Verify production after repair
         shell: bash
