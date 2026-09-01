@@ -156,6 +156,8 @@ services:
     command:
       - -source-directory
       - /var/lib/gildra/genshin-source
+      - -supplemental-directory
+      - /var/lib/gildra/genshin-supplemental
       - -source-revision
       - ${GENSHIN_SOURCE_REVISION:-}
       - -game-version
@@ -174,6 +176,7 @@ services:
     volumes:
       - catalog_media:/var/lib/gildra/catalog-media
       - ${GENSHIN_SOURCE_DIRECTORY:-./.artifacts/genshin-db-source}:/var/lib/gildra/genshin-source:ro
+      - ${GENSHIN_SUPPLEMENTAL_DIRECTORY:-./.artifacts/genshin-supplemental}:/var/lib/gildra/genshin-supplemental:ro
       - ${GENSHIN_ALTERNATE_MEDIA_DIRECTORY:-./.artifacts/genshin-alt-media}:/var/lib/gildra/genshin-alt-media:ro
     depends_on:
       postgres: { condition: service_healthy }

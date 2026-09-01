@@ -333,6 +333,7 @@ function contentCategoryLabel(value: string) {
     tcgdetailedrules: "Правила TCG", tcgenemycards: "Карты противников TCG", tcgkeywords: "Ключевые слова TCG",
     tcglevelrewards: "Награды уровней TCG", tcgstatuseffects: "Эффекты состояний TCG", tcgsummons: "Призываемые сущности TCG",
     voiceovers: "Озвучка", weaponmaterialtypes: "Материалы оружия", weapons: "Оружие (полные данные)", windgliders: "Планеры",
+    events: "События и баннеры",
   };
   return labels[value] ?? value;
 }

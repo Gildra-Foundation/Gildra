@@ -7,6 +7,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"image"
+	"image/jpeg"
 	"image/png"
 	"io"
 	"log/slog"
@@ -295,10 +297,11 @@ func (f *MediaFetcher) download(ctx context.Context, directory, requested, fetch
 }
 
 func (f *MediaFetcher) persist(directory, requested, fetched, sourceURL string, content []byte) (MediaAsset, error) {
-	config, err := png.DecodeConfig(bytes.NewReader(content))
+	normalized, config, err := normalizeImage(content)
 	if err != nil {
-		return MediaAsset{}, fmt.Errorf("decode PNG metadata: %w", err)
+		return MediaAsset{}, fmt.Errorf("decode image metadata: %w", err)
 	}
+	content = normalized
 	digest := sha256.Sum256(content)
 	digestText := hex.EncodeToString(digest[:])
 	storageKey := "genshin/" + digestText + ".png"
@@ -317,6 +320,32 @@ func (f *MediaFetcher) persist(directory, requested, fetched, sourceURL string, 
 		SourceURL:  sourceURL,
 		FetchedAs:  fetched,
 	}, nil
+}
+
+// normalizeImage keeps the media store in one safe PNG format while allowing
+// supplemental sources such as the event calendar to provide JPEG banners.
+// PNG bytes are retained exactly; JPEGs are decoded and re-encoded once at
+// import time so the public handler can remain a strict PNG-only endpoint.
+func normalizeImage(content []byte) ([]byte, image.Config, error) {
+	config, format, err := image.DecodeConfig(bytes.NewReader(content))
+	if err != nil {
+		return nil, image.Config{}, err
+	}
+	if format == "png" {
+		return content, config, nil
+	}
+	if format != "jpeg" {
+		return nil, image.Config{}, fmt.Errorf("unsupported image format %q", format)
+	}
+	picture, err := jpeg.Decode(bytes.NewReader(content))
+	if err != nil {
+		return nil, image.Config{}, fmt.Errorf("decode JPEG: %w", err)
+	}
+	var encoded bytes.Buffer
+	if err := png.Encode(&encoded, picture); err != nil {
+		return nil, image.Config{}, fmt.Errorf("encode PNG: %w", err)
+	}
+	return encoded.Bytes(), config, nil
 }
 
 func persistMedia(destination string, content []byte, expected [sha256.Size]byte) (returnErr error) {

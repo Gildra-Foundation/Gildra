@@ -21,6 +21,14 @@ type sourceObject struct {
 type imageManifest map[string]map[string]string
 
 func LoadSource(root string) (Dataset, error) {
+	return LoadSourceWithOverlay(root, "")
+}
+
+// LoadSourceWithOverlay loads the primary genshin-db checkout and an optional
+// source overlay. The overlay uses the same src/data layout and is intended
+// for additive datasets (for example the event calendar) that the primary
+// project deliberately does not ship.
+func LoadSourceWithOverlay(root, overlay string) (Dataset, error) {
 	if root == "" {
 		return Dataset{}, errors.New("genshin source directory is required")
 	}
@@ -64,13 +72,14 @@ func LoadSource(root string) (Dataset, error) {
 	if err != nil {
 		return Dataset{}, err
 	}
-	content, err := loadAllContent(root)
+	content, err := loadAllContent(root, overlay)
 	if err != nil {
 		return Dataset{}, err
 	}
 
 	dataset := Dataset{}
 	dataset.Content = content
+	dataset.SupplementalSources = loadSupplementalSources(overlay)
 	characterSlugs := sortedKeys(characters[LocaleEnglish])
 	for _, slug := range characterSlugs {
 		character, err := buildCharacter(slug, characters, talents, constellations, characterImages, talentImages, constellationImages)
@@ -115,23 +124,34 @@ func LoadSource(root string) (Dataset, error) {
 // optimized character/weapon/artifact projections are still built below, but
 // this generic layer prevents newer or less common categories from being lost
 // when the source adds fields or folders.
-func loadAllContent(root string) ([]ContentEntry, error) {
-	englishRoot := filepath.Join(root, "src", "data", "English")
-	folders, err := os.ReadDir(englishRoot)
-	if err != nil {
-		return nil, fmt.Errorf("list genshin source categories: %w", err)
+func loadAllContent(root string, overlay string) ([]ContentEntry, error) {
+	roots := []string{root}
+	if overlay != "" {
+		roots = append(roots, overlay)
 	}
-	result := make([]ContentEntry, 0)
-	for _, folderEntry := range folders {
-		if !folderEntry.IsDir() {
+	folders := make(map[string]struct{})
+	for _, sourceRoot := range roots {
+		englishRoot := filepath.Join(sourceRoot, "src", "data", "English")
+		entries, err := os.ReadDir(englishRoot)
+		if errors.Is(err, os.ErrNotExist) && sourceRoot != root {
 			continue
 		}
-		folder := folderEntry.Name()
-		localized, err := loadLocalizedObjectsAllowFallback(root, folder)
+		if err != nil {
+			return nil, fmt.Errorf("list genshin source categories: %w", err)
+		}
+		for _, entry := range entries {
+			if entry.IsDir() {
+				folders[entry.Name()] = struct{}{}
+			}
+		}
+	}
+	result := make([]ContentEntry, 0)
+	for _, folder := range sortedKeys(folders) {
+		localized, err := loadMergedLocalizedObjects(roots, folder)
 		if err != nil {
 			return nil, err
 		}
-		images, err := loadGenericImageManifest(root, folder)
+		images, err := loadMergedGenericImageManifest(roots, folder)
 		if err != nil {
 			return nil, err
 		}
@@ -179,6 +199,66 @@ func loadAllContent(root string) ([]ContentEntry, error) {
 		return strings.Compare(a.Slug, b.Slug)
 	})
 	return result, nil
+}
+
+func loadMergedLocalizedObjects(roots []string, folder string) (map[string]map[string]sourceObject, error) {
+	result := map[string]map[string]sourceObject{
+		LocaleEnglish: make(map[string]sourceObject),
+		LocaleRussian: make(map[string]sourceObject),
+	}
+	for _, root := range roots {
+		localized, err := loadLocalizedObjectsAllowFallback(root, folder)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) || strings.Contains(err.Error(), "no such file or directory") {
+				continue
+			}
+			return nil, err
+		}
+		maps.Copy(result[LocaleEnglish], localized[LocaleEnglish])
+		maps.Copy(result[LocaleRussian], localized[LocaleRussian])
+	}
+	if len(result[LocaleEnglish]) == 0 {
+		return nil, fmt.Errorf("genshin source category %q contains no English records", folder)
+	}
+	if err := requireSameSlugs(folder, result[LocaleEnglish], result[LocaleRussian]); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func loadMergedGenericImageManifest(roots []string, folder string) (genericImageManifest, error) {
+	result := make(genericImageManifest)
+	for _, root := range roots {
+		manifest, err := loadGenericImageManifest(root, folder)
+		if err != nil {
+			return nil, err
+		}
+		for slug, fields := range manifest {
+			if result[slug] == nil {
+				result[slug] = make(map[string]json.RawMessage)
+			}
+			maps.Copy(result[slug], fields)
+		}
+	}
+	return result, nil
+}
+
+func loadSupplementalSources(overlay string) []SupplementalSource {
+	if overlay == "" {
+		return nil
+	}
+	content, err := os.ReadFile(filepath.Join(overlay, "manifest.json"))
+	if err != nil {
+		return nil
+	}
+	var source SupplementalSource
+	if json.Unmarshal(content, &source) != nil || source.URL == "" || source.SHA256 == "" {
+		return nil
+	}
+	if source.Name == "" {
+		source.Name = "supplemental"
+	}
+	return []SupplementalSource{source}
 }
 
 // derivedContentMedia fills the one source category whose client icon can be

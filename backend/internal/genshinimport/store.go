@@ -71,6 +71,9 @@ func (s *Store) Publish(ctx context.Context, dataset Dataset, assets map[string]
 		"counts":         counts,
 		"mediaFallbacks": mediaFallbacks,
 	}
+	if len(dataset.SupplementalSources) > 0 {
+		manifestValues["supplementalSources"] = dataset.SupplementalSources
+	}
 	if opts.AlternateMediaBaseURL != "" {
 		manifestValues["alternateMediaBaseURL"] = opts.AlternateMediaBaseURL
 	}
