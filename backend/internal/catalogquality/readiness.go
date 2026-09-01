@@ -95,11 +95,29 @@ func EvaluateReadinessWithRecoveryPolicy(
 			JOIN game_products product ON product.id=profile.product_id
 			WHERE product.slug=$1 AND profile.status='active'
 			ORDER BY profile.profile_key LIMIT 1
+		), public_dataset_scope AS (
+			-- A profile can retain a required entity type for products where the
+			-- game system exists, while the library applicability matrix explicitly
+			-- marks that system as not applicable for another product (for example,
+			-- battle pets in Classic Era and Hardcore).  Treat that reviewed fact as
+			-- a scope decision, not as an import failure.  Missing applicability rows
+			-- remain blocking so an incomplete matrix cannot silently bypass the gate.
+			SELECT definition.entity_type,
+				count(*) FILTER (WHERE applicability.product_id IS NOT NULL) AS matched,
+				count(*) FILTER (WHERE applicability.product_id IS NULL OR applicability.status<>'not_applicable') AS non_not_applicable
+			FROM catalog_library_dataset_definitions definition
+			LEFT JOIN catalog_library_dataset_applicability applicability
+				ON applicability.dataset_slug=definition.slug
+				AND applicability.product_id=(SELECT id FROM game_products WHERE slug=$1)
+			WHERE definition.is_public
+			GROUP BY definition.entity_type
 		), required_types AS (
 			SELECT scope.entity_type,scope.minimum_count
 			FROM catalog_release_profile_entity_types scope
 			JOIN profile ON profile.profile_key=scope.profile_key
+			LEFT JOIN public_dataset_scope dataset ON dataset.entity_type=scope.entity_type
 			WHERE scope.requirement='required'
+			  AND NOT (COALESCE(dataset.matched,0)>0 AND COALESCE(dataset.non_not_applicable,0)=0)
 		), entity_counts AS (
 			SELECT entity.entity_type,count(*) AS entity_count
 			FROM game_entities entity
