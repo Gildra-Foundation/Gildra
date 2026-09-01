@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -131,6 +132,43 @@ func (c *Client) CurrentBuild(ctx context.Context, table, locale string) (string
 		return "", fmt.Errorf("invalid Wago build %q", build)
 	}
 	return build, nil
+}
+
+// CurrentBuildForProduct resolves the newest live DB2 build for a game
+// product from Wago's build manifest.  Wago publishes Classic Hardcore under
+// the Classic Era manifest, so that product intentionally shares the Era
+// build stream while remaining a separate catalog in our database.
+func (c *Client) CurrentBuildForProduct(ctx context.Context, product string) (string, error) {
+	product = strings.TrimSpace(product)
+	if product == "wow_classic_hardcore" {
+		product = "wow_classic_era"
+	}
+	if product == "" {
+		return "", errors.New("Wago product is required")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/api/builds", nil)
+	if err != nil {
+		return "", fmt.Errorf("create Wago builds request: %w", err)
+	}
+	resp, err := c.do(req)
+	if err != nil {
+		return "", fmt.Errorf("request Wago builds: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("Wago builds request returned %s", resp.Status)
+	}
+	var manifest map[string][]struct {
+		Version string `json:"version"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&manifest); err != nil {
+		return "", fmt.Errorf("decode Wago builds: %w", err)
+	}
+	entries := manifest[product]
+	if len(entries) == 0 || !buildPattern.MatchString(entries[0].Version) {
+		return "", fmt.Errorf("Wago has no valid live build for product %q", product)
+	}
+	return entries[0].Version, nil
 }
 
 func (c *Client) Rows(

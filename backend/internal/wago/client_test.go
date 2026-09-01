@@ -3,6 +3,7 @@ package wago
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,6 +12,34 @@ import (
 	"testing"
 	"time"
 )
+
+func TestCurrentBuildForProductUsesLiveManifest(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/builds" {
+			t.Fatalf("path = %q, want /api/builds", r.URL.Path)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"wow":             []map[string]string{{"version": "12.1.0.69497"}},
+			"wow_classic_era": []map[string]string{{"version": "1.15.9.69547"}},
+		})
+	}))
+	t.Cleanup(server.Close)
+	client := New(Config{BaseURL: server.URL})
+	for product, want := range map[string]string{
+		"wow":                  "12.1.0.69497",
+		"wow_classic_era":      "1.15.9.69547",
+		"wow_classic_hardcore": "1.15.9.69547",
+	} {
+		got, err := client.CurrentBuildForProduct(t.Context(), product)
+		if err != nil {
+			t.Fatalf("product %s: %v", product, err)
+		}
+		if got != want {
+			t.Errorf("product %s build = %q, want %q", product, got, want)
+		}
+	}
+}
 
 func TestCurrentBuild(t *testing.T) {
 	t.Parallel()
