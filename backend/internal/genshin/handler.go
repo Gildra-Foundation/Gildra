@@ -17,6 +17,7 @@ type Catalog interface {
 	ListCharacters(context.Context, ListParams) (Page[CharacterSummary], error)
 	ListWeapons(context.Context, ListParams) (Page[WeaponSummary], error)
 	ListArtifactSets(context.Context, ListParams) (Page[ArtifactSetSummary], error)
+	ListTalents(context.Context, ListParams) (Page[TalentSummary], error)
 }
 
 type Handler struct {
@@ -42,6 +43,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET "+apiBase+"/characters", h.characters)
 	mux.HandleFunc("GET "+apiBase+"/weapons", h.weapons)
 	mux.HandleFunc("GET "+apiBase+"/artifact-sets", h.artifactSets)
+	mux.HandleFunc("GET "+apiBase+"/talents", h.talents)
 }
 
 func (h *Handler) index(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +58,7 @@ func (h *Handler) index(w http.ResponseWriter, r *http.Request) {
 			"characters":   apiBase + "/characters",
 			"weapons":      apiBase + "/weapons",
 			"artifactSets": apiBase + "/artifact-sets",
+			"talents":      apiBase + "/talents",
 		},
 		"locales": []string{"en_US", "ru_RU"},
 	})
@@ -77,7 +80,7 @@ func (h *Handler) characters(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if params.Element != "" && !validElement(params.Element) {
-		writeProblem(w, r, http.StatusBadRequest, "invalid-element", "Invalid element", "Element must be one of anemo, geo, electro, dendro, hydro, pyro or cryo.")
+		writeProblem(w, r, http.StatusBadRequest, "invalid-element", "Invalid element", "Element must be one of none, anemo, geo, electro, dendro, hydro, pyro or cryo.")
 		return
 	}
 	if params.WeaponType != "" && !validWeaponType(params.WeaponType) {
@@ -107,6 +110,15 @@ func (h *Handler) artifactSets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	page, err := h.catalog.ListArtifactSets(r.Context(), params)
+	handlePage(w, r, page, err)
+}
+
+func (h *Handler) talents(w http.ResponseWriter, r *http.Request) {
+	params, ok := parseListParams(w, r)
+	if !ok {
+		return
+	}
+	page, err := h.catalog.ListTalents(r.Context(), params)
 	handlePage(w, r, page, err)
 }
 
@@ -169,7 +181,7 @@ func handlePage[T any](w http.ResponseWriter, r *http.Request, page Page[T], err
 
 func validElement(value string) bool {
 	switch value {
-	case "anemo", "geo", "electro", "dendro", "hydro", "pyro", "cryo":
+	case "none", "anemo", "geo", "electro", "dendro", "hydro", "pyro", "cryo":
 		return true
 	default:
 		return false

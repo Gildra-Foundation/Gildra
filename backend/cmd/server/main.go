@@ -146,6 +146,12 @@ func run() error {
 	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient, cfg.CatalogRecoveryPolicy).Register(router)
 	genshin.NewHandler(genshin.NewService(postgres)).Register(router)
 	if cfg.CatalogMediaDirectory != "" {
+		genshinMediaHandler, genshinMediaErr := genshin.NewMediaHandler(cfg.CatalogMediaDirectory)
+		if genshinMediaErr != nil {
+			return genshinMediaErr
+		}
+		router.Handle("/genshin-impact/media/", genshinMediaHandler)
+
 		mediaHandler, mediaErr := catalogmedia.NewHandlerWithAccessMode(postgres, cfg.CatalogMediaDirectory, cfg.CatalogPublicationEnv, cfg.CatalogAccessMode)
 		if mediaErr != nil {
 			return mediaErr

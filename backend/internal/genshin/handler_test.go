@@ -29,6 +29,10 @@ func (stubCatalog) ListArtifactSets(context.Context, ListParams) (Page[ArtifactS
 	return Page[ArtifactSetSummary]{Data: []ArtifactSetSummary{}, Pagination: Pagination{Limit: 24}}, nil
 }
 
+func (stubCatalog) ListTalents(context.Context, ListParams) (Page[TalentSummary], error) {
+	return Page[TalentSummary]{Data: []TalentSummary{}, Pagination: Pagination{Limit: 24}}, nil
+}
+
 func TestStatusReturnsCatalogState(t *testing.T) {
 	t.Parallel()
 	mux := http.NewServeMux()
@@ -70,6 +74,12 @@ func TestCursorRoundTrip(t *testing.T) {
 	}
 	if got != want {
 		t.Fatalf("cursor = %q, want %q", got, want)
+	}
+}
+
+func TestTalentCursorRejectsNonNumericValue(t *testing.T) {
+	if _, err := decodeTalentCursor(encodeCursor("abc")); !errors.Is(err, ErrInvalidCursor) {
+		t.Fatalf("error = %v, want ErrInvalidCursor", err)
 	}
 }
 

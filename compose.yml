@@ -148,6 +148,31 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
 
+  genshin-import:
+    profiles: ["operations"]
+    image: ${API_IMAGE:-gildra-api:local}
+    build: ./backend
+    entrypoint: ["genshin-import"]
+    command:
+      - -source-directory
+      - /var/lib/gildra/genshin-source
+      - -source-revision
+      - ${GENSHIN_SOURCE_REVISION:-}
+      - -game-version
+      - ${GENSHIN_GAME_VERSION:-}
+      - -media-directory
+      - /var/lib/gildra/catalog-media
+      - -media-workers
+      - ${GENSHIN_MEDIA_WORKERS:-12}
+    environment:
+      DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra?sslmode=disable
+      CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
+    volumes:
+      - catalog_media:/var/lib/gildra/catalog-media
+      - ${GENSHIN_SOURCE_DIRECTORY:-./.artifacts/genshin-db-source}:/var/lib/gildra/genshin-source:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+
   web:
     image: ${WEB_IMAGE:-gildra-web:local}
     build: .
