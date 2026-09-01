@@ -29,6 +29,15 @@ func TestResolveDescriptionTextUsesScalingFormulaInsteadOfFakeZero(t *testing.T)
 	}
 }
 
+func TestResolveDescriptionTextUsesZeroBasedDB2EffectIndexes(t *testing.T) {
+	values := map[int64]spellDescriptionValues{
+		17: {Effects: map[int]spellEffectValue{0: {BasePoints: 42}}},
+	}
+	if got := resolveDescriptionText("Deals $s1 damage.", 17, values, "en_US"); got != "Deals 42 damage." {
+		t.Fatalf("unexpected zero-based DB2 description: %q", got)
+	}
+}
+
 func TestResolveDescriptionTextPreservesUnknownTokens(t *testing.T) {
 	raw := "Deals $s4 damage over $999999d."
 	if got := resolveDescriptionText(raw, 123, map[int64]spellDescriptionValues{}, "en_US"); got != raw {
