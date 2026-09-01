@@ -67,6 +67,11 @@ def image_urls(event: dict[str, object]) -> list[str]:
 def write_overlay(output: Path, source_url: str, raw: bytes, events: dict[str, object]) -> None:
     temporary = Path(tempfile.mkdtemp(prefix="genshin-events-", dir=output.parent))
     try:
+        if output.exists():
+            shutil.copytree(output, temporary, dirs_exist_ok=True)
+            for language in ("English", "Russian"):
+                shutil.rmtree(temporary / "src" / "data" / language / "events", ignore_errors=True)
+            (temporary / "src" / "data" / "image" / "events.json").unlink(missing_ok=True)
         english = temporary / "src" / "data" / "English" / "events"
         russian = temporary / "src" / "data" / "Russian" / "events"
         english.mkdir(parents=True)
@@ -89,7 +94,7 @@ def write_overlay(output: Path, source_url: str, raw: bytes, events: dict[str, o
             if urls:
                 images[slug] = {"filename_banner": urls}
         image_dir = temporary / "src" / "data" / "image"
-        image_dir.mkdir(parents=True)
+        image_dir.mkdir(parents=True, exist_ok=True)
         (image_dir / "events.json").write_text(
             json.dumps(images, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
