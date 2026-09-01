@@ -87,14 +87,21 @@ type GameEntitySummary struct {
 }
 
 type GameProduct struct {
-	ID                   int     `json:"id"`
-	Slug                 string  `json:"slug"`
-	Name                 string  `json:"name"`
-	BuildNumber          *int    `json:"buildNumber,omitempty"`
-	BuildVersion         *string `json:"buildVersion,omitempty"`
-	EntityCount          int     `json:"entityCount"`
-	PublishedEntityCount int     `json:"publishedEntityCount"`
-	PublicRelease        bool    `json:"publicRelease"`
+	ID                   int        `json:"id"`
+	Slug                 string     `json:"slug"`
+	Name                 string     `json:"name"`
+	BuildNumber          *int       `json:"buildNumber,omitempty"`
+	BuildVersion         *string    `json:"buildVersion,omitempty"`
+	Source               string     `json:"source"`
+	SourceBuildNumber    *int       `json:"sourceBuildNumber,omitempty"`
+	SourceBuildVersion   *string    `json:"sourceBuildVersion,omitempty"`
+	SourceStatus         *string    `json:"sourceStatus,omitempty"`
+	SourceCheckedAt      *time.Time `json:"sourceCheckedAt,omitempty"`
+	EntityCount          int        `json:"entityCount"`
+	PublishedEntityCount int        `json:"publishedEntityCount"`
+	PublicRelease        bool       `json:"publicRelease"`
+	Freshness            string     `json:"freshness"`
+	FreshnessReason      string     `json:"freshnessReason"`
 }
 
 type GameTooltip struct {

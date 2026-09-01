@@ -64,12 +64,17 @@ replace them with zero or a guessed number.
 
 ## Discovery and quality
 
-- `GET /v1/game/products` lists imported products/build families and returns
-  each product's active client build (`buildNumber`/`buildVersion`) plus a
-  `publicRelease` flag. The flag is true only after an atomic release pointer
-  has been published for that product; an imported entity count alone is not a
-  public release. It requires the administrator session while
-  `CATALOG_ACCESS_MODE=private` is active.
+- `GET /v1/game/products` lists the four independent editions (Retail,
+  Classic, Classic Era and Hardcore) and returns each product's active client
+  build (`buildNumber`/`buildVersion`) plus a `publicRelease` flag. The
+  `freshness`/`freshnessReason` fields compare that imported build with the
+  latest live source check; `unknown` means no check exists, `stale` means a
+  newer source build is available, and `failed` means the check itself failed.
+  `sourceBuildVersion`, `sourceCheckedAt` and `sourceStatus` preserve the
+  evidence behind the derived state. The flag is true only after an atomic
+  release pointer has been published for that product; an imported entity
+  count alone is not a public release. It requires the administrator session
+  while `CATALOG_ACCESS_MODE=private` is active.
 - `GET /v1/game/entity-types` returns the registry-driven UI order, localized
   labels, count and coverage totals.
 - `GET /v1/game/categories` returns the many-to-many taxonomy and cached
@@ -97,7 +102,10 @@ the normalized graph without requiring clients to decode tooltip JSON:
 
 ```graphql
 query Catalog($product: String!, $id: ID!, $locale: Locale!) {
-  gameProducts { slug buildVersion publishedEntityCount publicRelease }
+  gameProducts {
+    slug buildVersion publishedEntityCount publicRelease
+    freshness freshnessReason sourceBuildVersion sourceCheckedAt sourceStatus
+  }
   libraryDatasets(product: $product, locale: $locale) {
     slug categoryPath itemClassId entityCount freshness imageCount
   }

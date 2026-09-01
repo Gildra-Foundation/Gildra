@@ -2,6 +2,7 @@ package graphqlapi
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/graphqlapi/model"
@@ -26,11 +27,27 @@ func toGraphQLProduct(product catalog.Product) *model.GameProduct {
 		value := int(*product.BuildNumber)
 		buildNumber = &value
 	}
+	var sourceBuildNumber *int
+	if product.SourceBuildNumber != nil {
+		value := int(*product.SourceBuildNumber)
+		sourceBuildNumber = &value
+	}
+	freshness := product.Freshness
+	if strings.TrimSpace(freshness) == "" {
+		freshness = "unknown"
+	}
+	freshnessReason := product.FreshnessReason
+	if strings.TrimSpace(freshnessReason) == "" {
+		freshnessReason = "Источник ещё не проверялся"
+	}
 	return &model.GameProduct{
 		ID: int(product.ID), Slug: product.Slug, Name: product.Name,
 		BuildNumber: buildNumber, BuildVersion: product.BuildVersion,
-		EntityCount: int(product.EntityCount), PublishedEntityCount: int(product.PublishedCount),
-		PublicRelease: product.PublicRelease,
+		Source: product.Source, SourceBuildNumber: sourceBuildNumber,
+		SourceBuildVersion: product.SourceBuildVersion, SourceStatus: product.SourceStatus,
+		SourceCheckedAt: product.SourceCheckedAt,
+		EntityCount:     int(product.EntityCount), PublishedEntityCount: int(product.PublishedCount),
+		PublicRelease: product.PublicRelease, Freshness: freshness, FreshnessReason: freshnessReason,
 	}
 }
 

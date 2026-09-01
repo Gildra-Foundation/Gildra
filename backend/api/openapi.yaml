@@ -984,7 +984,7 @@ components:
             additionalProperties: true
     GameProduct:
       type: object
-      required: [id, slug, name, entityCount, publishedEntityCount]
+      required: [id, slug, name, entityCount, publishedEntityCount, freshness, freshnessReason]
       properties:
         id:
           type: integer
@@ -1001,6 +1001,25 @@ components:
         buildVersion:
           type: string
           description: Active client version pinned to the product.
+        source:
+          type: string
+          description: Primary source used for the latest build freshness check.
+        sourceBuildNumber:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Build number reported by the latest source check, when available.
+        sourceBuildVersion:
+          type: string
+          description: Build version reported by the latest source check, when available.
+        sourceStatus:
+          type: string
+          enum: [current, update_available, failed]
+          description: Raw status recorded by the latest source check.
+        sourceCheckedAt:
+          type: string
+          format: date-time
+          description: Time of the latest source check.
         entityCount:
           type: integer
           format: int64
@@ -1014,6 +1033,13 @@ components:
         publicRelease:
           type: boolean
           description: True only when an atomic catalog release is currently selected for public reads.
+        freshness:
+          type: string
+          enum: [fresh, stale, failed, unknown]
+          description: Derived freshness of the imported active build versus the latest source check.
+        freshnessReason:
+          type: string
+          description: Human-readable explanation of the freshness state.
     LibraryDataset:
       type: object
       required: [slug, product, entityType, categoryPath, group, iconSymbol, sortOrder, name, description, entityCount, localizedCount, verifiedLocalizedCount, tooltipCount, imageCount, applicability, applicabilityReason, freshness, freshnessReason]

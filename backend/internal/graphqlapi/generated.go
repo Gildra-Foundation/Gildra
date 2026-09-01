@@ -117,11 +117,18 @@ type ComplexityRoot struct {
 		BuildNumber          func(childComplexity int) int
 		BuildVersion         func(childComplexity int) int
 		EntityCount          func(childComplexity int) int
+		Freshness            func(childComplexity int) int
+		FreshnessReason      func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		Name                 func(childComplexity int) int
 		PublicRelease        func(childComplexity int) int
 		PublishedEntityCount func(childComplexity int) int
 		Slug                 func(childComplexity int) int
+		Source               func(childComplexity int) int
+		SourceBuildNumber    func(childComplexity int) int
+		SourceBuildVersion   func(childComplexity int) int
+		SourceCheckedAt      func(childComplexity int) int
+		SourceStatus         func(childComplexity int) int
 	}
 
 	GameTooltip struct {
@@ -554,6 +561,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.GameProduct.EntityCount(childComplexity), true
+	case "GameProduct.freshness":
+		if e.ComplexityRoot.GameProduct.Freshness == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.Freshness(childComplexity), true
+	case "GameProduct.freshnessReason":
+		if e.ComplexityRoot.GameProduct.FreshnessReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.FreshnessReason(childComplexity), true
 	case "GameProduct.id":
 		if e.ComplexityRoot.GameProduct.ID == nil {
 			break
@@ -584,6 +603,36 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.GameProduct.Slug(childComplexity), true
+	case "GameProduct.source":
+		if e.ComplexityRoot.GameProduct.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.Source(childComplexity), true
+	case "GameProduct.sourceBuildNumber":
+		if e.ComplexityRoot.GameProduct.SourceBuildNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.SourceBuildNumber(childComplexity), true
+	case "GameProduct.sourceBuildVersion":
+		if e.ComplexityRoot.GameProduct.SourceBuildVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.SourceBuildVersion(childComplexity), true
+	case "GameProduct.sourceCheckedAt":
+		if e.ComplexityRoot.GameProduct.SourceCheckedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.SourceCheckedAt(childComplexity), true
+	case "GameProduct.sourceStatus":
+		if e.ComplexityRoot.GameProduct.SourceStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.SourceStatus(childComplexity), true
 
 	case "GameTooltip.blocks":
 		if e.ComplexityRoot.GameTooltip.Blocks == nil {
@@ -1052,12 +1101,26 @@ func (ec *executionContext) childFields_GameProduct(ctx context.Context, field g
 		return ec.fieldContext_GameProduct_buildNumber(ctx, field)
 	case "buildVersion":
 		return ec.fieldContext_GameProduct_buildVersion(ctx, field)
+	case "source":
+		return ec.fieldContext_GameProduct_source(ctx, field)
+	case "sourceBuildNumber":
+		return ec.fieldContext_GameProduct_sourceBuildNumber(ctx, field)
+	case "sourceBuildVersion":
+		return ec.fieldContext_GameProduct_sourceBuildVersion(ctx, field)
+	case "sourceStatus":
+		return ec.fieldContext_GameProduct_sourceStatus(ctx, field)
+	case "sourceCheckedAt":
+		return ec.fieldContext_GameProduct_sourceCheckedAt(ctx, field)
 	case "entityCount":
 		return ec.fieldContext_GameProduct_entityCount(ctx, field)
 	case "publishedEntityCount":
 		return ec.fieldContext_GameProduct_publishedEntityCount(ctx, field)
 	case "publicRelease":
 		return ec.fieldContext_GameProduct_publicRelease(ctx, field)
+	case "freshness":
+		return ec.fieldContext_GameProduct_freshness(ctx, field)
+	case "freshnessReason":
+		return ec.fieldContext_GameProduct_freshnessReason(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type GameProduct", field.Name)
 }
@@ -2928,6 +2991,121 @@ func (ec *executionContext) fieldContext_GameProduct_buildVersion(_ context.Cont
 	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _GameProduct_source(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_sourceBuildNumber(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_sourceBuildNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceBuildNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_sourceBuildNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_sourceBuildVersion(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_sourceBuildVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceBuildVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_sourceBuildVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_sourceStatus(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_sourceStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_sourceStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_sourceCheckedAt(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_sourceCheckedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceCheckedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_sourceCheckedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
 func (ec *executionContext) _GameProduct_entityCount(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2995,6 +3173,52 @@ func (ec *executionContext) _GameProduct_publicRelease(ctx context.Context, fiel
 }
 func (ec *executionContext) fieldContext_GameProduct_publicRelease(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_freshness(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_freshness(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Freshness, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_freshness(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_freshnessReason(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_freshnessReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FreshnessReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_freshnessReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _GameTooltip_plainText(ctx context.Context, field graphql.CollectedField, obj *model.GameTooltip) (ret graphql.Marshaler) {
@@ -5512,6 +5736,31 @@ func (ec *executionContext) _GameProduct(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "source":
+			out.Values[i] = ec._GameProduct_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sourceBuildNumber":
+			out.Values[i] = ec._GameProduct_sourceBuildNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "sourceBuildVersion":
+			out.Values[i] = ec._GameProduct_sourceBuildVersion(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "sourceStatus":
+			out.Values[i] = ec._GameProduct_sourceStatus(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "sourceCheckedAt":
+			out.Values[i] = ec._GameProduct_sourceCheckedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "entityCount":
 			out.Values[i] = ec._GameProduct_entityCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5524,6 +5773,16 @@ func (ec *executionContext) _GameProduct(ctx context.Context, sel ast.SelectionS
 			}
 		case "publicRelease":
 			out.Values[i] = ec._GameProduct_publicRelease(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "freshness":
+			out.Values[i] = ec._GameProduct_freshness(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "freshnessReason":
+			out.Values[i] = ec._GameProduct_freshnessReason(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
