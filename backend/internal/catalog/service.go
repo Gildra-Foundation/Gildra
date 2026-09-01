@@ -45,6 +45,9 @@ type Entity struct {
 	LocaleFallback bool
 	Name           string
 	Description    string
+	// DescriptionState is present, missing, or unresolved. It prevents API
+	// consumers from treating an empty or tokenized description as complete.
+	DescriptionState string
 	// RawDescription is the source-backed description before DB2 value
 	// substitution. ResolvedDescription is the display-ready value after
 	// substitutions; keeping both prevents clients from losing provenance.
@@ -72,6 +75,7 @@ type EntityLocalization struct {
 	Name                string
 	Description         string
 	ResolvedDescription string
+	DescriptionState    string
 }
 
 type Media struct {
@@ -959,6 +963,7 @@ func (s *Service) enrichLocalizations(ctx context.Context, entities []*Entity) e
 		}
 		if entity := byID[entityID]; entity != nil {
 			localization.ResolvedDescription = localization.Description
+			localization.DescriptionState = descriptionState(localization.Description, localization.ResolvedDescription)
 			entity.Localizations[locale] = localization
 		}
 	}
@@ -1084,6 +1089,7 @@ func scanEntity(row rowScanner) (Entity, error) {
 	}
 	entity.RawDescription = entity.Description
 	entity.ResolvedDescription = entity.Description
+	entity.DescriptionState = descriptionState(entity.RawDescription, entity.ResolvedDescription)
 	if len(tooltipBlocks) > 0 {
 		var blocks []map[string]any
 		if err := json.Unmarshal(tooltipBlocks, &blocks); err != nil {

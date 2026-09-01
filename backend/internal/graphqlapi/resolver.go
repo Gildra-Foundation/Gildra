@@ -57,7 +57,7 @@ func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 		ExternalID: strconv.FormatInt(entity.ExternalID, 10), Slug: entity.Slug,
 		Locale: model.Locale(entity.Locale), ResolvedLocale: model.Locale(entity.ResolvedLocale),
 		LocaleFallback: entity.LocaleFallback, Name: entity.Name, Description: entity.Description,
-		RawDescription: entity.RawDescription, ResolvedDescription: entity.ResolvedDescription,
+		RawDescription: entity.RawDescription, ResolvedDescription: entity.ResolvedDescription, DescriptionState: entity.DescriptionState,
 		Localizations: make([]*model.GameEntityLocalization, 0, len(entity.Localizations)),
 		Media:         make([]*model.GameEntityMedia, 0, len(entity.Media)),
 		IconName:      entity.IconName, IconURL: entity.IconURL, Quality: entity.Quality,
@@ -70,7 +70,7 @@ func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 		}
 		result.Localizations = append(result.Localizations, &model.GameEntityLocalization{
 			Locale: model.Locale(locale), Name: localization.Name, Description: localization.Description,
-			ResolvedDescription: localization.ResolvedDescription,
+			ResolvedDescription: localization.ResolvedDescription, DescriptionState: localization.DescriptionState,
 		})
 	}
 	if entity.Tooltip != nil {

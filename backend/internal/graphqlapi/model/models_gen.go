@@ -23,6 +23,7 @@ type GameEntity struct {
 	Description         string                    `json:"description"`
 	RawDescription      string                    `json:"rawDescription"`
 	ResolvedDescription string                    `json:"resolvedDescription"`
+	DescriptionState    string                    `json:"descriptionState"`
 	Localizations       []*GameEntityLocalization `json:"localizations"`
 	Tooltip             *GameTooltip              `json:"tooltip,omitempty"`
 	Media               []*GameEntityMedia        `json:"media"`
@@ -44,6 +45,7 @@ type GameEntityLocalization struct {
 	Name                string `json:"name"`
 	Description         string `json:"description"`
 	ResolvedDescription string `json:"resolvedDescription"`
+	DescriptionState    string `json:"descriptionState"`
 }
 
 type GameEntityMedia struct {
