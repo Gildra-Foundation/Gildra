@@ -247,18 +247,32 @@ func loadSupplementalSources(overlay string) []SupplementalSource {
 	if overlay == "" {
 		return nil
 	}
-	content, err := os.ReadFile(filepath.Join(overlay, "manifest.json"))
-	if err != nil {
-		return nil
+	paths := []string{filepath.Join(overlay, "manifest.json")}
+	additional, err := filepath.Glob(filepath.Join(overlay, "manifest-*.json"))
+	if err == nil {
+		paths = append(paths, additional...)
 	}
-	var source SupplementalSource
-	if json.Unmarshal(content, &source) != nil || source.URL == "" || source.SHA256 == "" {
-		return nil
+	seen := make(map[string]struct{}, len(paths))
+	sources := make([]SupplementalSource, 0, len(paths))
+	for _, manifestPath := range paths {
+		if _, exists := seen[manifestPath]; exists {
+			continue
+		}
+		seen[manifestPath] = struct{}{}
+		content, err := os.ReadFile(manifestPath)
+		if err != nil {
+			continue
+		}
+		var source SupplementalSource
+		if json.Unmarshal(content, &source) != nil || source.URL == "" || source.SHA256 == "" {
+			continue
+		}
+		if source.Name == "" {
+			source.Name = "supplemental"
+		}
+		sources = append(sources, source)
 	}
-	if source.Name == "" {
-		source.Name = "supplemental"
-	}
-	return []SupplementalSource{source}
+	return sources
 }
 
 // derivedContentMedia fills the one source category whose client icon can be
