@@ -202,15 +202,17 @@ func (d Dataset) MediaFilenames() []string {
 	return filenames
 }
 
-// OptionalMediaFilenames returns one best-effort presentation image per
-// generic record. Some genshin-db image manifests refer to client-only TCG
+// OptionalMediaFilenames returns every best-effort image referenced by generic
+// source records. Some genshin-db image manifests refer to client-only TCG
 // and codex assets that the public provider does not expose; those references
 // remain in source_payload while available images are still cached locally.
 func (d Dataset) OptionalMediaFilenames() []string {
 	unique := make(map[string]struct{})
 	for _, entry := range d.Content {
-		if len(entry.Media) > 0 && entry.Media[0].Filename != "" {
-			unique[entry.Media[0].Filename] = struct{}{}
+		for _, media := range entry.Media {
+			if media.Filename != "" {
+				unique[media.Filename] = struct{}{}
+			}
 		}
 	}
 	filenames := make([]string, 0, len(unique))
