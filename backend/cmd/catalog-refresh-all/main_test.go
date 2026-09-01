@@ -53,14 +53,17 @@ func TestContainsBattleNetProduct(t *testing.T) {
 		t.Fatal(err)
 	}
 	if containsBattleNetProduct(retail) {
-		t.Fatal("Retail should not require Battle.net")
+		t.Fatal("Retail uses Wago for build discovery")
 	}
 	classic, err := selectProducts([]string{"classic"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !containsBattleNetProduct(classic) {
-		t.Fatal("Classic should require Battle.net")
+	if containsBattleNetProduct(classic) {
+		t.Fatal("Classic must not require the unsupported Battle.net namespace")
+	}
+	if !containsBattleNetProduct([]productSpec{{Source: "battlenet"}}) {
+		t.Fatal("an explicitly Battle.net-backed edition should initialize the client")
 	}
 }
 

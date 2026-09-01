@@ -438,11 +438,11 @@ func aliases(specs []productSpec) []string {
 }
 
 func containsBattleNetProduct(specs []productSpec) bool {
-	// Battle.net remains a required enrichment source for every non-Retail
-	// edition even though Wago is the build-discovery source. The two sources
-	// serve different purposes: Wago pins DB2 rows, while Battle.net supplies
-	// official localized details and media where the client export is sparse.
-	return slices.ContainsFunc(specs, func(spec productSpec) bool { return spec.Product != "wow" })
+	// Only initialize the OAuth client when a selected edition explicitly uses
+	// Battle.net as its build source. Classic namespaces currently return
+	// 403/404, so treating every non-Retail product as a Battle.net product
+	// creates a false dependency and makes the scheduled refresh fragile.
+	return slices.ContainsFunc(specs, func(spec productSpec) bool { return spec.Source == "battlenet" })
 }
 
 func splitList(value string) []string {

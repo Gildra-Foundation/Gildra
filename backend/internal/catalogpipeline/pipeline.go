@@ -47,18 +47,19 @@ var catalogProfiles = map[string]profileDefinition{
 	},
 	ProfileClassicFoundation: {
 		Product: "wow_classic",
-		// DB2 establishes the build-pinned identity set first; Battle.net then
-		// enriches Classic records (including quests and localized descriptions)
-		// before the verified listfile closes the source manifest.
-		Sources: []string{"db2", "battlenet", "listfile"},
+		// Blizzard's game-data API currently exposes Retail namespaces only.
+		// Classic records therefore stay build-pinned to the DB2 export and
+		// verified listfile; a future Classic API can be added explicitly once
+		// its namespace and response coverage are proven.
+		Sources: []string{"db2", "listfile"},
 	},
 	ProfileClassicEraFoundation: {
 		Product: "wow_classic_era",
-		Sources: []string{"db2", "battlenet", "listfile"},
+		Sources: []string{"db2", "listfile"},
 	},
 	ProfileClassicHardcoreFoundation: {
 		Product: "wow_classic_hardcore",
-		Sources: []string{"db2", "battlenet", "listfile"},
+		Sources: []string{"db2", "listfile"},
 	},
 }
 
