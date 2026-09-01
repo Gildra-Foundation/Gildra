@@ -1111,7 +1111,7 @@ components:
           format: date-time
     GameEntityLocalization:
       type: object
-      required: [name, description, resolvedDescription]
+      required: [name, description, resolvedDescription, descriptionState]
       properties:
         name:
           type: string
@@ -1122,9 +1122,12 @@ components:
         resolvedDescription:
           type: string
           description: Display-ready description after resolving build-pinned DB2 value tokens. Empty means no source value.
+        descriptionState:
+          type: string
+          description: present when resolved display text is available, missing when the source has no description, or unresolved when Blizzard template tokens remain.
     GameEntity:
       type: object
-      required: [id, product, type, externalId, slug, locale, resolvedLocale, localeFallback, name, description, rawDescription, resolvedDescription, payload, localizations, updatedAt]
+      required: [id, product, type, externalId, slug, locale, resolvedLocale, localeFallback, name, description, rawDescription, resolvedDescription, descriptionState, payload, localizations, updatedAt]
       properties:
         id:
           type: string
@@ -1158,6 +1161,9 @@ components:
         resolvedDescription:
           type: string
           description: Display-ready description after resolving build-pinned DB2 value tokens.
+        descriptionState:
+          type: string
+          description: present, missing, or unresolved; lets clients distinguish usable text from a source gap or unresolved template.
         payload:
           type: object
           additionalProperties: true

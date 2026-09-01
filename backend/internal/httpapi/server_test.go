@@ -25,9 +25,10 @@ func TestAPIEntityExposesBothSourceLocalizationsAndPayload(t *testing.T) {
 		ID: uuid.New(), Product: "wow", Type: "spell", ExternalID: 133, Slug: "fireball",
 		Locale: "ru_RU", ResolvedLocale: "ru_RU", Name: "Огненный шар", Description: "Описание",
 		RawDescription: "Бросает $s1 ед. урона.", ResolvedDescription: "Бросает 100 ед. урона.",
+		DescriptionState: "present",
 		Localizations: map[string]catalog.EntityLocalization{
-			"en_US": {Name: "Fireball", Description: "Hurls a fiery ball.", ResolvedDescription: "Hurls a fiery ball."},
-			"ru_RU": {Name: "Огненный шар", Description: "Бросает $s1 ед. урона.", ResolvedDescription: "Бросает 100 ед. урона."},
+			"en_US": {Name: "Fireball", Description: "Hurls a fiery ball.", ResolvedDescription: "Hurls a fiery ball.", DescriptionState: "present"},
+			"ru_RU": {Name: "Огненный шар", Description: "Бросает $s1 ед. урона.", ResolvedDescription: "Бросает 100 ед. урона.", DescriptionState: "unresolved"},
 		},
 		Payload:   map[string]any{"spell_id": int64(133), "cast_time_ms": int64(1500)},
 		UpdatedAt: time.Unix(1, 0).UTC(),
@@ -41,6 +42,9 @@ func TestAPIEntityExposesBothSourceLocalizationsAndPayload(t *testing.T) {
 	}
 	if got.RawDescription != entity.RawDescription || got.ResolvedDescription != entity.ResolvedDescription || got.Localizations["ru_RU"].ResolvedDescription != "Бросает 100 ед. урона." {
 		t.Fatalf("raw/resolved descriptions were lost in API mapping: %#v", got)
+	}
+	if got.DescriptionState != "present" || got.Localizations["ru_RU"].DescriptionState != "unresolved" {
+		t.Fatalf("description states were lost in API mapping: %#v", got)
 	}
 }
 

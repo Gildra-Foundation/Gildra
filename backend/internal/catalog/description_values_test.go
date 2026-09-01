@@ -149,3 +149,21 @@ func TestDescriptionLocaleDoesNotMixFallbackEnglishWithRussianUnits(t *testing.T
 		t.Fatalf("expected Russian text, got %q", got)
 	}
 }
+
+func TestDescriptionStateDistinguishesSourceGapsAndUnresolvedTemplates(t *testing.T) {
+	tests := []struct {
+		name, raw, resolved, want string
+	}{
+		{name: "present", raw: "Hurls a fiery ball.", resolved: "Hurls a fiery ball.", want: "present"},
+		{name: "missing", raw: "", resolved: "", want: "missing"},
+		{name: "unresolved source", raw: "Deals $s1 damage.", resolved: "Deals $s1 damage.", want: "unresolved"},
+		{name: "unresolved output", raw: "Deals damage.", resolved: "Deals $w1 damage.", want: "unresolved"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := descriptionState(test.raw, test.resolved); got != test.want {
+				t.Fatalf("descriptionState(%q, %q) = %q, want %q", test.raw, test.resolved, got, test.want)
+			}
+		})
+	}
+}

@@ -63,6 +63,7 @@ type GameEntity {
   description: String!
   rawDescription: String!
   resolvedDescription: String!
+  descriptionState: String!
   localizations: [GameEntityLocalization!]!
   tooltip: GameTooltip
   media: [GameEntityMedia!]!
@@ -110,6 +111,7 @@ type GameEntityLocalization {
   name: String!
   description: String!
   resolvedDescription: String!
+  descriptionState: String!
 }
 
 type GameTooltip {

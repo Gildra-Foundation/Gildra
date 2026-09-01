@@ -40,6 +40,7 @@ type ComplexityRoot struct {
 	GameEntity struct {
 		BuildID             func(childComplexity int) int
 		Description         func(childComplexity int) int
+		DescriptionState    func(childComplexity int) int
 		ExternalID          func(childComplexity int) int
 		ID                  func(childComplexity int) int
 		IconName            func(childComplexity int) int
@@ -68,6 +69,7 @@ type ComplexityRoot struct {
 
 	GameEntityLocalization struct {
 		Description         func(childComplexity int) int
+		DescriptionState    func(childComplexity int) int
 		Locale              func(childComplexity int) int
 		Name                func(childComplexity int) int
 		ResolvedDescription func(childComplexity int) int
@@ -218,6 +220,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.GameEntity.Description(childComplexity), true
+	case "GameEntity.descriptionState":
+		if e.ComplexityRoot.GameEntity.DescriptionState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntity.DescriptionState(childComplexity), true
 	case "GameEntity.externalId":
 		if e.ComplexityRoot.GameEntity.ExternalID == nil {
 			break
@@ -352,6 +360,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.GameEntityLocalization.Description(childComplexity), true
+	case "GameEntityLocalization.descriptionState":
+		if e.ComplexityRoot.GameEntityLocalization.DescriptionState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameEntityLocalization.DescriptionState(childComplexity), true
 	case "GameEntityLocalization.locale":
 		if e.ComplexityRoot.GameEntityLocalization.Locale == nil {
 			break
@@ -963,6 +977,8 @@ func (ec *executionContext) childFields_GameEntity(ctx context.Context, field gr
 		return ec.fieldContext_GameEntity_rawDescription(ctx, field)
 	case "resolvedDescription":
 		return ec.fieldContext_GameEntity_resolvedDescription(ctx, field)
+	case "descriptionState":
+		return ec.fieldContext_GameEntity_descriptionState(ctx, field)
 	case "localizations":
 		return ec.fieldContext_GameEntity_localizations(ctx, field)
 	case "tooltip":
@@ -1005,6 +1021,8 @@ func (ec *executionContext) childFields_GameEntityLocalization(ctx context.Conte
 		return ec.fieldContext_GameEntityLocalization_description(ctx, field)
 	case "resolvedDescription":
 		return ec.fieldContext_GameEntityLocalization_resolvedDescription(ctx, field)
+	case "descriptionState":
+		return ec.fieldContext_GameEntityLocalization_descriptionState(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type GameEntityLocalization", field.Name)
 }
@@ -1815,6 +1833,29 @@ func (ec *executionContext) fieldContext_GameEntity_resolvedDescription(_ contex
 	return graphql.NewScalarFieldContext("GameEntity", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _GameEntity_descriptionState(ctx context.Context, field graphql.CollectedField, obj *model.GameEntity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntity_descriptionState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DescriptionState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntity_descriptionState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntity", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _GameEntity_localizations(ctx context.Context, field graphql.CollectedField, obj *model.GameEntity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2202,6 +2243,29 @@ func (ec *executionContext) _GameEntityLocalization_resolvedDescription(ctx cont
 	)
 }
 func (ec *executionContext) fieldContext_GameEntityLocalization_resolvedDescription(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameEntityLocalization", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameEntityLocalization_descriptionState(ctx context.Context, field graphql.CollectedField, obj *model.GameEntityLocalization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameEntityLocalization_descriptionState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DescriptionState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameEntityLocalization_descriptionState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("GameEntityLocalization", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -5265,6 +5329,11 @@ func (ec *executionContext) _GameEntity(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "descriptionState":
+			out.Values[i] = ec._GameEntity_descriptionState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "localizations":
 			out.Values[i] = ec._GameEntity_localizations(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5403,6 +5472,11 @@ func (ec *executionContext) _GameEntityLocalization(ctx context.Context, sel ast
 			}
 		case "resolvedDescription":
 			out.Values[i] = ec._GameEntityLocalization_resolvedDescription(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "descriptionState":
+			out.Values[i] = ec._GameEntityLocalization_descriptionState(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

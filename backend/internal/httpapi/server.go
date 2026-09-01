@@ -664,7 +664,7 @@ func toAPIEntity(entity catalog.Entity) api.GameEntity {
 		ResolvedLocale: api.GameEntityResolvedLocale(entity.ResolvedLocale),
 		LocaleFallback: entity.LocaleFallback,
 		Description:    entity.Description, RawDescription: entity.RawDescription,
-		ResolvedDescription: entity.ResolvedDescription, BuildId: entity.BuildID,
+		ResolvedDescription: entity.ResolvedDescription, DescriptionState: entity.DescriptionState, BuildId: entity.BuildID,
 		Localizations: make(map[string]api.GameEntityLocalization, len(entity.Localizations)),
 		Payload:       entity.Payload,
 		UpdatedAt:     entity.UpdatedAt,
@@ -672,7 +672,7 @@ func toAPIEntity(entity catalog.Entity) api.GameEntity {
 	for locale, localization := range entity.Localizations {
 		result.Localizations[locale] = api.GameEntityLocalization{
 			Name: localization.Name, Description: localization.Description,
-			ResolvedDescription: localization.ResolvedDescription,
+			ResolvedDescription: localization.ResolvedDescription, DescriptionState: localization.DescriptionState,
 		}
 	}
 	if entity.Tooltip != nil {

@@ -47,7 +47,18 @@ type spellEffectValue struct {
 }
 
 func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity) error {
-	if entity == nil || entity.BuildID == nil {
+	if entity == nil {
+		return nil
+	}
+	// Establish an explicit state even when no build-pinned substitution is
+	// needed. Clients must be able to distinguish a source gap from a usable
+	// description without inspecting raw text themselves.
+	entity.DescriptionState = descriptionState(entity.RawDescription, entity.ResolvedDescription)
+	for locale, localized := range entity.Localizations {
+		localized.DescriptionState = descriptionState(localized.Description, localized.ResolvedDescription)
+		entity.Localizations[locale] = localized
+	}
+	if entity.BuildID == nil {
 		return nil
 	}
 	// Items can carry effect blocks whose text belongs to a referenced spell
@@ -91,6 +102,7 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		valuesByLocale[locale] = values
 		if localized, ok := entity.Localizations[locale]; ok {
 			localized.ResolvedDescription = resolveDescriptionText(localized.Description, currentSpellID, values, descriptionLocale(localized.Description, locale))
+			localized.DescriptionState = descriptionState(localized.Description, localized.ResolvedDescription)
 			entity.Localizations[locale] = localized
 		}
 	}
@@ -98,6 +110,7 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 	values := valuesByLocale[entity.Locale]
 	entity.Description = resolveDescriptionText(entity.Description, currentSpellID, values, descriptionLocale(entity.Description, entity.Locale))
 	entity.ResolvedDescription = entity.Description
+	entity.DescriptionState = descriptionState(entity.RawDescription, entity.ResolvedDescription)
 	if entity.Tooltip == nil {
 		return nil
 	}
@@ -142,6 +155,24 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, resolved)
 	}
 	return nil
+}
+
+// descriptionState is based on both source and resolved text. A resolver may
+// leave an unknown token untouched; exposing that as "present" would make an
+// incomplete record look production-ready to clients.
+func descriptionState(raw, resolved string) string {
+	raw = strings.TrimSpace(raw)
+	resolved = strings.TrimSpace(resolved)
+	if raw == "" {
+		return "missing"
+	}
+	if descriptionTemplateToken.MatchString(raw) || descriptionTemplateToken.MatchString(resolved) {
+		return "unresolved"
+	}
+	if resolved == "" {
+		return "missing"
+	}
+	return "present"
 }
 
 var descriptionTemplateToken = regexp.MustCompile(`\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])`)

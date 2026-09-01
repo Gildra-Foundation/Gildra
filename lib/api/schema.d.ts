@@ -560,6 +560,8 @@ export interface components {
             description: string;
             /** @description Display-ready description after resolving build-pinned DB2 value tokens. Empty means no source value. */
             resolvedDescription: string;
+            /** @description present when resolved display text is available, missing when the source has no description, or unresolved when Blizzard template tokens remain. */
+            descriptionState: string;
         };
         GameEntity: {
             /** Format: uuid */
@@ -584,6 +586,8 @@ export interface components {
             rawDescription: string;
             /** @description Display-ready description after resolving build-pinned DB2 value tokens. */
             resolvedDescription: string;
+            /** @description present, missing, or unresolved; lets clients distinguish usable text from a source gap or unresolved template. */
+            descriptionState: string;
             /** @description Raw, build-pinned source payload for the published entity version. */
             payload: {
                 [key: string]: unknown;
