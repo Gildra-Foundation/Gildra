@@ -509,12 +509,7 @@ func (c *Cache) downloadWagoCASC(ctx context.Context, sourceURL string) ([]byte,
 	if err != nil {
 		return nil, err
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	request.Header.Set("User-Agent", catalogMediaUserAgent)
-	response, err := c.client.Do(request)
+	response, err := doMediaRequest(ctx, c.client, parsed)
 	if err != nil {
 		return nil, fmt.Errorf("download BLP2: %w", err)
 	}
