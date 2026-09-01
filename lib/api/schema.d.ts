@@ -21,6 +21,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Discover the stable v1 API surfaces (trailing-slash alias).
+         * @description The trailing-slash form is kept as an explicit alias because reverse proxies may normalize a product-scoped base URL to /v1/.
+         */
+        get: operations["getAPIIndexTrailingSlash"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/game/products": {
         parameters: {
             query?: never;
@@ -993,6 +1013,27 @@ export interface components {
 export type $defs = Record<string, never>;
 export interface operations {
     getAPIIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description API entry point. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIIndex"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getAPIIndexTrailingSlash: {
         parameters: {
             query?: never;
             header?: never;
