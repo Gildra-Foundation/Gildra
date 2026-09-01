@@ -109,6 +109,38 @@ paths:
           $ref: "#/components/responses/CatalogUnavailable"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+  /characters/{slug}:
+    get:
+      operationId: getGenshinCharacter
+      summary: Read one character with stats, level costs, talents and constellations.
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+        - $ref: "#/components/parameters/Locale"
+      responses:
+        "200":
+          description: Localized character profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterDetail"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          description: Character slug was not found in the active release.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "503":
+          $ref: "#/components/responses/CatalogUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
   /weapons/{slug}:
     get:
       operationId: getGenshinWeapon
@@ -169,6 +201,38 @@ paths:
                           $ref: "#/components/schemas/ArtifactSetSummary"
         "400":
           $ref: "#/components/responses/InvalidQuery"
+        "503":
+          $ref: "#/components/responses/CatalogUnavailable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /artifact-sets/{slug}:
+    get:
+      operationId: getGenshinArtifactSet
+      summary: Read one artifact set with effects, pieces and acquisition sources.
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+        - $ref: "#/components/parameters/Locale"
+      responses:
+        "200":
+          description: Localized artifact set profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArtifactSetDetail"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          description: Artifact set slug was not found in the active release.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
         "503":
           $ref: "#/components/responses/CatalogUnavailable"
         "429":
@@ -388,6 +452,70 @@ components:
         locale: { $ref: "#/components/schemas/Locale" }
         localeFallback: { type: boolean }
         talentCount: { type: integer, format: int64, minimum: 0 }
+    CharacterDetail:
+      allOf:
+        - $ref: "#/components/schemas/CharacterSummary"
+        - type: object
+          required: [description, stats, ascensionCosts, levelingCosts, talents, constellations]
+          properties:
+            description: { type: string }
+            stats:
+              oneOf:
+                - $ref: "#/components/schemas/CharacterStats"
+                - type: "null"
+            ascensionCosts:
+              type: array
+              items: { $ref: "#/components/schemas/UpgradeCostStage" }
+            levelingCosts:
+              $ref: "#/components/schemas/LevelingCosts"
+            talents:
+              type: array
+              items: { $ref: "#/components/schemas/TalentSummary" }
+            constellations:
+              type: array
+              items: { $ref: "#/components/schemas/ConstellationSummary" }
+    CharacterStats:
+      type: object
+      required: [base, curve, promotion, specialized]
+      properties:
+        base:
+          type: object
+          required: [hp, attack, defense, critRate, critDamage]
+          properties:
+            hp: { type: number }
+            attack: { type: number }
+            defense: { type: number }
+            critRate: { type: number }
+            critDamage: { type: number }
+        curve:
+          type: object
+          additionalProperties: { type: string }
+        promotion:
+          type: array
+          items: { $ref: "#/components/schemas/CharacterPromotion" }
+        specialized: { type: string }
+    CharacterPromotion:
+      type: object
+      required: [hp, attack, defense, maxLevel, specialized]
+      properties:
+        hp: { type: number }
+        attack: { type: number }
+        defense: { type: number }
+        maxLevel: { type: integer, minimum: 1, maximum: 90 }
+        specialized: { type: number }
+    ConstellationSummary:
+      type: object
+      required: [id, characterSlug, externalKey, position, name, description, locale, localeFallback]
+      properties:
+        id: { type: integer, format: int64 }
+        characterSlug: { type: string }
+        externalKey: { type: string }
+        position: { type: integer, minimum: 1, maximum: 6 }
+        name: { type: string }
+        description: { type: string }
+        iconUrl: { type: [string, "null"] }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
     WeaponSummary:
       type: object
       required: [id, externalId, slug, name, rarity, weaponType, secondaryStat, locale, localeFallback]
@@ -411,7 +539,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/WeaponSummary"
         - type: object
-          required: [stats, refinements, ascensionCosts]
+          required: [stats, refinements, ascensionCosts, levelingCosts]
           properties:
             stats:
               oneOf:
@@ -425,6 +553,8 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/UpgradeCostStage"
+            levelingCosts:
+              $ref: "#/components/schemas/LevelingCosts"
     WeaponStats:
       type: object
       required: [base, curve, promotion, specialized]
@@ -479,6 +609,44 @@ components:
         iconUrl: { type: [string, "null"] }
         locale: { $ref: "#/components/schemas/Locale" }
         localeFallback: { type: boolean }
+    LevelingCosts:
+      type: object
+      required: [levels, materials]
+      properties:
+        levels:
+          type: array
+          description: Exact EXP and Mora requirement for every level in the active game version.
+          items: { $ref: "#/components/schemas/LevelProgressionCost" }
+        materials:
+          type: array
+          description: Canonical material composition for each ascension range.
+          items: { $ref: "#/components/schemas/LevelMaterialCost" }
+    LevelProgressionCost:
+      type: object
+      required: [level, nextLevel, expRequired, totalExp, moraCost]
+      properties:
+        level: { type: integer, minimum: 1, maximum: 90 }
+        nextLevel: { type: [integer, "null"], minimum: 2, maximum: 90 }
+        expRequired: { type: integer, format: int64, minimum: 0 }
+        totalExp: { type: integer, format: int64, minimum: 0 }
+        moraCost: { type: integer, format: int64, minimum: 0 }
+    LevelMaterialCost:
+      type: object
+      required: [fromLevel, toLevel, materialKey, materialId, name, count, experiencePerItem, experienceProvided, wastedExperience, moraCost, locale, localeFallback]
+      properties:
+        fromLevel: { type: integer, minimum: 1, maximum: 89 }
+        toLevel: { type: integer, minimum: 2, maximum: 90 }
+        materialKey: { type: string }
+        materialId: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        count: { type: integer, format: int64, minimum: 1 }
+        experiencePerItem: { type: integer, format: int64, minimum: 1 }
+        experienceProvided: { type: integer, format: int64, minimum: 1 }
+        wastedExperience: { type: integer, format: int64, minimum: 0 }
+        moraCost: { type: integer, format: int64, minimum: 0 }
+        iconUrl: { type: [string, "null"] }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
     ArtifactSetSummary:
       type: object
       required: [id, externalId, slug, name, minRarity, maxRarity, twoPieceBonus, fourPieceBonus, locale, localeFallback, pieceCount]
@@ -495,6 +663,41 @@ components:
         locale: { $ref: "#/components/schemas/Locale" }
         localeFallback: { type: boolean }
         pieceCount: { type: integer, format: int64, minimum: 0 }
+    ArtifactSetDetail:
+      allOf:
+        - $ref: "#/components/schemas/ArtifactSetSummary"
+        - type: object
+          required: [pieces, sources]
+          properties:
+            pieces:
+              type: array
+              items: { $ref: "#/components/schemas/ArtifactPieceSummary" }
+            sources:
+              type: array
+              items: { $ref: "#/components/schemas/ArtifactSourceSummary" }
+    ArtifactPieceSummary:
+      type: object
+      required: [id, slot, name, description, locale, localeFallback]
+      properties:
+        id: { type: integer, format: int64 }
+        slot: { type: string, enum: [flower, plume, sands, goblet, circlet] }
+        name: { type: string }
+        description: { type: string }
+        iconUrl: { type: [string, "null"] }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
+    ArtifactSourceSummary:
+      type: object
+      required: [slug, name, region, entranceName, unlockRank, recommendedLevel, sourceKind]
+      properties:
+        slug: { type: string }
+        name: { type: string }
+        region: { type: string }
+        entranceName: { type: string }
+        unlockRank: { type: integer, minimum: 0 }
+        recommendedLevel: { type: integer, minimum: 0 }
+        sourceKind: { type: string, enum: [domain, world_boss, artifact_strongbox] }
+        note: { type: string }
     ContentSummary:
       type: object
       required: [id, category, slug, name, description, media, sourcePayload, localizedPayload, locale, localeFallback]
@@ -534,6 +737,17 @@ components:
         iconUrl: { type: [string, "null"] }
         locale: { $ref: "#/components/schemas/Locale" }
         localeFallback: { type: boolean }
+        upgradeCosts:
+          type: array
+          items: { $ref: "#/components/schemas/TalentLevelCost" }
+    TalentLevelCost:
+      type: object
+      required: [level, items]
+      properties:
+        level: { type: integer, minimum: 2, maximum: 10 }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/UpgradeCostItem" }
     Problem:
       type: object
       required: [type, title, status, detail, instance]
