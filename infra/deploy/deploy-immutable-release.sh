@@ -45,6 +45,27 @@ validate_image() {
     fail "$label must be an approved GHCR image pinned by sha256 digest"
 }
 
+validate_rollback_image() {
+  label=$1
+  image=$2
+  pattern=$3
+
+  case "$image" in
+    ghcr.io/gildra-foundation/*@sha256:*)
+      validate_image "$label" "$image" "$pattern"
+      ;;
+    gildra-web:*|gildra-api:*|gildra-cms:*|gildra-scraper:*)
+      printf '%s\n' "$image" | grep -Eq '^gildra-(web|api|cms|scraper):[0-9A-Za-z._-]+$' ||
+        fail "$label local image reference is invalid"
+      docker image inspect "$image" >/dev/null 2>&1 ||
+        fail "$label local image is not available on the host"
+      ;;
+    *)
+      fail "$label must be an approved GHCR image or an available legacy local image"
+      ;;
+  esac
+}
+
 validate_release_inputs() {
   : "${WEB_IMAGE:?WEB_IMAGE is required}"
   : "${API_IMAGE:?API_IMAGE is required}"
@@ -109,10 +130,10 @@ load_previous_release() {
   rollback_source_revision=$(manifest_optional_value SOURCE_REVISION "$file")
   rollback_release_id=$(manifest_optional_value RELEASE_ID "$file")
 
-  validate_image WEB_IMAGE "$rollback_web_image" '^ghcr\.io/gildra-foundation/gildra-web@sha256:[0-9a-f]{64}$'
-  validate_image API_IMAGE "$rollback_api_image" '^ghcr\.io/gildra-foundation/gildra-api@sha256:[0-9a-f]{64}$'
-  validate_image CMS_IMAGE "$rollback_cms_image" '^ghcr\.io/gildra-foundation/gildra-cms@sha256:[0-9a-f]{64}$'
-  validate_image SCRAPER_IMAGE "$rollback_scraper_image" '^ghcr\.io/gildra-foundation/gildra-scraper@sha256:[0-9a-f]{64}$'
+  validate_rollback_image WEB_IMAGE "$rollback_web_image" '^ghcr\.io/gildra-foundation/gildra-web@sha256:[0-9a-f]{64}$'
+  validate_rollback_image API_IMAGE "$rollback_api_image" '^ghcr\.io/gildra-foundation/gildra-api@sha256:[0-9a-f]{64}$'
+  validate_rollback_image CMS_IMAGE "$rollback_cms_image" '^ghcr\.io/gildra-foundation/gildra-cms@sha256:[0-9a-f]{64}$'
+  validate_rollback_image SCRAPER_IMAGE "$rollback_scraper_image" '^ghcr\.io/gildra-foundation/gildra-scraper@sha256:[0-9a-f]{64}$'
 
   if [ -n "$rollback_source_revision" ]; then
     validate_revision "$rollback_source_revision"
@@ -141,7 +162,11 @@ verify_service_image() {
   container_id=$(compose ps -q "$service")
   [ -n "$container_id" ] || fail "service $service has no running container"
   actual=$(docker inspect --format '{{.Config.Image}}' "$container_id")
-  [ "$actual" = "$expected" ] ||
+  if [ "$actual" = "$expected" ]; then
+    return
+  fi
+  expected_id=$(docker image inspect --format '{{.Id}}' "$expected" 2>/dev/null || true)
+  [ -n "$expected_id" ] && [ "$actual" = "$expected_id" ] ||
     fail "service $service is running an unexpected image: $actual"
 }
 
@@ -340,7 +365,20 @@ rollback_release() {
   SCRAPER_IMAGE=$rollback_scraper_image
   export WEB_IMAGE API_IMAGE CMS_IMAGE SCRAPER_IMAGE
 
-  compose pull web api catalog-backup cms scraper scraper-worker || return 1
+  pull_rollback_image() {
+    service=$1
+    image=$2
+    case "$image" in
+      ghcr.io/gildra-foundation/*@sha256:*) compose pull "$service" || return 1 ;;
+      *) docker image inspect "$image" >/dev/null 2>&1 || return 1 ;;
+    esac
+  }
+  pull_rollback_image web "$rollback_web_image" || return 1
+  pull_rollback_image api "$rollback_api_image" || return 1
+  pull_rollback_image catalog-backup "$rollback_api_image" || return 1
+  pull_rollback_image cms "$rollback_cms_image" || return 1
+  pull_rollback_image scraper "$rollback_scraper_image" || return 1
+  pull_rollback_image scraper-worker "$rollback_scraper_image" || return 1
   compose up -d --no-build --remove-orphans --wait --wait-timeout 240 || return 1
   verify_running_images || return 1
   verify_local_health || return 1
