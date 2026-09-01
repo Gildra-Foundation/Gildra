@@ -160,6 +160,9 @@ func loadAllContent(root string) ([]ContentEntry, error) {
 					LocaleRussian: russianLocalization,
 				},
 			}
+			if len(entry.Media) == 0 {
+				entry.Media = derivedContentMedia(folder, english)
+			}
 			if len(entry.Media) > 0 {
 				entry.IconFilename = entry.Media[0].Filename
 			}
@@ -176,6 +179,21 @@ func loadAllContent(root string) ([]ContentEntry, error) {
 		return strings.Compare(a.Slug, b.Slug)
 	})
 	return result, nil
+}
+
+// derivedContentMedia fills the one source category whose client icon can be
+// derived from its stable item id even though genshin-db has no image manifest.
+// The local mirror contains the available UI_ItemIcon files; unavailable ids
+// remain source-only and do not block publication.
+func derivedContentMedia(category string, object sourceObject) []ContentMedia {
+	if category != "crafts" {
+		return nil
+	}
+	id := requiredInt(object, "id")
+	if id <= 0 {
+		return nil
+	}
+	return []ContentMedia{{Role: "derived_icon", Filename: "UI_ItemIcon_" + strconv.Itoa(id+100000)}}
 }
 
 // stats and curves are shipped outside the localized entity folders. Keep
