@@ -77,6 +77,34 @@ func EvaluateReadinessWithRecoveryPolicy(
 		return ReadinessReport{}, err
 	}
 
+	// A pipeline may be invoked independently of catalog-refresh-all. Require
+	// a recent edition-aware Wago manifest observation for the exact build it
+	// is about to publish so a manually supplied, older build cannot pass the
+	// remaining structural checks. `update_available` is valid here only when
+	// its observed build is the candidate being validated: the check was made
+	// before importing that new build and therefore still describes the active
+	// catalog as older.
+	var freshBuildChecks int64
+	if err := db.QueryRow(ctx, `
+		SELECT count(*)
+		FROM catalog_build_update_checks check
+		JOIN game_products product ON product.id=check.product_id
+		WHERE product.slug=$1
+		  AND check.source='wago_tools' AND check.channel='live'
+		  AND check.status IN ('current','update_available')
+		  AND check.observed_build=$2
+		  AND check.checked_at>=now()-interval '48 hours'`, product, buildVersion).
+		Scan(&freshBuildChecks); err != nil {
+		return ReadinessReport{}, fmt.Errorf("check source build freshness: %w", err)
+	}
+	freshnessMissing := int64(0)
+	if freshBuildChecks != 1 {
+		freshnessMissing = 1
+	}
+	report.add("source_build_freshness", ScopeData, freshnessMissing != 0,
+		freshnessMissing,
+		"the candidate build must match a successful Wago manifest check from the last 48 hours")
+
 	var entityCount, missingVersions int64
 	if err := db.QueryRow(ctx, `
 		SELECT count(*),count(*) FILTER (WHERE entity.latest_version_id IS NULL)
