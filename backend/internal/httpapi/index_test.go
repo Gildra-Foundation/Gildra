@@ -2,6 +2,9 @@ package httpapi
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 
@@ -69,5 +72,22 @@ func TestAPIIndexTrailingSlashMatchesCanonicalIndex(t *testing.T) {
 	}
 	if !reflect.DeepEqual(api.APIIndex(alias), api.APIIndex(canonical)) {
 		t.Fatalf("trailing-slash index differs from canonical index: alias=%#v canonical=%#v", alias, canonical)
+	}
+}
+
+func TestAPIIndexTrailingSlashRoute(t *testing.T) {
+	handler := api.HandlerWithOptions(api.NewStrictHandler(&Server{}, nil), api.StdHTTPServerOptions{})
+	request := httptest.NewRequest(http.MethodGet, "/v1/", nil)
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("GET /v1/ status = %d, want %d; body=%s", recorder.Code, http.StatusOK, recorder.Body.String())
+	}
+	var got api.APIIndex
+	if err := json.NewDecoder(recorder.Body).Decode(&got); err != nil {
+		t.Fatalf("decode GET /v1/ response: %v", err)
+	}
+	if got.Version != api.V1 || got.Rest == "" || got.Catalog == "" || got.Library == "" {
+		t.Fatalf("GET /v1/ returned incomplete API index: %#v", got)
 	}
 }
