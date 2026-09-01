@@ -545,8 +545,14 @@ func promotionMaxLevels(stats *CharacterStats) []int16 {
 	if stats == nil {
 		return nil
 	}
-	levels := make([]int16, 0, len(stats.Promotion))
-	for _, promotion := range stats.Promotion {
+	// The first promotion row describes the level-20 baseline. Ascend1
+	// unlocks the following row (level 40), so costs are offset by one row.
+	start := 0
+	if len(stats.Promotion) > 1 && stats.Promotion[0].MaxLevel <= 20 {
+		start = 1
+	}
+	levels := make([]int16, 0, len(stats.Promotion)-start)
+	for _, promotion := range stats.Promotion[start:] {
 		levels = append(levels, promotion.MaxLevel)
 	}
 	return levels
