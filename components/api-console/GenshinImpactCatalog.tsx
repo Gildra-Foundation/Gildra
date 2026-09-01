@@ -177,7 +177,7 @@ export function GenshinImpactCatalog() {
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 text-[9px] uppercase tracking-[.18em] text-[#8f9bad]"><BookOpen className="size-3.5 text-[#c9a24f]" />Локальная энциклопедия</div>
           <h2 className="mt-3 font-[var(--display)] text-2xl font-semibold tracking-tight text-[#edf0f5] sm:text-3xl">Genshin Impact</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#8792a5]">Полный двуязычный каталог источника: персонажи, таланты, оружие, артефакты, еда, материалы, противники, подземелья, TCG и другие записи. Изображения хранятся на сервере Gildra.</p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#8792a5]">Полный двуязычный каталог источника: персонажи, таланты, оружие, артефакты, еда, материалы, противники, подземелья, задания, интерактивные карты, TCG и другие записи. Изображения хранятся на сервере Gildra.</p>
         </div>
         <div className="grid grid-cols-2 gap-px border border-[#2b3240] bg-[#2b3240] sm:grid-cols-3 lg:grid-cols-6 lg:min-w-[620px]">
           <Metric label="Персонажи" value={status?.characters ?? 0} />
@@ -333,7 +333,7 @@ function contentCategoryLabel(value: string) {
     tcgdetailedrules: "Правила TCG", tcgenemycards: "Карты противников TCG", tcgkeywords: "Ключевые слова TCG",
     tcglevelrewards: "Награды уровней TCG", tcgstatuseffects: "Эффекты состояний TCG", tcgsummons: "Призываемые сущности TCG",
     voiceovers: "Озвучка", weaponmaterialtypes: "Материалы оружия", weapons: "Оружие (полные данные)", windgliders: "Планеры",
-    events: "События и баннеры", quests: "Задания и диалоги",
+    events: "События и баннеры", quests: "Задания и диалоги", maps: "Карты", map_labels: "Категории карт", map_points: "Точки карт",
   };
   return labels[value] ?? value;
 }
