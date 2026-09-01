@@ -462,6 +462,69 @@ func TestSeedOfficialIconsCachesOnceAndLinksSharedEntities(t *testing.T) {
 	if observations != 3 || distinctObjects != 1 {
 		t.Fatalf("cached media observations=%d objects=%d, want 3 and 1", observations, distinctObjects)
 	}
+
+	// The same content-addressed icon should be linked for another WoW
+	// edition without issuing a second CDN request. Its observation keeps a
+	// source artifact from the target build, while the cache key is shared.
+	var classicProductID int16
+	if err := database.QueryRowContext(ctx, `SELECT id FROM game_products WHERE slug='wow_classic'`).Scan(&classicProductID); err != nil {
+		t.Fatal(err)
+	}
+	var classicBuildID int64
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_builds(product_id,build_number,version,is_active)
+		VALUES($1,9999998,'99.0.0.9999998',true) RETURNING id`, classicProductID).Scan(&classicBuildID); err != nil {
+		t.Fatal(err)
+	}
+	var classicSnapshotID, classicArtifactID uuid.UUID
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO catalog_snapshots(product_id,build_id,source,status,validated_at,published_at,metadata)
+		VALUES($1,$2,'wago_tools','published',now(),now(),'{}') RETURNING id`, classicProductID, classicBuildID).Scan(&classicSnapshotID); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO catalog_source_artifacts(
+			snapshot_id,build_id,source,artifact_key,source_url,content_hash,byte_size,status
+		) VALUES($1,$2,'wago_tools','classic-shared-icon-source','https://wago.tools/test',
+			decode(repeat('cd',32),'hex'),1,'ready') RETURNING id`, classicSnapshotID, classicBuildID).Scan(&classicArtifactID); err != nil {
+		t.Fatal(err)
+	}
+	var classicEntityID, classicVersionID uuid.UUID
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_entities(product_id,entity_type,external_id,canonical_slug,first_seen_build_id,last_seen_build_id)
+		VALUES($1,'spell',700101,'classic-shared-icon-spell',$2,$2) RETURNING id`, classicProductID, classicBuildID).Scan(&classicEntityID); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_entity_versions(entity_id,build_id,content_hash,payload,source_url,snapshot_id,source_artifact_id,source)
+		VALUES($1,$2,digest('classic-spell-700101','sha256'),'{}','https://wago.tools/test',$3,$4,'wago_tools') RETURNING id`,
+		classicEntityID, classicBuildID, classicSnapshotID, classicArtifactID).Scan(&classicVersionID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `UPDATE game_entities SET latest_version_id=$2,published_version_id=$2 WHERE id=$1`, classicEntityID, classicVersionID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_entity_icons(build_id,entity_type,external_id,icon_name,source_artifact_id,file_data_id,asset_source_artifact_id)
+		VALUES($1,'spell',700101,'spell_fire_flamebolt',$2,135812,$2)`, classicBuildID, classicArtifactID); err != nil {
+		t.Fatal(err)
+	}
+	result, err = cache.SeedOfficialIcons(ctx, "wow_classic", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Eligible != 0 || result.IconsCached != 0 || result.Entities != 1 || result.Failed != 0 || calls != 2 {
+		t.Fatalf("cross-build icon link result=%#v calls=%d, want one local link and no CDN request", result, calls)
+	}
+	var sharedObjects int
+	if err := database.QueryRowContext(ctx, `
+		SELECT count(DISTINCT cache_key) FROM catalog_entity_media
+		WHERE attributes->>'icon_name'='spell_fire_flamebolt' AND cache_status='cached'`).Scan(&sharedObjects); err != nil {
+		t.Fatal(err)
+	}
+	if sharedObjects != 1 {
+		t.Fatalf("cross-build icon cache objects=%d, want one shared object", sharedObjects)
+	}
 }
 
 type seededMedia struct {

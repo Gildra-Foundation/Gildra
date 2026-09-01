@@ -107,6 +107,17 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 		if _, err := tx.Exec(ctx, `SET LOCAL max_parallel_workers_per_gather=0`); err != nil {
 			return fmt.Errorf("disable parallel official icon candidate plan: %w", err)
 		}
+		// Icon files are global WoW assets: the same icon name can be referenced
+		// by Retail, Classic, Era and Hardcore. Reuse a verified cached object
+		// from another build before making another CDN request. The observation
+		// is still written for this product/build and keeps the target icon
+		// mapping as its provenance, so the release gate never relies on an
+		// unproven cross-product row.
+		linked, err := tx.Exec(ctx, crossBuildIconLinkSQL, productID, buildID, c.publicBase)
+		if err != nil {
+			return fmt.Errorf("link cached icons from other builds: %w", err)
+		}
+		result.Entities += linked.RowsAffected()
 		rows, err := tx.Query(ctx, `
 		WITH targets AS (
 			SELECT lower(icon.icon_name) AS icon_name,min(icon.file_data_id) AS file_data_id,
@@ -121,9 +132,9 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 			GROUP BY lower(icon.icon_name)
 		), cached AS (
 			SELECT lower(media.attributes->>'icon_name') AS icon_name,
-				count(DISTINCT media.entity_id) AS entity_count
+				count(*) AS entity_count
 			FROM catalog_entity_media media
-			WHERE media.build_id=$2 AND media.media_kind='icon'
+			WHERE media.media_kind='icon'
 			  AND ((media.asset_key='official_render_56' AND media.source='blizzard_api')
 			    OR (media.asset_key='wago_casc_icon_png' AND media.source='wago_tools'))
 			  AND media.cache_status='cached' AND media.cached_content_hash IS NOT NULL
@@ -452,6 +463,71 @@ func (c *Cache) fetchOfficialIcons(
 	}()
 	return results
 }
+
+// crossBuildIconLinkSQL links already cached official icon objects to the
+// current product/build. Media objects are content-addressed and live in the
+// shared catalog media directory, so copying the observation avoids a second
+// CDN request when (for example) a Classic item uses a Retail icon name.
+// The target catalog_entity_icons source artifact remains the proof attached
+// to the new observation; the cached object contributes only bytes and
+// dimensions.
+const crossBuildIconLinkSQL = `
+WITH templates AS MATERIALIZED (
+	SELECT DISTINCT ON (lower(media.attributes->>'icon_name'))
+		lower(media.attributes->>'icon_name') AS icon_name,
+		media.source,media.asset_key,media.source_url,media.file_data_id,
+		media.content_hash,media.mime_type,media.width,media.height,
+		media.cache_key,media.cached_content_hash,media.cached_byte_size
+	FROM catalog_entity_media media
+	WHERE media.build_id<>$2
+	  AND media.media_kind='icon' AND media.is_primary
+	  AND ((media.asset_key='official_render_56' AND media.source='blizzard_api')
+	    OR (media.asset_key='wago_casc_icon_png' AND media.source='wago_tools'))
+	  AND media.cache_status='cached'
+	  AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL
+	  AND lower(media.attributes->>'icon_name') ~ '^[a-z0-9_]+$'
+	ORDER BY lower(media.attributes->>'icon_name'),media.updated_at DESC,media.id DESC
+), targets AS (
+	SELECT DISTINCT ON (entity.id)
+		entity.id AS entity_id,entity.entity_type,entity.external_id,
+		icon.icon_name,COALESCE(icon.file_data_id,template.file_data_id) AS file_data_id,
+		icon.source_artifact_id,template.source,template.asset_key,template.source_url,
+		template.content_hash,template.mime_type,template.width,template.height,
+		template.cache_key,template.cached_content_hash,template.cached_byte_size
+	FROM catalog_entity_icons icon
+	JOIN game_entities entity ON entity.product_id=$1
+		AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
+	JOIN game_entity_versions current_version ON current_version.id=entity.latest_version_id
+		AND current_version.build_id=icon.build_id
+	JOIN templates template ON template.icon_name=lower(icon.icon_name)
+	WHERE icon.build_id=$2 AND entity.deleted_at IS NULL
+	  AND NOT EXISTS (
+		SELECT 1 FROM catalog_entity_media existing
+		WHERE existing.entity_id=entity.id AND existing.build_id=$2
+		  AND existing.media_kind='icon' AND existing.is_primary
+		  AND existing.cache_status='cached'
+		  AND existing.cached_content_hash IS NOT NULL AND existing.cached_byte_size IS NOT NULL
+	  )
+	ORDER BY entity.id,icon.file_data_id NULLS LAST
+), prepared AS (
+	SELECT gen_random_uuid() AS id,target.* FROM targets target
+)
+INSERT INTO catalog_entity_media(
+	id,build_id,entity_id,entity_type,external_id,media_kind,asset_key,locale,
+	source,source_url,cached_url,file_data_id,content_hash,mime_type,width,height,
+	cache_status,source_artifact_id,is_primary,attributes,cache_key,
+	cached_content_hash,cached_byte_size,cached_at,cache_error
+)
+SELECT prepared.id,$2,prepared.entity_id,prepared.entity_type,prepared.external_id,
+	'icon',prepared.asset_key,'',prepared.source,prepared.source_url,
+	$3 || '/v1/media/' || prepared.id::text,prepared.file_data_id,
+	prepared.content_hash,prepared.mime_type,prepared.width,prepared.height,
+	'cached',prepared.source_artifact_id,true,
+	jsonb_build_object('icon_name',prepared.icon_name,'file_data_id',prepared.file_data_id,
+		'discovery','cross_build_cached_icon'),prepared.cache_key,
+	prepared.cached_content_hash,prepared.cached_byte_size,now(),''
+FROM prepared
+ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO NOTHING`
 
 func (c *Cache) fetchWagoCASCIcon(
 	ctx context.Context,
