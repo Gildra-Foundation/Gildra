@@ -47,6 +47,33 @@ func TestResolveDescriptionTextUsesBuildPinnedSpellRange(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextUsesBuildPinnedMinPeriodicAndChainValues(t *testing.T) {
+	t.Parallel()
+
+	values := map[int64]spellDescriptionValues{
+		42: {Effects: map[int]spellEffectValue{
+			0: {BasePoints: 20, ChainTargets: 5},
+			1: {BasePoints: 12, MaxBasePoints: 12, AmplitudeMS: 3000},
+		}},
+	}
+	got := resolveDescriptionText("Removes $m1 effects, up to ${$m2-4}; jumps to $x1 and ticks for $o2.", 42, values, "en_US")
+	want := "Removes 20 effects, up to 8; jumps to 5 and ticks for 12."
+	if got != want {
+		t.Fatalf("unexpected DB2 effect token resolution\nwant: %s\n got: %s", want, got)
+	}
+}
+
+func TestResolveDescriptionTextPreservesUnprovenMaxEffectValue(t *testing.T) {
+	t.Parallel()
+
+	values := map[int64]spellDescriptionValues{42: {Effects: map[int]spellEffectValue{
+		0: {BasePoints: 20},
+	}}}
+	if got := resolveDescriptionText("Up to $M1.", 42, values, "en_US"); got != "Up to $M1." {
+		t.Fatalf("max value without DB2 proof must remain unresolved: %q", got)
+	}
+}
+
 func TestResolveDescriptionTextPreservesUnknownTokens(t *testing.T) {
 	raw := "Deals $s4 damage over $999999d."
 	if got := resolveDescriptionText(raw, 123, map[int64]spellDescriptionValues{}, "en_US"); got != raw {

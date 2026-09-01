@@ -3,6 +3,9 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"maps"
 	"math"
 	"regexp"
@@ -13,19 +16,25 @@ import (
 )
 
 var (
-	spellDescriptionToken   = regexp.MustCompile(`\$@spelldesc(\d+)`)
-	spellConditionalToken   = regexp.MustCompile(`\$\?([A-Za-z][A-Za-z0-9_|-]*)`)
-	spellConditionalSpellID = regexp.MustCompile(`^[as]([0-9]+)$`)
-	spellValueExpression    = regexp.MustCompile(`\$\{\$(\d*)s(\d+)(?:([/*+-])(\d+(?:\.\d+)?))?\}`)
-	spellDurationToken      = regexp.MustCompile(`\$(\d+)d\b`)
-	spellMaxDurationToken   = regexp.MustCompile(`\$(\d+)D\b`)
-	spellEffectToken        = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
-	spellRadiusToken        = regexp.MustCompile(`\$[aA](\d*)\b`)
-	spellRangeToken         = regexp.MustCompile(`\$[rR]\b`)
-	spellTickToken          = regexp.MustCompile(`\$t(\d+)\b`)
-	currentDurationToken    = regexp.MustCompile(`\$d\b`)
-	currentMaxDurationToken = regexp.MustCompile(`\$D\b`)
-	currentEffectToken      = regexp.MustCompile(`\$s(\d+)\b`)
+	spellDescriptionToken    = regexp.MustCompile(`\$@spelldesc(\d+)`)
+	spellConditionalToken    = regexp.MustCompile(`\$\?([A-Za-z][A-Za-z0-9_|-]*)`)
+	spellConditionalSpellID  = regexp.MustCompile(`^[as]([0-9]+)$`)
+	spellValueExpression     = regexp.MustCompile(`\$\{\$(\d*)s(\d+)(?:([/*+-])(\d+(?:\.\d+)?))?\}`)
+	spellCrossEffectToken    = regexp.MustCompile(`\$(\d+)([mMoOx])(\d+)\b`)
+	spellMinEffectToken      = regexp.MustCompile(`\$m(\d+)\b`)
+	spellMaxEffectToken      = regexp.MustCompile(`\$M(\d+)\b`)
+	spellPeriodicEffectToken = regexp.MustCompile(`\$o(\d+)\b`)
+	spellChainTargetsToken   = regexp.MustCompile(`\$x(\d+)\b`)
+	numericExpressionToken   = regexp.MustCompile(`\$\{([^{}]+)\}`)
+	spellDurationToken       = regexp.MustCompile(`\$(\d+)d\b`)
+	spellMaxDurationToken    = regexp.MustCompile(`\$(\d+)D\b`)
+	spellEffectToken         = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
+	spellRadiusToken         = regexp.MustCompile(`\$[aA](\d*)\b`)
+	spellRangeToken          = regexp.MustCompile(`\$[rR]\b`)
+	spellTickToken           = regexp.MustCompile(`\$t(\d+)\b`)
+	currentDurationToken     = regexp.MustCompile(`\$d\b`)
+	currentMaxDurationToken  = regexp.MustCompile(`\$D\b`)
+	currentEffectToken       = regexp.MustCompile(`\$s(\d+)\b`)
 )
 
 type spellDescriptionValues struct {
@@ -40,9 +49,11 @@ type spellDescriptionValues struct {
 
 type spellEffectValue struct {
 	BasePoints             float64
+	ChainTargets           int64
 	Coefficient            float64
 	AttackPowerCoefficient float64
 	AmplitudeMS            int64
+	MaxBasePoints          float64
 	Radius                 float64
 }
 
@@ -260,6 +271,10 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				THEN (radius.payload->>'RadiusMax')::double precision END,
 				CASE WHEN radius.payload->>'Radius' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
 				THEN (radius.payload->>'Radius')::double precision END,0)
+			,COALESCE(effect.chain_targets,0),
+			CASE WHEN COALESCE(effect.attributes->>'variance','0') ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				AND (effect.attributes->>'variance')::double precision=0
+				THEN effect.base_points::double precision END
 		FROM game_products product
 		JOIN game_entities entity ON entity.product_id=product.id AND entity.entity_type='spell'
 			AND entity.external_id=ANY($2::bigint[]) AND entity.deleted_at IS NULL
@@ -320,9 +335,10 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		var minRange, maxRange float64
 		var effectIndex *int16
 		var basePoints, coefficient, attackPowerCoefficient *float64
-		var amplitude int64
+		var amplitude, chainTargets int64
 		var radius *float64
-		if err := rows.Scan(&id, &name, &description, &duration, &maxDuration, &minRange, &maxRange, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude, &radius); err != nil {
+		var maxBasePoints *float64
+		if err := rows.Scan(&id, &name, &description, &duration, &maxDuration, &minRange, &maxRange, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude, &radius, &chainTargets, &maxBasePoints); err != nil {
 			return nil, fmt.Errorf("scan spell description values: %w", err)
 		}
 		value := result[id]
@@ -334,9 +350,11 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		if effectIndex != nil {
 			value.Effects[int(*effectIndex)+1] = spellEffectValue{
 				BasePoints:             pointerFloat(basePoints),
+				ChainTargets:           chainTargets,
 				Coefficient:            pointerFloat(coefficient),
 				AttackPowerCoefficient: pointerFloat(attackPowerCoefficient),
 				AmplitudeMS:            amplitude,
+				MaxBasePoints:          pointerFloat(maxBasePoints),
 				Radius:                 pointerFloat(radius),
 			}
 		}
@@ -378,7 +396,7 @@ func referencedSpellIDs(texts []string, currentSpellID int64) []int64 {
 		unique[currentSpellID] = struct{}{}
 	}
 	for _, text := range texts {
-		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellDurationToken, spellMaxDurationToken, spellEffectToken, spellValueExpression} {
+		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellDurationToken, spellMaxDurationToken, spellEffectToken, spellCrossEffectToken, spellValueExpression} {
 			for _, match := range expression.FindAllStringSubmatch(text, -1) {
 				if len(match) < 2 || match[1] == "" {
 					continue
@@ -444,6 +462,30 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		}
 		return token
 	})
+	text = spellCrossEffectToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellCrossEffectToken.FindStringSubmatch(token)
+		id, _ := strconv.ParseInt(match[1], 10, 64)
+		index, _ := strconv.Atoi(match[3])
+		value, ok := spellEffectValueAt(values[id].Effects, index)
+		if !ok {
+			return token
+		}
+		switch match[2] {
+		case "m", "o":
+			if formatted, resolved := formatSpellBasePoints(value); resolved {
+				return formatted
+			}
+		case "M":
+			if math.Abs(value.MaxBasePoints) > 0.000001 {
+				return formatDescriptionNumber(value.MaxBasePoints)
+			}
+		case "x":
+			if value.ChainTargets > 0 {
+				return strconv.FormatInt(value.ChainTargets, 10)
+			}
+		}
+		return token
+	})
 	text = spellDurationToken.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellDurationToken.FindStringSubmatch(token)
 		id, _ := strconv.ParseInt(match[1], 10, 64)
@@ -498,6 +540,42 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		return token
 	})
 	if currentSpellID > 0 {
+		text = spellMinEffectToken.ReplaceAllStringFunc(text, func(token string) string {
+			match := spellMinEffectToken.FindStringSubmatch(token)
+			index, _ := strconv.Atoi(match[1])
+			if value, ok := spellEffectValueAt(values[currentSpellID].Effects, index); ok {
+				if formatted, resolved := formatSpellBasePoints(value); resolved {
+					return formatted
+				}
+			}
+			return token
+		})
+		text = spellMaxEffectToken.ReplaceAllStringFunc(text, func(token string) string {
+			match := spellMaxEffectToken.FindStringSubmatch(token)
+			index, _ := strconv.Atoi(match[1])
+			if value, ok := spellEffectValueAt(values[currentSpellID].Effects, index); ok && math.Abs(value.MaxBasePoints) > 0.000001 {
+				return formatDescriptionNumber(value.MaxBasePoints)
+			}
+			return token
+		})
+		text = spellPeriodicEffectToken.ReplaceAllStringFunc(text, func(token string) string {
+			match := spellPeriodicEffectToken.FindStringSubmatch(token)
+			index, _ := strconv.Atoi(match[1])
+			if value, ok := spellEffectValueAt(values[currentSpellID].Effects, index); ok {
+				if formatted, resolved := formatSpellBasePoints(value); resolved {
+					return formatted
+				}
+			}
+			return token
+		})
+		text = spellChainTargetsToken.ReplaceAllStringFunc(text, func(token string) string {
+			match := spellChainTargetsToken.FindStringSubmatch(token)
+			index, _ := strconv.Atoi(match[1])
+			if value, ok := spellEffectValueAt(values[currentSpellID].Effects, index); ok && value.ChainTargets > 0 {
+				return strconv.FormatInt(value.ChainTargets, 10)
+			}
+			return token
+		})
 		text = currentDurationToken.ReplaceAllStringFunc(text, func(token string) string {
 			if duration := values[currentSpellID].DurationMS; duration != 0 {
 				return formatDescriptionDuration(duration, locale)
@@ -529,7 +607,79 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		}
 		return token
 	})
+	text = numericExpressionToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := numericExpressionToken.FindStringSubmatch(token)
+		if len(match) != 2 {
+			return token
+		}
+		value, ok := evaluateNumericExpression(match[1])
+		if !ok {
+			return token
+		}
+		return formatDescriptionNumber(value)
+	})
 	return text
+}
+
+func evaluateNumericExpression(expression string) (float64, bool) {
+	expression = strings.TrimSpace(expression)
+	if expression == "" || strings.ContainsAny(expression, "$%&|^<>=!,?:") {
+		return 0, false
+	}
+	expr, err := parser.ParseExpr(expression)
+	if err != nil {
+		return 0, false
+	}
+	return evaluateNumericAST(expr)
+}
+
+func evaluateNumericAST(expr ast.Expr) (float64, bool) {
+	switch node := expr.(type) {
+	case *ast.BasicLit:
+		if node.Kind != token.INT && node.Kind != token.FLOAT {
+			return 0, false
+		}
+		value, err := strconv.ParseFloat(node.Value, 64)
+		return value, err == nil && math.IsNaN(value) == false && math.IsInf(value, 0) == false
+	case *ast.ParenExpr:
+		return evaluateNumericAST(node.X)
+	case *ast.UnaryExpr:
+		value, ok := evaluateNumericAST(node.X)
+		if !ok {
+			return 0, false
+		}
+		switch node.Op {
+		case token.ADD:
+			return value, true
+		case token.SUB:
+			return -value, true
+		default:
+			return 0, false
+		}
+	case *ast.BinaryExpr:
+		left, leftOK := evaluateNumericAST(node.X)
+		right, rightOK := evaluateNumericAST(node.Y)
+		if !leftOK || !rightOK {
+			return 0, false
+		}
+		switch node.Op {
+		case token.ADD:
+			return left + right, true
+		case token.SUB:
+			return left - right, true
+		case token.MUL:
+			return left * right, true
+		case token.QUO:
+			if math.Abs(right) < 0.000000000001 {
+				return 0, false
+			}
+			return left / right, true
+		default:
+			return 0, false
+		}
+	default:
+		return 0, false
+	}
 }
 
 // spellEffectValueAt converts the one-based effect references used by
@@ -712,6 +862,13 @@ func formatSpellEffect(value spellEffectValue, operator string, operand float64)
 		return formatDescriptionNumber(apply(value.AttackPowerCoefficient)) + " × AP", true
 	}
 	return "", false
+}
+
+func formatSpellBasePoints(value spellEffectValue) (string, bool) {
+	if math.Abs(value.BasePoints) <= 0.000001 {
+		return "", false
+	}
+	return formatDescriptionNumber(value.BasePoints), true
 }
 
 func pointerFloat(value *float64) float64 {
