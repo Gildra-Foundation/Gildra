@@ -386,7 +386,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 			id, _ = strconv.ParseInt(match[1], 10, 64)
 		}
 		index, _ := strconv.Atoi(match[2])
-		value, ok := values[id].Effects[index]
+		value, ok := spellEffectValueAt(values[id].Effects, index)
 		if !ok {
 			return token
 		}
@@ -419,7 +419,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		match := spellEffectToken.FindStringSubmatch(token)
 		id, _ := strconv.ParseInt(match[1], 10, 64)
 		index, _ := strconv.Atoi(match[2])
-		if value, ok := values[id].Effects[index]; ok {
+		if value, ok := spellEffectValueAt(values[id].Effects, index); ok {
 			if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
 				return formatted
 			}
@@ -436,7 +436,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 			}
 			index = parsed
 		}
-		if value, ok := values[currentSpellID].Effects[index]; ok && value.Radius > 0 {
+		if value, ok := spellEffectValueAt(values[currentSpellID].Effects, index); ok && value.Radius > 0 {
 			return formatDescriptionNumber(value.Radius)
 		}
 		return token
@@ -451,7 +451,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		text = currentEffectToken.ReplaceAllStringFunc(text, func(token string) string {
 			match := currentEffectToken.FindStringSubmatch(token)
 			index, _ := strconv.Atoi(match[1])
-			if value, ok := values[currentSpellID].Effects[index]; ok {
+			if value, ok := spellEffectValueAt(values[currentSpellID].Effects, index); ok {
 				if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
 					return formatted
 				}
@@ -468,12 +468,36 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 	text = spellTickToken.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellTickToken.FindStringSubmatch(token)
 		index, _ := strconv.Atoi(match[1])
-		if value, ok := values[currentSpellID].Effects[index]; ok && value.AmplitudeMS > 0 {
+		if value, ok := spellEffectValueAt(values[currentSpellID].Effects, index); ok && value.AmplitudeMS > 0 {
 			return formatDescriptionDuration(value.AmplitudeMS, locale)
 		}
 		return token
 	})
 	return text
+}
+
+// spellEffectValueAt converts the one-based effect references used by
+// Blizzard description templates ($s1, $s2, $A1, …) to the zero-based
+// EffectIndex values stored in DB2. A few legacy/imported payloads already
+// contain one-based indexes; when no index 0 is present we retain that shape
+// as a compatibility fallback instead of silently changing their meaning.
+func spellEffectValueAt(effects map[int]spellEffectValue, oneBasedIndex int) (spellEffectValue, bool) {
+	if oneBasedIndex < 1 || len(effects) == 0 {
+		return spellEffectValue{}, false
+	}
+	if _, zeroBased := effects[0]; zeroBased {
+		if value, ok := effects[oneBasedIndex-1]; ok {
+			return value, true
+		}
+		// Keep a defensive fallback for sparse legacy payloads whose first
+		// persisted effect is zero-based but later entries were normalized as
+		// one-based. It is safer to render a proved value than to leak a raw
+		// template token when the canonical slot is absent.
+		value, ok := effects[oneBasedIndex]
+		return value, ok
+	}
+	value, ok := effects[oneBasedIndex]
+	return value, ok
 }
 
 // resolveConditionalDescriptionTokens keeps both branches of a Blizzard
