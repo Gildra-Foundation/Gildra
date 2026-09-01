@@ -39,6 +39,7 @@ type CharacterDetail = Character & {
   description: string;
   stats?: CharacterStats | null;
   ascensionCosts: UpgradeCostStage[];
+  levelingCosts: LevelingCosts;
   talents: Talent[];
   constellations: Constellation[];
 };
@@ -61,6 +62,17 @@ type UpgradeCostItem = {
 
 type UpgradeCostStage = { key: string; stage: number; maxLevel?: number; items: UpgradeCostItem[] };
 
+type LevelProgressionCost = {
+  level: number; nextLevel: number | null; expRequired: number; totalExp: number; moraCost: number;
+};
+type LevelMaterialCost = {
+  fromLevel: number; toLevel: number; materialKey: string; materialId: number | null; name: string;
+  count: number; experiencePerItem: number; experienceProvided: number; wastedExperience: number;
+  moraCost: number; iconUrl?: string | null; locale: Locale; localeFallback: boolean;
+};
+type LevelingCosts = { levels: LevelProgressionCost[]; materials: LevelMaterialCost[] };
+type TalentLevelCost = { level: number; items: UpgradeCostItem[] };
+
 type Weapon = {
   id: number; externalId: number; slug: string; name: string; rarity: number;
   weaponType: string; baseAttack: number | null; secondaryStat: string;
@@ -72,6 +84,7 @@ type WeaponDetail = Weapon & {
   description: string; passiveName: string; passiveDescription: string;
   stats?: WeaponStats | null;
   refinements: WeaponRefinement[]; ascensionCosts: UpgradeCostStage[];
+  levelingCosts: LevelingCosts;
 };
 
 type WeaponRefinement = { level: number; values: string[]; description: string };
@@ -97,6 +110,7 @@ type ArtifactPiece = {
 type ArtifactSource = {
   slug: string; name: string; region: string; entranceName: string;
   unlockRank: number; recommendedLevel: number;
+  sourceKind: string; note?: string;
 };
 
 type ArtifactDetail = ArtifactSet & { pieces: ArtifactPiece[]; sources: ArtifactSource[] };
@@ -105,6 +119,7 @@ type Talent = {
   id: number; characterSlug: string; characterName: string; externalKey: string;
   kind: string; displayOrder: number; name: string; description: string;
   iconUrl: string | null; locale: Locale; localeFallback: boolean;
+  upgradeCosts?: TalentLevelCost[];
 };
 
 type Constellation = {
@@ -125,22 +140,27 @@ type Content = {
 type CatalogItem = Character | Talent | Weapon | ArtifactSet | Content;
 type CatalogPage<T> = { data: T[]; pagination: { nextCursor?: string; hasMore: boolean; limit: number } };
 
-const sectionOptions: { id: Section; label: string; icon: typeof Swords }[] = [
-  { id: "characters", label: "Персонажи", icon: Swords },
-  { id: "talents", label: "Таланты", icon: BookOpen },
-  { id: "weapons", label: "Оружие", icon: Sparkles },
-  { id: "artifact-sets", label: "Артефакты", icon: Gem },
+const sectionOptions: { id: Section; icon: typeof Swords }[] = [
+  { id: "characters", icon: Swords },
+  { id: "talents", icon: BookOpen },
+  { id: "weapons", icon: Sparkles },
+  { id: "artifact-sets", icon: Gem },
 ];
 
-const elementOptions = [
-  ["", "Все элементы"], ["none", "Без элемента"], ["anemo", "Анемо"], ["geo", "Гео"], ["electro", "Электро"],
-  ["dendro", "Дендро"], ["hydro", "Гидро"], ["pyro", "Пиро"], ["cryo", "Крио"],
-];
+function localizedElementOptions(locale: Locale) {
+  const en = locale === "en_US";
+  return [["", en ? "All elements" : "Все элементы"], ["none", en ? "No element" : "Без элемента"], ["anemo", "Anemo"], ["geo", "Geo"], ["electro", "Electro"], ["dendro", "Dendro"], ["hydro", "Hydro"], ["pyro", "Pyro"], ["cryo", "Cryo"]];
+}
 
-const weaponOptions = [
-  ["", "Все типы оружия"], ["sword", "Одноручное"], ["claymore", "Двуручное"],
-  ["polearm", "Копьё"], ["bow", "Лук"], ["catalyst", "Катализатор"],
-];
+function localizedWeaponOptions(locale: Locale) {
+  const en = locale === "en_US";
+  return [["", en ? "All weapon types" : "Все типы оружия"], ["sword", en ? "Sword" : "Одноручное"], ["claymore", en ? "Claymore" : "Двуручное"], ["polearm", en ? "Polearm" : "Копьё"], ["bow", en ? "Bow" : "Лук"], ["catalyst", en ? "Catalyst" : "Катализатор"]];
+}
+
+function sectionLabel(section: Section, locale: Locale) {
+  const labels = locale === "en_US" ? { characters: "Characters", talents: "Talents", weapons: "Weapons", "artifact-sets": "Artifacts", content: "Content" } : { characters: "Персонажи", talents: "Таланты", weapons: "Оружие", "artifact-sets": "Артефакты", content: "Данные" };
+  return labels[section];
+}
 
 const elementColors: Record<string, string> = {
   anemo: "border-[#5bbcac] text-[#84ded0] bg-[#10201f]",
@@ -194,6 +214,7 @@ export function GenshinImpactCatalog() {
   const [artifactDetailLoading, setArtifactDetailLoading] = useState(false);
   const [artifactDetailError, setArtifactDetailError] = useState("");
   const [imagePreview, setImagePreview] = useState<ImagePreview | null>(null);
+  const en = locale === "en_US";
 
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({ locale, limit: "24" });
@@ -337,31 +358,31 @@ export function GenshinImpactCatalog() {
       <ElementRail />
       <div className="grid gap-8 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="max-w-3xl">
-          <div className="flex items-center gap-2 text-[9px] uppercase tracking-[.18em] text-[#8f9bad]"><BookOpen className="size-3.5 text-[#c9a24f]" />Локальная энциклопедия</div>
+          <div className="flex items-center gap-2 text-[9px] uppercase tracking-[.18em] text-[#8f9bad]"><BookOpen className="size-3.5 text-[#c9a24f]" />{en ? "Local encyclopedia" : "Локальная энциклопедия"}</div>
           <h2 className="mt-3 font-[var(--display)] text-2xl font-semibold tracking-tight text-[#edf0f5] sm:text-3xl">Genshin Impact</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#8792a5]">Полный двуязычный каталог источника: персонажи, таланты, оружие, артефакты, еда, материалы, противники, подземелья, задания, интерактивные карты, TCG и другие записи. Изображения хранятся на сервере Gildra.</p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#8792a5]">{en ? "Full bilingual source catalog: characters, talents, weapons, artifacts, food, materials, enemies, domains, quests, interactive maps, TCG and more. Images are stored on the Gildra server." : "Полный двуязычный каталог источника: персонажи, таланты, оружие, артефакты, еда, материалы, противники, подземелья, задания, интерактивные карты, TCG и другие записи. Изображения хранятся на сервере Gildra."}</p>
         </div>
         <div className="grid grid-cols-2 gap-px border border-[#2b3240] bg-[#2b3240] sm:grid-cols-3 lg:grid-cols-6 lg:min-w-[620px]">
-          <Metric label="Персонажи" value={status?.characters ?? 0} />
-          <Metric label="Таланты" value={status?.talents ?? 0} />
-          <Metric label="Оружие" value={status?.weapons ?? 0} />
-          <Metric label="Наборы" value={status?.artifactSets ?? 0} />
-          <Metric label="Все записи" value={status?.contentEntries ?? 0} />
-          <Metric label="Медиа" value={status?.mediaAssets ?? 0} />
+          <Metric label={en ? "Characters" : "Персонажи"} value={status?.characters ?? 0} />
+          <Metric label={en ? "Talents" : "Таланты"} value={status?.talents ?? 0} />
+          <Metric label={en ? "Weapons" : "Оружие"} value={status?.weapons ?? 0} />
+          <Metric label={en ? "Sets" : "Наборы"} value={status?.artifactSets ?? 0} />
+          <Metric label={en ? "All records" : "Все записи"} value={status?.contentEntries ?? 0} />
+          <Metric label={en ? "Media" : "Медиа"} value={status?.mediaAssets ?? 0} />
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#29303c] bg-[#0c1017] px-5 py-3 text-[10px] text-[#69758a] sm:px-7">
-        <span className={status?.ready ? "text-[#78c395]" : "text-[#d1a451]"}>{status?.ready ? "Опубликованная версия доступна" : "Ожидается первый импорт"}</span>
-        <span>Версия игры: <strong className="font-medium text-[#aeb7c7]">{status?.gameVersion || "—"}</strong></span>
-        <span>Источник: <strong className="font-mono font-medium text-[#aeb7c7]">{status?.sourceRevision?.slice(0, 12) || "—"}</strong></span>
-        <span className="ml-auto">{status?.publishedAt ? new Date(status.publishedAt).toLocaleString(locale === "ru_RU" ? "ru-RU" : "en-US") : "Релиз ещё не опубликован"}</span>
+        <span className={status?.ready ? "text-[#78c395]" : "text-[#d1a451]"}>{status?.ready ? (en ? "Published version available" : "Опубликованная версия доступна") : (en ? "Waiting for first import" : "Ожидается первый импорт")}</span>
+        <span>{en ? "Game version" : "Версия игры"}: <strong className="font-medium text-[#aeb7c7]">{status?.gameVersion || "—"}</strong></span>
+        <span>{en ? "Source" : "Источник"}: <strong className="font-mono font-medium text-[#aeb7c7]">{status?.sourceRevision?.slice(0, 12) || "—"}</strong></span>
+        <span className="ml-auto">{status?.publishedAt ? new Date(status.publishedAt).toLocaleString(locale === "ru_RU" ? "ru-RU" : "en-US") : (en ? "Release is not published" : "Релиз ещё не опубликован")}</span>
       </div>
     </section>
 
     <section className="border border-[#2d3341] bg-[#11151d]">
       <div className="flex flex-col gap-4 border-b border-[#2b313e] p-4 sm:p-5 xl:flex-row xl:items-center">
         <div className="flex min-w-0 flex-1 overflow-x-auto" role="tablist" aria-label="Раздел каталога">
-          {sectionOptions.map((option) => <button key={option.id} type="button" role="tab" aria-selected={section === option.id} onClick={() => switchSection(option.id)} className={cn("flex h-10 shrink-0 items-center gap-2 border-b-2 px-4 text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c9a24f]", section === option.id ? "border-[#d1aa53] bg-[#191a1b] text-[#e6c778]" : "border-transparent text-[#7f899d] hover:bg-[#151a23] hover:text-[#d5dbe5]")}><option.icon className="size-3.5" />{option.label}</button>)}
+          {sectionOptions.map((option) => <button key={option.id} type="button" role="tab" aria-selected={section === option.id} onClick={() => switchSection(option.id)} className={cn("flex h-10 shrink-0 items-center gap-2 border-b-2 px-4 text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c9a24f]", section === option.id ? "border-[#d1aa53] bg-[#191a1b] text-[#e6c778]" : "border-transparent text-[#7f899d] hover:bg-[#151a23] hover:text-[#d5dbe5]")}><option.icon className="size-3.5" />{sectionLabel(option.id, locale)}</button>)}
           <label className={cn("flex h-10 shrink-0 items-center border-b-2 px-3 text-xs", section === "content" ? "border-[#d1aa53] bg-[#191a1b] text-[#e6c778]" : "border-transparent text-[#7f899d]")}><span className="sr-only">Все разделы данных</span><select value={section === "content" ? contentCategory : ""} onChange={(event) => { const value = event.target.value; if (value) { setLoading(true); setItems([]); setContentCategory(value); setSection("content"); setRarity(""); setElement(""); setWeaponType(""); } }} className="max-w-52 bg-transparent text-xs outline-none"><option value="">Все разделы данных</option>{Object.entries(status?.contentByCategory ?? {}).sort(([a], [b]) => a.localeCompare(b)).map(([category, count]) => <option key={category} value={category}>{contentCategoryLabel(category)} ({count.toLocaleString("ru-RU")})</option>)}</select></label>
         </div>
         <div className="flex items-center gap-2">
@@ -373,10 +394,10 @@ export function GenshinImpactCatalog() {
       </div>
 
       <div className="grid gap-3 border-b border-[#2b313e] bg-[#0d1118] p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[minmax(260px,1fr)_170px_190px_210px]">
-        <label className="relative"><span className="sr-only">Поиск</span><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#657185]" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={section === "characters" ? "Найти персонажа" : section === "talents" ? "Найти талант или героя" : section === "weapons" ? "Найти оружие" : section === "artifact-sets" ? "Найти набор" : "Найти запись"} className="h-10 rounded-none border-[#303746] bg-[#090d13] pl-9 text-xs placeholder:text-[#566175] focus-visible:border-[#9b8148]" /></label>
-        {section !== "talents" && section !== "content" ? <FilterSelect label="Редкость" value={rarity} onChange={setRarity} options={[["", "Любая редкость"], ["5", "5 звёзд"], ["4", "4 звезды"], ...(section === "weapons" ? [["3", "3 звезды"], ["2", "2 звезды"], ["1", "1 звезда"]] : [])]} /> : <div className="hidden sm:block" />}
-        {section === "characters" ? <FilterSelect label="Элемент" value={element} onChange={setElement} options={elementOptions} /> : <div className="hidden xl:block" />}
-        {section === "characters" || section === "weapons" ? <FilterSelect label="Тип оружия" value={weaponType} onChange={setWeaponType} options={weaponOptions} /> : <div className="hidden xl:block" />}
+        <label className="relative"><span className="sr-only">{en ? "Search" : "Поиск"}</span><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#657185]" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={section === "characters" ? (en ? "Find a character" : "Найти персонажа") : section === "talents" ? (en ? "Find a talent or hero" : "Найти талант или героя") : section === "weapons" ? (en ? "Find a weapon" : "Найти оружие") : section === "artifact-sets" ? (en ? "Find a set" : "Найти набор") : (en ? "Find a record" : "Найти запись")} className="h-10 rounded-none border-[#303746] bg-[#090d13] pl-9 text-xs placeholder:text-[#566175] focus-visible:border-[#9b8148]" /></label>
+        {section !== "talents" && section !== "content" ? <FilterSelect label={en ? "Rarity" : "Редкость"} value={rarity} onChange={setRarity} options={[["", en ? "Any rarity" : "Любая редкость"], ["5", "5 ★"], ["4", "4 ★"], ...(section === "weapons" ? [["3", "3 ★"], ["2", "2 ★"], ["1", "1 ★"]] : [])]} /> : <div className="hidden sm:block" />}
+        {section === "characters" ? <FilterSelect label={en ? "Element" : "Элемент"} value={element} onChange={setElement} options={localizedElementOptions(locale)} /> : <div className="hidden xl:block" />}
+        {section === "characters" || section === "weapons" ? <FilterSelect label={en ? "Weapon type" : "Тип оружия"} value={weaponType} onChange={setWeaponType} options={localizedWeaponOptions(locale)} /> : <div className="hidden xl:block" />}
       </div>
 
       {error ? <div className="m-4 flex items-start gap-3 border border-[#693b3e] bg-[#211215] p-4 text-sm text-[#eba0a3] sm:m-5"><CircleAlert className="mt-0.5 size-4 shrink-0" /><div><strong className="block font-semibold">Каталог не загрузился</strong><span className="mt-1 block text-xs text-[#ad858d]">{error}</span></div></div> : null}
@@ -386,9 +407,9 @@ export function GenshinImpactCatalog() {
         {hasMore ? <div className="mt-5 flex justify-center border-t border-[#29303c] pt-5"><Button type="button" variant="outline" onClick={() => void loadMore()} disabled={loadingMore} className="rounded-none border-[#49422f] bg-[#15140f] px-6 text-xs text-[#d5b35f] hover:border-[#8e7540] hover:bg-[#1d1a11]">{loadingMore ? <RefreshCw className="size-3.5 animate-spin" /> : <ChevronRight className="size-3.5" />}Показать ещё</Button></div> : null}
       </div>
     </section>
-    <CharacterDialog character={selectedCharacter} detail={characterDetail} loading={characterDetailLoading} error={characterDetailError} onClose={() => setSelectedCharacter(null)} onOpenImage={setImagePreview} />
-    <WeaponDialog weapon={selectedWeapon} detail={weaponDetail} loading={weaponDetailLoading} error={weaponDetailError} onClose={() => setSelectedWeapon(null)} onOpenImage={setImagePreview} />
-    <ArtifactDialog artifact={selectedArtifact} detail={artifactDetail} loading={artifactDetailLoading} error={artifactDetailError} onClose={() => setSelectedArtifact(null)} onOpenImage={setImagePreview} />
+    <CharacterDialog locale={locale} character={selectedCharacter} detail={characterDetail} loading={characterDetailLoading} error={characterDetailError} onClose={() => setSelectedCharacter(null)} onOpenImage={setImagePreview} />
+    <WeaponDialog locale={locale} weapon={selectedWeapon} detail={weaponDetail} loading={weaponDetailLoading} error={weaponDetailError} onClose={() => setSelectedWeapon(null)} onOpenImage={setImagePreview} />
+    <ArtifactDialog locale={locale} artifact={selectedArtifact} detail={artifactDetail} loading={artifactDetailLoading} error={artifactDetailError} onClose={() => setSelectedArtifact(null)} onOpenImage={setImagePreview} />
     <ImageLightbox preview={imagePreview} onClose={() => setImagePreview(null)} />
   </div>;
 }
@@ -466,7 +487,8 @@ function WeaponEffectPreview({ item }: { item: Weapon }) {
   return item.passiveName || description ? <div className="mt-3 line-clamp-4 text-[10px] leading-4 text-[#8995a8]"><span className="mr-1 uppercase tracking-[.08em] text-[#c9a24f]">{item.passiveName || "Пассивный эффект"}</span>{description || "Описание эффекта отсутствует."}</div> : null;
 }
 
-function CharacterDialog({ character, detail, loading, error, onClose, onOpenImage }: {
+function CharacterDialog({ locale, character, detail, loading, error, onClose, onOpenImage }: {
+  locale: Locale;
   character: Character | null;
   detail: CharacterDetail | null;
   loading: boolean;
@@ -475,41 +497,44 @@ function CharacterDialog({ character, detail, loading, error, onClose, onOpenIma
   onOpenImage: (preview: ImagePreview) => void;
 }) {
   if (!character) return null;
+  const en = locale === "en_US";
   const profile = detail ?? character;
   const imageURL = profile.portraitUrl ?? profile.iconUrl;
   return <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#05070b]/85 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-labelledby="genshin-character-dialog-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="my-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-6xl flex-col overflow-hidden border border-[#4b4029] bg-[#0d1118] shadow-[0_28px_90px_rgba(0,0,0,.65)] sm:max-h-[calc(100vh-3rem)]">
       <div className="flex items-start justify-between gap-4 border-b border-[#2b313e] bg-[#11151d] px-4 py-4 sm:px-6">
-        <div className="min-w-0"><div className="text-[9px] uppercase tracking-[.18em] text-[#c9a24f]">Профиль персонажа</div><h2 id="genshin-character-dialog-title" className="mt-1 truncate font-[var(--display)] text-xl font-semibold text-[#edf0f5] sm:text-2xl">{profile.name}</h2><p className="mt-1 text-xs text-[#8290a4]">{profile.title || profile.region || "Genshin Impact"}</p></div>
-        <button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center border border-[#343b4a] text-[#9da7b7] transition-colors hover:border-[#8e7540] hover:text-[#e6c778]" aria-label="Закрыть профиль"><X className="size-4" /></button>
+        <div className="min-w-0"><div className="text-[9px] uppercase tracking-[.18em] text-[#c9a24f]">{en ? "Character profile" : "Профиль персонажа"}</div><h2 id="genshin-character-dialog-title" className="mt-1 truncate font-[var(--display)] text-xl font-semibold text-[#edf0f5] sm:text-2xl">{profile.name}</h2><p className="mt-1 text-xs text-[#8290a4]">{profile.title || profile.region || "Genshin Impact"}</p></div>
+        <button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center border border-[#343b4a] text-[#9da7b7] transition-colors hover:border-[#8e7540] hover:text-[#e6c778]" aria-label={en ? "Close profile" : "Закрыть профиль"}><X className="size-4" /></button>
       </div>
       <div className="min-h-0 overflow-y-auto">
         <div className="grid gap-5 border-b border-[#2b313e] bg-[radial-gradient(circle_at_18%_18%,rgba(201,162,79,.1),transparent_35%),#0b0f16] p-4 sm:grid-cols-[220px_minmax(0,1fr)] sm:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <div className="relative flex min-h-64 items-center justify-center overflow-hidden border border-[#343c4b] bg-[linear-gradient(145deg,#161d29,#090d13)] sm:min-h-80">
-            {imageURL ? <button type="button" className="relative h-full min-h-64 w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#e6c77a]" onClick={() => onOpenImage({ url: imageURL, label: profile.name })} aria-label={`Открыть изображение: ${profile.name}`}><img src={imageURL} alt={profile.name} className="h-full max-h-[28rem] w-full object-contain p-3" /><span className="absolute bottom-3 right-3 grid size-8 place-items-center border border-[#5b4c2b] bg-[#0a0d13]/85 text-[#d9b65e]"><Maximize2 className="size-4" /></span></button> : <ImageIcon className="size-10 text-[#4c586b]" strokeWidth={1.2} />}
+            {imageURL ? <button type="button" className="relative h-full min-h-64 w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#e6c77a]" onClick={() => onOpenImage({ url: imageURL, label: profile.name })} aria-label={`${en ? "Open image" : "Открыть изображение"}: ${profile.name}`}><img src={imageURL} alt={profile.name} className="h-full max-h-[28rem] w-full object-contain p-3" /><span className="absolute bottom-3 right-3 grid size-8 place-items-center border border-[#5b4c2b] bg-[#0a0d13]/85 text-[#d9b65e]"><Maximize2 className="size-4" /></span></button> : <ImageIcon className="size-10 text-[#4c586b]" strokeWidth={1.2} />}
           </div>
-          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Stars count={profile.rarity} /><span className={cn("border px-2 py-1 text-[9px] font-semibold uppercase tracking-[.1em]", elementColors[profile.element] ?? "border-[#394151] text-[#9ca6b8]")}>{elementLabel(profile.element)}</span><span className="border border-[#343c4b] px-2 py-1 text-[9px] text-[#aeb7c7]">{weaponLabel(profile.weaponType)}</span></div><p className="mt-5 max-w-3xl whitespace-pre-line text-sm leading-6 text-[#b0bac9]">{detail?.description || "Описание персонажа загружается вместе с профилем."}</p><div className="mt-6 grid grid-cols-2 gap-px border border-[#2b3340] bg-[#2b3340] sm:grid-cols-4"><Fact label="Регион" value={profile.region || "—"} /><Fact label="Таланты" value={String(profile.talentCount)} /><Fact label="ID" value={String(profile.externalId)} mono /><Fact label="Язык" value={profile.locale === "ru_RU" ? "Русский" : "English"} /></div></div>
+          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Stars count={profile.rarity} /><span className={cn("border px-2 py-1 text-[9px] font-semibold uppercase tracking-[.1em]", elementColors[profile.element] ?? "border-[#394151] text-[#9ca6b8]")}>{elementLabel(profile.element)}</span><span className="border border-[#343c4b] px-2 py-1 text-[9px] text-[#aeb7c7]">{weaponLabel(profile.weaponType)}</span></div><p className="mt-5 max-w-3xl whitespace-pre-line text-sm leading-6 text-[#b0bac9]">{detail?.description || (en ? "Character description is loaded with the profile." : "Описание персонажа загружается вместе с профилем.")}</p><div className="mt-6 grid grid-cols-2 gap-px border border-[#2b3340] bg-[#2b3340] sm:grid-cols-4"><Fact label={en ? "Region" : "Регион"} value={profile.region || "—"} /><Fact label={en ? "Talents" : "Таланты"} value={String(profile.talentCount)} /><Fact label="ID" value={String(profile.externalId)} mono /><Fact label={en ? "Language" : "Язык"} value={profile.locale === "ru_RU" ? "Русский" : "English"} /></div></div>
         </div>
-        {loading ? <div className="grid min-h-56 place-items-center p-6"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /><span className="sr-only">Загрузка профиля</span></div> : error ? <div className="m-4 border border-[#693b3e] bg-[#211215] p-4 text-sm text-[#eba0a3] sm:m-6">{error}</div> : <div className="space-y-8 p-4 sm:p-6"><CharacterProgression detail={detail} onOpenImage={onOpenImage} /><div className="grid gap-8 lg:grid-cols-2 lg:gap-10"><CharacterTalentList talents={detail?.talents ?? []} onOpenImage={onOpenImage} /><CharacterConstellationList constellations={detail?.constellations ?? []} onOpenImage={onOpenImage} /></div></div>}
+        {loading ? <div className="grid min-h-56 place-items-center p-6"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /><span className="sr-only">{en ? "Loading profile" : "Загрузка профиля"}</span></div> : error ? <div className="m-4 border border-[#693b3e] bg-[#211215] p-4 text-sm text-[#eba0a3] sm:m-6">{error}</div> : <div className="space-y-8 p-4 sm:p-6"><CharacterProgression locale={locale} detail={detail} onOpenImage={onOpenImage} /><div className="grid gap-8 lg:grid-cols-2 lg:gap-10"><CharacterTalentList locale={locale} talents={detail?.talents ?? []} onOpenImage={onOpenImage} /><CharacterConstellationList locale={locale} constellations={detail?.constellations ?? []} onOpenImage={onOpenImage} /></div></div>}
       </div>
     </div>
   </div>;
 }
 
-function CharacterProgression({ detail, onOpenImage }: { detail: CharacterDetail | null; onOpenImage: (preview: ImagePreview) => void }) {
+function CharacterProgression({ locale, detail, onOpenImage }: { locale: Locale; detail: CharacterDetail | null; onOpenImage: (preview: ImagePreview) => void }) {
   if (!detail) return null;
+  const en = locale === "en_US";
   const stats = detail.stats;
   return <section className="space-y-6" aria-labelledby="genshin-character-progression-title">
-    <div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Развитие персонажа</div><h3 id="genshin-character-progression-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Базовые характеристики и возвышение</h3></div><span className="text-[10px] text-[#7d899b]">90 ур.</span></div>
+    <div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Character progression" : "Развитие персонажа"}</div><h3 id="genshin-character-progression-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{en ? "Base stats and ascension" : "Базовые характеристики и возвышение"}</h3></div><span className="text-[10px] text-[#7d899b]">{en ? "Level 90" : "90 ур."}</span></div>
     {stats ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      <StatTile label="HP на 1 уровне" value={formatStat(stats.base.hp)} />
-      <StatTile label="Атака на 1 уровне" value={formatStat(stats.base.attack)} />
-      <StatTile label="Защита на 1 уровне" value={formatStat(stats.base.defense)} />
-      <StatTile label="Шанс крит. попадания" value={formatPercent(stats.base.critRate)} />
-      <StatTile label="Крит. урон" value={formatPercent(stats.base.critDamage)} />
-    </div> : <EmptyDetail text="Базовые характеристики для этой формы персонажа пока не опубликованы в источнике." />}
-    {stats?.promotion.length ? <div className="overflow-x-auto border border-[#2b3340] bg-[#0c1017]"><table className="min-w-[680px] w-full text-left text-[10px]"><caption className="border-b border-[#2b3340] px-3 py-2 text-left text-[9px] uppercase tracking-[.12em] text-[#8e7540]">Прирост по возвышениям</caption><thead className="bg-[#111720] text-[#68758a]"><tr><th className="px-3 py-2 font-medium">Макс. уровень</th><th className="px-3 py-2 font-medium">HP</th><th className="px-3 py-2 font-medium">Атака</th><th className="px-3 py-2 font-medium">Защита</th><th className="px-3 py-2 font-medium">Спец. стат</th></tr></thead><tbody>{stats.promotion.map((row, index) => <tr key={`${row.maxLevel}-${index}`} className="border-t border-[#252d3a] text-[#aeb7c7]"><td className="px-3 py-2 font-semibold text-[#d5b35f]">{row.maxLevel}</td><td className="px-3 py-2">{formatStat(row.hp)}</td><td className="px-3 py-2">{formatStat(row.attack)}</td><td className="px-3 py-2">{formatStat(row.defense)}</td><td className="px-3 py-2">{row.specialized ? formatStat(row.specialized) : "—"}</td></tr>)}</tbody></table></div> : null}
-    <UpgradeCostList title="Ресурсы для возвышения" stages={detail.ascensionCosts} onOpenImage={onOpenImage} />
+      <StatTile label={en ? "HP at level 1" : "HP на 1 уровне"} value={formatStat(stats.base.hp)} />
+      <StatTile label={en ? "Attack at level 1" : "Атака на 1 уровне"} value={formatStat(stats.base.attack)} />
+      <StatTile label={en ? "Defense at level 1" : "Защита на 1 уровне"} value={formatStat(stats.base.defense)} />
+      <StatTile label={en ? "CRIT Rate" : "Шанс крит. попадания"} value={formatPercent(stats.base.critRate)} />
+      <StatTile label={en ? "CRIT DMG" : "Крит. урон"} value={formatPercent(stats.base.critDamage)} />
+    </div> : <EmptyDetail text={en ? "Base stats for this character form are not present in the source." : "Базовые характеристики для этой формы персонажа пока не опубликованы в источнике."} />}
+    {stats?.promotion.length ? <div className="overflow-x-auto border border-[#2b3340] bg-[#0c1017]"><table className="min-w-[680px] w-full text-left text-[10px]"><caption className="border-b border-[#2b3340] px-3 py-2 text-left text-[9px] uppercase tracking-[.12em] text-[#8e7540]">{en ? "Ascension stat growth" : "Прирост по возвышениям"}</caption><thead className="bg-[#111720] text-[#68758a]"><tr><th className="px-3 py-2 font-medium">{en ? "Max level" : "Макс. уровень"}</th><th className="px-3 py-2 font-medium">HP</th><th className="px-3 py-2 font-medium">{en ? "Attack" : "Атака"}</th><th className="px-3 py-2 font-medium">{en ? "Defense" : "Защита"}</th><th className="px-3 py-2 font-medium">{en ? "Special stat" : "Спец. стат"}</th></tr></thead><tbody>{stats.promotion.map((row, index) => <tr key={`${row.maxLevel}-${index}`} className="border-t border-[#252d3a] text-[#aeb7c7]"><td className="px-3 py-2 font-semibold text-[#d5b35f]">{row.maxLevel}</td><td className="px-3 py-2">{formatStat(row.hp)}</td><td className="px-3 py-2">{formatStat(row.attack)}</td><td className="px-3 py-2">{formatStat(row.defense)}</td><td className="px-3 py-2">{row.specialized ? formatStat(row.specialized) : "—"}</td></tr>)}</tbody></table></div> : null}
+    <UpgradeCostList title={en ? "Ascension materials" : "Ресурсы для возвышения"} stages={detail.ascensionCosts} onOpenImage={onOpenImage} locale={locale} />
+    <LevelingCostTable costs={detail.levelingCosts} locale={locale} onOpenImage={onOpenImage} />
   </section>;
 }
 
@@ -517,83 +542,106 @@ function StatTile({ label, value }: { label: string; value: string }) {
   return <div className="border border-[#2b3340] bg-[#111720] px-3 py-3"><div className="text-[9px] uppercase tracking-[.08em] text-[#68758a]">{label}</div><div className="mt-2 font-[var(--display)] text-lg font-semibold tabular-nums text-[#dce2eb]">{value}</div></div>;
 }
 
-function UpgradeCostList({ title, stages, onOpenImage }: { title: string; stages: UpgradeCostStage[]; onOpenImage: (preview: ImagePreview) => void }) {
-  return <section aria-label={title}><div className="flex items-center justify-between border-b border-[#2b3340] pb-2"><h4 className="text-xs font-semibold text-[#dce2eb]">{title}</h4><span className="text-[10px] text-[#778297]">{stages.length} этапов</span></div>{stages.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{stages.map((stage) => <div key={stage.key} className="border border-[#2b3340] bg-[#0f151e] p-3"><div className="flex items-center justify-between text-[9px] uppercase tracking-[.08em] text-[#8e7540]"><span>Этап {stage.stage}</span>{stage.maxLevel ? <span>до {stage.maxLevel} ур.</span> : null}</div><div className="mt-3 space-y-2">{stage.items.map((item, index) => <div key={`${stage.key}-${item.id}-${index}`} className="flex items-center gap-2"><SmallMediaButton url={item.iconUrl ?? null} label={item.name} onOpenImage={onOpenImage} /><span className="min-w-0 flex-1 truncate text-[10px] text-[#aeb7c7]">{item.name || `Материал #${item.id}`}</span><span className="shrink-0 font-mono text-[10px] text-[#d5b35f]">×{item.count.toLocaleString("ru-RU")}</span></div>)}</div></div>)}</div> : <div className="mt-3 border border-dashed border-[#303847] p-4 text-center text-[10px] text-[#738095]">Ресурсы возвышения не указаны.</div>}</section>;
+function UpgradeCostList({ title, stages, onOpenImage, locale }: { title: string; stages: UpgradeCostStage[]; onOpenImage: (preview: ImagePreview) => void; locale: Locale }) {
+  const en = locale === "en_US";
+  const numberLocale = en ? "en-US" : "ru-RU";
+  return <section aria-label={title}><div className="flex items-center justify-between border-b border-[#2b3340] pb-2"><h4 className="text-xs font-semibold text-[#dce2eb]">{title}</h4><span className="text-[10px] text-[#778297]">{stages.length} {en ? "stages" : "этапов"}</span></div>{stages.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{stages.map((stage) => <div key={stage.key} className="border border-[#2b3340] bg-[#0f151e] p-3"><div className="flex items-center justify-between text-[9px] uppercase tracking-[.08em] text-[#8e7540]"><span>{en ? "Stage" : "Этап"} {stage.stage}</span>{stage.maxLevel ? <span>{en ? "up to" : "до"} {stage.maxLevel} {en ? "lvl." : "ур."}</span> : null}</div><div className="mt-3 space-y-2">{stage.items.map((item, index) => <div key={`${stage.key}-${item.id}-${index}`} className="flex items-center gap-2"><SmallMediaButton url={item.iconUrl ?? null} label={item.name} onOpenImage={onOpenImage} /><span className="min-w-0 flex-1 truncate text-[10px] text-[#aeb7c7]">{item.name || `${en ? "Material" : "Материал"} #${item.id}`}</span><span className="shrink-0 font-mono text-[10px] text-[#d5b35f]">×{item.count.toLocaleString(numberLocale)}</span></div>)}</div></div>)}</div> : <div className="mt-3 border border-dashed border-[#303847] p-4 text-center text-[10px] text-[#738095]">{en ? "Ascension materials are not listed." : "Ресурсы возвышения не указаны."}</div>}</section>;
 }
 
-function CharacterTalentList({ talents, onOpenImage }: { talents: Talent[]; onOpenImage: (preview: ImagePreview) => void }) {
-  return <section aria-labelledby="genshin-character-talents-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Боевые навыки</div><h3 id="genshin-character-talents-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Таланты</h3></div><span className="text-[10px] tabular-nums text-[#7d899b]">{talents.length}</span></div><div className="mt-4 space-y-3">{talents.length ? talents.map((talent) => <div key={talent.id} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex gap-3"><SmallMediaButton url={talent.iconUrl} label={talent.name} onOpenImage={onOpenImage} /><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.1em] text-[#8e7540]">{talentKindLabel(talent.kind)}</div><h4 className="mt-1 text-sm font-medium text-[#dce2eb]">{talent.name}</h4><p className="mt-2 whitespace-pre-line text-[11px] leading-5 text-[#8894a7]">{talent.description || "Описание отсутствует."}</p></div></div></div>) : <EmptyDetail text="Для этого персонажа таланты не найдены." />}</div></section>;
+function LevelingCostTable({ costs, locale, onOpenImage }: { costs: LevelingCosts; locale: Locale; onOpenImage: (preview: ImagePreview) => void }) {
+  const en = locale === "en_US";
+  const numberLocale = en ? "en-US" : "ru-RU";
+  if (!costs.levels.length && !costs.materials.length) return null;
+  return <section aria-labelledby="genshin-leveling-costs-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Leveling resources" : "Ресурсы прокачки"}</div><h3 id="genshin-leveling-costs-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{en ? "EXP and Mora by level" : "EXP и мора по уровням"}</h3></div><span className="text-[10px] text-[#7d899b]">{costs.levels.length} {en ? "levels" : "уровней"}</span></div><details className="mt-4 border border-[#2b3340] bg-[#0c1017]"><summary className="cursor-pointer px-3 py-3 text-xs font-medium text-[#d5b35f]">{en ? "Show exact per-level table" : "Показать точную таблицу по уровням"}</summary><div className="max-h-80 overflow-auto border-t border-[#2b3340]"><table className="min-w-[560px] w-full text-left text-[10px]"><thead className="sticky top-0 bg-[#111720] text-[#68758a]"><tr><th className="px-3 py-2 font-medium">{en ? "Level" : "Уровень"}</th><th className="px-3 py-2 font-medium">{en ? "EXP to next" : "EXP до след."}</th><th className="px-3 py-2 font-medium">{en ? "Total EXP" : "Всего EXP"}</th><th className="px-3 py-2 font-medium">{en ? "Mora" : "Мора"}</th></tr></thead><tbody>{costs.levels.map((row) => <tr key={row.level} className="border-t border-[#252d3a] text-[#aeb7c7]"><td className="px-3 py-2 font-semibold text-[#d5b35f]">{row.level}</td><td className="px-3 py-2">{row.nextLevel ? row.expRequired.toLocaleString(numberLocale) : "—"}</td><td className="px-3 py-2">{row.totalExp.toLocaleString(numberLocale)}</td><td className="px-3 py-2">{row.moraCost.toLocaleString(numberLocale)}</td></tr>)}</tbody></table></div></details><div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{costs.materials.map((item) => <div key={`${item.fromLevel}-${item.toLevel}-${item.materialKey}`} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex items-center justify-between text-[9px] uppercase tracking-[.08em] text-[#8e7540]"><span>{item.fromLevel} → {item.toLevel} {en ? "level" : "ур."}</span><span>{item.moraCost.toLocaleString(numberLocale)} {en ? "Mora" : "моры"}</span></div><div className="mt-3 flex items-center gap-2"><SmallMediaButton url={item.iconUrl ?? null} label={item.name} onOpenImage={onOpenImage} /><span className="min-w-0 flex-1 truncate text-[10px] text-[#aeb7c7]">{item.name}</span><span className="font-mono text-[10px] text-[#d5b35f]">×{item.count.toLocaleString(numberLocale)}</span></div><div className="mt-2 text-[9px] text-[#778297]">{item.experienceProvided.toLocaleString(numberLocale)} EXP{item.wastedExperience ? ` · ${en ? "waste" : "потери"} ${item.wastedExperience.toLocaleString(numberLocale)}` : ""}</div></div>)}</div></section>;
 }
 
-function CharacterConstellationList({ constellations, onOpenImage }: { constellations: Constellation[]; onOpenImage: (preview: ImagePreview) => void }) {
-  return <section aria-labelledby="genshin-character-constellations-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Созвездие</div><h3 id="genshin-character-constellations-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Созвездия</h3></div><span className="text-[10px] tabular-nums text-[#7d899b]">{constellations.length}/6</span></div><div className="mt-4 space-y-3">{constellations.length ? constellations.map((constellation) => <div key={constellation.id} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex gap-3"><SmallMediaButton url={constellation.iconUrl} label={constellation.name} onOpenImage={onOpenImage} /><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.1em] text-[#8e7540]">C{constellation.position}</div><h4 className="mt-1 text-sm font-medium text-[#dce2eb]">{constellation.name}</h4><p className="mt-2 whitespace-pre-line text-[11px] leading-5 text-[#8894a7]">{constellation.description || "Описание отсутствует."}</p></div></div></div>) : <EmptyDetail text="Для этого персонажа созвездия не найдены." />}</div></section>;
+function CharacterTalentList({ locale, talents, onOpenImage }: { locale: Locale; talents: Talent[]; onOpenImage: (preview: ImagePreview) => void }) {
+  const en = locale === "en_US";
+  return <section aria-labelledby="genshin-character-talents-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Combat skills" : "Боевые навыки"}</div><h3 id="genshin-character-talents-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{en ? "Talents" : "Таланты"}</h3></div><span className="text-[10px] tabular-nums text-[#7d899b]">{talents.length}</span></div><div className="mt-4 space-y-3">{talents.length ? talents.map((talent) => <div key={talent.id} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex gap-3"><SmallMediaButton url={talent.iconUrl} label={talent.name} onOpenImage={onOpenImage} /><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.1em] text-[#8e7540]">{talentKindLabel(talent.kind)}</div><h4 className="mt-1 text-sm font-medium text-[#dce2eb]">{talent.name}</h4><p className="mt-2 whitespace-pre-line text-[11px] leading-5 text-[#8894a7]">{talent.description || (en ? "Description unavailable." : "Описание отсутствует.")}</p>{talent.upgradeCosts?.length ? <TalentCostList locale={locale} costs={talent.upgradeCosts} onOpenImage={onOpenImage} /> : null}</div></div></div>) : <EmptyDetail text={en ? "No talents were found for this character." : "Для этого персонажа таланты не найдены."} />}</div></section>;
 }
 
-function WeaponDialog({ weapon, detail, loading, error, onClose, onOpenImage }: {
+function TalentCostList({ locale, costs, onOpenImage }: { locale: Locale; costs: TalentLevelCost[]; onOpenImage: (preview: ImagePreview) => void }) {
+  const en = locale === "en_US";
+  return <details className="mt-3 border border-[#2b3340] bg-[#0c1017]"><summary className="cursor-pointer px-3 py-2 text-[10px] font-medium text-[#c9a24f]">{en ? "Talent level-up materials" : "Ресурсы талантов по уровням"}</summary><div className="space-y-2 border-t border-[#2b3340] p-3">{costs.map((cost) => <div key={cost.level} className="flex flex-wrap items-center gap-2 text-[10px]"><span className="w-10 font-semibold text-[#d5b35f]">{en ? "Lv." : "Ур."}{cost.level}</span>{cost.items.map((item, index) => <span key={`${cost.level}-${item.id}-${index}`} className="inline-flex items-center gap-1 border border-[#303847] px-1.5 py-1 text-[#aeb7c7]"><SmallMediaButton url={item.iconUrl ?? null} label={item.name} onOpenImage={onOpenImage} /><span>{item.name}</span><b className="font-mono text-[#d5b35f]">×{item.count.toLocaleString(en ? "en-US" : "ru-RU")}</b></span>)}</div>)}</div></details>;
+}
+
+function CharacterConstellationList({ locale, constellations, onOpenImage }: { locale: Locale; constellations: Constellation[]; onOpenImage: (preview: ImagePreview) => void }) {
+  const en = locale === "en_US";
+  return <section aria-labelledby="genshin-character-constellations-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Constellation" : "Созвездие"}</div><h3 id="genshin-character-constellations-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{en ? "Constellations" : "Созвездия"}</h3></div><span className="text-[10px] tabular-nums text-[#7d899b]">{constellations.length}/6</span></div><div className="mt-4 space-y-3">{constellations.length ? constellations.map((constellation) => <div key={constellation.id} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex gap-3"><SmallMediaButton url={constellation.iconUrl} label={constellation.name} onOpenImage={onOpenImage} /><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.1em] text-[#8e7540]">C{constellation.position}</div><h4 className="mt-1 text-sm font-medium text-[#dce2eb]">{constellation.name}</h4><p className="mt-2 whitespace-pre-line text-[11px] leading-5 text-[#8894a7]">{constellation.description || (en ? "Description unavailable." : "Описание отсутствует.")}</p></div></div></div>) : <EmptyDetail text={en ? "No constellations were found for this character." : "Для этого персонажа созвездия не найдены."} />}</div></section>;
+}
+
+function WeaponDialog({ locale, weapon, detail, loading, error, onClose, onOpenImage }: {
+  locale: Locale;
   weapon: Weapon | null; detail: WeaponDetail | null; loading: boolean; error: string;
   onClose: () => void; onOpenImage: (preview: ImagePreview) => void;
 }) {
   if (!weapon) return null;
+  const en = locale === "en_US";
   const profile = detail ?? weapon;
   return <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#05070b]/85 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-labelledby="genshin-weapon-dialog-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="my-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden border border-[#4b4029] bg-[#0d1118] shadow-[0_28px_90px_rgba(0,0,0,.65)] sm:max-h-[calc(100vh-3rem)]">
-      <DialogHeader eyebrow="Профиль оружия" title={profile.name} subtitle={weaponLabel(profile.weaponType)} onClose={onClose} titleID="genshin-weapon-dialog-title" />
+      <DialogHeader eyebrow={en ? "Weapon profile" : "Профиль оружия"} title={profile.name} subtitle={weaponLabel(profile.weaponType)} onClose={onClose} titleID="genshin-weapon-dialog-title" locale={locale} />
       <div className="min-h-0 overflow-y-auto">
         <div className="grid gap-5 border-b border-[#2b313e] bg-[radial-gradient(circle_at_18%_18%,rgba(201,162,79,.1),transparent_35%),#0b0f16] p-4 sm:grid-cols-[220px_minmax(0,1fr)] sm:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <div className="relative flex min-h-56 items-center justify-center overflow-hidden border border-[#343c4b] bg-[linear-gradient(145deg,#161d29,#090d13)] sm:min-h-64">{profile.iconUrl ? <button type="button" className="relative h-full min-h-56 w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#e6c77a]" onClick={() => onOpenImage({ url: profile.iconUrl as string, label: profile.name })} aria-label={`Открыть изображение: ${profile.name}`}><img src={profile.iconUrl} alt={profile.name} className="h-full max-h-80 w-full object-contain p-6" /><span className="absolute bottom-3 right-3 grid size-8 place-items-center border border-[#5b4c2b] bg-[#0a0d13]/85 text-[#d9b65e]"><Maximize2 className="size-4" /></span></button> : <ImageIcon className="size-10 text-[#4c586b]" strokeWidth={1.2} />}</div>
-          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Stars count={profile.rarity} /><span className="border border-[#343c4b] px-2 py-1 text-[9px] text-[#aeb7c7]">{weaponLabel(profile.weaponType)}</span></div><div className="mt-5 grid grid-cols-2 gap-px border border-[#2b3340] bg-[#2b3340] sm:grid-cols-4"><Fact label="Базовая атака" value={profile.baseAttack == null ? "—" : formatStat(profile.baseAttack)} /><Fact label="Доп. стат" value={profile.secondaryStat || "—"} /><Fact label="Значение" value={profile.secondaryStatValue == null ? "—" : formatStat(profile.secondaryStatValue)} /><Fact label="ID" value={String(profile.externalId)} mono /></div><p className="mt-5 whitespace-pre-line text-sm leading-6 text-[#b0bac9]">{detail?.description || "Описание оружия загружается вместе с профилем."}</p></div>
+          <div className="relative flex min-h-56 items-center justify-center overflow-hidden border border-[#343c4b] bg-[linear-gradient(145deg,#161d29,#090d13)] sm:min-h-64">{profile.iconUrl ? <button type="button" className="relative h-full min-h-56 w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#e6c77a]" onClick={() => onOpenImage({ url: profile.iconUrl as string, label: profile.name })} aria-label={`${en ? "Open image" : "Открыть изображение"}: ${profile.name}`}><img src={profile.iconUrl} alt={profile.name} className="h-full max-h-80 w-full object-contain p-6" /><span className="absolute bottom-3 right-3 grid size-8 place-items-center border border-[#5b4c2b] bg-[#0a0d13]/85 text-[#d9b65e]"><Maximize2 className="size-4" /></span></button> : <ImageIcon className="size-10 text-[#4c586b]" strokeWidth={1.2} />}</div>
+          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Stars count={profile.rarity} /><span className="border border-[#343c4b] px-2 py-1 text-[9px] text-[#aeb7c7]">{weaponLabel(profile.weaponType)}</span></div><div className="mt-5 grid grid-cols-2 gap-px border border-[#2b3340] bg-[#2b3340] sm:grid-cols-4"><Fact label={en ? "Base attack" : "Базовая атака"} value={profile.baseAttack == null ? "—" : formatStat(profile.baseAttack)} /><Fact label={en ? "Secondary stat" : "Доп. стат"} value={profile.secondaryStat || "—"} /><Fact label={en ? "Value" : "Значение"} value={profile.secondaryStatValue == null ? "—" : formatStat(profile.secondaryStatValue)} /><Fact label="ID" value={String(profile.externalId)} mono /></div><p className="mt-5 whitespace-pre-line text-sm leading-6 text-[#b0bac9]">{detail?.description || (en ? "Weapon description is loaded with the profile." : "Описание оружия загружается вместе с профилем.")}</p></div>
         </div>
-        {loading ? <LoadingDetail /> : error ? <DetailError text={error} /> : <div className="space-y-8 p-4 sm:p-6"><WeaponProgression detail={detail} /><WeaponEffect detail={detail} /><WeaponRefinementList refinements={detail?.refinements ?? []} /><UpgradeCostList title="Ресурсы для возвышения" stages={detail?.ascensionCosts ?? []} onOpenImage={onOpenImage} /></div>}
+        {loading ? <LoadingDetail /> : error ? <DetailError text={error} /> : <div className="space-y-8 p-4 sm:p-6"><WeaponProgression locale={locale} detail={detail} /><WeaponEffect locale={locale} detail={detail} /><WeaponRefinementList locale={locale} refinements={detail?.refinements ?? []} /><UpgradeCostList title={en ? "Ascension materials" : "Ресурсы для возвышения"} stages={detail?.ascensionCosts ?? []} onOpenImage={onOpenImage} locale={locale} /><LevelingCostTable costs={detail?.levelingCosts ?? { levels: [], materials: [] }} locale={locale} onOpenImage={onOpenImage} /></div>}
       </div>
     </div>
   </div>;
 }
 
-function WeaponProgression({ detail }: { detail: WeaponDetail | null }) {
+function WeaponProgression({ locale, detail }: { locale: Locale; detail: WeaponDetail | null }) {
   if (!detail) return null;
+  const en = locale === "en_US";
   const stats = detail.stats;
   const maxLevel = stats?.promotion.at(-1)?.maxLevel ?? detail.ascensionCosts.at(-1)?.maxLevel;
   return <section className="space-y-6" aria-labelledby="genshin-weapon-progression-title">
-    <div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Развитие оружия</div><h3 id="genshin-weapon-progression-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Базовые характеристики и прокачка</h3></div><span className="text-[10px] text-[#7d899b]">{maxLevel ? `${maxLevel} ур.` : "—"}</span></div>
+    <div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Weapon progression" : "Развитие оружия"}</div><h3 id="genshin-weapon-progression-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{en ? "Base stats and leveling" : "Базовые характеристики и прокачка"}</h3></div><span className="text-[10px] text-[#7d899b]">{maxLevel ? `${maxLevel} ${en ? "lvl." : "ур."}` : "—"}</span></div>
     {stats ? <>
-      <div className="grid gap-3 sm:grid-cols-2"><StatTile label="Базовая атака" value={formatStat(stats.base.attack)} /><StatTile label={detail.secondaryStat || "Доп. характеристика"} value={formatWeaponSpecialized(stats.base.specialized)} /></div>
-      {stats.promotion.length ? <div className="overflow-x-auto border border-[#2b3340] bg-[#0c1017]"><table className="min-w-[420px] w-full text-left text-[10px]"><caption className="border-b border-[#2b3340] px-3 py-2 text-left text-[9px] uppercase tracking-[.12em] text-[#8e7540]">Прирост атаки по возвышениям</caption><thead className="bg-[#111720] text-[#68758a]"><tr><th className="px-3 py-2 font-medium">Макс. уровень</th><th className="px-3 py-2 font-medium">Прирост атаки</th></tr></thead><tbody>{stats.promotion.map((row, index) => <tr key={`${row.maxLevel}-${index}`} className="border-t border-[#252d3a] text-[#aeb7c7]"><td className="px-3 py-2 font-semibold text-[#d5b35f]">{row.maxLevel}</td><td className="px-3 py-2">{row.attack ? formatStat(row.attack) : "—"}</td></tr>)}</tbody></table></div> : null}
-    </> : <EmptyDetail text="Характеристики и уровни возвышения для этого оружия пока не опубликованы в источнике." />}
+      <div className="grid gap-3 sm:grid-cols-2"><StatTile label={en ? "Base attack" : "Базовая атака"} value={formatStat(stats.base.attack)} /><StatTile label={detail.secondaryStat || (en ? "Secondary stat" : "Доп. характеристика")} value={formatWeaponSpecialized(stats.base.specialized)} /></div>
+      {stats.promotion.length ? <div className="overflow-x-auto border border-[#2b3340] bg-[#0c1017]"><table className="min-w-[420px] w-full text-left text-[10px]"><caption className="border-b border-[#2b3340] px-3 py-2 text-left text-[9px] uppercase tracking-[.12em] text-[#8e7540]">{en ? "Attack growth by ascension" : "Прирост атаки по возвышениям"}</caption><thead className="bg-[#111720] text-[#68758a]"><tr><th className="px-3 py-2 font-medium">{en ? "Max level" : "Макс. уровень"}</th><th className="px-3 py-2 font-medium">{en ? "Attack growth" : "Прирост атаки"}</th></tr></thead><tbody>{stats.promotion.map((row, index) => <tr key={`${row.maxLevel}-${index}`} className="border-t border-[#252d3a] text-[#aeb7c7]"><td className="px-3 py-2 font-semibold text-[#d5b35f]">{row.maxLevel}</td><td className="px-3 py-2">{row.attack ? formatStat(row.attack) : "—"}</td></tr>)}</tbody></table></div> : null}
+    </> : <EmptyDetail text={en ? "Stats and ascension levels for this weapon are not present in the source." : "Характеристики и уровни возвышения для этого оружия пока не опубликованы в источнике."} />}
   </section>;
 }
 
-function WeaponEffect({ detail }: { detail: WeaponDetail | null }) {
-  if (!detail?.passiveName && !detail?.passiveDescription) return <EmptyDetail text="Пассивный эффект для этого оружия не указан." />;
+function WeaponEffect({ locale, detail }: { locale: Locale; detail: WeaponDetail | null }) {
+  const en = locale === "en_US";
+  if (!detail?.passiveName && !detail?.passiveDescription) return <EmptyDetail text={en ? "No passive effect is listed for this weapon." : "Пассивный эффект для этого оружия не указан."} />;
   const description = formatEffectDescription(detail.passiveDescription, detail.refinements[0]?.values);
-  return <section aria-labelledby="genshin-weapon-effect-title"><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Уникальный эффект · R1</div><h3 id="genshin-weapon-effect-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{detail.passiveName || "Пассивный эффект"}</h3><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#aeb7c7]">{description || "Описание отсутствует."}</p></section>;
+  return <section aria-labelledby="genshin-weapon-effect-title"><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Unique effect · R1" : "Уникальный эффект · R1"}</div><h3 id="genshin-weapon-effect-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{detail.passiveName || (en ? "Passive effect" : "Пассивный эффект")}</h3><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#aeb7c7]">{description || (en ? "Description unavailable." : "Описание отсутствует.")}</p></section>;
 }
 
-function WeaponRefinementList({ refinements }: { refinements: WeaponRefinement[] }) {
-  return <section aria-labelledby="genshin-weapon-refinement-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Уровни пробуждения</div><h3 id="genshin-weapon-refinement-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Эффект по рангам</h3></div><span className="text-[10px] text-[#7d899b]">{refinements.length}/5</span></div>{refinements.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{refinements.map((refinement) => <div key={refinement.level} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex items-center justify-between"><span className="font-[var(--display)] text-base font-semibold text-[#d5b35f]">R{refinement.level}</span>{refinement.values.length ? <span className="text-[9px] text-[#778297]">{refinement.values.join(" · ")}</span> : null}</div><p className="mt-3 whitespace-pre-line text-[11px] leading-5 text-[#8894a7]">{refinement.description || "Описание отсутствует."}</p></div>)}</div> : <div className="mt-4"><EmptyDetail text="Данные об уровнях пробуждения не указаны." /></div>}</section>;
+function WeaponRefinementList({ locale, refinements }: { locale: Locale; refinements: WeaponRefinement[] }) {
+  const en = locale === "en_US";
+  return <section aria-labelledby="genshin-weapon-refinement-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Refinement levels" : "Уровни пробуждения"}</div><h3 id="genshin-weapon-refinement-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{en ? "Effect by rank" : "Эффект по рангам"}</h3></div><span className="text-[10px] text-[#7d899b]">{refinements.length}/5</span></div>{refinements.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{refinements.map((refinement) => <div key={refinement.level} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex items-center justify-between"><span className="font-[var(--display)] text-base font-semibold text-[#d5b35f]">R{refinement.level}</span>{refinement.values.length ? <span className="text-[9px] text-[#778297]">{refinement.values.join(" · ")}</span> : null}</div><p className="mt-3 whitespace-pre-line text-[11px] leading-5 text-[#8894a7]">{refinement.description || (en ? "Description unavailable." : "Описание отсутствует.")}</p></div>)}</div> : <div className="mt-4"><EmptyDetail text={en ? "Refinement levels are not listed." : "Данные об уровнях пробуждения не указаны."} /></div>}</section>;
 }
 
-function ArtifactDialog({ artifact, detail, loading, error, onClose, onOpenImage }: {
+function ArtifactDialog({ locale, artifact, detail, loading, error, onClose, onOpenImage }: {
+  locale: Locale;
   artifact: ArtifactSet | null; detail: ArtifactDetail | null; loading: boolean; error: string;
   onClose: () => void; onOpenImage: (preview: ImagePreview) => void;
 }) {
   if (!artifact) return null;
+  const en = locale === "en_US";
   const profile = detail ?? artifact;
   return <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#05070b]/85 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-labelledby="genshin-artifact-dialog-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="my-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden border border-[#4b4029] bg-[#0d1118] shadow-[0_28px_90px_rgba(0,0,0,.65)] sm:max-h-[calc(100vh-3rem)]">
-      <DialogHeader eyebrow="Профиль набора артефактов" title={profile.name} subtitle={`${profile.minRarity}–${profile.maxRarity} ★`} onClose={onClose} titleID="genshin-artifact-dialog-title" />
+      <DialogHeader eyebrow={en ? "Artifact set profile" : "Профиль набора артефактов"} title={profile.name} subtitle={`${profile.minRarity}–${profile.maxRarity} ★`} onClose={onClose} titleID="genshin-artifact-dialog-title" locale={locale} />
       <div className="min-h-0 overflow-y-auto">
         <div className="grid gap-5 border-b border-[#2b313e] bg-[radial-gradient(circle_at_18%_18%,rgba(201,162,79,.1),transparent_35%),#0b0f16] p-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:p-6">
           <div className="relative flex min-h-44 items-center justify-center overflow-hidden border border-[#343c4b] bg-[linear-gradient(145deg,#161d29,#090d13)]">{profile.iconUrl ? <button type="button" className="relative h-full min-h-44 w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#e6c77a]" onClick={() => onOpenImage({ url: profile.iconUrl as string, label: profile.name })} aria-label={`Открыть изображение: ${profile.name}`}><img src={profile.iconUrl} alt={profile.name} className="h-full max-h-60 w-full object-contain p-5" /><span className="absolute bottom-3 right-3 grid size-8 place-items-center border border-[#5b4c2b] bg-[#0a0d13]/85 text-[#d9b65e]"><Maximize2 className="size-4" /></span></button> : <ImageIcon className="size-10 text-[#4c586b]" strokeWidth={1.2} />}</div>
-          <ArtifactEffects item={profile} />
+          <ArtifactEffects locale={locale} item={profile} />
         </div>
-        {loading ? <LoadingDetail /> : error ? <DetailError text={error} /> : <div className="space-y-8 p-4 sm:p-6"><ArtifactSources sources={detail?.sources ?? []} /><ArtifactPieces pieces={detail?.pieces ?? []} onOpenImage={onOpenImage} /></div>}
+        {loading ? <LoadingDetail /> : error ? <DetailError text={error} /> : <div className="space-y-8 p-4 sm:p-6"><ArtifactSources locale={locale} sources={detail?.sources ?? []} /><ArtifactPieces locale={locale} pieces={detail?.pieces ?? []} onOpenImage={onOpenImage} /></div>}
       </div>
     </div>
   </div>;
 }
 
-function DialogHeader({ eyebrow, title, subtitle, titleID, onClose }: { eyebrow: string; title: string; subtitle: string; titleID: string; onClose: () => void }) {
-  return <div className="flex items-start justify-between gap-4 border-b border-[#2b313e] bg-[#11151d] px-4 py-4 sm:px-6"><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.18em] text-[#c9a24f]">{eyebrow}</div><h2 id={titleID} className="mt-1 truncate font-[var(--display)] text-xl font-semibold text-[#edf0f5] sm:text-2xl">{title}</h2><p className="mt-1 text-xs text-[#8290a4]">{subtitle}</p></div><button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center border border-[#343b4a] text-[#9da7b7] transition-colors hover:border-[#8e7540] hover:text-[#e6c778]" aria-label="Закрыть профиль"><X className="size-4" /></button></div>;
+function DialogHeader({ eyebrow, title, subtitle, titleID, onClose, locale }: { eyebrow: string; title: string; subtitle: string; titleID: string; onClose: () => void; locale: Locale }) {
+  return <div className="flex items-start justify-between gap-4 border-b border-[#2b313e] bg-[#11151d] px-4 py-4 sm:px-6"><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.18em] text-[#c9a24f]">{eyebrow}</div><h2 id={titleID} className="mt-1 truncate font-[var(--display)] text-xl font-semibold text-[#edf0f5] sm:text-2xl">{title}</h2><p className="mt-1 text-xs text-[#8290a4]">{subtitle}</p></div><button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center border border-[#343b4a] text-[#9da7b7] transition-colors hover:border-[#8e7540] hover:text-[#e6c778]" aria-label={locale === "en_US" ? "Close profile" : "Закрыть профиль"}><X className="size-4" /></button></div>;
 }
 
 function LoadingDetail() {
@@ -604,16 +652,19 @@ function DetailError({ text }: { text: string }) {
   return <div className="m-4 border border-[#693b3e] bg-[#211215] p-4 text-sm text-[#eba0a3] sm:m-6">{text}</div>;
 }
 
-function ArtifactEffects({ item }: { item: ArtifactSet }) {
-  return <div className="min-w-0"><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Бонусы комплекта</div><div className="mt-4 space-y-4"><div><h3 className="text-sm font-semibold text-[#e3e7ee]">2 предмета</h3><p className="mt-1 whitespace-pre-line text-sm leading-6 text-[#aeb7c7]">{item.twoPieceBonus || "Бонус не указан."}</p></div><div><h3 className="text-sm font-semibold text-[#e3e7ee]">4 предмета</h3><p className="mt-1 whitespace-pre-line text-sm leading-6 text-[#aeb7c7]">{item.fourPieceBonus || "Бонус не указан."}</p></div></div></div>;
+function ArtifactEffects({ locale, item }: { locale: Locale; item: ArtifactSet }) {
+  const en = locale === "en_US";
+  return <div className="min-w-0"><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Set bonuses" : "Бонусы комплекта"}</div><div className="mt-4 space-y-4"><div><h3 className="text-sm font-semibold text-[#e3e7ee]">{en ? "2-piece" : "2 предмета"}</h3><p className="mt-1 whitespace-pre-line text-sm leading-6 text-[#aeb7c7]">{item.twoPieceBonus || (en ? "Bonus not listed." : "Бонус не указан.")}</p></div><div><h3 className="text-sm font-semibold text-[#e3e7ee]">{en ? "4-piece" : "4 предмета"}</h3><p className="mt-1 whitespace-pre-line text-sm leading-6 text-[#aeb7c7]">{item.fourPieceBonus || (en ? "Bonus not listed." : "Бонус не указан.")}</p></div></div></div>;
 }
 
-function ArtifactSources({ sources }: { sources: ArtifactSource[] }) {
-  return <section aria-labelledby="genshin-artifact-sources-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Получение</div><h3 id="genshin-artifact-sources-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Где получить</h3></div><span className="text-[10px] text-[#7d899b]">{sources.length} источников</span></div>{sources.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{sources.map((source) => <div key={`${source.slug}-${source.unlockRank}`} className="border border-[#2b3340] bg-[#111720] p-3"><h4 className="text-sm font-medium text-[#dce2eb]">{source.name}</h4><p className="mt-1 text-[10px] text-[#8995a8]">{source.entranceName || source.region || "Подземелье"}</p><div className="mt-3 flex flex-wrap gap-2 text-[9px] text-[#aeb7c7]">{source.region ? <span className="border border-[#343c4b] px-2 py-1">{source.region}</span> : null}{source.unlockRank ? <span className="border border-[#343c4b] px-2 py-1">Ранг {source.unlockRank}</span> : null}{source.recommendedLevel ? <span className="border border-[#343c4b] px-2 py-1">Рек. уровень {source.recommendedLevel}</span> : null}</div></div>)}</div> : <div className="mt-4"><EmptyDetail text="Способ получения не указан в опубликованном источнике." /></div>}</section>;
+function ArtifactSources({ locale, sources }: { locale: Locale; sources: ArtifactSource[] }) {
+  const en = locale === "en_US";
+  return <section aria-labelledby="genshin-artifact-sources-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Acquisition" : "Получение"}</div><h3 id="genshin-artifact-sources-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{en ? "Where to obtain" : "Где получить"}</h3></div><span className="text-[10px] text-[#7d899b]">{sources.length} {en ? "sources" : "источников"}</span></div>{sources.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{sources.map((source) => <div key={`${source.slug}-${source.unlockRank}`} className="border border-[#2b3340] bg-[#111720] p-3"><h4 className="text-sm font-medium text-[#dce2eb]">{source.name}</h4><p className="mt-1 text-[10px] text-[#8995a8]">{source.entranceName || source.region || (en ? "Dungeon" : "Подземелье")}</p>{source.note ? <p className="mt-2 text-[10px] leading-4 text-[#8894a7]">{source.note}</p> : null}<div className="mt-3 flex flex-wrap gap-2 text-[9px] text-[#aeb7c7]">{source.region ? <span className="border border-[#343c4b] px-2 py-1">{source.region}</span> : null}{source.unlockRank ? <span className="border border-[#343c4b] px-2 py-1">{en ? "AR" : "Ранг"} {source.unlockRank}</span> : null}{source.recommendedLevel ? <span className="border border-[#343c4b] px-2 py-1">{en ? "Rec. level" : "Рек. уровень"} {source.recommendedLevel}</span> : null}</div></div>)}</div> : <div className="mt-4"><EmptyDetail text={en ? "Acquisition is not listed in the published source." : "Способ получения не указан в опубликованном источнике."} /></div>}</section>;
 }
 
-function ArtifactPieces({ pieces, onOpenImage }: { pieces: ArtifactPiece[]; onOpenImage: (preview: ImagePreview) => void }) {
-  return <section aria-labelledby="genshin-artifact-pieces-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">Комплект</div><h3 id="genshin-artifact-pieces-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">Пять предметов</h3></div><span className="text-[10px] text-[#7d899b]">{pieces.length}/5</span></div>{pieces.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{pieces.map((piece) => <div key={piece.id} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex gap-3"><SmallMediaButton url={piece.iconUrl} label={piece.name} onOpenImage={onOpenImage} /><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.1em] text-[#8e7540]">{artifactSlotLabel(piece.slot)}</div><h4 className="mt-1 text-sm font-medium text-[#dce2eb]">{piece.name}</h4><p className="mt-2 whitespace-pre-line text-[10px] leading-4 text-[#8894a7]">{piece.description || "Описание отсутствует."}</p></div></div></div>)}</div> : <div className="mt-4"><EmptyDetail text="Предметы набора не найдены." /></div>}</section>;
+function ArtifactPieces({ locale, pieces, onOpenImage }: { locale: Locale; pieces: ArtifactPiece[]; onOpenImage: (preview: ImagePreview) => void }) {
+  const en = locale === "en_US";
+  return <section aria-labelledby="genshin-artifact-pieces-title"><div className="flex items-end justify-between gap-3 border-b border-[#3a3425] pb-3"><div><div className="text-[9px] uppercase tracking-[.16em] text-[#8e7540]">{en ? "Set pieces" : "Комплект"}</div><h3 id="genshin-artifact-pieces-title" className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e3e7ee]">{en ? "Five pieces" : "Пять предметов"}</h3></div><span className="text-[10px] text-[#7d899b]">{pieces.length}/5</span></div>{pieces.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{pieces.map((piece) => <div key={piece.id} className="border border-[#2b3340] bg-[#111720] p-3"><div className="flex gap-3"><SmallMediaButton url={piece.iconUrl} label={piece.name} onOpenImage={onOpenImage} /><div className="min-w-0"><div className="text-[9px] uppercase tracking-[.1em] text-[#8e7540]">{artifactSlotLabel(piece.slot)}</div><h4 className="mt-1 text-sm font-medium text-[#dce2eb]">{piece.name}</h4><p className="mt-2 whitespace-pre-line text-[10px] leading-4 text-[#8894a7]">{piece.description || (en ? "Description unavailable." : "Описание отсутствует.")}</p></div></div></div>)}</div> : <div className="mt-4"><EmptyDetail text={en ? "Set pieces were not found." : "Предметы набора не найдены."} /></div>}</section>;
 }
 
 function SmallMediaButton({ url, label, onOpenImage }: { url: string | null; label: string; onOpenImage: (preview: ImagePreview) => void }) {
