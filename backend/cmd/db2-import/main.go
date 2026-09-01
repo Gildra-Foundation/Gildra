@@ -1707,7 +1707,7 @@ func projectPvpTalents(ctx context.Context, db *pgxpool.Pool, ic catalogimport.I
 				FROM game_entity_versions current_version
 				JOIN game_builds current_build ON current_build.id=current_version.build_id
 				WHERE current_version.id=entity.latest_version_id),0)
-				<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$3)`, ic.ProductID, ic.NamespaceID, ic.BuildID); err != nil {
+				<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$1)`, ic.BuildID); err != nil {
 			return fmt.Errorf("activate staged PvP talents: %w", err)
 		}
 		return nil
