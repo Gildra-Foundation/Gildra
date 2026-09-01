@@ -27,6 +27,16 @@ APP_SN = "ys_obc"
 LANGUAGES = (("en-us", "en_US", "English"), ("ru-ru", "ru_RU", "Russian"))
 RETRIES = 3
 
+# The official map-list endpoint currently returns the map titles in Chinese
+# for every requested locale. Keep the source title in ``sourceName`` while
+# exposing stable English/Russian names to API consumers.
+MAP_NAMES = {
+    2: {"en_US": "Teyvat", "ru_RU": "Тейват"},
+    7: {"en_US": "Enkanomiya", "ru_RU": "Энканомия"},
+    9: {"en_US": "The Chasm", "ru_RU": "Разлом"},
+    36: {"en_US": "Ancient Sacred Mountain", "ru_RU": "Древняя священная гора"},
+}
+
 
 def fetch_json(url: str) -> tuple[bytes, dict[str, object]]:
     request = Request(url, headers={"User-Agent": "Gildra-Genshin-MapSync/1.0 (+https://api.gildra.net)"})
@@ -151,7 +161,14 @@ def write_overlay(
                 map_id = int(map_info["id"])
                 payload = dict(map_info)
                 payload["id"] = map_id
-                payload["name"] = str(payload.get("name") or f"Map {map_id}")
+                source_name = str(payload.get("name") or f"Map {map_id}")
+                payload["sourceName"] = source_name
+                payload["name"] = MAP_NAMES.get(map_id, {}).get(locale, source_name)
+                payload["description"] = (
+                    f"Официальная интерактивная карта: {payload['name']}"
+                    if locale == "ru_RU"
+                    else f"Official interactive map: {payload['name']}"
+                )
                 payload["sourceUrl"] = endpoint(host, "v1", "info", language_code, map_id=map_id)
                 (maps_dir / f"map-{map_id}.json").write_text(
                     json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8"
