@@ -478,7 +478,17 @@ trap 'exit 143' TERM
 # starts and its entrypoint applies pending Goose migrations. The second gate
 # below captures and restore-tests the newly migrated schema as well.
 ensure_recovery_backup
-compose pull web api catalog-backup cms scraper scraper-worker
+# ghcr.io intermittently drops TCP connects from this host (a third of them on
+# 2026-09-02) while every other destination is clean. A single compose pull of
+# six services rarely survives that, so retry; layers already fetched stay
+# cached between attempts.
+pull_attempt=1
+until compose pull web api catalog-backup cms scraper scraper-worker; do
+  [ "$pull_attempt" -lt 8 ] || fail 'compose pull failed after 8 attempts'
+  printf 'deploy: compose pull attempt %s failed; retrying in 10s\n' "$pull_attempt" >&2
+  pull_attempt=$((pull_attempt + 1))
+  sleep 10
+done
 compose up -d --no-build --remove-orphans --wait --wait-timeout 240
 verify_running_images
 write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
