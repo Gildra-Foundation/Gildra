@@ -17,8 +17,19 @@ func (s *Service) enrichMentions(ctx context.Context, entities []Entity) error {
 	ids := make([]uuid.UUID, 0, len(entities))
 	byID := make(map[uuid.UUID]int, len(entities))
 	for index := range entities {
+		// Mentions are only attached to spell and talent descriptions. Avoid
+		// sending item/quest/NPC IDs through the multi-join query: PostgreSQL
+		// cannot reliably infer the entity-type predicate from an arbitrary
+		// UUID array, so a non-applicable detail request can otherwise spend a
+		// full second scanning the mention graph before returning no rows.
+		if entities[index].Type != "spell" && entities[index].Type != "talent" && entities[index].Type != "pvp_talent" {
+			continue
+		}
 		ids = append(ids, entities[index].ID)
 		byID[entities[index].ID] = index
+	}
+	if len(ids) == 0 {
+		return nil
 	}
 	rows, err := s.postgres.Query(ctx, `
 		WITH description_sources AS (
