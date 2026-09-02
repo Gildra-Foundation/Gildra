@@ -22,10 +22,13 @@ the values are. Do not duplicate the contract here.
    assets or data.
 
 3. **Capture a baseline.** With a local server running:
-   `npm run design:capture` (or targeted Playwright MCP captures for specific
-   states). Matrix: 1440×1000, 1280×900, 768×1024, 390×844 for `/` and
-   `/tier-lists`, plus any interactive states the task touches (menus, search,
-   filters, detail panel).
+   `npm run design:capture -- --deterministic --out .artifacts/design/baseline`
+   (or targeted Playwright MCP captures for specific states). Matrix:
+   1440×1000, 1280×900, 768×1024, 390×844 for `/`, `/ru` and `/tier-lists`,
+   plus any interactive states the task touches (menus, search, filters,
+   detail panel). For a single block, use the gallery: `/dev/blocks/<type>`
+   renders it alone at any width, and `--blocks` captures every registered
+   block.
 
 4. **Implement minimally.** Smallest change that fixes the hierarchy/flow
    problem. Respect the hard rules: artwork hero + solid body, honest states,

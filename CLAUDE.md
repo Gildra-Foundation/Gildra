@@ -7,22 +7,37 @@ tool second → analytics dashboard third**. Production: https://gildra.net
 
 - Next.js 16 App Router + React 19 + TypeScript, Go 1.26 API/River worker,
   Payload CMS, PostgreSQL, ClickHouse and Redis.
-- Routes: `app/page.tsx` (homepage), `app/tier-lists/page.tsx` (full tier list
-  workspace), `app/specs/[slug]/page.tsx` (10 static spec pages from
-  `lib/specs.ts`), `app/privacy/page.tsx`, `app/not-found.tsx` (branded 404),
-  plus a full static Russian mirror under `app/ru/**` (UI strings via
-  `lib/i18n.ts`; game terms stay English; links through `p(lang, href)`).
+- **Pages are configs of blocks.** Page definitions live in
+  `lib/games/<slug>/pages/*.ts` (`definePage` → `{ en, ru }`); route files
+  `app/**/page.tsx` and their `app/ru/**` mirrors are three-line wrappers.
+  Blocks live in `components/blocks/<game|shared>/<name>/` and are mapped in
+  `lib/blocks/registry.ts`. Chrome (Icons, TopNav, `.app/.main`, Footer, Reveal)
+  comes only from `components/layout/PageShell.tsx`. The full contract, plus
+  "add a block / page / game" recipes, is in
+  [components/blocks/README.md](components/blocks/README.md) — read it before UI work.
+- Games: `lib/games/registry.ts` is the single source of game identity, URL
+  prefix (WoW = site root, others `/<slug>/`), nav tasks, footer and legal
+  text; TopNav/Footer/SearchCommand read it. Never add `app/[game]`.
+- Block pages so far: WoW home, `/tier-lists` (one `wow.tierWorkspace` block
+  around `components/TierSection.tsx`), `/specs/[slug]`, `/privacy`, and all of
+  `/league-of-legends/**` (+ `/ru` mirrors). `/database`, `/library` and
+  `app/not-found.tsx` are app pages that only use `PageShell`. UI strings via
+  `lib/i18n.ts` (`t`, `tNav`); game terms stay English; links through
+  `p(lang, href)` / `gameHref`; anchors through `lib/anchors.ts`.
   Homepage stays an overview with a compact Tier Preview; the full
   filters/table/detail experience lives only on `/tier-lists`. Never embed the
   full workspace back into the homepage.
-- Styling: existing Gildra tokens and components remain in `app/globals.css`;
-  new UI uses Tailwind CSS and shadcn/ui without changing the visual language.
-- Components: `components/` (TopNav, Hero, PatchHighlights, SectionNav,
-  MetaPulse, MythicMeta, MetaTrends, RaidFeature, GuidesSection, TierPreview,
-  TierSection, SearchCommand, Footer, Reveal, SpecSlot, Icons).
-- Data: `data/site.ts` is the **only** dataset. Game icons/artwork resolve
-  **only** through `lib/gameAssets.ts` (files in `public/assets/**`, hero/raid
-  artwork `public/bg.jpg`). Never invent data, links or game assets.
+- Styling: `app/globals.css` is only an ordered `@import` index; tokens in
+  `app/styles/tokens.css`, shared rules in `app/styles/*.css`, each legacy
+  block's CSS next to the block. Class names are never renamed; block-level
+  compaction uses `@container` (containers: `.section`, `.cards-row`); new UI
+  uses Tailwind CSS and shadcn/ui on the same tokens without changing the
+  visual language.
+- Data: blocks read data only through `ctx.source` (`lib/data/source.ts`);
+  `data/site.ts` is the demo dataset behind it and the only source for
+  `demo.ts` files. Game icons/artwork resolve **only** through
+  `lib/games/wow/assets.ts` (files in `public/assets/**`, hero/raid artwork
+  `public/bg.jpg`). Never invent data, links or game assets.
 
 ## Hard design rules
 
@@ -50,7 +65,9 @@ tool second → analytics dashboard third**. Production: https://gildra.net
 
 - Project checks: `npm run typecheck && npm run build`, CMS build in `cms/`,
   and `go vet ./... && go test ./...` in `backend/`. Dev: `npm run dev`; prod-like: `npm run start`;
-  screenshots: `npm run design:capture`.
+  screenshots: `npm run design:capture -- --deterministic`, pixel gate:
+  `npm run design:compare <baseline> <run>` (0 px + no overflow on `/`, `/ru`,
+  `/tier-lists`), block gallery: `/dev/blocks` (`--blocks` captures every block).
 - Commit, push and deploy happen **only with the user's explicit permission**
   (successful CI on `master` deploys to OVHcloud).
 - More context: [README.md](README.md).

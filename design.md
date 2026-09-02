@@ -210,6 +210,10 @@ compact Tier Preview (+builds) → footer`.
 Rhythm: cinematic artwork → compact data → artwork break → editorial → compact
 actionable data → footer.
 
+This order is executable: it is the block list in
+`lib/games/wow/pages/home.ts` (see `components/blocks/README.md`). Change the
+config and this table together.
+
 **Localization:** every route has a static Russian mirror under `/ru` (same
 components, `lang` prop for server components, `langOf(usePathname())` for
 client ones). UI chrome translates through `lib/i18n.ts` — an EN-keyed
@@ -372,7 +376,9 @@ inspect current render
 → identify the hierarchy/flow problem
 → implement the minimal change
 → npm run build
-→ capture the same states/viewports
+→ capture the same states/viewports (npm run design:capture -- --deterministic)
+→ npm run design:compare <baseline> <run> — refactors must be 0 px; intended
+  changes must show only the intended diff
 → critique the visible result (not the code)
 → fix regressions
 → keyboard/accessibility pass
