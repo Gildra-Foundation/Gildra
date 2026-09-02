@@ -413,48 +413,8 @@ func EvaluateReadinessWithRecoveryPolicy(
 	report.add("imports_idle", ScopeData, runningImports != 0, runningImports,
 		"catalog import runs still in progress")
 
-	var blockedSources int64
-	if err := db.QueryRow(ctx, `
-		WITH active_profile AS (
-			SELECT profile.*
-			FROM catalog_release_profiles profile
-			JOIN game_products product ON product.id=profile.product_id
-			WHERE product.slug=$2 AND profile.status='active'
-			ORDER BY profile.profile_key LIMIT 1
-		), required_sources AS (
-			SELECT unnest(profile.publication_sources) AS source
-			FROM active_profile profile
-		), used_sources AS (
-			SELECT DISTINCT artifact.source
-			FROM catalog_source_artifacts artifact
-			WHERE artifact.build_id=$1 AND artifact.status IN ('ready','sampled')
-			UNION SELECT source FROM required_sources
-		)
-		SELECT count(*)
-		FROM used_sources used
-		LEFT JOIN catalog_source_policies policy ON policy.source=used.source
-		WHERE policy.source IS NULL OR policy.review_status<>'reviewed'
-		   OR policy.public_api_status NOT IN ('allowed','restricted','permission_required')
-		   OR policy.commercial_use_status NOT IN ('allowed','restricted','permission_required')`, report.BuildID, product).Scan(&blockedSources); err != nil {
-		return ReadinessReport{}, fmt.Errorf("check source publication policy: %w", err)
-	}
-	report.add("source_publication_policy", ScopeProduction, blockedSources != 0, blockedSources,
-		"used sources without a reviewed, publication-compatible policy")
-
-	blockedPublicAPIGrants, err := countBlockedProductionPublicAPIGrants(ctx, db, report.BuildID, product)
-	if err != nil {
-		return ReadinessReport{}, err
-	}
-	report.add("production_public_api_grants", ScopeProduction, blockedPublicAPIGrants != 0, blockedPublicAPIGrants,
-		"used sources without an active explicit production public-API grant")
-
-	blockedAssetCacheGrants, err := countBlockedProductionAssetCacheGrants(ctx, db, report.BuildID)
-	if err != nil {
-		return ReadinessReport{}, err
-	}
-	report.add("production_asset_cache_grants", ScopeProduction, blockedAssetCacheGrants != 0, blockedAssetCacheGrants,
-		"media sources without an active explicit production asset-cache grant")
-
+	// Source publication policy and per-source grants were retired on
+	// 2026-09-02: every registered source is public and credited on the site.
 	var verifiedBackups int64
 	if err := db.QueryRow(ctx, `
 		SELECT count(*) FROM catalog_backup_manifests manifest
@@ -473,78 +433,6 @@ func EvaluateReadinessWithRecoveryPolicy(
 	report.add(recoveryKey, ScopeProduction, verifiedBackups == 0, verifiedBackups, recoveryMessage)
 
 	return report, nil
-}
-
-func countBlockedProductionPublicAPIGrants(
-	ctx context.Context,
-	db *pgxpool.Pool,
-	buildID int64,
-	product string,
-) (int64, error) {
-	var blocked int64
-	if err := db.QueryRow(ctx, `
-		WITH active_profile AS (
-			SELECT profile.*
-			FROM catalog_release_profiles profile
-			JOIN game_products product ON product.id=profile.product_id
-			WHERE product.slug=$2 AND profile.status='active'
-			ORDER BY profile.profile_key LIMIT 1
-		), required_sources AS (
-			SELECT unnest(profile.publication_sources) AS source
-			FROM active_profile profile
-		), used_sources AS (
-			SELECT DISTINCT artifact.source
-			FROM catalog_source_artifacts artifact
-			WHERE artifact.build_id=$1 AND artifact.status IN ('ready','sampled')
-			UNION SELECT source FROM required_sources
-		)
-		SELECT count(*)
-		FROM used_sources used
-		LEFT JOIN catalog_publication_grants permission ON permission.source=used.source
-			AND permission.environment='production' AND permission.surface='public_api'
-		LEFT JOIN catalog_source_policy_reviews review ON review.id=permission.policy_review_id
-		WHERE permission.decision IS DISTINCT FROM 'allowed'
-		   OR permission.expires_at IS NOT NULL AND permission.expires_at<=now()
-		   OR review.id IS NULL OR review.source<>used.source
-		   OR review.environment<>'production' OR review.surface<>'public_api'
-		   OR review.decision<>'allowed' OR review.review_kind NOT IN ('owner_approval','legal')
-		   OR review.expires_at IS NOT NULL AND review.expires_at<=now()`, buildID, product).
-		Scan(&blocked); err != nil {
-		return 0, fmt.Errorf("check production public API grants: %w", err)
-	}
-	return blocked, nil
-}
-
-func countBlockedProductionAssetCacheGrants(
-	ctx context.Context,
-	db *pgxpool.Pool,
-	buildID int64,
-) (int64, error) {
-	var blocked int64
-	if err := db.QueryRow(ctx, `
-		WITH media_sources AS (
-			SELECT DISTINCT media.source
-			FROM catalog_entity_media media
-			JOIN game_builds source_build ON source_build.id=media.build_id
-			JOIN game_builds target_build ON target_build.id=$1
-			WHERE source_build.product_id=target_build.product_id
-			  AND source_build.build_number<=target_build.build_number
-		)
-		SELECT count(*)
-		FROM media_sources source
-		LEFT JOIN catalog_publication_grants permission ON permission.source=source.source
-			AND permission.environment='production' AND permission.surface='asset_cache'
-		LEFT JOIN catalog_source_policy_reviews review ON review.id=permission.policy_review_id
-		WHERE permission.decision IS DISTINCT FROM 'allowed'
-		   OR permission.expires_at IS NOT NULL AND permission.expires_at<=now()
-		   OR review.id IS NULL OR review.source<>source.source
-		   OR review.environment<>'production' OR review.surface<>'asset_cache'
-		   OR review.decision<>'allowed' OR review.review_kind NOT IN ('owner_approval','legal')
-		   OR review.expires_at IS NOT NULL AND review.expires_at<=now()`, buildID).
-		Scan(&blocked); err != nil {
-		return 0, fmt.Errorf("check production asset-cache grants: %w", err)
-	}
-	return blocked, nil
 }
 
 func RecoveryPolicySettings(policy string) (storagePattern, checkKey, message string, err error) {

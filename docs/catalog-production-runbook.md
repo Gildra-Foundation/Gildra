@@ -178,34 +178,17 @@ the active environment.
 Missing, blocked, expired or revoked permission returns `404` and never falls
 back to the upstream host.
 
-Before enabling a source, review the immutable evidence already recorded in
-`catalog_source_policy_reviews`. An allow must reference the exact evidence
-SHA-256, identify the accountable owner or legal reviewer, state a precise
-reason and expire within 366 days. Do not update
-`catalog_publication_grants` directly. Validate the decision first, then repeat
-with `-confirm` only after the accountable reviewer has approved it:
-
-```bash
-catalog-source-approval \
-  -source blizzard_api \
-  -environment production \
-  -surface public_api \
-  -decision allowed \
-  -approved-by owner@example.com \
-  -reason 'approved for the registered application and documented controls' \
-  -evidence-sha256 <reviewed-terms-sha256> \
-  -expires-at 2026-09-27T12:00:00Z
-```
-
-The command is dry-run by default. `-confirm` records an append-only owner
-approval, links the grant to it and emits an immutable grant event. Revocation
-uses `-decision blocked` with no evidence hash or expiry and takes effect
-immediately. After approval, run a bounded cache batch and review
-`catalog_media_cache_runs` before increasing the limit:
+Source publication is open by owner decision (2026-09-02): every registered
+source in `catalog_source_policies` is public, and the site credits sources
+(`attribution_text`) instead of gating them. The former review/grant workflow
+(`catalog-source-approval`, `catalog_publication_grants`,
+`catalog_source_policy_reviews`) was removed in migration 00131. Media caching
+runs in bounded batches; review `catalog_media_cache_runs` before increasing
+the limit:
 
 ```bash
 catalog-media-cache \
-  -environment staging \
+  -environment production \
   -limit 100 \
   -confirm
 ```
@@ -231,27 +214,15 @@ plus `localeFallback`. Recipe reagent and output blocks expose
 `resolution_status` and `resolution_reason`, so known source gaps are not
 presented as valid empty data.
 
-## Private production library
+## Public catalog
 
-The single-server production deployment uses `CATALOG_ACCESS_MODE=private`.
-Catalog REST routes under `/v1/game/` and `/v1/library/`, GraphQL and
-`/v1/media/` require the same valid administrator session as the API console.
-Anonymous catalog requests return `401`; their bodies and authenticated
-responses are marked `private, no-store`. The public catalog response cache and
-public-source publication gate are not used in this mode. Data-readiness,
-artifact proof, active-build and verified same-host recovery gates remain
-mandatory.
-
-`https://api.gildra.net/library` is routed to the authenticated catalog view in
-the API console. Public `/database` and `/library` paths on `gildra.net`
-redirect to that login-protected surface. Do not change the access mode to
-`public` while Wago.Tools or wow-listfile contribute to the selected release
-without recording current public-API grants.
-
-Cached media with a configured source retention period is not returned after
-that period. The hourly media job re-fetches expired observations; a failed
-refresh retains the previous content-addressed bytes for recovery but leaves
-the expired observation unavailable until a later successful refresh.
+Production runs with `CATALOG_ACCESS_MODE=public`: catalog REST routes under
+`/v1/game/` and `/v1/library/`, GraphQL and `/v1/media/` are anonymous and
+cacheable, and `gildra.net/database` and `/library` render in Next.js. The API
+console keeps its own administrator session. Data-readiness, artifact proof,
+active-build and verified same-host recovery gates remain mandatory for every
+release; the deploy runs the readiness audit with `-require-production-ready`
+in this mode.
 
 ## Safe projection of existing complete DB2 facts
 

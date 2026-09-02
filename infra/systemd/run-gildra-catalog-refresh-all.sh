@@ -39,7 +39,7 @@ run_edition() {
   printf 'catalog-refresh: importing %s with profile %s\n' "$product" "$profile"
   compose run --rm --no-deps --entrypoint catalog-pipeline api \
     -mode apply -trigger schedule -product "$product" -profile "$profile" \
-    -sources wago,db2,battlenet,listfile -use-checked-build \
+    -sources wago,raidbots,db2,battlenet,listfile -use-checked-build \
     -max-records 0 -confirm-full-import -publication-environment production \
     -access-mode private -recovery-policy verified_same_host -timeout 8h
 }

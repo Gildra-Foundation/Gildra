@@ -26,12 +26,15 @@ func TestPublicationStatusIncludesPublishedFactArtifacts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !status.Ready {
+		t.Fatalf("publication is open by owner decision, got %#v", status)
+	}
 	for _, source := range status.Sources {
 		if source.Source != "all_the_things" {
 			continue
 		}
-		if source.Allowed || len(source.BlockingReasons) == 0 {
-			t.Fatalf("ATT fact source unexpectedly passed fail-closed publication: %#v", source)
+		if !source.Allowed || len(source.BlockingReasons) != 0 {
+			t.Fatalf("ATT fact source must be publishable: %#v", source)
 		}
 		return
 	}

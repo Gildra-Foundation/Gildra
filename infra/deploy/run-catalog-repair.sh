@@ -59,7 +59,7 @@ compose run --rm --no-deps --entrypoint catalog-pipeline api \
   -trigger manual \
   -profile retail-foundation \
   -product wow \
-  -sources wago,db2,battlenet,listfile \
+  -sources wago,raidbots,db2,battlenet,listfile \
   -version "$build_version" \
   -force-rebuild \
   -max-records 0 \

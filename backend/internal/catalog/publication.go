@@ -11,6 +11,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// PublicationSource describes a data source that contributes to the catalog.
+// Every registered source is publishable; the owner credits sources on the
+// site (catalog_source_policies keeps display names and attribution text).
+// The legacy grant/review fields stay in the struct so API consumers keep
+// their shape; they always report an allowed state.
 type PublicationSource struct {
 	Source           string
 	DisplayName      string
@@ -35,9 +40,9 @@ type PublicationStatus struct {
 	Sources     []PublicationSource
 }
 
-// PublicationService evaluates the sources that currently contribute to the
-// public catalog. It deliberately requires both a compatible reviewed policy
-// and an explicit grant for the requested environment and surface.
+// PublicationService lists the sources that currently contribute to the
+// catalog (or to a staged release). Publication is open by owner decision
+// (2026-09-02): there is no per-source grant or review gate any more.
 type PublicationService struct {
 	postgres *pgxpool.Pool
 	ttl      time.Duration
@@ -71,9 +76,8 @@ func (s *PublicationService) Status(ctx context.Context, environment, surface st
 	return status, nil
 }
 
-// ReleaseStatus evaluates the sources requested by a staging release rather
-// than the sources in the currently published catalog. This prevents a new,
-// unapproved source from passing the gate merely because it is not public yet.
+// ReleaseStatus lists the sources requested by a staging release rather than
+// the sources in the currently published catalog.
 func (s *PublicationService) ReleaseStatus(
 	ctx context.Context,
 	environment, surface string,
@@ -92,9 +96,8 @@ func (s *PublicationService) ReleaseStatus(
 	return s.load(ctx, environment, surface, &releaseID)
 }
 
-// PrivateStatus evaluates the currently published catalog for an authenticated,
-// internal-only surface. A reviewed source policy is still mandatory, while
-// public redistribution grants deliberately do not apply to this surface.
+// PrivateStatus reports the currently published catalog for the authenticated,
+// internal-only surface.
 func (s *PublicationService) PrivateStatus(ctx context.Context, environment string) (PublicationStatus, error) {
 	status, err := s.Status(ctx, environment, "public_api")
 	if err != nil {
@@ -103,9 +106,7 @@ func (s *PublicationService) PrivateStatus(ctx context.Context, environment stri
 	return privatePublicationStatus(status), nil
 }
 
-// PrivateReleaseStatus applies the same internal-only policy to a staged
-// release. This keeps private refreshes governed without pretending that an
-// internal deployment has a public redistribution grant.
+// PrivateReleaseStatus reports a staged release for the internal-only surface.
 func (s *PublicationService) PrivateReleaseStatus(
 	ctx context.Context,
 	environment string,
@@ -123,13 +124,8 @@ func privatePublicationStatus(status PublicationStatus) PublicationStatus {
 	status.Ready = true
 	status.Sources = append([]PublicationSource(nil), status.Sources...)
 	for index := range status.Sources {
-		source := &status.Sources[index]
-		source.Allowed = source.ReviewStatus == "reviewed"
-		source.BlockingReasons = nil
-		if !source.Allowed {
-			status.Ready = false
-			source.BlockingReasons = []string{"source policy is not reviewed"}
-		}
+		status.Sources[index].Allowed = true
+		status.Sources[index].BlockingReasons = nil
 	}
 	return status
 }
@@ -145,7 +141,7 @@ func (s *PublicationService) load(ctx context.Context, environment, surface stri
 		WITH source_candidates AS (
 			SELECT dependency.source
 			FROM catalog_published_source_dependencies dependency
-			WHERE $3::uuid IS NULL
+			WHERE $1::uuid IS NULL
 			UNION ALL
 			SELECT DISTINCT CASE requested.source
 				WHEN 'wago' THEN 'wago_tools'
@@ -156,26 +152,19 @@ func (s *PublicationService) load(ctx context.Context, environment, surface stri
 			END
 			FROM catalog_releases catalog_release
 			CROSS JOIN LATERAL unnest(catalog_release.requested_sources) AS requested(source)
-			WHERE catalog_release.id=$3
+			WHERE catalog_release.id=$1
 			UNION ALL
 			SELECT DISTINCT artifact.source
 			FROM catalog_source_artifacts artifact
 			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
-			WHERE snapshot.release_id=$3
+			WHERE snapshot.release_id=$1
 		), active_sources AS (
 			SELECT DISTINCT source FROM source_candidates
 		)
-		SELECT active.source,COALESCE(policy.display_name,active.source),
-			COALESCE(policy.public_api_status,'unknown'),COALESCE(policy.commercial_use_status,'unknown'),
-			COALESCE(policy.review_status,'pending'),
-			COALESCE(grant_record.decision,'blocked'),grant_record.expires_at,
-			review.id,COALESCE(review.review_kind,''),COALESCE(review.decision,'blocked'),review.expires_at
+		SELECT active.source,COALESCE(policy.display_name,active.source)
 		FROM active_sources active
 		LEFT JOIN catalog_source_policies policy ON policy.source=active.source
-		LEFT JOIN catalog_publication_grants grant_record ON grant_record.source=active.source
-			AND grant_record.environment=$1 AND grant_record.surface=$2
-		LEFT JOIN catalog_source_policy_reviews review ON review.id=grant_record.policy_review_id
-		ORDER BY active.source`, environment, surface, releaseID)
+		ORDER BY active.source`, releaseID)
 	if err != nil {
 		return PublicationStatus{}, fmt.Errorf("load catalog publication status: %w", err)
 	}
@@ -183,37 +172,17 @@ func (s *PublicationService) load(ctx context.Context, environment, surface stri
 
 	status := PublicationStatus{Environment: environment, Surface: surface, Ready: true, CheckedAt: time.Now().UTC()}
 	for rows.Next() {
-		var source PublicationSource
-		if err := rows.Scan(&source.Source, &source.DisplayName, &source.PolicyStatus, &source.CommercialStatus, &source.ReviewStatus,
-			&source.GrantDecision, &source.GrantExpiresAt, &source.GrantReviewID, &source.GrantReviewKind,
-			&source.GrantReviewState, &source.GrantReviewUntil); err != nil {
+		source := PublicationSource{
+			PolicyStatus:     "allowed",
+			CommercialStatus: "allowed",
+			ReviewStatus:     "reviewed",
+			GrantDecision:    "allowed",
+			GrantReviewState: "allowed",
+			Allowed:          true,
+		}
+		if err := rows.Scan(&source.Source, &source.DisplayName); err != nil {
 			return PublicationStatus{}, fmt.Errorf("scan catalog publication source: %w", err)
 		}
-		now := status.CheckedAt
-		if source.ReviewStatus != "reviewed" {
-			source.BlockingReasons = append(source.BlockingReasons, "source policy is not currently reviewed")
-		}
-		if !policyStatusCanBeGranted(source.PolicyStatus) {
-			source.BlockingReasons = append(source.BlockingReasons, "public API use is not permitted by policy")
-		}
-		if !policyStatusCanBeGranted(source.CommercialStatus) {
-			source.BlockingReasons = append(source.BlockingReasons, "commercial use is not permitted by policy")
-		}
-		if source.GrantDecision != "allowed" {
-			source.BlockingReasons = append(source.BlockingReasons, "no explicit publication grant")
-		}
-		if source.GrantExpiresAt != nil && !source.GrantExpiresAt.After(now) {
-			source.BlockingReasons = append(source.BlockingReasons, "publication grant expired")
-		}
-		if source.GrantReviewID == nil || source.GrantReviewState != "allowed" ||
-			(source.GrantReviewKind != "owner_approval" && source.GrantReviewKind != "legal") {
-			source.BlockingReasons = append(source.BlockingReasons, "publication grant has no matching owner or legal review")
-		}
-		if source.GrantReviewUntil != nil && !source.GrantReviewUntil.After(now) {
-			source.BlockingReasons = append(source.BlockingReasons, "publication grant review expired")
-		}
-		source.Allowed = len(source.BlockingReasons) == 0
-		status.Ready = status.Ready && source.Allowed
 		status.Sources = append(status.Sources, source)
 	}
 	if err := rows.Err(); err != nil {
@@ -221,8 +190,4 @@ func (s *PublicationService) load(ctx context.Context, environment, surface stri
 	}
 	sort.Slice(status.Sources, func(i, j int) bool { return status.Sources[i].Source < status.Sources[j].Source })
 	return status, nil
-}
-
-func policyStatusCanBeGranted(status string) bool {
-	return status == "allowed" || status == "restricted" || status == "permission_required"
 }

@@ -20,7 +20,7 @@ import (
 // Keep backup verification aligned with the latest production migration. A
 // backup that predates the required-field quality gate cannot be promoted
 // safely because it may contain publicly incomplete records.
-const MinimumSchemaVersion int64 = 130
+const MinimumSchemaVersion int64 = 131
 
 var CriticalTables = []string{
 	"users",
@@ -42,9 +42,6 @@ var CriticalTables = []string{
 	"catalog_library_dataset_definitions",
 	"catalog_library_dataset_localizations",
 	"catalog_library_dataset_stats",
-	"catalog_source_policy_reviews",
-	"catalog_publication_grants",
-	"catalog_publication_grant_events",
 	"catalog_item_variants",
 	"catalog_item_variant_stats",
 	"catalog_item_variant_effects",

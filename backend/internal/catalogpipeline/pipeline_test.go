@@ -83,24 +83,28 @@ func TestBuildPlanRejectsUnknownCatalogAccessMode(t *testing.T) {
 	}
 }
 
-func TestRetailFoundationProfileExcludesCommunityEnrichment(t *testing.T) {
+func TestRetailFoundationProfileIncludesRaidbotsTalentTrees(t *testing.T) {
 	plan, err := BuildPlan(Options{Product: "wow", Profile: ProfileRetailFoundation})
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantImports := []string{"import-wago", "import-db2", "import-battlenet", "import-battlenet-media", "import-listfile", "enrich-battlenet-missing"}
+	wantImports := []string{"import-wago", "import-raidbots", "import-db2", "import-battlenet", "import-battlenet-media", "import-listfile", "enrich-battlenet-missing"}
 	for index, key := range wantImports {
 		if plan[index].Key != key {
 			t.Fatalf("foundation stage %d = %q, want %q", index, plan[index].Key, key)
 		}
 	}
+	foundRaidbots := false
 	for _, stage := range plan {
 		if stage.Key == "import-raidbots" {
-			t.Fatal("retail foundation must not include Raidbots community enrichment")
+			foundRaidbots = true
 		}
 	}
-	if _, err := BuildPlan(Options{Product: "wow", Profile: ProfileRetailFoundation, Sources: []string{"raidbots"}}); err == nil {
-		t.Fatal("expected foundation profile to reject a source outside the profile")
+	if !foundRaidbots {
+		t.Fatal("retail foundation must include the Raidbots talent-tree stage")
+	}
+	if _, err := BuildPlan(Options{Product: "wow_classic", Profile: ProfileClassicFoundation, Sources: []string{"raidbots"}}); err == nil {
+		t.Fatal("expected the classic foundation profile to reject a source outside the profile")
 	}
 }
 
@@ -117,7 +121,7 @@ func TestNormalizeOptionsSelectsProductAwareProfiles(t *testing.T) {
 	}{
 		{
 			name: "retail default", product: "wow",
-			wantProfile: ProfileRetailFoundation, wantSources: []string{"wago", "db2", "battlenet", "listfile"},
+			wantProfile: ProfileRetailFoundation, wantSources: []string{"wago", "raidbots", "db2", "battlenet", "listfile"},
 		},
 		{
 			name: "classic default", product: "wow_classic", buildVersion: "4.4.2.69900",
@@ -211,7 +215,7 @@ func TestProductionProfilesAcceptTheirCompleteSourceSets(t *testing.T) {
 		name, product, profile, version string
 		sources                         []string
 	}{
-		{name: "retail", product: "wow", profile: ProfileRetailFoundation, version: "12.1.0.69404", sources: []string{"wago", "db2", "battlenet", "listfile"}},
+		{name: "retail", product: "wow", profile: ProfileRetailFoundation, version: "12.1.0.69404", sources: []string{"wago", "raidbots", "db2", "battlenet", "listfile"}},
 		{name: "classic", product: "wow_classic", profile: ProfileClassicFoundation, version: "4.4.2.69900", sources: []string{"db2", "battlenet", "listfile"}},
 		{name: "era", product: "wow_classic_era", profile: ProfileClassicEraFoundation, version: "1.15.8.69901", sources: []string{"db2", "battlenet", "listfile"}},
 		{name: "hardcore", product: "wow_classic_hardcore", profile: ProfileClassicHardcoreFoundation, version: "1.15.8.69902", sources: []string{"db2", "battlenet", "listfile"}},
@@ -318,7 +322,7 @@ func TestProductionForceRebuildAcceptsCompletePinnedProfile(t *testing.T) {
 	_, err := BuildPlan(Options{
 		Mode: "apply", PublicationEnvironment: "production", Product: "wow",
 		Profile:      ProfileRetailFoundation,
-		Sources:      []string{"wago", "db2", "battlenet", "listfile"},
+		Sources:      []string{"wago", "raidbots", "db2", "battlenet", "listfile"},
 		BuildVersion: "12.1.0.69404", MaxRecords: 0,
 		ConfirmFullImport: true, ForceRebuild: true,
 	})

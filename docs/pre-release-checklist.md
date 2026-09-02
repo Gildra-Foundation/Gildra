@@ -81,13 +81,12 @@ require the protected `production` environment and its approval policy.
   pass for both `en_US` and `ru_RU`; its JSON report is retained in the deploy
   log as release evidence.
 - Require `catalog-audit -require-production-ready` to pass with the selected
-  same-server recovery policy. This is a fail-closed deployment gate: missing
-  source reviews, linked owner/legal evidence, or publication grants must abort
-  and roll back the candidate.
-- Verify every allowed production grant points to an unexpired immutable
-  `owner_approval` or `legal` review for the same source and surface. Direct
-  grant updates are prohibited; use `catalog-source-approval` and retain its
-  JSON result as release evidence.
+  same-server recovery policy. This is a fail-closed deployment gate: a missing
+  verified backup, stale read models or a schema mismatch must abort and roll
+  back the candidate.
+- Verify every contributing source has a `catalog_source_policies` row with a
+  display name and attribution text: all sources are public and credited on
+  the site, there is no per-source grant step.
 - Verify `/database`, `/ru/database`, one EN quest and one RU quest through the
   public HTTPS path.
 - Verify catalog pagination, invalid-cursor handling and reward links.

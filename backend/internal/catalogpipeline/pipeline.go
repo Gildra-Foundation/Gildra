@@ -43,7 +43,9 @@ type profileDefinition struct {
 var catalogProfiles = map[string]profileDefinition{
 	ProfileRetailFoundation: {
 		Product: "wow",
-		Sources: []string{"wago", "db2", "battlenet", "listfile"},
+		// Raidbots is part of the retail profile since 2026-09-02: it is the
+		// only source of talent-tree topology for the talent calculator.
+		Sources: []string{"wago", "raidbots", "db2", "battlenet", "listfile"},
 	},
 	ProfileClassicFoundation: {
 		Product: "wow_classic",
@@ -283,7 +285,13 @@ func buildPlan(options Options) []Stage {
 			}
 			plan = append(plan, Stage{Key: "import-wago", Executable: "catalog-import", Arguments: args})
 		case "raidbots":
-			plan = append(plan, Stage{Key: "import-raidbots", Executable: "raidbots-import", Arguments: []string{"-environment", "live", "-max-records", fmt.Sprint(options.MaxRecords)}})
+			args := []string{"-environment", "live", "-max-records", fmt.Sprint(options.MaxRecords)}
+			if options.BuildVersion != "" {
+				// Pin Raidbots to the release build: the importer selects the
+				// environment (live/ptr/beta/xptr) whose data matches this version.
+				args = append(args, "-version", options.BuildVersion)
+			}
+			plan = append(plan, Stage{Key: "import-raidbots", Executable: "raidbots-import", Arguments: args})
 		case "db2":
 			args := []string{"-product", options.Product, "-max-records", fmt.Sprint(options.MaxRecords), "-confirm"}
 			if options.BuildVersion != "" {

@@ -29,7 +29,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 130
+const latestCatalogSchemaVersion int64 = 131
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -198,7 +198,6 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 		t.Fatalf("latest library migrations are incomplete: preview_column=%d reward_dataset=%d",
 			previewColumn, rewardPackageDataset)
 	}
-	assertSourceApprovalEvidenceGate(t, ctx, database)
 	assertUIMapReadModelBuildGuard(t, ctx, database)
 	var restoredUserID string
 	if err := database.QueryRowContext(ctx, `SELECT id::text FROM users WHERE email=$1`, proofEmail).Scan(&restoredUserID); err != nil {
@@ -329,81 +328,6 @@ func seedStaleATTMapResolution(t *testing.T, ctx context.Context, database *sql.
 		FROM node CROSS JOIN entity`,
 	); err != nil {
 		t.Fatalf("seed stale ATT map resolution: %v", err)
-	}
-}
-
-func assertSourceApprovalEvidenceGate(t *testing.T, ctx context.Context, database *sql.DB) {
-	t.Helper()
-	var evidenceCount int
-	if err := database.QueryRowContext(ctx, `
-		SELECT count(*) FROM catalog_source_policy_reviews
-		WHERE review_kind='evidence' AND decision='blocked'`).Scan(&evidenceCount); err != nil {
-		t.Fatal(err)
-	}
-	if evidenceCount != 5 {
-		t.Fatalf("source-policy evidence rows=%d, want 5", evidenceCount)
-	}
-
-	if _, err := database.ExecContext(ctx, `
-		UPDATE catalog_publication_grants
-		SET decision='allowed',approved_by='migration-test',reviewed_at=now(),reason='missing review must fail'
-		WHERE source='blizzard_api' AND environment='production' AND surface='public_api'`); err == nil {
-		t.Fatal("publication grant without a linked owner/legal review unexpectedly succeeded")
-	}
-
-	var blizzardEvidenceID string
-	if err := database.QueryRowContext(ctx, `
-		SELECT id::text FROM catalog_source_policy_reviews
-		WHERE source='blizzard_api' AND environment='production' AND surface='public_api'
-		  AND review_kind='evidence' ORDER BY created_at DESC,id DESC LIMIT 1`).Scan(&blizzardEvidenceID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := database.ExecContext(ctx, `
-		INSERT INTO catalog_source_policy_reviews(
-			source,environment,surface,review_kind,decision,reviewer,reason,observed_at,parent_review_id
-		) VALUES('wago_tools','production','public_api','owner_approval','allowed',
-			'migration-test','mismatched evidence must fail',now(),$1)`, blizzardEvidenceID); err == nil {
-		t.Fatal("owner approval with mismatched evidence unexpectedly succeeded")
-	}
-
-	transaction, err := database.BeginTx(ctx, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer transaction.Rollback()
-	var approvalID string
-	if err := transaction.QueryRowContext(ctx, `
-		INSERT INTO catalog_source_policy_reviews(
-			source,environment,surface,review_kind,decision,reviewer,reason,observed_at,expires_at,parent_review_id
-		) VALUES('blizzard_api','production','public_api','owner_approval','allowed',
-			'migration-test','explicit integration approval',now(),now()+interval '1 day',$1)
-		RETURNING id::text`, blizzardEvidenceID).Scan(&approvalID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := transaction.ExecContext(ctx, `
-		UPDATE catalog_publication_grants
-		SET decision='allowed',approved_by='migration-test',reviewed_at=now(),expires_at=now()+interval '1 day',
-			reason='explicit integration approval',policy_review_id=$1
-		WHERE source='blizzard_api' AND environment='production' AND surface='public_api'`, approvalID); err != nil {
-		t.Fatal(err)
-	}
-	var eventCount int
-	if err := transaction.QueryRowContext(ctx, `
-		SELECT count(*) FROM catalog_publication_grant_events
-		WHERE source='blizzard_api' AND environment='production' AND surface='public_api'
-		  AND operation='update' AND actor='migration-test'`).Scan(&eventCount); err != nil {
-		t.Fatal(err)
-	}
-	if eventCount != 1 {
-		t.Fatalf("publication grant audit events=%d, want 1", eventCount)
-	}
-	if err := transaction.Rollback(); err != nil {
-		t.Fatal(err)
-	}
-
-	if _, err := database.ExecContext(ctx, `
-		UPDATE catalog_source_policy_reviews SET reason='mutation must fail' WHERE id=$1`, blizzardEvidenceID); err == nil {
-		t.Fatal("immutable source-policy evidence unexpectedly changed")
 	}
 }
 
@@ -593,9 +517,10 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err != nil {
 		t.Fatal(err)
 	}
-	if publication.Ready || len(publication.Sources) != 2 ||
-		publication.Sources[0].Source != "wago_tools" || publication.Sources[1].Source != "wow_listfile" {
-		t.Fatalf("candidate publication sources = %#v, want blocked wago_tools and wow_listfile", publication)
+	if !publication.Ready || len(publication.Sources) != 2 ||
+		publication.Sources[0].Source != "wago_tools" || publication.Sources[1].Source != "wow_listfile" ||
+		!publication.Sources[0].Allowed || !publication.Sources[1].Allowed {
+		t.Fatalf("candidate publication sources = %#v, want publishable wago_tools and wow_listfile", publication)
 	}
 	candidate, err := store.Begin(ctx, "wow", 100003, "1.0.0.100003", "us", "wago_tools", &publishedReleaseID, map[string]any{"test": "publish"})
 	if err != nil {

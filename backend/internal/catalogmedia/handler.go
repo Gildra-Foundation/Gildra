@@ -65,6 +65,9 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 	}
 	var key, mimeType string
 	var hash []byte
+	// Publication is open (owner decision 2026-09-02): serve any cached media
+	// of a published entity whose source artifact is proven; the source policy
+	// only contributes an optional retention window.
 	query := `
 		SELECT media.cache_key,media.mime_type,media.cached_content_hash
 		FROM catalog_entity_media media
@@ -76,56 +79,12 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		  AND media_build.product_id=entity.product_id
 		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
 		JOIN catalog_published_source_dependencies dependency ON dependency.source=media.source
-		JOIN catalog_source_policies policy ON policy.source=media.source
-		JOIN catalog_publication_grants cache_permission ON cache_permission.source=media.source
-		  AND cache_permission.environment=$2 AND cache_permission.surface='asset_cache'
-		JOIN catalog_source_policy_reviews cache_review ON cache_review.id=cache_permission.policy_review_id
-		JOIN catalog_publication_grants public_permission ON public_permission.source=media.source
-		  AND public_permission.environment=$2 AND public_permission.surface='public_api'
-		JOIN catalog_source_policy_reviews public_review ON public_review.id=public_permission.policy_review_id
-		WHERE media.id=$1 AND media.cache_status='cached' AND policy.review_status='reviewed'
-		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
-		  AND media_build.build_number<=published_build.build_number
-		  AND policy.asset_caching_status IN ('allowed','restricted','permission_required')
-		  AND policy.public_api_status IN ('allowed','restricted','permission_required')
-		  AND policy.commercial_use_status IN ('allowed','restricted','permission_required')
-		  AND cache_permission.decision='allowed' AND cache_permission.reviewed_at IS NOT NULL
-		  AND (cache_permission.expires_at IS NULL OR cache_permission.expires_at>now())
-		  AND cache_review.source=cache_permission.source
-		  AND cache_review.environment=cache_permission.environment
-		  AND cache_review.surface=cache_permission.surface
-		  AND cache_review.decision='allowed'
-		  AND cache_review.review_kind IN ('owner_approval','legal')
-		  AND (cache_review.expires_at IS NULL OR cache_review.expires_at>now())
-		  AND public_permission.decision='allowed' AND public_permission.reviewed_at IS NOT NULL
-		  AND (public_permission.expires_at IS NULL OR public_permission.expires_at>now())
-		  AND public_review.source=public_permission.source
-		  AND public_review.environment=public_permission.environment
-		  AND public_review.surface=public_permission.surface
-		  AND public_review.decision='allowed'
-		  AND public_review.review_kind IN ('owner_approval','legal')
-		  AND (public_review.expires_at IS NULL OR public_review.expires_at>now())
-		  AND (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))`
-	args := []any{id, h.environment}
-	if h.accessMode == "private" {
-		query = `
-		SELECT media.cache_key,media.mime_type,media.cached_content_hash
-		FROM catalog_entity_media media
-		JOIN game_entities entity ON entity.id=media.entity_id
-		JOIN game_entity_versions published ON published.id=entity.published_version_id
-		JOIN game_builds published_build ON published_build.id=published.build_id
-		  AND published_build.product_id=entity.product_id
-		JOIN game_builds media_build ON media_build.id=media.build_id
-		  AND media_build.product_id=entity.product_id
-		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
-		JOIN catalog_published_source_dependencies dependency ON dependency.source=media.source
-		JOIN catalog_source_policies policy ON policy.source=media.source
-		WHERE media.id=$1 AND media.cache_status='cached' AND policy.review_status='reviewed'
+		LEFT JOIN catalog_source_policies policy ON policy.source=media.source
+		WHERE media.id=$1 AND media.cache_status='cached'
 		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
 		  AND media_build.build_number<=published_build.build_number
 		  AND (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))`
-		args = []any{id}
-	}
+	args := []any{id}
 	err = h.db.QueryRow(request.Context(), query, args...).Scan(&key, &mimeType, &hash)
 	if errors.Is(err, pgx.ErrNoRows) {
 		http.NotFound(response, request)

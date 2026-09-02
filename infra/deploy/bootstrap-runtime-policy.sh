@@ -35,10 +35,10 @@ ensure_entry() {
   fi
 }
 
-# These defaults are fail-safe for the existing single-host production
-# deployment: the catalog stays private and recovery remains server-local.
+# Defaults for the single-host production deployment: the catalog is public
+# (owner decision, 2026-09-02) and recovery remains server-local.
 # Secrets are never generated or written here.
-ensure_entry CATALOG_ACCESS_MODE private
+ensure_entry CATALOG_ACCESS_MODE public
 ensure_entry CATALOG_RECOVERY_POLICY verified_same_host
 ensure_entry CATALOG_BACKUP_LOCAL_DIRECTORY /var/lib/gildra/catalog-backups
 
