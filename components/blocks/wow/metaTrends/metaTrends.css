@@ -1,4 +1,8 @@
 /* Styles for metaTrends — imported from app/globals.css in cascade order. */
+.trendside{display:flex;flex-direction:column;padding:18px 4px 0}
+.trendside .panel-rule{margin:0 0 14px}
+.trendside .trend{padding:10px 2px}
+.trendside .btn-line{margin-top:auto}
 /* мета-тренды */
 .trend-list{display:flex;flex-direction:column;margin-bottom:12px}
 .trend{

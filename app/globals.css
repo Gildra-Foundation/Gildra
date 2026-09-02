@@ -14,6 +14,8 @@
 @import "../components/blocks/wow/hero/hero.css";
 @import "./styles/layout.css";
 @import "./styles/primitives.css";
+@import "../components/blocks/wow/mythicMeta/mythicMeta.css";
+@import "../components/blocks/wow/raidFeature/raidFeature.css";
 @import "../components/blocks/wow/metaTrends/metaTrends.css";
 @import "../components/blocks/wow/guides/guides.css";
 @import "../components/blocks/wow/tierWorkspace/tierWorkspace.css";

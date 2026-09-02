@@ -32,3 +32,11 @@ a.logo{color:inherit}
 .tabs button[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
 .soon-note{font-size:10px;color:var(--ink-3);margin-top:10px;line-height:1.5}
 .guides-sec{display:block}
+
+/* design.md §G: 5 rows / 2 builds and no popularity column when the column is narrow (was @media 720). */
+@container (max-width:680px){
+  .tpv-pop{display:none}
+  .tpv-builds{grid-template-columns:1fr}
+  .tpv-row:nth-child(n+6){display:none}
+  .tpv-builds .bcard:nth-child(n+3){display:none}
+}

@@ -9,7 +9,7 @@ import { specHref } from "@/lib/specs";
 import { AdSlot } from "./AdSlot";
 import { tierTable, classChips, builds, liveStats } from "@/data/site";
 import { usePathname } from "next/navigation";
-import { langOf, p, t as tr } from "@/lib/i18n";
+import { langOf, p, t as tr, type Lang } from "@/lib/i18n";
 import type { TableRow } from "@/data/site";
 import { ANCHORS, anchorHref } from "@/lib/anchors";
 
@@ -116,8 +116,11 @@ function Radar() {
   );
 }
 
-export function TierSection() {
-  const lang = langOf(usePathname());
+/** `lang` comes from the page (block/PageShell); the pathname is only a fallback
+ *  for legacy call sites that render the workspace outside a page config. */
+export function TierSection({ lang: langProp }: { lang?: Lang } = {}) {
+  const pathname = usePathname();
+  const lang = langProp ?? langOf(pathname);
   const tt = tr(lang);
   const [cls, setCls] = useState("all");
   const [q, setQ] = useState("");

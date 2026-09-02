@@ -1,6 +1,7 @@
 import { defineBlock, type BlockComponentProps, type RenderContext } from "@/lib/blocks/types";
 import { getLeagueStatus, type LeagueStatus } from "@/lib/games/league-of-legends/api";
 import styles from "@/components/league/league.module.css";
+import { t } from "@/lib/i18n";
 
 export type LeagueHeroProps = {
   eyebrow: string;
@@ -11,19 +12,20 @@ export type LeagueHeroProps = {
 export type LeagueHeroData = { status: LeagueStatus | null };
 
 /** Catalog hero: title copy + live patch card from the Data Dragon status endpoint. */
-function LeagueHero({ eyebrow, title, description, data }: BlockComponentProps<LeagueHeroProps, LeagueHeroData>) {
+function LeagueHero({ eyebrow, title, description, data, lang }: BlockComponentProps<LeagueHeroProps, LeagueHeroData>) {
   const { status } = data;
+  const tt = t(lang);
   return (
     <section className={styles.hero}>
       <div>
-        <span className={styles.eyebrow}>{eyebrow}</span>
-        <h1>{title}</h1>
-        <p>{description}</p>
+        <span className={styles.eyebrow}>{tt(eyebrow)}</span>
+        <h1>{tt(title)}</h1>
+        <p>{tt(description)}</p>
       </div>
       <div className={styles.patch}>
-        <span>LIVE DATA</span>
-        <strong>Patch {status?.ddragonVersion ?? "—"}</strong>
-        <small>{status?.ready ? "Riot Data Dragon · EN / RU" : "Catalog awaiting first import"}</small>
+        <span>{tt("LIVE DATA")}</span>
+        <strong>{tt("Patch")} {status?.ddragonVersion ?? "—"}</strong>
+        <small>{status?.ready ? "Riot Data Dragon · EN / RU" : tt("Catalog awaiting first import")}</small>
       </div>
     </section>
   );
