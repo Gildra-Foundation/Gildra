@@ -13,9 +13,9 @@ Classic builds are always explicitly pinned because each edition has its own
 client line. Example repair/refresh plans are:
 
 ```powershell
-docker compose run --rm --entrypoint catalog-pipeline api -mode dry_run -profile classic-foundation -product wow_classic -version 5.5.4.67732
-docker compose run --rm --entrypoint catalog-pipeline api -mode dry_run -profile classic-era-foundation -product wow_classic_era -version 1.15.9.69109
-docker compose run --rm --entrypoint catalog-pipeline api -mode dry_run -profile classic-hardcore-foundation -product wow_classic_hardcore -version 1.15.9.69109
+docker compose run --rm catalog-pipeline -mode dry_run -profile classic-foundation -product wow_classic -version 5.5.4.67732
+docker compose run --rm catalog-pipeline -mode dry_run -profile classic-era-foundation -product wow_classic_era -version 1.15.9.69109
+docker compose run --rm catalog-pipeline -mode dry_run -profile classic-hardcore-foundation -product wow_classic_hardcore -version 1.15.9.69109
 ```
 
 The version is not shared between products even when Era and Hardcore currently
@@ -37,7 +37,7 @@ foundation profiles and cannot be selected by a production foundation run.
 Preview the exact stages without importing data:
 
 ```powershell
-docker compose run --rm --entrypoint catalog-pipeline api -mode dry_run -profile retail-foundation -version 12.1.0.69404 -max-records 100
+docker compose run --rm catalog-pipeline -mode dry_run -profile retail-foundation -version 12.1.0.69404 -max-records 100
 ```
 
 A production apply is fail-closed. It requires an explicit build, a recent
@@ -48,13 +48,13 @@ The bounded proof run is therefore the first writable step after the recovery
 gate:
 
 ```powershell
-docker compose run --rm --entrypoint catalog-pipeline api -mode apply -profile retail-foundation -version 12.1.0.69404 -max-records 100
+docker compose run --rm catalog-pipeline -mode apply -profile retail-foundation -version 12.1.0.69404 -max-records 100
 ```
 
 The full command is deliberately hard to run accidentally:
 
 ```powershell
-docker compose run --rm --entrypoint catalog-pipeline api -mode apply -profile retail-foundation -version 12.1.0.69404 -max-records 0 -confirm-full-import
+docker compose run --rm catalog-pipeline -mode apply -profile retail-foundation -version 12.1.0.69404 -max-records 0 -confirm-full-import
 ```
 
 Writable pipeline runs create a private row in `catalog_releases` before the
@@ -169,7 +169,7 @@ gates, and moves the public pointer only after the complete candidate is
 validated:
 
 ```powershell
-docker compose run --rm --entrypoint catalog-pipeline api -mode apply -trigger manual -profile retail-foundation -product wow -sources wago,raidbots,db2,battlenet,listfile -version 12.1.0.69497 -force-rebuild -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
+docker compose run --rm catalog-pipeline -mode apply -trigger manual -profile retail-foundation -product wow -sources wago,raidbots,db2,battlenet,listfile -version 12.1.0.69497 -force-rebuild -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
 ```
 
 `-force-rebuild` is deliberately opt-in and cannot be combined with a resumed
@@ -504,13 +504,13 @@ errors.
 Inspect a complete plan without downloading or changing catalog data:
 
 ```powershell
-docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode dry_run -profile retail-foundation -sources wago,raidbots,db2,battlenet,listfile -publication-environment production -access-mode private -recovery-policy verified_same_host
+docker compose run --rm --no-deps catalog-pipeline -mode dry_run -profile retail-foundation -sources wago,raidbots,db2,battlenet,listfile -publication-environment production -access-mode private -recovery-policy verified_same_host
 ```
 
 Run an approved full refresh:
 
 ```powershell
-docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode apply -trigger manual -profile retail-foundation -sources wago,raidbots,db2,battlenet,listfile -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
+docker compose run --rm --no-deps catalog-pipeline -mode apply -trigger manual -profile retail-foundation -sources wago,raidbots,db2,battlenet,listfile -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
 ```
 
 For a build that is already published, do not bypass the monotonic-build

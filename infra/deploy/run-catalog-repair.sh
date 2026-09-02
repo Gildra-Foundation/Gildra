@@ -54,7 +54,7 @@ compose() {
 
 cd "$deployment_directory"
 printf 'catalog-repair: starting explicit same-build repair for WoW build %s\n' "$build_version" >&2
-compose run --rm --no-deps --entrypoint catalog-pipeline api \
+compose run --rm --no-deps catalog-pipeline \
   -mode apply \
   -trigger manual \
   -profile retail-foundation \

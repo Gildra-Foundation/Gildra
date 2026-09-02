@@ -92,6 +92,53 @@ services:
       redis: { condition: service_healthy }
       scraper-worker: { condition: service_healthy }
 
+  # One-off catalog pipeline worker (imports, audit, publication).  It shares
+  # the api image and environment but is NOT an HTTP service: no healthcheck,
+  # no restart policy, so `compose run` containers are never reported as
+  # unhealthy api instances.
+  catalog-pipeline:
+    profiles: ["operations"]
+    image: ${API_IMAGE:-gildra-api:local}
+    build: ./backend
+    entrypoint: ["catalog-pipeline"]
+    healthcheck:
+      disable: true
+    environment:
+      DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra?sslmode=disable
+      CLICKHOUSE_ADDR: clickhouse:9000
+      CLICKHOUSE_DATABASE: gildra
+      CLICKHOUSE_USER: gildra
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      INDEXNOW_KEY: ${INDEXNOW_KEY}
+      INDEXNOW_HOST: gildra.net
+      SENTRY_DSN: ${SENTRY_GO_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      CATALOG_PUBLICATION_MODE: ${CATALOG_PUBLICATION_MODE:-enforce}
+      CATALOG_PUBLICATION_ENVIRONMENT: ${CATALOG_PUBLICATION_ENVIRONMENT:-production}
+      CATALOG_ACCESS_MODE: ${CATALOG_ACCESS_MODE:-public}
+      # The current deployment keeps its verified backup on this OVH host.
+      # Operators can opt into an off-host policy explicitly once remote
+      # storage is configured; do not make R2/S3 a hidden prerequisite.
+      CATALOG_RECOVERY_POLICY: ${CATALOG_RECOVERY_POLICY:-verified_same_host}
+      CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
+      DATASET_WORKER_URL: http://scraper-worker:8081
+      DATASET_WORKER_TIMEOUT: 25m
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
+      ADMIN_SESSION_TTL: ${ADMIN_SESSION_TTL:-12h}
+      BATTLENET_CLIENT_ID: ${BATTLENET_CLIENT_ID:-}
+      BATTLENET_CLIENT_SECRET: ${BATTLENET_CLIENT_SECRET:-}
+      BATTLENET_BUILD_NUMBER: ${BATTLENET_BUILD_NUMBER:-}
+      BATTLENET_BUILD_VERSION: ${BATTLENET_BUILD_VERSION:-}
+    volumes:
+      - catalog_media:/var/lib/gildra/catalog-media:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+      clickhouse: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
   catalog-backup:
     profiles: ["operations"]
     image: ${API_IMAGE:-gildra-api:local}

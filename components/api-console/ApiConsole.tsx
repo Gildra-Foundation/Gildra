@@ -20,7 +20,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { GenshinImpactCatalog } from "./GenshinImpactCatalog";
 import { WarcraftCatalog } from "./WarcraftCatalog";
-import type { ArchonTierlistEntry, DashboardData, DatasetListItem, DatasetRun, IcyVeinsTierlistEntry, IcyVeinsTierlistResponse, PanelUser, TierlistEntry, WowClassListResponse, WowGGTierlistEntry, WowGGTierlistResponse, WowSpecializationResponse, WowSpecListResponse } from "./types";
+import { requestJSON, useConsoleRequest, type ConsoleRequestState } from "./client";
+import { CONSOLE_ENDPOINTS, EDITION_BASES } from "./endpoints";
+import { datasetClassPath, datasetPath } from "./paths";
+import type { AnalyticsOverview, AnalyticsOverviewResponse, ArchonTierlistEntry, CatalogHealth, CatalogHealthResponse, CatalogReadiness, DatasetDetailResponse, DatasetFreshness, DatasetListItem, DatasetRun, DatasetSummary, IcyVeinsTierlistEntry, IcyVeinsTierlistResponse, PanelUser, SystemReport, SystemStatus, TierlistEntry, WowClassListResponse, WowGGTierlistEntry, WowGGTierlistResponse, WowSpecializationResponse, WowSpecListResponse } from "./types";
 
 type View = "overview" | "catalog" | "genshin-impact" | "league-of-legends" | "datasets" | "api" | "system";
 
@@ -33,29 +36,6 @@ const navItems = [
   { id: "api" as const, label: "API", icon: Code2, href: "/api-console/api" },
   { id: "system" as const, label: "Система", icon: Server, href: "/api-console/system" },
 ];
-
-async function requestJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const timeout = AbortSignal.timeout(15_000);
-  const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
-  let response: Response;
-  try {
-    response = await fetch(path, { credentials: "include", ...init, signal });
-  } catch (reason) {
-    if (reason instanceof DOMException && reason.name === "TimeoutError") {
-      throw new Error("Сервис не ответил за 15 секунд. Повторите запрос.");
-    }
-    throw reason;
-  }
-  if (!response.ok) {
-    let message = "Запрос не выполнен";
-    try {
-      const problem = await response.json() as { message?: string; detail?: string; code?: string };
-      message = problem.detail ?? problem.message ?? (problem.code ? `${problem.code}: ${message}` : message);
-    } catch { /* empty response */ }
-    throw new Error(message);
-  }
-  return response.json() as Promise<T>;
-}
 
 export function ApiConsole({ consolePath, returnTo }: { consolePath: string[]; returnTo?: string }) {
   const [user, setUser] = useState<PanelUser | null>(null);
@@ -177,86 +157,16 @@ function LoginScreen({ onLogin, returnTo }: { onLogin: (user: PanelUser) => void
   );
 }
 
-function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePath: string[]; onLogout: () => void }) {
-  const pathKey = consolePath.join("/");
-  const view: View = consolePath[0] === "catalog" ? "catalog" : consolePath[0] === "genshin-impact" ? "genshin-impact" : consolePath[0] === "league-of-legends" ? "league-of-legends" : consolePath[0] === "datasets" ? "datasets" : consolePath[0] === "api" ? "api" : consolePath[0] === "system" ? "system" : "overview";
-  const datasetSlug = view === "datasets" ? consolePath[1] ?? "" : "";
-  const classSlug = view === "datasets" && consolePath[2] === "classes" ? consolePath[3] ?? "" : "";
+function Dashboard({ user, consolePath: segments, onLogout }: { user: PanelUser; consolePath: string[]; onLogout: () => void }) {
+  const pathKey = segments.join("/");
+  const view: View = segments[0] === "catalog" ? "catalog" : segments[0] === "genshin-impact" ? "genshin-impact" : segments[0] === "league-of-legends" ? "league-of-legends" : segments[0] === "datasets" ? "datasets" : segments[0] === "api" ? "api" : segments[0] === "system" ? "system" : "overview";
+  const datasetSlug = view === "datasets" ? segments[1] ?? "" : "";
+  const classSlug = view === "datasets" && segments[2] === "classes" ? segments[3] ?? "" : "";
   const [mobileNav, setMobileNav] = useState(false);
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [datasets, setDatasets] = useState<DatasetListItem[]>([]);
-  const [entries, setEntries] = useState<TierlistEntry[]>([]);
-  const [archonEntries, setArchonEntries] = useState<ArchonTierlistEntry[]>([]);
-  const [wowGG, setWowGG] = useState<WowGGTierlistResponse>({ snapshotId: "", contexts: [], data: [], weeks: [], count: 0 });
-  const [icyVeins, setIcyVeins] = useState<IcyVeinsTierlistResponse>({ snapshotId: "", pages: [], data: [], count: 0 });
-  const [datasetRuns, setDatasetRuns] = useState<DatasetRun[]>([]);
-  const [activityFilter, setActivityFilter] = useState("raid");
-  const [roleFilter, setRoleFilter] = useState("dps");
-  const [difficultyFilter, setDifficultyFilter] = useState("heroic");
-  const [metricFilter, setMetricFilter] = useState("popularity");
-  const [wowGGWeek, setWowGGWeek] = useState("");
-  const [query, setQuery] = useState("");
-  const [error, setError] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
-
-  const load = useCallback(async (signal?: AbortSignal) => {
-    setRefreshing(true); setError("");
-    if (view === "genshin-impact" || view === "league-of-legends") {
-      setRefreshing(false);
-      return;
-    }
-    try {
-      const needsDashboard = view !== "catalog";
-      const needsTierlist = view === "overview" || (view === "datasets" && datasetSlug === "tierlist-wowhead");
-      const needsArchon = view === "datasets" && datasetSlug === "tierlist-archon";
-      const needsWowGG = view === "datasets" && datasetSlug === "tierlist-wowgg";
-      const needsIcyVeins = view === "datasets" && datasetSlug === "tierlist-icyveins";
-      const tierlistURL = classSlug
-        ? "/v1/admin/tierlist-wowhead"
-        : `/v1/admin/tierlist-wowhead?activity=${activityFilter}&role=${roleFilter}`;
-      const archonURL = classSlug
-        ? "/v1/admin/tierlist-archon"
-        : `/v1/admin/tierlist-archon?activity=${activityFilter}&difficulty=${activityFilter === "mythic_plus" ? "10" : difficultyFilter}&role=${roleFilter}`;
-      const icyVeinsURL = classSlug
-        ? "/v1/admin/tierlist-icyveins"
-        : `/v1/admin/tierlist-icyveins?activity=${activityFilter}&role=${roleFilter}`;
-      const [dashboard, datasetList, tierlist, archon, wowgg, icyveins, runs] = await Promise.allSettled([
-        needsDashboard ? requestJSON<DashboardData>("/v1/admin/dashboard", { signal }) : Promise.resolve(null),
-        view === "datasets" ? requestJSON<{ data: DatasetListItem[] }>("/v1/admin/datasets", { signal }) : Promise.resolve({ data: [] }),
-        needsTierlist ? requestJSON<{ data: TierlistEntry[] }>(tierlistURL, { signal }) : Promise.resolve({ data: [] }),
-        needsArchon ? requestJSON<{ data: ArchonTierlistEntry[] }>(archonURL, { signal }) : Promise.resolve({ data: [] }),
-        needsWowGG ? requestJSON<WowGGTierlistResponse>(`/v1/admin/tierlist-wowgg${wowGGWeek ? `?week=${encodeURIComponent(wowGGWeek)}` : ""}`, { signal }) : Promise.resolve({ snapshotId: "", contexts: [], data: [], weeks: [], count: 0 }),
-        needsIcyVeins ? requestJSON<IcyVeinsTierlistResponse>(icyVeinsURL, { signal }) : Promise.resolve({ snapshotId: "", pages: [], data: [], count: 0 }),
-        view === "datasets" && datasetSlug
-          ? requestJSON<{ data: DatasetRun[] }>(`/v1/admin/datasets/${datasetSlug}/runs`, { signal })
-          : Promise.resolve({ data: [] }),
-      ]);
-      if (dashboard.status === "fulfilled" && dashboard.value) setData(dashboard.value);
-      if (datasetList.status === "fulfilled") setDatasets(datasetList.value.data);
-      if (tierlist.status === "fulfilled") setEntries(tierlist.value.data);
-      if (archon.status === "fulfilled") setArchonEntries(archon.value.data);
-      if (wowgg.status === "fulfilled") setWowGG(wowgg.value);
-      if (icyveins.status === "fulfilled") setIcyVeins(icyveins.value);
-      if (runs.status === "fulfilled") setDatasetRuns(runs.value.data);
-      const failed = [dashboard, datasetList, tierlist, archon, wowgg, icyveins, runs].find((result) => result.status === "rejected" && !(result.reason instanceof DOMException && result.reason.name === "AbortError"));
-      if (failed?.status === "rejected") setError(failed.reason instanceof Error ? failed.reason.message : "Некоторые данные не загрузились");
-    } catch (reason) {
-      if (reason instanceof DOMException && reason.name === "AbortError") return;
-      setError(reason instanceof Error ? reason.message : "Не удалось загрузить панель");
-    }
-    finally { setRefreshing(false); }
-  }, [activityFilter, classSlug, datasetSlug, difficultyFilter, roleFilter, view, wowGGWeek]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
-
-  const filteredEntries = useMemo(() => entries.filter((entry) => `${entry.specName} ${entry.className}`.toLowerCase().includes(query.toLowerCase())), [entries, query]);
-  const filteredArchonEntries = useMemo(() => archonEntries.filter((entry) => `${entry.specName} ${entry.className}`.toLowerCase().includes(query.toLowerCase())), [archonEntries, query]);
-  const filteredWowGGEntries = useMemo(() => wowGG.data.filter((entry) => entry.entityName.toLowerCase().includes(query.toLowerCase())), [wowGG.data, query]);
-  const filteredIcyVeinsEntries = useMemo(() => icyVeins.data.filter((entry) => `${entry.specName} ${entry.className}`.toLowerCase().includes(query.toLowerCase())), [icyVeins.data, query]);
+  // Every view loads its own sections; the header button only bumps a key
+  // that the section hooks watch, so a refresh never blocks on one request.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = () => setRefreshKey((value) => value + 1);
 
   async function logout() { try { await fetch("/v1/auth/logout", { method: "POST", credentials: "include" }); } finally { onLogout(); } }
 
@@ -273,20 +183,102 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
       {mobileNav && <button className="fixed inset-0 z-30 bg-black/70 lg:hidden" onClick={() => setMobileNav(false)} aria-label="Закрыть меню" />}
 
       <section className="min-w-0 lg:col-start-2">
-        <header className="sticky top-0 z-20 flex h-[64px] items-center justify-between border-b border-[#252a37] bg-[#0b0e14]/95 px-4 backdrop-blur sm:px-6 lg:h-[76px] lg:px-8"><div className="flex items-center gap-3"><button type="button" onClick={() => setMobileNav(true)} className="grid size-9 place-items-center border border-[#303645] lg:hidden" aria-label="Открыть меню"><Menu className="size-5" /></button><div><p className="text-[9px] uppercase tracking-[.16em] text-[#687286]">Gildra API / {pathKey || "обзор"}</p><h1 className="font-[var(--display)] text-lg font-semibold sm:text-xl">{view === "overview" ? "Обзор API" : view === "catalog" ? "База Warcraft" : view === "genshin-impact" ? "База Genshin Impact" : view === "league-of-legends" ? "База League of Legends" : view === "datasets" ? classSlug ? "Информация о классе" : datasetSlug ? "Данные датасета" : "Датасеты" : view === "api" ? "Документация API" : "Состояние системы"}</h1></div></div>{view !== "genshin-impact" && view !== "league-of-legends" ? <Button variant="outline" disabled={refreshing} onClick={() => void load()} className="h-9 rounded-sm border-[#3a404f] bg-[#11151d] text-xs text-[#abb3c2] hover:border-[#8d7540] hover:bg-[#181a1d] hover:text-[#e4c574]"><RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">Обновить</span></Button> : null}</header>
+        <header className="sticky top-0 z-20 flex h-[64px] items-center justify-between border-b border-[#252a37] bg-[#0b0e14]/95 px-4 backdrop-blur sm:px-6 lg:h-[76px] lg:px-8"><div className="flex items-center gap-3"><button type="button" onClick={() => setMobileNav(true)} className="grid size-9 place-items-center border border-[#303645] lg:hidden" aria-label="Открыть меню"><Menu className="size-5" /></button><div><p className="text-[9px] uppercase tracking-[.16em] text-[#687286]">Gildra API / {pathKey || "обзор"}</p><h1 className="font-[var(--display)] text-lg font-semibold sm:text-xl">{view === "overview" ? "Обзор API" : view === "catalog" ? "База Warcraft" : view === "genshin-impact" ? "База Genshin Impact" : view === "league-of-legends" ? "База League of Legends" : view === "datasets" ? classSlug ? "Информация о классе" : datasetSlug ? "Данные датасета" : "Датасеты" : view === "api" ? "Документация API" : "Состояние системы"}</h1></div></div>{view !== "genshin-impact" && view !== "league-of-legends" ? <Button variant="outline" onClick={refresh} className="h-9 rounded-sm border-[#3a404f] bg-[#11151d] text-xs text-[#abb3c2] hover:border-[#8d7540] hover:bg-[#181a1d] hover:text-[#e4c574]"><RefreshCw className="size-3.5" /><span className="hidden sm:inline">Обновить</span></Button> : null}</header>
 
         <div className="mx-auto max-w-[1480px] p-4 sm:p-6 lg:p-8">
-          {error && <Alert variant="destructive" className="mb-5 rounded-sm border-[#693b3e] bg-[#2a1518] text-[#ef9a9d]"><CircleAlert className="size-4" /><AlertTitle>Панель временно недоступна</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-          {view === "catalog" ? <WarcraftCatalog buildVersion={data?.catalog.activeBuildVersion ?? ""} /> : view === "genshin-impact" ? <GenshinImpactCatalog /> : view === "league-of-legends" ? <LeagueConsolePanel /> : !data ? error ? <PanelLoadError message={error} onRetry={() => void load()} /> : <div className="grid min-h-[60vh] place-items-center"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : <>
-            {view === "overview" && <Overview data={data} entries={filteredEntries} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} />}
-            {view === "datasets" && <DatasetSection data={data} datasets={datasets} datasetSlug={datasetSlug} classSlug={classSlug} entries={classSlug ? entries : filteredEntries} archonEntries={classSlug ? archonEntries : filteredArchonEntries} wowGG={{ ...wowGG, data: classSlug ? wowGG.data : filteredWowGGEntries }} icyVeins={{ ...icyVeins, data: classSlug ? icyVeins.data : filteredIcyVeinsEntries }} wowGGWeek={wowGGWeek} setWowGGWeek={setWowGGWeek} datasetRuns={datasetRuns} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} difficulty={difficultyFilter} setDifficulty={setDifficultyFilter} metric={metricFilter} setMetric={setMetricFilter} />}
-            {view === "api" && <APIView data={data} />}
-            {view === "system" && <SystemView data={data} />}
-          </>}
+          {view === "catalog" ? <CatalogView refreshKey={refreshKey} /> : view === "genshin-impact" ? <GenshinImpactCatalog /> : view === "league-of-legends" ? <LeagueConsolePanel /> : view === "datasets" ? <DatasetsView datasetSlug={datasetSlug} classSlug={classSlug} refreshKey={refreshKey} /> : view === "api" ? <APIView /> : view === "system" ? <SystemView refreshKey={refreshKey} /> : <OverviewView refreshKey={refreshKey} />}
         </div>
       </section>
     </main>
   );
+}
+
+// Loadable renders a section from its own request state: content when data
+// is present, an inline error with retry, or a skeleton — never a page-wide
+// spinner that waits for unrelated requests.
+function Loadable<T>({ state, title, children }: { state: ConsoleRequestState<T>; title: string; children: (value: T) => React.ReactNode }) {
+  if (state.data) return <>{children(state.data)}</>;
+  if (state.error) return <SectionError title={title} message={state.error} onRetry={state.reload} />;
+  return <SectionSkeleton title={title} />;
+}
+
+function SectionSkeleton({ title }: { title: string }) {
+  return <div role="status" aria-busy="true" aria-label={`${title}: загрузка`} className="border border-[#2d3341] bg-[#11151d] p-5"><div className="flex items-center gap-3 text-[10px] uppercase tracking-[.14em] text-[#687286]"><RefreshCw className="size-3.5 animate-spin text-[#c9a24f]" />{title}</div><div className="mt-4 space-y-2"><div className="h-3 w-2/5 animate-pulse bg-[#1c2230]" /><div className="h-3 w-3/5 animate-pulse bg-[#1c2230]" /><div className="h-3 w-1/3 animate-pulse bg-[#1c2230]" /></div></div>;
+}
+
+function SectionError({ title, message, onRetry }: { title: string; message: string; onRetry: () => void }) {
+  return <div role="alert" className="border border-[#693b3e] bg-[#1b1114] p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><CircleAlert className="mt-0.5 size-4 shrink-0 text-[#e88787]" /><div><div className="text-xs font-semibold text-[#f0b0b0]">{title}: не удалось загрузить</div><p className="mt-1 text-xs text-[#a8909a]">{message}</p></div></div><Button variant="outline" onClick={onRetry} className="h-9 rounded-sm border-[#5c3a3f] bg-transparent text-xs text-[#f0b0b0] hover:bg-[#2a1518]"><RefreshCw className="size-3.5" />Повторить</Button></div></div>;
+}
+
+function CatalogView({ refreshKey }: { refreshKey: number }) {
+  const health = useConsoleRequest<CatalogHealthResponse>("/v1/admin/catalog-health", { refreshKey, fallback: "Не удалось загрузить состояние каталога" });
+  return <WarcraftCatalog buildVersion={health.data?.catalog.activeBuildVersion ?? ""} />;
+}
+
+function OverviewView({ refreshKey }: { refreshKey: number }) {
+  const system = useConsoleRequest<SystemReport>("/v1/admin/system", { refreshKey, fallback: "Не удалось проверить состояние систем" });
+  const health = useConsoleRequest<CatalogHealthResponse>("/v1/admin/catalog-health", { refreshKey, fallback: "Не удалось загрузить состояние каталога" });
+  const summary = useConsoleRequest<DatasetDetailResponse>("/v1/admin/datasets/tierlist-wowhead", { refreshKey, fallback: "Не удалось загрузить сводку датасета" });
+  const runs = useConsoleRequest<{ data: DatasetRun[] }>("/v1/admin/datasets/tierlist-wowhead/runs", { refreshKey, fallback: "Не удалось загрузить историю обновлений" });
+  const analytics = useConsoleRequest<AnalyticsOverviewResponse>("/v1/admin/analytics-overview?hours=24", { refreshKey, fallback: "Аналитика временно недоступна" });
+  const [activity, setActivity] = useState("raid");
+  const [role, setRole] = useState("dps");
+  const [query, setQuery] = useState("");
+  const tierlist = useConsoleRequest<{ data: TierlistEntry[] }>(`/v1/admin/tierlist-wowhead?activity=${activity}&role=${role}`, { refreshKey, fallback: "Не удалось загрузить тир-лист" });
+  const entries = useMemo(() => (tierlist.data?.data ?? []).filter((entry) => `${entry.specName} ${entry.className}`.toLowerCase().includes(query.toLowerCase())), [tierlist.data, query]);
+  return <div className="flex flex-col gap-5">
+    <StatusRail systems={system.data?.systems ?? null} dataset={summary.data?.dataset ?? null} error={system.error || summary.error} onRetry={() => { system.reload(); summary.reload(); }} />
+    <Loadable state={health} title="Полнота каталога">{(value) => <CatalogHealthPanel catalog={value.catalog} readiness={value.catalogReadiness} />}</Loadable>
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,.55fr)]"><Loadable state={analytics} title="Активность API">{(value) => <ActivityChart analytics={value.analytics} />}</Loadable><Loadable state={runs} title="История обновлений">{(value) => <RunHistory runs={value.data} compact />}</Loadable></div>
+    <Loadable state={tierlist} title="Tierlist WoWHead">{() => <TierlistTable entries={entries} query={query} setQuery={setQuery} activity={activity} setActivity={setActivity} role={role} setRole={setRole} limit={12} />}</Loadable>
+    <EndpointList />
+  </div>;
+}
+
+function DatasetsView({ datasetSlug, classSlug, refreshKey }: { datasetSlug: string; classSlug: string; refreshKey: number }) {
+  if (!datasetSlug) return <DatasetListView refreshKey={refreshKey} />;
+  return <DatasetDetailView slug={datasetSlug} classSlug={classSlug} refreshKey={refreshKey} />;
+}
+
+function DatasetListView({ refreshKey }: { refreshKey: number }) {
+  const list = useConsoleRequest<{ data: DatasetListItem[] }>("/v1/admin/datasets", { refreshKey, fallback: "Не удалось загрузить список датасетов" });
+  return <Loadable state={list} title="Датасеты">{(value) => <DatasetCatalog datasets={value.data} />}</Loadable>;
+}
+
+const EMPTY_WOWGG: WowGGTierlistResponse = { snapshotId: "", contexts: [], data: [], weeks: [], count: 0 };
+const EMPTY_ICYVEINS: IcyVeinsTierlistResponse = { snapshotId: "", pages: [], data: [], count: 0 };
+
+// The dataset page loads its card, its freshness, its run history and the
+// dataset records as four independent requests.
+function DatasetDetailView({ slug, classSlug, refreshKey }: { slug: string; classSlug: string; refreshKey: number }) {
+  const detail = useConsoleRequest<DatasetDetailResponse>(`/v1/admin/datasets/${encodeURIComponent(slug)}`, { refreshKey, fallback: "Не удалось загрузить датасет" });
+  const freshness = useConsoleRequest<DatasetFreshness>(`/v1/admin/datasets/${encodeURIComponent(slug)}/freshness`, { refreshKey, fallback: "Не удалось проверить свежесть" });
+  const runs = useConsoleRequest<{ data: DatasetRun[] }>(`/v1/admin/datasets/${encodeURIComponent(slug)}/runs`, { refreshKey, enabled: !classSlug, fallback: "Не удалось загрузить историю обновлений" });
+  const [activity, setActivity] = useState("raid");
+  const [role, setRole] = useState("dps");
+  const [difficulty, setDifficulty] = useState("heroic");
+  const [metric, setMetric] = useState("popularity");
+  const [wowGGWeek, setWowGGWeek] = useState("");
+  const [query, setQuery] = useState("");
+  const wowheadURL = slug === "tierlist-wowhead" ? (classSlug ? "/v1/admin/tierlist-wowhead" : `/v1/admin/tierlist-wowhead?activity=${activity}&role=${role}`) : null;
+  const archonURL = slug === "tierlist-archon" ? (classSlug ? "/v1/admin/tierlist-archon" : `/v1/admin/tierlist-archon?activity=${activity}&difficulty=${activity === "mythic_plus" ? "10" : difficulty}&role=${role}`) : null;
+  const wowGGURL = slug === "tierlist-wowgg" ? `/v1/admin/tierlist-wowgg${wowGGWeek ? `?week=${encodeURIComponent(wowGGWeek)}` : ""}` : null;
+  const icyVeinsURL = slug === "tierlist-icyveins" ? (classSlug ? "/v1/admin/tierlist-icyveins" : `/v1/admin/tierlist-icyveins?activity=${activity}&role=${role}`) : null;
+  const wowhead = useConsoleRequest<{ data: TierlistEntry[] }>(wowheadURL, { refreshKey, fallback: "Не удалось загрузить записи датасета" });
+  const archon = useConsoleRequest<{ data: ArchonTierlistEntry[] }>(archonURL, { refreshKey, fallback: "Не удалось загрузить записи датасета" });
+  const wowGG = useConsoleRequest<WowGGTierlistResponse>(wowGGURL, { refreshKey, fallback: "Не удалось загрузить записи датасета" });
+  const icyVeins = useConsoleRequest<IcyVeinsTierlistResponse>(icyVeinsURL, { refreshKey, fallback: "Не удалось загрузить записи датасета" });
+  const records = slug === "tierlist-wowhead" ? wowhead : slug === "tierlist-archon" ? archon : slug === "tierlist-wowgg" ? wowGG : slug === "tierlist-icyveins" ? icyVeins : null;
+  const matches = (name: string) => name.toLowerCase().includes(query.toLowerCase());
+  const entries = useMemo(() => (wowhead.data?.data ?? []).filter((entry) => classSlug || matches(`${entry.specName} ${entry.className}`)), [wowhead.data, query, classSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+  const archonEntries = useMemo(() => (archon.data?.data ?? []).filter((entry) => classSlug || matches(`${entry.specName} ${entry.className}`)), [archon.data, query, classSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+  const wowGGData = useMemo(() => { const value = wowGG.data ?? EMPTY_WOWGG; return { ...value, data: value.data.filter((entry) => classSlug || matches(entry.entityName)) }; }, [wowGG.data, query, classSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+  const icyVeinsData = useMemo(() => { const value = icyVeins.data ?? EMPTY_ICYVEINS; return { ...value, data: value.data.filter((entry) => classSlug || matches(`${entry.specName} ${entry.className}`)) }; }, [icyVeins.data, query, classSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+  const dataset = detail.data ? { ...detail.data.dataset, ...(freshness.data ? { freshness: freshness.data.freshness, freshUntil: freshness.data.freshUntil } : {}) } : null;
+  return <div className="flex flex-col gap-5">
+    <Loadable state={detail} title="Датасет">{() => dataset ? <DatasetSection dataset={dataset} classSlug={classSlug} entries={entries} archonEntries={archonEntries} wowGG={wowGGData} icyVeins={icyVeinsData} wowGGWeek={wowGGWeek} setWowGGWeek={setWowGGWeek} datasetRuns={runs.data?.data ?? []} runsState={runs} recordsState={records} query={query} setQuery={setQuery} activity={activity} setActivity={setActivity} role={role} setRole={setRole} difficulty={difficulty} setDifficulty={setDifficulty} metric={metric} setMetric={setMetric} /> : <EmptyDataset />}</Loadable>
+    {freshness.error ? <SectionError title="Свежесть датасета" message={freshness.error} onRetry={freshness.reload} /> : null}
+  </div>;
 }
 
 type LeaguePanelStatus = {
@@ -367,19 +359,7 @@ function PanelLoadError({ message, onRetry }: { message: string; onRetry: () => 
   </div>;
 }
 
-function Overview({ data, entries, query, setQuery, activity, setActivity, role, setRole }: { data: DashboardData; entries: TierlistEntry[]; query: string; setQuery: (v: string) => void; activity: string; setActivity: (v: string) => void; role: string; setRole: (v: string) => void }) {
-  return <div className="flex flex-col gap-5">
-    <StatusRail data={data} />
-    <CatalogHealthPanel data={data} />
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,.55fr)]"><ActivityChart data={data} /><RunHistory data={data} compact /></div>
-    <TierlistTable entries={entries} query={query} setQuery={setQuery} activity={activity} setActivity={setActivity} role={role} setRole={setRole} limit={12} />
-    <EndpointList data={data} />
-  </div>;
-}
-
-function CatalogHealthPanel({ data }: { data: DashboardData }) {
-  const catalog = data.catalog;
-  const readiness = data.catalogReadiness;
+function CatalogHealthPanel({ catalog, readiness }: { catalog: CatalogHealth & { warnings?: string[] }; readiness: CatalogReadiness }) {
   const actionableChecks = readiness.checks.filter((check) => check.status !== "pass");
   const percent = (value: number) => catalog.entityCount ? `${(value / catalog.entityCount * 100).toFixed(1)}%` : "—";
   const activeImport = catalog.imports.find((item) => item.status === "RUNNING");
@@ -395,7 +375,8 @@ function CatalogHealthPanel({ data }: { data: DashboardData }) {
     <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] text-[#707b90]">
       <span>Последнее атомарное обновление: {catalog.refreshedAt ? new Date(catalog.refreshedAt).toLocaleString("ru-RU") : "не выполнялось"}</span>
       <span>Pipeline: {catalog.lastPipelineRunId ? `#${catalog.lastPipelineRunId} · ${catalog.pipelineStatus} · ${catalog.pipelineStage || "complete"}` : "не запускался"}</span>
-      <span className={catalog.publicationReady ? "text-[#7fc493]" : "text-[#d99a68]"}>Публикация: {catalog.publicationReady == null ? "не проверена" : catalog.publicationReady ? "разрешена" : "заблокирована политикой источников"}</span>
+      <span className={catalog.publicationReady ? "text-[#7fc493]" : "text-[#d99a68]"}>Публикация: {catalog.publicationReady == null ? "не проверена" : catalog.publicationReady ? "разрешена" : "заблокирована"}</span>
+      {catalog.warnings?.includes("import_activity_skipped") ? <span className="text-[#d9ad57]">Живые счётчики импорта пропущены: запрос превысил лимит времени</span> : null}
     </div>
     <div className="mt-4 border border-[#292f3c] bg-[#0d1118] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -506,16 +487,24 @@ function CatalogSelect({ label, value, onChange, options }: { label: string; val
 
 function catalogActivityLabel(activity: string) { return activity === "mythic_plus" ? "Mythic+" : activity === "pvp" ? "PvP" : "Рейд"; }
 
-type DatasetSectionProps = Parameters<typeof Overview>[0] & {
-  datasets: DatasetListItem[];
-  datasetSlug: string;
+type DatasetSectionProps = {
+  dataset: DatasetListItem;
   classSlug: string;
+  entries: TierlistEntry[];
   archonEntries: ArchonTierlistEntry[];
   wowGG: WowGGTierlistResponse;
   icyVeins: IcyVeinsTierlistResponse;
   wowGGWeek: string;
   setWowGGWeek: (value: string) => void;
   datasetRuns: DatasetRun[];
+  runsState: ConsoleRequestState<{ data: DatasetRun[] }>;
+  recordsState: ConsoleRequestState<unknown> | null;
+  query: string;
+  setQuery: (value: string) => void;
+  activity: string;
+  setActivity: (value: string) => void;
+  role: string;
+  setRole: (value: string) => void;
   difficulty: string;
   setDifficulty: (value: string) => void;
   metric: string;
@@ -523,9 +512,7 @@ type DatasetSectionProps = Parameters<typeof Overview>[0] & {
 };
 
 function DatasetSection(props: DatasetSectionProps) {
-  if (!props.datasetSlug) return <DatasetCatalog datasets={props.datasets} />;
-  const dataset = props.datasets.find((item) => item.slug === props.datasetSlug);
-  if (!dataset) return <EmptyDataset />;
+  const dataset = props.dataset;
   if (props.classSlug && dataset.slug === "tierlist-wowhead") return <ClassDetail dataset={dataset} classSlug={props.classSlug} entries={props.entries} />;
   if (props.classSlug && dataset.slug === "tierlist-archon") return <ArchonClassDetail dataset={dataset} classSlug={props.classSlug} entries={props.archonEntries} />;
   if (props.classSlug && dataset.slug === "tierlist-wowgg") return <WowGGClassDetail dataset={dataset} classSlug={props.classSlug} entries={props.wowGG.data} />;
@@ -537,6 +524,15 @@ function DatasetSection(props: DatasetSectionProps) {
   return <EmptyDataset />;
 }
 
+// RecordsNotice surfaces a failed or pending records request above a table
+// that would otherwise just look empty.
+function RecordsNotice({ state }: { state: ConsoleRequestState<unknown> | null }) {
+  if (!state) return null;
+  if (state.error && !state.data) return <SectionError title="Записи датасета" message={state.error} onRetry={state.reload} />;
+  if (state.loading && !state.data) return <SectionSkeleton title="Записи датасета" />;
+  return null;
+}
+
 function DatasetCatalog({ datasets }: { datasets: DatasetListItem[] }) {
   return <div className="flex flex-col gap-5">
     <div>
@@ -545,7 +541,7 @@ function DatasetCatalog({ datasets }: { datasets: DatasetListItem[] }) {
       <p className="mt-2 max-w-2xl text-sm text-[#7f899d]">Откройте датасет, чтобы посмотреть записи, историю обновлений, описания классов и исходные гайды.</p>
     </div>
     <div className="grid gap-4 xl:grid-cols-2">
-      {datasets.map((dataset) => <a key={dataset.id} href={`/datasets/${dataset.slug}`} className="group block border border-[#2d3341] bg-[#11151d] transition-colors hover:border-[#76643b] hover:bg-[#151921]">
+      {datasets.map((dataset) => <a key={dataset.id} href={datasetPath(dataset.slug)} className="group block border border-[#2d3341] bg-[#11151d] transition-colors hover:border-[#76643b] hover:bg-[#151921]">
         <div className="flex flex-col gap-5 p-5 sm:p-6">
           <div className="flex items-start gap-4">
             <div className="grid size-11 shrink-0 place-items-center border border-[#51452e] bg-[#1b1811] text-[#d2ad57]"><Database className="size-5" strokeWidth={1.5} /></div>
@@ -563,34 +559,36 @@ function DatasetCatalog({ datasets }: { datasets: DatasetListItem[] }) {
 
 function DatasetDetail(props: DatasetSectionProps & { dataset: DatasetListItem }) {
   return <div className="flex flex-col gap-5">
-    <Breadcrumb items={[{ label: "Датасеты", href: "/datasets" }, { label: props.dataset.name }]} />
+    <Breadcrumb items={[{ label: "Датасеты", href: datasetPath() }, { label: props.dataset.name }]} />
     <div className="flex flex-col gap-4 border border-[#2d3341] bg-[#11151d] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
       <div><div className="flex flex-wrap items-center gap-3"><h2 className="font-[var(--display)] text-2xl font-semibold">{props.dataset.name}</h2><FreshnessBadge dataset={props.dataset} /></div><p className="mt-2 text-sm text-[#7f899d]">Источник: {props.dataset.sourceName} · обновление каждые {formatInterval(props.dataset.refreshIntervalSeconds)}</p></div>
       <div className="text-left text-xs text-[#7f899d] sm:text-right"><div>Последний успешный снимок</div><strong className="mt-1 block font-medium text-[#c5ccd7]">{formatDate(props.dataset.lastSuccessAt)}</strong></div>
     </div>
-    <StatusRail data={props.data} />
+    <StatusRail systems={null} dataset={props.dataset} />
+    <RecordsNotice state={props.recordsState} />
     <TierlistTable {...props} />
-    <DatasetRunHistory runs={props.datasetRuns} />
+    <DatasetRunHistory runs={props.datasetRuns} state={props.runsState} />
   </div>;
 }
 
 function ArchonDatasetDetail(props: DatasetSectionProps & { dataset: DatasetListItem }) {
   return <div className="flex flex-col gap-5">
-    <Breadcrumb items={[{ label: "Датасеты", href: "/datasets" }, { label: props.dataset.name }]} />
+    <Breadcrumb items={[{ label: "Датасеты", href: datasetPath() }, { label: props.dataset.name }]} />
     <div className="flex flex-col gap-4 border border-[#2d3341] bg-[#11151d] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
       <div><div className="flex flex-wrap items-center gap-3"><h2 className="font-[var(--display)] text-2xl font-semibold">{props.dataset.name}</h2><FreshnessBadge dataset={props.dataset} /></div><p className="mt-2 max-w-3xl text-sm leading-6 text-[#7f899d]">12 срезов Archon: Mythic+ и рейды Normal, Heroic и Mythic для DPS, танков и лекарей. Сохраняются тиры, рейтинг, популярность, число разборов и показатели эффективности.</p></div>
       <div className="text-left text-xs text-[#7f899d] sm:text-right"><div>Последний успешный снимок</div><strong className="mt-1 block font-medium text-[#c5ccd7]">{formatDate(props.dataset.lastSuccessAt)}</strong></div>
     </div>
     <div className="grid grid-cols-3 gap-px border border-[#292f3c] bg-[#292f3c]"><DatasetMetric label="Страниц" value={props.dataset.pageCount} /><DatasetMetric label="Записей" value={props.dataset.recordCount} /><DatasetMetric label="Специализаций" value={props.dataset.uniqueSpecCount} /></div>
+    <RecordsNotice state={props.recordsState} />
     <ArchonTierlistTable entries={props.archonEntries} query={props.query} setQuery={props.setQuery} activity={props.activity} setActivity={props.setActivity} role={props.role} setRole={props.setRole} difficulty={props.difficulty} setDifficulty={props.setDifficulty} metric={props.metric} setMetric={props.setMetric} />
-    <DatasetRunHistory runs={props.datasetRuns} />
+    <DatasetRunHistory runs={props.datasetRuns} state={props.runsState} />
   </div>;
 }
 
 function IcyVeinsDatasetDetail(props: DatasetSectionProps & { dataset: DatasetListItem }) {
   const activePage = props.icyVeins.pages.find((page) => page.activity === props.activity && page.role === props.role);
   return <div className="flex flex-col gap-5">
-    <Breadcrumb items={[{ label: "Датасеты", href: "/datasets" }, { label: props.dataset.name }]} />
+    <Breadcrumb items={[{ label: "Датасеты", href: datasetPath() }, { label: props.dataset.name }]} />
     <div className="flex flex-col gap-4 border border-[#2d3341] bg-[#11151d] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
       <div><div className="flex flex-wrap items-center gap-3"><h2 className="font-[var(--display)] text-2xl font-semibold">{props.dataset.name}</h2><FreshnessBadge dataset={props.dataset} /></div><p className="mt-2 max-w-3xl text-sm leading-6 text-[#7f899d]">Восемь тир-листов Icy Veins: Mythic+, рейды и PvP. Сохраняются только позиции, изменения, даты источников и ссылки на гайды — без текста гайдов.</p></div>
       <div className="text-left text-xs text-[#7f899d] sm:text-right"><div>Ежедневная проверка</div><strong className="mt-1 block font-medium text-[#c5ccd7]">{formatDate(props.dataset.lastSuccessAt)}</strong></div>
@@ -603,14 +601,15 @@ function IcyVeinsDatasetDetail(props: DatasetSectionProps & { dataset: DatasetLi
       </div>
       {activePage ? <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#292f3c] pt-4 text-[10px] text-[#7d879a]"><span>{activePage.recordCount} специализаций</span><span>·</span><span>Автор: {activePage.authorName || "Icy Veins"}</span><span>·</span><a href={activePage.sourceUrl} target="_blank" rel="noreferrer" className="text-[#c6a451] hover:text-[#e2c471]">Открыть источник</a></div> : null}
     </Panel>
+    <RecordsNotice state={props.recordsState} />
     <IcyVeinsTierlistTable entries={props.icyVeins.data} query={props.query} setQuery={props.setQuery} />
-    <DatasetRunHistory runs={props.datasetRuns} />
+    <DatasetRunHistory runs={props.datasetRuns} state={props.runsState} />
   </div>;
 }
 
 function IcyVeinsTierlistTable({ entries, query, setQuery }: { entries: IcyVeinsTierlistEntry[]; query: string; setQuery: (value: string) => void }) {
   return <Panel title="Tierlist — Icy Veins" kicker={`${entries.length} записей в выборке`} icon={Database} action={<div className="relative w-full sm:w-56"><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#626d80]" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти класс или спек" className="h-9 rounded-sm border-[#303645] bg-[#0b0e14] pl-9 text-xs" /></div>}>
-    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-16 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="w-12"><span className="sr-only">Гайд</span></TableHead></TableRow></TableHeader><TableBody>{entries.map((entry) => <TableRow key={`${entry.contextKey}-${entry.classSlug}-${entry.specSlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(entry.tier))}>{entry.tier}</span></TableCell><TableCell><a href={`/datasets/tierlist-icyveins/classes/${entry.classSlug}`} className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</a><div className="mt-0.5 text-[10px] text-[#768196]">#{entry.rankInTier} в тире</div></TableCell><TableCell className="hidden text-xs md:table-cell"><a href={`/datasets/tierlist-icyveins/classes/${entry.classSlug}`} className="inline-flex items-center gap-1.5 text-[#9ca6b8] hover:text-[#dfbd69]">{entry.className}<ChevronRight className="size-3" /></a></TableCell><TableCell><a href={entry.guideUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть гайд ${entry.specName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>)}</TableBody></Table></div>
+    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-16 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="w-12"><span className="sr-only">Гайд</span></TableHead></TableRow></TableHeader><TableBody>{entries.map((entry) => <TableRow key={`${entry.contextKey}-${entry.classSlug}-${entry.specSlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(entry.tier))}>{entry.tier}</span></TableCell><TableCell><Link href={datasetClassPath("tierlist-icyveins", entry.classSlug)} className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</Link><div className="mt-0.5 text-[10px] text-[#768196]">#{entry.rankInTier} в тире</div></TableCell><TableCell className="hidden text-xs md:table-cell"><Link href={datasetClassPath("tierlist-icyveins", entry.classSlug)} className="inline-flex items-center gap-1.5 text-[#9ca6b8] hover:text-[#dfbd69]">{entry.className}<ChevronRight className="size-3" /></Link></TableCell><TableCell><a href={entry.guideUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть гайд ${entry.specName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>)}</TableBody></Table></div>
     {entries.length === 0 ? <div className="border-x border-b border-[#292f3c] py-10 text-center text-xs text-[#737e92]">Для этого формата данных нет. Последний успешный снимок сохранён.</div> : null}
   </Panel>;
 }
@@ -654,7 +653,7 @@ function WowGGDatasetDetail(props: DatasetSectionProps & { dataset: DatasetListI
   const entries = activeContext ? props.wowGG.data.filter((entry) => entry.contextKey === activeContext.contextKey) : [];
 
   return <div className="flex flex-col gap-5">
-    <Breadcrumb items={[{ label: "Датасеты", href: "/datasets" }, { label: props.dataset.name }]} />
+    <Breadcrumb items={[{ label: "Датасеты", href: datasetPath() }, { label: props.dataset.name }]} />
     <div className="flex flex-col gap-4 border border-[#2d3341] bg-[#11151d] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
       <div><div className="flex flex-wrap items-center gap-3"><h2 className="font-[var(--display)] text-2xl font-semibold">{props.dataset.name}</h2><FreshnessBadge dataset={props.dataset} /></div><p className="mt-2 max-w-3xl text-sm leading-6 text-[#7f899d]">Полная мета wow.gg: Mythic+, рейды и PvP, все роли, дополнения, ключи, подземелья, боссы, сложности, PvP-бракеты, регионы и доступные недели.</p></div>
       <div className="text-left text-xs text-[#7f899d] sm:text-right"><div>Обновляется каждые 8 часов</div><strong className="mt-1 block font-medium text-[#c5ccd7]">{formatDate(props.dataset.lastSuccessAt)}</strong></div>
@@ -676,7 +675,7 @@ function WowGGDatasetDetail(props: DatasetSectionProps & { dataset: DatasetListI
       {activeContext ? <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#292f3c] pt-4 text-[10px] text-[#7d879a]"><span>{activeContext.recordCount} записей</span><span>·</span><span>{activeContext.sourceWeek}</span><span>·</span><span>Источник обновлён {formatDate(activeContext.sourceUpdatedAt)}</span><a href={activeContext.sourceUrl} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 text-[#c5a454] hover:text-[#e2c16f]">wow.gg <ExternalLink className="size-3" /></a></div> : null}
     </Panel>
     <WowGGTierlistTable entries={entries} metric={effectiveMetric} query={props.query} setQuery={props.setQuery} datasetSlug={props.dataset.slug} />
-    <DatasetRunHistory runs={props.datasetRuns} />
+    <DatasetRunHistory runs={props.datasetRuns} state={props.runsState} />
   </div>;
 }
 
@@ -685,7 +684,7 @@ function WowGGClassDetail({ dataset, classSlug, entries }: { dataset: DatasetLis
   const specs = Array.from(new Map(classEntries.map((entry) => [entry.specSlug, entry])).values());
   const className = classEntries[0]?.className ?? classSlug;
   return <div className="flex flex-col gap-5">
-    <Breadcrumb items={[{ label: "Датасеты", href: "/datasets" }, { label: dataset.name, href: `/datasets/${dataset.slug}` }, { label: className }]} />
+    <Breadcrumb items={[{ label: "Датасеты", href: datasetPath() }, { label: dataset.name, href: datasetPath(dataset.slug) }, { label: className }]} />
     <div className="flex flex-col gap-4 border border-[#2d3341] bg-[#11151d] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div><p className="text-[10px] uppercase tracking-[.16em] text-[#9a824a]">wow.gg · World of Warcraft</p><h2 className="mt-2 font-[var(--display)] text-3xl font-semibold">{className}</h2><p className="mt-2 text-sm text-[#7f899d]">{classEntries.length} позиций во всех режимах и фильтрах текущего снимка.</p></div><FreshnessBadge dataset={dataset} /></div>
     {specs.length === 0 ? <div className="border border-[#2d3341] bg-[#11151d] py-16 text-center text-sm text-[#8b95a8]">Информация об этом классе не найдена.</div> : <div className="grid gap-4 xl:grid-cols-2">{specs.map((entry) => <Card key={entry.specSlug} className="rounded-sm border-[#2d3341] bg-[#11151d] shadow-none"><CardHeader className="border-b border-[#292f3c] p-5"><div className="flex items-center gap-3"><span className={cn("grid size-10 place-items-center border font-[var(--display)] text-base font-bold", tierStyle(entry.tier))}>{entry.tier}</span><div><CardTitle className="text-lg">{entry.specName}</CardTitle><p className="mt-1 text-[10px] text-[#778196]">Найдено в {classEntries.filter((item) => item.specSlug === entry.specSlug).length} срезах</p></div></div></CardHeader><CardContent className="p-5"><div className="grid grid-cols-2 gap-px border border-[#292f3c] bg-[#292f3c]"><SmallMetric label="Лучший M+ рейтинг" value={formatMetricNumber(bestMetric(classEntries, entry.specSlug, "metaScore"))} /><SmallMetric label="Макс. ключ" value={formatMetricNumber(bestMetric(classEntries, entry.specSlug, "maxKey"))} /><SmallMetric label="Средний DPS" value={formatMetricNumber(bestMetric(classEntries, entry.specSlug, "averageDps"))} /><SmallMetric label="PvP рейтинг" value={formatMetricNumber(bestMetric(classEntries, entry.specSlug, "pvpMaxRating"))} /></div><a href={entry.guideUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex h-10 items-center gap-2 bg-[#c9a24f] px-4 text-xs font-semibold text-[#171205] hover:bg-[#dfbd69]">Открыть гайд wow.gg <ExternalLink className="size-3.5" /></a></CardContent></Card>)}</div>}
   </div>;
@@ -695,7 +694,7 @@ function IcyVeinsClassDetail({ dataset, classSlug, entries }: { dataset: Dataset
   const classEntries = entries.filter((entry) => entry.classSlug === classSlug);
   const className = classEntries[0]?.className ?? classSlug.replaceAll("-", " ");
   return <div className="flex flex-col gap-5">
-    <Breadcrumb items={[{ label: "Датасеты", href: "/datasets" }, { label: dataset.name, href: `/datasets/${dataset.slug}` }, { label: className }]} />
+    <Breadcrumb items={[{ label: "Датасеты", href: datasetPath() }, { label: dataset.name, href: datasetPath(dataset.slug) }, { label: className }]} />
     <div className="border border-[#2d3341] bg-[#11151d] p-5 sm:p-6"><div className="flex flex-wrap items-center gap-3"><h2 className="font-[var(--display)] text-2xl font-semibold capitalize">{className}</h2><FreshnessBadge dataset={dataset} /></div><p className="mt-2 text-sm text-[#7f899d]">Позиции специализаций класса и прямые ссылки на гайды Icy Veins.</p></div>
     <div className="grid gap-4 xl:grid-cols-2">{classEntries.map((entry) => <article key={`${entry.contextKey}-${entry.specSlug}`} className="border border-[#2d3341] bg-[#11151d] p-5"><div className="flex items-start justify-between gap-4"><div><div className="text-[9px] uppercase tracking-[.13em] text-[#897546]">{icyVeinsActivityLabel(entry.activity)} · {roleLabel(entry.role)}</div><h3 className="mt-2 font-[var(--display)] text-lg font-semibold">{entry.specName}</h3></div><span className={cn("grid size-10 place-items-center border font-[var(--display)] text-base font-bold", tierStyle(entry.tier))}>{entry.tier}</span></div><div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#292f3c] pt-4"><span className="text-[10px] text-[#6f798c]">Источник: {formatDate(entry.sourceUpdatedAt)}</span><a href={entry.guideUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-xs text-[#c6a451] hover:text-[#e2c471]">Открыть гайд<ExternalLink className="size-3.5" /></a></div></article>)}</div>
     {classEntries.length === 0 ? <EmptyDataset /> : null}
@@ -706,12 +705,12 @@ function ArchonClassDetail({ dataset, classSlug, entries }: { dataset: DatasetLi
   const classEntries = entries.filter((entry) => entry.classSlug === classSlug);
   const className = classEntries[0]?.className ?? classSlug;
   return <div className="flex flex-col gap-5">
-    <Breadcrumb items={[{ label: "Датасеты", href: "/datasets" }, { label: dataset.name, href: `/datasets/${dataset.slug}` }, { label: className }]} />
+    <Breadcrumb items={[{ label: "Датасеты", href: datasetPath() }, { label: dataset.name, href: datasetPath(dataset.slug) }, { label: className }]} />
     <div className="flex flex-col gap-4 border border-[#2d3341] bg-[#11151d] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
       <div><p className="text-[10px] uppercase tracking-[.16em] text-[#9a824a]">Archon · World of Warcraft</p><h2 className="mt-2 font-[var(--display)] text-3xl font-semibold">{className}</h2><p className="mt-2 text-sm text-[#7f899d]">Все специализации класса во всех 12 срезах: тиры, показатели, объём выборки и ссылки на билды.</p></div>
       <FreshnessBadge dataset={dataset} />
     </div>
-    {classEntries.length === 0 ? <div className="border border-[#2d3341] bg-[#11151d] py-16 text-center"><p className="text-sm text-[#8b95a8]">Информация об этом классе не найдена.</p><a href={`/datasets/${dataset.slug}`} className="mt-4 inline-flex items-center gap-2 text-xs text-[#d2ad57]"><ArrowLeft className="size-4" />Вернуться к датасету</a></div> : <div className="grid gap-4 xl:grid-cols-2">{classEntries.map((entry) => <Card key={`${entry.activity}-${entry.difficulty}-${entry.role}-${entry.specSlug}`} className="rounded-sm border-[#2d3341] bg-[#11151d] shadow-none">
+    {classEntries.length === 0 ? <div className="border border-[#2d3341] bg-[#11151d] py-16 text-center"><p className="text-sm text-[#8b95a8]">Информация об этом классе не найдена.</p><Link href={datasetPath(dataset.slug)} className="mt-4 inline-flex items-center gap-2 text-xs text-[#d2ad57]"><ArrowLeft className="size-4" />Вернуться к датасету</Link></div> : <div className="grid gap-4 xl:grid-cols-2">{classEntries.map((entry) => <Card key={`${entry.activity}-${entry.difficulty}-${entry.role}-${entry.specSlug}`} className="rounded-sm border-[#2d3341] bg-[#11151d] shadow-none">
       <CardHeader className="border-b border-[#292f3c] p-5"><div className="flex items-start gap-3"><span className={cn("grid size-10 shrink-0 place-items-center border font-[var(--display)] text-base font-bold", tierStyle(entry.tier))}>{entry.tier || "—"}</span><div className="min-w-0 flex-1"><CardTitle className="text-lg">{entry.specName}</CardTitle><div className="mt-2 flex flex-wrap gap-2"><Badge variant="outline" className="rounded-sm border-[#3a4352] text-[9px] text-[#9ea8ba]">{activityLabel(entry.activity)}</Badge><Badge variant="outline" className="rounded-sm border-[#3a4352] text-[9px] text-[#9ea8ba]">{difficultyLabel(entry.difficulty)}</Badge><Badge variant="outline" className="rounded-sm border-[#3a4352] text-[9px] text-[#9ea8ba]">{roleLabel(entry.role)}</Badge></div></div></div></CardHeader>
       <CardContent className="p-5"><div className="grid grid-cols-2 gap-px border border-[#292f3c] bg-[#292f3c]"><SmallMetric label="Разборов" value={entry.parses.toLocaleString("ru-RU")} /><SmallMetric label="Популярность" value={entry.popularity == null ? "—" : `${(entry.popularity * 100).toFixed(1)}%`} /><SmallMetric label="DPS" value={formatMetricNumber(entry.dps)} /><SmallMetric label="HPS" value={formatMetricNumber(entry.hps)} /></div><div className="mt-5 flex flex-wrap gap-3"><a href={entry.buildUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 bg-[#c9a24f] px-4 text-xs font-semibold text-[#171205] hover:bg-[#dfbd69]">Открыть билд <ExternalLink className="size-3.5" /></a><a href={entry.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 border border-[#3a4352] px-4 text-xs text-[#a9b2c2] hover:border-[#806c3e] hover:text-[#dfbd69]">Источник <ExternalLink className="size-3.5" /></a></div></CardContent>
     </Card>)}</div>}
@@ -722,35 +721,42 @@ function ClassDetail({ dataset, classSlug, entries }: { dataset: DatasetListItem
   const classEntries = entries.filter((entry) => entry.classSlug === classSlug);
   const className = classEntries[0]?.className ?? classSlug;
   return <div className="flex flex-col gap-5">
-    <Breadcrumb items={[{ label: "Датасеты", href: "/datasets" }, { label: dataset.name, href: `/datasets/${dataset.slug}` }, { label: className }]} />
+    <Breadcrumb items={[{ label: "Датасеты", href: datasetPath() }, { label: dataset.name, href: datasetPath(dataset.slug) }, { label: className }]} />
     <div className="flex flex-col gap-4 border border-[#2d3341] bg-[#11151d] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
       <div><p className="text-[10px] uppercase tracking-[.16em] text-[#9a824a]">World of Warcraft · класс</p><h2 className="mt-2 font-[var(--display)] text-3xl font-semibold">{className}</h2><p className="mt-2 text-sm text-[#7f899d]">Все найденные специализации, тиры и прямые ссылки на гайды WoWHead.</p></div>
       <FreshnessBadge dataset={dataset} />
     </div>
-    {classEntries.length === 0 ? <div className="border border-[#2d3341] bg-[#11151d] py-16 text-center"><p className="text-sm text-[#8b95a8]">Информация об этом классе не найдена.</p><a href={`/datasets/${dataset.slug}`} className="mt-4 inline-flex items-center gap-2 text-xs text-[#d2ad57]"><ArrowLeft className="size-4" />Вернуться к датасету</a></div> : <div className="grid gap-4 xl:grid-cols-2">{classEntries.map((entry) => <Card key={`${entry.activity}-${entry.role}-${entry.specSlug}`} className="rounded-sm border-[#2d3341] bg-[#11151d] shadow-none">
+    {classEntries.length === 0 ? <div className="border border-[#2d3341] bg-[#11151d] py-16 text-center"><p className="text-sm text-[#8b95a8]">Информация об этом классе не найдена.</p><Link href={datasetPath(dataset.slug)} className="mt-4 inline-flex items-center gap-2 text-xs text-[#d2ad57]"><ArrowLeft className="size-4" />Вернуться к датасету</Link></div> : <div className="grid gap-4 xl:grid-cols-2">{classEntries.map((entry) => <Card key={`${entry.activity}-${entry.role}-${entry.specSlug}`} className="rounded-sm border-[#2d3341] bg-[#11151d] shadow-none">
       <CardHeader className="border-b border-[#292f3c] p-5"><div className="flex items-start gap-3"><span className={cn("grid size-10 shrink-0 place-items-center border font-[var(--display)] text-base font-bold", tierStyle(entry.tier))}>{entry.tier}</span><div className="min-w-0 flex-1"><CardTitle className="text-lg">{entry.specName}</CardTitle><div className="mt-2 flex flex-wrap gap-2"><Badge variant="outline" className="rounded-sm border-[#3a4352] text-[9px] text-[#9ea8ba]">{activityLabel(entry.activity)}</Badge><Badge variant="outline" className="rounded-sm border-[#3a4352] text-[9px] text-[#9ea8ba]">{roleLabel(entry.role)}</Badge></div></div></div></CardHeader>
       <CardContent className="p-5"><div className="flex flex-wrap gap-3"><a href={entry.guideUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 bg-[#c9a24f] px-4 text-xs font-semibold text-[#171205] hover:bg-[#dfbd69]">Открыть гайд <ExternalLink className="size-3.5" /></a><a href={entry.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 border border-[#3a4352] px-4 text-xs text-[#a9b2c2] hover:border-[#806c3e] hover:text-[#dfbd69]">Исходная страница <ExternalLink className="size-3.5" /></a></div></CardContent>
     </Card>)}</div>}
   </div>;
 }
 
-function EmptyDataset() { return <div className="border border-[#2d3341] bg-[#11151d] py-16 text-center"><Database className="mx-auto size-8 text-[#6f798c]" /><h2 className="mt-4 text-lg font-semibold">Датасет не найден</h2><a href="/datasets" className="mt-4 inline-flex items-center gap-2 text-xs text-[#d2ad57]"><ArrowLeft className="size-4" />К списку датасетов</a></div>; }
+function EmptyDataset() { return <div className="border border-[#2d3341] bg-[#11151d] py-16 text-center"><Database className="mx-auto size-8 text-[#6f798c]" /><h2 className="mt-4 text-lg font-semibold">Датасет не найден</h2><Link href={datasetPath()} className="mt-4 inline-flex items-center gap-2 text-xs text-[#d2ad57]"><ArrowLeft className="size-4" />К списку датасетов</Link></div>; }
 
-function Breadcrumb({ items }: { items: { label: string; href?: string }[] }) { return <nav aria-label="Хлебные крошки" className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[.12em] text-[#697387]">{items.map((item, index) => <span key={`${item.label}-${index}`} className="flex items-center gap-2">{index > 0 ? <ChevronRight className="size-3" /> : null}{item.href ? <a href={item.href} className="text-[#a98d4f] hover:text-[#ddba67]">{item.label}</a> : <span>{item.label}</span>}</span>)}</nav>; }
+function Breadcrumb({ items }: { items: { label: string; href?: string }[] }) { return <nav aria-label="Хлебные крошки" className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[.12em] text-[#697387]">{items.map((item, index) => <span key={`${item.label}-${index}`} className="flex items-center gap-2">{index > 0 ? <ChevronRight className="size-3" /> : null}{item.href ? <Link href={item.href} className="text-[#a98d4f] hover:text-[#ddba67]">{item.label}</Link> : <span>{item.label}</span>}</span>)}</nav>; }
 
 function FreshnessBadge({ dataset }: { dataset: DatasetListItem }) { const fresh = dataset.freshness === "fresh"; const never = dataset.freshness === "never"; return <Badge variant="outline" className={cn("rounded-sm px-2 py-1 text-[9px] uppercase tracking-[.1em]", fresh ? "border-[#31583a] bg-[#102017] text-[#6bc278]" : never ? "border-[#604047] bg-[#261619] text-[#df7c83]" : "border-[#66552e] bg-[#211c10] text-[#e0b85d]")}><span className={cn("mr-1.5 size-1.5 rounded-full", fresh ? "bg-[#58ad67]" : never ? "bg-[#d95c55]" : "bg-[#d2a846]")} />{fresh ? "Свежие данные" : never ? "Нет данных" : "Данные устарели"}</Badge>; }
 
 function DatasetMetric({ label, value }: { label: string; value: number }) { return <div className="bg-[#0c1017] p-3"><div className="text-[9px] uppercase tracking-[.12em] text-[#687286]">{label}</div><div className="mt-1 font-[var(--display)] text-lg font-semibold text-[#e1e5ed]">{value.toLocaleString("ru-RU")}</div></div>; }
 
-function StatusRail({ data }: { data: DashboardData }) {
-  const success = data.systems.every((system) => system.status === "operational");
-  const cards = [{ label: success ? "Все системы работают" : "Есть отклонения", value: success ? "Работает" : "Проверить", icon: Activity, ok: success }, { label: "Страниц собрано", value: data.dataset.pageCount, icon: FileJson2 }, { label: "Записей в датасете", value: data.dataset.recordCount, icon: Database }, { label: "Уникальных специализаций", value: data.dataset.uniqueSpecCount, icon: Swords }, { label: "Последнее обновление", value: relativeTime(data.dataset.lastSuccessAt), icon: Clock3 }];
+function StatusRail({ systems, dataset, error, onRetry }: { systems: SystemStatus[] | null; dataset: DatasetListItem | DatasetSummary | null; error?: string; onRetry?: () => void }) {
+  if (error && !systems && !dataset && onRetry) return <SectionError title="Состояние систем" message={error} onRetry={onRetry} />;
+  const success = systems ? systems.every((system) => system.status === "operational") : null;
+  const cards = [
+    { label: success == null ? "Проверка систем" : success ? "Все системы работают" : "Есть отклонения", value: success == null ? (systems ? "—" : "Проверяем…") : success ? "Работает" : "Проверить", icon: Activity, ok: success === true },
+    { label: "Страниц собрано", value: dataset ? dataset.pageCount : "—", icon: FileJson2 },
+    { label: "Записей в датасете", value: dataset ? dataset.recordCount : "—", icon: Database },
+    { label: "Уникальных специализаций", value: dataset ? dataset.uniqueSpecCount : "—", icon: Swords },
+    { label: "Последнее обновление", value: dataset ? relativeTime(dataset.lastSuccessAt) : "—", icon: Clock3 },
+  ];
   return <div className="grid border border-[#2b303e] bg-[#2b303e] sm:grid-cols-2 xl:grid-cols-5">{cards.map((card, index) => <div key={card.label} className="flex min-h-[92px] items-center gap-3 border-b border-r border-[#2b303e] bg-[#11151d] px-4 py-4 last:border-r-0 sm:px-5 xl:border-b-0"><div className={cn("grid size-9 shrink-0 place-items-center border bg-[#0b0e14]", index === 0 && card.ok ? "border-[#31583a] text-[#65ba72]" : "border-[#424652] text-[#c2a253]")}><card.icon className="size-4" strokeWidth={1.5} /></div><div className="min-w-0"><div className="truncate text-[9px] uppercase tracking-[.12em] text-[#737e92]">{card.label}</div><div className="mt-1 truncate font-[var(--display)] text-lg font-semibold text-[#e4e8ef]">{card.value}</div></div></div>)}</div>;
 }
 
-function ActivityChart({ data }: { data: DashboardData }) {
-  const chart = (data.analytics.series ?? []).map((point) => ({ ...point, label: new Date(point.hour).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) }));
-  return <Panel title="Активность API" kicker="Последние 24 часа" icon={BarChart3}><div className="mb-4 grid grid-cols-3 gap-px border border-[#292f3c] bg-[#292f3c]"><Metric label="События" value={data.analytics.events} /><Metric label="Пользователи" value={data.analytics.uniqueUsers} /><Metric label="Подписки" value={data.analytics.activeSubscriptions} /></div><div className="h-[245px] min-w-0"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chart} margin={{ top: 8, right: 4, bottom: 0, left: -24 }}><defs><linearGradient id="activityGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c9a24f" stopOpacity={0.35} /><stop offset="100%" stopColor="#c9a24f" stopOpacity={0} /></linearGradient></defs><CartesianGrid stroke="#232938" vertical={false} /><XAxis dataKey="label" stroke="#667086" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={30} /><YAxis stroke="#667086" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} allowDecimals={false} /><Tooltip contentStyle={{ background: "#11151d", border: "1px solid #3a404f", borderRadius: 2, fontSize: 11 }} labelStyle={{ color: "#8791a5" }} /><Area type="monotone" dataKey="events" stroke="#d2ad57" fill="url(#activityGold)" strokeWidth={2} name="События" /></AreaChart></ResponsiveContainer></div></Panel>;
+function ActivityChart({ analytics }: { analytics: AnalyticsOverview }) {
+  const chart = (analytics.series ?? []).map((point) => ({ ...point, label: new Date(point.hour).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) }));
+  return <Panel title="Активность API" kicker="Последние 24 часа" icon={BarChart3}><div className="mb-4 grid grid-cols-3 gap-px border border-[#292f3c] bg-[#292f3c]"><Metric label="События" value={analytics.events} /><Metric label="Пользователи" value={analytics.uniqueUsers} /><Metric label="Подписки" value={analytics.activeSubscriptions} /></div><div className="h-[245px] min-w-0"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chart} margin={{ top: 8, right: 4, bottom: 0, left: -24 }}><defs><linearGradient id="activityGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c9a24f" stopOpacity={0.35} /><stop offset="100%" stopColor="#c9a24f" stopOpacity={0} /></linearGradient></defs><CartesianGrid stroke="#232938" vertical={false} /><XAxis dataKey="label" stroke="#667086" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={30} /><YAxis stroke="#667086" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} allowDecimals={false} /><Tooltip contentStyle={{ background: "#11151d", border: "1px solid #3a404f", borderRadius: 2, fontSize: 11 }} labelStyle={{ color: "#8791a5" }} /><Area type="monotone" dataKey="events" stroke="#d2ad57" fill="url(#activityGold)" strokeWidth={2} name="События" /></AreaChart></ResponsiveContainer></div></Panel>;
 }
 
 function Metric({ label, value }: { label: string; value: number }) { return <div className="bg-[#0d1118] px-3 py-3"><div className="text-[9px] uppercase tracking-[.12em] text-[#687286]">{label}</div><div className="mt-1 font-[var(--display)] text-xl font-semibold">{value.toLocaleString("ru-RU")}</div></div>; }
@@ -759,7 +765,7 @@ function TierlistTable({ entries, query, setQuery, activity, setActivity, role, 
   const displayed = limit ? entries.slice(0, limit) : entries;
   return <Panel title="Tierlist WoWHead" kicker={`${entries.length} записей в выборке`} icon={Database} action={<div className="flex flex-wrap items-center gap-2"><Tabs value={activity} onValueChange={setActivity}><TabsList className="h-8 rounded-sm border border-[#303645] bg-[#0b0e14] p-0"><TabsTrigger value="raid" className="h-full rounded-sm px-3 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">Рейд</TabsTrigger><TabsTrigger value="mythic_plus" className="h-full rounded-sm px-3 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">Mythic+</TabsTrigger></TabsList></Tabs><Tabs value={role} onValueChange={setRole}><TabsList className="h-8 rounded-sm border border-[#303645] bg-[#0b0e14] p-0">{[["dps", "DPS"], ["healer", "Лекарь"], ["tank", "Танк"]].map(([id, label]) => <TabsTrigger key={id} value={id} className="h-full rounded-sm px-3 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">{label}</TabsTrigger>)}</TabsList></Tabs></div>}>
     <div className="relative mb-4 max-w-xs"><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#697387]" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти специализацию..." className="h-9 rounded-sm border-[#303645] bg-[#0b0e14] pl-9 text-xs" /></div>
-    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-16 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="w-12"><span className="sr-only">Гайд</span></TableHead></TableRow></TableHeader><TableBody>{displayed.map((entry) => <TableRow key={`${entry.activity}-${entry.role}-${entry.classSlug}-${entry.specSlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(entry.tier))}>{entry.tier}</span></TableCell><TableCell><a href={`/datasets/tierlist-wowhead/classes/${entry.classSlug}`} className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</a><a href={`/datasets/tierlist-wowhead/classes/${entry.classSlug}`} className="mt-0.5 block text-[10px] text-[#8d9ab0] hover:text-[#dfbd69] md:hidden">{entry.className} · подробнее</a></TableCell><TableCell className="hidden text-xs md:table-cell"><a href={`/datasets/tierlist-wowhead/classes/${entry.classSlug}`} className="inline-flex items-center gap-1.5 text-[#9ca6b8] hover:text-[#dfbd69]">{entry.className}<ChevronRight className="size-3" /></a></TableCell><TableCell><a href={entry.guideUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть гайд ${entry.specName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>)}</TableBody></Table></div>
+    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-16 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="w-12"><span className="sr-only">Гайд</span></TableHead></TableRow></TableHeader><TableBody>{displayed.map((entry) => <TableRow key={`${entry.activity}-${entry.role}-${entry.classSlug}-${entry.specSlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(entry.tier))}>{entry.tier}</span></TableCell><TableCell><Link href={datasetClassPath("tierlist-wowhead", entry.classSlug)} className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</Link><Link href={datasetClassPath("tierlist-wowhead", entry.classSlug)} className="mt-0.5 block text-[10px] text-[#8d9ab0] hover:text-[#dfbd69] md:hidden">{entry.className} · подробнее</Link></TableCell><TableCell className="hidden text-xs md:table-cell"><Link href={datasetClassPath("tierlist-wowhead", entry.classSlug)} className="inline-flex items-center gap-1.5 text-[#9ca6b8] hover:text-[#dfbd69]">{entry.className}<ChevronRight className="size-3" /></Link></TableCell><TableCell><a href={entry.guideUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть гайд ${entry.specName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>)}</TableBody></Table></div>
     {displayed.length === 0 && <div className="border-x border-b border-[#292f3c] py-10 text-center text-xs text-[#737e92]">В этой выборке записей нет</div>}
   </Panel>;
 }
@@ -781,7 +787,7 @@ function ArchonTierlistTable({ entries, query, setQuery, activity, setActivity, 
   };
   return <Panel title="Tierlist Archon" kicker={`${entries.length} записей в выборке`} icon={Database} action={<div className="flex flex-wrap items-center gap-2"><Tabs value={activity} onValueChange={(value) => { setActivity(value); if (value === "mythic_plus") setMetric("score"); else if (metric === "score") setMetric("popularity"); }}><TabsList className="h-8 rounded-sm border border-[#303645] bg-[#0b0e14] p-0"><TabsTrigger value="raid" className="h-full rounded-sm px-3 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">Рейд</TabsTrigger><TabsTrigger value="mythic_plus" className="h-full rounded-sm px-3 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">Mythic+</TabsTrigger></TabsList></Tabs><Tabs value={role} onValueChange={setRole}><TabsList className="h-8 rounded-sm border border-[#303645] bg-[#0b0e14] p-0">{[["dps", "DPS"], ["healer", "Лекарь"], ["tank", "Танк"]].map(([id, label]) => <TabsTrigger key={id} value={id} className="h-full rounded-sm px-3 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">{label}</TabsTrigger>)}</TabsList></Tabs></div>}>
     <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"><div className="relative max-w-xs flex-1"><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#697387]" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти специализацию..." className="h-9 rounded-sm border-[#303645] bg-[#0b0e14] pl-9 text-xs" /></div><div className="flex flex-wrap gap-2">{activity === "raid" ? <Tabs value={difficulty} onValueChange={setDifficulty}><TabsList className="h-8 rounded-sm border border-[#303645] bg-[#0b0e14] p-0">{[["normal", "Normal"], ["heroic", "Heroic"], ["mythic", "Mythic"]].map(([id, label]) => <TabsTrigger key={id} value={id} className="h-full rounded-sm px-3 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">{label}</TabsTrigger>)}</TabsList></Tabs> : null}<Tabs value={activeMetric} onValueChange={setMetric}><TabsList className="h-8 rounded-sm border border-[#303645] bg-[#0b0e14] p-0">{availableMetrics.map(([id, label]) => <TabsTrigger key={id} value={id} className="h-full rounded-sm px-3 text-[10px] data-[state=active]:bg-[#29271e] data-[state=active]:text-[#dfbe6c]">{label}</TabsTrigger>)}</TabsList></Tabs></div></div>
-    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-16 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="text-right text-[9px] uppercase tracking-[.12em] text-[#6f798c]">{metricLabel(activeMetric, role)}</TableHead><TableHead className="hidden text-right text-[9px] uppercase tracking-[.12em] text-[#6f798c] sm:table-cell">Разборов</TableHead><TableHead className="w-12"><span className="sr-only">Билд</span></TableHead></TableRow></TableHeader><TableBody>{displayed.map((entry) => { const assignment = entry.tierAssignments[activeMetric]; return <TableRow key={`${entry.activity}-${entry.difficulty}-${entry.role}-${entry.classSlug}-${entry.specSlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(assignment?.tier ?? ""))}>{assignment?.tier ?? "—"}</span></TableCell><TableCell><a href={`/datasets/tierlist-archon/classes/${entry.classSlug}`} className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</a></TableCell><TableCell className="hidden text-xs md:table-cell"><a href={`/datasets/tierlist-archon/classes/${entry.classSlug}`} className="inline-flex items-center gap-1.5 text-[#9ca6b8] hover:text-[#dfbd69]">{entry.className}<ChevronRight className="size-3" /></a></TableCell><TableCell className="text-right font-mono text-xs text-[#d8bd79]">{metricValue(entry)}</TableCell><TableCell className="hidden text-right font-mono text-xs text-[#8792a5] sm:table-cell">{entry.parses.toLocaleString("ru-RU")}</TableCell><TableCell><a href={entry.buildUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть билд ${entry.specName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>; })}</TableBody></Table></div>
+    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-16 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="text-right text-[9px] uppercase tracking-[.12em] text-[#6f798c]">{metricLabel(activeMetric, role)}</TableHead><TableHead className="hidden text-right text-[9px] uppercase tracking-[.12em] text-[#6f798c] sm:table-cell">Разборов</TableHead><TableHead className="w-12"><span className="sr-only">Билд</span></TableHead></TableRow></TableHeader><TableBody>{displayed.map((entry) => { const assignment = entry.tierAssignments[activeMetric]; return <TableRow key={`${entry.activity}-${entry.difficulty}-${entry.role}-${entry.classSlug}-${entry.specSlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(assignment?.tier ?? ""))}>{assignment?.tier ?? "—"}</span></TableCell><TableCell><Link href={datasetClassPath("tierlist-archon", entry.classSlug)} className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</Link></TableCell><TableCell className="hidden text-xs md:table-cell"><Link href={datasetClassPath("tierlist-archon", entry.classSlug)} className="inline-flex items-center gap-1.5 text-[#9ca6b8] hover:text-[#dfbd69]">{entry.className}<ChevronRight className="size-3" /></Link></TableCell><TableCell className="text-right font-mono text-xs text-[#d8bd79]">{metricValue(entry)}</TableCell><TableCell className="hidden text-right font-mono text-xs text-[#8792a5] sm:table-cell">{entry.parses.toLocaleString("ru-RU")}</TableCell><TableCell><a href={entry.buildUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть билд ${entry.specName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>; })}</TableBody></Table></div>
     {displayed.length === 0 ? <div className="border-x border-b border-[#292f3c] py-10 text-center text-xs text-[#737e92]">В этой выборке записей нет. Последний успешный снимок сохранён.</div> : null}
   </Panel>;
 }
@@ -826,7 +832,7 @@ function wowGGMetricValue(entry: WowGGTierlistEntry, metric: string): number | n
 function WowGGTierlistTable({ entries, metric, query, setQuery, datasetSlug }: { entries: WowGGTierlistEntry[]; metric: string; query: string; setQuery: (value: string) => void; datasetSlug: string }) {
   const displayed = [...entries].sort((left, right) => (left.tierAssignments[metric]?.rank ?? 32_767) - (right.tierAssignments[metric]?.rank ?? 32_767));
   return <Panel title="Tierlist — wow.gg" kicker={`${displayed.length} записей в выбранном срезе`} icon={Database} action={<div className="relative w-full sm:w-56"><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#626d80]" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти класс или спек" className="h-9 rounded-sm border-[#303645] bg-[#0b0e14] pl-9 text-xs" /></div>}>
-    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-14 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация / подземелье</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="text-right text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Значение</TableHead><TableHead className="w-12"><span className="sr-only">Источник</span></TableHead></TableRow></TableHeader><TableBody>{displayed.map((entry) => { const assignment = entry.tierAssignments[metric]; const value = wowGGMetricValue(entry, metric); const classHref = entry.classSlug ? `/datasets/${datasetSlug}/classes/${entry.classSlug}` : ""; return <TableRow key={`${entry.contextKey}-${entry.entityType}-${entry.entitySlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(assignment?.tier ?? entry.tier))}>{assignment?.tier ?? entry.tier}</span></TableCell><TableCell>{classHref ? <a href={classHref} className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</a> : <span className="font-semibold text-[#e0e4ec]">{entry.entityName}</span>}<div className="mt-0.5 text-[10px] text-[#768196]">#{assignment?.rank ?? entry.rank}</div></TableCell><TableCell className="hidden text-xs md:table-cell">{classHref ? <a href={classHref} className="inline-flex items-center gap-1.5 text-[#9ca6b8] hover:text-[#dfbd69]">{entry.className}<ChevronRight className="size-3" /></a> : <span className="text-[#697387]">Mythic+</span>}</TableCell><TableCell className="text-right font-mono text-xs text-[#d8bd79]">{metric === "popularity" && value != null ? `${value.toFixed(1)}%` : metric === "maxKey" && value != null ? `+${Math.round(value)}` : formatMetricNumber(value)}</TableCell><TableCell><a href={entry.guideUrl || entry.sourceUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть источник ${entry.entityName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>; })}</TableBody></Table></div>
+    <div className="overflow-x-auto border border-[#292f3c]"><Table><TableHeader><TableRow className="border-[#292f3c] bg-[#0c1017] hover:bg-[#0c1017]"><TableHead className="w-14 text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Тир</TableHead><TableHead className="text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Специализация / подземелье</TableHead><TableHead className="hidden text-[9px] uppercase tracking-[.12em] text-[#6f798c] md:table-cell">Класс</TableHead><TableHead className="text-right text-[9px] uppercase tracking-[.12em] text-[#6f798c]">Значение</TableHead><TableHead className="w-12"><span className="sr-only">Источник</span></TableHead></TableRow></TableHeader><TableBody>{displayed.map((entry) => { const assignment = entry.tierAssignments[metric]; const value = wowGGMetricValue(entry, metric); const classHref = entry.classSlug ? datasetClassPath(datasetSlug, entry.classSlug) : ""; return <TableRow key={`${entry.contextKey}-${entry.entityType}-${entry.entitySlug}`} className="border-[#252b38] bg-[#11151d] hover:bg-[#171b24]"><TableCell><span className={cn("grid size-8 place-items-center border font-[var(--display)] text-sm font-bold", tierStyle(assignment?.tier ?? entry.tier))}>{assignment?.tier ?? entry.tier}</span></TableCell><TableCell>{classHref ? <Link href={classHref} className="font-semibold text-[#e0e4ec] hover:text-[#dfbd69]">{entry.specName}</Link> : <span className="font-semibold text-[#e0e4ec]">{entry.entityName}</span>}<div className="mt-0.5 text-[10px] text-[#768196]">#{assignment?.rank ?? entry.rank}</div></TableCell><TableCell className="hidden text-xs md:table-cell">{classHref ? <Link href={classHref} className="inline-flex items-center gap-1.5 text-[#9ca6b8] hover:text-[#dfbd69]">{entry.className}<ChevronRight className="size-3" /></Link> : <span className="text-[#697387]">Mythic+</span>}</TableCell><TableCell className="text-right font-mono text-xs text-[#d8bd79]">{metric === "popularity" && value != null ? `${value.toFixed(1)}%` : metric === "maxKey" && value != null ? `+${Math.round(value)}` : formatMetricNumber(value)}</TableCell><TableCell><a href={entry.guideUrl || entry.sourceUrl} target="_blank" rel="noreferrer" className="grid size-8 place-items-center border border-[#323846] text-[#a88c4d] hover:border-[#8f7540] hover:text-[#e0bd68]" aria-label={`Открыть источник ${entry.entityName}`}><ExternalLink className="size-3.5" /></a></TableCell></TableRow>; })}</TableBody></Table></div>
     {displayed.length === 0 ? <div className="border-x border-b border-[#292f3c] py-10 text-center text-xs text-[#737e92]">Для этой комбинации фильтров данных пока нет. Последний успешный снимок сохранён.</div> : null}
   </Panel>;
 }
@@ -836,20 +842,28 @@ function bestMetric(entries: WowGGTierlistEntry[], specSlug: string | null, fiel
   return values.length ? Math.max(...values) : null;
 }
 
-function DatasetRunHistory({ runs }: { runs: DatasetRun[] }) {
-  return <Panel title="История обновлений" kicker="Снимки сохраняются при сбоях" icon={Clock3}>{runs.length === 0 ? <div className="py-10 text-center text-xs text-[#737e92]">Запуски ещё не зарегистрированы</div> : <div className="flex flex-col">{runs.map((run) => <div key={run.id} className="flex items-center gap-3 border-b border-[#252b38] py-3 last:border-b-0"><span className={cn("grid size-7 shrink-0 place-items-center border", run.status === "succeeded" ? "border-[#31583a] bg-[#122018] text-[#65ba72]" : run.status === "failed" ? "border-[#653a3d] bg-[#251416] text-[#e47d82]" : "border-[#5c4e2c] bg-[#211b0f] text-[#d2ad57]")}>{run.status === "succeeded" ? <Check className="size-3.5" /> : run.status === "failed" ? <X className="size-3.5" /> : <RefreshCw className="size-3.5" />}</span><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><div className="truncate text-xs font-medium">{run.status === "succeeded" ? "Обновление выполнено" : run.status === "failed" ? "Ошибка обновления — сохранён прошлый снимок" : "Обновление данных"}</div><time className="shrink-0 text-[9px] text-[#667086]">{formatDate(run.finishedAt || run.startedAt)}</time></div><div className="mt-1 text-[10px] text-[#737e92]">{run.recordCount} записей · {run.pageCount} страниц · {run.trigger}</div>{run.errorSummary ? <div className="mt-1 text-[10px] text-[#bd7479]">{run.errorSummary}</div> : null}</div></div>)}</div>}</Panel>;
+function DatasetRunHistory({ runs, state }: { runs: DatasetRun[]; state?: ConsoleRequestState<{ data: DatasetRun[] }> }) {
+  return <Panel title="История обновлений" kicker="Снимки сохраняются при сбоях" icon={Clock3}>{state?.error && !state.data ? <SectionError title="История обновлений" message={state.error} onRetry={state.reload} /> : state?.loading && !state.data ? <SectionSkeleton title="История обновлений" /> : runs.length === 0 ? <div className="py-10 text-center text-xs text-[#737e92]">Запуски ещё не зарегистрированы</div> : <div className="flex flex-col">{runs.map((run) => <div key={run.id} className="flex items-center gap-3 border-b border-[#252b38] py-3 last:border-b-0"><span className={cn("grid size-7 shrink-0 place-items-center border", run.status === "succeeded" ? "border-[#31583a] bg-[#122018] text-[#65ba72]" : run.status === "failed" ? "border-[#653a3d] bg-[#251416] text-[#e47d82]" : "border-[#5c4e2c] bg-[#211b0f] text-[#d2ad57]")}>{run.status === "succeeded" ? <Check className="size-3.5" /> : run.status === "failed" ? <X className="size-3.5" /> : <RefreshCw className="size-3.5" />}</span><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><div className="truncate text-xs font-medium">{run.status === "succeeded" ? "Обновление выполнено" : run.status === "failed" ? "Ошибка обновления — сохранён прошлый снимок" : "Обновление данных"}</div><time className="shrink-0 text-[9px] text-[#667086]">{formatDate(run.finishedAt || run.startedAt)}</time></div><div className="mt-1 text-[10px] text-[#737e92]">{run.recordCount} записей · {run.pageCount} страниц · {run.trigger}</div>{run.errorSummary ? <div className="mt-1 text-[10px] text-[#bd7479]">{run.errorSummary}</div> : null}</div></div>)}</div>}</Panel>;
 }
 
-function RunHistory({ data, compact = false }: { data: DashboardData; compact?: boolean }) {
-  const runs = compact ? data.runs.slice(0, 5) : data.runs;
+function RunHistory({ runs: allRuns, compact = false }: { runs: DatasetRun[]; compact?: boolean }) {
+  const runs = compact ? allRuns.slice(0, 5) : allRuns;
   return <Panel title="История обновлений" kicker="Снимки сохраняются при сбоях" icon={Clock3}>{runs.length === 0 ? <div className="py-10 text-center text-xs text-[#737e92]">Запуски ещё не зарегистрированы</div> : <div className="flex flex-col">{runs.map((run) => <div key={run.id} className="flex items-center gap-3 border-b border-[#252b38] py-3 last:border-b-0"><span className={cn("grid size-7 shrink-0 place-items-center border", run.status === "succeeded" ? "border-[#31583a] bg-[#122018] text-[#65ba72]" : run.status === "failed" ? "border-[#653a3d] bg-[#251416] text-[#e47d82]" : "border-[#5c4e2c] bg-[#211b0f] text-[#d2ad57]")}>{run.status === "succeeded" ? <Check className="size-3.5" /> : run.status === "failed" ? <X className="size-3.5" /> : <RefreshCw className="size-3.5" />}</span><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><div className="truncate text-xs font-medium">{run.status === "succeeded" ? "Обновление выполнено" : run.status === "failed" ? "Ошибка обновления" : "Обновление данных"}</div><time className="shrink-0 text-[9px] text-[#667086]">{formatDate(run.finishedAt || run.startedAt)}</time></div><div className="mt-1 text-[10px] text-[#737e92]">{run.recordCount} записей · {run.pageCount} страниц · {run.trigger}</div></div></div>)}</div>}</Panel>;
 }
 
-function EndpointList({ data }: { data: DashboardData }) { return <Panel title="Доступные методы API" kicker="REST v1 и GraphQL" icon={Code2}><div className="grid gap-px border border-[#292f3c] bg-[#292f3c] md:grid-cols-2">{data.endpoints.map((endpoint) => <div key={`${endpoint.method}-${endpoint.path}`} className="flex items-center gap-3 bg-[#11151d] p-4"><Badge variant="outline" className={cn("w-12 justify-center rounded-sm font-mono text-[9px]", endpoint.method === "GET" ? "border-[#31583a] text-[#6bc278]" : "border-[#5b4c2c] text-[#d4ae58]")}>{endpoint.method}</Badge><div className="min-w-0"><code className="text-xs text-[#dce1eb]">{endpoint.path}</code><div className="mt-0.5 truncate text-[10px] text-[#737e92]">{endpoint.description}</div></div></div>)}</div></Panel>; }
+function EndpointList() { return <Panel title="Доступные методы API" kicker="REST v1, базы по изданиям и GraphQL" icon={Code2}><div className="grid gap-px border border-[#292f3c] bg-[#292f3c] md:grid-cols-2">{CONSOLE_ENDPOINTS.map((endpoint) => <div key={`${endpoint.method}-${endpoint.path}`} className="flex items-center gap-3 bg-[#11151d] p-4"><Badge variant="outline" className={cn("w-12 justify-center rounded-sm font-mono text-[9px]", endpoint.method === "GET" ? "border-[#31583a] text-[#6bc278]" : "border-[#5b4c2c] text-[#d4ae58]")}>{endpoint.method}</Badge><div className="min-w-0"><code className="text-xs text-[#dce1eb]">{endpoint.path}</code><div className="mt-0.5 truncate text-[10px] text-[#737e92]">{endpoint.description}</div></div></div>)}</div></Panel>; }
 
-function APIView({ data }: { data: DashboardData }) { return <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,.8fr)]"><EndpointList data={data} /><Panel title="Как работает API" kicker="Быстрый старт" icon={BookOpen}><ol className="flex flex-col gap-4">{[{ title: "Выберите метод", text: "Используйте стабильные REST-методы /v1 или GraphQL." }, { title: "Отправьте запрос", text: "Ответы возвращаются в JSON, ошибки — с машинным кодом и сообщением." }, { title: "Проверьте состояние", text: "Эндпоинты /livez и /readyz показывают готовность сервиса." }].map((step, index) => <li key={step.title} className="flex gap-3"><span className="grid size-7 shrink-0 place-items-center border border-[#65542e] bg-[#201b10] font-[var(--display)] text-xs text-[#d8b45e]">{index + 1}</span><div><div className="text-xs font-semibold">{step.title}</div><p className="mt-1 text-xs leading-5 text-[#7f899d]">{step.text}</p></div></li>)}</ol><div className="mt-6 border border-[#2f3543] bg-[#090c12] p-4 font-mono text-[11px] leading-6 text-[#9da7b9]"><span className="text-[#6bc278]">curl</span> --cookie 'gildra_admin_session=…' https://api.gildra.net/v1/game/products</div><p className="mt-2 text-[10px] leading-5 text-[#697488]">Каталог и библиотека закрыты сессией администратора в текущем owner-approved режиме.</p></Panel></div>; }
+// The API page is static: it documents the public methods and the
+// edition-scoped bases without touching the network.
+function APIView() { return <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,.8fr)]"><div className="flex flex-col gap-5"><EndpointList /><Panel title="Базы API по изданиям" kicker="Тот же /v1 с закреплённым продуктом" icon={Gamepad2}><div className="grid gap-px border border-[#292f3c] bg-[#292f3c] sm:grid-cols-2">{EDITION_BASES.map((item) => <div key={item.edition} className="bg-[#11151d] p-4"><div className="text-[9px] uppercase tracking-[.12em] text-[#687286]">{item.edition} · {item.product}</div><code className="mt-1 block text-xs text-[#dce1eb]">https://api.gildra.net{item.base}</code></div>)}</div></Panel></div><Panel title="Как работает API" kicker="Быстрый старт" icon={BookOpen}><ol className="flex flex-col gap-4">{[{ title: "Выберите метод", text: "Используйте стабильные REST-методы /v1, базы по изданиям или GraphQL." }, { title: "Отправьте запрос", text: "Ответы возвращаются в JSON, ошибки — с машинным кодом и сообщением." }, { title: "Проверьте состояние", text: "Эндпоинты /livez и /readyz показывают готовность сервиса, /v1/admin/system — быстрые проверки хранилищ." }].map((step, index) => <li key={step.title} className="flex gap-3"><span className="grid size-7 shrink-0 place-items-center border border-[#65542e] bg-[#201b10] font-[var(--display)] text-xs text-[#d8b45e]">{index + 1}</span><div><div className="text-xs font-semibold">{step.title}</div><p className="mt-1 text-xs leading-5 text-[#7f899d]">{step.text}</p></div></li>)}</ol><div className="mt-6 border border-[#2f3543] bg-[#090c12] p-4 font-mono text-[11px] leading-6 text-[#9da7b9]"><span className="text-[#6bc278]">curl</span> https://api.gildra.net/world-of-warcraft/retail/v1/library/datasets?locale=en_US</div><p className="mt-2 text-[10px] leading-5 text-[#697488]">Каталог и библиотека публичны; методы /v1/admin/* требуют cookie сессии администратора.</p></Panel></div>; }
 
-function SystemView({ data }: { data: DashboardData }) { return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{data.systems.map((system) => <Card key={system.name} className="rounded-sm border-[#2d3341] bg-[#11151d] shadow-none"><CardHeader className="flex-row items-center justify-between p-5"><div className="grid size-9 place-items-center border border-[#354438] bg-[#101a14] text-[#63b970]"><Server className="size-4" /></div><span className="flex items-center gap-2 text-[9px] uppercase tracking-[.12em] text-[#72b97b]"><span className="size-1.5 rounded-full bg-[#58ad67] shadow-[0_0_8px_#58ad67]" />{system.status === "operational" ? "Работает" : "Отклонение"}</span></CardHeader><CardContent className="px-5 pb-5"><CardTitle className="text-base">{system.name}</CardTitle><div className="mt-2 text-xs text-[#778196]">Ответ за {system.latencyMs} мс</div></CardContent></Card>)}</div>; }
+function SystemView({ refreshKey }: { refreshKey: number }) {
+  const system = useConsoleRequest<SystemReport>("/v1/admin/system", { refreshKey, fallback: "Не удалось проверить состояние систем" });
+  return <Loadable state={system} title="Состояние системы">{(report) => <div className="flex flex-col gap-5">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{report.systems.map((system) => { const ok = system.status === "operational"; return <Card key={system.name} className="rounded-sm border-[#2d3341] bg-[#11151d] shadow-none"><CardHeader className="flex-row items-center justify-between p-5"><div className={cn("grid size-9 place-items-center border", ok ? "border-[#354438] bg-[#101a14] text-[#63b970]" : "border-[#5f3539] bg-[#1b1013] text-[#e58b8f]")}><Server className="size-4" /></div><span className={cn("flex items-center gap-2 text-[9px] uppercase tracking-[.12em]", ok ? "text-[#72b97b]" : "text-[#e58b8f]")}><span className={cn("size-1.5 rounded-full", ok ? "bg-[#58ad67] shadow-[0_0_8px_#58ad67]" : "bg-[#d95c55]")} />{ok ? "Работает" : "Отклонение"}</span></CardHeader><CardContent className="px-5 pb-5"><CardTitle className="text-base">{system.name}</CardTitle><div className="mt-2 text-xs text-[#778196]">Ответ за {system.latencyMs} мс</div></CardContent></Card>; })}</div>
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] text-[#707b90]"><span>Схема БД: версия {report.schemaVersion}</span><span>Политика восстановления: {report.recoveryPolicy || "—"}</span><span>Проверено {new Date(report.generatedAt).toLocaleString("ru-RU")}</span></div>
+  </div>}</Loadable>;
+}
 
 function Panel({ title, kicker, icon: Icon, action, children }: { title: string; kicker: string; icon: typeof Activity; action?: React.ReactNode; children: React.ReactNode }) { return <Card className="min-w-0 rounded-sm border-[#2d3341] bg-[#11151d] shadow-none"><CardHeader className="flex flex-col gap-4 border-b border-[#292f3c] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"><div className="flex items-center gap-3"><div className="grid size-8 place-items-center border border-[#4b4230] bg-[#1b1811] text-[#c9a24f]"><Icon className="size-3.5" /></div><div><CardTitle className="font-[var(--display)] text-sm tracking-wide">{title}</CardTitle><p className="mt-1 text-[9px] uppercase tracking-[.12em] text-[#667086]">{kicker}</p></div></div>{action}</CardHeader><CardContent className="p-4 sm:p-5">{children}</CardContent></Card>; }
 

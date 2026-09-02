@@ -17,6 +17,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/analytics"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/api"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/auth"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
 )
@@ -37,6 +38,10 @@ type Handler struct {
 	readinessMu       sync.Mutex
 	readinessCached   catalogquality.ReadinessReport
 	readinessCachedAt time.Time
+
+	healthMu       sync.Mutex
+	healthCached   catalogHealth
+	healthCachedAt time.Time
 }
 
 type statusItem struct {
@@ -78,6 +83,10 @@ type catalogHealth struct {
 	PipelineStartedAt  *time.Time            `json:"pipelineStartedAt"`
 	PipelineFinishedAt *time.Time            `json:"pipelineFinishedAt"`
 	Imports            []catalogImportStatus `json:"imports"`
+	// Warnings lists sections that were skipped because a bounded query hit
+	// its time budget (for example live source-record counts during an
+	// import).  The rest of the snapshot stays valid.
+	Warnings []string `json:"warnings,omitempty"`
 }
 
 type catalogImportStatus struct {
@@ -266,8 +275,14 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /v1/auth/logout", h.logout)
 	mux.HandleFunc("GET /v1/auth/me", h.me)
 	mux.HandleFunc("GET /v1/admin/dashboard", h.dashboard)
+	mux.HandleFunc("GET /v1/admin/system", h.system)
+	mux.HandleFunc("GET /v1/admin/catalog-health", h.catalogHealthAPI)
 	mux.HandleFunc("GET /v1/admin/catalog-readiness", h.catalogReadiness)
+	mux.HandleFunc("GET /v1/admin/analytics-overview", h.analyticsOverview)
+	mux.HandleFunc("GET /v1/admin/endpoints", h.endpoints)
 	mux.HandleFunc("GET /v1/admin/datasets", h.datasets)
+	mux.HandleFunc("GET /v1/admin/datasets/{slug}", h.datasetDetail)
+	mux.HandleFunc("GET /v1/admin/datasets/{slug}/freshness", h.datasetFreshnessAPI)
 	mux.HandleFunc("GET /v1/admin/datasets/{slug}/runs", h.datasetRunsAPI)
 	mux.HandleFunc("GET /v1/admin/tierlist-wowhead", h.tierlist)
 	mux.HandleFunc("GET /v1/admin/tierlist-archon", h.archonTierlist)
@@ -322,18 +337,7 @@ func (h *Handler) dashboardReadiness() catalogquality.ReadinessReport {
 	if !cachedAt.IsZero() {
 		return report
 	}
-	return catalogquality.ReadinessReport{
-		Product:     "wow",
-		GeneratedAt: time.Now().UTC(),
-		DataReady:   false,
-		Checks: []catalogquality.ReadinessCheck{{
-			Key:      "readiness_pending",
-			Scope:    catalogquality.ScopeData,
-			Status:   "pending",
-			Message:  "Полная проверка готовности запускается отдельно и не блокирует панель",
-			Blocking: false,
-		}},
-	}
+	return pendingReadiness()
 }
 
 func (h *Handler) datasetRunsAPI(w http.ResponseWriter, r *http.Request) {
@@ -576,48 +580,15 @@ func (h *Handler) datasets(w http.ResponseWriter, r *http.Request) {
 	if _, ok := h.authorize(w, r); !ok {
 		return
 	}
-	rows, err := h.postgres.Query(r.Context(), `
-		SELECT d.id::text, d.slug, d.name, d.source_name,
-		       extract(epoch from d.refresh_interval)::bigint,
-		       d.last_attempt_at, d.last_success_at, d.last_error_code, d.last_error_summary,
-		       COALESCE(s.page_count, 0), COALESCE(s.record_count, 0),
-		       COALESCE(s.unique_spec_count, 0)
-		FROM datasets d
-		LEFT JOIN dataset_snapshots s ON s.id = d.current_snapshot_id
-		ORDER BY d.name`)
+	ctx, cancel := context.WithTimeout(r.Context(), datasetQueryTimeout)
+	defer cancel()
+	result, err := h.loadDatasets(ctx, "")
 	if err != nil {
+		slog.Error("load panel datasets", "error", err)
 		writeError(w, http.StatusInternalServerError, "datasets_unavailable", "Не удалось загрузить список датасетов")
 		return
 	}
-	defer rows.Close()
-	now := time.Now().UTC()
-	result := make([]datasetListItem, 0)
-	for rows.Next() {
-		var item datasetListItem
-		if err := rows.Scan(&item.ID, &item.Slug, &item.Name, &item.SourceName,
-			&item.RefreshIntervalSeconds, &item.LastAttemptAt, &item.LastSuccessAt,
-			&item.LastErrorCode, &item.LastErrorSummary, &item.PageCount,
-			&item.RecordCount, &item.UniqueSpecCount); err != nil {
-			writeError(w, http.StatusInternalServerError, "datasets_unavailable", "Не удалось прочитать список датасетов")
-			return
-		}
-		item.Freshness = "never"
-		if item.LastSuccessAt != nil {
-			freshUntil := item.LastSuccessAt.UTC().Add(time.Duration(item.RefreshIntervalSeconds) * time.Second)
-			item.FreshUntil = &freshUntil
-			if now.Before(freshUntil) {
-				item.Freshness = "fresh"
-			} else {
-				item.Freshness = "stale"
-			}
-		}
-		result = append(result, item)
-	}
-	if err := rows.Err(); err != nil {
-		writeError(w, http.StatusInternalServerError, "datasets_unavailable", "Не удалось загрузить список датасетов")
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"data": result, "count": len(result), "generatedAt": now})
+	writeJSON(w, http.StatusOK, map[string]any{"data": result, "count": len(result), "generatedAt": time.Now().UTC()})
 }
 
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
@@ -675,29 +646,40 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"user": user})
 }
 
+// dashboard keeps the combined snapshot for older clients.  Every section is
+// bounded: the console pages themselves use the dedicated endpoints and never
+// wait for this route.
 func (h *Handler) dashboard(w http.ResponseWriter, r *http.Request) {
 	user, ok := h.authorize(w, r)
 	if !ok {
 		return
 	}
-	ctx := r.Context()
-	dataset, err := h.datasetSummary(ctx)
+	ctx, cancel := context.WithTimeout(r.Context(), dashboardTimeout)
+	defer cancel()
+	datasetCtx, datasetCancel := context.WithTimeout(ctx, datasetQueryTimeout)
+	defer datasetCancel()
+	dataset, err := h.datasetSummary(datasetCtx)
 	if err != nil {
 		slog.Error("load panel dataset summary", "error", err)
 		writeError(w, http.StatusInternalServerError, "dashboard_unavailable", "Не удалось загрузить данные панели")
 		return
 	}
-	runs, err := h.datasetRuns(ctx, "tierlist-wowhead")
+	runs, err := h.datasetRuns(datasetCtx, "tierlist-wowhead")
 	if err != nil {
 		slog.Error("load panel dataset runs", "error", err)
 		writeError(w, http.StatusInternalServerError, "dashboard_unavailable", "Не удалось загрузить историю обновлений")
 		return
 	}
-	overview, err := h.analytics.Overview(ctx, 24)
+	analyticsCtx, analyticsCancel := context.WithTimeout(ctx, analyticsQueryTimeout)
+	overview, err := h.analytics.Overview(analyticsCtx, 24)
+	analyticsCancel()
 	if err != nil {
 		slog.Warn("load panel analytics", "error", err)
 	}
-	catalogStatus, err := h.catalogHealth(ctx)
+	if overview.Series == nil {
+		overview.Series = make([]api.AnalyticsPoint, 0)
+	}
+	catalogStatus, err := h.cachedCatalogHealth(ctx)
 	if err != nil {
 		slog.Warn("load catalog health", "error", err)
 	}
@@ -706,25 +688,7 @@ func (h *Handler) dashboard(w http.ResponseWriter, r *http.Request) {
 		"generatedAt": time.Now().UTC(), "user": user, "systems": h.systemStatuses(ctx),
 		"dataset": dataset, "runs": runs, "analytics": overview, "catalog": catalogStatus,
 		"catalogReadiness": readiness,
-		"endpoints": []map[string]string{
-			{"method": "GET", "path": "/v1/game/products", "description": "Список игровых продуктов"},
-			{"method": "GET", "path": "/v1/game/entity-types", "description": "Полнота каталога по типам данных"},
-			{"method": "GET", "path": "/v1/game/entity-summaries", "description": "Быстрый поиск и карточки без тяжёлых payload"},
-			{"method": "GET", "path": "/v1/game/entities", "description": "Совместимый полный список каталога"},
-			{"method": "GET", "path": "/v1/game/categories", "description": "Иерархические категории каталога"},
-			{"method": "GET", "path": "/v1/game/entities/{id}", "description": "Карточка игровой сущности"},
-			{"method": "GET", "path": "/v1/game/entities/{id}/relationships", "description": "Связи, источники, владельцы и упоминания"},
-			{"method": "GET", "path": "/v1/game/coverage", "description": "Покрытие полей по активной сборке"},
-			{"method": "GET", "path": "/v1/game/source-policies", "description": "Правила использования источников"},
-			{"method": "GET", "path": "/v1/game/relation-types", "description": "Онтология связей каталога"},
-			{"method": "GET", "path": "/v1/game/sitemap-entries", "description": "Сегментированный SEO read-model"},
-			{"method": "GET", "path": "/v1/admin/catalog-readiness", "description": "Проверки готовности базы к production"},
-			{"method": "GET", "path": "/v1/admin/tierlist-wowgg", "description": "Все срезы и фильтры Tierlist — wow.gg"},
-			{"method": "GET", "path": "/v1/admin/tierlist-icyveins", "description": "Тиры, разборы и гайды Tierlist — Icy Veins"},
-			{"method": "POST", "path": "/v1/analytics/events", "description": "Приём событий аналитики"},
-			{"method": "POST", "path": "/v1/indexnow", "description": "Отправка URL в IndexNow"},
-			{"method": "POST", "path": "/graphql", "description": "GraphQL API каталога"},
-		},
+		"endpoints":        consoleEndpoints,
 	})
 }
 
@@ -775,17 +739,10 @@ func (h *Handler) catalogHealth(ctx context.Context) (catalogHealth, error) {
 			COALESCE(run.parameters->'entity_types','[]'::jsonb),
 			COALESCE(run.parameters->'locales','[]'::jsonb),
 			run.records_seen,run.records_written,
-			COALESCE(activity.record_count,0),run.started_at,run.finished_at,
-			activity.last_activity_at,run.error_summary
+			run.snapshot_id::text,run.started_at,run.finished_at,run.error_summary
 		FROM catalog_import_runs run
 		JOIN game_products product ON product.id=run.product_id AND product.slug='wow'
 		JOIN game_builds build ON build.id=run.build_id
-		LEFT JOIN LATERAL (
-			SELECT count(record.*) AS record_count,max(record.imported_at) AS last_activity_at
-			FROM catalog_source_artifacts artifact
-			LEFT JOIN catalog_source_records record ON record.artifact_id=artifact.id
-			WHERE artifact.snapshot_id=run.snapshot_id
-		) activity ON true
 		ORDER BY run.started_at DESC,run.id DESC
 		LIMIT 8`)
 	if err != nil {
@@ -793,13 +750,16 @@ func (h *Handler) catalogHealth(ctx context.Context) (catalogHealth, error) {
 	}
 	defer importRows.Close()
 	result.Imports = make([]catalogImportStatus, 0, 8)
+	snapshotIDs := make([]string, 0, 8)
+	snapshotByImport := make([]string, 0, 8)
 	for importRows.Next() {
 		var item catalogImportStatus
 		var entityTypesJSON, localesJSON []byte
+		var snapshotID *string
 		if err := importRows.Scan(
 			&item.ID, &item.Source, &item.BuildVersion, &item.Status, &entityTypesJSON, &localesJSON,
-			&item.RecordsSeen, &item.RecordsWritten, &item.LiveSourceRecords,
-			&item.StartedAt, &item.FinishedAt, &item.LastActivityAt, &item.ErrorSummary,
+			&item.RecordsSeen, &item.RecordsWritten, &snapshotID,
+			&item.StartedAt, &item.FinishedAt, &item.ErrorSummary,
 		); err != nil {
 			return result, err
 		}
@@ -809,9 +769,38 @@ func (h *Handler) catalogHealth(ctx context.Context) (catalogHealth, error) {
 		if err := json.Unmarshal(localesJSON, &item.Locales); err != nil {
 			return result, err
 		}
+		key := ""
+		if snapshotID != nil {
+			key = *snapshotID
+			snapshotIDs = append(snapshotIDs, key)
+		}
+		snapshotByImport = append(snapshotByImport, key)
 		result.Imports = append(result.Imports, item)
 	}
-	return result, importRows.Err()
+	if err := importRows.Err(); err != nil {
+		return result, err
+	}
+	importRows.Close()
+	activity, err := h.catalogImportActivity(ctx, snapshotIDs)
+	if err != nil {
+		// A timed-out activity scan degrades only the live counters.
+		slog.Warn("aggregate catalog import activity", "error", err)
+		result.Warnings = append(result.Warnings, "import_activity_skipped")
+		activity = map[string][2]any{}
+	}
+	for index := range result.Imports {
+		entry, ok := activity[snapshotByImport[index]]
+		if !ok {
+			continue
+		}
+		if count, ok := entry[0].(int64); ok {
+			result.Imports[index].LiveSourceRecords = count
+		}
+		if last, ok := entry[1].(*time.Time); ok {
+			result.Imports[index].LastActivityAt = last
+		}
+	}
+	return result, nil
 }
 
 func (h *Handler) tierlist(w http.ResponseWriter, r *http.Request) {
@@ -970,30 +959,6 @@ func (h *Handler) datasetRuns(ctx context.Context, slug string) ([]datasetRun, e
 		result = append(result, run)
 	}
 	return result, rows.Err()
-}
-
-func (h *Handler) systemStatuses(parent context.Context) []statusItem {
-	checks := []struct {
-		name string
-		fn   func(context.Context) error
-	}{
-		{"PostgreSQL", h.postgres.Ping},
-		{"ClickHouse", h.clickhouse.Ping},
-		{"Redis", func(ctx context.Context) error { return h.redis.Ping(ctx).Err() }},
-	}
-	result := []statusItem{{Name: "API", Status: "operational", LatencyMS: 0}}
-	for _, check := range checks {
-		ctx, cancel := context.WithTimeout(parent, 2*time.Second)
-		started := time.Now()
-		err := check.fn(ctx)
-		cancel()
-		status := "operational"
-		if err != nil {
-			status = "degraded"
-		}
-		result = append(result, statusItem{Name: check.name, Status: status, LatencyMS: time.Since(started).Milliseconds()})
-	}
-	return result
 }
 
 func sameOrigin(r *http.Request) bool {
