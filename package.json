@@ -8,7 +8,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "generate:api": "openapi-typescript backend/api/openapi.yaml -o lib/api/schema.d.ts",
-    "design:capture": "node scripts/capture-design.mjs"
+    "design:capture": "node scripts/capture-design.mjs",
+    "design:compare": "node scripts/compare-design.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.11",
@@ -33,7 +34,9 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "openapi-typescript": "^7.0.0",
+    "pixelmatch": "^7.2.0",
     "playwright": "^1.62.1",
+    "pngjs": "^7.0.0",
     "tailwindcss": "^4.0.0",
     "tw-animate-css": "^1.3.0",
     "typescript": "^5.6.0"
