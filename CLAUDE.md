@@ -15,6 +15,9 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   comes only from `components/layout/PageShell.tsx`. The full contract, plus
   "add a block / page / game" recipes, is in
   [components/blocks/README.md](components/blocks/README.md) — read it before UI work.
+- CMS: a published Payload `pages` document with `slug` = page id and a
+  `blocks` JSON overrides that page's block list (`lib/cms/pages.ts`,
+  validated against the registry, fails open to the TS config).
 - Games: `lib/games/registry.ts` is the single source of game identity, URL
   prefix (WoW = site root, others `/<slug>/`), nav tasks, footer and legal
   text; TopNav/Footer/SearchCommand read it. Never add `app/[game]`.
