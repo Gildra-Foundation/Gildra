@@ -25,6 +25,7 @@ import (
 type options struct {
 	databaseURL string
 	environment string
+	version     string
 	files       []string
 	factFiles   []string
 	maxRecords  int
@@ -66,6 +67,42 @@ func main() {
 	}
 }
 
+// raidbotsEnvironments lists the Raidbots data channels in preference order
+// when a build version must be matched.
+var raidbotsEnvironments = []string{"live", "ptr", "beta", "xptr"}
+
+// resolveMetadata loads the Raidbots metadata for the requested environment,
+// or — when -version is set — for the environment whose wowBuild equals that
+// version, so a release pinned to a build never mixes Raidbots data from a
+// different build.
+func resolveMetadata(ctx context.Context, client *raidbots.Client, opts options) (raidbots.Metadata, error) {
+	if opts.version == "" {
+		return client.Metadata(ctx, opts.environment)
+	}
+	candidates := append([]string{opts.environment}, raidbotsEnvironments...)
+	seen := make(map[string]bool, len(candidates))
+	var tried []string
+	for _, environment := range candidates {
+		if environment == "" || seen[environment] {
+			continue
+		}
+		seen[environment] = true
+		metadata, err := client.Metadata(ctx, environment)
+		if err != nil {
+			slog.Warn("Raidbots metadata unavailable", "environment", environment, "error", err)
+			continue
+		}
+		if metadata.WoWBuild == opts.version {
+			if metadata.Environment == "" {
+				metadata.Environment = environment
+			}
+			return metadata, nil
+		}
+		tried = append(tried, environment+"="+metadata.WoWBuild)
+	}
+	return raidbots.Metadata{}, fmt.Errorf("no Raidbots environment publishes build %s (checked %s)", opts.version, strings.Join(tried, ", "))
+}
+
 func run() error {
 	opts, err := parseOptions()
 	if err != nil {
@@ -75,10 +112,11 @@ func run() error {
 	defer stop()
 
 	client := raidbots.New(raidbots.Config{})
-	metadata, err := client.Metadata(ctx, opts.environment)
+	metadata, err := resolveMetadata(ctx, client, opts)
 	if err != nil {
 		return err
 	}
+	opts.environment = metadata.Environment
 	buildNumber, err := buildNumber(metadata.WoWBuild)
 	if err != nil {
 		return err
@@ -652,6 +690,7 @@ func parseOptions() (options, error) {
 	opts := options{}
 	flag.StringVar(&opts.databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&opts.environment, "environment", "live", "Raidbots environment")
+	flag.StringVar(&opts.version, "version", "", "WoW build version to import (e.g. 12.1.0.69497); picks the Raidbots environment whose data matches it")
 	flag.StringVar(&files, "files", defaultFiles, "comma-separated Raidbots datasets")
 	flag.StringVar(&factFiles, "fact-files", defaultFactFiles, "comma-separated Raidbots fact datasets stored as source records")
 	flag.IntVar(&opts.maxRecords, "max-records", 1000, "maximum records per dataset; 0 imports all")
@@ -660,6 +699,7 @@ func parseOptions() (options, error) {
 		opts.databaseURL = os.Getenv("DATABASE_URL")
 	}
 	opts.environment = strings.TrimSpace(opts.environment)
+	opts.version = strings.TrimSpace(opts.version)
 	opts.files = splitList(files)
 	opts.factFiles = splitList(factFiles)
 	switch {

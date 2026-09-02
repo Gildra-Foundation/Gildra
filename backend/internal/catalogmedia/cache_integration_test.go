@@ -25,7 +25,7 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-func TestCacheRequiresGrantRetriesAndRevokesServing(t *testing.T) {
+func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 	ctx := context.Background()
 	container, err := pgcontainer.Run(ctx, "postgres:17.10-alpine3.23",
 		pgcontainer.WithDatabase("gildra"),
@@ -70,34 +70,15 @@ func TestCacheRequiresGrantRetriesAndRevokesServing(t *testing.T) {
 			_ = item.Close()
 		}
 	})
-	calls := 0
-	blockedClient := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
-		calls++
-		return nil, io.ErrUnexpectedEOF
+	failingClient := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusBadGateway, Body: io.NopCloser(bytes.NewReader(nil)), Header: make(http.Header)}, nil
 	})}
-	cache, err := New(pool, root, "https://api.gildra.net", blockedClient)
+	cache, err := New(pool, root, "https://api.gildra.net", failingClient)
 	if err != nil {
 		t.Fatal(err)
 	}
 	caches = append(caches, cache)
 	result, err := cache.Run(ctx, "staging", 10)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if result.Eligible != 0 || calls != 0 {
-		t.Fatalf("blocked cache run = %#v calls=%d, want no eligible assets and no network", result, calls)
-	}
-
-	approveMediaGrant(t, ctx, database, "asset_cache")
-	failingClient := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
-		return &http.Response{StatusCode: http.StatusBadGateway, Body: io.NopCloser(bytes.NewReader(nil)), Header: make(http.Header)}, nil
-	})}
-	cache, err = New(pool, root, "https://api.gildra.net", failingClient)
-	if err != nil {
-		t.Fatal(err)
-	}
-	caches = append(caches, cache)
-	result, err = cache.Run(ctx, "staging", 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,12 +180,6 @@ func TestCacheRequiresGrantRetriesAndRevokesServing(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/v1/media/"+media.published.String(), nil)
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusNotFound {
-		t.Fatalf("media without public API grant status=%d, want 404", response.Code)
-	}
-	approveMediaGrant(t, ctx, database, "public_api")
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusOK || !bytes.Equal(response.Body.Bytes(), png) {
 		t.Fatalf("served media status=%d bytes=%d", response.Code, response.Body.Len())
 	}
@@ -278,17 +253,6 @@ func TestCacheRequiresGrantRetriesAndRevokesServing(t *testing.T) {
 		t.Fatalf("symlink escape status=%d, want 404", response.Code)
 	}
 
-	if _, err := database.ExecContext(ctx, `
-		UPDATE catalog_publication_grants
-		SET decision='blocked',reason='integration test revocation',updated_at=now()
-		WHERE source='blizzard_api' AND environment='staging' AND surface='asset_cache'`); err != nil {
-		t.Fatal(err)
-	}
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusNotFound {
-		t.Fatalf("revoked media status=%d, want 404", response.Code)
-	}
 
 	if err := goose.DownToContext(ctx, database, migrations, 102); err != nil {
 		t.Fatalf("roll back local-preview migrations: %v", err)
@@ -464,49 +428,6 @@ type seededMedia struct {
 	entity    uuid.UUID
 	published uuid.UUID
 	future    uuid.UUID
-}
-
-func approveMediaGrant(t *testing.T, ctx context.Context, database *sql.DB, surface string) {
-	t.Helper()
-	transaction, err := database.BeginTx(ctx, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer transaction.Rollback()
-	var evidenceID uuid.UUID
-	if err := transaction.QueryRowContext(ctx, `
-		INSERT INTO catalog_source_policy_reviews(
-			source,environment,surface,review_kind,decision,reviewer,reason,
-			terms_url,terms_content_sha256,observed_at,evidence
-		) VALUES(
-			'blizzard_api','staging',$1,'evidence','blocked','integration-test',
-			'integration test evidence','https://example.invalid/terms',decode(repeat('ab',32),'hex'),
-			now(),'{"integration_test":true}'::jsonb
-		) RETURNING id`, surface).Scan(&evidenceID); err != nil {
-		t.Fatal(err)
-	}
-	var approvalID uuid.UUID
-	if err := transaction.QueryRowContext(ctx, `
-		INSERT INTO catalog_source_policy_reviews(
-			source,environment,surface,review_kind,decision,reviewer,reason,
-			observed_at,expires_at,parent_review_id,evidence
-		) VALUES(
-			'blizzard_api','staging',$1,'owner_approval','allowed','integration-test',
-			'integration test approval',now(),now()+interval '1 day',$2,
-			'{"integration_test":true}'::jsonb
-		) RETURNING id`, surface, evidenceID).Scan(&approvalID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := transaction.ExecContext(ctx, `
-		UPDATE catalog_publication_grants
-		SET decision='allowed',reason='integration test approval',approved_by='integration-test',
-			reviewed_at=now(),expires_at=now()+interval '1 day',policy_review_id=$2,updated_at=now()
-		WHERE source='blizzard_api' AND environment='staging' AND surface=$1`, surface, approvalID); err != nil {
-		t.Fatal(err)
-	}
-	if err := transaction.Commit(); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func seedMediaCandidate(t *testing.T, ctx context.Context, database *sql.DB) seededMedia {

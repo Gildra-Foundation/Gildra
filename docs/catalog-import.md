@@ -169,7 +169,7 @@ gates, and moves the public pointer only after the complete candidate is
 validated:
 
 ```powershell
-docker compose run --rm --entrypoint catalog-pipeline api -mode apply -trigger manual -profile retail-foundation -product wow -sources wago,db2,battlenet,listfile -version 12.1.0.69497 -force-rebuild -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
+docker compose run --rm --entrypoint catalog-pipeline api -mode apply -trigger manual -profile retail-foundation -product wow -sources wago,raidbots,db2,battlenet,listfile -version 12.1.0.69497 -force-rebuild -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
 ```
 
 `-force-rebuild` is deliberately opt-in and cannot be combined with a resumed
@@ -504,13 +504,13 @@ errors.
 Inspect a complete plan without downloading or changing catalog data:
 
 ```powershell
-docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode dry_run -profile retail-foundation -sources wago,db2,battlenet,listfile -publication-environment production -access-mode private -recovery-policy verified_same_host
+docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode dry_run -profile retail-foundation -sources wago,raidbots,db2,battlenet,listfile -publication-environment production -access-mode private -recovery-policy verified_same_host
 ```
 
 Run an approved full refresh:
 
 ```powershell
-docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode apply -trigger manual -profile retail-foundation -sources wago,db2,battlenet,listfile -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
+docker compose run --rm --no-deps --entrypoint catalog-pipeline api -mode apply -trigger manual -profile retail-foundation -sources wago,raidbots,db2,battlenet,listfile -max-records 0 -confirm-full-import -publication-environment production -access-mode private -recovery-policy verified_same_host -timeout 8h
 ```
 
 For a build that is already published, do not bypass the monotonic-build
@@ -539,12 +539,12 @@ that all non-quest entities have a latest version, relation types are valid and
 read models are fresh. Registry-only quests are counted as enrichment backlog,
 not treated as corrupt entities.
 
-The import can succeed while the run ends as `blocked`: this means the private
-catalog and read models are consistent, but at least one contributing source is
-not cleared for public delivery. Never turn the gate off to work around that
-state. Update `catalog_source_policies` after a current terms review and add an
-`allowed` row to `catalog_publication_grants` only with the approver, reason,
-review timestamp, exact environment/surface and any expiration date recorded.
+Every registered source is public and credited on the site (owner decision,
+2026-09-02): `catalog_source_policies` is the attribution registry, and the
+per-source review/grant workflow no longer exists. A run therefore never ends as
+`blocked` because of a source; add a new source by inserting its policy row in a
+migration (display name, homepage, attribution text) before enabling it in a
+pipeline profile.
 
 The optional host scheduler is in `infra/systemd/gildra-catalog-refresh.*`. It
 runs at 04:15 with randomized delay and `Persistent=true`. The runner checks

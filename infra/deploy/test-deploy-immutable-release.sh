@@ -255,7 +255,7 @@ bootstrap_env=$test_directory/bootstrap.env
 printf 'LEGACY_SETTING=kept\n' > "$bootstrap_env"
 "$bootstrap_script" "$bootstrap_env" > "$test_directory/bootstrap.log" 2>&1
 grep -q '^LEGACY_SETTING=kept$' "$bootstrap_env"
-grep -q '^CATALOG_ACCESS_MODE=private$' "$bootstrap_env"
+grep -q '^CATALOG_ACCESS_MODE=public$' "$bootstrap_env"
 grep -q '^CATALOG_RECOVERY_POLICY=verified_same_host$' "$bootstrap_env"
 grep -q '^CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups$' "$bootstrap_env"
 "$bootstrap_script" "$bootstrap_env" >/dev/null 2>&1

@@ -37,7 +37,7 @@ license.
 
 The ATT and Blizzard conclusions above are evidence decisions, not automatic
 production grants. An accountable owner or legal approval still has to be
-recorded by `catalog-source-approval`; the importer cannot grant itself rights.
+recorded in `catalog_source_policies` (every registered source is public since 2026-09-02); the importer cannot register a source itself.
 
 ### Blizzard operational gap
 

@@ -122,42 +122,21 @@ func (c *Cache) RunWithAccessMode(ctx context.Context, environment string, limit
 }
 
 func (c *Cache) runCandidates(ctx context.Context, environment string, limit int, accessMode string) (Result, error) {
+	// Publication is open (owner decision 2026-09-02): every proven media
+	// observation is eligible for the local cache; the source policy only
+	// contributes an optional retention window.
 	query := `
 		SELECT media.id,media.source_url,media.cache_status,count(*) OVER()
 		FROM catalog_entity_media media
 		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
-		JOIN catalog_source_policies policy ON policy.source=media.source
-		JOIN catalog_publication_grants permission ON permission.source=media.source AND permission.environment=$1 AND permission.surface='asset_cache'
-		JOIN catalog_source_policy_reviews permission_review ON permission_review.id=permission.policy_review_id
+		LEFT JOIN catalog_source_policies policy ON policy.source=media.source
 		WHERE (media.cache_status IN ('remote','failed') OR
 		       media.cache_status='cached' AND policy.retention_days IS NOT NULL AND
 		       media.cached_at<=now()-make_interval(days=>policy.retention_days))
 		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
-		  AND policy.review_status='reviewed' AND policy.asset_caching_status IN ('allowed','restricted','permission_required')
-		  AND permission.decision='allowed' AND permission.reviewed_at IS NOT NULL
-		  AND (permission.expires_at IS NULL OR permission.expires_at>now())
-		  AND permission_review.source=permission.source
-		  AND permission_review.environment=permission.environment
-		  AND permission_review.surface=permission.surface
-		  AND permission_review.decision='allowed'
-		  AND permission_review.review_kind IN ('owner_approval','legal')
-		  AND (permission_review.expires_at IS NULL OR permission_review.expires_at>now())
-		ORDER BY COALESCE(media.cached_at,'-infinity'::timestamptz),media.updated_at,media.id LIMIT $2`
-	args := []any{environment, limit}
-	if accessMode == "private" {
-		query = `
-		SELECT media.id,media.source_url,media.cache_status,count(*) OVER()
-		FROM catalog_entity_media media
-		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
-		JOIN catalog_source_policies policy ON policy.source=media.source
-		WHERE (media.cache_status IN ('remote','failed') OR
-		       media.cache_status='cached' AND policy.retention_days IS NOT NULL AND
-		       media.cached_at<=now()-make_interval(days=>policy.retention_days))
-		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
-		  AND policy.review_status='reviewed'
 		ORDER BY COALESCE(media.cached_at,'-infinity'::timestamptz),media.updated_at,media.id LIMIT $1`
-		args = []any{limit}
-	}
+	args := []any{limit}
+	_, _ = environment, accessMode
 	rows, err := c.db.Query(ctx, query, args...)
 	if err != nil {
 		return Result{}, fmt.Errorf("list eligible media: %w", err)
