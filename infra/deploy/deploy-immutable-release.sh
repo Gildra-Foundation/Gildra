@@ -232,22 +232,27 @@ verify_library_route() {
 
 # nginx mounts infra/nginx/prod.conf as a single file. The upload step replaces
 # that file with a new inode, so the running container keeps serving the old
-# content until it is recreated; a reload is not enough. Recreate nginx only
-# when the loaded config differs from the uploaded one.
+# content until it is recreated; a reload is not enough. Remember the hash of
+# the configuration that the running container was created with and recreate
+# nginx only when the uploaded file differs from it.
 sync_nginx_config() {
-  nginx_container=$(compose ps -q nginx)
-  [ -n "$nginx_container" ] || { compose up -d --no-deps nginx || return 1; return 0; }
-  loaded_hash=$(docker exec "$nginx_container" sh -c 'sha256sum /etc/nginx/conf.d/default.conf' 2>/dev/null | cut -d' ' -f1)
+  nginx_state_directory="$deployment_directory/var"
+  nginx_state_file="$nginx_state_directory/nginx-config.sha256"
   uploaded_hash=$(sha256sum "$deployment_directory/infra/nginx/prod.conf" | cut -d' ' -f1)
-  if [ -z "$loaded_hash" ]; then
-    printf 'deploy: could not read the loaded nginx configuration; leaving nginx untouched\n' >&2
+  [ -n "$uploaded_hash" ] || return 1
+  mkdir -p "$nginx_state_directory" || return 1
+  if [ ! -f "$nginx_state_file" ]; then
+    # First run after this gate was introduced: the running container is
+    # assumed current (it was verified by the health gates of its release).
+    printf '%s\n' "$uploaded_hash" > "$nginx_state_file"
     return 0
   fi
-  if [ "$loaded_hash" = "$uploaded_hash" ]; then
+  if [ "$(cat "$nginx_state_file")" = "$uploaded_hash" ]; then
     return 0
   fi
   printf 'deploy: nginx configuration changed; recreating the nginx container\n' >&2
   compose up -d --force-recreate --no-deps nginx || return 1
+  printf '%s\n' "$uploaded_hash" > "$nginx_state_file"
 }
 
 verify_local_health() {
