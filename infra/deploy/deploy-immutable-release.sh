@@ -239,6 +239,10 @@ verify_local_health() {
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/genshin-impact/v1/status >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/genshin-impact >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/league-of-legends/v1/status >/dev/null
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/league-of-legends >/dev/null
   if [ "$catalog_access_mode" = private ]; then
     catalog_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
       --output /dev/null --write-out '%{http_code}' \
