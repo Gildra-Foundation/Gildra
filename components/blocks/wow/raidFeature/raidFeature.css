@@ -1,0 +1,32 @@
+/* raidFeature: artwork raid banner. Imported from app/globals.css right after mythicMeta.css. */
+.raidfeat{
+  position:relative;overflow:hidden;margin-top:26px;min-height:230px;
+  border:1px solid #2b3145;background:#0e1119;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+}
+.rf-art{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 62%;
+}
+.raidfeat::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(10,12,18,.93) 22%,rgba(10,12,18,.6) 55%,rgba(10,12,18,.25));
+}
+.rf-in{
+  position:relative;z-index:2;display:flex;gap:40px;align-items:center;
+  padding:30px 30px;min-height:230px;
+}
+.rf-main{flex:1;max-width:520px}
+.rf-main h2{font-family:var(--display);font-weight:700;font-size:27px;color:#eef0f8;margin:8px 0 8px}
+.rf-main p{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-bottom:14px}
+.rf-links{display:flex;align-items:center;gap:11px;flex-wrap:wrap;font-size:12.5px;font-weight:600}
+.rf-specs{display:flex;flex-direction:column;gap:9px;min-width:230px}
+.rf-row{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;color:var(--ink)}
+.rf-row .tpill{margin-left:auto}
+
+/* Compact banner when the containing column is narrow (was @media 1120 / 720). */
+@container (max-width:1052px){
+  .rf-in{flex-direction:column;align-items:flex-start;gap:20px}
+}
+@container (max-width:680px){
+  .rf-in{padding:22px 20px}
+}
