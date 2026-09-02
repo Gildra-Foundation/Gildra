@@ -26,3 +26,6 @@ __pycache__/
 *.dump
 *.exe
 tsconfig.tsbuildinfo
+
+# local Next build dirs (NEXT_DIST_DIR overrides)
+.next-*/
