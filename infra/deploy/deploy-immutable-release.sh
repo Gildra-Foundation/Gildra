@@ -310,8 +310,16 @@ verify_local_health() {
     --resolve gildra.net:443:127.0.0.1 https://gildra.net/library >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/library >/dev/null
-  verify_library_redirect /library/items
-  verify_library_redirect /ru/library/items
+  if [ "$catalog_access_mode" = private ]; then
+    verify_library_redirect /library/items
+    verify_library_redirect /ru/library/items
+  else
+    # Public catalog: the dataset pages are served by Next.js on gildra.net.
+    curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+      --resolve gildra.net:443:127.0.0.1 https://gildra.net/library/items >/dev/null
+    curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
+      --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/library/items >/dev/null
+  fi
 }
 
 verify_library_redirect() {
