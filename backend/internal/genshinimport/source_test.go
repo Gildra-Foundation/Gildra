@@ -1,6 +1,10 @@
 package genshinimport
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestBirthday(t *testing.T) {
 	tests := []struct {
@@ -63,5 +67,27 @@ func TestSourceMappings(t *testing.T) {
 		if err != nil || got != want {
 			t.Errorf("weaponType(%q) = %q, %v; want %q", input, got, err, want)
 		}
+	}
+}
+
+func TestLoadSupplementalSourcesReadsAllManifests(t *testing.T) {
+	directory := t.TempDir()
+	manifests := map[string]string{
+		"manifest.json":              `{"name":"events","url":"https://example.test/events","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}`,
+		"manifest-quests-en_US.json": `{"name":"quests-en","url":"https://example.test/quests/en","sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}`,
+		"manifest-quests-ru_RU.json": `{"name":"quests-ru","url":"https://example.test/quests/ru","sha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}`,
+		"manifest-invalid.json":      `{"name":"missing-digest","url":"https://example.test/nope"}`,
+	}
+	for name, content := range manifests {
+		if err := os.WriteFile(filepath.Join(directory, name), []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	sources := loadSupplementalSources(directory)
+	if len(sources) != 3 {
+		t.Fatalf("loaded %d supplemental sources, want 3: %#v", len(sources), sources)
+	}
+	if sources[0].Name != "events" || sources[1].Name != "quests-en" || sources[2].Name != "quests-ru" {
+		t.Fatalf("unexpected source order/content: %#v", sources)
 	}
 }
