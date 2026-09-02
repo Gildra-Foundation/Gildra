@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
+	"fmt"
 	"io"
 	"path/filepath"
 	"strings"
@@ -28,7 +29,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 127
+const latestCatalogSchemaVersion int64 = 130
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -615,6 +616,9 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err := store.UpsertCanonical(ctx, candidate, releasedItem); err != nil {
 		t.Fatal(err)
 	}
+	// The required-field quality gate (00128) needs a Russian name/description
+	// and a proven icon for every required entity type in the candidate build.
+	seedRequiredFields(t, ctx, database, store, candidate, "item", 900001, 100003, artifactID)
 	if err := store.Finish(ctx, candidate.RunID, "SUCCEEDED", 1, 1, nil); err != nil {
 		t.Fatal(err)
 	}
@@ -709,6 +713,7 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err := store.UpsertCanonical(ctx, candidate, candidateSpell); err != nil {
 		t.Fatal(err)
 	}
+	seedRequiredFields(t, ctx, database, store, candidate, "spell", 900010, 100003, artifactID)
 	var previousSpellVersionID, candidateSpellVersionID uuid.UUID
 	if err := database.QueryRowContext(ctx, `
 		SELECT version.id
@@ -924,6 +929,12 @@ func assertLocaleFallbackContract(
 		ON CONFLICT (version_id,locale) DO UPDATE SET name=EXCLUDED.name,description=EXCLUDED.description`, versionID); err != nil {
 		t.Fatal(err)
 	}
+	// The release fixture proved this Russian value so the release could
+	// publish; drop the proof to observe the unproven fallback contract first.
+	if _, err := database.ExecContext(ctx, `
+		DELETE FROM catalog_entity_localization_artifacts WHERE version_id=$1 AND locale='ru_RU'`, versionID); err != nil {
+		t.Fatal(err)
+	}
 	entity, err := service.Get(ctx, entityID, "ru_RU")
 	if err != nil {
 		t.Fatal(err)
@@ -952,6 +963,56 @@ func assertLocaleFallbackContract(
 	}
 	if entity.LocaleFallback || entity.ResolvedLocale != "ru_RU" {
 		t.Fatalf("proven Russian value must remain Russian: %#v", entity)
+	}
+}
+
+// seedRequiredFields gives a candidate version the proven Russian localization
+// and the proven icon observation that the required-field and provenance
+// gates expect for items and spells. assertLocaleFallbackContract removes the
+// localization proof again to observe the English fallback before re-adding it.
+func seedRequiredFields(t *testing.T, ctx context.Context, database *sql.DB, store *catalogimport.Store, run catalogimport.ImportContext, entityType string, externalID, buildNumber int64, artifactID uuid.UUID) {
+	t.Helper()
+	// Localization provenance is locale-specific: prove the Russian text with a
+	// Russian source artifact of the same run, like the real importer does.
+	ruArtifactID, err := store.RegisterArtifact(ctx, run, "wago_tools", "ItemSparse", "ru_RU",
+		"https://wago.tools/db2/ItemSparse/csv?build=1.0.0.100003&locale=ru_RU", map[string]any{"test": "Russian proof " + entityType})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ruProof := []byte("25,Released " + entityType + "\n")
+	ruDigest := sha256.Sum256(ruProof)
+	if err := store.CompleteArtifact(ctx, ruArtifactID, ruDigest[:], int64(len(ruProof)), `"integration-ru-seed-etag"`); err != nil {
+		t.Fatal(err)
+	}
+	var versionID uuid.UUID
+	var buildID int64
+	if err := database.QueryRowContext(ctx, `
+		SELECT version.id, build.id
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.entity_id=entity.id
+		JOIN game_builds build ON build.id=version.build_id
+		WHERE entity.entity_type=$1 AND entity.external_id=$2 AND build.build_number=$3
+		ORDER BY version.revision DESC, version.created_at DESC
+		LIMIT 1`, entityType, externalID, buildNumber).Scan(&versionID, &buildID); err != nil {
+		t.Fatalf("find %s %d candidate version: %v", entityType, externalID, err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO game_entity_localizations(version_id,locale,slug,name,description)
+		VALUES($1,'ru_RU',$2,$3,'Тест атомарного релиза')
+		ON CONFLICT (version_id,locale) DO UPDATE SET name=EXCLUDED.name,description=EXCLUDED.description`,
+		versionID, fmt.Sprintf("%s-%d-ru", entityType, externalID), "Released "+entityType); err != nil {
+		t.Fatalf("seed %s Russian localization: %v", entityType, err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+		VALUES($1,'ru_RU',$2) ON CONFLICT DO NOTHING`, versionID, ruArtifactID); err != nil {
+		t.Fatalf("seed %s Russian localization proof: %v", entityType, err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_entity_icons(build_id,entity_type,external_id,icon_name,source_artifact_id)
+		VALUES($1,$2,$3,'inv_test',$4)
+		ON CONFLICT DO NOTHING`, buildID, entityType, externalID, artifactID); err != nil {
+		t.Fatalf("seed %s icon observation: %v", entityType, err)
 	}
 }
 
