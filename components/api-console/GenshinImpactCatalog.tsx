@@ -91,8 +91,10 @@ const elementColors: Record<string, string> = {
   cryo: "border-[#75aeba] text-[#a9dde4] bg-[#112024]",
 };
 
-async function requestJSON<T>(path: string): Promise<T> {
-  const response = await fetch(path, { credentials: "include", signal: AbortSignal.timeout(15_000) });
+async function requestJSON<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const deadline = AbortSignal.timeout(15_000);
+  const requestSignal = signal ? AbortSignal.any([signal, deadline]) : deadline;
+  const response = await fetch(path, { credentials: "include", signal: requestSignal });
   if (!response.ok) {
     let detail = "Не удалось загрузить данные Genshin Impact";
     try {
@@ -131,24 +133,38 @@ export function GenshinImpactCatalog() {
     return `/genshin-impact/v1/${path}?${params}`;
   }, [contentCategory, element, locale, query, rarity, section, weaponType]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true); setError(""); setItems([]); setNextCursor("");
     try {
-      const [catalogStatus, page] = await Promise.all([
-        requestJSON<CatalogStatus>("/genshin-impact/v1/status"),
-        requestJSON<CatalogPage<CatalogItem>>(endpoint),
-      ]);
-      setStatus(catalogStatus); setItems(page.data); setHasMore(page.pagination.hasMore);
+      const page = await requestJSON<CatalogPage<CatalogItem>>(endpoint, signal);
+      setItems(page.data); setHasMore(page.pagination.hasMore);
       setNextCursor(page.pagination.nextCursor ?? "");
     } catch (reason) {
+      if (reason instanceof DOMException && reason.name === "AbortError") return;
       setError(reason instanceof Error ? reason.message : "Не удалось загрузить каталог");
     } finally { setLoading(false); }
   }, [endpoint]);
 
+  const loadStatus = useCallback(async (signal?: AbortSignal) => {
+    try {
+      setStatus(await requestJSON<CatalogStatus>("/genshin-impact/v1/status", signal));
+    } catch (reason) {
+      if (reason instanceof DOMException && reason.name === "AbortError") return;
+      setError(reason instanceof Error ? reason.message : "Не удалось загрузить состояние каталога");
+    }
+  }, []);
+
   useEffect(() => {
-    const timer = window.setTimeout(() => { void load(); }, query ? 250 : 0);
-    return () => window.clearTimeout(timer);
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => { void load(controller.signal); }, query ? 250 : 0);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [load, revision, query]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadStatus(controller.signal);
+    return () => controller.abort();
+  }, [loadStatus, revision]);
 
   async function loadMore() {
     if (!nextCursor || loadingMore) return;

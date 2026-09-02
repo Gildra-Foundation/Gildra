@@ -1,0 +1,365 @@
+openapi: 3.1.0
+info:
+  title: Gildra League of Legends API
+  version: 1.0.0
+  description: Read-only, bilingual, patch-versioned League of Legends static catalog backed by official Riot Data Dragon releases.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: https://api.gildra.net/league-of-legends/v1
+tags:
+  - name: Discovery
+  - name: Champions
+  - name: Content
+paths:
+  /:
+    get:
+      operationId: getLeagueAPIIndex
+      summary: Discover the stable League of Legends API resources.
+      tags: [Discovery]
+      responses:
+        "200":
+          description: API resource links and supported locales.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/APIIndex" }
+              examples:
+                default:
+                  value:
+                    version: v1
+                    status: /league-of-legends/v1/status
+                    resources:
+                      champions: /league-of-legends/v1/champions
+                      content: /league-of-legends/v1/content/{category}
+                    locales: [en_US, ru_RU]
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /status:
+    get:
+      operationId: getLeagueCatalogStatus
+      summary: Get the active Data Dragon release and catalog coverage.
+      tags: [Discovery]
+      responses:
+        "200":
+          description: Current publication state and entity counts.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CatalogStatus" }
+        "503": { $ref: "#/components/responses/CatalogUnavailable" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /champions:
+    get:
+      operationId: listLeagueChampions
+      summary: Search and filter champions from the active release.
+      tags: [Champions]
+      parameters:
+        - $ref: "#/components/parameters/Locale"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: tag
+          in: query
+          description: Riot champion tag such as Mage, Assassin, Fighter, Marksman, Support or Tank.
+          schema:
+            type: string
+            enum: [Assassin, Fighter, Mage, Marksman, Support, Tank]
+      responses:
+        "200":
+          description: Cursor-paginated champion summaries.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/CursorPage"
+                  - type: object
+                    required: [data]
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/ChampionSummary" }
+        "400": { $ref: "#/components/responses/InvalidQuery" }
+        "503": { $ref: "#/components/responses/CatalogUnavailable" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /champions/{slug}:
+    get:
+      operationId: getLeagueChampion
+      summary: Get a champion with localized abilities, skins and official assets.
+      tags: [Champions]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        - $ref: "#/components/parameters/Locale"
+      responses:
+        "200":
+          description: Complete champion resource.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChampionDetail" }
+              examples:
+                ahri:
+                  value:
+                    id: 103
+                    slug: ahri
+                    internalName: Ahri
+                    name: Ahri
+                    title: the Nine-Tailed Fox
+                    resourceType: Mana
+                    tags: [Mage, Assassin]
+                    stats: { hp: 590, mp: 418, movespeed: 330 }
+                    info: { attack: 3, defense: 4, magic: 8, difficulty: 5 }
+                    assets:
+                      icon: /league-of-legends/media/lol/example.png
+                      splash: /league-of-legends/media/lol/example.jpg
+                    abilities: []
+                    skins: []
+                    blurb: Ahri is a fox-like vastaya who can manipulate her prey's emotions.
+                    lore: Innately connected to the magic of the spirit realm, Ahri searches for her place in the world.
+                    allyTips: []
+                    enemyTips: []
+                    sourcePayload: {}
+                    locale: en_US
+                    localeFallback: false
+        "400": { $ref: "#/components/responses/InvalidQuery" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/CatalogUnavailable" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /content/{category}:
+    get:
+      operationId: listLeagueContent
+      summary: Search complete source-preserving static entries.
+      tags: [Content]
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/ContentCategory"
+        - $ref: "#/components/parameters/Locale"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Cursor-paginated static entries with their complete Data Dragon payload.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/CursorPage"
+                  - type: object
+                    required: [data]
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/ContentEntry" }
+        "400": { $ref: "#/components/responses/InvalidQuery" }
+        "503": { $ref: "#/components/responses/CatalogUnavailable" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+components:
+  parameters:
+    Locale:
+      name: locale
+      in: query
+      description: Requested localization. English is used as an explicit field-level fallback.
+      schema: { $ref: "#/components/schemas/Locale" }
+    Search:
+      name: q
+      in: query
+      schema:
+        type: string
+        maxLength: 200
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque nextCursor returned by the previous response.
+      schema:
+        type: string
+        maxLength: 256
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 24
+  responses:
+    InvalidQuery:
+      description: One or more query parameters are invalid.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    NotFound:
+      description: The requested resource does not exist in the active release.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    CatalogUnavailable:
+      description: No published catalog exists or PostgreSQL could not be read.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    TooManyRequests:
+      description: Public API rate limit exceeded.
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+  schemas:
+    Locale:
+      type: string
+      enum: [en_US, ru_RU]
+      default: en_US
+    ContentCategory:
+      type: string
+      enum: [items, runes, summoner-spells, maps, profile-icons]
+    APIIndex:
+      type: object
+      required: [version, status, resources, locales]
+      properties:
+        version: { const: v1 }
+        status: { type: string }
+        resources:
+          type: object
+          required: [champions, content]
+          properties:
+            champions: { type: string }
+            content: { type: string }
+        locales:
+          type: array
+          items: { $ref: "#/components/schemas/Locale" }
+    CatalogStatus:
+      type: object
+      required: [ready, champions, abilities, skins, contentEntries, contentByCategory, mediaAssets, locales]
+      properties:
+        ready: { type: boolean }
+        releaseId: { type: string, format: uuid }
+        ddragonVersion: { type: string }
+        publishedAt: { type: string, format: date-time }
+        champions: { type: integer, format: int64, minimum: 0 }
+        abilities: { type: integer, format: int64, minimum: 0 }
+        skins: { type: integer, format: int64, minimum: 0 }
+        contentEntries: { type: integer, format: int64, minimum: 0 }
+        contentByCategory:
+          type: object
+          additionalProperties: { type: integer, format: int64, minimum: 0 }
+        mediaAssets: { type: integer, format: int64, minimum: 0 }
+        locales:
+          type: array
+          items: { $ref: "#/components/schemas/Locale" }
+    CursorPage:
+      type: object
+      required: [pagination]
+      properties:
+        pagination:
+          type: object
+          required: [hasMore, limit]
+          properties:
+            nextCursor: { type: string }
+            hasMore: { type: boolean }
+            limit: { type: integer, minimum: 1, maximum: 100 }
+    AssetSet:
+      type: object
+      properties:
+        icon: { type: [string, "null"] }
+        splash: { type: [string, "null"] }
+        loading: { type: [string, "null"] }
+        tile: { type: [string, "null"] }
+    ChampionSummary:
+      type: object
+      required: [id, slug, internalName, name, title, resourceType, tags, assets, locale, localeFallback]
+      properties:
+        id: { type: integer, format: int32 }
+        slug: { type: string }
+        internalName: { type: string }
+        name: { type: string }
+        title: { type: string }
+        resourceType: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        assets: { $ref: "#/components/schemas/AssetSet" }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
+    Ability:
+      type: object
+      required: [key, kind, slot, displayOrder, name, description, tooltip, iconUrl, cooldowns, costs, ranges, variables, effects]
+      properties:
+        key: { type: string }
+        kind: { type: string, enum: [passive, spell] }
+        slot: { type: string, enum: [P, Q, W, E, R, EXTRA] }
+        displayOrder: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        tooltip: { type: string }
+        iconUrl: { type: [string, "null"] }
+        cooldowns: {}
+        costs: {}
+        ranges: {}
+        variables: {}
+        effects: {}
+    Skin:
+      type: object
+      required: [id, number, name, hasChromas, assets]
+      properties:
+        id: { type: integer, format: int64 }
+        number: { type: integer }
+        name: { type: string }
+        hasChromas: { type: boolean }
+        assets: { $ref: "#/components/schemas/AssetSet" }
+    ChampionDetail:
+      allOf:
+        - $ref: "#/components/schemas/ChampionSummary"
+        - type: object
+          required: [blurb, lore, allyTips, enemyTips, info, stats, abilities, skins, sourcePayload]
+          properties:
+            blurb: { type: string }
+            lore: { type: string }
+            allyTips:
+              type: array
+              items: { type: string }
+            enemyTips:
+              type: array
+              items: { type: string }
+            info: { type: object, additionalProperties: true }
+            stats: { type: object, additionalProperties: true }
+            abilities:
+              type: array
+              items: { $ref: "#/components/schemas/Ability" }
+            skins:
+              type: array
+              items: { $ref: "#/components/schemas/Skin" }
+            sourcePayload: { type: object, additionalProperties: true }
+    ContentEntry:
+      type: object
+      required: [id, category, externalKey, slug, name, description, tags, iconUrl, sourcePayload, localizedPayload, locale, localeFallback]
+      properties:
+        id: { type: integer, format: int64 }
+        category: { $ref: "#/components/schemas/ContentCategory" }
+        externalKey: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        iconUrl: { type: [string, "null"] }
+        sourcePayload: { type: object, additionalProperties: true }
+        localizedPayload: { type: object, additionalProperties: true }
+        locale: { $ref: "#/components/schemas/Locale" }
+        localeFallback: { type: boolean }
+    Problem:
+      type: object
+      required: [type, title, status, detail, instance]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }

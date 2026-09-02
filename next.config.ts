@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  async rewrites() {
+    const api = process.env.API_INTERNAL_URL ?? "http://api:8080";
+    return [
+      { source: "/league-of-legends/v1/:path*", destination: `${api}/league-of-legends/v1/:path*` },
+      { source: "/league-of-legends/media/:path*", destination: `${api}/league-of-legends/media/:path*` },
+    ];
+  },
 };
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
