@@ -30,7 +30,7 @@ run_edition() {
   profile=$2
 
   printf 'catalog-refresh: checking %s\n' "$product"
-  if compose run --rm --no-deps --entrypoint catalog-build-check api \
+  if compose run --rm --no-deps --entrypoint catalog-build-check catalog-pipeline \
       -product "$product" -require-update; then
     :
   else
@@ -52,7 +52,7 @@ run_edition() {
   esac
   printf 'catalog-refresh: importing %s with profile %s (sources %s, access %s)\n' \
     "$product" "$profile" "$sources" "$catalog_access_mode"
-  compose run --rm --no-deps --entrypoint catalog-pipeline api \
+  compose run --rm --no-deps catalog-pipeline \
     -mode apply -trigger schedule -product "$product" -profile "$profile" \
     -sources "$sources" -use-checked-build \
     -max-records 0 -confirm-full-import -publication-environment production \

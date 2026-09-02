@@ -124,3 +124,17 @@ export type WowSpecListResponse = { classSlug: string; data: WowSpecSummary[]; c
 export type WowSpecializationResponse = {
   specialization: WowSpecSummary; guides: WowGuide[]; placements: WowPlacement[]; pagination: PageInfo;
 };
+
+// Responses of the split console endpoints (see backend/internal/adminpanel/console.go).
+export type SystemReport = {
+  generatedAt: string; systems: SystemStatus[]; schemaVersion: number;
+  recoveryPolicy: string; healthy: boolean;
+};
+export type CatalogHealthResponse = { generatedAt: string; catalog: CatalogHealth & { warnings?: string[] }; catalogReadiness: CatalogReadiness };
+export type AnalyticsOverview = { hours: number; events: number; uniqueUsers: number; activeSubscriptions: number; series: AnalyticsPoint[] };
+export type AnalyticsOverviewResponse = { generatedAt: string; analytics: AnalyticsOverview };
+export type DatasetDetailResponse = { dataset: DatasetListItem; generatedAt: string };
+export type DatasetFreshness = {
+  slug: string; freshness: "fresh" | "stale" | "never"; freshUntil: string | null;
+  lastSuccessAt: string | null; lastAttemptAt: string | null; refreshIntervalSeconds: number; generatedAt: string;
+};
