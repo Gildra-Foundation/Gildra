@@ -290,17 +290,50 @@ func (h *Handler) catalogReadiness(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) cachedCatalogReadiness(ctx context.Context) (catalogquality.ReadinessReport, error) {
 	h.readinessMu.Lock()
-	defer h.readinessMu.Unlock()
 	if !h.readinessCachedAt.IsZero() && time.Since(h.readinessCachedAt) < readinessCacheTTL {
-		return h.readinessCached, nil
+		report := h.readinessCached
+		h.readinessMu.Unlock()
+		return report, nil
 	}
+	h.readinessMu.Unlock()
+
+	// The readiness audit scans the published projection and can take minutes
+	// on the production-sized catalog.  Run it outside the cache mutex so an
+	// explicit audit request cannot block dashboard snapshots or other readers.
 	report, err := catalogquality.EvaluateReadinessWithRecoveryPolicy(ctx, h.postgres, "wow", "", h.recoveryPolicy)
 	if err != nil {
 		return catalogquality.ReadinessReport{}, err
 	}
+	h.readinessMu.Lock()
 	h.readinessCached = report
 	h.readinessCachedAt = time.Now()
+	h.readinessMu.Unlock()
 	return report, nil
+}
+
+// dashboardReadiness returns the last completed audit without starting a new
+// production-sized scan.  The dashboard is a fast health overview; the full
+// audit is intentionally exposed through /v1/admin/catalog-readiness.
+func (h *Handler) dashboardReadiness() catalogquality.ReadinessReport {
+	h.readinessMu.Lock()
+	report := h.readinessCached
+	cachedAt := h.readinessCachedAt
+	h.readinessMu.Unlock()
+	if !cachedAt.IsZero() {
+		return report
+	}
+	return catalogquality.ReadinessReport{
+		Product:     "wow",
+		GeneratedAt: time.Now().UTC(),
+		DataReady:   false,
+		Checks: []catalogquality.ReadinessCheck{{
+			Key:      "readiness_pending",
+			Scope:    catalogquality.ScopeData,
+			Status:   "pending",
+			Message:  "Полная проверка готовности запускается отдельно и не блокирует панель",
+			Blocking: false,
+		}},
+	}
 }
 
 func (h *Handler) datasetRunsAPI(w http.ResponseWriter, r *http.Request) {
@@ -668,11 +701,7 @@ func (h *Handler) dashboard(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Warn("load catalog health", "error", err)
 	}
-	readiness, err := h.cachedCatalogReadiness(ctx)
-	if err != nil {
-		slog.Warn("load catalog readiness", "error", err)
-		readiness.Checks = make([]catalogquality.ReadinessCheck, 0)
-	}
+	readiness := h.dashboardReadiness()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"generatedAt": time.Now().UTC(), "user": user, "systems": h.systemStatuses(ctx),
 		"dataset": dataset, "runs": runs, "analytics": overview, "catalog": catalogStatus,

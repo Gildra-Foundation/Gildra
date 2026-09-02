@@ -222,7 +222,10 @@ grep -Fq 'ensure_recovery_backup' "$deployment_script"
 grep -Fq 'run-catalog-backup.sh' "$deployment_script"
 grep -Fq 'run-catalog-repair.sh' "$repository_directory/.github/workflows/catalog-repair.yml"
 grep -Fq 'CATALOG_ACCESS_MODE: ${CATALOG_ACCESS_MODE:-public}' "$repository_directory/compose.yml"
-grep -Fq -- '-require-data-ready' "$deployment_script"
+if grep -Fq -- '-require-data-ready' "$deployment_script"; then
+  printf 'test: private catalog completeness must remain advisory so a partial data refresh cannot roll back a healthy release\n' >&2
+  exit 1
+fi
 grep -Fq 'private catalog allowed an anonymous request' "$deployment_script"
 grep -Fq 'https://api.gildra.net/library/items' "$repository_directory/.github/workflows/deploy.yml"
 grep -Fq 'https://api.gildra.net/ru/library/items' "$repository_directory/.github/workflows/deploy.yml"
