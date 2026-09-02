@@ -1,0 +1,83 @@
+/* Styles for specBody — imported from app/globals.css in cascade order. */
+/* ============ SPEC PAGE ============ */
+.sp-crumb{
+  display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--ink-3);
+  margin-bottom:20px;
+}
+.sp-crumb a{color:var(--ink-2)}
+.sp-crumb a:hover{color:var(--gold-2)}
+.sp-crumb .dia{font-size:7px;color:var(--gold-dim)}
+.sp-hero{
+  display:flex;align-items:center;gap:16px;padding:20px 22px;
+  position:relative;overflow:hidden;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--cc) 9%,var(--panel)),var(--panel) 55%);
+  border:1px solid var(--line);border-left:2px solid var(--cc);
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+}
+.sp-id{flex:1;min-width:0}
+.sp-hero h1{
+  font-family:var(--display);font-weight:700;font-size:26px;color:#eef0f8;
+  line-height:1.15;
+}
+.sp-sub{font-size:11.5px;color:var(--ink-2);margin-top:5px}
+.sp-hero .tpill{flex:none}
+.sp-score{
+  text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;
+  margin-left:6px;
+}
+.sp-score b{
+  font-family:var(--display);font-weight:700;font-size:30px;color:#eef0f8;
+  line-height:1;font-variant-numeric:tabular-nums;
+}
+.sp-score>span:not(.sbar){
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
+  margin-top:4px;
+}
+.sp-score .sbar{margin-top:6px;width:74px}
+.sp-oct{ /* гравировка: концентрические октагоны в цвете класса */
+  position:absolute;right:118px;top:50%;transform:translateY(-50%);
+  width:170px;height:170px;color:var(--cc);opacity:.08;pointer-events:none;
+}
+.sp-emboss{ /* тиснёная тир-буква */
+  position:absolute;right:10px;top:50%;transform:translateY(-54%);
+  font-family:var(--display);font-weight:700;font-size:120px;line-height:1;
+  color:rgba(233,236,243,.05);pointer-events:none;user-select:none;
+}
+.sp-stats{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);margin-top:14px;
+  position:relative;overflow:hidden;
+}
+.sp-stat .sbar{width:64px;margin-top:7px}
+.sp-stat{
+  background:var(--bg);padding:14px 16px;display:flex;flex-direction:column;gap:5px;
+}
+.sp-stat b{
+  font-family:var(--display);font-weight:700;font-size:19px;color:#e9ecf7;
+  font-variant-numeric:tabular-nums;
+}
+.sp-stat span{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+.sp-note{font-size:10.5px;color:var(--ink-3);margin:10px 2px 30px}
+.sp-builds{margin-bottom:8px}
+.sp-guides{display:flex;flex-direction:column}
+.sp-guide{
+  display:grid;grid-template-columns:150px 1fr auto;gap:14px;align-items:center;
+  padding:12px 8px;border-bottom:1px solid var(--line-soft);
+  transition:background .15s,box-shadow .2s;
+}
+.sp-guide:hover{background:rgba(28,33,48,.5);box-shadow:inset 2px 0 0 var(--gold-dim)}
+.sp-guide-cat{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold)}
+.sp-guide-title{font-size:13px;font-weight:600;color:var(--ink)}
+.sp-guide-meta{font-size:10.5px;color:var(--ink-3)}
+.sp-back{margin-top:34px}
+@media (max-width:900px){
+  .sp-stats{grid-template-columns:repeat(2,1fr)}
+  .sp-stat:last-of-type{grid-column:span 2}
+}
+@media (max-width:720px){
+  .sp-hero{flex-wrap:wrap;padding:16px}
+  .sp-hero h1{font-size:21px}
+  .sp-id{flex-basis:calc(100% - 64px)}
+  .sp-score{margin-left:0;align-items:flex-start;text-align:left}
+  .sp-guide{grid-template-columns:1fr;gap:3px}
+}

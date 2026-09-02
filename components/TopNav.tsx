@@ -5,45 +5,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SearchCommand } from "./SearchCommand";
-import { altPath, langOf, p, t } from "@/lib/i18n";
-
-/** Task-based направления Explore — только реальные destinations. */
-const TASKS = [
-  {
-    task: "Compare specs",
-    title: "Tier List",
-    desc: "Ranked Mythic+ specs with scores",
-    href: "/tier-lists",
-    icon: "#ic-sword",
-  },
-  {
-    task: "Explore game data",
-    title: "Library",
-    desc: "Verified datasets, images and tooltips",
-    href: "/library",
-    icon: "#ic-database",
-  },
-  {
-    task: "Prepare for raid",
-    title: "Raid Overview",
-    desc: "Manaforge Omega meta and specs",
-    href: "/#raid",
-    icon: "#ic-shield",
-  },
-  {
-    task: "Learn & improve",
-    title: "Latest Guides",
-    desc: "Fresh guides for the season",
-    href: "/#guides",
-    icon: "#ic-book",
-  },
-];
-
-const GAMES = [
-  { label: "Diablo IV", icon: "#gm-d4", color: "#d95c55" },
-  { label: "Hearthstone", icon: "#gm-hs", color: "#dfc06a" },
-  { label: "Overwatch 2", icon: "#gm-ow", color: "#e8975a" },
-];
+import { altPath, langOf, t, type Lang } from "@/lib/i18n";
+import { ANCHORS, anchorHref } from "@/lib/anchors";
+import {
+  GAMES,
+  GAME_ORDER,
+  currentGame,
+  gameHref,
+  type GameSlug,
+} from "@/lib/games/registry";
 
 /** Disclosure-меню: клик/Enter/Space открывают, Escape закрывает и
  *  возвращает фокус на триггер, клик вне — закрывает. */
@@ -76,15 +46,20 @@ function useMenu() {
   return { open, setOpen, rootRef, btnRef };
 }
 
-export function TopNav() {
+/** Global header. Game and language come from the page (PageShell); when
+ *  rendered outside it (404, root layout) both are derived from the pathname.
+ *  Game switcher, Explore tasks and search index all read the game registry. */
+export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; lang?: Lang }) {
   const [mobOpen, setMobOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchBtnRef = useRef<HTMLButtonElement>(null);
   const explore = useMenu();
-  const game = useMenu();
+  const gameMenu = useMenu();
   const pathname = usePathname();
-  const lang = langOf(pathname);
+  const lang = langProp ?? langOf(pathname);
+  const game = gameSlug ? GAMES[gameSlug] : currentGame(pathname);
   const tt = t(lang);
+  const tasks = game.nav.tasks;
 
   useEffect(() => {
     document.body.style.overflow = mobOpen ? "hidden" : "";
@@ -93,7 +68,7 @@ export function TopNav() {
     };
   }, [mobOpen]);
 
-  const isCurrent = (href: string) => p(lang, href) === pathname;
+  const isCurrent = (path: string) => gameHref(game, lang, path) === pathname;
 
   return (
     <header className="topnav">
@@ -109,7 +84,7 @@ export function TopNav() {
         <span />
       </button>
 
-      <Link className="logo" href={p(lang, "/")} aria-label="Gildra home">
+      <Link className="logo" href={gameHref(GAMES.wow, lang, "/")} aria-label="Gildra home">
         <Image
           className="logo-mark"
           src="/brand/helmet.png"
@@ -121,55 +96,75 @@ export function TopNav() {
         <span className="logo-text">GILDRA</span>
       </Link>
 
-      <div className="gsw" ref={game.rootRef}>
+      <div className="gsw" ref={gameMenu.rootRef}>
         <button
-          ref={game.btnRef}
+          ref={gameMenu.btnRef}
           className="gsw-btn"
-          aria-expanded={game.open}
+          aria-expanded={gameMenu.open}
           aria-controls="game-menu"
-          onClick={() => game.setOpen((v) => !v)}
+          onClick={() => gameMenu.setOpen((v) => !v)}
         >
           <svg className="i" aria-hidden="true">
-            <use href="#gm-wow" />
+            <use href={game.icon} />
           </svg>{" "}
-          <span className="gsw-label">World of Warcraft</span>
-          <span className="gsw-label-sm">WoW</span>{" "}
+          <span className="gsw-label">{game.name}</span>
+          <span className="gsw-label-sm">{game.shortName}</span>{" "}
           <span className="caret">▾</span>
         </button>
-        {game.open && (
+        {gameMenu.open && (
           <div className="gsw-menu game-menu" id="game-menu">
             <div className="exp-cap">{tt("Switch game")}</div>
             <button
               type="button"
               className="gitem on"
               aria-current="true"
-              onClick={() => game.setOpen(false)}
+              onClick={() => gameMenu.setOpen(false)}
             >
               <span className="gtile gtile-on">
                 <svg className="i" aria-hidden="true">
-                  <use href="#gm-wow" />
+                  <use href={game.icon} />
                 </svg>
               </span>
-              World of Warcraft
+              {game.name}
               <span className="gmark" aria-hidden="true">◆</span>
             </button>
             <div className="gdiv" />
-            {GAMES.map((g) => (
-              <button
-                key={g.label}
-                type="button"
-                className="gitem"
-                aria-disabled="true"
-                title="Coming soon"
-              >
+            {GAME_ORDER.filter((s) => s !== game.slug).map((s) => {
+              const g = GAMES[s];
+              const tile = (
                 <span className="gtile">
-                  <svg className="i" style={{ color: g.color }} aria-hidden="true">
+                  <svg className="i" style={{ color: g.accent }} aria-hidden="true">
                     <use href={g.icon} />
                   </svg>
                 </span>
-                {g.label} <span className="soon">{tt("soon")}</span>
-              </button>
-            ))}
+              );
+              if (g.status === "soon") {
+                return (
+                  <button
+                    key={g.slug}
+                    type="button"
+                    className="gitem"
+                    aria-disabled="true"
+                    title="Coming soon"
+                  >
+                    {tile}
+                    {g.name} <span className="soon">{tt("soon")}</span>
+                  </button>
+                );
+              }
+              return (
+                <Link
+                  key={g.slug}
+                  className="gitem"
+                  href={gameHref(g, lang, "/")}
+                  onClick={() => gameMenu.setOpen(false)}
+                >
+                  {tile}
+                  {g.name}
+                  {g.status === "beta" && <span className="soon">{tt("beta")}</span>}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
@@ -187,23 +182,23 @@ export function TopNav() {
         {explore.open && (
           <div className="gsw-menu exp-menu" id="explore-menu">
             <div className="exp-grid">
-              {TASKS.map((t) => (
+              {tasks.map((task) => (
                 <Link
-                  key={t.title}
-                  className={`exp-card${isCurrent(t.href) ? " on" : ""}`}
-                  href={p(lang, t.href)}
-                  aria-current={isCurrent(t.href) ? "page" : undefined}
+                  key={task.title}
+                  className={`exp-card${isCurrent(task.path) ? " on" : ""}`}
+                  href={gameHref(game, lang, task.path)}
+                  aria-current={isCurrent(task.path) ? "page" : undefined}
                   onClick={() => explore.setOpen(false)}
                 >
                   <span className="exp-tile">
                     <svg className="i" aria-hidden="true">
-                      <use href={t.icon} />
+                      <use href={task.icon} />
                     </svg>
                   </span>
                   <span className="exp-tx">
-                    <span className="exp-task">{tt(t.task)}</span>
-                    <span className="exp-title">{tt(t.title)}</span>
-                    <span className="exp-desc">{tt(t.desc)}</span>
+                    <span className="exp-task">{tt(task.task)}</span>
+                    <span className="exp-title">{tt(task.title)}</span>
+                    <span className="exp-desc">{tt(task.desc)}</span>
                   </span>
                 </Link>
               ))}
@@ -277,20 +272,20 @@ export function TopNav() {
             </svg>
             {tt("Search Gildra...")}
           </button>
-          {TASKS.map((t) => (
+          {tasks.map((task) => (
             <Link
-              key={t.title}
+              key={task.title}
               className="mob-task"
-              href={p(lang, t.href)}
+              href={gameHref(game, lang, task.path)}
               onClick={() => setMobOpen(false)}
             >
-              <span className="exp-task">{tt(t.task)}</span>
-              <span className="exp-title">{tt(t.title)}</span>
+              <span className="exp-task">{tt(task.task)}</span>
+              <span className="exp-title">{tt(task.title)}</span>
             </Link>
           ))}
           <Link
             className="mob-prem"
-            href={p(lang, "/#premium")}
+            href={gameHref(GAMES.wow, lang, anchorHref(ANCHORS.premium))}
             onClick={() => setMobOpen(false)}
           >
             {tt("Go Premium")}
@@ -300,6 +295,8 @@ export function TopNav() {
 
       <SearchCommand
         open={searchOpen}
+        game={game}
+        lang={lang}
         onOpen={() => setSearchOpen(true)}
         onClose={() => {
           setSearchOpen(false);

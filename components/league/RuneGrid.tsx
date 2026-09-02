@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
-import type { LeagueContentEntry } from "@/lib/league";
+import type { LeagueContentEntry } from "@/lib/games/league-of-legends/api";
 import styles from "./league.module.css";
 
 type RuneTreeDefinition = {

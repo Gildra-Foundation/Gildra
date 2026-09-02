@@ -84,6 +84,10 @@ export function Icons() {
         <rect x="4.2" y="2.5" width="7.6" height="11" rx="2" />
         <circle cx="8" cy="8" r="1.6" />
       </symbol>
+      <symbol id="gm-lol" viewBox="0 0 16 16">
+        <path d="M8 2 13 5v6l-5 3-5-3V5z" />
+        <path d="M8 6v4" />
+      </symbol>
       <symbol id="gm-ow" viewBox="0 0 16 16">
         <path d="M12.6 5.2a5.5 5.5 0 0 0-9.2 0" />
         <path d="M3.4 10.8a5.5 5.5 0 0 0 9.2 0" />

@@ -1,8 +1,6 @@
+import { PageShell } from "@/components/layout/PageShell";
 import Link from "next/link";
 import { DatabaseEntityDetail } from "@/components/DatabaseDirectory";
-import { Footer } from "@/components/Footer";
-import { Icons } from "@/components/Icons";
-import { TopNav } from "@/components/TopNav";
 import type { CatalogEntityComparison, CatalogEntityQuality, CatalogEntityType, CatalogEntityVersion, CatalogRelationship, GameEntity } from "@/lib/api/client";
 import { formatQuestText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
@@ -69,8 +67,7 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
   const media = (entity.media ?? []).filter((asset, index, assets) => assets.findIndex((candidate) => candidate.url === asset.url) === index).slice(0, 12);
 
   return <>
-    <Icons /><TopNav />
-    <div className="app"><main className="main"><article className="section route-section db-detail-page">
+    <PageShell lang={lang}><article className="section route-section db-detail-page">
       <nav className="db-detail-breadcrumb" aria-label={lang === "ru" ? "Хлебные крошки" : "Breadcrumb"}>
         <Link href={libraryDataset ? `${prefix}/library` : `${prefix}/database`}>{libraryDataset ? (lang === "ru" ? "Библиотека" : "Library") : (lang === "ru" ? "База данных" : "Database")}</Link><span aria-hidden="true">/</span>
         <Link href={libraryDataset ? `${prefix}/library/${encodeURIComponent(libraryDataset.slug)}${productQuery}` : `${prefix}/database?type=${encodeURIComponent(entity.type)}`}>{libraryDataset?.name ?? entityType?.label ?? entity.type}</Link><span aria-hidden="true">/</span><span aria-current="page">#{entity.externalId}</span>
@@ -128,6 +125,6 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
         {comparison ? <div className="db-version-compare"><header><span>{versionLabel(comparison.from)}</span><i aria-hidden="true">→</i><span>{versionLabel(comparison.to)}</span></header>{comparison.changes.length ? <div className="db-version-table"><table><thead><tr><th>{lang === "ru" ? "Поле" : "Field"}</th><th>{versionLabel(comparison.from)}</th><th>{versionLabel(comparison.to)}</th></tr></thead><tbody>{comparison.changes.map((change) => <tr key={change.field}><th>{change.label}</th><td>{displayValue(change.before, lang)}</td><td>{displayValue(change.after, lang)}</td></tr>)}</tbody></table></div> : <p>{lang === "ru" ? "В отображаемых полях изменений нет." : "No changes in the displayed fields."}</p>}</div> : <div className="db-version-notice"><strong>{lang === "ru" ? "Сравнение появится после второй сборки" : "Comparison needs a second build"}</strong><p>{lang === "ru" ? "История уже хранится по версиям; сейчас доступна только одна сборка." : "History is build-pinned; this entity currently has only one stored build."}</p></div>}
         {versions.length ? <ol className="db-version-list">{versions.map((version, index) => <li key={version.id}><span className={index === 0 ? "is-current" : ""} /><div><strong>{versionLabel(version)}</strong><small>Build {version.buildNumber} · rev. {version.revision}</small></div><time dateTime={version.observedAt}>{new Date(version.observedAt).toLocaleDateString(locale)}</time>{version.sourceUrl ? <a href={version.sourceUrl} target="_blank" rel="noreferrer">{lang === "ru" ? "Источник" : "Source"}</a> : null}</li>)}</ol> : null}
       </section>
-    </article></main><Footer lang={lang} /></div>
+    </article></PageShell>
   </>;
 }

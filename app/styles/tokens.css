@@ -1,0 +1,91 @@
+/* Design tokens: shadcn theme bridge + Gildra palette. Imported first from app/globals.css. */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+}
+
+/* ============================================================
+   GILDRA v2 — «золотая гравировка»
+   Слои: фон → панель → приподнятое. Один акцент: золото.
+   Синий — только данные и ссылки. Классовые цвета — только спеки.
+   ============================================================ */
+:root{
+  --bg:#0b0d13;
+  --panel:#12151e;
+  --panel-2:#171b26;
+  --raise:#1c2130;
+  --line:#232837;
+  --line-soft:#1c212e;
+  --ink:#e9ecf3;
+  --ink-2:#98a2b6;
+  --ink-3:#7a86a0;
+  --gold:#c9a24f;
+  --gold-2:#e6c77a;
+  --gold-dim:#8a733c;
+  --gold-line:linear-gradient(90deg,transparent,rgba(201,162,79,.55) 18%,rgba(201,162,79,.55) 82%,transparent);
+  --blue:#4d7dd6;
+  --blue-2:#7ba6ee;
+  --green:#57ab63;
+  --red:#d95c55;
+  --ts-bg:#42191b; --ts-tx:#e88f80; --ts-ln:#6b2b28;
+  --ta-bg:#3c2f12; --ta-tx:#dfc06a; --ta-ln:#5d4a1e;
+  --tb-bg:#16331d; --tb-tx:#82c08c; --tb-ln:#28512f;
+  --tc-bg:#16283e; --tc-tx:#7fa9d6; --tc-ln:#28425f;
+  --c-dk:#c41e3a; --c-mage:#3fc7eb; --c-evoker:#33937f; --c-pal:#f48cba;
+  --c-rogue:#fff468; --c-druid:#ff7c0a; --c-priest:#dfe3e8; --c-hunter:#aad372;
+  --c-shaman:#0070dd; --c-lock:#8788ee; --c-monk:#00ff98; --c-war:#c69b6d; --c-dh:#a330c9;
+  --r-lg:3px; --r-md:2px; --r-sm:2px;
+  --display:var(--font-display),sans-serif;
+  --ui:var(--font-ui),system-ui,sans-serif;
+  --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  --background:var(--bg);
+  --foreground:var(--ink);
+  --card:var(--panel);
+  --card-foreground:var(--ink);
+  --popover:#0e1119;
+  --popover-foreground:var(--ink);
+  --primary:var(--gold);
+  --primary-foreground:#171204;
+  --secondary:var(--raise);
+  --secondary-foreground:var(--ink);
+  --muted:var(--panel-2);
+  --muted-foreground:var(--ink-2);
+  --accent:var(--raise);
+  --accent-foreground:var(--gold-2);
+  --destructive:var(--red);
+  --border:var(--line);
+  --input:var(--line);
+  --ring:var(--gold-2);
+  --chart-1:var(--gold-2);
+  --chart-2:var(--blue-2);
+  --chart-3:var(--green);
+  --chart-4:#c085ec;
+  --chart-5:var(--red);
+  --radius:3px;
+}

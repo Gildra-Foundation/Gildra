@@ -1,8 +1,7 @@
+import { PageShell } from "@/components/layout/PageShell";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Icons } from "@/components/Icons";
-import { TopNav } from "@/components/TopNav";
 
 export const metadata: Metadata = {
   title: "Page not found — Gildra",
@@ -10,9 +9,7 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <>
-      <Icons />
-      <TopNav />
+    <PageShell layout="bare">
       <main className="nf">
       <Image
         className="nf-helm"
@@ -38,6 +35,6 @@ export default function NotFound() {
         </Link>
       </div>
       </main>
-    </>
+    </PageShell>
   );
 }

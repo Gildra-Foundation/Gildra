@@ -1,5 +1,9 @@
-import { featuredGuide, guidesList } from "@/data/site";
-import { t, type Lang } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
+import { ANCHORS } from "@/lib/anchors";
+import type { BlockComponentProps, EmptyProps } from "@/lib/blocks/types";
+import type { GuidesData } from "@/lib/data/source";
+
+export type GuidesProps = EmptyProps;
 
 /* Иллюстрации статей — собственная графика (не игровые иконки). */
 
@@ -75,10 +79,13 @@ const THUMBS: Record<string, React.ReactNode> = {
   ),
 };
 
-export function GuidesSection({ lang = "en" }: { lang?: Lang }) {
+/** Редакционный блок: избранная статья + список. Владеет своим
+ *  `<section id="guides">` — якорь для SectionNav и футера. */
+export function GuidesSection({ data, lang }: BlockComponentProps<GuidesProps, GuidesData>) {
+  const { featured, list } = data;
   const tt = t(lang);
   return (
-    <>
+    <section id={ANCHORS.guides} className="guides-sec">
       <div className="guides-head">
         <span className="t">
           <svg className="i" style={{ width: 15, height: 15 }}>
@@ -94,13 +101,13 @@ export function GuidesSection({ lang = "en" }: { lang?: Lang }) {
         <article className="nfeat">
           <ArtFeatured />
           <div className="nfeat-body">
-            <span className="ncat">{featuredGuide.cat}</span>
-            <div className="t">{featuredGuide.title}</div>
-            <div className="nmeta">{featuredGuide.meta}</div>
+            <span className="ncat">{featured.cat}</span>
+            <div className="t">{featured.title}</div>
+            <div className="nmeta">{featured.meta}</div>
           </div>
         </article>
         <div className="nlist">
-          {guidesList.map((g) => (
+          {list.map((g) => (
             <div className="nrow" key={g.title}>
               <div className="nthumb">{THUMBS[g.art]}</div>
               <div>
@@ -112,6 +119,6 @@ export function GuidesSection({ lang = "en" }: { lang?: Lang }) {
           ))}
         </div>
       </div>
-    </>
+    </section>
   );
 }

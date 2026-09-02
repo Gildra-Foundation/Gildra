@@ -1,8 +1,6 @@
+import { PageShell } from "@/components/layout/PageShell";
 import type { Metadata } from "next";
-import { Footer } from "@/components/Footer";
-import { Icons } from "@/components/Icons";
 import { LibraryLanding } from "@/components/library/LibraryLanding";
-import { TopNav } from "@/components/TopNav";
 import { getLibraryLandingData, requireCatalogSession } from "@/lib/library/server";
 
 export const metadata: Metadata = {
@@ -16,5 +14,5 @@ export default async function LibraryPageRu({ searchParams }: { searchParams: Pr
   const product = filters.product ?? "wow";
   await requireCatalogSession(`/ru/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
   const data = await getLibraryLandingData("ru_RU", product);
-  return <><Icons /><TopNav /><div className="app"><main className="main"><div className="section route-section"><LibraryLanding lang="ru" selectedProduct={product} {...data} /></div></main><Footer lang="ru" /></div></>;
+  return <PageShell lang="ru" variant="route"><LibraryLanding lang="ru" selectedProduct={product} {...data} /></PageShell>;
 }

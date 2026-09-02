@@ -1,0 +1,87 @@
+/* Styles for guides — imported from app/globals.css in cascade order. */
+/* ============ GUIDES ============ */
+.guides-head{display:flex;align-items:center;gap:14px;margin:32px 0 16px}
+.guides-head .t{
+  font-family:var(--display);font-size:14px;font-weight:700;letter-spacing:.13em;color:#e9ecf7;
+  display:flex;align-items:center;gap:10px;white-space:nowrap;
+}
+.guides-head .t .i{color:var(--gold)}
+.guides-head .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,162,79,.35),transparent)}
+.guides-head .view{font-size:11.5px;font-weight:600;white-space:nowrap}
+.guides-row{display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
+.gcard{
+  display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid #2b3145;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
+  overflow:hidden;cursor:pointer;position:relative;
+  transition:transform .16s,border-color .16s;
+}
+.gcard:hover{transform:translateY(-3px);border-color:#3d4053}
+.gcard:hover .gart svg{transform:scale(1.06)}
+.gart{height:92px;position:relative;overflow:hidden}
+.gart svg{position:absolute;inset:0;width:100%;height:100%;transition:transform .4s ease}
+.gart::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 30%,rgba(18,21,30,.92));
+}
+.gbody{padding:12px 13px 14px;position:relative;flex:1;display:flex;flex-direction:column}
+.gbody::before{ /* тонкая золотая засечка */
+  content:"";position:absolute;top:0;left:13px;width:26px;height:1px;background:var(--gold);opacity:.6;
+}
+.gcat{font-size:9px;font-weight:600;letter-spacing:.15em;color:var(--gold);margin-bottom:6px;text-transform:uppercase}
+.gtitle{font-size:12.5px;font-weight:600;line-height:1.4;margin-bottom:8px;color:var(--ink)}
+.gmeta{font-size:10.5px;color:var(--ink-3);margin-top:auto;padding-top:8px}
+
+/* ===== редакционный блок статей: избранная + список ===== */
+.news{display:grid;grid-template-columns:1.05fr 1fr;gap:18px;align-items:stretch}
+.nfeat{
+  position:relative;min-height:280px;overflow:hidden;cursor:pointer;
+  background:#101321;border:1px solid #2b3145;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+}
+.nfeat .art{position:absolute;inset:0;width:100%;height:100%;transition:transform .5s ease}
+.nfeat:hover .art{transform:scale(1.04)}
+.nfeat::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 35%,rgba(13,15,24,.94) 82%);
+}
+.nfeat-body{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:20px}
+.ncat{
+  display:inline-flex;align-items:center;padding:4px 9px;
+  background:rgba(201,162,79,.14);border:1px solid rgba(201,162,79,.42);
+  color:var(--gold-2);font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;
+  clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+}
+.nfeat-body .t{
+  font-family:var(--display);font-weight:600;font-size:19px;line-height:1.3;
+  color:#eef0f8;margin:11px 0 7px;
+}
+.nfeat-body .nmeta{color:var(--ink-2)}
+.nmeta{font-size:10.5px;color:var(--ink-3)}
+.nlist{display:flex;flex-direction:column}
+.nrow{
+  flex:1;display:flex;gap:14px;align-items:center;padding:11px 4px;cursor:pointer;
+  border-bottom:1px solid var(--line-soft);
+}
+.nrow:last-child{border-bottom:none}
+.nrow .t{font-size:13px;font-weight:600;color:var(--ink);line-height:1.35;transition:color .13s}
+.nrow:hover .t{color:var(--gold-2)}
+.nrow .cap{margin-bottom:3px}
+.nrow .nmeta{margin-top:3px}
+.nthumb{
+  width:60px;height:60px;flex:none;position:relative;overflow:hidden;
+  border:1px solid #2b3145;
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);
+}
+.nthumb svg{position:absolute;inset:0;width:100%;height:100%}
+@media (max-width:980px){
+  .search{display:none}
+  .exp{display:none}
+  .topnav{gap:12px;padding:0 14px}
+  .user .caret{display:none}
+  .burger{display:flex}
+  .gsw-label{display:none}
+  .gsw-label-sm{display:inline}
+  .user-name{display:none}
+}
+@media (max-width:1120px){.news{grid-template-columns:1fr}}

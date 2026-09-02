@@ -1,0 +1,34 @@
+/* Styles for tierPreview — imported from app/globals.css in cascade order. */
+/* ===== tier list preview (homepage) ===== */
+.tpv{display:block;margin-top:36px}
+.tpv-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.tpv-head h2{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.04em;color:#eef0f8}
+.tpv-sub{font-size:11.5px;color:var(--ink-3);margin-top:6px}
+.tpv-cta{padding:11px 18px}
+.tpv-rows{margin:14px 0 4px}
+.tpv-row{
+  display:flex;align-items:center;gap:12px;padding:9px 4px;
+  border-bottom:1px solid var(--line-soft);font-size:12.5px;
+  transition:background .15s,box-shadow .2s;
+}
+.tpv-row:hover{background:rgba(28,33,48,.5);box-shadow:inset 2px 0 0 var(--gold-dim)}
+.tpv-row:last-child{border-bottom:none}
+.tpv-rank{width:16px;text-align:center;font-family:var(--display);font-weight:600;font-size:11px;color:var(--ink-3);flex:none}
+.tpv-name{flex:1;min-width:0;font-weight:600;color:var(--ink)}
+.tpv-name:hover{color:var(--gold-2)}
+.tpv-score{width:88px;flex:none;font-family:var(--display);font-weight:600;font-size:13.5px;color:#eef0f8}
+.tpv-score .sbar{margin-top:3px}
+.tpv-pop{width:52px;flex:none;text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.tpv-trend{width:46px;flex:none;text-align:right;font-size:11px}
+.tpv-builds{grid-template-columns:1fr 1fr}
+a.bcard{color:inherit}
+.bcard-static{cursor:default}
+.bcard-static:hover{transform:none;border-color:#2b3145}
+.nfeat,.nrow{cursor:default}
+.bname,.bauthor{display:block}
+.dead-link{color:var(--ink-3);cursor:default}
+.route-section{padding-top:26px}
+a.logo{color:inherit}
+.tabs button[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+.soon-note{font-size:10px;color:var(--ink-3);margin-top:10px;line-height:1.5}
+.guides-sec{display:block}

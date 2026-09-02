@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import type { LeagueAbility } from "@/lib/league";
+import type { LeagueAbility } from "@/lib/games/league-of-legends/api";
 import styles from "./league.module.css";
 
 type SkillSlot = "Q" | "W" | "E" | "R";

@@ -1,0 +1,32 @@
+/* Featured build cards (.builds/.bcard/.bpill) — shared by tierPreview and specBody. */
+/* ===== featured builds ===== */
+.bhead{display:flex;align-items:center;gap:12px;margin:26px 0 0}
+.bhead .t{
+  font-family:var(--display);font-size:12.5px;font-weight:700;letter-spacing:.13em;color:#e9ecf7;
+  white-space:nowrap;
+}
+.bhead .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,162,79,.35),transparent)}
+.bhead .view{font-size:11px;font-weight:600;white-space:nowrap}
+.builds{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.bcard{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;min-width:0;
+  background:var(--panel-2);border:1px solid #2b3145;cursor:pointer;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
+  transition:border-color .14s,transform .14s,opacity .25s;
+}
+.bcard:hover{
+  border-color:var(--gold-dim);transform:translateY(-2px);
+  box-shadow:inset 2px 0 0 var(--gold-dim);
+}
+.bcard.dim{opacity:.14}
+.binfo{flex:1;min-width:0}
+.bname{font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bauthor{font-size:10.5px;color:var(--ink-3);margin-top:3px}
+.bpill{
+  flex:none;width:24px;height:24px;display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;font-size:11px;
+  clip-path:polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
+}
+.bpill.s{background:linear-gradient(165deg,#5a2023,var(--ts-bg));color:var(--ts-tx)}
+.bpill.a{background:linear-gradient(165deg,#514016,var(--ta-bg));color:var(--ta-tx)}
+@media (max-width:1120px){.builds{grid-template-columns:1fr}}

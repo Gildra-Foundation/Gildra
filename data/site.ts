@@ -163,3 +163,17 @@ export const featuredGuide = {
   title: "Manaforge Omega — Complete Boss Guide",
   meta: "By Velyne · 5h ago · 14 min read",
 };
+
+/* ---- Types for DataSource consumers (lib/data/source.ts) ---- */
+export type LiveStats = typeof liveStats;
+export type Season = typeof season;
+export type MythicSpotlight = typeof mythicSpotlight;
+export type RunnerUp = (typeof mythicRunnersUp)[number];
+export type MythicTierRow = (typeof mythicTierRows)[number];
+export type Trend = (typeof trends)[number];
+export type Raid = typeof raid;
+export type TierGroup = (typeof tierTable)[number];
+export type ClassChip = (typeof classChips)[number];
+export type Build = (typeof builds)[number];
+export type GuideItem = (typeof guidesList)[number];
+export type FeaturedGuide = typeof featuredGuide;

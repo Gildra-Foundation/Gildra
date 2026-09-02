@@ -2,64 +2,23 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { specIcon, classIcon } from "@/lib/gameAssets";
-import { specHref } from "@/lib/specs";
-import { SPEC_ICONS } from "@/lib/gameAssets";
-import { classChips, builds, guidesList, featuredGuide, raid } from "@/data/site";
-import { langOf, p, t as tr } from "@/lib/i18n";
+import { useRouter } from "next/navigation";
+import { t as tr, type Lang } from "@/lib/i18n";
+import { gameHref, type GameDefinition } from "@/lib/games/registry";
+import { getAdapter, type SearchItem as Item } from "@/lib/games/adapter";
 
-type Item = {
-  group: string;
-  label: string;
-  href: string;
-  img?: string | null;
-  sprite?: string;
-};
 
-/** Локальный индекс только по реально существующим данным и destinations. */
-const INDEX: Item[] = [
-  { group: "Pages", label: "World of Warcraft Database", href: "/database", sprite: "#ic-database" },
-  { group: "Pages", label: "Mythic+ Tier List", href: "/tier-lists", sprite: "#ic-sword" },
-  { group: "Pages", label: "Meta overview", href: "/#meta", sprite: "#ic-sword" },
-  { group: "Pages", label: "Latest Guides", href: "/#guides", sprite: "#ic-book" },
-  { group: "Raid", label: `${raid.name} — Current Raid`, href: "/#raid", sprite: "#ic-shield" },
-  ...Object.keys(SPEC_ICONS).map((name) => ({
-    group: "Specs",
-    label: name,
-    href: specHref(name),
-    img: specIcon(name),
-  })),
-  ...classChips
-    .filter((c) => c.key !== "all")
-    .map((c) => ({
-      group: "Classes",
-      label: c.label,
-      href: "/tier-lists",
-      img: classIcon(c.key),
-    })),
-  ...builds.map((b) => ({
-    group: "Builds",
-    label: b.title,
-    href: "/tier-lists#builds",
-    img: specIcon(b.spec.name),
-  })),
-  ...[featuredGuide, ...guidesList].map((g) => ({
-    group: "Guides",
-    label: g.title,
-    href: "/#guides",
-    sprite: "#ic-book",
-  })),
-];
-
-const GROUP_ORDER = ["Specs", "Classes", "Builds", "Raid", "Guides", "Pages"];
-
+/** Command palette over the current game's search index (see lib/games/adapter.ts). */
 export function SearchCommand({
   open,
+  game,
+  lang,
   onOpen,
   onClose,
 }: {
   open: boolean;
+  game: GameDefinition;
+  lang: Lang;
   onOpen: () => void;
   onClose: () => void;
 }) {
@@ -68,8 +27,8 @@ export function SearchCommand({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const lang = langOf(usePathname());
   const tt = tr(lang);
+  const adapter = getAdapter(game.slug);
 
   // Cmd+K / Ctrl+K — глобально
   useEffect(() => {
@@ -100,14 +59,14 @@ export function SearchCommand({
 
   const results = useMemo(() => {
     const query = q.trim().toLowerCase();
+    const index = adapter.searchIndex(lang);
     const hits = query
-      ? INDEX.filter((i) => i.label.toLowerCase().includes(query))
-      : INDEX.filter((i) => i.group === "Pages" || i.group === "Raid");
-    return GROUP_ORDER.flatMap((g) => hits.filter((h) => h.group === g)).slice(
-      0,
-      12,
-    );
-  }, [q]);
+      ? index.filter((i) => i.label.toLowerCase().includes(query))
+      : index.filter((i) => adapter.searchDefaultGroups.includes(i.group));
+    const ordered = adapter.searchGroups.flatMap((g) => hits.filter((h) => h.group === g));
+    const rest = hits.filter((h) => !adapter.searchGroups.includes(h.group));
+    return [...ordered, ...rest].slice(0, 12);
+  }, [q, adapter, lang]);
 
   useEffect(() => {
     setSel(0);
@@ -117,7 +76,7 @@ export function SearchCommand({
 
   const go = (item: Item) => {
     onClose();
-    router.push(p(lang, item.href));
+    router.push(gameHref(game, lang, item.path));
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
