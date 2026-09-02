@@ -17,9 +17,11 @@ import (
 var ErrNotFound = errors.New("game entity not found")
 
 type Product struct {
-	ID   int32
-	Slug string
-	Name string
+	ID              int32
+	Slug            string
+	Name            string
+	Freshness       string
+	FreshnessReason string
 }
 
 type Entity struct {
@@ -122,9 +124,40 @@ func NewService(postgres *pgxpool.Pool) *Service {
 
 func (s *Service) Products(ctx context.Context) ([]Product, error) {
 	rows, err := s.postgres.Query(ctx, `
-		SELECT id, slug, name
-		FROM game_products
-		ORDER BY id`)
+		SELECT product.id, product.slug, product.name,
+			COALESCE(active_build.version, ''),
+			COALESCE(public_release.status, ''),
+			COALESCE(public_release.build_version, ''),
+			COALESCE(build_check.status, ''),
+			COALESCE(build_check.observed_build, ''),
+			COALESCE(latest_pipeline.status, '')
+		FROM game_products product
+		LEFT JOIN LATERAL (
+			SELECT build.version
+			FROM game_builds build
+			WHERE build.product_id = product.id AND build.is_active
+			ORDER BY build.build_number DESC
+			LIMIT 1
+		) active_build ON true
+		LEFT JOIN catalog_public_release_state release_state ON release_state.product_id = product.id
+		LEFT JOIN catalog_releases public_release ON public_release.id = release_state.release_id
+		LEFT JOIN LATERAL (
+			SELECT check_run.status, check_run.observed_build
+			FROM catalog_build_update_checks check_run
+			WHERE check_run.product_id = product.id
+			  AND check_run.source = 'wago_tools'
+			  AND check_run.channel = 'live'
+			ORDER BY check_run.checked_at DESC
+			LIMIT 1
+		) build_check ON true
+		LEFT JOIN LATERAL (
+			SELECT pipeline.status
+			FROM catalog_pipeline_runs pipeline
+			WHERE pipeline.product = product.slug
+			ORDER BY pipeline.started_at DESC
+			LIMIT 1
+		) latest_pipeline ON true
+		ORDER BY product.id`)
 	if err != nil {
 		return nil, fmt.Errorf("list game products: %w", err)
 	}
@@ -133,15 +166,50 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 	products := make([]Product, 0, 8)
 	for rows.Next() {
 		var product Product
-		if err := rows.Scan(&product.ID, &product.Slug, &product.Name); err != nil {
+		var activeBuild, releaseStatus, releaseBuild, checkStatus, observedBuild, pipelineStatus string
+		if err := rows.Scan(&product.ID, &product.Slug, &product.Name, &activeBuild, &releaseStatus, &releaseBuild,
+			&checkStatus, &observedBuild, &pipelineStatus); err != nil {
 			return nil, fmt.Errorf("scan game product: %w", err)
 		}
+		product.Freshness, product.FreshnessReason = productFreshness(
+			activeBuild, releaseStatus, releaseBuild, checkStatus, observedBuild, pipelineStatus,
+		)
 		products = append(products, product)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate game products: %w", err)
 	}
 	return products, nil
+}
+
+// productFreshness is deliberately derived from the active build, the atomic
+// public release pointer, and the latest build/pipeline observations.  A
+// staging projection never appears as fresh until it has an actual published
+// release matching the active build.
+func productFreshness(activeBuild, releaseStatus, releaseBuild, checkStatus, observedBuild, pipelineStatus string) (string, string) {
+	activeBuild = strings.TrimSpace(activeBuild)
+	releaseStatus = strings.ToLower(strings.TrimSpace(releaseStatus))
+	releaseBuild = strings.TrimSpace(releaseBuild)
+	checkStatus = strings.ToLower(strings.TrimSpace(checkStatus))
+	observedBuild = strings.TrimSpace(observedBuild)
+	pipelineStatus = strings.ToLower(strings.TrimSpace(pipelineStatus))
+
+	if activeBuild == "" {
+		return "empty", "для издания ещё не определена активная сборка"
+	}
+	if pipelineStatus == "running" {
+		return "refreshing", "для издания выполняется обновление каталога"
+	}
+	if releaseStatus != "published" || releaseBuild == "" {
+		if pipelineStatus == "failed" || checkStatus == "failed" {
+			return "failed", "последнее обновление завершилось ошибкой; опубликованной версии нет"
+		}
+		return "empty", "опубликованной версии для этого издания пока нет"
+	}
+	if releaseBuild != activeBuild || checkStatus == "update_available" || (observedBuild != "" && observedBuild != releaseBuild) {
+		return "stale", fmt.Sprintf("опубликована сборка %s, активна %s", releaseBuild, activeBuild)
+	}
+	return "fresh", fmt.Sprintf("опубликованная сборка %s совпадает с активной", releaseBuild)
 }
 
 func (s *Service) Categories(ctx context.Context, product, entityType, locale string) ([]Category, error) {

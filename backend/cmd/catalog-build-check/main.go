@@ -63,7 +63,7 @@ func run() (bool, error) {
 		return false, fmt.Errorf("open catalog database: %w", err)
 	}
 	defer db.Close()
-	remoteBuild, err := wago.New(wago.Config{RetryMax: 2, RetryDelay: time.Second}).CurrentBuild(ctx, table, locale)
+	remoteBuild, err := wago.New(wago.Config{RetryMax: 2, RetryDelay: time.Second}).CurrentBuildForProduct(ctx, product)
 	if err != nil {
 		return false, err
 	}

@@ -522,6 +522,21 @@ func importBattleNet(
 					entityType, spec, opts.maxRecords, opts.detailWorkers, artifactID, seen, written)
 			})
 			if err != nil {
+				// Static Classic namespaces do not expose every Retail collection
+				// (for example talent and PvP-talent indexes). Treat a deterministic
+				// 404 as an explicit source gap and continue with the DB2/listfile
+				// foundation instead of failing the whole release. Detail-level 404s
+				// are already handled by the per-record import helpers, so this branch
+				// is limited to an unavailable collection/index.
+				if battlenet.IsNotFound(err) {
+					reason := fmt.Sprintf("Battle.net collection unavailable for %s (%s): %v", entityType, locale, err)
+					if markErr := store.MarkArtifactUnavailable(context.WithoutCancel(ctx), artifactID, reason); markErr != nil {
+						return markErr
+					}
+					slog.Warn("Battle.net collection unavailable; recorded explicit source gap",
+						"type", entityType, "locale", locale, "product", opts.product, "error", err)
+					continue
+				}
 				return err
 			}
 		}
@@ -568,6 +583,7 @@ func importBattleNetMissingType(
 	if workers > len(targets) {
 		workers = len(targets)
 	}
+	var processed int64
 	jobs := make(chan int64)
 	group, groupCtx := errgroup.WithContext(ctx)
 	for range workers {
@@ -599,6 +615,9 @@ func importBattleNetMissingType(
 						}
 					}
 					atomic.AddInt64(written, 1)
+					processedCount := atomic.AddInt64(&processed, 1)
+					logBattleNetProgress(entityType, locale, int(processedCount),
+						atomic.LoadInt64(seen), atomic.LoadInt64(written))
 				}
 			}
 		})

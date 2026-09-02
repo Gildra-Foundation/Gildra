@@ -62,9 +62,11 @@ type GameEntityMedia struct {
 }
 
 type GameProduct struct {
-	ID   int    `json:"id"`
-	Slug string `json:"slug"`
-	Name string `json:"name"`
+	ID              int    `json:"id"`
+	Slug            string `json:"slug"`
+	Name            string `json:"name"`
+	Freshness       string `json:"freshness"`
+	FreshnessReason string `json:"freshnessReason"`
 }
 
 type GameTooltip struct {

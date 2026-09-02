@@ -26,12 +26,15 @@ jobs:
           sh -n infra/deploy/test-deploy-immutable-release.sh
           sh -n infra/deploy/run-catalog-repair.sh
           sh -n infra/systemd/test-gildra-catalog-media-cache.sh
+          sh -n infra/systemd/test-gildra-catalog-refresh.sh
       - name: Verify backup wrapper evidence
         run: infra/backup/test-run-catalog-backup.sh
       - name: Verify backup secret references
         run: infra/backup/test-backup-secret-references.sh
       - name: Verify hourly media icon seeding contract
         run: infra/systemd/test-gildra-catalog-media-cache.sh
+      - name: Verify all WoW edition refresh contract
+        run: infra/systemd/test-gildra-catalog-refresh.sh
       - name: Validate immutable release policy
         env:
           WEB_IMAGE: ghcr.io/gildra-foundation/gildra-web@sha256:0000000000000000000000000000000000000000000000000000000000000000

@@ -89,9 +89,11 @@ type ComplexityRoot struct {
 	}
 
 	GameProduct struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
-		Slug func(childComplexity int) int
+		Freshness       func(childComplexity int) int
+		FreshnessReason func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Name            func(childComplexity int) int
+		Slug            func(childComplexity int) int
 	}
 
 	GameTooltip struct {
@@ -402,6 +404,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.GameEntityMedia.Width(childComplexity), true
 
+	case "GameProduct.freshness":
+		if e.ComplexityRoot.GameProduct.Freshness == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.Freshness(childComplexity), true
+	case "GameProduct.freshnessReason":
+		if e.ComplexityRoot.GameProduct.FreshnessReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GameProduct.FreshnessReason(childComplexity), true
 	case "GameProduct.id":
 		if e.ComplexityRoot.GameProduct.ID == nil {
 			break
@@ -805,6 +819,10 @@ func (ec *executionContext) childFields_GameProduct(ctx context.Context, field g
 		return ec.fieldContext_GameProduct_slug(ctx, field)
 	case "name":
 		return ec.fieldContext_GameProduct_name(ctx, field)
+	case "freshness":
+		return ec.fieldContext_GameProduct_freshness(ctx, field)
+	case "freshnessReason":
+		return ec.fieldContext_GameProduct_freshnessReason(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type GameProduct", field.Name)
 }
@@ -2171,6 +2189,52 @@ func (ec *executionContext) _GameProduct_name(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_GameProduct_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_freshness(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_freshness(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Freshness, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_freshness(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _GameProduct_freshnessReason(ctx context.Context, field graphql.CollectedField, obj *model.GameProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GameProduct_freshnessReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FreshnessReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GameProduct_freshnessReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("GameProduct", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -4384,6 +4448,16 @@ func (ec *executionContext) _GameProduct(ctx context.Context, sel ast.SelectionS
 			}
 		case "name":
 			out.Values[i] = ec._GameProduct_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "freshness":
+			out.Values[i] = ec._GameProduct_freshness(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "freshnessReason":
+			out.Values[i] = ec._GameProduct_freshnessReason(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

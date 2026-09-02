@@ -9,7 +9,15 @@ export type CatalogRecord = components["schemas"]["GameEntitySummary"] & {
 };
 export type CatalogCategory = components["schemas"]["GameCategory"];
 export type CatalogEntityType = components["schemas"]["GameEntityTypeSummary"];
-export type CatalogProduct = components["schemas"]["GameProduct"];
+/**
+ * Product rows are intentionally small in the public API.  The library can
+ * optionally decorate them with a freshness state when the publication
+ * monitor has checked that edition; older servers simply omit these fields.
+ */
+export type CatalogProduct = components["schemas"]["GameProduct"] & {
+  freshness?: "fresh" | "stale" | "empty" | "refreshing" | "failed" | "unknown";
+  freshnessReason?: string;
+};
 export type LibraryDataset = components["schemas"]["LibraryDataset"];
 export type CatalogCoverage = components["schemas"]["GameFieldCoverage"];
 export type CatalogRelationship = components["schemas"]["GameEntityRelationship"];
