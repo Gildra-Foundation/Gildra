@@ -7,6 +7,13 @@ set -eu
 
 deployment_directory=${GILDRA_DEPLOY_DIR:-/opt/gildra}
 environment_file=${GILDRA_ENV_FILE:-$deployment_directory/.env}
+# The catalog access mode follows the runtime environment file (public since
+# 2026-09-02); fall back to public when the entry is missing.
+catalog_access_mode=$(sed -n 's/^CATALOG_ACCESS_MODE=//p' "$environment_file" | head -n 1)
+case "$catalog_access_mode" in
+  public|private) ;;
+  *) catalog_access_mode=public ;;
+esac
 
 compose() {
   /usr/bin/docker compose \
@@ -36,12 +43,20 @@ run_edition() {
     return "$check_status"
   fi
 
-  printf 'catalog-refresh: importing %s with profile %s\n' "$product" "$profile"
+  # Each production import must pass its profile's complete source set
+  # (backend/internal/catalogpipeline/pipeline.go): Raidbots supplies the
+  # retail talent trees, the classic editions have no Wago or Raidbots data.
+  case "$profile" in
+    retail-foundation) sources=wago,raidbots,db2,battlenet,listfile ;;
+    *) sources=db2,battlenet,listfile ;;
+  esac
+  printf 'catalog-refresh: importing %s with profile %s (sources %s, access %s)\n' \
+    "$product" "$profile" "$sources" "$catalog_access_mode"
   compose run --rm --no-deps --entrypoint catalog-pipeline api \
     -mode apply -trigger schedule -product "$product" -profile "$profile" \
-    -sources wago,raidbots,db2,battlenet,listfile -use-checked-build \
+    -sources "$sources" -use-checked-build \
     -max-records 0 -confirm-full-import -publication-environment production \
-    -access-mode private -recovery-policy verified_same_host -timeout 8h
+    -access-mode "$catalog_access_mode" -recovery-policy verified_same_host -timeout 8h
 }
 
 failures=0
