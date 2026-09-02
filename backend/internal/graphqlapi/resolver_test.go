@@ -56,3 +56,11 @@ func TestToGraphQLDatasetExposesFreshnessAndCoverage(t *testing.T) {
 		t.Fatalf("graphql dataset mapping lost preview image: %#v", got)
 	}
 }
+
+func TestToGraphQLProductExposesFreshness(t *testing.T) {
+	product := catalog.Product{ID: 2, Slug: "wow_classic", Name: "World of Warcraft Classic", Freshness: "empty", FreshnessReason: "опубликованной версии пока нет"}
+	got := toGraphQLProduct(product)
+	if got.ID != 2 || got.Slug != product.Slug || got.Freshness != product.Freshness || got.FreshnessReason != product.FreshnessReason {
+		t.Fatalf("graphql product mapping lost freshness: %#v", got)
+	}
+}

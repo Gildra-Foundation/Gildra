@@ -37,14 +37,29 @@ func (s *Server) GetCatalogMedia(context.Context, api.GetCatalogMediaRequestObje
 func NewServer(analyticsService *analytics.Service, catalogService *catalog.Service, indexnowQueue IndexNowQueue) *Server {
 	return &Server{analytics: analyticsService, catalog: catalogService, indexnow: indexnowQueue}
 }
-
-func (s *Server) GetAPIIndex(context.Context, api.GetAPIIndexRequestObject) (api.GetAPIIndexResponseObject, error) {
+func (s *Server) GetAPIIndex(_ context.Context, request api.GetAPIIndexRequestObject) (api.GetAPIIndexResponseObject, error) {
+	product := "wow"
+	// Nginx translates a canonical edition prefix into this query parameter.
+	// A direct /v1 request without it remains the Retail default.
+	if request.Params.Product != nil {
+		product = string(*request.Params.Product)
+	}
+	edition := "retail"
+	switch product {
+	case "wow_classic":
+		edition = "classic"
+	case "wow_classic_era":
+		edition = "classic-era"
+	case "wow_classic_hardcore":
+		edition = "hardcore"
+	}
+	base := "https://api.gildra.net/world-of-warcraft/" + edition + "/v1"
 	return api.GetAPIIndex200JSONResponse{
 		Version: api.V1,
-		Rest:    "https://api.gildra.net/world-of-warcraft/retail/v1/",
+		Rest:    base + "/",
 		Graphql: "https://api.gildra.net/graphql",
-		Catalog: "https://api.gildra.net/world-of-warcraft/retail/v1/game/entities",
-		Library: "https://api.gildra.net/world-of-warcraft/retail/v1/library/datasets",
+		Catalog: base + "/game/entities",
+		Library: base + "/library/datasets",
 	}, nil
 }
 
@@ -57,9 +72,21 @@ func (s *Server) ListGameProducts(ctx context.Context, _ api.ListGameProductsReq
 	}
 	response := make([]api.GameProduct, 0, len(products))
 	for _, product := range products {
-		response = append(response, api.GameProduct{Id: product.ID, Slug: product.Slug, Name: product.Name})
+		response = append(response, toAPIProduct(product))
 	}
 	return api.ListGameProducts200JSONResponse{Data: response}, nil
+}
+
+func toAPIProduct(product catalog.Product) api.GameProduct {
+	freshness := api.GameProductFreshness(product.Freshness)
+	freshnessReason := product.FreshnessReason
+	return api.GameProduct{
+		Id:              product.ID,
+		Slug:            product.Slug,
+		Name:            product.Name,
+		Freshness:       &freshness,
+		FreshnessReason: &freshnessReason,
+	}
 }
 
 func (s *Server) ListLibraryDatasets(ctx context.Context, request api.ListLibraryDatasetsRequestObject) (api.ListLibraryDatasetsResponseObject, error) {

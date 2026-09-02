@@ -452,6 +452,13 @@ export interface components {
             id: number;
             slug: string;
             name: string;
+            /**
+             * @description Publication freshness for the edition relative to its active build.
+             * @enum {string}
+             */
+            freshness?: "fresh" | "stale" | "empty" | "refreshing" | "failed" | "unknown";
+            /** @description Human-readable explanation of the freshness state. */
+            freshnessReason?: string;
         };
         LibraryDataset: {
             slug: string;
@@ -937,7 +944,10 @@ export type $defs = Record<string, never>;
 export interface operations {
     getAPIIndex: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Optional product slug used by a canonical edition prefix. */
+                product?: "wow" | "wow_classic" | "wow_classic_era" | "wow_classic_hardcore";
+            };
             header?: never;
             path?: never;
             cookie?: never;

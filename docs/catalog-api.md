@@ -5,6 +5,11 @@ historical `/v1/game` paths remain compatible aliases. The OpenAPI 3.1 source
 of truth is `backend/api/openapi.yaml`; generated Go and TypeScript files must
 not be edited by hand.
 
+The edition root is self-describing: `GET /world-of-warcraft/classic/v1`
+returns links rooted at the Classic base. A direct `GET /v1` defaults to
+Retail; callers may pass `?product=wow_classic`, `wow_classic_era` or
+`wow_classic_hardcore` when they need the corresponding discovery document.
+
 Edition prefixes select the product without a query parameter:
 
 - `/world-of-warcraft/retail/v1` → `wow` (current retail client)
@@ -66,6 +71,10 @@ replace them with zero or a guessed number.
 
 - `GET /v1/game/products` lists imported products/build families. It requires
   the administrator session while `CATALOG_ACCESS_MODE=private` is active.
+  Each product also returns `freshness` (`fresh`, `stale`, `empty`,
+  `refreshing` or `failed`) and `freshnessReason`. `fresh` is reserved for an
+  atomic published release whose build matches the active build; a staging
+  projection without a public release is never reported as fresh.
 - `GET /v1/game/entity-types` returns the registry-driven UI order, localized
   labels, count and coverage totals.
 - `GET /v1/game/categories` returns the many-to-many taxonomy and cached
@@ -83,6 +92,19 @@ replace them with zero or a guessed number.
   operational guidance, not a grant of rights.
 - `GET /v1/game/sitemap-entries` is a bounded, UUID-sharded SEO read model used
   by the website's segmented sitemaps.
+
+GraphQL exposes the same edition freshness signal through `gameProducts`:
+
+```graphql
+query Editions {
+  gameProducts {
+    slug
+    name
+    freshness
+    freshnessReason
+  }
+}
+```
 
 ## HTTP caching and errors
 

@@ -27,7 +27,13 @@ func CachePublicCatalog(next http.Handler) http.Handler {
 				w.Header().Add(key, value)
 			}
 		}
-		if response.StatusCode == http.StatusOK {
+		// RequireCatalogAuthentication may deliberately mark an otherwise
+		// successful response as private/no-store.  Preserve that policy and
+		// never replace it with a shared-cache directive: this middleware is
+		// composed outside the authentication layer in the server bootstrap.
+		cacheControl := strings.ToLower(response.Header.Get("Cache-Control"))
+		privateResponse := strings.Contains(cacheControl, "no-store") || strings.Contains(cacheControl, "private")
+		if response.StatusCode == http.StatusOK && !privateResponse {
 			digest := sha256.Sum256(body)
 			etag := `"` + base64.RawURLEncoding.EncodeToString(digest[:]) + `"`
 			w.Header().Set("ETag", etag)

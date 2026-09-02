@@ -866,7 +866,13 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			ON CONFLICT(version_id) DO UPDATE SET parent_skill_line_id=EXCLUDED.parent_skill_line_id,category_id=EXCLUDED.category_id,
 				parent_tier_index=EXCLUDED.parent_tier_index,icon_file_data_id=EXCLUDED.icon_file_data_id,can_link=EXCLUDED.can_link,flags=EXCLUDED.flags;
 			UPDATE game_entities e SET latest_version_id=p.version_id,updated_at=now()
-			FROM projected_profession_versions p WHERE e.id=p.entity_id`, pgx.QueryExecModeSimpleProtocol, ic.ProductID, ic.BuildID); err != nil {
+			FROM projected_profession_versions p
+			WHERE e.id=p.entity_id
+			  AND COALESCE((SELECT current_build.build_number
+				FROM game_entity_versions current_version
+				JOIN game_builds current_build ON current_build.id=current_version.build_id
+				WHERE current_version.id=e.latest_version_id),0)
+				<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$2)`, pgx.QueryExecModeSimpleProtocol, ic.ProductID, ic.BuildID); err != nil {
 			return fmt.Errorf("project professions: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `
@@ -963,7 +969,13 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				description=EXCLUDED.description,attributes=EXCLUDED.attributes;
 
 			UPDATE game_entities entity SET latest_version_id=recipe.version_id,updated_at=now()
-			FROM projected_recipe_versions recipe WHERE entity.id=recipe.entity_id;
+			FROM projected_recipe_versions recipe
+			WHERE entity.id=recipe.entity_id
+			  AND COALESCE((SELECT current_build.build_number
+				FROM game_entity_versions current_version
+				JOIN game_builds current_build ON current_build.id=current_version.build_id
+				WHERE current_version.id=entity.latest_version_id),0)
+				<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$2);
 
 			DELETE FROM catalog_profession_recipes link USING game_entity_versions version,game_entities entity
 			WHERE link.recipe_version_id=version.id AND version.entity_id=entity.id
@@ -1160,7 +1172,13 @@ func projectCreatures(ctx context.Context, db *pgxpool.Pool, ic catalogimport.Im
 			ON CONFLICT(version_id,slot) DO UPDATE SET display_external_id=EXCLUDED.display_external_id,
 				probability=EXCLUDED.probability,source_artifact_id=EXCLUDED.source_artifact_id;
 			UPDATE game_entities e SET latest_version_id=p.version_id,updated_at=now()
-			FROM projected_creature_versions p WHERE e.id=p.entity_id`, pgx.QueryExecModeSimpleProtocol, ic.ProductID, ic.BuildID); err != nil {
+			FROM projected_creature_versions p
+			WHERE e.id=p.entity_id
+			  AND COALESCE((SELECT current_build.build_number
+				FROM game_entity_versions current_version
+				JOIN game_builds current_build ON current_build.id=current_version.build_id
+				WHERE current_version.id=e.latest_version_id),0)
+				<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$2)`, pgx.QueryExecModeSimpleProtocol, ic.ProductID, ic.BuildID); err != nil {
 			return fmt.Errorf("project creatures: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `
@@ -1413,7 +1431,13 @@ const questEntitiesProjectionSQL = `
 		description=EXCLUDED.description,attributes=EXCLUDED.attributes;
 
 	UPDATE game_entities entity SET latest_version_id=projected.version_id,updated_at=now()
-	FROM projected_named_quest_versions projected WHERE entity.id=projected.entity_id;
+	FROM projected_named_quest_versions projected
+	WHERE entity.id=projected.entity_id
+	  AND COALESCE((SELECT current_build.build_number
+		FROM game_entity_versions current_version
+		JOIN game_builds current_build ON current_build.id=current_version.build_id
+		WHERE current_version.id=entity.latest_version_id),0)
+		<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$1);
 
 	-- QuestV2 is the authoritative client registry even when the client does
 	-- not ship a localized title. Preserve those quests as source-backed
@@ -1456,7 +1480,12 @@ const questEntitiesProjectionSQL = `
 	UPDATE game_entities entity SET latest_version_id=version.id,updated_at=now()
 	FROM projected_registry_quests projected,game_entity_versions version
 	WHERE entity.product_id=$2 AND entity.entity_type='quest' AND entity.external_id=projected.external_id
-		AND version.entity_id=entity.id AND version.build_id=$1 AND version.content_hash=projected.content_hash;`
+		AND version.entity_id=entity.id AND version.build_id=$1 AND version.content_hash=projected.content_hash
+		AND COALESCE((SELECT current_build.build_number
+			FROM game_entity_versions current_version
+			JOIN game_builds current_build ON current_build.id=current_version.build_id
+			WHERE current_version.id=entity.latest_version_id),0)
+			<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$1);`
 
 const questPackageEntitiesProjectionSQL = `
 	CREATE TEMP TABLE projected_quest_reward_packages ON COMMIT DROP AS
@@ -1672,7 +1701,13 @@ func projectPvpTalents(ctx context.Context, db *pgxpool.Pool, ic catalogimport.I
 		}
 		if _, err := tx.Exec(ctx, `
 			UPDATE game_entities entity SET latest_version_id=projected.version_id,updated_at=now()
-			FROM projected_pvp_talent_versions projected WHERE entity.id=projected.entity_id`); err != nil {
+			FROM projected_pvp_talent_versions projected
+			WHERE entity.id=projected.entity_id
+			  AND COALESCE((SELECT current_build.build_number
+				FROM game_entity_versions current_version
+				JOIN game_builds current_build ON current_build.id=current_version.build_id
+				WHERE current_version.id=entity.latest_version_id),0)
+				<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$1)`, ic.BuildID); err != nil {
 			return fmt.Errorf("activate staged PvP talents: %w", err)
 		}
 		return nil
@@ -2328,7 +2363,13 @@ const journalEntityProjectionSQL = `
 		ORDER BY entity.id,(version.snapshot_id=$3) DESC,version.revision DESC
 	)
 	UPDATE game_entities entity SET latest_version_id=candidate.version_id,updated_at=now()
-	FROM candidates candidate WHERE entity.id=candidate.entity_id;
+	FROM candidates candidate
+	WHERE entity.id=candidate.entity_id
+	  AND COALESCE((SELECT current_build.build_number
+		FROM game_entity_versions current_version
+		JOIN game_builds current_build ON current_build.id=current_version.build_id
+		WHERE current_version.id=entity.latest_version_id),0)
+		<= (SELECT selected_build.build_number FROM game_builds selected_build WHERE selected_build.id=$1);
 
 	UPDATE catalog_journal_instances instance SET entity_id=entity.id
 	FROM game_entities entity WHERE instance.build_id=$1 AND entity.product_id=$2
