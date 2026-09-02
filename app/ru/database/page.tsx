@@ -1,8 +1,6 @@
+import { PageShell } from "@/components/layout/PageShell";
 import type { Metadata } from "next";
 import { DatabaseDirectory } from "@/components/DatabaseDirectory";
-import { Footer } from "@/components/Footer";
-import { Icons } from "@/components/Icons";
-import { TopNav } from "@/components/TopNav";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts } from "@/lib/api/client";
 
 export const metadata: Metadata = {
@@ -27,12 +25,7 @@ export default async function DatabasePageRu({
     getCatalogProducts(),
   ]);
   return (
-    <>
-      <Icons />
-      <TopNav />
-      <div className="app">
-        <main className="main">
-          <div className="section route-section">
+    <PageShell lang="ru" variant="route">
             <DatabaseDirectory
               lang="ru"
               catalog={catalog}
@@ -50,11 +43,7 @@ export default async function DatabasePageRu({
               minRequiredLevel={filters.minRequiredLevel ?? ""}
               maxRequiredLevel={filters.maxRequiredLevel ?? ""}
             />
-          </div>
-        </main>
-        <Footer lang="ru" />
-      </div>
-    </>
+    </PageShell>
   );
 }
 

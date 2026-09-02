@@ -1,0 +1,37 @@
+/* Styles for sectionNav — imported from app/globals.css in cascade order. */
+/* ============ CONTEXTUAL SECTION NAV ============ */
+.secnav{
+  position:sticky;top:54px;z-index:40;
+  background:rgba(11,13,19,.82);backdrop-filter:blur(9px);
+  border-bottom:1px solid var(--line-soft);
+}
+.secnav-in{
+  max-width:1210px;margin:0 auto;padding:0 34px;
+  display:flex;gap:2px;height:42px;
+  overflow-x:auto;scrollbar-width:none;
+}
+.secnav-in::-webkit-scrollbar{display:none}
+.secnav a{
+  position:relative;display:flex;align-items:center;padding:0 13px;
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-2);white-space:nowrap;
+  transition:color .15s;
+}
+.sn-season{color:var(--gold)!important;margin-right:8px}
+.sn-season-sm{display:none}
+@keyframes sweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.secnav a:hover{color:var(--ink)}
+.secnav a.on{color:var(--gold-2)}
+.secnav a.on::after{
+  content:"";position:absolute;left:13px;right:13px;bottom:-1px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  transform-origin:left;animation:sweep .28s ease;
+}
+@media (max-width:720px){
+  .secnav{top:54px}
+  .secnav-in{padding:0 12px}
+  .secnav::after{
+    content:"";position:absolute;top:0;right:0;bottom:0;width:36px;pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(11,13,19,.92));
+  }
+}

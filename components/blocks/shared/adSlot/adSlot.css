@@ -1,0 +1,52 @@
+/* Styles for adSlot — imported from app/globals.css in cascade order. */
+/* ============ AD SLOTS ============ */
+/* Слоты зарезервированы дизайном: спокойная поверхность чуть темнее панелей,
+   фиксированная min-height (без сдвига вёрстки), честная маркировка. */
+.pslot{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  background:#0c0f16;border:1px solid var(--line-soft);
+  background-image:repeating-linear-gradient(
+    -45deg,rgba(233,236,243,.013) 0 10px,transparent 10px 20px);
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+}
+.pslot-wide{min-height:96px;margin:30px 0}
+.pslot-tall{min-height:250px}
+.pslot-cap{
+  position:absolute;top:8px;left:10px;
+  font-size:8px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);border:1px solid var(--line);padding:2px 6px;
+}
+/* house-ad: самореклама Premium, пока не подключена рекламная сеть */
+.pslot-promo{
+  position:absolute;inset:0;display:flex;align-items:center;gap:16px;
+  padding:0 84px 0 22px;color:inherit;
+  background:radial-gradient(420px 120px at 18% 50%,rgba(201,162,79,.07),transparent 70%);
+}
+.pslot-promo:hover{color:inherit}
+.pp-helm{flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.pp-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pp-tx b{
+  font-family:var(--display);font-weight:700;font-size:15.5px;color:#eef0f8;
+  letter-spacing:.04em;
+}
+.pp-tx b em{font-style:normal;color:var(--gold-2)}
+.pp-tx>span{font-size:11px;color:var(--ink-2)}
+.pp-cta{
+  width:auto;flex:none;margin-left:auto;padding:9px 18px;
+  font-size:11px;letter-spacing:.1em;
+}
+.pslot-promo:hover .pp-cta{filter:brightness(1.07)}
+.pslot-tall .pslot-promo{
+  flex-direction:column;justify-content:center;text-align:center;
+  gap:12px;padding:26px 18px;
+  background:radial-gradient(220px 180px at 50% 30%,rgba(201,162,79,.08),transparent 72%);
+}
+.pslot-tall .pp-tx{align-items:center}
+.pslot-tall .pp-cta{margin-left:0}
+/* Compact house-ad when the containing column is ≤680px (see layout.css query containers). */
+@container (max-width:680px){
+  .pslot-wide{min-height:100px;margin:22px 0}
+  .pslot-promo{gap:12px;padding:0 14px}
+  .pp-tx>span{display:none}
+  .pp-cta{padding:8px 13px}
+}

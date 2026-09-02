@@ -11,6 +11,7 @@ import { tierTable, classChips, builds, liveStats } from "@/data/site";
 import { usePathname } from "next/navigation";
 import { langOf, p, t as tr } from "@/lib/i18n";
 import type { TableRow } from "@/data/site";
+import { ANCHORS, anchorHref } from "@/lib/anchors";
 
 const DIR = { up: "▲", down: "▼", flat: "—" } as const;
 
@@ -514,10 +515,10 @@ export function TierSection() {
             </div>
           </div>
           <div className="dactions">
-            <Link className="btn btn-primary" href={p(lang, "/#guides")}>
+            <Link className="btn btn-primary" href={p(lang, anchorHref(ANCHORS.guides))}>
               {tt("View Guides")}
             </Link>
-            <a className="btn btn-dim" href="#builds">
+            <a className="btn btn-dim" href={`#${ANCHORS.builds}`}>
               {tt("View Builds")}
             </a>
           </div>

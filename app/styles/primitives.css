@@ -1,0 +1,151 @@
+/* Shared primitives used across blocks (.section/.cards-row, .panel*, .tbadge, .spec slot, .tpill)
+   plus the mythicMeta (.metaopen/.mspot/.mrows) and raidFeature (.raidfeat/.rf-*) rules that were
+   interleaved with them in the original stylesheet — kept together in source order. */
+/* ============ SECTION WRAP ============ */
+.section{max-width:1210px;padding:0 34px;margin:0 auto}
+.cards-row{
+  display:grid;grid-template-columns:1.75fr 1fr;gap:18px;
+  margin-top:28px;position:relative;z-index:3;
+}
+.panel{
+  display:flex;flex-direction:column;position:relative;
+  background:linear-gradient(180deg,var(--panel-2),var(--panel) 40px);
+  border:1px solid #2b3145;padding:18px;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),inset 0 -1px 0 rgba(0,0,0,.45);
+}
+.panel::after{ /* внутренняя гравированная рамка */
+  content:"";position:absolute;inset:4px;pointer-events:none;
+  border:1px solid rgba(201,162,79,.13);
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);
+}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.panel-head .t{
+  font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.08em;color:#e9ecf7;
+}
+.panel-head .view{font-size:11px;font-weight:600;white-space:nowrap}
+.panel-sub{font-size:11px;color:var(--ink-3);margin:3px 0 14px}
+.panel-rule{height:1px;background:var(--gold-line);opacity:.35;margin:0 -18px 14px}
+
+/* тир-строки на карточках */
+.tier-rows{display:flex;flex-direction:column;gap:8px}
+.tier-row{display:flex;align-items:center;gap:12px}
+.tbadge{
+  width:36px;height:36px;flex:none;display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;font-size:16px;
+  clip-path:polygon(26% 0,74% 0,100% 26%,100% 74%,74% 100%,26% 100%,0 74%,0 26%);
+}
+.tbadge.s{background:linear-gradient(165deg,#5a2023,var(--ts-bg));color:var(--ts-tx);box-shadow:inset 0 0 0 1px var(--ts-ln)}
+.tbadge.a{background:linear-gradient(165deg,#514016,var(--ta-bg));color:var(--ta-tx);box-shadow:inset 0 0 0 1px var(--ta-ln)}
+.tbadge.b{background:linear-gradient(165deg,#1e4527,var(--tb-bg));color:var(--tb-tx);box-shadow:inset 0 0 0 1px var(--tb-ln)}
+.tbadge.c{background:linear-gradient(165deg,#1e3a58,var(--tc-bg));color:var(--tc-tx);box-shadow:inset 0 0 0 1px var(--tc-ln)}
+.specs{display:flex;gap:7px;flex-wrap:wrap}
+
+/* грaнёный слот спека — фирменный элемент */
+.spec{
+  --oct:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+  width:32px;height:32px;flex:none;position:relative;
+  clip-path:var(--oct);
+  background:linear-gradient(150deg,#4a5468,#232a3a 65%);
+  display:grid;place-items:center;
+  cursor:pointer;transition:transform .13s;
+}
+.spec > b{
+  width:26px;height:26px;clip-path:var(--oct);
+  display:grid;place-items:center;
+  font-size:8.5px;font-weight:700;color:#0d1017;font-style:normal;
+  box-shadow:inset 0 -8px 10px rgba(0,0,0,.35);
+}
+.spec:hover{transform:translateY(-2px)}
+.spec.sm{width:26px;height:26px}
+.spec.sm > b{width:21px;height:21px;font-size:7.5px}
+.spec.dk>b{background:linear-gradient(150deg,#ef7188,var(--c-dk))}
+.spec.mage>b{background:linear-gradient(150deg,#b6ecf9,var(--c-mage))}
+.spec.evoker>b{background:linear-gradient(150deg,#8fdcc8,var(--c-evoker))}
+.spec.pal>b{background:linear-gradient(150deg,#fccde2,var(--c-pal))}
+.spec.rogue>b{background:linear-gradient(150deg,#fffcd0,var(--c-rogue))}
+.spec.druid>b{background:linear-gradient(150deg,#ffb473,var(--c-druid))}
+.spec.priest>b{background:linear-gradient(150deg,#ffffff,#b4bcc8)}
+.spec.hunter>b{background:linear-gradient(150deg,#ddf0bc,var(--c-hunter))}
+.spec.shaman>b{background:linear-gradient(150deg,#74b3f2,var(--c-shaman));color:#eef4fd}
+.spec.lock>b{background:linear-gradient(150deg,#cccdfa,var(--c-lock))}
+.spec.monk>b{background:linear-gradient(150deg,#96ffd6,var(--c-monk))}
+.spec.war>b{background:linear-gradient(150deg,#ecd2b0,var(--c-war))}
+.spec.dh>b{background:linear-gradient(150deg,#d896ec,var(--c-dh));color:#f6ecfb}
+.spec b svg,.dicon b svg{
+  width:62%;height:62%;display:block;
+  stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;
+}
+.spec b img,.dicon b img,.coct img{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+.spec.lg{width:48px;height:48px}
+.spec.lg > b{width:40px;height:40px}
+.mspot{
+  display:flex;align-items:center;gap:14px;padding:13px 14px;margin-bottom:4px;
+  background:linear-gradient(90deg,rgba(196,30,58,.14),rgba(196,30,58,.03) 70%);
+  border-left:3px solid #c41e3a;
+  box-shadow:inset 0 0 0 1px rgba(196,30,58,.22);
+}
+.mspot-info{flex:1;min-width:0}
+.mspot-name{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:600;color:#eef0f8}
+.mspot-sub{font-size:11px;color:var(--ink-2);margin-top:4px}
+.mspot-score{text-align:right}
+.mspot-score b{display:block;font-family:var(--display);font-weight:700;font-size:26px;color:#eef0f8;line-height:1}
+.mspot-score span{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.tpill{
+  display:inline-grid;place-items:center;width:20px;height:20px;flex:none;
+  font-family:var(--display);font-weight:700;font-size:11px;
+  clip-path:polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
+}
+.tpill.s{background:linear-gradient(165deg,#5a2023,var(--ts-bg));color:var(--ts-tx)}
+.tpill.sm{width:17px;height:17px;font-size:9.5px}
+.mrows{margin:6px 0 14px}
+.mrow{
+  display:flex;align-items:center;gap:10px;padding:8px 4px;
+  border-bottom:1px solid var(--line-soft);font-size:12.5px;
+}
+.mrow:last-child{border-bottom:none}
+.mname{flex:1;font-weight:600;color:var(--ink)}
+.mval{font-family:var(--display);font-weight:600;font-size:14px;color:#eef0f8}
+.raidfeat{
+  position:relative;overflow:hidden;margin-top:26px;min-height:230px;
+  border:1px solid #2b3145;background:#0e1119;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+}
+.rf-art{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 62%;
+}
+.raidfeat::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(10,12,18,.93) 22%,rgba(10,12,18,.6) 55%,rgba(10,12,18,.25));
+}
+.rf-in{
+  position:relative;z-index:2;display:flex;gap:40px;align-items:center;
+  padding:30px 30px;min-height:230px;
+}
+.rf-main{flex:1;max-width:520px}
+.rf-main h2{font-family:var(--display);font-weight:700;font-size:27px;color:#eef0f8;margin:8px 0 8px}
+.rf-main p{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-bottom:14px}
+.rf-links{display:flex;align-items:center;gap:11px;flex-wrap:wrap;font-size:12.5px;font-weight:600}
+.rf-specs{display:flex;flex-direction:column;gap:9px;min-width:230px}
+.rf-row{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;color:var(--ink)}
+.rf-row .tpill{margin-left:auto}
+.trendside{display:flex;flex-direction:column;padding:18px 4px 0}
+.trendside .panel-rule{margin:0 0 14px}
+.trendside .trend{padding:10px 2px}
+.trendside .btn-line{margin-top:auto}
+.metaopen{display:flex;flex-direction:column;padding:18px 4px 0}
+.metaopen .panel-rule{margin:0 0 14px}
+.panel-foot{
+  font-size:10.5px;color:var(--ink-3);margin-top:auto;padding-top:11px;
+  border-top:1px solid var(--line-soft);
+}
+.tier-rows{margin-bottom:14px}
+
+/* mythicMeta compact layout — container width ≤680px (≈ viewport 720 with 20px gutters). */
+@container (max-width:680px){
+  .metaopen{padding:14px 0 0}
+  .mspot{padding:11px 12px;flex-wrap:wrap}
+  .mspot-score{width:100%;text-align:left;display:flex;align-items:baseline;gap:8px}
+}

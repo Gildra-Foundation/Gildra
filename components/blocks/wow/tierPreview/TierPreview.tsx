@@ -1,9 +1,25 @@
 import Link from "next/link";
-import { SpecSlot } from "./SpecSlot";
-import { tierTable, builds, liveStats } from "@/data/site";
-import type { TableRow } from "@/data/site";
+import { SpecSlot } from "@/components/SpecSlot";
+import type { Build, LiveStats, TableRow, TierGroup } from "@/data/site";
 import { specHref } from "@/lib/specs";
-import { p, t, type Lang } from "@/lib/i18n";
+import { p, t } from "@/lib/i18n";
+import { ANCHORS, anchorHref } from "@/lib/anchors";
+import type { BlockComponentProps } from "@/lib/blocks/types";
+
+export type TierPreviewProps = {
+  /** Rows shown in the open list (design.md: 7 on desktop). */
+  rows?: number;
+  /** Featured builds shown under the list. */
+  builds?: number;
+};
+
+export type PreviewRow = TableRow & { tier: TierGroup["tier"] };
+
+export type TierPreviewData = {
+  rows: readonly PreviewRow[];
+  builds: readonly Build[];
+  liveStats: LiveStats;
+};
 
 const DIR = { up: "▲", down: "▼", flat: "—" } as const;
 
@@ -18,14 +34,12 @@ function Trend({ t }: { t: TableRow["trend"] }) {
 
 /** Компактный preview тир-листа для homepage: топ-7 строк открытым
  *  списком + 4 избранных билда. Полный интерфейс живёт на /tier-lists. */
-export function TierPreview({ lang = "en" }: { lang?: Lang }) {
+export function TierPreview({ data, lang }: BlockComponentProps<TierPreviewProps, TierPreviewData>) {
   const tt = t(lang);
-  const rows = tierTable
-    .flatMap((g) => g.rows.map((r) => ({ ...r, tier: g.tier })))
-    .slice(0, 7);
+  const { rows, builds, liveStats } = data;
 
   return (
-    <>
+    <section id={ANCHORS.tierPreview} className="tpv">
       <div className="tpv-head">
         <div>
           <h2>{tt("Mythic+ Tier List")}</h2>
@@ -68,16 +82,16 @@ export function TierPreview({ lang = "en" }: { lang?: Lang }) {
         <span className="t">{tt("FEATURED BUILDS")}</span>
         <span className="dia">◆</span>
         <span className="rule" />
-        <Link className="view" href={p(lang, "/tier-lists#builds")}>
+        <Link className="view" href={p(lang, anchorHref(ANCHORS.builds, "/tier-lists"))}>
           {tt("All Builds →")}
         </Link>
       </div>
       <div className="builds tpv-builds">
-        {builds.slice(0, 4).map((b) => (
+        {builds.map((b) => (
           <Link
             key={b.title}
             className="bcard"
-            href={p(lang, "/tier-lists#builds")}
+            href={p(lang, anchorHref(ANCHORS.builds, "/tier-lists"))}
           >
             <SpecSlot name={b.spec.name} cls={b.spec.cls} />
             <span className="binfo">
@@ -88,6 +102,6 @@ export function TierPreview({ lang = "en" }: { lang?: Lang }) {
           </Link>
         ))}
       </div>
-    </>
+    </section>
   );
 }

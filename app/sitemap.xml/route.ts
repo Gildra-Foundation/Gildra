@@ -12,7 +12,7 @@ function shardsFor(count: number) {
 
 export async function GET() {
   const types = await getCatalogEntityTypes("en_US");
-  const locations = [`${siteOrigin}/sitemaps/static`];
+  const locations = [`${siteOrigin}/sitemaps/static`, `${siteOrigin}/sitemaps/league-of-legends`];
   for (const entityType of types) {
     for (const shard of shardsFor(entityType.count)) {
       locations.push(`${siteOrigin}/sitemaps/database/${encodeURIComponent(entityType.type)}/${shard}`);

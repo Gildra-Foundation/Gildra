@@ -1,0 +1,53 @@
+/* Page layout: .app/.main and route sections. */
+/* ============ LAYOUT ============ */
+.app{display:block;min-height:100vh}
+.sidebar{
+  background:#0d1017;border-right:1px solid var(--line-soft);
+  padding:22px 16px;display:flex;flex-direction:column;gap:26px;
+  position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;
+}
+.side-season h2{
+  font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:.08em;
+  margin:3px 0 12px;color:#e9ecf7;
+}
+.side-meta{display:flex;flex-direction:column;gap:7px;font-size:11.5px;color:var(--ink-2)}
+.side-meta .row{display:flex;align-items:center;gap:8px}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.side-links{display:flex;flex-direction:column;gap:1px;margin-top:10px}
+.side-links a{
+  display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:var(--r-sm);
+  color:var(--ink-2);font-size:12.5px;font-weight:500;
+  border-left:2px solid transparent;
+}
+.side-links a:hover{background:var(--raise);color:var(--ink);border-left-color:var(--gold-dim)}
+.side-links .i{color:var(--ink-3)}
+.side-links a:hover .i{color:var(--gold)}
+.premium{
+  margin-top:auto;padding:15px;border-radius:var(--r-md);position:relative;
+  background:linear-gradient(165deg,#1c1810,#12141c 70%);
+  border:1px solid #33301f;
+}
+.premium::before,.premium::after{ /* угловые скобы */
+  content:"";position:absolute;width:12px;height:12px;
+  border:1px solid rgba(201,162,79,.5);
+}
+.premium::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
+.premium::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
+.premium h4{font-size:12.5px;display:flex;align-items:center;gap:7px;color:#e9ecf7}
+.premium h4 .i{color:var(--gold-2)}
+.premium p{font-size:11px;color:var(--ink-2);margin:7px 0 12px;line-height:1.55}
+.btn-gold{
+  width:100%;padding:9px 0;
+  clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);
+  font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.12em;
+  color:#251c07;border:1px solid #6b571f;
+  background:linear-gradient(180deg,#edd28a,#c9a24f 52%,#99793a);
+  box-shadow:inset 0 1px 0 rgba(255,243,205,.55),inset 0 -1px 0 rgba(58,42,10,.5),
+    0 3px 10px rgba(0,0,0,.4);
+  position:relative;overflow:hidden;
+}
+.btn-gold:hover{filter:brightness(1.07);color:#251c07}
+
+/* Query containers: blocks adapt to the column they live in (`@container`),
+   not to the viewport. `.section` = page column, `.cards-row` = columns block. */
+.section,.cards-row{container-type:inline-size}

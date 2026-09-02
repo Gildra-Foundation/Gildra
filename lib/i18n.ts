@@ -81,7 +81,7 @@ const RU: Record<string, string> = {
   "PvP balance adjustments": "Правки баланса PvP",
   // SectionNav
   "Season 1": "Сезон 1",
-  MetaNav: "Мета",
+  "nav:Meta": "Мета",
   Raid: "Рейд",
   Guides: "Гайды",
   // MetaPulse
@@ -395,6 +395,25 @@ const RU: Record<string, string> = {
   "← Full Mythic+ tier list": "← Полный тир-лист Mythic+",
   "demo data — based on": "демо-данные — по",
   "runs, updated": "забегам, обновлено",
+  // Game registry (lib/games/registry.ts)
+  beta: "бета",
+  "Browse champions": "Чемпионы и способности",
+  Champions: "Чемпионы",
+  "Every champion, ability and skin": "Все чемпионы, способности и скины",
+  Items: "Предметы",
+  "Complete localized item database": "Полная локализованная база предметов",
+  "Plan a build": "Собрать билд",
+  Runes: "Руны",
+  "Rune trees and keystones": "Ветки рун и краеугольные камни",
+  "Prepare for lane": "Подготовка к линии",
+  "Summoner Spells": "Заклинания призывателя",
+  "Summoner spells with cooldowns": "Заклинания призывателя с перезарядкой",
+  "League of Legends champion, item and rune database with official Data Dragon assets.":
+    "База чемпионов, предметов и рун League of Legends с официальными ассетами Data Dragon.",
+  "League of Legends and Riot Games are trademarks of Riot Games, Inc. Gildra is not affiliated with Riot Games.":
+    "League of Legends и Riot Games — товарные знаки Riot Games, Inc. Gildra не связана с Riot Games.",
+  "Official Data Dragon source ↗": "Официальный источник Data Dragon ↗",
+  "Champion Database": "База чемпионов",
 };
 
 /** t(lang)("View All →") — RU-перевод или исходная строка. */
@@ -402,3 +421,10 @@ export const t =
   (lang: Lang) =>
   (s: string): string =>
     lang === "ru" ? (RU[s] ?? s) : s;
+
+/** Navigation labels can differ from the same word in prose (hero "Meta" →
+ *  "метой", nav "Meta" → "Мета"): `nav:<key>` wins, then the plain key. */
+export const tNav =
+  (lang: Lang) =>
+  (s: string): string =>
+    lang === "ru" ? (RU[`nav:${s}`] ?? RU[s] ?? s) : s;

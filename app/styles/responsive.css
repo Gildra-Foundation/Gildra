@@ -1,0 +1,59 @@
+/* Global responsive / motion rules spanning several blocks (design.md §I). */
+/* ============ RESPONSIVE / MOTION ============ */
+@media (max-width:1120px){
+  .cards-row{grid-template-columns:1fr;margin-top:24px}
+  .rf-in{flex-direction:column;align-items:flex-start;gap:20px}
+  .tp-side{display:none}
+  .mfil{display:flex}
+  .dtoggle{display:flex}
+  .tp-detail{display:none;border-left:none;border-top:1px solid var(--line)}
+  .tp-detail.open{display:flex}
+  .guides-row{grid-template-columns:repeat(3,1fr)}
+  .tierpage{grid-template-columns:1fr}
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+}
+@media (max-width:720px){
+  .cards-row{grid-template-columns:1fr;margin-top:18px}
+  .hero-inner{grid-template-columns:1fr;padding:40px 20px 28px}
+  .hero h1{font-size:31px}
+  .hero{min-height:400px}
+  .hero-live{display:grid;grid-template-columns:repeat(2,auto);justify-content:start;gap:9px 20px;font-size:9.5px}
+  .hl-item+.hl-item::before{display:none}
+  .hl-upd{grid-column:1/-1}
+  .patch{padding:0}
+  .patch-toggle{
+    display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;
+    padding:13px 14px;background:none;border:none;
+    font-family:var(--ui);font-size:12px;font-weight:600;color:var(--ink);text-align:left;
+  }
+  .patch-toggle .caret{transition:transform .2s}
+  .patch.open .patch-toggle .caret{transform:rotate(180deg)}
+  .patch .patch-title{display:none}
+  .patch ul{display:none;padding:0 14px}
+  .patch .more{display:none;padding:0 14px 13px}
+  .patch.open ul{display:flex}
+  .patch.open .more{display:inline-block}
+  .tpv-pop{display:none}
+  .tpv-builds{grid-template-columns:1fr}
+  .tpv-row:nth-child(n+6){display:none}
+  .tpv-builds .bcard:nth-child(n+3){display:none}
+  .col-key,.col-top{display:none}
+  .sn-season-full{display:none}
+  .sn-season-sm{display:inline}
+  .mpulse{gap:12px;padding:10px 12px 10px 16px}
+  .pulse-movers{gap:14px}
+  .section{padding:0 20px}
+  .tierpage{margin:30px -20px 0}
+  .rf-in{padding:22px 20px}
+  .foot-in{padding:28px 20px 20px;gap:26px}
+  .foot-legal{padding:12px 20px 20px}
+  .gsw-btn{padding:0 9px;font-size:11px}
+}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .45s ease,transform .45s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+  .hero-art img{animation:none!important}
+  .reveal{opacity:1!important;transform:none!important}
+}

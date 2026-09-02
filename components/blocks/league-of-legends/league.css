@@ -1,0 +1,2 @@
+/* League of Legends page body: the game keeps its own dark-blue ground inside .app (theme vars come from lib/games/registry.ts). */
+.app[data-game="league-of-legends"]{min-height:100vh;background:radial-gradient(90% 34% at 50% 0,#111925 0,var(--bg) 72%);color:#e8edf4}
