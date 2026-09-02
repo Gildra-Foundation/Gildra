@@ -14,7 +14,7 @@ grep -Fq 'catalog-pipeline' "$runner_file"
 for product in wow wow_classic wow_classic_era wow_classic_hardcore; do
   grep -Fq "'$product" "$runner_file"
 done
-for profile in retail-foundation classic-foundation-v1 classic-era-foundation-v1 classic-hardcore-foundation-v1; do
+for profile in retail-foundation classic-foundation classic-era-foundation classic-hardcore-foundation; do
   grep -Fq "$profile" "$runner_file"
 done
 

@@ -62,9 +62,9 @@ run_edition() {
 failures=0
 for edition in \
   'wow retail-foundation' \
-  'wow_classic classic-foundation-v1' \
-  'wow_classic_era classic-era-foundation-v1' \
-  'wow_classic_hardcore classic-hardcore-foundation-v1'; do
+  'wow_classic classic-foundation' \
+  'wow_classic_era classic-era-foundation' \
+  'wow_classic_hardcore classic-hardcore-foundation'; do
   # The values are controlled by this file and contain no shell syntax.
   set -- $edition
   if ! run_edition "$1" "$2"; then
