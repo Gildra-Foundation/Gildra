@@ -127,6 +127,38 @@ so old `?locale=ru_RU` links 308 to `/ru/…`. Wide game columns are a game bloc
 (`lol.main`), not `.section`; the game's ground colour comes from `theme` in the
 registry (applied as CSS variables on `.app`).
 
+## Payload CMS overrides
+
+Editors can replace a page's block list without a deploy. In the CMS
+(`cms/`, collection **Pages**) create a document whose `slug` is the page id
+(`wow/home`, `wow/tier-lists`, `league-of-legends/home`…) and put a
+`BlockInstance[]` JSON into `blocks`, e.g.
+
+```json
+[
+  { "type": "wow.hero" },
+  { "type": "sectionNav" },
+  { "type": "container", "children": [
+    { "type": "wow.metaPulse" },
+    { "type": "columns", "props": { "layout": "meta", "id": "meta", "anchor": "Meta" },
+      "children": [{ "type": "wow.mythicMeta" }, { "type": "wow.metaTrends" }] },
+    { "type": "adSlot" },
+    { "type": "wow.raidFeature" },
+    { "type": "wow.guides" },
+    { "type": "wow.tierPreview" }
+  ]}
+]
+```
+
+`lib/cms/pages.ts` fetches `CMS_INTERNAL_URL/api/pages?where[slug][equals]=<id>`
+(published documents only, cached 60 s) and validates the JSON against the
+registry: unknown block types, non-object props or `children` on a
+non-container make the whole override invalid and the TS config renders
+instead. Drafts are ignored; `layout` may switch between `default` and `bare`.
+Unset `CMS_INTERNAL_URL` to disable CMS lookups (local dev without the CMS).
+Block types available to editors are exactly the registry keys listed by
+`/dev/blocks/manifest`.
+
 ## Sitemaps
 
 `/sitemaps/static` is generated from `liveGames()` × `game.locales` ×
