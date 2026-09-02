@@ -147,8 +147,19 @@ jobs:
           OVH_USER: ${{ secrets.OVH_USER }}
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_TOKEN: ${{ github.token }}
+        # TCP connects from the OVH host to ghcr.io intermittently lose the SYN
+        # (~1 in 4 on 2026-09-02) while ping is clean; docker login has no retry
+        # of its own, so retry the whole login a few times before failing.
         run: |
-          printf '%s' "$GHCR_TOKEN" | ssh "$OVH_USER@$OVH_HOST" "sudo docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin"
+          for attempt in 1 2 3 4 5 6 7 8; do
+            if printf '%s' "$GHCR_TOKEN" | ssh "$OVH_USER@$OVH_HOST" "sudo docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin"; then
+              exit 0
+            fi
+            echo "docker login attempt $attempt failed, retrying in 10s" >&2
+            sleep 10
+          done
+          echo "docker login to ghcr.io failed after 8 attempts" >&2
+          exit 1
       - name: Deploy immutable images
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
