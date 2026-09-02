@@ -14,12 +14,16 @@ import (
 const apiBase = "/genshin-impact/v1"
 
 var contentCategoryValue = regexp.MustCompile(`^[a-z0-9]{1,64}$`)
+var characterSlugValue = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 
 type Catalog interface {
 	Status(context.Context) (Status, error)
 	ListCharacters(context.Context, ListParams) (Page[CharacterSummary], error)
+	GetCharacter(context.Context, string, string) (CharacterDetail, error)
 	ListWeapons(context.Context, ListParams) (Page[WeaponSummary], error)
+	GetWeapon(context.Context, string, string) (WeaponDetail, error)
 	ListArtifactSets(context.Context, ListParams) (Page[ArtifactSetSummary], error)
+	GetArtifactSet(context.Context, string, string) (ArtifactSetDetail, error)
 	ListTalents(context.Context, ListParams) (Page[TalentSummary], error)
 	ListContent(context.Context, string, ListParams) (Page[ContentSummary], error)
 }
@@ -45,8 +49,11 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET "+apiBase+"/", h.index)
 	mux.HandleFunc("GET "+apiBase+"/status", h.status)
 	mux.HandleFunc("GET "+apiBase+"/characters", h.characters)
+	mux.HandleFunc("GET "+apiBase+"/characters/{slug}", h.character)
 	mux.HandleFunc("GET "+apiBase+"/weapons", h.weapons)
+	mux.HandleFunc("GET "+apiBase+"/weapons/{slug}", h.weapon)
 	mux.HandleFunc("GET "+apiBase+"/artifact-sets", h.artifactSets)
+	mux.HandleFunc("GET "+apiBase+"/artifact-sets/{slug}", h.artifactSet)
 	mux.HandleFunc("GET "+apiBase+"/talents", h.talents)
 	mux.HandleFunc("GET "+apiBase+"/content/{category}", h.content)
 }
@@ -61,8 +68,11 @@ func (h *Handler) index(w http.ResponseWriter, r *http.Request) {
 		"status":  apiBase + "/status",
 		"resources": map[string]string{
 			"characters":   apiBase + "/characters",
+			"character":    apiBase + "/characters/{slug}",
 			"weapons":      apiBase + "/weapons",
+			"weapon":       apiBase + "/weapons/{slug}",
 			"artifactSets": apiBase + "/artifact-sets",
+			"artifactSet":  apiBase + "/artifact-sets/{slug}",
 			"talents":      apiBase + "/talents",
 			"content":      apiBase + "/content/{category}",
 		},
@@ -97,6 +107,33 @@ func (h *Handler) characters(w http.ResponseWriter, r *http.Request) {
 	handlePage(w, r, page, err)
 }
 
+func (h *Handler) character(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+	if !characterSlugValue.MatchString(slug) {
+		writeProblem(w, r, http.StatusBadRequest, "invalid-character", "Invalid character", "Character slug must contain only lowercase letters, numbers and hyphens.")
+		return
+	}
+	locale := r.URL.Query().Get("locale")
+	if locale == "" {
+		locale = "en_US"
+	}
+	if locale != "en_US" && locale != "ru_RU" {
+		writeProblem(w, r, http.StatusBadRequest, "invalid-locale", "Invalid locale", "Locale must be en_US or ru_RU.")
+		return
+	}
+	item, err := h.catalog.GetCharacter(r.Context(), slug, locale)
+	if errors.Is(err, ErrCharacterNotFound) {
+		writeProblem(w, r, http.StatusNotFound, "character-not-found", "Character not found", "The requested Genshin Impact character does not exist.")
+		return
+	}
+	if err != nil {
+		slog.Error("read genshin character", "slug", slug, "error", err)
+		writeProblem(w, r, http.StatusServiceUnavailable, "catalog-unavailable", "Catalog unavailable", "The Genshin Impact catalog could not be read. Retry later.")
+		return
+	}
+	writeJSON(w, http.StatusOK, item)
+}
+
 func (h *Handler) weapons(w http.ResponseWriter, r *http.Request) {
 	params, ok := parseListParams(w, r)
 	if !ok {
@@ -108,6 +145,86 @@ func (h *Handler) weapons(w http.ResponseWriter, r *http.Request) {
 	}
 	page, err := h.catalog.ListWeapons(r.Context(), params)
 	handlePage(w, r, page, err)
+}
+
+func (h *Handler) weapon(w http.ResponseWriter, r *http.Request) {
+	item, err := h.getLocalizedWeapon(r)
+	if err != nil {
+		if errors.Is(err, ErrWeaponNotFound) {
+			writeProblem(w, r, http.StatusNotFound, "weapon-not-found", "Weapon not found", "The requested Genshin Impact weapon does not exist.")
+			return
+		}
+		if errors.Is(err, errInvalidLocale) {
+			writeProblem(w, r, http.StatusBadRequest, "invalid-locale", "Invalid locale", "Locale must be en_US or ru_RU.")
+			return
+		}
+		if errors.Is(err, errInvalidSlug) {
+			writeProblem(w, r, http.StatusBadRequest, "invalid-weapon", "Invalid weapon", "Weapon slug must contain only lowercase letters, numbers and hyphens.")
+			return
+		}
+		slog.Error("read genshin weapon", "slug", r.PathValue("slug"), "error", err)
+		writeProblem(w, r, http.StatusServiceUnavailable, "catalog-unavailable", "Catalog unavailable", "The Genshin Impact catalog could not be read. Retry later.")
+		return
+	}
+	writeJSON(w, http.StatusOK, item)
+}
+
+func (h *Handler) artifactSet(w http.ResponseWriter, r *http.Request) {
+	item, err := h.getLocalizedArtifactSet(r)
+	if err != nil {
+		if errors.Is(err, ErrArtifactSetNotFound) {
+			writeProblem(w, r, http.StatusNotFound, "artifact-set-not-found", "Artifact set not found", "The requested Genshin Impact artifact set does not exist.")
+			return
+		}
+		if errors.Is(err, errInvalidLocale) {
+			writeProblem(w, r, http.StatusBadRequest, "invalid-locale", "Invalid locale", "Locale must be en_US or ru_RU.")
+			return
+		}
+		if errors.Is(err, errInvalidSlug) {
+			writeProblem(w, r, http.StatusBadRequest, "invalid-artifact-set", "Invalid artifact set", "Artifact set slug must contain only lowercase letters, numbers and hyphens.")
+			return
+		}
+		slog.Error("read genshin artifact set", "slug", r.PathValue("slug"), "error", err)
+		writeProblem(w, r, http.StatusServiceUnavailable, "catalog-unavailable", "Catalog unavailable", "The Genshin Impact catalog could not be read. Retry later.")
+		return
+	}
+	writeJSON(w, http.StatusOK, item)
+}
+
+var (
+	errInvalidLocale = errors.New("invalid genshin locale")
+	errInvalidSlug   = errors.New("invalid genshin slug")
+)
+
+func (h *Handler) getLocalizedWeapon(r *http.Request) (WeaponDetail, error) {
+	slug, locale, err := detailParams(r)
+	if err != nil {
+		return WeaponDetail{}, err
+	}
+	return h.catalog.GetWeapon(r.Context(), slug, locale)
+}
+
+func (h *Handler) getLocalizedArtifactSet(r *http.Request) (ArtifactSetDetail, error) {
+	slug, locale, err := detailParams(r)
+	if err != nil {
+		return ArtifactSetDetail{}, err
+	}
+	return h.catalog.GetArtifactSet(r.Context(), slug, locale)
+}
+
+func detailParams(r *http.Request) (string, string, error) {
+	slug := r.PathValue("slug")
+	if !characterSlugValue.MatchString(slug) {
+		return "", "", errInvalidSlug
+	}
+	locale := r.URL.Query().Get("locale")
+	if locale == "" {
+		return slug, "en_US", nil
+	}
+	if locale != "en_US" && locale != "ru_RU" {
+		return "", "", errInvalidLocale
+	}
+	return slug, locale, nil
 }
 
 func (h *Handler) artifactSets(w http.ResponseWriter, r *http.Request) {

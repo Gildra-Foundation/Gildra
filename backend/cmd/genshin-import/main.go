@@ -17,15 +17,18 @@ import (
 )
 
 type options struct {
-	sourceDirectory  string
-	mediaDirectory   string
-	mediaBaseURL     string
-	databaseURL      string
-	sourceRevision   string
-	sourceRepository string
-	gameVersion      string
-	workers          int
-	confirm          bool
+	sourceDirectory         string
+	supplementalDirectory   string
+	mediaDirectory          string
+	mediaBaseURL            string
+	alternateMediaDirectory string
+	alternateMediaBaseURL   string
+	databaseURL             string
+	sourceRevision          string
+	sourceRepository        string
+	gameVersion             string
+	workers                 int
+	confirm                 bool
 }
 
 func main() {
@@ -45,7 +48,7 @@ func run() error {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Hour)
 	defer cancel()
 
-	dataset, err := genshinimport.LoadSource(opts.sourceDirectory)
+	dataset, err := genshinimport.LoadSourceWithOverlay(opts.sourceDirectory, opts.supplementalDirectory)
 	if err != nil {
 		return fmt.Errorf("load genshin source: %w", err)
 	}
@@ -65,6 +68,11 @@ func run() error {
 	fetcher, err := genshinimport.NewMediaFetcher(opts.mediaDirectory, opts.mediaBaseURL, opts.workers)
 	if err != nil {
 		return err
+	}
+	if opts.alternateMediaDirectory != "" {
+		if err := fetcher.SetAlternateMediaSource(opts.alternateMediaDirectory, opts.alternateMediaBaseURL); err != nil {
+			return err
+		}
 	}
 	assets, err := fetcher.Fetch(ctx, filenames, dataset.MediaFallbacks())
 	if err != nil {
@@ -88,10 +96,11 @@ func run() error {
 		return fmt.Errorf("ping genshin database: %w", err)
 	}
 	release, err := genshinimport.NewStore(database).Publish(ctx, dataset, assets, genshinimport.PublishOptions{
-		SourceRevision:   opts.sourceRevision,
-		GameVersion:      opts.gameVersion,
-		SourceRepository: opts.sourceRepository,
-		MediaBaseURL:     opts.mediaBaseURL,
+		SourceRevision:        opts.sourceRevision,
+		GameVersion:           opts.gameVersion,
+		SourceRepository:      opts.sourceRepository,
+		MediaBaseURL:          opts.mediaBaseURL,
+		AlternateMediaBaseURL: opts.alternateMediaBaseURL,
 	})
 	if err != nil {
 		return err
@@ -102,8 +111,11 @@ func run() error {
 func parseOptions() (options, error) {
 	var opts options
 	flag.StringVar(&opts.sourceDirectory, "source-directory", "", "genshin-db checkout directory")
+	flag.StringVar(&opts.supplementalDirectory, "supplemental-directory", os.Getenv("GENSHIN_SUPPLEMENTAL_DIRECTORY"), "optional additive source overlay directory")
 	flag.StringVar(&opts.mediaDirectory, "media-directory", os.Getenv("CATALOG_MEDIA_DIRECTORY"), "local catalog media directory")
 	flag.StringVar(&opts.mediaBaseURL, "media-base-url", "https://enka.network/ui", "source base URL for PNG game assets")
+	flag.StringVar(&opts.alternateMediaDirectory, "alternate-media-directory", os.Getenv("GENSHIN_ALTERNATE_MEDIA_DIRECTORY"), "optional local mirror for client-only PNG assets")
+	flag.StringVar(&opts.alternateMediaBaseURL, "alternate-media-base-url", "https://raw.githubusercontent.com/PathOfGenshin/resources/015a2493b5672b28576ab78ffbcffde2ea0c9844/resources/gi/Sprite", "base URL recorded for the optional local media mirror")
 	flag.StringVar(&opts.databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
 	flag.StringVar(&opts.sourceRevision, "source-revision", "", "exact 40-character genshin-db Git revision")
 	flag.StringVar(&opts.sourceRepository, "source-repository", "https://github.com/theBowja/genshin-db", "source repository URL")

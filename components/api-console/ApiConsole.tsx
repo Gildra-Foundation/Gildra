@@ -60,17 +60,40 @@ async function requestJSON<T>(path: string, init?: RequestInit): Promise<T> {
 export function ApiConsole({ consolePath, returnTo }: { consolePath: string[]; returnTo?: string }) {
   const [user, setUser] = useState<PanelUser | null>(null);
   const [checking, setChecking] = useState(true);
+  const isPublicGenshin = consolePath[0] === "genshin-impact";
 
   useEffect(() => {
+    if (isPublicGenshin) {
+      setChecking(false);
+      return;
+    }
+    setChecking(true);
     requestJSON<{ user: PanelUser }>("/v1/auth/me")
       .then((result) => setUser(result.user))
       .catch(() => setUser(null))
       .finally(() => setChecking(false));
-  }, []);
+  }, [isPublicGenshin]);
+
+  // The Genshin catalog is a read-only public encyclopedia. Keep the
+  // operational/admin sections behind the panel session, while allowing the
+  // catalog page to be opened directly from api.gildra.net.
+  if (isPublicGenshin) {
+    return <PublicGenshinCatalog />;
+  }
 
   if (checking) return <LoadingScreen />;
   if (!user) return <LoginScreen onLogin={setUser} returnTo={returnTo} />;
   return <Dashboard user={user} consolePath={consolePath} onLogout={() => setUser(null)} />;
+}
+
+function PublicGenshinCatalog() {
+  return (
+    <main className="min-h-screen bg-[#090b10] text-[#e7eaf1]">
+      <div className="mx-auto max-w-[1480px] p-4 sm:p-6 lg:p-8">
+        <GenshinImpactCatalog />
+      </div>
+    </main>
+  );
 }
 
 function BrandMark({ compact = false }: { compact?: boolean }) {

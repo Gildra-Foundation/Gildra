@@ -17,6 +17,18 @@ func (s stubCatalog) Status(context.Context) (Status, error) {
 	return s.status, nil
 }
 
+func (stubCatalog) GetCharacter(context.Context, string, string) (CharacterDetail, error) {
+	return CharacterDetail{}, nil
+}
+
+func (stubCatalog) GetWeapon(context.Context, string, string) (WeaponDetail, error) {
+	return WeaponDetail{}, nil
+}
+
+func (stubCatalog) GetArtifactSet(context.Context, string, string) (ArtifactSetDetail, error) {
+	return ArtifactSetDetail{}, nil
+}
+
 func (stubCatalog) ListCharacters(context.Context, ListParams) (Page[CharacterSummary], error) {
 	return Page[CharacterSummary]{Data: []CharacterSummary{}, Pagination: Pagination{Limit: 24}}, nil
 }
@@ -66,6 +78,17 @@ func TestCharactersRejectsUnsupportedLocale(t *testing.T) {
 	}
 	if got := recorder.Header().Get("Content-Type"); got != "application/problem+json" {
 		t.Fatalf("content type = %q", got)
+	}
+}
+
+func TestCharacterDetailRejectsInvalidSlug(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	NewHandler(stubCatalog{}).Register(mux)
+	recorder := httptest.NewRecorder()
+	mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, apiBase+"/characters/Not%20a%20slug", nil))
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusBadRequest)
 	}
 }
 
