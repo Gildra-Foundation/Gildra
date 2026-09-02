@@ -230,6 +230,26 @@ verify_library_route() {
     --resolve api.gildra.net:443:127.0.0.1 "https://api.gildra.net$route_path" >/dev/null
 }
 
+# nginx mounts infra/nginx/prod.conf as a single file. The upload step replaces
+# that file with a new inode, so the running container keeps serving the old
+# content until it is recreated; a reload is not enough. Recreate nginx only
+# when the loaded config differs from the uploaded one.
+sync_nginx_config() {
+  nginx_container=$(compose ps -q nginx)
+  [ -n "$nginx_container" ] || { compose up -d --no-deps nginx || return 1; return 0; }
+  loaded_hash=$(docker exec "$nginx_container" sh -c 'sha256sum /etc/nginx/conf.d/default.conf' 2>/dev/null | cut -d' ' -f1)
+  uploaded_hash=$(sha256sum "$deployment_directory/infra/nginx/prod.conf" | cut -d' ' -f1)
+  if [ -z "$loaded_hash" ]; then
+    printf 'deploy: could not read the loaded nginx configuration; leaving nginx untouched\n' >&2
+    return 0
+  fi
+  if [ "$loaded_hash" = "$uploaded_hash" ]; then
+    return 0
+  fi
+  printf 'deploy: nginx configuration changed; recreating the nginx container\n' >&2
+  compose up -d --force-recreate --no-deps nginx || return 1
+}
+
 verify_local_health() {
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/livez >/dev/null
@@ -497,6 +517,7 @@ until compose pull web api catalog-backup cms scraper scraper-worker; do
   sleep 10
 done
 compose up -d --no-build --remove-orphans --wait --wait-timeout 240
+sync_nginx_config || fail 'nginx configuration could not be applied'
 verify_running_images
 write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 ensure_recovery_backup
