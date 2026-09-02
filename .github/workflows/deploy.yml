@@ -173,7 +173,7 @@ jobs:
         run: |
           ssh "$OVH_USER@$OVH_HOST" \
             "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
-      - name: Verify private production paths
+      - name: Verify public production paths
         shell: bash
         run: |
           set -euo pipefail
@@ -184,10 +184,10 @@ jobs:
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/league-of-legends/v1/status >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/league-of-legends >/dev/null
           catalog_status="$(curl --silent --show-error --retry 6 --retry-delay 5 --max-time 15 --output /dev/null --write-out '%{http_code}' 'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US')"
-          test "$catalog_status" = 401
+          test "$catalog_status" = 200
           for edition in retail classic classic-era hardcore; do
             prefixed_catalog_status="$(curl --silent --show-error --retry 6 --retry-delay 5 --max-time 15 --output /dev/null --write-out '%{http_code}' "https://api.gildra.net/world-of-warcraft/$edition/v1/library/datasets?locale=en_US")"
-            test "$prefixed_catalog_status" = 401
+            test "$prefixed_catalog_status" = 200
           done
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/library >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/ru/library >/dev/null
