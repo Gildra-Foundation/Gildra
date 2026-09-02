@@ -11,5 +11,5 @@ Allowed:
 - restarting local development services.
 
 Do not commit or push unless explicitly requested.
-Do not modify production infrastructure or production data.
+Production deployment, migrations, data imports, and service restarts are allowed only when explicitly requested by the user. Verify backup, rollback, and service health before production changes.
 Preserve existing user changes.
