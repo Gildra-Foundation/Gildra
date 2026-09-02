@@ -1,9 +1,10 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Activity, ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, CircleAlert, Clock3,
-  Code2, Database, ExternalLink, Eye, EyeOff, FileJson2, Gauge, Gem, LogOut,
+  Code2, Database, ExternalLink, Eye, EyeOff, FileJson2, Gamepad2, Gauge, Gem, LogOut,
   Menu, RefreshCw, Search, Server, ShieldCheck, Swords, X,
 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -21,15 +22,16 @@ import { GenshinImpactCatalog } from "./GenshinImpactCatalog";
 import { WarcraftCatalog } from "./WarcraftCatalog";
 import type { ArchonTierlistEntry, DashboardData, DatasetListItem, DatasetRun, IcyVeinsTierlistEntry, IcyVeinsTierlistResponse, PanelUser, TierlistEntry, WowClassListResponse, WowGGTierlistEntry, WowGGTierlistResponse, WowSpecializationResponse, WowSpecListResponse } from "./types";
 
-type View = "overview" | "catalog" | "genshin-impact" | "datasets" | "api" | "system";
+type View = "overview" | "catalog" | "genshin-impact" | "league-of-legends" | "datasets" | "api" | "system";
 
 const navItems = [
-  { id: "overview" as const, label: "Обзор", icon: Gauge, href: "/" },
-  { id: "catalog" as const, label: "База Warcraft", icon: BookOpen, href: "/catalog" },
-  { id: "genshin-impact" as const, label: "Genshin Impact", icon: Gem, href: "/genshin-impact" },
-  { id: "datasets" as const, label: "Датасеты", icon: Database, href: "/datasets" },
-  { id: "api" as const, label: "API", icon: Code2, href: "/api" },
-  { id: "system" as const, label: "Система", icon: Server, href: "/system" },
+  { id: "overview" as const, label: "Обзор", icon: Gauge, href: "/api-console" },
+  { id: "catalog" as const, label: "База Warcraft", icon: BookOpen, href: "/api-console/catalog" },
+  { id: "genshin-impact" as const, label: "Genshin Impact", icon: Gem, href: "/api-console/genshin-impact" },
+  { id: "league-of-legends" as const, label: "League of Legends", icon: Gamepad2, href: "/api-console/league-of-legends" },
+  { id: "datasets" as const, label: "Датасеты", icon: Database, href: "/api-console/datasets" },
+  { id: "api" as const, label: "API", icon: Code2, href: "/api-console/api" },
+  { id: "system" as const, label: "Система", icon: Server, href: "/api-console/system" },
 ];
 
 async function requestJSON<T>(path: string, init?: RequestInit): Promise<T> {
@@ -154,7 +156,7 @@ function LoginScreen({ onLogin, returnTo }: { onLogin: (user: PanelUser) => void
 
 function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePath: string[]; onLogout: () => void }) {
   const pathKey = consolePath.join("/");
-  const view: View = consolePath[0] === "catalog" ? "catalog" : consolePath[0] === "genshin-impact" ? "genshin-impact" : consolePath[0] === "datasets" ? "datasets" : consolePath[0] === "api" ? "api" : consolePath[0] === "system" ? "system" : "overview";
+  const view: View = consolePath[0] === "catalog" ? "catalog" : consolePath[0] === "genshin-impact" ? "genshin-impact" : consolePath[0] === "league-of-legends" ? "league-of-legends" : consolePath[0] === "datasets" ? "datasets" : consolePath[0] === "api" ? "api" : consolePath[0] === "system" ? "system" : "overview";
   const datasetSlug = view === "datasets" ? consolePath[1] ?? "" : "";
   const classSlug = view === "datasets" && consolePath[2] === "classes" ? consolePath[3] ?? "" : "";
   const [mobileNav, setMobileNav] = useState(false);
@@ -174,13 +176,14 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal?: AbortSignal) => {
     setRefreshing(true); setError("");
-    if (view === "genshin-impact") {
+    if (view === "genshin-impact" || view === "league-of-legends") {
       setRefreshing(false);
       return;
     }
     try {
+      const needsDashboard = view !== "catalog";
       const needsTierlist = view === "overview" || (view === "datasets" && datasetSlug === "tierlist-wowhead");
       const needsArchon = view === "datasets" && datasetSlug === "tierlist-archon";
       const needsWowGG = view === "datasets" && datasetSlug === "tierlist-wowgg";
@@ -194,24 +197,38 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
       const icyVeinsURL = classSlug
         ? "/v1/admin/tierlist-icyveins"
         : `/v1/admin/tierlist-icyveins?activity=${activityFilter}&role=${roleFilter}`;
-      const [dashboard, datasetList, tierlist, archon, wowgg, icyveins, runs] = await Promise.all([
-        requestJSON<DashboardData>("/v1/admin/dashboard"),
-        view === "datasets" ? requestJSON<{ data: DatasetListItem[] }>("/v1/admin/datasets") : Promise.resolve({ data: [] }),
-        needsTierlist ? requestJSON<{ data: TierlistEntry[] }>(tierlistURL) : Promise.resolve({ data: [] }),
-        needsArchon ? requestJSON<{ data: ArchonTierlistEntry[] }>(archonURL) : Promise.resolve({ data: [] }),
-        needsWowGG ? requestJSON<WowGGTierlistResponse>(`/v1/admin/tierlist-wowgg${wowGGWeek ? `?week=${encodeURIComponent(wowGGWeek)}` : ""}`) : Promise.resolve({ snapshotId: "", contexts: [], data: [], weeks: [], count: 0 }),
-        needsIcyVeins ? requestJSON<IcyVeinsTierlistResponse>(icyVeinsURL) : Promise.resolve({ snapshotId: "", pages: [], data: [], count: 0 }),
+      const [dashboard, datasetList, tierlist, archon, wowgg, icyveins, runs] = await Promise.allSettled([
+        needsDashboard ? requestJSON<DashboardData>("/v1/admin/dashboard", { signal }) : Promise.resolve(null),
+        view === "datasets" ? requestJSON<{ data: DatasetListItem[] }>("/v1/admin/datasets", { signal }) : Promise.resolve({ data: [] }),
+        needsTierlist ? requestJSON<{ data: TierlistEntry[] }>(tierlistURL, { signal }) : Promise.resolve({ data: [] }),
+        needsArchon ? requestJSON<{ data: ArchonTierlistEntry[] }>(archonURL, { signal }) : Promise.resolve({ data: [] }),
+        needsWowGG ? requestJSON<WowGGTierlistResponse>(`/v1/admin/tierlist-wowgg${wowGGWeek ? `?week=${encodeURIComponent(wowGGWeek)}` : ""}`, { signal }) : Promise.resolve({ snapshotId: "", contexts: [], data: [], weeks: [], count: 0 }),
+        needsIcyVeins ? requestJSON<IcyVeinsTierlistResponse>(icyVeinsURL, { signal }) : Promise.resolve({ snapshotId: "", pages: [], data: [], count: 0 }),
         view === "datasets" && datasetSlug
-          ? requestJSON<{ data: DatasetRun[] }>(`/v1/admin/datasets/${datasetSlug}/runs`)
+          ? requestJSON<{ data: DatasetRun[] }>(`/v1/admin/datasets/${datasetSlug}/runs`, { signal })
           : Promise.resolve({ data: [] }),
       ]);
-      setData(dashboard); setDatasets(datasetList.data); setEntries(tierlist.data);
-      setArchonEntries(archon.data); setWowGG(wowgg); setIcyVeins(icyveins); setDatasetRuns(runs.data);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Не удалось загрузить панель"); }
+      if (dashboard.status === "fulfilled" && dashboard.value) setData(dashboard.value);
+      if (datasetList.status === "fulfilled") setDatasets(datasetList.value.data);
+      if (tierlist.status === "fulfilled") setEntries(tierlist.value.data);
+      if (archon.status === "fulfilled") setArchonEntries(archon.value.data);
+      if (wowgg.status === "fulfilled") setWowGG(wowgg.value);
+      if (icyveins.status === "fulfilled") setIcyVeins(icyveins.value);
+      if (runs.status === "fulfilled") setDatasetRuns(runs.value.data);
+      const failed = [dashboard, datasetList, tierlist, archon, wowgg, icyveins, runs].find((result) => result.status === "rejected" && !(result.reason instanceof DOMException && result.reason.name === "AbortError"));
+      if (failed?.status === "rejected") setError(failed.reason instanceof Error ? failed.reason.message : "Некоторые данные не загрузились");
+    } catch (reason) {
+      if (reason instanceof DOMException && reason.name === "AbortError") return;
+      setError(reason instanceof Error ? reason.message : "Не удалось загрузить панель");
+    }
     finally { setRefreshing(false); }
   }, [activityFilter, classSlug, datasetSlug, difficultyFilter, roleFilter, view, wowGGWeek]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
 
   const filteredEntries = useMemo(() => entries.filter((entry) => `${entry.specName} ${entry.className}`.toLowerCase().includes(query.toLowerCase())), [entries, query]);
   const filteredArchonEntries = useMemo(() => archonEntries.filter((entry) => `${entry.specName} ${entry.className}`.toLowerCase().includes(query.toLowerCase())), [archonEntries, query]);
@@ -226,18 +243,18 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
         <div className="flex h-[76px] items-center justify-between border-b border-[#252a37] px-5"><BrandMark /><button type="button" onClick={() => setMobileNav(false)} className="lg:hidden" aria-label="Закрыть меню"><X className="size-5" /></button></div>
         <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="Разделы панели">
           <div className="px-3 pb-2 pt-3 text-[9px] uppercase tracking-[.18em] text-[#586276]">Панель управления</div>
-          {navItems.map((item) => <a key={item.id} href={item.href} onClick={() => setMobileNav(false)} className={cn("flex h-10 items-center gap-3 border-l-2 px-3 text-left text-xs font-medium transition-colors", view === item.id ? "border-[#c9a24f] bg-[#1a1c20] text-[#e4c574]" : "border-transparent text-[#8791a5] hover:bg-[#141821] hover:text-[#d7dce6]")}><item.icon className="size-4" strokeWidth={1.6} />{item.label}</a>)}
+          {navItems.map((item) => <Link key={item.id} href={item.href} onClick={() => setMobileNav(false)} className={cn("flex h-10 items-center gap-3 border-l-2 px-3 text-left text-xs font-medium transition-colors", view === item.id ? "border-[#c9a24f] bg-[#1a1c20] text-[#e4c574]" : "border-transparent text-[#8791a5] hover:bg-[#141821] hover:text-[#d7dce6]")}><item.icon className="size-4" strokeWidth={1.6} />{item.label}</Link>)}
         </nav>
         <div className="border-t border-[#252a37] p-3"><div className="mb-2 flex items-center gap-3 px-2 py-2"><div className="grid size-8 place-items-center border border-[#5b4e32] bg-[#1a1812] text-xs font-bold text-[#d8b867]">{(user.displayName || user.email).slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold">{user.displayName || "Администратор"}</div><div className="truncate text-[10px] text-[#687286]">{user.email}</div></div></div><Button variant="ghost" onClick={logout} className="h-9 w-full justify-start rounded-sm text-xs text-[#8490a4] hover:bg-[#181c25] hover:text-[#e8a0a0]"><LogOut className="size-4" />Выйти</Button></div>
       </aside>
       {mobileNav && <button className="fixed inset-0 z-30 bg-black/70 lg:hidden" onClick={() => setMobileNav(false)} aria-label="Закрыть меню" />}
 
       <section className="min-w-0 lg:col-start-2">
-        <header className="sticky top-0 z-20 flex h-[64px] items-center justify-between border-b border-[#252a37] bg-[#0b0e14]/95 px-4 backdrop-blur sm:px-6 lg:h-[76px] lg:px-8"><div className="flex items-center gap-3"><button type="button" onClick={() => setMobileNav(true)} className="grid size-9 place-items-center border border-[#303645] lg:hidden" aria-label="Открыть меню"><Menu className="size-5" /></button><div><p className="text-[9px] uppercase tracking-[.16em] text-[#687286]">Gildra API / {pathKey || "обзор"}</p><h1 className="font-[var(--display)] text-lg font-semibold sm:text-xl">{view === "overview" ? "Обзор API" : view === "catalog" ? "База Warcraft" : view === "genshin-impact" ? "База Genshin Impact" : view === "datasets" ? classSlug ? "Информация о классе" : datasetSlug ? "Данные датасета" : "Датасеты" : view === "api" ? "Документация API" : "Состояние системы"}</h1></div></div>{view !== "genshin-impact" ? <Button variant="outline" disabled={refreshing} onClick={() => void load()} className="h-9 rounded-sm border-[#3a404f] bg-[#11151d] text-xs text-[#abb3c2] hover:border-[#8d7540] hover:bg-[#181a1d] hover:text-[#e4c574]"><RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">Обновить</span></Button> : null}</header>
+        <header className="sticky top-0 z-20 flex h-[64px] items-center justify-between border-b border-[#252a37] bg-[#0b0e14]/95 px-4 backdrop-blur sm:px-6 lg:h-[76px] lg:px-8"><div className="flex items-center gap-3"><button type="button" onClick={() => setMobileNav(true)} className="grid size-9 place-items-center border border-[#303645] lg:hidden" aria-label="Открыть меню"><Menu className="size-5" /></button><div><p className="text-[9px] uppercase tracking-[.16em] text-[#687286]">Gildra API / {pathKey || "обзор"}</p><h1 className="font-[var(--display)] text-lg font-semibold sm:text-xl">{view === "overview" ? "Обзор API" : view === "catalog" ? "База Warcraft" : view === "genshin-impact" ? "База Genshin Impact" : view === "league-of-legends" ? "База League of Legends" : view === "datasets" ? classSlug ? "Информация о классе" : datasetSlug ? "Данные датасета" : "Датасеты" : view === "api" ? "Документация API" : "Состояние системы"}</h1></div></div>{view !== "genshin-impact" && view !== "league-of-legends" ? <Button variant="outline" disabled={refreshing} onClick={() => void load()} className="h-9 rounded-sm border-[#3a404f] bg-[#11151d] text-xs text-[#abb3c2] hover:border-[#8d7540] hover:bg-[#181a1d] hover:text-[#e4c574]"><RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">Обновить</span></Button> : null}</header>
 
         <div className="mx-auto max-w-[1480px] p-4 sm:p-6 lg:p-8">
           {error && <Alert variant="destructive" className="mb-5 rounded-sm border-[#693b3e] bg-[#2a1518] text-[#ef9a9d]"><CircleAlert className="size-4" /><AlertTitle>Панель временно недоступна</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-          {view === "catalog" ? <WarcraftCatalog buildVersion={data?.catalog.activeBuildVersion ?? ""} /> : view === "genshin-impact" ? <GenshinImpactCatalog /> : !data ? error ? <PanelLoadError message={error} onRetry={() => void load()} /> : <div className="grid min-h-[60vh] place-items-center"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : <>
+          {view === "catalog" ? <WarcraftCatalog buildVersion={data?.catalog.activeBuildVersion ?? ""} /> : view === "genshin-impact" ? <GenshinImpactCatalog /> : view === "league-of-legends" ? <LeagueConsolePanel /> : !data ? error ? <PanelLoadError message={error} onRetry={() => void load()} /> : <div className="grid min-h-[60vh] place-items-center"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div> : <>
             {view === "overview" && <Overview data={data} entries={filteredEntries} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} />}
             {view === "datasets" && <DatasetSection data={data} datasets={datasets} datasetSlug={datasetSlug} classSlug={classSlug} entries={classSlug ? entries : filteredEntries} archonEntries={classSlug ? archonEntries : filteredArchonEntries} wowGG={{ ...wowGG, data: classSlug ? wowGG.data : filteredWowGGEntries }} icyVeins={{ ...icyVeins, data: classSlug ? icyVeins.data : filteredIcyVeinsEntries }} wowGGWeek={wowGGWeek} setWowGGWeek={setWowGGWeek} datasetRuns={datasetRuns} query={query} setQuery={setQuery} activity={activityFilter} setActivity={setActivityFilter} role={roleFilter} setRole={setRoleFilter} difficulty={difficultyFilter} setDifficulty={setDifficultyFilter} metric={metricFilter} setMetric={setMetricFilter} />}
             {view === "api" && <APIView data={data} />}
@@ -247,6 +264,72 @@ function Dashboard({ user, consolePath, onLogout }: { user: PanelUser; consolePa
       </section>
     </main>
   );
+}
+
+type LeaguePanelStatus = {
+  ready: boolean;
+  ddragonVersion?: string;
+  publishedAt?: string;
+  champions: number;
+  abilities: number;
+  skins: number;
+  contentEntries: number;
+  mediaAssets: number;
+  contentByCategory: Record<string, number>;
+};
+
+type LeaguePanelChampion = {
+  id: number;
+  slug: string;
+  name: string;
+  title: string;
+  tags: string[];
+  assets: { icon: string | null; tile: string | null; splash: string | null };
+};
+
+function LeagueConsolePanel() {
+  const [status, setStatus] = useState<LeaguePanelStatus | null>(null);
+  const [champions, setChampions] = useState<LeaguePanelChampion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    setError("");
+    try {
+      const [nextStatus, page] = await Promise.all([
+        requestJSON<LeaguePanelStatus>("/league-of-legends/v1/status", { signal }),
+        requestJSON<{ data: LeaguePanelChampion[] }>("/league-of-legends/v1/champions?locale=ru_RU&limit=12", { signal }),
+      ]);
+      setStatus(nextStatus);
+      setChampions(page.data);
+    } catch (reason) {
+      if (reason instanceof DOMException && reason.name === "AbortError") return;
+      setError(reason instanceof Error ? reason.message : "Не удалось загрузить League of Legends");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
+
+  if (loading && !status) return <div className="grid min-h-[60vh] place-items-center"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /></div>;
+  if (error && !status) return <PanelLoadError message={error} onRetry={() => void load()} />;
+
+  return <div className="space-y-6">
+    {error && <Alert variant="destructive" className="rounded-sm border-[#693b3e] bg-[#2a1518] text-[#ef9a9d]"><CircleAlert className="size-4" /><AlertTitle>League API временно недоступен</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
+    <Card className="rounded-sm border-[#2b3240] bg-[#11151d]"><CardHeader className="flex-row items-start justify-between gap-4"><div><CardTitle className="font-[var(--display)] text-xl text-[#e7eaf1]">League of Legends</CardTitle><p className="mt-1 text-sm text-[#8791a5]">Каталог чемпионов, умений, обликов и игровых справочников.</p></div><Badge className={cn("rounded-sm", status?.ready ? "bg-[#173e31] text-[#80d9ae]" : "bg-[#3d2e17] text-[#e5bd70]")}>{status?.ready ? "Данные опубликованы" : "Ожидается импорт"}</Badge></CardHeader><CardContent className="space-y-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[
+        ["Чемпионы", status?.champions ?? 0], ["Умения", status?.abilities ?? 0], ["Облики", status?.skins ?? 0], ["Контент", status?.contentEntries ?? 0], ["Медиа", status?.mediaAssets ?? 0],
+      ].map(([label, value]) => <div key={label} className="border border-[#293040] bg-[#0d1118] p-4"><p className="text-[10px] uppercase tracking-[.12em] text-[#687286]">{label}</p><p className="mt-2 text-2xl font-semibold text-[#e7c878]">{value}</p></div>)}</div>
+      <div className="flex flex-wrap items-center gap-3 text-xs text-[#8791a5]"><span>Data Dragon {status?.ddragonVersion ?? "—"}</span><span>·</span><span>{status?.publishedAt ? `Опубликовано ${new Date(status.publishedAt).toLocaleString("ru-RU")}` : "Релиз ещё не опубликован"}</span><Link href="/league-of-legends" className="ml-auto inline-flex items-center gap-2 text-[#e4c574] hover:underline">Открыть библиотеку <ExternalLink className="size-3.5" /></Link></div>
+    </CardContent></Card>
+    <Card className="rounded-sm border-[#2b3240] bg-[#11151d]"><CardHeader><CardTitle className="font-[var(--display)] text-lg">Последние чемпионы</CardTitle></CardHeader><CardContent>{champions.length > 0 ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{champions.map((champion) => <Link key={champion.id} href={`/league-of-legends/champions/${champion.slug}`} className="flex items-center gap-3 border border-[#293040] bg-[#0d1118] p-3 transition-colors hover:border-[#8d7540]"><div className="size-12 shrink-0 overflow-hidden bg-[#1a202c]">{champion.assets.icon ? <img src={champion.assets.icon} alt="" className="size-full object-cover" loading="lazy" /> : null}</div><div className="min-w-0"><p className="truncate font-medium text-[#e7eaf1]">{champion.name}</p><p className="truncate text-xs text-[#8791a5]">{champion.title}</p><p className="mt-1 text-[10px] uppercase tracking-[.1em] text-[#687286]">{champion.tags.join(" · ") || "Champion"}</p></div></Link>)}</div> : <p className="text-sm text-[#8791a5]">Данные чемпионов появятся после первого подтверждённого импорта.</p>}</CardContent></Card>
+  </div>;
 }
 
 function PanelLoadError({ message, onRetry }: { message: string; onRetry: () => void }) {

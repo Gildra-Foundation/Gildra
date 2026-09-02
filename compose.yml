@@ -173,6 +173,27 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
 
+  lol-import:
+    profiles: ["operations"]
+    image: ${API_IMAGE:-gildra-api:local}
+    build: ./backend
+    user: "65532:65532"
+    entrypoint: ["lol-import"]
+    command:
+      - -version
+      - ${LOL_DDRAGON_VERSION:-latest}
+      - -media-directory
+      - /var/lib/gildra/catalog-media
+      - -workers
+      - ${LOL_IMPORT_WORKERS:-12}
+    environment:
+      DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra?sslmode=disable
+      CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
+    volumes:
+      - catalog_media:/var/lib/gildra/catalog-media
+    depends_on:
+      postgres: { condition: service_healthy }
+
   web:
     image: ${WEB_IMAGE:-gildra-web:local}
     build: .

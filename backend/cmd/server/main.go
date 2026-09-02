@@ -33,6 +33,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpapi"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/indexnow"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/joberrors"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/league"
 )
 
 func main() {
@@ -145,12 +146,18 @@ func run() error {
 	router := http.NewServeMux()
 	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient, cfg.CatalogRecoveryPolicy).Register(router)
 	genshin.NewHandler(genshin.NewService(postgres)).Register(router)
+	league.NewHandler(league.NewService(postgres)).Register(router)
 	if cfg.CatalogMediaDirectory != "" {
 		genshinMediaHandler, genshinMediaErr := genshin.NewMediaHandler(cfg.CatalogMediaDirectory)
 		if genshinMediaErr != nil {
 			return genshinMediaErr
 		}
 		router.Handle("/genshin-impact/media/", genshinMediaHandler)
+		leagueMediaHandler, leagueMediaErr := league.NewMediaHandler(cfg.CatalogMediaDirectory)
+		if leagueMediaErr != nil {
+			return leagueMediaErr
+		}
+		router.Handle("/league-of-legends/media/", leagueMediaHandler)
 
 		mediaHandler, mediaErr := catalogmedia.NewHandlerWithAccessMode(postgres, cfg.CatalogMediaDirectory, cfg.CatalogPublicationEnv, cfg.CatalogAccessMode)
 		if mediaErr != nil {

@@ -110,12 +110,8 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
     if (query) params.set("q", query);
     if (cursor) params.set("cursor", cursor);
     try {
-      const [productPage, typePage, records] = await Promise.all([
-        catalogRequest<{ data: CatalogProduct[] }>("/v1/game/products", signal),
-        catalogRequest<{ data: CatalogEntityType[] }>(`/v1/game/entity-types?${new URLSearchParams({ product, locale: "ru_RU" })}`, signal),
-        catalogRequest<CatalogPage>(`/v1/game/entity-summaries?${params}`, signal),
-      ]);
-      setProducts(productPage.data); setTypes(typePage.data); setPage(records);
+      const records = await catalogRequest<CatalogPage>(`/v1/game/entity-summaries?${params}`, signal);
+      setPage(records);
     } catch (reason) {
       if (reason instanceof DOMException && reason.name === "AbortError") return;
       setError(reason instanceof DOMException && reason.name === "TimeoutError"
@@ -129,6 +125,38 @@ export function WarcraftCatalog({ buildVersion }: { buildVersion: string }) {
     void load(controller.signal);
     return () => controller.abort();
   }, [load]);
+
+  const loadProducts = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const result = await catalogRequest<{ data: CatalogProduct[] }>("/v1/game/products", signal);
+      setProducts(result.data);
+    } catch (reason) {
+      if (reason instanceof DOMException && reason.name === "AbortError") return;
+      setError(reason instanceof Error ? reason.message : "Не удалось загрузить версии игры");
+    }
+  }, []);
+
+  const loadTypes = useCallback(async (selectedProduct: string, signal?: AbortSignal) => {
+    try {
+      const result = await catalogRequest<{ data: CatalogEntityType[] }>(`/v1/game/entity-types?${new URLSearchParams({ product: selectedProduct, locale: "ru_RU" })}`, signal);
+      setTypes(result.data);
+    } catch (reason) {
+      if (reason instanceof DOMException && reason.name === "AbortError") return;
+      setError(reason instanceof Error ? reason.message : "Не удалось загрузить типы данных");
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadProducts(controller.signal);
+    return () => controller.abort();
+  }, [loadProducts]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadTypes(product, controller.signal);
+    return () => controller.abort();
+  }, [loadTypes, product]);
 
   function submit(event: FormEvent) {
     event.preventDefault();
