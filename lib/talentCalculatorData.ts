@@ -99,7 +99,6 @@ type Topology = {
 const locale = "ru_RU" as const;
 const specId = 72;
 const facet = "classes/warrior/fury";
-const midnightBuildNumber = midnightManifest.buildNumber;
 const heroSubtreeId = 61;
 const unavailableOfficialIcons = new Set(["inv121_ability_warrior_javelineer"]);
 
@@ -354,7 +353,7 @@ async function enrich(summary: TalentEntityRecord, topology: Topology) {
   const description = blocks.find((block) => block.type === "description");
   const provenance = blocks.find((block) => block.type === "provenance");
   const buildNumber = asNumber(provenance?.build_number);
-  if (!provenance || !Object.prototype.hasOwnProperty.call(provenance, "build_number") || buildNumber !== midnightBuildNumber) return null;
+  if (!provenance || !Object.prototype.hasOwnProperty.call(provenance, "build_number") || buildNumber !== topology.buildNumber) return null;
   const appearances = Array.isArray(info?.appearances) ? info.appearances.map(asRecord).filter((item): item is RecordValue => item !== null) : [];
   const appearance = appearances.find((item) => asNumber(item.spec_id) === specId && ["class", "hero", "spec"].includes(String(item.tree_kind)));
   if (!appearance) return null;
@@ -407,7 +406,7 @@ async function enrichPvp(summary: TalentEntityRecord, topology: Topology): Promi
   const description = blocks.find((block) => block.type === "description");
   const provenance = blocks.find((block) => block.type === "provenance");
   const buildNumber = asNumber(provenance?.build_number);
-  if (!provenance || !Object.prototype.hasOwnProperty.call(provenance, "build_number") || buildNumber !== midnightBuildNumber) return null;
+  if (!provenance || !Object.prototype.hasOwnProperty.call(provenance, "build_number") || buildNumber !== topology.buildNumber) return null;
   const appearances = Array.isArray(info?.appearances) ? info.appearances.map(asRecord).filter((item): item is RecordValue => item !== null) : [];
   const appearance = appearances.find((item) => asNumber(item.spec_id) === specId);
   if (!appearance) return null;
@@ -461,7 +460,9 @@ function placeNodes(kind: TalentKind, rawNodes: RawNode[], grouped: Map<number, 
 async function loadMidnightWarriorTalentData(): Promise<TalentCalculatorData> {
   const [summaries, treeEntity, pvpSummaries] = await Promise.all([getAllTalentSummaries(), getTalentTreeEntity(), getAllPvpTalentSummaries()]);
   const topology = readTopology(treeEntity);
-  if (!topology || topology.specId !== specId || topology.buildNumber !== midnightBuildNumber) throw new Error("The active catalog does not contain the verified Midnight Fury topology");
+  // The catalog decides which build is current: the tree, its talents and PvP
+  // talents only have to agree with each other (see the buildId checks above).
+  if (!topology || topology.specId !== specId) throw new Error("The active catalog does not contain the verified Midnight Fury topology");
   const [enrichedRaw, pvpRaw] = await Promise.all([
     mapWithConcurrency(summaries, 3, (summary) => enrich(summary, topology)),
     mapWithConcurrency(pvpSummaries, 3, (summary) => enrichPvp(summary, topology)),
