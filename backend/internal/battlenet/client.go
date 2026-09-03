@@ -342,8 +342,25 @@ func (c *Client) getJSON(ctx context.Context, endpoint string, target any) error
 			}
 			continue
 		}
-		if remote.StatusCode == http.StatusUnauthorized && attempt == 0 {
+		if remote.StatusCode == http.StatusUnauthorized {
+			// Blizzard occasionally rejects a still-valid token during OAuth
+			// service incidents.  Re-authenticate and back off instead of
+			// failing a multi-hour enrichment run on the second 401 (run 36 on
+			// 2026-09-03 died this way after four hours).
 			c.invalidateToken()
+			if attempt == requestAttempts-1 {
+				return err
+			}
+			if attempt > 0 {
+				delay := min(time.Duration(1<<attempt)*time.Second, maxRetryDelay)
+				timer := time.NewTimer(delay)
+				select {
+				case <-ctx.Done():
+					timer.Stop()
+					return ctx.Err()
+				case <-timer.C:
+				}
+			}
 			continue
 		}
 		if remote.StatusCode != http.StatusTooManyRequests && remote.StatusCode < http.StatusInternalServerError {

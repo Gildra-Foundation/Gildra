@@ -316,3 +316,32 @@ func TestRequestRefreshesExpiredServerTokenAfterUnauthorized(t *testing.T) {
 		t.Fatalf("token calls = %d", tokenCalls.Load())
 	}
 }
+
+func TestRequestReauthenticatesAfterRepeatedUnauthorized(t *testing.T) {
+	t.Parallel()
+	var tokenCalls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/token" {
+			call := tokenCalls.Add(1)
+			fmt.Fprintf(w, `{"access_token":"token-%d","expires_in":3600}`, call)
+			return
+		}
+		// Two consecutive rejections model a transient OAuth incident.
+		if auth := r.Header.Get("Authorization"); auth == "Bearer token-1" || auth == "Bearer token-2" {
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return
+		}
+		fmt.Fprint(w, `{"page":1,"pageCount":1,"results":[]}`)
+	}))
+	t.Cleanup(server.Close)
+	client, err := New(Config{ClientID: "id", ClientSecret: "secret", TokenURL: server.URL + "/token", APIBaseURL: func(string) string { return server.URL }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.Search(context.Background(), "us", "static-us", "en_US", "item", 1, 100); err != nil {
+		t.Fatalf("expected the third token to succeed, got %v", err)
+	}
+	if tokenCalls.Load() != 3 {
+		t.Fatalf("token calls = %d, want 3", tokenCalls.Load())
+	}
+}
