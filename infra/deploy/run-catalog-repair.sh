@@ -67,5 +67,5 @@ compose run --rm --no-deps catalog-pipeline \
   -publication-environment production \
   -access-mode "$catalog_access_mode" \
   -recovery-policy "$catalog_recovery_policy" \
-  -timeout 8h
+  -timeout 30h
 printf 'catalog-repair: repair pipeline completed for WoW build %s\n' "$build_version" >&2
