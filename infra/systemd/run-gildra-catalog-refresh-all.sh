@@ -56,7 +56,7 @@ run_edition() {
     -mode apply -trigger schedule -product "$product" -profile "$profile" \
     -sources "$sources" -use-checked-build \
     -max-records 0 -confirm-full-import -publication-environment production \
-    -access-mode "$catalog_access_mode" -recovery-policy verified_same_host -timeout 8h
+    -access-mode "$catalog_access_mode" -recovery-policy verified_same_host -timeout 30h
 }
 
 failures=0
