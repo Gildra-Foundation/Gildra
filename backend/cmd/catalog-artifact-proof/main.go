@@ -35,13 +35,14 @@ func main() {
 }
 
 func run() error {
-	var databaseURL, source string
+	var databaseURL, source, expectContentHash string
 	var confirm, fetch bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&source, "source", "", "registered source key whose ready artifacts lack a proof (required)")
 	flag.BoolVar(&confirm, "confirm", false, "write the computed proofs; without it the tool only reports")
 	flag.BoolVar(&fetch, "fetch", false, "for artifacts without stored records, download source_url again and prove the file itself (only when the source still serves the same content)")
+	flag.StringVar(&expectContentHash, "expect-content-hash", "", "with -fetch: only prove artifacts whose metadata raidbots_content_hash equals this value (the content the source serves now)")
 	flag.DurationVar(&timeout, "timeout", 30*time.Minute, "operation timeout")
 	flag.Parse()
 	if databaseURL == "" {
@@ -63,6 +64,7 @@ func run() error {
 
 	rows, err := db.Query(ctx, `
 		SELECT artifact.id, artifact.artifact_key, artifact.source_url,
+			COALESCE(artifact.metadata->>'raidbots_content_hash',''),
 			(SELECT count(*) FROM catalog_source_records record WHERE record.artifact_id=artifact.id)
 		FROM catalog_source_artifacts artifact
 		WHERE artifact.source=$1 AND artifact.status='ready'
@@ -75,12 +77,13 @@ func run() error {
 		id      uuid.UUID
 		key     string
 		url     string
+		content string
 		records int64
 	}
 	candidates := make([]candidate, 0)
 	for rows.Next() {
 		var item candidate
-		if err := rows.Scan(&item.id, &item.key, &item.url, &item.records); err != nil {
+		if err := rows.Scan(&item.id, &item.key, &item.url, &item.content, &item.records); err != nil {
 			rows.Close()
 			return fmt.Errorf("scan artifact: %w", err)
 		}
@@ -98,6 +101,13 @@ func run() error {
 		if item.records == 0 {
 			if !fetch {
 				slog.Warn("artifact has no stored records; proof cannot be derived", "artifact", item.id, "key", item.key)
+				skipped++
+				continue
+			}
+			if expectContentHash == "" || item.content != expectContentHash {
+				// Never hash a file the source has since replaced: the proof
+				// must describe the content that was imported.
+				slog.Warn("source content changed since import; proof cannot be derived", "artifact", item.id, "key", item.key, "imported_content", item.content)
 				skipped++
 				continue
 			}

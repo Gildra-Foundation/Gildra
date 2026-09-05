@@ -1225,7 +1225,12 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			SELECT entity.id,entity.entity_type,entity.external_id,version.build_id,
 				COALESCE(item.source_artifact_id,
 					CASE WHEN direct.file_data_id IS NOT NULL THEN direct_proof.source_artifact_id END,
-					spell.source_artifact_id,creature.source_artifact_id,version.source_artifact_id) AS source_artifact_id,
+					spell.source_artifact_id,creature.source_artifact_id,
+					-- Raidbots-only entities (talents, gems, consumables) carry no
+					-- DB2 icon row: prefer a proven artifact observed for the
+					-- version (a re-import records the new proof against the
+					-- unchanged version) over the version's original artifact.
+					direct_proof.source_artifact_id,version.source_artifact_id) AS source_artifact_id,
 				COALESCE(direct.file_data_id,item.file_data_id,spell.file_data_id,creature.file_data_id) AS file_data_id,
 				NULLIF(BTRIM(version.payload #>> '{raidbots,icon}'),'') AS raidbots_icon,
 				NULLIF(BTRIM(version.payload #>> '{raidbots,spellIcon}'),'') AS raidbots_spell_icon
@@ -1282,6 +1287,14 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			CASE WHEN file_icon IS NOT NULL THEN asset_source_artifact_id END
 		FROM resolved
 		WHERE COALESCE(file_icon,raidbots_icon,raidbots_spell_icon,file_data_id::text) IS NOT NULL
+		  -- An icon must cite complete source proof; a version whose only
+		  -- artifact failed (for example an aborted Battle.net fetch) gets no
+		  -- icon row instead of one that fails the readiness audit.
+		  AND EXISTS (
+			SELECT 1 FROM catalog_source_artifacts proof
+			WHERE proof.id=resolved.source_artifact_id AND proof.status='ready'
+			  AND proof.content_hash IS NOT NULL AND proof.byte_size IS NOT NULL
+		  )
 		ON CONFLICT(build_id,entity_type,external_id) DO UPDATE SET
 			icon_name=EXCLUDED.icon_name,file_data_id=EXCLUDED.file_data_id,
 			source_artifact_id=EXCLUDED.source_artifact_id,
