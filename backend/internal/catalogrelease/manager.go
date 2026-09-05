@@ -233,6 +233,18 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 				 JOIN catalog_releases candidate_release ON candidate_release.id=$1
 				 WHERE artifact_snapshot.release_id=$1
 				   AND (artifact.status<>'ready' OR artifact.content_hash IS NULL OR artifact.byte_size IS NULL)
+				   -- A source file re-imported later in the same release (a
+				   -- resumed stage) supersedes its earlier artifact: the newer
+				   -- proven artifact carries the provenance of the current data.
+				   AND NOT EXISTS (
+					   SELECT 1
+					   FROM catalog_source_artifacts newer
+					   JOIN catalog_snapshots newer_snapshot ON newer_snapshot.id=newer.snapshot_id
+					   WHERE newer_snapshot.release_id=$1 AND newer_snapshot.status='validated'
+						 AND newer_snapshot.created_at>artifact_snapshot.created_at
+						 AND newer.source=artifact.source AND newer.artifact_key=artifact.artifact_key
+						 AND newer.locale=artifact.locale AND newer.status='ready'
+						 AND newer.content_hash IS NOT NULL AND newer.byte_size IS NOT NULL)
 				   AND NOT EXISTS (
 					   SELECT 1
 					   FROM catalog_release_profiles profile
@@ -442,12 +454,15 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 			WHERE snapshot.release_id=$1 AND artifact.status='ready'
 			  AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
 			UNION
+			-- Proven artifacts of any validated/published snapshot of the product
+			-- stay trustworthy across builds: listfile assets, Battle.net
+			-- documents and localizations are reused by later builds when the
+			-- source did not change (the readiness audit applies the same rule).
 			SELECT artifact.id
 			FROM catalog_source_artifacts artifact
 			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
 			JOIN catalog_releases candidate ON candidate.id=$1
 			WHERE snapshot.product_id=candidate.product_id
-			  AND snapshot.build_id=$2
 			  AND snapshot.status IN ('validated','published')
 			  AND artifact.status='ready'
 			  AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
@@ -478,14 +493,25 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 			FROM catalog_item_variant_effects effect
 			JOIN catalog_item_variants variant ON variant.id=effect.variant_id
 		), unproven_versions AS (
+			-- A version is proven by the artifact it was written from or by any
+			-- proven artifact observed for it later (a re-import of the same
+			-- source records the new proof against an unchanged version), the
+			-- same rule the readiness audit applies.
 			SELECT candidate.id
 			FROM candidate_versions candidate
+			JOIN game_entities entity ON entity.latest_version_id=candidate.id
 			LEFT JOIN release_artifacts artifact ON artifact.id=candidate.source_artifact_id
 			WHERE artifact.id IS NULL
+			  AND NOT EXISTS (
+				SELECT 1
+				FROM catalog_entity_version_artifacts observation
+				JOIN release_artifacts observed ON observed.id=observation.source_artifact_id
+				WHERE observation.version_id=candidate.id)
 		), unproven_normalized_facts AS (
 			SELECT fact.version_id
 			FROM normalized_facts fact
 			JOIN candidate_versions candidate ON candidate.id=fact.version_id
+			JOIN game_entities current_entity ON current_entity.latest_version_id=candidate.id
 			LEFT JOIN release_artifacts artifact ON artifact.id=fact.source_artifact_id
 			WHERE artifact.id IS NULL
 		), trusted_quest_artifacts AS (
@@ -529,8 +555,12 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 			LEFT JOIN release_artifacts artifact ON artifact.id=taxon.source_artifact_id
 			WHERE taxon.build_id=$2 AND artifact.id IS NULL
 		), unproven_localizations AS (
+			-- Only the versions the release publishes (the entities' current
+			-- versions) need proof; revisions superseded inside the release
+			-- are never served.
 			SELECT localized.version_id
 			FROM candidate_versions candidate
+			JOIN game_entities current_entity ON current_entity.latest_version_id=candidate.id
 			JOIN game_entity_localizations localized ON localized.version_id=candidate.id
 			LEFT JOIN game_entity_localizations english ON english.version_id=candidate.id AND english.locale='en_US'
 			WHERE NOT EXISTS (
