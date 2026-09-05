@@ -72,11 +72,12 @@ func main() {
 }
 
 func run() error {
-	var databaseURL, product, recoveryPolicy string
+	var databaseURL, product, recoveryPolicy, buildVersion string
 	var requireProductionReady, requireDataReady bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&product, "product", "wow", "game product slug")
+	flag.StringVar(&buildVersion, "build", "", "audit readiness of this staged build version instead of the active build")
 	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
 	flag.BoolVar(&requireProductionReady, "require-production-ready", false, "exit non-zero unless every data and production readiness check passes")
 	flag.BoolVar(&requireDataReady, "require-data-ready", false, "exit non-zero unless every catalog data-readiness check passes")
@@ -256,7 +257,12 @@ func run() error {
 		WHERE product.slug=$1`, product).Scan(&result.Imports.Running, &result.Imports.Failed); err != nil {
 		return fmt.Errorf("query import state: %w", err)
 	}
-	result.Readiness, err = catalogquality.EvaluateReadinessWithRecoveryPolicy(ctx, db, product, result.Build.Version, recoveryPolicy)
+	auditBuild := result.Build.Version
+	if buildVersion != "" {
+		// A staged (not yet active) build can be audited before publication.
+		auditBuild = buildVersion
+	}
+	result.Readiness, err = catalogquality.EvaluateReadinessWithRecoveryPolicy(ctx, db, product, auditBuild, recoveryPolicy)
 	if err != nil {
 		return fmt.Errorf("evaluate catalog readiness: %w", err)
 	}

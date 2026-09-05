@@ -2,6 +2,7 @@ package raidbots
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -245,4 +246,21 @@ func (c *Client) open(ctx context.Context, environment, file string) (io.ReadClo
 		return nil, endpoint, fmt.Errorf("Raidbots %s returned %s", file, resp.Status)
 	}
 	return resp.Body, endpoint, nil
+}
+
+// Digest streams a Raidbots file once more and returns its SHA-256 and byte
+// size so importers can record the artifact proof of datasets that are not
+// stored record by record.
+func (c *Client) Digest(ctx context.Context, environment, file string) ([]byte, int64, error) {
+	body, _, err := c.open(ctx, environment, file)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer body.Close()
+	digest := sha256.New()
+	size, err := io.Copy(digest, body)
+	if err != nil {
+		return nil, 0, fmt.Errorf("read Raidbots %s: %w", file, err)
+	}
+	return digest.Sum(nil), size, nil
 }
