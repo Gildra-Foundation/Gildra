@@ -1470,6 +1470,35 @@ func rebuildSpellRelationships(ctx context.Context, tx pgx.Tx) error {
 		  AND COALESCE(NULLIF(definition_text.payload->>'OverrideName_lang',''),NULLIF(spell_text.name,'')) IS NOT NULL
 		ON CONFLICT(version_id,locale) DO NOTHING;
 
+		-- The Russian talent text is copied from DB2 (TraitDefinition override
+		-- or the linked spell), so the talent localization must cite that DB2
+		-- artifact: without the link 2,889 talents failed
+		-- russian_localization_provenance in 12.1.0.69587.
+		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+		SELECT DISTINCT talent_version.id,'ru_RU',
+			COALESCE(definition_text.source_artifact_id,spell_proof.source_artifact_id)
+		FROM game_entities talent
+		JOIN game_entity_versions talent_version ON talent_version.id=talent.latest_version_id
+		JOIN game_entity_localizations russian ON russian.version_id=talent_version.id AND russian.locale='ru_RU'
+		LEFT JOIN catalog_db2_rows definition_text ON definition_text.build_id=talent_version.build_id
+			AND definition_text.table_name='TraitDefinition' AND definition_text.locale='ru_RU'
+			AND definition_text.row_id=CASE WHEN talent_version.payload #>> '{raidbots,definitionId}' ~ '^[1-9][0-9]*$'
+				THEN (talent_version.payload #>> '{raidbots,definitionId}')::bigint END
+			AND NULLIF(definition_text.payload->>'OverrideName_lang','') IS NOT NULL
+		LEFT JOIN LATERAL (
+			SELECT proof.source_artifact_id
+			FROM catalog_talent_spell_links link
+			JOIN catalog_entity_localization_artifacts proof ON proof.version_id=link.spell_version_id AND proof.locale='ru_RU'
+			JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
+			WHERE link.talent_version_id=talent_version.id AND artifact.status='ready'
+			  AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			ORDER BY proof.observed_at DESC LIMIT 1
+		) spell_proof ON true
+		WHERE talent.entity_type='talent' AND talent.deleted_at IS NULL
+		  AND russian.attributes->>'localization_source' IN ('db2_trait_definition','db2_linked_spell')
+		  AND COALESCE(definition_text.source_artifact_id,spell_proof.source_artifact_id) IS NOT NULL
+		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING;
+
 		WITH descriptions AS (
 			SELECT talent_text.version_id,talent_text.locale,
 				COALESCE(NULLIF(definition_text.payload->>'OverrideDescription_lang',''),
