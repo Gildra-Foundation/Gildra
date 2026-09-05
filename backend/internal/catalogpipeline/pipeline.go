@@ -793,8 +793,17 @@ func (r *Runner) validate(
 	}
 	counts["readiness"] = readiness
 	if !readiness.DataReady || (publicationEnvironment == "production" && catalogAccessMode == "public" && !readiness.ProductionReady) {
+		// Persist the report before failing: the release manager resets the
+		// entity pointers afterwards, so the audit cannot be reproduced later.
+		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET counters=$3 WHERE run_id=$1 AND stage_key=$2`, runID, "validate-catalog", jsonObject(counts))
+		failing := make([]string, 0)
+		for _, check := range readiness.Checks {
+			if check.Status != "pass" && check.Blocking {
+				failing = append(failing, fmt.Sprintf("%s=%d", check.Key, check.Count))
+			}
+		}
 		return r.failStage(ctx, runID, "validate-catalog", "catalog_readiness_failed",
-			fmt.Errorf("catalog readiness failed: data_ready=%t production_ready=%t", readiness.DataReady, readiness.ProductionReady))
+			fmt.Errorf("catalog readiness failed: data_ready=%t production_ready=%t blocking=[%s]", readiness.DataReady, readiness.ProductionReady, strings.Join(failing, " ")))
 	}
 	_, err = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`, runID, "validate-catalog", jsonObject(counts))
 	return err
