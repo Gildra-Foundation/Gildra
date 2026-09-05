@@ -396,8 +396,8 @@ func projectEncounterItem(ctx context.Context, db *pgxpool.Pool, store *catalogi
 		for index, value := range stats {
 			stat, _ := value.(map[string]any)
 			if _, err := tx.Exec(ctx, `INSERT INTO catalog_item_variant_stats(
-				variant_id,stat_index,stat_type,allocation,attributes) VALUES($1,$2,$3,$4,$5)`,
-				variantID, index, numericID(stat["id"]), stat["alloc"], stat); err != nil {
+				variant_id,stat_index,stat_type,allocation,attributes,source_artifact_id) VALUES($1,$2,$3,$4,$5,$6)`,
+				variantID, index, numericID(stat["id"]), stat["alloc"], stat, artifactID); err != nil {
 				return err
 			}
 		}

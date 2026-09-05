@@ -1430,6 +1430,16 @@ const questEntitiesProjectionSQL = `
 	ON CONFLICT(version_id,locale) DO UPDATE SET slug=EXCLUDED.slug,name=EXCLUDED.name,
 		description=EXCLUDED.description,attributes=EXCLUDED.attributes;
 
+	-- Both quest localizations come from the same QuestV2 artifact; record the
+	-- proof so the readiness audit can verify them (12.1.0.69587 was blocked by
+	-- 21k quest localizations without a proof link).
+	INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+	SELECT DISTINCT projected.version_id,localized.locale,projected.source_artifact_id
+	FROM projected_named_quest_versions projected
+	CROSS JOIN (VALUES ('en_US'::text),('ru_RU'::text)) localized(locale)
+	WHERE projected.source_artifact_id IS NOT NULL
+	ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING;
+
 	UPDATE game_entities entity SET latest_version_id=projected.version_id,updated_at=now()
 	FROM projected_named_quest_versions projected
 	WHERE entity.id=projected.entity_id
