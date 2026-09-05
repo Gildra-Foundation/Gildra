@@ -31,7 +31,7 @@ func main() {
 
 func run() (catalogpipeline.Result, error) {
 	var databaseURL, sources, mode, trigger, profile, product, version, binaryDirectory, publicationEnvironment, catalogAccessMode, recoveryPolicy string
-	var resumeReleaseID, resumeFrom string
+	var resumeReleaseID, resumeFrom, resumeStages string
 	var maxRecords int
 	var confirmFullImport, useCheckedBuild, forceRebuild bool
 	var timeout time.Duration
@@ -55,6 +55,7 @@ func run() (catalogpipeline.Result, error) {
 	flag.DurationVar(&timeout, "timeout", 6*time.Hour, "whole pipeline timeout")
 	flag.StringVar(&resumeReleaseID, "resume-release", "", "resume a failed staging release without repeating validated source stages")
 	flag.StringVar(&resumeFrom, "resume-from", "import-battlenet", "first executable stage to run when resuming a release")
+	flag.StringVar(&resumeStages, "resume-stages", "", "comma-separated stage keys to run when resuming a release; other retained stages are skipped, validation and publication still run")
 	flag.Parse()
 	if databaseURL == "" {
 		databaseURL = os.Getenv("DATABASE_URL")
@@ -109,6 +110,7 @@ func run() (catalogpipeline.Result, error) {
 		RecoveryPolicy:         strings.TrimSpace(recoveryPolicy),
 		ResumeReleaseID:        strings.TrimSpace(resumeReleaseID),
 		ResumeFrom:             strings.TrimSpace(resumeFrom),
+		ResumeStages:           strings.Split(resumeStages, ","),
 	}
 	return (&catalogpipeline.Runner{DB: db, Stdout: os.Stdout, Stderr: os.Stderr}).Run(ctx, options)
 }

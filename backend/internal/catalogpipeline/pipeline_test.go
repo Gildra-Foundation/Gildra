@@ -330,3 +330,25 @@ func TestProductionForceRebuildAcceptsCompletePinnedProfile(t *testing.T) {
 		t.Fatalf("expected explicit production repair profile to pass normalization, got %v", err)
 	}
 }
+
+func TestResumeStagesLimitRetainedStages(t *testing.T) {
+	options := Options{ResumeReleaseID: "51dbfc88-1bdc-4d39-85db-53f0ea3755c1", ResumeStages: []string{" import-raidbots ", "", "rebuild-projections", "import-raidbots"}}
+	options.ResumeStages = normalizeStageList(options.ResumeStages)
+	if len(options.ResumeStages) != 2 {
+		t.Fatalf("normalized stages = %#v", options.ResumeStages)
+	}
+	reached := false
+	if !resumeStageAllowed(options, "import-raidbots", &reached) || resumeStageAllowed(options, "import-db2", &reached) || !resumeStageAllowed(options, "rebuild-projections", &reached) {
+		t.Fatal("only listed stages may run when resume-stages is set")
+	}
+	// Without a list the classic resume-from semantics apply.
+	options.ResumeStages = nil
+	options.ResumeFrom = "import-db2"
+	reached = false
+	if resumeStageAllowed(options, "import-wago", &reached) || !resumeStageAllowed(options, "import-db2", &reached) || !resumeStageAllowed(options, "import-battlenet", &reached) {
+		t.Fatal("resume-from must run every stage from the resume point")
+	}
+	if _, err := normalizeOptions(Options{Mode: "apply", Product: "wow", Profile: ProfileRetailFoundation, Sources: []string{"wago", "raidbots", "db2", "battlenet", "listfile"}, BuildVersion: "12.1.0.69587", ResumeStages: []string{"import-raidbots"}}); err == nil {
+		t.Fatal("resume-stages without resume-release must be rejected")
+	}
+}
