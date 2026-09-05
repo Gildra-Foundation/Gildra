@@ -228,6 +228,11 @@ func importFactDatasets(
 		if err != nil {
 			return fmt.Errorf("import Raidbots facts %s: %w", file, err)
 		}
+		// Record the provenance proof (manifest of the stored records) so the
+		// readiness audit can verify every fact that cites this artifact.
+		if _, err := store.CompleteArtifactFromRecords(ctx, artifactID); err != nil {
+			return fmt.Errorf("complete Raidbots facts artifact %s: %w", file, err)
+		}
 	}
 	return nil
 }
@@ -532,6 +537,9 @@ func importDatasets(
 		if err != nil {
 			return fmt.Errorf("import Raidbots %s: %w", file, err)
 		}
+		if err := completeRaidbotsArtifact(ctx, client, store, opts.environment, file, artifactID); err != nil {
+			return err
+		}
 		if spec.Type == "talent_tree" {
 			ids := make([]int64, 0, len(talents))
 			for id := range talents {
@@ -644,7 +652,10 @@ func importItemNames(
 		(*written)++
 		return nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	return completeRaidbotsArtifact(ctx, client, store, environment, "item-names.json", artifactID)
 }
 
 func raidbotsRecord(sourceURL string, spec datasetSpec, raw json.RawMessage) (catalogimport.Record, bool, error) {
@@ -770,4 +781,18 @@ func splitList(value string) []string {
 		}
 	}
 	return result
+}
+
+// completeRaidbotsArtifact records the SHA-256 and size of a dataset file
+// whose records are projected directly (not stored one by one), so the
+// readiness audit can verify every icon and fact that cites the artifact.
+func completeRaidbotsArtifact(ctx context.Context, client *raidbots.Client, store *catalogimport.Store, environment, file string, artifactID uuid.UUID) error {
+	hash, size, err := client.Digest(ctx, environment, file)
+	if err != nil {
+		return fmt.Errorf("prove Raidbots %s: %w", file, err)
+	}
+	if err := store.CompleteArtifact(ctx, artifactID, hash, size, ""); err != nil {
+		return fmt.Errorf("complete Raidbots artifact %s: %w", file, err)
+	}
+	return nil
 }
