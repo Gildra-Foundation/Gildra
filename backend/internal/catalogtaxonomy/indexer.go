@@ -1359,6 +1359,9 @@ func carryForwardOfficialIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			JOIN game_builds source_build ON source_build.id=source_icon.build_id
 			JOIN catalog_source_artifacts artifact ON artifact.id=source_icon.source_artifact_id
 			WHERE entity.deleted_at IS NULL AND artifact.source='blizzard_api'
+			  -- Carry only icons whose artifact carries complete proof; an
+			  -- aborted Battle.net fetch must not propagate to newer builds.
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
 			  AND source_build.product_id=entity.product_id
 			  AND source_build.build_number<=target_build.build_number
 			ORDER BY target_version.build_id,entity.entity_type,entity.external_id,source_build.build_number DESC
