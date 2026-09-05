@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -81,6 +82,12 @@ type Options struct {
 	RecoveryPolicy         string
 	ResumeReleaseID        string
 	ResumeFrom             string
+	// ResumeStages limits a resumed release to the listed executable stages
+	// (comma-separated stage keys on the CLI).  Every other retained stage is
+	// marked skipped; validation, the publication gate and publish still run.
+	// It lets an operator repeat one source import on a staged release
+	// without replaying every later stage.
+	ResumeStages []string
 }
 
 type Stage struct {
@@ -232,8 +239,42 @@ func normalizeOptions(options Options) (Options, error) {
 		if options.ResumeFrom == "" {
 			options.ResumeFrom = "import-battlenet"
 		}
+		options.ResumeStages = normalizeStageList(options.ResumeStages)
+	} else if len(normalizeStageList(options.ResumeStages)) > 0 {
+		return Options{}, errors.New("resume-stages requires resume-release")
 	}
 	return options, nil
+}
+
+// normalizeStageList trims, de-duplicates and drops empty stage keys.
+func normalizeStageList(stages []string) []string {
+	seen := make(map[string]struct{}, len(stages))
+	result := make([]string, 0, len(stages))
+	for _, stage := range stages {
+		stage = strings.TrimSpace(stage)
+		if stage == "" {
+			continue
+		}
+		if _, ok := seen[stage]; ok {
+			continue
+		}
+		seen[stage] = struct{}{}
+		result = append(result, stage)
+	}
+	return result
+}
+
+// resumeStageAllowed reports whether a retained stage runs on resume.  With
+// an explicit stage list only listed stages run; otherwise every stage from
+// ResumeFrom onwards runs.
+func resumeStageAllowed(options Options, stageKey string, resumeReached *bool) bool {
+	if len(options.ResumeStages) > 0 {
+		return slices.Contains(options.ResumeStages, stageKey)
+	}
+	if !*resumeReached && stageKey == options.ResumeFrom {
+		*resumeReached = true
+	}
+	return *resumeReached
 }
 
 func defaultProfile(product string) string {
@@ -518,16 +559,12 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		if stage.Executable == "" {
 			continue
 		}
-		if resuming && !resumeReached {
-			if stage.Key == options.ResumeFrom {
-				resumeReached = true
-			} else {
-				_, skipErr := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='skipped',started_at=COALESCE(started_at,now()),finished_at=now(),error_code='resume_skip',error_summary='retained from previous release attempt' WHERE run_id=$1 AND stage_key=$2`, result.RunID, stage.Key)
-				if skipErr != nil {
-					return result, fmt.Errorf("skip retained stage %s: %w", stage.Key, skipErr)
-				}
-				continue
+		if resuming && !resumeStageAllowed(options, stage.Key, &resumeReached) {
+			_, skipErr := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='skipped',started_at=COALESCE(started_at,now()),finished_at=now(),error_code='resume_skip',error_summary='retained from previous release attempt' WHERE run_id=$1 AND stage_key=$2`, result.RunID, stage.Key)
+			if skipErr != nil {
+				return result, fmt.Errorf("skip retained stage %s: %w", stage.Key, skipErr)
 			}
+			continue
 		}
 		if err := r.executeStage(ctx, result.RunID, options.BinaryDirectory, result.ReleaseID, stage); err != nil {
 			return result, err
