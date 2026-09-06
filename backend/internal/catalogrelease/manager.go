@@ -124,7 +124,13 @@ func (m *Manager) Resume(
 			  AND game_product.slug=$3
 			  AND release.build_version=$4
 			  AND release.requested_sources=$5
-			  AND release.status='failed'`, releaseID, pipelineRunID, strings.TrimSpace(product), strings.TrimSpace(buildVersion), sources)
+			  -- A run that died without reaching Fail (killed worker, host
+			  -- restart) leaves the release in staging; it can be resumed as
+			  -- long as its last pipeline run is no longer running.
+			  AND (release.status='failed' OR (release.status='staging' AND NOT EXISTS (
+				SELECT 1 FROM catalog_pipeline_runs previous_run
+				WHERE previous_run.id=release.pipeline_run_id AND previous_run.status='running')))`,
+			releaseID, pipelineRunID, strings.TrimSpace(product), strings.TrimSpace(buildVersion), sources)
 		if err != nil {
 			return fmt.Errorf("resume catalog release: %w", err)
 		}
