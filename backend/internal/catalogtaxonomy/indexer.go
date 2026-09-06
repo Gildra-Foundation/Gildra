@@ -316,6 +316,9 @@ func (i *Indexer) RebuildDescriptions(ctx context.Context) (Result, error) {
 		if err != nil {
 			return err
 		}
+		if err := deriveTalentTreeLocalizations(ctx, tx); err != nil {
+			return err
+		}
 		if err := carryForwardPublishedAcquisitions(ctx, tx); err != nil {
 			return err
 		}
@@ -333,6 +336,50 @@ func (i *Indexer) RebuildDescriptions(ctx context.Context) (Result, error) {
 // fields it ships; Battle.net descriptions and Russian names collected for
 // the previous build stay valid until a newer import replaces them.  The
 // release gate treats a lost name or description as a regression.
+// deriveTalentTreeLocalizations names Raidbots talent trees in Russian from
+// the DB2 class and specialization names ("Класс — Специализация"); Raidbots
+// publishes English only.  The proof is the specialization's DB2 artifact.
+func deriveTalentTreeLocalizations(ctx context.Context, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, `
+		WITH trees AS (
+			SELECT tree.id AS entity_id,tree.latest_version_id AS version_id,tree.canonical_slug,
+				class_text.name AS class_name,spec_text.name AS spec_name,
+				spec.latest_version_id AS spec_version_id
+			FROM game_entities tree
+			JOIN game_entity_versions tree_version ON tree_version.id=tree.latest_version_id
+			JOIN game_entities spec ON spec.product_id=tree.product_id AND spec.entity_type='specialization'
+				AND spec.external_id=(tree_version.payload #>> '{raidbots,specId}')::bigint AND spec.deleted_at IS NULL
+			JOIN game_entity_localizations spec_text ON spec_text.version_id=spec.latest_version_id AND spec_text.locale='ru_RU'
+			JOIN game_entities class ON class.product_id=tree.product_id AND class.entity_type='class'
+				AND class.external_id=(tree_version.payload #>> '{raidbots,classId}')::bigint AND class.deleted_at IS NULL
+			JOIN game_entity_localizations class_text ON class_text.version_id=class.latest_version_id AND class_text.locale='ru_RU'
+			WHERE tree.entity_type='talent_tree' AND tree.deleted_at IS NULL
+			  AND tree_version.payload #>> '{raidbots,specId}' ~ '^[1-9][0-9]*$'
+			  AND tree_version.payload #>> '{raidbots,classId}' ~ '^[1-9][0-9]*$'
+			  AND NULLIF(BTRIM(spec_text.name),'') IS NOT NULL AND NULLIF(BTRIM(class_text.name),'') IS NOT NULL
+		), inserted AS (
+			INSERT INTO game_entity_localizations(version_id,locale,slug,name,description,attributes)
+			SELECT version_id,'ru_RU',canonical_slug,class_name||' — '||spec_name,'',
+				jsonb_build_object('localization_source','db2_class_specialization')
+			FROM trees
+			ON CONFLICT(version_id,locale) DO UPDATE SET name=EXCLUDED.name,attributes=game_entity_localizations.attributes||EXCLUDED.attributes
+			WHERE NULLIF(game_entity_localizations.name,'') IS NULL
+			   OR game_entity_localizations.attributes->>'localization_source'='db2_class_specialization'
+			RETURNING version_id
+		)
+		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+		SELECT DISTINCT trees.version_id,'ru_RU',proof.source_artifact_id
+		FROM trees
+		JOIN catalog_entity_localization_artifacts proof ON proof.version_id=trees.spec_version_id AND proof.locale='ru_RU'
+		JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
+		WHERE artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING`)
+	if err != nil {
+		return fmt.Errorf("derive talent tree localizations: %w", err)
+	}
+	return nil
+}
+
 func carryForwardPublishedLocalizations(ctx context.Context, tx pgx.Tx) (int64, error) {
 	command, err := tx.Exec(ctx, `
 		WITH candidates AS (
@@ -1313,21 +1360,39 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 			WHERE entity.entity_type='creature' AND entity.deleted_at IS NULL
 			  AND info.portrait_file_data_id IS NOT NULL
 			ORDER BY version.build_id,entity.external_id,display.probability DESC,display.slot,info.external_id
+		), talent_spell_icons AS MATERIALIZED (
+			-- Talents imported from Battle.net carry no icon of their own; the
+			-- icon of the spell they grant is the official one (DB2 SpellMisc).
+			SELECT DISTINCT ON (talent.id)
+				talent.id AS talent_id,spell_icon.icon_name,spell_icon.file_data_id,
+				spell_icon.source_artifact_id,spell_icon.asset_source_artifact_id
+			FROM game_entities talent
+			JOIN game_entity_versions talent_version ON talent_version.id=talent.latest_version_id
+			JOIN catalog_talent_spell_links link ON link.talent_version_id=talent_version.id
+			JOIN game_entity_versions spell_version ON spell_version.id=link.spell_version_id
+			JOIN game_entities spell ON spell.id=spell_version.entity_id
+			JOIN catalog_entity_icons spell_icon ON spell_icon.build_id=talent_version.build_id
+				AND spell_icon.entity_type='spell' AND spell_icon.external_id=spell.external_id
+			WHERE talent.entity_type IN ('talent','pvp_talent') AND talent.deleted_at IS NULL
+			  AND NULLIF(BTRIM(talent_version.payload #>> '{raidbots,icon}'),'') IS NULL
+			  AND NULLIF(BTRIM(talent_version.payload #>> '{raidbots,spellIcon}'),'') IS NULL
+			ORDER BY talent.id,(link.relationship='grants') DESC,spell_icon.file_data_id NULLS LAST
 		), candidates AS MATERIALIZED (
 			SELECT entity.id,entity.entity_type,entity.external_id,version.build_id,
 				COALESCE(item.source_artifact_id,
 					CASE WHEN direct.file_data_id IS NOT NULL THEN direct_proof.source_artifact_id END,
-					spell.source_artifact_id,creature.source_artifact_id,
+					spell.source_artifact_id,creature.source_artifact_id,talent_icon.source_artifact_id,
 					-- Raidbots-only entities (talents, gems, consumables) carry no
 					-- DB2 icon row: prefer a proven artifact observed for the
 					-- version (a re-import records the new proof against the
 					-- unchanged version) over the version's original artifact.
 					direct_proof.source_artifact_id,version.source_artifact_id) AS source_artifact_id,
-				COALESCE(direct.file_data_id,item.file_data_id,spell.file_data_id,creature.file_data_id) AS file_data_id,
-				NULLIF(BTRIM(version.payload #>> '{raidbots,icon}'),'') AS raidbots_icon,
+				COALESCE(direct.file_data_id,item.file_data_id,spell.file_data_id,creature.file_data_id,talent_icon.file_data_id) AS file_data_id,
+				COALESCE(NULLIF(BTRIM(version.payload #>> '{raidbots,icon}'),''),talent_icon.icon_name) AS raidbots_icon,
 				NULLIF(BTRIM(version.payload #>> '{raidbots,spellIcon}'),'') AS raidbots_spell_icon
 			FROM game_entities entity
 			JOIN game_entity_versions version ON version.id=entity.latest_version_id
+			LEFT JOIN talent_spell_icons talent_icon ON talent_icon.talent_id=entity.id
 			LEFT JOIN catalog_source_artifacts version_artifact ON version_artifact.id=version.source_artifact_id
 			LEFT JOIN LATERAL (
 				SELECT artifact.id AS source_artifact_id
