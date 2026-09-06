@@ -116,10 +116,13 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		}
 		insertDB2ProofRow(t, ctx, pool, ic, artifactID, proof)
 	}
-	questPackageHash := sha256.Sum256([]byte("integration-quest-package"))
-	if err := store.CompleteArtifact(ctx, artifacts["QuestPackageItem"], questPackageHash[:],
-		int64(len("integration-quest-package")), ""); err != nil {
-		t.Fatalf("complete quest package artifact: %v", err)
+	// Every DB2 artifact carries complete proof, as in production: icon and
+	// fact projections only cite proven artifacts.
+	for table, artifactID := range artifacts {
+		tableHash := sha256.Sum256([]byte("integration-" + table))
+		if err := store.CompleteArtifact(ctx, artifactID, tableHash[:], int64(len("integration-"+table)), ""); err != nil {
+			t.Fatalf("complete %s artifact: %v", table, err)
+		}
 	}
 	listfileArtifact, err := store.RegisterArtifact(ctx, ic, "wow_listfile", "community-listfile", "",
 		"https://github.com/wowdev/wow-listfile/blob/master/community-listfile.csv", map[string]any{"test": true})

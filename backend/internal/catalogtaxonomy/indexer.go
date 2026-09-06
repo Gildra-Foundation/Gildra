@@ -1368,15 +1368,18 @@ func rebuildEntityIcons(ctx context.Context, tx pgx.Tx) (int64, error) {
 				spell_icon.source_artifact_id,spell_icon.asset_source_artifact_id
 			FROM game_entities talent
 			JOIN game_entity_versions talent_version ON talent_version.id=talent.latest_version_id
-			JOIN catalog_talent_spell_links link ON link.talent_version_id=talent_version.id
-			JOIN game_entity_versions spell_version ON spell_version.id=link.spell_version_id
-			JOIN game_entities spell ON spell.id=spell_version.entity_id
 			JOIN catalog_entity_icons spell_icon ON spell_icon.build_id=talent_version.build_id
-				AND spell_icon.entity_type='spell' AND spell_icon.external_id=spell.external_id
+				AND spell_icon.entity_type='spell'
+				AND spell_icon.external_id=CASE
+					WHEN talent_version.payload #>> '{raidbots,spellId}' ~ '^[1-9][0-9]*$'
+						THEN (talent_version.payload #>> '{raidbots,spellId}')::bigint
+					WHEN talent_version.payload #>> '{spell,id}' ~ '^[1-9][0-9]*$'
+						THEN (talent_version.payload #>> '{spell,id}')::bigint
+				END
 			WHERE talent.entity_type IN ('talent','pvp_talent') AND talent.deleted_at IS NULL
 			  AND NULLIF(BTRIM(talent_version.payload #>> '{raidbots,icon}'),'') IS NULL
 			  AND NULLIF(BTRIM(talent_version.payload #>> '{raidbots,spellIcon}'),'') IS NULL
-			ORDER BY talent.id,(link.relationship='grants') DESC,spell_icon.file_data_id NULLS LAST
+			ORDER BY talent.id,spell_icon.file_data_id NULLS LAST
 		), candidates AS MATERIALIZED (
 			SELECT entity.id,entity.entity_type,entity.external_id,version.build_id,
 				COALESCE(item.source_artifact_id,
