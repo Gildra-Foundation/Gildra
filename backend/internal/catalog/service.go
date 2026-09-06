@@ -510,6 +510,7 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 		) spell_misc ON true
 		LEFT JOIN catalog_file_assets spell_fa ON spell_fa.file_data_id=CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN (spell_misc.payload->>'SpellIconFileDataID')::bigint END
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
+		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
 		  AND ($1 = '' OR p.slug = $1)
 		  AND ($2 = '' OR e.entity_type = $2)
 		  AND e.id > $3
@@ -598,11 +599,15 @@ func (s *Service) count(ctx context.Context, params ListParams) (int64, error) {
 				SELECT child.id FROM catalog_categories child JOIN selected_categories selected ON child.parent_id=selected.id
 			)
 			SELECT count(*) FROM game_entities e JOIN game_products p ON p.id=e.product_id
+			JOIN game_entity_versions v ON v.id=e.published_version_id
+			LEFT JOIN game_entity_localizations l ON l.version_id=v.id AND l.locale=$4
+			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 			WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
+			  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
 			  AND ($1='' OR p.slug=$1) AND ($2='' OR e.entity_type=$2)
 			  AND ($3='' OR EXISTS(SELECT 1 FROM game_entity_categories ec
 				WHERE ec.version_id=e.published_version_id AND ec.category_id IN (SELECT id FROM selected_categories)))`,
-			strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), strings.TrimSpace(params.Category)).Scan(&total)
+			strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), strings.TrimSpace(params.Category), normalizeLocale(params.Locale)).Scan(&total)
 		if err != nil {
 			return 0, fmt.Errorf("count game entities: %w", err)
 		}
@@ -626,6 +631,7 @@ func (s *Service) count(ctx context.Context, params ListParams) (int64, error) {
 		LEFT JOIN game_entity_localizations l ON l.version_id=v.id AND l.locale=$3
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
+		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
 		  AND ($1='' OR p.slug=$1)
 		  AND ($2='' OR e.entity_type=$2)
 		  AND ($5='' OR EXISTS (
@@ -879,7 +885,8 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 			LIMIT 1
 		) spell_misc ON true
 		LEFT JOIN catalog_file_assets spell_fa ON spell_fa.file_data_id=CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN (spell_misc.payload->>'SpellIconFileDataID')::bigint END
-		WHERE e.id = $1 AND e.deleted_at IS NULL AND e.published_version_id IS NOT NULL`, id, normalizeLocale(locale))
+		WHERE e.id = $1 AND e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
+		  `+publicCatalogDisplayNamePredicate("l", "fallback")+``, id, normalizeLocale(locale))
 	entity, err := scanEntity(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Entity{}, ErrNotFound
@@ -1091,6 +1098,16 @@ func normalizeLocale(locale string) string {
 		return locale
 	}
 	return "en_US"
+}
+
+// publicCatalogDisplayNamePredicate keeps raw import rows out of player-facing
+// catalogue endpoints. Missing names and explicit placeholder markers remain
+// in the source registry for audit/import work, but must never become a card
+// rendered as "item #123". Aliases are fixed by the query callers.
+func publicCatalogDisplayNamePredicate(localizedAlias, fallbackAlias string) string {
+	name := fmt.Sprintf("COALESCE(NULLIF(%s.name,''),NULLIF(%s.name,''))", localizedAlias, fallbackAlias)
+	return `AND ` + name + ` IS NOT NULL
+		AND ` + name + ` !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold)([[:space:]_:-]|$)|\[(ph|dnt|test|unused|deprecated|internal|zzold)\]'`
 }
 
 func encodeCursor(id uuid.UUID) string {

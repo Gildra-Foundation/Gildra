@@ -29,7 +29,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 135
+const latestCatalogSchemaVersion int64 = 140
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -208,6 +208,78 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	}
 	assertProductionRecoveryGate(t, ctx, database, postgresURL)
 	assertAtomicCatalogRelease(t, ctx, database, postgresURL)
+	assertMidnightExpansionCohortSync(t, ctx, database)
+}
+
+func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, database *sql.DB) {
+	t.Helper()
+	var productID int16
+	if err := database.QueryRowContext(ctx, `SELECT id FROM game_products WHERE slug='wow'`).Scan(&productID); err != nil {
+		t.Fatalf("find WoW product for Midnight cohort: %v", err)
+	}
+	var buildID int64
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_builds(product_id,build_number,version,is_active)
+		VALUES($1,999996,'99.0.0.999996',false)
+		ON CONFLICT(product_id,build_number) DO UPDATE SET version=EXCLUDED.version
+		RETURNING id`, productID).Scan(&buildID); err != nil {
+		t.Fatalf("seed Midnight cohort build: %v", err)
+	}
+	var snapshotID, artifactID string
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO catalog_snapshots(product_id,build_id,source,status,content_hash)
+		VALUES($1,$2,'wago_tools','validated','midnight-cohort-proof')
+		RETURNING id::text`, productID, buildID).Scan(&snapshotID); err != nil {
+		t.Fatalf("seed Midnight cohort snapshot: %v", err)
+	}
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO catalog_source_artifacts(
+			snapshot_id,build_id,source,artifact_key,locale,source_url,content_hash,status)
+		VALUES($1,$2,'wago_tools','ItemSparse','en_US',
+			'https://wago.tools/db2/ItemSparse/csv?build=99.0.0.999996',
+			decode(repeat('ab',32),'hex'),'ready')
+		RETURNING id::text`, snapshotID, buildID).Scan(&artifactID); err != nil {
+		t.Fatalf("seed Midnight cohort artifact: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_db2_rows(
+			build_id,table_name,locale,row_id,payload,content_hash,source_url,snapshot_id,source_artifact_id)
+		VALUES($1,'ItemSparse','en_US',880001,
+			'{"ExpansionID":11,"Display_lang":"Integration Midnight Sword","ItemLevel":100,"InventoryType":13}'::jsonb,
+			decode(repeat('cd',32),'hex'),
+			'https://wago.tools/db2/ItemSparse/csv?build=99.0.0.999996',$2::uuid,$3::uuid)`,
+		buildID, snapshotID, artifactID); err != nil {
+		t.Fatalf("insert Midnight ItemSparse evidence: %v", err)
+	}
+	var expansionKey, classification, evidenceTable, sourceArtifact string
+	if err := database.QueryRowContext(ctx, `
+		SELECT expansion.expansion_key, membership.classification,
+		       membership.evidence->>'table_name', membership.source_artifact_id::text
+		FROM catalog_entity_expansions membership
+		JOIN catalog_expansions expansion ON expansion.id=membership.expansion_id
+		WHERE membership.product_id=$1 AND membership.build_id=$2
+		  AND membership.entity_type='item' AND membership.external_id=880001`,
+		productID, buildID).Scan(&expansionKey, &classification, &evidenceTable, &sourceArtifact); err != nil {
+		t.Fatalf("read Midnight ItemSparse membership: %v", err)
+	}
+	if expansionKey != "midnight" || classification != "confirmed" || evidenceTable != "ItemSparse" || sourceArtifact != artifactID {
+		t.Fatalf("Midnight ItemSparse membership is not provenance-safe: expansion=%q classification=%q table=%q artifact=%q",
+			expansionKey, classification, evidenceTable, sourceArtifact)
+	}
+	var assessed int64
+	if err := database.QueryRowContext(ctx, `SELECT catalog_refresh_midnight_item_usability($1)`, buildID).Scan(&assessed); err != nil {
+		t.Fatalf("refresh Midnight item usability: %v", err)
+	}
+	var decision, reason string
+	if err := database.QueryRowContext(ctx, `
+		SELECT decision,reason_code FROM catalog_entity_usability
+		WHERE product_id=$1 AND build_id=$2 AND entity_type='item' AND external_id=880001`,
+		productID, buildID).Scan(&decision, &reason); err != nil {
+		t.Fatalf("read Midnight item usability: %v", err)
+	}
+	if assessed != 1 || decision != "eligible" || reason != "gameplay_signal_present" {
+		t.Fatalf("Midnight usability classification is wrong: assessed=%d decision=%q reason=%q", assessed, decision, reason)
+	}
 }
 
 func assertUIMapReadModelBuildGuard(t *testing.T, ctx context.Context, database *sql.DB) {
@@ -711,6 +783,25 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	}
 	if missingCachedMedia == 0 {
 		t.Fatal("release quality gate did not report missing cached media warning")
+	}
+	// Published releases promote their snapshots from validated to published.
+	// The gate must accept that real status, and must not treat the public
+	// release itself as its own previous build.
+	var candidateSnapshots, candidateVersions, buildRegression int64
+	if err := database.QueryRowContext(ctx, `
+		SELECT
+			COALESCE((SELECT failed_count FROM catalog_release_quality_gate($1)
+				WHERE check_key='candidate_snapshots'),0),
+			COALESCE((SELECT failed_count FROM catalog_release_quality_gate($1)
+				WHERE check_key='candidate_versions'),0),
+			COALESCE((SELECT failed_count FROM catalog_release_quality_gate($1)
+				WHERE check_key='release_build_regression'),0)`, publishedReleaseID).
+		Scan(&candidateSnapshots, &candidateVersions, &buildRegression); err != nil {
+		t.Fatal(err)
+	}
+	if candidateSnapshots != 0 || candidateVersions != 0 || buildRegression != 0 {
+		t.Fatalf("published release quality gate false positives: snapshots=%d versions=%d build_regression=%d",
+			candidateSnapshots, candidateVersions, buildRegression)
 	}
 	if _, err := database.ExecContext(ctx, `UPDATE catalog_source_artifacts SET content_hash=NULL WHERE id=$1`, listfileArtifactID); err != nil {
 		t.Fatal(err)
