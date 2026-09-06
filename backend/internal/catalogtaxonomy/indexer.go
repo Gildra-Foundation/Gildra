@@ -312,11 +312,103 @@ func (i *Indexer) RebuildDescriptions(ctx context.Context) (Result, error) {
 		if err != nil {
 			return err
 		}
+		published, err := carryForwardPublishedLocalizations(ctx, tx)
+		if err != nil {
+			return err
+		}
+		if err := carryForwardPublishedAcquisitions(ctx, tx); err != nil {
+			return err
+		}
 		canonical, err := rebuildCanonicalDescriptions(ctx, tx)
-		result.Descriptions = carried + canonical
+		result.Descriptions = carried + published + canonical
 		return err
 	})
 	return result, err
+}
+
+// carryForwardPublishedLocalizations copies the published version's proven
+// localization text (name and description per locale) onto the current
+// version of the same entity when the new build did not deliver it, and
+// carries the proof observation along.  A DB2 build only refreshes the
+// fields it ships; Battle.net descriptions and Russian names collected for
+// the previous build stay valid until a newer import replaces them.  The
+// release gate treats a lost name or description as a regression.
+func carryForwardPublishedLocalizations(ctx context.Context, tx pgx.Tx) (int64, error) {
+	command, err := tx.Exec(ctx, `
+		WITH candidates AS (
+			SELECT entity.id AS entity_id,entity.latest_version_id AS version_id,entity.canonical_slug,
+				published.locale,published.name,published.description
+			FROM game_entities entity
+			JOIN game_entity_versions current_version ON current_version.id=entity.latest_version_id
+			JOIN game_entity_versions published_version ON published_version.id=entity.published_version_id
+			JOIN game_entity_localizations published ON published.version_id=published_version.id
+			WHERE entity.deleted_at IS NULL
+			  AND entity.latest_version_id IS DISTINCT FROM entity.published_version_id
+			  AND NULLIF(BTRIM(published.name),'') IS NOT NULL
+			  AND EXISTS (
+				SELECT 1
+				FROM catalog_entity_localization_artifacts proof
+				JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
+				WHERE proof.version_id=published_version.id AND proof.locale=published.locale
+				  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL)
+		)
+		INSERT INTO game_entity_localizations(version_id,locale,slug,name,description,attributes)
+		SELECT version_id,locale,canonical_slug,name,COALESCE(description,''),
+			jsonb_build_object('published_carry_forward',true)
+		FROM candidates
+		ON CONFLICT(version_id,locale) DO UPDATE SET
+			name=COALESCE(NULLIF(game_entity_localizations.name,''),EXCLUDED.name),
+			description=COALESCE(NULLIF(game_entity_localizations.description,''),EXCLUDED.description),
+			attributes=game_entity_localizations.attributes||EXCLUDED.attributes
+		WHERE NULLIF(game_entity_localizations.name,'') IS NULL
+		   OR (NULLIF(game_entity_localizations.description,'') IS NULL AND NULLIF(EXCLUDED.description,'') IS NOT NULL)`)
+	if err != nil {
+		return 0, fmt.Errorf("carry published localizations to current versions: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+		SELECT DISTINCT entity.latest_version_id,proof.locale,proof.source_artifact_id
+		FROM game_entities entity
+		JOIN game_entity_localizations current_text ON current_text.version_id=entity.latest_version_id
+			AND current_text.attributes ? 'published_carry_forward'
+		JOIN catalog_entity_localization_artifacts proof ON proof.version_id=entity.published_version_id
+			AND proof.locale=current_text.locale
+		JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
+		WHERE entity.deleted_at IS NULL
+		  AND entity.latest_version_id IS DISTINCT FROM entity.published_version_id
+		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING`); err != nil {
+		return 0, fmt.Errorf("carry published localization proof to current versions: %w", err)
+	}
+	return command.RowsAffected(), nil
+}
+
+// carryForwardPublishedAcquisitions keeps an item's proven acquisition
+// sources when the new build's import did not deliver any for it; the rows
+// cite the same source artifact as the published version.
+func carryForwardPublishedAcquisitions(ctx context.Context, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, `
+		INSERT INTO catalog_item_acquisition_sources(
+			version_id,source_type,source_id,context_id,source_entity_id,journal_instance_id,
+			difficulty_mask,attributes,chance_percent,source_url,chance_source,source_artifact_id)
+		SELECT entity.latest_version_id,source.source_type,source.source_id,source.context_id,source.source_entity_id,
+			source.journal_instance_id,source.difficulty_mask,
+			source.attributes||jsonb_build_object('published_carry_forward',true),
+			source.chance_percent,source.source_url,source.chance_source,source.source_artifact_id
+		FROM game_entities entity
+		JOIN catalog_item_acquisition_sources source ON source.version_id=entity.published_version_id
+		JOIN catalog_source_artifacts artifact ON artifact.id=source.source_artifact_id
+		WHERE entity.entity_type='item' AND entity.deleted_at IS NULL
+		  AND entity.latest_version_id IS DISTINCT FROM entity.published_version_id
+		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+		  AND NOT EXISTS (
+			SELECT 1 FROM catalog_item_acquisition_sources current_source
+			WHERE current_source.version_id=entity.latest_version_id)
+		ON CONFLICT(version_id,source_type,source_id,context_id) DO NOTHING`)
+	if err != nil {
+		return fmt.Errorf("carry published acquisition sources to current versions: %w", err)
+	}
+	return nil
 }
 
 func carryForwardOfficialLocalizations(ctx context.Context, tx pgx.Tx) (int64, error) {
