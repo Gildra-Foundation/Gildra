@@ -722,9 +722,17 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if err := store.CompleteArtifact(ctx, listfileArtifactID, listfileDigest[:], int64(len(listfileProof)), `"integration-etag"`); err != nil {
 		t.Fatal(err)
 	}
+	// A version is proven by the artifact it was written from or by any
+	// proven artifact observed for it, so both links must go for the release
+	// to be rejected.
 	if _, err := database.ExecContext(ctx, `
 		UPDATE game_entity_versions SET source_artifact_id=NULL
 		WHERE id=(SELECT latest_version_id FROM game_entities WHERE id=$1)`, entityID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		DELETE FROM catalog_entity_version_artifacts
+		WHERE version_id=(SELECT latest_version_id FROM game_entities WHERE id=$1)`, entityID); err != nil {
 		t.Fatal(err)
 	}
 	if err := releases.Publish(ctx, publishedReleaseID); !errors.Is(err, catalogrelease.ErrReleaseNotPublishable) ||
@@ -734,6 +742,12 @@ func assertAtomicCatalogRelease(t *testing.T, ctx context.Context, database *sql
 	if _, err := database.ExecContext(ctx, `
 		UPDATE game_entity_versions SET source_artifact_id=$2
 		WHERE id=(SELECT latest_version_id FROM game_entities WHERE id=$1)`, entityID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_entity_version_artifacts(version_id,source_artifact_id)
+		SELECT latest_version_id,$2 FROM game_entities WHERE id=$1
+		ON CONFLICT(version_id,source_artifact_id) DO NOTHING`, entityID, artifactID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := database.ExecContext(ctx, `
