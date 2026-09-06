@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,13 +64,13 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		http.NotFound(response, request)
 		return
 	}
-	var key, mimeType string
+	var key, mimeType, sourceURL string
 	var hash []byte
 	// Publication is open (owner decision 2026-09-02): serve any cached media
 	// of a published entity whose source artifact is proven; the source policy
 	// only contributes an optional retention window.
 	query := `
-		SELECT media.cache_key,media.mime_type,media.cached_content_hash
+		SELECT media.cache_key,media.mime_type,media.cached_content_hash,media.source_url
 		FROM catalog_entity_media media
 		JOIN game_entities entity ON entity.id=media.entity_id
 		JOIN game_entity_versions published ON published.id=entity.published_version_id
@@ -85,7 +86,7 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		  AND media_build.build_number<=published_build.build_number
 		  AND (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))`
 	args := []any{id}
-	err = h.db.QueryRow(request.Context(), query, args...).Scan(&key, &mimeType, &hash)
+	err = h.db.QueryRow(request.Context(), query, args...).Scan(&key, &mimeType, &hash, &sourceURL)
 	if errors.Is(err, pgx.ErrNoRows) {
 		http.NotFound(response, request)
 		return
@@ -96,6 +97,13 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 	}
 	file, err := h.root.Open(filepath.FromSlash(key))
 	if err != nil {
+		if fallback, ok := verifiedRemoteMediaURL(sourceURL); ok {
+			// A cache volume can be restored independently of the catalog database.
+			// Redirect to the same vetted source rather than emitting a broken image
+			// while the cache worker repairs the missing object.
+			http.Redirect(response, request, fallback, http.StatusTemporaryRedirect)
+			return
+		}
 		http.NotFound(response, request)
 		return
 	}
@@ -114,6 +122,14 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 	response.Header().Set("ETag", `"sha256-`+hex.EncodeToString(hash)+`"`)
 	response.Header().Set("X-Content-Type-Options", "nosniff")
 	http.ServeContent(response, request, filepath.Base(key), info.ModTime(), file)
+}
+
+func verifiedRemoteMediaURL(raw string) (string, bool) {
+	parsed, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || parsed.Scheme != "https" || parsed.Hostname() == "" || parsed.User != nil || parsed.Fragment != "" {
+		return "", false
+	}
+	return parsed.String(), true
 }
 
 func validCacheKey(key string) bool {

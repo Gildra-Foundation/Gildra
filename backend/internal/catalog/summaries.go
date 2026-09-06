@@ -63,7 +63,7 @@ type SummaryPage struct {
 	Total      *int64
 }
 
-const summaryFastQuery = `
+var summaryFastQuery = `
 	SELECT entity.id,$1::text,entity.entity_type,entity.external_id,
 		COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),$4::text,
 		(localized.version_id IS NULL OR NULLIF(localized.name,'') IS NULL) AS locale_fallback,
@@ -92,6 +92,7 @@ const summaryFastQuery = `
 			version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}')::bigint END
 	WHERE entity.deleted_at IS NULL
 		AND entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+		` + publicCatalogDisplayNamePredicate("localized", "fallback") + `
 		AND ($2='' OR entity.entity_type=$2)
 		AND ($6::int IS NULL OR item.item_level >= $6)
 		AND ($7::int IS NULL OR item.item_level <= $7)
@@ -253,6 +254,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			THEN COALESCE(version.payload #>> '{db2,InventoryIconFileID}',version.payload #>> '{db2,IconFileID}',
 				version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}')::bigint END
 		WHERE entity.deleted_at IS NULL AND product.slug=$1
+			` + publicCatalogDisplayNamePredicate("localized", "fallback") + `
 			AND ($2='' OR entity.entity_type=$2)
 			AND (cardinality($7::text[])=0 OR selected.version_id IS NOT NULL)
 			AND ($8::int IS NULL OR item.item_level >= $8)
@@ -358,10 +360,15 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 	if query == "" && len(filterPaths) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil {
 		var total int64
 		err := s.postgres.QueryRow(ctx, `
-			SELECT COALESCE(sum(stats.entity_count),0)
-			FROM catalog_entity_type_stats stats
-			JOIN game_products product ON product.id=stats.product_id
-			WHERE product.slug=$1 AND stats.locale=$2 AND ($3='' OR stats.entity_type=$3)`,
+			SELECT count(*)
+			FROM game_entities entity
+			JOIN game_products product ON product.id=entity.product_id
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$2
+			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
+			WHERE entity.deleted_at IS NULL AND product.slug=$1
+				`+publicCatalogDisplayNamePredicate("localized", "fallback")+`
+				AND ($3='' OR entity.entity_type=$3)`,
 			product, locale, entityType).Scan(&total)
 		if err != nil {
 			return 0, fmt.Errorf("read cached entity summary count: %w", err)
@@ -416,10 +423,13 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		SELECT count(*) FROM game_entities entity
 		JOIN game_products product ON product.id=entity.product_id
 		JOIN game_entity_versions version ON version.id=entity.published_version_id
+		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$10
+		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 		LEFT JOIN catalog_items item ON item.version_id=version.id
 		LEFT JOIN search_candidates search ON search.version_id=version.id
 		LEFT JOIN selected_versions selected ON selected.version_id=version.id
 		WHERE entity.deleted_at IS NULL AND product.slug=$1 AND ($2='' OR entity.entity_type=$2)
+			`+publicCatalogDisplayNamePredicate("localized", "fallback")+`
 			AND (cardinality($4::text[])=0 OR selected.version_id IS NOT NULL)
 			AND ($5::int IS NULL OR item.item_level >= $5)
 			AND ($6::int IS NULL OR item.item_level <= $6)
@@ -427,7 +437,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 			AND ($8::int IS NULL OR item.required_level <= $8)
 			AND ($9::int IS NULL OR item.item_class_id=$9)
 			AND ($3='' OR search.version_id IS NOT NULL)`, product, entityType, query, filterPaths, params.MinItemLevel, params.MaxItemLevel,
-		params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID).Scan(&total)
+		params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID, locale).Scan(&total)
 	if err != nil {
 		return 0, fmt.Errorf("count game entity summaries: %w", err)
 	}
