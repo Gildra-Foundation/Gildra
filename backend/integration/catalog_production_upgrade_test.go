@@ -225,7 +225,7 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 		RETURNING id`, productID).Scan(&buildID); err != nil {
 		t.Fatalf("seed Midnight cohort build: %v", err)
 	}
-	var snapshotID, artifactID string
+	var snapshotID, artifactID, currencyArtifactID string
 	if err := database.QueryRowContext(ctx, `
 		INSERT INTO catalog_snapshots(product_id,build_id,source,status,content_hash)
 		VALUES($1,$2,'wago_tools','validated','midnight-cohort-proof')
@@ -241,6 +241,15 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 		RETURNING id::text`, snapshotID, buildID).Scan(&artifactID); err != nil {
 		t.Fatalf("seed Midnight cohort artifact: %v", err)
 	}
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO catalog_source_artifacts(
+			snapshot_id,build_id,source,artifact_key,locale,source_url,content_hash,byte_size,status)
+		VALUES($1,$2,'wago_tools','ItemCurrencyCost','en_US',
+			'https://wago.tools/db2/ItemCurrencyCost/csv?build=99.0.0.999996',
+			decode(repeat('ac',32),'hex'),1,'ready')
+		RETURNING id::text`, snapshotID, buildID).Scan(&currencyArtifactID); err != nil {
+		t.Fatalf("seed Midnight currency-cost artifact: %v", err)
+	}
 	if _, err := database.ExecContext(ctx, `
 		INSERT INTO catalog_db2_rows(
 			build_id,table_name,locale,row_id,payload,content_hash,source_url,snapshot_id,source_artifact_id)
@@ -255,14 +264,14 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 		INSERT INTO catalog_db2_rows(
 			build_id,table_name,locale,row_id,payload,content_hash,source_url,snapshot_id,source_artifact_id)
 		VALUES($1,'ItemSparse','en_US',880002,
-			' {"ExpansionID":11,"Display_lang":"Integration Midnight Currency Token","ItemLevel":100}'::jsonb,
+			'{"ExpansionID":11,"Display_lang":"Integration Midnight Currency Token","ItemLevel":100}'::jsonb,
 			decode(repeat('ce',32),'hex'),
 			'https://wago.tools/db2/ItemSparse/csv?build=99.0.0.999996',$2::uuid,$3::uuid),
 			($1,'ItemCurrencyCost','en_US',990001,
-			' {"ID":"990001","ItemID":"880002"}'::jsonb,
+			'{"ID":"990001","ItemID":"880002"}'::jsonb,
 			decode(repeat('cf',32),'hex'),
-			'https://wago.tools/db2/ItemCurrencyCost/csv?build=99.0.0.999996',$2::uuid,$3::uuid)`,
-		buildID, snapshotID, artifactID); err != nil {
+			'https://wago.tools/db2/ItemCurrencyCost/csv?build=99.0.0.999996',$2::uuid,$4::uuid)`,
+		buildID, snapshotID, artifactID, currencyArtifactID); err != nil {
 		t.Fatalf("insert Midnight currency-cost evidence: %v", err)
 	}
 	var expansionKey, classification, evidenceTable, sourceArtifact string
