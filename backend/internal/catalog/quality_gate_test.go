@@ -5,22 +5,20 @@ import (
 	"testing"
 )
 
-func TestPublicCatalogUsabilityPredicateFailsClosedForMidnightItems(t *testing.T) {
+func TestPublicCatalogUsabilityPredicateHidesNonEligibleItems(t *testing.T) {
 	t.Parallel()
 	predicate := publicCatalogUsabilityPredicate("entity", "version")
 	for _, fragment := range []string{
-		"catalog_entity_expansions midnight_membership",
-		"midnight.expansion_key='midnight'",
-		"midnight_membership.build_id=version.build_id",
 		"catalog_entity_usability usability",
-		"usability.decision='eligible'",
+		"usability.decision <> 'eligible'",
+		"(entity.product_id,version.build_id,entity.external_id) NOT IN",
 	} {
 		if !strings.Contains(predicate, fragment) {
 			t.Fatalf("quality gate predicate is missing %q: %s", fragment, predicate)
 		}
 	}
-	if strings.Contains(predicate, "decision<>'eligible'") {
-		t.Fatal("quality gate must explicitly allow only the eligible decision")
+	if strings.Contains(predicate, "catalog_entity_expansions") {
+		t.Fatal("quality gate must not scan expansion membership for every catalog row")
 	}
 }
 
