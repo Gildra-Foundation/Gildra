@@ -93,6 +93,7 @@ var summaryFastQuery = `
 	WHERE entity.deleted_at IS NULL
 		AND entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
 		` + publicCatalogDisplayNamePredicate("localized", "fallback") + `
+		` + publicCatalogUsabilityPredicate("entity", "version") + `
 		AND ($2='' OR entity.entity_type=$2)
 		AND ($6::int IS NULL OR item.item_level >= $6)
 		AND ($7::int IS NULL OR item.item_level <= $7)
@@ -164,6 +165,12 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	product := strings.TrimSpace(params.Product)
 	if product == "" {
 		product = "wow"
+	}
+	// Cached dataset/category totals predate the build-pinned Midnight gate.
+	// Recompute item totals from the same gated projection instead of exposing
+	// stale counts that still include review/excluded rows.
+	if datasetTotalCached && product == "wow" && strings.TrimSpace(params.Type) == "item" {
+		datasetTotalCached = false
 	}
 	locale := normalizeLocale(params.Locale)
 	var total *int64
@@ -255,6 +262,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 				version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}')::bigint END
 		WHERE entity.deleted_at IS NULL AND product.slug=$1
 			` + publicCatalogDisplayNamePredicate("localized", "fallback") + `
+			` + publicCatalogUsabilityPredicate("entity", "version") + `
 			AND ($2='' OR entity.entity_type=$2)
 			AND (cardinality($7::text[])=0 OR selected.version_id IS NOT NULL)
 			AND ($8::int IS NULL OR item.item_level >= $8)
@@ -368,6 +376,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 			WHERE entity.deleted_at IS NULL AND product.slug=$1
 				`+publicCatalogDisplayNamePredicate("localized", "fallback")+`
+				`+publicCatalogUsabilityPredicate("entity", "version")+`
 				AND ($3='' OR entity.entity_type=$3)`,
 			product, locale, entityType).Scan(&total)
 		if err != nil {
@@ -375,7 +384,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		}
 		return total, nil
 	}
-	if query == "" && category != "" && len(params.Facets) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil {
+	if query == "" && category != "" && len(params.Facets) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil && !(product == "wow" && entityType == "item") {
 		var total int64
 		err := s.postgres.QueryRow(ctx, `
 			SELECT COALESCE(stats.entity_count,0) FROM catalog_categories category
@@ -430,6 +439,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		LEFT JOIN selected_versions selected ON selected.version_id=version.id
 		WHERE entity.deleted_at IS NULL AND product.slug=$1 AND ($2='' OR entity.entity_type=$2)
 			`+publicCatalogDisplayNamePredicate("localized", "fallback")+`
+			`+publicCatalogUsabilityPredicate("entity", "version")+`
 			AND (cardinality($4::text[])=0 OR selected.version_id IS NOT NULL)
 			AND ($5::int IS NULL OR item.item_level >= $5)
 			AND ($6::int IS NULL OR item.item_level <= $6)

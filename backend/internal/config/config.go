@@ -36,6 +36,7 @@ type Config struct {
 	CatalogAccessMode      string
 	CatalogRecoveryPolicy  string
 	CatalogMediaDirectory  string
+	CatalogQualityProfile  string
 }
 
 func Load() (Config, error) {
@@ -59,6 +60,7 @@ func Load() (Config, error) {
 	sentryEnvironment := envOr("SENTRY_ENVIRONMENT", "development")
 	publicationEnvironment := envOr("CATALOG_PUBLICATION_ENVIRONMENT", normalizedPublicationEnvironment(sentryEnvironment))
 	recoveryPolicy := envOr("CATALOG_RECOVERY_POLICY", "off_host")
+	qualityProfile := envOr("CATALOG_QUALITY_PROFILE", "midnight-active")
 	publicationMode := os.Getenv("CATALOG_PUBLICATION_MODE")
 	if publicationMode == "" {
 		publicationMode = "report"
@@ -91,6 +93,7 @@ func Load() (Config, error) {
 		CatalogAccessMode:      envOr("CATALOG_ACCESS_MODE", "public"),
 		CatalogRecoveryPolicy:  recoveryPolicy,
 		CatalogMediaDirectory:  os.Getenv("CATALOG_MEDIA_DIRECTORY"),
+		CatalogQualityProfile:  qualityProfile,
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -113,6 +116,9 @@ func Load() (Config, error) {
 	}
 	if cfg.CatalogRecoveryPolicy != "off_host" && cfg.CatalogRecoveryPolicy != "verified_same_host" {
 		return Config{}, errors.New("CATALOG_RECOVERY_POLICY must be off_host or verified_same_host")
+	}
+	if cfg.CatalogQualityProfile != "midnight-active" {
+		return Config{}, errors.New("CATALOG_QUALITY_PROFILE must be midnight-active")
 	}
 
 	return cfg, nil

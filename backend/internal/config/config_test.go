@@ -20,6 +20,9 @@ func TestLoadValidatesRequiredSettings(t *testing.T) {
 	if cfg.CatalogAccessMode != "public" {
 		t.Fatalf("unexpected default catalog access mode: %s", cfg.CatalogAccessMode)
 	}
+	if cfg.CatalogQualityProfile != "midnight-active" {
+		t.Fatalf("unexpected default catalog quality profile: %s", cfg.CatalogQualityProfile)
+	}
 }
 
 func TestLoadAcceptsPrivateCatalogAccess(t *testing.T) {
@@ -97,5 +100,16 @@ func TestLoadEnforcesPublicationPolicyInProduction(t *testing.T) {
 	}
 	if cfg.CatalogPublicationMode != "enforce" || cfg.CatalogPublicationEnv != "production" {
 		t.Fatalf("unexpected production publication config: mode=%s env=%s", cfg.CatalogPublicationMode, cfg.CatalogPublicationEnv)
+	}
+}
+
+func TestLoadRejectsUnscopedQualityProfile(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://gildra:test@localhost:5432/gildra")
+	t.Setenv("CLICKHOUSE_PASSWORD", "test")
+	t.Setenv("INDEXNOW_KEY", "00000000000000000000000000000000")
+	t.Setenv("CATALOG_QUALITY_PROFILE", "whole-wow")
+
+	if _, err := Load(); err == nil {
+		t.Fatal("expected unscoped quality profile to be rejected")
 	}
 }
