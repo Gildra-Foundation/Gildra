@@ -166,9 +166,10 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if product == "" {
 		product = "wow"
 	}
-	// Cached dataset/category totals predate the build-pinned Midnight gate.
-	// Recompute item totals from the same gated projection instead of exposing
-	// stale counts that still include review/excluded rows.
+	// Dataset totals are maintained by an older projection which deliberately
+	// retains raw client rows. Midnight item datasets therefore use the exact
+	// public-summary projection below until that dataset projection gains the
+	// same eligibility dimension.
 	if datasetTotalCached && product == "wow" && strings.TrimSpace(params.Type) == "item" {
 		datasetTotalCached = false
 	}
@@ -368,19 +369,13 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 	if query == "" && len(filterPaths) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil {
 		var total int64
 		err := s.postgres.QueryRow(ctx, `
-			SELECT count(*)
-			FROM game_entities entity
-			JOIN game_products product ON product.id=entity.product_id
-			JOIN game_entity_versions version ON version.id=entity.published_version_id
-			LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$2
-			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
-			WHERE entity.deleted_at IS NULL AND product.slug=$1
-				`+publicCatalogDisplayNamePredicate("localized", "fallback")+`
-				`+publicCatalogUsabilityPredicate("entity", "version")+`
-				AND ($3='' OR entity.entity_type=$3)`,
+			SELECT COALESCE(sum(stats.entity_count),0)
+			FROM catalog_public_summary_stats stats
+			JOIN game_products product ON product.id=stats.product_id
+			WHERE product.slug=$1 AND stats.locale=$2 AND ($3='' OR stats.entity_type=$3)`,
 			product, locale, entityType).Scan(&total)
 		if err != nil {
-			return 0, fmt.Errorf("read cached entity summary count: %w", err)
+			return 0, fmt.Errorf("read public entity summary count: %w", err)
 		}
 		return total, nil
 	}

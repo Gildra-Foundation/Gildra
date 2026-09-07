@@ -374,6 +374,9 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_read_models($1)`, productID); err != nil {
 			return fmt.Errorf("refresh published catalog read models: %w", err)
 		}
+		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_public_summary_stats($1)`, productID); err != nil {
+			return fmt.Errorf("refresh published catalog summary stats: %w", err)
+		}
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
 			return fmt.Errorf("refresh published library datasets: %w", err)
 		}

@@ -65,12 +65,14 @@ func (s *Service) EntityTypes(ctx context.Context, product, locale string) ([]En
 	rows, err := s.postgres.Query(ctx, `
 		SELECT registry.entity_type,COALESCE(localized.name,initcap(replace(registry.entity_type,'_',' '))),
 			COALESCE(localized.description,''),registry.group_key,registry.icon_symbol,registry.sort_order,
-			stats.entity_count,stats.localized_count,stats.described_count,stats.tooltip_count,
+			COALESCE(public_stats.entity_count,0),stats.localized_count,stats.described_count,stats.tooltip_count,
 			stats.icon_count,stats.relationship_count,stats.refreshed_at
 		FROM catalog_entity_type_registry registry
 		JOIN game_products product ON product.id=registry.product_id
 		JOIN catalog_entity_type_stats stats ON stats.product_id=registry.product_id
 			AND stats.entity_type=registry.entity_type AND stats.locale=$2
+		LEFT JOIN catalog_public_summary_stats public_stats ON public_stats.product_id=registry.product_id
+			AND public_stats.entity_type=registry.entity_type AND public_stats.locale=$2
 		LEFT JOIN catalog_entity_type_localizations localized ON localized.product_id=registry.product_id
 			AND localized.entity_type=registry.entity_type AND localized.locale=$2
 		WHERE product.slug=$1 AND registry.is_public

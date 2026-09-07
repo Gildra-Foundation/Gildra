@@ -29,7 +29,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 141
+const latestCatalogSchemaVersion int64 = 142
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -336,6 +336,9 @@ func assertUIMapReadModelBuildGuard(t *testing.T, ctx context.Context, database 
 	}
 	if _, err := database.ExecContext(ctx, `SELECT refresh_catalog_read_models($1)`, productID); err != nil {
 		t.Fatalf("refresh ui_map entity read model: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `SELECT refresh_catalog_public_summary_stats($1)`, productID); err != nil {
+		t.Fatalf("refresh ui_map public summary stats: %v", err)
 	}
 	if _, err := database.ExecContext(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
 		t.Fatalf("refresh ui-maps dataset read model: %v", err)
