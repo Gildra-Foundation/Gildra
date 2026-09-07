@@ -511,6 +511,7 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 		LEFT JOIN catalog_file_assets spell_fa ON spell_fa.file_data_id=CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN (spell_misc.payload->>'SpellIconFileDataID')::bigint END
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
+		  `+publicCatalogUsabilityPredicate("e", "v")+`
 		  AND ($1 = '' OR p.slug = $1)
 		  AND ($2 = '' OR e.entity_type = $2)
 		  AND e.id > $3
@@ -604,6 +605,7 @@ func (s *Service) count(ctx context.Context, params ListParams) (int64, error) {
 			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 			WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 			  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
+			  `+publicCatalogUsabilityPredicate("e", "v")+`
 			  AND ($1='' OR p.slug=$1) AND ($2='' OR e.entity_type=$2)
 			  AND ($3='' OR EXISTS(SELECT 1 FROM game_entity_categories ec
 				WHERE ec.version_id=e.published_version_id AND ec.category_id IN (SELECT id FROM selected_categories)))`,
@@ -632,6 +634,7 @@ func (s *Service) count(ctx context.Context, params ListParams) (int64, error) {
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
+		  `+publicCatalogUsabilityPredicate("e", "v")+`
 		  AND ($1='' OR p.slug=$1)
 		  AND ($2='' OR e.entity_type=$2)
 		  AND ($5='' OR EXISTS (
@@ -886,7 +889,8 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 		) spell_misc ON true
 		LEFT JOIN catalog_file_assets spell_fa ON spell_fa.file_data_id=CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN (spell_misc.payload->>'SpellIconFileDataID')::bigint END
 		WHERE e.id = $1 AND e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
-		  `+publicCatalogDisplayNamePredicate("l", "fallback")+``, id, normalizeLocale(locale))
+		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
+		  `+publicCatalogUsabilityPredicate("e", "v")+``, id, normalizeLocale(locale))
 	entity, err := scanEntity(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Entity{}, ErrNotFound

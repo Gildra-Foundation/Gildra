@@ -56,12 +56,13 @@ type importReport struct {
 }
 
 type report struct {
-	GeneratedAt time.Time                      `json:"generatedAt"`
-	Build       buildReport                    `json:"build"`
-	Coverage    []coverageReport               `json:"coverage"`
-	Facts       factReport                     `json:"facts"`
-	Imports     importReport                   `json:"imports"`
-	Readiness   catalogquality.ReadinessReport `json:"readiness"`
+	GeneratedAt time.Time                            `json:"generatedAt"`
+	Build       buildReport                          `json:"build"`
+	Coverage    []coverageReport                     `json:"coverage"`
+	Facts       factReport                           `json:"facts"`
+	Imports     importReport                         `json:"imports"`
+	Quality     catalogquality.PublicQualitySnapshot `json:"quality"`
+	Readiness   catalogquality.ReadinessReport       `json:"readiness"`
 }
 
 func main() {
@@ -72,12 +73,13 @@ func main() {
 }
 
 func run() error {
-	var databaseURL, product, recoveryPolicy, buildVersion string
+	var databaseURL, product, recoveryPolicy, buildVersion, qualityProfile string
 	var requireProductionReady, requireDataReady bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&product, "product", "wow", "game product slug")
 	flag.StringVar(&buildVersion, "build", "", "audit readiness of this staged build version instead of the active build")
+	flag.StringVar(&qualityProfile, "quality-profile", catalogquality.QualityProfileMidnightActive, "scoped public quality profile (default: midnight-active)")
 	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
 	flag.BoolVar(&requireProductionReady, "require-production-ready", false, "exit non-zero unless every data and production readiness check passes")
 	flag.BoolVar(&requireDataReady, "require-data-ready", false, "exit non-zero unless every catalog data-readiness check passes")
@@ -262,10 +264,15 @@ func run() error {
 		// A staged (not yet active) build can be audited before publication.
 		auditBuild = buildVersion
 	}
+	result.Quality, err = catalogquality.EvaluatePublicQuality(ctx, db, product, auditBuild, qualityProfile)
+	if err != nil {
+		return fmt.Errorf("evaluate public quality profile: %w", err)
+	}
 	result.Readiness, err = catalogquality.EvaluateReadinessWithRecoveryPolicy(ctx, db, product, auditBuild, recoveryPolicy)
 	if err != nil {
 		return fmt.Errorf("evaluate catalog readiness: %w", err)
 	}
+	catalogquality.ApplyPublicQualityGate(&result.Readiness, result.Quality)
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
