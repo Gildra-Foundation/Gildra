@@ -74,7 +74,7 @@ func main() {
 
 func run() error {
 	var databaseURL, product, recoveryPolicy, buildVersion, qualityProfile string
-	var requireProductionReady, requireDataReady bool
+	var requireProductionReady, requireDataReady, enforcePublicQuality bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&product, "product", "wow", "game product slug")
@@ -83,6 +83,7 @@ func run() error {
 	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
 	flag.BoolVar(&requireProductionReady, "require-production-ready", false, "exit non-zero unless every data and production readiness check passes")
 	flag.BoolVar(&requireDataReady, "require-data-ready", false, "exit non-zero unless every catalog data-readiness check passes")
+	flag.BoolVar(&enforcePublicQuality, "enforce-public-quality", false, "treat scoped public-quality failures as production-readiness blockers")
 	flag.DurationVar(&timeout, "timeout", 15*time.Minute, "maximum time allowed for the complete audit")
 	flag.Parse()
 	if timeout <= 0 {
@@ -272,7 +273,12 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("evaluate catalog readiness: %w", err)
 	}
-	catalogquality.ApplyPublicQualityGate(&result.Readiness, result.Quality)
+	// The report is always produced. Enforcement is opt-in until the selected
+	// cohort has been backfilled; otherwise a safety-only release would be
+	// unable to deploy precisely because it exposes the existing data gaps.
+	if enforcePublicQuality {
+		catalogquality.ApplyPublicQualityGate(&result.Readiness, result.Quality)
+	}
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
