@@ -29,7 +29,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 142
+const latestCatalogSchemaVersion int64 = 143
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -251,6 +251,20 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 		buildID, snapshotID, artifactID); err != nil {
 		t.Fatalf("insert Midnight ItemSparse evidence: %v", err)
 	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_db2_rows(
+			build_id,table_name,locale,row_id,payload,content_hash,source_url,snapshot_id,source_artifact_id)
+		VALUES($1,'ItemSparse','en_US',880002,
+			' {"ExpansionID":11,"Display_lang":"Integration Midnight Currency Token","ItemLevel":100}'::jsonb,
+			decode(repeat('ce',32),'hex'),
+			'https://wago.tools/db2/ItemSparse/csv?build=99.0.0.999996',$2::uuid,$3::uuid),
+			($1,'ItemCurrencyCost','en_US',990001,
+			' {"ID":"990001","ItemID":"880002"}'::jsonb,
+			decode(repeat('cf',32),'hex'),
+			'https://wago.tools/db2/ItemCurrencyCost/csv?build=99.0.0.999996',$2::uuid,$3::uuid)`,
+		buildID, snapshotID, artifactID); err != nil {
+		t.Fatalf("insert Midnight currency-cost evidence: %v", err)
+	}
 	var expansionKey, classification, evidenceTable, sourceArtifact string
 	if err := database.QueryRowContext(ctx, `
 		SELECT expansion.expansion_key, membership.classification,
@@ -277,8 +291,20 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 		productID, buildID).Scan(&decision, &reason); err != nil {
 		t.Fatalf("read Midnight item usability: %v", err)
 	}
-	if assessed != 1 || decision != "eligible" || reason != "gameplay_signal_present" {
+	if assessed != 2 || decision != "eligible" || reason != "gameplay_signal_present" {
 		t.Fatalf("Midnight usability classification is wrong: assessed=%d decision=%q reason=%q", assessed, decision, reason)
+	}
+	var currencyDecision string
+	var currencyEvidence bool
+	if err := database.QueryRowContext(ctx, `
+		SELECT decision,COALESCE((evidence->>'currency_cost')::boolean,false)
+		FROM catalog_entity_usability
+		WHERE product_id=$1 AND build_id=$2 AND entity_type='item' AND external_id=880002`,
+		productID, buildID).Scan(&currencyDecision, &currencyEvidence); err != nil {
+		t.Fatalf("read Midnight currency-cost usability: %v", err)
+	}
+	if currencyDecision != "eligible" || !currencyEvidence {
+		t.Fatalf("Midnight currency-cost evidence was not promoted: decision=%q evidence=%t", currencyDecision, currencyEvidence)
 	}
 }
 
