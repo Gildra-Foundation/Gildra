@@ -177,8 +177,8 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 
 	rows, err := db.Query(ctx, `
 		WITH cohort AS (
-			SELECT entity_type,external_id,
-				CASE WHEN entity_type='item' THEN COALESCE(usability.decision,'review') ELSE 'eligible' END AS decision
+			SELECT cohort.entity_type,cohort.external_id,
+				CASE WHEN cohort.entity_type='item' THEN COALESCE(usability.decision,'review') ELSE 'eligible' END AS decision
 			FROM catalog_entity_expansions cohort
 			JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
 			LEFT JOIN catalog_entity_usability usability ON usability.product_id=cohort.product_id AND usability.build_id=cohort.build_id
@@ -208,8 +208,8 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 
 	if err := db.QueryRow(ctx, `
 		WITH cohort AS (
-			SELECT entity_type,external_id,
-				CASE WHEN entity_type='item' THEN COALESCE(usability.decision,'review') ELSE 'eligible' END AS decision
+			SELECT cohort.entity_type,cohort.external_id,
+				CASE WHEN cohort.entity_type='item' THEN COALESCE(usability.decision,'review') ELSE 'eligible' END AS decision
 			FROM catalog_entity_expansions cohort
 			JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
 			LEFT JOIN catalog_entity_usability usability ON usability.product_id=cohort.product_id AND usability.build_id=cohort.build_id
