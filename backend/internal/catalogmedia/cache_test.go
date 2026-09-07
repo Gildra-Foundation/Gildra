@@ -131,6 +131,9 @@ func TestFetchWagoCASCIconConvertsAndCachesPNG(t *testing.T) {
 		if request.URL.String() != want {
 			t.Fatalf("fallback URL=%q, want %q", request.URL, want)
 		}
+		if got := request.Header.Get("User-Agent"); got != wagoCASCUserAgent {
+			t.Fatalf("fallback User-Agent=%q, want %q", got, wagoCASCUserAgent)
+		}
 		return &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       io.NopCloser(bytes.NewReader(raw)),
