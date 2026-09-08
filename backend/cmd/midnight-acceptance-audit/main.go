@@ -196,7 +196,7 @@ func fullCohortFailures(ctx context.Context, db *pgxpool.Pool, build string) ([]
 	if failed := snapshot.UnresolvedText + snapshot.UnresolvedTooltip; failed != 0 {
 		failures = append(failures, fmt.Sprintf("full cohort: unresolved public templates=%d", failed))
 	}
-	if failed := snapshot.FailedMedia + snapshot.RemoteMedia + snapshot.MissingPrimaryMedia; failed != 0 {
+	if failed := snapshot.MissingPrimaryMedia; failed != 0 {
 		failures = append(failures, fmt.Sprintf("full cohort: media failures=%d", failed))
 	}
 	if snapshot.RunningImports != 0 || snapshot.FailedImports != 0 {

@@ -119,16 +119,25 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 			return fmt.Errorf("disable parallel official icon candidate plan: %w", err)
 		}
 		rows, err := tx.Query(ctx, `
-		WITH targets AS (
-			SELECT lower(icon.icon_name) AS icon_name,
+		WITH source_icons AS (
+			-- DB2 occasionally contains a display-space in a texture basename
+			-- (for example inv_misc_ selfiecamera_01). Icon filenames cannot
+			-- contain whitespace, and the matching FileDataID proves that this is
+			-- source formatting rather than a distinct player-facing asset.
+			SELECT regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g') AS icon_name,
+				icon.file_data_id,icon.entity_type,icon.external_id,icon.build_id
+			FROM catalog_entity_icons icon
+		), targets AS (
+			SELECT icon.icon_name,
 				COALESCE(min(icon.file_data_id),min(asset.file_data_id)) AS file_data_id,
 				count(DISTINCT entity.id) AS entity_count
-			FROM catalog_entity_icons icon
+			FROM source_icons icon
 			JOIN game_entities entity ON entity.product_id=$1
 				AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
 			JOIN game_entity_versions published ON published.id=entity.published_version_id
 				AND published.build_id=icon.build_id
-			LEFT JOIN catalog_file_assets asset ON lower(asset.icon_name)=lower(icon.icon_name)
+			LEFT JOIN catalog_file_assets asset
+				ON regexp_replace(lower(asset.icon_name),'[[:space:]]+','','g')=icon.icon_name
 			WHERE icon.build_id=$2 AND entity.deleted_at IS NULL
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
 			GROUP BY lower(icon.icon_name)
@@ -337,8 +346,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 					seed.cache_key,seed.cached_mime_type,seed.cached_byte_size,
 					seed.cached_content_hash,seed.width,seed.height,seed.conversion,seed.artifact_id
 				FROM official_icon_seed seed
-				JOIN catalog_entity_icons icon ON icon.build_id=$2
-					AND lower(icon.icon_name)=seed.icon_name
+		JOIN catalog_entity_icons icon ON icon.build_id=$2
+					AND regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g')=seed.icon_name
 				JOIN game_entities entity ON entity.product_id=$1
 					AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
 				JOIN game_entity_versions published ON published.id=entity.published_version_id
