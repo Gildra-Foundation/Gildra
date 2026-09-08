@@ -143,7 +143,6 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		if resolved == raw {
 			continue
 		}
-		block["raw_text"] = raw
 		block["text"] = resolved
 		block["resolution_source"] = "db2"
 		entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, resolved)
