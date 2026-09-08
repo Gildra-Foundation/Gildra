@@ -148,6 +148,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 			if err := rows.Scan(&candidate.Name, &candidate.FileDataID, &result.Eligible); err != nil {
 				return fmt.Errorf("scan official icon candidate: %w", err)
 			}
+			candidate.FileDataID = inferFileDataID(candidate.Name, candidate.FileDataID)
 			candidates = append(candidates, candidate)
 		}
 		if err := rows.Err(); err != nil {
@@ -370,6 +371,31 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 		return result, err
 	}
 	return result, nil
+}
+
+// inferFileDataID preserves the explicit DB2 value when it is present. Some
+// modern DB2 icon rows expose the FileDataID as the icon value itself, however,
+// leaving the companion file_data_id column null. Those values are not render
+// filenames; treat a positive decimal-only icon value as the equivalent CASC
+// FileDataID so the build-pinned fallback can fetch the real icon.
+func inferFileDataID(iconName string, explicit *int64) *int64 {
+	if explicit != nil && *explicit > 0 {
+		return explicit
+	}
+	iconName = strings.TrimSpace(iconName)
+	if iconName == "" {
+		return nil
+	}
+	for _, character := range iconName {
+		if character < '0' || character > '9' {
+			return nil
+		}
+	}
+	fileDataID, err := strconv.ParseInt(iconName, 10, 64)
+	if err != nil || fileDataID <= 0 {
+		return nil
+	}
+	return &fileDataID
 }
 
 func (c *Cache) fetchOfficialIcons(
