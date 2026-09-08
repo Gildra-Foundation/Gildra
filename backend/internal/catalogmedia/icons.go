@@ -140,18 +140,17 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				icon.file_data_id,icon.entity_type,icon.external_id,icon.build_id
 			FROM catalog_entity_icons icon
 			WHERE icon.build_id=$2
+		), verified_primary_media AS (
+			SELECT DISTINCT media.entity_id,media.build_id
+			FROM catalog_entity_media media
+			WHERE media.build_id=$2 AND media.media_kind='icon' AND media.is_primary
+			  AND media.cache_status='cached' AND media.cached_content_hash IS NOT NULL
+			  AND media.cached_byte_size IS NOT NULL
 		), targets AS (
 			SELECT icon.icon_name,
 				COALESCE(min(icon.file_data_id),min(asset.file_data_id)) AS file_data_id,
 				count(DISTINCT entity.id) AS entity_count,
-				count(DISTINCT entity.id) FILTER (WHERE NOT EXISTS (
-					SELECT 1 FROM catalog_entity_media primary_media
-					WHERE primary_media.entity_id=entity.id AND primary_media.build_id=icon.build_id
-					  AND primary_media.media_kind='icon' AND primary_media.is_primary
-					  AND primary_media.cache_status='cached'
-					  AND primary_media.cached_content_hash IS NOT NULL
-					  AND primary_media.cached_byte_size IS NOT NULL
-				)) AS missing_media_entity_count
+				count(DISTINCT entity.id) FILTER (WHERE primary_media.entity_id IS NULL) AS missing_media_entity_count
 			FROM source_icons icon
 			JOIN game_entities entity ON entity.product_id=$1
 				AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
@@ -161,6 +160,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				AND cohort.build_id=icon.build_id AND cohort.entity_type=icon.entity_type
 				AND cohort.external_id=icon.external_id AND cohort.classification='confirmed'
 			LEFT JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
+			LEFT JOIN verified_primary_media primary_media ON primary_media.entity_id=entity.id
+				AND primary_media.build_id=icon.build_id
 			LEFT JOIN catalog_file_assets asset
 				ON regexp_replace(regexp_replace(lower(asset.icon_name),'[[:space:]]+','','g'),'_+','_','g')=icon.icon_name
 			WHERE entity.deleted_at IS NULL
