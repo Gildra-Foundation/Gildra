@@ -108,6 +108,21 @@ func TestOfficialIconURL(t *testing.T) {
 	}
 }
 
+func TestZamimgIconURL(t *testing.T) {
+	t.Parallel()
+	got, err := zamimgIconURL(" Spell_Fire_Flamebolt ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_flamebolt.jpg"
+	if got != want {
+		t.Fatalf("zamimgIconURL=%q, want %q", got, want)
+	}
+	if _, err := zamimgIconURL("../secret"); err == nil {
+		t.Fatal("zamimgIconURL unexpectedly accepted a path")
+	}
+}
+
 func TestInferFileDataID(t *testing.T) {
 	t.Parallel()
 	explicit := int64(101)

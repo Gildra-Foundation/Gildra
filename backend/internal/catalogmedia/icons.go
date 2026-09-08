@@ -22,6 +22,12 @@ const officialIconOrigin = "https://render.worldofwarcraft.com/eu/icons/56/"
 const wagoCASCOrigin = "https://wago.tools/api/casc/"
 const wagoCASCUserAgent = "GildraCatalogMedia/1.0 (+https://gildra.net)"
 
+// zamimgIconOrigin is a filename-addressed WoW icon mirror. It is used only
+// after both the official render endpoint and the build-pinned CASC fallback
+// fail. The icon name itself still comes from the imported, build-proven DB2
+// mapping and the downloaded bytes are cached locally before publication.
+const zamimgIconOrigin = "https://wow.zamimg.com/images/wow/icons/large/"
+
 // Wago's CASC endpoint is deliberately conservative about burst traffic. Icon
 // seeding is a maintenance job, so prefer a single deterministic stream over
 // a fast parallel burst that leaves part of the catalog uncached with 403s.
@@ -41,6 +47,7 @@ type IconSeedResult struct {
 	Bytes                  int64         `json:"bytes"`
 	FallbackCached         int64         `json:"fallbackCached"`
 	UnpinnedFallbackCached int64         `json:"unpinnedFallbackCached"`
+	NameFallbackCached     int64         `json:"nameFallbackCached"`
 	FailureSample          []IconFailure `json:"failureSample,omitempty"`
 }
 
@@ -131,7 +138,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 			FROM catalog_entity_media media
 			WHERE media.build_id=$2 AND media.media_kind='icon'
 			  AND ((media.asset_key='official_render_56' AND media.source='blizzard_api')
-			    OR (media.asset_key='wago_casc_icon_png' AND media.source='wago_tools'))
+			    OR (media.asset_key='wago_casc_icon_png' AND media.source='wago_tools')
+			    OR (media.asset_key='zamimg_icon_large' AND media.source='zamimg'))
 			  AND media.cache_status='cached' AND media.cached_content_hash IS NOT NULL
 			  AND media.cached_byte_size IS NOT NULL AND media.attributes ? 'icon_name'
 			GROUP BY lower(media.attributes->>'icon_name')
@@ -190,6 +198,9 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 				result.UnpinnedFallbackCached++
 			}
 		}
+		if outcome.Icon.Source == "zamimg" {
+			result.NameFallbackCached++
+		}
 	}
 	if err := ctx.Err(); err != nil {
 		return result, err
@@ -211,7 +222,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 
 	err = pgx.BeginFunc(ctx, c.db, func(tx pgx.Tx) error {
 		snapshotIDs := make(map[string]uuid.UUID, len(iconsBySource))
-		for _, source := range []string{"blizzard_api", "wago_tools"} {
+		for _, source := range []string{"blizzard_api", "wago_tools", "zamimg"} {
 			sourceIcons := iconsBySource[source]
 			if len(sourceIcons) == 0 {
 				continue
@@ -224,6 +235,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 			projection := "official_render_icons_56"
 			if source == "wago_tools" {
 				projection = "wago_casc_icons_png"
+			} else if source == "zamimg" {
+				projection = "zamimg_icons_large"
 			}
 			var snapshotID uuid.UUID
 			if err := tx.QueryRow(ctx, `
@@ -268,6 +281,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 			projection := "official_render_icon_56"
 			if icon.Source == "wago_tools" {
 				projection = "wago_casc_icon_blp2"
+			} else if icon.Source == "zamimg" {
+				projection = "zamimg_icon_large"
 			}
 			seedRows = append(seedRows, []any{
 				icon.Name, icon.FileDataID, snapshotIDs[icon.Source], icon.Source,
@@ -333,7 +348,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 					WHERE existing.entity_id=entity.id AND existing.build_id=icon.build_id
 					  AND existing.media_kind='icon' AND existing.cache_status='cached'
 					  AND ((existing.asset_key='official_render_56' AND existing.source='blizzard_api')
-					    OR (existing.asset_key='wago_casc_icon_png' AND existing.source='wago_tools'))
+					    OR (existing.asset_key='wago_casc_icon_png' AND existing.source='wago_tools')
+					    OR (existing.asset_key='zamimg_icon_large' AND existing.source='zamimg'))
 					  AND existing.cached_content_hash IS NOT NULL AND existing.cached_byte_size IS NOT NULL
 				)
 				ORDER BY entity.id,icon.file_data_id NULLS LAST
@@ -447,18 +463,25 @@ func (c *Cache) fetchOfficialIcons(
 						Height:         56,
 						Conversion:     "identity",
 					}
-				} else if candidate.FileDataID != nil {
-					fallback, fallbackErr := c.fetchWagoCASCIcon(ctx, candidate, product, buildVersion)
-					if fallbackErr == nil {
-						outcome.Icon = fallback
-					} else {
-						outcome.Err = errors.Join(
-							fmt.Errorf("official render: %w", err),
-							fmt.Errorf("Wago CASC fallback: %w", fallbackErr),
-						)
-					}
 				} else {
-					outcome.Err = err
+					fetchErrors := []error{fmt.Errorf("official render: %w", err)}
+					if candidate.FileDataID != nil {
+						fallback, fallbackErr := c.fetchWagoCASCIcon(ctx, candidate, product, buildVersion)
+						if fallbackErr == nil {
+							outcome.Icon = fallback
+						} else {
+							fetchErrors = append(fetchErrors, fmt.Errorf("Wago CASC fallback: %w", fallbackErr))
+						}
+					}
+					if outcome.Icon.Source == "" {
+						fallback, fallbackErr := c.fetchZamimgIcon(ctx, candidate)
+						if fallbackErr == nil {
+							outcome.Icon = fallback
+						} else {
+							fetchErrors = append(fetchErrors, fmt.Errorf("name fallback: %w", fallbackErr))
+							outcome.Err = errors.Join(fetchErrors...)
+						}
+					}
 				}
 				select {
 				case results <- outcome:
@@ -536,6 +559,36 @@ func (c *Cache) fetchWagoCASCIcon(
 	}, nil
 }
 
+func (c *Cache) fetchZamimgIcon(ctx context.Context, candidate iconCandidate) (cachedIcon, error) {
+	sourceURL, err := zamimgIconURL(candidate.Name)
+	if err != nil {
+		return cachedIcon{}, err
+	}
+	cacheKey, mimeType, size, hash, err := c.fetch(ctx, sourceURL)
+	if err != nil {
+		return cachedIcon{}, err
+	}
+	if mimeType != "image/jpeg" {
+		return cachedIcon{}, fmt.Errorf("unexpected icon MIME type %q", mimeType)
+	}
+	return cachedIcon{
+		iconCandidate:  candidate,
+		Source:         "zamimg",
+		AssetKey:       "zamimg_icon_large",
+		ArtifactKey:    "icons/large/" + candidate.Name + ".jpg",
+		SourceURL:      sourceURL,
+		SourceSize:     size,
+		SourceHash:     hash,
+		CacheKey:       cacheKey,
+		CachedMIMEType: mimeType,
+		CachedSize:     size,
+		CachedHash:     hash,
+		Width:          56,
+		Height:         56,
+		Conversion:     "filename_mirror_identity",
+	}, nil
+}
+
 func (c *Cache) downloadWagoCASC(ctx context.Context, sourceURL string) ([]byte, error) {
 	parsed, err := validateRemoteURL(sourceURL)
 	if err != nil {
@@ -585,6 +638,14 @@ func wagoCASCIconURL(fileDataID int64, product, buildVersion string) (string, er
 }
 
 func officialIconURL(name string) (string, error) {
+	return iconURL(officialIconOrigin, name)
+}
+
+func zamimgIconURL(name string) (string, error) {
+	return iconURL(zamimgIconOrigin, name)
+}
+
+func iconURL(origin, name string) (string, error) {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" {
 		return "", errors.New("icon name is required")
@@ -594,5 +655,5 @@ func officialIconURL(name string) (string, error) {
 			return "", errors.New("icon name contains unsupported characters")
 		}
 	}
-	return officialIconOrigin + url.PathEscape(name) + ".jpg", nil
+	return origin + url.PathEscape(name) + ".jpg", nil
 }
