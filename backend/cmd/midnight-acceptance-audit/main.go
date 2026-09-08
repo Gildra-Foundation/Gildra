@@ -1,0 +1,298 @@
+// midnight-acceptance-audit performs the build-pinned public acceptance sweep
+// for the Midnight cohort. It deliberately calls the public API rather than
+// reading projections directly, so an eligible row that cannot render is a
+// failure and review/excluded rows that leak are failures too.
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"net/http"
+	"net/url"
+	"os"
+	"regexp"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var templateToken = regexp.MustCompile(`\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])`)
+var technicalName = regexp.MustCompile(`(?i)(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\]`)
+
+type record struct {
+	ID         string
+	Type       string
+	ExternalID int64
+	Decision   string
+	HasMedia   bool
+}
+
+type result struct {
+	Build       string   `json:"build"`
+	Random      int      `json:"randomEligible"`
+	Edge        int      `json:"edgeCases"`
+	Checked     int      `json:"checkedRequests"`
+	Failures    []string `json:"failures,omitempty"`
+	CompletedAt string   `json:"completedAt"`
+}
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	var databaseURL, apiBase, build, seed string
+	var randomCount, edgeCount int
+	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
+	flag.StringVar(&apiBase, "api-base-url", "https://api.gildra.net", "public API base URL")
+	flag.StringVar(&build, "build", "", "build version (defaults to the active WoW build)")
+	flag.StringVar(&seed, "seed", "midnight-acceptance-v1", "deterministic selection seed")
+	flag.IntVar(&randomCount, "random", 200, "number of eligible random records")
+	flag.IntVar(&edgeCount, "edge", 100, "number of edge records")
+	flag.Parse()
+	if databaseURL == "" {
+		return errors.New("DATABASE_URL or -database-url is required")
+	}
+	if randomCount < 1 || edgeCount < 1 {
+		return errors.New("-random and -edge must be positive")
+	}
+	apiBase = strings.TrimRight(strings.TrimSpace(apiBase), "/")
+	if _, err := url.ParseRequestURI(apiBase); err != nil {
+		return fmt.Errorf("invalid API base URL: %w", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+	db, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	if build == "" {
+		if err := db.QueryRow(ctx, `SELECT build.version FROM game_builds build JOIN game_products product ON product.id=build.product_id WHERE product.slug='wow' AND build.is_active ORDER BY build.build_number DESC LIMIT 1`).Scan(&build); err != nil {
+			return fmt.Errorf("load active build: %w", err)
+		}
+	}
+	randomRecords, err := loadRecords(ctx, db, build, seed, randomCount, "random")
+	if err != nil {
+		return err
+	}
+	seen := make(map[string]struct{}, len(randomRecords)+edgeCount)
+	for _, item := range randomRecords {
+		seen[item.ID] = struct{}{}
+	}
+	selectedEdges := make([]record, 0, edgeCount)
+	edgeSelectors := []string{"noneligible", "missing_media", "template"}
+	for _, selector := range edgeSelectors {
+		candidates, err := loadRecords(ctx, db, build, seed, edgeCount, selector)
+		if err != nil {
+			return err
+		}
+		quota := edgeCount / len(edgeSelectors)
+		if selector == edgeSelectors[len(edgeSelectors)-1] {
+			quota = edgeCount - len(selectedEdges)
+		}
+		for _, item := range candidates {
+			if len(selectedEdges) >= edgeCount || quota == 0 {
+				break
+			}
+			if _, duplicate := seen[item.ID]; duplicate {
+				continue
+			}
+			seen[item.ID] = struct{}{}
+			selectedEdges = append(selectedEdges, item)
+			quota--
+		}
+	}
+	for _, selector := range edgeSelectors {
+		if len(selectedEdges) == edgeCount {
+			break
+		}
+		candidates, err := loadRecords(ctx, db, build, seed+"-fill", edgeCount, selector)
+		if err != nil {
+			return err
+		}
+		for _, item := range candidates {
+			if len(selectedEdges) == edgeCount {
+				break
+			}
+			if _, duplicate := seen[item.ID]; duplicate {
+				continue
+			}
+			seen[item.ID] = struct{}{}
+			selectedEdges = append(selectedEdges, item)
+		}
+	}
+	if len(randomRecords) != randomCount || len(selectedEdges) != edgeCount {
+		return fmt.Errorf("acceptance cohort is too small: random=%d/%d edge=%d/%d", len(randomRecords), randomCount, len(selectedEdges), edgeCount)
+	}
+	report := result{Build: build, Random: len(randomRecords), Edge: len(selectedEdges)}
+	client := &http.Client{Timeout: 20 * time.Second}
+	for _, item := range append(randomRecords, selectedEdges...) {
+		if item.Decision != "eligible" {
+			report.Checked++
+			if err := expectStatus(ctx, client, apiBase, item.ID, "en_US", http.StatusNotFound); err != nil {
+				report.Failures = append(report.Failures, fmt.Sprintf("%s/%d (%s): %v", item.Type, item.ExternalID, item.Decision, err))
+			}
+			continue
+		}
+		for _, locale := range []string{"en_US", "ru_RU"} {
+			report.Checked++
+			payload, err := fetchEntity(ctx, client, apiBase, item.ID, locale)
+			if err != nil {
+				report.Failures = append(report.Failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
+				continue
+			}
+			if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
+				report.Failures = append(report.Failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
+			}
+		}
+	}
+	report.CompletedAt = time.Now().UTC().Format(time.RFC3339)
+	sort.Strings(report.Failures)
+	encoded, _ := json.MarshalIndent(report, "", "  ")
+	fmt.Println(string(encoded))
+	if len(report.Failures) > 0 {
+		return fmt.Errorf("Midnight public acceptance failed: %d failures", len(report.Failures))
+	}
+	return nil
+}
+
+func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limit int, selector string) ([]record, error) {
+	query := `
+	WITH scoped AS (
+		SELECT entity.id,cohort.entity_type,cohort.external_id,COALESCE(usability.decision,'review') decision,
+			EXISTS (SELECT 1 FROM catalog_entity_media media WHERE media.build_id=cohort.build_id
+				AND media.entity_type=cohort.entity_type AND media.external_id=cohort.external_id
+				AND media.cache_status='cached' AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL AND media.cached_url IS NOT NULL) has_media,
+			EXISTS (SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=version.id
+				AND (tooltip.plain_text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' OR tooltip.blocks::text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])')) has_template
+		FROM catalog_entity_expansions cohort
+		JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id AND expansion.expansion_key='midnight'
+		JOIN game_products product ON product.id=cohort.product_id AND product.slug='wow'
+		JOIN game_builds build_row ON build_row.id=cohort.build_id AND build_row.version=$1
+		JOIN game_entities entity ON entity.product_id=cohort.product_id AND entity.entity_type=cohort.entity_type AND entity.external_id=cohort.external_id AND entity.deleted_at IS NULL
+		JOIN game_entity_versions version ON version.id=entity.published_version_id AND version.build_id=cohort.build_id
+		LEFT JOIN catalog_entity_usability usability ON usability.product_id=cohort.product_id AND usability.build_id=cohort.build_id AND usability.entity_type=cohort.entity_type AND usability.external_id=cohort.external_id
+		WHERE cohort.classification='confirmed'
+	)
+	SELECT id::text,entity_type,external_id,decision,has_media
+	FROM scoped
+	WHERE `
+	switch selector {
+	case "random":
+		query += `decision='eligible' ORDER BY md5($2 || id::text) LIMIT $3`
+	case "noneligible":
+		query += `decision<>'eligible' ORDER BY md5($2 || id::text) LIMIT $3`
+	case "missing_media":
+		query += `decision='eligible' AND entity_type='item' AND NOT has_media ORDER BY md5($2 || id::text) LIMIT $3`
+	case "template":
+		query += `decision='eligible' AND has_template ORDER BY md5($2 || id::text) LIMIT $3`
+	default:
+		return nil, fmt.Errorf("unsupported acceptance selector %q", selector)
+	}
+	rows, err := db.Query(ctx, query, build, seed, limit)
+	if err != nil {
+		return nil, fmt.Errorf("select acceptance records: %w", err)
+	}
+	defer rows.Close()
+	result := make([]record, 0, limit)
+	for rows.Next() {
+		var item record
+		if err := rows.Scan(&item.ID, &item.Type, &item.ExternalID, &item.Decision, &item.HasMedia); err != nil {
+			return nil, err
+		}
+		result = append(result, item)
+	}
+	return result, rows.Err()
+}
+
+func expectStatus(ctx context.Context, client *http.Client, base, id, locale string, wanted int) error {
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, base+"/v1/game/entities/"+id+"?locale="+url.QueryEscape(locale), nil)
+	if err != nil {
+		return err
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != wanted {
+		return fmt.Errorf("HTTP %d, want %d", response.StatusCode, wanted)
+	}
+	return nil
+}
+
+func fetchEntity(ctx context.Context, client *http.Client, base, id, locale string) (map[string]any, error) {
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, base+"/v1/game/entities/"+id+"?locale="+url.QueryEscape(locale), nil)
+	if err != nil {
+		return nil, err
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d, want 200", response.StatusCode)
+	}
+	var payload map[string]any
+	if err := json.NewDecoder(http.MaxBytesReader(nil, response.Body, 8<<20)).Decode(&payload); err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
+func validateDisplay(payload map[string]any, entityType string, hasMedia bool) error {
+	name, _ := payload["name"].(string)
+	if strings.TrimSpace(name) == "" || technicalName.MatchString(name) {
+		return fmt.Errorf("invalid public name %q", name)
+	}
+	if entityType == "item" && !hasMedia {
+		return errors.New("missing verified primary media")
+	}
+	if hasMedia {
+		if iconURL, _ := payload["iconUrl"].(string); !strings.HasPrefix(iconURL, "https://api.gildra.net/v1/media/") {
+			return fmt.Errorf("cached media has no local icon URL")
+		}
+	}
+	for _, key := range []string{"description", "resolvedDescription"} {
+		if value, _ := payload[key].(string); templateToken.MatchString(value) {
+			return fmt.Errorf("unresolved template in %s", key)
+		}
+	}
+	if tooltip, ok := payload["tooltip"].(map[string]any); ok && tooltipHasTemplate(tooltip) {
+		return errors.New("unresolved template in tooltip")
+	}
+	return nil
+}
+
+func tooltipHasTemplate(value any) bool {
+	switch typed := value.(type) {
+	case string:
+		return templateToken.MatchString(typed)
+	case []any:
+		for _, entry := range typed {
+			if tooltipHasTemplate(entry) {
+				return true
+			}
+		}
+	case map[string]any:
+		for key, entry := range typed {
+			if key == "raw_text" {
+				continue
+			}
+			if tooltipHasTemplate(entry) {
+				return true
+			}
+		}
+	}
+	return false
+}
