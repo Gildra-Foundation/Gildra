@@ -220,17 +220,30 @@ func checkRecord(ctx context.Context, client *http.Client, apiBase string, item 
 		}
 		return 1, failures
 	}
+	requests := 0
 	for _, locale := range []string{"en_US", "ru_RU"} {
 		payload, err := fetchEntity(ctx, client, apiBase, item.ID, locale)
+		requests++
 		if err != nil {
 			failures = append(failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
 			continue
 		}
 		if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
 			failures = append(failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
+			continue
+		}
+		// Media is build-scoped rather than localized. One actual fetch is
+		// enough to prove that the public URL points at the locally cached
+		// asset, while each localized entity response still proves it exposes
+		// that URL consistently.
+		if locale == "en_US" && item.HasMedia {
+			requests++
+			if err := fetchCachedMedia(ctx, client, payload); err != nil {
+				failures = append(failures, fmt.Sprintf("%s/%d icon: %v", item.Type, item.ExternalID, err))
+			}
 		}
 	}
-	return 2, failures
+	return requests, failures
 }
 
 func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limit int, selector string) ([]record, error) {
@@ -344,6 +357,28 @@ func validateDisplay(payload map[string]any, entityType string, hasMedia bool) e
 	}
 	if tooltip, ok := payload["tooltip"].(map[string]any); ok && tooltipHasTemplate(tooltip) {
 		return errors.New("unresolved template in tooltip")
+	}
+	return nil
+}
+
+// fetchCachedMedia proves that the public entity URL does not merely look
+// local: it must serve an actual image without redirecting to a third party.
+func fetchCachedMedia(ctx context.Context, client *http.Client, payload map[string]any) error {
+	iconURL, _ := payload["iconUrl"].(string)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, iconURL, nil)
+	if err != nil {
+		return fmt.Errorf("create media request: %w", err)
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("HTTP %d, want 200", response.StatusCode)
+	}
+	if !strings.HasPrefix(strings.ToLower(response.Header.Get("Content-Type")), "image/") {
+		return fmt.Errorf("content type %q is not an image", response.Header.Get("Content-Type"))
 	}
 	return nil
 }
