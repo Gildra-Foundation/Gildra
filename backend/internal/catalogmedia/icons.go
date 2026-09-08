@@ -465,7 +465,19 @@ func (c *Cache) fetchOfficialIcons(
 					}
 				} else {
 					fetchErrors := []error{fmt.Errorf("official render: %w", err)}
-					if candidate.FileDataID != nil {
+					// The filename mirror is backed by the imported DB2 icon mapping and
+					// responds quickly to the official CDN's systematic 403. Try it
+					// before Wago CASC: the latter is useful as a byte-level fallback,
+					// but a slow CASC gateway must not serialize thousands of icons.
+					if outcome.Icon.Source == "" {
+						fallback, fallbackErr := c.fetchZamimgIcon(ctx, candidate)
+						if fallbackErr == nil {
+							outcome.Icon = fallback
+						} else {
+							fetchErrors = append(fetchErrors, fmt.Errorf("name fallback: %w", fallbackErr))
+						}
+					}
+					if outcome.Icon.Source == "" && candidate.FileDataID != nil {
 						fallback, fallbackErr := c.fetchWagoCASCIcon(ctx, candidate, product, buildVersion)
 						if fallbackErr == nil {
 							outcome.Icon = fallback
@@ -474,13 +486,7 @@ func (c *Cache) fetchOfficialIcons(
 						}
 					}
 					if outcome.Icon.Source == "" {
-						fallback, fallbackErr := c.fetchZamimgIcon(ctx, candidate)
-						if fallbackErr == nil {
-							outcome.Icon = fallback
-						} else {
-							fetchErrors = append(fetchErrors, fmt.Errorf("name fallback: %w", fallbackErr))
-							outcome.Err = errors.Join(fetchErrors...)
-						}
+						outcome.Err = errors.Join(fetchErrors...)
 					}
 				}
 				select {
