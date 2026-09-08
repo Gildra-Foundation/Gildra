@@ -23,7 +23,7 @@ func main() {
 }
 
 func run() error {
-	var databaseURL, root, publicBase, environment, accessMode, product string
+	var databaseURL, root, publicBase, environment, accessMode, product, expansion string
 	var limit, seedIconLimit int
 	var confirm, skipMediaCache bool
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
@@ -32,6 +32,7 @@ func run() error {
 	flag.StringVar(&environment, "environment", envOr("CATALOG_PUBLICATION_ENVIRONMENT", "development"), "grant environment")
 	flag.StringVar(&accessMode, "access-mode", envOr("CATALOG_ACCESS_MODE", "public"), "catalog access mode: public or private")
 	flag.StringVar(&product, "product", "wow", "game product for official icon seeding")
+	flag.StringVar(&expansion, "expansion", os.Getenv("CATALOG_MEDIA_EXPANSION"), "optional confirmed expansion key to scope icon seeding")
 	flag.IntVar(&limit, "limit", 100, "maximum assets per run")
 	flag.IntVar(&seedIconLimit, "seed-icon-limit", 0, "download and link this many missing official icons before the normal cache run")
 	flag.BoolVar(&skipMediaCache, "skip-media-cache", false, "seed official icons without processing other remote media")
@@ -65,7 +66,9 @@ func run() error {
 	}
 	var iconResult catalogmedia.IconSeedResult
 	if seedIconLimit > 0 {
-		iconResult, err = cache.SeedOfficialIcons(ctx, product, seedIconLimit)
+		iconResult, err = cache.SeedOfficialIcons(ctx, catalogmedia.IconSeedOptions{
+			Product: product, Expansion: expansion, Limit: seedIconLimit, MissingOnly: true,
+		})
 		if err != nil {
 			return err
 		}
