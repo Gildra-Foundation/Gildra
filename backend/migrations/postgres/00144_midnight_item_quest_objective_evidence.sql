@@ -134,6 +134,10 @@ END;
 $$;
 -- +goose StatementEnd
 
+-- The public directory reads its headline totals from this exact usability
+-- projection, so refresh it in the same migration as the decisions.
+SELECT refresh_catalog_public_summary_stats(NULL);
+
 -- +goose Down
 -- The function remains forward-compatible if the schema is rolled back by
 -- one step; migration 00143's v2 logic is restored when rolling back further.
