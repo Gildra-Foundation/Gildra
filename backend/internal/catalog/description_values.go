@@ -27,7 +27,10 @@ var (
 	spellAuraValueToken     = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
 	spellPluralToken        = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
 	currentMaxStacksToken   = regexp.MustCompile(`\$u\b`)
-	spellTickToken          = regexp.MustCompile(`\$t(\d+)\b`)
+	// Tick intervals may address the current spell (`$t2`) or a referenced
+	// spell (`$1217960t2`). Keep the optional spell ID so item-effect blocks
+	// can resolve their explicit reference instead of leaking a raw token.
+	spellTickToken          = regexp.MustCompile(`\$(\d*)t(\d+)\b`)
 	currentDurationToken    = regexp.MustCompile(`\$d\b`)
 	currentMaxDurationToken = regexp.MustCompile(`\$D\b`)
 	currentEffectToken      = regexp.MustCompile(`\$s(\d+)\b`)
@@ -558,8 +561,12 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 	}
 	text = spellTickToken.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellTickToken.FindStringSubmatch(token)
-		index, _ := strconv.Atoi(match[1])
-		if value, ok := values[currentSpellID].Effects[index]; ok && value.AmplitudeMS > 0 {
+		spellID := currentSpellID
+		if match[1] != "" {
+			spellID, _ = strconv.ParseInt(match[1], 10, 64)
+		}
+		index, _ := strconv.Atoi(match[2])
+		if value, ok := values[spellID].Effects[index]; ok && value.AmplitudeMS > 0 {
 			return formatDescriptionDuration(value.AmplitudeMS, locale)
 		}
 		return token

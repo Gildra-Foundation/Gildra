@@ -116,6 +116,12 @@ func TestResolveDescriptionTextResolvesMaxDurationAndTick(t *testing.T) {
 	if got != "Lasts 2 sec (up to 8 sec); ticks every 3 sec." {
 		t.Fatalf("unexpected duration resolution: %q", got)
 	}
+	got = resolveDescriptionText("Ticks every $1217960t2.", 1217961, map[int64]spellDescriptionValues{
+		1217960: {Effects: map[int]spellEffectValue{2: {AmplitudeMS: 2000}}},
+	}, "en_US")
+	if got != "Ticks every 2 sec." {
+		t.Fatalf("unexpected referenced tick resolution: %q", got)
+	}
 }
 
 func TestResolveDescriptionTextResolvesSpellRadius(t *testing.T) {
