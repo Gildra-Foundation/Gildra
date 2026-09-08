@@ -141,7 +141,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 				ON regexp_replace(lower(asset.icon_name),'[[:space:]]+','','g')=icon.icon_name
 			WHERE entity.deleted_at IS NULL
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
-			GROUP BY lower(icon.icon_name)
+			GROUP BY icon.icon_name
 		), cached AS (
 			SELECT lower(media.attributes->>'icon_name') AS icon_name,
 				count(DISTINCT media.entity_id) AS entity_count
