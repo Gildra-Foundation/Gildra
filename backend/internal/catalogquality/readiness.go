@@ -274,26 +274,26 @@ func EvaluateReadinessWithRecoveryPolicy(
 			WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
 			  AND entity.deleted_at IS NULL AND version.build_id=$2
 		), facts AS (
-			SELECT role.version_id,role.source_artifact_id FROM catalog_npc_roles role
-			UNION ALL SELECT location.version_id,location.source_artifact_id FROM catalog_npc_locations location
-			UNION ALL SELECT acquisition.version_id,acquisition.source_artifact_id FROM catalog_item_acquisition_sources acquisition
-			UNION ALL SELECT stat.version_id,stat.source_artifact_id FROM catalog_item_stats stat
-			UNION ALL SELECT effect.version_id,effect.source_artifact_id FROM catalog_item_effects effect
-			UNION ALL SELECT effect.spell_version_id,effect.source_artifact_id FROM catalog_spell_effects effect
-			UNION ALL SELECT recipe.profession_version_id,recipe.source_artifact_id FROM catalog_profession_recipes recipe
-			UNION ALL SELECT reagent.recipe_version_id,reagent.source_artifact_id FROM catalog_recipe_reagents reagent
-			UNION ALL SELECT currency.recipe_version_id,currency.source_artifact_id FROM catalog_recipe_currencies currency
-			UNION ALL SELECT output.recipe_version_id,output.source_artifact_id FROM catalog_recipe_outputs output
-			UNION ALL SELECT display.version_id,display.source_artifact_id FROM catalog_creature_displays display
-			UNION ALL SELECT difficulty.version_id,difficulty.source_artifact_id FROM catalog_creature_difficulties difficulty
+			SELECT role.version_id,role.source_artifact_id FROM current_versions current JOIN catalog_npc_roles role ON role.version_id=current.version_id
+			UNION ALL SELECT location.version_id,location.source_artifact_id FROM current_versions current JOIN catalog_npc_locations location ON location.version_id=current.version_id
+			UNION ALL SELECT acquisition.version_id,acquisition.source_artifact_id FROM current_versions current JOIN catalog_item_acquisition_sources acquisition ON acquisition.version_id=current.version_id
+			UNION ALL SELECT stat.version_id,stat.source_artifact_id FROM current_versions current JOIN catalog_item_stats stat ON stat.version_id=current.version_id
+			UNION ALL SELECT effect.version_id,effect.source_artifact_id FROM current_versions current JOIN catalog_item_effects effect ON effect.version_id=current.version_id
+			UNION ALL SELECT effect.spell_version_id,effect.source_artifact_id FROM current_versions current JOIN catalog_spell_effects effect ON effect.spell_version_id=current.version_id
+			UNION ALL SELECT recipe.profession_version_id,recipe.source_artifact_id FROM current_versions current JOIN catalog_profession_recipes recipe ON recipe.profession_version_id=current.version_id
+			UNION ALL SELECT reagent.recipe_version_id,reagent.source_artifact_id FROM current_versions current JOIN catalog_recipe_reagents reagent ON reagent.recipe_version_id=current.version_id
+			UNION ALL SELECT currency.recipe_version_id,currency.source_artifact_id FROM current_versions current JOIN catalog_recipe_currencies currency ON currency.recipe_version_id=current.version_id
+			UNION ALL SELECT output.recipe_version_id,output.source_artifact_id FROM current_versions current JOIN catalog_recipe_outputs output ON output.recipe_version_id=current.version_id
+			UNION ALL SELECT display.version_id,display.source_artifact_id FROM current_versions current JOIN catalog_creature_displays display ON display.version_id=current.version_id
+			UNION ALL SELECT difficulty.version_id,difficulty.source_artifact_id FROM current_versions current JOIN catalog_creature_difficulties difficulty ON difficulty.version_id=current.version_id
 			UNION ALL
 			SELECT variant.item_version_id,stat.source_artifact_id
 			FROM catalog_item_variant_stats stat
 			JOIN catalog_item_variants variant ON variant.id=stat.variant_id
+			JOIN current_versions current ON current.version_id=variant.item_version_id
 		), invalid AS (
 			SELECT fact.version_id
 			FROM facts fact
-			JOIN current_versions current ON current.version_id=fact.version_id
 			LEFT JOIN catalog_source_artifacts artifact ON artifact.id=fact.source_artifact_id
 			WHERE artifact.id IS NULL OR artifact.status<>'ready'
 			   OR artifact.content_hash IS NULL OR artifact.byte_size IS NULL
