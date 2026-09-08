@@ -27,7 +27,10 @@ services:
       interval: 10s
       timeout: 3s
       retries: 12
-      start_period: 30s
+      # Goose may need several minutes for an intentionally heavyweight
+      # migration (for example rebuilding a public read model).  Do not mark
+      # a container unhealthy before its migration transaction can finish.
+      start_period: 5m
 
   catalog-pipeline:
     user: "65532:65532"
