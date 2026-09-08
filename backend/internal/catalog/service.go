@@ -1014,12 +1014,8 @@ func (s *Service) enrichMedia(ctx context.Context, entities []*Entity) error {
 			media.locale,media.mime_type,media.cache_status,media.file_data_id,
 			media.width,media.height,media.is_primary
 		FROM proved_media media
-		WHERE (
-			media.cache_status='cached' AND NULLIF(media.cached_url,'') IS NOT NULL
-			AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL
-		) OR (
-			media.cache_status='remote' AND media.source_url ~ '^https://'
-		)
+		WHERE media.cache_status='cached' AND NULLIF(media.cached_url,'') IS NOT NULL
+		  AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL
 		ORDER BY media.entity_id,(media.media_kind='icon') DESC,media.is_primary DESC,
 			media.media_kind,media.asset_key,media.id`, ids)
 	if err != nil {
@@ -1044,19 +1040,6 @@ func (s *Service) enrichMedia(ctx context.Context, entities []*Entity) error {
 	}
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("iterate entity media: %w", err)
-	}
-	// Media bytes are filled asynchronously. If a published version already
-	// carries a validated icon name, expose the official render URL until the
-	// local cache worker has produced a content-addressed object. This keeps
-	// the library usable without treating an uncached asset as a local cache
-	// success.
-	for _, entity := range entities {
-		if entity == nil || entity.IconURL != nil || entity.IconName == nil {
-			continue
-		}
-		if value, ok := iconURLFromName(*entity.IconName); ok {
-			entity.IconURL = &value
-		}
 	}
 	return nil
 }
