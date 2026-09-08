@@ -16,6 +16,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -34,6 +36,7 @@ type record struct {
 
 type result struct {
 	Build       string   `json:"build"`
+	Full        bool     `json:"fullCohort"`
 	Random      int      `json:"randomEligible"`
 	Edge        int      `json:"edgeCases"`
 	Checked     int      `json:"checkedRequests"`
@@ -50,25 +53,36 @@ func main() {
 
 func run() error {
 	var databaseURL, apiBase, build, seed string
-	var randomCount, edgeCount int
+	var randomCount, edgeCount, concurrency int
+	var all bool
+	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
 	flag.StringVar(&apiBase, "api-base-url", "https://api.gildra.net", "public API base URL")
 	flag.StringVar(&build, "build", "", "build version (defaults to the active WoW build)")
 	flag.StringVar(&seed, "seed", "midnight-acceptance-v1", "deterministic selection seed")
 	flag.IntVar(&randomCount, "random", 200, "number of eligible random records")
 	flag.IntVar(&edgeCount, "edge", 100, "number of edge records")
+	flag.BoolVar(&all, "all", false, "check every eligible and non-eligible Midnight record")
+	flag.IntVar(&concurrency, "concurrency", 8, "maximum concurrent public API requests")
+	flag.DurationVar(&timeout, "timeout", 30*time.Minute, "whole audit timeout")
 	flag.Parse()
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL or -database-url is required")
 	}
-	if randomCount < 1 || edgeCount < 1 {
+	if !all && (randomCount < 1 || edgeCount < 1) {
 		return errors.New("-random and -edge must be positive")
+	}
+	if concurrency < 1 || concurrency > 32 {
+		return errors.New("-concurrency must be between 1 and 32")
+	}
+	if timeout < time.Minute || timeout > time.Hour {
+		return errors.New("-timeout must be between 1m and 1h")
 	}
 	apiBase = strings.TrimRight(strings.TrimSpace(apiBase), "/")
 	if _, err := url.ParseRequestURI(apiBase); err != nil {
 		return fmt.Errorf("invalid API base URL: %w", err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	db, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
@@ -80,9 +94,71 @@ func run() error {
 			return fmt.Errorf("load active build: %w", err)
 		}
 	}
+	var records []record
+	report := result{Build: build, Full: all}
+	if all {
+		records, err = loadRecords(ctx, db, build, seed, 0, "all")
+		if err != nil {
+			return err
+		}
+		if len(records) == 0 {
+			return errors.New("Midnight cohort is empty")
+		}
+	} else {
+		var selectedEdges []record
+		records, selectedEdges, err = loadSample(ctx, db, build, seed, randomCount, edgeCount)
+		if err != nil {
+			return err
+		}
+		report.Random, report.Edge = len(records), len(selectedEdges)
+		records = append(records, selectedEdges...)
+	}
+	client := &http.Client{Timeout: 20 * time.Second}
+	var checked atomic.Int64
+	var failuresMu sync.Mutex
+	jobs := make(chan record)
+	var workers sync.WaitGroup
+	for range concurrency {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			for item := range jobs {
+				requestCount, failures := checkRecord(ctx, client, apiBase, item)
+				checked.Add(int64(requestCount))
+				if len(failures) > 0 {
+					failuresMu.Lock()
+					report.Failures = append(report.Failures, failures...)
+					failuresMu.Unlock()
+				}
+			}
+		}()
+	}
+	for _, item := range records {
+		select {
+		case jobs <- item:
+		case <-ctx.Done():
+			close(jobs)
+			workers.Wait()
+			return ctx.Err()
+		}
+	}
+	close(jobs)
+	workers.Wait()
+	report.Checked = int(checked.Load())
+	report.CompletedAt = time.Now().UTC().Format(time.RFC3339)
+	sort.Strings(report.Failures)
+	encoded, _ := json.MarshalIndent(report, "", "  ")
+	fmt.Println(string(encoded))
+	if len(report.Failures) > 0 {
+		return fmt.Errorf("Midnight public acceptance failed: %d failures", len(report.Failures))
+	}
+	return nil
+}
+
+func loadSample(ctx context.Context, db *pgxpool.Pool, build, seed string, randomCount, edgeCount int) ([]record, []record, error) {
 	randomRecords, err := loadRecords(ctx, db, build, seed, randomCount, "random")
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	seen := make(map[string]struct{}, len(randomRecords)+edgeCount)
 	for _, item := range randomRecords {
@@ -93,7 +169,7 @@ func run() error {
 	for _, selector := range edgeSelectors {
 		candidates, err := loadRecords(ctx, db, build, seed, edgeCount, selector)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 		quota := edgeCount / len(edgeSelectors)
 		if selector == edgeSelectors[len(edgeSelectors)-1] {
@@ -117,7 +193,7 @@ func run() error {
 		}
 		candidates, err := loadRecords(ctx, db, build, seed+"-fill", edgeCount, selector)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 		for _, item := range candidates {
 			if len(selectedEdges) == edgeCount {
@@ -131,38 +207,30 @@ func run() error {
 		}
 	}
 	if len(randomRecords) != randomCount || len(selectedEdges) != edgeCount {
-		return fmt.Errorf("acceptance cohort is too small: random=%d/%d edge=%d/%d", len(randomRecords), randomCount, len(selectedEdges), edgeCount)
+		return nil, nil, fmt.Errorf("acceptance cohort is too small: random=%d/%d edge=%d/%d", len(randomRecords), randomCount, len(selectedEdges), edgeCount)
 	}
-	report := result{Build: build, Random: len(randomRecords), Edge: len(selectedEdges)}
-	client := &http.Client{Timeout: 20 * time.Second}
-	for _, item := range append(randomRecords, selectedEdges...) {
-		if item.Decision != "eligible" {
-			report.Checked++
-			if err := expectStatus(ctx, client, apiBase, item.ID, "en_US", http.StatusNotFound); err != nil {
-				report.Failures = append(report.Failures, fmt.Sprintf("%s/%d (%s): %v", item.Type, item.ExternalID, item.Decision, err))
-			}
+	return randomRecords, selectedEdges, nil
+}
+
+func checkRecord(ctx context.Context, client *http.Client, apiBase string, item record) (int, []string) {
+	failures := make([]string, 0, 2)
+	if item.Decision != "eligible" {
+		if err := expectStatus(ctx, client, apiBase, item.ID, "en_US", http.StatusNotFound); err != nil {
+			failures = append(failures, fmt.Sprintf("%s/%d (%s): %v", item.Type, item.ExternalID, item.Decision, err))
+		}
+		return 1, failures
+	}
+	for _, locale := range []string{"en_US", "ru_RU"} {
+		payload, err := fetchEntity(ctx, client, apiBase, item.ID, locale)
+		if err != nil {
+			failures = append(failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
 			continue
 		}
-		for _, locale := range []string{"en_US", "ru_RU"} {
-			report.Checked++
-			payload, err := fetchEntity(ctx, client, apiBase, item.ID, locale)
-			if err != nil {
-				report.Failures = append(report.Failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
-				continue
-			}
-			if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
-				report.Failures = append(report.Failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
-			}
+		if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
+			failures = append(failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
 		}
 	}
-	report.CompletedAt = time.Now().UTC().Format(time.RFC3339)
-	sort.Strings(report.Failures)
-	encoded, _ := json.MarshalIndent(report, "", "  ")
-	fmt.Println(string(encoded))
-	if len(report.Failures) > 0 {
-		return fmt.Errorf("Midnight public acceptance failed: %d failures", len(report.Failures))
-	}
-	return nil
+	return 2, failures
 }
 
 func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limit int, selector string) ([]record, error) {
@@ -187,6 +255,8 @@ func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limi
 	FROM scoped
 	WHERE `
 	switch selector {
+	case "all":
+		query += `true ORDER BY entity_type,external_id`
 	case "random":
 		query += `decision='eligible' ORDER BY md5($2 || id::text) LIMIT $3`
 	case "noneligible":
@@ -198,7 +268,11 @@ func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limi
 	default:
 		return nil, fmt.Errorf("unsupported acceptance selector %q", selector)
 	}
-	rows, err := db.Query(ctx, query, build, seed, limit)
+	args := []any{build}
+	if selector != "all" {
+		args = append(args, seed, limit)
+	}
+	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("select acceptance records: %w", err)
 	}
