@@ -108,6 +108,8 @@ type catalogImportStatus struct {
 	FailureRetryable  bool       `json:"failureRetryable"`
 	RetryAfter        *time.Time `json:"retryAfter"`
 	FailureQueueState string     `json:"failureQueueState"`
+	ResolutionCode    string     `json:"resolutionCode"`
+	ResolutionSummary string     `json:"resolutionSummary"`
 }
 
 type datasetListItem struct {
@@ -927,7 +929,7 @@ func (h *Handler) catalogHealth(ctx context.Context) (catalogHealth, error) {
 			run.records_seen,run.records_written,
 			run.snapshot_id::text,run.started_at,run.finished_at,run.error_summary,
 			run.failure_code,run.failure_retryable,run.retry_after,
-			COALESCE(queue.state,'')
+			COALESCE(queue.state,''),COALESCE(queue.resolution_code,''),COALESCE(queue.resolution_summary,'')
 		FROM catalog_import_runs run
 		JOIN game_products product ON product.id=run.product_id AND product.slug='wow'
 		JOIN game_builds build ON build.id=run.build_id
@@ -950,6 +952,7 @@ func (h *Handler) catalogHealth(ctx context.Context) (catalogHealth, error) {
 			&item.RecordsSeen, &item.RecordsWritten, &snapshotID,
 			&item.StartedAt, &item.FinishedAt, &item.ErrorSummary,
 			&item.FailureCode, &item.FailureRetryable, &item.RetryAfter, &item.FailureQueueState,
+			&item.ResolutionCode, &item.ResolutionSummary,
 		); err != nil {
 			return result, err
 		}

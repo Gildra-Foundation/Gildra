@@ -1059,7 +1059,7 @@ func (s *Store) finish(ctx context.Context, runID uuid.UUID, status string, seen
 				ON CONFLICT (import_run_id) DO UPDATE SET
 					state=EXCLUDED.state,failure_code=EXCLUDED.failure_code,
 					retry_after=EXCLUDED.retry_after,last_error_summary=EXCLUDED.last_error_summary,
-					updated_at=now(),resolved_at=NULL`,
+					resolution_code='',resolution_summary='',updated_at=now(),resolved_at=NULL`,
 				runID, queueState, failure.Code, failure.RetryAfter, errorSummary); err != nil {
 				return fmt.Errorf("queue failed catalog import: %w", err)
 			}

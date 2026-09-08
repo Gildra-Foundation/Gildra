@@ -260,8 +260,10 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		result.Coverage[index].MissingPrimaryMedia = result.MissingPrimaryMedia
 	}
 	if err := db.QueryRow(ctx, `
-		SELECT count(*) FILTER (WHERE run.status='RUNNING'),count(*) FILTER (WHERE run.status='FAILED')
+		SELECT count(*) FILTER (WHERE run.status='RUNNING'),
+			count(*) FILTER (WHERE run.status='FAILED' AND COALESCE(queue.state,'quarantined')<>'resolved')
 		FROM catalog_import_runs run JOIN game_products product ON product.id=run.product_id
+		LEFT JOIN catalog_import_failure_queue queue ON queue.import_run_id=run.id
 		WHERE product.slug=$1 AND run.build_id=$2`, product, result.BuildID).
 		Scan(&result.RunningImports, &result.FailedImports); err != nil {
 		return PublicQualitySnapshot{}, fmt.Errorf("query quality profile imports: %w", err)

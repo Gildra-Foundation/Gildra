@@ -254,9 +254,11 @@ func run() error {
 	}
 
 	if err := db.QueryRow(ctx, `
-		SELECT count(*) FILTER (WHERE run.status='RUNNING'),count(*) FILTER (WHERE run.status='FAILED')
+		SELECT count(*) FILTER (WHERE run.status='RUNNING'),
+			count(*) FILTER (WHERE run.status='FAILED' AND COALESCE(queue.state,'quarantined')<>'resolved')
 		FROM catalog_import_runs run
 		JOIN game_products product ON product.id=run.product_id
+		LEFT JOIN catalog_import_failure_queue queue ON queue.import_run_id=run.id
 		WHERE product.slug=$1`, product).Scan(&result.Imports.Running, &result.Imports.Failed); err != nil {
 		return fmt.Errorf("query import state: %w", err)
 	}
