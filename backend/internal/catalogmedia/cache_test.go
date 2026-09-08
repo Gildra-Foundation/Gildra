@@ -108,6 +108,38 @@ func TestOfficialIconURL(t *testing.T) {
 	}
 }
 
+func TestInferFileDataID(t *testing.T) {
+	t.Parallel()
+	explicit := int64(101)
+	tests := []struct {
+		name     string
+		iconName string
+		explicit *int64
+		want     int64
+		wantNil  bool
+	}{
+		{name: "preserves explicit value", iconName: "7416095", explicit: &explicit, want: 101},
+		{name: "uses numeric icon value", iconName: "7416095", want: 7416095},
+		{name: "rejects render filename", iconName: "inv_squirrelflying", wantNil: true},
+		{name: "rejects nonpositive value", iconName: "0", wantNil: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			got := inferFileDataID(test.iconName, test.explicit)
+			if test.wantNil {
+				if got != nil {
+					t.Fatalf("inferFileDataID(%q)=%d, want nil", test.iconName, *got)
+				}
+				return
+			}
+			if got == nil || *got != test.want {
+				t.Fatalf("inferFileDataID(%q)=%v, want %d", test.iconName, got, test.want)
+			}
+		})
+	}
+}
+
 func TestWagoCASCIconURL(t *testing.T) {
 	t.Parallel()
 	got, err := wagoCASCIconURL(5351060, "wow", "12.1.0.69497")
