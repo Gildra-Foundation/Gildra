@@ -72,8 +72,13 @@ func run() error {
 	if !all && (randomCount < 1 || edgeCount < 1) {
 		return errors.New("-random and -edge must be positive")
 	}
-	if concurrency < 1 || concurrency > 32 {
-		return errors.New("-concurrency must be between 1 and 32")
+	// The full Midnight cohort contains thousands of public records.  The
+	// endpoint is deliberately verified rather than queried from the database,
+	// so a small worker pool makes the complete release gate exceed its own
+	// timeout even when every request is healthy.  Sixty-four in-flight reads is
+	// bounded, read-only traffic and keeps the full audit practical.
+	if concurrency < 1 || concurrency > 64 {
+		return errors.New("-concurrency must be between 1 and 64")
 	}
 	if timeout < time.Minute || timeout > time.Hour {
 		return errors.New("-timeout must be between 1m and 1h")
