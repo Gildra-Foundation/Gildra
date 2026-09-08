@@ -529,7 +529,9 @@ until compose pull web api catalog-backup cms scraper scraper-worker; do
   pull_attempt=$((pull_attempt + 1))
   sleep 10
 done
-compose up -d --no-build --remove-orphans --wait --wait-timeout 240
+# Match the API health start window above: a new release can legitimately be
+# unavailable while its transactional Goose migrations rebuild read models.
+compose up -d --no-build --remove-orphans --wait --wait-timeout 600
 sync_nginx_config || fail 'nginx configuration could not be applied'
 verify_running_images
 write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
