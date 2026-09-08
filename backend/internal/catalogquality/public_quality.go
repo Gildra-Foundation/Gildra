@@ -200,6 +200,23 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		if err := rows.Scan(&item.EntityType, &item.Raw, &item.Eligible, &item.Review, &item.Excluded); err != nil {
 			return PublicQualitySnapshot{}, fmt.Errorf("scan quality profile coverage: %w", err)
 		}
+		var englishTechnical, russianTechnical, englishMissing, russianMissing int64
+		var russianFallback, russianUnproven, englishVerified, russianVerified int64
+		var englishTextTemplates, russianTextTemplates, englishTooltipTemplates, russianTooltipTemplates int64
+		if err := db.QueryRow(ctx, scopeSQL+` WHERE selected.entity_type=$3`, product, result.BuildID, item.EntityType).Scan(
+			&item.Raw, &item.Eligible, &item.Review, &item.Excluded,
+			&item.English.Available, &item.Russian.Available,
+			&englishTechnical, &russianTechnical, &englishMissing, &russianMissing,
+			&russianFallback, &russianUnproven, &englishVerified, &russianVerified,
+			&englishTextTemplates, &russianTextTemplates, &englishTooltipTemplates, &russianTooltipTemplates); err != nil {
+			return PublicQualitySnapshot{}, fmt.Errorf("query quality profile coverage for %s: %w", item.EntityType, err)
+		}
+		item.English.Technical, item.Russian.Technical = englishTechnical, russianTechnical
+		item.English.Missing, item.Russian.Missing = englishMissing, russianMissing
+		item.English.Verified, item.Russian.Verified = englishVerified, russianVerified
+		item.Russian.Fallback, item.Russian.Unproven = russianFallback, russianUnproven
+		item.UnresolvedText = englishTextTemplates + russianTextTemplates
+		item.UnresolvedTooltip = englishTooltipTemplates + russianTooltipTemplates
 		result.Coverage = append(result.Coverage, item)
 	}
 	if err := rows.Err(); err != nil {
@@ -231,6 +248,16 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		FROM eligible cohort LEFT JOIN media ON media.entity_type=cohort.entity_type AND media.external_id=cohort.external_id`, product, result.BuildID).
 		Scan(&result.MediaRecords, &result.CachedMedia, &result.FailedMedia, &result.RemoteMedia, &result.MissingPrimaryMedia); err != nil {
 		return PublicQualitySnapshot{}, fmt.Errorf("query quality profile media: %w", err)
+	}
+	for index := range result.Coverage {
+		if result.Coverage[index].EntityType != "item" {
+			continue
+		}
+		result.Coverage[index].MediaRecords = result.MediaRecords
+		result.Coverage[index].CachedMedia = result.CachedMedia
+		result.Coverage[index].FailedMedia = result.FailedMedia
+		result.Coverage[index].RemoteMedia = result.RemoteMedia
+		result.Coverage[index].MissingPrimaryMedia = result.MissingPrimaryMedia
 	}
 	if err := db.QueryRow(ctx, `
 		SELECT count(*) FILTER (WHERE run.status='RUNNING'),count(*) FILTER (WHERE run.status='FAILED')
