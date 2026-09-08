@@ -39,3 +39,26 @@ func TestFetchCachedMediaRequiresPublicImage(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateEmbeddedLocalizations(t *testing.T) {
+	t.Parallel()
+	valid := map[string]any{
+		"localizations": map[string]any{
+			"en_US": map[string]any{"name": "Arcane Trinket", "description": "A verified description."},
+			"ru_RU": map[string]any{"name": "Чародейская безделушка", "description": "Проверенное описание."},
+		},
+	}
+	if err := validateEmbeddedLocalizations(valid); err != nil {
+		t.Fatalf("valid embedded localizations: %v", err)
+	}
+
+	invalid := map[string]any{
+		"localizations": map[string]any{
+			"en_US": map[string]any{"name": "Arcane Trinket"},
+			"ru_RU": map[string]any{"name": "[DNT] Placeholder"},
+		},
+	}
+	if err := validateEmbeddedLocalizations(invalid); err == nil || !strings.Contains(err.Error(), "invalid ru_RU name") {
+		t.Fatalf("invalid embedded localizations error = %v", err)
+	}
+}
