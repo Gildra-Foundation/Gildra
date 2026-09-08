@@ -1,11 +1,18 @@
 package catalogimport
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"slices"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/Gildra-Foundation/Gildra/backend/internal/battlenet"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/wago"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestSourceRecordManifestProofIsOrderIndependent(t *testing.T) {
@@ -27,6 +34,40 @@ func TestSourceRecordManifestProofIsOrderIndependent(t *testing.T) {
 	}
 	if proof.SHA256 != reversed.SHA256 || proof.ByteSize != reversed.ByteSize || proof.RecordCount != 2 {
 		t.Fatalf("manifest proof changed with record order: %#v != %#v", proof, reversed)
+	}
+}
+
+func TestClassifyImportFailure(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name      string
+		err       error
+		code      string
+		retryable bool
+	}{
+		{"rate limited", &battlenet.RemoteError{StatusCode: 429, Status: "429 Too Many Requests", RetryAfter: time.Minute}, "source_rate_limited", true},
+		{"authentication", &battlenet.OAuthError{StatusCode: 401, Status: "401 Unauthorized"}, "source_authorization", false},
+		{"source unavailable", &battlenet.RemoteError{StatusCode: 503, Status: "503 Service Unavailable"}, "source_unavailable", true},
+		{"missing wago artifact", &wago.UnavailableError{StatusCode: 404}, "source_unavailable_artifact", false},
+		{"database conflict", &pgconn.PgError{Code: "23505"}, "database_integrity_conflict", false},
+		{"deadline", context.DeadlineExceeded, "source_timeout", true},
+		{"unknown", errors.New("broken projection"), "unclassified", false},
+	}
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			got := classifyImportFailure(test.err)
+			if got.Code != test.code || got.Retryable != test.retryable {
+				t.Fatalf("classifyImportFailure(%v) = %#v, want code=%q retryable=%v", test.err, got, test.code, test.retryable)
+			}
+			if test.retryable && got.RetryAfter == nil {
+				t.Fatal("retryable failure has no retry time")
+			}
+			if !test.retryable && got.RetryAfter != nil {
+				t.Fatalf("non-retryable failure retry time = %v", got.RetryAfter)
+			}
+		})
 	}
 }
 
