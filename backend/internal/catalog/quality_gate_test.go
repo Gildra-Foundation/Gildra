@@ -5,20 +5,20 @@ import (
 	"testing"
 )
 
-func TestPublicCatalogUsabilityPredicateHidesNonEligibleItems(t *testing.T) {
+func TestPublicCatalogUsabilityPredicateHidesNonEligibleMidnightEntities(t *testing.T) {
 	t.Parallel()
 	predicate := publicCatalogUsabilityPredicate("entity", "version")
 	for _, fragment := range []string{
 		"catalog_entity_usability usability",
 		"usability.decision <> 'eligible'",
-		"(entity.product_id,version.build_id,entity.external_id) NOT IN",
+		"(entity.product_id,version.build_id,entity.entity_type,entity.external_id) NOT IN",
 	} {
 		if !strings.Contains(predicate, fragment) {
 			t.Fatalf("quality gate predicate is missing %q: %s", fragment, predicate)
 		}
 	}
-	if strings.Contains(predicate, "catalog_entity_expansions") {
-		t.Fatal("quality gate must not scan expansion membership for every catalog row")
+	if strings.Contains(predicate, "entity_type <> 'item'") {
+		t.Fatal("quality gate must apply to every entity type with a non-eligible decision")
 	}
 }
 

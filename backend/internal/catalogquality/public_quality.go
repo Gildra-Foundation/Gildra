@@ -111,7 +111,7 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 	const scopeSQL = `
 	WITH midnight AS (
 		SELECT cohort.entity_type,cohort.external_id,
-			CASE WHEN cohort.entity_type='item' THEN COALESCE(usability.decision,'review') ELSE 'eligible' END AS decision
+			COALESCE(usability.decision,'review') AS decision
 		FROM catalog_entity_expansions cohort
 		JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
 		LEFT JOIN catalog_entity_usability usability
@@ -133,10 +133,10 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 	)
 	SELECT count(*),
 		count(*) FILTER (WHERE decision='eligible'),count(*) FILTER (WHERE decision='review'),count(*) FILTER (WHERE decision='excluded'),
-		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NOT NULL AND en.name !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold)\\]'),
-		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NOT NULL AND ru.name !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold)\\]'),
-		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NOT NULL AND en.name ~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold)\\]'),
-		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NOT NULL AND ru.name ~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold)\\]'),
+		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NOT NULL AND en.name !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\\]'),
+		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NOT NULL AND ru.name !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\\]'),
+		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NOT NULL AND en.name ~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\\]'),
+		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NOT NULL AND ru.name ~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\\]'),
 		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NULL),
 		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NULL),
 		count(*) FILTER (WHERE decision='eligible' AND ru.name IS NOT NULL AND btrim(ru.name)<>'' AND btrim(ru.name)=btrim(en.name)
@@ -178,7 +178,7 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 	rows, err := db.Query(ctx, `
 		WITH cohort AS (
 			SELECT cohort.entity_type,cohort.external_id,
-				CASE WHEN cohort.entity_type='item' THEN COALESCE(usability.decision,'review') ELSE 'eligible' END AS decision
+			COALESCE(usability.decision,'review') AS decision
 			FROM catalog_entity_expansions cohort
 			JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
 			LEFT JOIN catalog_entity_usability usability ON usability.product_id=cohort.product_id AND usability.build_id=cohort.build_id

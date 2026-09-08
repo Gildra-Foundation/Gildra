@@ -197,6 +197,19 @@ func run() error {
 			slog.Info("Midnight item usability refreshed", "build", opts.version, "assessed", assessed)
 		}
 	}
+	if importErr == nil && (contains(opts.tables, "Map") || contains(opts.tables, "TransmogSet")) {
+		var assessed int64
+		if err := db.QueryRow(ctx, `SELECT catalog_refresh_midnight_nonitem_usability($1)`, ic.BuildID).Scan(&assessed); err != nil {
+			importErr = fmt.Errorf("refresh Midnight non-item usability: %w", err)
+		} else if assessed > 0 {
+			slog.Info("Midnight non-item usability refreshed", "build", opts.version, "assessed", assessed)
+		}
+	}
+	if importErr == nil && (contains(opts.tables, "ItemSparse") || contains(opts.tables, "Map") || contains(opts.tables, "TransmogSet")) {
+		if _, err := db.Exec(ctx, `SELECT catalog_apply_midnight_usability_overrides($1)`, ic.BuildID); err != nil {
+			importErr = fmt.Errorf("apply Midnight usability overrides: %w", err)
+		}
+	}
 	if importErr == nil {
 		importErr = observeDB2LocalizationArtifactsForTables(ctx, db, ic, opts.tables)
 	}

@@ -288,7 +288,7 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				   AND raw.payload->>'EffectIndex'=effect.effect_index::text
 				 ORDER BY (COALESCE(NULLIF(raw.payload->>'DifficultyID','')::int,0)=0) DESC,raw.row_id
 				 LIMIT 1)
-			) AS radius_ref(radius_index) ON true
+			) radius_ref ON true
 		LEFT JOIN catalog_db2_rows radius ON radius.build_id=version.build_id
 			AND radius.table_name='SpellRadius' AND radius.locale='en_US'
 			AND radius.row_id=radius_ref.radius_index
