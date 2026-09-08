@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -288,6 +289,8 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/admin/tierlist-archon", h.archonTierlist)
 	mux.HandleFunc("GET /v1/admin/tierlist-wowgg", h.wowGGTierlist)
 	mux.HandleFunc("GET /v1/admin/tierlist-icyveins", h.icyVeinsTierlist)
+	mux.HandleFunc("GET /v1/admin/midnight-review", h.midnightReview)
+	mux.HandleFunc("POST /v1/admin/midnight-review/{entityType}/{externalID}", h.updateMidnightReview)
 }
 
 func (h *Handler) catalogReadiness(w http.ResponseWriter, r *http.Request) {
@@ -301,6 +304,182 @@ func (h *Handler) catalogReadiness(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, report)
+}
+
+type midnightReviewEntry struct {
+	EntityType        string          `json:"entityType"`
+	ExternalID        int64           `json:"externalId"`
+	NameEN            string          `json:"nameEn"`
+	NameRU            string          `json:"nameRu"`
+	Decision          string          `json:"decision"`
+	Reason            string          `json:"reason"`
+	Evidence          json.RawMessage `json:"evidence"`
+	SourceProvenance  map[string]any  `json:"sourceProvenance"`
+	AuditHistoryCount int64           `json:"auditHistoryCount"`
+}
+
+// midnightReview returns only the active build's explicit review queue. The
+// build and expansion joins are deliberate: historical decisions must not be
+// mixed into an operator's current release review.
+func (h *Handler) midnightReview(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.authorize(w, r); !ok {
+		return
+	}
+	if !sameOrigin(r) {
+		writeError(w, http.StatusForbidden, "same_origin_required", "Запрос должен быть выполнен с того же источника")
+		return
+	}
+	rows, err := h.postgres.Query(r.Context(), `
+		WITH active_build AS (
+			SELECT build.id, build.version, build.build_number
+			FROM game_builds build JOIN game_products product ON product.id=build.product_id
+			WHERE product.slug='wow' AND build.is_active
+			ORDER BY build.build_number DESC LIMIT 1
+		)
+		SELECT build.version, build.build_number, usability.entity_type, usability.external_id,
+			COALESCE(en.name,''), COALESCE(ru.name, en.name, ''), usability.decision,
+			usability.reason_code, usability.evidence,
+			COALESCE(artifact.source,''), COALESCE(artifact.artifact_key,''),
+			COALESCE(artifact.source_url,''), artifact.fetched_at,
+			(SELECT count(*) FROM catalog_entity_usability_audit audit
+			 WHERE audit.product_id=usability.product_id AND audit.build_id=usability.build_id
+			   AND audit.entity_type=usability.entity_type AND audit.external_id=usability.external_id)
+		FROM active_build build
+		JOIN catalog_entity_expansions cohort ON cohort.build_id=build.id
+		JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id AND expansion.expansion_key='midnight'
+		JOIN catalog_entity_usability usability ON usability.product_id=cohort.product_id
+			AND usability.build_id=cohort.build_id AND usability.entity_type=cohort.entity_type
+			AND usability.external_id=cohort.external_id
+		LEFT JOIN game_entities entity ON entity.product_id=usability.product_id
+			AND entity.entity_type=usability.entity_type AND entity.external_id=usability.external_id
+		LEFT JOIN game_entity_versions version ON version.entity_id=entity.id AND version.build_id=build.id
+		LEFT JOIN game_entity_localizations en ON en.version_id=version.id AND en.locale='en_US'
+		LEFT JOIN game_entity_localizations ru ON ru.version_id=version.id AND ru.locale='ru_RU'
+		LEFT JOIN catalog_source_artifacts artifact ON artifact.id=usability.source_artifact_id
+		WHERE usability.decision IN ('review','excluded')
+		ORDER BY usability.entity_type, usability.external_id`)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "midnight_review_unavailable", "Не удалось загрузить очередь проверки Midnight")
+		return
+	}
+	defer rows.Close()
+	entries := make([]midnightReviewEntry, 0)
+	var buildVersion string
+	var buildNumber int
+	for rows.Next() {
+		var entry midnightReviewEntry
+		var evidence []byte
+		var source, artifactKey, sourceURL string
+		var fetchedAt *time.Time
+		if err := rows.Scan(&buildVersion, &buildNumber, &entry.EntityType, &entry.ExternalID,
+			&entry.NameEN, &entry.NameRU, &entry.Decision, &entry.Reason, &evidence,
+			&source, &artifactKey, &sourceURL, &fetchedAt, &entry.AuditHistoryCount); err != nil {
+			writeError(w, http.StatusInternalServerError, "midnight_review_unavailable", "Не удалось прочитать очередь проверки Midnight")
+			return
+		}
+		entry.Evidence = json.RawMessage(evidence)
+		entry.SourceProvenance = map[string]any{"source": source, "artifactKey": artifactKey, "sourceUrl": sourceURL}
+		if fetchedAt != nil {
+			entry.SourceProvenance["fetchedAt"] = fetchedAt
+		}
+		entries = append(entries, entry)
+	}
+	if err := rows.Err(); err != nil {
+		writeError(w, http.StatusInternalServerError, "midnight_review_unavailable", "Не удалось прочитать очередь проверки Midnight")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"build": map[string]any{"version": buildVersion, "buildNumber": buildNumber}, "data": entries, "count": len(entries)})
+}
+
+type midnightReviewUpdate struct {
+	Decision string         `json:"decision"`
+	Reason   string         `json:"reason"`
+	Evidence map[string]any `json:"evidence"`
+}
+
+func (h *Handler) updateMidnightReview(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.authorize(w, r)
+	if !ok {
+		return
+	}
+	if !sameOrigin(r) {
+		writeError(w, http.StatusForbidden, "same_origin_required", "Запрос должен быть выполнен с того же источника")
+		return
+	}
+	entityType := r.PathValue("entityType")
+	if !regexp.MustCompile(`^[a-z][a-z0-9_]{1,63}$`).MatchString(entityType) {
+		writeError(w, http.StatusBadRequest, "invalid_entity_type", "Некорректный тип сущности")
+		return
+	}
+	externalID, err := strconv.ParseInt(r.PathValue("externalID"), 10, 64)
+	if err != nil || externalID <= 0 {
+		writeError(w, http.StatusBadRequest, "invalid_external_id", "Некорректный внешний идентификатор")
+		return
+	}
+	var input midnightReviewUpdate
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10))
+	if err := decoder.Decode(&input); err != nil || input.Evidence == nil {
+		writeError(w, http.StatusBadRequest, "invalid_review_payload", "Требуются decision, reason и evidence")
+		return
+	}
+	if input.Decision != "eligible" && input.Decision != "review" && input.Decision != "excluded" {
+		writeError(w, http.StatusBadRequest, "invalid_decision", "Недопустимое решение")
+		return
+	}
+	if !regexp.MustCompile(`^[a-z][a-z0-9_]{1,63}$`).MatchString(input.Reason) {
+		writeError(w, http.StatusBadRequest, "invalid_reason", "Причина должна быть в формате reason_code")
+		return
+	}
+	evidence, err := json.Marshal(input.Evidence)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_evidence", "Доказательство должно быть JSON-объектом")
+		return
+	}
+	tx, err := h.postgres.Begin(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "midnight_review_unavailable", "Не удалось начать обновление очереди")
+		return
+	}
+	defer func() { _ = tx.Rollback(r.Context()) }()
+	var productID int16
+	var buildID int64
+	err = tx.QueryRow(r.Context(), `
+		SELECT product.id, build.id FROM game_products product JOIN game_builds build ON build.product_id=product.id
+		WHERE product.slug='wow' AND build.is_active ORDER BY build.build_number DESC LIMIT 1`).Scan(&productID, &buildID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "active_build_not_found", "Активная сборка WoW не найдена")
+		return
+	}
+	var exists bool
+	err = tx.QueryRow(r.Context(), `SELECT EXISTS(
+		SELECT 1 FROM catalog_entity_expansions cohort JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
+		WHERE cohort.product_id=$1 AND cohort.build_id=$2 AND cohort.entity_type=$3 AND cohort.external_id=$4
+		  AND expansion.expansion_key='midnight')`, productID, buildID, entityType, externalID).Scan(&exists)
+	if err != nil || !exists {
+		writeError(w, http.StatusNotFound, "midnight_entity_not_found", "Сущность не найдена в активной когорте Midnight")
+		return
+	}
+	_, err = tx.Exec(r.Context(), `INSERT INTO catalog_entity_usability_overrides
+		(product_id,build_id,entity_type,external_id,decision,reason_code,reviewer,evidence,is_active,updated_at)
+		VALUES($1,$2,$3,$4,$5,$6,$7,$8,true,now())
+		ON CONFLICT(product_id,build_id,entity_type,external_id) DO UPDATE SET decision=EXCLUDED.decision,
+		 reason_code=EXCLUDED.reason_code,reviewer=EXCLUDED.reviewer,evidence=EXCLUDED.evidence,is_active=true,updated_at=now()`,
+		productID, buildID, entityType, externalID, input.Decision, input.Reason, strings.ToLower(strings.TrimSpace(user.Email)), evidence)
+	if err == nil {
+		_, err = tx.Exec(r.Context(), `SELECT catalog_apply_midnight_usability_overrides($1)`, buildID)
+	}
+	if err == nil {
+		_, err = tx.Exec(r.Context(), `SELECT refresh_catalog_public_summary_stats($1)`, productID)
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "midnight_review_update_failed", "Не удалось применить решение")
+		return
+	}
+	if err := tx.Commit(r.Context()); err != nil {
+		writeError(w, http.StatusInternalServerError, "midnight_review_update_failed", "Не удалось сохранить решение")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"entityType": entityType, "externalId": externalID, "decision": input.Decision, "reason": input.Reason, "reviewer": user.Email})
 }
 
 func (h *Handler) cachedCatalogReadiness(ctx context.Context) (catalogquality.ReadinessReport, error) {
