@@ -6,11 +6,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -334,6 +336,91 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 		resolvedReferences != 1 || unresolvedReferences != 1 || runCount != 2 {
 		t.Fatalf("stored ATT resolution = nodes:%d/%d/%d references:%d/%d runs:%d",
 			resolvedNodes, unresolvedNodes, excludedNodes, resolvedReferences, unresolvedReferences, runCount)
+	}
+}
+
+func TestCanonicalImportConcurrentIdenticalVersionIsIdempotent(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	migrations, err := filepath.Abs("../../migrations/postgres")
+	if err != nil {
+		t.Fatal(err)
+	}
+	postgres, err := pgcontainer.Run(ctx, "postgres:17.10-alpine3.23",
+		pgcontainer.WithDatabase("gildra"),
+		pgcontainer.WithUsername("gildra"),
+		pgcontainer.WithPassword("test-password"),
+		pgcontainer.BasicWaitStrategies(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testcontainers.CleanupContainer(t, postgres)
+	postgresURL, err := postgres.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		t.Fatal(err)
+	}
+	database, err := sql.Open("pgx", postgresURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	if err := goose.SetDialect("postgres"); err != nil {
+		t.Fatal(err)
+	}
+	if err := goose.UpContext(ctx, database, migrations); err != nil {
+		t.Fatal(err)
+	}
+	pool, err := pgxpool.New(ctx, postgresURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+
+	store := catalogimport.NewStore(pool)
+	first, err := store.Begin(ctx, "wow", 899001, "99.0.0.899001", "us", "wago_tools", nil, map[string]any{"test": "first"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := store.Begin(ctx, "wow", 899001, "99.0.0.899001", "us", "raidbots", nil, map[string]any{"test": "second"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := catalogimport.Record{
+		Type: "item", ExternalID: 990001, Locale: "en_US",
+		Payload:   json.RawMessage(`{"id":990001,"name":"Concurrent proof item"}`),
+		SourceURL: "https://example.invalid/proof",
+	}
+	start := make(chan struct{})
+	errors := make(chan error, 2)
+	var workers sync.WaitGroup
+	for _, importContext := range []catalogimport.ImportContext{first, second} {
+		workers.Add(1)
+		go func(importContext catalogimport.ImportContext) {
+			defer workers.Done()
+			<-start
+			errors <- store.UpsertCanonical(ctx, importContext, record)
+		}(importContext)
+	}
+	close(start)
+	workers.Wait()
+	close(errors)
+	for err := range errors {
+		if err != nil {
+			t.Fatalf("concurrent canonical upsert: %v", err)
+		}
+	}
+	var versions int
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*) FROM game_entity_versions version
+		JOIN game_entities entity ON entity.id=version.entity_id
+		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug='wow')
+		  AND entity.entity_type='item' AND entity.external_id=990001
+		  AND version.build_id=$1`, first.BuildID).Scan(&versions); err != nil {
+		t.Fatal(err)
+	}
+	if versions != 1 {
+		t.Fatalf("canonical versions=%d, want one", versions)
 	}
 }
 
