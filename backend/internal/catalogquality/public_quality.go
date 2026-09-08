@@ -295,10 +295,15 @@ func ApplyPublicQualityGate(report *ReadinessReport, snapshot PublicQualitySnaps
 		snapshot.UnresolvedText+snapshot.UnresolvedTooltip != 0,
 		snapshot.UnresolvedText+snapshot.UnresolvedTooltip,
 		"public eligible records must not expose unresolved description or tooltip templates")
+	// Failed and remote observations are retained as source history. They do not
+	// make a public card broken when a newer verified cached primary already
+	// exists for that entity. MissingPrimaryMedia is the build-pinned cardinality
+	// of cards that have no usable public image at all, and is the only safe
+	// release blocker here.
 	report.add("public_media_backlog", ScopeProduction,
-		snapshot.FailedMedia+snapshot.RemoteMedia+snapshot.MissingPrimaryMedia != 0,
-		snapshot.FailedMedia+snapshot.RemoteMedia+snapshot.MissingPrimaryMedia,
-		"public eligible records must have verified media; failed and remote media remain backlog")
+		snapshot.MissingPrimaryMedia != 0,
+		snapshot.MissingPrimaryMedia,
+		"public eligible records must have a verified cached primary image")
 	report.add("public_import_failures", ScopeProduction, snapshot.FailedImports != 0, snapshot.FailedImports,
 		"the profiled build has failed catalog imports")
 }
