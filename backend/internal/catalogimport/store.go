@@ -870,6 +870,8 @@ func (s *Store) UpsertCanonical(ctx context.Context, ic ImportContext, record Re
 				)
 				SELECT $1, $2, COALESCE(MAX(revision), 0) + 1, $3, $4, $5, $6, $7
 				FROM game_entity_versions WHERE entity_id = $1 AND build_id = $2
+				ON CONFLICT (entity_id,build_id,content_hash) DO UPDATE
+				SET source_url=game_entity_versions.source_url
 				RETURNING id`, entityID, ic.BuildID, hash[:], json.RawMessage(canonical), record.SourceURL, ic.SnapshotID, record.SourceArtifactID).Scan(&versionID)
 		}
 		if err != nil {
