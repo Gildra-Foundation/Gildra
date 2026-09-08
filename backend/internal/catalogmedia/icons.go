@@ -21,7 +21,11 @@ import (
 const officialIconOrigin = "https://render.worldofwarcraft.com/eu/icons/56/"
 const wagoCASCOrigin = "https://wago.tools/api/casc/"
 const wagoCASCUserAgent = "GildraCatalogMedia/1.0 (+https://gildra.net)"
-const officialIconWorkers = 8
+
+// Wago's CASC endpoint is deliberately conservative about burst traffic. Icon
+// seeding is a maintenance job, so prefer a single deterministic stream over
+// a fast parallel burst that leaves part of the catalog uncached with 403s.
+const officialIconWorkers = 1
 const officialIconFailureSampleLimit = 25
 
 type IconFailure struct {
