@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -120,6 +121,48 @@ func TestZamimgIconURL(t *testing.T) {
 	}
 	if _, err := zamimgIconURL("../secret"); err == nil {
 		t.Fatal("zamimgIconURL unexpectedly accepted a path")
+	}
+}
+
+func TestOfficialIconFetchUsesNameMirrorBeforeSlowCASC(t *testing.T) {
+	t.Parallel()
+	jpeg, err := base64.StdEncoding.DecodeString("/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAH/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAEFAqf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/Aaf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/Aaf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAY/Aqf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/IX//2gAMAwEAAgADAAAAEP/EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQMBAT8QH//EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQIBAT8QH//EABQQAQAAAAAAAAAAAAAAAAAAABD/2gAIAQEAAT8QH//Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	rootHandle, err := os.OpenRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = rootHandle.Close() })
+	wagoRequests := 0
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		switch request.URL.Hostname() {
+		case "render.worldofwarcraft.com":
+			return &http.Response{StatusCode: http.StatusForbidden, Body: io.NopCloser(bytes.NewReader(nil)), Header: make(http.Header)}, nil
+		case "wow.zamimg.com":
+			header := make(http.Header)
+			header.Set("Content-Type", "image/jpeg")
+			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(jpeg)), Header: header}, nil
+		case "wago.tools":
+			wagoRequests++
+			return nil, errors.New("CASC must not run when the name mirror succeeds")
+		default:
+			return nil, errors.New("unexpected icon host")
+		}
+	})}
+	cache := &Cache{rootPath: root, root: rootHandle, client: client}
+	fileDataID := int64(123)
+	var outcomes []iconFetchResult
+	for outcome := range cache.fetchOfficialIcons(context.Background(), []iconCandidate{{Name: "spell_fire_flamebolt", FileDataID: &fileDataID}}, "wow", "12.1.0.69587") {
+		outcomes = append(outcomes, outcome)
+	}
+	if len(outcomes) != 1 || outcomes[0].Err != nil || outcomes[0].Icon.Source != "zamimg" {
+		t.Fatalf("unexpected icon outcome: %#v", outcomes)
+	}
+	if wagoRequests != 0 {
+		t.Fatalf("Wago CASC was called %d times after a successful name mirror", wagoRequests)
 	}
 }
 
