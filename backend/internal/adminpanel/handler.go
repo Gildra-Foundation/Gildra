@@ -471,6 +471,9 @@ func (h *Handler) updateMidnightReview(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		_, err = tx.Exec(r.Context(), `SELECT refresh_catalog_public_summary_stats($1)`, productID)
 	}
+	if err == nil {
+		_, err = tx.Exec(r.Context(), `SELECT refresh_catalog_library_datasets($1)`, productID)
+	}
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "midnight_review_update_failed", "Не удалось применить решение")
 		return
