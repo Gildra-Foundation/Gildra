@@ -368,7 +368,7 @@ func referencedSpellIDs(texts []string, currentSpellID int64) []int64 {
 		unique[currentSpellID] = struct{}{}
 	}
 	for _, text := range texts {
-		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellNameToken, spellIconToken, spellDurationToken, spellMaxDurationToken, spellEffectToken, spellValueExpression, spellMagnitudeToken, spellAuraValueToken, spellRadiusToken} {
+		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellNameToken, spellIconToken, spellDurationToken, spellMaxDurationToken, spellEffectToken, spellValueExpression, spellMagnitudeToken, spellAuraValueToken, spellRadiusToken, spellTickToken} {
 			for _, match := range expression.FindAllStringSubmatch(text, -1) {
 				if len(match) < 2 || match[1] == "" {
 					continue
