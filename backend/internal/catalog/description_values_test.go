@@ -124,6 +124,13 @@ func TestResolveDescriptionTextResolvesMaxDurationAndTick(t *testing.T) {
 	}
 }
 
+func TestReferencedSpellIDsIncludesExplicitTickSpell(t *testing.T) {
+	got := referencedSpellIDs([]string{"Ticks every $1217960t2."}, 0)
+	if len(got) != 1 || got[0] != 1217960 {
+		t.Fatalf("explicit tick reference was not discovered: %#v", got)
+	}
+}
+
 func TestResolveDescriptionTextResolvesSpellRadius(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
 		42: {Effects: map[int]spellEffectValue{
