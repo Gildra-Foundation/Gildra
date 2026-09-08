@@ -7,12 +7,17 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"net"
 	"net/url"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/Gildra-Foundation/Gildra/backend/internal/battlenet"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/wago"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -1023,6 +1028,7 @@ func (s *Store) finish(ctx context.Context, runID uuid.UUID, status string, seen
 	if importErr != nil {
 		errorSummary = importErr.Error()
 	}
+	failure := classifyImportFailure(importErr)
 	return pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		var snapshotID uuid.UUID
 		var productID int16
@@ -1030,17 +1036,33 @@ func (s *Store) finish(ctx context.Context, runID uuid.UUID, status string, seen
 		if err := tx.QueryRow(ctx, `
 			WITH finished AS (
 				UPDATE catalog_import_runs
-				SET status=$2,records_seen=$3,records_written=$4,error_summary=$5,finished_at=now()
+				SET status=$2,records_seen=$3,records_written=$4,error_summary=$5,
+					failure_code=$6,failure_retryable=$7,retry_after=$8,finished_at=now()
 				WHERE id=$1
 				RETURNING snapshot_id,product_id
 			)
 			SELECT finished.snapshot_id,finished.product_id,snapshot.release_id
 			FROM finished
 			JOIN catalog_snapshots snapshot ON snapshot.id=finished.snapshot_id`,
-			runID, status, seen, written, errorSummary).Scan(&snapshotID, &productID, &releaseID); err != nil {
+			runID, status, seen, written, errorSummary, failure.Code, failure.Retryable, failure.RetryAfter).Scan(&snapshotID, &productID, &releaseID); err != nil {
 			return err
 		}
 		if status != "SUCCEEDED" {
+			queueState := "quarantined"
+			if failure.Retryable {
+				queueState = "retry_scheduled"
+			}
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO catalog_import_failure_queue(
+					import_run_id,state,failure_code,retry_after,last_error_summary
+				) VALUES($1,$2,$3,$4,$5)
+				ON CONFLICT (import_run_id) DO UPDATE SET
+					state=EXCLUDED.state,failure_code=EXCLUDED.failure_code,
+					retry_after=EXCLUDED.retry_after,last_error_summary=EXCLUDED.last_error_summary,
+					updated_at=now(),resolved_at=NULL`,
+				runID, queueState, failure.Code, failure.RetryAfter, errorSummary); err != nil {
+				return fmt.Errorf("queue failed catalog import: %w", err)
+			}
 			if _, err := tx.Exec(ctx, `UPDATE catalog_snapshots SET status='failed',failed_at=now() WHERE id=$1`, snapshotID); err != nil {
 				return err
 			}
@@ -1122,6 +1144,69 @@ func (s *Store) finish(ctx context.Context, runID uuid.UUID, status string, seen
 		}
 		return nil
 	})
+}
+
+type importFailure struct {
+	Code       string
+	Retryable  bool
+	RetryAfter *time.Time
+}
+
+// classifyImportFailure converts source and transport errors into a deliberately
+// small, stable vocabulary.  The original error remains in error_summary for
+// diagnosis, but operations must not have to parse its prose to decide whether
+// retrying is safe.
+func classifyImportFailure(err error) importFailure {
+	if err == nil {
+		return importFailure{}
+	}
+	now := time.Now().UTC()
+	retryAt := func(delay time.Duration) *time.Time {
+		value := now.Add(delay)
+		return &value
+	}
+	var remote *battlenet.RemoteError
+	if errors.As(err, &remote) {
+		switch {
+		case remote.StatusCode == 429:
+			delay := remote.RetryAfter
+			if delay <= 0 {
+				delay = 15 * time.Minute
+			}
+			return importFailure{Code: "source_rate_limited", Retryable: true, RetryAfter: retryAt(delay)}
+		case remote.StatusCode >= 500:
+			return importFailure{Code: "source_unavailable", Retryable: true, RetryAfter: retryAt(15 * time.Minute)}
+		case remote.StatusCode == 401 || remote.StatusCode == 403:
+			return importFailure{Code: "source_authorization", Retryable: false}
+		case remote.StatusCode == 404:
+			return importFailure{Code: "source_not_found", Retryable: false}
+		default:
+			return importFailure{Code: "source_response", Retryable: false}
+		}
+	}
+	var oauth *battlenet.OAuthError
+	if errors.As(err, &oauth) {
+		return importFailure{Code: "source_authorization", Retryable: false}
+	}
+	var unavailable *wago.UnavailableError
+	if errors.As(err, &unavailable) {
+		return importFailure{Code: "source_unavailable_artifact", Retryable: false}
+	}
+	var databaseError *pgconn.PgError
+	if errors.As(err, &databaseError) {
+		if databaseError.Code == "23505" {
+			return importFailure{Code: "database_integrity_conflict", Retryable: false}
+		}
+		return importFailure{Code: "database_error", Retryable: false}
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return importFailure{Code: "source_timeout", Retryable: true, RetryAfter: retryAt(10 * time.Minute)}
+	}
+	var networkError net.Error
+	if errors.As(err, &networkError) && (networkError.Timeout() || networkError.Temporary()) {
+		return importFailure{Code: "source_transport", Retryable: true, RetryAfter: retryAt(10 * time.Minute)}
+	}
+	return importFailure{Code: "unclassified", Retryable: false}
 }
 
 func decodePayload(payload json.RawMessage) (map[string]any, []byte, error) {

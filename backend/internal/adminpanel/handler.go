@@ -104,6 +104,10 @@ type catalogImportStatus struct {
 	FinishedAt        *time.Time `json:"finishedAt"`
 	LastActivityAt    *time.Time `json:"lastActivityAt"`
 	ErrorSummary      string     `json:"errorSummary"`
+	FailureCode       string     `json:"failureCode"`
+	FailureRetryable  bool       `json:"failureRetryable"`
+	RetryAfter        *time.Time `json:"retryAfter"`
+	FailureQueueState string     `json:"failureQueueState"`
 }
 
 type datasetListItem struct {
@@ -921,10 +925,13 @@ func (h *Handler) catalogHealth(ctx context.Context) (catalogHealth, error) {
 			COALESCE(run.parameters->'entity_types','[]'::jsonb),
 			COALESCE(run.parameters->'locales','[]'::jsonb),
 			run.records_seen,run.records_written,
-			run.snapshot_id::text,run.started_at,run.finished_at,run.error_summary
+			run.snapshot_id::text,run.started_at,run.finished_at,run.error_summary,
+			run.failure_code,run.failure_retryable,run.retry_after,
+			COALESCE(queue.state,'')
 		FROM catalog_import_runs run
 		JOIN game_products product ON product.id=run.product_id AND product.slug='wow'
 		JOIN game_builds build ON build.id=run.build_id
+		LEFT JOIN catalog_import_failure_queue queue ON queue.import_run_id=run.id
 		ORDER BY run.started_at DESC,run.id DESC
 		LIMIT 8`)
 	if err != nil {
@@ -942,6 +949,7 @@ func (h *Handler) catalogHealth(ctx context.Context) (catalogHealth, error) {
 			&item.ID, &item.Source, &item.BuildVersion, &item.Status, &entityTypesJSON, &localesJSON,
 			&item.RecordsSeen, &item.RecordsWritten, &snapshotID,
 			&item.StartedAt, &item.FinishedAt, &item.ErrorSummary,
+			&item.FailureCode, &item.FailureRetryable, &item.RetryAfter, &item.FailureQueueState,
 		); err != nil {
 			return result, err
 		}
