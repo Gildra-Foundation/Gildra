@@ -65,6 +65,18 @@ func TestResolveDescriptionTextResolvesSpellDescriptionReferences(t *testing.T) 
 	}
 }
 
+func TestResolveDescriptionTextResolvesSpellNameAndZeroBasedEffectAliases(t *testing.T) {
+	values := map[int64]spellDescriptionValues{
+		42: {Effects: map[int]spellEffectValue{1: {BasePoints: 12}}},
+		77: {Name: "Arcane Nova"},
+	}
+	got := resolveDescriptionText("Grants $s0 for $42s0 sec with $@spellname77 $@spellicon77.", 42, values, "en_US")
+	want := "Grants 12 for 12 sec with Arcane Nova ."
+	if got != want {
+		t.Fatalf("unexpected macro resolution\nwant: %s\n got: %s", want, got)
+	}
+}
+
 func TestResolveDescriptionTextRendersBothConditionalBranches(t *testing.T) {
 	got := resolveDescriptionText("Base.$?a157642[Empowered $s1.][]", 157642, map[int64]spellDescriptionValues{
 		157642: {Name: "Improved Fireball", Effects: map[int]spellEffectValue{1: {BasePoints: 20}}},

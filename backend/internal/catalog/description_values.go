@@ -14,6 +14,8 @@ import (
 
 var (
 	spellDescriptionToken   = regexp.MustCompile(`\$@spelldesc(\d+)`)
+	spellNameToken          = regexp.MustCompile(`\$@spellname(\d+)`)
+	spellIconToken          = regexp.MustCompile(`\$@spellicon(\d+)`)
 	spellConditionalToken   = regexp.MustCompile(`\$\?([A-Za-z][A-Za-z0-9_|-]*)`)
 	spellConditionalSpellID = regexp.MustCompile(`^[as]([0-9]+)$`)
 	spellValueExpression    = regexp.MustCompile(`\$\{\$(\d*)([sm])(\d+)(?:([/*+-])(-?\d+(?:\.\d+)?))?\}(?:\.1)?`)
@@ -364,7 +366,7 @@ func referencedSpellIDs(texts []string, currentSpellID int64) []int64 {
 		unique[currentSpellID] = struct{}{}
 	}
 	for _, text := range texts {
-		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellDurationToken, spellMaxDurationToken, spellEffectToken, spellValueExpression, spellMagnitudeToken, spellAuraValueToken, spellRadiusToken} {
+		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellNameToken, spellIconToken, spellDurationToken, spellMaxDurationToken, spellEffectToken, spellValueExpression, spellMagnitudeToken, spellAuraValueToken, spellRadiusToken} {
 			for _, match := range expression.FindAllStringSubmatch(text, -1) {
 				if len(match) < 2 || match[1] == "" {
 					continue
@@ -410,6 +412,21 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		}
 		text = resolved
 	}
+	// These macros are references to records already loaded from the
+	// build-pinned DB2 snapshot. Names are usable text, while an inline icon
+	// has no text equivalent and is deliberately omitted rather than exposing
+	// an implementation token to the public catalog.
+	text = spellNameToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellNameToken.FindStringSubmatch(token)
+		id, _ := strconv.ParseInt(match[1], 10, 64)
+		if name := values[id].Name; name != "" {
+			return name
+		}
+		return token
+	})
+	text = spellIconToken.ReplaceAllStringFunc(text, func(token string) string {
+		return ""
+	})
 	text = spellValueExpression.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellValueExpression.FindStringSubmatch(token)
 		id := currentSpellID
@@ -417,7 +434,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 			id, _ = strconv.ParseInt(match[1], 10, 64)
 		}
 		index, _ := strconv.Atoi(match[3])
-		value, ok := values[id].Effects[index]
+		value, ok := spellEffectAt(values[id], index)
 		if !ok {
 			return token
 		}
@@ -450,7 +467,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		match := spellEffectToken.FindStringSubmatch(token)
 		id, _ := strconv.ParseInt(match[1], 10, 64)
 		index, _ := strconv.Atoi(match[2])
-		if value, ok := values[id].Effects[index]; ok {
+		if value, ok := spellEffectAt(values[id], index); ok {
 			if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
 				return formatted
 			}
@@ -520,7 +537,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		text = currentEffectToken.ReplaceAllStringFunc(text, func(token string) string {
 			match := currentEffectToken.FindStringSubmatch(token)
 			index, _ := strconv.Atoi(match[1])
-			if value, ok := values[currentSpellID].Effects[index]; ok {
+			if value, ok := spellEffectAt(values[currentSpellID], index); ok {
 				if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
 					return formatted
 				}
@@ -549,6 +566,19 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		return token
 	})
 	return resolvePlural(text, locale)
+}
+
+// spellEffectAt translates the DB2 zero-based effect index to the
+// user-facing spell-template convention. Blizzard templates normally use
+// `$s1` for EffectIndex 0, but some Midnight records use `$s0`; both refer to
+// that first effect. Values are stored with the template index (EffectIndex +
+// 1), so preserve all other indexes and only apply the documented zero alias.
+func spellEffectAt(value spellDescriptionValues, index int) (spellEffectValue, bool) {
+	if index == 0 {
+		index = 1
+	}
+	effect, ok := value.Effects[index]
+	return effect, ok
 }
 
 // resolvePlural collapses Blizzard `$lone:few:many;` plural templates. English

@@ -127,6 +127,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 			SELECT regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g') AS icon_name,
 				icon.file_data_id,icon.entity_type,icon.external_id,icon.build_id
 			FROM catalog_entity_icons icon
+			WHERE icon.build_id=$2
 		), targets AS (
 			SELECT icon.icon_name,
 				COALESCE(min(icon.file_data_id),min(asset.file_data_id)) AS file_data_id,
@@ -138,7 +139,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 				AND published.build_id=icon.build_id
 			LEFT JOIN catalog_file_assets asset
 				ON regexp_replace(lower(asset.icon_name),'[[:space:]]+','','g')=icon.icon_name
-			WHERE icon.build_id=$2 AND entity.deleted_at IS NULL
+			WHERE entity.deleted_at IS NULL
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
 			GROUP BY lower(icon.icon_name)
 		), cached AS (
