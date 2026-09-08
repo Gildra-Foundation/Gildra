@@ -113,13 +113,15 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 		}
 		rows, err := tx.Query(ctx, `
 		WITH targets AS (
-			SELECT lower(icon.icon_name) AS icon_name,min(icon.file_data_id) AS file_data_id,
+			SELECT lower(icon.icon_name) AS icon_name,
+				COALESCE(min(icon.file_data_id),min(asset.file_data_id)) AS file_data_id,
 				count(DISTINCT entity.id) AS entity_count
 			FROM catalog_entity_icons icon
 			JOIN game_entities entity ON entity.product_id=$1
 				AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
 			JOIN game_entity_versions published ON published.id=entity.published_version_id
 				AND published.build_id=icon.build_id
+			LEFT JOIN catalog_file_assets asset ON lower(asset.icon_name)=lower(icon.icon_name)
 			WHERE icon.build_id=$2 AND entity.deleted_at IS NULL
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
 			GROUP BY lower(icon.icon_name)
