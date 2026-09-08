@@ -20,6 +20,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -72,13 +73,12 @@ func run() error {
 	if !all && (randomCount < 1 || edgeCount < 1) {
 		return errors.New("-random and -edge must be positive")
 	}
-	// The full Midnight cohort contains thousands of public records.  The
-	// endpoint is deliberately verified rather than queried from the database,
-	// so a small worker pool makes the complete release gate exceed its own
-	// timeout even when every request is healthy.  Sixty-four in-flight reads is
-	// bounded, read-only traffic and keeps the full audit practical.
-	if concurrency < 1 || concurrency > 64 {
-		return errors.New("-concurrency must be between 1 and 64")
+	// This audit uses a database gate for the entire cohort and bounded public
+	// HTTP checks for its acceptance sample.  More than sixteen simultaneous
+	// detail requests only evicts the production database working set, making
+	// the audit slower and competing with player traffic.
+	if concurrency < 1 || concurrency > 16 {
+		return errors.New("-concurrency must be between 1 and 16")
 	}
 	if timeout < time.Minute || timeout > time.Hour {
 		return errors.New("-timeout must be between 1m and 1h")
@@ -101,13 +101,28 @@ func run() error {
 	}
 	var records []record
 	report := result{Build: build, Full: all}
+	client := &http.Client{Timeout: 20 * time.Second}
+	var checked atomic.Int64
 	if all {
-		records, err = loadRecords(ctx, db, build, seed, 0, "all")
+		report.Failures, err = fullCohortFailures(ctx, db, build)
 		if err != nil {
 			return err
 		}
-		if len(records) == 0 {
-			return errors.New("Midnight cohort is empty")
+		var selectedEdges []record
+		records, selectedEdges, err = loadSample(ctx, db, build, seed, 200, 100)
+		if err != nil {
+			return err
+		}
+		report.Random, report.Edge = len(records), len(selectedEdges)
+		records = append(records, selectedEdges...)
+		localeRoutes, routeErr := loadRecords(ctx, db, build, seed, 0, "locale_routes")
+		if routeErr != nil {
+			return routeErr
+		}
+		for _, item := range localeRoutes {
+			requestCount, failures := checkLocaleRoute(ctx, client, apiBase, item)
+			checked.Add(int64(requestCount))
+			report.Failures = append(report.Failures, failures...)
 		}
 	} else {
 		var selectedEdges []record
@@ -118,8 +133,6 @@ func run() error {
 		report.Random, report.Edge = len(records), len(selectedEdges)
 		records = append(records, selectedEdges...)
 	}
-	client := &http.Client{Timeout: 20 * time.Second}
-	var checked atomic.Int64
 	var failuresMu sync.Mutex
 	jobs := make(chan record)
 	var workers sync.WaitGroup
@@ -158,6 +171,38 @@ func run() error {
 		return fmt.Errorf("Midnight public acceptance failed: %d failures", len(report.Failures))
 	}
 	return nil
+}
+
+// fullCohortFailures validates every eligible Midnight row through the same
+// build-pinned quality projection that the release gate uses.  The public
+// HTTP phase below intentionally remains a bounded acceptance sample: issuing
+// two expensive detail requests for every record would turn a safety check
+// into a production load test and would not validate more source data.
+func fullCohortFailures(ctx context.Context, db *pgxpool.Pool, build string) ([]string, error) {
+	snapshot, err := catalogquality.EvaluatePublicQuality(ctx, db, "wow", build, catalogquality.QualityProfileMidnightActive)
+	if err != nil {
+		return nil, fmt.Errorf("evaluate full Midnight quality cohort: %w", err)
+	}
+	failures := make([]string, 0, 8)
+	if !snapshot.ActiveBuild || snapshot.Raw == 0 || snapshot.Eligible == 0 {
+		failures = append(failures, "full cohort: active Midnight denominator is empty or not pinned to the active build")
+	}
+	if failed := snapshot.English.Missing + snapshot.English.Technical + snapshot.English.Unproven; failed != 0 {
+		failures = append(failures, fmt.Sprintf("full cohort: English display failures=%d", failed))
+	}
+	if failed := snapshot.Russian.Missing + snapshot.Russian.Technical + snapshot.Russian.Fallback + snapshot.Russian.Unproven; failed != 0 {
+		failures = append(failures, fmt.Sprintf("full cohort: Russian display/provenance failures=%d", failed))
+	}
+	if failed := snapshot.UnresolvedText + snapshot.UnresolvedTooltip; failed != 0 {
+		failures = append(failures, fmt.Sprintf("full cohort: unresolved public templates=%d", failed))
+	}
+	if failed := snapshot.FailedMedia + snapshot.RemoteMedia + snapshot.MissingPrimaryMedia; failed != 0 {
+		failures = append(failures, fmt.Sprintf("full cohort: media failures=%d", failed))
+	}
+	if snapshot.RunningImports != 0 || snapshot.FailedImports != 0 {
+		failures = append(failures, fmt.Sprintf("full cohort: running imports=%d failed imports=%d", snapshot.RunningImports, snapshot.FailedImports))
+	}
+	return failures, nil
 }
 
 func loadSample(ctx context.Context, db *pgxpool.Pool, build, seed string, randomCount, edgeCount int) ([]record, []record, error) {
@@ -225,30 +270,40 @@ func checkRecord(ctx context.Context, client *http.Client, apiBase string, item 
 		}
 		return 1, failures
 	}
-	requests := 0
-	for _, locale := range []string{"en_US", "ru_RU"} {
-		payload, err := fetchEntity(ctx, client, apiBase, item.ID, locale)
+	requests := 1
+	payload, err := fetchEntity(ctx, client, apiBase, item.ID, "en_US")
+	if err != nil {
+		return requests, append(failures, fmt.Sprintf("%s/%d en_US: %v", item.Type, item.ExternalID, err))
+	}
+	if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
+		failures = append(failures, fmt.Sprintf("%s/%d en_US: %v", item.Type, item.ExternalID, err))
+	}
+	if err := validateEmbeddedLocalizations(payload); err != nil {
+		failures = append(failures, fmt.Sprintf("%s/%d localizations: %v", item.Type, item.ExternalID, err))
+	}
+	// The response contains both build-pinned locale payloads. One media fetch
+	// is sufficient because cached media is build-scoped, not locale-scoped.
+	if item.HasMedia {
 		requests++
-		if err != nil {
-			failures = append(failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
-			continue
-		}
-		if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
-			failures = append(failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
-			continue
-		}
-		// Media is build-scoped rather than localized. One actual fetch is
-		// enough to prove that the public URL points at the locally cached
-		// asset, while each localized entity response still proves it exposes
-		// that URL consistently.
-		if locale == "en_US" && item.HasMedia {
-			requests++
-			if err := fetchCachedMedia(ctx, client, payload); err != nil {
-				failures = append(failures, fmt.Sprintf("%s/%d icon: %v", item.Type, item.ExternalID, err))
-			}
+		if err := fetchCachedMedia(ctx, client, payload); err != nil {
+			failures = append(failures, fmt.Sprintf("%s/%d icon: %v", item.Type, item.ExternalID, err))
 		}
 	}
 	return requests, failures
+}
+
+func checkLocaleRoute(ctx context.Context, client *http.Client, apiBase string, item record) (int, []string) {
+	if item.Decision != "eligible" {
+		return 0, nil
+	}
+	payload, err := fetchEntity(ctx, client, apiBase, item.ID, "ru_RU")
+	if err != nil {
+		return 1, []string{fmt.Sprintf("%s/%d ru_RU route: %v", item.Type, item.ExternalID, err)}
+	}
+	if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
+		return 1, []string{fmt.Sprintf("%s/%d ru_RU route: %v", item.Type, item.ExternalID, err)}
+	}
+	return 1, nil
 }
 
 func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limit int, selector string) ([]record, error) {
@@ -283,12 +338,20 @@ func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limi
 		query += `decision='eligible' AND entity_type='item' AND NOT has_media ORDER BY md5($2 || id::text) LIMIT $3`
 	case "template":
 		query += `decision='eligible' AND has_template ORDER BY md5($2 || id::text) LIMIT $3`
+	case "locale_routes":
+		query += `decision='eligible' AND id IN (
+			SELECT DISTINCT ON (entity_type) id FROM scoped
+			WHERE decision='eligible' ORDER BY entity_type,md5($2 || id::text)
+		) ORDER BY entity_type`
 	default:
 		return nil, fmt.Errorf("unsupported acceptance selector %q", selector)
 	}
 	args := []any{build}
 	if selector != "all" {
 		args = append(args, seed, limit)
+		if selector == "locale_routes" {
+			args = args[:2]
+		}
 	}
 	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
@@ -362,6 +425,33 @@ func validateDisplay(payload map[string]any, entityType string, hasMedia bool) e
 	}
 	if tooltip, ok := payload["tooltip"].(map[string]any); ok && tooltipHasTemplate(tooltip) {
 		return errors.New("unresolved template in tooltip")
+	}
+	return nil
+}
+
+// validateEmbeddedLocalizations checks the bilingual payload returned with a
+// public entity. The requested-locale route is separately exercised once per
+// entity type, while this check proves the actual EN/RU content for every
+// sampled record without multiplying production detail traffic.
+func validateEmbeddedLocalizations(payload map[string]any) error {
+	localizations, ok := payload["localizations"].(map[string]any)
+	if !ok {
+		return errors.New("missing bilingual localizations")
+	}
+	for _, locale := range []string{"en_US", "ru_RU"} {
+		value, ok := localizations[locale].(map[string]any)
+		if !ok {
+			return fmt.Errorf("missing %s localization", locale)
+		}
+		name, _ := value["name"].(string)
+		if strings.TrimSpace(name) == "" || technicalName.MatchString(name) {
+			return fmt.Errorf("invalid %s name %q", locale, name)
+		}
+		for _, key := range []string{"description", "resolvedDescription"} {
+			if text, _ := value[key].(string); templateToken.MatchString(text) {
+				return fmt.Errorf("unresolved %s template in %s", locale, key)
+			}
+		}
 	}
 	return nil
 }
