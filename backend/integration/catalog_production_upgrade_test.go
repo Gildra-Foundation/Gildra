@@ -29,7 +29,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 143
+const latestCatalogSchemaVersion int64 = 144
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -225,7 +225,7 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 		RETURNING id`, productID).Scan(&buildID); err != nil {
 		t.Fatalf("seed Midnight cohort build: %v", err)
 	}
-	var snapshotID, artifactID, currencyArtifactID string
+	var snapshotID, artifactID, currencyArtifactID, objectiveArtifactID string
 	if err := database.QueryRowContext(ctx, `
 		INSERT INTO catalog_snapshots(product_id,build_id,source,status,content_hash)
 		VALUES($1,$2,'wago_tools','validated','midnight-cohort-proof')
@@ -250,6 +250,15 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 		RETURNING id::text`, snapshotID, buildID).Scan(&currencyArtifactID); err != nil {
 		t.Fatalf("seed Midnight currency-cost artifact: %v", err)
 	}
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO catalog_source_artifacts(
+			snapshot_id,build_id,source,artifact_key,locale,source_url,content_hash,byte_size,status)
+		VALUES($1,$2,'wago_tools','QuestObjective','en_US',
+			'https://wago.tools/db2/QuestObjective/csv?build=99.0.0.999996',
+			decode(repeat('ad',32),'hex'),1,'ready')
+		RETURNING id::text`, snapshotID, buildID).Scan(&objectiveArtifactID); err != nil {
+		t.Fatalf("seed Midnight quest-objective artifact: %v", err)
+	}
 	if _, err := database.ExecContext(ctx, `
 		INSERT INTO catalog_db2_rows(
 			build_id,table_name,locale,row_id,payload,content_hash,source_url,snapshot_id,source_artifact_id)
@@ -270,8 +279,16 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 			($1,'ItemCurrencyCost','en_US',990001,
 			'{"ID":"990001","ItemID":"880002"}'::jsonb,
 			decode(repeat('cf',32),'hex'),
-			'https://wago.tools/db2/ItemCurrencyCost/csv?build=99.0.0.999996',$2::uuid,$4::uuid)`,
-		buildID, snapshotID, artifactID, currencyArtifactID); err != nil {
+			'https://wago.tools/db2/ItemCurrencyCost/csv?build=99.0.0.999996',$2::uuid,$4::uuid),
+			($1,'ItemSparse','en_US',880003,
+			'{"ExpansionID":11,"Display_lang":"Integration Midnight Quest Objective"}'::jsonb,
+			decode(repeat('d0',32),'hex'),
+			'https://wago.tools/db2/ItemSparse/csv?build=99.0.0.999996',$2::uuid,$3::uuid),
+			($1,'QuestObjective','en_US',990002,
+			'{"ID":"990002","Type":"1","ObjectID":"880003"}'::jsonb,
+			decode(repeat('d1',32),'hex'),
+			'https://wago.tools/db2/QuestObjective/csv?build=99.0.0.999996',$2::uuid,$5::uuid)`,
+		buildID, snapshotID, artifactID, currencyArtifactID, objectiveArtifactID); err != nil {
 		t.Fatalf("insert Midnight currency-cost evidence: %v", err)
 	}
 	var expansionKey, classification, evidenceTable, sourceArtifact string
@@ -300,7 +317,7 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 		productID, buildID).Scan(&decision, &reason); err != nil {
 		t.Fatalf("read Midnight item usability: %v", err)
 	}
-	if assessed != 2 || decision != "eligible" || reason != "gameplay_signal_present" {
+	if assessed != 3 || decision != "eligible" || reason != "gameplay_signal_present" {
 		t.Fatalf("Midnight usability classification is wrong: assessed=%d decision=%q reason=%q", assessed, decision, reason)
 	}
 	var currencyDecision string
@@ -314,6 +331,18 @@ func assertMidnightExpansionCohortSync(t *testing.T, ctx context.Context, databa
 	}
 	if currencyDecision != "eligible" || !currencyEvidence {
 		t.Fatalf("Midnight currency-cost evidence was not promoted: decision=%q evidence=%t", currencyDecision, currencyEvidence)
+	}
+	var objectiveDecision string
+	var objectiveEvidence bool
+	if err := database.QueryRowContext(ctx, `
+		SELECT decision,COALESCE((evidence->>'quest_objective_item')::boolean,false)
+		FROM catalog_entity_usability
+		WHERE product_id=$1 AND build_id=$2 AND entity_type='item' AND external_id=880003`,
+		productID, buildID).Scan(&objectiveDecision, &objectiveEvidence); err != nil {
+		t.Fatalf("read Midnight quest-objective usability: %v", err)
+	}
+	if objectiveDecision != "eligible" || !objectiveEvidence {
+		t.Fatalf("Midnight quest-objective evidence was not promoted: decision=%q evidence=%t", objectiveDecision, objectiveEvidence)
 	}
 }
 
