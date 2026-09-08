@@ -1,3 +1,4 @@
+-- +goose Up
 -- Import failures need an operational state, rather than an unstructured log
 -- message.  Keep the original run immutable and attach one actionable queue
 -- record to it: transient source failures are scheduled for retry, while
