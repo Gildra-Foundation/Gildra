@@ -253,7 +253,6 @@ func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 		t.Fatalf("symlink escape status=%d, want 404", response.Code)
 	}
 
-
 	if err := goose.DownToContext(ctx, database, migrations, 102); err != nil {
 		t.Fatalf("roll back local-preview migrations: %v", err)
 	}
@@ -370,14 +369,14 @@ func TestSeedOfficialIconsCachesOnceAndLinksSharedEntities(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = cache.Close() })
-	result, err := cache.SeedOfficialIcons(ctx, "wow", 10)
+	result, err := cache.SeedOfficialIcons(ctx, IconSeedOptions{Product: "wow", Limit: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.Eligible != 1 || result.IconsCached != 1 || result.Entities != 2 || result.Failed != 0 || calls != 1 {
 		t.Fatalf("icon seed result=%#v calls=%d, want one download linked to two entities", result, calls)
 	}
-	result, err = cache.SeedOfficialIcons(ctx, "wow", 10)
+	result, err = cache.SeedOfficialIcons(ctx, IconSeedOptions{Product: "wow", Limit: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -405,7 +404,7 @@ func TestSeedOfficialIconsCachesOnceAndLinksSharedEntities(t *testing.T) {
 		VALUES($1,'spell',700003,'spell_fire_flamebolt',$2,135812,$2)`, buildID, artifactID); err != nil {
 		t.Fatal(err)
 	}
-	result, err = cache.SeedOfficialIcons(ctx, "wow", 10)
+	result, err = cache.SeedOfficialIcons(ctx, IconSeedOptions{Product: "wow", Limit: 10})
 	if err != nil {
 		t.Fatal(err)
 	}

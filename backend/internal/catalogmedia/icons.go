@@ -51,6 +51,15 @@ type IconSeedResult struct {
 	FailureSample          []IconFailure `json:"failureSample,omitempty"`
 }
 
+// IconSeedOptions can constrain a repair to a confirmed expansion cohort.
+// MissingOnly prevents a repair job from re-downloading already usable media.
+type IconSeedOptions struct {
+	Product     string
+	Expansion   string
+	Limit       int
+	MissingOnly bool
+}
+
 type iconCandidate struct {
 	Name       string
 	FileDataID *int64
@@ -83,8 +92,10 @@ type iconFetchResult struct {
 // cached browser images. One official render asset is fetched per unique icon;
 // every published entity using that icon then points to the same content-
 // addressed object on disk.
-func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int) (IconSeedResult, error) {
-	product = strings.TrimSpace(product)
+func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) (IconSeedResult, error) {
+	product := strings.TrimSpace(options.Product)
+	expansion := strings.TrimSpace(strings.ToLower(options.Expansion))
+	limit := options.Limit
 	if product == "" {
 		return IconSeedResult{}, errors.New("catalog product is required")
 	}
@@ -131,16 +142,29 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 		), targets AS (
 			SELECT icon.icon_name,
 				COALESCE(min(icon.file_data_id),min(asset.file_data_id)) AS file_data_id,
-				count(DISTINCT entity.id) AS entity_count
+				count(DISTINCT entity.id) AS entity_count,
+				count(DISTINCT entity.id) FILTER (WHERE NOT EXISTS (
+					SELECT 1 FROM catalog_entity_media primary_media
+					WHERE primary_media.entity_id=entity.id AND primary_media.build_id=icon.build_id
+					  AND primary_media.media_kind='icon' AND primary_media.is_primary
+					  AND primary_media.cache_status='cached'
+					  AND primary_media.cached_content_hash IS NOT NULL
+					  AND primary_media.cached_byte_size IS NOT NULL
+				)) AS missing_media_entity_count
 			FROM source_icons icon
 			JOIN game_entities entity ON entity.product_id=$1
 				AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
 			JOIN game_entity_versions published ON published.id=entity.published_version_id
 				AND published.build_id=icon.build_id
+			LEFT JOIN catalog_entity_expansions cohort ON cohort.product_id=$1
+				AND cohort.build_id=icon.build_id AND cohort.entity_type=icon.entity_type
+				AND cohort.external_id=icon.external_id AND cohort.classification='confirmed'
+			LEFT JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
 			LEFT JOIN catalog_file_assets asset
 				ON regexp_replace(lower(asset.icon_name),'[[:space:]]+','','g')=icon.icon_name
 			WHERE entity.deleted_at IS NULL
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
+			  AND ($4='' OR expansion.expansion_key=$4)
 			GROUP BY icon.icon_name
 		), cached AS (
 			SELECT lower(media.attributes->>'icon_name') AS icon_name,
@@ -157,12 +181,13 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 			SELECT target.icon_name,target.file_data_id
 			FROM targets target
 			LEFT JOIN cached ON cached.icon_name=target.icon_name
-			WHERE COALESCE(cached.entity_count,0)<target.entity_count
+			WHERE CASE WHEN $5::boolean THEN target.missing_media_entity_count>0
+				ELSE COALESCE(cached.entity_count,0)<target.entity_count END
 		)
 		SELECT icon_name,file_data_id,count(*) OVER()
 		FROM candidates
 		ORDER BY icon_name
-		LIMIT $3`, productID, buildID, limit)
+		LIMIT $3`, productID, buildID, limit, expansion, options.MissingOnly)
 		if err != nil {
 			return fmt.Errorf("list uncached official icons: %w", err)
 		}
@@ -353,15 +378,18 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 					AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
 				JOIN game_entity_versions published ON published.id=entity.published_version_id
 					AND published.build_id=icon.build_id
-				WHERE entity.deleted_at IS NULL AND NOT EXISTS (
+				LEFT JOIN catalog_entity_expansions cohort ON cohort.product_id=$1
+					AND cohort.build_id=icon.build_id AND cohort.entity_type=icon.entity_type
+					AND cohort.external_id=icon.external_id AND cohort.classification='confirmed'
+				LEFT JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
+				WHERE entity.deleted_at IS NULL AND ($4='' OR expansion.expansion_key=$4)
+				  AND (NOT $5::boolean OR NOT EXISTS (
 					SELECT 1 FROM catalog_entity_media existing
 					WHERE existing.entity_id=entity.id AND existing.build_id=icon.build_id
-					  AND existing.media_kind='icon' AND existing.cache_status='cached'
-					  AND ((existing.asset_key='official_render_56' AND existing.source='blizzard_api')
-					    OR (existing.asset_key='wago_casc_icon_png' AND existing.source='wago_tools')
-					    OR (existing.asset_key='zamimg_icon_large' AND existing.source='zamimg'))
+					  AND existing.media_kind='icon' AND existing.is_primary
+					  AND existing.cache_status='cached'
 					  AND existing.cached_content_hash IS NOT NULL AND existing.cached_byte_size IS NOT NULL
-				)
+				))
 				ORDER BY entity.id,icon.file_data_id NULLS LAST
 			), prepared AS (
 				SELECT gen_random_uuid() AS id,target.* FROM targets target
@@ -383,7 +411,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, product string, limit int
 				),prepared.cache_key,prepared.cached_content_hash,prepared.cached_byte_size,now(),''
 			FROM prepared
 			ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO NOTHING`,
-			productID, buildID, c.publicBase)
+			productID, buildID, c.publicBase, expansion, options.MissingOnly)
 		if err != nil {
 			return fmt.Errorf("link official icon batch to entities: %w", err)
 		}
