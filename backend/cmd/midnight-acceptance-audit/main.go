@@ -40,6 +40,7 @@ type result struct {
 	Full        bool     `json:"fullCohort"`
 	Random      int      `json:"randomEligible"`
 	Edge        int      `json:"edgeCases"`
+	Templates   int      `json:"templateRecords"`
 	Checked     int      `json:"checkedRequests"`
 	Failures    []string `json:"failures,omitempty"`
 	CompletedAt string   `json:"completedAt"`
@@ -64,7 +65,7 @@ func run() error {
 	flag.IntVar(&randomCount, "random", 200, "number of eligible random records")
 	flag.IntVar(&edgeCount, "edge", 100, "number of edge records")
 	flag.BoolVar(&all, "all", false, "check every eligible and non-eligible Midnight record")
-	flag.IntVar(&concurrency, "concurrency", 8, "maximum concurrent public API requests")
+	flag.IntVar(&concurrency, "concurrency", 4, "maximum concurrent public API requests")
 	flag.DurationVar(&timeout, "timeout", 30*time.Minute, "whole audit timeout")
 	flag.Parse()
 	if databaseURL == "" {
@@ -79,6 +80,9 @@ func run() error {
 	// the audit slower and competing with player traffic.
 	if concurrency < 1 || concurrency > 16 {
 		return errors.New("-concurrency must be between 1 and 16")
+	}
+	if all && concurrency > 4 {
+		return errors.New("-all requires -concurrency no greater than 4 to protect production traffic")
 	}
 	if timeout < time.Minute || timeout > time.Hour {
 		return errors.New("-timeout must be between 1m and 1h")
@@ -124,6 +128,19 @@ func run() error {
 			checked.Add(int64(requestCount))
 			report.Failures = append(report.Failures, failures...)
 		}
+		// A stored source template is not itself a public failure: the API
+		// resolves supported Blizzard tokens at request time. Audit every such
+		// record through both locale routes so the release result reflects the
+		// exact public payload, including tooltip blocks, rather than a raw DB
+		// regular-expression count.
+		templateRecords, templateErr := loadRecords(ctx, db, build, seed, 0, "template_all")
+		if templateErr != nil {
+			return templateErr
+		}
+		report.Templates = len(templateRecords)
+		requestCount, templateFailures := checkTemplateRecords(ctx, client, apiBase, templateRecords, concurrency)
+		checked.Add(int64(requestCount))
+		report.Failures = append(report.Failures, templateFailures...)
 	} else {
 		var selectedEdges []record
 		records, selectedEdges, err = loadSample(ctx, db, build, seed, randomCount, edgeCount)
@@ -193,9 +210,10 @@ func fullCohortFailures(ctx context.Context, db *pgxpool.Pool, build string) ([]
 	if failed := snapshot.Russian.Missing + snapshot.Russian.Technical + snapshot.Russian.Fallback + snapshot.Russian.Unproven; failed != 0 {
 		failures = append(failures, fmt.Sprintf("full cohort: Russian display/provenance failures=%d", failed))
 	}
-	if failed := snapshot.UnresolvedText + snapshot.UnresolvedTooltip; failed != 0 {
-		failures = append(failures, fmt.Sprintf("full cohort: unresolved public templates=%d", failed))
-	}
+	// Template values are resolved while constructing the public entity. The
+	// full audit calls both locale routes for each raw candidate below, which is
+	// the authoritative check; a raw-token counter would incorrectly reject a
+	// successfully resolved public tooltip.
 	if failed := snapshot.MissingPrimaryMedia; failed != 0 {
 		failures = append(failures, fmt.Sprintf("full cohort: media failures=%d", failed))
 	}
@@ -313,8 +331,10 @@ func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limi
 			EXISTS (SELECT 1 FROM catalog_entity_media media WHERE media.build_id=cohort.build_id
 				AND media.entity_type=cohort.entity_type AND media.external_id=cohort.external_id
 				AND media.cache_status='cached' AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL AND media.cached_url IS NOT NULL) has_media,
-			EXISTS (SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=version.id
-				AND (tooltip.plain_text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' OR tooltip.blocks::text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])')) has_template
+			(EXISTS (SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=version.id
+				AND (tooltip.plain_text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' OR tooltip.blocks::text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'))
+			 OR EXISTS (SELECT 1 FROM game_entity_localizations localization WHERE localization.version_id=version.id
+				AND localization.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])')) has_template
 		FROM catalog_entity_expansions cohort
 		JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id AND expansion.expansion_key='midnight'
 		JOIN game_products product ON product.id=cohort.product_id AND product.slug='wow'
@@ -338,6 +358,8 @@ func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limi
 		query += `decision='eligible' AND entity_type='item' AND NOT has_media ORDER BY md5($2 || id::text) LIMIT $3`
 	case "template":
 		query += `decision='eligible' AND has_template ORDER BY md5($2 || id::text) LIMIT $3`
+	case "template_all":
+		query += `decision='eligible' AND has_template ORDER BY entity_type,external_id`
 	case "locale_routes":
 		query += `decision='eligible' AND id IN (
 			SELECT DISTINCT ON (entity_type) id FROM scoped
@@ -347,7 +369,7 @@ func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limi
 		return nil, fmt.Errorf("unsupported acceptance selector %q", selector)
 	}
 	args := []any{build}
-	if selector != "all" {
+	if selector != "all" && selector != "template_all" {
 		args = append(args, seed, limit)
 		if selector == "locale_routes" {
 			args = args[:2]
@@ -367,6 +389,68 @@ func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limi
 		result = append(result, item)
 	}
 	return result, rows.Err()
+}
+
+func checkTemplateRecords(ctx context.Context, client *http.Client, apiBase string, records []record, concurrency int) (int, []string) {
+	if len(records) == 0 {
+		return 0, nil
+	}
+	jobs := make(chan record)
+	var workers sync.WaitGroup
+	var checked atomic.Int64
+	var failuresMu sync.Mutex
+	failures := make([]string, 0)
+	for range concurrency {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			for item := range jobs {
+				requests, recordFailures := checkTemplateRecord(ctx, client, apiBase, item)
+				checked.Add(int64(requests))
+				if len(recordFailures) == 0 {
+					continue
+				}
+				failuresMu.Lock()
+				failures = append(failures, recordFailures...)
+				failuresMu.Unlock()
+			}
+		}()
+	}
+	for _, item := range records {
+		select {
+		case jobs <- item:
+		case <-ctx.Done():
+			close(jobs)
+			workers.Wait()
+			return int(checked.Load()), append(failures, fmt.Sprintf("template audit: %v", ctx.Err()))
+		}
+	}
+	close(jobs)
+	workers.Wait()
+	return int(checked.Load()), failures
+}
+
+func checkTemplateRecord(ctx context.Context, client *http.Client, apiBase string, item record) (int, []string) {
+	if item.Decision != "eligible" {
+		return 0, nil
+	}
+	failures := make([]string, 0, 2)
+	for _, locale := range []string{"en_US", "ru_RU"} {
+		payload, err := fetchEntity(ctx, client, apiBase, item.ID, locale)
+		if err != nil {
+			failures = append(failures, fmt.Sprintf("%s/%d %s template route: %v", item.Type, item.ExternalID, locale, err))
+			continue
+		}
+		// Media is independently checked by the full cohort gate and sampled
+		// HTTP fetches. Do not multiply icon traffic for every template record.
+		if err := validateDisplay(payload, item.Type, false); err != nil {
+			failures = append(failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
+		}
+		if err := validateEmbeddedLocalizations(payload); err != nil {
+			failures = append(failures, fmt.Sprintf("%s/%d localizations: %v", item.Type, item.ExternalID, err))
+		}
+	}
+	return 2, failures
 }
 
 func expectStatus(ctx context.Context, client *http.Client, base, id, locale string, wanted int) error {
