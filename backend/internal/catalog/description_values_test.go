@@ -124,6 +124,15 @@ func TestResolveDescriptionTextResolvesMaxDurationAndTick(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextResolvesCapitalMagnitude(t *testing.T) {
+	got := resolveDescriptionText("Lasts $M2 min.", 1262057, map[int64]spellDescriptionValues{
+		1262057: {Effects: map[int]spellEffectValue{2: {BasePoints: 60}}},
+	}, "en_US")
+	if got != "Lasts 60 min." {
+		t.Fatalf("unexpected capital magnitude resolution: %q", got)
+	}
+}
+
 func TestReferencedSpellIDsIncludesExplicitTickSpell(t *testing.T) {
 	got := referencedSpellIDs([]string{"Ticks every $1217960t2."}, 0)
 	if len(got) != 1 || got[0] != 1217960 {

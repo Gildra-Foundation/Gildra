@@ -24,9 +24,13 @@ var (
 	spellEffectToken        = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
 	spellRadiusToken        = regexp.MustCompile(`\$(\d*)[aA](\d*)\b`)
 	spellMagnitudeToken     = regexp.MustCompile(`\$(\d*)m(\d+)\b`)
-	spellAuraValueToken     = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
-	spellPluralToken        = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
-	currentMaxStacksToken   = regexp.MustCompile(`\$u\b`)
+	// `$M<n>` is the capitalized Blizzard magnitude form. It addresses the
+	// current spell only (unlike `$123m<n>`), and commonly appears in item
+	// effects as a human-readable duration/count such as `$M2 min.`.
+	spellMaxMagnitudeToken = regexp.MustCompile(`\$M(\d+)\b`)
+	spellAuraValueToken    = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
+	spellPluralToken       = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
+	currentMaxStacksToken  = regexp.MustCompile(`\$u\b`)
 	// Tick intervals may address the current spell (`$t2`) or a referenced
 	// spell (`$1217960t2`). Keep the optional spell ID so item-effect blocks
 	// can resolve their explicit reference instead of leaking a raw token.
@@ -494,6 +498,14 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 			return formatDescriptionNumber(math.Abs(value.PowerCostMaxPct))
 		}
 		if effect, exists := value.Effects[index]; exists && math.Abs(effect.BasePoints) > 0.000001 {
+			return formatDescriptionNumber(math.Abs(effect.BasePoints))
+		}
+		return token
+	})
+	text = spellMaxMagnitudeToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellMaxMagnitudeToken.FindStringSubmatch(token)
+		index, _ := strconv.Atoi(match[1])
+		if effect, exists := values[currentSpellID].Effects[index]; exists && math.Abs(effect.BasePoints) > 0.000001 {
 			return formatDescriptionNumber(math.Abs(effect.BasePoints))
 		}
 		return token
