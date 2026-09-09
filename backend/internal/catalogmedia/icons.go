@@ -391,33 +391,45 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 		}
 
 		command, err := tx.Exec(ctx, `
-			WITH targets AS (
-				SELECT DISTINCT ON (entity.id)
-					entity.id AS entity_id,entity.entity_type,entity.external_id,
+			WITH scoped_entities AS (
+				-- Start from the published, confirmed cohort for an expansion repair.
+				-- The former seed-first shape normalized every icon row before the
+				-- Midnight filter could apply, turning this small link operation into
+				-- a catalogue-wide disk scan.
+				SELECT entity.id AS entity_id,entity.entity_type,entity.external_id
+				FROM game_entities entity
+				JOIN game_entity_versions published ON published.id=entity.published_version_id
+					AND published.build_id=$2
+				WHERE entity.product_id=$1 AND entity.deleted_at IS NULL AND $4=''
+				UNION ALL
+				SELECT entity.id AS entity_id,entity.entity_type,entity.external_id
+				FROM catalog_entity_expansions cohort
+				JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
+				JOIN game_entities entity ON entity.product_id=cohort.product_id
+					AND entity.entity_type=cohort.entity_type AND entity.external_id=cohort.external_id
+				JOIN game_entity_versions published ON published.id=entity.published_version_id
+					AND published.build_id=cohort.build_id
+				WHERE cohort.product_id=$1 AND cohort.build_id=$2 AND cohort.classification='confirmed'
+					AND expansion.expansion_key=$4 AND entity.deleted_at IS NULL
+			), targets AS (
+				SELECT DISTINCT ON (scoped.entity_id)
+					scoped.entity_id,scoped.entity_type,scoped.external_id,
 					seed.icon_name,COALESCE(icon.file_data_id,seed.file_data_id) AS file_data_id,
 					seed.source,seed.asset_key,seed.source_url,seed.source_content_hash,
 					seed.cache_key,seed.cached_mime_type,seed.cached_byte_size,
 					seed.cached_content_hash,seed.width,seed.height,seed.conversion,seed.artifact_id
-				FROM official_icon_seed seed
-		JOIN catalog_entity_icons icon ON icon.build_id=$2
-					AND regexp_replace(regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g'),'_+','_','g')=seed.icon_name
-				JOIN game_entities entity ON entity.product_id=$1
-					AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
-				JOIN game_entity_versions published ON published.id=entity.published_version_id
-					AND published.build_id=icon.build_id
-				LEFT JOIN catalog_entity_expansions cohort ON cohort.product_id=$1
-					AND cohort.build_id=icon.build_id AND cohort.entity_type=icon.entity_type
-					AND cohort.external_id=icon.external_id AND cohort.classification='confirmed'
-				LEFT JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
-				WHERE entity.deleted_at IS NULL AND ($4='' OR expansion.expansion_key=$4)
-				  AND (NOT $5::boolean OR NOT EXISTS (
+				FROM scoped_entities scoped
+				JOIN catalog_entity_icons icon ON icon.build_id=$2
+					AND icon.entity_type=scoped.entity_type AND icon.external_id=scoped.external_id
+				JOIN official_icon_seed seed ON regexp_replace(regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g'),'_+','_','g')=seed.icon_name
+				WHERE NOT $5::boolean OR NOT EXISTS (
 					SELECT 1 FROM catalog_entity_media existing
-					WHERE existing.entity_id=entity.id AND existing.build_id=icon.build_id
+					WHERE existing.entity_id=scoped.entity_id AND existing.build_id=icon.build_id
 					  AND existing.media_kind='icon' AND existing.is_primary
 					  AND existing.cache_status='cached'
 					  AND existing.cached_content_hash IS NOT NULL AND existing.cached_byte_size IS NOT NULL
-				))
-				ORDER BY entity.id,icon.file_data_id NULLS LAST
+				)
+				ORDER BY scoped.entity_id,icon.file_data_id NULLS LAST
 			), prepared AS (
 				SELECT gen_random_uuid() AS id,target.* FROM targets target
 			)
