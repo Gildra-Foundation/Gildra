@@ -391,7 +391,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 		}
 
 		command, err := tx.Exec(ctx, `
-			WITH scoped_entities AS (
+			WITH scoped_entities AS MATERIALIZED (
 				-- Start from the published, confirmed cohort for an expansion repair.
 				-- The former seed-first shape normalized every icon row before the
 				-- Midnight filter could apply, turning this small link operation into
