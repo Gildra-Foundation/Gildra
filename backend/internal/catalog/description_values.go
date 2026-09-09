@@ -18,8 +18,8 @@ var (
 	spellIconToken          = regexp.MustCompile(`\$@spellicon(\d+)`)
 	spellConditionalToken   = regexp.MustCompile(`\$\?([A-Za-z][A-Za-z0-9_|-]*)`)
 	spellConditionalSpellID = regexp.MustCompile(`^[as]([0-9]+)$`)
-	spellValueExpression    = regexp.MustCompile(`\$\{\$(\d*)([sm])(\d+)((?:[/*+-]-?\d+(?:\.\d+)?)*)\}(?:\.1)?`)
-	spellValueOperation     = regexp.MustCompile(`([/*+-])(-?\d+(?:\.\d+)?)`)
+	spellValueExpression    = regexp.MustCompile(`\$\{\$(\d*)([sm])(\d+)((?:[/*+-]-?(?:\d+(?:\.\d+)?|\.\d+))*)\}(?:\.1)?`)
+	spellValueOperation     = regexp.MustCompile(`([/*+-])(-?(?:\d+(?:\.\d+)?|\.\d+))`)
 	// Durations embedded in a `${...}` arithmetic expression must remain a
 	// number until the expression is evaluated. Replacing `$d` with "20 sec"
 	// first would turn a valid expression into invalid source text.
@@ -469,6 +469,10 @@ func referencedSpellIDs(texts []string, currentSpellID int64) []int64 {
 }
 
 func resolveDescriptionText(text string, currentSpellID int64, values map[int64]spellDescriptionValues, locale string) string {
+	return resolveDescriptionTextAtDepth(text, currentSpellID, values, locale, 0)
+}
+
+func resolveDescriptionTextAtDepth(text string, currentSpellID int64, values map[int64]spellDescriptionValues, locale string, depth int) string {
 	if text == "" {
 		return text
 	}
@@ -479,6 +483,9 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 			match := spellDescriptionToken.FindStringSubmatch(token)
 			id, _ := strconv.ParseInt(match[1], 10, 64)
 			if value := values[id]; value.Description != "" && value.Description != token {
+				if depth < 3 {
+					return resolveDescriptionTextAtDepth(value.Description, id, values, locale, depth+1)
+				}
 				return value.Description
 			}
 			return token
