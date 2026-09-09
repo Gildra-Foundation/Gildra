@@ -133,6 +133,15 @@ func TestResolveDescriptionTextResolvesCapitalMagnitude(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextResolvesCapitalEffect(t *testing.T) {
+	got := resolveDescriptionText("+$S1 profession skill", 1234159, map[int64]spellDescriptionValues{
+		1234159: {Effects: map[int]spellEffectValue{1: {BasePoints: 5}}},
+	}, "en_US")
+	if got != "+5 profession skill" {
+		t.Fatalf("unexpected capital effect resolution: %q", got)
+	}
+}
+
 func TestResolveDescriptionTextResolvesEnchantmentEffect(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
 		1236094: {Enchantments: map[int]spellEnchantmentValue{1: {

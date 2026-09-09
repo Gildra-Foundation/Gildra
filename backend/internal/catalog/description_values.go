@@ -45,6 +45,9 @@ var (
 	currentDurationToken    = regexp.MustCompile(`\$d\b`)
 	currentMaxDurationToken = regexp.MustCompile(`\$D\b`)
 	currentEffectToken      = regexp.MustCompile(`\$s(\d+)\b`)
+	// The capitalized form is used by profession and some item-effect tooltips;
+	// it addresses the same current-spell effect as `$s<n>`.
+	currentCapitalEffectToken = regexp.MustCompile(`\$S(\d+)\b`)
 )
 
 type spellDescriptionValues struct {
@@ -619,6 +622,16 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		})
 		text = currentEffectToken.ReplaceAllStringFunc(text, func(token string) string {
 			match := currentEffectToken.FindStringSubmatch(token)
+			index, _ := strconv.Atoi(match[1])
+			if value, ok := spellEffectAt(values[currentSpellID], index); ok {
+				if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
+					return formatted
+				}
+			}
+			return token
+		})
+		text = currentCapitalEffectToken.ReplaceAllStringFunc(text, func(token string) string {
+			match := currentCapitalEffectToken.FindStringSubmatch(token)
 			index, _ := strconv.Atoi(match[1])
 			if value, ok := spellEffectAt(values[currentSpellID], index); ok {
 				if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
