@@ -62,6 +62,9 @@ var (
 	currentDurationWithIndexToken = regexp.MustCompile(`\$d\d+\b`)
 	currentMaxDurationToken       = regexp.MustCompile(`\$D\b`)
 	currentEffectToken            = regexp.MustCompile(`\$s(\d+)\b`)
+	// `$o<n>` is Blizzard's periodic-output form. It addresses the same
+	// effect slot as `$s<n>` but is used in channel/heal-over-time text.
+	currentOvertimeEffectToken = regexp.MustCompile(`\$o(\d+)\b`)
 	// The capitalized form is used by profession and some item-effect tooltips;
 	// it addresses the same current-spell effect as `$s<n>`.
 	currentCapitalEffectToken = regexp.MustCompile(`\$S(\d+)\b`)
@@ -704,6 +707,16 @@ func resolveDescriptionTextAtDepth(text string, currentSpellID int64, values map
 		})
 		text = currentEffectToken.ReplaceAllStringFunc(text, func(token string) string {
 			match := currentEffectToken.FindStringSubmatch(token)
+			index, _ := strconv.Atoi(match[1])
+			if value, ok := spellEffectAt(values[currentSpellID], index); ok {
+				if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
+					return formatted
+				}
+			}
+			return token
+		})
+		text = currentOvertimeEffectToken.ReplaceAllStringFunc(text, func(token string) string {
+			match := currentOvertimeEffectToken.FindStringSubmatch(token)
 			index, _ := strconv.Atoi(match[1])
 			if value, ok := spellEffectAt(values[currentSpellID], index); ok {
 				if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
