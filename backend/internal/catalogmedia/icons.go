@@ -157,7 +157,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			  AND media.cached_byte_size IS NOT NULL
 		), targets AS (
 			SELECT icon.icon_name,
-				COALESCE(min(icon.file_data_id),min(asset.file_data_id)) AS file_data_id,
+				min(icon.file_data_id) AS file_data_id,
 				count(DISTINCT entity.id) AS entity_count,
 				count(DISTINCT entity.id) FILTER (WHERE primary_media.entity_id IS NULL) AS missing_media_entity_count
 			FROM source_icons icon
@@ -167,8 +167,6 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				AND published.build_id=icon.build_id
 			LEFT JOIN verified_primary_media primary_media ON primary_media.entity_id=entity.id
 				AND primary_media.build_id=icon.build_id
-			LEFT JOIN catalog_file_assets asset
-				ON regexp_replace(regexp_replace(lower(asset.icon_name),'[[:space:]]+','','g'),'_+','_','g')=icon.icon_name
 			WHERE entity.deleted_at IS NULL
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
 			GROUP BY icon.icon_name
@@ -195,9 +193,26 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			LEFT JOIN cached ON cached.icon_name=target.icon_name
 			WHERE CASE WHEN $5::boolean THEN target.missing_media_entity_count>0
 				ELSE COALESCE(cached.entity_count,0)<target.entity_count END
+		), resolved_candidates AS (
+			-- Most DB2 icon rows contain FileDataID directly. Only the small set
+			-- that does not gets the legacy file-asset fallback; joining that
+			-- unindexed normalized name mapping for every scoped icon made a
+			-- Midnight repair spend minutes before its first download.
+			SELECT candidate.icon_name,
+				COALESCE(candidate.file_data_id,asset.file_data_id) AS file_data_id
+			FROM candidates candidate
+			LEFT JOIN LATERAL (
+				SELECT file_asset.file_data_id
+				FROM catalog_file_assets file_asset
+				WHERE candidate.file_data_id IS NULL
+				  AND file_asset.file_data_id IS NOT NULL
+				  AND regexp_replace(regexp_replace(lower(file_asset.icon_name),'[[:space:]]+','','g'),'_+','_','g')=candidate.icon_name
+				ORDER BY file_asset.file_data_id
+				LIMIT 1
+			) asset ON true
 		)
 		SELECT icon_name,file_data_id,count(*) OVER()
-		FROM candidates
+		FROM resolved_candidates
 		ORDER BY icon_name
 		LIMIT $3`, productID, buildID, limit, expansion, options.MissingOnly)
 		if err != nil {
