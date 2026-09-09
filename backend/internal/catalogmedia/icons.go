@@ -173,10 +173,16 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
 			GROUP BY icon.icon_name
 		), cached AS (
+			-- MissingOnly is the production repair path. It needs only one
+			-- verified primary image per entity, not a catalogue-wide accounting
+			-- of every cached icon. Keep this CTE empty in that mode so PostgreSQL
+			-- does not group the complete WoW media cache before considering the
+			-- small Midnight cohort.
 			SELECT lower(media.attributes->>'icon_name') AS icon_name,
 				count(DISTINCT media.entity_id) AS entity_count
 			FROM catalog_entity_media media
-			WHERE media.build_id=$2 AND media.media_kind='icon'
+			WHERE NOT $5::boolean
+			  AND media.build_id=$2 AND media.media_kind='icon'
 			  AND ((media.asset_key='official_render_56' AND media.source='blizzard_api')
 			    OR (media.asset_key='wago_casc_icon_png' AND media.source='wago_tools')
 			    OR (media.asset_key='zamimg_icon_large' AND media.source='zamimg'))
