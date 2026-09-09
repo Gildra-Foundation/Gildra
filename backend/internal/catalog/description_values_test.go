@@ -158,6 +158,22 @@ func TestResolveDescriptionTextResolvesEnchantmentEffect(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextExplainsRoleAdjustedValues(t *testing.T) {
+	values := map[int64]spellDescriptionValues{
+		1236094: {Enchantments: map[int]spellEnchantmentValue{1: {
+			Effects: map[int]float64{1: 20, 2: 35},
+		}}},
+	}
+	got := resolveDescriptionText("Deals ${$<rolemult>*$ec1s1} Fire damage before detonating for ${$<rolemult>*$ec1s2}.", 1236094, values, "en_US")
+	if got != "Deals a role-adjusted value of Fire damage before detonating for a role-adjusted value of." {
+		t.Fatalf("unexpected role-adjusted English resolution: %q", got)
+	}
+	got = resolveDescriptionText("Наносит ${$<rolemult>*$ec1s1} ед. урона.", 1236094, values, "ru_RU")
+	if got != "Наносит величину, зависящую от роли ед. урона." {
+		t.Fatalf("unexpected role-adjusted Russian resolution: %q", got)
+	}
+}
+
 func TestReferencedSpellIDsIncludesExplicitTickSpell(t *testing.T) {
 	got := referencedSpellIDs([]string{"Ticks every $1217960t2."}, 0)
 	if len(got) != 1 || got[0] != 1217960 {

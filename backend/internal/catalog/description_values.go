@@ -19,6 +19,11 @@ var (
 	spellConditionalToken   = regexp.MustCompile(`\$\?([A-Za-z][A-Za-z0-9_|-]*)`)
 	spellConditionalSpellID = regexp.MustCompile(`^[as]([0-9]+)$`)
 	spellValueExpression    = regexp.MustCompile(`\$\{\$(\d*)([sm])(\d+)(?:([/*+-])(-?\d+(?:\.\d+)?))?\}(?:\.1)?`)
+	// `$<rolemult>` is evaluated by the game client from the player's role.
+	// A catalog page has no player context, so it must never invent a numeric
+	// value.  Replace the complete dynamic expression with an explicit,
+	// player-readable qualifier instead of leaking the client template.
+	spellRoleMultiplierExpression = regexp.MustCompile(`\$\{\$<rolemult>\*[^{}]*\}`)
 	spellDurationToken      = regexp.MustCompile(`\$(\d+)d\b`)
 	spellMaxDurationToken   = regexp.MustCompile(`\$(\d+)D\b`)
 	spellEffectToken        = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
@@ -475,6 +480,12 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 	})
 	text = spellIconToken.ReplaceAllStringFunc(text, func(token string) string {
 		return ""
+	})
+	text = spellRoleMultiplierExpression.ReplaceAllStringFunc(text, func(token string) string {
+		if locale == "ru_RU" {
+			return "величину, зависящую от роли"
+		}
+		return "a role-adjusted value of"
 	})
 	text = spellValueExpression.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellValueExpression.FindStringSubmatch(token)
