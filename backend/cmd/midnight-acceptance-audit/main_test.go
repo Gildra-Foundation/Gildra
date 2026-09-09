@@ -77,3 +77,33 @@ func TestValidateDisplayRequiresItemMediaOnlyWhenTheRecordLacksIt(t *testing.T) 
 		t.Fatalf("unverified item media error = %v", err)
 	}
 }
+
+func TestSelectTemplateShardKeepsEveryRecordExactlyOnce(t *testing.T) {
+	t.Parallel()
+	records := []record{
+		{ID: "a"},
+		{ID: "b"},
+		{ID: "c"},
+		{ID: "d"},
+		{ID: "e"},
+	}
+	want := [][]string{{"a", "d"}, {"b", "e"}, {"c"}}
+	seen := make(map[string]int, len(records))
+	for shard, wantIDs := range want {
+		selected := selectTemplateShard(records, len(want), shard)
+		if len(selected) != len(wantIDs) {
+			t.Fatalf("shard %d length = %d, want %d", shard, len(selected), len(wantIDs))
+		}
+		for index, item := range selected {
+			if item.ID != wantIDs[index] {
+				t.Fatalf("shard %d record %d = %q, want %q", shard, index, item.ID, wantIDs[index])
+			}
+			seen[item.ID]++
+		}
+	}
+	for _, item := range records {
+		if seen[item.ID] != 1 {
+			t.Fatalf("record %q was selected %d times", item.ID, seen[item.ID])
+		}
+	}
+}
