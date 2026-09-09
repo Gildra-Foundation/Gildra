@@ -441,9 +441,12 @@ func checkTemplateRecord(ctx context.Context, client *http.Client, apiBase strin
 			failures = append(failures, fmt.Sprintf("%s/%d %s template route: %v", item.Type, item.ExternalID, locale, err))
 			continue
 		}
-		// Media is independently checked by the full cohort gate and sampled
-		// HTTP fetches. Do not multiply icon traffic for every template record.
-		if err := validateDisplay(payload, item.Type, false); err != nil {
+		// Media is independently fetched by the sampled HTTP checks, so do not
+		// multiply icon traffic for every template record. Still preserve the
+		// build-pinned media fact here: passing false made every item template
+		// look like a missing-media failure even when its cached icon was proven
+		// by the same SQL record selection.
+		if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
 			failures = append(failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
 		}
 		if err := validateEmbeddedLocalizations(payload); err != nil {

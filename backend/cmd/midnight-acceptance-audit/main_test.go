@@ -62,3 +62,18 @@ func TestValidateEmbeddedLocalizations(t *testing.T) {
 		t.Fatalf("invalid embedded localizations error = %v", err)
 	}
 }
+
+func TestValidateDisplayRequiresItemMediaOnlyWhenTheRecordLacksIt(t *testing.T) {
+	payload := map[string]any{
+		"name":                "Bright Linen Spellthread",
+		"description":         "Verified description.",
+		"resolvedDescription": "Verified description.",
+		"iconUrl":             "https://api.gildra.net/v1/media/example",
+	}
+	if err := validateDisplay(payload, "item", true); err != nil {
+		t.Fatalf("verified item media was rejected: %v", err)
+	}
+	if err := validateDisplay(payload, "item", false); err == nil || !strings.Contains(err.Error(), "missing verified primary media") {
+		t.Fatalf("unverified item media error = %v", err)
+	}
+}
