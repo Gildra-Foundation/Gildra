@@ -43,8 +43,8 @@ func TestResolveDescriptionTextAppliesChainedArithmeticWithDuration(t *testing.T
 			3: {Coefficient: 0.6},
 		}},
 	}
-	got := resolveDescriptionText("Restores ${$m1/5*$d} health and ${$m3/5*$d} mana.", 42, values, "en_US")
-	want := "Restores 3.2 × SP health and 2.4 × SP mana."
+	got := resolveDescriptionText("Restores ${$m1/5*$d} health and ${$m3/5*$d} mana; bonus ${$m1*.9}.", 42, values, "en_US")
+	want := "Restores 3.2 × SP health and 2.4 × SP mana; bonus 0.72 × SP."
 	if got != want {
 		t.Fatalf("unexpected chained expression\nwant: %s\n got: %s", want, got)
 	}
@@ -72,9 +72,9 @@ func TestResolveDescriptionTextPreservesUnknownTokens(t *testing.T) {
 func TestResolveDescriptionTextResolvesSpellDescriptionReferences(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
 		10: {Description: "$@spelldesc20"},
-		20: {Description: "Canonical description"},
+		20: {Description: "Deals $s1 damage.", Effects: map[int]spellEffectValue{1: {BasePoints: 7}}},
 	}
-	if got := resolveDescriptionText("$@spelldesc10", 0, values, "en_US"); got != "Canonical description" {
+	if got := resolveDescriptionText("$@spelldesc10", 0, values, "en_US"); got != "Deals 7 damage." {
 		t.Fatalf("unexpected nested description: %q", got)
 	}
 }
