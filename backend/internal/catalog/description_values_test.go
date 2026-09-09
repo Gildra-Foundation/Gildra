@@ -158,6 +158,33 @@ func TestResolveDescriptionTextResolvesEnchantmentEffect(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextResolvesIndexedDurationsAndExplicitMagnitude(t *testing.T) {
+	values := map[int64]spellDescriptionValues{
+		42: {DurationMS: 30000},
+		77: {DurationMS: 5000, Effects: map[int]spellEffectValue{1: {BasePoints: 3}}},
+	}
+	got := resolveDescriptionText("Lasts $d1, then $77d1; has $77M1 charges.", 42, values, "en_US")
+	want := "Lasts 30 sec, then 5 sec; has 3 charges."
+	if got != want {
+		t.Fatalf("unexpected indexed macro resolution\nwant: %s\n got: %s", want, got)
+	}
+}
+
+func TestResolveDescriptionTextRendersAlternativeConditionals(t *testing.T) {
+	got := resolveDescriptionText("Gain $?(a1)[Strength]?(a2)[Agility][Strength or Agility].", 0, nil, "en_US")
+	want := "Gain if «a1»: Strength; otherwise, if «a2»: Agility; otherwise: Strength or Agility."
+	if got != want {
+		t.Fatalf("unexpected alternative conditional: %q", got)
+	}
+}
+
+func TestResolveDescriptionTextExplainsHealingRoleAdjustedValues(t *testing.T) {
+	got := resolveDescriptionText("Heals ${$<healingrolemult>*$s1}.", 0, nil, "en_US")
+	if got != "Heals a role-adjusted value of." {
+		t.Fatalf("unexpected healing role resolution: %q", got)
+	}
+}
+
 func TestResolveDescriptionTextExplainsRoleAdjustedValues(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
 		1236094: {Enchantments: map[int]spellEnchantmentValue{1: {

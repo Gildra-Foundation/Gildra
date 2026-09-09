@@ -23,16 +23,21 @@ var (
 	// A catalog page has no player context, so it must never invent a numeric
 	// value.  Replace the complete dynamic expression with an explicit,
 	// player-readable qualifier instead of leaking the client template.
-	spellRoleMultiplierExpression = regexp.MustCompile(`\$\{\$<rolemult>\*[^{}]*\}`)
-	spellDurationToken      = regexp.MustCompile(`\$(\d+)d\b`)
-	spellMaxDurationToken   = regexp.MustCompile(`\$(\d+)D\b`)
-	spellEffectToken        = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
-	spellRadiusToken        = regexp.MustCompile(`\$(\d*)[aA](\d*)\b`)
-	spellMagnitudeToken     = regexp.MustCompile(`\$(\d*)m(\d+)\b`)
+	spellRoleMultiplierExpression = regexp.MustCompile(`\$\{\$<(?:healing)?rolemult>\*[^{}]*\}`)
+	spellDurationToken            = regexp.MustCompile(`\$(\d+)d\b`)
+	// Some item effects use `$d1` / `$123d1`. The suffix selects the
+	// duration-bearing effect but does not change the spell duration exposed
+	// by the DB2 snapshot, so it is resolved through the same source as `$d`.
+	spellDurationWithIndexToken = regexp.MustCompile(`\$(\d*)d\d+\b`)
+	spellMaxDurationToken       = regexp.MustCompile(`\$(\d+)D\b`)
+	spellEffectToken            = regexp.MustCompile(`\$(\d+)s(\d+)\b`)
+	spellRadiusToken            = regexp.MustCompile(`\$(\d*)[aA](\d*)\b`)
+	spellMagnitudeToken         = regexp.MustCompile(`\$(\d*)m(\d+)\b`)
 	// `$M<n>` is the capitalized Blizzard magnitude form. It addresses the
 	// current spell only (unlike `$123m<n>`), and commonly appears in item
 	// effects as a human-readable duration/count such as `$M2 min.`.
-	spellMaxMagnitudeToken = regexp.MustCompile(`\$M(\d+)\b`)
+	spellMaxMagnitudeToken         = regexp.MustCompile(`\$M(\d+)\b`)
+	spellExplicitMaxMagnitudeToken = regexp.MustCompile(`\$(\d+)M(\d+)\b`)
 	// Item-enchantment values are addressed from the owning spell's effect:
 	// `$ec1s1` means enchantment on EffectIndex 0, EffectPointsMin_0.
 	spellEnchantmentEffectToken = regexp.MustCompile(`\$ec(\d+)s(\d+)\b`)
@@ -46,13 +51,18 @@ var (
 	// Tick intervals may address the current spell (`$t2`) or a referenced
 	// spell (`$1217960t2`). Keep the optional spell ID so item-effect blocks
 	// can resolve their explicit reference instead of leaking a raw token.
-	spellTickToken          = regexp.MustCompile(`\$(\d*)t(\d+)\b`)
-	currentDurationToken    = regexp.MustCompile(`\$d\b`)
-	currentMaxDurationToken = regexp.MustCompile(`\$D\b`)
-	currentEffectToken      = regexp.MustCompile(`\$s(\d+)\b`)
+	spellTickToken                = regexp.MustCompile(`\$(\d*)t(\d+)\b`)
+	currentDurationToken          = regexp.MustCompile(`\$d\b`)
+	currentDurationWithIndexToken = regexp.MustCompile(`\$d\d+\b`)
+	currentMaxDurationToken       = regexp.MustCompile(`\$D\b`)
+	currentEffectToken            = regexp.MustCompile(`\$s(\d+)\b`)
 	// The capitalized form is used by profession and some item-effect tooltips;
 	// it addresses the same current-spell effect as `$s<n>`.
 	currentCapitalEffectToken = regexp.MustCompile(`\$S(\d+)\b`)
+	// A chained `$?(a...)[A]?(a...)[B][C]` is Blizzard's compact stat-choice
+	// conditional. It needs its own parser because it is not the ordinary
+	// two-branch `$?condition[A][B]` form.
+	spellAlternativeConditionalToken = regexp.MustCompile(`\$\?\(([^)]*)\)\[([^\]]*)\]\?\(([^)]*)\)\[([^\]]*)\]\[([^\]]*)\]`)
 )
 
 type spellDescriptionValues struct {
@@ -280,12 +290,18 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				THEN (radius.payload->>'RadiusMax')::double precision END,
 				CASE WHEN radius.payload->>'Radius' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
 				THEN (radius.payload->>'Radius')::double precision END,0)
-			,COALESCE(CASE WHEN enchantment.payload->>'EffectPointsMin_0' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
-				THEN (enchantment.payload->>'EffectPointsMin_0')::double precision END,0)
-			,COALESCE(CASE WHEN enchantment.payload->>'EffectPointsMin_1' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
-				THEN (enchantment.payload->>'EffectPointsMin_1')::double precision END,0)
-			,COALESCE(CASE WHEN enchantment.payload->>'EffectPointsMin_2' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
-				THEN (enchantment.payload->>'EffectPointsMin_2')::double precision END,0)
+			,COALESCE(NULLIF(CASE WHEN enchantment.payload->>'EffectPointsMin_0' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'EffectPointsMin_0')::double precision END,0),
+				CASE WHEN enchantment.payload->>'EffectArg_0' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'EffectArg_0')::double precision END,0)
+			,COALESCE(NULLIF(CASE WHEN enchantment.payload->>'EffectPointsMin_1' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'EffectPointsMin_1')::double precision END,0),
+				CASE WHEN enchantment.payload->>'EffectArg_1' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'EffectArg_1')::double precision END,0)
+			,COALESCE(NULLIF(CASE WHEN enchantment.payload->>'EffectPointsMin_2' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'EffectPointsMin_2')::double precision END,0),
+				CASE WHEN enchantment.payload->>'EffectArg_2' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'EffectArg_2')::double precision END,0)
 			,COALESCE(CASE WHEN enchantment.payload->>'ItemLevelMin' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
 				THEN (enchantment.payload->>'ItemLevelMin')::double precision END,0)
 			,COALESCE(CASE WHEN enchantment.payload->>'ItemLevelMax' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
@@ -420,7 +436,7 @@ func referencedSpellIDs(texts []string, currentSpellID int64) []int64 {
 		unique[currentSpellID] = struct{}{}
 	}
 	for _, text := range texts {
-		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellNameToken, spellIconToken, spellDurationToken, spellMaxDurationToken, spellEffectToken, spellValueExpression, spellMagnitudeToken, spellAuraValueToken, spellRadiusToken, spellTickToken} {
+		for _, expression := range []*regexp.Regexp{spellDescriptionToken, spellNameToken, spellIconToken, spellDurationToken, spellDurationWithIndexToken, spellMaxDurationToken, spellEffectToken, spellValueExpression, spellMagnitudeToken, spellExplicitMaxMagnitudeToken, spellAuraValueToken, spellRadiusToken, spellTickToken} {
 			for _, match := range expression.FindAllStringSubmatch(text, -1) {
 				if len(match) < 2 || match[1] == "" {
 					continue
@@ -451,6 +467,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 	if text == "" {
 		return text
 	}
+	text = resolveAlternativeConditionalDescriptionTokens(text, locale)
 	text = resolveConditionalDescriptionTokens(text, currentSpellID, values, locale)
 	for range 4 {
 		resolved := spellDescriptionToken.ReplaceAllStringFunc(text, func(token string) string {
@@ -515,6 +532,17 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		}
 		return token
 	})
+	text = spellDurationWithIndexToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellDurationWithIndexToken.FindStringSubmatch(token)
+		id := currentSpellID
+		if match[1] != "" {
+			id, _ = strconv.ParseInt(match[1], 10, 64)
+		}
+		if duration := values[id].DurationMS; duration != 0 {
+			return formatDescriptionDuration(duration, locale)
+		}
+		return token
+	})
 	text = spellMaxDurationToken.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellMaxDurationToken.FindStringSubmatch(token)
 		id, _ := strconv.ParseInt(match[1], 10, 64)
@@ -560,6 +588,15 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		match := spellMaxMagnitudeToken.FindStringSubmatch(token)
 		index, _ := strconv.Atoi(match[1])
 		if effect, exists := values[currentSpellID].Effects[index]; exists && math.Abs(effect.BasePoints) > 0.000001 {
+			return formatDescriptionNumber(math.Abs(effect.BasePoints))
+		}
+		return token
+	})
+	text = spellExplicitMaxMagnitudeToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellExplicitMaxMagnitudeToken.FindStringSubmatch(token)
+		id, _ := strconv.ParseInt(match[1], 10, 64)
+		index, _ := strconv.Atoi(match[2])
+		if effect, exists := values[id].Effects[index]; exists && math.Abs(effect.BasePoints) > 0.000001 {
 			return formatDescriptionNumber(math.Abs(effect.BasePoints))
 		}
 		return token
@@ -626,6 +663,12 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 	})
 	if currentSpellID > 0 {
 		text = currentDurationToken.ReplaceAllStringFunc(text, func(token string) string {
+			if duration := values[currentSpellID].DurationMS; duration != 0 {
+				return formatDescriptionDuration(duration, locale)
+			}
+			return token
+		})
+		text = currentDurationWithIndexToken.ReplaceAllStringFunc(text, func(token string) string {
 			if duration := values[currentSpellID].DurationMS; duration != 0 {
 				return formatDescriptionDuration(duration, locale)
 			}
@@ -761,6 +804,23 @@ func resolveConditionalDescriptionTokens(text string, currentSpellID int64, valu
 		}
 		text = text[:start] + replacement + text[end:]
 	}
+}
+
+// resolveAlternativeConditionalDescriptionTokens expands the three-way
+// conditional form used by class-agnostic stat effects. Static catalog pages
+// cannot know the reader's class, so retain every outcome in readable text
+// instead of leaking Blizzard's client-side `$?(...)` source expression.
+func resolveAlternativeConditionalDescriptionTokens(text, locale string) string {
+	return spellAlternativeConditionalToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellAlternativeConditionalToken.FindStringSubmatch(token)
+		if len(match) != 6 {
+			return token
+		}
+		if locale == "ru_RU" {
+			return fmt.Sprintf("если выполняется условие «%s»: %s; иначе, если «%s»: %s; иначе: %s", match[1], match[2], match[3], match[4], match[5])
+		}
+		return fmt.Sprintf("if «%s»: %s; otherwise, if «%s»: %s; otherwise: %s", match[1], match[2], match[3], match[4], match[5])
+	})
 }
 
 func conditionalSpellID(condition string) (int64, bool) {
