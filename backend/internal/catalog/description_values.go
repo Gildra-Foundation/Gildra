@@ -18,7 +18,12 @@ var (
 	spellIconToken          = regexp.MustCompile(`\$@spellicon(\d+)`)
 	spellConditionalToken   = regexp.MustCompile(`\$\?([A-Za-z][A-Za-z0-9_|-]*)`)
 	spellConditionalSpellID = regexp.MustCompile(`^[as]([0-9]+)$`)
-	spellValueExpression    = regexp.MustCompile(`\$\{\$(\d*)([sm])(\d+)(?:([/*+-])(-?\d+(?:\.\d+)?))?\}(?:\.1)?`)
+	spellValueExpression    = regexp.MustCompile(`\$\{\$(\d*)([sm])(\d+)((?:[/*+-]-?\d+(?:\.\d+)?)*)\}(?:\.1)?`)
+	spellValueOperation     = regexp.MustCompile(`([/*+-])(-?\d+(?:\.\d+)?)`)
+	// Durations embedded in a `${...}` arithmetic expression must remain a
+	// number until the expression is evaluated. Replacing `$d` with "20 sec"
+	// first would turn a valid expression into invalid source text.
+	spellExpressionCurrentDurationToken = regexp.MustCompile(`\$\{([^{}]*)\$d\b([^{}]*)\}`)
 	// `$<rolemult>` is evaluated by the game client from the player's role.
 	// A catalog page has no player context, so it must never invent a numeric
 	// value.  Replace the complete dynamic expression with an explicit,
@@ -504,6 +509,13 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		}
 		return "a role-adjusted value of"
 	})
+	if duration := values[currentSpellID].DurationMS; duration > 0 {
+		seconds := formatDescriptionNumber(float64(duration) / 1000)
+		text = spellExpressionCurrentDurationToken.ReplaceAllStringFunc(text, func(token string) string {
+			match := spellExpressionCurrentDurationToken.FindStringSubmatch(token)
+			return "${" + match[1] + seconds + match[2] + "}"
+		})
+	}
 	text = spellValueExpression.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellValueExpression.FindStringSubmatch(token)
 		id := currentSpellID
@@ -515,11 +527,7 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		if !ok {
 			return token
 		}
-		operand := 0.0
-		if match[5] != "" {
-			operand, _ = strconv.ParseFloat(match[5], 64)
-		}
-		if formatted, resolved := formatSpellEffect(value, match[4], operand); resolved {
+		if formatted, resolved := formatSpellEffectOperations(value, match[4]); resolved {
 			return formatted
 		}
 		return token
@@ -906,31 +914,57 @@ func formatDescriptionNumber(value float64) string {
 }
 
 func formatSpellEffect(value spellEffectValue, operator string, operand float64) (string, bool) {
-	if operator == "/" && operand == 0 {
-		return "", false
+	operations := ""
+	if operator != "" {
+		operations = operator + formatDescriptionNumber(operand)
 	}
-	apply := func(number float64) float64 {
-		switch operator {
-		case "/":
-			return number / operand
-		case "*":
-			return number * operand
-		case "+":
-			return number + operand
-		case "-":
-			return number - operand
-		default:
-			return number
+	return formatSpellEffectOperations(value, operations)
+}
+
+// formatSpellEffectOperations evaluates the left-to-right arithmetic used by
+// Blizzard `${$s1/100*5}` templates. Keeping the unit suffix when the source
+// is a spell- or attack-power coefficient prevents the catalog from turning a
+// player-dependent value into a made-up flat number.
+func formatSpellEffectOperations(value spellEffectValue, operations string) (string, bool) {
+	apply := func(number float64) (float64, bool) {
+		for _, match := range spellValueOperation.FindAllStringSubmatch(operations, -1) {
+			operand, err := strconv.ParseFloat(match[2], 64)
+			if err != nil || (match[1] == "/" && operand == 0) {
+				return 0, false
+			}
+			switch match[1] {
+			case "/":
+				number /= operand
+			case "*":
+				number *= operand
+			case "+":
+				number += operand
+			case "-":
+				number -= operand
+			}
 		}
+		return number, true
 	}
 	if math.Abs(value.BasePoints) > 0.000001 {
-		return formatDescriptionNumber(apply(value.BasePoints)), true
+		resolved, ok := apply(value.BasePoints)
+		if !ok {
+			return "", false
+		}
+		return formatDescriptionNumber(resolved), true
 	}
 	if math.Abs(value.Coefficient) > 0.000001 {
-		return formatDescriptionNumber(apply(value.Coefficient)) + " × SP", true
+		resolved, ok := apply(value.Coefficient)
+		if !ok {
+			return "", false
+		}
+		return formatDescriptionNumber(resolved) + " × SP", true
 	}
 	if math.Abs(value.AttackPowerCoefficient) > 0.000001 {
-		return formatDescriptionNumber(apply(value.AttackPowerCoefficient)) + " × AP", true
+		resolved, ok := apply(value.AttackPowerCoefficient)
+		if !ok {
+			return "", false
+		}
+		return formatDescriptionNumber(resolved) + " × AP", true
 	}
 	return "", false
 }
