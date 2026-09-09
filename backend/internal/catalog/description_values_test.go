@@ -156,6 +156,15 @@ func TestResolveDescriptionTextResolvesCapitalEffect(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextResolvesPeriodicOutput(t *testing.T) {
+	got := resolveDescriptionText("Heals $o1 over $d.", 42, map[int64]spellDescriptionValues{
+		42: {DurationMS: 5000, Effects: map[int]spellEffectValue{1: {Coefficient: 0.159}}},
+	}, "en_US")
+	if got != "Heals 0.159 × SP over 5 sec." {
+		t.Fatalf("unexpected periodic output resolution: %q", got)
+	}
+}
+
 func TestResolveDescriptionTextResolvesEnchantmentEffect(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
 		1236094: {Enchantments: map[int]spellEnchantmentValue{1: {
