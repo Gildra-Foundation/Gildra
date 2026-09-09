@@ -424,7 +424,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				JOIN official_icon_seed seed ON regexp_replace(regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g'),'_+','_','g')=seed.icon_name
 				WHERE NOT $5::boolean OR NOT EXISTS (
 					SELECT 1 FROM catalog_entity_media existing
-					WHERE existing.entity_id=scoped.entity_id AND existing.build_id=icon.build_id
+					WHERE existing.build_id=icon.build_id
+					  AND existing.entity_type=scoped.entity_type AND existing.external_id=scoped.external_id
 					  AND existing.media_kind='icon' AND existing.is_primary
 					  AND existing.cache_status='cached'
 					  AND existing.cached_content_hash IS NOT NULL AND existing.cached_byte_size IS NOT NULL
