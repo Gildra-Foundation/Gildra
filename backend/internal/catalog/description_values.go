@@ -47,6 +47,7 @@ var (
 	// `$ec1s1` means enchantment on EffectIndex 0, EffectPointsMin_0.
 	spellEnchantmentEffectToken = regexp.MustCompile(`\$ec(\d+)s(\d+)\b`)
 	spellEnchantmentValueToken  = regexp.MustCompile(`\$ec(\d+)\b`)
+	spellPrimaryStatToken       = regexp.MustCompile(`\$pri\b`)
 	// Blizzard uses `$ecim` and `$ecix` for the selected enchantment's
 	// minimum and maximum applicable item levels respectively.
 	spellEnchantmentItemLevelToken = regexp.MustCompile(`\$eci([mx])\b`)
@@ -334,10 +335,10 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 			AND effect.difficulty_id=0 AND effect.source='db2'
 		LEFT JOIN LATERAL (
 			SELECT COALESCE(
-				CASE WHEN effect.attributes->>'radius_index_1' ~ '^[0-9]+$'
-					THEN (effect.attributes->>'radius_index_1')::bigint END,
-				CASE WHEN effect.attributes->>'radius_index_0' ~ '^[0-9]+$'
-					THEN (effect.attributes->>'radius_index_0')::bigint END,
+				NULLIF(CASE WHEN effect.attributes->>'radius_index_1' ~ '^[0-9]+$'
+					THEN (effect.attributes->>'radius_index_1')::bigint END,0),
+				NULLIF(CASE WHEN effect.attributes->>'radius_index_0' ~ '^[0-9]+$'
+					THEN (effect.attributes->>'radius_index_0')::bigint END,0),
 				(SELECT COALESCE(
 					CASE WHEN raw.payload->>'EffectRadiusIndex_1' ~ '^[0-9]+$'
 						THEN (raw.payload->>'EffectRadiusIndex_1')::bigint END,
@@ -631,7 +632,19 @@ func resolveDescriptionTextAtDepth(text string, currentSpellID int64, values map
 		if value, ok := values[currentSpellID].Enchantments[enchantmentIndex].Effects[1]; ok && math.Abs(value) > 0.000001 {
 			return formatDescriptionNumber(math.Abs(value))
 		}
+		// A one-effect spell can point to a multi-effect SpellItemEnchantment.
+		// In that form `$ec2` addresses EffectPointsMin_1 of the same
+		// enchantment, rather than a second spell effect.
+		if value, ok := values[currentSpellID].Enchantments[1].Effects[enchantmentIndex]; ok && math.Abs(value) > 0.000001 {
+			return formatDescriptionNumber(math.Abs(value))
+		}
 		return token
+	})
+	text = spellPrimaryStatToken.ReplaceAllStringFunc(text, func(token string) string {
+		if locale == "ru_RU" {
+			return "основную характеристику"
+		}
+		return "your primary stat"
 	})
 	text = spellEnchantmentItemLevelToken.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellEnchantmentItemLevelToken.FindStringSubmatch(token)

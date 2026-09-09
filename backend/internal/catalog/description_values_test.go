@@ -170,6 +170,21 @@ func TestResolveDescriptionTextResolvesEnchantmentEffect(t *testing.T) {
 	if got != "Increases haste by 20; valid for levels 10 through 120." {
 		t.Fatalf("unexpected enchantment value resolution: %q", got)
 	}
+	got = resolveDescriptionText("Increases Intellect by $ec1 and Stamina by $ec2.", 1236094, map[int64]spellDescriptionValues{
+		1236094: {Enchantments: map[int]spellEnchantmentValue{1: {Effects: map[int]float64{1: 5, 2: 7}}}},
+	}, "en_US")
+	if got != "Increases Intellect by 5 and Stamina by 7." {
+		t.Fatalf("unexpected multi-effect enchantment resolution: %q", got)
+	}
+}
+
+func TestResolveDescriptionTextRendersPrimaryStatToken(t *testing.T) {
+	if got := resolveDescriptionText("Increases $pri.", 0, nil, "en_US"); got != "Increases your primary stat." {
+		t.Fatalf("unexpected English primary stat: %q", got)
+	}
+	if got := resolveDescriptionText("Увеличивает $pri.", 0, nil, "ru_RU"); got != "Увеличивает основную характеристику." {
+		t.Fatalf("unexpected Russian primary stat: %q", got)
+	}
 }
 
 func TestResolveDescriptionTextResolvesIndexedDurationsAndExplicitMagnitude(t *testing.T) {
