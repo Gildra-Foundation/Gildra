@@ -465,26 +465,28 @@ func checkTemplateRecord(ctx context.Context, client *http.Client, apiBase strin
 	if item.Decision != "eligible" {
 		return 0, nil
 	}
-	failures := make([]string, 0, 2)
-	for _, locale := range []string{"en_US", "ru_RU"} {
-		payload, err := fetchEntity(ctx, client, apiBase, item.ID, locale)
-		if err != nil {
-			failures = append(failures, fmt.Sprintf("%s/%d %s template route: %v", item.Type, item.ExternalID, locale, err))
-			continue
-		}
-		// Media is independently fetched by the sampled HTTP checks, so do not
-		// multiply icon traffic for every template record. Still preserve the
-		// build-pinned media fact here: passing false made every item template
-		// look like a missing-media failure even when its cached icon was proven
-		// by the same SQL record selection.
-		if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
-			failures = append(failures, fmt.Sprintf("%s/%d %s: %v", item.Type, item.ExternalID, locale, err))
-		}
-		if err := validateEmbeddedLocalizations(payload); err != nil {
-			failures = append(failures, fmt.Sprintf("%s/%d localizations: %v", item.Type, item.ExternalID, err))
-		}
+	// Each public detail response embeds both EN and RU localizations.  Request
+	// it once and validate all of that content; requesting the same entity a
+	// second time with ru_RU only repeats an expensive projection query. The
+	// separate locale-route check above still exercises each requested-locale
+	// route for every entity type.
+	payload, err := fetchEntity(ctx, client, apiBase, item.ID, "en_US")
+	if err != nil {
+		return 1, []string{fmt.Sprintf("%s/%d en_US template route: %v", item.Type, item.ExternalID, err)}
 	}
-	return 2, failures
+	failures := make([]string, 0, 2)
+	// Media is independently fetched by the sampled HTTP checks, so do not
+	// multiply icon traffic for every template record. Still preserve the
+	// build-pinned media fact here: passing false made every item template
+	// look like a missing-media failure even when its cached icon was proven
+	// by the same SQL record selection.
+	if err := validateDisplay(payload, item.Type, item.HasMedia); err != nil {
+		failures = append(failures, fmt.Sprintf("%s/%d en_US: %v", item.Type, item.ExternalID, err))
+	}
+	if err := validateEmbeddedLocalizations(payload); err != nil {
+		failures = append(failures, fmt.Sprintf("%s/%d localizations: %v", item.Type, item.ExternalID, err))
+	}
+	return 1, failures
 }
 
 func expectStatus(ctx context.Context, client *http.Client, base, id, locale string, wanted int) error {
