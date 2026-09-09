@@ -107,3 +107,32 @@ func TestSelectTemplateShardKeepsEveryRecordExactlyOnce(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckTemplateRecordUsesEmbeddedBilingualLocalizations(t *testing.T) {
+	t.Parallel()
+	var requests int
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		requests++
+		if got := request.URL.Query().Get("locale"); got != "en_US" {
+			t.Errorf("requested locale = %q, want en_US", got)
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{
+			"name":"Arcane Trinket",
+			"description":"Verified description.",
+			"resolvedDescription":"Verified description.",
+			"localizations":{
+				"en_US":{"name":"Arcane Trinket","description":"Verified description."},
+				"ru_RU":{"name":"Чародейская безделушка","description":"Проверенное описание."}
+			}
+		}`))
+	}))
+	defer server.Close()
+	checked, failures := checkTemplateRecord(context.Background(), server.Client(), server.URL, record{ID: "example", Type: "spell", ExternalID: 1, Decision: "eligible"})
+	if checked != 1 || len(failures) != 0 {
+		t.Fatalf("checkTemplateRecord() = requests=%d failures=%#v", checked, failures)
+	}
+	if requests != 1 {
+		t.Fatalf("HTTP requests = %d, want 1", requests)
+	}
+}
