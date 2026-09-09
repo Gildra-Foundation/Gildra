@@ -134,11 +134,18 @@ func TestResolveDescriptionTextResolvesCapitalMagnitude(t *testing.T) {
 }
 
 func TestResolveDescriptionTextResolvesEnchantmentEffect(t *testing.T) {
-	got := resolveDescriptionText("Deals $ec1s1 Fire damage.", 1236094, map[int64]spellDescriptionValues{
-		1236094: {Enchantments: map[int]spellEnchantmentValue{1: {Effects: map[int]float64{1: 20}}}},
-	}, "en_US")
+	values := map[int64]spellDescriptionValues{
+		1236094: {Enchantments: map[int]spellEnchantmentValue{1: {
+			Effects: map[int]float64{1: 20}, ItemLevelMin: 10, ItemLevelMax: 120,
+		}}},
+	}
+	got := resolveDescriptionText("Deals $ec1s1 Fire damage.", 1236094, values, "en_US")
 	if got != "Deals 20 Fire damage." {
 		t.Fatalf("unexpected enchantment effect resolution: %q", got)
+	}
+	got = resolveDescriptionText("Increases haste by $ec1; valid for levels $ecim through $ecix.", 1236094, values, "en_US")
+	if got != "Increases haste by 20; valid for levels 10 through 120." {
+		t.Fatalf("unexpected enchantment value resolution: %q", got)
 	}
 }
 

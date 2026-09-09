@@ -31,9 +31,13 @@ var (
 	// Item-enchantment values are addressed from the owning spell's effect:
 	// `$ec1s1` means enchantment on EffectIndex 0, EffectPointsMin_0.
 	spellEnchantmentEffectToken = regexp.MustCompile(`\$ec(\d+)s(\d+)\b`)
-	spellAuraValueToken         = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
-	spellPluralToken            = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
-	currentMaxStacksToken       = regexp.MustCompile(`\$u\b`)
+	spellEnchantmentValueToken  = regexp.MustCompile(`\$ec(\d+)\b`)
+	// Blizzard uses `$ecim` and `$ecix` for the selected enchantment's
+	// minimum and maximum applicable item levels respectively.
+	spellEnchantmentItemLevelToken = regexp.MustCompile(`\$eci([mx])\b`)
+	spellAuraValueToken            = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
+	spellPluralToken               = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
+	currentMaxStacksToken          = regexp.MustCompile(`\$u\b`)
 	// Tick intervals may address the current spell (`$t2`) or a referenced
 	// spell (`$1217960t2`). Keep the optional spell ID so item-effect blocks
 	// can resolve their explicit reference instead of leaking a raw token.
@@ -65,7 +69,9 @@ type spellEffectValue struct {
 }
 
 type spellEnchantmentValue struct {
-	Effects map[int]float64
+	Effects      map[int]float64
+	ItemLevelMin float64
+	ItemLevelMax float64
 }
 
 func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity) error {
@@ -272,6 +278,10 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				THEN (enchantment.payload->>'EffectPointsMin_1')::double precision END,0)
 			,COALESCE(CASE WHEN enchantment.payload->>'EffectPointsMin_2' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
 				THEN (enchantment.payload->>'EffectPointsMin_2')::double precision END,0)
+			,COALESCE(CASE WHEN enchantment.payload->>'ItemLevelMin' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'ItemLevelMin')::double precision END,0)
+			,COALESCE(CASE WHEN enchantment.payload->>'ItemLevelMax' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'ItemLevelMax')::double precision END,0)
 		FROM game_products product
 		JOIN game_entities entity ON entity.product_id=product.id AND entity.entity_type='spell'
 			AND entity.external_id=ANY($2::bigint[]) AND entity.deleted_at IS NULL
@@ -334,8 +344,8 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		var basePoints, coefficient, attackPowerCoefficient *float64
 		var amplitude int64
 		var radius *float64
-		var enchantmentPoint0, enchantmentPoint1, enchantmentPoint2 float64
-		if err := rows.Scan(&id, &name, &description, &powerCostMaxPct, &maxStacks, &duration, &maxDuration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude, &radius, &enchantmentPoint0, &enchantmentPoint1, &enchantmentPoint2); err != nil {
+		var enchantmentPoint0, enchantmentPoint1, enchantmentPoint2, enchantmentItemLevelMin, enchantmentItemLevelMax float64
+		if err := rows.Scan(&id, &name, &description, &powerCostMaxPct, &maxStacks, &duration, &maxDuration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude, &radius, &enchantmentPoint0, &enchantmentPoint1, &enchantmentPoint2, &enchantmentItemLevelMin, &enchantmentItemLevelMax); err != nil {
 			return nil, fmt.Errorf("scan spell description values: %w", err)
 		}
 		value := result[id]
@@ -353,15 +363,15 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				AmplitudeMS:            amplitude,
 				Radius:                 pointerFloat(radius),
 			}
-			if enchantmentPoint0 != 0 || enchantmentPoint1 != 0 || enchantmentPoint2 != 0 {
+			if enchantmentPoint0 != 0 || enchantmentPoint1 != 0 || enchantmentPoint2 != 0 || enchantmentItemLevelMin != 0 || enchantmentItemLevelMax != 0 {
 				if value.Enchantments == nil {
 					value.Enchantments = make(map[int]spellEnchantmentValue)
 				}
-				value.Enchantments[index] = spellEnchantmentValue{Effects: map[int]float64{
-					1: enchantmentPoint0,
-					2: enchantmentPoint1,
-					3: enchantmentPoint2,
-				}}
+				value.Enchantments[index] = spellEnchantmentValue{
+					Effects:      map[int]float64{1: enchantmentPoint0, 2: enchantmentPoint1, 3: enchantmentPoint2},
+					ItemLevelMin: enchantmentItemLevelMin,
+					ItemLevelMax: enchantmentItemLevelMax,
+				}
 			}
 		}
 		result[id] = value
@@ -546,6 +556,26 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		effectIndex, _ := strconv.Atoi(match[2])
 		if value, ok := values[currentSpellID].Enchantments[enchantmentIndex].Effects[effectIndex]; ok && math.Abs(value) > 0.000001 {
 			return formatDescriptionNumber(math.Abs(value))
+		}
+		return token
+	})
+	text = spellEnchantmentValueToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellEnchantmentValueToken.FindStringSubmatch(token)
+		enchantmentIndex, _ := strconv.Atoi(match[1])
+		if value, ok := values[currentSpellID].Enchantments[enchantmentIndex].Effects[1]; ok && math.Abs(value) > 0.000001 {
+			return formatDescriptionNumber(math.Abs(value))
+		}
+		return token
+	})
+	text = spellEnchantmentItemLevelToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellEnchantmentItemLevelToken.FindStringSubmatch(token)
+		enchantment := values[currentSpellID].Enchantments[1]
+		level := enchantment.ItemLevelMin
+		if match[1] == "x" {
+			level = enchantment.ItemLevelMax
+		}
+		if level > 0 {
+			return formatDescriptionNumber(level)
 		}
 		return token
 	})
