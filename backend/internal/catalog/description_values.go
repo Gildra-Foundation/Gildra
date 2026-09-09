@@ -28,9 +28,12 @@ var (
 	// current spell only (unlike `$123m<n>`), and commonly appears in item
 	// effects as a human-readable duration/count such as `$M2 min.`.
 	spellMaxMagnitudeToken = regexp.MustCompile(`\$M(\d+)\b`)
-	spellAuraValueToken    = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
-	spellPluralToken       = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
-	currentMaxStacksToken  = regexp.MustCompile(`\$u\b`)
+	// Item-enchantment values are addressed from the owning spell's effect:
+	// `$ec1s1` means enchantment on EffectIndex 0, EffectPointsMin_0.
+	spellEnchantmentEffectToken = regexp.MustCompile(`\$ec(\d+)s(\d+)\b`)
+	spellAuraValueToken         = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
+	spellPluralToken            = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
+	currentMaxStacksToken       = regexp.MustCompile(`\$u\b`)
 	// Tick intervals may address the current spell (`$t2`) or a referenced
 	// spell (`$1217960t2`). Keep the optional spell ID so item-effect blocks
 	// can resolve their explicit reference instead of leaking a raw token.
@@ -50,6 +53,7 @@ type spellDescriptionValues struct {
 	PowerCostMaxPct float64
 	MaxStacks       int64
 	Effects         map[int]spellEffectValue
+	Enchantments    map[int]spellEnchantmentValue
 }
 
 type spellEffectValue struct {
@@ -58,6 +62,10 @@ type spellEffectValue struct {
 	AttackPowerCoefficient float64
 	AmplitudeMS            int64
 	Radius                 float64
+}
+
+type spellEnchantmentValue struct {
+	Effects map[int]float64
 }
 
 func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity) error {
@@ -258,6 +266,12 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				THEN (radius.payload->>'RadiusMax')::double precision END,
 				CASE WHEN radius.payload->>'Radius' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
 				THEN (radius.payload->>'Radius')::double precision END,0)
+			,COALESCE(CASE WHEN enchantment.payload->>'EffectPointsMin_0' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'EffectPointsMin_0')::double precision END,0)
+			,COALESCE(CASE WHEN enchantment.payload->>'EffectPointsMin_1' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'EffectPointsMin_1')::double precision END,0)
+			,COALESCE(CASE WHEN enchantment.payload->>'EffectPointsMin_2' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				THEN (enchantment.payload->>'EffectPointsMin_2')::double precision END,0)
 		FROM game_products product
 		JOIN game_entities entity ON entity.product_id=product.id AND entity.entity_type='spell'
 			AND entity.external_id=ANY($2::bigint[]) AND entity.deleted_at IS NULL
@@ -301,6 +315,10 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		LEFT JOIN catalog_db2_rows radius ON radius.build_id=version.build_id
 			AND radius.table_name='SpellRadius' AND radius.locale='en_US'
 			AND radius.row_id=radius_ref.radius_index
+		LEFT JOIN catalog_db2_rows enchantment ON enchantment.build_id=version.build_id
+			AND enchantment.table_name='SpellItemEnchantment' AND enchantment.locale='en_US'
+			AND enchantment.row_id=CASE WHEN effect.attributes->>'misc_value_0' ~ '^[0-9]+$'
+				THEN (effect.attributes->>'misc_value_0')::bigint END
 		WHERE product.slug=$1
 		ORDER BY entity.external_id,effect.effect_index`, product, ids, normalizeLocale(locale), buildID)
 	if err != nil {
@@ -316,7 +334,8 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		var basePoints, coefficient, attackPowerCoefficient *float64
 		var amplitude int64
 		var radius *float64
-		if err := rows.Scan(&id, &name, &description, &powerCostMaxPct, &maxStacks, &duration, &maxDuration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude, &radius); err != nil {
+		var enchantmentPoint0, enchantmentPoint1, enchantmentPoint2 float64
+		if err := rows.Scan(&id, &name, &description, &powerCostMaxPct, &maxStacks, &duration, &maxDuration, &effectIndex, &basePoints, &coefficient, &attackPowerCoefficient, &amplitude, &radius, &enchantmentPoint0, &enchantmentPoint1, &enchantmentPoint2); err != nil {
 			return nil, fmt.Errorf("scan spell description values: %w", err)
 		}
 		value := result[id]
@@ -326,12 +345,23 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 			value.Effects = make(map[int]spellEffectValue)
 		}
 		if effectIndex != nil {
-			value.Effects[int(*effectIndex)+1] = spellEffectValue{
+			index := int(*effectIndex) + 1
+			value.Effects[index] = spellEffectValue{
 				BasePoints:             pointerFloat(basePoints),
 				Coefficient:            pointerFloat(coefficient),
 				AttackPowerCoefficient: pointerFloat(attackPowerCoefficient),
 				AmplitudeMS:            amplitude,
 				Radius:                 pointerFloat(radius),
+			}
+			if enchantmentPoint0 != 0 || enchantmentPoint1 != 0 || enchantmentPoint2 != 0 {
+				if value.Enchantments == nil {
+					value.Enchantments = make(map[int]spellEnchantmentValue)
+				}
+				value.Enchantments[index] = spellEnchantmentValue{Effects: map[int]float64{
+					1: enchantmentPoint0,
+					2: enchantmentPoint1,
+					3: enchantmentPoint2,
+				}}
 			}
 		}
 		result[id] = value
@@ -507,6 +537,15 @@ func resolveDescriptionText(text string, currentSpellID int64, values map[int64]
 		index, _ := strconv.Atoi(match[1])
 		if effect, exists := values[currentSpellID].Effects[index]; exists && math.Abs(effect.BasePoints) > 0.000001 {
 			return formatDescriptionNumber(math.Abs(effect.BasePoints))
+		}
+		return token
+	})
+	text = spellEnchantmentEffectToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellEnchantmentEffectToken.FindStringSubmatch(token)
+		enchantmentIndex, _ := strconv.Atoi(match[1])
+		effectIndex, _ := strconv.Atoi(match[2])
+		if value, ok := values[currentSpellID].Enchantments[enchantmentIndex].Effects[effectIndex]; ok && math.Abs(value) > 0.000001 {
+			return formatDescriptionNumber(math.Abs(value))
 		}
 		return token
 	})
