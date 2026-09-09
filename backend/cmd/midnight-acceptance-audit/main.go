@@ -36,14 +36,16 @@ type record struct {
 }
 
 type result struct {
-	Build       string   `json:"build"`
-	Full        bool     `json:"fullCohort"`
-	Random      int      `json:"randomEligible"`
-	Edge        int      `json:"edgeCases"`
-	Templates   int      `json:"templateRecords"`
-	Checked     int      `json:"checkedRequests"`
-	Failures    []string `json:"failures,omitempty"`
-	CompletedAt string   `json:"completedAt"`
+	Build          string   `json:"build"`
+	Full           bool     `json:"fullCohort"`
+	Random         int      `json:"randomEligible"`
+	Edge           int      `json:"edgeCases"`
+	Templates      int      `json:"templateRecords"`
+	TemplateShard  int      `json:"templateShard"`
+	TemplateShards int      `json:"templateShards"`
+	Checked        int      `json:"checkedRequests"`
+	Failures       []string `json:"failures,omitempty"`
+	CompletedAt    string   `json:"completedAt"`
 }
 
 func main() {
@@ -55,8 +57,8 @@ func main() {
 
 func run() error {
 	var databaseURL, apiBase, build, seed string
-	var randomCount, edgeCount, concurrency int
-	var all bool
+	var randomCount, edgeCount, concurrency, templateShard, templateShards int
+	var all, templatesOnly bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
 	flag.StringVar(&apiBase, "api-base-url", "https://api.gildra.net", "public API base URL")
@@ -65,7 +67,10 @@ func run() error {
 	flag.IntVar(&randomCount, "random", 200, "number of eligible random records")
 	flag.IntVar(&edgeCount, "edge", 100, "number of edge records")
 	flag.BoolVar(&all, "all", false, "check every eligible and non-eligible Midnight record")
+	flag.BoolVar(&templatesOnly, "templates-only", false, "only run the sharded public template checks (requires -all)")
 	flag.IntVar(&concurrency, "concurrency", 4, "maximum concurrent public API requests")
+	flag.IntVar(&templateShards, "template-shards", 1, "split template API checks into this many deterministic shards")
+	flag.IntVar(&templateShard, "template-shard", 0, "zero-based template shard to check")
 	flag.DurationVar(&timeout, "timeout", 30*time.Minute, "whole audit timeout")
 	flag.Parse()
 	if databaseURL == "" {
@@ -73,6 +78,9 @@ func run() error {
 	}
 	if !all && (randomCount < 1 || edgeCount < 1) {
 		return errors.New("-random and -edge must be positive")
+	}
+	if templatesOnly && !all {
+		return errors.New("-templates-only requires -all")
 	}
 	// This audit uses a database gate for the entire cohort and bounded public
 	// HTTP checks for its acceptance sample.  More than sixteen simultaneous
@@ -86,6 +94,9 @@ func run() error {
 	}
 	if timeout < time.Minute || timeout > time.Hour {
 		return errors.New("-timeout must be between 1m and 1h")
+	}
+	if templateShards < 1 || templateShards > 16 || templateShard < 0 || templateShard >= templateShards {
+		return errors.New("template-shards must be 1..16 and template-shard must select an existing shard")
 	}
 	apiBase = strings.TrimRight(strings.TrimSpace(apiBase), "/")
 	if _, err := url.ParseRequestURI(apiBase); err != nil {
@@ -104,29 +115,31 @@ func run() error {
 		}
 	}
 	var records []record
-	report := result{Build: build, Full: all}
+	report := result{Build: build, Full: all, TemplateShard: templateShard, TemplateShards: templateShards}
 	client := &http.Client{Timeout: 20 * time.Second}
 	var checked atomic.Int64
 	if all {
-		report.Failures, err = fullCohortFailures(ctx, db, build)
-		if err != nil {
-			return err
-		}
-		var selectedEdges []record
-		records, selectedEdges, err = loadSample(ctx, db, build, seed, 200, 100)
-		if err != nil {
-			return err
-		}
-		report.Random, report.Edge = len(records), len(selectedEdges)
-		records = append(records, selectedEdges...)
-		localeRoutes, routeErr := loadRecords(ctx, db, build, seed, 0, "locale_routes")
-		if routeErr != nil {
-			return routeErr
-		}
-		for _, item := range localeRoutes {
-			requestCount, failures := checkLocaleRoute(ctx, client, apiBase, item)
-			checked.Add(int64(requestCount))
-			report.Failures = append(report.Failures, failures...)
+		if !templatesOnly {
+			report.Failures, err = fullCohortFailures(ctx, db, build)
+			if err != nil {
+				return err
+			}
+			var selectedEdges []record
+			records, selectedEdges, err = loadSample(ctx, db, build, seed, 200, 100)
+			if err != nil {
+				return err
+			}
+			report.Random, report.Edge = len(records), len(selectedEdges)
+			records = append(records, selectedEdges...)
+			localeRoutes, routeErr := loadRecords(ctx, db, build, seed, 0, "locale_routes")
+			if routeErr != nil {
+				return routeErr
+			}
+			for _, item := range localeRoutes {
+				requestCount, failures := checkLocaleRoute(ctx, client, apiBase, item)
+				checked.Add(int64(requestCount))
+				report.Failures = append(report.Failures, failures...)
+			}
 		}
 		// A stored source template is not itself a public failure: the API
 		// resolves supported Blizzard tokens at request time. Audit every such
@@ -137,6 +150,7 @@ func run() error {
 		if templateErr != nil {
 			return templateErr
 		}
+		templateRecords = selectTemplateShard(templateRecords, templateShards, templateShard)
 		report.Templates = len(templateRecords)
 		requestCount, templateFailures := checkTemplateRecords(ctx, client, apiBase, templateRecords, concurrency)
 		checked.Add(int64(requestCount))
@@ -389,6 +403,23 @@ func loadRecords(ctx context.Context, db *pgxpool.Pool, build, seed string, limi
 		result = append(result, item)
 	}
 	return result, rows.Err()
+}
+
+// selectTemplateShard splits the already deterministically sorted template
+// cohort without changing its membership. A complete acceptance run consists
+// of every shard; this keeps each production-safe HTTP pass comfortably below
+// the one-hour execution limit.
+func selectTemplateShard(records []record, shards, shard int) []record {
+	if shards <= 1 {
+		return records
+	}
+	result := make([]record, 0, (len(records)+shards-1)/shards)
+	for index, item := range records {
+		if index%shards == shard {
+			result = append(result, item)
+		}
+	}
+	return result
 }
 
 func checkTemplateRecords(ctx context.Context, client *http.Client, apiBase string, records []record, concurrency int) (int, []string) {
