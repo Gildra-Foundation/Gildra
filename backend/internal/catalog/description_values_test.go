@@ -36,6 +36,20 @@ func TestResolveDescriptionTextAppliesArithmeticOperators(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextAppliesChainedArithmeticWithDuration(t *testing.T) {
+	values := map[int64]spellDescriptionValues{
+		42: {DurationMS: 20000, Effects: map[int]spellEffectValue{
+			1: {Coefficient: 0.8},
+			3: {Coefficient: 0.6},
+		}},
+	}
+	got := resolveDescriptionText("Restores ${$m1/5*$d} health and ${$m3/5*$d} mana.", 42, values, "en_US")
+	want := "Restores 3.2 × SP health and 2.4 × SP mana."
+	if got != want {
+		t.Fatalf("unexpected chained expression\nwant: %s\n got: %s", want, got)
+	}
+}
+
 func TestResolveDescriptionTextUsesScalingFormulaInsteadOfFakeZero(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
 		17: {Effects: map[int]spellEffectValue{1: {Coefficient: 1.65}}},
