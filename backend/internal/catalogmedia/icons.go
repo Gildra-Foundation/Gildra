@@ -139,7 +139,16 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			SELECT regexp_replace(regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g'),'_+','_','g') AS icon_name,
 				icon.file_data_id,icon.entity_type,icon.external_id,icon.build_id
 			FROM catalog_entity_icons icon
-			WHERE icon.build_id=$2
+			WHERE icon.build_id=$2 AND $4=''
+			UNION ALL
+			SELECT regexp_replace(regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g'),'_+','_','g') AS icon_name,
+				icon.file_data_id,icon.entity_type,icon.external_id,icon.build_id
+			FROM catalog_entity_expansions cohort
+			JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
+			JOIN catalog_entity_icons icon ON icon.build_id=cohort.build_id
+				AND icon.entity_type=cohort.entity_type AND icon.external_id=cohort.external_id
+			WHERE cohort.product_id=$1 AND cohort.build_id=$2 AND cohort.classification='confirmed'
+				AND expansion.expansion_key=$4
 		), verified_primary_media AS (
 			SELECT DISTINCT media.entity_id,media.build_id
 			FROM catalog_entity_media media
@@ -156,17 +165,12 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				AND entity.entity_type=icon.entity_type AND entity.external_id=icon.external_id
 			JOIN game_entity_versions published ON published.id=entity.published_version_id
 				AND published.build_id=icon.build_id
-			LEFT JOIN catalog_entity_expansions cohort ON cohort.product_id=$1
-				AND cohort.build_id=icon.build_id AND cohort.entity_type=icon.entity_type
-				AND cohort.external_id=icon.external_id AND cohort.classification='confirmed'
-			LEFT JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
 			LEFT JOIN verified_primary_media primary_media ON primary_media.entity_id=entity.id
 				AND primary_media.build_id=icon.build_id
 			LEFT JOIN catalog_file_assets asset
 				ON regexp_replace(regexp_replace(lower(asset.icon_name),'[[:space:]]+','','g'),'_+','_','g')=icon.icon_name
 			WHERE entity.deleted_at IS NULL
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
-			  AND ($4='' OR expansion.expansion_key=$4)
 			GROUP BY icon.icon_name
 		), cached AS (
 			SELECT lower(media.attributes->>'icon_name') AS icon_name,
