@@ -18,9 +18,9 @@ import (
 )
 
 // Keep backup verification aligned with the latest production migration. A
-// backup that predates the import-failure resolution evidence cannot be
-// promoted safely because it may treat superseded history as an active error.
-const MinimumSchemaVersion int64 = 160
+// backup that predates the active entity-type quality profiles cannot be
+// promoted safely because public completeness would be unverified.
+const MinimumSchemaVersion int64 = 161
 
 var CriticalTables = []string{
 	"users",
