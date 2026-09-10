@@ -64,6 +64,9 @@ func run() error {
 		if err != nil {
 			return err
 		}
+		if candidate == nil {
+			return json.NewEncoder(os.Stdout).Encode(map[string]any{"status": "idle"})
+		}
 		return json.NewEncoder(os.Stdout).Encode(candidate)
 	}
 	if strings.TrimSpace(binaryDirectory) == "" {
@@ -121,25 +124,25 @@ func nextCandidate(ctx context.Context, db *pgxpool.Pool, claim bool) (*retryCan
 	}
 	statement := `
 		WITH due AS (
-			SELECT queue.id
+			SELECT queue.id,queue.import_run_id,release.id AS release_id,product.slug AS product,
+				release.build_version,import_run.source,pipeline.publication_environment
 			FROM catalog_import_failure_queue queue
+			JOIN catalog_import_runs import_run ON import_run.id=queue.import_run_id
+			JOIN catalog_snapshots snapshot ON snapshot.id=import_run.snapshot_id
+			JOIN catalog_releases release ON release.id=snapshot.release_id
+			JOIN game_products product ON product.id=import_run.product_id
+			JOIN catalog_pipeline_runs pipeline ON pipeline.id=release.pipeline_run_id
 			WHERE queue.state='retry_scheduled' AND queue.retry_after<=now()
 			ORDER BY queue.retry_after,queue.created_at
-			FOR UPDATE SKIP LOCKED
+			FOR UPDATE OF queue SKIP LOCKED
 			LIMIT 1
 		), selected AS (
 			UPDATE catalog_import_failure_queue queue
 			SET state='retrying',attempts=queue.attempts+1,updated_at=now()
 			FROM due WHERE queue.id=due.id
-			RETURNING queue.id,queue.import_run_id
+			RETURNING due.id,due.import_run_id,due.release_id,due.product,due.build_version,due.source,due.publication_environment
 		)
-		SELECT selected.id,selected.import_run_id,release.id,product.slug,release.build_version,import_run.source,pipeline.publication_environment
-		FROM selected
-		JOIN catalog_import_runs import_run ON import_run.id=selected.import_run_id
-		JOIN catalog_snapshots snapshot ON snapshot.id=import_run.snapshot_id
-		JOIN catalog_releases release ON release.id=snapshot.release_id
-		JOIN game_products product ON product.id=import_run.product_id
-		JOIN catalog_pipeline_runs pipeline ON pipeline.id=release.pipeline_run_id`
+		SELECT * FROM selected`
 	var candidate retryCandidate
 	err := db.QueryRow(ctx, statement).Scan(&candidate.QueueID, &candidate.ImportRunID, &candidate.ReleaseID, &candidate.Product, &candidate.BuildVersion, &candidate.Source, &candidate.Environment)
 	if err != nil {
