@@ -90,3 +90,59 @@ func TestLocalStoreRejectsSymlinkEscape(t *testing.T) {
 		t.Fatal("symlink escape was accepted")
 	}
 }
+
+func TestLocalStoreDeleteRemovesOnlyExactRegularObject(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Chmod(root, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	store, err := NewLocalStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const key = "catalog/wow/2026/08/28/postgres.dump.age"
+	if err := store.Put(context.Background(), key, strings.NewReader("encrypted"), 9, "", nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Delete(key); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(key))); !os.IsNotExist(err) {
+		t.Fatalf("deleted object stat error = %v, want not exists", err)
+	}
+	// Idempotency is useful after an interrupted retention run.
+	if err := store.Delete(key); err != nil {
+		t.Fatalf("delete of absent object: %v", err)
+	}
+	if err := store.Delete("../outside"); err == nil {
+		t.Fatal("path traversal delete was accepted")
+	}
+}
+
+func TestLocalStoreDeleteRejectsSymlink(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Chmod(root, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	store, err := NewLocalStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	directory := filepath.Join(root, "catalog")
+	if err := os.MkdirAll(directory, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	outside := filepath.Join(t.TempDir(), "outside")
+	if err := os.WriteFile(outside, []byte("do not remove"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(directory, "object")); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Delete("catalog/object"); err == nil {
+		t.Fatal("symlink delete was accepted")
+	}
+	if _, err := os.Stat(outside); err != nil {
+		t.Fatalf("outside target was touched: %v", err)
+	}
+}
