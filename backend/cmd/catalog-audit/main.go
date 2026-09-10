@@ -43,15 +43,16 @@ type coverageReport struct {
 }
 
 type factReport struct {
-	ItemStats          int64 `json:"itemStats"`
-	ItemEffects        int64 `json:"itemEffects"`
-	AcquisitionSources int64 `json:"acquisitionSources"`
-	SpellEffects       int64 `json:"spellEffects"`
-	TalentSpellLinks   int64 `json:"talentSpellLinks"`
-	SpellOwners        int64 `json:"spellOwners"`
-	ProfessionRecipes  int64 `json:"professionRecipes"`
-	RecipeReagents     int64 `json:"recipeReagents"`
-	RecipeOutputs      int64 `json:"recipeOutputs"`
+	ItemStats                    int64 `json:"itemStats"`
+	ItemEffects                  int64 `json:"itemEffects"`
+	UnavailableItemEffectTargets int64 `json:"unavailableItemEffectTargets"`
+	AcquisitionSources           int64 `json:"acquisitionSources"`
+	SpellEffects                 int64 `json:"spellEffects"`
+	TalentSpellLinks             int64 `json:"talentSpellLinks"`
+	SpellOwners                  int64 `json:"spellOwners"`
+	ProfessionRecipes            int64 `json:"professionRecipes"`
+	RecipeReagents               int64 `json:"recipeReagents"`
+	RecipeOutputs                int64 `json:"recipeOutputs"`
 }
 
 type importReport struct {
@@ -249,6 +250,10 @@ func run() error {
 			(SELECT count(*) FROM catalog_item_effects fact
 				JOIN game_entity_versions version ON version.id=fact.version_id AND version.build_id=$1
 				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
+			(SELECT count(*) FROM catalog_item_effects fact
+				JOIN game_entity_versions version ON version.id=fact.version_id AND version.build_id=$1
+				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL
+				WHERE fact.spell_target_status='unavailable_in_build'),
 			(SELECT count(*) FROM catalog_item_acquisition_sources fact
 				JOIN game_entity_versions version ON version.id=fact.version_id AND version.build_id=$1
 				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL),
@@ -270,7 +275,7 @@ func run() error {
 			(SELECT count(*) FROM catalog_recipe_outputs fact
 				JOIN game_entity_versions version ON version.id=fact.recipe_version_id AND version.build_id=$1
 				JOIN game_entities entity ON entity.id=version.entity_id AND entity.product_id=(SELECT id FROM game_products WHERE slug=$2) AND entity.deleted_at IS NULL)`, result.Build.ID, product).Scan(
-		&result.Facts.ItemStats, &result.Facts.ItemEffects, &result.Facts.AcquisitionSources,
+		&result.Facts.ItemStats, &result.Facts.ItemEffects, &result.Facts.UnavailableItemEffectTargets, &result.Facts.AcquisitionSources,
 		&result.Facts.SpellEffects, &result.Facts.TalentSpellLinks, &result.Facts.SpellOwners,
 		&result.Facts.ProfessionRecipes, &result.Facts.RecipeReagents, &result.Facts.RecipeOutputs,
 	); err != nil {
