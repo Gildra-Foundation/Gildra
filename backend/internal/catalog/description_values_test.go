@@ -64,6 +64,14 @@ func TestResolveDescriptionTextHandlesMidnightTemplateVariants(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextExplainsUnresolvedSourceMacros(t *testing.T) {
+	got := resolveDescriptionText("Ticks every $123t, up to $456u targets; see $@spelldesc789.", 0, nil, "en_US")
+	want := "Ticks every an effect-defined interval, up to the maximum stack count targets; see the linked spell's effect."
+	if got != want {
+		t.Fatalf("unexpected readable fallback\nwant: %s\n got: %s", want, got)
+	}
+}
+
 func TestResolveDescriptionTextAppliesChainedArithmeticWithDuration(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
 		42: {DurationMS: 20000, Effects: map[int]spellEffectValue{
@@ -85,15 +93,15 @@ func TestResolveDescriptionTextUsesScalingFormulaInsteadOfFakeZero(t *testing.T)
 	if got := resolveDescriptionText("Absorbs $s1 damage.", 17, values, "en_US"); got != "Absorbs 1.65 × SP damage." {
 		t.Fatalf("unexpected scaling description: %q", got)
 	}
-	if got := resolveDescriptionText("Deals $s2 damage.", 17, values, "en_US"); got != "Deals $s2 damage." {
-		t.Fatalf("missing values must remain unresolved: %q", got)
+	if got := resolveDescriptionText("Deals $s2 damage.", 17, values, "en_US"); got != "Deals a game-defined value damage." {
+		t.Fatalf("missing values must remain readable: %q", got)
 	}
 }
 
-func TestResolveDescriptionTextPreservesUnknownTokens(t *testing.T) {
+func TestResolveDescriptionTextMakesUnknownTokensReadable(t *testing.T) {
 	raw := "Deals $s4 damage over $999999d."
-	if got := resolveDescriptionText(raw, 123, map[int64]spellDescriptionValues{}, "en_US"); got != raw {
-		t.Fatalf("unknown values must remain source-visible: %q", got)
+	if got := resolveDescriptionText(raw, 123, map[int64]spellDescriptionValues{}, "en_US"); got != "Deals a game-defined value damage over a game-defined value." {
+		t.Fatalf("unknown values must be readable: %q", got)
 	}
 }
 

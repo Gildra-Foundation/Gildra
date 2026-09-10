@@ -55,9 +55,14 @@ var (
 	spellEnchantmentItemLevelToken = regexp.MustCompile(`\$eci([mx])\b`)
 	spellHomeLocationToken         = regexp.MustCompile(`\$z\b`)
 	spellCounterMaximumToken       = regexp.MustCompile(`\$ctrmax\d+\b`)
-	spellAuraValueToken            = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
-	spellPluralToken               = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
-	currentMaxStacksToken          = regexp.MustCompile(`\$u\b`)
+	// A final display safeguard for a supported Blizzard client macro whose
+	// numeric source is absent from the build snapshot. The raw source remains
+	// in RawDescription; the public resolved text must never expose `$...`.
+	unresolvedTemplateExpression = regexp.MustCompile(`\$\{[^{}]*\}`)
+	unresolvedTemplateToken      = regexp.MustCompile(`\$[A-Za-z0-9_@<>]+`)
+	spellAuraValueToken          = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
+	spellPluralToken             = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
+	currentMaxStacksToken        = regexp.MustCompile(`\$u\b`)
 	// Tick intervals may address the current spell (`$t2`) or a referenced
 	// spell (`$1217960t2`). Keep the optional spell ID so item-effect blocks
 	// can resolve their explicit reference instead of leaking a raw token.
@@ -816,7 +821,46 @@ func resolveDescriptionTextAtDepth(text string, currentSpellID int64, values map
 		}
 		return token
 	})
-	return resolvePlural(text, locale)
+	return sanitizeUnresolvedDescriptionTemplates(resolvePlural(text, locale), locale)
+}
+
+func sanitizeUnresolvedDescriptionTemplates(text, locale string) string {
+	value := func() string {
+		if locale == "ru_RU" {
+			return "значение, определяемое игрой"
+		}
+		return "a game-defined value"
+	}
+	text = unresolvedTemplateExpression.ReplaceAllStringFunc(text, func(token string) string {
+		return value()
+	})
+	return unresolvedTemplateToken.ReplaceAllStringFunc(text, func(token string) string {
+		lower := strings.ToLower(token)
+		switch {
+		case strings.HasPrefix(lower, "$@spelldesc"):
+			if locale == "ru_RU" {
+				return "эффект связанного заклинания"
+			}
+			return "the linked spell's effect"
+		case strings.HasSuffix(lower, "t"):
+			if locale == "ru_RU" {
+				return "интервал, определяемый эффектом"
+			}
+			return "an effect-defined interval"
+		case strings.HasSuffix(lower, "u"):
+			if locale == "ru_RU" {
+				return "максимальное число эффектов"
+			}
+			return "the maximum stack count"
+		case strings.HasSuffix(lower, "x"):
+			if locale == "ru_RU" {
+				return "число, определяемое эффектом"
+			}
+			return "an effect-defined number"
+		default:
+			return value()
+		}
+	})
 }
 
 // spellEffectAt translates the DB2 zero-based effect index to the
