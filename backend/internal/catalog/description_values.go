@@ -13,13 +13,14 @@ import (
 )
 
 var (
-	spellDescriptionToken   = regexp.MustCompile(`\$@spelldesc(\d+)`)
-	spellNameToken          = regexp.MustCompile(`\$@spellname(\d+)`)
-	spellIconToken          = regexp.MustCompile(`\$@spellicon(\d+)`)
-	spellConditionalToken   = regexp.MustCompile(`\$\?([A-Za-z][A-Za-z0-9_|-]*)`)
-	spellConditionalSpellID = regexp.MustCompile(`^[as]([0-9]+)$`)
-	spellValueExpression    = regexp.MustCompile(`\$\{\$(\d*)([sm])(\d+)((?:[/*+-]-?(?:\d+(?:\.\d+)?|\.\d+))*)\}(?:\.1)?`)
-	spellValueOperation     = regexp.MustCompile(`([/*+-])(-?(?:\d+(?:\.\d+)?|\.\d+))`)
+	spellDescriptionToken            = regexp.MustCompile(`\$@spelldesc(\d+)`)
+	spellNameToken                   = regexp.MustCompile(`\$@spellname(\d+)`)
+	spellIconToken                   = regexp.MustCompile(`\$@spellicon(\d+)`)
+	spellConditionalToken            = regexp.MustCompile(`\$\?([A-Za-z][A-Za-z0-9_|-]*)`)
+	spellConditionalSpellID          = regexp.MustCompile(`^[as]([0-9]+)$`)
+	spellValueExpression             = regexp.MustCompile(`\$\{\$(\d*)([smM])(\d+)((?:[/*+-]-?(?:\d+(?:\.\d+)?|\.\d+))*)\}(?:\.1)?`)
+	spellPercentDifferenceExpression = regexp.MustCompile(`\$\{\$(\d*)[sS](\d+)-\$(\d*)[sS](\d+)%\$(\d*)[sS](\d+)\}`)
+	spellValueOperation              = regexp.MustCompile(`([/*+-])(-?(?:\d+(?:\.\d+)?|\.\d+))`)
 	// Durations embedded in a `${...}` arithmetic expression must remain a
 	// number until the expression is evaluated. Replacing `$d` with "20 sec"
 	// first would turn a valid expression into invalid source text.
@@ -28,7 +29,7 @@ var (
 	// A catalog page has no player context, so it must never invent a numeric
 	// value.  Replace the complete dynamic expression with an explicit,
 	// player-readable qualifier instead of leaking the client template.
-	spellRoleMultiplierExpression = regexp.MustCompile(`\$\{\$<(?:healing)?rolemult>\*[^{}]*\}`)
+	spellRoleMultiplierExpression = regexp.MustCompile(`\$\{[^{}]*\$<(?:healing)?rolemult>[^{}]*\}`)
 	spellDurationToken            = regexp.MustCompile(`\$(\d+)d\b`)
 	// Some item effects use `$d1` / `$123d1`. The suffix selects the
 	// duration-bearing effect but does not change the spell duration exposed
@@ -41,8 +42,9 @@ var (
 	// `$M<n>` is the capitalized Blizzard magnitude form. It addresses the
 	// current spell only (unlike `$123m<n>`), and commonly appears in item
 	// effects as a human-readable duration/count such as `$M2 min.`.
-	spellMaxMagnitudeToken         = regexp.MustCompile(`\$M(\d+)\b`)
-	spellExplicitMaxMagnitudeToken = regexp.MustCompile(`\$(\d+)M(\d+)\b`)
+	spellMaxMagnitudeToken          = regexp.MustCompile(`\$M(\d+)\b`)
+	spellExplicitMaxMagnitudeToken  = regexp.MustCompile(`\$(\d+)M(\d+)\b`)
+	spellExplicitCapitalEffectToken = regexp.MustCompile(`\$(\d+)S(\d+)\b`)
 	// Item-enchantment values are addressed from the owning spell's effect:
 	// `$ec1s1` means enchantment on EffectIndex 0, EffectPointsMin_0.
 	spellEnchantmentEffectToken = regexp.MustCompile(`\$ec(\d+)s(\d+)\b`)
@@ -51,6 +53,8 @@ var (
 	// Blizzard uses `$ecim` and `$ecix` for the selected enchantment's
 	// minimum and maximum applicable item levels respectively.
 	spellEnchantmentItemLevelToken = regexp.MustCompile(`\$eci([mx])\b`)
+	spellHomeLocationToken         = regexp.MustCompile(`\$z\b`)
+	spellCounterMaximumToken       = regexp.MustCompile(`\$ctrmax\d+\b`)
 	spellAuraValueToken            = regexp.MustCompile(`\$(\d*)w(\d+)\b`)
 	spellPluralToken               = regexp.MustCompile(`\$l([^:;]*):([^:;]*):([^;]*);`)
 	currentMaxStacksToken          = regexp.MustCompile(`\$u\b`)
@@ -520,6 +524,18 @@ func resolveDescriptionTextAtDepth(text string, currentSpellID int64, values map
 		}
 		return "a role-adjusted value of"
 	})
+	text = spellHomeLocationToken.ReplaceAllStringFunc(text, func(token string) string {
+		if locale == "ru_RU" {
+			return "ваше место отдыха"
+		}
+		return "your home location"
+	})
+	text = spellCounterMaximumToken.ReplaceAllStringFunc(text, func(token string) string {
+		if locale == "ru_RU" {
+			return "максимальный уровень"
+		}
+		return "the maximum level"
+	})
 	if duration := values[currentSpellID].DurationMS; duration > 0 {
 		seconds := formatDescriptionNumber(float64(duration) / 1000)
 		text = spellExpressionCurrentDurationToken.ReplaceAllStringFunc(text, func(token string) string {
@@ -542,6 +558,28 @@ func resolveDescriptionTextAtDepth(text string, currentSpellID int64, values map
 			return formatted
 		}
 		return token
+	})
+	text = spellPercentDifferenceExpression.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellPercentDifferenceExpression.FindStringSubmatch(token)
+		spellID := func(raw string) int64 {
+			if raw == "" {
+				return currentSpellID
+			}
+			id, _ := strconv.ParseInt(raw, 10, 64)
+			return id
+		}
+		valueAt := func(id int64, indexRaw string) (float64, bool) {
+			index, _ := strconv.Atoi(indexRaw)
+			effect, ok := spellEffectAt(values[id], index)
+			return effect.BasePoints, ok && math.Abs(effect.BasePoints) > 0.000001
+		}
+		base, baseOK := valueAt(spellID(match[1]), match[2])
+		reductionBase, reductionOK := valueAt(spellID(match[3]), match[4])
+		percent, percentOK := valueAt(spellID(match[5]), match[6])
+		if !baseOK || !reductionOK || !percentOK || math.Abs(base-reductionBase) > 0.000001 {
+			return token
+		}
+		return formatDescriptionNumber(base * (1 - percent/100))
 	})
 	text = spellDurationToken.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellDurationToken.FindStringSubmatch(token)
@@ -620,6 +658,17 @@ func resolveDescriptionTextAtDepth(text string, currentSpellID int64, values map
 		}
 		return token
 	})
+	text = spellExplicitCapitalEffectToken.ReplaceAllStringFunc(text, func(token string) string {
+		match := spellExplicitCapitalEffectToken.FindStringSubmatch(token)
+		id, _ := strconv.ParseInt(match[1], 10, 64)
+		index, _ := strconv.Atoi(match[2])
+		if value, ok := spellEffectAt(values[id], index); ok {
+			if formatted, resolved := formatSpellEffect(value, "", 0); resolved {
+				return formatted
+			}
+		}
+		return token
+	})
 	text = spellEnchantmentEffectToken.ReplaceAllStringFunc(text, func(token string) string {
 		match := spellEnchantmentEffectToken.FindStringSubmatch(token)
 		enchantmentIndex, _ := strconv.Atoi(match[1])
@@ -653,6 +702,12 @@ func resolveDescriptionTextAtDepth(text string, currentSpellID int64, values map
 		match := spellEnchantmentItemLevelToken.FindStringSubmatch(token)
 		enchantment := values[currentSpellID].Enchantments[1]
 		level := enchantment.ItemLevelMin
+		if match[1] == "m" && level <= 0 {
+			// Several Midnight enchantments store their actual lower applicability
+			// threshold in ItemLevelMax while ItemLevelMin is zero. Prefer the
+			// non-zero source value over leaking `$ecim` to players.
+			level = enchantment.ItemLevelMax
+		}
 		if match[1] == "x" {
 			level = enchantment.ItemLevelMax
 		}
