@@ -291,6 +291,21 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	assertEntityArtifact(t, ctx, pool, "creature", 900, artifacts["Creature"])
 	assertEntityArtifact(t, ctx, pool, "quest", 1000, artifacts["QuestV2CliTask"])
 	assertEntityArtifact(t, ctx, pool, "quest", 1001, artifacts["QuestV2"])
+	var questLocaleCount, questRUProofCount int
+	if err := pool.QueryRow(ctx, `
+		SELECT count(DISTINCT localization.locale),
+			count(DISTINCT proof.source_artifact_id)
+		FROM game_entities entity
+		JOIN game_entity_versions version ON version.id=entity.latest_version_id
+		LEFT JOIN game_entity_localizations localization ON localization.version_id=version.id
+		LEFT JOIN catalog_entity_localization_artifacts proof
+			ON proof.version_id=version.id AND proof.locale='ru_RU'
+		WHERE entity.entity_type='quest' AND entity.external_id=1000`).Scan(&questLocaleCount, &questRUProofCount); err != nil {
+		t.Fatalf("read quest locale provenance: %v", err)
+	}
+	if questLocaleCount != 1 || questRUProofCount != 0 {
+		t.Fatalf("quest locale count=%d ru proof count=%d, want only proven EN", questLocaleCount, questRUProofCount)
+	}
 	assertEntityArtifact(t, ctx, pool, "ui_map", 2000, artifacts["UiMap"])
 	assertEntityArtifact(t, ctx, pool, "ui_map", 2001, artifacts["UiMap"])
 	var collidingMapExists bool

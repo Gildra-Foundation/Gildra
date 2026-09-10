@@ -11,7 +11,8 @@ func TestPublicCatalogUsabilityPredicateHidesNonEligibleMidnightEntities(t *test
 	for _, fragment := range []string{
 		"catalog_entity_usability usability",
 		"usability.decision <> 'eligible'",
-		"(entity.product_id,version.build_id,entity.entity_type,entity.external_id) NOT IN",
+		"usability.product_id=entity.product_id",
+		"usability.build_id=version.build_id",
 	} {
 		if !strings.Contains(predicate, fragment) {
 			t.Fatalf("quality gate predicate is missing %q: %s", fragment, predicate)

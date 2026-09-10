@@ -5,18 +5,22 @@ package catalog
 // joined by the published version's build: a decision from another build must
 // never make a raw entity public.
 //
-// The DB2 importer reserves a review decision for every confirmed Midnight
-// entity before type-specific classification. Keeping the hot-path predicate
-// to this small decision table matters: the public catalog lists hundreds of
-// thousands of historical rows, while the Midnight cohort is only a few
-// thousand records. Non-Midnight entities are unchanged.
+// The DB2 importer reserves a review decision for every confirmed entity before
+// type-specific classification. Keeping the hot-path predicate to this small
+// decision table matters: the public catalog lists hundreds of thousands of
+// historical rows, while quality cohorts are build-pinned and indexed. An
+// entity without a decision remains public for products/types that have not
+// opted into a quality cohort yet; once a cohort row exists, every non-eligible
+// decision is held from public reads.
 func publicCatalogUsabilityPredicate(entityAlias, versionAlias string) string {
 	return `
-		AND (
-			` + entityAlias + `.product_id <> (SELECT id FROM game_products WHERE slug='wow')
-			OR (` + entityAlias + `.product_id,` + versionAlias + `.build_id,` + entityAlias + `.entity_type,` + entityAlias + `.external_id) NOT IN (
-				SELECT usability.product_id,usability.build_id,usability.entity_type,usability.external_id
-				FROM catalog_entity_usability usability WHERE usability.decision <> 'eligible'
-			)
+		AND NOT EXISTS (
+			SELECT 1
+			FROM catalog_entity_usability usability
+			WHERE usability.product_id=` + entityAlias + `.product_id
+			  AND usability.build_id=` + versionAlias + `.build_id
+			  AND usability.entity_type=` + entityAlias + `.entity_type
+			  AND usability.external_id=` + entityAlias + `.external_id
+			  AND usability.decision <> 'eligible'
 		)`
 }
