@@ -12,16 +12,24 @@
 состояние медиа и момент последней проверки. Английский fallback разрешён только
 с явной маркировкой; он не считается русским переводом.
 
-## Факты на 2026-09-07
+## Факты на 2026-09-10
 
-- Midnight, активная сборка `12.1.0.69587`: 7 812 item-записей; 6 843 eligible,
-  961 review, 8 excluded.
-- Публичный запрос пока не использует `catalog_entity_usability`: 961 review
-  могут быть показаны. Это блокер.
-- Во всём WoW: у предметов есть RU-имя у 175 156 из 213 341 опубликованных;
-  у квестов — у 15 025 из 66 902.
-- Есть 239 199 неразрешённых шаблонов в описаниях, 619 879 — в tooltip-ах;
-  1 495 медиа-объектов ещё не готовы локально; в истории 12 failed imports.
+- Midnight, активная сборка `12.1.0.69587`: 16 760 подтверждённых cohort-строк;
+  7 565 eligible, 798 review, 17 excluded. После quality-gate полный acceptance
+  прогон проверил 1 667 API-запросов без ошибок.
+- Eligible Midnight entities имеют EN/RU names 100%; технических имён и
+  unresolved public template payloads в runtime-проверке нет. Исходные tooltip
+  tokens сохраняются в raw-слое и разрешаются build-aware resolver-ом.
+- Во всём WoW опубликованы 213 341 item, 66 902 quest и 11 752 recipe rows.
+  Для исторических DB2 cohorts добавлен build-pinned gate: 158 647 активных
+  retail item rows имеют EN/RU names; старые строки без подтверждённого игрового
+  сигнала остаются review/excluded, а не попадают в public выдачу.
+- Квестовый gate dry-run дал 14 973 verified bilingual rows; 51 687 остаются
+  review/excluded до появления источника локализации. Recipe gate дал 8 408
+  rows с verified output и 3 328 review rows без output.
+- В production backup/restore проверены на schema 154. Миграции historical
+  cohorts/quests/recipes (155–157) подготовлены, dry-run прошли и ожидают
+  штатного production deploy.
 
 ## Архитектурные решения
 
