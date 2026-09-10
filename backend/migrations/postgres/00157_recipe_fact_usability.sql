@@ -94,6 +94,7 @@ END;
 $$;
 -- +goose StatementEnd
 
+-- +goose StatementBegin
 DO $$
 DECLARE build_record RECORD;
 BEGIN
@@ -108,6 +109,7 @@ BEGIN
     END LOOP;
 END;
 $$;
+-- +goose StatementEnd
 
 SELECT refresh_catalog_public_summary_stats(NULL);
 
