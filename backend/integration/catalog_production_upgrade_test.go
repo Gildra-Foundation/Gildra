@@ -29,7 +29,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 160
+const latestCatalogSchemaVersion int64 = 161
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -189,6 +189,14 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	}
 	if !spellDependencyFunction {
 		t.Fatalf("spell dependency usability function missing: %v", spellDependencyFunction)
+	}
+	var activeEntityTypeFunction bool
+	if err := database.QueryRowContext(ctx, `
+		SELECT to_regprocedure('catalog_refresh_active_entity_type_usability(smallint,bigint)') IS NOT NULL`).Scan(&activeEntityTypeFunction); err != nil {
+		t.Fatal(err)
+	}
+	if !activeEntityTypeFunction {
+		t.Fatalf("active entity type usability function missing: %v", activeEntityTypeFunction)
 	}
 	var previewColumn, rewardPackageDataset int
 	if err := database.QueryRowContext(ctx, `
