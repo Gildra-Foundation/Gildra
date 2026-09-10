@@ -171,6 +171,29 @@ func (s *LocalStore) Delete(key string) error {
 	return nil
 }
 
+// KeyFromURI converts only a file URI rooted below this store into an object
+// key. It is intentionally strict because retention URIs originate in the
+// database and must never become arbitrary filesystem paths.
+func (s *LocalStore) KeyFromURI(raw string) (string, error) {
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "file" || u.Host != "" || u.Path == "" {
+		return "", errors.New("local backup URI must be an absolute file URI")
+	}
+	resolved, err := filepath.Abs(filepath.Clean(u.Path))
+	if err != nil {
+		return "", fmt.Errorf("resolve local backup URI: %w", err)
+	}
+	relative, err := filepath.Rel(s.root, resolved)
+	if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return "", errors.New("local backup URI escapes the configured root")
+	}
+	key := filepath.ToSlash(relative)
+	if err := validateObjectKey(key); err != nil {
+		return "", fmt.Errorf("local backup URI object key: %w", err)
+	}
+	return key, nil
+}
+
 type contextReader struct {
 	ctx    context.Context
 	source io.Reader
