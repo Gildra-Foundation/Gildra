@@ -496,3 +496,24 @@ func (report *ReadinessReport) warn(key, scope string, count int64, message stri
 		Key: key, Scope: scope, Status: status, Count: count, Message: message,
 	})
 }
+
+// AddProductionCheck lets an external public-surface probe contribute a
+// scoped blocking result without exposing the internal readiness bookkeeping.
+func (report *ReadinessReport) AddProductionCheck(key string, count int64, failed bool, message string) {
+	report.add(key, ScopeProduction, failed, count, message)
+}
+
+// PublicQualityReady evaluates only the build-pinned public profile checks.
+// It intentionally leaves broad historical data readiness visible without
+// making a focused Midnight release impossible to deploy.
+func PublicQualityReady(report ReadinessReport) bool {
+	for _, check := range report.Checks {
+		if check.Scope != ScopeProduction || check.Status != "fail" {
+			continue
+		}
+		if check.Key == "quality_profile_scope" || strings.HasPrefix(check.Key, "public_") {
+			return false
+		}
+	}
+	return true
+}

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestToGraphQLEntityExposesFullCatalogContract(t *testing.T) {
+func TestToGraphQLEntityRedactsRawSourceFieldsButPreservesDisplayAndProvenance(t *testing.T) {
 	iconURL := "https://api.gildra.net/v1/media/79be8de3-77ba-436d-afd0-91a38146611a"
 	quality := 95
 	fileDataID := int64(12345)
@@ -34,8 +34,11 @@ func TestToGraphQLEntityExposesFullCatalogContract(t *testing.T) {
 	if got.Media[0].FileDataID == nil || *got.Media[0].FileDataID != "12345" {
 		t.Fatalf("graphql FileDataID = %#v", got.Media[0].FileDataID)
 	}
-	if got.RawDescription != entity.RawDescription || got.ResolvedDescription != entity.ResolvedDescription || got.Localizations[1].ResolvedDescription != "Бросает 100 ед. урона." {
-		t.Fatalf("graphql raw/resolved descriptions = %#v", got)
+	if got.RawDescription != "" || len(got.Payload) != 0 || got.ResolvedDescription != entity.ResolvedDescription || got.Localizations[1].ResolvedDescription != "Бросает 100 ед. урона." {
+		t.Fatalf("graphql public display projection was not preserved safely: %#v", got)
+	}
+	if got.Localizations[1].Description != "" {
+		t.Fatalf("graphql raw localization description leaked: %#v", got.Localizations[1])
 	}
 }
 

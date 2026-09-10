@@ -364,13 +364,15 @@ verify_catalog_readiness() {
   api_container=$(compose ps -q api)
   [ -n "$api_container" ] || fail 'api service has no running container for the readiness gate'
   if [ "$catalog_access_mode" = private ]; then
-    # Data completeness is monitored by the audit endpoint, but it is not a
-    # deployment blocker for the private console.  The catalog is intentionally
-    # expanded over time; health, migration, recovery and load gates below are
-    # the safety barriers that must stop a broken release.
+    # Broad historical completeness remains report-only for the private
+    # console, but the active Midnight public cohort is a hard deployment
+    # gate. The command also probes every template-bearing card through the
+    # running API, so raw source text cannot be mistaken for display quality.
     docker exec "$api_container" catalog-audit \
       -product wow \
       -recovery-policy verified_same_host \
+      -quality-profile midnight-active \
+      -require-public-quality \
       -timeout 15m
   else
     docker exec "$api_container" catalog-audit \
