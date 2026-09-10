@@ -2282,15 +2282,21 @@ const itemDetailsProjectionSQL = `
 		  )
 	)
 	INSERT INTO catalog_item_effects(version_id,item_effect_id,slot,spell_id,trigger_type,charges,cooldown_ms,
-		category_cooldown_ms,spell_category_id,specialization_id,player_condition_id,source_artifact_id)
+		category_cooldown_ms,spell_category_id,specialization_id,player_condition_id,source_artifact_id,
+		spell_name,spell_target_status)
 	SELECT item_version.id,effect.item_effect_id,COALESCE(NULLIF(effect.payload->>'LegacySlotIndex','')::smallint,0),
 		(effect.payload->>'SpellID')::bigint,COALESCE(NULLIF(effect.payload->>'TriggerType','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'Charges','')::int,0),COALESCE(NULLIF(effect.payload->>'CoolDownMSec','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'CategoryCoolDownMSec','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'SpellCategoryID','')::int,0),
 		COALESCE(NULLIF(effect.payload->>'ChrSpecializationID','')::int,0),
-		COALESCE(NULLIF(effect.payload->>'PlayerConditionID','')::int,0),effect.source_artifact_id
+		COALESCE(NULLIF(effect.payload->>'PlayerConditionID','')::int,0),effect.source_artifact_id,
+		COALESCE(NULLIF(BTRIM(spell_name.payload->>'Name_lang'),''),''),
+		CASE WHEN spell_name.row_id IS NULL THEN 'unavailable_in_build' ELSE 'resolved' END
 	FROM item_effect_links effect
+	LEFT JOIN catalog_db2_rows spell_name ON spell_name.build_id=$1
+		AND spell_name.table_name='SpellName' AND spell_name.locale='en_US'
+		AND spell_name.row_id=(effect.payload->>'SpellID')::bigint
 	JOIN game_entities entity ON entity.product_id=$2 AND entity.entity_type='item'
 		AND entity.external_id=effect.item_id
 	JOIN LATERAL (SELECT candidate.id FROM game_entity_versions candidate
@@ -2301,7 +2307,8 @@ const itemDetailsProjectionSQL = `
 		trigger_type=EXCLUDED.trigger_type,charges=EXCLUDED.charges,cooldown_ms=EXCLUDED.cooldown_ms,
 		category_cooldown_ms=EXCLUDED.category_cooldown_ms,spell_category_id=EXCLUDED.spell_category_id,
 		specialization_id=EXCLUDED.specialization_id,player_condition_id=EXCLUDED.player_condition_id,
-		source_artifact_id=EXCLUDED.source_artifact_id;`
+		source_artifact_id=EXCLUDED.source_artifact_id,spell_name=EXCLUDED.spell_name,
+		spell_target_status=EXCLUDED.spell_target_status;`
 
 const journalEntityProjectionSQL = `
 	INSERT INTO game_entities(product_id,namespace_id,entity_type,external_id,canonical_slug,

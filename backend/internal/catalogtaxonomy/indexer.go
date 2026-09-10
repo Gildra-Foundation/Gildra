@@ -874,8 +874,9 @@ func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, int64, int6
 			SELECT DISTINCT ON (current.item_version_id,effect.item_effect_id)
 				current.product_id,current.item_version_id,current.build_id,current.variant_id,
 				effect.item_effect_id,effect.slot,effect.spell_id,effect.trigger_type,effect.charges,
-				effect.cooldown_ms,effect.category_cooldown_ms,effect.spell_category_id,
-				effect.specialization_id,effect.player_condition_id,effect.source_artifact_id
+				 effect.cooldown_ms,effect.category_cooldown_ms,effect.spell_category_id,
+				effect.specialization_id,effect.player_condition_id,effect.source_artifact_id,
+				effect.spell_name,effect.spell_target_status
 			FROM current_items current
 			JOIN game_entity_versions fact_version ON fact_version.entity_id=current.entity_id
 				AND fact_version.build_id=current.build_id
@@ -887,7 +888,7 @@ func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, int64, int6
 			attributes,source_artifact_id)
 		SELECT effect.variant_id,
 			(row_number() OVER (PARTITION BY effect.item_version_id ORDER BY effect.slot,effect.item_effect_id)-1)::smallint,
-			spell.id,effect.spell_id,effect.trigger_type,
+		 CASE WHEN spell_version.id IS NULL THEN NULL ELSE spell.id END,effect.spell_id,effect.trigger_type,
 			CASE WHEN effect.cooldown_ms<0 THEN NULL ELSE effect.cooldown_ms END,
 			jsonb_build_object(
 				'item_effect_id',effect.item_effect_id,
@@ -898,6 +899,8 @@ func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, int64, int6
 				'spell_category_id',effect.spell_category_id,
 				'specialization_id',effect.specialization_id,
 				'player_condition_id',effect.player_condition_id,
+				'spell_name',effect.spell_name,
+				'spell_target_status',effect.spell_target_status,
 				'projection','canonical_base'),
 			effect.source_artifact_id
 		FROM current_effects effect
@@ -2342,20 +2345,31 @@ const tooltipSQL = `
 		WHERE table_name='SpellPower' AND locale='en_US' AND payload ? 'SpellID'
 		ORDER BY build_id,(payload->>'SpellID')::bigint,COALESCE(NULLIF(payload->>'OrderIndex','')::int,0),row_id
 	), item_effect_rows AS (
-		SELECT links.build_id,(links.payload->>'ItemID')::bigint AS item_id,spell_text.locale,
+		SELECT links.build_id,(links.payload->>'ItemID')::bigint AS item_id,locale.code AS locale,
 			jsonb_agg(jsonb_build_object(
 				'type','effect','trigger',COALESCE(NULLIF(effect.payload->>'TriggerType','')::int,0),
 				'spell_id',COALESCE(NULLIF(effect.payload->>'SpellID','')::bigint,0),
-				'text',spell_text.payload->>'Description_lang'
+				'spell_name',COALESCE(NULLIF(spell_name.payload->>'Name_lang',''),NULLIF(spell_name_fallback.payload->>'Name_lang',''),''),
+				'spell_target_status',CASE WHEN spell_name_fallback.row_id IS NULL THEN 'unavailable_in_build' ELSE 'resolved' END,
+				'text',COALESCE(NULLIF(spell_text.payload->>'Description_lang',''),
+					CASE WHEN spell_name_fallback.row_id IS NULL AND locale.code='ru_RU'
+						THEN 'Эффект недоступен в данных этой сборки.'
+					WHEN spell_name_fallback.row_id IS NULL
+						THEN 'Effect unavailable in this build.'
+					ELSE COALESCE(NULLIF(spell_name.payload->>'Name_lang',''),NULLIF(spell_name_fallback.payload->>'Name_lang','')) END)
 			) ORDER BY COALESCE(NULLIF(effect.payload->>'LegacySlotIndex','')::int,0),links.row_id) AS effects
 		FROM catalog_db2_rows links
 		JOIN catalog_db2_rows effect ON effect.build_id=links.build_id AND effect.table_name='ItemEffect' AND effect.locale='en_US'
 			AND effect.row_id=(links.payload->>'ItemEffectID')::bigint
-		JOIN catalog_db2_rows spell_text ON spell_text.build_id=links.build_id AND spell_text.table_name='Spell'
-			AND spell_text.row_id=(effect.payload->>'SpellID')::bigint AND spell_text.locale IN ('en_US','ru_RU')
+		CROSS JOIN (VALUES ('en_US'::text),('ru_RU'::text)) locale(code)
+		LEFT JOIN catalog_db2_rows spell_name ON spell_name.build_id=links.build_id AND spell_name.table_name='SpellName'
+			AND spell_name.row_id=(effect.payload->>'SpellID')::bigint AND spell_name.locale=locale.code
+		LEFT JOIN catalog_db2_rows spell_name_fallback ON spell_name_fallback.build_id=links.build_id AND spell_name_fallback.table_name='SpellName'
+			AND spell_name_fallback.row_id=(effect.payload->>'SpellID')::bigint AND spell_name_fallback.locale='en_US'
+		LEFT JOIN catalog_db2_rows spell_text ON spell_text.build_id=links.build_id AND spell_text.table_name='Spell'
+			AND spell_text.row_id=(effect.payload->>'SpellID')::bigint AND spell_text.locale=locale.code
 		WHERE links.table_name='ItemXItemEffect' AND links.locale='en_US'
-			AND NULLIF(spell_text.payload->>'Description_lang','') IS NOT NULL
-		GROUP BY links.build_id,(links.payload->>'ItemID')::bigint,spell_text.locale
+		GROUP BY links.build_id,(links.payload->>'ItemID')::bigint,locale.code
 	), item_acquisition_rows AS (
 		SELECT source.version_id,locale.code AS locale,
 			jsonb_agg(jsonb_build_object(
