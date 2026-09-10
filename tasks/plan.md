@@ -27,16 +27,33 @@
 - Квестовый gate dry-run дал 14 973 verified bilingual rows; 51 687 остаются
   review/excluded до появления источника локализации. Recipe gate дал 8 408
   rows с verified output и 3 328 review rows без output.
-- Production release wave `bb892d2` поднял API на schema 158; его обязательные
-  backup и isolated restore выполняются штатным deploy-gate. Следующий wave
-  `e235cdc` (schema 160) уже запушен и ждёт CI/deploy очереди.
-  Миграции Classic cohorts `00158`, spell dependency `00159` и исправление
-  stale library counts `00160` проходят production-upgrade integration test в
-  изолированном PostgreSQL.
+- Production release `77e5c1b` поднял API на schema 162. CI и production
+  upgrade integration прошли; deploy-gate завершил полный backup/isolated
+  restore с `verified=true` и `source_restore_match=true`. Миграции Classic
+  cohorts `00158`, spell dependency `00159`, stale library counts `00160`,
+  backup policy tables `00161` и media-source classification `00162` работают
+  в production.
+- Для media добавлен auditable статус `unavailable`: 71 наблюдение Blizzard
+  render CDN с подтверждённым HTTP 403 больше не попадает в бесконечную retry
+  очередь, но сохраняется в raw/audit слое. После релиза bounded media run
+  завершился `succeeded` с `eligible=0`; оставшийся backlog — 1 426 `remote`
+  записей, failed=0, cached=1 321 274.
 - Classic audit показал честный разрыв: `wow_classic` 17 137 quests,
   `wow_classic_era` 4 807 и `wow_classic_hardcore` 4 807 имеют registry rows,
   но 0 verified RU proofs. Эти строки должны оставаться raw/review до импорта
   настоящего `ru_RU` источника; английский fallback не засчитывается.
+
+## Последний production checkpoint (2026-09-10)
+
+- API revision `77e5c1bc06837fc87fc82aee1db08f2284ab136b`, health `healthy`,
+  `/livez` и `/readyz` отвечают 200; goose schema `162`.
+- `catalog-audit -quality-profile midnight-active -require-public-quality`
+  завершён deploy-gate без ошибки; публичный dataset endpoint для `en_US`
+  отвечает данными. Полнота исторических Classic/RU cohorts этим не объявляется
+  закрытой: они остаются review до появления подтверждённого источника.
+- Последний media-cache run: `succeeded`, limit 100, eligible 0. Это означает,
+  что в Midnight cohort нет доступной для этой очереди записи; это не является
+  утверждением, что весь исторический media backlog закрыт.
 
 ## Архитектурные решения
 
