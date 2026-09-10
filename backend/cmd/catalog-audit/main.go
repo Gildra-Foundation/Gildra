@@ -6,7 +6,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
@@ -56,13 +60,28 @@ type importReport struct {
 }
 
 type report struct {
-	GeneratedAt time.Time                            `json:"generatedAt"`
-	Build       buildReport                          `json:"build"`
-	Coverage    []coverageReport                     `json:"coverage"`
-	Facts       factReport                           `json:"facts"`
-	Imports     importReport                         `json:"imports"`
-	Quality     catalogquality.PublicQualitySnapshot `json:"quality"`
-	Readiness   catalogquality.ReadinessReport       `json:"readiness"`
+	GeneratedAt  time.Time                            `json:"generatedAt"`
+	Build        buildReport                          `json:"build"`
+	Coverage     []coverageReport                     `json:"coverage"`
+	Facts        factReport                           `json:"facts"`
+	Imports      importReport                         `json:"imports"`
+	Quality      catalogquality.PublicQualitySnapshot `json:"quality"`
+	Readiness    catalogquality.ReadinessReport       `json:"readiness"`
+	RuntimeProbe runtimeTemplateProbeReport           `json:"runtimeTemplateProbe,omitempty"`
+}
+
+type runtimeTemplateProbeRecord struct {
+	ID         string
+	EntityType string
+	ExternalID int64
+}
+
+type runtimeTemplateProbeReport struct {
+	Records          int      `json:"records"`
+	Requests         int      `json:"requests"`
+	RawTokenPayloads int64    `json:"rawTokenPayloads"`
+	FallbackPayloads int64    `json:"fallbackPayloads"`
+	Failures         []string `json:"failures,omitempty"`
 }
 
 func main() {
@@ -73,8 +92,8 @@ func main() {
 }
 
 func run() error {
-	var databaseURL, product, recoveryPolicy, buildVersion, qualityProfile string
-	var requireProductionReady, requireDataReady, enforcePublicQuality bool
+	var databaseURL, product, recoveryPolicy, buildVersion, qualityProfile, apiBaseURL string
+	var requireProductionReady, requireDataReady, requirePublicQuality, enforcePublicQuality bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&product, "product", "wow", "game product slug")
@@ -83,11 +102,19 @@ func run() error {
 	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
 	flag.BoolVar(&requireProductionReady, "require-production-ready", false, "exit non-zero unless every data and production readiness check passes")
 	flag.BoolVar(&requireDataReady, "require-data-ready", false, "exit non-zero unless every catalog data-readiness check passes")
+	flag.BoolVar(&requirePublicQuality, "require-public-quality", false, "exit non-zero unless the scoped public quality profile and its runtime probe pass")
 	flag.BoolVar(&enforcePublicQuality, "enforce-public-quality", false, "treat scoped public-quality failures as production-readiness blockers")
+	flag.StringVar(&apiBaseURL, "api-base-url", "http://127.0.0.1:8080", "public API base URL used by the enforced runtime template probe")
 	flag.DurationVar(&timeout, "timeout", 15*time.Minute, "maximum time allowed for the complete audit")
 	flag.Parse()
 	if timeout <= 0 {
 		return errors.New("-timeout must be greater than zero")
+	}
+	// A required public gate always evaluates the scoped profile and the live
+	// template probe. It deliberately does not turn unrelated historical
+	// data-readiness findings into deployment blockers.
+	if requirePublicQuality {
+		enforcePublicQuality = true
 	}
 	if databaseURL == "" {
 		databaseURL = os.Getenv("DATABASE_URL")
@@ -280,6 +307,13 @@ func run() error {
 	// unable to deploy precisely because it exposes the existing data gaps.
 	if enforcePublicQuality {
 		catalogquality.ApplyPublicQualityGate(&result.Readiness, result.Quality)
+		result.RuntimeProbe, err = runRuntimeTemplateProbe(ctx, db, product, auditBuild, apiBaseURL)
+		if err != nil {
+			return fmt.Errorf("run public runtime template probe: %w", err)
+		}
+		probeFailures := int64(len(result.RuntimeProbe.Failures))
+		result.Readiness.AddProductionCheck("public_runtime_template_probe", probeFailures, probeFailures != 0,
+			"every eligible Midnight template record must render without raw tokens or sanitizer fallback phrases")
 	}
 
 	encoder := json.NewEncoder(os.Stdout)
@@ -287,18 +321,103 @@ func run() error {
 	if err := encoder.Encode(result); err != nil {
 		return fmt.Errorf("encode audit report: %w", err)
 	}
-	if err := enforceReadiness(result.Readiness, requireDataReady, requireProductionReady); err != nil {
+	if err := enforceReadiness(result.Readiness, requireDataReady, requireProductionReady, requirePublicQuality); err != nil {
 		return err
 	}
 	return nil
 }
 
-func enforceReadiness(readiness catalogquality.ReadinessReport, requireDataReady, requireProductionReady bool) error {
+func enforceReadiness(readiness catalogquality.ReadinessReport, requireDataReady, requireProductionReady, requirePublicQuality bool) error {
 	if requireDataReady && !readiness.DataReady {
 		return errors.New("catalog data readiness gate failed")
 	}
 	if requireProductionReady && !readiness.ProductionReady {
 		return errors.New("catalog production readiness gate failed")
 	}
+	if requirePublicQuality && !catalogquality.PublicQualityReady(readiness) {
+		return errors.New("catalog public quality gate failed")
+	}
 	return nil
+}
+
+func runRuntimeTemplateProbe(ctx context.Context, db *pgxpool.Pool, product, build, baseURL string) (runtimeTemplateProbeReport, error) {
+	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	parsed, err := url.ParseRequestURI(baseURL)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return runtimeTemplateProbeReport{}, fmt.Errorf("invalid -api-base-url %q", baseURL)
+	}
+	if parsed.Scheme != "https" && !(parsed.Scheme == "http" && (parsed.Hostname() == "127.0.0.1" || parsed.Hostname() == "localhost" || parsed.Hostname() == "::1")) {
+		return runtimeTemplateProbeReport{}, errors.New("-api-base-url must use HTTPS, except loopback HTTP")
+	}
+	rows, err := db.Query(ctx, `
+		SELECT DISTINCT entity.id::text,entity.entity_type,entity.external_id
+		FROM catalog_entity_expansions cohort
+		JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id AND expansion.expansion_key='midnight'
+		JOIN game_products product_row ON product_row.id=cohort.product_id AND product_row.slug=$1
+		JOIN game_builds build_row ON build_row.id=cohort.build_id AND build_row.version=$2
+		JOIN game_entities entity ON entity.product_id=cohort.product_id AND entity.entity_type=cohort.entity_type
+			AND entity.external_id=cohort.external_id AND entity.deleted_at IS NULL
+		JOIN game_entity_versions version ON version.id=entity.published_version_id AND version.build_id=cohort.build_id
+		JOIN catalog_entity_usability usability ON usability.product_id=cohort.product_id AND usability.build_id=cohort.build_id
+			AND usability.entity_type=cohort.entity_type AND usability.external_id=cohort.external_id AND usability.decision='eligible'
+		WHERE cohort.classification='confirmed'
+		  AND (EXISTS (SELECT 1 FROM game_entity_localizations localization WHERE localization.version_id=version.id
+			AND localization.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])')
+		    OR EXISTS (SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=version.id
+			AND (tooltip.plain_text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' OR tooltip.blocks::text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])')))
+		ORDER BY entity.entity_type,entity.external_id`, product, build)
+	if err != nil {
+		return runtimeTemplateProbeReport{}, fmt.Errorf("select runtime template records: %w", err)
+	}
+	defer rows.Close()
+	records := make([]runtimeTemplateProbeRecord, 0)
+	for rows.Next() {
+		var item runtimeTemplateProbeRecord
+		if err := rows.Scan(&item.ID, &item.EntityType, &item.ExternalID); err != nil {
+			return runtimeTemplateProbeReport{}, err
+		}
+		records = append(records, item)
+	}
+	if err := rows.Err(); err != nil {
+		return runtimeTemplateProbeReport{}, err
+	}
+	result := runtimeTemplateProbeReport{Records: len(records), Failures: make([]string, 0)}
+	client := &http.Client{Timeout: 20 * time.Second}
+	for _, item := range records {
+		for _, locale := range []string{"en_US", "ru_RU"} {
+			result.Requests++
+			request, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/v1/game/entities/"+url.PathEscape(item.ID)+"?locale="+url.QueryEscape(locale), nil)
+			if err != nil {
+				result.Failures = append(result.Failures, fmt.Sprintf("%s/%d %s: %v", item.EntityType, item.ExternalID, locale, err))
+				continue
+			}
+			response, err := client.Do(request)
+			if err != nil {
+				result.Failures = append(result.Failures, fmt.Sprintf("%s/%d %s: %v", item.EntityType, item.ExternalID, locale, err))
+				continue
+			}
+			body, readErr := io.ReadAll(io.LimitReader(response.Body, 8<<20))
+			response.Body.Close()
+			if response.StatusCode != http.StatusOK || readErr != nil {
+				result.Failures = append(result.Failures, fmt.Sprintf("%s/%d %s: HTTP %d", item.EntityType, item.ExternalID, locale, response.StatusCode))
+				continue
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(body, &payload); err != nil {
+				result.Failures = append(result.Failures, fmt.Sprintf("%s/%d %s: invalid JSON: %v", item.EntityType, item.ExternalID, locale, err))
+				continue
+			}
+			validation := catalogquality.ValidatePublicTemplatePayload(payload)
+			if validation.RawTokens > 0 {
+				result.RawTokenPayloads++
+			}
+			if validation.FallbackPhrases > 0 {
+				result.FallbackPayloads++
+			}
+			if validation.RawTokens > 0 || validation.FallbackPhrases > 0 {
+				result.Failures = append(result.Failures, fmt.Sprintf("%s/%d %s: raw_tokens=%d fallback_phrases=%d", item.EntityType, item.ExternalID, locale, validation.RawTokens, validation.FallbackPhrases))
+			}
+		}
+	}
+	return result, nil
 }

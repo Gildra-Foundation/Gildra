@@ -26,11 +26,12 @@ func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 		ExternalID: strconv.FormatInt(entity.ExternalID, 10), Slug: entity.Slug,
 		Locale: model.Locale(entity.Locale), ResolvedLocale: model.Locale(entity.ResolvedLocale),
 		LocaleFallback: entity.LocaleFallback, Name: entity.Name, Description: entity.Description,
-		RawDescription: entity.RawDescription, ResolvedDescription: entity.ResolvedDescription,
-		Localizations: make([]*model.GameEntityLocalization, 0, len(entity.Localizations)),
-		Media:         make([]*model.GameEntityMedia, 0, len(entity.Media)),
-		IconName:      entity.IconName, IconURL: entity.IconURL, Quality: entity.Quality,
-		Payload: entity.Payload, UpdatedAt: entity.UpdatedAt,
+		ResolvedDescription: entity.ResolvedDescription,
+		Localizations:       make([]*model.GameEntityLocalization, 0, len(entity.Localizations)),
+		Media:               make([]*model.GameEntityMedia, 0, len(entity.Media)),
+		IconName:            entity.IconName, IconURL: entity.IconURL, Quality: entity.Quality,
+		Payload:   map[string]any{},
+		UpdatedAt: entity.UpdatedAt,
 	}
 	for _, locale := range []string{"en_US", "ru_RU"} {
 		localization, ok := entity.Localizations[locale]
@@ -38,7 +39,7 @@ func toGraphQLEntity(entity catalog.Entity) *model.GameEntity {
 			continue
 		}
 		result.Localizations = append(result.Localizations, &model.GameEntityLocalization{
-			Locale: model.Locale(locale), Name: localization.Name, Description: localization.Description,
+			Locale: model.Locale(locale), Name: localization.Name,
 			ResolvedDescription: localization.ResolvedDescription,
 		})
 	}

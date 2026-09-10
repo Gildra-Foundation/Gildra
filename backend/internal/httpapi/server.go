@@ -634,23 +634,24 @@ func (s *Server) SubmitIndexNow(ctx context.Context, request api.SubmitIndexNowR
 }
 
 func toAPIEntity(entity catalog.Entity) api.GameEntity {
-	// Keep localized source values and the raw payload in the full entity
-	// response so API consumers can render complete records without guessing.
+	// This is the public projection. Raw source payloads and unresolved
+	// descriptions are intentionally not exposed without an authorization
+	// boundary; display-ready fields and provenance remain available below.
 	result := api.GameEntity{
 		Id: entity.ID, Product: entity.Product, Type: entity.Type,
 		ExternalId: entity.ExternalID, Slug: entity.Slug,
 		Locale: api.GameEntityLocale(entity.Locale), Name: entity.Name,
-		ResolvedLocale: api.GameEntityResolvedLocale(entity.ResolvedLocale),
-		LocaleFallback: entity.LocaleFallback,
-		Description:    entity.Description, RawDescription: entity.RawDescription,
+		ResolvedLocale:      api.GameEntityResolvedLocale(entity.ResolvedLocale),
+		LocaleFallback:      entity.LocaleFallback,
+		Description:         entity.Description,
 		ResolvedDescription: entity.ResolvedDescription, BuildId: entity.BuildID,
 		Localizations: make(map[string]api.GameEntityLocalization, len(entity.Localizations)),
-		Payload:       entity.Payload,
+		Payload:       map[string]interface{}{},
 		UpdatedAt:     entity.UpdatedAt,
 	}
 	for locale, localization := range entity.Localizations {
 		result.Localizations[locale] = api.GameEntityLocalization{
-			Name: localization.Name, Description: localization.Description,
+			Name:                localization.Name,
 			ResolvedDescription: localization.ResolvedDescription,
 		}
 	}

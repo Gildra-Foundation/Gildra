@@ -22,7 +22,7 @@ func TestPublicQualityGateBlocksCriticalProfileFailures(t *testing.T) {
 		ActiveBuild: true, Raw: 10, Eligible: 10,
 		English:           LocaleQuality{Technical: 1},
 		Russian:           LocaleQuality{Fallback: 2},
-		UnresolvedTooltip: 1, MissingPrimaryMedia: 1, FailedImports: 1,
+		UnresolvedTooltip: 1, TooltipFallback: 1, MissingPrimaryMedia: 1, FailedImports: 1,
 	})
 	if readiness.ProductionReady {
 		t.Fatalf("critical scoped quality failures must block production: %#v", readiness)
@@ -37,6 +37,17 @@ func TestPublicQualityGateBlocksCriticalProfileFailures(t *testing.T) {
 		if !found {
 			t.Errorf("missing blocking quality check %q: %#v", key, readiness.Checks)
 		}
+	}
+}
+
+func TestPublicQualityGateDoesNotTreatStoredTooltipTokensAsPublicFailures(t *testing.T) {
+	readiness := ReadinessReport{DataReady: true, ProductionReady: true}
+	ApplyPublicQualityGate(&readiness, PublicQualitySnapshot{
+		Profile: QualityProfileMidnightActive, ActiveBuild: true, Raw: 10, Eligible: 10,
+		UnresolvedTooltip: 10,
+	})
+	if !readiness.ProductionReady {
+		t.Fatalf("raw tooltip tokens are resolved by the API and must not block the public gate: %#v", readiness)
 	}
 }
 

@@ -47,6 +47,7 @@ type PublicQualityCoverage struct {
 	Russian             LocaleQuality `json:"russian"`
 	UnresolvedText      int64         `json:"unresolvedTextTemplates"`
 	UnresolvedTooltip   int64         `json:"unresolvedTooltipTemplates"`
+	TooltipFallback     int64         `json:"tooltipFallbackValues"`
 	MediaRecords        int64         `json:"mediaRecords"`
 	CachedMedia         int64         `json:"cachedMedia"`
 	FailedMedia         int64         `json:"failedMedia"`
@@ -68,6 +69,7 @@ type PublicQualitySnapshot struct {
 	Russian             LocaleQuality           `json:"russian"`
 	UnresolvedText      int64                   `json:"unresolvedTextTemplates"`
 	UnresolvedTooltip   int64                   `json:"unresolvedTooltipTemplates"`
+	TooltipFallback     int64                   `json:"tooltipFallbackValues"`
 	MediaRecords        int64                   `json:"mediaRecords"`
 	CachedMedia         int64                   `json:"cachedMedia"`
 	FailedMedia         int64                   `json:"failedMedia"`
@@ -152,20 +154,21 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		count(*) FILTER (WHERE decision='eligible' AND en.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'),
 		count(*) FILTER (WHERE decision='eligible' AND ru.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'),
 		count(*) FILTER (WHERE decision='eligible' AND EXISTS (SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=selected.version_id AND tooltip.locale='en_US' AND (tooltip.plain_text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' OR tooltip.blocks::text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'))),
-		count(*) FILTER (WHERE decision='eligible' AND EXISTS (SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=selected.version_id AND tooltip.locale='ru_RU' AND (tooltip.plain_text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' OR tooltip.blocks::text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])')))
+		count(*) FILTER (WHERE decision='eligible' AND EXISTS (SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=selected.version_id AND tooltip.locale='ru_RU' AND (tooltip.plain_text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])' OR tooltip.blocks::text ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'))),
+		count(*) FILTER (WHERE decision='eligible' AND EXISTS (SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=selected.version_id AND (tooltip.plain_text ~* 'a game-defined value|значение, определяемое игрой' OR tooltip.blocks::text ~* 'a game-defined value|значение, определяемое игрой')))
 	FROM selected
 	LEFT JOIN game_entity_localizations en ON en.version_id=selected.version_id AND en.locale='en_US'
 	LEFT JOIN game_entity_localizations ru ON ru.version_id=selected.version_id AND ru.locale='ru_RU'`
 
 	var englishTechnical, russianTechnical, englishMissing, russianMissing int64
 	var russianFallback, russianUnproven, englishVerified, russianVerified int64
-	var englishTextTemplates, russianTextTemplates, englishTooltipTemplates, russianTooltipTemplates int64
+	var englishTextTemplates, russianTextTemplates, englishTooltipTemplates, russianTooltipTemplates, tooltipFallback int64
 	if err := db.QueryRow(ctx, scopeSQL, product, result.BuildID).Scan(
 		&result.Raw, &result.Eligible, &result.Review, &result.Excluded,
 		&result.English.Available, &result.Russian.Available,
 		&englishTechnical, &russianTechnical, &englishMissing, &russianMissing,
 		&russianFallback, &russianUnproven, &englishVerified, &russianVerified,
-		&englishTextTemplates, &russianTextTemplates, &englishTooltipTemplates, &russianTooltipTemplates); err != nil {
+		&englishTextTemplates, &russianTextTemplates, &englishTooltipTemplates, &russianTooltipTemplates, &tooltipFallback); err != nil {
 		return PublicQualitySnapshot{}, fmt.Errorf("query quality profile snapshot: %w", err)
 	}
 	result.English.Technical, result.Russian.Technical = englishTechnical, russianTechnical
@@ -174,6 +177,7 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 	result.Russian.Fallback, result.Russian.Unproven = russianFallback, russianUnproven
 	result.UnresolvedText = englishTextTemplates + russianTextTemplates
 	result.UnresolvedTooltip = englishTooltipTemplates + russianTooltipTemplates
+	result.TooltipFallback = tooltipFallback
 
 	rows, err := db.Query(ctx, `
 		WITH cohort AS (
@@ -202,13 +206,13 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		}
 		var englishTechnical, russianTechnical, englishMissing, russianMissing int64
 		var russianFallback, russianUnproven, englishVerified, russianVerified int64
-		var englishTextTemplates, russianTextTemplates, englishTooltipTemplates, russianTooltipTemplates int64
+		var englishTextTemplates, russianTextTemplates, englishTooltipTemplates, russianTooltipTemplates, tooltipFallback int64
 		if err := db.QueryRow(ctx, scopeSQL+` WHERE selected.entity_type=$3`, product, result.BuildID, item.EntityType).Scan(
 			&item.Raw, &item.Eligible, &item.Review, &item.Excluded,
 			&item.English.Available, &item.Russian.Available,
 			&englishTechnical, &russianTechnical, &englishMissing, &russianMissing,
 			&russianFallback, &russianUnproven, &englishVerified, &russianVerified,
-			&englishTextTemplates, &russianTextTemplates, &englishTooltipTemplates, &russianTooltipTemplates); err != nil {
+			&englishTextTemplates, &russianTextTemplates, &englishTooltipTemplates, &russianTooltipTemplates, &tooltipFallback); err != nil {
 			return PublicQualitySnapshot{}, fmt.Errorf("query quality profile coverage for %s: %w", item.EntityType, err)
 		}
 		item.English.Technical, item.Russian.Technical = englishTechnical, russianTechnical
@@ -217,6 +221,7 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		item.Russian.Fallback, item.Russian.Unproven = russianFallback, russianUnproven
 		item.UnresolvedText = englishTextTemplates + russianTextTemplates
 		item.UnresolvedTooltip = englishTooltipTemplates + russianTooltipTemplates
+		item.TooltipFallback = tooltipFallback
 		result.Coverage = append(result.Coverage, item)
 	}
 	if err := rows.Err(); err != nil {
@@ -293,10 +298,14 @@ func ApplyPublicQualityGate(report *ReadinessReport, snapshot PublicQualitySnaps
 	}
 	report.add("public_russian_names", ScopeProduction, russianFailure != 0, russianFailure,
 		"Russian availability is measured separately; fallback and unproven text do not count as verified Russian")
+	// Tooltip rows retain source-backed raw templates. The API resolves these
+	// at request time, so a stored token alone is not a public defect. A
+	// literal sanitizer fallback is observable public output and remains a
+	// blocking failure. UnresolvedTooltip is intentionally audit-only here.
+	templateFailures := snapshot.UnresolvedText + snapshot.TooltipFallback
 	report.add("public_unresolved_templates", ScopeProduction,
-		snapshot.UnresolvedText+snapshot.UnresolvedTooltip != 0,
-		snapshot.UnresolvedText+snapshot.UnresolvedTooltip,
-		"public eligible records must not expose unresolved description or tooltip templates")
+		templateFailures != 0, templateFailures,
+		"public eligible records must not expose unresolved descriptions or runtime tooltip fallback values")
 	// Failed and remote observations are retained as source history. They do not
 	// make a public card broken when a newer verified cached primary already
 	// exists for that entity. MissingPrimaryMedia is the build-pinned cardinality
