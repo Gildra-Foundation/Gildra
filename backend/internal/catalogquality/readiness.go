@@ -199,31 +199,55 @@ func EvaluateReadinessWithRecoveryPolicy(
 		FROM game_entities entity
 		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
 		  AND entity.deleted_at IS NULL AND entity.latest_version_id IS NOT NULL
-	), ready_localizations AS (
-		SELECT DISTINCT proof.version_id,proof.locale
-		FROM current_versions current
-		JOIN catalog_entity_localization_artifacts proof ON proof.version_id=current.version_id
-		JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
-		WHERE artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
-		  AND (artifact.locale='' OR artifact.locale=proof.locale)
 	), english_missing AS (
-			SELECT current.version_id
-			FROM current_versions current
-			JOIN game_entity_localizations english ON english.version_id=current.version_id AND english.locale='en_US'
-			LEFT JOIN ready_localizations proof ON proof.version_id=current.version_id AND proof.locale='en_US'
-			WHERE proof.version_id IS NULL
-		), russian_missing AS (
-			SELECT current.version_id,russian.name,english.name AS english_name
-			FROM current_versions current
-			JOIN game_entity_localizations russian ON russian.version_id=current.version_id AND russian.locale='ru_RU'
-			LEFT JOIN game_entity_localizations english ON english.version_id=current.version_id AND english.locale='en_US'
-			LEFT JOIN ready_localizations proof ON proof.version_id=current.version_id AND proof.locale='ru_RU'
-			WHERE proof.version_id IS NULL
-		)
-		SELECT
-			(SELECT count(*) FROM english_missing),
-			(SELECT count(*) FROM russian_missing WHERE name=english_name),
-			(SELECT count(*) FROM russian_missing WHERE english_name IS NULL OR name<>english_name)`, product).
+		SELECT current.version_id
+		FROM current_versions current
+		JOIN LATERAL (
+			SELECT 1
+			FROM game_entity_localizations english
+			WHERE english.version_id=current.version_id AND english.locale='en_US'
+			LIMIT 1
+		) english ON true
+		LEFT JOIN LATERAL (
+			SELECT 1 AS proven
+			FROM catalog_entity_localization_artifacts proof
+			JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
+			WHERE proof.version_id=current.version_id AND proof.locale='en_US'
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			  AND (artifact.locale='' OR artifact.locale='en_US')
+			LIMIT 1
+		) proof ON true
+		WHERE proof.proven IS NULL
+	), russian_missing AS (
+		SELECT current.version_id,russian.name,english.name AS english_name
+		FROM current_versions current
+		JOIN LATERAL (
+			SELECT localized.name
+			FROM game_entity_localizations localized
+			WHERE localized.version_id=current.version_id AND localized.locale='ru_RU'
+			LIMIT 1
+		) russian ON true
+		LEFT JOIN LATERAL (
+			SELECT localized.name
+			FROM game_entity_localizations localized
+			WHERE localized.version_id=current.version_id AND localized.locale='en_US'
+			LIMIT 1
+		) english ON true
+		LEFT JOIN LATERAL (
+			SELECT 1 AS proven
+			FROM catalog_entity_localization_artifacts proof
+			JOIN catalog_source_artifacts artifact ON artifact.id=proof.source_artifact_id
+			WHERE proof.version_id=current.version_id AND proof.locale='ru_RU'
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			  AND (artifact.locale='' OR artifact.locale='ru_RU')
+			LIMIT 1
+		) proof ON true
+		WHERE proof.proven IS NULL
+	)
+	SELECT
+		(SELECT count(*) FROM english_missing),
+		(SELECT count(*) FROM russian_missing WHERE name=english_name),
+		(SELECT count(*) FROM russian_missing WHERE english_name IS NULL OR name<>english_name)`, product).
 		Scan(&unprovenEnglish, &russianFallbacks, &unexplainedRussian); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check localization provenance: %w", err)
 	}
