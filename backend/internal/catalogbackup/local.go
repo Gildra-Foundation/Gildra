@@ -140,6 +140,37 @@ func (s *LocalStore) Get(ctx context.Context, key string) (StoredObject, error) 
 	return StoredObject{Body: &contextReadCloser{ctx: ctx, file: file}, Size: info.Size()}, nil
 }
 
+// Delete removes one exact local backup object. Retention callers must derive
+// keys from verified manifest URIs and call this method for each artifact and
+// sidecar; the object-key validation and root/symlink checks prevent a
+// retention pass from deleting arbitrary files on the host.
+func (s *LocalStore) Delete(key string) error {
+	if err := validateObjectKey(key); err != nil {
+		return err
+	}
+	target, err := s.objectPath(key, false)
+	if err != nil {
+		return err
+	}
+	info, err := os.Lstat(target)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("inspect local backup object %s: %w", filepath.Base(target), err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return errors.New("local backup object must not be a symbolic link")
+	}
+	if !info.Mode().IsRegular() {
+		return errors.New("local backup object must be a regular file")
+	}
+	if err := os.Remove(target); err != nil {
+		return fmt.Errorf("remove local backup object %s: %w", filepath.Base(target), err)
+	}
+	return nil
+}
+
 type contextReader struct {
 	ctx    context.Context
 	source io.Reader
