@@ -36,6 +36,34 @@ func TestResolveDescriptionTextAppliesArithmeticOperators(t *testing.T) {
 	}
 }
 
+func TestResolveDescriptionTextHandlesMidnightTemplateVariants(t *testing.T) {
+	values := map[int64]spellDescriptionValues{
+		42: {
+			Effects: map[int]spellEffectValue{
+				1: {BasePoints: 10},
+				2: {BasePoints: 40},
+				3: {BasePoints: 25},
+			},
+			Enchantments: map[int]spellEnchantmentValue{1: {
+				Effects: map[int]float64{1: 25}, ItemLevelMin: 0, ItemLevelMax: 320,
+			}},
+		},
+		77: {Effects: map[int]spellEffectValue{2: {BasePoints: 7}}},
+	}
+	for _, test := range []struct{ raw, want string }{
+		{"Restores ${$M1*10} mana.", "Restores 100 mana."},
+		{"Restores ${$s2-$s2%$s3} health.", "Restores 30 health."},
+		{"Cannot be applied below $ecim.", "Cannot be applied below 320."},
+		{"Damage increased by $77S2%.", "Damage increased by 7%."},
+		{"Returns you to $z; unavailable above $ctrmax5997.", "Returns you to your home location; unavailable above the maximum level."},
+		{"Deals ${$s1*$<rolemult>} damage.", "Deals a role-adjusted value of damage."},
+	} {
+		if got := resolveDescriptionText(test.raw, 42, values, "en_US"); got != test.want {
+			t.Fatalf("%q resolved to %q, want %q", test.raw, got, test.want)
+		}
+	}
+}
+
 func TestResolveDescriptionTextAppliesChainedArithmeticWithDuration(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
 		42: {DurationMS: 20000, Effects: map[int]spellEffectValue{
