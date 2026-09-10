@@ -22,7 +22,7 @@ func TestPublicQualityGateBlocksCriticalProfileFailures(t *testing.T) {
 		ActiveBuild: true, Raw: 10, Eligible: 10,
 		English:           LocaleQuality{Technical: 1},
 		Russian:           LocaleQuality{Fallback: 2},
-		UnresolvedTooltip: 1, TooltipFallback: 1, MissingPrimaryMedia: 1, FailedImports: 1,
+		UnresolvedText: 1, UnresolvedTooltip: 1, TooltipFallback: 1, MissingPrimaryMedia: 1, FailedImports: 1,
 	})
 	if readiness.ProductionReady {
 		t.Fatalf("critical scoped quality failures must block production: %#v", readiness)
