@@ -180,6 +180,7 @@ $$;
 
 -- Seed active retail and every already imported retail build.  The function
 -- is idempotent and does not touch Midnight rows (ExpansionID 11).
+-- +goose StatementBegin
 DO $$
 DECLARE build_record RECORD;
 BEGIN
@@ -196,6 +197,7 @@ BEGIN
     END LOOP;
 END;
 $$;
+-- +goose StatementEnd
 
 -- +goose Down
 DROP FUNCTION IF EXISTS catalog_refresh_historical_item_usability(BIGINT);
