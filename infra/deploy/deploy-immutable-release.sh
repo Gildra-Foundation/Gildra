@@ -379,14 +379,14 @@ verify_catalog_readiness() {
     # historical catalog remains report-only until its older expansions are
     # backfilled; requiring the broad readiness profile here would roll back a
     # healthy Midnight release for unrelated legacy gaps.
+    # Probe the same public JSON handlers through the API container's local
+    # listener; hairpinning the public hostname from Docker can stall the
+    # entire 15-minute audit even when the public edge is healthy.
     docker exec "$api_container" catalog-audit \
       -product wow \
       -recovery-policy verified_same_host \
       -quality-profile midnight-active \
       -require-public-quality \
-      # Probe the same public JSON handlers through the API container's local
-      # listener; hairpinning the public hostname from Docker can stall the
-      # entire 15-minute audit even when the public edge is healthy.
       -api-base-url http://127.0.0.1:8080 \
       -timeout 15m
   fi
