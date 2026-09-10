@@ -166,11 +166,11 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if product == "" {
 		product = "wow"
 	}
-	// Dataset totals are maintained by an older projection which deliberately
-	// retains raw client rows. Midnight item datasets therefore use the exact
-	// public-summary projection below until that dataset projection gains the
-	// same eligibility dimension.
-	if datasetTotalCached && product == "wow" && strings.TrimSpace(params.Type) == "item" {
+	// Dataset totals are maintained by a projection that historically included
+	// raw client rows. Any WoW product may now have build-pinned quality rows, so
+	// use the exact public-summary query for WoW products until every dataset
+	// projection carries the same eligibility dimension.
+	if datasetTotalCached && strings.HasPrefix(product, "wow") {
 		datasetTotalCached = false
 	}
 	locale := normalizeLocale(params.Locale)
@@ -379,7 +379,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		}
 		return total, nil
 	}
-	if query == "" && category != "" && len(params.Facets) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil && !(product == "wow" && entityType == "item") {
+	if query == "" && category != "" && len(params.Facets) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil && !strings.HasPrefix(product, "wow") {
 		var total int64
 		err := s.postgres.QueryRow(ctx, `
 			SELECT COALESCE(stats.entity_count,0) FROM catalog_categories category

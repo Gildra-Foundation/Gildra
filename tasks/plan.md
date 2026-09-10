@@ -27,9 +27,14 @@
 - Квестовый gate dry-run дал 14 973 verified bilingual rows; 51 687 остаются
   review/excluded до появления источника локализации. Recipe gate дал 8 408
   rows с verified output и 3 328 review rows без output.
-- В production backup/restore проверены на schema 154. Миграции historical
-  cohorts/quests/recipes (155–157) подготовлены, dry-run прошли и ожидают
-  штатного production deploy.
+- Production release `40cba4a` уже поднял API на schema 157; обязательные
+  backup и isolated restore для этого релиза выполняются штатным deploy-gate.
+  Миграция Classic cohorts `00158` подготовлена, dry-run и production-upgrade
+  integration test прошли в изолированном PostgreSQL.
+- Classic audit показал честный разрыв: `wow_classic` 17 137 quests,
+  `wow_classic_era` 4 807 и `wow_classic_hardcore` 4 807 имеют registry rows,
+  но 0 verified RU proofs. Эти строки должны оставаться raw/review до импорта
+  настоящего `ru_RU` источника; английский fallback не засчитывается.
 
 ## Архитектурные решения
 
@@ -406,12 +411,24 @@ candidate. Только после этого массово расширять 
 
 ## Текущий статус реализации
 
-- **Task 1 выполнен локально:** `catalog-audit` получил scoped профиль
-  `midnight-active` и отдаёт denominator, EN/RU provenance, template/media/import
-  quality snapshot.
-- **Task 2 выполнен локально:** public list, search, count, summaries и detail
-  теперь пропускают только Midnight `eligible` записи pinned к build. Изменения
-  ещё не прошли CI/production-deploy.
-- **Task 3 и Task 4 остаются открытыми:** текущая реализация ограничивает
-  Midnight, но ещё не даёт единую public quality-state модель для каждого типа и
-  не добавляет UI-индикацию статуса.
+- **Tasks 1–2 выполнены и выкачиваются:** audit/acceptance для Midnight
+  воспроизводимы; list, search, count, summaries и detail используют
+  build-pinned quality gate. Текущий production API — `40cba4a`, schema 157;
+  финальный deploy ждёт recovery backup/restore.
+- **Tasks 3–4 частично закрыты:** решения `eligible/review/excluded`, evidence
+  и технические marker-фильтры применяются к Midnight и историческим retail
+  cohorts. UI/reporting всё ещё показывает quality state преимущественно через
+  audit, поэтому отдельный пользовательский статус «полно» не объявляется.
+- **Tasks 5–8 выполнены для Midnight:** canonical cohort, EN/RU proof,
+  normalized item facts и build-aware tooltip resolver покрыты acceptance-gate.
+- **Task 9 частично:** media worker имеет retry/fallback и теперь User-Agent;
+  71 текущий WoW failure остаётся явно зафиксированным как HTTP 403 и требует
+  bounded production retry после завершения deploy.
+- **Task 10–11:** review queue и полный acceptance реализованы; последний
+  полный прогон до текущего schema wave проверил 1 667 запросов без raw tokens.
+- **Tasks 12–17 в работе:** historical item/quest/recipe gates добавлены для
+  retail; Classic quality migration `00158` и общий cross-product gate готовы
+  локально, но ещё не выкачены. Spell/creature/small-type coverage остаётся
+  отдельными slices и не считается завершённой.
+- **Tasks 18–20:** backup/restore release-gate и retry/failure queue работают;
+  dashboard/SLO и окончательная all-products acceptance ещё требуют прохода.

@@ -1404,11 +1404,14 @@ const questDetailsProjectionSQL = `
 
 const questEntitiesProjectionSQL = `
 	CREATE TEMP TABLE projected_named_quests ON COMMIT DROP AS
-	SELECT task.row_id AS external_id,task.source_url,task.source_artifact_id,task.payload AS db2_en,
-		COALESCE(task_ru.payload,task.payload) AS db2_ru,task.payload->>'QuestTitle_lang' AS name_en,
-		COALESCE(NULLIF(task_ru.payload->>'QuestTitle_lang',''),task.payload->>'QuestTitle_lang') AS name_ru,
+	SELECT task.row_id AS external_id,task.source_url,task.source_artifact_id,
+		task_ru.source_artifact_id AS source_artifact_ru_id,task.payload AS db2_en,
+		CASE WHEN NULLIF(BTRIM(task_ru.payload->>'QuestTitle_lang'),'') IS NOT NULL
+			THEN task_ru.payload ELSE '{}'::jsonb END AS db2_ru,
+		task.payload->>'QuestTitle_lang' AS name_en,
+		NULLIF(BTRIM(task_ru.payload->>'QuestTitle_lang'),'') AS name_ru,
 		COALESCE(task.payload->>'BulletText_lang','') AS description_en,
-		COALESCE(NULLIF(task_ru.payload->>'BulletText_lang',''),task.payload->>'BulletText_lang','') AS description_ru
+		COALESCE(NULLIF(task_ru.payload->>'BulletText_lang',''),'') AS description_ru
 	FROM catalog_db2_rows task
 	LEFT JOIN catalog_db2_rows task_ru ON task_ru.build_id=task.build_id AND task_ru.table_name='QuestV2CliTask'
 		AND task_ru.locale='ru_RU' AND task_ru.row_id=task.row_id
@@ -1448,17 +1451,22 @@ const questEntitiesProjectionSQL = `
 	SELECT version_id,'ru_RU',COALESCE(NULLIF(TRIM(BOTH '-' FROM LOWER(regexp_replace(name_ru,'[^[:alnum:]]+','-','g'))),''),'quest-'||external_id),
 		name_ru,description_ru,jsonb_build_object('id',external_id,'name',name_ru,'description',description_ru,'db2',db2_ru)
 	FROM projected_named_quest_versions
+	WHERE NULLIF(BTRIM(name_ru),'') IS NOT NULL
 	ON CONFLICT(version_id,locale) DO UPDATE SET slug=EXCLUDED.slug,name=EXCLUDED.name,
 		description=EXCLUDED.description,attributes=EXCLUDED.attributes;
 
-	-- Both quest localizations come from the same QuestV2 artifact; record the
-	-- proof so the readiness audit can verify them (12.1.0.69587 was blocked by
-	-- 21k quest localizations without a proof link).
+	-- Record locale-specific proof.  Never claim an EN artifact proves RU: a
+	-- missing RU QuestV2 row remains a raw/review record until a real RU source
+	-- is imported.
 	INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
-	SELECT DISTINCT projected.version_id,localized.locale,projected.source_artifact_id
+	SELECT DISTINCT projected.version_id,'en_US',projected.source_artifact_id
 	FROM projected_named_quest_versions projected
-	CROSS JOIN (VALUES ('en_US'::text),('ru_RU'::text)) localized(locale)
 	WHERE projected.source_artifact_id IS NOT NULL
+	UNION ALL
+	SELECT DISTINCT projected.version_id,'ru_RU',projected.source_artifact_ru_id
+	FROM projected_named_quest_versions projected
+	WHERE projected.source_artifact_ru_id IS NOT NULL
+	  AND NULLIF(BTRIM(projected.name_ru),'') IS NOT NULL
 	ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING;
 
 	UPDATE game_entities entity SET latest_version_id=projected.version_id,updated_at=now()
