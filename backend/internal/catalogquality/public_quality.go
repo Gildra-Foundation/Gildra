@@ -13,19 +13,53 @@ import (
 // Midnight cohort.  New strict public checks must be added to an explicit
 // profile rather than silently applying to every historical WoW row.
 const QualityProfileMidnightActive = "midnight-active"
+const QualityProfileClassicActive = "classic-active"
 
 type PublicQualityProfile struct {
 	Key                  string
 	RequiresRussianProof bool
+	RequireAllEligible   bool
 }
 
 func PublicQualityProfileFor(key string) (PublicQualityProfile, error) {
 	switch strings.TrimSpace(strings.ToLower(key)) {
 	case "", QualityProfileMidnightActive:
 		return PublicQualityProfile{Key: QualityProfileMidnightActive, RequiresRussianProof: true}, nil
+	case QualityProfileClassicActive:
+		return PublicQualityProfile{Key: QualityProfileClassicActive, RequiresRussianProof: true, RequireAllEligible: true}, nil
 	default:
 		return PublicQualityProfile{}, fmt.Errorf("unsupported catalog quality profile %q", key)
 	}
+}
+
+// publicQualityCohortSQL returns the build-pinned denominator for a named
+// profile. The SQL is selected only from constants in this package; product
+// and build values remain query parameters in the caller.
+func publicQualityCohortSQL(profile string) string {
+	if profile == QualityProfileClassicActive {
+		return `
+			SELECT entity.entity_type,entity.external_id,
+				COALESCE(usability.decision,'review') AS decision
+			FROM game_entities entity
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			LEFT JOIN catalog_entity_usability usability
+				ON usability.product_id=entity.product_id AND usability.build_id=version.build_id
+				AND usability.entity_type=entity.entity_type AND usability.external_id=entity.external_id
+			WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
+			  AND version.build_id=$2 AND entity.deleted_at IS NULL
+			  AND entity.entity_type IN ('quest','recipe')`
+	}
+	return `
+			SELECT cohort.entity_type,cohort.external_id,
+				COALESCE(usability.decision,'review') AS decision
+			FROM catalog_entity_expansions cohort
+			JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
+			LEFT JOIN catalog_entity_usability usability
+				ON usability.product_id=cohort.product_id AND usability.build_id=cohort.build_id
+				AND usability.entity_type=cohort.entity_type AND usability.external_id=cohort.external_id
+			WHERE cohort.product_id=(SELECT id FROM game_products WHERE slug=$1)
+			  AND cohort.build_id=$2 AND cohort.classification='confirmed'
+			  AND expansion.expansion_key='midnight'`
 }
 
 type LocaleQuality struct {
@@ -107,28 +141,17 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		return PublicQualitySnapshot{}, fmt.Errorf("load quality profile build: %w", err)
 	}
 
-	// The cohort and usability tables are populated by the Midnight-specific
-	// migrations. A confirmed non-item cohort row is eligible by default; item
-	// decisions are explicit and review/excluded rows remain visible in audit.
-	const scopeSQL = `
-	WITH midnight AS (
-		SELECT cohort.entity_type,cohort.external_id,
-			COALESCE(usability.decision,'review') AS decision
-		FROM catalog_entity_expansions cohort
-		JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
-		LEFT JOIN catalog_entity_usability usability
-			ON usability.product_id=cohort.product_id AND usability.build_id=cohort.build_id
-			AND usability.entity_type=cohort.entity_type AND usability.external_id=cohort.external_id
-		WHERE cohort.product_id=(SELECT id FROM game_products WHERE slug=$1)
-		  AND cohort.build_id=$2 AND cohort.classification='confirmed'
-		  AND expansion.expansion_key='midnight'
-	), selected AS (
-		SELECT midnight.*,
+	// The cohort and usability tables are populated by the named profile. A
+	// confirmed non-item Midnight row is eligible by default; Classic rows are
+	// explicitly assessed by migration 00158 and remain review until proven.
+	scopeSQL := fmt.Sprintf(`
+	WITH cohort AS (%s), selected AS (
+		SELECT cohort.*,
 			entity.id AS entity_id,
 			version.id AS version_id
-		FROM midnight
+		FROM cohort
 		LEFT JOIN game_entities entity ON entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
-			AND entity.entity_type=midnight.entity_type AND entity.external_id=midnight.external_id
+			AND entity.entity_type=cohort.entity_type AND entity.external_id=cohort.external_id
 			AND entity.deleted_at IS NULL
 		LEFT JOIN game_entity_versions version ON version.id=COALESCE(entity.published_version_id,entity.latest_version_id)
 			AND version.build_id=$2
@@ -158,7 +181,7 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		count(*) FILTER (WHERE decision='eligible' AND EXISTS (SELECT 1 FROM catalog_entity_tooltips tooltip WHERE tooltip.version_id=selected.version_id AND (tooltip.plain_text ~* 'a game-defined value|значение, определяемое игрой' OR tooltip.blocks::text ~* 'a game-defined value|значение, определяемое игрой')))
 	FROM selected
 	LEFT JOIN game_entity_localizations en ON en.version_id=selected.version_id AND en.locale='en_US'
-	LEFT JOIN game_entity_localizations ru ON ru.version_id=selected.version_id AND ru.locale='ru_RU'`
+	LEFT JOIN game_entity_localizations ru ON ru.version_id=selected.version_id AND ru.locale='ru_RU'`, publicQualityCohortSQL(profile.Key))
 
 	var englishTechnical, russianTechnical, englishMissing, russianMissing int64
 	var russianFallback, russianUnproven, englishVerified, russianVerified int64
@@ -179,22 +202,13 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 	result.UnresolvedTooltip = englishTooltipTemplates + russianTooltipTemplates
 	result.TooltipFallback = tooltipFallback
 
-	rows, err := db.Query(ctx, `
-		WITH cohort AS (
-			SELECT cohort.entity_type,cohort.external_id,
-			COALESCE(usability.decision,'review') AS decision
-			FROM catalog_entity_expansions cohort
-			JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id
-			LEFT JOIN catalog_entity_usability usability ON usability.product_id=cohort.product_id AND usability.build_id=cohort.build_id
-				AND usability.entity_type=cohort.entity_type AND usability.external_id=cohort.external_id
-			WHERE cohort.product_id=(SELECT id FROM game_products WHERE slug=$1) AND cohort.build_id=$2
-			  AND cohort.classification='confirmed' AND expansion.expansion_key='midnight'
-		), counts AS (
+	rows, err := db.Query(ctx, fmt.Sprintf(`
+		WITH cohort AS (%s), counts AS (
 			SELECT entity_type,count(*) AS raw,count(*) FILTER (WHERE decision='eligible') AS eligible,
 				count(*) FILTER (WHERE decision='review') AS review,count(*) FILTER (WHERE decision='excluded') AS excluded
 			FROM cohort GROUP BY entity_type
 		)
-		SELECT entity_type,raw,eligible,review,excluded FROM counts ORDER BY entity_type`, product, result.BuildID)
+		SELECT entity_type,raw,eligible,review,excluded FROM counts ORDER BY entity_type`, publicQualityCohortSQL(profile.Key)), product, result.BuildID)
 	if err != nil {
 		return PublicQualitySnapshot{}, fmt.Errorf("query quality profile coverage: %w", err)
 	}
@@ -228,7 +242,7 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		return PublicQualitySnapshot{}, fmt.Errorf("read quality profile coverage: %w", err)
 	}
 
-	if err := db.QueryRow(ctx, `
+	mediaQuery := `
 		WITH cohort AS (
 			SELECT cohort.entity_type,cohort.external_id,
 				CASE WHEN cohort.entity_type='item' THEN COALESCE(usability.decision,'review') ELSE 'eligible' END AS decision
@@ -250,7 +264,13 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 		)
 		SELECT COALESCE(sum(media.records),0),COALESCE(sum(media.cached),0),COALESCE(sum(media.failed),0),COALESCE(sum(media.remote),0),
 			count(*) FILTER (WHERE media.entity_type IS NULL OR media.cached=0)
-		FROM eligible cohort LEFT JOIN media ON media.entity_type=cohort.entity_type AND media.external_id=cohort.external_id`, product, result.BuildID).
+		FROM eligible cohort LEFT JOIN media ON media.entity_type=cohort.entity_type AND media.external_id=cohort.external_id`
+	if profile.Key == QualityProfileClassicActive {
+		// Classic's current strict profile covers quests and recipes. Media is
+		// assessed by the type-specific public checks, not as an item-card gate.
+		mediaQuery = `SELECT 0::bigint,0::bigint,0::bigint,0::bigint,0::bigint WHERE $1::text=$1::text AND $2::bigint=$2::bigint`
+	}
+	if err := db.QueryRow(ctx, mediaQuery, product, result.BuildID).
 		Scan(&result.MediaRecords, &result.CachedMedia, &result.FailedMedia, &result.RemoteMedia, &result.MissingPrimaryMedia); err != nil {
 		return PublicQualitySnapshot{}, fmt.Errorf("query quality profile media: %w", err)
 	}
@@ -298,6 +318,11 @@ func ApplyPublicQualityGate(report *ReadinessReport, snapshot PublicQualitySnaps
 	}
 	report.add("public_russian_names", ScopeProduction, russianFailure != 0, russianFailure,
 		"Russian availability is measured separately; fallback and unproven text do not count as verified Russian")
+	if profile.RequireAllEligible {
+		decisionFailures := snapshot.Review + snapshot.Excluded
+		report.add("public_quality_decisions", ScopeProduction, decisionFailures != 0, decisionFailures,
+			"the strict profile cannot publish review or excluded records")
+	}
 	// Tooltip rows retain source-backed raw templates and some Blizzard
 	// formulas intentionally render a dynamic game-defined value. The API
 	// exposes explicit effect metadata for those formulas; both stored tokens

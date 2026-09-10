@@ -29,7 +29,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 158
+const latestCatalogSchemaVersion int64 = 159
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -182,6 +182,14 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	}
 	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion)
 	assertTablePresent(t, ctx, database, "catalog_media_cache_runs")
+	var spellDependencyFunction bool
+	if err := database.QueryRowContext(ctx, `
+		SELECT to_regprocedure('catalog_refresh_spell_dependency_usability(smallint,bigint)') IS NOT NULL`).Scan(&spellDependencyFunction); err != nil {
+		t.Fatal(err)
+	}
+	if !spellDependencyFunction {
+		t.Fatalf("spell dependency usability function missing: %v", spellDependencyFunction)
+	}
 	var previewColumn, rewardPackageDataset int
 	if err := database.QueryRowContext(ctx, `
 		SELECT

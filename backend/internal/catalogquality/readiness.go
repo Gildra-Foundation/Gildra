@@ -170,23 +170,32 @@ func EvaluateReadinessWithRecoveryPolicy(
 
 	var unprovenVersions int64
 	if err := db.QueryRow(ctx, `
-		WITH ready_artifacts AS (
-			SELECT id FROM catalog_source_artifacts
-			WHERE status='ready' AND content_hash IS NOT NULL AND byte_size IS NOT NULL
-		), proven_versions AS (
-			SELECT version.id
-			FROM game_entity_versions version
-			JOIN ready_artifacts artifact ON artifact.id=version.source_artifact_id
-			UNION
-			SELECT observation.version_id
-			FROM catalog_entity_version_artifacts observation
-			JOIN ready_artifacts artifact ON artifact.id=observation.source_artifact_id
-		)
 		SELECT count(*)
 		FROM game_entities entity
-		LEFT JOIN proven_versions proof ON proof.id=entity.latest_version_id
+		LEFT JOIN LATERAL (
+			SELECT version.id,version.source_artifact_id
+			FROM game_entity_versions version
+			WHERE version.id=entity.latest_version_id
+			LIMIT 1
+		) version ON true
+		LEFT JOIN LATERAL (
+			SELECT 1 AS proven
+			FROM catalog_source_artifacts artifact
+			WHERE artifact.id=version.source_artifact_id
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			LIMIT 1
+		) direct ON true
+		LEFT JOIN LATERAL (
+			SELECT 1 AS proven
+			FROM catalog_entity_version_artifacts observation
+			JOIN catalog_source_artifacts artifact ON artifact.id=observation.source_artifact_id
+			WHERE observation.version_id=version.id
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			LIMIT 1
+		) observation ON true
 		WHERE entity.product_id=(SELECT id FROM game_products WHERE slug=$1)
-		  AND entity.deleted_at IS NULL AND proof.id IS NULL`, product).Scan(&unprovenVersions); err != nil {
+		  AND entity.deleted_at IS NULL
+		  AND (version.id IS NULL OR (direct.proven IS NULL AND observation.proven IS NULL))`, product).Scan(&unprovenVersions); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check entity provenance: %w", err)
 	}
 	report.add("entity_provenance", ScopeData, unprovenVersions != 0, unprovenVersions,
