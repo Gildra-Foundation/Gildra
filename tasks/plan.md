@@ -27,10 +27,12 @@
 - Квестовый gate dry-run дал 14 973 verified bilingual rows; 51 687 остаются
   review/excluded до появления источника локализации. Recipe gate дал 8 408
   rows с verified output и 3 328 review rows без output.
-- Production release `40cba4a` уже поднял API на schema 157; обязательные
-  backup и isolated restore для этого релиза выполняются штатным deploy-gate.
-  Миграция Classic cohorts `00158` подготовлена, dry-run и production-upgrade
-  integration test прошли в изолированном PostgreSQL.
+- Production release wave `bb892d2` поднял API на schema 158; его обязательные
+  backup и isolated restore выполняются штатным deploy-gate. Следующий wave
+  `e235cdc` (schema 160) уже запушен и ждёт CI/deploy очереди.
+  Миграции Classic cohorts `00158`, spell dependency `00159` и исправление
+  stale library counts `00160` проходят production-upgrade integration test в
+  изолированном PostgreSQL.
 - Classic audit показал честный разрыв: `wow_classic` 17 137 quests,
   `wow_classic_era` 4 807 и `wow_classic_hardcore` 4 807 имеют registry rows,
   но 0 verified RU proofs. Эти строки должны оставаться raw/review до импорта
@@ -413,8 +415,8 @@ candidate. Только после этого массово расширять 
 
 - **Tasks 1–2 выполнены и выкачиваются:** audit/acceptance для Midnight
   воспроизводимы; list, search, count, summaries и detail используют
-  build-pinned quality gate. Текущий production API — `40cba4a`, schema 157;
-  финальный deploy ждёт recovery backup/restore.
+  build-pinned quality gate. Production API wave `bb892d2` healthy на schema
+  158; immutable deploy ещё завершает recovery backup/restore.
 - **Tasks 3–4 частично закрыты:** решения `eligible/review/excluded`, evidence
   и технические marker-фильтры применяются к Midnight и историческим retail
   cohorts. UI/reporting всё ещё показывает quality state преимущественно через
@@ -427,8 +429,9 @@ candidate. Только после этого массово расширять 
 - **Task 10–11:** review queue и полный acceptance реализованы; последний
   полный прогон до текущего schema wave проверил 1 667 запросов без raw tokens.
 - **Tasks 12–17 в работе:** historical item/quest/recipe gates добавлены для
-  retail; Classic quality migration `00158` и общий cross-product gate готовы
-  локально, но ещё не выкачены. Spell/creature/small-type coverage остаётся
-  отдельными slices и не считается завершённой.
+  retail; Classic strict profile и build-pinned spell dependency gate добавлены
+  в `00158`/`00159`, а `00160` обнуляет stale Classic quest/recipe library
+  counters, когда все строки held. Wave ещё не выкачен в production. Creature,
+  encounter и малые типы остаются отдельными slices и не считаются завершёнными.
 - **Tasks 18–20:** backup/restore release-gate и retry/failure queue работают;
   dashboard/SLO и окончательная all-products acceptance ещё требуют прохода.
