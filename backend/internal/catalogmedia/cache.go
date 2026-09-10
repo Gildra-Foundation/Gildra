@@ -195,6 +195,11 @@ func (c *Cache) fetch(ctx context.Context, sourceURL string) (string, string, in
 	if err != nil {
 		return "", "", 0, nil, err
 	}
+	// Identify the cache worker to render endpoints. Some Blizzard-backed
+	// hosts reject anonymous programmatic requests with HTTP 403; the same
+	// descriptive agent used by the CASC fallback keeps the remote-media
+	// retry path auditable and avoids treating an absent header as bad data.
+	request.Header.Set("User-Agent", wagoCASCUserAgent)
 	response, err := c.client.Do(request)
 	if err != nil {
 		return "", "", 0, nil, fmt.Errorf("download media: %w", err)
