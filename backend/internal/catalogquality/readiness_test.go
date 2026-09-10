@@ -1,6 +1,9 @@
 package catalogquality
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestPublicQualityProfileIsExplicitlyScoped(t *testing.T) {
 	profile, err := PublicQualityProfileFor("")
@@ -13,6 +16,25 @@ func TestPublicQualityProfileIsExplicitlyScoped(t *testing.T) {
 	if _, err := PublicQualityProfileFor("whole-wow"); err == nil {
 		t.Fatal("unscoped historical profile must not be accepted")
 	}
+	classic, err := PublicQualityProfileFor(QualityProfileClassicActive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !classic.RequiresRussianProof || !classic.RequireAllEligible {
+		t.Fatalf("Classic profile must require proven RU and no held rows: %#v", classic)
+	}
+	if got := publicQualityCohortSQL(QualityProfileClassicActive); got == "" || !containsAll(got, "game_entity_versions", "entity_type IN ('quest','recipe')") {
+		t.Fatalf("Classic profile must use the build-pinned quest/recipe cohort: %q", got)
+	}
+}
+
+func containsAll(value string, needles ...string) bool {
+	for _, needle := range needles {
+		if !strings.Contains(value, needle) {
+			return false
+		}
+	}
+	return true
 }
 
 func TestPublicQualityGateBlocksCriticalProfileFailures(t *testing.T) {
@@ -20,8 +42,8 @@ func TestPublicQualityGateBlocksCriticalProfileFailures(t *testing.T) {
 	ApplyPublicQualityGate(&readiness, PublicQualitySnapshot{
 		Profile:     QualityProfileMidnightActive,
 		ActiveBuild: true, Raw: 10, Eligible: 10,
-		English:           LocaleQuality{Technical: 1},
-		Russian:           LocaleQuality{Fallback: 2},
+		English:        LocaleQuality{Technical: 1},
+		Russian:        LocaleQuality{Fallback: 2},
 		UnresolvedText: 1, UnresolvedTooltip: 1, TooltipFallback: 1, MissingPrimaryMedia: 1, FailedImports: 1,
 	})
 	if readiness.ProductionReady {
@@ -59,6 +81,22 @@ func TestPublicQualityGateDoesNotTreatReviewRowsAsPublicFailures(t *testing.T) {
 	if !readiness.ProductionReady {
 		t.Fatalf("held rows should not block a scoped public cohort by themselves: %#v", readiness)
 	}
+}
+
+func TestClassicQualityGateBlocksHeldRows(t *testing.T) {
+	readiness := ReadinessReport{DataReady: true, ProductionReady: true}
+	ApplyPublicQualityGate(&readiness, PublicQualitySnapshot{
+		Profile: QualityProfileClassicActive, ActiveBuild: true, Raw: 10, Eligible: 0, Review: 10,
+	})
+	if readiness.ProductionReady {
+		t.Fatal("Classic strict profile must block held rows")
+	}
+	for _, check := range readiness.Checks {
+		if check.Key == "public_quality_decisions" && check.Status == "fail" && check.Blocking {
+			return
+		}
+	}
+	t.Fatalf("Classic decision gate was not reported: %#v", readiness.Checks)
 }
 
 func TestPublicQualityGateRequiresActiveBuild(t *testing.T) {
