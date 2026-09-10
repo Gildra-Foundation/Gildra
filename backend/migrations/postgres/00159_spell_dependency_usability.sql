@@ -125,7 +125,6 @@ BEGIN
                      THEN 'excluded'
                    WHEN en_name IS NOT NULL AND ru_name IS NOT NULL
                     AND en_proven AND ru_proven AND version_proven
-                    AND NOT unresolved_description
                      THEN 'eligible'
                    ELSE 'review'
                END AS decision,
