@@ -256,14 +256,15 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 			SELECT * FROM cohort WHERE decision='eligible' AND entity_type='item'
 		), media AS (
 			SELECT media.entity_type,media.external_id,
-				count(*) AS records,
+				count(*) FILTER (WHERE media.cache_status<>'unavailable') AS records,
 				count(*) FILTER (WHERE media.cache_status='cached' AND NULLIF(media.cached_url,'') IS NOT NULL AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL) AS cached,
 				count(*) FILTER (WHERE media.cache_status='failed') AS failed,
-				count(*) FILTER (WHERE media.cache_status='remote') AS remote
+				count(*) FILTER (WHERE media.cache_status='remote') AS remote,
+				count(*) FILTER (WHERE media.cache_status='unavailable') AS unavailable
 			FROM catalog_entity_media media WHERE media.build_id=$2 GROUP BY media.entity_type,media.external_id
 		)
 		SELECT COALESCE(sum(media.records),0),COALESCE(sum(media.cached),0),COALESCE(sum(media.failed),0),COALESCE(sum(media.remote),0),
-			count(*) FILTER (WHERE media.entity_type IS NULL OR media.cached=0)
+			count(*) FILTER (WHERE media.entity_type IS NULL OR (media.cached=0 AND media.unavailable=0))
 		FROM eligible cohort LEFT JOIN media ON media.entity_type=cohort.entity_type AND media.external_id=cohort.external_id`
 	if profile.Key == QualityProfileClassicActive {
 		// Classic's current strict profile covers quests and recipes. Media is
