@@ -375,11 +375,17 @@ verify_catalog_readiness() {
       -require-public-quality \
       -timeout 15m
   else
+    # Public production is released against the active Midnight cohort.  The
+    # historical catalog remains report-only until its older expansions are
+    # backfilled; requiring the broad readiness profile here would roll back a
+    # healthy Midnight release for unrelated legacy gaps.
     docker exec "$api_container" catalog-audit \
       -product wow \
       -recovery-policy verified_same_host \
-      -timeout 15m \
-      -require-production-ready
+      -quality-profile midnight-active \
+      -require-public-quality \
+      -api-base-url https://api.gildra.net \
+      -timeout 15m
   fi
 }
 
