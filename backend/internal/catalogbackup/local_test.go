@@ -146,3 +146,29 @@ func TestLocalStoreDeleteRejectsSymlink(t *testing.T) {
 		t.Fatalf("outside target was touched: %v", err)
 	}
 }
+
+func TestLocalStoreKeyFromURIIsRootBound(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Chmod(root, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	store, err := NewLocalStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := "catalog/wow/archive.dump.age"
+	uri := store.URI(key)
+	got, err := store.KeyFromURI(uri)
+	if err != nil || got != key {
+		t.Fatalf("KeyFromURI(%q) = %q, %v; want %q", uri, got, err, key)
+	}
+	for _, unsafeURI := range []string{
+		"https://backup.example/archive.dump.age",
+		"file:///etc/passwd",
+		"file://other-host" + root + "/archive.dump.age",
+	} {
+		if _, err := store.KeyFromURI(unsafeURI); err == nil {
+			t.Fatalf("unsafe URI %q was accepted", unsafeURI)
+		}
+	}
+}

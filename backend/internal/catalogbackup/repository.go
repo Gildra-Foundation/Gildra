@@ -14,6 +14,11 @@ type PostgresManifestRepository struct {
 	DB *pgxpool.Pool
 }
 
+type ExpiredManifest struct {
+	ID         uuid.UUID
+	StorageURI string
+}
+
 var _ MediaManifestRepository = PostgresManifestRepository{}
 
 func (r PostgresManifestRepository) Create(ctx context.Context, start ManifestStart) error {
@@ -109,6 +114,64 @@ func (r PostgresManifestRepository) MarkFailed(ctx context.Context, id uuid.UUID
 		return fmt.Errorf("mark backup failed: %w", err)
 	}
 	return expectManifestRow("mark backup failed", tag.RowsAffected())
+}
+
+// ExpireVerified marks only verified PostgreSQL manifests older than the keep
+// window. The update and returned deletion set are one transaction so a
+// retention run never deletes an object whose manifest was not expired.
+func (r PostgresManifestRepository) ExpireVerified(ctx context.Context, product string, keep int) ([]ExpiredManifest, error) {
+	if r.DB == nil {
+		return nil, fmt.Errorf("manifest database is required")
+	}
+	if keep < 1 {
+		return nil, fmt.Errorf("verified retention must be at least 1")
+	}
+	tx, err := r.DB.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin backup retention: %w", err)
+	}
+	defer tx.Rollback(ctx) // harmless after a successful commit
+	rows, err := tx.Query(ctx, `
+		WITH ranked AS (
+			SELECT manifest.id,
+				ROW_NUMBER() OVER (
+					ORDER BY COALESCE(manifest.restore_completed_at, manifest.completed_at, manifest.started_at) DESC,
+					manifest.id DESC
+				) AS retention_rank
+			FROM catalog_backup_manifests manifest
+			JOIN game_products product ON product.id = manifest.product_id
+			WHERE manifest.component='postgres'
+			  AND manifest.status='verified'
+			  AND manifest.storage_uri LIKE 'file://%'
+			  AND product.slug=$1
+		), expired AS (
+			UPDATE catalog_backup_manifests manifest
+			SET status='expired', updated_at=now()
+			FROM ranked
+			WHERE manifest.id=ranked.id AND ranked.retention_rank > $2
+			RETURNING manifest.id, manifest.storage_uri
+		)
+		SELECT id, storage_uri FROM expired`, product, keep)
+	if err != nil {
+		return nil, fmt.Errorf("expire old verified backups: %w", err)
+	}
+	var expired []ExpiredManifest
+	for rows.Next() {
+		var item ExpiredManifest
+		if err := rows.Scan(&item.ID, &item.StorageURI); err != nil {
+			return nil, fmt.Errorf("read expired backup: %w", err)
+		}
+		expired = append(expired, item)
+	}
+	rowsErr := rows.Err()
+	rows.Close()
+	if err := rowsErr; err != nil {
+		return nil, fmt.Errorf("iterate expired backups: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit backup retention: %w", err)
+	}
+	return expired, nil
 }
 
 func expectManifestRow(operation string, rows int64) error {

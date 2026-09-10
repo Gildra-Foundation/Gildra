@@ -28,6 +28,7 @@ func main() {
 
 func run() error {
 	var product, prefix, temporaryDirectory string
+	var retainVerified int
 	var timeout time.Duration
 	var preflight bool
 	flag.StringVar(&product, "product", "wow", "game product slug recorded with the backup")
@@ -35,7 +36,18 @@ func run() error {
 	flag.StringVar(&temporaryDirectory, "temp-directory", "", "directory for the encrypted temporary archive")
 	flag.DurationVar(&timeout, "timeout", 2*time.Hour, "whole backup and restore-verification timeout")
 	flag.BoolVar(&preflight, "preflight", false, "validate backup configuration without accessing databases or object storage")
+	flag.IntVar(&retainVerified, "retain-verified", 9, "number of newest verified local PostgreSQL backups to retain")
 	flag.Parse()
+	if retainVerified < 1 {
+		return errors.New("retain-verified must be at least 1")
+	}
+	if value := strings.TrimSpace(os.Getenv("CATALOG_BACKUP_RETAIN_VERIFIED")); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil || parsed < 1 {
+			return errors.New("CATALOG_BACKUP_RETAIN_VERIFIED must be a positive integer")
+		}
+		retainVerified = parsed
+	}
 	if timeout <= 0 {
 		return errors.New("timeout must be positive")
 	}
@@ -130,6 +142,13 @@ func run() error {
 	result, err := runner.Run(ctx, options)
 	if err != nil {
 		return err
+	}
+	if localStore, ok := store.(*catalogbackup.LocalStore); ok {
+		retained, retentionErr := catalogbackup.RetainLocalVerified(ctx, catalogbackup.PostgresManifestRepository{DB: database}, localStore, options.Product, retainVerified)
+		if retentionErr != nil {
+			return retentionErr
+		}
+		_ = retained // retention is operational housekeeping; backup result stays stable
 	}
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
