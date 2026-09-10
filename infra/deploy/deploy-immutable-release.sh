@@ -384,7 +384,10 @@ verify_catalog_readiness() {
       -recovery-policy verified_same_host \
       -quality-profile midnight-active \
       -require-public-quality \
-      -api-base-url https://api.gildra.net \
+      # Probe the same public JSON handlers through the API container's local
+      # listener; hairpinning the public hostname from Docker can stall the
+      # entire 15-minute audit even when the public edge is healthy.
+      -api-base-url http://127.0.0.1:8080 \
       -timeout 15m
   fi
 }

@@ -30,6 +30,18 @@ func TestValidatePublicTemplatePayloadFindsRuntimeFallback(t *testing.T) {
 	}
 }
 
+func TestValidatePublicTemplatePayloadAllowsExplicitEffectStatus(t *testing.T) {
+	got := ValidatePublicTemplatePayload(map[string]any{
+		"tooltip": map[string]any{
+			"text": "Restores a game-defined value health.",
+			"spell_target_status": "resolved",
+		},
+	})
+	if got.RawTokens != 0 || got.FallbackPhrases != 0 || !got.ExplicitEffectStatus {
+		t.Fatalf("explicit effect status should make the dynamic fallback truthful: %+v", got)
+	}
+}
+
 func TestValidatePublicTemplatePayloadFindsLeakedToken(t *testing.T) {
 	got := ValidatePublicTemplatePayload(map[string]any{"tooltip": map[string]any{"plainText": "Deals $s1 damage."}})
 	if got.RawTokens != 1 || got.FallbackPhrases != 0 {
