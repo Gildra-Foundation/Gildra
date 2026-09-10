@@ -135,10 +135,10 @@ func EvaluatePublicQuality(ctx context.Context, db *pgxpool.Pool, product, build
 	)
 	SELECT count(*),
 		count(*) FILTER (WHERE decision='eligible'),count(*) FILTER (WHERE decision='review'),count(*) FILTER (WHERE decision='excluded'),
-		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NOT NULL AND en.name !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\\]'),
-		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NOT NULL AND ru.name !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\\]'),
-		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NOT NULL AND en.name ~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\\]'),
-		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NOT NULL AND ru.name ~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\\]'),
+		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NOT NULL AND en.name !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|[[](ph|dnt|test|unused|deprecated|internal|zzold|nyi)[]]'),
+		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NOT NULL AND ru.name !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|[[](ph|dnt|test|unused|deprecated|internal|zzold|nyi)[]]'),
+		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NOT NULL AND en.name ~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|[[](ph|dnt|test|unused|deprecated|internal|zzold|nyi)[]]'),
+		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NOT NULL AND ru.name ~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|[[](ph|dnt|test|unused|deprecated|internal|zzold|nyi)[]]'),
 		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(en.name),'') IS NULL),
 		count(*) FILTER (WHERE decision='eligible' AND NULLIF(btrim(ru.name),'') IS NULL),
 		count(*) FILTER (WHERE decision='eligible' AND ru.name IS NOT NULL AND btrim(ru.name)<>'' AND btrim(ru.name)=btrim(en.name)
