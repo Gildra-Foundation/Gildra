@@ -266,8 +266,8 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				SELECT (power.payload->>'PowerCostMaxPct')::double precision
 				FROM catalog_db2_rows power
 				WHERE power.build_id=version.build_id AND power.table_name='SpellPower' AND power.locale='en_US'
-				  AND power.payload->>'SpellID' ~ '^[0-9]+$'
-				  AND (power.payload->>'SpellID')::bigint=entity.external_id
+				  AND power.payload ? 'SpellID'
+				  AND (NULLIF(power.payload->>'SpellID',''))::bigint=entity.external_id
 				  AND power.payload->>'PowerCostMaxPct' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
 				ORDER BY power.row_id
 				LIMIT 1
@@ -276,8 +276,8 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				SELECT (aura.payload->>'CumulativeAura')::bigint
 				FROM catalog_db2_rows aura
 				WHERE aura.build_id=version.build_id AND aura.table_name='SpellAuraOptions' AND aura.locale='en_US'
-				  AND aura.payload->>'SpellID' ~ '^[0-9]+$'
-				  AND (aura.payload->>'SpellID')::bigint=entity.external_id
+				  AND aura.payload ? 'SpellID'
+				  AND (NULLIF(aura.payload->>'SpellID',''))::bigint=entity.external_id
 				  AND aura.payload->>'CumulativeAura' ~ '^[0-9]+$'
 				ORDER BY aura.row_id
 				LIMIT 1
@@ -330,8 +330,8 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				THEN (misc.payload->>'DurationIndex')::bigint END AS duration_index
 			FROM catalog_db2_rows misc
 			WHERE misc.build_id=version.build_id AND misc.table_name='SpellMisc' AND misc.locale='en_US'
-			  AND misc.payload->>'SpellID' ~ '^[0-9]+$'
-			  AND (misc.payload->>'SpellID')::bigint=entity.external_id
+			  AND misc.payload ? 'SpellID'
+			  AND (NULLIF(misc.payload->>'SpellID',''))::bigint=entity.external_id
 			ORDER BY (COALESCE(NULLIF(misc.payload->>'DifficultyID','')::int,0)=0) DESC,misc.row_id
 			LIMIT 1
 		) misc ON true
@@ -353,7 +353,8 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 						THEN (raw.payload->>'EffectRadiusIndex_0')::bigint END)
 				 FROM catalog_db2_rows raw
 				 WHERE raw.build_id=version.build_id AND raw.table_name='SpellEffect' AND raw.locale='en_US'
-				   AND raw.payload->>'SpellID'=entity.external_id::text
+				   AND raw.payload ? 'SpellID'
+				   AND (NULLIF(raw.payload->>'SpellID',''))::bigint=entity.external_id
 				   AND raw.payload->>'EffectIndex'=effect.effect_index::text
 				 ORDER BY (COALESCE(NULLIF(raw.payload->>'DifficultyID','')::int,0)=0) DESC,raw.row_id
 				 LIMIT 1)
