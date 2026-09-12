@@ -93,6 +93,17 @@ func IsNotFound(err error) bool {
 	return errors.As(err, &remote) && remote.StatusCode == http.StatusNotFound
 }
 
+// RemoteStatusCode returns the HTTP status carried by a Battle.net response
+// error. Importers use it when preserving expected, locale-specific source
+// gaps alongside the raw source manifest.
+func RemoteStatusCode(err error) (int, bool) {
+	var remote *RemoteError
+	if !errors.As(err, &remote) || remote.StatusCode <= 0 {
+		return 0, false
+	}
+	return remote.StatusCode, true
+}
+
 // IsForbidden reports an expected access/policy response from a resource
 // endpoint. Media links are optional for an entity, so callers can record the
 // omission and continue the import instead of discarding an otherwise valid

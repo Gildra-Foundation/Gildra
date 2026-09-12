@@ -195,8 +195,72 @@ type QuestReward struct {
 	Attributes map[string]any `json:"attributes"`
 }
 
+type battleNetUnavailableDetailEvidence struct {
+	EntityType string `json:"entity_type"`
+	ExternalID int64  `json:"external_id"`
+	Locale     string `json:"locale"`
+	Status     string `json:"status"`
+	HTTPStatus int    `json:"http_status"`
+	SourceURL  string `json:"source_url"`
+	Reason     string `json:"reason"`
+}
+
+func battleNetUnavailableDetailRecordKey(externalID int64) string {
+	return fmt.Sprintf("unavailable/%d", externalID)
+}
+
+func encodeBattleNetUnavailableDetailEvidence(evidence battleNetUnavailableDetailEvidence) ([]byte, error) {
+	return json.Marshal(evidence)
+}
+
 func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
+}
+
+// RecordBattleNetUnavailableDetail preserves an expected detail-level source
+// gap without creating a fabricated localization or reward row. The record is
+// attached to the already release-aware artifact, so its snapshot/build/locale
+// scope and manifest proof remain queryable through catalog_source_records.
+func (s *Store) RecordBattleNetUnavailableDetail(
+	ctx context.Context,
+	artifactID uuid.UUID,
+	entityType, locale string,
+	externalID, statusCode int64,
+	sourceURL, reason string,
+) error {
+	if artifactID == uuid.Nil {
+		return errors.New("artifact ID is required")
+	}
+	if strings.TrimSpace(entityType) == "" {
+		return errors.New("entity type is required")
+	}
+	if locale != "en_US" && locale != "ru_RU" {
+		return fmt.Errorf("unsupported locale %q", locale)
+	}
+	if externalID <= 0 {
+		return errors.New("external ID must be positive")
+	}
+	if statusCode <= 0 {
+		return errors.New("HTTP status code must be positive")
+	}
+	if strings.TrimSpace(reason) == "" {
+		return errors.New("unavailable reason is required")
+	}
+	evidence := battleNetUnavailableDetailEvidence{
+		EntityType: strings.TrimSpace(entityType), ExternalID: externalID,
+		Locale: locale, Status: "unavailable", HTTPStatus: int(statusCode),
+		SourceURL: strings.TrimSpace(sourceURL), Reason: strings.TrimSpace(reason),
+	}
+	payload, err := encodeBattleNetUnavailableDetailEvidence(evidence)
+	if err != nil {
+		return fmt.Errorf("encode unavailable %s %d evidence: %w", entityType, externalID, err)
+	}
+	if _, err := s.UpsertSourceRecord(ctx, artifactID,
+		battleNetUnavailableDetailRecordKey(externalID), payload); err != nil {
+		return fmt.Errorf("preserve unavailable %s %d (%s) evidence: %w",
+			entityType, externalID, locale, err)
+	}
+	return nil
 }
 
 // ReplaceBattleNetQuestRewards projects the complete localized reward set from
