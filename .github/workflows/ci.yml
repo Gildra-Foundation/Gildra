@@ -124,12 +124,24 @@ jobs:
       - name: Verify Docker is available for Testcontainers
         run: docker info
       - name: Verify PostgreSQL migrations, importers, projections, and provenance
-        run: >-
-          go test -p 1 -tags=integration -count=1 -timeout=10m
-          ./integration
-          ./cmd/catalog-import
-          ./cmd/db2-import
-          ./cmd/listfile-import
+        shell: bash
+        run: |
+          set -o pipefail
+          log_file="${RUNNER_TEMP}/catalog-integration.log"
+          if go test -p 1 -tags=integration -count=1 -timeout=10m \
+            ./integration \
+            ./cmd/catalog-import \
+            ./cmd/db2-import \
+            ./cmd/listfile-import 2>&1 | tee "$log_file"; then
+            exit 0
+          fi
+          {
+            echo '### Catalog integration failure tail'
+            echo '```text'
+            tail -n 200 "$log_file"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
 
   scraper:
     runs-on: ubuntu-latest
