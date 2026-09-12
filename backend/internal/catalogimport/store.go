@@ -924,8 +924,20 @@ func (s *Store) UpsertLocalization(ctx context.Context, ic ImportContext, record
 			FROM game_entity_versions version
 			LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
 			WHERE version.entity_id=e.id
-			  AND (version.snapshot_id=$4 OR ($5::uuid IS NOT NULL AND snapshot.release_id=$5))
-			ORDER BY (version.snapshot_id=$4) DESC,snapshot.created_at DESC NULLS LAST,version.revision DESC
+			  AND (
+				version.snapshot_id=$4
+				OR ($5::uuid IS NOT NULL AND snapshot.release_id=$5)
+				OR EXISTS (
+					SELECT 1
+					FROM catalog_entity_version_artifacts observation
+					JOIN catalog_source_artifacts artifact ON artifact.id=observation.source_artifact_id
+					JOIN catalog_snapshots observed_snapshot ON observed_snapshot.id=artifact.snapshot_id
+					WHERE observation.version_id=version.id
+					  AND (artifact.snapshot_id=$4 OR ($5::uuid IS NOT NULL AND observed_snapshot.release_id=$5))
+				)
+			  )
+			ORDER BY (version.snapshot_id=$4) DESC,
+				snapshot.created_at DESC NULLS LAST,version.revision DESC
 			LIMIT 1
 		) candidate ON true
 		WHERE e.product_id = $1 AND e.entity_type = $2 AND e.external_id = $3

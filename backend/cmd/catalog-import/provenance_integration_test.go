@@ -87,6 +87,30 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 	defer pool.Close()
 
 	store := catalogimport.NewStore(pool)
+	client := wago.New(wago.Config{BaseURL: server.URL, HTTPClient: server.Client(), RetryMax: 1})
+	seedContext, err := store.Begin(ctx, "wow", 69497, "12.1.0.69497", "us", "wago_tools", nil,
+		map[string]any{"integration_test": "published_identical_item"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedOptions := options{
+		buildVersion: "12.1.0.69497", locales: []string{"en_US"},
+		entityTypes: []string{"item"}, maxRecords: 1,
+	}
+	var seedSeen, seedWritten int64
+	if err := importWago(ctx, client, store, seedContext, seedOptions, &seedSeen, &seedWritten); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Finish(ctx, seedContext.RunID, "SUCCEEDED", seedSeen, seedWritten, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+		UPDATE game_entities
+		SET deleted_at=now()
+		WHERE product_id=$1 AND entity_type='item' AND external_id=25`, seedContext.ProductID); err != nil {
+		t.Fatal(err)
+	}
+
 	ic, err := store.Begin(ctx, "wow", 69497, "12.1.0.69497", "us", "wago_tools", nil,
 		map[string]any{"integration_test": "wago_artifact_provenance"})
 	if err != nil {
@@ -96,17 +120,8 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 	// earlier publication. The English pass must be able to stage a candidate
 	// version for it, and the following Russian pass must attach to that staged
 	// version even though the public entity remains deleted until publication.
-	if _, err := pool.Exec(ctx, `
-		INSERT INTO game_entities (
-			product_id,namespace_id,entity_type,external_id,canonical_slug,
-			first_seen_build_id,last_seen_build_id,deleted_at
-		) VALUES ($1,$2,'item',25,'retired-proof-item',$3,$3,now())`,
-		ic.ProductID, ic.NamespaceID, ic.BuildID); err != nil {
-		t.Fatal(err)
-	}
 	releaseID := uuid.New()
 	ic.ReleaseID = &releaseID
-	client := wago.New(wago.Config{BaseURL: server.URL, HTTPClient: server.Client(), RetryMax: 1})
 	opts := options{
 		buildVersion: "12.1.0.69497", locales: []string{"en_US", "ru_RU"},
 		entityTypes: []string{"item", "spell"}, maxRecords: 1,
@@ -119,7 +134,7 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 		t.Fatalf("Wago counters = (%d,%d), want (4,4)", seen, written)
 	}
 
-	var versions, unproven, artifacts, localizations int64
+	var versions, unproven, artifacts, localizations, reusedCurrentProof int64
 	if err := pool.QueryRow(ctx, `
 		SELECT count(*),count(*) FILTER (WHERE source_artifact_id IS NULL)
 		FROM game_entity_versions WHERE snapshot_id=$1`, ic.SnapshotID).Scan(&versions, &unproven); err != nil {
@@ -136,9 +151,19 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 		WHERE version.snapshot_id=$1`, ic.SnapshotID).Scan(&localizations); err != nil {
 		t.Fatal(err)
 	}
-	if versions != 2 || unproven != 0 || artifacts != 6 || localizations != 4 {
-		t.Fatalf("Wago provenance counts = versions:%d unproven:%d artifacts:%d localizations:%d",
-			versions, unproven, artifacts, localizations)
+	if err := pool.QueryRow(ctx, `
+		SELECT count(DISTINCT observation.version_id)
+		FROM catalog_entity_version_artifacts observation
+		JOIN catalog_source_artifacts artifact ON artifact.id=observation.source_artifact_id
+		JOIN game_entity_versions version ON version.id=observation.version_id
+		JOIN game_entities entity ON entity.id=version.entity_id
+		WHERE artifact.snapshot_id=$1 AND version.snapshot_id<>$1
+		  AND entity.entity_type='item' AND entity.external_id=25`, ic.SnapshotID).Scan(&reusedCurrentProof); err != nil {
+		t.Fatal(err)
+	}
+	if versions != 1 || unproven != 0 || artifacts != 6 || localizations != 2 || reusedCurrentProof != 1 {
+		t.Fatalf("Wago provenance counts = versions:%d unproven:%d artifacts:%d localizations:%d reused:%d",
+			versions, unproven, artifacts, localizations, reusedCurrentProof)
 	}
 	var retiredItemLocalized bool
 	if err := pool.QueryRow(ctx, `
@@ -146,8 +171,14 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 			SELECT 1
 			FROM game_entity_versions version
 			JOIN game_entity_localizations localized ON localized.version_id=version.id
-			WHERE version.entity_id=entity.id AND version.snapshot_id=$4
+			WHERE version.entity_id=entity.id
 			  AND localized.locale='ru_RU' AND localized.name='Проверочный предмет'
+			  AND EXISTS (
+				SELECT 1
+				FROM catalog_entity_version_artifacts observation
+				JOIN catalog_source_artifacts artifact ON artifact.id=observation.source_artifact_id
+				WHERE observation.version_id=version.id AND artifact.snapshot_id=$4
+			  )
 		)
 		FROM game_entities entity
 		WHERE entity.product_id=$1 AND entity.entity_type='item' AND entity.external_id=$2
@@ -169,6 +200,12 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 			ORDER BY entity_id,revision DESC
 		) candidate
 		WHERE entity.id=candidate.entity_id`, ic.SnapshotID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+		UPDATE game_entities
+		SET deleted_at=NULL
+		WHERE product_id=$1 AND entity_type='item' AND external_id=25`, ic.ProductID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -301,7 +338,9 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 		WHERE snapshot.id=$1`, attContext.SnapshotID).Scan(&attSnapshotStatus, &attBuildActive); err != nil {
 		t.Fatal(err)
 	}
-	if attSnapshotStatus != "validated" || attBuildActive {
+	// The seed import published this same build. Staging ATT must preserve that
+	// pre-existing activation while leaving its own snapshot merely validated.
+	if attSnapshotStatus != "validated" || !attBuildActive {
 		t.Fatalf("ATT snapshot = status:%s build_active:%t", attSnapshotStatus, attBuildActive)
 	}
 
