@@ -141,6 +141,8 @@ jobs:
             tail -n 200 "$log_file"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          failure_tail="$(tail -n 40 "$log_file" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
+          echo "::error title=Catalog integration failure::$failure_tail"
           exit 1
 
   scraper:
