@@ -62,13 +62,25 @@ func TestIndexResultEntriesPreservesBuildPinnedLink(t *testing.T) {
 
 func TestPinnedBattleNetNamespace(t *testing.T) {
 	t.Parallel()
-	if got, err := pinnedBattleNetNamespace("12.1.0.69497", "US"); err != nil || got != "static-12.1.0_69497-us" {
-		t.Fatalf("namespace = %q, err = %v", got, err)
+	tests := map[string]string{
+		"wow":                  "static-12.1.0_69497-us",
+		"wow_classic":          "static-12.1.0_69497-classic-us",
+		"wow_classic_era":      "static-12.1.0_69497-classic1x-us",
+		"wow_classic_hardcore": "static-12.1.0_69497-classic1x-us",
+	}
+	for product, want := range tests {
+		got, err := pinnedBattleNetNamespace(product, "12.1.0.69497", "US")
+		if err != nil || got != want {
+			t.Fatalf("namespace for %s = %q, err = %v, want %q", product, got, err, want)
+		}
 	}
 	for _, version := range []string{"", "12.1.0", "12.1.0.bad", "12.1.0.0"} {
-		if _, err := pinnedBattleNetNamespace(version, "us"); err == nil {
+		if _, err := pinnedBattleNetNamespace("wow", version, "us"); err == nil {
 			t.Fatalf("version %q should be rejected", version)
 		}
+	}
+	if _, err := pinnedBattleNetNamespace("unknown", "12.1.0.69497", "us"); err == nil {
+		t.Fatal("unsupported product should be rejected")
 	}
 }
 

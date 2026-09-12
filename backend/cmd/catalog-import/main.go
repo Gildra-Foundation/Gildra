@@ -574,7 +574,7 @@ func importBattleNetMissingType(
 	// namespace for direct detail requests so a moving static alias cannot mix
 	// source data from another client build into this release.
 	detailNamespace := namespace
-	if pinned, pinErr := pinnedBattleNetNamespace(opts.sourceBuildVersion, region); pinErr == nil {
+	if pinned, pinErr := pinnedBattleNetNamespace(opts.product, opts.sourceBuildVersion, region); pinErr == nil {
 		detailNamespace = pinned
 	} else {
 		slog.Warn("using moving Battle.net namespace for missing-field enrichment", "type", entityType, "locale", locale, "error", pinErr)
@@ -639,7 +639,7 @@ func importBattleNetMissingType(
 	return nil
 }
 
-func pinnedBattleNetNamespace(version, region string) (string, error) {
+func pinnedBattleNetNamespace(product, version, region string) (string, error) {
 	parts := strings.Split(strings.TrimSpace(version), ".")
 	if len(parts) != 4 || strings.TrimSpace(region) == "" {
 		return "", fmt.Errorf("invalid source build version %q", version)
@@ -657,7 +657,17 @@ func pinnedBattleNetNamespace(version, region string) (string, error) {
 			return "", fmt.Errorf("invalid source build version %q", version)
 		}
 	}
-	return fmt.Sprintf("static-%s_%s-%s", strings.Join(parts[:3], "."), parts[3], strings.ToLower(strings.TrimSpace(region))), nil
+	suffix := ""
+	switch strings.TrimSpace(product) {
+	case "wow":
+	case "wow_classic":
+		suffix = "-classic"
+	case "wow_classic_era", "wow_classic_hardcore":
+		suffix = "-classic1x"
+	default:
+		return "", fmt.Errorf("unsupported Battle.net product %q", product)
+	}
+	return fmt.Sprintf("static-%s_%s%s-%s", strings.Join(parts[:3], "."), parts[3], suffix, strings.ToLower(strings.TrimSpace(region))), nil
 }
 
 func runBattleNetArtifact(

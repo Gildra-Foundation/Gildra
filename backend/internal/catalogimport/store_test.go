@@ -86,6 +86,15 @@ func TestLocalizedString(t *testing.T) {
 	}
 }
 
+func TestMissingBattleNetLocalizationConditionIncludesNamesAndDescriptions(t *testing.T) {
+	t.Parallel()
+	for _, field := range []string{"localization.name", "localization.description"} {
+		if !strings.Contains(missingBattleNetLocalizationCondition, field) {
+			t.Fatalf("missing enrichment condition does not include %s", field)
+		}
+	}
+}
+
 func TestInteger32RejectsUnsignedProtocolSentinel(t *testing.T) {
 	t.Parallel()
 	if got := integer32(float64(4294967295)); got != nil {

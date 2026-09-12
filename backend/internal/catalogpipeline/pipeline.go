@@ -345,8 +345,15 @@ func buildPlan(options Options) []Stage {
 			// Keep the release pinned to one target build while allowing the
 			// importer to consume the API's current build and record that
 			// source-build divergence in artifact provenance.
+			// Quests are a separate first-class stage.  The old combined missing
+			// enrichment processed item, spell and creature before quest, so a
+			// rate-limit failure in any earlier family could permanently starve the
+			// quest denominator.  Import the official quest index first and keep its
+			// lower concurrency independent from the other Battle.net families.
+			battleNetQuestArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "quest", "-page-size", "1000", "-detail-workers", "2", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
 			battleNetArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "talent,pvp_talent,profession,mount,battle_pet,class,specialization,achievement,item_set,instance,encounter,faction", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
 			if options.BuildVersion != "" {
+				battleNetQuestArgs = append(battleNetQuestArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 				battleNetArgs = append(battleNetArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			}
 			battleNetMediaArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "class,specialization,profession,instance,mount,battle_pet,achievement", "-media-only", "-page-size", "1000", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
@@ -354,6 +361,7 @@ func buildPlan(options Options) []Stage {
 				battleNetMediaArgs = append(battleNetMediaArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			}
 			plan = append(plan,
+				Stage{Key: "import-battlenet-quests", Executable: "catalog-import", Arguments: battleNetQuestArgs},
 				Stage{Key: "import-battlenet", Executable: "catalog-import", Arguments: battleNetArgs},
 				Stage{Key: "import-battlenet-media", Executable: "catalog-import", Arguments: battleNetMediaArgs},
 			)
@@ -366,11 +374,16 @@ func buildPlan(options Options) []Stage {
 		}
 	}
 	if needsBattleNetMissingEnrichment {
-		battleNetMissingArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "item,spell,creature,quest", "-missing-only", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
+		battleNetQuestMissingArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "quest", "-missing-only", "-detail-workers", "2", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
+		battleNetMissingArgs := []string{"-source", "battlenet", "-product", options.Product, "-locales", "en_US,ru_RU", "-types", "item,spell,creature", "-missing-only", "-detail-workers", "8", "-max-records", fmt.Sprint(options.MaxRecords), "-allow-build-mismatch"}
 		if options.BuildVersion != "" {
+			battleNetQuestMissingArgs = append(battleNetQuestMissingArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			battleNetMissingArgs = append(battleNetMissingArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 		}
-		plan = append(plan, Stage{Key: "enrich-battlenet-missing", Executable: "catalog-import", Arguments: battleNetMissingArgs})
+		plan = append(plan,
+			Stage{Key: "enrich-battlenet-quests", Executable: "catalog-import", Arguments: battleNetQuestMissingArgs},
+			Stage{Key: "enrich-battlenet-missing", Executable: "catalog-import", Arguments: battleNetMissingArgs},
+		)
 	}
 	indexArgs := func(mode string) []string {
 		return []string{mode, "-confirm", "-product", options.Product}
@@ -605,11 +618,18 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		if productErr != nil {
 			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "product_lookup_failed", productErr)
 		}
+		questUsabilityRefreshed, questRefreshErr := r.refreshPublishedQuestUsability(ctx, options.Product, productID, options.BuildVersion)
+		if questRefreshErr != nil {
+			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "quest_usability_refresh_failed", questRefreshErr)
+		}
 		if err := catalog.NewService(r.DB).RefreshReadModels(ctx, &productID); err != nil {
 			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "post_publish_read_model_refresh_failed", err)
 		}
 		if _, err := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
-			result.RunID, "refresh-post-publish", jsonObject(map[string]any{"release_id": result.ReleaseID, "read_models_refreshed": true})); err != nil {
+			result.RunID, "refresh-post-publish", jsonObject(map[string]any{
+				"release_id": result.ReleaseID, "read_models_refreshed": true,
+				"quest_usability_refreshed": questUsabilityRefreshed,
+			})); err != nil {
 			return result, fmt.Errorf("finish post-publish read model stage: %w", err)
 		}
 	} else {
@@ -645,6 +665,41 @@ func (r *Runner) productID(ctx context.Context, product string) (int16, error) {
 		return 0, fmt.Errorf("resolve product %q: %w", product, err)
 	}
 	return productID, nil
+}
+
+// refreshPublishedQuestUsability reclassifies the newly published quest
+// denominator before the cached read models are rebuilt.  The classifiers are
+// intentionally publication-aware: they require the version and both locale
+// proofs that the release manager has just moved into the public projection.
+func (r *Runner) refreshPublishedQuestUsability(
+	ctx context.Context,
+	product string,
+	productID int16,
+	buildVersion string,
+) (int64, error) {
+	var buildID int64
+	if err := r.DB.QueryRow(ctx, `
+		SELECT id
+		FROM game_builds
+		WHERE product_id=$1 AND version=$2 AND is_active
+		ORDER BY build_number DESC
+		LIMIT 1`, productID, buildVersion).Scan(&buildID); err != nil {
+		return 0, fmt.Errorf("resolve published quest build %s: %w", buildVersion, err)
+	}
+	var refreshed int64
+	switch product {
+	case "wow":
+		if err := r.DB.QueryRow(ctx, `SELECT catalog_refresh_quest_usability($1)`, buildID).Scan(&refreshed); err != nil {
+			return 0, fmt.Errorf("refresh Retail quest usability: %w", err)
+		}
+	case "wow_classic", "wow_classic_era", "wow_classic_hardcore":
+		if err := r.DB.QueryRow(ctx, `SELECT catalog_refresh_classic_quest_usability($1,$2)`, productID, buildID).Scan(&refreshed); err != nil {
+			return 0, fmt.Errorf("refresh Classic quest usability: %w", err)
+		}
+	default:
+		return 0, nil
+	}
+	return refreshed, nil
 }
 
 func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product, recoveryPolicy string) error {
