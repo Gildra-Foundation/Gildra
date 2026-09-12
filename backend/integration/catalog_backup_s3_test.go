@@ -21,7 +21,7 @@ func TestCatalogBackupS3StoreTransfersMultipartObject(t *testing.T) {
 	ctx := context.Background()
 	const accessKey = "gildra-integration-access"
 	const secretKey = "gildra-integration-secret-key"
-	container, err := testcontainers.Run(ctx, "minio/minio:RELEASE.2025-07-23T15-54-02Z",
+	container, err := testcontainers.Run(ctx, "quay.io/minio/minio:RELEASE.2025-07-23T15-54-02Z",
 		testcontainers.WithExposedPorts("9000/tcp"),
 		testcontainers.WithEnv(map[string]string{"MINIO_ROOT_USER": accessKey, "MINIO_ROOT_PASSWORD": secretKey}),
 		testcontainers.WithCmd("server", "/data"),
