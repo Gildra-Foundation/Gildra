@@ -30,3 +30,18 @@ func TestPublicCatalogUsabilityPredicateSupportsDistinctAliases(t *testing.T) {
 		t.Fatalf("quality gate did not use supplied aliases: %s", predicate)
 	}
 }
+
+func TestPublicCatalogUsabilityPredicateFailsClosedForRetailQuests(t *testing.T) {
+	t.Parallel()
+	predicate := publicCatalogUsabilityPredicate("entity", "version")
+	for _, fragment := range []string{
+		"entity.entity_type <> 'quest'",
+		"entity.product_id <> (SELECT id FROM game_products WHERE slug='wow')",
+		"usability.entity_type='quest'",
+		"usability.decision='eligible'",
+	} {
+		if !strings.Contains(predicate, fragment) {
+			t.Fatalf("Retail quest fail-closed predicate is missing %q: %s", fragment, predicate)
+		}
+	}
+}
