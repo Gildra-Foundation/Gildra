@@ -196,6 +196,16 @@ func TestIsForbiddenRecognizesOptionalMediaAccessFailure(t *testing.T) {
 	}
 }
 
+func TestRemoteStatusCodeExtractsRemoteHTTPStatus(t *testing.T) {
+	t.Parallel()
+	if got, ok := RemoteStatusCode(&RemoteError{StatusCode: http.StatusNotFound}); !ok || got != http.StatusNotFound {
+		t.Fatalf("status = (%d,%t), want (404,true)", got, ok)
+	}
+	if got, ok := RemoteStatusCode(errors.New("network failure")); ok || got != 0 {
+		t.Fatalf("non-remote status = (%d,%t), want (0,false)", got, ok)
+	}
+}
+
 func TestIndexBuildsOfficialResourceURL(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

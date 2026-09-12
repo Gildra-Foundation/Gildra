@@ -86,6 +86,30 @@ func TestLocalizedString(t *testing.T) {
 	}
 }
 
+func TestBattleNetUnavailableDetailEvidenceIsLocaleScopedAndStable(t *testing.T) {
+	t.Parallel()
+	evidence := battleNetUnavailableDetailEvidence{
+		EntityType: "quest", ExternalID: 8446, Locale: "ru_RU",
+		Status: "unavailable", HTTPStatus: 404,
+		SourceURL: "https://eu.api.blizzard.com/data/wow/quest/8446?locale=ru_RU",
+		Reason:    "detail_not_found",
+	}
+	payload, err := encodeBattleNetUnavailableDetailEvidence(evidence)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := battleNetUnavailableDetailRecordKey(evidence.ExternalID), "unavailable/8446"; got != want {
+		t.Fatalf("record key = %q, want %q", got, want)
+	}
+	var decoded battleNetUnavailableDetailEvidence
+	if err := json.Unmarshal(payload, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if decoded != evidence {
+		t.Fatalf("decoded evidence = %#v, want %#v", decoded, evidence)
+	}
+}
+
 func TestMissingBattleNetLocalizationConditionIncludesNamesAndDescriptions(t *testing.T) {
 	t.Parallel()
 	for _, field := range []string{"localization.name", "localization.description"} {

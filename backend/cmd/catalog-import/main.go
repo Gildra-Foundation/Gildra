@@ -601,6 +601,12 @@ func importBattleNetMissingType(
 					if fetchErr != nil {
 						if battlenet.IsNotFound(fetchErr) {
 							slog.Warn("Battle.net enrichment target is not available", "type", entityType, "id", id, "locale", locale)
+							if statusCode, ok := battlenet.RemoteStatusCode(fetchErr); ok {
+								if err := store.RecordBattleNetUnavailableDetail(groupCtx, artifactID, entityType, locale,
+									id, int64(statusCode), sourceURL, "detail_not_found"); err != nil {
+									return err
+								}
+							}
 							continue
 						}
 						return fmt.Errorf("fetch missing %s %d (%s): %w", entityType, id, locale, fetchErr)
@@ -977,10 +983,11 @@ type battleNetDetailFetcher interface {
 }
 
 type battleNetSearchDetail struct {
-	ID        int64
-	Payload   json.RawMessage
-	SourceURL string
-	Missing   bool
+	ID         int64
+	Payload    json.RawMessage
+	SourceURL  string
+	StatusCode int
+	Missing    bool
 }
 
 func fetchBattleNetSearchDetails(
@@ -1013,6 +1020,10 @@ func fetchBattleNetSearchDetails(
 			if err != nil {
 				if battlenet.IsNotFound(err) {
 					details[i].Missing = true
+					details[i].SourceURL = sourceURL
+					if statusCode, ok := battlenet.RemoteStatusCode(err); ok {
+						details[i].StatusCode = statusCode
+					}
 					return nil
 				}
 				return fmt.Errorf("fetch detail %d (%s): %w", details[i].ID, locale, err)
@@ -1180,6 +1191,14 @@ func importQuestType(
 		for _, detail := range details {
 			if detail.Missing {
 				slog.Warn("skipping missing Battle.net quest detail", "id", detail.ID, "locale", locale)
+				statusCode := detail.StatusCode
+				if statusCode == 0 {
+					statusCode = 404
+				}
+				if err := store.RecordBattleNetUnavailableDetail(ctx, artifactID, entityType, locale,
+					detail.ID, int64(statusCode), detail.SourceURL, "detail_not_found"); err != nil {
+					return err
+				}
 				continue
 			}
 			if err := storeBattleNetRecord(ctx, store, importContext, artifactID, entityType, locale, detail.ID, detail.Payload, detail.SourceURL); err != nil {

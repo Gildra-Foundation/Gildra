@@ -244,6 +244,30 @@ func TestFetchBattleNetIndexDetailsPreservesQuestIDs(t *testing.T) {
 	}
 }
 
+type notFoundDetailFetcher struct{}
+
+func (notFoundDetailFetcher) FetchLink(
+	context.Context, string, string, string,
+) (json.RawMessage, string, error) {
+	const sourceURL = "https://eu.api.blizzard.com/data/wow/quest/8446?namespace=static-12.1.0_69497-eu"
+	return nil, sourceURL, &battlenet.RemoteError{StatusCode: 404, Status: "404 Not Found"}
+}
+
+func TestFetchBattleNetIndexDetailsPreservesUnavailableQuestEvidence(t *testing.T) {
+	t.Parallel()
+	entries := []battleNetIndexEntry{{ID: 8446, Href: "https://eu.api.blizzard.com/data/wow/quest/8446"}}
+	details, err := fetchBattleNetIndexDetails(context.Background(), notFoundDetailFetcher{}, "eu", "ru_RU", entries, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(details) != 1 || !details[0].Missing {
+		t.Fatalf("details = %#v, want one missing detail", details)
+	}
+	if details[0].ID != 8446 || details[0].StatusCode != 404 || details[0].SourceURL == "" {
+		t.Fatalf("unavailable detail = %#v, want ID/status/source URL", details[0])
+	}
+}
+
 func TestBattleNetIndexBatchSize(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
