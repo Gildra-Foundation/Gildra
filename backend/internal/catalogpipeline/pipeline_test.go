@@ -10,11 +10,12 @@ func TestBuildPlanIsDeterministicAndNeverContainsDatabaseCredentials(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan) != 15 {
-		t.Fatalf("expected 15 stages, got %d", len(plan))
+	if len(plan) != 17 {
+		t.Fatalf("expected 17 stages, got %d", len(plan))
 	}
 	expected := []string{
-		"import-wago", "import-raidbots", "import-db2", "import-battlenet", "import-battlenet-media", "import-listfile", "enrich-battlenet-missing",
+		"import-wago", "import-raidbots", "import-db2", "import-battlenet-quests", "import-battlenet", "import-battlenet-media", "import-listfile",
+		"enrich-battlenet-quests", "enrich-battlenet-missing",
 		"rebuild-descriptions", "rebuild-item-variants", "rebuild-spell-effects",
 		"rebuild-projections", "rebuild-entity-graph", "refresh-coverage",
 		"validate-catalog", "publication-gate",
@@ -36,13 +37,19 @@ func TestBuildPlanIsDeterministicAndNeverContainsDatabaseCredentials(t *testing.
 		if stage.Key == "import-wago" && !strings.Contains(strings.Join(stage.Arguments, " "), "-build 69404") {
 			t.Fatalf("Wago import is not pinned to the release build number: %#v", stage.Arguments)
 		}
-		if (stage.Key == "import-battlenet" || stage.Key == "import-battlenet-media" || stage.Key == "enrich-battlenet-missing") &&
+		if (stage.Key == "import-battlenet-quests" || stage.Key == "import-battlenet" || stage.Key == "import-battlenet-media" ||
+			stage.Key == "enrich-battlenet-quests" || stage.Key == "enrich-battlenet-missing") &&
 			(!strings.Contains(strings.Join(stage.Arguments, " "), "-version 12.1.0.69404") ||
 				!strings.Contains(strings.Join(stage.Arguments, " "), "-build 69404")) {
 			t.Fatalf("%s is not pinned to the release build: %#v", stage.Key, stage.Arguments)
 		}
-		if stage.Key == "enrich-battlenet-missing" && !strings.Contains(strings.Join(stage.Arguments, " "), "-missing-only") {
+		if (stage.Key == "enrich-battlenet-quests" || stage.Key == "enrich-battlenet-missing") &&
+			!strings.Contains(strings.Join(stage.Arguments, " "), "-missing-only") {
 			t.Fatalf("missing-field enrichment stage is not scoped: %#v", stage.Arguments)
+		}
+		if (stage.Key == "import-battlenet-quests" || stage.Key == "enrich-battlenet-quests") &&
+			!strings.Contains(strings.Join(stage.Arguments, " "), "-types quest") {
+			t.Fatalf("quest stage is not isolated from other Battle.net families: %#v", stage.Arguments)
 		}
 		if (stage.Key == "import-db2" || stage.Key == "import-listfile") && !strings.Contains(strings.Join(stage.Arguments, " "), "-product wow") {
 			t.Fatalf("%s is not product-scoped: %#v", stage.Key, stage.Arguments)
@@ -88,7 +95,7 @@ func TestRetailFoundationProfileIncludesRaidbotsTalentTrees(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantImports := []string{"import-wago", "import-raidbots", "import-db2", "import-battlenet", "import-battlenet-media", "import-listfile", "enrich-battlenet-missing"}
+	wantImports := []string{"import-wago", "import-raidbots", "import-db2", "import-battlenet-quests", "import-battlenet", "import-battlenet-media", "import-listfile", "enrich-battlenet-quests", "enrich-battlenet-missing"}
 	for index, key := range wantImports {
 		if plan[index].Key != key {
 			t.Fatalf("foundation stage %d = %q, want %q", index, plan[index].Key, key)

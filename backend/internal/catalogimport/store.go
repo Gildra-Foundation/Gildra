@@ -51,10 +51,17 @@ type MediaCandidate struct {
 	AssetPrefix string
 }
 
-// MissingBattleNetIDs returns build-pinned entities whose localized description
-// still needs official API enrichment. When includeMedia is true (the canonical
-// English pass), entities without a verified icon observation are included as
-// well. The query is deliberately scoped to the import snapshot (or, for a
+const missingBattleNetLocalizationCondition = `(
+			NULLIF(BTRIM(localization.name),'') IS NULL
+			OR NULLIF(BTRIM(localization.description),'') IS NULL
+			OR localization.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'
+			OR ($7::boolean AND cached_icons.entity_id IS NULL)
+		)`
+
+// MissingBattleNetIDs returns build-pinned entities whose localized name or
+// description still needs official API enrichment. When includeMedia is true
+// (the canonical English pass), entities without a verified icon observation
+// are included as well. The query is deliberately scoped to the import snapshot (or, for a
 // staged release, every snapshot belonging to that release) so an enrichment
 // run cannot accidentally update a different build or product. Falling back
 // to the published version keeps this command useful for an isolated import
@@ -79,7 +86,7 @@ func (s *Store) MissingBattleNetIDs(
 	if limit < 0 {
 		return nil, errors.New("limit cannot be negative")
 	}
-	rows, err := s.db.Query(ctx, `
+	rows, err := s.db.Query(ctx, fmt.Sprintf(`
 		WITH candidate_versions_raw AS (
 			SELECT entity.id,entity.external_id,version.id AS version_id,
 				version.revision,snapshot.created_at AS snapshot_created_at,0 AS source_rank
@@ -118,11 +125,7 @@ func (s *Store) MissingBattleNetIDs(
 		LEFT JOIN game_entity_localizations localization
 		  ON localization.version_id=candidate.version_id AND localization.locale=$6
 		LEFT JOIN cached_icons ON cached_icons.entity_id=candidate.id
-		WHERE (
-			NULLIF(BTRIM(localization.description),'') IS NULL
-			OR localization.description ~ '\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])'
-			OR ($7::boolean AND cached_icons.entity_id IS NULL)
-		)
+		WHERE %s
 		-- A successful Battle.net detail response can legitimately contain no
 		-- description (for example, a purely mechanical item).  Retrying the
 		-- same empty response on every daily run wastes the API budget and can
@@ -139,7 +142,7 @@ func (s *Store) MissingBattleNetIDs(
 			  AND attempted.imported_at >= now() - interval '7 days'
 		)
 		ORDER BY candidate.external_id
-		LIMIT CASE WHEN $8::int > 0 THEN $8::int ELSE 2147483647 END`,
+		LIMIT CASE WHEN $8::int > 0 THEN $8::int ELSE 2147483647 END`, missingBattleNetLocalizationCondition),
 		ic.ProductID, entityType, ic.BuildID, ic.SnapshotID, ic.ReleaseID, locale, includeMedia, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list missing Battle.net %s enrichment targets: %w", entityType, err)
