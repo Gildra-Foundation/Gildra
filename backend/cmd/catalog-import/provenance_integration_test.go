@@ -20,6 +20,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/attparser"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/wago"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
@@ -91,6 +92,20 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// A same-build repair can encounter an entity that was soft-deleted by an
+	// earlier publication. The English pass must be able to stage a candidate
+	// version for it, and the following Russian pass must attach to that staged
+	// version even though the public entity remains deleted until publication.
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO game_entities (
+			product_id,namespace_id,entity_type,external_id,canonical_slug,
+			first_seen_build_id,last_seen_build_id,deleted_at
+		) VALUES ($1,$2,'item',25,'retired-proof-item',$3,$3,now())`,
+		ic.ProductID, ic.NamespaceID, ic.BuildID); err != nil {
+		t.Fatal(err)
+	}
+	releaseID := uuid.New()
+	ic.ReleaseID = &releaseID
 	client := wago.New(wago.Config{BaseURL: server.URL, HTTPClient: server.Client(), RetryMax: 1})
 	opts := options{
 		buildVersion: "12.1.0.69497", locales: []string{"en_US", "ru_RU"},
@@ -124,6 +139,37 @@ func TestWagoImportPreservesArtifactProvenance(t *testing.T) {
 	if versions != 2 || unproven != 0 || artifacts != 6 || localizations != 4 {
 		t.Fatalf("Wago provenance counts = versions:%d unproven:%d artifacts:%d localizations:%d",
 			versions, unproven, artifacts, localizations)
+	}
+	var retiredItemLocalized bool
+	if err := pool.QueryRow(ctx, `
+		SELECT entity.deleted_at IS NOT NULL AND EXISTS (
+			SELECT 1
+			FROM game_entity_versions version
+			JOIN game_entity_localizations localized ON localized.version_id=version.id
+			WHERE version.entity_id=entity.id AND version.snapshot_id=$4
+			  AND localized.locale='ru_RU' AND localized.name='Проверочный предмет'
+		)
+		FROM game_entities entity
+		WHERE entity.product_id=$1 AND entity.entity_type='item' AND entity.external_id=$2
+		  AND entity.namespace_id=$3`, ic.ProductID, int64(25), ic.NamespaceID, ic.SnapshotID).Scan(&retiredItemLocalized); err != nil {
+		t.Fatal(err)
+	}
+	if !retiredItemLocalized {
+		t.Fatal("release-aware import did not localize the staged version of the soft-deleted item")
+	}
+	// The remainder of this broad integration test exercises post-publication
+	// consumers. Emulate the atomic pointer switch that the pipeline performs.
+	if _, err := pool.Exec(ctx, `
+		UPDATE game_entities entity
+		SET latest_version_id=candidate.id,published_version_id=candidate.id,deleted_at=NULL
+		FROM (
+			SELECT DISTINCT ON (entity_id) entity_id,id
+			FROM game_entity_versions
+			WHERE snapshot_id=$1
+			ORDER BY entity_id,revision DESC
+		) candidate
+		WHERE entity.id=candidate.entity_id`, ic.SnapshotID); err != nil {
+		t.Fatal(err)
 	}
 
 	manifestArtifactID, err := store.RegisterPendingArtifact(ctx, ic, "blizzard_api",

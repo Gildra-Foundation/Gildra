@@ -917,14 +917,23 @@ func (s *Store) UpsertLocalization(ctx context.Context, ic ImportContext, record
 	}
 	var versionID uuid.UUID
 	err = s.db.QueryRow(ctx, `
-		SELECT COALESCE((
-			SELECT v.id FROM game_entity_versions v
-			WHERE v.entity_id=e.id AND v.snapshot_id=$4
-			ORDER BY v.revision DESC LIMIT 1
-		), e.latest_version_id)
+		SELECT COALESCE(candidate.id,e.latest_version_id)
 		FROM game_entities e
-		WHERE e.product_id = $1 AND e.entity_type = $2 AND e.external_id = $3 AND e.deleted_at IS NULL`,
-		ic.ProductID, record.Type, record.ExternalID, ic.SnapshotID).Scan(&versionID)
+		LEFT JOIN LATERAL (
+			SELECT version.id
+			FROM game_entity_versions version
+			LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
+			WHERE version.entity_id=e.id
+			  AND (version.snapshot_id=$4 OR ($5::uuid IS NOT NULL AND snapshot.release_id=$5))
+			ORDER BY (version.snapshot_id=$4) DESC,snapshot.created_at DESC NULLS LAST,version.revision DESC
+			LIMIT 1
+		) candidate ON true
+		WHERE e.product_id = $1 AND e.entity_type = $2 AND e.external_id = $3
+		  AND (
+			candidate.id IS NOT NULL
+			OR (e.deleted_at IS NULL AND e.latest_version_id IS NOT NULL)
+		  )`,
+		ic.ProductID, record.Type, record.ExternalID, ic.SnapshotID, ic.ReleaseID).Scan(&versionID)
 	if err != nil {
 		return fmt.Errorf("find canonical %s %d: %w", record.Type, record.ExternalID, err)
 	}
