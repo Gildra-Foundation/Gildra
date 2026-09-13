@@ -18,10 +18,11 @@ import (
 )
 
 // TestRetailQuestOfficialNotFoundConfirmation proves that unavailable detail
-// records are a conservative usability input: one sweep, a build mismatch,
-// and incomplete/transient artifacts remain review, while two complete
-// bilingual sweeps separated by a day can exclude only a non-technical quest
-// without a successful official document/localization.
+// records are a conservative usability input: one exact-build sweep and a
+// mismatch without matching index/DB2 evidence remain review, while either
+// two exact-build sweeps separated by a day or a complete bilingual index plus
+// a stable DB2 comparison can exclude only a non-technical quest without a
+// successful official document/localization.
 func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	ctx := context.Background()
 	migrations, err := filepath.Abs("../migrations/postgres")
@@ -74,6 +75,13 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 		VALUES($1,$2,$3,false) RETURNING id`, productID, sourceBuildNumber, sourceBuildVersion).Scan(&sourceBuildID); err != nil {
 		t.Fatal(err)
 	}
+	var releaseID string
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO catalog_releases(product_id,build_id,build_version,status,requested_sources)
+		VALUES($1,$2,$3,'staging',ARRAY['battlenet','db2']::text[]) RETURNING id::text`,
+		productID, buildID, buildVersion).Scan(&releaseID); err != nil {
+		t.Fatal(err)
+	}
 	var namespaceID int16
 	if err := database.QueryRowContext(ctx, `
 		INSERT INTO game_namespaces(product_id,region,kind,slug)
@@ -84,7 +92,7 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	}
 
 	publishedSnapshot := insertSnapshot(t, ctx, database, productID, buildID, "published", time.Now().UTC())
-	questIDs := []int64{163001, 163002, 163003, 163004, 163005, 163006, 163007, 163008, 163009, 163010, 163011}
+	questIDs := []int64{163001, 163002, 163003, 163004, 163005, 163006, 163007, 163008, 163009, 163010, 163011, 163012}
 	versionIDs := make(map[int64]string, len(questIDs))
 	for _, questID := range questIDs {
 		versionIDs[questID] = insertQuest(t, ctx, database, productID, namespaceID, buildID, publishedSnapshot, questID, "", "")
@@ -138,23 +146,43 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 		insertUnavailable(t, ctx, database, latestMismatchSweep, buildID, 163008, locale, "ready", buildNumber+1, "12.1.0.1630002", now.Add(time.Hour))
 	}
 
-	// Two older-build bilingual sweeps may exclude only records whose QuestV2
-	// identity is stable across complete source and target artifacts. A row
-	// added in the target build remains protected, while stable absence from
-	// both complete tables is also valid evidence.
+	// A bilingual older-build 404 sweep may exclude only records whose QuestV2
+	// identity is stable across complete source and target artifacts and which
+	// are absent from the complete bilingual official index in the same release.
+	// A row added in the target build and a stable row present in the index both
+	// remain protected, while stable absence from both DB2 tables is valid.
 	sourceDB2Snapshot := insertSnapshot(t, ctx, database, productID, sourceBuildID, "published", now.Add(-time.Hour))
 	sourceDB2Artifact := insertArtifact(t, ctx, database, sourceDB2Snapshot, sourceBuildID, "wago_tools", "QuestV2", "en_US", "ready", sourceBuildNumber, sourceBuildVersion, now.Add(-time.Hour))
 	targetDB2Artifact := insertArtifact(t, ctx, database, publishedSnapshot, buildID, "wago_tools", "QuestV2", "en_US", "ready", buildNumber, buildVersion, now)
 	insertQuestV2Row(t, ctx, database, sourceBuildID, sourceDB2Snapshot, sourceDB2Artifact, 163009, "aa")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163009, "aa")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163010, "bb")
-	stableMismatchOldSweep := insertSnapshot(t, ctx, database, productID, buildID, "validated", now.Add(-48*time.Hour))
+	insertQuestV2Row(t, ctx, database, sourceBuildID, sourceDB2Snapshot, sourceDB2Artifact, 163012, "cc")
+	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163012, "cc")
 	stableMismatchNewSweep := insertSnapshot(t, ctx, database, productID, buildID, "validated", now)
-	for _, snapshotID := range []string{stableMismatchOldSweep, stableMismatchNewSweep} {
-		for _, questID := range []int64{163009, 163010, 163011} {
-			for _, locale := range []string{"en_US", "ru_RU"} {
-				insertUnavailable(t, ctx, database, snapshotID, buildID, questID, locale, "ready", sourceBuildNumber, sourceBuildVersion, now)
-			}
+	indexSnapshot := insertSnapshot(t, ctx, database, productID, buildID, "validated", now.Add(-time.Minute))
+	if _, err := database.ExecContext(ctx, `
+		UPDATE catalog_snapshots SET release_id=$1 WHERE id IN ($2,$3)`,
+		releaseID, stableMismatchNewSweep, indexSnapshot); err != nil {
+		t.Fatal(err)
+	}
+	for _, locale := range []string{"en_US", "ru_RU"} {
+		indexArtifact := insertArtifact(t, ctx, database, indexSnapshot, buildID, "blizzard_api", "battlenet/quest", locale, "ready", sourceBuildNumber, sourceBuildVersion, now.Add(-time.Minute))
+		if _, err := database.ExecContext(ctx, `
+			UPDATE catalog_source_artifacts
+			SET metadata=metadata||'{"proof_scope":"source_record_manifest_v1","bounded":false}'::jsonb
+			WHERE id=$1`, indexArtifact); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := database.ExecContext(ctx, `
+			INSERT INTO catalog_source_records(artifact_id,record_key,payload,content_hash)
+			VALUES($1,'163012','{"id":163012}'::jsonb,decode(repeat('ac',32),'hex'))`, indexArtifact); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, questID := range []int64{163009, 163010, 163011, 163012} {
+		for _, locale := range []string{"en_US", "ru_RU"} {
+			insertUnavailable(t, ctx, database, stableMismatchNewSweep, buildID, questID, locale, "ready", sourceBuildNumber, sourceBuildVersion, now)
 		}
 	}
 
@@ -194,6 +222,7 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	assertQuestUsability(t, ctx, database, productID, buildID, 163009, "excluded", "official_not_found_stable_source_build")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163010, "review", "official_not_found_build_mismatch")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163011, "excluded", "official_not_found_stable_source_build")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163012, "review", "official_not_found_build_mismatch")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163001, "official_not_found", "confirmed")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163008, "official_not_found", "build_mismatch")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163009, "official_not_found", "stable_source_build_confirmed")
@@ -202,13 +231,13 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	var entityCount, recordCount int
 	if err := database.QueryRowContext(ctx, `
 		SELECT
-			(SELECT count(*) FROM game_entities WHERE product_id=$1 AND entity_type='quest' AND external_id BETWEEN 163001 AND 163011),
+			(SELECT count(*) FROM game_entities WHERE product_id=$1 AND entity_type='quest' AND external_id BETWEEN 163001 AND 163012),
 			(SELECT count(*) FROM catalog_source_records record
 			 JOIN catalog_source_artifacts artifact ON artifact.id=record.artifact_id
 			 WHERE artifact.build_id=$2 AND record.record_key LIKE 'unavailable/%')`, productID, buildID).Scan(&entityCount, &recordCount); err != nil {
 		t.Fatal(err)
 	}
-	if entityCount != len(questIDs) || recordCount != 38 {
+	if entityCount != len(questIDs) || recordCount != 34 {
 		t.Fatalf("raw fixture data changed: entities=%d records=%d", entityCount, recordCount)
 	}
 }
