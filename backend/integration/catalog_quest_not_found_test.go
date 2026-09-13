@@ -60,10 +60,18 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	}
 	const buildNumber = 1630001
 	const buildVersion = "12.1.0.1630001"
+	const sourceBuildNumber = buildNumber - 1
+	const sourceBuildVersion = "12.1.0.1630000"
 	var buildID int64
 	if err := database.QueryRowContext(ctx, `
 		INSERT INTO game_builds(product_id,build_number,version,is_active)
 		VALUES($1,$2,$3,true) RETURNING id`, productID, buildNumber, buildVersion).Scan(&buildID); err != nil {
+		t.Fatal(err)
+	}
+	var sourceBuildID int64
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_builds(product_id,build_number,version,is_active)
+		VALUES($1,$2,$3,false) RETURNING id`, productID, sourceBuildNumber, sourceBuildVersion).Scan(&sourceBuildID); err != nil {
 		t.Fatal(err)
 	}
 	var namespaceID int16
@@ -76,7 +84,7 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	}
 
 	publishedSnapshot := insertSnapshot(t, ctx, database, productID, buildID, "published", time.Now().UTC())
-	questIDs := []int64{163001, 163002, 163003, 163004, 163005, 163006, 163007, 163008}
+	questIDs := []int64{163001, 163002, 163003, 163004, 163005, 163006, 163007, 163008, 163009, 163010, 163011}
 	versionIDs := make(map[int64]string, len(questIDs))
 	for _, questID := range questIDs {
 		versionIDs[questID] = insertQuest(t, ctx, database, productID, namespaceID, buildID, publishedSnapshot, questID, "", "")
@@ -130,6 +138,26 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 		insertUnavailable(t, ctx, database, latestMismatchSweep, buildID, 163008, locale, "ready", buildNumber+1, "12.1.0.1630002", now.Add(time.Hour))
 	}
 
+	// Two older-build bilingual sweeps may exclude only records whose QuestV2
+	// identity is stable across complete source and target artifacts. A row
+	// added in the target build remains protected, while stable absence from
+	// both complete tables is also valid evidence.
+	sourceDB2Snapshot := insertSnapshot(t, ctx, database, productID, sourceBuildID, "published", now.Add(-time.Hour))
+	sourceDB2Artifact := insertArtifact(t, ctx, database, sourceDB2Snapshot, sourceBuildID, "wago_tools", "QuestV2", "en_US", "ready", sourceBuildNumber, sourceBuildVersion, now.Add(-time.Hour))
+	targetDB2Artifact := insertArtifact(t, ctx, database, publishedSnapshot, buildID, "wago_tools", "QuestV2", "en_US", "ready", buildNumber, buildVersion, now)
+	insertQuestV2Row(t, ctx, database, sourceBuildID, sourceDB2Snapshot, sourceDB2Artifact, 163009, "aa")
+	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163009, "aa")
+	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163010, "bb")
+	stableMismatchOldSweep := insertSnapshot(t, ctx, database, productID, buildID, "validated", now.Add(-48*time.Hour))
+	stableMismatchNewSweep := insertSnapshot(t, ctx, database, productID, buildID, "validated", now)
+	for _, snapshotID := range []string{stableMismatchOldSweep, stableMismatchNewSweep} {
+		for _, questID := range []int64{163009, 163010, 163011} {
+			for _, locale := range []string{"en_US", "ru_RU"} {
+				insertUnavailable(t, ctx, database, snapshotID, buildID, questID, locale, "ready", sourceBuildNumber, sourceBuildVersion, now)
+			}
+		}
+	}
+
 	// Failed/transient artifacts never count as a complete sweep.
 	transientSweep := insertSnapshot(t, ctx, database, productID, buildID, "validated", now.Add(48*time.Hour))
 	for _, locale := range []string{"en_US", "ru_RU"} {
@@ -163,20 +191,37 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	assertQuestUsability(t, ctx, database, productID, buildID, 163006, "review", "missing_english_name")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163007, "review", "missing_english_name")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163008, "review", "official_not_found_build_mismatch")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163009, "excluded", "official_not_found_stable_source_build")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163010, "review", "official_not_found_build_mismatch")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163011, "excluded", "official_not_found_stable_source_build")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163001, "official_not_found", "confirmed")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163008, "official_not_found", "build_mismatch")
+	assertQuestEvidence(t, ctx, database, productID, buildID, 163009, "official_not_found", "stable_source_build_confirmed")
+	assertQuestEvidence(t, ctx, database, productID, buildID, 163011, "quest_v2_row_present", "false")
 
 	var entityCount, recordCount int
 	if err := database.QueryRowContext(ctx, `
 		SELECT
-			(SELECT count(*) FROM game_entities WHERE product_id=$1 AND entity_type='quest' AND external_id BETWEEN 163001 AND 163008),
+			(SELECT count(*) FROM game_entities WHERE product_id=$1 AND entity_type='quest' AND external_id BETWEEN 163001 AND 163011),
 			(SELECT count(*) FROM catalog_source_records record
 			 JOIN catalog_source_artifacts artifact ON artifact.id=record.artifact_id
 			 WHERE artifact.build_id=$2 AND record.record_key LIKE 'unavailable/%')`, productID, buildID).Scan(&entityCount, &recordCount); err != nil {
 		t.Fatal(err)
 	}
-	if entityCount != len(questIDs) || recordCount != 26 {
+	if entityCount != len(questIDs) || recordCount != 38 {
 		t.Fatalf("raw fixture data changed: entities=%d records=%d", entityCount, recordCount)
+	}
+}
+
+func insertQuestV2Row(t *testing.T, ctx context.Context, database *sql.DB, buildID int64, snapshotID, artifactID string, questID int64, hashByte string) {
+	t.Helper()
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_db2_rows(
+			build_id,table_name,locale,row_id,payload,content_hash,source_url,snapshot_id,source_artifact_id)
+		VALUES($1,'QuestV2','en_US',$2::bigint,jsonb_build_object('ID',$2::bigint),
+			decode(repeat($3::text,32),'hex'),'https://example.invalid/QuestV2',$4,$5)`,
+		buildID, questID, hashByte, snapshotID, artifactID); err != nil {
+		t.Fatal(err)
 	}
 }
 
