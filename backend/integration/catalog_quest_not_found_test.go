@@ -94,6 +94,9 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	}
 
 	publishedSnapshot := insertSnapshot(t, ctx, database, productID, buildID, "published", time.Now().UTC())
+	if _, err := database.ExecContext(ctx, `UPDATE catalog_snapshots SET release_id=$1 WHERE id=$2`, releaseID, publishedSnapshot); err != nil {
+		t.Fatal(err)
+	}
 	questIDs := []int64{163001, 163002, 163003, 163004, 163005, 163006, 163007, 163008, 163009, 163010, 163011, 163012, 163013, 163014, 163015, 163016}
 	versionIDs := make(map[int64]string, len(questIDs))
 	for _, questID := range questIDs {
@@ -173,35 +176,23 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	sourceDB2Artifact := insertArtifact(t, ctx, database, sourceDB2Snapshot, sourceBuildID, "wago_tools", "QuestV2", "en_US", "ready", sourceBuildNumber, sourceBuildVersion, now.Add(-time.Hour))
 	targetDB2Artifact := insertArtifact(t, ctx, database, publishedSnapshot, buildID, "wago_tools", "QuestV2", "en_US", "ready", buildNumber, buildVersion, now)
 	questLineArtifact := insertArtifact(t, ctx, database, publishedSnapshot, buildID, "wago_tools", "QuestLineXQuest", "en_US", "ready", buildNumber, buildVersion, now)
+	if _, err := database.ExecContext(ctx, `
+		UPDATE catalog_source_artifacts
+		SET metadata=metadata||jsonb_build_object('build',$1::text,'bounded',false)
+		WHERE id=$2`, buildVersion, questLineArtifact); err != nil {
+		t.Fatal(err)
+	}
 	insertQuestV2Row(t, ctx, database, sourceBuildID, sourceDB2Snapshot, sourceDB2Artifact, 163009, "aa")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163009, "aa")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163010, "bb")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163015, "dd")
 	insertQuestV2Row(t, ctx, database, sourceBuildID, sourceDB2Snapshot, sourceDB2Artifact, 163012, "cc")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163012, "cc")
-	if _, err := database.ExecContext(ctx, `
-		INSERT INTO catalog_quest_registry(build_id,quest_id,enrichment_status)
-		VALUES($1,163017,'registry_only')`, buildID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := database.ExecContext(ctx, `
-		INSERT INTO catalog_quest_lines(build_id,quest_line_id,flags)
-		VALUES($1,9917,0)`, buildID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := database.ExecContext(ctx, `
-		INSERT INTO catalog_quest_line_entries(build_id,quest_line_id,quest_id,order_index,flags)
-		VALUES($1,9917,163017,0,0)`, buildID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := database.ExecContext(ctx, `
-		INSERT INTO catalog_db2_rows(
-			build_id,table_name,locale,row_id,payload,content_hash,source_url,snapshot_id,source_artifact_id)
-		VALUES($1,'QuestLineXQuest','en_US',9917001,
-			'{"QuestID":"163017","QuestLineID":"9917"}'::jsonb,
-			decode(repeat('bc',32),'hex'),'https://example.invalid/QuestLineXQuest',$2,$3)`, buildID, publishedSnapshot, questLineArtifact); err != nil {
-		t.Fatal(err)
-	}
+	insertLineOnlyQuest(t, ctx, database, buildID, publishedSnapshot, questLineArtifact, 163017, 9917, 9917)
+	// A row tied to an artifact for the wrong table and a row whose raw line ID
+	// disagrees with the projected relationship must not prove an exclusion.
+	insertLineOnlyQuest(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163018, 9918, 9918)
+	insertLineOnlyQuest(t, ctx, database, buildID, publishedSnapshot, questLineArtifact, 163019, 9919, 9920)
 	stableMismatchNewSweep := insertSnapshot(t, ctx, database, productID, buildID, "validated", now)
 	indexSnapshot := insertSnapshot(t, ctx, database, productID, buildID, "validated", now.Add(-time.Minute))
 	if _, err := database.ExecContext(ctx, `
@@ -286,6 +277,8 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	assertQuestUsability(t, ctx, database, productID, buildID, 163015, "review", "official_not_found_build_mismatch")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163016, "eligible", "manual_reviewed")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163017, "excluded", "orphaned_quest_line_reference")
+	assertQuestUsabilityMissing(t, ctx, database, productID, buildID, 163018)
+	assertQuestUsabilityMissing(t, ctx, database, productID, buildID, 163019)
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163001, "official_not_found", "confirmed")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163008, "official_not_found", "build_mismatch")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163009, "official_not_found", "stable_source_build_confirmed")
@@ -293,6 +286,14 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163010, "registry_only", "true")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163013, "official_russian_title", "blank")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163017, "quest_line_reference", "true")
+
+	// Positive QuestV2 evidence must remove the prior orphan decision even if
+	// entity projection has not run yet.
+	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163017, "ee")
+	if err := database.QueryRowContext(ctx, `SELECT catalog_refresh_quest_usability($1)`, buildID).Scan(&refreshed); err != nil {
+		t.Fatal(err)
+	}
+	assertQuestUsabilityMissing(t, ctx, database, productID, buildID, 163017)
 
 	var entityCount, recordCount int
 	if err := database.QueryRowContext(ctx, `
@@ -316,6 +317,33 @@ func insertQuestV2Row(t *testing.T, ctx context.Context, database *sql.DB, build
 		VALUES($1,'QuestV2','en_US',$2::bigint,jsonb_build_object('ID',$2::bigint),
 			decode(repeat($3::text,32),'hex'),'https://example.invalid/QuestV2',$4,$5)`,
 		buildID, questID, hashByte, snapshotID, artifactID); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func insertLineOnlyQuest(t *testing.T, ctx context.Context, database *sql.DB, buildID int64, snapshotID, artifactID string, questID, projectedLineID, rawLineID int64) {
+	t.Helper()
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_quest_registry(build_id,quest_id,enrichment_status)
+		VALUES($1,$2,'registry_only')`, buildID, questID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_quest_lines(build_id,quest_line_id,flags)
+		VALUES($1,$2,0)`, buildID, projectedLineID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_quest_line_entries(build_id,quest_line_id,quest_id,order_index,flags)
+		VALUES($1,$2,$3,0,0)`, buildID, projectedLineID, questID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_db2_rows(
+			build_id,table_name,locale,row_id,payload,content_hash,source_url,snapshot_id,source_artifact_id)
+		VALUES($1,'QuestLineXQuest','en_US',$2,
+			jsonb_build_object('QuestID',$3::bigint::text,'QuestLineID',$4::bigint::text),
+			decode(repeat('bc',32),'hex'),'https://example.invalid/QuestLineXQuest',$5,$6)`, buildID, questID, questID, rawLineID, snapshotID, artifactID); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -428,6 +456,19 @@ func assertQuestUsability(t *testing.T, ctx context.Context, database *sql.DB, p
 	}
 	if decision != wantDecision || reason != wantReason {
 		t.Fatalf("quest %d usability = %s/%s, want %s/%s", questID, decision, reason, wantDecision, wantReason)
+	}
+}
+
+func assertQuestUsabilityMissing(t *testing.T, ctx context.Context, database *sql.DB, productID int16, buildID, questID int64) {
+	t.Helper()
+	var count int
+	if err := database.QueryRowContext(ctx, `
+		SELECT count(*) FROM catalog_entity_usability
+		WHERE product_id=$1 AND build_id=$2 AND entity_type='quest' AND external_id=$3`, productID, buildID, questID).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Fatalf("quest %d unexpectedly retained a usability row", questID)
 	}
 }
 
