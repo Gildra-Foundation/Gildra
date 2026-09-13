@@ -36,7 +36,7 @@ func run() error {
 	flag.StringVar(&temporaryDirectory, "temp-directory", "", "directory for the encrypted temporary archive")
 	flag.DurationVar(&timeout, "timeout", 2*time.Hour, "whole backup and restore-verification timeout")
 	flag.BoolVar(&preflight, "preflight", false, "validate backup configuration without accessing databases or object storage")
-	flag.IntVar(&retainVerified, "retain-verified", 9, "number of newest verified local PostgreSQL backups to retain")
+	flag.IntVar(&retainVerified, "retain-verified", 3, "number of newest verified local PostgreSQL backups to retain")
 	flag.Parse()
 	if retainVerified < 1 {
 		return errors.New("retain-verified must be at least 1")
