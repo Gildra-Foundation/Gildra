@@ -18,8 +18,34 @@ BEGIN
     SELECT catalog_refresh_quest_usability_v5(target_build_id)
     INTO baseline_affected;
 
+    -- v6 owns only rows that had no entity-backed decision. Rebuild that set
+    -- from the latest complete line table on every refresh so a newly arrived
+    -- QuestV2/client task or a removed line reference immediately clears the
+    -- old exclusion.
+    DELETE FROM catalog_entity_usability usability
+    WHERE usability.build_id=target_build_id
+      AND usability.entity_type='quest'
+      AND usability.rule_version='quest-localization-usability-v6';
+    GET DIAGNOSTICS stale_affected=ROW_COUNT;
+
     WITH target_build AS (
-        SELECT id,product_id FROM game_builds WHERE id=target_build_id
+        SELECT id,product_id,version FROM game_builds WHERE id=target_build_id
+    ), latest_line_artifact AS (
+        SELECT artifact.id
+        FROM catalog_source_artifacts artifact
+        JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
+        JOIN target_build target ON target.id=artifact.build_id
+        WHERE artifact.source='wago_tools'
+          AND artifact.artifact_key='QuestLineXQuest'
+          AND artifact.locale='en_US'
+          AND artifact.status='ready'
+          AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+          AND artifact.metadata->>'bounded'='false'
+          AND artifact.metadata->>'build'=target.version
+          AND snapshot.status IN ('validated','published')
+          AND snapshot.release_id IS NOT NULL
+        ORDER BY artifact.fetched_at DESC,artifact.id DESC
+        LIMIT 1
     ), orphan_references AS (
         SELECT registry.quest_id AS external_id,
                (array_agg(DISTINCT line.quest_line_id ORDER BY line.quest_line_id))[1] AS first_quest_line_id,
@@ -34,9 +60,8 @@ BEGIN
           ON raw.build_id=registry.build_id
          AND raw.table_name='QuestLineXQuest' AND raw.locale='en_US'
          AND raw.payload->>'QuestID'=registry.quest_id::text
-        JOIN catalog_source_artifacts artifact ON artifact.id=raw.source_artifact_id
-          AND artifact.status='ready'
-          AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+         AND raw.payload->>'QuestLineID'=line.quest_line_id::text
+        JOIN latest_line_artifact artifact ON artifact.id=raw.source_artifact_id
         WHERE registry.build_id=target_build_id
           AND NOT EXISTS (
               SELECT 1 FROM catalog_db2_rows quest
@@ -75,44 +100,8 @@ BEGIN
            'quest-localization-usability-v6',now()
     FROM orphan_references orphan
     JOIN target_build target ON true
-    ON CONFLICT(product_id,build_id,entity_type,external_id) DO UPDATE SET
-        decision=EXCLUDED.decision,
-        reason_code=EXCLUDED.reason_code,
-        source_artifact_id=EXCLUDED.source_artifact_id,
-        evidence=EXCLUDED.evidence,
-        rule_version=EXCLUDED.rule_version,
-        assessed_at=EXCLUDED.assessed_at
-    WHERE catalog_entity_usability.rule_version NOT LIKE 'midnight-%';
+    ON CONFLICT(product_id,build_id,entity_type,external_id) DO NOTHING;
     GET DIAGNOSTICS orphan_affected=ROW_COUNT;
-
-    DELETE FROM catalog_entity_usability usability
-    WHERE usability.build_id=target_build_id
-      AND usability.entity_type='quest'
-      AND usability.rule_version='quest-localization-usability-v6'
-      AND NOT EXISTS (
-          SELECT 1
-          FROM catalog_quest_registry registry
-          JOIN catalog_quest_line_entries line
-            ON line.build_id=registry.build_id AND line.quest_id=registry.quest_id
-          WHERE registry.build_id=target_build_id
-            AND registry.quest_id=usability.external_id
-            AND NOT EXISTS (
-                SELECT 1 FROM catalog_db2_rows quest
-                WHERE quest.build_id=registry.build_id
-                  AND quest.table_name IN ('QuestV2','QuestV2CliTask')
-                  AND quest.locale='en_US' AND quest.row_id=registry.quest_id
-            )
-            AND EXISTS (
-                SELECT 1 FROM catalog_db2_rows raw
-                JOIN catalog_source_artifacts artifact ON artifact.id=raw.source_artifact_id
-                WHERE raw.build_id=registry.build_id
-                  AND raw.table_name='QuestLineXQuest' AND raw.locale='en_US'
-                  AND raw.payload->>'QuestID'=registry.quest_id::text
-                  AND artifact.status='ready'
-                  AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
-            )
-      );
-    GET DIAGNOSTICS stale_affected=ROW_COUNT;
 
     RETURN baseline_affected+orphan_affected+stale_affected;
 END;
