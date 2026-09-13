@@ -172,12 +172,36 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	sourceDB2Snapshot := insertSnapshot(t, ctx, database, productID, sourceBuildID, "published", now.Add(-time.Hour))
 	sourceDB2Artifact := insertArtifact(t, ctx, database, sourceDB2Snapshot, sourceBuildID, "wago_tools", "QuestV2", "en_US", "ready", sourceBuildNumber, sourceBuildVersion, now.Add(-time.Hour))
 	targetDB2Artifact := insertArtifact(t, ctx, database, publishedSnapshot, buildID, "wago_tools", "QuestV2", "en_US", "ready", buildNumber, buildVersion, now)
+	questLineArtifact := insertArtifact(t, ctx, database, publishedSnapshot, buildID, "wago_tools", "QuestLineXQuest", "en_US", "ready", buildNumber, buildVersion, now)
 	insertQuestV2Row(t, ctx, database, sourceBuildID, sourceDB2Snapshot, sourceDB2Artifact, 163009, "aa")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163009, "aa")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163010, "bb")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163015, "dd")
 	insertQuestV2Row(t, ctx, database, sourceBuildID, sourceDB2Snapshot, sourceDB2Artifact, 163012, "cc")
 	insertQuestV2Row(t, ctx, database, buildID, publishedSnapshot, targetDB2Artifact, 163012, "cc")
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_quest_registry(build_id,quest_id,enrichment_status)
+		VALUES($1,163017,'registry_only')`, buildID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_quest_lines(build_id,quest_line_id,flags)
+		VALUES($1,9917,0)`, buildID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_quest_line_entries(build_id,quest_line_id,quest_id,order_index,flags)
+		VALUES($1,9917,163017,0,0)`, buildID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_db2_rows(
+			build_id,table_name,locale,row_id,payload,content_hash,source_url,snapshot_id,source_artifact_id)
+		VALUES($1,'QuestLineXQuest','en_US',9917001,
+			'{"QuestID":"163017","QuestLineID":"9917"}'::jsonb,
+			decode(repeat('bc',32),'hex'),'https://example.invalid/QuestLineXQuest',$2,$3)`, buildID, publishedSnapshot, questLineArtifact); err != nil {
+		t.Fatal(err)
+	}
 	stableMismatchNewSweep := insertSnapshot(t, ctx, database, productID, buildID, "validated", now)
 	indexSnapshot := insertSnapshot(t, ctx, database, productID, buildID, "validated", now.Add(-time.Minute))
 	if _, err := database.ExecContext(ctx, `
@@ -261,12 +285,14 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	assertQuestUsability(t, ctx, database, productID, buildID, 163014, "excluded", "technical_or_placeholder_marker")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163015, "review", "official_not_found_build_mismatch")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163016, "eligible", "manual_reviewed")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163017, "excluded", "orphaned_quest_line_reference")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163001, "official_not_found", "confirmed")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163008, "official_not_found", "build_mismatch")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163009, "official_not_found", "stable_source_build_confirmed")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163011, "quest_v2_row_present", "false")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163010, "registry_only", "true")
 	assertQuestEvidence(t, ctx, database, productID, buildID, 163013, "official_russian_title", "blank")
+	assertQuestEvidence(t, ctx, database, productID, buildID, 163017, "quest_line_reference", "true")
 
 	var entityCount, recordCount int
 	if err := database.QueryRowContext(ctx, `
