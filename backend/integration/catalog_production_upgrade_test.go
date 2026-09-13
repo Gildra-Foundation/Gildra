@@ -29,7 +29,7 @@ import (
 // The test intentionally upgrades from the immutable v15 baseline through the
 // full catalog schema so newly added quality/read-model migrations cannot be
 // skipped silently.
-const latestCatalogSchemaVersion int64 = 163
+const latestCatalogSchemaVersion int64 = 164
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	ctx := context.Background()
@@ -425,6 +425,43 @@ func assertUIMapReadModelBuildGuard(t *testing.T, ctx context.Context, database 
 	}
 	if _, err := database.ExecContext(ctx, `SELECT assert_catalog_ui_map_read_model($1,$2)`, productID, buildID); err != nil {
 		t.Fatalf("validate ui_map read model: %v", err)
+	}
+	var excludedEntityID string
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_entities(
+			product_id,namespace_id,entity_type,external_id,canonical_slug,
+			first_seen_build_id,last_seen_build_id
+		) VALUES($1,$2,'ui_map',424244,'ui-map-424244',$3,$3)
+		RETURNING id::text`, productID, namespaceID, buildID).Scan(&excludedEntityID); err != nil {
+		t.Fatalf("seed excluded ui_map entity: %v", err)
+	}
+	var excludedVersionID string
+	if err := database.QueryRowContext(ctx, `
+		INSERT INTO game_entity_versions(entity_id,build_id,content_hash,payload,source_url)
+		VALUES($1,$2,decode(repeat('bb',32),'hex'),
+			'{"registry_only":true,"db2":{"Name_lang":"Deprecated [DNT]"}}'::jsonb,
+			'https://wago.tools/db2/UiMap/csv?build=99.0.0.999998')
+		RETURNING id::text`, excludedEntityID, buildID).Scan(&excludedVersionID); err != nil {
+		t.Fatalf("seed excluded ui_map version: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		UPDATE game_entities SET latest_version_id=$2::uuid,published_version_id=$2::uuid WHERE id=$1::uuid`, excludedEntityID, excludedVersionID); err != nil {
+		t.Fatalf("publish excluded ui_map version: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_entity_usability(
+			product_id,build_id,entity_type,external_id,decision,reason_code,rule_version,evidence
+		) VALUES($1,$2,'ui_map',424244,'excluded','technical_or_placeholder_marker','test','{}')`, productID, buildID); err != nil {
+		t.Fatalf("exclude ui_map from public dataset: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `SELECT refresh_catalog_read_models($1)`, productID); err != nil {
+		t.Fatalf("refresh filtered ui_map entity read model: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
+		t.Fatalf("refresh filtered ui_map dataset read model: %v", err)
+	}
+	if _, err := database.ExecContext(ctx, `SELECT assert_catalog_ui_map_read_model($1,$2)`, productID, buildID); err != nil {
+		t.Fatalf("validate filtered ui_map read model: %v", err)
 	}
 	if _, err := database.ExecContext(ctx, `SELECT assert_catalog_ui_map_read_model($1,$2)`, productID, buildID+1); err == nil {
 		t.Fatal("ui_map read model guard accepted a non-active build")
