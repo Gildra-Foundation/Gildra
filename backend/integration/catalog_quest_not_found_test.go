@@ -24,7 +24,9 @@ import (
 // a stable DB2 comparison can exclude only a non-technical quest without a
 // successful official document/localization. It also proves that an official
 // blank Russian title and an explicit editor placeholder are retained raw but
-// excluded from the player-facing bilingual denominator.
+// excluded from the player-facing bilingual denominator. Ordinary localized
+// titles containing the word "Test" remain publishable, while an unmistakable
+// "Test Quest" fixture remains excluded.
 func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	ctx := context.Background()
 	migrations, err := filepath.Abs("../migrations/postgres")
@@ -53,7 +55,7 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	if err := goose.SetDialect("postgres"); err != nil {
 		t.Fatal(err)
 	}
-	if err := goose.UpContext(ctx, database, migrations); err != nil {
+	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion-1); err != nil {
 		t.Fatal(err)
 	}
 
@@ -97,7 +99,7 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	if _, err := database.ExecContext(ctx, `UPDATE catalog_snapshots SET release_id=$1 WHERE id=$2`, releaseID, publishedSnapshot); err != nil {
 		t.Fatal(err)
 	}
-	questIDs := []int64{163001, 163002, 163003, 163004, 163005, 163006, 163007, 163008, 163009, 163010, 163011, 163012, 163013, 163014, 163015, 163016}
+	questIDs := []int64{163001, 163002, 163003, 163004, 163005, 163006, 163007, 163008, 163009, 163010, 163011, 163012, 163013, 163014, 163015, 163016, 163020, 163021, 163022}
 	versionIDs := make(map[int64]string, len(questIDs))
 	for _, questID := range questIDs {
 		versionIDs[questID] = insertQuest(t, ctx, database, productID, namespaceID, buildID, publishedSnapshot, questID, "", "")
@@ -112,6 +114,21 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 			INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
 			VALUES($1,$2,$3)`, versionIDs[163005], locale, wagoArtifact); err != nil {
 			t.Fatal(err)
+		}
+	}
+	setQuestLocalization(t, ctx, database, versionIDs[163020], "en_US", "A Test of Courage")
+	setQuestLocalization(t, ctx, database, versionIDs[163020], "ru_RU", "Испытание храбрости")
+	setQuestLocalization(t, ctx, database, versionIDs[163021], "en_US", "Test Quest")
+	setQuestLocalization(t, ctx, database, versionIDs[163021], "ru_RU", "Тестовое задание")
+	setQuestLocalization(t, ctx, database, versionIDs[163022], "en_US", "Test-Quest")
+	setQuestLocalization(t, ctx, database, versionIDs[163022], "ru_RU", "Тестовое задание")
+	for _, questID := range []int64{163020, 163021, 163022} {
+		for _, locale := range []string{"en_US", "ru_RU"} {
+			if _, err := database.ExecContext(ctx, `
+				INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+				VALUES($1,$2,$3)`, versionIDs[questID], locale, wagoArtifact); err != nil {
+				t.Fatal(err)
+			}
 		}
 	}
 	// Technical markers retain the baseline exclusion priority even with two
@@ -252,6 +269,27 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Migration 169 must reclassify existing rows immediately, and its Down
+	// path must restore the previous broad behavior before a re-apply.
+	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion); err != nil {
+		t.Fatal(err)
+	}
+	assertQuestUsability(t, ctx, database, productID, buildID, 163020, "eligible", "verified_bilingual_localization")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163021, "excluded", "technical_or_placeholder_marker")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163022, "excluded", "technical_or_placeholder_marker")
+	if err := goose.DownToContext(ctx, database, migrations, latestCatalogSchemaVersion-1); err != nil {
+		t.Fatal(err)
+	}
+	assertQuestUsability(t, ctx, database, productID, buildID, 163020, "excluded", "technical_or_placeholder_marker")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163021, "excluded", "technical_or_placeholder_marker")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163022, "excluded", "technical_or_placeholder_marker")
+	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion); err != nil {
+		t.Fatal(err)
+	}
+	assertQuestUsability(t, ctx, database, productID, buildID, 163020, "eligible", "verified_bilingual_localization")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163021, "excluded", "technical_or_placeholder_marker")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163022, "excluded", "technical_or_placeholder_marker")
+
 	var refreshed int64
 	if err := database.QueryRowContext(ctx, `SELECT catalog_refresh_quest_usability($1)`, buildID).Scan(&refreshed); err != nil {
 		t.Fatal(err)
@@ -276,6 +314,9 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	assertQuestUsability(t, ctx, database, productID, buildID, 163014, "excluded", "technical_or_placeholder_marker")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163015, "review", "official_not_found_build_mismatch")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163016, "eligible", "manual_reviewed")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163020, "eligible", "verified_bilingual_localization")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163021, "excluded", "technical_or_placeholder_marker")
+	assertQuestUsability(t, ctx, database, productID, buildID, 163022, "excluded", "technical_or_placeholder_marker")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163017, "excluded", "orphaned_quest_line_reference")
 	assertQuestUsabilityMissing(t, ctx, database, productID, buildID, 163018)
 	assertQuestUsabilityMissing(t, ctx, database, productID, buildID, 163019)
@@ -298,7 +339,7 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	var entityCount, recordCount int
 	if err := database.QueryRowContext(ctx, `
 		SELECT
-			(SELECT count(*) FROM game_entities WHERE product_id=$1 AND entity_type='quest' AND external_id BETWEEN 163001 AND 163016),
+			(SELECT count(*) FROM game_entities WHERE product_id=$1 AND entity_type='quest' AND external_id BETWEEN 163001 AND 163022),
 			(SELECT count(*) FROM catalog_source_records record
 			 JOIN catalog_source_artifacts artifact ON artifact.id=record.artifact_id
 			 WHERE artifact.build_id=$2 AND record.record_key LIKE 'unavailable/%')`, productID, buildID).Scan(&entityCount, &recordCount); err != nil {
