@@ -126,7 +126,7 @@ existing database.
 catalog-backup \
   -product wow \
   -object-prefix catalog-backups \
-  -timeout 2h
+  -timeout 6h
 ```
 
 Successful output contains only non-secret evidence: manifest ID, storage
