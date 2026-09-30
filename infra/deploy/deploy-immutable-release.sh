@@ -208,7 +208,15 @@ ensure_recovery_backup() {
   [ -x "$backup_script" ] || fail 'catalog schema changed or recovery evidence is stale, but the local backup runner is missing'
   printf 'deploy: refreshing verified local recovery evidence (schema=%s, previous_backup=%s|%s)\n' \
     "$current_schema" "$backup_version" "$backup_epoch" >&2
-  GILDRA_DEPLOYMENT_DIRECTORY="$deployment_directory" \
+  # The runner reads its image references from the release manifest through
+  # `docker compose --env-file`, but an exported variable beats an env file.
+  # This script exports the images of the release being deployed, so without
+  # `env -u` the backup before the upgrade would run the NEW image against the
+  # OLD schema and be refused by its minimum-schema check. Clear them and let
+  # the manifest decide: the previous release before the upgrade, the new one
+  # once write_release_manifest has recorded it.
+  env -u WEB_IMAGE -u API_IMAGE -u CMS_IMAGE -u SCRAPER_IMAGE -u ROTATION_WORKER_IMAGE \
+    GILDRA_DEPLOYMENT_DIRECTORY="$deployment_directory" \
     GILDRA_ENV_FILE="$environment_file" \
     GILDRA_RELEASE_ENV_FILE="$current_manifest" \
     "$backup_script"
