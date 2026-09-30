@@ -23,10 +23,16 @@ new_web=ghcr.io/gildra-foundation/gildra-web@sha256:1111111111111111111111111111
 new_api=ghcr.io/gildra-foundation/gildra-api@sha256:2222222222222222222222222222222222222222222222222222222222222222
 new_cms=ghcr.io/gildra-foundation/gildra-cms@sha256:3333333333333333333333333333333333333333333333333333333333333333
 new_scraper=ghcr.io/gildra-foundation/gildra-scraper@sha256:4444444444444444444444444444444444444444444444444444444444444444
+new_rotation_worker=ghcr.io/gildra-foundation/gildra-rotation-sim-worker@sha256:5555555555555555555555555555555555555555555555555555555555555555
 
 for file in .env compose.yml compose.prod.yml compose.runtime.yml; do
   : > "$deployment_directory/$file"
 done
+# The release syncs the uploaded nginx configuration after the containers start;
+# without this file the deployment would fail (and roll back) at that step
+# instead of at the health gate these scenarios exercise.
+mkdir -p "$deployment_directory/infra/nginx"
+printf 'server {}\n' > "$deployment_directory/infra/nginx/prod.conf"
 
 {
   printf 'CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups\n'
@@ -111,12 +117,13 @@ while [ "$#" -gt 0 ]; do
       count=$(cat "$TEST_STATE_DIR/up-count")
       count=$((count + 1))
       printf '%s\n' "$count" > "$TEST_STATE_DIR/up-count"
-      for service in web api catalog-backup cms scraper scraper-worker; do
+      for service in web api catalog-backup cms scraper scraper-worker rotation-sim-worker; do
         case $service in
           web) image=$WEB_IMAGE ;;
           api|catalog-backup) image=$API_IMAGE ;;
           cms) image=$CMS_IMAGE ;;
           scraper|scraper-worker) image=$SCRAPER_IMAGE ;;
+          rotation-sim-worker) image=$ROTATION_WORKER_IMAGE ;;
         esac
         printf '%s\n' "$image" > "$TEST_STATE_DIR/$service.image"
       done
@@ -176,6 +183,7 @@ if PATH="$fake_bin:$PATH" \
   API_IMAGE=$new_api \
   CMS_IMAGE=$new_cms \
   SCRAPER_IMAGE=$new_scraper \
+  ROTATION_WORKER_IMAGE=$new_rotation_worker \
   GILDRA_SOURCE_REVISION=1111111111111111111111111111111111111111 \
   GILDRA_RELEASE_ID=test-release \
   GILDRA_ROLLBACK_COMPATIBLE=true \
@@ -192,7 +200,14 @@ fi
 [ "$(cat "$state_directory/api.image")" = "$old_api" ]
 [ "$(cat "$state_directory/cms.image")" = "$old_cms" ]
 [ "$(cat "$state_directory/scraper.image")" = "$old_scraper" ]
+# The previous release predates the rotation worker: its manifest has no entry
+# for it, so a rollback keeps the worker of the failed release running.
+[ "$(cat "$state_directory/rotation-sim-worker.image")" = "$new_rotation_worker" ]
 grep -q "WEB_IMAGE=$old_web" "$deployment_directory/current-release.env"
+if grep -q '^ROTATION_WORKER_IMAGE=' "$deployment_directory/current-release.env"; then
+  printf 'test: rollback must restore the previous manifest exactly, which has no rotation worker entry\n' >&2
+  exit 1
+fi
 grep -q '^FAILED_RELEASE_ID=test-release$' "$deployment_directory/last-rollback.env"
 grep -q '^RESTORED_RELEASE_ID=legacy$' "$deployment_directory/last-rollback.env"
 grep -q 'rollback completed and verified' "$test_directory/deploy.log"
@@ -252,6 +267,62 @@ rollback_disarm_line=$(grep -n '^rollback_armed=false$' "$deployment_script" | t
 }
 
 printf 'test: failed release restored and verified the previous immutable images\n'
+
+# A release contract without the rotation worker image must be refused.
+if PATH="$fake_bin:$PATH" \
+  WEB_IMAGE=$new_web API_IMAGE=$new_api CMS_IMAGE=$new_cms SCRAPER_IMAGE=$new_scraper \
+  GILDRA_SOURCE_REVISION=1111111111111111111111111111111111111111 \
+  GILDRA_RELEASE_ID=test-release GILDRA_ROLLBACK_COMPATIBLE=true \
+  "$deployment_script" --validate-only >/dev/null 2>&1; then
+  printf 'test: a release without ROTATION_WORKER_IMAGE must fail validation\n' >&2
+  exit 1
+fi
+if PATH="$fake_bin:$PATH" \
+  WEB_IMAGE=$new_web API_IMAGE=$new_api CMS_IMAGE=$new_cms SCRAPER_IMAGE=$new_scraper \
+  ROTATION_WORKER_IMAGE=gildra-rotation-sim-worker:latest \
+  GILDRA_SOURCE_REVISION=1111111111111111111111111111111111111111 \
+  GILDRA_RELEASE_ID=test-release GILDRA_ROLLBACK_COMPATIBLE=true \
+  "$deployment_script" --validate-only >/dev/null 2>&1; then
+  printf 'test: an unpinned rotation worker image must fail validation\n' >&2
+  exit 1
+fi
+
+# A healthy release over a manifest that predates the worker: it must record the
+# worker image, and repeating the identical release must be a no-op.
+deploy_success() {
+  PATH="$fake_bin:$PATH" \
+    TEST_STATE_DIR=$state_directory \
+    TEST_NEW_WEB=never \
+    GILDRA_DEPLOY_DIR=$deployment_directory \
+    GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock \
+    WEB_IMAGE=$new_web \
+    API_IMAGE=$new_api \
+    CMS_IMAGE=$new_cms \
+    SCRAPER_IMAGE=$new_scraper \
+    ROTATION_WORKER_IMAGE=$new_rotation_worker \
+    GILDRA_SOURCE_REVISION=2222222222222222222222222222222222222222 \
+    GILDRA_RELEASE_ID=test-release-ok \
+    GILDRA_ROLLBACK_COMPATIBLE=true \
+    "$deployment_script" > "$test_directory/deploy-ok.log" 2>&1
+}
+up_before=$(cat "$state_directory/up-count")
+deploy_success || {
+  cat "$test_directory/deploy-ok.log" >&2
+  printf 'test: a healthy release with the rotation worker should succeed\n' >&2
+  exit 1
+}
+[ "$(cat "$state_directory/up-count")" -eq $((up_before + 1)) ]
+[ "$(cat "$state_directory/rotation-sim-worker.image")" = "$new_rotation_worker" ]
+grep -q "^ROTATION_WORKER_IMAGE=$new_rotation_worker$" "$deployment_directory/current-release.env"
+grep -q 'immutable release is running and verified' "$test_directory/deploy-ok.log"
+deploy_success || {
+  cat "$test_directory/deploy-ok.log" >&2
+  printf 'test: repeating the identical release should be a healthy no-op\n' >&2
+  exit 1
+}
+[ "$(cat "$state_directory/up-count")" -eq $((up_before + 1)) ]
+grep -q 'requested immutable images are already running and healthy' "$test_directory/deploy-ok.log"
+printf 'test: rotation worker joins the immutable release contract\n'
 
 bootstrap_env=$test_directory/bootstrap.env
 printf 'LEGACY_SETTING=kept\n' > "$bootstrap_env"

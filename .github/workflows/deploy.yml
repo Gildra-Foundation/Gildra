@@ -39,6 +39,9 @@ jobs:
           - name: scraper
             context: ./scraper
             file: ./scraper/Dockerfile
+          - name: rotation-sim-worker
+            context: .
+            file: ./infra/simc/Dockerfile
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -97,11 +100,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for name in web api cms scraper; do
+          for name in web api cms scraper rotation-sim-worker; do
             ref="$IMAGE_PREFIX-$name:$IMAGE_SHA"
             digest="$(docker buildx imagetools inspect "$ref" --format '{{json .Manifest.Digest}}' | tr -d '"')"
             printf '%s\n' "$digest" | grep -Eq '^sha256:[0-9a-f]{64}$'
-            key="$(printf '%s_IMAGE' "$name" | tr '[:lower:]' '[:upper:]')"
+            case "$name" in
+              rotation-sim-worker) key=ROTATION_WORKER_IMAGE ;;
+              *) key="$(printf '%s_IMAGE' "$name" | tr '[:lower:]' '[:upper:]')" ;;
+            esac
             printf '%s=%s\n' "$key" "$IMAGE_PREFIX-$name@$digest" >> "$GITHUB_OUTPUT"
           done
       - name: Validate immutable release contract
@@ -110,6 +116,7 @@ jobs:
           API_IMAGE: ${{ steps.images.outputs.API_IMAGE }}
           CMS_IMAGE: ${{ steps.images.outputs.CMS_IMAGE }}
           SCRAPER_IMAGE: ${{ steps.images.outputs.SCRAPER_IMAGE }}
+          ROTATION_WORKER_IMAGE: ${{ steps.images.outputs.ROTATION_WORKER_IMAGE }}
           GILDRA_SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
           GILDRA_RELEASE_ID: ${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.head_sha }}
           GILDRA_ROLLBACK_COMPATIBLE: "true"
@@ -168,11 +175,12 @@ jobs:
           API_IMAGE: ${{ steps.images.outputs.API_IMAGE }}
           CMS_IMAGE: ${{ steps.images.outputs.CMS_IMAGE }}
           SCRAPER_IMAGE: ${{ steps.images.outputs.SCRAPER_IMAGE }}
+          ROTATION_WORKER_IMAGE: ${{ steps.images.outputs.ROTATION_WORKER_IMAGE }}
           GILDRA_SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
           GILDRA_RELEASE_ID: ${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.head_sha }}
         run: |
           ssh "$OVH_USER@$OVH_HOST" \
-            "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
+            "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' ROTATION_WORKER_IMAGE='$ROTATION_WORKER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
       - name: Verify public production paths
         shell: bash
         run: |
