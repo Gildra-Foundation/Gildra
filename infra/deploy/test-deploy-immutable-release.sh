@@ -31,8 +31,17 @@ done
 # The release syncs the uploaded nginx configuration after the containers start;
 # without this file the deployment would fail (and roll back) at that step
 # instead of at the health gate these scenarios exercise.
-mkdir -p "$deployment_directory/infra/nginx"
+mkdir -p "$deployment_directory/infra/nginx" "$deployment_directory/infra/backup"
 printf 'server {}\n' > "$deployment_directory/infra/nginx/prod.conf"
+# A stand-in for the real backup runner that records which image it would run:
+# the variable inherited from the deployment, and the one in the release
+# manifest it was pointed at.
+cat > "$deployment_directory/infra/backup/run-catalog-backup.sh" <<'FAKE_BACKUP'
+#!/bin/sh
+printf 'env_api=%s manifest_api=%s\n' "${API_IMAGE:-unset}" \
+  "$(sed -n 's/^API_IMAGE=//p' "$GILDRA_RELEASE_ENV_FILE")" >> "$TEST_STATE_DIR/backup-calls.log"
+FAKE_BACKUP
+chmod +x "$deployment_directory/infra/backup/run-catalog-backup.sh"
 
 {
   printf 'CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups\n'
@@ -76,7 +85,7 @@ if [ "$1" = exec ]; then
   # this test remains focused on immutable image rollback behaviour.
   case "$*" in
     *goose_db_version*) printf '116\n' ;;
-    *) printf '116|9999999999\n' ;;
+    *) if [ -n "${TEST_BACKUP_STALE:-}" ]; then printf '0|0\n'; else printf '116|9999999999\n'; fi ;;
   esac
   exit 0
 fi
@@ -323,6 +332,49 @@ deploy_success || {
 [ "$(cat "$state_directory/up-count")" -eq $((up_before + 1)) ]
 grep -q 'requested immutable images are already running and healthy' "$test_directory/deploy-ok.log"
 printf 'test: rotation worker joins the immutable release contract\n'
+
+# Stale recovery evidence plus a release that raises the minimum schema version:
+# the backup taken before the upgrade must run the image recorded in the current
+# manifest (the release being replaced), not the exported image of the release
+# being deployed. After the upgrade it must use the new release's image.
+next_web=ghcr.io/gildra-foundation/gildra-web@sha256:6666666666666666666666666666666666666666666666666666666666666666
+next_api=ghcr.io/gildra-foundation/gildra-api@sha256:7777777777777777777777777777777777777777777777777777777777777777
+next_cms=ghcr.io/gildra-foundation/gildra-cms@sha256:8888888888888888888888888888888888888888888888888888888888888888
+next_scraper=ghcr.io/gildra-foundation/gildra-scraper@sha256:9999999999999999999999999999999999999999999999999999999999999999
+next_worker=ghcr.io/gildra-foundation/gildra-rotation-sim-worker@sha256:abababababababababababababababababababababababababababababababab
+rm -f "$state_directory/backup-calls.log"
+PATH="$fake_bin:$PATH" \
+  TEST_STATE_DIR=$state_directory \
+  TEST_NEW_WEB=never \
+  TEST_BACKUP_STALE=1 \
+  GILDRA_DEPLOY_DIR=$deployment_directory \
+  GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock \
+  WEB_IMAGE=$next_web API_IMAGE=$next_api CMS_IMAGE=$next_cms SCRAPER_IMAGE=$next_scraper \
+  ROTATION_WORKER_IMAGE=$next_worker \
+  GILDRA_SOURCE_REVISION=3333333333333333333333333333333333333333 \
+  GILDRA_RELEASE_ID=test-release-stale \
+  GILDRA_ROLLBACK_COMPATIBLE=true \
+  "$deployment_script" > "$test_directory/deploy-stale.log" 2>&1 || {
+  cat "$test_directory/deploy-stale.log" >&2
+  printf 'test: a release with stale recovery evidence should succeed\n' >&2
+  exit 1
+}
+[ "$(wc -l < "$state_directory/backup-calls.log")" -eq 2 ] || {
+  cat "$state_directory/backup-calls.log" >&2
+  printf 'test: expected one backup before the upgrade and one after it\n' >&2
+  exit 1
+}
+[ "$(sed -n 1p "$state_directory/backup-calls.log")" = "env_api=unset manifest_api=$new_api" ] || {
+  cat "$state_directory/backup-calls.log" >&2
+  printf 'test: the backup before the upgrade must run the current release image, not the exported new one\n' >&2
+  exit 1
+}
+[ "$(sed -n 2p "$state_directory/backup-calls.log")" = "env_api=unset manifest_api=$next_api" ] || {
+  cat "$state_directory/backup-calls.log" >&2
+  printf 'test: the backup after the upgrade must run the new release image from the manifest\n' >&2
+  exit 1
+}
+printf 'test: pre-upgrade backup runs the image of the release being replaced\n'
 
 bootstrap_env=$test_directory/bootstrap.env
 printf 'LEGACY_SETTING=kept\n' > "$bootstrap_env"
