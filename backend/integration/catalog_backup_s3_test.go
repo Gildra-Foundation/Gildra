@@ -21,10 +21,13 @@ func TestCatalogBackupS3StoreTransfersMultipartObject(t *testing.T) {
 	ctx := context.Background()
 	const accessKey = "gildra-integration-access"
 	const secretKey = "gildra-integration-secret-key"
-	container, err := testcontainers.Run(ctx, "quay.io/minio/minio:RELEASE.2025-07-23T15-54-02Z",
+	// MinIO removed its community images from Docker Hub and Quay, so any pull of
+	// the previous pinned release now fails with "unauthorized". RustFS is an
+	// S3-compatible server that accepts the same credential variables and serves
+	// the same readiness path. Pinned by digest (release 1.0.0) for repeatability.
+	container, err := testcontainers.Run(ctx, "rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff",
 		testcontainers.WithExposedPorts("9000/tcp"),
-		testcontainers.WithEnv(map[string]string{"MINIO_ROOT_USER": accessKey, "MINIO_ROOT_PASSWORD": secretKey}),
-		testcontainers.WithCmd("server", "/data"),
+		testcontainers.WithEnv(map[string]string{"RUSTFS_ROOT_USER": accessKey, "RUSTFS_ROOT_PASSWORD": secretKey}),
 		testcontainers.WithWaitStrategy(wait.ForHTTP("/minio/health/ready").WithPort("9000/tcp")),
 	)
 	if err != nil {
