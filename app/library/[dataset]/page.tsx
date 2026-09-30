@@ -1,7 +1,9 @@
 import { PageShell } from "@/components/layout/PageShell";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { DatabaseDirectory } from "@/components/DatabaseDirectory";
+import { CatalogTotal } from "@/components/database/CatalogTotal";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
 import { requireCatalogSession } from "@/lib/library/server";
@@ -27,17 +29,19 @@ export default async function LibraryDatasetPage({ params, searchParams }: { par
   const dataset = datasets.find((entry) => entry.slug === slug);
   if (!dataset) notFound();
   const facets = Array.isArray(filters.facet) ? filters.facet : filters.facet ? [filters.facet] : [];
+  const catalogParams = { locale: "en_US" as const, product, dataset: dataset.slug, facets, query: filters.q, cursor: filters.cursor, minItemLevel: optionalNumber(filters.minLevel), maxItemLevel: optionalNumber(filters.maxLevel), minRequiredLevel: optionalNumber(filters.minRequiredLevel), maxRequiredLevel: optionalNumber(filters.maxRequiredLevel) };
+  const catalogTotalParams = { ...catalogParams, cursor: undefined };
   let catalog, categories, entityTypes, products;
   try {
     [catalog, categories, entityTypes, products] = await Promise.all([
-      getCatalogPage({ locale: "en_US", product, dataset: dataset.slug, facets, query: filters.q, cursor: filters.cursor, minItemLevel: optionalNumber(filters.minLevel), maxItemLevel: optionalNumber(filters.maxLevel), minRequiredLevel: optionalNumber(filters.minRequiredLevel), maxRequiredLevel: optionalNumber(filters.maxRequiredLevel) }),
+      getCatalogPage({ ...catalogParams, includeTotal: false }),
       getCatalogCategories("en_US", dataset.entityType, product), getCatalogEntityTypes("en_US", product), getCatalogProducts(),
     ]);
   } catch (error) {
     console.error("library dataset unavailable", error);
     return <UnavailablePage />;
   }
-  return <PageShell lang="en" variant="route"><DatabaseDirectory catalog={catalog} categories={categories} entityTypes={entityTypes} products={products} query={filters.q ?? ""} selectedProduct={product} selectedType={dataset.entityType} selectedCategory="" selectedFacets={facets} cursor={filters.cursor ?? ""} minItemLevel={filters.minLevel ?? ""} maxItemLevel={filters.maxLevel ?? ""} minRequiredLevel={filters.minRequiredLevel ?? ""} maxRequiredLevel={filters.maxRequiredLevel ?? ""} libraryDataset={{ slug: dataset.slug, name: dataset.name, description: dataset.description, itemClassId: dataset.itemClassId }} /></PageShell>;
+  return <PageShell lang="en" variant="route"><DatabaseDirectory totalCount={<Suspense fallback="…"><CatalogTotal params={catalogTotalParams} /></Suspense>} catalog={catalog} categories={categories} entityTypes={entityTypes} products={products} query={filters.q ?? ""} selectedProduct={product} selectedType={dataset.entityType} selectedCategory="" selectedFacets={facets} cursor={filters.cursor ?? ""} minItemLevel={filters.minLevel ?? ""} maxItemLevel={filters.maxLevel ?? ""} minRequiredLevel={filters.minRequiredLevel ?? ""} maxRequiredLevel={filters.maxRequiredLevel ?? ""} libraryDataset={{ slug: dataset.slug, name: dataset.name, description: dataset.description, itemClassId: dataset.itemClassId }} /></PageShell>;
 }
 
 function UnavailablePage() {

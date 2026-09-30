@@ -1,0 +1,34 @@
+{
+  "tool": "built-in image_gen",
+  "createdAt": "2026-09-26",
+  "note": "Generated cinematic scene assets, distinct from the user-supplied static backdrop portraits. Prompts requested alpha; actual output properties are verified before integration.",
+  "assets": [
+    {
+      "key": "intro-arthas",
+      "args": {
+        "referenced_image_paths": [
+          "/home/debian/Gildra-integrated/public/assets/wow/character-book/arthas-original.jpg"
+        ],
+        "prompt": "Use case: stylized-concept. Asset type: transparent cinematic character layer for a Warcraft website opening sequence. Image 1 is a CHARACTER IDENTITY and material reference only, not the pose. Generate Arthas Menethil, long white hair, pale stern face, glowing cold blue eyes, recognizable heavy dark skull armor, in an active two-handed Frostmourne striking pose facing RIGHT. Composition: landscape 3:2 canvas, knee-up three-quarter side view; body anchored in the LEFT half, forward-leaning shoulders and extended armored arms. His ONLY sword is the recognizable large skull-hilt icy runeblade Frostmourne: grip at lower middle, blade running diagonally toward the UPPER RIGHT, tip near 92% canvas width and 20% canvas height. Keep the complete blade, both hands, head and shoulders inside the canvas with 5% padding. This layer will meet an opponent entering from the right, so keep the silhouette clean and mechanically credible. Style: meticulous classic Warcraft dark-fantasy cinematic matte painting, weathered steel, restrained icy light, sharp readable anatomy, no plastic AI gloss, no excessive tiny ornaments. No helmet so recognizable face remains visible. GENUINELY TRANSPARENT background, retain fine hair and a little blue vapor at boots, no landscape, no frame, no text, no watermark, no other character, no extra arms, no multiple swords. Clear action pose, not a standing portrait."
+      }
+    },
+    {
+      "key": "intro-illidan",
+      "args": {
+        "referenced_image_paths": [
+          "/home/debian/Gildra-integrated/public/assets/wow/character-book/illidan-original.jpg"
+        ],
+        "prompt": "Use case: stylized-concept. Asset type: transparent cinematic character layer for a Warcraft website opening sequence. Image 1 is a CHARACTER IDENTITY and material reference only, not the pose. Generate Illidan Stormrage in an active defensive counterstrike facing LEFT: recognizable purple skin, black hair, curved horns, long pointed ears, glowing green fel tattoos, black eye covering with subtle green light, one folded dark wing behind him. Composition: landscape 3:2 canvas, knee-up three-quarter side view; torso anchored in the RIGHT half, leaning and looking LEFT toward an oncoming icy sword. His leftward extended hand grips ONE recognizable crescent double-ended warglaive, held on a strong diagonal ready to meet a blade at about 15% canvas width and 35% canvas height; the other hand holds the second glaive low and behind, keep silhouettes distinct. Keep complete horns, hands and blade tips inside the canvas with 5% padding. Style: meticulous classic Warcraft dark-fantasy cinematic matte painting, anatomical musculature, weathered metal, subtle emerald light, sharp readable anatomy, no plastic AI gloss or arbitrary ornament. GENUINELY TRANSPARENT background, retain fine hair and only a little green vapor below waist. No landscape, no frame, no text, no watermark, no other character, no extra arms, no sword replacing the warglaives. Strong credible action pose, not a standing portrait."
+      }
+    },
+    {
+      "key": "intro-cover",
+      "args": {
+        "referenced_image_paths": [
+          "/home/debian/Gildra-integrated/public/assets/wow/character-book/folio-binding-v1.png"
+        ],
+        "prompt": "Use case: stylized-concept. Asset type: isolated closed book FRONT COVER texture for a CSS 3D book-opening animation on a Warcraft-themed website. Reference image 1 is the existing OPEN book, supplied only to match its leather, worn antique gold corner hardware and aged warm parchment palette. Generate the same book CLOSED, straight-on orthographic front cover, portrait 2:3 proportions, perfectly frontal rectangular surface without perspective distortion; all four corners visible, centered with only 3% transparent padding. Dark oxblood-brown worn leather, substantial bevelled antique brass corners and binding on the left, a handsome central circular bronze medallion embossed with a simple crossed sword and crescent glaive motif; small inset blue and muted green gemstones flank the medallion. Craftsmanship, leather grain, scratches, aged metal, painterly realistic Warcraft UI material, restrained highlights. Thin visible ivory page-edge at right and bottom. GENUINELY TRANSPARENT background, no table or cast ground shadow, no person, no words, no letters, no runic gibberish, no watermark, no glow cloud. It must work as a physical book cover rotating on its left hinge; do not show the book already open."
+      }
+    }
+  ]
+}

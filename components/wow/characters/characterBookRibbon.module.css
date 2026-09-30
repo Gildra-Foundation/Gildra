@@ -1,0 +1,130 @@
+.ribbon {
+  position: sticky;
+  z-index: 1;
+  top: 64px;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 64px;
+  width: 100%;
+  margin: 0 0 24px;
+  padding: 8px 13px;
+  color: #e2ddce;
+}
+
+.ribbon::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0 -10px;
+  content: "";
+  border-block: 1px solid var(--folio-ribbon-edge);
+  background:
+    linear-gradient(180deg, #d8e2e414, transparent 36%, #080e1455),
+    linear-gradient(180deg, var(--folio-ribbon-top), var(--folio-ribbon-mid) 50%, var(--folio-ribbon-bottom));
+  box-shadow: 0 5px 10px #0a0c0d55, inset 0 1px #e1d2ad24, inset 0 -1px #090b0ca6;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 50%, 100% 100%, 0 100%, 5px 50%);
+  pointer-events: none;
+}
+
+.brand {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 196px;
+  min-height: 42px;
+  margin-right: auto;
+  padding: 3px 14px 3px 5px;
+  border-right: 1px solid #c7a35b55;
+  color: #e2ddce;
+  text-decoration: none;
+}
+
+.brand > svg { width: 20px; height: 20px; color: #cfb77c; }
+.brand > span { display: grid; gap: 1px; }
+.brand small { color: #b6a47b; font: 700 9px/1.2 var(--folio-body, Georgia, serif); letter-spacing: .12em; text-transform: uppercase; }
+.brand b { color: #e6dec9; font: 700 14px/1.2 var(--folio-title, Georgia, serif); }
+
+.chapters {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chapters a,
+.languages a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 7px 9px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  color: #e6cca0;
+  background: transparent;
+  font: 13px/1.25 var(--folio-title, Georgia, serif);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.chapters i { color: #b6a47b; font: 10px/1 var(--folio-title, Georgia, serif); font-style: normal; }
+.chapters a:hover, .chapters a:focus-visible, .chapters a[aria-current="location"] { color: #fff1cc; border-bottom-color: #d6c186; background: #b4a27626; }
+
+.languages {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  margin-left: 2px;
+  padding: 3px;
+  border: 1px solid #9b8964;
+  background: var(--folio-ribbon-bottom);
+}
+
+.languageControl { display: flex; flex: 0 0 auto; margin-left: 2px; }
+
+.languages a { min-width: 37px; min-height: 34px; padding: 4px 7px; font-size: 11px; }
+.languages a[aria-current="page"] { color: #f2e7cb; background: var(--folio-ribbon-active); box-shadow: inset 0 0 0 1px #bda46c; }
+.seal { display: none; }
+.brand:focus-visible, .chapters a:focus-visible, .languages a:focus-visible { outline: 2px solid #efd299; outline-offset: 2px; }
+
+/* The leather follows the same valley as the paper beneath it. This stays
+   behind the links, so the crease never dims labels or intercepts clicks. */
+@container auditPage (min-width: 821px) {
+  .ribbon::after {
+    position: absolute;
+    z-index: -1;
+    inset: 1px auto 1px 50%;
+    width: var(--book-gutter-width, 84px);
+    transform: translateX(-50%);
+    content: "";
+    background: linear-gradient(90deg, transparent, #060a0c0a 14%, #05080b30 34%, #03060970 46%, #020406b3 50%, #070b1038 53%, #d1dbda24 62%, #d1dbda0b 78%, transparent);
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 920px) {
+  .ribbon { flex-wrap: wrap; gap: 4px; padding-inline: 10px; }
+  .brand { flex: 1 1 auto; min-width: 0; }
+  .chapters { order: 3; flex: 1 1 100%; justify-content: flex-start; overflow-x: auto; scrollbar-width: thin; }
+  .chapters a { min-height: 36px; }
+  .languages, .languageControl { order: 2; }
+}
+
+@media (max-width: 520px) {
+  .ribbon { min-height: 58px; margin-bottom: 18px; padding-inline: 7px; }
+  .brand { min-height: 36px; padding-right: 7px; }
+  .brand > svg { width: 17px; height: 17px; }
+  .brand b { font-size: 12px; }
+  .languages { gap: 0; }
+  .languages a { min-width: 31px; min-height: 30px; padding-inline: 5px; }
+  .chapters a { padding-inline: 8px; font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapters a, .languages a { transition-duration: .01ms; }
+}

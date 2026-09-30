@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "scope": "midnight-season-one-guardian-edict-raw-build-continuity-and-render-conflict",
+  "spellId": 1260763,
+  "dependencySpellId": 1260826,
+  "targetBuild": "12.1.0.69587",
+  "currentBuild": "12.1.0.69814",
+  "lastVerifiedAt": "2026-09-13T11:32:52.324Z",
+  "dependencyAuditSha256": {
+    "description": "2aa7350d61e45074e14f82a108ede25237472fc0e3edf2b172cec0e40a2d1d86",
+    "effect": "001cb750cca082cf47ea7e4a44b458a646ba8391693783174e51a35f5c2d8ab0",
+    "candidate": "b8107e6ce1988d92de2e3b1869d40a5b3f6cc93b1828983225b2cd174de522d9"
+  },
+  "method": "Verifies that every exact DB2 row used by Guardian's Edict value and duration tokens is byte-normalized and unchanged between consecutive Retail builds 12.1.0.69587 and 12.1.0.69814. It then compares current same-ID EN/RU per-difficulty Wowhead renders and the same-ID Warcraft Wiki guide fragment. This proves raw-data continuity only; it does not backdate a mutable renderer to the target build.",
+  "publicationPolicy": "Remain withheld when the renderer lacks exact-build provenance, when exact same-ID rendered sources conflict, or when a difficulty render depends on fallback semantics that are not reproduced from selected exact DB2 rows. Raw row continuity cannot by itself authorize publication.",
+  "sources": [
+    {
+      "kind": "retail_build_index",
+      "url": "https://wago.tools/api/builds",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "relevantBuildWindowSha256": "eaeccd2f8da5956c36fae84c7f57bcbe25e4f2375b7c26f31d4c61fa27eda42d"
+    },
+    {
+      "kind": "spell_en_12_1_0_69587",
+      "semanticKind": "spell_en",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=enUS&filter[ID]=1260763",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69587",
+      "locale": "enUS",
+      "normalizedResponseSha256": "c2508c31c62963aad52ef355d40eb89cbd62acfc38b97925b068af5f16635cb7",
+      "rawResponseBytes": 330,
+      "exactRows": 1,
+      "exactRowsSha256": "c2508c31c62963aad52ef355d40eb89cbd62acfc38b97925b068af5f16635cb7"
+    },
+    {
+      "kind": "spell_ru_12_1_0_69587",
+      "semanticKind": "spell_ru",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=ruRU&filter[ID]=1260763",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69587",
+      "locale": "ruRU",
+      "normalizedResponseSha256": "55ae07a40f124a7c9714dda9854c35b0d6e93f3685db23781f5f8787fd40f73a",
+      "rawResponseBytes": 584,
+      "exactRows": 1,
+      "exactRowsSha256": "55ae07a40f124a7c9714dda9854c35b0d6e93f3685db23781f5f8787fd40f73a"
+    },
+    {
+      "kind": "spell_effect_12_1_0_69587",
+      "semanticKind": "spell_effect",
+      "url": "https://wago.tools/db2/SpellEffect/csv?build=12.1.0.69587&locale=enUS&filter[SpellID]=1260826",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69587",
+      "locale": "enUS",
+      "normalizedResponseSha256": "fe4a7184742ee3adf307c97338e0ca631f19e2f5658f2f9d6f9c8806750c3e27",
+      "rawResponseBytes": 1020,
+      "exactRows": 4,
+      "exactRowsSha256": "fe4a7184742ee3adf307c97338e0ca631f19e2f5658f2f9d6f9c8806750c3e27"
+    },
+    {
+      "kind": "spell_misc_12_1_0_69587",
+      "semanticKind": "spell_misc",
+      "url": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69587&locale=enUS&filter[SpellID]=1260826",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69587",
+      "locale": "enUS",
+      "normalizedResponseSha256": "49a65ce26caeb2b75ef3861f26a9fed80a3654eb9b021b88e41120ba0388cbb7",
+      "rawResponseBytes": 690,
+      "exactRows": 2,
+      "exactRowsSha256": "49a65ce26caeb2b75ef3861f26a9fed80a3654eb9b021b88e41120ba0388cbb7"
+    },
+    {
+      "kind": "spell_duration_5_12_1_0_69587",
+      "semanticKind": "spell_duration_5",
+      "url": "https://wago.tools/db2/SpellDuration/csv?build=12.1.0.69587&locale=enUS&filter[ID]=5",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69587",
+      "locale": "enUS",
+      "normalizedResponseSha256": "2d9de930de17da2c6886cf21ae94d7c7dea9a9078824487ff3c848b186aaf7b4",
+      "rawResponseBytes": 2902,
+      "exactRows": 1,
+      "exactRowsSha256": "f3cae3b194cd37d2b7a8870ea5d787df59fc313ca1b96278d0191d22e1072933"
+    },
+    {
+      "kind": "spell_duration_9_12_1_0_69587",
+      "semanticKind": "spell_duration_9",
+      "url": "https://wago.tools/db2/SpellDuration/csv?build=12.1.0.69587&locale=enUS&filter[ID]=9",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69587",
+      "locale": "enUS",
+      "normalizedResponseSha256": "892322fd27994bdebbe815c4ff8eafdaf30c9f1744601de2efb7b4716246fc69",
+      "rawResponseBytes": 1534,
+      "exactRows": 1,
+      "exactRowsSha256": "abe086b5516fdbc0adaccc2e47350ec59ef3389ba011250b159445bf8f227123"
+    },
+    {
+      "kind": "spell_en_12_1_0_69814",
+      "semanticKind": "spell_en",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS&filter[ID]=1260763",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69814",
+      "locale": "enUS",
+      "normalizedResponseSha256": "c2508c31c62963aad52ef355d40eb89cbd62acfc38b97925b068af5f16635cb7",
+      "rawResponseBytes": 330,
+      "exactRows": 1,
+      "exactRowsSha256": "c2508c31c62963aad52ef355d40eb89cbd62acfc38b97925b068af5f16635cb7"
+    },
+    {
+      "kind": "spell_ru_12_1_0_69814",
+      "semanticKind": "spell_ru",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU&filter[ID]=1260763",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69814",
+      "locale": "ruRU",
+      "normalizedResponseSha256": "55ae07a40f124a7c9714dda9854c35b0d6e93f3685db23781f5f8787fd40f73a",
+      "rawResponseBytes": 584,
+      "exactRows": 1,
+      "exactRowsSha256": "55ae07a40f124a7c9714dda9854c35b0d6e93f3685db23781f5f8787fd40f73a"
+    },
+    {
+      "kind": "spell_effect_12_1_0_69814",
+      "semanticKind": "spell_effect",
+      "url": "https://wago.tools/db2/SpellEffect/csv?build=12.1.0.69814&locale=enUS&filter[SpellID]=1260826",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69814",
+      "locale": "enUS",
+      "normalizedResponseSha256": "fe4a7184742ee3adf307c97338e0ca631f19e2f5658f2f9d6f9c8806750c3e27",
+      "rawResponseBytes": 1020,
+      "exactRows": 4,
+      "exactRowsSha256": "fe4a7184742ee3adf307c97338e0ca631f19e2f5658f2f9d6f9c8806750c3e27"
+    },
+    {
+      "kind": "spell_misc_12_1_0_69814",
+      "semanticKind": "spell_misc",
+      "url": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS&filter[SpellID]=1260826",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69814",
+      "locale": "enUS",
+      "normalizedResponseSha256": "49a65ce26caeb2b75ef3861f26a9fed80a3654eb9b021b88e41120ba0388cbb7",
+      "rawResponseBytes": 690,
+      "exactRows": 2,
+      "exactRowsSha256": "49a65ce26caeb2b75ef3861f26a9fed80a3654eb9b021b88e41120ba0388cbb7"
+    },
+    {
+      "kind": "spell_duration_5_12_1_0_69814",
+      "semanticKind": "spell_duration_5",
+      "url": "https://wago.tools/db2/SpellDuration/csv?build=12.1.0.69814&locale=enUS&filter[ID]=5",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69814",
+      "locale": "enUS",
+      "normalizedResponseSha256": "2d9de930de17da2c6886cf21ae94d7c7dea9a9078824487ff3c848b186aaf7b4",
+      "rawResponseBytes": 2902,
+      "exactRows": 1,
+      "exactRowsSha256": "f3cae3b194cd37d2b7a8870ea5d787df59fc313ca1b96278d0191d22e1072933"
+    },
+    {
+      "kind": "spell_duration_9_12_1_0_69814",
+      "semanticKind": "spell_duration_9",
+      "url": "https://wago.tools/db2/SpellDuration/csv?build=12.1.0.69814&locale=enUS&filter[ID]=9",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "build": "12.1.0.69814",
+      "locale": "enUS",
+      "normalizedResponseSha256": "892322fd27994bdebbe815c4ff8eafdaf30c9f1744601de2efb7b4716246fc69",
+      "rawResponseBytes": 1534,
+      "exactRows": 1,
+      "exactRowsSha256": "abe086b5516fdbc0adaccc2e47350ec59ef3389ba011250b159445bf8f227123"
+    },
+    {
+      "kind": "wowhead_en",
+      "url": "https://www.wowhead.com/spell=1260763",
+      "locale": "en",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "normalizedEvidenceSha256": "360099fa5c76f5493ec6b97dccd1a1bae304485bcdd55ff331c3b75fe981243d"
+    },
+    {
+      "kind": "wowhead_ru",
+      "url": "https://www.wowhead.com/ru/spell=1260763",
+      "locale": "ru",
+      "sourceKind": "verified_database",
+      "sourcePriority": 3,
+      "normalizedEvidenceSha256": "b6d336b933b49454fd8e5ee27224664eec142628d478d55f8a134372d96603b3"
+    },
+    {
+      "kind": "warcraft_wiki_en",
+      "url": "https://warcraft.wiki.gg/wiki/Belo%27ren,_Child_of_Al%27ar",
+      "locale": "en",
+      "sourceKind": "expert_guide",
+      "sourcePriority": 3,
+      "normalizedEvidenceSha256": "cdef336ceecd90f0b0b376eb2a53c94469d710fa2b8f348a35192f4334adc364"
+    }
+  ],
+  "buildWindow": {
+    "product": "wow",
+    "consecutive": true,
+    "builds": [
+      {
+        "version": "12.1.0.69814",
+        "createdAt": "2026-09-12T18:56:02Z",
+        "buildConfig": "9712ae9c84cc54111e9e3ddf9a6b8019",
+        "productConfig": "53020d32e1a25648c8e1eafd5771935f",
+        "cdnConfig": "3bf5d9d33331e68f0899bd0e32ebdf4a",
+        "backgroundDownload": false
+      },
+      {
+        "version": "12.1.0.69587",
+        "createdAt": "2026-09-01T14:10:02Z",
+        "buildConfig": "c9fa1a64b0170829cc5c5c98c71025c3",
+        "productConfig": "53020d32e1a25648c8e1eafd5771935f",
+        "cdnConfig": "f321c713e2545259b44497c7628cef15",
+        "backgroundDownload": false
+      }
+    ]
+  },
+  "rawContinuity": {
+    "spell_en": {
+      "targetRowsSha256": "c2508c31c62963aad52ef355d40eb89cbd62acfc38b97925b068af5f16635cb7",
+      "currentRowsSha256": "c2508c31c62963aad52ef355d40eb89cbd62acfc38b97925b068af5f16635cb7",
+      "unchanged": true
+    },
+    "spell_ru": {
+      "targetRowsSha256": "55ae07a40f124a7c9714dda9854c35b0d6e93f3685db23781f5f8787fd40f73a",
+      "currentRowsSha256": "55ae07a40f124a7c9714dda9854c35b0d6e93f3685db23781f5f8787fd40f73a",
+      "unchanged": true
+    },
+    "spell_effect": {
+      "targetRowsSha256": "fe4a7184742ee3adf307c97338e0ca631f19e2f5658f2f9d6f9c8806750c3e27",
+      "currentRowsSha256": "fe4a7184742ee3adf307c97338e0ca631f19e2f5658f2f9d6f9c8806750c3e27",
+      "unchanged": true
+    },
+    "spell_misc": {
+      "targetRowsSha256": "49a65ce26caeb2b75ef3861f26a9fed80a3654eb9b021b88e41120ba0388cbb7",
+      "currentRowsSha256": "49a65ce26caeb2b75ef3861f26a9fed80a3654eb9b021b88e41120ba0388cbb7",
+      "unchanged": true
+    },
+    "spell_duration_5": {
+      "targetRowsSha256": "f3cae3b194cd37d2b7a8870ea5d787df59fc313ca1b96278d0191d22e1072933",
+      "currentRowsSha256": "f3cae3b194cd37d2b7a8870ea5d787df59fc313ca1b96278d0191d22e1072933",
+      "unchanged": true
+    },
+    "spell_duration_9": {
+      "targetRowsSha256": "abe086b5516fdbc0adaccc2e47350ec59ef3389ba011250b159445bf8f227123",
+      "currentRowsSha256": "abe086b5516fdbc0adaccc2e47350ec59ef3389ba011250b159445bf8f227123",
+      "unchanged": true
+    }
+  },
+  "renderedEvidence": {
+    "wowheadReportedLiveVersion": "12.1.0",
+    "exactBuildExposed": false,
+    "wowhead": {
+      "en": [
+        {
+          "difficultyId": 14,
+          "groupSize": 30,
+          "effectPercent": 20,
+          "durationText": "30 sec",
+          "normalizedDescriptionSha256": "df586d2fd1135f8ac8db190b9421b592b28664c8c00fc95c12f438896414ef34"
+        },
+        {
+          "difficultyId": 15,
+          "groupSize": 30,
+          "effectPercent": 20,
+          "durationText": "5 min",
+          "normalizedDescriptionSha256": "224364b3296ccaea8186c46e78571d388aec5a361dd6a8abc31a54ffdf364799"
+        },
+        {
+          "difficultyId": 16,
+          "groupSize": 20,
+          "effectPercent": 20,
+          "durationText": "30 sec",
+          "normalizedDescriptionSha256": "df586d2fd1135f8ac8db190b9421b592b28664c8c00fc95c12f438896414ef34"
+        },
+        {
+          "difficultyId": 17,
+          "groupSize": 30,
+          "effectPercent": 10,
+          "durationText": "until canceled",
+          "normalizedDescriptionSha256": "e1cfb400d59366470c26b6818e8a10a619c005e2ebadb189b77defd42359af9e"
+        }
+      ],
+      "ru": [
+        {
+          "difficultyId": 14,
+          "groupSize": 30,
+          "effectPercent": 20,
+          "durationText": "30 сек",
+          "normalizedDescriptionSha256": "3ba291a8f08168c281cef281ca3025c799de9e46823fce6c5bb90b237c0cf93e"
+        },
+        {
+          "difficultyId": 15,
+          "groupSize": 30,
+          "effectPercent": 20,
+          "durationText": "5 мин",
+          "normalizedDescriptionSha256": "d181ed536987b12a6ddb632a84bfc5d3b428f44339318002e487ad4978b9e74c"
+        },
+        {
+          "difficultyId": 16,
+          "groupSize": 20,
+          "effectPercent": 20,
+          "durationText": "30 сек",
+          "normalizedDescriptionSha256": "3ba291a8f08168c281cef281ca3025c799de9e46823fce6c5bb90b237c0cf93e"
+        },
+        {
+          "difficultyId": 17,
+          "groupSize": 30,
+          "effectPercent": 10,
+          "durationText": "до отмены",
+          "normalizedDescriptionSha256": "cbd10a4b3aa98275226df889671d10eb877d906d27aea71af9f8b6ca5302c5d8"
+        }
+      ]
+    },
+    "warcraftWiki": {
+      "exactSameIdLink": true,
+      "effectPercent": 30,
+      "durationText": "30 sec",
+      "normalizedFragmentSha256": "73acc8bd97f18cc0e85eb0884a441ec1cfcbf9b0c394068cf59a43acc4706dfc"
+    }
+  },
+  "conflicts": {
+    "guideEffectPercentDiffersFromCurrentRenderer": true,
+    "guideDurationDiffersFromCurrentRenderer": true,
+    "lfrDurationHasNoExactSpellMiscDifficultyRow": true,
+    "lfrDurationRenderDiffersFromDefault": true
+  },
+  "blockers": [
+    "exact_build_renderer_provenance_missing",
+    "same_id_rendered_sources_conflict",
+    "lfr_duration_fallback_semantics_unresolved",
+    "publication_requires_explicit_per_spell_allowlist"
+  ],
+  "publicationSafe": false,
+  "promotionAllowed": false
+}

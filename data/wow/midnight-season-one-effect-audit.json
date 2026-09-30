@@ -1,0 +1,6608 @@
+{
+  "schemaVersion": 1,
+  "scope": "Midnight Season 1 unresolved raid-description numeric client tokens recorded by the canonical manifest",
+  "gameBuild": "12.1.0.69587",
+  "descriptionAuditSha256": "2aa7350d61e45074e14f82a108ede25237472fc0e3edf2b172cec0e40a2d1d86",
+  "lastVerifiedAt": "2026-09-13T10:56:22.586Z",
+  "method": "Every effect-value, period, duration, and radius token in the exact-build EN/RU terminal descriptions is mapped to its explicit or terminal spell ID. Effect suffixes 1+ map to zero-based SpellEffect.EffectIndex. Suffix 0 and omitted period suffixes are retained as unresolved client-index semantics instead of being guessed. Every source row and difficulty context is retained.",
+  "publicationPolicy": "This audit is dependency evidence, not a tooltip renderer. No numeric token becomes publication-safe from DB2 metadata alone. Player-facing sign, unit, scaling, content tuning, rounding, locale grammar, and difficulty rendering require an independent exact-context render before publication.",
+  "limitations": [
+    "Wago DB2 exports mirror client data but are not an official Blizzard publication surface.",
+    "DifficultyID=0 is retained as an unnamed DB2 default when the pinned Difficulty table has no corresponding row; it is not labeled as a raid difficulty.",
+    "Client tokens with suffix 0 or no effect suffix are explicitly unresolved; no EffectIndex is inferred.",
+    "Static metadata does not prove player-facing values, tactics, mechanic tags, role assignments, timelines, or drop chances."
+  ],
+  "sources": [
+    {
+      "kind": "spell_effect",
+      "table": "SpellEffect",
+      "locale": "enUS",
+      "url": "https://wago.tools/db2/SpellEffect/csv?build=12.1.0.69587&locale=enUS",
+      "sha256": "19136cdcb8b11de7a53e6943010380de2e424d932d5cf4e380c61de0a0d413b1",
+      "bytes": 57045862,
+      "rows": 629332,
+      "sourceKind": "verified_database",
+      "sourcePriority": 3
+    },
+    {
+      "kind": "spell_misc",
+      "table": "SpellMisc",
+      "locale": "enUS",
+      "url": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69587&locale=enUS",
+      "sha256": "590447e9658888795de48402b6cdb2c42e4ec882ebceaeae1b096695ee7c5cd4",
+      "bytes": 45637554,
+      "rows": 417583,
+      "sourceKind": "verified_database",
+      "sourcePriority": 3
+    },
+    {
+      "kind": "spell_duration",
+      "table": "SpellDuration",
+      "locale": "enUS",
+      "url": "https://wago.tools/db2/SpellDuration/csv?build=12.1.0.69587&locale=enUS",
+      "sha256": "ba8dd9dfdbd9866523db2c5d467af3849ead709d7df2e9322829d7751b02b2c5",
+      "bytes": 7892,
+      "rows": 435,
+      "sourceKind": "verified_database",
+      "sourcePriority": 3
+    },
+    {
+      "kind": "spell_radius",
+      "table": "SpellRadius",
+      "locale": "enUS",
+      "url": "https://wago.tools/db2/SpellRadius/csv?build=12.1.0.69587&locale=enUS",
+      "sha256": "ab4b56313597b825f18225a63078c629ecfb19bc85e1e69f1d464f4c9c87a863",
+      "bytes": 5970,
+      "rows": 375,
+      "sourceKind": "verified_database",
+      "sourcePriority": 3
+    },
+    {
+      "kind": "difficulty_en",
+      "table": "Difficulty",
+      "locale": "enUS",
+      "url": "https://wago.tools/db2/Difficulty/csv?build=12.1.0.69587&locale=enUS",
+      "sha256": "5b5909ea3319a9596ba4472256ef8901e24c67d2b10638259bfabc652268a23e",
+      "bytes": 2957,
+      "rows": 60,
+      "sourceKind": "verified_database",
+      "sourcePriority": 3
+    },
+    {
+      "kind": "difficulty_ru",
+      "table": "Difficulty",
+      "locale": "ruRU",
+      "url": "https://wago.tools/db2/Difficulty/csv?build=12.1.0.69587&locale=ruRU",
+      "sha256": "4d75da7e1625bca4cb861ec3a1d8941abb5858a5da30b332fc670a859b7a3bd2",
+      "bytes": 3888,
+      "rows": 60,
+      "sourceKind": "verified_database",
+      "sourcePriority": 3
+    }
+  ],
+  "summary": {
+    "withheldAbilities": 28,
+    "tokenizedAbilities": 28,
+    "evidenceRecords": 58,
+    "targetSpellIds": 44,
+    "categoryRecordCounts": {
+      "duration": 9,
+      "effect_period": 2,
+      "effect_value": 41,
+      "radius": 6
+    },
+    "classificationRecordCounts": {
+      "client_index_unresolved": 6,
+      "difficulty_variant": 30,
+      "scaled_or_dynamic": 8,
+      "static_metadata": 14
+    },
+    "indexResolutionCounts": {
+      "client_index_zero_unresolved": 4,
+      "exact_effect_index": 43,
+      "implicit_client_index_unresolved": 2,
+      "not_applicable": 9
+    },
+    "difficultyIds": [
+      0,
+      14,
+      15,
+      16,
+      17,
+      220
+    ],
+    "registeredDifficultyIds": [
+      14,
+      15,
+      16,
+      17,
+      220
+    ],
+    "unregisteredDifficultyIds": [
+      0
+    ],
+    "metadataCompleteRecords": 52,
+    "metadataIncompleteRecords": 6,
+    "independentlyRenderedRecords": 0,
+    "standalonePublicationSafeRecords": 0
+  },
+  "difficulties": [
+    {
+      "difficultyId": 0,
+      "registeredDifficulty": false,
+      "names": {
+        "en": null,
+        "ru": null
+      }
+    },
+    {
+      "difficultyId": 14,
+      "registeredDifficulty": true,
+      "names": {
+        "en": "Normal",
+        "ru": "Обычный"
+      },
+      "metadata": {
+        "ID": 14,
+        "InstanceType": 2,
+        "OrderIndex": 3,
+        "FallbackDifficultyID": 0,
+        "MinPlayers": 10,
+        "MaxPlayers": 30,
+        "Flags": 6,
+        "ItemContext": 3
+      },
+      "localeMetadataMatch": true
+    },
+    {
+      "difficultyId": 15,
+      "registeredDifficulty": true,
+      "names": {
+        "en": "Heroic",
+        "ru": "Героический"
+      },
+      "metadata": {
+        "ID": 15,
+        "InstanceType": 2,
+        "OrderIndex": 4,
+        "FallbackDifficultyID": 14,
+        "MinPlayers": 10,
+        "MaxPlayers": 30,
+        "Flags": 68,
+        "ItemContext": 5
+      },
+      "localeMetadataMatch": true
+    },
+    {
+      "difficultyId": 16,
+      "registeredDifficulty": true,
+      "names": {
+        "en": "Mythic",
+        "ru": "Эпохальный"
+      },
+      "metadata": {
+        "ID": 16,
+        "InstanceType": 2,
+        "OrderIndex": 5,
+        "FallbackDifficultyID": 233,
+        "MinPlayers": 20,
+        "MaxPlayers": 20,
+        "Flags": 133,
+        "ItemContext": 6
+      },
+      "localeMetadataMatch": true
+    },
+    {
+      "difficultyId": 17,
+      "registeredDifficulty": true,
+      "names": {
+        "en": "Looking For Raid",
+        "ru": "Поиск рейда"
+      },
+      "metadata": {
+        "ID": 17,
+        "InstanceType": 2,
+        "OrderIndex": 6,
+        "FallbackDifficultyID": 14,
+        "MinPlayers": 10,
+        "MaxPlayers": 30,
+        "Flags": 16,
+        "ItemContext": 4
+      },
+      "localeMetadataMatch": true
+    },
+    {
+      "difficultyId": 220,
+      "registeredDifficulty": true,
+      "names": {
+        "en": "Story",
+        "ru": "Сюжет"
+      },
+      "metadata": {
+        "ID": 220,
+        "InstanceType": 2,
+        "OrderIndex": 9,
+        "FallbackDifficultyID": 0,
+        "MinPlayers": 10,
+        "MaxPlayers": 10,
+        "Flags": 0,
+        "ItemContext": 0
+      },
+      "localeMetadataMatch": true
+    }
+  ],
+  "evidence": [
+    {
+      "key": "1233602:effect_value:$1233649s1:1233649:0",
+      "abilitySpellId": 1233602,
+      "encounterId": 2738,
+      "category": "effect_value",
+      "token": "$1233649s1",
+      "targetSpellId": 1233649,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 55,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 68,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 87,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 54.92231369019,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1227220,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 55,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1233649
+        },
+        {
+          "ID": 1302905,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 68,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1233649
+        },
+        {
+          "ID": 1302906,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 87,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1233649
+        },
+        {
+          "ID": 1305051,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 54.92231369019,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1233649
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1233865:effect_value:$s1:1233865:0",
+      "abilitySpellId": 1233865,
+      "encounterId": 2738,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1233865,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 301,
+          "basePoints": 228,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 301,
+          "basePoints": 152,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 301,
+          "basePoints": 600,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 301,
+          "basePoints": 190,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1227866,
+          "EffectAura": 301,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 3,
+          "EffectBasePointsF": 228,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 22,
+          "SpellID": 1233865
+        },
+        {
+          "ID": 1289584,
+          "EffectAura": 301,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 3,
+          "EffectBasePointsF": 152,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 22,
+          "SpellID": 1233865
+        },
+        {
+          "ID": 1262639,
+          "EffectAura": 301,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 3,
+          "EffectBasePointsF": 228,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 22,
+          "SpellID": 1233865
+        },
+        {
+          "ID": 1262638,
+          "EffectAura": 301,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 2.29999995232,
+          "EffectBasePointsF": 600,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 22,
+          "SpellID": 1233865
+        },
+        {
+          "ID": 1296248,
+          "EffectAura": 301,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 3,
+          "EffectBasePointsF": 190,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 22,
+          "SpellID": 1233865
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1237614:duration:$1237623d:1237623:not_applicable",
+      "abilitySpellId": 1237614,
+      "encounterId": 2738,
+      "category": "duration",
+      "token": "$1237623d",
+      "targetSpellId": 1237623,
+      "effectIndex": null,
+      "indexResolution": "not_applicable",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "durationIndex": 32,
+          "duration": {
+            "ID": 32,
+            "Duration": 6000,
+            "MaxDuration": 6000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0
+        }
+      ],
+      "durationRows": [
+        {
+          "ID": 32,
+          "Duration": 6000,
+          "MaxDuration": 6000,
+          "DurationPerResource": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 792187,
+          "DifficultyID": 0,
+          "DurationIndex": 32,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0,
+          "ContentTuningID": 0,
+          "SpellID": 1237623
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1237614:effect_value:$s1:1237614:0",
+      "abilitySpellId": 1237614,
+      "encounterId": 2738,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1237614,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "scaled_or_dynamic",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 3,
+          "effectAura": 0,
+          "basePoints": 40,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1234386,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 3,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 40,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1237614
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1237837:effect_value:$1237875s1:1237875:0",
+      "abilitySpellId": 1237837,
+      "encounterId": 2738,
+      "category": "effect_value",
+      "token": "$1237875s1",
+      "targetSpellId": 1237875,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 60,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 59.87026596069,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 80,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1234762,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 60,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 8,
+          "SpellID": 1237875
+        },
+        {
+          "ID": 1305067,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 59.87026596069,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 8,
+          "SpellID": 1237875
+        },
+        {
+          "ID": 1305066,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 80,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 8,
+          "SpellID": 1237875
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1237837:radius:$1237875A1:1237875:0",
+      "abilitySpellId": 1237837,
+      "encounterId": 2738,
+      "category": "radius",
+      "token": "$1237875A1",
+      "targetSpellId": 1237875,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "radius0": null,
+          "radius1": {
+            "ID": 8,
+            "Radius": 5,
+            "RadiusPerLevel": 0,
+            "RadiusMin": 0,
+            "RadiusMax": 5
+          }
+        }
+      ],
+      "radiusRows": [
+        {
+          "ID": 8,
+          "Radius": 5,
+          "RadiusPerLevel": 0,
+          "RadiusMin": 0,
+          "RadiusMax": 5
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1234762,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 60,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 8,
+          "SpellID": 1237875
+        },
+        {
+          "ID": 1305067,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 59.87026596069,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 8,
+          "SpellID": 1237875
+        },
+        {
+          "ID": 1305066,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 80,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 8,
+          "SpellID": 1237875
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1239089:duration:$1255453d:1255453:not_applicable",
+      "abilitySpellId": 1239089,
+      "encounterId": 2738,
+      "category": "duration",
+      "token": "$1255453d",
+      "targetSpellId": 1255453,
+      "effectIndex": null,
+      "indexResolution": "not_applicable",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "durationIndex": 29,
+          "duration": {
+            "ID": 29,
+            "Duration": 12000,
+            "MaxDuration": 12000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0
+        }
+      ],
+      "durationRows": [
+        {
+          "ID": 29,
+          "Duration": 12000,
+          "MaxDuration": 12000,
+          "DurationPerResource": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 809330,
+          "DifficultyID": 0,
+          "DurationIndex": 29,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0,
+          "ContentTuningID": 0,
+          "SpellID": 1255453
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1239089:effect_value:$1239095s1:1239095:0",
+      "abilitySpellId": 1239089,
+      "encounterId": 2738,
+      "category": "effect_value",
+      "token": "$1239095s1",
+      "targetSpellId": 1239095,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 24.94799995422,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 39.20400238037,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 44.54999923706,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 50.625,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1236566,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1.12000000477,
+          "EffectBasePointsF": 24.94799995422,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1239095
+        },
+        {
+          "ID": 1263833,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1.12000000477,
+          "EffectBasePointsF": 39.20400238037,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1239095
+        },
+        {
+          "ID": 1305071,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1.12000000477,
+          "EffectBasePointsF": 44.54999923706,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1239095
+        },
+        {
+          "ID": 1317295,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1.12000000477,
+          "EffectBasePointsF": 50.625,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1239095
+        },
+        {
+          "ID": 1264335,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1.12000000477,
+          "EffectBasePointsF": 24.94799995422,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1239095
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1239089:effect_value:$1255453s1:1255453:0",
+      "abilitySpellId": 1239089,
+      "encounterId": 2738,
+      "category": "effect_value",
+      "token": "$1255453s1",
+      "targetSpellId": 1255453,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "scaled_or_dynamic",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 87,
+          "basePoints": 300,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1262309,
+          "EffectAura": 87,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 300,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1255453
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1241162:effect_value:$s1:1241162:0",
+      "abilitySpellId": 1241162,
+      "encounterId": 2739,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1241162,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "scaled_or_dynamic",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 87,
+          "basePoints": -50,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1239996,
+          "EffectAura": 87,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": -50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1241162
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1241163:effect_value:$s1:1241163:0",
+      "abilitySpellId": 1241163,
+      "encounterId": 2739,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1241163,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "scaled_or_dynamic",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 87,
+          "basePoints": -50,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1239997,
+          "EffectAura": 87,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": -50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1241163
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1241520:duration:$d:1241520:not_applicable",
+      "abilitySpellId": 1241520,
+      "encounterId": 2738,
+      "category": "duration",
+      "token": "$d",
+      "targetSpellId": 1241520,
+      "effectIndex": null,
+      "indexResolution": "not_applicable",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "durationIndex": 18,
+          "duration": {
+            "ID": 18,
+            "Duration": 20000,
+            "MaxDuration": 20000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0.5
+        }
+      ],
+      "durationRows": [
+        {
+          "ID": 18,
+          "Duration": 20000,
+          "MaxDuration": 20000,
+          "DurationPerResource": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 796102,
+          "DifficultyID": 0,
+          "DurationIndex": 18,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0.5,
+          "ContentTuningID": 0,
+          "SpellID": 1241520
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1241520:effect_value:$s1:1241520:0",
+      "abilitySpellId": 1241520,
+      "encounterId": 2738,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1241520,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 87,
+          "basePoints": 30,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 87,
+          "basePoints": 5,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1240539,
+          "EffectAura": 87,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 30,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1241520
+        },
+        {
+          "ID": 1267553,
+          "EffectAura": 87,
+          "DifficultyID": 220,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 5,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1241520
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 220,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Story",
+            "ru": "Сюжет"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1241520:effect_value:$s2:1241520:1",
+      "abilitySpellId": 1241520,
+      "encounterId": 2738,
+      "category": "effect_value",
+      "token": "$s2",
+      "targetSpellId": 1241520,
+      "effectIndex": 1,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 12,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 11.99651813507,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1240540,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 1,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 12,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1241520
+        },
+        {
+          "ID": 1267552,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 1,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 11.99651813507,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1241520
+        },
+        {
+          "ID": 1267551,
+          "EffectAura": 0,
+          "DifficultyID": 220,
+          "EffectIndex": 1,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 11.99651813507,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1241520
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 220,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Story",
+            "ru": "Сюжет"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1241520:radius:$1233526A1:1233526:0",
+      "abilitySpellId": 1241520,
+      "encounterId": 2738,
+      "category": "radius",
+      "token": "$1233526A1",
+      "targetSpellId": 1233526,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "radius0": null,
+          "radius1": {
+            "ID": 18,
+            "Radius": 15,
+            "RadiusPerLevel": 0,
+            "RadiusMin": 0,
+            "RadiusMax": 15
+          }
+        }
+      ],
+      "radiusRows": [
+        {
+          "ID": 18,
+          "Radius": 15,
+          "RadiusPerLevel": 0,
+          "RadiusMin": 0,
+          "RadiusMax": 15
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1227029,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 3,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 0,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 18,
+          "SpellID": 1233526
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1244012:effect_value:$1241807s0:1241807:client_index_zero_unresolved",
+      "abilitySpellId": 1244012,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$1241807s0",
+      "targetSpellId": 1241807,
+      "effectIndex": null,
+      "indexResolution": "client_index_zero_unresolved",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "client_index_unresolved",
+      "metadataComplete": false,
+      "observedValues": [],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1241005,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 200,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 28,
+          "SpellID": 1241807
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1244012:effect_value:$1241808s0:1241808:client_index_zero_unresolved",
+      "abilitySpellId": 1244012,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$1241808s0",
+      "targetSpellId": 1241808,
+      "effectIndex": null,
+      "indexResolution": "client_index_zero_unresolved",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "client_index_unresolved",
+      "metadataComplete": false,
+      "observedValues": [],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1241007,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 60,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 28,
+          "SpellID": 1241808
+        },
+        {
+          "ID": 1311277,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 70,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 28,
+          "SpellID": 1241808
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1244012:effect_value:$1281906s0:1281906:client_index_zero_unresolved",
+      "abilitySpellId": 1244012,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$1281906s0",
+      "targetSpellId": 1281906,
+      "effectIndex": null,
+      "indexResolution": "client_index_zero_unresolved",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "client_index_unresolved",
+      "metadataComplete": false,
+      "observedValues": [],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1295291,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 150,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1281906
+        },
+        {
+          "ID": 1314519,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 180,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1281906
+        },
+        {
+          "ID": 1303584,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1281906
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1244012:effect_value:$1281954s0:1281954:client_index_zero_unresolved",
+      "abilitySpellId": 1244012,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$1281954s0",
+      "targetSpellId": 1281954,
+      "effectIndex": null,
+      "indexResolution": "client_index_zero_unresolved",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "client_index_unresolved",
+      "metadataComplete": false,
+      "observedValues": [],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1295358,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 150,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1281954
+        },
+        {
+          "ID": 1314520,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 180,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1281954
+        },
+        {
+          "ID": 1303583,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1281954
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1245486:duration:$d:1245486:not_applicable",
+      "abilitySpellId": 1245486,
+      "encounterId": 2795,
+      "category": "duration",
+      "token": "$d",
+      "targetSpellId": 1245486,
+      "effectIndex": null,
+      "indexResolution": "not_applicable",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "durationIndex": 1326,
+          "duration": {
+            "ID": 1326,
+            "Duration": 1000,
+            "MaxDuration": 1000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0
+        }
+      ],
+      "durationRows": [
+        {
+          "ID": 1326,
+          "Duration": 1000,
+          "MaxDuration": 1000,
+          "DurationPerResource": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 799847,
+          "DifficultyID": 0,
+          "DurationIndex": 1326,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0,
+          "ContentTuningID": 0,
+          "SpellID": 1245486
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1245486:effect_value:$s1:1245486:0",
+      "abilitySpellId": 1245486,
+      "encounterId": 2795,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1245486,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 100,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 300,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1246545,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 100,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245486
+        },
+        {
+          "ID": 1314653,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 300,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245486
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1245645:effect_value:$1245647s1:1245647:0",
+      "abilitySpellId": 1245645,
+      "encounterId": 2735,
+      "category": "effect_value",
+      "token": "$1245647s1",
+      "targetSpellId": 1245647,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 150,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 160,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 170,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 212.5,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1246822,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0.05000000075,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 150,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245647
+        },
+        {
+          "ID": 1301339,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0.05000000075,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 160,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245647
+        },
+        {
+          "ID": 1302588,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0.05000000075,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 170,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245647
+        },
+        {
+          "ID": 1301379,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0.04942339286,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 212.5,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245647
+        },
+        {
+          "ID": 1302587,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0.05000000075,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 150,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245647
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1245645:effect_value:$1245652s1:1245652:0",
+      "abilitySpellId": 1245645,
+      "encounterId": 2735,
+      "category": "effect_value",
+      "token": "$1245652s1",
+      "targetSpellId": 1245652,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 50,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 50.09805679321,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 62.5,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1246828,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0.05000000075,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245652
+        },
+        {
+          "ID": 1301340,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0.05432098731,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50.09805679321,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245652
+        },
+        {
+          "ID": 1301393,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0.05432098731,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 62.5,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1245652
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1245645:effect_value:$1280355s1:1280355:0",
+      "abilitySpellId": 1245645,
+      "encounterId": 2735,
+      "category": "effect_value",
+      "token": "$1280355s1",
+      "targetSpellId": 1280355,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 301,
+          "basePoints": 10,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 301,
+          "basePoints": 20,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1293280,
+          "EffectAura": 301,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1.10000002384,
+          "EffectBasePointsF": 10,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1280355
+        },
+        {
+          "ID": 1301341,
+          "EffectAura": 301,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1.10000002384,
+          "EffectBasePointsF": 10,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1280355
+        },
+        {
+          "ID": 1301397,
+          "EffectAura": 301,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1.10000002384,
+          "EffectBasePointsF": 20,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1280355
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1246736:duration:$d:1246736:not_applicable",
+      "abilitySpellId": 1246736,
+      "encounterId": 2737,
+      "category": "duration",
+      "token": "$d",
+      "targetSpellId": 1246736,
+      "effectIndex": null,
+      "indexResolution": "not_applicable",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "durationIndex": 28,
+          "duration": {
+            "ID": 28,
+            "Duration": 5000,
+            "MaxDuration": 5000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0
+        }
+      ],
+      "durationRows": [
+        {
+          "ID": 28,
+          "Duration": 5000,
+          "MaxDuration": 5000,
+          "DurationPerResource": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 801041,
+          "DifficultyID": 0,
+          "DurationIndex": 28,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0,
+          "ContentTuningID": 0,
+          "SpellID": 1246736
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1246736:effect_value:$s1:1246736:0",
+      "abilitySpellId": 1246736,
+      "encounterId": 2737,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1246736,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 50,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 75,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 100,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 130,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1248453,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246736
+        },
+        {
+          "ID": 1262759,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 75,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246736
+        },
+        {
+          "ID": 1262758,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 100,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246736
+        },
+        {
+          "ID": 1262757,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 130,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246736
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1246736:effect_value:$s2:1246736:1",
+      "abilitySpellId": 1246736,
+      "encounterId": 2737,
+      "category": "effect_value",
+      "token": "$s2",
+      "targetSpellId": 1246736,
+      "effectIndex": 1,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 255,
+          "basePoints": 100,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 255,
+          "basePoints": 300,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 255,
+          "basePoints": 500,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 255,
+          "basePoints": 50,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1248454,
+          "EffectAura": 255,
+          "DifficultyID": 0,
+          "EffectIndex": 1,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 100,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246736
+        },
+        {
+          "ID": 1262761,
+          "EffectAura": 255,
+          "DifficultyID": 15,
+          "EffectIndex": 1,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 300,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246736
+        },
+        {
+          "ID": 1262760,
+          "EffectAura": 255,
+          "DifficultyID": 16,
+          "EffectIndex": 1,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 500,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246736
+        },
+        {
+          "ID": 1292961,
+          "EffectAura": 255,
+          "DifficultyID": 17,
+          "EffectIndex": 1,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246736
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1248674:effect_value:$s1:1248674:0",
+      "abilitySpellId": 1248674,
+      "encounterId": 2737,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1248674,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 69,
+          "basePoints": 300,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 69,
+          "basePoints": 750,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 69,
+          "basePoints": 1000,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 69,
+          "basePoints": 2000,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 69,
+          "basePoints": 500,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1251755,
+          "EffectAura": 69,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 300,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1248674
+        },
+        {
+          "ID": 1289500,
+          "EffectAura": 69,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 750,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1248674
+        },
+        {
+          "ID": 1262764,
+          "EffectAura": 69,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 1000,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1248674
+        },
+        {
+          "ID": 1262763,
+          "EffectAura": 69,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 2000,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1248674
+        },
+        {
+          "ID": 1289499,
+          "EffectAura": 69,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 500,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1248674
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1249262:effect_value:$s1:1249262:0",
+      "abilitySpellId": 1249262,
+      "encounterId": 2733,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1249262,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 110,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 109.84462738037,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 143,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 93,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1252692,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 110,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 88,
+          "SpellID": 1249262
+        },
+        {
+          "ID": 1297249,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 109.84462738037,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 88,
+          "SpellID": 1249262
+        },
+        {
+          "ID": 1297248,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 143,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 88,
+          "SpellID": 1249262
+        },
+        {
+          "ID": 1313009,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 93,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 88,
+          "SpellID": 1249262
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1249262:radius:$1249261A1:1249261:0",
+      "abilitySpellId": 1249262,
+      "encounterId": 2733,
+      "category": "radius",
+      "token": "$1249261A1",
+      "targetSpellId": 1249261,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "radius0": null,
+          "radius1": {
+            "ID": 13,
+            "Radius": 10,
+            "RadiusPerLevel": 0,
+            "RadiusMin": 0,
+            "RadiusMax": 10
+          }
+        }
+      ],
+      "radiusRows": [
+        {
+          "ID": 13,
+          "Radius": 10,
+          "RadiusPerLevel": 0,
+          "RadiusMin": 0,
+          "RadiusMax": 10
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1252689,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 3,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 0,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 13,
+          "SpellID": 1249261
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1250953:effect_value:$s1:1250953:0",
+      "abilitySpellId": 1250953,
+      "encounterId": 2795,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1250953,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 301,
+          "basePoints": 11,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 301,
+          "basePoints": 13.19999980927,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 301,
+          "basePoints": 9,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1255274,
+          "EffectAura": 301,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 11,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 41,
+          "SpellID": 1250953
+        },
+        {
+          "ID": 1314639,
+          "EffectAura": 301,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 13.19999980927,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 41,
+          "SpellID": 1250953
+        },
+        {
+          "ID": 1306135,
+          "EffectAura": 301,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 9,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 41,
+          "SpellID": 1250953
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1250991:duration:$d:1250991:not_applicable",
+      "abilitySpellId": 1250991,
+      "encounterId": 2736,
+      "category": "duration",
+      "token": "$d",
+      "targetSpellId": 1250991,
+      "effectIndex": null,
+      "indexResolution": "not_applicable",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "durationIndex": 31,
+          "duration": {
+            "ID": 31,
+            "Duration": 8000,
+            "MaxDuration": 8000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0
+        }
+      ],
+      "durationRows": [
+        {
+          "ID": 31,
+          "Duration": 8000,
+          "MaxDuration": 8000,
+          "DurationPerResource": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 805133,
+          "DifficultyID": 0,
+          "DurationIndex": 31,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0,
+          "ContentTuningID": 0,
+          "SpellID": 1250991
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1250991:effect_period:$t:1250991:implicit_client_index_unresolved",
+      "abilitySpellId": 1250991,
+      "encounterId": 2736,
+      "category": "effect_period",
+      "token": "$t",
+      "targetSpellId": 1250991,
+      "effectIndex": null,
+      "indexResolution": "implicit_client_index_unresolved",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "client_index_unresolved",
+      "metadataComplete": false,
+      "observedValues": [],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1255326,
+          "EffectAura": 226,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 2000,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1.20000004768,
+          "EffectBasePointsF": 0,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1250991
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1250991:effect_value:$1285504s1:1285504:0",
+      "abilitySpellId": 1250991,
+      "encounterId": 2736,
+      "category": "effect_value",
+      "token": "$1285504s1",
+      "targetSpellId": 1285504,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 16,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 24,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1301564,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 16,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1285504
+        },
+        {
+          "ID": 1301565,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 24,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1285504
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1251361:effect_value:$1253691s1:1253691:0",
+      "abilitySpellId": 1251361,
+      "encounterId": 2733,
+      "category": "effect_value",
+      "token": "$1253691s1",
+      "targetSpellId": 1253691,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "scaled_or_dynamic",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 75,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1259635,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 75,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 13,
+          "SpellID": 1253691
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1251361:radius:$1253691A1:1253691:0",
+      "abilitySpellId": 1251361,
+      "encounterId": 2733,
+      "category": "radius",
+      "token": "$1253691A1",
+      "targetSpellId": 1253691,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "radius0": null,
+          "radius1": {
+            "ID": 13,
+            "Radius": 10,
+            "RadiusPerLevel": 0,
+            "RadiusMin": 0,
+            "RadiusMax": 10
+          }
+        }
+      ],
+      "radiusRows": [
+        {
+          "ID": 13,
+          "Radius": 10,
+          "RadiusPerLevel": 0,
+          "RadiusMin": 0,
+          "RadiusMax": 10
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1259635,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 75,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 13,
+          "SpellID": 1253691
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1251812:effect_value:$s1:1251812:0",
+      "abilitySpellId": 1251812,
+      "encounterId": 2737,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1251812,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 75,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 100,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 150,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 200,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1256637,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 75,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1251812
+        },
+        {
+          "ID": 1262746,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 100,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1251812
+        },
+        {
+          "ID": 1262745,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 150,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1251812
+        },
+        {
+          "ID": 1262744,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 200,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1251812
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1253915:effect_value:$1254076s1:1254076:0",
+      "abilitySpellId": 1253915,
+      "encounterId": 2740,
+      "category": "effect_value",
+      "token": "$1254076s1",
+      "targetSpellId": 1254076,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 20,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 10,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 25,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 30,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 5,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 2.5,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1260329,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 20,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254076
+        },
+        {
+          "ID": 1290502,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 10,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254076
+        },
+        {
+          "ID": 1290501,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 25,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254076
+        },
+        {
+          "ID": 1290500,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 30,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254076
+        },
+        {
+          "ID": 1290499,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 5,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254076
+        },
+        {
+          "ID": 1290498,
+          "EffectAura": 0,
+          "DifficultyID": 220,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 2.5,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254076
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        },
+        {
+          "difficultyId": 220,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Story",
+            "ru": "Сюжет"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1254088:effect_value:$s2:1254088:1",
+      "abilitySpellId": 1254088,
+      "encounterId": 2736,
+      "category": "effect_value",
+      "token": "$s2",
+      "targetSpellId": 1254088,
+      "effectIndex": 1,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 10,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 20,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 250,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1297485,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 1,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 10,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 88,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254088
+        },
+        {
+          "ID": 1297491,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 1,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 20,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 88,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254088
+        },
+        {
+          "ID": 1297489,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 1,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 250,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 88,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254088
+        },
+        {
+          "ID": 1297488,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 1,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 10,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 88,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1254088
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1259184:duration:$d:1259186:not_applicable",
+      "abilitySpellId": 1259184,
+      "encounterId": 2734,
+      "category": "duration",
+      "token": "$d",
+      "targetSpellId": 1259186,
+      "effectIndex": null,
+      "indexResolution": "not_applicable",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "durationIndex": 9,
+          "duration": {
+            "ID": 9,
+            "Duration": 30000,
+            "MaxDuration": 30000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0
+        }
+      ],
+      "durationRows": [
+        {
+          "ID": 9,
+          "Duration": 30000,
+          "MaxDuration": 30000,
+          "DurationPerResource": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 812729,
+          "DifficultyID": 0,
+          "DurationIndex": 9,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0,
+          "ContentTuningID": 0,
+          "SpellID": 1259186
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1259184:effect_value:$s1:1259186:0",
+      "abilitySpellId": 1259184,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1259186,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 50,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 70,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1268146,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 14,
+          "SpellID": 1259186
+        },
+        {
+          "ID": 1311289,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 14,
+          "SpellID": 1259186
+        },
+        {
+          "ID": 1294774,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 70,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 14,
+          "SpellID": 1259186
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1259184:effect_value:$s2:1259186:1",
+      "abilitySpellId": 1259184,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$s2",
+      "targetSpellId": 1259186,
+      "effectIndex": 1,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 87,
+          "basePoints": 50,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 87,
+          "basePoints": 100,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1268147,
+          "EffectAura": 87,
+          "DifficultyID": 0,
+          "EffectIndex": 1,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 14,
+          "SpellID": 1259186
+        },
+        {
+          "ID": 1284054,
+          "EffectAura": 87,
+          "DifficultyID": 16,
+          "EffectIndex": 1,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 100,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 14,
+          "SpellID": 1259186
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1259184:effect_value:$s5:1259186:4",
+      "abilitySpellId": 1259184,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$s5",
+      "targetSpellId": 1259186,
+      "effectIndex": 4,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 20,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 25,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1268237,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 4,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 20,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 88,
+          "SpellID": 1259186
+        },
+        {
+          "ID": 1311290,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 4,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 20,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 88,
+          "SpellID": 1259186
+        },
+        {
+          "ID": 1302807,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 4,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 25,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 88,
+          "SpellID": 1259186
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1259184:radius:$A1:1259186:0",
+      "abilitySpellId": 1259184,
+      "encounterId": 2734,
+      "category": "radius",
+      "token": "$A1",
+      "targetSpellId": 1259186,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "radius0": null,
+          "radius1": {
+            "ID": 14,
+            "Radius": 8,
+            "RadiusPerLevel": 0,
+            "RadiusMin": 0,
+            "RadiusMax": 8
+          }
+        }
+      ],
+      "radiusRows": [
+        {
+          "ID": 14,
+          "Radius": 8,
+          "RadiusPerLevel": 0,
+          "RadiusMin": 0,
+          "RadiusMax": 8
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1268146,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 14,
+          "SpellID": 1259186
+        },
+        {
+          "ID": 1311289,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 50,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 14,
+          "SpellID": 1259186
+        },
+        {
+          "ID": 1294774,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 70,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 14,
+          "SpellID": 1259186
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1260046:effect_value:$s1:1260052:0",
+      "abilitySpellId": 1260046,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1260052,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 70,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 90,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1269439,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 70,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 113,
+          "SpellID": 1260052
+        },
+        {
+          "ID": 1311274,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 90,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 113,
+          "SpellID": 1260052
+        },
+        {
+          "ID": 1292889,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 90,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 113,
+          "SpellID": 1260052
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1260763:duration:$1260826d:1260826:not_applicable",
+      "abilitySpellId": 1260763,
+      "encounterId": 2739,
+      "category": "duration",
+      "token": "$1260826d",
+      "targetSpellId": 1260826,
+      "effectIndex": null,
+      "indexResolution": "not_applicable",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "durationIndex": 9,
+          "duration": {
+            "ID": 9,
+            "Duration": 30000,
+            "MaxDuration": 30000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0
+        },
+        {
+          "durationIndex": 5,
+          "duration": {
+            "ID": 5,
+            "Duration": 300000,
+            "MaxDuration": 300000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0
+        }
+      ],
+      "durationRows": [
+        {
+          "ID": 5,
+          "Duration": 300000,
+          "MaxDuration": 300000,
+          "DurationPerResource": 0
+        },
+        {
+          "ID": 9,
+          "Duration": 30000,
+          "MaxDuration": 30000,
+          "DurationPerResource": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 814060,
+          "DifficultyID": 0,
+          "DurationIndex": 9,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0,
+          "ContentTuningID": 0,
+          "SpellID": 1260826
+        },
+        {
+          "ID": 838722,
+          "DifficultyID": 15,
+          "DurationIndex": 5,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0,
+          "ContentTuningID": 0,
+          "SpellID": 1260826
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1260763:effect_value:$1260826s1:1260826:0",
+      "abilitySpellId": 1260763,
+      "encounterId": 2739,
+      "category": "effect_value",
+      "token": "$1260826s1",
+      "targetSpellId": 1260826,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 79,
+          "basePoints": 20,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 6,
+          "effectAura": 79,
+          "basePoints": 10,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1270371,
+          "EffectAura": 79,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 20,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1260826
+        },
+        {
+          "ID": 1317231,
+          "EffectAura": 79,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 10,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1260826
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1262020:duration:$d:1262020:not_applicable",
+      "abilitySpellId": 1262020,
+      "encounterId": 2795,
+      "category": "duration",
+      "token": "$d",
+      "targetSpellId": 1262020,
+      "effectIndex": null,
+      "indexResolution": "not_applicable",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "durationIndex": 1326,
+          "duration": {
+            "ID": 1326,
+            "Duration": 1000,
+            "MaxDuration": 1000,
+            "DurationPerResource": 0
+          },
+          "minDurationMs": 0
+        }
+      ],
+      "durationRows": [
+        {
+          "ID": 1326,
+          "Duration": 1000,
+          "MaxDuration": 1000,
+          "DurationPerResource": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 815130,
+          "DifficultyID": 0,
+          "DurationIndex": 1326,
+          "PvPDurationIndex": 0,
+          "MinDuration": 0,
+          "ContentTuningID": 0,
+          "SpellID": 1262020
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1262020:effect_value:$1262053s1:1262053:0",
+      "abilitySpellId": 1262020,
+      "encounterId": 2795,
+      "category": "effect_value",
+      "token": "$1262053s1",
+      "targetSpellId": 1262053,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "scaled_or_dynamic",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 100,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1272083,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 100,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1262053
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1262020:effect_value:$1262059s1:1262059:0",
+      "abilitySpellId": 1262020,
+      "encounterId": 2795,
+      "category": "effect_value",
+      "token": "$1262059s1",
+      "targetSpellId": 1262059,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "scaled_or_dynamic",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 35,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1272092,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 35,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1262059
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1262305:effect_value:$1246827s1:1246827:0",
+      "abilitySpellId": 1262305,
+      "encounterId": 2795,
+      "category": "effect_value",
+      "token": "$1246827s1",
+      "targetSpellId": 1246827,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 150,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 150.06231689453,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 300,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1248607,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 150,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246827
+        },
+        {
+          "ID": 1283294,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 150.06231689453,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246827
+        },
+        {
+          "ID": 1283293,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 300,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1246827
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1262305:effect_value:$s1:1262305:0",
+      "abilitySpellId": 1262305,
+      "encounterId": 2795,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1262305,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 240,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 300,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 400,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1272465,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 3,
+          "EffectBasePointsF": 240,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 13,
+          "SpellID": 1262305
+        },
+        {
+          "ID": 1283298,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 3,
+          "EffectBasePointsF": 300,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 13,
+          "SpellID": 1262305
+        },
+        {
+          "ID": 1283297,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 400,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 13,
+          "SpellID": 1262305
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1262305:radius:$1262303A1:1262303:0",
+      "abilitySpellId": 1262305,
+      "encounterId": 2795,
+      "category": "radius",
+      "token": "$1262303A1",
+      "targetSpellId": 1262303,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "static_metadata",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "radius0": null,
+          "radius1": {
+            "ID": 13,
+            "Radius": 10,
+            "RadiusPerLevel": 0,
+            "RadiusMin": 0,
+            "RadiusMax": 10
+          }
+        }
+      ],
+      "radiusRows": [
+        {
+          "ID": 13,
+          "Radius": 10,
+          "RadiusPerLevel": 0,
+          "RadiusMin": 0,
+          "RadiusMax": 10
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1272459,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 3,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 0,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 13,
+          "SpellID": 1262303
+        },
+        {
+          "ID": 1274536,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 3,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 0,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 13,
+          "SpellID": 1262303
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1263970:effect_value:$1253878s1:1253878:0",
+      "abilitySpellId": 1263970,
+      "encounterId": 2740,
+      "category": "effect_value",
+      "token": "$1253878s1",
+      "targetSpellId": 1253878,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 30,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 20,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 40,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 15,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1259975,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 30,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1253878
+        },
+        {
+          "ID": 1290430,
+          "EffectAura": 0,
+          "DifficultyID": 14,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 20,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1253878
+        },
+        {
+          "ID": 1290429,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 30,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1253878
+        },
+        {
+          "ID": 1290428,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 40,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1253878
+        },
+        {
+          "ID": 1290427,
+          "EffectAura": 0,
+          "DifficultyID": 220,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 15,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1253878
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 14,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Normal",
+            "ru": "Обычный"
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 220,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Story",
+            "ru": "Сюжет"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1263970:effect_value:$s1:1263970:0",
+      "abilitySpellId": 1263970,
+      "encounterId": 2740,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1263970,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "scaled_or_dynamic",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 6,
+          "effectAura": 4,
+          "basePoints": 5,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1274964,
+          "EffectAura": 4,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 5,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1263970
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1272937:effect_period:$1272937t:1272937:implicit_client_index_unresolved",
+      "abilitySpellId": 1272937,
+      "encounterId": 2734,
+      "category": "effect_period",
+      "token": "$1272937t",
+      "targetSpellId": 1272937,
+      "effectIndex": null,
+      "indexResolution": "implicit_client_index_unresolved",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "client_index_unresolved",
+      "metadataComplete": false,
+      "observedValues": [],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1286264,
+          "EffectAura": 226,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 6,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 2000,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 0,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 0,
+          "SpellID": 1272937
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        }
+      ]
+    },
+    {
+      "key": "1272937:effect_value:$s1:1272950:0",
+      "abilitySpellId": 1272937,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$s1",
+      "targetSpellId": 1272950,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 3,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 3.3599998951,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 4.48000001907,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1286279,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 3,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 28,
+          "SpellID": 1272950
+        },
+        {
+          "ID": 1312876,
+          "EffectAura": 0,
+          "DifficultyID": 15,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 3.3599998951,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 28,
+          "SpellID": 1272950
+        },
+        {
+          "ID": 1294767,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 4.48000001907,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 28,
+          "SpellID": 1272950
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 15,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Heroic",
+            "ru": "Героический"
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        }
+      ]
+    },
+    {
+      "key": "1273067:effect_value:$1276811s1:1276811:0",
+      "abilitySpellId": 1273067,
+      "encounterId": 2734,
+      "category": "effect_value",
+      "token": "$1276811s1",
+      "targetSpellId": 1276811,
+      "effectIndex": 0,
+      "indexResolution": "exact_effect_index",
+      "locales": [
+        "en",
+        "ru"
+      ],
+      "classification": "difficulty_variant",
+      "metadataComplete": true,
+      "observedValues": [
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 90,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 120,
+          "effectAmplitude": 0
+        },
+        {
+          "effect": 2,
+          "effectAura": 0,
+          "basePoints": 70,
+          "effectAmplitude": 0
+        }
+      ],
+      "independentlyRendered": false,
+      "publicationSafe": false,
+      "sourceRows": [
+        {
+          "ID": 1288802,
+          "EffectAura": 0,
+          "DifficultyID": 0,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 90,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 176,
+          "SpellID": 1276811
+        },
+        {
+          "ID": 1302874,
+          "EffectAura": 0,
+          "DifficultyID": 16,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 120,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 176,
+          "SpellID": 1276811
+        },
+        {
+          "ID": 1294739,
+          "EffectAura": 0,
+          "DifficultyID": 17,
+          "EffectIndex": 0,
+          "Effect": 2,
+          "EffectAmplitude": 0,
+          "EffectAuraPeriod": 0,
+          "EffectBonusCoefficient": 0,
+          "EffectPointsPerResource": 0,
+          "EffectRealPointsPerLevel": 0,
+          "BonusCoefficientFromAP": 0,
+          "Coefficient": 0,
+          "Variance": 0,
+          "ResourceCoefficient": 0,
+          "GroupSizeBasePointsCoefficient": 1,
+          "EffectBasePointsF": 70,
+          "ScalingClass": 0,
+          "EffectRadiusIndex_0": 0,
+          "EffectRadiusIndex_1": 176,
+          "SpellID": 1276811
+        }
+      ],
+      "difficultyContexts": [
+        {
+          "difficultyId": 0,
+          "registeredDifficulty": false,
+          "names": {
+            "en": null,
+            "ru": null
+          }
+        },
+        {
+          "difficultyId": 16,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Mythic",
+            "ru": "Эпохальный"
+          }
+        },
+        {
+          "difficultyId": 17,
+          "registeredDifficulty": true,
+          "names": {
+            "en": "Looking For Raid",
+            "ru": "Поиск рейда"
+          }
+        }
+      ]
+    }
+  ]
+}

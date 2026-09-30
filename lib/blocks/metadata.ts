@@ -23,7 +23,11 @@ export function pageMetadata({
   robots,
   noAlternates,
 }: PageMetaInput & { game: GameDefinition; lang: Lang; path: string }): Metadata {
-  const languages = Object.fromEntries(game.locales.map((l) => [l, gameHref(game, l, path)]));
+  const defaultLocale = game.locales.includes("en") ? "en" : game.locales[0];
+  const languages = {
+    ...Object.fromEntries(game.locales.map((l) => [l, gameHref(game, l, path)])),
+    "x-default": gameHref(game, defaultLocale, path),
+  };
   return {
     title,
     description,

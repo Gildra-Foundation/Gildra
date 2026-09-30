@@ -1,0 +1,752 @@
+{
+  "Bind Soul": {
+    "spellId": 330810,
+    "iconName": "spell_necro_deathall",
+    "iconUrl": "/assets/wow/mythic/spells/bind-soul-330810.webp"
+  },
+  "Arc Lightning": {
+    "spellId": 1305810,
+    "iconName": "spell_nature_chainlightning",
+    "iconUrl": "/assets/wow/mythic/spells/arc-lightning-1305810.webp"
+  },
+  "Accumulate Charge": {
+    "spellId": 1310739,
+    "iconName": "spell_chargepositive",
+    "iconUrl": "/assets/wow/mythic/spells/accumulate-charge-1310739.webp"
+  },
+  "Awaken the Lightbloom": {
+    "spellId": 1246559,
+    "iconName": "inv_desertlasherorchid_yellow",
+    "iconUrl": "/assets/wow/mythic/spells/awaken-the-lightbloom-1246559.webp"
+  },
+  "Bestial Wrath": {
+    "spellId": 1285912,
+    "iconName": "ability_druid_ferociousbite",
+    "iconUrl": "/assets/wow/mythic/spells/bestial-wrath-1285912.webp"
+  },
+  "Axe Toss": {
+    "spellId": 1287456,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/axe-toss-1287456.webp"
+  },
+  "Addle Mind": {
+    "spellId": 1314082,
+    "iconName": "spell_shadow_mindflay",
+    "iconUrl": "/assets/wow/mythic/spells/addle-mind-1314082.webp"
+  },
+  "A Knot of Snakes": {
+    "spellId": 1290031,
+    "iconName": "ability_hunter_snaketrap",
+    "iconUrl": "/assets/wow/mythic/spells/a-knot-of-snakes-1290031.webp"
+  },
+  "Barrel Through": {
+    "spellId": 1310761,
+    "iconName": "ability_monk_clashingoxcharge",
+    "iconUrl": "/assets/wow/mythic/spells/barrel-through-1310761.webp"
+  },
+  "Axegrinder": {
+    "spellId": 1312846,
+    "iconName": "ability_warrior_bladestorm",
+    "iconUrl": "/assets/wow/mythic/spells/axegrinder-1312846.webp"
+  },
+  "Burn Corruption": {
+    "spellId": 1311956,
+    "iconName": "ability_siege_engineer_purification_beam",
+    "iconUrl": "/assets/wow/mythic/spells/burn-corruption-1311956.webp"
+  },
+  "Boneslicer": {
+    "spellId": 1301509,
+    "iconName": "ability_hunter_swiftstrike",
+    "iconUrl": "/assets/wow/mythic/spells/boneslicer-1301509.webp"
+  },
+  "Bolster": {
+    "spellId": 1310319,
+    "iconName": "ability_druid_enrage",
+    "iconUrl": "/assets/wow/mythic/spells/bolster-1310319.webp"
+  },
+  "Call of the Elements": {
+    "spellId": 383011,
+    "iconName": "ability_shaman_multitotemactivation",
+    "iconUrl": "/assets/wow/mythic/spells/call-of-the-elements-383011.webp"
+  },
+  "Bloodthorn Roots": {
+    "spellId": 1259364,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/bloodthorn-roots-1259364.webp"
+  },
+  "Blade Combo": {
+    "spellId": 1303205,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/blade-combo-1303205.webp"
+  },
+  "Burrow": {
+    "spellId": 1314074,
+    "iconName": "spell_shaman_earthquake",
+    "iconUrl": "/assets/wow/mythic/spells/burrow-1314074.webp"
+  },
+  "Burrowing Charge": {
+    "spellId": 1300083,
+    "iconName": "spell_nature_earthquake",
+    "iconUrl": "/assets/wow/mythic/spells/burrowing-charge-1300083.webp"
+  },
+  "Bloodthirsty Gaze": {
+    "spellId": 1317906,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/bloodthirsty-gaze-1317906.webp"
+  },
+  "Blood Frenzy": {
+    "spellId": 1295071,
+    "iconName": "ability_racial_bloodrage",
+    "iconUrl": "/assets/wow/mythic/spells/blood-frenzy-1295071.webp"
+  },
+  "Chaos Bolt": {
+    "spellId": 1275781,
+    "iconName": "ability_warlock_chaosbolt",
+    "iconUrl": "/assets/wow/mythic/spells/chaos-bolt-1275781.webp"
+  },
+  "Concentrated Lightbeam": {
+    "spellId": 1302811,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/concentrated-lightbeam-1302811.webp"
+  },
+  "Corrupted Lifeforce": {
+    "spellId": 1301029,
+    "iconName": "inv_nullstone_shadow",
+    "iconUrl": "/assets/wow/mythic/spells/corrupted-lifeforce-1301029.webp"
+  },
+  "Charged Slam": {
+    "spellId": 382783,
+    "iconName": "inv_artifact_stolenpower",
+    "iconUrl": "/assets/wow/mythic/spells/charged-slam-382783.webp"
+  },
+  "Cryo Surge": {
+    "spellId": 1239871,
+    "iconName": "spell_mage_frostbomb",
+    "iconUrl": "/assets/wow/mythic/spells/cryo-surge-1239871.webp"
+  },
+  "Corrosive Essence": {
+    "spellId": 1289265,
+    "iconName": "inv_ability_poison_orb",
+    "iconUrl": "/assets/wow/mythic/spells/corrosive-essence-1289265.webp"
+  },
+  "Dark Bloom": {
+    "spellId": 1300262,
+    "iconName": "inv_ability_voidweaverpriest_entropicrift",
+    "iconUrl": "/assets/wow/mythic/spells/dark-bloom-1300262.webp"
+  },
+  "Cytotoxin": {
+    "spellId": 1308148,
+    "iconName": "ability_hunter_cobrastrikes",
+    "iconUrl": "/assets/wow/mythic/spells/cytotoxin-1308148.webp"
+  },
+  "Cosmic Crash": {
+    "spellId": 1300372,
+    "iconName": "inv_cosmicvoid_groundsate",
+    "iconUrl": "/assets/wow/mythic/spells/cosmic-crash-1300372.webp"
+  },
+  "Deathly Roar": {
+    "spellId": 334708,
+    "iconName": "ability_creature_cursed_03",
+    "iconUrl": "/assets/wow/mythic/spells/deathly-roar-334708.webp"
+  },
+  "Debilitating Backhand": {
+    "spellId": 266241,
+    "iconName": "inv_relics_totemofrage",
+    "iconUrl": "/assets/wow/mythic/spells/debilitating-backhand-266241.webp"
+  },
+  "Dark Revelation": {
+    "spellId": 1298317,
+    "iconName": "ability_priest_clarityofpower",
+    "iconUrl": "/assets/wow/mythic/spells/dark-revelation-1298317.webp"
+  },
+  "Death Rattle": {
+    "spellId": 1299080,
+    "iconName": "inv_sonic_debuff",
+    "iconUrl": "/assets/wow/mythic/spells/death-rattle-1299080.webp"
+  },
+  "Demoralizing Shout": {
+    "spellId": 1298899,
+    "iconName": "ability_warrior_warcry",
+    "iconUrl": "/assets/wow/mythic/spells/demoralizing-shout-1298899.webp"
+  },
+  "Defiling Taint": {
+    "spellId": 1301202,
+    "iconName": "ability_creature_disease_05",
+    "iconUrl": "/assets/wow/mythic/spells/defiling-taint-1301202.webp"
+  },
+  "Destabilized": {
+    "spellId": 1265412,
+    "iconName": "spell_frost_stun",
+    "iconUrl": "/assets/wow/mythic/spells/destabilized-1265412.webp"
+  },
+  "Disorienting Screech": {
+    "spellId": 1252805,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/disorienting-screech-1252805.webp"
+  },
+  "Devour": {
+    "spellId": 1302629,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/devour-1302629.webp"
+  },
+  "Demonic Rage": {
+    "spellId": 1223533,
+    "iconName": "ability_warlock_demonicempowerment",
+    "iconUrl": "/assets/wow/mythic/spells/demonic-rage-1223533.webp"
+  },
+  "Drain Fluids": {
+    "spellId": 338690,
+    "iconName": "inv_artifact_bloodoftheassassinated",
+    "iconUrl": "/assets/wow/mythic/spells/drain-fluids-338690.webp"
+  },
+  "Earthshatter Slam": {
+    "spellId": 1270428,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/earthshatter-slam-1270428.webp"
+  },
+  "Devouring Lunge": {
+    "spellId": 1243473,
+    "iconName": "inv_devourersmallmount_dark",
+    "iconUrl": "/assets/wow/mythic/spells/devouring-lunge-1243473.webp"
+  },
+  "Echoing Maul": {
+    "spellId": 1256331,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/echoing-maul-1256331.webp"
+  },
+  "Fan Of Thorns": {
+    "spellId": 1261015,
+    "iconName": "inv_misc_herb_04",
+    "iconUrl": "/assets/wow/mythic/spells/fan-of-thorns-1261015.webp"
+  },
+  "Entomb": {
+    "spellId": 271569,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/entomb-271569.webp"
+  },
+  "Evolve": {
+    "spellId": 1311508,
+    "iconName": "inv_giantsnake_green",
+    "iconUrl": "/assets/wow/mythic/spells/evolve-1311508.webp"
+  },
+  "Essence Disruption": {
+    "spellId": 1303535,
+    "iconName": "inv_elemental_mote_shadow01",
+    "iconUrl": "/assets/wow/mythic/spells/essence-disruption-1303535.webp"
+  },
+  "Envenom": {
+    "spellId": 1307571,
+    "iconName": "inv_ability_poison_missile",
+    "iconUrl": "/assets/wow/mythic/spells/envenom-1307571.webp"
+  },
+  "Fel Shiv": {
+    "spellId": 252330,
+    "iconName": "inv_knife_1h_felfireraid_d_04",
+    "iconUrl": "/assets/wow/mythic/spells/fel-shiv-252330.webp"
+  },
+  "Fel Missiles": {
+    "spellId": 1216571,
+    "iconName": "spell_fire_felrainoffire",
+    "iconUrl": "/assets/wow/mythic/spells/fel-missiles-1216571.webp"
+  },
+  "Felstorm": {
+    "spellId": 1264110,
+    "iconName": "spell_fire_felcano",
+    "iconUrl": "/assets/wow/mythic/spells/felstorm-1264110.webp"
+  },
+  "Fel-Infused Freight": {
+    "spellId": 1219631,
+    "iconName": "inv_ember_fel",
+    "iconUrl": "/assets/wow/mythic/spells/fel-infused-freight-1219631.webp"
+  },
+  "Fel Rage": {
+    "spellId": 1214922,
+    "iconName": "ability_creature_felfrenzy",
+    "iconUrl": "/assets/wow/mythic/spells/fel-rage-1214922.webp"
+  },
+  "Fire Bomb": {
+    "spellId": 1297673,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/fire-bomb-1297673.webp"
+  },
+  "Flame Shock": {
+    "spellId": 1307165,
+    "iconName": "spell_fire_flameshock",
+    "iconUrl": "/assets/wow/mythic/spells/flame-shock-1307165.webp"
+  },
+  "Fingers of Gul'dan": {
+    "spellId": 1218203,
+    "iconName": "ability_warlock_handofguldan",
+    "iconUrl": "/assets/wow/mythic/spells/fingers-of-gul-dan-1218203.webp"
+  },
+  "Forceful Roar": {
+    "spellId": 1255385,
+    "iconName": "spell_druid_stamedingroar",
+    "iconUrl": "/assets/wow/mythic/spells/forceful-roar-1255385.webp"
+  },
+  "Frigid Roar": {
+    "spellId": 1309919,
+    "iconName": "inv_amanibearmount_witherbark",
+    "iconUrl": "/assets/wow/mythic/spells/frigid-roar-1309919.webp"
+  },
+  "Forceful Slam": {
+    "spellId": 1310033,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/forceful-slam-1310033.webp"
+  },
+  "Frozen Tempest": {
+    "spellId": 1312760,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/frozen-tempest-1312760.webp"
+  },
+  "Fury of the War God": {
+    "spellId": 1243488,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/fury-of-the-war-god-1243488.webp"
+  },
+  "Gale Force": {
+    "spellId": 1315239,
+    "iconName": "ability_skyreach_four_wind",
+    "iconUrl": "/assets/wow/mythic/spells/gale-force-1315239.webp"
+  },
+  "Gilded Destruction": {
+    "spellId": 1303288,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/gilded-destruction-1303288.webp"
+  },
+  "Glacial Torment": {
+    "spellId": 1235549,
+    "iconName": "inv12_apextalent_mage_handoffrost",
+    "iconUrl": "/assets/wow/mythic/spells/glacial-torment-1235549.webp"
+  },
+  "Galvanize": {
+    "spellId": 1290862,
+    "iconName": "spell_shaman_staticshock",
+    "iconUrl": "/assets/wow/mythic/spells/galvanize-1290862.webp"
+  },
+  "Grievous Thrash": {
+    "spellId": 1241058,
+    "iconName": "spell_druid_bloodythrash",
+    "iconUrl": "/assets/wow/mythic/spells/grievous-thrash-1241058.webp"
+  },
+  "Healing Breeze": {
+    "spellId": 1297696,
+    "iconName": "spell_frost_windwalkon",
+    "iconUrl": "/assets/wow/mythic/spells/healing-breeze-1297696.webp"
+  },
+  "Gravitic Orbs": {
+    "spellId": 1310025,
+    "iconName": "inv_enchant_voidsphere",
+    "iconUrl": "/assets/wow/mythic/spells/gravitic-orbs-1310025.webp"
+  },
+  "Health Funnel": {
+    "spellId": 1309970,
+    "iconName": "spell_shadow_lifedrain",
+    "iconUrl": "/assets/wow/mythic/spells/health-funnel-1309970.webp"
+  },
+  "Hex": {
+    "spellId": 1270766,
+    "iconName": "spell_shaman_hex",
+    "iconUrl": "/assets/wow/mythic/spells/hex-1270766.webp"
+  },
+  "Imbued Conduction": {
+    "spellId": 1296052,
+    "iconName": "spell_nature_stormreach",
+    "iconUrl": "/assets/wow/mythic/spells/imbued-conduction-1296052.webp"
+  },
+  "Hex Volley": {
+    "spellId": 269972,
+    "iconName": "warlock_curse_shadow",
+    "iconUrl": "/assets/wow/mythic/spells/hex-volley-269972.webp"
+  },
+  "Induction": {
+    "spellId": 1309525,
+    "iconName": "ability_thunderking_overcharge",
+    "iconUrl": "/assets/wow/mythic/spells/induction-1309525.webp"
+  },
+  "Insatiable Hunger": {
+    "spellId": 1269625,
+    "iconName": "spell_shadow_vampiricaura",
+    "iconUrl": "/assets/wow/mythic/spells/insatiable-hunger-1269625.webp"
+  },
+  "Light Bolt Volley": {
+    "spellId": 1301834,
+    "iconName": "ability_priest_flashoflight",
+    "iconUrl": "/assets/wow/mythic/spells/light-bolt-volley-1301834.webp"
+  },
+  "Legion Strike": {
+    "spellId": 1214781,
+    "iconName": "inv_axe_09",
+    "iconUrl": "/assets/wow/mythic/spells/legion-strike-1214781.webp"
+  },
+  "Killing Spree": {
+    "spellId": 1263280,
+    "iconName": "ability_rogue_murderspree",
+    "iconUrl": "/assets/wow/mythic/spells/killing-spree-1263280.webp"
+  },
+  "Latent Hex": {
+    "spellId": 1311982,
+    "iconName": "inv_shoulder_armor_hextroll_d_01",
+    "iconUrl": "/assets/wow/mythic/spells/latent-hex-1311982.webp"
+  },
+  "Lightbloom's Essence": {
+    "spellId": 1308388,
+    "iconName": "inv_ability_holyfire_orb",
+    "iconUrl": "/assets/wow/mythic/spells/lightbloom-s-essence-1308388.webp"
+  },
+  "Lightblossom Beam": {
+    "spellId": 1235577,
+    "iconName": "ability_paladin_infusionoflight",
+    "iconUrl": "/assets/wow/mythic/spells/lightblossom-beam-1235577.webp"
+  },
+  "Lightsower Dash": {
+    "spellId": 1235546,
+    "iconName": "rogue_burstofspeed",
+    "iconUrl": "/assets/wow/mythic/spells/lightsower-dash-1235546.webp"
+  },
+  "Lightfire": {
+    "spellId": 1256260,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/lightfire-1256260.webp"
+  },
+  "Lightning Spire": {
+    "spellId": 1309491,
+    "iconName": "ability_thunderking_rockfalllow",
+    "iconUrl": "/assets/wow/mythic/spells/lightning-spire-1309491.webp"
+  },
+  "Lightspore Shot": {
+    "spellId": 1247669,
+    "iconName": "inv_orange_sporecreature2",
+    "iconUrl": "/assets/wow/mythic/spells/lightspore-shot-1247669.webp"
+  },
+  "Lingering Fluid": {
+    "spellId": 271564,
+    "iconName": "inv_drink_31_embalmingfluid",
+    "iconUrl": "/assets/wow/mythic/spells/lingering-fluid-271564.webp"
+  },
+  "Mad Shriek": {
+    "spellId": 1233398,
+    "iconName": "spell_shadow_psychicscream",
+    "iconUrl": "/assets/wow/mythic/spells/mad-shriek-1233398.webp"
+  },
+  "Lucre's Call": {
+    "spellId": 265923,
+    "iconName": "spell_holy_purifyingpower",
+    "iconUrl": "/assets/wow/mythic/spells/lucre-s-call-265923.webp"
+  },
+  "Malefic Wave": {
+    "spellId": 1315369,
+    "iconName": "ability_felarakkoa_feldetonation_green",
+    "iconUrl": "/assets/wow/mythic/spells/malefic-wave-1315369.webp"
+  },
+  "Mass Envenom": {
+    "spellId": 1307567,
+    "iconName": "inv_ability_poison_missile",
+    "iconUrl": "/assets/wow/mythic/spells/mass-envenom-1307567.webp"
+  },
+  "Mending Void": {
+    "spellId": 1310324,
+    "iconName": "inv_cosmicvoid_buff",
+    "iconUrl": "/assets/wow/mythic/spells/mending-void-1310324.webp"
+  },
+  "Melt Armor": {
+    "spellId": 1250043,
+    "iconName": "spell_fire_firebolt02",
+    "iconUrl": "/assets/wow/mythic/spells/melt-armor-1250043.webp"
+  },
+  "Mind-Numbing Poison": {
+    "spellId": 1263971,
+    "iconName": "ability_creature_poison_02",
+    "iconUrl": "/assets/wow/mythic/spells/mind-numbing-poison-1263971.webp"
+  },
+  "Murder in a Row": {
+    "spellId": 1227012,
+    "iconName": "inv_legendary_gun",
+    "iconUrl": "/assets/wow/mythic/spells/murder-in-a-row-1227012.webp"
+  },
+  "Nether Dash": {
+    "spellId": 1298673,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/nether-dash-1298673.webp"
+  },
+  "Paralyzing Shots": {
+    "spellId": 1307269,
+    "iconName": "ability_poisonsting",
+    "iconUrl": "/assets/wow/mythic/spells/paralyzing-shots-1307269.webp"
+  },
+  "Mother's Wrath": {
+    "spellId": 1311037,
+    "iconName": "inv_misc_monsterfang_02",
+    "iconUrl": "/assets/wow/mythic/spells/mother-s-wrath-1311037.webp"
+  },
+  "Monstrous Roar": {
+    "spellId": 1262497,
+    "iconName": "ability_racial_darkflight",
+    "iconUrl": "/assets/wow/mythic/spells/monstrous-roar-1262497.webp"
+  },
+  "Pit of Despair": {
+    "spellId": 276031,
+    "iconName": "spell_shadow_psychicscream",
+    "iconUrl": "/assets/wow/mythic/spells/pit-of-despair-276031.webp"
+  },
+  "Piercing Hiss": {
+    "spellId": 1294557,
+    "iconName": "inv_sonic_wave",
+    "iconUrl": "/assets/wow/mythic/spells/piercing-hiss-1294557.webp"
+  },
+  "Poison Nova": {
+    "spellId": 1254305,
+    "iconName": "inv_ability_poison_nova",
+    "iconUrl": "/assets/wow/mythic/spells/poison-nova-1254305.webp"
+  },
+  "Poisoned Cheap Shot": {
+    "spellId": 1308100,
+    "iconName": "ability_cheapshot",
+    "iconUrl": "/assets/wow/mythic/spells/poisoned-cheap-shot-1308100.webp"
+  },
+  "Pulverizing Strikes": {
+    "spellId": 1240257,
+    "iconName": "ability_druid_swipe",
+    "iconUrl": "/assets/wow/mythic/spells/pulverizing-strikes-1240257.webp"
+  },
+  "Poison Spit": {
+    "spellId": 1310116,
+    "iconName": "inv_ability_poison_orb",
+    "iconUrl": "/assets/wow/mythic/spells/poison-spit-1310116.webp"
+  },
+  "Quaking Leap": {
+    "spellId": 1303328,
+    "iconName": "ability_heroicleap",
+    "iconUrl": "/assets/wow/mythic/spells/quaking-leap-1303328.webp"
+  },
+  "Poison Splash": {
+    "spellId": 1300351,
+    "iconName": "spell_nature_corrosivebreath",
+    "iconUrl": "/assets/wow/mythic/spells/poison-splash-1300351.webp"
+  },
+  "Ravenous Bellow": {
+    "spellId": 1235118,
+    "iconName": "ability_druid_challangingroar",
+    "iconUrl": "/assets/wow/mythic/spells/ravenous-bellow-1235118.webp"
+  },
+  "Ravenous Claws": {
+    "spellId": 1306342,
+    "iconName": "ability_xavius_tormentingswipe",
+    "iconUrl": "/assets/wow/mythic/spells/ravenous-claws-1306342.webp"
+  },
+  "Rending Pounce": {
+    "spellId": 213824,
+    "iconName": "ability_ghoulfrenzy",
+    "iconUrl": "/assets/wow/mythic/spells/rending-pounce-213824.webp"
+  },
+  "Regurgitate": {
+    "spellId": 1304491,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/regurgitate-1304491.webp"
+  },
+  "Ravenous Stomp": {
+    "spellId": 1310413,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/ravenous-stomp-1310413.webp"
+  },
+  "Rising Winds": {
+    "spellId": 195263,
+    "iconName": "ability_monk_risingsunkick",
+    "iconUrl": "/assets/wow/mythic/spells/rising-winds-195263.webp"
+  },
+  "Rimeshatter": {
+    "spellId": 1263590,
+    "iconName": "spell_frost_icestorm",
+    "iconUrl": "/assets/wow/mythic/spells/rimeshatter-1263590.webp"
+  },
+  "Ritual of the Fang": {
+    "spellId": 1301063,
+    "iconName": "inv_achievement_dungeon_altaroffangs",
+    "iconUrl": "/assets/wow/mythic/spells/ritual-of-the-fang-1301063.webp"
+  },
+  "Ritual Venom": {
+    "spellId": 1300901,
+    "iconName": "inv_ability_poison_beam",
+    "iconUrl": "/assets/wow/mythic/spells/ritual-venom-1300901.webp"
+  },
+  "Seduction": {
+    "spellId": 1201554,
+    "iconName": "spell_shadow_seduction",
+    "iconUrl": "/assets/wow/mythic/spells/seduction-1201554.webp"
+  },
+  "Savage Maul": {
+    "spellId": 1303490,
+    "iconName": "inv_misc_raptorfoot_white",
+    "iconUrl": "/assets/wow/mythic/spells/savage-maul-1303490.webp"
+  },
+  "Scavenge": {
+    "spellId": 1239394,
+    "iconName": "inv_vulturemount_black",
+    "iconUrl": "/assets/wow/mythic/spells/scavenge-1239394.webp"
+  },
+  "Ssscavenging": {
+    "spellId": 1298221,
+    "iconId": 458236,
+    "iconName": "trade_archaeology_bones of transformation",
+    "iconUrl": "https://render.worldofwarcraft.com/eu/icons/56/trade_archaeology_bonesoftransformation.jpg",
+    "identitySourceUrl": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69587&locale=enUS&filter[ID]=1298221",
+    "iconMappingSourceUrl": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69587&filter[SpellID]=1298221",
+    "actorEvidenceUrl": "https://aws.keystone.guru/index.php/compendium/spell/1298221-ssscavenging",
+    "lastVerifiedAt": "2026-09-13T04:14:29Z"
+  },
+  "Serpentine Gust": {
+    "spellId": 1311988,
+    "iconName": "ability_skyreach_four_wind",
+    "iconUrl": "/assets/wow/mythic/spells/serpentine-gust-1311988.webp"
+  },
+  "Severing Blade": {
+    "spellId": 270487,
+    "iconName": "spell_druid_bloodythrash",
+    "iconUrl": "/assets/wow/mythic/spells/severing-blade-270487.webp"
+  },
+  "Shadowbolt Volley": {
+    "spellId": 1299938,
+    "iconName": "spell_fire_twilightflamestrike",
+    "iconUrl": "/assets/wow/mythic/spells/shadowbolt-volley-1299938.webp"
+  },
+  "Shadow Barrage": {
+    "spellId": 1213804,
+    "iconName": "spell_shadow_mindtwisting",
+    "iconUrl": "/assets/wow/mythic/spells/shadow-barrage-1213804.webp"
+  },
+  "Snowdrift": {
+    "spellId": 1266193,
+    "iconName": "spell_hunter_icetrap",
+    "iconUrl": "/assets/wow/mythic/spells/snowdrift-1266193.webp"
+  },
+  "Spit Gold": {
+    "spellId": 1312104,
+    "iconName": "ability_creature_amber_01",
+    "iconUrl": "/assets/wow/mythic/spells/spit-gold-1312104.webp"
+  },
+  "Storm Blessed": {
+    "spellId": 1310311,
+    "iconName": "spell_nature_lightningshield",
+    "iconUrl": "/assets/wow/mythic/spells/storm-blessed-1310311.webp"
+  },
+  "Spoiled Supplies": {
+    "spellId": 1234843,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/spoiled-supplies-1234843.webp"
+  },
+  "Spiteful Venom": {
+    "spellId": 1305368,
+    "iconName": "ability_rogue_venomouswounds",
+    "iconUrl": "/assets/wow/mythic/spells/spiteful-venom-1305368.webp"
+  },
+  "Storm Rush": {
+    "spellId": 471622,
+    "iconName": "ability_mount_spectralwyvern",
+    "iconUrl": "/assets/wow/mythic/spells/storm-rush-471622.webp"
+  },
+  "Summon Infernal": {
+    "spellId": 1220899,
+    "iconName": "spell_shadow_summoninfernal",
+    "iconUrl": "/assets/wow/mythic/spells/summon-infernal-1220899.webp"
+  },
+  "Tempest Winds": {
+    "spellId": 1311808,
+    "iconName": "achievement_raidprimalist_windelemental",
+    "iconUrl": "/assets/wow/mythic/spells/tempest-winds-1311808.webp"
+  },
+  "Thornblade": {
+    "spellId": 1261301,
+    "iconName": "trade_engineering",
+    "iconUrl": "/assets/wow/mythic/spells/thornblade-1261301.webp"
+  },
+  "Thunder and Lightning": {
+    "spellId": 1314051,
+    "iconName": "spell_nature_unrelentingstorm",
+    "iconUrl": "/assets/wow/mythic/spells/thunder-and-lightning-1314051.webp"
+  },
+  "Toxic Atrophy": {
+    "spellId": 1310974,
+    "iconName": "spell_shadow_requiem",
+    "iconUrl": "/assets/wow/mythic/spells/toxic-atrophy-1310974.webp"
+  },
+  "Thunder Spit": {
+    "spellId": 1298329,
+    "iconName": "ability_thunderking_thunderstruck",
+    "iconUrl": "/assets/wow/mythic/spells/thunder-spit-1298329.webp"
+  },
+  "Toxic Spores": {
+    "spellId": 1234846,
+    "iconName": "ability_creature_poison_06",
+    "iconUrl": "/assets/wow/mythic/spells/toxic-spores-1234846.webp"
+  },
+  "Triple Shot": {
+    "spellId": 1307573,
+    "iconName": "spell_nature_corrosivebreath",
+    "iconUrl": "/assets/wow/mythic/spells/triple-shot-1307573.webp"
+  },
+  "Unholy Mending": {
+    "spellId": 270901,
+    "iconName": "spell_nature_regenerate",
+    "iconUrl": "/assets/wow/mythic/spells/unholy-mending-270901.webp"
+  },
+  "Uncoil": {
+    "spellId": 1287811,
+    "iconName": "ability_hunter_snaketrap",
+    "iconUrl": "/assets/wow/mythic/spells/uncoil-1287811.webp"
+  },
+  "Unstable Singularity": {
+    "spellId": 1282770,
+    "iconName": "inv_ability_voidweaverpriest_entropicrift",
+    "iconUrl": "/assets/wow/mythic/spells/unstable-singularity-1282770.webp"
+  },
+  "Venom Volley": {
+    "spellId": 1305396,
+    "iconName": "inv_ability_poison_missile",
+    "iconUrl": "/assets/wow/mythic/spells/venom-volley-1305396.webp"
+  },
+  "Venomous Ascension": {
+    "spellId": 1272784,
+    "iconName": "inv_ability_poison_orb",
+    "iconUrl": "/assets/wow/mythic/spells/venomous-ascension-1272784.webp"
+  },
+  "Venomous Breath": {
+    "spellId": 1299065,
+    "iconName": "inv_ability_poison_beam",
+    "iconUrl": "/assets/wow/mythic/spells/venomous-breath-1299065.webp"
+  },
+  "Vile Eruption": {
+    "spellId": 330614,
+    "iconName": "spell_shadow_plaguecloud",
+    "iconUrl": "/assets/wow/mythic/spells/vile-eruption-330614.webp"
+  },
+  "Verdant Stomp": {
+    "spellId": 1236747,
+    "iconName": "inv_raptortravelform",
+    "iconUrl": "/assets/wow/mythic/spells/verdant-stomp-1236747.webp"
+  },
+  "Violent Sand": {
+    "spellId": 1249621,
+    "iconName": "spell_sandexplosion",
+    "iconUrl": "/assets/wow/mythic/spells/violent-sand-1249621.webp"
+  },
+  "Void Cascade": {
+    "spellId": 1227247,
+    "iconName": "inv_cosmicvoid_missile",
+    "iconUrl": "/assets/wow/mythic/spells/void-cascade-1227247.webp"
+  },
+  "Winter's Shroud": {
+    "spellId": 1235829,
+    "iconName": "ability_deathknight_icygrip",
+    "iconUrl": "/assets/wow/mythic/spells/winter-s-shroud-1235829.webp"
+  },
+  "Warden's Wrath": {
+    "spellId": 1260581,
+    "iconName": "spell_nature_wispsplodegreen",
+    "iconUrl": "/assets/wow/mythic/spells/warden-s-wrath-1260581.webp"
+  },
+  "Wretched Discharge": {
+    "spellId": 267763,
+    "iconName": "spell_festergutgas",
+    "iconUrl": "/assets/wow/mythic/spells/wretched-discharge-267763.webp"
+  }
+}

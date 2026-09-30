@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "siteOrigin": "https://gildra.net",
+  "locales": ["en", "ru"],
+  "phases": ["P0", "P1", "P2", "P3", "P4"],
+  "staticRoutes": [
+    { "id": "wow-home", "path": "/wow", "phase": "P0", "indexable": false },
+    { "id": "raid-index", "path": "/wow/raids", "phase": "P0", "indexable": false },
+    { "id": "lair-index", "path": "/wow/lairs", "phase": "P0", "indexable": false },
+    { "id": "weekly-checklist", "path": "/wow/weekly-checklist", "phase": "P0", "indexable": false },
+    { "id": "characters", "path": "/wow/characters", "phase": "P0", "indexable": false },
+    { "id": "gear", "path": "/wow/gear", "phase": "P0", "indexable": false },
+    { "id": "midnight-season-2", "path": "/wow/midnight/season-2", "phase": "P0", "indexable": false },
+    { "id": "talents", "path": "/talents", "phase": "P0", "indexable": false },
+    { "id": "versions", "path": "/wow/versions", "phase": "P3", "indexable": true },
+    { "id": "expansions", "path": "/wow/expansions", "phase": "P2", "indexable": true },
+    { "id": "dungeons", "path": "/wow/dungeons", "phase": "P1", "indexable": false },
+    { "id": "mythic-plus", "path": "/wow/mythic-plus", "phase": "P1", "indexable": false },
+    { "id": "delves", "path": "/wow/delves", "phase": "P1", "indexable": false },
+    { "id": "prey", "path": "/wow/prey", "phase": "P1", "indexable": false },
+    { "id": "classes", "path": "/wow/classes", "phase": "P1", "indexable": false },
+    { "id": "guides", "path": "/wow/guides", "phase": "P4", "indexable": true },
+    { "id": "builds", "path": "/wow/builds", "phase": "P4", "indexable": true },
+    { "id": "patches", "path": "/wow/patches", "phase": "P2", "indexable": true },
+    { "id": "items", "path": "/wow/items", "phase": "P2", "indexable": true }
+  ],
+  "routeGroups": [
+    {
+      "id": "midnight-raids",
+      "template": "/wow/raids/{raid}",
+      "phase": "P0",
+      "indexable": false,
+      "parameters": { "raid": ["the-voidspire", "the-dreamrift", "march-on-queldanas"] }
+    },
+    {
+      "id": "midnight-season-2-raid",
+      "template": "/wow/raids/{raid}",
+      "phase": "P0",
+      "indexable": false,
+      "parameters": { "raid": ["venomous-abyss"] }
+    },
+    {
+      "id": "midnight-raid-bosses",
+      "template": "/wow/raids/venomous-abyss/{boss}",
+      "phase": "P0",
+      "indexable": false,
+      "parameters": { "boss": ["nekzali-the-soulcoiler", "entombed-sentinels", "the-lost-explorers", "vashnik-the-malignant", "sszorak", "the-twin-fangs", "the-coiled-altar", "ulatek"] }
+    },
+    {
+      "id": "sporefall",
+      "template": "/wow/raids/{raid}",
+      "phase": "P1",
+      "indexable": false,
+      "parameters": { "raid": ["sporefall"] }
+    },
+    {
+      "id": "sporefall-boss",
+      "template": "/wow/raids/sporefall/{boss}",
+      "phase": "P1",
+      "indexable": false,
+      "parameters": { "boss": ["rotmire"] }
+    },
+    {
+      "id": "midnight-season-1-bosses",
+      "template": "/wow/raids/{raid}/{boss}",
+      "phase": "P1",
+      "indexable": false,
+      "parameterSets": [
+        { "raid": "the-voidspire", "boss": "imperator-averzian" },
+        { "raid": "the-voidspire", "boss": "vorasius" },
+        { "raid": "the-voidspire", "boss": "fallen-king-salhadaar" },
+        { "raid": "the-voidspire", "boss": "vaelgor-ezzorak" },
+        { "raid": "the-voidspire", "boss": "lightblinded-vanguard" },
+        { "raid": "the-voidspire", "boss": "crown-of-the-cosmos" },
+        { "raid": "the-dreamrift", "boss": "chimaerus" },
+        { "raid": "march-on-queldanas", "boss": "beloren" },
+        { "raid": "march-on-queldanas", "boss": "midnight-falls" }
+      ]
+    },
+    {
+      "id": "midnight-season-2-dungeons",
+      "template": "/wow/dungeons/{dungeon}",
+      "phase": "P1",
+      "indexable": false,
+      "parameters": { "dungeon": ["altar-of-fangs", "murder-row", "den-of-nalorakk", "the-blinding-vale", "voidscar-arena", "kings-rest", "ruby-life-pools", "temple-of-sethraliss"] }
+    },
+    {
+      "id": "midnight-season-2-lairs-and-world",
+      "template": "/wow/lairs/{boss}",
+      "phase": "P0",
+      "indexable": false,
+      "parameters": { "boss": ["nymrissa-wavecaller", "luashal", "cragpine", "thormbelan", "predaxas"] }
+    },
+    {
+      "id": "talent-specs",
+      "template": "/talents/{spec}",
+      "phase": "P1",
+      "indexable": false,
+      "parameters": {
+        "spec": [
+          "balance-druid", "feral-druid", "guardian-druid", "restoration-druid",
+          "devastation-evoker", "preservation-evoker", "augmentation-evoker",
+          "discipline-priest", "holy-priest", "shadow-priest",
+          "blood-death-knight", "frost-death-knight", "unholy-death-knight",
+          "beast-mastery-hunter", "marksmanship-hunter", "survival-hunter",
+          "assassination-rogue", "outlaw-rogue", "subtlety-rogue",
+          "elemental-shaman", "enhancement-shaman", "restoration-shaman",
+          "holy-paladin", "protection-paladin", "retribution-paladin",
+          "arcane-mage", "fire-mage", "frost-mage",
+          "arms-warrior", "fury-warrior", "protection-warrior",
+          "affliction-warlock", "demonology-warlock", "destruction-warlock",
+          "brewmaster-monk", "windwalker-monk", "mistweaver-monk",
+          "havoc-demon-hunter", "vengeance-demon-hunter", "devourer-demon-hunter"
+        ]
+      }
+    },
+    {"id":"midnight-classes","template":"/wow/classes/{class}","phase":"P1","indexable":false,"parameters":{"class":["druid","evoker","priest","death-knight","hunter","rogue","shaman","paladin","mage","warrior","warlock","monk","demon-hunter"]}},
+    {"id":"midnight-class-specs","template":"/wow/classes/{class}/{spec}","phase":"P1","indexable":false,"parameterSets":[{"class":"druid","spec":"balance-druid"},{"class":"druid","spec":"feral-druid"},{"class":"druid","spec":"guardian-druid"},{"class":"druid","spec":"restoration-druid"},{"class":"evoker","spec":"devastation-evoker"},{"class":"evoker","spec":"preservation-evoker"},{"class":"evoker","spec":"augmentation-evoker"},{"class":"priest","spec":"discipline-priest"},{"class":"priest","spec":"holy-priest"},{"class":"priest","spec":"shadow-priest"},{"class":"death-knight","spec":"blood-death-knight"},{"class":"death-knight","spec":"frost-death-knight"},{"class":"death-knight","spec":"unholy-death-knight"},{"class":"hunter","spec":"beast-mastery-hunter"},{"class":"hunter","spec":"marksmanship-hunter"},{"class":"hunter","spec":"survival-hunter"},{"class":"rogue","spec":"assassination-rogue"},{"class":"rogue","spec":"outlaw-rogue"},{"class":"rogue","spec":"subtlety-rogue"},{"class":"shaman","spec":"elemental-shaman"},{"class":"shaman","spec":"enhancement-shaman"},{"class":"shaman","spec":"restoration-shaman"},{"class":"paladin","spec":"holy-paladin"},{"class":"paladin","spec":"protection-paladin"},{"class":"paladin","spec":"retribution-paladin"},{"class":"mage","spec":"arcane-mage"},{"class":"mage","spec":"fire-mage"},{"class":"mage","spec":"frost-mage"},{"class":"warrior","spec":"arms-warrior"},{"class":"warrior","spec":"fury-warrior"},{"class":"warrior","spec":"protection-warrior"},{"class":"warlock","spec":"affliction-warlock"},{"class":"warlock","spec":"demonology-warlock"},{"class":"warlock","spec":"destruction-warlock"},{"class":"monk","spec":"brewmaster-monk"},{"class":"monk","spec":"windwalker-monk"},{"class":"monk","spec":"mistweaver-monk"},{"class":"demon-hunter","spec":"havoc-demon-hunter"},{"class":"demon-hunter","spec":"vengeance-demon-hunter"},{"class":"demon-hunter","spec":"devourer-demon-hunter"}]},
+    { "id": "edition", "template": "/wow/versions/{edition}", "phase": "P3", "indexable": true, "parameters": { "edition": ["retail", "classic", "classic-era", "hardcore"] } },
+    { "id": "expansion", "template": "/wow/expansions/{expansion}", "phase": "P2", "indexable": true, "parameters": { "expansion": ["midnight", "the-war-within", "dragonflight", "shadowlands", "battle-for-azeroth", "legion", "warlords-of-draenor", "mists-of-pandaria", "cataclysm", "wrath-of-the-lich-king", "the-burning-crusade", "classic"] } },
+    { "id": "patch", "template": "/wow/patches/{patch}", "phase": "P2", "indexable": true, "parameters": { "patch": ["12-0", "12-0-7", "12-1"] } },
+    { "id": "mplus-season", "template": "/wow/mythic-plus/seasons/{season}", "phase": "P1", "indexable": false, "parameters": { "season": ["midnight-season-1", "midnight-season-2"] } },
+    { "id": "mplus-season-dungeon", "template": "/wow/mythic-plus/{season}/{dungeon}", "phase": "P1", "indexable": false, "parameters": { "season": ["midnight-season-2"], "dungeon": ["altar-of-fangs", "murder-row", "den-of-nalorakk", "the-blinding-vale", "voidscar-arena", "kings-rest", "ruby-life-pools", "temple-of-sethraliss"] } },
+    { "id": "delve", "template": "/wow/delves/{delve}", "phase": "P1", "indexable": false, "parameters": { "delve": ["the-shadow-enclave", "collegiate-calamity", "parhelion-plaza", "the-darkway", "twilight-crypts", "atalaman", "the-grudge-pit", "the-gulf-of-memory", "sunkiller-sanctum", "shadowguard-point", "the-ring-of-glory", "gnarldor-isle", "venomfall-deeps"] } }
+  ],
+  "serviceRoutes": [
+    { "id": "sitemap-index", "path": "/sitemap.xml", "phase": "P0", "expectedContentType": "application/xml" },
+    { "id": "static-sitemap", "path": "/sitemaps/static", "phase": "P0", "expectedContentType": "application/xml" },
+    { "id": "league-sitemap", "path": "/sitemaps/league-of-legends", "phase": "P0", "expectedContentType": "application/xml" },
+    { "id": "quest-sitemap-fallback", "path": "/sitemaps/database/quest/all", "phase": "P0", "expectedContentType": "application/xml" },
+    { "id": "quest-sitemap-shard", "path": "/sitemaps/database/quest/0", "phase": "P0", "expectedContentType": "application/xml" },
+    { "id": "robots", "path": "/robots.txt", "phase": "P0", "expectedContentType": "text/plain" }
+  ],
+  "redirectRoutes": [
+    { "path": "/wow/mythic", "redirectTo": "/wow/mythic-plus", "phase": "P0" },
+    { "path": "/wow/mythic/altar-of-fangs", "redirectTo": "/wow/mythic-plus/midnight-season-2/altar-of-fangs", "phase": "P0" },
+    { "path": "/wow/mythic/murder-row", "redirectTo": "/wow/mythic-plus/midnight-season-2/murder-row", "phase": "P0" },
+    { "path": "/wow/mythic/den-of-nalorakk", "redirectTo": "/wow/mythic-plus/midnight-season-2/den-of-nalorakk", "phase": "P0" },
+    { "path": "/wow/mythic/the-blinding-vale", "redirectTo": "/wow/mythic-plus/midnight-season-2/the-blinding-vale", "phase": "P0" },
+    { "path": "/wow/mythic/voidscar-arena", "redirectTo": "/wow/mythic-plus/midnight-season-2/voidscar-arena", "phase": "P0" },
+    { "path": "/wow/mythic/kings-rest", "redirectTo": "/wow/mythic-plus/midnight-season-2/kings-rest", "phase": "P0" },
+    { "path": "/wow/mythic/ruby-life-pools", "redirectTo": "/wow/mythic-plus/midnight-season-2/ruby-life-pools", "phase": "P0" },
+    { "path": "/wow/mythic/temple-of-sethraliss", "redirectTo": "/wow/mythic-plus/midnight-season-2/temple-of-sethraliss", "phase": "P0" },
+    { "path": "/wow/lairs/ravi", "redirectTo": "/wow/dungeons/altar-of-fangs" },
+    { "path": "/wow/lairs/the-writhing-coil", "redirectTo": "/wow/dungeons/altar-of-fangs" },
+    { "path": "/wow/lairs/zuljan", "redirectTo": "/wow/dungeons/altar-of-fangs" },
+    { "path": "/wow/lairs/drakta", "redirectTo": "/wow/delves/the-ring-of-glory" },
+    { "path": "/wow/lairs/gnok", "redirectTo": "/wow/delves/the-ring-of-glory" },
+    { "path": "/wow/lairs/gralka-snake-eater", "redirectTo": "/wow/delves/gnarldor-isle" },
+    { "path": "/wow/lairs/osseous-amalgamation", "redirectTo": "/wow/delves/gnarldor-isle" },
+    { "path": "/wow/lairs/aztarec", "redirectTo": "/wow/delves/venomfall-deeps" },
+    { "path": "/specs/frost-death-knight", "redirectTo": "/wow/classes/death-knight/frost-death-knight", "phase": "P0" },
+    { "path": "/specs/arcane-mage", "redirectTo": "/wow/classes/mage/arcane-mage", "phase": "P0" },
+    { "path": "/specs/augmentation-evoker", "redirectTo": "/wow/classes/evoker/augmentation-evoker", "phase": "P0" },
+    { "path": "/specs/retribution-paladin", "redirectTo": "/wow/classes/paladin/retribution-paladin", "phase": "P0" },
+    { "path": "/specs/outlaw-rogue", "redirectTo": "/wow/classes/rogue/outlaw-rogue", "phase": "P0" },
+    { "path": "/specs/balance-druid", "redirectTo": "/wow/classes/druid/balance-druid", "phase": "P0" },
+    { "path": "/specs/shadow-priest", "redirectTo": "/wow/classes/priest/shadow-priest", "phase": "P0" },
+    { "path": "/specs/marksmanship-hunter", "redirectTo": "/wow/classes/hunter/marksmanship-hunter", "phase": "P0" },
+    { "path": "/specs/elemental-shaman", "redirectTo": "/wow/classes/shaman/elemental-shaman", "phase": "P0" },
+    { "path": "/specs/affliction-warlock", "redirectTo": "/wow/classes/warlock/affliction-warlock", "phase": "P0" }
+  ]
+}

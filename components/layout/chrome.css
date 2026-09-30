@@ -59,11 +59,11 @@
 .gsw-menu [aria-disabled="true"]{cursor:default}
 .gsw-menu [aria-disabled="true"]:hover{background:none;color:var(--ink-2)}
 .soon{
-  margin-left:auto;font-size:8px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  margin-left:auto;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
   color:var(--ink-3);border:1px solid var(--line);padding:2px 5px;
 }
 .exp-cap{
-  padding:8px 10px 3px;font-size:9px;font-weight:600;letter-spacing:.15em;
+  padding:8px 10px 3px;font-size:10px;font-weight:600;letter-spacing:.15em;
   text-transform:uppercase;color:var(--ink-3);
 }
 .game-menu .exp-cap{padding:5px 9px 6px}
@@ -85,7 +85,7 @@
   background:linear-gradient(160deg,rgba(201,162,79,.35),rgba(201,162,79,.12));
   color:var(--gold-2);
 }
-.gmark{margin-left:auto;color:var(--gold);font-size:8px}
+.gmark{margin-left:auto;color:var(--gold);font-size:10px}
 .gdiv{height:1px;background:var(--line-soft);margin:5px 7px}
 .exp-menu{padding:0}
 .exp-grid{
@@ -120,7 +120,7 @@
   color:var(--gold-2);
 }
 .exp-tx{display:flex;flex-direction:column;gap:2px;text-align:left;min-width:0}
-.exp-task{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.exp-task{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
 .exp-title{font-size:13px;font-weight:600;color:var(--ink);margin-top:1px}
 .exp-card.on .exp-title{color:var(--gold-2)}
 .exp-desc{font-size:10.5px;color:var(--ink-3);line-height:1.4}
@@ -134,7 +134,7 @@
 .exp-foot .i{width:12px;height:12px;color:var(--gold);flex:none}
 .exp-foot .kbd{
   margin-left:auto;border:1px solid #2a3143;border-radius:4px;
-  padding:1px 5px;font-size:9.5px;color:var(--ink-3);
+  padding:1px 5px;font-size:10px;color:var(--ink-3);
 }
 .mob-task{display:flex;flex-direction:column;gap:1px}
 .mob-task .exp-task{padding-top:2px}
@@ -162,10 +162,10 @@
   flex:1;background:none;border:none;outline:none;
   color:var(--ink);font-family:inherit;font-size:14px;
 }
-.sc-input .kbd{border:1px solid #2a3143;border-radius:4px;padding:1px 5px;font-size:9.5px;color:var(--ink-3)}
+.sc-input .kbd{border:1px solid #2a3143;border-radius:4px;padding:1px 5px;font-size:10px;color:var(--ink-3)}
 .sc-results{overflow-y:auto;padding:6px}
 .sc-group{
-  padding:9px 10px 3px;font-size:9px;font-weight:600;letter-spacing:.15em;
+  padding:9px 10px 3px;font-size:10px;font-weight:600;letter-spacing:.15em;
   text-transform:uppercase;color:var(--ink-3);
 }
 .sc-item{
@@ -195,7 +195,7 @@
 }
 .foot::after{ /* водяной знак — шлем */
   content:"";position:absolute;right:-30px;bottom:-70px;width:320px;height:320px;
-  background:url(/brand/helmet.png) center/contain no-repeat;
+  background:url(/brand/helmet-watermark-optimized.webp) center/contain no-repeat;
   opacity:.05;filter:grayscale(1);pointer-events:none;
 }
 .foot-in{
@@ -243,14 +243,14 @@
   content:"";position:absolute;left:13px;right:13px;bottom:-1px;height:2px;
   background:linear-gradient(90deg,transparent,var(--gold),transparent);
 }
-.caret{font-size:8px;margin-left:5px;opacity:.55}
+.caret{font-size:10px;margin-left:5px;opacity:.55}
 .nav-spacer{flex:1}
 .search{
   display:flex;align-items:center;gap:8px;width:230px;height:32px;padding:0 11px;
   background:#10131c;border:1px solid var(--line);border-radius:var(--r-md);
   color:var(--ink-3);font-size:12px;
 }
-.search .kbd{margin-left:auto;border:1px solid #2a3143;border-radius:4px;padding:1px 5px;font-size:9.5px;color:var(--ink-3)}
+.search .kbd{margin-left:auto;border:1px solid #2a3143;border-radius:4px;padding:1px 5px;font-size:10px;color:var(--ink-3)}
 .icon-btn{
   width:32px;height:32px;border:none;background:none;border-radius:var(--r-md);
   display:grid;place-items:center;color:var(--ink-2);
@@ -266,22 +266,77 @@
 /* ============ COOKIE NOTICE + LEGAL ============ */
 .cookie{
   position:fixed;left:18px;bottom:18px;z-index:80;
-  width:min(420px,calc(100vw - 36px));
-  display:flex;flex-direction:column;gap:12px;
-  background:#0e1119;border:1px solid var(--line);padding:16px 18px;
+  width:min(620px,calc(100vw - 36px));
+  display:flex;align-items:center;gap:18px;
+  background:#0e1119;border:1px solid var(--line);padding:12px 16px;
   box-shadow:0 18px 40px rgba(0,0,0,.55);
   clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
   animation:cookie-in .3s ease both;
 }
 @keyframes cookie-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.cookie{animation:none}}
-.cookie-text{font-size:11.5px;line-height:1.55;color:var(--ink-2)}
+.cookie-text{min-width:0;margin:0;font-size:11px;line-height:1.45;color:var(--ink-2)}
 .cookie-text a{color:var(--blue-2)}
 .cookie-text a:hover{color:var(--gold-2)}
-.cookie-actions{display:flex;align-items:center;gap:14px}
+.cookie-actions{display:flex;flex:0 0 auto;align-items:center;gap:12px}
 .cookie-ok{font-size:11px;padding:7px 16px}
 .cookie-no{
   background:none;border:none;font-family:inherit;font-size:11px;font-weight:600;
   color:var(--ink-3);cursor:pointer;
 }
 .cookie-no:hover{color:var(--ink)}
+@media (max-width:620px){
+  .cookie{left:8px;bottom:69px;width:calc(100vw - 16px);padding:10px 12px;gap:8px;flex-direction:column;align-items:flex-start}
+  .cookie-text{font-size:10.5px;line-height:1.4}
+  .cookie-actions{width:100%}
+  .cookie-ok{padding:6px 14px}
+  .cookie-book{bottom:calc(8px + env(safe-area-inset-bottom, 0px));display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 9px}
+  .cookie-book .cookie-text{font-size:9px;line-height:1.3}
+  .cookie-book .cookie-actions{width:auto;gap:6px}
+  .cookie-book .cookie-actions{flex-direction:row;align-self:center;justify-content:flex-end}
+  .cookie-book .cookie-ok{height:28px;min-height:28px;padding:3px 8px;font-size:10px;line-height:1}
+  .cookie-book .cookie-no{height:28px;min-height:28px;padding:3px;font-size:9px;line-height:1}
+}
+
+/* Consent sits over the manuscript on login / character routes. Use the same
+   vellum as the page so it reads as a small marginal note, not a black card. */
+.cookie-book{
+  border:1px solid #8b693b;
+  border-radius:2px;
+  clip-path:none;
+  color:#352310;
+  background:var(--gildra-character-paper-wash,linear-gradient(180deg,#c8d8e070,#c5d2dc70)),var(--cookie-book-paper,#e4dcc8) center / 640px repeat;
+  box-shadow:0 4px 12px #080a0c70,inset 0 0 0 2px #dfe6e055;
+  font-family:"Gildra Atlas",Georgia,serif;
+}
+.cookie-book .cookie-text{color:#49341d}
+.cookie-book .cookie-text a{color:#783921;text-decoration-color:#947445}
+.cookie-book .cookie-text a:hover{color:#4a2814}
+.cookie-book .cookie-ok{
+  min-height:40px;
+  border:0;
+  border-radius:3px;
+  background:var(--cookie-book-button,none) center / 100% 100% no-repeat,#582118;
+  color:#fff0c7;
+  box-shadow:0 2px 3px #08050380;
+  font-family:"Gildra Kurale",Georgia,serif;
+  font-size:13px;
+  text-shadow:0 1px 2px #1c0b05;
+}
+.cookie-book .cookie-no{color:#624a2e;font-family:"Gildra Atlas",Georgia,serif}
+.cookie-book .cookie-no:hover{color:#352310}
+
+@media (max-width:1120px){
+  .topnav{gap:12px;padding:0 14px}
+  .search,.exp{display:none}
+  .burger{display:flex}
+  .gsw-label{display:none}
+  .gsw-label-sm{display:inline}
+  .user-name,.user .caret{display:none}
+  .nav-links a{padding-inline:10px;font-size:12px;white-space:nowrap}
+}
+@media (max-width:760px){
+  .nav-links{display:none}
+  .logo{margin-right:0}
+  .topnav :is(.burger,.icon-btn,.user){min-width:44px;min-height:44px}
+}

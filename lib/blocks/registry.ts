@@ -8,47 +8,11 @@
  * Keys: shared blocks are plain ("columns"), game blocks are "<game>.<name>".
  */
 import "server-only";
-import type { BlockDef } from "./types";
-import { containerBlock } from "@/components/blocks/shared/container";
-import { columnsBlock } from "@/components/blocks/shared/columns";
-import { sectionNavBlock } from "@/components/blocks/shared/sectionNav";
-import { adSlotBlock } from "@/components/blocks/shared/adSlot";
-import { legalBlock } from "@/components/blocks/shared/legal";
-import { heroBlock } from "@/components/blocks/wow/hero";
-import { metaPulseBlock } from "@/components/blocks/wow/metaPulse";
-import { mythicMetaBlock } from "@/components/blocks/wow/mythicMeta";
-import { metaTrendsBlock } from "@/components/blocks/wow/metaTrends";
-import { raidFeatureBlock } from "@/components/blocks/wow/raidFeature";
-import { guidesBlock } from "@/components/blocks/wow/guides";
-import { tierPreviewBlock } from "@/components/blocks/wow/tierPreview";
-import { tierWorkspaceBlock } from "@/components/blocks/wow/tierWorkspace";
-import { specBodyBlock } from "@/components/blocks/wow/specBody";
-import { leagueMainBlock } from "@/components/blocks/league-of-legends/main";
-import { leagueHeroBlock } from "@/components/blocks/league-of-legends/hero";
-import { championCatalogBlock } from "@/components/blocks/league-of-legends/championCatalog";
-import { championDetailBlock } from "@/components/blocks/league-of-legends/championDetail";
-import { contentCategoryBlock } from "@/components/blocks/league-of-legends/contentCategory";
+import { sharedRegistry } from "./registries/shared";
+import { wowRegistry } from "./registries/wow";
+import { leagueRegistry } from "./registries/league";
 
-export const registry = {
-  container: containerBlock,
-  columns: columnsBlock,
-  sectionNav: sectionNavBlock,
-  adSlot: adSlotBlock,
-  legal: legalBlock,
-  "wow.hero": heroBlock,
-  "wow.metaPulse": metaPulseBlock,
-  "wow.mythicMeta": mythicMetaBlock,
-  "wow.metaTrends": metaTrendsBlock,
-  "wow.raidFeature": raidFeatureBlock,
-  "wow.guides": guidesBlock,
-  "wow.tierPreview": tierPreviewBlock,
-  "wow.tierWorkspace": tierWorkspaceBlock,
-  "wow.specBody": specBodyBlock,
-  "lol.main": leagueMainBlock,
-  "lol.hero": leagueHeroBlock,
-  "lol.championCatalog": championCatalogBlock,
-  "lol.championDetail": championDetailBlock,
-  "lol.contentCategory": contentCategoryBlock,
-} as const satisfies Record<string, BlockDef<any, any, boolean>>;
+// Full registry remains available to the block gallery and type-level schema.
+export const registry = { ...sharedRegistry, ...wowRegistry, ...leagueRegistry };
 
 export type Registry = typeof registry;

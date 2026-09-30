@@ -1,0 +1,13 @@
+.page { position: relative; min-height: 78vh; max-width: 1320px; margin: 0 auto; padding: 58px 34px 72px; }
+.hero { position: relative; min-height: 230px; margin-bottom: 16px; padding: 42px 46px; overflow: hidden; border: 1px solid #68451c; border-inline-start: 3px solid #d28c30; background: #080604; box-shadow: 0 28px 70px rgba(0, 0, 0, .44), inset 0 1px rgba(255, 225, 160, .06); }
+.heroImage { position: absolute; z-index: 0; inset: 0; }
+.heroImage img { width: 100%; height: 100%; object-fit: cover; object-position: center 55%; }
+.hero::before { content: ""; position: absolute; z-index: 1; inset: 0; background: linear-gradient(90deg, rgba(8, 6, 4, .97) 0 48%, rgba(8, 6, 4, .48) 76%, rgba(8, 6, 4, .7)); pointer-events: none; }
+.hero::after { content: ""; position: absolute; top: -65%; right: -3%; width: 390px; height: 390px; border: 1px solid rgba(211, 142, 47, .12); border-radius: 50%; box-shadow: inset 0 0 0 54px rgba(211, 142, 47, .025), inset 0 0 0 55px rgba(211, 142, 47, .09); }
+.eyebrow { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: #d59a3f; font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+.eyebrow::before { content: ""; width: 24px; height: 1px; background: #cf8a30; box-shadow: 0 0 8px rgba(207, 138, 48, .55); }
+.title { position: relative; z-index: 1; max-width: 760px; color: #f1e3ca; font: 400 clamp(38px, 5vw, 66px)/.98 Georgia, "Times New Roman", serif; letter-spacing: -.035em; text-shadow: 0 3px 14px #000; }
+.subtitle { position: relative; z-index: 1; max-width: 630px; margin-top: 14px; color: #ad9e87; font-size: 14px; line-height: 1.65; }
+.ribbon { position: absolute; z-index: 2; right: 26px; bottom: 24px; display: flex; align-items: center; gap: 9px; padding: 10px 13px; color: #b8a888; border: 1px solid #65451f; background: rgba(8, 6, 4, .88); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+.ribbon i { width: 6px; height: 6px; border-radius: 50%; background: #70b44f; box-shadow: 0 0 8px #70b44f; }
+@media (max-width: 720px) { .page { padding: 18px 10px 40px; } .hero { min-height: 250px; padding: 30px 22px 70px; } .ribbon { right: 18px; bottom: 18px; left: 18px; justify-content: center; } }

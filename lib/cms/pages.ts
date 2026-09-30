@@ -1,6 +1,5 @@
 import "server-only";
 import type { BlockInstance } from "@/lib/blocks/page";
-import { registry } from "@/lib/blocks/registry";
 import type { Lang } from "@/lib/i18n";
 
 /**
@@ -34,8 +33,9 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 /** Structural validation against the registry: type must exist, props must be
  *  a plain object, children only on container blocks. Returns null on any
  *  violation so a typo never breaks a page. */
-export function validateBlocks(value: unknown, depth = 0): BlockInstance[] | null {
+export async function validateBlocks(value: unknown, depth = 0): Promise<BlockInstance[] | null> {
   if (!Array.isArray(value) || depth > 6) return null;
+  const { registry } = await import("@/lib/blocks/registry");
   const out: BlockInstance[] = [];
   for (const raw of value) {
     if (!isPlainObject(raw) || typeof raw.type !== "string" || !(raw.type in registry)) return null;
@@ -43,7 +43,7 @@ export function validateBlocks(value: unknown, depth = 0): BlockInstance[] | nul
     if (raw.props !== undefined && !isPlainObject(raw.props)) return null;
     if (raw.children !== undefined) {
       if (!def.container) return null;
-      const children = validateBlocks(raw.children, depth + 1);
+      const children = await validateBlocks(raw.children, depth + 1);
       if (!children) return null;
       out.push({ ...(raw as object), children } as BlockInstance);
       continue;
@@ -72,7 +72,7 @@ export async function getCmsPageOverride(pageId: string, lang: Lang): Promise<Cm
     const payload = (await response.json()) as { docs?: CmsPageDoc[] };
     const doc = payload.docs?.[0];
     if (!doc || doc._status === "draft") return null;
-    const blocks = validateBlocks(doc.blocks);
+    const blocks = await validateBlocks(doc.blocks);
     if (!blocks || blocks.length === 0) return null;
     return {
       blocks,

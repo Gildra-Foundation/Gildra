@@ -1,0 +1,98 @@
+.volume {
+  --edge-width: var(--book-edge-width, clamp(120px, 16cqw, 240px));
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  /* Character folios allow the alpha binding/fore-edge to extend into the
+     scene; their outer page owns viewport clipping. Other shells opt in. */
+  overflow-x: var(--book-frame-overflow, clip);
+  pointer-events: none;
+  user-select: none;
+  filter: var(--book-material-filter, none);
+}
+
+.paper {
+  position: absolute;
+  inset: var(--book-paper-inset, -12px -12px -20px);
+  background:
+    linear-gradient(90deg, #756d5b30, transparent 8%, #e0dfd226 27%, #77827410 48%, #747d7420 50%, #e7e8dc2b 53%, transparent 78%, #716b5c2e),
+    var(--folio-paper);
+  mask-image: var(--book-paper-mask, linear-gradient(90deg, transparent, #000 48px, #000 calc(100% - 48px), transparent), var(--book-paper-block-mask, linear-gradient(#000, #000)));
+  mask-composite: intersect;
+}
+
+/* The vertical sprite repeats at its natural ratio; paper fibres are never
+   stretched over the several-thousand-pixel-long character workspace. */
+.edge {
+  position: absolute;
+  top: -8px;
+  bottom: -16px;
+  width: var(--edge-width);
+  background: var(--book-edge-image) left top / 100% auto repeat-y;
+  filter: var(--book-trim-filter, none);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 72%, transparent);
+}
+.left { left: calc(var(--edge-width) / -2); }
+.right { right: calc(var(--edge-width) / -2); transform: scaleX(-1); }
+
+/* Only the endcaps of this nine-slice are painted. The middle uses the
+   seamless fore-edge sprite instead of repeating ornate corner hardware. */
+.binding {
+  /* Fade before the painted 88px border ends; fading beyond it leaves an
+     abrupt, partially opaque strip across the interior parchment. */
+  --cap-solid: 48px;
+  --cap-fade: 86px;
+  position: absolute;
+  inset: var(--book-binding-inset, -52px -56px -60px);
+  border: solid transparent;
+  border-width: var(--book-binding-width, 88px 88px);
+  border-image-source: var(--book-binding-image);
+  border-image-slice: 17.578125% 13.020833%;
+  border-image-repeat: stretch;
+  mask-image: var(--book-binding-mask, linear-gradient(#000 0 var(--cap-solid), transparent var(--cap-fade), transparent calc(100% - var(--cap-fade)), #000 calc(100% - var(--cap-solid))));
+  filter: var(--book-trim-filter, brightness(100%)) var(--book-binding-shadow, drop-shadow(0 10px 12px #08050370));
+}
+
+.gutter {
+  position: absolute;
+  inset: var(--book-gutter-inset, -4px auto -24px 50%);
+  width: var(--book-gutter-width, clamp(44px, 7cqw, 96px));
+  transform: translateX(-50%);
+  background: var(--book-gutter-shade, linear-gradient(90deg, transparent, #83908710 20%, #79807620 42%, #4c514a2e 49%, #474c4737 50%, #9e997f1d 53%, #e5e8dc2e 60%, transparent 84%));
+  mask-image: var(--book-gutter-mask, linear-gradient(transparent, #000 44px, #000 calc(100% - 44px), transparent));
+}
+
+@container auditPage (max-width: 820px) {
+  .volume { --edge-width: var(--book-edge-width, 120px); }
+  .binding { --cap-solid: 32px; --cap-fade: 62px; inset: var(--book-binding-inset, -36px -30px -40px); border-width: var(--book-binding-width, 64px 56px); }
+  .paper {
+    inset-inline: var(--book-paper-inline-inset, -4px);
+    background: var(--folio-paper);
+    /* Match the narrower fore-edge so its fade overlaps solid paper instead
+       of opening a dark seam between the page and the binding. */
+    mask-image: var(--book-paper-mask, linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent), var(--book-paper-block-mask, linear-gradient(#000, #000)));
+  }
+  .gutter { display: none; }
+}
+@container auditPage (max-width: 560px) {
+  .volume { --edge-width: var(--book-edge-width, 64px); }
+  .edge { top: 0; bottom: -8px; }
+  .binding { --cap-solid: 22px; --cap-fade: 42px; inset: var(--book-binding-inset, -24px -8px -24px); border-width: var(--book-binding-width, 44px 28px); }
+  .paper { inset: var(--book-paper-inset, -4px 0 -8px); mask-image: var(--book-paper-mask, linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent), var(--book-paper-block-mask, linear-gradient(#000, #000))); }
+  .gutter { opacity: .35; }
+}
+
+@media (max-width: 760px) {
+  /* Keep the close contact shadow, but avoid a second large shadow surface on mobile. */
+  .volume {
+    filter: saturate(.8) contrast(.99) brightness(1.012) drop-shadow(0 3px 5px #05090ca8);
+  }
+
+  .edge {
+    background-image: var(--book-edge-image-mobile, var(--book-edge-image));
+  }
+
+  .binding {
+    border-image-source: var(--book-binding-image-mobile, var(--book-binding-image));
+  }
+}

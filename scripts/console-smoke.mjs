@@ -54,6 +54,11 @@ const failures = [];
 try {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const hits = new Map();
+  await context.route("**/api/api-console/session", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ user: fixtures["/v1/auth/me"].user }),
+  }));
   await context.route("**/v1/**", async (route) => {
     const url = new URL(route.request().url());
     hits.set(url.pathname, (hits.get(url.pathname) ?? 0) + 1);

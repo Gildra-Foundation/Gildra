@@ -1,0 +1,70 @@
+/* Build controls are annotations on the two leaves, not another panel laid
+   across the binding. Calculation tables are the explicit exception. */
+.manager, .optimizer { min-width: 0; }
+:global([data-character-book="open"]) :is(.manager, .optimizer)[aria-labelledby] {
+  padding: 24px 0 0;
+  border: 0;
+  border-top: 1px solid var(--folio-line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+:global([data-character-book="open"]) .manager > div:first-child,
+:global([data-character-book="open"]) .optimizer > header {
+  width: var(--book-leaf-width);
+  margin-inline: 0;
+  padding-inline: 0;
+  background: transparent;
+}
+:global([data-character-book="open"]) .manager > p,
+:global([data-character-book="open"]) .manager > :global([data-book-empty]),
+:global([data-character-book="open"]) .optimizer > :is([role="status"], [role="alert"]) {
+  width: var(--book-leaf-width);
+  text-align: left;
+}
+:global([data-character-book="open"]) .modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) var(--book-gutter) repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+:global([data-character-book="open"]) .modes > :nth-child(3) { grid-column: 4; }
+:global([data-character-book="open"]) .modes > :nth-child(4) { grid-column: 5; }
+:global([data-character-book="open"]) .modes > button { margin-inline: 0 4px; overflow-wrap: anywhere; }
+:global([data-character-book="open"]) .modes > :is(:nth-child(2), :nth-child(4)) { margin-inline: 4px 0; }
+:global([data-character-book="open"]) .leaves {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--book-gutter); row-gap: 12px;
+  margin-inline: 0; padding-inline: 0;
+  background: transparent;
+}
+:global([data-character-book="open"]) .manager > .leaves { border-block-width: 1px; border-color: var(--folio-line); }
+:global([data-character-book="open"]) .leaves > button { justify-self: start; max-width: 100%; }
+:global([data-character-book="open"]) .manager .leaves label > span {
+  position: static; display: block; width: auto; height: auto;
+  clip: auto; overflow: visible; margin-bottom: 6px;
+  color: var(--folio-ink, #452b14); font-size: 12px;
+}
+:global([data-character-book="open"]) .manager .leaves > button { align-self: end; }
+:global([data-character-book="open"]) .controls { display: block; }
+:global([data-character-book="open"]) .controls > div { margin: 16px 0 0 calc(50% + var(--book-gutter) / 2); justify-content: flex-start; flex-wrap: wrap; }
+:global([data-character-book="open"]) .insert {
+  background: var(--folio-paper);
+  border: 1px solid var(--folio-line);
+  box-shadow: 0 4px 8px #38200d24;
+  padding: 12px;
+}
+@container auditPage (max-width: 820px) {
+  :global([data-character-book="open"]) .manager > div:first-child,
+  :global([data-character-book="open"]) .optimizer > header,
+  :global([data-character-book="open"]) .manager > p,
+  :global([data-character-book="open"]) .manager > :global([data-book-empty]),
+  :global([data-character-book="open"]) .optimizer > :is([role="status"], [role="alert"]) { width: 100%; }
+  :global([data-character-book="open"]) .modes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  :global([data-character-book="open"]) .modes > :nth-child(n) { grid-column: auto; margin: 0; }
+  :global([data-character-book="open"]) .leaves { column-gap: 12px; }
+  :global([data-character-book="open"]) .controls > div { margin-left: 0; }
+}
+@container auditPage (max-width: 560px) {
+  :global([data-character-book="open"]) :is(.modes, .leaves) { grid-template-columns: minmax(0, 1fr); }
+}

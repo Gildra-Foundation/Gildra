@@ -1,0 +1,206 @@
+/* Ink, gilt and marginalia enrich the existing book; they never create another
+   panel over its fold. All illustration layers are non-interactive. */
+.engraving {
+  display: block;
+  width: 104px;
+  height: 104px;
+  flex: 0 0 104px;
+  background-image: var(--folio-engraving-atlas);
+  /* Keep the sprite viewport exactly one atlas cell wide. Scale the finished
+     viewport, not the atlas, or neighboring engravings bleed into the margin. */
+  background-size: 300% 200%;
+  background-repeat: no-repeat;
+  transform: scale(.86);
+  transform-origin: center;
+  pointer-events: none;
+  user-select: none;
+  opacity: .78;
+  mix-blend-mode: multiply;
+}
+.engraving[data-engraving="armory"] { background-position: 0 0; }
+.engraving[data-engraving="talents"] { background-position: 50% 0; }
+.engraving[data-engraving="rotation"] { background-position: 100% 0; }
+.engraving[data-engraving="logs"] { background-position: 0 100%; }
+.engraving[data-engraving="history"] { background-position: 50% 100%; }
+.engraving[data-engraving="compass"] { background-position: 100% 100%; }
+
+.page[data-character-book="open"] .masthead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
+  min-height: 60px;
+  padding-block: 4px 12px;
+  border-bottom: 3px double var(--folio-line);
+}
+.page[data-character-book="open"] .masthead > span:last-child { text-align: right; }
+.page[data-character-book="open"] .masthead > span:not(.engraving) { letter-spacing: .16em; }
+.page[data-character-book="open"] .masthead > .engraving {
+  width: 52px;
+  height: 52px;
+  flex-basis: 52px;
+  opacity: .8;
+}
+.page[data-profile-source="battle-net"][data-character-book="open"] .chapter {
+  margin-top: clamp(18px, 2.1vw, 28px);
+  padding-block: 14px 8px;
+  min-height: 124px;
+  align-items: center;
+}
+.page[data-profile-source="battle-net"][data-character-book="open"] .chapter > .chapterTitle {
+  position: relative;
+  isolation: isolate;
+  align-self: stretch;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--folio-faint-rule);
+}
+.page[data-character-book="open"] .chapterTitle [data-folio-chapter] {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border: 0;
+  border-radius: 50%;
+  color: #f3dfb5;
+  background: var(--folio-medallion, none) center / contain no-repeat;
+  filter: var(--folio-metal-filter, saturate(.78)) drop-shadow(0 2px 2px #603b2433);
+  font: 700 17px/1 var(--folio-title, Georgia, serif);
+  text-shadow: 0 1px 2px #211208;
+}
+.page[data-character-book="open"] .chapterTitle::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 26px;
+  height: 76px;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 10px;
+  background: linear-gradient(90deg, #542414, #873d22 18%, #642814 80%, #492311);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 8px), 0 100%);
+  box-shadow: inset 3px 0 #daa05840, inset -3px 0 #daa05840;
+  pointer-events: none;
+}
+.page[data-character-book="open"] .chapterRubric {
+  display: inline-block;
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--folio-gilt) 70%, var(--folio-line));
+  color: var(--folio-rubric);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .18em;
+}
+.page[data-character-book="open"] .chapterTitle h2 { margin-top: 8px; }
+.page[data-profile-source="battle-net"][data-character-book="open"] .chapter > .chapterSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px;
+  gap: 12px;
+  padding-block: 4px;
+  align-self: stretch;
+  align-items: center;
+  border-bottom: 1px solid var(--folio-faint-rule);
+}
+.page[data-character-book="open"] .chapterSummary > .engraving { display: block; width: 84px; height: 84px; flex: none; opacity: .64; }
+.chapterSummary > div { min-width: 0; }
+.chapterSignature { display: flex; align-items: center; width: 32px; margin-bottom: 8px; color: var(--folio-rubric); }
+.chapterSignature svg { width: 18px; height: 18px; }
+.page[data-character-book="open"] .chapterSummary p { font-size: 13px; line-height: 1.65; color: var(--folio-muted); }
+
+/* Keep chapter boundaries clear without making every section feel like a
+   separate dashboard card. The inner glow gently echoes the cool metal in the
+   outer scene while the vellum and ink stay true to the approved reference. */
+.page[data-profile-source="battle-net"][data-character-book="open"] .chapter::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  bottom: -15px;
+  left: 50%;
+  width: min(132px, 18cqw);
+  height: 30px;
+  transform: translateX(-50%);
+  background: var(--folio-divider-image) center / contain no-repeat;
+  opacity: .44;
+  pointer-events: none;
+}
+
+.page[data-character-book="open"] [data-book-identity] {
+  padding: 16px 0 20px;
+  border-block: 1px solid var(--folio-faint-rule);
+  background: linear-gradient(90deg, #d4dfe01c, transparent);
+}
+.page[data-character-book="open"] [data-book-metrics] > div {
+  padding: 12px 16px;
+  border-top: 3px double color-mix(in srgb, var(--folio-gilt) 68%, transparent);
+  border-bottom: 1px solid var(--folio-faint-rule);
+  background: linear-gradient(110deg, #d4dfe01c, transparent);
+}
+.page[data-character-book="open"] [data-book-metrics] > div > small { color: var(--folio-rubric); }
+.page[data-character-book="open"] [data-book-metrics] > div > b { text-shadow: 0 1px #eee9dc; }
+
+.page[data-character-book="open"] [data-book-record] {
+  position: relative;
+  border-top: 1px solid var(--folio-faint-rule);
+}
+.page[data-character-book="open"] [data-book-record]::after {
+  content: "";
+  position: absolute;
+  top: 24px;
+  right: 16px;
+  width: 44px;
+  height: 16px;
+  background: var(--folio-divider-image) center / 100% auto no-repeat;
+  opacity: .55;
+  pointer-events: none;
+}
+.page[data-character-book="open"] [data-book-status] b {
+  width: fit-content;
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 1px solid #52703970;
+  color: #385427;
+  background: #8d9b4420;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.page[data-character-book="open"] [data-book-status="stale"] b {
+  color: #7b3e16;
+  border-color: #87502466;
+  background: #9d612414;
+}
+.page[data-character-book="open"] .colophon {
+  margin-top: 32px;
+  padding-block: 24px;
+  border-top: 3px double var(--folio-line);
+}
+.page[data-character-book="open"] .colophon > div { align-items: center; }
+.page[data-character-book="open"] .colophon .engraving { width: 52px; height: 52px; flex-basis: 52px; }
+
+@container auditPage (max-width: 820px) {
+  .page[data-profile-source="battle-net"][data-character-book="open"] .chapter { min-height: 0; gap: 8px; padding-block: 16px 6px; }
+  .page[data-profile-source="battle-net"][data-character-book="open"] .chapter > .chapterSummary { padding-left: 56px; grid-template-columns: minmax(0, 1fr) 64px; gap: 10px; }
+  .page[data-character-book="open"] .chapterSummary > .engraving { width: 64px; height: 64px; }
+  .page[data-profile-source="battle-net"][data-character-book="open"] .chapter::after { display: none; }
+  .chapterSignature { display: none; }
+}
+@container auditPage (max-width: 420px) {
+  .page[data-character-book="open"] .masthead { gap: 8px; grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr); }
+  .page[data-character-book="open"] .masthead > span:not(.engraving) { font-size: 9px; letter-spacing: .06em; }
+  .page[data-character-book="open"] .masthead > .engraving { width: 36px; height: 36px; flex-basis: 36px; }
+  .page[data-profile-source="battle-net"][data-character-book="open"] .chapter > .chapterSummary { padding-left: 0; }
+  .page[data-character-book="open"] [data-book-record]::after { width: 32px; }
+}
+@container auditPage (max-width: 560px) {
+  .page[data-character-book="open"] .chapterTitle [data-folio-chapter] {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+    font-size: 13px;
+  }
+  .page[data-character-book="open"] .chapterTitle::before {
+    left: 4px;
+    height: 68px;
+  }
+  .page[data-profile-source="battle-net"][data-character-book="open"] .chapter { margin-top: 14px; padding-top: 12px; }
+}

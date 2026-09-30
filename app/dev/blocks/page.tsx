@@ -24,7 +24,7 @@ export default async function BlockGallery({
   return (
     <main className="min-h-screen bg-[var(--bg)] px-6 py-8 text-[var(--ink)]">
       <header className="mb-6 flex flex-wrap items-baseline gap-4">
-        <h1 className="font-[var(--display)] text-xl font-semibold tracking-wide text-[var(--gold-2)]">
+        <h1 className="font-[family-name:var(--display)] text-xl font-semibold tracking-wide text-[var(--gold-2)]">
           Block gallery
         </h1>
         <span className="text-xs text-[var(--ink-3)]">
@@ -53,7 +53,7 @@ export default async function BlockGallery({
         const src = `/dev/blocks/${type}?lang=${lang}`;
         return (
           <section key={type} id={type} className="mb-12">
-            <h2 className="mb-1 font-[var(--display)] text-sm tracking-widest text-[var(--ink-2)]">
+            <h2 className="mb-1 font-[family-name:var(--display)] text-sm tracking-widest text-[var(--ink-2)]">
               {type}
               <a href={src} className="ml-3 text-[11px] text-[var(--blue-2)]">
                 open ↗

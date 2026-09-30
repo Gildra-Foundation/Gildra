@@ -1,0 +1,436 @@
+.selectorRoot {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  gap: 0.375rem;
+}
+
+.selectorLabel {
+  padding-inline: 0.25rem;
+  color: #ac9876;
+  font: 700 0.5625rem/1 var(--font-ui), sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 0 1px #000;
+}
+
+.selectorRoot .selectorTrigger {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 3.25rem;
+  padding: 0.3125rem 0.625rem 0.3125rem 0.3125rem;
+  overflow: hidden;
+  color: #e6d6bb;
+  border: 1px solid #765425;
+  border-radius: 0.1875rem;
+  outline: 1px solid rgba(0, 0, 0, 0.92);
+  background:
+    linear-gradient(105deg, rgba(255, 208, 118, 0.055), transparent 38%),
+    linear-gradient(180deg, #211c14, #0a0907);
+  box-shadow:
+    inset 0 1px rgba(255, 235, 194, 0.08),
+    inset 0 -2px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(194, 139, 51, 0.08);
+  text-align: left;
+  transition: border-color 180ms ease, box-shadow 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.selectorRoot .selectorTrigger::after {
+  position: absolute;
+  right: -35%;
+  bottom: 0;
+  left: -35%;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, #e4a94e, transparent);
+  opacity: 0;
+  transform: translateX(-35%);
+  transition: opacity 180ms ease, transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.selectorRoot .selectorTrigger:hover,
+.selectorRoot .selectorTrigger:focus-visible,
+.selectorRoot[data-open] .selectorTrigger {
+  color: #ffe5a6 !important;
+  border-color: #c18a39 !important;
+  background:
+    linear-gradient(105deg, rgba(255, 201, 98, 0.1), transparent 45%),
+    linear-gradient(180deg, #302416, #100c08) !important;
+  box-shadow:
+    inset 0 1px rgba(255, 236, 193, 0.13),
+    inset 0 -2px rgba(0, 0, 0, 0.68),
+    0 0 0 1px rgba(225, 166, 66, 0.13),
+    0 0 1rem rgba(198, 112, 31, 0.16) !important;
+}
+
+.selectorRoot .selectorTrigger:hover::after,
+.selectorRoot .selectorTrigger:focus-visible::after,
+.selectorRoot[data-open] .selectorTrigger::after {
+  opacity: 0.85;
+  transform: translateX(35%);
+}
+
+.dungeonSelector {
+  width: min(17.5rem, 100%);
+}
+
+.keySelector {
+  width: 10.75rem;
+}
+
+.triggerArtwork,
+.optionArtwork {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 1px solid #9d7130;
+  outline: 2px solid #080604;
+  background: #090806;
+  box-shadow: inset 0 0 0 1px rgba(255, 229, 170, 0.14), 0 0 0.75rem rgba(0, 0, 0, 0.7);
+}
+
+.triggerArtwork {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.triggerArtwork::after,
+.optionArtwork::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  box-shadow: inset 0 0 0.75rem rgba(0, 0, 0, 0.48), inset 0 1px rgba(255, 244, 217, 0.18);
+}
+
+.triggerArtwork img,
+.optionArtwork img {
+  object-fit: cover;
+  filter: brightness(0.9) saturate(1.08) contrast(1.08);
+  transition: filter 180ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.triggerGem {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  color: #cfb786;
+  border: 1px solid currentColor;
+  outline: 2px solid #070604;
+  background: radial-gradient(circle, color-mix(in srgb, currentColor 20%, #080706), #080706 70%);
+  box-shadow: 0 0 0.75rem color-mix(in srgb, currentColor 20%, transparent), inset 0 0 0.625rem #000;
+}
+
+.triggerGem[data-tone="uncommon"] { color: #5fd36a; }
+.triggerGem[data-tone="rare"] { color: #4b9cff; }
+.triggerGem[data-tone="epic"] { color: #b66cff; }
+.triggerGem[data-tone="mythic"] { color: #ff9b3d; }
+
+.triggerGem svg {
+  width: 1.125rem;
+  filter: drop-shadow(0 0 0.3125rem currentColor);
+}
+
+.triggerCopy,
+.optionCopy {
+  display: grid;
+  min-width: 0;
+}
+
+.triggerCopy {
+  gap: 0.125rem;
+  padding-inline: 0.625rem;
+}
+
+.triggerCopy strong {
+  overflow: hidden;
+  font: 600 0.75rem/1.2 Georgia, serif;
+  letter-spacing: 0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerCopy small {
+  overflow: hidden;
+  color: #887c69;
+  font-size: 0.5625rem;
+  letter-spacing: 0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron,
+.loadingIcon {
+  width: 0.9375rem;
+  color: #d9a64c;
+}
+
+.chevron {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.selectorRoot[data-open] .chevron {
+  transform: rotate(180deg);
+}
+
+.loadingIcon {
+  animation: selectorSpin 800ms linear infinite;
+}
+
+.selectorMenu {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 0.625rem);
+  right: 0;
+  min-width: 100%;
+  padding: 0.625rem;
+  color: #d8c8ad;
+  border: 1px solid #8b6229;
+  border-radius: 0.1875rem;
+  outline: 2px solid #030201;
+  background:
+    linear-gradient(rgba(13, 12, 9, 0.965), rgba(6, 6, 5, 0.985)),
+    url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 26rem auto;
+  box-shadow:
+    inset 0 1px rgba(255, 232, 183, 0.08),
+    0 1.5rem 4rem rgba(0, 0, 0, 0.78),
+    0 0 2rem rgba(173, 94, 28, 0.12);
+  transform-origin: top right;
+  animation: selectorReveal 190ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dungeonSelector .selectorMenu {
+  width: min(31rem, calc(100vw - 2rem));
+}
+
+.keySelector .selectorMenu {
+  width: 15rem;
+}
+
+.menuOrnament {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  margin: -0.125rem 0 0.5rem;
+  color: #cf963e;
+}
+
+.menuOrnament i {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(213, 156, 66, 0.66));
+}
+
+.menuOrnament i:last-child {
+  transform: scaleX(-1);
+}
+
+.menuOrnament svg {
+  width: 0.75rem;
+  filter: drop-shadow(0 0 0.375rem rgba(226, 150, 50, 0.42));
+}
+
+.optionGrid {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.dungeonSelector .optionGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.selectorRoot .selectorOption {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 3.75rem;
+  padding: 0.3125rem 0.5rem 0.3125rem 0.3125rem;
+  overflow: hidden;
+  color: #c8b99f;
+  border: 1px solid rgba(126, 91, 41, 0.4);
+  border-radius: 0.125rem;
+  outline: none;
+  background: linear-gradient(90deg, rgba(34, 28, 19, 0.72), rgba(11, 10, 8, 0.84)) !important;
+  box-shadow: inset 0 1px rgba(255, 236, 199, 0.025) !important;
+  text-align: left;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.selectorRoot .selectorOption:hover,
+.selectorRoot .selectorOption:focus-visible {
+  z-index: 1;
+  color: #ffe2a0 !important;
+  border-color: #b98234 !important;
+  background: linear-gradient(90deg, rgba(83, 54, 25, 0.82), rgba(22, 16, 10, 0.92)) !important;
+  box-shadow: inset 0 1px rgba(255, 225, 164, 0.08), 0 0 0.875rem rgba(190, 102, 28, 0.12) !important;
+  transform: translateY(-1px);
+}
+
+.selectorRoot .selectorOption[aria-selected="true"] {
+  color: #ffe5aa !important;
+  border-color: #d29b45 !important;
+  background:
+    linear-gradient(90deg, rgba(118, 72, 27, 0.62), rgba(29, 20, 11, 0.92)) !important;
+  box-shadow: inset 2px 0 #e6ae51, inset 0 1px rgba(255, 232, 180, 0.09), 0 0 0.75rem rgba(205, 116, 29, 0.1) !important;
+}
+
+.optionArtwork {
+  width: 3rem;
+  height: 3rem;
+}
+
+.selectorOption:hover .optionArtwork img,
+.selectorOption:focus-visible .optionArtwork img {
+  filter: brightness(1.08) saturate(1.15) contrast(1.06);
+  transform: scale(1.07);
+}
+
+.optionCopy {
+  gap: 0.1875rem;
+  padding-inline: 0.625rem;
+}
+
+.optionCopy strong {
+  overflow: hidden;
+  font: 600 0.6875rem/1.15 Georgia, serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionCopy small {
+  overflow: hidden;
+  color: #8f826d;
+  font-size: 0.5rem;
+  letter-spacing: 0.025em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedCheck {
+  width: 0.875rem;
+  color: #eeb95b;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.selectorOption[aria-selected="true"] .selectedCheck {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.optionGem {
+  position: relative;
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  color: #aea68f;
+  border: 1px solid currentColor;
+  outline: 2px solid #060503;
+  background: radial-gradient(circle, color-mix(in srgb, currentColor 18%, #080706), #070605 72%);
+  box-shadow: inset 0 0 0.875rem #000, 0 0 0.625rem color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.selectorOption[data-tone="uncommon"] .optionGem { color: #42c65a; }
+.selectorOption[data-tone="rare"] .optionGem { color: #3b8eff; }
+.selectorOption[data-tone="epic"] .optionGem { color: #ad5cff; }
+.selectorOption[data-tone="mythic"] .optionGem { color: #ff932f; }
+
+.optionGem svg {
+  width: 1.5rem;
+  filter: drop-shadow(0 0 0.375rem currentColor);
+}
+
+.optionGem b {
+  position: absolute;
+  font: 700 0.625rem Georgia, serif;
+  text-shadow: 0 1px 2px #000;
+}
+
+.keyboardHint {
+  margin: 0.5rem 0 -0.125rem;
+  color: #6f6657;
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+@keyframes selectorReveal {
+  from { opacity: 0; transform: translateY(-0.5rem) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes selectorSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 780px) {
+  .dungeonSelector {
+    width: min(20rem, 100%);
+  }
+
+  .keySelector {
+    width: min(12rem, 100%);
+  }
+
+  .selectorMenu {
+    right: auto;
+    left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .dungeonSelector,
+  .keySelector {
+    width: 100%;
+  }
+
+  .dungeonSelector .selectorMenu,
+  .keySelector .selectorMenu {
+    position: fixed;
+    z-index: 500;
+    top: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+    max-height: min(78vh, 36rem);
+    overflow-y: auto;
+    transform-origin: bottom center;
+  }
+
+  .dungeonSelector .optionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .selectorRoot .selectorOption {
+    min-height: 3.5rem;
+  }
+
+  .optionArtwork,
+  .optionGem {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selectorTrigger,
+  .selectorTrigger::after,
+  .selectorOption,
+  .triggerArtwork img,
+  .optionArtwork img,
+  .chevron,
+  .selectedCheck {
+    transition: none !important;
+  }
+
+  .selectorMenu,
+  .loadingIcon {
+    animation: none !important;
+  }
+}

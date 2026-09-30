@@ -17,7 +17,7 @@ export const season = {
 
 export const patchHighlights = [
   "Class tuning updates",
-  "Manaforge Omega raid open",
+  "Three Midnight raids now open",
   "New Mythic+ affix rotation",
   "PvP balance adjustments",
 ];
@@ -77,9 +77,9 @@ export const trends = [
 
 export const raid = {
   label: "Current Raid",
-  name: "Manaforge Omega",
+  name: "Midnight Raid Journal",
   blurb:
-    "Boss rankings, spec performance and encounter guides — updated 2h ago from 23,671+ logged parses.",
+    "The Voidspire, The Dreamrift and March on Quel'Danas — nine encounters with real Adventure Guide mechanics.",
   links: ["Boss Rankings", "Tier List", "Guides", "Best Specs"],
   topSpecs: [
     { name: "Devastation Evoker", cls: "evoker" },
@@ -160,7 +160,7 @@ export const guidesList = [
 
 export const featuredGuide = {
   cat: "Raid Guide",
-  title: "Manaforge Omega — Complete Boss Guide",
+  title: "Midnight — Complete Raid Journal",
   meta: "By Velyne · 5h ago · 14 min read",
 };
 

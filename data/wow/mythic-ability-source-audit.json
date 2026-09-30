@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "gameBuild": "12.1.0.69587",
+  "sourceUrl": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69587&locale=enUS",
+  "lastVerifiedAt": "2026-09-13T04:14:29Z",
+  "method": "case-insensitive exact English-name match across the complete 413985-line SpellName CSV",
+  "rejectedNames": [
+    { "name": "Arena Charge", "dungeon": "voidscar-arena", "actor": "Brutok", "reason": "not-present-in-spell-name-source" },
+    { "name": "Arena's Verdict", "dungeon": "voidscar-arena", "actor": "Taz'Rah", "reason": "not-present-in-spell-name-source" },
+    { "name": "Bloodthorn Growth", "dungeon": "the-blinding-vale", "actor": "Bloodthorn Stalker", "reason": "not-present-in-spell-name-source" },
+    { "name": "Blooming Guard", "dungeon": "the-blinding-vale", "actor": "Bloom Guardian", "reason": "not-present-in-spell-name-source" },
+    { "name": "Call Rider", "dungeon": "temple-of-sethraliss", "actor": "Sand-Sworn Rider", "reason": "not-present-in-spell-name-source" },
+    { "name": "Coiling Strike", "dungeon": "altar-of-fangs", "actor": "Ascendant Serpent", "reason": "not-present-in-spell-name-source" },
+    { "name": "Contraband Bomb", "dungeon": "murder-row", "actor": "Illicit Smuggler", "reason": "not-present-in-spell-name-source" },
+    { "name": "Demolishing Swing", "dungeon": "murder-row", "actor": "Row Enforcer", "reason": "not-present-in-spell-name-source" },
+    { "name": "Faithless Charge", "dungeon": "temple-of-sethraliss", "actor": "Faithless Invader", "reason": "not-present-in-spell-name-source" },
+    { "name": "Guarded Slam", "dungeon": "kings-rest", "actor": "Animated Guardian", "reason": "not-present-in-spell-name-source" },
+    { "name": "Guardian Slam", "dungeon": "temple-of-sethraliss", "actor": "Guardian of Sethraliss", "reason": "not-present-in-spell-name-source" },
+    { "name": "Hunting Fixate", "dungeon": "den-of-nalorakk", "actor": "Loyal Saberfang", "reason": "not-present-in-spell-name-source" },
+    { "name": "Legion Cleave", "dungeon": "murder-row", "actor": "Wrathguard Flayer", "reason": "not-present-in-spell-name-source" },
+    { "name": "Lightfire Cone", "dungeon": "the-blinding-vale", "actor": "Lightfire Warden", "reason": "not-present-in-spell-name-source" },
+    { "name": "Lightgorged Bulwark", "dungeon": "the-blinding-vale", "actor": "Lightgorged Lasher", "reason": "not-present-in-spell-name-source" },
+    { "name": "Mass Venom", "dungeon": "altar-of-fangs", "actor": "Uncoiled Writhe", "reason": "not-present-in-spell-name-source" },
+    { "name": "Petal Burst", "dungeon": "the-blinding-vale", "actor": "Petalwing Skirmisher", "reason": "not-present-in-spell-name-source" },
+    { "name": "Plague Doctoring", "dungeon": "temple-of-sethraliss", "actor": "Heart Guardian", "reason": "not-present-in-spell-name-source" },
+    { "name": "Rending Leap", "dungeon": "kings-rest", "actor": "Honored Raptor", "reason": "not-present-in-spell-name-source" },
+    { "name": "Silencing Shriek", "dungeon": "den-of-nalorakk", "actor": "Keen-Eyed Striker", "reason": "not-present-in-spell-name-source" },
+    { "name": "Sporeblight Eruption", "dungeon": "the-blinding-vale", "actor": "Sporeblight Belcher", "reason": "not-present-in-spell-name-source" }
+  ],
+  "resolvedNames": [
+    {
+      "name": "Ssscavenging",
+      "dungeon": "altar-of-fangs",
+      "actor": "Rav'i",
+      "candidateSpellIds": [1296216, 1298220, 1298221, 1298223, 1298226, 1307801, 1309522],
+      "selectedSpellId": 1298221,
+      "iconId": 458236,
+      "actorEvidenceUrl": "https://aws.keystone.guru/index.php/compendium/spell/1298221-ssscavenging",
+      "identitySourceUrl": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69587&locale=enUS&filter[ID]=1298221",
+      "iconMappingSourceUrl": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69587&filter[SpellID]=1298221",
+      "reason": "exact spell compendium entry identifies Rav'i as the caster in Altar of Fangs"
+    }
+  ],
+  "ambiguousNames": []
+}

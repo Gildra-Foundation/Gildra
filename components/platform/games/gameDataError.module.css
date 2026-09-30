@@ -1,0 +1,11 @@
+.page{min-height:calc(100vh - 64px);padding:clamp(34px,8vw,110px) 18px;display:grid;place-items:start center;background:radial-gradient(60% 50% at 50% 0,rgba(188,111,25,.12),transparent),linear-gradient(180deg,rgba(7,6,4,.1),rgba(7,6,4,.72))}
+.panel{width:min(680px,100%);padding:clamp(28px,5vw,54px);position:relative;overflow:hidden;border:1px solid rgba(184,123,42,.62);border-top-color:#d2963e;background:linear-gradient(145deg,rgba(27,19,10,.98),rgba(8,7,5,.98));box-shadow:0 28px 80px rgba(0,0,0,.58),inset 0 1px rgba(255,228,164,.06);text-align:center}
+.panel::before{content:"";position:absolute;inset:8px;pointer-events:none;border:1px solid rgba(197,135,49,.14)}
+.sigil{width:72px;height:72px;margin:0 auto 18px;display:grid;place-items:center;border:1px solid #8e5e27;border-radius:50%;color:#dc9b42;background:radial-gradient(circle,#3c220d,#0b0805 68%);box-shadow:0 0 34px rgba(210,128,33,.16)}
+.sigil svg{width:29px}
+.panel>p{color:#d99a42;font-size:10px;font-weight:800;letter-spacing:.18em}
+.panel h1{margin:8px 0 12px;color:#f0dec0;font:400 clamp(28px,4vw,42px)/1.08 Georgia,"Times New Roman",serif;text-shadow:0 2px 12px #000}
+.panel>span:not(.sigil){display:block;margin:auto;max-width:530px;color:#ad9e8b;font-size:13px;line-height:1.65}
+.panel>div{margin-top:25px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.panel button,.panel a{min-height:42px;padding:0 17px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #815722;color:#e7bf77;background:linear-gradient(180deg,#27190b,#0d0905);font-size:11px;font-weight:700;letter-spacing:.04em}
+.panel button:hover,.panel a:hover{border-color:#d08d32;background:#34200c}.panel svg{width:15px}

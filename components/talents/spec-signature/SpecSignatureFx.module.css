@@ -1,0 +1,30 @@
+.scene{position:absolute;inset:48px 0 0;z-index:1;overflow:hidden;pointer-events:none;color:var(--tc-accent);contain:strict;isolation:isolate}
+.manuscript { inset-block-start: 100px; }
+.manuscript::before { display: none; }
+.manuscript .ward { opacity: .35; }
+.engraving {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: clamp(100px, 16%, 180px);
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  opacity: .22;
+  filter: sepia(.35) saturate(.5);
+  pointer-events: none;
+}
+.scene::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 86% 46%,rgba(var(--tc-accent-rgb),.075),transparent 31%),linear-gradient(115deg,transparent 72%,rgba(var(--tc-hot-rgb),.025));opacity:.7}
+.scene canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.34}
+.ward{position:absolute;right:-5%;bottom:9%;width:43%;height:auto;overflow:hidden;fill:none;stroke:rgba(var(--tc-hot-rgb),.1);stroke-width:1;transform:rotate(-8deg)}
+.ward path{stroke:rgba(var(--tc-accent-rgb),.1)}
+.primary{position:absolute;right:3%;bottom:17%;display:grid;place-items:center;width:34%;height:34%;color:rgba(var(--tc-hot-rgb),.24);transform-origin:58% 54%}
+.primary svg{width:100%;height:100%;stroke-width:1.2}
+.secondary{position:absolute;right:4%;bottom:9%;display:grid;place-items:center;width:11%;aspect-ratio:1;color:rgba(var(--tc-accent-rgb),.23);transform-origin:center}
+.secondary svg{width:100%;height:100%;stroke-width:1.25}
+[data-signature="blood-death-knight"] .primary{right:5%;bottom:18%;width:31%;height:31%}
+[data-signature="frost-death-knight"] .primary,[data-signature="devastation-evoker"] .primary,[data-signature="preservation-evoker"] .primary,[data-signature="augmentation-evoker"] .primary{right:1%;bottom:17%;width:39%;height:37%}
+[data-signature="subtlety-rogue"] .primary,[data-signature="devourer-demon-hunter"] .primary{color:rgba(var(--tc-hot-rgb),.27)}
+@media(max-width:900px){.primary{right:2%;width:38%;height:34%}.secondary{right:4%;width:10%}}
+@media(max-width:560px){.primary{right:0;bottom:18%;width:40%;height:31%}.secondary{display:none}.ward{right:-7%;bottom:13%;width:48%}.scene canvas{opacity:.24}}
+@media(prefers-reduced-motion:reduce){.scene canvas{opacity:.52}.primary{opacity:.72}.secondary{opacity:.45}}

@@ -20,7 +20,7 @@ export function SpecBody({ data, lang, game }: BlockComponentProps<SpecBodyProps
   return (
     <>
       <nav className="sp-crumb" aria-label="Breadcrumb">
-        <Link href={lp(lang, "/tier-lists")}>{tt("Mythic+ Tier List")}</Link>
+        <Link href={lp(lang, "/wow")}>{tt("World of Warcraft")}</Link>
         <span className="dia" aria-hidden="true">◆</span>
         <span aria-current="page">{name}</span>
       </nav>
@@ -113,7 +113,7 @@ export function SpecBody({ data, lang, game }: BlockComponentProps<SpecBodyProps
       </div>
 
       <p className="sp-note">
-        {tt(season.season)} · {tt("demo data — based on")} {liveStats.runs}+{" "}
+        {lang === "ru" ? "Сезонный срез по" : "Season snapshot based on"} {liveStats.runs}+{" "}
         {tt("runs, updated")} {tt(liveStats.updated)}.
       </p>
 
@@ -163,8 +163,8 @@ export function SpecBody({ data, lang, game }: BlockComponentProps<SpecBodyProps
       )}
 
       <div className="sp-back">
-        <Link className="btn-line" href={lp(lang, "/tier-lists")}>
-          {tt("← Full Mythic+ tier list")}
+        <Link className="btn-line" href={lp(lang, "/wow")}>
+          {tt("← World of Warcraft")}
         </Link>
       </div>
     </>

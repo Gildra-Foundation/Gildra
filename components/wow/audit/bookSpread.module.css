@@ -1,0 +1,74 @@
+/* A spread has two equal leaves. Only explicitly mounted work surfaces may
+   bridge its binding; ordinary text must respect the shared inner margin. */
+.layout {
+  --book-gutter: clamp(40px, 5cqw, 72px);
+  --book-leaf-width: calc((100% - var(--book-gutter)) / 2);
+}
+
+.identity, .metrics { display: contents; }
+
+.layout[data-character-book="open"] .hero {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas: "sync sync" "identity metrics" "identity live" "identity actions" "evidence evidence";
+  gap: 16px var(--book-gutter);
+  padding-inline: 8px;
+  min-height: 0;
+}
+.layout[data-character-book="open"] .identity {
+  grid-area: identity;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  align-self: start;
+}
+.layout[data-character-book="open"] .identity > div:first-child { flex: 0 0 64px; width: 64px; height: 64px; margin: 8px 0 0; }
+.layout[data-character-book="open"] .name { min-width: 0; }
+.layout[data-character-book="open"] .name h1 { font-size: clamp(28px, 3.5cqw, 48px); white-space: normal; overflow-wrap: anywhere; line-height: 1.12; }
+.layout[data-character-book="open"] .name :is(p, small) { white-space: normal; flex-wrap: wrap; }
+.layout[data-character-book="open"] .metrics { grid-area: metrics; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+.layout[data-character-book="open"] .metrics > div { grid-area: auto; min-width: 0; }
+.layout[data-character-book="open"] .actions { grid-area: actions; display: flex; flex-wrap: wrap; justify-content: flex-start; width: auto; }
+.layout[data-character-book="open"] .actions > button { width: auto; flex: 0 1 auto; max-width: 100%; }
+.layout[data-character-book="open"] .status { justify-self: start; margin: 0; }
+.layout[data-character-book="open"] .evidence { grid-template-columns: repeat(2, minmax(0, 1fr)) var(--book-gutter) repeat(2, minmax(0, 1fr)); gap: 0; }
+.layout[data-character-book="open"] .evidence > :nth-child(3) { grid-column: 4; }
+.layout[data-character-book="open"] .evidence > :nth-child(4) { grid-column: 5; }
+
+.layout[data-character-book="open"] .chapter {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px var(--book-gutter);
+  padding-inline: 8px;
+}
+.layout[data-character-book="open"] .chapter > .chapterTitle {
+  grid-column: 1; grid-row: 1;
+  display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 16px;
+}
+.layout[data-character-book="open"] .chapterTitle > span { width: 48px; height: 60px; font-size: 28px; }
+.layout[data-character-book="open"] .chapterTitle h2 { font-size: clamp(22px, 2.4cqw, 32px); line-height: 1.2; overflow-wrap: anywhere; }
+.layout[data-character-book="open"] .chapter > .chapterSummary {
+  grid-column: 2; grid-row: 1;
+  display: flex; gap: 16px; align-items: center;
+}
+.layout[data-character-book="open"] .chapterSummary > span { flex: 0 0 32px; margin: 0; }
+.layout[data-character-book="open"] .chapterSummary p { margin: 0; max-width: 36em; }
+.layout[data-character-book="open"] .footer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--book-gutter); align-items: start; }
+.layout[data-character-book="open"] .footer > div { display: flex; align-items: start; gap: 8px; }
+.layout[data-character-book="open"] .footer svg { flex-shrink: 0; }
+.layout[data-character-book="open"] .footer > span { margin: 0; white-space: normal; }
+
+@container auditPage (max-width: 820px) {
+  .layout[data-character-book="open"] .hero { grid-template-columns: minmax(0, 1fr); grid-template-areas: "sync" "identity" "metrics" "live" "actions" "evidence"; gap: 20px; }
+  .layout[data-character-book="open"] .evidence { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .layout[data-character-book="open"] .evidence > :nth-child(n) { grid-column: auto; }
+  .layout[data-character-book="open"] .chapter { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .layout[data-character-book="open"] .chapter > .chapterSummary { grid-column: 1; grid-row: 2; padding-left: 64px; }
+  .layout[data-character-book="open"] .chapterSummary > span { display: none; }
+  .layout[data-character-book="open"] .footer { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+}
+@container auditPage (max-width: 420px) {
+  .layout[data-character-book="open"] .identity { gap: 12px; }
+  .layout[data-character-book="open"] .identity > div:first-child { flex-basis: 44px; width: 44px; height: 44px; }
+  .layout[data-character-book="open"] .metrics { gap: 4px; }
+  .layout[data-character-book="open"] .metrics > div { padding: 8px; }
+  .layout[data-character-book="open"] .metrics b { font-size: 28px; }
+}

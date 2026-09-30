@@ -1,0 +1,2581 @@
+{
+  "schemaVersion": 1,
+  "scope": "Midnight Season 1 raid ability descriptions recorded by the canonical manifest",
+  "gameBuild": "12.1.0.69587",
+  "sourceKind": "verified_database",
+  "sourcePriority": 3,
+  "sources": [
+    {
+      "kind": "spell_en",
+      "table": "Spell",
+      "locale": "en",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=enUS",
+      "sha256": "89421cf8becf4f22bfa720a824dc65ea022efa0868c4b1ba61dce25d8b5bd8c0",
+      "bytes": 23704001,
+      "rows": 413984
+    },
+    {
+      "kind": "spell_ru",
+      "table": "Spell",
+      "locale": "ru",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=ruRU",
+      "sha256": "12c7b36ac36d1cbe574fd032e5a4801340236bd8c8bdcf6934320cddaa8508fc",
+      "bytes": 40927127,
+      "rows": 413984
+    },
+    {
+      "kind": "journal_section_en",
+      "table": "JournalEncounterSection",
+      "locale": "en",
+      "url": "https://wago.tools/db2/JournalEncounterSection/csv?build=12.1.0.69587&locale=enUS",
+      "sha256": "6b7ac5ea18ed881f4be21f6bad559ef528d9a8ee7aaff3ac97888bbd47c0be4b",
+      "bytes": 3159173,
+      "rows": 21281
+    },
+    {
+      "kind": "journal_section_ru",
+      "table": "JournalEncounterSection",
+      "locale": "ru",
+      "url": "https://wago.tools/db2/JournalEncounterSection/csv?build=12.1.0.69587&locale=ruRU",
+      "sha256": "90e226b22ed8a7ae3f3521361f8e9dcd21f2dcf7fd7bea2212e1de719d0d14e0",
+      "bytes": 4765819,
+      "rows": 21281
+    },
+    {
+      "kind": "spell_name_en",
+      "table": "SpellName",
+      "locale": "en",
+      "url": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69587&locale=enUS",
+      "sha256": "68bc167663c9c001a137dc074ad401e00dadadf451504f08d473f1651ce82dc5",
+      "bytes": 11291391,
+      "rows": 413984
+    },
+    {
+      "kind": "spell_name_ru",
+      "table": "SpellName",
+      "locale": "ru",
+      "url": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69587&locale=ruRU",
+      "sha256": "aedb1f4bcb11fc69915c836a122eb8e13253097bf3e2d58b82e5dfc00a8b5538",
+      "bytes": 17178170,
+      "rows": 413984
+    }
+  ],
+  "abilities": [
+    {
+      "spellId": 1233602,
+      "manifestId": "wow:spell:1233602",
+      "encounterId": 2738,
+      "names": {
+        "en": "Silverstrike Arrow",
+        "ru": "Серебряная стрела"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1233602,
+          "terminalSpellId": 1233602,
+          "referenceChain": [
+            1233602
+          ],
+          "classification": "tokenized",
+          "description": "Alleria marks a player, firing a silver-lined arrow through them. The arrow inflicts $1233649s1 Arcane damage in a line and removes Void effects from players and Voidspawn struck.",
+          "descriptionSha256": "ca3094dd510948f6bf3cbedd3f6f98a571f3124f35d34a1a38ae264eeedf7f77",
+          "tokens": [
+            "$1233649s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1233602,
+          "terminalSpellId": 1233602,
+          "referenceChain": [
+            1233602
+          ],
+          "classification": "tokenized",
+          "description": "Аллерия отмечает игрока и выпускает серебряную стрелу, пробивающую его насквозь. Стрела наносит целям на линии $1233649s1 ед. урона от тайной магии и снимает эффекты Бездны с пораженных игроков и порождений Бездны.",
+          "descriptionSha256": "b45d1aa15e7938c9d5882e6a6bede111551a1a1d8fded489e49f5e8b575126e2",
+          "tokens": [
+            "$1233649s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 32457,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Silverstrike Arrow",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34080,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Section 78",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 32457,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Серебряная стрела",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34080,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Раздел 78",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1233865,
+      "manifestId": "wow:spell:1233865",
+      "encounterId": 2738,
+      "names": {
+        "en": "Null Corona",
+        "ru": "Нуль-венец"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1233865,
+          "terminalSpellId": 1233865,
+          "referenceChain": [
+            1233865
+          ],
+          "classification": "tokenized",
+          "description": "Alleria places a shell of Void magic around a player that absorbs $s1 healing. If $@spellname1233865 is dispelled, the remaining absorb jumps to another random player.",
+          "descriptionSha256": "1dbed0b09966959d3c00bca5a379da1f88a2a37c525dfb278c0afca99a63b61f",
+          "tokens": [
+            "$@spellname1233865",
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1233865,
+          "terminalSpellId": 1233865,
+          "referenceChain": [
+            1233865
+          ],
+          "classification": "tokenized",
+          "description": "Аллерия окружает цель аурой магии Бездны, поглощающей $s1 ед. получаемого исцеления. Если \"$@spellname1233865\" рассеивают, оставшийся эффект поглощения исцеления переходит на другого случайного игрока.",
+          "descriptionSha256": "b3c5c821ce88c4df8f81dc6de6c74842a3b1a0489252cd1e9ca90e79a677f4c7",
+          "tokens": [
+            "$@spellname1233865",
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 32476,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Touch of Harm",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 32915,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Section 40",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 32923,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Section 44",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34085,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Section 83",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 32476,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Вредоносное касание",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 32915,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Раздел 40",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 32923,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Раздел 44",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34085,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Раздел 83",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value",
+        "spell_name"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1237614,
+      "manifestId": "wow:spell:1237614",
+      "encounterId": 2738,
+      "names": {
+        "en": "Ranger Captain's Mark",
+        "ru": "Метка капитана следопытов"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1237614,
+          "terminalSpellId": 1237614,
+          "referenceChain": [
+            1237614
+          ],
+          "classification": "tokenized",
+          "description": "Alleria applies a Ranger Captain's Mark to random players within $s1 yards for $1237623d. Upon expiration, she fires a $@spellname1237729 at them.",
+          "descriptionSha256": "3163a5c691dee5817f7c235a03de5639720a97403173fe9042da55745ff1e89c",
+          "tokens": [
+            "$1237623d",
+            "$@spellname1237729",
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1237614,
+          "terminalSpellId": 1237614,
+          "referenceChain": [
+            1237614
+          ],
+          "classification": "tokenized",
+          "description": "Аллерия применяет к случайным игрокам в радиусе $s1 м \"Метку капитана следопытов\" на $1237623d. По истечении этого времени Аллерия применяет к отмеченным целям способность \"$@spellname1237729\".",
+          "descriptionSha256": "a72a397d714bc60331dd57b90eff1274dad92e888eb9be7a42dae22ad01fc149",
+          "tokens": [
+            "$1237623d",
+            "$@spellname1237729",
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 32464,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Ranger General's Mark",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 32464,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Метка командира следопытов",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "duration",
+        "effect_value",
+        "spell_name"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1237837,
+      "manifestId": "wow:spell:1237837",
+      "encounterId": 2738,
+      "names": {
+        "en": "Call of the Void",
+        "ru": "Зов Бездны"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1237837,
+          "terminalSpellId": 1237837,
+          "referenceChain": [
+            1237837
+          ],
+          "classification": "tokenized",
+          "description": "Celestial energy bursts around Alleria, inflicting $1237875s1 Shadow damage within $1237875A1 yards of each impact and calling forth an Undying Voidspawn.",
+          "descriptionSha256": "e5d0261e96a21b7ccaec1956c8d0c9b48d8970276262b3949bd9a028b7e10249",
+          "tokens": [
+            "$1237875A1",
+            "$1237875s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1237837,
+          "terminalSpellId": 1237837,
+          "referenceChain": [
+            1237837
+          ],
+          "classification": "tokenized",
+          "description": "Вокруг Аллерии происходят вспышки небесной энергии, наносящие целям в радиусе $1237875A1 м от мест ударов $1237875s1 ед. урона от темной магии и призывающие бессмертное порождение Бездны.",
+          "descriptionSha256": "9370eba8c9bb001e84f968b4873b67c2ee926c556c0b97330eda1a44373c0299",
+          "tokens": [
+            "$1237875A1",
+            "$1237875s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 34037,
+            "encounterId": 2738,
+            "difficultyMask": 0,
+            "title": "Call of the Void",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 34037,
+            "encounterId": 2738,
+            "difficultyMask": 0,
+            "title": "Зов Бездны",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value",
+        "radius"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1239089,
+      "manifestId": "wow:spell:1239089",
+      "encounterId": 2738,
+      "names": {
+        "en": "Gravity Collapse",
+        "ru": "Гравитационный коллапс"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1239089,
+          "terminalSpellId": 1239089,
+          "referenceChain": [
+            1239089
+          ],
+          "classification": "tokenized",
+          "description": "Reverberating darkness knocks the target upwards and increases their Physical damage taken by $1255453s1% for $1255453d. The cosmic tremors additionally inflict $1239095s1 Shadow damage to all other players.",
+          "descriptionSha256": "a00e0329a107fd732b2854d6d80054b07d56331e366ccb32395a1e2a49da42f8",
+          "tokens": [
+            "$1239095s1",
+            "$1255453d",
+            "$1255453s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1239089,
+          "terminalSpellId": 1239089,
+          "referenceChain": [
+            1239089
+          ],
+          "classification": "tokenized",
+          "description": "Сотрясающаяся энергия тьмы подбрасывает цель и увеличивает получаемый физический урон на $1255453s1% на $1255453d. Космическая дрожь также наносит остальным игрокам $1239095s1 ед. урона от темной магии.",
+          "descriptionSha256": "d4d9d8fa972adabcf66494247336cbe6556a51cc789eba76d0d707f1f33fa8f3",
+          "tokens": [
+            "$1239095s1",
+            "$1255453d",
+            "$1255453s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 32938,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Section 45",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 32938,
+            "encounterId": 2738,
+            "difficultyMask": -1,
+            "title": "Раздел 45",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "duration",
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1241162,
+      "manifestId": "wow:spell:1241162",
+      "encounterId": 2739,
+      "names": {
+        "en": "Light Feather",
+        "ru": "Перо Света"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1241162,
+          "terminalSpellId": 1241162,
+          "referenceChain": [
+            1241162
+          ],
+          "classification": "tokenized",
+          "description": "Infused with a luminous feather, reducing Holy damage taken by $s1%.",
+          "descriptionSha256": "f6b871ef847f4806d1bc7c4e0df400207996a2903177a302fe873f821d12d0c2",
+          "tokens": [
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1241162,
+          "terminalSpellId": 1241162,
+          "referenceChain": [
+            1241162
+          ],
+          "classification": "tokenized",
+          "description": "Сияющее перо уменьшает получаемый урон от светлой магии на $s1%.",
+          "descriptionSha256": "f385f6ed704ad74627b5dfe7952f10f9e79d4ba017269828934125b29ed1ddfe",
+          "tokens": [
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33131,
+            "encounterId": 2739,
+            "difficultyMask": -1,
+            "title": "Section 17",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33131,
+            "encounterId": 2739,
+            "difficultyMask": -1,
+            "title": "Раздел 17",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1241163,
+      "manifestId": "wow:spell:1241163",
+      "encounterId": 2739,
+      "names": {
+        "en": "Void Feather",
+        "ru": "Перо Бездны"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1241163,
+          "terminalSpellId": 1241163,
+          "referenceChain": [
+            1241163
+          ],
+          "classification": "tokenized",
+          "description": "Infused with a darkened feather, reducing Shadow damage taken by $s1%.",
+          "descriptionSha256": "82aaba47c0d5256d9111376c8a4369c2dee3a3b91a368d5e768e546ce63abd15",
+          "tokens": [
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1241163,
+          "terminalSpellId": 1241163,
+          "referenceChain": [
+            1241163
+          ],
+          "classification": "tokenized",
+          "description": "Омраченное перо уменьшает получаемый урон от темной магии на $s1%.",
+          "descriptionSha256": "6c1817c982ed828d1839dab77c3d6c07e838fa964e8def40d78d4662ebb8577c",
+          "tokens": [
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33132,
+            "encounterId": 2739,
+            "difficultyMask": -1,
+            "title": "Section 18",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33132,
+            "encounterId": 2739,
+            "difficultyMask": -1,
+            "title": "Раздел 18",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1241520,
+      "manifestId": "wow:spell:1241520",
+      "encounterId": 2738,
+      "names": {
+        "en": "Corrupting Essence",
+        "ru": "Оскверняющая сущность"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1241520,
+          "terminalSpellId": 1241520,
+          "referenceChain": [
+            1241520
+          ],
+          "classification": "tokenized",
+          "description": "The droplet erupts with Void upon death and splashes the nearest player or Sentinel within $1233526A1 yards. This inflicts $s2 Shadow damage and causes the target to take $s1% increased damage for $d. This effect stacks.",
+          "descriptionSha256": "c57c8f4c0ed2936e447857f449f06792bee69b999899b1e70f2a10929337dd7a",
+          "tokens": [
+            "$1233526A1",
+            "$d",
+            "$s1",
+            "$s2"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1241520,
+          "terminalSpellId": 1241520,
+          "referenceChain": [
+            1241520
+          ],
+          "classification": "tokenized",
+          "description": "При уничтожении исторгает энергию Бездны в ближайшего игрока или часового в радиусе $1233526A1 м, нанося $s2 ед. урона от темной магии и увеличивая получаемый целью урон на $s1% на $d. Эффект суммируется.",
+          "descriptionSha256": "d8d2c34b1d75b354694f74fb8e8bee72b2f02f7289b13a1954c720e3770d8f8c",
+          "tokens": [
+            "$1233526A1",
+            "$d",
+            "$s1",
+            "$s2"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [],
+        "ru": []
+      },
+      "requiredBy": [
+        "duration",
+        "effect_value",
+        "radius"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1243320,
+      "manifestId": "wow:spell:1243320",
+      "encounterId": 2739,
+      "names": {
+        "en": "Immortal Flame",
+        "ru": "Бессмертное пламя"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1243320,
+          "terminalSpellId": 1243320,
+          "referenceChain": [
+            1243320
+          ],
+          "classification": "publication_safe",
+          "description": "Eternal flames fuel Belo'ren's energy, allowing him to use Rebirth when his health is fully depleted.",
+          "descriptionSha256": "ad33e1ff1df50779feac57ea6cf4a01866e30429e24e71535ee62ca828f3d52b",
+          "tokens": []
+        },
+        "ru": {
+          "rawSpellId": 1243320,
+          "terminalSpellId": 1243320,
+          "referenceChain": [
+            1243320
+          ],
+          "classification": "publication_safe",
+          "description": "Вечное пламя придает Бело'рену энергию, позволяя ему возрождаться после гибели.",
+          "descriptionSha256": "5919057f44401f7af326de4976c937128a97dd12b959e23ca4a8cd19be43513d",
+          "tokens": []
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 35154,
+            "encounterId": 2739,
+            "difficultyMask": -1,
+            "title": "Section 42",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 35154,
+            "encounterId": 2739,
+            "difficultyMask": -1,
+            "title": "Раздел 42",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [],
+      "blockers": [],
+      "publicationSafe": true,
+      "proposedVariantStatus": "not_required_verified"
+    },
+    {
+      "spellId": 1244012,
+      "manifestId": "wow:spell:1244012",
+      "encounterId": 2734,
+      "names": {
+        "en": "Shadowclaw Slam",
+        "ru": "Теневое сокрушение"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1244012,
+          "terminalSpellId": 1241692,
+          "referenceChain": [
+            1244012,
+            1241692
+          ],
+          "classification": "tokenized",
+          "description": "Vorasius slams a giant claw into the ground, inflicting $1281906s0 Shadow and $1281954s0 Physical damage to players in the impact area and $1241808s0 Shadow damage to all players. If the central impact fails to hit at least 1 player, Vorasius inflicts $1241807s0 Shadow damage to all players instead. The impact of the larger claws applies Smashed and creates Void Crystals.",
+          "descriptionSha256": "02fadfdb78fe056793318738b95edbad3c5a5542b25bcb018bb144e72ff0e078",
+          "tokens": [
+            "$1241807s0",
+            "$1241808s0",
+            "$1281906s0",
+            "$1281954s0"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1244012,
+          "terminalSpellId": 1241692,
+          "referenceChain": [
+            1244012,
+            1241692
+          ],
+          "classification": "tokenized",
+          "description": "Ненасытникус бьет по земле огромной лапой, нанося игрокам в области поражения $1281906s0 ед. урона от темной магии и $1281954s0 ед. физического урона, а также нанося всем игрокам $1241808s0 ед. урона от удара Тьмы. Если в месте удара нет ни одного игрока, вместо этого наносит всем целям $1241807s0 ед. урона от удара Тьмы. Применяет к игрокам в месте удара эффект \"Раздавливание\" и создает кристаллы Бездны.",
+          "descriptionSha256": "60bc3a904b254a2c9702ff58fe1112675b8cbaa945cfea895800768744e3eaf0",
+          "tokens": [
+            "$1241807s0",
+            "$1241808s0",
+            "$1281906s0",
+            "$1281954s0"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [],
+        "ru": []
+      },
+      "requiredBy": [
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1244419,
+      "manifestId": "wow:spell:1244419",
+      "encounterId": 2734,
+      "names": {
+        "en": "Overpowering Pulse",
+        "ru": "Подавляющая пульсация"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1244419,
+          "terminalSpellId": 1244419,
+          "referenceChain": [
+            1244419
+          ],
+          "classification": "publication_safe",
+          "description": "If no player is within reach, Vorasius pulses with deadly void energy.",
+          "descriptionSha256": "1f081d30c42e9783e3a3d0330fb93fbaa192b90e4f8d527d5f33124364b2dadb",
+          "tokens": []
+        },
+        "ru": {
+          "rawSpellId": 1244419,
+          "terminalSpellId": 1244419,
+          "referenceChain": [
+            1244419
+          ],
+          "classification": "publication_safe",
+          "description": "Когда в области ближнего боя нет игроков, Ненасытникус излучает смертоносную энергию Бездны.",
+          "descriptionSha256": "7156c15a7ed35d9ca9ff076ec5dc04401f00c873915c0dfae3eab59be72f7bb5",
+          "tokens": []
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 34204,
+            "encounterId": 2734,
+            "difficultyMask": -1,
+            "title": "Section 17",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 34204,
+            "encounterId": 2734,
+            "difficultyMask": -1,
+            "title": "Раздел 17",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [],
+      "blockers": [],
+      "publicationSafe": true,
+      "proposedVariantStatus": "not_required_verified"
+    },
+    {
+      "spellId": 1245486,
+      "manifestId": "wow:spell:1245486",
+      "encounterId": 2795,
+      "names": {
+        "en": "Corrupted Devastation",
+        "ru": "Опустошение порчи"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1245486,
+          "terminalSpellId": 1245486,
+          "referenceChain": [
+            1245486
+          ],
+          "classification": "tokenized",
+          "description": "Chimaerus sweeps across its den, exhaling corruption that inflicts $s1 Nature damage to players standing in the area and stuns them for $d.\r\n\r\nThe spewed corruption coalesces Manifestations and leaves behind $@spellname1245919.",
+          "descriptionSha256": "da5952855414446206628d13b02a0040a8b6c717e98adf24843e990027c1af44",
+          "tokens": [
+            "$@spellname1245919",
+            "$d",
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1245486,
+          "terminalSpellId": 1245486,
+          "referenceChain": [
+            1245486
+          ],
+          "classification": "tokenized",
+          "description": "Химерий пролетает по своему логову, изрыгая энергию порчи. Область порчи наносит игрокам $s1 ед. урона от сил природы и оглушает их на $d.\r\n\r\nЗатем порча сгущается в оживающие порождения и оставляет \"$@spellname1245919\".",
+          "descriptionSha256": "1e9d17ece29433a82347622b0e7ec13cc9ee18eafa942fd3a902b80e5f48780a",
+          "tokens": [
+            "$@spellname1245919",
+            "$d",
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33296,
+            "encounterId": 2795,
+            "difficultyMask": 0,
+            "title": "Section 8",
+            "body": "$[!16\r\n\r\nOn Mythic difficulty, Chimaerus coalesces additional Manifestations within the Rift.$]",
+            "bodySha256": "f7c3386562b2c75239348b7680ae7e67a00762ea6616182eb78d8a59a69c48ce",
+            "tokens": [
+              "$[!16\r\n\r\nOn Mythic difficulty, Chimaerus coalesces additional Manifestations within the Rift.$]"
+            ]
+          },
+          {
+            "id": 34523,
+            "encounterId": 2795,
+            "difficultyMask": 0,
+            "title": "Section 8",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33296,
+            "encounterId": 2795,
+            "difficultyMask": 0,
+            "title": "Раздел 8",
+            "body": "$[!16\r\n\r\nВ эпохальном режиме Химерий создает дополнительные воплощения в Провале.$]",
+            "bodySha256": "5052f4a65a2d887dba37f2f38cf030822dd9c8ef7652adb2882c92b0fe32da20",
+            "tokens": [
+              "$[!16\r\n\r\nВ эпохальном режиме Химерий создает дополнительные воплощения в Провале.$]"
+            ]
+          },
+          {
+            "id": 34523,
+            "encounterId": 2795,
+            "difficultyMask": 0,
+            "title": "Раздел 8",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "difficulty_conditional",
+        "duration",
+        "effect_value",
+        "journal_supplement",
+        "spell_name"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized",
+        "journal_supplement_unmerged"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1245645,
+      "manifestId": "wow:spell:1245645",
+      "encounterId": 2735,
+      "names": {
+        "en": "Rakfang",
+        "ru": "Клык Эззорака"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1245645,
+          "terminalSpellId": 1245645,
+          "referenceChain": [
+            1245645
+          ],
+          "classification": "tokenized",
+          "description": "Ezzorak strikes his primary target, inflicting $1245647s1 Physical damage and $1245652s1 Shadow damage.\r\n\r\nThis attack empowers Ezzorak's melee attacks, causing them to absorb the next $1280355s1 healing. This effect stacks, increasing in intensity each Rakfang until Rakfang strikes a new target.",
+          "descriptionSha256": "688ce215e3af2995a4362ceaf5cf0c52eaccabff3d87b9640b24561e5503389b",
+          "tokens": [
+            "$1245647s1",
+            "$1245652s1",
+            "$1280355s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1245645,
+          "terminalSpellId": 1245645,
+          "referenceChain": [
+            1245645
+          ],
+          "classification": "tokenized",
+          "description": "Эззорак атакует основную цель, нанося $1245647s1 ед. физического урона и $1245652s1 ед. урона от темной магии.\r\n\r\nПосле этого его атаки ближнего боя начинают также поглощать следующие $1280355s1 ед. исцеления, получаемого целью. Эффект суммируется и усиливается с каждым применением \"Клыка Эззорака\", пока эта способность не поразит новую цель.",
+          "descriptionSha256": "b6e9bb603f245bae06f4ad107203b6d6495aee7c337875d9a3853d839b069fe9",
+          "tokens": [
+            "$1245647s1",
+            "$1245652s1",
+            "$1280355s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33669,
+            "encounterId": 2735,
+            "difficultyMask": -1,
+            "title": "Section 17",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33669,
+            "encounterId": 2735,
+            "difficultyMask": -1,
+            "title": "Раздел 17",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1246736,
+      "manifestId": "wow:spell:1246736",
+      "encounterId": 2737,
+      "names": {
+        "en": "Judgment",
+        "ru": "Правосудие"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1246736,
+          "terminalSpellId": 1246736,
+          "referenceChain": [
+            1246736
+          ],
+          "classification": "tokenized",
+          "description": "Lightblood passes judgment on his current target, inflicting $s1 Holy damage and increasing damage they take from $@spellname1251812 by $s2% for $d.\r\n\r\nAfter passing judgment, Lightblood immediately casts Final Verdict on his current target.",
+          "descriptionSha256": "2bac1938cc0e40ed63c0058199acaf396fe4ddf944b45c0e79a54eca3d3f5e3a",
+          "tokens": [
+            "$@spellname1251812",
+            "$d",
+            "$s1",
+            "$s2"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1246736,
+          "terminalSpellId": 1246736,
+          "referenceChain": [
+            1246736
+          ],
+          "classification": "tokenized",
+          "description": "Светлая Кровь вершит правосудие над текущей целью, нанося $s1 ед. урона от светлой магии и увеличивая урон, получаемый от способности \"$@spellname1251812\", на $s2% на $d.\r\n\r\nПосле этого Светлая Кровь сразу же применяет к цели \"Окончательный приговор\".",
+          "descriptionSha256": "6017fe9ca0151f562f1aa78e8388a090f168c0afd667f61487bbf23e6a6fb8d3",
+          "tokens": [
+            "$@spellname1251812",
+            "$d",
+            "$s1",
+            "$s2"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33688,
+            "encounterId": 2737,
+            "difficultyMask": -1,
+            "title": "Judgment",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33688,
+            "encounterId": 2737,
+            "difficultyMask": -1,
+            "title": "Правосудие",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "duration",
+        "effect_value",
+        "spell_name"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1248674,
+      "manifestId": "wow:spell:1248674",
+      "encounterId": 2737,
+      "names": {
+        "en": "Sacred Shield",
+        "ru": "Священный щит"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1248674,
+          "terminalSpellId": 1248674,
+          "referenceChain": [
+            1248674
+          ],
+          "classification": "tokenized",
+          "description": "Senn shields herself, absorbing the next $s1 damage and becoming immune to interrupt effects. She then charges into battle on her mighty elekk before casting $@spellname1258514.",
+          "descriptionSha256": "4de9a2a0eb284b56ca7b4247d05d09ffd5e869817fc4164e2110aaf3c8e44811",
+          "tokens": [
+            "$@spellname1258514",
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1248674,
+          "terminalSpellId": 1248674,
+          "referenceChain": [
+            1248674
+          ],
+          "classification": "tokenized",
+          "description": "Сенн окружает себя щитом, поглощающим $s1 ед. урона, и получает невосприимчивость к эффектам прерывания. После этого Сенн седлает своего могучего элекка и мчится в бой, а затем применяет \"$@spellname1258514\".",
+          "descriptionSha256": "c7784b0aedab3ea24eb0412424cdcca950c43fab1089c0e1e6a804b204dfcba5",
+          "tokens": [
+            "$@spellname1258514",
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33694,
+            "encounterId": 2737,
+            "difficultyMask": -1,
+            "title": "Searing Shield",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33694,
+            "encounterId": 2737,
+            "difficultyMask": -1,
+            "title": "Опаляющий щит",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value",
+        "spell_name"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1249262,
+      "manifestId": "wow:spell:1249262",
+      "encounterId": 2733,
+      "names": {
+        "en": "Umbral Collapse",
+        "ru": "Темный коллапс"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1249262,
+          "terminalSpellId": 1249262,
+          "referenceChain": [
+            1249262
+          ],
+          "classification": "tokenized",
+          "description": "Averzian collapses void energy around his target, inflicting $s1 Shadow damage to all players. This damage is reduced by the number of players within $1249261A1 yards of the impact location.",
+          "descriptionSha256": "5bc17b554cba4c757a66b21c48e64720e1dc5729c8e95b24ba3f93a4ad11269c",
+          "tokens": [
+            "$1249261A1",
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1249262,
+          "terminalSpellId": 1249262,
+          "referenceChain": [
+            1249262
+          ],
+          "classification": "tokenized",
+          "description": "Аверзиан вызывает вокруг цели коллапс энергии Бездны, нанося всем игрокам $s1 ед. урона от темной магии. Урон уменьшается за каждого игрока в радиусе $1249261A1 м от места удара.",
+          "descriptionSha256": "e19acae9a6a5c8bcd9a7823a6eddb8b665aaee0401e00d178a8cf09dbc6cd66a",
+          "tokens": [
+            "$1249261A1",
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33966,
+            "encounterId": 2733,
+            "difficultyMask": 0,
+            "title": "Section 9",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35009,
+            "encounterId": 2733,
+            "difficultyMask": 0,
+            "title": "Section 74",
+            "body": "$[!16\r\n\r\nIn Mythic difficulty, Abyssal Voidshapers gain multiple applications of |cFF2959D3|Hspell:1280035|h[Cosmic Shell]|h|r to become immune to |cFF2959D3|Hspell:1249262|h[Umbral Collapse]|h|r.",
+            "bodySha256": "f781b87d104e711ccec3d1c370b35cccc08e6e8f69128e0863c9e985bc0941c6",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33966,
+            "encounterId": 2733,
+            "difficultyMask": 0,
+            "title": "Раздел 9",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35009,
+            "encounterId": 2733,
+            "difficultyMask": 0,
+            "title": "Раздел 74",
+            "body": "$[!16\r\n\r\nВ эпохальном режиме пустотные ваятели Бездны применяют |cFF2959D3|Hspell:1280035|h[Космический панцирь]|h|r и получают неуязвимость к |cFF2959D3|Hspell:1249262|h[Темному коллапсу]|h|r.",
+            "bodySha256": "44a1d9060fae54437f5ed5f0c72059ab76cc4b6724cba757e521a0b784739afb",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value",
+        "journal_supplement",
+        "radius"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized",
+        "journal_supplement_unmerged"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1250953,
+      "manifestId": "wow:spell:1250953",
+      "encounterId": 2795,
+      "names": {
+        "en": "Rift Sickness",
+        "ru": "Хворь Провала"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1250953,
+          "terminalSpellId": 1250953,
+          "referenceChain": [
+            1250953
+          ],
+          "classification": "tokenized",
+          "description": "As each Manifestation emerges within the Rift, they release a wave of sickness, causing all players to absorb the next $s1 healing received.",
+          "descriptionSha256": "142d902c2625146e59e862108182f2af4c842db69569acd629e4a022786a7937",
+          "tokens": [
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1250953,
+          "terminalSpellId": 1250953,
+          "referenceChain": [
+            1250953
+          ],
+          "classification": "tokenized",
+          "description": "Когда порождения появляются в Провале, они излучают волны болезнетворной энергии, поглощающей $s1 ед. исцеления, получаемого всеми игроками.",
+          "descriptionSha256": "74abf6fb8b5b2bfe29ea7a6c70d8f82c5b71245b43a69e4b17d510796a479072",
+          "tokens": [
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33704,
+            "encounterId": 2795,
+            "difficultyMask": -1,
+            "title": "Section 32",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33704,
+            "encounterId": 2795,
+            "difficultyMask": -1,
+            "title": "Раздел 32",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1250991,
+      "manifestId": "wow:spell:1250991",
+      "encounterId": 2736,
+      "names": {
+        "en": "Dark Radiation",
+        "ru": "Темное излучение"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1250991,
+          "terminalSpellId": 1250991,
+          "referenceChain": [
+            1250991
+          ],
+          "classification": "tokenized",
+          "description": "Orbs of Concentrated Void cover all players in void essence when destroyed, inflicting $1285504s1 Shadow damage every $t sec for $d. This effect stacks.",
+          "descriptionSha256": "7150fd2f088629417ab31182533400998bea30d7c23f3d0a0fb0db9357a69057",
+          "tokens": [
+            "$1285504s1",
+            "$d",
+            "$t"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1250991,
+          "terminalSpellId": 1250991,
+          "referenceChain": [
+            1250991
+          ],
+          "classification": "tokenized",
+          "description": "Разрушаясь, сферы концентрированной Бездны заражают игроков сущностью Бездны, наносящей $1285504s1 ед. урона от темной магии раз в $t сек. в течение $d. Эффект суммируется.",
+          "descriptionSha256": "c26173a3b3d2d8ef61cf47c9e9557eb953c536e969a1d80f1fff38ea5b13811d",
+          "tokens": [
+            "$1285504s1",
+            "$d",
+            "$t"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 34418,
+            "encounterId": 2736,
+            "difficultyMask": -1,
+            "title": "Section 24",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35219,
+            "encounterId": 2736,
+            "difficultyMask": -1,
+            "title": "Section 24",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 34418,
+            "encounterId": 2736,
+            "difficultyMask": -1,
+            "title": "Раздел 24",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35219,
+            "encounterId": 2736,
+            "difficultyMask": -1,
+            "title": "Раздел 24",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1251361,
+      "manifestId": "wow:spell:1251361",
+      "encounterId": 2733,
+      "names": {
+        "en": "Shadow's Advance",
+        "ru": "Наступление тени"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1251361,
+          "terminalSpellId": 1251361,
+          "referenceChain": [
+            1251361
+          ],
+          "classification": "tokenized",
+          "description": "Averzian summons Abyssal Voidshapers onto the battlefield. As his minions emerge, they inflict $1253691s1 Shadow damage to players within $1253691A1 yards and knocks them away.",
+          "descriptionSha256": "75ee9cffd6471d62532bf0c5ea7125ea57a31cedaf823f99948e1edcb51b637b",
+          "tokens": [
+            "$1253691A1",
+            "$1253691s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1251361,
+          "terminalSpellId": 1251361,
+          "referenceChain": [
+            1251361
+          ],
+          "classification": "tokenized",
+          "description": "Аверзиан призывает на поле боя пустотных ваятелей Бездны. Появляясь, его прислужники наносят игрокам в радиусе $1253691A1 м $1253691s1 ед. урона от темной магии и отбрасывают их.",
+          "descriptionSha256": "4eca4287eeb65919b289726b275d768c3754d759cb504b3c7147a4225f7b0b8b",
+          "tokens": [
+            "$1253691A1",
+            "$1253691s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 32191,
+            "encounterId": 2733,
+            "difficultyMask": 0,
+            "title": "Stage One",
+            "body": "$[!16\r\n\r\nOn Mythic difficulty, Averzian summons the Abyssal Malus to join his army.",
+            "bodySha256": "43421b448039ff81baa8a8ba7c4146e1f7d8cb61ffd10140f8c189e495695c52",
+            "tokens": []
+          },
+          {
+            "id": 34566,
+            "encounterId": 2733,
+            "difficultyMask": 0,
+            "title": "Stage One",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 32191,
+            "encounterId": 2733,
+            "difficultyMask": 0,
+            "title": "Фаза 1",
+            "body": "$[!16\r\n\r\nВ эпохальном режиме Аверзиан призывает в свое войско пустотного злодейского слугу.",
+            "bodySha256": "321f725e1030d5b2a1c4aeba02f254e62cf13a85f1241185a615d3f248d765e2",
+            "tokens": []
+          },
+          {
+            "id": 34566,
+            "encounterId": 2733,
+            "difficultyMask": 0,
+            "title": "Фаза 1",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value",
+        "journal_supplement",
+        "radius"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized",
+        "journal_supplement_unmerged"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1251812,
+      "manifestId": "wow:spell:1251812",
+      "encounterId": 2737,
+      "names": {
+        "en": "Final Verdict",
+        "ru": "Окончательный приговор"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1251812,
+          "terminalSpellId": 1251812,
+          "referenceChain": [
+            1251812
+          ],
+          "classification": "tokenized",
+          "description": "Lightblood unleashes a devastating strike on his current target that inflicts $s1 Holy damage.",
+          "descriptionSha256": "68b85fa22619aa631d332f31aaa2ed8efdfc4defaa2f11e2f1f55c5ec7fd975f",
+          "tokens": [
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1251812,
+          "terminalSpellId": 1251812,
+          "referenceChain": [
+            1251812
+          ],
+          "classification": "tokenized",
+          "description": "Светлая Кровь совершает сокрушительный удар, нанося цели $s1 ед. урона от светлой магии.",
+          "descriptionSha256": "ebf436d3b9ebf37daafb6a562b5a720cf0afac51a695bd1593c416619a3a1fff",
+          "tokens": [
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33897,
+            "encounterId": 2737,
+            "difficultyMask": -1,
+            "title": "Section 25",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33897,
+            "encounterId": 2737,
+            "difficultyMask": -1,
+            "title": "Раздел 25",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1253915,
+      "manifestId": "wow:spell:1253915",
+      "encounterId": 2740,
+      "names": {
+        "en": "Heaven's Glaives",
+        "ru": "Небесные глефы"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1253915,
+          "terminalSpellId": 1253915,
+          "referenceChain": [
+            1253915
+          ],
+          "classification": "tokenized",
+          "description": "L'ura spins and unleashes whirling blades that eviscerate players on contact, inflicting up to ${$1254076s1*5} Cosmic damage. \r\n\r\nThe blades ricochet through the chamber, inflicting reduced damage as they lose speed.",
+          "descriptionSha256": "b376e077d9659b1026643338d501d23efa2241809bbaa418a463c9cd9a4ed341",
+          "tokens": [
+            "${$1254076s1*5}"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1253915,
+          "terminalSpellId": 1253915,
+          "referenceChain": [
+            1253915
+          ],
+          "classification": "tokenized",
+          "description": "Л'ура крутится на месте и выпускает вращающиеся клинки, наносящие ближайшим игрокам до ${$1254076s1*5} ед. космического урона.\r\n\r\nКлинки рикошетят по полю боя, теряя скорость и нанося все меньше урона.",
+          "descriptionSha256": "6930983d0b1b46f2076d51820b382e4bf225adff971ccc3190d511a4b10eb88c",
+          "tokens": [
+            "${$1254076s1*5}"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33988,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Section 25",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33988,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Раздел 25",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value",
+        "expression"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1254088,
+      "manifestId": "wow:spell:1254088",
+      "encounterId": 2736,
+      "names": {
+        "en": "Shadow Fracture",
+        "ru": "Раскол Тьмы"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1254088,
+          "terminalSpellId": 1254088,
+          "referenceChain": [
+            1254088
+          ],
+          "classification": "tokenized",
+          "description": "The Fractured Image releases a burst of void energy, inflicting $s2 Shadow damage to all players and leaving behind $@spellname1245592. The image then reintegrates with Salhadaar.",
+          "descriptionSha256": "6070743f585e2bffc6fa1c05f96d37fd0d84c75e06bffea3097218d70a870a7f",
+          "tokens": [
+            "$@spellname1245592",
+            "$s2"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1254088,
+          "terminalSpellId": 1254088,
+          "referenceChain": [
+            1254088
+          ],
+          "classification": "tokenized",
+          "description": "Расколотый образ вызывает выброс энергии Бездны, нанося игрокам $s2 ед. урона от темной магии и создавая \"$@spellname1245592\". После этого образ сливается с Салхадааром.",
+          "descriptionSha256": "5ad044b7f674d90ed00166741050bcf5497b55a827bcc7f5457daab865ecc494",
+          "tokens": [
+            "$@spellname1245592",
+            "$s2"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33997,
+            "encounterId": 2736,
+            "difficultyMask": -1,
+            "title": "Section 24",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34850,
+            "encounterId": 2736,
+            "difficultyMask": -1,
+            "title": "Section 24",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33997,
+            "encounterId": 2736,
+            "difficultyMask": -1,
+            "title": "Раздел 24",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34850,
+            "encounterId": 2736,
+            "difficultyMask": -1,
+            "title": "Раздел 24",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value",
+        "spell_name"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1255749,
+      "manifestId": "wow:spell:1255749",
+      "encounterId": 2733,
+      "names": {
+        "en": "Gathering Darkness",
+        "ru": "Сгущение мрака"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1255749,
+          "terminalSpellId": 1255749,
+          "referenceChain": [
+            1255749
+          ],
+          "classification": "publication_safe",
+          "description": "At full power, the Voidshaper transforms into an Obscurion Endwalker.",
+          "descriptionSha256": "6ba9445a4b7d18c863ba3f2b0cb76c955af0683c20bbc7144a96254c01d51d21",
+          "tokens": []
+        },
+        "ru": {
+          "rawSpellId": 1255749,
+          "terminalSpellId": 1255749,
+          "referenceChain": [
+            1255749
+          ],
+          "classification": "publication_safe",
+          "description": "Набрав полную силу, ваятель Бездны превращается в обскуриона – странника рока.",
+          "descriptionSha256": "5bf5e230c72b32ef81de5cb7d10b6a5d90de26a7b1a996d821a2cf07289ada62",
+          "tokens": []
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 34597,
+            "encounterId": 2733,
+            "difficultyMask": -1,
+            "title": "Section 20",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35001,
+            "encounterId": 2733,
+            "difficultyMask": -1,
+            "title": "Section 20",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 34597,
+            "encounterId": 2733,
+            "difficultyMask": -1,
+            "title": "Раздел 20",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35001,
+            "encounterId": 2733,
+            "difficultyMask": -1,
+            "title": "Раздел 20",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [],
+      "blockers": [],
+      "publicationSafe": true,
+      "proposedVariantStatus": "not_required_verified"
+    },
+    {
+      "spellId": 1259184,
+      "manifestId": "wow:spell:1259184",
+      "encounterId": 2734,
+      "names": {
+        "en": "Blisterburst",
+        "ru": "Обжигающий взрыв"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1259184,
+          "terminalSpellId": 1259186,
+          "referenceChain": [
+            1259184,
+            1259186
+          ],
+          "classification": "tokenized",
+          "description": "The Blistercreep explodes upon death, inflicting $s1 Shadow damage to players within $A1 yards, increasing their damage taken by $s2% for $d and knocking them away. The explosion also inflicts $s5 Shadow damage to all players.",
+          "descriptionSha256": "2dcafdbd336a5ee5857e80fc8e9f2fd356e64c48422e394493d97ff240713e18",
+          "tokens": [
+            "$A1",
+            "$d",
+            "$s1",
+            "$s2",
+            "$s5"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1259184,
+          "terminalSpellId": 1259186,
+          "referenceChain": [
+            1259184,
+            1259186
+          ],
+          "classification": "tokenized",
+          "description": "Перед смертью огнежальщик взрывается, нанося игрокам в радиусе $A1 м $s1 ед. урона от темной магии, отбрасывая их и увеличивая получаемый урон от темной магии на $s2% на $d. Также наносит $s5 ед. урона от темной магии всем игрокам.",
+          "descriptionSha256": "dcf4e838f8b94b0b8c10729dccc4f794e7eb50c9a966dffc6c9e49e39f9661cf",
+          "tokens": [
+            "$A1",
+            "$d",
+            "$s1",
+            "$s2",
+            "$s5"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [],
+        "ru": []
+      },
+      "requiredBy": [
+        "duration",
+        "effect_value",
+        "radius"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1260046,
+      "manifestId": "wow:spell:1260046",
+      "encounterId": 2734,
+      "names": {
+        "en": "Primordial Roar",
+        "ru": "Первобытный рев"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1260046,
+          "terminalSpellId": 1260052,
+          "referenceChain": [
+            1260046,
+            1260052
+          ],
+          "classification": "tokenized",
+          "description": "Vorasius takes a deep breath, pulling players closer before unleashing a deafening roar that inflicts $s1 Physical damage to all players and knocks them away.",
+          "descriptionSha256": "a175295dbd6f5000dec208f8d2326dc95c64b9a82e30a4fe2fb9a318ea4aa997",
+          "tokens": [
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1260046,
+          "terminalSpellId": 1260052,
+          "referenceChain": [
+            1260046,
+            1260052
+          ],
+          "classification": "tokenized",
+          "description": "Ненасытникус делает глубокий вдох, притягивая противников, а затем издает оглушительный рев, наносящий игрокам $s1 ед. физического урона и отбрасывающий их.",
+          "descriptionSha256": "0f93c29a396ace3afe027b285c52e23da030b0274f553be2dd797b23a6648015",
+          "tokens": [
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [],
+        "ru": []
+      },
+      "requiredBy": [
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1260763,
+      "manifestId": "wow:spell:1260763",
+      "encounterId": 2739,
+      "names": {
+        "en": "Guardian's Edict",
+        "ru": "Указ стража"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1260763,
+          "terminalSpellId": 1260763,
+          "referenceChain": [
+            1260763
+          ],
+          "classification": "tokenized",
+          "description": "Belo'ren performs a devastating combination of Light and Void attacks.\r\n\r\nFailing to attack a player or attacking a player that is infused with an opposing element empowers Belo'ren, increasing all damage done by $1260826s1% for $1260826d. This effect stacks.",
+          "descriptionSha256": "9058911f2e4c65b429893242990746bab51d779fc5e57f4eafa9fdd60c2cffd5",
+          "tokens": [
+            "$1260826d",
+            "$1260826s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1260763,
+          "terminalSpellId": 1260763,
+          "referenceChain": [
+            1260763
+          ],
+          "classification": "tokenized",
+          "description": "Бело'рен проводит разрушительную комбинацию атак, используя силу Света и Бездны. \r\n\r\nЕсли эти атаки не поражают ни одного игрока или поражают игрока под действием противоположной стихии, Бело'рен усиливается, и наносимый им урон увеличивается на $1260826s1% на $1260826d. Эффект суммируется.",
+          "descriptionSha256": "77db7316e3bb7dc31954af5f322fd657ef447b79bacccfae73a0fc85c79bee41",
+          "tokens": [
+            "$1260826d",
+            "$1260826s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 34209,
+            "encounterId": 2739,
+            "difficultyMask": -1,
+            "title": "Section 35",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 34209,
+            "encounterId": 2739,
+            "difficultyMask": -1,
+            "title": "Раздел 35",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "duration",
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1262020,
+      "manifestId": "wow:spell:1262020",
+      "encounterId": 2795,
+      "names": {
+        "en": "Colossal Strikes",
+        "ru": "Неимоверные удары"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1262020,
+          "terminalSpellId": 1262020,
+          "referenceChain": [
+            1262020
+          ],
+          "classification": "tokenized",
+          "description": "The Colossal Horror unleashes a series of three strikes at its current target over $d, inflicting $1262053s1 Physical damage and $1262059s1 Nature damage with each strike.",
+          "descriptionSha256": "4c6acfc8afe289b7a7d962678f63ca16fe2b9f0e0377ddd2e78cdd6642129824",
+          "tokens": [
+            "$1262053s1",
+            "$1262059s1",
+            "$d"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1262020,
+          "terminalSpellId": 1262020,
+          "referenceChain": [
+            1262020
+          ],
+          "classification": "tokenized",
+          "description": "Чудовищный колосс обрушивает на текущую цель серию из трех ударов за $d., нанося $1262053s1 ед. физического урона и $1262059s1 ед. урона от сил природы каждым ударом.",
+          "descriptionSha256": "5803803eb0649010f2e10ca8db2f6ce1c48b57a8577b9788f67760a22ec816a4",
+          "tokens": [
+            "$1262053s1",
+            "$1262059s1",
+            "$d"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 34240,
+            "encounterId": 2795,
+            "difficultyMask": -1,
+            "title": "Section 42",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34241,
+            "encounterId": 2795,
+            "difficultyMask": -1,
+            "title": "Section 43",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34527,
+            "encounterId": 2795,
+            "difficultyMask": -1,
+            "title": "Section 42",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 34240,
+            "encounterId": 2795,
+            "difficultyMask": -1,
+            "title": "Раздел 42",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34241,
+            "encounterId": 2795,
+            "difficultyMask": -1,
+            "title": "Раздел 43",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34527,
+            "encounterId": 2795,
+            "difficultyMask": -1,
+            "title": "Раздел 42",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "duration",
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1262305,
+      "manifestId": "wow:spell:1262305",
+      "encounterId": 2795,
+      "names": {
+        "en": "Alndust Upheaval",
+        "ru": "Встряска пыли Альн"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1262305,
+          "terminalSpellId": 1262305,
+          "referenceChain": [
+            1262305
+          ],
+          "classification": "tokenized",
+          "description": "Chimaerus tears a hole in Reality, inflicting $1246827s1 Physical damage to its current target and $s1 Nature damage split evenly between players within $1262303A1 yards of the impact.\r\n\r\nVictims are knocked into the air and gain $@spellname1245698.",
+          "descriptionSha256": "7257527a7d4d19e222d0ae69edd475781ce0779737fb4610c99aa87090cfd865",
+          "tokens": [
+            "$1246827s1",
+            "$1262303A1",
+            "$@spellname1245698",
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1262305,
+          "terminalSpellId": 1262305,
+          "referenceChain": [
+            1262305
+          ],
+          "classification": "tokenized",
+          "description": "Химерий открывает прорыв в реальности, нанося $1246827s1 ед. физического урона текущей цели, а также распределяя между игроками в радиусе $1262303A1 м от места удара $s1 ед. урона от сил природы.\r\n\r\nПодбрасывает пораженные цели в воздух и применяет к ним \"$@spellname1245698\".",
+          "descriptionSha256": "d2f7176995bc2917f9732501660bd026af6bc82498297ad394ea0a7751f83c11",
+          "tokens": [
+            "$1246827s1",
+            "$1262303A1",
+            "$@spellname1245698",
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [],
+        "ru": []
+      },
+      "requiredBy": [
+        "effect_value",
+        "radius",
+        "spell_name"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1263970,
+      "manifestId": "wow:spell:1263970",
+      "encounterId": 2740,
+      "names": {
+        "en": "Heaven's Lance",
+        "ru": "Небесное копье"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1263970,
+          "terminalSpellId": 1263970,
+          "referenceChain": [
+            1263970
+          ],
+          "classification": "tokenized",
+          "description": "L'ura regenerates a halo of glass ornaments over time. Upon reaching $s1 applications, she forges the glass into spikes that fire into her current target.\r\n\r\nEach impact inflicts $1253878s1 Cosmic damage and applies $@spellname1265842.",
+          "descriptionSha256": "a9752017a27b753107a63f950172f96d685399bca011fbba4e2f989fefee310c",
+          "tokens": [
+            "$1253878s1",
+            "$@spellname1265842",
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1263970,
+          "terminalSpellId": 1263970,
+          "referenceChain": [
+            1263970
+          ],
+          "classification": "tokenized",
+          "description": "Л'ура постепенно создает ореол из стеклянных узоров. Накопив $s1 $lузор:узора:узоров;, она кует из них шипы и выпускает в текущую цель.\r\n\r\nКаждое попадание наносит $1253878s1 ед. космического урона и применяет эффект \"$@spellname1265842\".",
+          "descriptionSha256": "94688b7dc66e49bc9a9ffcdd0941c7bf5298f3b297b780825e993a3695eca6f4",
+          "tokens": [
+            "$1253878s1",
+            "$@spellname1265842",
+            "$l",
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33989,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Section 32",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 33990,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Section 32",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35069,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Section 32",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33989,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Раздел 32",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 33990,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Раздел 32",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35069,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Раздел 32",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value",
+        "grammar",
+        "spell_name"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1272937,
+      "manifestId": "wow:spell:1272937",
+      "encounterId": 2734,
+      "names": {
+        "en": "Primordial Power",
+        "ru": "Изначальная мощь"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1272937,
+          "terminalSpellId": 1272950,
+          "referenceChain": [
+            1272937,
+            1272950
+          ],
+          "classification": "tokenized",
+          "description": "Vorasius gathers power with each roar, radiating $s1 Shadow damage to all players every $1272937t sec.",
+          "descriptionSha256": "83897494e7fe2ad9e2a29e5e66155275ab0811e79a665832532ace0104ac3c6f",
+          "tokens": [
+            "$1272937t",
+            "$s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1272937,
+          "terminalSpellId": 1272950,
+          "referenceChain": [
+            1272937,
+            1272950
+          ],
+          "classification": "tokenized",
+          "description": "Каждый раз, когда Ненасытникус ревет, он начинает излучать мощную энергию, наносящую игрокам $s1 ед. урона от темной магии раз в $1272937t сек.",
+          "descriptionSha256": "49111453938344ce6d107fd2394806c3ac029ce4a4d8a973fe9b723a63de82d7",
+          "tokens": [
+            "$1272937t",
+            "$s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 34912,
+            "encounterId": 2734,
+            "difficultyMask": -1,
+            "title": "Section 20",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 34912,
+            "encounterId": 2734,
+            "difficultyMask": -1,
+            "title": "Раздел 20",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_period",
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1273067,
+      "manifestId": "wow:spell:1273067",
+      "encounterId": 2734,
+      "names": {
+        "en": "Aftershock",
+        "ru": "Повторный толчок"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1273067,
+          "terminalSpellId": 1273067,
+          "referenceChain": [
+            1273067
+          ],
+          "classification": "tokenized",
+          "description": "Shadowclaw Slam creates seismic aftershocks that reverberate from the impact location, inflicting $1276811s1 Physical damage to players within the area.",
+          "descriptionSha256": "9b6cbd74266ec2adb3bddd5f94c67323995f00fe601c02d50ad271c922cd91d7",
+          "tokens": [
+            "$1276811s1"
+          ]
+        },
+        "ru": {
+          "rawSpellId": 1273067,
+          "terminalSpellId": 1273067,
+          "referenceChain": [
+            1273067
+          ],
+          "classification": "tokenized",
+          "description": "\"Теневое сокрушение\" вызывает повторные толчки, расходящиеся от места удара и наносящие игрокам в области поражения $1276811s1 ед. физического урона.",
+          "descriptionSha256": "6fcd1703fa3f82782a7a7a76144138e17d7b612eee3580ece0a51a491d3679f5",
+          "tokens": [
+            "$1276811s1"
+          ]
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 34911,
+            "encounterId": 2734,
+            "difficultyMask": -1,
+            "title": "Section 19",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 34911,
+            "encounterId": 2734,
+            "difficultyMask": -1,
+            "title": "Раздел 19",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [
+        "effect_value"
+      ],
+      "blockers": [
+        "description_en_tokenized",
+        "description_ru_tokenized"
+      ],
+      "publicationSafe": false,
+      "proposedVariantStatus": "required_unverified"
+    },
+    {
+      "spellId": 1282027,
+      "manifestId": "wow:spell:1282027",
+      "encounterId": 2740,
+      "names": {
+        "en": "The Darkwell",
+        "ru": "Темный Колодец"
+      },
+      "source": {
+        "en": {
+          "rawSpellId": 1282027,
+          "terminalSpellId": 1282027,
+          "referenceChain": [
+            1282027
+          ],
+          "classification": "publication_safe",
+          "description": "The Darkwell's colossal void beam instantly vaporizes any player that dares to enter.",
+          "descriptionSha256": "87f534d88be7cb279864c37a399cdeea643bda55ced2750a40b058ce35172c77",
+          "tokens": []
+        },
+        "ru": {
+          "rawSpellId": 1282027,
+          "terminalSpellId": 1282027,
+          "referenceChain": [
+            1282027
+          ],
+          "classification": "publication_safe",
+          "description": "Темный Колодец выпускает чудовищный луч Бездны, который мгновенно убивает игроков в области поражения.",
+          "descriptionSha256": "59a23d90a24958512820c128905f993cd745e448f2d8e52be6ab8009adf722eb",
+          "tokens": []
+        }
+      },
+      "journalSections": {
+        "en": [
+          {
+            "id": 33998,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Section 35",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34000,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Section 35",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35041,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Section 35",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ],
+        "ru": [
+          {
+            "id": 33998,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Раздел 35",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 34000,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Раздел 35",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          {
+            "id": 35041,
+            "encounterId": 2740,
+            "difficultyMask": -1,
+            "title": "Раздел 35",
+            "body": "",
+            "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          }
+        ]
+      },
+      "requiredBy": [],
+      "blockers": [],
+      "publicationSafe": true,
+      "proposedVariantStatus": "not_required_verified"
+    }
+  ],
+  "lastVerifiedAt": "2026-09-13T10:55:21.092Z"
+}

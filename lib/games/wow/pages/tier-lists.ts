@@ -1,5 +1,4 @@
 import { definePage } from "@/lib/pages/definePage";
-import { ANCHORS } from "@/lib/anchors";
 
 export const tierListsPage = definePage({
   game: "wow",
@@ -7,14 +6,16 @@ export const tierListsPage = definePage({
   meta: ({ lang }) =>
     lang === "ru"
       ? {
-          title: "Тир-лист Mythic+ — Gildra",
+          title: "Тир-листы Mythic+ и рейдов — Gildra",
           description:
-            "Полный тир-лист Mythic+ с фильтрами, чипами классов, избранными билдами и деталями спеков.",
+            "Тир-листы специализаций для Mythic+, отдельных подземелий, рейдов и боссов с живыми метриками.",
+          robots: { index: false, follow: true },
         }
       : {
-          title: "Mythic+ Tier List — Gildra",
+          title: "Mythic+ & Raid Tier Lists — Gildra",
           description:
-            "Full Mythic+ tier list with filters, class chips, featured builds and spec details.",
+            "Specialization tier lists for Mythic+, individual dungeons, raids and bosses with live metrics.",
+          robots: { index: false, follow: true },
         },
   page: () => ({
     id: "wow/tier-lists",
@@ -22,10 +23,6 @@ export const tierListsPage = definePage({
     path: "/tier-lists",
     layout: "default",
     blocks: [
-      {
-        type: "sectionNav",
-        props: { anchorsFrom: "wow/home", linkToHome: true, active: ANCHORS.tierPreview },
-      },
       { type: "container", props: { variant: "route" }, children: [{ type: "wow.tierWorkspace" }] },
     ],
   }),

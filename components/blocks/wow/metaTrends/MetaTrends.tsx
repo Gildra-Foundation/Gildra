@@ -1,5 +1,5 @@
 import { SpecSlot } from "@/components/SpecSlot";
-import { p, t } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import type { BlockComponentProps, EmptyProps } from "@/lib/blocks/types";
 import type { Trend } from "@/data/site";
 
@@ -14,9 +14,7 @@ export function MetaTrends({ data, lang }: BlockComponentProps<MetaTrendsProps, 
     <div className="trendside">
       <div className="panel-head">
         <span className="t">{tt("Meta Trends")}</span>
-        <a className="view" href={p(lang, "/tier-lists")}>
-          {tt("View All →")}
-        </a>
+
       </div>
       <div className="panel-sub">{tt("Specs popularity · Last 7 Days")}</div>
       <div className="panel-rule" />
@@ -31,7 +29,6 @@ export function MetaTrends({ data, lang }: BlockComponentProps<MetaTrendsProps, 
           </div>
         ))}
       </div>
-      <button className="btn-line">{tt("View Full Meta Trends")}</button>
     </div>
   );
 }

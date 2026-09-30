@@ -26,14 +26,18 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/auth"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogmedia"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/characterworkspace"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/config"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/datasetrefresh"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/gamemeta"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/genshin"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/graphqlapi"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpapi"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/indexnow"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/joberrors"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/league"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/platformhome"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/rotationlab"
 )
 
 func main() {
@@ -146,7 +150,11 @@ func run() error {
 	router := http.NewServeMux()
 	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient, cfg.CatalogRecoveryPolicy).Register(router)
 	genshin.NewHandler(genshin.NewService(postgres)).Register(router)
+	gamemeta.NewHandler(gamemeta.NewService(postgres)).Register(router)
 	league.NewHandler(league.NewService(postgres)).Register(router)
+	platformhome.NewHandler(platformhome.NewService(postgres)).Register(router)
+	rotationlab.NewHandler(rotationlab.NewService(postgres)).Register(router)
+	characterworkspace.NewHandler(characterworkspace.NewService(postgres), characterworkspace.NewBattleNetVerifier()).Register(router)
 	if cfg.CatalogMediaDirectory != "" {
 		genshinMediaHandler, genshinMediaErr := genshin.NewMediaHandler(cfg.CatalogMediaDirectory)
 		if genshinMediaErr != nil {

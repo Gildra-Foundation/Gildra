@@ -5,29 +5,28 @@
   Tailwind utilities or a co-located CSS module and need no entry here.
 */
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @import "./styles/tokens.css";
+@import "./styles/local-book-fonts.css";
+@import "./styles/loading.css";
 @import "./styles/base.css";
 @import "../components/layout/chrome.css";
-@import "../components/blocks/shared/sectionNav/sectionNav.css";
-@import "../components/blocks/wow/hero/hero.css";
 @import "./styles/layout.css";
 @import "./styles/primitives.css";
-@import "../components/blocks/wow/mythicMeta/mythicMeta.css";
-@import "../components/blocks/wow/raidFeature/raidFeature.css";
-@import "../components/blocks/wow/metaTrends/metaTrends.css";
-@import "../components/blocks/wow/guides/guides.css";
-@import "../components/blocks/wow/tierWorkspace/tierWorkspace.css";
-@import "../components/blocks/wow/metaPulse/metaPulse.css";
-@import "../components/blocks/wow/tierPreview/tierPreview.css";
 @import "./styles/builds.css";
 @import "./styles/responsive.css";
 @import "./styles/not-found.css";
-@import "../components/blocks/wow/specBody/specBody.css";
 @import "../components/blocks/shared/legal/legal.css";
-@import "./styles/legacy-database.css";
-@import "../components/blocks/shared/adSlot/adSlot.css";
-@import "./styles/legacy-library.css";
-@import "../components/blocks/league-of-legends/league.css";
-@import "./styles/talents.css";
+@import "./styles/workspaceNavigator.css";
+@import "./styles/wow-skin.css";
+
+html[data-route-theme="wow"]:has([data-grimoire-home]) body {
+  background-color: #0d0e0d;
+  background-image: none;
+}
+
+html:has([data-rotation-spec]),
+body:has([data-rotation-spec]) {
+  max-width: 100%;
+  overflow-x: clip;
+}

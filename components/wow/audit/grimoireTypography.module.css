@@ -1,0 +1,64 @@
+/* Apply only to the connected character manuscript (and its tooltip portal).
+   The PT Serif fallback is already self-hosted by characterAuditPage.module.css. */
+.typography {
+  --grimoire-display: "Gildra Kurale", "Gildra Atlas", Georgia, serif;
+  --grimoire-body: "Gildra Atlas", Georgia, serif;
+  --wow-title: var(--grimoire-display);
+  --wow-ui: var(--grimoire-body);
+  --font-display: var(--grimoire-display);
+  --font-heading: var(--grimoire-display);
+  --font-ui: var(--grimoire-body);
+  --ph-display: var(--grimoire-display);
+  --folio-title: var(--grimoire-display);
+  --folio-body: var(--grimoire-body);
+  font-family: var(--grimoire-body);
+  font-kerning: normal;
+  font-variant-numeric: tabular-nums lining-nums;
+  text-rendering: optimizeLegibility;
+}
+
+/* The existing connected-profile selector sets font tokens on this same node;
+   the extra data attributes keep this book-only override deterministic. */
+.typography:global([data-profile-source="battle-net"][data-character-book="open"]) {
+  --wow-title: var(--grimoire-display);
+  --wow-ui: var(--grimoire-body);
+  --font-display: var(--grimoire-display);
+  --font-heading: var(--grimoire-display);
+  --font-ui: var(--grimoire-body);
+  --ph-display: var(--grimoire-display);
+  --folio-title: var(--grimoire-display);
+  --folio-body: var(--grimoire-body);
+  font-family: var(--grimoire-body);
+}
+
+.typography:global([data-profile-source="battle-net"][data-character-book="open"]) :is(h1, h2, h3, h4) {
+  font-family: var(--grimoire-display);
+  font-synthesis: weight;
+  text-wrap: balance;
+}
+
+.typography:global([data-profile-source="battle-net"][data-character-book="open"]) :is(button, input, select) {
+  font-family: var(--grimoire-body);
+}
+
+.typography:global([data-profile-source="battle-net"][data-character-book="open"]) :is(p, li, dd, dt, label) {
+  font-family: var(--grimoire-body);
+}
+
+/* Item names are short display text, unlike their longer item descriptions. */
+.typography:global([data-profile-source="battle-net"][data-character-book="open"]) button[data-quality] > span > b,
+.typography button[data-quality] > span > b {
+  font-family: var(--grimoire-display);
+  font-synthesis: weight;
+}
+
+.typography:global([data-character-book="open"]) [data-quality] strong {
+  font-family: var(--grimoire-display);
+  font-synthesis: weight;
+}
+
+/* Rotation expressions, combat codes and input samples must remain mono. */
+.typography :is(code, pre, kbd, samp, [data-monospace]) {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-variant-numeric: normal;
+}

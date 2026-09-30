@@ -1,0 +1,97 @@
+/* Interaction feedback on the live character folio, never combat-state
+   animation. No ability moves or scales when hovered, focused, or pressed. */
+:global(#rotation-lab-content).motion {
+  --rotation-motion-ease: cubic-bezier(.2, .65, .3, 1);
+  --rotation-motion-ink: #74451f;
+  --rotation-motion-wash: #fff0c64d;
+}
+:global(#rotation-lab-content).motion .abilityCell {
+  transition: background-color 150ms var(--rotation-motion-ease), box-shadow 150ms var(--rotation-motion-ease);
+}
+:global(#rotation-lab-content).motion .slotInput,
+:global(#rotation-lab-content).motion .slotInput:is(:hover, :active, :focus-visible) {
+  transform: none !important;
+  filter: none;
+}
+:global(#rotation-lab-content).motion .slotInput:active:not(:disabled) {
+  box-shadow: inset 0 0 0 2px #633d278c;
+}
+:global(#rotation-lab-content).motion .abilityCell:focus-within {
+  outline: 2px solid var(--rotation-motion-ink);
+  outline-offset: 3px;
+}
+:global(#rotation-lab-content).motion .catalogReveal {
+  animation: ink-appear 220ms var(--rotation-motion-ease) both;
+}
+:global(#rotation-lab-content).motion .pageReveal {
+  animation: ink-appear 180ms var(--rotation-motion-ease) both;
+}
+:global(#rotation-lab-content).motion .noteReveal {
+  animation: ink-appear 140ms var(--rotation-motion-ease) both;
+}
+:global(#rotation-lab-content).motion .catalogAbility {
+  transition: background-color 160ms var(--rotation-motion-ease), box-shadow 160ms var(--rotation-motion-ease);
+}
+:global(#rotation-lab-content).motion .catalogAbility,
+:global(#rotation-lab-content).motion .catalogAbility:is(:hover, :active, :focus-visible) {
+  transform: none !important;
+  filter: none;
+}
+:global(#rotation-lab-content).motion .catalogAbility[data-preview="true"] {
+  background-color: #9d69341a;
+  box-shadow: inset 3px 0 #8d592c80;
+}
+:global(#rotation-lab-content).motion .catalogAbility:focus-visible {
+  outline: 2px solid var(--rotation-motion-ink);
+  outline-offset: 3px;
+  background-color: var(--rotation-motion-wash);
+}
+:global(#rotation-lab-content).motion .catalogAbility:active:not([aria-disabled="true"]) {
+  background-color: #8e58282b;
+  box-shadow: inset 3px 0 var(--rotation-motion-ink), inset 0 1px 5px #6441212b;
+}
+:global(#rotation-lab-content).motion .categories > button {
+  transition: background-color 150ms var(--rotation-motion-ease), box-shadow 150ms var(--rotation-motion-ease), color 150ms var(--rotation-motion-ease);
+}
+:global(#rotation-lab-content).motion .categories > button:focus-visible {
+  outline: 2px solid var(--rotation-motion-ink);
+  outline-offset: -2px;
+}
+:global(#rotation-lab-content).motion .categories > button:active {
+  background-color: #93602c2b;
+}
+
+/* Legacy details styles also rotated the decorative icon. Keep it upright;
+   only the trailing chevron communicates the expanded state. */
+:global(#rotation-lab-content).motion .chapter > summary > svg:first-child { transform: none; }
+:global(#rotation-lab-content).motion .chapter > summary > svg:last-child {
+  transform: rotate(-90deg);
+  transition: transform 190ms var(--rotation-motion-ease);
+}
+:global(#rotation-lab-content).motion .chapter[open] > summary > svg:last-child { transform: rotate(0); }
+:global(#rotation-lab-content).motion .chapter > summary:focus-visible {
+  outline: 2px solid var(--rotation-motion-ink);
+  outline-offset: -3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(#rotation-lab-content).motion .abilityCell:hover:not(:has(button:disabled)) {
+    background-color: var(--rotation-motion-wash);
+    box-shadow: inset 0 0 0 1px #8d592c, inset 0 0 0 3px #ffe8b866, 0 0 0 2px #ac773529;
+  }
+  :global(#rotation-lab-content).motion .catalogAbility:hover {
+    background-color: var(--rotation-motion-wash);
+    box-shadow: inset 3px 0 #8d592c80;
+  }
+  :global(#rotation-lab-content).motion .categories > button:hover { background-color: var(--rotation-motion-wash); }
+}
+
+@keyframes ink-appear {
+  from { opacity: .55; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :global(#rotation-lab-content).motion :is(.abilityCell, .slotInput, .catalogAbility, .categories > button),
+  :global(#rotation-lab-content).motion .chapter > summary > svg { transition: none !important; }
+  :global(#rotation-lab-content).motion :is(.catalogReveal, .pageReveal, .noteReveal) { animation: none !important; }
+}

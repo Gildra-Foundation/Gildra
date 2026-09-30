@@ -1,0 +1,8 @@
+.switcher { display: inline-flex; align-items: center; gap: 2px; flex: 0 0 auto; padding: 3px; border: 1px solid var(--folio-ribbon-edge, #9b7954); background: var(--folio-ribbon-bottom, #21160f); box-shadow: inset 0 0 12px #0006; }
+.switcher a { display: inline-flex; align-items: center; justify-content: center; min-width: 37px; min-height: 34px; padding: 4px 7px; color: #e6cca0; font: 700 11px/1.2 var(--folio-title, Georgia, serif); letter-spacing: .06em; text-decoration: none; transition: color 160ms, background-color 160ms; }
+.switcher a[aria-current="page"] { color: #fff0c7; background: var(--folio-ribbon-active, #5a4128); box-shadow: inset 0 0 0 1px #b29563; }
+.switcher a:hover { color: #fff1cc; background-color: #b48c4326; }
+.switcher a:focus-visible { outline: 2px solid #ffe1a0; outline-offset: 2px; }
+@media (max-width: 920px) { .switcher a { min-height: 40px; } }
+@media (max-width: 520px) { .switcher a { min-width: 31px; min-height: 30px; padding-inline: 5px; } }
+@media (prefers-reduced-motion: reduce) { .switcher a { transition: none; } }

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { SpecSlot } from "@/components/SpecSlot";
 import { p, t } from "@/lib/i18n";
 import { ANCHORS, anchorHref } from "@/lib/anchors";
 import type { BlockComponentProps, EmptyProps } from "@/lib/blocks/types";
@@ -16,8 +15,8 @@ export function RaidFeature({ data, lang }: BlockComponentProps<RaidFeatureProps
     <section className="raidfeat" id={ANCHORS.raid}>
       <Image
         className="rf-art"
-        src="/bg.jpg"
-        alt="Manaforge Omega artwork"
+        src="/assets/wow/raids/midnight/backgrounds/the-voidspire.png"
+        alt={raid.name}
         fill
         sizes="100vw"
         style={{ objectFit: "cover", objectPosition: "center 62%" }}
@@ -28,23 +27,10 @@ export function RaidFeature({ data, lang }: BlockComponentProps<RaidFeatureProps
           <h2>{raid.name}</h2>
           <p>{tt(raid.blurb)}</p>
           <div className="rf-links">
-            <span className="dead-link" title={tt("Coming soon")}>{tt("Boss Rankings")}</span>
-            <span className="dia">◆</span>
-            <Link href={p(lang, "/tier-lists")}>{tt("Tier List")}</Link>
+            <Link href={p(lang, "/wow/raids")}>{tt("Boss Rankings")}</Link>
             <span className="dia">◆</span>
             <a href={p(lang, anchorHref(ANCHORS.guides))}>{tt("Guides")}</a>
-            <span className="dia">◆</span>
-            <Link href={p(lang, "/tier-lists")}>{tt("Best Specs")}</Link>
           </div>
-        </div>
-        <div className="rf-specs">
-          <span className="cap">{tt("Top raid specs")}</span>
-          {raid.topSpecs.map((sp) => (
-            <div className="rf-row" key={sp.name}>
-              <SpecSlot name={sp.name} cls={sp.cls} size="sm" /> {sp.name}{" "}
-              <span className="tpill s sm">S</span>
-            </div>
-          ))}
         </div>
       </div>
     </section>

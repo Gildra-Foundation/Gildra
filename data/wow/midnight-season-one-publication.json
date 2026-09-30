@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "manifestVersion": "2026-09-13.baseline.17",
+  "sourceAuditSha256": "2aa7350d61e45074e14f82a108ede25237472fc0e3edf2b172cec0e40a2d1d86",
+  "encounterCoverage": [
+    {
+      "encounterId": 2733,
+      "recordedAbilities": 3,
+      "publicationSafeAbilities": 1,
+      "withheldAbilities": 2
+    },
+    {
+      "encounterId": 2734,
+      "recordedAbilities": 6,
+      "publicationSafeAbilities": 1,
+      "withheldAbilities": 5
+    },
+    {
+      "encounterId": 2735,
+      "recordedAbilities": 1,
+      "publicationSafeAbilities": 0,
+      "withheldAbilities": 1
+    },
+    {
+      "encounterId": 2736,
+      "recordedAbilities": 2,
+      "publicationSafeAbilities": 0,
+      "withheldAbilities": 2
+    },
+    {
+      "encounterId": 2737,
+      "recordedAbilities": 3,
+      "publicationSafeAbilities": 0,
+      "withheldAbilities": 3
+    },
+    {
+      "encounterId": 2738,
+      "recordedAbilities": 6,
+      "publicationSafeAbilities": 0,
+      "withheldAbilities": 6
+    },
+    {
+      "encounterId": 2739,
+      "recordedAbilities": 4,
+      "publicationSafeAbilities": 1,
+      "withheldAbilities": 3
+    },
+    {
+      "encounterId": 2740,
+      "recordedAbilities": 3,
+      "publicationSafeAbilities": 1,
+      "withheldAbilities": 2
+    },
+    {
+      "encounterId": 2795,
+      "recordedAbilities": 4,
+      "publicationSafeAbilities": 0,
+      "withheldAbilities": 4
+    }
+  ],
+  "abilities": [
+    {
+      "encounterId": 2733,
+      "spellId": 1255749,
+      "role": "dps",
+      "nameEn": "Gathering Darkness",
+      "nameRu": "Сгущение мрака",
+      "descriptionEn": "At full power, the Voidshaper transforms into an Obscurion Endwalker.",
+      "descriptionRu": "Набрав полную силу, ваятель Бездны превращается в обскуриона – странника рока.",
+      "iconName": "spell_shadow_summonvoidwalker",
+      "iconUrl": "/assets/wow/raids/midnight/spells/1255749.jpg",
+      "descriptionSourceUrlEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=enUS",
+      "descriptionSourceUrlRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=ruRU",
+      "descriptionVerifiedAt": "2026-09-13T10:55:21.092Z",
+      "descriptionBuild": "12.1.0.69587"
+    },
+    {
+      "encounterId": 2734,
+      "spellId": 1244419,
+      "role": "tank",
+      "nameEn": "Overpowering Pulse",
+      "nameRu": "Подавляющая пульсация",
+      "descriptionEn": "If no player is within reach, Vorasius pulses with deadly void energy.",
+      "descriptionRu": "Когда в области ближнего боя нет игроков, Ненасытникус излучает смертоносную энергию Бездны.",
+      "iconName": "inv_cosmicvoid_groundsate",
+      "iconUrl": "/assets/wow/raids/midnight/spells/1244419.jpg",
+      "descriptionSourceUrlEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=enUS",
+      "descriptionSourceUrlRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=ruRU",
+      "descriptionVerifiedAt": "2026-09-13T10:55:21.092Z",
+      "descriptionBuild": "12.1.0.69587"
+    },
+    {
+      "encounterId": 2739,
+      "spellId": 1243320,
+      "role": "raid",
+      "nameEn": "Immortal Flame",
+      "nameRu": "Бессмертное пламя",
+      "descriptionEn": "Eternal flames fuel Belo'ren's energy, allowing him to use Rebirth when his health is fully depleted.",
+      "descriptionRu": "Вечное пламя придает Бело'рену энергию, позволяя ему возрождаться после гибели.",
+      "iconName": "inv_ridingphoenix2",
+      "iconUrl": "/assets/wow/raids/midnight/spells/1243320.jpg",
+      "descriptionSourceUrlEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=enUS",
+      "descriptionSourceUrlRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=ruRU",
+      "descriptionVerifiedAt": "2026-09-13T10:55:21.092Z",
+      "descriptionBuild": "12.1.0.69587"
+    },
+    {
+      "encounterId": 2740,
+      "spellId": 1282027,
+      "role": "raid",
+      "nameEn": "The Darkwell",
+      "nameRu": "Темный Колодец",
+      "descriptionEn": "The Darkwell's colossal void beam instantly vaporizes any player that dares to enter.",
+      "descriptionRu": "Темный Колодец выпускает чудовищный луч Бездны, который мгновенно убивает игроков в области поражения.",
+      "iconName": "ability_druid_cresentburn",
+      "iconUrl": "/assets/wow/raids/midnight/spells/1282027.jpg",
+      "descriptionSourceUrlEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=enUS",
+      "descriptionSourceUrlRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69587&locale=ruRU",
+      "descriptionVerifiedAt": "2026-09-13T10:55:21.092Z",
+      "descriptionBuild": "12.1.0.69587"
+    }
+  ]
+}

@@ -1,0 +1,2467 @@
+{
+  "schemaVersion": 1,
+  "scope": "venomous-abyss-withheld-description-candidate-ranking",
+  "gameBuild": "12.1.0.69814",
+  "lastVerifiedAt": "2026-09-13T10:02:02.670Z",
+  "method": "Ranks every withheld overview ability by exact-build token/effect evidence and an independently rendered English Adventure Guide fragment. A rendered fragment is associated only when its ability heading links directly to the same Wowhead spell ID; hashes are calculated from normalized per-ability fragments, not mutable page chrome. Dreadmarch additionally uses its exact DB2 description-reference chain and per-difficulty Wowhead render to detect whether raw EffectBasePoints values are valid player-facing substitutions.",
+  "publicationPolicy": "This artifact is triage only. Every candidate remains withheld. Promotion requires an explicit per-spell allowlist, exact difficulty selection, semantic interpretation of every effect token, reproducible locale-native EN/RU rendering, and independently rendered same-ID evidence for every substituted value. Generic X placeholders and unresolved client tokens are never published.",
+  "limitations": [
+    "Warcraft Wiki is a priority-3 expert/community source, not an official Blizzard publication surface.",
+    "The rendered English guide can cross-check values but cannot establish Russian grammar or locale rendering by itself.",
+    "A direct same-ID link establishes fragment identity only; it does not prove tactics, role assignments, mechanic tags, timing, or difficulty deltas.",
+    "Numeric literals are inventory evidence only and are not promoted automatically from this report.",
+    "The Wowhead Dreadmarch tooltip is current live priority-3 evidence rather than a build-pinned Blizzard source; it may reject a naive substitution but cannot authorize publication for build 12.1.0.69814."
+  ],
+  "sources": [
+    {
+      "kind": "rendered_guide_nekzali-the-soulcoiler_en",
+      "url": "https://warcraft.wiki.gg/wiki/Nek%27zali_the_Soulcoiler",
+      "sourcePriority": 3,
+      "relevantAbilities": 3,
+      "sameIdLinkedAbilities": 2,
+      "relevantFragmentIndexSha256": "783cb1e38627674891a50ef33ae76e154ba1d2bce80b1557fa51eceda9a51b61"
+    },
+    {
+      "kind": "rendered_guide_entombed-sentinels_en",
+      "url": "https://warcraft.wiki.gg/wiki/Entombed_Sentinels",
+      "sourcePriority": 3,
+      "relevantAbilities": 1,
+      "sameIdLinkedAbilities": 1,
+      "relevantFragmentIndexSha256": "65f145208d22640705f8ef060226edb9fa30b61e06b285a591f34e91947b287a"
+    },
+    {
+      "kind": "rendered_guide_the-lost-explorers_en",
+      "url": "https://warcraft.wiki.gg/wiki/The_Lost_Explorers",
+      "sourcePriority": 3,
+      "relevantAbilities": 1,
+      "sameIdLinkedAbilities": 0,
+      "relevantFragmentIndexSha256": "284017b276b2309503fe215c8b1f34e78a5d41ad2c0f94575cc4abeb89280ac1"
+    },
+    {
+      "kind": "rendered_guide_vashnik-the-malignant_en",
+      "url": "https://warcraft.wiki.gg/wiki/Vashnik_the_Malignant",
+      "sourcePriority": 3,
+      "relevantAbilities": 1,
+      "sameIdLinkedAbilities": 1,
+      "relevantFragmentIndexSha256": "94fe67ab7db50fbfa36d9369bec5b032cf65c004208d184e584eb898656c4374"
+    },
+    {
+      "kind": "rendered_guide_sszorak_en",
+      "url": "https://warcraft.wiki.gg/wiki/Sszorak",
+      "sourcePriority": 3,
+      "relevantAbilities": 2,
+      "sameIdLinkedAbilities": 2,
+      "relevantFragmentIndexSha256": "2a8e86790b97a0f6ddd5f51af8638ecfc68c579174dda3c96c73b83333ee1ca3"
+    },
+    {
+      "kind": "rendered_guide_the-twin-fangs_en",
+      "url": "https://warcraft.wiki.gg/wiki/The_Twin_Fangs",
+      "sourcePriority": 3,
+      "relevantAbilities": 8,
+      "sameIdLinkedAbilities": 7,
+      "relevantFragmentIndexSha256": "9b572d7650f254e64cc32ad4ae260456a0d058ed31471e39e2ed0c8b5095023d"
+    },
+    {
+      "kind": "rendered_guide_the-coiled-altar_en",
+      "url": "https://warcraft.wiki.gg/wiki/The_Coiled_Altar",
+      "sourcePriority": 3,
+      "relevantAbilities": 4,
+      "sameIdLinkedAbilities": 4,
+      "relevantFragmentIndexSha256": "a3547999fcde52ac0c061dfb4d44ed91f22a383367393c45900463e90301bf7e"
+    },
+    {
+      "kind": "rendered_guide_ulatek_en",
+      "url": "https://warcraft.wiki.gg/wiki/Ula-Tek",
+      "sourcePriority": 3,
+      "relevantAbilities": 5,
+      "sameIdLinkedAbilities": 5,
+      "relevantFragmentIndexSha256": "fc259f98964a969853f2eed0c5a595dea432fa0a56d7f0bddd10c55761e4cba0"
+    },
+    {
+      "kind": "rendered_spell_dreadmarch_en",
+      "url": "https://www.wowhead.com/spell=1285647/dreadmarch",
+      "sourcePriority": 3,
+      "sourceSpellId": 1285647,
+      "terminalSpellId": 1297445,
+      "normalizedDifficultyTooltipIndexSha256": "4dd2769fb2c3a5e131fd08f532e3c662e4e2dd443537552ab59c422e10e9bf81",
+      "renderedDifficulties": 5
+    }
+  ],
+  "summary": {
+    "withheldAbilities": 25,
+    "renderedGuidePages": 8,
+    "supplementalRenderedSources": 1,
+    "sameIdLinkedAbilities": 22,
+    "sameIdMissingAbilities": 3,
+    "renderedWithoutPlaceholders": 1,
+    "promotionAllowedAbilities": 0,
+    "rejectedBySemanticCrossCheck": 1,
+    "rankGroups": {
+      "difficulty_variant": 10,
+      "grammar_or_difficulty_conditional": 3,
+      "missing_same_id_rendered_evidence": 3,
+      "rendered_same_id_scaled_value_conflict": 1,
+      "scaled_or_dynamic": 8
+    },
+    "nextCandidateSpellIds": [],
+    "rejectedCandidateSpellIds": [
+      1285643
+    ]
+  },
+  "candidates": [
+    {
+      "spellId": 1291404,
+      "encounterSlug": "the-twin-fangs",
+      "names": {
+        "en": "Venomous Emergence",
+        "ru": "Ядовитое появление"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1291404
+        ],
+        "ru": [
+          1291404
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1291404,
+        "ru": 1291404
+      },
+      "blockingCategories": [
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "effect_value": 1,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 1,
+        "completeRecords": 1,
+        "classifications": {
+          "difficulty_variant": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Twin_Fangs",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "d82db041d7cd8cfcf4d522198290bf4fd68f213c971aad92d047291aad2ff2f1",
+        "normalizedFragmentLength": 158,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": []
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1287265,
+      "encounterSlug": "ulatek",
+      "names": {
+        "en": "Spectral Coils",
+        "ru": "Призрачные кольца"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1287265
+        ],
+        "ru": [
+          1287265
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1287265,
+        "ru": 1287265
+      },
+      "blockingCategories": [
+        "effect_value",
+        "radius"
+      ],
+      "tokenCounts": {
+        "effect_value": 1,
+        "radius": 1,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 2,
+        "completeRecords": 2,
+        "classifications": {
+          "difficulty_variant": 1,
+          "static_metadata": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 14,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Normal",
+              "ru": "Обычный"
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 220,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Story",
+              "ru": "Сюжет"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Ula-Tek",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 3,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "c3139e1ba5435b8f4d28d763d44ef758eb45b054691811afddb8eb981a8d8850",
+        "normalizedFragmentLength": 229,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "10"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1290003,
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "names": {
+        "en": "Uncoiling",
+        "ru": "Расплетение"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1290003
+        ],
+        "ru": [
+          1290003
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1290003,
+        "ru": 1290003
+      },
+      "blockingCategories": [
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "effect_period": 1,
+        "effect_value": 1,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 2,
+        "completeRecords": 2,
+        "classifications": {
+          "difficulty_variant": 1,
+          "static_metadata": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Nek%27zali_the_Soulcoiler",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "2bb8cda1dccb1e6223515a0b223c41755ee10cfce1f4b1658599e5d95964d9aa",
+        "normalizedFragmentLength": 173,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "0.85"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1286860,
+      "encounterSlug": "ulatek",
+      "names": {
+        "en": "Rage of the Shackled",
+        "ru": "Ярость пленницы"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1286860
+        ],
+        "ru": [
+          1286860
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1286860,
+        "ru": 1286860
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 1,
+        "spell_name_reference": 2
+      },
+      "effectEvidence": {
+        "records": 3,
+        "completeRecords": 3,
+        "classifications": {
+          "difficulty_variant": 1,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          },
+          {
+            "difficultyId": 220,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Story",
+              "ru": "Сюжет"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Ula-Tek",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 3,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "270503fb263b06cbd0d1bb9cbda3d31bffd23697da9c0cab8050378424621350",
+        "normalizedFragmentLength": 225,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "5",
+          "20"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1301510,
+      "encounterSlug": "ulatek",
+      "names": {
+        "en": "Circling Prey",
+        "ru": "Обвивание добычи"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1301510
+        ],
+        "ru": [
+          1301510
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1301510,
+        "ru": 1301510
+      },
+      "blockingCategories": [
+        "effect_value",
+        "radius"
+      ],
+      "tokenCounts": {
+        "effect_value": 2,
+        "radius": 2
+      },
+      "effectEvidence": {
+        "records": 3,
+        "completeRecords": 3,
+        "classifications": {
+          "difficulty_variant": 2,
+          "static_metadata": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 14,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Normal",
+              "ru": "Обычный"
+            }
+          },
+          {
+            "difficultyId": 220,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Story",
+              "ru": "Сюжет"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Ula-Tek",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "3170b605ec8f78724587f65e550683233a234075bbc364e4d6261007c9a24e49",
+        "normalizedFragmentLength": 157,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "13"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1289993,
+      "encounterSlug": "the-twin-fangs",
+      "names": {
+        "en": "Caustic Globule",
+        "ru": "Едкий комок"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1289993
+        ],
+        "ru": [
+          1289993
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1289993,
+        "ru": 1289993
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_value": 1,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 2,
+        "completeRecords": 2,
+        "classifications": {
+          "difficulty_variant": 1,
+          "static_metadata": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Twin_Fangs",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "f7378cf320f8f1067d3d442033fac86dea8d1ddd5b5bad9376a004947eec98c1",
+        "normalizedFragmentLength": 276,
+        "placeholderCounts": {
+          "genericValue": 2,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "10"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1280189,
+      "encounterSlug": "vashnik-the-malignant",
+      "names": {
+        "en": "Malignant Burst",
+        "ru": "Тлетворный взрыв"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1280189
+        ],
+        "ru": [
+          1280189
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1280189,
+        "ru": 1280189
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 2
+      },
+      "effectEvidence": {
+        "records": 4,
+        "completeRecords": 4,
+        "classifications": {
+          "difficulty_variant": 2,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 14,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Normal",
+              "ru": "Обычный"
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Vashnik_the_Malignant",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "e6f2e4c18a9f4201f339ca176386c138e3815c6cd7c84d3ba83ef8243be4d3a1",
+        "normalizedFragmentLength": 193,
+        "placeholderCounts": {
+          "genericValue": 2,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "3",
+          "30"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1292403,
+      "encounterSlug": "ulatek",
+      "names": {
+        "en": "Caustic Waves",
+        "ru": "Едкие волны"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1292403
+        ],
+        "ru": [
+          1292403
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1292403,
+        "ru": 1292403
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 2
+      },
+      "effectEvidence": {
+        "records": 4,
+        "completeRecords": 4,
+        "classifications": {
+          "difficulty_variant": 2,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 14,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Normal",
+              "ru": "Обычный"
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          },
+          {
+            "difficultyId": 17,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Looking For Raid",
+              "ru": "Поиск рейда"
+            }
+          },
+          {
+            "difficultyId": 220,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Story",
+              "ru": "Сюжет"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Ula-Tek",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 2,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "8e70e96d96a633287d6fdf2d16b147a289c09af4f8ef7018e4a3bb216884bb70",
+        "normalizedFragmentLength": 281,
+        "placeholderCounts": {
+          "genericValue": 2,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "1",
+          "10"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1305959,
+      "encounterSlug": "sszorak",
+      "names": {
+        "en": "Venomous Surge",
+        "ru": "Ядовитый поток"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1305959
+        ],
+        "ru": [
+          1305959
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1305959,
+        "ru": 1305959
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 2,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 4,
+        "completeRecords": 4,
+        "classifications": {
+          "difficulty_variant": 2,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          },
+          {
+            "difficultyId": 17,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Looking For Raid",
+              "ru": "Поиск рейда"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Sszorak",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "4bbbe664262050d7d75cc5a521335de038c92e6ce12ad60cfb9e816dbdc779a2",
+        "normalizedFragmentLength": 267,
+        "placeholderCounts": {
+          "genericValue": 2,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "1",
+          "10"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1289192,
+      "encounterSlug": "the-twin-fangs",
+      "names": {
+        "en": "Caustic Deluge",
+        "ru": "Едкое наводнение"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1289192
+        ],
+        "ru": [
+          1289192
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1289192,
+        "ru": 1289192
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value",
+        "radius"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 2,
+        "radius": 1,
+        "spell_name_reference": 2
+      },
+      "effectEvidence": {
+        "records": 5,
+        "completeRecords": 5,
+        "classifications": {
+          "difficulty_variant": 2,
+          "static_metadata": 3
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Twin_Fangs",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "0d085cee344a24d7b49501ee42123a4aede98fb9fe4dcd5fbf6ec6cb3aee106e",
+        "normalizedFragmentLength": 302,
+        "placeholderCounts": {
+          "genericValue": 2,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "0.5",
+          "4",
+          "5"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "difficulty_variant",
+      "rankGroupPriority": 3,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1285643,
+      "encounterSlug": "the-coiled-altar",
+      "names": {
+        "en": "Dreadmarch",
+        "ru": "Марш ужаса"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1285643,
+          1285647,
+          1297445
+        ],
+        "ru": [
+          1285643,
+          1285647,
+          1297445
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1297445,
+        "ru": 1297445
+      },
+      "blockingCategories": [
+        "difficulty_conditional",
+        "effect_value",
+        "grammar"
+      ],
+      "tokenCounts": {
+        "difficulty_conditional": 1,
+        "effect_value": 2,
+        "grammar": 1
+      },
+      "effectEvidence": {
+        "records": 2,
+        "completeRecords": 2,
+        "classifications": {
+          "difficulty_variant": 1,
+          "scaled_or_dynamic": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 17,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Looking For Raid",
+              "ru": "Поиск рейда"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Coiled_Altar",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 2,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "12d8c97a7b54773a44ef33674fb8334eafd716254decdd330194ddaf155dd5e7",
+        "normalizedFragmentLength": 307,
+        "placeholderCounts": {
+          "genericValue": 0,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "2",
+          "80"
+        ]
+      },
+      "semanticCrossCheck": {
+        "sourceUrl": "https://www.wowhead.com/spell=1285647/dreadmarch",
+        "descriptionReferenceChainMatches": true,
+        "sourceSpellId": 1285647,
+        "terminalSpellId": 1297445,
+        "renderedDifficulties": [
+          {
+            "difficultyId": 14,
+            "groupSize": 30,
+            "terminalSpellId": 1297445,
+            "terminalSpellLink": true,
+            "absorbDamage": 427714,
+            "manifestations": 2,
+            "normalizedDescriptionSha256": "ee439f015454ccf7c3fa7772ceb2bf2b442e65b54134489692ea763d7e86dce2"
+          },
+          {
+            "difficultyId": 15,
+            "groupSize": 30,
+            "terminalSpellId": 1297445,
+            "terminalSpellLink": true,
+            "absorbDamage": 494352,
+            "manifestations": 2,
+            "normalizedDescriptionSha256": "9f43fb8b72653afc6d6d64ce81d2128f0e442ec86aac66b43e110b38a8842c73"
+          },
+          {
+            "difficultyId": 16,
+            "groupSize": 20,
+            "terminalSpellId": 1297445,
+            "terminalSpellLink": true,
+            "absorbDamage": 568393,
+            "manifestations": 2,
+            "normalizedDescriptionSha256": "fffd99d2e0537e54dcd76972a9c26137948bac2a0ec0028456f86f1f7b29ad0a"
+          },
+          {
+            "difficultyId": 17,
+            "groupSize": 30,
+            "terminalSpellId": 1297445,
+            "terminalSpellLink": true,
+            "absorbDamage": 189053,
+            "manifestations": "multiple",
+            "normalizedDescriptionSha256": "41e51047695f7fb92712559e72bfa7f199d7ce4f6cf869f7e08b6dbd5095231f"
+          },
+          {
+            "difficultyId": 241,
+            "groupSize": 10,
+            "terminalSpellId": 1297445,
+            "terminalSpellLink": true,
+            "absorbDamage": 246806,
+            "manifestations": null,
+            "normalizedDescriptionSha256": "6da00dcf5c6c44e1d6e51cbb02707d7de4f293c6dc1c205f5b700b609220d26d"
+          }
+        ],
+        "normalizedDifficultyTooltipIndexSha256": "4dd2769fb2c3a5e131fd08f532e3c662e4e2dd443537552ab59c422e10e9bf81",
+        "rawBasePoints": [
+          40,
+          80
+        ],
+        "renderedAbsorbValues": [
+          189053,
+          246806,
+          427714,
+          494352,
+          568393
+        ],
+        "rawBasePointsMatchRenderedValues": false
+      },
+      "rankGroup": "rendered_same_id_scaled_value_conflict",
+      "rankGroupPriority": 4,
+      "blockers": [
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "difficulty_specific_variant_not_selected",
+        "independent_renderer_disproves_raw_basepoint_substitution",
+        "difficulty_conditional_not_rendered_per_difficulty",
+        "locale_grammar_selection_unproven",
+        "locale_native_token_rendering_not_yet_reproduced",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1284032,
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "names": {
+        "en": "Soulcoil Well",
+        "ru": "Колодец душителей душ"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1284032
+        ],
+        "ru": [
+          1284032
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1284032,
+        "ru": 1284032
+      },
+      "blockingCategories": [
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "effect_period": 1,
+        "effect_value": 1,
+        "spell_name_reference": 3
+      },
+      "effectEvidence": {
+        "records": 2,
+        "completeRecords": 2,
+        "classifications": {
+          "scaled_or_dynamic": 1,
+          "static_metadata": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Nek%27zali_the_Soulcoiler",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 5,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "939ab5cfffe71063efa31f129268bce365b2bc45bce64f22070dbf242af924c8",
+        "normalizedFragmentLength": 257,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "1"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "scaled_or_dynamic",
+      "rankGroupPriority": 4,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1306872,
+      "encounterSlug": "the-twin-fangs",
+      "names": {
+        "en": "Sanguine Storm",
+        "ru": "Кровавая буря"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1306872
+        ],
+        "ru": [
+          1306872
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1306872,
+        "ru": 1306872
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_value",
+        "radius"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_value": 1,
+        "radius": 1
+      },
+      "effectEvidence": {
+        "records": 3,
+        "completeRecords": 3,
+        "classifications": {
+          "scaled_or_dynamic": 1,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Twin_Fangs",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "25a2d84b6936eb30a7b82231d62f625296a7b8e54f4b75d0dfc75ba759117f0e",
+        "normalizedFragmentLength": 147,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "4"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "scaled_or_dynamic",
+      "rankGroupPriority": 4,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1282403,
+      "encounterSlug": "the-coiled-altar",
+      "names": {
+        "en": "Coalesced Venom",
+        "ru": "Сгустившийся яд"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1282403
+        ],
+        "ru": [
+          1282403
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1282403,
+        "ru": 1282403
+      },
+      "blockingCategories": [
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "effect_value": 2,
+        "spell_name_reference": 2
+      },
+      "effectEvidence": {
+        "records": 2,
+        "completeRecords": 2,
+        "classifications": {
+          "difficulty_variant": 1,
+          "scaled_or_dynamic": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Coiled_Altar",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 10,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "8ceaa68839b53e48286d5e264d925eebac15c67701011b51689713e226149ff1",
+        "normalizedFragmentLength": 235,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "2"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "scaled_or_dynamic",
+      "rankGroupPriority": 4,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1301268,
+      "encounterSlug": "ulatek",
+      "names": {
+        "en": "Putrid Membrane",
+        "ru": "Гнилостная капсула"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1301268
+        ],
+        "ru": [
+          1301268
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1301268,
+        "ru": 1301268
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 1,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 3,
+        "completeRecords": 3,
+        "classifications": {
+          "difficulty_variant": 1,
+          "scaled_or_dynamic": 1,
+          "static_metadata": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 14,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Normal",
+              "ru": "Обычный"
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Ula-Tek",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 2,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "ccaa30c8c852ecaec63bfc4533734b484948973e0eaf8041ec8cf4045e558d62",
+        "normalizedFragmentLength": 157,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "1",
+          "10"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "scaled_or_dynamic",
+      "rankGroupPriority": 4,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1284590,
+      "encounterSlug": "entombed-sentinels",
+      "names": {
+        "en": "Helical Toxins",
+        "ru": "Спиральный токсин"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1284590
+        ],
+        "ru": [
+          1284590
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1284590,
+        "ru": 1284590
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 2,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 4,
+        "completeRecords": 4,
+        "classifications": {
+          "difficulty_variant": 1,
+          "scaled_or_dynamic": 1,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 14,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Normal",
+              "ru": "Обычный"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Entombed_Sentinels",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "36ea6252206f10f3df748ef3a2b6f027ab36b07cca6600ae6ede680a6611c394",
+        "normalizedFragmentLength": 321,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "1",
+          "4",
+          "28"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "scaled_or_dynamic",
+      "rankGroupPriority": 4,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1286620,
+      "encounterSlug": "the-coiled-altar",
+      "names": {
+        "en": "Soul Sever",
+        "ru": "Отделение души"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1286620
+        ],
+        "ru": [
+          1286620
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1286620,
+        "ru": 1286620
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 3,
+        "spell_name_reference": 2
+      },
+      "effectEvidence": {
+        "records": 5,
+        "completeRecords": 5,
+        "classifications": {
+          "difficulty_variant": 2,
+          "scaled_or_dynamic": 1,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          },
+          {
+            "difficultyId": 17,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Looking For Raid",
+              "ru": "Поиск рейда"
+            }
+          },
+          {
+            "difficultyId": 220,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Story",
+              "ru": "Сюжет"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Coiled_Altar",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "f0b7d9c3634d003852891a8f60b0aa80b61018bf0c01208d9b6681ddf13dec4f",
+        "normalizedFragmentLength": 336,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "0",
+          "2",
+          "36",
+          "200%"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "scaled_or_dynamic",
+      "rankGroupPriority": 4,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1285419,
+      "encounterSlug": "sszorak",
+      "names": {
+        "en": "Raging Crosswinds",
+        "ru": "Яростные завихрения"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1285419
+        ],
+        "ru": [
+          1285419
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1285419,
+        "ru": 1285419
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value",
+        "radius"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 2,
+        "radius": 1,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 5,
+        "completeRecords": 5,
+        "classifications": {
+          "difficulty_variant": 2,
+          "scaled_or_dynamic": 1,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Sszorak",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "f396c012a9010434101364d4aae2dec9d6dbd25c9ea0b05f7777ce02e8eba453",
+        "normalizedFragmentLength": 314,
+        "placeholderCounts": {
+          "genericValue": 2,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "1",
+          "6",
+          "8"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "scaled_or_dynamic",
+      "rankGroupPriority": 4,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1288538,
+      "encounterSlug": "the-twin-fangs",
+      "names": {
+        "en": "Stone Breaker",
+        "ru": "Крушитель камня"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1288538
+        ],
+        "ru": [
+          1288538
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1288538,
+        "ru": 1288538
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_value",
+        "radius"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_value": 3,
+        "radius": 1,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 5,
+        "completeRecords": 5,
+        "classifications": {
+          "difficulty_variant": 2,
+          "scaled_or_dynamic": 1,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Twin_Fangs",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "7e261fb16c07994085341098a24edb7541f83bd1a9f884b8e36d8905b6538bf5",
+        "normalizedFragmentLength": 345,
+        "placeholderCounts": {
+          "genericValue": 2,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "4"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "scaled_or_dynamic",
+      "rankGroupPriority": 4,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1299680,
+      "encounterSlug": "the-coiled-altar",
+      "names": {
+        "en": "Sever",
+        "ru": "Рассечение"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1299680,
+          1299684
+        ],
+        "ru": [
+          1299680,
+          1299684
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1299684,
+        "ru": 1299684
+      },
+      "blockingCategories": [
+        "difficulty_conditional",
+        "duration",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "difficulty_conditional": 1,
+        "duration": 1,
+        "effect_value": 2,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 3,
+        "completeRecords": 3,
+        "classifications": {
+          "difficulty_variant": 3
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          },
+          {
+            "difficultyId": 17,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Looking For Raid",
+              "ru": "Поиск рейда"
+            }
+          },
+          {
+            "difficultyId": 220,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Story",
+              "ru": "Сюжет"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Coiled_Altar",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "e1c80ef2e9c975d18ad62ec0511717c9bded8b89c748510b76445098d31193ca",
+        "normalizedFragmentLength": 244,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "30",
+          "200%"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "grammar_or_difficulty_conditional",
+      "rankGroupPriority": 5,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "difficulty_conditional_not_rendered_per_difficulty",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1290336,
+      "encounterSlug": "the-twin-fangs",
+      "names": {
+        "en": "Eternal Venom",
+        "ru": "Вечный яд"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1290336
+        ],
+        "ru": [
+          1290336
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1290336,
+        "ru": 1290336
+      },
+      "blockingCategories": [
+        "difficulty_conditional",
+        "duration",
+        "effect_period",
+        "effect_value",
+        "grammar"
+      ],
+      "tokenCounts": {
+        "difficulty_conditional": 1,
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 4,
+        "grammar": 2
+      },
+      "effectEvidence": {
+        "records": 5,
+        "completeRecords": 5,
+        "classifications": {
+          "difficulty_variant": 3,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          },
+          {
+            "difficultyId": 17,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Looking For Raid",
+              "ru": "Поиск рейда"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Twin_Fangs",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "47ae557624184576fc37ce09eb2c9ac97f1c36414a1332d2ad5912e9d67f686f",
+        "normalizedFragmentLength": 292,
+        "placeholderCounts": {
+          "genericValue": 1,
+          "clientToken": 0
+        },
+        "numericLiterals": [
+          "1",
+          "8",
+          "9",
+          "85%"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "grammar_or_difficulty_conditional",
+      "rankGroupPriority": 5,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "difficulty_specific_variant_not_selected",
+        "difficulty_conditional_not_rendered_per_difficulty",
+        "locale_grammar_selection_unproven",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1290516,
+      "encounterSlug": "the-twin-fangs",
+      "names": {
+        "en": "Ravenous Feast",
+        "ru": "Яростное пожирание"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1290516
+        ],
+        "ru": [
+          1290516
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1290516,
+        "ru": 1290516
+      },
+      "blockingCategories": [
+        "difficulty_conditional",
+        "effect_value",
+        "grammar",
+        "radius"
+      ],
+      "tokenCounts": {
+        "difficulty_conditional": 1,
+        "effect_value": 4,
+        "grammar": 3,
+        "radius": 1,
+        "spell_name_reference": 3
+      },
+      "effectEvidence": {
+        "records": 5,
+        "completeRecords": 5,
+        "classifications": {
+          "difficulty_variant": 2,
+          "scaled_or_dynamic": 2,
+          "static_metadata": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Twin_Fangs",
+        "directSameIdLink": true,
+        "exactLinkOccurrences": 1,
+        "matchingFragmentCount": 1,
+        "normalizedFragmentSha256": "38aedaffe346e3c90e37689169a06163e2c0dd248706592ffb5bd295a9491fcd",
+        "normalizedFragmentLength": 370,
+        "placeholderCounts": {
+          "genericValue": 2,
+          "clientToken": 1
+        },
+        "numericLiterals": [
+          "1",
+          "3",
+          "14"
+        ]
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "grammar_or_difficulty_conditional",
+      "rankGroupPriority": 5,
+      "blockers": [
+        "rendered_fragment_contains_generic_value_placeholder",
+        "rendered_fragment_contains_client_token",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "difficulty_specific_variant_not_selected",
+        "difficulty_conditional_not_rendered_per_difficulty",
+        "locale_grammar_selection_unproven",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1292779,
+      "encounterSlug": "the-lost-explorers",
+      "names": {
+        "en": "Final Ascension",
+        "ru": "Последнее вознесение"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1292779,
+          1292780
+        ],
+        "ru": [
+          1292779,
+          1292780
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1292780,
+        "ru": 1292780
+      },
+      "blockingCategories": [
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "effect_period": 1,
+        "effect_value": 1
+      },
+      "effectEvidence": {
+        "records": 2,
+        "completeRecords": 2,
+        "classifications": {
+          "difficulty_variant": 1,
+          "static_metadata": 1
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 14,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Normal",
+              "ru": "Обычный"
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          },
+          {
+            "difficultyId": 16,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Mythic",
+              "ru": "Эпохальный"
+            }
+          },
+          {
+            "difficultyId": 17,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Looking For Raid",
+              "ru": "Поиск рейда"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Lost_Explorers",
+        "directSameIdLink": false,
+        "exactLinkOccurrences": 0,
+        "matchingFragmentCount": 0,
+        "normalizedFragmentSha256": null,
+        "normalizedFragmentLength": 0,
+        "placeholderCounts": {
+          "genericValue": 0,
+          "clientToken": 0
+        },
+        "numericLiterals": []
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "missing_same_id_rendered_evidence",
+      "rankGroupPriority": 6,
+      "blockers": [
+        "same_id_rendered_fragment_missing",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1293749,
+      "encounterSlug": "the-twin-fangs",
+      "names": {
+        "en": "Vile Flood",
+        "ru": "Гнусный потоп"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1293749,
+          1294293
+        ],
+        "ru": [
+          1293749,
+          1294293
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1294293,
+        "ru": 1294293
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 1,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 3,
+        "completeRecords": 3,
+        "classifications": {
+          "scaled_or_dynamic": 1,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/The_Twin_Fangs",
+        "directSameIdLink": false,
+        "exactLinkOccurrences": 0,
+        "matchingFragmentCount": 0,
+        "normalizedFragmentSha256": null,
+        "normalizedFragmentLength": 0,
+        "placeholderCounts": {
+          "genericValue": 0,
+          "clientToken": 0
+        },
+        "numericLiterals": []
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "missing_same_id_rendered_evidence",
+      "rankGroupPriority": 6,
+      "blockers": [
+        "same_id_rendered_fragment_missing",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    },
+    {
+      "spellId": 1288772,
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "names": {
+        "en": "Soulcoil Rite",
+        "ru": "Обряд душителя душ"
+      },
+      "descriptionReferenceChains": {
+        "en": [
+          1288772,
+          1284033
+        ],
+        "ru": [
+          1288772,
+          1284033
+        ]
+      },
+      "terminalSpellIds": {
+        "en": 1284033,
+        "ru": 1284033
+      },
+      "blockingCategories": [
+        "duration",
+        "effect_period",
+        "effect_value"
+      ],
+      "tokenCounts": {
+        "duration": 1,
+        "effect_period": 1,
+        "effect_value": 3,
+        "spell_name_reference": 1
+      },
+      "effectEvidence": {
+        "records": 5,
+        "completeRecords": 5,
+        "classifications": {
+          "difficulty_variant": 1,
+          "scaled_or_dynamic": 2,
+          "static_metadata": 2
+        },
+        "difficultyContexts": [
+          {
+            "difficultyId": 0,
+            "registeredDifficulty": false,
+            "names": {
+              "en": null,
+              "ru": null
+            }
+          },
+          {
+            "difficultyId": 15,
+            "registeredDifficulty": true,
+            "names": {
+              "en": "Heroic",
+              "ru": "Героический"
+            }
+          }
+        ]
+      },
+      "renderedGuide": {
+        "sourceUrl": "https://warcraft.wiki.gg/wiki/Nek%27zali_the_Soulcoiler",
+        "directSameIdLink": false,
+        "exactLinkOccurrences": 0,
+        "matchingFragmentCount": 0,
+        "normalizedFragmentSha256": null,
+        "normalizedFragmentLength": 0,
+        "placeholderCounts": {
+          "genericValue": 0,
+          "clientToken": 0
+        },
+        "numericLiterals": []
+      },
+      "semanticCrossCheck": null,
+      "rankGroup": "missing_same_id_rendered_evidence",
+      "rankGroupPriority": 6,
+      "blockers": [
+        "same_id_rendered_fragment_missing",
+        "scaled_or_dynamic_effect_semantics_unproven",
+        "difficulty_specific_variant_not_selected",
+        "publication_requires_explicit_per_spell_allowlist"
+      ],
+      "publicationSafe": false,
+      "promotionAllowed": false
+    }
+  ]
+}

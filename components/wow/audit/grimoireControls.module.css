@@ -1,0 +1,253 @@
+/* Explicit control hooks keep decorative skins off talent nodes and spell slots. */
+.theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a) {
+  position: relative;
+  isolation: isolate;
+  min-height: 42px !important;
+  padding: 9px 18px;
+  border: 0 !important;
+  border-radius: 3px !important;
+  color: #fff0c7 !important;
+  background: var(--folio-control-image) center / 100% 100% no-repeat, #582118 !important;
+  box-shadow: 0 2px 3px #4021094d !important;
+  font-family: var(--folio-title, Georgia, serif) !important;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-shadow: 0 1px 2px #1c0b05;
+  transition: filter var(--folio-motion-fast, 160ms) ease, box-shadow var(--folio-motion-normal, 240ms) ease, transform var(--folio-motion-fast, 160ms) var(--folio-motion-ease, ease);
+}
+.theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a)::before,
+.theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a)::after { display: none !important; }
+.theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(1px);
+  filter: brightness(.85);
+  box-shadow: 0 1px 2px #40210944 !important;
+}
+.theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):is(:disabled, [aria-disabled="true"]) {
+  opacity: .52;
+  filter: saturate(.45);
+  cursor: not-allowed;
+  transform: none;
+}
+.theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):focus-visible {
+  outline: 2px solid #5c2e12 !important;
+  outline-offset: 3px;
+}
+.theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):focus-visible:not(:disabled) {
+  filter: brightness(1.12);
+}
+.theme :is(button, a)[data-folio-action="quiet"] {
+  background: linear-gradient(#efd7a83b, #8d592524), var(--folio-paper) !important;
+  border: 1px solid #926b36 !important;
+  color: #432a14 !important;
+  box-shadow: inset 0 0 0 2px #f8e6bf73, 0 2px 3px #40210926 !important;
+  text-shadow: 0 1px #fff2d173;
+}
+.theme [data-folio-choice] {
+  position: relative;
+  color: #452b14;
+  border: 1px solid #926b3666 !important;
+  border-radius: 3px;
+  background: linear-gradient(105deg, #fff1cf54, #a1713320) !important;
+  box-shadow: inset 0 0 0 2px #fae7bd4d !important;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, filter 160ms ease;
+}
+.theme [data-folio-choice]:focus-visible:not(:disabled) {
+  border-color: #87532e !important;
+  background: linear-gradient(105deg, #fff1cf88, #a171332e) !important;
+}
+.theme [data-folio-choice][aria-pressed="true"] {
+  border-color: #8a4525 !important;
+  background: linear-gradient(100deg, #a257292e, #e1b97847) !important;
+  box-shadow: inset 4px 0 #843b20, inset 0 0 0 2px #ffebbe88 !important;
+}
+.theme [data-folio-choice]:active:not(:disabled) { filter: brightness(.94); }
+.theme [data-folio-choice]:disabled { opacity: .55; cursor: not-allowed; }
+.theme [data-folio-choice] :is(b, strong) {
+  font-family: var(--folio-title, Georgia, serif);
+  font-size: 16px;
+  font-weight: 400;
+  color: #442610;
+}
+.theme :is([data-folio-choice], [data-folio-fields] :is(input, select, textarea)):focus-visible {
+  outline: 2px solid #6c391b !important;
+  outline-offset: 3px;
+}
+.theme [data-folio-fields] :is(input, select, textarea) {
+  border: 1px solid #8e6238 !important;
+  border-radius: 3px;
+  background: linear-gradient(#c6a06133, #fff0ce77) !important;
+  color: #352310 !important;
+  box-shadow: inset 0 2px 4px #603b2426, 0 1px #fff1c977 !important;
+  font-family: var(--folio-body, Georgia, serif);
+  font-size: 14px;
+  line-height: 1.45;
+  min-width: 0;
+  max-width: 100%;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.theme [data-folio-fields] :is(input, select, textarea):focus-visible {
+  box-shadow: inset 0 1px 3px #603b241a, 0 0 0 3px #98622924 !important;
+}
+.theme [data-folio-fields] :is(input, select, textarea):disabled { opacity: .6; cursor: not-allowed; }
+.theme [data-folio-fields] :is(input, textarea)::placeholder { color: #786044; opacity: 1; }
+.theme [data-folio-fields] select option { color: #352310; background: #ead4a7; }
+.theme [data-folio-chapter] {
+  border: 0 !important;
+  background: var(--folio-medallion) center / contain no-repeat !important;
+  color: #f8dfa8 !important;
+  font-size: 21px !important;
+  font-weight: 400 !important;
+  text-shadow: 0 1px 2px #27170c !important;
+  aspect-ratio: 1;
+}
+.theme [data-folio-divider] { color: #854925; }
+.theme[data-character-book="open"] [data-folio-divider]::after {
+  content: "";
+  display: block !important;
+  position: static;
+  width: min(216px, 70%);
+  height: 36px;
+  margin: 0 auto;
+  border: 0;
+  background: var(--folio-divider-image) center / 100% auto no-repeat;
+  border-radius: 0;
+  box-shadow: none;
+  filter: none;
+  clip-path: none;
+  transform: none;
+  mask-image: none;
+  pointer-events: none;
+}
+.theme[data-character-book="open"] [data-folio-illuminated] {
+  border-top-color: transparent;
+}
+.theme[data-character-book="open"] [data-folio-illuminated]::before {
+  content: "";
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  width: min(300px, 76%);
+  height: 56px;
+  border: 0;
+  background: var(--folio-divider-image) center / 100% auto no-repeat;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 1px 0 #fff0bf99);
+  pointer-events: none;
+}
+@container auditPage (max-width: 560px) {
+  .theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a) { min-height: 44px !important; padding: 9px 12px; font-size: 12px; }
+  .theme [data-folio-choice] :is(b, strong) { font-size: 14px; }
+  .theme [data-folio-chapter] { font-size: 16px !important; }
+}
+/* Icon-only controls must not inherit a text button's horizontal padding. */
+.theme [data-folio-action][data-folio-icon] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+}
+.theme [data-folio-action][data-folio-icon] > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):hover:not(:active):not(:disabled):not([aria-disabled="true"]) {
+    filter: brightness(1.14);
+    box-shadow: 0 3px 8px #40210955, 0 0 0 1px #d3a76066 !important;
+  }
+  .theme [data-folio-choice]:hover:not(:disabled) {
+    border-color: #87532e !important;
+    box-shadow: inset 0 0 0 2px #fae7bd80, 0 2px 6px #603b2426 !important;
+  }
+  .theme [data-folio-choice][aria-pressed="true"]:hover:not(:disabled) {
+    box-shadow: inset 4px 0 #843b20, inset 0 0 0 2px #ffebbe88, 0 2px 6px #603b2426 !important;
+  }
+}
+
+/* A single brass glint follows a deliberate interaction. It never loops, is
+   clipped within the existing skin, and cannot intercept a click. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a) { overflow: hidden; }
+  .theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a)::after {
+    content: "";
+    display: block !important;
+    position: absolute;
+    inset: 3px;
+    width: auto;
+    height: auto;
+    border: 0;
+    background: linear-gradient(110deg, transparent 32%, #fff0c536 50%, transparent 68%);
+    box-shadow: none;
+    transform: translateX(-115%);
+    opacity: 1;
+    pointer-events: none;
+  }
+  .theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):is(:hover, :focus-visible):not(:disabled):not([aria-disabled="true"])::after {
+    transform: translateX(115%);
+    transition: transform 550ms var(--folio-motion-ease, ease);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme :is([data-folio-action], [data-folio-choice], [data-folio-tools] > button, [data-folio-tools] > a),
+  .theme [data-folio-fields] :is(input, select, textarea) { transition: none !important; }
+  .theme :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):active { transform: none; }
+}
+
+/* Keep the control skin on the page's shared folio palette. The previous
+   duplicate token assignments here had higher specificity than the surface
+   theme and silently restored the old warm-gold colors on login, roster and
+   live character pages. */
+.theme.theme[data-character-book="open"] :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a) {
+  color: var(--folio-control-ink, #fff0c7) !important;
+  background: var(--folio-control-wash, linear-gradient(transparent, transparent)), var(--folio-control-image) center / 100% 100% no-repeat, #45272b !important;
+  box-shadow: 0 2px 3px var(--folio-control-shadow, #4021094d) !important;
+  text-shadow: 0 1px 2px #100f16;
+}
+.theme.theme[data-character-book="open"] :is(button, a)[data-folio-action="quiet"] {
+  color: var(--folio-ink) !important;
+  border-color: color-mix(in srgb, var(--folio-gilt) 72%, var(--folio-line)) !important;
+  background: linear-gradient(145deg, #dce7eb23, #b8c8ce12), var(--folio-paper) !important;
+  box-shadow: inset 0 0 0 2px #eff0e173, 0 2px 3px #26364026 !important;
+  text-shadow: 0 1px #f4f3e773;
+}
+.theme.theme[data-character-book="open"] :is([data-folio-action], [data-folio-choice], [data-folio-tools] > button, [data-folio-tools] > a, [data-folio-fields] :is(input, select, textarea)):focus-visible {
+  outline-color: var(--folio-focus, #6c391b) !important;
+}
+.theme.theme[data-character-book="open"] [data-folio-choice] {
+  color: var(--folio-ink);
+  border-color: var(--folio-line) !important;
+  background: linear-gradient(105deg, #f0f0e454, #7a8b9220) !important;
+  box-shadow: inset 0 0 0 2px #eeedde4d !important;
+}
+.theme.theme[data-character-book="open"] [data-folio-choice][aria-pressed="true"] {
+  border-color: var(--folio-rubric) !important;
+  background: linear-gradient(100deg, #73625c2e, #c2c3ac47) !important;
+  box-shadow: inset 4px 0 var(--folio-rubric), inset 0 0 0 2px #eeeada88 !important;
+}
+.theme.theme[data-character-book="open"] [data-folio-choice] :is(b, strong) { color: var(--folio-ink); }
+.theme.theme[data-character-book="open"] [data-folio-fields] :is(input, select, textarea) {
+  border-color: color-mix(in srgb, var(--folio-gilt) 70%, var(--folio-line)) !important;
+  color: var(--folio-ink) !important;
+  background: linear-gradient(110deg, #dce7eb2b, #f1edde68) !important;
+  box-shadow: inset 0 2px 4px #26364026, 0 1px #eff0e177 !important;
+}
+.theme.theme[data-character-book="open"] [data-folio-fields] :is(input, textarea)::placeholder { color: var(--folio-muted); }
+.theme.theme[data-character-book="open"] [data-folio-fields] select option { color: var(--folio-ink); background: #e2ddc9; }
+@media (hover: hover) and (pointer: fine) {
+  .theme.theme[data-character-book="open"] :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):hover:not(:active):not(:disabled):not([aria-disabled="true"]) {
+    box-shadow: 0 3px 8px #15212955, 0 0 0 1px #bab8a366 !important;
+  }
+  .theme.theme[data-character-book="open"] [data-folio-choice]:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 2px #eeedde80, 0 2px 6px #26364026 !important;
+  }
+  .theme.theme[data-character-book="open"] [data-folio-choice][aria-pressed="true"]:hover:not(:disabled) {
+    box-shadow: inset 4px 0 var(--folio-rubric), inset 0 0 0 2px #eeeada88, 0 2px 6px #26364026 !important;
+  }
+}

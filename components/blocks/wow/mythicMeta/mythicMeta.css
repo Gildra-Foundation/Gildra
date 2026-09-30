@@ -10,7 +10,7 @@
 .mspot-sub{font-size:11px;color:var(--ink-2);margin-top:4px}
 .mspot-score{text-align:right}
 .mspot-score b{display:block;font-family:var(--display);font-weight:700;font-size:26px;color:#eef0f8;line-height:1}
-.mspot-score span{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.mspot-score span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
 .mrows{margin:6px 0 14px}
 .mrow{
   display:flex;align-items:center;gap:10px;padding:8px 4px;

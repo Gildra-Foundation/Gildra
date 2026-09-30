@@ -1,0 +1,111 @@
+/* The manuscript settles once as it is read; nothing loops at rest. */
+.page {
+  --folio-motion-fast: 160ms;
+  --folio-motion-normal: 240ms;
+  --folio-motion-enter: 560ms;
+  --folio-motion-ease: cubic-bezier(.2, .7, .25, 1);
+}
+
+.page[data-character-book="open"] .navigation a {
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+.page[data-character-book="open"] .navigation a[aria-current="location"] {
+  color: #fff0cc;
+  background: #b4a27626;
+  border-bottom-color: #d6c186;
+  box-shadow: inset 0 -2px #d6c186, inset 0 1px #e9d9ae33;
+  text-shadow: 0 1px 3px #0c0602;
+}
+.page[data-character-book="open"] .navigation a i { transition: color 180ms ease; }
+.page[data-character-book="open"] .navigation a[aria-current="location"] i { color: #f1dfb3; }
+.page[data-character-book="open"] .navigation a:active { background-color: #b4a27640; }
+.page[data-character-book="open"] .navigation a:focus-visible {
+  color: #fff0cc;
+  background-color: #b4a27640;
+  outline: 2px solid #d6c186;
+  outline-offset: -4px;
+}
+
+.page[data-character-book="open"] .chapter { scroll-margin-top: 100px; }
+
+/* Opt-in entrances never hide server-rendered content. Text fades in place,
+   while only small decorative elements settle onto the parchment. Work
+   surfaces, talent nodes, and action slots keep their exact hit positions. */
+@media (prefers-reduced-motion: no-preference) {
+  .page[data-character-book="open"] [data-book-reveal="ink"][data-book-revealed="true"],
+  .page[data-character-book="open"] [data-book-reveal="chapter"][data-book-revealed="true"] :is(h2, small, p),
+  .page[data-character-book="open"] .chapter:target h2 {
+    animation: chapterInk var(--folio-motion-enter) var(--folio-motion-ease);
+  }
+  .page[data-character-book="open"] [data-book-reveal="chapter"][data-book-revealed="true"] [data-folio-chapter],
+  .page[data-character-book="open"] .chapter:target [data-folio-chapter] {
+    animation: chapterSeal 620ms var(--folio-motion-ease);
+  }
+  .page[data-character-book="open"] [data-book-reveal="chapter"][data-book-revealed="true"][data-folio-illuminated]::before {
+    animation: chapterFlourish 720ms var(--folio-motion-ease);
+  }
+  .page[data-character-book="open"] [data-book-reveal="ornament"][data-book-revealed="true"] {
+    animation: ornamentSettle 680ms var(--folio-motion-ease);
+  }
+}
+@keyframes chapterInk {
+  from { opacity: .58; }
+  to { opacity: 1; }
+}
+@keyframes chapterSeal {
+  from { opacity: .65; transform: translateY(-3px) rotate(-5deg) scale(.94); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes chapterFlourish {
+  from { opacity: .35; transform: translateX(-50%) scaleX(.78); }
+  to { opacity: 1; transform: translateX(-50%) scaleX(1); }
+}
+@keyframes ornamentSettle {
+  from { opacity: .45; translate: 0 4px; }
+  to { translate: 0 0; }
+}
+
+/* Details reveal only their content. No height or grid animation moves the
+   book crease, control positions, or talent-node hit targets. */
+.page :is(details[data-book-disclosure]) > summary {
+  min-height: 36px;
+  padding-block: 8px;
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+.page :is(details[data-book-disclosure]) > summary::marker { color: #855128; }
+.page :is(details[data-book-disclosure]) > summary:hover { color: #6e3219; background-color: #9263360d; }
+.page :is(details[data-book-disclosure]) > summary:focus-visible { outline: 2px solid #6c391b; outline-offset: 3px; }
+.page :is(details[data-book-disclosure])[open] > :not(summary) { animation: inkReveal 200ms ease-out; }
+@keyframes inkReveal { from { opacity: .35; } to { opacity: 1; } }
+
+.page button[data-quality] {
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+.page button[data-quality]:active { transform: none; box-shadow: inset 0 2px 5px #603b2440; }
+.page button[data-quality][aria-pressed="true"] { outline: 2px solid #80522e; outline-offset: 2px; }
+.page button[data-quality]:focus-visible { outline: 2px solid #6c391b; outline-offset: 3px; }
+.page button[data-quality] img { transition: filter 180ms ease; }
+@media (hover: hover) and (pointer: fine) {
+  .page button[data-quality]:hover { box-shadow: inset 0 0 0 1px #e0b571, 0 3px 8px #65451b30; }
+  .page button[data-quality]:hover img { filter: brightness(1.08); }
+}
+.tooltip {
+  overscroll-behavior: contain;
+  scrollbar-color: #ae824f #24180f;
+  scrollbar-width: thin;
+}
+.tooltip[data-pinned="true"] { animation: inkReveal 180ms ease-out; }
+.tooltip button { transition: background-color 160ms ease, border-color 160ms ease, filter 160ms ease; }
+.tooltip button:hover { filter: brightness(1.16); }
+.tooltip button:active { filter: brightness(.88); }
+
+@media (prefers-reduced-motion: reduce) {
+  .page .navigation a, .page .navigation a i,
+  .page button[data-quality], .page button[data-quality] img,
+  .page details[data-book-disclosure] > summary, .tooltip button { transition: none !important; }
+  .page .chapter:target h2, .page .chapter:target [data-folio-chapter],
+  .page [data-book-reveal], .page [data-book-reveal="chapter"] :is(h2, small, p, [data-folio-chapter]),
+  .page [data-book-reveal="chapter"][data-folio-illuminated]::before,
+  .page details[data-book-disclosure][open] > :not(summary), .tooltip { animation: none !important; }
+}

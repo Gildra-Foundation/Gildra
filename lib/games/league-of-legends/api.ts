@@ -27,6 +27,7 @@ export type LeagueContentEntry = {
 };
 
 const apiURL = () => process.env.API_INTERNAL_URL ?? "http://api:8080";
+export const LEAGUE_CONTENT_PAGE_SIZE = 50;
 
 async function leagueRequest<T>(path: string, revalidate = 3600): Promise<T> {
   const response = await fetch(`${apiURL()}${path}`, {
@@ -77,10 +78,10 @@ export async function getLeagueContent(category: string, locale: "en_US" | "ru_R
   try {
     const suffix = cursor ? `&cursor=${encodeURIComponent(cursor)}` : "";
     return await leagueRequest<{ data: LeagueContentEntry[]; pagination: { hasMore: boolean; nextCursor?: string; limit: number } }>(
-      `/league-of-legends/v1/content/${encodeURIComponent(category)}?locale=${locale}&limit=100${suffix}`,
+      `/league-of-legends/v1/content/${encodeURIComponent(category)}?locale=${locale}&limit=${LEAGUE_CONTENT_PAGE_SIZE}${suffix}`,
     );
   } catch (error) {
     console.error("League content unavailable", error);
-    return { data: [], pagination: { hasMore: false, limit: 100 } };
+    return { data: [], pagination: { hasMore: false, limit: LEAGUE_CONTENT_PAGE_SIZE } };
   }
 }

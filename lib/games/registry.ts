@@ -9,7 +9,7 @@
  * All human-readable strings are EN dictionary keys — render them through
  * `t(lang)` / `tNav(lang)` from lib/i18n.ts and extend the RU dictionary.
  */
-import { altPath, p, type Lang } from "@/lib/i18n";
+import { altPath, p, type Lang } from "@/lib/i18n-paths";
 import { ANCHORS, anchorHref } from "@/lib/anchors";
 
 export type GameSlug =
@@ -81,13 +81,6 @@ const wow: GameDefinition = {
   nav: {
     tasks: [
       {
-        task: "Compare specs",
-        title: "Tier List",
-        desc: "Ranked Mythic+ specs with scores",
-        path: "/tier-lists",
-        icon: "#ic-sword",
-      },
-      {
         task: "Explore game data",
         title: "Library",
         desc: "Verified datasets, images and tooltips",
@@ -95,10 +88,10 @@ const wow: GameDefinition = {
         icon: "#ic-database",
       },
       {
-        task: "Prepare for raid",
-        title: "Raid Overview",
-        desc: "Manaforge Omega meta and specs",
-        path: anchorHref(ANCHORS.raid),
+        task: "Enter Season 2",
+        title: "Midnight Season 2",
+        desc: "Raid, Mythic+, gear and unlock calendar",
+        path: "/wow/midnight/season-2",
         icon: "#ic-shield",
       },
       {
@@ -111,16 +104,14 @@ const wow: GameDefinition = {
     ],
   },
   footer: {
-    tagline: "Gaming intelligence for Azeroth — live tier lists, meta statistics and guides.",
+    tagline: "Gaming intelligence for Azeroth — raid journals, Mythic+ routes and guides.",
     columns: [
       {
         title: "Content",
         links: [
-          { label: "Tier Lists", path: "/tier-lists" },
-          { label: "Database", path: "/database" },
           { label: "Mythic+", path: anchorHref(ANCHORS.meta) },
-          { label: "Raid", path: anchorHref(ANCHORS.raid) },
-          { label: "Builds", path: anchorHref(ANCHORS.builds, "/tier-lists") },
+          { label: "Raid", path: "/wow/raids" },
+          { label: "Builds", path: anchorHref(ANCHORS.builds, "/wow") },
           { label: "Guides", path: anchorHref(ANCHORS.guides) },
         ],
       },

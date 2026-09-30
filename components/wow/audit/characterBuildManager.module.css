@@ -1,0 +1,400 @@
+.manager { margin-top:16px; padding:15px; border:1px solid #4b3821; background:linear-gradient(135deg,rgba(var(--spec-rgb),.065),transparent 42%),#0d100e; }
+.heading,.libraryHead { display:flex; align-items:center; gap:11px; }
+.heading > span { width:38px; height:38px; display:grid; place-items:center; flex:0 0 auto; border:1px solid rgba(var(--spec-rgb),.5); color:var(--spec-accent); background:rgba(var(--spec-rgb),.08); }
+.heading svg { width:18px; }
+.heading div,.libraryHead div { min-width:0; }
+.heading small,.libraryHead small { color:#96774a; font-size:8px; font-weight:800; letter-spacing:.12em; }
+.heading h3,.libraryHead h3 { margin:2px 0 0; color:#e7dbc8; font-size:13px; }
+.heading p { margin:3px 0 0; color:#85827a; font-size:9px; line-height:1.4; }
+.modes { margin-top:12px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
+.modes button { min-height:84px; padding:10px; display:grid; align-content:space-between; gap:8px; text-align:left; border:1px solid #36342e; background:#121512; color:#88877f; }
+.modes button:hover,.modes button:focus-visible { outline:none; border-color:#8e6c3e; background:#19170f; }
+.modes button[aria-pressed="true"] { border-color:var(--spec-accent); background:linear-gradient(145deg,rgba(var(--spec-rgb),.17),rgba(var(--spec-rgb),.04)); box-shadow:inset 3px 0 var(--spec-accent),0 0 16px rgba(var(--spec-rgb),.1); }
+.modes button > span { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:3px 5px; }
+.modes button svg { width:13px; height:13px; color:#89bd72; }
+.modes button b { grid-column:2; color:#dcd0bd; font-size:11px; }
+.modes button small { grid-column:1/-1; color:#797a74; font-size:8px; line-height:1.35; }
+.modes button em { color:#a88d61; font-size:8px; font-style:normal; line-height:1.35; }
+.modeNote { margin:8px 0 0; color:#77776f; font-size:8px; line-height:1.45; }
+.libraryHead { justify-content:space-between; margin-top:16px; padding-top:13px; border-top:1px solid #2f2c25; }
+.newButton,.saveRow > button { min-height:34px; padding:0 11px; display:flex; align-items:center; justify-content:center; gap:6px; border:1px solid #655035; background:#1c1811; color:#d3b277; font-size:9px; font-weight:700; }
+.newButton svg,.saveRow > button svg { width:13px; }
+.newButton:hover,.newButton:focus-visible,.saveRow > button:hover,.saveRow > button:focus-visible { outline:none; border-color:var(--spec-accent); color:#f2ddba; }
+.saveRow { margin-top:9px; display:grid; grid-template-columns:minmax(0,1fr) max-content; gap:7px; }
+.saveRow label { min-width:0; }
+.saveRow label > span { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+.saveRow input { width:100%; min-height:38px; padding:0 10px; border:1px solid #454037; border-radius:0; outline:none; color:#e8ded0; background:#101210; font-size:10px; }
+.saveRow input:focus { border-color:var(--spec-accent); box-shadow:0 0 0 2px rgba(var(--spec-rgb),.12); }
+.builds { margin-top:9px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+.builds article { min-width:0; display:grid; grid-template-columns:minmax(0,1fr) 34px; border:1px solid #322f29; background:#101210; }
+.builds article[data-active="true"] { border-color:#78603a; background:#17150f; }
+.loadButton { min-width:0; min-height:46px; padding:7px 9px; display:flex; align-items:center; gap:8px; border:0; text-align:left; color:#8f8b82; background:transparent; }
+.loadButton:hover,.loadButton:focus-visible { outline:none; background:rgba(var(--spec-rgb),.07); }
+.loadButton > svg { width:14px; flex:0 0 auto; color:#9f7c45; }
+.loadButton span { min-width:0; display:grid; gap:2px; }
+.loadButton b { overflow:hidden; color:#d5c9b7; font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
+.loadButton small { color:#74736d; font-size:8px; }
+.deleteButton { display:grid; place-items:center; border:0; border-left:1px solid #2f2c26; color:#7e766b; background:transparent; }
+.deleteButton svg { width:13px; }
+.deleteButton:hover,.deleteButton:focus-visible { outline:none; color:#de7b68; background:rgba(162,63,48,.1); }
+.empty { margin-top:9px; padding:11px; border:1px dashed #36322b; color:#74736d; font-size:9px; text-align:center; }
+.message { min-height:13px; margin:7px 0 0; color:#9c8d74; font-size:8px; }
+@media(max-width:860px){.modes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.manager{padding:11px}.modes,.builds{grid-template-columns:1fr}.saveRow{grid-template-columns:1fr}.saveRow>button{justify-self:stretch}}
+
+
+/* Character Codex v2 — saved loadouts. */
+.manager { position:relative; overflow:hidden; border-color:var(--wow-line,rgba(188,151,86,.22)); border-radius:12px; background:rgba(10,12,15,.9); box-shadow:inset 0 1px rgba(255,235,197,.035); }
+.heading h3,.libraryHead h3,.loadButton b { color:var(--wow-ivory,#f0e8dc); font-family:var(--font-display),Georgia,serif; font-weight:500; }
+.heading small,.libraryHead small { color:var(--wow-gold,#c9a15d); }
+.heading p,.modeNote,.message { color:var(--wow-muted,#8e8981); }
+.heading>span { border-color:var(--wow-line-strong,rgba(211,173,101,.52)); border-radius:11px; color:var(--wow-gold-bright,#efd39a); background:rgba(201,161,93,.055); }
+.modes button,.builds article,.saveRow input,.empty { border-color:var(--wow-line,rgba(188,151,86,.22)); border-radius:9px; background:#0d1013; }
+.modes button:hover,.modes button:focus-visible,.builds article[data-active="true"] { border-color:var(--wow-line-strong,rgba(211,173,101,.52)); background:#14171a; }
+.modes button[aria-pressed="true"] { border-color:var(--spec-accent); background:rgba(var(--spec-rgb),.09); box-shadow:inset 3px 0 var(--spec-accent); }
+.newButton,.saveRow>button { border-color:var(--wow-line-strong,rgba(211,173,101,.52)); border-radius:9px; background:#151719; color:var(--wow-gold-bright,#efd39a); }
+
+/* Connected character: quest-book heading, inset choices, parchment saved builds. */
+:global([data-profile-source="battle-net"]) .manager {
+  border: 2px solid #8f6938;
+  border-radius: 2px;
+  color: #dcc8a2;
+  background: linear-gradient(#22180f, #110d08);
+  box-shadow: inset 0 0 0 1px #161009, inset 0 2px #c69a5866;
+  font-family: var(--wow-ui, Arial, sans-serif);
+  font-size: 12px;
+}
+:global([data-profile-source="battle-net"]) .heading {
+  margin: -15px -15px 0;
+  padding: 15px 20px;
+  border-bottom: 2px ridge #896333;
+  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+}
+:global([data-profile-source="battle-net"]) .heading > span { border-color: #80572d; border-radius: 2px; color: #eed19b; background: #342011; }
+:global([data-profile-source="battle-net"]) .heading small,
+:global([data-profile-source="battle-net"]) .libraryHead small { color: #684a2b; font-size: 11px; letter-spacing: .08em; }
+:global([data-profile-source="battle-net"]) .heading h3,
+:global([data-profile-source="battle-net"]) .libraryHead h3 { color: #3b2817; font: 700 19px/1.2 var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .heading p { color: #594024; font-size: 12px; line-height: 1.45; }
+:global([data-profile-source="battle-net"]) .modes { margin-top: 14px; }
+:global([data-profile-source="battle-net"]) .modes button {
+  min-height: 90px;
+  border: 1px solid #785a37;
+  border-radius: 2px;
+  color: #cdbb9a;
+  background: linear-gradient(#231b12, #10100d);
+}
+:global([data-profile-source="battle-net"]) .modes button:hover,
+:global([data-profile-source="battle-net"]) .modes button:focus-visible { border-color: #d7ac66; background: #302215; }
+:global([data-profile-source="battle-net"]) .modes button[aria-pressed="true"] { border-color: #c98b4c; color: #f1dbaa; background: linear-gradient(#45271a, #1a120e); box-shadow: inset 3px 0 #c98949; }
+:global([data-profile-source="battle-net"]) .modes button b { color: #f1ddba; font: 700 14px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .modes button small { color: #c4b08c; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .modes button em { color: #d6b57c; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .modeNote { margin-top: 10px; color: #c0ae90; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .libraryHead {
+  margin: 18px -15px 0;
+  padding: 11px 20px;
+  border-block: 2px ridge #896333;
+  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+}
+:global([data-profile-source="battle-net"]) .newButton,
+:global([data-profile-source="battle-net"]) .saveRow > button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 0;
+  color: #f0d39b;
+  background: #21180e url("/assets/wow/ui-textures/character/dark-gold-button-up.png") center / 100% 133.33% no-repeat;
+  box-shadow: 0 2px 5px #0009;
+  font-size: 12px;
+}
+:global([data-profile-source="battle-net"]) .newButton:active { background-image: url("/assets/wow/ui-textures/character/dark-gold-button-down.png"); }
+:global([data-profile-source="battle-net"]) .saveRow > button {
+  color: #f5d783;
+  background: #4f160f url("/assets/wow/ui-textures/character/dialog-button-up.png") center top / 100% 139.13% no-repeat;
+}
+:global([data-profile-source="battle-net"]) .saveRow > button:active { background-image: url("/assets/wow/ui-textures/character/dialog-button-down.png"); }
+:global([data-profile-source="battle-net"]) .saveRow input { min-height: 40px; border-color: #8a673e; border-radius: 2px; color: #f3deba; background: #120e0a; font-size: 13px; }
+:global([data-profile-source="battle-net"]) .builds article,
+:global([data-profile-source="battle-net"]) .builds article[data-active="true"] {
+  border-color: #957040;
+  border-radius: 2px;
+  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+}
+:global([data-profile-source="battle-net"]) .builds article[data-active="true"] { box-shadow: inset 3px 0 #386627; }
+:global([data-profile-source="battle-net"]) .loadButton { min-height: 52px; color: #543820; }
+:global([data-profile-source="battle-net"]) .loadButton:hover,
+:global([data-profile-source="battle-net"]) .loadButton:focus-visible { background: #ffebbb55; }
+:global([data-profile-source="battle-net"]) .loadButton > svg { color: #68421c; }
+:global([data-profile-source="battle-net"]) .loadButton b { color: #382414; font: 700 13px var(--wow-ui, Arial, sans-serif); }
+:global([data-profile-source="battle-net"]) .loadButton small { color: #654626; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .deleteButton { border-left-color: #a0794c; color: #6e321d; }
+:global([data-profile-source="battle-net"]) .deleteButton:hover,
+:global([data-profile-source="battle-net"]) .deleteButton:focus-visible { color: #a82617; background: #e8b09a77; }
+:global([data-profile-source="battle-net"]) .empty { padding: 13px; border-color: #8b6a42; border-radius: 2px; color: #d1bc98; background: #1a140d; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .message { min-height: 17px; color: #c9b48f; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .manager :is(button, input):focus-visible { outline: 2px solid #ffd689; outline-offset: 2px; }
+@media (max-width: 520px) {
+  :global([data-profile-source="battle-net"]) .heading { margin: -11px -11px 0; padding: 14px; }
+  :global([data-profile-source="battle-net"]) .libraryHead { margin-inline: -11px; padding-inline: 14px; }
+  :global([data-profile-source="battle-net"]) .modes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  :global([data-profile-source="battle-net"]) .modes button { min-height: 116px; padding: 8px; }
+  :global([data-profile-source="battle-net"]) .modes button b { font-size: 13px; }
+}
+
+/* In the connected hero's open book, saved builds are printed directly on the
+   manuscript leaves. Keep the underlying book's material and binding gutter;
+   do not introduce the older dark card/map-header treatment inside it. */
+:global([data-profile-source="battle-net"][data-character-book="open"]) .manager {
+  position: relative;
+  overflow: visible;
+  margin-top: 28px;
+  padding: 24px 0 4px;
+  border: 0;
+  border-top: 3px double var(--folio-line, #7b756b70);
+  border-radius: 0;
+  color: var(--folio-ink, #37342f);
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--folio-body, "Gildra Atlas", Georgia, serif);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .heading {
+  width: var(--book-leaf-width, 100%);
+  min-height: 74px;
+  margin: 0;
+  padding: 4px 0 14px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .heading > span {
+  width: 42px;
+  height: 42px;
+  border: 3px double #98764b;
+  border-radius: 50%;
+  color: #7c3d24;
+  background: linear-gradient(145deg, #f3dfb5a8, #b7925a42), var(--folio-paper);
+  box-shadow: inset 0 0 0 2px #f8e9c866, 0 2px 4px #49331d20;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .heading small,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .libraryHead small {
+  color: var(--folio-rubric, #70533d);
+  font: 700 10px/1.35 var(--folio-body, "Gildra Atlas", Georgia, serif);
+  letter-spacing: .14em;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .heading h3,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .libraryHead h3 {
+  color: var(--folio-ink, #37342f);
+  font: 700 24px/1.16 var(--folio-title, "Gildra Kurale", Georgia, serif);
+  text-shadow: none;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .heading p,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modeNote {
+  color: var(--folio-muted, #625d55);
+  font: 12px/1.55 var(--folio-body, "Gildra Atlas", Georgia, serif);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes {
+  margin-top: 4px;
+  align-items: stretch;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button {
+  min-height: 88px;
+  padding: 12px 14px;
+  border: 1px solid var(--folio-line, #7b756b70);
+  border-radius: 2px;
+  color: var(--folio-ink, #37342f);
+  background: var(--folio-paper);
+  box-shadow: inset 0 1px #fff2d277;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button:hover,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button:focus-visible {
+  border-color: #8f7049;
+  color: #30271e;
+  background: linear-gradient(180deg, #f1dfbb2b, #b9cdd21c), var(--folio-paper);
+  box-shadow: inset 0 0 0 1px #fff1cc8a;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button[aria-pressed="true"] {
+  border-color: #875239;
+  color: #30251c;
+  background: linear-gradient(180deg, #ead7ad38, #b9cdd224), var(--folio-paper);
+  box-shadow: inset 4px 0 #87442e, inset 0 0 0 1px #fff0c977;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button > span { gap: 4px 7px; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button svg { color: #45623a; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button b {
+  color: var(--folio-ink, #37342f);
+  font: 700 16px/1.2 var(--folio-title, "Gildra Kurale", Georgia, serif);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button small,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button em {
+  color: var(--folio-muted, #625d55);
+  font: 11px/1.4 var(--folio-body, "Gildra Atlas", Georgia, serif);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .libraryHead {
+  min-height: 66px;
+  margin: 28px 0 0;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid var(--folio-line, #7b756b70);
+  border-bottom: 1px solid var(--folio-line, #7b756b70);
+  background: transparent;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .libraryHead h3 { font-size: 22px; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .newButton,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .saveRow > button {
+  min-height: 44px;
+  border: 1px solid #80603d;
+  border-radius: 3px;
+  color: #fff0c7;
+  background: linear-gradient(#f0d39b18, transparent 42%), linear-gradient(#713025, #4b2018 58%, #2d130e);
+  box-shadow: inset 0 1px #e2ba7866, inset 0 -1px #1d0d08, 0 2px 4px #49331d33;
+  font: 700 13px/1.2 var(--folio-title, "Gildra Kurale", Georgia, serif);
+  text-shadow: 0 1px #1d0d08;
+  transition: border-color 160ms ease, filter 160ms ease, transform 160ms ease;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .newButton {
+  color: var(--folio-ink, #37342f);
+  background: var(--folio-paper);
+  text-shadow: none;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .newButton:hover,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .newButton:focus-visible,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .saveRow > button:hover,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .saveRow > button:focus-visible {
+  border-color: #a77b43;
+  filter: brightness(1.08);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .saveRow input {
+  min-height: 44px;
+  border: 1px solid #8b765a;
+  border-radius: 2px;
+  color: var(--folio-ink, #37342f);
+  background: var(--folio-paper);
+  box-shadow: inset 0 1px 3px #44321e1c;
+  font: 14px/1.4 var(--folio-body, "Gildra Atlas", Georgia, serif);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .saveRow input::placeholder {
+  color: #6f665a;
+  opacity: 1;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .saveRow input:focus-visible {
+  border-color: #76502d;
+  outline: 2px solid #805a3273;
+  outline-offset: 2px;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .builds article,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .builds article[data-active="true"] {
+  min-height: 58px;
+  border: 0;
+  border-top: 1px solid var(--folio-line, #7b756b70);
+  border-bottom: 1px solid var(--folio-faint-rule, #7b756b40);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .builds article[data-active="true"] {
+  box-shadow: inset 3px 0 #7a3d2b;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .loadButton {
+  min-height: 56px;
+  color: var(--folio-ink, #37342f);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .loadButton:hover,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .loadButton:focus-visible { background: #b89d7020; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .loadButton > svg { color: #76502e; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .loadButton b {
+  color: var(--folio-ink, #37342f);
+  font: 700 15px/1.2 var(--folio-title, "Gildra Kurale", Georgia, serif);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .loadButton small,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .message {
+  color: var(--folio-muted, #625d55);
+  font: 12px/1.4 var(--folio-body, "Gildra Atlas", Georgia, serif);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .deleteButton {
+  min-width: 44px;
+  border-left: 1px solid var(--folio-faint-rule, #7b756b40);
+  color: #725446;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .deleteButton:hover,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .deleteButton:focus-visible {
+  color: #7f2f20;
+  background: #87442e12;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .empty {
+  width: var(--book-leaf-width, 100%);
+  padding: 12px 0;
+  border: 0;
+  border-block: 1px dashed var(--folio-line, #7b756b70);
+  border-radius: 0;
+  color: var(--folio-muted, #625d55);
+  background: transparent;
+  font: 12px/1.5 var(--folio-body, "Gildra Atlas", Georgia, serif);
+  text-align: left;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .message {
+  min-height: 18px;
+  margin: 8px 0 0;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .manager :is(button, input):focus-visible {
+  outline: 2px solid #76502d99;
+  outline-offset: 3px;
+}
+@container auditPage (max-width: 820px) {
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .heading { width: 100%; }
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .empty { width: 100%; }
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .libraryHead { margin-top: 24px; }
+}
+@container auditPage (max-width: 560px) {
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .manager { margin-top: 20px; padding-top: 18px; }
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .heading h3 { font-size: 22px; }
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button { min-height: 68px; padding: 10px 12px; }
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .modes > button b { font-size: 15px; }
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .libraryHead { gap: 8px; }
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .libraryHead h3 { font-size: 20px; }
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .libraryHead .newButton { min-height: 42px; padding-inline: 9px; }
+  :global([data-profile-source="battle-net"][data-character-book="open"]) .empty { width: 100%; }
+}
+
+/* Connected character: one parchment leaf, with separate metal action controls. */
+:global([data-profile-source="battle-net"]) .manager,
+:global([data-profile-source="battle-net"]) .modes button,
+:global([data-profile-source="battle-net"]) .builds article,
+:global([data-profile-source="battle-net"]) .builds article[data-active="true"],
+:global([data-profile-source="battle-net"]) .saveRow input,
+:global([data-profile-source="battle-net"]) .empty {
+  color: #3b2817;
+  background: var(--wow-paper);
+}
+:global([data-profile-source="battle-net"]) .manager { box-shadow: inset 0 0 0 1px #e7cb9466, 0 6px 16px #0005; }
+:global([data-profile-source="battle-net"]) .modes button { border-color: #977044; }
+:global([data-profile-source="battle-net"]) .modes button:hover,
+:global([data-profile-source="battle-net"]) .modes button:focus-visible { color: #2d1b0d; background: var(--wow-paper); box-shadow: inset 0 0 0 2px #fff0ca77; }
+:global([data-profile-source="battle-net"]) .modes button[aria-pressed="true"] { border-color: #8d471e; color: #2d1b0d; background: var(--wow-paper); box-shadow: inset 4px 0 #a45622, inset 0 0 0 1px #fff1c7; }
+:global([data-profile-source="battle-net"]) .modes button b { color: #3c2715; }
+:global([data-profile-source="battle-net"]) .modes button small,
+:global([data-profile-source="battle-net"]) .modeNote,
+:global([data-profile-source="battle-net"]) .message { color: #614528; }
+:global([data-profile-source="battle-net"]) .modes button em { color: #71491c; }
+:global([data-profile-source="battle-net"]) .saveRow input { border-color: #896139; color: #3b2817; }
+:global([data-profile-source="battle-net"]) .saveRow input::placeholder { color: #725334; opacity: 1; }
+:global([data-profile-source="battle-net"]) .empty { color: #5f4124; }
+:global([data-profile-source="battle-net"]) .newButton,
+:global([data-profile-source="battle-net"]) .saveRow > button {
+  border: 1px solid #76572d;
+  border-radius: 2px;
+  color: #f7dda6;
+  background: linear-gradient(#fff0c11b, transparent 40%), linear-gradient(#3c2b17, #21180e 53%, #100b07);
+  box-shadow: inset 0 0 0 1px #120b05, inset 0 1px #f7d69e4d, 0 3px 6px #0007;
+  text-shadow: 0 1px #100804;
+}
+:global([data-profile-source="battle-net"]) .saveRow > button {
+  border-color: #9d4727;
+  background: linear-gradient(#ffdcaf24, transparent 40%), linear-gradient(#912e1c, #651a11 52%, #310d09);
+}
+:global([data-profile-source="battle-net"]) .newButton:hover,
+:global([data-profile-source="battle-net"]) .newButton:focus-visible,
+:global([data-profile-source="battle-net"]) .saveRow > button:hover,
+:global([data-profile-source="battle-net"]) .saveRow > button:focus-visible { border-color: #e0ae5a; color: #fff2cd; filter: brightness(1.12); }
+:global([data-profile-source="battle-net"]) .newButton:active,
+:global([data-profile-source="battle-net"]) .saveRow > button:active { background: linear-gradient(#0005, transparent 50%), linear-gradient(#1a1009, #4b2b15); box-shadow: inset 0 2px 5px #0009; }

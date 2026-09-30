@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Genshin Impact">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="68%"><stop stop-color="#43245f"/><stop offset=".62" stop-color="#170d29"/><stop offset="1" stop-color="#050711"/></radialGradient>
+    <linearGradient id="violet" x1=".15" y1=".1" x2=".85" y2=".9"><stop stop-color="#ffd4ff"/><stop offset=".48" stop-color="#d06dde"/><stop offset="1" stop-color="#7047b2"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#efc477"/><stop offset="1" stop-color="#8f541f"/></linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#03070d" stroke="url(#gold)" stroke-width="3"/>
+  <circle cx="64" cy="64" r="51" fill="url(#bg)" stroke="#281235" stroke-width="4"/>
+  <path d="M64 20l9 27 27-9-19 21 23 16-29-2-2 29-14-24-22 19 8-28-28-6 27-11-13-26 24 17z" fill="url(#violet)" fill-opacity=".92" stroke="#f0baff" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="64" cy="63" r="11" fill="#10091d" stroke="#ffe0ff" stroke-width="2"/>
+  <path d="M57 63h14M64 56v14" stroke="#ffe5ff" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,15 @@
+# Illuminated character grimoire — UI materials
+
+Generated 2026-09-25 using the built-in imagegen tool (not CLI). Source PNGs copied without editing; transparency preserved. Next Image supplies optimized runtime derivatives via PhysicalBookFrame.tsx. These are decorative materials only: no character data, item icons, labels or numbers are baked into images.
+
+## grimoire-frame-v1.png
+
+Use case: stylized-concept. Asset type: production game UI nine-slice decorative frame on transparent background. Make ONE square ornate frame for a World of Warcraft old illuminated spellbook interface: antique dark brass corner filigree, worn brown leather binding under thin double brass rules, small sculpted scrollwork. Orthographic front view, perfectly symmetric axis-aligned square. Frame outer bounds from 2% to 98% of canvas, entire decorative thickness within outer 14%; vast central 72% square must be genuinely transparent, not black or parchment. Straight thin middle edges suitable for nine-slicing; richer small corner ornaments, no protruding title crest. Soft small realistic shadow outside, warm candle highlights, hand-painted Blizzard-style fantasy UI craftsmanship. This frames a real live 3D character and tooltip text, so center completely empty alpha. No letters, runes, numbers, symbols, images, gems, content, logos or watermark. Deliver square PNG with true transparent background.
+
+## grimoire-button-v1.png
+
+Use case: stylized-concept. Asset type: production game UI button skin. ONE wide horizontal empty button face for a World of Warcraft antique spellbook. Canvas and button 3:1 landscape ratio. Full-bleed rectangular button aligned flat to camera, outer edge aligned to canvas edges. Dark oxblood burgundy embossed leather middle, very subtle grain, warm softly bevelled antique brass 2-line rim with tiny leaf engravings at four corners. Restrained aged premium medieval craftsmanship, hand-painted realistic texture, slight highlight top-left and contact shadow bottom. 80% blank central leather for clear HTML text overlaid. Rounded corners at most 2% radius. No text, no runes, no symbols, no jewels, no ornaments protruding outside rectangle, no additional objects, no border padding, no watermarks. This is a usable texture not a UI mockup.
+
+## grimoire-medallion-v1.png
+
+Use case: stylized-concept. Asset type: single transparent UI stat medallion for a World of Warcraft antique spellbook. Centered circular aged brass medallion with finely engraved medieval foliage on thick outer ring, softly bevelled worn bronze and antique gold metal. Empty dark warm brown matte leather disk in center, suitable for overlaying a simple readable statistic icon. Ring runs from radius 32% to 46% of square canvas, outer extent 46%; empty center radius32%. Front-on symmetrical orthographic view, compact rich hand-painted fantasy game asset, realistic subtle shadow. True transparent background outside circular medallion. No existing icon, no letters, numbers, runes, text, no gems, no logo, no watermark. Square PNG.

@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const rawDescription = entity.description || entity.tooltip?.plainText || `${entity.name} — World of Warcraft database entry.`;
   const description = entity.type === "quest" ? formatQuestText(rawDescription, "en") : rawDescription;
   const canonical = `/database/${type}/${id}/${entity.slug}`;
-  return { title: `${entity.name} — Gildra Database`, description: description.slice(0, 160), alternates: { canonical, languages: { en: canonical, ru: `/ru/database/${type}/${id}/${entity.slug}` } }, robots: entity.name && (entity.description || entity.tooltip) ? "index, follow" : "noindex, follow" };
+  return { title: `${entity.name} — Gildra Database`, description: description.slice(0, 160), alternates: { canonical, languages: { en: canonical, ru: `/ru/database/${type}/${id}/${entity.slug}`, "x-default": canonical } }, robots: entity.name && (entity.description || entity.tooltip) ? "index, follow" : "noindex, follow" };
 }
 
 export default async function Page({ params, searchParams }: Props) {

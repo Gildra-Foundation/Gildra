@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { langOf, p, t } from "@/lib/i18n";
 
 const KEY = "gildra-consent";
 
@@ -13,8 +12,15 @@ const KEY = "gildra-consent";
 export function CookieNotice() {
   const [visible, setVisible] = useState(false);
   const pathname = usePathname();
-  const lang = langOf(pathname);
-  const tt = t(lang);
+  const lang = pathname === "/ru" || pathname?.startsWith("/ru/") ? "ru" : "en";
+  const characterBook = /^\/(?:ru\/)?(?:login|wow\/characters(?:\/.*)?)\/?$/.test(pathname);
+  const consentCopy = characterBook
+    ? lang === "ru"
+      ? "Gildra хранит настройки в браузере и собирает анонимную статистику. Подробнее —"
+      : "Gildra stores browser settings and anonymous usage statistics. See the"
+    : lang === "ru"
+      ? "Gildra хранит настройки в вашем браузере и собирает анонимную статистику использования, чтобы улучшать продукт. Подробнее — в"
+      : "Gildra stores your preferences in your browser and collects anonymous usage statistics to improve the product. See the";
 
   useEffect(() => {
     if (window.location.hostname === "api.gildra.net") return;
@@ -34,15 +40,26 @@ export function CookieNotice() {
     setVisible(false);
   };
 
-  if (!visible || pathname.startsWith("/api-console") || pathname.includes("/talents")) return null;
+  if (
+    !visible
+    || pathname.startsWith("/api-console")
+    || pathname.includes("/talents")
+    || pathname.includes("/wow/characters/")
+  ) return null;
 
   return (
-    <aside className="cookie" role="region" aria-label="Cookies">
+    <aside
+      className={`cookie${characterBook ? " cookie-book" : ""}`}
+      style={characterBook ? {
+        "--cookie-book-paper": 'image-set(url("/_next/image?url=%2Fassets%2Fwow%2Fcharacter-book%2Ffolio-vellum-v1-optimized.webp&w=640&q=75") 1x, url("/_next/image?url=%2Fassets%2Fwow%2Fcharacter-book%2Ffolio-vellum-v1-optimized.webp&w=1920&q=75") 2x)',
+        "--cookie-book-button": 'url("/_next/image?url=%2Fassets%2Fwow%2Fcharacter-book%2Fgrimoire-button-v1-optimized.webp&w=384&q=75")',
+      } as CSSProperties : undefined}
+      role="region"
+      aria-label="Cookies"
+    >
       <p className="cookie-text">
-        {tt(
-          "Gildra stores your preferences in your browser and collects anonymous usage statistics to improve the product. See the",
-        )}{" "}
-        <Link href={p(lang, "/privacy")}>{tt("privacy policy")}</Link>.
+        {consentCopy}{" "}
+        <Link href={lang === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{lang === "ru" ? "политике конфиденциальности" : "privacy policy"}</Link>.
       </p>
       <div className="cookie-actions">
         <button
@@ -50,14 +67,14 @@ export function CookieNotice() {
           className="btn btn-primary cookie-ok"
           onClick={() => choose("accepted")}
         >
-          {tt("Accept")}
+          Accept
         </button>
         <button
           type="button"
           className="cookie-no"
           onClick={() => choose("declined")}
         >
-          {tt("Decline")}
+          Decline
         </button>
       </div>
     </aside>

@@ -53,10 +53,69 @@ async function catalogFetchOptions(revalidate: number, tags: string[] = []) {
   return { cache: "force-cache" as const, next: { revalidate, tags } };
 }
 
-async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestCache = "force-cache"): Promise<T> {
+type DevelopmentCatalogCacheEntry = { expiresAt: number; bytes: number; value: unknown };
+type DevelopmentCatalogCacheState = { entries: Map<string, DevelopmentCatalogCacheEntry>; bytes: number };
+type CatalogGlobal = typeof globalThis & { __gildraDevelopmentCatalogCache?: DevelopmentCatalogCacheState };
+const catalogGlobal = globalThis as CatalogGlobal;
+const developmentCatalogCache = catalogGlobal.__gildraDevelopmentCatalogCache ??= { entries: new Map(), bytes: 0 };
+const developmentCatalogCacheMaxEntries = 32;
+const developmentCatalogCacheMaxBytes = 4 * 1024 * 1024;
+
+function readDevelopmentCatalogCache<T>(key: string): T | undefined {
+  const entry = developmentCatalogCache.entries.get(key);
+  if (!entry) return undefined;
+  if (entry.expiresAt <= Date.now()) {
+    developmentCatalogCache.entries.delete(key);
+    developmentCatalogCache.bytes -= entry.bytes;
+    return undefined;
+  }
+  // Refresh insertion order so the least recently used response is evicted first.
+  developmentCatalogCache.entries.delete(key);
+  developmentCatalogCache.entries.set(key, entry);
+  return entry.value as T;
+}
+
+function writeDevelopmentCatalogCache(key: string, value: unknown, ttlSeconds: number) {
+  if (ttlSeconds <= 0) return;
+  const encoded = JSON.stringify(value);
+  if (!encoded) return;
+  const bytes = encoded.length * 2;
+  if (bytes > developmentCatalogCacheMaxBytes) return;
+
+  const previous = developmentCatalogCache.entries.get(key);
+  if (previous) {
+    developmentCatalogCache.entries.delete(key);
+    developmentCatalogCache.bytes -= previous.bytes;
+  }
+  while (developmentCatalogCache.entries.size >= developmentCatalogCacheMaxEntries
+    || developmentCatalogCache.bytes + bytes > developmentCatalogCacheMaxBytes) {
+    const oldestKey = developmentCatalogCache.entries.keys().next().value as string | undefined;
+    if (oldestKey === undefined) break;
+    const oldest = developmentCatalogCache.entries.get(oldestKey);
+    if (oldest) developmentCatalogCache.bytes -= oldest.bytes;
+    developmentCatalogCache.entries.delete(oldestKey);
+  }
+  developmentCatalogCache.entries.set(key, { value, bytes, expiresAt: Date.now() + ttlSeconds * 1000 });
+  developmentCatalogCache.bytes += bytes;
+}
+
+async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestCache = "force-cache", timeoutMs = 15_000): Promise<T> {
+  const cacheOptions = cache === "no-store"
+    ? { cache: "no-store" as const }
+    : await catalogFetchOptions(revalidate, ["catalog"]);
+  const useDevelopmentCache = process.env.NODE_ENV === "development"
+    && cache === "force-cache"
+    && cacheOptions.cache === "force-cache"
+    && path.startsWith("/v1/game/");
+  const cacheKey = `${apiURL()}${path}`;
+  if (useDevelopmentCache) {
+    const cached = readDevelopmentCatalogCache<T>(cacheKey);
+    if (cached !== undefined) return cached;
+  }
+
   const response = await fetch(`${apiURL()}${path}`, {
-    ...(cache === "no-store" ? { cache: "no-store" as const } : await catalogFetchOptions(revalidate, ["catalog"])),
-    signal: AbortSignal.timeout(15_000),
+    ...cacheOptions,
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) {
     let message = `Catalog request failed (${response.status})`;
@@ -68,7 +127,12 @@ async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestC
     }
     throw new Error(message);
   }
-  return await response.json() as T;
+  const value = await response.json() as T;
+  if (useDevelopmentCache && response.status === 200
+    && /(?:^|,)\s*public(?:\s|,|$)/i.test(response.headers.get("cache-control") ?? "")) {
+    writeDevelopmentCatalogCache(cacheKey, value, Math.min(revalidate, 60));
+  }
+  return value;
 }
 
 export async function getAnalyticsOverview(hours = 24): Promise<AnalyticsOverview> {
@@ -93,24 +157,7 @@ export async function getCatalogPreview(locale: "en_US" | "ru_RU"): Promise<Cata
   return (await Promise.all(requests)).flat();
 }
 
-export async function getCatalogPage({
-  locale,
-  product = "wow",
-  dataset = "",
-  type = "",
-  query = "",
-  cursor = "",
-  category = "",
-  facets = [],
-  minItemLevel,
-  maxItemLevel,
-  minRequiredLevel,
-  maxRequiredLevel,
-  limit = 24,
-  includeTotal = true,
-  itemClassId,
-  fresh = false,
-}: {
+export type CatalogPageParams = {
   locale: "en_US" | "ru_RU";
   product?: string;
   dataset?: string;
@@ -127,7 +174,30 @@ export async function getCatalogPage({
   includeTotal?: boolean;
   itemClassId?: number;
   fresh?: boolean;
-}): Promise<CatalogPage> {
+  timeoutMs?: number;
+};
+
+export async function getCatalogPage({
+  locale,
+  product = "wow",
+  dataset = "",
+  type = "",
+  query = "",
+  cursor = "",
+  category = "",
+  facets = [],
+  minItemLevel,
+  maxItemLevel,
+  minRequiredLevel,
+  maxRequiredLevel,
+  limit = 24,
+  // Full counts can require scanning the localization catalog. Keep paged
+  // reads fast by default; callers that display an exact total opt in.
+  includeTotal = false,
+  itemClassId,
+  fresh = false,
+  timeoutMs = 15_000,
+}: CatalogPageParams): Promise<CatalogPage> {
   const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: String(includeTotal) });
   if (dataset) params.set("dataset", dataset);
   if (type) params.set("type", type);
@@ -142,8 +212,13 @@ export async function getCatalogPage({
   if (minRequiredLevel !== undefined) params.set("minRequiredLevel", String(minRequiredLevel));
   if (maxRequiredLevel !== undefined) params.set("maxRequiredLevel", String(maxRequiredLevel));
   if (itemClassId !== undefined) params.set("itemClassId", String(itemClassId));
-  const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`, fresh ? 0 : 300, fresh ? "no-store" : "force-cache");
+  const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`, fresh ? 0 : 300, fresh ? "no-store" : "force-cache", timeoutMs);
   return { data: page.data, pagination: page.pagination };
+}
+
+export async function getCatalogTotal(params: CatalogPageParams): Promise<number | undefined> {
+  const page = await getCatalogPage({ ...params, limit: 1, includeTotal: true });
+  return page.pagination.total;
 }
 
 export async function getCatalogCategories(
@@ -264,6 +339,8 @@ export async function getCatalogSitemapEntries(
 ): Promise<CatalogSitemapEntry[]> {
   const params = new URLSearchParams({ product, type });
   if (shard) params.set("shard", shard);
-  const page = await catalogRequest<{ data: CatalogSitemapEntry[] }>(`/v1/game/sitemap-entries?${params}`, 3600);
+  // Shards can exceed Next's 2 MB Data Cache item limit. The XML response is
+  // cached at the route/CDN layer, so avoid a second oversized JSON cache.
+  const page = await catalogRequest<{ data: CatalogSitemapEntry[] }>(`/v1/game/sitemap-entries?${params}`, 3600, "no-store");
   return page.data;
 }

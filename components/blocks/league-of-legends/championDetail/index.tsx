@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image, { getImageProps } from "next/image";
 import { notFound } from "next/navigation";
 import { defineBlock, type BlockComponentProps, type RenderContext } from "@/lib/blocks/types";
 import { GAMES, gameHref } from "@/lib/games/registry";
@@ -27,10 +28,10 @@ function ChampionDetail({ data, lang }: BlockComponentProps<ChampionDetailProps,
   return <>
     <div className={styles.breadcrumb}><Link href={gameHref(game, lang, "/")}>{tt("Champions")}</Link><span>/</span><strong>{champion.name}</strong></div>
     <section className={styles.championHero}>
-      {champion.assets.splash && <img src={champion.assets.splash} alt="" />}
+      {champion.assets.splash && <Image src={champion.assets.splash} alt="" fill sizes="(max-width: 760px) calc(100vw - 28px), (max-width: 1376px) 93vw, 1280px" quality={75} priority />}
       <div className={styles.heroShade} />
       <div className={styles.championIdentity}>
-        {champion.assets.icon && <img src={champion.assets.icon} alt="" />}
+        {champion.assets.icon && <Image src={champion.assets.icon} alt="" width={184} height={184} sizes="92px" quality={90} />}
         <div><span>{champion.tags.join(" · ")}</span><h1>{champion.name}</h1><p>{champion.title}</p></div>
       </div>
       <div className={styles.heroId}>RIOT ID {champion.id}</div>
@@ -42,15 +43,42 @@ function ChampionDetail({ data, lang }: BlockComponentProps<ChampionDetailProps,
     </section>
     <section className={styles.detailSection} id="abilities">
       <header><div><span className={styles.eyebrow}>{tt("KIT REFERENCE")}</span><h2>{tt("Abilities")}</h2></div><p>{champion.abilities.length} {tt("official Data Dragon records")}</p></header>
-      <div className={styles.abilities}>{champion.abilities.map((ability) => <article key={`${ability.slot}-${ability.key}`}>
-        <div className={styles.abilityIcon}>{ability.iconUrl ? <img src={ability.iconUrl} alt="" /> : <span>{ability.slot}</span>}<b>{ability.slot}</b></div>
-        <div><span>{ability.kind}</span><h3>{ability.name}</h3><p>{clean(ability.description)}</p></div>
-      </article>)}</div>
+      <div className={styles.abilities}>{champion.abilities.map((ability) => {
+        const iconProps = ability.iconUrl ? getImageProps({
+          src: ability.iconUrl,
+          alt: "",
+          width: 120,
+          height: 120,
+          sizes: "60px",
+          quality: 90,
+          loading: "lazy",
+          decoding: "async",
+          fetchPriority: "low",
+        }).props : null;
+        return <article key={`${ability.slot}-${ability.key}`}>
+          <div className={styles.abilityIcon}>{iconProps ? <img {...iconProps} /> : <span>{ability.slot}</span>}<b>{ability.slot}</b></div>
+          <div><span>{ability.kind}</span><h3>{ability.name}</h3><p>{clean(ability.description)}</p></div>
+        </article>;
+      })}</div>
     </section>
     <SkillPathPreview abilities={champion.abilities} locale={locale} />
     <section className={styles.detailSection} id="skins">
       <header><div><span className={styles.eyebrow}>{tt("OFFICIAL ARTWORK")}</span><h2>{tt("Skins")}</h2></div><p>{champion.skins.length} {tt("records")} · {distinctSkins.length} {tt("distinct artworks")}</p></header>
-      <div className={styles.skinGrid}>{distinctSkins.slice(0, 24).map((skin) => <article key={skin.id}>{skin.assets.splash && <img src={skin.assets.splash} alt="" loading="lazy" />}<div><strong>{skin.name === "default" ? champion.name : skin.name}</strong><span>#{skin.number}{skin.hasChromas ? " · Chromas" : ""}</span></div></article>)}</div>
+      {/* These offscreen images use server-generated img props to avoid hydrating 24 Image components. */}
+      <div className={styles.skinGrid}>{distinctSkins.slice(0, 24).map((skin) => {
+        const imageProps = skin.assets.splash ? getImageProps({
+          src: skin.assets.splash,
+          alt: "",
+          width: 608,
+          height: 368,
+          sizes: "(max-width: 760px) 44vw, (max-width: 1100px) 29vw, 25vw",
+          quality: 75,
+          loading: "lazy",
+          decoding: "async",
+          fetchPriority: "low",
+        }).props : null;
+        return <article key={skin.id}>{imageProps && <img {...imageProps} />}<div><strong>{skin.name === "default" ? champion.name : skin.name}</strong><span>#{skin.number}{skin.hasChromas ? " · Chromas" : ""}</span></div></article>;
+      })}</div>
       {distinctSkins.length > 24 && <p className={styles.galleryNote}>{tt("Showing 24 artworks. The complete set remains available through the public API.")}</p>}
     </section>
     <section className={styles.assetsPanel} id="assets"><span className={styles.eyebrow}>{tt("ASSET DELIVERY")}</span><h2>{tt("Official assets, cached locally")}</h2><p>{tt("Icon, splash, loading and tile files are mirrored from Riot Data Dragon, verified, deduplicated by SHA‑256 and served with immutable caching.")}</p><div>{Object.entries(champion.assets).map(([key, value]) => value && <a key={key} href={value}>{key} ↗</a>)}</div></section>

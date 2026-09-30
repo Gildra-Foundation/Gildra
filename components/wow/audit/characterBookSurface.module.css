@@ -1,0 +1,132 @@
+.root {
+  /* Shared ivory, aged pewter and oxblood for the whole character flow.
+     Cool only the materials: spell icons, portraits and models retain color. */
+  --folio-ink: #363128;
+  --folio-muted: #625b4c;
+  --folio-line: #746d5966;
+  --folio-rubric: #6b4440;
+  --folio-gilt: #928364;
+  --folio-faint-rule: #746d5938;
+  --folio-ribbon-top: #303738;
+  --folio-ribbon-mid: #222829;
+  --folio-ribbon-bottom: #151b1e;
+  --folio-ribbon-edge: #9a8c70;
+  --folio-ribbon-active: #464a42;
+  --folio-paper: linear-gradient(180deg, #cbd9e04f, #c1d1dd45), linear-gradient(180deg, #ede4cc0f, #d3c7a511), var(--book-paper-image, #e4dcc8) center / 640px repeat;
+  --folio-panel-paper: linear-gradient(145deg, #d8e1e42b, #d7d5ca18), var(--folio-paper);
+  --folio-control-wash: linear-gradient(180deg, #849aab3b, #24354942);
+  --folio-control-ink: #f0eadd;
+  --folio-control-shadow: #1521294d;
+  --folio-focus: #526775;
+  /* Release the original alpha edges; clip only at the viewport, not at the
+     manuscript rectangle. Contact shadows follow the actual binding shape. */
+  --book-frame-overflow: visible;
+  /* Keep solid paper under the endcap fade instead of exposing the dark
+     scene between two translucent materials. Match the warmer bitmap trim
+     to the cooler ivory of the repeating sheet. */
+  --book-paper-block-mask: linear-gradient(transparent, #000 12px, #000 calc(100% - 16px), transparent);
+  --book-trim-filter: saturate(.58) contrast(.95) brightness(1.04);
+  /* A narrow valley and a softer raised right leaf, aligned with the binding.
+     Keep this on the materials, never across live controls or model canvases. */
+  --book-gutter-width: clamp(48px, 6cqw, 84px);
+  --book-gutter-inset: -22px auto -34px 50%;
+  --book-gutter-shade: linear-gradient(90deg, transparent, #514b3b0a 16%, #514b3b1a 32%, #3b372a35 44%, #302d2452 49%, #302d2461 50%, #69604a1a 53%, #f6edcf38 61%, #f6edcf12 76%, transparent);
+  --book-gutter-mask: linear-gradient(transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  --book-material-filter: saturate(.8) contrast(.99) brightness(1.012) drop-shadow(0 3px 5px #05090ca8) drop-shadow(0 16px 22px #050b1294);
+  --folio-metal-filter: saturate(.78) contrast(1.01) brightness(1.01);
+  --folio-title: var(--grimoire-display);
+  --folio-body: var(--grimoire-body);
+}
+
+.root[data-character-book="open"] {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  min-height: 100svh;
+  color: var(--folio-ink);
+  background: #080a0c;
+  font: 14px/1.45 var(--folio-body);
+}
+
+.root[data-character-book="open"][data-profile-source="battle-net"] {
+  color: var(--folio-ink);
+  background: #080a0c;
+  font: 14px/1.45 var(--folio-body);
+}
+
+.backdrop {
+  /* Keep the same world behind the whole scroll, including the short space
+     after the physical book and the app's consent footer. A sticky 100svh
+     layer used to disappear when the manuscript ended, leaving a black slab. */
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  margin: 0;
+  transform: none;
+  pointer-events: none;
+}
+
+/* API loading/error wrappers use their own semantic class too; this scoped
+   selector keeps them on precisely the same viewport-fixed scene layer. */
+.root[data-character-book="open"] > .backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  margin: 0;
+  transform: none;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flow-root;
+  /* Match the reference volume: broad enough to feel like an open book, while
+     preserving a visible strip of the illustrated realm on both sides. */
+  width: min(1480px, 86%);
+  min-width: 0;
+  min-height: 100svh;
+  margin: 0 auto;
+  /* Room for the binding endcaps and their soft contact shadow on every side. */
+  padding: 64px 0 88px;
+  container: auditPage / inline-size;
+}
+
+.root[data-character-book="open"][data-character-book-entry="login"] > .content {
+  display: flex;
+  flex-direction: column;
+}
+
+.root[data-character-book="open"][data-character-book-entry="login"] > .content > .manuscript {
+  width: 100%;
+  margin-block: auto;
+  min-height: max(620px, calc(100svh - 172px));
+}
+
+.manuscript {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  padding: 24px clamp(16px, 2.5vw, 40px) 32px;
+}
+
+@media (max-width: 1200px) {
+  .content { width: 92%; padding-top: 56px; }
+}
+
+@media (max-width: 760px) {
+  .content {
+    width: 96%;
+    padding-top: 48px;
+    padding-bottom: 64px;
+  }
+}
+
+@media (max-width: 560px) {
+  .root { --book-paper-block-mask: linear-gradient(transparent, #000 4px, #000 calc(100% - 8px), transparent); }
+  .content { padding-top: 36px; padding-bottom: 48px; }
+}
