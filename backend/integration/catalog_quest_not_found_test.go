@@ -17,6 +17,12 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
+// This test exercises migration 169 (quest technical-title reclassification):
+// it seeds data at version 168, applies 169, reverts it and applies it again.
+// It stays pinned to that migration when newer migrations are added, whereas
+// latestCatalogSchemaVersion always tracks the highest migration.
+const questNotFoundMigrationVersion int64 = 169
+
 // TestRetailQuestOfficialNotFoundConfirmation proves that unavailable detail
 // records are a conservative usability input: one exact-build sweep and a
 // mismatch without matching index/DB2 evidence remain review, while either
@@ -55,7 +61,7 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 	if err := goose.SetDialect("postgres"); err != nil {
 		t.Fatal(err)
 	}
-	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion-1); err != nil {
+	if err := goose.UpToContext(ctx, database, migrations, questNotFoundMigrationVersion-1); err != nil {
 		t.Fatal(err)
 	}
 
@@ -271,19 +277,19 @@ func TestRetailQuestOfficialNotFoundConfirmation(t *testing.T) {
 
 	// Migration 169 must reclassify existing rows immediately, and its Down
 	// path must restore the previous broad behavior before a re-apply.
-	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion); err != nil {
+	if err := goose.UpToContext(ctx, database, migrations, questNotFoundMigrationVersion); err != nil {
 		t.Fatal(err)
 	}
 	assertQuestUsability(t, ctx, database, productID, buildID, 163020, "eligible", "verified_bilingual_localization")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163021, "excluded", "technical_or_placeholder_marker")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163022, "excluded", "technical_or_placeholder_marker")
-	if err := goose.DownToContext(ctx, database, migrations, latestCatalogSchemaVersion-1); err != nil {
+	if err := goose.DownToContext(ctx, database, migrations, questNotFoundMigrationVersion-1); err != nil {
 		t.Fatal(err)
 	}
 	assertQuestUsability(t, ctx, database, productID, buildID, 163020, "excluded", "technical_or_placeholder_marker")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163021, "excluded", "technical_or_placeholder_marker")
 	assertQuestUsability(t, ctx, database, productID, buildID, 163022, "excluded", "technical_or_placeholder_marker")
-	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion); err != nil {
+	if err := goose.UpToContext(ctx, database, migrations, questNotFoundMigrationVersion); err != nil {
 		t.Fatal(err)
 	}
 	assertQuestUsability(t, ctx, database, productID, buildID, 163020, "eligible", "verified_bilingual_localization")
