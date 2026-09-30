@@ -11,9 +11,9 @@ RUN git init \
     && git remote add origin https://github.com/simulationcraft/simc.git \
     && git fetch --depth 1 origin "${SIMC_REF}" \
     && git checkout --detach FETCH_HEAD \
-    && make -C engine release -j2 SC_NO_NETWORKING=1
+    && make -C engine release -j"$(nproc)" SC_NO_NETWORKING=1
 
-FROM golang:1.26-bookworm AS worker-build
+FROM golang:1.26.6-bookworm AS worker-build
 WORKDIR /src
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download

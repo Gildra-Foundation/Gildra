@@ -15,6 +15,8 @@ services:
     image: ${SCRAPER_IMAGE:-gildra-scraper:local}
   scraper-worker:
     image: ${SCRAPER_IMAGE:-gildra-scraper:local}
+  rotation-sim-worker:
+    image: ${ROTATION_WORKER_IMAGE:-gildra-rotation-sim-worker:local}
   nginx:
     ports:
       - "80:80"

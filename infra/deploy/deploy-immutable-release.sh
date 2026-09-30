@@ -71,6 +71,7 @@ validate_release_inputs() {
   : "${API_IMAGE:?API_IMAGE is required}"
   : "${CMS_IMAGE:?CMS_IMAGE is required}"
   : "${SCRAPER_IMAGE:?SCRAPER_IMAGE is required}"
+  : "${ROTATION_WORKER_IMAGE:?ROTATION_WORKER_IMAGE is required}"
   : "${GILDRA_SOURCE_REVISION:?GILDRA_SOURCE_REVISION is required}"
   : "${GILDRA_RELEASE_ID:?GILDRA_RELEASE_ID is required}"
 
@@ -78,6 +79,7 @@ validate_release_inputs() {
   validate_image API_IMAGE "$API_IMAGE" '^ghcr\.io/gildra-foundation/gildra-api@sha256:[0-9a-f]{64}$'
   validate_image CMS_IMAGE "$CMS_IMAGE" '^ghcr\.io/gildra-foundation/gildra-cms@sha256:[0-9a-f]{64}$'
   validate_image SCRAPER_IMAGE "$SCRAPER_IMAGE" '^ghcr\.io/gildra-foundation/gildra-scraper@sha256:[0-9a-f]{64}$'
+  validate_image ROTATION_WORKER_IMAGE "$ROTATION_WORKER_IMAGE" '^ghcr\.io/gildra-foundation/gildra-rotation-sim-worker@sha256:[0-9a-f]{64}$'
   validate_revision "$GILDRA_SOURCE_REVISION"
   validate_release_id "$GILDRA_RELEASE_ID"
   [ "${GILDRA_ROLLBACK_COMPATIBLE:-}" = true ] ||
@@ -127,6 +129,9 @@ load_previous_release() {
   rollback_api_image=$(manifest_value API_IMAGE "$file")
   rollback_cms_image=$(manifest_value CMS_IMAGE "$file")
   rollback_scraper_image=$(manifest_value SCRAPER_IMAGE "$file")
+  # Releases deployed before the rotation worker joined the contract have no
+  # entry for it, so this key is optional when reading an older manifest.
+  rollback_rotation_worker_image=$(manifest_optional_value ROTATION_WORKER_IMAGE "$file")
   rollback_source_revision=$(manifest_optional_value SOURCE_REVISION "$file")
   rollback_release_id=$(manifest_optional_value RELEASE_ID "$file")
 
@@ -134,6 +139,9 @@ load_previous_release() {
   validate_rollback_image API_IMAGE "$rollback_api_image" '^ghcr\.io/gildra-foundation/gildra-api@sha256:[0-9a-f]{64}$'
   validate_rollback_image CMS_IMAGE "$rollback_cms_image" '^ghcr\.io/gildra-foundation/gildra-cms@sha256:[0-9a-f]{64}$'
   validate_rollback_image SCRAPER_IMAGE "$rollback_scraper_image" '^ghcr\.io/gildra-foundation/gildra-scraper@sha256:[0-9a-f]{64}$'
+  if [ -n "$rollback_rotation_worker_image" ]; then
+    validate_rollback_image ROTATION_WORKER_IMAGE "$rollback_rotation_worker_image" '^ghcr\.io/gildra-foundation/gildra-rotation-sim-worker@sha256:[0-9a-f]{64}$'
+  fi
 
   if [ -n "$rollback_source_revision" ]; then
     validate_revision "$rollback_source_revision"
@@ -175,6 +183,7 @@ verify_running_images() {
   verify_service_image api "$API_IMAGE"
   verify_service_image cms "$CMS_IMAGE"
   verify_service_image scraper-worker "$SCRAPER_IMAGE"
+  verify_service_image rotation-sim-worker "$ROTATION_WORKER_IMAGE"
 }
 
 ensure_recovery_backup() {
@@ -407,6 +416,7 @@ write_release_manifest() {
     printf 'API_IMAGE=%s\n' "$API_IMAGE"
     printf 'CMS_IMAGE=%s\n' "$CMS_IMAGE"
     printf 'SCRAPER_IMAGE=%s\n' "$SCRAPER_IMAGE"
+    printf 'ROTATION_WORKER_IMAGE=%s\n' "$ROTATION_WORKER_IMAGE"
     printf 'DEPLOYED_AT=%s\n' "$deployed_at"
   } > "$temporary"
   chmod 600 "$temporary"
@@ -423,7 +433,14 @@ rollback_release() {
   API_IMAGE=$rollback_api_image
   CMS_IMAGE=$rollback_cms_image
   SCRAPER_IMAGE=$rollback_scraper_image
-  export WEB_IMAGE API_IMAGE CMS_IMAGE SCRAPER_IMAGE
+  # An older release has no rotation worker of its own. The worker is stateless
+  # and the older web release never calls it, so keep the worker that this
+  # release started rather than failing the rollback for want of an image.
+  if [ -z "$rollback_rotation_worker_image" ]; then
+    rollback_rotation_worker_image=$ROTATION_WORKER_IMAGE
+  fi
+  ROTATION_WORKER_IMAGE=$rollback_rotation_worker_image
+  export WEB_IMAGE API_IMAGE CMS_IMAGE SCRAPER_IMAGE ROTATION_WORKER_IMAGE
 
   pull_rollback_image() {
     service=$1
@@ -439,6 +456,7 @@ rollback_release() {
   pull_rollback_image cms "$rollback_cms_image" || return 1
   pull_rollback_image scraper "$rollback_scraper_image" || return 1
   pull_rollback_image scraper-worker "$rollback_scraper_image" || return 1
+  pull_rollback_image rotation-sim-worker "$rollback_rotation_worker_image" || return 1
   compose up -d --no-build --remove-orphans --wait --wait-timeout 240 || return 1
   verify_running_images || return 1
   verify_local_health || return 1
@@ -505,7 +523,8 @@ load_previous_release "$current_manifest"
 if [ "$rollback_web_image" = "$WEB_IMAGE" ] &&
    [ "$rollback_api_image" = "$API_IMAGE" ] &&
    [ "$rollback_cms_image" = "$CMS_IMAGE" ] &&
-   [ "$rollback_scraper_image" = "$SCRAPER_IMAGE" ]; then
+   [ "$rollback_scraper_image" = "$SCRAPER_IMAGE" ] &&
+   [ "$rollback_rotation_worker_image" = "$ROTATION_WORKER_IMAGE" ]; then
   verify_running_images
   ensure_recovery_backup
   verify_local_health
@@ -531,10 +550,10 @@ trap 'exit 143' TERM
 ensure_recovery_backup
 # ghcr.io intermittently drops TCP connects from this host (a third of them on
 # 2026-09-02) while every other destination is clean. A single compose pull of
-# six services rarely survives that, so retry; layers already fetched stay
+# seven services rarely survives that, so retry; layers already fetched stay
 # cached between attempts.
 pull_attempt=1
-until compose pull web api catalog-backup cms scraper scraper-worker; do
+until compose pull web api catalog-backup cms scraper scraper-worker rotation-sim-worker; do
   [ "$pull_attempt" -lt 8 ] || fail 'compose pull failed after 8 attempts'
   printf 'deploy: compose pull attempt %s failed; retrying in 10s\n' "$pull_attempt" >&2
   pull_attempt=$((pull_attempt + 1))

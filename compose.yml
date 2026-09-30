@@ -263,8 +263,37 @@ services:
       INDEXNOW_KEY: ${INDEXNOW_KEY}
       NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      # Battle.net sign-in (Auth.js). Without AUTH_SECRET and the client pair the
+      # site reports login as not configured instead of faking a session.
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_URL: ${AUTH_URL:-https://gildra.net}
+      BATTLENET_CLIENT_ID: ${BATTLENET_CLIENT_ID:-}
+      BATTLENET_CLIENT_SECRET: ${BATTLENET_CLIENT_SECRET:-}
+      BATTLENET_REGION: ${BATTLENET_REGION:-eu}
+      # Optional Warcraft Logs link; the feature stays off until all three are set.
+      WARCRAFT_LOGS_CLIENT_ID: ${WARCRAFT_LOGS_CLIENT_ID:-}
+      WARCRAFT_LOGS_CLIENT_SECRET: ${WARCRAFT_LOGS_CLIENT_SECRET:-}
+      WARCRAFT_LOGS_REDIRECT_URI: ${WARCRAFT_LOGS_REDIRECT_URI:-}
+      # SimulationCraft worker on the private network. A failed simulation is
+      # reported as an error; it is never replaced by a training estimate.
+      ROTATION_WORKER_URL: http://rotation-sim-worker:8080
+      ROTATION_ALLOW_MVP_FALLBACK: "false"
     depends_on:
       - api
+
+  rotation-sim-worker:
+    image: ${ROTATION_WORKER_IMAGE:-gildra-rotation-sim-worker:local}
+    build:
+      context: .
+      dockerfile: infra/simc/Dockerfile
+    restart: unless-stopped
+    environment:
+      ROTATION_WORKER_ADDR: 0.0.0.0:8080
+    # SimulationCraft is CPU bound. Bound it so a burst of simulations cannot
+    # starve PostgreSQL or the API that share this host.
+    mem_limit: 2g
+    cpus: 2
+    pids_limit: 256
 
   cms:
     image: ${CMS_IMAGE:-gildra-cms:local}

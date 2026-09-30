@@ -109,6 +109,22 @@ services:
       retries: 18
       start_period: 60s
 
+  rotation-sim-worker:
+    user: "65532:65532"
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      # The image ships bash but no curl or wget.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /healthz HTTP/1.0\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
   scraper:
     user: "10001:10001"
     init: true
