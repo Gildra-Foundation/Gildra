@@ -1,40 +1,15 @@
 import { PageShell } from "@/components/layout/PageShell";
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
+import { NotFoundContent } from "@/components/layout/NotFoundContent";
 
 export const metadata: Metadata = {
-  title: "Page not found — Gildra",
+  title: "404 — Gildra",
 };
 
 export default function NotFound() {
   return (
     <PageShell layout="bare">
-      <main className="nf">
-      <Image
-        className="nf-helm"
-        src="/brand/helmet.png"
-        alt=""
-        width={132}
-        height={132}
-        priority
-      />
-      <div className="nf-code">404</div>
-      <h1 className="nf-title">This page fell in battle</h1>
-      <p className="nf-sub">
-        The page you are looking for was moved, renamed or never existed.
-        <br />
-        Страница, которую вы ищете, была перемещена или не существует.
-      </p>
-      <div className="nf-actions">
-        <Link className="btn btn-primary" href="/">
-          Back to overview
-        </Link>
-        <Link className="btn-line" href="/tier-lists">
-          Mythic+ Tier List →
-        </Link>
-      </div>
-      </main>
+      <NotFoundContent />
     </PageShell>
   );
 }

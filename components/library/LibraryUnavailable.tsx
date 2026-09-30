@@ -8,6 +8,6 @@ export function LibraryUnavailable({ lang, href }: Props) {
     <p className="cap gold">{lang === "ru" ? "Каталог недоступен" : "Catalog unavailable"}</p>
     <h2>{lang === "ru" ? "Публикация данных временно закрыта" : "Data publication is temporarily closed"}</h2>
     <p>{lang === "ru" ? "Источники или API сейчас проходят проверку. Данные не удалены — повторите попытку позже или войдите в панель администратора." : "The sources or API are being checked. No data was deleted — try again later or sign in to the administrator console."}</p>
-    <Link href={`/api-console?next=${encodeURIComponent(next)}`}>{lang === "ru" ? "Открыть панель" : "Open console"}</Link>
+    <Link href={`/api-console?next=${encodeURIComponent(next)}`} prefetch={false}>{lang === "ru" ? "Открыть панель" : "Open console"}</Link>
   </section>;
 }

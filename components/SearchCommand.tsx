@@ -10,16 +10,12 @@ import { getAdapter, type SearchItem as Item } from "@/lib/games/adapter";
 
 /** Command palette over the current game's search index (see lib/games/adapter.ts). */
 export function SearchCommand({
-  open,
   game,
   lang,
-  onOpen,
   onClose,
 }: {
-  open: boolean;
   game: GameDefinition;
   lang: Lang;
-  onOpen: () => void;
   onClose: () => void;
 }) {
   const [q, setQ] = useState("");
@@ -28,34 +24,19 @@ export function SearchCommand({
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const tt = tr(lang);
-  const adapter = getAdapter(game.slug);
+  const adapter = useMemo(() => getAdapter(game.slug), [game.slug]);
 
-  // Cmd+K / Ctrl+K — глобально
+  // Сброс и фокус при монтировании + scroll-lock.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        if (open) onClose();
-        else onOpen();
-      }
+    setQ("");
+    setSel(0);
+    document.body.style.overflow = "hidden";
+    const t = setTimeout(() => inputRef.current?.focus(), 20);
+    return () => {
+      clearTimeout(t);
+      document.body.style.overflow = "";
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onOpen, onClose]);
-
-  // сброс и фокус при открытии + scroll-lock
-  useEffect(() => {
-    if (open) {
-      setQ("");
-      setSel(0);
-      document.body.style.overflow = "hidden";
-      const t = setTimeout(() => inputRef.current?.focus(), 20);
-      return () => {
-        clearTimeout(t);
-        document.body.style.overflow = "";
-      };
-    }
-  }, [open]);
+  }, []);
 
   const results = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -67,12 +48,6 @@ export function SearchCommand({
     const rest = hits.filter((h) => !adapter.searchGroups.includes(h.group));
     return [...ordered, ...rest].slice(0, 12);
   }, [q, adapter, lang]);
-
-  useEffect(() => {
-    setSel(0);
-  }, [results.length, q]);
-
-  if (!open) return null;
 
   const go = (item: Item) => {
     onClose();
@@ -123,7 +98,10 @@ export function SearchCommand({
           <input
             ref={inputRef}
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setSel(0);
+            }}
             placeholder={tt("Search specs, builds, guides...")}
             aria-label="Search"
           />

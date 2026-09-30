@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "scope": "venomous-abyss-live-identity-and-overview-abilities",
+  "gameBuild": "12.1.0.69814",
+  "lastVerifiedAt": "2026-09-13T07:01:45Z",
+  "method": "Exact ID joins across the live Wago build manifest and Blizzard DB2 JournalInstance, JournalEncounter, JournalEncounterSection, SpellName, and SpellMisc exports. Only spells linked from each encounter's Overview section are included.",
+  "limitations": [
+    "This audit proves entity identity, EN/RU localization, encounter ordering, parentage, overview-listed spell IDs, and icon file data IDs only.",
+    "It does not prove tactics, role assignments, mechanic tags, timings, difficulty deltas, NPC portraits, loot, or drop chance.",
+    "This file proves icon file data IDs only; image-source and byte verification is recorded separately in venomous-abyss-icon-audit.json.",
+    "Ability description publication safety is classified separately in venomous-abyss-description-audit.json.",
+    "Full EN/RU section-tree traversal and explicit phase-heading evidence is recorded separately in venomous-abyss-journal-tree-audit.json."
+  ],
+  "sources": [
+    { "kind": "live_build_manifest", "url": "https://wago.tools/api/builds", "sha256": null },
+    { "kind": "journal_instance_en", "url": "https://wago.tools/db2/JournalInstance/csv?build=12.1.0.69814&locale=enUS", "sha256": "8970a8f9aa62d327bfe583f5aafc292008c2c02feef5f972dc462dba0730491f" },
+    { "kind": "journal_instance_ru", "url": "https://wago.tools/db2/JournalInstance/csv?build=12.1.0.69814&locale=ruRU", "sha256": "d4653b438c14325230af4b40a39905a3509f82d737b20f359fd8ba3d9c2a6791" },
+    { "kind": "journal_encounter_en", "url": "https://wago.tools/db2/JournalEncounter/csv?build=12.1.0.69814&locale=enUS", "sha256": "0012e24a1726e1b5ddd5f95c2749bca727b410d5ae877f26bd3b702a9c0d251d" },
+    { "kind": "journal_encounter_ru", "url": "https://wago.tools/db2/JournalEncounter/csv?build=12.1.0.69814&locale=ruRU", "sha256": "5b306e136033ff4fd574dc29180125a7ad15a153924fd830037780692fea265b" },
+    { "kind": "journal_section_en", "url": "https://wago.tools/db2/JournalEncounterSection/csv?build=12.1.0.69814&locale=enUS", "sha256": "749743a68e984821ebcaf4c2619fc89fafb47217d59fd9e6299d8e0ccd27cf18" },
+    { "kind": "journal_section_ru", "url": "https://wago.tools/db2/JournalEncounterSection/csv?build=12.1.0.69814&locale=ruRU", "sha256": "dfe7a41e9d066ae4002cbae51ee5907a58fd72bccddd899f1e077a00f4db3bd7" },
+    { "kind": "spell_name_en", "url": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS", "sha256": "99629cf0bc20d889d80df64d9be7dbd9be1498f958055e6f74de83be33927bc5" },
+    { "kind": "spell_name_ru", "url": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU", "sha256": "082c3ead14f49ab8c965fc651588109e6a10c891899c584977589ed8e98b4f2c" },
+    { "kind": "spell_icon_mapping", "url": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS", "sha256": "83e46ad55ed2cf1245a2358ecfb72889a434b1df5e1138b41208f4e134b65781" }
+  ],
+  "instance": {
+    "canonicalSlug": "venomous-abyss",
+    "journalInstanceId": 1320,
+    "mapId": 3004,
+    "names": { "en": "The Venomous Abyss", "ru": "Отравленная бездна" },
+    "descriptions": {
+      "en": "Guided by the dark whispers of Malacrass, Zul'jan has freed the forgotten broods of Ula'tek from their prison. As the monster's power grows, Zul'jarra calls upon the Champions of Azeroth to descend into the Vaults of Atal'Utek to stop her brother before the weapon is unleashed upon Azeroth.",
+      "ru": "Внимая темному шепоту Малакрасса, Зул'джан освободил из темницы давно забытое потомство Ула'тек. Чудовища набирают силу, и Зул'джарра просит защитников Азерота спуститься в хранилища Атал'Утека и остановить ее брата, пока новое бедствие не обрушилось на Азерот."
+    }
+  },
+  "encounters": [
+    {
+      "canonicalSlug": "nekzali-the-soulcoiler", "order": 1, "journalEncounterId": 2888, "dungeonEncounterId": 3470, "firstSectionId": 35250,
+      "names": { "en": "Nek'zali the Soulcoiler", "ru": "Нек'зали Душительница Душ" },
+      "descriptions": { "en": "Long ago, the shadow hunter Nek'zali and her followers were entombed for the blasphemous act of summoning Ula'tek. Restored by the very power she unleashed, she calls the other Soulcoilers from their tombs to serve her once more.", "ru": "Давным-давно темная охотница Нек'зали и ее последователи были заживо погребены за святотатственную попытку призвать Ула'тек. Возвращенная к жизни своей госпожой, Нек'зали подняла из склепов остальных душителей душ." },
+      "overviewAbilities": [
+        { "spellId": 1284032, "names": { "en": "Soulcoil Well", "ru": "Колодец душителей душ" }, "iconId": 574792 },
+        { "spellId": 1288772, "names": { "en": "Soulcoil Rite", "ru": "Обряд душителя душ" }, "iconId": 2576091 },
+        { "spellId": 1289919, "names": { "en": "Restless Amani", "ru": "Неупокоенный тролль из племени Амани" }, "iconId": 7214199 },
+        { "spellId": 1289683, "names": { "en": "Ritual of Awakening", "ru": "Ритуал пробуждения" }, "iconId": 1568673 },
+        { "spellId": 1289696, "names": { "en": "Tether of Awakening", "ru": "Нить пробуждения" }, "iconId": 3528290 },
+        { "spellId": 1290003, "names": { "en": "Uncoiling", "ru": "Расплетение" }, "iconId": 7549439 }
+      ]
+    },
+    {
+      "canonicalSlug": "entombed-sentinels", "order": 2, "journalEncounterId": 2874, "dungeonEncounterId": 3445, "firstSectionId": 34947,
+      "names": { "en": "Entombed Sentinels", "ru": "Погребенные стражи" },
+      "descriptions": { "en": "The Blood and Breath of Ula'tek bar the way to Vashnik's inner sanctum. Ancient golems that long stood guard within the vaults, now corrupted by the venom of the nightmarish monster they imprisoned.", "ru": "Кровь и Дыхание Ула'тек преграждают путь в святая святых Вашника. Древние големы, испокон веков охранявшие эти залы, осквернены ядом кошмарного чудовища, чью темницу они должны стеречь." },
+      "overviewAbilities": [
+        { "spellId": 1284588, "names": { "en": "Vitriolic Stasis", "ru": "Агрессивный стазис" }, "iconId": 4631369 },
+        { "spellId": 1284590, "names": { "en": "Helical Toxins", "ru": "Спиральный токсин" }, "iconId": 6866618 }
+      ]
+    },
+    {
+      "canonicalSlug": "the-lost-explorers", "order": 3, "journalEncounterId": 2894, "dungeonEncounterId": 3497, "firstSectionId": 35543,
+      "names": { "en": "The Lost Explorers", "ru": "Потерявшиеся исследователи" },
+      "descriptions": { "en": "A band of tortollans, possessed by spirits, have come to their senses near the sarcophagus of an ancient Soulcoiler. Trapped in the vault, they seek ancient artifacts to protect themselves from further possession by vengeful spirits.", "ru": "Несколько одержимых призраками тортолланов очнулось у саркофага древнего душителя душ. Запертые в хранилище тортолланы ищут древние артефакты, которые помогут им защититься от мстительных призраков, стремящихся в них вселиться." },
+      "overviewAbilities": [
+        { "spellId": 1295451, "names": { "en": "Dark Whispers", "ru": "Темный шепот" }, "iconId": 7558869 },
+        { "spellId": 1297024, "names": { "en": "Mor'zahi's Command", "ru": "Приказ Мор'захи" }, "iconId": 7816851 },
+        { "spellId": 1292779, "names": { "en": "Final Ascension", "ru": "Последнее вознесение" }, "iconId": 3528311 }
+      ]
+    },
+    {
+      "canonicalSlug": "vashnik-the-malignant", "order": 4, "journalEncounterId": 2882, "dungeonEncounterId": 3455, "firstSectionId": 35046,
+      "names": { "en": "Vashnik the Malignant", "ru": "Вашник Тлетворный" },
+      "descriptions": { "en": "Within The Chamber of Virulence, Vashnik the Malignant distills Ula'tek's venoms into ever more lethal forms. The creature lurks in its noxious chamber, brewing foul toxins to empower its brood.", "ru": "Вашник Тлетворный занимается ядами Ула'тек в Зале заражения, перегоняя их в еще более смертельные образцы. Скрываясь в своей смрадной лаборатории, он создает мерзкие токсины для усиления потомства." },
+      "overviewAbilities": [
+        { "spellId": 1283164, "names": { "en": "Imbibe", "ru": "Питье" }, "iconId": 136070 },
+        { "spellId": 1280189, "names": { "en": "Malignant Burst", "ru": "Тлетворный взрыв" }, "iconId": 236271 }
+      ]
+    },
+    {
+      "canonicalSlug": "sszorak", "order": 5, "journalEncounterId": 2871, "dungeonEncounterId": 3420, "firstSectionId": 34740,
+      "names": { "en": "Sszorak", "ru": "Ссзорак" },
+      "descriptions": { "en": "A horrifying creature, warped by Ula'tek's toxic venom, Sszorak is a brutal instrument of vengeance. Calling upon the winds that howl deep within Atal'Utek, it tears apart any living creature it encounters.", "ru": "Ужасная тварь, искаженная ядом Ула'тек, Ссзорак – жестокое орудие мести. Взывая к ветрам, воющим в глубинах Атал'Утека, он рвет в клочья все живое на своем пути." },
+      "overviewAbilities": [
+        { "spellId": 1277025, "names": { "en": "Apex Predator", "ru": "Сверххищник" }, "iconId": 132160 },
+        { "spellId": 1305959, "names": { "en": "Venomous Surge", "ru": "Ядовитый поток" }, "iconId": 132108 },
+        { "spellId": 1285419, "names": { "en": "Raging Crosswinds", "ru": "Яростные завихрения" }, "iconId": 1029595 },
+        { "spellId": 1285732, "names": { "en": "Howling Maelstrom", "ru": "Воющий вихрь" }, "iconId": 136018 }
+      ]
+    },
+    {
+      "canonicalSlug": "the-twin-fangs", "order": 6, "journalEncounterId": 2887, "dungeonEncounterId": 3421, "firstSectionId": 35096,
+      "names": { "en": "The Twin Fangs", "ru": "Два Клыка" },
+      "descriptions": { "en": "The first of Ula'tek's blood, Vexhul and Ithraz brood beneath a roiling sea of venom deep within the vault of Atal'Utek. Any foolish enough to enter the prison's inner chamber risk their monstrous jaws and toxic strikes.", "ru": "Вексул и Итраз – первые из кладки Ула'тек. Они копят силы под бурлящим морем яда в глубине хранилищ Атал'Утека. Любой глупец, что зайдет слишком далеко в темницу, падет жертвой их чудовищных клыков и отравленных когтей." },
+      "overviewAbilities": [
+        { "spellId": 1290336, "names": { "en": "Eternal Venom", "ru": "Вечный яд" }, "iconId": 136067 },
+        { "spellId": 1289192, "names": { "en": "Caustic Deluge", "ru": "Едкое наводнение" }, "iconId": 5764918 },
+        { "spellId": 1289993, "names": { "en": "Caustic Globule", "ru": "Едкий комок" }, "iconId": 5764924 },
+        { "spellId": 1291404, "names": { "en": "Venomous Emergence", "ru": "Ядовитое появление" }, "iconId": 136070 },
+        { "spellId": 1290516, "names": { "en": "Ravenous Feast", "ru": "Яростное пожирание" }, "iconId": 236305 },
+        { "spellId": 1288538, "names": { "en": "Stone Breaker", "ru": "Крушитель камня" }, "iconId": 132318 },
+        { "spellId": 1293749, "names": { "en": "Vile Flood", "ru": "Гнусный потоп" }, "iconId": 236271 },
+        { "spellId": 1306872, "names": { "en": "Sanguine Storm", "ru": "Кровавая буря" }, "iconId": 1394887 }
+      ]
+    },
+    {
+      "canonicalSlug": "the-coiled-altar", "order": 7, "journalEncounterId": 2883, "dungeonEncounterId": 3429, "firstSectionId": 35058,
+      "names": { "en": "The Coiled Altar", "ru": "Спиральный алтарь" },
+      "descriptions": { "en": "The spirit of Malacrass will not release his grip on Zul'jan so easily. At the Coiled Altar, the shaman commands the warrior to enact the final ritual to unleash Ula'tek on the Amani--for revenge, and to gain their promised reward.", "ru": "Дух Малакрасса не готов просто так освободить Зул'джана. У Спирального алтаря шаман велел воину провести последний ритуал, который обрушит гнев Ула'тек на амани... Все ради мести и обещанной награды." },
+      "overviewAbilities": [
+        { "spellId": 1282403, "names": { "en": "Coalesced Venom", "ru": "Сгустившийся яд" }, "iconId": 5764924 },
+        { "spellId": 1299680, "names": { "en": "Sever", "ru": "Рассечение" }, "iconId": 132109 },
+        { "spellId": 1285643, "names": { "en": "Dreadmarch", "ru": "Марш ужаса" }, "iconId": 3163624 },
+        { "spellId": 1286620, "names": { "en": "Soul Sever", "ru": "Отделение души" }, "iconId": 1354410 },
+        { "spellId": 1304032, "names": { "en": "Soulbinding", "ru": "Связь душ" }, "iconId": 2576086 }
+      ]
+    },
+    {
+      "canonicalSlug": "ulatek", "order": 8, "journalEncounterId": 2895, "dungeonEncounterId": 3492, "firstSectionId": 35548,
+      "names": { "en": "Ula'tek", "ru": "Ула'тек" },
+      "descriptions": { "en": "The great shame of the Amani empire. The vast complex of Altal'Utek was created to imprison the weapon that proved to be as much of a threat as the enemy she was intended to destroy. Ula'tek has risen from her ancient slumber and threatens all of Azeroth if she should escape.", "ru": "Тайный позор империи Амани... Обширный комплекс Атал'Утек был создан, чтобы избавиться от оружия, оказавшегося не менее опасным, чем враг, на которого оно было направлено. Ула'тек вышла из долгой спячки, – и если она сбежит из темницы, пострадает весь Азерот." },
+      "overviewAbilities": [
+        { "spellId": 1292403, "names": { "en": "Caustic Waves", "ru": "Едкие волны" }, "iconId": 5764925 },
+        { "spellId": 1301268, "names": { "en": "Putrid Membrane", "ru": "Гнилостная капсула" }, "iconId": 236549 },
+        { "spellId": 1287265, "names": { "en": "Spectral Coils", "ru": "Призрачные кольца" }, "iconId": 3528295 },
+        { "spellId": 1286860, "names": { "en": "Rage of the Shackled", "ru": "Ярость пленницы" }, "iconId": 7966624 },
+        { "spellId": 1290990, "names": { "en": "Writhing Gestation", "ru": "Извивающееся порождение" }, "iconId": 538440 },
+        { "spellId": 1300751, "names": { "en": "Call of the Serpent", "ru": "Зов змеи" }, "iconId": 8125100 },
+        { "spellId": 1301510, "names": { "en": "Circling Prey", "ru": "Обвивание добычи" }, "iconId": 7500005 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+.trigger {
+  --wow-tooltip-tone: #a9dd46;
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  color: inherit;
+  border: 0;
+  background: transparent;
+  cursor: help;
+}
+
+.trigger:focus-visible { outline: 2px solid var(--wow-tooltip-tone); outline-offset: 3px; border-radius: 3px; }
+
+.iconFrame,
+.largeIcon {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--wow-tooltip-tone) 56%, #8a642d);
+  border-radius: 4px;
+  outline: 1px solid #030403;
+  background: #050706;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 0 12px color-mix(in srgb, var(--wow-tooltip-tone) 12%, transparent);
+}
+
+.iconFrame::after,
+.largeIcon::after { position: absolute; inset: 0; content: ""; pointer-events: none; box-shadow: inset 0 0 10px rgba(0,0,0,.66); }
+
+.iconFrame { width: 38px; height: 38px; }
+.trigger[data-size="sm"] .iconFrame { width: 25px; height: 25px; }
+.trigger[data-size="lg"] .iconFrame { width: 54px; height: 54px; }
+
+.iconFrame img,
+.largeIcon img { width: 100%; height: 100%; object-fit: cover; }
+.trigger:hover .iconFrame,
+.trigger[data-open] .iconFrame { border-color: var(--wow-tooltip-tone); filter: brightness(1.12) saturate(1.1); }
+
+.inlineTrigger { min-height: 27px; padding: 2px 7px 2px 3px; border: 1px solid rgba(168, 199, 91, .17); border-radius: 3px; background: rgba(4, 8, 5, .7); }
+.label { overflow: hidden; color: inherit; font: inherit; font-weight: inherit; text-overflow: ellipsis; white-space: nowrap; }
+
+.card { display: grid; gap: 10px; }
+.card header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(155,117,58,.28); }
+.card header span,
+.card header b { display: flex; align-items: center; gap: 5px; color: #8e8e86; font-size: 8px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.card header svg { width: 12px; color: var(--intel-tone); }
+.card header b { color: #ffd364; }
+.subject { display: grid; grid-template-columns: 50px minmax(0, 1fr); align-items: center; gap: 12px; }
+.largeIcon { width: 50px; height: 50px; border-color: color-mix(in srgb, var(--intel-tone) 58%, #8a642d); }
+.subject > span:last-child { display: grid; min-width: 0; gap: 4px; }
+.subject small { color: #777873; font-size: 8px; letter-spacing: .04em; }
+.subject strong { overflow: hidden; color: var(--intel-tone); font: 500 17px/1.13 Georgia, serif; text-overflow: ellipsis; text-shadow: 0 0 12px color-mix(in srgb, var(--intel-tone) 22%, transparent); }
+.card > p { margin: 0; color: #f0ede7; font-size: 12px; line-height: 1.55; text-shadow: 0 1px 2px #000; }
+.card ul { display: grid; gap: 5px; margin: 0; padding: 8px 0; color: #a9aaa3; border-top: 1px solid rgba(126,101,61,.22); border-bottom: 1px solid rgba(126,101,61,.22); font-size: 9px; line-height: 1.4; list-style: none; }
+.card li { position: relative; padding-left: 12px; }
+.card li::before { position: absolute; top: .55em; left: 1px; width: 4px; height: 4px; content: ""; background: var(--intel-tone); box-shadow: 0 0 6px var(--intel-tone); }
+.card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #858681; font-size: 9px; }
+.card footer strong { overflow: hidden; max-width: 58%; color: #ffd05e; font: 600 12px Georgia, serif; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger:hover .iconFrame,
+  .trigger[data-open] .iconFrame { filter: none; }
+}

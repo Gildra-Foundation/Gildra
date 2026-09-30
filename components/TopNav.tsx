@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SearchCommand } from "./SearchCommand";
-import { altPath, langOf, t, type Lang } from "@/lib/i18n";
+import { altPath, langOf, p, type Lang } from "@/lib/i18n-paths";
 import { ANCHORS, anchorHref } from "@/lib/anchors";
 import {
   GAMES,
@@ -14,6 +13,36 @@ import {
   gameHref,
   type GameSlug,
 } from "@/lib/games/registry";
+
+const loadSearchCommand = () => import("./SearchCommand");
+type SearchCommandComponent = typeof import("./SearchCommand").SearchCommand;
+
+const topNavRu: Record<string, string> = {
+  "Switch game": "Сменить игру",
+  soon: "скоро",
+  beta: "бета",
+  Explore: "Разделы",
+  "Looking for a spec or guide? Search Gildra": "Ищете спек или гайд? Поиск по Gildra",
+  "Search Gildra...": "Поиск по Gildra...",
+  "Go Premium": "Оформить Премиум",
+  "Explore game data": "Изучить данные игры",
+  Library: "Библиотека",
+  "Verified datasets, images and tooltips": "Проверенные датасеты, изображения и tooltip",
+  "Learn & improve": "Учись и расти",
+  "Latest Guides": "Свежие гайды",
+  "Fresh guides for the season": "Свежие гайды сезона",
+  "Browse champions": "Чемпионы и способности",
+  Champions: "Чемпионы",
+  "Every champion, ability and skin": "Все чемпионы, способности и скины",
+  Items: "Предметы",
+  "Complete localized item database": "Полная локализованная база предметов",
+  "Plan a build": "Собрать билд",
+  Runes: "Руны",
+  "Rune trees and keystones": "Ветки рун и краеугольные камни",
+  "Prepare for lane": "Подготовка к линии",
+  "Summoner Spells": "Заклинания призывателя",
+  "Summoner spells with cooldowns": "Заклинания призывателя с перезарядкой",
+};
 
 /** Disclosure-меню: клик/Enter/Space открывают, Escape закрывает и
  *  возвращает фокус на триггер, клик вне — закрывает. */
@@ -52,14 +81,19 @@ function useMenu() {
 export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; lang?: Lang }) {
   const [mobOpen, setMobOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [SearchCommand, setSearchCommand] = useState<SearchCommandComponent | null>(null);
   const searchBtnRef = useRef<HTMLButtonElement>(null);
+  const searchLoadingRef = useRef<HTMLDivElement>(null);
   const explore = useMenu();
   const gameMenu = useMenu();
   const pathname = usePathname();
   const lang = langProp ?? langOf(pathname);
   const game = gameSlug ? GAMES[gameSlug] : currentGame(pathname);
-  const tt = t(lang);
+  const tt = (copy: string) => lang === "ru" ? topNavRu[copy] ?? copy : copy;
   const tasks = game.nav.tasks;
+  const warmSearchCommand = () => {
+    void loadSearchCommand().then((module) => setSearchCommand(() => module.SearchCommand));
+  };
 
   useEffect(() => {
     document.body.style.overflow = mobOpen ? "hidden" : "";
@@ -67,6 +101,27 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
       document.body.style.overflow = "";
     };
   }, [mobOpen]);
+
+  useEffect(() => {
+    if (searchOpen && !SearchCommand) searchLoadingRef.current?.focus();
+  }, [searchOpen, SearchCommand]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        if (searchOpen) {
+          setSearchOpen(false);
+          window.setTimeout(() => searchBtnRef.current?.focus(), 0);
+        } else {
+          setSearchOpen(true);
+          warmSearchCommand();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [searchOpen]);
 
   const isCurrent = (path: string) => gameHref(game, lang, path) === pathname;
 
@@ -84,7 +139,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
         <span />
       </button>
 
-      <Link className="logo" href={gameHref(GAMES.wow, lang, "/")} aria-label="Gildra home">
+      <Link className="logo" href={gameHref(GAMES.wow, lang, "/")} prefetch={false} aria-label="Gildra home">
         <Image
           className="logo-mark"
           src="/brand/helmet.png"
@@ -145,6 +200,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
                     type="button"
                     className="gitem"
                     aria-disabled="true"
+                    disabled
                     title="Coming soon"
                   >
                     {tile}
@@ -157,6 +213,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
                   key={g.slug}
                   className="gitem"
                   href={gameHref(g, lang, "/")}
+                  prefetch={false}
                   onClick={() => gameMenu.setOpen(false)}
                 >
                   {tile}
@@ -187,6 +244,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
                   key={task.title}
                   className={`exp-card${isCurrent(task.path) ? " on" : ""}`}
                   href={gameHref(game, lang, task.path)}
+                  prefetch={false}
                   aria-current={isCurrent(task.path) ? "page" : undefined}
                   onClick={() => explore.setOpen(false)}
                 >
@@ -209,6 +267,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
               onClick={() => {
                 explore.setOpen(false);
                 setSearchOpen(true);
+                warmSearchCommand();
               }}
             >
               <svg className="i" aria-hidden="true">
@@ -226,8 +285,10 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
         ref={searchBtnRef}
         className="search"
         type="button"
+        onPointerEnter={warmSearchCommand}
+        onFocus={warmSearchCommand}
         aria-label="Search Gildra (Ctrl+K)"
-        onClick={() => setSearchOpen(true)}
+        onClick={() => { setSearchOpen(true); warmSearchCommand(); }}
       >
         <svg className="i" aria-hidden="true">
           <use href="#ic-search" />
@@ -238,6 +299,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
         <Link
           className={lang === "en" ? "on" : undefined}
           href={altPath(pathname ?? "/", "en")}
+          prefetch={false}
           aria-current={lang === "en" ? "true" : undefined}
         >
           EN
@@ -246,16 +308,17 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
         <Link
           className={lang === "ru" ? "on" : undefined}
           href={altPath(pathname ?? "/", "ru")}
+          prefetch={false}
           aria-current={lang === "ru" ? "true" : undefined}
         >
           RU
         </Link>
       </nav>
-      <button className="user" type="button" aria-label="Account: Alexandér">
+      <Link className="user" href={p(lang, "/profile/arcanist")} prefetch={false} aria-label={lang === "ru" ? "Профиль: Arcanist Vexis" : "Profile: Arcanist Vexis"}>
         <span className="avatar" aria-hidden="true" />
-        <span className="user-name">Alexandér</span>{" "}
-        <span className="caret">▾</span>
-      </button>
+        <span className="user-name">Arcanist Vexis</span>{" "}
+        <span className="caret">→</span>
+      </Link>
 
       {mobOpen && (
         <nav className="mobmenu" id="mobile-menu" aria-label="Mobile">
@@ -265,6 +328,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
             onClick={() => {
               setMobOpen(false);
               setSearchOpen(true);
+              warmSearchCommand();
             }}
           >
             <svg className="i" aria-hidden="true">
@@ -277,6 +341,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
               key={task.title}
               className="mob-task"
               href={gameHref(game, lang, task.path)}
+              prefetch={false}
               onClick={() => setMobOpen(false)}
             >
               <span className="exp-task">{tt(task.task)}</span>
@@ -286,6 +351,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
           <Link
             className="mob-prem"
             href={gameHref(GAMES.wow, lang, anchorHref(ANCHORS.premium))}
+            prefetch={false}
             onClick={() => setMobOpen(false)}
           >
             {tt("Go Premium")}
@@ -293,16 +359,21 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
         </nav>
       )}
 
-      <SearchCommand
-        open={searchOpen}
+      {searchOpen && (SearchCommand ? <SearchCommand
         game={game}
         lang={lang}
-        onOpen={() => setSearchOpen(true)}
         onClose={() => {
           setSearchOpen(false);
           searchBtnRef.current?.focus();
         }}
-      />
+      /> : (
+        <div className="sc-overlay" onMouseDown={() => setSearchOpen(false)}>
+          <div ref={searchLoadingRef} className="sc" role="dialog" aria-modal="true" aria-label="Search Gildra" aria-busy="true" tabIndex={-1} onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === "Escape") { setSearchOpen(false); searchBtnRef.current?.focus(); } }}>
+            <div className="sc-input"><svg className="i" aria-hidden="true"><use href="#ic-search" /></svg><span>{tt("Search Gildra...")}</span><span className="kbd">Esc</span></div>
+            <div className="sc-results" role="status">{lang === "ru" ? "Загружаем поиск…" : "Loading search…"}</div>
+          </div>
+        </div>
+      ))}
     </header>
   );
 }

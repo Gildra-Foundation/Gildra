@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
-import { registry } from "@/lib/blocks/registry";
 import type { BlockInstance } from "@/lib/blocks/page";
 import type { RenderContext } from "@/lib/blocks/types";
+import type { BlockRegistry } from "@/lib/blocks/loadRegistry";
 
 function isVisible(b: BlockInstance, ctx: RenderContext) {
   const v = b.visibility;
@@ -19,9 +19,11 @@ function isVisible(b: BlockInstance, ctx: RenderContext) {
 export async function BlockRenderer({
   blocks,
   ctx,
+  registry,
 }: {
   blocks: BlockInstance[];
   ctx: RenderContext;
+  registry: BlockRegistry;
 }) {
   const nodes = await Promise.all(
     blocks.map(async (b, i) => {
@@ -33,7 +35,7 @@ export async function BlockRenderer({
       const load = def.load as ((ctx: RenderContext, props: unknown) => unknown) | undefined;
       const props = { ...def.defaults, ...b.props };
       const data = load ? await load(ctx, props) : undefined;
-      const children = b.children ? <BlockRenderer blocks={b.children} ctx={ctx} /> : undefined;
+      const children = b.children ? <BlockRenderer blocks={b.children} ctx={ctx} registry={registry} /> : undefined;
       return (
         <Component key={b.id ?? `${b.type}-${i}`} {...props} data={data} lang={ctx.lang} game={ctx.game}>
           {children}

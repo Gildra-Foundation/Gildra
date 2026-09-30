@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 2,
+  "lastVerifiedAt": "2026-09-13T05:53:00Z",
+  "method": "exact case-sensitive route name compared with the canonical English Wowhead NPC page title and route-context guide; fuzzy matches and ambiguous duplicate names are rejected",
+  "verifiedLinks": [
+    { "name": "A Knot of Snakes", "npcId": 134388, "displayId": 83574, "sourceUrl": "https://www.wowhead.com/npc=134388/a-knot-of-snakes", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus", "portraitUrl": "/assets/wow/mythic/npcs/season-two/a-knot-of-snakes-134388.webp" },
+    { "name": "Agitated Voidscythe", "npcId": 263228, "displayId": 138723, "sourceUrl": "https://www.wowhead.com/npc=263228/agitated-voidscythe", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/voidscar-arena/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/agitated-voidscythe-263228.webp" },
+    { "name": "Aka'ali the Conqueror", "npcId": 135470, "displayId": 84269, "sourceUrl": "https://www.wowhead.com/npc=135470/akaali-the-conqueror", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", "portraitUrl": "/assets/wow/mythic/npcs/season-two/akaali-the-conqueror-135470.webp" },
+    { "name": "Animated Guardian", "npcId": 133935, "displayId": 83252, "sourceUrl": "https://www.wowhead.com/npc=133935/animated-guardian", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/kings-rest/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/animated-guardian-133935.webp" },
+    { "name": "Avatar of Sethraliss", "npcId": 133392, "displayId": 83203, "sourceUrl": "https://www.wowhead.com/npc=133392/avatar-of-sethraliss", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/temple-of-sethraliss/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/avatar-of-sethraliss-133392.webp" },
+    { "name": "Bonded Beasttamer", "npcId": 245145, "displayId": 129581, "sourceUrl": "https://www.wowhead.com/npc=245145/bonded-beasttamer", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/den-of-nalorakk/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/bonded-beasttamer-245145.webp" },
+    { "name": "Bloodthorn Roots", "npcId": 253571, "displayId": null, "sourceUrl": "https://www.wowhead.com/npc=253571/bloodthorn-roots", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/the-blinding-vale-dungeon-overview-location-rewards", "portraitUrl": null },
+    { "name": "Explosive Totem", "npcId": 135764, "displayId": 84933, "sourceUrl": "https://www.wowhead.com/npc=135764/explosive-totem", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", "portraitUrl": "/assets/wow/mythic/npcs/season-two/explosive-totem-135764.webp" },
+    { "name": "Faithless Subjugator", "npcId": 134364, "displayId": 86510, "sourceUrl": "https://www.wowhead.com/npc=134364/faithless-subjugator", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/temple-of-sethraliss/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/faithless-subjugator-134364.webp" },
+    { "name": "Furious Vilefiend", "npcId": 234799, "displayId": 84426, "sourceUrl": "https://www.wowhead.com/npc=234799/furious-vilefiend", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/murder-row/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/furious-vilefiend-234799.webp" },
+    { "name": "Half-Finished Mummy", "npcId": 270502, "displayId": 84688, "sourceUrl": "https://www.wowhead.com/npc=270502/half-finished-mummy", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/kings-rest/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/half-finished-mummy-270502.webp" },
+    { "name": "Gravitic Orb", "npcId": 255001, "displayId": null, "sourceUrl": "https://www.wowhead.com/npc=255001/gravitic-orb", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/voidscar-arena-dungeon-overview-location-rewards", "portraitUrl": null },
+    { "name": "Kezkitt", "npcId": 243029, "displayId": 139027, "sourceUrl": "https://www.wowhead.com/npc=243029/kezkitt", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/the-blinding-vale-dungeon-overview-location-rewards", "portraitUrl": "/assets/wow/mythic/npcs/season-two/kezkitt-243029.webp" },
+    { "name": "Kilivore Screamer", "npcId": 243766, "displayId": 141196, "sourceUrl": "https://www.wowhead.com/npc=243766/kilivore-screamer", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/voidscar-arena/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/kilivore-screamer-243766.webp" },
+    { "name": "King Dazar", "npcId": 136160, "displayId": 84352, "sourceUrl": "https://www.wowhead.com/npc=136160/king-dazar", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", "portraitUrl": "/assets/wow/mythic/npcs/season-two/king-dazar-136160.webp" },
+    { "name": "Kula the Butcher", "npcId": 135475, "displayId": 84272, "sourceUrl": "https://www.wowhead.com/npc=135475/kula-the-butcher", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", "portraitUrl": "/assets/wow/mythic/npcs/season-two/kula-the-butcher-135475.webp" },
+    { "name": "Lekshi", "npcId": 243030, "displayId": 139025, "sourceUrl": "https://www.wowhead.com/npc=243030/lekshi", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/the-blinding-vale-dungeon-overview-location-rewards", "portraitUrl": "/assets/wow/mythic/npcs/season-two/lekshi-243030.webp" },
+    { "name": "Lightspawn Lasher", "npcId": 247755, "displayId": 131589, "sourceUrl": "https://www.wowhead.com/npc=247755/lightspawn-lasher", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/the-blinding-vale-dungeon-overview-location-rewards", "portraitUrl": "/assets/wow/mythic/npcs/season-two/lightspawn-lasher-247755.webp" },
+    { "name": "Lightwarden Ruia", "npcId": 245912, "displayId": 129856, "sourceUrl": "https://www.wowhead.com/npc=245912/lightwarden-ruia", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/the-blinding-vale/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/lightwarden-ruia-245912.webp" },
+    { "name": "Lightning Spire", "npcId": 135445, "displayId": null, "sourceUrl": "https://www.wowhead.com/npc=135445/lightning-spire", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/temple-of-sethraliss/en_US.js", "portraitUrl": null },
+    { "name": "Meittik", "npcId": 243028, "displayId": 129588, "sourceUrl": "https://www.wowhead.com/npc=243028/meittik", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/the-blinding-vale-dungeon-overview-location-rewards", "portraitUrl": "/assets/wow/mythic/npcs/season-two/meittik-243028.webp" },
+    { "name": "Nalorakk", "npcId": 246404, "displayId": 129989, "sourceUrl": "https://www.wowhead.com/npc=246404/nalorakk", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/den-of-nalorakk/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/nalorakk-246404.webp" },
+    { "name": "Royal Berserker", "npcId": 135167, "displayId": 84112, "sourceUrl": "https://www.wowhead.com/npc=135167/royal-berserker", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", "portraitUrl": "/assets/wow/mythic/npcs/season-two/royal-berserker-135167.webp" },
+    { "name": "Shadow of Zul", "npcId": 138489, "displayId": 85860, "sourceUrl": "https://www.wowhead.com/npc=138489/shadow-of-zul", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/kings-rest/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/shadow-of-zul-138489.webp" },
+    { "name": "Stormbound Mystic", "npcId": 245139, "displayId": 129562, "sourceUrl": "https://www.wowhead.com/npc=245139/stormbound-mystic", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/den-of-nalorakk/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/stormbound-mystic-245139.webp" },
+    { "name": "Toxic Creeper", "npcId": 239070, "displayId": 140374, "sourceUrl": "https://www.wowhead.com/npc=239070/toxic-creeper", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/voidscar-arena-dungeon-overview-location-rewards", "portraitUrl": "/assets/wow/mythic/npcs/season-two/toxic-creeper-239070.webp" },
+    { "name": "Wrathguard Flayer", "npcId": 235267, "displayId": 63968, "sourceUrl": "https://www.wowhead.com/npc=235267/wrathguard-flayer", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/murder-row/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/wrathguard-flayer-235267.webp" },
+    { "name": "Zanazal the Wise", "npcId": 135472, "displayId": 84271, "sourceUrl": "https://www.wowhead.com/npc=135472/zanazal-the-wise", "contextSourceUrl": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", "portraitUrl": "/assets/wow/mythic/npcs/season-two/zanazal-the-wise-135472.webp" },
+    { "name": "Zul'jan", "npcId": 259447, "displayId": 145435, "sourceUrl": "https://www.wowhead.com/npc=259447/zuljan", "contextSourceUrl": "https://assets.keystone.guru/compiled/v15.25.1/mapcontext/data/altar-of-fangs/en_US.js", "portraitUrl": "/assets/wow/mythic/npcs/season-two/zul-jan-259447.webp" }
+  ],
+  "contextOverrides": [],
+  "sourceSupportedUnresolved": [],
+  "mustNotBeEnemyLabels": [
+    "Arena Beast",
+    "Arena Monstrosity",
+    "Awakened Lightbloom",
+    "Bloodthorn Stalker",
+    "Bloom Guardian",
+    "Dazar, The First King",
+    "Demon Hound",
+    "Faithless Invader",
+    "Fangbound Ritualist",
+    "Fangbound Scavenger",
+    "Fel Axe",
+    "Fel Freight Handler",
+    "Foraging Mauler",
+    "Frostfeather Harrier",
+    "Galvanized Guardian",
+    "Golden Serpent Acolyte",
+    "Guardian of Sethraliss",
+    "Illicit Smuggler",
+    "Infernal",
+    "Killvore Screamer",
+    "Lightblossom Trinity",
+    "Lightfire Warden",
+    "Lightspore Sentry",
+    "Mirror Image",
+    "Mutated Attendant",
+    "Petalwing Skirmisher",
+    "Primalist Recruit",
+    "Primalist Flamedancer",
+    "Row Enforcer",
+    "Spectral Berserker",
+    "The Council of Tribes",
+    "Vilefiend"
+  ],
+  "rejectedLinks": [
+    {
+      "name": "A Knot of Snakes",
+      "rejectedNpcId": 263958,
+      "actualTitle": "Meet With Tokka Kill Credit [DNT]",
+      "sourceUrl": "https://www.wowhead.com/npc=263958/meet-with-tokka-kill-credit-dnt"
+    },
+    {
+      "name": "Faithless Invader",
+      "rejectedNpcId": 128575,
+      "actualTitle": "Vision of Faithless Invader",
+      "sourceUrl": "https://www.wowhead.com/npc=128575/vision-of-faithless-invader"
+    },
+    {
+      "name": "Fel Axe",
+      "rejectedNpcId": 179669,
+      "actualTitle": "Spore of Marasmius",
+      "sourceUrl": "https://www.wowhead.com/npc=179669/spore-of-marasmius"
+    },
+    {
+      "name": "Half-Finished Mummy",
+      "rejectedNpcId": 136264,
+      "actualTitle": "Finished Mummy",
+      "sourceUrl": "https://www.wowhead.com/npc=136264/finished-mummy"
+    },
+    {
+      "name": "Mirror Image",
+      "rejectedNpcId": 55342,
+      "actualTitle": "Fire Juggler",
+      "sourceUrl": "https://www.wowhead.com/npc=55342/fire-juggler"
+    },
+    {
+      "name": "Primalist Recruit",
+      "rejectedNpcId": 190147,
+      "actualTitle": "Primalist Recruiter",
+      "sourceUrl": "https://www.wowhead.com/npc=190147/primalist-recruiter"
+    },
+    {
+      "name": "Spectral Berserker",
+      "rejectedNpcId": 135167,
+      "actualTitle": "Royal Berserker",
+      "sourceUrl": "https://www.wowhead.com/npc=135167/royal-berserker"
+    }
+  ]
+}

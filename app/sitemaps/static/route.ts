@@ -15,9 +15,11 @@ export function GET() {
   const urls: string[] = [];
   for (const game of liveGames()) {
     for (const path of PATHS_BY_GAME[game.slug]?.() ?? []) {
-      const alternates = game.locales
+      const localizedAlternates = game.locales
         .map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${xmlEscape(`${siteOrigin}${gameHref(game, l, path)}`)}"/>`)
         .join("");
+      const defaultHref = `${siteOrigin}${gameHref(game, game.locales.includes("en") ? "en" : game.locales[0], path)}`;
+      const alternates = `${localizedAlternates}<xhtml:link rel="alternate" hreflang="x-default" href="${xmlEscape(defaultHref)}"/>`;
       for (const lang of game.locales) {
         urls.push(`<url><loc>${xmlEscape(`${siteOrigin}${gameHref(game, lang, path)}`)}</loc>${alternates}</url>`);
       }

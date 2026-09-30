@@ -1,5 +1,5 @@
 import { SpecSlot } from "@/components/SpecSlot";
-import { p, t } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import type { BlockComponentProps } from "@/lib/blocks/types";
 import type { MythicMetaBlockData, MythicMetaProps } from "./schema";
 
@@ -18,9 +18,7 @@ export function MythicMeta({ data, lang }: BlockComponentProps<MythicMetaProps, 
     <div className="metaopen">
       <div className="panel-head">
         <span className="t">{tt("Mythic+ Meta")}</span>
-        <a className="view" href={p(lang, "/tier-lists")}>
-          {tt("View All →")}
-        </a>
+
       </div>
       <div className="panel-sub">{tt("All Keys · Overall · Last 7 Days")}</div>
       <div className="panel-rule" />

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { defineBlock, type BlockComponentProps, type RenderContext } from "@/lib/blocks/types";
 import { GAMES, gameHref } from "@/lib/games/registry";
-import { getLeagueContent, type LeagueContentEntry } from "@/lib/games/league-of-legends/api";
+import { getLeagueContent, LEAGUE_CONTENT_PAGE_SIZE, type LeagueContentEntry } from "@/lib/games/league-of-legends/api";
 import { RuneGrid } from "@/components/league/RuneGrid";
 import styles from "@/components/league/league.module.css";
 import { t } from "@/lib/i18n";
@@ -35,7 +35,7 @@ function ContentCategory({ category, cursor, data, lang }: BlockComponentProps<C
       <section><small>{entry.category} · {entry.externalKey}</small><h2>{entry.name || entry.slug || entry.externalKey}</h2><p>{entry.description.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()}</p>{entry.tags.length > 0 && <footer>{entry.tags.slice(0, 3).map((tag) => <span key={tag}>{tag}</span>)}</footer>}</section>
     </article>)}</div>}
     {data.entries.length === 0 && <div className={styles.empty}><strong>{tt("No published entries")}</strong><span>{tt("The first Data Dragon import will populate this category.")}</span></div>}
-    <div className={styles.pagination}>{cursor && <Link href={base}>{tt("← First page")}</Link>}{data.nextCursor && <Link href={`${base}?cursor=${encodeURIComponent(data.nextCursor)}`}>{tt("Next 100 →")}</Link>}</div>
+    <div className={styles.pagination}>{cursor && <Link href={base}>{tt("← First page")}</Link>}{data.nextCursor && <Link href={`${base}?cursor=${encodeURIComponent(data.nextCursor)}`}>{tt(`Next ${LEAGUE_CONTENT_PAGE_SIZE} →`)}</Link>}</div>
   </>;
 }
 

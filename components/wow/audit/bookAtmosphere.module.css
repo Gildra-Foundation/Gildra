@@ -1,0 +1,36 @@
+/* Shared stone and mist; decorative layers never tint live icons or models. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  background: var(--gildra-character-world-base,
+    radial-gradient(ellipse 30% 72% at 4% 52%, #829eae36, transparent 88%),
+    radial-gradient(ellipse 28% 70% at 96% 54%, #78977a2c, transparent 88%),
+    radial-gradient(ellipse at 18% 32%, #4864772b, transparent 54%),
+    radial-gradient(ellipse at 86% 66%, #3e555d27, transparent 52%),
+    linear-gradient(180deg, #090e133b, #10191d0f 45%, #060b1131),
+    #080a0c);
+}
+@media (max-width: 760px) {
+  .backdrop { background: var(--gildra-character-world-base-mobile, var(--gildra-character-world-base)); }
+}
+.backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gildra-character-world-glow,
+    linear-gradient(118deg, transparent 12%, #adc3cb16 29%, transparent 47%),
+    radial-gradient(ellipse at 42% 0, #9db2c02c, transparent 57%),
+    radial-gradient(ellipse at 4% 83%, #718c9b2b, transparent 48%),
+    radial-gradient(ellipse at 96% 87%, #69828d2a, transparent 43%));
+}
+.backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gildra-character-world-shade,
+    radial-gradient(ellipse at 50% 43%, transparent 34%, #03080c1d 100%),
+    linear-gradient(transparent 76%, #050a0e2e));
+}

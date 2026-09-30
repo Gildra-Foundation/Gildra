@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { SpecSlot } from "@/components/SpecSlot";
-import { p, t } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import type { BlockComponentProps } from "@/lib/blocks/types";
 import type { MetaPulseData, MetaPulseProps } from "./schema";
 
@@ -29,9 +28,7 @@ export function MetaPulse({ data, lang }: BlockComponentProps<MetaPulseProps, Me
           </span>
         ))}
       </div>
-      <Link className="pulse-link" href={p(lang, "/tier-lists")}>
-        {data.changes} {tt("rank changes")} →
-      </Link>
+
     </aside>
   );
 }

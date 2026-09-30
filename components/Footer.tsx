@@ -47,7 +47,9 @@ export function Footer({ lang = "en", game = "wow" }: { lang?: Lang; game?: Game
           <div className="fcol foot-prem" id="premium">
             <h5>{tt("Premium")}</h5>
             <p>{tt("Remove ads and support Gildra development.")}</p>
-            <button className="btn-gold">{tt("Go Premium")}</button>
+            <span className="btn-gold is-disabled" aria-disabled="true" title={tt("Coming soon")}>
+              {tt("Go Premium")} · {tt("Coming soon")}
+            </span>
           </div>
         </div>
       </div>

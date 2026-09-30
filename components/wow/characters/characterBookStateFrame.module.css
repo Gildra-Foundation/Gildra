@@ -1,0 +1,37 @@
+.page {
+  --book-paper-inset: -8px -8px -14px;
+  --book-binding-inset: -42px -42px -48px;
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  color: var(--folio-ink);
+  font-family: var(--folio-body);
+}
+
+.bookContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.manuscript {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: max(min(620px, 70svh), calc(100svh - 172px));
+  padding: clamp(32px, 5cqw, 68px) clamp(20px, 5cqw, 72px);
+}
+
+@container auditPage (max-width: 820px) {
+  .manuscript { min-height: max(58svh, calc(100svh - 172px)); padding: 40px 7%; }
+}
+
+@container auditPage (max-width: 560px) {
+  .manuscript { min-height: max(60svh, calc(100svh - 172px)); padding: 32px 5%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page *, .page *::before, .page *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

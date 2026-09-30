@@ -6,7 +6,7 @@
 }
 .sp-crumb a{color:var(--ink-2)}
 .sp-crumb a:hover{color:var(--gold-2)}
-.sp-crumb .dia{font-size:7px;color:var(--gold-dim)}
+.sp-crumb .dia{font-size:10px;color:var(--gold-dim)}
 .sp-hero{
   display:flex;align-items:center;gap:16px;padding:20px 22px;
   position:relative;overflow:hidden;
@@ -30,7 +30,7 @@
   line-height:1;font-variant-numeric:tabular-nums;
 }
 .sp-score>span:not(.sbar){
-  font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
   margin-top:4px;
 }
 .sp-score .sbar{margin-top:6px;width:74px}
@@ -56,7 +56,7 @@
   font-family:var(--display);font-weight:700;font-size:19px;color:#e9ecf7;
   font-variant-numeric:tabular-nums;
 }
-.sp-stat span{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+.sp-stat span{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
 .sp-note{font-size:10.5px;color:var(--ink-3);margin:10px 2px 30px}
 .sp-builds{margin-bottom:8px}
 .sp-guides{display:flex;flex-direction:column}
@@ -66,7 +66,7 @@
   transition:background .15s,box-shadow .2s;
 }
 .sp-guide:hover{background:rgba(28,33,48,.5);box-shadow:inset 2px 0 0 var(--gold-dim)}
-.sp-guide-cat{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold)}
+.sp-guide-cat{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold)}
 .sp-guide-title{font-size:13px;font-weight:600;color:var(--ink)}
 .sp-guide-meta{font-size:10.5px;color:var(--ink-3)}
 .sp-back{margin-top:34px}

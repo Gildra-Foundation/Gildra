@@ -1,0 +1,1250 @@
+/*
+ * Talent calculator premium surface.
+ *
+ * This layer owns scale, optical sharpness and interaction finish. Spec files
+ * still own colour and fantasy, while the legacy sheet owns behaviour/layout
+ * fallbacks. Keeping the finish layer isolated makes it possible to redesign a
+ * specialization without reintroducing tiny type or soft, compositor-heavy UI.
+ */
+
+.talent-calculator {
+  --tc-control-radius: 8px;
+  --tc-panel-radius: 10px;
+  --tc-ease-premium: cubic-bezier(.2,.72,.18,1);
+  grid-template-rows: 56px 84px minmax(520px,1fr) 88px;
+  min-height: 748px;
+  background:
+    radial-gradient(ellipse at 50% -8%,rgba(var(--tc-hot-rgb),.065),transparent 34%),
+    radial-gradient(ellipse at 82% 32%,rgba(var(--tc-ambient-rgb),.13),transparent 38%),
+    radial-gradient(ellipse at 18% 58%,rgba(var(--tc-accent-rgb),.055),transparent 34%),
+    linear-gradient(180deg,#07090a 0,#030506 58%,#050607 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.talent-calculator::after {
+  inset: 56px 0 auto;
+  height: 156px;
+  clip-path: none;
+  background:
+    linear-gradient(105deg,transparent 8%,rgba(var(--tc-accent-rgb),.045) 28%,transparent 47%),
+    radial-gradient(ellipse at 50% 0,rgba(var(--tc-hot-rgb),.06),transparent 58%),
+    linear-gradient(180deg,rgba(var(--tc-ambient-rgb),.055),transparent 78%);
+  box-shadow: inset 0 1px rgba(var(--tc-hot-rgb),.055);
+  opacity: .9;
+}
+
+.talent-calculator :where(button,input,a) { font-synthesis: none; }
+
+/* A routed page arrives fully composed; motion is reserved for interaction and
+   the single view-transition layer instead of animating five large surfaces. */
+.talent-calculator :is(.tc-header,.tc-commandbar,.tc-toolbar,.tc-panel,.tc-tree-canvas) { animation: none; }
+
+/* Global navigation: high-contrast, calm and physically aligned. */
+.talent-calculator .tc-header {
+  gap: 24px;
+  padding-inline: 24px;
+  border-bottom-color: rgba(var(--tc-accent-rgb),.32);
+  background: linear-gradient(180deg,rgba(6,8,9,.995),rgba(2,4,5,.995));
+  box-shadow: 0 10px 28px rgba(0,0,0,.36),inset 0 -1px rgba(var(--tc-hot-rgb),.055);
+}
+.talent-calculator .tc-brand-lockup {
+  color: #f4f1ea;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-shadow: 0 0 18px rgba(var(--tc-accent-rgb),.14);
+}
+.talent-calculator .tc-game-select,
+.talent-calculator .tc-header-search {
+  height: 38px;
+  border-color: rgba(var(--tc-accent-rgb),.38);
+  border-radius: var(--tc-control-radius);
+  background: #080b0d;
+  font-size: 13px;
+  box-shadow: inset 0 1px rgba(255,255,255,.035);
+}
+.talent-calculator .tc-game-select:hover,
+.talent-calculator .tc-game-select:focus-visible,
+.talent-calculator .tc-header-search:focus-within {
+  outline: 0;
+  border-color: rgba(var(--tc-hot-rgb),.72);
+  box-shadow: 0 0 0 2px rgba(var(--tc-accent-rgb),.075),inset 0 1px rgba(255,255,255,.045);
+}
+.talent-calculator .tc-game-select img { width: 24px; height: 24px; }
+.talent-calculator .tc-main-nav { gap: 26px; }
+.talent-calculator .tc-main-nav a { color: #c7cbd0; font-size: 13px; font-weight: 500; }
+.talent-calculator .tc-main-nav a.is-active { color: #fff; }
+.talent-calculator .tc-header-search { width: min(300px,20vw); padding-inline: 12px; }
+.talent-calculator .tc-header-search input { font-size: 12px; line-height: 1.4; }
+.talent-calculator .tc-account { width: 38px; height: 38px; flex-basis: 38px; border-color: rgba(var(--tc-accent-rgb),.7); }
+.talent-calculator .tc-account svg { width: 19px; height: 19px; }
+
+/* Build command strip: readable at normal viewing distance. */
+.talent-calculator .tc-commandbar {
+  gap: 20px;
+  padding: 10px 24px;
+  border-bottom-color: rgba(var(--tc-accent-rgb),.36);
+  background: linear-gradient(90deg,rgba(var(--tc-ambient-rgb),.13),transparent 38%),#07090a;
+  box-shadow: inset 0 -1px rgba(var(--tc-hot-rgb),.045);
+}
+.talent-calculator .tc-page-title { min-width: 390px; gap: 16px; }
+.talent-calculator .tc-fury-portrait { width: 58px; height: 58px; flex-basis: 58px; border-width: 1px; }
+.talent-calculator .tc-fury-portrait img {
+  object-position: center;
+  filter: saturate(1.02) contrast(1.08) brightness(.96);
+}
+.talent-calculator .tc-page-title > div { gap: 3px; }
+.talent-calculator .tc-title-tags { gap: 6px !important; margin-bottom: 0; }
+.talent-calculator .tc-title-tags b {
+  min-height: 17px;
+  padding: 4px 7px 3px;
+  border-color: rgba(var(--tc-accent-rgb),.42);
+  border-radius: 4px;
+  background: rgba(var(--tc-ambient-rgb),.12);
+  color: color-mix(in srgb,var(--tc-hot) 82%,#d7d7d7);
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: .1em;
+}
+.talent-calculator .tc-page-title h1 {
+  color: #f7f7f4;
+  font-size: 22px;
+  font-weight: 680;
+  line-height: 1.08;
+  letter-spacing: -.025em;
+  text-shadow: 0 1px #000;
+}
+.talent-calculator .tc-page-title .tc-build-version {
+  max-width: min(520px,34vw);
+  overflow: hidden;
+  color: #a9afb4;
+  font-size: 10px;
+  line-height: 1.3;
+  letter-spacing: .01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.talent-calculator .tc-command-actions { gap: 8px; }
+.talent-calculator .tc-build-select,
+.talent-calculator .tc-command-button {
+  height: 50px;
+  border-color: rgba(var(--tc-accent-rgb),.34);
+  border-radius: var(--tc-control-radius);
+  background: linear-gradient(180deg,rgba(var(--tc-ambient-rgb),.065),#090b0c 62%);
+  box-shadow: inset 0 1px rgba(255,255,255,.035),0 4px 13px rgba(0,0,0,.12);
+  transition: transform .2s var(--tc-ease-premium),border-color .2s ease,background-color .2s ease,box-shadow .2s ease,color .2s ease;
+}
+.talent-calculator .tc-build-select svg,
+.talent-calculator .tc-command-button svg { color: var(--tc-accent); }
+.talent-calculator .tc-build-select { width: 240px; padding-inline: 14px; }
+.talent-calculator .tc-build-select > span small { font-size: 8px; letter-spacing: .09em; }
+.talent-calculator .tc-build-select > span b { font-size: 12px; line-height: 1.2; }
+.talent-calculator .tc-command-button { min-width: 82px; padding-inline: 13px; font-size: 11px; font-weight: 600; }
+.talent-calculator .tc-command-button svg { width: 17px; height: 17px; }
+.talent-calculator .tc-command-button.is-share { min-width: 112px; }
+.talent-calculator .tc-command-button:hover:not(:disabled),
+.talent-calculator .tc-build-select:hover,
+.talent-calculator .tc-build-select:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--tc-accent);
+  background: color-mix(in srgb,var(--tc-deep) 18%,#0c1012);
+  box-shadow: 0 8px 20px rgba(0,0,0,.28),inset 0 1px rgba(var(--tc-hot-rgb),.11),inset 0 0 18px rgba(var(--tc-ambient-rgb),.1);
+}
+.talent-calculator .tc-command-button:active:not(:disabled),
+.talent-calculator .tc-build-select:active { transform: translateY(0) scale(.982); }
+
+/* The specialization resource remains decorative, but never tiny. */
+.talent-calculator .tc-points-badge { min-width: 214px; height: 52px; border-radius: var(--tc-control-radius); }
+.talent-calculator .tc-rage-copy small { font-size: 8px; line-height: 1; letter-spacing: .1em; }
+.talent-calculator .tc-rage-copy b { font-size: 17px; line-height: 1; }
+.talent-calculator .tc-rage-copy b i { font-size: 10px; }
+.talent-calculator .tc-rage-meter .tc-rage-percent { font-size: 10px; font-weight: 700; }
+
+/* Workspace: distinct surfaces and sharp hierarchy, without blur layers. */
+.talent-calculator .tc-workspace { gap: 14px; padding: 12px 20px; }
+.talent-calculator .tc-workspace::before { right: 20px; left: 20px; opacity: .72; }
+.talent-calculator .tc-panel {
+  border-color: rgba(var(--tc-panel-hot),.5);
+  border-radius: var(--tc-panel-radius);
+  background:
+    linear-gradient(90deg,rgba(var(--tc-panel-rgb),.035) 1px,transparent 1px) 0 0/64px 64px,
+    linear-gradient(rgba(var(--tc-panel-rgb),.03) 1px,transparent 1px) 0 0/64px 64px,
+    radial-gradient(ellipse at 50% 38%,rgba(var(--tc-panel-rgb),.105),transparent 56%),
+    linear-gradient(155deg,#111517,#050708 64%,#080a0b);
+  box-shadow: inset 0 1px rgba(255,255,255,.055),inset 0 0 0 1px rgba(0,0,0,.7),inset 0 -36px 70px rgba(0,0,0,.22),0 14px 34px rgba(0,0,0,.28);
+  outline: 1px solid rgba(var(--tc-panel-hot),.075);
+  outline-offset: -4px;
+  transition: border-color .22s ease,box-shadow .22s ease,outline-color .22s ease;
+}
+.talent-calculator .tc-panel.is-node-active {
+  border-color: rgba(var(--tc-panel-hot),.76);
+  outline-color: rgba(var(--tc-panel-hot),.13);
+  box-shadow: inset 0 1px rgba(255,255,255,.065),inset 0 0 0 1px rgba(0,0,0,.72),inset 0 0 74px rgba(var(--tc-panel-rgb),.075),0 16px 38px rgba(0,0,0,.32);
+}
+.talent-calculator .tc-panel::before { inset: 88px 5% 34px; opacity: .14; }
+.talent-calculator .tc-hero-panel::before { inset-block-start: 110px; }
+.talent-calculator .tc-panel::after { inset-block-start: 78px; opacity: .065; }
+.talent-calculator .tc-hero-panel::after { inset-block-start: 100px; }
+.talent-calculator .tc-tree-canvas { inset: 92px 7% 42px; }
+.talent-calculator .tc-hero-panel .tc-tree-canvas { inset: 114px 10% 42px; }
+.talent-calculator .tc-lines { shape-rendering: geometricPrecision; }
+.talent-calculator .tc-lines line { stroke: rgba(194,204,210,.43); stroke-width: .95; stroke-linecap: round; }
+.talent-calculator .tc-lines line.is-lit {
+  stroke-width: 1.55;
+  stroke-opacity: 1;
+  animation: tc-premium-path-awaken .44s var(--tc-ease-premium) both;
+}
+.talent-calculator .tc-lines line.is-dimmed { stroke-opacity: .17; }
+
+.talent-calculator .tc-node {
+  width: 40px;
+  height: 40px;
+  contain: style;
+  padding: 2px;
+  border-color: #8b9194;
+  border-width: 2px;
+  border-radius: 6px;
+  background: #030607;
+  box-shadow: 0 0 0 1px #000,0 5px 14px rgba(0,0,0,.78),inset 0 0 0 1px rgba(255,255,255,.15);
+  transition: transform .18s var(--tc-ease-premium),border-color .18s ease,box-shadow .18s ease,filter .18s ease,opacity .18s ease;
+}
+.talent-calculator .tc-node.tiered,
+.talent-calculator .tc-node.subtree { width: 50px; height: 50px; padding: 6px; }
+.talent-calculator .tc-node-art { inset: 2px; background: #020405; box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+.talent-calculator .tc-node img { image-rendering: auto; filter: grayscale(.62) saturate(.7) brightness(.78) contrast(1.14); }
+.talent-calculator .tc-node:not(.is-locked):not(.is-selected) {
+  border-color: color-mix(in srgb,rgb(var(--tc-panel-hot)) 72%,#949b9e);
+  box-shadow: 0 0 0 1px #000,0 6px 15px rgba(0,0,0,.82),0 0 0 3px rgba(var(--tc-panel-rgb),.055),inset 0 0 0 1px rgba(255,255,255,.18);
+}
+.talent-calculator .tc-node:not(.is-locked):not(.is-selected) img {
+  filter: grayscale(.12) saturate(.96) brightness(.94) contrast(1.1);
+}
+.talent-calculator .tc-node:not(.is-locked):not(.is-selected) .tc-node-ring {
+  border-color: rgba(var(--tc-panel-hot),.44);
+}
+.talent-calculator .tc-node.is-selected img { filter: saturate(1.18) contrast(1.09) brightness(1.04); }
+.talent-calculator .tc-node.is-selected {
+  border-color: rgb(var(--tc-panel-hot));
+  box-shadow: 0 0 0 1px #000,0 0 0 3px rgba(var(--tc-panel-rgb),.13),0 0 16px rgba(var(--tc-panel-rgb),.52),inset 0 0 0 1px rgba(var(--tc-hot-rgb),.28);
+}
+.talent-calculator .tc-node.is-selected::after { animation: none; }
+
+/* The resource dial wakes on intent, but consumes no frames while idle. */
+.talent-calculator .tc-points-badge::after,
+.talent-calculator .tc-rage-emblem::after,
+.talent-calculator .tc-rage-emblem svg { animation: none; }
+.talent-calculator .tc-points-badge:hover::after { animation: tc-resource-scan 1.05s ease-out 1; }
+.talent-calculator .tc-points-badge:hover .tc-rage-emblem::after { animation: tc-resource-orbit 9s linear infinite; }
+.talent-calculator .tc-points-badge:hover .tc-rage-emblem svg { animation: tc-resource-glyph 1.6s ease-in-out infinite; }
+.talent-calculator .tc-node.is-locked { opacity: .82; filter: none; }
+.talent-calculator .tc-node.is-locked img { filter: grayscale(.9) saturate(.35) brightness(.72) contrast(1.17); }
+.talent-calculator .tc-node.is-dimmed { opacity: .24 !important; }
+.talent-calculator .tc-node:hover,
+.talent-calculator .tc-node:focus-visible { filter: none; transform: translate(-50%,-50%) scale(1.075); }
+.talent-calculator .tc-node-count {
+  top: calc(100% - 2px);
+  min-width: 23px;
+  min-height: 14px;
+  padding: 2px 4px;
+  border-color: rgba(var(--tc-panel-hot),.42);
+  border-radius: 4px;
+  background: #020405;
+  color: #fff;
+  font-size: 10px;
+  line-height: 10px;
+  letter-spacing: -.02em;
+  box-shadow: 0 2px 7px #000;
+}
+.talent-calculator .tc-node.is-selected .tc-node-count {
+  border-color: rgb(var(--tc-panel-hot));
+  background: color-mix(in srgb,var(--tc-deep) 62%,#030506);
+  box-shadow: 0 0 9px rgba(var(--tc-panel-rgb),.34),0 2px 7px #000;
+}
+.talent-calculator .tc-choice-switch { top: -2px; right: -2px; width: 23px; height: 13px; }
+.talent-calculator .tc-choice-switch b { font-size: 8px; }
+.talent-calculator .tc-node:focus-visible { outline: 2px solid var(--tc-hot); outline-offset: 5px; }
+
+/* Hero path controls form a distinct third text level below the title. */
+.talent-calculator .tc-hero-paths {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 6px;
+  width: min(100%,280px);
+}
+.talent-calculator .tc-hero-paths a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 22px;
+  padding: 5px 8px 4px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--tc-accent-rgb),.28);
+  border-radius: 5px;
+  background: rgba(var(--tc-ambient-rgb),.075);
+  color: #979b9d;
+  font: 650 8px/1 var(--ui);
+  letter-spacing: .025em;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: border-color .16s ease,background-color .16s ease,color .16s ease,box-shadow .16s ease;
+}
+.talent-calculator .tc-hero-paths a:hover,
+.talent-calculator .tc-hero-paths a:focus-visible {
+  outline: 0;
+  border-color: rgba(var(--tc-hot-rgb),.68);
+  color: #eef2f3;
+}
+.talent-calculator .tc-hero-paths a.is-active {
+  border-color: var(--tc-accent);
+  background: rgba(var(--tc-accent-rgb),.15);
+  color: var(--tc-hot);
+  box-shadow: inset 0 -1px rgba(var(--tc-hot-rgb),.16),0 0 10px rgba(var(--tc-accent-rgb),.08);
+}
+
+/* Bottom deck: compact, intentional, and fully spec-coloured. */
+.talent-calculator .tc-toolbar {
+  gap: 16px;
+  padding-inline: 20px;
+  background: radial-gradient(ellipse at 76% 0,rgba(var(--tc-ambient-rgb),.16),transparent 42%),linear-gradient(180deg,#0a0d0f,#040607 78%);
+  box-shadow: 0 -12px 30px rgba(0,0,0,.48),inset 0 1px rgba(var(--tc-hot-rgb),.08);
+}
+.talent-calculator .tc-search,
+.talent-calculator .tc-import {
+  height: 48px;
+  border-radius: var(--tc-control-radius);
+  background: linear-gradient(180deg,rgba(var(--tc-ambient-rgb),.085),#070a0b);
+  box-shadow: inset 0 1px rgba(255,255,255,.035),0 5px 15px rgba(0,0,0,.16);
+}
+.talent-calculator .tc-search { width: 250px; }
+.talent-calculator .tc-search input { font-size: 12px; line-height: 1.4; }
+.talent-calculator .tc-import { min-width: 158px; font-size: 11px; font-weight: 600; }
+.talent-calculator .tc-pvp-label { font-size: 11px; line-height: 1.15; }
+.talent-calculator .tc-pvp-label b { font-size: 9px; }
+.talent-calculator .tc-pvp-slot { width: 50px; height: 50px; border-radius: 6px; }
+.talent-calculator .tc-pvp-slot img { width: 38px; height: 38px; }
+.talent-calculator .tc-total-points { font-size: 12px; }
+.talent-calculator .tc-total-points b { font-size: 20px; }
+.talent-calculator .tc-use-rotation {
+  height: 52px;
+  border-radius: var(--tc-control-radius);
+  box-shadow: inset 0 1px rgba(var(--tc-hot-rgb),.22),inset 0 -12px 22px rgba(0,0,0,.2),0 8px 22px rgba(var(--tc-accent-rgb),.2);
+}
+.talent-calculator .tc-use-rotation .tc-save-copy b { font-size: 12px; }
+.talent-calculator .tc-use-rotation .tc-save-copy small { font-size: 9px; }
+
+/* Tooltips and build library carry content at body-text scale. */
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip {
+  width: min(390px,calc(100vw - 24px));
+  border-radius: 8px;
+  box-shadow: 0 26px 70px rgba(0,0,0,.94),0 0 0 1px #020304,0 0 0 3px color-mix(in srgb,var(--tc-deep) 58%,#171a1c),inset 0 1px color-mix(in srgb,var(--tc-accent) 34%,#202426) !important;
+}
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-backplate {
+  border-radius: 8px;
+  background: radial-gradient(circle at 12% 0,color-mix(in srgb,var(--tc-deep) 34%,#111416),#080b0c 42%,#050708 100%) !important;
+}
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-meta {
+  padding: 11px 14px 9px;
+  border-bottom-color: rgba(var(--tc-accent-rgb),.25);
+  background: linear-gradient(90deg,rgba(var(--tc-ambient-rgb),.18),transparent 72%);
+  color: color-mix(in srgb,var(--tc-hot) 72%,#b4b4b4);
+  font-size: 9px;
+}
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-heading img { width: 52px; height: 52px; border-radius: 5px; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-heading strong { font-size: 18px; line-height: 1.12; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-heading span { font-size: 10px; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip p { font-size: 12px; line-height: 1.55; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip small { font-size: 10px; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-state > span:last-child { font-size: 10px; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-rank small { font-size: 8px; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-lock { font-size: 10px; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-lock b { font-size: 9px; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-lock small { font-size: 10px; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-lock i { font-size: 8px; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-controls,
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-foot { font-size: 9px; }
+.talent-calculator .tc-loadout-popover { border-radius: 10px; background: #080b0c; }
+.talent-calculator .tc-loadout-popover :where(button,input) { font-size: 11px; }
+.talent-calculator .tc-build-popover-head small,
+.talent-calculator .tc-build-name > span,
+.talent-calculator .tc-build-row small { font-size: 9px; }
+
+@keyframes tc-premium-path-awaken {
+  from { stroke-opacity: .25; stroke-width: .7; }
+  62% { stroke-opacity: 1; stroke-width: 1.9; }
+  to { stroke-opacity: 1; stroke-width: 1.55; }
+}
+
+@keyframes tc-premium-node-seal {
+  from { opacity: 0; transform: scale(.72); }
+  64% { opacity: 1; transform: scale(1.16); }
+  to { opacity: 1; transform: scale(1.08); }
+}
+
+/* Route loading is deliberately neutral: it never impersonates the previous spec. */
+.talent-calculator.tc-skeleton {
+  background: radial-gradient(ellipse at 50% 0,rgba(141,154,164,.08),transparent 38%),linear-gradient(180deg,#07090a,#030506 62%,#050607);
+}
+.talent-calculator.tc-skeleton::after { opacity: .34; }
+.talent-calculator.tc-skeleton .tc-panel {
+  animation: none;
+  border-color: rgba(190,201,208,.22);
+  background: linear-gradient(155deg,#101416,#050708 66%,#080a0b);
+  box-shadow: inset 0 1px rgba(255,255,255,.04),inset 0 0 0 1px rgba(0,0,0,.72),0 12px 28px rgba(0,0,0,.2);
+}
+.talent-calculator.tc-skeleton .tc-skeleton-block::after { animation: none; transform: none; opacity: .45; }
+.talent-calculator.tc-skeleton .tc-skeleton-tree { inset-block-start: 92px; }
+.talent-calculator.tc-skeleton .tc-hero-panel .tc-skeleton-tree { inset-block-start: 114px; }
+.talent-calculator.tc-skeleton .tc-skeleton-path { display: block; width: min(100%,260px); height: 20px; }
+
+@media (max-width: 1500px) {
+  .talent-calculator .tc-header { gap: 18px; padding-inline: 18px; }
+  .talent-calculator .tc-main-nav { gap: 20px; }
+  .talent-calculator .tc-header-search { width: min(250px,18vw); }
+  .talent-calculator .tc-commandbar { padding-inline: 18px; }
+  .talent-calculator .tc-page-title { min-width: 340px; }
+  .talent-calculator .tc-workspace { grid-template-columns: minmax(0,34fr) minmax(0,30fr) minmax(0,36fr); gap: 10px; padding-inline: 14px; }
+  .talent-calculator .tc-hero-paths { width: 100%; }
+}
+
+@media (min-width: 1251px) and (max-width: 1500px) {
+  .talent-calculator:is([data-spec="devastation-evoker"],[data-spec="augmentation-evoker"],[data-spec="preservation-evoker"],[data-spec="devourer-demon-hunter"]) .tc-node { width: 32px; height: 32px; }
+  .talent-calculator:is([data-spec="devastation-evoker"],[data-spec="augmentation-evoker"],[data-spec="preservation-evoker"],[data-spec="devourer-demon-hunter"]) .tc-node:is(.tiered,.subtree) { width: 38px; height: 38px; }
+  .talent-calculator[data-spec="vengeance-demon-hunter"] .tc-node { width: 30px; height: 30px; }
+  .talent-calculator[data-spec="vengeance-demon-hunter"] .tc-node:is(.tiered,.subtree) { width: 36px; height: 36px; }
+}
+
+@media (max-width: 1250px) {
+  .talent-calculator { grid-template-rows: 56px 80px minmax(510px,1fr) 88px; }
+  .talent-calculator .tc-page-title { min-width: 300px; }
+  .talent-calculator .tc-page-title h1 { font-size: 20px; }
+  .talent-calculator .tc-points-badge { min-width: 170px; }
+  .talent-calculator .tc-command-button { min-width: 46px; }
+  .talent-calculator .tc-command-button.is-share { min-width: 48px; }
+  .talent-calculator .tc-node { width: 36px; height: 36px; }
+  .talent-calculator .tc-node.tiered,
+  .talent-calculator .tc-node.subtree { width: 44px; height: 44px; }
+  .talent-calculator .tc-panel::before { inset-block-start: 74px; }
+  .talent-calculator .tc-hero-panel::before { inset-block-start: 92px; }
+  .talent-calculator .tc-panel::after { inset-block-start: 64px; }
+  .talent-calculator .tc-hero-panel::after { inset-block-start: 82px; }
+  .talent-calculator .tc-tree-canvas { inset-block-start: 78px; }
+  .talent-calculator .tc-hero-panel .tc-tree-canvas { inset-block-start: 96px; }
+  .talent-calculator.tc-skeleton .tc-skeleton-tree { inset-block-start: 78px; }
+  .talent-calculator.tc-skeleton .tc-hero-panel .tc-skeleton-tree { inset-block-start: 96px; }
+  .talent-calculator .tc-hero-paths { gap: 4px; width: min(100%,220px); }
+  .talent-calculator .tc-hero-paths a { min-height: 20px; padding-inline: 5px; font-size: 7px; }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .talent-calculator .tc-workspace { grid-template-columns: minmax(0,33fr) minmax(0,31fr) minmax(0,36fr); }
+  .talent-calculator .tc-page-title h1 .tc-title-prefix { display: none; }
+  .talent-calculator .tc-hero-paths { width: 100%; }
+  .talent-calculator .tc-node { width: 28px; height: 28px; }
+  .talent-calculator .tc-node.tiered,
+  .talent-calculator .tc-node.subtree { width: 34px; height: 34px; }
+  .talent-calculator .tc-node-count { min-width: 21px; min-height: 12px; padding: 1px 3px; font-size: 8px; }
+  .talent-calculator:is([data-spec="devastation-evoker"],[data-spec="augmentation-evoker"],[data-spec="preservation-evoker"],[data-spec="devourer-demon-hunter"]) .tc-node { width: 24px; height: 24px; }
+  .talent-calculator:is([data-spec="devastation-evoker"],[data-spec="augmentation-evoker"],[data-spec="preservation-evoker"],[data-spec="devourer-demon-hunter"]) .tc-node:is(.tiered,.subtree) { width: 30px; height: 30px; }
+  .talent-calculator[data-spec="vengeance-demon-hunter"] .tc-node { width: 22px; height: 22px; }
+  .talent-calculator[data-spec="vengeance-demon-hunter"] .tc-node:is(.tiered,.subtree) { width: 28px; height: 28px; }
+}
+
+@media (max-width: 900px) {
+  .talent-calculator { height: 100svh; min-height: 760px; grid-template-rows: 56px auto 46px minmax(458px,1fr) 108px; }
+  .talent-calculator .tc-header { padding-inline: 12px; }
+  .talent-calculator .tc-commandbar { padding: 12px; }
+  .talent-calculator .tc-page-title { min-width: 0; }
+  .talent-calculator .tc-page-title h1 { font-size: 19px; }
+  .talent-calculator .tc-page-title .tc-build-version { font-size: 9px; }
+  .talent-calculator .tc-workspace { padding: 8px; }
+  .talent-calculator .tc-tree-canvas { inset: 78px 8% 34px; }
+  .talent-calculator .tc-hero-panel .tc-tree-canvas { inset: 96px 8% 34px; }
+  .talent-calculator .tc-toolbar {
+    grid-template-rows: 48px 52px;
+    gap: 4px 8px;
+    padding-inline: 10px;
+  }
+}
+
+/* Warcraft dialogs, build library, and auxiliary states. */
+.talent-calculator .tc-loadout-popover {
+  border: 1px solid #9b7135;
+  border-radius: 4px;
+  background:
+    radial-gradient(circle at 92% 0, rgba(var(--tc-ambient-rgb), .15), transparent 34%),
+    linear-gradient(180deg, #181610, #090a09 58%, #050605);
+  box-shadow:
+    inset 0 0 0 1px #030303,
+    inset 0 0 0 3px rgba(111, 80, 36, .17),
+    inset 0 1px rgba(255, 231, 177, .09),
+    0 26px 64px rgba(0, 0, 0, .94);
+}
+.talent-calculator .tc-build-name > span {
+  color: #c4a66b;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: .04em;
+}
+.talent-calculator .tc-build-name input {
+  border-color: #574526;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #0b0c0a, #050605);
+  color: #eee2c9;
+  box-shadow: inset 0 1px 7px #000, 0 0 0 1px #020202;
+}
+.talent-calculator .tc-build-name input:focus {
+  border-color: #c18c3e;
+  box-shadow: inset 0 1px 7px #000, 0 0 0 1px #020202, 0 0 9px rgba(var(--tc-accent-rgb), .13);
+}
+.talent-calculator .tc-build-actions button,
+.talent-calculator .tc-build-actions button + button,
+.talent-calculator .tc-build-tools button {
+  border-color: #725429 !important;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #2b2417, #0a0a08) !important;
+  color: #e6cf9d !important;
+  box-shadow: inset 0 0 0 1px #030303, inset 0 1px rgba(255, 236, 195, .09);
+}
+.talent-calculator .tc-build-actions button:first-child {
+  border-color: color-mix(in srgb, var(--tc-accent) 38%, #98703a) !important;
+  background:
+    linear-gradient(180deg, rgba(var(--tc-hot-rgb), .12), transparent 46%),
+    linear-gradient(180deg, color-mix(in srgb, var(--tc-deep) 45%, #3a2d1c), #0b0907) !important;
+}
+.talent-calculator .tc-build-actions button:hover,
+.talent-calculator .tc-build-actions button:focus-visible,
+.talent-calculator .tc-build-tools button:hover,
+.talent-calculator .tc-build-tools button:focus-visible {
+  border-color: #c79443 !important;
+  color: #fff0cb !important;
+  filter: brightness(1.08);
+}
+.talent-calculator .tc-build-list {
+  scrollbar-color: #7c5a2d #0a0a08;
+}
+.talent-calculator .tc-build-list > p,
+.talent-calculator .tc-build-row {
+  border-color: #4d4029;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #10110e, #070807);
+}
+.talent-calculator .tc-build-row:hover,
+.talent-calculator .tc-build-row.is-active {
+  border-color: #a77a39;
+  background: linear-gradient(180deg, #201c13, #0b0b09);
+}
+.talent-calculator .tc-build-row.is-active {
+  box-shadow: inset 3px 0 #d3a34b, inset 0 0 0 1px #030303;
+}
+.talent-calculator .tc-build-row > button:first-child span { color: #eadbbd; }
+.talent-calculator .tc-build-row > button:last-child { border-left-color: #4d4029 !important; color: #a48855 !important; }
+.talent-calculator .tc-build-row > button:last-child:hover,
+.talent-calculator .tc-build-row > button:last-child:focus-visible { background: #25170d !important; color: #efc271 !important; }
+.talent-calculator .tc-build-tools { border-top-color: rgba(182, 135, 60, .28); }
+
+.talent-calculator .tc-import-backdrop,
+.talent-calculator .tc-pvp-picker-backdrop {
+  background: radial-gradient(circle at 50% 40%, rgba(126, 90, 35, .12), transparent 34%), rgba(0, 0, 0, .78);
+  backdrop-filter: blur(3px) saturate(.72);
+}
+.talent-calculator .tc-import-dialog,
+.talent-calculator .tc-pvp-picker {
+  border: 1px solid #a27635;
+  border-radius: 4px;
+  background:
+    radial-gradient(circle at 86% 0, rgba(var(--tc-ambient-rgb), .13), transparent 36%),
+    linear-gradient(180deg, #181610, #090a09 58%, #050605);
+  box-shadow:
+    inset 0 0 0 1px #020202,
+    inset 0 0 0 3px rgba(110, 80, 36, .18),
+    inset 0 1px rgba(255, 230, 177, .1),
+    0 30px 90px #000;
+}
+.talent-calculator .tc-import-dialog::before,
+.talent-calculator .tc-pvp-picker::before {
+  background: linear-gradient(90deg, transparent, #9e7132, color-mix(in srgb, var(--tc-hot) 50%, #f0c15e), #9e7132, transparent);
+  box-shadow: 0 0 12px rgba(210, 161, 73, .34);
+}
+.talent-calculator .tc-import-dialog > header,
+.talent-calculator .tc-pvp-picker-head {
+  border-bottom-color: #594421;
+  background:
+    radial-gradient(circle at 50px 50%, rgba(var(--tc-ambient-rgb), .12), transparent 150px),
+    linear-gradient(180deg, #211d15, #0d0e0c);
+  box-shadow: inset 0 -1px #030303;
+}
+.talent-calculator .tc-import-dialog > header small,
+.talent-calculator .tc-pvp-picker .tc-state-kicker {
+  color: #cba85d;
+}
+.talent-calculator .tc-import-dialog h2,
+.talent-calculator .tc-pvp-picker h2 {
+  color: #f0dfbd;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-shadow: 0 2px 1px #000;
+}
+.talent-calculator .tc-import-dialog > header button,
+.talent-calculator .tc-pvp-close {
+  border-color: #6d522d;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #211c13, #080908);
+  color: #d8bd82;
+  box-shadow: inset 0 0 0 1px #030303;
+}
+.talent-calculator .tc-import-dialog > header button:hover,
+.talent-calculator .tc-import-dialog > header button:focus-visible,
+.talent-calculator .tc-pvp-close:hover,
+.talent-calculator .tc-pvp-close:focus-visible {
+  border-color: #c99644;
+  background: linear-gradient(180deg, #372a17, #0b0b09);
+  color: #f7dfab;
+}
+.talent-calculator .tc-import-dialog > p { color: #aaa08e; }
+.talent-calculator .tc-import-dialog > label > span { color: #c5aa75; }
+.talent-calculator .tc-import-dialog textarea {
+  border-color: #594526;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #080908, #040504);
+  color: #e8dfce;
+  caret-color: #e2b85e;
+  box-shadow: inset 0 2px 10px #000;
+}
+.talent-calculator .tc-import-dialog textarea:focus {
+  border-color: #c08b3e;
+  box-shadow: inset 0 2px 10px #000, 0 0 0 1px #020202, 0 0 9px rgba(var(--tc-accent-rgb), .14);
+}
+.talent-calculator .tc-import-formats span,
+.talent-calculator .tc-import-error {
+  border-color: #504123;
+  border-radius: 2px;
+  background: #0b0c0a;
+}
+.talent-calculator .tc-import-dialog > footer button {
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px #030303, inset 0 1px rgba(255, 235, 194, .08);
+}
+.talent-calculator .tc-import-cancel {
+  border-color: #59482b;
+  background: linear-gradient(180deg, #1a1812, #080908);
+  color: #bdad8e;
+}
+.talent-calculator .tc-import-apply {
+  border-color: color-mix(in srgb, var(--tc-accent) 48%, #a27738);
+  background:
+    linear-gradient(180deg, rgba(var(--tc-hot-rgb), .13), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--tc-deep) 46%, #40301c), #0b0907);
+  color: #f5dfb4;
+}
+.talent-calculator .tc-pvp-picker-head::after { color: rgba(210, 167, 79, .05); }
+.talent-calculator .tc-pvp-picker-slots > span,
+.talent-calculator .tc-pvp-picker-search,
+.talent-calculator .tc-pvp-options .tc-pvp-option,
+.talent-calculator .tc-pvp-empty {
+  border-color: #4d4029;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #10110e, #070807);
+}
+.talent-calculator .tc-pvp-picker-slots > span.is-active,
+.talent-calculator .tc-pvp-options .tc-pvp-option[aria-selected="true"] {
+  border-color: color-mix(in srgb, var(--tc-accent) 54%, #ad7d39);
+  background: linear-gradient(90deg, rgba(var(--tc-ambient-rgb), .26), #0b0b09 58%);
+  box-shadow: inset 3px 0 #d0a04a;
+}
+.talent-calculator .tc-pvp-picker-search:focus-within,
+.talent-calculator .tc-pvp-options .tc-pvp-option:hover,
+.talent-calculator .tc-pvp-options .tc-pvp-option:focus-visible {
+  border-color: #b9893f;
+  background: linear-gradient(90deg, rgba(var(--tc-ambient-rgb), .18), #0b0b09 58%);
+  box-shadow: inset 0 0 0 1px #030303, 0 0 10px rgba(var(--tc-accent-rgb), .12);
+}
+.talent-calculator .tc-pvp-option-art,
+.talent-calculator .tc-pvp-options img {
+  border-color: #8f6a34;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px #060606, 0 0 0 3px #2c2113, 0 4px 9px #000;
+}
+.talent-calculator .tc-pvp-option-action,
+.talent-calculator .tc-pvp-clear {
+  border-color: #674d2a;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #241d12, #090908);
+  color: #d7bb7d;
+  box-shadow: inset 0 0 0 1px #030303;
+}
+.talent-calculator .tc-pvp-clear:hover:not(:disabled),
+.talent-calculator .tc-pvp-clear:focus-visible {
+  border-color: #c08e41;
+  background: linear-gradient(180deg, #3a2b17, #0d0c09);
+}
+
+.talent-calculator.tc-skeleton .tc-skeleton-block {
+  border-color: #5d4627;
+  background: linear-gradient(180deg, #17150f, #090a08);
+}
+.talent-calculator.tc-skeleton .tc-skeleton-block::after {
+  background: linear-gradient(90deg, transparent, rgba(219, 175, 88, .1), transparent);
+}
+
+@media (max-width: 560px) {
+  .talent-calculator { min-height: 760px; grid-template-rows: 56px auto 46px minmax(434px,1fr) 108px; }
+  .talent-calculator .tc-brand-lockup { font-size: 21px; }
+  .talent-calculator .tc-game-select { height: 40px; }
+  .talent-calculator .tc-fury-portrait { width: 48px; height: 48px; flex-basis: 48px; }
+  .talent-calculator .tc-page-title h1 { font-size: 18px; }
+  .talent-calculator .tc-page-title h1 .tc-title-prefix { display: none; }
+  .talent-calculator .tc-title-tags b { min-height: 15px; padding: 3px 5px; font-size: 7px; }
+  .talent-calculator .tc-points-badge { min-width: 126px; }
+  .talent-calculator .tc-workspace { padding: 6px; }
+  .talent-calculator .tc-node { width: 34px; height: 34px; }
+  .talent-calculator .tc-node.tiered,
+  .talent-calculator .tc-node.subtree { width: 42px; height: 42px; }
+  .talent-calculator .tc-node-count { font-size: 9px; }
+  .talent-calculator .tc-panel::before { inset-block-start: 66px; }
+  .talent-calculator .tc-hero-panel::before { inset-block-start: 86px; }
+  .talent-calculator .tc-panel::after { inset-block-start: 56px; }
+  .talent-calculator .tc-hero-panel::after { inset-block-start: 76px; }
+  .talent-calculator .tc-tree-canvas { inset-block-start: 72px; }
+  .talent-calculator .tc-hero-panel .tc-tree-canvas { inset-block-start: 92px; }
+  .talent-calculator.tc-skeleton .tc-skeleton-tree { inset-block-start: 72px; }
+  .talent-calculator.tc-skeleton .tc-hero-panel .tc-skeleton-tree { inset-block-start: 92px; }
+  .talent-calculator .tc-hero-paths { gap: 4px; width: 100%; }
+  .talent-calculator .tc-hero-paths a { min-height: 18px; padding: 4px 5px 3px; font-size: 8px; }
+  .talent-calculator .tc-search input { font-size: 11px; }
+  .talent-calculator .tc-pvp-slot { width: 38px; height: 38px; }
+  .talent-calculator .tc-pvp-slot img { width: 28px; height: 28px; }
+  .talent-calculator .tc-use-rotation .tc-save-copy b { font-size: 9px; }
+}
+
+@media (max-width: 340px) {
+  .talent-calculator .tc-workspace { padding-inline: 5px; }
+  .talent-calculator .tc-tree-canvas,
+  .talent-calculator .tc-hero-panel .tc-tree-canvas { inset-inline: 3%; }
+  .talent-calculator .tc-node { width: 28px; height: 28px; }
+  .talent-calculator .tc-node.tiered,
+  .talent-calculator .tc-node.subtree { width: 36px; height: 36px; }
+  .talent-calculator .tc-node-count { min-width: 21px; min-height: 12px; padding: 1px 3px; font-size: 8px; }
+  .talent-calculator:is([data-spec="devastation-evoker"],[data-spec="augmentation-evoker"],[data-spec="preservation-evoker"],[data-spec="devourer-demon-hunter"]) .tc-node { width: 24px; height: 24px; }
+  .talent-calculator:is([data-spec="devastation-evoker"],[data-spec="augmentation-evoker"],[data-spec="preservation-evoker"],[data-spec="devourer-demon-hunter"]) .tc-node:is(.tiered,.subtree) { width: 32px; height: 32px; }
+  .talent-calculator[data-spec="vengeance-demon-hunter"] .tc-node { width: 22px; height: 22px; }
+  .talent-calculator[data-spec="vengeance-demon-hunter"] .tc-node:is(.tiered,.subtree) { width: 28px; height: 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talent-calculator { scroll-behavior: auto; }
+  .talent-calculator .tc-lines line.is-lit,
+  .talent-calculator .tc-node.is-selected::after { animation: none; }
+}
+
+@media (min-width: 1600px) {
+  .talent-calculator .tc-node { width: 42px; height: 42px; }
+  .talent-calculator .tc-node.tiered,
+  .talent-calculator .tc-node.subtree { width: 52px; height: 52px; }
+  .talent-calculator .tc-hero-paths { width: min(100%,320px); }
+}
+
+/* Talent inspection motion: opaque throughout, directional, and finite. */
+.tc-tooltip-layer { display: contents; }
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip {
+  --tc-tooltip-enter-y: -7px;
+  --tc-tooltip-exit-y: -4px;
+  contain: layout paint style;
+  opacity: 1 !important;
+  transform-origin: var(--tc-tooltip-anchor) 0;
+  will-change: transform;
+  animation: tc-premium-tooltip-unfold .16s cubic-bezier(.16,.9,.24,1) both !important;
+}
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip[data-placement="above"] {
+  --tc-tooltip-enter-y: 7px;
+  --tc-tooltip-exit-y: 4px;
+  transform-origin: var(--tc-tooltip-anchor) 100%;
+}
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip[data-motion="closing"] {
+  pointer-events: none;
+  animation: tc-premium-tooltip-fold .11s cubic-bezier(.4,0,.78,.28) both !important;
+}
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-forge-line::after {
+  left: -80px;
+  animation: tc-premium-tooltip-glint .36s .015s cubic-bezier(.2,.76,.28,1) 1 both !important;
+  will-change: transform,opacity;
+}
+
+/* Hover feedback fires once, then rests. It keeps the themed response without a permanent repaint loop. */
+.talent-calculator .tc-panel.is-node-active::before {
+  opacity: .2;
+  filter: none !important;
+  animation: none !important;
+}
+.talent-calculator .tc-panel.is-node-active .tc-lines line.is-lit {
+  filter: none !important;
+}
+.talent-calculator .tc-node:is(:hover,:focus-visible)::before {
+  animation: tc-premium-node-intent .38s cubic-bezier(.16,.82,.24,1) 1 both !important;
+  will-change: transform,opacity;
+}
+.talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-sigil {
+  animation: none !important;
+  opacity: .9;
+  will-change: auto;
+}
+.talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-ring {
+  animation: none !important;
+  opacity: .94;
+  will-change: auto;
+}
+.talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-vfx {
+  animation: none !important;
+  opacity: .78;
+  will-change: auto !important;
+}
+.talent-calculator .tc-node.is-prerequisite::before {
+  animation: tc-premium-node-intent .44s cubic-bezier(.16,.82,.24,1) 1 both !important;
+}
+
+@keyframes tc-premium-tooltip-unfold {
+  0% { transform: translate3d(0,var(--tc-tooltip-enter-y),0); }
+  72% { transform: translate3d(0,1px,0); }
+  100% { transform: translate3d(0,0,0); }
+}
+@keyframes tc-premium-tooltip-fold {
+  from { transform: translate3d(0,0,0); }
+  to { transform: translate3d(0,var(--tc-tooltip-exit-y),0); }
+}
+@keyframes tc-premium-tooltip-glint {
+  0% { opacity: 0; transform: translate3d(0,0,0); }
+  24% { opacity: .92; }
+  100% { opacity: 0; transform: translate3d(480px,0,0); }
+}
+@keyframes tc-premium-node-intent {
+  0% { opacity: .18; transform: scale(.78) rotate(-3deg); }
+  64% { opacity: 1; transform: scale(1.09) rotate(3deg); }
+  100% { opacity: .72; transform: scale(1.02) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip,
+  :is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip > :not(.tc-tooltip-backplate):not(.tc-tooltip-forge-line),
+  :is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-forge-line::after,
+  .talent-calculator .tc-node:is(:hover,:focus-visible)::before,
+  .talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-sigil,
+  .talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-ring,
+  .talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-vfx {
+    animation: none !important;
+    transform: none;
+    will-change: auto !important;
+  }
+  .talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-sigil {
+    transform: rotate(var(--tc-sigil-rotation));
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * Warcraft armory skin
+ *
+ * Shared by every specialization. The calculator keeps its spec-specific
+ * colour, particles and tree geometry; this layer replaces the sci-fi shell
+ * with a stable, CSS-built forged-metal interface.
+ * ---------------------------------------------------------------------- */
+.talent-calculator {
+  --tc-control-radius: 3px;
+  --tc-panel-radius: 5px;
+  background:
+    radial-gradient(ellipse at 50% -12%, rgba(190, 132, 50, .1), transparent 34%),
+    radial-gradient(ellipse at 84% 36%, rgba(var(--tc-ambient-rgb), .1), transparent 38%),
+    repeating-linear-gradient(118deg, rgba(255, 255, 255, .012) 0 1px, transparent 1px 9px),
+    linear-gradient(180deg, #12110e 0%, #070808 52%, #030404 100%);
+}
+.talent-calculator::before {
+  opacity: .13;
+  background-image:
+    radial-gradient(circle at 20% 24%, rgba(218, 174, 83, .07) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 72% 65%, rgba(218, 174, 83, .05) 0 1px, transparent 1.5px);
+  background-size: 38px 38px, 54px 54px;
+  mix-blend-mode: normal;
+}
+.talent-calculator::after {
+  background:
+    linear-gradient(90deg, transparent, rgba(193, 143, 57, .12) 20% 80%, transparent),
+    radial-gradient(ellipse at 50% 0, rgba(var(--tc-accent-rgb), .1), transparent 58%);
+}
+
+.talent-calculator .tc-header {
+  border-bottom: 1px solid #8a632b;
+  background:
+    linear-gradient(90deg, rgba(95, 62, 22, .08), transparent 24% 76%, rgba(95, 62, 22, .08)),
+    linear-gradient(180deg, #16140f 0%, #090907 58%, #040505 100%);
+  box-shadow:
+    inset 0 -1px #24180d,
+    inset 0 1px rgba(255, 229, 170, .06),
+    0 7px 18px rgba(0, 0, 0, .58);
+}
+.talent-calculator .tc-brand-lockup {
+  color: #eccb82;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-shadow: 0 2px 1px #000, 0 0 10px rgba(222, 165, 70, .18);
+}
+.talent-calculator .tc-game-select,
+.talent-calculator .tc-header-search,
+.talent-calculator .tc-account {
+  border-color: #634923;
+  border-radius: 3px;
+  background:
+    linear-gradient(180deg, rgba(255, 227, 172, .045), transparent 38%),
+    linear-gradient(180deg, #181611, #080908);
+  box-shadow: inset 0 0 0 1px #030303, inset 0 1px rgba(255, 233, 188, .07);
+}
+.talent-calculator .tc-game-select:hover,
+.talent-calculator .tc-game-select:focus-visible,
+.talent-calculator .tc-header-search:focus-within,
+.talent-calculator .tc-account:hover,
+.talent-calculator .tc-account:focus-visible {
+  border-color: #bb8436;
+  box-shadow: inset 0 0 0 1px #030303, 0 0 0 1px rgba(219, 163, 69, .1);
+}
+.talent-calculator .tc-main-nav a { color: #c9bda7; }
+.talent-calculator .tc-main-nav a:hover { color: #f2d799; }
+.talent-calculator .tc-main-nav a.is-active { color: #f2d38d; }
+.talent-calculator .tc-main-nav a.is-active::after {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #b67e2e 18%, var(--tc-hot) 50%, #b67e2e 82%, transparent);
+  box-shadow: 0 0 9px rgba(var(--tc-accent-rgb), .36);
+}
+
+.talent-calculator .tc-commandbar {
+  border-bottom: 1px solid #7f5927;
+  background:
+    radial-gradient(ellipse at 16% 50%, rgba(var(--tc-ambient-rgb), .11), transparent 30%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, .009) 0 1px, transparent 1px 8px),
+    linear-gradient(100deg, #17140f, #0a0b0a 46%, #060707);
+  box-shadow: inset 0 1px rgba(255, 229, 171, .055), inset 0 -1px #24170c, 0 8px 18px rgba(0, 0, 0, .32);
+}
+.talent-calculator .tc-fury-portrait {
+  border: 2px solid #b78338;
+  border-radius: 50%;
+  clip-path: none;
+  background: #060606;
+  box-shadow:
+    inset 0 0 0 2px #080604,
+    0 0 0 2px #2f2213,
+    0 0 0 3px rgba(218, 169, 81, .58),
+    0 5px 14px rgba(0, 0, 0, .62),
+    0 0 16px rgba(var(--tc-accent-rgb), .16);
+}
+.talent-calculator .tc-fury-portrait::before {
+  inset: 3px;
+  border-color: rgba(255, 218, 135, .28);
+  border-radius: 50%;
+  clip-path: none;
+}
+.talent-calculator .tc-page-title h1 {
+  color: #f1dfba;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  text-shadow: 0 2px 1px #000, 0 0 9px rgba(217, 164, 72, .12);
+}
+.talent-calculator .tc-page-title .tc-build-version { color: #a89a83; }
+.talent-calculator .tc-title-tags b {
+  border-color: #654920;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #201b12, #0c0c0a);
+  color: #d6ba7b;
+  box-shadow: inset 0 0 0 1px #030303;
+}
+.talent-calculator .tc-title-tags b:nth-child(2) {
+  border-color: rgba(var(--tc-accent-rgb), .65);
+  color: var(--tc-hot);
+}
+
+.talent-calculator .tc-build-select,
+.talent-calculator .tc-command-button,
+.talent-calculator .tc-points-badge {
+  border-color: #684b24;
+  border-radius: 3px;
+  background:
+    linear-gradient(180deg, rgba(255, 230, 180, .055), transparent 38%),
+    linear-gradient(180deg, #1a1712, #0a0b0a 66%);
+  box-shadow:
+    inset 0 0 0 1px #030303,
+    inset 0 1px rgba(255, 233, 185, .08),
+    0 4px 10px rgba(0, 0, 0, .38);
+}
+.talent-calculator .tc-build-select:hover,
+.talent-calculator .tc-build-select:focus-visible,
+.talent-calculator .tc-command-button:hover:not(:disabled),
+.talent-calculator .tc-command-button:focus-visible {
+  border-color: #c08a3a;
+  color: #f2d89e;
+  background: linear-gradient(180deg, #2c2417, #0d0d0b 68%);
+  box-shadow: inset 0 0 0 1px #030303, inset 0 1px rgba(255, 236, 194, .13), 0 6px 13px rgba(0, 0, 0, .5);
+}
+.talent-calculator .tc-command-button.is-share {
+  border-color: color-mix(in srgb, var(--tc-accent) 64%, #8f652c);
+  background:
+    linear-gradient(180deg, rgba(var(--tc-hot-rgb), .15), transparent 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--tc-deep) 62%, #332016), #0c0908);
+  color: #f8e0b2;
+}
+.talent-calculator .tc-points-badge {
+  border-color: color-mix(in srgb, var(--tc-accent) 50%, #8b652f);
+  background:
+    radial-gradient(circle at 11% 50%, rgba(var(--tc-accent-rgb), .18), transparent 24%),
+    linear-gradient(180deg, #1c1811, #080a0a 72%);
+}
+.talent-calculator .tc-rage-emblem,
+.talent-calculator .tc-points-badge > span.tc-rage-emblem {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #050504, 0 0 0 3px #8c642e, inset 0 0 10px #000, 0 0 12px rgba(var(--tc-accent-rgb), .2);
+}
+
+.talent-calculator .tc-workspace {
+  gap: 14px;
+  padding: 12px 20px;
+  background:
+    linear-gradient(90deg, transparent, rgba(197, 145, 54, .035) 50%, transparent),
+    repeating-linear-gradient(118deg, rgba(255, 255, 255, .008) 0 1px, transparent 1px 10px);
+}
+.talent-calculator .tc-workspace::before {
+  background: linear-gradient(90deg, transparent, #8b622b 14%, var(--tc-accent) 50%, #8b622b 86%, transparent);
+  opacity: .6;
+  box-shadow: 0 0 8px rgba(var(--tc-accent-rgb), .2);
+}
+.talent-calculator .tc-panel {
+  overflow: hidden;
+  border: 1px solid #8a632e;
+  border-top-color: #c09248;
+  border-radius: 5px;
+  outline: 0;
+  background:
+    radial-gradient(circle at 50% 43%, rgba(var(--tc-panel-rgb), .11), transparent 38%),
+    repeating-linear-gradient(116deg, rgba(255, 255, 255, .012) 0 1px, transparent 1px 9px),
+    linear-gradient(160deg, #151613 0%, #090b0b 58%, #040505 100%);
+  box-shadow:
+    inset 0 0 0 1px #030303,
+    inset 0 0 0 3px rgba(101, 74, 35, .18),
+    inset 0 0 64px rgba(0, 0, 0, .52),
+    0 12px 28px rgba(0, 0, 0, .4);
+}
+.talent-calculator .tc-panel.is-node-active {
+  border-color: #b78339;
+  outline: 0;
+  box-shadow:
+    inset 0 0 0 1px #030303,
+    inset 0 0 0 3px rgba(129, 92, 40, .2),
+    inset 0 0 70px rgba(var(--tc-panel-rgb), .07),
+    0 14px 32px rgba(0, 0, 0, .46);
+}
+.talent-calculator .tc-panel::before {
+  opacity: .15;
+  background:
+    repeating-conic-gradient(from 0deg at 50% 48%, rgba(213, 167, 76, .17) 0 .45deg, transparent .75deg 15deg),
+    radial-gradient(circle at 50% 48%, transparent 0 18%, rgba(206, 158, 65, .18) 18.2% 18.55%, transparent 18.8% 41%, rgba(206, 158, 65, .11) 41.2% 41.5%, transparent 41.8%);
+}
+.talent-calculator .tc-panel::after { opacity: .09; }
+
+.talent-calculator .tc-panel:not([data-panel-appearance="manuscript"]) > header {
+  border-bottom: 1px solid #674b25 !important;
+  background:
+    radial-gradient(circle at 46px 50%, rgba(var(--tc-panel-rgb), .12), transparent 120px),
+    linear-gradient(180deg, #211d15 0%, #11110e 52%, #080909 100%) !important;
+  box-shadow:
+    inset 0 0 0 1px #050505,
+    inset 0 1px rgba(255, 232, 178, .08),
+    0 7px 15px rgba(0, 0, 0, .38) !important;
+}
+.talent-calculator .tc-panel:not([data-panel-appearance="manuscript"]) > header::before,
+.talent-calculator .tc-panel:not([data-panel-appearance="manuscript"]) > header::after {
+  background: linear-gradient(90deg, transparent, #a77936, color-mix(in srgb, var(--tc-panel-hot) 52%, #c69745), #a77936, transparent) !important;
+  opacity: .72;
+}
+.talent-calculator .tc-panel:not([data-panel-appearance="manuscript"]) > header h2 {
+  color: #eeddb9 !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-shadow: 0 2px 1px #000 !important;
+}
+.talent-calculator .tc-panel:not([data-panel-appearance="manuscript"]) > header [class*="icon"] {
+  border-color: #9c7134;
+  border-radius: 4px;
+  background: #060707;
+  box-shadow: inset 0 0 0 2px #050504, 0 0 0 1px #2b1e10, 0 4px 10px #000, 0 0 10px rgba(var(--tc-panel-rgb), .16);
+}
+.talent-calculator .tc-panel:not([data-panel-appearance="manuscript"])[data-panel-variant="hero"] > header [class*="icon"] { border-radius: 50%; }
+.talent-calculator .tc-panel:not([data-panel-appearance="manuscript"])[data-panel-variant="spec"] > header [class*="icon"] { border-radius: 3px; }
+
+.talent-calculator .tc-lines line {
+  stroke: rgba(151, 130, 94, .58);
+  stroke-width: 1;
+}
+.talent-calculator .tc-lines line.is-lit {
+  stroke: color-mix(in srgb, rgb(var(--tc-panel-hot)) 58%, #f1c45e);
+  stroke-width: 1.65;
+  filter: drop-shadow(0 0 2px rgba(var(--tc-panel-rgb), .48)) !important;
+}
+.talent-calculator .tc-lines line.is-dimmed { stroke-opacity: .13; }
+
+.talent-calculator .tc-node {
+  border: 2px solid #625d51;
+  border-radius: 3px;
+  background: #030404;
+  box-shadow:
+    0 0 0 1px #000,
+    0 0 0 3px #211d16,
+    0 5px 12px rgba(0, 0, 0, .82),
+    inset 0 0 0 1px rgba(255, 233, 188, .12);
+}
+.talent-calculator .tc-node.passive { border-radius: 50%; }
+.talent-calculator .tc-node.choice { border-radius: 2px; }
+.talent-calculator .tc-node:not(.is-locked):not(.is-selected) {
+  border-color: color-mix(in srgb, rgb(var(--tc-panel-hot)) 46%, #9c875d);
+  box-shadow:
+    0 0 0 1px #000,
+    0 0 0 3px #211d16,
+    0 5px 12px rgba(0, 0, 0, .82),
+    inset 0 0 0 1px rgba(255, 236, 191, .16);
+}
+.talent-calculator .tc-node:not(.is-locked):not(.is-selected) img {
+  filter: grayscale(.2) saturate(.92) brightness(.9) contrast(1.1);
+}
+.talent-calculator .tc-node.is-selected {
+  border-color: #efc35d;
+  box-shadow:
+    0 0 0 1px #000,
+    0 0 0 3px color-mix(in srgb, rgb(var(--tc-panel-hot)) 44%, #6e4a1d),
+    0 0 14px rgba(var(--tc-panel-rgb), .55),
+    inset 0 0 0 1px rgba(255, 244, 213, .34);
+}
+.talent-calculator .tc-node.is-selected img { filter: saturate(1.18) contrast(1.08) brightness(1.05); }
+.talent-calculator .tc-node.is-locked {
+  border-color: #4c4a43;
+  opacity: .74;
+  box-shadow: 0 0 0 1px #000, 0 0 0 3px #171816, 0 4px 10px rgba(0, 0, 0, .75);
+}
+.talent-calculator .tc-node.is-locked img { filter: grayscale(1) brightness(.48) contrast(1.18); }
+.talent-calculator .tc-node-ring { border-color: rgba(214, 176, 102, .34); }
+.talent-calculator .tc-node.is-selected .tc-node-ring { border-color: rgba(255, 221, 139, .66); }
+.talent-calculator .tc-node-count {
+  border-color: #70603e;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #13110c, #030404);
+  color: #f1e3c5;
+  box-shadow: inset 0 0 0 1px #020202, 0 2px 6px #000;
+}
+.talent-calculator .tc-node.is-selected .tc-node-count {
+  border-color: #d9a94d;
+  background: linear-gradient(180deg, #271e0e, #080705);
+  color: #fff0c6;
+  box-shadow: inset 0 0 0 1px #030302, 0 0 8px rgba(var(--tc-panel-rgb), .35), 0 2px 6px #000;
+}
+
+.talent-calculator .tc-hero-paths a {
+  border-color: #5d4727;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #17150f, #080908);
+  color: #a99e8a;
+  box-shadow: inset 0 0 0 1px #030303;
+}
+.talent-calculator .tc-hero-paths a:hover,
+.talent-calculator .tc-hero-paths a:focus-visible {
+  border-color: #af7f38;
+  color: #eddaad;
+  background: linear-gradient(180deg, #282116, #0b0b09);
+}
+.talent-calculator .tc-hero-paths a.is-active {
+  border-color: color-mix(in srgb, var(--tc-accent) 68%, #b9883c);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tc-deep) 42%, #302418), #090909);
+  color: var(--tc-hot);
+  box-shadow: inset 0 0 0 1px #030303, inset 0 1px rgba(var(--tc-hot-rgb), .14), 0 0 8px rgba(var(--tc-accent-rgb), .1);
+}
+
+.talent-calculator .tc-toolbar {
+  border-top: 1px solid #9a6c2e;
+  background:
+    radial-gradient(ellipse at 76% 0, rgba(var(--tc-ambient-rgb), .12), transparent 40%),
+    linear-gradient(180deg, #18150f, #080909 66%, #030404);
+  box-shadow: 0 -10px 25px rgba(0, 0, 0, .56), inset 0 1px rgba(255, 229, 173, .07);
+}
+.talent-calculator .tc-toolbar::before {
+  background: linear-gradient(90deg, transparent, #9b6d2f, var(--tc-accent), #9b6d2f, transparent);
+  opacity: .62;
+}
+.talent-calculator .tc-search,
+.talent-calculator .tc-import {
+  border-color: #644b26;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #17150f, #070808);
+  color: #d6b872;
+  box-shadow: inset 0 0 0 1px #030303, inset 0 1px rgba(255, 232, 182, .06);
+}
+.talent-calculator .tc-search:hover,
+.talent-calculator .tc-search:focus-within,
+.talent-calculator .tc-import:hover,
+.talent-calculator .tc-import:focus-visible {
+  border-color: #b88338;
+  box-shadow: inset 0 0 0 1px #030303, 0 0 0 1px rgba(217, 162, 66, .09);
+}
+.talent-calculator .tc-pvp-slot {
+  border-color: color-mix(in srgb, var(--tc-accent) 45%, #785829);
+  border-radius: 4px;
+  background: linear-gradient(145deg, #21190f, #060707);
+  box-shadow: inset 0 0 0 2px #030303, 0 0 0 1px #24170d, 0 4px 10px #000;
+}
+.talent-calculator .tc-use-rotation {
+  border-color: color-mix(in srgb, var(--tc-accent) 58%, #ad7831);
+  border-radius: 3px;
+  background:
+    linear-gradient(180deg, rgba(var(--tc-hot-rgb), .14), transparent 38%),
+    linear-gradient(180deg, color-mix(in srgb, var(--tc-deep) 58%, #3a2818), #0a0807);
+  color: #f7e0b2;
+  box-shadow: inset 0 0 0 1px #050303, inset 0 1px rgba(255, 232, 187, .13), 0 6px 16px rgba(0, 0, 0, .5);
+}
+.talent-calculator .tc-use-rotation:hover:not(:disabled),
+.talent-calculator .tc-use-rotation:focus-visible {
+  border-color: #ddb05a;
+  filter: brightness(1.08);
+  box-shadow: inset 0 0 0 1px #050303, inset 0 1px rgba(255, 239, 205, .18), 0 8px 18px rgba(0, 0, 0, .54), 0 0 12px rgba(var(--tc-accent-rgb), .16);
+}
+
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip {
+  border: 1px solid #a27635 !important;
+  border-radius: 3px;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, .94), 0 0 0 1px #020202, 0 0 0 3px #5f4625, inset 0 1px #b98a42 !important;
+}
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-backplate {
+  border-radius: 3px;
+  background:
+    radial-gradient(circle at 12% 0, rgba(var(--tc-ambient-rgb), .13), transparent 34%),
+    linear-gradient(160deg, #11110e, #050606 62%, #030404) !important;
+}
+:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-meta {
+  border-bottom-color: #5f4727;
+  background: linear-gradient(90deg, rgba(142, 96, 37, .16), transparent 72%);
+  color: #cfb77f;
+}
+
+@media (max-width: 900px) {
+  .talent-calculator .tc-panel { border-radius: 4px; }
+  .talent-calculator .tc-workspace { padding: 8px; }
+  .talent-calculator .tc-mobile-tree-switcher {
+    border-block: 1px solid #634821;
+    background: linear-gradient(180deg, #17140f, #080908);
+  }
+  .talent-calculator .tc-mobile-tree-switcher button {
+    border-radius: 2px;
+    color: #aa9b82;
+  }
+  .talent-calculator .tc-mobile-tree-switcher button[aria-pressed="true"] {
+    color: #f1d48f;
+    background: linear-gradient(180deg, #2a2114, #0c0c0a);
+    box-shadow: inset 0 -2px #bd8737;
+  }
+}

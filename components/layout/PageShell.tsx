@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
 import type { Lang } from "@/lib/i18n";
 import { GAMES, type GameSlug } from "@/lib/games/registry";
+import { preloadSharedWowBackdrop } from "@/lib/wow/sharedBackdropPreload";
 
 /**
  * The one page chrome: icon sprite, TopNav, `.app > .main`, Footer and the
@@ -44,6 +45,7 @@ export function PageShell({
       </>
     );
   }
+  if (game === "wow") preloadSharedWowBackdrop();
   return (
     <>
       <Icons />

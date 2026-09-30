@@ -1,0 +1,48 @@
+.frame[aria-hidden] {
+  --frame-depth: 20px;
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+.frame > i {
+  position: absolute;
+  display: block;
+  background-repeat: no-repeat;
+  background-image: url("/assets/wow/ui-textures/character/world-map-small-left.png");
+}
+.topLeft, .topRight, .bottomLeft, .bottomRight {
+  width: var(--frame-depth);
+  height: var(--frame-depth);
+  background-size: calc(var(--frame-depth) * 16) calc(var(--frame-depth) * 16);
+}
+.topLeft { top: 0; left: 0; background-position: 0 0; }
+.bottomLeft { bottom: 0; left: 0; background-position: 0 calc(var(--frame-depth) * -12.75); }
+.frame > .topRight, .frame > .bottomRight, .frame > .right {
+  background-image: url("/assets/wow/ui-textures/character/world-map-small-right.png");
+}
+.topRight, .bottomRight {
+  right: 0;
+  background-size: calc(var(--frame-depth) * 4) calc(var(--frame-depth) * 16);
+}
+.topRight { top: 0; background-position: calc(var(--frame-depth) * -1.5) 0; }
+.bottomRight { bottom: 0; background-position: calc(var(--frame-depth) * -1.5) calc(var(--frame-depth) * -12.75); }
+.top, .bottom {
+  right: var(--frame-depth);
+  left: var(--frame-depth);
+  height: var(--frame-depth);
+  /* Source strip x=32..480: stretch the straight edge, never the corners. */
+  background-size: 114.285714% calc(var(--frame-depth) * 16);
+}
+.top { top: 0; background-position: center top; }
+.bottom { bottom: 0; background-position: center calc(var(--frame-depth) * -12.75); }
+.left, .right {
+  top: var(--frame-depth);
+  bottom: var(--frame-depth);
+  width: var(--frame-depth);
+  /* Source strip y=32..408, excluding the transparent tail at y=440..512. */
+  background-size: calc(var(--frame-depth) * 16) 136.170213%;
+}
+.left { left: 0; background-position: 0 23.529412%; }
+.right { right: 0; background-size: calc(var(--frame-depth) * 4) 136.170213%; background-position: calc(var(--frame-depth) * -1.5) 23.529412%; }

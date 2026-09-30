@@ -1,0 +1,7 @@
+.loading { width: min(600px, 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: clamp(24px, 4cqw, 48px); text-align: center; color: var(--folio-ink); }
+.seal { width: 56px; height: 56px; display: grid; place-items: center; border: 1px solid var(--folio-line); border-radius: 50%; color: var(--folio-rubric); background: var(--folio-medallion) center / contain no-repeat; }
+.seal svg { width: 24px; height: 24px; stroke-width: 1.5; }
+.rubric { color: var(--folio-rubric); font: 700 10px/1.4 var(--folio-body); letter-spacing: .16em; }
+.loading h1 { margin: 0; color: #39200e; font: 400 clamp(24px, 3vw, 34px)/1.25 var(--folio-title); text-wrap: balance; }
+.loading p { max-width: 420px; margin: 0; color: var(--folio-muted); font: 14px/1.6 var(--folio-body); }
+.divider { width: min(240px, 72%); height: 40px; background: var(--folio-divider-image) center / 100% auto no-repeat; }

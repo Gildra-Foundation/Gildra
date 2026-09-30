@@ -1,48 +1,29 @@
-/** WoW adapter: client-safe search index over real pages and demo entities. */
+/** WoW adapter: client-safe search index over published, source-tracked entities. */
 import type { GameAdapter, SearchItem } from "@/lib/games/adapter";
-import { SPEC_ICONS, classIcon, specIcon } from "./assets";
-import { specHref } from "@/lib/specs";
-import { builds, classChips, featuredGuide, guidesList, raid } from "@/data/site";
-import { ANCHORS, anchorHref } from "@/lib/anchors";
+import { specIcon } from "./assets";
+import { midnightClasses, midnightSpecializations } from "@/data/wow/midnight-specializations";
 
-/** Локальный индекс только по реально существующим данным и destinations. */
-const INDEX: SearchItem[] = [
-  { group: "Pages", label: "World of Warcraft Database", path: "/database", sprite: "#ic-database" },
-  { group: "Pages", label: "Mythic+ Tier List", path: "/tier-lists", sprite: "#ic-sword" },
-  { group: "Pages", label: "Meta overview", path: anchorHref(ANCHORS.meta), sprite: "#ic-sword" },
-  { group: "Pages", label: "Latest Guides", path: anchorHref(ANCHORS.guides), sprite: "#ic-book" },
-  { group: "Raid", label: `${raid.name} — Current Raid`, path: anchorHref(ANCHORS.raid), sprite: "#ic-shield" },
-  ...Object.keys(SPEC_ICONS).map((name) => ({
+const index = (lang: "en" | "ru"): SearchItem[] => [
+  { group: "Pages", label: lang === "ru" ? "Рейды" : "Raids", path: "/wow/raids", sprite: "#ic-shield" },
+  { group: "Pages", label: lang === "ru" ? "Подземелья" : "Dungeons", path: "/wow/dungeons", sprite: "#ic-map" },
+  { group: "Pages", label: lang === "ru" ? "Таланты" : "Talents", path: "/talents/fury-warrior", sprite: "#ic-spark" },
+  ...midnightSpecializations.map((spec) => ({
     group: "Specs",
-    label: name,
-    path: specHref(name),
-    img: specIcon(name),
+    label: lang === "ru" ? spec.specNameRu : spec.specName,
+    path: `/wow/classes/${spec.classSlug}/${spec.slug}`,
+    img: specIcon(spec.specName),
   })),
-  ...classChips
-    .filter((c) => c.key !== "all")
-    .map((c) => ({
-      group: "Classes",
-      label: c.label,
-      path: "/tier-lists",
-      img: classIcon(c.key),
-    })),
-  ...builds.map((b) => ({
-    group: "Builds",
-    label: b.title,
-    path: anchorHref(ANCHORS.builds, "/tier-lists"),
-    img: specIcon(b.spec.name),
-  })),
-  ...[featuredGuide, ...guidesList].map((g) => ({
-    group: "Guides",
-    label: g.title,
-    path: anchorHref(ANCHORS.guides),
-    sprite: "#ic-book",
+  ...midnightClasses.map((entry) => ({
+    group: "Classes",
+    label: lang === "ru" ? entry.nameRu : entry.nameEn,
+    path: `/wow/classes/${entry.slug}`,
+    sprite: "#ic-sword",
   })),
 ];
 
 export const wowAdapter: GameAdapter = {
   slug: "wow",
-  searchIndex: () => INDEX,
-  searchGroups: ["Specs", "Classes", "Builds", "Raid", "Guides", "Pages"],
-  searchDefaultGroups: ["Pages", "Raid"],
+  searchIndex: (lang) => index(lang),
+  searchGroups: ["Specs", "Classes", "Pages"],
+  searchDefaultGroups: ["Pages"],
 };

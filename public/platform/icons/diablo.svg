@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Diablo IV">
+  <defs>
+    <radialGradient id="bg" cx="48%" cy="38%" r="70%"><stop stop-color="#51120f"/><stop offset=".58" stop-color="#1d0808"/><stop offset="1" stop-color="#060506"/></radialGradient>
+    <linearGradient id="ember" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff6c39"/><stop offset=".5" stop-color="#d21d17"/><stop offset="1" stop-color="#ff9a4d"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eab569"/><stop offset="1" stop-color="#70431b"/></linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#050506" stroke="url(#gold)" stroke-width="3"/>
+  <circle cx="64" cy="64" r="51" fill="url(#bg)" stroke="#2c0b09" stroke-width="4"/>
+  <path d="M35 28l15 10h28l15-10-8 18 12 7-13 5v31L64 106 44 89V58l-13-5 12-7z" fill="none" stroke="url(#ember)" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M52 47h15c15 0 24 8 24 22 0 16-10 27-26 27H52zm13 13v23c8 0 12-5 12-14 0-6-4-9-12-9z" fill="url(#ember)"/>
+</svg>

@@ -1,0 +1,262 @@
+.optimizer{margin-top:16px;padding:15px;border:1px solid #574126;background:linear-gradient(120deg,rgba(var(--spec-rgb),.08),transparent 42%),#0c0f0d}
+.heading{display:flex;align-items:center;gap:11px}.heading>span{width:38px;height:38px;display:grid;place-items:center;flex:0 0 auto;border:1px solid rgba(var(--spec-rgb),.5);color:var(--spec-accent);background:rgba(var(--spec-rgb),.08)}.heading svg{width:18px}.heading div{min-width:0}.heading small,.results header small,.summary small{color:#a17d49;font-size:8px;font-weight:800;letter-spacing:.12em}.heading h3{margin:2px 0 0;color:#eadfce;font-size:13px}.heading p{max-width:780px;margin:3px 0 0;color:#87837a;font-size:9px;line-height:1.45}
+.controls{margin-top:13px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px}.controls fieldset{min-width:0;margin:0;padding:0;border:0}.controls legend{margin-bottom:7px;color:#a99a83;font-size:9px;font-weight:700}.scenarios{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.scenarios button{min-height:52px;padding:7px 9px;display:grid;gap:3px;border:1px solid #37342e;color:#827f77;background:#111411;text-align:left}.scenarios button:hover,.scenarios button:focus-visible{outline:none;border-color:#84663c}.scenarios button[aria-pressed=true]{border-color:var(--spec-accent);color:#eee2d1;background:rgba(var(--spec-rgb),.12);box-shadow:inset 3px 0 var(--spec-accent)}.scenarios b{font-size:10px}.scenarios span{font-size:7px;line-height:1.35}.actions{display:flex;gap:6px}.actions button,.results li>button{min-height:38px;padding:0 12px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #72512b;font-size:9px;font-weight:800}.actions svg,.results li>button svg{width:13px}.startButton{color:#201408;background:#d48a39}.startButton:hover,.startButton:focus-visible{outline:2px solid rgba(var(--spec-rgb),.3);outline-offset:2px;background:#ed9c46}.startButton:disabled{opacity:.55}.cancelButton{color:#d69983;background:#28130f!important;border-color:#713a30!important}
+.progress,.error,.cancelled{margin-top:12px;padding:11px;display:flex;align-items:center;gap:9px;border:1px solid #4a3b28;color:#8c877e;background:#15150f;font-size:9px;line-height:1.4}.progress>svg{width:18px;flex:0 0 auto;color:#c68b42;animation:spin 1s linear infinite}.progress>div,.error span,.cancelled span{min-width:0;display:grid;gap:3px}.progress b,.error b,.cancelled b{color:#dec9a9;font-size:10px}.progress progress{width:100%;height:5px;margin-top:4px;border:0;background:#28241d;accent-color:var(--spec-accent)}.progress progress::-webkit-progress-bar{background:#28241d}.progress progress::-webkit-progress-value{background:var(--spec-accent)}.error{border-color:rgba(190,78,60,.45);color:#ad8b82;background:rgba(137,49,36,.09)}.error>svg{width:18px;color:#d67462}.error b{color:#de806e}.cancelled>svg{width:15px;color:#bd9460}
+@keyframes spin{to{transform:rotate(360deg)}}
+.summary{margin-top:12px;padding:12px;display:flex;align-items:center;gap:10px;border:1px solid #554933;color:#a69d90;background:#161612}.summary>svg{width:22px;flex:0 0 auto;color:#baa36f}.summary span{display:grid;gap:2px}.summary b{color:#ddd0bd;font-size:12px}.summary em{color:#89857d;font-size:8px;font-style:normal;font-variant-numeric:tabular-nums}.summaryGain{border-color:rgba(107,162,82,.5);background:rgba(73,121,55,.1)}.summaryGain>svg,.summaryGain b{color:#90c977}
+.results{margin-top:12px;border:1px solid #373129;background:#0d100e}.results>header{min-height:44px;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #312c25}.results h4{margin:2px 0 0;color:#ddd1bf;font-size:11px}.results>header>span{color:#77756f;font-size:8px}.results ol{margin:0;padding:7px;display:grid;gap:6px;list-style:none}.results li{min-width:0;display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:9px;padding:8px;border:1px solid #302d27;background:#111310}.results li[data-positive=true]{border-color:rgba(98,151,76,.42);background:rgba(68,111,52,.07)}.rank{width:27px;height:27px;display:grid;place-items:center;border:1px solid #54452f;color:#c5a66f;background:#17140f;font:700 13px/1 var(--font-heading)}.variant{min-width:0}.variantHead{display:flex;align-items:baseline;justify-content:space-between;gap:9px}.variantHead span{min-width:0;display:flex;align-items:baseline;gap:7px}.variantHead b{color:#ddd2c1;font-size:9px}.variantHead small{color:#77746d;font-size:7px}.variantHead strong{color:#cf8b63;font-size:13px;font-variant-numeric:tabular-nums}.results li[data-positive=true] .variantHead strong{color:#84bd6c}.changes{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}.changes span{min-height:25px;padding:3px 6px 3px 3px;display:flex;align-items:center;gap:5px;border:1px solid #39332a;color:#a59b8c;background:#0d0f0d}.changes img{width:18px;height:18px;object-fit:cover}.changes em{font-size:7px;font-style:normal}.numbers{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px 12px;color:#77756f;font-size:7px;font-variant-numeric:tabular-nums}.numbers span:first-child{color:#b8aa94}.results li>button{min-width:88px;color:#d6b77f;background:#201a11}.results li>button:hover,.results li>button:focus-visible{outline:none;border-color:var(--spec-accent);color:#f5dfba}.results>p{margin:0;padding:8px 10px;border-top:1px solid #2d2923;color:#74716b;font-size:8px;line-height:1.4}
+@media(max-width:900px){.controls{grid-template-columns:1fr}.actions{justify-content:flex-end}.scenarios{grid-template-columns:repeat(2,minmax(0,1fr))}.results li{grid-template-columns:27px minmax(0,1fr)}.results li>button{grid-column:2;justify-self:start}}
+@media(max-width:520px){.optimizer{padding:11px}.scenarios{grid-template-columns:1fr}.actions{display:grid;grid-template-columns:1fr}.results li{grid-template-columns:24px minmax(0,1fr);align-items:start}.variantHead,.variantHead span{align-items:flex-start;flex-direction:column;gap:2px}.results li>button{width:100%;justify-self:stretch}.summary{align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){.progress>svg{animation:none}}
+.heading small,.results header small,.summary small{font-size:9px}.heading h3{margin-top:3px;font-size:16px}.heading p{margin-top:4px;color:#969188;font-size:11px;line-height:1.5}.controls legend{color:#b2a38b;font-size:10px}.scenarios button{min-height:58px;padding:8px 10px;gap:4px;color:#918d84}.scenarios b{font-size:12px}.scenarios span{font-size:9px;line-height:1.4}.actions button,.results li>button{min-height:40px;padding-inline:13px;font-size:10px}.progress,.error,.cancelled{padding:12px;color:#9a958b;font-size:10px;line-height:1.45}.progress b,.error b,.cancelled b{font-size:12px}.progress progress{height:6px;margin-top:5px}.summary{padding:13px}.summary span{gap:3px}.summary b{font-size:14px}.summary em{color:#98938a;font-size:10px}.results h4{font-size:13px}.results>header>span{font-size:9px}.variantHead b{font-size:11px}.variantHead small{font-size:9px}.variantHead strong{font-size:15px}.changes em,.numbers,.results>p{font-size:9px}
+
+
+/* Character Codex v2 — automatic talent optimizer. */
+.optimizer { position:relative; overflow:hidden; border-color:var(--wow-line,rgba(188,151,86,.22)); border-radius:12px; background:rgba(10,12,15,.9); box-shadow:inset 0 1px rgba(255,235,197,.035); }
+.optimizer::before { content:""; position:absolute; inset:0 18% auto; height:1px; background:linear-gradient(90deg,transparent,var(--wow-gold,#c9a15d),transparent); }
+.heading h3,.summary b,.variantHead b { color:var(--wow-ivory,#f0e8dc); font-family:var(--font-display),Georgia,serif; font-weight:500; }
+.heading small,.results header small,.summary small { color:var(--wow-gold,#c9a15d); }
+.heading p,.numbers,.variantHead small { color:var(--wow-muted,#8e8981); }
+.heading>span { border-color:var(--wow-line-strong,rgba(211,173,101,.52)); border-radius:11px; color:var(--wow-gold-bright,#efd39a); background:rgba(201,161,93,.055); }
+.scenarios button,.variant,.summary { border-color:var(--wow-line,rgba(188,151,86,.22)); border-radius:9px; background:#0d1013; }
+.scenarios button[aria-pressed="true"] { border-color:var(--spec-accent); background:rgba(var(--spec-rgb),.1); box-shadow:inset 3px 0 var(--spec-accent); }
+.startButton { border-color:rgba(var(--spec-rgb),.7)!important; border-radius:9px; background:linear-gradient(180deg,color-mix(in srgb,var(--spec-hot) 78%,#c9a15d),var(--spec-accent))!important; color:#170d08!important; }
+.cancelButton,.progress,.error,.cancelled { border-radius:9px; }
+
+/* Connected character: the auto-pick station belongs to the same quest-book. */
+:global([data-profile-source="battle-net"]) .optimizer {
+  border: 2px solid #8f6938;
+  border-radius: 2px;
+  color: #dcc8a2;
+  background: linear-gradient(#22180f, #110d08);
+  box-shadow: inset 0 0 0 1px #161009, inset 0 2px #c69a5866;
+  font-family: var(--wow-ui, Arial, sans-serif);
+  font-size: 12px;
+}
+:global([data-profile-source="battle-net"]) .heading {
+  margin: -15px -15px 0;
+  padding: 15px 20px;
+  border-bottom: 2px ridge #896333;
+  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+}
+:global([data-profile-source="battle-net"]) .heading > span { border-color: #80572d; border-radius: 2px; color: #eed19b; background: #342011; }
+:global([data-profile-source="battle-net"]) .heading small { color: #684a2b; font-size: 11px; letter-spacing: .08em; }
+:global([data-profile-source="battle-net"]) .heading h3 { color: #3b2817; font: 700 19px/1.2 var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .heading p { color: #594024; font-size: 12px; line-height: 1.45; }
+:global([data-profile-source="battle-net"]) .controls legend { color: #d7bd8c; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .scenarios button {
+  min-height: 65px;
+  border: 1px solid #785a37;
+  border-radius: 2px;
+  color: #cdbb9a;
+  background: linear-gradient(#231b12, #10100d);
+}
+:global([data-profile-source="battle-net"]) .scenarios button:hover,
+:global([data-profile-source="battle-net"]) .scenarios button:focus-visible { border-color: #d7ac66; background: #302215; }
+:global([data-profile-source="battle-net"]) .scenarios button[aria-pressed="true"] { border-color: #c98b4c; color: #f1dbaa; background: linear-gradient(#45271a, #1a120e); box-shadow: inset 3px 0 #c98949; }
+:global([data-profile-source="battle-net"]) .scenarios b { color: #f1ddba; font: 700 14px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .scenarios span { color: #c4b08c; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .actions button,
+:global([data-profile-source="battle-net"]) .results li > button { min-height: 40px; border: 0; border-radius: 0; font-size: 12px; }
+:global([data-profile-source="battle-net"]) .startButton,
+:global([data-profile-source="battle-net"]) .results li > button {
+  color: #f5d783 !important;
+  background: #4f160f url("/assets/wow/ui-textures/character/dialog-button-up.png") center top / 100% 139.13% no-repeat !important;
+  box-shadow: 0 2px 5px #0009;
+}
+:global([data-profile-source="battle-net"]) .startButton:hover:not(:disabled),
+:global([data-profile-source="battle-net"]) .results li > button:hover { filter: brightness(1.15); background: #4f160f url("/assets/wow/ui-textures/character/dialog-button-up.png") center top / 100% 139.13% no-repeat !important; }
+:global([data-profile-source="battle-net"]) .startButton:active:not(:disabled),
+:global([data-profile-source="battle-net"]) .results li > button:active { background-image: url("/assets/wow/ui-textures/character/dialog-button-down.png") !important; }
+:global([data-profile-source="battle-net"]) .cancelButton {
+  border: 0 !important;
+  color: #f0d39b;
+  background: #21180e url("/assets/wow/ui-textures/character/dark-gold-button-up.png") center / 100% 133.33% no-repeat !important;
+}
+:global([data-profile-source="battle-net"]) .cancelButton:active { background-image: url("/assets/wow/ui-textures/character/dark-gold-button-down.png") !important; }
+:global([data-profile-source="battle-net"]) .progress,
+:global([data-profile-source="battle-net"]) .error,
+:global([data-profile-source="battle-net"]) .cancelled { border-radius: 2px; color: #d4c19f; background: #24190f; font-size: 12px; }
+:global([data-profile-source="battle-net"]) .progress b,
+:global([data-profile-source="battle-net"]) .error b,
+:global([data-profile-source="battle-net"]) .cancelled b { color: #f1dab2; font-size: 13px; }
+:global([data-profile-source="battle-net"]) .summary,
+:global([data-profile-source="battle-net"]) .summaryGain {
+  border: 2px solid #8c6538;
+  border-radius: 2px;
+  color: #5b3e22;
+  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+}
+:global([data-profile-source="battle-net"]) .summaryGain { border-color: #688a3b; }
+:global([data-profile-source="battle-net"]) .summary small { color: #674827; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .summary b { color: #352312; font: 700 17px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .summaryGain b { color: #24561e; }
+:global([data-profile-source="battle-net"]) .summary em { color: #614426; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .results { border: 2px solid #8c6538; border-radius: 2px; color: #3b2817; background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat; }
+:global([data-profile-source="battle-net"]) .results > header { border-bottom-color: #9a7549; }
+:global([data-profile-source="battle-net"]) .results header small,
+:global([data-profile-source="battle-net"]) .results > header > span { color: #684a2b; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .results h4 { color: #352312; font: 700 17px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .results li,
+:global([data-profile-source="battle-net"]) .results li[data-positive="true"] { border-color: #ad8553; background: #ffe4b552; }
+:global([data-profile-source="battle-net"]) .results li[data-positive="true"] { border-left: 3px solid #4c7a2f; }
+:global([data-profile-source="battle-net"]) .rank { color: #5d3817; background: #f1d5a0; font-family: var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .variantHead b { color: #352312; font: 700 13px var(--wow-ui, Arial, sans-serif); }
+:global([data-profile-source="battle-net"]) .variantHead small,
+:global([data-profile-source="battle-net"]) .numbers { color: #684a2b; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .variantHead strong { color: #8b341d; font-size: 16px; }
+:global([data-profile-source="battle-net"]) .results li[data-positive="true"] .variantHead strong { color: #2f6527; }
+:global([data-profile-source="battle-net"]) .changes span { border-color: #ad8553; color: #50351d; background: #f2d5a477; }
+:global([data-profile-source="battle-net"]) .changes em { font-size: 11px; }
+:global([data-profile-source="battle-net"]) .results > p { border-top-color: #9a7549; color: #604327; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .optimizer :is(button, input):focus-visible { outline: 2px solid #ffd689; outline-offset: 2px; }
+@media (max-width: 520px) {
+  :global([data-profile-source="battle-net"]) .heading { margin: -11px -11px 0; padding: 14px; }
+  :global([data-profile-source="battle-net"]) .scenarios { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  :global([data-profile-source="battle-net"]) .scenarios button { min-height: 84px; padding: 8px; }
+  :global([data-profile-source="battle-net"]) .scenarios b { font-size: 13px; }
+}
+
+/* Match the World Map leaf used by the rest of the connected profile. */
+:global([data-profile-source="battle-net"]) .optimizer,
+:global([data-profile-source="battle-net"]) .scenarios button,
+:global([data-profile-source="battle-net"]) .summary,
+:global([data-profile-source="battle-net"]) .summaryGain,
+:global([data-profile-source="battle-net"]) .results,
+:global([data-profile-source="battle-net"]) .results li,
+:global([data-profile-source="battle-net"]) .results li[data-positive="true"],
+:global([data-profile-source="battle-net"]) .progress,
+:global([data-profile-source="battle-net"]) .error,
+:global([data-profile-source="battle-net"]) .cancelled {
+  color: #3b2817;
+  background: var(--wow-paper);
+}
+:global([data-profile-source="battle-net"]) .optimizer { box-shadow: inset 0 0 0 1px #e7cb9466, 0 6px 16px #0005; }
+:global([data-profile-source="battle-net"]) .controls legend,
+:global([data-profile-source="battle-net"]) .scenarios b,
+:global([data-profile-source="battle-net"]) .progress b,
+:global([data-profile-source="battle-net"]) .cancelled b { color: #3b2817; }
+:global([data-profile-source="battle-net"]) .scenarios span { color: #614528; }
+:global([data-profile-source="battle-net"]) .scenarios button:hover,
+:global([data-profile-source="battle-net"]) .scenarios button:focus-visible { color: #2d1b0d; background: var(--wow-paper); box-shadow: inset 0 0 0 2px #fff0ca77; }
+:global([data-profile-source="battle-net"]) .scenarios button[aria-pressed="true"] { border-color: #8d471e; color: #2d1b0d; background: var(--wow-paper); box-shadow: inset 4px 0 #a45622, inset 0 0 0 1px #fff1c7; }
+:global([data-profile-source="battle-net"]) .progress,
+:global([data-profile-source="battle-net"]) .cancelled { border-color: #927045; }
+:global([data-profile-source="battle-net"]) .error { border-color: #a75237; }
+:global([data-profile-source="battle-net"]) .error b { color: #8e301f; }
+:global([data-profile-source="battle-net"]) .startButton,
+:global([data-profile-source="battle-net"]) .results li > button,
+:global([data-profile-source="battle-net"]) .cancelButton {
+  border: 1px solid #9d4727 !important;
+  border-radius: 2px;
+  color: #f7dda6 !important;
+  background: linear-gradient(#ffdcaf24, transparent 40%), linear-gradient(#912e1c, #651a11 52%, #310d09) !important;
+  box-shadow: inset 0 0 0 1px #200804, inset 0 1px #f7d69e4d, 0 3px 6px #0007;
+  text-shadow: 0 1px #100804;
+}
+:global([data-profile-source="battle-net"]) .cancelButton { border-color: #76572d !important; background: linear-gradient(#fff0c11b, transparent 40%), linear-gradient(#3c2b17, #21180e 53%, #100b07) !important; }
+:global([data-profile-source="battle-net"]) .startButton:hover:not(:disabled),
+:global([data-profile-source="battle-net"]) .results li > button:hover,
+:global([data-profile-source="battle-net"]) .cancelButton:hover { border-color: #e0ae5a !important; color: #fff2cd !important; background: linear-gradient(#ffdcaf24, transparent 40%), linear-gradient(#ad3c23, #792317 52%, #3c110b) !important; filter: none; }
+:global([data-profile-source="battle-net"]) .startButton:active:not(:disabled),
+:global([data-profile-source="battle-net"]) .results li > button:active,
+:global([data-profile-source="battle-net"]) .cancelButton:active { background: linear-gradient(#0005, transparent 50%), linear-gradient(#1a1009, #4b2b15) !important; box-shadow: inset 0 2px 5px #0009; }
+:global([data-profile-source="battle-net"]) .actions button:focus-visible,
+:global([data-profile-source="battle-net"]) .results li > button:focus-visible { outline: 2px solid #6f3f1b; outline-offset: 2px; }
+
+/* Marginal notes and recommendations on the open character folio. */
+:global([data-character-book="open"]) .optimizer {
+  margin-top: 28px;
+  padding: 24px 0 0;
+  border: 0;
+  border-top: 1px solid var(--folio-line, #76532e66);
+  border-radius: 0;
+  color: var(--folio-ink, #382415);
+  background: transparent;
+  box-shadow: none;
+}
+:global([data-character-book="open"]) .optimizer::before { display: none; }
+:global([data-character-book="open"]) .optimizer > :global([class*="warcraftFrame"][aria-hidden="true"]) { display: none; }
+:global([data-character-book="open"]) .heading {
+  margin: 0;
+  padding: 0 0 16px;
+  border: 0;
+  background: transparent;
+}
+:global([data-character-book="open"]) .heading > span {
+  border: 1px solid var(--folio-line, #76532e66);
+  border-radius: 50%;
+  color: #774623;
+  background: #76532e0b;
+}
+:global([data-character-book="open"]) .heading h3,
+:global([data-character-book="open"]) .results h4,
+:global([data-character-book="open"]) .summary b {
+  color: var(--folio-ink, #382415);
+  font-family: var(--folio-title, Georgia, serif);
+}
+:global([data-character-book="open"]) .heading :is(small, p),
+:global([data-character-book="open"]) .controls legend { color: var(--folio-muted, #684b2e); }
+:global([data-character-book="open"]) .scenarios { gap: 8px; }
+:global([data-character-book="open"]) .scenarios button {
+  padding: 12px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--folio-line, #76532e66);
+  border-radius: 0;
+  color: var(--folio-ink, #382415);
+  background: transparent;
+  box-shadow: none;
+}
+:global([data-character-book="open"]) .scenarios button:hover {
+  border-color: var(--folio-line, #76532e66);
+  background: #76532e0b;
+  box-shadow: none;
+}
+:global([data-character-book="open"]) .scenarios button[aria-pressed="true"] {
+  border-color: #92542588;
+  color: #572614;
+  background: #a66a2422;
+  box-shadow: inset 3px 0 #88401f;
+}
+:global([data-character-book="open"]) .scenarios b { font-family: var(--folio-title, Georgia, serif); }
+:global([data-character-book="open"]) .progress,
+:global([data-character-book="open"]) .error,
+:global([data-character-book="open"]) .cancelled,
+:global([data-character-book="open"]) .summary,
+:global([data-character-book="open"]) .summaryGain {
+  border: 0;
+  border-left: 3px solid var(--folio-line, #76532e66);
+  border-radius: 0;
+  color: var(--folio-muted, #684b2e);
+  background: #76532e0b;
+  box-shadow: none;
+}
+:global([data-character-book="open"]) .summaryGain { border-left-color: #4c6b32; }
+:global([data-character-book="open"]) .error { border-left-color: #9b3d2a; }
+:global([data-character-book="open"]) .results {
+  border: 0;
+  border-block: 1px solid var(--folio-line, #76532e66);
+  border-radius: 0;
+  background: transparent;
+}
+:global([data-character-book="open"]) .results ol { padding: 0; gap: 0; }
+:global([data-character-book="open"]) .results li,
+:global([data-character-book="open"]) .results li[data-positive="true"] {
+  padding: 16px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--folio-line, #76532e66);
+  background: transparent;
+}
+:global([data-character-book="open"]) .variant { background: transparent; }
+:global([data-character-book="open"]) .rank {
+  border: 0;
+  color: #865227;
+  background: transparent;
+  font-family: var(--folio-title, Georgia, serif);
+}
+:global([data-character-book="open"]) .changes span { border: 0; border-radius: 0; background: #76532e0b; }
+:global([data-character-book="open"]) .optimizer :is(button, input):focus-visible { outline: 2px solid #75391c; outline-offset: 3px; }
+@container auditPage (max-width: 520px) {
+  :global([data-character-book="open"]) .optimizer { padding-top: 20px; }
+  :global([data-character-book="open"]) .heading { margin: 0; padding-inline: 0; }
+}

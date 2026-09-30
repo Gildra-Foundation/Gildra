@@ -4,7 +4,6 @@
  * anchors (`sectionNav` with `anchorsFrom: "wow/home"`).
  */
 import type { BlockInstance } from "@/lib/blocks/page";
-import { ANCHORS } from "@/lib/anchors";
 
 export const homeBlocks: BlockInstance[] = [
   { type: "wow.hero" },
@@ -12,16 +11,10 @@ export const homeBlocks: BlockInstance[] = [
   {
     type: "container",
     children: [
-      { type: "wow.metaPulse" },
-      {
-        type: "columns",
-        props: { layout: "meta", id: ANCHORS.meta, anchor: "Meta" },
-        children: [{ type: "wow.mythicMeta" }, { type: "wow.metaTrends" }],
-      },
+      { type: "wow.quickLaunch" },
       { type: "adSlot" },
       { type: "wow.raidFeature" },
       { type: "wow.guides" },
-      { type: "wow.tierPreview" },
     ],
   },
 ];

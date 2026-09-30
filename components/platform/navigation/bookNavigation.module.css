@@ -1,0 +1,184 @@
+.dialog {
+  width: min(1240px, 98vw);
+  max-width: none;
+  max-height: 96svh;
+  margin: auto;
+  padding: 46px 54px 52px;
+  border: 0;
+  background: transparent;
+  color: #2d1c0f;
+  overflow: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+  font: 20px/1.5 "Gildra Atlas", Georgia, serif;
+}
+.dialog::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.dialog::backdrop { background: #080a0cf4; }
+.dialog[open] { animation: unfold 250ms ease-out; }
+.dialog * { box-sizing: border-box; }
+.dialog[open] :is(a, button):focus-visible { outline: 3px solid #783921; outline-offset: 3px; }
+.dialog[open] .close:focus-visible { outline: none; box-shadow: inset 0 0 0 3px #f0d29d; }
+
+.volume {
+  --folio-paper: linear-gradient(#eee0bf70, #eee0bf70), var(--book-paper-image) center / 640px repeat;
+  --book-edge-width: 90px;
+  --book-paper-inset: -22px -12px -26px;
+  --book-paper-inline-inset: -12px;
+  --book-paper-fade: 32px;
+  --book-paper-mask: linear-gradient(90deg, transparent, #000 var(--book-paper-fade), #000 calc(100% - var(--book-paper-fade)), transparent), linear-gradient(transparent, #000 20px, #000 calc(100% - 20px), transparent);
+  --book-binding-fade: 56px;
+  --book-binding-inset: -38px -44px -42px;
+  --book-binding-width: 58px 64px;
+  /* Fade out before the border-image ends, so its pale inner edge never
+     leaves a rectangular seam across the continuous parchment underneath. */
+  --book-binding-mask: linear-gradient(#000 0 18px, transparent var(--book-binding-fade), transparent calc(100% - var(--book-binding-fade)), #000 calc(100% - 18px));
+  --book-binding-shadow: drop-shadow(0 6px 9px #08050350);
+  --book-material-filter: saturate(.62) contrast(.91) brightness(.98);
+  position: relative;
+  isolation: isolate;
+  container: auditPage / inline-size;
+  padding: 32px 34px;
+}
+.spread { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(56px, 7vw, 100px); }
+.leaf { min-width: 0; }
+.leaf h2 {
+  margin: 0;
+  padding: 0 0 18px;
+  border-bottom: 2px solid #76502d66;
+  color: #39200e;
+  font: 32px/1.2 "Gildra Kurale", Georgia, serif;
+}
+.leaf .archiveHeading { margin-top: 28px; font-size: 29px; }
+.close {
+  position: absolute;
+  z-index: 3;
+  top: -34px;
+  right: 12px;
+  width: 44px;
+  height: 65px;
+  display: grid;
+  place-items: center;
+  padding: 0 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(90deg, #392020, #643431 16%, #57302c 80%, #38201d);
+  box-shadow: inset 2px 0 #b68f5b40, inset -2px 0 #b68f5b40;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 9px), 0 100%);
+  color: #ead4af;
+  cursor: pointer;
+}
+.close:hover { filter: brightness(1.18); }
+.dialog .entry {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 15px;
+  min-height: 76px;
+  padding: 16px 6px;
+  border-bottom: 1px solid #79512b55;
+  color: #2d1c0f;
+  text-decoration: none;
+  font: 23px/1.35 "Gildra Atlas", Georgia, serif;
+  transition: color 160ms, background 160ms;
+}
+.dialog .entry:hover { color: #6f291b; background: #87512612; }
+.dialog .entry[aria-current="page"] { color: #6f291b; background: #78392112; box-shadow: inset 3px 0 #783921; }
+.entryIcon { color: #6b4320; }
+.arrow { color: #6b4320; }
+.dialog .account {
+  display: grid;
+  grid-template-columns: 23px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 13px;
+  min-height: 60px;
+  margin-top: 28px;
+  padding: 14px 16px;
+  border: 1px solid #926b36;
+  border-radius: 3px;
+  background: #582118 var(--folio-control-image) center / 100% 100%;
+  color: #fff0c7;
+  text-decoration: none;
+  white-space: normal;
+  font: 20px/1.35 "Gildra Atlas", Georgia, serif;
+}
+.dialog .account:hover { filter: brightness(1.12); }
+.launcher {
+  position: relative;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 13px 7px 6px;
+  border: 1px solid #a7783a7a;
+  border-radius: 3px;
+  background: #21180ff0;
+  color: #e6c995;
+  box-shadow: 0 4px 16px #0005;
+  cursor: pointer;
+  font: 14px Georgia, "Times New Roman", serif;
+}
+.launcher img { height: 30px; width: 20px; object-fit: contain; }
+.launcher:focus-visible { outline: 2px solid #e1bd78; outline-offset: 4px; }
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 8px 20px;
+  background: #0b0c0bf5;
+  border-bottom: 1px solid #a7783a30;
+}
+.toolbarTitle { color: #c5a270; font: 18px/1.1 Georgia, "Times New Roman", serif; letter-spacing: .14em; text-align: right; }
+.toolbarTitle small { display: block; font: 700 7px/1.5 system-ui, sans-serif; letter-spacing: .14em; margin-top: 5px; color: #8b7a61; }
+
+@keyframes unfold { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 960px) and (min-width: 821px) {
+  .volume { padding: 28px 18px; }
+  .spread { gap: 54px; }
+  .dialog .entry { font-size: 21px; gap: 10px; }
+  .leaf h2 { font-size: 29px; }
+  .leaf .archiveHeading { font-size: 26px; }
+}
+@media (max-width: 820px) {
+  .dialog { padding: 34px 26px; width: 100%; }
+  .volume { padding: 22px 22px; --book-edge-width: 58px; --book-binding-inset: -26px -20px -30px; --book-binding-width: 42px 36px; --book-binding-fade: 40px; --book-paper-inset: -16px -4px -20px; --book-paper-inline-inset: -4px; --book-paper-fade: 22px; }
+  .spread { grid-template-columns: minmax(0, 1fr); gap: 34px; }
+  .leaf h2 { font-size: 30px; padding-bottom: 16px; }
+  .dialog .entry { font-size: 22px; min-height: 70px; padding-block: 15px; }
+  .close { top: -23px; right: 4px; height: 57px; }
+}
+@media (max-width: 420px) {
+  .dialog { padding: 32px 14px; }
+  .volume { padding: 20px 12px; --book-binding-inset: -24px -8px -28px; --book-binding-width: 40px 26px; --book-edge-width: 46px; --book-binding-fade: 38px; --book-paper-inset: -16px 0 -20px; --book-paper-inline-inset: 0px; --book-paper-fade: 14px; }
+  .leaf h2 { font-size: 28px; }
+  .leaf .archiveHeading { font-size: 26px; }
+  .dialog .entry { grid-template-columns: 24px minmax(0, 1fr) 16px; gap: 11px; padding-inline: 3px; font-size: 20px; }
+  .dialog .account { padding: 14px 12px; gap: 10px; font-size: 19px; }
+  .close { right: 2px; }
+  .toolbar { padding-inline: 12px; }
+  .toolbarTitle small { display: none; }
+}
+@media (min-width: 821px) and (max-height: 760px) {
+  .volume { padding-block: 20px; }
+  .leaf h2 { font-size: 28px; padding-bottom: 12px; }
+  .leaf .archiveHeading { margin-top: 18px; font-size: 26px; }
+  .dialog .entry { min-height: 60px; padding-block: 12px; font-size: 21px; }
+  .dialog .account { margin-top: 20px; min-height: 52px; padding-block: 10px; }
+}
+@media (min-width: 821px) and (max-height: 600px) {
+  .volume { padding-block: 14px; }
+  .dialog .entry { min-height: 54px; padding-block: 10px; font-size: 20px; }
+  .leaf h2 { font-size: 26px; padding-bottom: 10px; }
+  .leaf .archiveHeading { margin-top: 14px; font-size: 25px; }
+  .dialog .account { margin-top: 16px; font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open] { animation: none; }
+  .entry { transition: none; }
+}

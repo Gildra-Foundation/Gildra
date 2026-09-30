@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Unverified icon placeholder</title>
+  <rect width="64" height="64" rx="8" fill="#151719"/>
+  <path d="M8 8h48v48H8z" fill="none" stroke="#555b60" stroke-width="2" stroke-dasharray="4 4"/>
+  <circle cx="32" cy="32" r="15" fill="#22262a" stroke="#737b82" stroke-width="2"/>
+  <path d="M26 27c.5-5 3.5-8 8.5-8 4.8 0 8 2.8 8 7.2 0 3.8-2.2 5.7-5.5 7.6-2.8 1.6-3.5 2.7-3.5 5.2" fill="none" stroke="#a8afb5" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="33.5" cy="46" r="2.5" fill="#a8afb5"/>
+</svg>

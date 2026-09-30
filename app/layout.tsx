@@ -1,21 +1,27 @@
 import type { Metadata } from "next";
 import { Chakra_Petch, Inter } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
-import { CookieNotice } from "@/components/CookieNotice";
-import { LangAttr } from "@/components/LangAttr";
+import { CookieNoticeGate } from "@/components/CookieNoticeGate";
+import { RouteTransitionGate } from "@/components/motion/RouteTransitionGate";
+import { WorkspaceNavigator } from "@/components/platform/navigation/WorkspaceNavigator";
 import "./globals.css";
 
 const display = Chakra_Petch({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
   variable: "--font-display",
+  // Many routes use this family, but the grimoire landing page does not.
+  // Let it load when a rendered component actually uses it instead of
+  // preloading all three weights on every route.
+  preload: false,
 });
 
 const ui = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-ui",
+  // Body text has a system fallback, so let critical CSS and the LCP image
+  // use the initial connection before the shared UI font downloads.
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -41,16 +47,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
-
   return (
-    <html lang={locale} className={`${display.variable} ${ui.variable}`} data-scroll-behavior="smooth">
+    <html lang="en" className={`${display.variable} ${ui.variable}`} data-scroll-behavior="smooth" data-route-theme="wow">
       <body>
-        <NextIntlClientProvider messages={messages}>
-          {children}
-          <CookieNotice />
-          <LangAttr />
-        </NextIntlClientProvider>
+        <WorkspaceNavigator />
+        <RouteTransitionGate>{children}</RouteTransitionGate>
+        <CookieNoticeGate />
       </body>
     </html>
   );

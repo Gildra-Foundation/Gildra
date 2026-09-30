@@ -1,0 +1,39 @@
+.scene { z-index: 990; }
+.scene[data-book-route-scene="turn"] { left: 0; width: 100%; height: 100%; bottom: 0; }
+.scene:not([data-book-hydrated]) { animation: failOpen 1ms 4s forwards; }
+.scene[data-book-route-phase="loading"] { pointer-events: none; }
+.scene[data-book-route-phase="loading"] [data-book-route-skip] { pointer-events: auto; }
+.scene[data-book-route-phase="loading"] .stage { opacity: 0; }
+.scene[data-book-route-phase="loading"] .veil { opacity: .2; }
+.veil { position: absolute; inset: 0; }
+.stage { position: absolute; left: 50%; top: 43%; width: min(1020px, 88%, 130vh); aspect-ratio: 1.65; transform: translate(-50%, -50%); perspective: 1700px; pointer-events: none; }
+.spread { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(8deg); border-radius: 7px; background: #402919; box-shadow: 0 20px 70px #000a, 0 4px 0 #2b1b0e; }
+.page, .front, .back { position: absolute; background: linear-gradient(90deg, #756b543b, #eee0bf70 12%, #eee0bf70 80%, #82735b33), var(--book-paper-image) center / 480px repeat, #d8cdb6; border: 1px solid #8e7e60; color: #594e3b; filter: saturate(.62) contrast(.91) brightness(.98); }
+.page { top: 2%; bottom: 2%; width: 48.5%; box-shadow: 0 2px 0 #a18752, 0 4px 0 #79603a, 0 6px 0 #3b281a; }
+.left { left: 1%; border-radius: 5px 1px 1px 5px; }
+.right { right: 1%; border-radius: 1px 5px 5px 1px; }
+.page::after, .front::after, .back::after { content: ""; position: absolute; inset: 7%; border: 1px solid #85582738; outline: 1px solid #85582724; outline-offset: 5px; pointer-events: none; }
+.spine { position: absolute; inset: 1% auto 1% 47%; width: 6%; background: linear-gradient(90deg, transparent, #4b2e1370 45%, #2c190b80 50%, #f2d8a54a 59%, transparent); pointer-events: none; }
+.ornament { position: absolute; top: 12%; left: 18%; width: 64%; height: 12%; background: var(--folio-divider-image) center / contain no-repeat; mix-blend-mode: multiply; opacity: .6; }
+.monogram { position: absolute; inset: 28% 0 auto; text-align: center; font: 400 clamp(34px, 5vw, 76px)/1.4 "Gildra Kurale", Georgia, serif; color: #70451f99; }
+.lines { position: absolute; inset: 57% 18% 16%; background: repeating-linear-gradient(transparent 0 16px, #8053282b 16px 17px); }
+.leaf { position: absolute; top: 2%; left: 50%; width: 49%; height: 96%; transform-origin: left center; transform-style: preserve-3d; transform: rotateY(-74deg); }
+.front, .back { inset: 0; backface-visibility: hidden; border-radius: 1px 5px 5px 1px; box-shadow: 5px 5px 16px #42260944; }
+.front { transform: translateZ(1px); }
+.back { transform: rotateY(180deg); background-image: linear-gradient(270deg, #756b5450, #eee0bf70 20%, #eee0bf70), var(--book-paper-image); }
+.front::before, .back::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #35200a44, transparent 16%, #fff3c344 80%, #3f260a26); }
+.caption { position: absolute; bottom: max(6vh, 28px); left: 8%; right: 8%; text-align: center; color: #e8dfce; }
+.caption > span { color: #bca27a; font-size: 10px; letter-spacing: .3em; }
+.caption h2 { margin: 7px 0; font: 400 clamp(24px, 3vw, 38px)/1.2 "Gildra Kurale", Georgia, serif; }
+.caption p { margin: 0; color: #baaa8d; font: 13px/1.5 Georgia, serif; }
+.scene[data-book-route-phase="waiting"] .leaf { animation: liftLeaf var(--book-lift-duration) cubic-bezier(.2,.7,.25,1) both; }
+.scene[data-book-route-phase="playing"] .leaf { animation: turnLeaf var(--book-turn-duration) cubic-bezier(.25,.55,.2,1) both; }
+.scene[data-book-route-phase="playing"] .stage { animation: revealPage var(--book-turn-duration) ease both; }
+.scene[data-book-route-phase="playing"] :is(.veil, .caption) { animation: fadeScene var(--book-turn-duration) ease both; }
+@keyframes liftLeaf { from { transform: rotateY(-2deg); } to { transform: rotateY(-74deg); } }
+@keyframes turnLeaf { from { transform: rotateY(-74deg); } 75%, to { transform: rotateY(-178deg); } }
+@keyframes revealPage { 0%, 55% { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) scale(1.12); } }
+@keyframes fadeScene { 0%, 58% { opacity: 1; } to { opacity: 0; } }
+@keyframes failOpen { to { visibility: hidden; pointer-events: none; } }
+@media (max-width: 600px) { .stage { width: 92%; top: 44%; } .caption { bottom: 14%; } .lines { background-size: auto; inset-inline: 14%; } }
+@media (prefers-reduced-motion: reduce) { .scene { display: none; } .scene *, .scene *::before, .scene *::after { animation: none !important; } }

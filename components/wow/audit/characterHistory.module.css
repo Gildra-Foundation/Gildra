@@ -1,0 +1,518 @@
+.history{grid-column:1/-1;border:1px solid rgba(228,116,52,.38);background:linear-gradient(145deg,rgba(19,10,7,.98),rgba(7,10,12,.98));color:#f7ede5;box-shadow:0 24px 60px rgba(0,0,0,.32)}
+.history>header{display:flex;align-items:center;gap:14px;padding:20px 22px;border-bottom:1px solid rgba(228,116,52,.22)}
+.history>header>div{flex:1}.history h2{margin:2px 0 4px;font:700 24px/1.1 Georgia,serif}.history header small{color:#ef7c42;font-weight:800;letter-spacing:.14em}.history header p{margin:0;color:#a99b93;font-size:13px}.icon{display:grid;place-items:center;width:46px;height:46px;border:1px solid #a94422;background:#2a0d08;color:#ff8246}.history header button{width:38px;height:38px;border:1px solid #62301f;background:#180c09;color:#e7b497;cursor:pointer}.history ol{list-style:none;margin:0;padding:0}.history li{display:grid;grid-template-columns:82px minmax(210px,1.4fr) minmax(210px,1fr) 170px 150px;gap:16px;align-items:center;padding:15px 20px;border-bottom:1px solid rgba(255,255,255,.075)}.history li[data-stale]{opacity:.72;background:rgba(255,176,81,.035)}
+.kind{padding:7px 8px;border:1px solid #71341f;background:#210d08;color:#ff9561;text-align:center;font-size:11px;font-weight:800;text-transform:uppercase}.summary{display:grid;grid-template-columns:1fr auto;gap:3px 12px}.summary b{grid-column:1/-1}.summary strong{font-size:18px}.summary small{color:#64d496;font-weight:800}.provenance{display:flex;flex-wrap:wrap;gap:4px 10px;color:#9f928b;font-size:11px}.provenance span:first-child{width:100%;color:#d6c3b8}.provenance svg{width:12px;height:12px;margin-right:4px;vertical-align:-2px}.provenance time{width:100%}.freshness{display:grid;grid-template-columns:22px 1fr;align-items:center}.freshness svg{grid-row:1/3;width:18px;color:#63cf91}.history li[data-stale] .freshness svg{color:#f1a648}.freshness b{font-size:13px}.freshness small{font-size:10px;color:#91847c}.actions{display:flex;flex-direction:column;align-items:stretch;gap:5px}.actions button{display:flex;justify-content:center;align-items:center;gap:6px;padding:9px;border:1px solid #a94b27;background:linear-gradient(#dd612f,#9e3017);color:white;font-weight:800;cursor:pointer}.actions button:disabled{opacity:.55}.actions svg{width:14px;height:14px}.actions span{font-size:10px;text-align:center;color:#8d8078}.notice{display:flex;gap:8px;align-items:center;margin:12px 20px 0;padding:10px 12px;border:1px solid rgba(74,205,139,.4);background:rgba(42,129,88,.12);color:#a8e6c3;font-size:12px}.notice svg{width:15px}.empty{display:flex;align-items:center;justify-content:center;gap:10px;min-height:112px;padding:20px;color:#aa9d96}.empty b,.empty span{display:block}.empty button{color:#ff8751;border:0;background:none;text-decoration:underline;cursor:pointer}.empty svg{width:20px}.spin{animation:spin .9s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:1050px){.history li{grid-template-columns:74px 1fr 1fr}.freshness,.actions{grid-column:auto}.actions{grid-column:3}.freshness{grid-column:2}}
+@media(max-width:680px){.history>header{align-items:flex-start}.history li{grid-template-columns:1fr;gap:10px}.kind{width:max-content}.actions{grid-column:auto}.freshness{grid-column:auto}.history header p{display:none}}
+
+
+/* Character Codex v2 — profile chronicle. */
+.history { position:relative; overflow:hidden; border:1px solid var(--wow-line,rgba(188,151,86,.22)); border-top-color:var(--wow-line-strong,rgba(211,173,101,.52)); border-radius:var(--wow-radius,18px); background:var(--wow-surface,rgba(10,12,15,.965)); color:var(--wow-text,#c8c0b5); box-shadow:inset 0 1px rgba(255,235,197,.04),var(--wow-shadow,0 24px 80px rgba(0,0,0,.42)); }
+.history::before { content:""; position:absolute; inset:0 14% auto; height:1px; background:linear-gradient(90deg,transparent,var(--wow-gold,#c9a15d),transparent); }
+.history>header { min-height:126px; padding:24px 26px; border-bottom-color:var(--wow-line,rgba(188,151,86,.22)); background:linear-gradient(105deg,rgba(var(--spec-rgb),.06),transparent 42%),rgba(15,17,20,.86); }
+.history h2,.summary b,.summary strong,.freshness b { color:var(--wow-ivory,#f0e8dc); font-family:var(--font-display),Georgia,serif; font-weight:500; }
+.history h2 { font-size:clamp(25px,3vw,36px); }
+.history header small,.kind { color:var(--wow-gold,#c9a15d); }
+.history header p,.provenance,.freshness small { color:var(--wow-muted,#8e8981); }
+.icon { border-color:var(--wow-line-strong,rgba(211,173,101,.52)); border-radius:14px; background:rgba(201,161,93,.055); color:var(--wow-gold-bright,#efd39a); }
+.history header button { border-color:var(--wow-line,rgba(188,151,86,.22)); border-radius:9px; background:#0d1013; color:var(--wow-gold-bright,#efd39a); }
+.history li { padding:18px 22px; border-bottom-color:rgba(188,151,86,.13); background:rgba(8,10,12,.48); }
+.history li:hover { background:rgba(18,20,23,.68); }
+.kind { border-color:var(--wow-line,rgba(188,151,86,.22)); border-radius:7px; background:rgba(201,161,93,.055); }
+.actions button { border-color:rgba(var(--spec-rgb),.55); border-radius:8px; background:rgba(var(--spec-rgb),.1); color:var(--spec-hot); }
+.notice { border-radius:9px; }
+@media(max-width:680px){.history{border-radius:14px}.history>header{padding:20px 16px}}
+
+/* Battle.net character archive: a compact Warcraft battle journal, not glass UI. */
+:global([data-profile-source="battle-net"]) .history {
+  --ledger-ink: #f2e5cb;
+  --ledger-copy: #d4c6ad;
+  --ledger-muted: #ac9d86;
+  --ledger-gold: #d9b46f;
+  border: 1px solid #6d532f;
+  border-top-color: #b98b45;
+  border-radius: 4px;
+  color: var(--ledger-copy);
+  background:
+    linear-gradient(145deg, rgba(22, 18, 13, .92), rgba(8, 8, 7, .98) 72%),
+    url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 600px repeat;
+  box-shadow: inset 0 0 0 1px #050504, inset 0 1px rgba(255, 224, 158, .1), 0 18px 40px rgba(0, 0, 0, .42);
+}
+:global([data-profile-source="battle-net"]) .history::before {
+  inset: 0 8% auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #8e642d 15%, #d7ab5d 50%, #8e642d 85%, transparent);
+}
+:global([data-profile-source="battle-net"]) .history > header {
+  min-height: 110px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #6a4d29;
+  background:
+    linear-gradient(90deg, rgba(40, 30, 18, .95), rgba(13, 12, 10, .95) 65%),
+    url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 520px repeat;
+}
+:global([data-profile-source="battle-net"]) .history .icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border: 0;
+  border-radius: 0;
+  color: #e6bf79;
+  background: url("/assets/wow/ui-textures/character/gold-ring.png") center / 58px 58px no-repeat;
+}
+:global([data-profile-source="battle-net"]) .history > header > div { min-width: 0; }
+:global([data-profile-source="battle-net"]) .history h2,
+:global([data-profile-source="battle-net"]) .summary b,
+:global([data-profile-source="battle-net"]) .summary strong,
+:global([data-profile-source="battle-net"]) .freshness b {
+  color: var(--ledger-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  text-shadow: 0 2px 2px #000;
+}
+:global([data-profile-source="battle-net"]) .history h2 { font-size: clamp(24px, 2.7vw, 31px); }
+:global([data-profile-source="battle-net"]) .history header small {
+  color: var(--ledger-gold);
+  letter-spacing: .13em;
+}
+:global([data-profile-source="battle-net"]) .history header p,
+:global([data-profile-source="battle-net"]) .provenance,
+:global([data-profile-source="battle-net"]) .freshness small,
+:global([data-profile-source="battle-net"]) .actions > span { color: var(--ledger-muted); }
+:global([data-profile-source="battle-net"]) .history header button {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #755932;
+  border-radius: 2px;
+  color: #e5ca96;
+  background: linear-gradient(180deg, #19150f, #0b0a08);
+  box-shadow: inset 0 0 0 1px #050504;
+}
+:global([data-profile-source="battle-net"]) .history header button:hover,
+:global([data-profile-source="battle-net"]) .history header button:focus-visible { border-color: #d2a65a; color: #fff1cf; }
+:global([data-profile-source="battle-net"]) .history li {
+  padding: 18px 22px;
+  border-bottom: 1px solid #493822;
+  color: var(--ledger-copy);
+  background:
+    linear-gradient(90deg, rgba(31, 24, 16, .94), rgba(11, 10, 8, .97)),
+    url("/assets/wow/ui-textures/character/spellbook-paper-optimized.webp") center / 420px repeat;
+}
+:global([data-profile-source="battle-net"]) .history li:hover {
+  background:
+    linear-gradient(90deg, rgba(52, 38, 20, .92), rgba(20, 16, 11, .96)),
+    url("/assets/wow/ui-textures/character/spellbook-paper-optimized.webp") center / 420px repeat;
+}
+:global([data-profile-source="battle-net"]) .history li[data-stale] {
+  opacity: 1;
+  box-shadow: inset 3px 0 #bd8742;
+  background:
+    linear-gradient(90deg, rgba(58, 39, 19, .9), rgba(14, 11, 8, .97)),
+    url("/assets/wow/ui-textures/character/spellbook-paper-optimized.webp") center / 420px repeat;
+}
+:global([data-profile-source="battle-net"]) .kind {
+  border: 1px solid #805b2b;
+  border-radius: 2px;
+  color: #e6bd75;
+  background: #2b2114;
+  box-shadow: inset 0 0 0 1px #090705;
+}
+:global([data-profile-source="battle-net"]) .summary strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+:global([data-profile-source="battle-net"]) .summary small { color: #96d1a2; }
+:global([data-profile-source="battle-net"]) .provenance span:first-child { color: #d5c1a1; }
+:global([data-profile-source="battle-net"]) .freshness svg { color: #8bcb98; }
+:global([data-profile-source="battle-net"]) .history li[data-stale] .freshness svg,
+:global([data-profile-source="battle-net"]) .history li[data-stale] .freshness b { color: #edbd75; }
+:global([data-profile-source="battle-net"]) .actions button {
+  min-height: 40px;
+  border: 1px solid #af6637;
+  border-radius: 3px;
+  color: #fff0d3;
+  background: linear-gradient(180deg, #963c22, #4c1d12);
+  box-shadow: inset 0 0 0 1px #260d08, inset 0 1px rgba(255, 221, 174, .18), 0 4px 10px rgba(0, 0, 0, .3);
+  text-shadow: 0 1px 1px #160704;
+}
+:global([data-profile-source="battle-net"]) .actions button:hover:not(:disabled) {
+  border-color: #e0a367;
+  background: linear-gradient(180deg, #b34b2a, #642518);
+}
+:global([data-profile-source="battle-net"]) .actions button:focus-visible,
+:global([data-profile-source="battle-net"]) .empty button:focus-visible { outline: 2px solid #f1cb82; outline-offset: 2px; }
+:global([data-profile-source="battle-net"]) .actions button:disabled { opacity: .55; cursor: wait; }
+:global([data-profile-source="battle-net"]) .notice {
+  border-radius: 2px;
+  color: #bde6bd;
+  background: linear-gradient(90deg, rgba(18, 34, 22, .85), rgba(11, 13, 10, .92));
+}
+:global([data-profile-source="battle-net"]) .empty { color: #c5b69b; }
+:global([data-profile-source="battle-net"]) .empty b { color: var(--ledger-ink); }
+:global([data-profile-source="battle-net"]) .empty button { color: #efc77e; }
+
+@media (max-width: 680px) {
+  :global([data-profile-source="battle-net"]) .history { border-radius: 3px; }
+  :global([data-profile-source="battle-net"]) .history > header { min-height: 0; padding: 18px 16px; flex-wrap: wrap; gap: 10px; }
+  :global([data-profile-source="battle-net"]) .history .icon { width: 42px; height: 42px; flex-basis: 42px; background-size: 52px 52px; }
+  :global([data-profile-source="battle-net"]) .history li { padding: 16px; }
+  :global([data-profile-source="battle-net"]) .empty { flex-wrap: wrap; }
+}
+
+/* Connected character: saved results as legible pages in the battle journal. */
+:global([data-profile-source="battle-net"]) .history { font-family: var(--wow-ui, Arial, sans-serif); font-size: 13px; line-height: 1.45; }
+:global([data-profile-source="battle-net"]) .history > header {
+  min-height: 0;
+  padding: 20px 28px;
+  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  box-shadow: inset 0 3px #f2d9a06b, inset 0 -3px #68471e77;
+}
+:global([data-profile-source="battle-net"]) .history h2 { color: var(--wow-ink, #3b2817); font: 700 clamp(23px, 2.5vw, 27px)/1.12 var(--wow-title, Georgia, serif); text-shadow: 0 1px #f2dcae88; }
+:global([data-profile-source="battle-net"]) .history header small { color: var(--wow-ink-muted, #684a2b); font-size: 11px; text-shadow: none; }
+:global([data-profile-source="battle-net"]) .history header p { color: #54391e; font-size: 13px; }
+:global([data-profile-source="battle-net"]) .history header button {
+  border: 0;
+  border-radius: 0;
+  color: #f0d39b;
+  background: #21180e url("/assets/wow/ui-textures/character/dark-gold-button-up.png") center / 100% 133.33% no-repeat;
+  box-shadow: 0 2px 5px #0009;
+}
+:global([data-profile-source="battle-net"]) .history header button:active { background-image: url("/assets/wow/ui-textures/character/dark-gold-button-down.png"); }
+:global([data-profile-source="battle-net"]) .history li,
+:global([data-profile-source="battle-net"]) .history li:hover,
+:global([data-profile-source="battle-net"]) .history li[data-stale] {
+  color: var(--wow-ink, #3b2817);
+  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+}
+:global([data-profile-source="battle-net"]) .history li:hover { filter: brightness(1.06); }
+:global([data-profile-source="battle-net"]) .history li[data-stale] { box-shadow: inset 4px 0 #955b27; }
+:global([data-profile-source="battle-net"]) .kind { color: #efcf93; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .summary b,
+:global([data-profile-source="battle-net"]) .summary strong,
+:global([data-profile-source="battle-net"]) .freshness b { color: #352312; text-shadow: 0 1px #f2dcae88; }
+:global([data-profile-source="battle-net"]) .summary b { font: 700 14px/1.25 var(--wow-ui, Arial, sans-serif); }
+:global([data-profile-source="battle-net"]) .summary strong { font: 700 20px/1.2 var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .summary small { color: #5d4024; font-size: 12px; }
+:global([data-profile-source="battle-net"]) .provenance,
+:global([data-profile-source="battle-net"]) .provenance span:first-child,
+:global([data-profile-source="battle-net"]) .freshness small,
+:global([data-profile-source="battle-net"]) .actions > span { color: #634626; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .freshness b { font-size: 15px; }
+:global([data-profile-source="battle-net"]) .history li[data-stale] .freshness b { color: #7b3e16; }
+:global([data-profile-source="battle-net"]) .actions button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 0;
+  color: #f5d783;
+  background: #4f160f url("/assets/wow/ui-textures/character/dialog-button-up.png") center top / 100% 139.13% no-repeat;
+  box-shadow: 0 2px 5px #0009;
+  font-size: 12px;
+}
+:global([data-profile-source="battle-net"]) .actions button:hover:not(:disabled) { filter: brightness(1.15); background: #4f160f url("/assets/wow/ui-textures/character/dialog-button-up.png") center top / 100% 139.13% no-repeat; }
+:global([data-profile-source="battle-net"]) .actions button:active:not(:disabled) { background-image: url("/assets/wow/ui-textures/character/dialog-button-down.png"); }
+:global([data-profile-source="battle-net"]) .technical { color: #66482a; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .technical summary { width: fit-content; cursor: pointer; color: #583414; text-decoration: underline; text-underline-offset: 2px; }
+:global([data-profile-source="battle-net"]) .technical summary:hover { color: #261507; }
+:global([data-profile-source="battle-net"]) .technical span { display: block; margin-top: 3px; }
+:global([data-profile-source="battle-net"]) .empty {
+  min-height: 112px;
+  margin: 16px 24px;
+  padding: 18px 24px;
+  border: 2px solid #8c6538;
+  border-radius: 2px;
+  color: #583e23;
+  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  font-size: 13px;
+}
+:global([data-profile-source="battle-net"]) .empty b { color: #3b2817; }
+:global([data-profile-source="battle-net"]) .empty button { color: #684015; font-weight: 700; }
+@media (max-width: 680px) {
+  :global([data-profile-source="battle-net"]) .history > header { padding: 18px 20px; }
+  :global([data-profile-source="battle-net"]) .history li { padding: 16px 20px; }
+  :global([data-profile-source="battle-net"]) .empty { margin-inline: 20px; }
+}
+
+/* The saved-run archive continues the same parchment sheet. */
+:global([data-profile-source="battle-net"]) .history,
+:global([data-profile-source="battle-net"]) .history > header,
+:global([data-profile-source="battle-net"]) .history ol,
+:global([data-profile-source="battle-net"]) .history li,
+:global([data-profile-source="battle-net"]) .history li:hover,
+:global([data-profile-source="battle-net"]) .history li[data-stale],
+:global([data-profile-source="battle-net"]) .empty { background: var(--wow-paper); }
+:global([data-profile-source="battle-net"]) .history,
+:global([data-profile-source="battle-net"]) .history li { color: var(--wow-ink, #3b2817); }
+:global([data-profile-source="battle-net"]) .history li { border-bottom-color: #947042; }
+:global([data-profile-source="battle-net"]) .history li:hover { filter: brightness(1.04); }
+:global([data-profile-source="battle-net"]) .history header button {
+  border: 1px solid #9b713a;
+  border-radius: 2px;
+  color: #f4deb0;
+  background: linear-gradient(180deg, #4b371d, #1c160e);
+  box-shadow: inset 0 1px #dfb87666, 0 2px 4px #0006;
+}
+:global([data-profile-source="battle-net"]) .history header button:hover:not(:disabled) { background: linear-gradient(180deg, #634924, #2a1e11); }
+:global([data-profile-source="battle-net"]) .actions button {
+  border: 1px solid #a85331;
+  border-radius: 2px;
+  color: #ffe3ad;
+  background: linear-gradient(180deg, #9e4126, #4b1b10);
+  box-shadow: inset 0 1px #f0b17d9c, 0 2px 4px #0006;
+  text-shadow: 0 1px #2a0b05;
+}
+:global([data-profile-source="battle-net"]) .actions button:hover:not(:disabled) { background: linear-gradient(180deg, #b65532, #642317); }
+:global([data-profile-source="battle-net"]) .actions button:active:not(:disabled) { background: linear-gradient(180deg, #642317, #41160e); }
+
+/* The chronicle is written directly on the open book's paper. */
+:global([data-character-book="open"]) .history {
+  padding: 24px 28px;
+  border: 0;
+  border-radius: 0;
+  color: var(--folio-ink, #382415);
+  background: transparent;
+  box-shadow: none;
+}
+:global([data-character-book="open"]) .history::before { display: none; }
+:global([data-character-book="open"]) .history > :global([class*="warcraftFrame"][aria-hidden="true"]) { display: none; }
+:global([data-character-book="open"]) .history > header {
+  align-items: start;
+  min-height: 0;
+  padding: 0 0 20px;
+  border: 0;
+  border-bottom: 1px solid var(--folio-line, #76532e66);
+  background: transparent;
+  box-shadow: none;
+}
+:global([data-character-book="open"]) .history h2 {
+  color: var(--folio-ink, #382415);
+  font: 700 clamp(21px, 2vw, 25px)/1.2 var(--folio-title, Georgia, serif);
+  letter-spacing: .015em;
+  text-shadow: 0 1px #ffedc766;
+}
+:global([data-character-book="open"]) .history header :is(small, p) { color: var(--folio-muted, #684b2e); }
+:global([data-character-book="open"]) .history header p { display: block; line-height: 1.55; }
+.heading { display: flex; align-items: start; gap: 14px; min-width: 0; }
+.heading > div { min-width: 0; }
+:global([data-character-book="open"]) .history > header > .archiveTools {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+}
+.archiveCount { display: grid; justify-items: start; gap: 2px; }
+.archiveEngraving { width: 72px; height: 72px; flex-basis: 72px; opacity: .72; }
+:global([data-character-book="open"]) .archiveCount strong { color: var(--folio-ink); font: 400 32px/1 var(--folio-title); }
+:global([data-character-book="open"]) .history .archiveCount small { font-size: 10px; letter-spacing: .06em; font-weight: 400; }
+.archiveTools > button { align-self: flex-start; }
+:global([data-character-book="open"]) .history .icon {
+  border: 1px solid var(--folio-line, #76532e66);
+  border-radius: 50%;
+  color: #774623;
+  background: #76532e0b;
+}
+:global([data-character-book="open"]) .history ol {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: var(--book-gutter, 72px);
+  align-items: start;
+  background: transparent;
+}
+:global([data-character-book="open"]) .history li,
+:global([data-character-book="open"]) .history li:hover,
+:global([data-character-book="open"]) .history li[data-stale] {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 24px 18px;
+  border-bottom: 1px solid var(--folio-line, #76532e66);
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+}
+:global([data-character-book="open"]) .history li:hover { background: #76532e08; }
+:global([data-character-book="open"]) .history li[data-stale] { border-left: 0; box-shadow: inset 2px 0 #92542588; }
+:global([data-character-book="open"]) .kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: start;
+  padding: 5px 0;
+  border: 0;
+  border-block: 1px solid var(--folio-line, #76532e66);
+  border-radius: 0;
+  color: #774623;
+  background: transparent;
+  box-shadow: none;
+  letter-spacing: .08em;
+}
+.kind > svg { width: 14px; height: 14px; flex: none; }
+:global([data-character-book="open"]) .summary strong,
+:global([data-character-book="open"]) .freshness b { font-family: var(--folio-title, Georgia, serif); }
+:global([data-character-book="open"]) .summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:global([data-character-book="open"]) .summary b { width: 100%; font-size: 16px; line-height: 1.4; }
+:global([data-character-book="open"]) .summary strong { font-size: 26px; line-height: 1.25; }
+:global([data-character-book="open"]) .summary small { white-space: nowrap; }
+:global([data-character-book="open"]) .provenance { min-width: 0; gap: 6px 12px; overflow-wrap: anywhere; }
+:global([data-character-book="open"]) .provenance > span:first-child,
+:global([data-character-book="open"]) .provenance > time { width: auto; }
+:global([data-character-book="open"]) .technical { width: 100%; }
+.recordFooter { display: flex; flex-wrap: wrap; align-items: start; gap: 16px; }
+:global([data-character-book="open"]) .recordFooter {
+  padding-top: 14px;
+  border-top: 1px solid #76502d33;
+}
+:global([data-character-book="open"]) .freshness { min-width: 0; flex: 1 1 160px; gap: 2px 0; overflow-wrap: anywhere; }
+:global([data-character-book="open"]) .freshness svg { color: #4c6b32; }
+:global([data-character-book="open"]) .history li[data-stale] .freshness svg { color: #875024; }
+:global([data-character-book="open"]) .actions { min-width: 0; width: min(100%, 160px); }
+:global([data-character-book="open"]) .actions > span { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+:global([data-character-book="open"]) .empty {
+  margin: 0;
+  min-height: 144px;
+  padding: 24px 0;
+  border: 0;
+  color: var(--folio-muted, #684b2e);
+  background: transparent;
+}
+:global([data-character-book="open"]) .empty b { color: var(--folio-ink, #382415); font: 700 18px var(--folio-title, Georgia, serif); }
+:global([data-character-book="open"]) .empty:has(> b) {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-content: stretch;
+  gap: 4px 10px;
+}
+:global([data-character-book="open"]) .empty:has(> b) > svg { grid-column: 1; grid-row: 1 / 3; align-self: start; }
+:global([data-character-book="open"]) .empty:has(> b) > b { grid-column: 2; grid-row: 1; }
+:global([data-character-book="open"]) .empty:has(> b) > span { grid-column: 2; grid-row: 2; min-width: 0; overflow-wrap: anywhere; }
+:global([data-character-book="open"]) .notice {
+  margin-inline: 0;
+  border: 0;
+  border-left: 3px solid #4c6b32;
+  border-radius: 0;
+  color: #3e5d2c;
+  background: #4c6b3209;
+}
+:global([data-character-book="open"]) .history :is(button, summary):focus-visible { outline: 2px solid #75391c; outline-offset: 3px; }
+@container auditPage (min-width: 821px) {
+  :global([data-character-book="open"]) .history > header {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--book-gutter, 72px);
+    align-items: start;
+  }
+  :global([data-character-book="open"]) .history > header > button { justify-self: end; }
+
+  :global([data-character-book="open"]) .notice,
+  :global([data-character-book="open"]) .empty {
+    box-sizing: border-box;
+    width: calc((100% - var(--book-gutter, 88px)) / 2);
+    max-width: 100%;
+  }
+  :global([data-character-book="open"]) .empty { justify-content: flex-start; text-align: left; }
+
+  /* A record belongs to one leaf; neither its content nor a painted surface
+     may bridge the physical book's fold. */
+  :global([data-character-book="open"]) .history ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container auditPage (max-width: 700px) {
+  :global([data-character-book="open"]) .history { padding: 20px 12px; }
+  :global([data-character-book="open"]) .history > header { padding: 0 0 16px; }
+  :global([data-character-book="open"]) .history li { padding: 20px 12px; }
+}
+@container auditPage (max-width: 820px) {
+  :global([data-character-book="open"]) .history .archiveTools { gap: 0; }
+  .archiveEngraving { width: 48px; height: 48px; flex-basis: 48px; }
+  .archiveCount { display: none; }
+}
+@container auditPage (max-width: 420px) {
+  :global([data-character-book="open"]) .heading { display: block; }
+  :global([data-character-book="open"]) .heading > .icon { display: none; }
+  :global([data-character-book="open"]) .history h2 { font-size: 21px; }
+  :global([data-character-book="open"]) .history header p { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+}
+
+/* Saved runs stay in the character folio instead of reverting to a dark
+   dashboard card. Every record uses the same vellum and ink as the armory. */
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history {
+  overflow: visible;
+  border: 0;
+  border-block: 3px double var(--folio-line);
+  border-radius: 0;
+  color: var(--folio-ink);
+  background: transparent;
+  box-shadow: none;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history::before { display: none; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history > header {
+  min-height: 0;
+  padding: 22px 8px;
+  border-color: var(--folio-line);
+  background: var(--folio-panel-paper);
+  box-shadow: inset 0 1px #fff5dc75;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history .icon {
+  color: var(--folio-rubric);
+  background: var(--folio-medallion) center / contain no-repeat;
+  filter: sepia(.3) saturate(.65);
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history :is(h2, b, strong) { color: var(--folio-ink); text-shadow: none; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history :is(p, small, .provenance, .freshness small, .actions > span) { color: var(--folio-muted); }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history > header button {
+  border-color: var(--folio-line);
+  border-radius: 2px;
+  color: var(--folio-ink);
+  background: var(--folio-panel-paper);
+  box-shadow: inset 0 1px #fff4d77a;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history li,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history li:hover,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history li[data-stale] {
+  border-color: var(--folio-line);
+  border-radius: 2px;
+  color: var(--folio-ink);
+  background: var(--folio-panel-paper);
+  box-shadow: inset 0 1px #fff4d77a, 0 2px 5px #40372d14;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history li:hover { filter: brightness(1.025); }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history li[data-stale] { box-shadow: inset 3px 0 #9a6c39, 0 2px 5px #40372d14; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .kind {
+  border-color: var(--folio-line);
+  border-radius: 2px;
+  color: var(--folio-rubric);
+  background: #f4e6c5a8;
+  box-shadow: inset 0 1px #fff6dd;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .summary :is(b, strong),
+:global([data-profile-source="battle-net"][data-character-book="open"]) .freshness b { color: var(--folio-ink); }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .summary small,
+:global([data-profile-source="battle-net"][data-character-book="open"]) .freshness svg { color: #526c48; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history li[data-stale] .freshness :is(svg, b) { color: #8a5b2d; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .actions button {
+  border: 1px solid #77503a;
+  border-radius: 2px;
+  color: #fff0cf;
+  background: var(--folio-control-image) center / 100% 100% no-repeat, linear-gradient(#704035, #4b2923);
+  box-shadow: inset 0 1px #e7cda267, 0 2px 4px #44342120;
+  text-shadow: none;
+}
+:global([data-profile-source="battle-net"][data-character-book="open"]) .notice { border-color: #71815b; border-radius: 2px; color: #455d3d; background: #dce4ce9c; }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history .empty { color: var(--folio-muted); }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history .empty b { color: var(--folio-ink); }
+:global([data-profile-source="battle-net"][data-character-book="open"]) .history :is(button, summary):focus-visible { outline-color: #76502d; }

@@ -1,0 +1,2 @@
+/* Character folios own their navigation and always use the full viewport. */
+.workspace-content { min-width: 0; padding: 0; }

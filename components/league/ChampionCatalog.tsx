@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { LeagueChampion } from "@/lib/games/league-of-legends/api";
 import { GAMES, gameHref } from "@/lib/games/registry";
@@ -36,7 +37,7 @@ export function ChampionCatalog({ champions, lang }: { champions: LeagueChampion
     {filtered.length > 0 ? <div className={styles.championGrid}>
       {filtered.map((champion) => <Link className={styles.championCard} key={champion.id} href={gameHref(game, lang, `/champions/${champion.slug}`)}>
         <div className={styles.cardImage}>
-          {champion.assets.tile || champion.assets.splash ? <img src={champion.assets.tile ?? champion.assets.splash ?? ""} alt="" loading="lazy" /> : <span>{champion.name.slice(0, 1)}</span>}
+          {champion.assets.tile || champion.assets.splash ? <Image src={champion.assets.tile ?? champion.assets.splash ?? ""} alt="" fill sizes="(max-width: 760px) 44vw, (max-width: 1180px) 22vw, 16vw" quality={75} /> : <span>{champion.name.slice(0, 1)}</span>}
           <em>{champion.id}</em>
         </div>
         <div className={styles.cardCopy}><strong>{champion.name}</strong><small>{champion.title}</small><div>{champion.tags.map((tag) => <span key={tag}>{tag}</span>)}</div></div>

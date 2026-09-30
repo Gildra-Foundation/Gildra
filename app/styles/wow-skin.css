@@ -1,0 +1,402 @@
+/* Shared World of Warcraft skin. RouteTransition sets data-route-theme on html. */
+html[data-route-theme="wow"] {
+  --bg: #080706;
+  --panel: #100d08;
+  --panel-2: #171109;
+  --raise: #21170c;
+  --line: #4a3217;
+  --line-soft: #2b2114;
+  --ink: #eee2cc;
+  --ink-2: #b6a58b;
+  --ink-3: #817563;
+  --gold: #c98b31;
+  --gold-2: #f0c873;
+  --gold-dim: #886126;
+  --blue: #8c622a;
+  --blue-2: #d6a44f;
+  --popover: #0d0a06;
+}
+
+@media (max-width: 720px) {
+  html[data-route-theme="wow"] body {
+    background-size: auto, auto, min(780px, 100vw) auto;
+  }
+}
+
+/* One world, many tools: platform/search/compare/patch screens all inherit the
+   same forged Warcraft material instead of switching back to a blue SaaS UI. */
+html[data-route-theme="wow"] [data-platform-home] {
+  --ph-bg: #080706;
+  --ph-panel: rgba(16, 12, 7, .92);
+  --ph-line: rgba(175, 116, 42, .48);
+  --ph-line-soft: rgba(128, 87, 37, .3);
+  --ph-gold: #d99031;
+  --ph-gold-soft: #efbd62;
+  --ph-ivory: #eee0c8;
+  --ph-muted: #a49379;
+  background: radial-gradient(70% 70% at 69% 7%, rgba(151, 70, 16, .15), transparent 65%), linear-gradient(rgba(7, 6, 4, .94), rgba(7, 6, 4, .985)) !important;
+}
+html[data-route-theme="wow"] [data-platform-home] > header {
+  border-bottom-color: rgba(183, 121, 42, .42) !important;
+  background: linear-gradient(90deg, rgba(190, 119, 27, .055), transparent 32%), rgba(7, 6, 4, .97) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .34), inset 0 -1px rgba(245, 200, 111, .035);
+}
+html[data-route-theme="wow"] [data-platform-home] > header > a:first-child { color: #e8b252 !important; text-shadow: 0 2px 10px #000, 0 0 22px rgba(217, 144, 49, .12); }
+html[data-route-theme="wow"] [data-platform-home] [class*="scopeLabel"],
+html[data-route-theme="wow"] [data-platform-home] [class*="search"],
+html[data-route-theme="wow"] [data-platform-home] [class*="profileButton"] {
+  border-color: rgba(176, 116, 40, .46) !important;
+  border-radius: 2px !important;
+  background: linear-gradient(180deg, rgba(25, 18, 10, .94), rgba(8, 6, 4, .96)) !important;
+  box-shadow: inset 0 1px rgba(255, 225, 160, .035);
+}
+html[data-route-theme="wow"] [data-platform-home] [class*="panel"],
+html[data-route-theme="wow"] [data-platform-home] [class*="filters"],
+html[data-route-theme="wow"] [data-platform-home] [class*="context"] > section,
+html[data-route-theme="wow"] [data-platform-home] [class*="timeline"],
+html[data-route-theme="wow"] [data-platform-home] [class*="stat"],
+html[data-route-theme="wow"] [data-platform-home] [class*="comparison"],
+html[data-route-theme="wow"] [data-platform-home] [class*="controls"] {
+  border-color: rgba(143, 95, 39, .42) !important;
+  border-radius: 2px !important;
+  background: linear-gradient(145deg, rgba(24, 17, 9, .94), rgba(8, 6, 4, .975)) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, .24), inset 0 1px rgba(255, 226, 164, .035) !important;
+}
+html[data-route-theme="wow"] [data-platform-home] [class*="resultItem"],
+html[data-route-theme="wow"] [data-platform-home] [class*="catalogItem"],
+html[data-route-theme="wow"] [data-platform-home] [class*="gameCard"],
+html[data-route-theme="wow"] [data-platform-home] [class*="compareCard"],
+html[data-route-theme="wow"] [data-platform-home] [class*="continueCard"] {
+  border-color: rgba(118, 80, 35, .38) !important;
+  border-radius: 2px !important;
+  background: linear-gradient(100deg, rgba(16, 12, 7, .95), rgba(8, 7, 5, .94)) !important;
+}
+html[data-route-theme="wow"] [data-platform-home] h1,
+html[data-route-theme="wow"] [data-platform-home] h2,
+html[data-route-theme="wow"] [data-platform-home] h3 { font-family: Georgia, "Times New Roman", serif !important; font-weight: 400 !important; text-shadow: 0 2px 9px rgba(0, 0, 0, .78); }
+html[data-route-theme="wow"] [data-platform-home] button,
+html[data-route-theme="wow"] [data-platform-home] [role="button"] { border-radius: 2px !important; }
+html[data-route-theme="wow"] [data-platform-home] [class*="mistB"] { background: radial-gradient(circle, rgba(138, 63, 17, .52), transparent 66%) !important; }
+
+/* Warcraft archive material for older PageShell routes. */
+html[data-route-theme="wow"] .library-hero,
+html[data-route-theme="wow"] .library-datasets,
+html[data-route-theme="wow"] .library-products { border-color: #543719; background: linear-gradient(145deg, rgba(24, 17, 9, .96), rgba(9, 7, 4, .985)); box-shadow: 0 20px 48px rgba(0, 0, 0, .3), inset 0 1px rgba(255, 225, 160, .04); }
+html[data-route-theme="wow"] .library-hero { border-inline-start: 3px solid #cf8a30; }
+html[data-route-theme="wow"] .library-hero h1,
+html[data-route-theme="wow"] .library-section-head h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
+html[data-route-theme="wow"] .library-dataset-card { border-color: #402b16; border-radius: 2px; background: #0d0a06; }
+html[data-route-theme="wow"] .library-dataset-card:hover { border-color: #a66f2b; background: #181006; }
+html[data-route-theme="wow"] .library-dataset-art { border-color: #70491d; background: #090704; box-shadow: inset 0 0 0 2px #171007, 0 8px 18px rgba(0, 0, 0, .3); }
+html[data-route-theme="wow"] .library-coverage { border-color: #322313; }
+
+html[data-route-theme="wow"] .legal {
+  position: relative;
+  max-width: 900px;
+  margin-block: 42px 70px;
+  padding: 42px 48px 46px;
+  border: 1px solid #543719;
+  border-inline-start: 3px solid #cf8a30;
+  background: linear-gradient(145deg, rgba(24, 17, 9, .97), rgba(8, 6, 4, .985));
+  box-shadow: 0 25px 65px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 226, 161, .045);
+}
+html[data-route-theme="wow"] .legal::before { content: "ARCHIVE OF GILDRA"; display: block; margin-bottom: 13px; color: #b27a35; font: 700 9px var(--ui); letter-spacing: .2em; }
+html[data-route-theme="wow"] .legal h1 { max-width: 760px; color: #f0dfbf; font: 400 clamp(34px, 4vw, 54px)/1.04 Georgia, "Times New Roman", serif; letter-spacing: -.025em; text-shadow: 0 3px 12px #000; }
+html[data-route-theme="wow"] .legal-upd { margin-top: 11px; padding-bottom: 17px; border-bottom: 1px solid #322313; color: #857864; }
+html[data-route-theme="wow"] .legal h2 { margin-top: 28px; color: #e0a84e; font: 400 18px Georgia, "Times New Roman", serif; }
+html[data-route-theme="wow"] .legal p { max-width: 760px; color: #ae9f87; line-height: 1.78; }
+@media (max-width: 720px) { html[data-route-theme="wow"] .legal { margin-block: 12px 32px; padding: 28px 20px 32px; border-inline-width: 0 0; } }
+
+html[data-route-theme="wow"] [data-api-console] {
+  background:
+    linear-gradient(180deg, rgba(8, 6, 4, .78), rgba(7, 5, 3, .97)),
+    radial-gradient(circle at 66% 0, rgba(160, 76, 17, .2), transparent 42%),
+    var(--wow-depth-background) center top / 1900px auto no-repeat !important;
+  color: #eadfc9 !important;
+}
+html[data-route-theme="wow"] [data-api-console] > header,
+html[data-route-theme="wow"] [data-api-console] > aside,
+html[data-route-theme="wow"] [data-api-console] section > header { border-color: #493019 !important; background-color: rgba(9, 7, 4, .96) !important; }
+html[data-route-theme="wow"] [data-api-console] .rounded-xl,
+html[data-route-theme="wow"] [data-api-console] .rounded-sm { border-color: #51361a !important; border-radius: 2px !important; background-color: rgba(17, 12, 7, .95) !important; box-shadow: 0 22px 58px rgba(0, 0, 0, .38) !important; }
+html[data-route-theme="wow"] [data-api-console] input { border-color: #51361a !important; border-radius: 2px !important; background: #090704 !important; color: #eadfc9 !important; }
+html[data-route-theme="wow"] [data-api-console] button { border-radius: 2px !important; }
+body[data-workspace-menu="open"] .cookie { opacity: 0; visibility: hidden; pointer-events: none; }
+html[data-route-theme="wow"] .cookie { border-color: #68451e; background: linear-gradient(145deg, rgba(24, 17, 9, .98), rgba(8, 6, 4, .99)); box-shadow: 0 22px 55px rgba(0, 0, 0, .58), inset 0 1px rgba(255, 225, 157, .04); }
+html[data-route-theme="wow"] .cookie-text a { color: #e2a749; }
+/* Character-book routes paint consent on top of vellum, not as the generic
+   black WoW toast used by the rest of the site. Keep this stronger than the
+   route-wide .cookie skin above. */
+html[data-route-theme="wow"] .cookie.cookie-book {
+  border-color: #827d70;
+  background: var(--gildra-character-paper-wash, linear-gradient(180deg, #b9cbd13d, #bac9d229)), var(--cookie-book-paper, #e4dcc8) center / 640px repeat;
+  box-shadow: 0 4px 12px #080a0c70, inset 0 0 0 2px #dfe6e055;
+}
+html[data-route-theme="wow"] .cookie.cookie-book .cookie-text a { color: #783921; }
+@media (max-width: 620px) {
+  html[data-route-theme="wow"] .cookie { flex-direction: row; align-items: center; gap: 10px; }
+  html[data-route-theme="wow"] .cookie-text { flex: 1; font-size: 9px; line-height: 1.35; }
+  html[data-route-theme="wow"] .cookie-actions { width: auto; flex-direction: column; align-items: stretch; gap: 3px; }
+  html[data-route-theme="wow"] .cookie-ok { min-width: 82px; padding: 6px 9px; }
+}
+
+html[data-route-theme="wow"] body {
+  background-color: #080706;
+  background-image:
+    linear-gradient(180deg, rgba(5, 4, 3, 0.42), #080706 760px),
+    radial-gradient(75% 44% at 66% 0, rgba(174, 91, 20, 0.17), transparent 70%),
+    var(--wow-depth-background);
+  background-position: center top;
+  background-size: auto, auto, min(1900px, 100vw) auto;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+}
+
+/* The talent calculator paints an opaque full-screen surface of its own; do
+   not download the shared dungeon backdrop behind it. */
+html[data-route-theme="wow"]:has([data-talent-route]) body {
+  background-image: none;
+}
+
+html[data-route-theme="wow"] :focus-visible,
+html[data-route-theme="wow-rotation"] :focus-visible {
+  outline-color: #efc66e;
+}
+
+/* Legacy WoW chrome: dense forged bar with warmer metal and carved controls. */
+html[data-route-theme="wow"] .topnav {
+  height: 58px;
+  border-bottom-color: rgba(194, 132, 43, 0.48);
+  background:
+    linear-gradient(90deg, rgba(204, 137, 42, 0.08), transparent 18%, transparent 82%, rgba(204, 137, 42, 0.05)),
+    linear-gradient(180deg, #15110b, #080706);
+  box-shadow: 0 1px rgba(247, 199, 106, 0.12), 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+html[data-route-theme="wow"] .logo-text { color: #e6ad4a; font-family: Georgia, "Times New Roman", serif; text-shadow: 0 2px 8px #000; }
+html[data-route-theme="wow"] .gsw-btn,
+html[data-route-theme="wow"] .search,
+html[data-route-theme="wow"] .tool,
+html[data-route-theme="wow"] .fgroup select {
+  border-color: rgba(168, 113, 39, 0.47);
+  background-color: #0c0905;
+  color: #d7c6a7;
+}
+html[data-route-theme="wow"] .gsw-menu,
+html[data-route-theme="wow"] .mobmenu,
+html[data-route-theme="wow"] .sc { border-color: #795222; background: #0c0906; }
+html[data-route-theme="wow"] .foot { border-top-color: #5a3b18; background: linear-gradient(180deg, #0d0a06, #050403); }
+
+/* Tier list becomes an adventurer's ledger instead of a blue admin table. */
+html[data-route-theme="wow"] .tierpage {
+  border: 1px solid #5a3d1b;
+  border-top-color: #aa712a;
+  border-radius: 2px;
+  background: rgba(10, 8, 5, 0.97);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.56), inset 0 1px rgba(255, 223, 155, 0.06);
+}
+html[data-route-theme="wow"] .tp-side {
+  border-right-color: #503619;
+  background: linear-gradient(180deg, #171108, #090704 72%);
+}
+html[data-route-theme="wow"] .tp-center { background: linear-gradient(180deg, rgba(23, 17, 9, 0.88), #0b0906 210px); }
+html[data-route-theme="wow"] .tp-detail {
+  border-left-color: #503619;
+  background: linear-gradient(180deg, #181108, #0a0805 260px);
+}
+html[data-route-theme="wow"] .tp-title h1,
+html[data-route-theme="wow"] .tp-title h2,
+html[data-route-theme="wow"] .dhead .name h2,
+html[data-route-theme="wow"] .db-intro h1,
+html[data-route-theme="wow"] .db-live-head h2,
+html[data-route-theme="wow"] .db-section-heading h2,
+html[data-route-theme="wow"] .db-directory-head h2 {
+  color: #f1dfbd;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  text-shadow: 0 2px 8px #000;
+}
+html[data-route-theme="wow"] .tp-title h1 { font-size: clamp(27px, 2.4vw, 38px); }
+html[data-route-theme="wow"] .tp-toolbar,
+html[data-route-theme="wow"] .tt thead th,
+html[data-route-theme="wow"] .tt td { border-color: #322514; }
+html[data-route-theme="wow"] tr:hover:not(.hl) td { background: rgba(195, 126, 35, 0.055); }
+html[data-route-theme="wow"] .chip,
+html[data-route-theme="wow"] .seg button,
+html[data-route-theme="wow"] .fsearch,
+html[data-route-theme="wow"] .dcard,
+html[data-route-theme="wow"] .faq-note,
+html[data-route-theme="wow"] .about,
+html[data-route-theme="wow"] .bcard {
+  border-color: #473017;
+  background-color: #0c0906;
+}
+html[data-route-theme="wow"] .chip.on,
+html[data-route-theme="wow"] .seg button.on {
+  border-color: #b97824;
+  background: linear-gradient(180deg, rgba(209, 139, 42, 0.24), rgba(103, 61, 15, 0.13));
+}
+
+/* Database: a carved Azeroth archive with item frames and parchment-gold hierarchy. */
+html[data-route-theme="wow"] .route-section { padding-top: 26px; }
+html[data-route-theme="wow"] .db-hero {
+  --db-hero-background: url("/assets/wow/mythic/ruby-depth-v3-light-fast.webp");
+  border: 1px solid #6d481d;
+  border-inline-start: 3px solid #d19031;
+  background:
+    linear-gradient(90deg, rgba(8, 6, 4, 0.88), rgba(15, 10, 5, 0.72)),
+    radial-gradient(60% 110% at 100% 0, rgba(190, 99, 21, 0.22), transparent 68%),
+    var(--db-hero-background) center 44% / cover;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.52), inset 0 0 0 1px rgba(244, 202, 115, 0.06);
+}
+@media (max-width: 720px) {
+  html[data-route-theme="wow"] .db-hero {
+    --db-hero-background: url("/assets/wow/mythic/ruby-depth-v3-mobile-optimized.webp");
+  }
+}
+html[data-route-theme="wow"] .db-source-panel,
+html[data-route-theme="wow"] .db-live,
+html[data-route-theme="wow"] .db-category-section {
+  border-color: #523718;
+  background: linear-gradient(180deg, rgba(23, 17, 9, 0.97), rgba(10, 8, 5, 0.98));
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.34), inset 0 1px rgba(255, 227, 164, 0.04);
+}
+html[data-route-theme="wow"] .db-catalog-search,
+html[data-route-theme="wow"] .db-type-filters button,
+html[data-route-theme="wow"] .db-category-card,
+html[data-route-theme="wow"] .db-record {
+  border-color: #3f2c17;
+  background: #0b0906;
+}
+html[data-route-theme="wow"] button.db-category-card:hover,
+html[data-route-theme="wow"] .db-record:hover {
+  border-color: #a36c27;
+  background: #181006;
+}
+html[data-route-theme="wow"] .db-category-card.is-active { border-color: #bd7d29; background: linear-gradient(110deg, rgba(201, 134, 42, 0.19), #100c07); }
+html[data-route-theme="wow"] .db-category-icon { border-color: #6b471d; background: linear-gradient(145deg, #31200d, #110c06); color: #efc671; }
+html[data-route-theme="wow"] .db-record { box-shadow: inset 2px 0 #9d6523; }
+
+/* Entity codex: the raw catalog keeps its density but shares the forged shell. */
+html[data-route-theme="wow"] .db-detail-header {
+  border-color: #6d481d;
+  background:
+    linear-gradient(100deg, rgba(20, 14, 7, .96), rgba(9, 8, 6, .84)),
+    var(--wow-depth-background) center 40% / cover;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, .42), inset 0 1px rgba(255, 226, 158, .05);
+}
+html[data-route-theme="wow"] .db-detail-header h1 { color: #f1dfbd; font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
+html[data-route-theme="wow"] .db-detail-main-icon,
+html[data-route-theme="wow"] .db-record-icon,
+html[data-route-theme="wow"] .db-tooltip-icon {
+  border-color: #8a5d27;
+  background: radial-gradient(circle at 50% 35%, #35200d, #090705 70%);
+  box-shadow: 0 0 0 1px #050403, inset 0 0 18px rgba(210, 137, 37, .12);
+}
+html[data-route-theme="wow"] .db-icon-fallback { color: #e0a43f; font: 700 25px/1 Georgia, serif; text-shadow: 0 0 12px rgba(224, 164, 63, .55); }
+html[data-route-theme="wow"] .db-evidence-ribbon,
+html[data-route-theme="wow"] .db-detail-jump,
+html[data-route-theme="wow"] .db-localization-card,
+html[data-route-theme="wow"] .db-raw-payload,
+html[data-route-theme="wow"] .db-media-gallery figure,
+html[data-route-theme="wow"] .db-entity-detail-tooltip {
+  border-color: #443019;
+  background: #0b0906;
+}
+html[data-route-theme="wow"] .db-detail-section {
+  border-color: #4e3519;
+  background: linear-gradient(145deg, rgba(20, 15, 8, .97), rgba(9, 7, 5, .98));
+  box-shadow: 0 15px 40px rgba(0, 0, 0, .28), inset 0 1px rgba(255, 227, 166, .035);
+}
+html[data-route-theme="wow"] .db-detail-jump { box-shadow: 0 8px 24px rgba(0, 0, 0, .5); }
+html[data-route-theme="wow"] .db-detail-jump a:hover { background: rgba(200, 133, 41, .1); }
+
+@media (max-width: 900px) {
+  html[data-route-theme="wow"] body { background-size: auto, auto, 1500px auto; }
+  html[data-route-theme="wow"] .topnav { height: 56px; }
+  html[data-route-theme="wow"] .talent-calculator .tc-pvp-group {
+    width: 160px;
+    max-width: 100%;
+  }
+  html[data-route-theme="wow"] .talent-calculator .tc-pvp-slot {
+    width: 48px;
+    height: 48px;
+  }
+  html[data-route-theme="wow"] .talent-calculator .tc-pvp-slot img {
+    width: 34px;
+    height: 34px;
+  }
+  html[data-route-theme="wow"] .talent-calculator .tc-pvp-close {
+    width: 49px;
+    height: 49px;
+    flex-basis: 49px;
+  }
+  html[data-route-theme="wow"] .talent-calculator .tc-pvp-clear { min-height: 49px; }
+}
+
+@media (max-width: 720px) {
+  html[data-route-theme="wow"],
+  html[data-route-theme="wow"] body { overflow-x: clip; }
+  html[data-route-theme="wow"] .route-section { padding-top: 12px; }
+  html[data-route-theme="wow"] .tierpage { border-inline: 0; }
+}
+
+@media (max-width: 420px) {
+  html[data-route-theme="wow"] .tierpage .tt th:last-child,
+  html[data-route-theme="wow"] .tierpage .tt td:last-child { display: none; }
+  html[data-route-theme="wow"] .tierpage .tp-toolbar { flex-wrap: wrap; }
+  html[data-route-theme="wow"] .tierpage .tool { margin-block: 0 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-route-theme="wow"] body { background-attachment: scroll; }
+}
+
+/* The character folio owns one continuous realm, not a separate image inside
+   the book plus the generic ruby dungeon behind the rest of the document.
+   Sharing these layers keeps the margins, scroll tail, cookie notice and the
+   next character route on the same cold moonlit scene. */
+html:has([data-character-book-backdrop]) {
+  /* A restrained blue-grey patina cools the parchment without washing out its
+     original warm vellum grain (the earlier 44% wash made the whole book grey). */
+  --gildra-character-paper-wash: linear-gradient(180deg, #b9cbd142, #bac9d230);
+  --gildra-character-world-base:
+    radial-gradient(ellipse 30% 72% at 4% 52%, #829eae36, transparent 88%),
+    radial-gradient(ellipse 28% 70% at 96% 54%, #78977a2c, transparent 88%),
+    radial-gradient(ellipse at 18% 32%, #4864772b, transparent 54%),
+    radial-gradient(ellipse at 86% 66%, #3e555d27, transparent 52%),
+    linear-gradient(180deg, #090e133b, #10191d0f 45%, #060b1131),
+    #080a0c;
+  --gildra-character-world-glow:
+    linear-gradient(118deg, transparent 12%, #adc3cb16 29%, transparent 47%),
+    radial-gradient(ellipse at 42% 0, #9db2c02c, transparent 57%),
+    radial-gradient(ellipse at 4% 83%, #718c9b2b, transparent 48%),
+    radial-gradient(ellipse at 96% 87%, #69828d2a, transparent 43%);
+  --gildra-character-world-shade:
+    radial-gradient(ellipse at 50% 43%, transparent 34%, #03080c1d 100%),
+    linear-gradient(transparent 76%, #050a0e2e);
+  --gildra-character-world:
+    var(--gildra-character-world-shade),
+    var(--gildra-character-world-glow),
+    var(--gildra-character-world-base);
+}
+
+html:has([data-character-book-backdrop]) body {
+  background: var(--gildra-character-world);
+  background-attachment: fixed;
+}
+
+@media (max-width: 760px) {
+  html:has([data-character-book-backdrop]) {
+    --gildra-character-world-base:
+      radial-gradient(ellipse 30% 72% at 4% 52%, #829eae36, transparent 88%),
+      radial-gradient(ellipse 28% 70% at 96% 54%, #78977a2c, transparent 88%),
+      radial-gradient(ellipse at 18% 32%, #4864772b, transparent 54%),
+      radial-gradient(ellipse at 86% 66%, #3e555d27, transparent 52%),
+      linear-gradient(180deg, #090e133b, #10191d0f 45%, #060b1131),
+      #080a0c;
+  }
+
+  html:has([data-character-book-backdrop]) body {
+    background-attachment: scroll;
+  }
+}

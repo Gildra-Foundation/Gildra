@@ -34,16 +34,16 @@ export function Hero({ data, lang }: BlockComponentProps<HeroProps, HeroData>) {
           </h1>
           <p className="sub">
             {tt(
-              "Builds, rankings and live data from high-level Mythic+ and Raid content.",
+              "Explore Midnight raids, Mythic+ routes and verified guides.",
             )}
           </p>
           <div className="hero-actions">
-            <Link className="btn btn-primary" href={p(lang, "/tier-lists")}>
+            <Link className="btn btn-primary" href={p(lang, "/wow/mythic-plus")}>
               {tt("Explore Mythic+")}
             </Link>
-            <a className="btn-text" href={p(lang, anchorHref(ANCHORS.raid))}>
-              {tt("Raid rankings →")}
-            </a>
+            <Link className="btn-text" href={p(lang, "/wow/raids")}>
+              {tt("Raid journal →")}
+            </Link>
           </div>
           <div className="hero-live">
             <span className="hl-badge">

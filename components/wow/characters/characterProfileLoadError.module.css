@@ -1,0 +1,39 @@
+.page { width: 100%; }
+.spread {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: var(--book-gutter, clamp(40px, 5cqw, 72px));
+  min-height: 340px;
+  margin-inline: 8px;
+}
+.leftLeaf,
+.rightLeaf { min-width: 0; padding-block: 24px; }
+.leftLeaf { display: flex; flex-direction: column; align-items: flex-start; }
+.rightLeaf { border-top: 1px solid var(--folio-faint-rule); border-bottom: 1px solid var(--folio-faint-rule); }
+.seal { width: 60px; height: 60px; margin-bottom: 18px; display: grid; place-items: center; border: 1px solid var(--folio-gilt); border-radius: 50%; color: var(--folio-rubric); background: var(--folio-medallion) center / contain no-repeat; }
+.seal svg { width: 24px; height: 24px; stroke-width: 1.5; }
+.rubric { color: var(--folio-rubric); font: 700 10px/1.4 var(--folio-body); letter-spacing: .16em; }
+.leftLeaf h1 { max-width: 18ch; margin: 10px 0 0; color: #39200e; font: 400 clamp(26px, 3.2cqw, 38px)/1.14 var(--folio-title); text-wrap: balance; }
+.rightLeaf p { max-width: 460px; margin: 0; color: var(--folio-muted); font: 14px/1.65 var(--folio-body); text-wrap: pretty; }
+.divider { display: block; width: min(260px, 72%); height: 40px; margin-top: 14px; background: var(--folio-divider-image) center / 100% auto no-repeat; }
+.actions { width: 100%; margin-top: 10px; display: flex; justify-content: flex-start; flex-wrap: wrap; gap: 10px; }
+.actions a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+.actions svg { width: 17px; height: 17px; }
+.actions a:focus-visible { outline: 2px solid #6c391b; outline-offset: 3px; }
+@container auditPage (max-width: 820px) {
+  .spread { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 0; }
+  .leftLeaf,
+  .rightLeaf { padding-block: 20px; }
+  .rightLeaf { border-top: 1px solid var(--folio-faint-rule); }
+}
+@container auditPage (max-width: 560px) {
+  .spread { margin-inline: 4px; }
+  .leftLeaf,
+  .rightLeaf { padding-block: 16px; }
+  .seal { width: 48px; height: 48px; margin-bottom: 12px; }
+  .leftLeaf h1 { font-size: clamp(25px, 8cqw, 32px); }
+  .rightLeaf p { font-size: 13px; }
+  .actions { flex-direction: column; }
+  .actions a { width: 100%; }
+}

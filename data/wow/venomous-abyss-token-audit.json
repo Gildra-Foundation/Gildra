@@ -1,0 +1,3259 @@
+{
+  "schemaVersion": 1,
+  "scope": "venomous-abyss-withheld-description-client-token-inventory",
+  "gameBuild": "12.1.0.69814",
+  "lastVerifiedAt": "2026-09-13T09:32:54.369Z",
+  "method": "Build-pinned EN/RU Spell rows are selected by exact spell ID. Full-string $@spelldesc<ID> chains are followed only within the same locale export. Terminal text is hashed and tokenized; tokenized prose is not copied into the audit.",
+  "publicationPolicy": "This inventory never publishes text. A description remains withheld whenever either locale has an unresolved blocking category. Spell-name references are marked non-blocking only because the separate description audit proves exact build-pinned EN/RU SpellName substitution.",
+  "categoryRequirements": {
+    "effect_value": [
+      "SpellEffect",
+      "difficulty/scaling context"
+    ],
+    "effect_period": [
+      "SpellEffect"
+    ],
+    "duration": [
+      "SpellMisc",
+      "SpellDuration"
+    ],
+    "radius": [
+      "SpellEffect",
+      "SpellRadius"
+    ],
+    "difficulty_conditional": [
+      "difficulty-specific publication variants"
+    ],
+    "grammar": [
+      "resolved controlling value",
+      "locale grammar selection"
+    ],
+    "spell_description_reference": [
+      "Spell"
+    ],
+    "spell_aura_reference": [
+      "Spell"
+    ],
+    "unknown_client_token": [
+      "documented client token semantics"
+    ],
+    "wow_markup": [
+      "WoW markup parser"
+    ]
+  },
+  "sources": [
+    {
+      "kind": "spell_en",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+      "sha256": "33de201115bf105308094aaff270b0a2af59595b1e2f0d0803f6bb7fd5357c8e",
+      "locale": "en",
+      "table": "Spell"
+    },
+    {
+      "kind": "spell_ru",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
+      "sha256": "ac76bf4d60786aa21a4582a6081eb5436c0c1629e0943b279325f35b96876b2d",
+      "locale": "ru",
+      "table": "Spell"
+    }
+  ],
+  "summary": {
+    "abilities": 37,
+    "publicationSafeAbilities": 12,
+    "withheldAbilities": 25,
+    "unresolvedCategoryAbilityCounts": {
+      "difficulty_conditional": 4,
+      "duration": 16,
+      "effect_period": 15,
+      "effect_value": 25,
+      "grammar": 3,
+      "radius": 7
+    },
+    "requiredTables": [
+      "SpellDuration",
+      "SpellEffect",
+      "SpellMisc",
+      "SpellRadius",
+      "difficulty-specific publication variants",
+      "difficulty/scaling context",
+      "locale grammar selection",
+      "resolved controlling value"
+    ],
+    "referenceCycles": 0,
+    "missingReferenceTargets": 0
+  },
+  "abilities": [
+    {
+      "spellId": 1284032,
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1284032,
+          "terminalSpellId": 1284032,
+          "descriptionReferenceChain": [
+            1284032
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 277,
+          "terminalTextSha256": "c7c8115ecdefb18efc44d24b66e2d1a18276f32dfc7d78372aaa010bcb41cc34",
+          "categories": [
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 3
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1289919"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1288772"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290361"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1290390s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1285623t1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1284032,
+          "terminalSpellId": 1284032,
+          "descriptionReferenceChain": [
+            1284032
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 334,
+          "terminalTextSha256": "19fac0587d13f515c370dc0b5efe488d0d21f14dbffe75a0ec5d9ad70d198cad",
+          "categories": [
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 3
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1289919"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1288772"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290361"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1290390s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1285623t1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1288772,
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1288772,
+          "terminalSpellId": 1284033,
+          "descriptionReferenceChain": [
+            1288772,
+            1284033
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 215,
+          "terminalTextSha256": "0b547fde2ad0389d5295ba404d49027ef0b6954d833ae3d57ba04473763692f2",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 3,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284032"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1288773s2"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1288772s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1288772s2"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1288772t2"
+            },
+            {
+              "category": "duration",
+              "token": "$1288772d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1288772,
+          "terminalSpellId": 1284033,
+          "descriptionReferenceChain": [
+            1288772,
+            1284033
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 232,
+          "terminalTextSha256": "54c16e50cb04e9bb9cb6cec0ede9d5896d0f9838ca3bff294a8628cef2bd7a9d",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 3,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284032"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1288773s2"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1288772s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1288772s2"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1288772t2"
+            },
+            {
+              "category": "duration",
+              "token": "$1288772d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1289919,
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description_spell_names",
+      "locales": {
+        "en": {
+          "rootSpellId": 1289919,
+          "terminalSpellId": 1289919,
+          "descriptionReferenceChain": [
+            1289919
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 91,
+          "terminalTextSha256": "e0d88ad5feb325c1fb00d5e9c6dece154aa89a71e3c4c31a36cb49bbf3d69e46",
+          "categories": [
+            "spell_name_reference"
+          ],
+          "blockingCategories": [],
+          "tokenCounts": {
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284032"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1289919,
+          "terminalSpellId": 1289919,
+          "descriptionReferenceChain": [
+            1289919
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 83,
+          "terminalTextSha256": "51fda0e792a8427b869dec2945f6dc3aaf7705a2210c8f02ee20793262dc146b",
+          "categories": [
+            "spell_name_reference"
+          ],
+          "blockingCategories": [],
+          "tokenCounts": {
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284032"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1289683,
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description",
+      "locales": {
+        "en": {
+          "rootSpellId": 1289683,
+          "terminalSpellId": 1289683,
+          "descriptionReferenceChain": [
+            1289683
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 174,
+          "terminalTextSha256": "96e950e79722eb281f22d9fa6a43660a11b58d7df7c7912c44cddc6e85e3a5b4",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        },
+        "ru": {
+          "rootSpellId": 1289683,
+          "terminalSpellId": 1289683,
+          "descriptionReferenceChain": [
+            1289683
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 171,
+          "terminalTextSha256": "8aad9aff58ff88f0632e57e6deecec0a9399ab0feb88a1fb933b2dd2a441889c",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        }
+      }
+    },
+    {
+      "spellId": 1289696,
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description",
+      "locales": {
+        "en": {
+          "rootSpellId": 1289696,
+          "terminalSpellId": 1289696,
+          "descriptionReferenceChain": [
+            1289696
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 62,
+          "terminalTextSha256": "6a91d5718f3ac5e2bfd28656bc2df1d35385cba1758d3939d9254e48fcd71aa7",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        },
+        "ru": {
+          "rootSpellId": 1289696,
+          "terminalSpellId": 1289696,
+          "descriptionReferenceChain": [
+            1289696
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 62,
+          "terminalTextSha256": "f760bd94cf728030e3e087d0812ddcfa7f636eab25b0939456940e8926a06c62",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        }
+      }
+    },
+    {
+      "spellId": 1290003,
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1290003,
+          "terminalSpellId": 1290003,
+          "descriptionReferenceChain": [
+            1290003
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 180,
+          "terminalTextSha256": "0c977b0897de1422224af81110f7e032fd30c583af5dc9930440dec9af13d0a7",
+          "categories": [
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284032"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1292315s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1307890t1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1290003,
+          "terminalSpellId": 1290003,
+          "descriptionReferenceChain": [
+            1290003
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 206,
+          "terminalTextSha256": "d1ea0fccb9ea23480feaacb4f5bcfdbd75fc73b73ecc9b069446c4313cb151d8",
+          "categories": [
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284032"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1292315s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1307890t1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1284588,
+      "encounterSlug": "entombed-sentinels",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description_static_modifier_duration",
+      "locales": {
+        "en": {
+          "rootSpellId": 1284588,
+          "terminalSpellId": 1284588,
+          "descriptionReferenceChain": [
+            1284588
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 222,
+          "terminalTextSha256": "5033f823dfbb9a463966049fe20f43745a8f1eb3412bdfe7ecb05a98de48304a",
+          "categories": [
+            "duration",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_value": 1
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1284588,
+          "terminalSpellId": 1284588,
+          "descriptionReferenceChain": [
+            1284588
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 239,
+          "terminalTextSha256": "cdce3a2f61bb771bb05845c85dd8049004f61f001a2f9af6495203e44357c936",
+          "categories": [
+            "duration",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_value": 1
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1284590,
+      "encounterSlug": "entombed-sentinels",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1284590,
+          "terminalSpellId": 1284590,
+          "descriptionReferenceChain": [
+            1284590
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 321,
+          "terminalTextSha256": "99a164b4b116c9db676cc7a51d1cecfe2dafcc259393fd7c0e728c926e137e14",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284590"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1284813s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1284590,
+          "terminalSpellId": 1284590,
+          "descriptionReferenceChain": [
+            1284590
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 301,
+          "terminalTextSha256": "417c19c136dd1bd713b0900cecfcbacb180b561648fc6248b83a499589102578",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284590"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1284813s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1295451,
+      "encounterSlug": "the-lost-explorers",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description",
+      "locales": {
+        "en": {
+          "rootSpellId": 1295451,
+          "terminalSpellId": 1295451,
+          "descriptionReferenceChain": [
+            1295451
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 66,
+          "terminalTextSha256": "585b765d165d89dbc6da9df756f5f94d8ade65e9d84b02b8d7c1757ba2168af3",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        },
+        "ru": {
+          "rootSpellId": 1295451,
+          "terminalSpellId": 1295451,
+          "descriptionReferenceChain": [
+            1295451
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 60,
+          "terminalTextSha256": "8031c759a40124f1cee85d848d7494d176adccf41f654e98e226df90623b32ad",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        }
+      }
+    },
+    {
+      "spellId": 1297024,
+      "encounterSlug": "the-lost-explorers",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description_reference",
+      "locales": {
+        "en": {
+          "rootSpellId": 1297024,
+          "terminalSpellId": 1297022,
+          "descriptionReferenceChain": [
+            1297024,
+            1297022
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 85,
+          "terminalTextSha256": "a7e160ad9e20405fb3d1d215e293b1563da4bfdb9fede5924ac26131535d1493",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        },
+        "ru": {
+          "rootSpellId": 1297024,
+          "terminalSpellId": 1297022,
+          "descriptionReferenceChain": [
+            1297024,
+            1297022
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 82,
+          "terminalTextSha256": "9e35e97ca0a3a7f0fe780f17d0dc6dce4de0f0675017e0a3654503c319ed0b94",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        }
+      }
+    },
+    {
+      "spellId": 1292779,
+      "encounterSlug": "the-lost-explorers",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1292779,
+          "terminalSpellId": 1292780,
+          "descriptionReferenceChain": [
+            1292779,
+            1292780
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 138,
+          "terminalTextSha256": "3e2458369fadb248abea0df6cee4c3b5de9f11ecb61c1e998d0e434d2f96a6a1",
+          "categories": [
+            "effect_period",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_period": 1,
+            "effect_value": 1
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1292779t1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1292779,
+          "terminalSpellId": 1292780,
+          "descriptionReferenceChain": [
+            1292779,
+            1292780
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 165,
+          "terminalTextSha256": "e1b860a85327830c4dad0c88681abdf608a6d8f66a0464e3573aabece3388729",
+          "categories": [
+            "effect_period",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_period": 1,
+            "effect_value": 1
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1292779t1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1283164,
+      "encounterSlug": "vashnik-the-malignant",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description_spell_names",
+      "locales": {
+        "en": {
+          "rootSpellId": 1283164,
+          "terminalSpellId": 1283164,
+          "descriptionReferenceChain": [
+            1283164
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 252,
+          "terminalTextSha256": "936c20f075358e98d497a261e268bdb7998b701157350f9d241b0e233cc208ee",
+          "categories": [
+            "spell_name_reference"
+          ],
+          "blockingCategories": [],
+          "tokenCounts": {
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284561"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1283164,
+          "terminalSpellId": 1283164,
+          "descriptionReferenceChain": [
+            1283164
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 248,
+          "terminalTextSha256": "3e9a049485bf3cf2b27da6cee63f58325d244db99e4f614b0acb6f25a2fd9bde",
+          "categories": [
+            "spell_name_reference"
+          ],
+          "blockingCategories": [],
+          "tokenCounts": {
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1284561"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1280189,
+      "encounterSlug": "vashnik-the-malignant",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1280189,
+          "terminalSpellId": 1280189,
+          "descriptionReferenceChain": [
+            1280189
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 177,
+          "terminalTextSha256": "212362034ed4c02c3b4da82608375b97538d2195c2d55c8b302a06173f7ce48c",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t2"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1280189,
+          "terminalSpellId": 1280189,
+          "descriptionReferenceChain": [
+            1280189
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 179,
+          "terminalTextSha256": "22187282054a39d26fc4b89f14115b5a00cb6afab4cae4cff79103f8acd9b0e0",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t2"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1277025,
+      "encounterSlug": "sszorak",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description",
+      "locales": {
+        "en": {
+          "rootSpellId": 1277025,
+          "terminalSpellId": 1277025,
+          "descriptionReferenceChain": [
+            1277025
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 113,
+          "terminalTextSha256": "4696ebf5759cc11dd91797bf6e614d8b987fd8ed2f644c73dfc9b4394cdd4194",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        },
+        "ru": {
+          "rootSpellId": 1277025,
+          "terminalSpellId": 1277025,
+          "descriptionReferenceChain": [
+            1277025
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 109,
+          "terminalTextSha256": "d755b2a6d208e60059389c242891c667f62fa5cf8c4c8c692186b8e0b41a9e75",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        }
+      }
+    },
+    {
+      "spellId": 1305959,
+      "encounterSlug": "sszorak",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1305959,
+          "terminalSpellId": 1305959,
+          "descriptionReferenceChain": [
+            1305959
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 289,
+          "terminalTextSha256": "946db6e35310f64171e4bee6e987e683b235f080e077d1f4f58c723fa306c072",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1287008"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1312156s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1306120s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1305963t1"
+            },
+            {
+              "category": "duration",
+              "token": "$1305963d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1305959,
+          "terminalSpellId": 1305959,
+          "descriptionReferenceChain": [
+            1305959
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 311,
+          "terminalTextSha256": "e1fe95d58eb8fc1820c087fa7d8d3cf38aa8f4a96bde419686980e4a236174da",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1287008"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1312156s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1306120s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1305963t1"
+            },
+            {
+              "category": "duration",
+              "token": "$1305963d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1285419,
+      "encounterSlug": "sszorak",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1285419,
+          "terminalSpellId": 1285419,
+          "descriptionReferenceChain": [
+            1285419
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 339,
+          "terminalTextSha256": "ef7e31a7febf490775984f55f35fa7ff803181d57be6374ce4e1f892f4126357",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2,
+            "radius": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1285447"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1312219s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1285616s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1285425t1"
+            },
+            {
+              "category": "duration",
+              "token": "$1285425d"
+            },
+            {
+              "category": "radius",
+              "token": "$1285443a1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1285419,
+          "terminalSpellId": 1285419,
+          "descriptionReferenceChain": [
+            1285419
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 347,
+          "terminalTextSha256": "bb50460d8409cc185d093e505ba9b356e63c5dd14f99c920db90fc25c50cfb3d",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2,
+            "radius": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1285447"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1312219s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1285616s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1285425t1"
+            },
+            {
+              "category": "duration",
+              "token": "$1285425d"
+            },
+            {
+              "category": "radius",
+              "token": "$1285443a1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1285732,
+      "encounterSlug": "sszorak",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description",
+      "locales": {
+        "en": {
+          "rootSpellId": 1285732,
+          "terminalSpellId": 1285732,
+          "descriptionReferenceChain": [
+            1285732
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 129,
+          "terminalTextSha256": "17c55a9fbf2507306e840a882f01600c6c6a2f5160e6c37b240885761e26004a",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        },
+        "ru": {
+          "rootSpellId": 1285732,
+          "terminalSpellId": 1285732,
+          "descriptionReferenceChain": [
+            1285732
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 120,
+          "terminalTextSha256": "33402ef6eb65b007864d0386f10bfd6b0e36b51b761c818e5bce0e8b74d4d745",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        }
+      }
+    },
+    {
+      "spellId": 1290336,
+      "encounterSlug": "the-twin-fangs",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1290336,
+          "terminalSpellId": 1290336,
+          "descriptionReferenceChain": [
+            1290336
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 371,
+          "terminalTextSha256": "9023b86cda2cfd83044ee01fe2ee252cfda50516ee9fb6464699d2107dfc4f96",
+          "categories": [
+            "difficulty_conditional",
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "difficulty_conditional",
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "difficulty_conditional": 1,
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 4
+          },
+          "tokens": [
+            {
+              "category": "difficulty_conditional",
+              "token": "$?DIFF15|DIFF16"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1290480s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1303196s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$1303196d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1290336,
+          "terminalSpellId": 1290336,
+          "descriptionReferenceChain": [
+            1290336
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 396,
+          "terminalTextSha256": "bacd98469aa3bfd3dbfb98ce58a847e88063f6870e6da6092920e48beb94abb5",
+          "categories": [
+            "difficulty_conditional",
+            "duration",
+            "effect_period",
+            "effect_value",
+            "grammar"
+          ],
+          "blockingCategories": [
+            "difficulty_conditional",
+            "duration",
+            "effect_period",
+            "effect_value",
+            "grammar"
+          ],
+          "tokenCounts": {
+            "difficulty_conditional": 1,
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 4,
+            "grammar": 2
+          },
+          "tokens": [
+            {
+              "category": "difficulty_conditional",
+              "token": "$?DIFF15|DIFF16"
+            },
+            {
+              "category": "grammar",
+              "token": "$lэффект:эффекта:эффектов;"
+            },
+            {
+              "category": "grammar",
+              "token": "$lэффект:эффекта:эффектов;"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1290480s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1303196s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$1303196d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1289192,
+      "encounterSlug": "the-twin-fangs",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1289192,
+          "terminalSpellId": 1289192,
+          "descriptionReferenceChain": [
+            1289192
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 302,
+          "terminalTextSha256": "0a3c348f28f1fab7ceaed081bae2d0ec838f05cd97e444d8d4dd159bdac43683",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2,
+            "radius": 1,
+            "spell_name_reference": 2
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1289993"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1289237s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1289994s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            },
+            {
+              "category": "radius",
+              "token": "$1289994a1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1289192,
+          "terminalSpellId": 1289192,
+          "descriptionReferenceChain": [
+            1289192
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 321,
+          "terminalTextSha256": "fdf8781ebdd45962bcc49c1b85d112066dfc9091507088760b6ab991bee1a65a",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2,
+            "radius": 1,
+            "spell_name_reference": 2
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1289993"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1289237s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1289994s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            },
+            {
+              "category": "radius",
+              "token": "$1289994a1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1289993,
+      "encounterSlug": "the-twin-fangs",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1289993,
+          "terminalSpellId": 1289993,
+          "descriptionReferenceChain": [
+            1289993
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 193,
+          "terminalTextSha256": "701803fcd37c8fc890015557406da9111b627dbcf2cb863730561ac7835e250a",
+          "categories": [
+            "duration",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1290338s1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1289993,
+          "terminalSpellId": 1289993,
+          "descriptionReferenceChain": [
+            1289993
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 202,
+          "terminalTextSha256": "d6e0bf9cdb99894c5db44e3569ab7a5c6265b687d077c823d69de263c15ab78e",
+          "categories": [
+            "duration",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1290338s1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1291404,
+      "encounterSlug": "the-twin-fangs",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1291404,
+          "terminalSpellId": 1291404,
+          "descriptionReferenceChain": [
+            1291404
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 131,
+          "terminalTextSha256": "45aa8369d625a99d2f2dea1b54e2f0aee07b8202a02f7dbd234b83f892c655ee",
+          "categories": [
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1308122s1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1291404,
+          "terminalSpellId": 1291404,
+          "descriptionReferenceChain": [
+            1291404
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 136,
+          "terminalTextSha256": "8fad2179df2a14a7f2b7672467ea2f51ba33379df1fd517020fcb83bc238aea7",
+          "categories": [
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1308122s1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1290516,
+      "encounterSlug": "the-twin-fangs",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1290516,
+          "terminalSpellId": 1290516,
+          "descriptionReferenceChain": [
+            1290516
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 444,
+          "terminalTextSha256": "481887647ac53c264de5ecd9fc6c12e098c43c127c0b214cc18a88a1d466c388",
+          "categories": [
+            "difficulty_conditional",
+            "effect_value",
+            "grammar",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "difficulty_conditional",
+            "effect_value",
+            "grammar",
+            "radius"
+          ],
+          "tokenCounts": {
+            "difficulty_conditional": 1,
+            "effect_value": 4,
+            "grammar": 2,
+            "radius": 1,
+            "spell_name_reference": 3
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1310096"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290516"
+            },
+            {
+              "category": "difficulty_conditional",
+              "token": "$?DIFF15|DIFF16"
+            },
+            {
+              "category": "grammar",
+              "token": "$Lapplication:applications;"
+            },
+            {
+              "category": "grammar",
+              "token": "$Ltarget:targets;"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1290662s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s3"
+            },
+            {
+              "category": "radius",
+              "token": "$1290654a1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1290516,
+          "terminalSpellId": 1290516,
+          "descriptionReferenceChain": [
+            1290516
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 486,
+          "terminalTextSha256": "75ac9a310884a63a469fca5d44913b0ee29b5cadab34079348e80483076fc051",
+          "categories": [
+            "difficulty_conditional",
+            "effect_value",
+            "grammar",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "difficulty_conditional",
+            "effect_value",
+            "grammar",
+            "radius"
+          ],
+          "tokenCounts": {
+            "difficulty_conditional": 1,
+            "effect_value": 4,
+            "grammar": 3,
+            "radius": 1,
+            "spell_name_reference": 3
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1310096"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290516"
+            },
+            {
+              "category": "difficulty_conditional",
+              "token": "$?DIFF15|DIFF16"
+            },
+            {
+              "category": "grammar",
+              "token": "$lраз:раза:раз;"
+            },
+            {
+              "category": "grammar",
+              "token": "$Lэффект:эффекта:эффектов;"
+            },
+            {
+              "category": "grammar",
+              "token": "$Lцели:целей:целей;"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1290662s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s3"
+            },
+            {
+              "category": "radius",
+              "token": "$1290654a1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1288538,
+      "encounterSlug": "the-twin-fangs",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1288538,
+          "terminalSpellId": 1288538,
+          "descriptionReferenceChain": [
+            1288538
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 401,
+          "terminalTextSha256": "b1c2a9cd295caa2ee50cbf5129f4eeea221d62e6d9912bba63376edce4708551",
+          "categories": [
+            "duration",
+            "effect_value",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_value": 3,
+            "radius": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1288538"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1310371s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1289092s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1289153s1"
+            },
+            {
+              "category": "duration",
+              "token": "$1289092d"
+            },
+            {
+              "category": "radius",
+              "token": "$a1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1288538,
+          "terminalSpellId": 1288538,
+          "descriptionReferenceChain": [
+            1288538
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 439,
+          "terminalTextSha256": "f2d835eebf14ee1d4d10518a57eb43b1cee61c365601140393278fbd1e472b44",
+          "categories": [
+            "duration",
+            "effect_value",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_value": 3,
+            "radius": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1288538"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1310371s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1289092s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1289153s1"
+            },
+            {
+              "category": "duration",
+              "token": "$1289092d"
+            },
+            {
+              "category": "radius",
+              "token": "$a1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1293749,
+      "encounterSlug": "the-twin-fangs",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1293749,
+          "terminalSpellId": 1294293,
+          "descriptionReferenceChain": [
+            1293749,
+            1294293
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 184,
+          "terminalTextSha256": "ff3f454164b3a606dc5be6cadc2f1db7ddbac6c0042c2b9257346a0471e7ad26",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1294605s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1294605t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1293749,
+          "terminalSpellId": 1294293,
+          "descriptionReferenceChain": [
+            1293749,
+            1294293
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 184,
+          "terminalTextSha256": "abfd9dd5ce8e1ceb6f5fd6b7eaa813634712915e5f7f313bdf75c25d2fd3e944",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1290336"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1294605s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1294605t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1306872,
+      "encounterSlug": "the-twin-fangs",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1306872,
+          "terminalSpellId": 1306872,
+          "descriptionReferenceChain": [
+            1306872
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 136,
+          "terminalTextSha256": "b728168f69e1ff9b9276065c3238c42c2d1dd44317b33eaae8bbbab44c509662",
+          "categories": [
+            "duration",
+            "effect_value",
+            "radius"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_value": 1,
+            "radius": 1
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$1306876s1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            },
+            {
+              "category": "radius",
+              "token": "$1306876a1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1306872,
+          "terminalSpellId": 1306872,
+          "descriptionReferenceChain": [
+            1306872
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 160,
+          "terminalTextSha256": "67ddac513c00db16d5b41eaeaf49f0894aa3fb48a0cdbcfbb4b060c1ac20baf2",
+          "categories": [
+            "duration",
+            "effect_value",
+            "radius"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_value": 1,
+            "radius": 1
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$1306876s1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            },
+            {
+              "category": "radius",
+              "token": "$1306876a1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1282403,
+      "encounterSlug": "the-coiled-altar",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1282403,
+          "terminalSpellId": 1282403,
+          "descriptionReferenceChain": [
+            1282403
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 238,
+          "terminalTextSha256": "f417192b5309db13bea4b57a4d23c24e38a6fb34af9def30793d4962b6bdb327",
+          "categories": [
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_value": 2,
+            "spell_name_reference": 2
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1299838"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1282419"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1282408s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1282403,
+          "terminalSpellId": 1282403,
+          "descriptionReferenceChain": [
+            1282403
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 234,
+          "terminalTextSha256": "47045eebd8e82ef666abd988246a68a85fe6af6b0d57707ddb5662b7bfec810d",
+          "categories": [
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "effect_value": 2,
+            "spell_name_reference": 2
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1299838"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1282419"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1282408s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1299680,
+      "encounterSlug": "the-coiled-altar",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1299680,
+          "terminalSpellId": 1299684,
+          "descriptionReferenceChain": [
+            1299680,
+            1299684
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 297,
+          "terminalTextSha256": "260df919256d5abd4d41e2c1dac53e0177eb59252d944933aa48245d04e69c96",
+          "categories": [
+            "difficulty_conditional",
+            "duration",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "difficulty_conditional",
+            "duration",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "difficulty_conditional": 1,
+            "duration": 1,
+            "effect_value": 2,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1299684"
+            },
+            {
+              "category": "difficulty_conditional",
+              "token": "$?DIFF16"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1301690s1"
+            },
+            {
+              "category": "duration",
+              "token": "$1301690d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1299680,
+          "terminalSpellId": 1299684,
+          "descriptionReferenceChain": [
+            1299680,
+            1299684
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 293,
+          "terminalTextSha256": "2edbf7aeecf71dab3ec15b9877350ef9730e5778598d2c13032230f1747cc5f4",
+          "categories": [
+            "difficulty_conditional",
+            "duration",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "difficulty_conditional",
+            "duration",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "difficulty_conditional": 1,
+            "duration": 1,
+            "effect_value": 2,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1299684"
+            },
+            {
+              "category": "difficulty_conditional",
+              "token": "$?DIFF16"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1301690s1"
+            },
+            {
+              "category": "duration",
+              "token": "$1301690d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1285643,
+      "encounterSlug": "the-coiled-altar",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1285643,
+          "terminalSpellId": 1297445,
+          "descriptionReferenceChain": [
+            1285643,
+            1285647,
+            1297445
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 242,
+          "terminalTextSha256": "692acd33f14e3905625ec873343d8e9f8a6822f1ad291e86591df643301b60fd",
+          "categories": [
+            "difficulty_conditional",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "difficulty_conditional",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "difficulty_conditional": 1,
+            "effect_value": 2
+          },
+          "tokens": [
+            {
+              "category": "difficulty_conditional",
+              "token": "$?DIFF17"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s3"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1285643,
+          "terminalSpellId": 1297445,
+          "descriptionReferenceChain": [
+            1285643,
+            1285647,
+            1297445
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 315,
+          "terminalTextSha256": "304c73b2998d31ae3e8aed40c2df9946218511ea2d779b58e3b3bf4ec132ef0e",
+          "categories": [
+            "difficulty_conditional",
+            "effect_value",
+            "grammar"
+          ],
+          "blockingCategories": [
+            "difficulty_conditional",
+            "effect_value",
+            "grammar"
+          ],
+          "tokenCounts": {
+            "difficulty_conditional": 1,
+            "effect_value": 2,
+            "grammar": 1
+          },
+          "tokens": [
+            {
+              "category": "difficulty_conditional",
+              "token": "$?DIFF17"
+            },
+            {
+              "category": "grammar",
+              "token": "$lвоплощение ужаса:воплощения ужаса:воплощений ужаса;"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s3"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1286620,
+      "encounterSlug": "the-coiled-altar",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1286620,
+          "terminalSpellId": 1286620,
+          "descriptionReferenceChain": [
+            1286620
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 356,
+          "terminalTextSha256": "f113aa0923eb1218a048284c34921c04ade18ff466808f81df0c0b7fa0a54335",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 3,
+            "spell_name_reference": 2
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1286620"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1286837"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1307959s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1312630s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1307959t2"
+            },
+            {
+              "category": "duration",
+              "token": "$1307959d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1286620,
+          "terminalSpellId": 1286620,
+          "descriptionReferenceChain": [
+            1286620
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 392,
+          "terminalTextSha256": "6aa9ee7811d6631a234a148797ea671265a8a50a3928fed6e39466349bb360bb",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 3,
+            "spell_name_reference": 2
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1286620"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1286837"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1307959s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1312630s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$1307959t2"
+            },
+            {
+              "category": "duration",
+              "token": "$1307959d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1304032,
+      "encounterSlug": "the-coiled-altar",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description",
+      "locales": {
+        "en": {
+          "rootSpellId": 1304032,
+          "terminalSpellId": 1304032,
+          "descriptionReferenceChain": [
+            1304032
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 268,
+          "terminalTextSha256": "7ca2f6e20d65fbb2c0008f367672576e274530bfd5b086fe8193c3580f5afdab",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        },
+        "ru": {
+          "rootSpellId": 1304032,
+          "terminalSpellId": 1304032,
+          "descriptionReferenceChain": [
+            1304032
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 296,
+          "terminalTextSha256": "c5c3289b2b632e8e64aa4f02e66f930a0a752ae0be383fb93494cb9328762ca8",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        }
+      }
+    },
+    {
+      "spellId": 1292403,
+      "encounterSlug": "ulatek",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1292403,
+          "terminalSpellId": 1292403,
+          "descriptionReferenceChain": [
+            1292403
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 264,
+          "terminalTextSha256": "2b94b54695e729ad5bb2de31197e952e33d7a74ba9086cff005b4ccc22549215",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t2"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1292403,
+          "terminalSpellId": 1292403,
+          "descriptionReferenceChain": [
+            1292403
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 253,
+          "terminalTextSha256": "7896ae937497af476f3fa0a7d024739bacc8757c38032d5f7f9a2ae49a9e3497",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 2
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t2"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1301268,
+      "encounterSlug": "ulatek",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1301268,
+          "terminalSpellId": 1301268,
+          "descriptionReferenceChain": [
+            1301268
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 146,
+          "terminalTextSha256": "33c9eca0cce7e0c09dbfbea04ea4fcea0a92d281359cf3e6f5e26482d429ad9b",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1294685"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1308275s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1301268,
+          "terminalSpellId": 1301268,
+          "descriptionReferenceChain": [
+            1301268
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 163,
+          "terminalTextSha256": "b1d94899d969e513bb8389920de181571dd5c105a04791946b9d45f29e78c5e9",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1294685"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1308275s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1287265,
+      "encounterSlug": "ulatek",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1287265,
+          "terminalSpellId": 1287265,
+          "descriptionReferenceChain": [
+            1287265
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 226,
+          "terminalTextSha256": "eb9646d43766b35f55988618cc885623e9ce11c2a0a8966caa5346fb1a89a6fc",
+          "categories": [
+            "effect_value",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "effect_value": 1,
+            "radius": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1287265"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "radius",
+              "token": "$1287260A1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1287265,
+          "terminalSpellId": 1287265,
+          "descriptionReferenceChain": [
+            1287265
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 197,
+          "terminalTextSha256": "dc6bb367b5fa2e063e6a277ae3c11a5484efb231b0736582a6268dfbc63db358",
+          "categories": [
+            "effect_value",
+            "radius",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "effect_value": 1,
+            "radius": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1287265"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "radius",
+              "token": "$1287260A1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1286860,
+      "encounterSlug": "ulatek",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1286860,
+          "terminalSpellId": 1286860,
+          "descriptionReferenceChain": [
+            1286860
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 221,
+          "terminalTextSha256": "cffd9d2804e42c94bfdd5327e8e980a7bbaa2d86b17b19abd649622cd5740f8b",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 2
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1286885"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1299526"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1307367s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1286860,
+          "terminalSpellId": 1286860,
+          "descriptionReferenceChain": [
+            1286860
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 283,
+          "terminalTextSha256": "064eda0ccfea60ade9f98ccd74da269c51f6967348a3664cee07b6a53425f233",
+          "categories": [
+            "duration",
+            "effect_period",
+            "effect_value",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration",
+            "effect_period",
+            "effect_value"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "effect_period": 1,
+            "effect_value": 1,
+            "spell_name_reference": 2
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1286885"
+            },
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1299526"
+            },
+            {
+              "category": "effect_value",
+              "token": "$1307367s1"
+            },
+            {
+              "category": "effect_period",
+              "token": "$t1"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1290990,
+      "encounterSlug": "ulatek",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description_spell_names_duration",
+      "locales": {
+        "en": {
+          "rootSpellId": 1290990,
+          "terminalSpellId": 1290990,
+          "descriptionReferenceChain": [
+            1290990
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 105,
+          "terminalTextSha256": "3f8e0894be902f820fd7dd422f36c2b70b1a735ddcd7e166696f0ed8927b1c11",
+          "categories": [
+            "duration",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1289962"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1290990,
+          "terminalSpellId": 1290990,
+          "descriptionReferenceChain": [
+            1290990
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 138,
+          "terminalTextSha256": "1503f7dc1870f33a113ff165090484f18f484e9e008f8c085a661a0e6e9613d9",
+          "categories": [
+            "duration",
+            "spell_name_reference"
+          ],
+          "blockingCategories": [
+            "duration"
+          ],
+          "tokenCounts": {
+            "duration": 1,
+            "spell_name_reference": 1
+          },
+          "tokens": [
+            {
+              "category": "spell_name_reference",
+              "token": "$@spellname1289962"
+            },
+            {
+              "category": "duration",
+              "token": "$d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "spellId": 1300751,
+      "encounterSlug": "ulatek",
+      "publicationSafe": true,
+      "publicationSourceKind": "spell_description",
+      "locales": {
+        "en": {
+          "rootSpellId": 1300751,
+          "terminalSpellId": 1300751,
+          "descriptionReferenceChain": [
+            1300751
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 78,
+          "terminalTextSha256": "456cc5e5259743c9b60e5ddbb414e7d58c0eca3feee74a911ba43eccabec92c1",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        },
+        "ru": {
+          "rootSpellId": 1300751,
+          "terminalSpellId": 1300751,
+          "descriptionReferenceChain": [
+            1300751
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 67,
+          "terminalTextSha256": "21c6c005734140fb847fdb46a01da1aa70bafeb8177cc68dfcf29099c030d9e5",
+          "categories": [],
+          "blockingCategories": [],
+          "tokenCounts": {},
+          "tokens": []
+        }
+      }
+    },
+    {
+      "spellId": 1301510,
+      "encounterSlug": "ulatek",
+      "publicationSafe": false,
+      "publicationSourceKind": null,
+      "locales": {
+        "en": {
+          "rootSpellId": 1301510,
+          "terminalSpellId": 1301510,
+          "descriptionReferenceChain": [
+            1301510
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 222,
+          "terminalTextSha256": "4e865544d92cc669306df039dc53cf7e6b1fcbadd922fcb7af074ae2624b4ca8",
+          "categories": [
+            "effect_value",
+            "radius"
+          ],
+          "blockingCategories": [
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "effect_value": 2,
+            "radius": 2
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "radius",
+              "token": "$a1"
+            },
+            {
+              "category": "radius",
+              "token": "$a1"
+            }
+          ]
+        },
+        "ru": {
+          "rootSpellId": 1301510,
+          "terminalSpellId": 1301510,
+          "descriptionReferenceChain": [
+            1301510
+          ],
+          "referenceCycle": false,
+          "missingReferenceTarget": false,
+          "terminalTextLength": 225,
+          "terminalTextSha256": "661377889b6e9aa5dd463911532e6eb92a8e9c815147d49aeb9d40755b90e170",
+          "categories": [
+            "effect_value",
+            "radius"
+          ],
+          "blockingCategories": [
+            "effect_value",
+            "radius"
+          ],
+          "tokenCounts": {
+            "effect_value": 2,
+            "radius": 2
+          },
+          "tokens": [
+            {
+              "category": "effect_value",
+              "token": "$s1"
+            },
+            {
+              "category": "effect_value",
+              "token": "$s2"
+            },
+            {
+              "category": "radius",
+              "token": "$a1"
+            },
+            {
+              "category": "radius",
+              "token": "$a1"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

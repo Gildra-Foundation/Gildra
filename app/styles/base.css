@@ -20,7 +20,17 @@ body{
   background-image:radial-gradient(90% 34% at 50% 0%, #10141f 0%, var(--bg) 72%);
   color:var(--ink);
   font-size:13px;line-height:1.5;
-  -webkit-font-smoothing:antialiased;
+  -webkit-font-smoothing:auto;
+  -moz-osx-font-smoothing:auto;
+  font-synthesis:none;
+  text-rendering:optimizeLegibility;
+}
+img{image-rendering:auto}
+small{font-size:inherit}
+[data-platform-home]{text-rendering:optimizeLegibility}
+[data-platform-home] :where(h1,h2,h3,strong,b,small,p,span,a,button,input,label,li,time,em){
+  -webkit-font-smoothing:auto;
+  text-rendering:optimizeLegibility;
 }
 a{color:var(--blue-2);text-decoration:none}
 a:hover{color:#a8c6f5}

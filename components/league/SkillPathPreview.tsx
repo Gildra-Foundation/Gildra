@@ -77,7 +77,7 @@ export function SkillPathPreview({
             const ability = abilityBySlot.get(slot)!;
             return <div className={styles.skillPriorityStep} key={slot}>
               <div className={styles.skillPriorityIcon}>
-                {ability.iconUrl && <img src={ability.iconUrl} alt={ability.name} />}
+                {ability.iconUrl && <img src={ability.iconUrl} alt={ability.name} loading="lazy" decoding="async" fetchPriority="low" />}
                 <b>{slot}</b>
               </div>
               {index < path.priority.length - 1 && <ArrowRight aria-hidden="true" size={27} strokeWidth={2} />}
@@ -104,7 +104,7 @@ export function SkillPathPreview({
               const selectedLevels = new Set(path.levels[slot] ?? []);
               return <div className={styles.skillGridRow} role="row" key={slot}>
                 <div className={styles.skillAbilityLabel} role="rowheader">
-                  {ability.iconUrl && <img src={ability.iconUrl} alt="" />}
+                  {ability.iconUrl && <img src={ability.iconUrl} alt="" loading="lazy" decoding="async" fetchPriority="low" />}
                   <span>{ability.name}</span>
                   <b>{slot}</b>
                 </div>
@@ -122,7 +122,7 @@ export function SkillPathPreview({
             })}
             <div className={`${styles.skillGridRow} ${styles.skillPassiveRow}`} role="row">
               <div className={styles.skillAbilityLabel} role="rowheader">
-                {passive.iconUrl && <img src={passive.iconUrl} alt="" />}
+                {passive.iconUrl && <img src={passive.iconUrl} alt="" loading="lazy" decoding="async" fetchPriority="low" />}
                 <span>{passive.name}</span>
                 <b>P</b>
               </div>

@@ -1,0 +1,3586 @@
+{
+  "schemaVersion": 1,
+  "scope": "venomous-abyss-live-overview-ability-descriptions",
+  "gameBuild": "12.1.0.69814",
+  "lastVerifiedAt": "2026-09-13T09:30:54.922Z",
+  "method": "Exact ID selection from build-pinned Spell and JournalEncounterSection DB2 exports in EN and RU. Raw text is represented by hashes, lengths, token inventories, and classifications; no unresolved client tokens are published as prose.",
+  "publicationPolicy": "An ability description is publication-safe only when exact-build EN and RU text is non-empty and contains no unresolved $-tokens. A full-string $@spelldesc<ID> reference may be followed recursively only when both locales resolve through the same exact ID chain to token-free text in the same pinned Spell export. In-text $@spellname<ID> tokens may be replaced only through the same exact ID sequence in build-pinned EN/RU SpellName exports. Current-spell $d may be formatted only from an exact DifficultyID=0 SpellMisc.DurationIndex and matching SpellDuration row, with the same duration evidence for both locales. Vitriolic Stasis spell 1284588 is the sole effect-value allowlist: exact Effect=6/Aura=87/BasePoints=-99 metadata and 30000 ms duration must agree with a source-linked rendered Adventure Guide fragment for the same spell ID before the locale-native EN/RU templates may render 99% and 30 sec. The final result must contain no other client token or WoW markup. A directly linked Journal BodyText pair is otherwise eligible when both locale bodies are token-free; empty Journal bodies cannot substitute for descriptions.",
+  "limitations": [
+    "DB2 Spell descriptions require client-side token and effect-value resolution before they can be displayed as player-facing prose.",
+    "Only full-string $@spelldesc<ID> references, exact-ID spell names, durations backed by SpellMisc plus SpellDuration, and the one explicitly cross-rendered Vitriolic Stasis static modifier are resolved here; all other effect values, periods, radii, difficulty conditionals, and grammar tokens remain unresolved and unpublished.",
+    "Most selected JournalEncounterSection rows contain titles and linkage but no player-facing BodyText; only exact paired non-empty bodies are eligible.",
+    "This audit does not prove tactics, mechanic tags, role assignments, timings, difficulty deltas, or effect values."
+  ],
+  "sources": [
+    {
+      "kind": "spell_en",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+      "sha256": "33de201115bf105308094aaff270b0a2af59595b1e2f0d0803f6bb7fd5357c8e",
+      "locale": "en",
+      "table": "Spell"
+    },
+    {
+      "kind": "spell_ru",
+      "url": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
+      "sha256": "ac76bf4d60786aa21a4582a6081eb5436c0c1629e0943b279325f35b96876b2d",
+      "locale": "ru",
+      "table": "Spell"
+    },
+    {
+      "kind": "journal_section_en",
+      "url": "https://wago.tools/db2/JournalEncounterSection/csv?build=12.1.0.69814&locale=enUS",
+      "sha256": "749743a68e984821ebcaf4c2619fc89fafb47217d59fd9e6299d8e0ccd27cf18",
+      "locale": "en",
+      "table": "JournalEncounterSection"
+    },
+    {
+      "kind": "journal_section_ru",
+      "url": "https://wago.tools/db2/JournalEncounterSection/csv?build=12.1.0.69814&locale=ruRU",
+      "sha256": "dfe7a41e9d066ae4002cbae51ee5907a58fd72bccddd899f1e077a00f4db3bd7",
+      "locale": "ru",
+      "table": "JournalEncounterSection"
+    },
+    {
+      "kind": "spell_name_en",
+      "url": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
+      "sha256": "99629cf0bc20d889d80df64d9be7dbd9be1498f958055e6f74de83be33927bc5",
+      "locale": "en",
+      "table": "SpellName"
+    },
+    {
+      "kind": "spell_name_ru",
+      "url": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
+      "sha256": "082c3ead14f49ab8c965fc651588109e6a10c891899c584977589ed8e98b4f2c",
+      "locale": "ru",
+      "table": "SpellName"
+    },
+    {
+      "kind": "spell_misc_en",
+      "url": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
+      "sha256": "83e46ad55ed2cf1245a2358ecfb72889a434b1df5e1138b41208f4e134b65781",
+      "locale": "en",
+      "table": "SpellMisc"
+    },
+    {
+      "kind": "spell_duration_en",
+      "url": "https://wago.tools/db2/SpellDuration/csv?build=12.1.0.69814&locale=enUS",
+      "sha256": "ba8dd9dfdbd9866523db2c5d467af3849ead709d7df2e9322829d7751b02b2c5",
+      "locale": "en",
+      "table": "SpellDuration"
+    },
+    {
+      "kind": "rendered_guide_entombed_sentinels_en",
+      "url": "https://warcraft.wiki.gg/wiki/Entombed_Sentinels",
+      "hashMode": "normalized_ability_fragment",
+      "sha256": "2ae35ac11bdc6e92e71362866cc2162efeaff090e77676a7cdf8663761187ac4",
+      "sourcePriority": 3,
+      "locale": "en",
+      "table": "RenderedAdventureGuide"
+    }
+  ],
+  "summary": {
+    "expectedAbilities": 37,
+    "publicationSafeAbilities": 12,
+    "withheldAbilities": 25,
+    "localeClassificationMismatches": 0,
+    "locales": {
+      "en": {
+        "spellRows": 37,
+        "descriptionClassifications": {
+          "publication_safe": 7,
+          "reference_only": 6,
+          "tokenized": 24
+        },
+        "auraDescriptionClassifications": {
+          "empty": 25,
+          "publication_safe": 1,
+          "reference_only": 1,
+          "tokenized": 10
+        },
+        "journalSectionRows": 68,
+        "journalUniqueSpells": 31,
+        "journalBodyClassifications": {
+          "empty": 64,
+          "tokenized": 4
+        },
+        "journalTitleClassifications": {
+          "generic": 66,
+          "localized_name": 2
+        },
+        "journalDifficultyMasks": {
+          "0": 24,
+          "-1": 44
+        }
+      },
+      "ru": {
+        "spellRows": 37,
+        "descriptionClassifications": {
+          "publication_safe": 7,
+          "reference_only": 6,
+          "tokenized": 24
+        },
+        "auraDescriptionClassifications": {
+          "empty": 25,
+          "publication_safe": 1,
+          "reference_only": 1,
+          "tokenized": 10
+        },
+        "journalSectionRows": 68,
+        "journalUniqueSpells": 31,
+        "journalBodyClassifications": {
+          "empty": 64,
+          "tokenized": 4
+        },
+        "journalTitleClassifications": {
+          "generic": 66,
+          "localized_name": 2
+        },
+        "journalDifficultyMasks": {
+          "0": 24,
+          "-1": 44
+        }
+      }
+    }
+  },
+  "abilities": [
+    {
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "journalEncounterId": 2888,
+      "spellId": 1284032,
+      "names": {
+        "en": "Soulcoil Well",
+        "ru": "Колодец душителей душ"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 277,
+            "sha256": "c7c8115ecdefb18efc44d24b66e2d1a18276f32dfc7d78372aaa010bcb41cc34",
+            "tokens": [
+              "$@spellname1288772",
+              "$@spellname1289919",
+              "$@spellname1290361"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35983,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a3148194e66f12eaec2d01b9f5bb01c56ce4e2ff9acd129a94ed6c9004739e96",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36049,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a3148194e66f12eaec2d01b9f5bb01c56ce4e2ff9acd129a94ed6c9004739e96",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36546,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a3148194e66f12eaec2d01b9f5bb01c56ce4e2ff9acd129a94ed6c9004739e96",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36794,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a3148194e66f12eaec2d01b9f5bb01c56ce4e2ff9acd129a94ed6c9004739e96",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36798,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a3148194e66f12eaec2d01b9f5bb01c56ce4e2ff9acd129a94ed6c9004739e96",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 334,
+            "sha256": "19fac0587d13f515c370dc0b5efe488d0d21f14dbffe75a0ec5d9ad70d198cad",
+            "tokens": [
+              "$@spellname1288772",
+              "$@spellname1289919",
+              "$@spellname1290361"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35983,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "16fd29aa4992fd9aab1e6e89f121b0130a26d1eed18b6228b56f4b3ec2635997",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36049,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "16fd29aa4992fd9aab1e6e89f121b0130a26d1eed18b6228b56f4b3ec2635997",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36546,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "16fd29aa4992fd9aab1e6e89f121b0130a26d1eed18b6228b56f4b3ec2635997",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36794,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "16fd29aa4992fd9aab1e6e89f121b0130a26d1eed18b6228b56f4b3ec2635997",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36798,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "16fd29aa4992fd9aab1e6e89f121b0130a26d1eed18b6228b56f4b3ec2635997",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "journalEncounterId": 2888,
+      "spellId": 1288772,
+      "names": {
+        "en": "Soulcoil Rite",
+        "ru": "Обряд душителя душ"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "3fabf6d4c7287668e62d3d2e1542eca227161fdbf4f877fa0fef5bc55bb089a0",
+            "tokens": [
+              "$@spelldesc1284033"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 42,
+            "sha256": "09cac8f471e5beeebdf252d99c423c138fa63f9a49488f48a5cb321aef4751ca",
+            "tokens": [
+              "$s2",
+              "$t2"
+            ]
+          },
+          "journalSections": []
+        },
+        "ru": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "3fabf6d4c7287668e62d3d2e1542eca227161fdbf4f877fa0fef5bc55bb089a0",
+            "tokens": [
+              "$@spelldesc1284033"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 44,
+            "sha256": "93dfe336fea8ad09aa1f4ae05c5e2e75c23831dcb65036096f19ba7dbfe42029",
+            "tokens": [
+              "$s2",
+              "$t2"
+            ]
+          },
+          "journalSections": []
+        }
+      }
+    },
+    {
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "journalEncounterId": 2888,
+      "spellId": 1289919,
+      "names": {
+        "en": "Restless Amani",
+        "ru": "Неупокоенный тролль из племени Амани"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description_spell_names",
+        "sectionId": null,
+        "descriptions": {
+          "en": "Ancient spirits return to their corpses, and make their way towards the Soulcoil Well.",
+          "ru": "Древние духи возвращаются к своим трупам и пытаются нырнуть в \"Колодец душителей душ\"."
+        },
+        "spellNameResolutions": {
+          "en": [
+            {
+              "token": "$@spellname1284032",
+              "spellId": 1284032,
+              "name": "Soulcoil Well",
+              "nameSha256": "27c10d4cd1487783a4a562d75eacb3d184d1ee8ff97d2f6672a644f4b7c27fc8"
+            }
+          ],
+          "ru": [
+            {
+              "token": "$@spellname1284032",
+              "spellId": 1284032,
+              "name": "Колодец душителей душ",
+              "nameSha256": "9d191d20555caa86b6aa551e757e932041639061536728f31234c10a2a355f33"
+            }
+          ]
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
+          "spellNameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
+          "spellNameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 91,
+            "sha256": "e0d88ad5feb325c1fb00d5e9c6dece154aa89a71e3c4c31a36cb49bbf3d69e46",
+            "tokens": [
+              "$@spellname1284032"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": []
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 83,
+            "sha256": "51fda0e792a8427b869dec2945f6dc3aaf7705a2210c8f02ee20793262dc146b",
+            "tokens": [
+              "$@spellname1284032"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": []
+        }
+      }
+    },
+    {
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "journalEncounterId": 2888,
+      "spellId": 1289683,
+      "names": {
+        "en": "Ritual of Awakening",
+        "ru": "Ритуал пробуждения"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description",
+        "sectionId": null,
+        "descriptions": {
+          "en": "Upon reaching 50% health, a loyal Soulcoiler, Summoner Jawae, activates the Tethers of Awakening to protect Nek'zali from harm. Severing all the tethers causes her to return.",
+          "ru": "Когда уровень здоровья достигает 50%, преданная душительница душ Джаваэ активирует нити пробуждения, чтобы защитить Нек'зали. Она возвращается после рассечения всех нитей."
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 174,
+            "sha256": "96e950e79722eb281f22d9fa6a43660a11b58d7df7c7912c44cddc6e85e3a5b4",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": []
+        },
+        "ru": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 171,
+            "sha256": "8aad9aff58ff88f0632e57e6deecec0a9399ab0feb88a1fb933b2dd2a441889c",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": []
+        }
+      }
+    },
+    {
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "journalEncounterId": 2888,
+      "spellId": 1289696,
+      "names": {
+        "en": "Tether of Awakening",
+        "ru": "Нить пробуждения"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description",
+        "sectionId": null,
+        "descriptions": {
+          "en": "Tethered to the Soulcoil Well, gaining immunity to all damage.",
+          "ru": "Связь с колодцем душителей душ дает невосприимчивость к урону."
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 62,
+            "sha256": "6a91d5718f3ac5e2bfd28656bc2df1d35385cba1758d3939d9254e48fcd71aa7",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 37,
+            "sha256": "3237d253961e94084df4f8bbb4b2e29c07177f9e98b3db6fba92de3bd6c9a171",
+            "tokens": [
+              "$s3"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 36577,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "f39889db7ae71469758328f1bda22751e5441c92df0544a384afdc5cac2ed935",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 62,
+            "sha256": "f760bd94cf728030e3e087d0812ddcfa7f636eab25b0939456940e8926a06c62",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 47,
+            "sha256": "83506304996605e30def7aa31ca1f3e82b6333a565e6c4af0d54521736ad7f51",
+            "tokens": [
+              "$s3"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 36577,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "dc41f0e8327d088c26d2359795a7efe7cdb401fecf20da7d549f198e9695a18f",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "nekzali-the-soulcoiler",
+      "journalEncounterId": 2888,
+      "spellId": 1290003,
+      "names": {
+        "en": "Uncoiling",
+        "ru": "Расплетение"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 180,
+            "sha256": "0c977b0897de1422224af81110f7e032fd30c583af5dc9930440dec9af13d0a7",
+            "tokens": [
+              "$@spellname1284032"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35787,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "6f31dac13fc85b1699a6a3896f9434c595808d51dcb0d133392f7408ae0fa5a2",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 206,
+            "sha256": "d1ea0fccb9ea23480feaacb4f5bcfdbd75fc73b73ecc9b069446c4313cb151d8",
+            "tokens": [
+              "$@spellname1284032"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35787,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "4cbda2f7a24ea711a56271bb207733c16cb5a1d6e8e0104172241eb6d5bfbccc",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "entombed-sentinels",
+      "journalEncounterId": 2874,
+      "spellId": 1284588,
+      "names": {
+        "en": "Vitriolic Stasis",
+        "ru": "Агрессивный стазис"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description_static_modifier_duration",
+        "sectionId": null,
+        "descriptions": {
+          "en": "Upon reaching 100 energy, both Sentinels rush together and begin to balance their fluid levels over 30 sec. This process reduces their damage taken by 99% and restores health to the weaker Sentinel until it matches the other.",
+          "ru": "Накопив 100 ед. энергии, оба часовых бегут друг к другу, чтобы в течение 30 сек. уравновесить уровень жидкостей. В процессе они получают на 99% меньше урона, а более поврежденный часовой восстанавливает здоровье до уровня менее поврежденного."
+        },
+        "durationResolutions": {
+          "en": [
+            {
+              "token": "$d",
+              "spellId": 1284588,
+              "durationIndex": 9,
+              "durationMs": 30000,
+              "formatted": "30 sec"
+            }
+          ],
+          "ru": [
+            {
+              "token": "$d",
+              "spellId": 1284588,
+              "durationIndex": 9,
+              "durationMs": 30000,
+              "formatted": "30 сек"
+            }
+          ]
+        },
+        "effectResolutions": {
+          "en": [
+            {
+              "token": "$s1",
+              "spellId": 1284588,
+              "effectIndex": 0,
+              "effect": 6,
+              "effectAura": 87,
+              "rawBasePoints": -99,
+              "renderedValue": 99
+            }
+          ],
+          "ru": [
+            {
+              "token": "$s1",
+              "spellId": 1284588,
+              "effectIndex": 0,
+              "effect": 6,
+              "effectAura": 87,
+              "rawBasePoints": -99,
+              "renderedValue": 99
+            }
+          ]
+        },
+        "renderedGuideEvidence": {
+          "spellId": 1284588,
+          "directSpellLink": true,
+          "normalizedFragmentSha256": "2ae35ac11bdc6e92e71362866cc2162efeaff090e77676a7cdf8663761187ac4",
+          "durationMs": 30000,
+          "reductionPercent": 99
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
+          "spellMisc": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
+          "spellDuration": "https://wago.tools/db2/SpellDuration/csv?build=12.1.0.69814&locale=enUS",
+          "spellEffect": "https://wago.tools/db2/SpellEffect/csv?build=12.1.0.69814&locale=enUS",
+          "renderedGuide": "https://warcraft.wiki.gg/wiki/Entombed_Sentinels"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 222,
+            "sha256": "5033f823dfbb9a463966049fe20f43745a8f1eb3412bdfe7ecb05a98de48304a",
+            "tokens": [
+              "$d",
+              "$s1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 29,
+            "sha256": "04c0506eea8982a810d2af274124715112492da117e4c153a751ed2214b3b50c",
+            "tokens": [
+              "$s1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 34976,
+              "difficultyMask": -1,
+              "titleClassification": "localized_name",
+              "titleSha256": "20e7ac2e7943cd8feec4c55715c0da4bc6f95c78a851d1caea49f9aca9f7ff53",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 239,
+            "sha256": "cdce3a2f61bb771bb05845c85dd8049004f61f001a2f9af6495203e44357c936",
+            "tokens": [
+              "$d",
+              "$s1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 34,
+            "sha256": "ae72c5a0e2b3c86d111432a99edbceb8d8e818f7cf718409bb2bf91d118e5006",
+            "tokens": [
+              "$s1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 34976,
+              "difficultyMask": -1,
+              "titleClassification": "localized_name",
+              "titleSha256": "332a26fe684f4e99de91218229f354c1beb1fc718442fe10b6dfa0f831b67b42",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "entombed-sentinels",
+      "journalEncounterId": 2874,
+      "spellId": 1284590,
+      "names": {
+        "en": "Helical Toxins",
+        "ru": "Спиральный токсин"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 321,
+            "sha256": "99a164b4b116c9db676cc7a51d1cecfe2dafcc259393fd7c0e728c926e137e14",
+            "tokens": [
+              "$@spellname1284590",
+              "$d",
+              "$s1",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 170,
+            "sha256": "bf1036558c30029d63264e0fa6c8305b53fee1b140a53c1d8178c9ec5059f50c",
+            "tokens": [
+              "$s1",
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 34983,
+              "difficultyMask": -1,
+              "titleClassification": "localized_name",
+              "titleSha256": "eac7e1addf2467256ae6660b325a42eacef6004b3c91c77b71ba4a5f25728c11",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 301,
+            "sha256": "417c19c136dd1bd713b0900cecfcbacb180b561648fc6248b83a499589102578",
+            "tokens": [
+              "$@spellname1284590",
+              "$d",
+              "$s1",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 182,
+            "sha256": "c17e33b89499e5aaf5050042bd95e0441aa372322e499b9b0d9c44a4b82ac2e9",
+            "tokens": [
+              "$s1",
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 34983,
+              "difficultyMask": -1,
+              "titleClassification": "localized_name",
+              "titleSha256": "18a03d3c2b2ef36ebd568a55902b93fcb694cfa3180c7dc6798062c4c1e52f9c",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-lost-explorers",
+      "journalEncounterId": 2894,
+      "spellId": 1295451,
+      "names": {
+        "en": "Dark Whispers",
+        "ru": "Темный шепот"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description",
+        "sectionId": null,
+        "descriptions": {
+          "en": "Mor'zahi's dark whispers compel the target to follow his commands.",
+          "ru": "Темный шепот Мор'захи принуждает цель выполнять его приказы."
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 66,
+            "sha256": "585b765d165d89dbc6da9df756f5f94d8ade65e9d84b02b8d7c1757ba2168af3",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "publication_safe",
+            "length": 30,
+            "sha256": "bde7353b28d8afe0bed0aa2a107c6f3f16a19f59e2db2e3c31b8c4467337ff9a",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36083,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "25c8db34cdfc0e442467508dd5700235a902e6d8d7b4be653a058ae5776ef38f",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 60,
+            "sha256": "8031c759a40124f1cee85d848d7494d176adccf41f654e98e226df90623b32ad",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "publication_safe",
+            "length": 21,
+            "sha256": "6a78159e7bf7483758e10843936fc0083e9076137a39670567b82acdeaa85f84",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36083,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "85314135067458b314fce5c5ea7af489a81c1b16dceb09100f4610cb50617b25",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-lost-explorers",
+      "journalEncounterId": 2894,
+      "spellId": 1297024,
+      "names": {
+        "en": "Mor'zahi's Command",
+        "ru": "Приказ Мор'захи"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description_reference",
+        "sectionId": null,
+        "referencedSpellIds": [
+          1297024,
+          1297022
+        ],
+        "descriptions": {
+          "en": "Mor'zahi violently retakes control of his target, granting them additional abilities.",
+          "ru": "Мор'захи силой возвращает контроль над целью и дает ей дополнительные способности."
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "caf30960f3a1b8bd462d17d7427c018c34cfdedb32b5170b7a84761c1311d9bb",
+            "tokens": [
+              "$@spelldesc1297022"
+            ]
+          },
+          "auraDescription": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "2a610338087363c2fac5dcfae5d91caa79a672917fa3f4f1d92a458436650501",
+            "tokens": [
+              "$@spellaura1297022"
+            ]
+          },
+          "journalSections": []
+        },
+        "ru": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "caf30960f3a1b8bd462d17d7427c018c34cfdedb32b5170b7a84761c1311d9bb",
+            "tokens": [
+              "$@spelldesc1297022"
+            ]
+          },
+          "auraDescription": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "2a610338087363c2fac5dcfae5d91caa79a672917fa3f4f1d92a458436650501",
+            "tokens": [
+              "$@spellaura1297022"
+            ]
+          },
+          "journalSections": []
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-lost-explorers",
+      "journalEncounterId": 2894,
+      "spellId": 1292779,
+      "names": {
+        "en": "Final Ascension",
+        "ru": "Последнее вознесение"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "d728266e4ae0afea80d7c05f1e010b2245bb3dcf72c3b5dd990b3d2b94f83a33",
+            "tokens": [
+              "$@spelldesc1292780"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": []
+        },
+        "ru": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "d728266e4ae0afea80d7c05f1e010b2245bb3dcf72c3b5dd990b3d2b94f83a33",
+            "tokens": [
+              "$@spelldesc1292780"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": []
+        }
+      }
+    },
+    {
+      "encounterSlug": "vashnik-the-malignant",
+      "journalEncounterId": 2882,
+      "spellId": 1283164,
+      "names": {
+        "en": "Imbibe",
+        "ru": "Питье"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description_spell_names",
+        "sectionId": null,
+        "descriptions": {
+          "en": "Vashnik draws power from two nearby fountains, infusing himself with their power and gaining an application of Toxic Vapor.\r\n\r\nEach fountain bursts forth in an expulsion of toxins and creates living venoms that crawl toward the Malignant Cavity.",
+          "ru": "Вашник черпает энергию из двух находящихся поблизости фонтанов, вбирая их силу и получая эффект \"Отравляющие испарения\".\r\n\r\nКаждый фонтан взрывается брызгами токсинов и создает живой яд, который начинает двигаться по направлению к тлетворному провалу."
+        },
+        "spellNameResolutions": {
+          "en": [
+            {
+              "token": "$@spellname1284561",
+              "spellId": 1284561,
+              "name": "Toxic Vapor",
+              "nameSha256": "b3d5220834fdaf11e32c09d60d2111c926242eccce1152b7cb23c6e4d38db79a"
+            }
+          ],
+          "ru": [
+            {
+              "token": "$@spellname1284561",
+              "spellId": 1284561,
+              "name": "Отравляющие испарения",
+              "nameSha256": "9d12abc92f84941311bd2604e7d875e57ab806bb5af31c45678f3a2395f4c8fb"
+            }
+          ]
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
+          "spellNameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
+          "spellNameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 252,
+            "sha256": "936c20f075358e98d497a261e268bdb7998b701157350f9d241b0e233cc208ee",
+            "tokens": [
+              "$@spellname1284561"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35941,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "90fd176c35aa18f3d2a1f08a42aecc5d3739e7f811d869ddecb381a59e002b64",
+              "bodyClassification": "tokenized",
+              "bodyLength": 96,
+              "bodySha256": "9f0dc662c6d6b4d00f5097518072ee4cf16928065becba8513b6a57068e168ad"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 248,
+            "sha256": "3e9a049485bf3cf2b27da6cee63f58325d244db99e4f614b0acb6f25a2fd9bde",
+            "tokens": [
+              "$@spellname1284561"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35941,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c383090b8b04500bddc702f6b9fb2de05741b00674ae18a134fefa0c50cd2222",
+              "bodyClassification": "tokenized",
+              "bodyLength": 89,
+              "bodySha256": "f2ed71bc8bcc1e59efc02511153a36343bbe0efc2c4f2224b8f6ad6b828e4dbc"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "vashnik-the-malignant",
+      "journalEncounterId": 2882,
+      "spellId": 1280189,
+      "names": {
+        "en": "Malignant Burst",
+        "ru": "Тлетворный взрыв"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 177,
+            "sha256": "212362034ed4c02c3b4da82608375b97538d2195c2d55c8b302a06173f7ce48c",
+            "tokens": [
+              "$d",
+              "$s1",
+              "$s2",
+              "$t2"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 43,
+            "sha256": "d82fe9956da40d0382146b0a0ae379f6b64fb96619fb4d4fd99bef071576311c",
+            "tokens": [
+              "$s2",
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 35943,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a2d0ac3ce4c6a4c9cdd534592f25ee5b74aad2694637b17d8b1cf9d98d43d3e4",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 179,
+            "sha256": "22187282054a39d26fc4b89f14115b5a00cb6afab4cae4cff79103f8acd9b0e0",
+            "tokens": [
+              "$d",
+              "$s1",
+              "$s2",
+              "$t2"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 43,
+            "sha256": "4b594628f2626c55c5b082b64bdf618557985b19e08d516d06c0a024527476db",
+            "tokens": [
+              "$s2",
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 35943,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "e8d2a49336f70c9c95bdc394f5046526daee3b8dc86004f2858deea24cf3766a",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "sszorak",
+      "journalEncounterId": 2871,
+      "spellId": 1277025,
+      "names": {
+        "en": "Apex Predator",
+        "ru": "Сверххищник"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description",
+        "sectionId": null,
+        "descriptions": {
+          "en": "Sszorak executes multiple attacks in rapid succession. Taunt effects can change his current target while casting.",
+          "ru": "Ссзорак применяет быструю серию атак. Эффекты провокации могут изменить его текущую цель во время применения."
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 113,
+            "sha256": "4696ebf5759cc11dd91797bf6e614d8b987fd8ed2f644c73dfc9b4394cdd4194",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 37046,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "94d4de1c59fefd3f2c3a633b703003b8c729f94dbccfae96836c73ba9ebb39f9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37271,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "94d4de1c59fefd3f2c3a633b703003b8c729f94dbccfae96836c73ba9ebb39f9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 109,
+            "sha256": "d755b2a6d208e60059389c242891c667f62fa5cf8c4c8c692186b8e0b41a9e75",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 37046,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "3af936497d4170a615a7000ea20196dd519bb06d7b21bfb92f392594637ed9cb",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37271,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "3af936497d4170a615a7000ea20196dd519bb06d7b21bfb92f392594637ed9cb",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "sszorak",
+      "journalEncounterId": 2871,
+      "spellId": 1305959,
+      "names": {
+        "en": "Venomous Surge",
+        "ru": "Ядовитый поток"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 289,
+            "sha256": "946db6e35310f64171e4bee6e987e683b235f080e077d1f4f58c723fa306c072",
+            "tokens": [
+              "$@spellname1287008"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35419,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "4f865f58714a21cb9b70c7098440216176ca4d6340e2245956e33c8837fc8d3d",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36606,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "4f865f58714a21cb9b70c7098440216176ca4d6340e2245956e33c8837fc8d3d",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 311,
+            "sha256": "e1fe95d58eb8fc1820c087fa7d8d3cf38aa8f4a96bde419686980e4a236174da",
+            "tokens": [
+              "$@spellname1287008"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35419,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "f306b344d85fe4e0d117d423164fdb850e2c434945adcc67d5c88abc6c99fc8b",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36606,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "f306b344d85fe4e0d117d423164fdb850e2c434945adcc67d5c88abc6c99fc8b",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "sszorak",
+      "journalEncounterId": 2871,
+      "spellId": 1285419,
+      "names": {
+        "en": "Raging Crosswinds",
+        "ru": "Яростные завихрения"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 339,
+            "sha256": "ef7e31a7febf490775984f55f35fa7ff803181d57be6374ce4e1f892f4126357",
+            "tokens": [
+              "$@spellname1285447"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35415,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a40f4ebe84d216cb0300edafdfbeebf4a30bbf231a3971b12b24f2cd8b766d86",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 347,
+            "sha256": "bb50460d8409cc185d093e505ba9b356e63c5dd14f99c920db90fc25c50cfb3d",
+            "tokens": [
+              "$@spellname1285447"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35415,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "f7d0ae2ccbc8ee71baa71df11c7f446a896279fab8a0d3d2ec3740620f319687",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "sszorak",
+      "journalEncounterId": 2871,
+      "spellId": 1285732,
+      "names": {
+        "en": "Howling Maelstrom",
+        "ru": "Воющий вихрь"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description",
+        "sectionId": null,
+        "descriptions": {
+          "en": "The Altar of the Six Winds unleashes a succession of gales across the arena. Each gale pushes players in its indicated direction.",
+          "ru": "Алтарь Шести Ветров запускает по полю боя несколько ураганов. Каждый ураган отталкивает игроков в указанном направлении."
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 129,
+            "sha256": "17c55a9fbf2507306e840a882f01600c6c6a2f5160e6c37b240885761e26004a",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35421,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "cd53a32d1959bf0ded6a7684f61915d336b818a5ee08e92030a137c3f1f74626",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 120,
+            "sha256": "33402ef6eb65b007864d0386f10bfd6b0e36b51b761c818e5bce0e8b74d4d745",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35421,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "b34733b7d79ac44599bc732a51baaf35f2ec9958d5df57604553e41a6c54cbbd",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-twin-fangs",
+      "journalEncounterId": 2887,
+      "spellId": 1290336,
+      "names": {
+        "en": "Eternal Venom",
+        "ru": "Вечный яд"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 371,
+            "sha256": "9023b86cda2cfd83044ee01fe2ee252cfda50516ee9fb6464699d2107dfc4f96",
+            "tokens": [
+              "$s2",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 264,
+            "sha256": "d2d30a4e098e378ce26ac2a6d5842ad8b2a6975d66794ecbcfc4a1118f732954",
+            "tokens": [
+              "$s2",
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 35638,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "a40f4ebe84d216cb0300edafdfbeebf4a30bbf231a3971b12b24f2cd8b766d86",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36855,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "a40f4ebe84d216cb0300edafdfbeebf4a30bbf231a3971b12b24f2cd8b766d86",
+              "bodyClassification": "tokenized",
+              "bodyLength": 188,
+              "bodySha256": "d96babba53c43bc998d5e05a042a30e164cdd85b3f37f18c51d34edb72fa533f"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 396,
+            "sha256": "bacd98469aa3bfd3dbfb98ce58a847e88063f6870e6da6092920e48beb94abb5",
+            "tokens": [
+              "$l",
+              "$s2",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 289,
+            "sha256": "046a67047ee93cd434ff49b83d6c7014ef8e390a4dfcbb368b37529e95a66062",
+            "tokens": [
+              "$l",
+              "$s2",
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 35638,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "f7d0ae2ccbc8ee71baa71df11c7f446a896279fab8a0d3d2ec3740620f319687",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36855,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "f7d0ae2ccbc8ee71baa71df11c7f446a896279fab8a0d3d2ec3740620f319687",
+              "bodyClassification": "tokenized",
+              "bodyLength": 188,
+              "bodySha256": "9460b71b3d66563c1c328ed09e00a9608762d39975cdfa283b7142dca3115f5b"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-twin-fangs",
+      "journalEncounterId": 2887,
+      "spellId": 1289192,
+      "names": {
+        "en": "Caustic Deluge",
+        "ru": "Едкое наводнение"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 302,
+            "sha256": "0a3c348f28f1fab7ceaed081bae2d0ec838f05cd97e444d8d4dd159bdac43683",
+            "tokens": [
+              "$@spellname1289993",
+              "$@spellname1290336",
+              "$d",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 49,
+            "sha256": "98165505d5a5642f2f2a21546d36989ad65f8816b8be4d2683c363f893c68044",
+            "tokens": [
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 35619,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3552606745838794d460250a0cb62827f5019125c6b3400c86037b47f3145ac5",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 321,
+            "sha256": "fdf8781ebdd45962bcc49c1b85d112066dfc9091507088760b6ab991bee1a65a",
+            "tokens": [
+              "$@spellname1289993",
+              "$@spellname1290336",
+              "$d",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 50,
+            "sha256": "da87f98d3214ee81d83b4042b02f2cd4b8a89a4e4cfb4c4d3400e2559f992ee4",
+            "tokens": [
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 35619,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "5c93be47712f3bd542a897edf73e69953403f2b55143162e6382527df95d81ba",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-twin-fangs",
+      "journalEncounterId": 2887,
+      "spellId": 1289993,
+      "names": {
+        "en": "Caustic Globule",
+        "ru": "Едкий комок"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 193,
+            "sha256": "701803fcd37c8fc890015557406da9111b627dbcf2cb863730561ac7835e250a",
+            "tokens": [
+              "$@spellname1290336",
+              "$d"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35620,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a3148194e66f12eaec2d01b9f5bb01c56ce4e2ff9acd129a94ed6c9004739e96",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 202,
+            "sha256": "d6e0bf9cdb99894c5db44e3569ab7a5c6265b687d077c823d69de263c15ab78e",
+            "tokens": [
+              "$@spellname1290336",
+              "$d"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35620,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "16fd29aa4992fd9aab1e6e89f121b0130a26d1eed18b6228b56f4b3ec2635997",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-twin-fangs",
+      "journalEncounterId": 2887,
+      "spellId": 1291404,
+      "names": {
+        "en": "Venomous Emergence",
+        "ru": "Ядовитое появление"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 131,
+            "sha256": "45aa8369d625a99d2f2dea1b54e2f0aee07b8202a02f7dbd234b83f892c655ee",
+            "tokens": [
+              "$@spellname1290336"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35643,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "cd53a32d1959bf0ded6a7684f61915d336b818a5ee08e92030a137c3f1f74626",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 136,
+            "sha256": "8fad2179df2a14a7f2b7672467ea2f51ba33379df1fd517020fcb83bc238aea7",
+            "tokens": [
+              "$@spellname1290336"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35643,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "b34733b7d79ac44599bc732a51baaf35f2ec9958d5df57604553e41a6c54cbbd",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-twin-fangs",
+      "journalEncounterId": 2887,
+      "spellId": 1290516,
+      "names": {
+        "en": "Ravenous Feast",
+        "ru": "Яростное пожирание"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 444,
+            "sha256": "481887647ac53c264de5ecd9fc6c12e098c43c127c0b214cc18a88a1d466c388",
+            "tokens": [
+              "$@spellname1290336",
+              "$@spellname1290516",
+              "$@spellname1310096",
+              "$Lapplication",
+              "$Ltarget",
+              "$s1",
+              "$s2",
+              "$s3"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35637,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "082b83180bde49aee86302601aeb7a56dc3f266697c41ece452f6f40fef12fc6",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36405,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "082b83180bde49aee86302601aeb7a56dc3f266697c41ece452f6f40fef12fc6",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36987,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "082b83180bde49aee86302601aeb7a56dc3f266697c41ece452f6f40fef12fc6",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 486,
+            "sha256": "75ac9a310884a63a469fca5d44913b0ee29b5cadab34079348e80483076fc051",
+            "tokens": [
+              "$@spellname1290336",
+              "$@spellname1290516",
+              "$@spellname1310096",
+              "$L",
+              "$l",
+              "$s1",
+              "$s2",
+              "$s3"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35637,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "377335732067a5b55fc919fdd22b1459d758428d0ed641c15d4c623135d776cb",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36405,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "377335732067a5b55fc919fdd22b1459d758428d0ed641c15d4c623135d776cb",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36987,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "377335732067a5b55fc919fdd22b1459d758428d0ed641c15d4c623135d776cb",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-twin-fangs",
+      "journalEncounterId": 2887,
+      "spellId": 1288538,
+      "names": {
+        "en": "Stone Breaker",
+        "ru": "Крушитель камня"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 401,
+            "sha256": "b1c2a9cd295caa2ee50cbf5129f4eeea221d62e6d9912bba63376edce4708551",
+            "tokens": [
+              "$@spellname1288538",
+              "$a1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35617,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "d8a5324683114d3c2da11d6fdb2183d378c599c1e2f39ffecb017d47f3d2f947",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 439,
+            "sha256": "f2d835eebf14ee1d4d10518a57eb43b1cee61c365601140393278fbd1e472b44",
+            "tokens": [
+              "$@spellname1288538",
+              "$a1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35617,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "d2fd7a309b1bf1d7e457eea5e6e8b2b2d5fab4662bf73337ef9b085e6da9ffb0",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-twin-fangs",
+      "journalEncounterId": 2887,
+      "spellId": 1293749,
+      "names": {
+        "en": "Vile Flood",
+        "ru": "Гнусный потоп"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "f05aa84c7c2e794c564246ea4ad69a1b919a6b6701adfc0c581cf1a720be8688",
+            "tokens": [
+              "$@spelldesc1294293"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": []
+        },
+        "ru": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "f05aa84c7c2e794c564246ea4ad69a1b919a6b6701adfc0c581cf1a720be8688",
+            "tokens": [
+              "$@spelldesc1294293"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": []
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-twin-fangs",
+      "journalEncounterId": 2887,
+      "spellId": 1306872,
+      "names": {
+        "en": "Sanguine Storm",
+        "ru": "Кровавая буря"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 136,
+            "sha256": "b728168f69e1ff9b9276065c3238c42c2d1dd44317b33eaae8bbbab44c509662",
+            "tokens": [
+              "$d"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35760,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "c121348c30d8a85518681c21e6cc5aca4f1200fc8bbcfc2507eee922f18347b6",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36625,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "c121348c30d8a85518681c21e6cc5aca4f1200fc8bbcfc2507eee922f18347b6",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 160,
+            "sha256": "67ddac513c00db16d5b41eaeaf49f0894aa3fb48a0cdbcfbb4b060c1ac20baf2",
+            "tokens": [
+              "$d"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35760,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "31e6fa02e3391dd91c0e61411379a54d76d1d1186b018768fc56eca8d2a180a0",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36625,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "31e6fa02e3391dd91c0e61411379a54d76d1d1186b018768fc56eca8d2a180a0",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-coiled-altar",
+      "journalEncounterId": 2883,
+      "spellId": 1282403,
+      "names": {
+        "en": "Coalesced Venom",
+        "ru": "Сгустившийся яд"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 238,
+            "sha256": "f417192b5309db13bea4b57a4d23c24e38a6fb34af9def30793d4962b6bdb327",
+            "tokens": [
+              "$@spellname1282419",
+              "$@spellname1299838",
+              "$s2"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36612,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36615,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36618,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36622,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36857,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36863,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36935,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36952,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36958,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36965,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c9609ad4ecc6e437a681ae9540ab42055811bda27250a3b44513309ec7b55785",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 234,
+            "sha256": "47045eebd8e82ef666abd988246a68a85fe6af6b0d57707ddb5662b7bfec810d",
+            "tokens": [
+              "$@spellname1282419",
+              "$@spellname1299838",
+              "$s2"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36612,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36615,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36618,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36622,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36857,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36863,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36935,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36952,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36958,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36965,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3640a0249ba2519f309da28f972349fe711faee8e5f4541ef37a4192d9a49542",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-coiled-altar",
+      "journalEncounterId": 2883,
+      "spellId": 1299680,
+      "names": {
+        "en": "Sever",
+        "ru": "Рассечение"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "5a28662108d088ba8ff6ff3a98fddd721a7a62c35b869a4084d6575485edb0e7",
+            "tokens": [
+              "$@spelldesc1299684"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36254,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "7bf202e68f9589ce329a283f6cee9c11683f7b2ee63bfff692bfbc4b08182b99",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "5a28662108d088ba8ff6ff3a98fddd721a7a62c35b869a4084d6575485edb0e7",
+            "tokens": [
+              "$@spelldesc1299684"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36254,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "9697618c082b205db7e15d5187871d8094363dfe4822479df44df8177bcd267c",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-coiled-altar",
+      "journalEncounterId": 2883,
+      "spellId": 1285643,
+      "names": {
+        "en": "Dreadmarch",
+        "ru": "Марш ужаса"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "be245263498f3a7634f7099c0a9bc48f3d784ce8ff0d9b8b7d6cf40952077578",
+            "tokens": [
+              "$@spelldesc1285647"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35494,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "52452576bb4a71f7f0c2d679b732eec2c7f2ca17549bf4c0d656a2db6473e5a9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36104,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "52452576bb4a71f7f0c2d679b732eec2c7f2ca17549bf4c0d656a2db6473e5a9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36109,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "52452576bb4a71f7f0c2d679b732eec2c7f2ca17549bf4c0d656a2db6473e5a9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36114,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "52452576bb4a71f7f0c2d679b732eec2c7f2ca17549bf4c0d656a2db6473e5a9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36137,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "52452576bb4a71f7f0c2d679b732eec2c7f2ca17549bf4c0d656a2db6473e5a9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36141,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "52452576bb4a71f7f0c2d679b732eec2c7f2ca17549bf4c0d656a2db6473e5a9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "reference_only",
+            "length": 18,
+            "sha256": "be245263498f3a7634f7099c0a9bc48f3d784ce8ff0d9b8b7d6cf40952077578",
+            "tokens": [
+              "$@spelldesc1285647"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35494,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "fc35cd0d73169d7a3898cc19985ef2e0cd165a11029d0c550de1edf1e9a542fe",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36104,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "fc35cd0d73169d7a3898cc19985ef2e0cd165a11029d0c550de1edf1e9a542fe",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36109,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "fc35cd0d73169d7a3898cc19985ef2e0cd165a11029d0c550de1edf1e9a542fe",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36114,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "fc35cd0d73169d7a3898cc19985ef2e0cd165a11029d0c550de1edf1e9a542fe",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36137,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "fc35cd0d73169d7a3898cc19985ef2e0cd165a11029d0c550de1edf1e9a542fe",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36141,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "fc35cd0d73169d7a3898cc19985ef2e0cd165a11029d0c550de1edf1e9a542fe",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-coiled-altar",
+      "journalEncounterId": 2883,
+      "spellId": 1286620,
+      "names": {
+        "en": "Soul Sever",
+        "ru": "Отделение души"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 356,
+            "sha256": "f113aa0923eb1218a048284c34921c04ade18ff466808f81df0c0b7fa0a54335",
+            "tokens": [
+              "$@spellname1286620",
+              "$@spellname1286837",
+              "$s1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35575,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "25c8db34cdfc0e442467508dd5700235a902e6d8d7b4be653a058ae5776ef38f",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 392,
+            "sha256": "6aa9ee7811d6631a234a148797ea671265a8a50a3928fed6e39466349bb360bb",
+            "tokens": [
+              "$@spellname1286620",
+              "$@spellname1286837",
+              "$s1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35575,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "85314135067458b314fce5c5ea7af489a81c1b16dceb09100f4610cb50617b25",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "the-coiled-altar",
+      "journalEncounterId": 2883,
+      "spellId": 1304032,
+      "names": {
+        "en": "Soulbinding",
+        "ru": "Связь душ"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description",
+        "sectionId": null,
+        "descriptions": {
+          "en": "Malacrass begins a ritual to bind his soul to Zul'jan, applying Ghastly Regeneration to him. Any healing Zul'jan receives is duplicated to Malacrass.\r\n\r\nFragments of Malacrass rupture from Zul'jan's body while the ritual holds, and attempt to return to their new host.",
+          "ru": "Малакрасс начинает проводить ритуал, чтобы связать свою душу с Зул'джаном, и дает ему \"Жуткую регенерацию\". Получаемое Зул'джаном исцеление копируется и применяется к Малакрассу.\r\n\r\nПока действует ритуал, из тела Зул'джана вырываются фрагменты Малакрасса, которые пытаются вернуться в новое тело."
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 268,
+            "sha256": "7ca2f6e20d65fbb2c0008f367672576e274530bfd5b086fe8193c3580f5afdab",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35583,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "4e08a66da4b35eed79a57739002eb399614fd544510a9d0a22f26cf5452116c9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36658,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "4e08a66da4b35eed79a57739002eb399614fd544510a9d0a22f26cf5452116c9",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 296,
+            "sha256": "c5c3289b2b632e8e64aa4f02e66f930a0a752ae0be383fb93494cb9328762ca8",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35583,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "cae01a4f4a8e6daf26c27aeb987556b6d102da5e728764dc7399640ebaf5eeb4",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36658,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "cae01a4f4a8e6daf26c27aeb987556b6d102da5e728764dc7399640ebaf5eeb4",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "ulatek",
+      "journalEncounterId": 2895,
+      "spellId": 1292403,
+      "names": {
+        "en": "Caustic Waves",
+        "ru": "Едкие волны"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 264,
+            "sha256": "2b94b54695e729ad5bb2de31197e952e33d7a74ba9086cff005b4ccc22549215",
+            "tokens": [
+              "$d",
+              "$s1",
+              "$s2",
+              "$t2"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 41,
+            "sha256": "9366267ae2791a80fa8f8faffaf3dd548861721728639535e0f943243db66c92",
+            "tokens": [
+              "$s2",
+              "$t2"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 35678,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "d661b8bd741418dd6bd5fc3bf207dbad508409aba7be8fb46eb8d6cbeed38a66",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36341,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "55d7bb287167b3544ca1b2ec890ac6a157adb0b2a550050b8fbee258d9b7dc21",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 253,
+            "sha256": "7896ae937497af476f3fa0a7d024739bacc8757c38032d5f7f9a2ae49a9e3497",
+            "tokens": [
+              "$d",
+              "$s1",
+              "$s2",
+              "$t2"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 43,
+            "sha256": "3cae745d91eca72dff9e416f4360c562a93a9557e3a1be9cf92a9fa34830a5d7",
+            "tokens": [
+              "$s2",
+              "$t2"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 35678,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a43c0d099cdb9f7576d3e9c5cddfd4c1a05b46c1fe9b31c61d3295dd2ce7f7be",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36341,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "ec8650702800ad8932bf5c28e0fddddf6c81ad70612c2ea3d9daaa4a71c32298",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "ulatek",
+      "journalEncounterId": 2895,
+      "spellId": 1301268,
+      "names": {
+        "en": "Putrid Membrane",
+        "ru": "Гнилостная капсула"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 146,
+            "sha256": "33c9eca0cce7e0c09dbfbea04ea4fcea0a92d281359cf3e6f5e26482d429ad9b",
+            "tokens": [
+              "$@spellname1294685",
+              "$d",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 48,
+            "sha256": "a23850e0ca4547c771eb023599fa964534873ef1c0d96c64f9997fef856c3d05",
+            "tokens": [
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 36376,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a207e5b614159a04e0bb74608218b44263231eeeac8f71654e8c70e137f58845",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36997,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "a207e5b614159a04e0bb74608218b44263231eeeac8f71654e8c70e137f58845",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 163,
+            "sha256": "b1d94899d969e513bb8389920de181571dd5c105a04791946b9d45f29e78c5e9",
+            "tokens": [
+              "$@spellname1294685",
+              "$d",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 50,
+            "sha256": "de3615ece216fab80d9c0630fb6d0a142c4e21800fcc2a74a6f8ac803eceb0d1",
+            "tokens": [
+              "$t1"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 36376,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "6f99218788f7d9fbaf4bec3320ef7233e38996806f65f107ddf3bc89b29cd83d",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36997,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "6f99218788f7d9fbaf4bec3320ef7233e38996806f65f107ddf3bc89b29cd83d",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "ulatek",
+      "journalEncounterId": 2895,
+      "spellId": 1287265,
+      "names": {
+        "en": "Spectral Coils",
+        "ru": "Призрачные кольца"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 226,
+            "sha256": "eb9646d43766b35f55988618cc885623e9ce11c2a0a8966caa5346fb1a89a6fc",
+            "tokens": [
+              "$@spellname1287265",
+              "$s1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35818,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c487d664734a00647ad49f8ac6836c8eb095ddf2fa3d59e5992c8995d759634d",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36322,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "85a157bd1215f1d895ea29ac457d356e2722476fb169cdf960488c92c31fe455",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37042,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c487d664734a00647ad49f8ac6836c8eb095ddf2fa3d59e5992c8995d759634d",
+              "bodyClassification": "tokenized",
+              "bodyLength": 143,
+              "bodySha256": "bf430d27f21317c3b7b9fc076f57cd54c3648a018b7614ec1ccd526f45627b52"
+            },
+            {
+              "sectionId": 37177,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "5c5ab525c366c78c6bdf09cb6abb959f85147b1682171aeb462d29110ea1be90",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37252,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c487d664734a00647ad49f8ac6836c8eb095ddf2fa3d59e5992c8995d759634d",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37254,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "5c5ab525c366c78c6bdf09cb6abb959f85147b1682171aeb462d29110ea1be90",
+              "bodyClassification": "tokenized",
+              "bodyLength": 143,
+              "bodySha256": "bf430d27f21317c3b7b9fc076f57cd54c3648a018b7614ec1ccd526f45627b52"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 197,
+            "sha256": "dc6bb367b5fa2e063e6a277ae3c11a5484efb231b0736582a6268dfbc63db358",
+            "tokens": [
+              "$@spellname1287265",
+              "$s1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35818,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c7d5ddee39b97ff0aa51c66b99e565c4432086b9a0148021647409aa7ed4b03f",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36322,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "3f75fb52acfd040a59d6577114336feb8bcdc26f8db6771e8ae3d1c6d7383852",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37042,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c7d5ddee39b97ff0aa51c66b99e565c4432086b9a0148021647409aa7ed4b03f",
+              "bodyClassification": "tokenized",
+              "bodyLength": 166,
+              "bodySha256": "a681a3adc1d3d664b4df6d8ee7c3d35aed3168326ae77618e7a3181630ef1579"
+            },
+            {
+              "sectionId": 37177,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "1692a924c23e5cfa5aed51ae1446f5b6f8ba57637cd57c7b402f253bff846807",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37252,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "c7d5ddee39b97ff0aa51c66b99e565c4432086b9a0148021647409aa7ed4b03f",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37254,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "1692a924c23e5cfa5aed51ae1446f5b6f8ba57637cd57c7b402f253bff846807",
+              "bodyClassification": "tokenized",
+              "bodyLength": 166,
+              "bodySha256": "a681a3adc1d3d664b4df6d8ee7c3d35aed3168326ae77618e7a3181630ef1579"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "ulatek",
+      "journalEncounterId": 2895,
+      "spellId": 1286860,
+      "names": {
+        "en": "Rage of the Shackled",
+        "ru": "Ярость пленницы"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 221,
+            "sha256": "cffd9d2804e42c94bfdd5327e8e980a7bbaa2d86b17b19abd649622cd5740f8b",
+            "tokens": [
+              "$@spellname1286885",
+              "$@spellname1299526",
+              "$d",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35565,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "3552606745838794d460250a0cb62827f5019125c6b3400c86037b47f3145ac5",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36309,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "bd938183bad62e18db7d0668a8880201d15cc9c10d20add006bb80e288191b6b",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36919,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "51d24e37920423d52b7d25bacb7ce3521bd24e73a43cade953560a41a9aadea7",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 283,
+            "sha256": "064eda0ccfea60ade9f98ccd74da269c51f6967348a3664cee07b6a53425f233",
+            "tokens": [
+              "$@spellname1286885",
+              "$@spellname1299526",
+              "$d",
+              "$t1"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 35565,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "5c93be47712f3bd542a897edf73e69953403f2b55143162e6382527df95d81ba",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36309,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "564fd55704670f0730ef76c8700cf6a68f1061b3603d81c5688cca1c1c38e861",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36919,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "7d33e432bc70dffa50c416454c3659c14719974a6c772d879dd59263d9aa4352",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "ulatek",
+      "journalEncounterId": 2895,
+      "spellId": 1290990,
+      "names": {
+        "en": "Writhing Gestation",
+        "ru": "Извивающееся порождение"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description_spell_names_duration",
+        "sectionId": null,
+        "descriptions": {
+          "en": "The Doomscale Warden transforms nearby Blightscale Spawn into a Blightscale Clutch that hatches after 20 sec.",
+          "ru": "Злочешуйный страж трансформирует ближайшее морочешуйчатое порождение. Морочешуйчатая кладка появляется на поле боя и проклевывается через 20 сек."
+        },
+        "spellNameResolutions": {
+          "en": [
+            {
+              "token": "$@spellname1289962",
+              "spellId": 1289962,
+              "name": "Blightscale Clutch",
+              "nameSha256": "2a7df226c6aba5f69ca4be0d52ac37d1256bde5430bae6917438706eeabac1f4"
+            }
+          ],
+          "ru": [
+            {
+              "token": "$@spellname1289962",
+              "spellId": 1289962,
+              "name": "Морочешуйчатая кладка",
+              "nameSha256": "c422223598143f388a9895f053bd03c23029caaa195b96935daa7876c20b992d"
+            }
+          ]
+        },
+        "durationResolutions": {
+          "en": [
+            {
+              "token": "$d",
+              "spellId": 1290990,
+              "durationIndex": 18,
+              "durationMs": 20000,
+              "formatted": "20 sec"
+            }
+          ],
+          "ru": [
+            {
+              "token": "$d",
+              "spellId": 1290990,
+              "durationIndex": 18,
+              "durationMs": 20000,
+              "formatted": "20 сек"
+            }
+          ]
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
+          "spellNameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
+          "spellNameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
+          "spellMisc": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
+          "spellDuration": "https://wago.tools/db2/SpellDuration/csv?build=12.1.0.69814&locale=enUS"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 105,
+            "sha256": "3f8e0894be902f820fd7dd422f36c2b70b1a735ddcd7e166696f0ed8927b1c11",
+            "tokens": [
+              "$@spellname1289962",
+              "$d"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 56,
+            "sha256": "f6f004baf46acb8f41921fb0a204037e6f253fd952fd8ff1a412b3496963bf8e",
+            "tokens": [
+              "$@spellname1289962"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 36291,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "d0349b1d6950e88d5ec4ba27f7b9267584465a6b13637eb256b5bdc19f26ac9b",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36881,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "d0349b1d6950e88d5ec4ba27f7b9267584465a6b13637eb256b5bdc19f26ac9b",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36887,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "d0349b1d6950e88d5ec4ba27f7b9267584465a6b13637eb256b5bdc19f26ac9b",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 138,
+            "sha256": "1503f7dc1870f33a113ff165090484f18f484e9e008f8c085a661a0e6e9613d9",
+            "tokens": [
+              "$@spellname1289962",
+              "$d"
+            ]
+          },
+          "auraDescription": {
+            "classification": "tokenized",
+            "length": 40,
+            "sha256": "7458500ec645ff5acf376f07c3d91e800ab6c52861fa9e9e9a6b73343cd37fcc",
+            "tokens": [
+              "$@spellname1289962"
+            ]
+          },
+          "journalSections": [
+            {
+              "sectionId": 36291,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "2e4472b41ab93a665086e95e9b7dae3962dee0a88c4165a0805d6b5237d6e2f4",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36881,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "2e4472b41ab93a665086e95e9b7dae3962dee0a88c4165a0805d6b5237d6e2f4",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 36887,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "2e4472b41ab93a665086e95e9b7dae3962dee0a88c4165a0805d6b5237d6e2f4",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "ulatek",
+      "journalEncounterId": 2895,
+      "spellId": 1300751,
+      "names": {
+        "en": "Call of the Serpent",
+        "ru": "Зов змеи"
+      },
+      "publicationSafe": true,
+      "publicationCandidate": {
+        "sourceKind": "spell_description",
+        "sectionId": null,
+        "descriptions": {
+          "en": "Ula'tek roars, shaking her children from the ceiling and causing them to fall.",
+          "ru": "Ула'тек ревет, сотрясая поле боя и сбрасывая своих детей с потолка."
+        },
+        "sourceUrls": {
+          "en": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
+          "ru": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
+        }
+      },
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 78,
+            "sha256": "456cc5e5259743c9b60e5ddbb414e7d58c0eca3feee74a911ba43eccabec92c1",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36373,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "5c11a4390850b861388622d0630bf54de2bca9f816d91a62fd0cb4316947833e",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37016,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "5c11a4390850b861388622d0630bf54de2bca9f816d91a62fd0cb4316947833e",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "publication_safe",
+            "length": 67,
+            "sha256": "21c6c005734140fb847fdb46a01da1aa70bafeb8177cc68dfcf29099c030d9e5",
+            "tokens": []
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36373,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "bbd79c8038a8a042943fa12bee3e0e11672c530cc0448e34f8303beb125f2755",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "sectionId": 37016,
+              "difficultyMask": 0,
+              "titleClassification": "generic",
+              "titleSha256": "bbd79c8038a8a042943fa12bee3e0e11672c530cc0448e34f8303beb125f2755",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encounterSlug": "ulatek",
+      "journalEncounterId": 2895,
+      "spellId": 1301510,
+      "names": {
+        "en": "Circling Prey",
+        "ru": "Обвивание добычи"
+      },
+      "publicationSafe": false,
+      "publicationCandidate": null,
+      "localeClassificationMatch": true,
+      "localized": {
+        "en": {
+          "description": {
+            "classification": "tokenized",
+            "length": 222,
+            "sha256": "4e865544d92cc669306df039dc53cf7e6b1fcbadd922fcb7af074ae2624b4ca8",
+            "tokens": [
+              "$a1",
+              "$s1",
+              "$s2"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36375,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "d3fde03d73f60fff4a98921c7b1861b00b21d0271b8aeb2f60e00a4ff9585095",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        "ru": {
+          "description": {
+            "classification": "tokenized",
+            "length": 225,
+            "sha256": "661377889b6e9aa5dd463911532e6eb92a8e9c815147d49aeb9d40755b90e170",
+            "tokens": [
+              "$a1",
+              "$s1",
+              "$s2"
+            ]
+          },
+          "auraDescription": {
+            "classification": "empty",
+            "length": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tokens": []
+          },
+          "journalSections": [
+            {
+              "sectionId": 36375,
+              "difficultyMask": -1,
+              "titleClassification": "generic",
+              "titleSha256": "d8784375c6ba2906c92bfe312a2b694c0d9711afa2b8216d2380f4d3eaefb4c3",
+              "bodyClassification": "empty",
+              "bodyLength": 0,
+              "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

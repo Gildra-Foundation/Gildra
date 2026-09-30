@@ -17,7 +17,7 @@
   font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.12em;
   text-transform:uppercase;color:var(--gold-2);
 }
-.pulse-tag span{font-size:9.5px;color:var(--ink-3)}
+.pulse-tag span{font-size:10px;color:var(--ink-3)}
 .pulse-movers{display:flex;align-items:center;gap:20px;flex-wrap:wrap;flex:1}
 .pmove{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--ink)}
 .pmove b{font-size:11px}

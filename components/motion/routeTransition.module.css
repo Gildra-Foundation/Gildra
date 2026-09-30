@@ -1,0 +1,18 @@
+.system {
+  --route-accent: #c58b36;
+  --route-soft: #f0cb78;
+  --route-glow: rgba(205, 133, 37, .22);
+  --route-bg: #181108;
+  --route-bg-deep: #050403;
+  min-height: 100vh;
+  background: #080706;
+}
+.frame { min-height: 100vh; }
+.frame[data-theme="wow"] :global([data-platform-home]) {
+  --ph-gold: #c58b36;
+  --ph-gold-soft: #f0cb78;
+  --ph-line: rgba(172, 120, 46, .46);
+  --ph-line-soft: rgba(148, 104, 42, .25);
+  --ph-bg: #080706;
+  --ph-surface: #12100c;
+}
