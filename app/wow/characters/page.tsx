@@ -4,6 +4,11 @@ import { ConnectedCharacterRosterLoader } from "@/components/wow/characters/Conn
 import { CharacterRosterEntryPage } from "@/components/wow/characters/CharacterRosterEntryPage";
 import { BATTLE_NET_REGIONS, getBattleNetPreferredRegion } from "@/lib/wow/battleNetCharacters";
 
+// The page depends on the visitor's Battle.net session and on runtime secrets.
+// Without this it is prerendered during the image build (no AUTH_SECRET, no
+// cookies) and that logged-out, "not configured" HTML is served to everyone.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "WoW Characters — Gildra",
   description: "Browse World of Warcraft characters connected to your Battle.net account.",
