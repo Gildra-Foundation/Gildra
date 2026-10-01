@@ -4,10 +4,13 @@ import { ProfilePage } from "@/components/platform/profile/ProfilePage";
 import { getPlatformHomeData } from "@/lib/platform/home/repository";
 import { auth, isBattleNetAuthConfigured } from "@/auth";
 import { BATTLE_NET_REGIONS } from "@/lib/wow/battleNetCharacters";
+import { hiddenForMvp } from "@/lib/mvp";
 
 export const metadata: Metadata = { title: "Arcanist Vexis — Gildra", description: "Cross-game command profile on Gildra." };
 
 export default async function Page({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string }> }) {
+  // Hidden for the WoW-only MVP: answers 404 until the flag in lib/mvp.ts is flipped.
+  hiddenForMvp();
   const { slug } = await params;
   if (slug === "arcanist-vexis") redirect("/profile/arcanist");
   if (slug !== "arcanist") notFound();

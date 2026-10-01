@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ChevronDown, Search } from "lucide-react";
 import type { PlatformHomeData } from "@/lib/platform/home/types";
 import type { Lang } from "@/lib/i18n";
+import { AccountChip } from "@/components/auth/AccountChip";
+import { MVP_DEFERRED_PAGES_PUBLIC } from "@/lib/mvp";
 import styles from "./platformHeader.module.css";
 
 export function PlatformHeader({
@@ -27,8 +29,11 @@ export function PlatformHeader({
         <Link className={active === "home" ? styles.navActive : ""} href={prefix || "/"}>{nav.home}</Link>
         <Link href={`${prefix}/talents/fury-warrior`}>{lang === "ru" ? "Спеки" : "Specs"}</Link>
         <Link className={active === "search" ? styles.navActive : ""} href={`${prefix}/search`}>{nav.search}</Link>
-        <Link className={active === "patches" ? styles.navActive : ""} href={`${prefix}/patches`}>{nav.patchCenter}</Link>
-        <Link className={active === "compare" ? styles.navActive : ""} href={`${prefix}/compare`}>{nav.comparisonLab}</Link>
+        {/* Patch Center and Comparison Lab run on fixtures and are hidden for the WoW-only MVP (lib/mvp.ts). */}
+        {MVP_DEFERRED_PAGES_PUBLIC ? <>
+          <Link className={active === "patches" ? styles.navActive : ""} href={`${prefix}/patches`}>{nav.patchCenter}</Link>
+          <Link className={active === "compare" ? styles.navActive : ""} href={`${prefix}/compare`}>{nav.comparisonLab}</Link>
+        </> : null}
       </nav>
       {showSearch ? (
         <form className={styles.search} action={`${prefix}/search`} role="search">
@@ -36,11 +41,14 @@ export function PlatformHeader({
           <button type="submit" aria-label={nav.search}><Search size={17} /></button>
         </form>
       ) : <span className={styles.headerSpacer} />}
-      <Link className={styles.profileButton} href={`${prefix}/profile/arcanist`} aria-label={`${data.profile.name} profile`}>
-        <span className={styles.avatar} aria-hidden="true">♜</span>
-        <span>{data.profile.name}</span>
-        <ChevronDown size={14} aria-hidden="true" />
-      </Link>
+      <AccountChip
+        lang={lang}
+        className={styles.profileButton}
+        avatarClassName={styles.avatar}
+        labelClassName={styles.accountLabel}
+        avatarContent="♜"
+        trailing={<ChevronDown size={14} aria-hidden="true" />}
+      />
     </header>
   );
 }

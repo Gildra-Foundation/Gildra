@@ -82,8 +82,8 @@ assert.ok(workspaceNavSource.includes('Boolean(session?.battleNetAccessToken)'),
 assert.ok(workspaceNavSource.includes('battleNetConnected ? "/wow/characters" : "/login"'), "A connected account shortcut inside the character workspace must return to its real roster");
 assert.ok(!workspaceNavSource.includes('"/profile/arcanist"'), "Character navigation must not send a Battle.net user into the unrelated sample-profile route");
 const bookNavSource = readFileSync(new URL("../components/platform/navigation/BookNavigationDialog.tsx", import.meta.url), "utf8");
-assert.ok(bookNavSource.includes('routePath === "/wow/characters" || routePath.startsWith("/wow/characters/")'));
-assert.ok(bookNavSource.includes('characterWorkspace ? "/wow/characters" : "/profile/arcanist"'), "Only the character-book navigation should return connected players to the real Battle.net roster");
+assert.ok(bookNavSource.includes('battleNetConnected ? "/wow/characters" : "/login"'), "A connected account must always return to the real Battle.net roster");
+assert.ok(!bookNavSource.includes("/profile/arcanist"), "The book navigation must not link the hidden sample-profile route");
 const auditPageSource = readFileSync(new URL("../components/wow/audit/CharacterAuditPage.tsx", import.meta.url), "utf8");
 assert.ok(auditPageSource.includes('dataMode === "battle-net" ? `${localePrefix}/wow/characters`'), "The live character folio brand must return to the real account roster");
 const stateFrameSource = readFileSync(new URL("../components/wow/characters/CharacterBookStateFrame.tsx", import.meta.url), "utf8");

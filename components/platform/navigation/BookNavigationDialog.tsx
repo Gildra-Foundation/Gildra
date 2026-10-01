@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { X, ArrowRight, Home, Users, Map, Shield, Skull, Search, Compass, Globe2, LogIn, UserRound, type LucideIcon } from "lucide-react";
+import { X, ArrowRight, Home, Users, Map, Shield, Skull, Search, Compass, LogIn, UserRound, type LucideIcon } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import { PhysicalBookFrame, physicalBookMaterials } from "@/components/wow/audit/PhysicalBookFrame";
 import styles from "./bookNavigation.module.css";
@@ -20,9 +20,10 @@ const primaryItems: NavigationItem[] = [
 const utilityItems: NavigationItem[] = [
   { href: "/search", ru: "Поиск по Азероту", en: "Search Azeroth", icon: Search },
 ];
+// WoW-only MVP: the former "Other worlds archive" (/genshin) entry is gone —
+// that route answers 404 (lib/mvp.ts).
 const archiveItems: NavigationItem[] = [
   { href: "/wow", ru: "Обзор World of Warcraft", en: "World of Warcraft overview", icon: Compass },
-  { href: "/genshin", ru: "Архив других миров", en: "Other worlds archive", icon: Globe2 },
 ];
 
 const bookTransitionsEnabled = process.env.NODE_ENV !== "development"
@@ -44,11 +45,9 @@ export function BookNavigationDialog({ open, onClose, lang }: { open: boolean; o
   const ru = lang === "ru";
   const prefix = ru ? "/ru" : "";
   const battleNetConnected = account.connected;
-  const routePath = pathname.replace(/^\/ru(?=\/|$)/, "") || "/";
-  const characterWorkspace = routePath === "/wow/characters" || routePath.startsWith("/wow/characters/");
-  const accountHref = prefix + (battleNetConnected
-    ? characterWorkspace ? "/wow/characters" : "/profile/arcanist"
-    : "/login");
+  // A connected account always goes to its real character roster; there is no
+  // other profile page (the sample /profile/arcanist is hidden, lib/mvp.ts).
+  const accountHref = prefix + (battleNetConnected ? "/wow/characters" : "/login");
   useEffect(() => {
     const element = dialog.current;
     if (!element) return;

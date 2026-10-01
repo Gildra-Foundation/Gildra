@@ -344,11 +344,11 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
       {dataMode === "battle-net" ? <div className={surface.backdrop} data-character-book-backdrop><CharacterBookBackdrop /></div> : null}
       <div className={dataMode === "battle-net" ? surface.content : styles.pageContents}>
       <header className={styles.topbar}>
-        <a href={dataMode === "battle-net" ? `${localePrefix}/wow/characters` : `${localePrefix}/profile/arcanist`} className={styles.brand}>GILDRA</a>
+        <a href={dataMode === "battle-net" ? `${localePrefix}/wow/characters` : `${localePrefix}/wow`} className={styles.brand}>GILDRA</a>
         <span className={styles.game}>W <b>World of Warcraft</b></span>
         <nav aria-label={tr("Разделы World of Warcraft")}>
           <a href={`${localePrefix}/talents/fury-warrior`}>{tr("Спеки")}</a><a href={`${localePrefix}/wow/mythic-plus`}>{tr("Эпох+")}</a><a href={`${localePrefix}/wow/raids`}>{tr("Рейд")}</a>
-          <a href={`${localePrefix}/talents/fury-warrior`}>{tr("Таланты")}</a><a href={`${localePrefix}/wow`}>{tr("Гайды")}</a><a href={`${localePrefix}/compare`}>{tr("Сравнение")}</a>
+          <a href={`${localePrefix}/talents/fury-warrior`}>{tr("Таланты")}</a><a href={`${localePrefix}/wow`}>{tr("Гайды")}</a>
         </nav>
         <label className={styles.search}><input aria-label={tr("Поиск по Gildra")} placeholder={tr("Поиск по Gildra…")} /><span>⌕</span></label>
       </header>

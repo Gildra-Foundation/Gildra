@@ -4,7 +4,7 @@
  * modules imported by that game's page definitions.
  */
 import type { Lang } from "@/lib/i18n";
-import type { GameSlug } from "./registry";
+import { isGameVisible, type GameSlug } from "./registry";
 import { wowAdapter } from "./wow/client";
 import { leagueAdapter } from "./league-of-legends/client";
 
@@ -39,4 +39,7 @@ const empty = (slug: GameSlug): GameAdapter => ({
   searchDefaultGroups: [],
 });
 
-export const getAdapter = (slug: GameSlug): GameAdapter => ADAPTERS[slug] ?? empty(slug);
+/** A game outside MVP_VISIBLE_GAMES gets an empty index, so search never
+ *  offers links into a hidden game. */
+export const getAdapter = (slug: GameSlug): GameAdapter =>
+  (isGameVisible(slug) ? ADAPTERS[slug] : undefined) ?? empty(slug);

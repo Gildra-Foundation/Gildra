@@ -1711,7 +1711,7 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
         <SpecMenu current={theme} localePrefix={localePrefix} />
         <nav className="tc-main-nav" aria-label="Разделы World of Warcraft"><Link href={`${localePrefix}/talents/fury-warrior`} prefetch={false}>Спеки</Link><Link href={`${localePrefix}/wow/mythic-plus`} prefetch={false}>Mythic+</Link><Link href={`${localePrefix}/wow/raids`} prefetch={false}>Рейд</Link><Link className="is-active" href={`${localePrefix}/talents/fury-warrior`} prefetch={false} aria-current="page">Таланты</Link><Link href={`${localePrefix}/wow`} prefetch={false}>Гайды</Link></nav>
         <TalentHeaderSearch query={query} onQueryChange={updateTalentQuery} />
-        <Link className="tc-account" href={`${localePrefix}/profile/arcanist?tab=gear`} prefetch={false} aria-label="Открыть профиль"><UserRound /></Link>
+        <Link className="tc-account" href={`${localePrefix}/wow/characters`} prefetch={false} aria-label={localePrefix ? "Мои персонажи" : "My characters"}><UserRound /></Link>
       </header>
       <section className="tc-commandbar" aria-label="Управление сборкой">
         <div className="tc-page-title">
