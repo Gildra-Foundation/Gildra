@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import type { CSSProperties } from "react";
-import type { Lang } from "@/lib/i18n";
+import { t as tr, type Lang } from "@/lib/i18n";
 import { CharacterBookBackdrop } from "@/components/wow/audit/CharacterBookBackdrop";
 import { PhysicalBookFrame, physicalBookMaterials } from "@/components/wow/audit/PhysicalBookFrame";
 import typography from "@/components/wow/audit/grimoireTypography.module.css";
@@ -46,8 +46,6 @@ type Copy = {
   start: string;
   prepare: string;
   conquer: string;
-  patches: string;
-  compare: string;
 };
 
 const copy: Record<Lang, Copy> = {
@@ -76,8 +74,6 @@ const copy: Record<Lang, Copy> = {
     start: "Персонаж",
     prepare: "Билд",
     conquer: "Маршрут",
-    patches: "Патчи",
-    compare: "Сравнение",
   },
   en: {
     eyebrow: "World of Warcraft · Midnight",
@@ -104,8 +100,6 @@ const copy: Record<Lang, Copy> = {
     start: "Character",
     prepare: "Build",
     conquer: "Route",
-    patches: "Patches",
-    compare: "Compare",
   },
 };
 
@@ -208,7 +202,8 @@ export function WowHome({ lang }: { lang: Lang }) {
         </section>
 
         <nav className={styles.utilityNav} aria-label={t.allTools}>
-          <Link href={href("/patches")}><BookOpen />{t.patches}</Link><Link href={href("/compare")}><Search />{t.compare}</Link>
+          {/* /patches and /compare run on fixtures and are hidden for the WoW-only MVP (lib/mvp.ts): link real pages instead. */}
+          <Link href={href("/tier-lists")}><BookOpen />{tr(lang)("Tier Lists")}</Link><Link href={href("/database")}><Search />{tr(lang)("Database")}</Link>
         </nav>
       </main>
     </div>

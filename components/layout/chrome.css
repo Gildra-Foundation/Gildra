@@ -27,11 +27,17 @@
 .mobmenu a{padding:12px 6px;font-size:14px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--line-soft)}
 .mobmenu a:last-child{border-bottom:none}
 .mobmenu .mob-prem{color:var(--gold-2)}
+.mobmenu .mob-soon{display:flex;align-items:center;gap:8px;padding:12px 6px;font-size:14px;font-weight:600;color:var(--ink-3);cursor:default}
 .mob-group{display:flex;flex-direction:column}
 .mob-group .exp-cap{padding:12px 6px 2px}
 .mobsearch{display:flex;align-items:center;gap:9px;height:40px;padding:0 11px;margin:6px 0 8px;width:100%;background:#10131c;border:1px solid var(--line);color:var(--ink-3);font-family:inherit;font-size:13px;text-align:left}
 .gsw-label-sm{display:none}
-.user-name{display:inline}
+/* Account chip (components/auth/AccountChip.tsx). The label slot has a fixed
+   width, so "checking", "Sign in" and any account name occupy the same space and
+   the header never shifts when the session answer arrives. */
+.user-name{display:inline-block;width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-skel{display:block;width:62px;height:8px;border-radius:2px;background:var(--line)}
+.user-pending{cursor:default}
 
 /* ============ GAME SWITCHER (дропдаун) ============ */
 .gsw{position:relative;height:100%;display:flex;align-items:center}
@@ -43,6 +49,8 @@
 }
 .gsw-btn .i{width:13px;height:13px;color:var(--gold-2)}
 .gsw-btn:hover{border-color:var(--gold-dim)}
+/* Single visible game: a plain label, not a control. */
+.gsw-static,.gsw-static:hover{cursor:default;border-color:var(--line)}
 .gsw-menu{
   position:absolute;top:calc(100% - 6px);left:0;min-width:212px;z-index:60;
   background:#0e1119;border:1px solid var(--line);padding:7px;

@@ -1,5 +1,5 @@
 import { siteOrigin, xmlEscape, xmlResponse } from "@/lib/sitemap";
-import { GAMES, gameHref } from "@/lib/games/registry";
+import { GAMES, gameHref, isGameVisible } from "@/lib/games/registry";
 import { getLeagueChampions } from "@/lib/games/league-of-legends/api";
 
 export const revalidate = 3600;
@@ -9,6 +9,14 @@ const game = GAMES["league-of-legends"];
 
 /** Champion detail pages in both locales, with hreflang alternates. */
 export async function GET() {
+  // WoW-only MVP: champion pages answer 404 while the game is hidden, so none
+  // of them may be listed. The sitemap index still references this file, so it
+  // stays a valid, empty urlset (no API call) until MVP_VISIBLE_GAMES lists LoL.
+  if (!isGameVisible(game.slug)) {
+    return xmlResponse(
+      '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml"></urlset>',
+    );
+  }
   let champions: Awaited<ReturnType<typeof getLeagueChampions>>;
   try {
     champions = await getLeagueChampions("en_US");

@@ -10,7 +10,6 @@
  * `t(lang)` / `tNav(lang)` from lib/i18n.ts and extend the RU dictionary.
  */
 import { altPath, p, type Lang } from "@/lib/i18n-paths";
-import { ANCHORS, anchorHref } from "@/lib/anchors";
 
 export type GameSlug =
   | "wow"
@@ -30,6 +29,9 @@ export type NavTask = {
   path: string;
   icon: `#ic-${string}`;
 };
+
+/** A plain, crawlable link to a real page (game-relative path). */
+export type SectionLink = { label: string; path: string };
 
 export type FooterLink =
   | { label: string; path: string }
@@ -54,7 +56,11 @@ export type GameDefinition = {
   accent: string;
   locales: readonly Lang[];
   apiLocale: Record<Lang, ApiLocale>;
-  nav: { tasks: NavTask[] };
+  nav: {
+    tasks: NavTask[];
+    /** Main sections as plain links: footer Content column and the cover-page nav. */
+    sections?: SectionLink[];
+  };
   footer: {
     tagline: string;
     columns: { title: string; links: FooterLink[] }[];
@@ -67,6 +73,19 @@ export type GameDefinition = {
   /** Catalog API product slug when the game is served by the catalog. */
   catalogProduct?: string;
 };
+
+/** Real WoW pages only (each exists under app/ and renders without a session).
+ *  Order = importance. Never point these at homepage anchors: `/` is the cover
+ *  page and has no sections. */
+const wowSections: SectionLink[] = [
+  { label: "Characters", path: "/wow/characters" },
+  { label: "Dungeons", path: "/wow/dungeons" },
+  { label: "Mythic+", path: "/wow/mythic-plus" },
+  { label: "Raids", path: "/wow/raids" },
+  { label: "Classes", path: "/wow/classes" },
+  { label: "Tier Lists", path: "/tier-lists" },
+  { label: "Database", path: "/database" },
+];
 
 const wow: GameDefinition = {
   slug: "wow",
@@ -81,39 +100,42 @@ const wow: GameDefinition = {
   nav: {
     tasks: [
       {
-        task: "Explore game data",
-        title: "Library",
-        desc: "Verified datasets, images and tooltips",
-        path: "/library",
-        icon: "#ic-database",
+        task: "Compare specs",
+        title: "Tier Lists",
+        desc: "Specialization rankings and filters",
+        path: "/tier-lists",
+        icon: "#ic-star",
       },
       {
-        task: "Enter Season 2",
-        title: "Midnight Season 2",
-        desc: "Raid, Mythic+, gear and unlock calendar",
-        path: "/wow/midnight/season-2",
+        task: "Choose a class",
+        title: "Classes",
+        desc: "Classes, specializations and talents",
+        path: "/wow/classes",
+        icon: "#ic-sword",
+      },
+      {
+        task: "Prepare for raid",
+        title: "Raids",
+        desc: "Midnight raid routes and bosses",
+        path: "/wow/raids",
         icon: "#ic-shield",
       },
       {
-        task: "Learn & improve",
-        title: "Latest Guides",
-        desc: "Fresh guides for the season",
-        path: anchorHref(ANCHORS.guides),
-        icon: "#ic-book",
+        task: "Push your key",
+        title: "Mythic+",
+        desc: "Dungeon routes and tactics",
+        path: "/wow/mythic-plus",
+        icon: "#ic-map",
       },
     ],
+    sections: wowSections,
   },
   footer: {
-    tagline: "Gaming intelligence for Azeroth — raid journals, Mythic+ routes and guides.",
+    tagline: "Gaming intelligence for Azeroth — raid journals, Mythic+ routes and character tools.",
     columns: [
       {
         title: "Content",
-        links: [
-          { label: "Mythic+", path: anchorHref(ANCHORS.meta) },
-          { label: "Raid", path: "/wow/raids" },
-          { label: "Builds", path: anchorHref(ANCHORS.builds, "/wow") },
-          { label: "Guides", path: anchorHref(ANCHORS.guides) },
-        ],
+        links: wowSections,
       },
       {
         title: "Community",
@@ -255,8 +277,20 @@ export const GAME_ORDER: readonly GameSlug[] = [
   "overwatch-2",
 ];
 
-export const liveGames = () =>
-  GAME_ORDER.map((s) => GAMES[s]).filter((g) => g.status !== "soon");
+/**
+ * MVP gate: the public site is World of Warcraft only. Every other game stays
+ * fully defined above (so it can come back) but is not linked from the game
+ * switcher, nav, footer, search or sitemaps, and its routes answer 404 through
+ * `hiddenForMvp()` in lib/mvp.ts. To bring a game back, add its slug here.
+ */
+export const MVP_VISIBLE_GAMES: readonly GameSlug[] = ["wow"];
+
+export const isGameVisible = (slug: GameSlug) => MVP_VISIBLE_GAMES.includes(slug);
+
+/** Games visitors may see, in switcher order. */
+export const visibleGames = () => GAME_ORDER.filter(isGameVisible).map((s) => GAMES[s]);
+
+export const liveGames = () => visibleGames().filter((g) => g.status !== "soon");
 
 /** Game-relative path → site path without language. Accepts "/", "/x/y",
  *  "/#anchor" and bare "#anchor". */
@@ -272,11 +306,12 @@ export const gameHref = (game: GameDefinition, lang: Lang, path: string) =>
   p(lang, gamePath(game, path));
 
 /** Game for a pathname (client components with usePathname). Strips the
- *  /ru prefix first; longest matching game prefix wins; WoW is the default. */
+ *  /ru prefix first; longest matching game prefix wins; WoW is the default.
+ *  Hidden games never match, so a 404 under a hidden prefix keeps WoW chrome. */
 export function currentGame(pathname: string | null): GameDefinition {
   const bare = pathname ? altPath(pathname, "en") : "/";
   return (
-    GAME_ORDER.map((s) => GAMES[s]).find(
+    visibleGames().find(
       (g) =>
         g.prefix &&
         (bare === g.prefix || bare.startsWith(`${g.prefix}/`) || bare.startsWith(`${g.prefix}#`)),

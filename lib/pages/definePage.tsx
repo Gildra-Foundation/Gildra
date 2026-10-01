@@ -11,7 +11,8 @@
 import { cache } from "react";
 import { permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { GAMES, gameHref, type ApiLocale, type GameDefinition, type GameSlug } from "@/lib/games/registry";
+import { GAMES, gameHref, isGameVisible, type ApiLocale, type GameDefinition, type GameSlug } from "@/lib/games/registry";
+import { hiddenForMvp } from "@/lib/mvp";
 import type { Lang } from "@/lib/i18n";
 import type { PageConfig } from "@/lib/blocks/page";
 import { Page } from "@/components/blocks/Page";
@@ -74,6 +75,9 @@ export function definePage<
   );
 
   const ctxFor = async (lang: Lang, props: RouteProps<P, S>) => {
+    // WoW-only MVP: a page of a game that is not in MVP_VISIBLE_GAMES is a 404
+    // (page and metadata both go through here). See lib/mvp.ts.
+    hiddenForMvp(def.game);
     const params = (await props.params) ?? ({} as P);
     const search =
       def.readsSearch || def.legacyLocaleQuery ? ((await props.searchParams) ?? ({} as S)) : ({} as S);
@@ -99,6 +103,9 @@ export function definePage<
   return {
     en: forLang("en"),
     ru: forLang("ru"),
-    ...(def.staticParams ? { generateStaticParams: def.staticParams } : {}),
+    // A hidden game prerenders nothing; its routes render on demand and 404.
+    ...(def.staticParams
+      ? { generateStaticParams: () => (isGameVisible(def.game) ? def.staticParams!() : []) }
+      : {}),
   };
 }

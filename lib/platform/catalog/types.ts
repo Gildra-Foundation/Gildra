@@ -1,4 +1,5 @@
 import type { PlatformGameId } from "@/lib/platform/home/types";
+import { isPlatformGameVisible } from "@/lib/mvp";
 
 export type CatalogGameId = PlatformGameId;
 export type ComparisonKind = "items" | "weapons" | "artifact-sets" | "runes";
@@ -31,7 +32,7 @@ export type CatalogQueryResult = {
   unavailableGames: CatalogGameId[];
 };
 
-export const catalogGames: CatalogGameOption[] = [
+const allCatalogGames: CatalogGameOption[] = [
   {
     id: "wow",
     name: "World of Warcraft",
@@ -65,6 +66,11 @@ export const catalogGames: CatalogGameOption[] = [
     kinds: [{ id: "items", label: "Items" }, { id: "runes", label: "Runes" }],
   },
 ];
+
+/** Games the public site lists and searches. WoW-only MVP: the others stay
+ *  defined above but are filtered out (lib/mvp.ts, MVP_VISIBLE_GAMES), so
+ *  search never offers or links a hidden game's records. */
+export const catalogGames: CatalogGameOption[] = allCatalogGames.filter((game) => isPlatformGameVisible(game.id));
 
 export function isCatalogGame(value: string): value is CatalogGameId {
   return catalogGames.some((game) => game.id === value);

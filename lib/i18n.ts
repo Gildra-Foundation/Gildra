@@ -633,6 +633,24 @@ const RU: Record<string, string> = {
   "Actions Per Min": "Действий в минуту",
   "The custom priority uses automatic usability checks; no arbitrary SimulationCraft expressions are accepted.": "Доступность действий проверяется автоматически; произвольные выражения SimulationCraft не принимаются.",
   "Per-action resource, buff, cooldown, target-count, and execute conditions were applied by the typed APL editor.": "Редактор APL применил условия ресурса, эффектов, кулдаунов, числа целей и добивания для каждого действия.",
+  // WoW-only MVP: nav tasks, section links, footer tagline (lib/games/registry.ts)
+  "Choose a class": "Выбрать класс",
+  "Push your key": "Пройти ключ",
+  Characters: "Персонажи",
+  Dungeons: "Подземелья",
+  Raids: "Рейды",
+  "Specialization rankings and filters": "Рейтинги специализаций и фильтры",
+  "Midnight raid routes and bosses": "Маршруты и боссы рейдов Midnight",
+  "Dungeon routes and tactics": "Маршруты и тактика подземелий",
+  "Gaming intelligence for Azeroth — raid journals, Mythic+ routes and character tools.":
+    "Игровая аналитика для Азерота — рейдовые журналы, маршруты Mythic+ и инструменты персонажа.",
+  Sections: "Разделы сайта",
+  // Account chip (TopNav, platform header)
+  "Sign in": "Войти",
+  "Sign in with Battle.net": "Войти через Battle.net",
+  "Checking account…": "Проверяем аккаунт…",
+  Account: "Аккаунт",
+  "My characters": "Мои персонажи",
 };
 
 /** t(lang)("View All →") — RU-перевод или исходная строка. */

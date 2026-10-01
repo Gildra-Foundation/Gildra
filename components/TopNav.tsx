@@ -4,45 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { altPath, langOf, p, type Lang } from "@/lib/i18n-paths";
-import { ANCHORS, anchorHref } from "@/lib/anchors";
+import { altPath, langOf, t, type Lang } from "@/lib/i18n";
+import { AccountChip } from "@/components/auth/AccountChip";
 import {
   GAMES,
-  GAME_ORDER,
   currentGame,
   gameHref,
+  visibleGames,
   type GameSlug,
 } from "@/lib/games/registry";
 
 const loadSearchCommand = () => import("./SearchCommand");
 type SearchCommandComponent = typeof import("./SearchCommand").SearchCommand;
-
-const topNavRu: Record<string, string> = {
-  "Switch game": "Сменить игру",
-  soon: "скоро",
-  beta: "бета",
-  Explore: "Разделы",
-  "Looking for a spec or guide? Search Gildra": "Ищете спек или гайд? Поиск по Gildra",
-  "Search Gildra...": "Поиск по Gildra...",
-  "Go Premium": "Оформить Премиум",
-  "Explore game data": "Изучить данные игры",
-  Library: "Библиотека",
-  "Verified datasets, images and tooltips": "Проверенные датасеты, изображения и tooltip",
-  "Learn & improve": "Учись и расти",
-  "Latest Guides": "Свежие гайды",
-  "Fresh guides for the season": "Свежие гайды сезона",
-  "Browse champions": "Чемпионы и способности",
-  Champions: "Чемпионы",
-  "Every champion, ability and skin": "Все чемпионы, способности и скины",
-  Items: "Предметы",
-  "Complete localized item database": "Полная локализованная база предметов",
-  "Plan a build": "Собрать билд",
-  Runes: "Руны",
-  "Rune trees and keystones": "Ветки рун и краеугольные камни",
-  "Prepare for lane": "Подготовка к линии",
-  "Summoner Spells": "Заклинания призывателя",
-  "Summoner spells with cooldowns": "Заклинания призывателя с перезарядкой",
-};
 
 /** Disclosure-меню: клик/Enter/Space открывают, Escape закрывает и
  *  возвращает фокус на триггер, клик вне — закрывает. */
@@ -77,7 +50,8 @@ function useMenu() {
 
 /** Global header. Game and language come from the page (PageShell); when
  *  rendered outside it (404, root layout) both are derived from the pathname.
- *  Game switcher, Explore tasks and search index all read the game registry. */
+ *  Game switcher, Explore tasks and search index all read the game registry;
+ *  UI strings come from lib/i18n.ts. The account chip is real (AccountChip). */
 export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; lang?: Lang }) {
   const [mobOpen, setMobOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -89,8 +63,10 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
   const pathname = usePathname();
   const lang = langProp ?? langOf(pathname);
   const game = gameSlug ? GAMES[gameSlug] : currentGame(pathname);
-  const tt = (copy: string) => lang === "ru" ? topNavRu[copy] ?? copy : copy;
+  const tt = t(lang);
   const tasks = game.nav.tasks;
+  // MVP: with a single visible game the switcher is a plain label, not a menu.
+  const switchable = visibleGames();
   const warmSearchCommand = () => {
     void loadSearchCommand().then((module) => setSearchCommand(() => module.SearchCommand));
   };
@@ -151,80 +127,92 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
         <span className="logo-text">GILDRA</span>
       </Link>
 
-      <div className="gsw" ref={gameMenu.rootRef}>
-        <button
-          ref={gameMenu.btnRef}
-          className="gsw-btn"
-          aria-expanded={gameMenu.open}
-          aria-controls="game-menu"
-          onClick={() => gameMenu.setOpen((v) => !v)}
-        >
-          <svg className="i" aria-hidden="true">
-            <use href={game.icon} />
-          </svg>{" "}
-          <span className="gsw-label">{game.name}</span>
-          <span className="gsw-label-sm">{game.shortName}</span>{" "}
-          <span className="caret">▾</span>
-        </button>
-        {gameMenu.open && (
-          <div className="gsw-menu game-menu" id="game-menu">
-            <div className="exp-cap">{tt("Switch game")}</div>
-            <button
-              type="button"
-              className="gitem on"
-              aria-current="true"
-              onClick={() => gameMenu.setOpen(false)}
-            >
-              <span className="gtile gtile-on">
-                <svg className="i" aria-hidden="true">
-                  <use href={game.icon} />
-                </svg>
-              </span>
-              {game.name}
-              <span className="gmark" aria-hidden="true">◆</span>
-            </button>
-            <div className="gdiv" />
-            {GAME_ORDER.filter((s) => s !== game.slug).map((s) => {
-              const g = GAMES[s];
-              const tile = (
-                <span className="gtile">
-                  <svg className="i" style={{ color: g.accent }} aria-hidden="true">
-                    <use href={g.icon} />
+      {switchable.length > 1 ? (
+        <div className="gsw" ref={gameMenu.rootRef}>
+          <button
+            ref={gameMenu.btnRef}
+            className="gsw-btn"
+            aria-expanded={gameMenu.open}
+            aria-controls="game-menu"
+            onClick={() => gameMenu.setOpen((v) => !v)}
+          >
+            <svg className="i" aria-hidden="true">
+              <use href={game.icon} />
+            </svg>{" "}
+            <span className="gsw-label">{game.name}</span>
+            <span className="gsw-label-sm">{game.shortName}</span>{" "}
+            <span className="caret">▾</span>
+          </button>
+          {gameMenu.open && (
+            <div className="gsw-menu game-menu" id="game-menu">
+              <div className="exp-cap">{tt("Switch game")}</div>
+              <button
+                type="button"
+                className="gitem on"
+                aria-current="true"
+                onClick={() => gameMenu.setOpen(false)}
+              >
+                <span className="gtile gtile-on">
+                  <svg className="i" aria-hidden="true">
+                    <use href={game.icon} />
                   </svg>
                 </span>
-              );
-              if (g.status === "soon") {
+                {game.name}
+                <span className="gmark" aria-hidden="true">◆</span>
+              </button>
+              <div className="gdiv" />
+              {switchable.filter((g) => g.slug !== game.slug).map((g) => {
+                const tile = (
+                  <span className="gtile">
+                    <svg className="i" style={{ color: g.accent }} aria-hidden="true">
+                      <use href={g.icon} />
+                    </svg>
+                  </span>
+                );
+                if (g.status === "soon") {
+                  return (
+                    <button
+                      key={g.slug}
+                      type="button"
+                      className="gitem"
+                      aria-disabled="true"
+                      disabled
+                      title={tt("Coming soon")}
+                    >
+                      {tile}
+                      {g.name} <span className="soon">{tt("soon")}</span>
+                    </button>
+                  );
+                }
                 return (
-                  <button
+                  <Link
                     key={g.slug}
-                    type="button"
                     className="gitem"
-                    aria-disabled="true"
-                    disabled
-                    title="Coming soon"
+                    href={gameHref(g, lang, "/")}
+                    prefetch={false}
+                    onClick={() => gameMenu.setOpen(false)}
                   >
                     {tile}
-                    {g.name} <span className="soon">{tt("soon")}</span>
-                  </button>
+                    {g.name}
+                    {g.status === "beta" && <span className="soon">{tt("beta")}</span>}
+                  </Link>
                 );
-              }
-              return (
-                <Link
-                  key={g.slug}
-                  className="gitem"
-                  href={gameHref(g, lang, "/")}
-                  prefetch={false}
-                  onClick={() => gameMenu.setOpen(false)}
-                >
-                  {tile}
-                  {g.name}
-                  {g.status === "beta" && <span className="soon">{tt("beta")}</span>}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        // One visible game (WoW-only MVP): an honest plain label, not a menu with nothing to switch to.
+        <div className="gsw">
+          <span className="gsw-btn gsw-static">
+            <svg className="i" aria-hidden="true">
+              <use href={game.icon} />
+            </svg>{" "}
+            <span className="gsw-label">{game.name}</span>
+            <span className="gsw-label-sm">{game.shortName}</span>
+          </span>
+        </div>
+      )}
 
       <div className="gsw exp" ref={explore.rootRef}>
         <button
@@ -314,11 +302,7 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
           RU
         </Link>
       </nav>
-      <Link className="user" href={p(lang, "/profile/arcanist")} prefetch={false} aria-label={lang === "ru" ? "Профиль: Arcanist Vexis" : "Profile: Arcanist Vexis"}>
-        <span className="avatar" aria-hidden="true" />
-        <span className="user-name">Arcanist Vexis</span>{" "}
-        <span className="caret">→</span>
-      </Link>
+      <AccountChip lang={lang} trailing={<span className="caret" aria-hidden="true">→</span>} />
 
       {mobOpen && (
         <nav className="mobmenu" id="mobile-menu" aria-label="Mobile">
@@ -348,14 +332,10 @@ export function TopNav({ game: gameSlug, lang: langProp }: { game?: GameSlug; la
               <span className="exp-title">{tt(task.title)}</span>
             </Link>
           ))}
-          <Link
-            className="mob-prem"
-            href={gameHref(GAMES.wow, lang, anchorHref(ANCHORS.premium))}
-            prefetch={false}
-            onClick={() => setMobOpen(false)}
-          >
-            {tt("Go Premium")}
-          </Link>
+          {/* Premium is not available yet (see the footer): shown as such, not as a dead anchor. */}
+          <span className="mob-prem mob-soon" aria-disabled="true">
+            {tt("Go Premium")} <span className="soon">{tt("soon")}</span>
+          </span>
         </nav>
       )}
 

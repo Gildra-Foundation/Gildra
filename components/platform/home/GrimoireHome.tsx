@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { preload } from "react-dom";
 import { ArrowRight, BookOpen } from "lucide-react";
-import type { Lang } from "@/lib/i18n";
+import { t, type Lang } from "@/lib/i18n";
+import { GAMES, gameHref } from "@/lib/games/registry";
 import { BookOpener } from "./BookOpener";
 import styles from "./grimoireHome.module.css";
 
@@ -19,6 +20,8 @@ export function GrimoireHome({ lang }: { lang: Lang }) {
   });
   const ru = lang === "ru";
   const prefix = ru ? "/ru" : "";
+  const tt = t(lang);
+  const sections = GAMES.wow.nav.sections ?? [];
   return <div className={styles.page} data-grimoire-home>
     <header className={styles.header}>
       <Link href={prefix || "/"} className={styles.brand} aria-label="Gildra">
@@ -60,7 +63,15 @@ export function GrimoireHome({ lang }: { lang: Lang }) {
       </div>
     </main>
     <footer className={styles.footer}>
-      <span>{ru ? "ПЕРСОНАЖИ · ПОДЗЕМЕЛЬЯ · РЕЙДЫ" : "CHARACTERS · DUNGEONS · RAIDS"}</span>
+      {/* The cover has no sections of its own: these plain links (the former
+          "Characters · Dungeons · Raids" line, extended) are the crawlable way in. */}
+      <nav className={styles.footerNav} aria-label={tt("Sections")}>
+        <ul>
+          {sections.map((link) => <li key={link.path}>
+            <Link href={gameHref(GAMES.wow, lang, link.path)} prefetch={false}>{tt(link.label)}</Link>
+          </li>)}
+        </ul>
+      </nav>
       <span className={styles.footerMark} aria-hidden="true">✧</span>
       <span>{ru ? "ВАШЕ ПРИКЛЮЧЕНИЕ. ВАША КНИГА." : "YOUR ADVENTURE. YOUR BOOK."}</span>
     </footer>

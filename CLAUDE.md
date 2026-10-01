@@ -21,6 +21,11 @@ tool second → analytics dashboard third**. Production: https://gildra.net
 - Games: `lib/games/registry.ts` is the single source of game identity, URL
   prefix (WoW = site root, others `/<slug>/`), nav tasks, footer and legal
   text; TopNav/Footer/SearchCommand read it. Never add `app/[game]`.
+  **WoW-only MVP:** `MVP_VISIBLE_GAMES` in the registry decides which games the
+  public site shows; `lib/mvp.ts` (`hiddenForMvp()`) makes routes of hidden games
+  and the fixture pages (/patches, /compare, /profile/*, /diablo, /genshin/**)
+  answer 404. The header account chip is `components/auth/AccountChip.tsx`
+  (real `/api/auth/status`, never a made-up name).
 - Block pages so far: WoW home, `/tier-lists` (one `wow.tierWorkspace` block
   around `components/TierSection.tsx`), `/specs/[slug]`, `/privacy`, and all of
   `/league-of-legends/**` (+ `/ru` mirrors). `/database`, `/library` and
