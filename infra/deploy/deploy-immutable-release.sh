@@ -10,6 +10,7 @@ previous_manifest=$deployment_directory/previous-release.env
 rollback_manifest=$deployment_directory/last-rollback.env
 validate_only=false
 rollback_armed=false
+backup_pid=""
 
 if [ "${1:-}" = "--validate-only" ]; then
   validate_only=true
@@ -215,11 +216,29 @@ ensure_recovery_backup() {
   # OLD schema and be refused by its minimum-schema check. Clear them and let
   # the manifest decide: the previous release before the upgrade, the new one
   # once write_release_manifest has recorded it.
+  #
+  # The backup and its isolated restore proof stay silent for about two hours.
+  # Run it in the background and print a line every minute, so the connection
+  # that carries this output is never idle and the log shows progress.
   env -u WEB_IMAGE -u API_IMAGE -u CMS_IMAGE -u SCRAPER_IMAGE -u ROTATION_WORKER_IMAGE \
     GILDRA_DEPLOYMENT_DIRECTORY="$deployment_directory" \
     GILDRA_ENV_FILE="$environment_file" \
     GILDRA_RELEASE_ENV_FILE="$current_manifest" \
-    "$backup_script"
+    "$backup_script" &
+  backup_pid=$!
+  heartbeat_seconds=${GILDRA_HEARTBEAT_SECONDS:-60}
+  waited_seconds=0
+  while kill -0 "$backup_pid" 2>/dev/null; do
+    sleep "$heartbeat_seconds"
+    waited_seconds=$((waited_seconds + heartbeat_seconds))
+    if kill -0 "$backup_pid" 2>/dev/null; then
+      printf 'deploy: recovery backup still running (%ss)\n' "$waited_seconds" >&2
+    fi
+  done
+  status=0
+  wait "$backup_pid" || status=$?
+  backup_pid=""
+  return "$status"
 }
 
 verify_library_route() {
@@ -283,8 +302,7 @@ verify_local_health() {
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/genshin-impact >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/league-of-legends/v1/status >/dev/null
-  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/league-of-legends >/dev/null
+  # The League of Legends web page is hidden for the WoW-only MVP; its API status above is still checked.
   for edition in retail classic classic-era hardcore; do
     prefixed_index_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
       --output /dev/null --write-out '%{http_code}' \
@@ -489,6 +507,12 @@ rollback_release() {
 on_exit() {
   status=$?
   trap - EXIT HUP INT TERM
+  # A recovery backup started by this run must not outlive it: the rollback
+  # below would otherwise race with it for the backup lock and the images.
+  if [ -n "$backup_pid" ] && kill -0 "$backup_pid" 2>/dev/null; then
+    kill "$backup_pid" 2>/dev/null || true
+    wait "$backup_pid" 2>/dev/null || true
+  fi
   if [ "$status" -ne 0 ] && [ "$rollback_armed" = true ]; then
     if ! rollback_release; then
       printf 'deploy: CRITICAL: automatic rollback failed\n' >&2

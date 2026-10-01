@@ -38,8 +38,10 @@ printf 'server {}\n' > "$deployment_directory/infra/nginx/prod.conf"
 # manifest it was pointed at.
 cat > "$deployment_directory/infra/backup/run-catalog-backup.sh" <<'FAKE_BACKUP'
 #!/bin/sh
+if [ "${TEST_BACKUP_SLEEP:-0}" -gt 0 ]; then sleep "$TEST_BACKUP_SLEEP"; fi
 printf 'env_api=%s manifest_api=%s\n' "${API_IMAGE:-unset}" \
   "$(sed -n 's/^API_IMAGE=//p' "$GILDRA_RELEASE_ENV_FILE")" >> "$TEST_STATE_DIR/backup-calls.log"
+[ -z "${TEST_BACKUP_FAIL:-}" ] || exit 7
 FAKE_BACKUP
 chmod +x "$deployment_directory/infra/backup/run-catalog-backup.sh"
 
@@ -347,6 +349,8 @@ PATH="$fake_bin:$PATH" \
   TEST_STATE_DIR=$state_directory \
   TEST_NEW_WEB=never \
   TEST_BACKUP_STALE=1 \
+  TEST_BACKUP_SLEEP=3 \
+  GILDRA_HEARTBEAT_SECONDS=1 \
   GILDRA_DEPLOY_DIR=$deployment_directory \
   GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock \
   WEB_IMAGE=$next_web API_IMAGE=$next_api CMS_IMAGE=$next_cms SCRAPER_IMAGE=$next_scraper \
@@ -375,6 +379,40 @@ PATH="$fake_bin:$PATH" \
   exit 1
 }
 printf 'test: pre-upgrade backup runs the image of the release being replaced\n'
+# The backup is silent for hours in production; the deployment must print progress.
+grep -q 'recovery backup still running' "$test_directory/deploy-stale.log" || {
+  cat "$test_directory/deploy-stale.log" >&2
+  printf 'test: a slow recovery backup must be accompanied by progress lines\n' >&2
+  exit 1
+}
+printf 'test: a slow recovery backup prints progress\n'
+
+# A failing backup must fail the deployment (the exit status of the background
+# run must not be lost) and roll the release back.
+cp "$deployment_directory/current-release.env" "$test_directory/manifest.before-failing-backup"
+third_web=ghcr.io/gildra-foundation/gildra-web@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+if PATH="$fake_bin:$PATH" \
+  TEST_STATE_DIR=$state_directory \
+  TEST_NEW_WEB=never \
+  TEST_BACKUP_STALE=1 \
+  TEST_BACKUP_FAIL=1 \
+  GILDRA_DEPLOY_DIR=$deployment_directory \
+  GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock \
+  WEB_IMAGE=$third_web API_IMAGE=$next_api CMS_IMAGE=$next_cms SCRAPER_IMAGE=$next_scraper \
+  ROTATION_WORKER_IMAGE=$next_worker \
+  GILDRA_SOURCE_REVISION=4444444444444444444444444444444444444444 \
+  GILDRA_RELEASE_ID=test-release-failing-backup \
+  GILDRA_ROLLBACK_COMPATIBLE=true \
+  "$deployment_script" > "$test_directory/deploy-failing-backup.log" 2>&1; then
+  printf 'test: a deployment whose recovery backup fails must fail\n' >&2
+  exit 1
+fi
+cmp -s "$deployment_directory/current-release.env" "$test_directory/manifest.before-failing-backup" || {
+  printf 'test: a failed backup must leave the release manifest untouched\n' >&2
+  exit 1
+}
+grep -q 'rollback completed and verified' "$test_directory/deploy-failing-backup.log"
+printf 'test: a failing recovery backup fails the deployment and rolls it back\n'
 
 bootstrap_env=$test_directory/bootstrap.env
 printf 'LEGACY_SETTING=kept\n' > "$bootstrap_env"
