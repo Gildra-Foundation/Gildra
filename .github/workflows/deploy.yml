@@ -86,6 +86,8 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          # The release mode compares this commit with the one running in production.
+          fetch-depth: 0
       - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
@@ -130,6 +132,40 @@ jobs:
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # A restore proof inside the deployment is silent for two hours; keep
+          # the connection alive so it is not dropped from under the script.
+          printf 'Host *\n  ServerAliveInterval 30\n  ServerAliveCountMax 240\n  TCPKeepAlive yes\n' > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+      - name: Decide release mode
+        id: mode
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Front-end only release: every file changed since the last FULL release
+          # (the SOURCE_REVISION in the production manifest) is web code, docs or
+          # the deployment tooling (it is uploaded with every release and restarts
+          # nothing). Anything else (backend, migrations, CMS, scraper, compose,
+          # nginx, backup and systemd files) takes the full immutable-release
+          # path with its backup and catalog gates.
+          web_only='^(app|components|lib|public|data|types|messages|i18n|docs|tasks|scripts)/|^(package\.json|package-lock\.json|next\.config\.ts|tsconfig\.json|proxy\.ts|auth\.ts|instrumentation(-client)?\.ts|sentry\.(edge|server)\.config\.ts|postcss\.config\.mjs|components\.json|Dockerfile|\.dockerignore|\.env\.example|CLAUDE\.md|AGENTS\.md|README\.md|CONTEXT\.md|design(-qa)?\.md)$|^\.github/|^infra/deploy/'
+          mode=full
+          deployed="$(ssh "$OVH_USER@$OVH_HOST" "sudo sed -n 's/^SOURCE_REVISION=//p' /opt/gildra/current-release.env" | head -n 1 | tr -d '\r')" || deployed=""
+          if printf '%s\n' "$deployed" | grep -Eq '^[0-9a-f]{40}$' && git cat-file -e "${deployed}^{commit}" 2>/dev/null; then
+            outside="$(git diff --name-only "$deployed" "$HEAD_SHA" | grep -Ev "$web_only" | sed '/^$/d' || true)"
+            if [ -z "$outside" ]; then
+              mode=web
+            else
+              printf 'Files outside the web allowlist since %s:\n%s\n' "$deployed" "$outside"
+            fi
+          else
+            printf 'Deployed revision %s is unknown to this checkout; using the full path.\n' "${deployed:-<none>}"
+          fi
+          printf 'Release mode: %s\n' "$mode"
+          printf 'mode=%s\n' "$mode" >> "$GITHUB_OUTPUT"
       - name: Upload deployment configuration
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
@@ -137,12 +173,14 @@ jobs:
         run: |
           tar -czf - compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && sudo chown -R root:root /opt/gildra'
       - name: Bootstrap catalog runtime policy
+        if: steps.mode.outputs.mode == 'full'
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
         run: |
           ssh "$OVH_USER@$OVH_HOST" 'sudo /opt/gildra/infra/deploy/bootstrap-runtime-policy.sh /opt/gildra/.env'
       - name: Normalize legacy release manifest
+        if: steps.mode.outputs.mode == 'full'
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
@@ -168,6 +206,7 @@ jobs:
           echo "docker login to ghcr.io failed after 8 attempts" >&2
           exit 1
       - name: Deploy immutable images
+        if: steps.mode.outputs.mode == 'full'
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
@@ -181,6 +220,17 @@ jobs:
         run: |
           ssh "$OVH_USER@$OVH_HOST" \
             "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' ROTATION_WORKER_IMAGE='$ROTATION_WORKER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
+      - name: Deploy web image
+        if: steps.mode.outputs.mode == 'web'
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          WEB_IMAGE: ${{ steps.images.outputs.WEB_IMAGE }}
+          GILDRA_WEB_SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          infra/deploy/deploy-web-release.sh --validate-only
+          ssh "$OVH_USER@$OVH_HOST" \
+            "sudo env WEB_IMAGE='$WEB_IMAGE' GILDRA_WEB_SOURCE_REVISION='$GILDRA_WEB_SOURCE_REVISION' /opt/gildra/infra/deploy/deploy-web-release.sh"
       - name: Verify public production paths
         shell: bash
         run: |
@@ -190,7 +240,7 @@ jobs:
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/genshin-impact/v1/status >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/genshin-impact >/dev/null
           curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/league-of-legends/v1/status >/dev/null
-          curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 15 https://api.gildra.net/league-of-legends >/dev/null
+          # The League of Legends page is hidden for the WoW-only MVP; its API status above is still checked.
           catalog_status="$(curl --silent --show-error --retry 6 --retry-delay 5 --max-time 15 --output /dev/null --write-out '%{http_code}' 'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US')"
           test "$catalog_status" = 200
           for edition in retail classic classic-era hardcore; do

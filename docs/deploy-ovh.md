@@ -109,3 +109,12 @@ Character pages, the Rotation Lab and the character workspace need three things 
 3. **Reverse proxy.** `infra/nginx/prod.conf` sends `/api/auth/`, `/api/wow/`, `/api/wow-model/` and `/api/platform/` to the Next.js service; every other `/api/` path terminates at the Go API. The deployment recreates nginx when this file changes.
 
 The `rotation-sim-worker` service (`infra/simc/Dockerfile`) runs a pinned SimulationCraft build with networking disabled, on the private Compose network only. The web service reaches it through `ROTATION_WORKER_URL`; a failed simulation is reported as an error and never replaced by a training estimate (`ROTATION_ALLOW_MVP_FALLBACK=false`).
+
+## 8. Release modes: web-only and full
+
+After a push to `master` the deploy job reads `SOURCE_REVISION` (the last full release) from `/opt/gildra/current-release.env` and compares it with the commit being deployed. The result is one of two modes, printed in the job log as `Release mode: web|full`.
+
+- **web** — every changed file is front-end code (`app/`, `components/`, `lib/`, `public/`, `data/`, `types/`, `messages/`, `i18n/`, `scripts/`, docs, the root Next.js/TypeScript/package files, `Dockerfile`), the deployment tooling (`infra/deploy/`, `.github/`) or documentation. Only the `web` container is replaced by `infra/deploy/deploy-web-release.sh`: pull the digest, recreate the container, reload nginx, check the live routes through nginx, then record `WEB_IMAGE` and `WEB_SOURCE_REVISION` in the manifest. Any failure restores the previous web image and leaves the manifest as it was. It takes minutes and does not run migrations, the recovery backup or the catalog gates.
+- **full** — anything else (backend, migrations, CMS, scraper, compose, nginx, backup or systemd files, the rotation worker), or an unknown deployed revision. This is the immutable release described in section 6, including the recovery backup and the catalog readiness audit.
+
+Both modes share the deployment lock, so they never overlap. The SSH connection of the workflow uses `ServerAliveInterval`, and the recovery backup prints a progress line every minute, because the restore proof is otherwise silent for about two hours.
