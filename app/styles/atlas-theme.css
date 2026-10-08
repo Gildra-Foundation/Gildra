@@ -1,0 +1,7 @@
+/* Palette shared with the Raid and Mythic+ atlases. */
+.gildra-atlas {
+--atlas-background:#050607; --atlas-surface:#090a0b; --atlas-text:#d9d0c0;
+--atlas-title:#f2e1c3; --atlas-muted:#aaa294; --atlas-accent:#d1a24b;
+--atlas-accent-bright:#f0b55a; --atlas-border:rgba(157,112,48,.45);
+--atlas-rule:rgba(157,112,48,.24); color-scheme:dark;
+}
