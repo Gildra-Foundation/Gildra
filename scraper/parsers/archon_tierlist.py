@@ -11,7 +11,6 @@ from typing import Any, Iterator
 from urllib.parse import urlsplit
 
 from web_scraper import ResponseContract
-from web_scraper.providers import ScrapeDoProvider
 
 from .wowhead_tier_lists import fetch_with_fallback
 
@@ -61,13 +60,16 @@ SOURCES = _sources()
 
 
 def _fetch_archon(source_url: str, contract: ResponseContract) -> tuple[bytes, dict[str, Any]]:
-    """Keep Scrape.do first, with direct HTTPS as a zero-credit Archon fallback."""
+    """Walk the whole provider chain, with direct HTTPS as a zero-credit fallback.
+
+    Archon sits behind a Cloudflare challenge. Scrape.do's normal strategy
+    returns the 2.5 KB interstitial, which the contract rejects, so ZenRows,
+    Zyte and Bright Data must get their turn before the direct request that
+    Cloudflare also blocks. Restricting the chain to Scrape.do alone left the
+    dataset failing every night from 2026-08-27 on.
+    """
     try:
-        return fetch_with_fallback(
-            source_url,
-            contract,
-            providers=[(ScrapeDoProvider(), "normal")],
-        )
+        return fetch_with_fallback(source_url, contract)
     except RuntimeError as provider_error:
         request = urllib.request.Request(
             source_url,

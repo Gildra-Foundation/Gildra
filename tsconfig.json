@@ -34,7 +34,11 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    ".next-local-perf-build/types/**/*.ts",
+    ".next-local-perf-build/dev/types/**/*.ts",
+    ".next-mythic-party-v1/types/**/*.ts",
+    ".next-mythic-party-v1/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

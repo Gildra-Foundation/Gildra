@@ -74,6 +74,7 @@ type options struct {
 	buildVersion       string
 	locales            []string
 	entityTypes        []string
+	entityIDs          []int64
 	pageSize           int
 	maxRecords         int
 	detailWorkers      int
@@ -463,6 +464,9 @@ func importBattleNet(
 		}
 		for _, entityType := range opts.entityTypes {
 			spec := battleNetEntitySpecs[entityType]
+			if len(opts.entityIDs) > 0 {
+				return importBattleNetSelectedIDs(ctx, client, store, importContext, opts, seen, written)
+			}
 			if opts.missingOnly {
 				collectionURL, urlErr := client.SearchURL(region, namespace, locale, spec.Resource, 1, opts.pageSize)
 				if entityType == "quest" {
@@ -542,6 +546,115 @@ func importBattleNet(
 		}
 	}
 	return nil
+}
+
+// importBattleNetSelectedIDs fetches an explicitly reviewed, bounded set of
+// Battle.net records.  It is used for a cohort repair such as Midnight, where
+// a broad "missing" pass would otherwise scan every expansion before reaching
+// the intended records.  The artifact contains the exact response manifest,
+// and Enrich only fills a description when the official response provides one.
+func importBattleNetSelectedIDs(
+	ctx context.Context,
+	client *battlenet.Client,
+	store *catalogimport.Store,
+	importContext catalogimport.ImportContext,
+	opts options,
+	seen, written *int64,
+) error {
+	entityType := opts.entityTypes[0]
+	spec := battleNetEntitySpecs[entityType]
+	for _, locale := range opts.locales {
+		region, err := regionForLocale(locale)
+		if err != nil {
+			return err
+		}
+		namespace, err := battleNetNamespace(opts.product, region)
+		if err != nil {
+			return err
+		}
+		collectionURL, err := client.SearchURL(region, namespace, locale, spec.Resource, 1, 1)
+		if err != nil {
+			return err
+		}
+		artifactID, err := store.RegisterPendingArtifact(ctx, importContext, "blizzard_api",
+			"battlenet-selected/"+entityType, locale, collectionURL, map[string]any{
+				"entity_type": entityType, "namespace": namespace, "locale": locale,
+				"proof_scope": "source_record_manifest_v1", "selected_ids": opts.entityIDs,
+				"source_build_number": opts.sourceBuildNumber, "source_build_version": opts.sourceBuildVersion,
+				"build_mismatch_allowed": opts.allowBuildMismatch,
+			})
+		if err != nil {
+			return err
+		}
+		if err := runBattleNetArtifact(ctx, store, artifactID, entityType, locale, func() error {
+			return importBattleNetSelectedType(ctx, client, store, importContext, opts, region, namespace,
+				locale, entityType, spec, artifactID, seen, written)
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func importBattleNetSelectedType(
+	ctx context.Context,
+	client *battlenet.Client,
+	store *catalogimport.Store,
+	importContext catalogimport.ImportContext,
+	opts options,
+	region, namespace, locale, entityType string,
+	spec battleNetEntitySpec,
+	artifactID uuid.UUID,
+	seen, written *int64,
+) error {
+	detailNamespace := namespace
+	if pinned, err := pinnedBattleNetNamespace(opts.sourceBuildVersion, region); err == nil {
+		detailNamespace = pinned
+	} else {
+		slog.Warn("using moving Battle.net namespace for selected enrichment", "type", entityType, "locale", locale, "error", err)
+	}
+	workers := min(opts.detailWorkers, len(opts.entityIDs))
+	jobs := make(chan int64)
+	group, groupCtx := errgroup.WithContext(ctx)
+	for range workers {
+		group.Go(func() error {
+			for {
+				select {
+				case <-groupCtx.Done():
+					return groupCtx.Err()
+				case id, ok := <-jobs:
+					if !ok {
+						return nil
+					}
+					atomic.AddInt64(seen, 1)
+					payload, sourceURL, err := client.Detail(groupCtx, region, detailNamespace, locale, spec.Resource, id)
+					if err != nil {
+						if battlenet.IsNotFound(err) {
+							slog.Warn("Battle.net selected record is not available", "type", entityType, "id", id, "locale", locale)
+							continue
+						}
+						return fmt.Errorf("fetch selected %s %d (%s): %w", entityType, id, locale, err)
+					}
+					if err := storeBattleNetRecord(groupCtx, store, importContext, artifactID, entityType, locale, id, payload, sourceURL); err != nil {
+						return err
+					}
+					atomic.AddInt64(written, 1)
+				}
+			}
+		})
+	}
+	group.Go(func() error {
+		defer close(jobs)
+		for _, id := range opts.entityIDs {
+			select {
+			case jobs <- id:
+			case <-groupCtx.Done():
+				return groupCtx.Err()
+			}
+		}
+		return nil
+	})
+	return group.Wait()
 }
 
 // importBattleNetMissingType enriches already imported build versions with
@@ -1801,7 +1914,7 @@ func searchResultID(payload json.RawMessage) (int64, error) {
 }
 
 func parseOptions() (options, error) {
-	var locales, entityTypes string
+	var locales, entityTypes, entityIDs string
 	opts := options{}
 	flag.StringVar(&opts.source, "source", "wago", "catalog source: wago or battlenet")
 	// Keep credentials and connection strings out of `-h` output.  The flag
@@ -1815,6 +1928,7 @@ func parseOptions() (options, error) {
 	flag.StringVar(&opts.buildVersion, "version", os.Getenv("BATTLENET_BUILD_VERSION"), "WoW version; Wago auto-detects when empty")
 	flag.StringVar(&locales, "locales", "en_US,ru_RU", "comma-separated storage locales")
 	flag.StringVar(&entityTypes, "types", "item,spell", "comma-separated entity types or all")
+	flag.StringVar(&entityIDs, "entity-ids", "", "comma-separated Battle.net entity IDs; requires one type and performs a bounded direct import")
 	flag.IntVar(&opts.pageSize, "page-size", 100, "Battle.net search page size")
 	flag.IntVar(&opts.maxRecords, "max-records", 100, "maximum records per type and locale; 0 imports all")
 	flag.IntVar(&opts.detailWorkers, "detail-workers", 8, "maximum concurrent Battle.net detail requests")
@@ -1835,6 +1949,10 @@ func parseOptions() (options, error) {
 	opts.source = strings.ToLower(strings.TrimSpace(opts.source))
 	opts.locales = splitList(locales)
 	opts.entityTypes = splitList(entityTypes)
+	var err error
+	if opts.entityIDs, err = parsePositiveIDs(entityIDs); err != nil {
+		return options{}, err
+	}
 	if len(opts.entityTypes) == 1 && opts.entityTypes[0] == "all" {
 		opts.entityTypes = slices.Clone(battleNetAllEntityTypes)
 	}
@@ -1852,6 +1970,12 @@ func parseOptions() (options, error) {
 		return options{}, errors.New("-media-only requires -source battlenet")
 	case opts.missingOnly && opts.source != "battlenet":
 		return options{}, errors.New("-missing-only requires -source battlenet")
+	case len(opts.entityIDs) > 0 && opts.source != "battlenet":
+		return options{}, errors.New("-entity-ids requires -source battlenet")
+	case len(opts.entityIDs) > 0 && opts.missingOnly:
+		return options{}, errors.New("-entity-ids and -missing-only cannot be combined")
+	case len(opts.entityIDs) > 0 && len(opts.entityTypes) != 1:
+		return options{}, errors.New("-entity-ids requires exactly one entity type")
 	case opts.mediaOnly && opts.missingOnly:
 		return options{}, errors.New("-media-only and -missing-only cannot be combined")
 	case len(opts.locales) == 0 || opts.locales[0] != "en_US":
@@ -1886,6 +2010,26 @@ func parseOptions() (options, error) {
 		}
 	}
 	return opts, nil
+}
+
+func parsePositiveIDs(raw string) ([]int64, error) {
+	if strings.TrimSpace(raw) == "" {
+		return nil, nil
+	}
+	seen := make(map[int64]struct{})
+	result := make([]int64, 0)
+	for _, part := range strings.Split(raw, ",") {
+		id, err := strconv.ParseInt(strings.TrimSpace(part), 10, 64)
+		if err != nil || id <= 0 {
+			return nil, fmt.Errorf("-entity-ids must contain positive integers: %q", part)
+		}
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+		result = append(result, id)
+	}
+	return result, nil
 }
 
 func effectiveWagoTableTimeout(value time.Duration) time.Duration {

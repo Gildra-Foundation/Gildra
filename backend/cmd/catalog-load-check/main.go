@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/api"
@@ -32,9 +34,12 @@ type options struct {
 	baseURL             string
 	databaseURL         string
 	inProcess           bool
+	directQuery         bool
+	explainQuery        bool
 	product             string
 	locale              string
 	dataset             string
+	query               string
 	requests            int
 	concurrency         int
 	requestTimeout      time.Duration
@@ -89,6 +94,21 @@ type observation struct {
 	err      error
 }
 
+type queryCapture struct {
+	query string
+	args  []any
+}
+
+func (capture *queryCapture) TraceQueryStart(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
+	if strings.Contains(data.SQL, "search_candidates(version_id,rank)") {
+		capture.query = data.SQL
+		capture.args = data.Args
+	}
+	return ctx
+}
+
+func (*queryCapture) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
+
 func main() {
 	if err := run(); err != nil {
 		slog.Error("catalog load check failed", "error", err)
@@ -102,6 +122,9 @@ func run() error {
 		return err
 	}
 	ctx := context.Background()
+	if opts.directQuery {
+		return runDirectSummary(ctx, opts)
+	}
 	if opts.inProcess {
 		server, closeServer, err := startInProcessServer(ctx, opts.databaseURL)
 		if err != nil {
@@ -154,9 +177,12 @@ func parseOptions() (options, error) {
 	opts := options{}
 	flag.StringVar(&opts.baseURL, "base-url", "", "catalog API HTTPS origin (HTTP allowed only for loopback)")
 	flag.BoolVar(&opts.inProcess, "in-process", false, "serve the public catalog in-process from DATABASE_URL (read-only journey)")
+	flag.BoolVar(&opts.directQuery, "direct-query", false, "call catalog summaries directly and report the underlying query error")
+	flag.BoolVar(&opts.explainQuery, "explain-query", false, "run EXPLAIN ANALYZE for the direct summary query")
 	flag.StringVar(&opts.product, "product", "wow", "catalog product slug")
 	flag.StringVar(&opts.locale, "locale", "en_US", "catalog locale")
 	flag.StringVar(&opts.dataset, "dataset", "items", "public dataset slug")
+	flag.StringVar(&opts.query, "query", "", "search query for entity summaries")
 	flag.IntVar(&opts.requests, "requests", 60, "measured requests per endpoint")
 	flag.IntVar(&opts.concurrency, "concurrency", 4, "concurrent requests (maximum 32)")
 	flag.DurationVar(&opts.requestTimeout, "timeout", 10*time.Second, "per-request timeout")
@@ -171,6 +197,9 @@ func parseOptions() (options, error) {
 }
 
 func normalizeOptions(opts options) (options, error) {
+	if opts.directQuery && !opts.inProcess {
+		return options{}, errors.New("direct-query requires in-process")
+	}
 	if opts.inProcess {
 		if strings.TrimSpace(opts.baseURL) != "" {
 			return options{}, errors.New("base-url and in-process are mutually exclusive")
@@ -213,6 +242,63 @@ func normalizeOptions(opts options) (options, error) {
 	}
 	opts.baseURL = parsed.String()
 	return opts, nil
+}
+
+func runDirectSummary(ctx context.Context, opts options) error {
+	config, err := pgxpool.ParseConfig(opts.databaseURL)
+	if err != nil {
+		return fmt.Errorf("parse PostgreSQL config: %w", err)
+	}
+	capture := &queryCapture{}
+	config.ConnConfig.Tracer = capture
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		return fmt.Errorf("open PostgreSQL pool: %w", err)
+	}
+	defer pool.Close()
+	if err := pool.Ping(ctx); err != nil {
+		return fmt.Errorf("ping PostgreSQL: %w", err)
+	}
+	started := time.Now()
+	page, err := catalog.NewService(pool).Summaries(ctx, catalog.SummaryParams{
+		Product: opts.product, Locale: opts.locale, Query: opts.query, Limit: 12, IncludeTotal: false,
+	})
+	elapsed := time.Since(started)
+	if err != nil {
+		var postgresError *pgconn.PgError
+		if errors.As(err, &postgresError) {
+			fmt.Printf("postgres_position=%d detail=%s where=%s\n", postgresError.Position, postgresError.Detail, postgresError.Where)
+			position := int(postgresError.Position) - 1
+			if position >= 0 && position < len(capture.query) {
+				start, end := max(0, position-100), min(len(capture.query), position+100)
+				fmt.Printf("query_error_context=%s\n", strings.ReplaceAll(capture.query[start:end], "\n", " "))
+			}
+		}
+		return fmt.Errorf("run catalog summary query: %w", err)
+	}
+	entityIDs := make([]string, 0, len(page.Entities))
+	for _, entity := range page.Entities {
+		entityIDs = append(entityIDs, entity.ID.String())
+	}
+	fmt.Printf("query=%q entities=%d has_more=%t elapsed=%s ids=%s\n", opts.query, len(page.Entities), page.HasMore, elapsed, strings.Join(entityIDs, ","))
+	if opts.explainQuery {
+		rows, err := pool.Query(ctx, "EXPLAIN (ANALYZE, BUFFERS, TIMING OFF) "+capture.query, capture.args...)
+		if err != nil {
+			return fmt.Errorf("explain catalog summary query: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var line string
+			if err := rows.Scan(&line); err != nil {
+				return fmt.Errorf("read summary query plan: %w", err)
+			}
+			fmt.Println(line)
+		}
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("read summary query plan: %w", err)
+		}
+	}
+	return nil
 }
 
 func startInProcessServer(ctx context.Context, databaseURL string) (*httptest.Server, func(), error) {
@@ -262,12 +348,21 @@ func datasetsPath(opts options) string {
 }
 
 func summariesPath(opts options) string {
-	return "/v1/game/entity-summaries?product=" + url.QueryEscape(opts.product) + "&locale=" + url.QueryEscape(opts.locale) +
-		"&dataset=" + url.QueryEscape(opts.dataset) + "&limit=20"
+	path := "/v1/game/entity-summaries?product=" + url.QueryEscape(opts.product) + "&locale=" + url.QueryEscape(opts.locale)
+	if opts.query != "" {
+		path += "&q=" + url.QueryEscape(opts.query)
+	} else {
+		path += "&dataset=" + url.QueryEscape(opts.dataset)
+	}
+	return path + "&limit=20&includeTotal=false"
 }
 
 func detailPath(opts options, id uuid.UUID) string {
-	return "/v1/game/entities/" + id.String() + "?locale=" + url.QueryEscape(opts.locale) + "&dataset=" + url.QueryEscape(opts.dataset)
+	path := "/v1/game/entities/" + id.String() + "?locale=" + url.QueryEscape(opts.locale)
+	if opts.query == "" {
+		path += "&dataset=" + url.QueryEscape(opts.dataset)
+	}
+	return path
 }
 
 func discoverDetailID(ctx context.Context, client *http.Client, opts options) (uuid.UUID, error) {
@@ -283,7 +378,8 @@ func discoverDetailID(ctx context.Context, client *http.Client, opts options) (u
 	}
 	defer response.Body.Close()
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return uuid.Nil, fmt.Errorf("discover detail entity: HTTP %d", response.StatusCode)
+		body, _ := io.ReadAll(io.LimitReader(response.Body, 4096))
+		return uuid.Nil, fmt.Errorf("discover detail entity: HTTP %d: %s", response.StatusCode, strings.TrimSpace(string(body)))
 	}
 	limited := io.LimitReader(response.Body, maxResponseBytes+1)
 	var payload struct {
@@ -372,15 +468,15 @@ func requestOnce(ctx context.Context, client *http.Client, targetURL string) obs
 		return observation{duration: duration, err: fmt.Errorf("request failed: %w", err)}
 	}
 	defer response.Body.Close()
-	written, readErr := io.Copy(io.Discard, io.LimitReader(response.Body, maxResponseBytes+1))
+	body, readErr := io.ReadAll(io.LimitReader(response.Body, maxResponseBytes+1))
 	if readErr != nil {
 		return observation{duration: duration, status: response.StatusCode, err: fmt.Errorf("read body: %w", readErr)}
 	}
-	if written > maxResponseBytes {
+	if len(body) > maxResponseBytes {
 		return observation{duration: duration, status: response.StatusCode, err: errors.New("response exceeds 8 MiB")}
 	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return observation{duration: duration, status: response.StatusCode, err: fmt.Errorf("HTTP %d", response.StatusCode)}
+		return observation{duration: duration, status: response.StatusCode, err: fmt.Errorf("HTTP %d: %s", response.StatusCode, strings.TrimSpace(string(body)))}
 	}
 	return observation{duration: duration, status: response.StatusCode}
 }

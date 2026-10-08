@@ -373,6 +373,14 @@ func projectEncounterItem(ctx context.Context, db *pgxpool.Pool, store *catalogi
 		return err
 	}
 	digest := sha256.Sum256(raw)
+	bonusIDs := make([]int64, 0)
+	if values, ok := doc["bonusLists"].([]any); ok {
+		for _, value := range values {
+			if id := numericID(value); id > 0 {
+				bonusIDs = append(bonusIDs, id)
+			}
+		}
+	}
 	return pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
 		var versionID, variantID uuid.UUID
 		if err := tx.QueryRow(ctx, `SELECT v.id FROM game_entities e JOIN game_entity_versions v ON v.entity_id=e.id
@@ -381,12 +389,12 @@ func projectEncounterItem(ctx context.Context, db *pgxpool.Pool, store *catalogi
 			return err
 		}
 		if err := tx.QueryRow(ctx, `INSERT INTO catalog_item_variants(
-			item_version_id,snapshot_id,source_artifact_id,variant_key,item_level,quality,content_hash,attributes)
-			VALUES($1,$2,$3,'raidbots:encounter',$4,$5,$6,$7)
+			item_version_id,snapshot_id,source_artifact_id,variant_key,bonus_list_ids,item_level,quality,content_hash,attributes)
+			VALUES($1,$2,$3,'raidbots:encounter',$4,$5,$6,$7,$8)
 			ON CONFLICT(item_version_id,variant_key) DO UPDATE SET snapshot_id=EXCLUDED.snapshot_id,
-			source_artifact_id=EXCLUDED.source_artifact_id,item_level=EXCLUDED.item_level,quality=EXCLUDED.quality,
+			source_artifact_id=EXCLUDED.source_artifact_id,bonus_list_ids=EXCLUDED.bonus_list_ids,item_level=EXCLUDED.item_level,quality=EXCLUDED.quality,
 			content_hash=EXCLUDED.content_hash,attributes=EXCLUDED.attributes,updated_at=now() RETURNING id`,
-			versionID, ic.SnapshotID, artifactID, numericID(doc["itemLevel"]), numericID(doc["quality"]), digest[:], raw).Scan(&variantID); err != nil {
+			versionID, ic.SnapshotID, artifactID, bonusIDs, numericID(doc["itemLevel"]), numericID(doc["quality"]), digest[:], raw).Scan(&variantID); err != nil {
 			return err
 		}
 		if _, err := tx.Exec(ctx, `DELETE FROM catalog_item_variant_stats WHERE variant_id=$1`, variantID); err != nil {

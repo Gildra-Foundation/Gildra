@@ -1,5 +1,6 @@
 [Unit]
 Description=Gildra atomic World of Warcraft catalog refresh
+OnFailure=gildra-notify@%p.service
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target

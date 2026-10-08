@@ -1,7 +1,20 @@
 import json
 import unittest
+from unittest import mock
 
+from scraper.parsers import archon_tierlist
 from scraper.parsers.archon_tierlist import parse_archon_page
+
+
+class FetchArchonProviderChainTest(unittest.TestCase):
+    def test_uses_the_full_provider_chain_before_direct_fallback(self) -> None:
+        contract = object()
+        with mock.patch.object(archon_tierlist, "fetch_with_fallback", return_value=(b"body", {"provider": "zyte"})) as fetch:
+            body, telemetry = archon_tierlist._fetch_archon("https://www.archon.gg/wow/tier-list/dps-rankings/mythic-plus/10/all-dungeons/this-week", contract)
+        self.assertEqual(body, b"body")
+        self.assertEqual(telemetry["provider"], "zyte")
+        fetch.assert_called_once()
+        self.assertNotIn("providers", fetch.call_args.kwargs, "Archon must not be pinned to Scrape.do alone")
 
 
 class ParseArchonPageTest(unittest.TestCase):

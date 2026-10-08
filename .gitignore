@@ -29,3 +29,8 @@ tsconfig.tsbuildinfo
 
 # local Next build dirs (NEXT_DIST_DIR overrides)
 .next-*/
+
+# Local browser evidence and temporary workspaces
+.playwright-cli/
+tmp/
+output/

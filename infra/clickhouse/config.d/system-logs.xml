@@ -1,0 +1,29 @@
+<clickhouse>
+    <!--
+        The API keeps a handful of analytics rows in ClickHouse, yet the default
+        system logs (trace_log, metric_log, text_log, part_log, ...) grew past
+        3 GB and kept fourteen merge threads busy at roughly a third of a core
+        while the server was otherwise idle. Keep only what an operator reads
+        when something breaks, and let those tables expire on their own.
+    -->
+    <trace_log remove="remove"/>
+    <metric_log remove="remove"/>
+    <asynchronous_metric_log remove="remove"/>
+    <processors_profile_log remove="remove"/>
+    <query_thread_log remove="remove"/>
+    <part_log remove="remove"/>
+    <query_metric_log remove="remove"/>
+    <background_schedule_pool_log remove="remove"/>
+    <latency_log remove="remove"/>
+
+    <text_log>
+        <level>warning</level>
+        <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+    </text_log>
+    <query_log>
+        <ttl>event_date + INTERVAL 30 DAY DELETE</ttl>
+    </query_log>
+    <error_log>
+        <ttl>event_date + INTERVAL 30 DAY DELETE</ttl>
+    </error_log>
+</clickhouse>

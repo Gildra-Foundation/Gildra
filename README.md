@@ -203,3 +203,7 @@ boundary.
 Original source code and documentation are available under the [MIT License](LICENSE).
 Third-party names, trademarks, data, and visual assets are excluded from that
 license unless their own license explicitly says otherwise.
+
+## Working with LLM agents
+
+Start with [AGENTS.md](AGENTS.md) and the [LLM context index](docs/llm/README.md). [brand.md](brand.md) records approved visual direction; [design.md](design.md) defines interface rules. Current work and known differences are recorded in the [handoff](docs/llm/handoff.md).

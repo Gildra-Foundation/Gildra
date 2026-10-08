@@ -15,7 +15,8 @@ function load(path, dependencies = {}) {
   return exports;
 }
 
-const i18n = load("../lib/i18n.ts");
+const i18nPaths = load("../lib/i18n-paths.ts");
+const i18n = load("../lib/i18n.ts", { "./i18n-paths": i18nPaths });
 const themes = load("../lib/talentSpecThemes.ts");
 const audit = load("../lib/wow/characterAudit.ts");
 const details = load("../lib/wow/battleNetCharacterDetails.ts");

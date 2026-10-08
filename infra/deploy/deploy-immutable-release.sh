@@ -357,6 +357,31 @@ verify_local_health() {
   fi
 }
 
+verify_wow_route_contract() {
+  route_base_url=$1
+  route_label=$2
+  web_container=$(compose ps -q web)
+  [ -n "$web_container" ] || fail 'web service has no running container for the route contract gate'
+
+  verification_directory="$deployment_directory/var/release-verification"
+  verification_report="$verification_directory/$GILDRA_RELEASE_ID-$route_label.json"
+  mkdir -p "$verification_directory" || fail 'route contract report directory could not be created'
+
+  route_gate_status=0
+  docker exec "$web_container" node /app/scripts/verify-wow-route-contract.mjs \
+    --base-url "$route_base_url" \
+    --label "$route_label" \
+    --output "/tmp/$GILDRA_RELEASE_ID-$route_label.json" \
+    --strict-phase P1 \
+    --timeout-ms 30000 \
+    --concurrency 8 > "$verification_report" || route_gate_status=$?
+
+  chmod 600 "$verification_report" || fail "route contract report permissions could not be secured: $verification_report"
+  [ "$route_gate_status" -eq 0 ] ||
+    fail "WoW route contract failed for $route_label; report: $verification_report"
+  printf 'deploy: WoW route contract passed for %s; report: %s\n' "$route_label" "$verification_report" >&2
+}
+
 verify_library_redirect() {
   route_path=$1
   response_headers=$(mktemp)
@@ -560,6 +585,8 @@ if [ "$rollback_web_image" = "$WEB_IMAGE" ] &&
   verify_running_images
   ensure_recovery_backup
   verify_local_health
+  verify_wow_route_contract http://127.0.0.1:3000 deployment-origin-p1
+  verify_wow_route_contract https://gildra.net deployment-public-p1
   verify_catalog_readiness
   verify_catalog_load
   write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
@@ -599,6 +626,8 @@ verify_running_images
 write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 ensure_recovery_backup
 verify_local_health
+verify_wow_route_contract http://127.0.0.1:3000 deployment-origin-p1
+verify_wow_route_contract https://gildra.net deployment-public-p1
 verify_catalog_readiness
 verify_catalog_load
 write_release_manifest "$current_manifest" "$GILDRA_SOURCE_REVISION" "$GILDRA_RELEASE_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"

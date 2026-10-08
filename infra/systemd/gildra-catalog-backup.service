@@ -1,5 +1,6 @@
 [Unit]
 Description=Gildra encrypted PostgreSQL backup with isolated restore proof
+OnFailure=gildra-notify@%p.service
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target
