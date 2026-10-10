@@ -1,6 +1,7 @@
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
 import { TierSection } from "@/components/TierSection";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
+import "./tierWorkspace.css";
 
 /** The full Mythic+ workspace (rail + table + detail + builds). design.md: it
  *  lives only on /tier-lists and is never embedded elsewhere. The client

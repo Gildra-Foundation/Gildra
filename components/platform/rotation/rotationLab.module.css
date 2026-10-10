@@ -1,4 +1,4 @@
-.shell{--lab-gold:#dda33e;--lab-gold-2:#f2c566;--lab-red:#e34428;--lab-line:rgba(186,122,48,.26);--lab-line-soft:rgba(186,122,48,.13);min-height:100vh;background:radial-gradient(70% 34% at 18% 4%,rgba(130,49,23,.12),transparent 62%),radial-gradient(55% 48% at 78% 14%,rgba(30,99,126,.07),transparent 72%),#020b10;color:#d8cdc1}
+.shell{--lab-gold: var(--atlas-accent);--lab-gold-2: var(--atlas-accent-bright);--lab-red:#e34428;--lab-line: var(--atlas-border);--lab-line-soft: var(--atlas-rule);min-height:100vh;background:var(--atlas-background);color:var(--atlas-text)}
 .lab{width:min(1536px,100%);margin:auto;padding:0 20px 34px;position:relative;z-index:1;font-family:var(--ph-ui,Inter,sans-serif)}
 .embeddedLab{width:100%;max-width:none;margin:0;padding:0 0 10px}
 .embeddedLab::before{display:none!important}
@@ -2648,3 +2648,46 @@
 }
 
 @media(max-width:430px){.shell.shell::after{--rotation-backdrop:url("/assets/characters/furybar-horde-hero-v1-mobile-optimized.webp")}}
+
+/* The standalone lab and personal lab share the dark internal atlas. */
+.lab:global(#rotation-lab-content) {
+  --lab-gold: var(--atlas-accent);
+  --lab-gold-2: var(--atlas-accent-bright);
+  --lab-line: var(--atlas-border);
+  --lab-line-soft: var(--atlas-rule);
+  --lab-text: var(--atlas-text);
+  --lab-muted: var(--atlas-muted);
+  --lab-subtle: var(--atlas-muted);
+  --lab-paper: var(--atlas-surface);
+  --lab-ink: var(--atlas-text);
+  --lab-ink-muted: var(--atlas-muted);
+  --lab-ink-soft: var(--atlas-muted);
+  --lab-paper-rule: var(--atlas-border);
+  --lab-title-font: var(--atlas-display);
+  --lab-ui-font: var(--atlas-ui);
+  --lab-button-skin: var(--atlas-accent-wash);
+  color: var(--atlas-text);
+  font-family: var(--atlas-ui);
+}
+.lab:global(#rotation-lab-content) :is(.hero, .buildStudio, .advancedLab, .priorityPanel, .timelinePanel, .findingsPanel, .trainer, .simpleStudioHeader, .forgePanel, .forgeReadout, .buildLibrary, .comboLibrary, .comboCard, .combatState, .buildEditor, .comboEditor, .trainingIntro, .trainerStage, .trainerHeader, .controls, .trainerConfig, .trainerConfigTitle, .trainerConfigFooter) {
+  border-color: var(--atlas-border);
+  border-radius: 2px;
+  background: var(--atlas-surface);
+  background-image: none;
+  box-shadow: none;
+}
+.lab:global(#rotation-lab-content) :is(.hero, .buildStudio, .forgePanel, .simpleStudioHeader)::before,
+.lab:global(#rotation-lab-content) :is(.hero, .buildStudio, .forgePanel, .simpleStudioHeader)::after { display: none; }
+.lab:global(#rotation-lab-content) :is(h1, h2, h3, .titleRow, .embeddedHeroTitle, .specPicker > strong, .comboLibrary summary strong) { color: var(--atlas-title) !important; font-family: var(--atlas-display); font-weight: 400; text-shadow: none !important; }
+.lab:global(#rotation-lab-content) :is(p, small, label > span, .heroEyebrow, .modelNotice) { color: var(--atlas-muted); text-shadow: none; }
+.lab:global(#rotation-lab-content) summary,
+.lab:global(#rotation-lab-content) summary :is(strong, b),
+.lab:global(#rotation-lab-content) summary > span { color: var(--atlas-title) !important; text-shadow: none !important; }
+.lab:global(#rotation-lab-content) summary svg { color: var(--atlas-accent); filter: none; }
+.lab:global(#rotation-lab-content) :is(.kicker, .eyebrow, .embeddedCharacter, .forgePanel > header small, .simpleStudioHeader > div > small) { color: var(--atlas-accent-bright) !important; text-shadow: none; }
+.lab:global(#rotation-lab-content) :is(button, select, input, textarea) { color: var(--atlas-text); border-color: var(--atlas-border); background: var(--atlas-background); background-image: none; box-shadow: none; text-shadow: none; }
+.lab:global(#rotation-lab-content) button { min-height: 44px; }
+.lab:global(#rotation-lab-content) :is(.guideButton, .resetButton, .simpleBuildActions > div > button, .trainerConfigButton, .trainerResetButton, .reportButton, .rotationSaveBar button, .rotationShare button) { color: var(--atlas-text) !important; background: var(--atlas-background) !important; border-color: var(--atlas-border) !important; box-shadow: none !important; text-shadow: none; }
+.lab:global(#rotation-lab-content) :is(.simulateButton, .simpleRun, .forgeRunButton, .primaryMini, .optimizerLead button, .readyTrain, .trainerStartButton, .trainerConfigDone, .forgeLaunch > button, .combatRunButton, .comboActions .comboUse, .simpleBuildActions > div > a) { color: var(--atlas-title) !important; background: var(--atlas-accent-wash) !important; border-color: var(--atlas-accent) !important; border-radius: 2px !important; box-shadow: none !important; text-shadow: none; }
+.lab:global(#rotation-lab-content) button[aria-pressed="true"] { color: var(--atlas-accent-bright); background: var(--atlas-accent-wash); }
+.lab:global(#rotation-lab-content) :is(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--atlas-accent-bright); outline-offset: 3px; }

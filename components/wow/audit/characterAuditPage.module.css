@@ -3894,7 +3894,7 @@
 
 
 /* Character Codex v2 — the authenticated armory is one continuous dark-fantasy workspace. */
-.audit[data-profile-source="battle-net"] {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) {
   --wow-bg: #050608;
   --wow-surface: rgba(10, 12, 15, .965);
   --wow-surface-raised: rgba(16, 18, 22, .97);
@@ -3923,7 +3923,7 @@
 .audit[data-profile-source="battle-net"][data-character-book="open"]::before {
   display: none;
 }
-.audit[data-profile-source="battle-net"]::before {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas])::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
@@ -3937,11 +3937,11 @@
   opacity: .54;
   filter: saturate(.68) contrast(1.08);
 }
-.audit[data-profile-source="battle-net"] > *:not([data-character-book-backdrop]) { position: relative; z-index: 1; }
-.audit[data-profile-source="battle-net"] .topbar { display: none; }
-.audit[data-profile-source="battle-net"] :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--wow-gold-bright); outline-offset: 3px; }
-.audit[data-profile-source="battle-net"] section[id],
-.audit[data-profile-source="battle-net"] header[id] { scroll-margin-top: 92px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) > *:not([data-character-book-backdrop]) { position: relative; z-index: 1; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .topbar { display: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--wow-gold-bright); outline-offset: 3px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) section[id],
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) header[id] { scroll-margin-top: 92px; }
 
 .armoryNav {
   position: sticky !important;
@@ -3976,7 +3976,7 @@
 .armoryNav a:hover { color: var(--wow-ivory); background: rgba(201, 161, 93, .045); }
 .armoryNav a:hover::after, .armoryNav a:focus-visible::after { opacity: 1; transform: none; }
 
-.audit[data-profile-source="battle-net"] .hero {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero {
   width: min(1560px, calc(100% - 48px));
   min-height: 430px;
   margin: 28px auto 0;
@@ -4000,43 +4000,43 @@
     url("/assets/wow/loading/archive.webp") 55% 52% / cover no-repeat;
   box-shadow: inset 0 1px rgba(255, 234, 190, .05), inset 0 -80px 110px rgba(0, 0, 0, .42), var(--wow-shadow);
 }
-.audit[data-profile-source="battle-net"] .hero::before { content: ""; position: absolute; z-index: 0; inset: 0; pointer-events: none; background: radial-gradient(circle at 16% 52%, rgba(var(--spec-rgb), .17), transparent 24%), linear-gradient(110deg, transparent 55%, rgba(var(--spec-rgb), .08), transparent 82%); }
-.audit[data-profile-source="battle-net"] .hero::after { right: 14%; left: 14%; background: linear-gradient(90deg, transparent, var(--wow-gold), var(--spec-accent), var(--wow-gold), transparent); opacity: .7; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero::before { content: ""; position: absolute; z-index: 0; inset: 0; pointer-events: none; background: radial-gradient(circle at 16% 52%, rgba(var(--spec-rgb), .17), transparent 24%), linear-gradient(110deg, transparent 55%, rgba(var(--spec-rgb), .08), transparent 82%); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero::after { right: 14%; left: 14%; background: linear-gradient(90deg, transparent, var(--wow-gold), var(--spec-accent), var(--wow-gold), transparent); opacity: .7; }
 .connectionDock { grid-area: sync; align-self: start; display: grid; gap: 8px; }
 .importedBanner { min-height: 42px; padding: 8px 12px; display: flex; align-items: center; gap: 9px; border: 1px solid rgba(132, 194, 147, .26); border-radius: 11px; color: #9bd0a8; background: rgba(8, 18, 13, .72); backdrop-filter: blur(12px); }
 .importedBanner span { margin-left: 4px; color: var(--wow-muted); }
 .importedBanner button, .refreshNotice > a, .refreshNotice > button { margin-left: auto; min-height: 30px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--wow-line); border-radius: 8px; color: var(--wow-gold-bright); background: rgba(201, 161, 93, .07); }
 .refreshNotice, .characterDiagnostic { border-color: var(--wow-line); border-radius: 11px; background: rgba(8, 10, 12, .9); backdrop-filter: blur(14px); }
 .characterDiagnostic ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.audit[data-profile-source="battle-net"] .specAtmosphere { opacity: .5; mix-blend-mode: screen; }
-.audit[data-profile-source="battle-net"] .avatar { grid-area: avatar; width: 106px; height: 106px; align-self: start; margin-top: 8px; border: 1px solid var(--wow-gold-bright); border-radius: 24px; background: #090b0e; box-shadow: 0 0 0 7px rgba(5, 6, 8, .72), 0 0 0 8px var(--wow-line), 0 22px 50px rgba(0, 0, 0, .48); transform: rotate(-2deg); }
-.audit[data-profile-source="battle-net"] .avatar img { transform: scale(1.05) rotate(2deg); }
-.audit[data-profile-source="battle-net"] .name { grid-area: identity; align-self: center; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .specAtmosphere { opacity: .5; mix-blend-mode: screen; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar { grid-area: avatar; width: 106px; height: 106px; align-self: start; margin-top: 8px; border: 1px solid var(--wow-gold-bright); border-radius: 24px; background: #090b0e; box-shadow: 0 0 0 7px rgba(5, 6, 8, .72), 0 0 0 8px var(--wow-line), 0 22px 50px rgba(0, 0, 0, .48); transform: rotate(-2deg); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar img { transform: scale(1.05) rotate(2deg); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name { grid-area: identity; align-self: center; }
 .profileEyebrow { color: var(--wow-gold); font-size: 9px; letter-spacing: .19em; }
-.audit[data-profile-source="battle-net"] .name h1 { margin-top: 10px; color: var(--wow-ivory); font: 500 clamp(42px, 5.2vw, 76px)/.92 var(--font-display), Georgia, serif; letter-spacing: -.045em; text-shadow: 0 8px 32px #000; }
-.audit[data-profile-source="battle-net"] .name p { margin: 14px 0 7px; color: #d4c9b9; font-size: 14px; }
-.audit[data-profile-source="battle-net"] .name > small { color: var(--wow-muted); font-size: 10px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name h1 { margin-top: 10px; color: var(--wow-ivory); font: 500 clamp(42px, 5.2vw, 76px)/.92 var(--font-display), Georgia, serif; letter-spacing: -.045em; text-shadow: 0 8px 32px #000; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name p { margin: 14px 0 7px; color: #d4c9b9; font-size: 14px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name > small { color: var(--wow-muted); font-size: 10px; }
 .rosterLink { margin-top: 13px; color: var(--wow-gold-bright); font-size: 10px; }
-.audit[data-profile-source="battle-net"] .rage { margin-top: 14px; }
-.audit[data-profile-source="battle-net"] .itemLevelMetric { grid-area: itemlevel; }
-.audit[data-profile-source="battle-net"] .mythicMetric { grid-area: mythic; }
-.audit[data-profile-source="battle-net"] .metric { min-height: 94px; padding: 16px; border: 1px solid var(--wow-line); border-radius: 14px; background: rgba(7, 9, 11, .68); backdrop-filter: blur(12px); }
-.audit[data-profile-source="battle-net"] .metric small { color: var(--wow-muted); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; }
-.audit[data-profile-source="battle-net"] .metric b { color: var(--wow-ivory); font: 500 34px/1 var(--font-display), Georgia, serif; }
-.audit[data-profile-source="battle-net"] .heroActions { grid-area: actions; }
-.audit[data-profile-source="battle-net"] .heroActions button { min-height: 43px; border-color: var(--wow-line); border-radius: 10px; clip-path: none; background: rgba(7, 9, 11, .76); color: var(--wow-text); }
-.audit[data-profile-source="battle-net"] .heroActions button + button { border-color: rgba(var(--spec-rgb), .6); background: linear-gradient(180deg, color-mix(in srgb, var(--spec-hot) 76%, #c59c5f), var(--spec-accent)); color: #170d08; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rage { margin-top: 14px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .itemLevelMetric { grid-area: itemlevel; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .mythicMetric { grid-area: mythic; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric { min-height: 94px; padding: 16px; border: 1px solid var(--wow-line); border-radius: 14px; background: rgba(7, 9, 11, .68); backdrop-filter: blur(12px); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric small { color: var(--wow-muted); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric b { color: var(--wow-ivory); font: 500 34px/1 var(--font-display), Georgia, serif; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions { grid-area: actions; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button { min-height: 43px; border-color: var(--wow-line); border-radius: 10px; clip-path: none; background: rgba(7, 9, 11, .76); color: var(--wow-text); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button + button { border-color: rgba(var(--spec-rgb), .6); background: linear-gradient(180deg, color-mix(in srgb, var(--spec-hot) 76%, #c59c5f), var(--spec-accent)); color: #170d08; }
 .realProfileStatus { grid-area: live; width: fit-content; min-height: 54px; padding: 9px 14px; display: grid; grid-template-columns: 24px auto; grid-template-rows: auto auto; gap: 3px 9px; border: 1px solid rgba(132, 194, 147, .26); border-radius: 12px; background: rgba(8, 18, 13, .62); }
 .realProfileEvidence { grid-area: evidence; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .realProfileEvidence > div { min-height: 88px; padding: 14px 16px; display: grid; place-content: center start; text-align: left; border: 1px solid var(--wow-line); border-radius: 13px; background: rgba(8, 10, 13, .78); backdrop-filter: blur(10px); }
 .realProfileEvidence b { color: var(--wow-ivory) !important; font: 500 19px/1.1 var(--font-display), Georgia, serif !important; }
 .realProfileEvidence small { color: var(--wow-muted); }
 .realProfileEvidence em { color: var(--wow-success); }
-.audit[data-profile-source="battle-net"] .hero:has(.importedBanner) .realProfileStatus { grid-area: live !important; }
-.audit[data-profile-source="battle-net"] .hero:has(.importedBanner) .realProfileEvidence { grid-area: evidence !important; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero:has(.importedBanner) .realProfileStatus { grid-area: live !important; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero:has(.importedBanner) .realProfileEvidence { grid-area: evidence !important; }
 
-.audit[data-profile-source="battle-net"] .grid { width: min(1560px, calc(100% - 48px)); max-width: none; margin: 0 auto; padding: 24px 0 16px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
-.audit[data-profile-source="battle-net"] .grid > * { grid-column: 1 / -1; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid { width: min(1560px, calc(100% - 48px)); max-width: none; margin: 0 auto; padding: 24px 0 16px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid > * { grid-column: 1 / -1; }
 .chapterIntro { min-height: 116px; margin-top: 30px; padding: 22px 4px 14px; display: grid; grid-template-columns: 54px 48px minmax(0, 1fr) minmax(80px, .35fr); align-items: center; gap: 16px; border-bottom: 1px solid var(--wow-line); }
 .chapterIndex { color: rgba(239, 211, 154, .4); font: 500 26px/1 var(--font-display), Georgia, serif; }
 .chapterIcon { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid var(--wow-line-strong); border-radius: 14px; color: var(--wow-gold-bright); background: rgba(201, 161, 93, .06); transform: rotate(45deg); }
@@ -4047,11 +4047,11 @@
 .chapterIntro p { max-width: 780px; margin: 0; color: var(--wow-muted); font-size: 12px; line-height: 1.5; }
 .chapterIntro > i { height: 1px; background: linear-gradient(90deg, var(--wow-line-strong), transparent); }
 
-.audit[data-profile-source="battle-net"] .gearPanel,
-.audit[data-profile-source="battle-net"] .rotationEmbed { border: 1px solid var(--wow-line); border-top-color: var(--wow-line-strong); border-radius: var(--wow-radius); clip-path: none; background: var(--wow-surface); box-shadow: inset 0 1px rgba(255, 235, 197, .04), var(--wow-shadow); }
-.audit[data-profile-source="battle-net"] .gearPanel { min-height: 760px; padding: 24px; }
-.audit[data-profile-source="battle-net"] .gearPanel::before { background: linear-gradient(90deg, rgba(5, 6, 8, .96), rgba(5, 6, 8, .56) 24%, transparent 42% 58%, rgba(5, 6, 8, .58) 76%, rgba(5, 6, 8, .96)), linear-gradient(180deg, transparent 42%, rgba(5, 6, 8, .72) 78%, #050608); }
-.audit[data-profile-source="battle-net"] .gearPanel::after { opacity: .42; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationEmbed { border: 1px solid var(--wow-line); border-top-color: var(--wow-line-strong); border-radius: var(--wow-radius); clip-path: none; background: var(--wow-surface); box-shadow: inset 0 1px rgba(255, 235, 197, .04), var(--wow-shadow); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel { min-height: 760px; padding: 24px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel::before { background: linear-gradient(90deg, rgba(5, 6, 8, .96), rgba(5, 6, 8, .56) 24%, transparent 42% 58%, rgba(5, 6, 8, .58) 76%, rgba(5, 6, 8, .96)), linear-gradient(180deg, transparent 42%, rgba(5, 6, 8, .72) 78%, #050608); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel::after { opacity: .42; }
 .paperDollTitle { top: 18px; padding: 11px 20px; border: 1px solid var(--wow-line); border-radius: 12px; background: rgba(7, 9, 11, .88); backdrop-filter: blur(12px); }
 .paperDollTitle::before, .paperDollTitle::after { display: none; }
 .paperDollTitle h2 { color: var(--wow-ivory); font: 500 18px/1.1 var(--font-display), Georgia, serif; }
@@ -4070,17 +4070,17 @@
 .gearWorkbench .modelViewport { border-inline: 1px solid rgba(201, 161, 93, .08); background: radial-gradient(circle at 50% 40%, rgba(var(--spec-rgb), .16), transparent 36%), #07090b; }
 .gearWorkbench .weaponPair { border-color: var(--wow-line); border-radius: 13px; background: rgba(7, 9, 11, .82); }
 
-.audit[data-profile-source="battle-net"] .rotationEmbed { padding: 12px; overflow: hidden; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationEmbed { padding: 12px; overflow: hidden; }
 .rotationBridge { min-height: 74px; margin: 0 0 12px; padding: 12px 16px; border: 1px solid var(--wow-line); border-radius: 12px; background: linear-gradient(90deg, rgba(var(--spec-rgb), .08), rgba(8, 10, 12, .86)); }
 .rotationBridge > svg { color: var(--wow-gold-bright); }
 .rotationBridge small { color: var(--wow-gold); }
 .rotationBridge strong { color: var(--wow-ivory); }
 .rotationBridge > b { border-color: rgba(132, 194, 147, .3); color: var(--wow-success); background: rgba(132, 194, 147, .055); }
-.audit[data-profile-source="battle-net"] .footer { width: min(1560px, calc(100% - 48px)); min-height: 64px; margin: 24px auto 0; padding: 0 18px; border: 1px solid var(--wow-line); border-radius: 14px; color: var(--wow-muted); background: rgba(8, 10, 12, .74); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer { width: min(1560px, calc(100% - 48px)); min-height: 64px; margin: 24px auto 0; padding: 0 18px; border: 1px solid var(--wow-line); border-radius: 14px; color: var(--wow-muted); background: rgba(8, 10, 12, .74); }
 
 @container auditPage (max-width: 1180px) {
-  .audit[data-profile-source="battle-net"] .hero { grid-template-columns: 104px minmax(240px, 1fr) 132px 132px; grid-template-areas: "sync sync sync sync" "avatar identity itemlevel mythic" "avatar identity actions actions" "live live live live" "evidence evidence evidence evidence"; }
-  .audit[data-profile-source="battle-net"] .heroActions { grid-template-columns: 1fr 1fr; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { grid-template-columns: 104px minmax(240px, 1fr) 132px 132px; grid-template-areas: "sync sync sync sync" "avatar identity itemlevel mythic" "avatar identity actions actions" "live live live live" "evidence evidence evidence evidence"; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions { grid-template-columns: 1fr 1fr; }
   .realProfileStatus { justify-self: start; }
   .armoryNav > span { min-width: 190px; }
   .armoryNav a { padding-inline: 12px; }
@@ -4091,18 +4091,18 @@
   .armoryNav > span small { display: none; }
   .armoryNav a { padding-inline: 10px; font-size: 0; }
   .armoryNav a i { font-size: 8px; }
-  .audit[data-profile-source="battle-net"] .hero { width: calc(100% - 24px); min-height: 0; margin-top: 16px; padding: 22px; grid-template-columns: 86px minmax(0, 1fr); grid-template-areas: "sync sync" "avatar identity" "itemlevel mythic" "actions actions" "live live" "evidence evidence"; gap: 14px; border-radius: 20px; }
-  .audit[data-profile-source="battle-net"] .avatar { width: 78px; height: 78px; }
-  .audit[data-profile-source="battle-net"] .name h1 { font-size: clamp(34px, 10vw, 52px); }
-  .audit[data-profile-source="battle-net"] .metric { min-height: 78px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { width: calc(100% - 24px); min-height: 0; margin-top: 16px; padding: 22px; grid-template-columns: 86px minmax(0, 1fr); grid-template-areas: "sync sync" "avatar identity" "itemlevel mythic" "actions actions" "live live" "evidence evidence"; gap: 14px; border-radius: 20px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar { width: 78px; height: 78px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name h1 { font-size: clamp(34px, 10vw, 52px); }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric { min-height: 78px; }
   .realProfileEvidence { grid-template-columns: 1fr 1fr; }
-  .audit[data-profile-source="battle-net"] .grid { width: calc(100% - 24px); gap: 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid { width: calc(100% - 24px); gap: 12px; }
   .chapterIntro { grid-template-columns: 42px 42px 1fr; min-height: 104px; margin-top: 18px; padding-inline: 0; }
   .chapterIntro > i { display: none; }
   .chapterIcon { width: 40px; height: 40px; }
-  .audit[data-profile-source="battle-net"] .gearPanel { min-height: 690px; padding: 14px; border-radius: 14px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel { min-height: 690px; padding: 14px; border-radius: 14px; }
   .gearWorkbench { min-height: 640px; }
-  .audit[data-profile-source="battle-net"] .footer { width: calc(100% - 24px); }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer { width: calc(100% - 24px); }
 }
 @container auditPage (max-width: 560px) {
   .armoryNav { position: relative !important; width: 100%; min-height: 62px; border-inline: 0; border-radius: 0; }
@@ -4110,23 +4110,23 @@
   .armoryNav > div { width: 100%; justify-content: space-between; }
   .armoryNav a { min-width: 0; padding: 6px 3px; flex: 1; flex-direction: column; justify-content: center; gap: 3px; font-size: 7px; letter-spacing: .02em; }
   .armoryNav a i { width: 21px; height: 21px; }
-  .audit[data-profile-source="battle-net"] .hero { width: 100%; margin-top: 0; padding: 18px 14px 22px; grid-template-columns: 64px minmax(0, 1fr); border-inline: 0; border-radius: 0 0 18px 18px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { width: 100%; margin-top: 0; padding: 18px 14px 22px; grid-template-columns: 64px minmax(0, 1fr); border-inline: 0; border-radius: 0 0 18px 18px; }
   .connectionDock { margin: 0 -2px; }
   .importedBanner { align-items: flex-start; flex-wrap: wrap; }
   .importedBanner span { width: calc(100% - 28px); margin-left: 24px; }
   .importedBanner button { width: 100%; justify-content: center; }
   .characterDiagnostic ul { grid-template-columns: 1fr; }
-  .audit[data-profile-source="battle-net"] .avatar { width: 58px; height: 58px; border-radius: 16px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar { width: 58px; height: 58px; border-radius: 16px; }
   .profileEyebrow { font-size: 7px; }
-  .audit[data-profile-source="battle-net"] .name h1 { margin-top: 6px; font-size: 32px; }
-  .audit[data-profile-source="battle-net"] .name p { margin-top: 8px; font-size: 11px; }
-  .audit[data-profile-source="battle-net"] .name > small, .audit[data-profile-source="battle-net"] .rage { display: none; }
-  .audit[data-profile-source="battle-net"] .metric { min-width: 0; padding: 12px; }
-  .audit[data-profile-source="battle-net"] .metric b { font-size: 27px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name h1 { margin-top: 6px; font-size: 32px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name p { margin-top: 8px; font-size: 11px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name > small, .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rage { display: none; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric { min-width: 0; padding: 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric b { font-size: 27px; }
   .realProfileEvidence { grid-template-columns: 1fr 1fr; }
   .realProfileEvidence > div { min-height: 72px; padding: 10px 11px; }
   .realProfileEvidence b { font-size: 15px !important; }
-  .audit[data-profile-source="battle-net"] .grid { width: calc(100% - 16px); }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid { width: calc(100% - 16px); }
   .chapterIntro { grid-template-columns: 36px minmax(0, 1fr); gap: 11px; }
   .chapterIndex { display: none; }
   .chapterIcon { width: 34px; height: 34px; border-radius: 10px; }
@@ -4134,11 +4134,11 @@
   .chapterIntro p { font-size: 10px; }
   .rotationBridge { grid-template-columns: 30px 1fr; }
   .rotationBridge > b { grid-column: 2; justify-self: start; }
-  .audit[data-profile-source="battle-net"] .footer { width: calc(100% - 16px); padding: 12px; align-items: flex-start; flex-direction: column; }
-  .audit[data-profile-source="battle-net"] .footer span { margin-left: 0; white-space: normal; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer { width: calc(100% - 16px); padding: 12px; align-items: flex-start; flex-direction: column; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer span { margin-left: 0; white-space: normal; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .audit[data-profile-source="battle-net"], .audit[data-profile-source="battle-net"] *, .audit[data-profile-source="battle-net"] *::before, .audit[data-profile-source="battle-net"] *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]), .audit[data-profile-source="battle-net"]:not([data-character-atlas]) *, .audit[data-profile-source="battle-net"]:not([data-character-atlas]) *::before, .audit[data-profile-source="battle-net"]:not([data-character-atlas]) *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
 /* Gear details are portaled to the body, so they need their own typography and
@@ -4185,7 +4185,7 @@
 }
 
 /* Warcraft atlas — local to the connected character; the global sidebar keeps its own theme. */
-.audit[data-profile-source="battle-net"] {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) {
   --wow-title: "Gildra Atlas", Georgia, "Palatino Linotype", "Book Antiqua", serif;
   --wow-ui: Arial, "Helvetica Neue", sans-serif;
   --font-ui: var(--wow-ui);
@@ -4217,11 +4217,11 @@
   color: var(--wow-ink);
   background: var(--wow-paper);
 }
-.audit[data-profile-source="battle-net"]::before { display: none; }
-.audit[data-profile-source="battle-net"] :is(h1, h2, h3) { font-family: var(--wow-title); }
-.audit[data-profile-source="battle-net"] :is(button, input, select, textarea) { font-family: var(--wow-ui); }
-.audit[data-profile-source="battle-net"] :is(button, a) { -webkit-tap-highlight-color: transparent; }
-.audit[data-profile-source="battle-net"] .armoryNav {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas])::before { display: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(h1, h2, h3) { font-family: var(--wow-title); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(button, input, select, textarea) { font-family: var(--wow-ui); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(button, a) { -webkit-tap-highlight-color: transparent; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav {
   min-height: 66px;
   padding: 8px 18px;
   gap: 16px;
@@ -4232,12 +4232,12 @@
   box-shadow: inset 0 -2px #080705, 0 2px #b09356, 0 8px 20px #0008;
   backdrop-filter: none;
 }
-.audit[data-profile-source="battle-net"] .armoryNav::before { display: none; }
-.audit[data-profile-source="battle-net"] .armoryNav > span { min-width: 185px; border-right-color: #655437; }
-.audit[data-profile-source="battle-net"] .armoryNav > span small { color: #cfb67b; font: 11px/1.3 var(--wow-ui); letter-spacing: .06em; }
-.audit[data-profile-source="battle-net"] .armoryNav > span b { font: 18px/1.25 var(--wow-title); color: #ffe5aa; }
-.audit[data-profile-source="battle-net"] .armoryNav > div { align-items: center; gap: 4px; }
-.audit[data-profile-source="battle-net"] .armoryNav a {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav::before { display: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span { min-width: 185px; border-right-color: #655437; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span small { color: #cfb67b; font: 11px/1.3 var(--wow-ui); letter-spacing: .06em; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span b { font: 18px/1.25 var(--wow-title); color: #ffe5aa; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > div { align-items: center; gap: 4px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a {
   min-height: 36px;
   padding: 6px 13px;
   align-self: center;
@@ -4250,11 +4250,11 @@
     url("/assets/wow/ui-textures/character/quest-tab-right.png") right bottom / 8px 36px no-repeat,
     url("/assets/wow/ui-textures/character/quest-tab-middle.png") center bottom / 64px 36px repeat-x;
 }
-.audit[data-profile-source="battle-net"] .armoryNav a i { display: none; }
-.audit[data-profile-source="battle-net"] .armoryNav a::after { display: none; }
-.audit[data-profile-source="battle-net"] .armoryNav a:hover { color: #fff0bc; filter: brightness(1.28); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a i { display: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a::after { display: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:hover { color: #fff0bc; filter: brightness(1.28); }
 
-.audit[data-profile-source="battle-net"] .hero {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero {
   min-height: 350px;
   padding: 34px 36px 32px;
   grid-template-columns: 96px minmax(220px, 1fr) 126px 126px minmax(185px, .7fr);
@@ -4265,10 +4265,10 @@
   background: var(--wow-paper);
   box-shadow: 0 20px 44px #000a;
 }
-.audit[data-profile-source="battle-net"] .hero::before,
-.audit[data-profile-source="battle-net"] .hero::after,
-.audit[data-profile-source="battle-net"] .specAtmosphere { display: none; }
-.audit[data-profile-source="battle-net"] .importedBanner {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero::before,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero::after,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .specAtmosphere { display: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner {
   min-height: 36px;
   padding: 0 0 12px;
   border: 0;
@@ -4280,9 +4280,9 @@
   backdrop-filter: none;
   font-size: 12px;
 }
-.audit[data-profile-source="battle-net"] .importedBanner span { color: var(--wow-ink-muted); font-size: 12px; }
-.audit[data-profile-source="battle-net"] .importedBanner > svg { flex-shrink: 0; }
-.audit[data-profile-source="battle-net"] :is(.importedBanner button, .refreshNotice > a, .refreshNotice > button) {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner span { color: var(--wow-ink-muted); font-size: 12px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner > svg { flex-shrink: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(.importedBanner button, .refreshNotice > a, .refreshNotice > button) {
   min-height: 36px;
   padding: 5px 14px;
   border: 1px solid #8e6b37;
@@ -4293,17 +4293,17 @@
   font: 12px/1.25 var(--wow-ui);
   text-shadow: 0 1px #000;
 }
-.audit[data-profile-source="battle-net"] :is(.importedBanner button, .refreshNotice > a, .refreshNotice > button):hover:not(:disabled) { background: linear-gradient(180deg, #68502b, #30200e); }
-.audit[data-profile-source="battle-net"] :is(.importedBanner button, .refreshNotice > a, .refreshNotice > button):active:not(:disabled) { background: linear-gradient(180deg, #24190d, #514024); }
-.audit[data-profile-source="battle-net"] :is(.importedBanner button, .refreshNotice > a, .refreshNotice > button):disabled { opacity: .55; cursor: wait; }
-.audit[data-profile-source="battle-net"] :is(.refreshNotice, .characterDiagnostic) {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(.importedBanner button, .refreshNotice > a, .refreshNotice > button):hover:not(:disabled) { background: linear-gradient(180deg, #68502b, #30200e); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(.importedBanner button, .refreshNotice > a, .refreshNotice > button):active:not(:disabled) { background: linear-gradient(180deg, #24190d, #514024); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(.importedBanner button, .refreshNotice > a, .refreshNotice > button):disabled { opacity: .55; cursor: wait; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(.refreshNotice, .characterDiagnostic) {
   border: 1px solid #87653a;
   border-radius: 2px;
   color: var(--wow-text);
   background: #20190f;
   backdrop-filter: none;
 }
-.audit[data-profile-source="battle-net"] .avatar {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar {
   width: 88px;
   height: 88px;
   padding: 0;
@@ -4316,7 +4316,7 @@
   box-shadow: 0 2px 12px #2e1b0e66;
   transform: none;
 }
-.audit[data-profile-source="battle-net"] .avatar::after {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar::after {
   content: "";
   position: absolute;
   z-index: 0;
@@ -4324,10 +4324,10 @@
   pointer-events: none;
   background: url("/assets/wow/ui-textures/character/portrait-ring.png") center / 200% 200% no-repeat;
 }
-.audit[data-profile-source="battle-net"] .avatar img { position: relative; z-index: 1; width: 100%; height: 100%; border-radius: 50%; transform: none; }
-.audit[data-profile-source="battle-net"] .profileEyebrow { color: #6a431e; font: 11px/1.4 var(--wow-ui); letter-spacing: .075em; }
-.audit[data-profile-source="battle-net"] .profileEyebrow > i { background: #775022; box-shadow: none; }
-.audit[data-profile-source="battle-net"] .name h1 {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar img { position: relative; z-index: 1; width: 100%; height: 100%; border-radius: 50%; transform: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .profileEyebrow { color: #6a431e; font: 11px/1.4 var(--wow-ui); letter-spacing: .075em; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .profileEyebrow > i { background: #775022; box-shadow: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name h1 {
   overflow: visible;
   margin-top: 6px;
   color: #39200e;
@@ -4337,11 +4337,11 @@
   overflow-wrap: anywhere;
   text-shadow: 0 1px #ffe9b777;
 }
-.audit[data-profile-source="battle-net"] .name p { margin: 10px 0 6px; color: #4f3319; font-size: 13px; line-height: 1.5; }
-.audit[data-profile-source="battle-net"] .name p svg { color: #783a20; }
-.audit[data-profile-source="battle-net"] .name > small { color: #6b4b2b; font-size: 12px; line-height: 1.5; }
-.audit[data-profile-source="battle-net"] .rosterLink { margin-top: 8px; color: #653513; font: 12px/1.5 var(--wow-ui); text-decoration: underline; text-underline-offset: 3px; }
-.audit[data-profile-source="battle-net"] .metric {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name p { margin: 10px 0 6px; color: #4f3319; font-size: 13px; line-height: 1.5; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name p svg { color: #783a20; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name > small { color: #6b4b2b; font-size: 12px; line-height: 1.5; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rosterLink { margin-top: 8px; color: #653513; font: 12px/1.5 var(--wow-ui); text-decoration: underline; text-underline-offset: 3px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric {
   min-height: 84px;
   padding: 12px;
   border: 1px solid #77532988;
@@ -4350,9 +4350,9 @@
   box-shadow: inset 0 0 0 2px #fff0c533;
   backdrop-filter: none;
 }
-.audit[data-profile-source="battle-net"] .metric small { color: #644524; font: 11px/1.35 var(--wow-ui); letter-spacing: .035em; }
-.audit[data-profile-source="battle-net"] .metric b { margin-top: 6px; color: #3e2511; font: 700 31px/1.15 var(--wow-title); letter-spacing: -.025em; text-shadow: none; }
-.audit[data-profile-source="battle-net"] .heroActions button {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric small { color: #644524; font: 11px/1.35 var(--wow-ui); letter-spacing: .035em; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric b { margin-top: 6px; color: #3e2511; font: 700 31px/1.15 var(--wow-title); letter-spacing: -.025em; text-shadow: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button {
   min-height: 39px;
   padding: 6px 15px;
   border: 1px solid #8e6b37;
@@ -4367,15 +4367,15 @@
   white-space: normal;
   text-shadow: 0 1px #000;
 }
-.audit[data-profile-source="battle-net"] .heroActions button + button { color: #ffe3a2; border-color: #a2743a; background: linear-gradient(180deg, #714520, #341b0b); }
-.audit[data-profile-source="battle-net"] .heroActions button:hover:not(:disabled) { transform: none; filter: brightness(1.16); }
-.audit[data-profile-source="battle-net"] .heroActions button:active:not(:disabled) { background: linear-gradient(180deg, #24190d, #514024); }
-.audit[data-profile-source="battle-net"] .heroActions button + button:active:not(:disabled) { background: linear-gradient(180deg, #341b0b, #714520); }
-.audit[data-profile-source="battle-net"] .heroActions button::after { display: none; }
-.audit[data-profile-source="battle-net"] .heroActions button > span { min-width: 0; font: inherit; border: 0; padding: 0; }
-.audit[data-profile-source="battle-net"] .heroActions button > span::after { content: none; }
-.audit[data-profile-source="battle-net"] .heroActions svg { width: 15px; height: 15px; padding: 0; border: 0; flex-shrink: 0; }
-.audit[data-profile-source="battle-net"] .realProfileStatus {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button + button { color: #ffe3a2; border-color: #a2743a; background: linear-gradient(180deg, #714520, #341b0b); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button:hover:not(:disabled) { transform: none; filter: brightness(1.16); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button:active:not(:disabled) { background: linear-gradient(180deg, #24190d, #514024); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button + button:active:not(:disabled) { background: linear-gradient(180deg, #341b0b, #714520); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button::after { display: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button > span { min-width: 0; font: inherit; border: 0; padding: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button > span::after { content: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions svg { width: 15px; height: 15px; padding: 0; border: 0; flex-shrink: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileStatus {
   min-height: 24px;
   padding: 0;
   display: flex;
@@ -4387,12 +4387,12 @@
   background: transparent;
   box-shadow: none;
 }
-.audit[data-profile-source="battle-net"] .realProfileStatus svg { width: 16px; height: 16px; color: #355328; }
-.audit[data-profile-source="battle-net"] .realProfileStatus b,
-.audit[data-profile-source="battle-net"] .realProfileStatus span { color: #355328; font: 12px/1.4 var(--wow-ui); letter-spacing: 0; }
-.audit[data-profile-source="battle-net"] .realProfileStatus b { font-weight: 700; }
-.audit[data-profile-source="battle-net"] .realProfileEvidence { gap: 0; padding-top: 16px; border-top: 1px solid #80603680; }
-.audit[data-profile-source="battle-net"] .realProfileEvidence > div {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileStatus svg { width: 16px; height: 16px; color: #355328; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileStatus b,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileStatus span { color: #355328; font: 12px/1.4 var(--wow-ui); letter-spacing: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileStatus b { font-weight: 700; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence { gap: 0; padding-top: 16px; border-top: 1px solid #80603680; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence > div {
   min-height: 58px;
   height: auto;
   padding: 4px 18px;
@@ -4404,13 +4404,13 @@
   box-shadow: none;
   backdrop-filter: none;
 }
-.audit[data-profile-source="battle-net"] .realProfileEvidence > div:first-child { padding-left: 0; }
-.audit[data-profile-source="battle-net"] .realProfileEvidence > div:last-child { border-right: 0; }
-.audit[data-profile-source="battle-net"] .realProfileEvidence b { color: #3d2512 !important; font: 700 21px/1.2 var(--wow-title) !important; text-shadow: none; }
-.audit[data-profile-source="battle-net"] .realProfileEvidence small { color: #654426; font: 12px/1.4 var(--wow-ui); text-transform: none; letter-spacing: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence > div:first-child { padding-left: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence > div:last-child { border-right: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence b { color: #3d2512 !important; font: 700 21px/1.2 var(--wow-title) !important; text-shadow: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence small { color: #654426; font: 12px/1.4 var(--wow-ui); text-transform: none; letter-spacing: 0; }
 
-.audit[data-profile-source="battle-net"] .grid { gap: 16px; padding-top: 16px; }
-.audit[data-profile-source="battle-net"] .chapterIntro {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid { gap: 16px; padding-top: 16px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro {
   min-height: 118px;
   margin-top: 24px;
   padding: 24px 32px;
@@ -4422,8 +4422,8 @@
   background: var(--wow-paper);
   box-shadow: 0 10px 24px #0008;
 }
-.audit[data-profile-source="battle-net"] .chapterIndex { color: #74502a; font: 700 19px/1 var(--wow-title); }
-.audit[data-profile-source="battle-net"] .chapterIcon {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIndex { color: #74502a; font: 700 19px/1 var(--wow-title); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIcon {
   width: 42px;
   height: 42px;
   border: 0;
@@ -4433,21 +4433,21 @@
   box-shadow: none;
   transform: none;
 }
-.audit[data-profile-source="battle-net"] .chapterIcon svg { width: 18px; transform: none; }
-.audit[data-profile-source="battle-net"] .chapterIntro small { color: #715027; font: 11px/1.4 var(--wow-ui); letter-spacing: .06em; }
-.audit[data-profile-source="battle-net"] .chapterIntro h2 { margin: 3px 0 5px; color: #3e2511; font: 700 clamp(24px, 2.4vw, 31px)/1.15 var(--wow-title); letter-spacing: -.015em; text-shadow: 0 1px #ffe9b766; }
-.audit[data-profile-source="battle-net"] .chapterIntro p { max-width: 760px; color: #64472a; font: 13px/1.5 var(--wow-ui); }
-.audit[data-profile-source="battle-net"] .chapterIntro > i { background: linear-gradient(90deg, #76502788, transparent); }
-.audit[data-profile-source="battle-net"] :is(.gearPanel, .rotationEmbed) {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIcon svg { width: 18px; transform: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro small { color: #715027; font: 11px/1.4 var(--wow-ui); letter-spacing: .06em; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro h2 { margin: 3px 0 5px; color: #3e2511; font: 700 clamp(24px, 2.4vw, 31px)/1.15 var(--wow-title); letter-spacing: -.015em; text-shadow: 0 1px #ffe9b766; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro p { max-width: 760px; color: #64472a; font: 13px/1.5 var(--wow-ui); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro > i { background: linear-gradient(90deg, #76502788, transparent); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(.gearPanel, .rotationEmbed) {
   border: 1px solid #81623a;
   border-radius: 2px;
   background: var(--wow-paper);
   box-shadow: 0 16px 30px #0008;
 }
-.audit[data-profile-source="battle-net"] .gearPanel { min-height: 0; padding: 32px clamp(24px, 3vw, 48px); gap: 20px; color: var(--wow-ink); }
-.audit[data-profile-source="battle-net"] .gearPanel::before,
-.audit[data-profile-source="battle-net"] .gearPanel::after { display: none; }
-.audit[data-profile-source="battle-net"] .paperDollTitle {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel { min-height: 0; padding: 32px clamp(24px, 3vw, 48px); gap: 20px; color: var(--wow-ink); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel::before,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel::after { display: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .paperDollTitle {
   position: relative;
   inset: auto;
   width: 100%;
@@ -4463,11 +4463,11 @@
   backdrop-filter: none;
   transform: none;
 }
-.audit[data-profile-source="battle-net"] .paperDollTitle::before,
-.audit[data-profile-source="battle-net"] .paperDollTitle::after { display: none; }
-.audit[data-profile-source="battle-net"] .paperDollTitle h2 { color: var(--wow-ink); font: 700 23px/1.2 var(--wow-title); }
-.audit[data-profile-source="battle-net"] .paperDollTitle small { margin-top: 5px; color: var(--wow-ink-muted); font: 12px/1.4 var(--wow-ui); text-transform: none; letter-spacing: 0; }
-.audit[data-profile-source="battle-net"] .equipmentStats {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .paperDollTitle::before,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .paperDollTitle::after { display: none; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .paperDollTitle h2 { color: var(--wow-ink); font: 700 23px/1.2 var(--wow-title); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .paperDollTitle small { margin-top: 5px; color: var(--wow-ink-muted); font: 12px/1.4 var(--wow-ui); text-transform: none; letter-spacing: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats {
   inset: auto;
   width: min(1100px, 100%);
   min-height: 58px;
@@ -4477,11 +4477,11 @@
   box-shadow: inset 0 0 0 2px #fff0c633;
   backdrop-filter: none;
 }
-.audit[data-profile-source="battle-net"] .equipmentStats > div { padding: 9px 10px; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; border-color: #80603a66; }
-.audit[data-profile-source="battle-net"] .equipmentStats > div > i { background: #2b2115; }
-.audit[data-profile-source="battle-net"] .equipmentStats small { color: #624524; font: 11px/1.3 var(--wow-ui); letter-spacing: 0; text-transform: none; white-space: normal; }
-.audit[data-profile-source="battle-net"] .equipmentStats b { color: #3c2714; font: 700 18px/1.25 var(--wow-title); }
-.audit[data-profile-source="battle-net"] .gearWorkbench {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div { padding: 9px 10px; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; border-color: #80603a66; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div > i { background: #2b2115; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats small { color: #624524; font: 11px/1.3 var(--wow-ui); letter-spacing: 0; text-transform: none; white-space: normal; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats b { color: #3c2714; font: 700 18px/1.25 var(--wow-title); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench {
   width: min(1220px, 100%);
   min-height: 690px;
   grid-template-columns: minmax(0, 270px) minmax(300px, 380px) minmax(0, 270px);
@@ -4489,33 +4489,33 @@
   column-gap: clamp(24px, 3.5vw, 52px);
   row-gap: 24px;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearList { gap: 8px; }
-.audit[data-profile-source="battle-net"] .gearWorkbench :is(.gearItem, .weaponItem),
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearListRight .gearItem {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList { gap: 8px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench :is(.gearItem, .weaponItem),
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearListRight .gearItem {
   border-color: #7f6540;
   border-radius: 2px;
   background: #181510;
   box-shadow: inset 0 0 0 1px #0a0805, 0 3px 7px #0007;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench :is(.gearItem, .weaponItem) .itemIcon { border-radius: 2px; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem > .gearCopy > small { color: #b9a47e; font: 10px/1.3 var(--wow-ui); letter-spacing: 0; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem > .gearCopy > b { font: 12px/1.25 var(--wow-ui); }
-.audit[data-profile-source="battle-net"] .gearWorkbench .modelViewport {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench :is(.gearItem, .weaponItem) .itemIcon { border-radius: 2px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem > .gearCopy > small { color: #b9a47e; font: 10px/1.3 var(--wow-ui); letter-spacing: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem > .gearCopy > b { font: 12px/1.25 var(--wow-ui); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .modelViewport {
   width: min(100%, 380px);
   min-height: 570px;
   max-height: 620px;
   border-radius: 3px;
   background: radial-gradient(ellipse at 50% 43%, rgba(var(--spec-rgb), .11), transparent 48%), var(--wow-paper);
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .modelFrame { border-radius: 3px; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .modelMeta { font: 10px/1.3 var(--wow-ui); letter-spacing: .025em; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .modelMeta span { font-size: 10px; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair { width: 100%; grid-column: 2; border: 0; border-radius: 0; background: transparent; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair[data-weapon-count="1"] { width: min(240px, 100%); grid-template-columns: minmax(0, 1fr); }
-.audit[data-profile-source="battle-net"] .weaponPairLabel { color: #65411c; font: 700 12px/1.35 var(--wow-ui); letter-spacing: .025em; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .modelFrame { border-radius: 3px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .modelMeta { font: 10px/1.3 var(--wow-ui); letter-spacing: .025em; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .modelMeta span { font-size: 10px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair { width: 100%; grid-column: 2; border: 0; border-radius: 0; background: transparent; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair[data-weapon-count="1"] { width: min(240px, 100%); grid-template-columns: minmax(0, 1fr); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .weaponPairLabel { color: #65411c; font: 700 12px/1.35 var(--wow-ui); letter-spacing: .025em; }
 
-.audit[data-profile-source="battle-net"] .rotationEmbed { padding: 24px; }
-.audit[data-profile-source="battle-net"] .rotationBridge {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationEmbed { padding: 24px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationBridge {
   min-height: 64px;
   margin-bottom: 16px;
   padding: 12px 16px;
@@ -4524,61 +4524,61 @@
   border-radius: 0;
   background: transparent;
 }
-.audit[data-profile-source="battle-net"] .rotationBridge small { color: #ba9d65; font: 11px/1.4 var(--wow-ui); letter-spacing: .03em; }
-.audit[data-profile-source="battle-net"] .rotationBridge strong { color: #f0dbaf; font: 700 16px/1.4 var(--wow-title); }
-.audit[data-profile-source="battle-net"] .rotationBridge > b { border: 0; color: #b7cd92; background: none; font: 12px/1.4 var(--wow-ui); white-space: normal; }
-.audit[data-profile-source="battle-net"] .footer { min-height: 54px; border: 0; border-top: 1px solid #6b5433; border-radius: 0; background: none; color: #634522; font: 12px/1.5 var(--wow-ui); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationBridge small { color: #ba9d65; font: 11px/1.4 var(--wow-ui); letter-spacing: .03em; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationBridge strong { color: #f0dbaf; font: 700 16px/1.4 var(--wow-title); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationBridge > b { border: 0; color: #b7cd92; background: none; font: 12px/1.4 var(--wow-ui); white-space: normal; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer { min-height: 54px; border: 0; border-top: 1px solid #6b5433; border-radius: 0; background: none; color: #634522; font: 12px/1.5 var(--wow-ui); }
 
 @container auditPage (min-width: 821px) {
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearList { gap: 6px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearItem,
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearListRight .gearItem { min-height: 64px; height: 64px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList { gap: 6px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem,
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearListRight .gearItem { min-height: 64px; height: 64px; }
 }
 
 @container auditPage (max-width: 1180px) {
-  .audit[data-profile-source="battle-net"] .hero { grid-template-columns: 92px minmax(200px, 1fr) 132px 132px; grid-template-areas: "sync sync sync sync" "avatar identity itemlevel mythic" "avatar identity actions actions" "live live live live" "evidence evidence evidence evidence"; }
-  .audit[data-profile-source="battle-net"] .armoryNav > span { min-width: 155px; }
-  .audit[data-profile-source="battle-net"] .armoryNav a { padding-inline: 10px; font-size: 13px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { grid-template-columns: 92px minmax(200px, 1fr) 132px 132px; grid-template-areas: "sync sync sync sync" "avatar identity itemlevel mythic" "avatar identity actions actions" "live live live live" "evidence evidence evidence evidence"; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span { min-width: 155px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a { padding-inline: 10px; font-size: 13px; }
 }
 @container auditPage (max-width: 820px) {
-  .audit[data-profile-source="battle-net"] .armoryNav { padding-inline: 10px; gap: 8px; }
-  .audit[data-profile-source="battle-net"] .armoryNav > span { display: none; }
-  .audit[data-profile-source="battle-net"] .armoryNav > div { justify-content: space-between; }
-  .audit[data-profile-source="battle-net"] .armoryNav a { padding-inline: 9px; font-size: 12px; }
-  .audit[data-profile-source="battle-net"] .hero { padding: 28px; min-height: 0; grid-template-columns: 80px repeat(2, minmax(0, 1fr)); grid-template-areas: "sync sync sync" "avatar identity identity" "itemlevel itemlevel mythic" "actions actions actions" "live live live" "evidence evidence evidence"; border-radius: 2px; }
-  .audit[data-profile-source="battle-net"] .avatar { width: 68px; height: 68px; }
-  .audit[data-profile-source="battle-net"] .name h1 { font-size: 36px; }
-  .audit[data-profile-source="battle-net"] .realProfileEvidence { row-gap: 12px; }
-  .audit[data-profile-source="battle-net"] .realProfileEvidence > div:nth-child(2) { border-right: 0; }
-  .audit[data-profile-source="battle-net"] .realProfileEvidence > div:nth-child(3) { padding-left: 0; }
-  .audit[data-profile-source="battle-net"] .chapterIntro { padding: 24px; grid-template-columns: 36px minmax(0,1fr); gap: 12px; }
-  .audit[data-profile-source="battle-net"] .chapterIndex,
-  .audit[data-profile-source="battle-net"] .chapterIntro > i { display: none; }
-  .audit[data-profile-source="battle-net"] .chapterIcon { width: 36px; height: 36px; }
-  .audit[data-profile-source="battle-net"] .gearPanel { padding: 24px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench {
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav { padding-inline: 10px; gap: 8px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span { display: none; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > div { justify-content: space-between; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a { padding-inline: 9px; font-size: 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { padding: 28px; min-height: 0; grid-template-columns: 80px repeat(2, minmax(0, 1fr)); grid-template-areas: "sync sync sync" "avatar identity identity" "itemlevel itemlevel mythic" "actions actions actions" "live live live" "evidence evidence evidence"; border-radius: 2px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar { width: 68px; height: 68px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name h1 { font-size: 36px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence { row-gap: 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence > div:nth-child(2) { border-right: 0; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence > div:nth-child(3) { padding-left: 0; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro { padding: 24px; grid-template-columns: 36px minmax(0,1fr); gap: 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIndex,
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro > i { display: none; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIcon { width: 36px; height: 36px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel { padding: 24px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench {
     min-height: 630px;
     grid-template-columns: minmax(48px, 1fr) minmax(220px, 360px) minmax(48px, 1fr);
     grid-template-rows: minmax(520px, auto) auto;
     column-gap: clamp(12px, 2vw, 24px);
   }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .modelViewport { width: min(100%, 360px); min-height: 520px; max-height: 600px; }
-  .audit[data-profile-source="battle-net"] .rotationEmbed { padding: 20px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .modelViewport { width: min(100%, 360px); min-height: 520px; max-height: 600px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationEmbed { padding: 20px; }
 }
 @container auditPage (max-width: 560px) {
-  .audit[data-profile-source="battle-net"] .armoryNav { padding: 5px 6px; min-height: 0; }
-  .audit[data-profile-source="battle-net"] .armoryNav > div { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: 36px; gap: 3px; overflow: visible; }
-  .audit[data-profile-source="battle-net"] .armoryNav a { min-width: 0; min-height: 36px; grid-column: span 2; padding: 4px 5px; justify-content: center; flex-direction: row; font-size: 12px; line-height: 1.1; text-align: center; white-space: normal; }
-  .audit[data-profile-source="battle-net"] .armoryNav a:nth-child(4):nth-last-child(2),
-  .audit[data-profile-source="battle-net"] .armoryNav a:nth-child(5):last-child { grid-column: span 3; }
-  .audit[data-profile-source="battle-net"] .armoryNav a:first-child:nth-last-child(4),
-  .audit[data-profile-source="battle-net"] .armoryNav a:first-child:nth-last-child(4) ~ a { grid-column: span 3; }
-  .audit[data-profile-source="battle-net"] .importedBanner { min-height: 34px; padding-bottom: 9px; align-items: center; flex-wrap: nowrap; gap: 5px; font-size: 11px; }
-  .audit[data-profile-source="battle-net"] .importedBanner > svg { width: 15px; height: 15px; }
-  .audit[data-profile-source="battle-net"] .importedBanner span { display: none; }
-  .audit[data-profile-source="battle-net"] .importedBanner button { width: auto; min-height: 28px; margin-left: auto; padding-inline: 6px; flex: 0 0 auto; justify-content: center; font-size: 11px; white-space: nowrap; }
-  .audit[data-profile-source="battle-net"] .importedBanner button svg { width: 13px; height: 13px; }
-  .audit[data-profile-source="battle-net"] .hero {
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav { padding: 5px 6px; min-height: 0; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > div { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: 36px; gap: 3px; overflow: visible; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a { min-width: 0; min-height: 36px; grid-column: span 2; padding: 4px 5px; justify-content: center; flex-direction: row; font-size: 12px; line-height: 1.1; text-align: center; white-space: normal; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:nth-child(4):nth-last-child(2),
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:nth-child(5):last-child { grid-column: span 3; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:first-child:nth-last-child(4),
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:first-child:nth-last-child(4) ~ a { grid-column: span 3; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner { min-height: 34px; padding-bottom: 9px; align-items: center; flex-wrap: nowrap; gap: 5px; font-size: 11px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner > svg { width: 15px; height: 15px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner span { display: none; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner button { width: auto; min-height: 28px; margin-left: auto; padding-inline: 6px; flex: 0 0 auto; justify-content: center; font-size: 11px; white-space: nowrap; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner button svg { width: 13px; height: 13px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero {
     width: calc(100% - 12px);
     margin-top: 12px;
     padding: 24px 20px;
@@ -4587,50 +4587,50 @@
     grid-template-areas: "sync sync sync sync" "avatar identity identity identity" "itemlevel itemlevel mythic mythic" "actions actions actions actions" "live live live live" "evidence evidence evidence evidence";
     gap: 14px 10px;
   }
-  .audit[data-profile-source="battle-net"] .hero .avatar { width: 50px; height: 50px; grid-column: 1; grid-row: 2; }
-  .audit[data-profile-source="battle-net"] .hero .name { grid-column: 2 / -1; grid-row: 2; }
-  .audit[data-profile-source="battle-net"] .hero .itemLevelMetric { grid-column: 1 / 3; grid-row: 3; }
-  .audit[data-profile-source="battle-net"] .hero .mythicMetric { grid-column: 3 / -1; grid-row: 3; }
-  .audit[data-profile-source="battle-net"] .name h1 { font-size: clamp(26px, 7vw, 34px); }
-  .audit[data-profile-source="battle-net"] .name p { font-size: 12px; }
-  .audit[data-profile-source="battle-net"] .name > small { display: block; font-size: 11px; }
-  .audit[data-profile-source="battle-net"] .profileEyebrow { font-size: 10px; letter-spacing: .03em; }
-  .audit[data-profile-source="battle-net"] .importedBanner { font-size: 11px; }
-  .audit[data-profile-source="battle-net"] .importedBanner span { font-size: 11px; margin-left: 22px; }
-  .audit[data-profile-source="battle-net"] .importedBanner button { min-height: 32px; }
-  .audit[data-profile-source="battle-net"] .metric { padding: 10px; }
-  .audit[data-profile-source="battle-net"] .metric b { font-size: 27px; }
-  .audit[data-profile-source="battle-net"] .heroActions { gap: 6px; }
-  .audit[data-profile-source="battle-net"] .heroActions button { padding-inline: 10px; font-size: 12px; }
-  .audit[data-profile-source="battle-net"] .realProfileEvidence > div { min-height: 60px; padding-inline: 12px; }
-  .audit[data-profile-source="battle-net"] .realProfileEvidence b { font-size: 19px !important; }
-  .audit[data-profile-source="battle-net"] .chapterIntro { margin-top: 12px; min-height: 120px; padding: 24px 20px; }
-  .audit[data-profile-source="battle-net"] .chapterIntro h2 { font-size: 24px; }
-  .audit[data-profile-source="battle-net"] .chapterIntro p { font-size: 12px; }
-  .audit[data-profile-source="battle-net"] .gearPanel { padding: 24px 12px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench {
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero .avatar { width: 50px; height: 50px; grid-column: 1; grid-row: 2; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero .name { grid-column: 2 / -1; grid-row: 2; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero .itemLevelMetric { grid-column: 1 / 3; grid-row: 3; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero .mythicMetric { grid-column: 3 / -1; grid-row: 3; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name h1 { font-size: clamp(26px, 7vw, 34px); }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name p { font-size: 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name > small { display: block; font-size: 11px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .profileEyebrow { font-size: 10px; letter-spacing: .03em; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner { font-size: 11px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner span { font-size: 11px; margin-left: 22px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner button { min-height: 32px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric { padding: 10px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric b { font-size: 27px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions { gap: 6px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button { padding-inline: 10px; font-size: 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence > div { min-height: 60px; padding-inline: 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence b { font-size: 19px !important; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro { margin-top: 12px; min-height: 120px; padding: 24px 20px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro h2 { font-size: 24px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro p { font-size: 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel { padding: 24px 12px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench {
     min-height: 550px;
     grid-template-columns: 44px minmax(0, 1fr) 44px;
     grid-template-rows: minmax(450px, auto) auto;
     column-gap: 12px;
     row-gap: 16px;
   }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .modelViewport { width: 100%; min-height: 450px; max-height: 520px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearList .tooltipBlock,
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair .tooltipBlock { width: 44px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench :is(.gearItem, .weaponItem),
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearListRight .gearItem { width: 44px; min-height: 44px; padding: 2px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench :is(.gearItem, .weaponItem) .itemIcon { width: 38px; height: 38px; flex-basis: 38px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair { width: 100px; grid-template-columns: repeat(2, 44px); }
-  .audit[data-profile-source="battle-net"] .equipmentStats > div { padding: 8px 6px; grid-template-columns: 20px minmax(0,1fr); gap: 5px; }
-  .audit[data-profile-source="battle-net"] .equipmentStats > div > i { width: 20px; height: 20px; border: 0; }
-  .audit[data-profile-source="battle-net"] .equipmentStats small { font-size: 10px; }
-  .audit[data-profile-source="battle-net"] .rotationBridge { padding: 8px 0; }
-  .audit[data-profile-source="battle-net"] .rotationBridge strong { font-size: 15px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .modelViewport { width: 100%; min-height: 450px; max-height: 520px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList .tooltipBlock,
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair .tooltipBlock { width: 44px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench :is(.gearItem, .weaponItem),
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearListRight .gearItem { width: 44px; min-height: 44px; padding: 2px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench :is(.gearItem, .weaponItem) .itemIcon { width: 38px; height: 38px; flex-basis: 38px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair { width: 100px; grid-template-columns: repeat(2, 44px); }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div { padding: 8px 6px; grid-template-columns: 20px minmax(0,1fr); gap: 5px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div > i { width: 20px; height: 20px; border: 0; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats small { font-size: 10px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationBridge { padding: 8px 0; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationBridge strong { font-size: 15px; }
 }
 
 /* Connected-character armory: carved WoW plaques on the shared parchment atlas. */
-.audit[data-profile-source="battle-net"] .realGearPanel {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realGearPanel {
   position: relative;
   padding-bottom: 38px;
   gap: 24px;
@@ -4639,8 +4639,8 @@
     radial-gradient(ellipse at 50% 100%, #51301824, transparent 62%),
     var(--wow-paper);
 }
-.audit[data-profile-source="battle-net"] .realGearPanel::before,
-.audit[data-profile-source="battle-net"] .realGearPanel::after {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realGearPanel::before,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realGearPanel::after {
   content: "";
   position: absolute;
   z-index: 1;
@@ -4654,10 +4654,10 @@
   opacity: .2;
   animation: none;
 }
-.audit[data-profile-source="battle-net"] .realGearPanel::before { left: clamp(22px, 6vw, 104px); }
-.audit[data-profile-source="battle-net"] .realGearPanel::after { right: clamp(22px, 6vw, 104px); transform: scaleX(-1); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realGearPanel::before { left: clamp(22px, 6vw, 104px); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realGearPanel::after { right: clamp(22px, 6vw, 104px); transform: scaleX(-1); }
 
-.audit[data-profile-source="battle-net"] .equipmentStats {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats {
   position: relative;
   width: min(1180px, 100%);
   min-height: 92px;
@@ -4669,8 +4669,8 @@
     url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 440px repeat;
   box-shadow: inset 0 0 0 1px #1b1308, inset 0 0 0 3px #a77e3a55, inset 0 14px 30px #0007, 0 10px 24px #2c1b0b73;
 }
-.audit[data-profile-source="battle-net"] .equipmentStats::before,
-.audit[data-profile-source="battle-net"] .equipmentStats::after {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats::before,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats::after {
   content: "";
   position: absolute;
   z-index: 1;
@@ -4681,9 +4681,9 @@
   background: url("/assets/wow/ui-textures/character/frame-gold-horizontal.png") center / 256px 32px repeat-x;
   opacity: .82;
 }
-.audit[data-profile-source="battle-net"] .equipmentStats::before { top: 1px; }
-.audit[data-profile-source="battle-net"] .equipmentStats::after { bottom: 1px; transform: scaleY(-1); }
-.audit[data-profile-source="battle-net"] .equipmentStats > div {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats::before { top: 1px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats::after { bottom: 1px; transform: scaleY(-1); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div {
   --stat-glow: #dbaa5f;
   min-width: 0;
   min-height: 88px;
@@ -4693,25 +4693,25 @@
   border-left: 1px solid #bb92514d;
   background: linear-gradient(90deg, transparent, #e7bd6c0a 50%, transparent);
 }
-.audit[data-profile-source="battle-net"] .equipmentStats > div:nth-child(2) { --stat-glow: #b8cbe8; }
-.audit[data-profile-source="battle-net"] .equipmentStats > div:nth-child(3) { --stat-glow: #c1a6d9; }
-.audit[data-profile-source="battle-net"] .equipmentStats > div:nth-child(4) { --stat-glow: #b6cda0; }
-.audit[data-profile-source="battle-net"] .equipmentStats > div:first-child { border-left: 0; }
-.audit[data-profile-source="battle-net"] .equipmentStats > div > i {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div:nth-child(2) { --stat-glow: #b8cbe8; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div:nth-child(3) { --stat-glow: #c1a6d9; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div:nth-child(4) { --stat-glow: #b6cda0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div:first-child { border-left: 0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div > i {
   width: 46px;
   height: 46px;
   border: 0;
   background: url("/assets/wow/ui-textures/character/gold-ring.png") center / 46px 46px no-repeat, radial-gradient(circle, #302110 46%, transparent 48%);
   box-shadow: none;
 }
-.audit[data-profile-source="battle-net"] .equipmentStats svg {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats svg {
   width: 21px;
   height: 21px;
   color: var(--stat-glow);
   filter: drop-shadow(0 1px 1px #000) drop-shadow(0 0 6px color-mix(in srgb, var(--stat-glow), transparent 54%));
 }
-.audit[data-profile-source="battle-net"] .equipmentStats span { gap: 4px; }
-.audit[data-profile-source="battle-net"] .equipmentStats small {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats span { gap: 4px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats small {
   overflow: visible;
   color: #d2bd91;
   font: 700 11px/1.25 var(--wow-ui);
@@ -4719,14 +4719,14 @@
   text-transform: uppercase;
   text-overflow: clip;
 }
-.audit[data-profile-source="battle-net"] .equipmentStats b {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats b {
   color: #fff0c8;
   font: 700 clamp(23px, 2.1vw, 30px)/1 var(--wow-title);
   text-shadow: 0 2px 2px #000, 0 0 12px #d8a65348;
   font-variant-numeric: tabular-nums;
 }
 
-.audit[data-profile-source="battle-net"] .gearWorkbench {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench {
   width: min(1260px, 100%);
   min-height: 740px;
   grid-template-columns: minmax(0, 306px) minmax(300px, 400px) minmax(0, 306px);
@@ -4735,12 +4735,12 @@
   row-gap: 30px;
   align-items: center;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearList {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList {
   isolation: isolate;
   align-self: center;
   gap: 9px;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearList::before {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList::before {
   content: "";
   position: absolute;
   z-index: -1;
@@ -4753,7 +4753,7 @@
     url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 450px repeat;
   box-shadow: inset 0 0 0 2px #100b08, inset 0 0 0 3px #bd8f4866, inset 0 0 25px #0009, 0 13px 26px #32200e7a;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearList::after {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList::after {
   content: "";
   position: absolute;
   top: -22px;
@@ -4765,8 +4765,8 @@
   filter: drop-shadow(0 2px 2px #000);
   transform: translateX(-50%);
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench :is(.gearItem, .weaponItem),
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearListRight .gearItem {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench :is(.gearItem, .weaponItem),
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearListRight .gearItem {
   --gear-quality: #eee3cc;
   min-height: 70px;
   padding: 7px 10px 7px 8px;
@@ -4781,7 +4781,7 @@
   box-shadow: inset 0 0 0 1px #0a0805, inset 0 0 0 3px #c4a16433, inset 0 1px #e9be7155, 0 5px 10px #24170c80;
   transition: border-color .18s ease, background-color .18s ease, transform .18s ease, box-shadow .18s ease;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem::before {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem::before {
   inset: 3px;
   border: 1px solid #f1d2961f;
   background:
@@ -4790,9 +4790,9 @@
     radial-gradient(circle at 2px calc(100% - 2px), #e7c278 0 1px, transparent 2px),
     radial-gradient(circle at calc(100% - 2px) calc(100% - 2px), #e7c278 0 1px, transparent 2px);
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem:hover,
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem:focus-visible,
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearPinned {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem:hover,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem:focus-visible,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearPinned {
   z-index: 3;
   border-color: #e0ae64;
   background:
@@ -4801,8 +4801,8 @@
     url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 380px repeat !important;
   box-shadow: inset 0 0 0 1px #100a06, inset 0 0 0 3px #d7a65d55, 0 0 0 1px #f3c16d4d, 0 8px 20px #24140cb8;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem:focus-visible { outline: 2px solid #f6d994; outline-offset: 2px; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem .itemIcon {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem:focus-visible { outline: 2px solid #f6d994; outline-offset: 2px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem .itemIcon {
   width: 48px;
   height: 48px;
   flex-basis: 48px;
@@ -4810,26 +4810,26 @@
   border-radius: 3px;
   box-shadow: inset 0 0 0 2px #050405, 0 0 0 1px var(--icon-edge), 0 3px 8px #000c, 0 0 9px var(--icon-glow);
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .itemIconLevel {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .itemIconLevel {
   min-width: 23px;
   padding: 3px 4px;
   color: #ffe4a4;
   border-color: #a47d42;
   font-size: 9px;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem > .gearCopy { gap: 3px; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem > .gearCopy > small {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem > .gearCopy { gap: 3px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem > .gearCopy > small {
   color: #d7b987;
   font: 700 10px/1.1 var(--wow-ui);
   letter-spacing: .085em;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem > .gearCopy > b {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem > .gearCopy > b {
   color: var(--gear-quality);
   font: 700 13px/1.18 var(--wow-ui);
   text-shadow: 0 1px 2px #000;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem > .gearCopy > .gearItemMeta { min-height: 9px; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem > svg {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem > .gearCopy > .gearItemMeta { min-height: 9px; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem > svg {
   top: 4px;
   right: 4px;
   width: 13px;
@@ -4841,15 +4841,15 @@
   background: #3a160e;
   filter: drop-shadow(0 1px 1px #000);
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem[data-quality="Низкое качество"] { --gear-quality: #a3a1a0; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem[data-quality="Необычный"] { --gear-quality: #81d872; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem[data-quality="Редкий"] { --gear-quality: #79b6ff; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem[data-quality="Эпический"] { --gear-quality: #d5a2ff; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem[data-quality="Легендарный"] { --gear-quality: #ffad5c; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem[data-quality="Артефакт"] { --gear-quality: #f0d291; }
-.audit[data-profile-source="battle-net"] .gearWorkbench .gearItem[data-quality="Наследуемый"] { --gear-quality: #d7d4c6; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem[data-quality="Низкое качество"] { --gear-quality: #a3a1a0; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem[data-quality="Необычный"] { --gear-quality: #81d872; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem[data-quality="Редкий"] { --gear-quality: #79b6ff; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem[data-quality="Эпический"] { --gear-quality: #d5a2ff; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem[data-quality="Легендарный"] { --gear-quality: #ffad5c; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem[data-quality="Артефакт"] { --gear-quality: #f0d291; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearItem[data-quality="Наследуемый"] { --gear-quality: #d7d4c6; }
 
-.audit[data-profile-source="battle-net"] .gearWorkbench .modelViewport {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .modelViewport {
   min-height: 596px;
   max-height: 650px;
   background:
@@ -4858,7 +4858,7 @@
     linear-gradient(180deg, #fae2ae2b, #7250270b 68%, #40251029),
     var(--wow-paper);
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench > .modelLoading {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench > .modelLoading {
   position: relative;
   inset: auto;
   width: min(100%, 400px);
@@ -4875,7 +4875,7 @@
   background: radial-gradient(ellipse at 50% 45%, #81552f42, transparent 63%), var(--wow-paper);
   box-shadow: inset 0 0 0 3px #2c200e, inset 0 0 0 5px #c8a15d80, 0 8px 20px #2a190a66;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair {
   width: min(700px, 100%);
   min-height: 0;
   padding: 22px 18px 15px;
@@ -4891,17 +4891,17 @@
     url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 440px repeat;
   box-shadow: inset 0 0 0 1px #120d08, inset 0 0 0 3px #c19b5a42, 0 10px 25px #2a190a87;
 }
-.audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair[data-weapon-count="1"] { width: min(390px, 100%); }
-.audit[data-profile-source="battle-net"] .weaponPairLabel {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair[data-weapon-count="1"] { width: min(390px, 100%); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .weaponPairLabel {
   position: relative;
   color: #f5d59a;
   font: 700 14px/1.1 var(--wow-title);
   letter-spacing: .09em;
   text-shadow: 0 2px 2px #000;
 }
-.audit[data-profile-source="battle-net"] .weaponPairLabel svg { width: 15px; height: 15px; color: #edb85d; }
-.audit[data-profile-source="battle-net"] .weaponPairLabel::before,
-.audit[data-profile-source="battle-net"] .weaponPairLabel::after {
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .weaponPairLabel svg { width: 15px; height: 15px; color: #edb85d; }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .weaponPairLabel::before,
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .weaponPairLabel::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -4909,8 +4909,8 @@
   height: 1px;
   background: linear-gradient(90deg, transparent, #d6aa62);
 }
-.audit[data-profile-source="battle-net"] .weaponPairLabel::before { right: calc(100% + 13px); }
-.audit[data-profile-source="battle-net"] .weaponPairLabel::after { left: calc(100% + 13px); transform: scaleX(-1); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .weaponPairLabel::before { right: calc(100% + 13px); }
+.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .weaponPairLabel::after { left: calc(100% + 13px); transform: scaleX(-1); }
 
 .warcraftTooltip .itemIcon.iconPoor,
 .gearWorkbench .gearItem .itemIcon.iconPoor { --icon-edge: #777674; --icon-light: #b5b3ae; --icon-glow: #77767455; }
@@ -4935,65 +4935,65 @@
 .warcraftTooltip .tooltipItemHeader[data-quality="Наследуемый"] strong { color: #d7d4c6; }
 
 @container auditPage (max-width: 1180px) {
-  .audit[data-profile-source="battle-net"] .realGearPanel::before,
-  .audit[data-profile-source="battle-net"] .realGearPanel::after { display: none; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench {
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realGearPanel::before,
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realGearPanel::after { display: none; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench {
     grid-template-columns: minmax(0, 245px) minmax(240px, 360px) minmax(0, 245px);
     column-gap: clamp(12px, 2vw, 24px);
   }
 }
 @container auditPage (max-width: 820px) {
-  .audit[data-profile-source="battle-net"] .equipmentStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .audit[data-profile-source="battle-net"] .equipmentStats > div { min-height: 76px; padding: 11px 14px; }
-  .audit[data-profile-source="battle-net"] .equipmentStats > div:nth-child(3) { border-top: 1px solid #bb92514d; border-left: 0; }
-  .audit[data-profile-source="battle-net"] .equipmentStats > div:nth-child(4) { border-top: 1px solid #bb92514d; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench {
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div { min-height: 76px; padding: 11px 14px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div:nth-child(3) { border-top: 1px solid #bb92514d; border-left: 0; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div:nth-child(4) { border-top: 1px solid #bb92514d; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench {
     min-height: 0;
     grid-template-columns: 48px minmax(220px, 360px) 48px;
     grid-template-rows: minmax(520px, auto) auto;
     column-gap: clamp(10px, 2vw, 20px);
     row-gap: 20px;
   }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearList::before { inset: -10px -5px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearList::after { display: none; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench :is(.gearItem, .weaponItem),
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearListRight .gearItem { min-height: 48px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearList .gearItem { width: 48px; padding: 3px; gap: 0; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearList .gearItem .itemIcon { width: 40px; height: 40px; flex-basis: 40px; padding: 3px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .modelViewport { min-height: 520px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench > .modelLoading { width: min(100%, 360px); min-height: 520px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair {
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList::before { inset: -10px -5px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList::after { display: none; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench :is(.gearItem, .weaponItem),
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearListRight .gearItem { min-height: 48px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList .gearItem { width: 48px; padding: 3px; gap: 0; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList .gearItem .itemIcon { width: 40px; height: 40px; flex-basis: 40px; padding: 3px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .modelViewport { min-height: 520px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench > .modelLoading { width: min(100%, 360px); min-height: 520px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair {
     width: min(600px, 100%);
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair .tooltipBlock { width: 100%; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair .gearItem { width: 100%; min-height: 64px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair .gearItem > .gearCopy { display: grid; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair .tooltipBlock { width: 100%; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair .gearItem { width: 100%; min-height: 64px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair .gearItem > .gearCopy { display: grid; }
 }
 @container auditPage (max-width: 560px) {
-  .audit[data-profile-source="battle-net"] .realGearPanel { padding-bottom: 24px; gap: 18px; }
-  .audit[data-profile-source="battle-net"] .equipmentStats > div { min-height: 76px; padding: 9px 7px; grid-template-columns: 32px minmax(0, 1fr); gap: 5px; }
-  .audit[data-profile-source="battle-net"] .equipmentStats > div > i { width: 32px; height: 32px; background-size: 32px 32px, auto; }
-  .audit[data-profile-source="battle-net"] .equipmentStats svg { width: 15px; height: 15px; }
-  .audit[data-profile-source="battle-net"] .equipmentStats small { font-size: 9px; letter-spacing: 0; }
-  .audit[data-profile-source="battle-net"] .equipmentStats b { font-size: 22px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench {
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realGearPanel { padding-bottom: 24px; gap: 18px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div { min-height: 76px; padding: 9px 7px; grid-template-columns: 32px minmax(0, 1fr); gap: 5px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats > div > i { width: 32px; height: 32px; background-size: 32px 32px, auto; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats svg { width: 15px; height: 15px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats small { font-size: 9px; letter-spacing: 0; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .equipmentStats b { font-size: 22px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench {
     grid-template-columns: 44px minmax(0, 1fr) 44px;
     grid-template-rows: minmax(450px, auto) auto;
     column-gap: 8px;
   }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearList .gearItem { width: 44px; min-height: 44px; padding: 2px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .gearList .gearItem .itemIcon { width: 38px; height: 38px; flex-basis: 38px; padding: 2px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .modelViewport { min-height: 450px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench > .modelLoading { width: 100%; min-height: 450px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair,
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair[data-weapon-count="1"] { width: min(340px, 100%); padding: 18px 12px 12px; grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr); }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair .tooltipBlock { width: 100%; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair .gearItem { width: 100%; min-height: 62px; padding: 6px 9px; gap: 10px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair .gearItem .itemIcon { width: 44px; height: 44px; flex-basis: 44px; }
-  .audit[data-profile-source="battle-net"] .gearWorkbench .weaponPair .gearCopy { display: grid; }
-  .audit[data-profile-source="battle-net"] .weaponPairLabel::before,
-  .audit[data-profile-source="battle-net"] .weaponPairLabel::after { width: 35px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList .gearItem { width: 44px; min-height: 44px; padding: 2px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList .gearItem .itemIcon { width: 38px; height: 38px; flex-basis: 38px; padding: 2px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .modelViewport { min-height: 450px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench > .modelLoading { width: 100%; min-height: 450px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair,
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair[data-weapon-count="1"] { width: min(340px, 100%); padding: 18px 12px 12px; grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr); }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair .tooltipBlock { width: 100%; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair .gearItem { width: 100%; min-height: 62px; padding: 6px 9px; gap: 10px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair .gearItem .itemIcon { width: 44px; height: 44px; flex-basis: 44px; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .weaponPair .gearCopy { display: grid; }
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .weaponPairLabel::before,
+  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .weaponPairLabel::after { width: 35px; }
 }
 
 /* A single manuscript on the supplied book, not independent cards over art.

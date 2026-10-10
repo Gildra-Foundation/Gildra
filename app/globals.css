@@ -11,14 +11,19 @@
 @import "./styles/loading.css";
 @import "./styles/base.css";
 @import "../components/layout/chrome.css";
+@import "../components/blocks/shared/adSlot/adSlot.css";
 @import "./styles/layout.css";
 @import "./styles/primitives.css";
 @import "./styles/builds.css";
+@import "./styles/legacy-database.css";
+@import "./styles/legacy-library.css";
 @import "./styles/responsive.css";
 @import "./styles/not-found.css";
 @import "../components/blocks/shared/legal/legal.css";
 @import "./styles/workspaceNavigator.css";
 @import "./styles/wow-skin.css";
+@import "./styles/atlas-theme.css";
+@import "./styles/atlas-pages.css";
 
 html[data-route-theme="wow"]:has([data-grimoire-home]) body {
   background-color: #0d0e0d;

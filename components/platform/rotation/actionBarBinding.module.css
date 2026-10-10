@@ -10,7 +10,7 @@
   background: var(--bind-wash);
   font: 14px/1.45 var(--folio-body, Georgia, serif);
 }
-.editor[data-manuscript] { --bind-ink: #432b18; --bind-muted: #695033; --bind-line: #805d3570; --bind-wash: #8b5b2512; }
+.editor[data-manuscript] { --bind-ink: var(--atlas-text); --bind-muted: var(--atlas-muted); --bind-line: var(--atlas-border); --bind-wash: var(--atlas-accent-wash); }
 .editor header { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
 .editor header small { display: block; font-size: 11px; color: var(--bind-muted); }
 .editor header strong { display: block; font: 400 20px/1.4 var(--folio-title, Georgia, serif); }

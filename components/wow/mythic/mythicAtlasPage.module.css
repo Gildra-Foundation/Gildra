@@ -1,5 +1,5 @@
 .page {
-  --atlas-gold: #d1a24b;
+  --atlas-gold: var(--atlas-accent);
   position: relative;
   min-height: 100dvh;
   overflow: hidden;

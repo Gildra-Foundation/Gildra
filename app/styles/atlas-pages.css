@@ -1,0 +1,178 @@
+/* Route content is scoped separately from the homepage and the book dialog. */
+body:has(.workspace-content[data-atlas-theme="dark"]) {
+  background: #050607;
+}
+.workspace-content.gildra-atlas {
+  min-height: 100svh;
+  color: var(--atlas-text);
+  background: var(--atlas-background);
+  font-family: var(--atlas-ui);
+}
+.workspace-content.gildra-atlas > div,
+.workspace-content.gildra-atlas > div > div {
+  background-color: var(--atlas-background);
+}
+.workspace-content.gildra-atlas [data-platform-home] {
+  --ph-bg: var(--atlas-background);
+  --ph-panel: var(--atlas-surface);
+  --ph-surface: var(--atlas-surface);
+  --ph-line: var(--atlas-border);
+  --ph-line-soft: var(--atlas-rule);
+  --ph-gold: var(--atlas-accent);
+  --ph-gold-soft: var(--atlas-accent-bright);
+  --ph-ivory: var(--atlas-text);
+  --ph-muted: var(--atlas-muted);
+  background: var(--atlas-background) !important;
+}
+.workspace-content.gildra-atlas .app,
+.workspace-content.gildra-atlas .main {
+  background: var(--atlas-background);
+}
+.workspace-content.gildra-atlas :is(.head, .topnav) { display: none; }
+.workspace-content.gildra-atlas .section {
+  max-width: 1540px;
+  padding-inline: 26px;
+}
+.workspace-content.gildra-atlas .route-section { padding-top: 32px; }
+.workspace-content.gildra-atlas .tp-wrap {
+  max-width: 100%;
+  border: 1px solid var(--atlas-border);
+  background: var(--atlas-surface);
+}
+.workspace-content.gildra-atlas .tierpage {
+  min-width: 0;
+  margin: 24px 0 0;
+  border: 1px solid var(--atlas-border);
+  background: var(--atlas-surface);
+  box-shadow: none;
+}
+.workspace-content.gildra-atlas :is(.tp-side, .tp-detail, .tp-center, .about, .mfil-panel, .detail-panel) {
+  background: var(--atlas-surface);
+  border-color: var(--atlas-rule);
+}
+.workspace-content.gildra-atlas :is(.tp-title h1, .library-hero h1, .analytics-header h1, .legal h1) {
+  color: var(--atlas-title);
+  font-family: var(--atlas-display);
+  font-weight: 400;
+  letter-spacing: -.025em;
+}
+.workspace-content.gildra-atlas .tp-title h1 { font-size: clamp(30px, 3vw, 44px); }
+.workspace-content.gildra-atlas :is(.library-hero, .library-datasets, .library-products, .library-dataset-card, .legal) {
+  background: var(--atlas-surface);
+  border-color: var(--atlas-border);
+  box-shadow: none;
+}
+.workspace-content.gildra-atlas :is(.library-hero p, .library-hero small, .legal p, .legal-upd) { color: var(--atlas-muted); }
+.workspace-content.gildra-atlas .legal::before { color: var(--atlas-accent); }
+.workspace-content.gildra-atlas :is(.legal h2, .library-section-head h2) { color: var(--atlas-title); }
+.workspace-content.gildra-atlas :is(.fgroup select, .seg button, .table-search, .tp-filters input) {
+  background-color: var(--atlas-background);
+  color: var(--atlas-text);
+  border-color: var(--atlas-border);
+}
+.workspace-content.gildra-atlas :is(.tt, .tt td, .tt th) { border-color: var(--atlas-rule); }
+.workspace-content.gildra-atlas .tt { background: var(--atlas-surface); }
+.workspace-content.gildra-atlas .pslot {
+  border-color: var(--atlas-rule);
+  background-color: var(--atlas-surface);
+  box-shadow: none;
+}
+.workspace-content.gildra-atlas :is(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--atlas-accent-bright);
+  outline-offset: 3px;
+}
+.workspace-content.gildra-atlas :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--atlas-border);
+  border-radius: 2px;
+  color: var(--atlas-title);
+  background: var(--atlas-accent-wash);
+  font-family: var(--atlas-ui);
+  text-decoration: none;
+  box-shadow: none;
+  clip-path: none;
+}
+.workspace-content.gildra-atlas :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):hover:not(:disabled) {
+  border-color: var(--atlas-accent);
+  background: rgba(209, 162, 75, .17);
+}
+.workspace-content.gildra-atlas [data-folio-action="quiet"] { color: var(--atlas-accent); background: transparent; }
+.workspace-content.gildra-atlas :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a) svg { width: 16px; height: 16px; flex-shrink: 0; }
+.workspace-content.gildra-atlas .db-hero {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr);
+  gap: 28px;
+  margin-inline: 0;
+  padding: 32px 26px;
+  border: 1px solid var(--atlas-border);
+  background: var(--atlas-surface);
+  box-shadow: none;
+  clip-path: none;
+}
+.workspace-content.gildra-atlas .db-hero::after { display: none; }
+.workspace-content.gildra-atlas :is(.db-intro h1, .db-live-head h2, .db-section-heading h2, .db-detail h1) {
+  color: var(--atlas-title);
+  font-family: var(--atlas-display);
+  font-weight: 400;
+}
+.workspace-content.gildra-atlas :is(.db-source-panel, .db-manifest, .db-live, .db-category-section, .db-record, .db-group, .db-detail, .db-detail-block, .db-localization-card, .db-media-gallery figure, .db-raw-payload) {
+  border-color: var(--atlas-border);
+  background: var(--atlas-surface);
+  box-shadow: none;
+  clip-path: none;
+}
+.workspace-content.gildra-atlas :is(.db-live, .db-category-section) { margin-inline: 0; }
+.workspace-content.gildra-atlas :is(.db-catalog-search, .db-search, .db-taxonomy, .db-media-gallery figure > a) { background: var(--atlas-background); border-color: var(--atlas-rule); }
+.workspace-content.gildra-atlas .db-pagination { flex-wrap: wrap; }
+.workspace-content.gildra-atlas [data-platform-home] > header { background: var(--atlas-background); border-color: var(--atlas-rule); box-shadow: none; }
+.workspace-content.gildra-atlas :is([data-lairs-root], .wow-journal) {
+  --wow-bg: var(--atlas-background);
+  --wow-panel: var(--atlas-surface);
+  --wow-panel-2: var(--atlas-surface-raised);
+  --wow-line: var(--atlas-border);
+  --wow-gold: var(--atlas-accent);
+  --wow-gold-2: var(--atlas-accent-bright);
+  --wow-text: var(--atlas-text);
+  --wow-muted: var(--atlas-muted);
+  background: var(--atlas-background);
+  color: var(--atlas-text);
+}
+.workspace-content.gildra-atlas .lairs-shell { width: 100%; max-width: 1540px; padding-inline: 26px; }
+.workspace-content.gildra-atlas :is(.lairs-title-row, .farm-panel, .system-card) { border-color: var(--atlas-border); background: var(--atlas-surface); box-shadow: none; clip-path: none; }
+.workspace-content.gildra-atlas :is(.lairs-title-row h1, .boss-nameplate h1) { color: var(--atlas-title); font-family: var(--atlas-display); font-weight: 400; text-shadow: none; }
+.workspace-content.gildra-atlas .talent-calculator {
+  --tc-bg: var(--atlas-background);
+  --tc-panel: var(--atlas-surface);
+  --tc-line: var(--atlas-border);
+  --tc-gold: var(--atlas-accent);
+  --tc-gold-2: var(--atlas-accent-bright);
+  --tc-ink: var(--atlas-text);
+  --tc-muted: var(--atlas-muted);
+  background: var(--atlas-background);
+}
+.workspace-content.gildra-atlas :is(.tc-header, .tc-footer, .tc-top-bar) { background: var(--atlas-surface); border-color: var(--atlas-rule); box-shadow: none; }
+.workspace-content.gildra-atlas .tc-title-row h1 { color: var(--atlas-title); font-family: var(--atlas-display); }
+.workspace-content.gildra-atlas [data-api-console] { background: var(--atlas-background) !important; }
+.workspace-content.gildra-atlas [data-api-console] :is(header, aside, input, .rounded-xl, .rounded-sm) {
+  border-color: var(--atlas-border) !important;
+  background-color: var(--atlas-surface) !important;
+}
+.workspace-content.gildra-atlas [data-api-console] input { color: var(--atlas-text) !important; }
+body:has(.workspace-content[data-atlas-theme="dark"]) .cookie.cookie-book {
+  background: #090a0b;
+  border-color: rgba(157, 112, 48, .45);
+  color: #d9d0c0;
+  box-shadow: 0 12px 32px #0005;
+}
+body:has(.workspace-content[data-atlas-theme="dark"]) .cookie.cookie-book .cookie-text a { color: #f0b55a; }
+@media (max-width: 760px) {
+  .workspace-content.gildra-atlas .section { padding-inline: 16px; }
+  .workspace-content.gildra-atlas .route-section { padding-top: 24px; }
+  .workspace-content.gildra-atlas .db-hero { grid-template-columns: minmax(0, 1fr); padding: 24px 20px; }
+  .workspace-content.gildra-atlas :is(.db-live, .db-category-section) { padding: 20px; }
+  .workspace-content.gildra-atlas .lairs-shell { padding-inline: 16px; }
+}

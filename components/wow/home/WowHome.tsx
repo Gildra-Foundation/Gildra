@@ -16,9 +16,6 @@ import {
 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { t as tr, type Lang } from "@/lib/i18n";
-import { CharacterBookBackdrop } from "@/components/wow/audit/CharacterBookBackdrop";
-import { PhysicalBookFrame, physicalBookMaterials } from "@/components/wow/audit/PhysicalBookFrame";
-import typography from "@/components/wow/audit/grimoireTypography.module.css";
 import styles from "./wowHome.module.css";
 
 type Copy = {
@@ -119,10 +116,8 @@ export function WowHome({ lang }: { lang: Lang }) {
   ];
 
   return (
-    <div className={`${styles.page} ${typography.typography}`} data-gildra-grimoire style={physicalBookMaterials as CSSProperties}>
-      <div className={styles.backdrop} aria-hidden="true"><CharacterBookBackdrop /></div>
+    <div className={`gildra-atlas ${styles.page}`} data-wow-atlas lang={lang}>
       <main className={styles.main}>
-        <PhysicalBookFrame />
         <nav className={styles.sectionNav} aria-label={t.navigation}>
           <Link href={href("/wow")}><Swords />World of Warcraft</Link>
           <Link href={href("/wow/characters")}>{lang === "ru" ? "Персонажи" : "Characters"}</Link>
@@ -146,7 +141,7 @@ export function WowHome({ lang }: { lang: Lang }) {
           <div className={styles.heroScene} aria-hidden="true">
             <div className={styles.runes}><i /><i /><i /></div>
             <Image src="/assets/characters/furybar-horde-hero-v1-optimized.webp" alt="" width={2171} height={724} sizes="(max-width: 720px) 430px, (max-width: 1050px) 50vw, 570px" priority />
-            <div className={styles.heroBadge}><Shield /><span><small>{lang === "ru" ? "Активный герой" : "Active hero"}</small><b>FURYBAR</b></span></div>
+            <div className={styles.heroBadge}><Shield /><span><small>{lang === "ru" ? "Мир Азерота" : "World of Azeroth"}</small><b>WARCRAFT</b></span></div>
           </div>
         </section>
 

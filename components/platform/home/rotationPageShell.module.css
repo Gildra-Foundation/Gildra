@@ -1,19 +1,17 @@
 .page {
-  --ph-bg: #020b11;
-  --ph-panel: rgba(3, 14, 20, .82);
-  --ph-line: rgba(151, 98, 38, .44);
-  --ph-line-soft: rgba(151, 98, 38, .25);
-  --ph-gold: #d88b2b;
-  --ph-gold-soft: #e2a750;
-  --ph-ivory: #e8d8c5;
-  --ph-muted: #a99b8f;
+  --ph-bg: var(--atlas-background);
+  --ph-panel: var(--atlas-surface);
+  --ph-line: var(--atlas-border);
+  --ph-line-soft: var(--atlas-rule);
+  --ph-gold: var(--atlas-accent);
+  --ph-gold-soft: var(--atlas-accent-bright);
+  --ph-ivory: var(--atlas-text);
+  --ph-muted: var(--atlas-muted);
   --ph-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   --ph-ui: var(--font-ui), Inter, system-ui, sans-serif;
   min-height: 100vh;
   color: var(--ph-ivory);
-  background:
-    radial-gradient(60% 80% at 45% 20%, rgba(8, 35, 46, .35), transparent 72%),
-    linear-gradient(rgba(1, 9, 14, .95), rgba(1, 12, 17, .98));
+  background: var(--atlas-background);
   font-family: var(--ph-ui);
   font-size: 13px;
 }

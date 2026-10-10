@@ -1,4 +1,10 @@
 .panel{isolation:isolate;contain:layout paint;overflow:clip!important}
+.atlas.panel { background: var(--atlas-surface); border-color: var(--atlas-border); box-shadow: none; }
+.atlas .header { background: var(--atlas-surface) !important; border-color: var(--atlas-rule) !important; }
+.atlas .heading h2 { color: var(--atlas-title) !important; font-family: var(--atlas-display) !important; font-weight: 400 !important; text-shadow: none; }
+.atlas .heading small, .atlas .counter small { color: var(--atlas-muted) !important; }
+.atlas .counter strong b { color: var(--atlas-accent-bright); text-shadow: none; }
+.atlas .frame, .atlas .header::before, .atlas .header::after { display: none; }
 .manuscript { --manuscript-ink: #38230f; --manuscript-muted: #73532e; }
 .manuscript .header {
   height: 100px!important;

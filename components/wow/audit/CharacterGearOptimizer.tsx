@@ -5,7 +5,6 @@ import { AlertTriangle, Check, ChevronRight, CircleHelp, Filter, Gem, LoaderCirc
 import type { AuditGearItem } from "@/lib/wow/characterAudit";
 import { useCharacterWorkspaceDocument } from "@/lib/wow/useCharacterWorkspaceDocument";
 import { recordCharacterRun } from "@/lib/wow/characterRunHistory";
-import { WarcraftFrame } from "./WarcraftFrame";
 import { characterWorkspaceCopy, workspaceGearError, workspaceKind, workspaceLocale, workspaceNumber, type WorkspaceLocale } from "./characterWorkspaceCopy";
 import styles from "./characterGearOptimizer.module.css";
 
@@ -149,7 +148,7 @@ export function CharacterGearOptimizer({ characterSlug, specializationSlug, gear
   if (!slots.length) return null;
   const excluded = Object.values(payload?.rejectedByReason ?? {}).reduce((sum, value) => sum + value, 0);
   return <section className={styles.optimizer} aria-labelledby="gear-optimizer-heading">
-    <WarcraftFrame />
+
     <header className={styles.heading}>
       <span className={styles.headingIcon}><Swords aria-hidden="true" /></span>
       <div><small>{t("ПОДБОР СНАРЯЖЕНИЯ")}</small><h2 id="gear-optimizer-heading">{t("Что надеть вместо текущей вещи?")}</h2><p>{t("Выберите слот и тип боя, затем сравните урон. До расчёта вещь не считается улучшением.")}</p></div>

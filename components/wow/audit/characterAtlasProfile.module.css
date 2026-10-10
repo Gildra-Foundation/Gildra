@@ -1,0 +1,76 @@
+.page[data-character-atlas][data-profile-source] {
+  --bg: var(--atlas-background);
+  --panel: var(--atlas-surface);
+  --panel-strong: var(--atlas-surface-raised);
+  --line: var(--atlas-border);
+  --line-soft: var(--atlas-rule);
+  --gold: var(--atlas-accent);
+  --gold-soft: var(--atlas-accent-bright);
+  --text: var(--atlas-text);
+  --muted: var(--atlas-muted);
+  --font-heading: var(--atlas-display);
+  background: var(--atlas-background);
+  color: var(--atlas-text);
+  overflow: visible;
+}
+.content { max-width: 1540px; min-width: 0; margin: auto; padding: 32px 26px 48px; container: auditPage / inline-size; }
+.manuscript { min-width: 0; }
+.page[data-character-atlas][data-profile-source] :global([data-character-identity]) {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .45fr);
+  grid-template-areas: none; grid-template-rows: none;
+  gap: 24px; min-height: 0; padding: 28px;
+  border: 1px solid var(--atlas-border); border-radius: 2px;
+  background: var(--atlas-surface); box-shadow: none;
+}
+.page[data-character-atlas][data-profile-source] :global([data-character-identity]) > * { grid-area: auto; min-width: 0; }
+.page[data-character-atlas][data-profile-source] :global([data-character-identity]) > :first-child { grid-column: 1 / -1; }
+.page[data-character-atlas][data-profile-source] :global([data-character-identity]) > :global([aria-hidden="true"]),
+.page[data-character-atlas][data-profile-source] :global([data-character-identity])::after { display: none; }
+.identity { display: flex; align-items: center; gap: 20px; min-width: 0; }
+.page[data-character-atlas][data-profile-source] .name { min-width: 0; width: auto; }
+.page .name h1 { color: var(--atlas-title); font: 400 clamp(32px, 4vw, 52px)/1.1 var(--atlas-display); white-space: normal; overflow-wrap: anywhere; }
+.page .name :is(p, small) { flex-wrap: wrap; white-space: normal; }
+.metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-self: center; min-width: 0; }
+.page .metrics > div { min-width: 0; padding: 12px 20px; }
+.page[data-character-atlas][data-profile-source] .actions { display: flex; flex-wrap: wrap; gap: 8px; align-self: center; }
+.page[data-character-atlas][data-profile-source] .actions > button { width: auto; min-width: 130px; }
+.status { align-self: center; justify-self: end; }
+.evidence { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.page[data-character-atlas][data-profile-source] :global([data-character-identity]) > .evidence { grid-column: 1 / -1; }
+.page[data-character-atlas][data-profile-source] .evidence > div { border-color: var(--atlas-border); border-radius: 2px; background: var(--atlas-background); box-shadow: none; }
+.page[data-character-atlas][data-profile-source] :global([data-character-sections]) { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 24px 0; }
+.page[data-character-atlas][data-profile-source] :global([data-character-sections]) > * { grid-column: 1; }
+.page[data-character-atlas][data-profile-source] :global([data-character-equipment]) { border: 1px solid var(--atlas-border); border-radius: 2px; background: var(--atlas-surface); box-shadow: none; }
+.page[data-character-atlas][data-profile-source] :global(#audit-rotation) { border: 0; padding: 0; background: transparent; box-shadow: none; }
+.chapter { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--atlas-rule); scroll-margin-top: 140px; }
+.chapter > span { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border: 1px solid var(--atlas-border); color: var(--atlas-accent); }
+.chapter svg { width: 20px; height: 20px; }
+.chapter small { color: var(--atlas-accent); font: 600 10px/1.5 var(--atlas-ui); letter-spacing: .12em; text-transform: uppercase; }
+.chapter h2 { margin: 6px 0; color: var(--atlas-title); font: 400 clamp(24px, 2.5vw, 32px)/1.2 var(--atlas-display); }
+.chapter p { max-width: 64em; color: var(--atlas-muted); font: 13px/1.7 var(--atlas-ui); }
+.navigation { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 12px 0; border-bottom: 1px solid var(--atlas-rule); background: var(--atlas-background); }
+.navigation > a { color: var(--atlas-title); font: 18px var(--atlas-display); text-decoration: none; }
+.navigation > div { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.navigation > div a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 12px; color: var(--atlas-muted); font: 12px var(--atlas-ui); text-decoration: none; }
+.navigation > div a:hover, .navigation a[aria-current="location"] { color: var(--atlas-accent-bright); background: var(--atlas-accent-wash); }
+.navigation a:focus-visible { outline: 2px solid var(--atlas-accent-bright); outline-offset: 3px; }
+.footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-block: 20px; border-top: 1px solid var(--atlas-rule); color: var(--atlas-muted); font: 11px/1.6 var(--atlas-ui); }
+.footer > div { display: flex; align-items: center; gap: 8px; }
+.footer svg { width: 16px; height: 16px; color: var(--atlas-accent); }
+.tooltip { color: var(--atlas-text); background: var(--atlas-surface); border-color: var(--atlas-border); font-family: var(--atlas-ui); }
+@media (max-width: 820px) {
+  .content { padding: 24px 16px 40px; }
+  .page[data-character-atlas][data-profile-source] :global([data-character-identity]) { grid-template-columns: minmax(0, 1fr); padding: 24px 20px; }
+  .page[data-character-atlas][data-profile-source] :global([data-character-identity]) > * { grid-column: 1; }
+  .status { justify-self: start; }
+  .evidence { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .navigation { flex-wrap: wrap; }
+  .navigation > div { width: 100%; margin: 0; }
+}
+@media (max-width: 420px) {
+  .content { padding-inline: 12px; }
+  .page[data-character-atlas][data-profile-source] :global([data-character-identity]) { padding: 20px 16px; }
+  .identity { gap: 12px; }
+  .page .metrics > div { padding: 12px; }
+  .page .metrics b { font-size: 28px; }
+}

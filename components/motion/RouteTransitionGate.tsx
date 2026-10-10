@@ -2,6 +2,9 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
+// Keep the shared contents toolbar styled before its lazy dialog loads.
+import "@/components/platform/navigation/bookNavigation.module.css";
 import { RouteThemeController } from "./RouteThemeController";
 import routeStyles from "./routeTransition.module.css";
 
@@ -12,8 +15,10 @@ const RouteTransition = bookTransitionsEnabled
   : null;
 
 export function RouteTransitionGate({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const landing = pathname === "/" || pathname === "/ru" || pathname === "/ru/";
   return (
-    <div className="workspace-content">
+    <div className={landing ? "workspace-content" : "workspace-content gildra-atlas"} data-atlas-theme={landing ? undefined : "dark"}>
       {RouteTransition ? <RouteTransition>{children}</RouteTransition> : <>
         <RouteThemeController />
         <div className={routeStyles.system} data-theme="wow" data-book-navigation="idle">

@@ -1,5 +1,7 @@
 "use client";
 
+import "@/app/styles/talents.css";
+
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { AlertTriangle, Check, LoaderCircle, LockKeyhole, Minus, Plus, RotateCcw, Sparkles, Swords } from "lucide-react";
@@ -15,7 +17,6 @@ import { TalentTreePanel } from "@/components/talents/TalentTreePanel";
 import { SpecSignatureFx } from "@/components/talents/spec-signature/SpecSignatureFx";
 import { CharacterBuildManager } from "./CharacterBuildManager";
 import { CharacterTalentOptimizer } from "./CharacterTalentOptimizer";
-import { WarcraftFrame } from "./WarcraftFrame";
 import { talentText, localizedTalentScenarios, type TalentLang } from "@/components/talents/talentLocale";
 import styles from "./characterTalentSimulator.module.css";
 import { withCharacterContext } from "@/lib/platform/rotation/characterRequestContext";
@@ -301,7 +302,7 @@ export function CharacterTalentSimulator({ data, characterSlug, specSlug, loadou
   };
 
   return <section className={styles.shell} aria-labelledby="live-talents-heading">
-    <WarcraftFrame />
+
     <header className={styles.header}>
       <div><small>{talentText(lang, "ТАЛАНТЫ · ")}{data.specName}</small><h2 id="live-talents-heading">{talentText(lang, "Ваш билд и его сила")}</h2><p>{talentText(lang, "Меняйте таланты и сравнивайте результат с текущим билдом персонажа.")}</p></div>
       <div className={styles.headerActions} data-folio-tools><Link href={`${localePrefix}/wow/rotation/${specSlug}?character=${encodeURIComponent(characterSlug)}&mode=${dataMode}`}><Swords /> {talentText(lang, " Настроить ротацию")}</Link><button type="button" onClick={() => { setSelection({ ranks: new Map(baseline.ranks), choices: new Map(baseline.choices), origin: baseline.origin }); setAutomaticRanks(new Map()); setNotice(""); }}><RotateCcw /> {talentText(lang, " Вернуть исходный билд")}</button></div>
@@ -325,7 +326,7 @@ export function CharacterTalentSimulator({ data, characterSlug, specSlug, loadou
           }
         }}>
         <div className={`talent-calculator ${styles.embeddedCalculator}`} data-performance="balanced">
-          <TalentTreePanel lang={lang} appearance="manuscript" specSlug={activeTree === "spec" ? theme?.slug : undefined} variant={activeTree} eyebrow={labels[activeTree]} title={activeTree === "hero" ? data.heroName : activeTree === "class" ? data.className : data.specName} iconSrc={activeTree === "hero" ? data.heroIconUrl : activeTree === "spec" ? theme?.iconUrl : theme?.classIconUrl} spent={spent(selection.ranks, data, activeTree)} budget={budgets[activeTree]} nodeCount={tree.nodes.length} scene={activeTree === "spec" && theme ? <SpecSignatureFx specSlug={theme.slug} appearance="manuscript" /> : undefined}>
+          <TalentTreePanel lang={lang} appearance="atlas" specSlug={activeTree === "spec" ? theme?.slug : undefined} variant={activeTree} eyebrow={labels[activeTree]} title={activeTree === "hero" ? data.heroName : activeTree === "class" ? data.className : data.specName} iconSrc={activeTree === "hero" ? data.heroIconUrl : activeTree === "spec" ? theme?.iconUrl : theme?.classIconUrl} spent={spent(selection.ranks, data, activeTree)} budget={budgets[activeTree]} nodeCount={tree.nodes.length} scene={activeTree === "spec" && theme ? <SpecSignatureFx specSlug={theme.slug}  /> : undefined}>
             <div className="tc-tree-canvas">
               <div className={styles.flowGuide} aria-hidden="true"><b>{talentText(lang, "НАЧАЛО")}</b><span>{talentText(lang, "развитие билда")}</span><i>→</i><b>{talentText(lang, "СИЛЬНЫЕ УЗЛЫ")}</b></div>
               <svg className="tc-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">

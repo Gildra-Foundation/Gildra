@@ -5,7 +5,6 @@ import { Activity, AlertTriangle, Check, Clock3, ExternalLink, Link2, LoaderCirc
 import type { RotationAbility, RotationSimulationResult } from "@/lib/platform/rotation/types";
 import type { WarcraftLogsAnalysis } from "@/lib/wow/warcraftLogsAnalysis";
 import { characterLogsReturnTo } from "@/lib/wow/warcraftLogsRoutes";
-import { WarcraftFrame } from "./WarcraftFrame";
 import { characterWorkspaceCopy, workspaceLocale, workspaceNumber, workspaceVisibility, type WorkspaceLocale } from "./characterWorkspaceCopy";
 import styles from "./characterLogAnalysis.module.css";
 
@@ -89,14 +88,14 @@ export function CharacterLogAnalysis({ characterSlug, specializationSlug, locale
     setStatus((value) => ({ configured: value?.configured ?? true, connected: false })); setReport(null); setAnalysis(null);
   }
 
-  if (!status) return <section className={styles.logs} id="audit-logs"><WarcraftFrame /><div className={styles.state}><LoaderCircle className={styles.spin} />{t("Проверяем Warcraft Logs…")}</div></section>;
-  if (!status.configured) return <section className={styles.logs} id="audit-logs"><WarcraftFrame /><header><span><Activity /></span><div><small>{t("БОЕВОЙ ЖУРНАЛ")}</small><h2>{t("Разбор настоящего боя")}</h2><p>{t("Здесь можно будет сравнить расчёт с тем, что произошло в игре.")}</p></div></header><div className={styles.state}><ShieldCheck /><div><b>{t("Разбор боёв пока недоступен")}</b><span>{t("Это настройка сервиса; с вашим персонажем и аккаунтом всё в порядке.")}</span></div></div></section>;
+  if (!status) return <section className={styles.logs} id="audit-logs"><div className={styles.state}><LoaderCircle className={styles.spin} />{t("Проверяем Warcraft Logs…")}</div></section>;
+  if (!status.configured) return <section className={styles.logs} id="audit-logs"><header><span><Activity /></span><div><small>{t("БОЕВОЙ ЖУРНАЛ")}</small><h2>{t("Разбор настоящего боя")}</h2><p>{t("Здесь можно будет сравнить расчёт с тем, что произошло в игре.")}</p></div></header><div className={styles.state}><ShieldCheck /><div><b>{t("Разбор боёв пока недоступен")}</b><span>{t("Это настройка сервиса; с вашим персонажем и аккаунтом всё в порядке.")}</span></div></div></section>;
   if (!status.connected) {
     const returnTo = characterLogsReturnTo(localePrefix, characterSlug);
-    return <section className={styles.logs} id="audit-logs"><WarcraftFrame /><header><span><Activity /></span><div><small>{t("БОЕВОЙ ЖУРНАЛ")}</small><h2>{t("Разбор настоящего боя")}</h2><p>{t("Подключите Warcraft Logs, чтобы увидеть свои действия и потери урона в конкретном бою.")}</p></div></header>{oauthResult ? <ConnectionNotice result={oauthResult} connected={false} locale={locale} /> : null}<div className={styles.connect} data-folio-tools><ShieldCheck /><div><b>{t("Нужен доступ к вашим отчётам")}</b><span>{t("Вы сами выбираете отчёт. Gildra не публикует и не меняет ваши логи.")}</span></div><a href={`/api/wow/logs/connect?returnTo=${encodeURIComponent(returnTo)}`}><Link2 />{t("Подключить Warcraft Logs")}</a></div></section>;
+    return <section className={styles.logs} id="audit-logs"><header><span><Activity /></span><div><small>{t("БОЕВОЙ ЖУРНАЛ")}</small><h2>{t("Разбор настоящего боя")}</h2><p>{t("Подключите Warcraft Logs, чтобы увидеть свои действия и потери урона в конкретном бою.")}</p></div></header>{oauthResult ? <ConnectionNotice result={oauthResult} connected={false} locale={locale} /> : null}<div className={styles.connect} data-folio-tools><ShieldCheck /><div><b>{t("Нужен доступ к вашим отчётам")}</b><span>{t("Вы сами выбираете отчёт. Gildra не публикует и не меняет ваши логи.")}</span></div><a href={`/api/wow/logs/connect?returnTo=${encodeURIComponent(returnTo)}`}><Link2 />{t("Подключить Warcraft Logs")}</a></div></section>;
   }
 
-  return <section className={styles.logs} id="audit-logs" aria-labelledby="logs-heading"><WarcraftFrame /><header><span><Activity /></span><div><small>{t("БОЕВОЙ ЖУРНАЛ")}</small><h2 id="logs-heading">{t("Что произошло в бою")}</h2><p>{t("Выберите отчёт и бой. Советы будут привязаны к вашим действиям и времени их применения.")}</p></div><button data-folio-action="quiet" type="button" onClick={() => void disconnect()}><LogOut />{t("Отключить")}</button></header>
+  return <section className={styles.logs} id="audit-logs" aria-labelledby="logs-heading"><header><span><Activity /></span><div><small>{t("БОЕВОЙ ЖУРНАЛ")}</small><h2 id="logs-heading">{t("Что произошло в бою")}</h2><p>{t("Выберите отчёт и бой. Советы будут привязаны к вашим действиям и времени их применения.")}</p></div><button data-folio-action="quiet" type="button" onClick={() => void disconnect()}><LogOut />{t("Отключить")}</button></header>
     {oauthResult === "connected" ? <ConnectionNotice result="connected" connected locale={locale} /> : null}
     <div className={styles.steps} aria-label={t("Как начать анализ")}><span>1</span><b>{t("Выберите отчёт")}</b><span>2</span><b>{t("Выберите бой")}</b><span>3</span><b>{t("Нажмите «Разобрать бой»")}</b></div>
     {reportsState === "loading" ? <div className={styles.reportState} role="status"><LoaderCircle className={styles.spin} />{t("Загружаем ваши последние отчёты…")}</div> : null}

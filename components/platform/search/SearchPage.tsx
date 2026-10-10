@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { ResilientImage } from "@/components/media/ResilientImage";
 import type { CSSProperties } from "react";
 import { Bookmark, Check, Filter, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { PlatformHeader } from "@/components/platform/home/PlatformHeader";
@@ -78,8 +79,8 @@ function CatalogResultIcon({ iconUrl, fallbackUrl }: { iconUrl?: string | null; 
   const srcSet = local && !rawCatalogMedia
     ? [48, 64, 96, 128].map((width) => `${optimizedCatalogIcon(icon, width)} ${width}w`).join(", ")
     : undefined;
-  return <img src={src} srcSet={srcSet} sizes={local ? "(max-width: 760px) 44px, 54px" : undefined}
-    data-fallback-src={fallback} alt="" width={54} height={54} loading="lazy" decoding="async" />;
+  return <ResilientImage src={src} srcSet={srcSet} sizes={local ? "(max-width: 760px) 44px, 54px" : undefined}
+    data-fallback-src={fallback} fallback={<img src={fallback} alt="" width={54} height={54} loading="lazy" decoding="async" />} alt="" width={54} height={54} loading="lazy" decoding="async" />;
 }
 
 export function SearchPage({

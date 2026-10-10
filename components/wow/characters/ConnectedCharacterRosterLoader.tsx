@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CharacterAtlasShell, CharacterAtlasHeader } from "./CharacterAtlasShell";
+import styles from "./characterRosterPage.module.css";
 import type { BattleNetRegion } from "@/lib/wow/battleNetCharacters";
 
 type CharacterRosterPageComponent = typeof import("./CharacterRosterPage").CharacterRosterPage;
@@ -25,8 +27,9 @@ export function ConnectedCharacterRosterLoader({ locale, accountName, pendingReg
   }
 
   return (
-    <main lang={locale} aria-busy="true" style={{ minHeight: "100svh", display: "grid", placeItems: "center", padding: 24, color: "#e8dcc7", background: "#081014" }}>
-      <p role="status">{locale === "ru" ? "Загружаем персонажей Battle.net…" : "Loading your Battle.net characters…"}</p>
-    </main>
+    <CharacterAtlasShell locale={locale} view="loading">
+      <CharacterAtlasHeader title={locale === "ru" ? "Персонажи аккаунта" : "Account characters"} intro={locale === "ru" ? "Загружаем персонажей из официального профиля Battle.net." : "Loading characters from your official Battle.net profile."} eyebrow="Battle.net" />
+      <div className={styles.loading} aria-busy="true"><p role="status">{locale === "ru" ? "Загружаем персонажей Battle.net…" : "Loading your Battle.net characters…"}</p></div>
+    </CharacterAtlasShell>
   );
 }

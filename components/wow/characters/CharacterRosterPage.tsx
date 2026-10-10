@@ -1,22 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { ChevronRight, ExternalLink, LockKeyhole, Search, Shield, Users } from "lucide-react";
+import { ChevronRight, ExternalLink, LockKeyhole, Search, Shield } from "lucide-react";
 import { BattleNetSignIn, BattleNetSignOut } from "@/components/auth/BattleNetActions";
-import { CharacterBookBackdrop } from "@/components/wow/audit/CharacterBookBackdrop";
-import { PhysicalBookFrame, physicalBookMaterials } from "@/components/wow/audit/PhysicalBookFrame";
-import grimoire from "@/components/wow/audit/grimoireControls.module.css";
-import typography from "@/components/wow/audit/grimoireTypography.module.css";
-import illumination from "@/components/wow/audit/characterBookIllumination.module.css";
-import { BookEngraving } from "@/components/wow/audit/BookEngraving";
-import surface from "@/components/wow/audit/characterBookSurface.module.css";
 import type { BattleNetCharacter, BattleNetRegion } from "@/lib/wow/battleNetCharacters";
 import { characterSlug } from "@/lib/wow/battleNetCharacterDetails";
-import { CharacterBookRibbon } from "./CharacterBookRibbon";
-import { CharacterBookMasthead } from "./CharacterBookMasthead";
 import { BattleNetConnectPanel } from "./BattleNetConnectPanel";
-import { CharacterEntryProof, CharacterEntryRoadmap } from "./CharacterEntryGuide";
+import { CharacterAtlasShell, CharacterAtlasHeader } from "./CharacterAtlasShell";
 import styles from "./characterRosterPage.module.css";
 
 type Props = {
@@ -60,14 +51,10 @@ type RosterCopy = {
   rateText: string;
   unavailableTitle: string;
   unavailableText: string;
-  contents: string;
-  bookTitle: string;
-  connectChapter: string;
   entryEyebrow: string;
   overview: string;
   searchChapter: string;
   rosterChapter: string;
-  archive: string;
   secureAccess: string;
   loadingRegions: string;
 };
@@ -91,7 +78,7 @@ const copy: Record<"en" | "ru", RosterCopy> = {
     forbiddenTitle: "World of Warcraft access was not granted", forbiddenText: "Reconnect Battle.net and confirm access to your WoW profile. If no permission screen appears, remove Gildra from Battle.net authorized applications and connect again.",
     rateTitle: "Battle.net request limit reached", rateText: "The account is connected. Wait a minute and try loading the characters again.",
     unavailableTitle: "Battle.net is temporarily unavailable", unavailableText: "The account is connected, but every regional character request failed. Please try again shortly.",
-    contents: "Contents", bookTitle: "Heroes", connectChapter: "Connect", entryEyebrow: "Official API", overview: "Overview", searchChapter: "Search", rosterChapter: "Characters", archive: "Hero chronicle", secureAccess: "Secure Battle.net sign-in", loadingRegions: "Checking Battle.net regions…",
+    entryEyebrow: "Official API", overview: "Overview", searchChapter: "Search", rosterChapter: "Characters", secureAccess: "Secure Battle.net sign-in", loadingRegions: "Checking Battle.net regions…",
   },
   ru: {
     title: "Персонажи аккаунта", connected: "Battle.net подключён",
@@ -105,7 +92,7 @@ const copy: Record<"en" | "ru", RosterCopy> = {
     forbiddenTitle: "Доступ к персонажам WoW не выдан", forbiddenText: "Переподключите Battle.net и подтвердите доступ к профилю WoW. Если окно разрешений не появится, удалите Gildra из списка разрешённых приложений Battle.net и подключите снова.",
     rateTitle: "Battle.net ограничил число запросов", rateText: "Аккаунт подключён. Подождите минуту и попробуйте загрузить персонажей ещё раз.",
     unavailableTitle: "Battle.net временно недоступен", unavailableText: "Аккаунт подключён, но запрос списка персонажей завершился ошибкой во всех регионах. Попробуйте ещё раз чуть позже.",
-    contents: "Оглавление", bookTitle: "Герои", connectChapter: "Подключение", entryEyebrow: "Официальный API", overview: "Обзор", searchChapter: "Поиск", rosterChapter: "Персонажи", archive: "Летопись героя", secureAccess: "Защищённый вход Battle.net", loadingRegions: "Проверяем регионы Battle.net…",
+    entryEyebrow: "Официальный API", overview: "Обзор", searchChapter: "Поиск", rosterChapter: "Персонажи", secureAccess: "Защищённый вход Battle.net", loadingRegions: "Проверяем регионы Battle.net…",
   },
 };
 
@@ -190,62 +177,27 @@ export function CharacterRosterPage({ characters, locale, isConnected, accountNa
   }, [characters, isConnected, locale, pendingRegions]);
 
   return (
-    <main
-      className={`${styles.roster} ${surface.root} ${grimoire.theme} ${typography.typography} ${illumination.page}`}
-      data-character-book="open"
-      data-roster-view={isConnected ? effectiveApiError ? "error" : "roster" : "entry"}
-      lang={locale}
-      style={physicalBookMaterials as CSSProperties}
-    >
-      <div className={surface.backdrop} data-character-book-backdrop aria-hidden="true"><CharacterBookBackdrop /></div>
-      <div className={`${styles.bookContent} ${surface.content}`}>
-        <div className={`${styles.manuscript} ${surface.manuscript}`}>
-          <PhysicalBookFrame />
-          <CharacterBookRibbon
-            locale={locale}
-            contents={t.contents}
-            title={t.bookTitle}
-            homeHref={`${prefix}/wow/characters`}
-            items={[
-              ...(isConnected && !effectiveApiError
-                ? [
-                    { number: "01", label: t.overview, href: "#account-overview" },
-                    { number: "02", label: t.searchChapter, href: "#character-search" },
-                    { number: "03", label: t.rosterChapter, href: "#character-roster", active: true },
-                  ]
-                : [{ number: "01", label: t.connectChapter, href: "#account-overview", active: true }]),
-            ]}
-          />
-
-          <CharacterBookMasthead locale={locale} rightLabel={t.archive} />
-
-          <header className={`${styles.hero} ${illumination.identity}`} id="account-overview">
-            <div className={styles.identityCopy}>
-              <span className={styles.eyebrow}><Users aria-hidden="true" />{isConnected ? `${accountName ? `${accountName} · ` : ""}${t.connected}` : accountName ?? t.entryEyebrow}</span>
-              <h1>{t.title}</h1>
-              <p>{t.intro}</p>
-              {!isConnected ? <CharacterEntryProof locale={locale} /> : null}
-              {isConnected ? <div className={styles.sessionAction}><BattleNetSignOut locale={locale} /></div> : null}
-            </div>
-            {isConnected && !effectiveApiError ? (
-              <dl className={styles.summary} aria-label={t.overview}>
-                <div><dt>{t.characters}</dt><dd>{rosterCharacters.length}</dd></div>
-                <div><dt>{t.realms}</dt><dd>{realmCount}</dd></div>
-                <div><dt>{t.classes}</dt><dd>{classes.length}</dd></div>
-              </dl>
-            ) : (
-              <BattleNetConnectPanel eyebrow={t.secureAccess} title={stateTitle} description={stateDescription}>
-                {effectiveApiError === "unavailable" || effectiveApiError === "rate-limited"
-                  ? <a data-folio-action="quiet" href={`${prefix}/wow/characters`}>{locale === "ru" ? "Повторить" : "Try again"}</a>
-                  : <BattleNetSignIn locale={locale} reconnect={Boolean(effectiveApiError)} />}
-                {!effectiveApiError ? <span className={styles.secureNote}><LockKeyhole aria-hidden="true" />{locale === "ru" ? "Пароль вводится только на стороне Blizzard." : "Your password stays with Blizzard."}</span> : null}
-              </BattleNetConnectPanel>
-            )}
-          </header>
-
-          {!isConnected ? (
-            <CharacterEntryRoadmap locale={locale} />
-          ) : null}
+    <CharacterAtlasShell locale={locale} view={isConnected ? effectiveApiError ? "error" : "roster" : "entry"}>
+      <CharacterAtlasHeader title={t.title} intro={isConnected ? (locale === "ru" ? "Выбери героя, чтобы открыть его экипировку, таланты и боевые инструменты." : "Choose a hero to open their equipment, talents, and combat tools.") : t.intro} eyebrow={isConnected ? `${accountName ? `${accountName} · ` : ""}${t.connected}` : t.entryEyebrow}>
+        {isConnected && !effectiveApiError ? (
+          <dl className={styles.summary} aria-label={t.overview}>
+            <div><dt>{t.characters}</dt><dd>{rosterCharacters.length}</dd></div>
+            <div><dt>{t.realms}</dt><dd>{realmCount}</dd></div>
+            <div><dt>{t.classes}</dt><dd>{classes.length}</dd></div>
+          </dl>
+        ) : null}
+      </CharacterAtlasHeader>
+      {isConnected ? <div className={styles.sessionAction}><BattleNetSignOut locale={locale} /></div> : null}
+      {!isConnected || effectiveApiError ? (
+        <div className={styles.connectionState}>
+          <BattleNetConnectPanel variant="atlas" eyebrow={t.secureAccess} title={stateTitle} description={stateDescription}>
+            {effectiveApiError === "unavailable" || effectiveApiError === "rate-limited"
+              ? <a data-folio-action="quiet" href={`${prefix}/wow/characters`}>{locale === "ru" ? "Повторить" : "Try again"}</a>
+              : <BattleNetSignIn locale={locale} reconnect={Boolean(effectiveApiError)} />}
+            {!effectiveApiError ? <span className={styles.secureNote}><LockKeyhole aria-hidden="true" />{locale === "ru" ? "Пароль вводится только на стороне Blizzard." : "Your password stays with Blizzard."}</span> : null}
+          </BattleNetConnectPanel>
+        </div>
+      ) : null}
 
           {isConnected && !effectiveApiError ? (
             <>
@@ -261,32 +213,29 @@ export function CharacterRosterPage({ characters, locale, isConnected, accountNa
               </section>
 
               <section className={styles.results} aria-live="polite" id="character-roster">
-                <header className={`${styles.chapterHeading} ${illumination.chapter}`}>
-                  <div className={`${styles.chapterTitle} ${illumination.chapterTitle}`}>
+                <header className={styles.chapterHeading}>
+                  <div className={styles.chapterTitle}>
                     <span className={styles.chapterIndex} data-folio-chapter>03</span>
                     <div><small>{t.connected}</small><h2>{t.roster}</h2></div>
                   </div>
-                  <div className={`${styles.chapterSummary} ${illumination.chapterSummary}`}>
+                  <div className={styles.chapterSummary}>
                     <div><span className={styles.chapterIcon}><Shield aria-hidden="true" /></span><p>{filtered.length} / {rosterCharacters.length} {t.characters}{isLoadingRegions ? ` · ${t.loadingRegions}` : ""}</p></div>
-                    <BookEngraving motif="armory" />
                   </div>
                 </header>
                     {filtered.length ? (
                   <div className={styles.grid}>
-                    {filtered.map((character) => <CharacterCard key={`${character.accountId}:${character.id}`} character={character} t={t} prefix={prefix} />)}
+                    {filtered.map((character) => <CharacterCard key={`${character.region}:${character.accountId}:${character.id}`} character={character} t={t} prefix={prefix} />)}
                   </div>
                 ) : (
                   <div className={styles.empty}>
-                    <Search aria-hidden="true" /><div><h3>{isLoadingRegions ? t.loadingRegions : t.emptyTitle}</h3><p>{isLoadingRegions ? t.emptyText : query || classId !== 0 ? t.noMatchingCharacters : t.emptyText}</p></div>
+                    <Search aria-hidden="true" /><div><h3>{isLoadingRegions ? t.loadingRegions : t.emptyTitle}</h3><p>{isLoadingRegions ? (locale === "ru" ? "Получаем список героев из официального профиля." : "Retrieving characters from your official profile.") : query || classId !== 0 ? t.noMatchingCharacters : t.emptyText}</p></div>
                     {query || classId !== 0 ? <button data-folio-action="quiet" type="button" onClick={() => { setQuery(""); setClassId(0); }}>{t.reset}</button> : null}
                   </div>
                 )}
               </section>
             </>
           ) : null}
-        </div>
-      </div>
-    </main>
+    </CharacterAtlasShell>
   );
 }
 

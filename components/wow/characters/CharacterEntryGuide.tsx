@@ -1,6 +1,7 @@
 import { BookOpen, LockKeyhole, Shield, Users } from "lucide-react";
 import { BookEngraving } from "@/components/wow/audit/BookEngraving";
-import styles from "./characterEntryGuide.module.css";
+import manuscriptStyles from "./characterEntryGuide.module.css";
+import atlasStyles from "./characterAtlasGuide.module.css";
 
 type Locale = "en" | "ru";
 
@@ -23,31 +24,32 @@ type RoadmapCopy = { eyebrow: string; title: string; intro: string; steps: reado
 const roadmapCopy: Record<Locale, RoadmapCopy> = {
   en: {
     eyebrow: "THE HERO’S PATH",
-    title: "From Battle.net to your hero’s folio",
+    title: "From Battle.net to your hero",
     intro: "Connect your account, choose a character, then open its equipment and combat tools.",
     steps: [
       ["Connect Battle.net", "Approve access securely on Blizzard’s sign-in page."],
       ["Sync your roster", "Load names, realms, classes, and races from the official profile."],
       ["Choose your hero", "Filter the returned characters and open the one you want."],
-      ["Open the character folio", "Review equipment, talents, and combat tools for that hero."],
+      ["Open your character profile", "Review equipment, talents, and combat tools for that hero."],
     ],
     colophon: "Character details are loaded from your Battle.net profile",
   },
   ru: {
     eyebrow: "ПУТЬ ГЕРОЯ",
-    title: "От Battle.net — к книге твоего героя",
+    title: "От Battle.net — к твоему герою",
     intro: "Подключи аккаунт, выбери персонажа и открой его экипировку и боевые инструменты.",
     steps: [
       ["Подключи Battle.net", "Подтверди безопасный вход на странице Blizzard."],
       ["Загрузи ростер", "Имена, серверы, классы и расы придут из официального профиля."],
       ["Выбери героя", "Отфильтруй персонажей и открой нужного."],
-      ["Открой книгу героя", "Изучи экипировку, таланты и боевые инструменты чара."],
+      ["Открой профиль героя", "Изучи экипировку, таланты и боевые инструменты чара."],
     ],
     colophon: "Данные персонажей загружаются из твоего профиля Battle.net",
   },
 };
 
-export function CharacterEntryProof({ locale }: { locale: Locale }) {
+export function CharacterEntryProof({ locale, variant = "book" }: { locale: Locale; variant?: "book" | "atlas" }) {
+  const styles = variant === "atlas" ? atlasStyles : manuscriptStyles;
   const copy = proofCopy[locale];
   const icons = [Users, Shield, BookOpen];
   return (
@@ -60,7 +62,8 @@ export function CharacterEntryProof({ locale }: { locale: Locale }) {
   );
 }
 
-export function CharacterEntryRoadmap({ locale }: { locale: Locale }) {
+export function CharacterEntryRoadmap({ locale, variant = "book" }: { locale: Locale; variant?: "book" | "atlas" }) {
+  const styles = variant === "atlas" ? atlasStyles : manuscriptStyles;
   const copy = roadmapCopy[locale];
   const icons = [LockKeyhole, Shield, Users, BookOpen];
   const stepList = (start: number, steps: readonly EntryStep[]) => (
@@ -72,6 +75,18 @@ export function CharacterEntryRoadmap({ locale }: { locale: Locale }) {
       })}
     </ol>
   );
+
+  if (variant === "atlas") {
+    return (
+      <section className={styles.roadmap} aria-labelledby="character-path-title">
+        <div className={styles.heading}>
+          <div><small>{copy.eyebrow}</small><h2 id="character-path-title">{locale === "ru" ? "От Battle.net — к твоему герою" : "From Battle.net to your hero"}</h2><p>{copy.intro}</p></div>
+        </div>
+        {stepList(1, copy.steps)}
+        <p className={styles.colophon}><Shield aria-hidden="true" />{copy.colophon}</p>
+      </section>
+    );
+  }
 
   return (
     <>

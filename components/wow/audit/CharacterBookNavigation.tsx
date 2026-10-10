@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import motion from "./characterBookMotion.module.css";
+import styles from "./characterAtlasProfile.module.css";
 import type { Lang } from "@/lib/i18n";
 import { CharacterLanguageSwitch } from "./CharacterLanguageSwitch";
-import { CharacterBookRibbon, type CharacterBookRibbonItem } from "@/components/wow/characters/CharacterBookRibbon";
+
 
 const chapters = [
   { id: "chapter-armory", number: "01", ru: "Экипировка", en: "Equipment" },
@@ -29,7 +29,7 @@ export function CharacterBookNavigation({ characterName, hasRotation, lang = "ru
       });
     const update = () => {
       frame = 0;
-      const readingLine = Math.max(96, (document.querySelector<HTMLElement>("[data-character-book-ribbon]")?.getBoundingClientRect().bottom ?? 64) + 32);
+      const readingLine = Math.max(96, (document.querySelector<HTMLElement>("[data-character-profile-navigation]")?.getBoundingClientRect().bottom ?? 64) + 32);
       let current = headings[0]?.id ?? "chapter-armory";
       for (const heading of headings) {
         if (heading.element.getBoundingClientRect().top <= readingLine) current = heading.id;
@@ -56,23 +56,11 @@ export function CharacterBookNavigation({ characterName, hasRotation, lang = "ru
     };
   }, [hasRotation]);
 
-  const items: CharacterBookRibbonItem[] = chapters
-    .filter((chapter) => hasRotation || chapter.id !== "chapter-rotation")
-    .map((chapter) => ({
-      number: chapter.number,
-      label: chapter[lang],
-      href: `#${chapter.id}`,
-      active: activeChapter === chapter.id,
-    }));
-
-  return <CharacterBookRibbon
-    locale={lang}
-    contents={lang === "ru" ? "Содержание" : "Contents"}
-    title={characterName}
-    homeHref="#audit-overview"
-    items={items}
-    ariaLabel={lang === "ru" ? "Навигация по профилю персонажа" : "Character profile navigation"}
-    className={motion.navigation}
-    languageControl={<CharacterLanguageSwitch lang={lang} />}
-  />;
+  return <nav className={styles.navigation} data-character-profile-navigation aria-label={lang === "ru" ? "Навигация по профилю персонажа" : "Character profile navigation"}>
+    <a href="#audit-overview">{characterName}</a>
+    <div>{chapters.filter((chapter) => hasRotation || chapter.id !== "chapter-rotation").map((chapter) =>
+      <a key={chapter.id} href={`#${chapter.id}`} aria-current={activeChapter === chapter.id ? "location" : undefined}>{chapter[lang]}</a>
+    )}</div>
+    <CharacterLanguageSwitch lang={lang} />
+  </nav>;
 }

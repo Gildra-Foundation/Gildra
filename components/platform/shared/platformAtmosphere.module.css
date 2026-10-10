@@ -14,3 +14,7 @@
 
 /* Keep the shared atmosphere layered but static to avoid repainting every route. */
 @media(prefers-reduced-motion:no-preference){.mistA,.mistB,.sigil{animation:none;will-change:auto}}
+
+/* Calm atlas content: no animated dashboard ornaments behind the data. */
+.atmosphere { background: radial-gradient(ellipse at 70% 0, rgba(209,162,75,.035), transparent 45%); }
+.grid, .mistA, .mistB, .pointerGlow, .sigil, .constellation, .noise { display: none; }

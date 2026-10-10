@@ -1,10 +1,10 @@
 /* Only the connected character's embedded lab opts into this manuscript.
    The lab id intentionally outranks its legacy atlas/container skins. */
 :global(#rotation-lab-content) .manuscript {
-  --script-ink: #432b18;
-  --script-muted: #695033;
-  --script-rule: #805d354d;
-  --script-highlight: #fff0cb66;
+  --script-ink: var(--atlas-text);
+  --script-muted: var(--atlas-muted);
+  --script-rule: var(--atlas-rule);
+  --script-highlight: var(--atlas-accent-wash);
 }
 
 :global(#rotation-lab-content) .manuscript .barViewport {
@@ -67,32 +67,32 @@
   aspect-ratio: 1;
   border: 0;
   border-radius: 2px;
-  background: #75461712;
-  box-shadow: inset 0 0 0 1px #835c378c, inset 0 0 0 3px #ffedc552, 0 1px #fff4d28c;
+  background: var(--atlas-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--atlas-border);
 }
 :global(#rotation-lab-content) .manuscript .cell[data-empty="true"] {
   background: transparent;
-  box-shadow: inset 0 0 0 1px #85643a66, inset 0 0 0 3px #ffedc533;
+  box-shadow: inset 0 0 0 1px var(--atlas-rule);
 }
 :global(#rotation-lab-content) .manuscript .cell > button > kbd {
   top: -11px;
   right: 1px;
   color: var(--script-ink);
   font: 600 10px/1 ui-monospace, monospace;
-  text-shadow: 0 1px #ffeecb;
+  text-shadow: none;
   opacity: 1;
 }
 :global(#rotation-lab-content) .manuscript .cell[data-empty="true"] > button > span {
-  color: #785837;
+  color: var(--atlas-muted);
   font: 400 21px/1 Georgia, serif;
   opacity: .65;
-  text-shadow: 0 1px #fff0ca;
+  text-shadow: none;
 }
 :global(#rotation-lab-content) .manuscript .cell:hover {
   background-color: var(--script-highlight);
 }
 :global(#rotation-lab-content) .manuscript .cell:focus-within {
-  outline: 2px solid #74411d;
+  outline: 2px solid var(--atlas-accent-bright);
   outline-offset: 3px;
 }
 

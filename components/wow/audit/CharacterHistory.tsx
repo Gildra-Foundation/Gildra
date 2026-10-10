@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Check, Clock3, Copy, History, Link2, LoaderCircle, RefreshCw, Shield, ShieldCheck, Sparkles, Swords, Unlink } from "lucide-react";
 import type { CharacterRunRecord } from "@/lib/wow/characterRunHistory";
-import { WarcraftFrame } from "./WarcraftFrame";
 import { BookEngraving } from "./BookEngraving";
 import { characterWorkspaceCopy, workspaceLocale, workspaceNumber, workspaceRunLabel, type WorkspaceLocale } from "./characterWorkspaceCopy";
 import styles from "./characterHistory.module.css";
@@ -77,7 +76,7 @@ export function CharacterHistory({ characterSlug, specializationSlug, fingerprin
   }
 
   return <section className={styles.history} id="audit-history" aria-labelledby="character-history-heading">
-    <WarcraftFrame />
+
     <header>
       <div className={styles.heading}>
         <span className={styles.icon} aria-hidden="true"><History /></span>

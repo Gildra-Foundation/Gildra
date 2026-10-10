@@ -382,7 +382,7 @@
 @media(max-width:680px){.logs{border-radius:14px}.logs>header{padding:20px 16px}}
 
 /* Battle.net combat journal: the same carved stone and parchment as the spellbook. */
-:global([data-profile-source="battle-net"]) .logs {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs {
   --journal-ink: #f2e5cb;
   --journal-copy: #d4c6ad;
   --journal-muted: #ac9d86;
@@ -397,12 +397,12 @@
     url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 600px repeat;
   box-shadow: inset 0 0 0 1px #050504, inset 0 1px rgba(255, 224, 158, .1), 0 18px 40px rgba(0, 0, 0, .42);
 }
-:global([data-profile-source="battle-net"]) .logs::before {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs::before {
   inset: 0 8% auto;
   height: 2px;
   background: linear-gradient(90deg, transparent, #8e642d 15%, #d7ab5d 50%, #8e642d 85%, transparent);
 }
-:global([data-profile-source="battle-net"]) .logs > header {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header {
   min-height: 110px;
   padding: 20px 24px;
   border-bottom: 1px solid #6a4d29;
@@ -410,7 +410,7 @@
     linear-gradient(90deg, rgba(40, 30, 18, .95), rgba(13, 12, 10, .95) 65%),
     url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 520px repeat;
 }
-:global([data-profile-source="battle-net"]) .logs > header > span {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header > span {
   width: 48px;
   height: 48px;
   flex: 0 0 48px;
@@ -419,31 +419,31 @@
   color: #e6bf79;
   background: url("/assets/wow/ui-textures/character/gold-ring.png") center / 58px 58px no-repeat;
 }
-:global([data-profile-source="battle-net"]) .logs > header > div { min-width: 0; }
-:global([data-profile-source="battle-net"]) .logs h2,
-:global([data-profile-source="battle-net"]) .findings h3 {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header > div { min-width: 0; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs h2,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings h3 {
   color: var(--journal-ink);
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 600;
   text-shadow: 0 2px 2px #000;
 }
-:global([data-profile-source="battle-net"]) .logs h2 { font-size: clamp(24px, 2.7vw, 31px); }
-:global([data-profile-source="battle-net"]) .logs header small,
-:global([data-profile-source="battle-net"]) .selector > div small {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs h2 { font-size: clamp(24px, 2.7vw, 31px); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header small,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > div small {
   color: var(--journal-gold);
   letter-spacing: .13em;
 }
-:global([data-profile-source="battle-net"]) .logs header p,
-:global([data-profile-source="battle-net"]) .state,
-:global([data-profile-source="battle-net"]) .connect,
-:global([data-profile-source="battle-net"]) .metrics small,
-:global([data-profile-source="battle-net"]) .metrics span,
-:global([data-profile-source="battle-net"]) .findings article small,
-:global([data-profile-source="battle-net"]) .findings article p { color: var(--journal-muted); }
-:global([data-profile-source="battle-net"]) .logs header button,
-:global([data-profile-source="battle-net"]) .import input,
-:global([data-profile-source="battle-net"]) .import select,
-:global([data-profile-source="battle-net"]) .selector select {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header p,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics small,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics span,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article small,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article p { color: var(--journal-muted); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import input,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import select,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector select {
   min-height: 40px;
   border: 1px solid #755932;
   border-radius: 2px;
@@ -451,32 +451,32 @@
   background: linear-gradient(180deg, #19150f, #0b0a08);
   box-shadow: inset 0 0 0 1px #050504, inset 0 2px 5px rgba(0, 0, 0, .42);
 }
-:global([data-profile-source="battle-net"]) .logs header button {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button {
   min-height: 36px;
   color: #ddc59a;
 }
-:global([data-profile-source="battle-net"]) .logs header button:hover,
-:global([data-profile-source="battle-net"]) .logs header button:focus-visible { border-color: #d2a65a; color: #fff1cf; }
-:global([data-profile-source="battle-net"]) .import input::placeholder { color: #a8987f; }
-:global([data-profile-source="battle-net"]) .import label span,
-:global([data-profile-source="battle-net"]) .selector label span { color: #c9b48f; }
-:global([data-profile-source="battle-net"]) .state,
-:global([data-profile-source="battle-net"]) .connect,
-:global([data-profile-source="battle-net"]) .import,
-:global([data-profile-source="battle-net"]) .selector,
-:global([data-profile-source="battle-net"]) .metrics {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button:hover,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button:focus-visible { border-color: #d2a65a; color: #fff1cf; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import input::placeholder { color: #a8987f; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import label span,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector label span { color: #c9b48f; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics {
   border-color: #4f3c23;
   background: rgba(9, 9, 8, .63);
 }
-:global([data-profile-source="battle-net"]) .state b,
-:global([data-profile-source="battle-net"]) .connect b,
-:global([data-profile-source="battle-net"]) .selector > div b,
-:global([data-profile-source="battle-net"]) .metrics b { color: var(--journal-ink); }
-:global([data-profile-source="battle-net"]) .connect > svg,
-:global([data-profile-source="battle-net"]) .state > svg { color: #94c894; }
-:global([data-profile-source="battle-net"]) .connect a,
-:global([data-profile-source="battle-net"]) .selector > button,
-:global([data-profile-source="battle-net"]) .import > button {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state b,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect b,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > div b,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics b { color: var(--journal-ink); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect > svg,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state > svg { color: #94c894; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button {
   min-height: 40px;
   justify-content: center;
   border: 1px solid #af6637;
@@ -486,32 +486,32 @@
   box-shadow: inset 0 0 0 1px #260d08, inset 0 1px rgba(255, 221, 174, .18), 0 4px 10px rgba(0, 0, 0, .3);
   text-shadow: 0 1px 1px #160704;
 }
-:global([data-profile-source="battle-net"]) .connect a:hover,
-:global([data-profile-source="battle-net"]) .selector > button:hover:not(:disabled),
-:global([data-profile-source="battle-net"]) .import > button:hover:not(:disabled) {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a:hover,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button:hover:not(:disabled),
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button:hover:not(:disabled) {
   border-color: #e0a367;
   background: linear-gradient(180deg, #b34b2a, #642518);
 }
-:global([data-profile-source="battle-net"]) .connect a:focus-visible,
-:global([data-profile-source="battle-net"]) .selector > button:focus-visible,
-:global([data-profile-source="battle-net"]) .import > button:focus-visible { outline: 2px solid #f1cb82; outline-offset: 2px; }
-:global([data-profile-source="battle-net"]) .selector > button:disabled,
-:global([data-profile-source="battle-net"]) .import > button:disabled { opacity: .55; cursor: wait; }
-:global([data-profile-source="battle-net"]) .steps { border-bottom-color: #4f3c23; color: #c7b79c; }
-:global([data-profile-source="battle-net"]) .steps span {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a:focus-visible,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button:focus-visible,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button:focus-visible { outline: 2px solid #f1cb82; outline-offset: 2px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button:disabled,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button:disabled { opacity: .55; cursor: wait; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .steps { border-bottom-color: #4f3c23; color: #c7b79c; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .steps span {
   border-color: #b08242;
   border-radius: 2px;
   color: #f3d496;
   background: #2b2114;
   box-shadow: inset 0 0 0 1px #090705;
 }
-:global([data-profile-source="battle-net"]) .metrics > div { border-right-color: #493822; }
-:global([data-profile-source="battle-net"]) .metrics b {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics > div { border-right-color: #493822; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics b {
   font: 600 22px/1.15 Georgia, "Times New Roman", serif;
   font-variant-numeric: tabular-nums;
 }
-:global([data-profile-source="battle-net"]) .findings h3 { color: #f0d7a1; }
-:global([data-profile-source="battle-net"]) .findings article {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings h3 { color: #f0d7a1; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article {
   border: 1px solid #59442a;
   border-left: 3px solid #c49a55;
   border-radius: 2px;
@@ -521,52 +521,52 @@
     url("/assets/wow/ui-textures/character/spellbook-paper-optimized.webp") center / 420px repeat;
   box-shadow: inset 0 1px rgba(248, 219, 163, .06);
 }
-:global([data-profile-source="battle-net"]) .findings article[data-severity="high"] { border-left-color: #d76c58; }
-:global([data-profile-source="battle-net"]) .findings article > span { color: #d6ae68; }
-:global([data-profile-source="battle-net"]) .findings article[data-severity="high"] > span { color: #e58b76; }
-:global([data-profile-source="battle-net"]) .findings article b { color: var(--journal-ink); }
-:global([data-profile-source="battle-net"]) .findings article a { color: #efc77e; }
-:global([data-profile-source="battle-net"]) .findings article a:hover { color: #fff0c7; }
-:global([data-profile-source="battle-net"]) .error,
-:global([data-profile-source="battle-net"]) .hint,
-:global([data-profile-source="battle-net"]) .reportState,
-:global([data-profile-source="battle-net"]) .oauthError,
-:global([data-profile-source="battle-net"]) .success {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article[data-severity="high"] { border-left-color: #d76c58; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article > span { color: #d6ae68; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article[data-severity="high"] > span { color: #e58b76; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article b { color: var(--journal-ink); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article a { color: #efc77e; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article a:hover { color: #fff0c7; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .error,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .hint,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .reportState,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .oauthError,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .success {
   border-radius: 2px;
   background-color: #17120d;
 }
-:global([data-profile-source="battle-net"]) .reportState svg { color: #d8b368; }
-:global([data-profile-source="battle-net"]) .oauthError svg { color: #e58b76; }
-:global([data-profile-source="battle-net"]) .logs > footer {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .reportState svg { color: #d8b368; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .oauthError svg { color: #e58b76; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer {
   border-color: rgba(112, 171, 123, .38);
   border-radius: 2px;
   color: #bdd1bc;
   background: linear-gradient(90deg, rgba(18, 34, 22, .82), rgba(11, 13, 10, .92));
 }
-:global([data-profile-source="battle-net"]) .logs > footer b { color: #deebd8; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer b { color: #deebd8; }
 
 @media (max-width: 680px) {
-  :global([data-profile-source="battle-net"]) .logs { border-radius: 3px; }
-  :global([data-profile-source="battle-net"]) .logs > header { min-height: 0; padding: 18px 16px; flex-wrap: wrap; gap: 10px; }
-  :global([data-profile-source="battle-net"]) .logs > header > span { width: 42px; height: 42px; flex-basis: 42px; background-size: 52px 52px; }
-  :global([data-profile-source="battle-net"]) .logs > header > button { margin-left: 52px; }
-  :global([data-profile-source="battle-net"]) .metrics > div { min-width: 0; padding: 12px; }
-  :global([data-profile-source="battle-net"]) .findings { padding: 16px; }
-  :global([data-profile-source="battle-net"]) .findings article { min-width: 0; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs { border-radius: 3px; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header { min-height: 0; padding: 18px 16px; flex-wrap: wrap; gap: 10px; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header > span { width: 42px; height: 42px; flex-basis: 42px; background-size: 52px 52px; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header > button { margin-left: 52px; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics > div { min-width: 0; padding: 12px; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings { padding: 16px; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article { min-width: 0; }
 }
 
 /* Connected character: battle report written on the same World Map parchment. */
-:global([data-profile-source="battle-net"]) .logs { font-family: var(--wow-ui, Arial, sans-serif); font-size: 13px; line-height: 1.45; }
-:global([data-profile-source="battle-net"]) .logs > header {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs { font-family: var(--wow-ui, Arial, sans-serif); font-size: 13px; line-height: 1.45; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header {
   min-height: 0;
   padding: 20px 28px;
   background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
   box-shadow: inset 0 3px #f2d9a06b, inset 0 -3px #68471e77;
 }
-:global([data-profile-source="battle-net"]) .logs h2 { color: var(--wow-ink, #3b2817); font: 700 clamp(23px, 2.5vw, 27px)/1.12 var(--wow-title, Georgia, serif); text-shadow: 0 1px #f2dcae88; }
-:global([data-profile-source="battle-net"]) .logs header small { color: var(--wow-ink-muted, #684a2b); font-size: 11px; text-shadow: none; }
-:global([data-profile-source="battle-net"]) .logs header p { color: #54391e; font-size: 13px; }
-:global([data-profile-source="battle-net"]) .logs header button {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs h2 { color: var(--wow-ink, #3b2817); font: 700 clamp(23px, 2.5vw, 27px)/1.12 var(--wow-title, Georgia, serif); text-shadow: 0 1px #f2dcae88; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header small { color: var(--wow-ink-muted, #684a2b); font-size: 11px; text-shadow: none; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header p { color: #54391e; font-size: 13px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button {
   min-height: 40px;
   border: 0;
   border-radius: 0;
@@ -574,25 +574,25 @@
   background: #21180e url("/assets/wow/ui-textures/character/dark-gold-button-up.png") center / 100% 133.33% no-repeat;
   box-shadow: 0 2px 5px #0009;
 }
-:global([data-profile-source="battle-net"]) .logs header button:active { background-image: url("/assets/wow/ui-textures/character/dark-gold-button-down.png"); }
-:global([data-profile-source="battle-net"]) .state,
-:global([data-profile-source="battle-net"]) .connect,
-:global([data-profile-source="battle-net"]) .metrics,
-:global([data-profile-source="battle-net"]) .findings article {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button:active { background-image: url("/assets/wow/ui-textures/character/dark-gold-button-down.png"); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article {
   color: var(--wow-ink, #3b2817);
   background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
 }
-:global([data-profile-source="battle-net"]) .state,
-:global([data-profile-source="battle-net"]) .connect { margin: 16px 24px; border: 2px solid #8b6334; border-radius: 2px; }
-:global([data-profile-source="battle-net"]) .state b,
-:global([data-profile-source="battle-net"]) .connect b { color: #3b2817; font: 700 18px var(--wow-title, Georgia, serif); }
-:global([data-profile-source="battle-net"]) .connect > svg,
-:global([data-profile-source="battle-net"]) .state > svg { color: #315a35; stroke-width: 2.4; }
-:global([data-profile-source="battle-net"]) .state span,
-:global([data-profile-source="battle-net"]) .connect span { color: #5b4025; font-size: 13px; }
-:global([data-profile-source="battle-net"]) .connect a,
-:global([data-profile-source="battle-net"]) .selector > button,
-:global([data-profile-source="battle-net"]) .import > button {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect { margin: 16px 24px; border: 2px solid #8b6334; border-radius: 2px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state b,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect b { color: #3b2817; font: 700 18px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect > svg,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state > svg { color: #315a35; stroke-width: 2.4; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state span,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect span { color: #5b4025; font-size: 13px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button {
   min-height: 40px;
   border: 0;
   border-radius: 0;
@@ -601,86 +601,86 @@
   box-shadow: 0 2px 5px #0009;
   font-size: 12px;
 }
-:global([data-profile-source="battle-net"]) .connect a:active,
-:global([data-profile-source="battle-net"]) .selector > button:active:not(:disabled),
-:global([data-profile-source="battle-net"]) .import > button:active:not(:disabled) { background-image: url("/assets/wow/ui-textures/character/dialog-button-down.png"); }
-:global([data-profile-source="battle-net"]) .connect a:hover,
-:global([data-profile-source="battle-net"]) .selector > button:hover:not(:disabled),
-:global([data-profile-source="battle-net"]) .import > button:hover:not(:disabled) { filter: brightness(1.15); background: #4f160f url("/assets/wow/ui-textures/character/dialog-button-up.png") center top / 100% 139.13% no-repeat; }
-:global([data-profile-source="battle-net"]) .import,
-:global([data-profile-source="battle-net"]) .selector { padding: 18px 24px; }
-:global([data-profile-source="battle-net"]) .import label span,
-:global([data-profile-source="battle-net"]) .selector label span,
-:global([data-profile-source="battle-net"]) .selector > div small { font-size: 11px; }
-:global([data-profile-source="battle-net"]) .import input,
-:global([data-profile-source="battle-net"]) .import select,
-:global([data-profile-source="battle-net"]) .selector select { font: 13px var(--wow-ui, Arial, sans-serif); }
-:global([data-profile-source="battle-net"]) .steps { padding-inline: 24px; }
-:global([data-profile-source="battle-net"]) .steps b { font-size: 11px; }
-:global([data-profile-source="battle-net"]) .metrics { border-block: 2px solid #8b6334; }
-:global([data-profile-source="battle-net"]) .metrics > div { border-right-color: #947043; }
-:global([data-profile-source="battle-net"]) .metrics small,
-:global([data-profile-source="battle-net"]) .metrics span { color: #654729; font-size: 11px; }
-:global([data-profile-source="battle-net"]) .metrics b { color: #332110; font: 700 22px/1.15 var(--wow-title, Georgia, serif); text-shadow: 0 1px #f2dcae; }
-:global([data-profile-source="battle-net"]) .findings { padding: 20px 24px; }
-:global([data-profile-source="battle-net"]) .findings h3 { font: 700 21px var(--wow-title, Georgia, serif); }
-:global([data-profile-source="battle-net"]) .findings article { border-color: #8c6538; }
-:global([data-profile-source="battle-net"]) .findings article b { color: #352312; font-size: 14px; }
-:global([data-profile-source="battle-net"]) .findings article small,
-:global([data-profile-source="battle-net"]) .findings article p { color: #5d4024; font-size: 12px; }
-:global([data-profile-source="battle-net"]) .findings article a { color: #714215; font-size: 12px; font-weight: 700; }
-:global([data-profile-source="battle-net"]) .findings article a:hover { color: #3b2108; }
-:global([data-profile-source="battle-net"]) .logs > footer { margin: 0 24px 24px; padding: 14px; color: #d7c6aa; font-size: 12px; }
-:global([data-profile-source="battle-net"]) .logs > footer > div { min-width: 0; }
-:global([data-profile-source="battle-net"]) .technical { margin-top: 4px; color: #bca98b; font-size: 11px; line-height: 1.5; }
-:global([data-profile-source="battle-net"]) .technical summary { width: fit-content; color: #e2bf82; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
-:global([data-profile-source="battle-net"]) .technical summary:hover { color: #ffe4ac; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a:active,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button:active:not(:disabled),
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button:active:not(:disabled) { background-image: url("/assets/wow/ui-textures/character/dialog-button-down.png"); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a:hover,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button:hover:not(:disabled),
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button:hover:not(:disabled) { filter: brightness(1.15); background: #4f160f url("/assets/wow/ui-textures/character/dialog-button-up.png") center top / 100% 139.13% no-repeat; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector { padding: 18px 24px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import label span,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector label span,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > div small { font-size: 11px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import input,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import select,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector select { font: 13px var(--wow-ui, Arial, sans-serif); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .steps { padding-inline: 24px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .steps b { font-size: 11px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics { border-block: 2px solid #8b6334; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics > div { border-right-color: #947043; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics small,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics span { color: #654729; font-size: 11px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics b { color: #332110; font: 700 22px/1.15 var(--wow-title, Georgia, serif); text-shadow: 0 1px #f2dcae; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings { padding: 20px 24px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings h3 { font: 700 21px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article { border-color: #8c6538; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article b { color: #352312; font-size: 14px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article small,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article p { color: #5d4024; font-size: 12px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article a { color: #714215; font-size: 12px; font-weight: 700; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article a:hover { color: #3b2108; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer { margin: 0 24px 24px; padding: 14px; color: #d7c6aa; font-size: 12px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer > div { min-width: 0; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical { margin-top: 4px; color: #bca98b; font-size: 11px; line-height: 1.5; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical summary { width: fit-content; color: #e2bf82; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical summary:hover { color: #ffe4ac; }
 @media (max-width: 680px) {
-  :global([data-profile-source="battle-net"]) .logs > header { padding: 18px 20px; }
-  :global([data-profile-source="battle-net"]) .state,
-  :global([data-profile-source="battle-net"]) .connect { margin-inline: 20px; flex-wrap: wrap; }
-  :global([data-profile-source="battle-net"]) .import,
-  :global([data-profile-source="battle-net"]) .selector,
-  :global([data-profile-source="battle-net"]) .findings { padding-inline: 20px; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header { padding: 18px 20px; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .state,
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect { margin-inline: 20px; flex-wrap: wrap; }
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .import,
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector,
+  :global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings { padding-inline: 20px; }
 }
 
 /* The battle report belongs to the same paper codex as gear and talents. */
-:global([data-profile-source="battle-net"]) .logs,
-:global([data-profile-source="battle-net"]) .logs > header,
-:global([data-profile-source="battle-net"]) .import,
-:global([data-profile-source="battle-net"]) .selector,
-:global([data-profile-source="battle-net"]) .steps,
-:global([data-profile-source="battle-net"]) .metrics,
-:global([data-profile-source="battle-net"]) .findings,
-:global([data-profile-source="battle-net"]) .logs > footer,
-:global([data-profile-source="battle-net"]) .state,
-:global([data-profile-source="battle-net"]) .connect,
-:global([data-profile-source="battle-net"]) .findings article { background: var(--wow-paper); }
-:global([data-profile-source="battle-net"]) .logs,
-:global([data-profile-source="battle-net"]) .steps,
-:global([data-profile-source="battle-net"]) .findings,
-:global([data-profile-source="battle-net"]) .logs > footer { color: var(--wow-ink, #3b2817); }
-:global([data-profile-source="battle-net"]) .import,
-:global([data-profile-source="battle-net"]) .selector,
-:global([data-profile-source="battle-net"]) .steps,
-:global([data-profile-source="battle-net"]) .logs > footer { border-color: #8c673c; }
-:global([data-profile-source="battle-net"]) .import label span,
-:global([data-profile-source="battle-net"]) .selector label span,
-:global([data-profile-source="battle-net"]) .selector > div small,
-:global([data-profile-source="battle-net"]) .logs > footer .technical { color: #67492b; }
-:global([data-profile-source="battle-net"]) .logs > footer b { color: #34220f; }
-:global([data-profile-source="battle-net"]) .logs > footer .technical summary { color: #654016; }
-:global([data-profile-source="battle-net"]) .logs header button {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .steps,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article { background: var(--wow-paper); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .steps,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer { color: var(--wow-ink, #3b2817); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .steps,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer { border-color: #8c673c; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import label span,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector label span,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > div small,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer .technical { color: #67492b; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer b { color: #34220f; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer .technical summary { color: #654016; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button {
   border: 1px solid #9b713a;
   border-radius: 2px;
   color: #f4deb0;
   background: linear-gradient(180deg, #4b371d, #1c160e);
   box-shadow: inset 0 1px #dfb87666, 0 2px 4px #0006;
 }
-:global([data-profile-source="battle-net"]) .logs header button:hover:not(:disabled) { background: linear-gradient(180deg, #634924, #2a1e11); }
-:global([data-profile-source="battle-net"]) .connect a,
-:global([data-profile-source="battle-net"]) .selector > button,
-:global([data-profile-source="battle-net"]) .import > button {
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button:hover:not(:disabled) { background: linear-gradient(180deg, #634924, #2a1e11); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button {
   border: 1px solid #a85331;
   border-radius: 2px;
   color: #ffe3ad;
@@ -688,12 +688,12 @@
   box-shadow: inset 0 1px #f0b17d9c, 0 2px 4px #0006;
   text-shadow: 0 1px #2a0b05;
 }
-:global([data-profile-source="battle-net"]) .connect a:hover,
-:global([data-profile-source="battle-net"]) .selector > button:hover:not(:disabled),
-:global([data-profile-source="battle-net"]) .import > button:hover:not(:disabled) { background: linear-gradient(180deg, #b65532, #642317); }
-:global([data-profile-source="battle-net"]) .connect a:active,
-:global([data-profile-source="battle-net"]) .selector > button:active:not(:disabled),
-:global([data-profile-source="battle-net"]) .import > button:active:not(:disabled) { background: linear-gradient(180deg, #642317, #41160e); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a:hover,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button:hover:not(:disabled),
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button:hover:not(:disabled) { background: linear-gradient(180deg, #b65532, #642317); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a:active,
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button:active:not(:disabled),
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button:active:not(:disabled) { background: linear-gradient(180deg, #642317, #41160e); }
 
 /* Combat notes share the page instead of introducing another framed window. */
 :global([data-character-book="open"]) .logs {
@@ -973,3 +973,10 @@
 :global([data-profile-source="battle-net"][data-character-book="open"]) .logs :is(.error, .hint, .reportState, .oauthError, .success) { border-radius: 2px; }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .logs > footer { border-color: var(--folio-line); color: var(--folio-muted); background: transparent; }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .logs :is(button, input, select, summary):focus-visible { outline-color: #76502d; }
+
+/* Internal atlas: controls keep their status and item-quality colors. */
+:global([data-character-atlas]) .logs { border: 1px solid var(--atlas-border); border-radius: 2px; background: var(--atlas-surface); color: var(--atlas-text); box-shadow: none; }
+:global([data-character-atlas]) .logs::before { display: none; }
+:global([data-character-atlas]) .logs :is(h2, h3) { color: var(--atlas-title); font-family: var(--atlas-display); font-weight: 400; text-shadow: none; }
+:global([data-character-atlas]) .logs > header { background: var(--atlas-surface); border-color: var(--atlas-rule); }
+:global([data-character-atlas]) .logs > header p { color: var(--atlas-muted); }

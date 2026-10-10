@@ -1,8 +1,8 @@
-.page { min-height: 100vh; max-width: 1040px; margin: 0 auto; padding: 72px 24px 96px; color: #e6e1d7; }
+.page { min-height: 100vh; max-width: 1540px; margin: 0 auto; padding: 32px 26px 64px; color: var(--atlas-text); }
 .hero { display: grid; gap: 14px; max-width: 780px; }
 .hero > p:first-child { margin: 0; color: #d5ac61; font-size: .76rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
-.hero h1 { margin: 0; font-size: clamp(2.2rem, 6vw, 4.7rem); line-height: .98; }
-.hero > p:not(:first-child) { margin: 0; color: #aaa79f; line-height: 1.7; }
+.hero h1 { margin: 0; color: var(--atlas-title); font: 400 clamp(32px, 4vw, 52px)/1.1 var(--atlas-display); }
+.hero > p:not(:first-child) { margin: 0; color: var(--atlas-muted); line-height: 1.7; }
 .verified { display: flex; align-items: center; gap: 8px; width: fit-content; min-height: 36px; padding: 6px 10px; border: 1px solid rgba(123, 184, 111, .35); color: #a9c7a4; font-size: .78rem; }
 .verified svg { width: 17px; }
 .summary { display: flex; align-items: center; gap: 12px; margin-top: 38px; padding: 15px; border: 1px solid rgba(213, 172, 97, .25); background: rgba(213, 172, 97, .05); }

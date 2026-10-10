@@ -1,14 +1,14 @@
 .gallery,
 .viewer {
-  --atlas-bg: #080706;
-  --atlas-panel: #110d08;
-  --atlas-panel-raised: #1a1209;
-  --atlas-line: rgba(202, 165, 88, 0.22);
-  --atlas-line-strong: rgba(222, 185, 105, 0.52);
-  --atlas-gold: #d2a956;
-  --atlas-gold-light: #f0d08b;
-  --atlas-text: #eee8dc;
-  --atlas-muted: #8f98aa;
+  --atlas-bg: var(--atlas-background);
+  --atlas-panel: var(--atlas-surface);
+  --atlas-panel-raised: var(--atlas-surface-raised);
+  --atlas-line: var(--atlas-rule);
+  --atlas-line-strong: var(--atlas-border);
+  --atlas-gold: var(--atlas-accent);
+  --atlas-gold-light: var(--atlas-accent-bright);
+  --atlas-text: var(--atlas-text);
+  --atlas-muted: var(--atlas-muted);
   --game-accent: #d2a956;
   min-height: 100vh;
   color: var(--atlas-text);

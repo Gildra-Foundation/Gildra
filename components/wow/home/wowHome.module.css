@@ -355,3 +355,15 @@
 @media (prefers-reduced-motion: reduce) {
   .page *, .page *::before, .page *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+.page[data-wow-atlas] { --gold: var(--atlas-accent); --gold-bright: var(--atlas-accent-bright); --line: var(--atlas-border); --line-soft: var(--atlas-rule); --surface: var(--atlas-surface); color: var(--atlas-text); background: var(--atlas-background); font-family: var(--atlas-ui); }
+.page[data-wow-atlas] .main { width: 100%; max-width: 1540px; padding: 32px 26px 48px; }
+.page[data-wow-atlas] :is(.sectionNav, .hero, .panel, .toolCard, .buildCard, .pathSection, .characterStats) { border-color: var(--atlas-border); border-radius: 2px; background: var(--atlas-surface); box-shadow: none; }
+.page[data-wow-atlas] :is(h1, h2, .toolCard strong, .characterStats strong) { color: var(--atlas-title); font-family: var(--atlas-display); font-weight: 400; }
+.page[data-wow-atlas] .description { color: var(--atlas-muted); }
+.page[data-wow-atlas] :is(.primaryAction, .secondaryAction) { min-height: 44px; border: 1px solid var(--atlas-border); background: var(--atlas-accent-wash); color: var(--atlas-title); box-shadow: none; clip-path: none; }
+.page[data-wow-atlas] .runes { display: none; }
+.page[data-wow-atlas] .sectionNav { flex-wrap: wrap; }
+.page[data-wow-atlas] a:focus-visible { outline: 2px solid var(--atlas-accent-bright); outline-offset: 3px; }
+@media (max-width: 760px) { .page[data-wow-atlas] .main { padding: 24px 16px 40px; } }
+@media (max-width: 420px) { .page[data-wow-atlas] .main { padding-inline: 12px; } }

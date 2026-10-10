@@ -1,0 +1,57 @@
+/* Shared materials from the Raid and Mythic+ atlases (brand.md).
+   Applied to internal content only; the landing scene and contents book
+   keep their own materials, typography, and animation. */
+.gildra-atlas {
+  --atlas-background: #050607;
+  --atlas-surface: #090a0b;
+  --atlas-surface-raised: #121210;
+  --atlas-text: #d9d0c0;
+  --atlas-title: #f2e1c3;
+  --atlas-muted: #aaa294;
+  --atlas-accent: #d1a24b;
+  --atlas-accent-bright: #f0b55a;
+  --atlas-border: rgba(157, 112, 48, .45);
+  --atlas-rule: rgba(157, 112, 48, .24);
+  --atlas-accent-wash: rgba(209, 162, 75, .09);
+  --atlas-display: Georgia, "Times New Roman", serif;
+  --atlas-ui: var(--font-ui), Arial, sans-serif;
+  --bg: var(--atlas-background);
+  --panel: var(--atlas-surface);
+  --panel-2: var(--atlas-surface-raised);
+  --raise: var(--atlas-surface-raised);
+  --line: var(--atlas-border);
+  --line-soft: var(--atlas-rule);
+  --ink: var(--atlas-text);
+  --ink-2: var(--atlas-muted);
+  --ink-3: var(--atlas-muted);
+  --gold: var(--atlas-accent);
+  --gold-2: var(--atlas-accent-bright);
+  --gold-dim: var(--atlas-border);
+  --display: var(--atlas-display);
+  --ui: var(--atlas-ui);
+  --wow-title: var(--atlas-display);
+  --wow-ui: var(--atlas-ui);
+  /* Existing personal tools use these names. They now describe dark
+     panels, without loading parchment or ornamental frame textures. */
+  --folio-ink: var(--atlas-text);
+  --folio-muted: var(--atlas-muted);
+  --folio-line: var(--atlas-border);
+  --folio-faint-rule: var(--atlas-rule);
+  --folio-rubric: var(--atlas-accent);
+  --folio-gilt: var(--atlas-accent);
+  --folio-paper: linear-gradient(var(--atlas-surface), var(--atlas-surface));
+  --folio-panel-paper: var(--folio-paper);
+  --folio-title: var(--atlas-display);
+  --folio-body: var(--atlas-ui);
+  --folio-focus: var(--atlas-accent-bright);
+  --folio-medallion: none;
+  --folio-divider-image: none;
+  --folio-control-image: none;
+  --folio-ribbon-top: var(--atlas-surface);
+  --folio-ribbon-mid: var(--atlas-surface);
+  --folio-ribbon-bottom: var(--atlas-background);
+  --folio-ribbon-edge: var(--atlas-border);
+  --folio-ribbon-active: var(--atlas-accent-wash);
+  --book-gutter: 24px;
+  color-scheme: dark;
+}

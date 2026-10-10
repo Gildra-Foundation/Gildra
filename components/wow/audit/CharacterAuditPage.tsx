@@ -44,14 +44,8 @@ import {
 import { SpecSignatureFx } from "@/components/talents/spec-signature/SpecSignatureFx";
 import { DeferredMount } from "./DeferredMount";
 import { WarcraftFrame } from "./WarcraftFrame";
-import { CharacterBookBackdrop } from "./CharacterBookBackdrop";
 import { CharacterBookNavigation } from "./CharacterBookNavigation";
-import { CharacterBookMasthead } from "@/components/wow/characters/CharacterBookMasthead";
 import { CharacterBookChapter as CharacterChapter } from "./CharacterBookChapter";
-import { BookEngraving } from "./BookEngraving";
-import { useCharacterBookReveals } from "./useCharacterBookReveals";
-import { PhysicalBookFrame, physicalBookMaterials } from "./PhysicalBookFrame";
-import surface from "./characterBookSurface.module.css";
 const CharacterTalentSimulator = dynamic(() => import("./CharacterTalentSimulator").then((module) => module.CharacterTalentSimulator));
 const CharacterGearOptimizer = dynamic(() => import("./CharacterGearOptimizer").then((module) => module.CharacterGearOptimizer));
 const CharacterHistory = dynamic(() => import("./CharacterHistory").then((module) => module.CharacterHistory));
@@ -62,12 +56,8 @@ import type { RotationPreset, RotationSimulationResult } from "@/lib/platform/ro
 import { buildRotationSpellbook } from "@/lib/platform/rotation/spellbook";
 import { abilityIcon, talentAbilityIcon } from "@/lib/games/wow/assets";
 import styles from "./characterAuditPage.module.css";
-import grimoire from "./grimoireControls.module.css";
-import typography from "./grimoireTypography.module.css";
-import book from "./bookSpread.module.css";
-import motion from "./characterBookMotion.module.css";
+import atlas from "./characterAtlasProfile.module.css";
 import armoryBook from "./characterArmorySpread.module.css";
-import illumination from "./characterBookIllumination.module.css";
 import type { Lang } from "@/lib/i18n";
 import { characterPageText, characterRoleLabel } from "./characterPageCopy";
 
@@ -114,7 +104,6 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
   const lang: Lang = localePrefix === "/ru" ? "ru" : "en";
   const tr = characterPageText(lang);
   const bookRef = useRef<HTMLElement>(null);
-  useCharacterBookReveals(bookRef, dataMode === "battle-net");
   const initialTheme = getTalentSpecTheme(initialSnapshot.specialization.slug) ?? defaultTalentSpecTheme;
   const profileBuild = (talentData?.buildVersion || rotationPreset?.patch || "unknown").replace(/[^A-Za-z0-9._%:+-]/g, "-").slice(0, 64);
   const [snapshot, setSnapshot] = useState<CharacterAuditSnapshot>(initialSnapshot);
@@ -317,16 +306,15 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
     <CharacterPageLanguage.Provider value={lang}><CharacterBookTheme.Provider value={dataMode === "battle-net"}>
     <main
       ref={bookRef}
-      className={`${styles.audit} ${dataMode === "battle-net" ? `${surface.root} ${grimoire.theme} ${typography.typography} ${book.layout} ${motion.page} ${illumination.page}` : ""}`}
+      className={`gildra-atlas ${styles.audit} ${atlas.page}`}
       id="audit-overview"
       lang={lang}
       tabIndex={-1}
       data-motif={theme.motif}
       data-profile-source={dataMode}
       data-character-workspace={dataMode === "battle-net" ? "live" : "fixture"}
-      data-character-book={dataMode === "battle-net" ? "open" : undefined}
+      data-character-atlas
       style={{
-        ...(dataMode === "battle-net" ? physicalBookMaterials : {}),
         "--spec-accent": theme.accent,
         "--spec-hot": theme.hot,
         "--spec-deep": theme.deep,
@@ -341,31 +329,18 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
         "--tc-ambient-rgb": theme.ambientRgb,
       } as CSSProperties}
     >
-      {dataMode === "battle-net" ? <div className={surface.backdrop} data-character-book-backdrop><CharacterBookBackdrop /></div> : null}
-      <div className={dataMode === "battle-net" ? surface.content : styles.pageContents}>
-      <header className={styles.topbar}>
-        <a href={dataMode === "battle-net" ? `${localePrefix}/wow/characters` : `${localePrefix}/wow`} className={styles.brand}>GILDRA</a>
-        <span className={styles.game}>W <b>World of Warcraft</b></span>
-        <nav aria-label={tr("Разделы World of Warcraft")}>
-          <a href={`${localePrefix}/talents/fury-warrior`}>{tr("Спеки")}</a><a href={`${localePrefix}/wow/mythic-plus`}>{tr("Эпох+")}</a><a href={`${localePrefix}/wow/raids`}>{tr("Рейд")}</a>
-          <a href={`${localePrefix}/talents/fury-warrior`}>{tr("Таланты")}</a><a href={`${localePrefix}/wow`}>{tr("Гайды")}</a>
-        </nav>
-        <label className={styles.search}><input aria-label={tr("Поиск по Gildra")} placeholder={tr("Поиск по Gildra…")} /><span>⌕</span></label>
-      </header>
-
-      <div className={dataMode === "battle-net" ? `${styles.manuscript} ${surface.manuscript}` : styles.pageContents}>
-      {dataMode === "battle-net" ? <PhysicalBookFrame /> : null}
+      <div className={atlas.content}>
+      <div className={atlas.manuscript}>
       {dataMode === "battle-net" ? <CharacterBookNavigation characterName={snapshot.character.name} hasRotation={Boolean(resolvedRotationPreset)} lang={lang} /> : null}
 
-      {dataMode === "battle-net" ? <CharacterBookMasthead locale={lang} rightLabel={tr("Летопись героя")} /> : null}
-      <section className={`${styles.hero} ${book.hero}`}>
-        {dataMode === "battle-net" ? <WarcraftFrame /> : null}
+      <section className={styles.hero} data-character-identity>
+
         {dataMode === "battle-net" ? <div className={styles.connectionDock}><div className={styles.importedBanner}><ShieldCheck />{tr("Battle.net подключён")} <span>{tr("Персонаж и экипировка импортированы")}</span><button data-folio-action="quiet" type="button" disabled={diagnosticBusy} onClick={() => void runDiagnostic()}><ClipboardCheck />{diagnosticBusy ? tr("Проверяем функции…") : tr("Проверить функции")}</button></div>{refreshState.status !== "idle" ? <section className={styles.refreshNotice} data-status={refreshState.status} role={refreshState.status === "error" ? "alert" : "status"} aria-live="polite"><span>{refreshState.status === "success" ? <Check /> : <AlertTriangle />}<b>{refreshState.status === "success" ? tr("Данные обновлены") : tr("Обновление не завершено")}</b><small>{refreshState.message}</small></span>{refreshState.status === "error" ? refreshState.code === "session_expired" || refreshState.code === "access_forbidden" ? <a href={`${localePrefix}/login`}>{tr("Переподключить Battle.net")}</a> : refreshState.code === "character_not_found" ? <a href={`${localePrefix}/wow/characters`}>{tr("К списку персонажей")}</a> : <button data-folio-action type="button" onClick={() => void refreshCharacter()} disabled={running}>{running ? tr("Обновляем…") : tr("Повторить")}</button> : null}</section> : null}{diagnostic ? <section className={styles.characterDiagnostic} aria-live="polite"><header><b>{diagnostic.status === "passed" ? tr("Все подключённые функции работают") : tr("Диагностика нашла проблему")}</b>{diagnostic.reportId ? <code>#{diagnostic.reportId}</code> : null}</header>{diagnostic.checks?.length ? <ul>{diagnostic.checks.map((check) => <li key={check.id} data-status={check.status}><i>{check.status === "pass" ? "✓" : check.status === "skip" ? "—" : "!"}</i><span><b>{check.label}</b><small>{check.detail}</small></span></li>)}</ul> : <p>{diagnostic.message ?? tr("Неизвестная ошибка")}</p>}</section> : null}</div> : null}
         <div className={styles.specAtmosphere} aria-hidden="true"><SpecSignatureFx specSlug={theme.slug} /></div>
-        <div className={book.identity} data-book-identity={dataMode === "battle-net" || undefined}>
+        <div className={atlas.identity} data-book-identity={dataMode === "battle-net" || undefined}>
         <div className={styles.avatar}><img src={snapshot.specialization.iconUrl} alt="" /></div>
-        <div className={`${styles.name} ${book.name}`}>
-          <span className={styles.profileEyebrow}><i /> {tr("Книга героя")} <b>·</b> {characterRoleLabel(theme.role, lang)}</span>
+        <div className={`${styles.name} ${atlas.name}`}>
+          <span className={styles.profileEyebrow}><i /> {tr("Профиль персонажа")} <b>·</b> {characterRoleLabel(theme.role, lang)}</span>
           <h1>{snapshot.character.name}</h1>
           <p><Trophy /> {snapshot.character.className} <i /> {snapshot.character.race}</p>
           <small>{tr("Уровень")} {snapshot.character.level} <b>·</b> {snapshot.character.faction} <b>·</b> {dataMode === "battle-net" ? "Battle.net" : tr("тестовый персонаж")}</small>
@@ -373,28 +348,28 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
           {dataMode === "fixture" ? <div className={styles.rage} aria-label={`${snapshot.specialization.resourceLabel}: 100 из 100`}><span>{snapshot.specialization.resourceLabel === "Ярость" ? <Flame /> : <Sparkles />} {snapshot.specialization.resourceLabel}</span><i><b /></i><strong>100</strong></div> : null}
         </div>
         </div>
-        <div className={book.metrics} data-book-metrics={dataMode === "battle-net" || undefined}>
+        <div className={atlas.metrics} data-book-metrics={dataMode === "battle-net" || undefined}>
         <Metric className={styles.itemLevelMetric} label={tr("Уровень предметов")} value={String(snapshot.character.itemLevel)} />
         <Metric className={styles.mythicMetric} label={tr("Рейтинг Эпох+")} value={snapshot.character.mythicRating.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} />
         </div>
-        <div className={`${styles.heroActions} ${book.actions}`} data-folio-tools>
+        <div className={`${styles.heroActions} ${atlas.actions}`} data-folio-tools>
           <button onClick={rerun} type="button" disabled={running} aria-busy={running}><RefreshCw className={running ? styles.spin : ""} /><span>{running ? tr("Обновляем…") : tr("Обновить")}</span></button>
           <button onClick={share} type="button" aria-label={dataMode === "battle-net" ? tr("Поделиться результатом расчёта") : tr("Поделиться")}><Share2 /><span>{dataMode === "battle-net" ? shared ? tr("Выберите расчёт ниже") : tr("Поделиться") : shared ? tr("Ссылка скопирована") : tr("Поделиться")}</span></button>
         </div>
         {dataMode === "battle-net" ? <>
-          <div className={`${styles.realProfileStatus} ${book.status}`} role="status" aria-label={tr("Статус реальных данных Battle.net")} title={tr("Персонаж импортирован из Battle.net; общая оценка не назначается без симуляции.")}><ShieldCheck /><b>Battle.net</b><span>{tr("Профиль персонажа")}</span></div>
-          <div className={`${styles.scoreTiles} ${styles.realProfileEvidence} ${book.evidence}`}>{realProfileEvidence.map((entry) => <EvidenceTile key={entry.label} {...entry} />)}</div>
+          <div className={`${styles.realProfileStatus} ${atlas.status}`} role="status" aria-label={tr("Статус реальных данных Battle.net")} title={tr("Персонаж импортирован из Battle.net; общая оценка не назначается без симуляции.")}><ShieldCheck /><b>Battle.net</b><span>{tr("Профиль персонажа")}</span></div>
+          <div className={`${styles.scoreTiles} ${styles.realProfileEvidence} ${atlas.evidence}`}>{realProfileEvidence.map((entry) => <EvidenceTile key={entry.label} {...entry} />)}</div>
         </> : snapshot.scores ? <>
           <div className={styles.score}><b>{score}<small>/100</small></b><span>Сильно,<br />{issues.length} {issues.length === 1 ? "проблема" : "проблем"}</span></div>
           <div className={styles.scoreTiles}><ScoreTile label={tr("Таланты")} value={String(snapshot.scores.talents)} good={snapshot.scores.talents >= 88} /><ScoreTile label="Шмот" value={String(snapshot.scores.gear)} good={snapshot.scores.gear >= 88} /><ScoreTile label={tr("Чары")} value={String(snapshot.scores.enchants)} bad={snapshot.scores.enchants < 78} /><ScoreTile label="Камни" value={String(snapshot.scores.gems)} good={snapshot.scores.gems >= 88} /></div>
         </> : null}
       </section>
 
-      <div className={styles.grid}>
+      <div className={styles.grid} data-character-sections>
         {dataMode === "battle-net" ? <CharacterChapter id="chapter-armory" index="01" eyebrow={tr("Арсенал")} title={tr("Экипировка и характеристики")} description={tr("Предметы, характеристики и облик вашего персонажа.")} icon={<Shield />} /> : null}
 
-        <section className={`${styles.gearPanel} ${dataMode === "battle-net" ? `${styles.realGearPanel} ${armoryBook.armory}` : ""}`} id="audit-gear" aria-labelledby="equipment-heading">
-          {dataMode === "battle-net" ? <WarcraftFrame /> : null}
+        <section className={`${styles.gearPanel} ${dataMode === "battle-net" ? `${styles.realGearPanel} ${armoryBook.armory}` : ""}`} id="audit-gear" data-character-equipment aria-labelledby="equipment-heading">
+
           <header className={`${styles.paperDollTitle} ${armoryBook.heading}`} data-folio-divider data-armory-heading>
             <h2 id="equipment-heading">{dataMode === "battle-net" ? tr("Боевые показатели") : tr("Экипировка")}</h2>
             <small>{snapshot.specialization.specName} · {snapshot.character.itemLevel} {tr("ур. предметов")}</small>
@@ -440,7 +415,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
         {resolvedRotationPreset ? <>
           {dataMode === "battle-net" ? <CharacterChapter id="chapter-rotation" index="03" eyebrow={tr("Боевая практика")} title={tr("Ротация и тренировка")} description={tr("Настройте панель умений и проверьте ротацию на своём билде.")} icon={<Zap />} /> : null}
           <section className={styles.rotationEmbed} id="audit-rotation" aria-label={localePrefix === "/ru" ? "Тренер ротации персонажа" : "Character rotation trainer"}>
-          {dataMode === "battle-net" ? <WarcraftFrame /> : null}
+
           {dataMode === "fixture" ? <div className={styles.rotationBridge}><Zap /><span><small>{localePrefix === "/ru" ? "ТАЛАНТЫ → РОТАЦИЯ → DPS" : "TALENTS → ROTATION → DPS"}</small><strong>{localePrefix === "/ru" ? "Текущий билд уже подключён к расчёту ниже" : "Your current build is connected to the simulation below"}</strong></span><b>{rotationTalentLoadout ? (localePrefix === "/ru" ? "Синхронизировано" : "Synced") : (localePrefix === "/ru" ? "Активный билд" : "Active build")}</b></div> : null}
           <DeferredMount minHeight={760}><RotationLabPage key={`rotation-${snapshotKey}`} preset={resolvedRotationPreset} spellbookAbilities={rotationSpellbookAbilities} lang={localePrefix === "/ru" ? "ru" : "en"} characterSlug={snapshot.slug} dataMode={dataMode} characterIdentity={dataMode === "battle-net" ? { name: snapshot.character.name, itemLevel: snapshot.character.itemLevel } : undefined} connectedTalentLoadout={rotationTalentLoadout} profileFingerprint={snapshotKey} onSimulationResult={setRotationSimulation} embedded /></DeferredMount>
         </section>
@@ -473,7 +448,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
         </section></> : null}
       </div>
 
-      <footer className={`${styles.footer} ${book.footer} ${illumination.colophon}`}><div>{dataMode === "battle-net" ? <BookEngraving motif="logs" /> : <ShieldCheck />}<span>{tr("Держите персонажа в форме — повторяйте аудит после еженедельного сундука.")}</span></div><span>{dataMode === "battle-net" ? tr("Экипировка Battle.net API") : snapshot.source === "catalog" ? tr("Предметы из каталога") : tr("Тестовый набор предметов")} · {snapshot.updatedAt} <RefreshCw /></span></footer>
+      <footer className={`${atlas.footer}`}><div><ShieldCheck /><span>{tr("Держите персонажа в форме — повторяйте аудит после еженедельного сундука.")}</span></div><span>{dataMode === "battle-net" ? tr("Экипировка Battle.net API") : snapshot.source === "catalog" ? tr("Предметы из каталога") : tr("Тестовый набор предметов")} · {snapshot.updatedAt} <RefreshCw /></span></footer>
       </div>
       </div>
     </main>
@@ -626,7 +601,7 @@ function WarcraftTooltip({ children, content, block = false, pinned = false, hov
 
   return <>
     <span ref={anchorRef} className={`${styles.tooltipAnchor} ${block ? styles.tooltipBlock : ""}`} aria-describedby={open ? id : undefined} onPointerEnter={show} onPointerLeave={hide} onFocusCapture={show} onBlurCapture={hide}>{children}</span>
-    {open ? createPortal(<div ref={tooltipRef} id={id} role={pinned ? "dialog" : "tooltip"} aria-label={pinned ? tr("Описание предмета") : undefined} data-pinned={pinned || undefined} data-character-book={bookTheme ? "open" : undefined} className={`${styles.warcraftTooltip} ${position.side === "top" ? styles.tooltipTop : styles.tooltipBottom} ${bookTheme ? `${typography.typography} ${motion.tooltip}` : ""}`} style={{ ...(bookTheme ? physicalBookMaterials : {}), left: position.left, top: position.top } as CSSProperties}>{pinned && onPinnedClose ? <div className={styles.tooltipControls}><button ref={closeRef} type="button" onClick={closePinned} aria-label={tr("Закрыть описание предмета")}><X /></button></div> : null}{content}</div>, document.body) : null}
+    {open ? createPortal(<div ref={tooltipRef} id={id} role={pinned ? "dialog" : "tooltip"} aria-label={pinned ? tr("Описание предмета") : undefined} data-pinned={pinned || undefined} data-character-atlas={bookTheme || undefined} className={`${styles.warcraftTooltip} ${position.side === "top" ? styles.tooltipTop : styles.tooltipBottom} ${bookTheme ? `gildra-atlas ${atlas.tooltip}` : ""}`} style={{ left: position.left, top: position.top } as CSSProperties}>{pinned && onPinnedClose ? <div className={styles.tooltipControls}><button ref={closeRef} type="button" onClick={closePinned} aria-label={tr("Закрыть описание предмета")}><X /></button></div> : null}{content}</div>, document.body) : null}
   </>;
 }
 

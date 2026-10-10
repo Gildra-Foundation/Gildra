@@ -1,14 +1,17 @@
 import type { ReactNode } from "react";
 import { Shield } from "lucide-react";
-import styles from "./battleNetConnectPanel.module.css";
+import manuscriptStyles from "./battleNetConnectPanel.module.css";
+import atlasStyles from "./battleNetAtlasPanel.module.css";
 
-export function BattleNetConnectPanel({ eyebrow, title, description, children, note }: {
+export function BattleNetConnectPanel({ eyebrow, title, description, children, note, variant = "book" }: {
+  variant?: "book" | "atlas";
   eyebrow: string;
   title: string;
   description: string;
   children: ReactNode;
   note?: ReactNode;
 }) {
+  const styles = variant === "atlas" ? atlasStyles : manuscriptStyles;
   return (
     <section className={styles.panel} aria-labelledby="battlenet-connect-title">
       <span className={styles.seal} aria-hidden="true"><Shield /></span>
