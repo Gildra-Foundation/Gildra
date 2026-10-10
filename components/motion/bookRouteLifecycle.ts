@@ -1,6 +1,6 @@
 export type BookRouteKind = "open" | "turn";
 export type BookRouteState = { kind: BookRouteKind; phase: "waiting" | "playing" | "loading" | "idle"; id: number };
-export const BOOK_ROUTE_TIMING = { open: 500, turn: 700, lift: 180, watchdog: 12000 } as const;
+export const BOOK_ROUTE_TIMING = { open: 500, turn: 900, lift: 180, watchdog: 12000 } as const;
 
 type Timer = ReturnType<typeof setTimeout>;
 

@@ -17,19 +17,5 @@
   --ph-surface: #12100c;
 }
 
-/* The sheet and content share one rhythm; the route is never remounted. */
-.frame[data-book-route-phase="waiting"] {
-  opacity: .38;
-  transition: opacity 180ms ease;
-}
-.frame[data-book-route-phase="playing"] {
-  animation: chapterReveal 700ms cubic-bezier(.22, .61, .36, 1) both;
-}
-@keyframes chapterReveal {
-  from { opacity: .38; }
-  45% { opacity: .62; }
-  to { opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .frame[data-book-route-phase] { animation: none; transition: none; opacity: 1; }
-}
+/* Motion is drawn over the live page; its content keeps full contrast. */
+.frame[data-book-route-phase] { opacity: 1; }

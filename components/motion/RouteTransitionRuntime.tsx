@@ -273,7 +273,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const active = state.phase !== "idle";
   return <div className={styles.system} data-theme="wow" data-book-navigation={active ? state.kind : "idle"}>
     {active && <BookRouteScene key={state.id} state={state} locale={locale} onReady={onSceneReady} onSkip={() => lifecycle.finish()} />}
-    <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-book-route-phase={state.phase} inert={active && state.phase === "playing"} aria-busy={active || undefined}>
+    <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-book-route-phase={state.phase} aria-busy={active || undefined}>
       {children}
     </div>
   </div>;

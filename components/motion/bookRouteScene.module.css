@@ -1,73 +1,84 @@
 .scene { z-index: 990; }
-.scene[data-book-route-scene="turn"] { inset: 0; width: 100%; height: 100%; color: #c3e8ec; }
+.scene[data-book-route-scene="turn"] {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: #d8f1fb;
+  pointer-events: none;
+  --ice-white: #ecfaff;
+  --ice-blue: #94d5f1;
+  --ice-release: cubic-bezier(.16,.74,.24,1);
+}
 .scene:not([data-book-hydrated]) { animation: failOpen 1ms 4s forwards; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* A fracture parts like a physical seam: cold glass becomes warm dust.
-   The existing lifecycle owns readiness, cancellation and the 700ms reveal. */
-.veil { position: absolute; inset: 0; background: #06101a59; pointer-events: none; }
-.rift { position: absolute; inset: 0; overflow: hidden; pointer-events: none; contain: paint; }
-.panel {
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 45%, #294451d9, #07101bf2 80%);
-  will-change: transform, opacity;
-}
-.panel::after {
-  content: ""; position: absolute; inset: 0;
-  background: repeating-linear-gradient(118deg, transparent 0 80px, #a0d4da05 81px, transparent 82px 150px);
-}
-.west { clip-path: polygon(0 0,53% 0,48.7% 17.5%,52.3% 29%,47.6% 44%,51.6% 56.5%,47.9% 72%,52% 86%,49% 100%,0 100%); }
-.east { clip-path: polygon(53% 0,100% 0,100% 100%,49% 100%,52% 86%,47.9% 72%,51.6% 56.5%,47.6% 44%,52.3% 29%,48.7% 17.5%); }
-.cracks { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #94c9d1; stroke-width: 1; opacity: .65; }
-.cracks path { vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; }
-.mainCrack { stroke: #d2eef0; stroke-width: 1.5; }
-.seal { position: absolute; left: 50%; top: 48%; width: 76px; height: 76px; margin: -38px; display: grid; place-items: center; }
-.seal span { font: 48px/1 Georgia,serif; color: #e6d5ad; text-shadow: 0 0 24px #94c9d159; }
-.seal i { position: absolute; inset: 0; border: 1px solid #bfdade59; transform: rotate(45deg); }
-.seal i:last-child { inset: 10px; border-color: #e6d5ad40; transform: rotate(15deg); }
-.light { position: absolute; inset: 8% 20%; background: radial-gradient(ellipse, #b4dfe22e, transparent 65%); opacity: .5; }
-.spark { position: absolute; left: var(--x); top: var(--y); width: 3px; height: 6px; background: #d0edf0; clip-path: polygon(50% 0,100% 35%,60% 100%,0 65%); opacity: 0; }
-.pending { position: absolute; inset: auto 20px max(7vh,28px); margin: 0; color: #c9dadd; text-align: center; font: 13px/1.5 "Gildra Atlas",Georgia,serif; letter-spacing: .06em; opacity: 0; }
-.scene[data-book-route-scene="turn"] .skip { border-color: #b8d6db40; background: #101c24b3; color: #d0ddd9; font-family: "Gildra Atlas",Georgia,serif; }
-.scene[data-book-route-scene="turn"] .skip:hover { background: #243d49; border-color: #bccdc8; }
-.scene[data-book-route-scene="turn"] .skip:focus-visible { outline-color: #d2e3dc; }
-.scene[data-book-route-scene="turn"] .skip kbd { border-color: #b6c9c330; color: #abbfb9; }
-.scene[data-book-route-phase="waiting"] .rift,
-.scene[data-book-route-phase="waiting"] .veil { animation: gather var(--book-lift-duration) ease-out both; }
-.scene[data-book-route-phase="waiting"] .cracks path { animation: etch 450ms ease-out both; }
-.scene[data-book-route-phase="waiting"] .seal { animation: sealGather 400ms ease-out both; }
-.scene[data-book-route-phase="waiting"] .pending { animation: pendingAppear 250ms 800ms both; }
-.scene[data-book-route-phase="playing"] .west { animation: westDepart var(--book-turn-duration) cubic-bezier(.22,.7,.2,1) both; }
-.scene[data-book-route-phase="playing"] .east { animation: eastDepart var(--book-turn-duration) cubic-bezier(.22,.7,.2,1) both; }
-.scene[data-book-route-phase="playing"] .cracks { animation: crackDepart var(--book-turn-duration) ease-out both; }
-.scene[data-book-route-phase="playing"] .seal { animation: sealDepart var(--book-turn-duration) ease-out both; }
-.scene[data-book-route-phase="playing"] .light { animation: lightDepart var(--book-turn-duration) ease-out both; }
-.scene[data-book-route-phase="playing"] .spark { animation: dust calc(var(--book-turn-duration) - 150ms) var(--delay) ease-out both; }
-.scene[data-book-route-phase="playing"] .veil,
+/* Light and crystal edges only. The visible page is the material beneath them. */
+.rift { position: absolute; inset: 0; overflow: hidden; pointer-events: none; contain: paint; perspective: 1100px; }
+.trace { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke-linejoin: bevel; }
+.trace path { vector-effect: non-scaling-stroke; }
+.refraction { stroke: #79bed8; stroke-width: 5; opacity: .1; transform: translateX(2px); }
+.tributaries { stroke: #afdcec; stroke-width: .65; opacity: .38; stroke-dasharray: 1; }
+.core { stroke: var(--ice-white); stroke-width: 1.1; opacity: .84; stroke-dasharray: 1; }
+.glint { stroke: #fff; stroke-width: 2; stroke-dasharray: .065 .935; stroke-dashoffset: 1; filter: drop-shadow(0 0 4px #a1e3ff); }
+.west { clip-path: polygon(0 0,50.7% 0,50.7% 100%,0 100%); }
+.east { clip-path: polygon(50.7% 0,100% 0,100% 100%,50.7% 100%); }
+.bloom { position: absolute; left: 50%; top: 49%; width: min(240px,40vw); height: min(660px,82vh); transform: translate(-50%,-50%); background: radial-gradient(ellipse, #a7e6ff16, #9edfff06 36%, transparent 70%); opacity: 0; }
+.aperture { position: absolute; left: 50%; top: 48%; width: 86px; height: 86px; margin: -43px; overflow: visible; fill: none; }
+.apertureOuter { stroke: #b8e4f3; stroke-width: .6; opacity: .45; }
+.apertureInner { fill: #d5f4ff12; stroke: #ecfaff; stroke-width: .9; }
+.apertureLine { stroke: #e8faff; stroke-width: .6; opacity: .7; }
+.facet { position: absolute; left: var(--x); top: var(--y); width: var(--width); height: var(--height); margin-left: calc(var(--width) / -2); margin-top: calc(var(--height) / -2); opacity: 0; transform-style: preserve-3d; }
+.facet svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.facetEdge { fill: none; stroke: #a4def2; stroke-width: .65; opacity: .38; }
+.facetHighlight { fill: none; stroke: #f1fcff; stroke-width: 1; opacity: .86; }
+.pending { position: absolute; left: 50%; bottom: max(6vh,24px); transform: translateX(-50%); margin: 0; padding: 8px 16px; white-space: nowrap; color: #c7e1ec; text-shadow: 0 1px 6px #000; text-align: center; font: 12px/1.5 "Gildra Atlas",Georgia,serif; letter-spacing: .04em; opacity: 0; }
+.scene[data-book-route-scene="turn"] .skip { top: 18px; right: 20px; min-height: 44px; border-color: #b8dceb30; background: #071017b3; color: #d7edf6; font: 12px/1.4 "Gildra Atlas",Georgia,serif; pointer-events: auto; }
+.scene[data-book-route-scene="turn"] .skip:hover { background: #162732e6; border-color: #a8dbef; }
+.scene[data-book-route-scene="turn"] .skip:focus-visible { outline-color: #dbf5ff; }
+.scene[data-book-route-scene="turn"] .skip kbd { border-color: #a8d4e530; color: #a8c7d4; }
+
+.scene[data-book-route-phase="waiting"] .trace { animation: gather var(--book-lift-duration) ease-out both; }
+.scene[data-book-route-phase="waiting"] .core,
+.scene[data-book-route-phase="waiting"] .tributaries { animation: etch 420ms cubic-bezier(.22,.61,.36,1) both; }
+.scene[data-book-route-phase="waiting"] .glint { animation: glintTravel 1800ms 240ms cubic-bezier(.3,0,.3,1) infinite; }
+.scene[data-book-route-phase="waiting"] .aperture { animation: apertureGather 420ms ease-out both; }
+.scene[data-book-route-phase="waiting"] .pending { animation: pendingAppear 250ms 900ms both; }
+.scene[data-book-route-phase="playing"] .west { animation: westRelease var(--book-turn-duration) var(--ice-release) both; }
+.scene[data-book-route-phase="playing"] .east { animation: eastRelease var(--book-turn-duration) var(--ice-release) both; }
+.scene[data-book-route-phase="playing"] .glint { animation: glintTravel 480ms ease-out both; }
+.scene[data-book-route-phase="playing"] .bloom { animation: lightRelease var(--book-turn-duration) ease-out both; }
+.scene[data-book-route-phase="playing"] .aperture { animation: apertureRelease var(--book-turn-duration) var(--ice-release) both; }
+.scene[data-book-route-phase="playing"] .facet { animation: crystalRelease calc(var(--book-turn-duration) - 110ms) var(--delay) var(--ice-release) both; }
 .scene[data-book-route-phase="playing"] .skip { animation: depart var(--book-turn-duration) ease-out both; }
 .scene[data-book-route-phase="loading"] { pointer-events: none; }
-.scene[data-book-route-phase="loading"] [data-book-route-skip] { pointer-events: auto; }
 .scene[data-book-route-phase="loading"] .rift { display: none; }
-.scene[data-book-route-phase="loading"] .veil { opacity: .12; }
 .scene[data-book-route-phase="loading"] .pending { opacity: 1; }
 
 @keyframes gather { from { opacity: 0; } to { opacity: 1; } }
 @keyframes etch { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes sealGather { from { opacity: 0; transform: scale(.8) rotate(-15deg); } to { opacity: 1; transform: none; } }
-@keyframes westDepart { 0% { transform: none; opacity: 1; } 100% { transform: translate(-65%,-8%) rotate(-7deg); opacity: 0; } }
-@keyframes eastDepart { 0% { transform: none; opacity: 1; } 100% { transform: translate(65%,8%) rotate(7deg); opacity: 0; } }
-@keyframes crackDepart { 0% { opacity: .65; } 30% { opacity: .9; } 100% { opacity: 0; transform: scaleX(1.2); } }
-@keyframes sealDepart { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(1.4) rotate(35deg); } }
-@keyframes lightDepart { 0% { opacity: .5; transform: scaleX(.4); } 25% { opacity: .7; } 100% { opacity: 0; transform: scaleX(1.4); } }
-@keyframes dust { 0% { opacity: 0; transform: none; } 16% { opacity: .8; } 45% { background: #ddbb7e; } 100% { opacity: 0; background: #ddbb7e; transform: translate(var(--dx),var(--dy)) rotate(70deg) scale(.2); } }
+@keyframes glintTravel { from { stroke-dashoffset: 1; opacity: 0; } 18% { opacity: .9; } 74% { opacity: .7; } to { stroke-dashoffset: -1; opacity: 0; } }
+@keyframes apertureGather { from { opacity: 0; transform: scale(.86) rotate(-8deg); } to { opacity: .8; transform: none; } }
+@keyframes westRelease { 0% { opacity: .7; transform: none; } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(-90px,-12px) skewY(-1.6deg); } }
+@keyframes eastRelease { 0% { opacity: .7; transform: none; } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(90px,12px) skewY(1.6deg); } }
+@keyframes lightRelease { 0% { opacity: 0; transform: translate(-50%,-50%) scaleX(.3); } 20% { opacity: .8; } 100% { opacity: 0; transform: translate(-50%,-50%) scaleX(1.5); } }
+@keyframes apertureRelease { 0% { opacity: .8; transform: none; } 18% { opacity: 1; } 65%,100% { opacity: 0; transform: scale(1.28) rotate(14deg); } }
+@keyframes crystalRelease {
+  0% { opacity: 0; transform: translate3d(0,0,-40px) rotateY(-30deg) scale(.7); }
+  14% { opacity: .82; }
+  44% { opacity: .65; }
+  100% { opacity: 0; transform: translate3d(var(--dx),var(--dy),70px) rotateY(105deg) rotateZ(var(--rotation)) scale(.65); }
+}
 @keyframes depart { from { opacity: 1; } to { opacity: 0; } }
 @keyframes pendingAppear { to { opacity: 1; } }
 @keyframes failOpen { to { visibility: hidden; pointer-events: none; } }
 @media (max-width: 560px) {
-  .seal { width: 56px; height: 56px; margin: -28px; }
-  .seal span { font-size: 36px; }
-  .scene[data-book-route-scene="turn"] .skip { top: 14px; right: 14px; padding: 8px 10px; font-size: 12px; }
-  .spark:nth-of-type(n+13) { display: none; }
+  .aperture { width: 64px; height: 64px; margin: -32px; }
+  .scene[data-book-route-scene="turn"] .skip { top: 12px; right: 12px; padding: 8px 10px; }
+  .facet { width: calc(var(--width) * .75); height: calc(var(--height) * .75); }
+  .facet:nth-last-child(-n+3) { display: none; }
+  @keyframes westRelease { 0% { opacity: .7; transform: none; } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(-42px,-9px) skewY(-1.6deg); } }
+  @keyframes eastRelease { 0% { opacity: .7; transform: none; } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(42px,9px) skewY(1.6deg); } }
 }
 @media (prefers-reduced-motion: reduce) {
   .scene { display: none; }
