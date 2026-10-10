@@ -75,7 +75,7 @@
 @media (max-width: 560px) {
   .aperture { width: 64px; height: 64px; margin: -32px; }
   .scene[data-book-route-scene="turn"] .skip { top: 12px; right: 12px; padding: 8px 10px; }
-  .facet { width: calc(var(--width) * .75); height: calc(var(--height) * .75); }
+  .facet { width: calc(var(--width) * .75); height: calc(var(--height) * .75); margin-left: calc(var(--width) * -.375); margin-top: calc(var(--height) * -.375); }
   .facet:nth-last-child(-n+3) { display: none; }
   @keyframes westRelease { 0% { opacity: .7; transform: none; } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(-42px,-9px) skewY(-1.6deg); } }
   @keyframes eastRelease { 0% { opacity: .7; transform: none; } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(42px,9px) skewY(1.6deg); } }

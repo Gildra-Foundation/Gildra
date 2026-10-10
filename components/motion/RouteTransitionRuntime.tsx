@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { preconnect } from "react-dom";
+import { createPortal, preconnect } from "react-dom";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { bookLocale, isBookPagePath, isCharacterAuthRedirect, shouldTurnBook } from "./routeTransitionPolicy";
@@ -272,7 +272,10 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
 
   const active = state.phase !== "idle";
   return <div className={styles.system} data-theme="wow" data-book-navigation={active ? state.kind : "idle"}>
-    {active && <BookRouteScene key={state.id} state={state} locale={locale} onReady={onSceneReady} onSkip={() => lifecycle.finish()} />}
+    {active && createPortal(
+      <BookRouteScene key={state.id} state={state} locale={locale} onReady={onSceneReady} onSkip={() => lifecycle.finish()} />,
+      document.body,
+    )}
     <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-book-route-phase={state.phase} aria-busy={active || undefined}>
       {children}
     </div>
