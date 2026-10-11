@@ -731,7 +731,6 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
             </div>
             {locale === "ru" ? <p className={styles.dungeonSubtitle}>{dungeon.name}</p> : null}
             <p className={styles.description}><strong>{copy.goal}</strong> {copy.goalText(dungeon.description, bossCount)}</p>
-            <ul className={styles.heroMeta}><li><MapPinned aria-hidden="true" /> {copy.steps(stops.length)}</li><li><Clock3 aria-hidden="true" /> {copy.takes(formatTime(totalDuration))}</li><li><Check aria-hidden="true" /> {copy.reserve(formatTime(reserveSeconds))}</li></ul>
           </div>
           <div className={styles.routeControls} role="group" aria-label={copy.controlsLabel}>
             <div className={styles.selectorRow}>
@@ -758,7 +757,6 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
           <article><span><Swords aria-hidden="true" /> {copy.forcesDone}</span><b>{completedForces.toFixed(1)}%</b><small>{copy.forcesGoal}</small></article>
           <article><span><Skull aria-hidden="true" /> {copy.deaths}</span><div className={styles.deathControl}><button type="button" onClick={() => setDeaths((value) => Math.max(0, value - 1))} aria-label={copy.removeDeath}><Minus aria-hidden="true" /></button><b>{deaths}</b><button type="button" onClick={() => setDeaths((value) => value + 1)} aria-label={copy.addDeath}><Plus aria-hidden="true" /></button></div><small>{copy.deathPenalty}</small></article>
           <article><span><ShieldAlert aria-hidden="true" /> {copy.conditions}</span><div className={styles.affixes}><button type="button" title={copy.tyrannicalTitle} onClick={() => announce(copy.tyrannicalNote)}>{copy.tyrannical}</button><button type="button" title={copy.seasonAffixTitle} onClick={() => announce(copy.seasonAffixNote)}>{copy.seasonAffix}</button></div><small>{copy.conditionsHint}</small></article>
-          <article><span><Users aria-hidden="true" /> {copy.party}</span><b>5 / 5</b><small>{copy.partyRoles}</small></article>
         </section>
 
         <RouteInteractionLayer

@@ -25,9 +25,6 @@ const ru = {
   eyebrow: (location: string) => `Маршрут подземелья · ${location} · Обновление 12.1`,
   goal: "Цель:",
   goalText: (description: string, _bosses: number) => description,
-  steps: (count: number) => `${count} ${plural(count, "шаг", "шага", "шагов")}`,
-  takes: (time: string) => `Займёт ~${time}`,
-  reserve: (time: string) => `Запас ${time}`,
   keyLevelLabel: "Уровень ключа",
   controlsLabel: "Настройки маршрута",
   edit: "Редактировать",
@@ -59,8 +56,6 @@ const ru = {
   seasonAffix: "Сезон 2",
   seasonAffixTitle: "Условия текущего сезона",
   seasonAffixNote: "Действуют условия Midnight Season 2",
-  party: "Тестовая группа",
-  partyRoles: "Защита · лечение · урон",
 
   // Workspace
   plannerLabel: (dungeon: string) => `Планировщик маршрута ${dungeon}`,
@@ -191,9 +186,6 @@ const en: MythicRouteCopy = {
   eyebrow: () => "Dungeon route · Patch 12.1",
   goal: "Goal:",
   goalText: (_description, bosses) => `Defeat ${bosses === 1 ? "the boss" : `all ${bosses} bosses`}, reach 100% enemy forces and finish the route before the timer runs out.`,
-  steps: (count) => `${count} ${count === 1 ? "step" : "steps"}`,
-  takes: (time) => `Takes ~${time}`,
-  reserve: (time) => `Spare ${time}`,
   keyLevelLabel: "Key level",
   controlsLabel: "Route settings",
   edit: "Edit route",
@@ -224,8 +216,6 @@ const en: MythicRouteCopy = {
   seasonAffix: "Season 2",
   seasonAffixTitle: "Current season conditions",
   seasonAffixNote: "Midnight Season 2 conditions apply",
-  party: "Test party",
-  partyRoles: "Tank · healer · damage",
 
   plannerLabel: (dungeon) => `${dungeon} route planner`,
   stepsTitle: "Step by step",
