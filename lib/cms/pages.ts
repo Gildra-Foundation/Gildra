@@ -2,6 +2,7 @@ import "server-only";
 import type { BlockInstance } from "@/lib/blocks/page";
 import type { BlockRegistry } from "@/lib/blocks/loadRegistry";
 import type { Lang } from "@/lib/i18n";
+import { fetchPage } from "./client";
 
 /**
  * Payload CMS page overrides.
@@ -10,6 +11,7 @@ import type { Lang } from "@/lib/i18n";
  * and whose `blocks` field holds a `BlockInstance[]` replaces the TS config
  * for that page. Everything fails open: no CMS URL, CMS down, no document,
  * malformed JSON or an unknown block type → the code config renders.
+ * Reads `/api/public/<site>/page?slug=…&locale=…` (published, site-bound).
  */
 export type CmsPageOverride = {
   blocks: BlockInstance[];
@@ -17,14 +19,11 @@ export type CmsPageOverride = {
   title?: string;
 };
 
-const cmsURL = () => (process.env.CMS_INTERNAL_URL ?? "").replace(/\/$/, "");
-
 type CmsPageDoc = {
   slug?: string;
-  title?: string;
-  layout?: string;
+  title?: string | null;
+  layout?: string | null;
   blocks?: unknown;
-  _status?: string;
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -56,33 +55,18 @@ export async function validateBlocks(value: unknown, registry: BlockRegistry, de
 }
 
 export async function getCmsPageOverride(pageId: string, lang: Lang, registry: BlockRegistry): Promise<CmsPageOverride | null> {
-  const base = cmsURL();
-  if (!base) return null;
-  try {
-    const params = new URLSearchParams({
-      "where[slug][equals]": pageId,
-      locale: lang,
-      "fallback-locale": "en",
-      depth: "0",
-      limit: "1",
-    });
-    const response = await fetch(`${base}/api/pages?${params}`, {
-      next: { revalidate: 60, tags: ["cms-pages", `cms-page-${pageId}`] },
-      signal: AbortSignal.timeout(3_000),
-    });
-    if (!response.ok) return null;
-    const payload = (await response.json()) as { docs?: CmsPageDoc[] };
-    const doc = payload.docs?.[0];
-    if (!doc || doc._status === "draft") return null;
-    const blocks = await validateBlocks(doc.blocks, registry);
-    if (!blocks || blocks.length === 0) return null;
-    return {
-      blocks,
-      layout: doc.layout === "bare" ? "bare" : doc.layout === "default" ? "default" : undefined,
-      title: typeof doc.title === "string" ? doc.title : undefined,
-    };
-  } catch (error) {
-    console.error(`cms page override unavailable for ${pageId}`, error);
-    return null;
-  }
+  // Site (CMS_SITE_SLUG, default gildra), locale and the published version are
+  // bound by the public endpoint; slugs keep their page-id form ("wow/home").
+  const result = await fetchPage(pageId, lang === "ru" ? "ru" : "en");
+  if (result.status === "error") console.error(`cms page override unavailable for ${pageId}: ${result.reason}`);
+  if (result.status !== "ok") return null;
+  const doc = result.data as CmsPageDoc;
+  if (doc.slug !== pageId) return null;
+  const blocks = await validateBlocks(doc.blocks, registry);
+  if (!blocks || blocks.length === 0) return null;
+  return {
+    blocks,
+    layout: doc.layout === "bare" ? "bare" : doc.layout === "default" ? "default" : undefined,
+    title: typeof doc.title === "string" ? doc.title : undefined,
+  };
 }

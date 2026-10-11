@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Alegreya, Chakra_Petch, Inter } from "next/font/google";
 import { CookieNoticeGate } from "@/components/CookieNoticeGate";
+import { PlausibleTracker } from "@/components/cms/PlausibleTracker";
 import { RouteTransitionGate } from "@/components/motion/RouteTransitionGate";
 import { WorkspaceNavigator } from "@/components/platform/navigation/WorkspaceNavigator";
 import "./globals.css";
@@ -64,6 +65,7 @@ export default async function RootLayout({
         <WorkspaceNavigator />
         <RouteTransitionGate>{children}</RouteTransitionGate>
         <CookieNoticeGate />
+        <PlausibleTracker />
       </body>
     </html>
   );

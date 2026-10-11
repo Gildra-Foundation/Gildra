@@ -1,0 +1,16 @@
+.panel { display: grid; gap: 14px; max-width: 520px; margin: 0 auto; padding: 56px 24px 96px; color: #e7e2d8; }
+.panel h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 2.6rem); }
+.panel p { margin: 0; line-height: 1.6; }
+.muted { color: #aaa79f; }
+.form { display: grid; gap: 12px; }
+.form label { display: grid; gap: 6px; font-size: .9rem; color: #cfc6b4; }
+.form input, .form textarea, .form select { padding: 10px 12px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.04); color: #f0e6cf; font: inherit; }
+.form input:focus-visible, .form textarea:focus-visible, .form select:focus-visible, .button:focus-visible, .secondary:focus-visible, .tab:focus-visible, .tabActive:focus-visible { outline: 2px solid #e9b85e; outline-offset: 2px; }
+.button { display: inline-flex; width: fit-content; min-height: 44px; align-items: center; padding: 0 18px; border: 1px solid #dfb766; background: #dfb766; color: #1a1408; font-weight: 700; cursor: pointer; text-decoration: none; }
+.button:disabled { opacity: .6; cursor: progress; }
+.secondary { width: fit-content; min-height: 40px; padding: 0 14px; border: 1px solid rgba(255,255,255,.2); background: transparent; color: #cfc6b4; cursor: pointer; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab, .tabActive { min-height: 40px; padding: 0 14px; border: 1px solid rgba(255,255,255,.14); background: transparent; color: #aaa79f; cursor: pointer; }
+.tabActive { border-color: #dfb766; color: #f0e6cf; }
+.info { padding: 10px 12px; border: 1px solid rgba(131,181,113,.35); background: rgba(131,181,113,.06); color: #cfe0c6; }
+.error { padding: 10px 12px; border: 1px solid rgba(214,106,86,.45); background: rgba(214,106,86,.07); color: #f0c9bf; }

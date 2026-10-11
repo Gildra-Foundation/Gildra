@@ -64,25 +64,42 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     admins: AdminAuthOperations;
+    members: MemberAuthOperations;
   };
   blocks: {};
   collections: {
+    sites: Site;
     admins: Admin;
     media: Media;
     pages: Page;
     guides: Guide;
+    categories: Category;
+    tags: Tag;
+    'site-settings': SiteSetting;
+    members: Member;
+    'member-profiles': MemberProfile;
+    'audit-log': AuditLog;
     'payload-kv': PayloadKv;
+    'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {};
   collectionsSelect: {
+    sites: SitesSelect<false> | SitesSelect<true>;
     admins: AdminsSelect<false> | AdminsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     guides: GuidesSelect<false> | GuidesSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    tags: TagsSelect<false> | TagsSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    members: MembersSelect<false> | MembersSelect<true>;
+    'member-profiles': MemberProfilesSelect<false> | MemberProfilesSelect<true>;
+    'audit-log': AuditLogSelect<false> | AuditLogSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -97,9 +114,16 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: Admin;
+  user: Admin | Member;
   jobs: {
-    tasks: unknown;
+    tasks: {
+      revalidateSite: TaskRevalidateSite;
+      schedulePublish: TaskSchedulePublish;
+      inline: {
+        input: unknown;
+        output: unknown;
+      };
+    };
     workflows: unknown;
   };
 }
@@ -121,6 +145,58 @@ export interface AdminAuthOperations {
     password: string;
   };
 }
+export interface MemberAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sites".
+ */
+export interface Site {
+  id: number;
+  name: string;
+  slug: string;
+  /**
+   * Public host name without scheme, e.g. gildra.net
+   */
+  domain: string;
+  game: 'wow' | 'lol';
+  languages: ('en' | 'ru')[];
+  defaultLocale: 'en' | 'ru';
+  /**
+   * Canonical origin used for preview, verification and reset links, e.g. https://gildra.net
+   */
+  publicUrl: string;
+  /**
+   * site_id in Plausible CE (usually the domain). Empty = analytics not configured.
+   */
+  plausibleSiteId?: string | null;
+  /**
+   * Server endpoint of the site that receives signed cache invalidation. The secret lives in CMS_REVALIDATE_SECRET_<SLUG>.
+   */
+  revalidateUrl?: string | null;
+  /**
+   * Allow reader self-registration for this site (requires working SMTP).
+   */
+  registrationEnabled?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "admins".
@@ -128,6 +204,17 @@ export interface AdminAuthOperations {
 export interface Admin {
   id: number;
   name: string;
+  /**
+   * Owners manage every site and provision staff.
+   */
+  platformRole: 'owner' | 'staff';
+  sites?:
+    | {
+        site: number | Site;
+        role: 'admin' | 'editor' | 'author' | 'analyst';
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -135,6 +222,7 @@ export interface Admin {
   resetPasswordExpiration?: string | null;
   salt?: string | null;
   hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   sessions?:
@@ -153,7 +241,9 @@ export interface Admin {
  */
 export interface Media {
   id: number;
+  site: number | Site;
   alt: string;
+  caption?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -172,9 +262,10 @@ export interface Media {
  */
 export interface Page {
   id: number;
+  site?: (number | null) | Site;
   title: string;
   /**
-   * Page id used by the web app, e.g. "wow/home" or "league-of-legends/home".
+   * Page id used by the web app, e.g. "wow/home" or "league-of-legends/home". Unique within the site.
    */
   slug: string;
   game?: ('wow' | 'league-of-legends') | null;
@@ -212,6 +303,12 @@ export interface Page {
     [k: string]: unknown;
   } | null;
   publishedAt?: string | null;
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    noIndex?: boolean | null;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -222,9 +319,16 @@ export interface Page {
  */
 export interface Guide {
   id: number;
+  site?: (number | null) | Site;
   title: string;
+  /**
+   * Unique within the site. Changing it changes the public URL.
+   */
   slug: string;
-  category: 'mythic-plus' | 'raid' | 'class' | 'gear';
+  /**
+   * Legacy Gildra category kept for compatibility. Prefer Categories.
+   */
+  category?: ('mythic-plus' | 'raid' | 'class' | 'gear') | null;
   summary: string;
   content: {
     root: {
@@ -242,10 +346,210 @@ export interface Guide {
     [k: string]: unknown;
   };
   hero?: (number | null) | Media;
+  /**
+   * Authors are always recorded as themselves.
+   */
+  author?: (number | null) | Admin;
+  categories?: (number | Category)[] | null;
+  tags?: (number | Tag)[] | null;
   publishedAt?: string | null;
+  gameContext?: {
+    /**
+     * e.g. 11.2.5 or 25.20
+     */
+    patch?: string | null;
+    season?: string | null;
+    /**
+     * When the content was last checked against the game.
+     */
+    lastReviewedAt?: string | null;
+    wowClass?:
+      | (
+          | 'death-knight'
+          | 'demon-hunter'
+          | 'druid'
+          | 'evoker'
+          | 'hunter'
+          | 'mage'
+          | 'monk'
+          | 'paladin'
+          | 'priest'
+          | 'rogue'
+          | 'shaman'
+          | 'warlock'
+          | 'warrior'
+        )
+      | null;
+    /**
+     * Spec slug, e.g. frost
+     */
+    wowSpec?: string | null;
+    /**
+     * Raid or dungeon slug
+     */
+    wowInstance?: string | null;
+    /**
+     * Champion id, e.g. Ahri
+     */
+    lolChampion?: string | null;
+    lolRole?: ('top' | 'jungle' | 'mid' | 'bottom' | 'support') | null;
+    lolMentionedChampions?: string[] | null;
+  };
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    noIndex?: boolean | null;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  site: number | Site;
+  title: string;
+  slug: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number;
+  site: number | Site;
+  title: string;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  site: number | Site;
+  siteTitle: string;
+  tagline?: string | null;
+  navigation?:
+    | {
+        label: string;
+        href: string;
+        id?: string | null;
+      }[]
+    | null;
+  footerLinks?:
+    | {
+        label: string;
+        href: string;
+        id?: string | null;
+      }[]
+    | null;
+  defaultSeo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+  };
+  social?:
+    | {
+        platform: 'discord' | 'x' | 'youtube' | 'twitch' | 'telegram' | 'github';
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "members".
+ */
+export interface Member {
+  id: number;
+  /**
+   * Server-controlled site memberships. Site admins manage rows of their own sites.
+   */
+  memberships?:
+    | {
+        site: number | Site;
+        status: 'active' | 'blocked';
+        joinedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Blocks the account on every site and ends all sessions.
+   */
+  blocked?: boolean | null;
+  blockedReason?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  _verified?: boolean | null;
+  _verificationToken?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'members';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "member-profiles".
+ */
+export interface MemberProfile {
+  id: number;
+  member: number | Member;
+  handle: string;
+  displayName: string;
+  bio?: string | null;
+  visibility: 'public' | 'private';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "audit-log".
+ */
+export interface AuditLog {
+  id: number;
+  action: string;
+  actorCollection: string;
+  actorId?: string | null;
+  actorEmail?: string | null;
+  targetCollection: string;
+  targetId: string;
+  site?: (number | null) | Site;
+  changes?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -266,11 +570,112 @@ export interface PayloadKv {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs".
+ */
+export interface PayloadJob {
+  id: number;
+  /**
+   * Input data provided to the job
+   */
+  input?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  taskStatus?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  completedAt?: string | null;
+  totalTried?: number | null;
+  /**
+   * If hasError is true this job will not be retried
+   */
+  hasError?: boolean | null;
+  /**
+   * If hasError is true, this is the error that caused it
+   */
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Task execution log
+   */
+  log?:
+    | {
+        executedAt: string;
+        completedAt: string;
+        taskSlug: 'inline' | 'revalidateSite' | 'schedulePublish';
+        taskID: string;
+        input?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        output?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        state: 'failed' | 'succeeded';
+        error?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  taskSlug?: ('inline' | 'revalidateSite' | 'schedulePublish') | null;
+  queue?: string | null;
+  waitUntil?: string | null;
+  processing?: boolean | null;
+  /**
+   * Used for concurrency control. Jobs with the same key are subject to exclusive/supersedes rules.
+   */
+  concurrencyKey?: string | null;
+  site?: (number | null) | Site;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
   id: number;
   document?:
+    | ({
+        relationTo: 'sites';
+        value: number | Site;
+      } | null)
     | ({
         relationTo: 'admins';
         value: number | Admin;
@@ -286,12 +691,41 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'guides';
         value: number | Guide;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'tags';
+        value: number | Tag;
+      } | null)
+    | ({
+        relationTo: 'site-settings';
+        value: number | SiteSetting;
+      } | null)
+    | ({
+        relationTo: 'members';
+        value: number | Member;
+      } | null)
+    | ({
+        relationTo: 'member-profiles';
+        value: number | MemberProfile;
+      } | null)
+    | ({
+        relationTo: 'audit-log';
+        value: number | AuditLog;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'admins';
-    value: number | Admin;
-  };
+  user:
+    | {
+        relationTo: 'admins';
+        value: number | Admin;
+      }
+    | {
+        relationTo: 'members';
+        value: number | Member;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -301,10 +735,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user: {
-    relationTo: 'admins';
-    value: number | Admin;
-  };
+  user:
+    | {
+        relationTo: 'admins';
+        value: number | Admin;
+      }
+    | {
+        relationTo: 'members';
+        value: number | Member;
+      };
   key?: string | null;
   value?:
     | {
@@ -331,10 +770,36 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sites_select".
+ */
+export interface SitesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  domain?: T;
+  game?: T;
+  languages?: T;
+  defaultLocale?: T;
+  publicUrl?: T;
+  plausibleSiteId?: T;
+  revalidateUrl?: T;
+  registrationEnabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "admins_select".
  */
 export interface AdminsSelect<T extends boolean = true> {
   name?: T;
+  platformRole?: T;
+  sites?:
+    | T
+    | {
+        site?: T;
+        role?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -342,6 +807,7 @@ export interface AdminsSelect<T extends boolean = true> {
   resetPasswordExpiration?: T;
   salt?: T;
   hash?: T;
+  resetPasswordRequestedAt?: T;
   loginAttempts?: T;
   lockUntil?: T;
   sessions?:
@@ -357,7 +823,9 @@ export interface AdminsSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  site?: T;
   alt?: T;
+  caption?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -375,6 +843,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "pages_select".
  */
 export interface PagesSelect<T extends boolean = true> {
+  site?: T;
   title?: T;
   slug?: T;
   game?: T;
@@ -384,6 +853,14 @@ export interface PagesSelect<T extends boolean = true> {
   summary?: T;
   content?: T;
   publishedAt?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        noIndex?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -393,16 +870,167 @@ export interface PagesSelect<T extends boolean = true> {
  * via the `definition` "guides_select".
  */
 export interface GuidesSelect<T extends boolean = true> {
+  site?: T;
   title?: T;
   slug?: T;
   category?: T;
   summary?: T;
   content?: T;
   hero?: T;
+  author?: T;
+  categories?: T;
+  tags?: T;
   publishedAt?: T;
+  gameContext?:
+    | T
+    | {
+        patch?: T;
+        season?: T;
+        lastReviewedAt?: T;
+        wowClass?: T;
+        wowSpec?: T;
+        wowInstance?: T;
+        lolChampion?: T;
+        lolRole?: T;
+        lolMentionedChampions?: T;
+      };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        noIndex?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  site?: T;
+  title?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags_select".
+ */
+export interface TagsSelect<T extends boolean = true> {
+  site?: T;
+  title?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  site?: T;
+  siteTitle?: T;
+  tagline?: T;
+  navigation?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        id?: T;
+      };
+  footerLinks?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        id?: T;
+      };
+  defaultSeo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  social?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "members_select".
+ */
+export interface MembersSelect<T extends boolean = true> {
+  memberships?:
+    | T
+    | {
+        site?: T;
+        status?: T;
+        joinedAt?: T;
+        id?: T;
+      };
+  blocked?: T;
+  blockedReason?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  resetPasswordRequestedAt?: T;
+  _verified?: T;
+  _verificationToken?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "member-profiles_select".
+ */
+export interface MemberProfilesSelect<T extends boolean = true> {
+  member?: T;
+  handle?: T;
+  displayName?: T;
+  bio?: T;
+  visibility?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "audit-log_select".
+ */
+export interface AuditLogSelect<T extends boolean = true> {
+  action?: T;
+  actorCollection?: T;
+  actorId?: T;
+  actorEmail?: T;
+  targetCollection?: T;
+  targetId?: T;
+  site?: T;
+  changes?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -411,6 +1039,39 @@ export interface GuidesSelect<T extends boolean = true> {
 export interface PayloadKvSelect<T extends boolean = true> {
   key?: T;
   data?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs_select".
+ */
+export interface PayloadJobsSelect<T extends boolean = true> {
+  input?: T;
+  taskStatus?: T;
+  completedAt?: T;
+  totalTried?: T;
+  hasError?: T;
+  error?: T;
+  log?:
+    | T
+    | {
+        executedAt?: T;
+        completedAt?: T;
+        taskSlug?: T;
+        taskID?: T;
+        input?: T;
+        output?: T;
+        state?: T;
+        error?: T;
+        id?: T;
+      };
+  taskSlug?: T;
+  queue?: T;
+  waitUntil?: T;
+  processing?: T;
+  concurrencyKey?: T;
+  site?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -453,6 +1114,54 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskRevalidateSite".
+ */
+export interface TaskRevalidateSite {
+  input: {
+    site: string;
+    collection: string;
+    docId: string;
+    slug?: string | null;
+    previousSlug?: string | null;
+    action: 'change' | 'unpublish' | 'delete';
+  };
+  output: {
+    status: string;
+    httpStatus?: number | null;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskSchedulePublish".
+ */
+export interface TaskSchedulePublish {
+  input: {
+    type?: ('publish' | 'unpublish') | null;
+    locale?: string | null;
+    doc?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'guides';
+          value: number | Guide;
+        } | null);
+    global?: string | null;
+    user?:
+      | ({
+          relationTo: 'admins';
+          value: number | Admin;
+        } | null)
+      | ({
+          relationTo: 'members';
+          value: number | Member;
+        } | null);
+  };
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

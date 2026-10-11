@@ -1,0 +1,51 @@
+# Local / staging example for the shared CMS. Not used by any live /opt project.
+#   cp .env.example .env   # fill in values
+#   docker compose -f docker-compose.example.yml --env-file .env config   # validate
+#   docker compose -f docker-compose.example.yml --env-file .env up -d --build
+# Plausible CE runs as its own stack (see README); only its URL and API key are configured here.
+name: gildra-cms-local
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: payload
+      POSTGRES_USER: payload
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payload -d payload"]
+      interval: 5s
+      retries: 20
+
+  cms:
+    build: { context: ., target: runner }
+    depends_on: { db: { condition: service_healthy } }
+    env_file: .env
+    environment:
+      PAYLOAD_DATABASE_URL: postgres://payload:${POSTGRES_PASSWORD}@db:5432/payload
+      # Exactly one runner: the dedicated `jobs` service below.
+      CMS_JOBS_AUTORUN: "false"
+    volumes:
+      - media:/app/media
+    ports:
+      - "127.0.0.1:3001:3001"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/api/public/gildra/settings >/dev/null || exit 1"]
+      interval: 15s
+      retries: 10
+
+  jobs:
+    build: { context: ., target: jobs }
+    depends_on: { cms: { condition: service_healthy } }
+    env_file: .env
+    environment:
+      PAYLOAD_DATABASE_URL: postgres://payload:${POSTGRES_PASSWORD}@db:5432/payload
+      CMS_JOBS_AUTORUN: "false"
+    volumes:
+      - media:/app/media
+
+volumes:
+  db:
+  media:

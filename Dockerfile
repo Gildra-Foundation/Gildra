@@ -5,7 +5,14 @@ RUN npm ci
 
 FROM node:22.23.2-alpine AS builder
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1
+# Public Plausible tracker settings (lib/cms/plausible.ts). Static pages are
+# prerendered here, so the tracker needs them at build time as well as at
+# runtime (compose.runtime.yml). Pass empty values to build without it.
+ARG PLAUSIBLE_SCRIPT_URL=https://gildra.net/stats/js/script.js
+ARG PLAUSIBLE_API_URL=/stats/api/event
+ARG PLAUSIBLE_SITE_DOMAIN=gildra.net
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    PLAUSIBLE_SCRIPT_URL=$PLAUSIBLE_SCRIPT_URL PLAUSIBLE_API_URL=$PLAUSIBLE_API_URL PLAUSIBLE_SITE_DOMAIN=$PLAUSIBLE_SITE_DOMAIN
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run generate:api && npm run build

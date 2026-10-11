@@ -10,29 +10,46 @@
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
-    "migrate:create": "cross-env NODE_OPTIONS=--no-deprecation payload migrate:create"
+    "migrate:create": "cross-env NODE_OPTIONS=--no-deprecation payload migrate:create",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "seed": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/seed.ts",
+    "jobs:worker": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/jobs-worker.ts",
+    "migrate:status": "cross-env NODE_OPTIONS=--no-deprecation payload migrate:status",
+    "import:articles": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/import-articles.ts"
   },
   "dependencies": {
-    "@payloadcms/db-postgres": "3.88.0",
-    "@payloadcms/next": "3.88.0",
-    "@payloadcms/richtext-lexical": "3.88.0",
-    "@payloadcms/ui": "3.88.0",
+    "@payloadcms/db-postgres": "3.90.2",
+    "@payloadcms/email-nodemailer": "3.90.2",
+    "@payloadcms/next": "3.90.2",
+    "@payloadcms/plugin-multi-tenant": "3.90.2",
+    "@payloadcms/richtext-lexical": "3.90.2",
+    "@payloadcms/translations": "3.90.2",
+    "@payloadcms/ui": "3.90.2",
     "cross-env": "^7.0.3",
     "graphql": "^16.8.1",
-    "next": "16.3.1",
-    "payload": "3.88.0",
+    "next": "16.3.8",
+    "payload": "3.90.2",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "typescript": "^5.7.0"
+    "tsx": "4.23.15",
+    "typescript": "^5.7.0",
+    "vite": "^7.3.7",
+    "vitest": "4.1.11"
   },
   "overrides": {
-    "dompurify": "3.4.14"
+    "dompurify": "3.4.16",
+    "undici": "7.29.1",
+    "nodemailer": "10.0.16",
+    "sass": "1.105.1",
+    "vite": "$vite"
   },
   "engines": {
     "node": ">=20.9.0"

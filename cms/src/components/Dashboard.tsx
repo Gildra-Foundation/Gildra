@@ -1,0 +1,436 @@
+import { Gutter } from "@payloadcms/ui";
+import type { Payload, TypedUser, VisibleEntities } from "payload";
+import React from "react";
+
+import { adminLang, adminText } from "../admin/text";
+import { plausibleEnv } from "../analytics/plausible";
+import {
+  ANALYTICS_ROLES,
+  asStaff,
+  hasSiteRole,
+  type ID,
+  isOwner,
+  PUBLISH_ROLES,
+  relationID,
+  roleOnSite,
+  SITE_ROLES,
+  siteIDsWithRole,
+  WRITE_ROLES,
+} from "../access/roles";
+import { LocalTime, SiteLink } from "./SiteLink";
+
+const STALE_DAYS = 90;
+const RECENT_LIMIT = 8;
+const UPCOMING_LIMIT = 6;
+
+const GAME_LABEL: Record<string, string> = { wow: "World of Warcraft", lol: "League of Legends" };
+
+type Props = {
+  payload: Payload;
+  user?: TypedUser | null;
+  i18n: { language: string };
+  locale?: { code?: string } | null;
+  visibleEntities?: VisibleEntities;
+};
+
+type SiteRow = {
+  id: ID;
+  name: string;
+  domain: string;
+  game: string;
+  publicUrl?: string | null;
+  plausibleSiteId?: string | null;
+  registrationEnabled?: boolean | null;
+  defaultLocale?: string | null;
+};
+
+type Counts = { published: number; drafts: number; scheduled: number; stale: number; readers: number | null };
+
+/** `titleLocale`: the content language the title was found in; links open the editor there. */
+type RecentItem = {
+  collection: "guides" | "pages";
+  id: ID;
+  title: string;
+  titleLocale: string;
+  site: ID | null;
+  status: string;
+  updatedAt: string;
+};
+
+type UpcomingItem = {
+  id: ID;
+  when: string;
+  action: "publish" | "unpublish";
+  collection: string;
+  docID: ID | null;
+  title: string;
+  titleLocale: string;
+  site: ID | null;
+};
+
+/**
+ * /admin home: one card per site the viewer works on (counters, quick actions,
+ * readers, analytics state), the latest edits and the publishing schedule.
+ * Every query runs with the viewer's own access, so nobody sees another site's
+ * numbers; the jobs queue is filtered by publishing role like its own access.
+ */
+export async function Dashboard({ payload, user, i18n, locale, visibleEntities }: Props) {
+  const lang = adminLang(i18n?.language);
+  const t = adminText(lang);
+  const staff = asStaff(user);
+  if (!staff) return null;
+  const owner = isOwner(staff);
+  const contentLocale = locale?.code ?? "en";
+  const plausible = plausibleEnv();
+  const statsServer = Boolean(plausible.url && plausible.apiKey);
+  const mySiteIDs = owner ? null : siteIDsWithRole(staff, SITE_ROLES).map(String);
+
+  const { docs } = await payload.find({ collection: "sites", depth: 0, pagination: false, overrideAccess: true, sort: "name" });
+  const sites = (docs as unknown as SiteRow[]).filter((s) => !mySiteIDs || mySiteIDs.includes(String(s.id)));
+
+  const [counts, recent, upcoming] = await Promise.all([
+    Promise.all(sites.map((site) => siteCounts(payload, user, site))),
+    recentEdits(payload, user, contentLocale),
+    upcomingJobs(payload, user, owner, contentLocale),
+  ]);
+  const siteName = new Map(sites.map((s) => [String(s.id), s.name]));
+  const roleLabel = (site: ID) => {
+    if (owner) return t.roleOwner;
+    const role = roleOnSite(staff, site);
+    return role ? t[`role${role[0].toUpperCase()}${role.slice(1)}` as "roleAdmin"] : "—";
+  };
+  const visible = new Set(visibleEntities?.collections ?? []);
+
+  return (
+    <Gutter className="dashboard gd-home">
+      <header className="gd-home__head">
+        <h1>{t.greeting}</h1>
+        <p>{t.greetingHint}</p>
+      </header>
+
+      {sites.length === 0 ? (
+        <p role="alert">{t.noSites}</p>
+      ) : (
+        <div className="gd-sites">
+          {sites.map((site, index) => {
+            const c = counts[index];
+            const id = String(site.id);
+            const canWrite = hasSiteRole(staff, site.id, WRITE_ROLES);
+            const canPublish = hasSiteRole(staff, site.id, PUBLISH_ROLES);
+            const canAnalyse = hasSiteRole(staff, site.id, ANALYTICS_ROLES);
+            const canSettings = hasSiteRole(staff, site.id, ["admin"]);
+            return (
+              <section key={id} className={`gd-site gd-site--${site.game}`} aria-labelledby={`gd-site-${id}`}>
+                <div className="gd-site__top">
+                  <div>
+                    <p className="gd-site__game">{GAME_LABEL[site.game] ?? site.game}</p>
+                    <h2 id={`gd-site-${id}`}>{site.name}</h2>
+                    <p className="gd-site__role">
+                      {t.yourRole}: {roleLabel(site.id)}
+                    </p>
+                  </div>
+                  {site.publicUrl ? (
+                    <a className="gd-site__open" href={site.publicUrl} target="_blank" rel="noreferrer">
+                      {site.domain} ↗
+                    </a>
+                  ) : null}
+                </div>
+
+                <dl className="gd-site__stats">
+                  <Stat label={t.published} value={c.published} />
+                  <Stat label={t.drafts} value={c.drafts} />
+                  <Stat label={t.scheduled} value={c.scheduled} />
+                  <Stat label={t.stale} value={c.stale} warn={c.stale > 0} />
+                </dl>
+
+                <p className="gd-site__meta">
+                  {c.readers !== null ? (
+                    <span>
+                      {t.readers}: <strong>{c.readers}</strong>
+                    </span>
+                  ) : null}
+                  <span>{site.registrationEnabled ? t.registrationOpen : t.registrationClosed}</span>
+                  <span className={statsServer && site.plausibleSiteId ? "gd-ok" : "gd-muted"}>
+                    {statsServer && site.plausibleSiteId ? t.statsConnected : t.statsMissing}
+                  </span>
+                </p>
+
+                <div className="gd-site__actions">
+                  {canWrite ? (
+                    <SiteLink
+                      siteID={id}
+                      href={`/admin/collections/guides/create?locale=${site.defaultLocale ?? "en"}`}
+                      className="gd-btn gd-btn--primary"
+                    >
+                      + {t.newArticle}
+                    </SiteLink>
+                  ) : null}
+                  <SiteLink siteID={id} href="/admin/collections/guides" className="gd-btn">
+                    {t.allArticles}
+                  </SiteLink>
+                  {canPublish ? (
+                    <SiteLink siteID={id} href="/admin/collections/pages" className="gd-btn">
+                      {t.pages}
+                    </SiteLink>
+                  ) : null}
+                  {canWrite ? (
+                    <SiteLink siteID={id} href="/admin/collections/media" className="gd-btn">
+                      {t.media}
+                    </SiteLink>
+                  ) : null}
+                  {canSettings ? (
+                    <SiteLink siteID={id} href="/admin/collections/site-settings" className="gd-btn">
+                      {t.settings}
+                    </SiteLink>
+                  ) : null}
+                  {canAnalyse ? (
+                    <SiteLink siteID={id} href="/admin/analytics" className="gd-btn">
+                      {t.analytics}
+                    </SiteLink>
+                  ) : null}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="gd-columns">
+        <section className="gd-panel" aria-labelledby="gd-recent">
+          <h2 id="gd-recent">{t.recent}</h2>
+          {recent.length === 0 ? (
+            <p className="gd-muted">{t.recentEmpty}</p>
+          ) : (
+            <table className="gd-table">
+              <thead>
+                <tr>
+                  <th>{t.colTitle}</th>
+                  <th>{t.colSite}</th>
+                  <th>{t.colStatus}</th>
+                  <th className="gd-num">{t.colUpdated}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((item) => (
+                  <tr key={`${item.collection}-${item.id}`}>
+                    <td>
+                      <ScopedLink site={item.site} href={`/admin/collections/${item.collection}/${item.id}?locale=${item.titleLocale}`}>
+                        {item.title || t.untitled}
+                      </ScopedLink>
+                      <span className="gd-kind">{item.collection === "guides" ? t.article : t.page}</span>
+                    </td>
+                    <td>{item.site !== null ? (siteName.get(String(item.site)) ?? "—") : "—"}</td>
+                    <td>
+                      <span className={`gd-pill gd-pill--${item.status === "published" ? "ok" : "draft"}`}>
+                        {item.status === "published" ? t.statusPublished : t.statusDraft}
+                      </span>
+                    </td>
+                    <td className="gd-num">
+                      <LocalTime iso={item.updatedAt} lang={lang} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+
+        <section className="gd-panel" aria-labelledby="gd-upcoming">
+          <h2 id="gd-upcoming">{t.upcoming}</h2>
+          {upcoming.length === 0 ? (
+            <p className="gd-muted">{t.upcomingEmpty}</p>
+          ) : (
+            <table className="gd-table">
+              <thead>
+                <tr>
+                  <th>{t.colWhen}</th>
+                  <th>{t.colTitle}</th>
+                  <th>{t.colAction}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {upcoming.map((job) => (
+                  <tr key={String(job.id)}>
+                    <td>
+                      <LocalTime iso={job.when} lang={lang} />
+                    </td>
+                    <td>
+                      {job.docID !== null ? (
+                        <ScopedLink site={job.site} href={`/admin/collections/${job.collection}/${job.docID}?locale=${job.titleLocale}`}>
+                          {job.title || t.untitled}
+                        </ScopedLink>
+                      ) : (
+                        job.title || t.untitled
+                      )}
+                      {job.site !== null ? <span className="gd-kind">{siteName.get(String(job.site)) ?? ""}</span> : null}
+                    </td>
+                    <td>{job.action === "unpublish" ? t.actionUnpublish : t.actionPublish}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </div>
+
+      <nav className="gd-sections" aria-label={t.sections}>
+        {(
+          [
+            ["admins", t.staff],
+            ["members", t.readerAccounts],
+            ["categories", t.categories],
+            ["tags", t.tags],
+            ["sites", t.sites],
+            ["audit-log", t.audit],
+          ] as const
+        )
+          .filter(([slug]) => visible.has(slug))
+          .map(([slug, label]) => (
+            <a key={slug} href={`/admin/collections/${slug}`} className="gd-chip">
+              {label}
+            </a>
+          ))}
+      </nav>
+    </Gutter>
+  );
+}
+
+function Stat({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
+  return (
+    <div className={warn ? "gd-stat gd-stat--warn" : "gd-stat"}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
+function ScopedLink({ site, href, children }: { site: ID | null; href: string; children: React.ReactNode }) {
+  return site === null ? <a href={href}>{children}</a> : <SiteLink siteID={String(site)} href={href}>{children}</SiteLink>;
+}
+
+async function siteCounts(payload: Payload, user: TypedUser | null | undefined, site: SiteRow): Promise<Counts> {
+  const staleBefore = new Date(Date.now() - STALE_DAYS * 24 * 3600 * 1000).toISOString();
+  const count = (where: Record<string, unknown>) =>
+    payload.count({ collection: "guides", where: where as never, overrideAccess: false, user }).then((r) => r.totalDocs);
+  const onSite = { site: { equals: site.id } };
+  const canSeeQueue = hasSiteRole(user, site.id, PUBLISH_ROLES);
+  const [published, drafts, stale, scheduled, readers] = await Promise.all([
+    count({ and: [onSite, { _status: { equals: "published" } }] }),
+    count({ and: [onSite, { _status: { equals: "draft" } }] }),
+    count({
+      and: [
+        onSite,
+        { _status: { equals: "published" } },
+        { or: [{ "gameContext.lastReviewedAt": { less_than: staleBefore } }, { "gameContext.lastReviewedAt": { exists: false } }] },
+      ],
+    }),
+    canSeeQueue
+      ? payload
+          .count({
+            collection: "payload-jobs",
+            where: { and: [{ taskSlug: { equals: "schedulePublish" } }, { site: { equals: site.id } }, { completedAt: { exists: false } }] },
+            overrideAccess: true,
+          })
+          .then((r) => r.totalDocs)
+      : Promise.resolve(0),
+    // Reader numbers only for those who manage memberships of this site.
+    hasSiteRole(user, site.id, ["admin"])
+      ? payload
+          .count({ collection: "members", where: { "memberships.site": { equals: site.id } }, overrideAccess: false, user })
+          .then((r) => r.totalDocs)
+          .catch(() => null)
+      : Promise.resolve(null),
+  ]);
+  return { published, drafts, scheduled, stale, readers };
+}
+
+/** Title in the editor's content locale, else in the language it was written in, plus that locale. */
+function pickTitle(value: unknown, locale: string): [string, string] {
+  if (typeof value === "string") return [value, locale];
+  if (!value || typeof value !== "object") return ["", locale];
+  const byLocale = value as Record<string, unknown>;
+  for (const code of [locale, "ru", "en", ...Object.keys(byLocale)]) {
+    const text = byLocale[code];
+    if (typeof text === "string" && text.trim()) return [text, code];
+  }
+  return ["", locale];
+}
+
+async function recentEdits(payload: Payload, user: TypedUser | null | undefined, locale: string): Promise<RecentItem[]> {
+  const load = async (collection: "guides" | "pages") => {
+    const { docs } = await payload.find({
+      collection,
+      draft: true,
+      depth: 0,
+      limit: RECENT_LIMIT,
+      sort: "-updatedAt",
+      locale: "all",
+      overrideAccess: false,
+      user,
+      select: { title: true, site: true, _status: true, updatedAt: true } as never,
+    });
+    return (docs as unknown as { id: ID; title?: unknown; site?: unknown; _status?: string; updatedAt: string }[]).map((doc) => {
+      const [title, titleLocale] = pickTitle(doc.title, locale);
+      return {
+        collection,
+        id: doc.id,
+        title,
+        titleLocale,
+        site: relationID(doc.site),
+        status: doc._status ?? "draft",
+        updatedAt: doc.updatedAt,
+      };
+    });
+  };
+  const [guides, pages] = await Promise.all([load("guides"), load("pages").catch(() => [])]);
+  return [...guides, ...pages].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, RECENT_LIMIT);
+}
+
+async function upcomingJobs(
+  payload: Payload,
+  user: TypedUser | null | undefined,
+  owner: boolean,
+  locale: string,
+): Promise<UpcomingItem[]> {
+  const sites = owner ? null : siteIDsWithRole(user, PUBLISH_ROLES);
+  if (sites && sites.length === 0) return [];
+  const { docs } = await payload.find({
+    collection: "payload-jobs",
+    where: {
+      and: [
+        { taskSlug: { equals: "schedulePublish" } },
+        { completedAt: { exists: false } },
+        ...(sites ? [{ site: { in: sites } }] : []),
+      ],
+    },
+    sort: "waitUntil",
+    limit: UPCOMING_LIMIT,
+    depth: 0,
+    overrideAccess: true,
+  });
+  return Promise.all(
+    (docs as unknown as { id: ID; waitUntil?: string; site?: unknown; input?: Record<string, unknown> }[]).map(async (job) => {
+      const input = job.input ?? {};
+      const doc = input.doc as { relationTo?: string; value?: unknown } | undefined;
+      const collection = doc?.relationTo === "pages" ? "pages" : "guides";
+      const docID = relationID(doc?.value);
+      let [title, titleLocale] = ["", locale];
+      if (docID !== null) {
+        [title, titleLocale] = await payload
+          .findByID({ collection, id: docID, draft: true, depth: 0, locale: "all", overrideAccess: false, user, select: { title: true } as never })
+          .then((d) => pickTitle((d as { title?: unknown }).title, locale))
+          .catch(() => ["", locale] as [string, string]);
+      }
+      return {
+        id: job.id,
+        when: job.waitUntil ?? "",
+        action: input.type === "unpublish" ? "unpublish" : "publish",
+        collection,
+        docID,
+        title,
+        titleLocale,
+        site: relationID(job.site),
+      } satisfies UpcomingItem;
+    }),
+  );
+}
