@@ -25,10 +25,28 @@ function key(): Buffer {
 
 const b64 = (input: Buffer | string) => Buffer.from(input).toString("base64url");
 
-export function signPreview(claims: Omit<PreviewClaims, "exp">, now = Date.now()): string {
-  const body = b64(JSON.stringify({ ...claims, exp: Math.floor(now / 1000) + PREVIEW_TTL_SECONDS }));
+function sign(claims: Omit<PreviewClaims, "exp">, exp: number): string {
+  const body = b64(JSON.stringify({ ...claims, exp }));
   const sig = b64(createHmac("sha256", key()).update(body).digest());
   return `${body}.${sig}`;
+}
+
+export function signPreview(claims: Omit<PreviewClaims, "exp">, now = Date.now()): string {
+  return sign(claims, Math.floor(now / 1000) + PREVIEW_TTL_SECONDS);
+}
+
+/** Granularity of site preview tokens (see `signSitePreview`). */
+export const SITE_PREVIEW_WINDOW_SECONDS = 60 * 60;
+
+/**
+ * Token for a preview rendered by the site itself (new tab or the Live Preview
+ * frame). Payload recomputes the live preview URL on every autosave and reloads
+ * the frame whenever the URL changes, so the expiry is rounded to the window:
+ * the token stays identical for up to an hour and is valid for one to two hours.
+ */
+export function signSitePreview(claims: Omit<PreviewClaims, "exp">, now = Date.now()): string {
+  const window = SITE_PREVIEW_WINDOW_SECONDS;
+  return sign(claims, (Math.floor(now / 1000 / window) + 2) * window);
 }
 
 export function verifyPreview(token: unknown, now = Date.now()): PreviewClaims | null {

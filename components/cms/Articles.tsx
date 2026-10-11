@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, Clock3, Newspaper } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { fetchArticle, fetchArticles } from "@/lib/cms/client";
@@ -162,7 +163,6 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
 }
 
 export async function ArticleDetailPage({ slug, lang }: { slug: string; lang: Lang }) {
-  const t = TEXT[lang];
   const result = await fetchArticle(slug, locale(lang));
   if (result.status === "disabled" || result.status === "not-found") notFound();
   // Transient CMS errors throw: Next keeps serving the last good render, and
@@ -170,7 +170,17 @@ export async function ArticleDetailPage({ slug, lang }: { slug: string; lang: La
   if (result.status === "error") throw new Error(`CMS article unavailable (${result.reason})`);
   const a = result.data;
   if (!a.resolvedLocale || a.slug !== slug) notFound();
+  return <ArticleView article={a} lang={lang} />;
+}
 
+/**
+ * Article page markup, shared by the published page and the CMS draft preview
+ * (`/cms-preview`), so a preview looks exactly like the site. `banner` renders
+ * above the article inside the page frame.
+ */
+export function ArticleView({ article: a, lang, banner }: { article: PublicArticle; lang: Lang; banner?: ReactNode }) {
+  const t = TEXT[lang];
+  const slug = a.slug;
   const config = cmsConfig();
   const toc = extractToc(a.content);
   const cover = a.cover ? safeMediaUrl(a.cover.url, config.mediaOrigins, config.publicUrl || undefined) : null;
@@ -182,7 +192,8 @@ export async function ArticleDetailPage({ slug, lang }: { slug: string; lang: La
 
   return (
     <AtlasFrame lang={lang}>
-      <article lang={a.resolvedLocale}>
+      {banner}
+      <article lang={a.resolvedLocale ?? undefined}>
         <AtlasHero
           breadcrumbs={[{ label: "World of Warcraft", href: wow }, { label: t.articles, href: articlesIndexHref(lang) }, { label: a.title ?? slug }]}
           breadcrumbsLabel={t.crumbs}

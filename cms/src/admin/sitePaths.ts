@@ -18,3 +18,24 @@ export function articleUrl(site: { slug?: unknown; publicUrl?: unknown }, slug: 
     return null;
   }
 }
+
+/**
+ * Draft preview pages of the sites (they fetch `/api/preview-content?token=…`
+ * and render the draft in the site design). RU is unprefixed on riftden.com.
+ */
+const PREVIEW_PATH: Record<string, Record<string, string>> = {
+  gildra: { en: "/cms-preview", ru: "/ru/cms-preview" },
+  riftden: { ru: "/preview", en: "/en/preview" },
+};
+
+export function sitePreviewUrl(site: { slug?: unknown; publicUrl?: unknown }, locale: string, token: string): string | null {
+  const path = typeof site.slug === "string" ? PREVIEW_PATH[site.slug]?.[locale] : undefined;
+  if (!path || typeof site.publicUrl !== "string") return null;
+  try {
+    const url = new URL(path, site.publicUrl);
+    url.searchParams.set("token", token);
+    return url.toString();
+  } catch {
+    return null;
+  }
+}

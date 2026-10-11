@@ -3,7 +3,7 @@ import type { CollectionConfig } from "payload";
 import { ARTICLE_POLICY, withEditorialPolicy } from "../editorial/policy";
 import { articleEditor } from "../fields/editor";
 import { gameDataField, seoTabField, validateSlug } from "../fields/shared";
-import { previewUrlFor } from "../preview/token";
+import { previewTarget, sitePreviewTarget } from "../preview/sitePreview";
 
 /**
  * Articles of both sites. The slug `guides` and every legacy field (`category`
@@ -20,7 +20,17 @@ export const Guides: CollectionConfig = withEditorialPolicy(
       useAsTitle: "title",
       defaultColumns: ["title", "slug", "_status", "publishedAt", "updatedAt"],
       group: { en: "Content", ru: "Контент" },
-      preview: previewUrlFor("guides"),
+      // The site's own draft page where the site supports it (CMS_SITE_PREVIEW), else the CMS preview.
+      preview: (doc, { locale, req }) => previewTarget({ collection: "guides", doc, locale, req }),
+      // Side-by-side preview in the site design; refreshes after every (auto)save.
+      livePreview: {
+        url: ({ data, locale, req }) => sitePreviewTarget({ collection: "guides", doc: data, locale: locale.code, req }),
+        breakpoints: [
+          { name: "mobile", label: "Телефон", width: 390, height: 844 },
+          { name: "tablet", label: "Планшет", width: 768, height: 1024 },
+          { name: "desktop", label: "Компьютер", width: 1440, height: 900 },
+        ],
+      },
     },
     versions: {
       maxPerDoc: 100,
