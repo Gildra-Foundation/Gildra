@@ -39,7 +39,22 @@ export type RichTextClassKey =
   | "image"
   | "caption"
   | "quote"
-  | "code";
+  | "code"
+  | "video"
+  | "videoFrame"
+  | "videoCaption"
+  | "details"
+  | "detailsSummary"
+  | "detailsBody"
+  | "prosCons"
+  | "pros"
+  | "cons"
+  | "prosConsTitle"
+  | "steps"
+  | "stepTitle"
+  | "stepBody"
+  | "button"
+  | "buttonSecondary";
 
 export type RichTextOptions = {
   /** Origins images may be loaded from (e.g. the CMS public origin). */
@@ -54,8 +69,45 @@ export type RichTextOptions = {
   calloutLabels?: Partial<Record<"info" | "tip" | "warning", string>>;
   /** Extra class for a callout tone (defaults to `cms-callout--<tone>`). */
   calloutToneClass?: (tone: "info" | "tip" | "warning") => string | undefined;
+  /** Labels of the pros/cons columns and the video frame title in the reader's language. */
+  blockLabels?: Partial<Record<"pros" | "cons" | "video", string>>;
+  /** Host name Twitch embeds must name as `parent` (e.g. gildra.net); without it Twitch videos render as links. */
+  embedParent?: string;
   classNames?: Partial<Record<RichTextClassKey, string>>;
 };
+
+/**
+ * Embed URL for the article "Video" block, from ids parsed with the same strict
+ * patterns as the CMS validation (cms/src/utilities/video.ts). Anything else → null.
+ */
+export function videoEmbedUrl(input: unknown, parent?: string): string | null {
+  if (typeof input !== "string" || input.length > 500) return null;
+  let url: URL;
+  try {
+    url = new URL(input.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  const host = url.hostname.replace(/^(www|m)\./, "");
+  const path = url.pathname;
+  const twitchParent = parent && /^[a-z0-9.-]+$/.test(parent) ? parent : null;
+  let m: RegExpMatchArray | null;
+  if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    const id = url.searchParams.get("v") ?? path.match(/^\/(?:shorts|embed|live)\/([A-Za-z0-9_-]{11})/)?.[1];
+    return id && /^[A-Za-z0-9_-]{11}$/.test(id) ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+  }
+  if (host === "youtu.be" && (m = path.match(/^\/([A-Za-z0-9_-]{11})$/))) return `https://www.youtube-nocookie.com/embed/${m[1]}`;
+  if (host === "twitch.tv" && (m = path.match(/^\/videos\/(\d{5,15})$/))) {
+    return twitchParent ? `https://player.twitch.tv/?video=${m[1]}&parent=${twitchParent}&autoplay=false` : null;
+  }
+  const clip =
+    (host === "twitch.tv" && path.match(/^\/[A-Za-z0-9_]{2,30}\/clip\/([A-Za-z0-9_-]{4,100})$/)) ||
+    (host === "clips.twitch.tv" && path.match(/^\/([A-Za-z0-9_-]{4,100})$/));
+  if (clip) return twitchParent ? `https://clips.twitch.tv/embed?clip=${clip[1]}&parent=${twitchParent}&autoplay=false` : null;
+  if (host === "rutube.ru" && (m = path.match(/^\/(?:video|play\/embed)\/([a-f0-9]{32})\/?$/))) return `https://rutube.ru/play/embed/${m[1]}`;
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // URL safety
@@ -258,6 +310,100 @@ function renderBlock(node: RichTextNode, ctx: Ctx, key: number): ReactNode {
       { key, className: [cls(ctx, "callout"), ctx.calloutToneClass ? ctx.calloutToneClass(tone) : `cms-callout--${tone}`].filter(Boolean).join(" "), "data-tone": tone },
       title ? h("p", { key: "t", className: cls(ctx, "calloutTitle") }, title) : null,
       h("p", { key: "b", className: cls(ctx, "calloutBody"), style: { whiteSpace: "pre-line" } }, typeof f.body === "string" ? f.body : ""),
+    );
+  }
+  if (f.blockType === "video") {
+    const caption = typeof f.caption === "string" && f.caption.trim() ? f.caption : null;
+    const src = videoEmbedUrl(f.url, ctx.embedParent);
+    if (!src) {
+      // Unknown provider or Twitch without a parent host: a plain, safe link instead of an embed.
+      const href = safeHref(f.url);
+      return href ? h("p", { key }, h("a", { href, rel: "noopener noreferrer", target: "_blank" }, caption ?? href)) : null;
+    }
+    return h(
+      "figure",
+      { key, className: cls(ctx, "video") },
+      h(
+        "div",
+        { key: "f", className: cls(ctx, "videoFrame") },
+        h("iframe", {
+          src,
+          title: caption ?? ctx.blockLabels?.video ?? "Video",
+          loading: "lazy",
+          allow: "accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+          allowFullScreen: true,
+          referrerPolicy: "strict-origin-when-cross-origin",
+        }),
+      ),
+      caption ? h("figcaption", { key: "c", className: cls(ctx, "videoCaption") }, caption) : null,
+    );
+  }
+  if (f.blockType === "details") {
+    const summary = typeof f.summary === "string" ? f.summary : "";
+    return h(
+      "details",
+      { key, className: cls(ctx, "details") },
+      h("summary", { key: "s", className: cls(ctx, "detailsSummary") }, summary),
+      h("p", { key: "b", className: cls(ctx, "detailsBody"), style: { whiteSpace: "pre-line" } }, typeof f.body === "string" ? f.body : ""),
+    );
+  }
+  if (f.blockType === "prosCons") {
+    const list = (value: unknown) =>
+      (Array.isArray(value) ? value : [])
+        .slice(0, 12)
+        .map((item) => String((item as { text?: unknown })?.text ?? "").trim())
+        .filter(Boolean);
+    const pros = list(f.pros);
+    const cons = list(f.cons);
+    if (!pros.length && !cons.length) return null;
+    const column = (kind: "pros" | "cons", items: string[]) =>
+      items.length
+        ? h(
+            "div",
+            { key: kind, className: cls(ctx, kind), "data-kind": kind },
+            h("p", { key: "t", className: cls(ctx, "prosConsTitle") }, ctx.blockLabels?.[kind] ?? (kind === "pros" ? "Pros" : "Cons")),
+            h("ul", { key: "l" }, items.map((text, i) => h("li", { key: i }, text))),
+          )
+        : null;
+    return h("div", { key, className: cls(ctx, "prosCons") }, column("pros", pros), column("cons", cons));
+  }
+  if (f.blockType === "steps") {
+    const steps = (Array.isArray(f.steps) ? f.steps : []).slice(0, 20).map((s) => s as { title?: unknown; body?: unknown });
+    if (!steps.length) return null;
+    return h(
+      "ol",
+      { key, className: cls(ctx, "steps") },
+      steps.map((step, i) =>
+        h(
+          "li",
+          { key: i },
+          h("p", { key: "t", className: cls(ctx, "stepTitle") }, typeof step.title === "string" ? step.title : ""),
+          typeof step.body === "string" && step.body.trim()
+            ? h("p", { key: "b", className: cls(ctx, "stepBody"), style: { whiteSpace: "pre-line" } }, step.body)
+            : null,
+        ),
+      ),
+    );
+  }
+  if (f.blockType === "button") {
+    const raw = safeHref(f.url);
+    const label = typeof f.label === "string" ? f.label.trim() : "";
+    if (!raw || !label) return null;
+    const internal = raw.startsWith("/") && !raw.startsWith("//");
+    const href = internal && ctx.localizeHref ? ctx.localizeHref(raw) : raw;
+    const external = /^https?:/.test(raw);
+    return h(
+      "p",
+      { key },
+      h(
+        "a",
+        {
+          href,
+          className: [cls(ctx, "button"), f.style === "secondary" ? cls(ctx, "buttonSecondary") : undefined].filter(Boolean).join(" ") || undefined,
+          ...(external ? { rel: "noopener noreferrer", target: "_blank" } : {}),
+        },
+        label,
+      ),
     );
   }
   if (f.blockType === "dataTable") {

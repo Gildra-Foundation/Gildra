@@ -61,6 +61,12 @@ const ru = {
   roleEditor: "редактор",
   roleAuthor: "автор",
   roleAnalyst: "аналитик",
+  navDesk: "Пульт",
+  navArticles: "Статьи",
+  navSite: "Сайт",
+  navPeople: "Люди",
+  navMore: "Ещё",
+  navReaderProfiles: "Профили читателей",
   // Site choice
   chooseSite: "Выберите сайт",
   chooseSiteIntro: (noun: string) =>
@@ -128,6 +134,12 @@ const en: typeof ru = {
   roleEditor: "editor",
   roleAuthor: "author",
   roleAnalyst: "analyst",
+  navDesk: "Desk",
+  navArticles: "Articles",
+  navSite: "Site",
+  navPeople: "People",
+  navMore: "More",
+  navReaderProfiles: "Reader profiles",
   chooseSite: "Choose a site",
   chooseSiteIntro: (noun: string) =>
     `Every ${noun} belongs to exactly one site, and the site cannot be changed later. Choose the site for the new ${noun}. You can switch sites at any time with the “Site” selector in the sidebar.`,

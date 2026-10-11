@@ -1,0 +1,128 @@
+/* Article blocks from the CMS editor (video, spoiler, pros/cons, steps, button), atlas tokens only. */
+.video {
+  margin: var(--atlas-space-6) 0;
+}
+
+.videoFrame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-sunken);
+}
+
+.videoFrame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.videoCaption {
+  margin-top: var(--atlas-space-2);
+  color: var(--atlas-text-muted);
+  font-size: 0.9em;
+}
+
+.details {
+  margin: var(--atlas-space-5) 0;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-raised);
+}
+
+.detailsSummary {
+  padding: var(--atlas-space-3) var(--atlas-space-4);
+  color: var(--atlas-text-strong);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.detailsBody {
+  margin: 0;
+  padding: 0 var(--atlas-space-4) var(--atlas-space-4);
+}
+
+.prosCons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--atlas-space-4);
+  margin: var(--atlas-space-6) 0;
+}
+
+.pros,
+.cons {
+  padding: var(--atlas-space-4);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-raised);
+}
+
+.pros {
+  box-shadow: inset 3px 0 0 var(--atlas-accent);
+}
+
+.cons {
+  box-shadow: inset 3px 0 0 var(--atlas-text-subtle);
+}
+
+.prosConsTitle {
+  margin: 0 0 var(--atlas-space-2);
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-weight: 700;
+}
+
+.pros ul,
+.cons ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.steps {
+  margin: var(--atlas-space-6) 0;
+  padding-left: 1.6em;
+}
+
+.steps > li + li {
+  margin-top: var(--atlas-space-3);
+}
+
+.stepTitle {
+  margin: 0;
+  color: var(--atlas-text-strong);
+  font-weight: 600;
+}
+
+.stepBody {
+  margin: var(--atlas-space-1) 0 0;
+}
+
+/* Doubled class: outranks the prose link colour rule (.prose a). */
+.button.button {
+  display: inline-block;
+  padding: var(--atlas-space-2) var(--atlas-space-5);
+  border: 1px solid var(--atlas-accent);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-accent);
+  color: var(--atlas-accent-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.button.button:hover,
+.button.button:focus-visible {
+  background: var(--atlas-accent-strong);
+}
+
+.button.buttonSecondary {
+  background: transparent;
+  color: var(--atlas-accent-strong);
+}
+
+.button.buttonSecondary:hover,
+.button.buttonSecondary:focus-visible {
+  background: var(--atlas-accent-wash-strong);
+}
