@@ -320,15 +320,21 @@ export interface Page {
 export interface Guide {
   id: number;
   site?: (number | null) | Site;
+  siteSlug?: string | null;
+  siteName?: string | null;
+  siteGame?: string | null;
+  sitePublicUrl?: string | null;
+  /**
+   * Main heading on the site.
+   */
   title: string;
   /**
    * Unique within the site. Changing it changes the public URL.
    */
   slug: string;
   /**
-   * Legacy Gildra category kept for compatibility. Prefer Categories.
+   * One or two sentences for article lists, link previews and search results.
    */
-  category?: ('mythic-plus' | 'raid' | 'class' | 'gear') | null;
   summary: string;
   content: {
     root: {
@@ -345,14 +351,14 @@ export interface Guide {
     };
     [k: string]: unknown;
   };
+  /**
+   * Wide image at the top of the article and in link previews, ideally 1600×900.
+   */
   hero?: (number | null) | Media;
   /**
-   * Authors are always recorded as themselves.
+   * Legacy Gildra category kept for compatibility. Prefer Categories.
    */
-  author?: (number | null) | Admin;
-  categories?: (number | Category)[] | null;
-  tags?: (number | Tag)[] | null;
-  publishedAt?: string | null;
+  category?: ('mythic-plus' | 'raid' | 'class' | 'gear') | null;
   gameContext?: {
     /**
      * e.g. 11.2.5 or 25.20
@@ -393,6 +399,9 @@ export interface Guide {
      */
     lolChampion?: string | null;
     lolRole?: ('top' | 'jungle' | 'mid' | 'bottom' | 'support') | null;
+    /**
+     * Champion ids shown under the article, e.g. Garen.
+     */
     lolMentionedChampions?: string[] | null;
   };
   seo?: {
@@ -401,6 +410,16 @@ export interface Guide {
     image?: (number | null) | Media;
     noIndex?: boolean | null;
   };
+  /**
+   * Empty: the site signs the article as its editorial team. Staff with the author role are always recorded as themselves.
+   */
+  author?: (number | null) | Admin;
+  categories?: (number | Category)[] | null;
+  tags?: (number | Tag)[] | null;
+  /**
+   * Date shown on the site; set automatically on first publication.
+   */
+  publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -871,16 +890,16 @@ export interface PagesSelect<T extends boolean = true> {
  */
 export interface GuidesSelect<T extends boolean = true> {
   site?: T;
+  siteSlug?: T;
+  siteName?: T;
+  siteGame?: T;
+  sitePublicUrl?: T;
   title?: T;
   slug?: T;
-  category?: T;
   summary?: T;
   content?: T;
   hero?: T;
-  author?: T;
-  categories?: T;
-  tags?: T;
-  publishedAt?: T;
+  category?: T;
   gameContext?:
     | T
     | {
@@ -902,6 +921,10 @@ export interface GuidesSelect<T extends boolean = true> {
         image?: T;
         noIndex?: T;
       };
+  author?: T;
+  categories?: T;
+  tags?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;

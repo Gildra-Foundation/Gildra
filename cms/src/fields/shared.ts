@@ -14,18 +14,23 @@ export const validateSlug =
     return pattern.test(value) && value.length <= 160 ? true : "Use lowercase letters, digits and dashes.";
   };
 
+const SEO_FIELDS: Field[] = [
+  { name: "title", type: "text", localized: true, maxLength: 70 },
+  { name: "description", type: "textarea", localized: true, maxLength: 170 },
+  { name: "image", type: "upload", relationTo: "media" },
+  { name: "noIndex", type: "checkbox", defaultValue: false },
+];
+
 export const seoField: Field = {
   name: "seo",
   type: "group",
   label: "SEO",
   admin: { position: "sidebar" },
-  fields: [
-    { name: "title", type: "text", localized: true, maxLength: 70 },
-    { name: "description", type: "textarea", localized: true, maxLength: 170 },
-    { name: "image", type: "upload", relationTo: "media" },
-    { name: "noIndex", type: "checkbox", defaultValue: false },
-  ],
+  fields: SEO_FIELDS,
 };
+
+/** Same `seo` group (same data and columns) for a form tab instead of the sidebar. */
+export const seoTabField: Field = { name: "seo", type: "group", label: false, fields: SEO_FIELDS };
 
 const WOW_CLASSES = [
   "death-knight",
@@ -63,7 +68,8 @@ export const gameDataField: Field = {
     {
       type: "collapsible",
       label: "World of Warcraft",
-      admin: { initCollapsed: true },
+      // Each site edits only its own game; documents without a known site show both.
+      admin: { initCollapsed: false, condition: (data) => data?.siteGame !== "lol" },
       fields: [
         { name: "wowClass", type: "select", options: WOW_CLASSES },
         { name: "wowSpec", type: "text", admin: { description: "Spec slug, e.g. frost" } },
@@ -73,7 +79,7 @@ export const gameDataField: Field = {
     {
       type: "collapsible",
       label: "League of Legends",
-      admin: { initCollapsed: true },
+      admin: { initCollapsed: false, condition: (data) => data?.siteGame !== "wow" },
       fields: [
         { name: "lolChampion", type: "text", admin: { description: "Champion id, e.g. Ahri" } },
         {
@@ -81,7 +87,12 @@ export const gameDataField: Field = {
           type: "select",
           options: ["top", "jungle", "mid", "bottom", "support"],
         },
-        { name: "lolMentionedChampions", type: "text", hasMany: true },
+        {
+          name: "lolMentionedChampions",
+          type: "text",
+          hasMany: true,
+          admin: { description: { en: "Champion ids shown under the article, e.g. Garen.", ru: "ID чемпионов, которые покажутся под статьёй, например Garen." } },
+        },
       ],
     },
   ],
