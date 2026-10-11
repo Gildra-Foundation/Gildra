@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CalendarDays, Clock3, Newspaper } from "lucide-react";
 
-import { PageShell } from "@/components/layout/PageShell";
+import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { fetchArticle, fetchArticles } from "@/lib/cms/client";
 import { cmsConfig } from "@/lib/cms/config";
 import type { CmsLocale, PublicArticle } from "@/lib/cms/contract";
@@ -113,40 +114,41 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
   const docs = result.status === "ok" ? result.data.docs : [];
   const totalPages = result.status === "ok" ? result.data.totalPages : 0;
 
+  const wow = lang === "ru" ? "/ru/wow" : "/wow";
+
   return (
-    <PageShell lang={lang} game="wow">
-      <div className={styles.page}>
-        <nav className={styles.crumbs} aria-label={t.crumbs}>
-          <Link href={lang === "ru" ? "/ru/wow" : "/wow"}>World of Warcraft</Link>
-          <span aria-hidden="true">/</span>
-          <span>{t.articles}</span>
-        </nav>
-        <header>
-          <p className={styles.eyebrow}>World of Warcraft</p>
-          <h1 className={styles.title}>{t.title}</h1>
-          <p className={styles.lead}>{t.lead}</p>
-        </header>
-        {result.status === "error" ? <p className={styles.notice} role="status">{t.unavailable}</p> : null}
-        {result.status === "ok" && docs.length === 0 ? <p className={styles.notice}>{t.empty}</p> : null}
+    <AtlasFrame lang={lang}>
+      <AtlasHero
+        breadcrumbs={[{ label: "World of Warcraft", href: wow }, { label: t.articles }]}
+        breadcrumbsLabel={t.crumbs}
+        emblem={<Newspaper />}
+        eyebrow="World of Warcraft"
+        title={t.title}
+        lede={t.lead}
+      />
+      <AtlasSection>
+        {result.status === "error" ? <AtlasNotice tone="caution" title={t.unavailable} /> : null}
+        {result.status === "ok" && docs.length === 0 ? <AtlasNotice title={t.empty} /> : null}
         {docs.length > 0 ? (
-          <ul className={styles.list}>
+          <AtlasGrid min={320} fit>
             {docs.map((a) => {
               const fallback = a.resolvedLocale !== null && a.resolvedLocale !== locale(lang);
+              const date = formatDate(a.publishedAt, lang);
               return (
-                <li key={a.id} className={styles.card} lang={a.resolvedLocale ?? undefined}>
-                  <h2>
-                    <Link href={articleHref(lang, a.slug)}>{a.title}</Link>
-                  </h2>
-                  {a.summary ? <p>{a.summary}</p> : null}
-                  <p className={styles.meta}>
-                    {formatDate(a.publishedAt, lang) ? <time dateTime={a.publishedAt!}>{formatDate(a.publishedAt, lang)}</time> : null}
-                    {a.categories[0] ? <span>{a.categories[0].title}</span> : null}
-                    {fallback ? <span className={styles.badge} title={t.fallback}>{a.resolvedLocale?.toUpperCase()}</span> : null}
-                  </p>
-                </li>
+                <AtlasCard
+                  key={a.id}
+                  href={articleHref(lang, a.slug)}
+                  eyebrow={a.categories[0]?.title}
+                  title={<span lang={a.resolvedLocale ?? undefined}>{a.title}</span>}
+                  description={a.summary || undefined}
+                  meta={[
+                    ...(date ? [{ icon: <CalendarDays aria-hidden="true" />, label: date }] : []),
+                    ...(fallback ? [{ label: <span title={t.fallback}>{a.resolvedLocale?.toUpperCase()}</span> }] : []),
+                  ]}
+                />
               );
             })}
-          </ul>
+          </AtlasGrid>
         ) : null}
         {totalPages > 1 ? (
           <nav className={styles.pager} aria-label="Pagination">
@@ -154,8 +156,8 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
             {page < totalPages ? <Link href={`${articlesIndexHref(lang)}?page=${page + 1}`}>{t.next}</Link> : null}
           </nav>
         ) : null}
-      </div>
-    </PageShell>
+      </AtlasSection>
+    </AtlasFrame>
   );
 }
 
@@ -176,31 +178,27 @@ export async function ArticleDetailPage({ slug, lang }: { slug: string; lang: La
   const published = formatDate(a.publishedAt, lang);
   const reviewed = formatDate(a.game.lastReviewedAt, lang);
 
+  const wow = lang === "ru" ? "/ru/wow" : "/wow";
+
   return (
-    <PageShell lang={lang} game="wow">
-      <article className={`${styles.page} ${styles.wide}`} lang={a.resolvedLocale}>
-        <nav className={styles.crumbs} aria-label={t.crumbs}>
-          <Link href={lang === "ru" ? "/ru/wow" : "/wow"}>World of Warcraft</Link>
-          <span aria-hidden="true">/</span>
-          <Link href={articlesIndexHref(lang)}>{t.articles}</Link>
-        </nav>
-        <header>
-          {a.categories[0] ? <p className={styles.eyebrow}>{a.categories[0].title}</p> : null}
-          <h1 className={styles.title}>{a.title}</h1>
-          {a.summary ? <p className={styles.lead}>{a.summary}</p> : null}
-          <p className={styles.meta}>
-            {a.author?.name ? <span>{t.by(a.author.name)}</span> : null}
-            {published ? <time dateTime={a.publishedAt!}>{published}</time> : null}
-            <span>{t.minutes(readingMinutes(a.content))}</span>
-            {a.game.patch ? <span>{t.patch(a.game.patch)}</span> : null}
-            {reviewed ? <span>{t.reviewed(reviewed)}</span> : null}
-          </p>
-          {fallback ? (
-            <p className={styles.notice} role="note">
-              {locale(lang) === "ru" ? t.fallback : t.otherOnly}
-            </p>
-          ) : null}
-        </header>
+    <AtlasFrame lang={lang}>
+      <article lang={a.resolvedLocale}>
+        <AtlasHero
+          breadcrumbs={[{ label: "World of Warcraft", href: wow }, { label: t.articles, href: articlesIndexHref(lang) }, { label: a.title ?? slug }]}
+          breadcrumbsLabel={t.crumbs}
+          emblem={<Newspaper />}
+          eyebrow={a.categories[0]?.title ?? "World of Warcraft"}
+          title={a.title ?? slug}
+          lede={a.summary || undefined}
+        />
+        <p className={styles.meta}>
+          {a.author?.name ? <span>{t.by(a.author.name)}</span> : null}
+          {published ? <span><CalendarDays aria-hidden="true" /><time dateTime={a.publishedAt!}>{published}</time></span> : null}
+          <span><Clock3 aria-hidden="true" />{t.minutes(readingMinutes(a.content))}</span>
+          {a.game.patch ? <span>{t.patch(a.game.patch)}</span> : null}
+          {reviewed ? <span>{t.reviewed(reviewed)}</span> : null}
+        </p>
+        {fallback ? <AtlasNotice title={locale(lang) === "ru" ? t.fallback : t.otherOnly} /> : null}
         {cover ? (
           <figure className={styles.cover}>
             {/* eslint-disable-next-line @next/next/no-img-element -- origin allow-listed server-side; no remotePatterns wildcard */}
@@ -223,6 +221,6 @@ export async function ArticleDetailPage({ slug, lang }: { slug: string; lang: La
           <CmsRichText content={a.content} lang={lang} />
         </div>
       </article>
-    </PageShell>
+    </AtlasFrame>
   );
 }

@@ -1,53 +1,115 @@
-/* CMS article surfaces. Palette follows the existing WoW route pages (dark body, gold accents). */
-.page { max-width: 920px; margin: 0 auto; padding: 56px 24px 96px; color: #e7e2d8; }
-.crumbs { display: flex; gap: 8px; margin-bottom: 32px; font-size: .85rem; color: #8f8a80; }
-.crumbs a { color: #dfb766; }
-.eyebrow { margin: 0; color: #b69a63; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.title { margin: 10px 0 0; font-size: clamp(2rem, 6vw, 3.6rem); line-height: 1.04; }
-.lead { margin: 14px 0 0; max-width: 720px; color: #aaa79f; line-height: 1.7; }
-.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 18px 0 0; color: #8f8a80; font-size: .85rem; }
-.notice { margin: 24px 0 0; padding: 14px 16px; border: 1px solid rgba(223,183,102,.3); background: rgba(223,183,102,.06); color: #cfc6b4; line-height: 1.6; }
-.cover { margin: 28px 0 0; }
-.cover img { display: block; width: 100%; height: auto; border: 1px solid rgba(255,255,255,.08); }
-.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; margin-top: 36px; }
-@media (min-width: 1100px) { .page.wide { max-width: 1180px; } .layout.withToc { grid-template-columns: 220px minmax(0, 1fr); } }
-.toc { position: sticky; top: 96px; align-self: start; font-size: .85rem; }
-.toc p { margin: 0 0 8px; color: #b69a63; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
-.toc ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
-.toc a { color: #aaa79f; }
-.toc a:hover { color: #dfb766; }
+/* atlas:strict — CMS articles: layout and reading typography; the frame, hero, cards and notices come from the atlas kit. */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--atlas-space-2) var(--atlas-space-4);
+  margin: var(--atlas-space-4) 0 0;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-meta);
+}
 
-.prose { color: #d9d3c6; line-height: 1.75; font-size: 1.02rem; overflow-wrap: anywhere; }
-.prose h2 { margin: 2.2em 0 .6em; font-size: 1.55rem; color: #f0e6cf; scroll-margin-top: 96px; }
-.prose h3 { margin: 1.8em 0 .5em; font-size: 1.2rem; color: #f0e6cf; scroll-margin-top: 96px; }
-.prose h4 { margin: 1.5em 0 .4em; font-size: 1.05rem; color: #f0e6cf; }
-.prose p, .prose ul, .prose ol { margin: 0 0 1em; }
-.prose a { color: #dfb766; text-decoration: underline; text-underline-offset: 3px; }
-.prose a:focus-visible, .page a:focus-visible { outline: 2px solid #e9b85e; outline-offset: 3px; }
-.prose code { padding: 1px 5px; background: rgba(255,255,255,.07); font-size: .92em; }
-.prose hr { border: 0; border-top: 1px solid rgba(255,255,255,.12); margin: 2em 0; }
-.quote { margin: 1.4em 0; padding: 4px 0 4px 18px; border-left: 3px solid #b69a63; color: #c4bdae; }
+.meta span { display: inline-flex; align-items: center; gap: 6px; }
+.meta svg { width: 14px; height: 14px; color: var(--atlas-accent); }
+
+.cover { margin: var(--atlas-space-5) 0 0; }
+.cover img { display: block; width: 100%; height: auto; border: 1px solid var(--atlas-line-soft); }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--atlas-space-6);
+  margin-top: var(--atlas-space-6);
+}
+
+.toc {
+  position: sticky;
+  top: calc(var(--atlas-sticky-top) + var(--atlas-space-4));
+  align-self: start;
+  font-size: var(--atlas-text-small);
+}
+
+.toc p {
+  margin: 0 0 var(--atlas-space-2);
+  color: var(--atlas-accent);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+
+.toc ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.toc a { color: var(--atlas-text-muted); }
+.toc a:hover { color: var(--atlas-accent-strong); }
+
+/* Reading column: ≤ 75ch, display serif for headings like every atlas page. */
+.prose {
+  max-width: 75ch;
+  color: var(--atlas-text);
+  font-size: var(--atlas-text-body);
+  line-height: var(--atlas-leading-body);
+  overflow-wrap: anywhere;
+}
+
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-weight: var(--atlas-weight-display);
+  line-height: var(--atlas-leading-snug);
+  scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4));
+}
+
+.prose h2 { margin: 2em 0 .6em; font-size: var(--atlas-text-h2); }
+.prose h3 { margin: 1.7em 0 .5em; font-size: var(--atlas-text-h3); }
+.prose h4 { margin: 1.4em 0 .4em; font-size: var(--atlas-text-title); }
+.prose p,
+.prose ul,
+.prose ol { margin: 0 0 1em; }
+.prose ul { padding-left: 1.2em; list-style: disc; }
+.prose ol { padding-left: 1.4em; list-style: decimal; }
+.prose a { color: var(--atlas-accent); text-decoration: underline; text-underline-offset: 3px; }
+.prose a:hover { color: var(--atlas-accent-strong); }
+.prose a:focus-visible,
+.pager a:focus-visible,
+.toc a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.prose code { padding: 1px 5px; background: var(--atlas-surface-raised); font-family: var(--atlas-font-mono); font-size: .92em; }
+.prose hr { margin: 2em 0; border: 0; border-top: 1px solid var(--atlas-line-soft); }
+
+.quote {
+  margin: 1.4em 0;
+  padding: 4px 0 4px var(--atlas-space-4);
+  border-left: 3px solid var(--atlas-accent);
+  color: var(--atlas-text-muted);
+}
+
 .figure { margin: 1.6em 0; }
 .image { display: block; max-width: 100%; height: auto; }
-.caption { margin-top: 6px; color: #8f8a80; font-size: .85rem; }
-.callout { margin: 1.4em 0; padding: 14px 16px; border: 1px solid rgba(223,183,102,.3); background: rgba(223,183,102,.06); }
-.callout[data-tone="warning"] { border-color: rgba(214,106,86,.45); background: rgba(214,106,86,.07); }
-.callout[data-tone="tip"] { border-color: rgba(131,181,113,.4); background: rgba(131,181,113,.06); }
-.calloutTitle { margin: 0 0 6px !important; font-weight: 700; color: #f0e6cf; }
-.calloutBody { margin: 0 !important; }
-.tableWrap { margin: 1.4em 0; overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; font-size: .92rem; }
-.table th, .table td { padding: 8px 10px; border: 1px solid rgba(255,255,255,.1); text-align: left; }
-.table th { color: #f0e6cf; background: rgba(255,255,255,.04); }
-.table caption { caption-side: top; text-align: left; padding-bottom: 6px; color: #8f8a80; }
+.caption { margin-top: 6px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 
-.list { display: grid; gap: 14px; margin: 32px 0 0; padding: 0; list-style: none; }
-.card { display: grid; gap: 6px; padding: 18px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.02); }
-.card:hover { border-color: rgba(223,183,102,.4); }
-.card h2 { margin: 0; font-size: 1.2rem; }
-.card h2 a { color: #f0e6cf; }
-.card p { margin: 0; color: #aaa79f; line-height: 1.6; }
-.badge { display: inline-block; width: fit-content; padding: 1px 6px; border: 1px solid rgba(255,255,255,.2); color: #aaa79f; font-size: .7rem; letter-spacing: .08em; }
-.pager { display: flex; gap: 16px; margin-top: 28px; }
-.pager a { color: #dfb766; }
-@media (max-width: 680px) { .page { padding: 40px 14px 72px; } }
+.callout {
+  margin: 1.4em 0;
+  padding: var(--atlas-space-3) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line);
+  border-left: 3px solid var(--atlas-accent);
+  background: var(--atlas-accent-wash);
+}
+
+.callout[data-tone="warning"] { border-left-color: var(--atlas-negative); }
+.callout[data-tone="tip"] { border-left-color: var(--atlas-positive); }
+.calloutTitle { margin: 0 0 6px !important; color: var(--atlas-text-strong); font-weight: 650; }
+.calloutBody { margin: 0 !important; }
+
+.tableWrap { margin: 1.4em 0; overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: var(--atlas-text-small); font-variant-numeric: lining-nums tabular-nums; }
+.table th,
+.table td { padding: 8px 10px; border: 1px solid var(--atlas-line-soft); text-align: left; }
+.table th { color: var(--atlas-text-strong); background: var(--atlas-surface-raised); }
+.table caption { padding-bottom: 6px; color: var(--atlas-text-subtle); caption-side: top; text-align: left; }
+
+.pager { display: flex; gap: var(--atlas-space-4); margin-top: var(--atlas-space-5); font-size: var(--atlas-text-small); }
+.pager a { color: var(--atlas-accent); }
+
+@media (min-width: 1100px) {
+  .layout.withToc { grid-template-columns: 220px minmax(0, 1fr); }
+}
