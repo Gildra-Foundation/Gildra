@@ -28,15 +28,16 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   and the fixture pages (/patches, /compare, /profile/*, /diablo, /genshin/**)
   answer 404. The account chip of the platform header is
   `components/auth/AccountChip.tsx` (real `/api/auth/status`, never a made-up name).
-- Block pages so far: WoW home, `/tier-lists` (one `wow.tierWorkspace` block
+- Block pages so far: `/tier-lists` (one `wow.tierWorkspace` block
   around `components/TierSection.tsx`), `/specs/[slug]`, `/privacy`, and all of
-  `/league-of-legends/**` (+ `/ru` mirrors). `/database`, `/library` and
-  `app/not-found.tsx` (atlas kit, client copy only) are app pages. UI strings via
-  `lib/i18n.ts` (`t`, `tNav`); game terms stay English; links through
-  `p(lang, href)` / `gameHref`; anchors through `lib/anchors.ts`.
-  Homepage stays an overview with a compact Tier Preview; the full
-  filters/table/detail experience lives only on `/tier-lists`. Never embed the
-  full workspace back into the homepage.
+  `/league-of-legends/**` (+ `/ru` mirrors). The WoW hub `/wow` is the atlas
+  page `components/wow/home/WowHome.tsx` (links only; the full tier
+  filters/table/detail experience lives only on `/tier-lists`). `/database`,
+  `/library` and `app/not-found.tsx` (atlas kit, client copy only) are app
+  pages. UI strings via `lib/i18n.ts` (`t`, `tNav`) in server code — client
+  components take strings as props or from a local `*Copy.ts`; game terms stay
+  English; links through `p(lang, href)` / `gameHref`; anchors through
+  `lib/anchors.ts`.
 - Styling: inner pages (everything except the landing scene and the contents
   book) use the **atlas theme**: tokens in `app/styles/atlas-theme.css`, the
   server-component kit in `components/atlas/` (README there), rules in
