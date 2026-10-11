@@ -428,6 +428,12 @@ grep -q '^CATALOG_BACKUP_LOCAL_DIRECTORY=/var/lib/gildra/catalog-backups$' "$boo
 grep -Fq 'bootstrap-runtime-policy.sh' "$repository_directory/.github/workflows/deploy.yml"
 grep -Fq 'chown root:65532' "$bootstrap_script"
 grep -Fq 'chmod 0640' "$bootstrap_script"
+# The configuration upload must not reset ownership of the whole deployment
+# directory: that strips group 65532 from the backup keys on web-only releases.
+if grep -Fq "chown -R root:root /opt/gildra'" "$repository_directory/.github/workflows/deploy.yml"; then
+  printf 'deploy.yml resets ownership of the whole /opt/gildra (breaks backup key access)\n' >&2
+  exit 1
+fi
 
 bootstrap_manifest=$test_directory/legacy-release.env
 {

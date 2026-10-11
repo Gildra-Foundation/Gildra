@@ -170,8 +170,13 @@ jobs:
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
+        # Own only what was uploaded. A recursive chown of /opt/gildra also reset
+        # the backup keys in /opt/gildra/backups to root:root, which the backup
+        # container (group 65532) cannot read; web-only releases skip the
+        # bootstrap step that restores them, so every nightly backup failed from
+        # 2026-10-01 and the catalog recovery gate blocked all imports.
         run: |
-          tar -czf - compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && sudo chown -R root:root /opt/gildra'
+          tar -czf - compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && cd /opt/gildra && sudo chown -R root:root compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd'
       - name: Bootstrap catalog runtime policy
         if: steps.mode.outputs.mode == 'full'
         env:
