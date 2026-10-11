@@ -1,14 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState, type CSSProperties, type SetStateAction } from "react";
-import { Anvil, ArrowDown, ArrowUp, Check, ChevronDown, CircleCheckBig, ClipboardPaste, Crosshair, Edit3, Flame, LibraryBig, Network, Play, Plus, Save, Share2, ShieldCheck, Skull, Swords, Target, Timer, Trash2, UsersRound, X, Zap } from "lucide-react";
+import { Anvil, ArrowDown, ArrowUp, Check, ChevronDown, CircleCheckBig, ClipboardPaste, Crosshair, Edit3, LibraryBig, Network, Play, Plus, Save, Share2, Skull, Swords, Trash2, UsersRound, X, Zap } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import type { RotationAbility, RotationAplRule, RotationBuildProfile, RotationScenario, RotationSimulationResult, SavedRotationCombo } from "@/lib/platform/rotation/types";
 import { AbilityIcon } from "./AbilityIcon";
 import { RotationAbilitySigil } from "./RotationAbilitySigil";
 import { rotationAbilityVisual, rotationVisualStyle } from "./rotationVisualTheme";
 import styles from "./rotationLab.module.css";
+import shell from "./rotationLabShell.module.css";
+import { AtlasButton, AtlasLinkButton } from "@/components/atlas/AtlasButton";
+import { AtlasNotice } from "@/components/atlas/AtlasNotice";
 import { FURY_REFERENCE_LOADOUT, TALENT_HANDOFF_STORAGE_KEY } from "@/lib/wowTalentLoadout";
 import { characterStorageScope, withCharacterContext } from "@/lib/platform/rotation/characterRequestContext";
 import { validateAplRules } from "@/lib/platform/rotation/apl";
@@ -78,7 +80,7 @@ function validStudio(value: unknown): StoredStudio {
   return { builds, combos, selectedBuildId: typeof parsed.selectedBuildId === "string" ? parsed.selectedBuildId : undefined };
 }
 
-export function BuildOptimizer({ slug, specialization, lang, abilities, scenario, fightLength, targets, rules, aplRules, characterSlug, dataMode, connectedTalentLoadout, embedded = false, currentResult, resultMatchesCurrent, onScenarioChange, onFightLengthChange, onTargetsChange, onTalentLoadoutChange, onOptimized, onUseCombo }: {
+export function BuildOptimizer({ slug, specialization, lang, abilities, scenario, fightLength, targets, rules, aplRules, characterSlug, dataMode, connectedTalentLoadout, embedded = false, currentResult, resultMatchesCurrent, sectionTitle, sectionText, onScenarioChange, onFightLengthChange, onTargetsChange, onTalentLoadoutChange, onOptimized, onUseCombo }: {
   slug: string;
   specialization: string;
   lang: Lang;
@@ -94,6 +96,8 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
   embedded?: boolean;
   currentResult: RotationSimulationResult | null;
   resultMatchesCurrent: boolean;
+  sectionTitle: string;
+  sectionText: string;
   onScenarioChange: (scenario: RotationScenario) => void;
   onFightLengthChange: (seconds: number) => void;
   onTargetsChange: (targets: number) => void;
@@ -397,58 +401,58 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
 
   return (
     <>
-    <section className={styles.buildStudio} aria-labelledby="build-studio-title">
-      <header className={styles.simpleStudioHeader}>
-        <div><span><Anvil /> {ru ? "КУЗНИЦА ПРОКАСТА" : "COMBO FORGE"}</span><h2 id="build-studio-title">{ru ? "Настрой бой. Получи последовательность." : "Set the fight. Get the sequence."}</h2><p>{ru ? "Выбери таланты и ситуацию — остальное лаборатория соберёт сама." : "Choose your talents and encounter; the lab handles the rest."}</p></div>
-        <span className={styles.forgeOnline}><i /><span><small>{ru ? "ТРЕНАЖЁР ГОТОВ" : "TRAINER READY"}</small><strong>{specialization}</strong></span></span>
+    <section className={shell.section} aria-labelledby="build-studio-title">
+      <header className={shell.sectionHeader} data-atlas-ui>
+        <div><h2 id="build-studio-title">{sectionTitle}</h2><p>{sectionText}</p></div>
       </header>
 
-      <div className={styles.forgeConsole}>
-        <article className={`${styles.forgePanel} ${styles.forgeBuild}`}>
-          <header><span><ShieldCheck /></span><div><small>{ru ? "БОЕВАЯ СБОРКА" : "COMBAT BUILD"}</small><h3>{ru ? "Таланты и приоритет" : "Talents and priority"}</h3></div></header>
-          <label className={styles.buildSelect}><span>{ru ? "Билд" : "Build"}</span><select value={selectedBuildId} disabled={optimizing || buildEditor !== null} onChange={(event) => { setSelectedBuildId(event.target.value); setScores([]); setReadyComboId(null); setError(""); }}>{builds.map((build) => <option key={build.id} value={build.id}>{build.name}</option>)}</select></label>
-          {!buildEditor && selectedBuild && <div className={styles.simpleBuildActions}>
-            <span><Check /> {selectedBuild.source === "reference" ? (characterSlug && dataMode === "battle-net" ? (ru ? "Шмот и активные таланты подключены из Battle.net" : "Gear and active talents connected from Battle.net") : (ru ? "Базовый профиль спека подключён" : "Specialization baseline connected")) : (ru ? "Ваши таланты подключены" : "Your talents are connected")}</span>
-            <div>
-              {embedded ? <a href="#live-talents-heading"><Network /> {ru ? "Изменить таланты выше" : "Change talents above"}</a> : <Link href={talentCalculatorHref}><Network /> {ru ? "Выбрать таланты" : "Choose talents"}</Link>}
-              <button type="button" onClick={selectedBuild.source === "reference" ? openNewBuild : openBuildEdit}>{selectedBuild.source === "reference" ? <ClipboardPaste /> : <Edit3 />}{ru ? "Вставить строку" : "Paste string"}</button>
+      <div className={shell.forge} data-atlas-ui>
+        <fieldset className={shell.group}>
+          <legend>{ru ? "Билд" : "Build"}</legend>
+          <label className={shell.field}><span>{ru ? "Набор талантов" : "Talent loadout"}</span><select value={selectedBuildId} disabled={optimizing || buildEditor !== null} onChange={(event) => { setSelectedBuildId(event.target.value); setScores([]); setReadyComboId(null); setError(""); }}>{builds.map((build) => <option key={build.id} value={build.id}>{build.name}</option>)}</select></label>
+          {!buildEditor && selectedBuild ? <>
+            <p className={shell.status}><Check aria-hidden="true" />{selectedBuild.source === "reference" ? (characterSlug && dataMode === "battle-net" ? (ru ? "Шмот и активные таланты подключены из Battle.net" : "Gear and active talents connected from Battle.net") : (ru ? "Базовый профиль специализации" : "Specialization baseline")) : (ru ? "Ваши таланты подключены" : "Your talents are connected")}</p>
+            <div className={shell.editorButtons}>
+              {embedded ? <AtlasLinkButton size="sm" href="#live-talents-heading" icon={<Network aria-hidden="true" />}>{ru ? "Изменить таланты выше" : "Change talents above"}</AtlasLinkButton> : <AtlasLinkButton size="sm" href={talentCalculatorHref} prefetch={false} icon={<Network aria-hidden="true" />}>{ru ? "Выбрать таланты" : "Choose talents"}</AtlasLinkButton>}
+              <AtlasButton size="sm" icon={selectedBuild.source === "reference" ? <ClipboardPaste aria-hidden="true" /> : <Edit3 aria-hidden="true" />} onClick={selectedBuild.source === "reference" ? openNewBuild : openBuildEdit}>{ru ? "Вставить строку" : "Paste string"}</AtlasButton>
             </div>
-          </div>}
-          {buildEditor && <div className={styles.buildEditor}>
-            <label><span>{ru ? "Название билда" : "Build name"}</span><input value={buildName} maxLength={48} autoFocus onChange={(event) => setBuildName(event.target.value)} /></label>
-            <label><span>{ru ? "Строка талантов из WoW" : "WoW talent import string"}</span><textarea value={talentLoadout} spellCheck={false} rows={4} onChange={(event) => setTalentLoadout(event.target.value.replace(/\s/g, ""))} placeholder={slug === "fury-warrior" ? `${FURY_REFERENCE_LOADOUT.slice(0, 28)}…` : (ru ? "Вставьте строку импорта…" : "Paste an import string…")} /></label>
-            <p>{ru ? "Где взять: открой таланты в WoW → меню набора → Поделиться → Копировать строку импорта." : "In WoW: Talents → loadout menu → Share → Copy import string."}</p>
-            <div><button type="button" className={styles.primaryMini} onClick={saveBuild}><Save /> {ru ? "Сохранить билд" : "Save build"}</button><button type="button" onClick={() => { setBuildEditor(null); setError(""); }}><X /> {ru ? "Отмена" : "Cancel"}</button>{buildEditor === "edit" && <button type="button" className={styles.dangerMini} onClick={deleteBuild}><Trash2 /> {ru ? "Удалить" : "Delete"}</button>}</div>
-          </div>}
-        </article>
+          </> : null}
+          {buildEditor ? <>
+            <label className={shell.field}><span>{ru ? "Название билда" : "Build name"}</span><input value={buildName} maxLength={48} autoFocus onChange={(event) => setBuildName(event.target.value)} /></label>
+            <label className={shell.field}><span>{ru ? "Строка талантов из WoW" : "WoW talent import string"}</span><textarea value={talentLoadout} spellCheck={false} rows={4} onChange={(event) => setTalentLoadout(event.target.value.replace(/\s/g, ""))} placeholder={slug === "fury-warrior" ? `${FURY_REFERENCE_LOADOUT.slice(0, 28)}…` : (ru ? "Вставьте строку импорта…" : "Paste an import string…")} /></label>
+            <p className={shell.help}>{ru ? "Где взять: таланты в WoW → меню набора → Поделиться → Копировать строку импорта." : "In WoW: Talents → loadout menu → Share → Copy import string."}</p>
+            <div className={shell.editorButtons}>
+              <AtlasButton size="sm" variant="primary" icon={<Save aria-hidden="true" />} onClick={saveBuild}>{ru ? "Сохранить билд" : "Save build"}</AtlasButton>
+              <AtlasButton size="sm" icon={<X aria-hidden="true" />} onClick={() => { setBuildEditor(null); setError(""); }}>{ru ? "Отмена" : "Cancel"}</AtlasButton>
+              {buildEditor === "edit" ? <AtlasButton size="sm" variant="ghost" icon={<Trash2 aria-hidden="true" />} onClick={deleteBuild}>{ru ? "Удалить" : "Delete"}</AtlasButton> : null}
+            </div>
+          </> : null}
+        </fieldset>
 
-        <article className={`${styles.forgePanel} ${styles.forgeEncounter}`}>
-          <header><span><Crosshair /></span><div><small>{ru ? "УСЛОВИЯ БОЯ" : "ENCOUNTER"}</small><h3>{ru ? "Где проверяем билд" : "Where to test it"}</h3></div></header>
-          <div className={styles.encounterChoices} role="radiogroup" aria-label={ru ? "Тип боя" : "Encounter type"}>
-            {(["single-target", "aoe", "execute"] as const).map((item) => {
-              const EncounterIcon = item === "single-target" ? Crosshair : item === "aoe" ? UsersRound : Skull;
-              return <button key={item} type="button" role="radio" aria-checked={scenario === item} onClick={() => { setScores([]); setReadyComboId(null); onScenarioChange(item); }} disabled={optimizing}><EncounterIcon /> <span><strong>{item === "single-target" ? (ru ? "Одна цель" : "Single target") : item === "aoe" ? (ru ? "Пачка" : "AoE") : (ru ? "Добить" : "Execute")}</strong><small>{item === "single-target" ? (ru ? "босс или манекен" : "boss or dummy") : item === "aoe" ? (ru ? "пачка противников" : "enemy pack") : (ru ? "цель ниже 20%" : "target below 20%")}</small></span></button>;
-            })}
+        <fieldset className={shell.group}>
+          <legend>{ru ? "Тип боя" : "Encounter"}</legend>
+          <div className={shell.choices} role="radiogroup" aria-label={ru ? "Тип боя" : "Encounter type"}>
+            {(["single-target", "aoe", "execute"] as const).map((item) => (
+              <button key={item} type="button" role="radio" aria-checked={scenario === item} onClick={() => { setScores([]); setReadyComboId(null); onScenarioChange(item); }} disabled={optimizing}>
+                <strong>{item === "single-target" ? (ru ? "Одна цель" : "Single target") : item === "aoe" ? (ru ? "Несколько целей" : "AoE") : (ru ? "Добивание" : "Execute")}</strong>
+                <small>{item === "single-target" ? (ru ? "босс или манекен" : "boss or dummy") : item === "aoe" ? (ru ? "пачка противников" : "enemy pack") : (ru ? "цель ниже 20%" : "target below 20%")}</small>
+              </button>
+            ))}
           </div>
-          <div className={styles.encounterOptions}>
-            <label><span><Timer /> {ru ? "Длительность" : "Duration"}</span><select value={fightLength} disabled={optimizing} onChange={(event) => { setScores([]); setReadyComboId(null); onFightLengthChange(Number(event.target.value)); }}><option value="60">1:00</option><option value="120">2:00</option><option value="180">3:00</option><option value="300">5:00</option></select></label>
-            {scenario === "aoe" && <label><span>{ru ? "Сколько целей" : "Targets"}</span><select value={targets} disabled={optimizing} onChange={(event) => { setScores([]); setReadyComboId(null); onTargetsChange(Number(event.target.value)); }}>{[2, 3, 5, 8].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>}
-            <span className={styles.encounterReadout}><Target /><span><small>{ru ? "ЦЕЛЕЙ" : "TARGETS"}</small><strong>{targetCount}</strong></span></span>
+          <div className={shell.pair}>
+            <label className={shell.field}><span>{ru ? "Длительность" : "Duration"}</span><select value={fightLength} disabled={optimizing} onChange={(event) => { setScores([]); setReadyComboId(null); onFightLengthChange(Number(event.target.value)); }}><option value="60">1:00</option><option value="120">2:00</option><option value="180">3:00</option><option value="300">5:00</option></select></label>
+            <label className={shell.field}><span>{ru ? "Целей" : "Targets"}</span><select value={targetCount} disabled={optimizing || scenario !== "aoe"} onChange={(event) => { setScores([]); setReadyComboId(null); onTargetsChange(Number(event.target.value)); }}>{(scenario === "aoe" ? [2, 3, 5, 8] : [1]).map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
           </div>
-        </article>
+        </fieldset>
 
-        <aside className={styles.forgeLaunch} data-busy={optimizing || undefined}>
-          <div className={styles.launchCore} aria-hidden="true"><i /><i /><Flame /></div>
-          <span>{optimizing ? (ru ? "ИДЁТ РАСЧЁТ" : "CALCULATING") : (ru ? "ГОТОВО К ЗАПУСКУ" : "READY TO FORGE")}</span>
-          <h3>{scenarioName}</h3>
-          <p>{selectedBuild?.name}</p>
-          <ul aria-label={ru ? "Параметры расчёта" : "Calculation settings"}><li><Timer /> {Math.floor(fightLength / 60)}:{String(fightLength % 60).padStart(2, "0")}</li><li><Target /> {targetCount}</li></ul>
-          <button type="button" onClick={() => void optimize()} disabled={optimizing || buildEditor !== null}><Zap /> {optimizing ? (ru ? `${optimizerStep} из ${optimizerTotal}…` : `${optimizerStep} of ${optimizerTotal}…`) : (ru ? "Рассчитать прокаст" : "Calculate combo")}</button>
-          {optimizing && <div className={styles.optimizerProgress} role="progressbar" aria-label={ru ? "Расчёт комбинации" : "Calculating combo"} aria-valuemin={0} aria-valuemax={optimizerTotal} aria-valuenow={optimizerStep}><span style={{ width: `${optimizerTotal ? (optimizerStep / optimizerTotal) * 100 : 0}%` }} /></div>}
-        </aside>
+        <div className={shell.run} data-busy={optimizing || undefined}>
+          <AtlasButton variant="primary" icon={<Zap aria-hidden="true" />} onClick={() => void optimize()} disabled={optimizing || buildEditor !== null}>{optimizing ? (ru ? `Вариант ${optimizerStep} из ${optimizerTotal}…` : `Variant ${optimizerStep} of ${optimizerTotal}…`) : (ru ? "Подобрать прокаст" : "Find best combo")}</AtlasButton>
+          {optimizing ? <div className={shell.progress} data-value role="progressbar" aria-label={ru ? "Подбор прокаста" : "Finding the best combo"} aria-valuemin={0} aria-valuemax={optimizerTotal} aria-valuenow={optimizerStep} style={{ "--progress": `${optimizerTotal ? (optimizerStep / optimizerTotal) * 100 : 0}%` } as CSSProperties}><span /></div> : null}
+          <p className={shell.runNote}>{scenarioName} · {Math.floor(fightLength / 60)}:{String(fightLength % 60).padStart(2, "0")} · {selectedBuild?.name}</p>
+        </div>
       </div>
 
-      {(notice || error || workspace.message || workspace.syncState === "saving") && <div className={error ? styles.buildError : styles.buildNotice} role={error ? "alert" : "status"}>{error || notice || workspace.message || (ru ? "Сохраняем в аккаунте…" : "Saving to account…")}</div>}
+      {(notice || error || workspace.message || workspace.syncState === "saving") ? <div className={shell.stack} data-atlas-ui role={error ? "alert" : "status"}><AtlasNotice tone={error ? "caution" : "info"}>{error || notice || workspace.message || (ru ? "Сохраняем в аккаунте…" : "Saving to account…")}</AtlasNotice></div> : null}
 
       {latestCombo && !optimizing && <section className={styles.readyCombo} aria-labelledby="ready-combo-title">
         <header><CircleCheckBig /><div><span>{ru ? "ПРОКАСТ ГОТОВ" : "COMBO READY"}</span><h3 id="ready-combo-title">{ru ? "Жми способности слева направо" : "Press abilities from left to right"}</h3><p>{ru ? "Тренажёр подсветит каждый шаг. Ошибка не сдвинет комбинацию дальше." : "The trainer highlights every step. A mistake will not advance the combo."}</p></div><strong>{compactDps(latestCombo.dps)} <small>DPS</small></strong></header>

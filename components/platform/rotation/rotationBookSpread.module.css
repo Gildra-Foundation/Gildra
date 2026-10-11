@@ -19,14 +19,6 @@
   justify-self: start;
   align-self: center;
 }
-:global(#rotation-lab-content).bookSpread .encounterChoices {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-:global(#rotation-lab-content).bookSpread .encounterChoices > button {
-  min-width: 0;
-  grid-column: auto;
-}
 :global(#rotation-lab-content).bookSpread .readout {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -55,13 +47,6 @@
 :global(#rotation-lab-content).bookSpread .barSheet { margin-block: 16px 0; }
 :global(#rotation-lab-content).bookSpread .foldout > :first-child { margin-top: 0; }
 :global(#rotation-lab-content).bookSpread .foldout > :last-child { margin-bottom: 0; }
-:global(#rotation-lab-content).bookSpread .controlsSheet {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
-}
 :global(#rotation-lab-content).bookSpread .playbackSheet { margin-top: 16px; }
 :global(#rotation-lab-content).bookSpread .leafNotes {
   display: block;
@@ -73,15 +58,6 @@
   line-height: 1.65;
 }
 :global(#rotation-lab-content).bookSpread .leafNotes > svg { display: inline-block; margin-right: 4px; vertical-align: text-bottom; }
-:global(#rotation-lab-content).bookSpread .chapterSummary {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) var(--rotation-book-gap) minmax(0, 1fr) 20px;
-  column-gap: 8px;
-  padding-inline: 0;
-}
-:global(#rotation-lab-content).bookSpread .chapterSummary > span { grid-column: 2; }
-:global(#rotation-lab-content).bookSpread .chapterSummary > svg:last-child { grid-column: 5; }
-:global(#rotation-lab-content).bookSpread .chapterSummary > span > * { white-space: normal; }
 
 @container auditPage (max-width: 820px) {
   :global(#rotation-lab-content).bookSpread .leafPair,
@@ -89,14 +65,6 @@
   :global(#rotation-lab-content).bookSpread .leafPair > *,
   :global(#rotation-lab-content).bookSpread .readout > :nth-child(n) { grid-column: 1; grid-row: auto; }
   :global(#rotation-lab-content).bookSpread .leafNotes { columns: 1; }
-  :global(#rotation-lab-content).bookSpread .chapterSummary { grid-template-columns: 20px minmax(0, 1fr) 20px; }
-  :global(#rotation-lab-content).bookSpread .chapterSummary > svg:last-child { grid-column: 3; }
   :global(#rotation-lab-content).bookSpread .foldout,
   :global(#rotation-lab-content).bookSpread .barSheet { padding: 12px; margin-block: 12px; }
-}
-@container auditPage (max-width: 420px) {
-  :global(#rotation-lab-content).bookSpread .controlsSheet { justify-content: stretch; }
-  :global(#rotation-lab-content).bookSpread .controlsSheet > * { flex: 1 1 auto; min-width: 0; }
-  :global(#rotation-lab-content).bookSpread .controlsSheet > :first-child { flex-basis: 100%; }
-  :global(#rotation-lab-content).bookSpread .encounterChoices { grid-template-columns: minmax(0, 1fr); }
 }

@@ -4,13 +4,14 @@ import { useState } from "react";
 import { CheckCircle2, ChevronDown, ChevronUp, GripVertical, Plus, RotateCcw, X } from "lucide-react";
 import type { RotationAbility, RotationAplOptions, RotationAplRule } from "@/lib/platform/rotation/types";
 import type { Lang } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import { AbilityIcon } from "./AbilityIcon";
 import { AplConditionEditor, conditionSummary } from "./AplConditionEditor";
 import styles from "./rotationLab.module.css";
 import deferredLabStyles from "./rotationLabDeferred.module.css";
+import shell from "./rotationLabShell.module.css";
 
-export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceLabel, defaults, lang, onChange, onAplChange, onReset, interactionsDisabled = false }: {
+export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceLabel, defaults, lang, wide = false, onChange, onAplChange, onReset, interactionsDisabled = false }: {
   abilities: RotationAbility[];
   rules: string[];
   aplRules: RotationAplRule[];
@@ -18,6 +19,8 @@ export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceL
   sourceLabel: string;
   defaults: string[];
   lang: Lang;
+  /** Full-width list (two columns on desktop) while there is no timeline beside it. */
+  wide?: boolean;
   onChange: (rules: string[]) => void;
   onAplChange: (rules: RotationAplRule[]) => void;
   onReset: () => void;
@@ -49,7 +52,7 @@ export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceL
         <div><h2 id="priority-rules-title">{tr("Priority Rules")}</h2><small>{sourceLabel} · {tr("Drag to reorder")}</small></div>
         <button className={deferredLabStyles.iconButton} onClick={onReset} disabled={interactionsDisabled} aria-label={tr("Reset priority rules")} title={tr("Reset priority rules")}><RotateCcw /></button>
       </header>
-      <ol className={styles.ruleList}>
+      <ol className={`${styles.ruleList} ${wide ? shell.ruleListWide : ""}`}>
         {rules.map((id, index) => {
           const ability = byId.get(id);
           const aplRule = aplRules.find((rule) => rule.abilityId === id);

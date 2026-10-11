@@ -26,8 +26,3 @@ html[data-route-theme="wow"]:has([data-grimoire-home]) body {
   background-image: none;
 }
 
-html:has([data-rotation-spec]),
-body:has([data-rotation-spec]) {
-  max-width: 100%;
-  overflow-x: clip;
-}

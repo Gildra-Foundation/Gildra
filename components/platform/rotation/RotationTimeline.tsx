@@ -3,7 +3,7 @@
 import { memo, useMemo, useState } from "react";
 import { MoveHorizontal, MousePointer2 } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import type { RotationAbility, RotationSimulationResult } from "@/lib/platform/rotation/types";
 import { AbilityIcon } from "./AbilityIcon";
 import styles from "./rotationLab.module.css";

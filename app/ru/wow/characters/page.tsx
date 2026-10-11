@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { auth, isBattleNetAuthConfigured } from "@/auth";
-import { ConnectedCharacterRosterLoader } from "@/components/wow/characters/ConnectedCharacterRosterLoader";
+import { CharacterRosterConnectedPage } from "@/components/wow/characters/CharacterRosterConnectedPage";
 import { CharacterRosterEntryPage } from "@/components/wow/characters/CharacterRosterEntryPage";
 import { BATTLE_NET_REGIONS, getBattleNetPreferredRegion } from "@/lib/wow/battleNetCharacters";
 
@@ -25,5 +25,5 @@ export default async function CharactersPage() {
   if (!session?.battleNetAccessToken) {
     return <CharacterRosterEntryPage locale="ru" accountName={accountName} apiError={apiError} />;
   }
-  return <ConnectedCharacterRosterLoader locale="ru" accountName={accountName} pendingRegions={[preferredRegion, ...remainingRegions]} />;
+  return <CharacterRosterConnectedPage locale="ru" accountName={accountName} pendingRegions={[preferredRegion, ...remainingRegions]} />;
 }

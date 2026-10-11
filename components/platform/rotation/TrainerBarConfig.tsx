@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { ChevronDown, ChevronUp, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import type { RotationAbility } from "@/lib/platform/rotation/types";
 import { AbilityIcon } from "./AbilityIcon";
 import { actionBindingLabel, bindingFromKeyboardEvent, bindingFromMouseEvent, bindingFromWheelEvent, isRiskyActionBinding, normalizeActionBinding } from "./actionBarBindings";

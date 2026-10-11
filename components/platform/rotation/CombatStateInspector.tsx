@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Activity, AlertTriangle, CheckCircle2, Gauge, Sparkles, TimerReset } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import type { RotationResourceTrack, RotationSimulationResult } from "@/lib/platform/rotation/types";
 import styles from "./rotationLab.module.css";
 import deferredLabStyles from "./rotationLabDeferred.module.css";

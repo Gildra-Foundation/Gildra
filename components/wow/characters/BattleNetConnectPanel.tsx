@@ -1,27 +1,24 @@
 import type { ReactNode } from "react";
-import { Shield } from "lucide-react";
-import manuscriptStyles from "./battleNetConnectPanel.module.css";
-import atlasStyles from "./battleNetAtlasPanel.module.css";
+import { ShieldCheck } from "lucide-react";
+import styles from "./battleNetConnectPanel.module.css";
 
-export function BattleNetConnectPanel({ eyebrow, title, description, children, note, variant = "book" }: {
-  variant?: "book" | "atlas";
+/** The one Battle.net sign-in card of the account pages (login, roster, roster errors). */
+export function BattleNetConnectPanel({ eyebrow, title, description, children, note, headingLevel = 2 }: {
   eyebrow: string;
   title: string;
   description: string;
-  children: ReactNode;
+  children?: ReactNode;
   note?: ReactNode;
+  headingLevel?: 2 | 3;
 }) {
-  const styles = variant === "atlas" ? atlasStyles : manuscriptStyles;
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
-    <section className={styles.panel} aria-labelledby="battlenet-connect-title">
-      <span className={styles.seal} aria-hidden="true"><Shield /></span>
-      <div className={styles.copy}>
-        <small>{eyebrow}</small>
-        <h2 id="battlenet-connect-title">{title}</h2>
-        <p>{description}</p>
-      </div>
-      <div className={styles.actions}>{children}</div>
-      {note ? <div className={styles.note}>{note}</div> : null}
-    </section>
+    <div className={styles.panel}>
+      <p className={styles.eyebrow}><ShieldCheck aria-hidden="true" />{eyebrow}</p>
+      <Heading id="battlenet-connect-title" className={styles.title}>{title}</Heading>
+      <p className={styles.text}>{description}</p>
+      {children ? <div className={styles.actions}>{children}</div> : null}
+      {note ? <p className={styles.note}>{note}</p> : null}
+    </div>
   );
 }

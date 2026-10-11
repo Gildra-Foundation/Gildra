@@ -1,5 +1,5 @@
 import type { Lang } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { rotationT as t } from "./rotationDictionary";
 import type { RotationAbility, RotationPreset, RotationScenario, RotationSimulationResult, SavedRotationCombo } from "./types";
 
 export const rotationLabelKey = (value: string) => value.toLowerCase().replace(/[^a-zа-яё0-9]/g, "");

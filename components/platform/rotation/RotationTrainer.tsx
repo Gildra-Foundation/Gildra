@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { BarChart3, CheckCircle2, Gamepad2, Pause, Play, RotateCcw, Settings2, Square, Zap } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import type { RotationAbility, RotationSequenceSource } from "@/lib/platform/rotation/types";
 import { AbilityIcon } from "./AbilityIcon";
 import { RotationAbilitySigil } from "./RotationAbilitySigil";

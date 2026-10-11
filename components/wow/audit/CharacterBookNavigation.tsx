@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import styles from "./characterAtlasProfile.module.css";
 import type { Lang } from "@/lib/i18n";
-import { CharacterLanguageSwitch } from "./CharacterLanguageSwitch";
 
 
 const chapters = [
@@ -61,6 +60,5 @@ export function CharacterBookNavigation({ characterName, hasRotation, lang = "ru
     <div>{chapters.filter((chapter) => hasRotation || chapter.id !== "chapter-rotation").map((chapter) =>
       <a key={chapter.id} href={`#${chapter.id}`} aria-current={activeChapter === chapter.id ? "location" : undefined}>{chapter[lang]}</a>
     )}</div>
-    <CharacterLanguageSwitch lang={lang} />
   </nav>;
 }

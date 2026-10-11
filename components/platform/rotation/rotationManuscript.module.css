@@ -78,7 +78,7 @@
   top: -11px;
   right: 1px;
   color: var(--script-ink);
-  font: 600 10px/1 ui-monospace, monospace;
+  font: 600 var(--atlas-text-meta)/1 ui-monospace, monospace;
   text-shadow: none;
   opacity: 1;
 }
@@ -337,7 +337,7 @@
 @container combat-arsenal (max-width: 450px) {
   :global(#rotation-lab-content) .manuscript .lane { grid-template-columns: 24px auto; gap: 8px; }
   :global(#rotation-lab-content) .manuscript .rowLabel b { font-size: 20px; }
-  :global(#rotation-lab-content) .manuscript .rowLabel small { font-size: 9px; }
+  :global(#rotation-lab-content) .manuscript .rowLabel small { font-size: var(--atlas-text-label); }
 }
 @keyframes manuscript-reveal {
   from { opacity: 0; transform: translateY(-6px); }

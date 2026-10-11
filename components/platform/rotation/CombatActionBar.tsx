@@ -2,9 +2,9 @@
 
 import { memo, startTransition, useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type DragEvent } from "react";
 import dynamic from "next/dynamic";
-import { BookOpen, Gauge, Keyboard, ListOrdered, Pause, Play, RotateCcw, ShieldCheck, Sparkles, Swords, TimerReset, Trash2 } from "lucide-react";
+import { BookOpen, Gauge, Keyboard, ListOrdered, Pause, Play, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
-import type { RotationAbility, RotationCast, RotationCooldownWindow, RotationScenario, RotationSimulationResult } from "@/lib/platform/rotation/types";
+import type { RotationAbility, RotationCast, RotationCooldownWindow, RotationSimulationResult } from "@/lib/platform/rotation/types";
 import { AbilityIcon } from "./AbilityIcon";
 import { ACTION_BAR_COLUMNS, ACTION_BAR_ROWS, actionBarKeyLabel } from "./actionBarLayout";
 import { useActionBarLayout } from "./useActionBarLayout";
@@ -15,6 +15,8 @@ import folio from "./rotationManuscript.module.css";
 import bindingStyles from "./actionBarBinding.module.css";
 import spread from "./rotationBookSpread.module.css";
 import motion from "./rotationMotion.module.css";
+import shell from "./rotationLabShell.module.css";
+import { AtlasDisclosure } from "@/components/atlas";
 
 const ActionBarBindingEditor = dynamic(
   () => import("./ActionBarBindingEditor").then((module) => module.ActionBarBindingEditor),
@@ -22,25 +24,6 @@ const ActionBarBindingEditor = dynamic(
 const SpellbookDrawer = dynamic(
   () => import("./SpellbookDrawer").then((module) => module.SpellbookDrawer),
 );
-
-export type RotationEncounterTemplate = {
-  id: "raid-boss" | "dungeon-boss" | "cleave" | "mythic-pack" | "execute";
-  scenario: RotationScenario;
-  targets: number;
-  fightLength: number;
-};
-
-const ENCOUNTERS: RotationEncounterTemplate[] = [
-  { id: "raid-boss", scenario: "single-target", targets: 1, fightLength: 300 },
-  { id: "dungeon-boss", scenario: "single-target", targets: 1, fightLength: 120 },
-  { id: "cleave", scenario: "aoe", targets: 2, fightLength: 120 },
-  { id: "mythic-pack", scenario: "aoe", targets: 5, fightLength: 60 },
-  { id: "execute", scenario: "execute", targets: 1, fightLength: 60 },
-];
-
-const compactDps = (value: number) => value >= 1_000_000
-  ? `${(value / 1_000_000).toFixed(2)}M`
-  : value >= 1_000 ? `${Math.round(value / 1_000)}K` : String(value);
 
 const stamp = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 
@@ -149,35 +132,15 @@ const ActionBarSlot = memo(function ActionBarSlot({
   );
 });
 
-function encounterText(id: RotationEncounterTemplate["id"], ru: boolean) {
-  const labels = ru ? {
-    "raid-boss": ["Рейдовый босс", "1 цель · 5 минут"],
-    "dungeon-boss": ["Босс ключа", "1 цель · 2 минуты"],
-    cleave: ["Две цели", "2 цели · 2 минуты"],
-    "mythic-pack": ["Пачка в ключе", "5 целей · 1 минута"],
-    execute: ["Добивание", "цель ниже 20%"],
-  } : {
-    "raid-boss": ["Raid boss", "1 target · 5 minutes"],
-    "dungeon-boss": ["Dungeon boss", "1 target · 2 minutes"],
-    cleave: ["Cleave", "2 targets · 2 minutes"],
-    "mythic-pack": ["Mythic+ pack", "5 targets · 1 minute"],
-    execute: ["Execute", "target below 20%"],
-  };
-  return labels[id];
-}
-
 export function CombatActionBar({
-  abilities, rules, result, scenario, targets, fightLength, lang, busy, stale, slug, storageScope, characterSlug, dataMode,
-  onCursor, onRun, onEncounter, manuscript = false,
+  abilities, rules, result, fightLength, lang, stale, slug, storageScope, characterSlug, dataMode,
+  onCursor, manuscript = false,
 }: {
   abilities: RotationAbility[];
   rules: string[];
   result: RotationSimulationResult | null;
-  scenario: RotationScenario;
-  targets: number;
   fightLength: number;
   lang: Lang;
-  busy: boolean;
   stale: boolean;
   slug: string;
   storageScope: string;
@@ -185,8 +148,6 @@ export function CombatActionBar({
   dataMode: "fixture" | "battle-net";
   manuscript?: boolean;
   onCursor: (value: number) => void;
-  onRun: () => void;
-  onEncounter: (template: RotationEncounterTemplate) => void;
 }) {
   const ru = lang === "ru";
   const [playing, setPlaying] = useState(false);
@@ -219,8 +180,6 @@ export function CombatActionBar({
     return callback;
   }, []);
   const duration = result?.fightLengthSeconds ?? fightLength;
-  const exact = Boolean(result?.accuracy?.mode.startsWith("simulationcraft-"));
-  const personal = result?.accuracy?.mode === "simulationcraft-armory";
 
   useEffect(() => {
     if (!playing || !result) return;
@@ -241,7 +200,6 @@ export function CombatActionBar({
   const slotsByPosition = useMemo(() => new Map(actionBar.slots.map((slot) => [slot.position, slot])), [actionBar.slots]);
   const casts = useMemo(() => [...(result?.casts ?? [])].filter((cast) => cast.lane !== "proc").sort((left, right) => left.time - right.time), [result?.casts]);
   const cooldownsByAbility = useMemo(() => new Map((result?.cooldowns ?? []).map((cooldown) => [cooldown.abilityId, cooldown])), [result?.cooldowns]);
-  const activeEncounter = ENCOUNTERS.find((item) => item.scenario === scenario && item.targets === targets && item.fightLength === fightLength)?.id;
   const labelAt = (position: number) => byId.get(slotsByPosition.get(position)?.abilityId ?? "")?.name ?? (ru ? "Пустая ячейка" : "Empty slot");
   const jumpToAbility = useCallback((abilityId: string) => {
     if (!result) return;
@@ -286,29 +244,8 @@ export function CombatActionBar({
 
   return (
     <section className={`${styles.combatDeck} ${manuscript ? folio.manuscript : ""}`} aria-labelledby="combat-deck-title">
-      <header className={`${styles.combatDeckHeader} ${manuscript ? spread.leafPair : ""}`}>
-        <div>
-          <span><Swords /> {ru ? "БОЕВАЯ ПАНЕЛЬ" : "COMBAT ACTION BAR"}</span>
-          <h3 id="combat-deck-title">{ru ? "Посмотри, как билд играет в бою" : "See how the build plays in combat"}</h3>
-          <p>{ru ? "Кулдауны, ресурс и окна проков берутся из журнала SimulationCraft — браузер не придумывает броски." : "Cooldowns, resources, and proc windows come from the SimulationCraft trace; the browser does not invent rolls."}</p>
-        </div>
-        <div className={`${styles.combatDeckStatus} ${manuscript ? spread.statusLeaf : ""}`} data-exact={exact || undefined}>
-          {exact ? <ShieldCheck /> : <TimerReset />}
-          <span><small>{personal ? (ru ? "ВАШ ПЕРСОНАЖ" : "YOUR CHARACTER") : exact ? "SIMULATIONCRAFT" : (ru ? "НУЖЕН РАСЧЁТ" : "SIMULATION REQUIRED")}</small><strong>{result ? `${compactDps(result.dps)} ${result.targets > 1 ? (ru ? "суммарный DPS" : "total DPS") : "DPS"}` : (ru ? "DPS ещё не рассчитан" : "DPS not calculated")}</strong></span>
-        </div>
-      </header>
 
-      <div className={`${styles.encounterProfiles} ${manuscript ? spread.leafPair : ""}`}>
-        <div><strong>{ru ? "Готовые профили боя" : "Encounter profiles"}</strong><small>{ru ? "Поддерживаемая APL SimC пересчитается под выбранные условия" : "The maintained SimC APL is recalculated for the selected conditions"}</small></div>
-        <div className={manuscript ? spread.encounterChoices : undefined} role="radiogroup" aria-label={ru ? "Профиль боя" : "Encounter profile"}>
-          {ENCOUNTERS.map((encounter) => {
-            const [name, detail] = encounterText(encounter.id, ru);
-            return <button key={encounter.id} type="button" role="radio" aria-checked={activeEncounter === encounter.id} disabled={busy} onClick={() => onEncounter(encounter)}><strong>{name}</strong><small>{detail}</small></button>;
-          })}
-        </div>
-      </div>
-
-      <RotationCursorValueContext.Consumer>{(cursor) => {
+      {result ? <RotationCursorValueContext.Consumer>{(cursor) => {
         const { next: nextCast } = castsAt(casts, cursor);
         const activeProcs = (result?.procs ?? []).filter((proc) => cursor >= proc.time && cursor <= proc.time + proc.duration);
         const resource = result ? resourceAt(result, cursor) : null;
@@ -320,14 +257,14 @@ export function CombatActionBar({
         </div>
         <div className={deferredLabStyles.combatProcRail} aria-live="polite">
           <Sparkles />
-          <span><small>{ru ? "АКТИВНЫЕ ПРОКИ И БАФФЫ" : "ACTIVE PROCS & BUFFS"}</small>{activeProcs.length ? <strong>{activeProcs.map((proc) => proc.name).join(" · ")}</strong> : <strong>{result ? (ru ? "Сейчас активных окон нет" : "No active windows now") : (ru ? "Появятся после расчёта" : "Available after simulation")}</strong>}</span>
+          <span><small>{ru ? "АКТИВНЫЕ ПРОКИ И БАФФЫ" : "ACTIVE PROCS & BUFFS"}</small>{activeProcs.length ? <strong>{activeProcs.map((proc) => proc.name).join(" · ")}</strong> : <strong>{ru ? "Сейчас активных окон нет" : "No active windows now"}</strong>}</span>
         </div>
         <div className={deferredLabStyles.combatNextCast}>
           <small>{ru ? "СЛЕДУЮЩЕЕ ДЕЙСТВИЕ" : "NEXT ACTION"}</small>
           <strong>{nextCast ? byId.get(nextCast.abilityId)?.name ?? nextCast.abilityId : "—"}</strong>
         </div>
         </div>;
-      }}</RotationCursorValueContext.Consumer>
+      }}</RotationCursorValueContext.Consumer> : null}
 
       <div className={styles.actionBarWorkbench} data-book-open={spellbookOpen || undefined} onKeyDown={(event) => {
         if (bindingMode && bindingPosition === null && event.key === "Escape") {
@@ -336,7 +273,7 @@ export function CombatActionBar({
       }}>
         <div className={`${styles.actionBarPanel} ${manuscript ? spread.barSheet : ""}`} data-book-surface={manuscript ? "foldout" : undefined}>
           <div className={`${styles.actionBarToolbar} ${bindingStyles.toolbar}`} data-binding-mode={bindingMode || undefined}>
-            <div><strong>{ru ? "Панель персонажа" : "Character action bar"}</strong><small>{ru ? "3 ряда · 36 ячеек · раскладка сохраняется автоматически" : "3 rows · 36 slots · layout saves automatically"}</small></div>
+            <div><strong>{ru ? "Панель персонажа" : "Character action bar"}</strong></div>
             <span className={styles.actionBarSaveState} data-state={actionBar.syncState}>{!actionBar.ready ? (ru ? "Загрузка раскладки…" : "Loading layout…") : actionBar.syncState === "saving" ? (ru ? "Сохраняем…" : "Saving…") : actionBar.syncState === "offline" ? (ru ? "Сохранено локально" : "Saved locally") : actionBar.syncState === "synced" ? (ru ? "Синхронизировано" : "Synced") : (ru ? "Автосохранение" : "Autosave")}</span>
             <button ref={bindingToggleRef} type="button" className={`${styles.actionBarUtility} ${bindingStyles.toggle}`} aria-pressed={bindingMode} disabled={!actionBar.ready} onClick={() => { setBindingMode(!bindingMode); setBindingPosition(null); setBindingNotice(""); setSpellbookOpen(false); setPlaying(false); }}><Keyboard /><span>{bindingMode ? (ru ? "Готово" : "Done binding") : (ru ? "Клавиши" : "Key bindings")}</span></button>
             <button type="button" className={styles.actionBarUtility} disabled={bindingMode || !actionBar.ready} onClick={actionBar.organize} title={ru ? "Собрать умения по порядку; бинды остаются на своих ячейках" : "Compact abilities; bindings stay with their slots"}><ListOrdered /> <span>{ru ? "Упорядочить" : "Arrange"}</span></button>
@@ -345,7 +282,6 @@ export function CombatActionBar({
           </div>
           {bindingMode && <p className={bindingStyles.modeHint} role="status">{bindingNotice} {ru ? "Выберите любую ячейку ниже, затем нажмите нужную клавишу. Бинд закрепляется за ячейкой. Esc — выйти." : "Select any slot below, then press a key. Bindings stay with their slots. Esc exits."}</p>}
           {bindingMode && bindingPosition !== null && <ActionBarBindingEditor key={bindingPosition} position={bindingPosition} label={labelAt(bindingPosition)} bindings={actionBar.bindings} labelAt={labelAt} ru={ru} manuscript={manuscript} onApply={saveBinding} onClose={closeBinding} />}
-          <p className={styles.actionBarScrollHint}>{ru ? "Листайте панель вбок, чтобы увидеть все 12 ячеек →" : "Scroll the bar sideways to see all 12 slots →"}</p>
           <div className={`${styles.wowBarFrame} ${folio.barViewport}`} role="region" tabIndex={0} aria-label={ru ? "Панель умений — прокручивается вбок" : "Action bar — scrolls sideways"}>
             <div className={`${styles.wowBarAssembly} ${folio.assembly}`}>
               <div className={styles.wowBarEndcap} aria-hidden="true" />
@@ -387,18 +323,20 @@ export function CombatActionBar({
         </div>}
       </div>
 
-      <RotationCursorValueContext.Consumer>{(cursor) => <footer className={`${styles.combatPlayback} ${manuscript ? `${spread.foldout} ${spread.playbackSheet}` : ""}`} data-book-surface={manuscript ? "foldout" : undefined}>
+      {result ? <RotationCursorValueContext.Consumer>{(cursor) => <footer className={`${styles.combatPlayback} ${manuscript ? `${spread.foldout} ${spread.playbackSheet}` : ""}`} data-book-surface={manuscript ? "foldout" : undefined}>
         <div>
-          <button type="button" disabled={!result || stale} onClick={() => { if (cursor >= duration) onCursor(0); setPlaying((value) => !value); }} aria-label={playing ? (ru ? "Пауза" : "Pause") : (ru ? "Воспроизвести" : "Play")}>{playing ? <Pause /> : <Play />}</button>
-          <button type="button" disabled={!result} onClick={() => { setPlaying(false); onCursor(0); }} aria-label={ru ? "В начало" : "Restart"}><RotateCcw /></button>
-          <select value={speed} disabled={!result} onChange={(event) => setSpeed(Number(event.target.value))} aria-label={ru ? "Скорость воспроизведения" : "Playback speed"}><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
+          <button type="button" disabled={stale} onClick={() => { if (cursor >= duration) onCursor(0); setPlaying((value) => !value); }} aria-label={playing ? (ru ? "Пауза" : "Pause") : (ru ? "Воспроизвести" : "Play")}>{playing ? <Pause /> : <Play />}</button>
+          <button type="button" onClick={() => { setPlaying(false); onCursor(0); }} aria-label={ru ? "В начало" : "Restart"}><RotateCcw /></button>
+          <select value={speed} onChange={(event) => setSpeed(Number(event.target.value))} aria-label={ru ? "Скорость воспроизведения" : "Playback speed"}><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
         </div>
-        <label><span>{stamp(cursor)}</span><input type="range" aria-label={ru ? "Позиция в симуляции" : "Simulation position"} min="0" max={duration} step="0.1" value={Math.min(cursor, duration)} disabled={!result} onChange={(event) => { setPlaying(false); onCursor(Number(event.target.value)); }} /><span>{stamp(duration)}</span></label>
-        {!result && <button type="button" className={styles.combatRunButton} onClick={onRun} disabled={busy}><Play /> {busy ? (ru ? "Считаем…" : "Calculating…") : (ru ? "Рассчитать и запустить" : "Calculate and play")}</button>}
-        {stale && <button type="button" className={styles.combatRunButton} onClick={onRun} disabled={busy}><Play /> {ru ? "Пересчитать изменения" : "Recalculate changes"}</button>}
-      </footer>}</RotationCursorValueContext.Consumer>
+        <label><span>{stamp(cursor)}</span><input type="range" aria-label={ru ? "Позиция в симуляции" : "Simulation position"} min="0" max={duration} step="0.1" value={Math.min(cursor, duration)} onChange={(event) => { setPlaying(false); onCursor(Number(event.target.value)); }} /><span>{stamp(duration)}</span></label>
+      </footer>}</RotationCursorValueContext.Consumer> : null}
 
-      <p className={`${styles.combatDeckFootnote} ${manuscript ? spread.leafNotes : ""}`}>{ru ? "В AoE показан суммарный DPS по всем целям — урон не делится поровну между мобами. Цель — стандартный Patchwerk-манекен SimulationCraft, а не любой конкретный NPC. Броня и базовая механика урона учитываются; уникальные иммунитеты, фазы и уязвимости босса требуют отдельного сценария. Нажатие на способность только перематывает журнал и не отправляет клавиши в WoW." : "AoE shows total DPS across every target; damage is not divided equally per mob. The target is SimulationCraft’s standard Patchwerk target, not every specific NPC. Armor and baseline damage mechanics are included; a boss’s unique immunities, phases, and vulnerabilities require a dedicated encounter script. Clicking an ability only seeks the trace and never sends keys to WoW."}</p>
+      <div className={`${shell.footnote} ${manuscript ? spread.leafNotes : ""}`} data-atlas-ui>
+        <AtlasDisclosure summary={ru ? "Как считается панель" : "How the panel is calculated"}>
+          <p>{ru ? "В AoE показан суммарный DPS по всем целям — урон не делится поровну между мобами. Цель — стандартный Patchwerk-манекен SimulationCraft, а не любой конкретный NPC. Броня и базовая механика урона учитываются; уникальные иммунитеты, фазы и уязвимости босса требуют отдельного сценария. Нажатие на способность только перематывает журнал и не отправляет клавиши в WoW." : "AoE shows total DPS across every target; damage is not divided equally per mob. The target is SimulationCraft’s standard Patchwerk target, not every specific NPC. Armor and baseline damage mechanics are included; a boss’s unique immunities, phases, and vulnerabilities require a dedicated encounter script. Clicking an ability only seeks the trace and never sends keys to WoW."}</p>
+        </AtlasDisclosure>
+      </div>
     </section>
   );
 }

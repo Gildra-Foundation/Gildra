@@ -2,58 +2,54 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { CSSProperties } from "react";
-import { useState } from "react";
-import { Check, ChevronDown, Layers3 } from "lucide-react";
-import type { Lang } from "@/lib/i18n";
+import { useRef, useState, type CSSProperties } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import { getTalentSpecTheme, talentSpecClasses } from "@/lib/talentSpecThemes";
-import styles from "./rotationLab.module.css";
+import styles from "./rotationSpecMenu.module.css";
 
-export function RotationSpecMenu({ activeSlug, lang }: { activeSlug: string; lang: Lang }) {
+type MenuCopy = { label: string; title: string; text: string };
+
+/** Spec switcher of the Rotation Lab toolbar. The list renders only while open. */
+export function RotationSpecMenu({ activeSlug, lang, copy }: { activeSlug: string; lang: "en" | "ru"; copy: MenuCopy }) {
   const active = getTalentSpecTheme(activeSlug);
   const ru = lang === "ru";
   const [open, setOpen] = useState(false);
+  const menu = useRef<HTMLDetailsElement>(null);
+  const close = () => { if (menu.current) menu.current.open = false; };
 
   return (
-    <details className={styles.specMenu} onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary aria-label={ru ? "Выбрать специализацию" : "Choose specialization"}>
+    <details ref={menu} className={styles.menu} onToggle={(event) => setOpen(event.currentTarget.open)} onKeyDown={(event) => { if (event.key === "Escape" && open) { close(); menu.current?.querySelector("summary")?.focus(); } }}>
+      <summary aria-label={copy.label}>
+        {active ? <Image src={active.iconUrl} alt="" width={24} height={24} unoptimized /> : null}
         <span>{active ? (ru ? active.specNameRu : active.specName) : activeSlug}</span>
         <ChevronDown aria-hidden="true" />
       </summary>
-      {open && <div className={styles.specMenuPanel}>
-        <header>
-          <span><Layers3 aria-hidden="true" /></span>
-          <div>
-            <strong>{ru ? "Выберите специализацию" : "Choose a specialization"}</strong>
-            <small>{ru ? "Способности, ресурс и тренировки сменятся вместе со спеком" : "Abilities, resource, and drills change with your spec"}</small>
+      {open ? (
+        <div className={styles.panel}>
+          <p className={styles.heading}><strong>{copy.title}</strong><span>{copy.text}</span></p>
+          <div className={styles.classes}>
+            {talentSpecClasses.map((group) => (
+              <section key={group.classKey} className={styles.group} aria-label={ru ? group.classNameRu : group.specs[0].className}>
+                <h3>{ru ? group.classNameRu : group.specs[0].className}</h3>
+                <ul>
+                  {group.specs.map((spec) => {
+                    const selected = spec.slug === activeSlug;
+                    return (
+                      <li key={spec.slug}>
+                        <Link href={`${ru ? "/ru" : ""}/wow/rotation/${spec.slug}`} aria-current={selected ? "page" : undefined} onClick={close} style={{ "--spec-accent-rgb": spec.accentRgb } as CSSProperties}>
+                          <Image src={spec.iconUrl} alt="" width={32} height={32} loading="lazy" unoptimized />
+                          <span><strong>{ru ? spec.specNameRu : spec.specName}</strong><small>{ru ? spec.roleRu : spec.role}</small></span>
+                          {selected ? <Check aria-hidden="true" /> : null}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
           </div>
-        </header>
-        <div className={styles.specMenuClasses}>
-          {talentSpecClasses.map((group) => (
-            <section key={group.classKey} className={styles.specMenuClass}>
-              <h3>{ru ? group.classNameRu : group.specs[0].className}</h3>
-              <div>
-                {group.specs.map((spec) => {
-                  const selected = spec.slug === activeSlug;
-                  return (
-                    <Link
-                      key={spec.slug}
-                      href={`${ru ? "/ru" : ""}/wow/rotation/${spec.slug}`}
-                      aria-current={selected ? "page" : undefined}
-                      className={selected ? styles.specMenuActive : ""}
-                      style={{ "--spec-menu-accent": spec.accent, "--spec-menu-rgb": spec.accentRgb } as CSSProperties}
-                    >
-                      <Image src={spec.iconUrl} alt="" width={36} height={36} sizes="36px" quality={85} loading="lazy" unoptimized />
-                      <span><strong>{ru ? spec.specNameRu : spec.specName}</strong><small>{ru ? spec.roleRu : spec.role}</small></span>
-                      {selected && <Check aria-hidden="true" />}
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
         </div>
-      </div>}
+      ) : null}
     </details>
   );
 }

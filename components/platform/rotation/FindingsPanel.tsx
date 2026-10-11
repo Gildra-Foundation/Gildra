@@ -2,7 +2,7 @@
 
 import { CheckCircle2, Clock3, Droplet, Swords } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import type { RotationFinding } from "@/lib/platform/rotation/types";
 import styles from "./rotationLab.module.css";
 import deferredLabStyles from "./rotationLabDeferred.module.css";

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
 import { usePathname } from "next/navigation";
-import { langOf, type Lang } from "@/lib/i18n";
+import { langOf, type Lang } from "@/lib/i18n-paths";
 
 const syncEnglish: Record<string, string> = {
   "Сессия Battle.net истекла. Локальная копия сохранена.": "Your Battle.net session expired. A local copy has been saved.",

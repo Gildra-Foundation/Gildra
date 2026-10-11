@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { auth, isBattleNetAuthConfigured } from "@/auth";
 import { LoginPage } from "@/components/auth/LoginPage";
-import { preloadCharacterBookEntry } from "@/lib/wow/preloadCharacterBookEntry";
 
 // The page depends on the visitor's Battle.net session and on runtime secrets.
 // Without this it is prerendered during the image build (no AUTH_SECRET, no
@@ -9,4 +8,4 @@ import { preloadCharacterBookEntry } from "@/lib/wow/preloadCharacterBookEntry";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Вход через Battle.net — Gildra", robots: { index: false, follow: false } };
-export default async function Page() { preloadCharacterBookEntry(); const session = isBattleNetAuthConfigured ? await auth() : null; return <LoginPage locale="ru" configured={isBattleNetAuthConfigured} isConnected={Boolean(session?.battleNetAccessToken)} accountName={session?.user?.name ?? undefined} />; }
+export default async function Page() { const session = isBattleNetAuthConfigured ? await auth() : null; return <LoginPage locale="ru" configured={isBattleNetAuthConfigured} isConnected={Boolean(session?.battleNetAccessToken)} accountName={session?.user?.name ?? undefined} />; }
