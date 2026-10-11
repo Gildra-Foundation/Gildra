@@ -11,7 +11,7 @@ lib/games/           registry.ts (GAMES, prefixes, nav, footer, legal) · adapte
 lib/data/            DataSource contract + demo implementation (data/site.ts stays the demo dataset)
 lib/anchors.ts       ANCHORS — every #id used by nav, footer, search and blocks
 components/blocks/   shared/<name>/ · <game>/<name>/ · _template/ · BlockRenderer · Page
-components/layout/   PageShell (Icons + TopNav + .app/.main + Footer + Reveal), Container, Section
+components/layout/   PageShell (Icons + .app/.main + Reveal; the top bar is global, the legal line is AtlasFrame's), Container, Section
 app/**/page.tsx      thin wrappers; app/ru/** mirrors them with `.ru`
 app/dev/blocks       gallery of every block at 1440/768/390 (dev only; GILDRA_DEV_GALLERY=1 in prod)
 ```

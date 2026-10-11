@@ -11,8 +11,10 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   `lib/games/<slug>/pages/*.ts` (`definePage` → `{ en, ru }`); route files
   `app/**/page.tsx` and their `app/ru/**` mirrors are three-line wrappers.
   Blocks live in `components/blocks/<game|shared>/<name>/` and are mapped in
-  `lib/blocks/registry.ts`. Chrome (Icons, TopNav, `.app/.main`, Footer, Reveal)
-  comes only from `components/layout/PageShell.tsx`. The full contract, plus
+  `lib/blocks/registry.ts`. The page wrapper (Icons, `.app/.main`, Reveal)
+  comes only from `components/layout/PageShell.tsx`; the one top bar (book
+  contents, EN/RU, GILDRA) is global (`components/platform/navigation/`) and
+  the legal line is `AtlasFrame`'s footer — pages render no header/footer. The full contract, plus
   "add a block / page / game" recipes, is in
   [components/blocks/README.md](components/blocks/README.md) — read it before UI work.
 - CMS: a published Payload `pages` document with `slug` = page id and a
@@ -20,16 +22,16 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   validated against the registry, fails open to the TS config).
 - Games: `lib/games/registry.ts` is the single source of game identity, URL
   prefix (WoW = site root, others `/<slug>/`), nav tasks, footer and legal
-  text; TopNav/Footer/SearchCommand read it. Never add `app/[game]`.
+  text. Never add `app/[game]`.
   **WoW-only MVP:** `MVP_VISIBLE_GAMES` in the registry decides which games the
   public site shows; `lib/mvp.ts` (`hiddenForMvp()`) makes routes of hidden games
   and the fixture pages (/patches, /compare, /profile/*, /diablo, /genshin/**)
-  answer 404. The header account chip is `components/auth/AccountChip.tsx`
-  (real `/api/auth/status`, never a made-up name).
+  answer 404. The account chip of the platform header is
+  `components/auth/AccountChip.tsx` (real `/api/auth/status`, never a made-up name).
 - Block pages so far: WoW home, `/tier-lists` (one `wow.tierWorkspace` block
   around `components/TierSection.tsx`), `/specs/[slug]`, `/privacy`, and all of
   `/league-of-legends/**` (+ `/ru` mirrors). `/database`, `/library` and
-  `app/not-found.tsx` are app pages that only use `PageShell`. UI strings via
+  `app/not-found.tsx` (atlas kit, client copy only) are app pages. UI strings via
   `lib/i18n.ts` (`t`, `tNav`); game terms stay English; links through
   `p(lang, href)` / `gameHref`; anchors through `lib/anchors.ts`.
   Homepage stays an overview with a compact Tier Preview; the full

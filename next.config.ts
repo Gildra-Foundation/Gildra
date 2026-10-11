@@ -63,9 +63,11 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // Group CSS by what each route imports instead of merging every page's
-    // styles into shared chunks (inner pages were downloading character and
-    // book styles they never use).
-    cssChunking: "graph",
+    // styles into shared chunks. A request is priced at 6 KB of CSS (default
+    // 20 KB): small route modules (characters, login, book) no longer ride
+    // along in the layout chunk of every inner page; −30…100 KB CSS per route
+    // for the same 5–9 requests (measured 2026-10-11).
+    cssChunking: { type: "graph", requestCost: 6000 },
   },
   allowedDevOrigins: ["127.0.0.1", "localhost", "51.68.180.93", ...additionalDevOrigins],
   turbopack: {
