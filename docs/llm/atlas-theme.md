@@ -33,6 +33,24 @@ backward compatible — many pages use them. Update the table in `components/atl
 5. Data from the existing sources (`lib/`, `data/`, API) — never invent numbers or assets.
 6. Check: `npm run typecheck`, `npm run atlas:check`, `npm run build`, screenshots EN/RU × 1440/390.
 
+## Declutter a page ("too busy")
+
+1. List the sections and what question each answers; merge or drop any that repeat the hero
+   or another section (second link grid, counters already in the hero, "step 1-2-3" rows).
+2. Fold long secondary detail into `AtlasDisclosure` instead of deleting it.
+3. Empty state = one `AtlasNotice` line; never a tall empty panel or skeleton without data.
+4. One primary action per block; no per-row button that duplicates the row link.
+5. Measure: `node .artifacts/atlas/cssweight.mjs http://127.0.0.1:3100 /ru/<route>` (page-own CSS/JS).
+
+## Make a page lighter
+
+- `"use client"` only for real interactivity; pass strings as props or from `*Copy.ts` —
+  never import `lib/i18n` in client code (~64 KB of dictionary).
+- Don't render UI and hide it with CSS; don't preload images the page does not paint.
+- A game's block registry is imported whole: delete blocks no page uses.
+- Never read request headers in `app/not-found.tsx` (it is evaluated for every route and makes
+  the whole site dynamic).
+
 ## Migrate an old page
 
 - Replace its own hero with `AtlasHero`, its cards with `AtlasCard`, its section headers with `AtlasSection`.
@@ -47,7 +65,10 @@ backward compatible — many pages use them. Update the table in `components/atl
 | --- | --- |
 | Tokens | `app/styles/atlas-theme.css` |
 | Kit | `components/atlas/*` |
-| Top bar | `components/platform/navigation/WorkspaceNavigatorContent.tsx`, `atlasToolbar.module.css` |
+| Top bar (book contents, EN/RU, GILDRA) | `components/platform/navigation/WorkspaceNavigatorContent.tsx`, `atlasToolbar.module.css` |
+| 404 | `app/not-found.tsx` + `components/layout/NotFoundCopy.tsx` |
+| Raid guides | `components/wow/raid/RaidBossGuide.tsx`, `RaidMechanicList.tsx`, `raidGuideCopy.ts` |
+| Articles (shared CMS) | `components/cms/Articles.tsx`, `cms.module.css` |
 | Legacy skin for old pages | `app/styles/atlas-pages.css`, `app/styles/wow-skin.css` |
 | Lairs and world bosses (reference) | `components/wow/lairs/` |
 | Raids hub, Mythic+ hub, WoW hub | `components/wow/raid/RaidAtlasPage.tsx`, `components/wow/mythic/MythicAtlasPage.tsx`, `components/wow/home/WowHome.tsx` |
