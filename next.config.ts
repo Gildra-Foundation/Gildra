@@ -60,6 +60,8 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      { source: "/lairs", destination: "/wow/lairs", permanent: false },
+      { source: "/ru/lairs", destination: "/ru/wow/lairs", permanent: false },
       { source: "/wow/mythic", destination: "/wow/mythic-plus", permanent: true },
       { source: "/ru/wow/mythic", destination: "/ru/wow/mythic-plus", permanent: true },
       { source: "/wow/mythic/:dungeon", destination: "/wow/mythic-plus/midnight-season-2/:dungeon", permanent: true },

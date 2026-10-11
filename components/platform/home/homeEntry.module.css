@@ -1,0 +1,61 @@
+.dialog{
+  position:fixed;inset:0;margin:auto;width:min(640px,calc(100% - 32px));
+  max-height:calc(100svh - 32px);overflow:auto;padding:32px;
+  border:1px solid color-mix(in srgb,var(--paper) 22%,transparent);border-top-color:color-mix(in srgb,var(--bright) 38%,transparent);border-radius:3px;
+  background:linear-gradient(135deg,#ffffff0d,#ffffff02 48%,rgba(var(--shade),.14));
+  -webkit-backdrop-filter:blur(22px) saturate(130%);backdrop-filter:blur(22px) saturate(130%);
+  color:var(--paper);box-shadow:0 20px 60px #0004,inset 0 1px 0 #ffffff12;
+  font:14px/1.65 var(--font-ui),system-ui,sans-serif;letter-spacing:normal;text-align:left;text-shadow:0 1px 6px rgba(var(--shade),.75)
+}
+.dialog::backdrop{background:rgba(var(--shade),.22)}
+.topline{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;color:var(--accent)}
+.topline>span{font:9px/1.6 "Gildra Atlas",Georgia,serif;letter-spacing:.12em}
+.language{display:flex;gap:8px}
+.language a{position:relative;display:grid;place-items:center;min-height:44px;padding:4px 10px;color:var(--muted);text-decoration:none;font-size:12px;transition:color 220ms,text-shadow 240ms}
+.language a[aria-current]{color:var(--bright)}
+.language a::after,.settingsTrigger::after{content:"";position:absolute;left:10px;right:10px;bottom:3px;height:1px;background:linear-gradient(90deg,transparent,var(--accent) 18%,var(--bright) 50%,var(--accent) 82%,transparent);box-shadow:0 1px 6px color-mix(in srgb,var(--accent) 55%,transparent);opacity:0;transform:scaleX(.65);transition:transform 320ms cubic-bezier(.2,.75,.2,1),opacity 180ms}
+.language a[aria-current]::after{opacity:.55;transform:scaleX(1)}
+.language a:hover,.language a:focus-visible{color:var(--bright);text-shadow:0 0 14px color-mix(in srgb,var(--accent) 44%,transparent)}
+.language a:hover::after,.language a:focus-visible::after,.settingsTrigger:hover::after,.settingsTrigger:focus-visible::after{opacity:1;transform:scaleX(1)}
+.dialog h2{margin:24px 0 16px;color:var(--heading);font:400 clamp(26px,5vw,34px)/1.25 "Gildra Kurale",Georgia,serif;outline:none}
+.description{margin:0;color:var(--paper)}
+.waiting{margin:12px 0 24px;color:var(--muted);font-size:12px}
+.cookies{margin:24px 0 0;padding:16px 0 0;min-width:0;border:0;border-top:1px solid color-mix(in srgb,var(--accent) 24%,transparent)}
+.cookies legend{padding:0 12px 0 0;color:var(--accent);font-size:12px}
+.cookies p{margin:0;color:var(--muted);font-size:12px}
+.cookieChoices{display:flex;flex-wrap:wrap;gap:4px 24px;margin:8px 0}
+.cookieChoices label{display:flex;align-items:center;min-height:44px;gap:8px;cursor:pointer;font-size:12px}
+.cookieChoices input{appearance:none;margin:0;width:14px;height:14px;border:1px solid var(--metal);border-radius:50%;background:transparent;flex:none}
+.cookieChoices input:checked{border-color:var(--accent);background:radial-gradient(circle,var(--bright) 0 3px,transparent 4px);box-shadow:0 0 8px color-mix(in srgb,var(--accent) 18%,transparent)}
+.privacy{display:inline-block;padding-block:4px;color:var(--accent);font-size:12px;text-underline-offset:3px}
+.actions{position:relative;isolation:isolate;display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:12px;margin-top:28px}
+.actions:has(>button:only-of-type){grid-template-columns:1fr}
+.actions button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0;min-height:68px;padding:12px 4px;border:0;background:transparent;border-radius:0;font:400 21px/1.3 "Gildra Kurale",Georgia,serif!important;text-shadow:0 2px 8px #000;cursor:pointer;transition:color 220ms}
+.withSound{color:var(--bright)}.withoutSound{color:var(--paper)}
+.actions button>span{max-width:100%;transition:text-shadow 240ms}
+.actions button small{margin-top:14px;font:10px/1.2 var(--font-ui),system-ui,sans-serif;color:var(--muted)}
+.actions button:hover,.actions button:focus-visible{color:var(--bright)}
+.actions button:hover>span,.actions button:focus-visible>span{text-shadow:0 0 14px color-mix(in srgb,var(--accent) 44%,transparent)}
+.actions button:active{color:var(--accent)}
+.actions button[aria-checked="true"]>span{color:var(--bright);text-shadow:0 0 14px color-mix(in srgb,var(--accent) 44%,transparent)}
+.actions button[role="radio"]>span::before{content:"";display:inline-block;vertical-align:middle;width:6px;height:6px;margin-right:10px;border:1px solid var(--accent);border-radius:50%;opacity:.55}
+.actions button[aria-checked="true"]>span::before{background:var(--bright);box-shadow:0 0 8px var(--accent);opacity:1}
+.confirm .actions{margin-top:8px}
+.confirm .actions button{min-height:52px;color:var(--bright);font-size:24px!important}
+.actions button:disabled{color:var(--muted);opacity:.5;cursor:default}
+.actions button:disabled>span{text-shadow:none}
+.actionHighlight{position:absolute;z-index:-1;left:0;top:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--accent) 18%,var(--bright) 50%,var(--accent) 82%,transparent);box-shadow:0 1px 6px color-mix(in srgb,var(--accent) 55%,transparent);transition:transform 320ms cubic-bezier(.2,.75,.2,1),width 320ms cubic-bezier(.2,.75,.2,1),opacity 180ms}
+.actionHighlight::after{content:"";position:absolute;left:-4px;right:-4px;top:0;height:8px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 30%,transparent) 30%,color-mix(in srgb,var(--accent) 42%,transparent) 50%,color-mix(in srgb,var(--accent) 30%,transparent) 70%,transparent);filter:blur(5px)}
+.footnote{margin:12px 0 0;color:var(--muted);font-size:11px}
+.settingsTrigger{position:relative;border:0;background:transparent;color:var(--paper);min-height:44px;padding:8px;font-size:11px!important;letter-spacing:0}
+.close{display:grid;place-items:center;min-width:44px;min-height:44px;margin-left:auto;border:0;background:transparent;color:var(--paper)}
+.dialog a:focus-visible,.dialog button:focus-visible,.dialog input:focus-visible,.settingsTrigger:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:480px){
+  .dialog{padding:24px;width:calc(100% - 24px);max-height:calc(100svh - 24px)}
+  .topline{gap:4px}.language{margin-left:-10px}.dialog h2{margin-top:16px}
+  .actions{grid-template-columns:1fr;margin-top:20px;gap:4px}.actions button{min-height:52px;font-size:22px!important}
+  .cookieChoices{display:grid;gap:0}.waiting{margin-bottom:16px}.cookies{margin-top:16px}.description{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){.dialog *,.settingsTrigger{transition:none!important}}
+@media(forced-colors:active){.cookieChoices input{appearance:auto}.actionHighlight{background:Highlight;box-shadow:none}.actionHighlight::after{display:none}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.dialog{background:rgba(var(--shade),.88)}}

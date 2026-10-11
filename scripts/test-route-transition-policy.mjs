@@ -9,7 +9,14 @@ for (const path of [profile, `/ru${profile}`, "/", "/ru", "/wow/characters", "/t
   assert.equal(shouldTurnBook(path, `${path}/`), false, "Trailing slash redirects are not a new page");
 }
 assert.equal(shouldTurnBook("/wow/characters", profile), true);
-assert.equal(shouldTurnBook(profile, `/ru${profile}`), true);
+for (const [english, russian] of [["/", "/ru"], ["/wow/characters", "/ru/wow/characters"], [profile, `/ru${profile}`], ["/wow/lairs", "/ru/wow/lairs/"]]) {
+  assert.equal(shouldTurnBook(english, russian), false, "Translations must not turn a leaf");
+  assert.equal(shouldTurnBook(russian, english), false, "Both language directions stay still");
+}
+assert.equal(shouldTurnBook("/lairs", "/wow/lairs"), false, "Hub redirects keep the same leaf");
+assert.equal(shouldTurnBook("/ru/lairs", "/ru/wow/lairs"), false);
+assert.equal(shouldTurnBook("/ru", "/ru/lairs"), true);
+assert.equal(shouldTurnBook("/ru/wow/lairs", "/wow/characters"), true, "A different page still turns when locale also changes");
 assert.equal(bookLocale(`/ru${profile}`), "ru");
 assert.equal(bookLocale(profile), "en");
 assert.equal(isCharacterAuthRedirect(profile, "/login"), true);
@@ -39,6 +46,7 @@ const first = harness();
 const opening = first.lifecycle.start("open");
 first.advance(2000);
 assert.equal(first.lifecycle.state.phase, "waiting", "Slow data must keep the book closed");
+first.lifecycle.pageReady(opening);
 first.lifecycle.ready(opening);
 first.advance(0);
 assert.equal(first.lifecycle.state.phase, "playing");
@@ -50,15 +58,17 @@ const nav = harness();
 const turn = nav.lifecycle.start("turn");
 nav.lifecycle.ready(turn);
 nav.lifecycle.ready(turn); // Observer notifications must not schedule duplicate completions.
-nav.advance(timing.lift - 1);
-assert.equal(nav.lifecycle.state.phase, "waiting");
-nav.advance(1);
+nav.advance(timing.lift + 500);
+assert.equal(nav.lifecycle.state.phase, "waiting", "The turn must wait for the destination page");
+nav.lifecycle.pageReady(turn);
+nav.advance(0);
 assert.equal(nav.lifecycle.state.phase, "playing");
 const nextTurn = nav.lifecycle.start("turn");
 nav.lifecycle.ready(turn);
 nav.advance(timing.turn + timing.lift);
 assert.equal(nav.lifecycle.state.phase, "waiting", "Old ready callbacks and timers must not finish the next route");
 nav.lifecycle.ready(nextTurn);
+nav.lifecycle.pageReady(nextTurn);
 nav.advance(timing.turn);
 assert.equal(nav.lifecycle.state.phase, "idle");
 assert.equal(nav.tasks.size, 0);
@@ -87,6 +97,7 @@ for (const kind of ["open", "turn"]) {
   strict.lifecycle.ready(stale);
   assert.equal(strict.lifecycle.state.phase, "waiting");
   strict.lifecycle.ready(current);
+  strict.lifecycle.pageReady(current);
   strict.advance(timing.lift + timing[kind]);
   assert.equal(strict.lifecycle.state.phase, "idle");
   assert.equal(strict.tasks.size, 0);

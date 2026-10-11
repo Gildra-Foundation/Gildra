@@ -3,8 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const KEY = "gildra-consent";
+import { readBrowserConsent, saveBrowserConsent, consentChanged } from "@/lib/browserConsent";
 
 /** Уведомление о cookies: показывается один раз, выбор хранится в
  *  localStorage. Честно: сайт не ставит трекеры — только настройки
@@ -25,23 +24,26 @@ export function CookieNotice() {
   useEffect(() => {
     if (window.location.hostname === "api.gildra.net") return;
     try {
-      if (!localStorage.getItem(KEY)) setVisible(true);
+      if (!readBrowserConsent()) setVisible(true);
     } catch {
       /* приватный режим без localStorage — не показываем */
     }
   }, []);
 
+  useEffect(() => {
+    const update = () => setVisible(!readBrowserConsent());
+    window.addEventListener(consentChanged, update);
+    return () => window.removeEventListener(consentChanged, update);
+  }, []);
+
   const choose = (value: "accepted" | "declined") => {
-    try {
-      localStorage.setItem(KEY, value);
-    } catch {
-      /* ignore */
-    }
+    saveBrowserConsent(value);
     setVisible(false);
   };
 
   if (
     !visible
+    || pathname === "/" || pathname === "/ru" || pathname === "/ru/"
     || pathname.startsWith("/api-console")
     || pathname.includes("/talents")
     || pathname.includes("/wow/characters/")
@@ -67,14 +69,14 @@ export function CookieNotice() {
           className="btn btn-primary cookie-ok"
           onClick={() => choose("accepted")}
         >
-          Accept
+          {lang === "ru" ? "Принять" : "Accept"}
         </button>
         <button
           type="button"
           className="cookie-no"
           onClick={() => choose("declined")}
         >
-          Decline
+          {lang === "ru" ? "Отклонить" : "Decline"}
         </button>
       </div>
     </aside>

@@ -1,6 +1,12 @@
-/** Only pathname changes turn a leaf; filters and chapter anchors stay on the current page. */
+/** Locale prefixes, trailing slashes and hub aliases share one page identity. */
+export function bookPageIdentity(pathname: string) {
+  const path = pathname.replace(/^\/ru(?=\/|$)/, "").replace(/\/+$/, "") || "/";
+  return path === "/lairs" ? "/wow/lairs" : path;
+}
+
+/** Only a new page turns a leaf; language, filters and anchors stay still. */
 export function shouldTurnBook(fromPathname: string, toPathname: string) {
-  return fromPathname.replace(/\/+$/, "") !== toPathname.replace(/\/+$/, "");
+  return bookPageIdentity(fromPathname) !== bookPageIdentity(toPathname);
 }
 
 /** A protected character route can resolve through an auth redirect after its

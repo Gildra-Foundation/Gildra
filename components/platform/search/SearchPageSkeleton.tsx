@@ -11,7 +11,7 @@ export function SearchPageSkeleton({ lang }: { lang: Lang }) {
   return <div className={homeStyles.page}>
     <PlatformAtmosphere />
     <PlatformHeader data={home} lang={lang} active="search" showSearch={false} scopeLabel={lang === "ru" ? "Все игры" : "All Games"} />
-    <main className={`${styles.page} ${styles.searchSkeleton}`} aria-busy="true" aria-label={lang === "ru" ? "Загрузка поиска" : "Loading search"}>
+    <main data-book-route-loading className={`${styles.page} ${styles.searchSkeleton}`} aria-busy="true" aria-label={lang === "ru" ? "Загрузка поиска" : "Loading search"}>
       <div className={styles.skeletonSearch}><Search /></div>
       <div className={styles.skeletonTabs}><i /><i /><i /></div>
       <div className={styles.skeletonLayout}>

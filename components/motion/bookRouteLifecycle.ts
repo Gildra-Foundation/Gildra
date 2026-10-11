@@ -1,6 +1,6 @@
 export type BookRouteKind = "open" | "turn";
 export type BookRouteState = { kind: BookRouteKind; phase: "waiting" | "playing" | "loading" | "idle"; id: number };
-export const BOOK_ROUTE_TIMING = { open: 500, turn: 120, lift: 40, watchdog: 12000 } as const;
+export const BOOK_ROUTE_TIMING = { open: 500, turn: 700, lift: 180, watchdog: 12000 } as const;
 
 type Timer = ReturnType<typeof setTimeout>;
 
@@ -16,6 +16,7 @@ export function createBookRouteLifecycle(
   let state: BookRouteState = { kind: "open", phase: "idle", id: 0 };
   let started = 0;
   let scheduled = false;
+  let sceneReady = false;
   let pageReady = false;
   let turnDone = false;
   const timers = new Set<Timer>();
@@ -30,10 +31,23 @@ export function createBookRouteLifecycle(
     timers.add(timer);
   };
   const finish = () => { clear(); update("idle"); };
+  const playWhenReady = () => {
+    if (state.phase !== "waiting" || scheduled || !sceneReady || (state.kind === "turn" && !pageReady)) return;
+    scheduled = true;
+    later(Math.max(0, (state.kind === "turn" ? BOOK_ROUTE_TIMING.lift : 0) - (clock.now() - started)), () => {
+      update("playing");
+      later(BOOK_ROUTE_TIMING[state.kind], () => {
+        turnDone = true;
+        if (pageReady) finish();
+        else update("loading");
+      });
+    });
+  };
   return {
     get state() { return state; },
     start(kind: BookRouteKind, reducedMotion = false) {
       clear();
+      sceneReady = false;
       pageReady = false;
       turnDone = false;
       state = { kind, phase: "waiting", id: state.id + 1 };
@@ -43,21 +57,15 @@ export function createBookRouteLifecycle(
       return state.id;
     },
     ready(id: number) {
-      if (id !== state.id || state.phase !== "waiting" || scheduled) return;
-      scheduled = true;
-      later(Math.max(0, (state.kind === "turn" ? BOOK_ROUTE_TIMING.lift : 0) - (clock.now() - started)), () => {
-        update("playing");
-        later(BOOK_ROUTE_TIMING[state.kind], () => {
-          turnDone = true;
-          if (pageReady) finish();
-          else update("loading");
-        });
-      });
+      if (id !== state.id || state.phase !== "waiting") return;
+      sceneReady = true;
+      playWhenReady();
     },
     pageReady(id: number) {
       if (id !== state.id || state.phase === "idle") return;
       pageReady = true;
       if (turnDone) finish();
+      else playWhenReady();
     },
     finish,
     cancel() { clear(); state = { ...state, phase: "idle", id: state.id + 1 }; },

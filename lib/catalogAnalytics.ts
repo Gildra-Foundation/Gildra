@@ -1,5 +1,7 @@
 "use client";
 
+import { readBrowserConsent } from "./browserConsent";
+
 type CatalogEventName =
   | "catalog_search_submitted"
   | "catalog_type_selected"
@@ -22,6 +24,7 @@ export function trackCatalogEvent(
   locale: "en" | "ru",
   properties: Record<string, string | number | boolean | undefined> = {},
 ) {
+  if (readBrowserConsent() !== "accepted") return;
   try {
     const body = JSON.stringify({
       events: [{

@@ -1,0 +1,29 @@
+/* The phone book is a full-screen modal surface over the dimmed home scene. */
+.dialog{position:fixed;inset:0;box-sizing:border-box;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;border:0;background:transparent;color:var(--paper);overflow:hidden;font-family:"Gildra Atlas",Georgia,serif;outline:none}
+.dialog::backdrop{background:rgba(6,10,16,.9)}
+.dialog[data-fade="in"]::backdrop{animation:backdropIn 480ms ease-out both}
+.dialog[data-fade="out"]::backdrop{animation:backdropOut 520ms ease-in 900ms both}
+@keyframes backdropIn{from{opacity:0}to{opacity:1}}
+@keyframes backdropOut{from{opacity:1}to{opacity:0}}
+.layout{box-sizing:border-box;height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding:max(6px,env(safe-area-inset-top)) 0 max(14px,env(safe-area-inset-bottom))}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:0 6px 0 20px}
+.bar>span{font:9px/1.5 "Gildra Atlas",Georgia,serif;letter-spacing:.16em;color:var(--accent);text-shadow:0 1px 4px #000}
+.close{display:grid;place-items:center;width:48px;height:48px;padding:0;border:0;background:transparent;color:var(--paper);font:30px/1 Georgia,serif;cursor:pointer;transition:color 200ms}
+.close:hover,.close:focus-visible{color:var(--bright)}
+/* One page fills the width; the second page is a swipe (or a tab) away. */
+.viewport{--page-width:min(calc(100vw - 8px),calc((100vh - 150px)*.75),calc((100dvh - 150px)*.75),520px);align-self:center;justify-self:center;width:var(--page-width);padding-block:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.viewport::-webkit-scrollbar{display:none}
+/* While the cover moves, nothing may clip its 3D swing. */
+.viewport[data-moving]{overflow:visible}
+.track{--leaf-perspective:1500px;position:relative;width:calc(var(--page-width)*2);transform-origin:0 0}
+.snap{position:absolute;top:0;bottom:0;left:0;width:50%;scroll-snap-align:start;scroll-snap-stop:always;pointer-events:none}
+.snap+.snap{left:50%}
+.pager{display:flex;justify-content:center;gap:clamp(8px,4vw,28px);padding:4px 16px 0}
+.tab{position:relative;display:flex;align-items:baseline;gap:8px;min-height:44px;padding:8px 12px;border:0;background:transparent;color:var(--muted);font:400 18px/1.2 "Gildra Kurale",Georgia,serif;text-shadow:0 2px 8px #000;cursor:pointer;transition:color 220ms}
+.tab small{font:13px/1 Georgia,serif;color:var(--accent);opacity:.8}
+.tab::after{content:"";position:absolute;left:12px;right:12px;bottom:4px;height:1px;background:linear-gradient(90deg,transparent,var(--accent) 18%,var(--bright) 50%,var(--accent) 82%,transparent);box-shadow:0 1px 6px color-mix(in srgb,var(--accent) 55%,transparent);opacity:0;transform:scaleX(.6);transition:opacity 200ms,transform 320ms cubic-bezier(.2,.75,.2,1)}
+.tab[aria-current]{color:var(--bright)}
+.tab[aria-current]::after{opacity:1;transform:scaleX(1)}
+.tab:disabled{cursor:default}
+.tab:focus-visible,.close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.dialog[data-fade]::backdrop{animation:none}.tab,.tab::after,.close{transition:none}}

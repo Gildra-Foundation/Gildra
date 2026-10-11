@@ -1,30 +1,143 @@
-.page{--gold:#c8a466;--paper:#e8dac0;position:relative;isolation:isolate;overflow-x:clip;min-height:100svh;color:var(--paper);font-family:"Gildra Atlas",Georgia,serif;background:radial-gradient(ellipse at 72% 46%,#6c46222e,transparent 48%),radial-gradient(ellipse at 9% 100%,#3b241b30,transparent 45%),linear-gradient(#0d0e0de8,#10110fe8),url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 640px repeat}
-.page *{box-sizing:border-box}.header a{color:inherit;text-decoration:none}.page button{font:inherit;cursor:pointer}.header a:focus-visible,.hero button:focus-visible{outline:2px solid #dbbc80;outline-offset:7px}
-.header{max-width:1500px;margin:auto;padding:30px clamp(24px,5vw,86px);display:flex;align-items:center;justify-content:space-between;gap:24px}
-.brand{display:flex;align-items:center;gap:14px;color:#d9bd87!important;font:25px/1 "Gildra Kurale",Georgia,serif;letter-spacing:.15em}
-.brandSeal{width:45px;height:45px;display:grid;place-items:center;border:1px solid #9b7747;border-radius:50%;outline:1px solid #9b774747;outline-offset:4px;font-size:30px;letter-spacing:0}
-.brand small{display:block;margin-top:8px;font:8px/1.3 "Gildra Atlas",Georgia,serif;letter-spacing:.2em;color:#9b8868}
-.headerRight{display:flex;align-items:center;gap:38px}.edition{font-size:9px;letter-spacing:.22em;color:#897b64}
-.language{display:flex;align-items:center;gap:11px;font:11px "Gildra Atlas",Georgia,serif;color:#6f685a}.language a{min-height:44px;display:grid;place-items:center}.language a[aria-current]{color:#e2c28a}
+.page{--accent:#9ecfea;--paper:#dbe9f2;--heading:#e4edf3;--muted:#b0c1ce;--subtle:#94aab9;--bright:#e1f4ff;--metal:#84b4d0;--metal-dark:#547c98;--button-top:#23465b;--button-bottom:#102332;--night:#080e17;--shade:4,9,16;--particle:#e0f3ff;--home-art:url("/assets/wow/character-book/intro/icecrown-home-background-v1.webp");position:relative;isolation:isolate;overflow-x:clip;min-height:100svh;color:var(--paper);font-family:"Gildra Atlas",Georgia,serif;background:var(--night);background-image:linear-gradient(90deg,rgba(var(--shade),.78),rgba(var(--shade),.38) 48%,rgba(var(--shade),.12)),linear-gradient(180deg,rgba(var(--shade),.24),transparent 35%,rgba(var(--shade),.78)),var(--home-art);background-position:center;background-size:cover;background-repeat:no-repeat}
+
+.page[data-home-theme="illidan"]{--accent:#c4a3f3;--paper:#e5dcef;--heading:#f0e9f7;--muted:#c4b9d1;--subtle:#b4a5c4;--bright:#f4eaff;--metal:#a385c6;--metal-dark:#765493;--button-top:#49305f;--button-bottom:#24152f;--night:#110d19;--shade:12,7,19;--particle:#a8ef78;--home-art:url("/assets/wow/character-book/intro/illidan-home-background-v1.webp")}
+.page[data-home-theme="garek"]{--accent:#a5dba7;--paper:#dcebdd;--heading:#eaf2e9;--muted:#bbcebf;--subtle:#a3baa8;--bright:#ebffec;--metal:#7eac87;--metal-dark:#4c7858;--button-top:#2d4c37;--button-bottom:#13291d;--night:#0a130f;--shade:4,14,9;--particle:#b2efb9;--home-art:url("/assets/wow/character-book/intro/garek-home-background-v1.webp")}
+.page[data-home-theme="varok"]{--accent:#f0a28f;--paper:#f0ded5;--heading:#fff0e5;--muted:#d8bdb1;--subtle:#c5a397;--bright:#fff1e3;--metal:#ca8b79;--metal-dark:#9e5748;--button-top:#6b302c;--button-bottom:#311716;--night:#180d0c;--shade:19,6,4;--particle:#ffb66d;--home-art:url("/assets/wow/character-book/intro/varok-home-background-v2.webp")}
+.page *{box-sizing:border-box}.header a{color:inherit;text-decoration:none}.page button{font:inherit;cursor:pointer}.header a:focus-visible,.header button:focus-visible,.hero button:focus-visible{outline:2px solid var(--accent);outline-offset:7px}
+.header{max-width:1500px;margin:auto;padding:30px clamp(24px,5vw,86px);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px}
+.brand{display:flex;min-height:44px;align-items:center;gap:12px;width:max-content;color:var(--paper)!important;transition:filter 280ms}
+.brandMark{width:52px;height:59px;flex:none;filter:drop-shadow(0 2px 8px color-mix(in srgb,var(--accent) 14%,transparent));transition:filter 300ms,transform 300ms}
+.brandWordmark{display:grid;gap:7px}.brandWordmark>span{font:30px/1 "Gildra Kurale",Georgia,serif;letter-spacing:.2em;background:linear-gradient(180deg,var(--bright) 12%,var(--paper) 58%,var(--metal-dark));background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 18px color-mix(in srgb,var(--accent) 10%,transparent)}
+.brandWordmark small{font:7px/1.3 "Gildra Atlas",Georgia,serif;letter-spacing:.26em;color:var(--subtle)}
+.brand:hover .brandMark,.brand:focus-visible .brandMark{filter:drop-shadow(0 0 9px color-mix(in srgb,var(--accent) 40%,transparent));transform:translateY(-1px)}
+.headerRight{display:flex;align-items:center;gap:18px}
+.language{display:flex;align-items:center;gap:11px;font:11px "Gildra Atlas",Georgia,serif;color:var(--subtle)}.language a{min-height:44px;display:grid;place-items:center}.language a[aria-current]{color:var(--bright)}
 .hero{max-width:1380px;min-height:calc(100svh - 195px);margin:auto;padding:16px clamp(28px,6vw,96px) 36px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:clamp(35px,6vw,100px)}
-.copy{position:relative;z-index:2;padding-bottom:10px}.eyebrow{display:flex;align-items:center;gap:13px;margin:0 0 29px;color:#b29768;font-size:9px;letter-spacing:.16em;line-height:1.6}.eyebrow>span{width:32px;height:1px;background:#a88953;flex-shrink:0}
-.copy h1{margin:0;font:400 clamp(46px,4.8vw,76px)/1.12 "Gildra Kurale",Georgia,serif;letter-spacing:-.025em;color:#e9dcc4}.copy h1 em{color:#c9a565;font-style:normal}
-.intro{max-width:405px;margin:25px 0 29px;color:#aca28e;font-size:15px;line-height:1.9;text-wrap:pretty}
-.openButton{min-height:51px;display:inline-flex;align-items:center;justify-content:center;gap:14px;padding:13px 24px;border:1px solid #b88848;border-radius:3px;background:#582118 url("/assets/wow/character-book/grimoire-button-v1-reduced.webp") center / 100% 100%;color:#f3dfb3;box-shadow:0 6px 19px #0005,inset 0 0 0 2px #dbad5833;font-family:"Gildra Kurale",Georgia,serif!important;font-size:17px!important;transition:filter 180ms,transform 180ms}
-.openButton:hover{filter:brightness(1.2);transform:translateY(-2px)}.openButton svg:first-child{color:#cda268}.openButton svg:last-child{margin-left:15px}
-.invitation{margin-top:16px;color:#8b806c;font-size:11px;font-style:italic}
-.bookScene{position:relative;display:grid;justify-items:center;min-width:0;perspective:1600px}.halo{position:absolute;pointer-events:none;inset:4% -14% 10%;border-radius:50%;background:radial-gradient(ellipse,#8b74591c,transparent 65%);filter:blur(24px)}
-.cover{position:relative;display:block;width:min(100%,440px,calc((100svh - 230px)*.667));min-width:260px;padding:0;border:0;background:none;transform:rotate(-3deg) rotateY(-5deg);transform-origin:50% 80%;filter:drop-shadow(-14px 18px 16px #0008);transition:transform 550ms cubic-bezier(.2,.7,.25,1),filter 550ms}
-.cover:hover{transform:rotate(-2deg) rotateY(-2deg) translateY(-3px);filter:drop-shadow(-16px 22px 18px #0008)}.coverImage{width:100%;height:auto;display:block;filter:saturate(.66) contrast(.92) brightness(.94)}
-.coverTitle{position:absolute;top:16%;left:19%;right:9%;display:grid;justify-items:center;color:#d9b579;text-shadow:0 1px 1px #120803}
-.coverTitle small{font:8px/1.4 "Gildra Atlas",Georgia,serif;letter-spacing:.24em}.coverTitle strong{font:400 clamp(25px,3.3vw,48px)/1.3 "Gildra Kurale",Georgia,serif;letter-spacing:.14em}.coverTitle i{width:70%;height:1px;margin-top:6px;background:linear-gradient(90deg,transparent,#d0a26888,transparent)}
-.coverSubtitle{position:absolute;top:72%;left:19%;right:9%;text-align:center;font:400 clamp(18px,2.1vw,30px)/1.12 "Gildra Kurale",Georgia,serif;color:#d4b27a;text-shadow:0 2px 2px #160b06}
-.coverSubtitle small{display:block;margin-top:14px;font:7px/1.5 "Gildra Atlas",Georgia,serif;letter-spacing:.18em;color:#ba9861}
-.bookHint{position:relative;margin:25px 0 0;font:italic 11px "Gildra Atlas",Georgia,serif;color:#9f8a69;text-align:center}.bookHint span{display:inline-block;margin-right:10px;color:#c39d5c;font-style:normal}
-.footer{max-width:1320px;margin:0 auto;padding:22px clamp(28px,5vw,70px) 28px;display:flex;align-items:center;justify-content:space-between;gap:18px;border-top:1px solid #b6905221;color:#8a7a60;font:8px/1.5 "Gildra Atlas",Georgia,serif;letter-spacing:.18em}.footerMark{color:#a88750;font-size:18px}
-.footerNav ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:4px 0}.footerNav li{display:flex;align-items:center;text-transform:uppercase}.footerNav li+li::before{content:"·";margin:0 .7em;color:#8a7a60}
-.footerNav a{display:inline-block;padding:7px 0;margin:-7px 0;color:inherit;text-decoration:none;transition:color 180ms}.footerNav a:hover{color:#d9bd87}.footerNav a:focus-visible{outline:2px solid #dbbc80;outline-offset:3px}
+.copy{position:relative;z-index:2;padding-bottom:10px}.eyebrow{display:flex;align-items:center;gap:13px;margin:0 0 29px;color:var(--accent);font-size:9px;letter-spacing:.16em;line-height:1.6}.eyebrow>span{width:32px;height:1px;background:var(--metal);flex-shrink:0}
+.copy h1{margin:0;font:400 clamp(46px,4.8vw,76px)/1.12 "Gildra Kurale",Georgia,serif;letter-spacing:-.025em;color:var(--heading)}.copy h1 em{color:var(--accent);font-style:normal}
+/* Preciosa is shared by every hero's quote and signature. */
+@font-face{font-family:"Gildra Preciosa";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/preciosa/preciosa-regular.woff2") format("woff2")}
+.epigraph,.epigraph blockquote{margin:0}
+.epigraph{max-width:520px}
+.copy .quoteText{max-width:520px;font:400 clamp(44px,4vw,60px)/1.28 "Gildra Preciosa","Gildra Kurale",Georgia,serif;letter-spacing:0;text-wrap:pretty;text-shadow:0 2px 10px rgba(var(--shade),.8)}
+.copy .longQuote{font-size:clamp(36px,3.2vw,48px);line-height:1.25}
+.quoteAuthor{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-top:16px;text-align:right;color:var(--accent);font:400 36px/1.4 "Gildra Preciosa","Gildra Kurale",Georgia,serif;letter-spacing:0}
+.quoteAuthor>span{width:32px;height:1px;flex:none;background:var(--metal)}
+.quoteAuthor cite{font-style:normal}
+.openButton{position:relative;isolation:isolate;overflow:hidden;margin-top:32px;min-height:51px;display:inline-flex;align-items:center;justify-content:center;gap:14px;padding:13px 24px;border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);border-radius:4px;background:linear-gradient(135deg,#ffffff12,#ffffff03 55%,color-mix(in srgb,var(--accent) 6%,transparent));background-color:rgba(7,10,15,.12);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:var(--bright);box-shadow:0 6px 20px #0003,inset 0 1px 0 #ffffff24;font-family:"Gildra Kurale",Georgia,serif!important;font-size:17px!important;transition:background-color 280ms,border-color 280ms,box-shadow 320ms,transform 280ms cubic-bezier(.2,.7,.2,1)}
+/* A narrow reflection crosses the glass on hover or keyboard focus. */
+.openButton::before{content:"";position:absolute;z-index:-1;inset:-100% -25%;background:linear-gradient(115deg,transparent 35%,#ffffff26 50%,transparent 65%);transform:translateX(-80%);opacity:0;pointer-events:none;transition:transform 750ms cubic-bezier(.2,.65,.3,1),opacity 220ms}
+.openButton::after{content:"";position:absolute;z-index:-1;left:12%;right:12%;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 8px color-mix(in srgb,var(--accent) 50%,transparent);opacity:.35;transform:scaleX(.8);pointer-events:none;transition:opacity 280ms,transform 280ms}
+.openButton:hover,.openButton:focus-visible{background-color:rgba(7,10,15,.06);border-color:color-mix(in srgb,var(--accent) 72%,transparent);box-shadow:0 8px 24px #0004,inset 0 1px 0 #ffffff38,0 0 18px color-mix(in srgb,var(--accent) 14%,transparent);transform:translateY(-2px)}
+.openButton:hover::before,.openButton:focus-visible::before{transform:translateX(80%);opacity:1}.openButton:hover::after,.openButton:focus-visible::after{opacity:.8;transform:scaleX(1)}
+.openButton svg{flex-shrink:0;transition:transform 280ms cubic-bezier(.2,.7,.2,1)}.openButton svg:first-child{color:var(--accent)}.openButton svg:last-child{margin-left:15px}.openButton:hover svg:last-child,.openButton:focus-visible svg:last-child{transform:translateX(4px)}
+.openButton:active{transform:translateY(0);box-shadow:0 3px 12px #0003,inset 0 1px 0 #ffffff24}
+.bookScene{position:relative;display:grid;justify-items:center;min-width:0}.halo{position:absolute;pointer-events:none;inset:4% -14% 10%;border-radius:50%;background:radial-gradient(ellipse,#d9dce015,transparent 65%);filter:blur(24px)}
+/* A 2D tilt avoids the low-resolution compositing caused by rotateY. */
+.cover{position:relative;display:block;width:min(100%,440px,calc((100svh - 230px)*.667));min-width:260px;padding:0;border:0;background:none;transform:rotate(-3deg);transform-origin:50% 80%;transition:transform 550ms cubic-bezier(.2,.7,.25,1)}
+.cover:hover{transform:rotate(-2deg) translateY(-3px);}
+/* Filter only the artwork; text retains its own sharp layer during the tilt. */
+.coverImage{width:100%;height:auto;display:block;filter:grayscale(1) drop-shadow(-14px 18px 16px #0008);transition:filter 550ms}
+.cover:hover .coverImage{filter:grayscale(1) drop-shadow(-16px 22px 18px #0008)}
+/* Lettering is foil-stamped into the leather: silver like the corner fittings,
+   a pressed upper edge and a lit lower edge (light falls from the top right). */
+.coverTitle{position:absolute;top:16%;left:19%;right:9%;display:grid;justify-items:center;color:#d3d7dc;text-shadow:0 -1px 0 #000b,0 1px 0 #ffffff1c}
+.coverTitle small{font:9px/1.4 "Gildra Atlas",Georgia,serif;letter-spacing:.24em}
+.coverTitle strong,.coverSubtitle>span{background:linear-gradient(180deg,#fbfcfd 8%,#d5d9de 36%,#8f969e 54%,#dfe2e6 74%,#a9afb6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:none;filter:drop-shadow(0 -1px 0 #000c) drop-shadow(0 1px 0 #ffffff26) drop-shadow(0 3px 4px #0008)}
+.coverTitle strong{font:400 clamp(25px,3.3vw,48px)/1.15 "Gildra Kurale",Georgia,serif;letter-spacing:.14em}
+/* A stamped rule with a small lozenge, echoing the riveted fittings. */
+.coverTitle i{position:relative;width:62%;height:1px;margin-top:5px;background:linear-gradient(90deg,transparent,#a7adb4 22%,#e6e9ec 50%,#a7adb4 78%,transparent);box-shadow:0 1px 0 #000a,0 -1px 0 #0006}
+.coverTitle i::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;background:linear-gradient(135deg,#f6f7f8,#9aa1a8 55%,#6c737a);box-shadow:0 1px 2px #000c;transform:translate(-50%,-50%) rotate(45deg)}
+.coverSubtitle{position:absolute;top:72%;left:19%;right:9%;text-align:center;font:400 clamp(18px,2.1vw,30px)/1.12 "Gildra Kurale",Georgia,serif;color:#d6d9de}
+.coverSubtitle>span{display:inline-block}
+.coverSubtitle small{display:block;margin-top:14px;font:8px/1.5 "Gildra Atlas",Georgia,serif;letter-spacing:.18em;color:#bfc3c9;text-shadow:0 -1px 0 #000b,0 1px 0 #ffffff1c}
+/* Directional light on the leather, limited to the book's own silhouette. */
+.coverLight{position:absolute;inset:0;pointer-events:none;-webkit-mask:url("/assets/wow/character-book/intro/chronicle-cover-v2-mask.png") 0 0/100% 100% no-repeat;mask:url("/assets/wow/character-book/intro/chronicle-cover-v2-mask.png") 0 0/100% 100% no-repeat;background:linear-gradient(115deg,transparent 42%,#ffffff2e 50%,transparent 58%) 130% 0/260% 100% no-repeat,linear-gradient(215deg,#ffffff24,transparent 38%,transparent 62%,#0000004d);mix-blend-mode:soft-light}
+.cover:hover .coverLight,.cover:focus-visible .coverLight{background-position:-30% 0,0 0;transition:background-position 1100ms cubic-bezier(.2,.65,.3,1)}
+/* The two cabochons take the colour of the chosen hero and wake on hover. */
+.coverGems{position:absolute;inset:0;pointer-events:none}
+.coverGems i,.coverGems::before,.coverGems::after{position:absolute;top:42.66%;width:6.2%;aspect-ratio:1;border-radius:50%}
+.coverGems i{background:radial-gradient(circle at 40% 36%,color-mix(in srgb,var(--accent) 55%,#fff),var(--accent) 34%,color-mix(in srgb,var(--accent) 70%,#000) 72%);mix-blend-mode:color;opacity:.8;transition:opacity 450ms ease}
+.coverGems i:first-child,.coverGems::before{left:23.5%}.coverGems i:last-child,.coverGems::after{left:73.85%}
+.coverGems::before,.coverGems::after{content:"";background:radial-gradient(circle,color-mix(in srgb,var(--accent) 85%,#fff) 0 18%,color-mix(in srgb,var(--accent) 55%,transparent) 36%,transparent 68%);mix-blend-mode:screen;opacity:.2;transform:scale(1.9);transition:opacity 450ms ease}
+.cover:hover .coverGems i,.cover:focus-visible .coverGems i,[data-cover-awake] .coverGems i{opacity:1}
+.cover:hover .coverGems::before,.cover:hover .coverGems::after,.cover:focus-visible .coverGems::before,.cover:focus-visible .coverGems::after,[data-cover-awake] .coverGems::before,[data-cover-awake] .coverGems::after{opacity:.75}
+.bookHint{position:relative;margin:25px 0 0;font:italic 11px "Gildra Atlas",Georgia,serif;color:var(--muted);text-align:center}.bookHint span{display:inline-block;margin-right:10px;color:var(--accent);font-style:normal}
+.footer{max-width:1320px;margin:0 auto;padding:22px clamp(28px,5vw,70px) 28px;display:flex;align-items:center;justify-content:space-between;gap:18px;border-top:1px solid color-mix(in srgb,var(--accent) 17%,transparent);color:var(--subtle);font:8px/1.5 "Gildra Atlas",Georgia,serif;letter-spacing:.18em}.footerMark{color:var(--accent);font-size:18px}
+.headerNav{position:relative;min-width:0;isolation:isolate}.headerNav ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px clamp(4px,1vw,16px)}
+.headerNav a{position:relative;display:flex;align-items:center;justify-content:center;min-height:44px;padding:10px 13px;color:var(--paper);font:16px/1.3 "Gildra Kurale",Georgia,serif;white-space:nowrap;text-shadow:0 2px 8px #000;transition:color 220ms}
+.navLabel{display:block;transition:text-shadow 240ms}.headerNav a:hover,.headerNav a:focus-visible{color:var(--bright)}.headerNav a:focus-visible{outline:none}.headerNav a:hover .navLabel,.headerNav a:focus-visible .navLabel{text-shadow:0 0 14px color-mix(in srgb,var(--accent) 44%,transparent)}.headerNav a:active{color:var(--accent)}
+/* A single shared underline follows the text, with a soft glow below it. */
+.navHighlight{position:absolute;z-index:-1;left:0;top:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--accent) 18%,var(--bright) 50%,var(--accent) 82%,transparent);box-shadow:0 1px 6px color-mix(in srgb,var(--accent) 55%,transparent);transition:transform 320ms cubic-bezier(.2,.75,.2,1),width 320ms cubic-bezier(.2,.75,.2,1),opacity 180ms}
+.navHighlight::after{content:"";position:absolute;left:-4px;right:-4px;top:0;height:8px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 30%,transparent) 30%,color-mix(in srgb,var(--accent) 42%,transparent) 50%,color-mix(in srgb,var(--accent) 30%,transparent) 70%,transparent);filter:blur(5px)}
+@media(max-width:1100px){.header{grid-template-columns:1fr auto;gap:14px 24px}.headerNav{grid-column:1/-1;grid-row:2}.headerRight{grid-column:2;grid-row:1}.headerNav ul{column-gap:12px}}
 @media(min-width:1600px){.hero{gap:130px}.cover{width:min(470px,calc((100svh - 230px)*.667))}}
-@media(max-width:1000px){.hero{gap:30px;padding-inline:40px}.copy h1{font-size:51px}.intro{font-size:14px}.edition{display:none}.cover{min-width:240px}.coverSubtitle{font-size:24px}}
-@media(max-width:760px){.header{padding:23px 24px}.brand{font-size:22px}.brandSeal{width:36px;height:36px;font-size:26px}.brand small{font-size:7px}.hero{grid-template-columns:1fr;padding:28px 25px 30px;gap:34px;text-align:center}.eyebrow{justify-content:center;font-size:8px;margin-bottom:18px}.eyebrow>span{width:20px}.copy h1{font-size:clamp(40px,8vw,57px);line-height:1.08}.intro{max-width:410px;margin:19px auto 24px;font-size:14px}.invitation{margin-bottom:0}.bookScene{grid-row:1;padding:0 0 8px}.copy{grid-row:2}.openButton{background-image:url("/assets/wow/character-book/grimoire-button-v1-mobile-fast.webp")}.cover{width:min(70vw,280px);min-width:0}.coverTitle strong{font-size:32px}.coverTitle small{font-size:6px}.coverSubtitle{font-size:22px}.coverSubtitle small{font-size:6px;margin-top:11px}.bookHint{margin-top:19px;font-size:10px}.footer{margin-inline:24px;padding:17px 0 22px;flex-wrap:wrap;justify-content:center;text-align:center;font-size:7px;gap:10px}.footerMark{display:none}.footer>span,.footer>nav{width:100%}.footerNav ul{justify-content:center}}
+@media(max-width:1000px){.hero{gap:30px;padding-inline:40px}.copy h1{font-size:51px}.cover{min-width:240px}.coverSubtitle{font-size:24px}}
+@media(max-width:760px){.page{background-image:linear-gradient(180deg,rgba(var(--shade),.2),rgba(var(--shade),.12) 300px,var(--night) 660px),var(--home-art);background-position:center top,42% top;background-size:100% 100%,auto 680px}.header{padding:23px 24px 10px;row-gap:16px}.headerNav ul{gap:2px 4px}.headerNav a{padding:10px 9px;font-size:14px}.brand{gap:9px}.brandMark{width:42px;height:48px}.brandWordmark>span{font-size:25px}.brandWordmark small{font-size:6px}.hero{grid-template-columns:1fr;padding:28px 25px 30px;gap:34px;text-align:center}.eyebrow{justify-content:center;font-size:8px;margin-bottom:18px}.eyebrow>span{width:20px}.copy h1{font-size:clamp(40px,8vw,57px);line-height:1.08}.bookScene{grid-row:2;padding:0 0 8px}.copy{grid-row:1}.cover{width:min(70vw,280px);min-width:0}.coverTitle strong{font-size:30px}.coverTitle small{font-size:7px}.coverTitle i{margin-top:3px;width:56%}.coverSubtitle{font-size:22px}.coverSubtitle small{font-size:7px;margin-top:11px}.bookHint{margin-top:19px;font-size:10px}.footer{margin-inline:24px;padding:17px 0 22px;flex-wrap:wrap;justify-content:center;text-align:center;font-size:7px;gap:10px}.footerMark{display:none}.footer>span{width:100%}}
+@media(max-width:1000px){.copy .quoteText{font-size:46px}.copy .longQuote{font-size:40px}}
+@media(max-width:760px){.epigraph{margin-inline:auto}.copy .quoteText{max-width:520px;margin-inline:auto;font-size:clamp(38px,8vw,52px);line-height:1.3}.copy .longQuote{font-size:clamp(32px,6.8vw,42px);line-height:1.3}.quoteAuthor{margin-top:16px;font-size:34px}}
+/* Decorative snowfall stays behind the content and never intercepts input. */
+.snow{position:absolute;z-index:-1;inset:0;max-height:100svh;overflow:hidden;pointer-events:none;user-select:none;mask-image:linear-gradient(#000 75%,transparent)}
+.snow span{position:absolute;top:-12px;left:var(--snow-x);width:var(--snow-size);height:var(--snow-size);border-radius:50%;background:var(--particle);opacity:0;animation:snowfall var(--snow-duration) var(--snow-delay) linear infinite}
+.snow span:nth-child(7n+1){border-radius:0;background:linear-gradient(90deg,transparent 42%,var(--particle) 42% 58%,transparent 58%),linear-gradient(30deg,transparent 42%,var(--particle) 42% 58%,transparent 58%),linear-gradient(150deg,transparent 42%,var(--particle) 42% 58%,transparent 58%)}
+@keyframes snowfall{0%{transform:translate3d(0,-12px,0);opacity:0}10%{opacity:.48}80%{opacity:.3}100%{transform:translate3d(var(--snow-drift),calc(100svh + 12px),0);opacity:0}}
+@media(max-width:760px){.snow span:nth-child(n+19){display:none}}
+@media(prefers-reduced-motion:reduce){.snow span{animation:none;transform:translate3d(0,var(--snow-rest),0);opacity:.25}}
 @media(prefers-reduced-motion:reduce){.page *{transition:none!important}.cover,.cover:hover{transform:rotate(-3deg)}}
+
+/* Equipment emblems and a translucent panel keep the art visible. */
+.themePicker{position:relative;z-index:10}
+.themeTrigger{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:6px 8px;border:0;border-radius:2px;background:transparent;color:var(--paper);font:14px/1.3 "Gildra Kurale",Georgia,serif!important;text-shadow:0 1px 6px #000;transition:color 220ms}
+.themeTrigger::after{content:"";position:absolute;left:8px;right:8px;bottom:3px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transform:scaleX(.65);transition:opacity 220ms,transform 220ms}
+.themeTrigger:hover,.themeTrigger[aria-expanded="true"]{color:var(--bright)}
+.themeTrigger:hover::after,.themeTrigger[aria-expanded="true"]::after{opacity:.7;transform:scaleX(1)}
+.themeEmblem{display:block;width:48px;height:48px;flex:none;object-fit:contain}
+.themeTrigger>.themeEmblem{width:32px;height:32px;color:var(--accent);transition:transform 260ms,filter 260ms}
+.themeTrigger:hover>.themeEmblem,.themeTrigger[aria-expanded="true"]>.themeEmblem{transform:translateY(-1px);filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 35%,transparent))}
+.themeTrigger>svg:last-child{margin-left:2px;opacity:.7;transition:transform 220ms}.themeTrigger[aria-expanded="true"]>svg:last-child{transform:rotate(180deg)}
+.themeMenu{position:absolute;right:0;top:calc(100% + 12px);width:284px;padding:12px;border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);border-radius:4px;background:rgba(7,10,15,.12);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);box-shadow:0 12px 32px #0004;animation:themeMenuIn 220ms ease-out}
+.themeMenu>p{margin:6px 12px 10px;color:var(--paper);font-size:8px;letter-spacing:.16em;text-shadow:0 1px 4px #000}
+.themeMenu button{position:relative;width:100%;min-height:66px;display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;border:1px solid transparent;border-radius:2px;background:transparent;color:#edf0f4;text-shadow:0 1px 6px #000;transition:background 180ms,border-color 180ms}
+.themeMenu button:hover,.themeMenu button:focus-visible{background:#ffffff0b;outline:none;border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.themeMenu button[aria-checked="true"]{background:#ffffff08}
+.themeMenu button[aria-checked="true"]::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:1px;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.themeIdentity{display:grid;gap:5px;flex:1}.themeMenu strong{font:19px/1.2 "Gildra Kurale",Georgia,serif;font-weight:400}.themeMenu small{font-size:10px;color:#d0d5dc}
+.themeMenu button>svg{color:var(--accent);flex:none}
+.themeSymbol{display:grid;place-items:center;flex:none;color:#b7e4ff;transition:transform 240ms,filter 240ms}
+.themeSymbol[data-symbol="illidan"]{color:#d0a8ff}.themeSymbol[data-symbol="garek"]{color:#b3ecb4}.themeSymbol[data-symbol="varok"]{color:#ffb68d}
+.themeMenu button:hover .themeSymbol,.themeMenu button:focus-visible .themeSymbol{transform:translateY(-1px);filter:drop-shadow(0 0 6px currentColor)}
+@keyframes themeMenuIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+/* Fel sparks fall, restless souls drift, and embers rise. */
+.page[data-home-theme="illidan"] .snow span{border-radius:1px;background:var(--particle);height:calc(var(--snow-size)*1.6);box-shadow:0 0 8px var(--particle);animation-name:felFall}
+.page[data-home-theme="garek"] .snow span{border-radius:50%;background:radial-gradient(ellipse at 50% 25%,var(--particle),transparent 75%);width:calc(var(--snow-size)*2);height:calc(var(--snow-size)*5);filter:blur(.5px);animation-name:soulDrift}
+.page[data-home-theme="varok"] .snow span{border-radius:50% 50% 25% 25%;background:var(--particle);height:calc(var(--snow-size)*1.4);box-shadow:0 0 7px #ff742a;animation-name:emberRise;animation-duration:calc(var(--snow-duration)*.65)}
+@keyframes felFall{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(var(--snow-drift),calc(100svh + 12px),0) rotate(150deg);opacity:0}}
+@keyframes soulDrift{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(var(--snow-drift),50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
+@keyframes emberRise{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(var(--snow-drift),-12px,0) scale(.3);opacity:0}}
+@media(max-width:480px){.header{padding-inline:18px;column-gap:12px}.headerRight{gap:6px}.brand{gap:7px}.brandMark{width:36px;height:42px}.brandWordmark>span{font-size:22px}.brandWordmark small{font-size:5px}.language{gap:8px}.themeTrigger{width:44px;padding:8px}.themeTrigger>span,.themeTrigger>svg:last-child{display:none}.themeMenu{position:fixed;top:78px;right:18px;width:min(284px,calc(100vw - 36px))}}
+@media(prefers-reduced-motion:reduce){.themeMenu{animation:none}.page .snow span{animation:none;transform:translate3d(0,var(--snow-rest),0);opacity:.25}}
+
+@media(prefers-reduced-motion:reduce){.openButton::before{display:none}.openButton::after{transition:none}.openButton:hover,.openButton:focus-visible,.openButton:active,.openButton:hover svg:last-child,.openButton:focus-visible svg:last-child{transform:none}}
+
+/* Fixed word geometry lets the ink appear without moving the text or button. */
+.inkWord{display:inline-block;white-space:nowrap}
+.inkLetter{display:inline-block}
+[data-scene-started="false"] .snow span{animation-play-state:paused}
+.epigraph[data-writing="waiting"] .inkLetter,.epigraph[data-writing="waiting"] .quoteAuthor>span{opacity:0}
+.epigraph[data-writing="writing"] .inkLetter{animation:epigraphInk var(--ink-duration,180ms) var(--ink-delay) linear both}
+.epigraph[data-cinematic="true"][data-writing="writing"] .inkLetter,.epigraph[data-cinematic="true"][data-writing="writing"] .quoteAuthor>span{animation-play-state:paused}
+.epigraph[data-writing="writing"] .quoteAuthor>span{animation:epigraphSignatureRule 250ms var(--signature-delay) ease-out both;transform-origin:left}
+@keyframes epigraphInk{from{opacity:0;clip-path:inset(-30% 110% -30% -25%)}to{opacity:1;clip-path:inset(-30% -25% -30% -25%)}}
+@keyframes epigraphSignatureRule{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+@media(prefers-reduced-motion:reduce){.epigraph[data-writing] .inkLetter,.epigraph[data-writing] .quoteAuthor>span{animation:none;opacity:1;clip-path:none;transform:none}}
+[data-scene-started="false"] .epigraph .inkLetter,[data-scene-started="false"] .epigraph .quoteAuthor>span{opacity:0}
+
+/* Opening the book on the page: the epigraph and hint step aside while the
+   cover keeps its box, so the closing book lands exactly where it started. */
+.hero{position:relative}
+.copy,.bookHint{transition:opacity 600ms ease 900ms,visibility 0s}
+.hero:is([data-book-state="opening"],[data-book-state="open"],[data-book-state="held"]) :is(.copy,.bookHint){opacity:0;visibility:hidden;transition:opacity 280ms ease,visibility 0s 280ms}
+.hero:not([data-book-state="closed"]) .cover{visibility:hidden}
+/* On a phone the book opens as a modal over the page, which stays as it is. */
+@media(max-width:820px){.hero:is([data-book-state="opening"],[data-book-state="open"],[data-book-state="held"]) :is(.copy,.bookHint){opacity:1;visibility:visible;transition:none}}
+@media(prefers-reduced-motion:reduce){.copy,.bookHint{transition:none!important}.cover:hover .coverLight,.cover:focus-visible .coverLight{background-position:130% 0,0 0}}

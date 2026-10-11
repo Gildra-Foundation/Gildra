@@ -2,6 +2,7 @@ export function RouteLoading({ lang = "en", talent = false }: { lang?: "en" | "r
   const label = lang === "ru" ? "Загрузка страницы" : "Loading page";
   return (
     <main
+      data-book-route-loading
       data-talent-route={talent ? "" : undefined}
       role="status"
       aria-live="polite"

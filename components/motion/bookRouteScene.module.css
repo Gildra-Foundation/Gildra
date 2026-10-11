@@ -1,39 +1,75 @@
 .scene { z-index: 990; }
-.scene[data-book-route-scene="turn"] { left: 0; width: 100%; height: 100%; bottom: 0; }
+.scene[data-book-route-scene="turn"] { inset: 0; width: 100%; height: 100%; color: #c3e8ec; }
 .scene:not([data-book-hydrated]) { animation: failOpen 1ms 4s forwards; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* A fracture parts like a physical seam: cold glass becomes warm dust.
+   The existing lifecycle owns readiness, cancellation and the 700ms reveal. */
+.veil { position: absolute; inset: 0; background: #06101a59; pointer-events: none; }
+.rift { position: absolute; inset: 0; overflow: hidden; pointer-events: none; contain: paint; }
+.panel {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, #294451d9, #07101bf2 80%);
+  will-change: transform, opacity;
+}
+.panel::after {
+  content: ""; position: absolute; inset: 0;
+  background: repeating-linear-gradient(118deg, transparent 0 80px, #a0d4da05 81px, transparent 82px 150px);
+}
+.west { clip-path: polygon(0 0,53% 0,48.7% 17.5%,52.3% 29%,47.6% 44%,51.6% 56.5%,47.9% 72%,52% 86%,49% 100%,0 100%); }
+.east { clip-path: polygon(53% 0,100% 0,100% 100%,49% 100%,52% 86%,47.9% 72%,51.6% 56.5%,47.6% 44%,52.3% 29%,48.7% 17.5%); }
+.cracks { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #94c9d1; stroke-width: 1; opacity: .65; }
+.cracks path { vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.mainCrack { stroke: #d2eef0; stroke-width: 1.5; }
+.seal { position: absolute; left: 50%; top: 48%; width: 76px; height: 76px; margin: -38px; display: grid; place-items: center; }
+.seal span { font: 48px/1 Georgia,serif; color: #e6d5ad; text-shadow: 0 0 24px #94c9d159; }
+.seal i { position: absolute; inset: 0; border: 1px solid #bfdade59; transform: rotate(45deg); }
+.seal i:last-child { inset: 10px; border-color: #e6d5ad40; transform: rotate(15deg); }
+.light { position: absolute; inset: 8% 20%; background: radial-gradient(ellipse, #b4dfe22e, transparent 65%); opacity: .5; }
+.spark { position: absolute; left: var(--x); top: var(--y); width: 3px; height: 6px; background: #d0edf0; clip-path: polygon(50% 0,100% 35%,60% 100%,0 65%); opacity: 0; }
+.pending { position: absolute; inset: auto 20px max(7vh,28px); margin: 0; color: #c9dadd; text-align: center; font: 13px/1.5 "Gildra Atlas",Georgia,serif; letter-spacing: .06em; opacity: 0; }
+.scene[data-book-route-scene="turn"] .skip { border-color: #b8d6db40; background: #101c24b3; color: #d0ddd9; font-family: "Gildra Atlas",Georgia,serif; }
+.scene[data-book-route-scene="turn"] .skip:hover { background: #243d49; border-color: #bccdc8; }
+.scene[data-book-route-scene="turn"] .skip:focus-visible { outline-color: #d2e3dc; }
+.scene[data-book-route-scene="turn"] .skip kbd { border-color: #b6c9c330; color: #abbfb9; }
+.scene[data-book-route-phase="waiting"] .rift,
+.scene[data-book-route-phase="waiting"] .veil { animation: gather var(--book-lift-duration) ease-out both; }
+.scene[data-book-route-phase="waiting"] .cracks path { animation: etch 450ms ease-out both; }
+.scene[data-book-route-phase="waiting"] .seal { animation: sealGather 400ms ease-out both; }
+.scene[data-book-route-phase="waiting"] .pending { animation: pendingAppear 250ms 800ms both; }
+.scene[data-book-route-phase="playing"] .west { animation: westDepart var(--book-turn-duration) cubic-bezier(.22,.7,.2,1) both; }
+.scene[data-book-route-phase="playing"] .east { animation: eastDepart var(--book-turn-duration) cubic-bezier(.22,.7,.2,1) both; }
+.scene[data-book-route-phase="playing"] .cracks { animation: crackDepart var(--book-turn-duration) ease-out both; }
+.scene[data-book-route-phase="playing"] .seal { animation: sealDepart var(--book-turn-duration) ease-out both; }
+.scene[data-book-route-phase="playing"] .light { animation: lightDepart var(--book-turn-duration) ease-out both; }
+.scene[data-book-route-phase="playing"] .spark { animation: dust calc(var(--book-turn-duration) - 150ms) var(--delay) ease-out both; }
+.scene[data-book-route-phase="playing"] .veil,
+.scene[data-book-route-phase="playing"] .skip { animation: depart var(--book-turn-duration) ease-out both; }
 .scene[data-book-route-phase="loading"] { pointer-events: none; }
 .scene[data-book-route-phase="loading"] [data-book-route-skip] { pointer-events: auto; }
-.scene[data-book-route-phase="loading"] .stage { opacity: 0; }
-.scene[data-book-route-phase="loading"] .veil { opacity: .2; }
-.veil { position: absolute; inset: 0; }
-.stage { position: absolute; left: 50%; top: 43%; width: min(1020px, 88%, 130vh); aspect-ratio: 1.65; transform: translate(-50%, -50%); perspective: 1700px; pointer-events: none; }
-.spread { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(8deg); border-radius: 7px; background: #402919; box-shadow: 0 20px 70px #000a, 0 4px 0 #2b1b0e; }
-.page, .front, .back { position: absolute; background: linear-gradient(90deg, #756b543b, #eee0bf70 12%, #eee0bf70 80%, #82735b33), var(--book-paper-image) center / 480px repeat, #d8cdb6; border: 1px solid #8e7e60; color: #594e3b; filter: saturate(.62) contrast(.91) brightness(.98); }
-.page { top: 2%; bottom: 2%; width: 48.5%; box-shadow: 0 2px 0 #a18752, 0 4px 0 #79603a, 0 6px 0 #3b281a; }
-.left { left: 1%; border-radius: 5px 1px 1px 5px; }
-.right { right: 1%; border-radius: 1px 5px 5px 1px; }
-.page::after, .front::after, .back::after { content: ""; position: absolute; inset: 7%; border: 1px solid #85582738; outline: 1px solid #85582724; outline-offset: 5px; pointer-events: none; }
-.spine { position: absolute; inset: 1% auto 1% 47%; width: 6%; background: linear-gradient(90deg, transparent, #4b2e1370 45%, #2c190b80 50%, #f2d8a54a 59%, transparent); pointer-events: none; }
-.ornament { position: absolute; top: 12%; left: 18%; width: 64%; height: 12%; background: var(--folio-divider-image) center / contain no-repeat; mix-blend-mode: multiply; opacity: .6; }
-.monogram { position: absolute; inset: 28% 0 auto; text-align: center; font: 400 clamp(34px, 5vw, 76px)/1.4 "Gildra Kurale", Georgia, serif; color: #70451f99; }
-.lines { position: absolute; inset: 57% 18% 16%; background: repeating-linear-gradient(transparent 0 16px, #8053282b 16px 17px); }
-.leaf { position: absolute; top: 2%; left: 50%; width: 49%; height: 96%; transform-origin: left center; transform-style: preserve-3d; transform: rotateY(-74deg); }
-.front, .back { inset: 0; backface-visibility: hidden; border-radius: 1px 5px 5px 1px; box-shadow: 5px 5px 16px #42260944; }
-.front { transform: translateZ(1px); }
-.back { transform: rotateY(180deg); background-image: linear-gradient(270deg, #756b5450, #eee0bf70 20%, #eee0bf70), var(--book-paper-image); }
-.front::before, .back::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #35200a44, transparent 16%, #fff3c344 80%, #3f260a26); }
-.caption { position: absolute; bottom: max(6vh, 28px); left: 8%; right: 8%; text-align: center; color: #e8dfce; }
-.caption > span { color: #bca27a; font-size: 10px; letter-spacing: .3em; }
-.caption h2 { margin: 7px 0; font: 400 clamp(24px, 3vw, 38px)/1.2 "Gildra Kurale", Georgia, serif; }
-.caption p { margin: 0; color: #baaa8d; font: 13px/1.5 Georgia, serif; }
-.scene[data-book-route-phase="waiting"] .leaf { animation: liftLeaf var(--book-lift-duration) cubic-bezier(.2,.7,.25,1) both; }
-.scene[data-book-route-phase="playing"] .leaf { animation: turnLeaf var(--book-turn-duration) cubic-bezier(.25,.55,.2,1) both; }
-.scene[data-book-route-phase="playing"] .stage { animation: revealPage var(--book-turn-duration) ease both; }
-.scene[data-book-route-phase="playing"] :is(.veil, .caption) { animation: fadeScene var(--book-turn-duration) ease both; }
-@keyframes liftLeaf { from { transform: rotateY(-2deg); } to { transform: rotateY(-74deg); } }
-@keyframes turnLeaf { from { transform: rotateY(-74deg); } 75%, to { transform: rotateY(-178deg); } }
-@keyframes revealPage { 0%, 55% { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) scale(1.12); } }
-@keyframes fadeScene { 0%, 58% { opacity: 1; } to { opacity: 0; } }
+.scene[data-book-route-phase="loading"] .rift { display: none; }
+.scene[data-book-route-phase="loading"] .veil { opacity: .12; }
+.scene[data-book-route-phase="loading"] .pending { opacity: 1; }
+
+@keyframes gather { from { opacity: 0; } to { opacity: 1; } }
+@keyframes etch { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes sealGather { from { opacity: 0; transform: scale(.8) rotate(-15deg); } to { opacity: 1; transform: none; } }
+@keyframes westDepart { 0% { transform: none; opacity: 1; } 100% { transform: translate(-65%,-8%) rotate(-7deg); opacity: 0; } }
+@keyframes eastDepart { 0% { transform: none; opacity: 1; } 100% { transform: translate(65%,8%) rotate(7deg); opacity: 0; } }
+@keyframes crackDepart { 0% { opacity: .65; } 30% { opacity: .9; } 100% { opacity: 0; transform: scaleX(1.2); } }
+@keyframes sealDepart { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(1.4) rotate(35deg); } }
+@keyframes lightDepart { 0% { opacity: .5; transform: scaleX(.4); } 25% { opacity: .7; } 100% { opacity: 0; transform: scaleX(1.4); } }
+@keyframes dust { 0% { opacity: 0; transform: none; } 16% { opacity: .8; } 45% { background: #ddbb7e; } 100% { opacity: 0; background: #ddbb7e; transform: translate(var(--dx),var(--dy)) rotate(70deg) scale(.2); } }
+@keyframes depart { from { opacity: 1; } to { opacity: 0; } }
+@keyframes pendingAppear { to { opacity: 1; } }
 @keyframes failOpen { to { visibility: hidden; pointer-events: none; } }
-@media (max-width: 600px) { .stage { width: 92%; top: 44%; } .caption { bottom: 14%; } .lines { background-size: auto; inset-inline: 14%; } }
-@media (prefers-reduced-motion: reduce) { .scene { display: none; } .scene *, .scene *::before, .scene *::after { animation: none !important; } }
+@media (max-width: 560px) {
+  .seal { width: 56px; height: 56px; margin: -28px; }
+  .seal span { font-size: 36px; }
+  .scene[data-book-route-scene="turn"] .skip { top: 14px; right: 14px; padding: 8px 10px; font-size: 12px; }
+  .spark:nth-of-type(n+13) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene { display: none; }
+  .scene *, .scene *::before, .scene *::after { animation: none !important; transition: none !important; }
+}

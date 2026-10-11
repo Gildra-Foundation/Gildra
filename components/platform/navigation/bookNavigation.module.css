@@ -1,108 +1,211 @@
 .dialog {
-  width: min(1240px, 98vw);
+  --nav-ink: #292c31;
+  --nav-muted-ink: #555a62;
+  box-sizing: border-box;
+  width: min(1360px, calc(100vw - 32px), calc((100svh - 40px) * 1.5));
   max-width: none;
-  max-height: 96svh;
+  max-height: calc(100svh - 24px);
   margin: auto;
-  padding: 46px 54px 52px;
+  padding: 0;
   border: 0;
   background: transparent;
-  color: #2d1c0f;
+  color: var(--nav-ink);
+  text-align: left;
   overflow: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
   overscroll-behavior: contain;
   font: 20px/1.5 "Gildra Atlas", Georgia, serif;
 }
-.dialog::-webkit-scrollbar { display: none; width: 0; height: 0; }
-.dialog::backdrop { background: #080a0cf4; }
-.dialog[open] { animation: unfold 250ms ease-out; }
+.dialog::backdrop { background: #080e17d9; }
+.dialog[open] { animation: unfold 180ms ease-out; }
 .dialog * { box-sizing: border-box; }
-.dialog[open] :is(a, button):focus-visible { outline: 3px solid #783921; outline-offset: 3px; }
-.dialog[open] .close:focus-visible { outline: none; box-shadow: inset 0 0 0 3px #f0d29d; }
+.dialog :is(a, button):focus-visible,
+.volume :is(a, button):focus-visible { outline: 2px solid var(--nav-muted-ink); outline-offset: 3px; }
+/* The dialog can grow out of the home page book and lay it back down. */
+.dialog[data-lift] { animation: none; transform-origin: 0 0; }
+.dialog[data-lift="in"]::backdrop { animation: backdropIn 560ms ease-out both; }
+.dialog[data-lift="out"]::backdrop { animation: backdropOut 460ms ease-in both; }
+@keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes backdropOut { from { opacity: 1; } to { opacity: 0; } }
 
 .volume {
-  --folio-paper: linear-gradient(#eee0bf70, #eee0bf70), var(--book-paper-image) center / 640px repeat;
-  --book-edge-width: 90px;
-  --book-paper-inset: -22px -12px -26px;
-  --book-paper-inline-inset: -12px;
-  --book-paper-fade: 32px;
-  --book-paper-mask: linear-gradient(90deg, transparent, #000 var(--book-paper-fade), #000 calc(100% - var(--book-paper-fade)), transparent), linear-gradient(transparent, #000 20px, #000 calc(100% - 20px), transparent);
-  --book-binding-fade: 56px;
-  --book-binding-inset: -38px -44px -42px;
-  --book-binding-width: 58px 64px;
-  /* Fade out before the border-image ends, so its pale inner edge never
-     leaves a rectangular seam across the continuous parchment underneath. */
-  --book-binding-mask: linear-gradient(#000 0 18px, transparent var(--book-binding-fade), transparent calc(100% - var(--book-binding-fade)), #000 calc(100% - 18px));
-  --book-binding-shadow: drop-shadow(0 6px 9px #08050350);
-  --book-material-filter: saturate(.62) contrast(.91) brightness(.98);
+  --nav-ink: #292c31;
+  --nav-muted-ink: #555a62;
   position: relative;
   isolation: isolate;
-  container: auditPage / inline-size;
-  padding: 32px 34px;
+  container-type: inline-size;
+  aspect-ratio: 3 / 2;
+  color: var(--nav-ink);
+  text-align: left;
+  font: 20px/1.5 "Gildra Atlas", Georgia, serif;
 }
-.spread { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(56px, 7vw, 100px); }
-.leaf { min-width: 0; }
+.volume * { box-sizing: border-box; }
+/* Keep the original pixels and proportions. Content occupies only the flat
+   paper inside the page edges, never the binding, spine or curled corners. */
+.bookArtwork {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: grayscale(1);
+  pointer-events: none;
+  user-select: none;
+}
+.mobileBookFrame {
+  --book-binding-image: url("/assets/wow/character-book/folio-binding-v1.png");
+  --book-binding-image-mobile: var(--book-binding-image);
+  --book-paper-image: url("/assets/wow/character-book/folio-vellum-v1.png");
+  --folio-paper: var(--book-paper-image) center / 640px repeat;
+  --book-frame-overflow: visible;
+  --book-binding-inset: 0;
+  --book-binding-width: 60px 36px;
+  --book-binding-mask: linear-gradient(#000 0 20px, transparent 56px, transparent calc(100% - 56px), #000 calc(100% - 20px)), linear-gradient(90deg, #000 0 10px, transparent 32px, transparent calc(100% - 32px), #000 calc(100% - 10px));
+  --book-paper-inset: 28px 24px;
+  --book-paper-mask: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent), linear-gradient(transparent, #000 32px, #000 calc(100% - 32px), transparent);
+  --book-edge-width: 0px;
+  --book-gutter-width: 0px;
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  display: none;
+  isolation: isolate;
+  filter: grayscale(1);
+}
+.spread {
+  position: absolute;
+  inset: 17% 15% 16%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16%;
+}
+.leaf {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding-top: 8px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #555a6240 transparent;
+}
+.runningTitle {
+  flex: none;
+  margin: 0 0 6px;
+  text-align: center;
+  color: var(--nav-muted-ink);
+  font: 11px/1.4 "Gildra Atlas", Georgia, serif;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
 .leaf h2 {
+  flex: none;
   margin: 0;
-  padding: 0 0 18px;
-  border-bottom: 2px solid #76502d66;
-  color: #39200e;
-  font: 32px/1.2 "Gildra Kurale", Georgia, serif;
+  color: var(--nav-ink);
+  text-align: center;
+  text-wrap: balance;
+  font: 400 clamp(23px, 3.1cqw, 38px)/1.25 "Gildra Kurale", Georgia, serif;
 }
-.leaf .archiveHeading { margin-top: 28px; font-size: 29px; }
+.ornament {
+  flex: none;
+  display: block;
+  height: clamp(24px, 3.4cqw, 42px);
+  margin: 2px auto 8px;
+  width: 86%;
+  background: url("/assets/wow/character-book/grimoire-divider-v1.png") center / contain no-repeat;
+  filter: grayscale(1);
+  opacity: .8;
+}
+.chapters, .guide { display: flex; flex: 1; flex-direction: column; min-height: 0; }
 .close {
   position: absolute;
   z-index: 3;
-  top: -34px;
-  right: 12px;
+  top: 3.5%;
+  right: 3.5%;
   width: 44px;
-  height: 65px;
+  height: 44px;
   display: grid;
   place-items: center;
-  padding: 0 0 8px;
+  padding: 0;
   border: 0;
-  border-radius: 0;
-  background: linear-gradient(90deg, #392020, #643431 16%, #57302c 80%, #38201d);
-  box-shadow: inset 2px 0 #b68f5b40, inset -2px 0 #b68f5b40;
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 9px), 0 100%);
-  color: #ead4af;
+  background: transparent;
+  color: #e1e3e6;
+  text-shadow: 0 1px 3px #000;
   cursor: pointer;
+  font: 28px/1 Georgia, serif !important;
 }
-.close:hover { filter: brightness(1.18); }
-.dialog .entry {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) 18px;
+.close:hover { color: #fff; }
+:is(.dialog, .volume) .entry {
+  position: relative;
+  display: flex;
+  flex: 1 0 auto;
   align-items: center;
-  gap: 15px;
-  min-height: 76px;
-  padding: 16px 6px;
-  border-bottom: 1px solid #79512b55;
-  color: #2d1c0f;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 0;
+  border-bottom: 1px solid #292c312e;
+  color: var(--nav-ink);
   text-decoration: none;
-  font: 23px/1.35 "Gildra Atlas", Georgia, serif;
-  transition: color 160ms, background 160ms;
+  font: clamp(17px, 2.12cqw, 27px)/1.25 "Gildra Kurale", Georgia, serif;
+  transition: background-color 140ms ease;
 }
-.dialog .entry:hover { color: #6f291b; background: #87512612; }
-.dialog .entry[aria-current="page"] { color: #6f291b; background: #78392112; box-shadow: inset 3px 0 #783921; }
-.entryIcon { color: #6b4320; }
-.arrow { color: #6b4320; }
-.dialog .account {
+.entry:hover, .entry[aria-current="page"] { background: linear-gradient(90deg, transparent, #292c310c 20%, #292c310c 80%, transparent); }
+.chapter {
+  flex: 0 0 26px;
+  color: var(--nav-muted-ink);
+  font: 400 clamp(19px, 2.5cqw, 32px)/1 Georgia, serif;
+  text-align: center;
+}
+.entryCopy { display: block; min-width: 0; }
+.entryLabel { display: block; overflow-wrap: anywhere; }
+.entryDetail {
+  display: block;
+  margin-top: 5px;
+  color: var(--nav-muted-ink);
+  overflow-wrap: anywhere;
+  font: clamp(12px, 1.3cqw, 16px)/1.4 "Gildra Atlas", Georgia, serif;
+}
+.entry:hover .entryLabel,
+.entry:focus-visible .entryLabel,
+.entry[aria-current="page"] .entryLabel { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.guide .entry { padding-inline: 8px; }
+.accountPlate {
+  flex: none;
+  margin-top: clamp(12px, 2cqw, 26px);
+  padding: 12px 8px;
+  border-block: 3px double #292c314f;
+  text-align: center;
+  background: radial-gradient(ellipse at center, #292c310a, transparent 75%);
+}
+.accountKicker { margin: 0 0 5px; color: var(--nav-muted-ink); font: 10px/1.4 "Gildra Atlas", Georgia, serif; letter-spacing: .12em; text-transform: uppercase; }
+.accountHeading {
+  margin: 0;
+  color: var(--nav-ink);
+  font: 400 clamp(19px, 2.1cqw, 27px)/1.3 "Gildra Kurale", Georgia, serif;
+}
+:is(.dialog, .volume) .account {
   display: grid;
-  grid-template-columns: 23px minmax(0, 1fr) 18px;
-  align-items: center;
-  gap: 13px;
-  min-height: 60px;
-  margin-top: 28px;
-  padding: 14px 16px;
-  border: 1px solid #926b36;
-  border-radius: 3px;
-  background: #582118 var(--folio-control-image) center / 100% 100%;
-  color: #fff0c7;
+  place-items: center;
+  min-height: 44px;
+  padding: 4px 0;
+  color: var(--nav-ink);
+  text-align: center;
   text-decoration: none;
-  white-space: normal;
-  font: 20px/1.35 "Gildra Atlas", Georgia, serif;
+  overflow-wrap: anywhere;
+  font: clamp(17px, 2cqw, 24px)/1.3 "Gildra Atlas", Georgia, serif;
 }
-.dialog .account:hover { filter: brightness(1.12); }
+.account:hover,
+.account:focus-visible { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.account[aria-disabled="true"] { color: var(--nav-muted-ink); }
+.accountDetail { margin: 0; color: var(--nav-muted-ink); font: clamp(12px, 1.3cqw, 16px)/1.4 "Gildra Atlas", Georgia, serif; text-wrap: balance; }
+.pageNumber {
+  flex: none;
+  padding-top: 12px;
+  color: var(--nav-muted-ink);
+  text-align: center;
+  font: 14px/1.3 Georgia, serif;
+}
 .launcher {
   position: relative;
   min-height: 44px;
@@ -110,16 +213,16 @@
   align-items: center;
   gap: 9px;
   padding: 7px 13px 7px 6px;
-  border: 1px solid #a7783a7a;
+  border: 1px solid #84b4d07a;
   border-radius: 3px;
-  background: #21180ff0;
-  color: #e6c995;
+  background: #102332f0;
+  color: #dbe9f2;
   box-shadow: 0 4px 16px #0005;
   cursor: pointer;
   font: 14px Georgia, "Times New Roman", serif;
 }
-.launcher img { height: 30px; width: 20px; object-fit: contain; }
-.launcher:focus-visible { outline: 2px solid #e1bd78; outline-offset: 4px; }
+.launcher img { height: 30px; width: 20px; object-fit: contain; filter: grayscale(1); }
+.launcher:focus-visible { outline: 2px solid #9ecfea; outline-offset: 4px; }
 .toolbar {
   position: sticky;
   top: 0;
@@ -130,55 +233,119 @@
   justify-content: space-between;
   gap: 20px;
   padding: 8px 20px;
-  background: #0b0c0bf5;
-  border-bottom: 1px solid #a7783a30;
+  background: #080e17f5;
+  border-bottom: 1px solid #84b4d030;
 }
-.toolbarTitle { color: #c5a270; font: 18px/1.1 Georgia, "Times New Roman", serif; letter-spacing: .14em; text-align: right; }
-.toolbarTitle small { display: block; font: 700 7px/1.5 system-ui, sans-serif; letter-spacing: .14em; margin-top: 5px; color: #8b7a61; }
+.toolbarTitle { color: #dbe9f2; font: 18px/1.1 Georgia, "Times New Roman", serif; letter-spacing: .14em; text-align: right; }
+.toolbarTitle small { display: block; font: 700 7px/1.5 system-ui, sans-serif; letter-spacing: .14em; margin-top: 5px; color: #94aab9; }
 
-@keyframes unfold { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes unfold { from { opacity: 0; } to { opacity: 1; } }
 
-@media (max-width: 960px) and (min-width: 821px) {
-  .volume { padding: 28px 18px; }
-  .spread { gap: 54px; }
-  .dialog .entry { font-size: 21px; gap: 10px; }
-  .leaf h2 { font-size: 29px; }
-  .leaf .archiveHeading { font-size: 26px; }
+@container (max-width: 1060px) {
+  .runningTitle { font-size: 9px; margin-bottom: 4px; }
+  .ornament { margin-bottom: 4px; }
+  :is(.dialog, .volume) .entry { padding-block: 6px; gap: 8px; }
+  .chapter { flex-basis: 22px; }
+  .accountPlate { padding-block: 8px; }
+  .accountKicker { font-size: 9px; }
+  .pageNumber { padding-top: 8px; }
 }
+
+@container (max-width: 860px) {
+  :is(.dialog, .volume) .entry { padding-block: 4px; }
+  .entryDetail { margin-top: 3px; font-size: 11px; line-height: 1.3; }
+  .accountPlate { margin-top: 8px; padding-block: 6px; }
+  .accountKicker { display: none; }
+  .accountDetail { font-size: 11px; }
+  .pageNumber { padding-top: 6px; font-size: 12px; }
+}
+
+/* A small spread (the home page book on a short screen) keeps chapter titles
+   only; lifting the book to full size shows the descriptions again. */
+@media (min-width: 821px) {
+  @container (max-width: 760px) {
+    .runningTitle, .entryDetail, .accountKicker, .accountDetail { display: none; }
+    .ornament { height: clamp(16px, 3.4cqw, 26px); margin-bottom: 2px; }
+    :is(.dialog, .volume) .entry { padding-block: 2px; }
+    .accountPlate { margin-top: 6px; padding-block: 4px; }
+    .pageNumber { padding-top: 4px; }
+  }
+}
+
 @media (max-width: 820px) {
-  .dialog { padding: 34px 26px; width: 100%; }
-  .volume { padding: 22px 22px; --book-edge-width: 58px; --book-binding-inset: -26px -20px -30px; --book-binding-width: 42px 36px; --book-binding-fade: 40px; --book-paper-inset: -16px -4px -20px; --book-paper-inline-inset: -4px; --book-paper-fade: 22px; }
-  .spread { grid-template-columns: minmax(0, 1fr); gap: 34px; }
-  .leaf h2 { font-size: 30px; padding-bottom: 16px; }
-  .dialog .entry { font-size: 22px; min-height: 70px; padding-block: 15px; }
-  .close { top: -23px; right: 4px; height: 57px; }
+  .dialog { width: min(580px, calc(100vw - 16px)); max-height: calc(100svh - 24px); }
+  .volume { aspect-ratio: auto; }
+  .bookArtwork { display: none; }
+  .mobileBookFrame { display: block; }
+  .spread {
+    position: relative;
+    inset: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 64px 44px 58px;
+  }
+  .leaf { overflow: visible; }
+  .leaf h2 { font-size: 30px; }
+  .runningTitle { font-size: 10px; }
+  .ornament { height: 36px; margin-bottom: 8px; }
+  .entryDetail, .accountDetail { font-size: 14px; }
+  .accountPlate { margin-top: 24px; padding-block: 16px; }
+  .accountKicker { display: block; font-size: 10px; }
+  .entryDetail { margin-top: 5px; line-height: 1.4; }
+  .guide .entry { padding-block: 18px; }
+  :is(.dialog, .volume) .entry { font-size: 22px; padding-block: 10px; }
+  .accountHeading { font-size: 20px; }
+  :is(.dialog, .volume) .account { font-size: 21px; }
+  .pageNumber { display: none; }
+  .close { top: 10px; right: 14px; color: var(--nav-ink); text-shadow: none; }
 }
 @media (max-width: 420px) {
-  .dialog { padding: 32px 14px; }
-  .volume { padding: 20px 12px; --book-binding-inset: -24px -8px -28px; --book-binding-width: 40px 26px; --book-edge-width: 46px; --book-binding-fade: 38px; --book-paper-inset: -16px 0 -20px; --book-paper-inline-inset: 0px; --book-paper-fade: 14px; }
-  .leaf h2 { font-size: 28px; }
-  .leaf .archiveHeading { font-size: 26px; }
-  .dialog .entry { grid-template-columns: 24px minmax(0, 1fr) 16px; gap: 11px; padding-inline: 3px; font-size: 20px; }
-  .dialog .account { padding: 14px 12px; gap: 10px; font-size: 19px; }
-  .close { right: 2px; }
+  .spread { padding: 56px 32px 52px; gap: 24px; }
+  .mobileBookFrame { --book-binding-width: 48px 28px; --book-paper-inset: 24px 18px; }
+  .leaf h2 { font-size: 27px; }
+
+  :is(.dialog, .volume) .entry { font-size: 20px; gap: 10px; }
+  .chapter { flex-basis: 24px; font-size: 25px; }
+  :is(.dialog, .volume) .account { font-size: 20px; }
   .toolbar { padding-inline: 12px; }
   .toolbarTitle small { display: none; }
 }
-@media (min-width: 821px) and (max-height: 760px) {
-  .volume { padding-block: 20px; }
-  .leaf h2 { font-size: 28px; padding-bottom: 12px; }
-  .leaf .archiveHeading { margin-top: 18px; font-size: 26px; }
-  .dialog .entry { min-height: 60px; padding-block: 12px; font-size: 21px; }
-  .dialog .account { margin-top: 20px; min-height: 52px; padding-block: 10px; }
+/* The home page book on a phone: both pages stay side by side (one page fills
+   the screen, the other is a swipe away), sized for a ~370px page. */
+.volume[data-layout="spread"] { aspect-ratio: 3 / 2; }
+.volume[data-layout="spread"] .bookArtwork { display: block; }
+.volume[data-layout="spread"] .mobileBookFrame { display: none; }
+.volume[data-layout="spread"] .spread {
+  position: absolute;
+  inset: 14% 13% 14.5%;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10%;
+  padding: 0;
 }
-@media (min-width: 821px) and (max-height: 600px) {
-  .volume { padding-block: 14px; }
-  .dialog .entry { min-height: 54px; padding-block: 10px; font-size: 20px; }
-  .leaf h2 { font-size: 26px; padding-bottom: 10px; }
-  .leaf .archiveHeading { margin-top: 14px; font-size: 25px; }
-  .dialog .account { margin-top: 16px; font-size: 19px; }
+.volume[data-layout="spread"] .leaf { overflow: auto; padding-top: 2px; }
+.volume[data-layout="spread"] .runningTitle,
+.volume[data-layout="spread"] .accountKicker { display: none; }
+.volume[data-layout="spread"] .leaf h2 { font-size: clamp(22px, 3.3cqw, 30px); line-height: 1.2; }
+.volume[data-layout="spread"] .ornament { height: 22px; margin: 2px auto 6px; }
+.volume[data-layout="spread"] .entry { gap: 8px; min-height: 44px; padding-block: 4px; font-size: clamp(16px, 2.3cqw, 19px); }
+.volume[data-layout="spread"] .guide .entry { padding: 7px 4px; }
+.volume[data-layout="spread"] .chapter { flex-basis: 22px; font-size: clamp(19px, 2.7cqw, 23px); }
+.volume[data-layout="spread"] :is(.entryDetail, .accountDetail) { margin-top: 2px; font-size: clamp(12px, 1.65cqw, 14px); line-height: 1.35; }
+.volume[data-layout="spread"] .accountPlate { margin-top: 10px; padding-block: 8px; }
+.volume[data-layout="spread"] .accountHeading { font-size: clamp(18px, 2.5cqw, 21px); }
+.volume[data-layout="spread"] .account { font-size: clamp(17px, 2.45cqw, 20px); }
+.volume[data-layout="spread"] .pageNumber { display: block; padding-top: 4px; font-size: 12px; }
+/* Lists keep their height; a page that is too short scrolls instead of overlapping. */
+.volume[data-layout="spread"] :is(.chapters, .guide) { flex: 0 0 auto; }
+/* The smallest phones keep titles only, so a whole page still fits the screen. */
+@container (max-width: 680px) {
+  .volume[data-layout="spread"] :is(.entryDetail, .accountDetail) { display: none; }
+  .volume[data-layout="spread"] .entry { padding-block: 2px; }
+  .volume[data-layout="spread"] .accountPlate { margin-top: 8px; padding-block: 6px; }
+  .volume[data-layout="spread"] .leaf h2 { font-size: 20px; }
+  .volume[data-layout="spread"] .ornament { height: 18px; margin: 0 auto 4px; }
 }
+
 @media (prefers-reduced-motion: reduce) {
   .dialog[open] { animation: none; }
-  .entry { transition: none; }
 }

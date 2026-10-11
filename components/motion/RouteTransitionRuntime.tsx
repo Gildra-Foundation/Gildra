@@ -45,11 +45,12 @@ function sharedWowBackgroundForPath(pathname: string) {
     : "/assets/wow/mythic/ruby-depth-v3-light-fast.webp";
 }
 
-function destinationFromTarget(target: EventTarget | null) {
+function destinationFromTarget(target: EventTarget | null, includeOptOut = false) {
   if (!(target instanceof Element)) return null;
   const anchor = target.closest<HTMLAnchorElement>("a[href]");
   if (!anchor || (anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")
-    || anchor.hasAttribute("data-no-book-transition") || anchor.rel.split(/\s+/).includes("external")) return null;
+    || anchor.getAttribute("aria-disabled") === "true" || anchor.closest("[inert]")
+    || (!includeOptOut && anchor.hasAttribute("data-no-book-transition")) || anchor.rel.split(/\s+/).includes("external")) return null;
   const destination = new URL(anchor.href, window.location.href);
   if (destination.origin !== window.location.origin || !/^https?:$/.test(destination.protocol)
     || !isBookPagePath(destination.pathname)) return null;
@@ -66,9 +67,9 @@ function explicitDestinationFromTarget(target: EventTarget | null) {
   return destination;
 }
 
-function clickDestination(event: MouseEvent) {
+function clickDestination(event: MouseEvent, includeOptOut = false) {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return null;
-  return destinationFromTarget(event.target);
+  return destinationFromTarget(event.target, includeOptOut);
 }
 
 /** One book survives App Router navigation. Page content never gets an artificial remount key. */
@@ -94,27 +95,29 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     lifecycle.pageReady(lifecycle.state.id);
   }, [lifecycle]);
 
-  const onSceneReady = useCallback(() => {
+  const onSceneReady = useCallback((id: number) => {
+    if (id !== lifecycle.state.id || lifecycle.state.phase === "idle") return;
     sceneReady.current = true;
-    lifecycle.ready(lifecycle.state.id);
+    lifecycle.ready(id);
     pageReady();
   }, [lifecycle, pageReady]);
 
   const begin = useCallback((destination: string) => {
     if (!shouldTurnBook(committedPath.current, destination)) {
-      if (expectedPath.current !== committedPath.current) {
-        expectedPath.current = committedPath.current;
-        lifecycle.finish();
-      }
+      expectedPath.current = committedPath.current;
+      if (lifecycle.state.phase !== "idle") lifecycle.finish();
       return;
     }
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (bookTransitionsEnabled && !reducedMotion) void loadBookRouteScene();
     expectedPath.current = destination;
     setLocale(bookLocale(destination));
     sceneReady.current = !bookTransitionsEnabled || reducedMotion;
-    if (bookTransitionsEnabled) lifecycle.start("turn", reducedMotion);
-    else if (lifecycle.state.phase !== "idle") lifecycle.finish();
+    if (bookTransitionsEnabled) {
+      const id = lifecycle.start("turn", reducedMotion);
+      if (!reducedMotion) void loadBookRouteScene().catch(() => {
+        if (lifecycle.state.id === id) lifecycle.finish();
+      });
+    } else if (lifecycle.state.phase !== "idle") lifecycle.finish();
   }, [lifecycle]);
 
   useEffect(() => {
@@ -175,17 +178,22 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       pageReady();
       return cleanupBackgroundListener;
     }
-    if (shouldTurnBook(committedPath.current, pathname)) {
-      // Also covers router.push/replace, redirects, and browser history.
-      // A redirect is part of the same navigation, even if its first route has
-      // already committed. Do not restart the leaf at an intermediate URL.
-      const navigationAlreadyStarted = expectedPath.current !== committedPath.current;
-      if (bookTransitionsEnabled && lifecycle.state.phase === "idle" && !navigationAlreadyStarted) {
-        sceneReady.current = false;
-        lifecycle.start("turn", window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (pathname !== committedPath.current) {
+      if (shouldTurnBook(committedPath.current, pathname)) {
+        // Also covers router.push/replace and browser history. The committed
+        // URL may be the result of a redirect, so readiness follows that URL.
+        const navigationAlreadyStarted = expectedPath.current !== committedPath.current;
+        if (lifecycle.state.phase === "idle" && !navigationAlreadyStarted) {
+          const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          sceneReady.current = reducedMotion;
+          lifecycle.start("turn", reducedMotion);
+        }
+      } else if (lifecycle.state.phase !== "idle") {
+        // A translation changes the content in place without a new leaf.
+        lifecycle.finish();
       }
       committedPath.current = pathname;
-      if (!navigationAlreadyStarted) expectedPath.current = pathname;
+      expectedPath.current = pathname;
       setLocale(bookLocale(pathname));
     }
     pageReady();
@@ -194,12 +202,18 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const capture = (event: MouseEvent) => {
-      const destination = clickDestination(event) ?? explicitDestinationFromTarget(event.target);
-      if (destination) begin(destination.pathname);
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const destination = clickDestination(event, true) ?? explicitDestinationFromTarget(event.target);
+      const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (destination && anchor?.hasAttribute("data-no-book-transition")) {
+        // Remember the intent so the eventual App Router commit stays quiet too.
+        expectedPath.current = destination.pathname;
+        if (lifecycle.state.phase !== "idle") lifecycle.finish();
+      } else if (destination) begin(destination.pathname);
     };
     const navigateAnchor = (event: MouseEvent) => {
       if (event.defaultPrevented) return; // Next Link and local handlers already own navigation.
-      const destination = clickDestination(event);
+      const destination = clickDestination(event, true);
       if (!destination || (destination.pathname === window.location.pathname && destination.search === window.location.search)) return;
       event.preventDefault();
       router.push(destination.pathname + destination.search + destination.hash);
@@ -256,11 +270,10 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     };
   }, [begin, router]);
 
-  const isCoverPage = /^\/(?:ru\/?)?$/.test(pathname);
-  const active = state.phase !== "idle" && !isCoverPage;
+  const active = state.phase !== "idle";
   return <div className={styles.system} data-theme="wow" data-book-navigation={active ? state.kind : "idle"}>
-    {active && <BookRouteScene state={state} locale={locale} onReady={onSceneReady} onSkip={() => lifecycle.finish()} />}
-    <div className={styles.frame} data-theme="wow" ref={frameRef} inert={state.phase === "playing"} aria-busy={active || undefined}>
+    {active && <BookRouteScene key={state.id} state={state} locale={locale} onReady={onSceneReady} onSkip={() => lifecycle.finish()} />}
+    <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-book-route-phase={state.phase} inert={active && state.phase === "playing"} aria-busy={active || undefined}>
       {children}
     </div>
   </div>;
