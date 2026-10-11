@@ -11,7 +11,9 @@ const descriptionAudit = JSON.parse(await fs.readFile(path.join(root, "data/wow/
 const tokenAudit = JSON.parse(await fs.readFile(path.join(root, "data/wow/venomous-abyss-token-audit.json"), "utf8"));
 const journalTreeAudit = JSON.parse(await fs.readFile(path.join(root, "data/wow/venomous-abyss-journal-tree-audit.json"), "utf8"));
 const manifest = JSON.parse(await fs.readFile(path.join(root, "data/wow/content-manifest.json"), "utf8"));
-const bossPageSource = await fs.readFile(path.join(root, "components/wow/raid/VenomousBossPage.tsx"), "utf8");
+// Disclosure copy lives in venomousCopy.ts next to the page markup.
+const venomousCopySource = await fs.readFile(path.join(root, "components/wow/raid/venomousCopy.ts"), "utf8");
+const bossPageSource = await fs.readFile(path.join(root, "components/wow/raid/VenomousBossPage.tsx"), "utf8") + venomousCopySource;
 const raidPageSource = await fs.readFile(path.join(root, "components/wow/raid/VenomousAbyssPage.tsx"), "utf8");
 const issues = [];
 const check = (condition, issue) => { if (!condition) issues.push(issue); };
@@ -128,8 +130,8 @@ for (const forbidden of ["Strategy reviewed", "Тактика проверена
   check(!bossPageSource.includes(forbidden) && !raidPageSource.includes(forbidden), `unsafe-publication-label:${forbidden}`);
 }
 check(bossPageSource.includes("source_tracked") && bossPageSource.includes("not verified"), "boss-page-source-tracked-disclosure-missing");
-check(bossPageSource.includes("journalAbilities") && bossPageSource.includes("Spell ID") && bossPageSource.includes("remain withheld"), "boss-page-verified-ability-disclosure-missing");
-check(bossPageSource.includes("journalPhases") && bossPageSource.includes("No phases were inferred"), "boss-page-verified-phase-disclosure-missing");
+check(bossPageSource.includes("journalAbilities") && bossPageSource.includes("Description will appear once verified"), "boss-page-verified-ability-disclosure-missing");
+check(bossPageSource.includes("journalPhases") && bossPageSource.includes("does not split this fight into phases"), "boss-page-verified-phase-disclosure-missing");
 check(raidPageSource.includes("content-manifest.json"), "raid-page-canonical-manifest-projection-missing");
 
 const onlineResults = [];
