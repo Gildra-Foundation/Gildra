@@ -1,0 +1,33 @@
+.emblem {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--atlas-accent-strong);
+  border: 1px solid var(--atlas-line-strong);
+  outline: 5px solid rgba(0, 0, 0, .76);
+  background: radial-gradient(circle, var(--atlas-accent-wash-strong), var(--atlas-surface) 68%);
+  box-shadow: 0 0 0 6px var(--atlas-accent-wash-strong), inset 0 0 20px #000, 0 0 28px var(--atlas-accent-glow);
+}
+
+.lg { width: 78px; height: 78px; }
+.md { width: 48px; height: 48px; outline-width: 3px; box-shadow: 0 0 0 4px var(--atlas-accent-wash), inset 0 0 14px #000; }
+.circle { border-radius: 50%; }
+.square::after,
+.diamond::after {
+  position: absolute;
+  inset: 7px;
+  content: "";
+  border: 1px solid var(--atlas-line-soft);
+}
+.diamond { transform: rotate(45deg); }
+.diamond .glyph { transform: rotate(-45deg); }
+
+.glyph { display: grid; place-items: center; }
+.glyph svg { width: 32px; height: 32px; filter: drop-shadow(0 0 8px var(--atlas-accent-glow)); }
+.md .glyph svg { width: 20px; height: 20px; }
+
+@media (max-width: 720px) {
+  .lg { width: 58px; height: 58px; outline-width: 3px; }
+  .lg .glyph svg { width: 24px; height: 24px; }
+}

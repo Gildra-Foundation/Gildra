@@ -9,5 +9,5 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 export default function Page() {
-  return <IdentityStatusPage locale="en" eyebrow="World of Warcraft · Midnight" title="Sporefall" summary="Sporefall and its Rotmire encounter are confirmed. Detailed strategy, abilities, encounter IDs, NPC IDs, icons, and loot remain withheld until verified." patch="12.0.7" season="Midnight Season 1" sourceUrl="https://worldofwarcraft.blizzard.com/en-us/news/24272110" sourceLabel="Official Blizzard source" lastVerifiedAt="2026-09-13" links={[{ href: "/wow/raids/sporefall/rotmire", label: "Rotmire" }]} />;
+  return <IdentityStatusPage locale="en" eyebrow="World of Warcraft · Midnight" title="Sporefall" summary="Sporefall and its boss Rotmire are confirmed by Blizzard. Strategy, abilities and loot will be published once they are verified." parent={{ href: "/wow/raids", label: "Raid journal" }} patch="12.0.7" season="Midnight Season 1" sourceUrl="https://worldofwarcraft.blizzard.com/en-us/news/24272110" sourceLabel="Official Blizzard source" lastVerifiedAt="2026-09-13" links={[{ href: "/wow/raids/sporefall/rotmire", label: "Rotmire" }]} />;
 }

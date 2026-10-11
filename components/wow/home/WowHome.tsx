@@ -1,206 +1,151 @@
-import Link from "next/link";
 import Image from "next/image";
-import {
-  ArrowRight,
-  BookOpen,
-  ChevronRight,
-  Crosshair,
-  Gem,
-  MapPinned,
-  Search,
-  Shield,
-  Sparkles,
-  Swords,
-  Trophy,
-  Users,
-} from "lucide-react";
-import type { CSSProperties } from "react";
-import { t as tr, type Lang } from "@/lib/i18n";
+import { ArrowRight, BookOpen, Crosshair, Database, Gem, MapPinned, Shield, Skull, Sparkles, Trophy, Users } from "lucide-react";
+import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasLocaleSwitch, AtlasSection, AtlasTile } from "@/components/atlas";
+import type { Lang } from "@/lib/i18n";
 import styles from "./wowHome.module.css";
 
-type Copy = {
-  eyebrow: string;
-  title: string;
-  description: string;
-  character: string;
-  talents: string;
-  allTools: string;
-  navigation: string;
-  workspace: string;
-  workspaceText: string;
-  openCharacter: string;
-  itemLevel: string;
-  rating: string;
-  favoriteBuilds: string;
-  tools: string;
-  ready: string;
-  seeAll: string;
-  weekly: string;
-  weeklyText: string;
-  learnMore: string;
-  heroPath: string;
-  heroPathText: string;
-  start: string;
-  prepare: string;
-  conquer: string;
-};
-
-const copy: Record<Lang, Copy> = {
+const copy = {
   ru: {
+    breadcrumbs: "Навигация",
     eyebrow: "World of Warcraft · Midnight",
     title: "Ваш командный центр в Азероте",
-    description: "Соберите персонажа, продумайте таланты и подготовьте маршрут — всё необходимое для следующего ключа в одном месте.",
+    lede: "Соберите персонажа, продумайте таланты и подготовьте маршрут — всё необходимое для следующего ключа в одном месте.",
     character: "Открыть персонажа",
     talents: "Калькулятор талантов",
-    allTools: "Все инструменты",
-    navigation: "Быстрый доступ",
-    workspace: "Ваш персонаж",
-    workspaceText: "Ваши персонажи Battle.net",
-    openCharacter: "В личный кабинет",
-    itemLevel: "Уровень предметов",
-    rating: "Рейтинг эпох+",
-    favoriteBuilds: "Избранные билды",
+    toolsEyebrow: "Быстрый доступ",
     tools: "Инструменты для следующего захода",
-    ready: "Открыть",
-    seeAll: "Смотреть все специализации",
-    weekly: "На этой неделе",
-    weeklyText: "Спланируйте маршрут и подготовьте группу до начала ключа.",
-    learnMore: "Открыть маршруты",
-    heroPath: "Путь героя",
-    heroPathText: "Три шага от листа персонажа до готового подземелья.",
-    start: "Персонаж",
-    prepare: "Билд",
-    conquer: "Маршрут",
+    characters: "Персонажи", charactersText: "Ростер, экипировка и показатели",
+    mythic: "Mythic+", mythicText: "Маршруты, таймер и тактика",
+    raids: "Рейды", raidsText: "Боссы, способности и тактика",
+    lairs: "Логова и мировые боссы", lairsText: "Где найти, что делать, что падает",
+    gear: "Экипировка", gearText: "План улучшений персонажа",
+    workspaceEyebrow: "Ваш персонаж",
+    workspace: "Ваши персонажи Battle.net",
+    workspaceText: "После входа через Battle.net здесь появятся ваши герои: экипировка, таланты и боевые инструменты на реальном персонаже.",
+    workspaceSource: "Источник: Battle.net",
+    openProfile: "В личный кабинет",
+    buildsEyebrow: "Избранные билды",
+    builds: "Начните с проверенной специализации",
+    open: "Открыть таланты",
+    pathEyebrow: "Путь героя",
+    path: "Три шага от листа персонажа до готового подземелья",
+    pathCharacter: "Персонаж", pathCharacterText: "Проверьте персонажа",
+    pathBuild: "Билд", pathBuildText: "Соберите таланты",
+    pathRoute: "Маршрут", pathRouteText: "Пройдите ключ вовремя",
+    more: "Ещё разделы",
+    tierLists: "Тир-листы", tierListsText: "Сила специализаций в ключах и рейдах",
+    database: "База данных", databaseText: "Предметы, заклинания и задания",
   },
   en: {
+    breadcrumbs: "Breadcrumbs",
     eyebrow: "World of Warcraft · Midnight",
     title: "Your command center in Azeroth",
-    description: "Shape your character, plan talents, and prepare a route — everything for the next key in one focused workspace.",
+    lede: "Shape your character, plan talents and prepare a route — everything for the next key in one place.",
     character: "Open character",
     talents: "Talent calculator",
-    allTools: "All tools",
-    navigation: "Quick access",
-    workspace: "Your character",
-    workspaceText: "Your Battle.net characters",
-    openCharacter: "Open profile",
-    itemLevel: "Item level",
-    rating: "Mythic+ rating",
-    favoriteBuilds: "Featured builds",
+    toolsEyebrow: "Quick access",
     tools: "Tools for your next run",
-    ready: "Open",
-    seeAll: "See all specializations",
-    weekly: "This week",
-    weeklyText: "Plan the route and prepare your party before the key begins.",
-    learnMore: "Open routes",
-    heroPath: "Hero path",
-    heroPathText: "Three steps from your character sheet to a ready dungeon run.",
-    start: "Character",
-    prepare: "Build",
-    conquer: "Route",
+    characters: "Characters", charactersText: "Roster, gear and performance",
+    mythic: "Mythic+", mythicText: "Routes, timer and tactics",
+    raids: "Raids", raidsText: "Bosses, abilities and strategy",
+    lairs: "Lairs and world bosses", lairsText: "Where to find them, what to do, what drops",
+    gear: "Gear", gearText: "Character upgrade plan",
+    workspaceEyebrow: "Your character",
+    workspace: "Your Battle.net characters",
+    workspaceText: "Sign in with Battle.net and your heroes appear here: gear, talents and combat tools on your real character.",
+    workspaceSource: "Source: Battle.net",
+    openProfile: "Open profile",
+    buildsEyebrow: "Featured builds",
+    builds: "Start with a tested specialization",
+    open: "Open talents",
+    pathEyebrow: "Hero path",
+    path: "Three steps from your character sheet to a ready dungeon run",
+    pathCharacter: "Character", pathCharacterText: "Inspect your character",
+    pathBuild: "Build", pathBuildText: "Shape your talents",
+    pathRoute: "Route", pathRouteText: "Time the key",
+    more: "More sections",
+    tierLists: "Tier lists", tierListsText: "Specialization strength in keys and raids",
+    database: "Database", databaseText: "Items, spells and quests",
   },
-};
+} as const;
 
-const buildCards = [
-  { name: "Неистовство", className: "Воин", image: "/assets/specs/fury-warrior.jpg", href: "/talents/fury-warrior", accent: "#e54827" },
-  { name: "Воздаяние", className: "Паладин", image: "/assets/specs/ret-paladin.jpg", href: "/talents/retribution-paladin", accent: "#ffe06b" },
-  { name: "Тайная магия", className: "Маг", image: "/assets/specs/arcane-mage.jpg", href: "/talents/arcane-mage", accent: "#b279ff" },
-];
+const builds = [
+  { slug: "fury-warrior", ru: ["Неистовство", "Воин"], en: ["Fury", "Warrior"], image: "/assets/specs/fury-warrior.jpg" },
+  { slug: "retribution-paladin", ru: ["Воздаяние", "Паладин"], en: ["Retribution", "Paladin"], image: "/assets/specs/ret-paladin.jpg" },
+  { slug: "arcane-mage", ru: ["Тайная магия", "Маг"], en: ["Arcane", "Mage"], image: "/assets/specs/arcane-mage.jpg" },
+] as const;
 
 export function WowHome({ lang }: { lang: Lang }) {
-  const t = copy[lang];
-  const href = (path: string) => `${lang === "ru" ? "/ru" : ""}${path}`;
-  const tools = [
-    { icon: Users, title: lang === "ru" ? "Персонажи" : "Characters", text: lang === "ru" ? "Ростер, экипировка и показатели" : "Roster, gear, and performance", href: "/wow/characters", accent: "#e5b768" },
-    { icon: MapPinned, title: "Mythic+", text: lang === "ru" ? "Маршруты, таймер и тактика" : "Routes, timer, and tactics", href: "/wow/mythic-plus", accent: "#55b9ff" },
-    { icon: Gem, title: lang === "ru" ? "Экипировка" : "Gear", text: lang === "ru" ? "План улучшений персонажа" : "Character upgrade plan", href: "/wow/gear", accent: "#c89b55" },
-  ];
+  const locale = lang === "ru" ? "ru" : "en";
+  const t = copy[locale];
+  const href = (path: string) => `${locale === "ru" ? "/ru" : ""}${path}`;
 
   return (
-    <div className={`gildra-atlas ${styles.page}`} data-wow-atlas lang={lang}>
-      <main className={styles.main}>
-        <nav className={styles.sectionNav} aria-label={t.navigation}>
-          <Link href={href("/wow")}><Swords />World of Warcraft</Link>
-          <Link href={href("/wow/characters")}>{lang === "ru" ? "Персонажи" : "Characters"}</Link>
-          <Link href={href("/wow/mythic-plus")}>Mythic+</Link>
-          <span className={styles.localeSwitch} role="group" aria-label={lang === "ru" ? "Язык страницы" : "Page language"}>
-            <Link href="/wow" lang="en" aria-current={lang === "en" ? "page" : undefined}>EN</Link>
-            <Link href="/ru/wow" lang="ru" aria-current={lang === "ru" ? "page" : undefined}>RU</Link>
-          </span>
-        </nav>
-
-        <section className={styles.hero}>
-          <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}><span /><span>{t.eyebrow}</span></p>
-            <h1>{t.title}</h1>
-            <p className={styles.description}>{t.description}</p>
-            <div className={styles.heroActions}>
-              <Link className={styles.primaryAction} href={href("/wow/characters")}>{t.character}<ArrowRight /></Link>
-              <Link className={styles.secondaryAction} href={href("/talents/fury-warrior")}><Sparkles />{t.talents}</Link>
-            </div>
+    <AtlasFrame lang={locale} dataAttributes={{ "data-wow-atlas": true }}>
+      <AtlasHero
+        toolbar={<AtlasLocaleSwitch locale={locale} path="/wow" />}
+        emblem={<Shield />}
+        eyebrow={t.eyebrow}
+        title={t.title}
+        lede={t.lede}
+        actions={<>
+          <AtlasLinkButton href={href("/wow/characters")} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{t.character}</AtlasLinkButton>
+          <AtlasLinkButton href={href("/talents/fury-warrior")} icon={<Sparkles aria-hidden="true" />}>{t.talents}</AtlasLinkButton>
+        </>}
+        aside={(
+          <div className={styles.heroArt} aria-hidden="true">
+            <Image src="/assets/characters/furybar-horde-hero-v1-optimized.webp" alt="" fill priority sizes="(max-width: 1100px) 100vw, 560px" />
           </div>
-          <div className={styles.heroScene} aria-hidden="true">
-            <div className={styles.runes}><i /><i /><i /></div>
-            <Image src="/assets/characters/furybar-horde-hero-v1-optimized.webp" alt="" width={2171} height={724} sizes="(max-width: 720px) 430px, (max-width: 1050px) 50vw, 570px" priority />
-            <div className={styles.heroBadge}><Shield /><span><small>{lang === "ru" ? "Мир Азерота" : "World of Azeroth"}</small><b>WARCRAFT</b></span></div>
-          </div>
-        </section>
+        )}
+      />
 
-        <section className={styles.quickSection} aria-labelledby="quick-title">
-          <div className={styles.sectionHeading}><div><p>{t.navigation}</p><h2 id="quick-title">{t.tools}</h2></div></div>
-          <div className={styles.toolGrid}>
-            {tools.map(({ icon: Icon, title, text, href: toolHref, accent }) => <Link href={href(toolHref)} className={styles.toolCard} style={{ "--tool-accent": accent } as React.CSSProperties} key={toolHref}>
-              <span className={styles.toolIcon}><Icon /></span><span><strong>{title}</strong><small>{text}</small></span><ChevronRight />
-            </Link>)}
-          </div>
-        </section>
+      <AtlasSection id="tools" eyebrow={t.toolsEyebrow} title={t.tools}>
+        <AtlasGrid min={260} fit>
+          <AtlasTile href={href("/wow/characters")} icon={<Users />} title={t.characters} text={t.charactersText} />
+          <AtlasTile href={href("/wow/mythic-plus")} icon={<MapPinned />} title={t.mythic} text={t.mythicText} />
+          <AtlasTile href={href("/wow/raids")} icon={<BookOpen />} title={t.raids} text={t.raidsText} />
+          <AtlasTile href={href("/wow/lairs")} icon={<Skull />} title={t.lairs} text={t.lairsText} />
+        </AtlasGrid>
+      </AtlasSection>
 
-        <div className={styles.contentGrid}>
-          <section className={`${styles.panel} ${styles.characterPanel}`} aria-labelledby="character-title">
-            <header className={styles.panelHeading}><div><p>{t.workspace}</p><h2 id="character-title">{t.workspaceText}</h2></div><Link href={href("/wow/characters")}>{t.openCharacter}<ArrowRight /></Link></header>
-            <div className={styles.characterContent}>
-              <img
-                src="/assets/characters/furybar-dual-axes-v4-768.webp"
-                srcSet="/assets/characters/furybar-dual-axes-v4-384.webp 384w, /assets/characters/furybar-dual-axes-v4-768.webp 768w, /assets/characters/furybar-dual-axes-v4-1122.webp 1122w"
-                sizes="(max-width: 720px) 40vw, (max-width: 1050px) 47vw, 520px"
-                alt=""
-                width={1122}
-                height={1402}
-                loading="lazy"
-                decoding="async"
-              />
-              <div className={styles.characterStats}>
-                <div><small>{lang === "ru" ? "Источник данных" : "Data source"}</small><strong>Battle.net</strong><span>LIVE <em>{lang === "ru" ? "после входа" : "after sign-in"}</em></span></div>
-                <div><small>{lang === "ru" ? "Рабочая область" : "Workspace"}</small><strong>{lang === "ru" ? "Все инструменты" : "All tools"}</strong><span className={styles.positive}>{lang === "ru" ? "На реальном персонаже" : "On your live character"}</span></div>
-                <Link href={href("/wow/characters")}><Gem />{lang === "ru" ? "Проверить экипировку" : "Inspect gear"}<ArrowRight /></Link>
-              </div>
-            </div>
-          </section>
+      <AtlasSection id="character" title={t.workspaceEyebrow}>
+        <AtlasCard
+          layout="feature"
+          headingLevel={3}
+          href={href("/wow/characters")}
+          image={{ src: "/assets/characters/furybar-dual-axes-v4-1122.webp", alt: "", position: "center 18%" }}
+          eyebrow={<><Shield aria-hidden="true" />{t.workspaceSource}</>}
+          title={t.workspace}
+          description={t.workspaceText}
+          meta={[{ icon: <Gem aria-hidden="true" />, label: t.gearText }]}
+          cta={t.openProfile}
+        />
+      </AtlasSection>
 
-        </div>
+      <AtlasSection id="builds" eyebrow={t.buildsEyebrow} title={t.builds}>
+        <AtlasGrid min={260} fit>
+          {builds.map((build) => {
+            const [spec, className] = build[locale];
+            return <AtlasTile key={build.slug} href={href(`/talents/${build.slug}`)} icon={<Image src={build.image} alt="" width={44} height={44} />} title={spec} text={`${className} · ${t.open}`} />;
+          })}
+        </AtlasGrid>
+      </AtlasSection>
 
-        <section className={styles.buildSection} aria-labelledby="build-title">
-          <div className={styles.sectionHeading}><div><p>{t.favoriteBuilds}</p><h2 id="build-title">{lang === "ru" ? "Начните с проверенной специализации" : "Start with a tested specialization"}</h2></div></div>
-          <div className={styles.buildGrid}>
-            {buildCards.map((build) => <Link className={styles.buildCard} href={href(build.href)} key={build.href} style={{ "--build-accent": build.accent } as React.CSSProperties}>
-              <img src={build.image} alt="" /><span><small>{build.className}</small><strong>{build.name}</strong><em>{t.ready}<ArrowRight /></em></span>
-            </Link>)}
-          </div>
-        </section>
+      <AtlasSection id="path" eyebrow={t.pathEyebrow} title={t.path}>
+        <AtlasGrid min={260} fit as="ol">
+          <li><AtlasTile href={href("/wow/characters")} index="01" icon={<Users />} title={t.pathCharacter} text={t.pathCharacterText} /></li>
+          <li><AtlasTile href={href("/talents/fury-warrior")} index="02" icon={<Crosshair />} title={t.pathBuild} text={t.pathBuildText} /></li>
+          <li><AtlasTile href={href("/wow/mythic-plus")} index="03" icon={<Trophy />} title={t.pathRoute} text={t.pathRouteText} /></li>
+        </AtlasGrid>
+      </AtlasSection>
 
-        <section className={styles.pathSection} aria-labelledby="path-title">
-          <div><p>{t.heroPath}</p><h2 id="path-title">{t.heroPathText}</h2></div>
-          <ol>
-            <li><span>01</span><Link href={href("/wow/characters")}><Users /><b>{t.start}</b><small>{lang === "ru" ? "Проверьте персонажа" : "Inspect your character"}</small></Link></li>
-            <li><span>02</span><Link href={href("/talents/fury-warrior")}><Crosshair /><b>{t.prepare}</b><small>{lang === "ru" ? "Соберите таланты" : "Shape your talents"}</small></Link></li>
-            <li><span>03</span><Link href={href("/wow/mythic-plus")}><Trophy /><b>{t.conquer}</b><small>{lang === "ru" ? "Пройдите ключ вовремя" : "Time the key"}</small></Link></li>
-          </ol>
-        </section>
-
-        <nav className={styles.utilityNav} aria-label={t.allTools}>
-          {/* /patches and /compare run on fixtures and are hidden for the WoW-only MVP (lib/mvp.ts): link real pages instead. */}
-          <Link href={href("/tier-lists")}><BookOpen />{tr(lang)("Tier Lists")}</Link><Link href={href("/database")}><Search />{tr(lang)("Database")}</Link>
-        </nav>
-      </main>
-    </div>
+      <AtlasSection id="more" title={t.more} level={3}>
+        <AtlasGrid min={260} fit>
+          <AtlasTile href={href("/tier-lists")} icon={<Trophy />} title={t.tierLists} text={t.tierListsText} />
+          <AtlasTile href={href("/database")} icon={<Database />} title={t.database} text={t.databaseText} />
+          <AtlasTile href={href("/wow/gear")} icon={<Gem />} title={t.gear} text={t.gearText} />
+        </AtlasGrid>
+      </AtlasSection>
+    </AtlasFrame>
   );
 }

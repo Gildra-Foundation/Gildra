@@ -7,10 +7,10 @@
 .statIcon { grid-row: 1 / 3; display: grid; place-items: center; width: 42px; height: 42px; color: #e1a648; border: 1px solid #70491e; background: radial-gradient(circle, #32210e, #0b0805 72%); box-shadow: inset 0 0 0 2px #100b06, 0 0 18px rgba(206, 128, 28, .1); }
 .statIcon svg { width: 19px; height: 19px; }
 .label { color: var(--atlas-muted) !important; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
-.value { color: var(--atlas-title) !important; font: 400 34px/1 Georgia, "Times New Roman", serif !important; text-shadow: 0 2px 8px #000; }
+.value { color: var(--atlas-title) !important; font: 400 34px/1 var(--atlas-font-display, Georgia, serif) !important; font-variant-numeric: lining-nums !important; text-shadow: 0 2px 8px #000; }
 .chartCard { min-height: 410px; }
 .chartHeader { position: relative; z-index: 2; padding: 22px 24px 6px !important; }
-.chartTitle { color: var(--atlas-title) !important; font: 400 24px Georgia, "Times New Roman", serif !important; }
+.chartTitle { color: var(--atlas-title) !important; font: 400 24px var(--atlas-font-display, Georgia, serif) !important; font-variant-numeric: lining-nums !important; }
 .chartDescription { margin-top: 4px; color: var(--atlas-muted) !important; }
 .chartContent { position: relative; z-index: 2; padding: 12px 18px 22px !important; }
 .empty { padding-block: 80px; text-align: center; color: var(--atlas-muted); }

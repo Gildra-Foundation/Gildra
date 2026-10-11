@@ -100,7 +100,7 @@
   align-items: center;
   gap: 8px;
   color: #d3a950;
-  font-size: 10px;
+  font-size: var(--atlas-text-meta);
   font-weight: 750;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -112,7 +112,7 @@
 .hero h1 {
   margin: 12px 0 7px;
   color: #f3e3c7;
-  font: 500 clamp(2.55rem, 5vw, 5.2rem)/.94 Georgia, serif;
+  font: 500 clamp(2.55rem, 5vw, 5.2rem)/.94 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums;
   letter-spacing: -.045em;
   text-wrap: balance;
   text-shadow: 0 2px 2px #000, 0 0 26px rgba(0, 0, 0, .78), 0 0 34px color-mix(in srgb, var(--raid-accent) 16%, transparent);
@@ -137,7 +137,7 @@
   border-radius: 2px;
   background: rgba(5, 6, 7, .74);
   box-shadow: inset 0 1px rgba(255, 235, 190, .04);
-  font-size: 8px;
+  font-size: var(--atlas-text-label);
   font-weight: 700;
   letter-spacing: .055em;
   text-transform: uppercase;
@@ -156,8 +156,8 @@
 
 .raidSigil span { display: grid; width: 42px; height: 42px; place-items: center; color: #e1b75d; border: 1px solid #8c6529; border-radius: 50%; box-shadow: 0 0 15px color-mix(in srgb, var(--raid-accent) 30%, transparent); }
 .raidSigil svg { width: 22px; height: 22px; }
-.raidSigil b { margin-top: 7px; color: #f4e3c2; font: 500 26px Georgia, serif; }
-.raidSigil small { color: #8e826e; font-size: 7px; letter-spacing: .18em; }
+.raidSigil b { margin-top: 7px; color: #f4e3c2; font: 500 26px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
+.raidSigil small { color: #8e826e; font-size: var(--atlas-text-label); letter-spacing: .18em; }
 
 .raidTabs {
   display: grid;
@@ -190,12 +190,12 @@
 }
 
 .raidTabs a:hover { border-color: color-mix(in srgb, var(--tab-accent) 70%, #987038); transform: translateY(-1px); }
-.raidTabs a[aria-current="page"] { border-color: color-mix(in srgb, var(--tab-accent) 78%, #c29145); background: linear-gradient(90deg, color-mix(in srgb, var(--tab-accent) 18%, #0b0c0e), #090a0b 74%); box-shadow: inset 0 0 16px color-mix(in srgb, var(--tab-accent) 9%, transparent), 0 0 16px color-mix(in srgb, var(--tab-accent) 10%, transparent); }
+.raidTabs a[aria-current="page"] { border-color: var(--atlas-line-strong); background: linear-gradient(90deg, var(--atlas-accent-wash-strong), var(--atlas-surface) 74%); box-shadow: inset 0 -2px var(--atlas-accent), 0 0 16px var(--atlas-accent-wash); }
 .raidTabs a > span { position: relative; grid-row: 1 / 3; width: 54px; height: 50px; overflow: hidden; }
 .raidTabs a > span::after { position: absolute; inset: 0; content: ""; box-shadow: inset 0 0 18px #000; }
 .raidTabs img { object-fit: cover; filter: saturate(.85) brightness(.8); }
-.raidTabs b { align-self: end; overflow: hidden; color: #e8d9bd; font: 600 12px/1.1 Georgia, serif; text-overflow: ellipsis; white-space: nowrap; }
-.raidTabs small { align-self: start; color: #7f786e; font-size: 8px; text-transform: uppercase; }
+.raidTabs b { align-self: end; overflow: hidden; color: #e8d9bd; font: 600 12px/1.1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-overflow: ellipsis; white-space: nowrap; }
+.raidTabs small { align-self: start; color: #7f786e; font-size: var(--atlas-text-label); text-transform: uppercase; }
 .raidTabs svg { grid-column: 3; grid-row: 1 / 3; width: 13px; color: #96713a; }
 
 .workspace {
@@ -218,8 +218,8 @@
 }
 
 .bossRail > header { display: flex; justify-content: space-between; padding: 16px 16px 13px; border-bottom: 1px solid rgba(130, 95, 45, .3); }
-.bossRail > header span { color: #c7a764; font-size: 9px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
-.bossRail > header b { color: #786d5d; font-size: 9px; }
+.bossRail > header span { color: #c7a764; font-size: var(--atlas-text-label); font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+.bossRail > header b { color: #786d5d; font-size: var(--atlas-text-label); }
 .bossList { display: grid; align-content: start; padding: 6px; }
 .bossList a {
   position: relative;
@@ -241,8 +241,8 @@
 
 .bossList a:hover { background: rgba(183, 137, 63, .06); }
 .bossList a:focus-visible { z-index: 1; outline: 2px solid #f2be5c; outline-offset: -1px; }
-.bossList a.activeBoss { border-color: color-mix(in srgb, var(--raid-accent) 50%, #8c662d); background: linear-gradient(90deg, color-mix(in srgb, var(--raid-accent) 16%, transparent), rgba(154, 105, 40, .035)); box-shadow: inset 2px 0 var(--raid-accent), inset 0 0 20px color-mix(in srgb, var(--raid-accent) 8%, transparent); }
-.order { color: #715e43; font: 500 10px Georgia, serif; text-align: center; }
+.bossList a.activeBoss { border-color: var(--atlas-line-strong); background: linear-gradient(90deg, var(--atlas-accent-wash-strong), rgba(154, 105, 40, .035)); box-shadow: inset 2px 0 var(--atlas-accent), inset 0 0 20px var(--atlas-accent-wash); }
+.order { color: #715e43; font: 500 var(--atlas-text-meta) var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-align: center; }
 .activeBoss .order { color: #f0c766; }
 .portrait { position: relative; width: 58px; height: 58px; overflow: hidden; border: 1px solid #634821; outline: 2px solid #020303; background: #030303; box-shadow: 0 0 0 3px rgba(144, 104, 47, .13); }
 .portrait::after { position: absolute; inset: 0; content: ""; box-shadow: inset 0 0 14px #000; }
@@ -250,40 +250,40 @@
 .bossList a:hover .portrait img,
 .activeBoss .portrait img { filter: brightness(1.08) saturate(1.08); transform: scale(1.04); }
 .bossName { display: grid; min-width: 0; gap: 5px; }
-.bossName b { overflow: hidden; color: #dcd0bd; font: 600 11px/1.15 Georgia, serif; text-overflow: ellipsis; }
-.bossName small { color: #766f65; font-size: 8px; }
+.bossName b { overflow: hidden; color: #dcd0bd; font: 600 11px/1.15 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-overflow: ellipsis; }
+.bossName small { color: #766f65; font-size: var(--atlas-text-label); }
 .bossList a > svg { width: 12px; color: #765b32; }
 .activeBoss .bossName b,
 .activeBoss > svg { color: #f1cf81; }
 .bossRail > footer { display: flex; align-items: center; gap: 9px; padding: 13px 14px; border-top: 1px solid rgba(130, 95, 45, .3); background: rgba(0, 0, 0, .26); }
 .bossRail > footer svg { width: 15px; color: #9a7437; }
 .bossRail > footer span { display: grid; gap: 2px; }
-.bossRail > footer small { color: #6f6b65; font-size: 7px; text-transform: uppercase; }
-.bossRail > footer b { color: #aaa092; font-size: 8px; }
+.bossRail > footer small { color: #6f6b65; font-size: var(--atlas-text-label); text-transform: uppercase; }
+.bossRail > footer b { color: #aaa092; font-size: var(--atlas-text-label); }
 
 .encounter { min-width: 0; background: #08090a; }
 .bossFeature { position: relative; min-height: 375px; overflow: hidden; border-bottom: 1px solid rgba(156, 111, 46, .4); background: #050607; }
 .bossFeature > img { object-fit: cover; object-position: center 28%; animation: bossReveal .45s ease both; }
 .bossShade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5, 6, 7, .96) 0%, rgba(5, 6, 7, .63) 42%, rgba(5, 6, 7, .12) 74%), linear-gradient(0deg, rgba(5, 6, 7, .95), transparent 48%), radial-gradient(circle at 76% 28%, transparent, rgba(0, 0, 0, .28)); }
 .bossIdentity { position: absolute; inset: auto auto 30px 34px; width: min(600px, 72%); }
-.bossIdentity > span { color: var(--raid-accent); font-size: 9px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; text-shadow: 0 0 10px #000; }
-.bossIdentity h2 { margin: 8px 0 11px; color: #f0dfc2; font: 500 clamp(2rem, 4.3vw, 4rem)/.98 Georgia, serif; letter-spacing: -.035em; text-wrap: balance; text-shadow: 0 2px 2px #000, 0 0 24px #000; }
+.bossIdentity > span { color: var(--atlas-accent-strong); font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .15em; text-transform: uppercase; text-shadow: 0 0 10px #000; }
+.bossIdentity h2 { margin: 8px 0 11px; color: #f0dfc2; font: 500 clamp(2rem, 4.3vw, 4rem)/.98 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; letter-spacing: -.035em; text-wrap: balance; text-shadow: 0 2px 2px #000, 0 0 24px #000; }
 .bossIdentity p { display: -webkit-box; max-width: 570px; margin: 0; overflow: hidden; color: #c8beaf; font-size: 12px; line-height: 1.55; text-shadow: 0 1px 6px #000; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
-.bossIdentity small { display: flex; align-items: center; gap: 6px; margin-top: 13px; color: #8d8579; font-size: 8px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
+.bossIdentity small { display: flex; align-items: center; gap: 6px; margin-top: 13px; color: #8d8579; font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
 .bossIdentity small svg { width: 12px; height: 12px; color: #b58a46; }
 
 .mechanicsPanel { position: relative; padding: 25px 27px 30px; background: radial-gradient(circle at 100% 0, color-mix(in srgb, var(--raid-accent) 7%, transparent), transparent 32%), linear-gradient(155deg, #0d0e0f, #060708 76%); }
 .mechanicsPanel::before { position: absolute; inset: 5px; content: ""; pointer-events: none; border: 1px solid rgba(166, 122, 54, .06); }
 .mechanicsHeader { position: relative; display: flex; align-items: end; justify-content: space-between; gap: 20px; }
-.mechanicsHeader > div > span { color: #b68d49; font-size: 8px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-.mechanicsHeader h3 { margin: 5px 0 4px; color: #ead9bb; font: 500 22px Georgia, serif; }
-.mechanicsHeader p { margin: 0; color: #78746d; font-size: 9px; }
-.mechanicsHeader > strong { display: grid; justify-items: center; min-width: 58px; padding: 7px 9px; color: #edc465; border: 1px solid rgba(147, 103, 40, .36); background: rgba(4, 5, 6, .56); font: 500 21px Georgia, serif; }
-.mechanicsHeader > strong small { color: #766c5d; font: 700 6px/1.2 var(--font-ui), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.mechanicsHeader > div > span { color: #b68d49; font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.mechanicsHeader h3 { margin: 5px 0 4px; color: #ead9bb; font: 500 22px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
+.mechanicsHeader p { margin: 0; color: #78746d; font-size: var(--atlas-text-label); }
+.mechanicsHeader > strong { display: grid; justify-items: center; min-width: 58px; padding: 7px 9px; color: #edc465; border: 1px solid rgba(147, 103, 40, .36); background: rgba(4, 5, 6, .56); font: 500 21px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
+.mechanicsHeader > strong small { color: #766c5d; font: 700 var(--atlas-text-label)/1.2 var(--font-ui), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
 .filters { position: relative; display: flex; flex-wrap: wrap; gap: 5px; margin: 20px 0 13px; padding-bottom: 12px; border-bottom: 1px solid rgba(128, 93, 42, .24); }
-.filters button { display: flex; align-items: center; gap: 6px; padding: 6px 8px; color: #8c877d; border: 1px solid rgba(117, 89, 48, .3); border-radius: 2px; background: #090a0b; font-size: 8px; font-weight: 700; cursor: pointer; transition: color .15s ease, border-color .15s ease, background .15s ease; }
+.filters button { display: flex; align-items: center; gap: 6px; padding: 6px 8px; color: #8c877d; border: 1px solid rgba(117, 89, 48, .3); border-radius: 2px; background: #090a0b; font-size: var(--atlas-text-label); font-weight: 700; cursor: pointer; transition: color .15s ease, border-color .15s ease, background .15s ease; }
 .filters button svg { width: 12px; height: 12px; color: #9b7740; }
-.filters button b { display: grid; min-width: 14px; height: 14px; place-items: center; color: #817662; border-radius: 2px; background: rgba(198, 150, 75, .08); font-size: 7px; }
+.filters button b { display: grid; min-width: 14px; height: 14px; place-items: center; color: #817662; border-radius: 2px; background: rgba(198, 150, 75, .08); font-size: var(--atlas-text-label); }
 .filters button:hover:not(:disabled),
 .filters button[aria-pressed="true"] { color: #f0d9aa; border-color: #a77835; background: rgba(158, 112, 45, .12); }
 .filters button[aria-pressed="true"] svg,
@@ -291,8 +291,8 @@
 .filters button:focus-visible { outline: 2px solid #f2be5c; outline-offset: 2px; }
 .filters button:disabled { opacity: .3; cursor: not-allowed; }
 .mechanicsGrid { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin: 0; padding: 0; list-style: none; }
-.empty { display: grid; min-height: 130px; place-items: center; color: #827a6d; border: 1px dashed rgba(151, 109, 47, .28); font-size: 10px; }
-.pageFooter { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px 6px 0; color: #6f6b65; font-size: 8px; text-transform: uppercase; }
+.empty { display: grid; min-height: 130px; place-items: center; color: #827a6d; border: 1px dashed rgba(151, 109, 47, .28); font-size: var(--atlas-text-meta); }
+.pageFooter { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px 6px 0; color: #6f6b65; font-size: var(--atlas-text-label); text-transform: uppercase; }
 .pageFooter span { display: flex; align-items: center; gap: 6px; }
 .pageFooter svg { width: 12px; color: #8b6c3d; }
 
@@ -327,20 +327,20 @@
 @media (max-width: 560px) {
   .commandBar { min-height: 48px; }
   .journalLink span { display: none; }
-  .season { font-size: 8px; }
+  .season { font-size: var(--atlas-text-label); }
   .hero { min-height: 365px; align-items: end; padding: 35px 10px 23px; }
   .hero h1 { font-size: 2.45rem; }
-  .heroCopy > p { display: -webkit-box; font-size: 11px; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
-  .difficulties span { font-size: 7px; }
+  .heroCopy > p { display: -webkit-box; overflow: hidden; font-size: var(--atlas-text-small); -webkit-box-orient: vertical; -webkit-line-clamp: 5; }
+  .difficulties span { font-size: var(--atlas-text-label); }
   .raidTabs { padding: 5px; }
   .workspace { min-height: auto; }
   .bossList a { flex-basis: 190px; }
-  .bossName b { font-size: 10px; }
+  .bossName b { font-size: var(--atlas-text-meta); }
   .bossFeature { min-height: 365px; }
   .bossFeature > img { object-position: 58% 24%; }
   .bossIdentity { inset: auto 14px 20px; }
   .bossIdentity h2 { font-size: 2.15rem; }
-  .bossIdentity p { font-size: 10px; -webkit-line-clamp: 5; }
+  .bossIdentity p { font-size: var(--atlas-text-meta); -webkit-line-clamp: 5; }
   .mechanicsPanel { padding: 21px 10px 24px; }
   .mechanicsHeader p { max-width: 240px; line-height: 1.4; }
   .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }

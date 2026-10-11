@@ -60,5 +60,5 @@ export function TalentCalculatorWithLocalization({ data, theme, lang }: Props) {
     return () => controller.abort();
   }, [data, lang]);
 
-  return <TalentCalculator data={renderData} theme={theme} />;
+  return <TalentCalculator data={renderData} theme={theme} lang={lang} />;
 }

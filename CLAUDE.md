@@ -35,9 +35,13 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   Homepage stays an overview with a compact Tier Preview; the full
   filters/table/detail experience lives only on `/tier-lists`. Never embed the
   full workspace back into the homepage.
-- Styling: `app/globals.css` is only an ordered `@import` index; tokens in
-  `app/styles/tokens.css`, shared rules in `app/styles/*.css`, each legacy
-  block's CSS next to the block. Class names are never renamed; block-level
+- Styling: inner pages (everything except the landing scene and the contents
+  book) use the **atlas theme**: tokens in `app/styles/atlas-theme.css`, the
+  server-component kit in `components/atlas/` (README there), rules in
+  `design.md`, recipes in `docs/llm/atlas-theme.md`; `npm run atlas:check`
+  guards token-only stylesheets. `app/globals.css` is only an ordered `@import`
+  index; legacy tokens in `app/styles/tokens.css`, shared rules in
+  `app/styles/*.css`, each legacy block's CSS next to the block. Class names are never renamed; block-level
   compaction uses `@container` (containers: `.section`, `.cards-row`); new UI
   uses Tailwind CSS and shadcn/ui on the same tokens without changing the
   visual language.

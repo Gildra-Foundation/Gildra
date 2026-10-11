@@ -9,7 +9,7 @@
   color: #fff0c7 !important;
   background: var(--folio-control-image) center / 100% 100% no-repeat, #582118 !important;
   box-shadow: 0 2px 3px #4021094d !important;
-  font-family: var(--folio-title, Georgia, serif) !important;
+  font-family: var(--folio-title, var(--atlas-font-display, Georgia, serif)) !important;
   font-size: 13px;
   font-weight: 400;
   line-height: 1.35;
@@ -64,7 +64,7 @@
 .theme [data-folio-choice]:active:not(:disabled) { filter: brightness(.94); }
 .theme [data-folio-choice]:disabled { opacity: .55; cursor: not-allowed; }
 .theme [data-folio-choice] :is(b, strong) {
-  font-family: var(--folio-title, Georgia, serif);
+  font-family: var(--folio-title, var(--atlas-font-display, Georgia, serif));
   font-size: 16px;
   font-weight: 400;
   color: #442610;
@@ -79,7 +79,7 @@
   background: linear-gradient(#c6a06133, #fff0ce77) !important;
   color: #352310 !important;
   box-shadow: inset 0 2px 4px #603b2426, 0 1px #fff1c977 !important;
-  font-family: var(--folio-body, Georgia, serif);
+  font-family: var(--folio-body, var(--atlas-font-display, Georgia, serif));
   font-size: 14px;
   line-height: 1.45;
   min-width: 0;

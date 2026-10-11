@@ -1,4 +1,5 @@
 import type { RouteAbility, RouteEnemy, RouteStop } from "./rubyLifePoolsData";
+import { targetLabel, type RouteLocale } from "./mythicRouteCopy";
 
 type EnemyRouteIntel = {
   summary: string;
@@ -31,6 +32,33 @@ const failureByAction: Record<RouteAbility["action"], string> = {
   "Защита": "Без личной или групповой защиты входящий урон может превысить доступное лечение.",
 };
 
+const actionInstructionEn: Record<RouteAbility["action"], string> = {
+  "Кик": "interrupt it before the cast finishes",
+  "Стоп": "stop it with a stun or other crowd control",
+  "Диспел": "dispel the effect quickly",
+  "Пурж": "purge the buff from the enemy",
+  "Фокус": "switch main damage to it at once",
+  "Уклонение": "step out of the marked area or line",
+  "Защита": "use the assigned defensive in advance",
+};
+
+const failureByActionEn: Record<RouteAbility["action"], string> = {
+  "Кик": "If the cast finishes, the party takes avoidable damage or a dangerous effect and loses control of the fight.",
+  "Стоп": "Without a stun or other control the ability goes off in full and opens a dangerous window for the whole party.",
+  "Диспел": "The effect keeps dealing damage or limiting the player and adds a lot of pressure on the healer.",
+  "Пурж": "While the buff is active the enemy lives longer or deals much more damage.",
+  "Фокус": "If damage does not switch at once, the extra target strengthens the fight, breaks the timing or applies the next mechanic.",
+  "Уклонение": "Players left in the area take heavy damage and can break this part of the route.",
+  "Защита": "Without a personal or party defensive the incoming damage can exceed the available healing.",
+};
+
+const priorityPhraseEn: Record<RouteEnemy["priority"], string> = {
+  boss: "the key target of the fight",
+  high: "a priority target for the party",
+  medium: "the second target after the marked dangerous enemies",
+  low: "a regular target that is easy to clear with area damage",
+};
+
 function normalized(value: string) {
   return value.toLocaleLowerCase("en-US").replaceAll("’", "'");
 }
@@ -55,8 +83,20 @@ export function enemyMechanics(enemyName: string, stop: RouteStop) {
   return stop.abilities.filter((ability) => belongsToEnemy(ability, enemyName));
 }
 
-export function routeEnemyIntel(enemy: RouteEnemy, stop: RouteStop, dungeonName: string): EnemyRouteIntel {
+export function routeEnemyIntel(enemy: RouteEnemy, stop: RouteStop, dungeonName: string, locale: RouteLocale = "ru"): EnemyRouteIntel {
   const mechanics = enemyMechanics(enemy.name, stop);
+  if (locale === "en") {
+    const names = mechanics.slice(0, 3).map((ability) => ability.name);
+    return {
+      summary: `${enemy.name} is ${priorityPhraseEn[enemy.priority]} on this step of ${dungeonName}. ${names.length ? `Watch for: ${names.join(", ")}.` : "Keep it with the pack and inside the party's area damage."}`,
+      danger: mechanics.length
+        ? mechanics.slice(0, 2).map((ability) => `${ability.name}: ${actionInstructionEn[ability.action]}`).join("; ") + "."
+        : enemy.priority === "boss"
+          ? "Handle the marked mechanics of this step and keep defensives for the dangerous casts."
+          : `Left without crowd control and priority damage, ${enemy.name} makes this step take longer than planned and adds pressure on the party.`,
+      mechanics,
+    };
+  }
   const priority = enemy.priority === "boss"
     ? "ключевая цель боя"
     : enemy.priority === "high"
@@ -74,7 +114,13 @@ export function routeEnemyIntel(enemy: RouteEnemy, stop: RouteStop, dungeonName:
   return { summary, danger, mechanics };
 }
 
-export function routeAbilityIntel(ability: RouteAbility, stop: RouteStop): AbilityRouteIntel {
+export function routeAbilityIntel(ability: RouteAbility, stop: RouteStop, locale: RouteLocale = "ru"): AbilityRouteIntel {
+  if (locale === "en") {
+    return {
+      effect: `${ability.name} is cast by ${ability.source ?? "a dangerous enemy"}. Party response: ${actionInstructionEn[ability.action]}; handled by ${targetLabel(ability.target, "en")}.`,
+      failure: failureByActionEn[ability.action],
+    };
+  }
   const source = ability.source ?? "опасный противник";
   const routeNote = matchingSentence(stop, ability);
   const effect = routeNote

@@ -1,0 +1,97 @@
+.hero {
+  display: grid;
+  gap: var(--atlas-space-4);
+}
+
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-3);
+}
+
+.toolbar { display: flex; align-items: center; gap: var(--atlas-space-2); }
+
+.panel .body {
+  padding: var(--atlas-space-6) clamp(var(--atlas-space-4), 3vw, 40px);
+  border: 1px solid var(--atlas-line);
+  outline: 1px solid #020303;
+  background: linear-gradient(110deg, rgba(9, 10, 11, .97), rgba(9, 10, 11, .76));
+  box-shadow: var(--atlas-shadow-panel);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--atlas-space-5);
+}
+
+.withEmblem { grid-template-columns: auto minmax(0, 1fr); }
+.withSide { grid-template-columns: minmax(0, 1fr) auto; }
+.withEmblem.withSide { grid-template-columns: auto minmax(0, 1fr) auto; }
+
+.copy { min-width: 0; }
+
+.eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--atlas-space-2);
+  color: var(--atlas-accent);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.eyebrow svg { width: 14px; height: 14px; }
+
+.title {
+  margin: 0;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-hero);
+  font-weight: var(--atlas-weight-display-hero);
+  letter-spacing: var(--atlas-tracking-display);
+  line-height: var(--atlas-leading-tight);
+  text-shadow: 0 2px 2px #000, 0 0 24px var(--atlas-accent-glow);
+  text-wrap: balance;
+}
+
+.lede {
+  max-width: 68ch;
+  margin: var(--atlas-space-3) 0 0;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-lead);
+  line-height: var(--atlas-leading-body);
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--atlas-space-2);
+  margin-top: var(--atlas-space-5);
+}
+
+.side { min-width: 0; }
+
+/* Stats drop under the copy on tablets, the emblem joins the column on phones. */
+@media (max-width: 1100px) {
+  .withSide { grid-template-columns: minmax(0, 1fr); }
+  .withEmblem.withSide { grid-template-columns: auto minmax(0, 1fr); }
+  .withSide .side { grid-column: 1 / -1; }
+  .stats { width: 100%; }
+}
+
+@media (max-width: 720px) {
+  .withEmblem,
+  .withEmblem.withSide { grid-template-columns: minmax(0, 1fr); }
+  /* The seal repeats the title on phones; give the space to the content. */
+  .emblem { display: none; }
+  .panel .body { padding: var(--atlas-space-5) var(--atlas-space-4); }
+}

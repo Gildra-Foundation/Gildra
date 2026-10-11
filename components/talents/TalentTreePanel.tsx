@@ -1,5 +1,5 @@
 import { Crown, Shield, Swords } from "lucide-react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import { SpecEmblem } from "./SpecEmblem";
 import styles from "./TalentTreePanel.module.css";
@@ -23,12 +23,13 @@ type TalentTreePanelProps = {
   loading?: boolean;
   children: ReactNode;
   scene?: ReactNode;
+  style?: CSSProperties;
 };
 
-export function TalentTreePanel({ lang = "ru", appearance = "atlas", specSlug, variant, eyebrow, title, iconSrc, secondary, spent, budget, nodeCount, loading = false, children, scene }: TalentTreePanelProps) {
+export function TalentTreePanel({ lang = "ru", appearance = "atlas", specSlug, variant, eyebrow, title, iconSrc, secondary, spent, budget, nodeCount, loading = false, children, scene, style }: TalentTreePanelProps) {
   const Icon = panelIcons[variant];
   const manuscript = appearance === "manuscript";
-  return <article className={`tc-panel tc-${variant}-panel ${styles.panel}${manuscript ? ` ${styles.manuscript}` : ""}${appearance === "atlas" ? ` ${styles.atlas}` : ""}`} data-panel-variant={variant} data-panel-appearance={appearance} data-loading={loading || undefined}>
+  return <article className={`tc-panel tc-${variant}-panel ${styles.panel}${manuscript ? ` ${styles.manuscript}` : ""}${appearance === "atlas" ? ` ${styles.atlas}` : ""}`} data-panel-variant={variant} data-panel-appearance={appearance} data-loading={loading || undefined} style={style}>
     <svg className={styles.frame} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <path d="M1 14V3Q1 1 3 1H18M82 1H97Q99 1 99 3V14M99 86V97Q99 99 97 99H82M18 99H3Q1 99 1 97V86" />
       <path d="M1 24V76M99 24V76" />

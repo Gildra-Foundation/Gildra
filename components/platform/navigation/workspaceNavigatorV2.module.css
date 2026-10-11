@@ -47,12 +47,12 @@
 .brand::before,
 .brand::after { content: ""; position: absolute; inset: 3px; border: 1px solid rgba(246, 206, 123, .22); border-radius: 50%; }
 .brand::after { inset: -5px 18px; border: 0; border-top: 5px solid #c1802e; border-bottom: 5px solid #c1802e; border-radius: 1px; }
-.brand i { position: relative; z-index: 1; font: 24px/1 Georgia, "Times New Roman", serif; font-style: normal; text-shadow: 0 2px 8px #000, 0 0 10px rgba(244, 185, 74, .24); }
+.brand i { position: relative; z-index: 1; font: 24px/1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; font-style: normal; text-shadow: 0 2px 8px #000, 0 0 10px rgba(244, 185, 74, .24); }
 .brandCopy { min-width: 0; display: grid; gap: 1px; }
-.brandCopy strong { color: #f0d7a6; font: 18px/1 Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 2px 8px #000; }
+.brandCopy strong { color: #f0d7a6; font: 18px/1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 2px 8px #000; }
 .brandCopy span { color: #8f7550; font-size: 8px; letter-spacing: .13em; text-transform: uppercase; }
 
-.label { position: relative; z-index: 1; margin: 0 10px 7px; color: #98733e; font: 9px/1.2 Georgia, "Times New Roman", serif; letter-spacing: .18em; text-transform: uppercase; }
+.label { position: relative; z-index: 1; margin: 0 10px 7px; color: #98733e; font: 9px/1.2 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; letter-spacing: .18em; text-transform: uppercase; }
 .utilityLabel { margin-top: 15px; }
 .primaryNav, .utilityNav { position: relative; z-index: 1; display: grid; gap: 3px; }
 .navigator nav a {
@@ -98,8 +98,8 @@
 .backdrop { position: fixed; z-index: 71; inset: 0; display: block; border: 0; background: rgba(2, 2, 2, .54); backdrop-filter: blur(3px); }
 .drawer { position: fixed; z-index: 72; top: 18px; left: 230px; display: block; width: min(420px, calc(100vw - 250px)); padding: 16px; border: 1px solid #815522; border-top-color: #d29439; border-radius: 3px; background: radial-gradient(circle at 80% 0, rgba(204, 128, 31, .13), transparent 40%), linear-gradient(160deg, rgba(27, 19, 10, .99), rgba(8, 6, 4, .995)); box-shadow: 0 22px 70px #000, inset 0 1px rgba(255, 220, 146, .09); animation: drawerIn .2s ease-out both; }
 .drawer header { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 12px; border-bottom: 1px solid rgba(155, 103, 38, .24); }
-.drawer header span { color: #9f7438; font: 8px Georgia, serif; letter-spacing: .18em; text-transform: uppercase; }
-.drawer header h2 { margin: 3px 0 0; color: #ebd6ae; font: 21px Georgia, serif; font-weight: 400; }
+.drawer header span { color: #9f7438; font: 8px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; letter-spacing: .18em; text-transform: uppercase; }
+.drawer header h2 { margin: 3px 0 0; color: #ebd6ae; font: 21px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; font-weight: 400; }
 .drawer header button { display: grid; place-items: center; width: 34px; height: 34px; color: #b8a78a; border: 1px solid #50371b; border-radius: 2px; background: #0b0805; }
 .drawer header button svg { width: 17px; }
 .drawerGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding-top: 12px; }
@@ -164,8 +164,8 @@
   .backdrop { position: fixed; z-index: 71; inset: 0 0 68px; display: block; border: 0; background: rgba(2, 2, 2, .66); backdrop-filter: blur(4px); }
   .drawer { top: auto; right: 10px; bottom: 77px; left: 10px; width: auto; padding: 14px; border-radius: 4px; }
   .drawer header { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 12px; border-bottom: 1px solid rgba(155, 103, 38, .24); }
-  .drawer header span { color: #9f7438; font: 8px Georgia, serif; letter-spacing: .18em; text-transform: uppercase; }
-  .drawer header h2 { margin: 3px 0 0; color: #ebd6ae; font: 21px Georgia, serif; font-weight: 400; }
+  .drawer header span { color: #9f7438; font: 8px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; letter-spacing: .18em; text-transform: uppercase; }
+  .drawer header h2 { margin: 3px 0 0; color: #ebd6ae; font: 21px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; font-weight: 400; }
   .drawer header button { display: grid; place-items: center; width: 34px; height: 34px; color: #b8a78a; border: 1px solid #50371b; border-radius: 2px; background: #0b0805; }
   .drawer header button svg { width: 17px; }
   .drawerGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding-top: 12px; }

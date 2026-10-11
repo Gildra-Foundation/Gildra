@@ -5,18 +5,22 @@ import type { CSSProperties, ReactNode } from "react";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { IntelPopover } from "./IntelPopover";
 import type { AbilityMediaPayload, EnemyMediaPayload } from "./dungeonCombatIntel.types";
+import { mythicRouteCopy, type RouteLocale } from "./mythicRouteCopy";
 import styles from "./combatIntelCard.module.css";
 
 type EnemyPriority = "low" | "medium" | "high" | "boss";
 
+/** Priority is data, so it keeps a status colour; everything else stays amber. */
 const priorityTone: Record<EnemyPriority, string> = {
-  low: "#b68a45",
-  medium: "#dc8a39",
-  high: "#ef5b39",
-  boss: "#ff3f32",
+  low: "var(--atlas-text-subtle)",
+  medium: "var(--atlas-caution)",
+  high: "var(--atlas-negative)",
+  boss: "var(--atlas-negative)",
 };
+const abilityTone = "var(--atlas-accent)";
 
 export function EnemyIntelCard({
+  locale,
   dungeonName,
   name,
   count,
@@ -28,6 +32,7 @@ export function EnemyIntelCard({
   media,
   icon,
 }: {
+  locale: RouteLocale;
   dungeonName?: string;
   name: string;
   count: number;
@@ -39,23 +44,25 @@ export function EnemyIntelCard({
   media?: EnemyMediaPayload;
   icon: ReactNode;
 }) {
+  const copy = mythicRouteCopy[locale];
   const intel = summary && danger ? { summary, danger } : {
-    summary: `${name} входит в выбранную группу маршрута. Приоритет и количество рассчитаны для стабильного прохождения ключа.`,
-    danger: priority === "boss" ? "Ключевой противник шага: выполняйте отмеченные механики и не расходуйте назначения одновременно." : "Без контроля или правильного приоритета эта цель создаёт лишнее давление на танка и лекаря.",
+    summary: copy.enemyFallback(name),
+    danger: priority === "boss" ? copy.enemyDangerBoss : copy.enemyDanger,
   };
   const portraitVerified = media?.portraitVerified === true;
   const portraitUnavailable = media?.portraitStatus === "model_unavailable";
   const portraitUrl = portraitVerified ? media.portraitUrl : undefined;
-  const portraitClass = portraitVerified ? styles.enemyPortrait : styles.spellIcon;
+  const portraitClass = portraitVerified ? ` ${styles.enemyPortrait}` : "";
   const portraitStyle = {
     "--portrait-scale": media?.portraitScale ?? 1.35,
     "--portrait-y": media?.portraitY ?? "34%",
   } as CSSProperties;
   const tone = priorityTone[priority];
+  const portraitStatus = portraitVerified ? copy.portraitVerified : portraitUnavailable ? copy.portraitUnavailable : copy.portraitUnverified;
 
   return (
     <li
-      className={`${styles.card} ${styles.enemyCard}`}
+      className={styles.card}
       data-intel-card="enemy"
       data-portrait-status={portraitVerified ? "verified" : portraitUnavailable ? "model-unavailable" : "unverified"}
       style={{ "--intel-tone": tone } as CSSProperties}
@@ -63,16 +70,16 @@ export function EnemyIntelCard({
       <IntelPopover
         tone={tone}
         kind="enemy"
-        content={<>
-          <header><span><ShieldAlert /> {media?.identityVerified && media.npcId ? `Существо · NPC #${media.npcId}` : "Существо · NPC ID не проверен"}</span><b>{priorityLabel}</b></header>
+        content={<div className={styles.intelBody}>
+          <header><span><ShieldAlert aria-hidden="true" /> {copy.creature()}</span><b>{priorityLabel}</b></header>
           <div className={styles.tooltipSubject}>
-            <span className={`${styles.gameIcon} ${media ? styles.tooltipPortrait : styles.tooltipSpell}`} style={portraitStyle}>{portraitUrl ? <ResilientImage src={portraitUrl} alt="" loading="eager" fallback={icon} /> : icon}</span>
+            <span className={media ? `${styles.gameIcon} ${styles.tooltipPortrait}` : styles.gameIcon} style={portraitStyle}>{portraitUrl ? <ResilientImage src={portraitUrl} alt="" loading="eager" fallback={icon} /> : icon}</span>
             <span><small>{dungeonName ?? "Mythic+"}{encounter ? ` · ${encounter}` : ""}</small><b>{name}</b></span>
           </div>
           <p>{intel.summary}</p>
-          <div className={styles.warning}><AlertTriangle /><span><b>Чем опасен</b>{intel.danger}</span></div>
-          <footer><span>Сколько в этой группе</span><strong>×{count}</strong></footer>
-        </>}
+          <div className={styles.warning}><AlertTriangle aria-hidden="true" /><span><b>{copy.whyDangerous}</b>{intel.danger}</span></div>
+          <footer><span>{copy.countInGroup}</span><strong>×{count}</strong></footer>
+        </div>}
       >
         {(bindings) => <button
           {...bindings}
@@ -80,12 +87,12 @@ export function EnemyIntelCard({
           className={styles.trigger}
           data-intel-trigger
         >
-          <span className={`${styles.gameIcon} ${portraitClass}`} style={portraitStyle}>
+          <span className={`${styles.gameIcon}${portraitClass}`} style={portraitStyle}>
             {portraitUrl ? <ResilientImage src={portraitUrl} alt="" loading="lazy" fallback={icon} /> : icon}
           </span>
-          <span className={styles.identity}><b>{name}</b><small>{priorityLabel} · {portraitVerified ? "Портрет проверен" : portraitUnavailable ? "Модель недоступна · placeholder" : "Портрет не проверен"}</small></span>
+          <span className={styles.identity}><b>{name}</b><small>{priorityLabel} · {portraitStatus}</small></span>
           <strong>×{count}</strong>
-          <span className={styles.more}><CircleHelp /><span>Что делает</span><ChevronDown /></span>
+          <span className={styles.more}><CircleHelp aria-hidden="true" /><span>{copy.whatItDoes}</span><ChevronDown aria-hidden="true" /></span>
         </button>}
       </IntelPopover>
     </li>
@@ -93,8 +100,11 @@ export function EnemyIntelCard({
 }
 
 export function AbilityIntelCard({
+  locale,
   name,
   action,
+  interrupt = false,
+  dispel = false,
   responsible,
   source: sourceOverride,
   encounter,
@@ -103,8 +113,11 @@ export function AbilityIntelCard({
   media: resolvedMedia,
   icon,
 }: {
+  locale: RouteLocale;
   name: string;
   action: string;
+  interrupt?: boolean;
+  dispel?: boolean;
   responsible: string;
   source?: string;
   encounter?: string;
@@ -113,37 +126,37 @@ export function AbilityIntelCard({
   media?: { media: AbilityMediaPayload; exact: boolean };
   icon: ReactNode;
 }) {
+  const copy = mythicRouteCopy[locale];
   const intel = effect && failure ? { effect, failure } : {
-    effect: `${name} — опасная способность выбранного противника. Интерфейс маршрута показывает требуемую реакцию и назначенного игрока.`,
-    failure: action === "Прервать" ? "Заклинание сработает и создаст сильный урон или опасный эффект для всей группы." : action === "Снять эффект" || action === "Снять усиление" ? "Эффект продолжит усиливаться и заметно усложнит лечение группы." : "Невыполненная механика создаст лишний урон и может сорвать этот шаг маршрута.",
+    effect: copy.abilityFallback(name),
+    failure: interrupt ? copy.abilityFailInterrupt : dispel ? copy.abilityFailDispel : copy.abilityFailOther,
   };
-  const source = sourceOverride ?? "Опасный противник";
+  const source = sourceOverride ?? copy.dangerousEnemy;
   const media = resolvedMedia?.media;
-  const tone = "#a335ee";
 
   return (
     <li
-      className={`${styles.card} ${styles.abilityCard}`}
+      className={styles.card}
       data-intel-card="ability"
-      style={{ "--intel-tone": tone } as CSSProperties}
+      style={{ "--intel-tone": abilityTone } as CSSProperties}
     >
       <IntelPopover
-        tone={tone}
+        tone={abilityTone}
         kind="ability"
-        content={<>
-          <header><span><ShieldAlert /> {resolvedMedia?.exact && media?.spellId ? `Заклинание · Spell #${media.spellId}` : "Заклинание · Путеводитель"}</span><b>{action}</b></header>
+        content={<div className={styles.intelBody}>
+          <header><span><ShieldAlert aria-hidden="true" /> {copy.spell(resolvedMedia?.exact ? media?.spellId : undefined)}</span><b>{action}</b></header>
           <div className={styles.tooltipSubject}>
-            <span className={`${styles.gameIcon} ${styles.tooltipSpell}`}>{media ? <ResilientImage src={media.iconUrl} alt="" loading="lazy" fallback={icon} /> : icon}</span>
+            <span className={styles.gameIcon}>{media ? <ResilientImage src={media.iconUrl} alt="" loading="lazy" fallback={icon} /> : icon}</span>
             <span><small>{resolvedMedia?.exact ? media?.iconName : source}{encounter ? ` · ${encounter}` : ""}</small><b>{name}</b></span>
           </div>
           <p>{intel.effect}</p>
-          <div className={styles.warning}><AlertTriangle /><span><b>Если не среагировать</b>{intel.failure}</span></div>
+          <div className={styles.warning}><AlertTriangle aria-hidden="true" /><span><b>{copy.ifIgnored}</b>{intel.failure}</span></div>
           <footer className={styles.response}>
-            <span><Swords /><i><small>Кто применяет</small><b>{source}</b></i></span>
-            <span><CheckCircle2 /><i><small>Что сделать</small><b>{action}</b></i></span>
-            <span><UserRound /><i><small>Кто отвечает</small><b>{responsible}</b></i></span>
+            <span><Swords aria-hidden="true" /><i><small>{copy.castBy}</small><b>{source}</b></i></span>
+            <span><CheckCircle2 aria-hidden="true" /><i><small>{copy.whatToDo}</small><b>{action}</b></i></span>
+            <span><UserRound aria-hidden="true" /><i><small>{copy.responsible}</small><b>{responsible}</b></i></span>
           </footer>
-        </>}
+        </div>}
       >
         {(bindings) => <button
           {...bindings}
@@ -151,12 +164,12 @@ export function AbilityIntelCard({
           className={styles.trigger}
           data-intel-trigger
         >
-          <span className={`${styles.gameIcon} ${styles.spellIcon}`}>
+          <span className={styles.gameIcon}>
             {media ? <ResilientImage src={media.iconUrl} alt="" loading="lazy" fallback={icon} /> : icon}
           </span>
-          <span className={styles.identity}><b>{name}</b><small>Применяет: {source}</small></span>
+          <span className={styles.identity}><b>{name}</b><small>{copy.castByShort(source)}</small></span>
           <strong>{action}</strong>
-          <span className={styles.more}><CircleHelp /><span>Ответ: {responsible}</span><ChevronDown /></span>
+          <span className={styles.more}><CircleHelp aria-hidden="true" /><span>{copy.responseShort(responsible)}</span><ChevronDown aria-hidden="true" /></span>
         </button>}
       </IntelPopover>
     </li>

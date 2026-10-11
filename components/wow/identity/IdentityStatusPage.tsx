@@ -1,10 +1,17 @@
-import Link from "next/link";
-import { ExternalLink, ShieldCheck } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarCheck, ExternalLink, Hourglass, Layers } from "lucide-react";
+import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasNotice, AtlasSection } from "@/components/atlas";
+import { formatAtlasDate, formatSeason } from "@/components/atlas/format";
 import styles from "./identityStatusPage.module.css";
 
 type Locale = "en" | "ru";
 type IdentityLink = { href: string; label: string };
 
+const copy = {
+  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", noticeTitle: "Раздел в подготовке", notice: "Подробности появятся здесь после проверки данных. Ниже — то, что уже подтверждено.", patch: "Патч", season: "Сезон", verified: "Проверено", next: "Куда дальше", source: "Источник" },
+  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", noticeTitle: "Section in preparation", notice: "Details will appear here once the data is verified. Below is what is already confirmed.", patch: "Patch", season: "Season", verified: "Verified", next: "Where to next", source: "Source" },
+} as const;
+
+/** Honest placeholder for a section whose details are not published yet. */
 export function IdentityStatusPage({
   locale,
   eyebrow,
@@ -16,6 +23,8 @@ export function IdentityStatusPage({
   sourceLabel,
   lastVerifiedAt,
   links = [],
+  parent,
+  notice,
 }: {
   locale: Locale;
   eyebrow: string;
@@ -27,35 +36,31 @@ export function IdentityStatusPage({
   sourceLabel: string;
   lastVerifiedAt: string;
   links?: IdentityLink[];
+  /** Section the page belongs to, shown in the breadcrumbs (path without the /ru prefix). */
+  parent?: IdentityLink;
+  /** Replaces the default "details later" notice. */
+  notice?: string;
 }) {
+  const text = copy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
+  const crumbs = [{ label: text.wow, href: `${prefix}/wow` }, ...(parent ? [{ label: parent.label, href: `${prefix}${parent.href}` }] : []), { label: title }];
   return (
-    <main className={styles.page}>
-      <nav aria-label={locale === "ru" ? "Хлебные крошки" : "Breadcrumbs"}>
-        <Link href={`${prefix}/wow`}>World of Warcraft</Link>
-      </nav>
-      <header>
-        <p>{eyebrow}</p>
-        <h1>{title}</h1>
-        <p>{summary}</p>
-      </header>
-      <section className={styles.status} aria-labelledby="verification-status">
-        <ShieldCheck aria-hidden="true" />
-        <div>
-          <h2 id="verification-status">{locale === "ru" ? "Опубликована только проверенная идентичность" : "Verified identity only"}</h2>
-          <p>{locale === "ru"
-            ? "Тактика, способности, игровые ID, иконки и добыча не публикуются как достоверные, пока не пройдут отдельную проверку."
-            : "Strategy, abilities, game IDs, icons, and loot are not presented as authoritative until separately verified."}</p>
+    <AtlasFrame lang={locale}>
+      <AtlasHero breadcrumbs={crumbs} breadcrumbsLabel={text.breadcrumbs} emblem={<BookOpen />} eyebrow={eyebrow} title={title} lede={summary} />
+      <AtlasSection>
+        <AtlasNotice tone="caution" icon={<Hourglass />} title={text.noticeTitle}>{notice ?? text.notice}</AtlasNotice>
+        <AtlasMetaList columns={3} className={styles.facts} items={[
+          { icon: <Layers />, label: text.patch, value: patch },
+          { icon: <BookOpen />, label: text.season, value: formatSeason(season, locale) },
+          { icon: <CalendarCheck />, label: text.verified, value: formatAtlasDate(lastVerifiedAt, locale) },
+        ]} />
+      </AtlasSection>
+      <AtlasSection title={links.length ? text.next : undefined} level={3}>
+        <div className={styles.actions}>
+          {links.map((link) => <AtlasLinkButton key={link.href} href={`${prefix}${link.href}`} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{link.label}</AtlasLinkButton>)}
+          <AtlasLinkButton href={sourceUrl} external variant="ghost" iconAfter={<ExternalLink aria-hidden="true" />}>{text.source}: {sourceLabel}</AtlasLinkButton>
         </div>
-      </section>
-      <dl className={styles.facts}>
-        <div><dt>Patch</dt><dd>{patch}</dd></div>
-        <div><dt>Season</dt><dd>{season}</dd></div>
-        <div><dt>{locale === "ru" ? "Статус" : "Status"}</dt><dd>identity_only</dd></div>
-        <div><dt>{locale === "ru" ? "Проверено" : "Last verified"}</dt><dd>{lastVerifiedAt}</dd></div>
-      </dl>
-      {links.length ? <ul className={styles.links}>{links.map((link) => <li key={link.href}><Link href={`${prefix}${link.href}`}>{link.label}</Link></li>)}</ul> : null}
-      <a className={styles.source} href={sourceUrl} target="_blank" rel="noreferrer">{sourceLabel}<ExternalLink aria-hidden="true" /></a>
-    </main>
+      </AtlasSection>
+    </AtlasFrame>
   );
 }

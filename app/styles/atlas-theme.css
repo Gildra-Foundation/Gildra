@@ -1,57 +1,157 @@
-/* Shared materials from the Raid and Mythic+ atlases (brand.md).
-   Applied to internal content only; the landing scene and contents book
-   keep their own materials, typography, and animation. */
-.gildra-atlas {
-  --atlas-background: #050607;
+/* =============================================================================
+   Gildra Atlas theme — the single source of truth for every inner page.
+
+   The landing scene and the contents book keep their own materials; every
+   other route is wrapped in `.gildra-atlas` (components/motion/RouteTransitionGate)
+   and reads its look from the variables below.
+
+   To change the look of the whole atlas, edit THIS file only:
+     - colours ............ "Surfaces", "Text", "Accent", "Lines", "Status"
+     - fonts .............. "Typography" (families come from app/layout.tsx)
+     - density ............ "Layout" and "Spacing"
+   Components in components/atlas/ and page modules must use these tokens and
+   never hardcode colours or font families (checked by
+   `npm run atlas:check`). Catalogue and recipes: docs/llm/atlas-theme.md.
+   ============================================================================= */
+.gildra-atlas,
+[data-atlas-scope] {
+  /* Surfaces — page → panel → raised → selected */
+  --atlas-bg: #050607;
   --atlas-surface: #090a0b;
-  --atlas-surface-raised: #121210;
+  --atlas-surface-raised: #11110f;
+  --atlas-surface-selected: #1a160e;
+  --atlas-surface-sunken: #030404;
+  --atlas-scrim: rgba(5, 6, 7, .86);
+
+  /* Text — contrast on --atlas-surface: strong 15.4, text 13, muted 7.8, subtle 5.1 (AA ≥ 4.5 on every surface) */
+  --atlas-text-strong: #f2e1c3;
   --atlas-text: #d9d0c0;
-  --atlas-title: #f2e1c3;
-  --atlas-muted: #aaa294;
+  --atlas-text-muted: #aaa294;
+  --atlas-text-subtle: #878074;
+
+  /* Accent — the one amber of the Raid and Mythic+ atlases */
   --atlas-accent: #d1a24b;
-  --atlas-accent-bright: #f0b55a;
-  --atlas-border: rgba(157, 112, 48, .45);
-  --atlas-rule: rgba(157, 112, 48, .24);
+  --atlas-accent-strong: #f0b55a;
+  --atlas-accent-ink: #140d03;
   --atlas-accent-wash: rgba(209, 162, 75, .09);
-  --atlas-display: Georgia, "Times New Roman", serif;
-  --atlas-ui: var(--font-ui), Arial, sans-serif;
-  --bg: var(--atlas-background);
+  --atlas-accent-wash-strong: rgba(209, 162, 75, .17);
+  --atlas-accent-glow: rgba(230, 172, 77, .12);
+
+  /* Lines */
+  --atlas-line: rgba(157, 112, 48, .45);
+  --atlas-line-soft: rgba(157, 112, 48, .24);
+  --atlas-line-strong: rgba(209, 162, 75, .72);
+
+  /* Status — data meaning only (trends, availability), never chrome */
+  --atlas-positive: #8fc47a;
+  --atlas-negative: #e2735f;
+  --atlas-caution: #e3b25a;
+  --atlas-info: #93b3d8;
+
+  /* Typography */
+  --atlas-font-display: var(--font-atlas-display), Georgia, "Times New Roman", serif;
+  --atlas-font-ui: var(--font-ui), "Segoe UI", Roboto, Arial, sans-serif;
+  --atlas-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --atlas-weight-display: 600;
+  --atlas-weight-display-hero: 500;
+  --atlas-text-hero: clamp(2.5rem, 1.6rem + 3.4vw, 4.75rem);
+  --atlas-text-h2: clamp(1.625rem, 1.25rem + 1.3vw, 2.375rem);
+  --atlas-text-h3: clamp(1.25rem, 1.1rem + .5vw, 1.5rem);
+  --atlas-text-title: 1.125rem;
+  --atlas-text-lead: 1rem;
+  --atlas-text-body: .9375rem;
+  --atlas-text-small: .8125rem;
+  --atlas-text-meta: .75rem;
+  --atlas-text-label: .6875rem;
+  --atlas-text-stat: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  --atlas-leading-tight: 1.04;
+  --atlas-leading-snug: 1.25;
+  --atlas-leading-body: 1.6;
+  --atlas-tracking-display: -.015em;
+  --atlas-tracking-label: .14em;
+
+  /* Layout */
+  --atlas-container: 1540px;
+  --atlas-gutter: clamp(14px, 2.2vw, 26px);
+  --atlas-radius: 2px;
+  --atlas-control-height: 44px;
+  /* Height of the sticky top bar; sticky page navigation sits under it. */
+  --atlas-sticky-top: 64px;
+
+  /* Spacing scale */
+  --atlas-space-1: 4px;
+  --atlas-space-2: 8px;
+  --atlas-space-3: 12px;
+  --atlas-space-4: 16px;
+  --atlas-space-5: 24px;
+  --atlas-space-6: 32px;
+  --atlas-space-7: 48px;
+  --atlas-space-8: 72px;
+
+  /* Depth */
+  --atlas-shadow-panel: inset 0 0 0 3px rgba(0, 0, 0, .58), inset 0 0 0 4px rgba(174, 127, 54, .06), 0 24px 55px rgba(0, 0, 0, .4);
+  --atlas-shadow-card: inset 0 0 0 3px rgba(0, 0, 0, .58), 0 20px 45px rgba(0, 0, 0, .32);
+  --atlas-shadow-lift: inset 0 0 0 3px rgba(0, 0, 0, .58), 0 26px 58px rgba(0, 0, 0, .46), 0 0 26px var(--atlas-accent-glow);
+  --atlas-art-shade: linear-gradient(0deg, rgba(6, 7, 8, .94), rgba(6, 7, 8, .2) 62%, transparent), linear-gradient(90deg, rgba(0, 0, 0, .38), transparent 46%);
+
+  /* Motion */
+  --atlas-ease: cubic-bezier(.2, .7, .2, 1);
+  --atlas-duration: .2s;
+  --atlas-duration-art: .55s;
+
+  color-scheme: dark;
+  /* Alegreya defaults to old-style figures; counters and dates read better lining.
+     Rules that use the `font:` shorthand reset this, so they repeat it. */
+  font-variant-numeric: lining-nums;
+
+  /* ---------------------------------------------------------------------------
+     Compatibility aliases. Older page styles read these names; they follow the
+     tokens above, so editing a token restyles legacy pages too. New code must
+     use the --atlas-* names.
+     ------------------------------------------------------------------------- */
+  --atlas-background: var(--atlas-bg);
+  --atlas-title: var(--atlas-text-strong);
+  --atlas-muted: var(--atlas-text-muted);
+  --atlas-accent-bright: var(--atlas-accent-strong);
+  --atlas-border: var(--atlas-line);
+  --atlas-rule: var(--atlas-line-soft);
+  --atlas-display: var(--atlas-font-display);
+  --atlas-ui: var(--atlas-font-ui);
+  --bg: var(--atlas-bg);
   --panel: var(--atlas-surface);
   --panel-2: var(--atlas-surface-raised);
   --raise: var(--atlas-surface-raised);
-  --line: var(--atlas-border);
-  --line-soft: var(--atlas-rule);
+  --line: var(--atlas-line);
+  --line-soft: var(--atlas-line-soft);
   --ink: var(--atlas-text);
-  --ink-2: var(--atlas-muted);
-  --ink-3: var(--atlas-muted);
+  --ink-2: var(--atlas-text-muted);
+  --ink-3: var(--atlas-text-subtle);
   --gold: var(--atlas-accent);
-  --gold-2: var(--atlas-accent-bright);
-  --gold-dim: var(--atlas-border);
-  --display: var(--atlas-display);
-  --ui: var(--atlas-ui);
-  --wow-title: var(--atlas-display);
-  --wow-ui: var(--atlas-ui);
-  /* Existing personal tools use these names. They now describe dark
-     panels, without loading parchment or ornamental frame textures. */
+  --gold-2: var(--atlas-accent-strong);
+  --gold-dim: var(--atlas-line);
+  --display: var(--atlas-font-display);
+  --ui: var(--atlas-font-ui);
+  --wow-title: var(--atlas-font-display);
+  --wow-ui: var(--atlas-font-ui);
+  /* Personal tools (character folios) — dark panels, no parchment textures. */
   --folio-ink: var(--atlas-text);
-  --folio-muted: var(--atlas-muted);
-  --folio-line: var(--atlas-border);
-  --folio-faint-rule: var(--atlas-rule);
+  --folio-muted: var(--atlas-text-muted);
+  --folio-line: var(--atlas-line);
+  --folio-faint-rule: var(--atlas-line-soft);
   --folio-rubric: var(--atlas-accent);
   --folio-gilt: var(--atlas-accent);
   --folio-paper: linear-gradient(var(--atlas-surface), var(--atlas-surface));
   --folio-panel-paper: var(--folio-paper);
-  --folio-title: var(--atlas-display);
-  --folio-body: var(--atlas-ui);
-  --folio-focus: var(--atlas-accent-bright);
+  --folio-title: var(--atlas-font-display);
+  --folio-body: var(--atlas-font-ui);
+  --folio-focus: var(--atlas-accent-strong);
   --folio-medallion: none;
   --folio-divider-image: none;
   --folio-control-image: none;
   --folio-ribbon-top: var(--atlas-surface);
   --folio-ribbon-mid: var(--atlas-surface);
-  --folio-ribbon-bottom: var(--atlas-background);
-  --folio-ribbon-edge: var(--atlas-border);
+  --folio-ribbon-bottom: var(--atlas-bg);
+  --folio-ribbon-edge: var(--atlas-line);
   --folio-ribbon-active: var(--atlas-accent-wash);
   --book-gutter: 24px;
-  color-scheme: dark;
 }

@@ -52,7 +52,17 @@ const nextConfig: NextConfig = {
     "/ru/talents/[spec]": ["./app/styles/talents/specs/**/*.css"],
   },
   images: {
-    qualities: [75, 90],
+    qualities: [50, 75, 90],
+  },
+  experimental: {
+    // Group CSS by what each route imports instead of merging every page's
+    // styles into shared chunks (inner pages were downloading character and
+    // book styles they never use).
+    cssChunking: "graph",
+    // Keep the ISR/fetch cache in memory only. On disk it filled the web
+    // container's bounded tmpfs with catalog and Wowhead responses, which
+    // then left no room for optimized images (2026-10-11 incident).
+    isrFlushToDisk: false,
   },
   allowedDevOrigins: ["127.0.0.1", "localhost", "51.68.180.93", ...additionalDevOrigins],
   turbopack: {

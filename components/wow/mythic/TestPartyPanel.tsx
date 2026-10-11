@@ -3,8 +3,10 @@
 import Image from "next/image";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Clock3, Copy, Crosshair, HeartPulse, LogIn, MapPin, Plus, RotateCcw, Shield, Sparkles, Sword, Trash2, Users, Zap } from "lucide-react";
+import { AtlasNotice } from "@/components/atlas/AtlasNotice";
 import type { RouteStop } from "./rubyLifePoolsData";
 import { initialAssignments, partyMembers, positions, type PartyAssignment, type PartyMember, type PartyRole, type PartyTalent } from "./testPartyData";
+import { partyPositionLabel, partyRoleLabels, plainPartyText, testPartyCopy, type TestPartyCopy } from "./testPartyCopy";
 import styles from "./testPartyPanel.module.css";
 
 type Locale = "en" | "ru";
@@ -32,49 +34,13 @@ function readSavedPartyState() {
 }
 
 const positionCoordinates: Record<string, { left: string; top: string }> = {
-  "Перед боссом": { left: "50%", top: "24%" },
+  "Перед боссом": { left: "50%", top: "29%" },
   "Мили слева": { left: "35%", top: "46%" },
   "Мили справа": { left: "65%", top: "46%" },
   "Дальний слева": { left: "23%", top: "73%" },
   "Дальний справа": { left: "77%", top: "73%" },
   "У края": { left: "50%", top: "86%" },
 };
-
-const roleLabel: Record<PartyRole, string> = { tank: "Защита", healer: "Лечение", dps: "Урон" };
-const treeLabel = { class: "Общие", spec: "Специализация", hero: "Героические" } as const;
-
-function positionLabel(position: string) {
-  if (position === "Мили слева") return "Рядом слева";
-  if (position === "Мили справа") return "Рядом справа";
-  if (position === "Дальний слева") return "Вдали слева";
-  if (position === "Дальний справа") return "Вдали справа";
-  return position;
-}
-
-function plainPartyText(text: string) {
-  return text
-    .replaceAll("АоЕ-сайленс", "Запрещает всем врагам произносить заклинания")
-    .replaceAll("ranged interrupt", "Прерывание издалека")
-    .replaceAll("magic defensive", "защита от магии")
-    .replaceAll("defensive", "защита")
-    .replaceAll("Mitigation", "Использовать защиту")
-    .replaceAll("stun", "оглушение")
-    .replaceAll("Бёрст-лечение", "Очень сильное лечение")
-    .replaceAll("Бёрст", "Сильный урон")
-    .replaceAll("бёрста", "сильного урона")
-    .replaceAll("Кик", "Прервать")
-    .replaceAll("кик", "прерывание")
-    .replaceAll("Стоп", "Остановить")
-    .replaceAll("Пурж", "Снять усиление")
-    .replaceAll("Bloodlust", "Усиление всей группы")
-    .replaceAll("паков", "групп врагов")
-    .replaceAll("паком", "группой врагов")
-    .replaceAll("пулл", "группу врагов")
-    .replaceAll("пак", "группу врагов")
-    .replaceAll("whelps", "маленьких драконов")
-    .replaceAll("стаков", "уровней эффекта")
-    .replaceAll("аддах", "дополнительных врагах");
-}
 
 function RoleIcon({ role }: { role: PartyRole }) {
   if (role === "tank") return <Shield aria-hidden="true" />;
@@ -99,6 +65,7 @@ export const TestPartyPanel = memo(function TestPartyPanel({
   selectedStop: RouteStop;
   onSelectStop: (stopId: number) => void;
 }) {
+  const copy = testPartyCopy[locale];
   const [savedParty] = useState(readSavedPartyState);
   const [activeMemberId, setActiveMemberId] = useState(savedParty.activeMemberId);
   const [inspectedMemberId, setInspectedMemberId] = useState(savedParty.activeMemberId);
@@ -134,17 +101,17 @@ export const TestPartyPanel = memo(function TestPartyPanel({
     setActiveMemberId(memberId);
     setInspectedMemberId(memberId);
     const member = partyMembers.find((item) => item.id === memberId);
-    announce(`Вы играете за ${member?.character ?? memberId}`);
-  }, [announce]);
+    announce(copy.nowPlaying(member?.character ?? memberId));
+  }, [announce, copy]);
 
   const copyBuild = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(inspectedMember.buildCode);
-      announce("Код билда скопирован");
+      announce(copy.buildCopied);
     } catch {
-      window.prompt("Скопируйте код билда", inspectedMember.buildCode);
+      window.prompt(copy.copyBuildPrompt, inspectedMember.buildCode);
     }
-  }, [announce, inspectedMember.buildCode]);
+  }, [announce, copy, inspectedMember.buildCode]);
 
   const changeDraftMember = useCallback((memberId: string) => {
     const member = partyMembers.find((item) => item.id === memberId) ?? partyMembers[0];
@@ -155,7 +122,7 @@ export const TestPartyPanel = memo(function TestPartyPanel({
   const addAssignment = useCallback(() => {
     const instruction = draftInstruction.trim();
     if (!instruction) {
-      announce("Добавьте короткую команду игроку");
+      announce(copy.needInstruction);
       return;
     }
     setAssignments((current) => [
@@ -171,49 +138,48 @@ export const TestPartyPanel = memo(function TestPartyPanel({
       },
     ]);
     setDraftInstruction("");
-    announce("Назначение добавлено");
-  }, [announce, draftAbility, draftInstruction, draftMemberId, draftPosition, draftSecond, selectedStop.id]);
+    announce(copy.assignmentAdded);
+  }, [announce, copy, draftAbility, draftInstruction, draftMemberId, draftPosition, draftSecond, selectedStop.id]);
 
   const resetParty = useCallback(() => {
     setAssignments(initialAssignments);
     setActiveMemberId(partyMembers[0].id);
     setInspectedMemberId(partyMembers[0].id);
     window.localStorage.removeItem(storageKey);
-    announce("Тестовая пати сброшена");
-  }, [announce]);
+    announce(copy.partyReset);
+  }, [announce, copy]);
 
   const removeAssignment = useCallback((id: string) => {
     setAssignments((current) => current.filter((item) => item.id !== id));
   }, []);
 
   return (
-    <section className={styles.shell} aria-labelledby="party-planner-title" data-reveal>
+    <section className={styles.shell} aria-labelledby="party-planner-title">
       <header className={styles.header}>
         <div>
-          <span className={styles.eyebrow}><Users aria-hidden="true" /> 5 игроков · один общий план</span>
-          <h2 id="party-planner-title">Команда и план действий</h2>
-          <p>Состав группы, способности каждого игрока и все действия для выбранного шага маршрута.</p>
+          <span className={styles.eyebrow}><Users aria-hidden="true" /> {copy.eyebrow}</span>
+          <h2 id="party-planner-title">{copy.title}</h2>
+          <p>{copy.lede}</p>
         </div>
         <div className={styles.sessionControls}>
           <label>
-            <span>Я играю за</span>
+            <span>{copy.playingAs}</span>
             <select value={activeMemberId} onChange={(event) => logIn(event.target.value)}>
               {partyMembers.map((member) => <option key={member.id} value={member.id}>{member.account} · {member.character}</option>)}
             </select>
           </label>
-          <div className={styles.liveState}><i /> Изменения сохранены на этом устройстве</div>
+          <p className={styles.liveState}><Check aria-hidden="true" /> {copy.savedLocally}</p>
         </div>
       </header>
 
-      <p data-demo-party role="note" style={{ margin: "0 0 16px", padding: "12px 14px", border: "1px solid rgba(183, 131, 66, .72)", background: "rgba(35, 24, 13, .86)" }}>
-        <strong>{locale === "ru" ? "Демонстрационные тестовые данные." : "Demonstration test data."}</strong>{" "}
-        {locale === "ru"
-          ? "Персонажи, уровни предметов, рейтинг, билды и назначения ниже вымышлены только для проверки интерфейса и не являются игровыми рекомендациями."
-          : "The characters, item levels, rating, builds, and assignments below are fictional UI fixtures and are not gameplay recommendations."}
-      </p>
+      <div data-demo-party>
+        <AtlasNotice tone="caution" title={copy.demoTitle}>{copy.demoText}</AtlasNotice>
+      </div>
 
       <div className={styles.dashboard}>
         <PartyRoster
+          copy={copy}
+          locale={locale}
           activeMemberId={activeMemberId}
           inspectedMemberId={inspectedMemberId}
           assignments={assignments}
@@ -222,6 +188,8 @@ export const TestPartyPanel = memo(function TestPartyPanel({
           onReset={resetParty}
         />
         <PartyLoadout
+          copy={copy}
+          locale={locale}
           inspectedMember={inspectedMember}
           selectedStopId={selectedStop.id}
           talentTree={talentTree}
@@ -229,6 +197,8 @@ export const TestPartyPanel = memo(function TestPartyPanel({
           onCopyBuild={copyBuild}
         />
         <PartyBriefing
+          copy={copy}
+          locale={locale}
           selectedStop={selectedStop}
           routeStops={routeStops}
           stopAssignments={stopAssignments}
@@ -242,6 +212,8 @@ export const TestPartyPanel = memo(function TestPartyPanel({
       </div>
 
       <PartyAssignmentBuilder
+        copy={copy}
+        locale={locale}
         selectedStopTitle={selectedStop.title}
         draftMemberId={draftMemberId}
         draftAbility={draftAbility}
@@ -257,12 +229,14 @@ export const TestPartyPanel = memo(function TestPartyPanel({
         onAddAssignment={addAssignment}
       />
       <p className={styles.status} role="status">{status}</p>
-      <span className={styles.localeNote}>{locale === "ru" ? "Тестовые персонажи · изменения хранятся только в этом браузере" : "Demo characters · changes are stored only in this browser"}</span>
+      <p className={styles.localeNote}>{copy.localeNote}</p>
     </section>
   );
 });
 
-const PartyRoster = memo(function PartyRoster({ activeMemberId, inspectedMemberId, assignments, onInspect, onLogin, onReset }: {
+const PartyRoster = memo(function PartyRoster({ copy, locale, activeMemberId, inspectedMemberId, assignments, onInspect, onLogin, onReset }: {
+  copy: TestPartyCopy;
+  locale: Locale;
   activeMemberId: string;
   inspectedMemberId: string;
   assignments: PartyAssignment[];
@@ -271,36 +245,38 @@ const PartyRoster = memo(function PartyRoster({ activeMemberId, inspectedMemberI
   onReset: () => void;
 }) {
   return (
-    <section className={styles.roster} aria-label="Состав группы">
-      <div className={styles.panelTitle}><span><Users /> Команда</span><b><i /> Все 5 готовы</b></div>
-      <div className={styles.roleSummary} aria-label="Роли группы"><span><Shield /> 1 защищает</span><span><HeartPulse /> 1 лечит</span><span><Sword /> 3 атакуют</span></div>
+    <section className={styles.roster} aria-label={copy.rosterLabel}>
+      <div className={styles.panelTitle}><span><Users aria-hidden="true" /> {copy.roster}</span><b>{copy.allReady}</b></div>
+      <div className={styles.roleSummary} aria-label={copy.rolesLabel}><span data-role="tank"><Shield aria-hidden="true" /> {copy.roleCounts.tank}</span><span data-role="healer"><HeartPulse aria-hidden="true" /> {copy.roleCounts.healer}</span><span data-role="dps"><Sword aria-hidden="true" /> {copy.roleCounts.dps}</span></div>
       <div className={styles.memberList}>
         {partyMembers.map((member) => {
           const isInspected = inspectedMemberId === member.id;
           const isActive = activeMemberId === member.id;
           const assignmentCount = assignments.filter((assignment) => assignment.memberId === member.id).length;
           return (
-            <article key={member.id} className={`${styles.memberCard} ${isInspected ? styles.inspected : ""}`} style={{ "--member-accent": member.accent } as React.CSSProperties}>
+            <article key={member.id} className={styles.memberCard} data-inspected={isInspected || undefined} style={{ "--member-accent": member.accent } as React.CSSProperties}>
               <button type="button" className={styles.memberMain} onClick={() => onInspect(member.id)} aria-pressed={isInspected}>
-                <span className={styles.memberPortrait}><Image src={member.portrait} width={56} height={56} alt="" /><i /></span>
+                <span className={styles.memberPortrait}><Image src={member.portrait} width={48} height={48} alt="" /></span>
                 <span className={styles.memberIdentity}>
                   <b>{member.character}</b>
                   <small>{member.spec} · {member.className}</small>
-                  <em><RoleIcon role={member.role} /> {roleLabel[member.role]} <i /> уровень {member.itemLevel}</em>
+                  <em data-role={member.role}><RoleIcon role={member.role} /> {partyRoleLabels[locale][member.role]} · {copy.itemLevel(member.itemLevel)}</em>
                 </span>
-                <span className={styles.memberScore}><b>{member.rating}</b><small>рейтинг</small><em title="Назначено действий"><MapPin /> {assignmentCount}</em></span>
+                <span className={styles.memberScore}><b>{member.rating}</b><small>{copy.rating}</small><em title={copy.assignedActions}><MapPin aria-hidden="true" /> {assignmentCount}</em></span>
               </button>
-              {isActive ? <span className={styles.youBadge}><Check /> Вы</span> : <button type="button" className={styles.loginButton} onClick={() => onLogin(member.id)} title={`Войти как ${member.character}`}><LogIn /></button>}
+              {isActive ? <span className={styles.youBadge}><Check aria-hidden="true" /> {copy.you}</span> : <button type="button" className={styles.loginButton} onClick={() => onLogin(member.id)} title={copy.logInAs(member.character)} aria-label={copy.logInAs(member.character)}><LogIn aria-hidden="true" /></button>}
             </article>
           );
         })}
       </div>
-      <button type="button" className={styles.resetButton} onClick={onReset}><RotateCcw /> Вернуть исходный состав</button>
+      <button type="button" className={styles.resetButton} onClick={onReset}><RotateCcw aria-hidden="true" /> {copy.resetParty}</button>
     </section>
   );
 });
 
-const PartyLoadout = memo(function PartyLoadout({ inspectedMember, selectedStopId, talentTree, onTalentTreeChange, onCopyBuild }: {
+const PartyLoadout = memo(function PartyLoadout({ copy, locale, inspectedMember, selectedStopId, talentTree, onTalentTreeChange, onCopyBuild }: {
+  copy: TestPartyCopy;
+  locale: Locale;
   inspectedMember: PartyMember;
   selectedStopId: number;
   talentTree: TalentTreeFilter;
@@ -309,31 +285,38 @@ const PartyLoadout = memo(function PartyLoadout({ inspectedMember, selectedStopI
 }) {
   const visibleTalents = talentTree === "all" ? inspectedMember.talents : inspectedMember.talents.filter((talent) => talent.tree === talentTree);
   return (
-    <section className={styles.loadout} aria-label={`Таланты ${inspectedMember.character}`}>
-      <div className={styles.panelTitle}><span><Zap /> Способности игрока</span><b>Билд для подземелья</b></div>
+    <section className={styles.loadout} aria-label={copy.talentsLabel(inspectedMember.character)}>
+      <div className={styles.panelTitle}><span><Zap aria-hidden="true" /> {copy.abilitiesTitle}</span><b>{copy.buildTitle}</b></div>
       <div className={styles.loadoutHero} style={{ "--member-accent": inspectedMember.accent } as React.CSSProperties}>
-        <span className={styles.loadoutPortrait}><Image src={inspectedMember.portrait} width={72} height={72} alt="" /><i><RoleIcon role={inspectedMember.role} /></i></span>
-        <div className={styles.loadoutIdentity}><span>{inspectedMember.account}</span><h3>{inspectedMember.character}</h3><p>{inspectedMember.spec} · {roleLabel[inspectedMember.role]}</p><div><b>{inspectedMember.itemLevel}<small>УРОВЕНЬ</small></b><b>{inspectedMember.rating}<small>РЕЙТИНГ</small></b><b>{inspectedMember.abilities.length}<small>ВАЖНЫХ УМЕНИЙ</small></b></div></div>
-        <button type="button" onClick={onCopyBuild}><Copy /> <span>Скопировать билд<small>Для импорта в игру</small></span></button>
+        <span className={styles.loadoutPortrait}><Image src={inspectedMember.portrait} width={64} height={64} alt="" /><i data-role={inspectedMember.role}><RoleIcon role={inspectedMember.role} /></i></span>
+        <div className={styles.loadoutIdentity}>
+          <span>{inspectedMember.account}</span>
+          <h3>{inspectedMember.character}</h3>
+          <p>{inspectedMember.spec} · {partyRoleLabels[locale][inspectedMember.role]}</p>
+          <dl><div><dt>{copy.itemLevelShort}</dt><dd>{inspectedMember.itemLevel}</dd></div><div><dt>{copy.ratingShort}</dt><dd>{inspectedMember.rating}</dd></div><div><dt>{copy.keyAbilities}</dt><dd>{inspectedMember.abilities.length}</dd></div></dl>
+        </div>
+        <button type="button" className={styles.copyBuildButton} onClick={onCopyBuild}><Copy aria-hidden="true" /> <span>{copy.copyBuild}<small>{copy.copyBuildHint}</small></span></button>
       </div>
-      <div className={styles.talentToolbar} aria-label="Фильтр талантов">
-        <span><Crosshair /> Выбранные таланты</span>
-        <div>{(["all", "class", "spec", "hero"] as TalentTreeFilter[]).map((tree) => <button key={tree} type="button" className={talentTree === tree ? styles.activeTalentTree : ""} onClick={() => onTalentTreeChange(tree)} aria-pressed={talentTree === tree}>{tree === "all" ? "Все" : treeLabel[tree]}</button>)}</div>
+      <div className={styles.talentToolbar} role="group" aria-label={copy.talentFilter}>
+        <span><Crosshair aria-hidden="true" /> {copy.chosenTalents}</span>
+        <div>{(["all", "class", "spec", "hero"] as TalentTreeFilter[]).map((tree) => <button key={tree} type="button" onClick={() => onTalentTreeChange(tree)} aria-pressed={talentTree === tree}>{tree === "all" ? copy.allTrees : copy.trees[tree]}</button>)}</div>
       </div>
       <div className={styles.talentGrid}>
         {visibleTalents.map((talent, index) => (
-          <article key={talent.name} className={styles.talent} data-tree={talent.tree}>
+          <article key={talent.name} className={styles.talent}>
             <span className={styles.talentIcon}><TalentIcon tree={talent.tree} /></span>
-            <div><em>{treeLabel[talent.tree]} <i /> 0{index + 1}</em><b>{talent.name}</b><small>{plainPartyText(talent.detail)}</small></div>
+            <div><em>{copy.trees[talent.tree]} · {String(index + 1).padStart(2, "0")}</em><b>{talent.name}</b><small>{plainPartyText(talent.detail)}</small></div>
           </article>
         ))}
       </div>
-      <div className={styles.buildCode}><span>КОД ДЛЯ ИГРЫ</span><code>{inspectedMember.buildCode}</code><i><Check /> подходит для +{selectedStopId > 10 ? 15 : 12}</i></div>
+      <div className={styles.buildCode}><span>{copy.buildCode}</span><code>{inspectedMember.buildCode}</code><i><Check aria-hidden="true" /> {copy.fitsKey(selectedStopId > 10 ? 15 : 12)}</i></div>
     </section>
   );
 });
 
-const PartyBriefing = memo(function PartyBriefing({ selectedStop, routeStops, stopAssignments, assignedPlayers, firstCall, finalCall, onSelectStop, onInspectMember, onRemoveAssignment }: {
+const PartyBriefing = memo(function PartyBriefing({ copy, locale, selectedStop, routeStops, stopAssignments, assignedPlayers, firstCall, finalCall, onSelectStop, onInspectMember, onRemoveAssignment }: {
+  copy: TestPartyCopy;
+  locale: Locale;
   selectedStop: RouteStop;
   routeStops: RouteStop[];
   stopAssignments: PartyAssignment[];
@@ -345,46 +328,49 @@ const PartyBriefing = memo(function PartyBriefing({ selectedStop, routeStops, st
   onRemoveAssignment: (assignmentId: string) => void;
 }) {
   return (
-    <section className={styles.briefing} aria-label="Тактические назначения">
+    <section className={styles.briefing} aria-label={copy.briefingLabel}>
       <div className={styles.briefHeader}>
-        <div><span><Crosshair /> Кто, где и когда</span><h3>{selectedStop.title}</h3><p>Действия команды для выбранного шага маршрута</p></div>
-        <label><span>Выбранный шаг</span><select value={selectedStop.id} onChange={(event) => onSelectStop(Number(event.target.value))}>{routeStops.map((stop, index) => <option key={stop.id} value={stop.id}>{index + 1}. {stop.title}</option>)}</select></label>
+        <div><span><Crosshair aria-hidden="true" /> {copy.briefingEyebrow}</span><h3>{selectedStop.title}</h3><p>{copy.briefingLede}</p></div>
+        <label><span>{copy.selectedStep}</span><select value={selectedStop.id} onChange={(event) => onSelectStop(Number(event.target.value))}>{routeStops.map((stop, index) => <option key={stop.id} value={stop.id}>{index + 1}. {stop.title}</option>)}</select></label>
       </div>
-      <div className={styles.briefStats} aria-label="Сводка назначений">
-        <article><span>Всего действий</span><b>{String(stopAssignments.length).padStart(2, "0")}</b><small>в этом шаге</small></article>
-        <article><span>Участвуют</span><b>{assignedPlayers} / 5</b><small>игроков команды</small></article>
-        <article><span>От первого до последнего</span><b>0:{String(firstCall).padStart(2, "0")}—0:{String(finalCall).padStart(2, "0")}</b><small>секунды после начала боя</small></article>
+      <div className={styles.briefStats} aria-label={copy.statsLabel}>
+        <article><span>{copy.totalActions}</span><b>{String(stopAssignments.length).padStart(2, "0")}</b><small>{copy.inThisStep}</small></article>
+        <article><span>{copy.involved}</span><b>{assignedPlayers} / 5</b><small>{copy.partyPlayers}</small></article>
+        <article><span>{copy.firstToLast}</span><b>0:{String(firstCall).padStart(2, "0")}—0:{String(finalCall).padStart(2, "0")}</b><small>{copy.secondsAfterPull}</small></article>
       </div>
-      <div className={styles.formation} aria-label="Схема позиций группы">
-        <div className={styles.formationHud} aria-hidden="true"><span>РАССТАНОВКА ГРУППЫ</span><i /><span>ВИД СВЕРХУ</span></div>
-        <div className={styles.boss}><span><Shield /></span><b>Враги</b><small>опасная зона спереди</small></div>
+      <div className={styles.formation} aria-label={copy.formationLabel}>
+        <div className={styles.formationHud} aria-hidden="true"><span>{copy.formationTitle}</span><span>{copy.topView}</span></div>
+        <div className={styles.boss}><span><Shield aria-hidden="true" /></span><b>{copy.enemies}</b><small>{copy.dangerFront}</small></div>
         {stopAssignments.map((assignment) => {
           const member = partyMembers.find((item) => item.id === assignment.memberId);
           if (!member) return null;
-          return <button key={assignment.id} type="button" className={styles.formationMember} style={{ ...positionCoordinates[assignment.position], "--member-accent": member.accent } as React.CSSProperties} onClick={() => onInspectMember(member.id)} title={`${member.character}: ${positionLabel(assignment.position)}`}><span><Image src={member.portrait} width={38} height={38} alt="" /><i /></span><b>{member.character}</b><small>{positionLabel(assignment.position)}</small></button>;
+          const position = partyPositionLabel(assignment.position, locale);
+          return <button key={assignment.id} type="button" className={styles.formationMember} style={{ ...positionCoordinates[assignment.position], "--member-accent": member.accent } as React.CSSProperties} onClick={() => onInspectMember(member.id)} title={`${member.character}: ${position}`}><span><Image src={member.portrait} width={36} height={36} alt="" /></span><b>{member.character}</b><small>{position}</small></button>;
         })}
-        <span className={styles.groupStart}>Старт группы</span>
+        <span className={styles.groupStart}>{copy.groupStart}</span>
       </div>
-      <div className={styles.timelineHeading}><span><Clock3 /> Что происходит по порядку</span><b><i /> План готов</b></div>
+      <div className={styles.timelineHeading}><span><Clock3 aria-hidden="true" /> {copy.timelineTitle}</span><b>{copy.planReady}</b></div>
       <div className={styles.timeline}>
         {stopAssignments.length ? stopAssignments.map((assignment, index) => {
           const member = partyMembers.find((item) => item.id === assignment.memberId) ?? partyMembers[0];
           return (
             <article key={assignment.id} className={styles.assignment} style={{ "--member-accent": member.accent } as React.CSSProperties}>
               <span className={styles.assignmentStep}>{String(index + 1).padStart(2, "0")}</span>
-              <time><Clock3 /> 0:{String(assignment.second).padStart(2, "0")}</time>
+              <time><Clock3 aria-hidden="true" /> 0:{String(assignment.second).padStart(2, "0")}</time>
               <Image src={member.portrait} width={32} height={32} alt="" />
-              <div><b>{member.character}</b><span><MapPin /> {positionLabel(assignment.position)}</span><strong><Zap /> Нажимает: {assignment.ability}</strong><p>{plainPartyText(assignment.instruction)}</p></div>
-              <button type="button" onClick={() => onRemoveAssignment(assignment.id)} aria-label={`Удалить назначение ${member.character}`}><Trash2 /></button>
+              <div><b>{member.character}</b><span><MapPin aria-hidden="true" /> {partyPositionLabel(assignment.position, locale)}</span><strong><Zap aria-hidden="true" /> {copy.presses(assignment.ability)}</strong><p>{plainPartyText(assignment.instruction)}</p></div>
+              <button type="button" onClick={() => onRemoveAssignment(assignment.id)} aria-label={copy.removeAssignment(member.character)}><Trash2 aria-hidden="true" /></button>
             </article>
           );
-        }) : <p className={styles.empty}>Для этой точки пока нет назначений.</p>}
+        }) : <p className={styles.empty}>{copy.noAssignments}</p>}
       </div>
     </section>
   );
 });
 
-const PartyAssignmentBuilder = memo(function PartyAssignmentBuilder({ selectedStopTitle, draftMemberId, draftAbility, draftPosition, draftSecond, draftInstruction, draftMember, onDraftMemberChange, onDraftAbilityChange, onDraftPositionChange, onDraftSecondChange, onDraftInstructionChange, onAddAssignment }: {
+const PartyAssignmentBuilder = memo(function PartyAssignmentBuilder({ copy, locale, selectedStopTitle, draftMemberId, draftAbility, draftPosition, draftSecond, draftInstruction, draftMember, onDraftMemberChange, onDraftAbilityChange, onDraftPositionChange, onDraftSecondChange, onDraftInstructionChange, onAddAssignment }: {
+  copy: TestPartyCopy;
+  locale: Locale;
   selectedStopTitle: string;
   draftMemberId: string;
   draftAbility: string;
@@ -400,14 +386,14 @@ const PartyAssignmentBuilder = memo(function PartyAssignmentBuilder({ selectedSt
   onAddAssignment: () => void;
 }) {
   return (
-    <section className={styles.assignmentBuilder} aria-label="Добавить действие игроку">
-      <div><span className={styles.builderIcon}><Plus /></span><div><b>Добавить действие</b><small>Шаг «{selectedStopTitle}»</small></div></div>
-      <label><span>Кто</span><select value={draftMemberId} onChange={(event) => onDraftMemberChange(event.target.value)}>{partyMembers.map((member) => <option key={member.id} value={member.id}>{member.character}</option>)}</select></label>
-      <label><span>Что нажать</span><select value={draftAbility} onChange={(event) => onDraftAbilityChange(event.target.value)}>{draftMember.abilities.map((ability) => <option key={ability}>{ability}</option>)}</select></label>
-      <label><span>Где стоять</span><select value={draftPosition} onChange={(event) => onDraftPositionChange(event.target.value)}>{positions.map((position) => <option key={position} value={position}>{positionLabel(position)}</option>)}</select></label>
-      <label className={styles.seconds}><span>Когда, сек.</span><input type="number" min="0" max="240" value={draftSecond} onChange={(event) => onDraftSecondChange(Number(event.target.value))} /></label>
-      <label className={styles.command}><span>Задача</span><input value={draftInstruction} onChange={(event) => onDraftInstructionChange(event.target.value)} placeholder="Например: прервать второе заклинание" onKeyDown={(event) => { if (event.key === "Enter") onAddAssignment(); }} /></label>
-      <button type="button" className={styles.addButton} onClick={onAddAssignment}><Plus /> Добавить действие</button>
+    <section className={styles.assignmentBuilder} aria-label={copy.builderLabel}>
+      <div className={styles.builderTitle}><span className={styles.builderIcon}><Plus aria-hidden="true" /></span><div><b>{copy.builderTitle}</b><small>{copy.builderStep(selectedStopTitle)}</small></div></div>
+      <label><span>{copy.who}</span><select value={draftMemberId} onChange={(event) => onDraftMemberChange(event.target.value)}>{partyMembers.map((member) => <option key={member.id} value={member.id}>{member.character}</option>)}</select></label>
+      <label><span>{copy.whatToPress}</span><select value={draftAbility} onChange={(event) => onDraftAbilityChange(event.target.value)}>{draftMember.abilities.map((ability) => <option key={ability}>{ability}</option>)}</select></label>
+      <label><span>{copy.whereToStand}</span><select value={draftPosition} onChange={(event) => onDraftPositionChange(event.target.value)}>{positions.map((position) => <option key={position} value={position}>{partyPositionLabel(position, locale)}</option>)}</select></label>
+      <label><span>{copy.whenSeconds}</span><input type="number" min="0" max="240" value={draftSecond} onChange={(event) => onDraftSecondChange(Number(event.target.value))} /></label>
+      <label className={styles.command}><span>{copy.task}</span><input value={draftInstruction} onChange={(event) => onDraftInstructionChange(event.target.value)} placeholder={copy.taskPlaceholder} onKeyDown={(event) => { if (event.key === "Enter") onAddAssignment(); }} /></label>
+      <button type="button" className={styles.addButton} onClick={onAddAssignment}><Plus aria-hidden="true" /> {copy.addAction}</button>
     </section>
   );
 });

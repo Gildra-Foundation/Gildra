@@ -1,13 +1,50 @@
+import { Trophy } from "lucide-react";
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
+import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
 import { TierSection } from "@/components/TierSection";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
+import { midnightSpecializations } from "@/data/wow/midnight-specializations";
+import { p } from "@/lib/i18n";
+import { tierCopy } from "./tierCopy";
+import { sampleCount, usesSample } from "./tierData";
+import styles from "./tierWorkspace.module.css";
 import "./tierWorkspace.css";
 
-/** The full Mythic+ workspace (rail + table + detail + builds). design.md: it
- *  lives only on /tier-lists and is never embedded elsewhere. The client
- *  component owns its URL state; the language comes from the page config. */
+/** Internal spec pages that exist (class/spec), so table rows can link to them. */
+const specPaths = midnightSpecializations.map((spec) => `${spec.classSlug}/${spec.slug}`);
+
+/** The full tier workspace: atlas hero, an honest sample notice when the meta
+ *  API is off, then the interactive table + spec card (client). design.md: it
+ *  lives only on /tier-lists and is never embedded elsewhere. */
 function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntelligence>) {
-  return <TierSection lang={lang} intelligence={data} />;
+  const copy = tierCopy[lang];
+  const sample = usesSample(data);
+  const mythic = data.tierLists?.mythic_plus?.roles ?? data.roles;
+  const stats: AtlasStat[] = sample
+    ? [{ value: sampleCount, label: copy.statSampleSpecs }]
+    : [
+        { value: new Set(Object.values(mythic ?? {}).flat().map((entry) => `${entry.classSlug}:${entry.specSlug}`)).size, label: copy.statSpecs },
+        { value: new Set((data.tierContexts ?? []).filter((item) => item.activity === "mythic_plus" && item.selectionType === "dungeon").map((item) => item.selectionId)).size, label: copy.statDungeons },
+        { value: data.sources.filter((source) => source.status === "live").length, label: copy.statSources },
+      ].filter((stat) => stat.value > 0);
+
+  return (
+    <AtlasFrame as="div" lang={lang} art="/assets/wow/mythic/backgrounds/kings.webp" artPosition="center 40%" className={styles.frame} dataAttributes={{ "data-tier-workspace": true }}>
+      <AtlasHero
+        breadcrumbs={[{ label: copy.wow, href: p(lang, "/wow") }, { label: copy.section }]}
+        breadcrumbsLabel={copy.breadcrumbsLabel}
+        emblem={<Trophy />}
+        emblemShape="diamond"
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        lede={sample ? copy.ledeSample : copy.ledeLive}
+        statsLabel={copy.statsLabel}
+        stats={stats}
+      />
+      {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
+      <TierSection lang={lang} intelligence={data} sample={sample} specPaths={specPaths} />
+    </AtlasFrame>
+  );
 }
 
 export const tierWorkspaceBlock = defineBlock<EmptyProps, GameIntelligence>({

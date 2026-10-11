@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Ellipsis } from "lucide-react";
 import { loadBookNavigationDialog, type BookNavigationDialogComponent } from "./BookNavigationDialogLoader";
-import bookStyles from "./bookNavigation.module.css";
+import toolbarStyles from "./atlasToolbar.module.css";
 
 export function WorkspaceNavigatorContent() {
   const pathname = usePathname();
@@ -44,12 +44,12 @@ export function WorkspaceNavigatorContent() {
   if (path === "/") return null;
 
   return <>
-    <header className={bookStyles.toolbar}>
-    <button className={bookStyles.launcher} type="button" onPointerEnter={prefetchAfterHover} onPointerLeave={cancelHoverPrefetch} onFocus={warmBookNavigation} onClick={() => { setOpen(true); warmBookNavigation(); }} aria-haspopup="dialog" aria-label={ru ? "Открыть оглавление книги" : "Open the book contents"}>
+    <header className={toolbarStyles.toolbar} data-atlas-scope>
+    <button className={toolbarStyles.launcher} type="button" onPointerEnter={prefetchAfterHover} onPointerLeave={cancelHoverPrefetch} onFocus={warmBookNavigation} onClick={() => { setOpen(true); warmBookNavigation(); }} aria-haspopup="dialog" aria-label={ru ? "Открыть оглавление книги" : "Open the book contents"}>
       <img src="/assets/wow/character-book/intro/chronicle-cover-toolbar.webp" width={20} height={30} decoding="async" alt="" />
       <span>{ru ? "Оглавление" : "Contents"}</span>
     </button>
-      <span className={bookStyles.toolbarTitle}>GILDRA<small>WORLD OF WARCRAFT</small></span>
+      <span className={toolbarStyles.title}>GILDRA<small>WORLD OF WARCRAFT</small></span>
     </header>
       {warmed && BookNavigationDialog ? <BookNavigationDialog open={open} onClose={() => setOpen(false)} lang={ru ? "ru" : "en"} /> : null}
   </>;

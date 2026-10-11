@@ -29,7 +29,7 @@ export function RaidAbilityCard({ mechanic, locale, bossName }: { mechanic: Raid
         content={(
           <div className={styles.tooltipContent}>
             <header className={styles.tooltipHeader}>
-              <span><Database aria-hidden="true" /> Spell ID: {mechanic.spellId}</span>
+              <span><Database aria-hidden="true" /> <a href={`https://www.wowhead.com/spell=${mechanic.spellId}`} target="_blank" rel="noreferrer">Wowhead</a></span>
               <b><AudienceIcon aria-hidden="true" /> {audience}</b>
             </header>
             <div className={styles.tooltipSubject}>
@@ -39,7 +39,7 @@ export function RaidAbilityCard({ mechanic, locale, bossName }: { mechanic: Raid
             <p className={styles.tooltipDescription}>{description}</p>
             <footer className={styles.tooltipSource}>
               <BookOpen aria-hidden="true" />
-              <span><small>{locale === "ru" ? "Источник и provenance" : "Source and provenance"}</small><b><a href={descriptionSourceUrl} target="_blank" rel="noreferrer">{locale === "ru" ? "Точное описание DB2" : "Exact-build DB2 description"}</a></b></span>
+              <span><small>{locale === "ru" ? "Источник описания" : "Description source"}</small><b><a href={descriptionSourceUrl} target="_blank" rel="noreferrer">{locale === "ru" ? "Журнал приключений" : "Adventure Guide"}</a></b></span>
               <em>{mechanic.descriptionBuild} · {mechanic.descriptionVerifiedAt.slice(0, 10)}</em>
             </footer>
           </div>

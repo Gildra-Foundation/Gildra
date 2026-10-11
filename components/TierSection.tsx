@@ -1,79 +1,40 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Castle, ChevronDown, Layers3, Map as MapIcon, Shield, Sparkles, Swords } from "lucide-react";
+import { ArrowUpRight, Castle, Check, ChevronDown, Layers3, Search, Share2, Swords } from "lucide-react";
 import { SpecSlot } from "./SpecSlot";
+import { AtlasBadge } from "@/components/atlas/AtlasBadge";
 import { classIcon } from "@/lib/gameAssets";
-import { AdSlot } from "./AdSlot";
-import { p, t as tr, type Lang } from "@/lib/i18n";
+import { p, type Lang } from "@/lib/i18n";
+import { ANCHORS } from "@/lib/anchors";
 import type { GameIntelligence, TierActivity, TierContext, TierEntry, TierRole } from "@/lib/platform/games/intelligence";
-import { specPages } from "@/lib/specs";
+import { tierCopy, type KeyRange, type TierCopy } from "@/components/blocks/wow/tierWorkspace/tierCopy";
+import { emptyRoles, sampleRoles } from "@/components/blocks/wow/tierWorkspace/tierData";
+import styles from "@/components/blocks/wow/tierWorkspace/tierWorkspace.module.css";
 
 const CLASS_KEYS: Record<string, string> = {
   "death-knight": "dk", "demon-hunter": "dh", evoker: "evoker", mage: "mage",
   paladin: "pal", rogue: "rogue", druid: "druid", priest: "priest",
   hunter: "hunter", shaman: "shaman", warlock: "lock", monk: "monk", warrior: "war",
 };
-
-const ROLE_LABELS: Record<TierRole, { en: string; ru: string }> = {
-  dps: { en: "DPS", ru: "БОЙЦЫ" }, healer: { en: "Healers", ru: "ЛЕКАРИ" }, tank: { en: "Tanks", ru: "ТАНКИ" },
-};
-
-const CLASS_SLUGS: Record<string, string> = {
-  dk: "death-knight", dh: "demon-hunter", evoker: "evoker", mage: "mage",
-  pal: "paladin", rogue: "rogue", druid: "druid", priest: "priest",
-  hunter: "hunter", shaman: "shaman", lock: "warlock", monk: "monk", war: "warrior",
-};
-
-const fixedPreviewDps: TierEntry[] = specPages.map((entry) => ({
-  rank: entry.rank,
-  tier: entry.tier.toUpperCase(),
-  role: "dps",
-  className: entry.className,
-  classSlug: CLASS_SLUGS[entry.row.spec.cls] ?? entry.row.spec.cls,
-  specName: entry.row.spec.name.replace(new RegExp(` ${entry.className}$`), ""),
-  specSlug: entry.slug,
-  score: Number(entry.row.score),
-  popularity: Number(entry.row.pop.replace("%", "")) / 100,
-  maxKey: Number(entry.row.key.replace("+", "")),
-  rankChange: entry.row.trend.dir === "up" ? entry.row.trend.val : entry.row.trend.dir === "down" ? -(entry.row.trend.val ?? 0) : 0,
-  sourceUrl: `/specs/${entry.slug}`,
-}));
-
-const emptyRoles: Record<TierRole, TierEntry[]> = { dps: [], healer: [], tank: [] };
-const fixedPreviewRoles: Record<TierRole, TierEntry[]> = { ...emptyRoles, dps: fixedPreviewDps };
+const ROLES = ["dps", "healer", "tank"] as const;
+const ACTIVITIES = ["mythic_plus", "raid"] as const;
+const KEY_RANGES: KeyRange[] = ["all", "high", "middle", "low"];
 
 function classKey(slug: string) { return CLASS_KEYS[slug] ?? slug; }
+/** Class colour token — used only on spec identity (icon chip, class name). */
+function classStyle(slug: string) { return { "--class-color": `var(--c-${classKey(slug)}, var(--atlas-text-muted))` } as CSSProperties; }
 function fullSpecName(entry: TierEntry) { return `${entry.specName} ${entry.className}`; }
 function entryKey(entry: TierEntry) { return `${entry.role}:${entry.classSlug}:${entry.specSlug}`; }
 function contextKey(context: TierContext) { return `${context.selectionType}:${context.selectionId}:${context.addonKey}`; }
 function contextLabel(context: TierContext) { return context.addonKey === "midnight" ? context.selectionName : `${context.selectionName} · ${context.addonName}`; }
 function tierClass(tier: string) {
-  return (["s", "a", "b", "c", "d"].includes(tier.charAt(0).toLowerCase()) ? tier.charAt(0).toLowerCase() : "b");
+  const letter = tier.charAt(0).toLowerCase();
+  return ["s", "a", "b", "c", "d"].includes(letter) ? letter : "b";
 }
-
-const KEY_LABELS = {
-  all: { en: "All keys", ru: "Все ключи" },
-  high: { en: "+15 and above", ru: "+15 и выше" },
-  middle: { en: "+7 to +14", ru: "+7–14" },
-  low: { en: "+2 to +6", ru: "+2–6" },
-} as const;
-
-const DIFFICULTY_LABELS = {
-  raid_myth: { en: "Mythic", ru: "Эпохальный" },
-  raid_hero: { en: "Heroic", ru: "Героический" },
-  raid_normal: { en: "Normal", ru: "Обычный" },
-  raid_h10: { en: "Heroic 10", ru: "Героический 10" },
-  raid_h25: { en: "Heroic 25", ru: "Героический 25" },
-  raid_n10: { en: "Normal 10", ru: "Обычный 10" },
-  raid_n25: { en: "Normal 25", ru: "Обычный 25" },
-} as const;
-
-function difficultyLabel(value: string, lang: Lang) {
-  return DIFFICULTY_LABELS[value as keyof typeof DIFFICULTY_LABELS]?.[lang] ?? value;
-}
+const isExternal = (href?: string) => Boolean(href && /^https?:\/\//.test(href));
 
 function compact(value: number | undefined, lang: Lang) {
   if (value === undefined) return "—";
@@ -82,24 +43,33 @@ function compact(value: number | undefined, lang: Lang) {
   }).format(value);
 }
 
-function Trend({ value }: { value?: number }) {
-  if (!value) return <span className="flat">—</span>;
-  return <span className={value > 0 ? "up" : "down"}>{value > 0 ? "▲" : "▼"} {Math.abs(value)}</span>;
+function Trend({ value, copy }: { value?: number; copy: TierCopy }) {
+  if (!value) return <span className={styles.trendFlat}><span aria-hidden="true">—</span><span className={styles.srOnly}>{copy.trendFlat}</span></span>;
+  const up = value > 0;
+  return <span className={up ? styles.trendUp : styles.trendDown}><span aria-hidden="true">{up ? "▲" : "▼"} {Math.abs(value)}</span><span className={styles.srOnly}>{up ? copy.trendUp(value) : copy.trendDown(-value)}</span></span>;
 }
 
-export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: GameIntelligence }) {
-  const tt = tr(lang);
+function TierMark({ tier, copy, size = "md" }: { tier: string; copy: TierCopy; size?: "md" | "sm" }) {
+  return <span className={size === "sm" ? `${styles.tierMark} ${styles.tierMarkSm}` : styles.tierMark} data-tier={tierClass(tier)}><span className={styles.srOnly}>{copy.tier} </span>{tier}</span>;
+}
+
+export function TierSection({ lang, intelligence, sample = false, specPaths = [] }: { lang: Lang; intelligence: GameIntelligence; sample?: boolean; specPaths?: string[] }) {
+  const copy = tierCopy[lang];
   const [activity, setActivity] = useState<TierActivity>("mythic_plus");
   const [role, setRole] = useState<TierRole>("dps");
   const [cls, setCls] = useState("all");
   const [q, setQ] = useState("");
   const [copied, setCopied] = useState(false);
   const [contextValue, setContextValue] = useState("all:all");
-  const [keyType, setKeyType] = useState<"all" | "high" | "middle" | "low">("all");
+  const [keyType, setKeyType] = useState<KeyRange>("all");
   const [difficulty, setDifficulty] = useState("raid_hero");
   const [remoteRoles, setRemoteRoles] = useState<Record<TierRole, TierEntry[]> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [selectedSlug, setSelectedSlug] = useState("");
+  const detailTitle = useRef<HTMLHeadingElement>(null);
+  const specPathSet = useMemo(() => new Set(specPaths), [specPaths]);
+
   const contexts = useMemo(() => {
     const unique = new Map<string, TierContext>();
     for (const context of intelligence.tierContexts ?? []) {
@@ -109,18 +79,20 @@ export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: 
     return [...unique.values()].sort((a, b) => a.selectionName.localeCompare(b.selectionName, lang === "ru" ? "ru" : "en"));
   }, [activity, intelligence.tierContexts, lang]);
   const selectedContext = contexts.find((context) => contextKey(context) === contextValue);
+  /** The published "all dungeons" slice lets the key range work without picking a dungeon. */
+  const allContext = useMemo(() => (intelligence.tierContexts ?? []).find((context) => context.activity === activity && context.selectionType === "all"), [activity, intelligence.tierContexts]);
+  const queryContext = selectedContext ?? (activity === "mythic_plus" && keyType !== "all" ? allContext : undefined);
+  const keyRangeEnabled = !sample && activity === "mythic_plus" && Boolean(selectedContext || allContext);
+  const difficultyEnabled = !sample && activity === "raid" && Boolean(selectedContext);
   const raidDifficulties = useMemo(() => {
     if (!selectedContext || activity !== "raid") return ["raid_myth", "raid_hero", "raid_normal"];
     return [...new Set((intelligence.tierContexts ?? []).filter((item) => item.activity === "raid" && contextKey(item) === contextKey(selectedContext) && item.difficulty).map((item) => item.difficulty as string))];
   }, [activity, intelligence.tierContexts, selectedContext]);
+
   const suppliedRoles = intelligence.tierLists?.[activity]?.roles ?? (activity === "mythic_plus" ? intelligence.roles : undefined);
-  const usingFixedPreview = !suppliedRoles && activity === "mythic_plus";
-  const baseRoles = suppliedRoles ?? (usingFixedPreview ? fixedPreviewRoles : emptyRoles);
-  const providerLabel = usingFixedPreview
-    ? (lang === "ru" ? "Фиксированные данные интерфейса" : "Fixed interface data")
-    : intelligence.providerLabel;
+  const baseRoles = suppliedRoles ?? (sample && activity === "mythic_plus" ? sampleRoles : emptyRoles);
   const activeRoles = remoteRoles ?? baseRoles;
-  const roleEntries = activeRoles?.[role] ?? [];
+  const roleEntries = useMemo(() => activeRoles[role] ?? [], [activeRoles, role]);
   const classes = useMemo(() => {
     const seen = new Map<string, string>();
     roleEntries.forEach((entry) => seen.set(entry.classSlug, entry.className));
@@ -139,12 +111,27 @@ export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: 
     }
     return result;
   }, [filtered]);
-  const [selectedSlug, setSelectedSlug] = useState("");
   const selected = roleEntries.find((entry) => entryKey(entry) === selectedSlug) ?? filtered[0] ?? roleEntries[0];
   const maxScore = Math.max(...roleEntries.map((entry) => entry.score ?? 0), 1);
+  const rate = (entry: TierEntry) => (role === "healer" ? entry.averageHps : entry.averageDps);
+  const rateLabel = role === "healer" ? "HPS" : "DPS";
+  const hasScore = roleEntries.some((entry) => entry.score !== undefined);
+  const hasRate = roleEntries.some((entry) => rate(entry) !== undefined);
+  const hasKey = activity === "mythic_plus" && roleEntries.some((entry) => entry.maxKey);
+  const hasTrend = roleEntries.some((entry) => entry.rankChange !== undefined);
+  const scopeName = selectedContext ? contextLabel(selectedContext) : activity === "mythic_plus" ? copy.allDungeons : copy.allRaids;
+  const scopeDetail = activity === "mythic_plus"
+    ? (queryContext || keyType !== "all" ? copy.keys[keyType] : "")
+    : (selectedContext ? copy.difficulties[difficulty] ?? difficulty : "");
   const updated = Date.parse(intelligence.updatedAt) > 0
     ? new Intl.DateTimeFormat(lang === "ru" ? "ru-RU" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(intelligence.updatedAt))
-    : "—";
+    : "";
+  const number = new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US");
+
+  const specHref = (entry: TierEntry) => {
+    const match = [`${entry.classSlug}/${entry.specSlug}`, `${entry.classSlug}/${entry.specSlug}-${entry.classSlug}`].find((path) => specPathSet.has(path));
+    return match ? p(lang, `/wow/classes/${match}`) : undefined;
+  };
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("activity") !== "raid") return;
@@ -157,7 +144,7 @@ export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: 
   }, []);
 
   useEffect(() => {
-    if (!selectedContext) {
+    if (!queryContext) {
       setRemoteRoles(null);
       setLoadError("");
       return;
@@ -171,15 +158,15 @@ export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: 
         activity,
         role: value,
         limit: "60",
-        selectionType: selectedContext.selectionType,
-        selectionId: selectedContext.selectionId,
-        addon: selectedContext.addonKey,
+        selectionType: queryContext.selectionType,
+        selectionId: queryContext.selectionId,
+        addon: queryContext.addonKey,
       });
       if (activity === "mythic_plus") params.set("keyType", keyType);
       if (activity === "raid") params.set("difficulty", difficulty);
       return params;
     };
-    Promise.all(((["dps", "healer", "tank"] as const)).map(async (value) => {
+    Promise.all(ROLES.map(async (value) => {
       const response = await fetch(`/v1/meta/wow/tier-list?${paramsFor(value)}`, { signal: controller.signal });
       if (!response.ok) throw new Error(`tier list request failed (${response.status})`);
       const snapshot = await response.json() as { entries: TierEntry[] };
@@ -189,12 +176,12 @@ export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: 
     }).catch((error: unknown) => {
       if (error instanceof DOMException && error.name === "AbortError") return;
       setRemoteRoles(null);
-      setLoadError(lang === "ru" ? "Не удалось загрузить выбранный срез. Показан общий рейтинг." : "The selected slice could not be loaded. Showing the overall ranking.");
+      setLoadError(copy.loadError);
     }).finally(() => {
       if (!controller.signal.aborted) setIsLoading(false);
     });
     return () => controller.abort();
-  }, [activity, difficulty, keyType, lang, selectedContext]);
+  }, [activity, copy.loadError, difficulty, keyType, queryContext]);
 
   const switchActivity = (value: TierActivity) => {
     setActivity(value);
@@ -203,6 +190,12 @@ export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: 
     setSelectedSlug("");
     setCls("all");
     setQ("");
+  };
+
+  const chooseRole = (value: TierRole) => {
+    setRole(value);
+    setCls("all");
+    setSelectedSlug("");
   };
 
   const chooseContext = (value: string) => {
@@ -215,6 +208,17 @@ export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: 
     if (!available.includes(difficulty) && available[0]) setDifficulty(available[0]);
   };
 
+  /** On one-column layouts the card sits under the table: bring it into view. */
+  const selectEntry = (entry: TierEntry) => {
+    setSelectedSlug(entryKey(entry));
+    if (!window.matchMedia("(max-width: 1199px)").matches) return;
+    window.requestAnimationFrame(() => {
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      document.getElementById("spec-detail")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+      detailTitle.current?.focus({ preventScroll: true });
+    });
+  };
+
   const share = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -223,73 +227,247 @@ export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: 
     } catch { /* Clipboard access is optional. */ }
   };
 
+  const contentOptions = (
+    <>
+      <option value="all:all">{activity === "mythic_plus" ? copy.allDungeons : copy.allRaids}</option>
+      {contexts.filter((item) => item.selectionType !== "boss").map((item) => <option key={contextKey(item)} value={contextKey(item)}>{contextLabel(item)}</option>)}
+      {activity === "raid" && contexts.some((item) => item.selectionType === "boss")
+        ? <optgroup label={copy.bosses}>{contexts.filter((item) => item.selectionType === "boss").map((item) => <option key={contextKey(item)} value={contextKey(item)}>{contextLabel(item)}</option>)}</optgroup>
+        : null}
+    </>
+  );
+  const controlsHint = sample
+    ? copy.sampleControls
+    : activity === "mythic_plus" && !keyRangeEnabled ? copy.pickDungeonFirst
+      : activity === "raid" && !difficultyEnabled ? copy.pickRaidFirst : "";
+
+  const guideCards = roleEntries.slice(0, 6).map((entry) => {
+    const external = entry.guideUrl || (isExternal(entry.sourceUrl) ? entry.sourceUrl : undefined);
+    const href = external ?? specHref(entry);
+    return href ? { entry, href, external: Boolean(external), meta: entry.guideUrl ? copy.providerGuide : external ? copy.providerSource : copy.specPageShort } : null;
+  }).filter((card): card is NonNullable<typeof card> => card !== null);
+
+  const metrics = selected ? [
+    selected.score !== undefined ? { label: copy.score, value: compact(selected.score, lang) } : null,
+    selected.averageDps !== undefined ? { label: "DPS", value: compact(selected.averageDps, lang) } : null,
+    selected.averageHps !== undefined ? { label: "HPS", value: compact(selected.averageHps, lang) } : null,
+    activity === "mythic_plus" && selected.maxKey ? { label: copy.maxKey, value: `+${number.format(selected.maxKey)}` } : null,
+    activity === "raid" && selectedContext ? { label: copy.difficulty, value: copy.difficulties[difficulty] ?? difficulty } : null,
+    selected.rankChange !== undefined ? { label: copy.weeklyChange, value: <Trend value={selected.rankChange} copy={copy} /> } : null,
+    selected.popularity ? { label: copy.popularity, value: `${number.format(Number((selected.popularity * 100).toFixed(1)))}%` } : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null) : [];
+  const selectedGuide = selected?.guideUrl || (isExternal(selected?.sourceUrl) ? selected?.sourceUrl : undefined);
+  const selectedSpecPage = selected ? specHref(selected) : undefined;
+
   return (
-    <div className="tierpage" id="tierlist">
-      <aside className="tp-side">
-        <div className="tp-brand"><Image className="logo-mark" src="/brand/helmet.png" alt="" width={24} height={24} /><span className="t">{tt("TIER LISTS")}</span></div>
-        <div className="tp-nav" aria-label={lang === "ru" ? "Тип рейтинга" : "Ranking type"}>
-          <button type="button" className={activity === "mythic_plus" ? "active" : ""} onClick={() => switchActivity("mythic_plus")} aria-pressed={activity === "mythic_plus"}><Swords aria-hidden="true" /> Mythic+</button>
-          <button type="button" className={activity === "raid" ? "active" : ""} onClick={() => { setActivity("raid"); setContextValue("all:all"); setRemoteRoles(null); setSelectedSlug(""); setCls("all"); setQ(""); }} aria-pressed={activity === "raid"}><Shield aria-hidden="true" />{tt("Raid")}</button>
+    <div className={styles.workspace} id={ANCHORS.tierList}>
+      <section className={styles.main} aria-labelledby="tier-results-title">
+        <div className={styles.controls} role="group" aria-label={copy.controlsLabel}>
+          <div className={styles.field}>
+            <span className={styles.label} id="tier-mode-label">{copy.mode}</span>
+            <div className={styles.segmented} role="group" aria-labelledby="tier-mode-label">
+              {ACTIVITIES.map((value) => (
+                <button type="button" key={value} className={styles.segment} aria-pressed={activity === value} onClick={() => switchActivity(value)}>
+                  {value === "mythic_plus" ? <Swords aria-hidden="true" /> : <Castle aria-hidden="true" />}{copy.modes[value]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={`${styles.field} ${styles.fieldGrow}`}>
+            <label className={styles.label} htmlFor="tier-content">{copy.content}</label>
+            <span className={styles.selectShell}>
+              <select id="tier-content" className={styles.select} value={contextValue} onChange={(event) => chooseContext(event.target.value)} disabled={!contexts.length}>{contentOptions}</select>
+              <ChevronDown aria-hidden="true" />
+            </span>
+          </div>
+          {activity === "mythic_plus" ? (
+            <div className={`${styles.field} ${styles.fieldWide}`}>
+              <span className={styles.label} id="tier-key-label">{copy.keyRange}</span>
+              <div className={`${styles.segmented} ${styles.segmentedFour}`} role="group" aria-labelledby="tier-key-label">
+                {KEY_RANGES.map((value) => (
+                  <button type="button" key={value} className={styles.segment} aria-pressed={keyType === value} disabled={!keyRangeEnabled} onClick={() => setKeyType(value)}>{copy.keys[value]}</button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className={`${styles.field} ${styles.fieldWide}`}>
+              <span className={styles.label} id="tier-difficulty-label">{copy.difficulty}</span>
+              <div className={styles.segmented} role="group" aria-labelledby="tier-difficulty-label">
+                {raidDifficulties.map((value) => (
+                  <button type="button" key={value} className={styles.segment} aria-pressed={difficultyEnabled && difficulty === value} disabled={!difficultyEnabled} onClick={() => setDifficulty(value)}>{copy.difficulties[value] ?? value}</button>
+                ))}
+              </div>
+            </div>
+          )}
+          {controlsHint ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
         </div>
-        <div className="filters-panel">
-          <div className="fgroup"><label htmlFor="tier-content-side">{lang === "ru" ? "Контент" : "Content"}</label><select id="tier-content-side" value={contextValue} onChange={(event) => chooseContext(event.target.value)}><option value="all:all">{activity === "mythic_plus" ? (lang === "ru" ? "Все подземелья" : "All dungeons") : (lang === "ru" ? "Все рейды" : "All raids")}</option>{contexts.filter((item) => item.selectionType !== "boss").map((item) => <option key={contextKey(item)} value={contextKey(item)}>{contextLabel(item)}</option>)}</select></div>
-          <div className="fgroup"><label>{lang === "ru" ? "Роль" : "Role"}</label><div className="seg">{(["dps", "healer", "tank"] as const).map((value) => <button type="button" className={role === value ? "on" : ""} onClick={() => { setRole(value); setCls("all"); setSelectedSlug(""); }} key={value}>{ROLE_LABELS[value][lang]}</button>)}</div></div>
-          {activity === "mythic_plus" ? <div className="fgroup"><label htmlFor="tier-key-side">{lang === "ru" ? "Уровень ключа" : "Key range"}</label><select id="tier-key-side" value={keyType} onChange={(event) => setKeyType(event.target.value as typeof keyType)}>{Object.entries(KEY_LABELS).map(([value, label]) => <option value={value} key={value}>{label[lang]}</option>)}</select></div> : <div className="fgroup"><label>{lang === "ru" ? "Сложность" : "Difficulty"}</label><div className="seg seg-stack">{raidDifficulties.map((value) => <button type="button" className={difficulty === value ? "on" : ""} onClick={() => setDifficulty(value)} key={value}>{difficultyLabel(value, lang)}</button>)}</div></div>}
-          <div className="fgroup"><label>{lang === "ru" ? "Источник" : "Source"}</label><strong>{providerLabel}</strong><small>{updated} UTC</small></div>
+
+        <div className={styles.resultsHead}>
+          <div className={styles.resultsCopy}>
+            <h2 id="tier-results-title" className={styles.resultsTitle}>{activity === "mythic_plus" ? copy.resultsMythic : copy.resultsRaid}</h2>
+            <p className={styles.resultsMeta}>{scopeName}{scopeDetail ? ` · ${scopeDetail}` : ""}</p>
+          </div>
+          <div className={styles.resultsTools}>
+            {sample ? <AtlasBadge tone="caution">{copy.sampleBadge}</AtlasBadge> : null}
+            <span className={styles.count} aria-live="polite"><Layers3 aria-hidden="true" />{isLoading ? copy.updating : copy.specCount(filtered.length)}</span>
+            <button type="button" className={styles.toolButton} onClick={share}>{copied ? <Check aria-hidden="true" /> : <Share2 aria-hidden="true" />}<span aria-live="polite">{copied ? copy.copied : copy.share}</span></button>
+          </div>
         </div>
-        <div className="about"><b><svg className="i"><use href="#ic-info" /></svg>{usingFixedPreview ? (lang === "ru" ? "Фиксированный набор интерфейса" : "Fixed interface dataset") : (lang === "ru" ? "Данные провайдера" : "Provider data")}</b>{usingFixedPreview ? (lang === "ru" ? "Сохранённые строки восстановлены локально и явно помечены; они не выдаются за текущий API-снимок." : "The saved rows are restored locally and explicitly labeled; they are not presented as a current API snapshot.") : (lang === "ru" ? "Тиры публикуются из Wowhead, числовые метрики дополняются совпадающим срезом wow.gg." : "Tiers are published from Wowhead; numeric metrics are enriched from the matching wow.gg snapshot.")}</div>
-        <div className="filters-panel">{intelligence.sources.map((source) => <div className="fgroup" key={source.slug}><label>{source.provider}</label><span className={`library-freshness is-${source.status}`}><i />{source.status} · {source.recordCount}</span></div>)}</div>
-        <AdSlot variant="rect" lang={lang} />
-        <div className="side-live"><span className="pulse" />{lang === "ru" ? "API-снимок" : "API snapshot"} · {intelligence.version}</div>
+
+        <div className={styles.roleTabs} role="group" aria-label={copy.role}>
+          {ROLES.map((value) => (
+            <button type="button" key={value} className={styles.roleTab} aria-pressed={role === value} onClick={() => chooseRole(value)}>
+              {copy.roles[value]}<span className={styles.roleCount}>{activeRoles[value]?.length ?? 0}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.filters}>
+          <span className={styles.searchShell}>
+            <Search aria-hidden="true" />
+            <input type="search" className={styles.search} placeholder={copy.searchPlaceholder} aria-label={copy.search} value={q} onChange={(event) => setQ(event.target.value)} />
+          </span>
+          {classes.length ? (
+            <div className={styles.chips} role="group" aria-label={copy.classFilter} data-scrollbox>
+              <button type="button" className={styles.chip} aria-pressed={cls === "all"} onClick={() => setCls("all")}>{copy.allClasses}</button>
+              {classes.map(([slug, name]) => {
+                const icon = classIcon(classKey(slug));
+                return (
+                  <button type="button" className={styles.chip} aria-pressed={cls === slug} onClick={() => setCls(slug)} key={slug} style={classStyle(slug)}>
+                    {icon ? <Image className={styles.chipIcon} src={icon} alt="" width={20} height={20} /> : null}{name}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+
+        {loadError ? <p className={styles.alert} role="status">{loadError}</p> : null}
+
+        <div className={styles.tableBox} aria-busy={isLoading} data-loading={isLoading || undefined} data-scrollbox>
+          {filtered.length ? (
+            <table className={styles.table}>
+              <caption className={styles.srOnly}>{copy.tableCaption(scopeName, copy.roles[role])}</caption>
+              <thead>
+                <tr>
+                  <th scope="col" className={styles.colTier}>{copy.tier}</th>
+                  <th scope="col">{copy.spec}</th>
+                  {hasScore ? <th scope="col" className={styles.num}>{copy.score}</th> : null}
+                  {hasRate ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{rateLabel}</th> : null}
+                  {hasKey ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{copy.maxKey}</th> : null}
+                  {hasTrend ? <th scope="col" className={styles.num}>{copy.trend}</th> : null}
+                </tr>
+              </thead>
+              {groups.map((group) => (
+                <tbody key={group.tier} className={styles.group} data-tier={tierClass(group.tier)}>
+                  {group.rows.map((entry, index) => {
+                    const isSelected = Boolean(selected && entryKey(selected) === entryKey(entry));
+                    return (
+                      <tr key={entryKey(entry)} className={isSelected ? styles.selectedRow : undefined}>
+                        {index === 0 ? <th scope="rowgroup" rowSpan={group.rows.length} className={styles.tierCell}><TierMark tier={group.tier} copy={copy} /></th> : null}
+                        <td className={styles.specCell}>
+                          <div className={styles.specInner}>
+                          <SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />
+                          <button type="button" className={styles.specButton} style={classStyle(entry.classSlug)} aria-controls="spec-detail" aria-current={isSelected ? "true" : undefined} onClick={() => selectEntry(entry)}>
+                            <span className={styles.specName}>{entry.specName}</span>
+                            <span className={styles.className}>{entry.className}</span>
+                          </button>
+                          </div>
+                        </td>
+                        {hasScore ? (
+                          <td className={`${styles.num} ${styles.score}`}>
+                            {compact(entry.score, lang)}
+                            <span className={styles.scoreBar} aria-hidden="true"><i style={{ width: `${entry.score ? Math.max(5, entry.score / maxScore * 100) : 0}%` }} /></span>
+                          </td>
+                        ) : null}
+                        {hasRate ? <td className={`${styles.num} ${styles.secondary}`}>{compact(rate(entry), lang)}</td> : null}
+                        {hasKey ? <td className={`${styles.num} ${styles.secondary}`}>{entry.maxKey ? `+${number.format(entry.maxKey)}` : "—"}</td> : null}
+                        {hasTrend ? <td className={styles.num}><Trend value={entry.rankChange} copy={copy} /></td> : null}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              ))}
+            </table>
+          ) : (
+            <p className={styles.empty}>{sample && !roleEntries.length ? copy.emptySample : copy.empty}</p>
+          )}
+          {isLoading ? <div className={styles.loading} role="status"><span aria-hidden="true" /><b>{copy.loadingSlice}</b></div> : null}
+        </div>
+
+        {!sample && intelligence.sources.length ? (
+          <div className={styles.sources}>
+            <h3 className={styles.sourcesTitle}>{copy.sourceTitle}</h3>
+            <p>{queryContext ? copy.sourceSlice : copy.sourceOverall}</p>
+            <ul className={styles.sourceList}>
+              {intelligence.sources.map((source) => (
+                <li key={source.slug}>
+                  <span className={styles.sourceName}>{source.provider}</span>
+                  <span className={styles.sourceStatus} data-status={source.status}>{copy.sourceStatus[source.status] ?? source.status}</span>
+                  <span className={styles.sourceCount}>{copy.records(number.format(source.recordCount))}</span>
+                </li>
+              ))}
+            </ul>
+            {updated ? <p className={styles.updated}>{copy.updated}: <time dateTime={intelligence.updatedAt}>{updated} UTC</time></p> : null}
+          </div>
+        ) : null}
+      </section>
+
+      <aside className={styles.detail} id="spec-detail" aria-labelledby={selected ? "spec-detail-title" : undefined} aria-label={selected ? undefined : copy.detailLabel}>
+        <p className={styles.detailEyebrow}>{copy.detailLabel}</p>
+        {selected ? (
+          <>
+            <div className={styles.detailHead}>
+              <SpecSlot name={fullSpecName(selected)} cls={classKey(selected.classSlug)} classSlug={selected.classSlug} specSlug={selected.specSlug} size="lg" />
+              <div className={styles.detailName} style={classStyle(selected.classSlug)}>
+                <h2 id="spec-detail-title" ref={detailTitle} tabIndex={-1} className={styles.detailTitle}>{selected.specName} <span className={styles.className}>{selected.className}</span></h2>
+                <p className={styles.detailRank}><TierMark tier={selected.tier} copy={copy} size="sm" />{copy.rankLine(selected.rank, copy.roles[selected.role] ?? copy.roles[role])}</p>
+              </div>
+            </div>
+            {metrics.length ? (
+              <dl className={styles.metrics}>
+                {metrics.map((item) => <div key={item.label} className={styles.metric}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}
+              </dl>
+            ) : null}
+            {selectedGuide || selectedSpecPage ? (
+              <div className={styles.detailActions}>
+                {selectedGuide ? <a className={`${styles.action} ${styles.actionPrimary}`} href={selectedGuide} target="_blank" rel="noreferrer">{selected.guideUrl ? copy.openGuide : copy.openSource}<ArrowUpRight aria-hidden="true" /></a> : null}
+                {selectedSpecPage ? <Link className={selectedGuide ? styles.action : `${styles.action} ${styles.actionPrimary}`} href={selectedSpecPage}>{copy.specPage}</Link> : null}
+              </div>
+            ) : null}
+          </>
+        ) : <p className={styles.detailEmpty}>{sample ? copy.emptySample : copy.noRows}</p>}
       </aside>
 
-      <div className="tp-center">
-        <div className="crumbs"><Link href={p(lang, "/")}>{tt("Home")}</Link><span className="sep">›</span><span>{lang === "ru" ? "Тир-листы" : "Tier Lists"}</span><span className="sep">›</span><span>{activity === "mythic_plus" ? "Mythic+" : (lang === "ru" ? "Рейды" : "Raids")}</span></div>
-        <div className="tp-title"><h1>{activity === "mythic_plus" ? tt("MYTHIC+ TIER LIST") : (lang === "ru" ? "РЕЙДОВЫЙ ТИР-ЛИСТ" : "RAID TIER LIST")}</h1><span className="dia">◆</span><span className="rule" /></div>
-        <div className="tp-sub">{lang === "ru" ? "Живой рейтинг специализаций по данным последних боёв" : "Live specialization rankings from the latest combat data"}</div>
-
-        <section className={`content-scope is-${activity}`} aria-label={lang === "ru" ? "Выбор контента" : "Content selection"}>
-          <div className="scope-emblem" aria-hidden="true">{activity === "mythic_plus" ? <MapIcon /> : <Castle />}</div>
-          <div className="scope-copy"><span><Sparkles aria-hidden="true" /> {selectedContext?.addonName ?? "Midnight"} · Season 1</span><strong>{selectedContext?.selectionName ?? (activity === "mythic_plus" ? (lang === "ru" ? "Все подземелья сезона" : "All season dungeons") : (lang === "ru" ? "Все рейды сезона" : "All season raids"))}</strong><small>{activity === "mythic_plus" ? (lang === "ru" ? "Рейтинг по прохождениям ключей" : "Ranked from completed keystone runs") : (lang === "ru" ? `${difficultyLabel(difficulty, lang)} режим` : `${difficultyLabel(difficulty, lang)} difficulty`)}</small></div>
-          <label className="scope-select"><span>{lang === "ru" ? "Подземелье / рейд" : "Dungeon / raid"}</span><span className="select-shell"><select value={contextValue} onChange={(event) => chooseContext(event.target.value)}><option value="all:all">{activity === "mythic_plus" ? (lang === "ru" ? "Все подземелья" : "All dungeons") : (lang === "ru" ? "Все рейды" : "All raids")}</option>{contexts.filter((item) => item.selectionType !== "boss").map((item) => <option key={contextKey(item)} value={contextKey(item)}>{contextLabel(item)}</option>)}{activity === "raid" && contexts.some((item) => item.selectionType === "boss") ? <optgroup label={lang === "ru" ? "Отдельные боссы" : "Individual bosses"}>{contexts.filter((item) => item.selectionType === "boss").map((item) => <option key={contextKey(item)} value={contextKey(item)}>{contextLabel(item)}</option>)}</optgroup> : null}</select><ChevronDown aria-hidden="true" /></span></label>
-          <div className="scope-mode" aria-label={lang === "ru" ? "Режим контента" : "Content mode"}><button type="button" className={activity === "mythic_plus" ? "on" : ""} onClick={() => switchActivity("mythic_plus")}><Swords aria-hidden="true" />Mythic+</button><button type="button" className={activity === "raid" ? "on" : ""} onClick={() => switchActivity("raid")}><Shield aria-hidden="true" />{lang === "ru" ? "Рейды" : "Raids"}</button></div>
+      {guideCards.length ? (
+        <section className={styles.guides} id={ANCHORS.builds} aria-labelledby="tier-guides-title">
+          <div className={styles.guidesHead}>
+            <h2 id="tier-guides-title" className={styles.guidesTitle}>{sample ? copy.guidesSample : copy.guidesLive}</h2>
+            <p className={styles.guidesText}>{sample ? copy.guidesSampleText : copy.guidesLiveText}</p>
+          </div>
+          <ul className={styles.guideGrid}>
+            {guideCards.map(({ entry, href, external, meta }) => {
+              const body = (
+                <>
+                  <SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />
+                  <span className={styles.guideCopy} style={classStyle(entry.classSlug)}>
+                    <span className={styles.guideName}>{entry.specName} <span className={styles.className}>{entry.className}</span></span>
+                    <span className={styles.guideMeta}>{meta}{external ? <ArrowUpRight aria-hidden="true" /> : null}</span>
+                  </span>
+                  <TierMark tier={entry.tier} copy={copy} size="sm" />
+                </>
+              );
+              return (
+                <li key={entryKey(entry)}>
+                  {external
+                    ? <a className={styles.guideCard} href={href} target="_blank" rel="noreferrer">{body}</a>
+                    : <Link className={styles.guideCard} href={href}>{body}</Link>}
+                </li>
+              );
+            })}
+          </ul>
         </section>
-        {activity === "raid" ? <div className="context-controls"><span>{lang === "ru" ? "Сложность" : "Difficulty"}</span>{raidDifficulties.map((value) => <button type="button" className={difficulty === value ? "on" : ""} onClick={() => setDifficulty(value)} key={value}>{difficultyLabel(value, lang)}</button>)}</div> : <div className="context-controls"><span>{lang === "ru" ? "Ключи" : "Keys"}</span>{Object.entries(KEY_LABELS).map(([value, label]) => <button type="button" className={keyType === value ? "on" : ""} onClick={() => setKeyType(value as typeof keyType)} key={value}>{label[lang]}</button>)}</div>}
-        {loadError ? <div className="tier-alert" role="status">{loadError}</div> : null}
-        <div className="tp-toolbar">
-          <div className="tabs">{(["dps", "healer", "tank"] as const).map((value) => <button type="button" className={role === value ? "on" : ""} onClick={() => { setRole(value); setCls("all"); setSelectedSlug(""); }} key={value}>{ROLE_LABELS[value][lang]}</button>)}</div>
-          <span className="tool tool-static"><Layers3 aria-hidden="true" />{isLoading ? (lang === "ru" ? "Обновление…" : "Updating…") : `${filtered.length} ${lang === "ru" ? "спеков" : "specs"}`}</span>
-          <button type="button" className="tool" onClick={share}><svg className="i"><use href="#ic-share" /></svg>{copied ? tt("Copied ✓") : tt("Share")}</button>
-        </div>
-
-        <div className="filterbar">
-          <label className="fsearch"><svg className="i"><use href="#ic-search" /></svg><input type="search" placeholder={tt("Search spec...")} aria-label={tt("Search spec...")} value={q} onChange={(event) => setQ(event.target.value)} /></label>
-          <div className="chips"><button type="button" className={`chip${cls === "all" ? " on" : ""}`} onClick={() => setCls("all")}>{tt("All Classes")}</button>{classes.map(([slug, name]) => { const key = classKey(slug); const icon = classIcon(key); return <button type="button" className={`chip${cls === slug ? " on" : ""}`} onClick={() => setCls(slug)} key={slug}>{icon ? <span className={`coct ${key}`}><Image src={icon} alt="" width={56} height={56} /></span> : null}{name}</button>; })}</div>
-        </div>
-
-        <div className={`tier-table-wrap${isLoading ? " is-loading" : ""}`} aria-busy={isLoading}><table className="tt">
-          <thead><tr><th>{tt("Tier")}</th><th>{tt("Spec")}</th><th className="num">{tt("Score")}</th><th className="num">{role === "healer" ? "HPS" : "DPS"}</th>{activity === "mythic_plus" ? <th className="num col-key">{lang === "ru" ? "Макс. ключ" : "Max key"}</th> : null}<th className="num">{tt("Trend")}</th></tr></thead>
-          <tbody>{groups.map((group) => group.rows.map((entry, index) => <tr key={entryKey(entry)} className={selected && entryKey(selected) === entryKey(entry) ? "hl" : ""}>
-            {index === 0 ? <td className="tcell" rowSpan={group.rows.length}><div className={`in tc-${tierClass(group.tier)}`}><span className="big">{group.tier}</span><span className="lbl">{tt("Tier").toUpperCase()}</span></div></td> : null}
-            <td><div className="scell"><SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} size="sm" /><button type="button" className="scell-name" onClick={() => setSelectedSlug(entryKey(entry))}>{entry.specName}</button></div></td>
-            <td className="num score">{compact(entry.score, lang)}<span className="sbar"><i style={{ width: `${entry.score ? Math.max(5, entry.score / maxScore * 100) : 0}%` }} /></span></td>
-            <td className="num">{compact(role === "healer" ? entry.averageHps : entry.averageDps, lang)}</td>
-            {activity === "mythic_plus" ? <td className="num col-key">{entry.maxKey ? `+${entry.maxKey}` : "—"}</td> : null}
-            <td className="num"><Trend value={entry.rankChange} /></td>
-          </tr>))}</tbody>
-        </table>{isLoading ? <div className="tier-loading"><span /><b>{lang === "ru" ? "Собираем выбранный срез" : "Loading selected slice"}</b></div> : null}</div>
-        {!filtered.length ? <div className="faq-note">{lang === "ru" ? "По выбранным фильтрам специализаций нет." : "No specializations match the selected filters."}</div> : null}
-        <div className="tfoot">{lang === "ru" ? "Источник" : "Source"}: {providerLabel} · {updated} UTC · {selectedContext?.selectionName ?? (activity === "mythic_plus" ? "Mythic+" : (lang === "ru" ? "Все рейды" : "All raids"))}</div>
-        <div className="faq-note"><b>{lang === "ru" ? "Как читать данные?" : "How should I read this?"}</b>{selectedContext ? (lang === "ru" ? "Тир, порядок и метрики рассчитаны по выбранному срезу wow.gg; смена подземелья, рейда, босса или сложности перестраивает рейтинг." : "Tier, order and metrics come from the selected wow.gg slice; changing dungeon, raid, boss or difficulty rebuilds the ranking.") : (lang === "ru" ? "Общий тир и порядок — редакционный срез Wowhead. Числовые метрики дополняются совпадающей записью wow.gg." : "Overall tier and order come from the published Wowhead snapshot. Numeric metrics are enriched from the matching wow.gg record.")}</div>
-        <AdSlot lang={lang} />
-        <div className="bhead" id="builds"><span className="t">{lang === "ru" ? "ПЕРВИЧНЫЕ ИСТОЧНИКИ" : "PRIMARY SOURCES"}</span><span className="dia">◆</span><span className="rule" /></div>
-        <div className="builds">{roleEntries.slice(0, 6).map((entry) => <a href={entry.guideUrl || entry.sourceUrl} target={usingFixedPreview ? undefined : "_blank"} rel={usingFixedPreview ? undefined : "noreferrer"} className="bcard" key={entryKey(entry)}><SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} /><span className="binfo"><span className="bname">{entry.specName} {entry.className}</span><span className="bauthor">{entry.guideUrl ? (lang === "ru" ? "Гайд провайдера" : "Provider guide") : providerLabel}</span></span><span className={`bpill ${tierClass(entry.tier)}`}>{entry.tier}</span></a>)}</div>
-      </div>
-
-      <aside className="tp-detail" id="spec-detail">
-        {selected ? <><div className="dhero"><div className="dhead"><div className="dicon"><b><SpecSlot name={fullSpecName(selected)} cls={classKey(selected.classSlug)} classSlug={selected.classSlug} specSlug={selected.specSlug} size="sm" /></b></div><div className="name"><h2>{selected.specName} {selected.className}</h2><div className="tier-line">{selected.tier} TIER · #{selected.rank}</div></div></div><div className="dtabs"><button className="on" aria-current="page">{tt("Overview")}</button><button aria-disabled="true" disabled>API</button></div></div>
-          <div className="dbody"><div className="dgrid"><div className="dcard"><h4>{lang === "ru" ? "Производительность" : "Performance"}</h4><div className="dline"><span>{tt("Score")}</span><b>{compact(selected.score, lang)}</b></div><div className="dline"><span>DPS</span><b>{compact(selected.averageDps, lang)}</b></div><div className="dline"><span>HPS</span><b>{compact(selected.averageHps, lang)}</b></div></div><div className="dcard"><h4>{tt("Quick Stats")}</h4>{activity === "mythic_plus" ? <div className="dline"><span>{lang === "ru" ? "Макс. ключ" : "Max key"}</span><b>{selected.maxKey ? `+${selected.maxKey}` : "—"}</b></div> : <div className="dline"><span>{lang === "ru" ? "Сложность" : "Difficulty"}</span><b>{difficultyLabel(difficulty, lang)}</b></div>}<div className="dline"><span>{tt("Weekly Change")}</span><b className={selected.rankChange && selected.rankChange > 0 ? "pos" : ""}>{selected.rankChange ? `${selected.rankChange > 0 ? "+" : ""}${selected.rankChange}` : "—"}</b></div><div className="dline"><span>{tt("Popularity")}</span><b>{selected.popularity ? `${(selected.popularity * 100).toFixed(1)}%` : "—"}</b></div></div></div><div className="dactions"><a className="btn btn-primary" href={selected.guideUrl || selected.sourceUrl} target="_blank" rel="noreferrer">{lang === "ru" ? "Открыть источник" : "Open source"}</a><Link className="btn btn-dim" href={p(lang, "/wow")}>{lang === "ru" ? "Штаб WoW" : "WoW hub"}</Link></div></div></> : <div className="dbody"><div className="faq-note">{lang === "ru" ? "Нет опубликованных строк." : "No published rows."}</div></div>}
-      </aside>
+      ) : null}
     </div>
   );
 }

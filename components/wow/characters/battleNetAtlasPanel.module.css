@@ -4,7 +4,7 @@
 .seal svg { width:22px; height:22px; stroke-width:1.5; }
 .copy { min-width:0; }
 .copy small { color:var(--atlas-accent); font-size:10px; line-height:1.6; letter-spacing:.12em; text-transform:uppercase; }
-.copy h2 { margin:8px 0; color:var(--atlas-title); font:500 clamp(23px,2.2vw,32px)/1.2 Georgia,serif; text-wrap:balance; }
+.copy h2 { margin:8px 0; color:var(--atlas-title); font:500 clamp(23px,2.2vw,32px)/1.2 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-wrap:balance; }
 .copy p { color:var(--atlas-muted); font-size:13px; line-height:1.7; }
 .actions { grid-column:1/-1; display:grid; gap:12px; margin-top:4px; }
 .actions :global(form),.actions :global(button),.actions > a { width:100%; }

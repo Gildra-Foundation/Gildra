@@ -30,7 +30,7 @@ export type DungeonRoute = {
   stops: RouteStop[];
 };
 
-export type DungeonSelectorOption = Pick<DungeonRoute, "slug" | "name" | "nameRu" | "location" | "backdropImage">;
+export type DungeonSelectorOption = Pick<DungeonRoute, "slug" | "name" | "nameRu" | "location" | "backdropImage" | "timerSeconds">;
 
 type StopSeed = {
   title: string;
@@ -678,7 +678,7 @@ export function getDungeonRoute(slug?: string): DungeonRoute | undefined {
 
 export function getDungeonSelectorOptions(): DungeonSelectorOption[] {
   return dungeonSlugs.map((slug) => {
-    const { name, nameRu, location, backdropImage } = dungeonRoutes[slug];
-    return { slug, name, nameRu, location, backdropImage };
+    const { name, nameRu, location, backdropImage, timerSeconds } = dungeonRoutes[slug];
+    return { slug, name, nameRu, location, backdropImage, timerSeconds };
   });
 }

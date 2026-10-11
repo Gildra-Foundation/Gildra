@@ -47,9 +47,9 @@
 .movementCall small,
 .raidCall small,
 .nextWaypoint small,
-.abilityDetail header small { color: #b68b47; font-size: 7px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-.titleLockup h3 { margin: 3px 0 2px; color: #f0dfbf; font: 500 22px/1.05 Georgia, serif; text-shadow: 0 1px 1px #000; }
-.titleLockup p { margin: 0; color: #837d73; font-size: 9px; line-height: 1.45; }
+.abilityDetail header small { color: #b68b47; font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.titleLockup h3 { margin: 3px 0 2px; color: #f0dfbf; font: 500 22px/1.05 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-shadow: 0 1px 1px #000; }
+.titleLockup p { margin: 0; color: #837d73; font-size: var(--atlas-text-label); line-height: 1.45; }
 
 .source {
   display: flex;
@@ -61,7 +61,7 @@
   border: 1px solid rgba(112, 143, 83, .34);
   border-radius: 2px;
   background: rgba(38, 54, 29, .24);
-  font-size: 8px;
+  font-size: var(--atlas-text-label);
   font-weight: 700;
   text-decoration: none;
 }
@@ -81,14 +81,14 @@
   background: color-mix(in srgb, var(--raid-accent) 5%, #0a0a0a);
 }
 .routeNote svg { flex: 0 0 auto; width: 14px; height: 14px; color: #d9aa4f; }
-.routeNote p { margin: 0; font-size: 9px; line-height: 1.5; }
+.routeNote p { margin: 0; font-size: var(--atlas-text-label); line-height: 1.5; }
 
 .layout { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.22fr) minmax(340px, .78fr); min-height: 730px; }
 .mapPanel { min-width: 0; border-right: 1px solid rgba(145, 103, 44, .35); background: #040506; }
-.mapTopbar { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 0 15px; color: #a99d8b; border-bottom: 1px solid rgba(126, 91, 41, .28); background: #0b0c0d; font-size: 8px; text-transform: uppercase; }
+.mapTopbar { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 0 15px; color: #a99d8b; border-bottom: 1px solid rgba(126, 91, 41, .28); background: #0b0c0d; font-size: var(--atlas-text-label); text-transform: uppercase; }
 .mapTopbar span { display: flex; align-items: center; gap: 7px; font-weight: 750; letter-spacing: .1em; }
 .mapTopbar svg { width: 13px; height: 13px; color: #d3a34b; }
-.mapTopbar b { color: #746d62; font-size: 7px; letter-spacing: .08em; }
+.mapTopbar b { color: #746d62; font-size: var(--atlas-text-label); letter-spacing: .08em; }
 
 .map {
   --route-art: none;
@@ -144,7 +144,7 @@
   gap: 5px;
   color: #c9b488;
   transform: translate(-50%, -100%);
-  font-size: 7px;
+  font-size: var(--atlas-text-label);
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -179,8 +179,8 @@
 .bossPortrait::after { position: absolute; inset: 0; content: ""; box-shadow: inset 0 0 13px #000; }
 .bossPortrait img { object-fit: cover; filter: brightness(.88) saturate(.85); transition: filter .18s ease, transform .18s ease; }
 .bossLabel { display: grid; max-width: 150px; gap: 2px; padding: 5px 8px; border-left: 1px solid rgba(189, 139, 58, .5); background: rgba(3, 4, 5, .74); box-shadow: 0 3px 12px rgba(0, 0, 0, .36); }
-.bossLabel small { color: #9c7741; font-size: 6px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.bossLabel b { overflow: hidden; font: 600 9px/1.15 Georgia, serif; text-overflow: ellipsis; white-space: nowrap; }
+.bossLabel small { color: #9c7741; font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.bossLabel b { overflow: hidden; font: 600 var(--atlas-text-label)/1.15 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-overflow: ellipsis; white-space: nowrap; }
 .bossNode:hover .bossPortrait,
 .bossNode[data-active="true"] .bossPortrait { border-color: #e5b95d; box-shadow: 0 0 0 3px color-mix(in srgb, var(--raid-accent) 28%, transparent), 0 0 22px color-mix(in srgb, var(--raid-accent) 52%, transparent); transform: scale(1.06); }
 .bossNode:hover img,
@@ -203,7 +203,7 @@
   border-radius: 50%;
   background: radial-gradient(circle at 38% 30%, #513113, #100e0a 70%);
   box-shadow: 0 3px 10px #000, inset 0 0 6px rgba(255, 207, 111, .16);
-  font: 700 10px Georgia, serif;
+  font: 700 var(--atlas-text-meta) var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums;
   transition: color .16s ease, border-color .16s ease, transform .16s ease, box-shadow .16s ease;
 }
 .pullMarker i { position: absolute; inset: -5px; border: 1px solid transparent; border-radius: 50%; animation: markerPulse 2.8s ease-out infinite; }
@@ -224,7 +224,7 @@
   border: 1px solid rgba(140, 102, 47, .35);
   background: rgba(3, 4, 5, .84);
   box-shadow: 0 7px 18px rgba(0, 0, 0, .45);
-  font-size: 6px;
+  font-size: var(--atlas-text-label);
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -259,10 +259,10 @@
   box-shadow: 0 8px 18px rgba(0, 0, 0, .35);
   backdrop-filter: blur(12px);
 }
-.pullNumber { display: grid; width: 42px; height: 42px; place-items: center; color: #f0c76e; border: 1px solid #83602c; outline: 2px solid #030303; background: #16120c; font: 500 18px Georgia, serif; }
+.pullNumber { display: grid; width: 42px; height: 42px; place-items: center; color: #f0c76e; border: 1px solid #83602c; outline: 2px solid #030303; background: #16120c; font: 500 18px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .pullHeader > div { min-width: 0; }
-.pullHeader h4 { margin: 4px 0 0; overflow: hidden; color: #ecddc3; font: 600 16px/1.05 Georgia, serif; text-overflow: ellipsis; white-space: nowrap; }
-.risk { align-self: start; padding: 4px 6px; color: #9b8d77; border: 1px solid #4d4438; font-size: 6px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.pullHeader h4 { margin: 4px 0 0; overflow: hidden; color: #ecddc3; font: 600 16px/1.05 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-overflow: ellipsis; white-space: nowrap; }
+.risk { align-self: start; padding: 4px 6px; color: #9b8d77; border: 1px solid #4d4438; font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
 .risk[data-danger="medium"] { color: #d4ac5f; border-color: rgba(187, 132, 47, .48); }
 .risk[data-danger="high"] { color: #ec9278; border-color: rgba(180, 68, 42, .58); background: rgba(107, 31, 20, .18); }
 
@@ -270,15 +270,15 @@
 .pullStats > span { display: grid; grid-template-columns: 18px auto; align-items: center; gap: 0 4px; padding: 9px 10px; border-right: 1px solid rgba(126, 91, 41, .2); }
 .pullStats > span:last-child { border-right: 0; }
 .pullStats svg { grid-row: 1 / 3; width: 14px; height: 14px; color: #ae8040; }
-.pullStats b { color: #e7d3ae; font: 600 12px Georgia, serif; }
-.pullStats small { overflow: hidden; color: #6f6a61; font-size: 6px; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.pullStats b { color: #e7d3ae; font: 600 12px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
+.pullStats small { overflow: hidden; color: #6f6a61; font-size: var(--atlas-text-label); text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 
 .movementCall,
 .raidCall { display: flex; gap: 9px; margin: 11px 12px 0; padding: 10px; border: 1px solid rgba(137, 100, 48, .3); background: #0e0e0e; }
 .movementCall > svg,
 .raidCall > svg { flex: 0 0 auto; width: 16px; height: 16px; color: #d1a34e; }
 .movementCall p,
-.raidCall p { margin: 4px 0 0; color: #c4b8a6; font-size: 8px; line-height: 1.52; }
+.raidCall p { margin: 4px 0 0; color: #c4b8a6; font-size: var(--atlas-text-label); line-height: 1.52; }
 .raidCall { border-color: color-mix(in srgb, var(--raid-accent) 34%, rgba(137, 100, 48, .3)); background: color-mix(in srgb, var(--raid-accent) 7%, #0d0d0e); }
 .raidCall > svg { color: color-mix(in srgb, var(--raid-accent) 64%, #e3b65d); }
 
@@ -287,9 +287,9 @@
 .sequence { margin-top: 13px; border-top: 1px solid rgba(130, 94, 42, .3); }
 .enemies > header,
 .abilities > header,
-.sequence > header { display: flex; align-items: center; justify-content: space-between; min-height: 32px; padding: 0 12px; color: #c5a05c; background: rgba(32, 25, 15, .35); font-size: 7px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.sequence > header { display: flex; align-items: center; justify-content: space-between; min-height: 32px; padding: 0 12px; color: #c5a05c; background: rgba(32, 25, 15, .35); font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .enemies > header b,
-.abilities > header b { color: #6f695f; font-size: 6px; letter-spacing: .05em; }
+.abilities > header b { color: #6f695f; font-size: var(--atlas-text-label); letter-spacing: .05em; }
 .enemies ul { margin: 0; padding: 0 8px 6px; list-style: none; }
 .enemies li { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto auto; align-items: center; gap: 7px; min-height: 54px; padding: 6px 5px; border-bottom: 1px solid rgba(105, 79, 42, .2); }
 .enemyMark { position: relative; display: grid; width: 30px; height: 30px; overflow: hidden; place-items: center; color: #9b8d78; border: 1px solid #4d4334; background: #090a0b; box-shadow: inset 0 0 10px #020202; }
@@ -299,10 +299,10 @@
 .enemies li[data-priority="critical"] .enemyMark { color: #f0ab67; border-color: #9f3e2c; box-shadow: inset 0 0 10px rgba(109, 24, 16, .28), 0 0 8px rgba(184, 59, 34, .14); }
 .enemies li[data-priority="high"] .enemyMark { color: #e1ba64; border-color: #88642e; }
 .enemyName { display: grid; min-width: 0; gap: 3px; }
-.enemyName b { overflow: hidden; color: #ddd0bc; font: 600 9px/1.1 Georgia, serif; text-overflow: ellipsis; white-space: nowrap; }
-.enemyName small { overflow: hidden; color: #777169; font-size: 7px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
-.enemyCount { color: #efc66d; font: 600 12px Georgia, serif; }
-.enemies li > a { display: flex; align-items: center; gap: 3px; color: #807665; font-size: 6px; text-decoration: none; }
+.enemyName b { overflow: hidden; color: #ddd0bc; font: 600 var(--atlas-text-label)/1.1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-overflow: ellipsis; white-space: nowrap; }
+.enemyName small { overflow: hidden; color: #777169; font-size: var(--atlas-text-label); line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.enemyCount { color: #efc66d; font: 600 12px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
+.enemies li > a { display: flex; align-items: center; gap: 3px; color: #807665; font-size: var(--atlas-text-label); text-decoration: none; }
 .enemies li > a small { color: #5f5a52; font-size: 5px; }
 .enemies li > a svg { width: 9px; height: 9px; }
 .enemies li > a:hover { color: #e0b75e; }
@@ -313,8 +313,8 @@
 .abilityList button[data-active="true"] { color: #eed8ae; border-color: #a37838; background: rgba(76, 54, 26, .18); box-shadow: inset 2px 0 #d8a54c; }
 .abilityList button:focus-visible { outline: 2px solid #efbf5e; outline-offset: 1px; }
 .abilityList button > span:nth-child(2) { display: grid; min-width: 0; gap: 3px; }
-.abilityList button small { color: #9d7440; font-size: 6px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
-.abilityList button b { overflow: hidden; font: 600 9px/1.1 Georgia, serif; text-overflow: ellipsis; white-space: nowrap; }
+.abilityList button small { color: #9d7440; font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.abilityList button b { overflow: hidden; font: 600 var(--atlas-text-label)/1.1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-overflow: ellipsis; white-space: nowrap; }
 .abilityList button > svg { width: 11px; height: 11px; color: #6d5940; }
 .spellIcon { position: relative; display: grid; width: 32px; height: 32px; overflow: hidden; place-items: center; color: #d4a756; border: 1px solid #77582c; outline: 1px solid #020202; background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--raid-accent) 45%, #332314), #09090a 72%); box-shadow: inset 0 0 8px #030303, 0 0 8px color-mix(in srgb, var(--raid-accent) 18%, transparent); }
 .spellIcon svg { width: 16px; height: 16px; filter: drop-shadow(0 1px 2px #000); }
@@ -330,12 +330,12 @@
 
 .abilityDetail { margin: 0 8px 8px; padding: 10px; border: 1px solid rgba(154, 111, 48, .42); background: #0e0e0f; box-shadow: inset 0 0 22px rgba(0, 0, 0, .36); animation: detailReveal .18s ease both; }
 .abilityDetail > header { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
-.abilityDetail h5 { margin: 3px 0 0; color: #ecddc2; font: 600 13px/1.1 Georgia, serif; }
+.abilityDetail h5 { margin: 3px 0 0; color: #ecddc2; font: 600 13px/1.1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .abilityDetail header > a { display: grid; width: 26px; height: 26px; place-items: center; color: #9f7c44; border: 1px solid rgba(133, 98, 45, .36); text-decoration: none; }
 .abilityDetail header > a:hover { color: #f1c66c; border-color: #a77a36; }
 .abilityDetail header > a svg { width: 12px; height: 12px; }
-.abilityDetail > p { margin: 9px 0; color: #918a80; font-size: 8px; line-height: 1.5; }
-.counterBadge { display: inline-flex; align-items: center; gap: 5px; margin-top: 9px; padding: 4px 7px; color: #d8b667; border: 1px solid rgba(168, 122, 50, .42); background: rgba(108, 73, 25, .13); font-size: 6px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.abilityDetail > p { margin: 9px 0; color: #918a80; font-size: var(--atlas-text-label); line-height: 1.5; }
+.counterBadge { display: inline-flex; align-items: center; gap: 5px; margin-top: 9px; padding: 4px 7px; color: #d8b667; border: 1px solid rgba(168, 122, 50, .42); background: rgba(108, 73, 25, .13); font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .counterBadge svg { width: 10px; height: 10px; }
 .counterBadge[data-counter="kick"],
 .counterBadge[data-counter="stop"] { color: #ef927d; border-color: rgba(182, 69, 45, .52); background: rgba(114, 34, 21, .16); }
@@ -352,10 +352,10 @@
 .roleResponses article span { display: grid; gap: 3px; }
 .mechanicFacts small,
 .requiredResponse small,
-.roleResponses small { color: #9d7540; font-size: 6px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.roleResponses small { color: #9d7540; font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .mechanicFacts b,
 .requiredResponse b,
-.roleResponses b { color: #c7bbab; font-size: 7px; line-height: 1.45; }
+.roleResponses b { color: #c7bbab; font-size: var(--atlas-text-label); line-height: 1.45; }
 .requiredResponse { display: flex; gap: 7px; padding: 9px; border-left: 2px solid #cc913c; background: rgba(155, 107, 38, .09); }
 .requiredResponse > svg { flex: 0 0 auto; width: 14px; height: 14px; color: #e6b458; }
 
@@ -367,29 +367,29 @@
 
 .sequence ol { display: grid; gap: 0; margin: 0; padding: 6px 10px 10px; list-style: none; }
 .sequence li { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 7px; min-height: 35px; border-bottom: 1px solid rgba(103, 78, 43, .18); }
-.sequence li > span { display: grid; width: 20px; height: 20px; place-items: center; color: #d6a64d; border: 1px solid #664b27; border-radius: 50%; font: 600 7px Georgia, serif; }
-.sequence li p { margin: 0; color: #aaa195; font-size: 7px; line-height: 1.35; }
+.sequence li > span { display: grid; width: 20px; height: 20px; place-items: center; color: #d6a64d; border: 1px solid #664b27; border-radius: 50%; font: 600 var(--atlas-text-label) var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
+.sequence li p { margin: 0; color: #aaa195; font-size: var(--atlas-text-label); line-height: 1.35; }
 .nextWaypoint { display: flex; align-items: center; gap: 9px; margin: 0 10px 14px; padding: 10px; border: 1px solid color-mix(in srgb, var(--raid-accent) 35%, #594328); background: color-mix(in srgb, var(--raid-accent) 6%, #0b0c0d); }
 .nextWaypoint > svg { flex: 0 0 auto; width: 17px; height: 17px; color: color-mix(in srgb, var(--raid-accent) 62%, #edbd5d); }
 .nextWaypoint span { display: grid; gap: 3px; }
-.nextWaypoint b { color: #d8c9b2; font-size: 8px; line-height: 1.4; }
+.nextWaypoint b { color: #d8c9b2; font-size: var(--atlas-text-label); line-height: 1.4; }
 .noEnemies,
-.noAbilities { display: flex; align-items: center; gap: 9px; margin: 8px; padding: 13px; color: #98bd85; border: 1px solid rgba(92, 137, 71, .3); background: rgba(39, 64, 28, .16); font-size: 8px; }
+.noAbilities { display: flex; align-items: center; gap: 9px; margin: 8px; padding: 13px; color: #98bd85; border: 1px solid rgba(92, 137, 71, .3); background: rgba(39, 64, 28, .16); font-size: var(--atlas-text-label); }
 .noEnemies > svg,
 .noAbilities > svg { flex: 0 0 auto; width: 17px; height: 17px; }
 .noEnemies span { display: grid; gap: 3px; }
-.noEnemies b { color: #c7dab8; font: 600 10px Georgia, serif; }
-.noEnemies small { color: #708067; font-size: 7px; }
+.noEnemies b { color: #c7dab8; font: 600 var(--atlas-text-meta) var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
+.noEnemies small { color: #708067; font-size: var(--atlas-text-label); }
 
 .pullRail { position: relative; z-index: 1; display: flex; gap: 5px; overflow-x: auto; padding: 8px; border-top: 1px solid rgba(143, 102, 44, .34); background: #060708; scrollbar-color: #76542b #08090a; }
 .pullRail button { display: grid; flex: 1 0 140px; grid-template-columns: 28px minmax(0, 1fr) 10px; align-items: center; gap: 7px; min-width: 0; min-height: 47px; padding: 5px 7px; color: #948c80; border: 1px solid rgba(112, 84, 44, .3); background: #0a0b0c; text-align: left; cursor: pointer; transition: color .15s ease, border-color .15s ease, background .15s ease, transform .15s ease; }
 .pullRail button:hover { color: #cbbca5; border-color: #795a2e; transform: translateY(-1px); }
 .pullRail button[aria-pressed="true"] { color: #efd7a9; border-color: #b07d35; background: rgba(104, 71, 29, .16); box-shadow: inset 0 -2px #d09a41; }
 .pullRail button:focus-visible { outline: 2px solid #f0c264; outline-offset: 1px; }
-.pullRail button > span:first-child { color: #d2a24c; font: 500 13px Georgia, serif; text-align: center; }
+.pullRail button > span:first-child { color: #d2a24c; font: 500 13px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-align: center; }
 .pullRail button > span:nth-child(2) { display: grid; min-width: 0; gap: 3px; }
-.pullRail b { overflow: hidden; font: 600 8px/1.1 Georgia, serif; text-overflow: ellipsis; white-space: nowrap; }
-.pullRail small { overflow: hidden; color: #69645c; font-size: 6px; text-overflow: ellipsis; white-space: nowrap; }
+.pullRail b { overflow: hidden; font: 600 var(--atlas-text-label)/1.1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-overflow: ellipsis; white-space: nowrap; }
+.pullRail small { overflow: hidden; color: #69645c; font-size: var(--atlas-text-label); text-overflow: ellipsis; white-space: nowrap; }
 .pullRail svg { width: 9px; height: 9px; color: #6f5531; }
 
 @keyframes routeMarch { to { stroke-dashoffset: -120; } }
@@ -449,5 +449,5 @@
   .roleResponses { grid-template-columns: 1fr; }
   .mechanicFacts b,
   .requiredResponse b,
-  .roleResponses b { font-size: 8px; }
+  .roleResponses b { font-size: var(--atlas-text-label); }
 }

@@ -1,83 +1,63 @@
+/* atlas:strict — combat intel cards (enemies, abilities) and the shared IntelPopover frame. Colours, fonts and sizes come from the atlas tokens. */
+
+/* ---------- Card trigger ---------- */
 .card {
-  --intel-tone: #c78b36;
+  --intel-tone: var(--atlas-accent);
   position: relative;
-  color: #dfd6c8;
+  min-width: 0;
+  color: var(--atlas-text);
 }
 
 .trigger {
   position: relative;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
-  gap: 9px;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: center;
+  gap: 4px var(--atlas-space-3);
   width: 100%;
-  min-height: 54px;
-  padding: 7px 9px;
-  overflow: hidden;
+  min-height: 60px;
+  padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-2) 14px;
   color: inherit;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-raised);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  border: 1px solid rgba(127, 93, 43, .42);
-  border-radius: 3px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--intel-tone) 7%, #0a0b0d), #090b0e 32%, #050709);
-  box-shadow: 0 1px 0 rgba(255, 211, 126, .04), inset 0 0 0 1px rgba(0, 0, 0, .72), inset 0 10px 24px rgba(255, 255, 255, .018), 0 7px 16px rgba(0, 0, 0, .18);
-  transition: border-color .14s ease, filter .14s ease, box-shadow .14s ease, transform .14s ease;
+  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
 }
 
+/* The left edge carries the data tone (enemy priority); chrome stays amber. */
 .trigger::before {
-  content: "";
   position: absolute;
-  inset: 7px auto 7px 0;
-  width: 2px;
+  inset: 8px auto 8px 0;
+  width: 3px;
+  content: "";
   background: var(--intel-tone);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--intel-tone) 62%, transparent);
-  opacity: .78;
-}
-
-.trigger::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(105deg, rgba(255, 224, 161, .035), transparent 26%);
 }
 
 .trigger:hover,
-.trigger:focus-visible,
 .trigger[data-open] {
-  border-color: color-mix(in srgb, var(--intel-tone) 76%, #b88a42);
-  filter: brightness(1.09);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, .9), inset 0 0 0 1px color-mix(in srgb, var(--intel-tone) 16%, transparent), inset 0 12px 28px rgba(255, 255, 255, .024), 0 8px 20px rgba(0, 0, 0, .28), 0 0 16px color-mix(in srgb, var(--intel-tone) 9%, transparent);
+  border-color: var(--atlas-accent);
+  background: var(--atlas-surface-selected);
 }
 
-.trigger:hover { transform: translateX(1px); }
-
 .trigger:focus-visible {
-  outline: 2px solid #ffd16d;
+  outline: 2px solid var(--atlas-accent-strong);
   outline-offset: 2px;
 }
 
 .gameIcon {
   position: relative;
   display: grid;
-  width: 34px;
-  height: 34px;
+  grid-row: span 2;
+  width: 40px;
+  height: 40px;
   place-items: center;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--intel-tone) 76%, #2a1b0b);
-  border-radius: 3px;
-  background: #050609;
-  box-shadow: 0 0 0 2px #020304, 0 0 0 3px rgba(123, 92, 47, .44), 0 0 13px color-mix(in srgb, var(--intel-tone) 20%, transparent), inset 0 0 10px rgba(0, 0, 0, .66);
-}
-
-.gameIcon::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border: 1px solid rgba(255, 237, 197, .12);
-  background: linear-gradient(145deg, rgba(255, 255, 255, .16), transparent 38%);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-sunken);
 }
 
 .gameIcon > img {
@@ -90,69 +70,70 @@
 .enemyPortrait > img {
   object-position: 50% var(--portrait-y, 34%);
   transform: scale(var(--portrait-scale, 1.35));
-  filter: brightness(1.18) saturate(1.12) contrast(1.04);
 }
 
 .identity {
   display: grid;
+  gap: 2px;
   min-width: 0;
-  gap: 3px;
 }
 
 .identity b {
   overflow: hidden;
-  color: #f1e7d8;
-  font-family: Georgia, serif;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.05;
+  color: var(--atlas-text-strong);
+  font-size: var(--atlas-text-small);
+  font-weight: 650;
+  line-height: var(--atlas-leading-snug);
   text-overflow: ellipsis;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, .8);
   white-space: nowrap;
 }
 
 .identity small {
   overflow: hidden;
-  color: #898780;
-  font-size: 8px;
-  line-height: 1.15;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-meta);
+  line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .trigger > strong {
   align-self: start;
-  padding-top: 2px;
-  color: #ffd05f;
-  font-size: 9px;
-  font-weight: 750;
+  color: var(--atlas-accent-strong);
+  font-size: var(--atlas-text-meta);
+  font-weight: 700;
   text-align: right;
-  text-shadow: 0 0 8px rgba(236, 164, 49, .2);
+  white-space: nowrap;
 }
 
 .more {
-  grid-column: 2 / -1;
   display: flex;
+  grid-column: 2 / -1;
   align-items: center;
-  gap: 4px;
-  margin-top: -3px;
-  color: #777a77;
-  font-size: 7.5px;
-  font-weight: 650;
-  letter-spacing: .025em;
+  gap: 6px;
+  min-width: 0;
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-meta);
 }
 
-.more svg { width: 10px; height: 10px; }
-.more svg:first-child { color: #b79861; }
+.more > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more svg { width: 13px; height: 13px; }
+.more svg:first-child { color: var(--atlas-accent); }
 
 .more svg:last-child {
   margin-left: auto;
-  color: #ad8747;
-  transition: transform .16s ease;
+  color: var(--atlas-accent);
+  transition: transform var(--atlas-duration) var(--atlas-ease);
 }
 
 .trigger[data-open] .more svg:last-child { transform: rotate(180deg); }
 
+/* ---------- Popover frame (shared with raid ability cards and WowTooltip) ---------- */
 .tooltip {
   --tooltip-width: 364px;
   --tooltip-x: 12px;
@@ -167,47 +148,31 @@
   max-height: calc(100dvh - 24px);
   gap: 10px;
   margin: 0;
-  padding: 15px 16px 14px;
+  padding: var(--atlas-space-4);
   overflow: auto;
   pointer-events: none;
-  color: #eee9df;
-  border: 1px solid #75511f;
-  border-radius: 3px;
-  outline: 1px solid #050505;
-  background: radial-gradient(circle at 12% -4%, color-mix(in srgb, var(--intel-tone) 11%, transparent), transparent 34%), linear-gradient(150deg, rgba(15, 15, 18, .995), rgba(3, 4, 6, .998) 72%);
-  box-shadow: 0 0 0 1px rgba(204, 155, 77, .16) inset, 0 0 0 3px rgba(0, 0, 0, .92), 0 18px 48px rgba(0, 0, 0, .72), 0 0 28px color-mix(in srgb, var(--intel-tone) 13%, transparent);
-  scrollbar-color: #765322 #090909;
-  transform-origin: right top;
+  color: var(--atlas-text);
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: var(--atlas-radius);
+  outline: 1px solid #020303;
+  background: var(--atlas-surface-raised);
+  box-shadow: var(--atlas-shadow-lift);
+  scrollbar-color: var(--atlas-line) transparent;
 }
 
 .tooltip:not(:popover-open) { display: none; }
 
-.tooltip:popover-open { animation: tooltipSummon .16s cubic-bezier(.2, .82, .25, 1) both; }
-
-@starting-style {
-  .tooltip:popover-open { opacity: 0; transform: translateX(5px) scale(.985); }
-}
-
-.tooltip::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 4px;
-  pointer-events: none;
-  border: 1px solid rgba(219, 173, 99, .08);
-  box-shadow: inset 0 0 34px rgba(0, 0, 0, .46);
-}
+.tooltip:popover-open { animation: tooltipSummon var(--atlas-duration) var(--atlas-ease) both; }
 
 .tooltip::after {
-  content: "";
   position: fixed;
   top: calc(var(--tooltip-y) + 22px);
   width: 9px;
   height: 9px;
-  border-top: 1px solid #75511f;
-  border-right: 1px solid #75511f;
-  background: #09090b;
-  box-shadow: 2px -2px 2px rgba(0, 0, 0, .22);
+  content: "";
+  border-top: 1px solid var(--atlas-line-strong);
+  border-right: 1px solid var(--atlas-line-strong);
+  background: var(--atlas-surface-raised);
 }
 
 .tooltip[data-side="right"]::after {
@@ -222,216 +187,191 @@
 
 .tooltip[data-side="sheet"]::after { display: none; }
 
-.tooltip header {
+/* ---------- Popover content of the route intel cards ---------- */
+.intelBody {
+  display: grid;
+  gap: var(--atlas-space-3);
+}
+
+.intelBody > header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(155, 117, 58, .28);
+  gap: var(--atlas-space-3);
+  padding-bottom: var(--atlas-space-2);
+  border-bottom: 1px solid var(--atlas-line-soft);
 }
 
-.tooltip header span,
-.tooltip header b {
+.intelBody > header span,
+.intelBody > header b {
   display: flex;
   align-items: center;
-  gap: 5px;
-  color: #898982;
-  font-size: 8px;
-  font-style: normal;
-  font-weight: 700;
-  letter-spacing: .065em;
+  gap: 6px;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
-.tooltip header svg { width: 12px; height: 12px; color: var(--intel-tone); }
-
-.tooltip header b {
-  flex: 0 0 auto;
-  color: #ffd364;
-  text-shadow: 0 0 9px rgba(255, 185, 58, .18);
-}
+.intelBody > header svg { width: 13px; height: 13px; color: var(--intel-tone); }
+.intelBody > header b { flex: none; color: var(--atlas-accent-strong); }
 
 .tooltipSubject {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
-  gap: 12px;
   align-items: center;
-  padding: 3px 0 2px;
+  gap: var(--atlas-space-3);
 }
 
 .tooltipSubject .gameIcon { width: 48px; height: 48px; }
 
 .tooltipSubject > span:last-child {
   display: grid;
+  gap: 2px;
   min-width: 0;
-  gap: 4px;
 }
 
 .tooltipSubject small {
   overflow: hidden;
-  color: #777873;
-  font-size: 8px;
-  letter-spacing: .04em;
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-meta);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .tooltipSubject b {
   overflow: hidden;
-  color: var(--intel-tone);
-  font-family: Georgia, serif;
-  font-size: 17px;
-  font-weight: 500;
-  line-height: 1.13;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  font-weight: var(--atlas-weight-display);
+  line-height: var(--atlas-leading-snug);
   text-overflow: ellipsis;
-  text-shadow: 0 0 12px color-mix(in srgb, var(--intel-tone) 22%, transparent);
   white-space: nowrap;
 }
-
-.tooltip[data-kind="ability"] .tooltipSubject b { color: #bd63ff; }
 
 .tooltipPortrait > img {
   object-position: 50% var(--portrait-y, 32%);
   transform: scale(var(--portrait-scale, 1.25));
-  filter: brightness(1.18) saturate(1.12) contrast(1.04);
 }
 
-.tooltip > p {
-  margin: 0;
-  color: #f0ede7;
-  font-size: 12px;
-  line-height: 1.55;
-  text-shadow: 0 1px 2px #000;
+.intelBody > p {
+  color: var(--atlas-text);
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-body);
 }
 
 .warning {
   display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 8px;
-  padding: 9px 0;
-  border-top: 1px solid rgba(130, 69, 39, .32);
-  border-bottom: 1px solid rgba(130, 69, 39, .2);
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: var(--atlas-space-2);
+  padding-block: var(--atlas-space-2);
+  border-block: 1px solid var(--atlas-line-soft);
 }
 
-.warning > svg {
-  width: 15px;
-  height: 15px;
-  color: #ff6b3d;
-  filter: drop-shadow(0 0 5px rgba(255, 68, 24, .25));
-}
+.warning > svg { width: 16px; height: 16px; color: var(--atlas-negative); }
 
 .warning span {
   display: grid;
-  gap: 3px;
-  color: #d9a28b;
-  font-size: 10px;
-  line-height: 1.45;
+  gap: 2px;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-body);
 }
 
 .warning b {
-  color: #ff7047;
-  font-size: 8px;
-  letter-spacing: .065em;
+  color: var(--atlas-negative);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
-.tooltip footer {
+.intelBody > footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  color: #858681;
-  font-size: 9px;
+  gap: var(--atlas-space-2);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-meta);
 }
 
-.tooltip footer > strong { color: #ffd05e; font: 600 16px Georgia, serif; }
+.intelBody > footer > strong {
+  color: var(--atlas-accent-strong);
+  font-variant-numeric: lining-nums;
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  font-weight: var(--atlas-weight-display);
+}
 
-.response { display: grid !important; gap: 0; }
+.intelBody > .response {
+  display: grid;
+  gap: 0;
+}
 
 .response > span {
   display: grid;
-  grid-template-columns: 24px 1fr;
-  gap: 8px;
+  grid-template-columns: 22px minmax(0, 1fr);
   align-items: center;
+  gap: var(--atlas-space-2);
   min-width: 0;
-  padding: 7px 0;
-  border-bottom: 1px solid rgba(115, 96, 67, .18);
+  padding-block: 6px;
+  border-bottom: 1px solid var(--atlas-line-soft);
 }
 
-.response > span:last-child { border-bottom: 0; padding-bottom: 0; }
-
-.response > span > svg {
-  width: 16px;
-  height: 16px;
-  color: var(--intel-tone);
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--intel-tone) 24%, transparent));
-}
-
-.response > span:nth-child(2) > svg { color: #3fd267; }
-.response > span:nth-child(3) > svg { color: #62a9ff; }
+.response > span:last-child { padding-bottom: 0; border-bottom: 0; }
+.response > span > svg { width: 16px; height: 16px; color: var(--atlas-accent); }
 
 .response i {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: var(--atlas-space-3);
   min-width: 0;
-  gap: 12px;
   font-style: normal;
 }
 
 .response small {
-  flex: 0 0 auto;
-  color: #777873;
-  font-size: 7px;
-  font-weight: 700;
-  letter-spacing: .055em;
+  flex: none;
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
 .response b {
-  color: #f4eddf;
-  font-size: 10px;
-  font-weight: 650;
+  color: var(--atlas-text-strong);
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
   line-height: 1.3;
   text-align: right;
   overflow-wrap: anywhere;
 }
 
 @keyframes tooltipSummon {
-  from { opacity: 0; transform: translateX(5px) scale(.985); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
 
 @media (max-width: 719px) {
   .tooltip {
     max-height: min(72dvh, 520px);
-    padding: 14px;
-    border-color: #8b6228;
-    box-shadow: 0 0 0 1px rgba(212, 165, 88, .16) inset, 0 0 0 3px rgba(0, 0, 0, .92), 0 -18px 54px rgba(0, 0, 0, .78);
-    transform-origin: center bottom;
+    padding: var(--atlas-space-4);
   }
 
-  .trigger { min-height: 58px; }
-
   .response i {
-    align-items: flex-start;
     flex-direction: column;
+    align-items: flex-start;
     gap: 2px;
   }
 
   .response b { text-align: left; }
-
-  @starting-style {
-    .tooltip:popover-open { opacity: 0; transform: translateY(8px) scale(.99); }
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .trigger,
-  .more svg:last-child,
-  .tooltip:popover-open {
-    animation: none !important;
-    transition: none !important;
-  }
+  .more svg:last-child { transition: none; }
+  .tooltip:popover-open { animation: none; }
 }

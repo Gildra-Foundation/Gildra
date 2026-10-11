@@ -82,7 +82,7 @@ function EntityTooltip({ entity, lang, expanded, detailPage = false, iconSymbol 
     return true;
   });
 	const content = (
-		<div ref={dialogRef} className={`db-wow-tooltip quality-${entity.quality ?? 0}${expanded ? " is-expanded" : ""}${detailPage ? " is-detail-page" : ""}`} id={`tooltip-${entity.id}`} role={expanded ? "dialog" : detailPage ? "region" : "tooltip"} aria-modal={expanded ? true : undefined} aria-labelledby={expanded || detailPage ? `tooltip-name-${entity.id}` : undefined} tabIndex={expanded ? -1 : undefined}>
+		<div ref={dialogRef} data-atlas-scope className={`db-wow-tooltip quality-${entity.quality ?? 0}${expanded ? " is-expanded" : ""}${detailPage ? " is-detail-page" : ""}`} id={`tooltip-${entity.id}`} role={expanded ? "dialog" : detailPage ? "region" : "tooltip"} aria-modal={expanded ? true : undefined} aria-labelledby={expanded || detailPage ? `tooltip-name-${entity.id}` : undefined} tabIndex={expanded ? -1 : undefined}>
 			{expanded ? <button ref={closeRef} type="button" className="db-tooltip-close" aria-label={lang === "ru" ? "Закрыть подсказку" : "Close tooltip"} onClick={onClose}>×</button> : null}
       <span className="db-tooltip-icon" aria-hidden="true">
         <ResilientImage src={entity.iconUrl} alt="" fallback={<span className="db-icon-fallback">✦</span>} />
@@ -95,13 +95,13 @@ function EntityTooltip({ entity, lang, expanded, detailPage = false, iconSymbol 
       </div>
 		</div>
 	);
-	return expanded && mounted ? createPortal(<><div className="db-tooltip-backdrop" aria-hidden="true" onMouseDown={onClose} />{content}</>, document.body) : content;
+	return expanded && mounted ? createPortal(<><div className="db-tooltip-backdrop" data-atlas-scope aria-hidden="true" onMouseDown={onClose} />{content}</>, document.body) : content;
 }
 
 function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<string, unknown>; entityType: string; lang: Lang; mentions: Record<string, unknown>[] }) {
   const type = String(block.type ?? "");
   if (type === "name") return null;
-	if (type === "item_level") return <div className="db-tooltip-level">{lang === "ru" ? "Уровень предмета (DB2)" : "Item level (DB2)"} {String(block.value ?? "")}</div>;
+	if (type === "item_level") return <div className="db-tooltip-level">{lang === "ru" ? "Уровень предмета" : "Item level"} {String(block.value ?? "")}</div>;
   if (type === "slot") return <div>{inventoryTypeLabel(Number(block.code), lang)}</div>;
   if (type === "subclass") return <div className="db-tooltip-muted">{subclassLabel(Number(block.class_id), Number(block.subclass_id), lang)}</div>;
   if (type === "binding") return <div>{bindingLabel(Number(block.code), lang)}</div>;
@@ -152,16 +152,10 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
 }
 
 function ItemRegistry({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
-	const fields = [
-		[lang === "ru" ? "Класс предмета" : "Item class", block.class_id],
-		[lang === "ru" ? "Подкласс" : "Subclass", block.subclass_id],
-		[lang === "ru" ? "Тип экипировки" : "Inventory type", block.inventory_type],
-		["FileDataID", block.icon_file_data_id],
-	].filter((entry) => entry[1] !== null && entry[1] !== undefined && entry[1] !== "");
-	return <div className="db-tooltip-item-context">
-		{Boolean(block.registry_only) ? <div className="db-tooltip-muted">{lang === "ru" ? "Запись реестра игрового клиента" : "Game client registry record"}</div> : null}
-		{fields.map(([label, value]) => <div key={String(label)}><b>{String(label)}:</b> {String(value)}</div>)}
-	</div>;
+	// Class, subclass, inventory type and FileDataID are internal client codes; the
+	// readable slot and armour type come from their own blocks, the raw codes stay in the JSON section.
+	if (!block.registry_only) return null;
+	return <div className="db-tooltip-item-context db-tooltip-muted">{lang === "ru" ? "Предмет есть в файлах игры, но подробных данных о нём пока нет." : "The item exists in the game files, but no details are available yet."}</div>;
 }
 
 function ProfessionInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
@@ -224,11 +218,10 @@ function ItemVariants({ entries, lang }: { entries: Record<string, unknown>[]; l
 			const stats = Array.isArray(variant.stats) ? variant.stats as Record<string, unknown>[] : [];
 			const effects = Array.isArray(variant.effects) ? variant.effects as Record<string, unknown>[] : [];
 			return <details key={`${String(variant.key)}-${variantIndex}`} open={entries.length === 1}>
-				<summary>{String(variant.key || "base")}{Number(variant.item_level ?? 0) > 0 ? ` · ${lang === "ru" ? "уровень" : "level"} ${String(variant.item_level)}` : ""}</summary>
+				<summary>{!variant.key || String(variant.key) === "base" ? (lang === "ru" ? "Основной вариант" : "Base version") : String(variant.key)}{Number(variant.item_level ?? 0) > 0 ? ` · ${lang === "ru" ? "уровень" : "level"} ${String(variant.item_level)}` : ""}</summary>
 				{stats.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Характеристики" : "Stats"}:</b>{stats.map((stat, index) => <span key={`${String(stat.index)}-${index}`}>{String(stat.label || stat.key || `Stat ${stat.type}`)}{stat.value !== null && stat.value !== undefined ? `: ${String(stat.value)}` : ""}{Number(stat.allocation ?? 0) !== 0 ? ` · ${lang === "ru" ? "масштаб" : "allocation"} ${String(stat.allocation)}` : ""}</span>)}</div> : null}
 				{effects.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Эффекты" : "Effects"}:</b>{effects.map((effect, index) => <span key={`${String(effect.index)}-${index}`}>{lang === "ru" ? "Заклинание" : "Spell"} #{String(effect.spell_id || "—")}{Number(effect.cooldown_ms ?? 0) > 0 ? ` · ${formatDuration(Number(effect.cooldown_ms), lang)}` : ""}</span>)}</div> : null}
-				{String(variant.source_artifact_id ?? "") ? <small>{lang === "ru" ? "Источник" : "Source proof"}: {String(variant.source_artifact_id)}</small> : null}
-			</details>;
+							</details>;
 		})}
 	</div>;
 }
@@ -252,8 +245,8 @@ function QuestRewardPackage({ block, lang }: { block: Record<string, unknown>; l
 	return <div className="db-tooltip-quest-info">
 		<div><b>{lang === "ru" ? "Пакет" : "Package"}:</b> #{String(block.package_id ?? "—")}</div>
 		<div className="db-tooltip-muted">{lang === "ru"
-			? "Клиентский набор предметов. Связь с конкретным заданием пока не подтверждена источником."
-			: "Client item package. A link to a specific quest is not yet proved by a source."}</div>
+			? "Набор предметов из игрового клиента. С каким заданием он связан, пока неизвестно."
+			: "An item set from the game client. Which quest awards it is not known yet."}</div>
 		{items.length ? <div className="db-tooltip-related db-tooltip-rewards">
 			<b>{lang === "ru" ? "Предметы в пакете" : "Package items"}:</b>
 			<div className="db-tooltip-reward-group">{items.map((item, index) => {
@@ -262,8 +255,7 @@ function QuestRewardPackage({ block, lang }: { block: Record<string, unknown>; l
 				const icon = verifiedMediaURL(String(item.icon_url ?? ""));
 				const label = String(item.name || `Item #${externalID || "—"}`);
 				const quantity = Number(item.quantity ?? 0);
-				const displayType = Number(item.display_type ?? 0);
-				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong>{label}</strong><small>{quantity > 0 ? `×${quantity.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}` : ""}{displayType > 0 ? ` · DisplayType ${displayType}` : ""}</small></span></>;
+				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong>{label}</strong><small>{quantity > 0 ? `×${quantity.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}` : ""}</small></span></>;
 				return entityID
 					? <Link className="db-tooltip-reward" href={`${prefix}/database/item/${encodeURIComponent(entityID)}/${encodeURIComponent(String(externalID || "item"))}`} key={`${externalID}-${index}`}>{content}</Link>
 					: <span className="db-tooltip-reward" key={`${externalID}-${index}`}>{content}</span>;
@@ -355,7 +347,7 @@ function LootTables({ tables, lang }: { tables: Record<string, unknown>[]; lang:
 		skinning: ["Skinning", "Снятие шкур"], vendor: ["Vendor inventory", "Товары продавца"],
 		container: ["Container", "Контейнер"], fishing: ["Fishing", "Рыбалка"], other: ["Other", "Другое"],
 	};
-	return <div className="db-tooltip-loot-tables"><b>{lang === "ru" ? "Подтверждённые источником предметы" : "Source-verified items"}</b>{tables.map((table) => {
+	return <div className="db-tooltip-loot-tables"><b>{lang === "ru" ? "Добыча" : "Loot"}</b>{tables.map((table) => {
 		const entries = Array.isArray(table.entries) ? table.entries as Record<string, unknown>[] : [];
 		const kind = String(table.kind ?? "other");
 		return <section key={String(table.id)}>
@@ -367,7 +359,7 @@ function LootTables({ tables, lang }: { tables: Record<string, unknown>[]; lang:
 				const min = hasQuantity ? Number(entry.min_quantity) : 0;
 				const max = hasQuantity ? Number(entry.max_quantity) : 0;
 				const quantity = !hasQuantity || (min === 1 && max === 1) ? "" : min === max ? ` ×${min}` : ` ×${min}–${max}`;
-				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-loot-icon-fallback" aria-hidden="true">◇</span>}<span><strong>{String(entry.name || `Item #${String(entry.item_external_id)}`)}{quantity}</strong><small>{chance || (lang === "ru" ? "Шанс не указан источником" : "Chance not stated by source")}</small></span></>;
+				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-loot-icon-fallback" aria-hidden="true">◇</span>}<span><strong>{String(entry.name || `Item #${String(entry.item_external_id)}`)}{quantity}</strong><small>{chance || (lang === "ru" ? "Шанс выпадения неизвестен" : "Drop chance unknown")}</small></span></>;
 				return entry.item_entity_id ? <a key={`${String(table.id)}-${String(entry.index)}`} href={`${prefix}/database/item/${encodeURIComponent(String(entry.item_entity_id))}/${encodeURIComponent(String(entry.item_external_id))}`}>{content}</a> : <span className="db-tooltip-loot-unresolved" key={`${String(table.id)}-${String(entry.index)}`}>{content}</span>;
 			})}
 		</section>;

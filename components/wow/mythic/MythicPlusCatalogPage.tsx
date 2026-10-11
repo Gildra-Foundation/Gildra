@@ -1,26 +1,65 @@
-import Link from "next/link";
-import { dungeonRoutes } from "./dungeonRoutes";
+import { CalendarRange, ExternalLink, Gem, Hourglass } from "lucide-react";
+import { AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
+import { DungeonCardGrid } from "./DungeonCardGrid";
+import { dungeonSlugs } from "./dungeonRoutes";
 
-export function MythicPlusCatalogPage({ locale, season = "midnight-season-2" }: { locale: "en" | "ru"; season?: "midnight-season-1" | "midnight-season-2" }) {
+type Season = "midnight-season-1" | "midnight-season-2";
+
+const copy = {
+  ru: {
+    breadcrumbs: "Навигация", wow: "World of Warcraft", hub: "Атлас Mythic+", eyebrow: "World of Warcraft · Midnight",
+    title: (n: string) => `Mythic+ · сезон ${n}`,
+    current: "Подземелья текущего сезона ключей с маршрутами, таймерами и тактикой.",
+    past: "Архив первого сезона Midnight.",
+    pendingTitle: "Состав пула появится позже",
+    pending: "Список подземелий первого сезона опубликуем после сверки по источникам.",
+    dungeons: "подземелий", list: "Подземелья сезона", seasons: "Сезоны", source: "Анонс Blizzard",
+    season1: "Midnight · Сезон 1", season2: "Midnight · Сезон 2", archive: "Архив", currentLabel: "Текущий сезон",
+  },
+  en: {
+    breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", hub: "Mythic+ atlas", eyebrow: "World of Warcraft · Midnight",
+    title: (n: string) => `Mythic+ · Season ${n}`,
+    current: "Dungeons of the current keystone season with routes, timers and strategy.",
+    past: "Archive of the first Midnight season.",
+    pendingTitle: "The dungeon pool will appear later",
+    pending: "We will publish the first season's dungeon list once it is checked against the sources.",
+    dungeons: "dungeons", list: "Dungeons of the season", seasons: "Seasons", source: "Blizzard announcement",
+    season1: "Midnight · Season 1", season2: "Midnight · Season 2", archive: "Archive", currentLabel: "Current season",
+  },
+} as const;
+
+const sources: Record<Season, string> = {
+  "midnight-season-2": "https://worldofwarcraft.blizzard.com/en-us/news/24280285",
+  "midnight-season-1": "https://worldofwarcraft.blizzard.com/en-us/news/24266321/midnight-season-1-has-begun",
+};
+
+export function MythicPlusCatalogPage({ locale, season = "midnight-season-2" }: { locale: "en" | "ru"; season?: Season }) {
+  const text = copy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   const isCurrent = season === "midnight-season-2";
   return (
-    <main style={{ maxWidth: 1080, margin: "0 auto", padding: "64px 24px 96px" }}>
-      <p>World of Warcraft · Midnight</p>
-      <h1>{locale === "ru" ? `Mythic+ · сезон ${isCurrent ? "2" : "1"}` : `Mythic+ · Season ${isCurrent ? "2" : "1"}`}</h1>
-      <p>{isCurrent
-        ? (locale === "ru" ? "Пул подземелий подтверждён официальным обзором Blizzard." : "The dungeon pool is confirmed by Blizzard's official overview.")
-        : (locale === "ru" ? "Исторический пул не публикуется, пока его состав не пройдёт сверку по источникам." : "The historical pool is withheld until its membership is source-verified.")}</p>
-      {isCurrent ? <ul>{Object.values(dungeonRoutes).map((dungeon) => (
-        <li key={dungeon.slug} style={{ marginBlock: 12 }}>
-          <Link href={`${prefix}/wow/mythic-plus/${season}/${dungeon.slug}`}>{locale === "ru" ? dungeon.nameRu : dungeon.name}</Link>
-        </li>
-      ))}</ul> : null}
-      <nav aria-label={locale === "ru" ? "Сезоны Mythic+" : "Mythic+ seasons"}>
-        <Link href={`${prefix}/wow/mythic-plus/seasons/midnight-season-1`}>Midnight Season 1</Link>{" · "}
-        <Link href={`${prefix}/wow/mythic-plus/seasons/midnight-season-2`}>Midnight Season 2</Link>
-      </nav>
-      <p><a href={isCurrent ? "https://worldofwarcraft.blizzard.com/en-us/news/24280285" : "https://worldofwarcraft.blizzard.com/en-us/news/24266321/midnight-season-1-has-begun"} rel="noreferrer">{locale === "ru" ? "Официальный источник Blizzard" : "Official Blizzard source"}</a></p>
-    </main>
+    <AtlasFrame lang={locale}>
+      <AtlasHero
+        breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.hub, href: `${prefix}/wow/mythic-plus` }, { label: text.title(isCurrent ? "2" : "1") }]}
+        breadcrumbsLabel={text.breadcrumbs}
+        emblem={<Gem />}
+        emblemShape="diamond"
+        eyebrow={text.eyebrow}
+        title={text.title(isCurrent ? "2" : "1")}
+        lede={isCurrent ? text.current : text.past}
+        stats={isCurrent ? [{ value: dungeonSlugs.length, label: text.dungeons }] : undefined}
+      />
+      <AtlasSection id="dungeons" title={isCurrent ? text.list : undefined} aside={<AtlasLinkButton variant="ghost" size="sm" href={sources[season]} external iconAfter={<ExternalLink aria-hidden="true" />}>{text.source}</AtlasLinkButton>}>
+        {isCurrent
+          ? <DungeonCardGrid locale={locale} hrefBase={`/wow/mythic-plus/${season}`} />
+          : <AtlasNotice tone="caution" icon={<Hourglass />} title={text.pendingTitle}>{text.pending}</AtlasNotice>}
+      </AtlasSection>
+      <AtlasSection id="seasons" title={text.seasons} level={3}>
+        <AtlasGrid min={260} fit>
+          <AtlasTile href={`${prefix}/wow/mythic-plus/seasons/midnight-season-2`} icon={<CalendarRange />} title={text.season2} text={text.currentLabel} />
+          <AtlasTile href={`${prefix}/wow/mythic-plus/seasons/midnight-season-1`} icon={<CalendarRange />} title={text.season1} text={text.archive} />
+        </AtlasGrid>
+      </AtlasSection>
+    </AtlasFrame>
   );
 }

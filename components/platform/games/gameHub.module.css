@@ -381,7 +381,7 @@
 .shell[data-game="wow"] .gameSwitch a {
   color: #94866f;
   border-color: rgba(112, 81, 35, .42);
-  font-family: Georgia, serif;
+  font-family: var(--atlas-font-display, Georgia, serif);
 }
 
 .shell[data-game="wow"] .gameSwitch a:hover,
@@ -410,13 +410,13 @@
 }
 
 .shell[data-game="wow"] .eyebrow { color: #e0a647; text-shadow: 0 0 12px rgba(216, 121, 32, .28); }
-.shell[data-game="wow"] .gameIdentity b { color: #eddfc7; font-family: Georgia, serif; }
+.shell[data-game="wow"] .gameIdentity b { color: #eddfc7; font-family: var(--atlas-font-display, Georgia, serif); }
 .shell[data-game="wow"] .gameIdentity small { color: #d39a3d; }
 
 .shell[data-game="wow"] .heroCopy h1 {
   max-width: 650px;
   color: #f5ead8;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--atlas-font-display, Georgia, serif);
   font-size: clamp(44px, 4.5vw, 68px);
   text-shadow: 0 3px 0 #100a04, 0 8px 24px rgba(9, 10, 11, .82);
 }
@@ -459,7 +459,7 @@
 
 .shell[data-game="wow"] :is(.commandFocus h2, .panelHeading h2, .signalHeading h2, .continueBody h2, .patchPanel > header > span, .buildPanel > header > span, .briefing h2, .tierTelemetry > div strong) {
   color: #eadbc3;
-  font-family: Georgia, serif;
+  font-family: var(--atlas-font-display, Georgia, serif);
 }
 
 .shell[data-game="wow"] .statusRail {

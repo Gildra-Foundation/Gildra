@@ -73,7 +73,7 @@ html[data-route-theme="wow"] [data-platform-home] [class*="continueCard"] {
 }
 html[data-route-theme="wow"] [data-platform-home] h1,
 html[data-route-theme="wow"] [data-platform-home] h2,
-html[data-route-theme="wow"] [data-platform-home] h3 { font-family: Georgia, "Times New Roman", serif !important; font-weight: 400 !important; text-shadow: 0 2px 9px rgba(0, 0, 0, .78); }
+html[data-route-theme="wow"] [data-platform-home] h3 { font-family: var(--atlas-font-display, Georgia, serif) !important; font-weight: 400 !important; text-shadow: 0 2px 9px rgba(0, 0, 0, .78); }
 html[data-route-theme="wow"] [data-platform-home] button,
 html[data-route-theme="wow"] [data-platform-home] [role="button"] { border-radius: 2px !important; }
 html[data-route-theme="wow"] [data-platform-home] [class*="mistB"] { background: radial-gradient(circle, rgba(138, 63, 17, .52), transparent 66%) !important; }
@@ -84,7 +84,7 @@ html[data-route-theme="wow"] .library-datasets,
 html[data-route-theme="wow"] .library-products { border-color: #543719; background: linear-gradient(145deg, rgba(24, 17, 9, .96), rgba(9, 7, 4, .985)); box-shadow: 0 20px 48px rgba(0, 0, 0, .3), inset 0 1px rgba(255, 225, 160, .04); }
 html[data-route-theme="wow"] .library-hero { border-inline-start: 3px solid #cf8a30; }
 html[data-route-theme="wow"] .library-hero h1,
-html[data-route-theme="wow"] .library-section-head h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
+html[data-route-theme="wow"] .library-section-head h2 { font-family: var(--atlas-font-display, Georgia, serif); font-weight: 400; }
 html[data-route-theme="wow"] .library-dataset-card { border-color: #402b16; border-radius: 2px; background: #0d0a06; }
 html[data-route-theme="wow"] .library-dataset-card:hover { border-color: #a66f2b; background: #181006; }
 html[data-route-theme="wow"] .library-dataset-art { border-color: #70491d; background: #090704; box-shadow: inset 0 0 0 2px #171007, 0 8px 18px rgba(0, 0, 0, .3); }
@@ -101,9 +101,9 @@ html[data-route-theme="wow"] .legal {
   box-shadow: 0 25px 65px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 226, 161, .045);
 }
 html[data-route-theme="wow"] .legal::before { content: "ARCHIVE OF GILDRA"; display: block; margin-bottom: 13px; color: #b27a35; font: 700 9px var(--ui); letter-spacing: .2em; }
-html[data-route-theme="wow"] .legal h1 { max-width: 760px; color: #f0dfbf; font: 400 clamp(34px, 4vw, 54px)/1.04 Georgia, "Times New Roman", serif; letter-spacing: -.025em; text-shadow: 0 3px 12px #000; }
+html[data-route-theme="wow"] .legal h1 { max-width: 760px; color: #f0dfbf; font: 400 clamp(34px, 4vw, 54px)/1.04 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; letter-spacing: -.025em; text-shadow: 0 3px 12px #000; }
 html[data-route-theme="wow"] .legal-upd { margin-top: 11px; padding-bottom: 17px; border-bottom: 1px solid #322313; color: #857864; }
-html[data-route-theme="wow"] .legal h2 { margin-top: 28px; color: #e0a84e; font: 400 18px Georgia, "Times New Roman", serif; }
+html[data-route-theme="wow"] .legal h2 { margin-top: 28px; color: #e0a84e; font: 400 18px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 html[data-route-theme="wow"] .legal p { max-width: 760px; color: #ae9f87; line-height: 1.78; }
 @media (max-width: 720px) { html[data-route-theme="wow"] .legal { margin-block: 12px 32px; padding: 28px 20px 32px; border-inline-width: 0 0; } }
 
@@ -172,11 +172,9 @@ html[data-route-theme="wow"] .topnav {
     linear-gradient(180deg, #15110b, #080706);
   box-shadow: 0 1px rgba(247, 199, 106, 0.12), 0 8px 24px rgba(0, 0, 0, 0.5);
 }
-html[data-route-theme="wow"] .logo-text { color: #e6ad4a; font-family: Georgia, "Times New Roman", serif; text-shadow: 0 2px 8px #000; }
+html[data-route-theme="wow"] .logo-text { color: #e6ad4a; font-family: var(--atlas-font-display, Georgia, serif); text-shadow: 0 2px 8px #000; }
 html[data-route-theme="wow"] .gsw-btn,
-html[data-route-theme="wow"] .search,
-html[data-route-theme="wow"] .tool,
-html[data-route-theme="wow"] .fgroup select {
+html[data-route-theme="wow"] .search {
   border-color: rgba(168, 113, 39, 0.47);
   background-color: #0c0905;
   color: #d7c6a7;
@@ -186,95 +184,20 @@ html[data-route-theme="wow"] .mobmenu,
 html[data-route-theme="wow"] .sc { border-color: #795222; background: #0c0906; }
 html[data-route-theme="wow"] .foot { border-top-color: #5a3b18; background: linear-gradient(180deg, #0d0a06, #050403); }
 
-/* Tier list becomes an adventurer's ledger instead of a blue admin table. */
-html[data-route-theme="wow"] .tierpage {
-  border: 1px solid #5a3d1b;
-  border-top-color: #aa712a;
-  border-radius: 2px;
-  background: rgba(10, 8, 5, 0.97);
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.56), inset 0 1px rgba(255, 223, 155, 0.06);
-}
-html[data-route-theme="wow"] .tp-side {
-  border-right-color: #503619;
-  background: linear-gradient(180deg, #171108, #090704 72%);
-}
-html[data-route-theme="wow"] .tp-center { background: linear-gradient(180deg, rgba(23, 17, 9, 0.88), #0b0906 210px); }
-html[data-route-theme="wow"] .tp-detail {
-  border-left-color: #503619;
-  background: linear-gradient(180deg, #181108, #0a0805 260px);
-}
-html[data-route-theme="wow"] .tp-title h1,
-html[data-route-theme="wow"] .tp-title h2,
-html[data-route-theme="wow"] .dhead .name h2,
-html[data-route-theme="wow"] .db-intro h1,
-html[data-route-theme="wow"] .db-live-head h2,
-html[data-route-theme="wow"] .db-section-heading h2,
-html[data-route-theme="wow"] .db-directory-head h2 {
+html[data-route-theme="wow"] .db-section-heading h2 {
   color: #f1dfbd;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--atlas-font-display, Georgia, serif);
   font-weight: 400;
   text-shadow: 0 2px 8px #000;
 }
-html[data-route-theme="wow"] .tp-title h1 { font-size: clamp(27px, 2.4vw, 38px); }
-html[data-route-theme="wow"] .tp-toolbar,
-html[data-route-theme="wow"] .tt thead th,
-html[data-route-theme="wow"] .tt td { border-color: #322514; }
 html[data-route-theme="wow"] tr:hover:not(.hl) td { background: rgba(195, 126, 35, 0.055); }
-html[data-route-theme="wow"] .chip,
-html[data-route-theme="wow"] .seg button,
-html[data-route-theme="wow"] .fsearch,
-html[data-route-theme="wow"] .dcard,
-html[data-route-theme="wow"] .faq-note,
-html[data-route-theme="wow"] .about,
 html[data-route-theme="wow"] .bcard {
   border-color: #473017;
   background-color: #0c0906;
 }
-html[data-route-theme="wow"] .chip.on,
-html[data-route-theme="wow"] .seg button.on {
-  border-color: #b97824;
-  background: linear-gradient(180deg, rgba(209, 139, 42, 0.24), rgba(103, 61, 15, 0.13));
-}
 
-/* Database: a carved Azeroth archive with item frames and parchment-gold hierarchy. */
+/* Database: the hub workspace is styled by components/database/databaseHub.module.css. */
 html[data-route-theme="wow"] .route-section { padding-top: 26px; }
-html[data-route-theme="wow"] .db-hero {
-  --db-hero-background: url("/assets/wow/mythic/ruby-depth-v3-light-fast.webp");
-  border: 1px solid #6d481d;
-  border-inline-start: 3px solid #d19031;
-  background:
-    linear-gradient(90deg, rgba(8, 6, 4, 0.88), rgba(15, 10, 5, 0.72)),
-    radial-gradient(60% 110% at 100% 0, rgba(190, 99, 21, 0.22), transparent 68%),
-    var(--db-hero-background) center 44% / cover;
-  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.52), inset 0 0 0 1px rgba(244, 202, 115, 0.06);
-}
-@media (max-width: 720px) {
-  html[data-route-theme="wow"] .db-hero {
-    --db-hero-background: url("/assets/wow/mythic/ruby-depth-v3-mobile-optimized.webp");
-  }
-}
-html[data-route-theme="wow"] .db-source-panel,
-html[data-route-theme="wow"] .db-live,
-html[data-route-theme="wow"] .db-category-section {
-  border-color: #523718;
-  background: linear-gradient(180deg, rgba(23, 17, 9, 0.97), rgba(10, 8, 5, 0.98));
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.34), inset 0 1px rgba(255, 227, 164, 0.04);
-}
-html[data-route-theme="wow"] .db-catalog-search,
-html[data-route-theme="wow"] .db-type-filters button,
-html[data-route-theme="wow"] .db-category-card,
-html[data-route-theme="wow"] .db-record {
-  border-color: #3f2c17;
-  background: #0b0906;
-}
-html[data-route-theme="wow"] button.db-category-card:hover,
-html[data-route-theme="wow"] .db-record:hover {
-  border-color: #a36c27;
-  background: #181006;
-}
-html[data-route-theme="wow"] .db-category-card.is-active { border-color: #bd7d29; background: linear-gradient(110deg, rgba(201, 134, 42, 0.19), #100c07); }
-html[data-route-theme="wow"] .db-category-icon { border-color: #6b471d; background: linear-gradient(145deg, #31200d, #110c06); color: #efc671; }
-html[data-route-theme="wow"] .db-record { box-shadow: inset 2px 0 #9d6523; }
 
 /* Entity codex: the raw catalog keeps its density but shares the forged shell. */
 html[data-route-theme="wow"] .db-detail-header {
@@ -284,15 +207,14 @@ html[data-route-theme="wow"] .db-detail-header {
     var(--wow-depth-background) center 40% / cover;
   box-shadow: 0 18px 46px rgba(0, 0, 0, .42), inset 0 1px rgba(255, 226, 158, .05);
 }
-html[data-route-theme="wow"] .db-detail-header h1 { color: #f1dfbd; font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
+html[data-route-theme="wow"] .db-detail-header h1 { color: #f1dfbd; font-family: var(--atlas-font-display, Georgia, serif); font-weight: 400; }
 html[data-route-theme="wow"] .db-detail-main-icon,
-html[data-route-theme="wow"] .db-record-icon,
 html[data-route-theme="wow"] .db-tooltip-icon {
   border-color: #8a5d27;
   background: radial-gradient(circle at 50% 35%, #35200d, #090705 70%);
   box-shadow: 0 0 0 1px #050403, inset 0 0 18px rgba(210, 137, 37, .12);
 }
-html[data-route-theme="wow"] .db-icon-fallback { color: #e0a43f; font: 700 25px/1 Georgia, serif; text-shadow: 0 0 12px rgba(224, 164, 63, .55); }
+html[data-route-theme="wow"] .db-icon-fallback { color: #e0a43f; font: 700 25px/1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-shadow: 0 0 12px rgba(224, 164, 63, .55); }
 html[data-route-theme="wow"] .db-evidence-ribbon,
 html[data-route-theme="wow"] .db-detail-jump,
 html[data-route-theme="wow"] .db-localization-card,
@@ -337,14 +259,6 @@ html[data-route-theme="wow"] .db-detail-jump a:hover { background: rgba(200, 133
   html[data-route-theme="wow"],
   html[data-route-theme="wow"] body { overflow-x: clip; }
   html[data-route-theme="wow"] .route-section { padding-top: 12px; }
-  html[data-route-theme="wow"] .tierpage { border-inline: 0; }
-}
-
-@media (max-width: 420px) {
-  html[data-route-theme="wow"] .tierpage .tt th:last-child,
-  html[data-route-theme="wow"] .tierpage .tt td:last-child { display: none; }
-  html[data-route-theme="wow"] .tierpage .tp-toolbar { flex-wrap: wrap; }
-  html[data-route-theme="wow"] .tierpage .tool { margin-block: 0 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

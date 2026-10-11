@@ -9,71 +9,25 @@ import type { Lang } from "@/lib/i18n-paths";
 import { trackCatalogEvent } from "@/lib/catalogAnalytics";
 import type { CatalogCategory, CatalogEntityType, CatalogPage, CatalogProduct, CatalogRecord, GameEntity } from "@/lib/api/client";
 import { ResilientImage } from "@/components/media/ResilientImage";
+import { databaseCopy, entityTypeLabel, FACET_LABELS, formatCount, GROUP_LABELS, highlightLabel, ITEM_QUALITY_COLORS, type DatabaseCopy } from "@/components/database/databaseCopy";
+import styles from "@/components/database/databaseHub.module.css";
 
-const SOURCES = [
-  { label: "Raidbots", href: "https://www.raidbots.com/developers" },
-  { label: "Blizzard API", href: "https://community.developer.battle.net/documentation/world-of-warcraft/game-data-apis" },
-  { label: "wow.export", href: "https://github.com/Kruithne/wow.export" },
-  { label: "wow-listfile", href: "https://github.com/wowdev/wow-listfile" },
-  { label: "Wago.Tools", href: "https://wago.tools/" },
-];
-
-const GROUP_LABELS: Record<string, [string, string]> = {
-  equipment: ["Equipment", "Экипировка"], combat: ["Classes & combat", "Классы и бой"],
-  encounters: ["Dungeons & raids", "Подземелья и рейды"], crafting: ["Professions", "Профессии"],
-  world: ["World & quests", "Мир и задания"], collections: ["Collections", "Коллекции"],
-  system: ["Game systems", "Игровые системы"], other: ["Other records", "Другие записи"],
-};
-
-const FACET_LABELS: Record<string, [string, string]> = {
-  class: ["Class", "Класс"], specialization: ["Specialization", "Специализация"], race: ["Race", "Раса"],
-  equipment_slot: ["Equipment slot", "Слот"], armor_type: ["Armor type", "Тип брони"], weapon_type: ["Weapon type", "Тип оружия"],
-  profession: ["Profession", "Профессия"], item_class: ["Item class", "Класс предмета"],
-};
 const FACET_ORDER = ["class", "specialization", "race", "profession", "equipment_slot", "armor_type", "weapon_type", "item_class"];
-
-const DB_RU: Record<string, string> = {
-  records: "записей",
-  "Search by name or game ID...": "Поиск по названию или игровому ID...",
-  Found: "Найдено",
-  All: "Все",
-  "World of Warcraft Database": "База данных World of Warcraft",
-  "Azeroth reference index": "Справочник Азерота",
-  "A structured catalog of items, spells, quests, creatures and every system that shapes World of Warcraft.":
-    "Структурированный каталог предметов, заклинаний, заданий, существ и всех систем World of Warcraft.",
-  "Catalog scope": "Охват каталога",
-  "Build-aware": "С учётом версий",
-  "English & Russian": "Русский и английский",
-  "Built from traceable data": "Данные с проверяемым происхождением",
-  "Catalog search": "Поиск по каталогу",
-  "Explore imported game data": "Поиск по импортированным данным",
-  "Search the game database": "Поиск по игровой базе данных",
-  Search: "Найти",
-  "Catalog type": "Тип данных",
-  "All records": "Все записи",
-  "Browse the catalog": "Навигация по каталогу",
-  "Choose a category": "Выберите категорию",
-  "Game record ID": "ID в игре",
-  "No matching records": "Подходящих записей нет",
-  "Try another search term or choose a different data type.":
-    "Попробуйте другой запрос или выберите иной тип данных.",
-  Back: "Назад",
-  "Next page": "Следующая страница",
-  Categories: "Категории",
-  "Category index": "Категории",
-};
-
-const translateDatabase = (lang: Lang) => (text: string) =>
-  lang === "ru" ? DB_RU[text] ?? text : text;
 
 const loadDatabaseEntityTooltip = () => import("@/components/database/DatabaseEntityTooltip").then((module) => module.EntityTooltip);
 const prefetchDatabaseEntityTooltip = () => { void loadDatabaseEntityTooltip().catch(() => undefined); };
 
 const DatabaseEntityTooltip = dynamic(
   loadDatabaseEntityTooltip,
-  { loading: () => <div className="db-tooltip-loading" aria-hidden="true"><span /></div> },
+  { loading: () => <div className="db-tooltip-loading" data-atlas-scope aria-hidden="true"><span /></div> },
 );
 
+/**
+ * Interactive part of the WoW database: search, record-type chips, catalog
+ * sections, facet filters, the record list and pagination. The page heading
+ * (AtlasHero) is rendered on the server by components/database/DatabaseHub.
+ * Library datasets reuse this workspace and get a compact heading of their own.
+ */
 export function DatabaseDirectory({ lang = "en", catalog, categories, entityTypes, products, totalCount, query = "", selectedProduct = "wow", selectedType = "", selectedCategory = "", selectedFacets = [], cursor = "", minItemLevel = "", maxItemLevel = "", minRequiredLevel = "", maxRequiredLevel = "", libraryDataset }: {
   lang?: Lang; catalog: CatalogPage; categories: CatalogCategory[]; entityTypes: CatalogEntityType[]; products: CatalogProduct[];
   totalCount?: ReactNode;
@@ -87,14 +41,20 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const pathname = usePathname();
-  const tt = translateDatabase(lang);
+  const copy = databaseCopy[lang];
+  const ru = lang === "ru";
   const openTooltipRef = useRef(openTooltip);
   openTooltipRef.current = openTooltip;
   const entityLoadState = useRef(new Map<string, "loading" | "loaded">());
   const typeRegistry = useMemo(() => new Map(entityTypes.map((type) => [type.type, type])), [entityTypes]);
+  // Record types without a single record are not offered as filters; a type
+  // selected through the URL stays visible so the active state is honest.
+  const allRecordsCount = useMemo(() => entityTypes.reduce((sum, entry) => sum + entry.count, 0), [entityTypes]);
+  const typeChips = useMemo(() => entityTypes.filter((entry) => entry.count > 0 || entry.type === selectedType), [entityTypes, selectedType]);
   const groups = useMemo(() => {
     const grouped = new Map<string, CatalogEntityType[]>();
     for (const entityType of entityTypes) {
+      if (entityType.count <= 0) continue;
       const entries = grouped.get(entityType.group) ?? [];
       entries.push(entityType);
       grouped.set(entityType.group, entries);
@@ -183,113 +143,180 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
   }, [lang, loadEntity]);
 
   const closePreview = useCallback(() => setOpenTooltip(""), []);
+  const foundCount = totalCount ?? (catalog.pagination.total !== undefined ? formatCount(catalog.pagination.total, lang) : "—");
+  const hasActiveFilters = Boolean(selectedCategory || selectedFacets.length || minItemLevel || maxItemLevel || minRequiredLevel || maxRequiredLevel);
+  const detailRoot = libraryDataset
+    ? `${ru ? "/ru" : ""}/library/${encodeURIComponent(libraryDataset.slug)}`
+    : `${ru ? "/ru" : ""}/database`;
 
   return (
-    <div className="db-page">
-      <header className="db-hero db-hero-compact" aria-labelledby="database-title">
-        <div className="db-intro">
-          <p className="cap gold">{libraryDataset ? (lang === "ru" ? "Публичная библиотека" : "Public library") : tt("Azeroth reference index")}</p>
-          <h1 id="database-title">{libraryDataset?.name ?? tt("World of Warcraft Database")}</h1>
-          <p className="db-lede">{libraryDataset?.description ?? tt("A structured catalog of items, spells, quests, creatures and every system that shapes World of Warcraft.")}</p>
-          <div className="db-scope" aria-label={tt("Catalog scope")}><span>{products.find((product) => product.slug === selectedProduct)?.name ?? "World of Warcraft"}</span><span>{tt("Build-aware")}</span><span>{tt("English & Russian")}</span></div>
+    <div className={styles.hub}>
+      {libraryDataset ? (
+        <header className={styles.libraryHeader}>
+          <p className={styles.eyebrow}>{copy.libraryEyebrow}</p>
+          <h1>{libraryDataset.name}</h1>
+          {libraryDataset.description ? <p>{libraryDataset.description}</p> : null}
+        </header>
+      ) : null}
+
+      <section className={styles.workspace} aria-label={copy.workspaceLabel}>
+        <div className={styles.toolbar}>
+          <form className={styles.search} role="search" onSubmit={submitSearch}>
+            <label className="sr-only" htmlFor="database-search">{copy.searchLabel}</label>
+            <svg className={styles.searchIcon} aria-hidden="true"><use href="#ic-search" /></svg>
+            <input key={query} id="database-search" className={styles.searchInput} name="q" type="search" defaultValue={query} placeholder={copy.searchPlaceholder} autoComplete="off" />
+            <button type="submit">{copy.searchSubmit}</button>
+          </form>
+          {products.length > 1 ? (
+            <label className={styles.product}>
+              <span>{copy.gameVersion}</span>
+              <select value={selectedProduct} onChange={(event) => navigate("", "", "", "", event.target.value, "", "", [])}>
+                {products.map((product) => <option key={product.slug} value={product.slug}>{product.name}</option>)}
+              </select>
+            </label>
+          ) : null}
         </div>
-        <details className="db-source-panel"><summary>{tt("Built from traceable data")}</summary><div className="db-source-links">{SOURCES.map((source) => <a key={source.label} href={source.href} target="_blank" rel="noreferrer">{source.label}<span aria-hidden="true">↗</span></a>)}</div></details>
-      </header>
 
-      <section className="db-live" aria-labelledby="database-live-title">
-        <div className="db-live-head">
-          <div><p className="cap">{tt("Catalog search")}</p><h2 id="database-live-title">{tt("Explore imported game data")}</h2></div>
-          <span className={catalog.data.length ? "db-live-state is-live" : "db-live-state"}>{totalCount ?? catalog.pagination.total?.toLocaleString(lang === "ru" ? "ru-RU" : "en-US") ?? "—"} {tt("records")}</span>
-        </div>
-        {products.length > 1 ? <label className="db-product-select"><span>{lang === "ru" ? "Версия игры" : "Game version"}</span><select value={selectedProduct} onChange={(event) => navigate("", "", "", "", event.target.value, "", "", [])}>{products.map((product) => <option key={product.slug} value={product.slug}>{product.name}</option>)}</select></label> : null}
-        <form className="db-catalog-search" onSubmit={submitSearch}>
-          <label className="sr-only" htmlFor="database-search">{tt("Search the game database")}</label>
-          <svg className="i" aria-hidden="true"><use href="#ic-search" /></svg>
-          <input key={query} id="database-search" name="q" type="search" defaultValue={query} placeholder={tt("Search by name or game ID...")} />
-          <button type="submit">{tt("Search")}</button>
-        </form>
-        {(facetGroups.length || selectedType === "item") ? <form className="db-quick-filters" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); navigate(selectedType, query, "", selectedCategory, selectedProduct, String(data.get("minLevel") ?? ""), String(data.get("maxLevel") ?? ""), data.getAll("facet").map(String).filter(Boolean), String(data.get("minRequiredLevel") ?? ""), String(data.get("maxRequiredLevel") ?? "")); }}>
-          <div className="db-facet-grid">{facetGroups.map(([facet, entries]) => <label key={`${facet}:${selectedFacets.join(",")}`}><span>{FACET_LABELS[facet][lang === "ru" ? 1 : 0]}</span><select name="facet" defaultValue={selectedFacets.find((path) => entries.some((entry) => entry.path === path)) ?? ""}><option value="">{lang === "ru" ? "Любой" : "Any"}</option>{entries.map((category) => <option key={category.id} value={category.path}>{category.name} · {category.count.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</option>)}</select></label>)}</div>
-          {selectedType === "item" ? <div className="db-level-grid"><label><span>{lang === "ru" ? "Уровень предмета от" : "Item level from"}</span><input name="minLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={minItemLevel} /></label><label><span>{lang === "ru" ? "Уровень предмета до" : "Item level to"}</span><input name="maxLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={maxItemLevel} /></label><label><span>{lang === "ru" ? "Уровень персонажа от" : "Character level from"}</span><input name="minRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={minRequiredLevel} /></label><label><span>{lang === "ru" ? "Уровень персонажа до" : "Character level to"}</span><input name="maxRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={maxRequiredLevel} /></label></div> : null}
-          <button type="submit">{lang === "ru" ? "Применить" : "Apply"}</button>
-          {(selectedCategory || selectedFacets.length || minItemLevel || maxItemLevel || minRequiredLevel || maxRequiredLevel) ? <button type="button" className="is-clear" onClick={() => navigate(selectedType, query, "", "", selectedProduct, "", "", [], "", "")}>{lang === "ru" ? "Сбросить" : "Reset"}</button> : null}
-        </form> : null}
-        {!libraryDataset ? <div className="db-type-filters" aria-label={tt("Catalog type")}><button type="button" className={!selectedType ? "is-active" : ""} aria-pressed={!selectedType} onClick={() => navigate("", query, "", "", selectedProduct, "", "", [])}>{tt("All records")}</button>{entityTypes.map((entityType) => <button type="button" key={entityType.type} className={selectedType === entityType.type ? "is-active" : ""} aria-pressed={selectedType === entityType.type} onClick={() => { trackCatalogEvent("catalog_type_selected", lang, { type: entityType.type }); navigate(entityType.type, query, "", "", selectedProduct, "", "", []); }}>{entityType.label}<b>{entityType.count.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</b></button>)}</div> : null}
+        {!libraryDataset ? (
+          <div className={styles.types} role="group" aria-label={copy.typesLabel}>
+            <button type="button" className={styles.chip} aria-pressed={!selectedType} onClick={() => navigate("", query, "", "", selectedProduct, "", "", [])}><span>{copy.allRecords}</span><b>{formatCount(allRecordsCount, lang)}</b></button>
+            {typeChips.map((entityType) => (
+              <button type="button" key={entityType.type} className={styles.chip} title={entityType.label} aria-pressed={selectedType === entityType.type}
+                onClick={() => { trackCatalogEvent("catalog_type_selected", lang, { type: entityType.type }); navigate(entityType.type, query, "", "", selectedProduct, "", "", []); }}>
+                <span>{entityType.label}</span><b>{formatCount(entityType.count, lang)}</b>
+              </button>
+            ))}
+          </div>
+        ) : null}
 
-        {!libraryDataset ? <details className="db-category-section db-category-disclosure" open={browseOpen} onToggle={(event) => setBrowseOpen(event.currentTarget.open)}>
-          <summary><span><span className="cap">{tt("Browse the catalog")}</span><strong id="database-categories">{tt("Choose a category")}</strong></span><span>{browseOpen ? (lang === "ru" ? "Скрыть" : "Hide") : (lang === "ru" ? "Показать разделы" : "Show sections")}</span></summary>
-          <div className="db-category-grid">{groups.map(([group, types]) => { const primary = types[0]; const active = types.some((entry) => entry.type === selectedType); return <button className={`db-category-card${active ? " is-active" : ""}`} type="button" key={group} aria-pressed={active} onClick={() => navigate(primary.type, "", "", "")}><span className="db-category-icon" aria-hidden="true"><svg className="i"><use href={primary.iconSymbol} /></svg></span><span className="db-category-copy"><strong>{GROUP_LABELS[group]?.[lang === "ru" ? 1 : 0] ?? group}</strong><small>{types.map((entry) => entry.label).slice(0, 3).join(" · ")}</small></span><span className="db-category-state is-live">{types.reduce((sum, entry) => sum + entry.count, 0).toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</span></button>; })}</div>
-        </details> : null}
+        {!libraryDataset && groups.length ? (
+          <details className={styles.browse} open={browseOpen} onToggle={(event) => setBrowseOpen(event.currentTarget.open)}>
+            <summary>
+              <span className={styles.browseTitle}>{copy.browseTitle}</span>
+              <span className={styles.browseToggle}>{browseOpen ? copy.browseHide : copy.browseShow}</span>
+            </summary>
+            <div className={styles.groupGrid}>
+              {groups.map(([group, types]) => {
+                const primary = types[0];
+                const active = types.some((entry) => entry.type === selectedType);
+                const total = types.reduce((sum, entry) => sum + entry.count, 0);
+                return (
+                  <button className={styles.group} type="button" key={group} aria-pressed={active} onClick={() => navigate(primary.type, "", "", "")}>
+                    <span className={styles.groupIcon} aria-hidden="true"><svg><use href={primary.iconSymbol} /></svg></span>
+                    <span className={styles.groupCopy}>
+                      <strong>{GROUP_LABELS[group]?.[ru ? 1 : 0] ?? group}</strong>
+                      <small>{types.map((entry) => entry.label).slice(0, 3).join(" · ")}</small>
+                    </span>
+                    <span className={styles.groupCount}>{formatCount(total, lang)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </details>
+        ) : null}
 
-        <div className={categories.length ? "db-catalog-layout has-taxonomy" : "db-catalog-layout"}>
+        {(facetGroups.length || selectedType === "item") ? (
+          <form className={styles.filters} aria-label={copy.filtersLabel} onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); navigate(selectedType, query, "", selectedCategory, selectedProduct, String(data.get("minLevel") ?? ""), String(data.get("maxLevel") ?? ""), data.getAll("facet").map(String).filter(Boolean), String(data.get("minRequiredLevel") ?? ""), String(data.get("maxRequiredLevel") ?? "")); }}>
+            {facetGroups.length ? (
+              <div className={styles.filterGrid}>
+                {facetGroups.map(([facet, entries]) => (
+                  <label key={`${facet}:${selectedFacets.join(",")}`}>
+                    <span>{FACET_LABELS[facet][ru ? 1 : 0]}</span>
+                    <select name="facet" defaultValue={selectedFacets.find((path) => entries.some((entry) => entry.path === path)) ?? ""}>
+                      <option value="">{copy.any}</option>
+                      {entries.map((category) => <option key={category.id} value={category.path}>{category.name} · {formatCount(category.count, lang)}</option>)}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            ) : null}
+            {selectedType === "item" ? (
+              <div className={styles.filterGrid}>
+                <label><span>{copy.itemLevelFrom}</span><input name="minLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={minItemLevel} /></label>
+                <label><span>{copy.itemLevelTo}</span><input name="maxLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={maxItemLevel} /></label>
+                <label><span>{copy.charLevelFrom}</span><input name="minRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={minRequiredLevel} /></label>
+                <label><span>{copy.charLevelTo}</span><input name="maxRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={maxRequiredLevel} /></label>
+              </div>
+            ) : null}
+            <div className={styles.filterActions}>
+              <button type="submit" className={styles.action}>{copy.apply}</button>
+              {hasActiveFilters ? <button type="button" className={styles.actionQuiet} onClick={() => navigate(selectedType, query, "", "", selectedProduct, "", "", [], "", "")}>{copy.reset}</button> : null}
+            </div>
+          </form>
+        ) : null}
+
+        <div className={categories.length ? `${styles.catalog} ${styles.withTaxonomy}` : styles.catalog}>
           {categories.length ? (
             <Taxonomy
               categories={categories}
               selectedPath={selectedCategory}
+              copy={copy}
               lang={lang}
               onSelect={(path) => navigate(selectedType, query, "", path)}
             />
           ) : null}
-          <div className="db-catalog-results">
+          <div className={styles.results}>
+            <p className={styles.resultsHead} aria-live="polite">{copy.found}: <b>{foundCount}</b></p>
             {catalog.data.length ? (
-              <div className={`db-records${isPending ? " is-pending" : ""}`} aria-busy={isPending}>
+              <ul className={styles.records} aria-busy={isPending} data-pending={isPending || undefined} aria-label={copy.resultsLabel}>
                 {catalog.data.map((entity) => {
                   const registeredType = typeRegistry.get(entity.type);
-                  const detail = entityDetails[entity.id];
-                  const detailRoot = libraryDataset
-                    ? `${lang === "ru" ? "/ru" : ""}/library/${encodeURIComponent(libraryDataset.slug)}`
-                    : `${lang === "ru" ? "/ru" : ""}/database`;
                   const detailHref = `${detailRoot}/${encodeURIComponent(entity.type)}/${entity.id}/${encodeURIComponent(entity.slug || String(entity.externalId))}${selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`}`;
                   return (
                     <DatabaseRecordRow
                       key={entity.id}
                       entity={entity}
                       registeredType={registeredType}
-                      detail={detail}
+                      detail={entityDetails[entity.id]}
                       detailHref={detailHref}
                       lang={lang}
+                      copy={copy}
                       open={openTooltip === entity.id}
                       tooltipState={tooltipState[entity.id]}
-                      recordIdLabel={tt("Game record ID")}
                       onLoad={loadEntity}
                       onPrefetchTooltip={prefetchDatabaseEntityTooltip}
                       onOpenPreview={openPreview}
                       onClosePreview={closePreview}
                     />
-                );})}
-              </div>
+                  );
+                })}
+              </ul>
             ) : (
-              <div className="db-live-empty"><span aria-hidden="true">◇</span><div><h3>{tt("No matching records")}</h3><p>{tt("Try another search term or choose a different data type.")}</p></div></div>
+              <div className={styles.empty} role="status">
+                <h3>{copy.emptyTitle}</h3>
+                <p>{copy.emptyText}</p>
+              </div>
             )}
           </div>
         </div>
-        <div className="db-pagination">
-          <button type="button" onClick={() => router.back()} disabled={!cursor}>{tt("Back")}</button>
-          <span>{tt("Found")}: <b>{totalCount ?? catalog.pagination.total?.toLocaleString(lang === "ru" ? "ru-RU" : "en-US") ?? "—"}</b></span>
-          <button type="button" disabled={!catalog.pagination.hasMore || !catalog.pagination.nextCursor}
-            onClick={() => navigate(selectedType, query, catalog.pagination.nextCursor)}>{tt("Next page")}</button>
-        </div>
+
+        <nav className={styles.pagination} aria-label={copy.resultsLabel}>
+          <button type="button" className={styles.action} onClick={() => router.back()} disabled={!cursor}>{copy.back}</button>
+          <button type="button" className={styles.action} disabled={!catalog.pagination.hasMore || !catalog.pagination.nextCursor}
+            onClick={() => navigate(selectedType, query, catalog.pagination.nextCursor)}>{copy.next}</button>
+        </nav>
       </section>
     </div>
   );
 }
 
-const DatabaseRecordRow = memo(function DatabaseRecordRow({ entity, registeredType, detail, detailHref, lang, open, tooltipState, recordIdLabel, onLoad, onPrefetchTooltip, onOpenPreview, onClosePreview }: {
+const DatabaseRecordRow = memo(function DatabaseRecordRow({ entity, registeredType, detail, detailHref, lang, copy, open, tooltipState, onLoad, onPrefetchTooltip, onOpenPreview, onClosePreview }: {
   entity: CatalogRecord;
   registeredType?: CatalogEntityType;
   detail?: CatalogRecord;
   detailHref: string;
   lang: Lang;
+  copy: DatabaseCopy;
   open: boolean;
   tooltipState?: "loading" | "error";
-  recordIdLabel: string;
   onLoad: (entity: CatalogRecord) => void;
   onPrefetchTooltip: () => void;
   onOpenPreview: (entity: CatalogRecord) => void;
   onClosePreview: () => void;
 }) {
-  const ru = lang === "ru";
-  const typeLabel = registeredType?.label ?? entity.type;
+  const typeLabel = entityTypeLabel(entity.type, lang, registeredType?.label);
+  const name = entity.name || `${typeLabel} #${entity.externalId}`;
+  const qualityColor = entity.quality !== undefined ? ITEM_QUALITY_COLORS[entity.quality] : undefined;
   const hoverPrefetchTimer = useRef<number | null>(null);
   useEffect(() => () => {
     if (hoverPrefetchTimer.current !== null) window.clearTimeout(hoverPrefetchTimer.current);
@@ -308,36 +335,44 @@ const DatabaseRecordRow = memo(function DatabaseRecordRow({ entity, registeredTy
     onPrefetchTooltip();
   };
   return (
-    <article className={`db-record quality-${entity.quality ?? 0}${open ? " is-open" : ""}`}>
-      <div className="db-record-trigger">
-        <span className="db-record-icon" aria-hidden="true">
-          <ResilientImage src={entity.iconUrl} alt="" loading="lazy" fallback={<span className="db-icon-fallback">✦</span>} />
-        </span>
-        <span className="db-record-body">
-          <span className="db-record-type">{typeLabel}{entity.localeFallback ? <em>{ru ? "EN" : "fallback"}</em> : null}</span>
-          <h3><Link href={detailHref} prefetch={false} onClick={() => trackCatalogEvent("catalog_detail_opened", lang, { id: entity.externalId, type: entity.type })}>{entity.name || `${typeLabel} #${entity.externalId}`}</Link></h3>
-          <span className="db-record-meta">
-            {entity.itemLevel ? <><span>{ru ? "Уровень предмета" : "Item level"}</span> <b>{entity.itemLevel}</b><i aria-hidden="true">·</i></> : null}
-            <span>{recordIdLabel}</span> <b>{entity.externalId}</b>
-          </span>
-          {entity.highlights?.length ? <span className="db-record-highlights">{entity.highlights.map((highlight) => <span key={highlight.key}>{highlight.value}</span>)}</span> : null}
-        </span>
-        <button type="button" className="db-record-preview" aria-haspopup="dialog" aria-expanded={open} onPointerEnter={prefetchAfterHover} onPointerLeave={cancelHoverPrefetch} onFocus={focusPreview} onClick={() => onOpenPreview(entity)}>Tooltip</button>
+    <li className={styles.record} data-quality={qualityColor ? entity.quality : undefined} style={qualityColor ? { "--record-quality": qualityColor } as CSSProperties : undefined}>
+      <span className={styles.recordIcon} aria-hidden="true">
+        <ResilientImage src={entity.iconUrl} alt="" width={56} height={56} loading="lazy" fallback={<span className={styles.iconFallback}>✦</span>} />
+      </span>
+      <div className={styles.recordBody}>
+        <p className={styles.recordType}>
+          {typeLabel}
+          {entity.localeFallback ? <em title={copy.englishOnlyTitle}>{copy.englishOnly}</em> : null}
+        </p>
+        <h3 className={styles.recordName}>
+          <Link href={detailHref} prefetch={false} onClick={() => trackCatalogEvent("catalog_detail_opened", lang, { id: entity.externalId, type: entity.type })}>{name}</Link>
+        </h3>
+        <p className={styles.recordMeta}>
+          {entity.itemLevel ? <span>{copy.itemLevel} <b>{entity.itemLevel}</b></span> : null}
+          <span>{copy.gameId} <b>{entity.externalId}</b></span>
+        </p>
+        {entity.highlights?.length ? (
+          <p className={styles.recordHighlights}>{entity.highlights.map((highlight) => highlightLabel(highlight.key, highlight.value, lang)).join(" · ")}</p>
+        ) : null}
       </div>
+      <button type="button" className={styles.preview} aria-haspopup="dialog" aria-expanded={open} aria-label={copy.previewLabel(name)}
+        onPointerEnter={prefetchAfterHover} onPointerLeave={cancelHoverPrefetch} onFocus={focusPreview} onClick={() => onOpenPreview(entity)}>
+        {copy.preview}
+      </button>
       {detail?.tooltip && open ? <DatabaseEntityTooltip entity={detail} lang={lang} expanded iconSymbol={registeredType?.iconSymbol} onClose={onClosePreview} /> : null}
-      {open && tooltipState === "loading" ? <div className="db-tooltip-status" role="status">{ru ? "Загружаем полную информацию…" : "Loading full details…"}</div> : null}
-      {open && tooltipState === "error" ? <div className="db-tooltip-status is-error" role="alert">{ru ? "Не удалось загрузить tooltip." : "Could not load the tooltip."} <button type="button" onClick={() => onLoad(entity)}>{ru ? "Повторить" : "Retry"}</button></div> : null}
-    </article>
+      {open && tooltipState === "loading" ? <p className={styles.tooltipStatus} role="status">{copy.loadingTooltip}</p> : null}
+      {open && tooltipState === "error" ? <p className={styles.tooltipStatus} data-error role="alert">{copy.tooltipError} <button type="button" onClick={() => onLoad(entity)}>{copy.retry}</button></p> : null}
+    </li>
   );
 });
 
-function Taxonomy({ categories, selectedPath, lang, onSelect }: {
+function Taxonomy({ categories, selectedPath, copy, lang, onSelect }: {
   categories: CatalogCategory[];
   selectedPath: string;
+  copy: DatabaseCopy;
   lang: Lang;
   onSelect: (path: string) => void;
 }) {
-  const tt = translateDatabase(lang);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const tree = useMemo(() => buildCategoryTree(categories), [categories]);
   const selectedAncestors = useMemo(() => {
@@ -358,20 +393,25 @@ function Taxonomy({ categories, selectedPath, lang, onSelect }: {
   }
 
   return (
-    <aside className="db-taxonomy" aria-label={tt("Categories")}>
-      <div className="db-taxonomy-head">
-        <span>{tt("Category index")}</span>
-        <button type="button" className={!selectedPath ? "is-active" : ""} onClick={() => onSelect("")}>{tt("All")}</button>
+    <aside className={styles.taxonomy} aria-label={copy.categories}>
+      <div className={styles.taxonomyHead}>
+        <span>{copy.categories}</span>
+        <button type="button" aria-pressed={!selectedPath} onClick={() => onSelect("")}>{copy.allCategories}</button>
       </div>
-      <div className="db-taxonomy-list">
+      <div className={styles.taxonomyList}>
         {visibleCategories.map((category) => {
           const depth = category.path.split("/").length - 1;
           const hasChildren = tree.children.has(category.path);
           const isExpanded = expanded.has(category.path) || selectedAncestors.has(category.path);
+          const active = selectedPath === category.path;
           return (
-            <div key={category.id} className={`db-taxonomy-row${selectedPath === category.path ? " is-active" : ""}`} style={{ "--taxonomy-depth": depth } as CSSProperties}>
-              {hasChildren ? <button type="button" className="db-taxonomy-toggle" aria-label={`${isExpanded ? (lang === "ru" ? "Свернуть" : "Collapse") : (lang === "ru" ? "Развернуть" : "Expand")} ${category.name}`} aria-expanded={isExpanded} onClick={() => toggleCategory(category.path)}><span className={`db-taxonomy-chevron${isExpanded ? " is-open" : ""}`} aria-hidden="true">›</span></button> : <span className="db-taxonomy-toggle is-leaf" aria-hidden="true" />}
-              <button type="button" className="db-taxonomy-select" aria-pressed={selectedPath === category.path} onClick={() => { trackCatalogEvent("catalog_category_selected", lang, { category: category.path }); onSelect(category.path); }}><span>{category.name}</span><b>{category.count.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</b></button>
+            <div key={category.id} className={styles.taxonomyRow} data-active={active || undefined} style={{ "--taxonomy-depth": depth } as CSSProperties}>
+              {hasChildren
+                ? <button type="button" className={styles.taxonomyToggle} aria-label={`${isExpanded ? copy.collapse : copy.expand} ${category.name}`} aria-expanded={isExpanded} onClick={() => toggleCategory(category.path)}><span data-open={isExpanded || undefined} aria-hidden="true">›</span></button>
+                : <span className={styles.taxonomyToggle} aria-hidden="true" />}
+              <button type="button" className={styles.taxonomySelect} aria-pressed={active} onClick={() => { trackCatalogEvent("catalog_category_selected", lang, { category: category.path }); onSelect(category.path); }}>
+                <span>{category.name}</span><b>{formatCount(category.count, lang)}</b>
+              </button>
             </div>
           );
         })}

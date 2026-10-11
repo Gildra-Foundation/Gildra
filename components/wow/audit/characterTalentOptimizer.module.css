@@ -14,7 +14,7 @@
 /* Character Codex v2 — automatic talent optimizer. */
 .optimizer { position:relative; overflow:hidden; border-color:var(--wow-line,rgba(188,151,86,.22)); border-radius:12px; background:rgba(10,12,15,.9); box-shadow:inset 0 1px rgba(255,235,197,.035); }
 .optimizer::before { content:""; position:absolute; inset:0 18% auto; height:1px; background:linear-gradient(90deg,transparent,var(--wow-gold,#c9a15d),transparent); }
-.heading h3,.summary b,.variantHead b { color:var(--wow-ivory,#f0e8dc); font-family:var(--font-display),Georgia,serif; font-weight:500; }
+.heading h3,.summary b,.variantHead b { color:var(--wow-ivory,#f0e8dc); font-family:var(--atlas-font-display, Georgia, serif); font-weight:500; }
 .heading small,.results header small,.summary small { color:var(--wow-gold,#c9a15d); }
 .heading p,.numbers,.variantHead small { color:var(--wow-muted,#8e8981); }
 .heading>span { border-color:var(--wow-line-strong,rgba(211,173,101,.52)); border-radius:11px; color:var(--wow-gold-bright,#efd39a); background:rgba(201,161,93,.055); }
@@ -41,7 +41,7 @@
 }
 :global([data-profile-source="battle-net"]) .heading > span { border-color: #80572d; border-radius: 2px; color: #eed19b; background: #342011; }
 :global([data-profile-source="battle-net"]) .heading small { color: #684a2b; font-size: 11px; letter-spacing: .08em; }
-:global([data-profile-source="battle-net"]) .heading h3 { color: #3b2817; font: 700 19px/1.2 var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .heading h3 { color: #3b2817; font: 700 19px/1.2 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]) .heading p { color: #594024; font-size: 12px; line-height: 1.45; }
 :global([data-profile-source="battle-net"]) .controls legend { color: #d7bd8c; font-size: 11px; }
 :global([data-profile-source="battle-net"]) .scenarios button {
@@ -54,7 +54,7 @@
 :global([data-profile-source="battle-net"]) .scenarios button:hover,
 :global([data-profile-source="battle-net"]) .scenarios button:focus-visible { border-color: #d7ac66; background: #302215; }
 :global([data-profile-source="battle-net"]) .scenarios button[aria-pressed="true"] { border-color: #c98b4c; color: #f1dbaa; background: linear-gradient(#45271a, #1a120e); box-shadow: inset 3px 0 #c98949; }
-:global([data-profile-source="battle-net"]) .scenarios b { color: #f1ddba; font: 700 14px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .scenarios b { color: #f1ddba; font: 700 14px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]) .scenarios span { color: #c4b08c; font-size: 11px; }
 :global([data-profile-source="battle-net"]) .actions button,
 :global([data-profile-source="battle-net"]) .results li > button { min-height: 40px; border: 0; border-radius: 0; font-size: 12px; }
@@ -89,18 +89,18 @@
 }
 :global([data-profile-source="battle-net"]) .summaryGain { border-color: #688a3b; }
 :global([data-profile-source="battle-net"]) .summary small { color: #674827; font-size: 11px; }
-:global([data-profile-source="battle-net"]) .summary b { color: #352312; font: 700 17px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .summary b { color: #352312; font: 700 17px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]) .summaryGain b { color: #24561e; }
 :global([data-profile-source="battle-net"]) .summary em { color: #614426; font-size: 11px; }
 :global([data-profile-source="battle-net"]) .results { border: 2px solid #8c6538; border-radius: 2px; color: #3b2817; background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat; }
 :global([data-profile-source="battle-net"]) .results > header { border-bottom-color: #9a7549; }
 :global([data-profile-source="battle-net"]) .results header small,
 :global([data-profile-source="battle-net"]) .results > header > span { color: #684a2b; font-size: 11px; }
-:global([data-profile-source="battle-net"]) .results h4 { color: #352312; font: 700 17px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .results h4 { color: #352312; font: 700 17px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]) .results li,
 :global([data-profile-source="battle-net"]) .results li[data-positive="true"] { border-color: #ad8553; background: #ffe4b552; }
 :global([data-profile-source="battle-net"]) .results li[data-positive="true"] { border-left: 3px solid #4c7a2f; }
-:global([data-profile-source="battle-net"]) .rank { color: #5d3817; background: #f1d5a0; font-family: var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]) .rank { color: #5d3817; background: #f1d5a0; font-family: var(--wow-title, var(--atlas-font-display, Georgia, serif)); }
 :global([data-profile-source="battle-net"]) .variantHead b { color: #352312; font: 700 13px var(--wow-ui, Arial, sans-serif); }
 :global([data-profile-source="battle-net"]) .variantHead small,
 :global([data-profile-source="battle-net"]) .numbers { color: #684a2b; font-size: 11px; }
@@ -193,7 +193,7 @@
 :global([data-character-book="open"]) .results h4,
 :global([data-character-book="open"]) .summary b {
   color: var(--folio-ink, #382415);
-  font-family: var(--folio-title, Georgia, serif);
+  font-family: var(--folio-title, var(--atlas-font-display, Georgia, serif));
 }
 :global([data-character-book="open"]) .heading :is(small, p),
 :global([data-character-book="open"]) .controls legend { color: var(--folio-muted, #684b2e); }
@@ -218,7 +218,7 @@
   background: #a66a2422;
   box-shadow: inset 3px 0 #88401f;
 }
-:global([data-character-book="open"]) .scenarios b { font-family: var(--folio-title, Georgia, serif); }
+:global([data-character-book="open"]) .scenarios b { font-family: var(--folio-title, var(--atlas-font-display, Georgia, serif)); }
 :global([data-character-book="open"]) .progress,
 :global([data-character-book="open"]) .error,
 :global([data-character-book="open"]) .cancelled,
@@ -252,7 +252,7 @@
   border: 0;
   color: #865227;
   background: transparent;
-  font-family: var(--folio-title, Georgia, serif);
+  font-family: var(--folio-title, var(--atlas-font-display, Georgia, serif));
 }
 :global([data-character-book="open"]) .changes span { border: 0; border-radius: 0; background: #76532e0b; }
 :global([data-character-book="open"]) .optimizer :is(button, input):focus-visible { outline: 2px solid #75391c; outline-offset: 3px; }

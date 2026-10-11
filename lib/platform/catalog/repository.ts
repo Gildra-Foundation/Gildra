@@ -84,7 +84,8 @@ async function wowItems(query: string, locale: ApiLocale, limit: number): Promis
     return {
       id: `wow:${item.id}`, gameId: "wow", kind: "items", entityType: item.type,
       name: item.name || `Item #${item.externalId}`,
-      description: compactText(item.description, `World of Warcraft item · ID ${item.externalId}`),
+      // No synthetic English filler: the search UI labels the record type itself.
+      description: compactText(item.description, ""),
       iconUrl: item.iconUrl, href: `${prefix}/database/${item.type}/${item.id}/${item.slug || item.externalId}`,
       meta: ["World of Warcraft", item.itemLevel ? `Item level ${item.itemLevel}` : `ID ${item.externalId}`],
       attributes,
@@ -188,9 +189,10 @@ async function searchOneGame(gameId: CatalogGameId, kind: SearchKind, query: str
     const page = await getCatalogPage({ locale, product: "wow", query, limit, includeTotal: false, timeoutMs: catalogLookupTimeoutMs });
     return page.data.map((item): PlatformCatalogItem => ({
       id: `wow:${item.id}`, gameId: "wow", kind: item.type === "item" ? "items" : "entities", entityType: item.type,
-      name: item.name || `${item.type} #${item.externalId}`, description: compactText(item.description, `World of Warcraft ${item.type}`),
+      name: item.name || `${item.type} #${item.externalId}`, description: compactText(item.description, ""),
       iconUrl: item.iconUrl, href: `${prefix}/database/${item.type}/${item.id}/${item.slug || item.externalId}`,
-      meta: ["World of Warcraft", item.type.replaceAll("_", " ")], attributes: {},
+      meta: ["World of Warcraft"],
+      attributes: { ...(item.quality !== undefined ? { Quality: item.quality } : {}), ...(item.itemLevel ? { "Item Level": item.itemLevel } : {}) },
     }));
   }
   if (gameId === "genshin") {

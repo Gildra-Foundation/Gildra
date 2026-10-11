@@ -8,3 +8,4 @@ cms/node_modules
 infra/certs
 .artifacts
 *.tsbuildinfo
+.next-*

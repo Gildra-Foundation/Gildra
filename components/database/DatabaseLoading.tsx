@@ -1,10 +1,28 @@
 import { PageShell } from "@/components/layout/PageShell";
+import { AtlasFrame } from "@/components/atlas";
+import { DatabaseHero } from "@/components/database/DatabaseHero";
+import { databaseCopy } from "@/components/database/databaseCopy";
 import type { Lang } from "@/lib/i18n";
+import styles from "./databaseHub.module.css";
 
 export function DatabaseLoading({ lang }: { lang: Lang }) {
-  return <PageShell lang={lang} variant="route"><DatabaseLoadingContent lang={lang} /></PageShell>;
+  return <PageShell lang={lang}><AtlasFrame as="div" lang={lang}><DatabaseLoadingContent lang={lang} /></AtlasFrame></PageShell>;
 }
 
+/**
+ * Suspense fallback of the database hub: the real heading (so the title paints
+ * at once) and a full-height placeholder for the catalog workspace.
+ */
 export function DatabaseLoadingContent({ lang }: { lang: Lang }) {
-  return <div className="db-loading" role="status" aria-live="polite"><div><span className="db-skeleton db-skeleton-cap" /><span className="db-skeleton db-skeleton-title" /><span className="db-skeleton db-skeleton-copy" /></div><span className="db-skeleton db-skeleton-search" /><div className="db-skeleton-chips">{Array.from({ length: 8 }, (_, index) => <span className="db-skeleton" key={index} />)}</div><div className="db-skeleton-records">{Array.from({ length: 8 }, (_, index) => <span className="db-skeleton" key={index} />)}</div><span className="sr-only">{lang === "ru" ? "Загрузка базы данных" : "Loading database"}</span></div>;
+  return (
+    <>
+      <DatabaseHero lang={lang} />
+      <div className={styles.skeleton} role="status" aria-live="polite">
+        <span className={styles.skeletonSearch} />
+        <div className={styles.skeletonChips}>{Array.from({ length: 8 }, (_, index) => <span key={index} />)}</div>
+        <div className={styles.skeletonRecords}>{Array.from({ length: 6 }, (_, index) => <span key={index} />)}</div>
+        <span className="sr-only">{databaseCopy[lang].loading}</span>
+      </div>
+    </>
+  );
 }

@@ -51,13 +51,13 @@
 .largeIcon { width: 50px; height: 50px; border-color: color-mix(in srgb, var(--intel-tone) 58%, #8a642d); }
 .subject > span:last-child { display: grid; min-width: 0; gap: 4px; }
 .subject small { color: #777873; font-size: 8px; letter-spacing: .04em; }
-.subject strong { overflow: hidden; color: var(--intel-tone); font: 500 17px/1.13 Georgia, serif; text-overflow: ellipsis; text-shadow: 0 0 12px color-mix(in srgb, var(--intel-tone) 22%, transparent); }
+.subject strong { overflow: hidden; color: var(--intel-tone); font: 500 17px/1.13 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-overflow: ellipsis; text-shadow: 0 0 12px color-mix(in srgb, var(--intel-tone) 22%, transparent); }
 .card > p { margin: 0; color: #f0ede7; font-size: 12px; line-height: 1.55; text-shadow: 0 1px 2px #000; }
 .card ul { display: grid; gap: 5px; margin: 0; padding: 8px 0; color: #a9aaa3; border-top: 1px solid rgba(126,101,61,.22); border-bottom: 1px solid rgba(126,101,61,.22); font-size: 9px; line-height: 1.4; list-style: none; }
 .card li { position: relative; padding-left: 12px; }
 .card li::before { position: absolute; top: .55em; left: 1px; width: 4px; height: 4px; content: ""; background: var(--intel-tone); box-shadow: 0 0 6px var(--intel-tone); }
 .card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #858681; font-size: 9px; }
-.card footer strong { overflow: hidden; max-width: 58%; color: #ffd05e; font: 600 12px Georgia, serif; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.card footer strong { overflow: hidden; max-width: 58%; color: #ffd05e; font: 600 12px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) {
   .trigger:hover .iconFrame,

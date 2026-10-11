@@ -21,7 +21,9 @@ try {
   assert.equal(response?.status(), 200, `Expected route HTTP 200, got ${response?.status() ?? "no response"}`);
   assert.match(await page.locator('meta[name="robots"]').getAttribute("content") ?? "", /noindex/i, "Unverified tactical draft must remain noindex");
   await page.locator('main[data-interactive="true"]').waitFor();
-  await page.getByText("Статус: тактический черновик, не проверен для игры.", { exact: true }).waitFor();
+  await page.getByText(/^(Маршрут — черновик|This route is a draft)$/).waitFor();
+  // The demo party panel is mounted on demand.
+  await page.getByRole("button", { name: "Открыть состав группы и тактические назначения" }).click();
   await page.locator("[data-demo-party]").getByText("Демонстрационные тестовые данные.", { exact: true }).waitFor();
 
   const visibleCopy = await page.locator("main").textContent() ?? "";
@@ -32,6 +34,14 @@ try {
     assert.ok(visibleCopy.includes(meaning), `Missing novice-facing information: ${meaning}`);
   }
 
+  // Popover copy is rendered only while the popover is open.
+  const readIntelCard = async (card) => {
+    await card.locator("[data-intel-trigger]").click();
+    await card.locator(":popover-open").waitFor();
+    const copy = await card.textContent() ?? "";
+    await page.keyboard.press("Escape");
+    return copy;
+  };
   const routeStepSelect = page.locator('[aria-label="Тактические назначения"] select').first();
   for (let step = 1; step <= 15; step += 1) {
     await routeStepSelect.selectOption(String(step));
@@ -39,9 +49,9 @@ try {
     const enemySection = stepDetails.locator("section").filter({ hasText: "Кого победить" }).first();
     const abilitySection = stepDetails.locator("section").filter({ hasText: "На что реагировать" }).first();
     for (const card of await enemySection.locator('[data-intel-card="enemy"]').all()) {
-      const copy = await card.textContent() ?? "";
+      const copy = await readIntelCard(card);
       assert.ok(copy.includes("Чем опасен") && copy.includes("Что делает"), `Enemy intel is incomplete at step ${step}`);
-      assert.match(copy, /NPC #\d+|NPC ID не проверен/, `Enemy identity status is missing at step ${step}`);
+      assert.match(copy, /Существо/, `Enemy card label is missing at step ${step}`);
       const portraitStatus = await card.getAttribute("data-portrait-status");
       const portrait = card.locator("[data-intel-trigger] img");
       if (portraitStatus === "verified") {
@@ -50,7 +60,7 @@ try {
         await portrait.evaluate((image) => image instanceof HTMLImageElement && image.decode ? image.decode().catch(() => undefined) : undefined);
         assert.ok(await portrait.evaluate((image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0), `Verified portrait failed to load at step ${step}`);
       } else if (portraitStatus === "model-unavailable") {
-        assert.ok(copy.includes("Модель недоступна · placeholder"), `Verified model-unavailable placeholder is not labelled at step ${step}`);
+        assert.ok(copy.includes("Модель недоступна"), `Verified model-unavailable placeholder is not labelled at step ${step}`);
         assert.equal(await portrait.count(), 0, `Model-unavailable placeholder rendered an image at step ${step}`);
       } else {
         assert.equal(portraitStatus, "unverified", `Unknown portrait status at step ${step}`);
@@ -60,7 +70,7 @@ try {
       assert.ok(!copy.includes("undefined"), `Enemy intel is missing at step ${step}`);
     }
     for (const card of await abilitySection.locator('[data-intel-card="ability"]').all()) {
-      const copy = await card.textContent() ?? "";
+      const copy = await readIntelCard(card);
       assert.ok(copy.includes("Кто применяет") && copy.includes("Кто отвечает") && copy.includes("Что сделать"), `Ability intel is incomplete at step ${step}`);
       assert.match(copy, /Spell #\d+/i, `Spell catalog ID is missing at step ${step}`);
       const spellIcon = card.locator("[data-intel-trigger] img");
@@ -88,15 +98,9 @@ try {
   assert.equal(Math.round(abilityCardAfter?.height ?? 0), Math.round(abilityCardBefore?.height ?? 0), "Ability tooltip shifted the route layout");
   await firstAbilityCard.locator("[data-intel-trigger]").click();
 
-  const backdrop = page.getByTestId("dungeon-backdrop");
-  const sceneAnimation = await backdrop.evaluate((element) => getComputedStyle(element).animationName);
-  assert.match(sceneAnimation, /dungeonBreath/);
-  await page.mouse.move(80, 180);
-  await page.waitForFunction(() => document.querySelector("main")?.style.getPropertyValue("--scene-x"));
-  const sceneOffset = await page.locator("main").evaluate((element) => element.style.getPropertyValue("--scene-x"));
-  assert.notEqual(sceneOffset, "", "Pointer parallax did not update the dungeon scene");
-  const routeAnimation = await page.getByTestId("route-line").locator("polyline").last().evaluate((element) => getComputedStyle(element).animationName);
-  assert.match(routeAnimation, /routeFlow/);
+  // The atlas restyle keeps the dungeon artwork static and the route line calm (no parallax or looping animation).
+  await page.getByTestId("dungeon-backdrop").waitFor({ state: "attached" });
+  await page.getByTestId("route-line").waitFor();
 
   const completeButton = page.getByRole("button", { name: "Отметить шаг выполненным" });
   await completeButton.click();
@@ -114,6 +118,7 @@ try {
 
   await page.getByRole("button", { name: "2F", exact: true }).click();
   await page.getByAltText("Карта Ruby Life Pools, этаж 2").waitFor();
+  await page.getByRole("button", { name: "1F", exact: true }).click();
 
   await page.getByRole("button", { name: "Увеличить" }).click();
   assert.equal(await page.locator('[aria-label="Масштаб карты"] output b').textContent(), "110%");

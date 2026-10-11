@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 export function generateStaticParams() { return [{ boss: "rotmire" }]; }
 export default async function Page({ params }: { params: Promise<{ boss: string }> }) {
   if ((await params).boss !== "rotmire") notFound();
-  return <IdentityStatusPage locale="ru" eyebrow="Sporefall · встреча" title="Rotmire" summary="Идентичность встречи подтверждена Blizzard. Утверждения о тактике, способностях, игровых ID, иконках и добыче ещё не публикуются." patch="12.0.7" season="Midnight Season 1" sourceUrl="https://worldofwarcraft.blizzard.com/en-us/news/24272110" sourceLabel="Официальный источник Blizzard" lastVerifiedAt="2026-09-13" />;
+  return <IdentityStatusPage locale="ru" eyebrow="Sporefall · босс" title="Rotmire" summary="Босс подтверждён Blizzard. Тактика, способности и добыча появятся после проверки." parent={{ href: "/wow/raids/sporefall", label: "Sporefall" }} patch="12.0.7" season="Midnight Season 1" sourceUrl="https://worldofwarcraft.blizzard.com/en-us/news/24272110" sourceLabel="Официальный источник Blizzard" lastVerifiedAt="2026-09-13" />;
 }

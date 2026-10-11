@@ -17,7 +17,7 @@
 .status b { padding-left: 8px; color: var(--acid-bright); border-left: 1px solid rgba(158, 214, 74, .25); font-weight: 700; }
 .kicker { display: flex; align-items: center; gap: 8px; margin: 44px 0 8px; color: var(--gold); font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .kicker svg { width: 15px; }
-.hero h1 { margin: 0; color: #f3ead6; font: 500 clamp(4rem, 9vw, 8.3rem)/.82 Georgia, serif; letter-spacing: -.07em; text-shadow: 0 3px 2px #000, 0 0 34px rgba(0,0,0,.72); }
+.hero h1 { margin: 0; color: #f3ead6; font: 500 clamp(4rem, 9vw, 8.3rem)/.82 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; letter-spacing: -.07em; text-shadow: 0 3px 2px #000, 0 0 34px rgba(0,0,0,.72); }
 .hero h1 em { color: var(--acid-bright); font-style: normal; }
 .lead { max-width: 660px; margin: 28px 0 0; color: #c1c3b8; font-size: 15px; line-height: 1.65; text-shadow: 0 1px 8px #000; }
 .heroActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
@@ -29,7 +29,7 @@
 .heroStats { position: absolute; right: max(32px, calc((100vw - 1460px) / 2)); bottom: 60px; display: flex; margin: 0; border: 1px solid rgba(178, 202, 104, .26); background: rgba(3, 8, 6, .82); backdrop-filter: blur(10px); }
 .heroStats div { min-width: 126px; padding: 17px 20px; border-left: 1px solid rgba(178, 202, 104, .2); }
 .heroStats div:first-child { border-left: 0; }
-.heroStats dt { color: #eff5d9; font: 500 30px Georgia, serif; }
+.heroStats dt { color: #eff5d9; font: 500 30px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .heroStats dd { margin: 4px 0 0; color: #868f7b; font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
 
 .frame { width: min(100% - 52px, 1460px); margin-inline: auto; padding-bottom: 34px; }
@@ -41,9 +41,9 @@
 
 .section { padding-top: 62px; scroll-margin-top: 54px; }
 .sectionHeader { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: end; gap: 13px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid rgba(166, 189, 92, .21); }
-.sectionHeader > span { color: #58624e; font: 500 24px Georgia, serif; }
+.sectionHeader > span { color: #58624e; font: 500 24px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .sectionHeader p { margin: 0 0 4px; color: var(--acid); font-size: 8px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
-.sectionHeader h2 { margin: 0; color: #eee7d6; font: 500 clamp(1.7rem, 3vw, 2.7rem)/1 Georgia, serif; letter-spacing: -.03em; }
+.sectionHeader h2 { margin: 0; color: #eee7d6; font: 500 clamp(1.7rem, 3vw, 2.7rem)/1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; letter-spacing: -.03em; }
 .sectionHeader small { color: #737a6e; font-size: 8px; letter-spacing: .06em; text-transform: uppercase; }
 
 .timeline { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
@@ -51,7 +51,7 @@
 .timelineMark { position: absolute; z-index: 2; top: -13px; display: grid; width: 26px; height: 26px; place-items: center; border-radius: 4px; background: #050807; }
 .timelineMark button { display: block; }
 .timeline time { color: var(--acid-bright); font-size: 9px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
-.timeline h3 { margin: 8px 0 13px; color: #e4ddcb; font: 500 18px/1.12 Georgia, serif; }
+.timeline h3 { margin: 8px 0 13px; color: #e4ddcb; font: 500 18px/1.12 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .timeline ul { display: grid; gap: 7px; margin: 0; padding: 0; color: #92988c; font-size: 10px; line-height: 1.45; list-style: none; }
 .timeline ul li { position: relative; padding-left: 10px; }
 .timeline ul li::before { position: absolute; top: .56em; left: 0; width: 3px; height: 3px; content: ""; background: #67745c; }
@@ -62,14 +62,14 @@
 .tracks { display: grid; gap: 5px; padding: 20px; border: 1px solid rgba(164, 185, 91, .22); background: linear-gradient(135deg, rgba(12, 22, 16, .9), rgba(5, 9, 7, .95)); }
 .tracks > div { --track-color: #fff; position: relative; display: grid; grid-template-columns: 27px 108px 85px minmax(0, 1fr); align-items: center; min-height: 41px; gap: 10px; }
 .tracks span { color: var(--track-color); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.tracks b { color: #e4e2d8; font: 500 18px Georgia, serif; }
+.tracks b { color: #e4e2d8; font: 500 18px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .tracks i { height: 5px; border: 1px solid color-mix(in srgb, var(--track-color) 35%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--track-color) 80%, transparent), color-mix(in srgb, var(--track-color) 10%, transparent)); box-shadow: 0 0 15px color-mix(in srgb, var(--track-color) 13%, transparent); }
 .gearNotes { display: grid; align-content: start; gap: 8px; padding: 20px; border: 1px solid rgba(164, 185, 91, .22); background: #080d0a; }
 .gearNotes > div { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid rgba(164, 185, 91, .14); }
 .gearNotes svg { width: 21px; color: var(--gold); }
 .gearNotes span { display: grid; gap: 3px; }
 .gearNotes small { color: #777e72; font-size: 7px; letter-spacing: .08em; text-transform: uppercase; }
-.gearNotes b { color: #e6ddc6; font: 500 15px Georgia, serif; }
+.gearNotes b { color: #e6ddc6; font: 500 15px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .gearNotes p { margin: 7px 0 0; color: #898f84; font-size: 10px; line-height: 1.6; }
 .rewardTable { margin-top: 10px; overflow-x: auto; border: 1px solid rgba(164, 185, 91, .22); background: #070b09; }
 .rewardTable:focus-visible { outline: 2px solid var(--acid); outline-offset: 2px; }
@@ -85,7 +85,7 @@
 .contentGrid .featuredContent { grid-column: 1 / -1; min-height: 185px; background: linear-gradient(100deg, rgba(22, 39, 18, .96), rgba(6, 10, 8, .94)), url("/assets/wow/mythic/backgrounds/altar.webp") right 48% / 55% auto no-repeat; }
 .contentIcon { align-self: center; }
 .contentGrid article p { margin: 0 0 4px; color: var(--acid); font-size: 8px; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; }
-.contentGrid article h3 { margin: 0 0 8px; color: #eae1ce; font: 500 22px/1 Georgia, serif; }
+.contentGrid article h3 { margin: 0 0 8px; color: #eae1ce; font: 500 22px/1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .contentGrid article div > span { display: block; max-width: 650px; color: #8e9589; font-size: 10px; line-height: 1.55; }
 .contentGrid article > a { display: flex; align-items: center; gap: 7px; color: #d1bd84; font-size: 8px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 .contentGrid article > a:hover { color: var(--acid-bright); }
@@ -94,11 +94,11 @@
 .rewards { display: grid; grid-template-columns: .5fr 1.5fr; align-items: center; gap: 26px; margin-top: 62px; padding: 25px; border: 1px solid rgba(183, 145, 71, .32); background: linear-gradient(120deg, rgba(40, 27, 10, .52), rgba(7, 11, 8, .96)); }
 .rewards p { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--gold); font-size: 8px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
 .rewards p svg { width: 15px; }
-.rewards h2 { margin: 7px 0 0; color: #eadfc8; font: 500 27px Georgia, serif; }
+.rewards h2 { margin: 7px 0 0; color: #eadfc8; font: 500 27px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .rewards ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
 .rewards li { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 7px 16px; border-left: 1px solid rgba(183, 145, 71, .22); }
 .rewards li > span { display: grid; min-width: 0; gap: 5px; }
-.rewards li > span b { color: #edc976; font: 500 16px Georgia, serif; }
+.rewards li > span b { color: #edc976; font: 500 16px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
 .rewards li > span small { overflow: hidden; color: #89877e; font-size: 8px; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 .sourceBar { display: flex; align-items: center; gap: 11px; margin-top: 10px; padding: 14px 16px; border: 1px solid rgba(164, 185, 91, .18); background: #070b09; }
 .sourceBar > svg { width: 18px; color: var(--gold); }

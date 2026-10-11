@@ -1,0 +1,26 @@
+.badge {
+  --badge-color: var(--atlas-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 3px 9px;
+  color: var(--badge-color);
+  border: 1px solid color-mix(in srgb, var(--badge-color) 42%, transparent);
+  background: color-mix(in srgb, var(--badge-color) 8%, rgba(0, 0, 0, .55));
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: .1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge svg { width: 13px; height: 13px; flex: none; }
+
+.accent { --badge-color: var(--atlas-accent-strong); }
+.neutral { --badge-color: var(--atlas-text-muted); }
+.positive { --badge-color: var(--atlas-positive); }
+.negative { --badge-color: var(--atlas-negative); }
+.info { --badge-color: var(--atlas-info); }
+.caution { --badge-color: var(--atlas-caution); }

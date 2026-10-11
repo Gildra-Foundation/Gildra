@@ -93,16 +93,16 @@ export function VenomousAbyssPage({ locale }: { locale: Locale }) {
         <section className={styles.liveBanner}><i /><div><b>{t("Рейд полностью открыт", "The full raid is now open")}</b><span>{t("Доступны все сложности и четыре крыла Поиска рейда.", "All difficulties and all four Raid Finder wings are available.")}</span></div><Link href={`${prefix}/wow/midnight/season-2`} prefetch={false}><CalendarDays aria-hidden="true" />{t("Календарь сезона", "Season calendar")}</Link></section>
 
         <section className={styles.coverage} aria-labelledby="raid-coverage-title" data-testid="raid-data-coverage">
-          <header className={styles.sectionHeader}><div><p>{t("Покрытие данных", "Data coverage")}</p><h2 id="raid-coverage-title">{t("Что подтверждено сейчас", "What is verified now")}</h2></div><span><ShieldCheck aria-hidden="true" /> {venomousRaidVerifiedAt}</span></header>
+          <header className={styles.sectionHeader}><div><p>{t("Журнал рейда", "Raid journal")}</p><h2 id="raid-coverage-title">{t("Что уже есть в гайде", "What the guide covers")}</h2></div><span><ShieldCheck aria-hidden="true" /> {venomousRaidVerifiedAt}</span></header>
           <dl>
-            <div><dt>{bosses.length}</dt><dd>{t("встреч с EN/RU идентичностью", "encounters with EN/RU identity")}</dd></div>
-            <div><dt>{abilities.length}</dt><dd>{t("способностей со Spell ID и иконкой", "abilities with Spell ID and icon")}</dd></div>
-            <div><dt>{verifiedDescriptions.length}</dt><dd>{t("проверенных двуязычных описаний", "verified bilingual descriptions")}</dd></div>
-            <div><dt>{phases.length}</dt><dd>{t("явных заголовков фаз Journal", "explicit Journal phase headings")}</dd></div>
+            <div><dt>{bosses.length}</dt><dd>{t("боссов", "bosses")}</dd></div>
+            <div><dt>{abilities.length}</dt><dd>{t("способностей", "abilities")}</dd></div>
+            <div><dt>{verifiedDescriptions.length}</dt><dd>{t("описаний способностей", "ability descriptions")}</dd></div>
+            <div><dt>{phases.length}</dt><dd>{t("фаз боя", "fight phases")}</dd></div>
           </dl>
           <p>{t(
-            `${abilities.length - verifiedDescriptions.length} описаний остаются скрыты из-за неразрешённых клиентских токенов. Тактические назначения помечены source_tracked и не считаются данными Blizzard Journal.`,
-            `${abilities.length - verifiedDescriptions.length} descriptions remain withheld because of unresolved client tokens. Tactical assignments are marked source_tracked and are not presented as Blizzard Journal data.`,
+            `Ещё ${abilities.length - verifiedDescriptions.length} описаний появятся после проверки. Тактические назначения — черновик из стороннего гайда, а не данные журнала приключений Blizzard.`,
+            `${abilities.length - verifiedDescriptions.length} more descriptions will appear once verified. Tactical assignments are a draft from a third-party guide, not Blizzard Adventure Guide data.`,
           )}</p>
         </section>
 
@@ -116,7 +116,7 @@ export function VenomousAbyssPage({ locale }: { locale: Locale }) {
               return <li key={boss.canonicalSlug}>
                 <div className={styles.bossLink}>
                   <div className={styles.bossNumber}>{String(index + 1).padStart(2, "0")}</div>
-                  <span className={styles.bossSigil} role="img" aria-label={t("Портрет NPC не проверен", "NPC portrait not verified")}><Skull aria-hidden="true" /></span>
+                  <span className={styles.bossSigil} role="img" aria-label={t("Портрет босса появится позже", "Boss portrait coming later")}><Skull aria-hidden="true" /></span>
                   <Link className={styles.bossCopy} href={`${prefix}/wow/raids/venomous-abyss/${boss.canonicalSlug}`} prefetch={false}>
                     <small>{t(`Встреча ${boss.order}`, `Encounter ${boss.order}`)} · Encounter ID {boss.refs.encounterId}</small>
                     <h3>{localized(boss.names)}</h3>
@@ -174,7 +174,7 @@ export function VenomousAbyssPage({ locale }: { locale: Locale }) {
         </section>
 
         <footer className={styles.sourceBar}>
-          <BookOpen aria-hidden="true" /><span><b>{t("Идентичность, локализация и обзор наград проверены", "Identity, localization, and reward overview verified")}</b><small>Journal DB2 · {raid.build} · {venomousRaidVerifiedAt}</small></span>
+          <BookOpen aria-hidden="true" /><span><b>{t("Боссы, названия и награды сверены с журналом приключений", "Bosses, names and rewards checked against the Adventure Guide")}</b><small>{t("Патч", "Patch")} {raid.build} · {venomousRaidVerifiedAt}</small></span>
           <a href="https://worldofwarcraft.blizzard.com/en-us/news/24294369/midnight-season-2-is-now-live" target="_blank" rel="noreferrer">{t("Официальный источник", "Official source")}<ExternalLink aria-hidden="true" /></a>
         </footer>
       </div>

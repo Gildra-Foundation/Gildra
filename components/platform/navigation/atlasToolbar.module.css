@@ -1,0 +1,58 @@
+/* Top bar of every inner page: the book-contents launcher and the Gildra mark.
+   The header carries data-atlas-scope, so it reads the atlas tokens even though
+   it is mounted outside the page's .gildra-atlas wrapper. */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: var(--atlas-sticky-top);
+  padding: 8px var(--atlas-gutter);
+  border-bottom: 1px solid var(--atlas-line-soft);
+  background: rgba(5, 6, 7, .94);
+  backdrop-filter: blur(10px);
+}
+
+.launcher {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--atlas-control-height);
+  padding: 6px 14px 6px 7px;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-strong);
+  background: var(--atlas-accent-wash);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .33);
+  cursor: pointer;
+  font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
+  letter-spacing: .04em;
+  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+}
+
+.launcher:hover { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
+.launcher:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+.launcher img { width: 20px; height: 30px; object-fit: contain; filter: sepia(.45) saturate(.9) brightness(1.05); }
+
+.title {
+  color: var(--atlas-text-strong);
+  font: var(--atlas-weight-display) 20px / 1 var(--atlas-font-display); font-variant-numeric: lining-nums;
+  letter-spacing: .18em;
+  text-align: right;
+}
+
+.title small {
+  display: block;
+  margin-top: 5px;
+  color: var(--atlas-text-subtle);
+  font: 650 var(--atlas-text-label) / 1.2 var(--atlas-font-ui);
+  letter-spacing: var(--atlas-tracking-label);
+}
+
+@media (max-width: 720px) {
+  .title small { display: none; }
+}

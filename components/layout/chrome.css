@@ -315,7 +315,7 @@
   color:#352310;
   background:var(--gildra-character-paper-wash,linear-gradient(180deg,#c8d8e070,#c5d2dc70)),var(--cookie-book-paper,#e4dcc8) center / 640px repeat;
   box-shadow:0 4px 12px #080a0c70,inset 0 0 0 2px #dfe6e055;
-  font-family:"Gildra Atlas",Georgia,serif;
+  font-family:var(--atlas-font-display, "Gildra Atlas", Georgia, serif);
 }
 .cookie-book .cookie-text{color:#49341d}
 .cookie-book .cookie-text a{color:#783921;text-decoration-color:#947445}
@@ -327,11 +327,11 @@
   background:var(--cookie-book-button,none) center / 100% 100% no-repeat,#582118;
   color:#fff0c7;
   box-shadow:0 2px 3px #08050380;
-  font-family:"Gildra Kurale",Georgia,serif;
+  font-family:"Gildra Kurale",var(--atlas-font-display, Georgia, serif);
   font-size:13px;
   text-shadow:0 1px 2px #1c0b05;
 }
-.cookie-book .cookie-no{color:#624a2e;font-family:"Gildra Atlas",Georgia,serif}
+.cookie-book .cookie-no{color:#624a2e;font-family:var(--atlas-font-display, "Gildra Atlas", Georgia, serif)}
 .cookie-book .cookie-no:hover{color:#352310}
 
 @media (max-width:1120px){

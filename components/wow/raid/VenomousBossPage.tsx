@@ -101,7 +101,7 @@ export function VenomousBossPage({
             <p><Sparkles aria-hidden="true" />{t(`БОСС ${boss.number} ИЗ 8`, `BOSS ${boss.number} OF 8`)} · {lt(boss.type, locale)}</p>
             <h1>{bossName}</h1>
             <p className={styles.lead}>{lt(boss.identityDescription, locale)}</p>
-            <div className={styles.pull}><Skull aria-hidden="true" />{lt(boss.pull, locale)}<small>{t("Портрет NPC не проверен", "NPC portrait not verified")}</small></div>
+            <div className={styles.pull}><Skull aria-hidden="true" />{lt(boss.pull, locale)}</div>
           </div>
           <div className={styles.bossNumber} aria-hidden="true"><span>{String(boss.number).padStart(2, "0")}</span><small>/ 08</small></div>
         </div>
@@ -111,10 +111,10 @@ export function VenomousBossPage({
         <section className={styles.verificationNotice} aria-label={t("Статус проверки", "Verification status")}>
           <BookOpen aria-hidden="true" />
           <div>
-            <b>{t("Черновик тактики из стороннего источника", "Third-party strategy draft")}</b>
+            <b>{t("Тактика — черновик", "Strategy is a draft")}</b>
             <span>{t(
-              `Идентичность встречи и локализация проверены по Journal DB2 для ${boss.build}. Назначения, тайминги, схема и различия сложностей пока имеют статус source_tracked и не считаются проверенными.`,
-              `Encounter identity and localization are verified against Journal DB2 for ${boss.build}. Assignments, timings, arena plan, and difficulty deltas remain source_tracked and are not verified.`,
+              "Босс, его способности и названия сверены с журналом приключений. Назначения, тайминги, схема арены и различия сложностей взяты из стороннего гайда и пока не проверены нами.",
+              "The boss, its abilities and names match the Adventure Guide. Assignments, timings, the arena plan and difficulty differences come from a third-party guide and are not verified by us yet.",
             )}</span>
           </div>
         </section>
@@ -123,13 +123,13 @@ export function VenomousBossPage({
           <header className={styles.panelHeader}>
             <BookOpen aria-hidden="true" />
             <div>
-              <p>{t("ПРОВЕРЕННЫЕ ИДЕНТИФИКАТОРЫ", "VERIFIED IDENTITIES")}</p>
-              <h2 id="abilities-title">{t("Способности из обзора журнала", "Encounter Journal overview abilities")}</h2>
+              <p>{t("ЖУРНАЛ ПРИКЛЮЧЕНИЙ", "ADVENTURE GUIDE")}</p>
+              <h2 id="abilities-title">{t("Способности босса", "Boss abilities")}</h2>
             </div>
           </header>
           <p className={styles.abilityDisclosure}>{t(
-            `Названия, spell ID и соответствующие иконки проверены. Для ${verifiedDescriptionCount} из ${boss.journalAbilities.length} способностей доступно двуязычное описание без неразрешённых клиентских токенов в сборке ${boss.build}; остальные описания, все теги механик и инструкции скрыты до проверки.`,
-            `Names, spell IDs, and matching icons are verified. ${verifiedDescriptionCount} of ${boss.journalAbilities.length} abilities have bilingual descriptions without unresolved client tokens in build ${boss.build}; other descriptions, all mechanic tags, and execution instructions remain withheld pending verification.`,
+            `Названия и иконки сверены с журналом приключений. Описания есть для ${verifiedDescriptionCount} из ${boss.journalAbilities.length} способностей; остальные и советы по реакции появятся после проверки.`,
+            `Names and icons match the Adventure Guide. Descriptions are available for ${verifiedDescriptionCount} of ${boss.journalAbilities.length} abilities; the rest, and advice on how to react, will appear once verified.`,
           )}</p>
           <div className={styles.abilityGrid} role="list" data-testid="verified-ability-list">
             {boss.journalAbilities.map((ability) => (
@@ -143,14 +143,12 @@ export function VenomousBossPage({
                 <Image src={ability.iconUrl} alt="" width={48} height={48} sizes="48px" />
                 <span>
                   <b>{lt(ability.name, locale)}</b>
-                  <small>Spell ID {ability.spellId} · Icon ID {ability.iconId}</small>
-                  <small>{ability.iconSourceKind === "blizzard_api" ? "Blizzard API" : "Wago CASC"} · {boss.build}</small>
                   {ability.description ? (
                     <p className={styles.abilityDescription} data-testid="verified-ability-description">{lt(ability.description, locale)}</p>
                   ) : (
                     <small className={styles.abilityWithheld} data-testid="withheld-ability-description">{t(
-                      "Описание скрыто: исходник содержит неразрешённые клиентские токены",
-                      "Description withheld: source contains unresolved client tokens",
+                      "Описание появится после проверки",
+                      "Description will appear once verified",
                     )}</small>
                   )}
                 </span>
@@ -163,15 +161,15 @@ export function VenomousBossPage({
           <header className={styles.panelHeader}>
             <Clock3 aria-hidden="true" />
             <div>
-              <p>{t("ПРОВЕРЕННАЯ СТРУКТУРА", "VERIFIED STRUCTURE")}</p>
-              <h2 id="journal-phases-title">{t("Заголовки фаз из журнала", "Encounter Journal phase headings")}</h2>
+              <p>{t("ЖУРНАЛ ПРИКЛЮЧЕНИЙ", "ADVENTURE GUIDE")}</p>
+              <h2 id="journal-phases-title">{t("Фазы боя", "Fight phases")}</h2>
             </div>
           </header>
           {boss.journalPhases.length ? (
             <>
               <p className={styles.abilityDisclosure}>{t(
-                `В Journal DB2 для ${boss.build} явно указано разделов: ${boss.journalPhases.length}. Проверены только названия и порядок; тайминги, описания и механики не выводятся из структуры разделов.`,
-                `Journal DB2 for ${boss.build} explicitly labels ${boss.journalPhases.length} sections. Only titles and order are verified; timing, descriptions, and mechanics are not inferred from the section tree.`,
+                "Названия и порядок фаз — из журнала приключений. Тайминги и механики фаз появятся после проверки.",
+                "Phase names and order come from the Adventure Guide. Phase timings and mechanics will appear once verified.",
               )}</p>
               <ol className={styles.journalPhaseList}>
                 {boss.journalPhases.map((phase) => (
@@ -179,7 +177,6 @@ export function VenomousBossPage({
                     <span>{String(phase.order).padStart(2, "0")}</span>
                     <div>
                       <b>{lt(phase.name, locale)}</b>
-                      <small>Journal Section ID {phase.journalSectionId} · {phase.phaseKind} · {boss.build}</small>
                     </div>
                   </li>
                 ))}
@@ -187,8 +184,8 @@ export function VenomousBossPage({
             </>
           ) : (
             <p className={styles.abilityDisclosure}>{t(
-              `В дереве Journal DB2 для ${boss.build} нет явных двуязычных заголовков stage/phase/intermission. Фазы не были выведены из черновика тактики.`,
-              `The Journal DB2 tree for ${boss.build} has no explicit bilingual stage/phase/intermission headings. No phases were inferred from the strategy draft.`,
+              "В журнале приключений бой не разделён на фазы.",
+              "The Adventure Guide does not split this fight into phases.",
             )}</p>
           )}
         </section>
@@ -278,16 +275,16 @@ export function VenomousBossPage({
             </div>
             {tierReward ? <p className={styles.tierReward}><Gem aria-hidden="true" /><span><b>{t("Tier-награда встречи", "Encounter tier reward")}</b>{tierReward[locale]}</span></p> : null}
             <p className={styles.note}>{t(
-              "Это проверенная группа уровней, а не список предметов. Строки добычи скрыты, пока для них не проверены canonical itemId, источник встречи, сложность, трек улучшения и chanceStatus. Точный шанс выпадения не опубликован.",
-              "This is a verified item-level band, not an item list. Loot rows are withheld until their canonical itemId, encounter source, difficulty, upgrade track, and chanceStatus are verified. The exact drop chance has not been published.",
+              "Это уровни предметов по сложностям, а не список добычи. Конкретные предметы появятся после проверки; шансы выпадения Blizzard не публикует.",
+              "These are item levels by difficulty, not a loot list. Specific items will appear once verified; Blizzard does not publish drop chances.",
             )}</p>
             <a className={styles.lootSource} href={venomousRaidLootSource} target="_blank" rel="noreferrer">{t(`Источник · проверено ${venomousRaidVerifiedAt}`, `Source · verified ${venomousRaidVerifiedAt}`)}<ExternalLink aria-hidden="true" /></a>
           </section>
         </div>
 
         <footer className={styles.sourceBar}>
-          <BookOpen aria-hidden="true" /><span><b>{t("Тактика: source_tracked, не проверена", "Strategy: source_tracked, not verified")}</b><small>{t("Идентичность Journal проверена 13 сентября 2026", "Journal identity verified September 13, 2026")}</small></span>
-          <a href={boss.source} target="_blank" rel="noreferrer">{t("Сторонний черновик", "Third-party draft source")}<ExternalLink aria-hidden="true" /></a>
+          <BookOpen aria-hidden="true" /><span><b>{t("Тактика — черновик из стороннего гайда", "Strategy is a draft from a third-party guide")}</b><small>{t("Сверено с журналом приключений 13 сентября 2026", "Checked against the Adventure Guide on September 13, 2026")}</small></span>
+          <a href={boss.source} target="_blank" rel="noreferrer">{t("Источник тактики", "Strategy source")}<ExternalLink aria-hidden="true" /></a>
         </footer>
 
         <nav className={styles.pager} aria-label={t("Другие боссы", "Other bosses")}>

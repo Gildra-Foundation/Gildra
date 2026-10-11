@@ -42,7 +42,7 @@
 }
 .crest { background: radial-gradient(circle, rgba(100, 58, 15, .62), #0b0805 52%, transparent 53%); box-shadow: 0 0 0 5px #0b0805, 0 0 0 6px rgba(216, 139, 43, .52), 0 0 40px rgba(196, 111, 21, .2); }
 .crest > b, .statRail, .starMap > span, .starMap button { background: #0c0906; }
-.identity h1, .panelHeading h2, .character h3, .buildRow b, .history strong, .worldList b, .digest h2 { font-family: Georgia, "Times New Roman", serif; color: #eadcc3; }
+.identity h1, .panelHeading h2, .character h3, .buildRow b, .history strong, .worldList b, .digest h2 { font-family: var(--atlas-font-display, Georgia, serif); color: #eadcc3; }
 .privacy button, .edit, .editing { border-radius: 2px; background: linear-gradient(180deg, #1a130b, #0b0805); }
 .heroWorlds button, .panel, .character { border-radius: 2px; }
 .statRail { border-color: rgba(191, 128, 42, .55); box-shadow: 0 13px 32px rgba(9, 10, 11, .42), inset 0 1px rgba(255, 221, 149, .05); }

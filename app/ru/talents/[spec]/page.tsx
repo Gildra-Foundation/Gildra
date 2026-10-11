@@ -29,7 +29,7 @@ export default async function RussianTalentSpecPage({ params, searchParams }: Pa
   const specStyles = await getTalentSpecStyles(theme);
   return <>
     <style key={theme.slug} data-talent-spec-styles={theme.slug}>{specStyles}</style>
-    <Suspense fallback={<TalentCalculatorSkeleton />}>
+    <Suspense fallback={<TalentCalculatorSkeleton lang="ru" />}>
       <RussianTalentCalculator spec={spec} searchParams={searchParams} theme={theme} />
     </Suspense>
   </>;

@@ -2,10 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Check, ChevronDown, CircleDot, Crosshair, Download, Droplets, Eye, Flame, Leaf, LockKeyhole, PawPrint, Plus, RotateCcw, Save, Search, Share2, Shield, Skull, Snowflake, Sparkles, Sun, Swords, Trash2, Undo2, Upload, UserRound, Waves, X, Zap } from "lucide-react";
-import { createElement, forwardRef, memo, startTransition, useCallback, useDeferredValue, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
+import { Check, ChevronDown, CircleDot, Crosshair, Download, Droplets, Eye, Flame, Leaf, LockKeyhole, PawPrint, Plus, RotateCcw, Save, Search, Share2, Shield, Skull, Snowflake, Sparkles, Sun, Swords, Trash2, Undo2, Upload, Waves, X, Zap } from "lucide-react";
+import { createContext, createElement, forwardRef, memo, startTransition, useCallback, useContext, useDeferredValue, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { createPortal } from "react-dom";
 import type { PvPTalent, TalentCalculatorData, TalentChoice, TalentNode, TalentTree, TalentKind } from "@/lib/talentCalculatorData";
 import type { TalentSpecTheme } from "@/lib/talentSpecThemes";
@@ -16,11 +15,12 @@ import { TalentTreePanel } from "@/components/talents/TalentTreePanel";
 import { TalentDescription } from "@/components/talents/TalentDescription";
 import { getPerformanceTier, type PerformanceTier } from "@/lib/client/performanceTier";
 import { navigateTalentPage } from "@/lib/client/viewTransitionNavigation";
+import { heroPathName, talentCalculatorCopy, talentThemeNames, type TalentCalculatorCopy, type TalentCopyLang } from "@/components/talents/talentCalculatorCopy";
 
-const SpecSignatureFx = dynamic(
-  () => import("@/components/talents/spec-signature/SpecSignatureFx").then((module) => module.SpecSignatureFx),
-  { ssr: false },
-);
+// Interface copy for the whole calculator tree (tooltips render through a portal,
+// which keeps React context).
+const TalentCopyContext = createContext<TalentCalculatorCopy>(talentCalculatorCopy.ru);
+const TalentLangContext = createContext<TalentCopyLang>("ru");
 
 type TooltipPlacement = "above" | "below";
 type TooltipMotion = "open" | "closing";
@@ -250,6 +250,21 @@ function countRanksByTree(ranks: Map<string, number>, data?: TalentCalculatorDat
   return totals;
 }
 
+/** Closest vertical (row) and horizontal (column) spacing of a tree, in % of its canvas. */
+function treeSpacing(nodes: TalentNode[]) {
+  let row = 100;
+  let column = 100;
+  for (const first of nodes) {
+    for (const second of nodes) {
+      const dy = second.y - first.y;
+      const dx = second.x - first.x;
+      if (dy > 0.5 && dy < row && Math.abs(dx) < 12) row = dy;
+      if (dx > 0.5 && dx < column && Math.abs(dy) < 1) column = dx;
+    }
+  }
+  return { row: row === 100 ? 12 : Math.round(row * 100) / 100, column: column === 100 ? 20 : Math.round(column * 100) / 100 };
+}
+
 function freeTalentRanks(data: TalentCalculatorData) {
   return new Map(Object.values(data.trees).flatMap((tree) => tree.nodes.filter((node) => node.freeNode).map((node) => [node.id, node.maxRanks] as const)));
 }
@@ -303,9 +318,9 @@ function mapsHaveSameValues<K, V>(left: ReadonlyMap<K, V>, right: ReadonlyMap<K,
   return true;
 }
 
-function talentNodeName(node: TalentNode) {
+function talentNodeName(node: TalentNode, copy: TalentCalculatorCopy) {
   const names = [...new Set(node.choices.map((choice) => choice.name).filter(Boolean))];
-  return names.join(" / ") || `талант #${node.nodeId}`;
+  return names.join(" / ") || copy.talentFallback(node.nodeId);
 }
 
 function catalogNodes(catalog: TalentNodeCatalog, nodeIds: number[], treeKind?: TalentKind) {
@@ -323,28 +338,28 @@ function talentRequirementRankSignature(nodeIds: number[], catalog: TalentNodeCa
   return signature;
 }
 
-function unmetTalentRequirement(nodes: TalentNode[], fallbackIds: number[], ranks: Map<string, number>) {
+function unmetTalentRequirement(nodes: TalentNode[], fallbackIds: number[], ranks: Map<string, number>, copy: TalentCalculatorCopy) {
   if (nodes.some((candidate) => (ranks.get(candidate.id) ?? 0) > 0)) return null;
-  const names = [...new Set(nodes.map(talentNodeName))];
-  const fallbackNames = fallbackIds.map((nodeId) => `талант #${nodeId}`);
+  const names = [...new Set(nodes.map((node) => talentNodeName(node, copy)))];
+  const fallbackNames = fallbackIds.map((nodeId) => copy.talentFallback(nodeId));
   const labels = names.length ? names : fallbackNames;
   return {
     nodeIds: nodes.map((candidate) => candidate.id),
-    text: labels.length === 1 ? `Выберите «${labels[0]}»` : `Выберите один из: ${labels.map((name) => `«${name}»`).join(", ")}`,
+    text: labels.length === 1 ? copy.chooseOne(labels[0]) : copy.chooseAnyOf(labels),
   };
 }
 
-function nodeAvailability(node: TalentNode, treeKind: TalentKind, ranks: Map<string, number>, spentInTree: number, catalog: TalentNodeCatalog): NodeAvailability {
+function nodeAvailability(node: TalentNode, treeKind: TalentKind, ranks: Map<string, number>, spentInTree: number, catalog: TalentNodeCatalog, copy: TalentCalculatorCopy): NodeAvailability {
   const currentRank = ranks.get(node.id) ?? 0;
   const spentBeforeNode = Math.max(0, spentInTree - currentRank);
   if (node.freeNode) return { available: true, reason: "", blockerNodeIds: [] };
 
   const reasons: string[] = [];
   const blockerNodeIds = new Set<string>();
-  if (node.requiredPoints && spentBeforeNode < node.requiredPoints) reasons.push(`Потратьте ещё ${node.requiredPoints - spentBeforeNode} очк. в этом дереве`);
+  if (node.requiredPoints && spentBeforeNode < node.requiredPoints) reasons.push(copy.spendMore(node.requiredPoints - spentBeforeNode));
 
   if (node.requiresNodeIds.length) {
-    const requirement = unmetTalentRequirement(catalogNodes(catalog, node.requiresNodeIds), node.requiresNodeIds, ranks);
+    const requirement = unmetTalentRequirement(catalogNodes(catalog, node.requiresNodeIds), node.requiresNodeIds, ranks, copy);
     if (requirement) {
       reasons.push(requirement.text);
       requirement.nodeIds.forEach((nodeId) => blockerNodeIds.add(nodeId));
@@ -352,7 +367,7 @@ function nodeAvailability(node: TalentNode, treeKind: TalentKind, ranks: Map<str
   }
 
   if (node.prevNodeIds.length) {
-    const requirement = unmetTalentRequirement(catalogNodes(catalog, node.prevNodeIds, treeKind), node.prevNodeIds, ranks);
+    const requirement = unmetTalentRequirement(catalogNodes(catalog, node.prevNodeIds, treeKind), node.prevNodeIds, ranks, copy);
     if (requirement) {
       reasons.push(requirement.text);
       requirement.nodeIds.forEach((nodeId) => blockerNodeIds.add(nodeId));
@@ -364,50 +379,47 @@ function nodeAvailability(node: TalentNode, treeKind: TalentKind, ranks: Map<str
     : { available: true, reason: "", blockerNodeIds: [] };
 }
 
-const treeLabels: Record<TalentKind, string> = {
-  class: "Дерево класса",
-  hero: "Путь героя",
-  spec: "Специализация",
-};
-
 function Tooltip({ node, treeKind, left, top, anchorOffset, placement, motion, id, selectedChoice, currentRank, lockReason }: { node: TalentNode; treeKind: TalentKind; left: number; top: number; anchorOffset: number; placement: TooltipPlacement; motion: TooltipMotion; id: string; selectedChoice?: number; currentRank: number; lockReason?: string }) {
+  const copy = useContext(TalentCopyContext);
   const isSelected = currentRank > 0;
-  const interactionLabel = node.nodeType === "choice" && currentRank >= node.maxRanks ? "Сменить вариант" : currentRank < node.maxRanks ? "Добавить ранг" : "Максимальный ранг";
+  const interactionLabel = node.nodeType === "choice" && currentRank >= node.maxRanks ? copy.switchChoice : currentRank < node.maxRanks ? copy.addRank : copy.maxRank;
   return (
     <aside className={`tc-tooltip tc-tooltip-${node.talentType}${lockReason ? " is-locked" : isSelected ? " is-selected" : ""}${motion === "closing" ? " is-closing" : ""}`} id={id} role="tooltip" data-motion={motion} data-placement={placement} aria-hidden={motion === "closing" ? true : undefined} style={{ left, top, "--tc-tooltip-anchor": `${anchorOffset}px` } as CSSProperties}>
       <span className="tc-tooltip-backplate" aria-hidden="true" />
       <span className="tc-tooltip-forge-line" aria-hidden="true" />
-      <div className="tc-tooltip-meta"><span>{treeLabels[treeKind]}</span><span>Узел #{node.nodeId}</span></div>
+      <div className="tc-tooltip-meta"><span>{copy.treeLabels[treeKind]}</span><span>{copy.nodeNumber(node.nodeId)}</span></div>
       {node.nodeType === "tiered"
         ? <TalentTieredTooltip node={node} />
         : node.choices.map((choice, index) => <TalentTooltipChoice choice={choice} key={choice.externalId} index={index} showChoice={node.nodeType === "choice"} tiered={false} selected={selectedChoice === choice.externalId} />)}
       <div className="tc-tooltip-state">
-        <span className="tc-tooltip-rank"><small>Текущий ранг</small><b>{currentRank}<i> / {node.maxRanks}</i></b></span>
-        <span className={lockReason ? "is-danger" : isSelected ? "is-ready" : "is-available"}>{lockReason ? <LockKeyhole /> : isSelected ? <Check /> : <Sparkles />}<span>{lockReason ? "Недоступно" : isSelected ? "Выбрано" : "Можно изучить"}</span></span>
+        <span className="tc-tooltip-rank"><small>{copy.currentRank}</small><b>{currentRank}<i> / {node.maxRanks}</i></b></span>
+        <span className={lockReason ? "is-danger" : isSelected ? "is-ready" : "is-available"}>{lockReason ? <LockKeyhole /> : isSelected ? <Check /> : <Sparkles />}<span>{lockReason ? copy.unavailable : isSelected ? copy.selected : copy.canLearn}</span></span>
       </div>
-      {lockReason ? <div className="tc-tooltip-lock"><LockKeyhole /><span><b>Как открыть талант</b><small>{lockReason}</small><i>Нужные узлы подсвечены на дереве</i></span></div> : null}
-      <div className="tc-tooltip-controls" aria-hidden="true"><span><kbd>ЛКМ</kbd>{interactionLabel}</span><span><kbd>ПКМ</kbd>Убрать ранг</span>{node.nodeType === "choice" ? <span><kbd>[ / ]</kbd>Вариант</span> : null}</div>
-      <div className="tc-tooltip-foot"><span>Midnight · {node.talentType === "active" ? "заклинание" : "талант"}</span><span>{node.freeNode ? "Изучен автоматически" : `Требуется очков: ${node.requiredPoints ?? 0}`}</span></div>
+      {lockReason ? <div className="tc-tooltip-lock"><LockKeyhole /><span><b>{copy.howToUnlock}</b><small>{lockReason}</small><i>{copy.requirementsHighlighted}</i></span></div> : null}
+      <div className="tc-tooltip-controls" aria-hidden="true"><span><kbd>{copy.leftClick}</kbd>{interactionLabel}</span><span><kbd>{copy.rightClick}</kbd>{copy.removeRank}</span>{node.nodeType === "choice" ? <span><kbd>[ / ]</kbd>{copy.choiceKeys}</span> : null}</div>
+      <div className="tc-tooltip-foot"><span>Midnight · {node.talentType === "active" ? copy.spell : copy.talent}</span><span>{node.freeNode ? copy.learnedAutomatically : copy.requiredPoints(node.requiredPoints ?? 0)}</span></div>
     </aside>
   );
 }
 
 function PvpTooltip({ talent, left, top, anchorOffset, placement, motion, id, selected }: { talent: PvPTalent; left: number; top: number; anchorOffset: number; placement: TooltipPlacement; motion: TooltipMotion; id: string; selected: boolean }) {
-  const iconSource = talent.iconSource === "fallback" ? "Локальная замена" : "Blizzard Render / DB2";
+  const copy = useContext(TalentCopyContext);
+  const lang = useContext(TalentLangContext);
+  const iconSource = talent.iconSource === "fallback" ? copy.localReplacement : "Blizzard Render / DB2";
   return <aside className={`tc-tooltip tc-pvp-tooltip${selected ? " is-selected" : ""}${motion === "closing" ? " is-closing" : ""}`} id={id} role="tooltip" data-motion={motion} data-placement={placement} aria-hidden={motion === "closing" ? true : undefined} style={{ left, top, "--tc-tooltip-anchor": `${anchorOffset}px` } as CSSProperties}>
     <span className="tc-tooltip-backplate" aria-hidden="true" />
     <span className="tc-tooltip-forge-line" aria-hidden="true" />
-    <div className="tc-tooltip-meta"><span>Арена и поля боя</span><span>PvP #{talent.externalId}</span></div>
+    <div className="tc-tooltip-meta"><span>{copy.pvpScope}</span><span>PvP #{talent.externalId}</span></div>
     <div className="tc-tooltip-choice is-selected">
       <div className="tc-tooltip-heading">
         {talent.iconUrl ? <img src={talent.iconUrl} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; }} /> : null}
-        <div><strong>{talent.name}</strong><span>PvP-талант · {selected ? "выбран" : "доступен"}{talent.iconFallback ? " · иконка-замена" : ""}</span></div>
+        <div><strong>{talent.name}</strong><span>{copy.pvpTalent} · {selected ? copy.pvpChosen : copy.pvpOpen}{talent.iconFallback ? ` · ${copy.iconReplacement}` : ""}</span></div>
       </div>
-      <TalentDescription talent={talent} />
+      <TalentDescription talent={talent} locale={lang} />
     </div>
-    <div className="tc-tooltip-state"><span className="tc-tooltip-rank"><small>Уровень</small><b>{talent.levelRequired ?? 80}</b></span><span className={selected ? "is-ready" : "is-available"}>{selected ? <Check /> : <Flame />}<span>{selected ? "Установлен" : "Можно выбрать"}</span></span></div>
-    <div className="tc-tooltip-controls" aria-hidden="true"><span><kbd>ЛКМ</kbd>Открыть выбор</span><span><kbd>Esc</kbd>Закрыть</span></div>
-    <div className="tc-tooltip-foot"><span>Midnight · PvP · {talent.buildVersion}</span><span>Источник: {iconSource}</span></div>
+    <div className="tc-tooltip-state"><span className="tc-tooltip-rank"><small>{copy.level}</small><b>{talent.levelRequired ?? 80}</b></span><span className={selected ? "is-ready" : "is-available"}>{selected ? <Check /> : <Flame />}<span>{selected ? copy.equipped : copy.canChoose}</span></span></div>
+    <div className="tc-tooltip-controls" aria-hidden="true"><span><kbd>{copy.leftClick}</kbd>{copy.openPicker}</span><span><kbd>Esc</kbd>{copy.close}</span></div>
+    <div className="tc-tooltip-foot"><span>Midnight · PvP · {talent.buildVersion}</span><span>{copy.sourceLabel(iconSource)}</span></div>
   </aside>;
 }
 
@@ -437,11 +449,12 @@ const TreeTooltipLayer = memo(forwardRef<TreeTooltipLayerHandle, {
     },
   }), []);
 
+  const copy = useContext(TalentCopyContext);
   if (!tooltip || typeof document === "undefined") return null;
   const spent = countRanks(ranks, tooltip.treeKind, data.trees[tooltip.treeKind].nodes);
-  const lockReason = nodeAvailability(tooltip.node, tooltip.treeKind, ranks, spent, nodeCatalog).reason;
+  const lockReason = nodeAvailability(tooltip.node, tooltip.treeKind, ranks, spent, nodeCatalog, copy).reason;
   return createPortal(
-    <div className="tc-tooltip-layer" data-spec={theme.slug} data-spec-motif={theme.motif} style={{ "--tc-accent": theme.accent, "--tc-hot": theme.hot, "--tc-deep": theme.deep, "--tc-accent-rgb": theme.accentRgb, "--tc-hot-rgb": theme.hotRgb, "--tc-ambient-rgb": theme.ambientRgb } as CSSProperties}>
+    <div className="tc-tooltip-layer" data-atlas-scope="" data-spec={theme.slug} data-spec-motif={theme.motif}>
       <Tooltip node={tooltip.node} treeKind={tooltip.treeKind} left={tooltip.left} top={tooltip.top} anchorOffset={tooltip.anchorOffset} placement={tooltip.placement} motion={motion} selectedChoice={choices.get(tooltip.node.id)} currentRank={ranks.get(tooltip.node.id) ?? 0} lockReason={lockReason} id={`tooltip-${tooltip.node.id}`} />
     </div>,
     document.body,
@@ -449,33 +462,37 @@ const TreeTooltipLayer = memo(forwardRef<TreeTooltipLayerHandle, {
 }));
 
 function TalentTieredTooltip({ node }: { node: TalentNode }) {
+  const copy = useContext(TalentCopyContext);
+  const lang = useContext(TalentLangContext);
   const icon = node.choices[0]?.iconUrl;
   let firstRank = 1;
   return (
     <div className="tc-tooltip-tiered">
       <div className="tc-tooltip-heading">
         {icon ? <img src={icon} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; }} /> : null}
-        <div><strong>{node.choices[0]?.name ?? "Apex Talent"}</strong><span>Apex Talent · последовательные ранги{node.choices[0]?.iconFallback ? " · иконка-замена" : ""}</span></div>
+        <div><strong>{node.choices[0]?.name ?? "Apex Talent"}</strong><span>Apex Talent · {copy.apexSequential}{node.choices[0]?.iconFallback ? ` · ${copy.iconReplacement}` : ""}</span></div>
       </div>
       {node.choices.map((choice) => {
         const start = firstRank;
         firstRank += choice.maxRanks;
-        return <div className="tc-tooltip-tier" key={choice.externalId}><b>Ранг {start}{choice.maxRanks > 1 ? `–${start + choice.maxRanks - 1}` : ""}</b><TalentDescription talent={choice} /></div>;
+        return <div className="tc-tooltip-tier" key={choice.externalId}><b>{copy.rankRange(`${start}${choice.maxRanks > 1 ? `–${start + choice.maxRanks - 1}` : ""}`)}</b><TalentDescription talent={choice} locale={lang} /></div>;
       })}
     </div>
   );
 }
 
 function TalentTooltipChoice({ choice, index, showChoice, tiered, selected }: { choice: TalentChoice; index: number; showChoice: boolean; tiered: boolean; selected: boolean }) {
+  const copy = useContext(TalentCopyContext);
+  const lang = useContext(TalentLangContext);
   return (
     <div className={`tc-tooltip-choice${selected ? " is-selected" : ""}`}>
       <div className="tc-tooltip-heading">
         {showChoice ? <span className="tc-choice-marker" aria-hidden="true">{selected ? "✓" : index + 1}</span> : null}
         {choice.iconUrl ? <img src={choice.iconUrl} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; }} /> : null}
-        <div><strong>{choice.name}</strong><span>{showChoice ? `Вариант ${index + 1} · ` : tiered ? `Уровень ${index + 1} · ` : ""}{choice.talentType === "active" ? "Активная способность" : "Пассивный эффект"}{choice.iconFallback ? " · иконка-замена" : ""}</span></div>
+        <div><strong>{choice.name}</strong><span>{showChoice ? `${copy.choiceN(index + 1)} · ` : tiered ? `${copy.tierN(index + 1)} · ` : ""}{choice.talentType === "active" ? copy.activeAbility : copy.passiveEffect}{choice.iconFallback ? ` · ${copy.iconReplacement}` : ""}</span></div>
       </div>
-      <TalentDescription talent={choice} />
-      <small>Макс. ранг: {choice.maxRanks}</small>
+      <TalentDescription talent={choice} locale={lang} />
+      <small>{copy.maxRankShort(choice.maxRanks)}</small>
     </div>
   );
 }
@@ -509,6 +526,7 @@ function TalentSigil({ visual }: { visual: TalentVisual }) {
 }
 
 const TalentNodeButton = memo(function TalentNodeButton({ view, tabIndex, openTooltip, closeTooltip, onRank, onCycleChoice, onMoveFocus, onFocusNode, onInspectRequirements }: { view: TalentNodeView; tabIndex: number; openTooltip: OpenTooltip; closeTooltip: () => void; onRank: (node: TalentNode, direction: 1 | -1) => void; onCycleChoice: (node: TalentNode, direction: 1 | -1) => void; onMoveFocus: (node: TalentNode, direction: MoveDirection) => void; onFocusNode: (nodeId: string) => void; onInspectRequirements: (nodeId: string | null, blockerNodeIds?: string[]) => void }) {
+  const copy = useContext(TalentCopyContext);
   const [pointerActive, setPointerActive] = useState(false);
   const pointerActiveTimerRef = useRef<number | null>(null);
   const { node, rank, selectedChoice, available, lockReason, blockerNodeIds, hasMatch } = view;
@@ -524,7 +542,7 @@ const TalentNodeButton = memo(function TalentNodeButton({ view, tabIndex, openTo
       type="button"
       data-node-id={node.id}
       tabIndex={tabIndex}
-      aria-label={`${node.nodeType === "tiered" ? (node.choices[0]?.name ?? "Apex Talent") : node.choices.map((choice) => choice.name).join(" или ")}, ${node.nodeType === "tiered" ? "последовательные ранги" : `выбранный вариант ${selected?.name ?? "не выбран"}`}, ранг ${rank} из ${node.maxRanks}${available ? "" : `, недоступен: ${lockReason}`}`}
+      aria-label={copy.nodeAria({ names: node.nodeType === "tiered" ? (node.choices[0]?.name ?? "Apex Talent") : node.choices.map((choice) => choice.name).join(copy.or), tiered: node.nodeType === "tiered", selectedName: selected?.name, rank, maxRanks: node.maxRanks, lockReason: available ? undefined : lockReason })}
       aria-describedby={`tooltip-${node.id}`}
       aria-pressed={rank > 0}
       aria-disabled={!available}
@@ -617,6 +635,7 @@ const TalentNodeButton = memo(function TalentNodeButton({ view, tabIndex, openTo
 const emptyMatchedNodeIds = new Set<string>();
 
 const TalentTreeView = memo(function TalentTreeView({ tree, ranks, choices, spentInTree, nodeCatalog, searchIndex, onRank, onCycleChoice, query, openTooltip, closeTooltip }: { tree: TalentTree; ranks: Map<string, number>; choices: ChoiceState; spentInTree: number; nodeCatalog: TalentNodeCatalog; searchIndex: TalentSearchIndex; onRank: (node: TalentNode, direction: 1 | -1) => void; onCycleChoice: (node: TalentNode, direction: 1 | -1) => void; query: string; openTooltip: RootOpenTooltip; closeTooltip: () => void }) {
+  const copy = useContext(TalentCopyContext);
   const [focusedNodeId, setFocusedNodeId] = useState(tree.nodes[0]?.id ?? "");
   const canvasRef = useRef<HTMLDivElement>(null);
   const nodeViewCacheRef = useRef(new Map<string, CachedTalentNodeView>());
@@ -700,11 +719,11 @@ const TalentTreeView = memo(function TalentTreeView({ tree, ranks, choices, spen
       && previous.previousRanks === previousRanks
       && previous.hasMatch === hasMatch) return previous.view;
 
-    const availability = nodeAvailability(node, tree.kind, ranks, spentInTree, nodeCatalog);
+    const availability = nodeAvailability(node, tree.kind, ranks, spentInTree, nodeCatalog, copy);
     const view = { node, rank, selectedChoice, available: availability.available, lockReason: availability.reason, blockerNodeIds: availability.blockerNodeIds, hasMatch };
     nodeViewCacheRef.current.set(node.id, { view, node, rank, selectedChoice, ranks, nodeCatalog, spentInTree, treeKind: tree.kind, pointGate, requiredRanks, previousRanks, hasMatch });
     return view;
-  }), [choices, nodeCatalog, normalizedQuery, ranks, searchIndex, spentInTree, tree.kind, tree.nodes]);
+  }), [choices, copy, nodeCatalog, normalizedQuery, ranks, searchIndex, spentInTree, tree.kind, tree.nodes]);
   const matchedNodeIds = useMemo(() => normalizedQuery
     ? new Set(nodeViews.filter((view) => view.hasMatch).map((view) => view.node.id))
     : emptyMatchedNodeIds, [nodeViews, normalizedQuery]);
@@ -797,19 +816,23 @@ const TalentTreeView = memo(function TalentTreeView({ tree, ranks, choices, spen
   }), [closeTooltip, focusedNodeId, inspectRequirements, moveFocus, nodeViews, onCycleChoice, onRank, openTreeTooltip]);
 
   // Keep pointer activity local; waking the panel invalidates styles for every tree node.
+  // The scroll box lets very wide trees scroll sideways on narrow screens
+  // instead of shrinking nodes below a readable size.
   return (
-    <div
-      className="tc-tree-canvas"
-      ref={canvasRef}
-      onFocusCapture={(event) => event.currentTarget.closest<HTMLElement>(".tc-panel")?.classList.add("is-node-active")}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.closest<HTMLElement>(".tc-panel")?.classList.remove("is-node-active");
-      }}
-    >
-      <svg className="tc-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        {edgeElements}
-      </svg>
-      {nodeElements}
+    <div className="tc-tree-scroll">
+      <div
+        className="tc-tree-canvas"
+        ref={canvasRef}
+        onFocusCapture={(event) => event.currentTarget.closest<HTMLElement>(".tc-panel")?.classList.add("is-node-active")}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.closest<HTMLElement>(".tc-panel")?.classList.remove("is-node-active");
+        }}
+      >
+        <svg className="tc-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {edgeElements}
+        </svg>
+        {nodeElements}
+      </div>
     </div>
   );
 }, (previous, next) => {
@@ -877,7 +900,7 @@ function removeInvalidDependents(data: TalentCalculatorData, ranks: Map<string, 
       const node = nodes.get(id);
       const treeKind = treeKinds.get(id);
       const rank = ranks.get(id) ?? 0;
-      if (!node || !treeKind || !nodeAvailability(node, treeKind, ranks, spentByTree[treeKind], catalog).available) {
+      if (!node || !treeKind || !nodeAvailability(node, treeKind, ranks, spentByTree[treeKind], catalog, talentCalculatorCopy.en).available) {
         ranks.delete(id);
         choices.delete(id);
         if (node && treeKind && !node.freeNode) spentByTree[treeKind] = Math.max(0, spentByTree[treeKind] - rank);
@@ -904,7 +927,7 @@ function sanitizeLoadout(data: TalentCalculatorData, decoded: { ranks: Map<strin
       const node = nodes.get(id);
       if (!node) continue;
       const treeKind = (Object.keys(data.trees) as TalentKind[]).find((kind) => data.trees[kind].nodes.some((item) => item.id === id));
-      if (!treeKind || !nodeAvailability(node, treeKind, ranks, countRanks(ranks, treeKind, data.trees[treeKind].nodes), catalog).available) {
+      if (!treeKind || !nodeAvailability(node, treeKind, ranks, countRanks(ranks, treeKind, data.trees[treeKind].nodes), catalog, talentCalculatorCopy.en).available) {
         ranks.delete(id);
         changed = true;
         adjusted = true;
@@ -935,8 +958,10 @@ function sanitizeLoadout(data: TalentCalculatorData, decoded: { ranks: Map<strin
   return { ranks, choices, pvp, adjusted };
 }
 
-function ErrorState({ theme }: { theme: TalentSpecTheme }) {
-  return <main className="talent-calculator tc-state" data-spec={theme.slug} data-spec-motif={theme.motif}><div className="tc-state-card"><span className="tc-state-kicker">Midnight · {theme.classNameRu}</span><h1>Дерево «{theme.specNameRu}» недоступно</h1><p>Не удалось получить актуальный игровой срез. Обновите страницу, чтобы повторить запрос.</p></div></main>;
+function ErrorState({ theme, lang }: { theme: TalentSpecTheme; lang: TalentCopyLang }) {
+  const copy = talentCalculatorCopy[lang];
+  const names = talentThemeNames(theme, lang);
+  return <main className="talent-calculator tc-state" lang={lang} data-atlas-scope="" data-spec={theme.slug} data-spec-motif={theme.motif}><div className="tc-state-card"><span className="tc-state-kicker">Midnight · {names.className}</span><h1>{copy.errorTitle(names.spec)}</h1><p>{copy.errorBody}</p></div></main>;
 }
 
 function ResourceGlyph({ motif }: { motif: TalentSpecTheme["motif"] }) {
@@ -959,6 +984,7 @@ function ResourceGlyph({ motif }: { motif: TalentSpecTheme["motif"] }) {
 }
 
 const TalentSearchField = memo(function TalentSearchField({ count, onQueryChange }: { count: number; onQueryChange: (value: string) => void }) {
+  const copy = useContext(TalentCopyContext);
   const [value, setValue] = useState("");
 
   useEffect(() => {
@@ -968,30 +994,18 @@ const TalentSearchField = memo(function TalentSearchField({ count, onQueryChange
     return () => window.clearTimeout(timeout);
   }, [onQueryChange, value]);
 
-  return <div className="tc-search"><label htmlFor="tc-search-input"><span aria-hidden="true">⌕</span><span className="sr-only">Поиск талантов</span></label><input id="tc-search-input" value={value} onChange={(event) => setValue(event.target.value)} placeholder="Поиск по талантам" />{value && <span className="tc-search-count" aria-live="polite">{count}</span>}{value && <button type="button" aria-label="Очистить поиск" onClick={() => setValue("")}>×</button>}</div>;
+  return <div className="tc-search" role="search"><label htmlFor="tc-search-input"><Search aria-hidden="true" /><span className="sr-only">{copy.searchTalents}</span></label><input id="tc-search-input" value={value} onChange={(event) => setValue(event.target.value)} placeholder={copy.searchPlaceholder} />{value && <span className="tc-search-count" aria-live="polite">{count}</span>}{value && <button type="button" aria-label={copy.clearSearch} onClick={() => setValue("")}>×</button>}</div>;
 });
 
-const TalentHeaderSearch = memo(function TalentHeaderSearch({ query, onQueryChange }: { query: string; onQueryChange: (value: string) => void }) {
-  const [value, setValue] = useState(query);
-
-  useEffect(() => setValue(query), [query]);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      startTransition(() => onQueryChange(value));
-    }, 250);
-    return () => window.clearTimeout(timeout);
-  }, [onQueryChange, value]);
-
-  return <label className="tc-header-search"><span className="sr-only">Поиск билдов и талантов</span><input value={value} onChange={(event) => setValue(event.target.value)} placeholder="Поиск билдов, талантов..." /><Search /></label>;
-});
-
-export function TalentCalculator({ data, theme }: { data: TalentCalculatorData | null; theme: TalentSpecTheme }) {
+export function TalentCalculator({ data, theme, lang: langProp }: { data: TalentCalculatorData | null; theme: TalentSpecTheme; lang?: TalentCopyLang }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const localePrefix = pathname.startsWith("/ru/") || pathname === "/ru" ? "/ru" : "";
-  const defaultBuildName = `Мой билд: ${theme.specNameRu}`;
+  const lang: TalentCopyLang = langProp ?? (pathname.startsWith("/ru/") || pathname === "/ru" ? "ru" : "en");
+  const localePrefix = lang === "ru" ? "/ru" : "";
+  const copy = talentCalculatorCopy[lang];
+  const names = talentThemeNames(theme, lang);
+  const defaultBuildName = copy.defaultBuildName(names.spec);
   const isFury = theme.slug === "fury-warrior";
   const dataLoadoutKey = data ? `${data.specId}:${data.buildVersion}:${data.heroSubtreeId}` : "";
   const loadoutDataRef = useRef(data);
@@ -1051,6 +1065,14 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
   const suppressPvpTooltipRef = useRef(false);
   const budgets = useMemo(() => data ? talentPointBudgets(data) : { class: 34, hero: 13, spec: 34 }, [data]);
   const nodeCatalog = useMemo(() => createTalentNodeCatalog(data), [data]);
+  // Closest row/column spacing of each tree (in % of the canvas). CSS turns it
+  // into a minimum canvas height and a node size, so rank labels never sit under
+  // the next row's icons, whatever the viewport.
+  const treeSpacings = useMemo(() => ({
+    class: treeSpacing(data?.trees.class.nodes ?? []),
+    hero: treeSpacing(data?.trees.hero.nodes ?? []),
+    spec: treeSpacing(data?.trees.spec.nodes ?? []),
+  }), [data]);
   const treeStateKeys = useMemo(() => {
     const rankKeys = {} as Record<TalentKind, Set<string>>;
     const choiceKeys = {} as Record<TalentKind, Set<string>>;
@@ -1215,10 +1237,10 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
       const wowDecoded = !encoded && !savedDecoded && imported ? decodeWoWTalentLoadout(currentData, imported) : null;
       const invalidIncoming = Boolean((encoded && !decoded) || (explicitImport && !wowDecoded));
       setInvalidLoadout(invalidIncoming);
-      if (invalidIncoming) setNotice({ message: `Строка сборки повреждена — открыто чистое дерево «${theme.specNameRu}»`, persistent: true });
+      if (invalidIncoming) setNotice({ message: copy.brokenLoadout(names.spec), persistent: true });
       const candidate = decoded ?? (!encoded ? savedDecoded : null) ?? (wowDecoded ? { ...wowDecoded, pvp: [null, null, null] } : null);
       const next = candidate ? sanitizeLoadout(currentData, candidate) : { ranks: freeTalentRanks(currentData), choices: new Map<string, number>(), pvp: [null, null, null], adjusted: false };
-      if (next.adjusted) setNotice({ message: "Ссылка содержала недоступные таланты — загружены только допустимые ранги", persistent: true });
+      if (next.adjusted) setNotice({ message: copy.adjustedLink, persistent: true });
       setRanks((current) => mapsHaveSameValues(current, next.ranks) ? current : next.ranks);
       setChoices((current) => mapsHaveSameValues(current, next.choices) ? current : next.choices);
       setPvpSelections((current) => current.length === next.pvp.length && current.every((id, index) => id === next.pvp[index]) ? current : next.pvp);
@@ -1236,7 +1258,7 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
     applyUrlLoadout();
     window.addEventListener("popstate", applyUrlLoadout);
     return () => window.removeEventListener("popstate", applyUrlLoadout);
-  }, [dataLoadoutKey, defaultBuildName, isFury, theme.slug, theme.specNameRu]);
+  }, [copy, dataLoadoutKey, defaultBuildName, isFury, names.spec, theme.slug]);
 
   useEffect(() => {
     if (!loadoutOpen) return;
@@ -1370,7 +1392,7 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
     setInvalidLoadout(false);
     setUndoState(null);
     if (direction > 0 && currentRank < node.maxRanks && data && countRanks(currentRanks, treeKind, data.trees[treeKind].nodes) >= budgets[treeKind]) {
-      setNotice({ message: `В дереве уже потрачены все ${budgets[treeKind]} очков — сначала сними один талант` });
+      setNotice({ message: copy.treeFull(budgets[treeKind]) });
       return;
     }
 
@@ -1397,7 +1419,7 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
     }
     setRanks(nextRanks);
     if (choicesChanged) setChoices(nextChoices);
-  }, [budgets, data, nodeCatalog]);
+  }, [budgets, copy, data, nodeCatalog]);
 
   const cycleChoice = useCallback((node: TalentNode, direction: 1 | -1) => {
     if (node.choices.length < 2) return;
@@ -1519,29 +1541,25 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
     if (pvpPickerSlot === null) return;
     const talent = pvpById.get(externalId);
     if (!talent) return;
-    if (pvpSelections.some((id, index) => id === externalId && index !== pvpPickerSlot)) { setNotice({ message: "Этот PvP-талант уже выбран в другом слоте" }); return; }
+    if (pvpSelections.some((id, index) => id === externalId && index !== pvpPickerSlot)) { setNotice({ message: copy.pvpDuplicate }); return; }
     setInvalidLoadout(false); setUndoState(null);
     suppressPvpTooltipRef.current = true;
     pendingPvpBurstRef.current = { slot: pvpPickerSlot, action: "equip" };
     setPvpSelections((current) => current.map((id, index) => index === pvpPickerSlot ? externalId : id));
     const slot = pvpPickerSlot;
-    setNotice({ message: `${talent.name} установлен в PvP-слот ${slot + 1}` });
+    setNotice({ message: copy.pvpEquipped(talent.name, slot + 1) });
     setPvpPickerSlot(null);
-  }, [pvpById, pvpPickerSlot, pvpSelections]);
+  }, [copy, pvpById, pvpPickerSlot, pvpSelections]);
   const clearPvpTalent = useCallback((slot: number) => {
     const talent = pvpById.get(pvpSelections[slot] ?? -1);
     if (!talent) return;
     const target = pvpSlotRefs.current[slot];
     if (target) playPvpBurst(target, "remove");
     setInvalidLoadout(false); setUndoState(null); setPvpSelections((current) => current.map((id, index) => index === slot ? null : id));
-    setNotice({ message: `${talent.name} убран из PvP-слота ${slot + 1}` });
-  }, [pvpById, pvpSelections]);
+    setNotice({ message: copy.pvpRemoved(talent.name, slot + 1) });
+  }, [copy, pvpById, pvpSelections]);
 
-  const themeStyle = {
-    "--tc-spec-art": `url('${isFury ? "/platform/home/fury-hd-optimized.webp" : theme.iconUrl}')`,
-  } as CSSProperties;
-
-  if (!data) return <ErrorState theme={theme} />;
+  if (!data) return <ErrorState theme={theme} lang={lang} />;
 
   const totalAvailable = Object.values(budgets).reduce((sum, value) => sum + value, 0);
   const rank = (kind: TalentKind) => rankByTree[kind];
@@ -1562,9 +1580,9 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
   const reset = () => {
     if (spent === 0 && !pvpSelections.some((id) => id !== null)) { setLoadoutOpen(false); return; }
     setUndoState({ ranks: new Map(ranks), choices: new Map(choices), pvp: [...pvpSelections] });
-    setInvalidLoadout(false); setRanks(freeTalentRanks(data)); setChoices(new Map()); setPvpSelections([null, null, null]); showNotice("Таланты сброшены — можно отменить", true); setLoadoutOpen(false);
+    setInvalidLoadout(false); setRanks(freeTalentRanks(data)); setChoices(new Map()); setPvpSelections([null, null, null]); showNotice(copy.talentsReset, true); setLoadoutOpen(false);
   };
-  const undoReset = () => { if (!undoState) return; setRanks(new Map(undoState.ranks)); setChoices(new Map(undoState.choices)); setPvpSelections([...undoState.pvp]); setUndoState(null); showNotice("Сборка восстановлена"); };
+  const undoReset = () => { if (!undoState) return; setRanks(new Map(undoState.ranks)); setChoices(new Map(undoState.choices)); setPvpSelections([...undoState.pvp]); setUndoState(null); showNotice(copy.buildRestored); };
   const copyText = async (value: string, success: string) => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
@@ -1583,8 +1601,8 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
       }
       showNotice(success);
     } catch {
-      window.prompt("Скопируйте вручную", value);
-      showNotice("Ссылка подготовлена — скопируйте её из окна", true);
+      window.prompt(copy.copyManually, value);
+      showNotice(copy.linkPrepared, true);
     }
     setLoadoutOpen(false);
   };
@@ -1595,8 +1613,8 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
     else url.searchParams.delete("loadout");
     return url.toString();
   };
-  const copyShareLink = async () => copyText(buildShareUrl(), "Ссылка на сборку скопирована");
-  const copyJson = async () => copyText(JSON.stringify({ v: 2, build: data.buildVersion, ranks: [...ranks.entries()], choices: [...choices.entries()], pvp: pvpSelections }, null, 2), "JSON сборки скопирован");
+  const copyShareLink = async () => copyText(buildShareUrl(), copy.linkCopied);
+  const copyJson = async () => copyText(JSON.stringify({ v: 2, build: data.buildVersion, ranks: [...ranks.entries()], choices: [...choices.entries()], pvp: pvpSelections }, null, 2), copy.jsonCopied);
   const persistBuilds = (builds: SavedTalentBuild[], activeId: string | null) => {
     try {
       window.localStorage.setItem(buildLibraryKey(theme.slug), JSON.stringify(builds));
@@ -1604,7 +1622,7 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
       else window.localStorage.removeItem(activeBuildKey(theme.slug));
       return true;
     } catch {
-      showNotice("Браузер запретил локальное сохранение — разреши данные сайта", true);
+      showNotice(copy.storageBlocked, true);
       return false;
     }
   };
@@ -1612,7 +1630,7 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
     const name = buildName.trim() || defaultBuildName;
     const loadout = encodeLoadout(ranks, choices, pvpSelections);
     const targetId = !asCopy && activeBuildId && savedBuilds.some((build) => build.id === activeBuildId) ? activeBuildId : createBuildId(theme.slug);
-    const targetName = asCopy ? `${name} — копия`.slice(0, 48) : name.slice(0, 48);
+    const targetName = asCopy ? `${name}${copy.copySuffix}`.slice(0, 48) : name.slice(0, 48);
     const record: SavedTalentBuild = { id: targetId, name: targetName, loadout, savedAt: new Date().toISOString(), buildVersion: data.buildVersion };
     const nextBuilds = [record, ...savedBuilds.filter((build) => build.id !== targetId)].slice(0, 24);
     if (!persistBuilds(nextBuilds, targetId)) return;
@@ -1621,39 +1639,39 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
     url.searchParams.set("loadout", loadout);
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
     setSavedBuilds(nextBuilds); setActiveBuildId(targetId); setBuildName(targetName); setSavedSignature(loadout); setLoadoutOpen(false);
-    showNotice(asCopy ? "Копия сборки сохранена" : `Билд «${targetName}» сохранён на этом устройстве`);
+    showNotice(asCopy ? copy.copySaved : copy.buildSaved(targetName));
   };
   const loadSavedBuild = (build: SavedTalentBuild) => {
     const decoded = decodeLoadout(build.loadout);
-    if (!decoded) { showNotice("Эта сохранённая сборка повреждена", true); return; }
+    if (!decoded) { showNotice(copy.savedBuildBroken, true); return; }
     const next = sanitizeLoadout(data, decoded);
     setUndoState({ ranks: new Map(ranks), choices: new Map(choices), pvp: [...pvpSelections] });
     const signature = encodeLoadout(next.ranks, next.choices, next.pvp);
     setRanks(next.ranks); setChoices(next.choices); setPvpSelections(next.pvp); setBuildName(build.name); setActiveBuildId(build.id); setSavedSignature(signature); setInvalidLoadout(false);
     persistBuilds(savedBuilds, build.id);
     const url = new URL(window.location.href); url.searchParams.delete("import"); url.searchParams.set("loadout", signature); window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-    setLoadoutOpen(false); showNotice(`Загружено: ${build.name}`);
+    setLoadoutOpen(false); showNotice(copy.loaded(build.name));
   };
   const deleteSavedBuild = (build: SavedTalentBuild) => {
-    if (!window.confirm(`Удалить сборку «${build.name}»?`)) return;
+    if (!window.confirm(copy.deleteConfirm(build.name))) return;
     const nextBuilds = savedBuilds.filter((item) => item.id !== build.id);
     const nextActiveId = activeBuildId === build.id ? null : activeBuildId;
     if (!persistBuilds(nextBuilds, nextActiveId)) return;
     setSavedBuilds(nextBuilds);
     if (activeBuildId === build.id) { setActiveBuildId(null); setSavedSignature(null); }
-    showNotice("Сборка удалена");
+    showNotice(copy.buildDeleted);
   };
   const createNewBuild = () => {
     setUndoState({ ranks: new Map(ranks), choices: new Map(choices), pvp: [...pvpSelections] });
-    setRanks(freeTalentRanks(data)); setChoices(new Map()); setPvpSelections([null, null, null]); setBuildName(`Новый билд: ${theme.specNameRu}`); setActiveBuildId(null); setSavedSignature(null); setInvalidLoadout(false); setLoadoutOpen(false);
+    setRanks(freeTalentRanks(data)); setChoices(new Map()); setPvpSelections([null, null, null]); setBuildName(copy.newBuildName(names.spec)); setActiveBuildId(null); setSavedSignature(null); setInvalidLoadout(false); setLoadoutOpen(false);
     persistBuilds(savedBuilds, null);
     const url = new URL(window.location.href); url.searchParams.delete("loadout"); url.searchParams.delete("import"); window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-    showNotice("Создана новая сборка — можно отменить", true);
+    showNotice(copy.newBuildCreated, true);
   };
   const openImportDialog = () => { setImportValue(""); setImportError(""); setLoadoutOpen(false); setImportOpen(true); };
   const applyImport = () => {
     const raw = importValue.trim();
-    if (!raw) { setImportError("Вставь строку, ссылку или JSON сборки."); return; }
+    if (!raw) { setImportError(copy.importEmpty); return; }
     let decoded: ReturnType<typeof decodeLoadout> = null;
     let source = raw;
     try {
@@ -1679,16 +1697,16 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
       const wowDecoded = decodeWoWTalentLoadout(data, source);
       if (wowDecoded) decoded = { ...wowDecoded, pvp: [null, null, null] };
     }
-    if (!decoded) { setImportError("Формат не распознан. Поддерживаются Blizzard/SimulationCraft, ссылка Gildra, код и JSON."); return; }
+    if (!decoded) { setImportError(copy.importUnknown); return; }
     const next = sanitizeLoadout(data, decoded);
     setUndoState({ ranks: new Map(ranks), choices: new Map(choices), pvp: [...pvpSelections] });
-    setRanks(next.ranks); setChoices(next.choices); setPvpSelections(next.pvp); setInvalidLoadout(false); setBuildName(`Импорт: ${theme.specNameRu}`); setActiveBuildId(null); setSavedSignature(null); setImportOpen(false); setImportError("");
+    setRanks(next.ranks); setChoices(next.choices); setPvpSelections(next.pvp); setInvalidLoadout(false); setBuildName(copy.importedBuildName(names.spec)); setActiveBuildId(null); setSavedSignature(null); setImportOpen(false); setImportError("");
     const loadout = encodeLoadout(next.ranks, next.choices, next.pvp);
     const url = new URL(window.location.href); url.searchParams.delete("import"); url.searchParams.set("loadout", loadout); window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-    setNotice({ message: next.adjusted ? "Сборка импортирована; недоступные узлы пропущены" : "Сборка импортирована — сохрани её в библиотеку" });
+    setNotice({ message: next.adjusted ? copy.importedAdjusted : copy.imported });
   };
   const useInRotation = () => {
-    if (!buildComplete) return showNotice(`Распредели ещё ${missingPoints} очк., чтобы SimulationCraft принял билд`, true);
+    if (!buildComplete) return showNotice(copy.pointsMissing(missingPoints), true);
     const talentLoadout = encodeWoWTalentLoadout(data, ranks, choices);
     try {
       window.sessionStorage.setItem(TALENT_HANDOFF_STORAGE_KEY, JSON.stringify({ talentLoadout, talentBuildName: buildName.trim() || defaultBuildName }));
@@ -1701,80 +1719,75 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
 
   const activePvpTalent = pvpPickerSlot === null ? null : pvpById.get(pvpSelections[pvpPickerSlot] ?? -1);
 
+  const rowStepStyle = (kind: TalentKind) => ({ "--tc-row-step": treeSpacings[kind].row, "--tc-col-step": treeSpacings[kind].column }) as CSSProperties;
+  const snapshotDate = new Date(data.source.observedAt).toLocaleDateString(copy.locale, { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" });
+  const sourceLabel = data.source.kind === "community_snapshot" ? copy.sourceCommunity : data.source.label;
+  const snapshotTime = new Date(data.source.observedAt).toLocaleString(copy.locale, { timeZone: "UTC", dateStyle: "short", timeStyle: "short" });
+
   return (
-    <main ref={calculatorRef} className={`talent-calculator${rotationFlow ? " is-rotation-flow" : ""}`} data-spec={theme.slug} data-hero={data.heroSubtreeId} data-spec-motif={theme.motif} data-performance={performanceTier} data-page-active="true" style={themeStyle}>
-      <span className="tc-fury-vignette" aria-hidden="true" />
-      <span className="tc-fury-impact" aria-hidden="true" />
-      <header className="tc-header">
-        <Link className="tc-brand-lockup" href={localePrefix || "/"} prefetch={false}>GILDRA</Link>
-        <Link className="tc-game-select" href={`${localePrefix}/wow`} prefetch={false} aria-label="World of Warcraft — открыть командный центр"><Image src="/platform/icons/wow.svg" alt="" width={22} height={22} /><span>World of Warcraft</span><ChevronDown /></Link>
-        <SpecMenu current={theme} localePrefix={localePrefix} />
-        <nav className="tc-main-nav" aria-label="Разделы World of Warcraft"><Link href={`${localePrefix}/talents/fury-warrior`} prefetch={false}>Спеки</Link><Link href={`${localePrefix}/wow/mythic-plus`} prefetch={false}>Mythic+</Link><Link href={`${localePrefix}/wow/raids`} prefetch={false}>Рейд</Link><Link className="is-active" href={`${localePrefix}/talents/fury-warrior`} prefetch={false} aria-current="page">Таланты</Link><Link href={`${localePrefix}/wow`} prefetch={false}>Гайды</Link></nav>
-        <TalentHeaderSearch query={query} onQueryChange={updateTalentQuery} />
-        <Link className="tc-account" href={`${localePrefix}/wow/characters`} prefetch={false} aria-label={localePrefix ? "Мои персонажи" : "My characters"}><UserRound /></Link>
-      </header>
-      <section className="tc-commandbar" aria-label="Управление сборкой">
+    <TalentCopyContext.Provider value={copy}><TalentLangContext.Provider value={lang}>
+    <main ref={calculatorRef} className={`talent-calculator${rotationFlow ? " is-rotation-flow" : ""}`} lang={lang} data-atlas-scope="" data-spec={theme.slug} data-hero={data.heroSubtreeId} data-spec-motif={theme.motif} data-performance={performanceTier} data-page-active="true">
+      <section className="tc-commandbar" aria-label={copy.toolbarLabel}>
         <div className="tc-page-title">
-          <span className="tc-fury-portrait tc-spec-icon"><Image src={theme.iconUrl} alt="" width={64} height={64} sizes="58px" quality={90} priority /><i /></span>
+          <span className="tc-fury-portrait tc-spec-icon"><Image src={theme.iconUrl} alt="" width={64} height={64} sizes="52px" quality={90} priority /></span>
           <div>
-            {rotationFlow ? <button type="button" onClick={() => router.push(returnTo)}>← Rotation Lab</button> : null}
-            <span className="tc-title-tags"><b>{theme.classNameRu}</b><b>{theme.specNameRu}</b><b>{data.heroName}</b></span>
-            <h1><span className="tc-title-prefix">Таланты</span> «{theme.specNameRu}»</h1>
+            {rotationFlow ? <button className="tc-back-link" type="button" onClick={() => router.push(returnTo)}>{copy.backToRotation}</button> : null}
+            <h1>{copy.title(theme)}</h1>
             <span className="tc-build-version">
-              {theme.specName} {theme.className} · Midnight {data.buildVersion} · {theme.fantasy} ·{" "}
-              <a href={data.source.url} target="_blank" rel="noreferrer">
-                {data.source.kind === "community_snapshot" ? "community snapshot: Raidbots" : data.source.label}
-              </a>{" "}
-              · снимок {new Date(data.source.observedAt).toLocaleString("ru-RU", { timeZone: "UTC" })} UTC
+              {names.className} · Midnight {data.buildVersion} ·{" "}
+              <a href={data.source.url} target="_blank" rel="noreferrer" title={`${sourceLabel} · ${snapshotTime} UTC`}>{sourceLabel}</a>{" "}
+              {copy.snapshotOn(snapshotDate)}
             </span>
           </div>
         </div>
         <div className="tc-command-actions">
-          <div className="tc-points-badge" data-resource-state={spent === 0 ? "empty" : spent === totalAvailable ? "complete" : "active"} style={{ "--tc-rage-level": `${ragePercent}%` } as CSSProperties} aria-label={`Распределено ${spent} из ${totalAvailable} очков — ${ragePercent}%`}>
+          <SpecMenu current={theme} localePrefix={localePrefix} lang={lang} />
+          <div className="tc-points-badge" data-resource-state={spent === 0 ? "empty" : spent === totalAvailable ? "complete" : "active"} style={{ "--tc-rage-level": `${ragePercent}%` } as CSSProperties} role="img" aria-label={copy.pointsAria(spent, totalAvailable, ragePercent)}>
             <span className="tc-rage-emblem" aria-hidden="true"><ResourceGlyph motif={theme.motif} /><i /></span>
-            <span className="tc-rage-copy"><small>{theme.resourceLabel}</small><b>{spent}<i> / {totalAvailable}</i></b></span>
+            <span className="tc-rage-copy" aria-hidden="true"><small>{names.resource}</small><b>{spent}<i> / {totalAvailable}</i></b></span>
             <span className="tc-rage-meter" aria-hidden="true"><strong className="tc-rage-percent">{ragePercent}%</strong><progress value={spent} max={totalAvailable} /></span>
           </div>
           <div className="tc-loadout-menu" ref={loadoutMenuRef}>
-            <button ref={loadoutTriggerRef} className="tc-build-select" type="button" aria-label={`Сборка: ${buildName}. Открыть библиотеку`} aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span><small>{buildSaved ? "Сохранено" : "Есть изменения"}</small><b>{buildName}</b></span><ChevronDown /></button>
-            {loadoutOpen ? <div className="tc-loadout-popover" id="tc-loadout-menu" role="menu" aria-label="Библиотека сборок">
-              <div className="tc-build-popover-head"><span><small>Библиотека билдов</small><b>{savedBuilds.length} сохранено</b></span><button type="button" role="menuitem" tabIndex={-1} onClick={createNewBuild}><Plus />Новый</button></div>
-              <label className="tc-build-name"><span>Название текущего билда</span><input value={buildName} maxLength={48} onChange={(event) => { setBuildName(event.target.value); setSavedSignature(null); }} /></label>
-              <div className="tc-build-actions"><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(false)}><Save />{activeBuildId ? "Сохранить изменения" : "Сохранить билд"}</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(true)}>Сохранить копию</button></div>
-              <div className="tc-build-list" role="group" aria-label="Сохранённые сборки">
-                {savedBuilds.map((build) => <div className={`tc-build-row${build.id === activeBuildId ? " is-active" : ""}`} key={build.id}><button type="button" role="menuitem" tabIndex={-1} onClick={() => loadSavedBuild(build)}><span>{build.name}</span><small>{new Date(build.savedAt).toLocaleDateString("ru-RU")} · {build.buildVersion}</small></button><button type="button" role="menuitem" tabIndex={-1} aria-label={`Удалить сборку ${build.name}`} onClick={() => deleteSavedBuild(build)}><Trash2 /></button></div>)}
-                {!savedBuilds.length ? <p>Сохранённых билдов пока нет.</p> : null}
+            <button ref={loadoutTriggerRef} className="tc-build-select" type="button" aria-label={copy.buildSelectAria(buildName)} aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span><small>{buildSaved ? copy.savedState : copy.unsavedState}</small><b>{buildName}</b></span><ChevronDown /></button>
+            {loadoutOpen ? <div className="tc-loadout-popover" id="tc-loadout-menu" role="menu" aria-label={copy.libraryLabel}>
+              <div className="tc-build-popover-head"><span><small>{copy.libraryTitle}</small><b>{copy.savedCount(savedBuilds.length)}</b></span><button type="button" role="menuitem" tabIndex={-1} onClick={createNewBuild}><Plus />{copy.newBuild}</button></div>
+              <label className="tc-build-name"><span>{copy.buildNameLabel}</span><input value={buildName} maxLength={48} onChange={(event) => { setBuildName(event.target.value); setSavedSignature(null); }} /></label>
+              <div className="tc-build-actions"><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(false)}><Save />{activeBuildId ? copy.saveChanges : copy.saveBuild}</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(true)}>{copy.saveCopy}</button></div>
+              <div className="tc-build-list" role="group" aria-label={copy.savedBuildsLabel}>
+                {savedBuilds.map((build) => <div className={`tc-build-row${build.id === activeBuildId ? " is-active" : ""}`} key={build.id}><button type="button" role="menuitem" tabIndex={-1} onClick={() => loadSavedBuild(build)}><span>{build.name}</span><small>{new Date(build.savedAt).toLocaleDateString(copy.locale)} · {build.buildVersion}</small></button><button type="button" role="menuitem" tabIndex={-1} aria-label={copy.deleteBuildAria(build.name)} onClick={() => deleteSavedBuild(build)}><Trash2 /></button></div>)}
+                {!savedBuilds.length ? <p>{copy.noSavedBuilds}</p> : null}
               </div>
-              <div className="tc-build-tools"><button type="button" role="menuitem" tabIndex={-1} onClick={openImportDialog}><Upload />Импорт</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => void copyShareLink()}><Share2 />Ссылка</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => void copyJson()}><Download />JSON</button><button type="button" role="menuitem" tabIndex={-1} onClick={reset}><RotateCcw />Сброс</button></div>
+              <div className="tc-build-tools"><button type="button" role="menuitem" tabIndex={-1} onClick={openImportDialog}><Upload />{copy.importShort}</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => void copyShareLink()}><Share2 />{copy.linkShort}</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => void copyJson()}><Download />JSON</button><button type="button" role="menuitem" tabIndex={-1} onClick={reset}><RotateCcw />{copy.resetShort}</button></div>
             </div> : null}
           </div>
-          <button className="tc-command-button" type="button" disabled={!undoState} onClick={undoReset}><Undo2 /><span>Отменить</span></button>
-          <button className="tc-command-button" type="button" onClick={openImportDialog}><Download /><span>Импорт</span></button>
-          <button className="tc-command-button is-reset" type="button" onClick={reset}><RotateCcw /><span>Сброс</span></button>
-          <button className="tc-command-button is-share" type="button" onClick={() => void copyShareLink()}><Share2 /><span>Поделиться</span></button>
+          <div className="tc-command-group">
+            <button className="tc-command-button is-undo" type="button" disabled={!undoState} onClick={undoReset} aria-label={copy.undo} title={copy.undo}><Undo2 aria-hidden="true" /><span>{copy.undo}</span></button>
+            <button className="tc-command-button" type="button" onClick={openImportDialog} aria-label={copy.importShort} title={copy.importShort}><Upload aria-hidden="true" /><span>{copy.importShort}</span></button>
+            <button className="tc-command-button is-reset" type="button" onClick={reset} aria-label={copy.resetShort} title={copy.resetShort}><RotateCcw aria-hidden="true" /><span>{copy.resetShort}</span></button>
+            <button className="tc-command-button is-share" type="button" onClick={() => void copyShareLink()} aria-label={copy.share} title={copy.share}><Share2 aria-hidden="true" /><span>{copy.share}</span></button>
+          </div>
         </div>
       </section>
-      <div className="tc-mobile-tree-switcher" role="group" aria-label="Выбор дерева талантов">
-        {([['class', 'Класс', data.className], ['hero', 'Путь героя', data.heroName], ['spec', 'Специализация', data.specName]] as const).map(([kind, label, name]) => <button key={kind} type="button" aria-label={`${label}: ${name}`} aria-pressed={mobileTree === kind} onClick={() => setMobileTree(kind)}>{label}</button>)}
+      <div className="tc-mobile-tree-switcher" role="group" aria-label={copy.treeSwitcher}>
+        {([["class", data.className], ["hero", data.heroName], ["spec", data.specName]] as const).map(([kind, name]) => <button key={kind} type="button" aria-label={`${copy.treeTabs[kind]}: ${name}`} aria-pressed={mobileTree === kind} onClick={() => setMobileTree(kind)}>{copy.treeTabs[kind]}</button>)}
       </div>
       <section className="tc-workspace" data-mobile-tree={mobileTree}>
-        {!compactLayout || mobileTree === "class" ? <TalentTreePanel variant="class" eyebrow="Основа класса" title={data.className} iconSrc={theme.classIconUrl} spent={rank("class")} budget={budgets.class} nodeCount={data.trees.class.nodes.length}><TalentTreeView tree={data.trees.class} ranks={treeRanks.class} choices={treeChoices.class} spentInTree={rank("class")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : null}
-        {!compactLayout || mobileTree === "hero" ? mountedTrees.has("hero") ? <TalentTreePanel variant="hero" eyebrow="Путь героя" title={data.heroName} iconSrc={heroPanelIcon} secondary={<nav className="tc-hero-paths" aria-label="Сменить путь героя">{theme.heroPaths.map((hero) => {
+        {!compactLayout || mobileTree === "class" ? <TalentTreePanel lang={lang} style={rowStepStyle("class")} variant="class" eyebrow={copy.treeEyebrows.class} title={data.className} iconSrc={theme.classIconUrl} spent={rank("class")} budget={budgets.class} nodeCount={data.trees.class.nodes.length}><TalentTreeView tree={data.trees.class} ranks={treeRanks.class} choices={treeChoices.class} spentInTree={rank("class")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : null}
+        {!compactLayout || mobileTree === "hero" ? mountedTrees.has("hero") ? <TalentTreePanel lang={lang} style={rowStepStyle("hero")} variant="hero" eyebrow={copy.treeEyebrows.hero} title={data.heroName} iconSrc={heroPanelIcon} secondary={<nav className="tc-hero-paths" aria-label={copy.heroPathsLabel}>{theme.heroPaths.map((hero) => {
           const href = `${localePrefix}/talents/${theme.slug}?hero=${hero.id}`;
-          return <Link key={hero.id} className={hero.id === data.heroSubtreeId ? "is-active" : undefined} href={href} prefetch={false} scroll={false} aria-current={hero.id === data.heroSubtreeId ? "page" : undefined} onClick={(event) => { navigateTalentPage(event, href, () => router.push(href, { scroll: false })); }}>{hero.nameRu}</Link>;
-        })}</nav>} spent={rank("hero")} budget={budgets.hero} nodeCount={data.trees.hero.nodes.length}><TalentTreeView tree={data.trees.hero} ranks={treeRanks.hero} choices={treeChoices.hero} spentInTree={rank("hero")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : <TalentTreePanel variant="hero" eyebrow="Путь героя" title={data.heroName} spent={0} budget={budgets.hero} nodeCount={data.trees.hero.nodes.length} loading><div className="tc-skeleton-tree" /></TalentTreePanel> : null}
-        {!compactLayout || mobileTree === "spec" ? mountedTrees.has("spec") ? <TalentTreePanel variant="spec" eyebrow="Специализация" title={data.specName} iconSrc={specPanelIcon} spent={rank("spec")} budget={budgets.spec} nodeCount={data.trees.spec.nodes.length} scene={<SpecSignatureFx specSlug={theme.slug} />}><TalentTreeView tree={data.trees.spec} ranks={treeRanks.spec} choices={treeChoices.spec} spentInTree={rank("spec")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : <TalentTreePanel variant="spec" eyebrow="Специализация" title={data.specName} spent={0} budget={budgets.spec} nodeCount={data.trees.spec.nodes.length} loading><div className="tc-skeleton-tree" /></TalentTreePanel> : null}
+          return <Link key={hero.id} className={hero.id === data.heroSubtreeId ? "is-active" : undefined} href={href} prefetch={false} scroll={false} aria-current={hero.id === data.heroSubtreeId ? "page" : undefined} onClick={(event) => { navigateTalentPage(event, href, () => router.push(href, { scroll: false })); }}>{heroPathName(hero, lang)}</Link>;
+        })}</nav>} spent={rank("hero")} budget={budgets.hero} nodeCount={data.trees.hero.nodes.length}><TalentTreeView tree={data.trees.hero} ranks={treeRanks.hero} choices={treeChoices.hero} spentInTree={rank("hero")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : <TalentTreePanel lang={lang} style={rowStepStyle("hero")} variant="hero" eyebrow={copy.treeEyebrows.hero} title={data.heroName} spent={0} budget={budgets.hero} nodeCount={data.trees.hero.nodes.length} loading><div className="tc-skeleton-tree" /></TalentTreePanel> : null}
+        {!compactLayout || mobileTree === "spec" ? mountedTrees.has("spec") ? <TalentTreePanel lang={lang} style={rowStepStyle("spec")} variant="spec" eyebrow={copy.treeEyebrows.spec} title={data.specName} iconSrc={specPanelIcon} spent={rank("spec")} budget={budgets.spec} nodeCount={data.trees.spec.nodes.length}><TalentTreeView tree={data.trees.spec} ranks={treeRanks.spec} choices={treeChoices.spec} spentInTree={rank("spec")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : <TalentTreePanel lang={lang} style={rowStepStyle("spec")} variant="spec" eyebrow={copy.treeEyebrows.spec} title={data.specName} spent={0} budget={budgets.spec} nodeCount={data.trees.spec.nodes.length} loading><div className="tc-skeleton-tree" /></TalentTreePanel> : null}
       </section>
       <footer className="tc-toolbar">
         <div className="tc-toolbar-group tc-toolbar-primary">
           <TalentSearchField count={matchingTalentCount} onQueryChange={updateTalentQuery} />
-          <button className="tc-import" type="button" onClick={openImportDialog}><Upload /><span>Импорт сборки</span></button>
         </div>
         <div className="tc-toolbar-divider" />
-        {!data.pvpTalents.length ? <div className="tc-pvp-group" aria-label="PvP-таланты загружаются"><span className="tc-pvp-label">PvP-таланты</span>{[1, 2, 3].map((slot) => <button className="tc-pvp-slot" key={slot} type="button" disabled aria-label={`PvP-талант ${slot}: данные пока недоступны`}><span>+</span><small>{slot}</small></button>)}</div> : null}
+        {!data.pvpTalents.length ? <div className="tc-pvp-group" role="group" aria-label={copy.pvpLoading}><span className="tc-pvp-label">{copy.pvpTalents}</span>{[1, 2, 3].map((slot) => <button className="tc-pvp-slot" key={slot} type="button" disabled aria-label={copy.pvpSlotUnavailable(slot)}><span>+</span><small>{slot}</small></button>)}</div> : null}
         <div className="tc-toolbar-spacer" />
         {data.pvpTalents.length ? <div className="tc-pvp-group" role="group" aria-labelledby="tc-pvp-label">
-          <span className="tc-pvp-label" id="tc-pvp-label"><b>{pvpSelections.filter((id) => id !== null).length}/3</b> PvP-таланты</span>
+          <span className="tc-pvp-label" id="tc-pvp-label"><b>{pvpSelections.filter((id) => id !== null).length}/3</b> {copy.pvpTalents}</span>
           {[0, 1, 2].map((slot) => {
             const talent = pvpById.get(pvpSelections[slot] ?? -1);
             const visual = talent ? pvpVisualTheme(talent) : null;
@@ -1787,12 +1800,12 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
               data-pvp-slot={slot}
               data-pvp-id={talent?.externalId}
               data-pvp-theme={visual?.theme}
-              aria-label={`PvP-талант ${slot + 1}: ${talent?.name ?? "не выбран"}. Нажмите, чтобы ${talent ? "заменить" : "выбрать"}${talent ? "; контекстное меню удаляет талант" : ""}`}
+              aria-label={copy.pvpSlotAria(slot + 1, talent?.name)}
               aria-describedby={slotTooltipId}
               aria-haspopup="dialog"
               aria-controls={pvpPickerSlot === null ? undefined : "tc-pvp-picker"}
               aria-expanded={pvpPickerSlot === slot}
-              title={talent ? `${talent.name} · нажмите для замены · правый клик для удаления` : `Выбрать PvP-талант в слот ${slot + 1}`}
+              title={copy.pvpSlotTitle(slot + 1, talent?.name)}
               onMouseEnter={(event) => { if (talent) openPvpTooltip(talent, event.currentTarget); }}
               onMouseLeave={closeTooltip}
               onFocus={(event) => { if (talent) openPvpTooltip(talent, event.currentTarget, true); }}
@@ -1807,30 +1820,29 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
             </button>;
           })}
         </div> : null}
-        <div className="tc-toolbar-summary"><span className="tc-total-points"><b>{spent}</b> / {totalAvailable} очк.</span></div>
-        <button type="button" className={`tc-use-rotation${buildSaved && !rotationFlow ? " is-saved" : ""}`} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)}><span className="tc-save-mark" aria-hidden="true">{buildSaved && !rotationFlow ? <Check /> : <Save />}</span><span className="tc-save-copy"><b>{rotationFlow ? (buildComplete ? "Использовать в тренере" : `Осталось ${missingPoints} очк.`) : buildSaved ? "Сборка сохранена" : activeBuildId ? "Сохранить изменения" : "Сохранить сборку"}</b><small>{rotationFlow ? (buildComplete ? "Готово для SimulationCraft" : "Распредели все очки") : `${spent}/${totalAvailable} очк. · ${savedBuilds.length} в библиотеке`}</small></span></button>
-        {notice ? <div className="tc-toast" role="status" aria-live="polite"><span>{notice.message}</span>{undoState ? <button type="button" onClick={undoReset}>Отменить</button> : null}{notice.persistent ? <button type="button" aria-label="Закрыть уведомление" onClick={() => setNotice(null)}>×</button> : null}</div> : null}
+        <button type="button" className={`tc-use-rotation${buildSaved && !rotationFlow ? " is-saved" : ""}`} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)}><span className="tc-save-mark" aria-hidden="true">{buildSaved && !rotationFlow ? <Check /> : <Save />}</span><span className="tc-save-copy"><b>{rotationFlow ? (buildComplete ? copy.useInTrainer : copy.pointsLeft(missingPoints)) : buildSaved ? copy.buildIsSaved : activeBuildId ? copy.saveChanges : copy.saveBuildCta}</b><small>{rotationFlow ? (buildComplete ? copy.readyForSim : copy.spendAllPoints) : copy.saveMeta(spent, totalAvailable, savedBuilds.length)}</small></span></button>
+        {notice ? <div className="tc-toast" role="status" aria-live="polite"><span>{notice.message}</span>{undoState ? <button type="button" onClick={undoReset}>{copy.undo}</button> : null}{notice.persistent ? <button type="button" aria-label={copy.closeNotice} onClick={() => setNotice(null)}>×</button> : null}</div> : null}
       </footer>
       {importOpen ? <div className="tc-import-backdrop" aria-hidden="true" onClick={closeImport} /> : null}
       {importOpen ? <div className="tc-import-dialog" ref={importDialogRef} role="dialog" aria-modal="true" aria-labelledby="tc-import-title" aria-describedby="tc-import-description">
-        <header><span><small>{theme.specName} Loadout Gateway</small><h2 id="tc-import-title">Импорт сборки</h2></span><button type="button" aria-label="Закрыть импорт" onClick={closeImport}><X /></button></header>
-        <p id="tc-import-description">Вставь строку талантов Blizzard или SimulationCraft, ссылку Gildra, компактный код либо JSON. Мы проверим узлы и не дадим загрузить повреждённую сборку.</p>
-        <label><span>Данные сборки</span><textarea data-build-import value={importValue} onChange={(event) => { setImportValue(event.target.value); setImportError(""); }} placeholder="CIEAAAAAAAAAAAAAAAAAAAAAAMjZmZmZmxM..." spellCheck={false} /></label>
-        {importError ? <div className="tc-import-error" role="alert"><b>Не удалось импортировать</b><span>{importError}</span></div> : <div className="tc-import-formats" aria-label="Поддерживаемые форматы"><span>Blizzard</span><span>SimulationCraft</span><span>Gildra URL</span><span>JSON</span></div>}
-        <footer><button type="button" className="tc-import-cancel" onClick={closeImport}>Отмена</button><button type="button" className="tc-import-apply" data-build-import-apply onClick={applyImport} disabled={!importValue.trim()}><Upload />Проверить и загрузить</button></footer>
+        <header><span><small>{copy.importKicker(`${theme.specName} ${theme.className}`)}</small><h2 id="tc-import-title">{copy.importTitle}</h2></span><button type="button" aria-label={copy.closeImport} onClick={closeImport}><X /></button></header>
+        <p id="tc-import-description">{copy.importDescription}</p>
+        <label><span>{copy.importDataLabel}</span><textarea data-build-import value={importValue} onChange={(event) => { setImportValue(event.target.value); setImportError(""); }} placeholder="CIEAAAAAAAAAAAAAAAAAAAAAAMjZmZmZmxM..." spellCheck={false} /></label>
+        {importError ? <div className="tc-import-error" role="alert"><b>{copy.importFailed}</b><span>{importError}</span></div> : <div className="tc-import-formats" role="list" aria-label={copy.supportedFormats}><span role="listitem">Blizzard</span><span role="listitem">SimulationCraft</span><span role="listitem">Gildra URL</span><span role="listitem">JSON</span></div>}
+        <footer><button type="button" className="tc-import-cancel" onClick={closeImport}>{copy.cancel}</button><button type="button" className="tc-import-apply" data-build-import-apply onClick={applyImport} disabled={!importValue.trim()}><Upload />{copy.verifyAndLoad}</button></footer>
       </div> : null}
       {pvpPickerSlot !== null ? <div className="tc-pvp-picker-backdrop" aria-hidden="true" onClick={closePvpPicker} /> : null}
       {pvpPickerSlot !== null ? <div className="tc-pvp-picker" id="tc-pvp-picker" ref={pvpPickerRef} role="dialog" aria-modal="true" aria-labelledby="tc-pvp-picker-title">
         <div className="tc-pvp-picker-head">
-          <div><span className="tc-state-kicker">Midnight · {theme.specName} · PvP arsenal</span><h2 id="tc-pvp-picker-title">{activePvpTalent ? "Заменить PvP-талант" : "Выбрать PvP-талант"}</h2></div>
-          <button type="button" className="tc-pvp-close" aria-label="Закрыть выбор PvP-таланта" onClick={closePvpPicker}>×</button>
+          <div><span className="tc-state-kicker">Midnight · {theme.specName} · PvP</span><h2 id="tc-pvp-picker-title">{activePvpTalent ? copy.pvpReplaceTitle : copy.pvpChooseTitle}</h2></div>
+          <button type="button" className="tc-pvp-close" aria-label={copy.closePvpPicker} onClick={closePvpPicker}>×</button>
         </div>
-        <div className="tc-pvp-picker-slots" aria-label="Текущие PvP-слоты">
-          {[0, 1, 2].map((slot) => { const selectedTalent = pvpById.get(pvpSelections[slot] ?? -1); return <span className={`${slot === pvpPickerSlot ? "is-active" : ""}${selectedTalent ? " is-filled" : ""}`} key={slot}><b>{slot + 1}</b>{selectedTalent?.iconUrl ? <img src={selectedTalent.iconUrl} alt="" /> : <i aria-hidden="true">+</i>}<small>{selectedTalent?.name ?? "Свободно"}</small></span>; })}
+        <div className="tc-pvp-picker-slots" role="list" aria-label={copy.currentPvpSlots}>
+          {[0, 1, 2].map((slot) => { const selectedTalent = pvpById.get(pvpSelections[slot] ?? -1); return <span role="listitem" className={`${slot === pvpPickerSlot ? "is-active" : ""}${selectedTalent ? " is-filled" : ""}`} key={slot}><b>{slot + 1}</b>{selectedTalent?.iconUrl ? <img src={selectedTalent.iconUrl} alt="" /> : <i aria-hidden="true">+</i>}<small>{selectedTalent?.name ?? copy.freeSlot}</small></span>; })}
         </div>
-        <label className="tc-pvp-picker-search"><Search aria-hidden="true" /><span className="sr-only">Поиск PvP-талантов</span><input data-pvp-search type="search" value={pvpQuery} onChange={(event) => setPvpQuery(event.target.value)} placeholder="Найти талант или эффект…" /><kbd>↓</kbd></label>
-        <p className="tc-pvp-picker-hint"><span>Слот {pvpPickerSlot + 1} · каждый талант можно поставить только один раз</span><b aria-live="polite">{filteredPvpTalents.length} из {data.pvpTalents.length}</b></p>
-        <div className="tc-pvp-options" role="listbox" aria-label={`PvP-таланты ${theme.specNameRu}`}>
+        <label className="tc-pvp-picker-search"><Search aria-hidden="true" /><span className="sr-only">{copy.searchPvp}</span><input data-pvp-search type="search" value={pvpQuery} onChange={(event) => setPvpQuery(event.target.value)} placeholder={copy.searchPvpPlaceholder} /><kbd>↓</kbd></label>
+        <p className="tc-pvp-picker-hint"><span>{copy.pvpSlotHint(pvpPickerSlot + 1)}</span><b aria-live="polite">{copy.pvpCount(filteredPvpTalents.length, data.pvpTalents.length)}</b></p>
+        <div className="tc-pvp-options" role="listbox" aria-label={copy.pvpOptionsLabel(names.spec)}>
           {filteredPvpTalents.map((talent, index) => {
             const selectedSlot = pvpSelections.findIndex((id) => id === talent.externalId);
             const selectedHere = selectedSlot === pvpPickerSlot;
@@ -1850,7 +1862,7 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
               tabIndex={!disabled && talent.externalId === firstAvailable ? 0 : -1}
               aria-selected={selectedHere}
               disabled={disabled}
-              aria-label={disabled ? `${talent.name}. Уже выбран в слоте ${selectedSlot + 1}` : talent.name}
+              aria-label={disabled ? copy.pvpTakenAria(talent.name, selectedSlot + 1) : talent.name}
               aria-describedby={optionTooltipId}
               onMouseEnter={(event) => openPvpTooltip(talent, event.currentTarget)}
               onMouseLeave={closeTooltip}
@@ -1860,20 +1872,21 @@ export function TalentCalculator({ data, theme }: { data: TalentCalculatorData |
             >
               <span className="tc-pvp-option-art"><img src={talent.iconUrl || UNVERIFIED_ICON_URL} alt="" data-icon-source={talent.iconSource} onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; event.currentTarget.dataset.iconSource = "fallback"; }} /><TalentSigil visual={visual} /></span>
               <span className="tc-pvp-option-copy"><strong>{talent.name}</strong><small>{talent.description}</small></span>
-              <span className="tc-pvp-option-action">{selectedHere ? <><b aria-hidden="true">✓</b> Выбран</> : disabled ? <>Слот {selectedSlot + 1}</> : <>Выбрать</>}</span>
+              <span className="tc-pvp-option-action">{selectedHere ? <><b aria-hidden="true">✓</b> {copy.pvpPicked}</> : disabled ? <>{copy.pvpSlotN(selectedSlot + 1)}</> : <>{copy.pvpPick}</>}</span>
             </button>;
           })}
-          {!filteredPvpTalents.length ? <div className="tc-pvp-empty" role="status"><span aria-hidden="true">⌕</span><strong>Ничего не найдено</strong><small>Попробуйте название способности или часть описания.</small><button type="button" onClick={() => setPvpQuery("")}>Сбросить поиск</button></div> : null}
+          {!filteredPvpTalents.length ? <div className="tc-pvp-empty" role="status"><span aria-hidden="true">⌕</span><strong>{copy.nothingFound}</strong><small>{copy.nothingFoundHint}</small><button type="button" onClick={() => setPvpQuery("")}>{copy.resetSearch}</button></div> : null}
         </div>
-        <div className="tc-pvp-picker-foot"><span><b>{pvpSelections.filter((id) => id !== null).length}</b>/3 слота занято</span><button type="button" className="tc-pvp-clear" data-pvp-remove="true" onClick={() => { clearPvpTalent(pvpPickerSlot); closePvpPicker(); }} disabled={!activePvpTalent}>Убрать из слота {pvpPickerSlot + 1}</button></div>
+        <div className="tc-pvp-picker-foot"><span><b>{pvpSelections.filter((id) => id !== null).length}</b>/3 {copy.slotsUsed}</span><button type="button" className="tc-pvp-clear" data-pvp-remove="true" onClick={() => { clearPvpTalent(pvpPickerSlot); closePvpPicker(); }} disabled={!activePvpTalent}>{copy.removeFromSlot(pvpPickerSlot + 1)}</button></div>
       </div> : null}
       <TreeTooltipLayer ref={treeTooltipLayerRef} theme={theme} ranks={ranks} choices={choices} nodeCatalog={nodeCatalog} data={data} />
       {tooltip && typeof document !== "undefined" ? createPortal(
-        <div className="tc-tooltip-layer" data-spec={theme.slug} data-spec-motif={theme.motif} style={{ "--tc-accent": theme.accent, "--tc-hot": theme.hot, "--tc-deep": theme.deep, "--tc-accent-rgb": theme.accentRgb, "--tc-hot-rgb": theme.hotRgb, "--tc-ambient-rgb": theme.ambientRgb } as CSSProperties}>
+        <div className="tc-tooltip-layer" data-atlas-scope="" data-spec={theme.slug} data-spec-motif={theme.motif}>
           <PvpTooltip talent={tooltip.talent} left={tooltip.left} top={tooltip.top} anchorOffset={tooltip.anchorOffset} placement={tooltip.placement} motion={tooltipMotion} selected={pvpSelections.includes(tooltip.talent.externalId)} id={`tooltip-pvp-${tooltip.talent.externalId}`} />
         </div>,
         document.body,
       ) : null}
     </main>
+    </TalentLangContext.Provider></TalentCopyContext.Provider>
   );
 }

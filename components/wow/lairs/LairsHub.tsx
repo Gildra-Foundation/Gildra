@@ -1,139 +1,127 @@
-import Image from "next/image";
-import Link from "next/link";
-import { ArrowRight, BookOpen, CalendarCheck, ChevronRight, Crown, ImageIcon, MapPin, ShieldCheck, Skull } from "lucide-react";
+import { CalendarClock, Gem, MapPin, ShieldCheck, Skull, Swords, UsersRound } from "lucide-react";
+import { AtlasBadge, AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasPanel, AtlasSection } from "@/components/atlas";
 import { midnightLairEncounters } from "@/data/wow/midnight-lairs";
-import { JournalMotion } from "./JournalMotion";
-import { getLairMedia } from "./lairMedia";
+import { getBoss, lairGuideLastVerifiedAt, lairGuideSourceUrl, type Boss } from "@/lib/lairs";
+import { lairsCopy, type LairsLocale } from "./lairsCopy";
+import styles from "./lairs.module.css";
 
-export function LairsHub({ locale = "ru" }: { locale?: "ru" | "en" }) {
+export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
+  const copy = lairsCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
-  const lair = midnightLairEncounters.find((encounter) => encounter.kind === "lair")!;
-  const worldBosses = midnightLairEncounters.filter((encounter) => encounter.kind === "world-boss");
-  const copy = locale === "ru" ? {
-    title: "Логова и мировые боссы",
-    subtitle: "Пять подтверждённых записей Midnight Season 2. Визуальный журнал восстановлен; неподтверждённые тактики и добыча не публикуются.",
-    current: "ТЕКУЩЕЕ ЛОГОВО",
-    verifiedRoster: "Название и тип подтверждены источником",
-    lairType: "БОСС ЛОГОВА",
-    sourceImage: "ИЗОБРАЖЕНИЕ ЛОКАЦИИ",
-    locationReference: "Визуальный ориентир",
-    sourceTracked: "Источник указан",
-    patch: "ПАТЧ",
-    season: "СЕЗОН",
-    status: "СТАТУС",
-    live: "Live",
-    verified: "ПОСЛЕДНЯЯ ПРОВЕРКА",
-    open: "Открыть запись",
-    worldBosses: "МИРОВЫЕ БОССЫ",
-    worldCaption: "Четыре подтверждённые записи Season 2",
-    worldType: "WORLD BOSS",
-    identityOnly: "Подтверждена идентичность",
-    checked: "Проверено",
-    map: "КАРТА",
-    verification: "СТАТУС ПУБЛИКАЦИИ",
-    verificationCaption: "Что подтверждено и что намеренно скрыто",
-    names: "Идентичности",
-    namesText: "Названия и типы активностей взяты из официального анонса Blizzard.",
-    media: "Медиа",
-    mediaText: "Скриншоты боссов и локаций имеют отдельный источник и дату проверки.",
-    strategy: "Тактика",
-    strategyText: "Опубликованные механики содержат Spell ID, исполнителя, действие и источник.",
-    loot: "Добыча",
-    lootText: "Опубликованные предметы содержат item ID и честный chanceStatus: unknown.",
-    official: "Официальный источник Blizzard",
-    mediaSource: "Источник изображений",
-  } : {
-    title: "Lairs and world bosses",
-    subtitle: "Five source-confirmed Midnight Season 2 records. The visual journal is restored; unverified strategy and loot remain unpublished.",
-    current: "CURRENT LAIR",
-    verifiedRoster: "Name and activity type are source-confirmed",
-    lairType: "LAIR BOSS",
-    sourceImage: "LOCATION IMAGE",
-    locationReference: "Visual location reference",
-    sourceTracked: "Source tracked",
-    patch: "PATCH",
-    season: "SEASON",
-    status: "STATUS",
-    live: "Live",
-    verified: "LAST VERIFIED",
-    open: "Open record",
-    worldBosses: "WORLD BOSSES",
-    worldCaption: "Four source-confirmed Season 2 records",
-    worldType: "WORLD BOSS",
-    identityOnly: "Identity verified",
-    checked: "Verified",
-    map: "MAP",
-    verification: "PUBLICATION STATUS",
-    verificationCaption: "What is confirmed and what remains intentionally withheld",
-    names: "Identities",
-    namesText: "Names and activity types come from Blizzard's official announcement.",
-    media: "Media",
-    mediaText: "Boss and location screenshots carry a separate source and verification date.",
-    strategy: "Strategy",
-    strategyText: "Published mechanics include the Spell ID, caster, required response, and source.",
-    loot: "Loot",
-    lootText: "Published loot includes item IDs and an honest chanceStatus: unknown.",
-    official: "Official Blizzard source",
-    mediaSource: "Image source",
-  };
-  const lairMedia = getLairMedia(lair.slug)!;
+  const bosses = midnightLairEncounters
+    .map((encounter) => ({ encounter, boss: getBoss(encounter.slug, locale) }))
+    .filter((entry): entry is { encounter: typeof entry.encounter; boss: Boss } => Boolean(entry.boss));
+  const lair = bosses.find(({ encounter }) => encounter.kind === "lair");
+  const worldBosses = bosses.filter(({ encounter }) => encounter.kind === "world-boss");
+  const worldExample = worldBosses[0]?.boss;
+  const announcement = midnightLairEncounters[0]?.sourceUrl;
+
   return (
-    <main className="lairs-page wow-journal" data-lairs-root>
-      <JournalMotion />
-      <header className="lairs-header lairs-shell" data-reveal>
-        <nav aria-label={locale === "ru" ? "Хлебные крошки" : "Breadcrumbs"}><Link href={`${prefix}/wow`}>World of Warcraft</Link><ChevronRight /><span>Midnight</span><ChevronRight /><b>Lairs</b></nav>
-        <div className="lairs-title-row">
-          <span className="lairs-title-crest"><Skull /></span>
-          <div><p>MIDNIGHT · SEASON 2</p><h1>{copy.title}</h1><span>{copy.subtitle}</span></div>
-          <div className="lairs-season"><small>{copy.season}</small><strong>02</strong><em>Patch 12.1</em></div>
+    <AtlasFrame lang={locale} dataAttributes={{ "data-lairs-root": true }}>
+      <AtlasHero
+        breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.section }]}
+        breadcrumbsLabel={copy.breadcrumbsLabel}
+        emblem={<Skull />}
+        emblemShape="diamond"
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        lede={copy.lede}
+        statsLabel={copy.statsLabel}
+        stats={[
+          { value: lair ? 1 : 0, label: copy.statLair },
+          { value: worldBosses.length, label: copy.statWorld },
+          { value: lair?.encounter.patch ?? "12.1", label: copy.statPatch },
+        ]}
+      />
+
+      {lair ? (
+        <AtlasSection id="lair" title={copy.lairSection} description={copy.lairSectionText}>
+          <AtlasCard
+            layout="feature"
+            headingLevel={3}
+            href={`${prefix}/wow/lairs/${lair.boss.slug}`}
+            image={{ src: lair.boss.portrait, alt: lair.boss.name, priority: true, position: "center 62%" }}
+            accent={lair.boss.accent}
+            artBadge={<AtlasBadge tone="accent" icon={<Skull />}>{copy.lairBadge}</AtlasBadge>}
+            eyebrow={<><MapPin aria-hidden="true" />{lair.boss.zone}</>}
+            title={lair.boss.name}
+            subtitle={lair.boss.title}
+            description={lair.boss.summary}
+            meta={[
+              { icon: <Swords aria-hidden="true" />, label: copy.abilities(lair.boss.mechanics.length) },
+              { icon: <Gem aria-hidden="true" />, label: copy.items(lair.boss.loot.length) },
+              { icon: <CalendarClock aria-hidden="true" />, label: lair.boss.reset },
+            ]}
+            cta={copy.openGuide}
+          >
+            <ul className={styles.difficultyStrip}>
+              {lair.boss.difficulties.map((difficulty) => (
+                <li key={difficulty.name}>
+                  <strong>{difficulty.name}</strong>
+                  <span>{difficulty.reward}</span>
+                  <small>{difficulty.group}</small>
+                </li>
+              ))}
+            </ul>
+          </AtlasCard>
+        </AtlasSection>
+      ) : null}
+
+      <AtlasSection id="world-bosses" title={copy.worldSection} description={worldExample?.difficulties[0]?.note}>
+        <AtlasGrid min={260} fit>
+          {worldBosses.map(({ boss }) => (
+            <AtlasCard
+              key={boss.slug}
+              href={`${prefix}/wow/lairs/${boss.slug}`}
+              image={{ src: boss.portrait, alt: boss.name, position: "center 24%", sizes: "(max-width: 620px) 100vw, (max-width: 1100px) 50vw, 25vw" }}
+              artRatio="4 / 3.6"
+              accent={boss.accent}
+              artBadge={<AtlasBadge tone="neutral">{copy.worldBadge}</AtlasBadge>}
+              artCaption={boss.farm.best}
+              eyebrow={<><MapPin aria-hidden="true" />{boss.zone}</>}
+              title={boss.name}
+              subtitle={boss.title}
+              description={boss.summary}
+              meta={[{ icon: <Swords aria-hidden="true" />, label: copy.abilities(boss.mechanics.length) }]}
+              cta={copy.guide}
+            />
+          ))}
+        </AtlasGrid>
+      </AtlasSection>
+
+      <AtlasSection id="rewards" title={copy.rewardsSection} description={copy.rewardsText}>
+        <div className={styles.rewardsGrid}>
+          {lair ? (
+            <AtlasPanel padding="none" as="article" aria-labelledby="rewards-lair">
+              <h3 id="rewards-lair" className={styles.panelTitle}><Skull aria-hidden="true" />{copy.lairBadge}</h3>
+              <AtlasMetaList columns={1} className={styles.flushList} items={[
+                { icon: <UsersRound />, label: copy.access, value: lair.boss.farm.access },
+                { icon: <CalendarClock />, label: copy.reset, value: lair.boss.reset },
+                { icon: <Gem />, label: copy.lockout, value: lair.boss.farm.lockout },
+                { icon: <ShieldCheck />, label: copy.bestReward, value: lair.boss.farm.best },
+              ]} />
+            </AtlasPanel>
+          ) : null}
+          {worldExample ? (
+            <AtlasPanel padding="none" as="article" aria-labelledby="rewards-world">
+              <h3 id="rewards-world" className={styles.panelTitle}><Swords aria-hidden="true" />{copy.worldBadge}</h3>
+              <AtlasMetaList columns={1} className={styles.flushList} items={[
+                { icon: <MapPin />, label: copy.access, value: worldExample.farm.access },
+                { icon: <CalendarClock />, label: copy.reset, value: worldExample.reset },
+                { icon: <Gem />, label: copy.lockout, value: worldExample.farm.lockout },
+                { icon: <ShieldCheck />, label: copy.bestReward, value: worldExample.farm.best },
+              ]} />
+            </AtlasPanel>
+          ) : null}
         </div>
-      </header>
-
-      <nav className="lairs-catalog-nav lairs-shell" aria-label={locale === "ru" ? "Разделы журнала" : "Journal sections"} data-reveal>
-        <a href="#current-lair"><Crown /><span>Lair</span><b>01</b></a>
-        <a href="#world-bosses"><Skull /><span>World bosses</span><b>04</b></a>
-        <a href="#verification"><ShieldCheck /><span>{copy.verification}</span><b>04</b></a>
-        <a href={lair.sourceUrl} rel="noreferrer"><BookOpen /><span>{copy.official}</span><b>↗</b></a>
-        <strong><small>{locale === "ru" ? "ВСЕГО" : "TOTAL"}</small>05</strong>
-      </nav>
-
-      <section id="current-lair" className="lairs-current lairs-shell" aria-labelledby="current-lair-name" data-reveal>
-        <div className="lairs-block-title"><div><span className="live-dot" />{copy.current}</div><p>{copy.verifiedRoster}</p></div>
-        <article className="current-lair-card" data-reactive style={{ "--boss-accent": lairMedia.accent } as React.CSSProperties}>
-          <Link className="current-boss-art" href={`${prefix}/wow/lairs/${lair.slug}`}>
-            <Image src={lairMedia.portrait} alt={lair.name} fill priority sizes="(max-width: 800px) 100vw, 46vw" />
-            <span className="boss-art-vignette" /><span className="boss-type"><Crown /> {copy.lairType}</span>
-            <div><small>MIDNIGHT · SEASON 2</small><h2 id="current-lair-name">{lair.name}</h2><p>{copy.identityOnly}</p></div>
-          </Link>
-          <div className="current-lair-info">
-            <div className="lair-map-card"><Image src={lairMedia.map} alt={`${copy.sourceImage}: ${lair.name}`} fill sizes="(max-width: 800px) 100vw, 36vw" /><span className="map-pin-pulse"><MapPin /></span><div><small>{copy.sourceImage}</small><strong>{copy.locationReference}</strong><b>{copy.sourceTracked}</b></div></div>
-            <div className="current-stats"><span><BookOpen /><small>{copy.patch}</small><strong>{lair.patch}</strong></span><span><CalendarCheck /><small>{copy.season}</small><strong>2</strong></span><span><ShieldCheck /><small>{copy.status}</small><strong>{copy.live}</strong></span></div>
-            <div className="current-actions"><div><small>{copy.verified}</small><strong>{lair.lastVerifiedAt}</strong></div><Link href={`${prefix}/wow/lairs/${lair.slug}`}>{copy.open} <ArrowRight /></Link></div>
+        <footer className={styles.sources}>
+          <p><strong>{copy.sources}.</strong> {copy.sourcesText(lairGuideLastVerifiedAt)}</p>
+          <div>
+            {announcement ? <AtlasLinkButton variant="ghost" size="sm" href={announcement} external>{copy.blizzard} ↗</AtlasLinkButton> : null}
+            <AtlasLinkButton variant="ghost" size="sm" href={lairGuideSourceUrl} external>{copy.icyVeins} ↗</AtlasLinkButton>
           </div>
-        </article>
-      </section>
-
-      <section id="world-bosses" className="lairs-roster lairs-shell" aria-labelledby="world-bosses-title" data-reveal>
-        <div className="lairs-block-title"><div><Skull /> {copy.worldBosses}</div><p id="world-bosses-title">{copy.worldCaption}</p></div>
-        <div className="world-boss-grid">{worldBosses.map((encounter) => {
-          const media = getLairMedia(encounter.slug)!;
-          return <Link key={encounter.id} href={`${prefix}/wow/lairs/${encounter.slug}`} className="world-boss-card" data-reactive style={{ "--boss-accent": media.accent } as React.CSSProperties}>
-            <div className="world-boss-art"><Image src={media.portrait} alt={encounter.name} fill sizes="(max-width: 480px) 124px, (max-width: 1050px) 145px, 180px" /><span /><b>{copy.worldType}</b></div>
-            <div className="world-boss-body"><small>MIDNIGHT · SEASON 2</small><h2>{encounter.name}</h2><p>{copy.identityOnly}</p><div><span><ShieldCheck /> {copy.checked}: {encounter.lastVerifiedAt}</span></div></div>
-            <div className="world-boss-map"><Image src={media.map} alt={`${copy.sourceImage}: ${encounter.name}`} fill sizes="120px" /><span>{copy.map}</span></div><ArrowRight className="world-boss-arrow" />
-          </Link>;
-        })}</div>
-      </section>
-
-      <section id="verification" className="lairs-system lairs-shell" aria-labelledby="verification-title" data-reveal>
-        <div className="lairs-block-title"><div><ShieldCheck /> {copy.verification}</div><p id="verification-title">{copy.verificationCaption}</p></div>
-        <div className="system-track">
-          <article><span><ShieldCheck /><small>01</small></span><div><strong>{copy.names}</strong><p>{copy.namesText}</p></div><b><a href={lair.sourceUrl} rel="noreferrer">Blizzard ↗</a></b></article>
-          <article><span><ImageIcon /><small>02</small></span><div><strong>{copy.media}</strong><p>{copy.mediaText}</p></div><b><a href="https://www.icy-veins.com/wow/midnight-world-bosses-guide" rel="noreferrer">{copy.mediaSource} ↗</a></b></article>
-          <article><span><BookOpen /><small>03</small></span><div><strong>{copy.strategy}</strong><p>{copy.strategyText}</p></div><b>VERIFIED</b></article>
-          <article><span><Crown /><small>04</small></span><div><strong>{copy.loot}</strong><p>{copy.lootText}</p></div><b>VERIFIED</b></article>
-        </div>
-      </section>
-    </main>
+        </footer>
+      </AtlasSection>
+    </AtlasFrame>
   );
 }

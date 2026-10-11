@@ -2,18 +2,17 @@
 
 import Image from "next/image";
 import { memo, useEffect, useId, useRef, useState, useTransition, type KeyboardEvent, type ReactNode } from "react";
-import { Check, ChevronDown, Gem, LoaderCircle, Map, Sparkles } from "lucide-react";
+import { Check, ChevronDown, Gem, LoaderCircle, Map } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { DungeonSelectorOption, DungeonSlug } from "./dungeonRoutes";
+import { mythicRouteCopy, type RouteLocale } from "./mythicRouteCopy";
 import styles from "./mythicRouteSelectors.module.css";
 
-type Locale = "en" | "ru";
 type SelectorOption<T extends string | number> = {
   value: T;
   title: string;
   subtitle: string;
   artwork?: string;
-  tone?: "weathered" | "uncommon" | "rare" | "epic" | "mythic";
 };
 
 type WowSelectorProps<T extends string | number> = {
@@ -24,9 +23,11 @@ type WowSelectorProps<T extends string | number> = {
   icon: ReactNode;
   className?: string;
   busy?: boolean;
+  loadingLabel: string;
+  keyboardHint: string;
 };
 
-function WowSelector<T extends string | number>({ label, value, options, onChange, icon, className = "", busy = false }: WowSelectorProps<T>) {
+function WowSelector<T extends string | number>({ label, value, options, onChange, icon, className = "", busy = false, loadingLabel, keyboardHint }: WowSelectorProps<T>) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -106,15 +107,14 @@ function WowSelector<T extends string | number>({ label, value, options, onChang
         {selected.artwork ? (
           <span className={styles.triggerArtwork}><Image src={selected.artwork} alt="" fill sizes="42px" /></span>
         ) : (
-          <span className={styles.triggerGem} data-tone={selected.tone} aria-hidden="true">{icon}</span>
+          <span className={styles.triggerGem} aria-hidden="true">{icon}</span>
         )}
         <span className={styles.triggerCopy}><strong>{selected.title}</strong><small>{selected.subtitle}</small></span>
-        {busy ? <LoaderCircle className={styles.loadingIcon} aria-label="Загрузка" /> : <ChevronDown className={styles.chevron} aria-hidden="true" />}
+        {busy ? <LoaderCircle className={styles.loadingIcon} aria-label={loadingLabel} /> : <ChevronDown className={styles.chevron} aria-hidden="true" />}
       </button>
 
       {open ? (
         <div id={listboxId} className={styles.selectorMenu} role="listbox" aria-label={label} onKeyDown={navigateOptions}>
-          <div className={styles.menuOrnament} aria-hidden="true"><i /><Sparkles /><i /></div>
           <div className={styles.optionGrid}>
             {options.map((option, index) => (
               <button
@@ -125,7 +125,6 @@ function WowSelector<T extends string | number>({ label, value, options, onChang
                 aria-selected={option.value === value}
                 tabIndex={index === activeIndex ? 0 : -1}
                 className={styles.selectorOption}
-                data-tone={option.tone}
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
                 onClick={() => selectOption(option)}
@@ -140,33 +139,30 @@ function WowSelector<T extends string | number>({ label, value, options, onChang
               </button>
             ))}
           </div>
-          <p className={styles.keyboardHint}>↑↓ выбрать · Enter подтвердить · Esc закрыть</p>
+          <p className={styles.keyboardHint}>{keyboardHint}</p>
         </div>
       ) : null}
     </div>
   );
 }
 
-const keyOptions: SelectorOption<number>[] = [
-  { value: 2, title: "+2", subtitle: "Входной уровень", tone: "weathered" },
-  { value: 5, title: "+5", subtitle: "Быстрый забег", tone: "uncommon" },
-  { value: 8, title: "+8", subtitle: "Усиленный ключ", tone: "rare" },
-  { value: 10, title: "+10", subtitle: "Слаженная группа", tone: "epic" },
-  { value: 12, title: "+12", subtitle: "Высокий ключ", tone: "mythic" },
-  { value: 15, title: "+15", subtitle: "Без права на ошибку", tone: "mythic" },
-];
+const keyLevels = [2, 5, 8, 10, 12, 15];
 
-export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale, dungeonSlug, dungeonOptions, keyLevel, onKeyLevelChange }: { locale: Locale; dungeonSlug: DungeonSlug; dungeonOptions: DungeonSelectorOption[]; keyLevel: number; onKeyLevelChange: (level: number) => void }) {
+function formatTimer(seconds: number) {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale, dungeonSlug, dungeonOptions, keyLevel, onKeyLevelChange }: { locale: RouteLocale; dungeonSlug: DungeonSlug; dungeonOptions: DungeonSelectorOption[]; keyLevel: number; onKeyLevelChange: (level: number) => void }) {
   const router = useRouter();
+  const copy = mythicRouteCopy[locale];
   const [isNavigating, startNavigation] = useTransition();
-  const options: SelectorOption<DungeonSlug>[] = dungeonOptions.map((route) => {
-    return {
-      value: route.slug,
-      title: locale === "ru" ? route.nameRu : route.name,
-      subtitle: locale === "ru" ? route.name : route.location,
-      artwork: route.backdropImage,
-    };
-  });
+  const options: SelectorOption<DungeonSlug>[] = dungeonOptions.map((route) => ({
+    value: route.slug,
+    title: locale === "ru" ? route.nameRu : route.name,
+    subtitle: copy.dungeonSubtitle({ name: route.name, nameRu: route.nameRu, timer: formatTimer(route.timerSeconds) }),
+    artwork: route.backdropImage,
+  }));
+  const keyOptions: SelectorOption<number>[] = keyLevels.map((level) => ({ value: level, title: `+${level}`, subtitle: copy.keyOptions[level] }));
 
   function changeDungeon(slug: DungeonSlug) {
     if (slug === dungeonSlug) return;
@@ -176,8 +172,8 @@ export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale,
 
   return (
     <>
-      <WowSelector label="Подземелье" value={dungeonSlug} options={options} onChange={changeDungeon} icon={<Map />} className={styles.dungeonSelector} busy={isNavigating} />
-      <WowSelector label="Сложность" value={keyLevel} options={keyOptions} onChange={onKeyLevelChange} icon={<Gem />} className={styles.keySelector} />
+      <WowSelector label={copy.dungeonLabel} value={dungeonSlug} options={options} onChange={changeDungeon} icon={<Map />} className={styles.dungeonSelector} busy={isNavigating} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
+      <WowSelector label={copy.difficultyLabel} value={keyLevel} options={keyOptions} onChange={onKeyLevelChange} icon={<Gem />} className={styles.keySelector} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
     </>
   );
 });

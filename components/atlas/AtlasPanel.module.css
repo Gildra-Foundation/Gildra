@@ -1,0 +1,29 @@
+.panel {
+  min-width: 0;
+  border: 1px solid var(--atlas-line);
+  outline: 1px solid #020303;
+  background: var(--atlas-surface);
+  box-shadow: var(--atlas-shadow-card);
+}
+
+.raised {
+  border-color: var(--atlas-line-soft);
+  outline: 0;
+  background: var(--atlas-surface-raised);
+  box-shadow: none;
+}
+
+.highlight {
+  border-color: var(--atlas-line-strong);
+  background: linear-gradient(135deg, var(--atlas-accent-wash), transparent 55%), var(--atlas-surface);
+}
+
+.pad-none { padding: 0; }
+.pad-sm { padding: var(--atlas-space-3); }
+.pad-md { padding: var(--atlas-space-5); }
+.pad-lg { padding: var(--atlas-space-6); }
+
+@media (max-width: 720px) {
+  .pad-md { padding: var(--atlas-space-4); }
+  .pad-lg { padding: var(--atlas-space-5) var(--atlas-space-4); }
+}

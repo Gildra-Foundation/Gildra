@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SearchPage } from "@/components/platform/search/SearchPage";
 import { searchCatalogGame } from "@/lib/platform/catalog/repository";
 import { catalogGames, isCatalogGame, type CatalogGameId, type SearchKind } from "@/lib/platform/catalog/types";
-import { getPlatformHomeData } from "@/lib/platform/home/repository";
+import { getSearchCatalogStats } from "@/lib/platform/catalog/searchStats";
 import { preloadSharedWowBackdrop } from "@/lib/wow/sharedBackdropPreload";
 
 export const metadata: Metadata = { title: "Search — Gildra", description: "Search every published Gildra game catalog." };
@@ -21,6 +21,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
     gameId,
     result: searchCatalogGame({ gameId, kind, query, locale: "en_US", limitPerGame: query ? 12 : 4 }),
   }));
-  const home = await getPlatformHomeData("en");
-  return <SearchPage lang="en" query={query} kind={kind} selectedGames={games} results={results} home={home} />;
+  const stats = await getSearchCatalogStats("en_US");
+  return <SearchPage lang="en" query={query} kind={kind} selectedGames={games} results={results} stats={stats} />;
 }

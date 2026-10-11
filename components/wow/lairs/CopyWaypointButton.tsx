@@ -2,12 +2,13 @@
 
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import styles from "./lairs.module.css";
 
-export function CopyWaypointButton({ waypoint, locale = "ru" }: { waypoint: string; locale?: "ru" | "en" }) {
+type Labels = { label: string; copied: string; failed: string };
+
+/** Copies a TomTom /way command; shows the command so it can also be typed. */
+export function CopyWaypointButton({ waypoint, labels }: { waypoint: string; labels: Labels }) {
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
-  const labels = locale === "ru"
-    ? { label: "Скопировать координаты", copied: "Скопировано", idle: "Копировать", error: "Не удалось скопировать" }
-    : { label: "Copy coordinates", copied: "Copied", idle: "Copy", error: "Copy failed" };
   async function copy() {
     try {
       if (navigator.clipboard?.writeText) {
@@ -30,6 +31,12 @@ export function CopyWaypointButton({ waypoint, locale = "ru" }: { waypoint: stri
     }
     window.setTimeout(() => setStatus("idle"), 1800);
   }
-  const message = status === "copied" ? labels.copied : status === "error" ? labels.error : labels.idle;
-  return <button type="button" className="wow-waypoint" onClick={copy} aria-label={labels.label}><code>{waypoint}</code><span aria-live="polite">{status === "copied" ? <Check /> : <Copy />}{message}</span></button>;
+  const message = status === "copied" ? labels.copied : status === "error" ? labels.failed : labels.label;
+  return (
+    <button type="button" className={styles.waypoint} onClick={copy} data-status={status}>
+      {status === "copied" ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+      <span aria-live="polite">{message}</span>
+      <code>{waypoint}</code>
+    </button>
+  );
 }

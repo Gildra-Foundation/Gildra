@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "atlas:check": "node scripts/check-atlas-tokens.mjs",
     "smoke:console": "node scripts/console-smoke.mjs",
     "preflight:api": "node scripts/check-api-readiness.mjs",
     "qa:talents": "node scripts/qa-talents.mjs",

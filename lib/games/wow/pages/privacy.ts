@@ -3,7 +3,7 @@ import type { LegalProps } from "@/components/blocks/shared/legal";
 
 const EN: LegalProps = {
   title: "Privacy Policy",
-  updated: "Last updated: August 20, 2026",
+  updated: "Last updated: October 11, 2026",
   sections: [
     {
       heading: "What we store in your browser",
@@ -11,11 +11,11 @@ const EN: LegalProps = {
     },
     {
       heading: "What we collect",
-      text: "The site is hosted on Vercel, which records standard anonymous request logs (IP address, browser type, requested page) to serve and protect the site. Gildra may also collect anonymous, aggregated usage statistics — page views and general performance metrics. None of this identifies you personally.",
+      text: "The site runs on Gildra servers at OVHcloud behind Cloudflare; they record standard request logs (IP address, browser type, requested page) to serve and protect the site. Gildra may also collect anonymous, aggregated usage statistics — page views and general performance metrics. None of this identifies you personally.",
     },
     {
       heading: "What we do not do",
-      text: "Gildra does not run advertising trackers, does not sell or share data with third parties, and does not require an account. If you decline cookies, only the technically necessary storage described above is used.",
+      text: "Gildra does not run advertising trackers and does not sell or share data with third parties. An account is not required. If you choose to sign in with Battle.net, a session cookie keeps you signed in and Gildra requests your World of Warcraft profile from Blizzard to show your characters; your password is entered only on Blizzard's site. If you decline cookies, only the technically necessary storage described above is used.",
     },
     {
       heading: "Contact",
@@ -27,7 +27,7 @@ const EN: LegalProps = {
 
 const RU: LegalProps = {
   title: "Политика конфиденциальности",
-  updated: "Обновлено: 20 августа 2026",
+  updated: "Обновлено: 11 октября 2026",
   sections: [
     {
       heading: "Что мы храним в вашем браузере",
@@ -35,11 +35,11 @@ const RU: LegalProps = {
     },
     {
       heading: "Что мы собираем",
-      text: "Сайт размещён на Vercel, который ведёт стандартные анонимные логи запросов (IP-адрес, тип браузера, запрошенная страница) для работы и защиты сайта. Gildra также может собирать анонимную агрегированную статистику использования — просмотры страниц и общие метрики производительности. Ничто из этого не идентифицирует вас лично.",
+      text: "Сайт работает на серверах Gildra в OVHcloud за Cloudflare; они ведут стандартные логи запросов (IP-адрес, тип браузера, запрошенная страница) для работы и защиты сайта. Gildra также может собирать анонимную агрегированную статистику использования — просмотры страниц и общие метрики производительности. Ничто из этого не идентифицирует вас лично.",
     },
     {
       heading: "Чего мы не делаем",
-      text: "Gildra не использует рекламные трекеры, не продаёт и не передаёт данные третьим лицам и не требует аккаунта. Если вы отклонили cookies, используется только технически необходимое хранилище, описанное выше.",
+      text: "Gildra не использует рекламные трекеры, не продаёт и не передаёт данные третьим лицам. Аккаунт не обязателен. Если вы входите через Battle.net, сессионный cookie сохраняет вход, а Gildra запрашивает у Blizzard профиль World of Warcraft, чтобы показать ваших персонажей; пароль вводится только на сайте Blizzard. Если вы отклонили cookies, используется только технически необходимое хранилище, описанное выше.",
     },
     {
       heading: "Контакты",

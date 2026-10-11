@@ -175,7 +175,7 @@
 .shell::before { content:""; position:absolute; z-index:1; inset:0 14% auto; height:1px; background:linear-gradient(90deg,transparent,var(--wow-gold,#c9a15d),var(--spec-accent),var(--wow-gold,#c9a15d),transparent); opacity:.7; }
 .header { min-height:132px; margin:-20px -20px 0; padding:27px 28px 24px; border-bottom:1px solid var(--wow-line,rgba(188,151,86,.22)); background:linear-gradient(110deg,rgba(var(--spec-rgb),.08),transparent 42%),rgba(15,17,20,.86); }
 .header small,.results h3,.resultHead small { color:var(--wow-gold,#c9a15d); }
-.header h2,.details b,.damage b,.empty b { color:var(--wow-ivory,#f0e8dc); font-family:var(--font-display),Georgia,serif; font-weight:500; }
+.header h2,.details b,.damage b,.empty b { color:var(--wow-ivory,#f0e8dc); font-family:var(--atlas-font-display, Georgia, serif); font-weight:500; }
 .header h2 { font-size:clamp(27px,3vw,38px); letter-spacing:-.025em; }
 .header p,.modeChooser>div:first-child span,.legend,.details p,.stat span,.damage span,.source { color:var(--wow-muted,#8e8981); }
 .headerActions a,.headerActions button { border-color:var(--wow-line,rgba(188,151,86,.22)); border-radius:9px; background:rgba(8,10,12,.72); color:var(--wow-gold-bright,#efd39a); }
@@ -230,7 +230,7 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .header small,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .resultHead small,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .results h3 { color: #e7bd74; text-shadow: 0 1px #170c04; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .header h2 { color: #f5e2b8; font-family: Georgia, "Times New Roman", serif; font-weight: 600; letter-spacing: .005em; text-shadow: 0 2px 3px #000; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .header h2 { color: #f5e2b8; font-family: var(--atlas-font-display, Georgia, serif); font-weight: 600; letter-spacing: .005em; text-shadow: 0 2px 3px #000; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .header p { color: #c4ae8c; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .headerActions a,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .headerActions button,
@@ -257,7 +257,7 @@
   background: linear-gradient(180deg, rgba(48, 30, 13, .88), rgba(18, 12, 7, .92)), url("/assets/wow/ui-textures/character/spellbook-paper-optimized.webp") center / cover;
   box-shadow: inset 0 1px #e0b16c33;
 }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .modeChooser > div:first-child b { color: #efca81; font-family: Georgia, "Times New Roman", serif; font-size: 15px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .modeChooser > div:first-child b { color: #efca81; font-family: var(--atlas-font-display, Georgia, serif); font-size: 15px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .modeChooser > div:first-child span,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .legend { color: #c9b593; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .legend i { border-color: #947142; border-radius: 2px; background: #120d08; }
@@ -291,7 +291,7 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .details > img { border-color: #7b5026; border-radius: 2px; box-shadow: 0 2px 5px #4a2b14aa; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .details b,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .statsPane h3,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .damage b { color: #322013; font-family: Georgia, "Times New Roman", serif; text-shadow: 0 1px #f7e2b6; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .damage b { color: #322013; font-family: var(--atlas-font-display, Georgia, serif); text-shadow: 0 1px #f7e2b6; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .details p,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .stat span,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .damage span,
@@ -350,7 +350,7 @@
   box-shadow: inset 0 3px #f2d9a06b, inset 0 -3px #68471e77;
 }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .header small { color: var(--wow-ink-muted, #684a2b); font-size: 11px; text-shadow: none; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .header h2 { color: var(--wow-ink, #3b2817); font: 700 clamp(23px, 2.5vw, 27px)/1.12 var(--wow-title, Georgia, serif); text-shadow: 0 1px #f2dcae88; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .header h2 { color: var(--wow-ink, #3b2817); font: 700 clamp(23px, 2.5vw, 27px)/1.12 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; text-shadow: 0 1px #f2dcae88; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .header p { color: #54391e; font-size: 13px; line-height: 1.45; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .headerActions { flex-wrap: wrap; justify-content: flex-end; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .headerActions a,
@@ -378,7 +378,7 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .dataSources > div { padding: 0 12px 12px; display: flex; flex-wrap: wrap; gap: 6px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .dataSources span { min-height: 30px; font-size: 11px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .modeChooser { margin-top: 14px; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .modeChooser > div:first-child b { font: 700 16px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .modeChooser > div:first-child b { font: 700 16px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .modeChooser > div:first-child span,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .legend { font-size: 11px; line-height: 1.4; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .builder nav button { font-size: 12px; }
@@ -389,7 +389,7 @@
   background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
 }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .details { padding: 16px; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .details b { font: 700 18px/1.2 var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .details b { font: 700 18px/1.2 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .details p { color: #53391f; font-size: 13px; line-height: 1.5; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .details small { font-size: 11px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .details .statusSelected { border-color: #47672b; color: #214e1d; background: #bed091bb; }
@@ -439,11 +439,11 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .damage dd,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .damage small,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .stat small { font-size: 11px; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .damage b { font: 700 26px var(--wow-title, Georgia, serif); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .damage b { font: 700 26px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .calculation summary { min-height: 40px; font-size: 12px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .calculation span,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .calculation span b { font-size: 11px; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .statsPane h3 { font: 700 17px var(--wow-title, Georgia, serif); letter-spacing: 0; text-transform: none; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .statsPane h3 { font: 700 17px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; letter-spacing: 0; text-transform: none; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .stat span,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .stat b { font-size: 12px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .statsPane footer { font-size: 11px; }
@@ -591,7 +591,7 @@
 }
 :global([data-character-book="open"]) .header h2 {
   color: var(--folio-ink, #382415);
-  font: 700 clamp(21px, 2vw, 25px)/1.2 var(--folio-title, Georgia, serif);
+  font: 700 clamp(21px, 2vw, 25px)/1.2 var(--folio-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums;
   letter-spacing: .015em;
   text-shadow: 0 1px #ffedc766;
 }
@@ -629,7 +629,7 @@
   color: var(--folio-muted, #684b2e);
   background: transparent;
   box-shadow: none;
-  font-family: var(--folio-title, Georgia, serif);
+  font-family: var(--folio-title, var(--atlas-font-display, Georgia, serif));
   font-size: 14px;
 }
 :global([data-character-book="open"]) .builder nav button:hover {
@@ -666,7 +666,7 @@
 :global([data-character-book="open"]) .details b,
 :global([data-character-book="open"]) .statsPane h3 {
   color: var(--folio-ink, #382415);
-  font-family: var(--folio-title, Georgia, serif);
+  font-family: var(--folio-title, var(--atlas-font-display, Georgia, serif));
 }
 :global([data-character-book="open"]) .statsPane { padding: 16px 0; }
 :global([data-character-book="open"]) .damage { gap: 0; border-block: 1px solid var(--folio-line, #76532e66); }
@@ -678,7 +678,7 @@
   box-shadow: none;
 }
 :global([data-character-book="open"]) .damage > div + div { border-left: 1px solid var(--folio-line, #76532e66); }
-:global([data-character-book="open"]) .damage b { font-family: var(--folio-title, Georgia, serif); }
+:global([data-character-book="open"]) .damage b { font-family: var(--folio-title, var(--atlas-font-display, Georgia, serif)); }
 :global([data-character-book="open"]) .changeSet section { border-radius: 0; background: transparent; }
 :global([data-character-book="open"]) .simStatus,
 :global([data-character-book="open"]) .verdict,
@@ -759,7 +759,7 @@
     display: block;
     margin: 9px 2px 0;
     color: var(--folio-muted, #755531);
-    font: 600 12px/1.4 var(--folio-body, Georgia, serif);
+    font: 600 12px/1.4 var(--folio-body, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums;
   }
   .treeViewport {
     width: 100%;
@@ -802,19 +802,19 @@
 }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .header small {
   color: var(--folio-rubric, #70533d);
-  font: 700 10px/1.4 var(--folio-body, "Gildra Atlas", Georgia, serif);
+  font: 700 10px/1.4 var(--folio-body, var(--atlas-font-display, "Gildra Atlas", Georgia, serif)); font-variant-numeric: lining-nums;
   letter-spacing: .13em;
   text-shadow: none;
 }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .header h2 {
   color: var(--folio-ink, #37342f);
-  font: 700 clamp(26px, 2.6vw, 34px)/1.15 var(--folio-title, "Gildra Kurale", Georgia, serif);
+  font: 700 clamp(26px, 2.6vw, 34px)/1.15 var(--folio-title, "Gildra Kurale", var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums;
   letter-spacing: 0;
   text-shadow: none;
 }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .header p {
   color: var(--folio-muted, #625d55);
-  font: 13px/1.55 var(--folio-body, "Gildra Atlas", Georgia, serif);
+  font: 13px/1.55 var(--folio-body, var(--atlas-font-display, "Gildra Atlas", Georgia, serif)); font-variant-numeric: lining-nums;
 }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .headerActions a,
 :global([data-profile-source="battle-net"][data-character-book="open"]) .headerActions button {
@@ -824,7 +824,7 @@
   color: var(--folio-ink, #37342f);
   background: var(--folio-paper);
   box-shadow: inset 0 1px #fff2d277;
-  font: 700 13px/1.2 var(--folio-title, "Gildra Kurale", Georgia, serif);
+  font: 700 13px/1.2 var(--folio-title, "Gildra Kurale", var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums;
   text-shadow: none;
   transition: border-color 160ms ease, filter 160ms ease;
 }
@@ -852,12 +852,12 @@
 }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .modeChooser > div:first-child b {
   color: var(--folio-ink, #37342f);
-  font: 700 19px/1.2 var(--folio-title, "Gildra Kurale", Georgia, serif);
+  font: 700 19px/1.2 var(--folio-title, "Gildra Kurale", var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums;
 }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .modeChooser > div:first-child span,
 :global([data-profile-source="battle-net"][data-character-book="open"]) .legend {
   color: var(--folio-muted, #625d55);
-  font: 12px/1.45 var(--folio-body, "Gildra Atlas", Georgia, serif);
+  font: 12px/1.45 var(--folio-body, var(--atlas-font-display, "Gildra Atlas", Georgia, serif)); font-variant-numeric: lining-nums;
 }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .legend i {
   border-color: #8a7657;
@@ -882,7 +882,7 @@
 }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .source {
   color: var(--folio-muted, #625d55);
-  font-family: var(--folio-body, "Gildra Atlas", Georgia, serif);
+  font-family: var(--folio-body, var(--atlas-font-display, "Gildra Atlas", Georgia, serif));
 }
 :global([data-profile-source="battle-net"][data-character-book="open"]) .shell :is(a, button, select):focus-visible {
   outline: 2px solid #76502d99;

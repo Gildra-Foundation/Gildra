@@ -1,8 +1,8 @@
 /* Apply only to the connected character manuscript (and its tooltip portal).
    The PT Serif fallback is already self-hosted by characterAuditPage.module.css. */
 .typography {
-  --grimoire-display: "Gildra Kurale", "Gildra Atlas", Georgia, serif;
-  --grimoire-body: "Gildra Atlas", Georgia, serif;
+  --grimoire-display: "Gildra Kurale", var(--atlas-font-display, "Gildra Atlas", Georgia, serif);
+  --grimoire-body: var(--atlas-font-display, "Gildra Atlas", Georgia, serif);
   --wow-title: var(--grimoire-display);
   --wow-ui: var(--grimoire-body);
   --font-display: var(--grimoire-display);

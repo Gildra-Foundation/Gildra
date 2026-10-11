@@ -1,0 +1,8 @@
+/* Freshness badge of catalog sources: /library dataset cards and the tier-list source panel (components/TierSection). Global because both routes use it. */
+.library-freshness{display:inline-flex;height:22px;align-items:center;gap:5px;padding:0 7px;border:1px solid #3b4555;color:#9da7b8;font:700 10px var(--ui);white-space:nowrap}.library-freshness i{width:6px;height:6px;border-radius:50%;background:#7f899c}
+.library-freshness.is-fresh{border-color:#295b3a;background:#10291a;color:#75d590}.library-freshness.is-fresh i{background:#54c87a}
+.library-freshness.is-stale,.library-freshness.is-empty{border-color:#66562d;background:#2a2413;color:#d8b75d}.library-freshness.is-stale i,.library-freshness.is-empty i{background:#d2a94f}
+.library-freshness.is-pending_source{border-color:#66562d;background:#2a2413;color:#d8b75d}.library-freshness.is-pending_source i{background:#d2a94f}
+.library-freshness.is-not_applicable{border-color:#434b59;background:#1a1f28;color:#a8b0bf}.library-freshness.is-not_applicable i{background:#747e8f}
+.library-freshness.is-failed{border-color:#71383d;background:#2b1518;color:#ef9298}.library-freshness.is-failed i{background:#e46068}
+.library-freshness.is-refreshing i{background:#73a9e8;box-shadow:0 0 0 3px #1c3857}

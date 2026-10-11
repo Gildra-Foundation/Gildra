@@ -1,0 +1,11 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--atlas-grid-min)), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fit { grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--atlas-grid-min)), 1fr)); }
+.sm { gap: var(--atlas-space-2); }
+.md { gap: var(--atlas-space-3); }
