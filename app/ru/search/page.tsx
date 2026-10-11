@@ -2,15 +2,12 @@ import type { Metadata } from "next";
 import { SearchPage } from "@/components/platform/search/SearchPage";
 import { searchCatalogGame } from "@/lib/platform/catalog/repository";
 import { catalogGames, isCatalogGame, type CatalogGameId, type SearchKind } from "@/lib/platform/catalog/types";
-import { getSearchCatalogStats } from "@/lib/platform/catalog/searchStats";
-import { preloadSharedWowBackdrop } from "@/lib/wow/sharedBackdropPreload";
 
 export const metadata: Metadata = { title: "Поиск — Gildra", description: "Поиск по опубликованным игровым каталогам Gildra." };
 
 type Params = { q?: string; type?: string; game?: string | string[] };
 
 export default async function Page({ searchParams }: { searchParams: Promise<Params> }) {
-  preloadSharedWowBackdrop();
   const params = await searchParams;
   const query = (params.q ?? "").trim().slice(0, 200);
   const kind: SearchKind = params.type === "characters" || params.type === "items" ? params.type : "all";
@@ -21,6 +18,5 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
     gameId,
     result: searchCatalogGame({ gameId, kind, query, locale: "ru_RU", limitPerGame: query ? 12 : 4 }),
   }));
-  const stats = await getSearchCatalogStats("ru_RU");
-  return <SearchPage lang="ru" query={query} kind={kind} selectedGames={games} results={results} stats={stats} />;
+  return <SearchPage lang="ru" query={query} kind={kind} selectedGames={games} results={results} />;
 }

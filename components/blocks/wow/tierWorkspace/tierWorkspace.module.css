@@ -19,7 +19,7 @@
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "main" "detail" "guides";
+  grid-template-areas: "main" "detail";
   gap: var(--atlas-space-5);
   margin-top: var(--atlas-space-5);
   scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4));
@@ -36,6 +36,7 @@
 
 .main {
   grid-area: main;
+  scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4));
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--atlas-space-4);
@@ -45,7 +46,7 @@
 @media (min-width: 1200px) {
   .workspace {
     grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
-    grid-template-areas: "main detail" "guides detail";
+    grid-template-areas: "main detail";
     align-items: start;
   }
   .detail {
@@ -177,8 +178,6 @@
   font-size: var(--atlas-text-small);
 }
 
-.resultsTools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); }
-
 .count {
   display: inline-flex;
   align-items: center;
@@ -188,25 +187,6 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-
-.count svg { width: 15px; height: 15px; color: var(--atlas-accent); }
-
-.toolButton {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--atlas-space-2);
-  min-height: 36px;
-  padding: 0 var(--atlas-space-3);
-  border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-text-strong);
-  background: var(--atlas-accent-wash);
-  font: 600 var(--atlas-text-meta) / 1.2 var(--atlas-font-ui);
-  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
-}
-
-.toolButton svg { width: 15px; height: 15px; color: var(--atlas-accent); }
-.toolButton:hover { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
 
 .roleTabs { display: flex; border-bottom: 1px solid var(--atlas-line-soft); }
 
@@ -596,50 +576,6 @@
 .actionPrimary:hover { background: var(--atlas-accent-strong); }
 
 .detailEmpty { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-
-/* ---------- Guides / spec pages ---------- */
-.guides { grid-area: guides; min-width: 0; scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
-.guidesHead { margin-bottom: var(--atlas-space-4); }
-
-.guidesTitle {
-  margin: 0;
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-h3);
-  font-weight: var(--atlas-weight-display);
-  line-height: var(--atlas-leading-snug);
-}
-
-.guidesText { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-
-.guideGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
-  gap: var(--atlas-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.guideCard {
-  display: flex;
-  align-items: center;
-  gap: var(--atlas-space-3);
-  min-height: 64px;
-  padding: var(--atlas-space-3) var(--atlas-space-4);
-  border: 1px solid var(--atlas-line-soft);
-  color: var(--atlas-text);
-  background: var(--atlas-surface);
-  text-decoration: none;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
-}
-
-.guideCard:hover { color: var(--atlas-text); border-color: var(--atlas-accent); background: var(--atlas-surface-raised); }
-.guideCopy { display: grid; flex: 1; gap: 2px; min-width: 0; }
-.guideName { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 600; }
-.guideName .className { margin-left: 2px; }
-.guideMeta { display: inline-flex; align-items: center; gap: 4px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-.guideMeta svg { width: 13px; height: 13px; color: var(--atlas-accent); }
 
 /* ---------- Tablet ---------- */
 @media (max-width: 1199px) and (min-width: 721px) {

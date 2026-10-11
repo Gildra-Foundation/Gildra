@@ -6,22 +6,23 @@ import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games
 import { midnightSpecializations } from "@/data/wow/midnight-specializations";
 import { p } from "@/lib/i18n";
 import { tierCopy } from "./tierCopy";
-import { sampleCount, usesSample } from "./tierData";
+import { sampleCount, sampleRoles, usesSample } from "./tierData";
 import styles from "./tierWorkspace.module.css";
 import "./tierWorkspace.css";
 
 /** Internal spec pages that exist (class/spec), so table rows can link to them. */
 const specPaths = midnightSpecializations.map((spec) => `${spec.classSlug}/${spec.slug}`);
 
-/** The full tier workspace: atlas hero, an honest sample notice when the meta
- *  API is off, then the interactive table + spec card (client). design.md: it
- *  lives only on /tier-lists and is never embedded elsewhere. */
+/** The full tier workspace: atlas hero, ONE honest sample notice when the meta
+ *  API is off, then the interactive table + spec card (client). Hero counters
+ *  appear only with live data (the sample's size is in the notice). design.md:
+ *  it lives only on /tier-lists and is never embedded elsewhere. */
 function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntelligence>) {
   const copy = tierCopy[lang];
   const sample = usesSample(data);
   const mythic = data.tierLists?.mythic_plus?.roles ?? data.roles;
   const stats: AtlasStat[] = sample
-    ? [{ value: sampleCount, label: copy.statSampleSpecs }]
+    ? []
     : [
         { value: new Set(Object.values(mythic ?? {}).flat().map((entry) => `${entry.classSlug}:${entry.specSlug}`)).size, label: copy.statSpecs },
         { value: new Set((data.tierContexts ?? []).filter((item) => item.activity === "mythic_plus" && item.selectionType === "dungeon").map((item) => item.selectionId)).size, label: copy.statDungeons },
@@ -42,7 +43,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntel
         stats={stats}
       />
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
-      <TierSection lang={lang} intelligence={data} sample={sample} specPaths={specPaths} />
+      <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} />
     </AtlasFrame>
   );
 }

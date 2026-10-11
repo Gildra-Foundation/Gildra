@@ -34,7 +34,7 @@
 
 .searchForm input::placeholder { color: var(--atlas-text-subtle); }
 /* The whole field shows focus (border + glow); no second ring inside it. */
-.searchForm .searchInput[type="search"]:focus-visible { outline: none; }
+.searchForm input[type="search"]:focus-visible { outline: none; }
 .searchForm input::-webkit-search-cancel-button { display: none; }
 
 .searchForm kbd {
@@ -81,14 +81,11 @@
 .bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-3);
+  align-items: flex-end;
   margin: var(--atlas-space-5) 0 var(--atlas-space-4);
-  border-bottom: 1px solid var(--atlas-line-soft);
 }
 
-.kindTabs { display: flex; gap: var(--atlas-space-1); }
+.kindTabs { display: flex; flex: 1 1 auto; gap: var(--atlas-space-1); border-bottom: 1px solid var(--atlas-line-soft); }
 
 .kindTabs a {
   display: inline-flex;
@@ -106,27 +103,25 @@
 .kindTabs a:hover { color: var(--atlas-text-strong); }
 .kindTabs a[aria-current="page"] { border-bottom-color: var(--atlas-accent); color: var(--atlas-accent-strong); }
 
-.clearAll {
+.databaseLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--atlas-line-soft);
   color: var(--atlas-accent);
   font-size: var(--atlas-text-small);
   font-weight: 600;
   text-decoration: none;
 }
 
-.clearAll:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.databaseLink:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- Layout ---------- */
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: var(--atlas-space-5);
-  align-items: start;
-}
+.layout { display: grid; gap: var(--atlas-space-5); align-items: start; }
+.withGames { grid-template-columns: 220px minmax(0, 1fr); }
 
-.withGames { grid-template-columns: 220px minmax(0, 1fr) 320px; }
-
-.games,
-.tips {
+.games {
   position: sticky;
   top: calc(var(--atlas-sticky-top) + var(--atlas-space-4));
   padding: var(--atlas-space-5);
@@ -136,8 +131,7 @@
   box-shadow: var(--atlas-shadow-card);
 }
 
-.games h2,
-.tips h2 {
+.games h2 {
   margin: 0 0 var(--atlas-space-3);
   color: var(--atlas-text-strong);
   font-family: var(--atlas-font-display);
@@ -176,38 +170,9 @@
 
 .games button:hover { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
 
-.tips ul {
-  display: grid;
-  gap: var(--atlas-space-3);
-  margin: 0 0 var(--atlas-space-4);
-  padding: 0;
-  list-style: none;
-}
-
-.tips li {
-  position: relative;
-  padding-left: 18px;
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-  line-height: 1.55;
-}
-
-.tips li::before {
-  position: absolute;
-  top: .55em;
-  left: 2px;
-  width: 6px;
-  height: 6px;
-  content: "";
-  background: var(--atlas-accent);
-  transform: rotate(45deg);
-}
-
 /* ---------- Results ---------- */
-.results { display: grid; gap: var(--atlas-space-3); min-width: 0; }
-
-.resultCount a { margin-left: 8px; color: var(--atlas-accent); font-weight: 600; text-decoration: none; }
-.resultCount a:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+/* Streaming results must not pull the footer into view and back (layout-shift guard). */
+.results { display: grid; align-content: start; gap: var(--atlas-space-3); min-width: 0; min-height: 40svh; }
 
 .resultCount,
 .pending {
@@ -229,136 +194,12 @@
 
 .resultList {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
   gap: var(--atlas-space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
-
-.result {
-  --result-quality: var(--atlas-line);
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: var(--atlas-space-3) var(--atlas-space-4);
-  min-height: 84px;
-  padding: var(--atlas-space-3) var(--atlas-space-4);
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: var(--atlas-radius);
-  background: var(--atlas-surface);
-  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
-}
-
-.result:hover,
-.result:focus-within { border-color: var(--atlas-line); background: var(--atlas-surface-raised); }
-
-.resultIcon {
-  display: grid;
-  width: 52px;
-  height: 52px;
-  place-items: center;
-  overflow: hidden;
-  border: 2px solid var(--result-quality);
-  border-radius: var(--atlas-radius);
-  background: var(--atlas-surface-sunken);
-  box-shadow: 0 0 0 1px #000;
-}
-
-.resultIcon img { display: block; width: 100%; height: 100%; object-fit: cover; }
-
-.iconFallback {
-  color: var(--atlas-accent);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-h3);
-  line-height: 1;
-}
-
-.resultBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; min-width: 0; }
-
-.resultType {
-  margin: 0;
-  color: var(--atlas-accent);
-  font-size: var(--atlas-text-label);
-  font-weight: 650;
-  letter-spacing: var(--atlas-tracking-label);
-  line-height: 1.3;
-  text-transform: uppercase;
-}
-
-.resultBody h3 {
-  margin: 0;
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-title);
-  font-weight: var(--atlas-weight-display);
-  line-height: var(--atlas-leading-snug);
-}
-
-.resultBody h3 a {
-  display: block;
-  overflow: hidden;
-  color: var(--atlas-text-strong);
-  text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Item names keep their in-game quality colour (data, not chrome). */
-.result[data-quality] .resultBody h3 a { color: var(--result-quality); }
-.resultBody h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
-
-.resultText {
-  margin: 0;
-  overflow: hidden;
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-  line-height: 1.45;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.resultMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 12px;
-  margin: 0;
-  padding: 0;
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-meta);
-  list-style: none;
-}
-
-.open {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-accent);
-  font-size: var(--atlas-text-small);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.open:hover { border-color: var(--atlas-accent); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
-
-.save {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-accent);
-  background: transparent;
-  cursor: pointer;
-}
-
-.save:hover { border-color: var(--atlas-line); background: var(--atlas-accent-wash); }
-.save[data-saved] { border-color: var(--atlas-accent); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash-strong); }
-.save [data-icon-saved] { display: none; }
-.save[data-saved] [data-icon-unsaved] { display: none; }
-.save[data-saved] [data-icon-saved] { display: block; }
 
 .empty {
   display: grid;
@@ -381,7 +222,7 @@
 
 .empty p { max-width: 52ch; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
 
-:is(.kindTabs a, .clearAll, .clearQuery, .searchForm button, .open, .save, .games button, .resultBody h3 a):focus-visible {
+:is(.kindTabs a, .databaseLink, .clearQuery, .searchForm button, .games button):focus-visible {
   outline: 2px solid var(--atlas-accent-strong);
   outline-offset: 2px;
 }
@@ -398,8 +239,8 @@
 .skeleton { display: grid; gap: var(--atlas-space-4); margin-top: var(--atlas-space-5); }
 .skeletonTabs { display: flex; gap: var(--atlas-space-2); }
 .skeletonTabs i { width: 120px; height: 44px; }
-.skeletonRows { display: grid; gap: var(--atlas-space-2); max-width: calc(100% - 340px); }
-.skeletonRows span { height: 84px; }
+.skeletonRows { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: var(--atlas-space-2); }
+.skeletonRows span { height: 76px; }
 
 .skeletonTabs i,
 .skeletonRows span {
@@ -411,22 +252,10 @@
 
 @keyframes skeleton { to { background-position: -200% 0; } }
 
-/* Hero counters get a fixed width on wide screens: when the web fonts swap in,
-   the numbers change width, and an auto-sized column would re-wrap the lede
-   (measured as layout shift). Below 1100 px the kit stacks them full-width. */
-@media (min-width: 1101px) {
-  .hero dl { width: 320px; }
-}
-
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
-  .layout,
   .withGames { grid-template-columns: minmax(0, 1fr); }
-  .games,
-  .tips { position: static; }
-  /* Streaming results must not pull the tips panel into view and back (layout-shift guard). */
-  .results { min-height: 50svh; align-content: start; }
-  .skeletonRows { max-width: none; }
+  .games { position: static; }
 }
 
 @media (max-width: 760px) {
@@ -435,19 +264,14 @@
   .searchForm button { padding: 0 14px; }
   .searchForm kbd { display: none; }
   .results { min-height: max(40svh, 320px); }
-  .kindTabs { overflow-x: auto; }
+  .databaseLink { border-bottom: 0; }
+  .kindTabs { max-width: 100%; overflow-x: auto; }
   .kindTabs a { flex: none; padding: 0 var(--atlas-space-3); }
-  .result { grid-template-columns: 44px minmax(0, 1fr) auto; gap: var(--atlas-space-2) var(--atlas-space-3); padding: var(--atlas-space-3); }
-  .resultIcon { width: 44px; height: 44px; }
-  .open { display: none; }
-  .resultText { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .games,
-  .tips { padding: var(--atlas-space-4); }
+  .games { padding: var(--atlas-space-4); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .searchForm,
-  .result { transition: none; }
+  .searchForm { transition: none; }
   .skeletonTabs i,
   .skeletonRows span { animation: none; }
 }

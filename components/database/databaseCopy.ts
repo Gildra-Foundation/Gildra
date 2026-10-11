@@ -1,12 +1,12 @@
 import type { Lang } from "@/lib/i18n";
 
 /**
- * Interface copy of the WoW database hub, its record cards and the entity
- * pages. Game terms (item, spell, zone names) stay English by project
- * convention; numbers and facts come from the catalog API, never from here.
- * RU ledes stay short enough for two lines in every web-font loading state:
- * the Latin and Cyrillic subsets arrive separately, and a re-wrap of the
- * lede is measured as layout shift.
+ * Interface copy of the WoW database hub, its record rows and the library
+ * dataset pages (same workspace). Game terms (item, spell, zone names) stay
+ * English by project convention; numbers and facts come from the catalog API,
+ * never from here. RU ledes stay short enough for two lines in every web-font
+ * loading state: the Latin and Cyrillic subsets arrive separately, and a
+ * re-wrap of the lede is measured as layout shift.
  */
 export const databaseCopy = {
   ru: {
@@ -23,12 +23,11 @@ export const databaseCopy = {
     searchPlaceholder: "Название или игровой ID…",
     searchSubmit: "Найти",
     gameVersion: "Версия игры",
-    typesLabel: "Тип записей",
+    sectionsLabel: "Разделы каталога",
+    typesLabel: "Типы записей раздела",
     allRecords: "Все записи",
-    browseTitle: "Разделы каталога",
-    browseShow: "Показать разделы",
-    browseHide: "Скрыть разделы",
-    filtersLabel: "Фильтры",
+    filtersTitle: "Фильтры",
+    filtersActive: (count: number) => `активно: ${count}`,
     any: "Любой",
     itemLevelFrom: "Уровень предмета от",
     itemLevelTo: "Уровень предмета до",
@@ -37,26 +36,22 @@ export const databaseCopy = {
     apply: "Применить",
     reset: "Сбросить",
     resultsLabel: "Записи каталога",
+    pagesLabel: "Страницы каталога",
     found: "Найдено",
-    records: "записей",
     back: "Назад",
     next: "Следующая страница",
     emptyTitle: "Подходящих записей нет",
-    emptyText: "Попробуйте другой запрос или выберите другой тип записей.",
+    emptyText: "Попробуйте другой запрос или выберите другой раздел.",
     categories: "Категории",
     allCategories: "Все",
-    expand: "Развернуть",
-    collapse: "Свернуть",
     itemLevel: "Уровень предмета",
-    gameId: "ID в игре",
-    preview: "Подсказка",
+    gameId: "ID",
     previewLabel: (name: string) => `Игровая подсказка: ${name}`,
     englishOnly: "только EN",
     englishOnlyTitle: "Русского названия в клиенте нет — показано английское",
     loadingTooltip: "Загружаем подсказку…",
     tooltipError: "Не удалось загрузить подсказку.",
     retry: "Повторить",
-    libraryEyebrow: "Публичная библиотека",
     loading: "Загрузка базы данных",
   },
   en: {
@@ -72,12 +67,11 @@ export const databaseCopy = {
     searchPlaceholder: "Name or game ID…",
     searchSubmit: "Search",
     gameVersion: "Game version",
-    typesLabel: "Record type",
+    sectionsLabel: "Catalog sections",
+    typesLabel: "Record types of the section",
     allRecords: "All records",
-    browseTitle: "Catalog sections",
-    browseShow: "Show sections",
-    browseHide: "Hide sections",
-    filtersLabel: "Filters",
+    filtersTitle: "Filters",
+    filtersActive: (count: number) => `${count} active`,
     any: "Any",
     itemLevelFrom: "Item level from",
     itemLevelTo: "Item level to",
@@ -86,31 +80,33 @@ export const databaseCopy = {
     apply: "Apply",
     reset: "Reset",
     resultsLabel: "Catalog records",
+    pagesLabel: "Catalog pages",
     found: "Found",
-    records: "records",
     back: "Back",
     next: "Next page",
     emptyTitle: "No matching records",
-    emptyText: "Try another search term or choose a different record type.",
+    emptyText: "Try another search term or choose a different section.",
     categories: "Categories",
     allCategories: "All",
-    expand: "Expand",
-    collapse: "Collapse",
     itemLevel: "Item level",
-    gameId: "Game ID",
-    preview: "Tooltip",
+    gameId: "ID",
     previewLabel: (name: string) => `In-game tooltip: ${name}`,
     englishOnly: "EN only",
     englishOnlyTitle: "The client has no localized name; the English one is shown",
     loadingTooltip: "Loading the tooltip…",
     tooltipError: "Could not load the tooltip.",
     retry: "Retry",
-    libraryEyebrow: "Public library",
     loading: "Loading the database",
   },
 } satisfies Record<Lang, Record<string, unknown>>;
 
 export type DatabaseCopy = (typeof databaseCopy)[Lang];
+
+/** Labels the preview button needs on the client (plain strings, no functions). */
+export function previewCopy(lang: Lang) {
+  const copy = databaseCopy[lang];
+  return { loading: copy.loadingTooltip, error: copy.tooltipError, retry: copy.retry };
+}
 
 export const DATA_SOURCES = [
   { label: "Blizzard API", href: "https://community.developer.battle.net/documentation/world-of-warcraft/game-data-apis" },

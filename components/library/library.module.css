@@ -1,0 +1,73 @@
+/* atlas:strict — /library and /library/<dataset>: edition switch, freshness notice, grouped dataset tiles. Layout only, atlas tokens. */
+
+.editions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--atlas-space-1);
+  margin-top: var(--atlas-space-5);
+  border-bottom: 1px solid var(--atlas-line-soft);
+}
+
+.editions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: -1px;
+  padding: 0 var(--atlas-space-4);
+  border-bottom: 2px solid transparent;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.editions a:hover { color: var(--atlas-text-strong); }
+.editions a[aria-current="page"] { border-bottom-color: var(--atlas-accent); color: var(--atlas-accent-strong); }
+.editions a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+.notice { margin-top: var(--atlas-space-4); }
+.unavailable { margin-top: var(--atlas-space-5); }
+
+.groups { display: grid; gap: var(--atlas-space-6); }
+.group { display: grid; gap: var(--atlas-space-3); }
+
+.group > h3 {
+  margin: 0;
+  color: var(--atlas-accent);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: var(--atlas-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grid > li { display: grid; min-width: 0; }
+
+.description,
+.facts { display: block; }
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--atlas-space-3);
+  margin-top: var(--atlas-space-1);
+  font-size: var(--atlas-text-meta);
+}
+
+.facts b { color: var(--atlas-accent-strong); font-weight: 600; font-variant-numeric: lining-nums tabular-nums; }
+.gaps { color: var(--atlas-text-subtle); }
+.state { color: var(--atlas-caution); font-weight: 600; }
+
+@media (max-width: 720px) {
+  .editions { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .editions a { flex: none; padding: 0 var(--atlas-space-3); }
+}

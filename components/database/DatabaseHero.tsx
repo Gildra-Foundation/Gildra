@@ -1,6 +1,6 @@
 import { Library } from "lucide-react";
 import { AtlasHero } from "@/components/atlas";
-import { DATA_SOURCES, databaseCopy, formatCount } from "@/components/database/databaseCopy";
+import { DATA_SOURCES as DATA_SOURCES_LIST, databaseCopy, formatCount } from "@/components/database/databaseCopy";
 import type { Lang } from "@/lib/i18n";
 import styles from "./databaseHub.module.css";
 
@@ -23,14 +23,21 @@ export function DatabaseHero({ lang, stats }: { lang: Lang; stats?: { records: n
         { value: formatCount(stats.records, lang), label: copy.statRecords },
         { value: formatCount(stats.types, lang), label: copy.statTypes },
       ] : undefined}
-      actions={(
-        <ul className={styles.sources} aria-label={copy.sourcesLabel}>
-          <li>{copy.sourcesLabel}</li>
-          {DATA_SOURCES.map((source) => (
-            <li key={source.label}><a href={source.href} target="_blank" rel="noreferrer">{source.label}<span aria-hidden="true">↗</span></a></li>
-          ))}
-        </ul>
-      )}
     />
+  );
+}
+
+/** Provenance line under the catalog: where the records come from. */
+export function DatabaseSources({ lang }: { lang: Lang }) {
+  const copy = databaseCopy[lang];
+  return (
+    <footer className={styles.sources}>
+      <span>{copy.sourcesLabel}</span>
+      <ul>
+        {DATA_SOURCES_LIST.map((source) => (
+          <li key={source.label}><a href={source.href} target="_blank" rel="noreferrer">{source.label}<span aria-hidden="true"> ↗</span></a></li>
+        ))}
+      </ul>
+    </footer>
   );
 }

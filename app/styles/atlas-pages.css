@@ -33,24 +33,24 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
   padding-inline: 26px;
 }
 .workspace-content.gildra-atlas .route-section { padding-top: 32px; }
-.workspace-content.gildra-atlas :is(.library-hero h1, .analytics-header h1, .legal h1) {
+.workspace-content.gildra-atlas :is(.analytics-header h1, .legal h1) {
   color: var(--atlas-title);
   font-family: var(--atlas-display);
   font-weight: 400;
   letter-spacing: -.025em;
 }
-.workspace-content.gildra-atlas :is(.library-hero, .library-datasets, .library-products, .library-dataset-card, .legal) {
+.workspace-content.gildra-atlas .legal {
   background: var(--atlas-surface);
   border-color: var(--atlas-border);
   box-shadow: none;
 }
-.workspace-content.gildra-atlas :is(.library-hero p, .library-hero small, .legal p, .legal-upd) { color: var(--atlas-muted); }
+.workspace-content.gildra-atlas :is(.legal p, .legal-upd) { color: var(--atlas-muted); }
 /* Legal pages: no English "ARCHIVE OF GILDRA" stamp on every locale; readable prose. */
 .workspace-content.gildra-atlas .legal::before { content: none; }
 .workspace-content.gildra-atlas .legal p { font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
 .workspace-content.gildra-atlas .legal-upd { font-size: var(--atlas-text-meta); }
 .workspace-content.gildra-atlas .legal h2 { font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.25 var(--atlas-font-display); font-variant-numeric: lining-nums; }
-.workspace-content.gildra-atlas :is(.legal h2, .library-section-head h2) { color: var(--atlas-title); }
+.workspace-content.gildra-atlas .legal h2 { color: var(--atlas-title); }
 .workspace-content.gildra-atlas .pslot {
   border-color: var(--atlas-rule);
   background-color: var(--atlas-surface);

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { AtlasFrame } from "@/components/atlas";
 import { DatabaseDirectory } from "@/components/DatabaseDirectory";
 import { CatalogTotal } from "@/components/database/CatalogTotal";
-import { DatabaseHero } from "@/components/database/DatabaseHero";
+import { DatabaseHero, DatabaseSources } from "@/components/database/DatabaseHero";
 import { DatabaseLoadingContent } from "@/components/database/DatabaseLoading";
 import { formatCount } from "@/components/database/databaseCopy";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts } from "@/lib/api/client";
@@ -14,8 +14,8 @@ export type DatabaseSearchParams = {
 };
 
 /**
- * /database and /ru/database: atlas frame, hero with real catalog counters and
- * the interactive catalog workspace. The frame renders at once; the catalog
+ * /database and /ru/database: atlas frame, hero with real catalog counters,
+ * the server-rendered catalog workspace and the data-source line. The frame renders at once; the catalog
  * streams in behind a full-height skeleton so nothing below it (the footer)
  * jumps when the data arrives.
  */
@@ -32,8 +32,8 @@ export function DatabaseHub({ lang, searchParams }: { lang: Lang; searchParams: 
 async function DatabaseCatalog({ lang, searchParams }: { lang: Lang; searchParams: Promise<DatabaseSearchParams> }) {
   const filters = await searchParams;
   const locale = lang === "ru" ? "ru_RU" as const : "en_US" as const;
-  const product = filters.product ?? "wow";
-  const facets = Array.isArray(filters.facet) ? filters.facet : filters.facet ? [filters.facet] : [];
+  const product = filters.product || "wow";
+  const facets = (Array.isArray(filters.facet) ? filters.facet : filters.facet ? [filters.facet] : []).filter(Boolean);
   const catalogParams = { locale, product, type: filters.type, query: filters.q, category: filters.category, facets, cursor: filters.cursor, minItemLevel: optionalNumber(filters.minLevel), maxItemLevel: optionalNumber(filters.maxLevel), minRequiredLevel: optionalNumber(filters.minRequiredLevel), maxRequiredLevel: optionalNumber(filters.maxRequiredLevel) };
   const catalogTotalParams = { ...catalogParams, cursor: undefined };
   const [catalog, categories, entityTypes, products] = await Promise.all([
@@ -73,6 +73,7 @@ async function DatabaseCatalog({ lang, searchParams }: { lang: Lang; searchParam
         minRequiredLevel={filters.minRequiredLevel ?? ""}
         maxRequiredLevel={filters.maxRequiredLevel ?? ""}
       />
+      <DatabaseSources lang={lang} />
     </>
   );
 }

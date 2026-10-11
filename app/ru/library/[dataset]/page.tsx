@@ -1,52 +1,12 @@
-import { PageShell } from "@/components/layout/PageShell";
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import { DatabaseDirectory } from "@/components/DatabaseDirectory";
-import { CatalogTotal } from "@/components/database/CatalogTotal";
-import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
-import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
-import { requireCatalogSession } from "@/lib/library/server";
-
-type Filters = { q?: string; product?: string; facet?: string | string[]; cursor?: string; minLevel?: string; maxLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string };
+import { LibraryDatasetPage, type LibraryDatasetFilters } from "@/components/library/LibraryDatasetPage";
 
 export async function generateMetadata({ params }: { params: Promise<{ dataset: string }> }): Promise<Metadata> {
   const { dataset } = await params;
   return { title: `${dataset.replaceAll("-", " ")} — Библиотека Gildra`, alternates: { languages: { en: `/library/${dataset}`, ru: `/ru/library/${dataset}` } } };
 }
 
-export default async function LibraryDatasetPageRu({ params, searchParams }: { params: Promise<{ dataset: string }>; searchParams: Promise<Filters> }) {
-  const [{ dataset: slug }, filters] = await Promise.all([params, searchParams]);
-  const product = filters.product ?? "wow";
-  await requireCatalogSession(`/ru/library/${encodeURIComponent(slug)}${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
-  let datasets;
-  try {
-    datasets = await getLibraryDatasets("ru_RU", product);
-  } catch (error) {
-    console.error("library dataset list unavailable", error);
-    return <UnavailablePage />;
-  }
-  const dataset = datasets.find((entry) => entry.slug === slug);
-  if (!dataset) notFound();
-  const facets = Array.isArray(filters.facet) ? filters.facet : filters.facet ? [filters.facet] : [];
-  const catalogParams = { locale: "ru_RU" as const, product, dataset: dataset.slug, facets, query: filters.q, cursor: filters.cursor, minItemLevel: optionalNumber(filters.minLevel), maxItemLevel: optionalNumber(filters.maxLevel), minRequiredLevel: optionalNumber(filters.minRequiredLevel), maxRequiredLevel: optionalNumber(filters.maxRequiredLevel) };
-  const catalogTotalParams = { ...catalogParams, cursor: undefined };
-  let catalog, categories, entityTypes, products;
-  try {
-    [catalog, categories, entityTypes, products] = await Promise.all([
-      getCatalogPage({ ...catalogParams, includeTotal: false }),
-      getCatalogCategories("ru_RU", dataset.entityType, product), getCatalogEntityTypes("ru_RU", product), getCatalogProducts(),
-    ]);
-  } catch (error) {
-    console.error("library dataset unavailable", error);
-    return <UnavailablePage />;
-  }
-  return <PageShell lang="ru" variant="route"><DatabaseDirectory lang="ru" totalCount={<Suspense fallback="…"><CatalogTotal params={catalogTotalParams} /></Suspense>} catalog={catalog} categories={categories} entityTypes={entityTypes} products={products} query={filters.q ?? ""} selectedProduct={product} selectedType={dataset.entityType} selectedCategory="" selectedFacets={facets} cursor={filters.cursor ?? ""} minItemLevel={filters.minLevel ?? ""} maxItemLevel={filters.maxLevel ?? ""} minRequiredLevel={filters.minRequiredLevel ?? ""} maxRequiredLevel={filters.maxRequiredLevel ?? ""} libraryDataset={{ slug: dataset.slug, name: dataset.name, description: dataset.description, itemClassId: dataset.itemClassId }} /></PageShell>;
+export default async function Page({ params, searchParams }: { params: Promise<{ dataset: string }>; searchParams: Promise<LibraryDatasetFilters> }) {
+  const [{ dataset }, filters] = await Promise.all([params, searchParams]);
+  return <LibraryDatasetPage lang="ru" slug={dataset} filters={filters} />;
 }
-
-function UnavailablePage() {
-  return <PageShell lang="ru" variant="route"><LibraryUnavailable lang="ru" href="/ru/library" /></PageShell>;
-}
-
-
-function optionalNumber(value?: string) { const parsed = Number(value); return value && Number.isFinite(parsed) ? parsed : undefined; }

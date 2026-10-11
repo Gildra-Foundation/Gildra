@@ -3,15 +3,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Castle, Check, ChevronDown, Layers3, Search, Share2, Swords } from "lucide-react";
+import { ArrowUpRight, Castle, ChevronDown, Search, Swords } from "lucide-react";
 import { SpecSlot } from "./SpecSlot";
-import { AtlasBadge } from "@/components/atlas/AtlasBadge";
 import { classIcon } from "@/lib/gameAssets";
-import { p, type Lang } from "@/lib/i18n";
+import { p, type Lang } from "@/lib/i18n-paths";
 import { ANCHORS } from "@/lib/anchors";
 import type { GameIntelligence, TierActivity, TierContext, TierEntry, TierRole } from "@/lib/platform/games/intelligence";
 import { tierCopy, type KeyRange, type TierCopy } from "@/components/blocks/wow/tierWorkspace/tierCopy";
-import { emptyRoles, sampleRoles } from "@/components/blocks/wow/tierWorkspace/tierData";
 import styles from "@/components/blocks/wow/tierWorkspace/tierWorkspace.module.css";
 
 const CLASS_KEYS: Record<string, string> = {
@@ -22,6 +20,7 @@ const CLASS_KEYS: Record<string, string> = {
 const ROLES = ["dps", "healer", "tank"] as const;
 const ACTIVITIES = ["mythic_plus", "raid"] as const;
 const KEY_RANGES: KeyRange[] = ["all", "high", "middle", "low"];
+const EMPTY_ROLES: Record<TierRole, TierEntry[]> = { dps: [], healer: [], tank: [] };
 
 function classKey(slug: string) { return CLASS_KEYS[slug] ?? slug; }
 /** Class colour token — used only on spec identity (icon chip, class name). */
@@ -53,13 +52,18 @@ function TierMark({ tier, copy, size = "md" }: { tier: string; copy: TierCopy; s
   return <span className={size === "sm" ? `${styles.tierMark} ${styles.tierMarkSm}` : styles.tierMark} data-tier={tierClass(tier)}><span className={styles.srOnly}>{copy.tier} </span>{tier}</span>;
 }
 
-export function TierSection({ lang, intelligence, sample = false, specPaths = [] }: { lang: Lang; intelligence: GameIntelligence; sample?: boolean; specPaths?: string[] }) {
+/**
+ * Interactive tier table of /tier-lists: role tabs, class filter and search,
+ * the ranked table and the spec card. With live data it also offers dungeon /
+ * raid slices (fetched from the meta API); with the saved sample (`sampleRoles`
+ * from the server) those controls are not rendered, the page notice explains why.
+ */
+export function TierSection({ lang, intelligence, sample = false, sampleRoles, specPaths = [] }: { lang: Lang; intelligence: GameIntelligence; sample?: boolean; sampleRoles?: Record<TierRole, TierEntry[]>; specPaths?: string[] }) {
   const copy = tierCopy[lang];
   const [activity, setActivity] = useState<TierActivity>("mythic_plus");
   const [role, setRole] = useState<TierRole>("dps");
   const [cls, setCls] = useState("all");
   const [q, setQ] = useState("");
-  const [copied, setCopied] = useState(false);
   const [contextValue, setContextValue] = useState("all:all");
   const [keyType, setKeyType] = useState<KeyRange>("all");
   const [difficulty, setDifficulty] = useState("raid_hero");
@@ -90,7 +94,7 @@ export function TierSection({ lang, intelligence, sample = false, specPaths = []
   }, [activity, intelligence.tierContexts, selectedContext]);
 
   const suppliedRoles = intelligence.tierLists?.[activity]?.roles ?? (activity === "mythic_plus" ? intelligence.roles : undefined);
-  const baseRoles = suppliedRoles ?? (sample && activity === "mythic_plus" ? sampleRoles : emptyRoles);
+  const baseRoles = suppliedRoles ?? (sample && activity === "mythic_plus" && sampleRoles ? sampleRoles : EMPTY_ROLES);
   const activeRoles = remoteRoles ?? baseRoles;
   const roleEntries = useMemo(() => activeRoles[role] ?? [], [activeRoles, role]);
   const classes = useMemo(() => {
@@ -219,14 +223,6 @@ export function TierSection({ lang, intelligence, sample = false, specPaths = []
     });
   };
 
-  const share = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch { /* Clipboard access is optional. */ }
-  };
-
   const contentOptions = (
     <>
       <option value="all:all">{activity === "mythic_plus" ? copy.allDungeons : copy.allRaids}</option>
@@ -236,16 +232,13 @@ export function TierSection({ lang, intelligence, sample = false, specPaths = []
         : null}
     </>
   );
-  const controlsHint = sample
-    ? copy.sampleControls
+  const controlsHint = sample ? ""
     : activity === "mythic_plus" && !keyRangeEnabled ? copy.pickDungeonFirst
       : activity === "raid" && !difficultyEnabled ? copy.pickRaidFirst : "";
-
-  const guideCards = roleEntries.slice(0, 6).map((entry) => {
-    const external = entry.guideUrl || (isExternal(entry.sourceUrl) ? entry.sourceUrl : undefined);
-    const href = external ?? specHref(entry);
-    return href ? { entry, href, external: Boolean(external), meta: entry.guideUrl ? copy.providerGuide : external ? copy.providerSource : copy.specPageShort } : null;
-  }).filter((card): card is NonNullable<typeof card> => card !== null);
+  // The sample has no slices and only Mythic+ DPS rows: controls that could only lead to an empty table are not rendered.
+  const showModes = !sample || Boolean(intelligence.tierLists?.raid);
+  const visibleRoles = sample ? ROLES.filter((value) => (activeRoles[value]?.length ?? 0) > 0) : [...ROLES];
+  const showRoleTabs = visibleRoles.length > 1;
 
   const metrics = selected ? [
     selected.score !== undefined ? { label: copy.score, value: compact(selected.score, lang) } : null,
@@ -261,66 +254,72 @@ export function TierSection({ lang, intelligence, sample = false, specPaths = []
 
   return (
     <div className={styles.workspace} id={ANCHORS.tierList}>
-      <section className={styles.main} aria-labelledby="tier-results-title">
-        <div className={styles.controls} role="group" aria-label={copy.controlsLabel}>
-          <div className={styles.field}>
-            <span className={styles.label} id="tier-mode-label">{copy.mode}</span>
-            <div className={styles.segmented} role="group" aria-labelledby="tier-mode-label">
-              {ACTIVITIES.map((value) => (
-                <button type="button" key={value} className={styles.segment} aria-pressed={activity === value} onClick={() => switchActivity(value)}>
-                  {value === "mythic_plus" ? <Swords aria-hidden="true" /> : <Castle aria-hidden="true" />}{copy.modes[value]}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={`${styles.field} ${styles.fieldGrow}`}>
-            <label className={styles.label} htmlFor="tier-content">{copy.content}</label>
-            <span className={styles.selectShell}>
-              <select id="tier-content" className={styles.select} value={contextValue} onChange={(event) => chooseContext(event.target.value)} disabled={!contexts.length}>{contentOptions}</select>
-              <ChevronDown aria-hidden="true" />
-            </span>
-          </div>
-          {activity === "mythic_plus" ? (
-            <div className={`${styles.field} ${styles.fieldWide}`}>
-              <span className={styles.label} id="tier-key-label">{copy.keyRange}</span>
-              <div className={`${styles.segmented} ${styles.segmentedFour}`} role="group" aria-labelledby="tier-key-label">
-                {KEY_RANGES.map((value) => (
-                  <button type="button" key={value} className={styles.segment} aria-pressed={keyType === value} disabled={!keyRangeEnabled} onClick={() => setKeyType(value)}>{copy.keys[value]}</button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className={`${styles.field} ${styles.fieldWide}`}>
-              <span className={styles.label} id="tier-difficulty-label">{copy.difficulty}</span>
-              <div className={styles.segmented} role="group" aria-labelledby="tier-difficulty-label">
-                {raidDifficulties.map((value) => (
-                  <button type="button" key={value} className={styles.segment} aria-pressed={difficultyEnabled && difficulty === value} disabled={!difficultyEnabled} onClick={() => setDifficulty(value)}>{copy.difficulties[value] ?? value}</button>
-                ))}
-              </div>
-            </div>
-          )}
-          {controlsHint ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
-        </div>
-
+      <section className={styles.main} id={ANCHORS.builds} aria-labelledby="tier-results-title">
         <div className={styles.resultsHead}>
           <div className={styles.resultsCopy}>
             <h2 id="tier-results-title" className={styles.resultsTitle}>{activity === "mythic_plus" ? copy.resultsMythic : copy.resultsRaid}</h2>
-            <p className={styles.resultsMeta}>{scopeName}{scopeDetail ? ` · ${scopeDetail}` : ""}</p>
+            <p className={styles.resultsMeta}>{scopeName}{scopeDetail ? ` · ${scopeDetail}` : ""}{showRoleTabs ? "" : ` · ${copy.roles[role]}`}</p>
           </div>
-          <div className={styles.resultsTools}>
-            {sample ? <AtlasBadge tone="caution">{copy.sampleBadge}</AtlasBadge> : null}
-            <span className={styles.count} aria-live="polite"><Layers3 aria-hidden="true" />{isLoading ? copy.updating : copy.specCount(filtered.length)}</span>
-            <button type="button" className={styles.toolButton} onClick={share}>{copied ? <Check aria-hidden="true" /> : <Share2 aria-hidden="true" />}<span aria-live="polite">{copied ? copy.copied : copy.share}</span></button>
-          </div>
+          {isLoading ? <span className={styles.count} aria-live="polite">{copy.updating}</span> : null}
         </div>
 
-        <div className={styles.roleTabs} role="group" aria-label={copy.role}>
-          {ROLES.map((value) => (
-            <button type="button" key={value} className={styles.roleTab} aria-pressed={role === value} onClick={() => chooseRole(value)}>
-              {copy.roles[value]}<span className={styles.roleCount}>{activeRoles[value]?.length ?? 0}</span>
-            </button>
-          ))}
-        </div>
+        {showModes ? (
+          <div className={styles.controls} role="group" aria-label={copy.controlsLabel}>
+            {showModes ? (
+              <div className={styles.field}>
+                <span className={styles.label} id="tier-mode-label">{copy.mode}</span>
+                <div className={styles.segmented} role="group" aria-labelledby="tier-mode-label">
+                  {ACTIVITIES.map((value) => (
+                    <button type="button" key={value} className={styles.segment} aria-pressed={activity === value} onClick={() => switchActivity(value)}>
+                      {value === "mythic_plus" ? <Swords aria-hidden="true" /> : <Castle aria-hidden="true" />}{copy.modes[value]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {!sample ? (
+              <>
+                <div className={`${styles.field} ${styles.fieldGrow}`}>
+                  <label className={styles.label} htmlFor="tier-content">{copy.content}</label>
+                  <span className={styles.selectShell}>
+                    <select id="tier-content" className={styles.select} value={contextValue} onChange={(event) => chooseContext(event.target.value)} disabled={!contexts.length}>{contentOptions}</select>
+                    <ChevronDown aria-hidden="true" />
+                  </span>
+                </div>
+                {activity === "mythic_plus" ? (
+                  <div className={`${styles.field} ${styles.fieldWide}`}>
+                    <span className={styles.label} id="tier-key-label">{copy.keyRange}</span>
+                    <div className={`${styles.segmented} ${styles.segmentedFour}`} role="group" aria-labelledby="tier-key-label">
+                      {KEY_RANGES.map((value) => (
+                        <button type="button" key={value} className={styles.segment} aria-pressed={keyType === value} disabled={!keyRangeEnabled} onClick={() => setKeyType(value)}>{copy.keys[value]}</button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`${styles.field} ${styles.fieldWide}`}>
+                    <span className={styles.label} id="tier-difficulty-label">{copy.difficulty}</span>
+                    <div className={styles.segmented} role="group" aria-labelledby="tier-difficulty-label">
+                      {raidDifficulties.map((value) => (
+                        <button type="button" key={value} className={styles.segment} aria-pressed={difficultyEnabled && difficulty === value} disabled={!difficultyEnabled} onClick={() => setDifficulty(value)}>{copy.difficulties[value] ?? value}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : null}
+            {controlsHint ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
+          </div>
+        ) : null}
+
+        {showRoleTabs ? (
+          <div className={styles.roleTabs} role="group" aria-label={copy.role}>
+            {visibleRoles.map((value) => (
+              <button type="button" key={value} className={styles.roleTab} aria-pressed={role === value} onClick={() => chooseRole(value)}>
+                {copy.roles[value]}<span className={styles.roleCount}>{activeRoles[value]?.length ?? 0}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className={styles.filters}>
           <span className={styles.searchShell}>
@@ -439,35 +438,6 @@ export function TierSection({ lang, intelligence, sample = false, specPaths = []
         ) : <p className={styles.detailEmpty}>{sample ? copy.emptySample : copy.noRows}</p>}
       </aside>
 
-      {guideCards.length ? (
-        <section className={styles.guides} id={ANCHORS.builds} aria-labelledby="tier-guides-title">
-          <div className={styles.guidesHead}>
-            <h2 id="tier-guides-title" className={styles.guidesTitle}>{sample ? copy.guidesSample : copy.guidesLive}</h2>
-            <p className={styles.guidesText}>{sample ? copy.guidesSampleText : copy.guidesLiveText}</p>
-          </div>
-          <ul className={styles.guideGrid}>
-            {guideCards.map(({ entry, href, external, meta }) => {
-              const body = (
-                <>
-                  <SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />
-                  <span className={styles.guideCopy} style={classStyle(entry.classSlug)}>
-                    <span className={styles.guideName}>{entry.specName} <span className={styles.className}>{entry.className}</span></span>
-                    <span className={styles.guideMeta}>{meta}{external ? <ArrowUpRight aria-hidden="true" /> : null}</span>
-                  </span>
-                  <TierMark tier={entry.tier} copy={copy} size="sm" />
-                </>
-              );
-              return (
-                <li key={entryKey(entry)}>
-                  {external
-                    ? <a className={styles.guideCard} href={href} target="_blank" rel="noreferrer">{body}</a>
-                    : <Link className={styles.guideCard} href={href}>{body}</Link>}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ) : null}
     </div>
   );
 }

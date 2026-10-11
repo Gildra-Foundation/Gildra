@@ -14,7 +14,6 @@
 @import "./styles/layout.css";
 @import "./styles/primitives.css";
 @import "./styles/builds.css";
-@import "./styles/library-freshness.css";
 @import "./styles/responsive.css";
 @import "../components/blocks/shared/legal/legal.css";
 @import "./styles/workspaceNavigator.css";

@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { BookMarked } from "lucide-react";
+import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
+import { ResilientImage } from "@/components/media/ResilientImage";
+import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import type { CatalogProduct, LibraryDataset } from "@/lib/api/client";
-import { DatasetPreviewImage } from "@/components/library/DatasetPreviewImage";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
+import { libraryCopy, libraryGroupText } from "@/components/library/libraryCopy";
+import styles from "./library.module.css";
 
 type Props = {
   lang: "en" | "ru";
@@ -11,105 +16,115 @@ type Props = {
   unavailable?: boolean;
 };
 
-const freshnessText = {
-  en: { fresh: "Fresh", stale: "Stale", empty: "Empty", refreshing: "Refreshing", failed: "Refresh failed" },
-  ru: { fresh: "Свежие", stale: "Устарели", empty: "Нет данных", refreshing: "Обновляются", failed: "Ошибка обновления" },
-};
+type Freshness = "fresh" | "stale" | "empty" | "refreshing" | "failed" | "unknown";
+const severity: Freshness[] = ["fresh", "unknown", "empty", "stale", "refreshing", "failed"];
 
-const productFreshnessText = {
-  en: { fresh: "Fresh", stale: "Stale", failed: "Check failed", unknown: "Not checked" },
-  ru: { fresh: "Свежие", stale: "Устарели", failed: "Ошибка проверки", unknown: "Нет проверки" },
-};
-
-type ProductWithFreshness = CatalogProduct & {
-  freshness?: keyof typeof productFreshnessText.en;
-  freshnessReason?: string;
-};
-
-const applicabilityText = {
-  en: { pending_source: "Source needed", not_applicable: "Not applicable" },
-  ru: { pending_source: "Нужен источник", not_applicable: "Не применяется" },
-};
-
-const groupText: Record<string, { en: string; ru: string }> = {
-  equipment: { en: "Items & equipment", ru: "Предметы и экипировка" },
-  combat: { en: "Classes & combat", ru: "Классы и бой" },
-  encounters: { en: "Dungeons & raids", ru: "Подземелья и рейды" },
-  crafting: { en: "Professions & crafting", ru: "Профессии и ремесло" },
-  world: { en: "World & quests", ru: "Мир и задания" },
-  collections: { en: "Collections", ru: "Коллекции" },
-};
-
-function percentage(value: number, total: number) {
-  if (total <= 0) return 0;
-  return Math.min(100, Math.round((value / total) * 100));
+/** Covered share as a whole percent (a gap of a few records in 160 000 still reads as 100%). */
+function coveredPercent(value: number, total: number) {
+  return total > 0 ? Math.round((Math.min(value, total) / total) * 100) : 0;
 }
 
+/**
+ * /library and /ru/library: hero, edition switch, ONE freshness notice for the
+ * shown edition, then the datasets grouped by area. A card states coverage only
+ * where it is incomplete, and a state badge only for datasets that do not apply.
+ */
 export function LibraryLanding({ lang, datasets, products, selectedProduct, unavailable = false }: Props) {
-  const localePrefix = lang === "ru" ? "/ru" : "";
+  const copy = libraryCopy[lang];
+  const prefix = lang === "ru" ? "/ru" : "";
   const formatter = new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US");
   const total = datasets.reduce((sum, dataset) => sum + dataset.entityCount, 0);
-  const groups = Map.groupBy(datasets, (dataset) => dataset.group);
-  const freshest = datasets.reduce<Date | null>((latest, dataset) => {
+  const groups = Array.from(Map.groupBy(datasets, (dataset) => dataset.group));
+  const productQuery = selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`;
+
+  const checked = datasets.reduce<Date | null>((latest, dataset) => {
     if (!dataset.coverageUpdatedAt) return latest;
     const candidate = new Date(dataset.coverageUpdatedAt);
     return !latest || candidate > latest ? candidate : latest;
   }, null);
+  const product = products.find((entry) => entry.slug === selectedProduct);
+  const states: Freshness[] = [
+    ...(product?.freshness ? [product.freshness] : []),
+    ...datasets.filter((dataset) => dataset.applicability === "applicable").map((dataset) => dataset.freshness),
+  ];
+  const state = states.reduce<Freshness>((worst, next) => (severity.indexOf(next) > severity.indexOf(worst) ? next : worst), "fresh");
+  const checkedText = checked
+    ? copy.checkedAt(checked.toLocaleString(lang === "ru" ? "ru-RU" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC")
+    : copy.neverChecked;
+  const notice = state === "failed" ? { tone: "caution" as const, title: copy.failedTitle, text: copy.failedText }
+    : state === "stale" || state === "empty" ? { tone: "caution" as const, title: copy.staleTitle, text: copy.staleText }
+      : state === "refreshing" ? { tone: "info" as const, title: copy.refreshingTitle, text: copy.refreshingText }
+        : { tone: "info" as const, title: copy.freshTitle, text: "" };
 
-  return <div className="library-page">
-    <header className="library-hero">
-      <div>
-        <p className="cap gold">{lang === "ru" ? "Проверенные данные Азерота" : "Verified Azeroth data"}</p>
-        <h1>{lang === "ru" ? "Библиотека World of Warcraft" : "World of Warcraft Library"}</h1>
-        <p>{lang === "ru" ? "Публичная библиотека структурированных игровых данных: изображения, tooltip, связи и происхождение каждой опубликованной записи." : "A public library of structured game data with images, tooltips, relationships and provenance for every published record."}</p>
-      </div>
-      <aside><strong>{unavailable ? "—" : formatter.format(total)}</strong><span>{unavailable ? (lang === "ru" ? "каталог временно закрыт" : "catalog temporarily unavailable") : (lang === "ru" ? "записей в разделах" : "records across datasets")}</span></aside>
-    </header>
+  return (
+    <AtlasFrame as="div" lang={lang} dataAttributes={{ "data-library-root": true }}>
+      <AtlasHero
+        emblem={<BookMarked />}
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        lede={copy.lede}
+        statsLabel={copy.statsLabel}
+        stats={unavailable ? undefined : [
+          { value: formatter.format(total), label: copy.statRecords },
+          { value: formatter.format(datasets.length), label: copy.statDatasets },
+        ]}
+      />
 
-    {unavailable ? <LibraryUnavailable lang={lang} /> : null}
+      {unavailable ? <LibraryUnavailable lang={lang} /> : (
+        <>
+          {products.length > 1 ? (
+            <nav className={styles.editions} aria-label={copy.editions}>
+              {products.map((entry) => (
+                <Link key={entry.slug} href={`${prefix}/library${entry.slug === "wow" ? "" : `?product=${encodeURIComponent(entry.slug)}`}`} prefetch={false}
+                  aria-current={entry.slug === selectedProduct ? "page" : undefined}>{entry.name}</Link>
+              ))}
+            </nav>
+          ) : null}
 
-    {!unavailable ? <nav className="library-products" aria-label={lang === "ru" ? "Версия игры" : "Game version"}>
-      {products.map((product) => {
-        // Older API deployments return only id/slug/name for products. Keep
-        // the freshness decoration additive so the outage fallback can be
-        // deployed without coupling the web build to a schema migration.
-        const productStatus = product as ProductWithFreshness;
-        const state = productStatus.freshness ?? "unknown";
-        const stateLabel = productFreshnessText[lang][state as keyof typeof productFreshnessText.en] ?? productFreshnessText[lang].unknown;
-        return <Link key={product.slug} className={product.slug === selectedProduct ? "is-active" : ""} href={`${localePrefix}/library${product.slug === "wow" ? "" : `?product=${encodeURIComponent(product.slug)}`}`} aria-label={`${product.name}: ${stateLabel}`} title={productStatus.freshnessReason}>
-          <span className="library-product-name">{product.name}</span>
-          <small className={`library-product-freshness is-${state}`}>{stateLabel}</small>
-        </Link>;
-      })}
-    </nav> : null}
+          <AtlasNotice tone={notice.tone} title={notice.title} className={styles.notice}>
+            {notice.text ? `${notice.text} ` : ""}{checkedText}
+          </AtlasNotice>
 
-    {!unavailable ? <section className="library-datasets" aria-labelledby="library-datasets-title">
-      <div className="library-section-head"><div><p className="cap">{lang === "ru" ? "Наборы данных" : "Datasets"}</p><h2 id="library-datasets-title">{lang === "ru" ? "Выберите раздел" : "Choose a dataset"}</h2></div><span>{freshest ? `${lang === "ru" ? "Проверено" : "Checked"} ${freshest.toLocaleString(lang === "ru" ? "ru-RU" : "en-US", { dateStyle: "medium", timeStyle: "short" })}` : (lang === "ru" ? "Ожидает первой проверки" : "Awaiting first verification")}</span></div>
-      <div className="library-dataset-groups">
-        {Array.from(groups, ([group, entries]) => <section className="library-dataset-group" key={group} aria-labelledby={`library-group-${group}`}>
-          <h3 id={`library-group-${group}`}>{groupText[group]?.[lang] ?? group}</h3>
-          <div className="library-dataset-grid">{entries.map((dataset) => {
-          const localizationCoverage = percentage(dataset.verifiedLocalizedCount, dataset.entityCount);
-          const tooltipCoverage = percentage(dataset.tooltipCount, dataset.entityCount);
-          const imageCoverage = percentage(dataset.imageCount, dataset.entityCount);
-          const href = `${localePrefix}/library/${encodeURIComponent(dataset.slug)}${selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`}`;
-          const tooltipID = `dataset-tooltip-${dataset.slug}`;
-          const stateClass = dataset.applicability === "applicable" ? dataset.freshness : dataset.applicability;
-          const stateLabel = dataset.applicability === "applicable" ? freshnessText[lang][dataset.freshness] : applicabilityText[lang][dataset.applicability];
-          return <article key={dataset.slug} className="library-dataset-card">
-            <Link href={href} className="library-dataset-main">
-              <span className="library-dataset-art" aria-hidden="true"><DatasetPreviewImage src={dataset.previewImageUrl} iconSymbol={dataset.iconSymbol} /></span>
-              <span className="library-dataset-copy"><strong>{dataset.name}</strong><small>{dataset.description}</small><b>{formatter.format(dataset.entityCount)} {lang === "ru" ? "записей" : "records"}</b></span>
-              <span className="library-coverage"><span>{lang === "ru" ? "Текст" : "Text"} <b>{localizationCoverage}%</b></span><span>Tooltip <b>{tooltipCoverage}%</b></span><span>{lang === "ru" ? "Изображения" : "Images"} <b>{imageCoverage}%</b></span></span>
-            </Link>
-            <details className="library-dataset-status">
-              <summary className={`library-freshness is-${stateClass}`} aria-describedby={tooltipID} aria-label={`${dataset.name}: ${stateLabel}`}><i />{stateLabel}</summary>
-              <span id={tooltipID} role="tooltip" className="library-card-tooltip"><strong>{dataset.name}</strong><span>{dataset.applicabilityReason || dataset.freshnessReason}</span><span>{lang === "ru" ? "Подтверждённый текст" : "Verified text"}: {formatter.format(dataset.verifiedLocalizedCount)} / {formatter.format(dataset.entityCount)}</span><span>Tooltip: {formatter.format(dataset.tooltipCount)} / {formatter.format(dataset.entityCount)}</span><span>{lang === "ru" ? "Изображения" : "Images"}: {formatter.format(dataset.imageCount)} / {formatter.format(dataset.entityCount)}</span>{dataset.buildVersion ? <span>Build {dataset.buildVersion}</span> : null}</span>
-            </details>
-          </article>;
-        })}</div>
-        </section>)}
-      </div>
-    </section> : null}
-  </div>;
+          <AtlasSection id="datasets" title={copy.datasetsTitle} description={copy.datasetsText}>
+            <div className={styles.groups}>
+              {groups.map(([group, entries]) => (
+                <section key={group} className={styles.group} aria-labelledby={`library-group-${group}`}>
+                  <h3 id={`library-group-${group}`}>{libraryGroupText[group]?.[lang] ?? group}</h3>
+                  <ul className={styles.grid}>
+                    {entries.map((dataset) => {
+                      const gaps = dataset.applicability === "applicable" ? [
+                        { label: copy.coverage.text, value: coveredPercent(dataset.verifiedLocalizedCount, dataset.entityCount) },
+                        { label: copy.coverage.tooltip, value: coveredPercent(dataset.tooltipCount, dataset.entityCount) },
+                        { label: copy.coverage.images, value: coveredPercent(dataset.imageCount, dataset.entityCount) },
+                      ].filter((entry) => entry.value < 100) : [];
+                      const badge = dataset.applicability === "pending_source" ? copy.pendingSource : dataset.applicability === "not_applicable" ? copy.notApplicable : null;
+                      return (
+                        <li key={dataset.slug}>
+                          <AtlasTile
+                            href={`${prefix}/library/${encodeURIComponent(dataset.slug)}${productQuery}`}
+                            icon={<ResilientImage src={dataset.previewImageUrl} alt="" width={44} height={44} loading="lazy" fallback={<CatalogGlyph symbol={dataset.iconSymbol} />} />}
+                            title={dataset.name}
+                            text={(
+                              <>
+                                <span className={styles.description}>{dataset.description}</span>
+                                <span className={styles.facts}>
+                                  <b>{copy.records(formatter.format(dataset.entityCount))}</b>
+                                  {badge ? <span className={styles.state} title={dataset.applicabilityReason || undefined}>{badge}</span> : null}
+                                  {gaps.length ? <span className={styles.gaps} aria-label={copy.coverageLabel}>{gaps.map((gap) => `${gap.label} ${gap.value}%`).join(" · ")}</span> : null}
+                                </span>
+                              </>
+                            )}
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </AtlasSection>
+        </>
+      )}
+    </AtlasFrame>
+  );
 }

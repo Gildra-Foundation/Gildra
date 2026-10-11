@@ -1,13 +1,19 @@
-import Link from "next/link";
+import { AtlasLinkButton, AtlasNotice } from "@/components/atlas";
+import { libraryCopy } from "@/components/library/libraryCopy";
+import styles from "./library.module.css";
 
 type Props = { lang: "en" | "ru"; href?: string };
 
+/** Honest outage state of the library: nothing was deleted, the publication is closed for now. */
 export function LibraryUnavailable({ lang, href }: Props) {
+  const copy = libraryCopy[lang];
   const next = href ?? (lang === "ru" ? "/ru/library" : "/library");
-  return <section className="library-unavailable" role="alert">
-    <p className="cap gold">{lang === "ru" ? "Каталог недоступен" : "Catalog unavailable"}</p>
-    <h2>{lang === "ru" ? "Публикация данных временно закрыта" : "Data publication is temporarily closed"}</h2>
-    <p>{lang === "ru" ? "Источники или API сейчас проходят проверку. Данные не удалены — повторите попытку позже или войдите в панель администратора." : "The sources or API are being checked. No data was deleted — try again later or sign in to the administrator console."}</p>
-    <Link href={`/api-console?next=${encodeURIComponent(next)}`} prefetch={false}>{lang === "ru" ? "Открыть панель" : "Open console"}</Link>
-  </section>;
+  return (
+    <div className={styles.unavailable} role="alert">
+      <AtlasNotice tone="caution" title={copy.unavailableTitle}
+        action={<AtlasLinkButton href={`/api-console?next=${encodeURIComponent(next)}`} prefetch={false} size="sm" variant="ghost">{copy.openConsole}</AtlasLinkButton>}>
+        {copy.unavailableText}
+      </AtlasNotice>
+    </div>
+  );
 }

@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 
 export default async function LibraryPageRu({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const filters = await searchParams;
-  const product = filters.product ?? "wow";
+  const product = filters.product || "wow";
   await requireCatalogSession(`/ru/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
   const data = await getLibraryLandingData("ru_RU", product);
-  return <PageShell lang="ru" variant="route"><LibraryLanding lang="ru" selectedProduct={product} {...data} /></PageShell>;
+  return <PageShell lang="ru"><LibraryLanding lang="ru" selectedProduct={product} {...data} /></PageShell>;
 }
