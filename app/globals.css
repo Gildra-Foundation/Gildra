@@ -8,7 +8,6 @@
 
 @import "./styles/tokens.css";
 @import "./styles/local-book-fonts.css";
-@import "./styles/loading.css";
 @import "./styles/base.css";
 @import "../components/layout/chrome.css";
 @import "../components/blocks/shared/adSlot/adSlot.css";
