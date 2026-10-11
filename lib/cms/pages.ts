@@ -1,11 +1,12 @@
 import "server-only";
 import type { BlockInstance } from "@/lib/blocks/page";
+import type { BlockRegistry } from "@/lib/blocks/loadRegistry";
 import type { Lang } from "@/lib/i18n";
 
 /**
  * Payload CMS page overrides.
  *
- * A published CMS `pages` document whose `slug` equals a page id ("wow/home")
+ * A published CMS `pages` document whose `slug` equals a page id ("wow/tier-lists")
  * and whose `blocks` field holds a `BlockInstance[]` replaces the TS config
  * for that page. Everything fails open: no CMS URL, CMS down, no document,
  * malformed JSON or an unknown block type → the code config renders.
@@ -30,20 +31,21 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Structural validation against the registry: type must exist, props must be
- *  a plain object, children only on container blocks. Returns null on any
- *  violation so a typo never breaks a page. */
-export async function validateBlocks(value: unknown, depth = 0): Promise<BlockInstance[] | null> {
+/** Structural validation against the page game's registry: type must exist,
+ *  props must be a plain object, children only on container blocks. Returns
+ *  null on any violation so a typo never breaks a page. The caller passes the
+ *  game's registry: importing the full one here would put every game's client
+ *  blocks into every block page's bundle. */
+export async function validateBlocks(value: unknown, registry: BlockRegistry, depth = 0): Promise<BlockInstance[] | null> {
   if (!Array.isArray(value) || depth > 6) return null;
-  const { registry } = await import("@/lib/blocks/registry");
   const out: BlockInstance[] = [];
   for (const raw of value) {
     if (!isPlainObject(raw) || typeof raw.type !== "string" || !(raw.type in registry)) return null;
-    const def = registry[raw.type as keyof typeof registry];
+    const def = registry[raw.type];
     if (raw.props !== undefined && !isPlainObject(raw.props)) return null;
     if (raw.children !== undefined) {
       if (!def.container) return null;
-      const children = await validateBlocks(raw.children, depth + 1);
+      const children = await validateBlocks(raw.children, registry, depth + 1);
       if (!children) return null;
       out.push({ ...(raw as object), children } as BlockInstance);
       continue;
@@ -53,7 +55,7 @@ export async function validateBlocks(value: unknown, depth = 0): Promise<BlockIn
   return out;
 }
 
-export async function getCmsPageOverride(pageId: string, lang: Lang): Promise<CmsPageOverride | null> {
+export async function getCmsPageOverride(pageId: string, lang: Lang, registry: BlockRegistry): Promise<CmsPageOverride | null> {
   const base = cmsURL();
   if (!base) return null;
   try {
@@ -72,7 +74,7 @@ export async function getCmsPageOverride(pageId: string, lang: Lang): Promise<Cm
     const payload = (await response.json()) as { docs?: CmsPageDoc[] };
     const doc = payload.docs?.[0];
     if (!doc || doc._status === "draft") return null;
-    const blocks = await validateBlocks(doc.blocks);
+    const blocks = await validateBlocks(doc.blocks, registry);
     if (!blocks || blocks.length === 0) return null;
     return {
       blocks,

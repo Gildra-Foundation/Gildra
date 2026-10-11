@@ -1,6 +1,5 @@
 import { PageShell } from "@/components/layout/PageShell";
 import { BlockRenderer } from "./BlockRenderer";
-import { registry } from "@/lib/blocks/registry";
 import { collectAnchors } from "@/lib/blocks/anchors";
 import { PAGE_BLOCKS } from "@/lib/blocks/pages";
 import { loadBlockRegistry } from "@/lib/blocks/loadRegistry";
@@ -13,8 +12,8 @@ import type { Lang } from "@/lib/i18n";
 /** Render a page config: apply a published CMS override (if any), build the
  *  RenderContext once, then shell + blocks. */
 export async function Page({ config, lang }: { config: PageConfig; lang: Lang }) {
-  const override = await getCmsPageOverride(config.id, lang);
   const registry = await loadBlockRegistry(config.game);
+  const override = await getCmsPageOverride(config.id, lang, registry);
   const blocks = override?.blocks ?? config.blocks;
   const layout = override?.layout ?? config.layout;
   const ctx: RenderContext = {

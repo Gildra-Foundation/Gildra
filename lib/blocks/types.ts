@@ -26,7 +26,7 @@ export type RenderContext = {
   path: string;
   /** Anchors collected from the page config in document order (for SectionNav). */
   anchors: Anchor[];
-  /** Anchors of another page by id ("wow/home") — see lib/blocks/pages.ts. */
+  /** Anchors of another page by id ("wow/tier-lists") — see lib/blocks/pages.ts. */
   anchorsOf: (pageId: string) => Anchor[];
 };
 

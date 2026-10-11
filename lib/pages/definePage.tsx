@@ -2,9 +2,9 @@
  * definePage — one page definition, two routes.
  *
  * A route file becomes three lines:
- *   import { homePage } from "@/lib/games/wow/pages/home";
- *   export const generateMetadata = homePage.en.generateMetadata;
- *   export default homePage.en.Page;
+ *   import { tierListsPage } from "@/lib/games/wow/pages/tier-lists";
+ *   export const generateMetadata = tierListsPage.en.generateMetadata;
+ *   export default tierListsPage.en.Page;
  * and its /ru mirror uses `.ru`. Segment config literals (`revalidate`,
  * `dynamic`) stay in the route file — Next reads them statically.
  */

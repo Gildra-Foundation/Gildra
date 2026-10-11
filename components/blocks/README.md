@@ -19,12 +19,12 @@ app/dev/blocks       gallery of every block at 1440/768/390 (dev only; GILDRA_DE
 ## Block anatomy
 
 ```
-components/blocks/wow/hero/
-  Hero.tsx        component: (props + data + lang + game) → JSX. Owns its root element and its #id.
-  schema.ts       HeroProps (JSON-serialisable) and HeroData
-  data.ts         load(ctx, props) → HeroData via ctx.source only
+components/blocks/wow/specBody/
+  SpecBody.tsx    component: (props + data + lang + game) → JSX. Owns its root element and its #id.
+  schema.ts       props (JSON-serialisable) and data types
+  data.ts         load(ctx, props) → data via ctx.source only
   demo.ts         demo props + data for the gallery
-  index.ts        defineBlock({ type: "wow.hero", Component, load, anchor, demo })
+  index.ts        defineBlock({ type: "wow.specBody", Component, load, anchor, demo })
 ```
 
 Rules:
@@ -40,8 +40,12 @@ Rules:
 - **Strings** go through `t(lang)`; nav labels through `tNav(lang)`. Add RU to the
   dictionary in `lib/i18n.ts` — never hard-code a translation in a component.
 - **Registry keys**: shared blocks are plain (`columns`, `adSlot`), game blocks are
-  `<game>.<name>` (`wow.hero`). Keys are the `type` in page configs and the URL in
-  the gallery (`/dev/blocks/wow.hero`).
+  `<game>.<name>` (`wow.tierWorkspace`). Keys are the `type` in page configs and the URL in
+  the gallery (`/dev/blocks/wow.tierWorkspace`).
+- **Weight**: a game registry is imported as a whole, so every client component a
+  block pulls in ships on every block page of that game. Delete blocks no page
+  uses (the legacy WoW homepage blocks went on 2026-10-11) and keep client code
+  out of rarely used blocks.
 - **Styling**: `app/globals.css` is only an ordered `@import` index. Each legacy
   block's rules live in a partial next to it (`hero/hero.css`, `guides/guides.css`…);
   shared primitives, layout, responsive and database/library rules live in
@@ -131,28 +135,21 @@ registry (applied as CSS variables on `.app`).
 
 Editors can replace a page's block list without a deploy. In the CMS
 (`cms/`, collection **Pages**) create a document whose `slug` is the page id
-(`wow/home`, `wow/tier-lists`, `league-of-legends/home`…) and put a
+(`wow/tier-lists`, `wow/privacy`, `league-of-legends/home`…) and put a
 `BlockInstance[]` JSON into `blocks`, e.g.
 
 ```json
 [
-  { "type": "wow.hero" },
-  { "type": "sectionNav" },
   { "type": "container", "children": [
-    { "type": "wow.metaPulse" },
-    { "type": "columns", "props": { "layout": "meta", "id": "meta", "anchor": "Meta" },
-      "children": [{ "type": "wow.mythicMeta" }, { "type": "wow.metaTrends" }] },
-    { "type": "adSlot" },
-    { "type": "wow.raidFeature" },
-    { "type": "wow.guides" },
-    { "type": "wow.tierPreview" }
+    { "type": "wow.tierWorkspace" },
+    { "type": "adSlot" }
   ]}
 ]
 ```
 
 `lib/cms/pages.ts` fetches `CMS_INTERNAL_URL/api/pages?where[slug][equals]=<id>`
 (published documents only, cached 60 s) and validates the JSON against the
-registry: unknown block types, non-object props or `children` on a
+page game's registry: unknown block types, non-object props or `children` on a
 non-container make the whole override invalid and the TS config renders
 instead. Drafts are ignored; `layout` may switch between `default` and `bare`.
 Unset `CMS_INTERNAL_URL` to disable CMS lookups (local dev without the CMS).

@@ -32,7 +32,7 @@ export type BlockInstance = {
 }[BlockType];
 
 export type PageConfig = {
-  /** "<game>/<page>", e.g. "wow/home". */
+  /** "<game>/<page>", e.g. "wow/tier-lists". */
   id: string;
   game: GameSlug;
   /** Canonical EN, game-relative path. RU mirror = `p("ru", …)`. */

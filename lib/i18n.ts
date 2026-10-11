@@ -32,10 +32,6 @@ const RU: Record<string, string> = {
   // Hero
   "Master the": "Владей",
   Meta: "метой",
-  "Builds, rankings and live data from high-level Mythic+ and Raid content.":
-    "Билды, рейтинги и живые данные из хай-энд контента Mythic+ и рейдов.",
-  "Explore Mythic+": "Открыть Mythic+",
-  "Raid rankings →": "Рейтинг рейдов →",
   Live: "Live",
   runs: "забегов",
   specs: "спеков",
@@ -45,49 +41,29 @@ const RU: Record<string, string> = {
   // PatchHighlights
   highlights: "— главное",
   updates: "пунктов",
-  "PATCH HIGHLIGHTS": "ГЛАВНОЕ В ПАТЧЕ",
-  "View full patch notes →": "Полные патчноуты →",
   "Class tuning updates": "Обновление баланса классов",
   "Three Midnight raids now open": "Открыты три рейда Midnight",
   "New Mythic+ affix rotation": "Новая ротация аффиксов Mythic+",
   "PvP balance adjustments": "Правки баланса PvP",
   // SectionNav
   "Season 1": "Сезон 1",
-  "nav:Meta": "Мета",
   Raid: "Рейд",
   Guides: "Гайды",
   // MetaPulse
-  "Season 1 · demo data": "Сезон 1 · демо-данные",
-  "rank changes": "изменений в рейтинге",
   // MythicMeta / MetaTrends
-  "Mythic+ Meta": "Мета Mythic+",
-  "View All →": "Все →",
-  "All Keys · Overall · Last 7 Days": "Все ключи · Общий · 7 дней",
   played: "пикрейт",
   "avg key": "ср. ключ",
   score: "очки",
-  "Based on": "По данным",
   Updated: "Обновлено",
-  "Meta Trends": "Тренды меты",
-  "Specs popularity · Last 7 Days": "Популярность спеков · 7 дней",
-  "View Full Meta Trends": "Все тренды меты",
   // RaidFeature
   "Current Raid": "Текущий рейд",
   "The Voidspire, The Dreamrift and March on Quel'Danas — nine encounters with real Adventure Guide mechanics.":
     "Шпиль Бездны, Провал снов и Марш на Кель'Данас — девять встреч с реальными механиками из Журнала приключений.",
   "Boss Rankings": "Рейтинг боссов",
   "Best Specs": "Лучшие спеки",
-  "Top raid specs": "Топ спеки рейда",
   // Guides
-  "LATEST GUIDES": "СВЕЖИЕ ГАЙДЫ",
-  "View All Guides →": "Все гайды →",
   // TierPreview
   "Mythic+ Tier List": "Тир-лист Mythic+",
-  "Top specs by weighted score · All Keys · Last 7 Days · based on":
-    "Топ спеков по взвешенным очкам · Все ключи · 7 дней · по данным",
-  "View full tier list": "Полный тир-лист",
-  "FEATURED BUILDS": "ИЗБРАННЫЕ БИЛДЫ",
-  "All Builds →": "Все билды →",
   // TierSection
   Home: "Главная",
   "Tier Lists · Mythic+ · Overall": "Тир-листы · Mythic+ · Общий",

@@ -4,7 +4,7 @@ import { ANCHORS, anchorHref, type AnchorId } from "@/lib/anchors";
 import { SectionNav, type SectionNavView } from "./SectionNav";
 
 export type SectionNavProps = {
-  /** Show another page's anchors (e.g. "wow/home" on /tier-lists) — see lib/blocks/pages.ts. */
+  /** Show another page's anchors (a page id registered in lib/blocks/pages.ts) — see lib/blocks/pages.ts. */
   anchorsFrom?: string;
   /** Fixed active anchor (disables scrollspy); its link points at the current page. */
   active?: AnchorId;
