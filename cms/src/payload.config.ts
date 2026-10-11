@@ -41,6 +41,9 @@ export default buildConfig({
     meta: {
       titleSuffix: " — Gildra Network",
     },
+    // The custom palette (custom.scss) is dark; a light OS theme would mix dark
+    // backgrounds with light-theme text colours, so the admin is always dark.
+    theme: "dark",
     components: {
       graphics: {
         Icon: "/components/Brand#BrandIcon",

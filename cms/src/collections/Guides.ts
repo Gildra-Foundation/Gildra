@@ -2,7 +2,7 @@ import type { CollectionConfig } from "payload";
 
 import { ARTICLE_POLICY, withEditorialPolicy } from "../editorial/policy";
 import { articleEditor } from "../fields/editor";
-import { gameDataField, seoField, validateSlug } from "../fields/shared";
+import { gameDataField, seoTabField, validateSlug } from "../fields/shared";
 import { previewUrlFor } from "../preview/token";
 
 /**
@@ -18,7 +18,7 @@ export const Guides: CollectionConfig = withEditorialPolicy(
     labels: { singular: { en: "Article", ru: "Статья" }, plural: { en: "Articles", ru: "Статьи" } },
     admin: {
       useAsTitle: "title",
-      defaultColumns: ["title", "slug", "author", "_status", "updatedAt"],
+      defaultColumns: ["title", "slug", "_status", "publishedAt", "updatedAt"],
       group: { en: "Content", ru: "Контент" },
       preview: previewUrlFor("guides"),
     },
@@ -28,35 +28,126 @@ export const Guides: CollectionConfig = withEditorialPolicy(
     },
     indexes: [{ fields: ["site", "slug"], unique: true }],
     fields: [
-      { name: "title", type: "text", localized: true, required: true },
+      // Read-only facts of the article's site for the editor UI (not stored).
+      { name: "siteSlug", type: "text", virtual: "site.slug", admin: { hidden: true } },
+      { name: "siteName", type: "text", virtual: "site.name", admin: { hidden: true } },
+      { name: "siteGame", type: "text", virtual: "site.game", admin: { hidden: true } },
+      { name: "sitePublicUrl", type: "text", virtual: "site.publicUrl", admin: { hidden: true } },
       {
-        name: "slug",
-        type: "text",
-        index: true,
-        required: true,
-        validate: validateSlug(),
-        admin: { description: "Unique within the site. Changing it changes the public URL." },
+        name: "articlePanel",
+        type: "ui",
+        admin: { position: "sidebar", components: { Field: "/components/editor/ArticlePanel#ArticlePanel" } },
       },
       {
-        name: "category",
-        type: "select",
-        options: ["mythic-plus", "raid", "class", "gear"],
-        admin: { description: "Legacy Gildra category kept for compatibility. Prefer Categories." },
+        type: "tabs",
+        tabs: [
+          {
+            label: { en: "Article", ru: "Статья" },
+            fields: [
+              {
+                name: "title",
+                type: "text",
+                localized: true,
+                required: true,
+                admin: { description: { en: "Main heading on the site.", ru: "Главный заголовок статьи на сайте." } },
+              },
+              {
+                name: "slug",
+                type: "text",
+                index: true,
+                required: true,
+                validate: validateSlug(),
+                admin: {
+                  description: "Unique within the site. Changing it changes the public URL.",
+                  components: { Field: "/components/editor/SlugField#SlugField" },
+                },
+              },
+              {
+                name: "summary",
+                type: "textarea",
+                localized: true,
+                required: true,
+                admin: {
+                  description: {
+                    en: "One or two sentences for article lists, link previews and search results.",
+                    ru: "Одно-два предложения: показываются в списке статей, в превью ссылок и в поиске.",
+                  },
+                },
+              },
+              { name: "content", type: "richText", localized: true, required: true, editor: articleEditor },
+              {
+                name: "hero",
+                type: "upload",
+                relationTo: "media",
+                label: { en: "Cover", ru: "Обложка" },
+                admin: {
+                  description: {
+                    en: "Wide image at the top of the article and in link previews, ideally 1600×900.",
+                    ru: "Широкая картинка над статьёй и в превью ссылок, лучше 1600×900.",
+                  },
+                },
+              },
+            ],
+          },
+          {
+            label: { en: "Game data", ru: "Игровые данные" },
+            description: {
+              en: "Patch and game references: they date the article and link it to classes or champions on the site.",
+              ru: "Патч и игровые сущности: по ним видно, насколько статья свежая, и она связывается с классами или чемпионами на сайте.",
+            },
+            fields: [
+              {
+                name: "category",
+                type: "select",
+                options: [
+                  { value: "mythic-plus", label: "Mythic+" },
+                  { value: "raid", label: { en: "Raid", ru: "Рейд" } },
+                  { value: "class", label: { en: "Class", ru: "Класс" } },
+                  { value: "gear", label: { en: "Gear", ru: "Снаряжение" } },
+                ],
+                admin: {
+                  description: "Legacy Gildra category kept for compatibility. Prefer Categories.",
+                  condition: (data) => data?.siteGame !== "lol",
+                },
+              },
+              gameDataField,
+            ],
+          },
+          {
+            label: "SEO",
+            fields: [
+              { name: "seoPreview", type: "ui", admin: { components: { Field: "/components/editor/SeoPreview#SeoPreview" } } },
+              seoTabField,
+            ],
+          },
+        ],
       },
-      { name: "summary", type: "textarea", localized: true, required: true },
-      { name: "content", type: "richText", localized: true, required: true, editor: articleEditor },
-      { name: "hero", type: "upload", relationTo: "media", label: { en: "Cover", ru: "Обложка" } },
       {
         name: "author",
         type: "relationship",
         relationTo: "admins",
-        admin: { position: "sidebar", description: "Authors are always recorded as themselves." },
+        admin: {
+          position: "sidebar",
+          description: {
+            en: "Empty: the site signs the article as its editorial team. Staff with the author role are always recorded as themselves.",
+            ru: "Пусто — на сайте подпись «Редакция». Сотрудники с ролью «автор» записываются автоматически.",
+          },
+        },
       },
       { name: "categories", type: "relationship", relationTo: "categories", hasMany: true, admin: { position: "sidebar" } },
       { name: "tags", type: "relationship", relationTo: "tags", hasMany: true, admin: { position: "sidebar" } },
-      { name: "publishedAt", type: "date", admin: { position: "sidebar" } },
-      gameDataField,
-      seoField,
+      {
+        name: "publishedAt",
+        type: "date",
+        admin: {
+          position: "sidebar",
+          date: { pickerAppearance: "dayAndTime", displayFormat: "d MMM yyyy, HH:mm", timeFormat: "HH:mm" },
+          description: {
+            en: "Date shown on the site; set automatically on first publication.",
+            ru: "Дата на сайте; ставится сама при первой публикации.",
+          },
+        },
+      },
     ],
   },
   ARTICLE_POLICY,

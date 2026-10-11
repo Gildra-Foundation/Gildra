@@ -25,6 +25,9 @@ import { ChecklistFeatureClient as ChecklistFeatureClient_e70f5e05f09f93e00b997e
 import { BlockquoteFeatureClient as BlockquoteFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { InlineToolbarFeatureClient as InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { ArticlePanel as ArticlePanel_a522312b181a2969693f4479bb34acb3 } from '../../../components/editor/ArticlePanel'
+import { SlugField as SlugField_3d836d28318ebd3773170b5e527a3cbc } from '../../../components/editor/SlugField'
+import { SeoPreview as SeoPreview_54842116ebf27d5fc41a05116390649c } from '../../../components/editor/SeoPreview'
 import { BrandIcon as BrandIcon_42af45a2e169122dea8a98337d41efda } from '../../../components/Brand'
 import { BrandLogo as BrandLogo_42af45a2e169122dea8a98337d41efda } from '../../../components/Brand'
 import { GlobalViewRedirect as GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
@@ -65,6 +68,9 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BlockquoteFeatureClient": BlockquoteFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#HorizontalRuleFeatureClient": HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#InlineToolbarFeatureClient": InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/components/editor/ArticlePanel#ArticlePanel": ArticlePanel_a522312b181a2969693f4479bb34acb3,
+  "/components/editor/SlugField#SlugField": SlugField_3d836d28318ebd3773170b5e527a3cbc,
+  "/components/editor/SeoPreview#SeoPreview": SeoPreview_54842116ebf27d5fc41a05116390649c,
   "/components/Brand#BrandIcon": BrandIcon_42af45a2e169122dea8a98337d41efda,
   "/components/Brand#BrandLogo": BrandLogo_42af45a2e169122dea8a98337d41efda,
   "@payloadcms/plugin-multi-tenant/rsc#GlobalViewRedirect": GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62,
