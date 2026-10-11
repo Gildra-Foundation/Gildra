@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { IdentityStatusPage } from "@/components/wow/identity/IdentityStatusPage";
+import { SporefallPage } from "@/components/wow/raid/SporefallPage";
 
 const path = "/wow/raids/sporefall/rotmire";
 export const metadata: Metadata = {
@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 export function generateStaticParams() { return [{ boss: "rotmire" }]; }
 export default async function Page({ params }: { params: Promise<{ boss: string }> }) {
   if ((await params).boss !== "rotmire") notFound();
-  return <IdentityStatusPage locale="en" eyebrow="Sporefall · Boss" title="Rotmire" summary="The boss is confirmed by Blizzard. Strategy, abilities and loot will be published once they are verified." parent={{ href: "/wow/raids/sporefall", label: "Sporefall" }} patch="12.0.7" season="Midnight Season 1" sourceUrl="https://worldofwarcraft.blizzard.com/en-us/news/24272110" sourceLabel="Official Blizzard source" lastVerifiedAt="2026-09-13" />;
+  return <SporefallPage locale="en" view="boss" />;
 }

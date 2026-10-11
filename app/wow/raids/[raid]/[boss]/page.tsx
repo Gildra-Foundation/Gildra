@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { RaidGuidePage } from "@/components/wow/raid/RaidGuidePage";
+import { RaidBossGuide } from "@/components/wow/raid/RaidBossGuide";
 import { getMidnightRaid, raidSlugs } from "@/components/wow/raid/midnightRaidData";
 
 type PageProps = { params: Promise<{ raid: string; boss: string }> };
@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function Page({ params }: PageProps) {
   const { raid: raidSlug, boss: bossSlug } = await params;
   const raid = getMidnightRaid(raidSlug);
-  if (!raid || !raid.bosses.some((boss) => boss.slug === bossSlug)) notFound();
-  return <RaidGuidePage key={`${raid.slug}:${bossSlug}`} raid={raid} locale="en" initialBossSlug={bossSlug} />;
+  const boss = raid?.bosses.find((entry) => entry.slug === bossSlug);
+  if (!raid || !boss) notFound();
+  return <RaidBossGuide raid={raid} boss={boss} locale="en" />;
 }

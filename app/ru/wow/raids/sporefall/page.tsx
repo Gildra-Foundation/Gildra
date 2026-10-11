@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IdentityStatusPage } from "@/components/wow/identity/IdentityStatusPage";
+import { SporefallPage } from "@/components/wow/raid/SporefallPage";
 
 const path = "/ru/wow/raids/sporefall";
 export const metadata: Metadata = {
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 export default function Page() {
-  return <IdentityStatusPage locale="ru" eyebrow="World of Warcraft · Midnight" title="Sporefall" summary="Рейд Sporefall и его босс Rotmire подтверждены Blizzard. Тактика, способности и добыча появятся после проверки." parent={{ href: "/wow/raids", label: "Рейдовый журнал" }} patch="12.0.7" season="Midnight Season 1" sourceUrl="https://worldofwarcraft.blizzard.com/en-us/news/24272110" sourceLabel="Официальный источник Blizzard" lastVerifiedAt="2026-09-13" links={[{ href: "/wow/raids/sporefall/rotmire", label: "Rotmire" }]} />;
+  return <SporefallPage locale="ru" view="raid" />;
 }

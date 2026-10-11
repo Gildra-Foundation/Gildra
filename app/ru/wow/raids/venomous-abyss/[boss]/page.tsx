@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { VenomousBossPage } from "@/components/wow/raid/VenomousBossPage";
 import { bossBySlug, lt, venomousAbyss } from "@/data/venomousAbyss";
-import { preloadSharedWowBackdrop } from "@/lib/wow/sharedBackdropPreload";
 
 export function generateStaticParams() {
   return venomousAbyss.map((boss) => ({ boss: boss.slug }));
@@ -28,7 +27,5 @@ export default async function Page({ params }: { params: Promise<{ boss: string 
   const { boss: slug } = await params;
   const boss = bossBySlug(slug);
   if (!boss) notFound();
-  preloadSharedWowBackdrop();
-  const index = venomousAbyss.indexOf(boss);
-  return <VenomousBossPage boss={boss} locale="ru" previous={venomousAbyss[index - 1]} next={venomousAbyss[index + 1]} />;
+  return <VenomousBossPage boss={boss} bosses={venomousAbyss} locale="ru" />;
 }

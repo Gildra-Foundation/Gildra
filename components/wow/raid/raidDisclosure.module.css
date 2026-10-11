@@ -1,0 +1,42 @@
+/* atlas:strict — folding detail block (<details>) for raid guides; tokens only. Kit candidate. */
+.disclosure {
+  min-width: 0;
+  border-top: 1px solid var(--atlas-line-soft);
+}
+
+.summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: var(--atlas-control-height);
+  padding: var(--atlas-space-2) 0;
+  color: var(--atlas-accent);
+  cursor: pointer;
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
+  list-style: none;
+  user-select: none;
+}
+
+.summary::-webkit-details-marker { display: none; }
+.summary:hover { color: var(--atlas-accent-strong); }
+.summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  transition: transform var(--atlas-duration) var(--atlas-ease);
+}
+
+.disclosure[open] > .summary .chevron { transform: rotate(180deg); }
+
+.body {
+  display: grid;
+  gap: var(--atlas-space-4);
+  padding: var(--atlas-space-2) 0 var(--atlas-space-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron { transition: none; }
+}

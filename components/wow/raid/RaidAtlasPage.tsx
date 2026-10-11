@@ -64,13 +64,13 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
           image={{ src: "/assets/wow/mythic/backgrounds/altar.webp", alt: "", priority: true }}
           artBadge={<AtlasBadge tone="accent">{copy.currentBadge}</AtlasBadge>}
           eyebrow={<><Castle aria-hidden="true" />Midnight · {locale === "ru" ? "Сезон 2" : "Season 2"}</>}
-          title={localized(currentRaid.names)}
+          title={currentRaid.names.en}
           description={localized(currentRaid.descriptions)}
           meta={[{ icon: <Skull aria-hidden="true" />, label: copy.bossCount(currentBosses.length) }]}
           cta={copy.openRaid}
         >
           <ol className={styles.bossColumns} aria-label={copy.bossesLabel}>
-            {currentBosses.map((boss) => <li key={boss.canonicalSlug}>{localized(boss.names)}</li>)}
+            {currentBosses.map((boss) => <li key={boss.canonicalSlug}>{boss.names.en}</li>)}
           </ol>
         </AtlasCard>
       </AtlasSection>
@@ -79,7 +79,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
         <div className={styles.archiveGrid}>
           {raidSlugs.map((slug, index) => {
             const raid = midnightRaids[slug];
-            const name = locale === "ru" ? raid.nameRu : raid.nameEn;
+            const name = raid.nameEn;
             return (
               <article key={slug} className={styles.raid}>
                 <Link className={styles.raidArt} href={`${prefix}/wow/raids/${slug}`} tabIndex={-1} aria-hidden="true">
@@ -95,7 +95,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
                     {raid.bosses.map((boss) => (
                       <li key={boss.slug}>
                         <Image src={boss.artwork} alt="" width={28} height={28} />
-                        <Link href={`${prefix}/wow/raids/${slug}/${boss.slug}`}>{locale === "ru" ? boss.nameRu : boss.nameEn}</Link>
+                        <Link href={`${prefix}/wow/raids/${slug}/${boss.slug}`}>{boss.nameEn}</Link>
                       </li>
                     ))}
                   </ol>

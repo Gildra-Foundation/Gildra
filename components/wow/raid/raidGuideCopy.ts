@@ -1,0 +1,165 @@
+import { formatAtlasDate, pluralRu } from "@/components/atlas/format";
+import type { RaidAudience } from "./midnightRaidData";
+import type { VoidspireMechanicTag } from "./voidspireMechanicGuide";
+
+export type RaidLocale = "ru" | "en";
+
+/**
+ * Interface copy of the raid pages (Midnight raid overviews, boss guides,
+ * Sporefall). Game terms — raid, boss, spell and zone names — stay English and
+ * come from the data files, never from here.
+ */
+export const raidGuideCopy = {
+  ru: {
+    breadcrumbsLabel: "Навигация",
+    wow: "World of Warcraft",
+    raids: "Рейды",
+    season: (season: number) => `Midnight · Сезон ${season}`,
+    patch: (patch: string) => `Патч ${patch}`,
+    encounterOf: (order: number, total: number) => `Встреча ${order} из ${total}`,
+    encountersLabel: "Встречи рейда",
+
+    // Raid overview
+    bossesTitle: "Боссы",
+    bossesText: "План боя по фазам и что делать с каждой механикой — на странице встречи.",
+    bossesTextPending: "На страницах встреч — описание босса и способности с подтверждённым описанием.",
+    openGuide: "Открыть гайд",
+    mechanicCount: (count: number) => `${count} ${pluralRu(count, "механика", "механики", "механик")}`,
+
+    // Battle plan
+    planTitle: "Что делать",
+    planText: "Главное по каждой фазе боя. Порядок действий, цели и схема арены — под фазой.",
+    planMore: "Порядок, цели и схема арены",
+    steps: "Порядок действий",
+    priorities: "Приоритет целей",
+    dangers: "Чего избегать",
+    arenaLabel: (phase: string) => `Схема арены: ${phase}`,
+    arenaNorth: "Босс — вверху схемы",
+    zoneKinds: { safe: "безопасно", soak: "замачивание", danger: "опасно", wall: "стена" },
+    strategyPendingTitle: "Тактика готовится",
+    strategyPendingText: "План боя и разбор механик появятся после проверки источников и привязки способностей к ID.",
+
+    // Mechanics
+    mechanicsTitle: "Механики",
+    mechanicsText: "Кто отвечает и что делать. Где стоять, когда, цена ошибки и отличия сложностей — в «Подробнее».",
+    mechanicsJournalText: "Способности с подтверждённым описанием из журнала приключений.",
+    who: "Кто",
+    doThis: "Что делать",
+    more: "Подробнее",
+    position: "Где стоять",
+    timing: "Когда",
+    failure: "Цена ошибки",
+    difficulty: "Сложности",
+    journal: "Журнал приключений",
+    journalSource: (build: string, date: string) => `Журнал приключений, сборка ${build}, проверено ${formatAtlasDate(date, "ru")}`,
+    spellPending: "ID способности ещё не подтверждён",
+    spellLink: (spellId: number) => `Способность #${spellId} на Wowhead ↗`,
+    roles: { raid: "Весь рейд", tank: "Танки", healer: "Лекари", dps: "Бойцы" } satisfies Record<RaidAudience, string>,
+    tags: {
+      DODGE: "Уклонение",
+      INTERRUPT: "Прерывание",
+      STOP: "Сбить каст",
+      PURGE: "Развеивание",
+      DISPEL_MAGIC: "Снятие магии",
+      SOAK: "Замачивание",
+      SPREAD: "Разойтись",
+      STACK: "Собраться",
+      MOVE: "Перемещение",
+      TANK_SWAP: "Смена танков",
+      DEFENSIVE: "Защита",
+      HARD_CC: "Контроль",
+      TARGET_PRIORITY: "Приоритет целей",
+    } satisfies Record<VoidspireMechanicTag, string>,
+
+    // Sources and pager
+    sources: "Источники",
+    strategySource: (updated: string, checked: string) => `Тактика — пересказ гайда Icy Veins (обновлён ${formatAtlasDate(updated, "ru")}, проверен ${formatAtlasDate(checked, "ru")}).`,
+    strategySourceLink: "Гайд Icy Veins",
+    descriptionsSource: "Названия и описания — журнал приключений World of Warcraft.",
+    allBosses: (raid: string) => `Все боссы: ${raid}`,
+    nextBoss: "Следующий босс",
+
+    // Sporefall
+    pendingTitle: "Подробности позже",
+    sporefallLede: "Рейд из одной встречи. Названия рейда и босса подтверждены Blizzard.",
+    rotmireLede: "Единственный босс рейда Sporefall. Имя подтверждено Blizzard.",
+    pendingText: "Описание, портреты, способности и тактика появятся после проверки данных.",
+    pendingBoss: "Босс · подробности позже",
+    officialSource: "Анонс Blizzard",
+    // formatAtlasDate already ends with "г.", so no extra full stop here.
+    verifiedOn: (date: string) => `Проверено ${formatAtlasDate(date, "ru")}`,
+  },
+  en: {
+    breadcrumbsLabel: "Breadcrumbs",
+    wow: "World of Warcraft",
+    raids: "Raids",
+    season: (season: number) => `Midnight · Season ${season}`,
+    patch: (patch: string) => `Patch ${patch}`,
+    encounterOf: (order: number, total: number) => `Encounter ${order} of ${total}`,
+    encountersLabel: "Raid encounters",
+
+    bossesTitle: "Bosses",
+    bossesText: "Each encounter page has the phase-by-phase plan and what to do with every mechanic.",
+    bossesTextPending: "Encounter pages show the boss description and the abilities with a verified description.",
+    openGuide: "Open guide",
+    mechanicCount: (count: number) => `${count} ${count === 1 ? "mechanic" : "mechanics"}`,
+
+    planTitle: "What to do",
+    planText: "The key call for each phase. Step order, targets and the arena plan sit under the phase.",
+    planMore: "Steps, targets and arena plan",
+    steps: "Step order",
+    priorities: "Target priority",
+    dangers: "What to avoid",
+    arenaLabel: (phase: string) => `Arena plan: ${phase}`,
+    arenaNorth: "Boss at the top of the plan",
+    zoneKinds: { safe: "safe", soak: "soak", danger: "danger", wall: "wall" },
+    strategyPendingTitle: "Strategy in preparation",
+    strategyPendingText: "The battle plan and mechanic breakdown will appear once the sources are verified and abilities are linked to their IDs.",
+
+    mechanicsTitle: "Mechanics",
+    mechanicsText: "Who handles it and what to do. Positioning, timing, the cost of failure and difficulty notes are under “More”.",
+    mechanicsJournalText: "Abilities with a verified Adventure Guide description.",
+    who: "Who",
+    doThis: "Do this",
+    more: "More",
+    position: "Position",
+    timing: "When",
+    failure: "If failed",
+    difficulty: "Difficulty",
+    journal: "Adventure Guide",
+    journalSource: (build: string, date: string) => `Adventure Guide, build ${build}, checked ${formatAtlasDate(date, "en")}`,
+    spellPending: "Spell ID not confirmed yet",
+    spellLink: (spellId: number) => `Spell #${spellId} on Wowhead ↗`,
+    roles: { raid: "All players", tank: "Tanks", healer: "Healers", dps: "Damage" } satisfies Record<RaidAudience, string>,
+    tags: {
+      DODGE: "Dodge",
+      INTERRUPT: "Interrupt",
+      STOP: "Stop cast",
+      PURGE: "Purge",
+      DISPEL_MAGIC: "Dispel",
+      SOAK: "Soak",
+      SPREAD: "Spread",
+      STACK: "Stack",
+      MOVE: "Move",
+      TANK_SWAP: "Tank swap",
+      DEFENSIVE: "Defensive",
+      HARD_CC: "Crowd control",
+      TARGET_PRIORITY: "Target priority",
+    } satisfies Record<VoidspireMechanicTag, string>,
+
+    sources: "Sources",
+    strategySource: (updated: string, checked: string) => `Strategy paraphrased from the Icy Veins guide (updated ${formatAtlasDate(updated, "en")}, checked ${formatAtlasDate(checked, "en")}).`,
+    strategySourceLink: "Icy Veins guide",
+    descriptionsSource: "Names and descriptions come from the World of Warcraft Adventure Guide.",
+    allBosses: (raid: string) => `All bosses: ${raid}`,
+    nextBoss: "Next boss",
+
+    pendingTitle: "Details coming later",
+    sporefallLede: "A one-encounter raid. The raid and boss names are confirmed by Blizzard.",
+    rotmireLede: "The only boss of Sporefall. The name is confirmed by Blizzard.",
+    pendingText: "Description, portraits, abilities and strategy will appear once the data is verified.",
+    pendingBoss: "Boss · details coming later",
+    officialSource: "Blizzard announcement",
+    verifiedOn: (date: string) => `Checked ${formatAtlasDate(date, "en")}.`,
+  },
+} as const;
