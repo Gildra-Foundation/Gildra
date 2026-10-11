@@ -123,6 +123,8 @@ services:
       CMS_REVALIDATE_SECRET_RIFTDEN: ${CMS_REVALIDATE_SECRET_RIFTDEN:-}
       PLAUSIBLE_URL: http://plausible:8000
       PLAUSIBLE_API_KEY: ${PLAUSIBLE_API_KEY:-}
+      # Sites whose frontend renders draft previews itself (/preview, /cms-preview).
+      CMS_SITE_PREVIEW: ${CMS_SITE_PREVIEW:-}
       # Reader e-mail stays off until the host mail relay is fully live (PTR).
       EMAIL_TRANSPORT: disabled
       EMAIL_FROM_NAME: Gildra Network
