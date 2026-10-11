@@ -40,7 +40,7 @@
 
 ## Компоненты
 
-Набор [`components/atlas/`](components/atlas/README.md) — серверные компоненты без клиентского JS: `AtlasFrame`, `AtlasHero`, `AtlasStats`, `AtlasSection`, `AtlasAnchorNav`, `AtlasGrid`, `AtlasCard`, `AtlasTile`, `AtlasPanel`, `AtlasMetaList`, `AtlasBadge`, `AtlasButton`/`AtlasLinkButton`, `AtlasNotice`, `AtlasBreadcrumbs`, `AtlasEmblem` и утилиты `formatAtlasDate`, `formatSeason`, `pluralRu`. Каталог, свойства и примеры — в README набора. Эталонная реализация — `components/wow/lairs/`.
+Набор [`components/atlas/`](components/atlas/README.md) — серверные компоненты без клиентского JS: `AtlasFrame`, `AtlasHero`, `AtlasStats`, `AtlasSection`, `AtlasAnchorNav`, `AtlasGrid`, `AtlasCard`, `AtlasTile`, `AtlasPanel`, `AtlasMetaList`, `AtlasBadge`, `AtlasButton`/`AtlasLinkButton`, `AtlasNotice`, `AtlasBreadcrumbs`, `AtlasEmblem`, `AtlasDisclosure` и утилиты `formatAtlasDate`, `formatSeason`, `pluralRu`. Каталог, свойства и примеры — в README набора. Эталонная реализация — `components/wow/lairs/`.
 
 Тексты интерфейса хранятся отдельно от разметки (`*Copy.ts` с объектами `ru` и `en`).
 

@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { Flag, Swords } from "lucide-react";
-import { RaidDisclosure } from "./RaidDisclosure";
+import { AtlasDisclosure } from "@/components/atlas";
 import type { RaidTactic, TacticalPhase } from "./midnightRaidTactics";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import styles from "./raidGuide.module.css";
@@ -20,7 +20,7 @@ export function RaidBattlePlan({ tactic, bossArtwork, locale }: { tactic: RaidTa
           <div className={styles.phaseBody}>
             <h3 className={styles.phaseName}>{phase.name[locale]}</h3>
             <p className={styles.phaseCall}>{phase.summary[locale]}</p>
-            <RaidDisclosure summary={copy.planMore}>
+            <AtlasDisclosure summary={copy.planMore}>
               <div className={styles.phaseDetail}>
                 <div className={styles.phaseLists}>
                   <section>
@@ -38,7 +38,7 @@ export function RaidBattlePlan({ tactic, bossArtwork, locale }: { tactic: RaidTa
                 </div>
                 <ArenaPlan phase={phase} bossArtwork={bossArtwork} locale={locale} />
               </div>
-            </RaidDisclosure>
+            </AtlasDisclosure>
           </div>
         </li>
       ))}

@@ -21,6 +21,8 @@ import { AtlasFrame, AtlasHero, AtlasSection, AtlasCard, AtlasGrid } from "@/com
 4. **Honest data.** Counters and badges show only real numbers. Fixtures and drafts
    carry an `AtlasNotice`.
 5. **Page = frame + hero + sections.** Page-specific CSS describes layout only.
+   At most ~5 sections; no section repeats the hero or another section; long
+   secondary detail goes into `AtlasDisclosure` (see design.md, "Без перегрузки").
 6. **Copy lives apart from markup** (e.g. `components/wow/lairs/lairsCopy.ts`),
    RU and EN side by side. Game terms (boss, zone, item, spell names) stay English.
 
@@ -41,13 +43,13 @@ import { AtlasFrame, AtlasHero, AtlasSection, AtlasCard, AtlasGrid } from "@/com
 | Component | Use for | Key props |
 | --- | --- | --- |
 | `AtlasFrame` | Page wrapper: atmosphere art fading into the solid body, 1540 px column, slim legal footer | `art`, `artPosition`, `tint`, `as`, `lang`, `dataAttributes`, `footer` |
-| `AtlasHero` | The page `h1` with emblem, eyebrow, lede, counters or an aside | `title`, `eyebrow`, `lede`, `emblem`, `emblemShape`, `stats`, `breadcrumbs`, `actions`, `toolbar`, `aside`, `variant` |
+| `AtlasHero` | The page `h1` with emblem, eyebrow, lede, counters or an aside (the language switch is in the global bar, not here) | `title`, `eyebrow`, `lede`, `emblem`, `emblemShape`, `stats`, `breadcrumbs`, `actions`, `toolbar`, `aside`, `variant` |
 | `AtlasStats` | Row of headline counters (used inside the hero) | `items: {value, label}[]` |
 | `AtlasSection` | Titled block of the body (`h2`) | `id`, `title`, `eyebrow`, `description`, `aside`, `level` |
 | `AtlasAnchorNav` | Sticky in-page chapter links with counts | `items: {href, label, count}[]`, `label` |
 | `AtlasGrid` | Responsive card grid | `min` (px), `fit`, `gap` |
 | `AtlasTile` | Compact icon link: quick access, next steps, catalogues without artwork | `href`, `icon`, `title`, `text`, `index` |
-| `AtlasLocaleSwitch` | EN / RU switch (put it in the hero `toolbar`) | `locale`, `path` |
+| `AtlasDisclosure` | Folding detail (`<details>`): long secondary notes stay in the page but closed — prefer it to deleting real content | `summary`, `open` |
 | `AtlasCard` | Illustrated link card (raid, dungeon, boss); `layout="feature"` for the wide highlighted entry | `href`, `title`, `image`, `eyebrow`, `subtitle`, `description`, `meta`, `cta`, `artBadge`, `artCaption`, `index`, `accent`, `artRatio` |
 | `AtlasPanel` | Framed surface; never nest panels | `tone: default \| raised \| highlight`, `padding` |
 | `AtlasMetaList` | Labelled facts grid (zone, group, reward) | `items: {label, value, icon}[]`, `columns` |

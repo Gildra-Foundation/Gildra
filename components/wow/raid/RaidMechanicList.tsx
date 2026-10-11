@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { CircleHelp, Crosshair, Footprints, Shield, Swords, Users } from "lucide-react";
-import { AtlasBadge } from "@/components/atlas";
-import { RaidDisclosure } from "./RaidDisclosure";
+import { AtlasBadge, AtlasDisclosure } from "@/components/atlas";
 import type { RaidMechanic } from "./midnightRaidData";
 import type { VoidspireBossGuide, VoidspireMechanic, VoidspireMechanicTag } from "./voidspireMechanicGuide";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
@@ -64,7 +63,7 @@ function GuideMechanic({ mechanic, journal, locale }: { mechanic: VoidspireMecha
         </div>
         <p className={styles.mechanicWho}><b>{copy.who}:</b> {mechanic.who[locale]}</p>
         <p className={styles.mechanicAction}><strong>{copy.doThis}:</strong> {mechanic.action[locale]}</p>
-        <RaidDisclosure summary={copy.more}>
+        <AtlasDisclosure summary={copy.more}>
           <dl className={styles.facts}>
             <div><dt>{copy.position}</dt><dd>{mechanic.position[locale]}</dd></div>
             <div><dt>{copy.timing}</dt><dd>{mechanic.timing[locale]}</dd></div>
@@ -81,7 +80,7 @@ function GuideMechanic({ mechanic, journal, locale }: { mechanic: VoidspireMecha
               ? <a href={wowheadSpell(mechanic.spell.id, locale)} target="_blank" rel="noreferrer">{copy.spellLink(mechanic.spell.id)}</a>
               : copy.spellPending}
           </p>
-        </RaidDisclosure>
+        </AtlasDisclosure>
       </div>
     </li>
   );

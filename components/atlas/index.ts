@@ -19,4 +19,4 @@ export { AtlasGrid } from "./AtlasGrid";
 export { AtlasAnchorNav, type AtlasAnchor } from "./AtlasAnchorNav";
 export { formatAtlasDate, formatSeason, pluralRu, type AtlasLocale } from "./format";
 export { AtlasTile } from "./AtlasTile";
-export { AtlasLocaleSwitch } from "./AtlasLocaleSwitch";
+export { AtlasDisclosure } from "./AtlasDisclosure";

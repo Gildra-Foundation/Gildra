@@ -1,4 +1,4 @@
-/* atlas:strict — folding detail block (<details>) for raid guides; tokens only. Kit candidate. */
+/* atlas:strict — AtlasDisclosure: a folding detail block (<details>); tokens only. */
 .disclosure {
   min-width: 0;
   border-top: 1px solid var(--atlas-line-soft);

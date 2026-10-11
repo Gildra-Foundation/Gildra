@@ -1,8 +1,7 @@
 import { Castle, ExternalLink, Layers, MapPin, Skull, Trophy } from "lucide-react";
-import { AtlasFrame, AtlasGrid, AtlasHero, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTile } from "@/components/atlas";
+import { AtlasDisclosure, AtlasFrame, AtlasGrid, AtlasHero, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTile } from "@/components/atlas";
 import contentManifest from "@/data/wow/content-manifest.json";
 import { venomousAbyss } from "@/data/venomousAbyss";
-import { RaidDisclosure } from "./RaidDisclosure";
 import {
   gloryAchievements,
   headlineRewards,
@@ -148,7 +147,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
             <li key={reward.name}><Trophy aria-hidden="true" /><span><strong>{reward.name}</strong>{reward.detail[locale]}</span></li>
           ))}
         </ul>
-        <RaidDisclosure summary={<>Glory of the Venomous Raider · {copy.gloryRequirements(gloryAchievements.length)}</>} className={styles.glory}>
+        <AtlasDisclosure summary={<>Glory of the Venomous Raider · {copy.gloryRequirements(gloryAchievements.length)}</>} className={styles.glory}>
           <ol className={styles.gloryList} data-testid="raid-glory-requirements">
             {gloryAchievements.map((achievement) => (
               <li key={achievement.name}><strong>{achievement.name}</strong><span>{achievement.requirement[locale]}</span></li>
@@ -157,7 +156,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
           <p className={styles.footnote}>
             {copy.gloryReward} <a href={venomousRaidOverviewSource} target="_blank" rel="noreferrer">{copy.source}<ExternalLink aria-hidden="true" /></a>
           </p>
-        </RaidDisclosure>
+        </AtlasDisclosure>
       </AtlasSection>
     </AtlasFrame>
   );
