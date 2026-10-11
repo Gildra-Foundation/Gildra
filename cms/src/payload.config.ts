@@ -28,6 +28,17 @@ import { migrations } from "./migrations";
 import { publicEndpoints } from "./public/endpoints";
 
 const filename = fileURLToPath(import.meta.url);
+
+const EDITOR_MENU_LABELS: Record<string, Record<string, string>> = {
+  ru: {
+    upload: "Изображение",
+    relationship: "Ссылка на статью",
+    checklist: "Чек-лист",
+    unorderedList: "Маркированный список",
+    orderedList: "Нумерованный список",
+  },
+  en: { upload: "Image", relationship: "Article link" },
+};
 const dirname = path.dirname(filename);
 
 export default buildConfig({
@@ -49,7 +60,7 @@ export default buildConfig({
         Icon: "/components/Brand#BrandIcon",
         Logo: "/components/Brand#BrandLogo",
       },
-      afterNavLinks: ["/components/AnalyticsNavLink#AnalyticsNavLink"],
+      beforeNavLinks: ["/components/nav/AdminNav#AdminNav"],
       views: {
         dashboard: { Component: "/components/Dashboard#Dashboard" },
         analytics: { Component: "/components/AnalyticsView#AnalyticsView", path: "/analytics" },
@@ -62,9 +73,10 @@ export default buildConfig({
     supportedLanguages: { ru, en },
     fallbackLanguage: "ru",
   },
-  collections: [Sites, Admins, Media, Pages, Guides, Categories, Tags, SiteSettings, Members, MemberProfiles, AuditLog].map(
-    localizeCollection,
-  ),
+  // Every collection is reached through the curated sidebar (components/nav/AdminNav), not Payload's groups.
+  collections: [Sites, Admins, Media, Pages, Guides, Categories, Tags, SiteSettings, Members, MemberProfiles, AuditLog]
+    .map(localizeCollection)
+    .map((collection) => ({ ...collection, admin: { ...collection.admin, group: false as const } })),
   localization: {
     // Content languages; the labels name them in the switcher above every editor.
     locales: [
@@ -115,4 +127,13 @@ export default buildConfig({
     requireSiteField(["media", "categories", "tags", "site-settings"]),
   ],
   sharp,
-}).then(hardenInternalCollections);
+}).then((config) => {
+  // Lexical merges its stock feature labels into i18n while the config is
+  // sanitised, so clearer names for the editor's insert menu go on top here.
+  const translations = (config.i18n.translations ??= {}) as Record<string, Record<string, Record<string, Record<string, string>>>>;
+  for (const [lang, labels] of Object.entries(EDITOR_MENU_LABELS)) {
+    const lexical = ((translations[lang] ??= {}).lexical ??= {});
+    for (const [feature, label] of Object.entries(labels)) lexical[feature] = { ...lexical[feature], label };
+  }
+  return hardenInternalCollections(config);
+});

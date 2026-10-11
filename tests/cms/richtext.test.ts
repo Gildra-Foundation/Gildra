@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import type { RichTextDocument, RichTextNode } from "../../lib/cms/contract.ts";
-import { extractToc, plainText, readingMinutes, renderRichText, safeHref, safeMediaUrl } from "../../lib/cms/richtext.ts";
+import { extractToc, plainText, readingMinutes, renderRichText, safeHref, safeMediaUrl, videoEmbedUrl } from "../../lib/cms/richtext.ts";
 
 const text = (value: string, format = 0): RichTextNode => ({ type: "text", text: value, format, version: 1 });
 const para = (...children: RichTextNode[]): RichTextNode => ({ type: "paragraph", children });
@@ -123,5 +123,51 @@ describe("renderRichText", () => {
     assert.doesNotThrow(() => html(doc(deep)));
     assert.equal(plainText(doc(para(text("one two")), heading("h2", "three"))), "one two\nthree");
     assert.equal(readingMinutes(doc(para(text("word ".repeat(450))))), 2);
+  });
+});
+
+describe("editor blocks", () => {
+  const block = (fields: Record<string, unknown>): RichTextNode => ({ type: "block", fields });
+  const withParent = (d: RichTextDocument) =>
+    renderToStaticMarkup(renderRichText(d, { ...OPTIONS, embedParent: "gildra.net", blockLabels: { pros: "Плюсы", cons: "Минусы" } }) as never);
+
+  it("embeds only parsed YouTube, Twitch and Rutube ids", () => {
+    assert.equal(videoEmbedUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10"), "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
+    assert.equal(videoEmbedUrl("https://youtu.be/dQw4w9WgXcQ"), "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
+    assert.equal(videoEmbedUrl("https://www.youtube.com/shorts/dQw4w9WgXcQ"), "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
+    assert.equal(videoEmbedUrl("https://www.twitch.tv/videos/123456789", "gildra.net"), "https://player.twitch.tv/?video=123456789&parent=gildra.net&autoplay=false");
+    assert.equal(videoEmbedUrl("https://clips.twitch.tv/FunnyClip-abc", "gildra.net"), "https://clips.twitch.tv/embed?clip=FunnyClip-abc&parent=gildra.net&autoplay=false");
+    assert.equal(videoEmbedUrl("https://rutube.ru/video/0123456789abcdef0123456789abcdef/"), "https://rutube.ru/play/embed/0123456789abcdef0123456789abcdef");
+    assert.equal(videoEmbedUrl("https://www.twitch.tv/videos/123456789"), null, "Twitch needs a parent host");
+    for (const bad of ["https://evil.example/watch?v=dQw4w9WgXcQ", "javascript:alert(1)", "https://youtube.com/watch?v=short", 7]) {
+      assert.equal(videoEmbedUrl(bad), null, String(bad));
+    }
+  });
+
+  it("renders video as a lazy iframe, unknown links as plain links", () => {
+    const out = withParent(doc(block({ blockType: "video", url: "https://youtu.be/dQw4w9WgXcQ", caption: "Разбор" })));
+    assert.match(out, /<iframe src="https:\/\/www.youtube-nocookie.com\/embed\/dQw4w9WgXcQ" title="Разбор" loading="lazy"/);
+    assert.match(out, /<figcaption>Разбор<\/figcaption>/);
+    const fallback = withParent(doc(block({ blockType: "video", url: "https://vimeo.com/1" })));
+    assert.doesNotMatch(fallback, /<iframe/);
+    assert.match(fallback, /<a href="https:\/\/vimeo.com\/1" rel="noopener noreferrer" target="_blank">/);
+    assert.equal(withParent(doc(block({ blockType: "video", url: "javascript:alert(1)" }))), "<div></div>");
+  });
+
+  it("renders spoiler, pros/cons, steps and safe buttons", () => {
+    const out = withParent(
+      doc(
+        block({ blockType: "details", summary: "Почему так?", body: "Потому что" }),
+        block({ blockType: "prosCons", pros: [{ text: "Быстро" }], cons: [{ text: "Дорого" }, { text: "" }] }),
+        block({ blockType: "steps", steps: [{ title: "Шаг", body: "Текст" }, { title: "Второй" }] }),
+        block({ blockType: "button", label: "Тир-лист", url: "/tier-lists", style: "secondary" }),
+        block({ blockType: "button", label: "Плохо", url: "javascript:alert(1)" }),
+      ),
+    );
+    assert.match(out, /<details><summary>Почему так\?<\/summary><p style="white-space:pre-line">Потому что<\/p><\/details>/);
+    assert.match(out, /<div data-kind="pros"><p>Плюсы<\/p><ul><li>Быстро<\/li><\/ul><\/div><div data-kind="cons"><p>Минусы<\/p><ul><li>Дорого<\/li><\/ul><\/div>/);
+    assert.match(out, /<ol><li><p>Шаг<\/p><p style="white-space:pre-line">Текст<\/p><\/li><li><p>Второй<\/p><\/li><\/ol>/);
+    assert.match(out, /<a href="\/ru\/tier-lists">Тир-лист<\/a>/);
+    assert.doesNotMatch(out, /javascript|Плохо/);
   });
 });
