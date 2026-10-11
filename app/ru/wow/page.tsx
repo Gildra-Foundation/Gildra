@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { WowHome } from "@/components/wow/home/WowHome";
-import { preloadCharacterBookEntry } from "@/lib/wow/preloadCharacterBookEntry";
 
 export const metadata: Metadata = {
   title: "World of Warcraft — Gildra",
@@ -10,6 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  preloadCharacterBookEntry();
   return <WowHome lang="ru" />;
 }

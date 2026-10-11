@@ -38,6 +38,36 @@
 .launcher:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 .launcher img { width: 20px; height: 30px; object-fit: contain; filter: sepia(.45) saturate(.9) brightness(1.05); }
 
+.end {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.4vw, 28px);
+}
+
+/* EN / RU: the same page in the other language. */
+.locale {
+  display: flex;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+}
+
+.locale a {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  min-height: 34px;
+  padding: 0 8px;
+  color: var(--atlas-text-muted);
+  font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
+  letter-spacing: var(--atlas-tracking-label);
+  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+}
+
+.locale a + a { border-left: 1px solid var(--atlas-line); }
+.locale a:hover { color: var(--atlas-text-strong); }
+.locale a[aria-current] { color: var(--atlas-bg); background: var(--atlas-accent); }
+.locale a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
 .title {
   color: var(--atlas-text-strong);
   font: var(--atlas-weight-display) 20px / 1 var(--atlas-font-display); font-variant-numeric: lining-nums;

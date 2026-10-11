@@ -22,8 +22,7 @@ export const tierListsPage = definePage({
     game: "wow",
     path: "/tier-lists",
     layout: "default",
-    // Atlas page: the block renders its own AtlasFrame; the global sticky bar is the only header, no footer.
-    shell: { footer: false },
+    // Atlas page: the block renders its own AtlasFrame (frame, hero and legal footer).
     blocks: [{ type: "wow.tierWorkspace" }],
   }),
 });

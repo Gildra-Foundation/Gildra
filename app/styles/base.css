@@ -38,7 +38,7 @@ button{font-family:inherit;cursor:pointer;color:inherit}
 :focus-visible{outline:2px solid var(--gold-2);outline-offset:2px;border-radius:2px}
 /* элементы со срезанными углами (clip-path) режут внешний outline —
    для них фокус = внутреннее кольцо, повторяющее силуэт пластины */
-.gsw-btn:focus-visible,.exp-btn:focus-visible,.btn:focus-visible,
+.btn:focus-visible,
 .chip:focus-visible,.fchip:focus-visible,.fsearch:focus-within,
 .btn-gold:focus-visible{
   outline:none;

@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { altPath } from "@/lib/i18n-paths";
 import { Ellipsis } from "lucide-react";
 import { loadBookNavigationDialog, type BookNavigationDialogComponent } from "./BookNavigationDialogLoader";
 import toolbarStyles from "./atlasToolbar.module.css";
@@ -49,7 +51,13 @@ export function WorkspaceNavigatorContent() {
       <img src="/assets/wow/character-book/intro/chronicle-cover-toolbar.webp" width={20} height={30} decoding="async" alt="" />
       <span>{ru ? "Оглавление" : "Contents"}</span>
     </button>
-      <span className={toolbarStyles.title}>GILDRA<small>WORLD OF WARCRAFT</small></span>
+      <div className={toolbarStyles.end}>
+        <nav className={toolbarStyles.locale} aria-label={ru ? "Язык" : "Language"}>
+          <Link href={altPath(pathname, "en")} hrefLang="en" lang="en" aria-current={ru ? undefined : "true"} prefetch={false}>EN</Link>
+          <Link href={altPath(pathname, "ru")} hrefLang="ru" lang="ru" aria-current={ru ? "true" : undefined} prefetch={false}>RU</Link>
+        </nav>
+        <span className={toolbarStyles.title}>GILDRA<small>WORLD OF WARCRAFT</small></span>
+      </div>
     </header>
       {warmed && BookNavigationDialog ? <BookNavigationDialog open={open} onClose={() => setOpen(false)} lang={ru ? "ru" : "en"} /> : null}
   </>;

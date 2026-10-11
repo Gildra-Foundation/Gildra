@@ -28,8 +28,6 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
 .workspace-content.gildra-atlas .main {
   background: var(--atlas-background);
 }
-/* One header (the global top bar) and one footer line (AtlasFrame) on inner pages. */
-.workspace-content.gildra-atlas :is(.head, .topnav, .foot) { display: none; }
 .workspace-content.gildra-atlas .section {
   max-width: 1540px;
   padding-inline: 26px;

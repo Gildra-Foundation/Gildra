@@ -151,7 +151,7 @@ jobs:
           # nothing). Anything else (backend, migrations, CMS, scraper, compose,
           # nginx, backup and systemd files) takes the full immutable-release
           # path with its backup and catalog gates.
-          web_only='^(app|components|lib|public|data|types|messages|i18n|docs|tasks|scripts)/|^(package\.json|package-lock\.json|next\.config\.ts|tsconfig\.json|proxy\.ts|auth\.ts|instrumentation(-client)?\.ts|sentry\.(edge|server)\.config\.ts|postcss\.config\.mjs|components\.json|Dockerfile|\.dockerignore|\.env\.example|CLAUDE\.md|AGENTS\.md|README\.md|CONTEXT\.md|design(-qa)?\.md)$|^\.github/|^infra/deploy/'
+          web_only='^(app|components|lib|public|data|types|messages|i18n|docs|tasks|scripts)/|^(package\.json|package-lock\.json|next\.config\.ts|tsconfig\.json|proxy\.ts|auth\.ts|instrumentation(-client)?\.ts|sentry\.(edge|server)\.config\.ts|postcss\.config\.mjs|components\.json|Dockerfile|\.dockerignore|\.env\.example|CLAUDE\.md|AGENTS\.md|README\.md|CONTEXT\.md|brand\.md|design(-qa)?\.md)$|^\.github/|^infra/deploy/'
           mode=full
           deployed="$(ssh "$OVH_USER@$OVH_HOST" "sudo sed -n 's/^SOURCE_REVISION=//p' /opt/gildra/current-release.env" | head -n 1 | tr -d '\r')" || deployed=""
           if printf '%s\n' "$deployed" | grep -Eq '^[0-9a-f]{40}$' && git cat-file -e "${deployed}^{commit}" 2>/dev/null; then

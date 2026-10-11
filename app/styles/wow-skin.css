@@ -163,27 +163,6 @@ html[data-route-theme="wow-rotation"] :focus-visible {
   outline-color: #efc66e;
 }
 
-/* Legacy WoW chrome: dense forged bar with warmer metal and carved controls. */
-html[data-route-theme="wow"] .topnav {
-  height: 58px;
-  border-bottom-color: rgba(194, 132, 43, 0.48);
-  background:
-    linear-gradient(90deg, rgba(204, 137, 42, 0.08), transparent 18%, transparent 82%, rgba(204, 137, 42, 0.05)),
-    linear-gradient(180deg, #15110b, #080706);
-  box-shadow: 0 1px rgba(247, 199, 106, 0.12), 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-html[data-route-theme="wow"] .logo-text { color: #e6ad4a; font-family: var(--atlas-font-display, Georgia, serif); text-shadow: 0 2px 8px #000; }
-html[data-route-theme="wow"] .gsw-btn,
-html[data-route-theme="wow"] .search {
-  border-color: rgba(168, 113, 39, 0.47);
-  background-color: #0c0905;
-  color: #d7c6a7;
-}
-html[data-route-theme="wow"] .gsw-menu,
-html[data-route-theme="wow"] .mobmenu,
-html[data-route-theme="wow"] .sc { border-color: #795222; background: #0c0906; }
-html[data-route-theme="wow"] .foot { border-top-color: #5a3b18; background: linear-gradient(180deg, #0d0a06, #050403); }
-
 html[data-route-theme="wow"] .db-section-heading h2 {
   color: #f1dfbd;
   font-family: var(--atlas-font-display, Georgia, serif);
@@ -234,7 +213,6 @@ html[data-route-theme="wow"] .db-detail-jump a:hover { background: rgba(200, 133
 
 @media (max-width: 900px) {
   html[data-route-theme="wow"] body { background-size: auto, auto, 1500px auto; }
-  html[data-route-theme="wow"] .topnav { height: 56px; }
   html[data-route-theme="wow"] .talent-calculator .tc-pvp-group {
     width: 160px;
     max-width: 100%;

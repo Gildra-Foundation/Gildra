@@ -1,9 +1,0 @@
-/* atlas:strict — section placeholder page, layout only. */
-.facts { margin-top: var(--atlas-space-4); }
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--atlas-space-3);
-}

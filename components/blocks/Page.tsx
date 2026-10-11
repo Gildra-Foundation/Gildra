@@ -31,7 +31,6 @@ export async function Page({ config, lang }: { config: PageConfig; lang: Lang })
       game={config.game}
       layout={layout}
       reveal={config.shell?.reveal}
-      footer={config.shell?.footer}
     >
       <BlockRenderer blocks={blocks} ctx={ctx} registry={registry} />
     </PageShell>

@@ -20,11 +20,14 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
   const prefix = locale === "ru" ? "/ru" : "";
   const kind = boss.kind === "lair" ? copy.lairType : copy.worldType;
   const positioning = boss.positioning ?? [];
+  // A single-difficulty world boss repeats the facts next to the map; the
+  // difficulty chapter (and its group composition) only earns a place on lairs.
+  const showDifficulty = boss.difficulties.length > 1;
   const chapters = [
     { href: "#where", label: copy.whereChapter },
     { href: "#abilities", label: copy.abilitiesChapter, count: boss.mechanics.length },
     ...(positioning.length ? [{ href: "#positioning", label: copy.positioningChapter }] : []),
-    { href: "#difficulty", label: copy.difficultyChapter },
+    ...(showDifficulty ? [{ href: "#difficulty", label: copy.difficultyChapter }] : []),
     { href: "#loot", label: copy.lootChapter, count: boss.loot.length },
   ];
 
@@ -73,6 +76,9 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
         <ol className={styles.abilityList}>
           {boss.mechanics.map((mechanic) => {
             const tags = mechanic.tags ?? [mechanic.action];
+            // The boss name and the page-wide source are already in the hero.
+            const castBy = mechanic.castBy && mechanic.castBy !== boss.name ? mechanic.castBy : null;
+            const source = mechanic.sourceUrl && mechanic.sourceUrl !== boss.sourceUrl ? mechanic.sourceUrl : null;
             return (
               <li key={mechanic.name} id={spellAnchor(mechanic.name)} className={styles.ability}>
                 <Image className={styles.abilityIcon} src={mechanic.icon} alt="" width={52} height={52} />
@@ -86,11 +92,11 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
                   </div>
                   <p>{mechanic.description}</p>
                   <p className={styles.response}><strong>{copy.response}:</strong> {mechanic.response}</p>
-                  {mechanic.castBy || mechanic.sourceUrl ? (
+                  {castBy || source ? (
                     <small className={styles.abilityMeta}>
-                      {mechanic.castBy ? mechanic.castBy : null}
-                      {mechanic.castBy && mechanic.sourceUrl ? " · " : null}
-                      {mechanic.sourceUrl ? <a href={mechanic.sourceUrl} target="_blank" rel="noreferrer">{copy.source} ↗</a> : null}
+                      {castBy}
+                      {castBy && source ? " · " : null}
+                      {source ? <a href={source} target="_blank" rel="noreferrer">{copy.source} ↗</a> : null}
                     </small>
                   ) : null}
                 </div>
@@ -113,6 +119,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
         </AtlasSection>
       ) : null}
 
+      {showDifficulty ? (
       <AtlasSection id="difficulty" title={copy.difficultyTitle}>
         <div className={styles.difficultyGrid}>
           {boss.difficulties.map((difficulty, index) => {
@@ -138,6 +145,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
           { icon: <UsersRound />, label: copy.size, value: boss.composition.size },
         ]} />
       </AtlasSection>
+      ) : null}
 
       <AtlasSection id="loot" title={copy.lootTitle}>
         <div className={styles.lootScroller}>

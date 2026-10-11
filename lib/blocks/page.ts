@@ -39,7 +39,7 @@ export type PageConfig = {
   path: string;
   /** "default" = TopNav + .app/.main + Footer; "bare" = TopNav only (404-style). */
   layout: "default" | "bare";
-  shell?: { reveal?: boolean; footer?: boolean };
+  shell?: { reveal?: boolean };
   blocks: BlockInstance[];
 };
 

@@ -1,4 +1,4 @@
-import { Clock3, Database, MapPin, Route, Skull } from "lucide-react";
+import { Clock3, MapPin, Route } from "lucide-react";
 import { AtlasCard, AtlasGrid } from "@/components/atlas";
 import { dungeonRoutes, dungeonSlugs } from "./dungeonRoutes";
 import { dungeonLocationEn, mythicAtlasCopy } from "./mythicAtlasCopy";
@@ -17,7 +17,6 @@ export function DungeonCardGrid({ locale, hrefBase, priority = true }: { locale:
       {dungeonSlugs.map((slug, index) => {
         const dungeon = dungeonRoutes[slug];
         const bosses = dungeon.stops.filter((stop) => stop.kind === "boss");
-        const abilityCount = new Set(dungeon.stops.flatMap((stop) => stop.abilities.map((ability) => ability.name))).size;
         const location = locale === "ru" ? dungeon.location : dungeonLocationEn[dungeon.location];
         return (
           <AtlasCard
@@ -31,11 +30,8 @@ export function DungeonCardGrid({ locale, hrefBase, priority = true }: { locale:
             title={locale === "ru" ? dungeon.nameRu : dungeon.name}
             subtitle={locale === "ru" ? dungeon.name : undefined}
             description={locale === "ru" ? dungeon.description : undefined}
-            meta={[
-              { icon: <Route aria-hidden="true" />, label: copy.stops(dungeon.stops.length) },
-              { icon: <Skull aria-hidden="true" />, label: copy.bossCount(bosses.length) },
-              { icon: <Database aria-hidden="true" />, label: copy.abilities(abilityCount) },
-            ]}
+            // The boss list below already counts the bosses.
+            meta={[{ icon: <Route aria-hidden="true" />, label: copy.stops(dungeon.stops.length) }]}
             cta={copy.open}
           >
             <ol className={styles.bosses}>

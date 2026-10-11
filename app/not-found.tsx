@@ -1,15 +1,24 @@
-import { PageShell } from "@/components/layout/PageShell";
 import type { Metadata } from "next";
-import { NotFoundContent } from "@/components/layout/NotFoundContent";
+import { Compass } from "lucide-react";
+import { AtlasFrame, AtlasHero } from "@/components/atlas";
+import { NotFoundActions, NotFoundLede, NotFoundTitle } from "@/components/layout/NotFoundCopy";
 
 export const metadata: Metadata = {
   title: "404 — Gildra",
+  robots: { index: false, follow: true },
 };
 
+/** 404 of every route, on the atlas kit. Language comes from the URL (see NotFoundCopy). */
 export default function NotFound() {
   return (
-    <PageShell layout="bare">
-      <NotFoundContent />
-    </PageShell>
+    <AtlasFrame footer={false}>
+      <AtlasHero
+        emblem={<Compass aria-hidden="true" />}
+        eyebrow="404 · World of Warcraft"
+        title={<NotFoundTitle />}
+        lede={<NotFoundLede />}
+        actions={<NotFoundActions />}
+      />
+    </AtlasFrame>
   );
 }

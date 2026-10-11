@@ -1,3 +1,4 @@
+import path from "node:path";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
@@ -51,18 +52,20 @@ const nextConfig: NextConfig = {
     "/talents/[spec]": ["./app/styles/talents/specs/**/*.css"],
     "/ru/talents/[spec]": ["./app/styles/talents/specs/**/*.css"],
   },
+  // Fetch and ISR entries stay in memory (see the handler); only optimized
+  // images use the disk cache, which lives in the container's bounded tmpfs.
+  cacheHandler: path.join(process.cwd(), "lib/next/memoryCacheHandler.cjs"),
   images: {
     qualities: [50, 75, 90],
+    // Least-recently-used variants are evicted past this size, so the image
+    // cache can never fill /app/.next/cache (a 128 MB tmpfs in production).
+    maximumDiskCacheSize: 96 * 1024 * 1024,
   },
   experimental: {
     // Group CSS by what each route imports instead of merging every page's
     // styles into shared chunks (inner pages were downloading character and
     // book styles they never use).
     cssChunking: "graph",
-    // Keep the ISR/fetch cache in memory only. On disk it filled the web
-    // container's bounded tmpfs with catalog and Wowhead responses, which
-    // then left no room for optimized images (2026-10-11 incident).
-    isrFlushToDisk: false,
   },
   allowedDevOrigins: ["127.0.0.1", "localhost", "51.68.180.93", ...additionalDevOrigins],
   turbopack: {

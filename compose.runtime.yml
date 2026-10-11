@@ -86,9 +86,6 @@ services:
       # immutable. Keep it bounded and ephemeral so a stale cache can never
       # consume the host filesystem.
       - /app/.next/cache:size=128m,mode=0750,uid=1001,gid=1001
-      # Optimized images get their own tmpfs: when the fetch cache filled the
-      # shared mount, Next cached image variants as empty files.
-      - /app/.next/cache/images:size=512m,mode=0750,uid=1001,gid=1001
     security_opt:
       - no-new-privileges:true
     healthcheck:

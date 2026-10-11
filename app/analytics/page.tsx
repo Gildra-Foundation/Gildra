@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
-import { TopNav } from "@/components/TopNav";
-import { Footer } from "@/components/Footer";
 import { getAnalyticsOverview } from "@/lib/api/client";
 import styles from "@/components/analytics/analyticsPage.module.css";
 
@@ -17,7 +15,6 @@ export default async function AnalyticsPage() {
     <>
       <link rel="preload" as="image" href="/assets/wow/mythic/ruby-depth-v3-light-fast.webp" media="(min-width: 721px)" />
       <link rel="preload" as="image" href="/assets/wow/mythic/ruby-depth-v3-mobile-optimized.webp" media="(max-width: 720px)" />
-      <TopNav />
       <main className={styles.page}>
         <header className={styles.hero}>
           <picture className={styles.heroImage} aria-hidden="true">
@@ -38,7 +35,6 @@ export default async function AnalyticsPage() {
           }}
         />
       </main>
-      <Footer />
     </>
   );
 }
