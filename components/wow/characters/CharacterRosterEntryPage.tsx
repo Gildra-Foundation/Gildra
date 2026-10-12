@@ -24,7 +24,7 @@ export function CharacterRosterEntryPage({ locale, accountName, apiError }: {
       />
       <AtlasPanel as="section" padding="none" className={styles.entry} aria-labelledby="battlenet-connect-title">
         <div className={styles.entryArt} aria-hidden="true">
-          <Image src="/assets/wow/character-book/intro/varok-home-background-v2.webp" alt="" fill sizes="(max-width: 860px) 100vw, 58vw" />
+          <Image src="/assets/wow/character-book/intro/varok-home-background-v2.webp" alt="" fill sizes="(max-width: 860px) 100vw, 58vw" loading="eager" fetchPriority="high" />
         </div>
         <div className={styles.entryBody}>
           <BattleNetConnectPanel

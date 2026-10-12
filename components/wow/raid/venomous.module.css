@@ -170,7 +170,6 @@
   background: var(--atlas-surface);
 }
 
-.rewards li > svg { width: 20px; height: 20px; flex: none; color: var(--atlas-accent); }
 .rewards span { display: grid; gap: 4px; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: 1.5; }
 .rewards strong { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); }
 

@@ -73,6 +73,28 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  poweredByHeader: false,
+  async headers() {
+    const security = [
+      { key: "Strict-Transport-Security", value: "max-age=31536000" },
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+    ];
+    // Only the CMS live preview (cms.gildra.net) may frame the article preview.
+    const sameOriginFrames = [
+      { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+    ];
+    return [
+      { source: "/", headers: [...security, ...sameOriginFrames] },
+      { source: "/:path((?!cms-preview|ru/cms-preview).*)", headers: [...security, ...sameOriginFrames] },
+      ...["/cms-preview/:path*", "/ru/cms-preview/:path*"].map((source) => ({
+        source,
+        headers: [...security, { key: "Content-Security-Policy", value: "frame-ancestors 'self' https://cms.gildra.net" }],
+      })),
+    ];
+  },
   async redirects() {
     return [
       { source: "/lairs", destination: "/wow/lairs", permanent: false },
@@ -94,6 +116,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const api = process.env.API_INTERNAL_URL ?? "http://api:8080";
     return [
+      // IndexNow key file (/<INDEXNOW_KEY>.txt); static files and app routes such as /robots.txt win first.
+      { source: "/:file([A-Za-z0-9-]{8,128}\\.txt)", destination: "/indexnow/:file" },
       { source: "/v1/media/:path*", destination: `${api}/v1/media/:path*` },
       { source: "/genshin-impact/media/:path*", destination: `${api}/genshin-impact/media/:path*` },
       { source: "/league-of-legends/v1/:path*", destination: `${api}/league-of-legends/v1/:path*` },

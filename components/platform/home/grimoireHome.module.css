@@ -17,11 +17,14 @@
 .copy h1{margin:0;font:400 clamp(46px,4.8vw,76px)/1.12 "Gildra Kurale",Georgia,serif;letter-spacing:-.025em;color:var(--heading)}.copy h1 em{color:var(--accent);font-style:normal}
 /* Preciosa is shared by every hero's quote and signature. */
 @font-face{font-family:"Gildra Preciosa";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/preciosa/preciosa-regular.woff2") format("woff2")}
+/* Until Preciosa (115 KB) arrives the quote renders in Kurale scaled to Preciosa's width (EN quotes 77–79 %, RU 80–82 % of Kurale), so it keeps its line count and the book below does not jump when the script font swaps in. */
+@font-face{font-family:"Gildra Preciosa Fallback";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/grimoire/kurale-latin.woff2") format("woff2");size-adjust:78%;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Gildra Preciosa Fallback";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/grimoire/kurale-cyrillic.woff2") format("woff2");size-adjust:81%;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
 .epigraph,.epigraph blockquote{margin:0}
 .epigraph{max-width:520px}
-.copy .quoteText{max-width:520px;font:400 clamp(44px,4vw,60px)/1.28 "Gildra Preciosa","Gildra Kurale",Georgia,serif;letter-spacing:0;text-wrap:pretty;text-shadow:0 2px 10px rgba(var(--shade),.8)}
+.copy .quoteText{max-width:520px;font:400 clamp(44px,4vw,60px)/1.28 "Gildra Preciosa","Gildra Preciosa Fallback","Gildra Kurale",Georgia,serif;letter-spacing:0;text-wrap:pretty;text-shadow:0 2px 10px rgba(var(--shade),.8)}
 .copy .longQuote{font-size:clamp(36px,3.2vw,48px);line-height:1.25}
-.quoteAuthor{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-top:16px;text-align:right;color:var(--accent);font:400 36px/1.4 "Gildra Preciosa","Gildra Kurale",Georgia,serif;letter-spacing:0}
+.quoteAuthor{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-top:16px;text-align:right;color:var(--accent);font:400 36px/1.4 "Gildra Preciosa","Gildra Preciosa Fallback","Gildra Kurale",Georgia,serif;letter-spacing:0}
 .quoteAuthor>span{width:32px;height:1px;flex:none;background:var(--metal)}
 .quoteAuthor cite{font-style:normal}
 .openButton{position:relative;isolation:isolate;overflow:hidden;margin-top:32px;min-height:51px;display:inline-flex;align-items:center;justify-content:center;gap:14px;padding:13px 24px;border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);border-radius:4px;background:linear-gradient(135deg,#ffffff12,#ffffff03 55%,color-mix(in srgb,var(--accent) 6%,transparent));background-color:rgba(7,10,15,.12);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:var(--bright);box-shadow:0 6px 20px #0003,inset 0 1px 0 #ffffff24;font-family:"Gildra Kurale",Georgia,serif!important;font-size:17px!important;transition:background-color 280ms,border-color 280ms,box-shadow 320ms,transform 280ms cubic-bezier(.2,.7,.2,1)}

@@ -41,8 +41,8 @@ export function AtlasFrame({ children, art, artPosition, artShade = "default", t
   return (
     <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} {...dataAttributes}>
       <div className={styles.atmosphere} aria-hidden="true">
-        {/* Decorative and heavily shaded: fetch it early (it is often the largest paint) but after fonts, CSS and the hero. */}
-        {art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="low" /> : null}
+        {/* Decorative, but it is the largest paint of every route that has it: fetch it at high priority. */}
+        {art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" /> : null}
         {/* Torchlight over the artwork: a breathing glow and a few rising embers (CSS only). */}
         <span className={styles.embers} />
       </div>

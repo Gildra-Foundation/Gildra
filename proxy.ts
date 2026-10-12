@@ -12,9 +12,8 @@ export function proxy(request: NextRequest) {
   // WoW-only MVP: pages hidden by lib/mvp.ts answer a real HTTP 404. Rewriting
   // to a path no route owns makes Next render the branded not-found page with
   // status 404; `notFound()` inside the page alone would stream a 200 (the root
-  // loading.tsx has already flushed the shell). Two segments, because a single
-  // one is owned by app/[key]/route.ts (plain-text 404); the locale prefix keeps
-  // the Russian chrome on /ru/** URLs.
+  // loading.tsx has already flushed the shell). The locale prefix keeps the
+  // Russian chrome on /ru/** URLs.
   if (isHiddenForMvpPath(request.nextUrl.pathname)) {
     const hidden = request.nextUrl.clone();
     hidden.pathname = `${locale === "ru" ? "/ru" : ""}/_hidden-for-mvp/404`;

@@ -34,7 +34,10 @@ type LeagueChampion = {
 };
 
 const apiURL = () => (process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
-const catalogLookupTimeoutMs = 3_000;
+// Unfiltered catalog text search ranks every locale and alias and takes
+// 6–20 s on production (2026-10-12); a 3 s cut-off showed "temporarily
+// unavailable" for most queries. Stopgap until the API query is indexed.
+const catalogLookupTimeoutMs = 10_000;
 
 async function request<T>(path: string): Promise<T> {
   const query = new URLSearchParams(path.split("?", 2)[1] ?? "");
