@@ -236,21 +236,7 @@
   background: var(--atlas-surface-sunken);
 }
 
-.skeleton { display: grid; gap: var(--atlas-space-4); margin-top: var(--atlas-space-5); }
-.skeletonTabs { display: flex; gap: var(--atlas-space-2); }
-.skeletonTabs i { width: 120px; height: 44px; }
-.skeletonRows { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: var(--atlas-space-2); }
-.skeletonRows span { height: 76px; }
-
-.skeletonTabs i,
-.skeletonRows span {
-  display: block;
-  background: linear-gradient(90deg, var(--atlas-surface), var(--atlas-surface-raised), var(--atlas-surface));
-  background-size: 200% 100%;
-  animation: skeleton 1.4s ease-in-out infinite;
-}
-
-@keyframes skeleton { to { background-position: -200% 0; } }
+.skeleton { margin-top: var(--atlas-space-5); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
@@ -272,6 +258,4 @@
 
 @media (prefers-reduced-motion: reduce) {
   .searchForm { transition: none; }
-  .skeletonTabs i,
-  .skeletonRows span { animation: none; }
 }

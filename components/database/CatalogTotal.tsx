@@ -6,11 +6,11 @@ export async function CatalogTotal({ params }: { params: CatalogPageParams }) {
   // response open for a count that can take several seconds on common terms.
   if (params.query?.trim()) return <>—</>;
 
+  let total: number | undefined;
   try {
-    const total = await getCatalogTotal(params);
-    if (total === undefined) return <>—</>;
-    return <>{total.toLocaleString(params.locale === "ru_RU" ? "ru-RU" : "en-US")}</>;
+    total = await getCatalogTotal(params);
   } catch {
-    return <>—</>;
+    total = undefined;
   }
+  return <>{total === undefined ? "—" : total.toLocaleString(params.locale === "ru_RU" ? "ru-RU" : "en-US")}</>;
 }

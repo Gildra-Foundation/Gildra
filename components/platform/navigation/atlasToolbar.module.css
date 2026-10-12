@@ -86,3 +86,11 @@
 @media (max-width: 720px) {
   .title small { display: none; }
 }
+
+/* Narrow phones: launcher, search, EN/RU and the mark share 390 px. */
+@media (max-width: 480px) {
+  .toolbar { gap: 10px; }
+  .end { gap: 10px; }
+  .locale a { min-width: 34px; padding: 0 6px; }
+  .title { font-size: 17px; letter-spacing: .14em; }
+}

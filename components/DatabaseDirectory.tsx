@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import type { Lang } from "@/lib/i18n-paths";
 import type { CatalogCategory, CatalogEntityType, CatalogPage, CatalogProduct, CatalogRecord } from "@/lib/api/client";
-import { AtlasDisclosure } from "@/components/atlas";
+import { AtlasDisclosure, AtlasField, AtlasInput, AtlasSelect } from "@/components/atlas";
 import { CatalogBehavior } from "@/components/database/CatalogBehavior";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
 import { RecordPreviewButton } from "@/components/database/RecordPreviewButton";
@@ -98,10 +98,11 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
         </form>
         {products.length > 1 ? (
           <form className={styles.product} action={base} method="get" data-catalog-form>
-            <label htmlFor="database-product">{copy.gameVersion}</label>
-            <select id="database-product" name="product" defaultValue={selectedProduct} data-autosubmit key={selectedProduct}>
-              {products.map((product) => <option key={product.slug} value={product.slug}>{product.name}</option>)}
-            </select>
+            <AtlasField label={copy.gameVersion} htmlFor="database-product">
+              <AtlasSelect id="database-product" name="product" defaultValue={selectedProduct} data-autosubmit key={selectedProduct}>
+                {products.map((product) => <option key={product.slug} value={product.slug}>{product.name}</option>)}
+              </AtlasSelect>
+            </AtlasField>
           </form>
         ) : null}
       </div>
@@ -136,20 +137,19 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
             {hidden({ product: selectedProduct, type: urlType, q: query, category: selectedCategory })}
             <div className={styles.filterGrid}>
               {facetGroups.map(([facet, entries]) => (
-                <label key={facet}>
-                  <span>{FACET_LABELS[facet][ru ? 1 : 0]}</span>
-                  <select name="facet" defaultValue={facets.find((path) => entries.some((entry) => entry.path === path)) ?? ""}>
+                <AtlasField key={facet} label={FACET_LABELS[facet][ru ? 1 : 0]} htmlFor={`facet-${facet}`}>
+                  <AtlasSelect id={`facet-${facet}`} name="facet" defaultValue={facets.find((path) => entries.some((entry) => entry.path === path)) ?? ""}>
                     <option value="">{copy.any}</option>
                     {entries.map((category) => <option key={category.id} value={category.path}>{category.name} · {formatCount(category.count, lang)}</option>)}
-                  </select>
-                </label>
+                  </AtlasSelect>
+                </AtlasField>
               ))}
               {itemFilters ? (
                 <>
-                  <label><span>{copy.itemLevelFrom}</span><input name="minLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={minItemLevel} /></label>
-                  <label><span>{copy.itemLevelTo}</span><input name="maxLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={maxItemLevel} /></label>
-                  <label><span>{copy.charLevelFrom}</span><input name="minRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={minRequiredLevel} /></label>
-                  <label><span>{copy.charLevelTo}</span><input name="maxRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={maxRequiredLevel} /></label>
+                  <AtlasField label={copy.itemLevelFrom} htmlFor="filter-minLevel"><AtlasInput id="filter-minLevel" name="minLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={minItemLevel} /></AtlasField>
+                  <AtlasField label={copy.itemLevelTo} htmlFor="filter-maxLevel"><AtlasInput id="filter-maxLevel" name="maxLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={maxItemLevel} /></AtlasField>
+                  <AtlasField label={copy.charLevelFrom} htmlFor="filter-minRequiredLevel"><AtlasInput id="filter-minRequiredLevel" name="minRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={minRequiredLevel} /></AtlasField>
+                  <AtlasField label={copy.charLevelTo} htmlFor="filter-maxRequiredLevel"><AtlasInput id="filter-maxRequiredLevel" name="maxRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={maxRequiredLevel} /></AtlasField>
                 </>
               ) : null}
             </div>

@@ -11,8 +11,9 @@ export function SearchShortcut({ inputId }: { inputId: string }) {
       event.preventDefault();
       document.getElementById(inputId)?.focus();
     };
-    window.addEventListener("keydown", focusSearch);
-    return () => window.removeEventListener("keydown", focusSearch);
+    // Capture runs before the toolbar's quick search, which then leaves "/" alone.
+    window.addEventListener("keydown", focusSearch, { capture: true });
+    return () => window.removeEventListener("keydown", focusSearch, { capture: true });
   }, [inputId]);
   return null;
 }

@@ -1,0 +1,72 @@
+.region {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--atlas-line);
+  background: var(--atlas-surface);
+  overscroll-behavior-x: contain;
+}
+
+.region:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--atlas-text-small);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.caption {
+  padding: var(--atlas-space-3) var(--atlas-space-4) 0;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  text-align: left;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--atlas-space-3) var(--atlas-space-4);
+  color: var(--atlas-text-subtle);
+  border-bottom: 1px solid var(--atlas-line);
+  background: var(--atlas-surface-raised);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: .1em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table tbody th,
+.table tbody td {
+  padding: var(--atlas-space-2) var(--atlas-space-4);
+  color: var(--atlas-text);
+  border-bottom: 1px solid var(--atlas-line-soft);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table tbody th { color: var(--atlas-text-strong); font-weight: 600; }
+.table tbody tr:last-child > * { border-bottom: 0; }
+.table tbody tr { transition: background-color var(--atlas-duration) var(--atlas-ease); }
+.table tbody tr:hover { background: var(--atlas-accent-wash); }
+.table .numeric { text-align: right; font-variant-numeric: lining-nums tabular-nums; }
+
+/* Short tables on phones: every row becomes a card of label: value lines. */
+@media (max-width: 600px) {
+  .cards { overflow: visible; border: 0; background: none; }
+  .cards .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .cards .table tbody { display: grid; gap: var(--atlas-space-2); }
+  .cards .table tbody tr { display: grid; gap: 2px; padding: var(--atlas-space-3) var(--atlas-space-4); border: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
+  .cards .table tbody th,
+  .cards .table tbody td { display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr); gap: var(--atlas-space-3); padding: 2px 0; border: 0; text-align: left; }
+  .cards .table tbody th { padding-bottom: var(--atlas-space-1); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); }
+  .cards .table tbody td::before { color: var(--atlas-text-subtle); content: attr(data-label); font-size: var(--atlas-text-meta); }
+  .cards .table tbody th { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table tbody tr { transition: none; }
+}

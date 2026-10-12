@@ -44,12 +44,14 @@ async function RussianTalentCalculator({
   searchParams: PageProps["searchParams"];
   theme: NonNullable<ReturnType<typeof getTalentSpecTheme>>;
 }) {
+  // Load first, render after: JSX built inside try/catch would escape the catch (react-hooks/error-boundaries).
+  let data: Awaited<ReturnType<typeof getMidnightTalentPageData>> | null = null;
   try {
     const heroPathId = Number((await searchParams).hero) || undefined;
-    const data = await getMidnightTalentPageData(spec, heroPathId, "ru");
-    return <TalentCalculatorWithLocalization key={`${theme.slug}-${data.heroSubtreeId}`} data={data} theme={theme} lang="ru" />;
+    data = await getMidnightTalentPageData(spec, heroPathId, "ru");
   } catch (error) {
     if (process.env.NODE_ENV === "development") console.error(`[ru/talents/${spec}] data load failed`, error);
-    return <TalentCalculatorWithLocalization key={theme.slug} data={null} theme={theme} lang="ru" />;
   }
+  if (!data) return <TalentCalculatorWithLocalization key={theme.slug} data={null} theme={theme} lang="ru" />;
+  return <TalentCalculatorWithLocalization key={`${theme.slug}-${data.heroSubtreeId}`} data={data} theme={theme} lang="ru" />;
 }

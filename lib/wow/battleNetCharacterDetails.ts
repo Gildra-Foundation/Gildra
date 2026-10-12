@@ -230,6 +230,8 @@ function recommendations(items: CharacterGearItem[], average: number, locale: "e
 export async function getBattleNetCharacterDetails(token: string, character: BattleNetCharacter, locale: "en" | "ru"): Promise<BattleNetCharacterDetails> {
   const region = character.region;
   const root = `https://${region}.api.blizzard.com/profile/wow/character/${character.realm.slug}/${encodeURIComponent(character.name.toLowerCase())}`;
+  // Raw Blizzard profile JSON (profile, statistics, Mythic+) is read field by field below.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const [profile, equipmentResponse, appearance, specializations, statistics, media, mythic] = await Promise.all([
     requiredApi<any>(withLocale(root, region, locale), token, "profile"),
     requiredApi<{ equipped_items?: RawItem[] }>(withLocale(`${root}/equipment`, region, locale), token, "equipment"),
@@ -239,6 +241,7 @@ export async function getBattleNetCharacterDetails(token: string, character: Bat
     api<{ assets?: Array<{ key?: string; value?: string }> }>(withLocale(`${root}/character-media`, region, locale), token),
     api<any>(withLocale(`${root}/mythic-keystone-profile`, region, locale), token),
   ]);
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   const rawItems = equipmentResponse?.equipped_items ?? [];
   if (!profile?.id || !profile?.active_spec?.name || !rawItems.length || !specializations.active_specialization?.id) {
     throw new BattleNetCharacterDataError("incomplete", 422, !rawItems.length ? "equipment" : "profile");

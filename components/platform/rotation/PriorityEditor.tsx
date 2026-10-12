@@ -11,7 +11,7 @@ import styles from "./rotationLab.module.css";
 import deferredLabStyles from "./rotationLabDeferred.module.css";
 import shell from "./rotationLabShell.module.css";
 
-export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceLabel, defaults, lang, wide = false, onChange, onAplChange, onReset, interactionsDisabled = false }: {
+export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceLabel, lang, wide = false, onChange, onAplChange, onReset, interactionsDisabled = false }: {
   abilities: RotationAbility[];
   rules: string[];
   aplRules: RotationAplRule[];

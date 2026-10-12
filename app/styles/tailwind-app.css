@@ -1,0 +1,16 @@
+/*
+  Tailwind utilities for the few routes built with them: the API console,
+  /analytics and the /dev/blocks gallery (shadcn ui, charts). Their pages import
+  this file; atlas pages never load it (it used to put ~60 KB of utilities on
+  every page). Theme and preflight stay global in app/globals.css.
+*/
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "./tailwind-theme.css";
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "../../components/ui";
+@source "../../components/api-console";
+@source "../../components/charts";
+@source "../../components/analytics";
+@source "../../components/AnalyticsDashboard.tsx";
+@source "../dev/blocks";

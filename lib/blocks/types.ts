@@ -56,6 +56,13 @@ export type BlockDef<P extends object = EmptyProps, D = undefined, C extends boo
   demo: { props: P; data: D; note?: string; layout?: "full" | "section" };
 };
 
+/**
+ * A block of a registry: every entry has its own props and data types, so a
+ * registry (and the renderer that walks it) can only hold them widened.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous registry entries (see above)
+export type AnyBlockDef = BlockDef<any, any, boolean>;
+
 export const defineBlock = <P extends object = EmptyProps, D = undefined, C extends boolean = false>(
   def: BlockDef<P, D, C>,
 ): BlockDef<P, D, C> => def;

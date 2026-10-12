@@ -1,4 +1,4 @@
-import type { BlockDef } from "../types";
+import type { AnyBlockDef } from "../types";
 import { containerBlock } from "@/components/blocks/shared/container";
 import { columnsBlock } from "@/components/blocks/shared/columns";
 import { sectionNavBlock } from "@/components/blocks/shared/sectionNav";
@@ -11,4 +11,4 @@ export const sharedRegistry = {
   sectionNav: sectionNavBlock,
   adSlot: adSlotBlock,
   legal: legalBlock,
-} as const satisfies Record<string, BlockDef<any, any, boolean>>;
+} as const satisfies Record<string, AnyBlockDef>;

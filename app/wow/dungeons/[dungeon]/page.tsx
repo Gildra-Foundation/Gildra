@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MythicRouteMap } from "@/components/wow/mythic/MythicRouteMap";
 import { getDungeonCombatIntel } from "@/components/wow/mythic/dungeonCombatIntel.server";
 import { dungeonRoutes, getDungeonRoute, getDungeonSelectorOptions, type DungeonSlug } from "@/components/wow/mythic/dungeonRoutes";
+import { localizedRoute } from "@/components/wow/mythic/localizedRoute";
 import { preloadDungeonBackdrop } from "@/lib/wow/dungeonBackdropPreload";
 
 export const dynamicParams = false;
@@ -16,5 +17,5 @@ export default async function Page({ params }: { params: Promise<{ dungeon: stri
   const dungeon = getDungeonRoute(slug);
   if (!dungeon) notFound();
   preloadDungeonBackdrop(dungeon);
-  return <MythicRouteMap key={dungeon.slug} locale="en" dungeon={dungeon} dungeonOptions={getDungeonSelectorOptions()} combatIntel={getDungeonCombatIntel(dungeon)} />;
+  return <MythicRouteMap key={dungeon.slug} locale="en" dungeon={localizedRoute(dungeon, "en")} dungeonOptions={getDungeonSelectorOptions()} combatIntel={getDungeonCombatIntel(dungeon)} />;
 }

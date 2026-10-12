@@ -31,6 +31,7 @@ export async function BlockRenderer({
       const def = registry[b.type];
       if (!def) throw new Error(`Unknown block type "${b.type}"`);
       // The registry is a union of differently-typed blocks; widen once here.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- registry entries carry their own props types
       const Component = def.Component as ComponentType<any>;
       const load = def.load as ((ctx: RenderContext, props: unknown) => unknown) | undefined;
       const props = { ...def.defaults, ...b.props };

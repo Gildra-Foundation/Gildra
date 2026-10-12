@@ -102,32 +102,7 @@
 
 .product { display: grid; flex: 0 1 260px; gap: 4px; min-width: 0; }
 
-.product > label,
-.filterGrid label > span {
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-label);
-  font-weight: 600;
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-}
-
-.product select,
-.filterGrid select,
-.filterGrid input {
-  width: 100%;
-  min-height: var(--atlas-control-height);
-  padding: 0 10px;
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-text);
-  background: var(--atlas-surface-sunken);
-  font-family: var(--atlas-font-ui);
-  font-size: var(--atlas-text-small);
-}
-
-.product select:hover,
-.filterGrid select:hover,
-.filterGrid input:hover { border-color: var(--atlas-line); }
+/* Labels, selects and inputs of the toolbar and filters are AtlasField controls. */
 
 /* ---------- Sections → record types (one filtering model) ---------- */
 .sections,
@@ -201,7 +176,6 @@
   gap: var(--atlas-space-3);
 }
 
-.filterGrid label { display: grid; gap: 5px; min-width: 0; }
 .filterActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); }
 
 /* ---------- Catalog: category tree + records ---------- */
@@ -416,33 +390,8 @@
 .sources a span { color: var(--atlas-text-subtle); }
 
 /* ---------- Loading skeleton (Suspense fallback of the route) ---------- */
-.skeleton {
-  display: grid;
-  gap: var(--atlas-space-4);
-  /* Keeps the footer below the fold until the catalog streams in (layout-shift guard). */
-  min-height: 100svh;
-  margin-top: var(--atlas-space-5);
-  padding: var(--atlas-space-5);
-  border: 1px solid var(--atlas-line-soft);
-  background: var(--atlas-surface);
-}
-
-.skeleton > span,
-.skeletonChips > span,
-.skeletonRecords > span {
-  display: block;
-  background: linear-gradient(90deg, var(--atlas-surface-raised), var(--atlas-surface-selected), var(--atlas-surface-raised));
-  background-size: 200% 100%;
-  animation: skeleton 1.4s ease-in-out infinite;
-}
-
-.skeletonSearch { height: 52px; }
-.skeletonChips { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); }
-.skeletonChips > span { width: 140px; height: 40px; }
-.skeletonRecords { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: var(--atlas-space-2); }
-.skeletonRecords > span { height: 76px; }
-
-@keyframes skeleton { to { background-position: -200% 0; } }
+/* AtlasSkeleton draws the rows; this keeps the footer below the fold until the catalog streams in. */
+.skeleton { min-height: 100svh; margin-top: var(--atlas-space-5); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
@@ -475,8 +424,7 @@
   .types { margin-top: 0; margin-inline-start: 0; padding-inline-start: var(--atlas-space-3); }
   .section,
   .type { flex: none; }
-  .records,
-  .skeletonRecords { grid-template-columns: minmax(0, 1fr); }
+  .records { grid-template-columns: minmax(0, 1fr); }
   .filterGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filters > summary,
   .filters > div { padding-inline: var(--atlas-space-3); }
@@ -489,8 +437,5 @@
   .type,
   .search,
   .chevron { transition: none; }
-  .preview[data-state="loading"],
-  .skeleton > span,
-  .skeletonChips > span,
-  .skeletonRecords > span { animation: none; }
+  .preview[data-state="loading"] { animation: none; }
 }

@@ -67,3 +67,6 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stro
   background:linear-gradient(90deg,transparent,rgba(201,162,79,.4));
 }
 .ornhead::after{background:linear-gradient(90deg,rgba(201,162,79,.4),transparent)}
+
+/* Visually hidden, read by screen readers (used across the site). */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

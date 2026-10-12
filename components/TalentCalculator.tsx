@@ -1037,7 +1037,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
   const [performanceTier, setPerformanceTier] = useState<PerformanceTier>("balanced");
   const [loadoutOpen, setLoadoutOpen] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
-  const [invalidLoadout, setInvalidLoadout] = useState(false);
+  const [, setInvalidLoadout] = useState(false);
   const [buildName, setBuildName] = useState(defaultBuildName);
   const [savedBuilds, setSavedBuilds] = useState<SavedTalentBuild[]>([]);
   const [activeBuildId, setActiveBuildId] = useState<string | null>(null);

@@ -1,5 +1,5 @@
 import { Castle, ExternalLink, Layers, MapPin } from "lucide-react";
-import { AtlasDisclosure, AtlasFrame, AtlasGrid, AtlasHero, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTile } from "@/components/atlas";
+import { AtlasDisclosure, AtlasFrame, AtlasGrid, AtlasHero, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTable, AtlasTile } from "@/components/atlas";
 import contentManifest from "@/data/wow/content-manifest.json";
 import { venomousAbyss } from "@/data/venomousAbyss";
 import {
@@ -114,22 +114,19 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
       </AtlasSection>
 
       <AtlasSection id="loot" title={copy.lootTitle} description={copy.lootText}>
-        <div className={styles.tableWrap} role="region" aria-label={copy.lootTableLabel} tabIndex={0}>
-          <table className={styles.table} data-testid="raid-loot-bands">
-            <thead>
-              <tr><th scope="col">{copy.difficulty}</th>{copy.bossBand.map((band) => <th key={band} scope="col">{band}</th>)}<th scope="col">{copy.track}</th></tr>
-            </thead>
-            <tbody>
-              {raidLootBands.map((row) => (
-                <tr key={row.difficulty.en}>
-                  <th scope="row">{row.difficulty[locale]}</th>
-                  {row.levels.map((level, index) => <td key={index}>{level}</td>)}
-                  <td>{row.track}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AtlasTable
+          label={copy.lootTableLabel}
+          testId="raid-loot-bands"
+          maxWidth="960px"
+          layout="cards"
+          rows={raidLootBands}
+          rowKey={(row) => row.difficulty.en}
+          columns={[
+            { key: "difficulty", header: copy.difficulty, rowHeader: true, cell: (row) => row.difficulty[locale] },
+            ...copy.bossBand.map((band, index) => ({ key: `band-${index}`, header: band, numeric: true, cell: (row: (typeof raidLootBands)[number]) => row.levels[index] })),
+            { key: "track", header: copy.track, cell: (row) => row.track },
+          ]}
+        />
         <dl className={styles.tokens}>
           <dt>{copy.tierTokens}</dt>
           {Object.entries(tierRewards).map(([slug, reward]) => <dd key={slug}><span>{bossName(slug)}</span>{reward[locale]}</dd>)}

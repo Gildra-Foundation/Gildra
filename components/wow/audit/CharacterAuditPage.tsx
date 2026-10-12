@@ -43,7 +43,6 @@ import {
 } from "@/lib/wow/testCharacterTalentAudit";
 import { SpecSignatureFx } from "@/components/talents/spec-signature/SpecSignatureFx";
 import { DeferredMount } from "./DeferredMount";
-import { WarcraftFrame } from "./WarcraftFrame";
 import { CharacterBookNavigation } from "./CharacterBookNavigation";
 import { CharacterBookChapter as CharacterChapter } from "./CharacterBookChapter";
 const CharacterTalentSimulator = dynamic(() => import("./CharacterTalentSimulator").then((module) => module.CharacterTalentSimulator));

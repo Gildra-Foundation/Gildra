@@ -4,6 +4,7 @@ import { registry } from "@/lib/blocks/registry";
 import { assertGalleryEnabled, isBlockType } from "@/lib/blocks/gallery";
 import { notFound } from "next/navigation";
 import type { Lang } from "@/lib/i18n";
+import "@/app/styles/tailwind-app.css";
 
 export const metadata = { robots: { index: false, follow: false } };
 
@@ -24,6 +25,7 @@ export default async function BlockPreview({
   if (!isBlockType(type)) notFound();
   const lang: Lang = (await searchParams).lang === "ru" ? "ru" : "en";
   const def = registry[type];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- registry entries carry their own props types
   const Component = def.Component as ComponentType<any>;
   const el = <Component {...def.demo.props} data={def.demo.data} lang={lang} game="wow" />;
 

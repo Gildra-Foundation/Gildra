@@ -1,7 +1,7 @@
 import type { BlockInstance } from "./page";
-import type { Anchor, BlockDef } from "./types";
+import type { Anchor, AnyBlockDef } from "./types";
 
-type AnyRegistry = Record<string, BlockDef<any, any, boolean>>;
+type AnyRegistry = Record<string, AnyBlockDef>;
 
 /**
  * Walk a page config depth-first and collect navigation anchors in document

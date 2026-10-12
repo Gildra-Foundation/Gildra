@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, ArrowRight, BellRing, BookOpen, Check, ChevronRight, Crown, Eye, EyeOff, Gamepad2, Link2, Mail, Orbit, Pencil, Radio, Save, Shield, Sparkles, Swords, Trophy, Users } from "lucide-react";
+import { ArrowRight, BookOpen, Check, ChevronRight, Crown, Eye, EyeOff, Gamepad2, Mail, Orbit, Pencil, Radio, Save, Shield, Sparkles, Swords, Users } from "lucide-react";
 import { PlatformHeader } from "@/components/platform/home/PlatformHeader";
 import { PlatformMotion } from "@/components/platform/home/PlatformMotion";
 import homeStyles from "@/components/platform/home/rotationPageShell.module.css";
