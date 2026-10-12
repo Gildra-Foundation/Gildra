@@ -54,7 +54,7 @@ func run() error {
 	}
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn: cfg.SentryDSN, Environment: cfg.SentryEnvironment,
-		EnableTracing: cfg.SentryDSN != "", TracesSampleRate: 0.1,
+		EnableTracing: cfg.SentryDSN != "" && cfg.SentryTracesSampleRate > 0, TracesSampleRate: cfg.SentryTracesSampleRate,
 	}); err != nil {
 		return err
 	}
@@ -176,8 +176,10 @@ func run() error {
 	}
 	router.Handle("/graphql", graphqlCatalogHandler)
 	router.Handle("/", restHandler)
-	apiHandler := http.MaxBytesHandler(router, 8<<20)
-	apiHandler = httpapi.ObserveRequests(apiHandler, slog.Default())
+	// Observe the request the router sees: MaxBytesHandler hands the router a
+	// copy, so outside it the matched route pattern was lost ("unmatched").
+	apiHandler := httpapi.ObserveRequests(router, slog.Default())
+	apiHandler = http.MaxBytesHandler(apiHandler, 8<<20)
 	sentryHandler := sentryhttp.New(sentryhttp.Options{Repanic: true}).Handle(apiHandler)
 
 	httpServer := &http.Server{

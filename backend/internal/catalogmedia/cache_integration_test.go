@@ -14,6 +14,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
@@ -137,8 +138,12 @@ func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 	}
 	privateResponse = httptest.NewRecorder()
 	privateHandler.ServeHTTP(privateResponse, privateRequest)
-	if privateResponse.Code != http.StatusNotFound {
-		t.Fatalf("expired private media status=%d, want 404", privateResponse.Code)
+	// The expired copy is never served; the browser goes to the vetted public
+	// source URL instead (it used to be a 404, a broken image on the site).
+	if privateResponse.Code != http.StatusTemporaryRedirect ||
+		!strings.HasPrefix(privateResponse.Header().Get("Location"), "https://render.worldofwarcraft.com/") {
+		t.Fatalf("expired private media status=%d location=%q, want 307 to the source",
+			privateResponse.Code, privateResponse.Header().Get("Location"))
 	}
 	staleFailureCache, err := New(pool, root, "https://api.gildra.net", failingClient)
 	if err != nil {
@@ -182,6 +187,23 @@ func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusOK || !bytes.Equal(response.Body.Bytes(), png) {
 		t.Fatalf("served media status=%d bytes=%d", response.Code, response.Body.Len())
+	}
+	// Past the source's retention window (Blizzard API: 30 days) the cached copy
+	// is withheld and the browser is sent to the vetted source, not a 404.
+	var publishedSourceURL string
+	if err := database.QueryRowContext(ctx, `
+		UPDATE catalog_entity_media SET cached_at=now()-interval '400 days' WHERE id=$1 RETURNING source_url`,
+		media.published).Scan(&publishedSourceURL); err != nil {
+		t.Fatal(err)
+	}
+	expiredResponse := httptest.NewRecorder()
+	handler.ServeHTTP(expiredResponse, request)
+	if expiredResponse.Code != http.StatusTemporaryRedirect || expiredResponse.Header().Get("Location") != publishedSourceURL {
+		t.Fatalf("expired media status=%d location=%q, want 307 to %q",
+			expiredResponse.Code, expiredResponse.Header().Get("Location"), publishedSourceURL)
+	}
+	if _, err := database.ExecContext(ctx, `UPDATE catalog_entity_media SET cached_at=now() WHERE id=$1`, media.published); err != nil {
+		t.Fatal(err)
 	}
 	var cacheKey string
 	if err := database.QueryRowContext(ctx, `SELECT cache_key FROM catalog_entity_media WHERE id=$1`, media.published).Scan(&cacheKey); err != nil {

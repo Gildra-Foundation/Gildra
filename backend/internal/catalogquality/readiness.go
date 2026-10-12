@@ -448,18 +448,19 @@ func EvaluateReadinessWithRecoveryPolicy(
 
 	// Source publication policy and per-source grants were retired on
 	// 2026-09-02: every registered source is public and credited on the site.
+	// A postgres backup is a dump of the whole database, so it protects every
+	// product; the manifest's product only names the run that took it.
 	var verifiedBackups int64
 	if err := db.QueryRow(ctx, `
 		SELECT count(*) FROM catalog_backup_manifests manifest
 		WHERE manifest.component='postgres' AND manifest.status='verified'
-		  AND manifest.storage_uri ~ $2
+		  AND manifest.storage_uri ~ $1
 		  AND manifest.database_version=(
 			SELECT max(version_id) FROM goose_db_version WHERE is_applied
 		  )
 		  AND manifest.content_hash IS NOT NULL AND manifest.byte_size>0
 		  AND manifest.restore_completed_at>=now()-interval '24 hours'
-		  AND manifest.verification @> '{"restore_verified":true,"source_restore_match":true}'::jsonb
-		  AND (manifest.product_id IS NULL OR manifest.product_id=(SELECT id FROM game_products WHERE slug=$1))`, product, storagePattern).
+		  AND manifest.verification @> '{"restore_verified":true,"source_restore_match":true}'::jsonb`, storagePattern).
 		Scan(&verifiedBackups); err != nil {
 		return ReadinessReport{}, fmt.Errorf("check recovery evidence: %w", err)
 	}

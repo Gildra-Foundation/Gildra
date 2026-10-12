@@ -191,30 +191,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 
 	query := strings.TrimSpace(params.Query)
 	summaryQuery := `
-		WITH RECURSIVE search_candidates(version_id,rank) AS MATERIALIZED (
-			SELECT candidate.version_id,max(candidate.rank)::int FROM (
-				SELECT candidate_locale.version_id,greatest(
-					CASE WHEN lower(candidate_locale.name)=lower($5) THEN 9000 ELSE 0 END,
-					CASE WHEN candidate_locale.name ILIKE $5||'%' THEN 8000 ELSE 0 END,
-					CASE WHEN candidate_locale.search_document @@ websearch_to_tsquery('simple',$5)
-						THEN 7000+(ts_rank(candidate_locale.search_document,websearch_to_tsquery('simple',$5))*1000)::int ELSE 0 END,
-					CASE WHEN candidate_locale.name % $5 THEN 6000+(similarity(candidate_locale.name,$5)*1000)::int ELSE 0 END
-				) AS rank
-				FROM game_entity_localizations candidate_locale
-				WHERE $5<>'' AND $5!~'^[0-9]+$' AND (
-					candidate_locale.name ILIKE $5||'%' OR candidate_locale.search_document @@ websearch_to_tsquery('simple',$5) OR candidate_locale.name % $5)
-				UNION ALL
-				SELECT alias.version_id,greatest(
-					CASE WHEN lower(alias.alias)=lower($5) THEN 8500 ELSE 0 END,
-					CASE WHEN alias.alias ILIKE $5||'%' THEN 7500 ELSE 0 END,
-					CASE WHEN alias.alias % $5 THEN 5500+(similarity(alias.alias,$5)*1000)::int ELSE 0 END
-				)
-				FROM catalog_entity_aliases alias
-				WHERE $5<>'' AND $5!~'^[0-9]+$' AND (alias.alias ILIKE $5||'%' OR alias.alias % $5)
-				UNION ALL
-				SELECT numeric_entity.published_version_id,10000 FROM game_entities numeric_entity
-				WHERE $5~'^[0-9]+$' AND numeric_entity.external_id=$5::bigint AND numeric_entity.deleted_at IS NULL
-			) candidate WHERE candidate.rank>0 GROUP BY candidate.version_id
+		WITH RECURSIVE ` + searchCandidatesSQL("$5") + `
 		), requested_paths(path) AS (
 			SELECT unnest($7::text[])
 		), selected_categories(root_path,id) AS (
@@ -277,35 +254,46 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	queryArgs := []any{product, strings.TrimSpace(params.Type), cursorID, locale,
 		query, params.Limit + 1, filterPaths, params.MinItemLevel, params.MaxItemLevel,
 		params.MinRequiredLevel, params.MaxRequiredLevel, cursorRank, params.ItemClassID}
-	var rows pgx.Rows
+	entities := make([]CardSummary, 0, params.Limit+1)
+	scan := func(rows pgx.Rows) error {
+		defer rows.Close()
+		for rows.Next() {
+			var entity CardSummary
+			var requiredLevel *int
+			var inventoryType, school, castTime *string
+			var cooldown *int
+			if err := rows.Scan(&entity.ID, &entity.Product, &entity.Type, &entity.ExternalID, &entity.Slug,
+				&entity.Locale, &entity.LocaleFallback, &entity.Name, &entity.Description, &entity.IconName,
+				&entity.Quality, &entity.ItemLevel, &entity.BuildID, &entity.UpdatedAt, &requiredLevel,
+				&inventoryType, &school, &castTime, &cooldown, &entity.SearchRank); err != nil {
+				return fmt.Errorf("scan game entity summary: %w", err)
+			}
+			entity.Highlights = summaryHighlights(locale, requiredLevel, inventoryType, school, castTime, cooldown)
+			entities = append(entities, entity)
+		}
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("iterate game entity summaries: %w", err)
+		}
+		return nil
+	}
 	if query == "" && len(filterPaths) == 0 {
-		rows, err = s.postgres.Query(ctx, summaryFastQuery, product, strings.TrimSpace(params.Type), cursorID, locale,
+		rows, err := s.postgres.Query(ctx, summaryFastQuery, product, strings.TrimSpace(params.Type), cursorID, locale,
 			params.Limit+1, params.MinItemLevel, params.MaxItemLevel, params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID)
+		if err != nil {
+			return SummaryPage{}, fmt.Errorf("list game entity summaries: %w", err)
+		}
+		err = scan(rows)
 	} else {
-		rows, err = s.postgres.Query(ctx, summaryQuery, queryArgs...)
+		err = s.inSearchTransaction(ctx, func(tx pgx.Tx) error {
+			rows, err := tx.Query(ctx, summaryQuery, queryArgs...)
+			if err != nil {
+				return fmt.Errorf("list game entity summaries: %w", err)
+			}
+			return scan(rows)
+		})
 	}
 	if err != nil {
-		return SummaryPage{}, fmt.Errorf("list game entity summaries: %w", err)
-	}
-	defer rows.Close()
-
-	entities := make([]CardSummary, 0, params.Limit+1)
-	for rows.Next() {
-		var entity CardSummary
-		var requiredLevel *int
-		var inventoryType, school, castTime *string
-		var cooldown *int
-		if err := rows.Scan(&entity.ID, &entity.Product, &entity.Type, &entity.ExternalID, &entity.Slug,
-			&entity.Locale, &entity.LocaleFallback, &entity.Name, &entity.Description, &entity.IconName,
-			&entity.Quality, &entity.ItemLevel, &entity.BuildID, &entity.UpdatedAt, &requiredLevel,
-			&inventoryType, &school, &castTime, &cooldown, &entity.SearchRank); err != nil {
-			return SummaryPage{}, fmt.Errorf("scan game entity summary: %w", err)
-		}
-		entity.Highlights = summaryHighlights(locale, requiredLevel, inventoryType, school, castTime, cooldown)
-		entities = append(entities, entity)
-	}
-	if err := rows.Err(); err != nil {
-		return SummaryPage{}, fmt.Errorf("iterate game entity summaries: %w", err)
+		return SummaryPage{}, err
 	}
 	iconURLs, err := s.cachedIconURLs(ctx, cardSummaryIDs(entities))
 	if err != nil {
@@ -396,19 +384,9 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		return total, nil
 	}
 	var total int64
-	err = s.postgres.QueryRow(ctx, `
-		WITH RECURSIVE search_candidates(version_id) AS MATERIALIZED (
-			SELECT candidate.version_id FROM (
-				SELECT search_locale.version_id FROM game_entity_localizations search_locale
-				WHERE $3<>'' AND $3!~'^[0-9]+$' AND (
-					search_locale.search_document @@ websearch_to_tsquery('simple',$3) OR search_locale.name % $3)
-				UNION ALL
-				SELECT alias.version_id FROM catalog_entity_aliases alias
-				WHERE $3<>'' AND $3!~'^[0-9]+$' AND alias.alias % $3
-				UNION ALL
-				SELECT numeric_entity.published_version_id FROM game_entities numeric_entity
-				WHERE $3~'^[0-9]+$' AND numeric_entity.external_id=$3::bigint AND numeric_entity.deleted_at IS NULL
-			) candidate GROUP BY candidate.version_id
+	err = s.inSearchTransaction(ctx, func(tx pgx.Tx) error {
+		return tx.QueryRow(ctx, `
+		WITH RECURSIVE `+searchCandidatesSQL("$3")+`
 		), requested_paths(path) AS (
 			SELECT unnest($4::text[])
 		), selected_categories(root_path,id) AS (
@@ -442,7 +420,8 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 			AND ($8::int IS NULL OR item.required_level <= $8)
 			AND ($9::int IS NULL OR item.item_class_id=$9)
 			AND ($3='' OR search.version_id IS NOT NULL)`, product, entityType, query, filterPaths, params.MinItemLevel, params.MaxItemLevel,
-		params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID, locale).Scan(&total)
+			params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID, locale).Scan(&total)
+	})
 	if err != nil {
 		return 0, fmt.Errorf("count game entity summaries: %w", err)
 	}
@@ -556,4 +535,81 @@ func inventoryTypeSummary(raw, locale string) string {
 		return ru[code]
 	}
 	return en[code]
+}
+
+// Catalog text search. Exact, prefix (the locale-scoped lower(name) btree
+// index) and full-text matches cost tens of milliseconds; trigram similarity
+// over ~15 M localizations does not (8–25 s for short words at pg_trgm's 0.3
+// default, measured 2026-10-12). So fuzzy matching only runs as a fallback
+// when fewer than fuzzySearchFallbackBelow published entities match strongly,
+// at fuzzySearchThreshold, and the whole search runs under a statement timeout.
+const (
+	fuzzySearchFallbackBelow = 20
+	fuzzySearchMinQueryRunes = 4
+	fuzzySearchThreshold     = "0.5"
+	searchStatementTimeout   = "8s"
+)
+
+// searchCandidatesSQL defines search_candidates(version_id,rank) over published
+// versions for the search text bound to placeholder q (for example "$5").
+func searchCandidatesSQL(q string) string {
+	return strings.NewReplacer("{q}", q,
+		"{fallbackBelow}", strconv.Itoa(fuzzySearchFallbackBelow),
+		"{minRunes}", strconv.Itoa(fuzzySearchMinQueryRunes)).Replace(`strong_search(version_id,rank) AS MATERIALIZED (
+			SELECT candidate_locale.version_id,greatest(
+				CASE WHEN lower(candidate_locale.name)=lower({q}) THEN 9000 ELSE 0 END,
+				CASE WHEN lower(candidate_locale.name) LIKE replace(replace(replace(lower({q}),'\','\\'),'%','\%'),'_','\_')||'%' THEN 8000 ELSE 0 END,
+				CASE WHEN candidate_locale.search_document @@ websearch_to_tsquery('simple',{q})
+					THEN 7000+(ts_rank(candidate_locale.search_document,websearch_to_tsquery('simple',{q}))*1000)::int ELSE 0 END
+			)
+			FROM game_entity_localizations candidate_locale
+			JOIN game_entities published ON published.published_version_id=candidate_locale.version_id AND published.deleted_at IS NULL
+			WHERE {q}<>'' AND {q}!~'^[0-9]+$' AND candidate_locale.locale IN ('en_US','ru_RU') AND (
+				lower(candidate_locale.name) LIKE replace(replace(replace(lower({q}),'\','\\'),'%','\%'),'_','\_')||'%'
+				OR candidate_locale.search_document @@ websearch_to_tsquery('simple',{q}))
+			UNION ALL
+			SELECT alias.version_id,greatest(
+				CASE WHEN lower(alias.alias)=lower({q}) THEN 8500 ELSE 0 END,
+				CASE WHEN alias.alias ILIKE {q}||'%' THEN 7500 ELSE 0 END,
+				CASE WHEN alias.alias % {q} THEN 5500+(similarity(alias.alias,{q})*1000)::int ELSE 0 END
+			)
+			FROM catalog_entity_aliases alias
+			WHERE {q}<>'' AND {q}!~'^[0-9]+$' AND (alias.alias ILIKE {q}||'%' OR alias.alias % {q})
+			UNION ALL
+			SELECT numeric_entity.published_version_id,10000 FROM game_entities numeric_entity
+			WHERE {q}~'^[0-9]+$' AND numeric_entity.external_id={q}::bigint AND numeric_entity.deleted_at IS NULL
+		), fuzzy_search(version_id,rank) AS MATERIALIZED (
+			SELECT fuzzy.version_id,6000+(similarity(fuzzy.name,{q})*1000)::int
+			-- OFFSET 0 keeps the trigram GIN scan; with the locale filter pushed
+			-- down the planner walks the locale btree and runs 7 M similarity checks.
+			FROM (SELECT version_id,locale,name FROM game_entity_localizations WHERE name % {q} OFFSET 0) fuzzy
+			JOIN game_entities published ON published.published_version_id=fuzzy.version_id AND published.deleted_at IS NULL
+			WHERE (SELECT count(DISTINCT version_id) FROM strong_search) < {fallbackBelow}
+				AND char_length({q}) >= {minRunes} AND {q}!~'^[0-9]+$' AND fuzzy.locale IN ('en_US','ru_RU')
+		), search_candidates(version_id,rank) AS MATERIALIZED (
+			SELECT candidate.version_id,max(candidate.rank)::int FROM (
+				SELECT version_id,rank FROM strong_search UNION ALL SELECT version_id,rank FROM fuzzy_search
+			) candidate WHERE candidate.rank>0 GROUP BY candidate.version_id`)
+}
+
+// inSearchTransaction runs a catalog text search with the fuzzy threshold and a
+// statement timeout scoped to this read-only transaction.
+func (s *Service) inSearchTransaction(ctx context.Context, run func(pgx.Tx) error) error {
+	tx, err := s.postgres.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return fmt.Errorf("begin catalog search: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // after Commit the rollback is a no-op
+	for _, setting := range []string{
+		"SET LOCAL pg_trgm.similarity_threshold = " + fuzzySearchThreshold,
+		"SET LOCAL statement_timeout = '" + searchStatementTimeout + "'",
+	} {
+		if _, err := tx.Exec(ctx, setting); err != nil {
+			return fmt.Errorf("configure catalog search: %w", err)
+		}
+	}
+	if err := run(tx); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }

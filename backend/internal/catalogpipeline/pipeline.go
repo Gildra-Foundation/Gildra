@@ -712,6 +712,9 @@ func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product, r
 	if settingsErr != nil {
 		return r.failStage(ctx, runID, "recovery-gate", "recovery_policy_invalid", settingsErr)
 	}
+	// A postgres backup dumps the whole database (pg_dump without table filters),
+	// so a verified one covers every edition: Classic, Classic Era and Hardcore
+	// runs used to fail here forever because the nightly backup is taken for wow.
 	err := r.DB.QueryRow(ctx, `
 		WITH applied_schema_version AS (
 			SELECT max(version_id) AS version
@@ -723,19 +726,15 @@ func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product, r
 		CROSS JOIN applied_schema_version
 		WHERE manifest.component='postgres'
 		  AND manifest.status='verified'
-		  AND manifest.storage_uri ~ $3
+		  AND manifest.storage_uri ~ $2
 		  AND manifest.content_hash IS NOT NULL
 		  AND manifest.byte_size > 0
-		  AND applied_schema_version.version >= $2
+		  AND applied_schema_version.version >= $1
 		  AND manifest.database_version = applied_schema_version.version
 		  AND manifest.restore_completed_at >= now() - interval '24 hours'
 		  AND manifest.verification @> '{"restore_verified":true,"source_restore_match":true}'::jsonb
-		  AND (
-			manifest.product_id IS NULL OR
-			manifest.product_id = (SELECT id FROM game_products WHERE slug=$1)
-		  )
 		ORDER BY manifest.restore_completed_at DESC, manifest.id DESC
-		LIMIT 1`, product, minimumCatalogSchema, storagePattern).Scan(&manifestID, &storageURI, &databaseVersion, &restoredAt)
+		LIMIT 1`, minimumCatalogSchema, storagePattern).Scan(&manifestID, &storageURI, &databaseVersion, &restoredAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return r.failStage(ctx, runID, "recovery-gate", "verified_backup_missing", ErrRecoveryGate)
 	}
