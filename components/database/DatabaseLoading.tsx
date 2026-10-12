@@ -6,7 +6,7 @@ import type { Lang } from "@/lib/i18n";
 import styles from "./databaseHub.module.css";
 
 export function DatabaseLoading({ lang }: { lang: Lang }) {
-  return <PageShell lang={lang}><AtlasFrame as="div" lang={lang}><DatabaseLoadingContent lang={lang} /></AtlasFrame></PageShell>;
+  return <PageShell lang={lang}><AtlasFrame as="div" lang={lang} art="/assets/wow/loading/archive.webp" artPosition="center 45%"><DatabaseLoadingContent lang={lang} /></AtlasFrame></PageShell>;
 }
 
 /**

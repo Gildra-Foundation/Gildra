@@ -42,7 +42,7 @@ import { AtlasFrame, AtlasHero, AtlasSection, AtlasCard, AtlasGrid } from "@/com
 
 | Component | Use for | Key props |
 | --- | --- | --- |
-| `AtlasFrame` | Page wrapper: atmosphere art behind the hero fading into the solid body, 1540 px column, slim legal footer. Put the page's main artwork here, not in a framed box | `art`, `artPosition`, `artShade` (`deep` for bright art), `tint`, `as`, `lang`, `dataAttributes`, `footer` |
+| `AtlasFrame` | Page wrapper: atmosphere art behind the hero fading into the solid body, 1540 px column, slim legal footer. Put the page's main artwork here, not in a framed box; every page gets a scene (`public/assets/wow/loading/*` for sections without their own art). The atmosphere is alive — the art settles in and drifts, the torchlight breathes, embers rise (CSS only, off under reduced motion); `still` turns it off on work surfaces | `art`, `artPosition`, `artShade` (`deep` for bright art), `tint`, `still`, `as`, `lang`, `dataAttributes`, `footer` |
 | `AtlasHero` | The page `h1` on the page artwork (open by default): eyebrow only for real context (season, kind · zone — never "World of Warcraft"), lede, counters as a quiet row. `emblem` only for an identity image (spec icon, item icon), never a decorative glyph | `title`, `eyebrow`, `lede`, `emblem`, `stats`, `breadcrumbs`, `actions`, `toolbar`, `aside`, `variant` |
 | `AtlasStats` | Row of headline counters (used inside the hero) | `items: {value, label}[]` |
 | `AtlasSection` | Titled block of the body (`h2`) | `id`, `title`, `eyebrow`, `description`, `aside`, `level` |

@@ -1,0 +1,73 @@
+/* atlas:strict — delve index: names on dotted leaders, like the index of an atlas. */
+.index {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 2px var(--atlas-space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  display: flex;
+  align-items: baseline;
+  gap: var(--atlas-space-3);
+  min-height: var(--atlas-control-height);
+  padding: 10px 2px;
+  color: var(--atlas-text);
+  text-decoration: none;
+}
+
+.name {
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  font-weight: var(--atlas-weight-display);
+  transition: color var(--atlas-duration) var(--atlas-ease);
+}
+
+.leader {
+  flex: 1;
+  min-width: 24px;
+  border-bottom: 1px dotted var(--atlas-line);
+  translate: 0 -4px;
+  transition: border-color var(--atlas-duration) var(--atlas-ease);
+}
+
+.arrow {
+  flex: none;
+  align-self: center;
+  width: 16px;
+  height: 16px;
+  color: var(--atlas-accent);
+  transition: translate var(--atlas-duration) var(--atlas-ease);
+}
+
+.entry:hover .name,
+.entry:focus-visible .name { color: var(--atlas-accent-strong); }
+.entry:hover .leader,
+.entry:focus-visible .leader { border-bottom-color: var(--atlas-accent); }
+.entry:hover .arrow,
+.entry:focus-visible .arrow { translate: 4px 0; }
+.entry:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+/* The current season: larger names, each marked with an ember. */
+.current .name { font-size: var(--atlas-text-h3); color: var(--atlas-text-strong); }
+
+.current .entry::before {
+  flex: none;
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  content: "";
+  border-radius: 50%;
+  background: var(--atlas-accent-strong);
+  box-shadow: 0 0 10px var(--atlas-accent-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .name,
+  .leader,
+  .arrow { transition: none; }
+  .entry:hover .arrow,
+  .entry:focus-visible .arrow { translate: none; }
+}

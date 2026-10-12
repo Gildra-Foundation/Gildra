@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { ArrowRight, BookOpen, Database, MapPinned, Skull, Sparkles, Trophy, Users } from "lucide-react";
-import { AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasSection, AtlasTile } from "@/components/atlas";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasSection, AtlasTile } from "@/components/atlas";
 import type { Lang } from "@/lib/i18n";
 
 const copy = {
@@ -38,6 +38,15 @@ const copy = {
   },
 } as const;
 
+const sections = [
+  { key: "characters", href: "/wow/characters", art: "/assets/wow/loading/city.webp", position: "center 45%" },
+  { key: "mythic", href: "/wow/mythic-plus", art: "/assets/wow/mythic/ruby-depth-v3-light-fast.webp", position: "center 40%" },
+  { key: "raids", href: "/wow/raids", art: "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp", position: "center 35%" },
+  { key: "lairs", href: "/wow/lairs", art: "/assets/wow/lairs/bosses/nymrissa.jpg", position: "center 22%" },
+  { key: "tierLists", href: "/tier-lists", art: "/assets/wow/mythic/backgrounds/kings.webp", position: "center 40%" },
+  { key: "database", href: "/database", art: "/assets/wow/loading/archive.webp", position: "center 45%" },
+] as const;
+
 const builds = [
   { slug: "fury-warrior", ru: ["Неистовство", "Воин"], en: ["Fury", "Warrior"], image: "/assets/specs/fury-warrior.jpg" },
   { slug: "retribution-paladin", ru: ["Воздаяние", "Паладин"], en: ["Retribution", "Paladin"], image: "/assets/specs/ret-paladin.jpg" },
@@ -62,14 +71,19 @@ export function WowHome({ lang }: { lang: Lang }) {
       />
 
       <AtlasSection id="sections" title={t.sections}>
-        {/* Six sections: three columns on desktop, never an orphan tile. */}
-        <AtlasGrid min={400} fit>
-          <AtlasTile href={href("/wow/characters")} icon={<Users />} title={t.characters} text={t.charactersText} />
-          <AtlasTile href={href("/wow/mythic-plus")} icon={<MapPinned />} title={t.mythic} text={t.mythicText} />
-          <AtlasTile href={href("/wow/raids")} icon={<BookOpen />} title={t.raids} text={t.raidsText} />
-          <AtlasTile href={href("/wow/lairs")} icon={<Skull />} title={t.lairs} text={t.lairsText} />
-          <AtlasTile href={href("/tier-lists")} icon={<Trophy />} title={t.tierLists} text={t.tierListsText} />
-          <AtlasTile href={href("/database")} icon={<Database />} title={t.database} text={t.databaseText} />
+        {/* Six sections, each with its own scene: three columns on desktop, never an orphan. */}
+        <AtlasGrid min={340} fit>
+          {sections.map((section) => (
+            <AtlasCard
+              key={section.href}
+              href={href(section.href)}
+              image={{ src: section.art, alt: "", position: section.position, sizes: "(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 33vw" }}
+              artRatio="16 / 7"
+              title={t[section.key]}
+              description={t[`${section.key}Text`]}
+              cta={t[section.key]}
+            />
+          ))}
         </AtlasGrid>
       </AtlasSection>
 

@@ -12,7 +12,7 @@ export function DungeonCatalogPage({ locale }: { locale: "en" | "ru" }) {
   const text = copy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   return (
-    <AtlasFrame lang={locale}>
+    <AtlasFrame lang={locale} art="/assets/wow/mythic/backgrounds/nalorakk.webp" artPosition="center 40%">
       <AtlasHero
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
         breadcrumbsLabel={text.breadcrumbs}

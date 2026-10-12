@@ -21,7 +21,7 @@ export type DatabaseSearchParams = {
  */
 export function DatabaseHub({ lang, searchParams }: { lang: Lang; searchParams: Promise<DatabaseSearchParams> }) {
   return (
-    <AtlasFrame as="div" lang={lang} dataAttributes={{ "data-database-root": true }}>
+    <AtlasFrame as="div" lang={lang} art="/assets/wow/loading/archive.webp" artPosition="center 45%" dataAttributes={{ "data-database-root": true }}>
       <Suspense fallback={<DatabaseLoadingContent lang={lang} />}>
         <DatabaseCatalog lang={lang} searchParams={searchParams} />
       </Suspense>

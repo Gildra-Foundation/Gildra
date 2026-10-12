@@ -36,6 +36,9 @@
   --atlas-accent-wash: rgba(209, 162, 75, .09);
   --atlas-accent-wash-strong: rgba(209, 162, 75, .17);
   --atlas-accent-glow: rgba(230, 172, 77, .12);
+  /* Torchlight embers over page artwork (AtlasFrame) */
+  --atlas-ember: rgba(255, 199, 120, .95);
+  --atlas-ember-halo: rgba(255, 150, 60, .2);
 
   /* Lines */
   --atlas-line: rgba(157, 112, 48, .45);
@@ -98,6 +101,8 @@
   --atlas-ease: cubic-bezier(.2, .7, .2, 1);
   --atlas-duration: .2s;
   --atlas-duration-art: .55s;
+  /* Scroll reveal of cards and section flourishes (CSS scroll-driven, no JS) */
+  --atlas-reveal-shift: 26px;
 
   color-scheme: dark;
   /* Alegreya defaults to old-style figures; counters and dates read better lining.

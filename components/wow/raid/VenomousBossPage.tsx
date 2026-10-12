@@ -37,7 +37,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
   const isDraft = boss.strategyVerificationStatus === "source_tracked";
 
   return (
-    <AtlasFrame lang={locale}>
+    <AtlasFrame lang={locale} art="/assets/wow/mythic/backgrounds/altar.webp" artPosition="center 45%">
       <AtlasHero
         breadcrumbs={[
           { label: shared.wow, href: `${prefix}/wow` },

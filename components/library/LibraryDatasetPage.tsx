@@ -48,7 +48,7 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
   }
   return (
     <PageShell lang={lang}>
-      <AtlasFrame as="div" lang={lang} dataAttributes={{ "data-library-root": true }}>
+      <AtlasFrame as="div" lang={lang} art="/assets/wow/loading/tier.webp" artPosition="center 50%" dataAttributes={{ "data-library-root": true }}>
         <AtlasHero
           breadcrumbs={[{ label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
           breadcrumbsLabel={copy.breadcrumbsLabel}

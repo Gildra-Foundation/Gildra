@@ -29,7 +29,7 @@ export function RotationLabRoute({ locale, theme, preset, characterSlug, dataMod
   const className = ru ? theme.classNameRu : theme.className;
   const specName = ru ? theme.specNameRu : theme.specName;
   return (
-    <AtlasFrame lang={locale} tint={`rgba(${theme.ambientRgb}, .2)`} dataAttributes={{ "data-rotation-route": theme.slug }}>
+    <AtlasFrame lang={locale} still tint={`rgba(${theme.ambientRgb}, .2)`} dataAttributes={{ "data-rotation-route": theme.slug }}>
       <AtlasHero
         breadcrumbs={[
           { label: copy.wow, href: `${prefix}/wow` },

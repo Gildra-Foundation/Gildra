@@ -8,6 +8,9 @@ export function SeasonTwoHub({ locale }: { locale: Locale }) {
   const ru = locale === "ru";
   return (
     <IdentityStatusPage
+      art="/assets/wow/loading/raid-wow-optimized.webp"
+      artPosition="center 40%"
+      tint="rgba(122, 64, 196, .2)"
       locale={locale}
       eyebrow="Midnight"
       title="Midnight Season 2"

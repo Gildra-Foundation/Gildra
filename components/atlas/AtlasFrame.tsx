@@ -12,10 +12,12 @@ export type AtlasFrameProps = {
   art?: string;
   /** Focal point of the artwork, CSS object-position (default "center 18%"). */
   artPosition?: string;
-  /** Illustration tint of the atmosphere glow; chrome stays amber. */
   /** "deep" darkens bright artwork (sunlit scenes, light portraits) so the hero text keeps its contrast. */
   artShade?: "default" | "deep";
+  /** Illustration tint of the atmosphere glow; chrome stays amber. */
   tint?: string;
+  /** No embers and no drifting artwork: work surfaces (calculators, editors) where motion distracts. */
+  still?: boolean;
   /** Rendered element (default <main>). Use "div" when the route already owns <main>. */
   as?: "main" | "div";
   className?: string;
@@ -30,15 +32,19 @@ export type AtlasFrameProps = {
 /**
  * Page frame of every inner atlas route: atmosphere artwork, solid body and the
  * 1540 px content column. Pages compose AtlasHero / AtlasSection inside it.
+ * The atmosphere is alive: the artwork settles in and drifts slowly, embers rise
+ * through the torchlight. All of it is CSS and stops under reduced motion.
  */
-export function AtlasFrame({ children, art, artPosition, artShade = "default", tint, as: Element = "main", className, lang, id, dataAttributes, footer = true }: AtlasFrameProps) {
+export function AtlasFrame({ children, art, artPosition, artShade = "default", tint, still = false, as: Element = "main", className, lang, id, dataAttributes, footer = true }: AtlasFrameProps) {
   const locale = lang === "ru" ? "ru" : "en";
   const style = { "--atlas-frame-tint": tint, "--atlas-frame-art-position": artPosition } as CSSProperties;
   return (
-    <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, className)} style={style} lang={lang} id={id} {...dataAttributes}>
+    <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} {...dataAttributes}>
       <div className={styles.atmosphere} aria-hidden="true">
         {/* Decorative and heavily shaded: fetch it early (it is often the largest paint) but after fonts, CSS and the hero. */}
         {art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="low" /> : null}
+        {/* Torchlight over the artwork: a breathing glow and a few rising embers (CSS only). */}
+        <span className={styles.embers} />
       </div>
       <div className={styles.column}>
         {children}
