@@ -10,7 +10,7 @@ import { getBoss } from "@/lib/lairs";
 /**
  * The quick-search index of the site (⌘K): every section, raid, boss, lair,
  * dungeon, class, specialization and delve, in both languages. Built at build
- * time (app/api/site-search/route.ts) and fetched once when the dialog opens.
+ * time (app/api/platform/site-search/route.ts; nginx sends /api/platform/* to the web app) and fetched once when the dialog opens.
  * `h` is the English path; Russian pages prefix /ru. `k` holds the other
  * language's names so either spelling finds the entry.
  */

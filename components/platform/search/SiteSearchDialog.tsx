@@ -19,7 +19,7 @@ type Group = { label: string; rows: Row[] };
 let loaded: Index | null = null;
 let indexLoad: Promise<Index> | null = null;
 function loadIndex() {
-  indexLoad ??= fetch("/api/site-search").then((response) => {
+  indexLoad ??= fetch("/api/platform/site-search").then((response) => {
     if (!response.ok) throw new Error(String(response.status));
     return response.json() as Promise<Index>;
   }).then((data) => (loaded = data)).catch((error: unknown) => {
