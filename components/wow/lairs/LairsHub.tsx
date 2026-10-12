@@ -73,6 +73,7 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
               href={`${prefix}/wow/lairs/${boss.slug}`}
               image={{ src: boss.portrait, alt: boss.name, position: "center 24%", sizes: "(max-width: 620px) 100vw, (max-width: 1100px) 50vw, 25vw" }}
               artRatio="4 / 3.6"
+              tilt
               accent={boss.accent}
               eyebrow={<><MapPin aria-hidden="true" />{boss.zone}</>}
               title={boss.name}

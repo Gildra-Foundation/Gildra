@@ -4,6 +4,7 @@ import type { RaidBoss, RaidDefinition } from "./midnightRaidData";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy, isRaidStrategyPublished } from "./raidStrategy";
 import styles from "./raidGuide.module.css";
+import { VoidEye } from "./VoidEye";
 
 /** Raid page of a Midnight Season 1 raid: what the raid is and its encounters. */
 export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
@@ -18,7 +19,14 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
   };
 
   return (
-    <AtlasFrame lang={locale} art={raid.slug === "the-voidspire" ? "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp" : raid.artwork} artPosition="center 30%" tint={`${raid.accent}2e`}>
+    <AtlasFrame
+      lang={locale}
+      art={raid.slug === "the-voidspire" ? "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp" : raid.artwork}
+      artPosition="center 30%"
+      tint={`${raid.accent}2e`}
+      // The Voidspire's eye is alive: a shader of our own over the painting's void.
+      artLayer={raid.slug === "the-voidspire" ? <VoidEye imageSize={[1920, 734]} focus={[0.5, 0.3]} eye={[0.601, 0.2956]} eyeRadius={18} /> : undefined}
+    >
       <AtlasHero
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.raids, href: `${prefix}/wow/raids` }, { label: raid.nameEn }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}

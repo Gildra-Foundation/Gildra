@@ -44,6 +44,7 @@
 }
 
 .card {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
   min-height: 200px;
@@ -53,6 +54,41 @@
   background: var(--atlas-surface);
   text-decoration: none;
   transition: border-color var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease);
+}
+
+.card::before {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  padding: 1px;
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(200px circle at var(--spot-x, 50%) var(--spot-y, 40%), var(--atlas-card-accent, var(--atlas-accent-strong)), transparent 75%);
+  -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  -webkit-mask-clip: content-box, border-box;
+  -webkit-mask-composite: xor;
+  mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  mask-clip: content-box, border-box;
+  mask-composite: exclude;
+  transition: opacity .35s var(--atlas-ease);
+}
+
+.card::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(280px circle at var(--spot-x, 50%) var(--spot-y, 40%), color-mix(in srgb, var(--atlas-card-accent, var(--atlas-accent-strong)) 16%, transparent), transparent 70%);
+  mix-blend-mode: screen;
+  transition: opacity .35s var(--atlas-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover::before,
+  .card:hover::after { opacity: 1; }
 }
 
 /* Every other step turns the other way. */
