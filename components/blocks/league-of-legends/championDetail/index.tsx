@@ -56,7 +56,7 @@ function ChampionDetail({ data, lang }: BlockComponentProps<ChampionDetailProps,
           fetchPriority: "low",
         }).props : null;
         return <article key={`${ability.slot}-${ability.key}`}>
-          <div className={styles.abilityIcon}>{iconProps ? <img {...iconProps} /> : <span>{ability.slot}</span>}<b>{ability.slot}</b></div>
+          <div className={styles.abilityIcon}>{iconProps ? <img {...iconProps} alt={iconProps.alt ?? ""} /> : <span>{ability.slot}</span>}<b>{ability.slot}</b></div>
           <div><span>{ability.kind}</span><h3>{ability.name}</h3><p>{clean(ability.description)}</p></div>
         </article>;
       })}</div>
@@ -77,7 +77,7 @@ function ChampionDetail({ data, lang }: BlockComponentProps<ChampionDetailProps,
           decoding: "async",
           fetchPriority: "low",
         }).props : null;
-        return <article key={skin.id}>{imageProps && <img {...imageProps} />}<div><strong>{skin.name === "default" ? champion.name : skin.name}</strong><span>#{skin.number}{skin.hasChromas ? " · Chromas" : ""}</span></div></article>;
+        return <article key={skin.id}>{imageProps && <img {...imageProps} alt={imageProps.alt ?? ""} />}<div><strong>{skin.name === "default" ? champion.name : skin.name}</strong><span>#{skin.number}{skin.hasChromas ? " · Chromas" : ""}</span></div></article>;
       })}</div>
       {distinctSkins.length > 24 && <p className={styles.galleryNote}>{tt("Showing 24 artworks. The complete set remains available through the public API.")}</p>}
     </section>

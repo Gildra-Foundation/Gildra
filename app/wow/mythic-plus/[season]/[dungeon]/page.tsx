@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MythicRouteMap } from "@/components/wow/mythic/MythicRouteMap";
 import { getDungeonCombatIntel } from "@/components/wow/mythic/dungeonCombatIntel.server";
 import { dungeonRoutes, getDungeonRoute, getDungeonSelectorOptions, type DungeonSlug } from "@/components/wow/mythic/dungeonRoutes";
+import { localizedRoute } from "@/components/wow/mythic/localizedRoute";
 import { preloadDungeonBackdrop } from "@/lib/wow/dungeonBackdropPreload";
 
 export const dynamicParams = false;
@@ -13,5 +14,5 @@ export default async function Page({ params }: { params: Promise<{ season: strin
   const route = season === "midnight-season-2" ? getDungeonRoute(slug as DungeonSlug) : null;
   if (!route) notFound();
   preloadDungeonBackdrop(route);
-  return <MythicRouteMap key={route.slug} locale="en" dungeon={route} dungeonOptions={getDungeonSelectorOptions()} combatIntel={getDungeonCombatIntel(route)} />;
+  return <MythicRouteMap key={route.slug} locale="en" dungeon={localizedRoute(route, "en")} dungeonOptions={getDungeonSelectorOptions()} combatIntel={getDungeonCombatIntel(route)} />;
 }

@@ -1,0 +1,44 @@
+.tabs { display: grid; gap: var(--atlas-space-4); }
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--atlas-space-1);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--atlas-control-height);
+  padding: 0 var(--atlas-space-4);
+  color: var(--atlas-text-muted);
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+}
+
+.tab:hover { color: var(--atlas-text-strong); }
+.tab:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.count { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-variant-numeric: lining-nums tabular-nums; }
+
+/* Underline: the active tab stands on an amber rule. */
+.underline .list { border-bottom: 1px solid var(--atlas-line-soft); }
+.underline .tab { margin-bottom: -1px; border-bottom: 2px solid transparent; }
+.underline .tab[aria-selected="true"] { color: var(--atlas-text-strong); border-bottom-color: var(--atlas-accent-strong); }
+
+/* Segmented: a compact pill group. */
+.segmented .list { width: fit-content; padding: 3px; border: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
+.segmented .tab { min-height: 36px; }
+.segmented .tab[aria-selected="true"] { color: var(--atlas-accent-ink); background: var(--atlas-accent); box-shadow: 0 0 14px var(--atlas-accent-glow); }
+.segmented .tab[aria-selected="true"] .count { color: var(--atlas-accent-ink); }
+
+.panel:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tab { transition: none; }
+}

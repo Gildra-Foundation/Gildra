@@ -1,0 +1,10 @@
+/* atlas:strict — the database error page: the atlas column on the solid body. */
+.page {
+  display: grid;
+  min-height: 70vh;
+  place-items: center;
+  padding: var(--atlas-space-7) var(--atlas-gutter);
+  background: var(--atlas-bg);
+}
+
+.page > * { width: min(640px, 100%); }

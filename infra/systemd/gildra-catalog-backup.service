@@ -1,5 +1,10 @@
 [Unit]
 Description=Gildra encrypted PostgreSQL backup with isolated restore proof
+# A verified backup is what the catalog import's recovery gate needs, so the
+# import runs right after it instead of on its own timer (it used to start
+# while the backup was still running).
+OnFailure=gildra-notify@%p.service
+OnSuccess=gildra-notify-ok@%p.service gildra-catalog-refresh.service
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target

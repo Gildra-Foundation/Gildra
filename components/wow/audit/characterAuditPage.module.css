@@ -35,32 +35,9 @@
 .audit *, .audit *::before, .audit *::after { box-sizing: border-box; }
 .audit button, .audit input { font: inherit; }
 .audit button { cursor: pointer; }
-.audit button:focus-visible, .armory:focus-visible, .dialogActions a:focus-visible { outline: 2px solid var(--spec-hot); outline-offset: 2px; }
-.audit button:active:not(:disabled), .armory:active { transform: translateY(1px) scale(.99); }
+.audit button:focus-visible { outline: 2px solid var(--spec-hot); outline-offset: 2px; }
+.audit button:active:not(:disabled) { transform: translateY(1px) scale(.99); }
 .audit section[id] { scroll-margin-top: 54px; }
-
-.topbar {
-  min-width: 0;
-  height: 48px;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  border-bottom: 1px solid rgba(var(--spec-rgb), .38);
-  background: rgba(18, 17, 15, .94);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, .22);
-}
-.brand { flex: 0 0 auto; color: var(--spec-hot); font: 700 25px/1 var(--font-heading); letter-spacing: 4px; text-decoration: none; text-shadow: 0 0 18px rgba(var(--spec-rgb), .18); }
-.game { flex: 0 0 auto; padding: 7px 12px; border: 1px solid rgba(var(--spec-rgb), .58); border-radius: 2px; color: #65a8d1; background: linear-gradient(135deg, rgba(var(--spec-rgb), .12), transparent); }
-.game b { margin-left: 8px; color: #d8cebd; font-weight: 500; }
-.topbar nav { min-width: 0; display: flex; gap: clamp(14px, 1.7vw, 27px); }
-.topbar nav a { color: #c7b9a4; text-decoration: none; font: 600 13px/1 var(--font-heading); white-space: nowrap; transition: color .18s ease; }
-.topbar nav a:hover { color: var(--spec-hot); }
-.search { position: relative; min-width: 170px; max-width: 230px; margin-left: auto; flex: 1 1 230px; }
-.search input { width: 100%; padding: 8px 29px 8px 11px; border: 1px solid #393523; border-radius: 3px; outline: 0; background: #080d0e; color: #d7cab9; }
-.search input:focus { border-color: var(--spec-accent); box-shadow: 0 0 0 2px rgba(var(--spec-rgb), .12); }
-.search span { position: absolute; right: 10px; top: 3px; color: var(--spec-accent); font-size: 20px; }
 
 .hero {
   position: relative;
@@ -174,18 +151,13 @@
 .weaponItem .itemIcon { width: 39px; height: 39px; border-color: var(--spec-accent); box-shadow: 0 0 13px rgba(var(--spec-rgb), .62), inset 0 0 0 1px #000; }
 .weaponItem span small { color: var(--spec-accent); }
 .weaponItem span b { color: color-mix(in srgb, var(--spec-hot) 76%, #ead8c4); }
-.silhouette { position: absolute; z-index: 0; inset: 0; overflow: hidden; background: #100704; }
-.silhouette::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 48%, transparent 10%, rgba(9, 4, 2, .08) 45%, rgba(5, 3, 2, .72) 100%); pointer-events: none; }
-.silhouette img { width: 100%; height: 100%; object-fit: cover; object-position: center 43%; filter: saturate(.9) contrast(1.08) brightness(.76); transform: scale(1.015); animation: warriorBreath 5s ease-in-out infinite; }
-.modelViewport, .modelFallback { position: absolute; z-index: 1; inset: 0; overflow: hidden; background: radial-gradient(circle at 50% 38%, rgba(var(--spec-rgb), .28), transparent 34%), linear-gradient(180deg, color-mix(in srgb, var(--spec-deep) 42%, #100c09) 0%, #080504 76%); }
+.modelViewport { position: absolute; z-index: 1; inset: 0; overflow: hidden; background: radial-gradient(circle at 50% 38%, rgba(var(--spec-rgb), .28), transparent 34%), linear-gradient(180deg, color-mix(in srgb, var(--spec-deep) 42%, #100c09) 0%, #080504 76%); }
 .modelViewport::before { content: ""; position: absolute; z-index: 2; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(5, 3, 2, .84), transparent 27% 73%, rgba(5, 3, 2, .84)), linear-gradient(180deg, transparent 48%, rgba(5, 3, 2, .34) 74%, #090504 100%); }
 .modelViewport::after { content: ""; position: absolute; z-index: 2; left: 50%; bottom: 76px; width: 210px; height: 24px; pointer-events: none; transform: translateX(-50%); border-radius: 50%; background: rgba(var(--spec-rgb), .19); filter: blur(16px); animation: modelEmberPulse 3.2s ease-in-out infinite; }
 .wowModelHost { position: absolute; z-index: 1; inset: 0; overflow: hidden; filter: saturate(1.08) contrast(1.04) drop-shadow(0 16px 18px rgba(0,0,0,.72)); }
 .wowModelHost canvas { width: 100% !important; height: 100% !important; cursor: grab; touch-action: none; }
 .wowModelHost canvas:active { cursor: grabbing; }
 .modelFocused .wowModelHost { filter: saturate(1.18) contrast(1.07) drop-shadow(0 0 18px rgba(237,75,26,.28)) drop-shadow(0 16px 18px rgba(0,0,0,.72)); }
-.modelCanvas { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; touch-action: none; cursor: grab; }
-.modelCanvas:active { cursor: grabbing; }
 .modelLoading { position: absolute; z-index: 5; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #bd8a5f; background: radial-gradient(circle at 50% 42%, rgba(113, 34, 12, .34), transparent 33%), #0b0705; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 .modelLoading > i { width: 38px; height: 38px; border: 1px solid rgba(221,111,47,.24); border-top-color: #e67a34; border-radius: 50%; box-shadow: 0 0 18px rgba(224,74,21,.12), inset 0 0 12px rgba(224,74,21,.08); animation: spin .9s linear infinite; }
 .modelLoading[data-error="true"] { color: #d7a98a; }
@@ -198,22 +170,10 @@
 .modelLoading > span, .modelLoading > button { position: relative; z-index: 1; }
 .modelLoading button { min-height: 30px; padding: 0 13px; border: 1px solid rgba(225,116,51,.62); color: #f0b075; background: rgba(65,24,10,.72); font: 700 9px/1 var(--font-ui); letter-spacing: .06em; text-transform: uppercase; }
 .modelLoading button:hover { border-color: #f0924f; background: rgba(99,35,12,.84); }
-.modelFallback img { width: 100%; height: 100%; object-fit: cover; object-position: center 43%; filter: saturate(.9) contrast(1.08) brightness(.72); }
 .modelMeta { position: absolute; z-index: 3; top: 12px; left: 50%; max-width: 210px; display: flex; align-items: center; gap: 7px; transform: translateX(-50%); color: #bc9675; font-size: 8px; line-height: 1; letter-spacing: .04em; white-space: nowrap; pointer-events: none; }
 .modelMeta b { min-width: 29px; height: 18px; display: grid; place-items: center; border: 1px solid rgba(var(--spec-rgb), .72); color: var(--spec-hot); background: color-mix(in srgb, var(--spec-deep) 40%, rgba(18, 13, 9, .88)); font-size: 8px; letter-spacing: .13em; box-shadow: inset 0 0 8px rgba(var(--spec-rgb), .13), 0 0 12px rgba(var(--spec-rgb), .12); }
 .modelMeta span { overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
-.modelHint { position: absolute; z-index: 3; left: 50%; bottom: 126px; transform: translateX(-50%); color: rgba(212, 173, 135, .62); font-size: 8px; line-height: 1; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; pointer-events: none; opacity: .84; transition: opacity .2s ease; }
-.modelViewport:hover .modelHint { opacity: .28; }
 .gearSummary { position: relative; z-index: 3; grid-column: 1 / -1; grid-row: 2; display: grid; justify-items: center; gap: 7px; padding-top: 2px; }
-.average { width: 180px; text-align: center; color: #a99a84; font-size: 10px; }
-.average b { display: block; margin-top: 4px; color: #dca945; font: 700 21px/1 var(--font-heading); letter-spacing: -.025em; }
-.armory { min-height: 34px; padding: 7px 13px; display: flex; align-items: center; gap: 7px; border: 1px solid #c66421; border-radius: 1px; background: linear-gradient(180deg, rgba(54, 24, 10, .95), rgba(16, 9, 6, .95)); color: #ffb23f; text-decoration: none; font-size: 10px; font-weight: 700; line-height: 1; white-space: nowrap; clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); box-shadow: 0 0 16px rgba(229, 63, 15, .15); transition: background .18s ease, border-color .18s ease, transform .18s ease; }
-.armory:hover { transform: translateY(-1px); border-color: #ff8b2e; background: linear-gradient(180deg, rgba(106, 35, 9, .95), rgba(27, 11, 5, .96)); }
-.armory svg { width: 13px; transition: transform .18s ease; }
-.armory:hover svg { transform: translate(2px, -2px); }
-.legend { position: relative; z-index: 3; grid-column: 1 / -1; grid-row: 3; padding-top: 11px; display: flex; justify-content: space-between; gap: 6px; border-top: 1px solid var(--line-soft); color: #9f9384; font-size: 9px; white-space: nowrap; }
-.legend span::before { content: ""; width: 11px; height: 11px; margin-right: 4px; display: inline-block; border: 1px solid currentColor; vertical-align: -2px; }
-.optimal { color: #75b958; }.good { color: #5d9ac7; }.problem { color: #df5041; }.missing { color: #dc9a27; }
 
 .plan { min-height: 560px; padding: 11px; }
 .plan h2, .right h2, .bundle h2, .rerun h2, .save h2, .history h2 { margin: 0; display: flex; align-items: center; gap: 7px; color: #ded1bd; font: 700 18px/1.2 var(--font-heading); letter-spacing: -.025em; }
@@ -319,40 +279,13 @@
 .history > div b { color: #7cc25b; font: 700 18px/1 var(--font-heading); letter-spacing: -.025em; }
 .history > div b i { font-size: 9px; color: #a99883; font-style: normal; }
 .history > div em { color: #7ec15b; font-style: normal; }
-.footer { min-height: 43px; padding: 0 25px; display: flex; align-items: center; gap: 8px; border-top: 1px solid rgba(170, 129, 47, .27); color: #aa9d8a; font-size: 10px; }
-.footer > svg { width: 17px; color: #d9a43b; }
-.footer span { margin-left: auto; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-.footer span svg { width: 13px; }
-
-.dialogBackdrop { position: fixed; z-index: 80; inset: 0; padding: 24px; display: grid; place-items: center; background: rgba(1, 5, 7, .78); backdrop-filter: blur(10px); animation: fadeIn .18s ease both; }
 .gearDialog { position: relative; width: min(430px, 100%); padding: 22px; border: 1px solid #c35c21; border-radius: 2px; background: linear-gradient(145deg, #23130c, #090604 70%); box-shadow: 0 28px 90px rgba(0,0,0,.7), inset 0 1px rgba(255,159,66,.09), inset 0 0 34px rgba(143, 34, 10, .12); animation: dialogIn .28s cubic-bezier(.2,.75,.25,1) both; }
-.dialogClose { position: absolute; top: 11px; right: 11px; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid #594521; border-radius: 50%; background: #071419; color: #b8aa96; }
-.dialogClose:hover { color: #f0ba4d; border-color: #9d7029; }
-.dialogClose svg { width: 16px; }
-.dialogTitle { padding-right: 28px; display: flex; align-items: center; gap: 13px; }
-.dialogTitle .itemIcon { width: 54px; height: 54px; }
-.dialogTitle > div { min-width: 0; }
-.dialogTitle small { color: #9c907d; font-size: 10px; }
-.dialogTitle h2 { margin: 2px 0 6px; color: #eee0ca; font: 700 19px/1.15 var(--font-heading); letter-spacing: -.02em; }
-.dialogTitle span { font-size: 10px; }
-.dialogOptimal, .dialogGood { color: var(--green); }.dialogIssue { color: var(--red); }.dialogMissing { color: var(--gold); }
 .gearDialog dl { margin: 20px 0 12px; border-top: 1px solid var(--line-soft); }
 .gearDialog dl > div { min-height: 35px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--line-soft); }
 .gearDialog dt { color: #9f9383; }
 .gearDialog dd { margin: 0; color: #e3d5c0; text-align: right; }
-.upgrade { margin-top: 15px; padding: 12px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(107, 165, 75, .3); background: rgba(73, 121, 47, .08); }
-.upgrade > svg { width: 22px; color: var(--green); }
-.upgrade > div { display: grid; gap: 3px; }
-.upgrade b { color: #b8d8a5; font-size: 11px; }.upgrade span { color: #8f9b87; font-size: 10px; }
-.dialogActions { margin-top: 18px; display: flex; justify-content: flex-end; gap: 9px; }
-.dialogActions a, .dialogActions button { min-height: 34px; padding: 0 13px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #8f6a39; border-radius: 1px; background: #221f1a; color: #e2bb77; clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); text-decoration: none; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
-.dialogActions a:hover { transform: translateY(-1px); border-color: #d99a43; background: #2d271f; }
-.dialogActions button { border-color: #df7927; background: #df7828; color: #261104; font-weight: 750; }
-.dialogActions button:hover { transform: translateY(-1px); background: #ef8a31; }
-.dialogActions svg { width: 13px; }
 
 @container auditPage (max-width: 1240px) {
-  .topbar nav { display: none; }
   .hero { grid-template-columns: 76px minmax(210px, 1fr) 98px 108px 166px 164px; }
   .scoreTiles { display: none; }
   .grid { grid-template-columns: minmax(350px, .85fr) minmax(430px, 1.15fr); }
@@ -377,9 +310,6 @@
 }
 
 @container auditPage (max-width: 680px) {
-  .topbar { padding-inline: 13px; }
-  .brand { font-size: 23px; }
-  .search { display: none; }
   .hero { padding: 12px 13px; grid-template-columns: 64px minmax(0,1fr) 88px; }
   .avatar { width: 60px; height: 60px; grid-row: 1; }
   .name { grid-column: 2 / -1; }
@@ -404,11 +334,6 @@
   .weaponPair .weaponItem { min-height: 40px; }
   .weaponPair .weaponItem .itemIcon { width: 30px; height: 30px; }
   .gearSummary { gap: 5px; padding-top: 0; }
-  .average { font-size: 9px; }
-  .average b { margin-top: 2px; font-size: 19px; }
-  .armory { height: 32px; min-height: 32px; padding-block: 5px; }
-  .silhouette { opacity: .76; }
-  .legend { gap: 9px; padding-top: 6px; overflow-x: auto; justify-content: flex-start; }
   .issue { grid-template-columns: 17px 34px minmax(0,1fr) 82px; gap: 6px; padding-inline: 7px; }
   .issue button { padding-inline: 5px; gap: 2px; font-size: 8px; letter-spacing: 0; }
   .issue button svg { display: none; }
@@ -420,8 +345,6 @@
   .balance > div { grid-template-columns: 68px 50px minmax(50px,1fr) 13px; }
   .balance > div small { display: none; }
   .auditActions { grid-template-columns: 1fr; }
-  .footer { padding: 10px 13px; align-items: flex-start; }
-  .footer span { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -431,10 +354,8 @@
 @keyframes panelIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes rowIn { from { opacity: 0; transform: translateX(5px); } to { opacity: 1; transform: none; } }
 @keyframes scoreIn { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: scale(1); } }
-@keyframes tabLine { from { transform: scaleX(.2); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
 @keyframes reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 @keyframes barIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes dialogIn { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes rageFill { from { transform: scaleX(.08); filter: brightness(1.8); } to { transform: scaleX(1); filter: none; } }
@@ -442,7 +363,6 @@
 @keyframes modelEmberPulse { 0%, 100% { opacity: .45; transform: translateX(-50%) scaleX(.82); } 50% { opacity: .9; transform: translateX(-50%) scaleX(1.12); } }
 @keyframes combatPulse { 0%, 100% { box-shadow: 0 0 0 7px rgba(205, 59, 19, .11), 0 0 0 14px rgba(187, 61, 18, .06), 0 0 24px rgba(241, 63, 16, .18); } 50% { box-shadow: 0 0 0 7px rgba(205, 59, 19, .16), 0 0 0 14px rgba(187, 61, 18, .08), 0 0 36px rgba(255, 70, 17, .34); } }
 @keyframes emberSweep { 0%, 18% { left: -35%; opacity: 0; } 42% { opacity: 1; } 72%, 100% { left: 118%; opacity: 0; } }
-@keyframes warriorBreath { 0%, 100% { transform: scale(1.015) translateY(0); } 50% { transform: scale(1.025) translateY(-2px); } }
 
 /* Animated profile atmosphere — each primary column has its own restrained motion language. */
 .audit {
@@ -540,10 +460,7 @@
 .heroActions button,
 .bundle > button,
 .rerun button,
-.save button,
-.armory,
-.dialogActions a,
-.dialogActions button {
+.save button {
   clip-path: none;
   border-radius: var(--control-radius);
   font-family: var(--control-font);
@@ -720,7 +637,6 @@
 .balanceCompact > div small { display: none; }
 
 /* Gold-outline utility, success state included. */
-.armory,
 .save button {
   min-height: 36px;
   padding: 0 14px;
@@ -731,7 +647,6 @@
   font-size: 9px;
   font-weight: 750;
 }
-.armory:hover,
 .save button:hover {
   transform: translateY(-2px);
   border-color: #f0b644;
@@ -742,17 +657,6 @@
 .save button { grid-column: 2; display: flex; align-items: center; gap: 7px; }
 .save button svg, .rerun button svg { width: 14px; height: 14px; }
 .save button:has(svg) { transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease; }
-
-.dialogActions a,
-.dialogActions button {
-  min-height: 38px;
-  padding-inline: 15px;
-  font-size: 10px;
-  font-weight: 750;
-}
-.dialogActions a { border-color: rgba(185, 140, 77, .6); background: #24211d; color: #e6c58d; }
-.dialogActions button { border-color: #ff9a38; background: linear-gradient(135deg, #ff8d27, #dd5b12); color: #211006; }
-.dialogClose { border-radius: 8px; background: #171817; }
 
 @container auditPage (max-width: 680px) {
   .grid { padding-top: 10px; }
@@ -867,7 +771,6 @@
 .audit .score b small,
 .audit .scoreTiles b,
 .audit .gearItem em,
-.audit .average b,
 .audit .issue > span,
 .audit .issue > em,
 .audit .plan footer b,
@@ -902,7 +805,6 @@
 .weaponItem { min-height: 52px; }
 .weaponItem .itemIcon { width: 42px; height: 42px; }
 .modelMeta { top: 16px; }
-.modelHint { bottom: 136px; }
 
 /* Forged item frames. Each state gets its own metal and restrained glow. */
 .itemIcon {
@@ -1173,7 +1075,6 @@
 }
 .modelMeta b { min-width: 26px; height: 17px; }
 .modelMeta span { color: #a8896d; font-size: 7px; letter-spacing: .07em; }
-.modelHint { bottom: 94px; color: rgba(199, 157, 119, .48); }
 .modelViewport::after { bottom: 42px; }
 
 @container auditPage (max-width: 1240px) {
@@ -1199,7 +1100,6 @@
   .weaponPair { bottom: 18px; width: calc(100% - 32px); gap: 4px 6px; }
   .weaponPair .weaponItem { min-height: 45px; }
   .weaponPair .weaponItem .itemIcon { width: 34px; height: 34px; }
-  .modelHint { bottom: 82px; }
   .modelMeta span { display: none; }
 }
 
@@ -1408,55 +1308,6 @@
   letter-spacing: -.005em;
 }
 
-.topbar {
-  position: relative;
-  z-index: 20;
-  height: 60px;
-  padding: 0 32px;
-  gap: 28px;
-  border-bottom: 1px solid var(--premium-line);
-  background: rgba(8, 10, 12, .9);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, .2);
-  backdrop-filter: blur(22px) saturate(125%);
-}
-.topbar::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent 4%, rgba(var(--spec-rgb), .58) 22%, rgba(255,255,255,.12) 50%, transparent 82%);
-}
-.brand {
-  color: #f5f0e7;
-  font-size: 23px;
-  font-weight: 760;
-  letter-spacing: .22em;
-  text-shadow: 0 0 24px rgba(var(--spec-rgb), .28);
-}
-.brand::after { content: "."; color: var(--spec-hot); }
-.game {
-  padding: 8px 13px;
-  border-color: var(--premium-line-strong);
-  border-radius: 7px;
-  color: color-mix(in srgb, var(--spec-hot) 62%, #b9c8d0);
-  background: rgba(255,255,255,.035);
-  box-shadow: inset 0 1px rgba(255,255,255,.035);
-}
-.game b { color: #c9c8c4; font-weight: 560; }
-.topbar nav a { color: #9d9c98; font-size: 12px; font-weight: 620; }
-.topbar nav a:hover { color: #f2eee6; }
-.search input {
-  padding: 9px 34px 9px 13px;
-  border-color: var(--premium-line);
-  border-radius: 8px;
-  background: rgba(255,255,255,.025);
-  color: #e8e4dc;
-}
-.search input:focus { border-color: rgba(var(--spec-rgb), .58); background: rgba(255,255,255,.04); }
-
 .hero {
   min-height: 158px;
   padding: 20px 32px;
@@ -1648,18 +1499,6 @@
   background: rgba(255,255,255,.014);
 }
 .issueGroup > h3 { padding: 9px 11px; border-bottom-color: var(--premium-line); background: rgba(255,255,255,.025); font-size: 9px; letter-spacing: .09em; }
-.issueRow { min-height: 64px; border-bottom-color: rgba(255,255,255,.055); background: transparent; }
-.issueRow:hover { background: rgba(255,255,255,.025); }
-.issueRow strong { color: #dddad4; }
-.issueRow p { color: #787b7e; }
-.issueRow button {
-  border-color: var(--premium-line-strong);
-  border-radius: 7px;
-  background: rgba(255,255,255,.035);
-  color: #b8b7b3;
-  clip-path: none;
-}
-.issueRow button:hover { border-color: rgba(var(--spec-rgb), .5); background: rgba(var(--spec-rgb), .09); color: #fff; }
 .plan footer { margin-top: 12px; padding: 12px 2px 0; border-top-color: var(--premium-line); color: #74777a; }
 .plan footer b { color: color-mix(in srgb, var(--spec-hot) 60%, #e8e6df); font-size: 19px; font-weight: 620; }
 .clearPlan { border-radius: 8px; }
@@ -1676,8 +1515,6 @@
 .talentIdentity b { color: #dedad3; }
 .keyChanges span { border-top-color: rgba(255,255,255,.05); color: #969795; }
 .keyChanges em { color: color-mix(in srgb, var(--spec-hot) 57%, #c6c6c2); }
-.statRow, .readinessRow { border-top-color: rgba(255,255,255,.05); }
-.statRow > i, .readinessRow > i { background: rgba(255,255,255,.07); }
 
 .bundle, .rerun, .save, .history { min-height: 150px; padding: 17px; }
 .bundle p, .rerun p, .save p { color: #74777a; }
@@ -1698,7 +1535,6 @@
 .history > div { border-top-color: rgba(255,255,255,.055); }
 .history > div b { color: #e7e3dc; }
 .history > div em { color: color-mix(in srgb, var(--spec-hot) 52%, #a8aaa8); }
-.footer { border-top-color: var(--premium-line); background: rgba(7,9,11,.72); color: #77797b; }
 
 .helpTrigger { color: #73777a; }
 .helpTrigger:hover, .helpTrigger:focus-visible { color: color-mix(in srgb, var(--spec-hot) 65%, #fff); }
@@ -1725,7 +1561,6 @@
 }
 
 @container auditPage (max-width: 1240px) {
-  .topbar { padding-inline: 22px; gap: 20px; }
   .hero { min-height: 148px; padding-inline: 22px; grid-template-columns: 76px minmax(210px, 1fr) 98px 108px 166px 112px; gap: 14px; }
   .name h1 { font-size: 36px; }
   .grid { padding-inline: 22px; gap: 16px; }
@@ -1738,8 +1573,6 @@
 }
 
 @container auditPage (max-width: 680px) {
-  .topbar { height: 54px; padding-inline: 14px; }
-  .brand { font-size: 20px; }
   .hero { min-height: auto; padding: 16px 14px 18px; grid-template-columns: 76px minmax(0, 1fr) 96px; grid-template-rows: auto auto auto; gap: 11px; }
   .profileEyebrow { margin-bottom: 4px; font-size: 7px; }
   .profileEyebrow i { width: 12px; }
@@ -1843,25 +1676,20 @@
 .modelSpecFallback::after { animation-duration: 32s; }
 
 .heroActions button,
-.issueRow button,
 .bundle > button,
 .rerun button,
 .save button,
 .scoreTiles > div,
 .itemIcon,
-.tree i,
-.armory {
+.tree i {
   transition-duration: 260ms;
   transition-timing-function: cubic-bezier(.16, 1, .3, 1);
 }
 .heroActions button,
-.issueRow button,
 .bundle > button,
 .rerun button,
-.save button,
-.armory { transform: translateZ(0); }
+.save button { transform: translateZ(0); }
 .heroActions button:active:not(:disabled),
-.issueRow button:active:not(:disabled),
 .bundle > button:active:not(:disabled),
 .rerun button:active:not(:disabled),
 .save button:active:not(:disabled) { transform: translate3d(0, 1px, 0) scale(.985); }
@@ -1873,8 +1701,7 @@
 
 .bundle,
 .auditActions,
-.history,
-.footer {
+.history {
   content-visibility: auto;
   contain-intrinsic-size: auto 150px;
 }
@@ -2052,80 +1879,6 @@
     linear-gradient(rgba(7, 9, 11, .82), rgba(7, 8, 9, .94)),
     url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center top / 720px 720px repeat;
   font-size: 14px;
-}
-
-.topbar {
-  height: 68px;
-  padding-inline: clamp(22px, 3vw, 46px);
-  gap: 30px;
-  border-top: 1px solid rgba(255, 222, 143, .17);
-  border-bottom: 2px solid #77501f;
-  background:
-    linear-gradient(90deg, rgba(var(--spec-rgb), .08), transparent 30%, transparent 70%, rgba(var(--spec-rgb), .05)),
-    linear-gradient(rgba(7, 8, 9, .92), rgba(10, 10, 10, .94)),
-    url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 620px repeat;
-  box-shadow: inset 0 -1px #1b1005, inset 0 1px rgba(255, 226, 167, .08), 0 12px 36px #000;
-}
-.topbar::before {
-  content: "";
-  position: absolute;
-  right: 22px;
-  bottom: -5px;
-  left: 22px;
-  height: 8px;
-  pointer-events: none;
-  border-radius: 50%;
-  background: linear-gradient(90deg, transparent, #a8752d 14%, #edc263 50%, #a8752d 86%, transparent);
-  opacity: .48;
-  filter: blur(.35px);
-}
-.topbar::after { display: none; }
-.brand {
-  color: #f6cf78;
-  font: 700 26px/1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums;
-  letter-spacing: .23em;
-  text-shadow: 0 2px #000, 0 0 18px rgba(224, 159, 45, .2);
-}
-.game {
-  min-height: 38px;
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid #614a28;
-  border-radius: 3px;
-  color: #67b6e8;
-  background: linear-gradient(#22201d, #0e0e0e);
-  box-shadow: inset 0 0 0 1px #070707, inset 0 1px rgba(255,255,255,.07), 0 3px 8px #000;
-}
-.game b { color: #e3d7c1; font-weight: 600; }
-.topbar nav { align-self: stretch; align-items: stretch; }
-.topbar nav a {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  color: #cfc2ad;
-  font: 600 13px/1 var(--font-ui), sans-serif;
-  text-shadow: 0 1px #000;
-}
-.topbar nav a::after {
-  content: "";
-  position: absolute;
-  right: 12%;
-  bottom: 0;
-  left: 12%;
-  height: 2px;
-  background: var(--spec-hot);
-  opacity: 0;
-  box-shadow: 0 0 10px rgba(var(--spec-rgb), .85);
-  transform: scaleX(.3);
-  transition: opacity .2s ease, transform .25s ease;
-}
-.topbar nav a:hover::after { opacity: 1; transform: scaleX(1); }
-.search input {
-  min-height: 38px;
-  border: 1px solid #55452e;
-  border-radius: 3px;
-  background: rgba(4, 5, 6, .9);
-  box-shadow: inset 0 0 0 1px #000, inset 0 2px 7px #000;
 }
 
 .hero {
@@ -2459,8 +2212,7 @@
 .history { min-height: 178px; }
 .bundle,
 .auditActions,
-.history,
-.footer {
+.history {
   content-visibility: visible;
   contain-intrinsic-size: none;
 }
@@ -2474,7 +2226,6 @@
   box-shadow: inset 0 0 0 1px #050505, inset 0 0 25px rgba(0,0,0,.82), 0 18px 46px #000;
 }
 .warcraftTooltip::before { border-color: #55401e; border-radius: 0; }
-.footer { border-top: 1px solid #5e451e; color: #9f9079; background: rgba(4,5,6,.82); }
 
 @container auditPage (max-width: 1380px) {
   .hero {
@@ -2500,7 +2251,6 @@
 }
 
 @container auditPage (max-width: 940px) {
-  .topbar nav { display: none; }
   .hero { grid-template-columns: 94px minmax(210px, 1fr) 118px; grid-template-rows: auto auto auto auto; }
   .avatar { grid-column: 1; grid-row: 1 / 3; }
   .name { grid-column: 2; grid-row: 1 / 3; }
@@ -2516,10 +2266,6 @@
 }
 
 @container auditPage (max-width: 680px) {
-  .topbar { height: 58px; padding-inline: 14px; gap: 14px; }
-  .brand { font-size: 20px; }
-  .game { display: none; }
-  .search { min-width: 120px; }
   .hero { padding: 18px 14px 20px; grid-template-columns: 82px minmax(0, 1fr); grid-template-rows: auto auto auto auto auto; gap: 12px; }
   .avatar { width: 82px; height: 82px; grid-column: 1; grid-row: 1; }
   .name { grid-column: 2; grid-row: 1; }
@@ -2551,12 +2297,9 @@
   .issue > em { grid-column: 2 / 3; }
   .issue button { grid-column: 3; min-width: 0; }
   .auditActions { grid-template-columns: 1fr; }
-  .footer { padding: 12px 14px; align-items: flex-start; flex-wrap: wrap; }
-  .footer span { width: 100%; margin-left: 25px; white-space: normal; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .topbar nav a::after,
   .itemIcon::after { transition: none; }
 }
 
@@ -2569,7 +2312,6 @@
 }
 
 .hero,
-.topbar,
 .metric,
 .scoreTiles > div {
   background-color: #0b0b0a;
@@ -3938,43 +3680,9 @@
   filter: saturate(.68) contrast(1.08);
 }
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) > *:not([data-character-book-backdrop]) { position: relative; z-index: 1; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .topbar { display: none; }
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--wow-gold-bright); outline-offset: 3px; }
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) section[id],
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) header[id] { scroll-margin-top: 92px; }
-
-.armoryNav {
-  position: sticky !important;
-  z-index: 80 !important;
-  top: 0;
-  width: min(1560px, calc(100% - 48px));
-  min-height: 74px;
-  margin: 0 auto;
-  padding: 0 18px;
-  display: flex;
-  align-items: stretch;
-  gap: 20px;
-  overflow: hidden;
-  border: 1px solid var(--wow-line);
-  border-top: 0;
-  border-radius: 0 0 18px 18px;
-  background: rgba(7, 9, 11, .88);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, .3), inset 0 -1px rgba(235, 204, 144, .04);
-  backdrop-filter: blur(22px) saturate(1.25);
-}
-.armoryNav::before { content: ""; position: absolute; inset: auto 12% 0; height: 1px; background: linear-gradient(90deg, transparent, var(--wow-gold), transparent); }
-.armoryNav::after { display: none; }
-.armoryNav > span { min-width: 230px; padding: 0 22px 0 4px; display: grid; grid-template-columns: 36px 1fr; grid-template-rows: auto auto; align-content: center; column-gap: 10px; border-right: 1px solid var(--wow-line); }
-.armoryNav > span > svg { width: 25px; height: 25px; grid-row: 1 / 3; align-self: center; color: var(--wow-gold-bright); }
-.armoryNav > span small { color: var(--wow-success); font-size: 8px; font-weight: 850; letter-spacing: .16em; text-transform: uppercase; }
-.armoryNav > span b { overflow: hidden; color: var(--wow-ivory); font: 500 16px/1.2 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; text-overflow: ellipsis; white-space: nowrap; }
-.armoryNav > div { min-width: 0; flex: 1; display: flex; justify-content: flex-end; overflow-x: auto; scrollbar-width: none; }
-.armoryNav > div::-webkit-scrollbar { display: none; }
-.armoryNav a { min-width: max-content; padding: 0 clamp(10px, 1.4vw, 22px); display: flex; align-items: center; gap: 8px; position: relative; color: var(--wow-muted); font-size: 9px; font-weight: 780; letter-spacing: .08em; text-decoration: none; text-transform: uppercase; transition: color .18s ease, background .18s ease; }
-.armoryNav a::after { content: ""; position: absolute; right: 18px; bottom: 0; left: 18px; height: 2px; background: var(--wow-gold-bright); opacity: 0; transform: scaleX(.4); transition: opacity .18s ease, transform .18s ease; }
-.armoryNav a i { width: 25px; height: 25px; display: grid; place-items: center; border: 1px solid var(--wow-line); border-radius: 50%; color: var(--wow-gold); background: rgba(201, 161, 93, .04); font-size: 8px; font-style: normal; }
-.armoryNav a:hover { color: var(--wow-ivory); background: rgba(201, 161, 93, .045); }
-.armoryNav a:hover::after, .armoryNav a:focus-visible::after { opacity: 1; transform: none; }
 
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero {
   width: min(1560px, calc(100% - 48px));
@@ -4037,15 +3745,6 @@
 
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid { width: min(1560px, calc(100% - 48px)); max-width: none; margin: 0 auto; padding: 24px 0 16px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid > * { grid-column: 1 / -1; }
-.chapterIntro { min-height: 116px; margin-top: 30px; padding: 22px 4px 14px; display: grid; grid-template-columns: 54px 48px minmax(0, 1fr) minmax(80px, .35fr); align-items: center; gap: 16px; border-bottom: 1px solid var(--wow-line); }
-.chapterIndex { color: rgba(239, 211, 154, .4); font: 500 26px/1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
-.chapterIcon { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid var(--wow-line-strong); border-radius: 14px; color: var(--wow-gold-bright); background: rgba(201, 161, 93, .06); transform: rotate(45deg); }
-.chapterIcon svg { width: 19px; transform: rotate(-45deg); }
-.chapterIntro div { min-width: 0; }
-.chapterIntro small { color: var(--wow-gold); font-size: 9px; font-weight: 850; letter-spacing: .18em; text-transform: uppercase; }
-.chapterIntro h2 { margin: 5px 0 4px; color: var(--wow-ivory); font: 500 clamp(26px, 3vw, 38px)/1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; letter-spacing: -.025em; }
-.chapterIntro p { max-width: 780px; margin: 0; color: var(--wow-muted); font-size: 12px; line-height: 1.5; }
-.chapterIntro > i { height: 1px; background: linear-gradient(90deg, var(--wow-line-strong), transparent); }
 
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel,
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationEmbed { border: 1px solid var(--wow-line); border-top-color: var(--wow-line-strong); border-radius: var(--wow-radius); clip-path: none; background: var(--wow-surface); box-shadow: inset 0 1px rgba(255, 235, 197, .04), var(--wow-shadow); }
@@ -4076,40 +3775,23 @@
 .rotationBridge small { color: var(--wow-gold); }
 .rotationBridge strong { color: var(--wow-ivory); }
 .rotationBridge > b { border-color: rgba(132, 194, 147, .3); color: var(--wow-success); background: rgba(132, 194, 147, .055); }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer { width: min(1560px, calc(100% - 48px)); min-height: 64px; margin: 24px auto 0; padding: 0 18px; border: 1px solid var(--wow-line); border-radius: 14px; color: var(--wow-muted); background: rgba(8, 10, 12, .74); }
 
 @container auditPage (max-width: 1180px) {
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { grid-template-columns: 104px minmax(240px, 1fr) 132px 132px; grid-template-areas: "sync sync sync sync" "avatar identity itemlevel mythic" "avatar identity actions actions" "live live live live" "evidence evidence evidence evidence"; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions { grid-template-columns: 1fr 1fr; }
   .realProfileStatus { justify-self: start; }
-  .armoryNav > span { min-width: 190px; }
-  .armoryNav a { padding-inline: 12px; }
 }
 @container auditPage (max-width: 820px) {
-  .armoryNav { width: calc(100% - 24px); min-height: 64px; padding: 0 10px; border-radius: 0 0 14px 14px; }
-  .armoryNav > span { min-width: 150px; padding-right: 10px; }
-  .armoryNav > span small { display: none; }
-  .armoryNav a { padding-inline: 10px; font-size: 0; }
-  .armoryNav a i { font-size: 8px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { width: calc(100% - 24px); min-height: 0; margin-top: 16px; padding: 22px; grid-template-columns: 86px minmax(0, 1fr); grid-template-areas: "sync sync" "avatar identity" "itemlevel mythic" "actions actions" "live live" "evidence evidence"; gap: 14px; border-radius: 20px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar { width: 78px; height: 78px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name h1 { font-size: clamp(34px, 10vw, 52px); }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .metric { min-height: 78px; }
   .realProfileEvidence { grid-template-columns: 1fr 1fr; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid { width: calc(100% - 24px); gap: 12px; }
-  .chapterIntro { grid-template-columns: 42px 42px 1fr; min-height: 104px; margin-top: 18px; padding-inline: 0; }
-  .chapterIntro > i { display: none; }
-  .chapterIcon { width: 40px; height: 40px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel { min-height: 690px; padding: 14px; border-radius: 14px; }
   .gearWorkbench { min-height: 640px; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer { width: calc(100% - 24px); }
 }
 @container auditPage (max-width: 560px) {
-  .armoryNav { position: relative !important; width: 100%; min-height: 62px; border-inline: 0; border-radius: 0; }
-  .armoryNav > span { display: none; }
-  .armoryNav > div { width: 100%; justify-content: space-between; }
-  .armoryNav a { min-width: 0; padding: 6px 3px; flex: 1; flex-direction: column; justify-content: center; gap: 3px; font-size: 7px; letter-spacing: .02em; }
-  .armoryNav a i { width: 21px; height: 21px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { width: 100%; margin-top: 0; padding: 18px 14px 22px; grid-template-columns: 64px minmax(0, 1fr); border-inline: 0; border-radius: 0 0 18px 18px; }
   .connectionDock { margin: 0 -2px; }
   .importedBanner { align-items: flex-start; flex-wrap: wrap; }
@@ -4127,15 +3809,8 @@
   .realProfileEvidence > div { min-height: 72px; padding: 10px 11px; }
   .realProfileEvidence b { font-size: 15px !important; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid { width: calc(100% - 16px); }
-  .chapterIntro { grid-template-columns: 36px minmax(0, 1fr); gap: 11px; }
-  .chapterIndex { display: none; }
-  .chapterIcon { width: 34px; height: 34px; border-radius: 10px; }
-  .chapterIntro h2 { font-size: 25px; }
-  .chapterIntro p { font-size: 10px; }
   .rotationBridge { grid-template-columns: 30px 1fr; }
   .rotationBridge > b { grid-column: 2; justify-self: start; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer { width: calc(100% - 16px); padding: 12px; align-items: flex-start; flex-direction: column; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer span { margin-left: 0; white-space: normal; }
 }
 @media (prefers-reduced-motion: reduce) {
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]), .audit[data-profile-source="battle-net"]:not([data-character-atlas]) *, .audit[data-profile-source="battle-net"]:not([data-character-atlas]) *::before, .audit[data-profile-source="battle-net"]:not([data-character-atlas]) *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -4221,38 +3896,6 @@
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(h1, h2, h3) { font-family: var(--wow-title); }
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(button, input, select, textarea) { font-family: var(--wow-ui); }
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(button, a) { -webkit-tap-highlight-color: transparent; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav {
-  min-height: 66px;
-  padding: 8px 18px;
-  gap: 16px;
-  border: 1px solid #78684e;
-  border-top: 0;
-  border-radius: 0 0 3px 3px;
-  background: linear-gradient(#26211ac9, #100e0be6), url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 400px;
-  box-shadow: inset 0 -2px #080705, 0 2px #b09356, 0 8px 20px #0008;
-  backdrop-filter: none;
-}
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav::before { display: none; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span { min-width: 185px; border-right-color: #655437; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span small { color: #cfb67b; font: 11px/1.3 var(--wow-ui); letter-spacing: .06em; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span b { font: 18px/1.25 var(--wow-title); color: #ffe5aa; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > div { align-items: center; gap: 4px; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a {
-  min-height: 36px;
-  padding: 6px 13px;
-  align-self: center;
-  color: #e0ca9b;
-  font: 14px/1.2 var(--wow-title);
-  text-transform: none;
-  letter-spacing: 0;
-  background:
-    url("/assets/wow/ui-textures/character/quest-tab-left.png") left bottom / 8px 36px no-repeat,
-    url("/assets/wow/ui-textures/character/quest-tab-right.png") right bottom / 8px 36px no-repeat,
-    url("/assets/wow/ui-textures/character/quest-tab-middle.png") center bottom / 64px 36px repeat-x;
-}
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a i { display: none; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a::after { display: none; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:hover { color: #fff0bc; filter: brightness(1.28); }
 
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero {
   min-height: 350px;
@@ -4410,34 +4053,6 @@
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence small { color: #654426; font: 12px/1.4 var(--wow-ui); text-transform: none; letter-spacing: 0; }
 
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .grid { gap: 16px; padding-top: 16px; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro {
-  min-height: 118px;
-  margin-top: 24px;
-  padding: 24px 32px;
-  grid-template-columns: 30px 42px minmax(0, 1fr) minmax(40px, .2fr);
-  gap: 16px;
-  border: 0;
-  border-radius: 2px;
-  color: var(--wow-ink);
-  background: var(--wow-paper);
-  box-shadow: 0 10px 24px #0008;
-}
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIndex { color: #74502a; font: 700 19px/1 var(--wow-title); }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIcon {
-  width: 42px;
-  height: 42px;
-  border: 0;
-  border-radius: 0;
-  color: #f6d997;
-  background: url("/assets/wow/ui-textures/character/gold-ring.png") center / contain no-repeat, radial-gradient(circle, #332211 53%, transparent 55%);
-  box-shadow: none;
-  transform: none;
-}
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIcon svg { width: 18px; transform: none; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro small { color: #715027; font: 11px/1.4 var(--wow-ui); letter-spacing: .06em; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro h2 { margin: 3px 0 5px; color: #3e2511; font: 700 clamp(24px, 2.4vw, 31px)/1.15 var(--wow-title); letter-spacing: -.015em; text-shadow: 0 1px #ffe9b766; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro p { max-width: 760px; color: #64472a; font: 13px/1.5 var(--wow-ui); }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro > i { background: linear-gradient(90deg, #76502788, transparent); }
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) :is(.gearPanel, .rotationEmbed) {
   border: 1px solid #81623a;
   border-radius: 2px;
@@ -4527,7 +4142,6 @@
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationBridge small { color: #ba9d65; font: 11px/1.4 var(--wow-ui); letter-spacing: .03em; }
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationBridge strong { color: #f0dbaf; font: 700 16px/1.4 var(--wow-title); }
 .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationBridge > b { border: 0; color: #b7cd92; background: none; font: 12px/1.4 var(--wow-ui); white-space: normal; }
-.audit[data-profile-source="battle-net"]:not([data-character-atlas]) .footer { min-height: 54px; border: 0; border-top: 1px solid #6b5433; border-radius: 0; background: none; color: #634522; font: 12px/1.5 var(--wow-ui); }
 
 @container auditPage (min-width: 821px) {
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench .gearList { gap: 6px; }
@@ -4537,24 +4151,14 @@
 
 @container auditPage (max-width: 1180px) {
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { grid-template-columns: 92px minmax(200px, 1fr) 132px 132px; grid-template-areas: "sync sync sync sync" "avatar identity itemlevel mythic" "avatar identity actions actions" "live live live live" "evidence evidence evidence evidence"; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span { min-width: 155px; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a { padding-inline: 10px; font-size: 13px; }
 }
 @container auditPage (max-width: 820px) {
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav { padding-inline: 10px; gap: 8px; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > span { display: none; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > div { justify-content: space-between; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a { padding-inline: 9px; font-size: 12px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .hero { padding: 28px; min-height: 0; grid-template-columns: 80px repeat(2, minmax(0, 1fr)); grid-template-areas: "sync sync sync" "avatar identity identity" "itemlevel itemlevel mythic" "actions actions actions" "live live live" "evidence evidence evidence"; border-radius: 2px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .avatar { width: 68px; height: 68px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .name h1 { font-size: 36px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence { row-gap: 12px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence > div:nth-child(2) { border-right: 0; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence > div:nth-child(3) { padding-left: 0; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro { padding: 24px; grid-template-columns: 36px minmax(0,1fr); gap: 12px; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIndex,
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro > i { display: none; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIcon { width: 36px; height: 36px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel { padding: 24px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench {
     min-height: 630px;
@@ -4566,13 +4170,6 @@
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .rotationEmbed { padding: 20px; }
 }
 @container auditPage (max-width: 560px) {
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav { padding: 5px 6px; min-height: 0; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav > div { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: 36px; gap: 3px; overflow: visible; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a { min-width: 0; min-height: 36px; grid-column: span 2; padding: 4px 5px; justify-content: center; flex-direction: row; font-size: 12px; line-height: 1.1; text-align: center; white-space: normal; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:nth-child(4):nth-last-child(2),
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:nth-child(5):last-child { grid-column: span 3; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:first-child:nth-last-child(4),
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .armoryNav a:first-child:nth-last-child(4) ~ a { grid-column: span 3; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner { min-height: 34px; padding-bottom: 9px; align-items: center; flex-wrap: nowrap; gap: 5px; font-size: 11px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner > svg { width: 15px; height: 15px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .importedBanner span { display: none; }
@@ -4604,9 +4201,6 @@
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .heroActions button { padding-inline: 10px; font-size: 12px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence > div { min-height: 60px; padding-inline: 12px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .realProfileEvidence b { font-size: 19px !important; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro { margin-top: 12px; min-height: 120px; padding: 24px 20px; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro h2 { font-size: 24px; }
-  .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .chapterIntro p { font-size: 12px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearPanel { padding: 24px 12px; }
   .audit[data-profile-source="battle-net"]:not([data-character-atlas]) .gearWorkbench {
     min-height: 550px;
@@ -4998,100 +4592,12 @@
 
 /* A single manuscript on the supplied book, not independent cards over art.
    These tokens are shared by the embedded calculators, logs and rotation lab. */
-.pageContents { display: contents; }
 .audit[data-character-book="open"] {
   isolation: isolate;
   container-type: normal;
   container-name: none;
   padding-bottom: 0;
   --wow-paper: var(--folio-paper);
-}
-.audit[data-character-book="open"] .armoryNav {
-  flex-wrap: wrap;
-  width: 100%;
-  min-height: 64px;
-  margin: 0 auto 24px;
-  padding: 8px 20px;
-  overflow: visible;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  isolation: isolate;
-}
-.audit[data-character-book="open"] .armoryNav [data-language-switch] {
-  flex: 0 0 auto; width: auto; min-width: 0; display: flex; align-items: center; gap: 2px;
-  padding: 3px; border: 1px solid #9b8964; background: #171e20; overflow: visible;
-}
-.audit[data-character-book="open"] .armoryNav [data-language-switch] a {
-  min-width: 44px; min-height: 40px; padding: 4px 8px; flex: none; border: 0;
-  font: 700 12px/1.2 var(--folio-title); letter-spacing: .06em;
-}
-.audit[data-character-book="open"] .armoryNav [data-language-switch] a[aria-current="page"] {
-  color: #f0e3c6; background: #48463c; box-shadow: inset 0 0 0 1px #a49371;
-}
-@container auditPage (max-width: 1140px) {
-  .audit[data-character-book="open"] .armoryNav > span { display: grid; flex: 1; min-width: 0; border: 0; }
-  .audit[data-character-book="open"] .armoryNav > div:not([data-language-switch]) { order: 3; flex-basis: 100%; }
-  .audit[data-character-book="open"] .armoryNav [data-language-switch] a { min-height: 44px; }
-}
-.audit[data-character-book="open"] .armoryNav::before {
-  content: "";
-  display: block;
-  position: absolute;
-  z-index: -1;
-  inset: 0 -10px;
-  height: auto;
-  border-block: 1px solid #ae884a;
-  background: linear-gradient(#282d2cf5, #151b1dfa), url("/assets/wow/ui-textures/character/ui-background-rock-optimized.webp") center / 440px;
-  box-shadow: 0 5px 10px #321a0c55, inset 0 1px #efd09933;
-  clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 50%, 100% 100%, 0 100%, 5px 50%);
-  pointer-events: none;
-}
-.audit[data-character-book="open"] .armoryNav a {
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  background: none;
-  box-shadow: none;
-  color: #e6cca0;
-  font: 14px/1.3 var(--folio-title);
-}
-.audit[data-character-book="open"] .armoryNav a:hover,
-.audit[data-character-book="open"] .armoryNav a:focus-visible {
-  color: #fff1cc;
-  border-bottom-color: #d6c186;
-  background: #b4a27626;
-}
-.audit[data-character-book="open"] .armoryNav a::before,
-.audit[data-character-book="open"] .armoryNav a::after { display: none; }
-.audit[data-character-book="open"] .armoryNav a i {
-  display: inline;
-  width: auto;
-  height: auto;
-  padding: 0;
-  margin-right: 6px;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  color: #b3925c;
-  font: 10px/1 var(--folio-title);
-}
-.manuscript {
-  position: relative;
-  isolation: isolate;
-  min-width: 0;
-  padding: 24px clamp(16px, 2.5vw, 40px) 32px;
-  color: var(--folio-ink);
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-.manuscript::before {
-  content: none;
 }
 .audit[data-character-book="open"] :is(section, header)[id] { scroll-margin-top: 92px; }
 .audit[data-character-book="open"] .hero {
@@ -5141,56 +4647,6 @@
   gap: 24px;
   padding-top: 0;
 }
-.audit[data-character-book="open"] .chapterIntro {
-  position: relative;
-  min-height: 132px;
-  margin-top: 32px;
-  padding: 24px 8px 8px;
-  grid-template-columns: 56px minmax(0, 1fr) 40px;
-  gap: 20px;
-  border: 0;
-  border-top: 3px double var(--folio-line);
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-.audit[data-character-book="open"] .chapterIntro > :global([class*="warcraftFrame"]) { display: none; }
-.audit[data-character-book="open"] .chapterIntro::before {
-  content: "";
-  position: absolute;
-  top: -5px;
-  left: 50%;
-  width: 7px;
-  height: 7px;
-  border: 1px solid #886032;
-  background: #d0ad73;
-  transform: translateX(-50%) rotate(45deg);
-}
-.audit[data-character-book="open"] .chapterIndex {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 64px;
-  color: #732e1d;
-  border: 3px double #8c673e80;
-  border-radius: 1px;
-  background: #c0985330;
-  font: 700 32px/1 var(--folio-title);
-  text-shadow: 1px 1px #f7e4b9;
-}
-.audit[data-character-book="open"] .chapterIcon {
-  grid-column: 3;
-  grid-row: 1;
-  opacity: .7;
-  width: 36px;
-  height: 36px;
-  color: #634323;
-  background: none;
-}
-.audit[data-character-book="open"] .chapterIntro > div { grid-column: 2; grid-row: 1; }
-.audit[data-character-book="open"] .chapterIntro > i { display: none; }
-.audit[data-character-book="open"] .chapterIntro h2 { font-size: clamp(26px, 2.5vw, 34px); }
-.audit[data-character-book="open"] .chapterIntro small { color: #7a3522; letter-spacing: .12em; }
 .audit[data-character-book="open"] :is(.gearPanel, .rotationEmbed) {
   border: 0;
   border-radius: 0;
@@ -5473,19 +4929,10 @@
 @media (prefers-reduced-motion: reduce) {
   .warcraftTooltip[data-character-book="open"] { animation: none; }
 }
-.audit[data-character-book="open"] .footer {
-  width: 100%;
-  margin: 40px auto 0;
-  padding: 24px 8px 0;
-  border-top: 3px double var(--folio-line);
-  color: var(--folio-muted);
-  background: none;
-}
 .audit[data-character-book="open"] :is(.hero, .armoryNav) :is(button, a):focus-visible {
   outline: 2px solid #843c23;
   outline-offset: 3px;
 }
-.audit[data-character-book="open"] .armoryNav a:focus-visible { outline-color: #efd299; }
 
 /* Final material pass for the authenticated folio. Keep status colour semantic,
    but print every ordinary panel on the same slightly cool vellum leaf. */
@@ -5564,13 +5011,7 @@
   color: var(--folio-muted);
 }
 @container auditPage (max-width: 820px) {
-  .manuscript { padding: 20px 20px 28px; }
-  .audit[data-character-book="open"] .armoryNav { padding-inline: 8px; }
-  .audit[data-character-book="open"] .armoryNav a { padding-inline: 8px; font-size: 13px; }
   .audit[data-character-book="open"] .hero { padding: 20px 0; }
-  .audit[data-character-book="open"] .chapterIntro { padding: 24px 0 8px; grid-template-columns: 48px minmax(0, 1fr); gap: 16px; }
-  .audit[data-character-book="open"] .chapterIndex { width: 48px; height: 56px; font-size: 28px; }
-  .audit[data-character-book="open"] .chapterIcon { display: none; }
   .audit[data-character-book="open"] .gearPanel { padding-inline: 0; }
   .audit[data-character-book="open"] .equipmentStats > div { min-height: 84px; padding: 10px 12px; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; }
   .audit[data-character-book="open"] .equipmentStats > div > i { width: 44px; height: 44px; }
@@ -5585,21 +5026,12 @@
   }
 }
 @container auditPage (max-width: 560px) {
-  .manuscript { padding: 16px 12px 24px; }
-  .audit[data-character-book="open"] .armoryNav { margin-bottom: 20px; }
-  .audit[data-character-book="open"] .armoryNav::before { inset-inline: -6px; }
-  .audit[data-character-book="open"] .armoryNav a { padding: 8px 6px; font-size: 12px; }
-  .audit[data-character-book="open"] .armoryNav a i { margin-right: 3px; }
   .audit[data-character-book="open"] .hero { margin-top: 0; padding: 16px 0; }
   .audit[data-character-book="open"] .name h1 { font-size: 34px; }
   .audit[data-character-book="open"] .name > small b { display: inline-block; margin-inline: 4px; vertical-align: middle; }
   .audit[data-character-book="open"] .metric { padding-inline: 10px; }
   .audit[data-character-book="open"] .metric b { font-size: 28px; }
   .audit[data-character-book="open"] .grid { gap: 16px; }
-  .audit[data-character-book="open"] .chapterIntro { margin-top: 24px; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; }
-  .audit[data-character-book="open"] .chapterIndex { width: 36px; height: 48px; font-size: 24px; }
-  .audit[data-character-book="open"] .chapterIntro h2 { font-size: 25px; }
-  .audit[data-character-book="open"] .chapterIntro p { font-size: 12px; }
   .audit[data-character-book="open"] .equipmentStats { padding: 4px; }
   .audit[data-character-book="open"] .equipmentStats > div { min-height: 82px; padding: 8px 4px; grid-template-columns: 32px minmax(0, 1fr); gap: 6px; }
   .audit[data-character-book="open"] .equipmentStats > div > i { width: 32px; height: 32px; }
@@ -5645,7 +5077,6 @@
   .audit[data-character-book="open"] .gearWorkbench .gearList .gearCopy > b { font-size: 11px; }
   .audit[data-character-book="open"] .gearWorkbench .modelFrame { border-width: 26px; border-image-width: 26px; }
   .audit[data-character-book="open"] .gearWorkbench .weaponPair { grid-row: 3; }
-  .audit[data-character-book="open"] .footer { padding-inline: 0; }
 }
 
 /* Connection and diagnostics also respect the binding, including long API
@@ -5682,17 +5113,8 @@
   gap: 16px var(--book-gutter);
   overflow: visible;
 }
-.audit[data-profile-source="battle-net"][data-character-book="open"] .hero .identity {
-  grid-area: identity;
-  align-items: center;
-}
-.audit[data-profile-source="battle-net"][data-character-book="open"] .hero .metrics { grid-area: metrics; }
-.audit[data-profile-source="battle-net"][data-character-book="open"] .hero .actions { grid-area: actions; }
 .audit[data-profile-source="battle-net"][data-character-book="open"] .hero .realProfileStatus { grid-area: live; }
 .audit[data-profile-source="battle-net"][data-character-book="open"] .hero .realProfileEvidence { grid-area: evidence; }
-.audit[data-profile-source="battle-net"][data-character-book="open"] .hero .metrics > :is(.itemLevelMetric, .mythicMetric) {
-  grid-area: auto;
-}
 .audit[data-profile-source="battle-net"][data-character-book="open"] .avatar {
   align-self: center;
   width: 82px;
@@ -6027,38 +5449,10 @@
 .audit[data-profile-source="battle-net"][data-character-book="open"] .metric b {
   color: var(--folio-ink);
 }
-.audit[data-profile-source="battle-net"][data-character-book="open"] .chapterIntro {
-  min-height: 112px;
-  margin-top: 28px;
-  padding: 22px 8px 10px;
-  border-top: 3px double var(--folio-line);
-  border-bottom: 1px solid var(--folio-faint-rule);
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-.audit[data-profile-source="battle-net"][data-character-book="open"] .chapterIntro h2 {
-  color: var(--folio-ink);
-  font-family: var(--folio-title);
-  text-shadow: 0 1px #fff2d4a8;
-}
-.audit[data-profile-source="battle-net"][data-character-book="open"] .chapterIntro p {
-  color: var(--folio-muted);
-  font-family: var(--folio-body);
-}
-.audit[data-profile-source="battle-net"][data-character-book="open"] .chapterIntro small {
-  color: var(--folio-rubric);
-  font-family: var(--folio-body);
-}
 
 @container auditPage (max-width: 820px) {
   .audit[data-profile-source="battle-net"][data-character-book="open"] .hero {
     padding: 16px 0 20px;
-  }
-  .audit[data-profile-source="battle-net"][data-character-book="open"] .chapterIntro {
-    min-height: 96px;
-    margin-top: 22px;
-    padding: 18px 0 8px;
   }
 }
 

@@ -88,7 +88,8 @@
     "design:compare": "node scripts/compare-design.mjs",
     "test:cms": "node --experimental-strip-types --no-warnings --test tests/cms/*.test.ts",
     "test:cms:revalidate-e2e": "node tests/cms/revalidate-e2e.mjs",
-    "test:cms:readers-e2e": "node --experimental-strip-types --no-warnings tests/cms/readers-e2e.mjs"
+    "test:cms:readers-e2e": "node --experimental-strip-types --no-warnings tests/cms/readers-e2e.mjs",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.11",
@@ -115,6 +116,8 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.8",
     "openapi-typescript": "^7.0.0",
     "pixelmatch": "^7.2.0",
     "playwright": "^1.62.1",

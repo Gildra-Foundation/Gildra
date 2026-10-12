@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ExternalLink, Flame, HeartPulse, MapPin, Shield, Swords } from "lucide-react";
-import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasNotice, AtlasSection } from "@/components/atlas";
+import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable } from "@/components/atlas";
 import { difficulties, type BossGuide, type VerifiedAbilityIdentity } from "@/data/venomousAbyss";
 import { EncounterSwitcher, RaidPager } from "./RaidNavigation";
 import { lootBandIndexForBoss, raidLootBands, tierRewards, venomousRaidLootSource, venomousRaidVerifiedAt } from "./venomousAbyssIntel";
@@ -142,16 +142,18 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
 
       <AtlasSection id="loot" title={copy.rewardTitle} description={copy.rewardText}>
         <div className={styles.lootGrid}>
-          <div className={styles.tableWrap} role="region" aria-label={copy.rewardText} tabIndex={0}>
-            <table className={styles.table} data-testid="encounter-loot-band">
-              <thead><tr><th scope="col">{copy.difficulty}</th><th scope="col">{copy.itemLevel}</th><th scope="col">{copy.track}</th></tr></thead>
-              <tbody>
-                {raidLootBands.map((row) => (
-                  <tr key={row.difficulty.en}><th scope="row">{row.difficulty[locale]}</th><td>{row.levels[lootBandIndex]}</td><td>{row.track}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AtlasTable
+            label={copy.rewardText}
+            testId="encounter-loot-band"
+            layout="cards"
+            rows={raidLootBands}
+            rowKey={(row) => row.difficulty.en}
+            columns={[
+              { key: "difficulty", header: copy.difficulty, rowHeader: true, cell: (row) => row.difficulty[locale] },
+              { key: "level", header: copy.itemLevel, numeric: true, cell: (row) => row.levels[lootBandIndex] },
+              { key: "track", header: copy.track, cell: (row) => row.track },
+            ]}
+          />
           <div className={styles.lootNotes}>
             {tierReward ? <p className={styles.tier}><span>{copy.tierReward}</span><strong>{tierReward[locale]}</strong></p> : null}
             <p className={styles.footnote}>

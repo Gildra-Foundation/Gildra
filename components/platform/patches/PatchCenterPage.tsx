@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Activity, ArrowRight, Bookmark, Check, ChevronRight, Filter, Flame, Radio, ShieldCheck, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { Activity, ArrowRight, Bookmark, Check, Filter, Flame, Radio, ShieldCheck, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { PlatformHeader } from "@/components/platform/home/PlatformHeader";
 import { PlatformMotion } from "@/components/platform/home/PlatformMotion";
 import homeStyles from "@/components/platform/home/rotationPageShell.module.css";

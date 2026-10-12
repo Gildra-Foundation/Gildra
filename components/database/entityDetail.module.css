@@ -234,21 +234,6 @@
 .versionPicker button:focus-visible,
 .versionPicker select:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
-.tableBox { overflow-x: auto; border: 1px solid var(--atlas-line-soft); }
-
-.table {
-  width: 100%;
-  min-width: 520px;
-  border-collapse: collapse;
-  color: var(--atlas-text);
-  font-size: var(--atlas-text-small);
-}
-
-.table th,
-.table td { padding: 10px 12px; border-bottom: 1px solid var(--atlas-line-soft); text-align: start; vertical-align: top; overflow-wrap: anywhere; }
-.table thead th { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 600; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.table tbody th { width: 24%; color: var(--atlas-text-strong); font-weight: 600; }
-
 .versionList { display: grid; margin: 0; padding: 0; list-style: none; }
 
 .versionList li {

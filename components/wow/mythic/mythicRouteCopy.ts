@@ -183,9 +183,9 @@ const en: MythicRouteCopy = {
   breadcrumbsLabel: "Breadcrumbs",
   hub: "Mythic+",
   season: "Midnight · Season 2",
-  eyebrow: () => "Dungeon route · Patch 12.1",
+  eyebrow: (location) => `Dungeon route · ${location} · Patch 12.1`,
   goal: "Goal:",
-  goalText: (_description, bosses) => `Defeat ${bosses === 1 ? "the boss" : `all ${bosses} bosses`}, reach 100% enemy forces and finish the route before the timer runs out.`,
+  goalText: (description) => description,
   keyLevelLabel: "Key level",
   controlsLabel: "Route settings",
   edit: "Edit route",
@@ -196,7 +196,7 @@ const en: MythicRouteCopy = {
   downloadJson: "Download JSON",
   resetRoute: "Reset route",
   draftTitle: "This route is a draft",
-  draftText: "Blizzard has confirmed only the season's dungeon list. The route, enemy forces, timings and mechanic tips are our draft — check them in game. Step notes are in Russian for now.",
+  draftText: "Blizzard has confirmed only the season's dungeon list. The route, enemy forces, timings and mechanic tips are our draft — check them in game.",
   draftSource: "Blizzard · Midnight Season 2",
 
   summaryLabel: "Run summary",
@@ -414,11 +414,12 @@ export function stopSubtitle(subtitle: string, locale: RouteLocale) {
 }
 
 export function floorLabel(label: string, locale: RouteLocale) {
-  return locale === "ru" ? label : floorLabels[label] ?? "";
+  return locale === "ru" ? label : floorLabels[label] ?? label;
 }
 
 /** Route notes are written by players for players; this keeps the Russian notes free of raid slang. */
-export function plainLanguage(text: string) {
+export function plainLanguage(text: string, locale: RouteLocale = "ru") {
+  if (locale === "en") return text;
   return text
     .replaceAll("Стакайте пак", "Соберите врагов вместе")
     .replaceAll("Стак у стены", "Соберитесь у стены")

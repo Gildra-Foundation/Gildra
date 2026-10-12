@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState, type ImgHTMLAttributes, type ReactNode } from "react";
 
-type ResilientImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
+type ResilientImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt"> & {
   src?: string | null;
+  /** Required: describe the image, or "" when it is decorative. */
+  alt: string;
   fallback?: ReactNode;
 };
 
 /** Keeps stale catalog media from turning into the browser's broken-image glyph. */
-export function ResilientImage({ src, fallback = null, onError, decoding = "async", ...props }: ResilientImageProps) {
+export function ResilientImage({ src, alt, fallback = null, onError, decoding = "async", ...props }: ResilientImageProps) {
   const normalizedSrc = normalizeMediaSrc(src);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -24,6 +26,7 @@ export function ResilientImage({ src, fallback = null, onError, decoding = "asyn
   return (
     <img
       ref={imageRef}
+      alt={alt}
       {...props}
       src={normalizedSrc}
       decoding={decoding}

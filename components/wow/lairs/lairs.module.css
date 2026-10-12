@@ -258,44 +258,13 @@
   font-weight: var(--atlas-weight-display);
 }
 
-.lootScroller {
-  overflow-x: auto;
-  border: 1px solid var(--atlas-line);
-  background: var(--atlas-surface);
-}
+/* Loot uses AtlasTable; only the item cell and the armour line are local. */
+.lootTable table { min-width: 640px; }
+.lootArmor { display: block; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 
-.loot {
-  width: 100%;
-  min-width: 640px;
-  border-collapse: collapse;
-  font-size: var(--atlas-text-small);
+@media (max-width: 600px) {
+  .lootTable table { min-width: 0; }
 }
-
-.loot thead th {
-  padding: var(--atlas-space-3) var(--atlas-space-4);
-  color: var(--atlas-text-subtle);
-  border-bottom: 1px solid var(--atlas-line);
-  background: var(--atlas-surface-raised);
-  font-size: var(--atlas-text-label);
-  font-weight: 650;
-  letter-spacing: .1em;
-  text-align: left;
-  text-transform: uppercase;
-}
-
-.loot tbody th,
-.loot td {
-  padding: var(--atlas-space-2) var(--atlas-space-4);
-  color: var(--atlas-text);
-  border-bottom: 1px solid var(--atlas-line-soft);
-  font-weight: 400;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.loot tbody tr:last-child > * { border-bottom: 0; }
-.loot tbody tr:hover > * { background: var(--atlas-accent-wash); }
-.loot td small { display: block; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 
 .lootItem { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
 .lootItem img { flex: none; border: 1px solid var(--atlas-line); }

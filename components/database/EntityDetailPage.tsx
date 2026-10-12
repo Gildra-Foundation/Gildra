@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AtlasFrame, AtlasHero, AtlasMetaList, AtlasNotice, AtlasSection } from "@/components/atlas";
+import { AtlasFrame, AtlasHero, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable } from "@/components/atlas";
 import { AtlasDisclosure } from "@/components/atlas";
 import { PageShell } from "@/components/layout/PageShell";
 import { ResilientImage } from "@/components/media/ResilientImage";
@@ -198,12 +198,17 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
               ) : <p className={styles.note}>{copy.oneBuild}</p>}
               {comparison ? (
                 comparison.changes.length ? (
-                  <div className={styles.tableBox}>
-                    <table className={styles.table}>
-                      <thead><tr><th scope="col">{copy.field}</th><th scope="col">{versionLabel(comparison.from)}</th><th scope="col">{versionLabel(comparison.to)}</th></tr></thead>
-                      <tbody>{comparison.changes.map((change) => <tr key={change.field}><th scope="row">{change.label}</th><td>{displayValue(change.before, copy)}</td><td>{displayValue(change.after, copy)}</td></tr>)}</tbody>
-                    </table>
-                  </div>
+                  <AtlasTable
+                    label={copy.compare}
+                    layout="cards"
+                    rows={comparison.changes}
+                    rowKey={(change) => change.field}
+                    columns={[
+                      { key: "field", header: copy.field, rowHeader: true, cell: (change) => change.label },
+                      { key: "from", header: versionLabel(comparison.from), cell: (change) => displayValue(change.before, copy) },
+                      { key: "to", header: versionLabel(comparison.to), cell: (change) => displayValue(change.after, copy) },
+                    ]}
+                  />
                 ) : <p className={styles.note}>{copy.noChanges}</p>
               ) : null}
               {versions.length ? (

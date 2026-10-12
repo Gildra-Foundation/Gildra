@@ -99,13 +99,6 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
   background-color: var(--atlas-surface) !important;
 }
 .workspace-content.gildra-atlas [data-api-console] input { color: var(--atlas-text) !important; }
-body:has(.workspace-content[data-atlas-theme="dark"]) .cookie.cookie-book {
-  background: #090a0b;
-  border-color: rgba(157, 112, 48, .45);
-  color: #d9d0c0;
-  box-shadow: 0 12px 32px #0005;
-}
-body:has(.workspace-content[data-atlas-theme="dark"]) .cookie.cookie-book .cookie-text a { color: #f0b55a; }
 @media (max-width: 760px) {
   .workspace-content.gildra-atlas .section { padding-inline: 16px; }
   .workspace-content.gildra-atlas .route-section { padding-top: 24px; }

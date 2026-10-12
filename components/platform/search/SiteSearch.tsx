@@ -1,0 +1,74 @@
+"use client";
+
+import { useEffect, useEffectEvent, useState, useSyncExternalStore, type ComponentType } from "react";
+import { usePathname } from "next/navigation";
+import { Search } from "lucide-react";
+import { pageTitle, rememberPage } from "./recentPages";
+import { siteSearchCopy, type SiteSearchLang } from "./siteSearchCopy";
+import styles from "./siteSearch.module.css";
+
+type DialogComponent = ComponentType<{ onClose: () => void; lang: SiteSearchLang }>;
+let dialogLoad: Promise<DialogComponent> | null = null;
+const loadDialog = () => (dialogLoad ??= import("./SiteSearchDialog").then((module) => module.SiteSearchDialog).catch((error: unknown) => {
+  dialogLoad = null;
+  throw error;
+}));
+
+const noSubscribe = () => () => {};
+const isApple = () => /Mac|iPhone|iPad/.test(navigator.platform);
+
+/**
+ * Quick search of the toolbar: ⌘K / Ctrl+K anywhere, "/" when not typing.
+ * The dialog and the index load on first use (hover or focus warms them).
+ * `hotkeysOnly` keeps the shortcuts on pages whose toolbar is their own scene
+ * (the landing page) without drawing a button there. Also remembers the inner
+ * pages the reader opens for the dialog's "Recently opened".
+ */
+export function SiteSearch({ hotkeysOnly = false }: { hotkeysOnly?: boolean }) {
+  const pathname = usePathname();
+  const lang: SiteSearchLang = /^\/ru(?:\/|$)/.test(pathname) ? "ru" : "en";
+  const copy = siteSearchCopy[lang];
+  // The dialog belongs to the page it was opened on, so any navigation closes it.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === pathname;
+  const [Dialog, setDialog] = useState<DialogComponent | null>(null);
+  const apple = useSyncExternalStore(noSubscribe, isApple, () => false);
+
+  const warm = () => { void loadDialog().then((component) => setDialog(() => component), () => undefined); };
+  const show = () => { warm(); setOpenOn(pathname); };
+
+  const onKey = useEffectEvent((event: KeyboardEvent) => {
+    if (event.defaultPrevented || event.altKey) return;
+    const typing = (event.target as HTMLElement | null)?.closest("input, textarea, select, [contenteditable='true'], [contenteditable='']");
+    const combo = event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey) && !event.shiftKey;
+    const slash = event.key === "/" && !event.metaKey && !event.ctrlKey && !typing;
+    if (!combo && !slash) return;
+    event.preventDefault();
+    if (combo && open) setOpenOn(null);
+    else show();
+  });
+
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => onKey(event);
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, []);
+
+  // Remember the page once its title has settled.
+  useEffect(() => {
+    const path = pathname.replace(/^\/ru(?=\/|$)/, "") || "/";
+    const timer = window.setTimeout(() => rememberPage(path, pageTitle()), 900);
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
+
+  return <>
+    {hotkeysOnly ? null : (
+      <button className={styles.trigger} type="button" onClick={show} onPointerEnter={warm} onFocus={warm} aria-haspopup="dialog" aria-label={copy.open} aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
+        <Search size={16} strokeWidth={1.9} aria-hidden="true" />
+        <span className={styles.triggerLabel}>{copy.button}</span>
+        <kbd className={styles.triggerKey} aria-hidden="true">{apple ? "⌘K" : "Ctrl K"}</kbd>
+      </button>
+    )}
+    {open && Dialog ? <Dialog onClose={() => setOpenOn(null)} lang={lang} /> : null}
+  </>;
+}

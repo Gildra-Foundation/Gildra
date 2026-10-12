@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Check, ChevronRight, CircleHelp, Filter, Gem, LoaderCircle, MapPin, PackageCheck, RefreshCw, ShieldCheck, Sparkles, Swords } from "lucide-react";
+import { AlertTriangle, ChevronRight, CircleHelp, Filter, Gem, LoaderCircle, MapPin, PackageCheck, RefreshCw, ShieldCheck, Sparkles, Swords } from "lucide-react";
 import type { AuditGearItem } from "@/lib/wow/characterAudit";
 import { useCharacterWorkspaceDocument } from "@/lib/wow/useCharacterWorkspaceDocument";
 import { recordCharacterRun } from "@/lib/wow/characterRunHistory";

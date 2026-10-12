@@ -1,4 +1,4 @@
-import { AtlasFrame, AtlasHero } from "@/components/atlas";
+import { AtlasFrame, AtlasHero, AtlasSkeleton } from "@/components/atlas";
 import type { Lang } from "@/lib/i18n";
 import { searchCopy } from "./searchCopy";
 import styles from "./searchPage.module.css";
@@ -13,10 +13,7 @@ export function SearchPageSkeleton({ lang }: { lang: Lang }) {
         lede={t.lede}
         actions={<div className={styles.skeletonSearch} aria-hidden="true" />}
       />
-      <div className={styles.skeleton} aria-busy="true" role="status" aria-label={t.counting}>
-        <div className={styles.skeletonTabs}><i /><i /></div>
-        <div className={styles.skeletonRows}>{Array.from({ length: 5 }, (_, index) => <span key={index} />)}</div>
-      </div>
+      <AtlasSkeleton variant="rows" count={5} label={t.counting} className={styles.skeleton} />
     </AtlasFrame>
   );
 }

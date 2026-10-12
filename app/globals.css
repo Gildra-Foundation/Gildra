@@ -4,7 +4,13 @@
   source order of the monolithic stylesheet). New blocks style themselves with
   Tailwind utilities or a co-located CSS module and need no entry here.
 */
-@import "tailwindcss";
+/* Tailwind: theme and preflight for every page; utilities only for the routes
+   built with them (app/styles/tailwind-app.css). Atlas pages style themselves
+   with CSS modules. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "./styles/tailwind-theme.css";
 
 @import "./styles/tokens.css";
 @import "./styles/local-book-fonts.css";

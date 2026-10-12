@@ -1,8 +1,9 @@
 import { defineBlock, type BlockComponentProps } from "@/lib/blocks/types";
 import type { AnchorId } from "@/lib/anchors";
+import styles from "./columns.module.css";
 
 export type ColumnsProps = {
-  /** "meta" = homepage 1.75fr/1fr grid (`.cards-row`); "even" = equal columns (new UI, Tailwind). */
+  /** "meta" = homepage 1.75fr/1fr grid (`.cards-row`); "even" = equal columns. */
   layout: "meta" | "even";
   /** DOM id of the wrapper; with `anchor` it also appears in SectionNav. */
   id?: AnchorId | (string & {});
@@ -12,7 +13,7 @@ export type ColumnsProps = {
 
 const LAYOUT_CLASS: Record<ColumnsProps["layout"], string> = {
   meta: "cards-row",
-  even: "grid gap-[18px] grid-cols-2 max-[1120px]:grid-cols-1",
+  even: styles.even,
 };
 
 /** Multi-column wrapper. Owns its `<section>` root so anchors and CSS stay

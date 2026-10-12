@@ -92,24 +92,6 @@ html[data-route-theme="wow"] [data-api-console] .rounded-xl,
 html[data-route-theme="wow"] [data-api-console] .rounded-sm { border-color: #51361a !important; border-radius: 2px !important; background-color: rgba(17, 12, 7, .95) !important; box-shadow: 0 22px 58px rgba(0, 0, 0, .38) !important; }
 html[data-route-theme="wow"] [data-api-console] input { border-color: #51361a !important; border-radius: 2px !important; background: #090704 !important; color: #eadfc9 !important; }
 html[data-route-theme="wow"] [data-api-console] button { border-radius: 2px !important; }
-body[data-workspace-menu="open"] .cookie { opacity: 0; visibility: hidden; pointer-events: none; }
-html[data-route-theme="wow"] .cookie { border-color: #68451e; background: linear-gradient(145deg, rgba(24, 17, 9, .98), rgba(8, 6, 4, .99)); box-shadow: 0 22px 55px rgba(0, 0, 0, .58), inset 0 1px rgba(255, 225, 157, .04); }
-html[data-route-theme="wow"] .cookie-text a { color: #e2a749; }
-/* Character-book routes paint consent on top of vellum, not as the generic
-   black WoW toast used by the rest of the site. Keep this stronger than the
-   route-wide .cookie skin above. */
-html[data-route-theme="wow"] .cookie.cookie-book {
-  border-color: #827d70;
-  background: var(--gildra-character-paper-wash, linear-gradient(180deg, #b9cbd13d, #bac9d229)), var(--cookie-book-paper, #e4dcc8) center / 640px repeat;
-  box-shadow: 0 4px 12px #080a0c70, inset 0 0 0 2px #dfe6e055;
-}
-html[data-route-theme="wow"] .cookie.cookie-book .cookie-text a { color: #783921; }
-@media (max-width: 620px) {
-  html[data-route-theme="wow"] .cookie { flex-direction: row; align-items: center; gap: 10px; }
-  html[data-route-theme="wow"] .cookie-text { flex: 1; font-size: 9px; line-height: 1.35; }
-  html[data-route-theme="wow"] .cookie-actions { width: auto; flex-direction: column; align-items: stretch; gap: 3px; }
-  html[data-route-theme="wow"] .cookie-ok { min-width: 82px; padding: 6px 9px; }
-}
 
 html[data-route-theme="wow"] body {
   background-color: #080706;

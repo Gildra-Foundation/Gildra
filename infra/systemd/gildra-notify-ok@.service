@@ -1,0 +1,12 @@
+[Unit]
+Description=Report the recovery of Gildra unit %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/gildra/infra/systemd/notify-unit-failure.py --recovered %i
+Environment=GILDRA_NOTIFY_ENV_FILE=/opt/gildra/notify.env
+Environment=GILDRA_ALERT_LOG=/opt/gildra/var/alerts/alerts.jsonl
+NoNewPrivileges=true
+PrivateTmp=true

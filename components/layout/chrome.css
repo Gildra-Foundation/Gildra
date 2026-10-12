@@ -1,5 +1,5 @@
 /* Global chrome that survives the atlas bar: the account chip of the platform
-   header, the "soon" tag and the cookie notice. Imported from app/globals.css in
+   header and the "soon" tag (the cookie notice styles itself: components/cookieNotice.module.css). Imported from app/globals.css in
    cascade order. */
 
 /* Account chip (components/auth/AccountChip.tsx). The label slot has a fixed
@@ -20,69 +20,6 @@
   background:radial-gradient(circle at 32% 28%,#e0a06e,#7d472a);
   box-shadow:0 0 0 1px var(--gold-dim);
 }
-
-/* ============ COOKIE NOTICE + LEGAL ============ */
-.cookie{
-  position:fixed;left:18px;bottom:18px;z-index:80;
-  width:min(620px,calc(100vw - 36px));
-  display:flex;align-items:center;gap:18px;
-  background:#0e1119;border:1px solid var(--line);padding:12px 16px;
-  box-shadow:0 18px 40px rgba(0,0,0,.55);
-  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
-  animation:cookie-in .3s ease both;
-}
-@keyframes cookie-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.cookie{animation:none}}
-.cookie-text{min-width:0;margin:0;font-size:11px;line-height:1.45;color:var(--ink-2)}
-.cookie-text a{color:var(--blue-2)}
-.cookie-text a:hover{color:var(--gold-2)}
-.cookie-actions{display:flex;flex:0 0 auto;align-items:center;gap:12px}
-.cookie-ok{font-size:11px;padding:7px 16px}
-.cookie-no{
-  background:none;border:none;font-family:inherit;font-size:11px;font-weight:600;
-  color:var(--ink-3);cursor:pointer;
-}
-.cookie-no:hover{color:var(--ink)}
-@media (max-width:620px){
-  .cookie{left:8px;bottom:69px;width:calc(100vw - 16px);padding:10px 12px;gap:8px;flex-direction:column;align-items:flex-start}
-  .cookie-text{font-size:10.5px;line-height:1.4}
-  .cookie-actions{width:100%}
-  .cookie-ok{padding:6px 14px}
-  .cookie-book{bottom:calc(8px + env(safe-area-inset-bottom, 0px));display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 9px}
-  .cookie-book .cookie-text{font-size:9px;line-height:1.3}
-  .cookie-book .cookie-actions{width:auto;gap:6px}
-  .cookie-book .cookie-actions{flex-direction:row;align-self:center;justify-content:flex-end}
-  .cookie-book .cookie-ok{height:28px;min-height:28px;padding:3px 8px;font-size:10px;line-height:1}
-  .cookie-book .cookie-no{height:28px;min-height:28px;padding:3px;font-size:9px;line-height:1}
-}
-
-/* Consent sits over the manuscript on login / character routes. Use the same
-   vellum as the page so it reads as a small marginal note, not a black card. */
-.cookie-book{
-  border:1px solid #8b693b;
-  border-radius:2px;
-  clip-path:none;
-  color:#352310;
-  background:var(--gildra-character-paper-wash,linear-gradient(180deg,#c8d8e070,#c5d2dc70)),var(--cookie-book-paper,#e4dcc8) center / 640px repeat;
-  box-shadow:0 4px 12px #080a0c70,inset 0 0 0 2px #dfe6e055;
-  font-family:var(--atlas-font-display, "Gildra Atlas", Georgia, serif);
-}
-.cookie-book .cookie-text{color:#49341d}
-.cookie-book .cookie-text a{color:#783921;text-decoration-color:#947445}
-.cookie-book .cookie-text a:hover{color:#4a2814}
-.cookie-book .cookie-ok{
-  min-height:40px;
-  border:0;
-  border-radius:3px;
-  background:var(--cookie-book-button,none) center / 100% 100% no-repeat,#582118;
-  color:#fff0c7;
-  box-shadow:0 2px 3px #08050380;
-  font-family:"Gildra Kurale",var(--atlas-font-display, Georgia, serif);
-  font-size:13px;
-  text-shadow:0 1px 2px #1c0b05;
-}
-.cookie-book .cookie-no{color:#624a2e;font-family:var(--atlas-font-display, "Gildra Atlas", Georgia, serif)}
-.cookie-book .cookie-no:hover{color:#352310}
 
 @media (max-width:1120px){
   .user-name,.user .caret{display:none}

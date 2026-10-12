@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, Clock3 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
+import { AtlasCard, AtlasEmpty, AtlasFrame, AtlasGrid, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { fetchArticle, fetchArticles } from "@/lib/cms/client";
 import { cmsConfig } from "@/lib/cms/config";
 import type { CmsLocale, PublicArticle } from "@/lib/cms/contract";
@@ -127,7 +127,7 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
       />
       <AtlasSection>
         {result.status === "error" ? <AtlasNotice tone="caution" title={t.unavailable} /> : null}
-        {result.status === "ok" && docs.length === 0 ? <AtlasNotice title={t.empty} /> : null}
+        {result.status === "ok" && docs.length === 0 ? <AtlasEmpty title={t.empty} /> : null}
         {docs.length > 0 ? (
           <AtlasGrid min={320} fit>
             {docs.map((a) => {

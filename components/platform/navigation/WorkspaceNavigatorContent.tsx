@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { altPath } from "@/lib/i18n-paths";
-import { Ellipsis } from "lucide-react";
 import { loadBookNavigationDialog, type BookNavigationDialogComponent } from "./BookNavigationDialogLoader";
+import { SiteSearch } from "@/components/platform/search/SiteSearch";
 import toolbarStyles from "./atlasToolbar.module.css";
 
 export function WorkspaceNavigatorContent() {
@@ -52,6 +52,7 @@ export function WorkspaceNavigatorContent() {
       <span>{ru ? "Оглавление" : "Contents"}</span>
     </button>
       <div className={toolbarStyles.end}>
+        <SiteSearch />
         <nav className={toolbarStyles.locale} aria-label={ru ? "Язык" : "Language"}>
           <Link href={altPath(pathname, "en")} hrefLang="en" lang="en" aria-current={ru ? undefined : "true"} prefetch={false}>EN</Link>
           <Link href={altPath(pathname, "ru")} hrefLang="ru" lang="ru" aria-current={ru ? "true" : undefined} prefetch={false}>RU</Link>

@@ -88,48 +88,6 @@
 
 .wingBosses { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
 
-.tableWrap {
-  max-width: 960px;
-  overflow-x: auto;
-  border: 1px solid var(--atlas-line);
-  background: var(--atlas-surface);
-}
-
-.tableWrap:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--atlas-text-small);
-  font-variant-numeric: lining-nums tabular-nums;
-}
-
-.table thead th {
-  padding: var(--atlas-space-3) var(--atlas-space-4);
-  color: var(--atlas-text-subtle);
-  border-bottom: 1px solid var(--atlas-line);
-  background: var(--atlas-surface-raised);
-  font-size: var(--atlas-text-label);
-  font-weight: 650;
-  letter-spacing: .1em;
-  text-align: left;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.table tbody th,
-.table td {
-  padding: var(--atlas-space-2) var(--atlas-space-4);
-  color: var(--atlas-text);
-  border-bottom: 1px solid var(--atlas-line-soft);
-  font-weight: 400;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.table tbody th { color: var(--atlas-text-strong); font-weight: 600; }
-.table tbody tr:last-child > * { border-bottom: 0; }
-
 .tokens {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));

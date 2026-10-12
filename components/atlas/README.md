@@ -61,6 +61,12 @@ import { AtlasFrame, AtlasHero, AtlasSection, AtlasCard, AtlasGrid } from "@/com
 | `AtlasNotice` | Status line for drafts, fixtures, missing data | `title`, `tone: info \| caution`, `action` |
 | `AtlasBreadcrumbs` | Trail (also built into the hero) | `items: {label, href}[]` |
 | `AtlasEmblem` | Seal with an icon | `shape: circle \| diamond \| square`, `size` |
+| `AtlasTable` | Data table on tokens: sticky header, numeric columns, row headers; `layout="cards"` turns each row into a labelled card on phones (short tables), `scroll` keeps a horizontal scroll | `columns: {key, header, label, cell, rowHeader, numeric}[]`, `rows`, `rowKey`, `label`, `caption`, `layout`, `maxWidth` |
+| `AtlasTabs` | Client: ARIA tabs (arrows, Home/End), panels kept in the page | `tabs`, `label`, `defaultTab`, `variant: underline \| segmented`, `onChange` |
+| `AtlasField` + `AtlasInput` / `AtlasSelect` / `AtlasCheckbox` / `AtlasRange` | Native form controls (work in plain GET forms and server components); `AtlasField` adds label, hint and error | `label`, `hint`, `error`, `htmlFor`; `AtlasInput icon` |
+| `AtlasTooltip` | Client: short hover/focus explanation tied by `aria-describedby` | `content`, `placement: top \| bottom`, `focusable` |
+| `AtlasEmpty` / `AtlasError` / `AtlasSkeleton` | Honest states: nothing yet (`role=status`), failure with a code (`role=alert`), loading with the torchlight sweep | `title`, children, `action`; `actions`, `code`; `variant: lines \| cards \| rows`, `count`, `label` |
+| `AtlasDialog` | Client modal on the native `<dialog>` (focus trap, Esc, focus return, backdrop click); `variant="sheet"` rises from the bottom on phones | `open`, `onClose`, `label`, `variant` |
 
 Helpers (`components/atlas/format.ts`): `formatAtlasDate(iso, locale)`, `formatSeason("Midnight Season 2", locale)`, `pluralRu(n, one, few, many)`.
 

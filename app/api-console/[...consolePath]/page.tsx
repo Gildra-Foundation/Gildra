@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ApiConsole } from "@/components/api-console/ApiConsole";
+import "@/app/styles/tailwind-app.css";
 
 export const metadata: Metadata = {
   title: "Gildra API — Панель управления",

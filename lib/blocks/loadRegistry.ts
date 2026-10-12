@@ -1,8 +1,8 @@
 import "server-only";
 import type { GameSlug } from "@/lib/games/registry";
-import type { BlockDef } from "./types";
+import type { AnyBlockDef } from "./types";
 
-export type BlockRegistry = Record<string, BlockDef<any, any, boolean>>;
+export type BlockRegistry = Record<string, AnyBlockDef>;
 
 /** Load only the block components used by the current game's page tree. */
 export async function loadBlockRegistry(game: GameSlug): Promise<BlockRegistry> {

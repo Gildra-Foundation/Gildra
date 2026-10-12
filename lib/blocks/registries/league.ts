@@ -1,4 +1,4 @@
-import type { BlockDef } from "../types";
+import type { AnyBlockDef } from "../types";
 import { sharedRegistry } from "./shared";
 import { leagueMainBlock } from "@/components/blocks/league-of-legends/main";
 import { leagueHeroBlock } from "@/components/blocks/league-of-legends/hero";
@@ -13,4 +13,4 @@ export const leagueRegistry = {
   "lol.championCatalog": championCatalogBlock,
   "lol.championDetail": championDetailBlock,
   "lol.contentCategory": contentCategoryBlock,
-} as const satisfies Record<string, BlockDef<any, any, boolean>>;
+} as const satisfies Record<string, AnyBlockDef>;

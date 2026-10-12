@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CalendarClock, Crown, ExternalLink, Gem, MapPin, Shield, Swords, UsersRound } from "lucide-react";
-import { AtlasAnchorNav, AtlasBadge, AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasPanel, AtlasSection, type AtlasBadgeTone } from "@/components/atlas";
+import { AtlasAnchorNav, AtlasBadge, AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTable, type AtlasBadgeTone } from "@/components/atlas";
 import { getLootIcon, lairGuideLastVerifiedAt, type Boss, type Mechanic } from "@/lib/lairs";
 import { CopyWaypointButton } from "./CopyWaypointButton";
 import { lairsCopy, mechanicActions, type LairsLocale } from "./lairsCopy";
@@ -140,28 +140,27 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
       ) : null}
 
       <AtlasSection id="loot" title={copy.lootTitle}>
-        <div className={styles.lootScroller}>
-          <table className={styles.loot}>
-            <thead>
-              <tr><th scope="col">{copy.item}</th><th scope="col">{copy.slot}</th><th scope="col">{copy.stats}</th><th scope="col">{copy.priority}</th></tr>
-            </thead>
-            <tbody>
-              {boss.loot.map((item) => (
-                <tr key={item.name}>
-                  <th scope="row">
-                    <span className={styles.lootItem}>
-                      <Image src={getLootIcon(item.name)} alt="" width={36} height={36} />
-                      {item.itemId ? <a href={`https://www.wowhead.com/item=${item.itemId}`} target="_blank" rel="noreferrer">{item.name}</a> : <span>{item.name}</span>}
-                    </span>
-                  </th>
-                  <td>{item.slot}<small>{item.armor}</small></td>
-                  <td>{item.stats}</td>
-                  <td>{item.priority}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AtlasTable
+          label={copy.lootTitle}
+          layout="cards"
+          className={styles.lootTable}
+          rows={boss.loot}
+          rowKey={(item) => item.name}
+          columns={[
+            {
+              key: "item", header: copy.item, rowHeader: true,
+              cell: (item) => (
+                <span className={styles.lootItem}>
+                  <Image src={getLootIcon(item.name)} alt="" width={36} height={36} />
+                  {item.itemId ? <a href={`https://www.wowhead.com/item=${item.itemId}`} target="_blank" rel="noreferrer">{item.name}</a> : <span>{item.name}</span>}
+                </span>
+              ),
+            },
+            { key: "slot", header: copy.slot, cell: (item) => <>{item.slot}<small className={styles.lootArmor}>{item.armor}</small></> },
+            { key: "stats", header: copy.stats, cell: (item) => item.stats },
+            { key: "priority", header: copy.priority, cell: (item) => item.priority },
+          ]}
+        />
         <p className={styles.footnote}>{copy.lootNote(boss.lastVerifiedAt ?? lairGuideLastVerifiedAt)}</p>
       </AtlasSection>
 

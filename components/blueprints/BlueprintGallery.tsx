@@ -135,6 +135,7 @@ export function BlueprintGallery({ imagePropsBySlug }: BlueprintGalleryProps) {
               >
                 <div className={styles.cardMedia}>
                   <img
+                    alt=""
                     {...imagePropsBySlug[blueprint.slug]}
                     loading={index === 0 ? "eager" : "lazy"}
                     decoding="async"

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { registry } from "@/lib/blocks/registry";
 import { assertGalleryEnabled, galleryBlockTypes, GALLERY_WIDTHS } from "@/lib/blocks/gallery";
+import "@/app/styles/tailwind-app.css";
 
 export const metadata = {
   title: "Block gallery — Gildra dev",

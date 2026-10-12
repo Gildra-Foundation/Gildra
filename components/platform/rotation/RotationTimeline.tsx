@@ -63,7 +63,6 @@ export default function RotationTimeline({ result, abilities, lang, cursor, onCu
     return Math.abs(before.time - cursor) <= Math.abs(after.time - cursor) ? before : after;
   }, [cursor, sortedCasts]);
   const selectedAbility = selectedCast ? byId.get(selectedCast.abilityId) : null;
-  const resourceLabel = result.resourceLabel ?? (lang === "ru" ? "Ресурс" : "Resource");
 
   return (
     <section id="rotation-timeline" className={styles.timelinePanel} aria-labelledby="timeline-title">

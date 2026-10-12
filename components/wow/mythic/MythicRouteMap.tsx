@@ -197,7 +197,7 @@ const RouteStepNarrative = memo(function RouteStepNarrative({ locale, dungeon, d
   const handWritten = dungeon.slug === "ruby-life-pools" && locale === "ru";
   const enemyCount = selected.enemies.reduce((total, enemy) => total + enemy.count, 0);
   return <>
-    <p className={styles.detailDescription}>{plainLanguage(selected.summary)}</p>
+    <p className={styles.detailDescription}>{plainLanguage(selected.summary, locale)}</p>
     <section className={styles.detailSection}>
       <h3>{copy.enemiesTitle} <b>{copy.enemiesCount(enemyCount)}</b></h3>
       {selected.enemies.length ? <ul className={styles.intelList}>{selected.enemies.map((enemy) => {
@@ -216,10 +216,10 @@ const RouteStepNarrative = memo(function RouteStepNarrative({ locale, dungeon, d
     </section>
     <section className={styles.detailSection}>
       <h3>{copy.calloutsTitle}</h3>
-      <ul className={styles.callouts}>{selected.callouts.map((callout) => <li key={callout}>{plainLanguage(callout)}</li>)}</ul>
+      <ul className={styles.callouts}>{selected.callouts.map((callout) => <li key={callout}>{plainLanguage(callout, locale)}</li>)}</ul>
     </section>
     <div className={styles.roleTabs} role="group" aria-label={copy.rolesLabel}>{roles.map((item) => <button key={item} type="button" onClick={() => onRoleChange(item)} aria-pressed={role === item}>{roleLabels[locale][item]}</button>)}</div>
-    <p className={styles.roleText}>{plainLanguage(selected[role])}</p>
+    <p className={styles.roleText}>{plainLanguage(selected[role], locale)}</p>
   </>;
 });
 
