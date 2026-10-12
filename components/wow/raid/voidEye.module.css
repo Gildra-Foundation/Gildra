@@ -1,0 +1,10 @@
+/* atlas:strict — the void over The Voidspire's eye (VoidEye): light added on top of the painting. */
+.canvas {
+  position: absolute;
+  opacity: 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  transition: opacity 1.2s var(--atlas-ease);
+}
+
+.canvas[data-live] { opacity: .9; }

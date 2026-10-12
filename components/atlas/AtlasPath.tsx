@@ -29,7 +29,7 @@ export function AtlasPath({ steps, label, headingLevel = 3, className }: { steps
       {steps.map((step, index) => (
         <li key={step.href} className={styles.step}>
           <span className={styles.seal} aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-          <Link href={step.href} className={styles.card}>
+          <Link href={step.href} className={styles.card} data-spotlight>
             <div className={styles.art}>
               <Image src={step.image.src} alt={step.image.alt ?? ""} fill sizes="(max-width: 720px) 100vw, 380px" style={step.image.position ? { objectPosition: step.image.position } : undefined} />
             </div>

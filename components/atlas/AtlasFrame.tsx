@@ -4,6 +4,7 @@ import Link from "next/link";
 import { GAMES } from "@/lib/games/registry";
 import { t } from "@/lib/i18n";
 import clsx from "clsx";
+import { AtlasPointerLight } from "./AtlasPointerLight";
 import styles from "./AtlasFrame.module.css";
 
 export type AtlasFrameProps = {
@@ -18,6 +19,8 @@ export type AtlasFrameProps = {
   tint?: string;
   /** No embers and no drifting artwork: work surfaces (calculators, editors) where motion distracts. */
   still?: boolean;
+  /** A living layer over the scene (e.g. a shader on a point of the painting); it settles and drifts with the art. */
+  artLayer?: ReactNode;
   /** Rendered element (default <main>). Use "div" when the route already owns <main>. */
   as?: "main" | "div";
   className?: string;
@@ -35,7 +38,7 @@ export type AtlasFrameProps = {
  * The atmosphere is alive: the artwork settles in and drifts slowly, embers rise
  * through the torchlight. All of it is CSS and stops under reduced motion.
  */
-export function AtlasFrame({ children, art, artPosition, artShade = "default", tint, still = false, as: Element = "main", className, lang, id, dataAttributes, footer = true }: AtlasFrameProps) {
+export function AtlasFrame({ children, art, artPosition, artShade = "default", tint, still = false, artLayer, as: Element = "main", className, lang, id, dataAttributes, footer = true }: AtlasFrameProps) {
   const locale = lang === "ru" ? "ru" : "en";
   const style = { "--atlas-frame-tint": tint, "--atlas-frame-art-position": artPosition } as CSSProperties;
   return (
@@ -46,9 +49,11 @@ export function AtlasFrame({ children, art, artPosition, artShade = "default", t
         <div className={styles.atmosphere} aria-hidden="true">
           {/* Decorative, but it is the largest paint of every route that has it: fetch it at high priority. */}
           {art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" /> : null}
+          {artLayer ? <div className={styles.artLayer}>{artLayer}</div> : null}
           {/* Torchlight over the artwork: a breathing glow and a few rising embers (CSS only). */}
           <span className={styles.embers} />
         </div>
+        <AtlasPointerLight />
         <div className={styles.column}>
           {children}
           {footer ? (

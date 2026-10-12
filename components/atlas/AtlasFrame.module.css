@@ -53,6 +53,13 @@
   animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s ease-in-out 1.8s infinite alternate;
 }
 
+/* A living layer over the scene moves exactly like the art beneath it. */
+.artLayer {
+  position: absolute;
+  inset: 0;
+  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s ease-in-out 1.8s infinite alternate;
+}
+
 /* Embers: two parallax layers of sparks rising through the torchlight over the
    artwork's focal area. Each layer is one repeating tile moved by exactly its
    own height, so the loop never jumps. */
@@ -134,11 +141,13 @@
 
 /* Work surfaces and readers who asked for less motion get a still atmosphere. */
 .still .art,
+.still .artLayer,
 .still .atmosphere::before { animation: none; }
 .still .embers { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .art,
+  .artLayer,
   .atmosphere::before { animation: none; }
   .embers { display: none; }
 }

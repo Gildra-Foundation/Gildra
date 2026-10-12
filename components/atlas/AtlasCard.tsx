@@ -33,15 +33,17 @@ export type AtlasCardProps = {
   /** Aspect ratio of the artwork in the vertical layout (default "16 / 8.6"; portraits look better at "4 / 3.4"). */
   artRatio?: string;
   headingLevel?: 2 | 3;
+  /** Portrait entries (bosses) lean towards the pointer. */
+  tilt?: boolean;
   className?: string;
 };
 
 /** Illustrated entry of an atlas list: raid, dungeon, boss, lair. */
-export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, className }: AtlasCardProps) {
+export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, tilt = false, className }: AtlasCardProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const style = { "--atlas-card-accent": accent, "--atlas-card-art-ratio": artRatio } as CSSProperties;
   return (
-    <article className={clsx(styles.card, styles[layout], className)} style={style}>
+    <article className={clsx(styles.card, styles[layout], className)} style={style} data-spotlight data-tilt={tilt || undefined}>
       <Link className={styles.link} href={href}>
         <div className={styles.art}>
           {image ? (

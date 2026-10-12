@@ -76,7 +76,7 @@ export function ClassCatalogPage({ locale }: { locale: Locale }) {
             const name = locale === "ru" ? first.classNameRu : first.className;
             const style = { "--class-color": `var(--c-${classColorKey[first.classKey]}, var(--atlas-accent))` } as CSSProperties;
             return (
-              <li key={first.classSlug} className={styles.classRow} style={style}>
+              <li key={first.classSlug} className={styles.classRow} style={style} data-spotlight>
                 <Image className={styles.classIcon} src={first.classIconUrl} alt="" width={52} height={52} />
                 <div className={styles.classBody}>
                   <h3 className={styles.className}>{name}</h3>

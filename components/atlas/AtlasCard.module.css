@@ -1,4 +1,5 @@
 .card {
+  position: relative;
   min-width: 0;
   border: 1px solid var(--atlas-line-soft);
   background: var(--atlas-surface);
@@ -13,6 +14,55 @@
   border-color: color-mix(in srgb, var(--atlas-card-accent, var(--atlas-accent)) 60%, var(--atlas-accent));
   transform: translateY(-3px);
   box-shadow: var(--atlas-shadow-lift);
+}
+
+/* Torchlight under the cursor (AtlasPointerLight writes --spot-x/--spot-y): a pool
+   of light in the entry's own colour and the stretch of the frame nearest the pointer. */
+.card::before {
+  position: absolute;
+  z-index: 2;
+  inset: -1px;
+  padding: 1px;
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(200px circle at var(--spot-x, 50%) var(--spot-y, 40%), var(--atlas-card-accent, var(--atlas-accent-strong)), transparent 75%);
+  -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  -webkit-mask-clip: content-box, border-box;
+  -webkit-mask-composite: xor;
+  mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  mask-clip: content-box, border-box;
+  mask-composite: exclude;
+  transition: opacity .35s var(--atlas-ease);
+}
+
+.card::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(280px circle at var(--spot-x, 50%) var(--spot-y, 40%), color-mix(in srgb, var(--atlas-card-accent, var(--atlas-accent-strong)) 16%, transparent), transparent 70%);
+  mix-blend-mode: screen;
+  transition: opacity .35s var(--atlas-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover::before,
+  .card:hover::after { opacity: 1; }
+}
+
+/* Portrait entries lean towards the pointer (data-tilt, --tilt-x/--tilt-y). */
+.card[data-tilt] {
+  transform: perspective(900px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg));
+  transition: border-color var(--atlas-duration) var(--atlas-ease), transform .5s var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+}
+
+.card[data-tilt]:hover,
+.card[data-tilt]:focus-within {
+  transform: perspective(900px) translateY(-3px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg));
+  transition-duration: var(--atlas-duration), .15s, var(--atlas-duration);
 }
 
 .link {
@@ -202,6 +252,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .art::after { display: none; }
+  .card[data-tilt],
+  .card[data-tilt]:hover,
+  .card[data-tilt]:focus-within { transform: none; }
   .card,
   .art > img,
   .cta svg { transition: none; }
