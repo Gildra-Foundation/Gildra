@@ -17,5 +17,48 @@
   --ph-surface: #12100c;
 }
 
-/* Motion is drawn over the live page; its content keeps full contrast. */
-.frame[data-book-route-phase] { opacity: 1; }
+/* Page-to-page transition (RouteTransitionRuntime). The leaving page dims only
+   if the next one takes a moment (120 ms delay), so instant navigations never
+   flicker; the new page fades in from the runtime with a 260 ms animation. */
+.frame {
+  transition: opacity 180ms ease;
+}
+
+.frame[data-route-state="leaving"] {
+  opacity: .45;
+  transition-delay: 120ms;
+}
+
+/* A thin amber line over the top bar while the next page is on its way. It
+   appears after 150 ms, grows towards 85 % and finishes when the page is in. */
+.progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 120;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(240, 181, 90, .2), #f0b55a 60%, #ffe2a8);
+  box-shadow: 0 0 10px rgba(240, 181, 90, .55);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.system:is([data-route-state="leaving"], [data-route-state="loading"]) .progress {
+  animation: route-progress 2.4s cubic-bezier(.1, .7, .3, 1) 150ms forwards;
+}
+
+@keyframes route-progress {
+  0% { opacity: 1; transform: scaleX(0); }
+  100% { opacity: 1; transform: scaleX(.85); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame,
+  .frame[data-route-state="leaving"] { transition: none; opacity: 1; }
+  .system:is([data-route-state="leaving"], [data-route-state="loading"]) .progress {
+    animation: none;
+    opacity: 1;
+    transform: scaleX(.6);
+  }
+}

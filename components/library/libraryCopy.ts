@@ -3,7 +3,6 @@ import type { Lang } from "@/lib/i18n";
 /** Interface copy of /library and /library/<dataset> (RU and EN). Dataset names and descriptions come from the API. */
 export const libraryCopy = {
   ru: {
-    eyebrow: "World of Warcraft · Библиотека",
     title: "Библиотека World of Warcraft",
     lede: "Наборы структурированных игровых данных: подсказки, изображения, связи и происхождение каждой опубликованной записи.",
     statsLabel: "Объём библиотеки",
@@ -34,7 +33,6 @@ export const libraryCopy = {
     openConsole: "Открыть панель",
   },
   en: {
-    eyebrow: "World of Warcraft · Library",
     title: "World of Warcraft Library",
     lede: "Datasets of structured game data: tooltips, images, relationships and provenance for every published record.",
     statsLabel: "Library size",

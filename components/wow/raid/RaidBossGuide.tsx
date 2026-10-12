@@ -1,5 +1,4 @@
-import Image from "next/image";
-import { ExternalLink, Hourglass, Skull } from "lucide-react";
+import { ExternalLink, Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { RaidBattlePlan } from "./RaidBattlePlan";
 import { RaidMechanicList } from "./RaidMechanicList";
@@ -20,7 +19,7 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
   const hasMechanics = Boolean(strategy?.guide) || boss.mechanics.length > 0;
 
   return (
-    <AtlasFrame lang={locale}>
+    <AtlasFrame lang={locale} art={boss.artwork} artPosition="center 28%">
       <AtlasHero
         breadcrumbs={[
           { label: copy.wow, href: `${prefix}/wow` },
@@ -29,16 +28,9 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
           { label: boss.nameEn },
         ]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        emblem={<Skull />}
-        emblemShape="diamond"
         eyebrow={<>{raid.nameEn} · {copy.encounterOf(order + 1, raid.bosses.length)}</>}
         title={<span data-testid="boss-title">{boss.nameEn}</span>}
         lede={locale === "ru" ? boss.descriptionRu : boss.descriptionEn}
-        aside={(
-          <figure className={styles.portrait}>
-            <Image src={boss.artwork} alt={boss.nameEn} fill priority sizes="(max-width: 1100px) 100vw, 440px" />
-          </figure>
-        )}
       />
 
       <EncounterSwitcher items={encounters} label={copy.encountersLabel} />

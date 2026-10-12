@@ -1,7 +1,6 @@
 .card {
   min-width: 0;
-  border: 1px solid var(--atlas-line);
-  outline: 1px solid #020303;
+  border: 1px solid var(--atlas-line-soft);
   background: var(--atlas-surface);
   box-shadow: var(--atlas-shadow-card);
   content-visibility: auto;
@@ -29,9 +28,8 @@
 .art {
   position: relative;
   display: block;
-  aspect-ratio: var(--atlas-card-art-ratio, 16 / 8.6);
+  aspect-ratio: var(--atlas-card-art-ratio, 16 / 9.4);
   overflow: hidden;
-  border-bottom: 1px solid var(--atlas-line);
   background: var(--atlas-surface-sunken);
 }
 
@@ -51,18 +49,6 @@
 }
 
 .shade { position: absolute; inset: 0; background: var(--atlas-art-shade); }
-
-.index {
-  position: absolute;
-  top: 12px;
-  left: 14px;
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-small);
-  font-variant-numeric: lining-nums;
-  letter-spacing: .1em;
-  text-shadow: 0 1px 7px #000;
-}
 
 .artBadge { position: absolute; top: 10px; right: 10px; }
 
@@ -138,7 +124,6 @@
   gap: var(--atlas-space-2) var(--atlas-space-3);
   margin-top: auto;
   padding-top: var(--atlas-space-3);
-  border-top: 1px solid var(--atlas-line-soft);
 }
 
 .meta {
@@ -155,30 +140,34 @@
 .cta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   margin-left: auto;
-  color: var(--atlas-accent-strong);
-  font-size: var(--atlas-text-meta);
-  font-weight: 650;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  color: var(--atlas-accent);
 }
 
-.cta svg { width: 14px; height: 14px; transition: transform var(--atlas-duration) var(--atlas-ease); }
+.cta svg { width: 18px; height: 18px; transition: transform var(--atlas-duration) var(--atlas-ease); }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 .card:hover .cta svg,
 .card:focus-within .cta svg { transform: translateX(3px); }
 
 /* Feature: one wide entry (the current lair, the current raid). */
 .feature { contain-intrinsic-size: auto 520px; }
 .feature .link { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-rows: auto; }
-.feature .art { aspect-ratio: auto; min-height: 380px; border-right: 1px solid var(--atlas-line); border-bottom: 0; }
+.feature .art { aspect-ratio: auto; min-height: 380px; }
 .feature .body { justify-content: center; gap: 10px; padding: var(--atlas-space-6); }
 .feature .title { font-size: var(--atlas-text-h2); }
 .feature .description { font-size: var(--atlas-text-body); -webkit-line-clamp: 5; }
 
 @media (max-width: 900px) {
   .feature .link { grid-template-columns: minmax(0, 1fr); }
-  .feature .art { min-height: 0; aspect-ratio: 16 / 9; border-right: 0; border-bottom: 1px solid var(--atlas-line); }
+  .feature .art { min-height: 0; aspect-ratio: 16 / 9; }
   .feature .body { padding: var(--atlas-space-5) var(--atlas-space-4); }
 }
 

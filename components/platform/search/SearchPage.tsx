@@ -53,8 +53,6 @@ export function SearchPage({
     <AtlasFrame lang={lang} dataAttributes={{ "data-search-root": true }}>
       <SearchShortcut inputId="platform-search-input" />
       <AtlasHero
-        emblem={<Search />}
-        eyebrow={t.eyebrow}
         title={t.title}
         lede={t.lede}
         actions={(

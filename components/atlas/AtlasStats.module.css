@@ -1,41 +1,46 @@
+/* Headline counters: a quiet row of numbers, no boxes. */
 .stats {
   display: flex;
-  align-items: stretch;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--atlas-space-3) var(--atlas-space-6);
   margin: 0;
-  border: 1px solid var(--atlas-line-soft);
-  background: rgba(0, 0, 0, .32);
 }
 
 .stat {
   display: flex;
-  flex: 1 1 auto;
   flex-direction: column-reverse;
-  justify-content: center;
-  align-items: center;
-  min-width: 88px;
-  gap: 4px;
-  padding: var(--atlas-space-3) var(--atlas-space-4);
-  border-left: 1px solid var(--atlas-line-soft);
-  text-align: center;
+  gap: 6px;
+  min-width: 0;
 }
 
-.stat:first-child { border-left: 0; }
+.stat + .stat {
+  padding-left: var(--atlas-space-6);
+  border-left: 1px solid var(--atlas-line-soft);
+}
 
 .value {
   margin: 0;
-  color: var(--atlas-accent-strong);
+  color: var(--atlas-text-strong);
   font-family: var(--atlas-font-display);
   font-size: var(--atlas-text-stat);
   font-weight: var(--atlas-weight-display);
   font-variant-numeric: lining-nums tabular-nums;
   line-height: 1;
+  text-shadow: 0 1px 2px #000, 0 0 18px rgba(0, 0, 0, .6);
 }
 
 .label {
-  color: var(--atlas-text-subtle);
+  color: var(--atlas-text-muted);
+  text-shadow: 0 1px 2px #000;
   font-size: var(--atlas-text-label);
   font-weight: 600;
   letter-spacing: var(--atlas-tracking-label);
   line-height: 1.2;
   text-transform: uppercase;
+}
+
+@media (max-width: 720px) {
+  .stats { gap: var(--atlas-space-3) var(--atlas-space-5); }
+  .stat + .stat { padding-left: var(--atlas-space-5); }
 }

@@ -1,4 +1,4 @@
-import { AlertTriangle, RefreshCw, ShieldAlert } from "lucide-react";
+import { RefreshCw, ShieldAlert } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton } from "@/components/atlas";
 import { characterCopy, characterCrumbs } from "./characterCopy";
 
@@ -15,7 +15,6 @@ export function CharacterProfileLoadError({ locale, code, retryHref }: { locale:
       <AtlasHero
         breadcrumbs={characterCrumbs(locale, copy.profile.eyebrow)}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        emblem={reconnect ? <ShieldAlert /> : <AlertTriangle />}
         eyebrow={copy.profile.eyebrow}
         title={title}
         lede={description}

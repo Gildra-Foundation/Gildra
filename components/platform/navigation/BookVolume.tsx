@@ -26,15 +26,7 @@ const archiveItems: NavigationItem[] = [
   { href: "/wow", ru: "Обзор World of Warcraft", en: "World of Warcraft overview", detailRu: "Все разделы о мире Warcraft в одном месте", detailEn: "Explore every chapter of the Warcraft world" },
 ];
 
-const bookTransitionsEnabled = process.env.NODE_ENV !== "development"
-  || process.env.NEXT_PUBLIC_ENABLE_DEV_BOOK_TRANSITIONS === "1";
 const routePrefetchEnabled = process.env.NODE_ENV !== "development";
-
-function warmBookRouteScene() {
-  if (bookTransitionsEnabled && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    void import("@/components/motion/BookRouteScene");
-  }
-}
 
 type Account = { state: "idle" | "loading" | "ready"; connected: boolean; name?: string };
 
@@ -91,7 +83,6 @@ export function BookVolume({ lang, active, titleId, onNavigate, closeButton, lay
     const warmDestination = () => {
       if (!routePrefetchEnabled) return;
       router.prefetch(href);
-      warmBookRouteScene();
     };
     return <Link key={item.href} className={styles.entry} href={href} prefetch={false}
       aria-label={ru ? item.ru : item.en} aria-describedby={detailId}

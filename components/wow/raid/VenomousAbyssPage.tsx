@@ -52,7 +52,6 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
       <AtlasHero
         breadcrumbs={[{ label: shared.wow, href: `${prefix}/wow` }, { label: shared.raids, href: `${prefix}/wow/raids` }, { label: raid.names.en }]}
         breadcrumbsLabel={shared.breadcrumbsLabel}
-        emblem={<Castle />}
         eyebrow={copy.eyebrow}
         title={raid.names.en}
         lede={locale === "ru" ? raid.descriptions.ru : raid.descriptions.en}

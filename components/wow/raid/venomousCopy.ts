@@ -9,7 +9,7 @@ import type { Difficulty } from "@/data/venomousAbyss";
 export const venomousCopy = {
   ru: {
     // Hub
-    eyebrow: "World of Warcraft · Midnight · Сезон 2",
+    eyebrow: "Midnight · Сезон 2",
     statsLabel: "Сводка рейда",
     bossesStat: (count: number) => pluralRu(count, "босс", "босса", "боссов"),
     patchStat: "патч",
@@ -64,7 +64,7 @@ export const venomousCopy = {
     rewardNote: "Конкретные предметы появятся после проверки. Шанс выпадения Blizzard не публикует.",
   },
   en: {
-    eyebrow: "World of Warcraft · Midnight · Season 2",
+    eyebrow: "Midnight · Season 2",
     statsLabel: "Raid summary",
     bossesStat: (count: number) => (count === 1 ? "boss" : "bosses"),
     patchStat: "patch",

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarClock, Crown, ExternalLink, Gem, MapPin, Shield, Skull, Swords, UsersRound } from "lucide-react";
+import { ArrowRight, CalendarClock, Crown, ExternalLink, Gem, MapPin, Shield, Swords, UsersRound } from "lucide-react";
 import { AtlasAnchorNav, AtlasBadge, AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasPanel, AtlasSection, type AtlasBadgeTone } from "@/components/atlas";
 import { getLootIcon, lairGuideLastVerifiedAt, type Boss, type Mechanic } from "@/lib/lairs";
 import { CopyWaypointButton } from "./CopyWaypointButton";
@@ -32,12 +32,10 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
   ];
 
   return (
-    <AtlasFrame lang={locale} dataAttributes={{ "data-lairs-root": true }}>
+    <AtlasFrame lang={locale} art={boss.portrait} artPosition="center 24%" artShade="deep" dataAttributes={{ "data-lairs-root": true }}>
       <AtlasHero
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.section, href: `${prefix}/wow/lairs` }, { label: boss.name }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        emblem={boss.kind === "lair" ? <Skull /> : <Swords />}
-        emblemShape="diamond"
         eyebrow={<>{kind} · {boss.zone}</>}
         title={boss.name}
         lede={<><em className={styles.epithet}>{boss.title}.</em> {boss.summary}</>}
@@ -45,12 +43,6 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
           {boss.farm.waypoint ? <CopyWaypointButton waypoint={boss.farm.waypoint} labels={{ label: copy.copyWaypoint, copied: copy.copied, failed: copy.copyFailed }} /> : null}
           {boss.sourceUrl ? <AtlasLinkButton variant="ghost" href={boss.sourceUrl} external iconAfter={<ExternalLink aria-hidden="true" />}>{copy.strategySource}</AtlasLinkButton> : null}
         </>}
-        aside={(
-          <figure className={styles.portrait} style={{ "--boss-accent": boss.accent } as React.CSSProperties}>
-            <Image src={boss.portrait} alt={boss.name} fill priority sizes="(max-width: 1100px) 100vw, 340px" />
-            <figcaption>“{boss.flavor}”</figcaption>
-          </figure>
-        )}
       />
 
       <AtlasAnchorNav items={chapters} label={copy.chapters} />

@@ -1,4 +1,4 @@
-import { Castle, Hourglass, ListChecks } from "lucide-react";
+import { Hourglass, ListChecks } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import type { RaidDefinition } from "./midnightRaidData";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
@@ -18,7 +18,6 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
       <AtlasHero
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.raids, href: `${prefix}/wow/raids` }, { label: raid.nameEn }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        emblem={<Castle />}
         eyebrow={<>{copy.season(1)} · {raid.locationEn}</>}
         title={raid.nameEn}
         lede={locale === "ru" ? raid.descriptionRu : raid.descriptionEn}
@@ -36,7 +35,6 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
                     href={`${raidHref}/${boss.slug}`}
                     layout={single ? "feature" : "vertical"}
                     image={{ src: boss.artwork, alt: "", priority: index < 4 }}
-                    index={String(index + 1).padStart(2, "0")}
                     title={boss.nameEn}
                     description={locale === "ru" ? boss.descriptionRu : boss.descriptionEn}
                     meta={guide ? [{ icon: <ListChecks aria-hidden="true" />, label: copy.mechanicCount(guide.mechanics.length) }] : undefined}

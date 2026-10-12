@@ -13,7 +13,7 @@
   position: absolute;
   z-index: -1;
   inset: 0 0 auto;
-  height: min(960px, 120vh);
+  height: min(880px, 110vh);
   pointer-events: none;
   background: radial-gradient(circle at 74% 8%, var(--atlas-frame-tint), transparent 34%);
 }
@@ -23,14 +23,21 @@
   inset: 0;
   content: "";
   background:
-    linear-gradient(90deg, rgba(4, 5, 6, .9), rgba(4, 5, 6, .3) 58%, rgba(4, 5, 6, .78)),
-    linear-gradient(180deg, rgba(5, 6, 7, .2), var(--atlas-bg) 92%);
+    linear-gradient(90deg, rgba(4, 5, 6, .88), rgba(4, 5, 6, .32) 46%, rgba(4, 5, 6, .12) 72%, rgba(4, 5, 6, .45)),
+    linear-gradient(180deg, rgba(5, 6, 7, .1) 0%, rgba(5, 6, 7, .35) 45%, var(--atlas-bg) 94%);
+}
+
+/* Bright artwork: a heavier veil, the scene stays readable as texture. */
+.deep .atmosphere::after {
+  background:
+    linear-gradient(90deg, rgba(4, 5, 6, .93), rgba(4, 5, 6, .62) 50%, rgba(4, 5, 6, .5)),
+    linear-gradient(180deg, rgba(5, 6, 7, .25) 0%, rgba(5, 6, 7, .55) 45%, var(--atlas-bg) 92%);
 }
 
 .art {
   object-fit: cover;
   object-position: var(--atlas-frame-art-position, center 18%);
-  filter: saturate(.72) contrast(1.1) brightness(.82);
+  filter: saturate(.86) contrast(1.06) brightness(.92);
 }
 
 .column {
@@ -59,4 +66,9 @@
 
 @media (max-width: 720px) {
   .column { padding-top: var(--atlas-space-5); }
+  /* Text spans the full width on phones: an even veil instead of a left-to-right one. */
+  .atmosphere::after,
+  .deep .atmosphere::after {
+    background: linear-gradient(180deg, rgba(4, 5, 6, .5), rgba(4, 5, 6, .68) 45%, var(--atlas-bg) 90%);
+  }
 }

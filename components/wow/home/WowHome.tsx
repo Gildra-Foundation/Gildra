@@ -1,12 +1,11 @@
 import Image from "next/image";
-import { ArrowRight, BookOpen, Database, MapPinned, Shield, Skull, Sparkles, Trophy, Users } from "lucide-react";
+import { ArrowRight, BookOpen, Database, MapPinned, Skull, Sparkles, Trophy, Users } from "lucide-react";
 import { AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasSection, AtlasTile } from "@/components/atlas";
 import type { Lang } from "@/lib/i18n";
-import styles from "./wowHome.module.css";
 
 const copy = {
   ru: {
-    eyebrow: "World of Warcraft · Midnight",
+    eyebrow: "Midnight",
     title: "Ваш командный центр в Азероте",
     lede: "Соберите персонажа, продумайте таланты и подготовьте маршрут — всё необходимое для следующего ключа в одном месте.",
     character: "Открыть персонажа",
@@ -16,14 +15,13 @@ const copy = {
     mythic: "Mythic+", mythicText: "Маршруты, таймер и тактика",
     raids: "Рейды", raidsText: "Боссы, способности и тактика",
     lairs: "Логова и мировые боссы", lairsText: "Где найти, что делать, что падает",
-    buildsEyebrow: "Избранные билды",
     builds: "Начните с проверенной специализации",
     open: "Открыть таланты",
     tierLists: "Тир-листы", tierListsText: "Сила специализаций в ключах и рейдах",
     database: "База данных", databaseText: "Предметы, заклинания и задания",
   },
   en: {
-    eyebrow: "World of Warcraft · Midnight",
+    eyebrow: "Midnight",
     title: "Your command center in Azeroth",
     lede: "Shape your character, plan talents and prepare a route — everything for the next key in one place.",
     character: "Open character",
@@ -33,7 +31,6 @@ const copy = {
     mythic: "Mythic+", mythicText: "Routes, timer and tactics",
     raids: "Raids", raidsText: "Bosses, abilities and strategy",
     lairs: "Lairs and world bosses", lairsText: "Where to find them, what to do, what drops",
-    buildsEyebrow: "Featured builds",
     builds: "Start with a tested specialization",
     open: "Open talents",
     tierLists: "Tier lists", tierListsText: "Specialization strength in keys and raids",
@@ -53,9 +50,8 @@ export function WowHome({ lang }: { lang: Lang }) {
   const href = (path: string) => `${locale === "ru" ? "/ru" : ""}${path}`;
 
   return (
-    <AtlasFrame lang={locale} dataAttributes={{ "data-wow-atlas": true }}>
+    <AtlasFrame lang={locale} art="/assets/characters/furybar-horde-hero-v1-optimized.webp" artPosition="72% 30%" dataAttributes={{ "data-wow-atlas": true }}>
       <AtlasHero
-        emblem={<Shield />}
         eyebrow={t.eyebrow}
         title={t.title}
         lede={t.lede}
@@ -63,11 +59,6 @@ export function WowHome({ lang }: { lang: Lang }) {
           <AtlasLinkButton href={href("/wow/characters")} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{t.character}</AtlasLinkButton>
           <AtlasLinkButton href={href("/talents/fury-warrior")} icon={<Sparkles aria-hidden="true" />}>{t.talents}</AtlasLinkButton>
         </>}
-        aside={(
-          <div className={styles.heroArt} aria-hidden="true">
-            <Image src="/assets/characters/furybar-horde-hero-v1-optimized.webp" alt="" fill priority sizes="(max-width: 1100px) 100vw, 560px" />
-          </div>
-        )}
       />
 
       <AtlasSection id="sections" title={t.sections}>
@@ -82,7 +73,7 @@ export function WowHome({ lang }: { lang: Lang }) {
         </AtlasGrid>
       </AtlasSection>
 
-      <AtlasSection id="builds" eyebrow={t.buildsEyebrow} title={t.builds}>
+      <AtlasSection id="builds" title={t.builds}>
         <AtlasGrid min={260} fit>
           {builds.map((build) => {
             const [spec, className] = build[locale];

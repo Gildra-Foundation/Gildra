@@ -237,8 +237,8 @@ for (const path of [
   assert.doesNotMatch(text, /\bCharacterBookDuel\b|\bCHARACTER_BOOK_DUEL_FRAMES\b|duel-sequence\/|arthas-strike|illidan-parry/, path + " must not render or preload the cancelled duel");
 }
 assert.doesNotMatch(source("components/wow/audit/CharacterAuditPage.tsx"), /<CharacterBookIntro\b/, "Profiles must not play a second opening after the shared page turn");
-assert.match(source("components/motion/RouteTransition.tsx"), /<BookRouteScene\b/, "All routes must share the opening and page-turn scene");
-assert.doesNotMatch(source("components/motion/RouteTransition.tsx"), /key=\{(?:pathname|routeKey)\}/, "Query changes must preserve live page state");
+assert.match(source("components/motion/RouteTransitionGate.tsx"), /<RouteTransitionRuntime\b/, "All routes must share one page transition");
+assert.doesNotMatch(source("components/motion/RouteTransitionRuntime.tsx"), /key=\{(?:pathname|routeKey)\}/, "Query changes must preserve live page state");
 for (const prefix of ["app/wow", "app/ru/wow"]) {
   const route = source(prefix + "/characters/[slug]/page.tsx");
   assert.match(route, /getBattleNetCharacterDetails\(/, prefix + " no longer loads real character details");

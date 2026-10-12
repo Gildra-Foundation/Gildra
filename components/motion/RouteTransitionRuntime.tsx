@@ -1,49 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal, preconnect } from "react-dom";
-import dynamic from "next/dynamic";
+import { preconnect } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
-import { bookLocale, isBookPagePath, isCharacterAuthRedirect, shouldTurnBook } from "./routeTransitionPolicy";
-import { createBookRouteLifecycle, type BookRouteState } from "./bookRouteLifecycle";
+import { isBookPagePath, isCharacterAuthRedirect, shouldTurnBook } from "./routeTransitionPolicy";
+import { RouteThemeController } from "./RouteThemeController";
 import styles from "./routeTransition.module.css";
 
-const loadBookRouteScene = () => import("./BookRouteScene");
+/**
+ * Page-to-page transition of the whole site: the leaving page dims, a thin
+ * amber bar shows that the next page is on its way, and the new page fades in.
+ * Nothing is drawn over the content and nothing has to be skipped. The states
+ * are data attributes on `.system` / `.frame`; the look lives in
+ * routeTransition.module.css.
+ */
+type RouteState = "idle" | "leaving" | "loading";
 
-const BookRouteScene = dynamic(
-  () => loadBookRouteScene().then((module) => module.BookRouteScene),
-  { ssr: false },
-);
-
-// Keep the deliberately staged page turn for production; dev route compilation
-// can take long enough that its full-screen scene makes navigation feel stuck.
-const bookTransitionsEnabled = process.env.NODE_ENV !== "development"
-  || process.env.NEXT_PUBLIC_ENABLE_DEV_BOOK_TRANSITIONS === "1";
+// The new page starts dimmed rather than invisible, so the swap never shows an
+// empty frame between the two pages; it brightens and settles by 4 px.
+const ENTER: KeyframeAnimationOptions = { duration: 240, easing: "cubic-bezier(.2, .7, .2, 1)" };
+const ENTER_FRAMES: Keyframe[] = [{ opacity: .35, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }];
+/** Give up on a navigation that never commits (aborted, offline). */
+const WATCHDOG_MS = 12000;
 // In development, prefetching a route can make Next compile it before the
 // user navigates there. Keep that CPU work out of the active page interaction.
 const routePrefetchEnabled = process.env.NODE_ENV !== "development";
-
-function layoutForPath(pathname: string) {
-  const path = pathname.replace(/^\/ru(?=\/|$)/, "") || "/";
-  return path.startsWith("/wow/mythic") || path.startsWith("/wow/rotation") || path.startsWith("/talents") ? "immersive" : "standard";
-}
-
-function sharedWowBackgroundForPath(pathname: string) {
-  const path = pathname.replace(/^\/ru(?=\/|$)/, "") || "/";
-  // Other game hubs own their visual scene and should not download WoW art.
-  if (path === "/league-of-legends" || path.startsWith("/league-of-legends/")
-    || path === "/genshin" || path.startsWith("/genshin/")
-    || path === "/diablo" || path.startsWith("/diablo/")) return null;
-  if (path === "/") return null;
-  // These pages paint their own full-screen scene and do not use the shared
-  // dungeon backdrop. Keep its URL out of CSS so the browser cannot fetch it
-  // speculatively before route-specific styles are evaluated.
-  if (path === "/wow" || path === "/blueprints" || path.startsWith("/blueprints/")
-    || path.startsWith("/talents") || path === "/wow/characters" || path.startsWith("/wow/characters/")) return null;
-  return window.matchMedia("(max-width: 720px)").matches
-    ? "/assets/wow/mythic/ruby-depth-v3-mobile-optimized.webp"
-    : "/assets/wow/mythic/ruby-depth-v3-light-fast.webp";
-}
 
 function destinationFromTarget(target: EventTarget | null, includeOptOut = false) {
   if (!(target instanceof Element)) return null;
@@ -72,133 +53,87 @@ function clickDestination(event: MouseEvent, includeOptOut = false) {
   return destinationFromTarget(event.target, includeOptOut);
 }
 
-/** One book survives App Router navigation. Page content never gets an artificial remount key. */
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** One shell survives App Router navigation. Page content never gets an artificial remount key. */
 export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const routePath = pathname.replace(/^\/ru(?=\/|$)/, "") || "/";
-  const hasBlizzardIconMedia = /^\/wow\/mythic\/[^/]+\/?$/.test(routePath)
-    || /^\/wow\/mythic-plus\/[^/]+\/[^/]+\/?$/.test(routePath);
-  if (hasBlizzardIconMedia) {
+  if (/^\/wow\/mythic\/[^/]+\/?$/.test(routePath) || /^\/wow\/mythic-plus\/[^/]+\/[^/]+\/?$/.test(routePath)) {
     preconnect("https://render.worldofwarcraft.com");
   }
   const router = useRouter();
   const frameRef = useRef<HTMLDivElement>(null);
   const committedPath = useRef(pathname);
   const expectedPath = useRef(pathname);
-  const [locale, setLocale] = useState(bookLocale(pathname));
-  const [state, setState] = useState<BookRouteState>({ kind: "open", phase: "idle", id: 0 });
-  const [lifecycle] = useState(() => createBookRouteLifecycle(setState));
-  const sceneReady = useRef(false);
+  const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [state, setState] = useState<RouteState>("idle");
 
-  const pageReady = useCallback(() => {
-    if (!sceneReady.current || expectedPath.current !== committedPath.current || frameRef.current?.querySelector("[data-book-route-loading]")) return;
-    lifecycle.pageReady(lifecycle.state.id);
-  }, [lifecycle]);
+  const settle = useCallback(() => {
+    clearTimeout(watchdog.current);
+    setState("idle");
+  }, []);
 
-  const onSceneReady = useCallback((id: number) => {
-    if (id !== lifecycle.state.id || lifecycle.state.phase === "idle") return;
-    sceneReady.current = true;
-    lifecycle.ready(id);
-    pageReady();
-  }, [lifecycle, pageReady]);
+  /** The new page is in place: fade it in (unless the reader asked for less motion). */
+  const enter = useCallback(() => {
+    settle();
+    const frame = frameRef.current;
+    if (!frame) return;
+    // A dimming transition that started on the old page must not finish on the new one.
+    frame.getAnimations().forEach((animation) => animation.cancel());
+    if (!reducedMotion()) frame.animate(ENTER_FRAMES, ENTER);
+  }, [settle]);
+
+  /** A route with loading.tsx first commits its skeleton; wait for the real page. */
+  const enterWhenLoaded = useCallback(() => {
+    if (frameRef.current?.querySelector("[data-book-route-loading]")) setState("loading");
+    else enter();
+  }, [enter]);
 
   const begin = useCallback((destination: string) => {
     if (!shouldTurnBook(committedPath.current, destination)) {
       expectedPath.current = committedPath.current;
-      if (lifecycle.state.phase !== "idle") lifecycle.finish();
+      settle();
       return;
     }
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     expectedPath.current = destination;
-    setLocale(bookLocale(destination));
-    sceneReady.current = !bookTransitionsEnabled || reducedMotion;
-    if (bookTransitionsEnabled) {
-      const id = lifecycle.start("turn", reducedMotion);
-      if (!reducedMotion) void loadBookRouteScene().catch(() => {
-        if (lifecycle.state.id === id) lifecycle.finish();
-      });
-    } else if (lifecycle.state.phase !== "idle") lifecycle.finish();
-  }, [lifecycle]);
+    setState("leaving");
+    clearTimeout(watchdog.current);
+    watchdog.current = setTimeout(settle, WATCHDOG_MS);
+  }, [settle]);
 
   useEffect(() => {
-    if (!bookTransitionsEnabled) return;
-    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const interrupt = () => {
-      if (preference.matches || document.visibilityState === "hidden") lifecycle.finish();
-    };
-    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") lifecycle.finish(); };
-    preference.addEventListener("change", interrupt);
-    document.addEventListener("visibilitychange", interrupt);
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") settle(); };
     document.addEventListener("keydown", escape);
     return () => {
-      preference.removeEventListener("change", interrupt);
-      document.removeEventListener("visibilitychange", interrupt);
       document.removeEventListener("keydown", escape);
-      lifecycle.cancel();
+      clearTimeout(watchdog.current);
     };
-  }, [lifecycle, pageReady]);
+  }, [settle]);
 
+  // Skeleton → page: the loading marker disappears from the frame.
   useEffect(() => {
-    if (!bookTransitionsEnabled) return;
-    if (state.phase === "idle" || !frameRef.current) return;
-    const observer = new MutationObserver(pageReady);
-    observer.observe(frameRef.current, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["data-book-route-loading"],
-    });
-    // The route may already be ready by the time this effect attaches.
-    pageReady();
+    if (state !== "loading" || !frameRef.current) return;
+    const observer = new MutationObserver(enterWhenLoaded);
+    observer.observe(frameRef.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-book-route-loading"] });
     return () => observer.disconnect();
-  }, [state.phase, pageReady]);
+  }, [state, enterWhenLoaded]);
 
   useLayoutEffect(() => {
-    document.documentElement.lang = bookLocale(pathname);
-    document.documentElement.dataset.routeTheme = "wow";
-    document.documentElement.dataset.routeLayout = layoutForPath(pathname);
-    const root = document.documentElement;
-    const setBackground = () => {
-      const background = sharedWowBackgroundForPath(pathname);
-      if (background) root.style.setProperty("--wow-depth-background", `url("${background}")`);
-      else root.style.removeProperty("--wow-depth-background");
-    };
-    const mobileViewport = window.matchMedia("(max-width: 720px)");
-    setBackground();
-    mobileViewport.addEventListener("change", setBackground);
-    const cleanupBackgroundListener = () => mobileViewport.removeEventListener("change", setBackground);
-    // Keep the shared theme/background in development, but skip transition-only
-    // lifecycle updates while the book scene is disabled.
-    if (!bookTransitionsEnabled) return cleanupBackgroundListener;
-    if (isCharacterAuthRedirect(committedPath.current, pathname)
-      && expectedPath.current === committedPath.current) {
-      committedPath.current = pathname;
+    if (pathname === committedPath.current) return;
+    const from = committedPath.current;
+    committedPath.current = pathname;
+    if (isCharacterAuthRedirect(from, pathname) && expectedPath.current === from) {
+      // A protected character page resolved through the sign-in redirect: same turn.
       expectedPath.current = pathname;
-      setLocale(bookLocale(pathname));
-      pageReady();
-      return cleanupBackgroundListener;
+      enterWhenLoaded();
+      return;
     }
-    if (pathname !== committedPath.current) {
-      if (shouldTurnBook(committedPath.current, pathname)) {
-        // Also covers router.push/replace and browser history. The committed
-        // URL may be the result of a redirect, so readiness follows that URL.
-        const navigationAlreadyStarted = expectedPath.current !== committedPath.current;
-        if (lifecycle.state.phase === "idle" && !navigationAlreadyStarted) {
-          const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-          sceneReady.current = reducedMotion;
-          lifecycle.start("turn", reducedMotion);
-        }
-      } else if (lifecycle.state.phase !== "idle") {
-        // A translation changes the content in place without a new leaf.
-        lifecycle.finish();
-      }
-      committedPath.current = pathname;
-      expectedPath.current = pathname;
-      setLocale(bookLocale(pathname));
-    }
-    pageReady();
-    return cleanupBackgroundListener;
-  }, [pathname, lifecycle, pageReady]);
+    expectedPath.current = pathname;
+    // Router.push/replace and history also land here; language switches stay still.
+    if (shouldTurnBook(from, pathname)) enterWhenLoaded();
+    else settle();
+  }, [pathname, enterWhenLoaded, settle]);
 
   useEffect(() => {
     const capture = (event: MouseEvent) => {
@@ -208,7 +143,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       if (destination && anchor?.hasAttribute("data-no-book-transition")) {
         // Remember the intent so the eventual App Router commit stays quiet too.
         expectedPath.current = destination.pathname;
-        if (lifecycle.state.phase !== "idle") lifecycle.finish();
+        settle();
       } else if (destination) begin(destination.pathname);
     };
     const navigateAnchor = (event: MouseEvent) => {
@@ -221,34 +156,21 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     const history = () => begin(window.location.pathname);
     let prefetchTimer: ReturnType<typeof setTimeout> | undefined;
     const warm = (event: PointerEvent | FocusEvent) => {
-      if (!routePrefetchEnabled) return;
-      const anchor = event.target instanceof Element
-        ? event.target.closest<HTMLAnchorElement>("a[href]")
-        : null;
+      const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
       if (event instanceof PointerEvent && anchor && event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return;
       const destination = destinationFromTarget(event.target);
       if (!destination || !shouldTurnBook(committedPath.current, destination.pathname)) return;
       clearTimeout(prefetchTimer);
-      prefetchTimer = setTimeout(() => {
-        if (bookTransitionsEnabled && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          void loadBookRouteScene().catch(() => undefined);
-        }
-        router.prefetch(destination.pathname + destination.search);
-      }, event.type === "focusin" ? 0 : 100);
+      prefetchTimer = setTimeout(() => router.prefetch(destination.pathname + destination.search), event.type === "focusin" ? 0 : 100);
     };
     const cancelWarm = (event: PointerEvent) => {
-      const anchor = event.target instanceof Element
-        ? event.target.closest<HTMLAnchorElement>("a[href]")
-        : null;
+      const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
       if (anchor && event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return;
       clearTimeout(prefetchTimer);
     };
-    if (bookTransitionsEnabled) {
-      document.addEventListener("click", capture, true);
-      window.addEventListener("popstate", history);
-    }
-    // The book scene is optional in dev, but intent-prefetch still matters for
-    // menu links that explicitly opt out of Next Link's automatic prefetch.
+    document.addEventListener("click", capture, true);
+    window.addEventListener("popstate", history);
+    // Intent prefetch still matters for menu links that opt out of Next Link's automatic prefetch.
     if (routePrefetchEnabled) {
       document.addEventListener("pointerover", warm, true);
       document.addEventListener("pointerout", cancelWarm, true);
@@ -256,10 +178,8 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     }
     document.addEventListener("click", navigateAnchor);
     return () => {
-      if (bookTransitionsEnabled) {
-        document.removeEventListener("click", capture, true);
-        window.removeEventListener("popstate", history);
-      }
+      document.removeEventListener("click", capture, true);
+      window.removeEventListener("popstate", history);
       if (routePrefetchEnabled) {
         document.removeEventListener("pointerover", warm, true);
         document.removeEventListener("pointerout", cancelWarm, true);
@@ -268,15 +188,13 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       document.removeEventListener("click", navigateAnchor);
       clearTimeout(prefetchTimer);
     };
-  }, [begin, router]);
+  }, [begin, router, settle]);
 
-  const active = state.phase !== "idle";
-  return <div className={styles.system} data-theme="wow" data-book-navigation={active ? state.kind : "idle"}>
-    {active && createPortal(
-      <BookRouteScene key={state.id} state={state} locale={locale} onReady={onSceneReady} onSkip={() => lifecycle.finish()} />,
-      document.body,
-    )}
-    <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-book-route-phase={state.phase} aria-busy={active || undefined}>
+  const active = state !== "idle";
+  return <div className={styles.system} data-theme="wow" data-book-navigation={active ? "turn" : "idle"} data-route-state={state}>
+    <RouteThemeController />
+    <span className={styles.progress} aria-hidden="true" />
+    <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-route-state={state} aria-busy={active || undefined}>
       {children}
     </div>
   </div>;

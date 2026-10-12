@@ -3,8 +3,8 @@ import { AtlasFrame, AtlasGrid, AtlasHero, AtlasSection, AtlasTile } from "@/com
 import { midnightDelves } from "@/data/wow/midnight-delves";
 
 const copy = {
-  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", eyebrow: "World of Warcraft · Midnight", title: "Вылазки Midnight", lede: "Вылазки обоих сезонов Midnight. Тактика и награды появятся после проверки.", season2: "Сезон 2 · патч 12.1", season1: "Сезон 1 · патч 12.0", current: "Текущий сезон", delves: "вылазок" },
-  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", eyebrow: "World of Warcraft · Midnight", title: "Midnight Delves", lede: "Delves of both Midnight seasons. Strategy and rewards will appear once verified.", season2: "Season 2 · patch 12.1", season1: "Season 1 · patch 12.0", current: "Current season", delves: "delves" },
+  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", eyebrow: "Midnight", title: "Вылазки Midnight", lede: "Вылазки обоих сезонов Midnight. Тактика и награды появятся после проверки.", season2: "Сезон 2 · патч 12.1", season1: "Сезон 1 · патч 12.0", current: "Текущий сезон", delves: "вылазок" },
+  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", eyebrow: "Midnight", title: "Midnight Delves", lede: "Delves of both Midnight seasons. Strategy and rewards will appear once verified.", season2: "Season 2 · patch 12.1", season1: "Season 1 · patch 12.0", current: "Current season", delves: "delves" },
 } as const;
 
 export function DelveCatalogPage({ locale }: { locale: "en" | "ru" }) {
@@ -19,7 +19,6 @@ export function DelveCatalogPage({ locale }: { locale: "en" | "ru" }) {
       <AtlasHero
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
         breadcrumbsLabel={text.breadcrumbs}
-        emblem={<Compass />}
         eyebrow={text.eyebrow}
         title={text.title}
         lede={text.lede}

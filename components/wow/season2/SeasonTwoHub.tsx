@@ -9,7 +9,7 @@ export function SeasonTwoHub({ locale }: { locale: Locale }) {
   return (
     <IdentityStatusPage
       locale={locale}
-      eyebrow="World of Warcraft · Midnight"
+      eyebrow="Midnight"
       title="Midnight Season 2"
       summary={ru
         ? "Официальный обзор подтверждает запуск Season 2 и его основные семейства активностей. Таблицы наград, уровни предметов, игровые ID и детальные расписания скрыты до построчной сверки с каноническим manifest."

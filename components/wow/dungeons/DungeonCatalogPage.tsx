@@ -1,11 +1,11 @@
-import { Castle, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasSection } from "@/components/atlas";
 import { DungeonCardGrid } from "@/components/wow/mythic/DungeonCardGrid";
 import { dungeonSlugs } from "@/components/wow/mythic/dungeonRoutes";
 
 const copy = {
-  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", eyebrow: "World of Warcraft · Midnight · Сезон 2", title: "Подземелья", lede: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого.", dungeons: "подземелий", list: "Подземелья сезона", source: "Анонс Blizzard" },
-  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", eyebrow: "World of Warcraft · Midnight · Season 2", title: "Dungeons", lede: "Dungeons of the current season: route, bosses, timer and strategy for each.", dungeons: "dungeons", list: "Dungeons of the season", source: "Blizzard announcement" },
+  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", eyebrow: "Midnight · Сезон 2", title: "Подземелья", lede: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого.", dungeons: "подземелий", list: "Подземелья сезона", source: "Анонс Blizzard" },
+  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", eyebrow: "Midnight · Season 2", title: "Dungeons", lede: "Dungeons of the current season: route, bosses, timer and strategy for each.", dungeons: "dungeons", list: "Dungeons of the season", source: "Blizzard announcement" },
 } as const;
 
 export function DungeonCatalogPage({ locale }: { locale: "en" | "ru" }) {
@@ -16,7 +16,6 @@ export function DungeonCatalogPage({ locale }: { locale: "en" | "ru" }) {
       <AtlasHero
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
         breadcrumbsLabel={text.breadcrumbs}
-        emblem={<Castle />}
         eyebrow={text.eyebrow}
         title={text.title}
         lede={text.lede}

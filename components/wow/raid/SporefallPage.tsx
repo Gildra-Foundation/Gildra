@@ -1,4 +1,4 @@
-import { Castle, ExternalLink, Hourglass, Skull } from "lucide-react";
+import { ExternalLink, Hourglass, Skull } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
 import contentManifest from "@/data/wow/content-manifest.json";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
@@ -25,7 +25,6 @@ export function SporefallPage({ locale, view }: { locale: RaidLocale; view: "rai
       <AtlasHero
         breadcrumbs={isRaid ? [...crumbs, { label: raid.names.en }] : [...crumbs, { label: raid.names.en, href: raidHref }, { label: boss.names.en }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        emblem={isRaid ? <Castle /> : <Skull />}
         emblemShape={isRaid ? "circle" : "diamond"}
         eyebrow={isRaid ? <>{copy.season(1)} · {copy.patch(raid.patch)}</> : <>{raid.names.en} · {copy.encounterOf(1, 1)}</>}
         title={isRaid ? raid.names.en : boss.names.en}

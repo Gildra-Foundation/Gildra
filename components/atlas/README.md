@@ -30,7 +30,7 @@ import { AtlasFrame, AtlasHero, AtlasSection, AtlasCard, AtlasGrid } from "@/com
 
 ```tsx
 <AtlasFrame lang={locale} art="/assets/…/background.webp">
-  <AtlasHero breadcrumbs={…} emblem={<Skull />} eyebrow="World of Warcraft · Midnight"
+  <AtlasHero breadcrumbs={…} eyebrow="Midnight · Season 2"
              title="…" lede="…" stats={[{ value: 5, label: "raids" }]} />
   <AtlasSection id="list" title="…" description="…">
     <AtlasGrid min={280} fit>{items.map((item) => <AtlasCard … />)}</AtlasGrid>
@@ -42,15 +42,15 @@ import { AtlasFrame, AtlasHero, AtlasSection, AtlasCard, AtlasGrid } from "@/com
 
 | Component | Use for | Key props |
 | --- | --- | --- |
-| `AtlasFrame` | Page wrapper: atmosphere art fading into the solid body, 1540 px column, slim legal footer | `art`, `artPosition`, `tint`, `as`, `lang`, `dataAttributes`, `footer` |
-| `AtlasHero` | The page `h1` with emblem, eyebrow, lede, counters or an aside (the language switch is in the global bar, not here) | `title`, `eyebrow`, `lede`, `emblem`, `emblemShape`, `stats`, `breadcrumbs`, `actions`, `toolbar`, `aside`, `variant` |
+| `AtlasFrame` | Page wrapper: atmosphere art behind the hero fading into the solid body, 1540 px column, slim legal footer. Put the page's main artwork here, not in a framed box | `art`, `artPosition`, `artShade` (`deep` for bright art), `tint`, `as`, `lang`, `dataAttributes`, `footer` |
+| `AtlasHero` | The page `h1` on the page artwork (open by default): eyebrow only for real context (season, kind · zone — never "World of Warcraft"), lede, counters as a quiet row. `emblem` only for an identity image (spec icon, item icon), never a decorative glyph | `title`, `eyebrow`, `lede`, `emblem`, `stats`, `breadcrumbs`, `actions`, `toolbar`, `aside`, `variant` |
 | `AtlasStats` | Row of headline counters (used inside the hero) | `items: {value, label}[]` |
 | `AtlasSection` | Titled block of the body (`h2`) | `id`, `title`, `eyebrow`, `description`, `aside`, `level` |
 | `AtlasAnchorNav` | Sticky in-page chapter links with counts | `items: {href, label, count}[]`, `label` |
 | `AtlasGrid` | Responsive card grid | `min` (px), `fit`, `gap` |
 | `AtlasTile` | Compact icon link: quick access, next steps, catalogues without artwork | `href`, `icon`, `title`, `text`, `index` |
 | `AtlasDisclosure` | Folding detail (`<details>`): long secondary notes stay in the page but closed — prefer it to deleting real content | `summary`, `open` |
-| `AtlasCard` | Illustrated link card (raid, dungeon, boss); `layout="feature"` for the wide highlighted entry | `href`, `title`, `image`, `eyebrow`, `subtitle`, `description`, `meta`, `cta`, `artBadge`, `artCaption`, `index`, `accent`, `artRatio` |
+| `AtlasCard` | Illustrated link card (raid, dungeon, boss); `layout="feature"` for the wide highlighted entry | `href`, `title`, `image`, `eyebrow`, `subtitle`, `description`, `meta`, `cta` (accessible name of the arrow), `artBadge`, `artCaption`, `accent`, `artRatio`. No numbering, no badge that repeats the section title, no caption that is the same on every card |
 | `AtlasPanel` | Framed surface; never nest panels | `tone: default \| raised \| highlight`, `padding` |
 | `AtlasMetaList` | Labelled facts grid (zone, group, reward) | `items: {label, value, icon}[]`, `columns` |
 | `AtlasBadge` | Short uppercase label | `tone: accent \| neutral \| positive \| negative \| info \| caution`, `icon` |

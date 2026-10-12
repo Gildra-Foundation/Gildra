@@ -1,4 +1,3 @@
-import { Trophy } from "lucide-react";
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
 import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
 import { TierSection } from "@/components/TierSection";
@@ -34,8 +33,6 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntel
       <AtlasHero
         breadcrumbs={[{ label: copy.wow, href: p(lang, "/wow") }, { label: copy.section }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        emblem={<Trophy />}
-        emblemShape="diamond"
         eyebrow={copy.eyebrow}
         title={copy.title}
         lede={sample ? copy.ledeSample : copy.ledeLive}

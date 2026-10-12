@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Castle, Hourglass, Skull } from "lucide-react";
-import { AtlasBadge, AtlasCard, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
+import { ArrowRight, Castle, Hourglass, Skull } from "lucide-react";
+import { AtlasCard, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import contentManifest from "@/data/wow/content-manifest.json";
 import { midnightRaids, raidSlugs } from "./midnightRaidData";
 import { raidAtlasCopy } from "./raidAtlasCopy";
@@ -44,7 +44,8 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
   return (
     <AtlasFrame lang={locale} art="/assets/wow/raids/midnight/backgrounds/the-voidspire-optimized.webp" artPosition="center 10%" tint="rgba(95, 46, 151, .2)">
       <AtlasHero
-        emblem={<BookOpen />}
+        breadcrumbs={[{ label: "World of Warcraft", href: `${prefix}/wow` }, { label: copy.title }]}
+        breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
         title={copy.title}
         lede={copy.lede}
@@ -56,28 +57,22 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
         ]}
       />
 
-      <AtlasSection id="current" title={copy.currentTitle} description={copy.currentText} aside={currentRaid.build ? <span>{copy.patch(currentRaid.build)}</span> : null}>
+      <AtlasSection id="current" title={copy.currentTitle} description={copy.currentText}>
         <AtlasCard
           layout="feature"
           headingLevel={3}
           href={`${prefix}/wow/raids/venomous-abyss`}
           image={{ src: "/assets/wow/mythic/backgrounds/altar.webp", alt: "", priority: true }}
-          artBadge={<AtlasBadge tone="accent">{copy.currentBadge}</AtlasBadge>}
-          eyebrow={<><Castle aria-hidden="true" />Midnight · {locale === "ru" ? "Сезон 2" : "Season 2"}</>}
           title={currentRaid.names.en}
           description={localized(currentRaid.descriptions)}
           meta={[{ icon: <Skull aria-hidden="true" />, label: copy.bossCount(currentBosses.length) }]}
           cta={copy.openRaid}
-        >
-          <ol className={styles.bossColumns} aria-label={copy.bossesLabel}>
-            {currentBosses.map((boss) => <li key={boss.canonicalSlug}>{boss.names.en}</li>)}
-          </ol>
-        </AtlasCard>
+        />
       </AtlasSection>
 
       <AtlasSection id="archive" title={copy.archiveTitle} description={copy.archiveText}>
         <div className={styles.archiveGrid}>
-          {raidSlugs.map((slug, index) => {
+          {raidSlugs.map((slug) => {
             const raid = midnightRaids[slug];
             const name = raid.nameEn;
             return (
@@ -85,12 +80,9 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
                 <Link className={styles.raidArt} href={`${prefix}/wow/raids/${slug}`} tabIndex={-1} aria-hidden="true">
                   <Image src={raid.artwork} alt="" fill sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw" />
                   <span className={styles.shade} />
-                  <span className={styles.raidIndex}>{String(index + 1).padStart(2, "0")}</span>
                 </Link>
                 <div className={styles.raidBody}>
-                  <p className={styles.raidEyebrow}><Castle aria-hidden="true" />Midnight · {locale === "ru" ? "Сезон 1" : "Season 1"}</p>
                   <h3><Link href={`${prefix}/wow/raids/${slug}`}>{name}</Link></h3>
-                  <p className={styles.raidText}>{locale === "ru" ? raid.descriptionRu : raid.descriptionEn}</p>
                   <ol className={styles.encounters} aria-label={copy.bossesLabel}>
                     {raid.bosses.map((boss) => (
                       <li key={boss.slug}>
@@ -101,7 +93,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
                   </ol>
                   <footer className={styles.raidFooter}>
                     <span><Skull aria-hidden="true" />{copy.bossCount(raid.bosses.length)}</span>
-                    <Link href={`${prefix}/wow/raids/${slug}`}>{copy.openRaid}<ArrowRight aria-hidden="true" /></Link>
+                    <Link href={`${prefix}/wow/raids/${slug}`} aria-label={`${copy.openRaid}: ${name}`}><ArrowRight aria-hidden="true" /></Link>
                   </footer>
                 </div>
               </article>
@@ -111,10 +103,8 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
           <article className={styles.raid} data-testid="sporefall-identity-card">
             <Link className={`${styles.raidArt} ${styles.raidArtEmpty}`} href={`${prefix}/wow/raids/sporefall`} tabIndex={-1} aria-hidden="true">
               <Castle />
-              <span className={styles.raidIndex}>{String(raidSlugs.length + 1).padStart(2, "0")}</span>
             </Link>
             <div className={styles.raidBody}>
-              <p className={styles.raidEyebrow}><Castle aria-hidden="true" />Midnight · {copy.patch("12.0.7")}</p>
               <h3><Link href={`${prefix}/wow/raids/sporefall`}>{sporefall.names.en}</Link></h3>
               <p className={styles.pending}><Hourglass aria-hidden="true" /><span><strong>{copy.pendingTitle}.</strong> {copy.pendingText}</span></p>
               <ol className={styles.encounters} aria-label={copy.bossesLabel}>

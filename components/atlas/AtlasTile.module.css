@@ -5,9 +5,8 @@
   min-height: 76px;
   padding: var(--atlas-space-3) var(--atlas-space-4);
   color: inherit;
-  border: 1px solid var(--atlas-line);
+  border: 1px solid var(--atlas-line-soft);
   background: var(--atlas-surface);
-  box-shadow: var(--atlas-shadow-card);
   text-decoration: none;
   transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
 }

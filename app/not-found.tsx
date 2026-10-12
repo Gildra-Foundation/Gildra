@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Compass } from "lucide-react";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { NotFoundActions, NotFoundLede, NotFoundTitle } from "@/components/layout/NotFoundCopy";
 
@@ -13,8 +12,7 @@ export default function NotFound() {
   return (
     <AtlasFrame footer={false}>
       <AtlasHero
-        emblem={<Compass aria-hidden="true" />}
-        eyebrow="404 · World of Warcraft"
+        eyebrow="404"
         title={<NotFoundTitle />}
         lede={<NotFoundLede />}
         actions={<NotFoundActions />}

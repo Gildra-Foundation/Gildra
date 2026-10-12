@@ -1,4 +1,4 @@
-import { CalendarRange, ExternalLink, Gem, Hourglass } from "lucide-react";
+import { CalendarRange, ExternalLink, Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
 import { DungeonCardGrid } from "./DungeonCardGrid";
 import { dungeonSlugs } from "./dungeonRoutes";
@@ -7,7 +7,7 @@ type Season = "midnight-season-1" | "midnight-season-2";
 
 const copy = {
   ru: {
-    breadcrumbs: "Навигация", wow: "World of Warcraft", hub: "Атлас Mythic+", eyebrow: "World of Warcraft · Midnight",
+    breadcrumbs: "Навигация", wow: "World of Warcraft", hub: "Атлас Mythic+", eyebrow: "Midnight",
     title: (n: string) => `Mythic+ · сезон ${n}`,
     current: "Подземелья текущего сезона ключей с маршрутами, таймерами и тактикой.",
     past: "Архив первого сезона Midnight.",
@@ -17,7 +17,7 @@ const copy = {
     season1: "Midnight · Сезон 1", season2: "Midnight · Сезон 2", archive: "Архив", currentLabel: "Текущий сезон",
   },
   en: {
-    breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", hub: "Mythic+ atlas", eyebrow: "World of Warcraft · Midnight",
+    breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", hub: "Mythic+ atlas", eyebrow: "Midnight",
     title: (n: string) => `Mythic+ · Season ${n}`,
     current: "Dungeons of the current keystone season with routes, timers and strategy.",
     past: "Archive of the first Midnight season.",
@@ -42,8 +42,6 @@ export function MythicPlusCatalogPage({ locale, season = "midnight-season-2" }: 
       <AtlasHero
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.hub, href: `${prefix}/wow/mythic-plus` }, { label: text.title(isCurrent ? "2" : "1") }]}
         breadcrumbsLabel={text.breadcrumbs}
-        emblem={<Gem />}
-        emblemShape="diamond"
         eyebrow={text.eyebrow}
         title={text.title(isCurrent ? "2" : "1")}
         lede={isCurrent ? text.current : text.past}

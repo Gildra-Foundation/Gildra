@@ -12,8 +12,6 @@ export type AtlasCardProps = {
   href: string;
   title: ReactNode;
   image?: AtlasCardImage;
-  /** "01", "02"… shown on the artwork. */
-  index?: ReactNode;
   /** Label on the artwork, top right (activity type). */
   artBadge?: ReactNode;
   /** Small caption on the artwork, bottom right (timer, ilvl). */
@@ -26,6 +24,7 @@ export type AtlasCardProps = {
   /** Extra body content. Must not contain links: the whole card is one link. */
   children?: ReactNode;
   meta?: AtlasCardMeta[];
+  /** Accessible name of the arrow at the end of the card ("Open route"); not shown as text. */
   cta?: ReactNode;
   /** Illustration colour of this entry; only tints the eyebrow and hover glow. */
   accent?: string;
@@ -38,7 +37,7 @@ export type AtlasCardProps = {
 };
 
 /** Illustrated entry of an atlas list: raid, dungeon, boss, lair. */
-export function AtlasCard({ href, title, image, index, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, className }: AtlasCardProps) {
+export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, className }: AtlasCardProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const style = { "--atlas-card-accent": accent, "--atlas-card-art-ratio": artRatio } as CSSProperties;
   return (
@@ -56,7 +55,6 @@ export function AtlasCard({ href, title, image, index, artBadge, artCaption, eye
             />
           ) : <span className={styles.artEmpty} aria-hidden="true" />}
           <span className={styles.shade} aria-hidden="true" />
-          {index !== undefined ? <span className={styles.index}>{index}</span> : null}
           {artBadge ? <span className={styles.artBadge}>{artBadge}</span> : null}
           {artCaption ? <span className={styles.artCaption}>{artCaption}</span> : null}
         </div>
@@ -69,7 +67,7 @@ export function AtlasCard({ href, title, image, index, artBadge, artCaption, eye
           {meta?.length || cta ? (
             <div className={styles.footer}>
               {meta?.length ? <span className={styles.meta}>{meta.map((item, metaIndex) => <span key={metaIndex}>{item.icon}{item.label}</span>)}</span> : null}
-              {cta ? <span className={styles.cta}>{cta}<ArrowRight aria-hidden="true" /></span> : null}
+              {cta ? <span className={styles.cta}><span className={styles.srOnly}>{cta}</span><ArrowRight aria-hidden="true" /></span> : null}
             </div>
           ) : null}
         </div>
