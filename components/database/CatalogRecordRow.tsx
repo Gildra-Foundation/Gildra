@@ -8,8 +8,8 @@ import styles from "./catalogRecordRow.module.css";
 export type CatalogRecordRowProps = {
   href: string;
   name: string;
-  /** Uppercase line above the name (record type, game). */
-  typeLabel: ReactNode;
+  /** Uppercase line above the name (record type, game); left out when the whole list has one type. */
+  typeLabel?: ReactNode;
   iconUrl?: string | null;
   /** Sprite symbol of the record type, shown muted while the catalog icon is missing. */
   iconSymbol?: string;
@@ -37,7 +37,7 @@ export function CatalogRecordRow({ href, name, typeLabel, iconUrl, iconSymbol = 
         <ResilientImage src={iconUrl} alt="" width={48} height={48} loading="lazy" fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
       </span>
       <div className={styles.body}>
-        <p className={styles.type}>{typeLabel}</p>
+        {typeLabel ? <p className={styles.type}>{typeLabel}</p> : null}
         <h3 className={styles.name}>
           <Link href={href} prefetch={false} className={styles.link} data-track={track?.event} data-track-props={track ? JSON.stringify(track.props) : undefined}>{name}</Link>
         </h3>

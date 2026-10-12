@@ -15,7 +15,6 @@
 @import "./styles/primitives.css";
 @import "./styles/builds.css";
 @import "./styles/responsive.css";
-@import "../components/blocks/shared/legal/legal.css";
 @import "./styles/workspaceNavigator.css";
 @import "./styles/wow-skin.css";
 @import "./styles/atlas-theme.css";

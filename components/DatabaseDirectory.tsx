@@ -69,6 +69,8 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
   const levelCount = [minItemLevel, maxItemLevel, minRequiredLevel, maxRequiredLevel].filter(Boolean).length;
   const activeFilters = facets.length + (itemFilters ? levelCount : 0);
   const narrowed = Boolean(libraryDataset || selectedType || query.trim() || selectedCategory || activeFilters);
+  // A list narrowed to one record type does not repeat that type on every row.
+  const oneType = Boolean(libraryDataset || selectedType) && new Set(catalog.data.map((entity) => entity.type)).size === 1;
   const foundCount = totalCount ?? (catalog.pagination.total !== undefined ? formatCount(catalog.pagination.total, lang) : "—");
   const zeroResults = !catalog.data.length && (query || selectedType || selectedCategory || facets.length)
     ? JSON.stringify({ query, type: selectedType, category: selectedCategory, facets: facets.join(",") })
@@ -167,7 +169,7 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
           {catalog.data.length ? (
             <ul className={styles.records} aria-label={copy.resultsLabel}>
               {catalog.data.map((entity) => (
-                <RecordRow key={entity.id} entity={entity} registeredType={typeRegistry.get(entity.type)} lang={lang} copy={copy} preview={preview}
+                <RecordRow key={entity.id} entity={entity} registeredType={typeRegistry.get(entity.type)} lang={lang} copy={copy} preview={preview} hideType={oneType}
                   href={`${base}/${encodeURIComponent(entity.type)}/${entity.id}/${encodeURIComponent(entity.slug || String(entity.externalId))}${selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`}`} />
               ))}
             </ul>
@@ -191,8 +193,8 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
   );
 }
 
-function RecordRow({ entity, registeredType, href, lang, copy, preview }: {
-  entity: CatalogRecord; registeredType?: CatalogEntityType; href: string; lang: Lang; copy: DatabaseCopy; preview: ReturnType<typeof previewCopy>;
+function RecordRow({ entity, registeredType, href, lang, copy, preview, hideType = false }: {
+  entity: CatalogRecord; registeredType?: CatalogEntityType; href: string; lang: Lang; copy: DatabaseCopy; preview: ReturnType<typeof previewCopy>; hideType?: boolean;
 }) {
   const typeLabel = entityTypeLabel(entity.type, lang, registeredType?.label);
   const name = entity.name || `${typeLabel} #${entity.externalId}`;
@@ -205,7 +207,7 @@ function RecordRow({ entity, registeredType, href, lang, copy, preview }: {
     <CatalogRecordRow
       href={href}
       name={name}
-      typeLabel={<>{typeLabel}{entity.localeFallback ? <em title={copy.englishOnlyTitle}>{copy.englishOnly}</em> : null}</>}
+      typeLabel={hideType && !entity.localeFallback ? null : <>{hideType ? null : typeLabel}{entity.localeFallback ? <em title={copy.englishOnlyTitle}>{copy.englishOnly}</em> : null}</>}
       iconUrl={entity.iconUrl}
       iconSymbol={registeredType?.iconSymbol}
       quality={entity.quality}

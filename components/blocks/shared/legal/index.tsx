@@ -1,7 +1,8 @@
-import { Fragment } from "react";
-import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { AtlasFrame, AtlasHero, AtlasLinkButton } from "@/components/atlas";
 import { defineBlock, type BlockComponentProps } from "@/lib/blocks/types";
 import { p } from "@/lib/i18n";
+import styles from "./legal.module.css";
 
 export type LegalProps = {
   title: string;
@@ -11,24 +12,23 @@ export type LegalProps = {
   backLabel: string;
 };
 
-/** Narrow legal/prose page (`.legal`): h1, updated line, h2 + paragraph sections, back link. */
+/** Legal/prose page on the atlas kit: archive artwork, h1 with the update date, a readable column of h2 + paragraph sections. */
 function Legal({ title, updated, sections, backLabel, lang }: BlockComponentProps<LegalProps, undefined>) {
   return (
-    <div className="section route-section legal">
-      <h1>{title}</h1>
-      <p className="legal-upd">{updated}</p>
-      {sections.map((s) => (
-        <Fragment key={s.heading}>
-          <h2>{s.heading}</h2>
-          <p>{s.text}</p>
-        </Fragment>
-      ))}
-      <p className="legal-back">
-        <Link className="btn-line" href={p(lang, "/")}>
-          {backLabel}
-        </Link>
-      </p>
-    </div>
+    <AtlasFrame as="div" lang={lang} art="/assets/wow/loading/archive.webp" artPosition="center 45%" artShade="deep">
+      <AtlasHero title={title} lede={updated} />
+      <div className={styles.prose}>
+        {sections.map((section) => (
+          <section key={section.heading}>
+            <h2>{section.heading}</h2>
+            <p>{section.text}</p>
+          </section>
+        ))}
+        <AtlasLinkButton href={p(lang, "/")} variant="ghost" size="sm" icon={<ArrowLeft aria-hidden="true" />} className={styles.back}>
+          {backLabel.replace(/^←\s*/, "")}
+        </AtlasLinkButton>
+      </div>
+    </AtlasFrame>
   );
 }
 

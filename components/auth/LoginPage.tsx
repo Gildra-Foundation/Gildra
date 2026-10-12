@@ -29,7 +29,7 @@ export function LoginPage({ locale, accountName, configured, isConnected }: Prop
   );
 
   return (
-    <AtlasFrame lang={locale} id="battle-net-login" dataAttributes={{ "data-character-atlas": true, "data-roster-view": "entry" }}>
+    <AtlasFrame lang={locale} art="/assets/wow/character-book/intro/varok-home-background-v2.webp" artPosition="center 30%" id="battle-net-login" dataAttributes={{ "data-character-atlas": true, "data-roster-view": "entry" }}>
       <AtlasHero
         breadcrumbs={characterCrumbs(locale, copy.signIn)}
         breadcrumbsLabel={copy.breadcrumbsLabel}

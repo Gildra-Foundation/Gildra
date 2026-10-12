@@ -1,0 +1,27 @@
+/* atlas:strict — legal prose: one readable column on the solid page body. */
+.prose {
+  max-width: 72ch;
+  margin-top: var(--atlas-space-5);
+}
+
+.prose section + section { margin-top: var(--atlas-space-6); }
+
+.prose h2 {
+  margin: 0 0 var(--atlas-space-2);
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-h3);
+  font-weight: var(--atlas-weight-display);
+  letter-spacing: var(--atlas-tracking-display);
+  line-height: var(--atlas-leading-snug);
+}
+
+.prose p {
+  margin: 0;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-body);
+  line-height: var(--atlas-leading-body);
+  text-wrap: pretty;
+}
+
+.back { margin-top: var(--atlas-space-7); }

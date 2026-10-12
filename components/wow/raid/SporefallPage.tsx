@@ -1,4 +1,4 @@
-import { ExternalLink, Hourglass, Skull } from "lucide-react";
+import { ExternalLink, Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
 import contentManifest from "@/data/wow/content-manifest.json";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
@@ -21,7 +21,7 @@ export function SporefallPage({ locale, view }: { locale: RaidLocale; view: "rai
   const isRaid = view === "raid";
 
   return (
-    <AtlasFrame lang={locale}>
+    <AtlasFrame lang={locale} art="/assets/wow/loading/raid-wow-optimized.webp" artPosition="center 40%" tint="rgba(122, 64, 196, .2)">
       <AtlasHero
         breadcrumbs={isRaid ? [...crumbs, { label: raid.names.en }] : [...crumbs, { label: raid.names.en, href: raidHref }, { label: boss.names.en }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
@@ -42,7 +42,7 @@ export function SporefallPage({ locale, view }: { locale: RaidLocale; view: "rai
           </AtlasNotice>
           {isRaid ? (
             <ol className={styles.pendingList}>
-              <li><AtlasTile href={`${raidHref}/${boss.canonicalSlug}`} index="01" icon={<Skull />} title={boss.names.en} text={copy.pendingBoss} /></li>
+              <li><AtlasTile href={`${raidHref}/${boss.canonicalSlug}`} index="01" title={boss.names.en} text={copy.pendingBoss} /></li>
             </ol>
           ) : null}
         </div>

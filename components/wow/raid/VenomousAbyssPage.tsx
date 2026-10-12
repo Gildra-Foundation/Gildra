@@ -1,4 +1,4 @@
-import { Castle, ExternalLink, Layers, MapPin, Skull, Trophy } from "lucide-react";
+import { Castle, ExternalLink, Layers, MapPin } from "lucide-react";
 import { AtlasDisclosure, AtlasFrame, AtlasGrid, AtlasHero, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTile } from "@/components/atlas";
 import contentManifest from "@/data/wow/content-manifest.json";
 import { venomousAbyss } from "@/data/venomousAbyss";
@@ -68,7 +68,6 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
                 <AtlasTile
                   href={`${prefix}/wow/raids/venomous-abyss/${boss.canonicalSlug}`}
                   index={String(index + 1).padStart(2, "0")}
-                  icon={<Skull />}
                   title={boss.names.en}
                   text={guide ? guide.type[locale] : undefined}
                 />
@@ -143,7 +142,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
       <AtlasSection id="rewards" title={copy.rewardsTitle}>
         <ul className={styles.rewards}>
           {headlineRewards.map((reward) => (
-            <li key={reward.name}><Trophy aria-hidden="true" /><span><strong>{reward.name}</strong>{reward.detail[locale]}</span></li>
+            <li key={reward.name}><span><strong>{reward.name}</strong>{reward.detail[locale]}</span></li>
           ))}
         </ul>
         <AtlasDisclosure summary={<>Glory of the Venomous Raider · {copy.gloryRequirements(gloryAchievements.length)}</>} className={styles.glory}>

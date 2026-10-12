@@ -78,24 +78,6 @@ html[data-route-theme="wow"] [data-platform-home] button,
 html[data-route-theme="wow"] [data-platform-home] [role="button"] { border-radius: 2px !important; }
 html[data-route-theme="wow"] [data-platform-home] [class*="mistB"] { background: radial-gradient(circle, rgba(138, 63, 17, .52), transparent 66%) !important; }
 
-
-html[data-route-theme="wow"] .legal {
-  position: relative;
-  max-width: 900px;
-  margin-block: 42px 70px;
-  padding: 42px 48px 46px;
-  border: 1px solid #543719;
-  border-inline-start: 3px solid #cf8a30;
-  background: linear-gradient(145deg, rgba(24, 17, 9, .97), rgba(8, 6, 4, .985));
-  box-shadow: 0 25px 65px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 226, 161, .045);
-}
-html[data-route-theme="wow"] .legal::before { content: "ARCHIVE OF GILDRA"; display: block; margin-bottom: 13px; color: #b27a35; font: 700 9px var(--ui); letter-spacing: .2em; }
-html[data-route-theme="wow"] .legal h1 { max-width: 760px; color: #f0dfbf; font: 400 clamp(34px, 4vw, 54px)/1.04 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; letter-spacing: -.025em; text-shadow: 0 3px 12px #000; }
-html[data-route-theme="wow"] .legal-upd { margin-top: 11px; padding-bottom: 17px; border-bottom: 1px solid #322313; color: #857864; }
-html[data-route-theme="wow"] .legal h2 { margin-top: 28px; color: #e0a84e; font: 400 18px var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums; }
-html[data-route-theme="wow"] .legal p { max-width: 760px; color: #ae9f87; line-height: 1.78; }
-@media (max-width: 720px) { html[data-route-theme="wow"] .legal { margin-block: 12px 32px; padding: 28px 20px 32px; border-inline-width: 0 0; } }
-
 html[data-route-theme="wow"] [data-api-console] {
   background:
     linear-gradient(180deg, rgba(8, 6, 4, .78), rgba(7, 5, 3, .97)),

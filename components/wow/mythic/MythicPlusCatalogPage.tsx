@@ -1,4 +1,4 @@
-import { CalendarRange, ExternalLink, Hourglass } from "lucide-react";
+import { ExternalLink, Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
 import { DungeonCardGrid } from "./DungeonCardGrid";
 import { dungeonSlugs } from "./dungeonRoutes";
@@ -54,8 +54,8 @@ export function MythicPlusCatalogPage({ locale, season = "midnight-season-2" }: 
       </AtlasSection>
       <AtlasSection id="seasons" title={text.seasons} level={3}>
         <AtlasGrid min={260} fit>
-          <AtlasTile href={`${prefix}/wow/mythic-plus/seasons/midnight-season-2`} icon={<CalendarRange />} title={text.season2} text={text.currentLabel} />
-          <AtlasTile href={`${prefix}/wow/mythic-plus/seasons/midnight-season-1`} icon={<CalendarRange />} title={text.season1} text={text.archive} />
+          <AtlasTile href={`${prefix}/wow/mythic-plus/seasons/midnight-season-2`} title={text.season2} text={text.currentLabel} />
+          <AtlasTile href={`${prefix}/wow/mythic-plus/seasons/midnight-season-1`} title={text.season1} text={text.archive} />
         </AtlasGrid>
       </AtlasSection>
     </AtlasFrame>

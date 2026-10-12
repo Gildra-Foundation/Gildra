@@ -50,7 +50,7 @@ export function SearchPage({
   const kinds = (["all", "items", "characters"] as const).filter((value) => value !== "characters" || kind === "characters" || supportsCharacters(selectedGames));
   const multiGame = catalogGames.length > 1;
   return (
-    <AtlasFrame lang={lang} dataAttributes={{ "data-search-root": true }}>
+    <AtlasFrame lang={lang} art="/assets/wow/loading/archive.webp" artPosition="center 45%" dataAttributes={{ "data-search-root": true }}>
       <SearchShortcut inputId="platform-search-input" />
       <AtlasHero
         title={t.title}
