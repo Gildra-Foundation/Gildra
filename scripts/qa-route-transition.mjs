@@ -13,7 +13,13 @@ async function open(options = {}) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, ...options });
   page.on("pageerror", (error) => errors.push(error.stack));
   await page.addInitScript(() => {
-    window.routeQA = { id: Math.random(), events: [] };
+    window.routeQA = { id: Math.random(), events: [], viewTransitions: 0, arrivals: 0 };
+    // Count the View Transitions React starts for atlas pages.
+    const start = Document.prototype.startViewTransition;
+    if (start) Document.prototype.startViewTransition = function (...args) { window.routeQA.viewTransitions += 1; return start.apply(this, args); };
+    new MutationObserver(() => {
+      if (document.querySelector("[data-route-arrived]")) window.routeQA.arrivals += 1;
+    }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-route-arrived"] });
     let last = "";
     new MutationObserver(() => {
       const state = document.querySelector("[data-book-route-frame]")?.getAttribute("data-route-state") ?? "none";
@@ -35,6 +41,10 @@ try {
   await idle(page);
   assert.equal(await page.evaluate(() => window.routeQA.id), documentId, "Navigation must keep the app shell");
   assert.ok((await states(page)).includes("leaving"), "The leaving state must be set on click");
+  const handOver = await page.evaluate(() => window.routeQA);
+  assert.ok(handOver.viewTransitions > 0, "Atlas pages must hand over with a View Transition");
+  assert.ok(handOver.arrivals > 0, "The new page's hero must arrive as a cascade");
+  assert.equal(await page.locator("[data-book-route-frame]").getAttribute("data-view-transitions"), "", "With View Transitions the leaving page is not dimmed");
 
   // Query and hash changes on the same page do not transition.
   const before = (await states(page)).length;
@@ -80,7 +90,7 @@ try {
   assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
 
   assert.deepEqual(errors, []);
-  console.log("PASS route transition: shell kept, leaving/progress/fade, query+hash stable, slow route, history, reduced motion, mobile, no page errors.");
+  console.log("PASS route transition: shell kept, view transition + arrival cascade, leaving/progress, query+hash stable, slow route, history, reduced motion, mobile, no page errors.");
 } finally {
   await browser.close();
 }

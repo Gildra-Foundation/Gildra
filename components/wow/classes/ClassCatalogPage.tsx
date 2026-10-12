@@ -57,6 +57,7 @@ export function ClassCatalogPage({ locale }: { locale: Locale }) {
   return (
     <AtlasFrame lang={locale} art="/assets/wow/loading/talents-wow.webp" artPosition="center 40%">
       <AtlasHero
+        align="center"
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
         breadcrumbsLabel={text.breadcrumbs}
         title={text.title}

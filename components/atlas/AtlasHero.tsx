@@ -26,15 +26,17 @@ export type AtlasHeroProps = {
   aside?: ReactNode;
   /** "open" (default) sits directly on the page artwork; "panel" frames it in a box. */
   variant?: "panel" | "open";
+  /** "center" opens a hub like the title page of an atlas chapter: centred copy, an ornament under the title, counters below. Detail pages stay "start". */
+  align?: "start" | "center";
   titleId?: string;
   className?: string;
 };
 
 /** Page heading of every atlas route: emblem, eyebrow, title, lede, counters. */
-export function AtlasHero({ title, eyebrow, lede, emblem, emblemShape = "circle", stats, statsLabel, breadcrumbs, breadcrumbsLabel = "Breadcrumbs", actions, toolbar, aside, variant = "open", titleId, className }: AtlasHeroProps) {
+export function AtlasHero({ title, eyebrow, lede, emblem, emblemShape = "circle", stats, statsLabel, breadcrumbs, breadcrumbsLabel = "Breadcrumbs", actions, toolbar, aside, variant = "open", align = "start", titleId, className }: AtlasHeroProps) {
   const side = aside ?? (stats?.length ? <AtlasStats items={stats} label={statsLabel} className={styles.stats} /> : null);
   return (
-    <header className={clsx(styles.hero, styles[variant], className)}>
+    <header className={clsx(styles.hero, styles[variant], align === "center" && styles.center, className)}>
       {breadcrumbs?.length || toolbar ? (
         <div className={styles.topRow}>
           {breadcrumbs?.length ? <AtlasBreadcrumbs items={breadcrumbs} label={breadcrumbsLabel} /> : <span />}

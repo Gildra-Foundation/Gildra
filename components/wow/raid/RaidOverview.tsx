@@ -1,6 +1,6 @@
 import { Hourglass, ListChecks } from "lucide-react";
-import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
-import type { RaidDefinition } from "./midnightRaidData";
+import { AtlasCard, AtlasFrame, AtlasHero, AtlasNotice, AtlasPath, AtlasSection } from "@/components/atlas";
+import type { RaidBoss, RaidDefinition } from "./midnightRaidData";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy, isRaidStrategyPublished } from "./raidStrategy";
 import styles from "./raidGuide.module.css";
@@ -12,6 +12,10 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
   const raidHref = `${prefix}/wow/raids/${raid.slug}`;
   const published = isRaidStrategyPublished(raid);
   const single = raid.bosses.length === 1;
+  const mechanicsMeta = (boss: RaidBoss) => {
+    const guide = getBossStrategy(raid, boss)?.guide;
+    return guide ? [{ icon: <ListChecks aria-hidden="true" />, label: copy.mechanicCount(guide.mechanics.length) }] : undefined;
+  };
 
   return (
     <AtlasFrame lang={locale} art={raid.slug === "the-voidspire" ? "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp" : raid.artwork} artPosition="center 30%" tint={`${raid.accent}2e`}>
@@ -26,24 +30,30 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
       <AtlasSection id="bosses" title={copy.bossesTitle} description={published ? copy.bossesText : copy.bossesTextPending}>
         <div className={styles.stack}>
           {published ? null : <AtlasNotice tone="caution" icon={<Hourglass />} title={copy.strategyPendingTitle}>{copy.strategyPendingText}</AtlasNotice>}
-          <AtlasGrid min={360} as="ol">
-            {raid.bosses.map((boss, index) => {
-              const guide = getBossStrategy(raid, boss)?.guide;
-              return (
-                <li key={boss.slug} className={single ? styles.wide : undefined}>
-                  <AtlasCard
-                    href={`${raidHref}/${boss.slug}`}
-                    layout={single ? "feature" : "vertical"}
-                    image={{ src: boss.artwork, alt: "", priority: index < 4 }}
-                    title={boss.nameEn}
-                    description={locale === "ru" ? boss.descriptionRu : boss.descriptionEn}
-                    meta={guide ? [{ icon: <ListChecks aria-hidden="true" />, label: copy.mechanicCount(guide.mechanics.length) }] : undefined}
-                    cta={copy.openGuide}
-                  />
-                </li>
-              );
-            })}
-          </AtlasGrid>
+          {single ? (
+            <AtlasCard
+              href={`${raidHref}/${raid.bosses[0].slug}`}
+              layout="feature"
+              image={{ src: raid.bosses[0].artwork, alt: "", priority: true }}
+              title={raid.bosses[0].nameEn}
+              description={locale === "ru" ? raid.bosses[0].descriptionRu : raid.bosses[0].descriptionEn}
+              meta={mechanicsMeta(raid.bosses[0])}
+              cta={copy.openGuide}
+            />
+          ) : (
+            // The encounters in the order the raid meets them.
+            <AtlasPath
+              label={copy.bossesTitle}
+              steps={raid.bosses.map((boss) => ({
+                href: `${raidHref}/${boss.slug}`,
+                title: boss.nameEn,
+                image: { src: boss.artwork, position: "center 30%" },
+                description: locale === "ru" ? boss.descriptionRu : boss.descriptionEn,
+                meta: mechanicsMeta(boss),
+                cta: copy.openGuide,
+              }))}
+            />
+          )}
         </div>
       </AtlasSection>
     </AtlasFrame>

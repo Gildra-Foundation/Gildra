@@ -8,10 +8,12 @@ import { RouteThemeController } from "./RouteThemeController";
 import styles from "./routeTransition.module.css";
 
 /**
- * Page-to-page transition of the whole site: the leaving page dims, a thin
- * amber bar shows that the next page is on its way, and the new page fades in.
- * Nothing is drawn over the content and nothing has to be skipped. The states
- * are data attributes on `.system` / `.frame`; the look lives in
+ * Page-to-page transition of the whole site. A burning fuse along the top bar
+ * shows that the next page is on its way. Atlas pages hand over with a View
+ * Transition (AtlasFrame + app/styles/view-transitions.css); elsewhere, or
+ * without View Transitions, the leaving page dims and the new one fades in.
+ * Either way the new page's hero arrives as a short cascade (data-route-arrived).
+ * The states are data attributes on `.system` / `.frame`; the look lives in
  * routeTransition.module.css.
  */
 type RouteState = "idle" | "leaving" | "loading";
@@ -22,6 +24,8 @@ const ENTER: KeyframeAnimationOptions = { duration: 240, easing: "cubic-bezier(.
 const ENTER_FRAMES: Keyframe[] = [{ opacity: .35, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }];
 /** Give up on a navigation that never commits (aborted, offline). */
 const WATCHDOG_MS = 12000;
+/** How long the arrival cascade marker stays on the frame (longest hero/section delay + duration). */
+const ARRIVAL_MS = 1300;
 // In development, prefetching a route can make Next compile it before the
 // user navigates there. Keep that CPU work out of the active page interaction.
 const routePrefetchEnabled = process.env.NODE_ENV !== "development";
@@ -54,6 +58,7 @@ function clickDestination(event: MouseEvent, includeOptOut = false) {
 }
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const viewTransitions = () => typeof document.startViewTransition === "function";
 
 /** One shell survives App Router navigation. Page content never gets an artificial remount key. */
 export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
@@ -67,6 +72,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const committedPath = useRef(pathname);
   const expectedPath = useRef(pathname);
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const arrival = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [state, setState] = useState<RouteState>("idle");
 
   const settle = useCallback(() => {
@@ -74,14 +80,19 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     setState("idle");
   }, []);
 
-  /** The new page is in place: fade it in (unless the reader asked for less motion). */
+  /** The new page is in place: hand it over and let its hero arrive (unless the reader asked for less motion). */
   const enter = useCallback(() => {
     settle();
     const frame = frameRef.current;
     if (!frame) return;
     // A dimming transition that started on the old page must not finish on the new one.
     frame.getAnimations().forEach((animation) => animation.cancel());
-    if (!reducedMotion()) frame.animate(ENTER_FRAMES, ENTER);
+    if (reducedMotion()) return;
+    // Atlas pages already rise in through their View Transition.
+    if (!(viewTransitions() && frame.querySelector("[data-atlas-frame]"))) frame.animate(ENTER_FRAMES, ENTER);
+    clearTimeout(arrival.current);
+    frame.dataset.routeArrived = "";
+    arrival.current = setTimeout(() => { delete frame.dataset.routeArrived; }, ARRIVAL_MS);
   }, [settle]);
 
   /** A route with loading.tsx first commits its skeleton; wait for the real page. */
@@ -103,11 +114,14 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   }, [settle]);
 
   useEffect(() => {
+    // With View Transitions the leaving page stays bright: its snapshot would not carry the dim.
+    if (viewTransitions() && frameRef.current) frameRef.current.dataset.viewTransitions = "";
     const escape = (event: KeyboardEvent) => { if (event.key === "Escape") settle(); };
     document.addEventListener("keydown", escape);
     return () => {
       document.removeEventListener("keydown", escape);
       clearTimeout(watchdog.current);
+      clearTimeout(arrival.current);
     };
   }, [settle]);
 
@@ -194,6 +208,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   return <div className={styles.system} data-theme="wow" data-book-navigation={active ? "turn" : "idle"} data-route-state={state}>
     <RouteThemeController />
     <span className={styles.progress} aria-hidden="true" />
+    <span className={styles.spark} aria-hidden="true" />
     <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-route-state={state} aria-busy={active || undefined}>
       {children}
     </div>

@@ -17,20 +17,22 @@
   --ph-surface: #12100c;
 }
 
-/* Page-to-page transition (RouteTransitionRuntime). The leaving page dims only
-   if the next one takes a moment (120 ms delay), so instant navigations never
-   flicker; the new page fades in from the runtime with a 260 ms animation. */
+/* Page-to-page transition (RouteTransitionRuntime). Without View Transitions
+   the leaving page dims only if the next one takes a moment (120 ms delay), so
+   instant navigations never flicker; the new page fades in from the runtime.
+   With View Transitions the hand-over lives in app/styles/view-transitions.css. */
 .frame {
   transition: opacity 180ms ease;
 }
 
-.frame[data-route-state="leaving"] {
+.frame[data-route-state="leaving"]:not([data-view-transitions]) {
   opacity: .45;
   transition-delay: 120ms;
 }
 
-/* A thin amber line over the top bar while the next page is on its way. It
-   appears after 150 ms, grows towards 85 % and finishes when the page is in. */
+/* A burning fuse over the top bar while the next page is on its way: a thin
+   amber line with a spark at its head. It appears after 150 ms, burns towards
+   85 % and is gone when the page is in. */
 .progress {
   position: fixed;
   inset: 0 0 auto;
@@ -53,6 +55,35 @@
   100% { opacity: 1; transform: scaleX(.85); }
 }
 
+/* The spark rides the head of the line: same timing, moved instead of scaled. */
+.spark {
+  position: fixed;
+  top: -3px;
+  left: -4px;
+  z-index: 121;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff4d6 0 30%, #f0b55a 55%, transparent 72%);
+  box-shadow: 0 0 10px 3px rgba(240, 181, 90, .7), 0 0 22px 6px rgba(240, 120, 40, .35);
+  opacity: 0;
+}
+
+.system:is([data-route-state="leaving"], [data-route-state="loading"]) .spark {
+  animation: route-spark 2.4s cubic-bezier(.1, .7, .3, 1) 150ms forwards, route-spark-flicker .32s steps(2, jump-none) 150ms infinite alternate;
+}
+
+@keyframes route-spark {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 1; transform: translateX(85vw); }
+}
+
+@keyframes route-spark-flicker {
+  from { scale: 1; }
+  to { scale: 1.35; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .frame,
   .frame[data-route-state="leaving"] { transition: none; opacity: 1; }
@@ -61,4 +92,5 @@
     opacity: 1;
     transform: scaleX(.6);
   }
+  .system:is([data-route-state="leaving"], [data-route-state="loading"]) .spark { animation: none; }
 }
