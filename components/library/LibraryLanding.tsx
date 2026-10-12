@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { BookMarked } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
@@ -59,8 +58,6 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
   return (
     <AtlasFrame as="div" lang={lang} dataAttributes={{ "data-library-root": true }}>
       <AtlasHero
-        emblem={<BookMarked />}
-        eyebrow={copy.eyebrow}
         title={copy.title}
         lede={copy.lede}
         statsLabel={copy.statsLabel}

@@ -3,16 +3,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 24px;
-  padding: 3px 9px;
+  min-height: 22px;
+  padding: 2px 9px;
   color: var(--badge-color);
-  border: 1px solid color-mix(in srgb, var(--badge-color) 42%, transparent);
-  background: color-mix(in srgb, var(--badge-color) 8%, rgba(0, 0, 0, .55));
-  font-size: var(--atlas-text-label);
-  font-weight: 650;
-  letter-spacing: .1em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--badge-color) 13%, transparent);
+  font-size: var(--atlas-text-meta);
+  font-weight: 600;
   line-height: 1.2;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 

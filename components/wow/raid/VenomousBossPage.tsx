@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ExternalLink, Flame, HeartPulse, MapPin, Shield, Skull, Swords } from "lucide-react";
+import { ExternalLink, Flame, HeartPulse, MapPin, Shield, Swords } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { difficulties, type BossGuide, type VerifiedAbilityIdentity } from "@/data/venomousAbyss";
 import { EncounterSwitcher, RaidPager } from "./RaidNavigation";
@@ -46,8 +46,6 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
           { label: boss.name.en },
         ]}
         breadcrumbsLabel={shared.breadcrumbsLabel}
-        emblem={<Skull />}
-        emblemShape="diamond"
         eyebrow={<>The Venomous Abyss · {shared.encounterOf(order + 1, bosses.length)}</>}
         title={boss.name.en}
         lede={boss.identityDescription[locale]}

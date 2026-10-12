@@ -17,12 +17,10 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
   const announcement = midnightLairEncounters[0]?.sourceUrl;
 
   return (
-    <AtlasFrame lang={locale} dataAttributes={{ "data-lairs-root": true }}>
+    <AtlasFrame lang={locale} art="/assets/wow/lairs/bosses/nymrissa.jpg" artPosition="center 30%" dataAttributes={{ "data-lairs-root": true }}>
       <AtlasHero
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.section }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        emblem={<Skull />}
-        emblemShape="diamond"
         eyebrow={copy.eyebrow}
         title={copy.title}
         lede={copy.lede}
@@ -42,7 +40,6 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
             href={`${prefix}/wow/lairs/${lair.boss.slug}`}
             image={{ src: lair.boss.portrait, alt: lair.boss.name, priority: true, position: "center 62%" }}
             accent={lair.boss.accent}
-            artBadge={<AtlasBadge tone="accent" icon={<Skull />}>{copy.lairBadge}</AtlasBadge>}
             eyebrow={<><MapPin aria-hidden="true" />{lair.boss.zone}</>}
             title={lair.boss.name}
             subtitle={lair.boss.title}
@@ -76,8 +73,6 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
               image={{ src: boss.portrait, alt: boss.name, position: "center 24%", sizes: "(max-width: 620px) 100vw, (max-width: 1100px) 50vw, 25vw" }}
               artRatio="4 / 3.6"
               accent={boss.accent}
-              artBadge={<AtlasBadge tone="neutral">{copy.worldBadge}</AtlasBadge>}
-              artCaption={boss.farm.best}
               eyebrow={<><MapPin aria-hidden="true" />{boss.zone}</>}
               title={boss.name}
               subtitle={boss.title}

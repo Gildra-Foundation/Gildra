@@ -1,40 +1,4 @@
 /* atlas:strict — Raid journal hub, layout only; colours, fonts and sizes come from the atlas tokens. */
-.bossColumns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  margin: var(--atlas-space-2) 0 0;
-  padding: 0;
-  border: 1px solid var(--atlas-line-soft);
-  background: var(--atlas-line-soft);
-  counter-reset: boss;
-  list-style: none;
-}
-
-.bossColumns li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  padding: 9px var(--atlas-space-3);
-  overflow: hidden;
-  color: var(--atlas-text);
-  background: var(--atlas-surface);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-small);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  counter-increment: boss;
-}
-
-.bossColumns li::before {
-  flex: none;
-  color: var(--atlas-text-subtle);
-  content: counter(boss, decimal-leading-zero);
-  font-family: var(--atlas-font-ui);
-  font-size: var(--atlas-text-label);
-  font-variant-numeric: tabular-nums;
-}
 
 .archiveGrid {
   display: grid;
@@ -84,17 +48,6 @@
 
 .shade { position: absolute; inset: 0; background: var(--atlas-art-shade); }
 
-.raidIndex {
-  position: absolute;
-  top: 12px;
-  left: 14px;
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-small);
-  letter-spacing: .1em;
-  text-shadow: 0 1px 7px #000;
-}
-
 .raidBody {
   display: flex;
   flex-direction: column;
@@ -102,20 +55,6 @@
   min-width: 0;
   padding: var(--atlas-space-4);
 }
-
-.raidEyebrow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  color: var(--atlas-accent);
-  font-size: var(--atlas-text-label);
-  font-weight: 650;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-
-.raidEyebrow svg { width: 13px; height: 13px; }
 
 .raidBody h3 {
   margin: 0;
@@ -127,17 +66,6 @@
 
 .raidBody h3 a { color: var(--atlas-text-strong); text-decoration: none; }
 .raidBody h3 a:hover { color: var(--atlas-accent-strong); }
-
-.raidText {
-  display: -webkit-box;
-  margin: 0;
-  overflow: hidden;
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-  line-height: 1.55;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
-}
 
 .pending {
   display: flex;
@@ -215,10 +143,6 @@
 
 .raidFooter a:hover svg { transform: translateX(3px); }
 .raidFooter a svg { transition: transform var(--atlas-duration) var(--atlas-ease); color: inherit; }
-
-@media (max-width: 620px) {
-  .bossColumns { grid-template-columns: minmax(0, 1fr); }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .raid,

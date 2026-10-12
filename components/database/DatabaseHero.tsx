@@ -1,4 +1,3 @@
-import { Library } from "lucide-react";
 import { AtlasHero } from "@/components/atlas";
 import { DATA_SOURCES as DATA_SOURCES_LIST, databaseCopy, formatCount } from "@/components/database/databaseCopy";
 import type { Lang } from "@/lib/i18n";
@@ -13,8 +12,6 @@ export function DatabaseHero({ lang, stats }: { lang: Lang; stats?: { records: n
   return (
     <AtlasHero
       className={styles.hero}
-      emblem={<Library />}
-      eyebrow={copy.eyebrow}
       title={copy.title}
       titleId="database-title"
       lede={copy.lede}

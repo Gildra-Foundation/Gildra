@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Newspaper } from "lucide-react";
 
 import { AtlasFrame, AtlasHero, AtlasNotice } from "@/components/atlas";
 import { cmsOrigin, fetchArticlePreview } from "@/lib/cms/preview";
@@ -46,7 +45,7 @@ export async function ArticlePreviewPage({ lang, token }: { lang: Lang; token: s
     const [title, text] = result.status === "not-found" ? t.missing : result.status === "invalid" ? t.invalid : t.error;
     return (
       <AtlasFrame lang={lang}>
-        <AtlasHero emblem={<Newspaper />} eyebrow={t.draft} title={title} lede={text} />
+        <AtlasHero eyebrow={t.draft} title={title} lede={text} />
         {live}
       </AtlasFrame>
     );

@@ -3,6 +3,9 @@
   gap: var(--atlas-space-4);
 }
 
+/* Open hero: the title sits on the page artwork with room to breathe. */
+.open .body { padding-block: var(--atlas-space-5) var(--atlas-space-3); }
+
 .topRow {
   display: flex;
   flex-wrap: wrap;

@@ -1,7 +1,6 @@
 .panel {
   min-width: 0;
-  border: 1px solid var(--atlas-line);
-  outline: 1px solid #020303;
+  border: 1px solid var(--atlas-line-soft);
   background: var(--atlas-surface);
   box-shadow: var(--atlas-shadow-card);
 }

@@ -10,7 +10,6 @@ import type { Lang } from "@/lib/i18n";
  */
 export const databaseCopy = {
   ru: {
-    eyebrow: "World of Warcraft · База данных",
     title: "База данных World of Warcraft",
     lede: "Предметы, заклинания, задания, существа и игровые системы World of Warcraft — с подсказками, связями и историей версий.",
     statsLabel: "Объём каталога",
@@ -55,7 +54,6 @@ export const databaseCopy = {
     loading: "Загрузка базы данных",
   },
   en: {
-    eyebrow: "World of Warcraft · Database",
     title: "World of Warcraft database",
     lede: "Items, spells, quests, creatures and game systems of World of Warcraft — with in-game tooltips, relations and change history across client builds.",
     statsLabel: "Catalog size",

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleCheck, LockKeyhole, Swords } from "lucide-react";
+import { CircleCheck, LockKeyhole } from "lucide-react";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { BattleNetConnectPanel } from "@/components/wow/characters/BattleNetConnectPanel";
 import { characterCopy, characterCrumbs } from "@/components/wow/characters/characterCopy";
@@ -33,7 +33,6 @@ export function LoginPage({ locale, accountName, configured, isConnected }: Prop
       <AtlasHero
         breadcrumbs={characterCrumbs(locale, copy.signIn)}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        emblem={<Swords />}
         eyebrow={isConnected ? login.eyebrowConnected : login.eyebrow}
         title={isConnected ? login.titleConnected : login.title}
         lede={isConnected ? login.ledeConnected : login.lede}

@@ -1,4 +1,3 @@
-import { LoaderCircle } from "lucide-react";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { characterCopy, characterCrumbs } from "./characterCopy";
 
@@ -11,7 +10,6 @@ export function CharacterProfileLoading({ locale }: { locale: "en" | "ru" }) {
         <AtlasHero
           breadcrumbs={characterCrumbs(locale, copy.profile.eyebrow)}
           breadcrumbsLabel={copy.breadcrumbsLabel}
-          emblem={<LoaderCircle />}
           eyebrow={copy.profile.eyebrow}
           title={copy.profile.loadingTitle}
           lede={copy.profile.loadingText}

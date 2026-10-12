@@ -72,31 +72,6 @@
 /* ---------- Boss guide ---------- */
 .epithet { color: var(--atlas-text-strong); font-style: normal; font-weight: 600; }
 
-.portrait {
-  position: relative;
-  width: 340px;
-  aspect-ratio: 4 / 4.6;
-  margin: 0;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--boss-accent, var(--atlas-accent)) 45%, var(--atlas-line));
-  outline: 1px solid #020303;
-  background: var(--atlas-surface-sunken);
-  box-shadow: var(--atlas-shadow-card), 0 0 40px color-mix(in srgb, var(--boss-accent, var(--atlas-accent)) 14%, transparent);
-}
-
-.portrait img { object-fit: cover; object-position: center 20%; }
-
-.portrait figcaption {
-  position: absolute;
-  inset: auto 0 0;
-  padding: 48px var(--atlas-space-4) var(--atlas-space-4);
-  color: var(--atlas-text);
-  background: linear-gradient(0deg, rgba(5, 6, 7, .95), transparent);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-small);
-  line-height: 1.45;
-}
-
 .waypoint {
   display: inline-flex;
   flex-wrap: wrap;
@@ -362,10 +337,6 @@
 .pagerNext small { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); letter-spacing: .1em; text-transform: uppercase; }
 .pagerNext strong { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); }
 .pagerNext > svg { width: 18px; height: 18px; color: var(--atlas-accent); }
-
-@media (max-width: 1100px) {
-  .portrait { width: 100%; max-width: 520px; aspect-ratio: 16 / 11; }
-}
 
 @media (max-width: 900px) {
   .rewardsGrid,

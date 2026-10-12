@@ -1,34 +1,36 @@
+import { pluralRu } from "@/components/atlas/format";
+
 /** Interface copy of the Mythic+ hub. Dungeon, boss and zone names are game terms. */
 export const mythicAtlasCopy = {
   ru: {
-    eyebrow: "World of Warcraft · Midnight · Сезон 2",
+    eyebrow: "Midnight · Сезон 2",
     title: "Атлас Mythic+",
+    breadcrumbsLabel: "Навигация",
     lede: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения.",
     statsLabel: "Сводка сезона",
     dungeons: "подземелий",
     bosses: "боссов",
     season: "сезон",
     listTitle: "Подземелья сезона",
-    listText: "Восемь маршрутов текущего сезона ключей.",
-    stops: (count: number) => `${count} шагов`,
+    stops: (count: number) => `${count} ${pluralRu(count, "шаг", "шага", "шагов")}`,
+    bossCount: (count: number) => `${count} ${pluralRu(count, "босс", "босса", "боссов")}`,
     open: "Открыть маршрут",
     timer: "Таймер",
-    progressNote: "Отмеченный прогресс маршрута сохраняется только в вашем браузере.",
   },
   en: {
-    eyebrow: "World of Warcraft · Midnight · Season 2",
+    eyebrow: "Midnight · Season 2",
     title: "Mythic+ atlas",
+    breadcrumbsLabel: "Breadcrumbs",
     lede: "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments.",
     statsLabel: "Season summary",
     dungeons: "dungeons",
     bosses: "bosses",
     season: "season",
     listTitle: "Dungeons of the season",
-    listText: "Eight routes for the current keystone season.",
-    stops: (count: number) => `${count} stops`,
+    stops: (count: number) => `${count} ${count === 1 ? "stop" : "stops"}`,
+    bossCount: (count: number) => `${count} ${count === 1 ? "boss" : "bosses"}`,
     open: "Open route",
     timer: "Timer",
-    progressNote: "Route progress you mark is saved only in your browser.",
   },
 } as const;
 

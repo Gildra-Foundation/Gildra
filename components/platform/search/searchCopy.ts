@@ -3,7 +3,6 @@ import type { Lang } from "@/lib/i18n";
 /** Interface copy of /search and /ru/search. Record names and types come from the catalog. */
 export const searchCopy = {
   ru: {
-    eyebrow: "World of Warcraft · Поиск",
     title: "Поиск по архивам Азерота",
     lede: "Предметы, заклинания, задания и существа из базы Gildra. Ищите по названию на русском или английском — например, «Thunderfury».",
     placeholder: "Предмет, заклинание, задание…",
@@ -30,7 +29,6 @@ export const searchCopy = {
     results: "Результаты поиска",
   },
   en: {
-    eyebrow: "World of Warcraft · Search",
     title: "Search the Azeroth archives",
     lede: "Items, spells, quests, creatures and achievements from the Gildra database. Search by name in English or Russian — for example “Thunderfury”.",
     placeholder: "Item, spell or quest name…",

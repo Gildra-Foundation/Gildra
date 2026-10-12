@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { LockKeyhole, Users } from "lucide-react";
+import { LockKeyhole } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasPanel } from "@/components/atlas";
 import { BattleNetSignIn } from "@/components/auth/BattleNetActions";
 import { BattleNetConnectPanel } from "./BattleNetConnectPanel";
@@ -18,7 +18,6 @@ export function CharacterRosterEntryPage({ locale, accountName, apiError }: {
       <AtlasHero
         breadcrumbs={characterCrumbs(locale)}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        emblem={<Users />}
         eyebrow={accountName ?? copy.entry.eyebrow}
         title={copy.entry.title}
         lede={copy.entry.lede}

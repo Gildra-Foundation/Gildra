@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, ExternalLink, Hourglass } from "lucide-react";
+import { ArrowRight, ExternalLink, Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { formatAtlasDate, formatSeason } from "@/components/atlas/format";
 
@@ -48,7 +48,6 @@ export function IdentityStatusPage({
       <AtlasHero
         breadcrumbs={crumbs}
         breadcrumbsLabel={text.breadcrumbs}
-        emblem={<BookOpen />}
         eyebrow={eyebrow}
         title={title}
         lede={summary}

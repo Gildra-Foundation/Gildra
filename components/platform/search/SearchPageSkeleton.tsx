@@ -1,4 +1,3 @@
-import { Search } from "lucide-react";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import type { Lang } from "@/lib/i18n";
 import { searchCopy } from "./searchCopy";
@@ -10,8 +9,6 @@ export function SearchPageSkeleton({ lang }: { lang: Lang }) {
   return (
     <AtlasFrame lang={lang} dataAttributes={{ "data-book-route-loading": true }}>
       <AtlasHero
-        emblem={<Search />}
-        eyebrow={t.eyebrow}
         title={t.title}
         lede={t.lede}
         actions={<div className={styles.skeletonSearch} aria-hidden="true" />}

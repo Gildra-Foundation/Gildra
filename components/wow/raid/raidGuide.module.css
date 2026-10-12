@@ -4,21 +4,6 @@
 .wide { grid-column: 1 / -1; }
 .pendingList { max-width: 560px; margin: 0; padding: 0; list-style: none; }
 
-/* ---------- Hero portrait ---------- */
-.portrait {
-  position: relative;
-  width: 440px;
-  aspect-ratio: 16 / 10;
-  margin: 0;
-  overflow: hidden;
-  border: 1px solid var(--atlas-line);
-  outline: 1px solid #020303;
-  background: var(--atlas-surface-sunken);
-  box-shadow: var(--atlas-shadow-card);
-}
-
-.portrait img { object-fit: cover; object-position: center 30%; }
-
 /* ---------- Battle plan ---------- */
 .phases {
   display: grid;
@@ -363,12 +348,8 @@
 .sources svg { width: 12px; height: 12px; }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 1100px) {
-  .portrait { width: 100%; max-width: 560px; }
-}
 
 @media (max-width: 620px) {
-  .portrait { aspect-ratio: 16 / 8; }
   .phase { gap: var(--atlas-space-2); padding: var(--atlas-space-4) var(--atlas-space-4) 0; }
   .phaseIndex { align-self: center; font-size: var(--atlas-text-title); }
   .phaseBody { display: contents; }

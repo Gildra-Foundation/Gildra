@@ -11,7 +11,7 @@ export type AtlasHeroProps = {
   eyebrow?: ReactNode;
   /** One or two sentences that say what the page is for. */
   lede?: ReactNode;
-  /** Lucide icon (or any glyph) shown in the seal left of the title. */
+  /** Identity image left of the title (a spec icon, a portrait). Decorative glyphs are not used. */
   emblem?: ReactNode;
   emblemShape?: AtlasEmblemShape;
   stats?: AtlasStat[];
@@ -24,14 +24,14 @@ export type AtlasHeroProps = {
   toolbar?: ReactNode;
   /** Replaces the stats column (e.g. a sign-in card). */
   aside?: ReactNode;
-  /** "panel" frames the hero; "open" lets it sit directly on the atmosphere. */
+  /** "open" (default) sits directly on the page artwork; "panel" frames it in a box. */
   variant?: "panel" | "open";
   titleId?: string;
   className?: string;
 };
 
 /** Page heading of every atlas route: emblem, eyebrow, title, lede, counters. */
-export function AtlasHero({ title, eyebrow, lede, emblem, emblemShape = "circle", stats, statsLabel, breadcrumbs, breadcrumbsLabel = "Breadcrumbs", actions, toolbar, aside, variant = "panel", titleId, className }: AtlasHeroProps) {
+export function AtlasHero({ title, eyebrow, lede, emblem, emblemShape = "circle", stats, statsLabel, breadcrumbs, breadcrumbsLabel = "Breadcrumbs", actions, toolbar, aside, variant = "open", titleId, className }: AtlasHeroProps) {
   const side = aside ?? (stats?.length ? <AtlasStats items={stats} label={statsLabel} className={styles.stats} /> : null);
   return (
     <header className={clsx(styles.hero, styles[variant], className)}>

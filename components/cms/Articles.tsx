@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarDays, Clock3, Newspaper } from "lucide-react";
+import { CalendarDays, Clock3 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
@@ -122,8 +122,6 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
       <AtlasHero
         breadcrumbs={[{ label: "World of Warcraft", href: wow }, { label: t.articles }]}
         breadcrumbsLabel={t.crumbs}
-        emblem={<Newspaper />}
-        eyebrow="World of Warcraft"
         title={t.title}
         lede={t.lead}
       />
@@ -197,8 +195,7 @@ export function ArticleView({ article: a, lang, banner }: { article: PublicArtic
         <AtlasHero
           breadcrumbs={[{ label: "World of Warcraft", href: wow }, { label: t.articles, href: articlesIndexHref(lang) }, { label: a.title ?? slug }]}
           breadcrumbsLabel={t.crumbs}
-          emblem={<Newspaper />}
-          eyebrow={a.categories[0]?.title ?? "World of Warcraft"}
+          eyebrow={a.categories[0]?.title}
           title={a.title ?? slug}
           lede={a.summary || undefined}
         />

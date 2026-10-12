@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { BookMarked } from "lucide-react";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { DatabaseDirectory } from "@/components/DatabaseDirectory";
 import { CatalogTotal } from "@/components/database/CatalogTotal";
@@ -53,8 +52,6 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
         <AtlasHero
           breadcrumbs={[{ label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
           breadcrumbsLabel={copy.breadcrumbsLabel}
-          emblem={<BookMarked />}
-          eyebrow={copy.eyebrow}
           title={dataset.name}
           lede={dataset.description || undefined}
         />

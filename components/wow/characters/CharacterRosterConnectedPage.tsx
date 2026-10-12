@@ -1,4 +1,3 @@
-import { Users } from "lucide-react";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { BattleNetSignOut } from "@/components/auth/BattleNetActions";
 import type { BattleNetRegion } from "@/lib/wow/battleNetCharacters";
@@ -19,7 +18,6 @@ export function CharacterRosterConnectedPage({ locale, accountName, pendingRegio
         breadcrumbs={characterCrumbs(locale)}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         toolbar={<div className={styles.signOut}><BattleNetSignOut locale={locale} /></div>}
-        emblem={<Users />}
         eyebrow={accountName ? `${accountName} · ${copy.roster.eyebrowConnected}` : copy.roster.eyebrowConnected}
         title={copy.roster.title}
         lede={copy.roster.lede}
