@@ -122,7 +122,7 @@ and wrap it in `PageShell` — they do not need to become block pages.
 
 The switcher, Explore menu, search, footer and hreflang pick the game up from the
 registry automatically. URLs compose as `[/ru]` + `prefix` + path; never create
-`app/[game]` (it collides with `app/[key]/route.ts`).
+`app/[game]` (a root catch-all segment would shadow the branded 404).
 
 Reference implementation: League of Legends — `lib/games/league-of-legends/`
 (`api.ts`, `client.ts`, `sitemap.ts`, `pages/{home,champion,content}.ts`) and

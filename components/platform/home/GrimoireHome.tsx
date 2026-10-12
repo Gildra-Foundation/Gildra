@@ -12,15 +12,26 @@ import { HomeMusic } from "./HomeMusic";
 import { HomeScene } from "./HomeScene";
 import { HomeEntry } from "./HomeEntry";
 import { ThemePicker } from "./ThemePicker";
-import { homeThemeCookie, isHomeTheme } from "./homeThemes";
+import { homeThemeCookie, homeThemes, isHomeTheme } from "./homeThemes";
 import styles from "./grimoireHome.module.css";
 
 const coverSizes = "(max-width: 400px) 70vw, (max-width: 760px) 280px, (min-width: 1600px) 470px, 440px";
 const coverAvifSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320.avif 320w, /assets/wow/character-book/intro/chronicle-cover-v2-640.avif 640w, /assets/wow/character-book/intro/chronicle-cover-v2-1024.avif 1024w";
 const coverWebpSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320.webp 320w, /assets/wow/character-book/intro/chronicle-cover-v2-640.webp 640w, /assets/wow/character-book/intro/chronicle-cover-v2-1024.webp 1024w";
 
+// Kurale (headings, nav) and PT Serif (body) subsets the first screen renders
+// in. Discovered only through CSS they land ~1 s after the first paint on a
+// phone and re-wrap the quote and nav (CLS 0.23 / 0.55 on /, /ru).
+const firstScreenFonts = {
+  en: ["grimoire/kurale-latin", "atlas/pt-serif-regular-latin"],
+  ru: ["grimoire/kurale-cyrillic", "grimoire/kurale-latin", "atlas/pt-serif-regular-cyrillic", "atlas/pt-serif-regular-latin"],
+} as const;
+
 export async function GrimoireHome({ lang }: { lang: Lang }) {
   preload("/assets/wow/fonts/preciosa/preciosa-regular.woff2", { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+  for (const font of firstScreenFonts[lang === "ru" ? "ru" : "en"]) {
+    preload(`/assets/wow/fonts/${font}.woff2`, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+  }
   preload("/assets/wow/character-book/intro/chronicle-cover-v2-640.avif", {
     as: "image",
     type: "image/avif",
@@ -30,6 +41,10 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
   });
   const savedTheme = (await cookies()).get(homeThemeCookie)?.value;
   const initialTheme = isHomeTheme(savedTheme) ? savedTheme : "arthas";
+  // The scene background is the largest paint on phones; as a CSS background
+  // it would otherwise be found late and fetched at low priority.
+  const sceneArt = homeThemes.find((theme) => theme.id === initialTheme)?.art;
+  if (sceneArt) preload(`/assets/wow/character-book/intro/${sceneArt}`, { as: "image", type: "image/webp", fetchPriority: "high" });
   const ru = lang === "ru";
   const prefix = ru ? "/ru" : "";
   // The same cover art is the closed book and the leaf that swings open.
