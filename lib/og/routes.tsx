@@ -6,6 +6,7 @@ import contentManifest from "@/data/wow/content-manifest.json";
 import { midnightDelves } from "@/data/wow/midnight-delves";
 import { midnightLairEncounters } from "@/data/wow/midnight-lairs";
 import { getMidnightClass, getMidnightClassSpec, getMidnightClassSpecs, midnightClasses, midnightSpecializations } from "@/data/wow/midnight-specializations";
+import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { getBoss } from "@/lib/lairs";
 import { getTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
 import { atlasOgImage, type AtlasOgSpec } from "./atlasOg";
@@ -21,6 +22,8 @@ type Params = Record<string, string>;
 type Spec = Omit<AtlasOgSpec, "locale">;
 
 const L = "/assets/wow/loading";
+/** Art and preview crop of a section scene (lib/atlas/scenes.ts). */
+const scene = (id: AtlasSceneId) => ({ art: atlasScenes[id].art, focus: atlasScenes[id].og });
 const ru = (locale: Locale) => locale === "ru";
 const count = (locale: Locale, value: number, one: string, few: string, many: string, en: string, enPlural = `${en}s`) =>
   `${value} ${ru(locale) ? pluralRu(value, one, few, many) : value === 1 ? en : enPlural}`;
@@ -29,19 +32,19 @@ type Manifest = { canonicalSlug: string; instance?: string; order?: number; name
 const instances = contentManifest.instances as Manifest[];
 const encounters = contentManifest.encounters as Manifest[];
 
-const mythicPlusHub = (locale: Locale): Spec => ({ art: "/assets/wow/mythic/ruby-depth-v3-light-fast.webp", focus: [0.5, 0.4], eyebrow: ru(locale) ? "Midnight · Сезон 2" : "Midnight · Season 2", title: ru(locale) ? "Атлас Mythic+" : "Mythic+ atlas", subtitle: ru(locale) ? "Маршруты, таймеры и тактика подземелий сезона." : "Routes, timers and tactics for the dungeons of the season.", facts: [count(locale, Object.keys(dungeonRoutes).length, "подземелье", "подземелья", "подземелий", "dungeon")] });
+const mythicPlusHub = (locale: Locale): Spec => ({ ...scene("mythicPlus"), eyebrow: ru(locale) ? "Midnight · Сезон 2" : "Midnight · Season 2", title: ru(locale) ? "Атлас Mythic+" : "Mythic+ atlas", subtitle: ru(locale) ? "Маршруты, таймеры и тактика подземелий сезона." : "Routes, timers and tactics for the dungeons of the season.", facts: [count(locale, Object.keys(dungeonRoutes).length, "подземелье", "подземелья", "подземелий", "dungeon")] });
 
 const hubs = {
-  wow: (locale) => ({ art: "/assets/characters/furybar-horde-hero-v1-optimized.webp", focus: [0.72, 0.3], eyebrow: "Midnight", title: ru(locale) ? "Командный центр в Азероте" : "Command center in Azeroth", subtitle: ru(locale) ? "Рейды, Mythic+, логова, классы и база данных World of Warcraft." : "Raids, Mythic+, lairs, classes and the World of Warcraft database." }),
-  raids: (locale) => ({ art: "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp", focus: [0.5, 0.35], eyebrow: "Midnight", title: ru(locale) ? "Рейдовый журнал" : "Raid journal", subtitle: ru(locale) ? "Боссы, способности и тактика рейдов Midnight." : "Bosses, abilities and strategy of the Midnight raids." }),
+  wow: (locale) => ({ ...scene("wow"), eyebrow: "Midnight", title: ru(locale) ? "Командный центр в Азероте" : "Command center in Azeroth", subtitle: ru(locale) ? "Рейды, Mythic+, логова, классы и база данных World of Warcraft." : "Raids, Mythic+, lairs, classes and the World of Warcraft database." }),
+  raids: (locale) => ({ ...scene("raids"), eyebrow: "Midnight", title: ru(locale) ? "Рейдовый журнал" : "Raid journal", subtitle: ru(locale) ? "Боссы, способности и тактика рейдов Midnight." : "Bosses, abilities and strategy of the Midnight raids." }),
   mythicPlus: mythicPlusHub,
-  dungeons: (locale) => ({ ...mythicPlusHub(locale), art: "/assets/wow/mythic/backgrounds/nalorakk.webp", title: ru(locale) ? "Подземелья" : "Dungeons" }),
-  lairs: (locale) => ({ art: "/assets/wow/lairs/bosses/nymrissa.jpg", focus: [0.5, 0.3], eyebrow: ru(locale) ? "Midnight · Сезон 2" : "Midnight · Season 2", title: ru(locale) ? "Логова и мировые боссы" : "Lairs and world bosses", subtitle: ru(locale) ? "Где найти, что делать в бою и какая добыча падает." : "Where to find them, what to do and what drops." }),
-  classes: (locale) => ({ art: `${L}/talents-wow.webp`, focus: [0.5, 0.4], eyebrow: "Midnight", title: ru(locale) ? "Классы и специализации" : "Classes and specializations", facts: [count(locale, midnightClasses.length, "класс", "класса", "классов", "class", "classes"), count(locale, midnightSpecializations.length, "специализация", "специализации", "специализаций", "specialization")] }),
-  delves: (locale) => ({ art: `${L}/dungeon.webp`, focus: [0.5, 0.45], eyebrow: "Midnight", title: ru(locale) ? "Вылазки" : "Delves", facts: [count(locale, midnightDelves.length, "вылазка", "вылазки", "вылазок", "delve")] }),
-  tierLists: (locale) => ({ art: "/assets/wow/mythic/backgrounds/kings.webp", focus: [0.5, 0.4], eyebrow: "Mythic+ · Raids", title: ru(locale) ? "Тир-листы" : "Tier lists", subtitle: ru(locale) ? "Сила специализаций в ключах и рейдах." : "Specialization strength in keys and raids." }),
-  database: (locale) => ({ art: `${L}/archive.webp`, focus: [0.5, 0.45], eyebrow: "World of Warcraft", title: ru(locale) ? "База данных" : "Database", subtitle: ru(locale) ? "Предметы, заклинания, задания и существа с подсказками и историей версий." : "Items, spells, quests and creatures with tooltips and version history." }),
-  library: (locale) => ({ art: `${L}/tier.webp`, focus: [0.5, 0.5], eyebrow: "World of Warcraft", title: ru(locale) ? "Библиотека" : "Library", subtitle: ru(locale) ? "Наборы игровых данных: подсказки, изображения и связи." : "Game datasets: tooltips, images and relations." }),
+  dungeons: (locale) => ({ ...mythicPlusHub(locale), ...scene("dungeons"), title: ru(locale) ? "Подземелья" : "Dungeons" }),
+  lairs: (locale) => ({ ...scene("lairs"), eyebrow: ru(locale) ? "Midnight · Сезон 2" : "Midnight · Season 2", title: ru(locale) ? "Логова и мировые боссы" : "Lairs and world bosses", subtitle: ru(locale) ? "Где найти, что делать в бою и какая добыча падает." : "Where to find them, what to do and what drops." }),
+  classes: (locale) => ({ ...scene("classes"), eyebrow: "Midnight", title: ru(locale) ? "Классы и специализации" : "Classes and specializations", facts: [count(locale, midnightClasses.length, "класс", "класса", "классов", "class", "classes"), count(locale, midnightSpecializations.length, "специализация", "специализации", "специализаций", "specialization")] }),
+  delves: (locale) => ({ ...scene("delves"), eyebrow: "Midnight", title: ru(locale) ? "Вылазки" : "Delves", facts: [count(locale, midnightDelves.length, "вылазка", "вылазки", "вылазок", "delve")] }),
+  tierLists: (locale) => ({ ...scene("tierLists"), eyebrow: "Mythic+ · Raids", title: ru(locale) ? "Тир-листы" : "Tier lists", subtitle: ru(locale) ? "Сила специализаций в ключах и рейдах." : "Specialization strength in keys and raids." }),
+  database: (locale) => ({ ...scene("archive"), eyebrow: "World of Warcraft", title: ru(locale) ? "База данных" : "Database", subtitle: ru(locale) ? "Предметы, заклинания, задания и существа с подсказками и историей версий." : "Items, spells, quests and creatures with tooltips and version history." }),
+  library: (locale) => ({ ...scene("library"), eyebrow: "World of Warcraft", title: ru(locale) ? "Библиотека" : "Library", subtitle: ru(locale) ? "Наборы игровых данных: подсказки, изображения и связи." : "Game datasets: tooltips, images and relations." }),
 } satisfies Record<string, (locale: Locale) => Spec>;
 
 const kinds = {
@@ -76,19 +79,19 @@ const kinds = {
 
   venomous: (locale: Locale): Spec => {
     const bosses = encounters.filter((entry) => entry.instance === "venomous-abyss");
-    return { art: "/assets/wow/mythic/backgrounds/altar.webp", focus: [0.5, 0.4], eyebrow: ru(locale) ? "Midnight · Сезон 2 · рейд" : "Midnight · Season 2 · raid", title: "The Venomous Abyss", facts: [count(locale, bosses.length, "босс", "босса", "боссов", "boss", "bosses"), ru(locale) ? "Текущий рейд" : "Current raid"] };
+    return { ...scene("venomousAbyss"), eyebrow: ru(locale) ? "Midnight · Сезон 2 · рейд" : "Midnight · Season 2 · raid", title: "The Venomous Abyss", facts: [count(locale, bosses.length, "босс", "босса", "боссов", "boss", "bosses"), ru(locale) ? "Текущий рейд" : "Current raid"] };
   },
 
   venomousBoss: (locale: Locale, { boss: slug }: Params): Spec => {
     const bosses = encounters.filter((entry) => entry.instance === "venomous-abyss").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const index = bosses.findIndex((entry) => entry.canonicalSlug === slug);
     if (index < 0) return kinds.venomous(locale);
-    return { art: "/assets/wow/mythic/backgrounds/altar.webp", focus: [0.5, 0.4], eyebrow: `The Venomous Abyss · ${ru(locale) ? `встреча ${index + 1} из ${bosses.length}` : `encounter ${index + 1} of ${bosses.length}`}`, title: bosses[index].names.en ?? slug };
+    return { ...scene("venomousBoss"), eyebrow: `The Venomous Abyss · ${ru(locale) ? `встреча ${index + 1} из ${bosses.length}` : `encounter ${index + 1} of ${bosses.length}`}`, title: bosses[index].names.en ?? slug };
   },
 
   sporefall: (locale: Locale): Spec => {
     const raid = instances.find((entry) => entry.canonicalSlug === "sporefall");
-    return { art: `${L}/raid-wow-optimized.webp`, focus: [0.5, 0.4], eyebrow: ru(locale) ? "Midnight · рейд" : "Midnight · raid", title: raid?.names.en ?? "Sporefall", facts: [ru(locale) ? "Подробности позже" : "Details later"] };
+    return { ...scene("sporefall"), eyebrow: ru(locale) ? "Midnight · рейд" : "Midnight · raid", title: raid?.names.en ?? "Sporefall", facts: [ru(locale) ? "Подробности позже" : "Details later"] };
   },
 
   lair: (locale: Locale, { slug }: Params): Spec => {

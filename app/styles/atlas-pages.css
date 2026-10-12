@@ -5,28 +5,28 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
 .workspace-content.gildra-atlas {
   min-height: 100svh;
   color: var(--atlas-text);
-  background: var(--atlas-background);
-  font-family: var(--atlas-ui);
+  background: var(--atlas-bg);
+  font-family: var(--atlas-font-ui);
 }
 .workspace-content.gildra-atlas > div,
 .workspace-content.gildra-atlas > div > div {
-  background-color: var(--atlas-background);
+  background-color: var(--atlas-bg);
 }
 .workspace-content.gildra-atlas [data-platform-home] {
-  --ph-bg: var(--atlas-background);
+  --ph-bg: var(--atlas-bg);
   --ph-panel: var(--atlas-surface);
   --ph-surface: var(--atlas-surface);
-  --ph-line: var(--atlas-border);
-  --ph-line-soft: var(--atlas-rule);
+  --ph-line: var(--atlas-line);
+  --ph-line-soft: var(--atlas-line-soft);
   --ph-gold: var(--atlas-accent);
-  --ph-gold-soft: var(--atlas-accent-bright);
+  --ph-gold-soft: var(--atlas-accent-strong);
   --ph-ivory: var(--atlas-text);
-  --ph-muted: var(--atlas-muted);
-  background: var(--atlas-background) !important;
+  --ph-muted: var(--atlas-text-muted);
+  background: var(--atlas-bg) !important;
 }
 .workspace-content.gildra-atlas .app,
 .workspace-content.gildra-atlas .main {
-  background: var(--atlas-background);
+  background: var(--atlas-bg);
 }
 .workspace-content.gildra-atlas .section {
   max-width: 1540px;
@@ -34,18 +34,18 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
 }
 .workspace-content.gildra-atlas .route-section { padding-top: 32px; }
 .workspace-content.gildra-atlas .analytics-header h1 {
-  color: var(--atlas-title);
-  font-family: var(--atlas-display);
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
   font-weight: 400;
   letter-spacing: -.025em;
 }
 .workspace-content.gildra-atlas .pslot {
-  border-color: var(--atlas-rule);
+  border-color: var(--atlas-line-soft);
   background-color: var(--atlas-surface);
   box-shadow: none;
 }
 .workspace-content.gildra-atlas :is(a, button, input, select, textarea, summary):focus-visible {
-  outline: 2px solid var(--atlas-accent-bright);
+  outline: 2px solid var(--atlas-accent-strong);
   outline-offset: 3px;
 }
 .workspace-content.gildra-atlas :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a) {
@@ -55,11 +55,11 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
   gap: 8px;
   min-height: 44px;
   padding: 10px 16px;
-  border: 1px solid var(--atlas-border);
+  border: 1px solid var(--atlas-line);
   border-radius: 2px;
-  color: var(--atlas-title);
+  color: var(--atlas-text-strong);
   background: var(--atlas-accent-wash);
-  font-family: var(--atlas-ui);
+  font-family: var(--atlas-font-ui);
   text-decoration: none;
   box-shadow: none;
   clip-path: none;
@@ -71,31 +71,31 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
 .workspace-content.gildra-atlas [data-folio-action="quiet"] { color: var(--atlas-accent); background: transparent; }
 .workspace-content.gildra-atlas :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a) svg { width: 16px; height: 16px; flex-shrink: 0; }
 .workspace-content.gildra-atlas :is(.db-section-heading h2, .db-detail h1) {
-  color: var(--atlas-title);
-  font-family: var(--atlas-display);
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
   font-weight: 400;
 }
 .workspace-content.gildra-atlas :is(.db-detail, .db-detail-block, .db-localization-card, .db-media-gallery figure, .db-raw-payload) {
-  border-color: var(--atlas-border);
+  border-color: var(--atlas-line);
   background: var(--atlas-surface);
   box-shadow: none;
   clip-path: none;
 }
-.workspace-content.gildra-atlas .db-media-gallery figure > a { background: var(--atlas-background); border-color: var(--atlas-rule); }
-.workspace-content.gildra-atlas [data-platform-home] > header { background: var(--atlas-background); border-color: var(--atlas-rule); box-shadow: none; }
+.workspace-content.gildra-atlas .db-media-gallery figure > a { background: var(--atlas-bg); border-color: var(--atlas-line-soft); }
+.workspace-content.gildra-atlas [data-platform-home] > header { background: var(--atlas-bg); border-color: var(--atlas-line-soft); box-shadow: none; }
 .workspace-content.gildra-atlas .talent-calculator {
-  --tc-bg: var(--atlas-background);
+  --tc-bg: var(--atlas-bg);
   --tc-panel: var(--atlas-surface);
-  --tc-line: var(--atlas-border);
+  --tc-line: var(--atlas-line);
   --tc-gold: var(--atlas-accent);
-  --tc-gold-2: var(--atlas-accent-bright);
+  --tc-gold-2: var(--atlas-accent-strong);
   --tc-ink: var(--atlas-text);
-  --tc-muted: var(--atlas-muted);
-  background: var(--atlas-background);
+  --tc-muted: var(--atlas-text-muted);
+  background: var(--atlas-bg);
 }
-.workspace-content.gildra-atlas [data-api-console] { background: var(--atlas-background) !important; }
+.workspace-content.gildra-atlas [data-api-console] { background: var(--atlas-bg) !important; }
 .workspace-content.gildra-atlas [data-api-console] :is(header, aside, input, .rounded-xl, .rounded-sm) {
-  border-color: var(--atlas-border) !important;
+  border-color: var(--atlas-line) !important;
   background-color: var(--atlas-surface) !important;
 }
 .workspace-content.gildra-atlas [data-api-console] input { color: var(--atlas-text) !important; }

@@ -33,7 +33,7 @@
   mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
   mask-clip: content-box, border-box;
   mask-composite: exclude;
-  transition: opacity .35s var(--atlas-ease);
+  transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
 }
 
 .card::after {
@@ -45,7 +45,7 @@
   opacity: 0;
   background: radial-gradient(280px circle at var(--spot-x, 50%) var(--spot-y, 40%), color-mix(in srgb, var(--atlas-card-accent, var(--atlas-accent-strong)) 16%, transparent), transparent 70%);
   mix-blend-mode: screen;
-  transition: opacity .35s var(--atlas-ease);
+  transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -56,13 +56,13 @@
 /* Portrait entries lean towards the pointer (data-tilt, --tilt-x/--tilt-y). */
 .card[data-tilt] {
   transform: perspective(900px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg));
-  transition: border-color var(--atlas-duration) var(--atlas-ease), transform .5s var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration-art) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 
 .card[data-tilt]:hover,
 .card[data-tilt]:focus-within {
   transform: perspective(900px) translateY(-3px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg));
-  transition-duration: var(--atlas-duration), .15s, var(--atlas-duration);
+  transition-duration: var(--atlas-duration), var(--atlas-duration-fast), var(--atlas-duration);
 }
 
 .link {
@@ -86,7 +86,7 @@
 .art > img {
   object-fit: cover;
   filter: saturate(.9) brightness(.86);
-  transition: transform var(--atlas-duration-art) var(--atlas-ease), filter .3s ease;
+  transition: transform var(--atlas-duration-art) var(--atlas-ease), filter var(--atlas-duration-slow) ease;
 }
 
 .card:hover .art > img,

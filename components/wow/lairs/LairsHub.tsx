@@ -17,7 +17,7 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
   const announcement = midnightLairEncounters[0]?.sourceUrl;
 
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/lairs/bosses/nymrissa.jpg" artPosition="center 30%" dataAttributes={{ "data-lairs-root": true }}>
+    <AtlasFrame lang={locale} scene="lairs" dataAttributes={{ "data-lairs-root": true }}>
       <AtlasHero
         align="center"
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.section }]}

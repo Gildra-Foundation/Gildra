@@ -10,7 +10,7 @@
   background: var(--bind-wash);
   font: 14px/1.45 var(--folio-body, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums;
 }
-.editor[data-manuscript] { --bind-ink: var(--atlas-text); --bind-muted: var(--atlas-muted); --bind-line: var(--atlas-border); --bind-wash: var(--atlas-accent-wash); }
+.editor[data-manuscript] { --bind-ink: var(--atlas-text); --bind-muted: var(--atlas-text-muted); --bind-line: var(--atlas-line); --bind-wash: var(--atlas-accent-wash); }
 .editor header { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
 .editor header small { display: block; font-size: 11px; color: var(--bind-muted); }
 .editor header strong { display: block; font: 400 20px/1.4 var(--folio-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }

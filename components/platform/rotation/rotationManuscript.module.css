@@ -2,8 +2,8 @@
    The lab id intentionally outranks its legacy atlas/container skins. */
 :global(#rotation-lab-content) .manuscript {
   --script-ink: var(--atlas-text);
-  --script-muted: var(--atlas-muted);
-  --script-rule: var(--atlas-rule);
+  --script-muted: var(--atlas-text-muted);
+  --script-rule: var(--atlas-line-soft);
   --script-highlight: var(--atlas-accent-wash);
 }
 
@@ -68,11 +68,11 @@
   border: 0;
   border-radius: 2px;
   background: var(--atlas-surface-raised);
-  box-shadow: inset 0 0 0 1px var(--atlas-border);
+  box-shadow: inset 0 0 0 1px var(--atlas-line);
 }
 :global(#rotation-lab-content) .manuscript .cell[data-empty="true"] {
   background: transparent;
-  box-shadow: inset 0 0 0 1px var(--atlas-rule);
+  box-shadow: inset 0 0 0 1px var(--atlas-line-soft);
 }
 :global(#rotation-lab-content) .manuscript .cell > button > kbd {
   top: -11px;
@@ -83,7 +83,7 @@
   opacity: 1;
 }
 :global(#rotation-lab-content) .manuscript .cell[data-empty="true"] > button > span {
-  color: var(--atlas-muted);
+  color: var(--atlas-text-muted);
   font: 400 21px/1 var(--atlas-font-display, Georgia, serif); font-variant-numeric: lining-nums;
   opacity: .65;
   text-shadow: none;
@@ -92,7 +92,7 @@
   background-color: var(--script-highlight);
 }
 :global(#rotation-lab-content) .manuscript .cell:focus-within {
-  outline: 2px solid var(--atlas-accent-bright);
+  outline: 2px solid var(--atlas-accent-strong);
   outline-offset: 3px;
 }
 

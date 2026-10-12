@@ -27,7 +27,7 @@
   font-weight: var(--atlas-weight-display);
 }
 
-.text { max-width: 68ch; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.text { max-width: var(--atlas-measure); margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin-top: var(--atlas-space-2); }
 .code { margin: 0; color: var(--atlas-text-subtle); font-family: var(--atlas-font-mono); font-size: var(--atlas-text-meta); }
 
@@ -58,9 +58,9 @@
   animation: atlas-torch-sweep 1.8s var(--atlas-ease) infinite;
 }
 
-.shape:nth-child(2)::after { animation-delay: .15s; }
-.shape:nth-child(3)::after { animation-delay: .3s; }
-.shape:nth-child(4)::after { animation-delay: .45s; }
+.shape:nth-child(2)::after { animation-delay: calc(var(--atlas-stagger) * 2.5); }
+.shape:nth-child(3)::after { animation-delay: calc(var(--atlas-stagger) * 5); }
+.shape:nth-child(4)::after { animation-delay: calc(var(--atlas-stagger) * 7.5); }
 
 @keyframes atlas-torch-sweep { to { translate: 100% 0; } }
 

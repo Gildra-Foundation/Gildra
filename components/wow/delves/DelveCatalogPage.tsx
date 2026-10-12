@@ -18,7 +18,7 @@ export function DelveCatalogPage({ locale }: { locale: "en" | "ru" }) {
     { id: "midnight-season-1", title: text.season1 },
   ] as const;
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/loading/dungeon.webp" artPosition="center 45%">
+    <AtlasFrame lang={locale} scene="delves">
       <AtlasHero
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
         breadcrumbsLabel={text.breadcrumbs}

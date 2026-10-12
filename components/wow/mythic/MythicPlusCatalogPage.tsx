@@ -38,7 +38,7 @@ export function MythicPlusCatalogPage({ locale, season = "midnight-season-2" }: 
   const prefix = locale === "ru" ? "/ru" : "";
   const isCurrent = season === "midnight-season-2";
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/mythic/backgrounds/nalorakk.webp" artPosition="center 40%">
+    <AtlasFrame lang={locale} scene="dungeons">
       <AtlasHero
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.hub, href: `${prefix}/wow/mythic-plus` }, { label: text.title(isCurrent ? "2" : "1") }]}
         breadcrumbsLabel={text.breadcrumbs}

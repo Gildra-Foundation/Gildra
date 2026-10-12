@@ -1,4 +1,4 @@
-.shell { grid-column: 1 / -1; min-width: 0; padding: 20px; border: 1px solid var(--atlas-border); border-radius: 2px; background: var(--atlas-surface); box-shadow: none; color: var(--atlas-text); }
+.shell { grid-column: 1 / -1; min-width: 0; padding: 20px; border: 1px solid var(--atlas-line); border-radius: 2px; background: var(--atlas-surface); box-shadow: none; color: var(--atlas-text); }
 .header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
 .header small { color:#a48450; font-size:9px; font-weight:800; letter-spacing:.13em; }
 .header h2 { margin:5px 0 0; color:#f1e8da; font:650 25px/1.15 var(--font-heading); }
@@ -946,9 +946,9 @@
 /* Internal atlas: controls keep their status and item-quality colors. */
 :global([data-character-atlas]) .navLabelFull { display: inline; }
 :global([data-character-atlas]) .navLabelCompact { display: none; }
-:global([data-character-atlas]) .shell { border: 1px solid var(--atlas-border); border-radius: 2px; background: var(--atlas-surface); color: var(--atlas-text); box-shadow: none; }
+:global([data-character-atlas]) .shell { border: 1px solid var(--atlas-line); border-radius: 2px; background: var(--atlas-surface); color: var(--atlas-text); box-shadow: none; }
 :global([data-character-atlas]) .shell::before { display: none; }
-:global([data-character-atlas]) .shell :is(h2, h3) { color: var(--atlas-title); font-family: var(--atlas-display); font-weight: 400; text-shadow: none; }
-:global([data-character-atlas]) .shell > header { background: var(--atlas-surface); border-color: var(--atlas-rule); }
-:global([data-character-atlas]) .shell > header p { color: var(--atlas-muted); }
-:global([data-character-atlas]) :is(.builder, .damage > div, .calculation, .workspace, .buildBridge, .connectionLegend, .modeChooser, .treeDetails) { background: var(--atlas-background); border-color: var(--atlas-rule); box-shadow: none; }
+:global([data-character-atlas]) .shell :is(h2, h3) { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-weight: 400; text-shadow: none; }
+:global([data-character-atlas]) .shell > header { background: var(--atlas-surface); border-color: var(--atlas-line-soft); }
+:global([data-character-atlas]) .shell > header p { color: var(--atlas-text-muted); }
+:global([data-character-atlas]) :is(.builder, .damage > div, .calculation, .workspace, .buildBridge, .connectionLegend, .modeChooser, .treeDetails) { background: var(--atlas-bg); border-color: var(--atlas-line-soft); box-shadow: none; }

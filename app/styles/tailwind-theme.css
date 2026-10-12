@@ -1,4 +1,8 @@
-/* shadcn theme bridge for Tailwind: imported by app/globals.css and app/styles/tailwind-app.css. */
+/* Tailwind theme bridge: imported by app/globals.css and app/styles/tailwind-app.css.
+   The shadcn names (bg-card, text-muted-foreground, …) and the atlas tokens as
+   utilities (bg-atlas-surface, text-atlas-muted, border-atlas-line,
+   font-atlas-display, shadow-atlas-card, ease-atlas, …). `inline` makes each
+   utility read the live --atlas-* variable, so it follows app/styles/atlas-theme.css. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -28,4 +32,34 @@
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
+
+  /* Atlas tokens (app/styles/atlas-theme.css) */
+  --color-atlas-bg: var(--atlas-bg);
+  --color-atlas-surface: var(--atlas-surface);
+  --color-atlas-raised: var(--atlas-surface-raised);
+  --color-atlas-selected: var(--atlas-surface-selected);
+  --color-atlas-sunken: var(--atlas-surface-sunken);
+  --color-atlas-strong: var(--atlas-text-strong);
+  --color-atlas-text: var(--atlas-text);
+  --color-atlas-muted: var(--atlas-text-muted);
+  --color-atlas-subtle: var(--atlas-text-subtle);
+  --color-atlas-accent: var(--atlas-accent);
+  --color-atlas-accent-strong: var(--atlas-accent-strong);
+  --color-atlas-accent-ink: var(--atlas-accent-ink);
+  --color-atlas-accent-wash: var(--atlas-accent-wash);
+  --color-atlas-line: var(--atlas-line);
+  --color-atlas-line-soft: var(--atlas-line-soft);
+  --color-atlas-line-strong: var(--atlas-line-strong);
+  --color-atlas-positive: var(--atlas-positive);
+  --color-atlas-negative: var(--atlas-negative);
+  --color-atlas-caution: var(--atlas-caution);
+  --color-atlas-info: var(--atlas-info);
+  --font-atlas-display: var(--atlas-font-display);
+  --font-atlas-ui: var(--atlas-font-ui);
+  --font-atlas-mono: var(--atlas-font-mono);
+  --radius-atlas: var(--atlas-radius);
+  --shadow-atlas-panel: var(--atlas-shadow-panel);
+  --shadow-atlas-card: var(--atlas-shadow-card);
+  --shadow-atlas-lift: var(--atlas-shadow-lift);
+  --ease-atlas: var(--atlas-ease);
 }

@@ -29,7 +29,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntel
       ].filter((stat) => stat.value > 0);
 
   return (
-    <AtlasFrame as="div" lang={lang} art="/assets/wow/mythic/backgrounds/kings.webp" artPosition="center 40%" className={styles.frame} dataAttributes={{ "data-tier-workspace": true }}>
+    <AtlasFrame as="div" lang={lang} scene="tierLists" className={styles.frame} dataAttributes={{ "data-tier-workspace": true }}>
       <AtlasHero
         breadcrumbs={[{ label: copy.wow, href: p(lang, "/wow") }, { label: copy.section }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}

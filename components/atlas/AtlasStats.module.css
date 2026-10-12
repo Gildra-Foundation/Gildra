@@ -27,7 +27,7 @@
   font-weight: var(--atlas-weight-display);
   font-variant-numeric: lining-nums tabular-nums;
   line-height: 1;
-  text-shadow: 0 1px 2px #000, 0 0 18px rgba(0, 0, 0, .6);
+  text-shadow: var(--atlas-text-shadow-art);
 }
 
 .label {

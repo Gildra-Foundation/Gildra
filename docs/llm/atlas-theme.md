@@ -15,8 +15,12 @@ Never touch the landing scene or the contents book while doing these.
 | "Bolder headings" | `--atlas-weight-display`, `--atlas-weight-display-hero` (Alegreya is variable 400–900) |
 | "Wider / narrower page" | `--atlas-container`, `--atlas-gutter` |
 | "Rounder corners" | `--atlas-radius` (buttons, controls) |
+| "Faster / calmer motion" | `--atlas-duration-*`, `--atlas-ease*`, `--atlas-stagger` (one tempo for the whole atlas) |
+| "Softer / stronger glow" | `--atlas-glow-*`, `--atlas-ring-focus`, `--atlas-shadow-*` |
+| "Shorter / longer lines of text" | `--atlas-measure`, `--atlas-measure-wide` |
+| "Another painting for a section", "move the crop", "tint the torchlight" | the section's entry in `lib/atlas/scenes.ts` (pages use `<AtlasFrame scene="…">`; link previews read the same entry) |
 
-After a token change: `npm run build`, screenshot 2–3 pages (hub, detail, a table page) at 1440 and 390.
+After a token change: `npm run build`, then `npm run visual:diff` (local build against the live site, 1440 and 390) and look at the pages it flags. `/dev/atlas` (with `GILDRA_DEV_GALLERY=1`) shows every kit component at once.
 
 ## Change one component everywhere
 

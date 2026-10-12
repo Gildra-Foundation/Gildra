@@ -8,7 +8,7 @@ export function MythicAtlasPage({ locale }: { locale: "ru" | "en" }) {
   const bossTotal = dungeonSlugs.reduce((sum, slug) => sum + dungeonRoutes[slug].stops.filter((stop) => stop.kind === "boss").length, 0);
 
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/mythic/ruby-depth-v3-light-fast.webp" artPosition="center 30%" tint="rgba(200, 93, 38, .18)">
+    <AtlasFrame lang={locale} scene="mythicPlus">
       <AtlasHero
         align="center"
         breadcrumbs={[{ label: "World of Warcraft", href: `${locale === "ru" ? "/ru" : ""}/wow` }, { label: "Mythic+" }]}

@@ -118,7 +118,7 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
   const wow = lang === "ru" ? "/ru/wow" : "/wow";
 
   return (
-    <AtlasFrame lang={lang} art="/assets/wow/loading/city.webp" artPosition="center 40%">
+    <AtlasFrame lang={lang} scene="articles">
       <AtlasHero
         breadcrumbs={[{ label: "World of Warcraft", href: wow }, { label: t.articles }]}
         breadcrumbsLabel={t.crumbs}

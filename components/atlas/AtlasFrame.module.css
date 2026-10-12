@@ -26,7 +26,7 @@
   inset: 0;
   content: "";
   background: radial-gradient(circle at 74% 8%, var(--atlas-frame-tint), transparent 34%);
-  animation: atlas-torch 9s ease-in-out infinite;
+  animation: atlas-torch 9s var(--atlas-ease-ambient) infinite;
 }
 
 .atmosphere::after {
@@ -50,14 +50,14 @@
   object-position: var(--atlas-frame-art-position, center 18%);
   filter: saturate(.86) contrast(1.06) brightness(.92);
   /* The scene settles in when the page arrives, then drifts slowly — a living painting. */
-  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s ease-in-out 1.8s infinite alternate;
+  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
 }
 
 /* A living layer over the scene moves exactly like the art beneath it. */
 .artLayer {
   position: absolute;
   inset: 0;
-  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s ease-in-out 1.8s infinite alternate;
+  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
 }
 
 /* Embers: two parallax layers of sparks rising through the torchlight over the
@@ -85,7 +85,7 @@
     radial-gradient(circle at 40% 83%, var(--atlas-ember-halo), transparent 9px),
     radial-gradient(circle at 87% 11%, var(--atlas-ember) 0 .9px, transparent 1.6px);
   background-size: 380px 520px;
-  animation: atlas-ember-rise 26s linear infinite, atlas-ember-sway 7s ease-in-out infinite alternate, atlas-ember-in 2.4s ease-out both;
+  animation: atlas-ember-rise 26s linear infinite, atlas-ember-sway 7s var(--atlas-ease-ambient) infinite alternate, atlas-ember-in 2.4s ease-out both;
 }
 
 /* The far layer: smaller, slower, dimmer. */

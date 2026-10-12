@@ -518,8 +518,8 @@
 :global([data-profile-source="battle-net"][data-character-book="open"]) .history :is(button, summary):focus-visible { outline-color: #76502d; }
 
 /* Internal atlas: controls keep their status and item-quality colors. */
-:global([data-character-atlas]) .history { border: 1px solid var(--atlas-border); border-radius: 2px; background: var(--atlas-surface); color: var(--atlas-text); box-shadow: none; }
+:global([data-character-atlas]) .history { border: 1px solid var(--atlas-line); border-radius: 2px; background: var(--atlas-surface); color: var(--atlas-text); box-shadow: none; }
 :global([data-character-atlas]) .history::before { display: none; }
-:global([data-character-atlas]) .history :is(h2, h3) { color: var(--atlas-title); font-family: var(--atlas-display); font-weight: 400; text-shadow: none; }
-:global([data-character-atlas]) .history > header { background: var(--atlas-surface); border-color: var(--atlas-rule); }
-:global([data-character-atlas]) .history > header p { color: var(--atlas-muted); }
+:global([data-character-atlas]) .history :is(h2, h3) { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-weight: 400; text-shadow: none; }
+:global([data-character-atlas]) .history > header { background: var(--atlas-surface); border-color: var(--atlas-line-soft); }
+:global([data-character-atlas]) .history > header p { color: var(--atlas-text-muted); }

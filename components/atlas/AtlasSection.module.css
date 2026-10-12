@@ -73,7 +73,7 @@
 }
 
 .description {
-  max-width: 72ch;
+  max-width: var(--atlas-measure-wide);
   margin: 6px 0 0;
   color: var(--atlas-text-muted);
   font-size: var(--atlas-text-body);
@@ -95,7 +95,7 @@
 
 /* Arrival after an in-site navigation: the page body follows the hero cascade. */
 @media (prefers-reduced-motion: no-preference) {
-  :global([data-route-arrived]) .section { animation: atlas-section-arrive 640ms var(--atlas-ease) 420ms both; }
+  :global([data-route-arrived]) .section { animation: atlas-section-arrive var(--atlas-duration-enter) var(--atlas-ease) calc(var(--atlas-stagger) * 7) both; }
 }
 
 @keyframes atlas-section-arrive {

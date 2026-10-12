@@ -42,7 +42,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
   }
 
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp" artPosition="center 30%" tint="rgba(95, 46, 151, .2)">
+    <AtlasFrame lang={locale} scene="raids">
       <AtlasHero
         align="center"
         breadcrumbs={[{ label: "World of Warcraft", href: `${prefix}/wow` }, { label: copy.title }]}

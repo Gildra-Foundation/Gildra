@@ -2,15 +2,40 @@
 // Guards the atlas theme: stylesheets that opted in must take colours, fonts
 // and type sizes from the tokens in app/styles/atlas-theme.css.
 //
-// Checked files: everything in components/atlas/, plus any stylesheet whose
-// first line contains `atlas:strict`. Run: npm run atlas:check
+// Checked files: every CSS module (*.module.css) in components/ and app/, plus
+// any stylesheet whose first line contains `atlas:strict`, except the surfaces
+// listed in `exempt` with their reason. New modules are strict by default.
+// Run: npm run atlas:check
 import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const scanDirs = ["components", "app"];
-const alwaysStrict = ["components/atlas/"];
+const exempt = {
+  "components/platform/home/": "landing scene — its own materials (0 px gate)",
+  "components/wow/audit/": "contents book — its own materials",
+  "components/platform/navigation/bookNavigation.module.css": "contents book dialog — its own materials",
+  "components/platform/rotation/": "rotation lab — per-spec themed workbench (to tokens in roadmap wave 3)",
+  "components/platform/profile/": "fixture page — hidden for the WoW MVP",
+  "components/platform/patches/": "fixture page — hidden for the WoW MVP",
+  "components/league/": "League of Legends — hidden for the WoW MVP",
+  "components/platform/games/": "Genshin and Diablo hubs — hidden for the WoW MVP",
+  "components/platform/compare/": "fixture page — hidden for the WoW MVP",
+  "components/analytics/": "analytics product skin",
+  "components/cms/reader.module.css": "reader account pages skin",
+  "components/motion/routeTransition.module.css": "global route chrome, rendered outside the atlas scope",
+  "components/blueprints/": "legacy blueprint skin — to be moved onto tokens (roadmap wave 3)",
+  "components/platform/shared/platformAtmosphere.module.css": "atmosphere of the hidden fixture pages",
+  "components/wow/shared/wowTooltip.module.css": "in-game WoW tooltip look — joins AtlasTooltip with roadmap item 14",
+  "components/wow/season2/": "Season 2 status hub skin — to tokens in roadmap wave 3",
+  "components/talents/TalentTreePanel.module.css": "talent tree — class colours of the game",
+};
 const allowedHex = new Set(["#000", "#020303"]);
+const retiredAliases = {
+  background: "--atlas-bg", title: "--atlas-text-strong", muted: "--atlas-text-muted", "accent-bright": "--atlas-accent-strong",
+  border: "--atlas-line", rule: "--atlas-line-soft", display: "--atlas-font-display", ui: "--atlas-font-ui",
+};
+const retiredAlias = new RegExp(`--atlas-(${Object.keys(retiredAliases).join("|")})(?![\\w-])`, "g");
 
 function* walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -27,7 +52,12 @@ for (const dir of scanDirs) {
   for (const file of walk(path.join(root, dir))) {
     const rel = path.relative(root, file);
     const source = fs.readFileSync(file, "utf8");
-    const strict = alwaysStrict.some((prefix) => rel.startsWith(prefix)) || source.split("\n", 1)[0].includes("atlas:strict");
+    // Removed aliases must not come back in any stylesheet.
+    source.split("\n").forEach((line, index) => {
+      for (const match of line.matchAll(retiredAlias)) problems.push(`${rel}:${index + 1}  ${match[0]} was retired — use ${retiredAliases[match[1]]}`);
+    });
+    const marked = source.split("\n", 1)[0].includes("atlas:strict");
+    const strict = marked || (rel.endsWith(".module.css") && !Object.keys(exempt).some((prefix) => rel.startsWith(prefix)));
     if (!strict) continue;
     checked += 1;
     source.split("\n").forEach((line, index) => {

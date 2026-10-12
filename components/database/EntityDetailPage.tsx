@@ -80,7 +80,7 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
 
   return (
     <PageShell lang={lang}>
-      <AtlasFrame as="div" lang={lang} art="/assets/wow/loading/archive.webp" artPosition="center 45%" artShade="deep" dataAttributes={{ "data-database-entity": true }}>
+      <AtlasFrame as="div" lang={lang} scene="archiveDeep" dataAttributes={{ "data-database-entity": true }}>
         <AtlasHero
           breadcrumbs={breadcrumbs}
           breadcrumbsLabel={copy.breadcrumbsLabel}

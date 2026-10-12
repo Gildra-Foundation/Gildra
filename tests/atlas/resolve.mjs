@@ -1,0 +1,20 @@
+// Test-only module resolution for `node --test`: the "@/..." alias of
+// tsconfig.json and extensionless relative imports (./file → ./file.ts).
+import { existsSync } from "node:fs";
+import { register } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const root = fileURLToPath(new URL("../../", import.meta.url));
+
+export async function resolve(specifier, context, next) {
+  let target = specifier;
+  if (specifier.startsWith("@/")) target = pathToFileURL(root + specifier.slice(2)).href;
+  else if (!(specifier.startsWith("./") || specifier.startsWith("../")) || /\.[cm]?[jt]sx?$|\.json$/.test(specifier)) return next(specifier, context);
+  const base = target.startsWith("file:") ? target : new URL(target, context.parentURL).href;
+  for (const suffix of ["", ".ts", ".tsx", "/index.ts"]) {
+    if (existsSync(fileURLToPath(base + suffix)) && !(suffix === "" && !/\.[a-z]+$/.test(base))) return next(base + suffix, context);
+  }
+  return next(specifier, context);
+}
+
+if (!import.meta.url.includes("?hooks")) register(import.meta.url + "?hooks");

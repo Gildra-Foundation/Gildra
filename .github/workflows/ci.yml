@@ -75,6 +75,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run atlas:check
+      - run: npm run test:atlas
       - run: npm run build
         env:
           SENTRY_AUTH_TOKEN: ""

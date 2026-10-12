@@ -34,7 +34,7 @@
 .input:hover,
 .select:hover { border-color: var(--atlas-line-strong); }
 .input:focus-visible,
-.select:focus-visible { border-color: var(--atlas-accent-strong); outline: none; box-shadow: 0 0 0 3px var(--atlas-accent-wash-strong); }
+.select:focus-visible { border-color: var(--atlas-accent-strong); outline: none; box-shadow: var(--atlas-ring-focus); }
 .invalid .input,
 .invalid .select { border-color: var(--atlas-negative); }
 
