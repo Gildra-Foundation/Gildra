@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule Gildra catalog backup retention
+
+[Timer]
+OnCalendar=*-*-* 08:30:00
+RandomizedDelaySec=10m
+Persistent=true
+Unit=gildra-catalog-backup-prune.service
+
+[Install]
+WantedBy=timers.target

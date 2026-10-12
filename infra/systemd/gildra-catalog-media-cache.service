@@ -1,5 +1,7 @@
 [Unit]
 Description=Refresh Gildra private catalog media cache
+OnFailure=gildra-notify@%p.service
+OnSuccess=gildra-notify-ok@%p.service
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target

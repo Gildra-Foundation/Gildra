@@ -1,0 +1,69 @@
+# GlitchTip (Sentry-compatible error tracking) for gildra.net, riftden.com and the API.
+# UI: http://127.0.0.1:8200 through an SSH tunnel (no public route). Senders on the
+# gildra_default network reach ingestion at http://glitchtip:8000; host scripts at 127.0.0.1:8200.
+# Only the `glitchtip` service joins gildra_default, and every service name here is unique:
+# on a shared network the name `postgres` resolves to the production Gildra database.
+name: glitchtip
+
+x-environment: &environment
+  DATABASE_URL: postgres://glitchtip:${POSTGRES_PASSWORD}@glitchtip-db:5432/glitchtip
+  VALKEY_URL: ""
+  SECRET_KEY: ${SECRET_KEY}
+  EMAIL_URL: consolemail://
+  DEFAULT_FROM_EMAIL: glitchtip@gildra.net
+  GLITCHTIP_DOMAIN: http://127.0.0.1:8200
+  ALLOWED_HOSTS: 127.0.0.1,localhost,glitchtip
+  ENABLE_USER_REGISTRATION: "False"
+  ENABLE_ORGANIZATION_CREATION: "False"
+  ENABLE_ADMIN: "False"
+  GLITCHTIP_RETENTION_DAYS: "30"
+  GLITCHTIP_ENABLE_LOGS: "False"
+  VTASKS_CONCURRENCY: "5"
+  DATABASE_POOL_MAX_SIZE: "6"
+
+services:
+  glitchtip-db:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: glitchtip
+    volumes:
+      - pg-data:/var/lib/postgresql
+    networks: [internal]
+    restart: unless-stopped
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glitchtip -d glitchtip"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  glitchtip:
+    image: glitchtip/glitchtip:6.2.6
+    depends_on:
+      glitchtip-db:
+        condition: service_healthy
+    environment:
+      <<: *environment
+      SERVER_ROLE: all_in_one
+    ports:
+      - "127.0.0.1:8200:8000"
+    volumes:
+      - uploads:/code/uploads
+    networks:
+      internal: {}
+      gildra:
+        aliases: [glitchtip]
+    restart: unless-stopped
+    mem_limit: 1g
+
+networks:
+  internal: {}
+  gildra:
+    external: true
+    name: gildra_default
+
+volumes:
+  pg-data:
+  uploads:

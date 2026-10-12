@@ -1,0 +1,18 @@
+[Unit]
+Description=Apply the retention policy to Gildra catalog backups
+OnSuccess=gildra-notify-ok@%p.service
+Requires=docker.service
+After=docker.service
+OnFailure=gildra-notify@%p.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/gildra/infra/backup/prune-catalog-backups.py --apply
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
