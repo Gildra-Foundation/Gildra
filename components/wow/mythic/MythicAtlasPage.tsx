@@ -10,6 +10,7 @@ export function MythicAtlasPage({ locale }: { locale: "ru" | "en" }) {
   return (
     <AtlasFrame lang={locale} art="/assets/wow/mythic/ruby-depth-v3-light-fast.webp" artPosition="center 30%" tint="rgba(200, 93, 38, .18)">
       <AtlasHero
+        align="center"
         breadcrumbs={[{ label: "World of Warcraft", href: `${locale === "ru" ? "/ru" : ""}/wow` }, { label: "Mythic+" }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}

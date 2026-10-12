@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { ViewTransition, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { GAMES } from "@/lib/games/registry";
@@ -39,22 +39,26 @@ export function AtlasFrame({ children, art, artPosition, artShade = "default", t
   const locale = lang === "ru" ? "ru" : "en";
   const style = { "--atlas-frame-tint": tint, "--atlas-frame-art-position": artPosition } as CSSProperties;
   return (
-    <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} {...dataAttributes}>
-      <div className={styles.atmosphere} aria-hidden="true">
-        {/* Decorative, but it is the largest paint of every route that has it: fetch it at high priority. */}
-        {art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" /> : null}
-        {/* Torchlight over the artwork: a breathing glow and a few rising embers (CSS only). */}
-        <span className={styles.embers} />
-      </div>
-      <div className={styles.column}>
-        {children}
-        {footer ? (
-          <footer className={styles.legal}>
-            <p>{t(locale)(GAMES.wow.legal)}</p>
-            <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(locale)("Privacy Policy")}</Link>
-          </footer>
-        ) : null}
-      </div>
-    </Element>
+    // Page-to-page transition: the leaving page lets go, the next one rises out of
+    // the dark (::view-transition rules in app/styles/view-transitions.css).
+    <ViewTransition enter="atlas-page-in" exit="atlas-page-out" default="none">
+      <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} data-atlas-frame {...dataAttributes}>
+        <div className={styles.atmosphere} aria-hidden="true">
+          {/* Decorative, but it is the largest paint of every route that has it: fetch it at high priority. */}
+          {art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" /> : null}
+          {/* Torchlight over the artwork: a breathing glow and a few rising embers (CSS only). */}
+          <span className={styles.embers} />
+        </div>
+        <div className={styles.column}>
+          {children}
+          {footer ? (
+            <footer className={styles.legal}>
+              <p>{t(locale)(GAMES.wow.legal)}</p>
+              <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(locale)("Privacy Policy")}</Link>
+            </footer>
+          ) : null}
+        </div>
+      </Element>
+    </ViewTransition>
   );
 }

@@ -1,0 +1,193 @@
+/* Ordered journey: seals on one spine, artwork alternating sides. */
+.path {
+  position: relative;
+  display: grid;
+  gap: var(--atlas-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The spine through the seals. */
+.path::before {
+  position: absolute;
+  top: 36px;
+  bottom: 36px;
+  left: 27px;
+  width: 1px;
+  content: "";
+  background: linear-gradient(180deg, transparent, var(--atlas-line-strong) 6%, var(--atlas-line-strong) 94%, transparent);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--atlas-space-4);
+}
+
+.seal {
+  position: relative;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  color: var(--atlas-accent-strong);
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--atlas-surface-raised), var(--atlas-bg) 70%);
+  box-shadow: 0 0 0 5px var(--atlas-bg), 0 0 18px var(--atlas-accent-glow);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  font-variant-numeric: lining-nums tabular-nums;
+  transition: box-shadow var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
+}
+
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  min-height: 200px;
+  overflow: hidden;
+  color: inherit;
+  border: 1px solid var(--atlas-line-soft);
+  background: var(--atlas-surface);
+  text-decoration: none;
+  transition: border-color var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease);
+}
+
+/* Every other step turns the other way. */
+.step:nth-child(even) .card { grid-template-columns: minmax(0, 1fr) minmax(0, 380px); }
+.step:nth-child(even) .art { order: 2; }
+
+.art {
+  position: relative;
+  display: block;
+  min-height: 200px;
+  overflow: hidden;
+  background: var(--atlas-surface-sunken);
+}
+
+.art img {
+  object-fit: cover;
+  filter: saturate(.9) brightness(.86);
+  transition: transform var(--atlas-duration-art) var(--atlas-ease), filter .3s ease;
+}
+
+/* The artwork melts into the text side. */
+.art::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, transparent 55%, var(--atlas-surface));
+}
+
+.step:nth-child(even) .art::after { background: linear-gradient(270deg, transparent 55%, var(--atlas-surface)); }
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: var(--atlas-space-5) var(--atlas-space-5) var(--atlas-space-4);
+}
+
+.title {
+  margin: 0;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-h3);
+  font-weight: var(--atlas-weight-display);
+  letter-spacing: var(--atlas-tracking-display);
+  line-height: var(--atlas-leading-snug);
+  transition: color var(--atlas-duration) var(--atlas-ease);
+}
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-3);
+  margin-top: auto;
+  padding-top: var(--atlas-space-2);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-meta);
+}
+
+.meta > span { display: inline-flex; align-items: center; gap: 5px; }
+.meta svg { width: 14px; height: 14px; color: var(--atlas-accent); }
+.cta { display: inline-flex; color: var(--atlas-accent); }
+.cta svg { width: 18px; height: 18px; transition: translate var(--atlas-duration) var(--atlas-ease); }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.card:hover,
+.card:focus-visible { border-color: var(--atlas-accent); }
+.card:hover .art img,
+.card:focus-visible .art img { transform: scale(1.05); filter: saturate(1.05) brightness(1); }
+.card:hover .title,
+.card:focus-visible .title { color: var(--atlas-accent-strong); }
+.card:hover .cta svg,
+.card:focus-visible .cta svg { translate: 4px 0; }
+.card:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.step:has(.card:hover, .card:focus-visible) .seal { border-color: var(--atlas-accent-strong); box-shadow: 0 0 0 5px var(--atlas-bg), 0 0 26px var(--atlas-accent-strong); }
+
+/* Steps slide in from their own side as they scroll into view. */
+@supports (animation-timeline: view()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    .card {
+      animation: atlas-path-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+    .step:nth-child(even) .card { animation-name: atlas-path-in-right; }
+  }
+}
+
+@keyframes atlas-path-in { from { opacity: 0; translate: -36px 0; } to { opacity: 1; translate: none; } }
+@keyframes atlas-path-in-right { from { opacity: 0; translate: 36px 0; } to { opacity: 1; translate: none; } }
+
+@media (max-width: 760px) {
+  .path::before { left: 19px; }
+  .step { grid-template-columns: 40px minmax(0, 1fr); gap: var(--atlas-space-3); align-items: start; }
+  .seal { width: 40px; height: 40px; margin-top: var(--atlas-space-3); font-size: var(--atlas-text-small); box-shadow: 0 0 0 4px var(--atlas-bg); }
+  .card,
+  .step:nth-child(even) .card { grid-template-columns: minmax(0, 1fr); }
+  .step:nth-child(even) .art { order: 0; }
+  .art { min-height: 0; aspect-ratio: 16 / 8; }
+  .art::after,
+  .step:nth-child(even) .art::after { background: linear-gradient(0deg, var(--atlas-surface), transparent 60%); }
+  .body { padding: var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seal,
+  .card,
+  .art img,
+  .title,
+  .cta svg { transition: none; }
+  .card:hover .art img,
+  .card:focus-visible .art img { transform: none; }
+}

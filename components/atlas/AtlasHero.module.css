@@ -105,3 +105,74 @@
   .emblem { display: none; }
   .panel .body { padding: var(--atlas-space-5) var(--atlas-space-4); }
 }
+
+/* Arrival after an in-site navigation (RouteTransitionRuntime sets
+   data-route-arrived for a moment): breadcrumbs, eyebrow, title, lede, actions
+   and counters rise one after another. A first page load stays still. */
+@media (prefers-reduced-motion: no-preference) {
+  :global([data-route-arrived]) .topRow,
+  :global([data-route-arrived]) .copy > *,
+  :global([data-route-arrived]) .side,
+  :global([data-route-arrived]) .emblem {
+    animation: atlas-hero-arrive 620ms var(--atlas-ease) both;
+  }
+  :global([data-route-arrived]) .topRow { animation-delay: 120ms; }
+  :global([data-route-arrived]) .emblem { animation-delay: 170ms; }
+  :global([data-route-arrived]) .copy > :nth-child(1) { animation-delay: 170ms; }
+  :global([data-route-arrived]) .copy > :nth-child(2) { animation-delay: 230ms; }
+  :global([data-route-arrived]) .copy > :nth-child(3) { animation-delay: 300ms; }
+  :global([data-route-arrived]) .copy > :nth-child(n + 4) { animation-delay: 370ms; }
+  :global([data-route-arrived]) .side { animation-delay: 340ms; }
+}
+
+@keyframes atlas-hero-arrive {
+  from { opacity: 0; translate: 0 16px; }
+}
+
+/* Centred hub hero: the title page of an atlas chapter. A dark halo keeps the
+   copy readable over the middle of the artwork; the eyebrow gets rules on both
+   sides and the title an ornament (rule · ember · rule). */
+.center .body,
+.center.withSide .body,
+.center .withSide { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
+.center .copy { position: relative; max-width: 940px; }
+
+.center .copy::before {
+  position: absolute;
+  z-index: -1;
+  inset: -48px -120px;
+  content: "";
+  background: radial-gradient(ellipse at center, rgba(4, 5, 6, .72), rgba(4, 5, 6, .35) 55%, transparent 75%);
+  pointer-events: none;
+}
+
+.center .eyebrow { justify-content: center; }
+
+.center .eyebrow::after {
+  width: 22px;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, currentColor, transparent);
+}
+
+.center .title::after {
+  display: block;
+  width: 168px;
+  height: 9px;
+  margin: var(--atlas-space-4) auto 0;
+  content: "";
+  background:
+    radial-gradient(circle at 50% 50%, var(--atlas-accent-strong) 0 3px, transparent 3.8px),
+    linear-gradient(90deg, transparent, var(--atlas-accent)) left center / calc(50% - 10px) 1px no-repeat,
+    linear-gradient(90deg, var(--atlas-accent), transparent) right center / calc(50% - 10px) 1px no-repeat;
+  filter: drop-shadow(0 0 6px var(--atlas-accent-glow));
+}
+
+.center .lede { margin-inline: auto; }
+.center .actions { justify-content: center; }
+.center .side { justify-self: center; }
+
+@media (max-width: 720px) {
+  .center .copy::before { inset: -32px -24px; }
+  .center .title::after { width: 128px; }
+}

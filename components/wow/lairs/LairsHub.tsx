@@ -19,6 +19,7 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
   return (
     <AtlasFrame lang={locale} art="/assets/wow/lairs/bosses/nymrissa.jpg" artPosition="center 30%" dataAttributes={{ "data-lairs-root": true }}>
       <AtlasHero
+        align="center"
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.section }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}

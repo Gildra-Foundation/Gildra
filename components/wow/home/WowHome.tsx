@@ -61,6 +61,7 @@ export function WowHome({ lang }: { lang: Lang }) {
   return (
     <AtlasFrame lang={locale} art="/assets/characters/furybar-horde-hero-v1-optimized.webp" artPosition="72% 30%" dataAttributes={{ "data-wow-atlas": true }}>
       <AtlasHero
+        align="center"
         eyebrow={t.eyebrow}
         title={t.title}
         lede={t.lede}
