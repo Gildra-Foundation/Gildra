@@ -5,6 +5,8 @@ export function DelveIdentityPage({ delve, locale }: { delve: MidnightDelve; loc
   const seasonNumber = delve.season.endsWith("2") ? "2" : "1";
   return (
     <IdentityStatusPage
+      art="/assets/wow/loading/dungeon.webp"
+      artPosition="center 45%"
       locale={locale}
       eyebrow={locale === "ru" ? `Вылазка · Midnight · Сезон ${seasonNumber}` : `Delve · Midnight · Season ${seasonNumber}`}
       title={delve.name}

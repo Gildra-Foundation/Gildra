@@ -12,7 +12,7 @@
   margin-bottom: var(--atlas-space-4);
 }
 
-.headingCopy { flex: 1 1 auto; min-width: 0; }
+.headingCopy { flex: 1 1 auto; min-width: 0; view-timeline: --atlas-section block; }
 
 .eyebrow {
   display: flex;
@@ -39,7 +39,38 @@
   text-wrap: balance;
 }
 
+/* Map-legend flourish under the heading: an ember dot and a fading amber rule.
+   It draws itself as the section scrolls into view. */
+.title::after {
+  display: block;
+  width: 88px;
+  height: 7px;
+  margin-top: 9px;
+  content: "";
+  background:
+    radial-gradient(circle at 3.5px 50%, var(--atlas-accent-strong) 0 2.6px, transparent 3.4px),
+    linear-gradient(90deg, var(--atlas-accent), transparent) 12px 50% / calc(100% - 12px) 1px no-repeat;
+  filter: drop-shadow(0 0 5px var(--atlas-accent-glow));
+  transform-origin: left center;
+}
+
 .titleSmall { font-size: var(--atlas-text-h3); }
+.titleSmall::after { width: 64px; margin-top: 7px; }
+
+@supports (animation-timeline: view()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    .title::after {
+      animation: atlas-flourish linear both;
+      animation-timeline: --atlas-section;
+      animation-range: entry 30% cover 35%;
+    }
+  }
+}
+
+@keyframes atlas-flourish {
+  from { opacity: 0; transform: scaleX(.08); }
+  to { opacity: 1; transform: none; }
+}
 
 .description {
   max-width: 72ch;

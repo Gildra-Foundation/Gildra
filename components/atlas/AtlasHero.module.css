@@ -51,6 +51,13 @@
   text-transform: uppercase;
 }
 
+.eyebrow::before {
+  width: 22px;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, currentColor);
+}
+
 .eyebrow svg { width: 14px; height: 14px; }
 
 .title {

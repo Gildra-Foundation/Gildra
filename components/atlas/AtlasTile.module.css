@@ -12,6 +12,8 @@
 }
 
 .tile:hover { border-color: var(--atlas-accent); background: var(--atlas-surface-raised); }
+.tile:hover .icon,
+.tile:focus-visible .icon { border-color: var(--atlas-accent); box-shadow: 0 0 18px var(--atlas-accent-glow), inset 0 0 12px var(--atlas-accent-wash-strong); }
 .tile:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 
 .index {
@@ -31,6 +33,7 @@
   border: 1px solid var(--atlas-line);
   border-radius: 50%;
   background: radial-gradient(circle, var(--atlas-accent-wash-strong), transparent 70%);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 
 .icon svg { width: 20px; height: 20px; }
@@ -49,6 +52,21 @@
 
 .chevron { flex: none; width: 18px; height: 18px; color: var(--atlas-accent); transition: transform var(--atlas-duration) var(--atlas-ease); }
 .tile:hover .chevron { transform: translateX(3px); }
+
+@supports (animation-timeline: view()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    .tile {
+      animation: atlas-tile-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 80%;
+    }
+  }
+}
+
+@keyframes atlas-tile-rise {
+  from { opacity: 0; translate: 0 calc(var(--atlas-reveal-shift) / 2); }
+  to { opacity: 1; translate: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .tile,

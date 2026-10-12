@@ -192,7 +192,7 @@ export const midnightRaids: Record<RaidSlug, RaidDefinition> = {
     locationRu: "Буря Бездны",
     descriptionEn: "From high above the Voidstorm, Xal'atath has gathered the Devouring Host beneath her dark banner. The towering Voidspire looms like a spear of darkness, a citadel guarded by an army of the void. The forces of the Light must rally for one last desperate assault before all is lost.",
     descriptionRu: "В своем бастионе над Бурей Бездны Ксал'атат собрала войско слуг тьмы – Пожирающий сонм. Шпиль нависает в вышине подобно темному копью, и армия Бездны охраняет цитадель своей повелительницы. Силам Света нужно объединиться для последней отчаянной битвы.",
-    artwork: "/assets/wow/raids/midnight/backgrounds/the-voidspire.png",
+    artwork: "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp",
     accent: "#8f5ce4",
     bosses: [bosses["imperator-averzian"], bosses.vorasius, bosses["fallen-king-salhadaar"], bosses["vaelgor-ezzorak"], bosses["lightblinded-vanguard"], bosses["crown-of-the-cosmos"]],
   },

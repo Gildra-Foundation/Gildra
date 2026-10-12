@@ -14,7 +14,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
   const single = raid.bosses.length === 1;
 
   return (
-    <AtlasFrame lang={locale} art={raid.slug === "the-voidspire" ? "/assets/wow/raids/midnight/backgrounds/the-voidspire-optimized.webp" : raid.artwork} artPosition="center 30%" tint={`${raid.accent}2e`}>
+    <AtlasFrame lang={locale} art={raid.slug === "the-voidspire" ? "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp" : raid.artwork} artPosition="center 30%" tint={`${raid.accent}2e`}>
       <AtlasHero
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.raids, href: `${prefix}/wow/raids` }, { label: raid.nameEn }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}

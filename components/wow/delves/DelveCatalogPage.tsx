@@ -1,10 +1,13 @@
-import { Compass } from "lucide-react";
-import { AtlasFrame, AtlasGrid, AtlasHero, AtlasSection, AtlasTile } from "@/components/atlas";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import clsx from "clsx";
+import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { midnightDelves } from "@/data/wow/midnight-delves";
+import styles from "./delveCatalog.module.css";
 
 const copy = {
-  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", eyebrow: "Midnight", title: "Вылазки Midnight", lede: "Вылазки обоих сезонов Midnight. Тактика и награды появятся после проверки.", season2: "Сезон 2 · патч 12.1", season1: "Сезон 1 · патч 12.0", current: "Текущий сезон", delves: "вылазок" },
-  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", eyebrow: "Midnight", title: "Midnight Delves", lede: "Delves of both Midnight seasons. Strategy and rewards will appear once verified.", season2: "Season 2 · patch 12.1", season1: "Season 1 · patch 12.0", current: "Current season", delves: "delves" },
+  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", title: "Вылазки Midnight", lede: "Вылазки обоих сезонов Midnight. Тактика и награды появятся после проверки.", season2: "Сезон 2 · патч 12.1", season1: "Сезон 1 · патч 12.0", current: "Текущий сезон", delves: "вылазок" },
+  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", title: "Midnight Delves", lede: "Delves of both Midnight seasons. Strategy and rewards will appear once verified.", season2: "Season 2 · patch 12.1", season1: "Season 1 · patch 12.0", current: "Current season", delves: "delves" },
 } as const;
 
 export function DelveCatalogPage({ locale }: { locale: "en" | "ru" }) {
@@ -15,22 +18,31 @@ export function DelveCatalogPage({ locale }: { locale: "en" | "ru" }) {
     { id: "midnight-season-1", title: text.season1 },
   ] as const;
   return (
-    <AtlasFrame lang={locale}>
+    <AtlasFrame lang={locale} art="/assets/wow/loading/dungeon.webp" artPosition="center 45%">
       <AtlasHero
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
         breadcrumbsLabel={text.breadcrumbs}
-        eyebrow={text.eyebrow}
         title={text.title}
         lede={text.lede}
         stats={[{ value: midnightDelves.length, label: text.delves }]}
       />
+      {/* An atlas index: names on dotted leaders, the current season set larger. */}
       {seasons.map((season) => {
         const delves = midnightDelves.filter((delve) => delve.season === season.id);
+        const current = "note" in season;
         return (
-          <AtlasSection key={season.id} id={season.id} title={season.title} description={"note" in season ? season.note : undefined}>
-            <AtlasGrid min={240} fit>
-              {delves.map((delve) => <AtlasTile key={delve.id} href={`${prefix}/wow/delves/${delve.slug}`} icon={<Compass />} title={delve.name} />)}
-            </AtlasGrid>
+          <AtlasSection key={season.id} id={season.id} title={season.title} description={current ? season.note : undefined}>
+            <ol className={clsx(styles.index, current && styles.current)}>
+              {delves.map((delve) => (
+                <li key={delve.id}>
+                  <Link className={styles.entry} href={`${prefix}/wow/delves/${delve.slug}`}>
+                    <span className={styles.name}>{delve.name}</span>
+                    <span className={styles.leader} aria-hidden="true" />
+                    <ArrowRight className={styles.arrow} aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ol>
           </AtlasSection>
         );
       })}

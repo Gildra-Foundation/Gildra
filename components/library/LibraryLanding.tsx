@@ -56,7 +56,7 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
         : { tone: "info" as const, title: copy.freshTitle, text: "" };
 
   return (
-    <AtlasFrame as="div" lang={lang} dataAttributes={{ "data-library-root": true }}>
+    <AtlasFrame as="div" lang={lang} art="/assets/wow/loading/tier.webp" artPosition="center 50%" dataAttributes={{ "data-library-root": true }}>
       <AtlasHero
         title={copy.title}
         lede={copy.lede}

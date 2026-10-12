@@ -6,3 +6,4 @@
 - Spell 1245727 and 1245698 icon fallback: exact Wowhead spell records using the same Blizzard icon asset: https://www.wowhead.com/spell=1245727 and https://www.wowhead.com/spell=1245698
 - Raid trash spell icons in `trash-spells/`: Blizzard spell icons resolved from the corresponding Wowhead spell records (Spell IDs 1228330–1283465) and served locally from `wow.zamimg.com`.
 - Raid route topology and lieutenant placement: https://www.wowhead.com/news/all-lieutenant-enemies-that-drop-boes-in-midnight-season-1-raids-381260
+- `backgrounds/the-voidspire-scene.webp`: `the-voidspire.png` without its transparent title crown (rows 0–163 removed), flattened on the atlas background, WebP q80.

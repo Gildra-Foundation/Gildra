@@ -14,8 +14,19 @@
   z-index: -1;
   inset: 0 0 auto;
   height: min(880px, 110vh);
+  /* The drifting artwork is a little larger than its box; keep it inside. */
+  overflow: hidden;
   pointer-events: none;
+}
+
+/* Torchlight: the tinted glow over the artwork breathes unevenly, like a flame. */
+.atmosphere::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
   background: radial-gradient(circle at 74% 8%, var(--atlas-frame-tint), transparent 34%);
+  animation: atlas-torch 9s ease-in-out infinite;
 }
 
 .atmosphere::after {
@@ -38,6 +49,46 @@
   object-fit: cover;
   object-position: var(--atlas-frame-art-position, center 18%);
   filter: saturate(.86) contrast(1.06) brightness(.92);
+  /* The scene settles in when the page arrives, then drifts slowly — a living painting. */
+  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s ease-in-out 1.8s infinite alternate;
+}
+
+/* Embers: two parallax layers of sparks rising through the torchlight over the
+   artwork's focal area. Each layer is one repeating tile moved by exactly its
+   own height, so the loop never jumps. */
+.embers {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  mask-image: radial-gradient(ellipse 60% 72% at 70% 34%, #000 22%, transparent 72%);
+}
+
+.embers::before,
+.embers::after {
+  position: absolute;
+  inset: 0 0 -520px;
+  content: "";
+  background-image:
+    radial-gradient(circle at 18% 24%, var(--atlas-ember) 0 1.3px, transparent 2.2px),
+    radial-gradient(circle at 18% 24%, var(--atlas-ember-halo), transparent 8px),
+    radial-gradient(circle at 63% 52%, var(--atlas-ember) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 63% 52%, var(--atlas-ember-halo), transparent 6px),
+    radial-gradient(circle at 40% 83%, var(--atlas-ember) 0 1.5px, transparent 2.4px),
+    radial-gradient(circle at 40% 83%, var(--atlas-ember-halo), transparent 9px),
+    radial-gradient(circle at 87% 11%, var(--atlas-ember) 0 .9px, transparent 1.6px);
+  background-size: 380px 520px;
+  animation: atlas-ember-rise 26s linear infinite, atlas-ember-sway 7s ease-in-out infinite alternate, atlas-ember-in 2.4s ease-out both;
+}
+
+/* The far layer: smaller, slower, dimmer. */
+.embers::after {
+  inset: 0 0 -700px;
+  background-size: 560px 700px;
+  background-position: 140px 90px;
+  opacity: .55;
+  animation-name: atlas-ember-rise-far, atlas-ember-sway, atlas-ember-in-far;
+  animation-duration: 44s, 11s, 3.2s;
 }
 
 .column {
@@ -64,8 +115,43 @@
 .legal a { color: var(--atlas-accent); }
 .legal a:hover { color: var(--atlas-accent-strong); }
 
+@keyframes atlas-torch {
+  0%, 100% { opacity: .78; }
+  17% { opacity: 1; }
+  29% { opacity: .84; }
+  46% { opacity: .96; }
+  62% { opacity: .72; }
+  81% { opacity: 1; }
+}
+
+@keyframes atlas-art-settle { from { scale: 1.075; } to { scale: 1.035; } }
+@keyframes atlas-art-drift { to { translate: -1.1% .5%; } }
+@keyframes atlas-ember-rise { to { transform: translate3d(0, -520px, 0); } }
+@keyframes atlas-ember-rise-far { to { transform: translate3d(0, -700px, 0); } }
+@keyframes atlas-ember-sway { from { translate: -6px 0; } to { translate: 8px 0; } }
+@keyframes atlas-ember-in { from { opacity: 0; } }
+@keyframes atlas-ember-in-far { from { opacity: 0; } to { opacity: .55; } }
+
+/* Work surfaces and readers who asked for less motion get a still atmosphere. */
+.still .art,
+.still .atmosphere::before { animation: none; }
+.still .embers { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .art,
+  .atmosphere::before { animation: none; }
+  .embers { display: none; }
+}
+
+@media print {
+  .embers { display: none; }
+}
+
 @media (max-width: 720px) {
   .column { padding-top: var(--atlas-space-5); }
+  /* One layer of embers behind the full-width text on phones. */
+  .embers { mask-image: radial-gradient(ellipse 80% 55% at 62% 26%, #000 20%, transparent 70%); }
+  .embers::after { display: none; }
   /* Text spans the full width on phones: an even veil instead of a left-to-right one. */
   .atmosphere::after,
   .deep .atmosphere::after {
