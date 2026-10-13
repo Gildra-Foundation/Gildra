@@ -1,5 +1,7 @@
 # Gildra architecture
 
+Go backend domains, their dependency rules and the test that enforces them: [backend-domains.md](backend-domains.md).
+
 Gildra is deployed as one modular monolith: one repository and one OVHcloud deployment, with isolated processes for the public site, API/worker and CMS.
 
 ```text
