@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
-import { formatSeason, pluralRu } from "../../packages/atlas-ui/src/format.ts";
+import { formatSeason, pluralRu } from "../../../../packages/atlas-ui/src/format.ts";
 import { siteSearchCopy } from "../../components/platform/search/siteSearchCopy.ts";
 import { normalize, searchIndex } from "../../components/platform/search/siteSearchMatch.ts";
 import { dungeonRoutes, dungeonSlugs } from "../../components/wow/mythic/dungeonRoutes.ts";
@@ -79,8 +79,8 @@ describe("English Mythic+ route text", () => {
 describe("kit documentation", () => {
   it("packages/atlas-ui/README.md describes every exported component", async () => {
     const { readFile } = await import("node:fs/promises");
-    const index = await readFile(new URL("../../packages/atlas-ui/src/index.ts", import.meta.url), "utf8");
-    const readme = await readFile(new URL("../../packages/atlas-ui/README.md", import.meta.url), "utf8");
+    const index = await readFile(new URL("../../../../packages/atlas-ui/src/index.ts", import.meta.url), "utf8");
+    const readme = await readFile(new URL("../../../../packages/atlas-ui/README.md", import.meta.url), "utf8");
     const components = [...index.matchAll(/export \{([^}]+)\}/g)]
       .flatMap((match) => match[1].split(","))
       .map((name) => name.trim().replace(/^type\s+/, ""))

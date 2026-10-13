@@ -1,4 +1,5 @@
-// ESLint for the Next.js app (roadmap item 91). Run: npm run lint
+// ESLint for the monorepo (roadmap items 81, 91): the web app in apps/web and the
+// shared packages. Run: npm run lint (root) or npm run lint -w @gildra/web.
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import fs from "node:fs";
@@ -10,7 +11,7 @@ const kitStaysIndependent = { regex: "^@/", message: "@gildra/atlas-ui is a pack
 
 // Feature modules of World of Warcraft (roadmap item 71): each uses its own
 // files, components/wow/shared, the kit and lib/ — never another feature's insides.
-const wowFeatures = fs.readdirSync(new URL("./components/wow/", import.meta.url), { withFileTypes: true })
+const wowFeatures = fs.readdirSync(new URL("./apps/web/components/wow/", import.meta.url), { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && entry.name !== "shared" && !entry.name.startsWith("_"))
   .map((entry) => entry.name);
 const otherFeature = (feature) => ({
@@ -29,17 +30,20 @@ const copyRules = [
   { selector: `ConditionalExpression[test.operator='==='][test.right.value=/^(ru|en)$/]${words("consequent")}${words("alternate")}`, message: copyMessage },
   { selector: `ConditionalExpression[test.type='Identifier'][test.name=/^(ru|isRu|isRussian)$/]${words("consequent")}${words("alternate")}`, message: copyMessage },
 ];
-const frozenCopy = ["components/platform/home/**", "components/platform/navigation/**", "components/wow/audit/**", "components/wow/characters/**"];
+const web = (glob) => `apps/web/${glob}`;
+const frozenCopy = ["components/platform/home/**", "components/platform/navigation/**", "components/wow/audit/**", "components/wow/characters/**"].map(web);
 
 const config = [
   ...nextVitals,
   ...nextTs,
   {
     ignores: [
-      ".next*/**", "node_modules/**", ".artifacts/**", "cms/**", "backend/**", "public/**",
-      "next-env.d.ts", "**/*.gen.*",
+      "**/.next*/**", "**/node_modules/**", "**/.artifacts/**", "cms/**", "backend/**", "scraper/**", "apps/web/public/**",
+      "**/next-env.d.ts", "**/*.gen.*",
     ],
   },
+  // Next's own rules look for the app here.
+  { settings: { next: { rootDir: "apps/web/" } } },
   {
     files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     rules: {
@@ -59,17 +63,17 @@ const config = [
   // data and logic and does not depend on kit components. (One block per file
   // set: a later no-restricted-imports replaces an earlier one, not merges.)
   {
-    files: ["components/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
-    ignores: ["components/blocks/**"],
+    files: [web("components/**/*.{ts,tsx}"), web("app/**/*.{ts,tsx}")],
+    ignores: [web("components/blocks/**")],
     rules: { "no-restricted-imports": ["error", { patterns: [noApp, noRawGameData] }] },
   },
   {
     // Blocks keep their demo dataset (data/site.ts) behind ctx.source.
-    files: ["components/blocks/**/*.{ts,tsx}"],
+    files: [web("components/blocks/**/*.{ts,tsx}")],
     rules: { "no-restricted-imports": ["error", { patterns: [noApp] }] },
   },
   {
-    files: ["lib/**/*.{ts,tsx}"],
+    files: [web("lib/**/*.{ts,tsx}")],
     rules: { "no-restricted-imports": ["error", { patterns: [noApp, noKitInLib] }] },
   },
   {
@@ -77,7 +81,7 @@ const config = [
     rules: { "no-restricted-imports": ["error", { patterns: [kitStaysIndependent] }] },
   },
   ...wowFeatures.map((feature) => ({
-    files: [`components/wow/${feature}/**/*.{ts,tsx}`],
+    files: [web(`components/wow/${feature}/**/*.{ts,tsx}`)],
     rules: { "no-restricted-imports": ["error", { patterns: [noApp, noRawGameData, otherFeature(feature)] }] },
   })),
   // Icon rule (roadmap item 7): components and routes take game icons from
@@ -87,17 +91,17 @@ const config = [
   // `lang === "ru" ? "…" : "…"` ternaries. The landing and the book keep theirs
   // (they are frozen at 0 px); a *Copy.ts may branch on the locale itself.
   {
-    files: ["components/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
+    files: [web("components/**/*.{ts,tsx}"), web("app/**/*.{ts,tsx}")],
     ignores: [...frozenCopy, "**/*Copy.ts"],
     rules: { "no-restricted-syntax": ["error", iconRule, ...copyRules] },
   },
   {
-    files: [...frozenCopy, "components/**/*Copy.ts"],
+    files: [...frozenCopy, web("components/**/*Copy.ts")],
     rules: { "no-restricted-syntax": ["error", iconRule] },
   },
   {
-    files: ["lib/**/*.{ts,tsx}"],
-    ignores: ["lib/wow/battleNet*.ts", "lib/platform/home/**", "**/*Copy.ts"],
+    files: [web("lib/**/*.{ts,tsx}")],
+    ignores: [web("lib/wow/battleNet*.ts"), web("lib/platform/home/**"), "**/*Copy.ts"],
     rules: { "no-restricted-syntax": ["error", ...copyRules] },
   },
   {

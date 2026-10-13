@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import { dsnFromString } from "@sentry/core";
@@ -36,7 +36,9 @@ describe("error-report tunnel", () => {
   it("bakes a DSN the browser SDK accepts", () => {
     // GlitchTip shows keys as UUIDs; the Sentry JS SDK only parses the hex
     // form ("Invalid Sentry Dsn" disabled browser reports on 2026-10-13).
-    const dockerfile = readFileSync(new URL("../../Dockerfile", import.meta.url), "utf8");
+    let directory = new URL(".", import.meta.url);
+    while (!existsSync(new URL("Dockerfile", directory)) && directory.pathname !== "/") directory = new URL("..", directory);
+    const dockerfile = readFileSync(new URL("Dockerfile", directory), "utf8");
     const dsn = /^ARG NEXT_PUBLIC_SENTRY_DSN=(.*)$/m.exec(dockerfile)?.[1] ?? "";
     assert.ok(dsnFromString(dsn), `Dockerfile NEXT_PUBLIC_SENTRY_DSN is not a valid Sentry DSN: ${dsn.replace(/\/\/[^@]+@/, "//<key>@")}`);
     assert.ok(parseDsn(dsn));

@@ -1,11 +1,11 @@
 .git
 .github
-.next
+**/.next
 cms/.next
-node_modules
+**/node_modules
 cms/node_modules
 .env
 infra/certs
-.artifacts
-*.tsbuildinfo
-.next-*
+**/.artifacts
+**/*.tsbuildinfo
+**/.next-*

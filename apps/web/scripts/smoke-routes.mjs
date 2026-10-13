@@ -11,7 +11,14 @@
  *   SMOKE_URL=https://gildra.net npm run smoke:routes # or checks a running site
  */
 import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+
+// The Next app this script belongs to (its parent directory), wherever the
+// workspace hoists node_modules.
+const appRoot = fileURLToPath(new URL("..", import.meta.url));
+const nextBin = createRequire(import.meta.url).resolve("next/dist/bin/next");
 
 const port = Number(process.env.SMOKE_PORT ?? 3199);
 const origin = process.env.SMOKE_URL ?? `http://127.0.0.1:${port}`;
@@ -38,7 +45,8 @@ const plain = [["/robots.txt", 200], ["/sitemap.xml", 200]];
 
 async function startServer() {
   if (process.env.SMOKE_URL) return null;
-  const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port)], {
+  const server = spawn(process.execPath, [nextBin, "start", "-p", String(port)], {
+    cwd: appRoot,
     stdio: ["ignore", "pipe", "pipe"],
     env: { ...process.env, PORT: String(port) },
   });
