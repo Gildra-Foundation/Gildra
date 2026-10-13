@@ -39,13 +39,6 @@ const EDITOR_MENU_LABELS: Record<string, Record<string, string>> = {
   },
   en: { upload: "Image", relationship: "Article link" },
 };
-
-/** Payload's own UI words that read oddly for editors ("Локаль: Русский" is the content language). */
-const GENERAL_LABELS: Record<string, Record<string, string>> = {
-  // The stock Russian "searchBy" lacks the {{label}} slot, so list search said only "Искать по".
-  ru: { locale: "Язык", searchBy: "Поиск: {{label}}", or: "или" },
-  en: { locale: "Language" },
-};
 const dirname = path.dirname(filename);
 
 export default buildConfig({
@@ -67,8 +60,6 @@ export default buildConfig({
         Icon: "/components/Brand#BrandIcon",
         Logo: "/components/Brand#BrandLogo",
       },
-      // Ctrl+K / ⌘K palette and its "Find…" button in the header.
-      actions: ["/components/command/CommandButton#CommandButton"],
       beforeNavLinks: ["/components/nav/AdminNav#AdminNav"],
       views: {
         dashboard: { Component: "/components/Dashboard#Dashboard" },
@@ -119,9 +110,8 @@ export default buildConfig({
       // Deleting a site must never cascade into content (Sites.beforeDelete refuses instead).
       cleanupAfterTenantDelete: false,
       collections: {
-        // The "Site" column in article and page lists (the plugin hides it by default).
-        guides: { tenantFieldOverrides: { admin: { disableListColumn: false } } },
-        pages: { tenantFieldOverrides: { admin: { disableListColumn: false } } },
+        guides: {},
+        pages: {},
         media: {},
         categories: {},
         tags: {},
@@ -144,10 +134,6 @@ export default buildConfig({
   for (const [lang, labels] of Object.entries(EDITOR_MENU_LABELS)) {
     const lexical = ((translations[lang] ??= {}).lexical ??= {});
     for (const [feature, label] of Object.entries(labels)) lexical[feature] = { ...lexical[feature], label };
-  }
-  for (const [lang, labels] of Object.entries(GENERAL_LABELS)) {
-    const general = ((translations[lang] ??= {}).general ??= {}) as unknown as Record<string, string>;
-    Object.assign(general, labels);
   }
   return hardenInternalCollections(config);
 });

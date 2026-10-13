@@ -87,27 +87,6 @@ RU and EN are both editable. They **share one publication status**:
 `localizeStatus` is experimental in Payload 3.90.2 and is not enabled, so
 publishing publishes both locales. Missing RU text falls back to EN in reads.
 
-The article and page editors open with a **language bar**
-(`src/components/editor/LanguageBar.tsx`): both versions with how complete
-they are (title, summary, text — the same parts the public API requires),
-switching in place (unsaved typing is autosaved first), **"Fill empty fields
-from the other version"** (Payload's `copyDataFromLocale`, merge mode: filled
-fields are kept) and a read-only **comparison panel** with the other version
-next to the form. Lists of articles and pages have a **Languages** column
-(`src/components/list/LanguagesCell.tsx`, one batched query per page).
-
-### Navigation
-
-The sidebar (`src/admin/navModel.ts`, `components/nav/`) navigates inside the
-app without reloading and stays docked on laptop widths (1025–1440 px, where
-Payload would hide it); closing it is remembered in the `nav` preference.
-**Ctrl+K / ⌘K** (or "Find…" in the header) opens a command palette built on
-[cmdk](https://github.com/pacocoursey/cmdk): sections, articles and pages by
-title or address in either language, "New article/page/image" on a chosen site,
-switching the working site or the language version. It is a lazy chunk and uses
-the REST API with the viewer's own access. Media thumbnails in the admin go
-through Next's image optimizer (384 px WebP/AVIF, no stored sizes).
-
 ### Editor
 
 Lexical with headings, lists, quotes, links, inline code, uploads from the

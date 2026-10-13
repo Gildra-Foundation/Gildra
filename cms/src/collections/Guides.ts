@@ -18,8 +18,7 @@ export const Guides: CollectionConfig = withEditorialPolicy(
     labels: { singular: { en: "Article", ru: "Статья" }, plural: { en: "Articles", ru: "Статьи" } },
     admin: {
       useAsTitle: "title",
-      defaultColumns: ["title", "languages", "site", "_status", "publishedAt", "updatedAt"],
-      listSearchableFields: ["title", "slug"],
+      defaultColumns: ["title", "slug", "_status", "publishedAt", "updatedAt"],
       group: { en: "Content", ru: "Контент" },
       // The site's own draft page where the site supports it (CMS_SITE_PREVIEW), else the CMS preview.
       preview: (doc, { locale, req }) => previewTarget({ collection: "guides", doc, locale, req }),
@@ -44,15 +43,6 @@ export const Guides: CollectionConfig = withEditorialPolicy(
       { name: "siteName", type: "text", virtual: "site.name", admin: { hidden: true } },
       { name: "siteGame", type: "text", virtual: "site.game", admin: { hidden: true } },
       { name: "sitePublicUrl", type: "text", virtual: "site.publicUrl", admin: { hidden: true } },
-      // List column: which language versions are filled in (no edit field).
-      {
-        name: "languages",
-        type: "ui",
-        label: { en: "Languages", ru: "Языки" },
-        admin: { components: { Cell: "/components/list/LanguagesCell#LanguagesCell" } },
-      },
-      // Language switch, fill-from-other-language and comparison above the form.
-      { name: "languageBar", type: "ui", admin: { components: { Field: "/components/editor/LanguageBar#LanguageBar" } } },
       {
         name: "articlePanel",
         type: "ui",
