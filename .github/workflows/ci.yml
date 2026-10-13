@@ -31,6 +31,7 @@ jobs:
           sh -n infra/systemd/test-gildra-catalog-refresh.sh
           sh -n infra/systemd/test-gildra-notify.sh
           sh -n infra/systemd/install-host-units.sh
+          sh -n infra/systemd/prune-host-images.sh
           sh -n infra/backup/test-prune-catalog-backups.sh
       - name: Verify backup wrapper evidence
         run: infra/backup/test-run-catalog-backup.sh

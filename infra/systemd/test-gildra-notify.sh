@@ -14,7 +14,7 @@ grep -Fxq 'ExecStart=/usr/bin/python3 /opt/gildra/infra/systemd/notify-unit-fail
 grep -Fxq 'ExecStart=/usr/bin/python3 /opt/gildra/infra/systemd/notify-unit-failure.py --recovered %i' "$recovery_template"
 grep -Fq 'GILDRA_ALERT_LOG=' "$template_file"
 
-for unit in gildra-catalog-refresh gildra-catalog-backup gildra-catalog-media-cache gildra-catalog-backup-prune; do
+for unit in gildra-catalog-refresh gildra-catalog-backup gildra-catalog-media-cache gildra-catalog-backup-prune gildra-image-prune; do
   grep -Fxq 'OnFailure=gildra-notify@%p.service' "$script_directory/$unit.service"
   grep -Eq '^OnSuccess=gildra-notify-ok@%p\.service( |$)' "$script_directory/$unit.service"
 done

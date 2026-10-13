@@ -1,0 +1,14 @@
+[Unit]
+Description=Prune superseded Gildra release images and old build cache
+OnFailure=gildra-notify@%p.service
+OnSuccess=gildra-notify-ok@%p.service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/gildra/infra/systemd/prune-host-images.sh --apply
+Nice=15
+IOSchedulingClass=idle
+NoNewPrivileges=true
+PrivateTmp=true
