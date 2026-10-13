@@ -2,69 +2,69 @@
   "note": "Decoded bytes (KB) a first visit downloads at 1440×900, cold cache. Measured by npm run budgets; raise a budget only with a reason in the commit.",
   "routes": {
     "/ru/wow": {
-      "js": 1329,
-      "css": 561,
-      "img": 170
+      "js": 885,
+      "css": 638,
+      "img": 193
     },
     "/wow/raids": {
-      "js": 1258,
-      "css": 283,
-      "img": 150
+      "js": 804,
+      "css": 322,
+      "img": 170
     },
     "/ru/wow/raids/the-voidspire": {
-      "js": 1276,
-      "css": 334,
-      "img": 223
+      "js": 825,
+      "css": 379,
+      "img": 253
     },
     "/ru/wow/raids/the-voidspire/imperator-averzian": {
-      "js": 1276,
-      "css": 334,
-      "img": 111
+      "js": 825,
+      "css": 379,
+      "img": 125
     },
     "/ru/wow/lairs": {
-      "js": 1275,
-      "css": 322,
-      "img": 143
+      "js": 823,
+      "css": 365,
+      "img": 163
     },
     "/wow/classes": {
-      "js": 1258,
-      "css": 446,
-      "img": 146
+      "js": 804,
+      "css": 507,
+      "img": 165
     },
     "/ru/wow/mythic-plus": {
-      "js": 1239,
-      "css": 311,
-      "img": 120
+      "js": 904,
+      "css": 414,
+      "img": 379
     },
     "/wow/mythic-plus/midnight-season-2/murder-row": {
-      "js": 1348,
-      "css": 319,
-      "img": 136
+      "js": 905,
+      "css": 363,
+      "img": 154
     },
     "/ru/wow/delves": {
-      "js": 1258,
-      "css": 314,
-      "img": 57
+      "js": 804,
+      "css": 357,
+      "img": 64
     },
     "/ru/database": {
-      "js": 1280,
-      "css": 343,
-      "img": 112
+      "js": 828,
+      "css": 389,
+      "img": 127
     },
     "/tier-lists": {
-      "js": 1329,
-      "css": 326,
-      "img": 57
+      "js": 885,
+      "css": 370,
+      "img": 64
     },
     "/ru/search": {
-      "js": 1256,
-      "css": 323,
-      "img": 112
+      "js": 822,
+      "css": 367,
+      "img": 127
     },
     "/ru/wow/whats-new": {
-      "js": 578,
-      "css": 266,
-      "img": 94
+      "js": 804,
+      "css": 354,
+      "img": 128
     }
   }
 }

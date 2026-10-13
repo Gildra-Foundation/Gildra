@@ -39,6 +39,11 @@
 
 .panel:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 
+/* Phones: a 44 px touch target for every tab. */
+@media (max-width: 720px) {
+  .segmented .tab { min-height: var(--atlas-control-height); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tab { transition: none; }
 }

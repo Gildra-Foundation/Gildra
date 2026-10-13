@@ -8,6 +8,7 @@ import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
 import { RecordPreviewButton } from "@/components/database/RecordPreviewButton";
 import { databaseCopy, entityTypeLabel, FACET_LABELS, formatCount, GROUP_LABELS, highlightLabel, previewCopy, type DatabaseCopy } from "@/components/database/databaseCopy";
 import styles from "@/components/database/databaseHub.module.css";
+import { AtlasPagination } from "@/components/atlas/AtlasPagination";
 
 const FACET_ORDER = ["class", "specialization", "race", "profession", "equipment_slot", "armor_type", "weapon_type", "item_class"];
 const ROOT_ID = "catalog-workspace";
@@ -182,12 +183,11 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
             </div>
           )}
           {cursor || (catalog.pagination.hasMore && catalog.pagination.nextCursor) ? (
-            <nav className={styles.pagination} aria-label={copy.pagesLabel}>
-              {cursor ? <a className={styles.quiet} href={href({ cursor: "" })} data-history-back>← {copy.back}</a> : <span />}
-              {catalog.pagination.hasMore && catalog.pagination.nextCursor
-                ? <a className={styles.primary} href={href({ cursor: catalog.pagination.nextCursor })} data-catalog-nav data-scroll-to={RESULTS_ID}>{copy.next} →</a>
-                : null}
-            </nav>
+            <AtlasPagination
+              label={copy.pagesLabel}
+              prev={cursor ? { href: href({ cursor: "" }), label: copy.back, attributes: { "data-history-back": true } } : undefined}
+              next={catalog.pagination.hasMore && catalog.pagination.nextCursor ? { href: href({ cursor: catalog.pagination.nextCursor }), label: copy.next, attributes: { "data-catalog-nav": true, "data-scroll-to": RESULTS_ID } } : undefined}
+            />
           ) : null}
         </div>
       </div>

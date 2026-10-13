@@ -42,6 +42,7 @@ import { actionLabels, floorLabel, mythicRouteCopy, plainLanguage, priorityLabel
 import { routeAbilityIntel, routeEnemyIntel } from "./routeIntel";
 import type { RouteStop } from "./rubyLifePoolsData";
 import styles from "./mythicRouteMap.module.css";
+import { AtlasTabs } from "@/components/atlas/AtlasTabs";
 
 const DeferredTestPartyPanel = dynamic(
   () => import("./TestPartyPanel").then((module) => module.TestPartyPanel),
@@ -218,8 +219,14 @@ const RouteStepNarrative = memo(function RouteStepNarrative({ locale, dungeon, d
       <h3>{copy.calloutsTitle}</h3>
       <ul className={styles.callouts}>{selected.callouts.map((callout) => <li key={callout}>{plainLanguage(callout, locale)}</li>)}</ul>
     </section>
-    <div className={styles.roleTabs} role="group" aria-label={copy.rolesLabel}>{roles.map((item) => <button key={item} type="button" onClick={() => onRoleChange(item)} aria-pressed={role === item}>{roleLabels[locale][item]}</button>)}</div>
-    <p className={styles.roleText}>{plainLanguage(selected[role], locale)}</p>
+    <AtlasTabs
+      className={styles.roleTabs}
+      variant="segmented"
+      label={copy.rolesLabel}
+      value={role}
+      onChange={(id) => onRoleChange(id as RouteRole)}
+      tabs={roles.map((item) => ({ id: item, label: roleLabels[locale][item], content: <p className={styles.roleText}>{plainLanguage(selected[item], locale)}</p> }))}
+    />
   </>;
 });
 
@@ -249,10 +256,14 @@ const RouteDetails = memo(function RouteDetails({ locale, dungeon, dungeonName, 
     <div className={styles.detailTop}><p>{copy.nowStep(selectedIndex + 1, totalSteps)}</p><span className={`${styles.kindTag} ${stopTone(selected.kind)}`}>{stopKindLabels[locale][selected.kind]}</span></div>
     <div key={selected.id} className={styles.detailHeading}><span className={`${styles.stopIndex} ${stopTone(selected.kind)}`}>{selectedIndex + 1}</span><div><h2>{selected.title}</h2><p>{copy.stepMeta(formatTime(selected.duration), selected.forces.toFixed(1), selected.cumulative.toFixed(1))}</p></div></div>
     <RouteStepNarrative locale={locale} dungeon={dungeon} dungeonName={dungeonName} selected={selected} role={role} combatIntel={combatIntel} onRoleChange={onRoleChange} />
-    <div className={styles.buttonRow}><button type="button" className={styles.toolButton} onClick={onSplitPull}><Scissors aria-hidden="true" /> {copy.splitPull}</button><button type="button" className={styles.toolButton} onClick={onFocusNote}><Pencil aria-hidden="true" /> {copy.addNote}</button></div>
     <button type="button" className={styles.primaryButton} onClick={onToggleComplete}>{isComplete ? <Undo2 aria-hidden="true" /> : <Check aria-hidden="true" />}{isComplete ? copy.reopenStep : copy.completeStep}</button>
-    <RouteNoteField key={`${selected.id}-${noteRevision}`} copy={copy} initialValue={note} onChange={onNoteChange} noteRef={noteRef} />
-    <div className={styles.buttonRow}><button type="button" className={styles.toolButton} onClick={onSaveRoute}><Save aria-hidden="true" /> {copy.save}</button><button type="button" className={styles.toolButton} onClick={onShareRoute}><Copy aria-hidden="true" /> {copy.link}</button></div>
+    {/* Secondary step tools fold away so the panel reads first; a step with a note keeps them open. */}
+    <details className={styles.stepTools} open={Boolean(note) || undefined}>
+      <summary>{copy.stepTools}</summary>
+      <div className={styles.buttonRow}><button type="button" className={styles.toolButton} onClick={onSplitPull}><Scissors aria-hidden="true" /> {copy.splitPull}</button><button type="button" className={styles.toolButton} onClick={onFocusNote}><Pencil aria-hidden="true" /> {copy.addNote}</button></div>
+      <RouteNoteField key={`${selected.id}-${noteRevision}`} copy={copy} initialValue={note} onChange={onNoteChange} noteRef={noteRef} />
+      <div className={styles.buttonRow}><button type="button" className={styles.toolButton} onClick={onSaveRoute}><Save aria-hidden="true" /> {copy.save}</button><button type="button" className={styles.toolButton} onClick={onShareRoute}><Copy aria-hidden="true" /> {copy.link}</button></div>
+    </details>
     <div className={styles.resourceLinks}><a href={dungeon.mdtRouteUrl} target="_blank" rel="noreferrer">{copy.communityRoutes} <ExternalLink aria-hidden="true" /></a><a href={dungeon.guideUrl} target="_blank" rel="noreferrer">{copy.guide} <ExternalLink aria-hidden="true" /></a></div>
   </aside>;
 });
@@ -679,7 +690,12 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
   const updateNote = useCallback((stopId: number, value: string) => {
     noteDraftsRef.current[stopId] = value;
   }, []);
-  const focusNote = useCallback(() => noteRef.current?.focus(), []);
+  // The note lives in the folded step tools: open them before focusing it.
+  const focusNote = useCallback(() => {
+    const tools = noteRef.current?.closest("details");
+    if (tools && !tools.open) tools.open = true;
+    noteRef.current?.focus();
+  }, []);
 
   function exportRoute() {
     const payload = JSON.stringify({ dungeon: dungeon.name, dungeonSlug: dungeon.slug, keyLevel, stops, notes: noteDraftsRef.current }, null, 2);

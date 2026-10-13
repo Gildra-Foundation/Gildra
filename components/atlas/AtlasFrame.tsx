@@ -2,10 +2,11 @@ import { ViewTransition, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { artMorphName } from "@/lib/atlas/morph";
-import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
+import { atlasScenes, type AtlasScene, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { GAMES } from "@/lib/games/registry";
 import { t } from "@/lib/i18n";
 import clsx from "clsx";
+import { AtlasArtGlow } from "./AtlasArtGlow";
 import { AtlasMotionToggle } from "./AtlasMotionToggle";
 import { AtlasPointerLight } from "./AtlasPointerLight";
 import styles from "./AtlasFrame.module.css";
@@ -46,13 +47,22 @@ export type AtlasFrameProps = {
  * The atmosphere is alive: the artwork settles in and drifts slowly, embers rise
  * through the torchlight. All of it is CSS and stops under reduced motion.
  */
+/** "72% 30%" / "center 45%" → [0.72, 0.3] / [0.5, 0.45] (object-position as fractions). */
+function objectFocus(position: string | undefined): [number, number] {
+  const [x = "center", y = "18%"] = (position ?? "center 18%").split(/\s+/);
+  const part = (value: string) => (value === "center" ? 0.5 : value === "left" || value === "top" ? 0 : value === "right" || value === "bottom" ? 1 : parseFloat(value) / 100);
+  return [part(x), part(y)];
+}
+
 export function AtlasFrame({ children, scene, art: artProp, artPosition: positionProp, artShade: shadeProp, tint: tintProp, still = false, artLayer, morphKey, as: Element = "main", className, lang, id, dataAttributes, footer = true }: AtlasFrameProps) {
-  const preset: Partial<(typeof atlasScenes)[AtlasSceneId]> & { shade?: "deep"; tint?: string; ember?: string } = scene ? atlasScenes[scene] : {};
+  const preset: Partial<(typeof atlasScenes)[AtlasSceneId]> & { shade?: "deep"; tint?: string; ember?: string; glow?: AtlasScene["glow"] } = scene ? atlasScenes[scene] : {};
   const art = artProp ?? preset.art;
   const artPosition = positionProp ?? preset.position;
   const artShade = shadeProp ?? preset.shade ?? "default";
   const tint = tintProp ?? preset.tint;
   const locale = lang === "ru" ? "ru" : "en";
+  // The scene's living light, unless the page brings its own art layer (the Voidspire eye).
+  const layer = artLayer ?? (preset.glow && !artProp ? <AtlasArtGlow imageSize={preset.glow.size} focus={objectFocus(artPosition)} points={preset.glow.points} /> : null);
   const picture = art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" {...artPlaceholder(art)} /> : null;
   // Section sparks (scene `ember`): the spark and its halo in the section's colour.
   const vars: Record<string, string | undefined> = { "--atlas-frame-tint": tint, "--atlas-frame-art-position": artPosition };
@@ -62,7 +72,7 @@ export function AtlasFrame({ children, scene, art: artProp, artPosition: positio
     <div className={styles.atmosphere} aria-hidden="true">
       {/* Decorative, but it is the largest paint of every route that has it: fetch it at high priority. */}
       {picture}
-      {artLayer ? <div className={styles.artLayer}>{artLayer}</div> : null}
+      {layer ? <div className={styles.artLayer}>{layer}</div> : null}
       {/* Torchlight over the artwork: a breathing glow and a few rising embers (CSS only). */}
       <span className={styles.embers} />
     </div>

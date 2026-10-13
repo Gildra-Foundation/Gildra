@@ -1,0 +1,19 @@
+.layer { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity var(--atlas-duration-art) var(--atlas-ease); }
+.layer[data-placed] { opacity: 1; }
+
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow-color) 0%, color-mix(in srgb, var(--glow-color) 35%, transparent) 38%, transparent 70%);
+  mix-blend-mode: screen;
+  animation: atlas-glow-breathe var(--glow-tempo) var(--atlas-ease-ambient) infinite alternate;
+}
+
+@keyframes atlas-glow-breathe {
+  from { opacity: .25; scale: .88; }
+  to { opacity: .8; scale: 1.08; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer { display: none; }
+}

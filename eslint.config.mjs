@@ -67,6 +67,17 @@ const config = [
     files: [`components/wow/${feature}/**/*.{ts,tsx}`],
     rules: { "no-restricted-imports": ["error", { patterns: [noApp, noRawGameData, otherFeature(feature)] }] },
   })),
+  // Icon rule (roadmap item 7): components and routes take game icons from
+  // lib/games/wow/assets.ts, never a hard-coded path (data mappings in lib/ may).
+  {
+    files: ["components/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": ["error", {
+        selector: "Literal[value=/^\\/assets\\/(abilities|classes|specs)\\/[^/]+\\.(jpe?g|png|webp)$/]",
+        message: "Game icons resolve only through lib/games/wow/assets.ts (specIcon, classIcon, abilityIcon).",
+      }],
+    },
+  },
   {
     files: ["**/*.cjs"],
     rules: { "@typescript-eslint/no-require-imports": "off" },

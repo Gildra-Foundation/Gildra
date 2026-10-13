@@ -351,15 +351,6 @@
 
 .empty p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-3);
-  padding-top: var(--atlas-space-4);
-  border-top: 1px solid var(--atlas-line-soft);
-}
-
 :is(.section, .type, .primary, .quiet, .preview, .taxonomyTree a, .taxonomyHead a, .search button):focus-visible {
   outline: 2px solid var(--atlas-accent-strong);
   outline-offset: 2px;

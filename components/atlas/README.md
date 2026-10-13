@@ -69,8 +69,38 @@ import { AtlasFrame, AtlasHero, AtlasSection, AtlasCard, AtlasGrid } from "@/com
 | `AtlasDialog` | Client modal on the native `<dialog>` (focus trap, Esc, focus return, backdrop click); `variant="sheet"` rises from the bottom on phones | `open`, `onClose`, `label`, `variant` |
 | `AtlasToast` | Client: short confirmation at the bottom of the screen (`role=status`), hides itself after `duration` | `message` (null hides), `onDone`, `tone: default \| negative`, `duration` |
 | `AtlasShareButton` | Client: "Share" for entity pages — the system share sheet on touch devices, otherwise copies the page link and confirms with `AtlasToast` | `title`, `locale` |
+| `AtlasArtGlow` | Client: living light on points of a scene painting (lava, crystals), placed with the cover-crop maths; AtlasFrame renders it from the scene registry `glow`; hidden under reduced or less motion | `imageSize`, `focus`, `points: {at, radius, color, tempo}[]` |
+| `AtlasPagination` | Paging of a list: quiet "previous", primary "next" / "show more", optional status; plain links (work without JS, the route runtime still animates) | `label`, `prev`, `next` (`href`, `label`, `attributes`), `status` |
+| `AtlasChart` | Horizontal bar chart in plain HTML (reads as a list, no library); bars scaled to the largest value, grow in on scroll; rows can link | `data: {key, label, value, display, href}[]`, `label`, `max`, `unit` |
 
 Helpers (`components/atlas/format.ts`): `formatAtlasDate(iso, locale)`, `formatSeason("Midnight Season 2", locale)`, `pluralRu(n, one, few, many)`.
+
+## Typography and icons
+
+Type roles (tokens in `app/styles/atlas-theme.css`; never a raw size):
+
+| Role | Token | Font | Used for |
+|---|---|---|---|
+| Hero | `--atlas-text-hero` | display, `--atlas-weight-display-hero` | page `h1` (AtlasHero) |
+| Section | `--atlas-text-h2` | display | AtlasSection `h2` |
+| Card / sub-section | `--atlas-text-h3`, `--atlas-text-title` | display | card and step titles, `h3` |
+| Lead | `--atlas-text-lead` | UI | hero lede, intro paragraphs |
+| Body | `--atlas-text-body` | UI | running text, tables |
+| Small / meta | `--atlas-text-small`, `--atlas-text-meta` | UI | captions, facts, footers |
+| Label | `--atlas-text-label` (≥ 11 px) | UI, uppercase, `--atlas-tracking-label` | eyebrows, breadcrumbs, table heads |
+| Stat | `--atlas-text-stat` | display, lining figures | counters |
+
+Reading: one line of prose is `--atlas-measure` (`--atlas-measure-wide` for longer notes);
+paragraphs and list items on atlas pages hyphenate (`hyphens: auto`, the page `lang` comes
+from AtlasFrame) and avoid one-word last lines (`text-wrap: pretty`); headings never hyphenate
+and balance their lines. Text set on artwork carries `--atlas-text-halo`.
+
+Icons: interface icons are lucide-react (16 px in buttons, 18 px in tiles and CTAs, 14 px inline),
+always `aria-hidden` next to a text label, or the control carries the name. Game icons (specs,
+classes, abilities, items) come only from `lib/games/wow/assets.ts` (`specIcon`, `classIcon`,
+`abilityIcon`) — ESLint rejects hard-coded `/assets/{specs,classes,abilities}/…` paths in
+components and routes. No emoji and no decorative glyph emblems; `AtlasEmblem` holds an
+identity image only.
 
 ## Changing the look
 

@@ -30,5 +30,7 @@ export function runtimeFlags(env: Env = process.env) {
     catalogPublic: (env.CATALOG_ACCESS_MODE ?? "private").toLowerCase() === "public",
     /** Intent prefetch of routes (off in development, where every prefetch compiles a page). */
     routePrefetch: env.NODE_ENV !== "development",
+    /** Staging copy of the site (GILDRA_STAGING=1): never indexed, no analytics, a visible badge. */
+    staging: env.GILDRA_STAGING === "1",
   };
 }
