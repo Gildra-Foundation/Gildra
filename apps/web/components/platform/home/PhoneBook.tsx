@@ -22,6 +22,14 @@ const identity = "matrix(1, 0, 0, 1, 0, 0)";
 const shadeDepth = 0.55;
 const step = 0.001;
 const half = "inset(0 0 0 50%)";
+const systemReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+type PhoneBookProps = OpenBookProps & {
+  onNavigate?: () => void;
+  /** Toolbar launches can be dismissed before the cover has finished opening. */
+  onDismiss?: () => void;
+  reducedMotion?: () => boolean;
+};
 
 /** Maps the cover-sized region of the track onto the closed cover drawn on the page. */
 function fromCover(pose: CoverPose, element: DOMRect, regionLeft: number, regionHeight: number) {
@@ -36,13 +44,14 @@ function toggle(from: number, to: number, at: number): Keyframe[] {
   return [{ opacity: from }, { opacity: from, offset: Math.max(0, at - step) }, { opacity: to, offset: at }, { opacity: to }];
 }
 
-export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace }: OpenBookProps) {
+export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace, onNavigate, onDismiss, reducedMotion = systemReducedMotion }: PhoneBookProps) {
   const ru = lang === "ru";
   const dialog = useRef<HTMLDialogElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const leaf = useRef<HTMLDivElement>(null);
   const chrome = useRef<HTMLElement[]>([]);
+  const tearingDown = useRef(false);
   const [page, setPage] = useState(0);
   const moving = phase === "opening" || phase === "closing";
 
@@ -50,10 +59,12 @@ export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace }: OpenBo
   useLayoutEffect(() => {
     const element = dialog.current;
     if (!element) return;
+    tearingDown.current = false;
     if (!element.open) element.showModal();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
+      tearingDown.current = true;
       document.body.style.overflow = previousOverflow;
       if (element.open) element.close();
     };
@@ -86,7 +97,7 @@ export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace }: OpenBo
     scroller.dataset.moving = "";
     scroller.scrollLeft = 0;
     const pose = measure();
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = reducedMotion();
     const artwork = volume.querySelector<HTMLElement>("[data-book-artwork]");
     const leftPage = volume.querySelector<HTMLElement>('[data-book-page="left"]');
     const rightPage = volume.querySelector<HTMLElement>('[data-book-page="right"]');
@@ -169,7 +180,7 @@ export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace }: OpenBo
       artwork.style.clipPath = "";
       delete scroller.dataset.moving;
     };
-  }, [phase, moving, measure, onPhase]);
+  }, [phase, moving, measure, onPhase, reducedMotion]);
 
   useEffect(() => {
     if (phase !== "open") return;
@@ -184,14 +195,18 @@ export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace }: OpenBo
   const turnTo = (index: number) => {
     const element = viewport.current;
     if (!element) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = reducedMotion();
     element.scrollTo({ left: index * element.clientWidth, behavior: reduced ? "auto" : "smooth" });
   };
-  const close = () => { if (phase === "open") onPhase("closing"); };
+  const close = () => {
+    if (phase === "open") onPhase("closing");
+    else if (phase === "opening") onDismiss?.();
+  };
   const pages = ru ? ["Оглавление", "Путеводитель"] : ["Contents", "Companion"];
 
   return <dialog ref={dialog} className={styles.dialog} aria-label={ru ? "Книга Gildra" : "The Gildra book"}
-    onCancel={(event) => { event.preventDefault(); close(); }}>
+    onCancel={(event) => { event.preventDefault(); close(); }}
+    onClose={(event) => { if (!tearingDown.current && !event.currentTarget.open && phase !== "closed") onDismiss?.(); }}>
     <div className={styles.layout}>
       <div className={styles.bar} ref={(element) => { if (element) chrome.current[0] = element; }}>
         <span>GILDRA · {ru ? "ХРОНИКИ АЗЕРОТА" : "CHRONICLES OF AZEROTH"}</span>
@@ -199,7 +214,7 @@ export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace }: OpenBo
       </div>
       <div ref={viewport} className={styles.viewport} data-page={page}>
         <div ref={track} className={styles.track} inert={moving}>
-          <BookVolume lang={lang} active layout="spread" artworkSrc={phoneBookArtworkSrc} />
+          <BookVolume lang={lang} active layout="spread" artworkSrc={phoneBookArtworkSrc} onNavigate={onNavigate} />
           <span className={styles.snap} aria-hidden="true" />
           <span className={styles.snap} aria-hidden="true" />
           <div className={leafStyles.leafMotion} hidden={!moving}>
