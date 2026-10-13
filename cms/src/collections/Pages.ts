@@ -25,13 +25,21 @@ export const Pages: CollectionConfig = withEditorialPolicy(
     labels: { singular: { en: "Page", ru: "Страница" }, plural: { en: "Pages", ru: "Страницы" } },
     admin: {
       useAsTitle: "title",
-      defaultColumns: ["title", "slug", "game", "_status"],
+      defaultColumns: ["title", "languages", "slug", "site", "_status"],
+      listSearchableFields: ["title", "slug"],
       group: { en: "Content", ru: "Контент" },
       preview: previewUrlFor("pages"),
     },
     versions: { maxPerDoc: 100, drafts: { autosave: { interval: 2000 }, schedulePublish: true } },
     indexes: [{ fields: ["site", "slug"], unique: true }],
     fields: [
+      {
+        name: "languages",
+        type: "ui",
+        label: { en: "Languages", ru: "Языки" },
+        admin: { components: { Cell: "/components/list/LanguagesCell#LanguagesCell" } },
+      },
+      { name: "languageBar", type: "ui", admin: { components: { Field: "/components/editor/LanguageBar#LanguageBar" } } },
       { name: "title", type: "text", localized: true, required: true },
       {
         name: "slug",

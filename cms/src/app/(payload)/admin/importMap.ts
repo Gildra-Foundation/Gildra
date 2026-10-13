@@ -1,5 +1,7 @@
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { TenantField as TenantField_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
+import { LanguagesCell as LanguagesCell_53d85114ffcb12245bb9ddc91716ed08 } from '../../../components/list/LanguagesCell'
+import { LanguageBar as LanguageBar_f95e950030180a051ab4222c538995b9 } from '../../../components/editor/LanguageBar'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -28,6 +30,7 @@ import { SlugField as SlugField_3d836d28318ebd3773170b5e527a3cbc } from '../../.
 import { SeoPreview as SeoPreview_54842116ebf27d5fc41a05116390649c } from '../../../components/editor/SeoPreview'
 import { BrandIcon as BrandIcon_42af45a2e169122dea8a98337d41efda } from '../../../components/Brand'
 import { BrandLogo as BrandLogo_42af45a2e169122dea8a98337d41efda } from '../../../components/Brand'
+import { CommandButton as CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b } from '../../../components/command/CommandButton'
 import { GlobalViewRedirect as GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
 import { TenantSelector as TenantSelector_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
 import { AdminNav as AdminNav_12a5d2e4943f1ef280c26afffa50cbd6 } from '../../../components/nav/AdminNav'
@@ -41,6 +44,8 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 export const importMap = {
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "@payloadcms/plugin-multi-tenant/client#TenantField": TenantField_1d0591e3cf4f332c83a86da13a0de59a,
+  "/components/list/LanguagesCell#LanguagesCell": LanguagesCell_53d85114ffcb12245bb9ddc91716ed08,
+  "/components/editor/LanguageBar#LanguageBar": LanguageBar_f95e950030180a051ab4222c538995b9,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -69,6 +74,7 @@ export const importMap = {
   "/components/editor/SeoPreview#SeoPreview": SeoPreview_54842116ebf27d5fc41a05116390649c,
   "/components/Brand#BrandIcon": BrandIcon_42af45a2e169122dea8a98337d41efda,
   "/components/Brand#BrandLogo": BrandLogo_42af45a2e169122dea8a98337d41efda,
+  "/components/command/CommandButton#CommandButton": CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b,
   "@payloadcms/plugin-multi-tenant/rsc#GlobalViewRedirect": GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelector": TenantSelector_d6d5f193a167989e2ee7d14202901e62,
   "/components/nav/AdminNav#AdminNav": AdminNav_12a5d2e4943f1ef280c26afffa50cbd6,
