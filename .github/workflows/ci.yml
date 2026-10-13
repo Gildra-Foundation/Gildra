@@ -31,6 +31,7 @@ jobs:
           sh -n infra/systemd/test-gildra-catalog-refresh.sh
           sh -n infra/systemd/test-gildra-notify.sh
           sh -n infra/systemd/install-host-units.sh
+          sh -n infra/systemd/prune-host-images.sh
           sh -n infra/backup/test-prune-catalog-backups.sh
       - name: Verify backup wrapper evidence
         run: infra/backup/test-run-catalog-backup.sh
@@ -76,10 +77,15 @@ jobs:
       - run: npm run lint
       - run: npm run atlas:check
       - run: npm run test:atlas
+      - run: npm run test:observability
       - run: npm run routes:check
       - run: npm run build
         env:
           SENTRY_AUTH_TOKEN: ""
+      # Roadmap 94: the built site serves the main EN/RU routes without page
+      # errors, hydration mismatches or 5xx (no API in CI: "unavailable" states).
+      - run: npx playwright install --with-deps chromium
+      - run: npm run smoke:routes
 
   cms:
     runs-on: ubuntu-latest

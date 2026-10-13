@@ -4,6 +4,7 @@ import type { CharacterRunMetrics, CharacterRunScenario, CharacterRunKind } from
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { characterWorkspaceCopy, workspaceLocale, workspaceNumber, workspaceScenario, workspaceRunLabel, type WorkspaceLocale } from "./characterWorkspaceCopy";
 import styles from "./sharedCharacterRunPage.module.css";
+import { apiInternalUrl } from "@/lib/env";
 
 type PublicRun = {
   schemaVersion: number;
@@ -25,7 +26,7 @@ export async function SharedCharacterRunPage({ token, localePrefix }: { token: s
   let run: PublicRun | null = null;
   if (valid) {
     try {
-      const base = (process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
+      const base = apiInternalUrl();
       const response = await fetch(`${base}/v1/wow/shared/${token}`, { cache: "no-store" });
       if (response.ok) run = await response.json() as PublicRun;
     } catch { /* The unavailable state below intentionally reveals no lookup details. */ }

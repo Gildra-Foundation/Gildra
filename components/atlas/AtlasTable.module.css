@@ -70,3 +70,9 @@
 @media (prefers-reduced-motion: reduce) {
   .table tbody tr { transition: none; }
 }
+
+/* Phones: links in cells (item names, sources) are 44 px touch targets. */
+@media (max-width: 720px) {
+  .table td a,
+  .table th a { display: inline-flex; align-items: center; min-height: var(--atlas-control-height); }
+}

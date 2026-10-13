@@ -1,0 +1,10 @@
+[Unit]
+Description=Weekly prune of superseded Gildra images (outside the 02:15 backup and the import after it)
+
+[Timer]
+OnCalendar=Sun *-*-* 05:30:00
+Persistent=true
+Unit=gildra-image-prune.service
+
+[Install]
+WantedBy=timers.target

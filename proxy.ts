@@ -13,7 +13,9 @@ export function proxy(request: NextRequest) {
   // status 404; `notFound()` inside the page alone would stream a 200 (the root
   // loading.tsx has already flushed the shell). The locale prefix keeps the
   // Russian chrome on /ru/** URLs.
-  if (isHiddenForMvpPath(request.nextUrl.pathname)) {
+  // Dev galleries (/dev/blocks, /dev/atlas) exist only with GILDRA_DEV_GALLERY=1 in production.
+  const devGalleryOff = process.env.NODE_ENV === "production" && process.env.GILDRA_DEV_GALLERY !== "1" && /^\/dev(\/|$)/.test(request.nextUrl.pathname);
+  if (devGalleryOff || isHiddenForMvpPath(request.nextUrl.pathname)) {
     const hidden = request.nextUrl.clone();
     hidden.pathname = `${locale === "ru" ? "/ru" : ""}/_hidden-for-mvp/404`;
     return NextResponse.rewrite(hidden, { request: { headers: requestHeaders } });

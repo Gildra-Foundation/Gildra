@@ -1,10 +1,11 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { apiInternalUrl } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const api = process.env.API_INTERNAL_URL ?? "http://api:8080";
+  const api = apiInternalUrl();
   const cookie = (await headers()).get("cookie") ?? "";
 
   try {

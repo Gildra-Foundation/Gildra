@@ -631,3 +631,9 @@
 @media (prefers-reduced-motion: reduce) {
   .loading span { animation: none; }
 }
+
+/* Phones: search and filter chips are 44 px touch targets (roadmap item 51). */
+@media (max-width: 720px) {
+  .search,
+  .chip { min-height: 44px; }
+}

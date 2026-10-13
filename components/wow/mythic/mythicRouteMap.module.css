@@ -1186,3 +1186,19 @@
   .page *::before,
   .page *::after { transition: none !important; }
 }
+
+/* Phones: every control of the route tool is a 44 px touch target (roadmap item 51). */
+@media (max-width: 720px) {
+  .toolButton,
+  .primaryButton,
+  .moreList button,
+  .floorTabs button,
+  .roleTabs button,
+  .affixes button,
+  .importTop button { min-height: 44px; }
+  .zoomControls button,
+  .deathControl button { width: 44px; height: 44px; }
+  .noticeLink,
+  .resourceLinks a,
+  .mapFooter a { display: inline-flex; align-items: center; min-height: 44px; }
+}

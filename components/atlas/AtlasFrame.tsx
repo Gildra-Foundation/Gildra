@@ -63,11 +63,10 @@ export function AtlasFrame({ children, scene, art: artProp, artPosition: positio
           <span className={styles.embers} />
         </div>
         <AtlasPointerLight />
-        {/* Target of the toolbar's "skip to content" link. */}
-        <div className={styles.column} id="atlas-content" tabIndex={-1}>
+        <div className={styles.column}>
           {children}
           {footer ? (
-            <footer className={styles.legal}>
+            <footer className={styles.legal} data-text-links>
               <p>{t(locale)(GAMES.wow.legal)}</p>
               <div className={styles.legalLinks}>
                 <AtlasMotionToggle locale={locale} />

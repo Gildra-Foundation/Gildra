@@ -106,6 +106,8 @@
   /* Text set directly on artwork */
   --atlas-text-shadow-art: 0 1px 2px #000, 0 0 18px rgba(0, 0, 0, .6);
   --atlas-text-shadow-hero: 0 2px 2px #000, 0 0 24px var(--atlas-accent-glow);
+  /* Small text over artwork (eyebrow, lede, breadcrumbs): a dark halo keeps AA on bright paintings */
+  --atlas-text-halo: 0 0 2px #000, 0 0 6px rgba(0, 0, 0, .95), 0 0 14px rgba(0, 0, 0, .8), 0 0 24px rgba(0, 0, 0, .5);
   --atlas-art-shade: linear-gradient(0deg, rgba(6, 7, 8, .94), rgba(6, 7, 8, .2) 62%, transparent), linear-gradient(90deg, rgba(0, 0, 0, .38), transparent 46%);
 
   /* Motion — one tempo for the whole atlas (reduced motion turns it off per component) */

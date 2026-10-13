@@ -78,6 +78,9 @@
 }
 
 .locale a + a { border-left: 1px solid var(--atlas-line); }
+/* A 44 px tall hit area around the 34 px switch (the bar is 64 px tall). */
+.locale a { position: relative; }
+.locale a::after { content: ""; position: absolute; inset: -5px 0; }
 .locale a:hover { color: var(--atlas-text-strong); }
 .locale a[aria-current] { color: var(--atlas-bg); background: var(--atlas-accent); }
 .locale a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }

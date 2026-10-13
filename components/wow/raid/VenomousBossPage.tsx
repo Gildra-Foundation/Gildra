@@ -165,7 +165,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
         </div>
       </AtlasSection>
 
-      <RaidPager label={shared.encountersLabel} back={{ href: raidHref, label: shared.allBosses("The Venomous Abyss") }} next={encounters[order + 1]} nextLabel={shared.nextBoss} />
+      <RaidPager label={shared.pagerLabel} back={{ href: raidHref, label: shared.allBosses("The Venomous Abyss") }} next={encounters[order + 1]} nextLabel={shared.nextBoss} />
     </AtlasFrame>
   );
 }

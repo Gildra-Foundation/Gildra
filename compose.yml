@@ -262,6 +262,9 @@ services:
       CMS_INTERNAL_URL: ${CMS_INTERNAL_URL:-http://cms:3001}
       INDEXNOW_KEY: ${INDEXNOW_KEY}
       NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+      # Server-side reports of the web app (GlitchTip project gildra-web, internal DSN).
+      SENTRY_DSN: ${SENTRY_WEB_DSN:-}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       # Battle.net sign-in (Auth.js). Without AUTH_SECRET and the client pair the
       # site reports login as not configured instead of faking a session.

@@ -71,12 +71,14 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
     return () => window.clearTimeout(timer);
   }, [pathname]);
 
+  // The accessible name contains the visible word ("Search" + "the site"); the
+  // shortcut is drawn by CSS and announced through aria-keyshortcuts.
   return <>
     {hotkeysOnly ? null : (
-      <button className={styles.trigger} type="button" onClick={() => show()} onPointerEnter={warm} onFocus={warm} aria-haspopup="dialog" aria-label={copy.open} aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
+      <button className={styles.trigger} type="button" onClick={() => show()} onPointerEnter={warm} onFocus={warm} aria-haspopup="dialog" aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
         <Search size={16} strokeWidth={1.9} aria-hidden="true" />
-        <span className={styles.triggerLabel}>{copy.button}</span>
-        <kbd className={styles.triggerKey} aria-hidden="true">{apple ? "⌘K" : "Ctrl K"}</kbd>
+        <span className={styles.triggerLabel}>{copy.button}<span className="sr-only">{copy.buttonRest}</span></span>
+        <kbd className={styles.triggerKey} data-key={apple ? "⌘K" : "Ctrl K"} aria-hidden="true" />
       </button>
     )}
     {open && Dialog ? <Dialog onClose={() => setOpenOn(null)} lang={lang} initialQuery={initialQuery} /> : null}

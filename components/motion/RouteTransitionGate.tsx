@@ -11,7 +11,8 @@ export function RouteTransitionGate({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const landing = pathname === "/" || pathname === "/ru" || pathname === "/ru/";
   return (
-    <div className={landing ? "workspace-content" : "workspace-content gildra-atlas"} data-atlas-theme={landing ? undefined : "dark"}>
+    // Inner pages: target of the toolbar's "skip to content" link, whatever the page is built with.
+    <div className={landing ? "workspace-content" : "workspace-content gildra-atlas"} data-atlas-theme={landing ? undefined : "dark"} id={landing ? undefined : "atlas-content"} tabIndex={landing ? undefined : -1}>
       <RouteTransitionRuntime>{children}</RouteTransitionRuntime>
     </div>
   );

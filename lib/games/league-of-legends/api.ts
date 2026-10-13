@@ -1,4 +1,5 @@
 import "server-only";
+import { apiInternalUrl } from "@/lib/env";
 
 export type LeagueAssets = { icon: string | null; splash: string | null; loading: string | null; tile: string | null };
 export type LeagueChampion = {
@@ -26,7 +27,7 @@ export type LeagueContentEntry = {
   localizedPayload: Record<string, unknown>; locale: string; localeFallback: boolean;
 };
 
-const apiURL = () => process.env.API_INTERNAL_URL ?? "http://api:8080";
+const apiURL = () => apiInternalUrl();
 export const LEAGUE_CONTENT_PAGE_SIZE = 50;
 
 async function leagueRequest<T>(path: string, revalidate = 3600): Promise<T> {

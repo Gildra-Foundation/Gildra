@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { apiInternalUrl } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ async function proxy(request: Request, context: { params: Promise<{ path?: strin
     || (shareRevokePath && request.method === "DELETE");
   if (!allowed) return reply({ code: "workspace_path_not_found" }, 404);
 
-  const upstreamBase = (process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
+  const upstreamBase = apiInternalUrl();
   const upstreamURL = new URL(`${upstreamBase}/v1/wow/workspace${path.length ? `/${path.join("/")}` : ""}`);
   const sourceURL = new URL(request.url);
   for (const key of ["character", "specialization", "fingerprint"]) {
