@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Alegreya, Chakra_Petch, Inter } from "next/font/google";
 import { CookieNoticeGate } from "@/components/CookieNoticeGate";
 import { PlausibleTracker } from "@/components/cms/PlausibleTracker";
@@ -9,6 +10,10 @@ import { RouteTransitionGate } from "@/components/motion/RouteTransitionGate";
 import { WorkspaceNavigator } from "@/components/platform/navigation/WorkspaceNavigator";
 import { motionPreferenceScript } from "@/lib/client/motionPreference";
 import "./globals.css";
+
+// The site has two root layouts — English (app/(site)/layout.tsx) and Russian
+// (app/ru/layout.tsx) — so the server sends the right <html lang>. Both, and the
+// 404 of unmatched URLs (app/global-not-found.tsx), render this one document.
 
 const display = Chakra_Petch({
   subsets: ["latin"],
@@ -40,7 +45,7 @@ const atlasDisplay = Alegreya({
   preload: false,
 });
 
-export const metadata: Metadata = {
+export const rootMetadata: Metadata = {
   metadataBase: new URL("https://gildra.net"),
   title: "Gildra — Master the Meta",
   description:
@@ -58,14 +63,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: ReactNode }) {
   return (
     // suppressHydrationWarning: the head script may set data-motion before React hydrates.
-    <html lang="en" className={`${display.variable} ${ui.variable} ${atlasDisplay.variable}`} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
+    <html lang={lang} className={`${display.variable} ${ui.variable} ${atlasDisplay.variable}`} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
       <head>
         {/* The reader's "less motion" choice, applied before the first paint (lib/client/motionPreference.ts). */}
         <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript }} />

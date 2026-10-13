@@ -2,7 +2,7 @@
 // Generators of the modular frontend (roadmap item 80):
 //   npm run new:feature -- <name>                 components/wow/<name>/ from components/wow/_template
 //   npm run new:page -- <path> <feature> [--title-en "…"] [--title-ru "…"]
-//                                                 app/<path>/page.tsx + app/ru/<path>/page.tsx
+//                                                 app/(site)/<path>/page.tsx + app/ru/<path>/page.tsx
 //   npm run new:og -- <path> <kind>               link-preview wrappers for both languages (kinds: lib/og/routes.tsx)
 // Never overwrites a file. Names are kebab-case ("world-quests").
 import fs from "node:fs";
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
 };
 export default function Page() { return <${component} locale="${locale}" />; }
 `;
-  write(`app/${clean}/page.tsx`, page("en", flags["title-en"] ?? pascal(feature)));
+  write(`app/(site)/${clean}/page.tsx`, page("en", flags["title-en"] ?? pascal(feature)));
   write(`app/ru/${clean}/page.tsx`, page("ru", flags["title-ru"] ?? flags["title-en"] ?? pascal(feature)));
 } else if (command === "og") {
   const [route, kind] = args;
@@ -71,7 +71,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/jpeg";
 export default ogImage(${JSON.stringify(locale)}, ${JSON.stringify(kind)});
 `;
-  write(`app/${clean}/opengraph-image.tsx`, og("en"));
+  write(`app/(site)/${clean}/opengraph-image.tsx`, og("en"));
   write(`app/ru/${clean}/opengraph-image.tsx`, og("ru"));
 } else {
   fail("usage: node scripts/new.mjs feature|page|og …");

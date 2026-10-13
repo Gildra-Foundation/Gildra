@@ -28,7 +28,7 @@ Every public page is built the same way (roadmap items 71–80):
   (`components/wow/_template`, README there). Features never import another
   feature's insides — shared pieces live in `components/wow/shared`, the kit in
   `components/atlas` (ESLint `no-restricted-imports`).
-- **Routes** — `app/<path>/page.tsx` and its `app/ru/<path>/page.tsx` mirror are
+- **Routes** — `app/(site)/<path>/page.tsx` and its `app/ru/<path>/page.tsx` mirror are
   thin wrappers (`npm run new:page`); `npm run routes:check` keeps every page and
   link preview paired. Link previews: `npm run new:og`.
 - **Sections** — `lib/routes/registry.ts` holds every section's path, parent and

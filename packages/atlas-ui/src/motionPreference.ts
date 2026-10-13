@@ -2,7 +2,7 @@
  * "Less motion" of the atlas: the system setting (prefers-reduced-motion) or the
  * reader's own choice on the site (the toggle in every inner page's footer),
  * kept in localStorage and mirrored as <html data-motion="reduced"> before the
- * first paint (inline script in app/layout.tsx). CSS for the site switch lives
+ * first paint (inline script in app/root-document.tsx). CSS for the site switch lives
  * in app/styles/motion-preference.css; scripted effects ask lessMotion().
  */
 export const MOTION_STORAGE_KEY = "gildra-motion";

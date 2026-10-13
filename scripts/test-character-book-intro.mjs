@@ -239,7 +239,7 @@ for (const path of [
 assert.doesNotMatch(source("components/wow/audit/CharacterAuditPage.tsx"), /<CharacterBookIntro\b/, "Profiles must not play a second opening after the shared page turn");
 assert.match(source("components/motion/RouteTransitionGate.tsx"), /<RouteTransitionRuntime\b/, "All routes must share one page transition");
 assert.doesNotMatch(source("components/motion/RouteTransitionRuntime.tsx"), /key=\{(?:pathname|routeKey)\}/, "Query changes must preserve live page state");
-for (const prefix of ["app/wow", "app/ru/wow"]) {
+for (const prefix of ["app/(site)/wow", "app/ru/wow"]) {
   const route = source(prefix + "/characters/[slug]/page.tsx");
   assert.match(route, /getBattleNetCharacterDetails\(/, prefix + " no longer loads real character details");
   assert.match(route, /<CharacterAuditPage\b[^>]*dataMode="battle-net"/, prefix + " no longer renders the real character page");

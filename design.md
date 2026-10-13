@@ -19,7 +19,7 @@
 | Акцент | `--atlas-accent`, `--atlas-accent-strong`, `--atlas-accent-ink`, `--atlas-accent-wash` | `#d1a24b`, `#f0b55a` |
 | Линии | `--atlas-line`, `--atlas-line-soft`, `--atlas-line-strong` | `rgba(157,112,48,.45)` и производные |
 | Статусы (только данные) | `--atlas-positive`, `--atlas-negative`, `--atlas-caution`, `--atlas-info` | |
-| Шрифты | `--atlas-font-display` (Alegreya), `--atlas-font-ui` (Inter), `--atlas-font-mono` | подключены в `app/layout.tsx` через `next/font`, латиница + кириллица |
+| Шрифты | `--atlas-font-display` (Alegreya), `--atlas-font-ui` (Inter), `--atlas-font-mono` | подключены в `app/root-document.tsx` через `next/font`, латиница + кириллица |
 | Размеры текста | `--atlas-text-hero`, `-h2`, `-h3`, `-title`, `-lead`, `-body` (15 px), `-small` (13 px), `-meta` (12 px), `-label` (11 px) | |
 | Сетка | `--atlas-container` (1540 px), `--atlas-gutter` (14–26 px), `--atlas-sticky-top` (64 px), `--atlas-space-1…8` | |
 

@@ -1,18 +1,19 @@
 /**
- * Генерирует статичную OG-карточку 1200×630 → app/opengraph-image.png.
+ * Генерирует статичную OG-карточку 1200×630 → app/(site)/opengraph-image.png и
+ * app/ru/opengraph-image.png (у каждой корневой раскладки своя копия).
  * Рендерит HTML в headless chromium (Playwright), шрифты — Google Fonts.
  * Запуск: node scripts/generate-og.mjs (нужен npx playwright install chromium).
  */
 import { chromium } from "playwright";
 import { fileURLToPath } from "node:url";
-import { readFileSync } from "node:fs";
+import fs, { readFileSync } from "node:fs";
 import path from "node:path";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const helmet =
   "data:image/png;base64," +
   readFileSync(path.join(root, "public/brand/helmet.png")).toString("base64");
-const out = path.join(root, "app/opengraph-image.png");
+const out = path.join(root, "app/(site)/opengraph-image.png");
 
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,4 +60,5 @@ await page.setContent(html, { waitUntil: "networkidle" });
 await page.evaluate(() => document.fonts.ready);
 await page.screenshot({ path: out });
 await browser.close();
-console.log("og image →", out);
+fs.copyFileSync(out, path.join(root, "app/ru/opengraph-image.png"));
+console.log("og image →", out, "+ app/ru/opengraph-image.png");

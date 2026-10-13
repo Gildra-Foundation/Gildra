@@ -12,7 +12,7 @@ lib/data/            DataSource contract + demo implementation (data/site.ts sta
 lib/anchors.ts       ANCHORS — every #id used by nav, footer, search and blocks
 components/blocks/   shared/<name>/ · <game>/<name>/ · _template/ · BlockRenderer · Page
 components/layout/   PageShell (Icons + .app/.main + Reveal; the top bar is global, the legal line is AtlasFrame's), Container, Section
-app/**/page.tsx      thin wrappers; app/ru/** mirrors them with `.ru`
+app/(site)/**/page.tsx  thin wrappers; app/ru/** mirrors them with `.ru`
 app/dev/blocks       gallery of every block at 1440/768/390 (dev only; GILDRA_DEV_GALLERY=1 in prod)
 ```
 
@@ -117,7 +117,7 @@ and wrap it in `PageShell` — they do not need to become block pages.
    (register it in `lib/games/adapter.ts`); `assets.ts`/`api.ts` as needed.
 4. `lib/games/<slug>/pages/home.ts` with `definePage`, and blocks under
    `components/blocks/<slug>/`.
-5. `app/<slug>/page.tsx` + `app/ru/<slug>/page.tsx` wrappers.
+5. `app/(site)/<slug>/page.tsx` + `app/ru/<slug>/page.tsx` wrappers.
 6. `lib/i18n.ts`: RU strings for the new nav tasks, tagline and legal notice.
 
 The switcher, Explore menu, search, footer and hreflang pick the game up from the
