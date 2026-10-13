@@ -5,6 +5,8 @@ COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/package.json
 COPY packages/game-data/package.json packages/game-data/package.json
 COPY packages/atlas-ui/package.json packages/atlas-ui/package.json
+# Root postinstall: local fix of the Next.js image optimizer (see the script).
+COPY scripts/patch-next.mjs scripts/patch-next.mjs
 RUN npm ci
 
 FROM node:22.23.2-alpine AS builder
