@@ -76,6 +76,7 @@ jobs:
       - run: npm run lint
       - run: npm run atlas:check
       - run: npm run test:atlas
+      - run: npm run test:observability
       - run: npm run routes:check
       - run: npm run build
         env:

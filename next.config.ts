@@ -137,5 +137,6 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  tunnelRoute: "/monitoring",
+  // No `tunnelRoute`: it only tunnels sentry.io DSNs. Browser reports go to
+  // GlitchTip through app/monitoring/route.ts (instrumentation-client.ts).
 });

@@ -11,8 +11,14 @@ WORKDIR /app
 ARG PLAUSIBLE_SCRIPT_URL=https://gildra.net/stats/js/script.js
 ARG PLAUSIBLE_API_URL=/stats/api/event
 ARG PLAUSIBLE_SITE_DOMAIN=gildra.net
+# Error reports (GlitchTip project gildra-web, roadmap 96). The DSN key is public
+# by design: every browser receives it, and reports reach the internal GlitchTip
+# only through /monitoring (app/monitoring/route.ts), which accepts this DSN
+# alone. Baked into the client bundle; pass an empty value to build without it.
+ARG NEXT_PUBLIC_SENTRY_DSN=http://dc8456a7-f083-4868-9f50-4db20d5fc692@glitchtip:8000/1
 ENV NEXT_TELEMETRY_DISABLED=1 \
-    PLAUSIBLE_SCRIPT_URL=$PLAUSIBLE_SCRIPT_URL PLAUSIBLE_API_URL=$PLAUSIBLE_API_URL PLAUSIBLE_SITE_DOMAIN=$PLAUSIBLE_SITE_DOMAIN
+    PLAUSIBLE_SCRIPT_URL=$PLAUSIBLE_SCRIPT_URL PLAUSIBLE_API_URL=$PLAUSIBLE_API_URL PLAUSIBLE_SITE_DOMAIN=$PLAUSIBLE_SITE_DOMAIN \
+    NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run generate:api && npm run build
