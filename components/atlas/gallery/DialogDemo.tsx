@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AtlasButton } from "../AtlasButton";
-import { AtlasDialog } from "../AtlasDialog";
+import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { AtlasDialog } from "@gildra/atlas-ui/AtlasDialog";
 import styles from "./gallery.module.css";
 
 /** Gallery island: opens AtlasDialog in both variants. */

@@ -6,7 +6,7 @@ import { getLootIcon, lairGuideLastVerifiedAt, type Boss, type Mechanic } from "
 import { CopyWaypointButton } from "./CopyWaypointButton";
 import { lairsCopy, mechanicActions, type LairsLocale } from "./lairsCopy";
 import styles from "./lairs.module.css";
-import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
+import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { trail } from "@/lib/routes/registry";
 
 const toneByMechanic: Record<Mechanic["tone"], AtlasBadgeTone> = { danger: "negative", frost: "info", control: "caution", tank: "neutral" };

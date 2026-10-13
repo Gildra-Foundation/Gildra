@@ -1,4 +1,4 @@
-import { pluralRu } from "@/components/atlas/format";
+import { pluralRu } from "@gildra/atlas-ui/format";
 import { getMidnightRaid, raidSceneArt, raidSlugs } from "@/components/wow/raid/midnightRaidData";
 import { getBossStrategy } from "@/components/wow/raid/raidStrategy";
 import { dungeonRoutes, getDungeonRoute, type DungeonSlug } from "@/components/wow/mythic/dungeonRoutes";

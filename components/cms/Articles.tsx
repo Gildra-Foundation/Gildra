@@ -13,7 +13,7 @@ import { CmsRichText } from "./CmsRichText";
 import { articleHref, articlesIndexHref } from "./paths";
 import styles from "./cms.module.css";
 import { trail } from "@/lib/routes/registry";
-import { AtlasAnchorSpy } from "@/components/atlas/AtlasAnchorSpy";
+import { AtlasAnchorSpy } from "@gildra/atlas-ui/AtlasAnchorSpy";
 
 const TEXT = {
   en: {

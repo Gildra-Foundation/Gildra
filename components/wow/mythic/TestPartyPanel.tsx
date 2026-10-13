@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Clock3, Copy, Crosshair, HeartPulse, LogIn, MapPin, Plus, RotateCcw, Shield, Sparkles, Sword, Trash2, Users, Zap } from "lucide-react";
-import { AtlasNotice } from "@/components/atlas/AtlasNotice";
+import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
 import type { RouteStop } from "./rubyLifePoolsData";
 import { initialAssignments, partyMembers, positions, type PartyAssignment, type PartyMember, type PartyRole, type PartyTalent } from "./testPartyData";
 import { partyPositionLabel, partyRoleLabels, plainPartyText, testPartyCopy, type TestPartyCopy } from "./testPartyCopy";

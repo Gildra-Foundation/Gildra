@@ -8,7 +8,7 @@ import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
 import { RecordPreviewButton } from "@/components/database/RecordPreviewButton";
 import { databaseCopy, entityTypeLabel, FACET_LABELS, formatCount, GROUP_LABELS, highlightLabel, previewCopy, type DatabaseCopy } from "@/components/database/databaseCopy";
 import styles from "@/components/database/databaseHub.module.css";
-import { AtlasPagination } from "@/components/atlas/AtlasPagination";
+import { AtlasPagination } from "@gildra/atlas-ui/AtlasPagination";
 
 const FACET_ORDER = ["class", "specialization", "race", "profession", "equipment_slot", "armor_type", "weapon_type", "item_class"];
 const ROOT_ID = "catalog-workspace";

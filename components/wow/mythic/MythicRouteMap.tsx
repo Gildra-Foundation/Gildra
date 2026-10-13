@@ -31,8 +31,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { AtlasBreadcrumbs } from "@/components/atlas/AtlasBreadcrumbs";
-import { AtlasNotice } from "@/components/atlas/AtlasNotice";
+import { AtlasBreadcrumbs } from "@gildra/atlas-ui/AtlasBreadcrumbs";
+import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
 import { dungeonBackdropSource } from "@/lib/wow/dungeonBackdropSource";
 import { MythicRouteSelectors } from "./MythicRouteSelectors";
 import { AbilityIntelCard, EnemyIntelCard } from "./CombatIntelCard";
@@ -42,7 +42,7 @@ import { actionLabels, floorLabel, mythicRouteCopy, plainLanguage, priorityLabel
 import { routeAbilityIntel, routeEnemyIntel } from "./routeIntel";
 import type { RouteStop } from "./rubyLifePoolsData";
 import styles from "./mythicRouteMap.module.css";
-import { AtlasTabs } from "@/components/atlas/AtlasTabs";
+import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
 
 const DeferredTestPartyPanel = dynamic(
   () => import("./TestPartyPanel").then((module) => module.TestPartyPanel),

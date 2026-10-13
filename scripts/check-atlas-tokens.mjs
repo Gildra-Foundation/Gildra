@@ -2,7 +2,7 @@
 // Guards the atlas theme: stylesheets that opted in must take colours, fonts
 // and type sizes from the tokens in app/styles/atlas-theme.css.
 //
-// Checked files: every CSS module (*.module.css) in components/ and app/, plus
+// Checked files: every CSS module (*.module.css) in components/, app/ and packages/, plus
 // any stylesheet whose first line contains `atlas:strict`, except the surfaces
 // listed in `exempt` with their reason. New modules are strict by default.
 // Run: npm run atlas:check
@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const scanDirs = ["components", "app"];
+const scanDirs = ["components", "app", "packages"];
 const exempt = {
   "components/platform/home/": "landing scene — its own materials (0 px gate)",
   "components/wow/audit/": "contents book — its own materials",

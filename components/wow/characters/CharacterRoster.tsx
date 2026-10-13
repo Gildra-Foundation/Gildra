@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { ChevronRight, ExternalLink, Search } from "lucide-react";
-import { AtlasNotice } from "@/components/atlas/AtlasNotice";
-import { AtlasPanel } from "@/components/atlas/AtlasPanel";
+import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
+import { AtlasPanel } from "@gildra/atlas-ui/AtlasPanel";
 import { BattleNetSignIn } from "@/components/auth/BattleNetActions";
 import type { BattleNetCharacter, BattleNetRegion } from "@/lib/wow/battleNetCharacters";
 import { characterSlug } from "@/lib/wow/characterSlug";

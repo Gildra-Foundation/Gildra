@@ -1,4 +1,4 @@
-import { formatAtlasDate, pluralRu } from "@/components/atlas/format";
+import { formatAtlasDate, pluralRu } from "@gildra/atlas-ui/format";
 import type { Difficulty } from "@/lib/data/wow";
 
 /**

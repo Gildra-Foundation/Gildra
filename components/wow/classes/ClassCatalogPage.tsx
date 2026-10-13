@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasSection } from "@/components/atlas";
-import { formatAtlasDate, pluralRu } from "@/components/atlas/format";
+import { formatAtlasDate, pluralRu } from "@gildra/atlas-ui/format";
 import { midnightSpecializations, TALENT_SNAPSHOT } from "@/lib/data/wow";
 import styles from "./classCatalog.module.css";
 import { trail } from "@/lib/routes/registry";

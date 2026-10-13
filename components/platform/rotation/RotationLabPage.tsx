@@ -3,8 +3,8 @@
 import dynamic from "next/dynamic";
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { BarChart3, ChevronDown, Dumbbell, Info, Play, RotateCcw } from "lucide-react";
-import { AtlasButton } from "@/components/atlas/AtlasButton";
-import { AtlasNotice } from "@/components/atlas/AtlasNotice";
+import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
 import type { Lang } from "@/lib/i18n";
 import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import type { RotationAbility, RotationAplRule, RotationPreset, RotationScenario, RotationSimulationResult, SavedRotationCombo } from "@/lib/platform/rotation/types";

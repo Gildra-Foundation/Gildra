@@ -8,7 +8,7 @@ import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
 import guide from "./raidGuide.module.css";
 import styles from "./venomous.module.css";
-import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
+import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { trail } from "@/lib/routes/registry";
 
 const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords } as const;

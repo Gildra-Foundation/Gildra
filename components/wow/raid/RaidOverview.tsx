@@ -5,7 +5,7 @@ import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy, isRaidStrategyPublished } from "./raidStrategy";
 import styles from "./raidGuide.module.css";
 import { VoidEye } from "./VoidEye";
-import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
+import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { raidSceneArt } from "./midnightRaidData";
 import { trail } from "@/lib/routes/registry";
 
