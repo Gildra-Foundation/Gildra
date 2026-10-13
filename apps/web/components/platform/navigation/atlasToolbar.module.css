@@ -50,7 +50,7 @@
 
 .launcher:hover { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
 .launcher:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
-.launcher img { width: 20px; height: 30px; object-fit: contain; filter: sepia(.45) saturate(.9) brightness(1.05); }
+.launcher img { width: 20px; height: 30px; object-fit: contain; filter: grayscale(1); }
 
 .end {
   display: flex;
