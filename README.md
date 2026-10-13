@@ -83,13 +83,18 @@ details.
 
 | Path | Responsibility |
 | --- | --- |
-| `app/`, `components/`, `lib/` | Public Next.js application and API client |
+| `apps/web/` | Public Next.js site (`app/`, `components/`, `lib/`, `scripts/`, `tests/`) and API client — npm workspace `@gildra/web` |
+| `packages/` | Shared npm workspaces: `@gildra/atlas-ui` (atlas kit), `@gildra/game-data` (game data) |
 | `backend/` | Go API, workers, importers, GraphQL, and database migrations |
 | `cms/` | Payload CMS application and CMS migrations |
 | `scraper/` | Source profiles, parsers, publication services, and tests |
 | `infra/` | nginx, PostgreSQL initialization, and scheduled refresh units |
 | `.github/workflows/` | Continuous integration and controlled deployment |
 | `docs/` | Architecture, catalog model, imports, sources, and deployment |
+
+The root `package.json` is the npm workspace root: `npm ci` installs everything,
+and every web script runs from the root (`npm run build` → `npm run build -w @gildra/web`).
+Services (`backend/`, `cms/`, `scraper/`) keep their own build contexts.
 
 ## Run locally
 

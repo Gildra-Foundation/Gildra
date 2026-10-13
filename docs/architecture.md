@@ -17,6 +17,24 @@ Go API -> PostgreSQL (catalog, users, subscriptions, River jobs)
        -> Redis (short-lived analytics cache)
 ```
 
+## Repository layout (roadmap item 81)
+
+One repository, npm workspaces for the JavaScript side:
+
+| Path | What | Build |
+| --- | --- | --- |
+| `apps/web/` | public Next.js site (`@gildra/web`) | root `Dockerfile` (context = repo root; the runner flattens the standalone output to `/app/server.js`) |
+| `packages/atlas-ui/` | atlas kit (`@gildra/atlas-ui`, TS source, no app imports) | transpiled by the site (`transpilePackages`) |
+| `packages/game-data/` | game data + content manifest (`@gildra/game-data`) | same |
+| `backend/` | Go API, River workers, importers, migrations | `backend/Dockerfile` |
+| `cms/` | Payload CMS (own lockfile) | `cms/Dockerfile` |
+| `scraper/` | Python scrapers | `scraper/Dockerfile` |
+| `infra/`, `deploy/`, `compose*.yml` | host deployment | — |
+
+`npm ci` at the root installs the workspaces; every web script runs from the
+root (`npm run build` → `npm run build -w @gildra/web`). Paths in the sections
+below are relative to `apps/web/`.
+
 ## Web front end: one page architecture
 
 Every public page is built the same way (roadmap items 71–80):

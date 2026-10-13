@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 
 const workerURL = (process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "");
-const source = await readFile(new URL("../backend/internal/rotationlab/specs.go", import.meta.url), "utf8");
+const source = await readFile(new URL("../../../backend/internal/rotationlab/specs.go", import.meta.url), "utf8");
 const rows = [...source.matchAll(/^\s*"([^"]+)":\s+\{"[^"]+",\s*"[^"]+",\s*"[^"]+",\s*"([^"]+)"/gm)]
   .map((match) => ({ slug: match[1], role: match[2] }));
 const combatSpecs = rows.filter((entry) => entry.role !== "heal");

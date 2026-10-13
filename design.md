@@ -10,7 +10,7 @@
 
 ## Тема атласа — единый источник
 
-Все цвета, шрифты, размеры и отступы внутренних страниц заданы токенами в [`app/styles/atlas-theme.css`](app/styles/atlas-theme.css). Тема действует внутри `.gildra-atlas` (обёртка всех внутренних маршрутов) и `[data-atlas-scope]` (порталы, верхняя панель).
+Все цвета, шрифты, размеры и отступы внутренних страниц заданы токенами в [`app/styles/atlas-theme.css`](apps/web/app/styles/atlas-theme.css). Тема действует внутри `.gildra-atlas` (обёртка всех внутренних маршрутов) и `[data-atlas-scope]` (порталы, верхняя панель).
 
 | Группа | Токены | Значение |
 | --- | --- | --- |
@@ -43,7 +43,7 @@
 
 ## Компоненты
 
-Набор [`components/atlas/`](components/atlas/README.md) — серверные компоненты без клиентского JS: `AtlasFrame`, `AtlasHero`, `AtlasStats`, `AtlasSection`, `AtlasAnchorNav`, `AtlasGrid`, `AtlasCard`, `AtlasTile`, `AtlasPanel`, `AtlasMetaList`, `AtlasBadge`, `AtlasButton`/`AtlasLinkButton`, `AtlasNotice`, `AtlasBreadcrumbs`, `AtlasEmblem`, `AtlasDisclosure` и утилиты `formatAtlasDate`, `formatSeason`, `pluralRu`. Каталог, свойства и примеры — в README набора. Эталонная реализация — `components/wow/lairs/`.
+Набор [`components/atlas/`](packages/atlas-ui/README.md) — серверные компоненты без клиентского JS: `AtlasFrame`, `AtlasHero`, `AtlasStats`, `AtlasSection`, `AtlasAnchorNav`, `AtlasGrid`, `AtlasCard`, `AtlasTile`, `AtlasPanel`, `AtlasMetaList`, `AtlasBadge`, `AtlasButton`/`AtlasLinkButton`, `AtlasNotice`, `AtlasBreadcrumbs`, `AtlasEmblem`, `AtlasDisclosure` и утилиты `formatAtlasDate`, `formatSeason`, `pluralRu`. Каталог, свойства и примеры — в README набора. Эталонная реализация — `components/wow/lairs/`.
 
 Тексты интерфейса хранятся отдельно от разметки (`*Copy.ts` с объектами `ru` и `en`).
 

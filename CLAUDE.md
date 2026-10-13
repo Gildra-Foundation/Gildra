@@ -7,6 +7,12 @@ tool second → analytics dashboard third**. Production: https://gildra.net
 
 - Next.js 16 App Router + React 19 + TypeScript, Go 1.26 API/River worker,
   Payload CMS, PostgreSQL, ClickHouse and Redis.
+- **Monorepo (npm workspaces):** the site is `apps/web/` (`@gildra/web`) —
+  every web path below (`app/`, `components/`, `lib/`, `scripts/` …) is
+  relative to it; shared code is in `packages/` (`@gildra/atlas-ui` kit,
+  `@gildra/game-data`); services keep their own builds (`backend/`, `cms/`,
+  `scraper/`). Run npm scripts from the repo root (they pass through to the
+  web workspace); ESLint config is the root `eslint.config.mjs`.
 - **Pages are configs of blocks.** Page definitions live in
   `lib/games/<slug>/pages/*.ts` (`definePage` → `{ en, ru }`); route files
   `app/(site)/**/page.tsx` and their `app/ru/**` mirrors are three-line wrappers
@@ -18,7 +24,7 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   contents, EN/RU, GILDRA) is global (`components/platform/navigation/`) and
   the legal line is `AtlasFrame`'s footer — pages render no header/footer. The full contract, plus
   "add a block / page / game" recipes, is in
-  [components/blocks/README.md](components/blocks/README.md) — read it before UI work.
+  [components/blocks/README.md](apps/web/components/blocks/README.md) — read it before UI work.
 - CMS: a published Payload `pages` document with `slug` = page id and a
   `blocks` JSON overrides that page's block list (`lib/cms/pages.ts`,
   validated against the registry, fails open to the TS config).

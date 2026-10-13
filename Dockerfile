@@ -1,7 +1,8 @@
 FROM node:22.23.2-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-# npm workspaces (packages/*): each package's manifest must exist for npm ci.
+# npm workspaces (apps/*, packages/*): each workspace manifest must exist for npm ci.
+COPY apps/web/package.json apps/web/package.json
 COPY packages/game-data/package.json packages/game-data/package.json
 COPY packages/atlas-ui/package.json packages/atlas-ui/package.json
 RUN npm ci
@@ -24,15 +25,25 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run generate:api && npm run build
+# The site is the workspace apps/web (roadmap item 81); standalone tracing
+# starts at the repository root, so the server lands in standalone/apps/web.
+# Turbopack links a few externals from .next/node_modules to the root
+# node_modules; the runner flattens apps/web onto /app, so point them there.
+RUN npm run generate:api && npm run build \
+ && externals=apps/web/.next/standalone/apps/web/.next/node_modules \
+ && if [ -d "$externals" ]; then for link in "$externals"/*; do \
+      target=$(readlink "$link"); ln -sfn "../../node_modules/${target##*/node_modules/}" "$link"; done; fi
 
 FROM node:22.23.2-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Same runtime layout as before the move: /app/server.js, /app/.next (the
+# tmpfs mounts in compose.runtime.yml), /app/public, /app/node_modules.
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone/apps/web ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]

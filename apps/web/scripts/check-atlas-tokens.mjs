@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const scanDirs = ["components", "app", "packages"];
+const scanDirs = ["components", "app", "../../packages"];
 const exempt = {
   "components/platform/home/": "landing scene — its own materials (0 px gate)",
   "components/wow/audit/": "contents book — its own materials",

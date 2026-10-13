@@ -3,6 +3,8 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
+const monorepoRoot = path.join(process.cwd(), "../..");
+
 const additionalDevOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS ?? "")
   .split(",")
   .map((origin) => origin.trim())
@@ -79,8 +81,13 @@ const nextConfig: NextConfig = {
     globalNotFound: true,
   },
   allowedDevOrigins: ["127.0.0.1", "localhost", "51.68.180.93", ...additionalDevOrigins],
+  // The app lives in apps/web of the monorepo (roadmap item 81): bundling and
+  // standalone tracing start at the repository root so packages/* and the
+  // hoisted node_modules are inside it. The Dockerfile flattens the standalone
+  // output back to /app/server.js.
+  outputFileTracingRoot: monorepoRoot,
   turbopack: {
-    root: process.cwd(),
+    root: monorepoRoot,
   },
   poweredByHeader: false,
   async headers() {

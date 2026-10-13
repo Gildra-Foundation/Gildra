@@ -3,8 +3,8 @@ import { readFile } from "node:fs/promises";
 
 const simulator = await readFile(new URL("../components/wow/audit/CharacterTalentSimulator.tsx", import.meta.url), "utf8");
 const route = await readFile(new URL("../app/api/wow/talent-simulation/route.ts", import.meta.url), "utf8");
-const workerModel = await readFile(new URL("../backend/internal/rotationlab/model.go", import.meta.url), "utf8");
-const worker = await readFile(new URL("../backend/internal/rotationlab/simc.go", import.meta.url), "utf8");
+const workerModel = await readFile(new URL("../../../backend/internal/rotationlab/model.go", import.meta.url), "utf8");
+const worker = await readFile(new URL("../../../backend/internal/rotationlab/simc.go", import.meta.url), "utf8");
 
 assert.match(simulator, /TalentChangeSet/, "The calculator does not render a named, complete talent change set");
 assert.match(simulator, /Автоматически отключены/, "Dependent talent pruning is not explained separately");
