@@ -1,0 +1,92 @@
+#!/usr/bin/env node
+// Block contracts (roadmap item 85): the JSON Schema of every block's props,
+// generated from the TypeScript types the blocks are written with, so the CMS
+// and the web app agree on what a block accepts.
+//   npm run blocks:contracts            writes contracts/blocks.schema.json
+//   npm run blocks:contracts -- --check fails when the file is out of date (CI)
+// The web app validates CMS page overrides against it (lib/cms/pages.ts); the
+// CMS can validate the `blocks` field with the same file before publishing.
+import fs from "node:fs";
+import path from "node:path";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const ts = require("typescript");
+const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const registries = ["lib/blocks/registries/shared.ts", "lib/blocks/registries/wow.ts", "lib/blocks/registries/league.ts"].map((file) => path.join(root, file));
+
+const configFile = ts.readConfigFile(path.join(root, "tsconfig.json"), ts.sys.readFile);
+const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, root);
+const program = ts.createProgram(registries, { ...parsed.options, noEmit: true });
+const checker = program.getTypeChecker();
+
+function schemaOf(type, depth = 0) {
+  if (depth > 8) return {};
+  if (type.flags & ts.TypeFlags.StringLiteral) return { const: type.value };
+  if (type.flags & ts.TypeFlags.NumberLiteral) return { const: type.value };
+  if (type.flags & ts.TypeFlags.BooleanLiteral) return { const: checker.typeToString(type) === "true" };
+  if (type.flags & ts.TypeFlags.String) return { type: "string" };
+  if (type.flags & ts.TypeFlags.Number) return { type: "number" };
+  if (type.flags & ts.TypeFlags.Boolean) return { type: "boolean" };
+  if (type.isUnion()) {
+    const parts = type.types.filter((part) => !(part.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Null)));
+    if (parts.length && parts.every((part) => part.flags & ts.TypeFlags.StringLiteral)) return { enum: parts.map((part) => part.value) };
+    if (parts.length === 2 && parts.every((part) => part.flags & ts.TypeFlags.BooleanLiteral)) return { type: "boolean" };
+    return parts.length === 1 ? schemaOf(parts[0], depth + 1) : { anyOf: parts.map((part) => schemaOf(part, depth + 1)) };
+  }
+  if (checker.isArrayType(type) || checker.isTupleType(type)) {
+    const [item] = checker.getTypeArguments(type);
+    return { type: "array", items: item ? schemaOf(item, depth + 1) : {} };
+  }
+  if (type.flags & ts.TypeFlags.Object) {
+    const properties = {};
+    const required = [];
+    for (const symbol of checker.getPropertiesOfType(type)) {
+      const declaration = symbol.valueDeclaration ?? symbol.declarations?.[0];
+      const propertyType = checker.getTypeOfSymbolAtLocation(symbol, declaration);
+      properties[symbol.name] = schemaOf(propertyType, depth + 1);
+      if (!(symbol.flags & ts.SymbolFlags.Optional)) required.push(symbol.name);
+    }
+    const index = checker.getIndexInfoOfType(type, ts.IndexKind.String);
+    return { type: "object", properties, ...(required.length ? { required } : {}), additionalProperties: index ? schemaOf(index.type, depth + 1) : false };
+  }
+  return {};
+}
+
+const blocks = {};
+for (const file of registries) {
+  const source = program.getSourceFile(file);
+  ts.forEachChild(source, function visit(node) {
+    if (ts.isVariableDeclaration(node) && node.initializer) {
+      let init = node.initializer;
+      while (ts.isSatisfiesExpression(init) || ts.isAsExpression(init)) init = init.expression;
+      if (ts.isObjectLiteralExpression(init)) {
+        for (const property of init.properties) {
+          if (!ts.isPropertyAssignment(property)) continue;
+          const name = property.name.getText(source).replace(/^["']|["']$/g, "");
+          const blockType = checker.getTypeAtLocation(property.initializer);
+          // BlockDef<P, D, C>: the props type is the parameter of `Component`'s props.props, read through `defaults?: Partial<P>`… simplest: the type of the `demo.props` field.
+          const demo = blockType.getProperty("demo");
+          const demoType = demo && checker.getTypeOfSymbolAtLocation(demo, property);
+          const propsSymbol = demoType?.getProperty("props");
+          const propsType = propsSymbol && checker.getTypeOfSymbolAtLocation(propsSymbol, property);
+          const container = blockType.getProperty("container");
+          const containerType = container && checker.getTypeOfSymbolAtLocation(container, property);
+          blocks[name] = { container: containerType ? checker.typeToString(containerType).includes("true") : false, props: propsType ? schemaOf(propsType) : { type: "object" } };
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  });
+}
+
+const out = `${JSON.stringify({ $schema: "https://json-schema.org/draft/2020-12/schema", description: "Props of every web block (generated by scripts/generate-block-contracts.mjs from the block types — do not edit).", blocks: Object.fromEntries(Object.entries(blocks).sort()) }, null, 2)}\n`;
+const target = path.join(root, "contracts/blocks.schema.json");
+if (process.argv.includes("--check")) {
+  const current = fs.existsSync(target) ? fs.readFileSync(target, "utf8") : "";
+  if (current !== out) { console.error("blocks:contracts — contracts/blocks.schema.json is out of date; run npm run blocks:contracts"); process.exit(1); }
+  console.log(`blocks:contracts — ${Object.keys(blocks).length} block contracts up to date`);
+} else {
+  fs.writeFileSync(target, out);
+  console.log(`blocks:contracts — ${Object.keys(blocks).length} block contracts written`);
+}

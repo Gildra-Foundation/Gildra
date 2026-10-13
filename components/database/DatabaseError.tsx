@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { RotateCcw } from "lucide-react";
-import { AtlasButton, AtlasLinkButton } from "@/components/atlas/AtlasButton";
-import { AtlasError } from "@/components/atlas/AtlasState";
+import { AtlasButton, AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
+import { AtlasError } from "@gildra/atlas-ui/AtlasState";
 import type { Lang } from "@/lib/i18n";
 import styles from "./databaseError.module.css";
 

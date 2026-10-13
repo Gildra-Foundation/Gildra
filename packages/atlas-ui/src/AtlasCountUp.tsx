@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import styles from "./AtlasCountUp.module.css";
-import { lessMotion } from "@/lib/client/motionPreference";
+import { lessMotion } from "./motionPreference";
 
 /**
  * A headline number that counts up as its page arrives through in-site

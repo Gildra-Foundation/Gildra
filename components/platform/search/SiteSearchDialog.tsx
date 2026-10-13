@@ -4,8 +4,8 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Clock3, CornerDownLeft, Database, Search } from "lucide-react";
-import { AtlasDialog } from "@/components/atlas/AtlasDialog";
-import { AtlasInput } from "@/components/atlas/AtlasField";
+import { AtlasDialog } from "@gildra/atlas-ui/AtlasDialog";
+import { AtlasInput } from "@gildra/atlas-ui/AtlasField";
 import { readRecentPages } from "./recentPages";
 import { loadedIndex, loadIndex, type SiteIndex as Index } from "./siteSearchIndex";
 import { siteSearchCopy, type SiteSearchLang } from "./siteSearchCopy";

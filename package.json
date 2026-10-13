@@ -2,6 +2,9 @@
   "name": "gildra",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "NEXT_PRIVATE_DISABLE_DEV_OVERLAY_UX=1 next dev",
     "dev:fast": "NEXT_PRIVATE_DISABLE_DEV_OVERLAY_UX=1 NEXT_REACT_STRICT_MODE=0 next dev",
@@ -12,6 +15,7 @@
     "test:atlas": "node --experimental-strip-types --no-warnings --import ./tests/atlas/resolve.mjs --test tests/atlas/*.test.ts",
     "test:observability": "node --experimental-strip-types --no-warnings --import ./tests/atlas/resolve.mjs --test tests/observability/*.test.ts",
     "routes:check": "node scripts/check-route-parity.mjs",
+    "blocks:contracts": "node scripts/generate-block-contracts.mjs",
     "new:feature": "node scripts/new.mjs feature",
     "new:page": "node scripts/new.mjs page",
     "new:og": "node scripts/new.mjs og",

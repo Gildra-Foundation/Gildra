@@ -1,5 +1,5 @@
 import "server-only";
-import contentManifest from "@/data/wow/content-manifest.json";
+import { contentManifest } from "@gildra/game-data";
 import { getCatalogEntity, getCatalogPage, type CatalogRecord } from "@/lib/api/client";
 import { buildGearCandidatePool, gearCandidateCatalogQuery, type CatalogGearEntity, type GearCandidateContext } from "./gearCandidates";
 

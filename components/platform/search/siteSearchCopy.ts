@@ -1,4 +1,4 @@
-import { pluralRu } from "@/components/atlas/format";
+import { pluralRu } from "@gildra/atlas-ui/format";
 
 /** Strings of the quick search (⌘K): the toolbar button and its dialog. */
 export const siteSearchCopy = {

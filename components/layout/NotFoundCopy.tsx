@@ -4,7 +4,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { ArrowRight } from "lucide-react";
-import buttonStyles from "@/components/atlas/AtlasButton.module.css";
+import buttonStyles from "@gildra/atlas-ui/AtlasButton.module.css";
 
 const copy = {
   en: {

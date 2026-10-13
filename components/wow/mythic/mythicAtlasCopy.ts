@@ -1,4 +1,4 @@
-import { pluralRu } from "@/components/atlas/format";
+import { pluralRu } from "@gildra/atlas-ui/format";
 
 /** Interface copy of the Mythic+ hub. Dungeon, boss and zone names are game terms. */
 export const mythicAtlasCopy = {

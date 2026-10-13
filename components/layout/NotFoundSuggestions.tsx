@@ -3,8 +3,8 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ArrowRight, Search } from "lucide-react";
-import { AtlasButton } from "@/components/atlas/AtlasButton";
-import { AtlasSection } from "@/components/atlas/AtlasSection";
+import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
 import { loadIndex, openSiteSearch } from "@/components/platform/search/siteSearchIndex";
 import { searchIndex, type SiteSearchHit } from "@/components/platform/search/siteSearchMatch";
 import styles from "./notFoundSuggestions.module.css";

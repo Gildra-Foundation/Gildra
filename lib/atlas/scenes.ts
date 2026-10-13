@@ -32,7 +32,7 @@ export const atlasScenes = {
   venomousBoss: { art: "/assets/wow/mythic/backgrounds/altar.webp", position: "center 45%", og: [0.5, 0.4] },
   sporefall: { art: `${L}/raid-wow-optimized.webp`, position: "center 40%", tint: "rgba(122, 64, 196, .2)", ember: "rgba(218, 168, 255, .95)", og: [0.5, 0.4] },
   mythicPlus: { art: "/assets/wow/mythic/ruby-depth-v3-light-fast.webp", position: "center 30%", tint: "rgba(200, 93, 38, .18)", ember: "rgba(255, 168, 112, .95)", og: [0.5, 0.4],
-    // The lava lake and the lavafall breathe (two points: the motion budget is 8 endless animations).
+    // The lava lake and the lavafall breathe (the motion budget allows up to three lights).
     glow: { size: [1500, 844], points: [{ at: [0.72, 0.77], radius: 120, color: "rgba(255, 120, 40, .55)", tempo: 5 }, { at: [0.875, 0.56], radius: 70, color: "rgba(255, 150, 60, .5)", tempo: 3.4 }] } },
   mythicSeasons: { art: "/assets/wow/mythic/backgrounds/nalorakk.webp", position: "center 40%", og: [0.5, 0.4] },
   dungeons: { art: "/assets/wow/mythic/backgrounds/nalorakk.webp", position: "center 40%", og: [0.5, 0.4] },

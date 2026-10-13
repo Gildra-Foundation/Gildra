@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { lessMotion } from "@/lib/client/motionPreference";
+import { lessMotion } from "./motionPreference";
 
 /**
  * Marks the chapter the reader is in: the link of the last section whose top

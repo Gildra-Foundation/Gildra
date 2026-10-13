@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AtlasButton } from "@/components/atlas/AtlasButton";
+import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { readBrowserConsent, saveBrowserConsent, consentChanged } from "@/lib/browserConsent";
 import styles from "./cookieNotice.module.css";
 

@@ -1,34 +1,10 @@
 /**
- * Gildra Atlas UI kit — building blocks of every inner page.
- * Server components, styled only through the tokens in app/styles/atlas-theme.css.
- * Catalogue with usage rules: components/atlas/README.md.
+ * The atlas kit as the app uses it: everything from @gildra/atlas-ui
+ * (packages/atlas-ui, catalogue in its README), plus the app's AtlasFrame —
+ * the kit's frame with the site's scenes and legal line. The import below hands
+ * the kit the blurred placeholders of the site's paintings.
  */
-export { AtlasFrame } from "./AtlasFrame";
-export { AtlasHero } from "./AtlasHero";
-export { AtlasStats, type AtlasStat } from "./AtlasStats";
-export { AtlasSection } from "./AtlasSection";
-export { AtlasPanel } from "./AtlasPanel";
-export { AtlasCard, type AtlasCardImage, type AtlasCardMeta } from "./AtlasCard";
-export { AtlasBadge, type AtlasBadgeTone } from "./AtlasBadge";
-export { AtlasButton, AtlasLinkButton } from "./AtlasButton";
-export { AtlasBreadcrumbs, type AtlasCrumb } from "./AtlasBreadcrumbs";
-export { AtlasEmblem } from "./AtlasEmblem";
-export { AtlasNotice } from "./AtlasNotice";
-export { AtlasMetaList, type AtlasMetaItem } from "./AtlasMetaList";
-export { AtlasGrid } from "./AtlasGrid";
-export { AtlasAnchorNav, type AtlasAnchor } from "./AtlasAnchorNav";
-export { formatAtlasDate, formatSeason, pluralRu, type AtlasLocale } from "./format";
-export { AtlasTile } from "./AtlasTile";
-export { AtlasPath, type AtlasPathStep } from "./AtlasPath";
-export { AtlasDisclosure } from "./AtlasDisclosure";
-export { AtlasTable, type AtlasColumn } from "./AtlasTable";
-export { AtlasTabs, type AtlasTab } from "./AtlasTabs";
-export { AtlasField, AtlasInput, AtlasSelect, AtlasCheckbox, AtlasRange } from "./AtlasField";
-export { AtlasTooltip } from "./AtlasTooltip";
-export { AtlasEmpty, AtlasError, AtlasSkeleton } from "./AtlasState";
-export { AtlasDialog } from "./AtlasDialog";
-export { AtlasToast } from "./AtlasToast";
-export { AtlasShareButton } from "./AtlasShareButton";
-export { AtlasArtGlow, type ArtGlowPoint } from "./AtlasArtGlow";
-export { AtlasPagination } from "./AtlasPagination";
-export { AtlasChart, type AtlasChartDatum } from "./AtlasChart";
+import "@/lib/atlas/placeholders";
+
+export * from "@gildra/atlas-ui";
+export { AtlasFrame, type AtlasFrameProps } from "./AtlasFrame";

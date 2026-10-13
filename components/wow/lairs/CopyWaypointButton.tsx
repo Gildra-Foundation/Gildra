@@ -2,7 +2,7 @@
 
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
-import { copyText } from "@/components/atlas/clipboard";
+import { copyText } from "@gildra/atlas-ui/clipboard";
 import styles from "./lairs.module.css";
 
 type Labels = { label: string; copied: string; failed: string };

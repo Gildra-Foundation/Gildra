@@ -1,0 +1,23 @@
+{
+  "name": "@gildra/atlas-ui",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Gildra atlas kit: page frame, hero, sections, cards, tables, tabs, fields, dialogs and states on the --atlas-* tokens. Source-only TypeScript and CSS modules, compiled by the app (transpilePackages).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.tsx",
+    "./placeholders": "./src/placeholders.ts",
+    "./motionPreference": "./src/motionPreference.ts",
+    "./morph": "./src/morph.ts",
+    "./format": "./src/format.ts",
+    "./clipboard": "./src/clipboard.ts",
+    "./*.module.css": "./src/*.module.css"
+  },
+  "peerDependencies": {
+    "clsx": "*",
+    "lucide-react": "*",
+    "next": "*",
+    "react": "*"
+  }
+}

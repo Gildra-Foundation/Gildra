@@ -3,10 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
-import { artMorphName } from "@/lib/atlas/morph";
+import { artMorphName } from "./morph";
 import { AtlasMorphPreload } from "./AtlasMorphPreload";
 import styles from "./AtlasPath.module.css";
-import { artPlaceholder } from "@/lib/atlas/placeholders";
+import { artPlaceholder } from "./placeholders";
 
 export type AtlasPathStep = {
   href: string;

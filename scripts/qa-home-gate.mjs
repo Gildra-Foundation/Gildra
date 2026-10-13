@@ -23,6 +23,8 @@ async function shoot(origin, path, phone, book) {
     ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, reducedMotion: "reduce" }
     : { viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
   await context.addInitScript(() => { try { localStorage.setItem("gildra-consent", "declined"); } catch {} });
+  // The staging copy marks itself with a badge (components/StagingBadge.tsx); compare the page, not the mark.
+  await context.addInitScript(() => { document.addEventListener("DOMContentLoaded", () => { const style = document.createElement("style"); style.textContent = ".staging-badge{display:none!important}"; document.head.append(style); }); });
   const page = await context.newPage();
   await page.goto(origin + path, { waitUntil: "networkidle" });
   await page.evaluate(() => document.fonts.ready);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { lessMotion } from "@/lib/client/motionPreference";
+import { lessMotion } from "./motionPreference";
 
 /**
  * Torchlight under the cursor for everything marked `data-spotlight` (cards,

@@ -12,7 +12,7 @@ import type { CatalogEntityComparison, CatalogEntityQuality, CatalogEntityType, 
 import { formatQuestText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
 import styles from "./entityDetail.module.css";
-import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
+import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 
 type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships: CatalogRelationship[]; quality: CatalogEntityQuality | null; versions: CatalogEntityVersion[]; comparison: CatalogEntityComparison | null; selectedFromBuildId?: number; selectedToBuildId?: number; lang: Lang; libraryDataset?: { slug: string; name: string } };
 

@@ -3,6 +3,7 @@ import type { BlockInstance } from "@/lib/blocks/page";
 import type { BlockRegistry } from "@/lib/blocks/loadRegistry";
 import type { Lang } from "@/lib/i18n";
 import { fetchPage } from "./client";
+import { blockPropsValid } from "@/lib/blocks/contracts";
 
 /**
  * Payload CMS page overrides.
@@ -42,6 +43,8 @@ export async function validateBlocks(value: unknown, registry: BlockRegistry, de
     if (!isPlainObject(raw) || typeof raw.type !== "string" || !(raw.type in registry)) return null;
     const def = registry[raw.type];
     if (raw.props !== undefined && !isPlainObject(raw.props)) return null;
+    // Props must match the block's contract (contracts/blocks.schema.json): a CMS typo falls back to the TS page.
+    if (!blockPropsValid(raw.type, raw.props)) return null;
     if (raw.children !== undefined) {
       if (!def.container) return null;
       const children = await validateBlocks(raw.children, registry, depth + 1);

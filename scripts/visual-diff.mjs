@@ -39,6 +39,8 @@ const browser = await chromium.launch();
 async function shoot(origin, route, viewport, file) {
   const context = await browser.newContext({ viewport: sizes[viewport], reducedMotion: "reduce", deviceScaleFactor: 1 });
   await context.addInitScript(() => { try { localStorage.setItem("gildra-consent", "declined"); } catch {} });
+  // The staging copy marks itself with a badge (components/StagingBadge.tsx); compare the page, not the mark.
+  await context.addInitScript(() => { document.addEventListener("DOMContentLoaded", () => { const style = document.createElement("style"); style.textContent = ".staging-badge{display:none!important}"; document.head.append(style); }); });
   const page = await context.newPage();
   await page.goto(origin + route, { waitUntil: "networkidle", timeout: 90_000 });
   await page.evaluate(() => document.fonts.ready);

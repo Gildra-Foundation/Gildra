@@ -7,7 +7,7 @@ import type { RaidBoss, RaidDefinition } from "./midnightRaidData";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy } from "./raidStrategy";
 import styles from "./raidGuide.module.css";
-import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
+import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { trail } from "@/lib/routes/registry";
 
 /** Boss guide of a Midnight Season 1 raid: header, encounter switcher, battle plan, one mechanics list. */

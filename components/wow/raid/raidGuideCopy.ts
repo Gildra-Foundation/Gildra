@@ -1,4 +1,4 @@
-import { formatAtlasDate, pluralRu } from "@/components/atlas/format";
+import { formatAtlasDate, pluralRu } from "@gildra/atlas-ui/format";
 import type { RaidAudience } from "./midnightRaidData";
 import type { VoidspireMechanicTag } from "./voidspireMechanicGuide";
 

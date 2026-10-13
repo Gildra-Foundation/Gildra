@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { setSiteMotionReduced, siteMotionReduced, subscribeSiteMotion } from "@/lib/client/motionPreference";
+import { setSiteMotionReduced, siteMotionReduced, subscribeSiteMotion } from "./motionPreference";
 import styles from "./AtlasFrame.module.css";
 
 const copy = {

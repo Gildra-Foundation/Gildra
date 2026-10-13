@@ -1,5 +1,5 @@
 import type { MechanicTag } from "@/lib/lairs";
-import { formatAtlasDate as formatDate, pluralRu } from "@/components/atlas/format";
+import { formatAtlasDate as formatDate, pluralRu } from "@gildra/atlas-ui/format";
 
 /**
  * Interface copy of the Lairs and world bosses section. Game terms (boss,

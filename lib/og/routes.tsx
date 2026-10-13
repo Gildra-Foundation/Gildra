@@ -1,11 +1,8 @@
-import { pluralRu } from "@/components/atlas/format";
+import { pluralRu } from "@gildra/atlas-ui/format";
 import { getMidnightRaid, raidSceneArt, raidSlugs } from "@/components/wow/raid/midnightRaidData";
 import { getBossStrategy } from "@/components/wow/raid/raidStrategy";
 import { dungeonRoutes, getDungeonRoute, type DungeonSlug } from "@/components/wow/mythic/dungeonRoutes";
-import contentManifest from "@/data/wow/content-manifest.json";
-import { midnightDelves } from "@/data/wow/midnight-delves";
-import { midnightLairEncounters } from "@/data/wow/midnight-lairs";
-import { getMidnightClass, getMidnightClassSpec, getMidnightClassSpecs, midnightClasses, midnightSpecializations } from "@/data/wow/midnight-specializations";
+import { contentManifest, midnightDelves, midnightLairEncounters, getMidnightClass, getMidnightClassSpec, getMidnightClassSpecs, midnightClasses, midnightSpecializations } from "@gildra/game-data";
 import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { getBoss } from "@/lib/lairs";
 import { getTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
