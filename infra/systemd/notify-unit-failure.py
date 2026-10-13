@@ -10,7 +10,9 @@ forwarded there. Channels are optional and independent:
 * ``TELEGRAM_BOT_TOKEN`` and ``TELEGRAM_CHAT_ID`` send a Telegram message.
   A unit that keeps failing is reported once, then at most every
   ``NOTIFY_REPEAT_HOURS`` (default 6) with the number of failures in between;
-  its next success sends one "recovered" message.
+  its next success sends one "recovered" message. Units listed in
+  ``NOTIFY_QUIET_UNITS`` (comma-separated) are never messaged: a known,
+  tracked failure should not drown the others.
 * ``SENTRY_DSN`` (optionally ``SENTRY_ENVIRONMENT``) records an event for every
   failure (GlitchTip/Sentry group them into one issue per unit).
 
@@ -208,6 +210,10 @@ def repeat_hours(channels: dict[str, str]) -> float:
         return DEFAULT_REPEAT_HOURS
 
 
+def quiet_units(channels: dict[str, str]) -> set[str]:
+    return {unit.strip() for unit in channels.get("NOTIFY_QUIET_UNITS", "").split(",") if unit.strip()}
+
+
 def telegram_decision(state: dict[str, dict[str, object]], record: dict[str, object], hours: float) -> tuple[bool, dict[str, object] | None]:
     """Update the unit's failure streak; say whether to message and with which repeat summary."""
     unit = str(record["unit"])
@@ -243,7 +249,11 @@ def report_failure(unit: str, offline: bool, log_path: Path, state_path: Path, c
     except OSError as exc:
         print(f"notify: could not update {state_path}: {exc}", file=sys.stderr)
     text = failure_text(record, repeat)
-    print(text if send else f"{text}\n(notify: repeat within {repeat_hours(channels)} h, Telegram skipped)")
+    if unit in quiet_units(channels):
+        send = False
+        print(f"{text}\n(notify: {unit} is in NOTIFY_QUIET_UNITS, Telegram skipped)")
+    else:
+        print(text if send else f"{text}\n(notify: repeat within {repeat_hours(channels)} h, Telegram skipped)")
     if offline:
         return
     if not telegram_token and not channels.get("SENTRY_DSN"):

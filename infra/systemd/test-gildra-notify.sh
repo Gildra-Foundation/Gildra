@@ -56,4 +56,11 @@ grep -Fq 'снова работает (сбоев подряд: 3' "$work_direct
 notify 2026-10-12T11:05:00+00:00 "--recovered gildra-catalog-refresh"
 [ ! -s "$work_directory/stdout" ]
 
+# A unit muted in notify.env is logged but never messaged.
+printf 'NOTIFY_QUIET_UNITS=gildra-graph-refresh, other\n' > "$work_directory/quiet.env"
+GILDRA_NOTIFY_OFFLINE=1 GILDRA_ALERT_LOG="$work_directory/alerts.jsonl" GILDRA_NOTIFY_ENV_FILE="$work_directory/quiet.env" \
+  GILDRA_NOTIFY_NOW=2026-10-13T00:00:00+00:00 python3 "$notify_script" gildra-graph-refresh >"$work_directory/stdout"
+grep -Fq 'NOTIFY_QUIET_UNITS, Telegram skipped' "$work_directory/stdout"
+grep -Fq '"unit": "gildra-graph-refresh"' "$work_directory/alerts.jsonl"
+
 printf '%s\n' 'test: unit failures are recorded, rate-limited, reported on recovery and wired to gildra-notify@'
