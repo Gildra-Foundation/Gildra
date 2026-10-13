@@ -17,6 +17,7 @@ import { validateAplRules } from "@/lib/platform/rotation/apl";
 import type { AplSearchSpace } from "@/lib/platform/rotation/aplOptimizer";
 import { useCharacterWorkspaceDocument } from "@/lib/wow/useCharacterWorkspaceDocument";
 import { mergeRotationAbility, rotationComboName, rotationScenarioLabel } from "@/lib/platform/rotation/locale";
+import { buildOptimizerCopy } from "./buildOptimizerCopy";
 
 type StoredStudio = { builds: RotationBuildProfile[]; combos: SavedRotationCombo[]; selectedBuildId?: string };
 type OptimizerScore = { candidateId: string; label: string; reason: string; mutation: "baseline" | "priority" | "threshold" | "state"; dps: number; rules: string[]; aplRules: RotationAplRule[]; result: RotationSimulationResult; verified?: boolean; verificationDelta?: number; meaningfulGain?: number };
@@ -63,14 +64,14 @@ async function simulateCandidate(input: Record<string, unknown>, lang: Lang) {
     if (![429, 503].includes(response.status) || attempt === 3) {
       const payload = await response.json().catch(() => null) as { error?: string; message?: string } | null;
       const error = `${payload?.error ?? ""} ${payload?.message ?? ""}`.toLowerCase();
-      if (response.status === 429 || error.includes("busy")) throw new Error(lang === "ru" ? "SimulationCraft занят. Повторите через минуту." : "SimulationCraft is busy. Try again in a minute.");
-      if (error.includes("healer") || error.includes("unsupported_combat_model")) throw new Error(lang === "ru" ? "Этой специализации нужен отдельный расчёт лечения." : "This specialization requires a dedicated healing model.");
-      throw new Error(lang === "ru" ? "Не удалось получить результат SimulationCraft. Повторите расчёт." : "Could not get a SimulationCraft result. Run the simulation again.");
+      if (response.status === 429 || error.includes("busy")) throw new Error(buildOptimizerCopy[lang].simulationcraftIsBusyTry);
+      if (error.includes("healer") || error.includes("unsupported_combat_model")) throw new Error(buildOptimizerCopy[lang].thisSpecializationRequiresA);
+      throw new Error(buildOptimizerCopy[lang].couldNotGetA);
     }
     const wait = Math.min(2200, Math.max(350, Number(response.headers.get("retry-after") ?? 1) * 1000));
     await new Promise((resolve) => window.setTimeout(resolve, wait));
   }
-  throw new Error(lang === "ru" ? "SimulationCraft не ответил." : "SimulationCraft did not respond.");
+  throw new Error(buildOptimizerCopy[lang].simulationcraftDidNotRespond);
 }
 
 function validStudio(value: unknown): StoredStudio {
@@ -186,7 +187,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
       params.delete("talentBuildName");
       try { window.sessionStorage.removeItem(TALENT_HANDOFF_STORAGE_KEY); } catch { /* no-op */ }
       window.history.replaceState({}, "", `${window.location.pathname}${params.size ? `?${params}` : ""}${window.location.hash}`);
-      setNotice(ru ? "Билд из калькулятора подключён. Теперь выбери тип боя." : "Calculator build connected. Now choose an encounter.");
+      setNotice(buildOptimizerCopy[lang].calculatorBuildConnectedNow);
     }
   }, [hydrated, ru, slug, specialization]);
   useEffect(() => {
@@ -208,7 +209,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
   const openNewBuild = () => { setBuildName(ru ? `Мой билд: ${specialization}` : `My ${specialization} build`); setTalentLoadout(""); setBuildEditor("new"); setError(""); };
   const openBuildEdit = () => {
     if (!selectedBuild) return;
-    setBuildName(selectedBuild.source === "reference" ? `${selectedBuild.name} · ${ru ? "копия" : "copy"}` : selectedBuild.name);
+    setBuildName(selectedBuild.source === "reference" ? `${selectedBuild.name} · ${buildOptimizerCopy[lang].copy}` : selectedBuild.name);
     setTalentLoadout(selectedBuild.talentLoadout);
     setBuildEditor(selectedBuild.source === "reference" ? "new" : "edit");
     setError("");
@@ -216,8 +217,8 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
   const saveBuild = () => {
     const name = buildName.trim();
     const loadout = talentLoadout.trim();
-    if (name.length < 2) return setError(ru ? "Дайте билду понятное имя." : "Give the build a clear name.");
-    if (!validLoadout(loadout)) return setError(ru ? "Вставьте полную строку талантов из WoW без пробелов." : "Paste a complete WoW talent import string without spaces.");
+    if (name.length < 2) return setError(buildOptimizerCopy[lang].giveTheBuildA);
+    if (!validLoadout(loadout)) return setError(buildOptimizerCopy[lang].pasteACompleteWow);
     const timestamp = now();
     if (buildEditor === "edit" && selectedBuild?.source === "custom") {
       setBuilds((current) => current.map((build) => build.id === selectedBuild.id ? { ...build, name, talentLoadout: loadout, updatedAt: timestamp } : build));
@@ -228,7 +229,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
       setSelectedBuildId(build.id);
     }
     setBuildEditor(null);
-    setNotice(ru ? "Билд сохранён в этом браузере." : "Build saved in this browser.");
+    setNotice(buildOptimizerCopy[lang].buildSavedInThis);
   };
   const deleteBuild = () => {
     if (!selectedBuild || selectedBuild.source === "reference") return;
@@ -236,7 +237,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
     setCombos((current) => current.filter((combo) => combo.buildId !== selectedBuild.id));
     setSelectedBuildId(referenceBuildId);
     setBuildEditor(null);
-    setNotice(ru ? "Билд и его комбинации удалены." : "Build and its combos were deleted.");
+    setNotice(buildOptimizerCopy[lang].buildAndItsCombos);
   };
 
   const optimize = async () => {
@@ -300,10 +301,10 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
       };
       setCombos((current) => existing ? current.map((item) => item.id === existing.id ? combo : item) : [combo, ...current]);
       setReadyComboId(combo.id);
-      setNotice(ru ? "Победитель повторно проверен SimulationCraft, сохранён и готов к тренировке." : "The winner was verified by a fresh SimulationCraft run, saved, and is ready to train.");
+      setNotice(buildOptimizerCopy[lang].theWinnerWasVerified);
       onOptimized(winner.result, combo);
     } catch (reason) {
-      setError(reason instanceof Error && !(reason instanceof TypeError) ? reason.message : (ru ? "Не удалось закончить сравнение. Проверьте соединение и повторите расчёт." : "Could not finish the comparison. Check your connection and run it again."));
+      setError(reason instanceof Error && !(reason instanceof TypeError) ? reason.message : buildOptimizerCopy[lang].couldNotFinishThe);
     } finally {
       setOptimizing(false);
     }
@@ -314,16 +315,16 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
     if (!editingComboId || !comboName.trim() || !comboSequence.length) return;
     setCombos((current) => current.map((combo) => combo.id === editingComboId ? { ...combo, name: comboName.trim(), nameSource: "custom", sequence: [...comboSequence], sequenceSource: "custom-apl", updatedAt: now() } : combo));
     setEditingComboId(null);
-    setNotice(ru ? "Комбинация обновлена." : "Combo updated.");
+    setNotice(buildOptimizerCopy[lang].comboUpdated);
   };
   const exportCombo = async (combo: SavedRotationCombo) => {
     const tag = encodeShareTag({ v: 1, spec: slug, name: comboLabel(combo), scenario: combo.scenario, targetCount: combo.targetCount, rules: combo.rules, aplRules: combo.aplRules, sequence: combo.sequence });
     setShareTag(tag);
     try {
       await navigator.clipboard.writeText(tag);
-      setNotice(ru ? "Тег ротации скопирован. Отправьте его другу." : "Rotation tag copied. Send it to a friend.");
+      setNotice(buildOptimizerCopy[lang].rotationTagCopiedSend);
     } catch {
-      setNotice(ru ? "Тег готов — скопируйте его из поля ниже." : "The tag is ready — copy it from the field below.");
+      setNotice(buildOptimizerCopy[lang].theTagIsReady);
     }
   };
   const importCombo = () => {
@@ -339,7 +340,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
         && payload.aplRules.length === payload.rules.length
         && payload.aplRules.every((rule, index) => rule.abilityId === payload.rules[index])));
     if (!valid || !selectedBuild) {
-      setError(ru ? "Тег повреждён или создан для другой специализации." : "The tag is invalid or belongs to another specialization.");
+      setError(buildOptimizerCopy[lang].theTagIsInvalid);
       return;
     }
     const timestamp = now();
@@ -352,7 +353,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
     setReadyComboId(combo.id);
     setShareTag("");
     setError("");
-    setNotice(ru ? "Ротация импортирована. Запустите расчёт — DPS будет пересчитан на вашем персонаже." : "Rotation imported. Run a simulation to recalculate DPS for your character.");
+    setNotice(buildOptimizerCopy[lang].rotationImportedRunA);
   };
   const saveCurrentPriority = () => {
     if (!selectedBuild) return;
@@ -378,7 +379,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
     };
     setCombos((current) => [combo, ...current]);
     setReadyComboId(combo.id);
-    setNotice(measured ? (ru ? "Ротация и рассчитанный DPS сохранены." : "Rotation and simulated DPS saved.") : (ru ? "Панель сохранена. Запустите SimulationCraft, чтобы закрепить DPS." : "Panel saved. Run SimulationCraft to attach DPS."));
+    setNotice(measured ? buildOptimizerCopy[lang].rotationAndSimulatedDps : buildOptimizerCopy[lang].panelSavedRunSimulationcraft);
   };
   const moveComboStep = (index: number, direction: -1 | 1) => setComboSequence((current) => {
     const target = index + direction;
@@ -408,87 +409,87 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
 
       <div className={shell.forge} data-atlas-ui>
         <fieldset className={shell.group}>
-          <legend>{ru ? "Билд" : "Build"}</legend>
-          <label className={shell.field}><span>{ru ? "Набор талантов" : "Talent loadout"}</span><select value={selectedBuildId} disabled={optimizing || buildEditor !== null} onChange={(event) => { setSelectedBuildId(event.target.value); setScores([]); setReadyComboId(null); setError(""); }}>{builds.map((build) => <option key={build.id} value={build.id}>{build.name}</option>)}</select></label>
+          <legend>{buildOptimizerCopy[lang].build}</legend>
+          <label className={shell.field}><span>{buildOptimizerCopy[lang].talentLoadout}</span><select value={selectedBuildId} disabled={optimizing || buildEditor !== null} onChange={(event) => { setSelectedBuildId(event.target.value); setScores([]); setReadyComboId(null); setError(""); }}>{builds.map((build) => <option key={build.id} value={build.id}>{build.name}</option>)}</select></label>
           {!buildEditor && selectedBuild ? <>
-            <p className={shell.status}><Check aria-hidden="true" />{selectedBuild.source === "reference" ? (characterSlug && dataMode === "battle-net" ? (ru ? "Шмот и активные таланты подключены из Battle.net" : "Gear and active talents connected from Battle.net") : (ru ? "Базовый профиль специализации" : "Specialization baseline")) : (ru ? "Ваши таланты подключены" : "Your talents are connected")}</p>
+            <p className={shell.status}><Check aria-hidden="true" />{selectedBuild.source === "reference" ? (characterSlug && dataMode === "battle-net" ? buildOptimizerCopy[lang].gearAndActiveTalents : buildOptimizerCopy[lang].specializationBaseline) : buildOptimizerCopy[lang].yourTalentsAreConnected}</p>
             <div className={shell.editorButtons}>
-              {embedded ? <AtlasLinkButton size="sm" href="#live-talents-heading" icon={<Network aria-hidden="true" />}>{ru ? "Изменить таланты выше" : "Change talents above"}</AtlasLinkButton> : <AtlasLinkButton size="sm" href={talentCalculatorHref} prefetch={false} icon={<Network aria-hidden="true" />}>{ru ? "Выбрать таланты" : "Choose talents"}</AtlasLinkButton>}
-              <AtlasButton size="sm" icon={selectedBuild.source === "reference" ? <ClipboardPaste aria-hidden="true" /> : <Edit3 aria-hidden="true" />} onClick={selectedBuild.source === "reference" ? openNewBuild : openBuildEdit}>{ru ? "Вставить строку" : "Paste string"}</AtlasButton>
+              {embedded ? <AtlasLinkButton size="sm" href="#live-talents-heading" icon={<Network aria-hidden="true" />}>{buildOptimizerCopy[lang].changeTalentsAbove}</AtlasLinkButton> : <AtlasLinkButton size="sm" href={talentCalculatorHref} prefetch={false} icon={<Network aria-hidden="true" />}>{buildOptimizerCopy[lang].chooseTalents}</AtlasLinkButton>}
+              <AtlasButton size="sm" icon={selectedBuild.source === "reference" ? <ClipboardPaste aria-hidden="true" /> : <Edit3 aria-hidden="true" />} onClick={selectedBuild.source === "reference" ? openNewBuild : openBuildEdit}>{buildOptimizerCopy[lang].pasteString}</AtlasButton>
             </div>
           </> : null}
           {buildEditor ? <>
-            <label className={shell.field}><span>{ru ? "Название билда" : "Build name"}</span><input value={buildName} maxLength={48} autoFocus onChange={(event) => setBuildName(event.target.value)} /></label>
-            <label className={shell.field}><span>{ru ? "Строка талантов из WoW" : "WoW talent import string"}</span><textarea value={talentLoadout} spellCheck={false} rows={4} onChange={(event) => setTalentLoadout(event.target.value.replace(/\s/g, ""))} placeholder={slug === "fury-warrior" ? `${FURY_REFERENCE_LOADOUT.slice(0, 28)}…` : (ru ? "Вставьте строку импорта…" : "Paste an import string…")} /></label>
-            <p className={shell.help}>{ru ? "Где взять: таланты в WoW → меню набора → Поделиться → Копировать строку импорта." : "In WoW: Talents → loadout menu → Share → Copy import string."}</p>
+            <label className={shell.field}><span>{buildOptimizerCopy[lang].buildName}</span><input value={buildName} maxLength={48} autoFocus onChange={(event) => setBuildName(event.target.value)} /></label>
+            <label className={shell.field}><span>{buildOptimizerCopy[lang].wowTalentImportString}</span><textarea value={talentLoadout} spellCheck={false} rows={4} onChange={(event) => setTalentLoadout(event.target.value.replace(/\s/g, ""))} placeholder={slug === "fury-warrior" ? `${FURY_REFERENCE_LOADOUT.slice(0, 28)}…` : buildOptimizerCopy[lang].pasteAnImportString} /></label>
+            <p className={shell.help}>{buildOptimizerCopy[lang].inWowTalentsLoadout}</p>
             <div className={shell.editorButtons}>
-              <AtlasButton size="sm" variant="primary" icon={<Save aria-hidden="true" />} onClick={saveBuild}>{ru ? "Сохранить билд" : "Save build"}</AtlasButton>
-              <AtlasButton size="sm" icon={<X aria-hidden="true" />} onClick={() => { setBuildEditor(null); setError(""); }}>{ru ? "Отмена" : "Cancel"}</AtlasButton>
-              {buildEditor === "edit" ? <AtlasButton size="sm" variant="ghost" icon={<Trash2 aria-hidden="true" />} onClick={deleteBuild}>{ru ? "Удалить" : "Delete"}</AtlasButton> : null}
+              <AtlasButton size="sm" variant="primary" icon={<Save aria-hidden="true" />} onClick={saveBuild}>{buildOptimizerCopy[lang].saveBuild}</AtlasButton>
+              <AtlasButton size="sm" icon={<X aria-hidden="true" />} onClick={() => { setBuildEditor(null); setError(""); }}>{buildOptimizerCopy[lang].cancel}</AtlasButton>
+              {buildEditor === "edit" ? <AtlasButton size="sm" variant="ghost" icon={<Trash2 aria-hidden="true" />} onClick={deleteBuild}>{buildOptimizerCopy[lang].delete}</AtlasButton> : null}
             </div>
           </> : null}
         </fieldset>
 
         <fieldset className={shell.group}>
-          <legend>{ru ? "Тип боя" : "Encounter"}</legend>
-          <div className={shell.choices} role="radiogroup" aria-label={ru ? "Тип боя" : "Encounter type"}>
+          <legend>{buildOptimizerCopy[lang].encounter}</legend>
+          <div className={shell.choices} role="radiogroup" aria-label={buildOptimizerCopy[lang].encounterType}>
             {(["single-target", "aoe", "execute"] as const).map((item) => (
               <button key={item} type="button" role="radio" aria-checked={scenario === item} onClick={() => { setScores([]); setReadyComboId(null); onScenarioChange(item); }} disabled={optimizing}>
-                <strong>{item === "single-target" ? (ru ? "Одна цель" : "Single target") : item === "aoe" ? (ru ? "Несколько целей" : "AoE") : (ru ? "Добивание" : "Execute")}</strong>
-                <small>{item === "single-target" ? (ru ? "босс или манекен" : "boss or dummy") : item === "aoe" ? (ru ? "пачка противников" : "enemy pack") : (ru ? "цель ниже 20%" : "target below 20%")}</small>
+                <strong>{item === "single-target" ? buildOptimizerCopy[lang].singleTarget : item === "aoe" ? buildOptimizerCopy[lang].aoe : buildOptimizerCopy[lang].execute}</strong>
+                <small>{item === "single-target" ? buildOptimizerCopy[lang].bossOrDummy : item === "aoe" ? buildOptimizerCopy[lang].enemyPack : buildOptimizerCopy[lang].targetBelow20}</small>
               </button>
             ))}
           </div>
           <div className={shell.pair}>
-            <label className={shell.field}><span>{ru ? "Длительность" : "Duration"}</span><select value={fightLength} disabled={optimizing} onChange={(event) => { setScores([]); setReadyComboId(null); onFightLengthChange(Number(event.target.value)); }}><option value="60">1:00</option><option value="120">2:00</option><option value="180">3:00</option><option value="300">5:00</option></select></label>
-            <label className={shell.field}><span>{ru ? "Целей" : "Targets"}</span><select value={targetCount} disabled={optimizing || scenario !== "aoe"} onChange={(event) => { setScores([]); setReadyComboId(null); onTargetsChange(Number(event.target.value)); }}>{(scenario === "aoe" ? [2, 3, 5, 8] : [1]).map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+            <label className={shell.field}><span>{buildOptimizerCopy[lang].duration}</span><select value={fightLength} disabled={optimizing} onChange={(event) => { setScores([]); setReadyComboId(null); onFightLengthChange(Number(event.target.value)); }}><option value="60">1:00</option><option value="120">2:00</option><option value="180">3:00</option><option value="300">5:00</option></select></label>
+            <label className={shell.field}><span>{buildOptimizerCopy[lang].targets}</span><select value={targetCount} disabled={optimizing || scenario !== "aoe"} onChange={(event) => { setScores([]); setReadyComboId(null); onTargetsChange(Number(event.target.value)); }}>{(scenario === "aoe" ? [2, 3, 5, 8] : [1]).map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
           </div>
         </fieldset>
 
         <div className={shell.run} data-busy={optimizing || undefined}>
-          <AtlasButton variant="primary" icon={<Zap aria-hidden="true" />} onClick={() => void optimize()} disabled={optimizing || buildEditor !== null}>{optimizing ? (ru ? `Вариант ${optimizerStep} из ${optimizerTotal}…` : `Variant ${optimizerStep} of ${optimizerTotal}…`) : (ru ? "Подобрать прокаст" : "Find best combo")}</AtlasButton>
-          {optimizing ? <div className={shell.progress} data-value role="progressbar" aria-label={ru ? "Подбор прокаста" : "Finding the best combo"} aria-valuemin={0} aria-valuemax={optimizerTotal} aria-valuenow={optimizerStep} style={{ "--progress": `${optimizerTotal ? (optimizerStep / optimizerTotal) * 100 : 0}%` } as CSSProperties}><span /></div> : null}
+          <AtlasButton variant="primary" icon={<Zap aria-hidden="true" />} onClick={() => void optimize()} disabled={optimizing || buildEditor !== null}>{optimizing ? (ru ? `Вариант ${optimizerStep} из ${optimizerTotal}…` : `Variant ${optimizerStep} of ${optimizerTotal}…`) : buildOptimizerCopy[lang].findBestCombo}</AtlasButton>
+          {optimizing ? <div className={shell.progress} data-value role="progressbar" aria-label={buildOptimizerCopy[lang].findingTheBestCombo} aria-valuemin={0} aria-valuemax={optimizerTotal} aria-valuenow={optimizerStep} style={{ "--progress": `${optimizerTotal ? (optimizerStep / optimizerTotal) * 100 : 0}%` } as CSSProperties}><span /></div> : null}
           <p className={shell.runNote}>{scenarioName} · {Math.floor(fightLength / 60)}:{String(fightLength % 60).padStart(2, "0")} · {selectedBuild?.name}</p>
         </div>
       </div>
 
-      {(notice || error || workspace.message || workspace.syncState === "saving") ? <div className={shell.stack} data-atlas-ui role={error ? "alert" : "status"}><AtlasNotice tone={error ? "caution" : "info"}>{error || notice || workspace.message || (ru ? "Сохраняем в аккаунте…" : "Saving to account…")}</AtlasNotice></div> : null}
+      {(notice || error || workspace.message || workspace.syncState === "saving") ? <div className={shell.stack} data-atlas-ui role={error ? "alert" : "status"}><AtlasNotice tone={error ? "caution" : "info"}>{error || notice || workspace.message || buildOptimizerCopy[lang].savingToAccount}</AtlasNotice></div> : null}
 
       {latestCombo && !optimizing && <section className={styles.readyCombo} aria-labelledby="ready-combo-title">
-        <header><CircleCheckBig /><div><span>{ru ? "ПРОКАСТ ГОТОВ" : "COMBO READY"}</span><h3 id="ready-combo-title">{ru ? "Жми способности слева направо" : "Press abilities from left to right"}</h3><p>{ru ? "Тренажёр подсветит каждый шаг. Ошибка не сдвинет комбинацию дальше." : "The trainer highlights every step. A mistake will not advance the combo."}</p></div><strong>{compactDps(latestCombo.dps)} <small>DPS</small></strong></header>
+        <header><CircleCheckBig /><div><span>{buildOptimizerCopy[lang].comboReady}</span><h3 id="ready-combo-title">{buildOptimizerCopy[lang].pressAbilitiesFromLeft}</h3><p>{buildOptimizerCopy[lang].theTrainerHighlightsEvery}</p></div><strong>{compactDps(latestCombo.dps)} <small>DPS</small></strong></header>
         <div className={styles.readyComboTrack}>
-          <ol aria-label={ru ? "Готовая последовательность" : "Ready sequence"}>{latestCombo.sequence.map((abilityId, index) => {
+          <ol aria-label={buildOptimizerCopy[lang].readySequence}>{latestCombo.sequence.map((abilityId, index) => {
             const ability = byId.get(abilityId);
             if (!ability) return null;
             const visual = rotationAbilityVisual(ability.id, slug);
             const style = { ...rotationVisualStyle(visual), "--rt-ready-index": index } as CSSProperties;
-            return <li key={`${abilityId}-${index}`} className={styles.readyComboStep} data-material={visual.material} style={style}><b><small>{ru ? "ШАГ" : "STEP"}</small>{index + 1}</b><span className={styles.readyComboArt}><RotationAbilitySigil visual={visual} className={styles.readyComboSigil} /><AbilityIcon ability={ability} /></span><span className={styles.readyComboName} title={ability.name}>{ability.name}</span>{index < latestCombo.sequence.length - 1 && <i aria-hidden="true">›</i>}</li>;
+            return <li key={`${abilityId}-${index}`} className={styles.readyComboStep} data-material={visual.material} style={style}><b><small>{buildOptimizerCopy[lang].step}</small>{index + 1}</b><span className={styles.readyComboArt}><RotationAbilitySigil visual={visual} className={styles.readyComboSigil} /><AbilityIcon ability={ability} /></span><span className={styles.readyComboName} title={ability.name}>{ability.name}</span>{index < latestCombo.sequence.length - 1 && <i aria-hidden="true">›</i>}</li>;
           })}</ol>
         </div>
-        <footer><span><b>{latestCombo.sequence.length}</b> {ru ? "действий в комбинации" : "actions in this combo"}</span><button type="button" className={styles.readyTrain} onClick={() => onUseCombo(trainingCombo(latestCombo))}><Play /> {ru ? "Начать тренировку на 30 секунд" : "Start a 30-second drill"}</button><button type="button" onClick={() => editCombo(latestCombo)}><Edit3 /> {ru ? "Изменить порядок" : "Edit order"}</button></footer>
+        <footer><span><b>{latestCombo.sequence.length}</b> {buildOptimizerCopy[lang].actionsInThisCombo}</span><button type="button" className={styles.readyTrain} onClick={() => onUseCombo(trainingCombo(latestCombo))}><Play /> {buildOptimizerCopy[lang].startA30Second}</button><button type="button" onClick={() => editCombo(latestCombo)}><Edit3 /> {buildOptimizerCopy[lang].editOrder}</button></footer>
       </section>}
 
       {scores.length > 0 && !optimizing && <details className={styles.optimizerDetails} open>
-        <summary>{ru ? "Почему выбран этот вариант?" : "Why was this option selected?"}<ChevronDown /></summary>
+        <summary>{buildOptimizerCopy[lang].whyWasThisOption}<ChevronDown /></summary>
         <p>{ru ? `Проверено ${scores.length} из ${searchSpace?.considered ?? scores.length} валидных соседей APL для режима «${scenarioName}». Поиск ограничен ${searchSpace?.limit ?? 8} вариантами: исходный вариант, соседние перестановки, ближайшие пороги и состояния. Это локальный поиск, а не доказательство глобального максимума.` : `Tested ${scores.length} of ${searchSpace?.considered ?? scores.length} valid APL neighbors for ${scenarioName}. Search is capped at ${searchSpace?.limit ?? 8}: baseline, adjacent swaps, nearby thresholds, and states. This is a local search, not proof of a global maximum.`}</p>
-        <ol className={styles.optimizerScores}>{scores.map((score, index) => <li key={JSON.stringify(score.aplRules)} className={index === 0 ? styles.optimizerWinner : ""}><b>{index + 1}</b><span><strong>{scoreTitle(score)}</strong><small>{scoreReason(score)} · {score.rules.slice(0, 3).map((rule) => byId.get(rule)?.name ?? rule).join(" → ")}</small></span><em>{compactDps(score.dps)}</em>{index === 0 && <i><Check /> {score.verified ? (ru ? `проверен · Δ ${Math.round(score.verificationDelta ?? 0)} · ±${Math.ceil(score.result.dpsError ?? 0)}` : `verified · Δ ${Math.round(score.verificationDelta ?? 0)} · ±${Math.ceil(score.result.dpsError ?? 0)}`) : (ru ? "выбран" : "selected")}</i>}</li>)}</ol>
+        <ol className={styles.optimizerScores}>{scores.map((score, index) => <li key={JSON.stringify(score.aplRules)} className={index === 0 ? styles.optimizerWinner : ""}><b>{index + 1}</b><span><strong>{scoreTitle(score)}</strong><small>{scoreReason(score)} · {score.rules.slice(0, 3).map((rule) => byId.get(rule)?.name ?? rule).join(" → ")}</small></span><em>{compactDps(score.dps)}</em>{index === 0 && <i><Check /> {score.verified ? (ru ? `проверен · Δ ${Math.round(score.verificationDelta ?? 0)} · ±${Math.ceil(score.result.dpsError ?? 0)}` : `verified · Δ ${Math.round(score.verificationDelta ?? 0)} · ±${Math.ceil(score.result.dpsError ?? 0)}`) : buildOptimizerCopy[lang].selected}</i>}</li>)}</ol>
       </details>}
     </section>
 
       <details className={styles.comboLibrary} open={Boolean(editingComboId) || buildCombos.length > 0}>
-        <summary><LibraryBig /><span>{ru ? "Арсенал прокастов" : "Combo arsenal"}<small>{ru ? "Готовые последовательности для выбранного билда" : "Combat-ready sequences for the selected build"}</small></span><b><strong>{buildCombos.length}</strong><small>{ru ? "сохранено" : "saved"}</small></b><ChevronDown /></summary>
+        <summary><LibraryBig /><span>{buildOptimizerCopy[lang].comboArsenal}<small>{buildOptimizerCopy[lang].combatReadySequencesFor}</small></span><b><strong>{buildCombos.length}</strong><small>{buildOptimizerCopy[lang].saved}</small></b><ChevronDown /></summary>
         <div className={styles.comboSection}>
-          <div className={styles.rotationSaveBar}><span><b>{ru ? "Текущая панель" : "Current panel"}</b><small>{rules.map((rule) => byId.get(rule)?.name ?? rule).slice(0, 4).join(" → ")}{rules.length > 4 ? "…" : ""}</small></span><button type="button" onClick={saveCurrentPriority}><Save /> {ru ? "Сохранить ротацию" : "Save rotation"}</button></div>
-          <div className={styles.rotationShare}><label><span>{ru ? "Тег ротации" : "Rotation tag"}</span><input value={shareTag} onChange={(event) => setShareTag(event.target.value)} placeholder={ru ? "Вставьте тег GLD1.…" : "Paste a GLD1.… tag"} /></label><button type="button" disabled={!shareTag.trim()} onClick={importCombo}><ClipboardPaste /> {ru ? "Импортировать" : "Import"}</button><small>{ru ? "Тег содержит порядок способностей, но не ваши предметы и не данные Battle.net." : "The tag contains ability order, not your items or Battle.net data."}</small></div>
-          {!buildCombos.length ? <div className={styles.comboEmpty}><Anvil /><span><strong>{ru ? "Первое место в арсенале свободно" : "The first arsenal slot is empty"}</strong><small>{characterSlug && dataMode === "battle-net" ? (ru ? "Рассчитай прокаст — он сохранится в аккаунте и появится на другом устройстве." : "Calculate a combo and it will sync to your account and other devices.") : (ru ? "Рассчитай прокаст — он появится здесь автоматически и останется в браузере." : "Calculate a combo and it will be stored here automatically in this browser.")}</small></span></div> : <div className={styles.comboList}>{buildCombos.map((combo, comboIndex) => editingComboId === combo.id ? <article key={combo.id} className={styles.comboEditor}>
-            <label><span>{ru ? "Название комбинации" : "Combo name"}</span><input value={comboName} maxLength={64} onChange={(event) => setComboName(event.target.value)} /></label>
-            <ol>{comboSequence.map((abilityId, index) => { const ability = byId.get(abilityId); return ability ? <li key={`${abilityId}-${index}`}><b>{index + 1}</b><AbilityIcon ability={ability} size="sm" /><span>{ability.name}</span><button type="button" aria-label={`${ru ? "Переместить вверх" : "Move up"}: ${ability.name}`} disabled={index === 0} onClick={() => moveComboStep(index, -1)}><ArrowUp /></button><button type="button" aria-label={`${ru ? "Переместить вниз" : "Move down"}: ${ability.name}`} disabled={index === comboSequence.length - 1} onClick={() => moveComboStep(index, 1)}><ArrowDown /></button><button type="button" aria-label={`${ru ? "Удалить" : "Remove"}: ${ability.name}`} disabled={comboSequence.length <= 1} onClick={() => setComboSequence((current) => current.filter((_, step) => step !== index))}><X /></button></li> : null; })}</ol>
-            <div className={styles.comboAdd}><select aria-label={ru ? "Добавляемая способность" : "Ability to add"} value={addAbility} onChange={(event) => setAddAbility(event.target.value)}>{abilities.filter((ability) => ability.id !== "bloodlust").map((ability) => <option key={ability.id} value={ability.id}>{ability.name}</option>)}</select><button type="button" onClick={() => addAbility && setComboSequence((current) => [...current, addAbility])}><Plus /> {ru ? "Добавить шаг" : "Add step"}</button></div>
-            <footer><button type="button" className={styles.primaryMini} onClick={saveCombo}><Save /> {ru ? "Сохранить изменения" : "Save changes"}</button><button type="button" onClick={() => setEditingComboId(null)}><X /> {ru ? "Отмена" : "Cancel"}</button></footer>
+          <div className={styles.rotationSaveBar}><span><b>{buildOptimizerCopy[lang].currentPanel}</b><small>{rules.map((rule) => byId.get(rule)?.name ?? rule).slice(0, 4).join(" → ")}{rules.length > 4 ? "…" : ""}</small></span><button type="button" onClick={saveCurrentPriority}><Save /> {buildOptimizerCopy[lang].saveRotation}</button></div>
+          <div className={styles.rotationShare}><label><span>{buildOptimizerCopy[lang].rotationTag}</span><input value={shareTag} onChange={(event) => setShareTag(event.target.value)} placeholder={buildOptimizerCopy[lang].pasteAGld1Tag} /></label><button type="button" disabled={!shareTag.trim()} onClick={importCombo}><ClipboardPaste /> {buildOptimizerCopy[lang].import}</button><small>{buildOptimizerCopy[lang].theTagContainsAbility}</small></div>
+          {!buildCombos.length ? <div className={styles.comboEmpty}><Anvil /><span><strong>{buildOptimizerCopy[lang].theFirstArsenalSlot}</strong><small>{characterSlug && dataMode === "battle-net" ? buildOptimizerCopy[lang].calculateAComboAnd : buildOptimizerCopy[lang].calculateAComboAnd2}</small></span></div> : <div className={styles.comboList}>{buildCombos.map((combo, comboIndex) => editingComboId === combo.id ? <article key={combo.id} className={styles.comboEditor}>
+            <label><span>{buildOptimizerCopy[lang].comboName}</span><input value={comboName} maxLength={64} onChange={(event) => setComboName(event.target.value)} /></label>
+            <ol>{comboSequence.map((abilityId, index) => { const ability = byId.get(abilityId); return ability ? <li key={`${abilityId}-${index}`}><b>{index + 1}</b><AbilityIcon ability={ability} size="sm" /><span>{ability.name}</span><button type="button" aria-label={`${buildOptimizerCopy[lang].moveUp}: ${ability.name}`} disabled={index === 0} onClick={() => moveComboStep(index, -1)}><ArrowUp /></button><button type="button" aria-label={`${buildOptimizerCopy[lang].moveDown}: ${ability.name}`} disabled={index === comboSequence.length - 1} onClick={() => moveComboStep(index, 1)}><ArrowDown /></button><button type="button" aria-label={`${buildOptimizerCopy[lang].remove}: ${ability.name}`} disabled={comboSequence.length <= 1} onClick={() => setComboSequence((current) => current.filter((_, step) => step !== index))}><X /></button></li> : null; })}</ol>
+            <div className={styles.comboAdd}><select aria-label={buildOptimizerCopy[lang].abilityToAdd} value={addAbility} onChange={(event) => setAddAbility(event.target.value)}>{abilities.filter((ability) => ability.id !== "bloodlust").map((ability) => <option key={ability.id} value={ability.id}>{ability.name}</option>)}</select><button type="button" onClick={() => addAbility && setComboSequence((current) => [...current, addAbility])}><Plus /> {buildOptimizerCopy[lang].addStep}</button></div>
+            <footer><button type="button" className={styles.primaryMini} onClick={saveCombo}><Save /> {buildOptimizerCopy[lang].saveChanges}</button><button type="button" onClick={() => setEditingComboId(null)}><X /> {buildOptimizerCopy[lang].cancel}</button></footer>
           </article> : <article key={combo.id} className={styles.comboCard} style={{ "--combo-index": comboIndex } as CSSProperties}>
-            <div className={styles.comboMeta}><span>{combo.scenario === "single-target" ? <Crosshair /> : combo.scenario === "aoe" ? <UsersRound /> : <Skull />}<small>{combo.scenario === "single-target" ? "ST" : combo.scenario === "aoe" ? (combo.targetCount === 2 ? "CL" : `A${combo.targetCount ?? 3}`) : "EX"}</small></span><div><strong>{comboLabel(combo)}</strong><small><em>{combo.dps > 0 ? `${compactDps(combo.dps)} DPS` : (ru ? "DPS не рассчитан" : "DPS not simulated")}</em>{combo.verified && <><i />✓ {ru ? "проверен" : "verified"}</>}<i />{combo.sequence.length} {ru ? "действий" : "actions"}<i />{new Date(combo.updatedAt).toLocaleDateString(ru ? "ru-RU" : "en-US")}</small></div></div>
-            <ol aria-label={ru ? "Последовательность способностей" : "Ability sequence"}>{combo.sequence.slice(0, 10).map((abilityId, index) => { const ability = byId.get(abilityId); return ability ? <li key={`${abilityId}-${index}`} title={`${index + 1}. ${ability.name}`}><AbilityIcon ability={ability} size="sm" /></li> : null; })}{combo.sequence.length > 10 && <li className={styles.comboMore}>+{combo.sequence.length - 10}</li>}</ol>
-            <div className={styles.comboActions}><button type="button" className={styles.comboUse} onClick={() => onUseCombo(trainingCombo(combo))}><Swords /> {ru ? "В тренировку" : "Train now"}</button><button type="button" title={ru ? "Поделиться тегом" : "Share tag"} aria-label={`${ru ? "Поделиться" : "Share"}: ${comboLabel(combo)}`} onClick={() => void exportCombo(combo)}><Share2 /></button><button type="button" title={ru ? "Изменить порядок" : "Edit order"} aria-label={`${ru ? "Изменить" : "Edit"}: ${comboLabel(combo)}`} onClick={() => editCombo(combo)}><Edit3 /></button><button type="button" title={ru ? "Удалить" : "Delete"} aria-label={`${ru ? "Удалить" : "Delete"}: ${comboLabel(combo)}`} onClick={() => setCombos((current) => current.filter((item) => item.id !== combo.id))}><Trash2 /></button></div>
+            <div className={styles.comboMeta}><span>{combo.scenario === "single-target" ? <Crosshair /> : combo.scenario === "aoe" ? <UsersRound /> : <Skull />}<small>{combo.scenario === "single-target" ? "ST" : combo.scenario === "aoe" ? (combo.targetCount === 2 ? "CL" : `A${combo.targetCount ?? 3}`) : "EX"}</small></span><div><strong>{comboLabel(combo)}</strong><small><em>{combo.dps > 0 ? `${compactDps(combo.dps)} DPS` : buildOptimizerCopy[lang].dpsNotSimulated}</em>{combo.verified && <><i />✓ {buildOptimizerCopy[lang].verified}</>}<i />{combo.sequence.length} {buildOptimizerCopy[lang].actions}<i />{new Date(combo.updatedAt).toLocaleDateString(buildOptimizerCopy[lang].numberLocale)}</small></div></div>
+            <ol aria-label={buildOptimizerCopy[lang].abilitySequence}>{combo.sequence.slice(0, 10).map((abilityId, index) => { const ability = byId.get(abilityId); return ability ? <li key={`${abilityId}-${index}`} title={`${index + 1}. ${ability.name}`}><AbilityIcon ability={ability} size="sm" /></li> : null; })}{combo.sequence.length > 10 && <li className={styles.comboMore}>+{combo.sequence.length - 10}</li>}</ol>
+            <div className={styles.comboActions}><button type="button" className={styles.comboUse} onClick={() => onUseCombo(trainingCombo(combo))}><Swords /> {buildOptimizerCopy[lang].trainNow}</button><button type="button" title={buildOptimizerCopy[lang].shareTag} aria-label={`${buildOptimizerCopy[lang].share}: ${comboLabel(combo)}`} onClick={() => void exportCombo(combo)}><Share2 /></button><button type="button" title={buildOptimizerCopy[lang].editOrder} aria-label={`${buildOptimizerCopy[lang].edit}: ${comboLabel(combo)}`} onClick={() => editCombo(combo)}><Edit3 /></button><button type="button" title={buildOptimizerCopy[lang].delete} aria-label={`${buildOptimizerCopy[lang].delete}: ${comboLabel(combo)}`} onClick={() => setCombos((current) => current.filter((item) => item.id !== combo.id))}><Trash2 /></button></div>
           </article>)}</div>}
         </div>
       </details>

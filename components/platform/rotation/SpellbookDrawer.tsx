@@ -8,6 +8,7 @@ import { AbilityIcon } from "./AbilityIcon";
 import styles from "./rotationLab.module.css";
 import folio from "./rotationManuscript.module.css";
 import motion from "./rotationMotion.module.css";
+import { spellbookDrawerCopy } from "./spellbookDrawerCopy";
 
 type SpellbookCategory = "all" | NonNullable<RotationAbility["category"]>;
 
@@ -42,10 +43,10 @@ export function SpellbookDrawer({ abilities, assignedIds, lang, onClose, onAdd, 
     if (window.matchMedia("(min-width: 721px)").matches) searchRef.current?.focus({ preventScroll: true });
   }, []);
   const visible = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase(lang === "ru" ? "ru-RU" : "en-US");
+    const needle = query.trim().toLocaleLowerCase(spellbookDrawerCopy[lang].numberLocale);
     return abilities.filter((ability) => {
       const matchesCategory = category === "all" || (ability.category ?? "core") === category;
-      const matchesQuery = !needle || (ability.name + " " + ability.hint).toLocaleLowerCase(lang === "ru" ? "ru-RU" : "en-US").includes(needle);
+      const matchesQuery = !needle || (ability.name + " " + ability.hint).toLocaleLowerCase(spellbookDrawerCopy[lang].numberLocale).includes(needle);
       return matchesCategory && matchesQuery;
     });
   }, [abilities, category, lang, query]);
@@ -66,23 +67,23 @@ export function SpellbookDrawer({ abilities, assignedIds, lang, onClose, onAdd, 
       <div className={`${styles.spellbookPage} ${styles.spellbookLeftPage} ${folio.indexPage}`}>
         <div className={`${styles.spellbookIndex} ${folio.index}`}>
           <header className={`${styles.spellbookLeftHeader} ${folio.catalogHeader}`}>
-            <span><small>{catalog ? (ru ? "ТЕКУЩИЙ БИЛД · АКТИВНЫЕ УМЕНИЯ" : "CURRENT BUILD · ACTIVE ABILITIES") : (ru ? "ФОЛИАНТ УМЕНИЙ · ТЕКУЩИЙ БИЛД" : "ABILITY FOLIO · CURRENT BUILD")}</small><strong id="spellbook-title">{catalog ? (ru ? "Каталог умений" : "Ability catalogue") : (ru ? "Книга заклинаний" : "Spellbook")}</strong></span>
-            <button type="button" onClick={onClose} aria-label={catalog ? (ru ? "Закрыть каталог умений" : "Close ability catalogue") : (ru ? "Закрыть книгу умений" : "Close spellbook")}><X /></button>
+            <span><small>{catalog ? spellbookDrawerCopy[lang].currentBuildActiveAbilities : spellbookDrawerCopy[lang].abilityFolioCurrentBuild}</small><strong id="spellbook-title">{catalog ? spellbookDrawerCopy[lang].abilityCatalogue : spellbookDrawerCopy[lang].spellbook}</strong></span>
+            <button type="button" onClick={onClose} aria-label={catalog ? spellbookDrawerCopy[lang].closeAbilityCatalogue : spellbookDrawerCopy[lang].closeSpellbook}><X /></button>
           </header>
-          <label className={`${styles.spellbookSearch} ${folio.search}`}><Search aria-hidden="true" /><input ref={searchRef} value={query} onChange={(event) => { setQuery(event.target.value); setPage(0); }} placeholder={ru ? "Найти умение…" : "Find an ability…"} aria-label={ru ? "Поиск умения" : "Search abilities"} /></label>
-          <nav className={`${styles.spellbookTabs} ${folio.categories} ${catalog ? motion.categories : ""}`} aria-label={catalog ? (ru ? "Категории умений" : "Ability categories") : (ru ? "Разделы книги умений" : "Spellbook sections")}>
+          <label className={`${styles.spellbookSearch} ${folio.search}`}><Search aria-hidden="true" /><input ref={searchRef} value={query} onChange={(event) => { setQuery(event.target.value); setPage(0); }} placeholder={spellbookDrawerCopy[lang].findAnAbility} aria-label={spellbookDrawerCopy[lang].searchAbilities} /></label>
+          <nav className={`${styles.spellbookTabs} ${folio.categories} ${catalog ? motion.categories : ""}`} aria-label={catalog ? spellbookDrawerCopy[lang].abilityCategories : spellbookDrawerCopy[lang].spellbookSections}>
             {availableCategories.map((item) => <button key={item} type="button" title={categoryLabel(item, ru)} aria-pressed={category === item} onClick={() => { setCategory(item); setPage(0); }}><span>{categoryLabel(item, ru)}</span><small>{item === "all" ? abilities.length : abilities.filter((ability) => (ability.category ?? "core") === item).length}</small></button>)}
           </nav>
           <div className={`${styles.spellbookPreview} ${folio.preview}`}>
-            <small>{catalog ? (ru ? "ОБ УМЕНИИ" : "ABILITY NOTES") : (ru ? "ЛИСТ УМЕНИЯ" : "ABILITY PAGE")}</small>
-            {previewAbility ? <><div><AbilityIcon ability={previewAbility} size="lg" /><strong>{previewAbility.name}</strong></div><p key={previewAbility.id} className={catalog ? motion.noteReveal : undefined}>{previewAbility.hint || (ru ? "Выберите или перетащите это умение на панель." : "Select or drag this ability onto the action bar.")}</p></> : <p>{ru ? "В этом разделе нет умений." : "There are no abilities in this chapter."}</p>}
+            <small>{catalog ? spellbookDrawerCopy[lang].abilityNotes : spellbookDrawerCopy[lang].abilityPage}</small>
+            {previewAbility ? <><div><AbilityIcon ability={previewAbility} size="lg" /><strong>{previewAbility.name}</strong></div><p key={previewAbility.id} className={catalog ? motion.noteReveal : undefined}>{previewAbility.hint || spellbookDrawerCopy[lang].selectOrDragThis}</p></> : <p>{spellbookDrawerCopy[lang].thereAreNoAbilities}</p>}
           </div>
-          <p className={`${styles.spellbookIndexHint} ${folio.catalogHint}`}>{catalog ? (ru ? "Нажмите + у умения или перетащите его в нужную ячейку выше." : "Choose + beside an ability or drag it into a slot above.") : (ru ? "Выберите раздел и перенесите умение на панель персонажа." : "Choose a chapter, then drag an ability onto the character bar.")}</p>
+          <p className={`${styles.spellbookIndexHint} ${folio.catalogHint}`}>{catalog ? spellbookDrawerCopy[lang].chooseBesideAnAbility : spellbookDrawerCopy[lang].chooseAChapterThen}</p>
         </div>
       </div>
       <div className={`${styles.spellbookPage} ${styles.spellbookRightPage} ${folio.abilitiesPage}`}>
         <div className={`${styles.spellbookPages} ${folio.abilities}`}>
-          <div className={`${styles.spellbookRightHeading} ${folio.listHeading}`}><span><small>{ru ? "АКТИВНЫЕ УМЕНИЯ" : "ACTIVE ABILITIES"}</small><strong>{categoryLabel(category, ru)}</strong></span>{!catalog && <button type="button" className={styles.spellbookMobileClose} onClick={onClose} aria-label={ru ? "Закрыть книгу умений" : "Close spellbook"}><X /></button>}<span>{visible.length}</span></div>
+          <div className={`${styles.spellbookRightHeading} ${folio.listHeading}`}><span><small>{spellbookDrawerCopy[lang].activeAbilities}</small><strong>{categoryLabel(category, ru)}</strong></span>{!catalog && <button type="button" className={styles.spellbookMobileClose} onClick={onClose} aria-label={spellbookDrawerCopy[lang].closeSpellbook}><X /></button>}<span>{visible.length}</span></div>
           <div key={`${category}:${currentPage}`} className={`${styles.spellbookList} ${folio.spells} ${catalog ? motion.pageReveal : ""}`}>
           {pageAbilities.map((ability) => {
             const assigned = assignedIds.has(ability.id);
@@ -103,16 +104,16 @@ export function SpellbookDrawer({ abilities, assignedIds, lang, onClose, onAdd, 
               >
                 <AbilityIcon ability={ability} size="lg" />
                 <span><strong>{ability.name}</strong></span>
-                <i>{assigned ? <><Check /> {ru ? "На панели" : "On bar"}</> : <><Plus /> {ru ? "Добавить" : "Add"}</>}</i>
+                <i>{assigned ? <><Check /> {spellbookDrawerCopy[lang].onBar}</> : <><Plus /> {spellbookDrawerCopy[lang].add}</>}</i>
               </button>
             );
           })}
-          {!visible.length && <div className={styles.spellbookEmpty}><BookOpen /><strong>{ru ? "Ничего не найдено" : "Nothing found"}</strong><small>{ru ? "Сбросьте поиск или выберите другой раздел." : "Clear the search or choose another section."}</small></div>}
+          {!visible.length && <div className={styles.spellbookEmpty}><BookOpen /><strong>{spellbookDrawerCopy[lang].nothingFound}</strong><small>{spellbookDrawerCopy[lang].clearTheSearchOr}</small></div>}
           </div>
           <footer className={`${styles.spellbookPagination} ${folio.pagination}`}>
-            <button type="button" onClick={() => setPage(currentPage - 1)} disabled={currentPage === 0} aria-label={ru ? "Предыдущая страница" : "Previous page"}><ChevronLeft /></button>
-            <span>{ru ? "Страница" : "Page"} {currentPage + 1} / {pageCount}</span>
-            <button type="button" onClick={() => setPage(currentPage + 1)} disabled={currentPage >= pageCount - 1} aria-label={ru ? "Следующая страница" : "Next page"}><ChevronRight /></button>
+            <button type="button" onClick={() => setPage(currentPage - 1)} disabled={currentPage === 0} aria-label={spellbookDrawerCopy[lang].previousPage}><ChevronLeft /></button>
+            <span>{spellbookDrawerCopy[lang].page} {currentPage + 1} / {pageCount}</span>
+            <button type="button" onClick={() => setPage(currentPage + 1)} disabled={currentPage >= pageCount - 1} aria-label={spellbookDrawerCopy[lang].nextPage}><ChevronRight /></button>
           </footer>
         </div>
       </div>

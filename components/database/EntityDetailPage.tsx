@@ -13,6 +13,7 @@ import { formatQuestText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
 import styles from "./entityDetail.module.css";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
+import { entityDetailPageCopy } from "./entityDetailPageCopy";
 
 type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships: CatalogRelationship[]; quality: CatalogEntityQuality | null; versions: CatalogEntityVersion[]; comparison: CatalogEntityComparison | null; selectedFromBuildId?: number; selectedToBuildId?: number; lang: Lang; libraryDataset?: { slug: string; name: string } };
 
@@ -60,7 +61,7 @@ function Disclosure({ title, meta, open, children }: { title: ReactNode; meta?: 
 export function EntityDetailPage({ entity, entityType, relationships, quality, versions, comparison, selectedFromBuildId, selectedToBuildId, lang, libraryDataset }: Props) {
   const copy = entityDetailCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
-  const locale = lang === "ru" ? "ru-RU" : "en-US";
+  const locale = entityDetailPageCopy[lang].numberLocale;
   const builds = Array.from(new Map(versions.map((version) => [version.buildId, version])).values());
   const rawDescription = entity.type === "quest" ? formatQuestText(entity.description, lang) : entity.description;
   const unresolvedDescription = hasUnresolvedTemplate(rawDescription);

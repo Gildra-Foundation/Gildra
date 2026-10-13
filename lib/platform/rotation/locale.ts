@@ -1,6 +1,7 @@
 import type { Lang } from "@/lib/i18n";
 import { rotationT as t } from "./rotationDictionary";
 import type { RotationAbility, RotationPreset, RotationScenario, RotationSimulationResult, SavedRotationCombo } from "./types";
+import { localeCopy } from "./localeCopy";
 
 export const rotationLabelKey = (value: string) => value.toLowerCase().replace(/[^a-zа-яё0-9]/g, "");
 
@@ -20,10 +21,10 @@ export function rotationResourceLabel(value: string, lang: Lang) {
 }
 
 export function rotationScenarioLabel(scenario: RotationScenario, lang: Lang, targets?: number) {
-  if (scenario === "single-target") return lang === "ru" ? "Одна цель" : "Single target";
-  if (scenario === "execute") return lang === "ru" ? "Добивание" : "Execute";
-  if (targets === 2) return lang === "ru" ? "Две цели" : "Cleave · 2";
-  return `${lang === "ru" ? "Урон по площади" : "AoE"}${targets ? ` · ${targets}` : ""}`;
+  if (scenario === "single-target") return localeCopy[lang].singleTarget;
+  if (scenario === "execute") return localeCopy[lang].execute;
+  if (targets === 2) return localeCopy[lang].cleave2;
+  return `${localeCopy[lang].aoe}${targets ? ` · ${targets}` : ""}`;
 }
 
 /** Only system-generated names carry this marker; user-authored names stay intact. */

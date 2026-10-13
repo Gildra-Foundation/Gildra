@@ -12,6 +12,7 @@ import type { GameIntelligence, TierActivity, TierContext, TierEntry, TierRole }
 import { tierCopy, type KeyRange, type TierCopy } from "@/components/blocks/wow/tierWorkspace/tierCopy";
 import styles from "@/components/blocks/wow/tierWorkspace/tierWorkspace.module.css";
 import { lessMotion } from "@/lib/client/motionPreference";
+import { tierSectionCopy } from "./tierSectionCopy";
 
 const CLASS_KEYS: Record<string, string> = {
   "death-knight": "dk", "demon-hunter": "dh", evoker: "evoker", mage: "mage",
@@ -38,7 +39,7 @@ const isExternal = (href?: string) => Boolean(href && /^https?:\/\//.test(href))
 
 function compact(value: number | undefined, lang: Lang) {
   if (value === undefined) return "—";
-  return new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US", {
+  return new Intl.NumberFormat(tierSectionCopy[lang].numberLocale, {
     notation: Math.abs(value) >= 10_000 ? "compact" : "standard", maximumFractionDigits: 1,
   }).format(value);
 }
@@ -129,9 +130,9 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     ? (queryContext || keyType !== "all" ? copy.keys[keyType] : "")
     : (selectedContext ? copy.difficulties[difficulty] ?? difficulty : "");
   const updated = Date.parse(intelligence.updatedAt) > 0
-    ? new Intl.DateTimeFormat(lang === "ru" ? "ru-RU" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(intelligence.updatedAt))
+    ? new Intl.DateTimeFormat(tierSectionCopy[lang].dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(intelligence.updatedAt))
     : "";
-  const number = new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US");
+  const number = new Intl.NumberFormat(tierSectionCopy[lang].numberLocale);
 
   const specHref = (entry: TierEntry) => {
     const match = [`${entry.classSlug}/${entry.specSlug}`, `${entry.classSlug}/${entry.specSlug}-${entry.classSlug}`].find((path) => specPathSet.has(path));

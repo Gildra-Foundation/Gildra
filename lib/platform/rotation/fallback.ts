@@ -5,6 +5,7 @@ import { defaultTalentSpecTheme, getTalentSpecTheme } from "@/lib/talentSpecThem
 import type { RotationPreset } from "./types";
 import { priorityToAplRules } from "./apl";
 import { resolveRotationAbilitySpellId } from "./spellIds";
+import { fallbackCopy } from "./fallbackCopy";
 
 const ability = (id: string, name: string, hint: string, suppliedSpellId?: number) => {
   const spellId = resolveRotationAbilitySpellId(id, suppliedSpellId);
@@ -18,7 +19,6 @@ const ability = (id: string, name: string, hint: string, suppliedSpellId?: numbe
 };
 
 function furyRotationPreset(lang: Lang): RotationPreset {
-  const ru = lang === "ru";
   const defaultRules = ["rampage", "bloodthirst", "raging-blow", "execute", "odyns-fury", "whirlwind"];
   const defaultAplRules = priorityToAplRules(defaultRules, "maintained");
   defaultAplRules[0].conditions = [{ type: "resource", resource: "rage", operator: "gte", value: 80 }];
@@ -29,8 +29,8 @@ function furyRotationPreset(lang: Lang): RotationPreset {
     className: "Warrior",
     specialization: "Fury Warrior",
     patch: "12.1.0",
-    engineLabel: ru ? "локальный движок готов" : "local engine ready",
-    resourceLabel: ru ? "Ярость" : "Rage",
+    engineLabel: fallbackCopy[lang].localEngineReady,
+    resourceLabel: fallbackCopy[lang].rage,
     locale: lang,
     character: {
       name: "MID2 Reference",
@@ -39,20 +39,20 @@ function furyRotationPreset(lang: Lang): RotationPreset {
       iconUrl: specIcon("Fury Warrior") ?? "",
     },
     abilities: [
-      ability("rampage", "Rampage", ru ? "При Rage ≥ 80" : "Use at 80+ Rage"),
-      ability("bloodthirst", "Bloodthirst", ru ? "Поддерживать Enrage" : "Maintain Enrage"),
-      ability("raging-blow", "Raging Blow", ru ? "Использовать заряды" : "Spend charges"),
-      ability("execute", "Execute", ru ? "При здоровье цели < 20%" : "Target below 20%"),
-      ability("odyns-fury", "Odyn's Fury", ru ? "По готовности" : "Use on cooldown"),
-      ability("whirlwind", "Whirlwind", ru ? "Перед cleave-окном" : "Before cleave window"),
-      ability("recklessness", "Recklessness", ru ? "Главное burst-окно" : "Primary burst window"),
-      ability("avatar", "Avatar", ru ? "Совмещать с burst" : "Align with burst"),
-      ability("bladestorm", "Bladestorm", ru ? "Большой AoE-кулдаун" : "Major AoE cooldown"),
-      ability("bloodlust", "Bloodlust", ru ? "Групповое burst-окно" : "Group burst window"),
+      ability("rampage", "Rampage", fallbackCopy[lang].useAt80Rage),
+      ability("bloodthirst", "Bloodthirst", fallbackCopy[lang].maintainEnrage),
+      ability("raging-blow", "Raging Blow", fallbackCopy[lang].spendCharges),
+      ability("execute", "Execute", fallbackCopy[lang].targetBelow20),
+      ability("odyns-fury", "Odyn's Fury", fallbackCopy[lang].useOnCooldown),
+      ability("whirlwind", "Whirlwind", fallbackCopy[lang].beforeCleaveWindow),
+      ability("recklessness", "Recklessness", fallbackCopy[lang].primaryBurstWindow),
+      ability("avatar", "Avatar", fallbackCopy[lang].alignWithBurst),
+      ability("bladestorm", "Bladestorm", fallbackCopy[lang].majorAoeCooldown),
+      ability("bloodlust", "Bloodlust", fallbackCopy[lang].groupBurstWindow),
     ],
     defaultRules,
     defaultAplRules,
-    aplSource: { kind: "gildra-fallback", label: ru ? "Безопасный шаблон Gildra" : "Safe Gildra template" },
+    aplSource: { kind: "gildra-fallback", label: fallbackCopy[lang].safeGildraTemplate },
     aplOptions: { resources: ["rage"], buffs: ["enrage"], cooldowns: defaultRules },
   };
 }
@@ -109,7 +109,7 @@ export async function fallbackRotationPreset(slug: string, lang: Lang): Promise<
     className: theme.className,
     specialization: `${theme.specName} ${theme.className}`,
     patch,
-    engineLabel: lang === "ru" ? "встроенная модель готова" : "built-in model ready",
+    engineLabel: fallbackCopy[lang].builtInModelReady,
     resourceLabel: lang === "ru" ? theme.resourceLabel : (englishResources[theme.resourceLabel] ?? "Resource"),
     locale: lang,
     character: {
@@ -121,7 +121,7 @@ export async function fallbackRotationPreset(slug: string, lang: Lang): Promise<
     abilities,
     defaultRules,
     defaultAplRules: priorityToAplRules(defaultRules, "maintained"),
-    aplSource: { kind: "gildra-fallback", label: lang === "ru" ? "Безопасный шаблон Gildra" : "Safe Gildra template" },
+    aplSource: { kind: "gildra-fallback", label: fallbackCopy[lang].safeGildraTemplate },
     aplOptions: { resources: [], buffs: [], cooldowns: defaultRules },
   };
 }

@@ -5,6 +5,7 @@ import type { Lang } from "@/lib/i18n";
 import type { TierEntry, TierRole } from "@/lib/platform/games/intelligence";
 import { GameSparkline } from "./GameSparkline";
 import styles from "./gameHub.module.css";
+import { gameTierSignalCopy } from "./gameTierSignalCopy";
 
 type RoleSignalData = Record<TierRole, { entries: TierEntry[]; series: number[] }>;
 
@@ -25,10 +26,10 @@ export function GameTierSignal({
   const { entries, series } = roles[role];
   const roleLabels: Record<TierRole, string> = {
     dps: "DPS",
-    healer: lang === "ru" ? "ЛЕКАРИ" : "HEALERS",
-    tank: lang === "ru" ? "ТАНКИ" : "TANKS",
+    healer: gameTierSignalCopy[lang].healers,
+    tank: gameTierSignalCopy[lang].tanks,
   };
-  const formatNumber = (value: number) => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US", {
+  const formatNumber = (value: number) => new Intl.NumberFormat(gameTierSignalCopy[lang].numberLocale, {
     notation: value >= 10_000 ? "compact" : "standard",
     maximumFractionDigits: 1,
   }).format(value);
@@ -36,7 +37,7 @@ export function GameTierSignal({
   return (
     <section className={styles.signalPanel} data-reveal>
       <header className={styles.signalHeading}>
-        <div><span>{providerLabel}</span><h2>{lang === "ru" ? "Живой тир-лист Mythic+" : "Live Mythic+ tier list"}</h2></div>
+        <div><span>{providerLabel}</span><h2>{gameTierSignalCopy[lang].liveMythicTierList}</h2></div>
         <div role="radiogroup" aria-label={signalLabel}>
           {(["dps", "healer", "tank"] as const).map((value) => (
             <button type="button" role="radio" aria-checked={role === value} className={role === value ? styles.rangeActive : ""} onClick={() => setRole(value)} key={value}>
@@ -56,7 +57,7 @@ export function GameTierSignal({
           </a>)}
         </div>
         <aside className={styles.tierTelemetry}>
-          <div><small>{lang === "ru" ? "Лидер роли" : "Role leader"}</small><strong>{entries[0]?.specName ?? "—"}</strong><span>{entries[0]?.tier ? `${entries[0].tier} tier` : "—"}</span></div>
+          <div><small>{gameTierSignalCopy[lang].roleLeader}</small><strong>{entries[0]?.specName ?? "—"}</strong><span>{entries[0]?.tier ? `${entries[0].tier} tier` : "—"}</span></div>
           {series.length > 1 ? <GameSparkline values={series} accent={accent} /> : null}
         </aside>
       </div>

@@ -17,6 +17,7 @@ import spread from "./rotationBookSpread.module.css";
 import motion from "./rotationMotion.module.css";
 import shell from "./rotationLabShell.module.css";
 import { AtlasDisclosure } from "@/components/atlas";
+import { combatActionBarCopy } from "./combatActionBarCopy";
 
 const ActionBarBindingEditor = dynamic(
   () => import("./ActionBarBindingEditor").then((module) => module.ActionBarBindingEditor),
@@ -121,13 +122,13 @@ const ActionBarSlot = memo(function ActionBarSlot({
   return (
     <div className={`${styles.wowActionCell} ${folio.cell} ${bindingStyles.cell} ${manuscript ? motion.abilityCell : ""}`} data-empty={!ability || undefined} data-binding-mode={bindingMode || undefined} data-binding-selected={bindingSelected || undefined} onDragOver={(event) => { if (!bindingMode) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; } }} onDrop={(event) => { if (!bindingMode) onDrop(event, position); }}>
       {ability ? <>
-        <button ref={slotRef} type="button" draggable={!bindingMode && actionBarReady} onDragStart={(event) => onDragStart(event, ability.id)} className={`${styles.wowActionSlot} ${manuscript ? motion.slotInput : ""} ${recommended ? styles.wowActionRecommended : ""} ${justCast ? deferredLabStyles.wowActionCast : ""}`} data-cooldown={cooldownRemaining !== null || undefined} onClick={() => onSelect(position, ability.id)} title={`${ability.name} · ${binding || (ru ? "Без клавиши" : "Unbound")}${ability.hint ? ` — ${ability.hint}` : ""}`} aria-label={bindingMode ? bindingLabel : `${ability.name}, ${keyLabel}${cooldownExact ? `, ${cooldownExact} ${ru ? "с" : "s"}` : ""}`}>
+        <button ref={slotRef} type="button" draggable={!bindingMode && actionBarReady} onDragStart={(event) => onDragStart(event, ability.id)} className={`${styles.wowActionSlot} ${manuscript ? motion.slotInput : ""} ${recommended ? styles.wowActionRecommended : ""} ${justCast ? deferredLabStyles.wowActionCast : ""}`} data-cooldown={cooldownRemaining !== null || undefined} onClick={() => onSelect(position, ability.id)} title={`${ability.name} · ${binding || combatActionBarCopy[ru ? "ru" : "en"].unbound}${ability.hint ? ` — ${ability.hint}` : ""}`} aria-label={bindingMode ? bindingLabel : `${ability.name}, ${keyLabel}${cooldownExact ? `, ${cooldownExact} ${combatActionBarCopy[ru ? "ru" : "en"].unitS}` : ""}`}>
           <kbd>{keyLabel}</kbd>
           <AbilityIcon ability={ability} size="lg" />
           {cooldownAngle !== null && <i className={deferredLabStyles.wowCooldownSweep} style={{ "--cooldown-angle": `${cooldownAngle}deg` } as CSSProperties}><strong>{cooldownRemaining}</strong></i>}
         </button>
-        {spellbookOpen && <button type="button" className={deferredLabStyles.wowSlotRemove} onClick={() => onRemove(position)} aria-label={`${ru ? "Убрать с панели" : "Remove from bar"}: ${ability.name}`}><Trash2 /></button>}
-      </> : <button ref={slotRef} type="button" disabled={!actionBarReady} className={`${styles.wowEmptySlot} ${manuscript ? motion.slotInput : ""}`} data-key-label={keyLabel} onClick={() => onSelect(position)} title={binding || (ru ? "Без клавиши" : "Unbound")} aria-label={bindingMode ? bindingLabel : `${ru ? "Добавить умение в ячейку" : "Add ability to slot"} ${position + 1}`} />}
+        {spellbookOpen && <button type="button" className={deferredLabStyles.wowSlotRemove} onClick={() => onRemove(position)} aria-label={`${combatActionBarCopy[ru ? "ru" : "en"].removeFromBar}: ${ability.name}`}><Trash2 /></button>}
+      </> : <button ref={slotRef} type="button" disabled={!actionBarReady} className={`${styles.wowEmptySlot} ${manuscript ? motion.slotInput : ""}`} data-key-label={keyLabel} onClick={() => onSelect(position)} title={binding || combatActionBarCopy[ru ? "ru" : "en"].unbound} aria-label={bindingMode ? bindingLabel : `${combatActionBarCopy[ru ? "ru" : "en"].addAbilityToSlot} ${position + 1}`} />}
     </div>
   );
 });
@@ -200,7 +201,7 @@ export function CombatActionBar({
   const slotsByPosition = useMemo(() => new Map(actionBar.slots.map((slot) => [slot.position, slot])), [actionBar.slots]);
   const casts = useMemo(() => [...(result?.casts ?? [])].filter((cast) => cast.lane !== "proc").sort((left, right) => left.time - right.time), [result?.casts]);
   const cooldownsByAbility = useMemo(() => new Map((result?.cooldowns ?? []).map((cooldown) => [cooldown.abilityId, cooldown])), [result?.cooldowns]);
-  const labelAt = (position: number) => byId.get(slotsByPosition.get(position)?.abilityId ?? "")?.name ?? (ru ? "Пустая ячейка" : "Empty slot");
+  const labelAt = (position: number) => byId.get(slotsByPosition.get(position)?.abilityId ?? "")?.name ?? combatActionBarCopy[lang].emptySlot;
   const jumpToAbility = useCallback((abilityId: string) => {
     if (!result) return;
     const cursor = cursorRef.current;
@@ -252,15 +253,15 @@ export function CombatActionBar({
         return <div className={`${styles.combatDeckReadout} ${manuscript ? spread.readout : ""}`}>
         <div className={deferredLabStyles.combatResource} style={{ "--resource-fill": `${resource?.percent ?? 0}%` } as CSSProperties}>
           <Gauge />
-          <span><small>{resource?.label ?? (ru ? "РЕСУРС" : "RESOURCE")}</small><strong>{resource ? `${resource.current} / ${resource.maximum}` : "—"}</strong></span>
+          <span><small>{resource?.label ?? combatActionBarCopy[lang].resource}</small><strong>{resource ? `${resource.current} / ${resource.maximum}` : "—"}</strong></span>
           <i><b /></i>
         </div>
         <div className={deferredLabStyles.combatProcRail} aria-live="polite">
           <Sparkles />
-          <span><small>{ru ? "АКТИВНЫЕ ПРОКИ И БАФФЫ" : "ACTIVE PROCS & BUFFS"}</small>{activeProcs.length ? <strong>{activeProcs.map((proc) => proc.name).join(" · ")}</strong> : <strong>{ru ? "Сейчас активных окон нет" : "No active windows now"}</strong>}</span>
+          <span><small>{combatActionBarCopy[lang].activeProcsBuffs}</small>{activeProcs.length ? <strong>{activeProcs.map((proc) => proc.name).join(" · ")}</strong> : <strong>{combatActionBarCopy[lang].noActiveWindowsNow}</strong>}</span>
         </div>
         <div className={deferredLabStyles.combatNextCast}>
-          <small>{ru ? "СЛЕДУЮЩЕЕ ДЕЙСТВИЕ" : "NEXT ACTION"}</small>
+          <small>{combatActionBarCopy[lang].nextAction}</small>
           <strong>{nextCast ? byId.get(nextCast.abilityId)?.name ?? nextCast.abilityId : "—"}</strong>
         </div>
         </div>;
@@ -273,16 +274,16 @@ export function CombatActionBar({
       }}>
         <div className={`${styles.actionBarPanel} ${manuscript ? spread.barSheet : ""}`} data-book-surface={manuscript ? "foldout" : undefined}>
           <div className={`${styles.actionBarToolbar} ${bindingStyles.toolbar}`} data-binding-mode={bindingMode || undefined}>
-            <div><strong>{ru ? "Панель персонажа" : "Character action bar"}</strong></div>
-            <span className={styles.actionBarSaveState} data-state={actionBar.syncState}>{!actionBar.ready ? (ru ? "Загрузка раскладки…" : "Loading layout…") : actionBar.syncState === "saving" ? (ru ? "Сохраняем…" : "Saving…") : actionBar.syncState === "offline" ? (ru ? "Сохранено локально" : "Saved locally") : actionBar.syncState === "synced" ? (ru ? "Синхронизировано" : "Synced") : (ru ? "Автосохранение" : "Autosave")}</span>
-            <button ref={bindingToggleRef} type="button" className={`${styles.actionBarUtility} ${bindingStyles.toggle}`} aria-pressed={bindingMode} disabled={!actionBar.ready} onClick={() => { setBindingMode(!bindingMode); setBindingPosition(null); setBindingNotice(""); setSpellbookOpen(false); setPlaying(false); }}><Keyboard /><span>{bindingMode ? (ru ? "Готово" : "Done binding") : (ru ? "Клавиши" : "Key bindings")}</span></button>
-            <button type="button" className={styles.actionBarUtility} disabled={bindingMode || !actionBar.ready} onClick={actionBar.organize} title={ru ? "Собрать умения по порядку; бинды остаются на своих ячейках" : "Compact abilities; bindings stay with their slots"}><ListOrdered /> <span>{ru ? "Упорядочить" : "Arrange"}</span></button>
-            <button type="button" className={styles.actionBarUtility} disabled={bindingMode || !actionBar.ready} onClick={actionBar.reset} title={ru ? "Вернуть исходные умения и клавиши" : "Restore default abilities and key bindings"}><RotateCcw /> <span>{ru ? "Сбросить" : "Reset"}</span></button>
-            <button ref={spellbookToggleRef} type="button" className={styles.spellbookToggle} disabled={bindingMode || !actionBar.ready} aria-expanded={spellbookOpen} aria-controls={spellbookOpen ? spellbookId : undefined} onClick={() => spellbookOpen ? closeSpellbook() : openSpellbook()}><BookOpen /> {manuscript ? (spellbookOpen ? (ru ? "Скрыть умения" : "Hide abilities") : (ru ? "Добавить умения" : "Add abilities")) : (spellbookOpen ? (ru ? "Закрыть книгу" : "Close book") : (ru ? "Книга умений" : "Spellbook"))}</button>
+            <div><strong>{combatActionBarCopy[lang].characterActionBar}</strong></div>
+            <span className={styles.actionBarSaveState} data-state={actionBar.syncState}>{!actionBar.ready ? combatActionBarCopy[lang].loadingLayout : actionBar.syncState === "saving" ? combatActionBarCopy[lang].saving : actionBar.syncState === "offline" ? combatActionBarCopy[lang].savedLocally : actionBar.syncState === "synced" ? combatActionBarCopy[lang].synced : combatActionBarCopy[lang].autosave}</span>
+            <button ref={bindingToggleRef} type="button" className={`${styles.actionBarUtility} ${bindingStyles.toggle}`} aria-pressed={bindingMode} disabled={!actionBar.ready} onClick={() => { setBindingMode(!bindingMode); setBindingPosition(null); setBindingNotice(""); setSpellbookOpen(false); setPlaying(false); }}><Keyboard /><span>{bindingMode ? combatActionBarCopy[lang].doneBinding : combatActionBarCopy[lang].keyBindings}</span></button>
+            <button type="button" className={styles.actionBarUtility} disabled={bindingMode || !actionBar.ready} onClick={actionBar.organize} title={combatActionBarCopy[lang].compactAbilitiesBindingsStay}><ListOrdered /> <span>{combatActionBarCopy[lang].arrange}</span></button>
+            <button type="button" className={styles.actionBarUtility} disabled={bindingMode || !actionBar.ready} onClick={actionBar.reset} title={combatActionBarCopy[lang].restoreDefaultAbilitiesAnd}><RotateCcw /> <span>{combatActionBarCopy[lang].reset}</span></button>
+            <button ref={spellbookToggleRef} type="button" className={styles.spellbookToggle} disabled={bindingMode || !actionBar.ready} aria-expanded={spellbookOpen} aria-controls={spellbookOpen ? spellbookId : undefined} onClick={() => spellbookOpen ? closeSpellbook() : openSpellbook()}><BookOpen /> {manuscript ? (spellbookOpen ? combatActionBarCopy[lang].hideAbilities : combatActionBarCopy[lang].addAbilities) : (spellbookOpen ? combatActionBarCopy[lang].closeBook : combatActionBarCopy[lang].spellbook)}</button>
           </div>
-          {bindingMode && <p className={bindingStyles.modeHint} role="status">{bindingNotice} {ru ? "Выберите любую ячейку ниже, затем нажмите нужную клавишу. Бинд закрепляется за ячейкой. Esc — выйти." : "Select any slot below, then press a key. Bindings stay with their slots. Esc exits."}</p>}
+          {bindingMode && <p className={bindingStyles.modeHint} role="status">{bindingNotice} {combatActionBarCopy[lang].selectAnySlotBelow}</p>}
           {bindingMode && bindingPosition !== null && <ActionBarBindingEditor key={bindingPosition} position={bindingPosition} label={labelAt(bindingPosition)} bindings={actionBar.bindings} labelAt={labelAt} ru={ru} manuscript={manuscript} onApply={saveBinding} onClose={closeBinding} />}
-          <div className={`${styles.wowBarFrame} ${folio.barViewport}`} role="region" tabIndex={0} aria-label={ru ? "Панель умений — прокручивается вбок" : "Action bar — scrolls sideways"}>
+          <div className={`${styles.wowBarFrame} ${folio.barViewport}`} role="region" tabIndex={0} aria-label={combatActionBarCopy[lang].actionBarScrollsSideways}>
             <div className={`${styles.wowBarAssembly} ${folio.assembly}`}>
               <div className={styles.wowBarEndcap} aria-hidden="true" />
               <div className={`${styles.wowBarPlate} ${folio.plate}`}>
@@ -290,7 +291,7 @@ export function CombatActionBar({
                   const { next: nextCast, last: lastCast } = castsAt(casts, cursor);
                   return <div className={`${styles.wowActionRows} ${folio.rows}`}>
                   {Array.from({ length: ACTION_BAR_ROWS }, (_, rowIndex) => <div className={`${deferredLabStyles.actionBarLane} ${folio.lane}`} key={rowIndex}>
-                    {manuscript && <span className={folio.rowLabel} aria-hidden="true"><b>{["I", "II", "III"][rowIndex]}</b><small>{ru ? "РЯД" : "ROW"}</small></span>}
+                    {manuscript && <span className={folio.rowLabel} aria-hidden="true"><b>{["I", "II", "III"][rowIndex]}</b><small>{combatActionBarCopy[lang].row}</small></span>}
                     <div className={`${styles.wowActionBar} ${folio.actionRow}`} role="group" aria-label={ru ? `Панель ${rowIndex + 1}: 12 ячеек` : `Action bar ${rowIndex + 1}: 12 slots`}>
                       {Array.from({ length: ACTION_BAR_COLUMNS }, (_, columnIndex) => {
                         const position = rowIndex * ACTION_BAR_COLUMNS + columnIndex;
@@ -300,7 +301,7 @@ export function CombatActionBar({
                         const recommended = Boolean(ability && nextCast?.abilityId === ability.id);
                         const justCast = Boolean(ability && lastCast?.abilityId === ability.id && cursor - lastCast.time < .42);
                         const keyLabel = actionBarKeyLabel(actionBar.bindings[position] ?? "") || "—";
-                        const bindingLabel = `${ru ? "Назначить клавишу" : "Bind key"}: ${labelAt(position)} (${position + 1})`;
+                        const bindingLabel = `${combatActionBarCopy[lang].bindKey}: ${labelAt(position)} (${position + 1})`;
                         const cooldownRemaining = cooldown ? cooldown.remaining >= 10 ? String(Math.ceil(cooldown.remaining)) : cooldown.remaining.toFixed(1) : null;
                         return <ActionBarSlot key={position} position={position} ability={ability} cooldownRemaining={cooldownRemaining} cooldownExact={cooldown ? cooldown.remaining.toFixed(1) : null} cooldownAngle={cooldown ? Math.round(cooldown.percent * 3.6) : null} binding={actionBar.bindings[position] ?? ""} recommended={recommended} justCast={justCast} keyLabel={keyLabel} bindingLabel={bindingLabel} bindingMode={bindingMode} bindingSelected={bindingPosition === position} spellbookOpen={spellbookOpen} actionBarReady={actionBar.ready} manuscript={manuscript} ru={ru} slotRef={slotRefForPosition(position)} onDragStart={dragAbility} onDrop={dropAbility} onSelect={selectActionBarSlot} onRemove={removeFromActionBar} />;
                       })}
@@ -312,12 +313,12 @@ export function CombatActionBar({
               <div className={`${styles.wowBarEndcap} ${deferredLabStyles.wowBarEndcapRight}`} aria-hidden="true" />
             </div>
           </div>
-          <p className={styles.actionBarHint}>{manuscript ? (ru ? "Нажмите + в пустой ячейке и выберите умение ниже. Или перетащите его прямо из каталога." : "Choose an empty + slot, then select an ability below. Or drag an ability from the catalogue.") : spellbookOpen ? (ru ? "Перетащите умение из книги в любую ячейку. Умения на панели также можно менять местами." : "Drag an ability from the spellbook into any slot. Assigned abilities can also be rearranged.") : (ru ? "Откройте «Книгу умений», чтобы добавить, удалить или переставить способности как в игре." : "Open the Spellbook to add, remove, or rearrange abilities like in game.")}</p>
+          <p className={styles.actionBarHint}>{manuscript ? combatActionBarCopy[lang].chooseAnEmptySlot : spellbookOpen ? combatActionBarCopy[lang].dragAnAbilityFrom : combatActionBarCopy[lang].openTheSpellbookTo}</p>
         </div>
-        {spellbookOpen && <div id={spellbookId} className={`${styles.spellbookViewport} ${folio.catalogViewport} ${manuscript ? motion.catalogReveal : ""}`} role="region" aria-label={manuscript ? (ru ? "Каталог умений" : "Ability catalogue") : (ru ? "Книга умений" : "Spellbook")} data-mobile-page={mobileBookPage}>
-          {!manuscript && <nav className={styles.spellbookMobileNav} aria-label={ru ? "Страницы книги" : "Book pages"}>
-            <button type="button" aria-pressed={mobileBookPage === "index"} onClick={() => setMobileBookPage("index")}>{ru ? "Оглавление" : "Contents"}</button>
-            <button type="button" aria-pressed={mobileBookPage === "abilities"} onClick={() => setMobileBookPage("abilities")}>{ru ? "Умения" : "Abilities"}</button>
+        {spellbookOpen && <div id={spellbookId} className={`${styles.spellbookViewport} ${folio.catalogViewport} ${manuscript ? motion.catalogReveal : ""}`} role="region" aria-label={manuscript ? combatActionBarCopy[lang].abilityCatalogue : combatActionBarCopy[lang].spellbook} data-mobile-page={mobileBookPage}>
+          {!manuscript && <nav className={styles.spellbookMobileNav} aria-label={combatActionBarCopy[lang].bookPages}>
+            <button type="button" aria-pressed={mobileBookPage === "index"} onClick={() => setMobileBookPage("index")}>{combatActionBarCopy[lang].contents}</button>
+            <button type="button" aria-pressed={mobileBookPage === "abilities"} onClick={() => setMobileBookPage("abilities")}>{combatActionBarCopy[lang].abilities}</button>
           </nav>}
           <SpellbookDrawer abilities={abilities} assignedIds={actionBar.assignedIds} lang={lang} presentation={manuscript ? "catalog" : "book"} onClose={closeSpellbook} onAdd={addFromSpellbook} />
         </div>}
@@ -325,16 +326,16 @@ export function CombatActionBar({
 
       {result ? <RotationCursorValueContext.Consumer>{(cursor) => <footer className={`${styles.combatPlayback} ${manuscript ? `${spread.foldout} ${spread.playbackSheet}` : ""}`} data-book-surface={manuscript ? "foldout" : undefined}>
         <div>
-          <button type="button" disabled={stale} onClick={() => { if (cursor >= duration) onCursor(0); setPlaying((value) => !value); }} aria-label={playing ? (ru ? "Пауза" : "Pause") : (ru ? "Воспроизвести" : "Play")}>{playing ? <Pause /> : <Play />}</button>
-          <button type="button" onClick={() => { setPlaying(false); onCursor(0); }} aria-label={ru ? "В начало" : "Restart"}><RotateCcw /></button>
-          <select value={speed} onChange={(event) => setSpeed(Number(event.target.value))} aria-label={ru ? "Скорость воспроизведения" : "Playback speed"}><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
+          <button type="button" disabled={stale} onClick={() => { if (cursor >= duration) onCursor(0); setPlaying((value) => !value); }} aria-label={playing ? combatActionBarCopy[lang].pause : combatActionBarCopy[lang].play}>{playing ? <Pause /> : <Play />}</button>
+          <button type="button" onClick={() => { setPlaying(false); onCursor(0); }} aria-label={combatActionBarCopy[lang].restart}><RotateCcw /></button>
+          <select value={speed} onChange={(event) => setSpeed(Number(event.target.value))} aria-label={combatActionBarCopy[lang].playbackSpeed}><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
         </div>
-        <label><span>{stamp(cursor)}</span><input type="range" aria-label={ru ? "Позиция в симуляции" : "Simulation position"} min="0" max={duration} step="0.1" value={Math.min(cursor, duration)} onChange={(event) => { setPlaying(false); onCursor(Number(event.target.value)); }} /><span>{stamp(duration)}</span></label>
+        <label><span>{stamp(cursor)}</span><input type="range" aria-label={combatActionBarCopy[lang].simulationPosition} min="0" max={duration} step="0.1" value={Math.min(cursor, duration)} onChange={(event) => { setPlaying(false); onCursor(Number(event.target.value)); }} /><span>{stamp(duration)}</span></label>
       </footer>}</RotationCursorValueContext.Consumer> : null}
 
       <div className={`${shell.footnote} ${manuscript ? spread.leafNotes : ""}`} data-atlas-ui>
-        <AtlasDisclosure summary={ru ? "Как считается панель" : "How the panel is calculated"}>
-          <p>{ru ? "В AoE показан суммарный DPS по всем целям — урон не делится поровну между мобами. Цель — стандартный Patchwerk-манекен SimulationCraft, а не любой конкретный NPC. Броня и базовая механика урона учитываются; уникальные иммунитеты, фазы и уязвимости босса требуют отдельного сценария. Нажатие на способность только перематывает журнал и не отправляет клавиши в WoW." : "AoE shows total DPS across every target; damage is not divided equally per mob. The target is SimulationCraft’s standard Patchwerk target, not every specific NPC. Armor and baseline damage mechanics are included; a boss’s unique immunities, phases, and vulnerabilities require a dedicated encounter script. Clicking an ability only seeks the trace and never sends keys to WoW."}</p>
+        <AtlasDisclosure summary={combatActionBarCopy[lang].howThePanelIs}>
+          <p>{combatActionBarCopy[lang].aoeShowsTotalDps}</p>
         </AtlasDisclosure>
       </div>
     </section>

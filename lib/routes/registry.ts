@@ -1,4 +1,5 @@
 import type { AtlasSceneId } from "@/lib/atlas/scenes";
+import { registryCopy } from "./registryCopy";
 
 /**
  * One registry of the site's sections (roadmap items 24, 73): path, parent and
@@ -45,7 +46,7 @@ export function sectionHref(id: SectionId, locale: Locale) {
 }
 
 /** Accessible name of the breadcrumb trail. */
-export const trailLabel = (locale: Locale) => (locale === "ru" ? "Навигация" : "Breadcrumbs");
+export const trailLabel = (locale: Locale) => registryCopy[locale].breadcrumbs;
 
 /**
  * Breadcrumbs of a page inside `id`: every ancestor section and the section

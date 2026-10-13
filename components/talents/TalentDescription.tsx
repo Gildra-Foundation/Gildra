@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { TalentChoice } from "@/lib/talentCalculatorData";
+import { talentDescriptionCopy } from "./talentDescriptionCopy";
 
 type DescribedTalent = Pick<TalentChoice, "description" | "name" | "spellId">;
 
@@ -72,7 +73,7 @@ export function TalentDescription({ talent, locale = "ru" }: { talent: Described
   }, [key, locale, supplied, talent.name, talent.spellId]);
 
   const fallback = talent.spellId
-    ? resolved ? locale === "ru" ? "Подробное описание пока не опубликовано игровым источником." : "The game source has not published a detailed description yet." : locale === "ru" ? "Загружаем описание способности…" : "Loading ability description…"
-    : locale === "ru" ? "У этого узла нет отдельного заклинания с описанием." : "This node has no separate spell description.";
+    ? resolved ? talentDescriptionCopy[locale].theGameSourceHas : talentDescriptionCopy[locale].loadingAbilityDescription
+    : talentDescriptionCopy[locale].thisNodeHasNo;
   return <p data-description-state={description ? "ready" : resolved ? "unavailable" : "loading"}>{formatTalentDescription(description || fallback, locale)}</p>;
 }

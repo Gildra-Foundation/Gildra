@@ -9,6 +9,7 @@ import { AbilityIcon } from "./AbilityIcon";
 import { actionBindingLabel, bindingFromKeyboardEvent, bindingFromMouseEvent, bindingFromWheelEvent, isRiskyActionBinding, normalizeActionBinding } from "./actionBarBindings";
 import { ACTION_BAR_SLOT_COUNT, type TrainerSlot } from "./actionBarLayout";
 import styles from "./rotationLab.module.css";
+import { trainerBarConfigCopy } from "./trainerBarConfigCopy";
 
 export function TrainerBarConfig({ open, lang, abilities, slots, storageLabel, onClose, onUpdateSlot, onMoveSlot, onRemoveSlot, onAddSlot, onReset }: {
   open: boolean;
@@ -45,7 +46,7 @@ export function TrainerBarConfig({ open, lang, abilities, slots, storageLabel, o
     if (normalized === null) return;
     const existing = slots.find((slot, slotIndex) => slotIndex !== index && slot.key === normalized);
     onUpdateSlot(index, { key: normalized });
-    setBindingNotice(existing ? (lang === "ru" ? "Назначение перенесено: прежняя ячейка теперь без клавиши." : "Binding moved: the previous slot is now unbound.") : isRiskyActionBinding(normalized) ? tr("This key may be reserved by your browser.") : tr("Key saved."));
+    setBindingNotice(existing ? trainerBarConfigCopy[lang].bindingMovedThePrevious : isRiskyActionBinding(normalized) ? tr("This key may be reserved by your browser.") : tr("Key saved."));
     setCapturingSlot(null);
   };
   useEffect(() => {
@@ -83,15 +84,15 @@ export function TrainerBarConfig({ open, lang, abilities, slots, storageLabel, o
   const restoreDefaults = () => {
     onReset();
     setCapturingSlot(null);
-    setBindingNotice(lang === "ru" ? "Панель восстановлена: стандартные способности и назначения клавиш." : "Bar restored: default abilities and key bindings.");
+    setBindingNotice(trainerBarConfigCopy[lang].barRestoredDefaultAbilities);
   };
 
   return (
     <dialog ref={dialogRef} className={styles.trainerConfigDialog} onCancel={(event) => { event.preventDefault(); onClose(); }} onClose={onClose} aria-labelledby="trainer-config-title">
       <div className={styles.trainerConfig} data-binding-editor>
         <header className={styles.trainerConfigTitle}>
-          <div><strong id="trainer-config-title">{tr("Action Bar Setup")}</strong><small>{tr("Choose abilities and assign your real in-game keys.")} {lang === "ru" ? "Нажмите поле клавиши, затем клавишу, кнопку мыши или колёсико. Сочетания с Ctrl, Alt и Shift поддерживаются; Esc отменяет запись." : "Click a binding, then press a key, mouse button or wheel. Ctrl, Alt and Shift combinations work; Esc cancels recording."}</small></div>
-          <div><button onClick={restoreDefaults}><RotateCcw /> {lang === "ru" ? "Стандартная раскладка" : "Default layout"}</button><button ref={closeRef} className={styles.trainerConfigClose} onClick={onClose} aria-label={tr("Close action bar setup")}><X /></button></div>
+          <div><strong id="trainer-config-title">{tr("Action Bar Setup")}</strong><small>{tr("Choose abilities and assign your real in-game keys.")} {trainerBarConfigCopy[lang].clickABindingThen}</small></div>
+          <div><button onClick={restoreDefaults}><RotateCcw /> {trainerBarConfigCopy[lang].defaultLayout}</button><button ref={closeRef} className={styles.trainerConfigClose} onClick={onClose} aria-label={tr("Close action bar setup")}><X /></button></div>
         </header>
         <ol>
           {slots.map((slot, index) => {
@@ -114,7 +115,7 @@ export function TrainerBarConfig({ open, lang, abilities, slots, storageLabel, o
         </ol>
         <footer className={styles.trainerConfigFooter}>
           <button className={styles.trainerAddSlot} disabled={slots.length >= ACTION_BAR_SLOT_COUNT || slots.length >= abilities.length} onClick={onAddSlot}><Plus /> {tr("Add Skill Slot")}</button>
-          <button className={styles.trainerResetLayoutMobile} onClick={restoreDefaults}><RotateCcw /> {lang === "ru" ? "Сбросить раскладку" : "Default layout"}</button>
+          <button className={styles.trainerResetLayoutMobile} onClick={restoreDefaults}><RotateCcw /> {trainerBarConfigCopy[lang].defaultLayout2}</button>
           <span role="status" aria-live="polite">{bindingNotice || storageLabel}</span>
           <button className={styles.trainerConfigDone} onClick={onClose}>{tr("Done")}</button>
         </footer>

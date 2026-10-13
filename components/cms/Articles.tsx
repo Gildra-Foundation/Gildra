@@ -14,6 +14,7 @@ import { articleHref, articlesIndexHref } from "./paths";
 import styles from "./cms.module.css";
 import { trail } from "@/lib/routes/registry";
 import { AtlasAnchorSpy } from "@gildra/atlas-ui/AtlasAnchorSpy";
+import { articlesCopy } from "./articlesCopy";
 
 const TEXT = {
   en: {
@@ -66,7 +67,7 @@ const locale = (lang: Lang): CmsLocale => (lang === "ru" ? "ru" : "en");
 function formatDate(value: string | null, lang: Lang): string | null {
   if (!value) return null;
   const date = new Date(value);
-  return Number.isNaN(date.valueOf()) ? null : new Intl.DateTimeFormat(lang === "ru" ? "ru-RU" : "en-GB", { dateStyle: "long" }).format(date);
+  return Number.isNaN(date.valueOf()) ? null : new Intl.DateTimeFormat(articlesCopy[lang === "ru" ? "ru" : "en"].dateLocale, { dateStyle: "long" }).format(date);
 }
 
 /** hreflang only for languages that really exist in the published version. */

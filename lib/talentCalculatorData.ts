@@ -2,6 +2,7 @@ import { getCatalogEntity, getCatalogEntityTypes, getCatalogPage, type CatalogRe
 import { midnightManifest } from "@/lib/midnightManifest";
 import { defaultTalentSpecTheme, getTalentSpecTheme, type TalentSpecTheme } from "@/lib/talentSpecThemes";
 import { getLocalizedTalentSpells } from "@/lib/wow/localizedTalentSpells";
+import { talentCalculatorDataCopy } from "./talentCalculatorDataCopy";
 
 export type TalentKind = "class" | "hero" | "spec";
 export type TalentNodeType = "single" | "choice" | "tiered" | "subtree";
@@ -334,7 +335,7 @@ function readTopology(entity: GameEntity | null, lang: TalentLang): Topology | n
     heroSelectionNodeId: subtreeRoot?.id ?? 0,
     heroSelectionEntryIndex: Math.max(0, subtreeEntries.findIndex((entry) => entry.id === hero?.id)),
     fullNodeOrder: asNumberArray(block.fullNodeOrder),
-    heroName: lang === "ru" ? "Истребитель" : "Slayer",
+    heroName: talentCalculatorDataCopy[lang].slayer,
     buildId: asNumber(entity?.buildId, 1),
     buildVersion: String(provenance?.build ?? ""),
     buildNumber: asNumber(provenance?.build_number),
@@ -653,7 +654,7 @@ function directChoice(entry: RawEntry, lang: TalentLang, localized?: Pick<Catalo
     spellId: entry.spellId,
     definitionId: entry.definitionId,
     entryIndex: entry.index,
-    name: localized?.name || entry.name || `${lang === "ru" ? "Талант" : "Talent"} ${entry.id}`,
+    name: localized?.name || entry.name || `${talentCalculatorDataCopy[lang].talent} ${entry.id}`,
     description: cleanTalentDescription(localized?.description, lang) || "",
     iconUrl: resolvedIcon.iconFallback ? fallbackIconUrl : resolvedIcon.iconUrl,
     iconName: entry.icon,
@@ -860,7 +861,7 @@ async function loadMidnightWarriorTalentData(lang: TalentLang): Promise<TalentCa
   return {
     specId: topology.specId,
     buildId: topology.buildId, buildVersion: topology.buildVersion, buildNumber: topology.buildNumber,
-    className: lang === "ru" ? "Воин" : "Warrior", specName: lang === "ru" ? "Неистовство" : "Fury", heroName: topology.heroName, heroSubtreeId: topology.heroSubtreeId,
+    className: talentCalculatorDataCopy[lang].warrior, specName: talentCalculatorDataCopy[lang].fury, heroName: topology.heroName, heroSubtreeId: topology.heroSubtreeId,
     heroSelectionNodeId: topology.heroSelectionNodeId,
     heroSelectionEntryIndex: topology.heroSelectionEntryIndex,
     fullNodeOrder: topology.fullNodeOrder,
@@ -869,7 +870,7 @@ async function loadMidnightWarriorTalentData(lang: TalentLang): Promise<TalentCa
     pvpTalents,
     source: {
       kind: "official_catalog",
-      label: lang === "ru" ? "Каталог Gildra на основе данных Blizzard" : "Gildra Blizzard-backed catalog",
+      label: talentCalculatorDataCopy[lang].gildraBlizzardBackedCatalog,
       url: "https://api.gildra.net/v1/game/entity-summaries",
       observedAt: new Date().toISOString(),
     },

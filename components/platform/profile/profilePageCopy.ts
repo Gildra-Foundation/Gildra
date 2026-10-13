@@ -1,0 +1,31 @@
+/** Strings of ProfilePage.tsx in both languages (roadmap item 76). */
+export const profilePageCopy = {
+  en: {
+    numberLocale: "en-US",
+    profileName: "Profile name",
+    level: "Level",
+    realm: "Realm",
+    loadingCharacters: "Loading characters…",
+    noCharactersFound: "No characters found",
+    checkingBattleNetRegions: "Checking Battle.net regions.",
+    checkYourBattleNet: "Check your Battle.net region or WoW profile availability.",
+    connectBattleNet: "Connect Battle.net",
+    couldNotLoadThe: "Could not load the Blizzard profile.",
+    signInToAdd: "Sign in to add your characters to this profile.",
+    connectedAccount: "Connected account",
+  },
+  ru: {
+    numberLocale: "ru-RU",
+    profileName: "Имя профиля",
+    level: "Уровень",
+    realm: "Сервер",
+    loadingCharacters: "Загружаем персонажей…",
+    noCharactersFound: "Персонажи не найдены",
+    checkingBattleNetRegions: "Проверяем регионы Battle.net.",
+    checkYourBattleNet: "Проверьте регион Battle.net или доступность профиля WoW.",
+    connectBattleNet: "Подключите Battle.net",
+    couldNotLoadThe: "Не удалось загрузить профиль Blizzard.",
+    signInToAdd: "Войдите, чтобы добавить своих персонажей в профиль.",
+    connectedAccount: "Подключённый аккаунт",
+  },
+};

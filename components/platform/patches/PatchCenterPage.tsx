@@ -9,6 +9,7 @@ import { PlatformAtmosphere } from "@/components/platform/shared/PlatformAtmosph
 import type { Lang } from "@/lib/i18n";
 import type { PatchGroup, PlatformGameId, PlatformHomeData } from "@/lib/platform/home/types";
 import styles from "./patchCenter.module.css";
+import { patchCenterPageCopy } from "./patchCenterPageCopy";
 
 type PatchKind = "all" | "buff" | "nerf" | "update";
 
@@ -37,7 +38,7 @@ export function PatchCenterPage({ data, lang }: { data: PlatformHomeData; lang: 
   }), [groups]);
   const total = totals.buff + totals.nerf + totals.update;
   const impact = Math.min(96, 52 + total * 4 + totals.nerf * 3);
-  const updated = new Intl.DateTimeFormat(lang === "ru" ? "ru-RU" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(data.updatedAt));
+  const updated = new Intl.DateTimeFormat(patchCenterPageCopy[lang].dateLocale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(data.updatedAt));
 
   return <div className={homeStyles.page} data-platform-home>
     <PlatformMotion />

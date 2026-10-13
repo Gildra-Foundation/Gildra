@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Lang } from "@/lib/i18n";
+import { tooltipRelationsCopy } from "./tooltipRelationsCopy";
 
 export function TooltipOwners({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
 	const specs = entries.filter((entry) => String(entry.owner_type ?? "") === "specialization" && String(entry.name ?? ""));
@@ -20,7 +21,7 @@ export function TooltipOwners({ entries, lang }: { entries: Record<string, unkno
 	});
 	if (!grouped.size && !standalone.length) return null;
 	return <div className="db-tooltip-ownership">
-		<b>{lang === "ru" ? "Класс и специализация" : "Class and specialization"}</b>
+		<b>{tooltipRelationsCopy[lang].classAndSpecialization}</b>
 		<div className="db-tooltip-owner-paths">
 			{Array.from(grouped.entries()).map(([classID, group]) => <div className="db-tooltip-owner-path" key={classID}>
 				<OwnerBadge name={group.name || String(classID)} mediaURL={group.iconURL} />

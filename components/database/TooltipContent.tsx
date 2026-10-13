@@ -5,6 +5,7 @@ import { RichDescription, TooltipOwners, verifiedMediaURL } from "@/components/d
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import type { CatalogRecord } from "@/lib/api/client";
+import { tooltipContentCopy } from "./tooltipContentCopy";
 
 const PLAYABLE_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 // Blizzard DB2 descriptions can contain value placeholders that are only
@@ -16,7 +17,7 @@ function safeTooltipText(value: unknown, lang: Lang) {
   const text = String(value ?? "");
   if (!text || UNRESOLVED_TEMPLATE.test(text)) {
     return UNRESOLVED_TEMPLATE.test(text)
-      ? (lang === "ru" ? "Описание ещё не разрешено для этой сборки." : "Description is not resolved for this build yet.")
+      ? tooltipContentCopy[lang].descriptionIsNotResolved
       : "";
   }
   return text;
@@ -66,27 +67,27 @@ export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: 
 function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<string, unknown>; entityType: string; lang: Lang; mentions: Record<string, unknown>[] }) {
   const type = String(block.type ?? "");
   if (type === "name") return null;
-	if (type === "item_level") return <div className="db-tooltip-level">{lang === "ru" ? "Уровень предмета" : "Item level"} {String(block.value ?? "")}</div>;
+	if (type === "item_level") return <div className="db-tooltip-level">{tooltipContentCopy[lang].itemLevel} {String(block.value ?? "")}</div>;
   if (type === "slot") return <div>{inventoryTypeLabel(Number(block.code), lang)}</div>;
   if (type === "subclass") return <div className="db-tooltip-muted">{subclassLabel(Number(block.class_id), Number(block.subclass_id), lang)}</div>;
   if (type === "binding") return <div>{bindingLabel(Number(block.code), lang)}</div>;
-  if (type === "required_level") return <div>{lang === "ru" ? "Требуется уровень" : "Requires Level"} {String(block.value ?? "")}</div>;
+  if (type === "required_level") return <div>{tooltipContentCopy[lang].requiresLevel} {String(block.value ?? "")}</div>;
   if (type === "required_skill") return <div>{requiredSkillLabel(Number(block.skill_id), Number(block.rank), lang)}</div>;
-  if (type === "stack_limit") return <div>{lang === "ru" ? "Максимум в стопке" : "Maximum stack"}: {String(block.value ?? "")}</div>;
-  if (type === "container_slots") return <div>{lang === "ru" ? "Ячеек в сумке" : "Bag slots"}: {String(block.value ?? "")}</div>;
+  if (type === "stack_limit") return <div>{tooltipContentCopy[lang].maximumStack}: {String(block.value ?? "")}</div>;
+  if (type === "container_slots") return <div>{tooltipContentCopy[lang].bagSlots}: {String(block.value ?? "")}</div>;
   if (type === "price") return <TooltipPrice buy={Number(block.buy ?? 0)} sell={Number(block.sell ?? 0)} lang={lang} />;
 	  if (type === "name_description") { const text = safeTooltipText(block.text, lang); return text ? <div className="db-tooltip-muted">{text}</div> : null; }
-  if (type === "item_set") return <div className="db-tooltip-set">{lang === "ru" ? "Комплект" : "Set"}: {String(block.name ?? "")}</div>;
+  if (type === "item_set") return <div className="db-tooltip-set">{tooltipContentCopy[lang].set}: {String(block.name ?? "")}</div>;
   if (type === "limit_category") return <div>{String(block.name ?? "")}{Number(block.quantity ?? 0) > 0 ? ` (${String(block.quantity)})` : ""}</div>;
   if (type === "stats" && Array.isArray(block.entries)) return <TooltipStats entries={block.entries as Record<string, unknown>[]} lang={lang} />;
 	  if (type === "subtext" && typeof block.text === "string") { const text = safeTooltipText(block.text, lang); return text ? <div className="db-tooltip-subtext">{text}</div> : null; }
   if (type === "cast_time") return <div className="db-tooltip-mechanic">{formatCastTime(Number(block.milliseconds), lang)}</div>;
-  if (type === "range") return <div className="db-tooltip-mechanic">{String(block.yards ?? "")} {lang === "ru" ? "м" : "yd range"}</div>;
-  if (type === "cooldown") return <div className="db-tooltip-mechanic">{formatDuration(Number(block.milliseconds), lang)} {lang === "ru" ? "восстановление" : "cooldown"}</div>;
-  if (type === "duration") return <div className="db-tooltip-mechanic">{lang === "ru" ? "Время действия" : "Duration"}: {formatDuration(Number(block.milliseconds), lang)}</div>;
+  if (type === "range") return <div className="db-tooltip-mechanic">{String(block.yards ?? "")} {tooltipContentCopy[lang].ydRange}</div>;
+  if (type === "cooldown") return <div className="db-tooltip-mechanic">{formatDuration(Number(block.milliseconds), lang)} {tooltipContentCopy[lang].cooldown}</div>;
+  if (type === "duration") return <div className="db-tooltip-mechanic">{tooltipContentCopy[lang].duration}: {formatDuration(Number(block.milliseconds), lang)}</div>;
   if (type === "power") return <div className="db-tooltip-mechanic">{formatPower(block, lang)}</div>;
-  if (type === "sockets") return <div className="db-tooltip-socket">◇ {lang === "ru" ? "Есть гнездо" : "Has socket"}</div>;
-  if (type === "profession") return <div className="db-tooltip-crafted">{lang === "ru" ? "Создаётся профессией" : "Crafted by a profession"}</div>;
+  if (type === "sockets") return <div className="db-tooltip-socket">◇ {tooltipContentCopy[lang].hasSocket}</div>;
+  if (type === "profession") return <div className="db-tooltip-crafted">{tooltipContentCopy[lang].craftedByAProfession}</div>;
   if (type === "acquisition") return <div className="db-tooltip-acquisition">{acquisitionLabel(block, lang)}</div>;
   if (type === "spell_owners" && Array.isArray(block.entries)) return <TooltipOwners entries={block.entries as Record<string, unknown>[]} lang={lang} />;
   if (type === "spell_talents" && Array.isArray(block.entries)) return <SpellTalents entries={block.entries as Record<string, unknown>[]} lang={lang} />;
@@ -103,7 +104,7 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
 	if (type === "creature_info") return <CreatureInfo block={block} lang={lang} />;
 	if (type === "provenance") return <TooltipProvenance block={block} lang={lang} />;
 	if (type === "spell_effects" && Array.isArray(block.entries)) return <SpellEffects entries={block.entries as Record<string, unknown>[]} lang={lang} />;
-  if (type === "unique_equipped") return <div>{lang === "ru" ? "Уникальный использующийся" : "Unique-Equipped"}</div>;
+  if (type === "unique_equipped") return <div>{tooltipContentCopy[lang].uniqueEquipped}</div>;
 	  if (type === "use" || type === "equip") { const text = safeTooltipText(block.text, lang); return text ? <div className="db-tooltip-effect">{text}</div> : null; }
 	  if (type === "effect") { const text = safeTooltipText(cleanWowText(String(block.text ?? ""), lang), lang); return text ? <div className="db-tooltip-effect">{effectPrefix(Number(block.trigger), lang)}{text}</div> : null; }
 	  if (type === "description" && typeof block.text === "string") {
@@ -120,7 +121,7 @@ function ItemRegistry({ block, lang }: { block: Record<string, unknown>; lang: L
 	// Class, subclass, inventory type and FileDataID are internal client codes; the
 	// readable slot and armour type come from their own blocks, the raw codes stay in the JSON section.
 	if (!block.registry_only) return null;
-	return <div className="db-tooltip-item-context db-tooltip-muted">{lang === "ru" ? "Предмет есть в файлах игры, но подробных данных о нём пока нет." : "The item exists in the game files, but no details are available yet."}</div>;
+	return <div className="db-tooltip-item-context db-tooltip-muted">{tooltipContentCopy[lang].theItemExistsIn}</div>;
 }
 
 function ProfessionInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
@@ -129,12 +130,12 @@ function ProfessionInfo({ block, lang }: { block: Record<string, unknown>; lang:
 	const parentID = Number(block.parent_skill_line_id ?? 0);
 	const recipesList = Array.isArray(block.recipes) ? block.recipes as Record<string, unknown>[] : [];
   return <div className="db-tooltip-profession-info">
-    <div><b>{lang === "ru" ? "Линия навыка" : "Skill line"}:</b> {String(block.skill_line_id ?? "")}</div>
-    {parentID > 0 ? <div>{lang === "ru" ? "Родительская ветка" : "Parent skill line"}: {parentID}</div> : null}
-    <div>{lang === "ru" ? "Рецептов в базе" : "Recipes in database"}: {recipes.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</div>
-    {categories > 0 ? <div>{lang === "ru" ? "Разделов рецептов" : "Recipe categories"}: {categories.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</div> : null}
-		{Boolean(block.can_link) ? <div>{lang === "ru" ? "Можно делиться ссылкой на профессию в игре" : "Can be linked in game"}</div> : null}
-		{recipesList.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Примеры рецептов" : "Recipe examples"}:</b>{recipesList.map((recipe) => <span key={String(recipe.id)}>{String(recipe.name || `ID ${recipe.external_id}`)}{Number(recipe.min_skill_rank ?? 0) > 0 ? ` (${lang === "ru" ? "навык" : "skill"} ${String(recipe.min_skill_rank)})` : ""}</span>)}</div> : null}
+    <div><b>{tooltipContentCopy[lang].skillLine}:</b> {String(block.skill_line_id ?? "")}</div>
+    {parentID > 0 ? <div>{tooltipContentCopy[lang].parentSkillLine}: {parentID}</div> : null}
+    <div>{tooltipContentCopy[lang].recipesInDatabase}: {recipes.toLocaleString(tooltipContentCopy[lang].numberLocale)}</div>
+    {categories > 0 ? <div>{tooltipContentCopy[lang].recipeCategories}: {categories.toLocaleString(tooltipContentCopy[lang].numberLocale)}</div> : null}
+		{Boolean(block.can_link) ? <div>{tooltipContentCopy[lang].canBeLinkedIn}</div> : null}
+		{recipesList.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].recipeExamples}:</b>{recipesList.map((recipe) => <span key={String(recipe.id)}>{String(recipe.name || `ID ${recipe.external_id}`)}{Number(recipe.min_skill_rank ?? 0) > 0 ? ` (${tooltipContentCopy[lang].skill} ${String(recipe.min_skill_rank)})` : ""}</span>)}</div> : null}
 	</div>;
 }
 
@@ -144,10 +145,10 @@ function RecipeInfo({ block, lang }: { block: Record<string, unknown>; lang: Lan
 	const currencies = Array.isArray(block.currencies) ? block.currencies as Record<string, unknown>[] : [];
 	const outputs = Array.isArray(block.outputs) ? block.outputs as Record<string, unknown>[] : [];
 	return <div className="db-tooltip-recipe-info">
-		{professions.length ? <div><b>{lang === "ru" ? "Профессия" : "Profession"}:</b> {professions.map((entry) => `${String(entry.name || entry.external_id)}${Number(entry.min_skill_rank ?? 0) > 0 ? ` (${String(entry.min_skill_rank)})` : ""}`).join(", ")}</div> : null}
-		{outputs.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Создаёт" : "Creates"}:</b>{outputs.map((entry) => <span key={String(entry.external_id)}>{String(entry.name || `Item #${entry.external_id}`)}</span>)}</div> : null}
-		{reagents.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Реагенты" : "Reagents"}:</b>{reagents.map((entry, index) => <span key={`${String(entry.external_id)}-${index}`}>{String(entry.name || `Item #${entry.external_id}`)} ×{String(entry.quantity ?? 0)}{Number(entry.recraft_quantity ?? 0) > 0 ? ` (${lang === "ru" ? "перекрафт" : "recraft"}: ${String(entry.recraft_quantity)})` : ""}</span>)}</div> : null}
-		{currencies.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Валюта" : "Currency"}:</b>{currencies.map((entry) => <span key={String(entry.external_id)}>#{String(entry.external_id)} ×{String(entry.quantity ?? 0)}</span>)}</div> : null}
+		{professions.length ? <div><b>{tooltipContentCopy[lang].profession}:</b> {professions.map((entry) => `${String(entry.name || entry.external_id)}${Number(entry.min_skill_rank ?? 0) > 0 ? ` (${String(entry.min_skill_rank)})` : ""}`).join(", ")}</div> : null}
+		{outputs.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].creates}:</b>{outputs.map((entry) => <span key={String(entry.external_id)}>{String(entry.name || `Item #${entry.external_id}`)}</span>)}</div> : null}
+		{reagents.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].reagents}:</b>{reagents.map((entry, index) => <span key={`${String(entry.external_id)}-${index}`}>{String(entry.name || `Item #${entry.external_id}`)} ×{String(entry.quantity ?? 0)}{Number(entry.recraft_quantity ?? 0) > 0 ? ` (${tooltipContentCopy[lang].recraft}: ${String(entry.recraft_quantity)})` : ""}</span>)}</div> : null}
+		{currencies.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].currency}:</b>{currencies.map((entry) => <span key={String(entry.external_id)}>#{String(entry.external_id)} ×{String(entry.quantity ?? 0)}</span>)}</div> : null}
 	</div>;
 }
 
@@ -160,32 +161,32 @@ function ItemRequirements({ block, lang }: { block: Record<string, unknown>; lan
 	const holiday = Number(block.holiday_id ?? 0);
 	if (!classNames.length && !raceRestricted && !ability && !faction && !holiday) return null;
 	return <div className="db-tooltip-requirements">
-		{classNames.length ? <div>{lang === "ru" ? "Классы" : "Classes"}: {classNames.join(", ")}</div> : null}
-		{raceRestricted ? <div>{lang === "ru" ? "Есть ограничение по расе" : "Race restricted"}</div> : null}
-		{ability ? <div>{lang === "ru" ? "Требуется способность" : "Requires ability"}: {ability}</div> : null}
-		{faction ? <div>{lang === "ru" ? "Требуется репутация" : "Requires reputation"}: {faction} ({String(block.reputation ?? 0)})</div> : null}
-		{holiday ? <div>{lang === "ru" ? "Событие" : "Event"}: {holiday}</div> : null}
+		{classNames.length ? <div>{tooltipContentCopy[lang].classes}: {classNames.join(", ")}</div> : null}
+		{raceRestricted ? <div>{tooltipContentCopy[lang].raceRestricted}</div> : null}
+		{ability ? <div>{tooltipContentCopy[lang].requiresAbility}: {ability}</div> : null}
+		{faction ? <div>{tooltipContentCopy[lang].requiresReputation}: {faction} ({String(block.reputation ?? 0)})</div> : null}
+		{holiday ? <div>{tooltipContentCopy[lang].event}: {holiday}</div> : null}
 	</div>;
 }
 
 function ItemEffectMetadata({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
 	return <div className="db-tooltip-effect-meta">{entries.map((effect, index) => <div key={`${String(effect.spell_id)}-${index}`}>
-		{Number(effect.charges ?? 0) !== 0 ? <span>{lang === "ru" ? "Заряды" : "Charges"}: {String(effect.charges)} </span> : null}
-		{Number(effect.cooldown_ms ?? 0) > 0 ? <span>{lang === "ru" ? "Восстановление" : "Cooldown"}: {formatDuration(Number(effect.cooldown_ms), lang)} </span> : null}
-		{Number(effect.specialization_id ?? 0) > 0 ? <span>{lang === "ru" ? "Специализация" : "Specialization"}: {specializationName(Number(effect.specialization_id), lang) || String(effect.specialization_id)}</span> : null}
+		{Number(effect.charges ?? 0) !== 0 ? <span>{tooltipContentCopy[lang].charges}: {String(effect.charges)} </span> : null}
+		{Number(effect.cooldown_ms ?? 0) > 0 ? <span>{tooltipContentCopy[lang].cooldown2}: {formatDuration(Number(effect.cooldown_ms), lang)} </span> : null}
+		{Number(effect.specialization_id ?? 0) > 0 ? <span>{tooltipContentCopy[lang].specialization}: {specializationName(Number(effect.specialization_id), lang) || String(effect.specialization_id)}</span> : null}
 	</div>)}</div>;
 }
 
 function ItemVariants({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
 	return <div className="db-tooltip-variants">
-		<b>{lang === "ru" ? "Варианты предмета" : "Item variants"}</b>
+		<b>{tooltipContentCopy[lang].itemVariants}</b>
 		{entries.map((variant, variantIndex) => {
 			const stats = Array.isArray(variant.stats) ? variant.stats as Record<string, unknown>[] : [];
 			const effects = Array.isArray(variant.effects) ? variant.effects as Record<string, unknown>[] : [];
 			return <details key={`${String(variant.key)}-${variantIndex}`} open={entries.length === 1}>
-				<summary>{!variant.key || String(variant.key) === "base" ? (lang === "ru" ? "Основной вариант" : "Base version") : String(variant.key)}{Number(variant.item_level ?? 0) > 0 ? ` · ${lang === "ru" ? "уровень" : "level"} ${String(variant.item_level)}` : ""}</summary>
-				{stats.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Характеристики" : "Stats"}:</b>{stats.map((stat, index) => <span key={`${String(stat.index)}-${index}`}>{String(stat.label || stat.key || `Stat ${stat.type}`)}{stat.value !== null && stat.value !== undefined ? `: ${String(stat.value)}` : ""}{Number(stat.allocation ?? 0) !== 0 ? ` · ${lang === "ru" ? "масштаб" : "allocation"} ${String(stat.allocation)}` : ""}</span>)}</div> : null}
-				{effects.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Эффекты" : "Effects"}:</b>{effects.map((effect, index) => <span key={`${String(effect.index)}-${index}`}>{lang === "ru" ? "Заклинание" : "Spell"} #{String(effect.spell_id || "—")}{Number(effect.cooldown_ms ?? 0) > 0 ? ` · ${formatDuration(Number(effect.cooldown_ms), lang)}` : ""}</span>)}</div> : null}
+				<summary>{!variant.key || String(variant.key) === "base" ? tooltipContentCopy[lang].baseVersion : String(variant.key)}{Number(variant.item_level ?? 0) > 0 ? ` · ${tooltipContentCopy[lang].level} ${String(variant.item_level)}` : ""}</summary>
+				{stats.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].stats}:</b>{stats.map((stat, index) => <span key={`${String(stat.index)}-${index}`}>{String(stat.label || stat.key || `Stat ${stat.type}`)}{stat.value !== null && stat.value !== undefined ? `: ${String(stat.value)}` : ""}{Number(stat.allocation ?? 0) !== 0 ? ` · ${tooltipContentCopy[lang].allocation} ${String(stat.allocation)}` : ""}</span>)}</div> : null}
+				{effects.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].effects}:</b>{effects.map((effect, index) => <span key={`${String(effect.index)}-${index}`}>{tooltipContentCopy[lang].spell} #{String(effect.spell_id || "—")}{Number(effect.cooldown_ms ?? 0) > 0 ? ` · ${formatDuration(Number(effect.cooldown_ms), lang)}` : ""}</span>)}</div> : null}
 							</details>;
 		})}
 	</div>;
@@ -197,10 +198,10 @@ function QuestInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang
 	const rewards = Array.isArray(block.rewards) ? block.rewards as Record<string, unknown>[] : [];
 	return <div className="db-tooltip-quest-info">
 		{String(block.bullet_text ?? "") ? <div>{formatQuestText(String(block.bullet_text), lang)}</div> : null}
-		{objectives.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Цели" : "Objectives"}:</b>{objectives.map((objective) => <span key={String(objective.id)}>• {String(objective.description || `${lang === "ru" ? "Объект" : "Object"} ${objective.object_id ?? ""}`)}{Number(objective.amount ?? 0) > 1 ? ` ×${String(objective.amount)}` : ""}</span>)}</div> : null}
-		{lines.length ? <div>{lang === "ru" ? "Цепочка" : "Quest line"}: {lines.map((line) => String(line.name || line.id)).join(", ")}</div> : null}
+		{objectives.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].objectives}:</b>{objectives.map((objective) => <span key={String(objective.id)}>• {String(objective.description || `${tooltipContentCopy[lang].object} ${objective.object_id ?? ""}`)}{Number(objective.amount ?? 0) > 1 ? ` ×${String(objective.amount)}` : ""}</span>)}</div> : null}
+		{lines.length ? <div>{tooltipContentCopy[lang].questLine}: {lines.map((line) => String(line.name || line.id)).join(", ")}</div> : null}
 		{rewards.length ? <QuestRewards rewards={rewards} lang={lang} /> : null}
-		{Number(block.poi_count ?? 0) > 0 ? <div>{lang === "ru" ? "Точек на карте" : "Map points"}: {String(block.poi_count)}</div> : null}
+		{Number(block.poi_count ?? 0) > 0 ? <div>{tooltipContentCopy[lang].mapPoints}: {String(block.poi_count)}</div> : null}
 	</div>;
 }
 
@@ -208,24 +209,22 @@ function QuestRewardPackage({ block, lang }: { block: Record<string, unknown>; l
 	const items = Array.isArray(block.items) ? block.items as Record<string, unknown>[] : [];
 	const prefix = lang === "ru" ? "/ru" : "";
 	return <div className="db-tooltip-quest-info">
-		<div><b>{lang === "ru" ? "Пакет" : "Package"}:</b> #{String(block.package_id ?? "—")}</div>
-		<div className="db-tooltip-muted">{lang === "ru"
-			? "Набор предметов из игрового клиента. С каким заданием он связан, пока неизвестно."
-			: "An item set from the game client. Which quest awards it is not known yet."}</div>
+		<div><b>{tooltipContentCopy[lang].package}:</b> #{String(block.package_id ?? "—")}</div>
+		<div className="db-tooltip-muted">{tooltipContentCopy[lang].anItemSetFrom}</div>
 		{items.length ? <div className="db-tooltip-related db-tooltip-rewards">
-			<b>{lang === "ru" ? "Предметы в пакете" : "Package items"}:</b>
+			<b>{tooltipContentCopy[lang].packageItems}:</b>
 			<div className="db-tooltip-reward-group">{items.map((item, index) => {
 				const externalID = Number(item.item_external_id ?? 0);
 				const entityID = String(item.entity_id ?? "");
 				const icon = verifiedMediaURL(String(item.icon_url ?? ""));
 				const label = String(item.name || `Item #${externalID || "—"}`);
 				const quantity = Number(item.quantity ?? 0);
-				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong>{label}</strong><small>{quantity > 0 ? `×${quantity.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}` : ""}</small></span></>;
+				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong>{label}</strong><small>{quantity > 0 ? `×${quantity.toLocaleString(tooltipContentCopy[lang].numberLocale)}` : ""}</small></span></>;
 				return entityID
 					? <Link className="db-tooltip-reward" href={`${prefix}/database/item/${encodeURIComponent(entityID)}/${encodeURIComponent(String(externalID || "item"))}`} key={`${externalID}-${index}`}>{content}</Link>
 					: <span className="db-tooltip-reward" key={`${externalID}-${index}`}>{content}</span>;
 			})}</div>
-		</div> : <div className="db-tooltip-muted">{lang === "ru" ? "В пакете нет подтверждённых строк предметов." : "The package has no proved item rows."}</div>}
+		</div> : <div className="db-tooltip-muted">{tooltipContentCopy[lang].thePackageHasNo}</div>}
 	</div>;
 }
 
@@ -242,16 +241,16 @@ function QuestRewards({ rewards, lang }: { rewards: Record<string, unknown>[]; l
 		const quality = Number(reward.quality ?? 0);
 		const label = String(reward.name || questRewardTypeLabel(type, lang, externalID));
 		const amount = Number(reward.amount ?? 0);
-		const details = [questRewardAmount(type, amount, lang), Boolean(reward.choice) ? (lang === "ru" ? "на выбор" : "choice") : ""].filter(Boolean).join(" · ");
+		const details = [questRewardAmount(type, amount, lang), Boolean(reward.choice) ? tooltipContentCopy[lang].choice : ""].filter(Boolean).join(" · ");
 		const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong className={`quality-${quality}`}>{label}</strong>{details ? <small>{details}</small> : null}</span></>;
 		return entityID
 			? <Link className="db-tooltip-reward" href={`${lang === "ru" ? "/ru" : ""}/database/${encodeURIComponent(entityType)}/${encodeURIComponent(entityID)}/${encodeURIComponent(slug)}`} key={`${type}-${externalID}-${index}`}>{content}</Link>
 			: <span className="db-tooltip-reward" key={`${type}-${externalID}-${index}`}>{content}</span>;
 	};
 	return <div className="db-tooltip-related db-tooltip-rewards">
-		<b>{lang === "ru" ? "Награды" : "Rewards"}:</b>
-		{guaranteed.length ? <div className="db-tooltip-reward-group">{choices.length ? <em>{lang === "ru" ? "Гарантировано" : "Guaranteed"}</em> : null}{guaranteed.map(renderReward)}</div> : null}
-		{choices.length ? <div className="db-tooltip-reward-group"><em>{lang === "ru" ? "Выберите одну награду" : "Choose one reward"}</em>{choices.map(renderReward)}</div> : null}
+		<b>{tooltipContentCopy[lang].rewards}:</b>
+		{guaranteed.length ? <div className="db-tooltip-reward-group">{choices.length ? <em>{tooltipContentCopy[lang].guaranteed}</em> : null}{guaranteed.map(renderReward)}</div> : null}
+		{choices.length ? <div className="db-tooltip-reward-group"><em>{tooltipContentCopy[lang].chooseOneReward}</em>{choices.map(renderReward)}</div> : null}
 	</div>;
 }
 
@@ -265,16 +264,16 @@ function questRewardTypeLabel(type: string, lang: Lang, externalID: number) {
 		experience: ["Experience", "Опыт"], reputation: ["Reputation", "Репутация"], spell: ["Spell", "Заклинание"],
 		title: ["Title", "Звание"], other: ["Reward", "Награда"],
 	};
-	const label = labels[type]?.[lang === "ru" ? 1 : 0] ?? (lang === "ru" ? "Награда" : "Reward");
+	const label = labels[type]?.[lang === "ru" ? 1 : 0] ?? tooltipContentCopy[lang].reward;
 	return externalID > 0 ? `${label} #${externalID}` : label;
 }
 
 function questRewardAmount(type: string, amount: number, lang: Lang) {
 	if (!Number.isFinite(amount) || amount <= 0) return "";
-	const formatted = amount.toLocaleString(lang === "ru" ? "ru-RU" : "en-US");
-	if (type === "experience") return `${formatted} ${lang === "ru" ? "опыта" : "XP"}`;
+	const formatted = amount.toLocaleString(tooltipContentCopy[lang].numberLocale);
+	if (type === "experience") return `${formatted} ${tooltipContentCopy[lang].unitXp}`;
 	if (type === "money") return formatQuestMoney(amount, lang);
-	if (type === "reputation") return `+${formatted} ${lang === "ru" ? "репутации" : "reputation"}`;
+	if (type === "reputation") return `+${formatted} ${tooltipContentCopy[lang].reputation}`;
 	if ((type === "spell" || type === "title") && amount === 1) return "";
 	return `×${formatted}`;
 }
@@ -285,9 +284,9 @@ function formatQuestMoney(copper: number, lang: Lang) {
 	const silver = Math.floor((whole % 10_000) / 100);
 	const remainder = whole % 100;
 	const parts = [];
-	if (gold) parts.push(`${gold.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} ${lang === "ru" ? "з." : "g"}`);
-	if (silver) parts.push(`${silver} ${lang === "ru" ? "с." : "s"}`);
-	if (remainder || !parts.length) parts.push(`${remainder} ${lang === "ru" ? "м." : "c"}`);
+	if (gold) parts.push(`${gold.toLocaleString(tooltipContentCopy[lang].numberLocale)} ${tooltipContentCopy[lang].unitG}`);
+	if (silver) parts.push(`${silver} ${tooltipContentCopy[lang].unitS}`);
+	if (remainder || !parts.length) parts.push(`${remainder} ${tooltipContentCopy[lang].unitC}`);
 	return parts.join(" ");
 }
 
@@ -296,11 +295,11 @@ function CreatureInfo({ block, lang }: { block: Record<string, unknown>; lang: L
 	const locations = Array.isArray(block.locations) ? block.locations as Record<string, unknown>[] : [];
 	const lootTables = Array.isArray(block.loot_tables) ? block.loot_tables as Record<string, unknown>[] : [];
 	return <div className="db-tooltip-creature-info">
-		{String(block.creature_type ?? "") ? <div>{lang === "ru" ? "Тип" : "Type"}: {String(block.creature_type)}</div> : null}
-		{String(block.creature_family ?? "") ? <div>{lang === "ru" ? "Семейство" : "Family"}: {String(block.creature_family)}</div> : null}
-		{Number(block.difficulty_count ?? 0) > 0 ? <div>{lang === "ru" ? "Вариантов сложности" : "Difficulty variants"}: {String(block.difficulty_count)}</div> : null}
-		{roles.length ? <div>{lang === "ru" ? "Роли" : "Roles"}: {roles.map((role) => String(role.role)).join(", ")}</div> : null}
-		{locations.length ? <div className="db-tooltip-related"><b>{lang === "ru" ? "Местоположение" : "Location"}:</b>{locations.map((location, index) => <span key={`${String(location.ui_map_id)}-${index}`}>{lang === "ru" ? "Карта" : "Map"} {String(location.ui_map_id || location.map_id || "—")}: {Number(location.x).toFixed(1)}, {Number(location.y).toFixed(1)}</span>)}</div> : null}
+		{String(block.creature_type ?? "") ? <div>{tooltipContentCopy[lang].type}: {String(block.creature_type)}</div> : null}
+		{String(block.creature_family ?? "") ? <div>{tooltipContentCopy[lang].family}: {String(block.creature_family)}</div> : null}
+		{Number(block.difficulty_count ?? 0) > 0 ? <div>{tooltipContentCopy[lang].difficultyVariants}: {String(block.difficulty_count)}</div> : null}
+		{roles.length ? <div>{tooltipContentCopy[lang].roles}: {roles.map((role) => String(role.role)).join(", ")}</div> : null}
+		{locations.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].location}:</b>{locations.map((location, index) => <span key={`${String(location.ui_map_id)}-${index}`}>{tooltipContentCopy[lang].map} {String(location.ui_map_id || location.map_id || "—")}: {Number(location.x).toFixed(1)}, {Number(location.y).toFixed(1)}</span>)}</div> : null}
 		{lootTables.length ? <LootTables tables={lootTables} lang={lang} /> : null}
 	</div>;
 }
@@ -312,11 +311,11 @@ function LootTables({ tables, lang }: { tables: Record<string, unknown>[]; lang:
 		skinning: ["Skinning", "Снятие шкур"], vendor: ["Vendor inventory", "Товары продавца"],
 		container: ["Container", "Контейнер"], fishing: ["Fishing", "Рыбалка"], other: ["Other", "Другое"],
 	};
-	return <div className="db-tooltip-loot-tables"><b>{lang === "ru" ? "Добыча" : "Loot"}</b>{tables.map((table) => {
+	return <div className="db-tooltip-loot-tables"><b>{tooltipContentCopy[lang].loot}</b>{tables.map((table) => {
 		const entries = Array.isArray(table.entries) ? table.entries as Record<string, unknown>[] : [];
 		const kind = String(table.kind ?? "other");
 		return <section key={String(table.id)}>
-			<header><span>{kindLabels[kind]?.[lang === "ru" ? 1 : 0] ?? kind}</span>{Number(table.difficulty_id ?? 0) > 0 ? <small>{lang === "ru" ? "Сложность" : "Difficulty"} {String(table.difficulty_id)}</small> : null}</header>
+			<header><span>{kindLabels[kind]?.[lang === "ru" ? 1 : 0] ?? kind}</span>{Number(table.difficulty_id ?? 0) > 0 ? <small>{tooltipContentCopy[lang].difficulty} {String(table.difficulty_id)}</small> : null}</header>
 			{entries.map((entry) => {
 				const icon = verifiedMediaURL(String(entry.icon_url ?? ""));
 				const chance = entry.chance_percent === null || entry.chance_percent === undefined ? "" : `${formatGameNumber(Number(entry.chance_percent))}%`;
@@ -324,7 +323,7 @@ function LootTables({ tables, lang }: { tables: Record<string, unknown>[]; lang:
 				const min = hasQuantity ? Number(entry.min_quantity) : 0;
 				const max = hasQuantity ? Number(entry.max_quantity) : 0;
 				const quantity = !hasQuantity || (min === 1 && max === 1) ? "" : min === max ? ` ×${min}` : ` ×${min}–${max}`;
-				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-loot-icon-fallback" aria-hidden="true">◇</span>}<span><strong>{String(entry.name || `Item #${String(entry.item_external_id)}`)}{quantity}</strong><small>{chance || (lang === "ru" ? "Шанс выпадения неизвестен" : "Drop chance unknown")}</small></span></>;
+				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-loot-icon-fallback" aria-hidden="true">◇</span>}<span><strong>{String(entry.name || `Item #${String(entry.item_external_id)}`)}{quantity}</strong><small>{chance || tooltipContentCopy[lang].dropChanceUnknown}</small></span></>;
 				return entry.item_entity_id ? <a key={`${String(table.id)}-${String(entry.index)}`} href={`${prefix}/database/item/${encodeURIComponent(String(entry.item_entity_id))}/${encodeURIComponent(String(entry.item_external_id))}`}>{content}</a> : <span className="db-tooltip-loot-unresolved" key={`${String(table.id)}-${String(entry.index)}`}>{content}</span>;
 			})}
 		</section>;
@@ -334,22 +333,22 @@ function LootTables({ tables, lang }: { tables: Record<string, unknown>[]; lang:
 function TooltipProvenance({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
 	const sourceURL = String(block.source_url ?? "");
 	const updated = block.updated_at ? new Date(String(block.updated_at)) : null;
-	return <div className="db-tooltip-provenance"><span>{lang === "ru" ? "Сборка" : "Build"}: {String(block.build || block.build_number || "—")}</span>{updated && !Number.isNaN(updated.valueOf()) ? <span>{lang === "ru" ? "Обновлено" : "Updated"}: {updated.toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US")}</span> : null}{sourceURL ? <a href={sourceURL} target="_blank" rel="noreferrer">{lang === "ru" ? "Источник данных" : "Data source"} ↗</a> : null}</div>;
+	return <div className="db-tooltip-provenance"><span>{tooltipContentCopy[lang].build}: {String(block.build || block.build_number || "—")}</span>{updated && !Number.isNaN(updated.valueOf()) ? <span>{tooltipContentCopy[lang].updated}: {updated.toLocaleDateString(tooltipContentCopy[lang].numberLocale)}</span> : null}{sourceURL ? <a href={sourceURL} target="_blank" rel="noreferrer">{tooltipContentCopy[lang].dataSource} ↗</a> : null}</div>;
 }
 
 function SpellEffects({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
 	const meaningful = entries.filter((effect) => Number(effect.base_points ?? 0) !== 0 || Number(effect.coefficient ?? 0) !== 0 || Number(effect.attack_power_coefficient ?? 0) !== 0 || Number(effect.amplitude_ms ?? 0) > 0 || Number(effect.chain_targets ?? 0) > 0 || Number((effect.attributes as Record<string, unknown> | undefined)?.trigger_spell_id ?? 0) > 0);
 	if (!meaningful.length) return null;
-	return <div className="db-tooltip-spell-effects"><b>{lang === "ru" ? "Параметры эффектов" : "Effect parameters"}</b>{meaningful.map((effect, index) => {
+	return <div className="db-tooltip-spell-effects"><b>{tooltipContentCopy[lang].effectParameters}</b>{meaningful.map((effect, index) => {
 		const attributes = (effect.attributes ?? {}) as Record<string, unknown>;
 		return <div key={`${String(effect.index)}-${String(effect.difficulty_id)}-${index}`}>
 			<span>#{String(Number(effect.index ?? 0) + 1)}</span>
-			{Number(effect.base_points ?? 0) !== 0 ? <span>{lang === "ru" ? "база" : "base"} {formatGameNumber(Number(effect.base_points))}</span> : null}
+			{Number(effect.base_points ?? 0) !== 0 ? <span>{tooltipContentCopy[lang].base} {formatGameNumber(Number(effect.base_points))}</span> : null}
 			{Number(effect.coefficient ?? 0) !== 0 ? <span>SP ×{formatGameNumber(Number(effect.coefficient))}</span> : null}
 			{Number(effect.attack_power_coefficient ?? 0) !== 0 ? <span>AP ×{formatGameNumber(Number(effect.attack_power_coefficient))}</span> : null}
-			{Number(effect.amplitude_ms ?? 0) > 0 ? <span>{lang === "ru" ? "период" : "period"} {formatDuration(Number(effect.amplitude_ms), lang)}</span> : null}
-			{Number(effect.chain_targets ?? 0) > 0 ? <span>{lang === "ru" ? "целей" : "targets"} {String(effect.chain_targets)}</span> : null}
-			{Number(attributes.trigger_spell_id ?? 0) > 0 ? <span>{lang === "ru" ? "вызывает заклинание" : "triggers spell"} {String(attributes.trigger_spell_id)}</span> : null}
+			{Number(effect.amplitude_ms ?? 0) > 0 ? <span>{tooltipContentCopy[lang].period} {formatDuration(Number(effect.amplitude_ms), lang)}</span> : null}
+			{Number(effect.chain_targets ?? 0) > 0 ? <span>{tooltipContentCopy[lang].targets} {String(effect.chain_targets)}</span> : null}
+			{Number(attributes.trigger_spell_id ?? 0) > 0 ? <span>{tooltipContentCopy[lang].triggersSpell} {String(attributes.trigger_spell_id)}</span> : null}
 		</div>;
 	})}</div>;
 }
@@ -357,7 +356,7 @@ function SpellEffects({ entries, lang }: { entries: Record<string, unknown>[]; l
 function SpellTalents({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
 	const unique = Array.from(new Map(entries.filter((entry) => String(entry.name ?? "")).map((entry) => [String(entry.talent_id), entry])).values());
 	if (!unique.length) return null;
-	return <div className="db-tooltip-talent-link"><b>{lang === "ru" ? "Связанные таланты:" : "Related talents:"}</b><span className="db-tooltip-related-inline">{unique.map((entry) => {
+	return <div className="db-tooltip-talent-link"><b>{tooltipContentCopy[lang].relatedTalents}</b><span className="db-tooltip-related-inline">{unique.map((entry) => {
 		const icon = verifiedMediaURL(String(entry.icon_url ?? ""));
 		const relation = String(entry.relationship ?? "grants");
 		return <span className="db-tooltip-owner-badge" key={String(entry.talent_id)}>{icon ? <img src={icon} alt="" loading="lazy" /> : null}<span>{String(entry.name)}{relation !== "grants" ? ` (${relation})` : ""}</span></span>;
@@ -372,7 +371,7 @@ function TalentSpells({ entries, lang }: { entries: Record<string, unknown>[]; l
 		modifies: ["Modifies", "Изменяет"],
 	};
 	const localePrefix = lang === "ru" ? "/ru" : "";
-	return <div className="db-tooltip-talent-spells"><b>{lang === "ru" ? "Связанные заклинания и эффекты" : "Related spells and effects"}</b>{entries.map((entry) => {
+	return <div className="db-tooltip-talent-spells"><b>{tooltipContentCopy[lang].relatedSpellsAndEffects}</b>{entries.map((entry) => {
 		const relation = String(entry.relationship ?? "grants");
 		const icon = verifiedMediaURL(String(entry.icon_url ?? ""));
 		const effects = Array.isArray(entry.effects) ? entry.effects as Record<string, unknown>[] : [];
@@ -394,11 +393,11 @@ function TalentInfo({ block, lang }: { block: Record<string, unknown>; lang: Lan
   const playerCondition = Number(block.player_condition_id ?? 0);
   const overridesSpell = Number(block.overrides_spell_id ?? 0);
   return <div className="db-tooltip-talent-info">
-    <div>{talentType === "pvp" ? (lang === "ru" ? "PvP-талант" : "PvP talent") : talentType === "active" ? (lang === "ru" ? "Активная способность" : "Active ability") : (lang === "ru" ? "Пассивный эффект" : "Passive effect")}</div>
-    {ranks > 1 ? <div>{lang === "ru" ? "Максимальный ранг" : "Maximum rank"}: {ranks}</div> : null}
-    {specs.length ? <div>{lang === "ru" ? "Специализации" : "Specializations"}: {specs.join(", ")}</div> : null}
-    {requiredLevel > 0 ? <div>{lang === "ru" ? "Требуется уровень" : "Requires level"}: {requiredLevel}</div> : null}
-    {overridesSpell > 0 ? <div>{lang === "ru" ? "Заменяет заклинание" : "Replaces spell"}: ID {overridesSpell}</div> : null}
+    <div>{talentType === "pvp" ? tooltipContentCopy[lang].pvpTalent : talentType === "active" ? tooltipContentCopy[lang].activeAbility : tooltipContentCopy[lang].passiveEffect}</div>
+    {ranks > 1 ? <div>{tooltipContentCopy[lang].maximumRank}: {ranks}</div> : null}
+    {specs.length ? <div>{tooltipContentCopy[lang].specializations}: {specs.join(", ")}</div> : null}
+    {requiredLevel > 0 ? <div>{tooltipContentCopy[lang].requiresLevel2}: {requiredLevel}</div> : null}
+    {overridesSpell > 0 ? <div>{tooltipContentCopy[lang].replacesSpell}: ID {overridesSpell}</div> : null}
     {playerCondition > 0 ? <div className="db-tooltip-muted">PlayerCondition ID {playerCondition}</div> : null}
   </div>;
 }
@@ -428,8 +427,8 @@ function specializationName(id: number, lang: Lang) {
 
 function TooltipPrice({ buy, sell, lang }: { buy: number; sell: number; lang: Lang }) {
   return <div className="db-tooltip-price">
-    {buy > 0 ? <span>{lang === "ru" ? "Цена покупки" : "Buy price"}: {formatCopper(buy)}</span> : null}
-    {sell > 0 ? <span>{lang === "ru" ? "Цена продажи" : "Sell price"}: {formatCopper(sell)}</span> : null}
+    {buy > 0 ? <span>{tooltipContentCopy[lang].buyPrice}: {formatCopper(buy)}</span> : null}
+    {sell > 0 ? <span>{tooltipContentCopy[lang].sellPrice}: {formatCopper(sell)}</span> : null}
   </div>;
 }
 
@@ -460,7 +459,7 @@ function statName(id: number, lang: Lang) {
     72: ["Agility / Strength", "Ловкость / сила"], 73: ["Agility / Intellect", "Ловкость / интеллект"],
     74: ["Strength / Intellect", "Сила / интеллект"],
   };
-  return names[id]?.[lang === "ru" ? 1 : 0] ?? `${lang === "ru" ? "Характеристика" : "Stat"} #${id}`;
+  return names[id]?.[lang === "ru" ? 1 : 0] ?? `${tooltipContentCopy[lang].stat} #${id}`;
 }
 
 function acquisitionLabel(block: Record<string, unknown>, lang: Lang) {
@@ -468,12 +467,12 @@ function acquisitionLabel(block: Record<string, unknown>, lang: Lang) {
   const name = String(block.name ?? "");
   const location = String(block.location ?? "");
   if (sourceType === "encounter") {
-    const prefix = lang === "ru" ? "Добывается: " : "Dropped by: ";
+    const prefix = tooltipContentCopy[lang].droppedBy;
 		const chance = Number(block.chance_percent ?? 0);
     return `${prefix}${name || `Encounter #${String(block.source_id ?? "")}`}${location ? ` — ${location}` : ""}${chance > 0 ? ` — ${chance}%` : ""}`;
   }
-  if (sourceType === "crafting_recipe") return `${lang === "ru" ? "Создаётся по рецепту: " : "Crafted with: "}${name || `Spell #${String(block.source_id ?? "")}`}`;
-  return lang === "ru" ? "Источник: Blizzard API" : "Source: Blizzard API";
+  if (sourceType === "crafting_recipe") return `${tooltipContentCopy[lang].craftedWith}${name || `Spell #${String(block.source_id ?? "")}`}`;
+  return tooltipContentCopy[lang].sourceBlizzardApi;
 }
 
 function effectPrefix(trigger: number, lang: Lang) {
@@ -484,32 +483,32 @@ function effectPrefix(trigger: number, lang: Lang) {
 }
 
 function cleanWowText(value: string, lang: Lang) {
-  const scaling = lang === "ru" ? "масштабируемое количество" : "a scaling amount";
+  const scaling = tooltipContentCopy[lang].aScalingAmount;
   return value
     .replace(/\|c[0-9a-f]{8}/gi, "")
     .replace(/\|r/gi, "")
     .replace(/\$@spelldesc(\d+)/gi, "Spell #$1")
-    .replace(/\$z\b/g, lang === "ru" ? "место привязки" : "your home location")
+    .replace(/\$z\b/g, tooltipContentCopy[lang].yourHomeLocation)
     .replace(/\$\d+s\d+/gi, scaling)
     .replace(/\$s\d+/gi, scaling)
     .replace(/\$w\d+/gi, scaling)
-    .replace(/\$d\b/gi, lang === "ru" ? "указанного времени" : "the listed duration")
-    .replace(/\$t\d+/gi, lang === "ru" ? "указанный интервал" : "the listed interval")
-    .replace(/\$x\d+/gi, lang === "ru" ? "несколько" : "several")
+    .replace(/\$d\b/gi, tooltipContentCopy[lang].theListedDuration)
+    .replace(/\$t\d+/gi, tooltipContentCopy[lang].theListedInterval)
+    .replace(/\$x\d+/gi, tooltipContentCopy[lang].several)
     .replace(/\$\?[^[]+\[/g, "")
     .replace(/\]\[\]/g, "")
     .trim();
 }
 
 function formatCastTime(milliseconds: number, lang: Lang) {
-  if (milliseconds <= 0) return lang === "ru" ? "Мгновенное применение" : "Instant";
-  return `${formatDuration(milliseconds, lang)} ${lang === "ru" ? "применение" : "cast"}`;
+  if (milliseconds <= 0) return tooltipContentCopy[lang].instant;
+  return `${formatDuration(milliseconds, lang)} ${tooltipContentCopy[lang].cast}`;
 }
 
 function formatDuration(milliseconds: number, lang: Lang) {
   const seconds = milliseconds / 1000;
-  if (seconds >= 60 && seconds % 60 === 0) return `${seconds / 60} ${lang === "ru" ? "мин" : "min"}`;
-  return `${Number.isInteger(seconds) ? seconds : seconds.toFixed(1)} ${lang === "ru" ? "сек" : "sec"}`;
+  if (seconds >= 60 && seconds % 60 === 0) return `${seconds / 60} ${tooltipContentCopy[lang].min}`;
+  return `${Number.isInteger(seconds) ? seconds : seconds.toFixed(1)} ${tooltipContentCopy[lang].sec}`;
 }
 
 function formatPower(block: Record<string, unknown>, lang: Lang) {
@@ -517,7 +516,7 @@ function formatPower(block: Record<string, unknown>, lang: Lang) {
   const percent = Number(block.percent ?? 0);
   const powerType = Number(block.power_type ?? 0);
   const labels: Record<number, [string, string]> = { 0: ["Mana", "маны"], 1: ["Rage", "ярости"], 2: ["Focus", "концентрации"], 3: ["Energy", "энергии"] };
-  const label = labels[powerType]?.[lang === "ru" ? 1 : 0] ?? (lang === "ru" ? "ресурса" : "resource");
+  const label = labels[powerType]?.[lang === "ru" ? 1 : 0] ?? tooltipContentCopy[lang].resource;
   return `${percent > 0 ? `${formatGameNumber(percent)}%` : formatGameNumber(amount)} ${label}`;
 }
 
@@ -543,8 +542,8 @@ function requiredSkillLabel(skillID: number, rank: number, lang: Lang) {
     202: ["Engineering", "Инженерное дело"], 333: ["Enchanting", "Наложение чар"],
     755: ["Jewelcrafting", "Ювелирное дело"], 773: ["Inscription", "Начертание"],
   };
-  const name = skills[skillID]?.[lang === "ru" ? 1 : 0] ?? `${lang === "ru" ? "Навык" : "Skill"} ${skillID}`;
-  return `${lang === "ru" ? "Требуется" : "Requires"} ${name}${rank > 0 ? ` (${rank})` : ""}`;
+  const name = skills[skillID]?.[lang === "ru" ? 1 : 0] ?? `${tooltipContentCopy[lang].skill2} ${skillID}`;
+  return `${tooltipContentCopy[lang].requires} ${name}${rank > 0 ? ` (${rank})` : ""}`;
 }
 
 function inventoryTypeLabel(code: number, lang: Lang) {
@@ -556,7 +555,7 @@ function inventoryTypeLabel(code: number, lang: Lang) {
     16: ["Back", "Спина"], 17: ["Two-Hand", "Двуручное"], 21: ["Main Hand", "Правая рука"],
     22: ["Off Hand", "Левая рука"], 23: ["Held In Off-hand", "Левая рука"], 26: ["Ranged", "Дальний бой"],
   };
-  return labels[code]?.[lang === "ru" ? 1 : 0] ?? (lang === "ru" ? "Экипировка" : "Equipment");
+  return labels[code]?.[lang === "ru" ? 1 : 0] ?? tooltipContentCopy[lang].equipment;
 }
 
 function subclassLabel(classID: number, subclassID: number, lang: Lang) {

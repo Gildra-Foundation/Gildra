@@ -6,6 +6,7 @@ import type { CatalogProduct, LibraryDataset } from "@/lib/api/client";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
 import { libraryCopy, libraryGroupText } from "@/components/library/libraryCopy";
 import styles from "./library.module.css";
+import { libraryLandingCopy } from "./libraryLandingCopy";
 
 type Props = {
   lang: "en" | "ru";
@@ -31,7 +32,7 @@ function coveredPercent(value: number, total: number) {
 export function LibraryLanding({ lang, datasets, products, selectedProduct, unavailable = false }: Props) {
   const copy = libraryCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
-  const formatter = new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US");
+  const formatter = new Intl.NumberFormat(libraryLandingCopy[lang].numberLocale);
   const total = datasets.reduce((sum, dataset) => sum + dataset.entityCount, 0);
   const groups = Array.from(Map.groupBy(datasets, (dataset) => dataset.group));
   const productQuery = selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`;
@@ -48,7 +49,7 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
   ];
   const state = states.reduce<Freshness>((worst, next) => (severity.indexOf(next) > severity.indexOf(worst) ? next : worst), "fresh");
   const checkedText = checked
-    ? copy.checkedAt(checked.toLocaleString(lang === "ru" ? "ru-RU" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC")
+    ? copy.checkedAt(checked.toLocaleString(libraryLandingCopy[lang].numberLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC")
     : copy.neverChecked;
   const notice = state === "failed" ? { tone: "caution" as const, title: copy.failedTitle, text: copy.failedText }
     : state === "stale" || state === "empty" ? { tone: "caution" as const, title: copy.staleTitle, text: copy.staleText }
