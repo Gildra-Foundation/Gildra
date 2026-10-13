@@ -12,6 +12,7 @@ import { GameDashboard } from "./GameDashboard";
 import { preloadSharedWowBackdrop } from "@/lib/wow/sharedBackdropPreload";
 import homeStyles from "@/components/platform/home/rotationPageShell.module.css";
 import styles from "./gameHub.module.css";
+import { gameHubPageCopy } from "./gameHubPageCopy";
 
 type RoleSignalData = Record<TierRole, { entries: TierEntry[]; series: number[] }>;
 
@@ -45,7 +46,7 @@ export function GameHubPage({ data, intelligence, lang, gameId }: { data: Platfo
     tank: roleSignalData(intelligence.roles.tank, intelligence.metrics),
   } : undefined;
   const updated = Date.parse(intelligence.updatedAt) > 0
-    ? new Intl.DateTimeFormat(lang === "ru" ? "ru-RU" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(new Date(intelligence.updatedAt))
+    ? new Intl.DateTimeFormat(gameHubPageCopy[lang].dateLocale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(new Date(intelligence.updatedAt))
     : "—";
   const primaryMetric = intelligence.metrics[0];
   if (gameId === "wow") preloadSharedWowBackdrop();
@@ -56,16 +57,16 @@ export function GameHubPage({ data, intelligence, lang, gameId }: { data: Platfo
       <PlatformAtmosphere accent={definition.accent} />
       <PlatformHeader data={data} lang={lang} active="game" scopeLabel={definition.name} />
       <main className={styles.page}>
-        <nav className={styles.gameSwitch} aria-label={lang === "ru" ? "Игровые миры" : "Game worlds"} data-reveal>
+        <nav className={styles.gameSwitch} aria-label={gameHubPageCopy[lang].gameWorlds} data-reveal>
           {gameHubIds.map((id) => { const item = getGameHubDefinition(id, lang); return <Link href={gameHubHref(id, lang)} aria-current={id === gameId ? "page" : undefined} className={id === gameId ? styles.gameActive : ""} key={id}><img src={item.iconUrl} alt="" width="27" height="27" /><span>{item.name}</span><i /></Link>; })}
         </nav>
 
         <GameHero definition={definition} game={game} meta={meta} active={active} lang={lang} />
 
         <section className={styles.statusRail} data-reveal>
-          <div><Radio /><span><small>{intelligence.status === "unavailable" ? (lang === "ru" ? "Подключение данных" : "Data connection") : definition.copy.database}</small><b>{intelligence.providerLabel}</b></span><i className={`${styles.liveDot} ${styles[intelligence.status]}`} /></div>
+          <div><Radio /><span><small>{intelligence.status === "unavailable" ? gameHubPageCopy[lang].dataConnection : definition.copy.database}</small><b>{intelligence.providerLabel}</b></span><i className={`${styles.liveDot} ${styles[intelligence.status]}`} /></div>
           <div><TrendingUp /><span><small>{primaryMetric?.label ?? definition.copy.score}</small><b data-count>{primaryMetric?.value ?? "—"}</b></span></div>
-          <div><Database /><span><small>{lang === "ru" ? "Версия данных" : "Data version"}</small><b>{intelligence.version}</b></span></div>
+          <div><Database /><span><small>{gameHubPageCopy[lang].dataVersion}</small><b>{intelligence.version}</b></span></div>
           <div><Clock3 /><span><small>{definition.copy.updated}</small><b>{updated} UTC</b></span></div>
         </section>
 

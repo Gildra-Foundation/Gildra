@@ -1,12 +1,8 @@
-import type { Metadata } from "next";
+// Generated from app/(site)/wow/page.tsx by npm run routes:mirror — edit the English page.
 import { WowHome } from "@/components/wow/home/WowHome";
+import { sectionMetadata } from "@/lib/routes/metadata";
 
-export const metadata: Metadata = {
-  title: "World of Warcraft — Gildra",
-  description: "Хаб World of Warcraft с маршрутами Midnight, источниками и явным статусом проверки.",
-  alternates: { canonical: "/ru/wow", languages: { en: "/wow", ru: "/ru/wow", "x-default": "/wow" } },
-  robots: { index: false, follow: true },
-};
+export const metadata = sectionMetadata("wow", "ru");
 
 export default function Page() {
   return <WowHome lang="ru" />;

@@ -1,9 +1,7 @@
-import type { Metadata } from "next";
+// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
 import { WhatsNewPage } from "@/components/wow/whats-new";
+import { sectionMetadata } from "@/lib/routes/metadata";
 
-export const metadata: Metadata = {
-  title: "What's new — Gildra",
-  alternates: { canonical: "/wow/whats-new", languages: { en: "/wow/whats-new", ru: "/ru/wow/whats-new" } },
-  robots: { index: false, follow: true },
-};
+export const metadata = sectionMetadata("whatsNew", "en");
+
 export default function Page() { return <WhatsNewPage locale="en" />; }

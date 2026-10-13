@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import type { Lang } from "@/lib/i18n";
 import type { CatalogRecord } from "@/lib/api/client";
 import { TooltipBody, tooltipClassName } from "@/components/database/TooltipContent";
+import { databaseEntityTooltipCopy } from "./databaseEntityTooltipCopy";
 
 /**
  * Modal in-game tooltip opened from a catalog row (RecordPreviewButton loads
@@ -41,7 +42,7 @@ export function EntityTooltip({ entity, lang, iconSymbol, onClose }: { entity: C
 		<>
 			<div className="db-tooltip-backdrop" data-atlas-scope aria-hidden="true" onMouseDown={onClose} />
 			<div ref={dialogRef} data-atlas-scope className={tooltipClassName(entity, "dialog")} id={`tooltip-${entity.id}`} role="dialog" aria-modal="true" aria-labelledby={`tooltip-name-${entity.id}`} tabIndex={-1}>
-				<button ref={closeRef} type="button" className="db-tooltip-close" aria-label={lang === "ru" ? "Закрыть подсказку" : "Close tooltip"} onClick={onClose}>×</button>
+				<button ref={closeRef} type="button" className="db-tooltip-close" aria-label={databaseEntityTooltipCopy[lang].closeTooltip} onClick={onClose}>×</button>
 				<TooltipBody entity={entity} lang={lang} iconSymbol={iconSymbol} />
 			</div>
 		</>,

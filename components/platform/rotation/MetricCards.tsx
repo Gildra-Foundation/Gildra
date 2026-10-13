@@ -4,6 +4,7 @@ import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import type { RotationSimulationResult } from "@/lib/platform/rotation/types";
 import styles from "./rotationLab.module.css";
 import deferredLabStyles from "./rotationLabDeferred.module.css";
+import { metricCardsCopy } from "./metricCardsCopy";
 
 function compactDps(value: number) {
   return value >= 1_000_000 ? `${(value / 1_000_000).toFixed(2)}M` : `${Math.round(value / 1000)}K`;
@@ -36,7 +37,7 @@ export function MetricCards({ result, lang, stale = false, lastRunAt }: {
         <header>
           <span>{labels[result.scenario]}</span>
           <span className={deferredLabStyles.metricBadges}>
-            <small>{result.baselineIncluded === false ? (lang === "ru" ? "Оценка кандидата" : "Candidate score") : result.baselineDelta === 0 ? tr("Baseline") : `${result.baselineDelta > 0 ? "+" : ""}${result.baselineDelta}%`}</small>
+            <small>{result.baselineIncluded === false ? metricCardsCopy[lang].candidateScore : result.baselineDelta === 0 ? tr("Baseline") : `${result.baselineDelta > 0 ? "+" : ""}${result.baselineDelta}%`}</small>
             <small className={stale ? deferredLabStyles.metricStale : deferredLabStyles.metricLive}><CheckCircle2 /> {stale ? tr("Outdated result") : tr("Live result")}</small>
           </span>
         </header>
@@ -44,12 +45,12 @@ export function MetricCards({ result, lang, stale = false, lastRunAt }: {
         <div className={styles.metricRows}>{result.metrics.map((metric) => <span key={metric.label}><strong>{metric.value}</strong><small>{tr(metric.label)}</small></span>)}</div>
       </article>
       <article className={styles.detailCard}>
-        <header><span>{tr("Simulation Details")}</span><small><DatabaseZap /> {liveSimC ? "SIMULATIONCRAFT" : lang === "ru" ? "ЛОКАЛЬНЫЙ РАСЧЁТ" : "LOCAL CALCULATION"}</small></header>
+        <header><span>{tr("Simulation Details")}</span><small><DatabaseZap /> {liveSimC ? "SIMULATIONCRAFT" : metricCardsCopy[lang].localCalculation}</small></header>
         <dl>
-          <div><dt>{tr("Fight Length")}</dt><dd>{result.fightLengthSeconds} {lang === "ru" ? "с" : "s"}</dd></div>
+          <div><dt>{tr("Fight Length")}</dt><dd>{result.fightLengthSeconds} {metricCardsCopy[lang].unitS}</dd></div>
           <div><dt>{tr("Targets")}</dt><dd>{result.targets}</dd></div>
-          <div><dt>{tr("Iterations")}</dt><dd>{result.iterations.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}</dd></div>
-          <div><dt>{tr("Engine")}</dt><dd>{liveSimC ? result.engine : lang === "ru" ? "Встроенная модель Gildra" : "Gildra built-in model"}</dd></div>
+          <div><dt>{tr("Iterations")}</dt><dd>{result.iterations.toLocaleString(metricCardsCopy[lang].numberLocale)}</dd></div>
+          <div><dt>{tr("Engine")}</dt><dd>{liveSimC ? result.engine : metricCardsCopy[lang].gildraBuiltInModel}</dd></div>
         </dl>
         <div className={deferredLabStyles.detailFooter}>
           <div className={deferredLabStyles.confidence}><strong>{result.confidence}%</strong><span>{tr("Confidence")}</span></div>

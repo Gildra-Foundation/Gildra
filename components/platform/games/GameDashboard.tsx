@@ -10,6 +10,7 @@ import type { GameIntelligence, TierEntry, TierRole } from "@/lib/platform/games
 import { OptimizedResilientImage } from "@/components/media/OptimizedResilientImage";
 import { GameTierSignal } from "./GameTierSignal";
 import styles from "./gameHub.module.css";
+import { gameDashboardCopy } from "./gameDashboardCopy";
 
 const icons: Record<HubIcon, typeof Radar> = {
   radar: Radar, swords: Swords, route: Map, database: Database,
@@ -43,7 +44,7 @@ function localHref(href: string, lang: Lang) {
 export function GameDashboard({ definition, intelligence, lang, meta, active, build, patch, recommendation, roleSignals }: Props) {
   const prefix = lang === "ru" ? "/ru" : "";
   const compareHref = definition.id === "diablo" ? `${prefix}/profile/arcanist` : `${prefix}/compare?game=${definition.id}`;
-  const formatNumber = (value: number) => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US", { notation: value >= 10_000 ? "compact" : "standard", maximumFractionDigits: 1 }).format(value);
+  const formatNumber = (value: number) => new Intl.NumberFormat(gameDashboardCopy[lang].numberLocale, { notation: value >= 10_000 ? "compact" : "standard", maximumFractionDigits: 1 }).format(value);
 
   return (
     <div className={styles.dashboard}>
@@ -53,7 +54,7 @@ export function GameDashboard({ definition, intelligence, lang, meta, active, bu
           {definition.modules.map((module) => {
             const Icon = icons[module.icon];
             return <Link href={localHref(module.href, lang)} className={styles.moduleCard} key={module.title} data-reveal-item>
-              <span className={styles.moduleIcon}><Icon /></span><small>{intelligence.status === "unavailable" ? (lang === "ru" ? "ПРЕВЬЮ" : "PREVIEW") : module.badge}</small><h3>{module.title}</h3><p>{module.description}</p><b>{definition.copy.open}<ArrowRight /></b>
+              <span className={styles.moduleIcon}><Icon /></span><small>{intelligence.status === "unavailable" ? gameDashboardCopy[lang].preview : module.badge}</small><h3>{module.title}</h3><p>{module.description}</p><b>{definition.copy.open}<ArrowRight /></b>
             </Link>;
           })}
         </div>
@@ -72,7 +73,7 @@ export function GameDashboard({ definition, intelligence, lang, meta, active, bu
         <section className={styles.patchPanel} data-reveal>
           <header><span>{definition.copy.patchIntel}</span><Link href={`${prefix}/patches`}>{definition.copy.open}<ArrowRight /></Link></header>
           <div>{patch?.changes.map((change) => <article key={change.text}><i className={styles[change.kind]}>{change.kind === "buff" ? "↑" : change.kind === "nerf" ? "↓" : "✦"}</i><p>{change.text}</p><small>{change.kind}</small></article>)}</div>
-          {!patch?.changes.length ? <p className={styles.noSignal}>{lang === "ru" ? "Новых сигналов нет." : "No new signals."}</p> : null}
+          {!patch?.changes.length ? <p className={styles.noSignal}>{gameDashboardCopy[lang].noNewSignals}</p> : null}
         </section>
       </aside>
 
@@ -84,7 +85,7 @@ export function GameDashboard({ definition, intelligence, lang, meta, active, bu
         roles={roleSignals}
       /> : <section className={styles.signalPanel} data-reveal>
         <header className={styles.signalHeading}>
-          <div><span>{intelligence.providerLabel}</span><h2>{intelligence.mode === "tier-list" ? (lang === "ru" ? "Живой тир-лист Mythic+" : "Live Mythic+ tier list") : intelligence.mode === "catalog" ? (lang === "ru" ? "Живая библиотека" : "Live library") : (lang === "ru" ? "Подключение данных" : "Data connection")}</h2></div>
+          <div><span>{intelligence.providerLabel}</span><h2>{intelligence.mode === "tier-list" ? gameDashboardCopy[lang].liveMythicTierList : intelligence.mode === "catalog" ? gameDashboardCopy[lang].liveLibrary : gameDashboardCopy[lang].dataConnection}</h2></div>
           <span className={`${styles.sourceState} ${styles[intelligence.status]}`}>{intelligence.status === "live" ? "LIVE" : intelligence.status.toUpperCase()}</span>
         </header>
         {intelligence.mode === "catalog" ? <div className={styles.catalogSignalContent}>
@@ -97,7 +98,7 @@ export function GameDashboard({ definition, intelligence, lang, meta, active, bu
             <span><strong>{entity.name}</strong><small>{entity.subtitle}</small></span><ArrowRight />
           </Link>)}</div>
         </div> : <div className={styles.pendingSignal}>
-          <Database /><div><strong>{lang === "ru" ? "Ожидается провайдер данных" : "Waiting for a data provider"}</strong><p>{intelligence.message}</p></div>
+          <Database /><div><strong>{gameDashboardCopy[lang].waitingForAData}</strong><p>{intelligence.message}</p></div>
         </div>}
       </section>}
 

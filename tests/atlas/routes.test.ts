@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 
 import { routeSections, trail, type RouteSection } from "../../lib/routes/registry.ts";
 import { atlasScenes } from "../../lib/atlas/scenes.ts";
+import { sectionMetadata } from "../../lib/routes/metadata.ts";
 
 const sections = routeSections as Record<string, RouteSection>;
 
@@ -17,6 +18,13 @@ describe("route registry", () => {
       if (section.scene) assert.ok(section.scene in atlasScenes, `scene ${section.scene}`);
     });
   }
+  it("derives canonical and hreflang of a section page from its path", () => {
+    const meta = sectionMetadata("lairs", "ru");
+    assert.equal(meta.title, "Логова и мировые боссы Midnight Season 2 — Gildra");
+    assert.deepEqual(meta.alternates, { canonical: "/ru/wow/lairs", languages: { en: "/wow/lairs", ru: "/ru/wow/lairs", "x-default": "/wow/lairs" } });
+    assert.deepEqual(meta.robots, { index: false, follow: true });
+    assert.equal(sectionMetadata("database", "en").robots, undefined);
+  });
   it("builds breadcrumbs through the parents", () => {
     assert.deepEqual(trail("ru", "lairs"), [{ label: "World of Warcraft", href: "/ru/wow" }, { label: "Логова и мировые боссы" }]);
     assert.deepEqual(trail("en", "raids", { label: "The Voidspire" }), [{ label: "World of Warcraft", href: "/wow" }, { label: "Raids", href: "/wow/raids" }, { label: "The Voidspire" }]);

@@ -1,3 +1,4 @@
+// Generated from app/(site)/wow/classes/[class]/[spec]/opengraph-image.tsx by npm run routes:mirror — edit the English page.
 import { ogImage, ogStaticParams } from "@/lib/og/routes";
 
 export const alt = "Gildra — World of Warcraft";

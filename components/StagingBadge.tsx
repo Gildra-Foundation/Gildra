@@ -13,5 +13,6 @@ const isStaging = () => document.cookie.split("; ").includes("gildra-env=staging
 export function StagingBadge() {
   const staging = useSyncExternalStore(noSubscribe, isStaging, () => false);
   if (!staging) return null;
-  return <div className="staging-badge" role="note">Staging</div>;
+  // An aside landmark: axe wants every piece of content inside a landmark.
+  return <aside className="staging-badge" aria-label="Environment">Staging</aside>;
 }

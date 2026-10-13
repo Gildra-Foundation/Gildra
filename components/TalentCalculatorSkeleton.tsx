@@ -1,10 +1,11 @@
 import { TalentTreePanel } from "@/components/talents/TalentTreePanel";
 import { talentCalculatorCopy, type TalentCopyLang } from "@/components/talents/talentCalculatorCopy";
+import { talentCalculatorSkeletonCopy } from "./talentCalculatorSkeletonCopy";
 
 /** Neutral route skeleton: same page toolbar and tree frames as the calculator, no second site header. */
 export function TalentCalculatorSkeleton({ lang = "ru" }: { lang?: TalentCopyLang }) {
   const copy = talentCalculatorCopy[lang];
-  const loadingLabel = lang === "ru" ? "Загрузка калькулятора талантов" : "Loading the talent calculator";
+  const loadingLabel = talentCalculatorSkeletonCopy[lang].loadingTheTalentCalculator;
   return (
     <main className="talent-calculator tc-skeleton" lang={lang} data-atlas-scope="" data-loading-theme="neutral" aria-busy="true" aria-label={loadingLabel}>
       <section className="tc-commandbar" aria-hidden="true">

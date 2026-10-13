@@ -21,6 +21,7 @@ import identityStyles from "./rotationSpecIdentity.module.css";
 import spread from "./rotationBookSpread.module.css";
 import motion from "./rotationMotion.module.css";
 import shell from "./rotationLabShell.module.css";
+import { rotationLabPageCopy } from "./rotationLabPageCopy";
 
 /** The character profile prints the lab on book foldouts; the standalone page needs no wrapper. */
 function BookFoldout({ enabled, children }: { enabled: boolean; children: ReactNode }) {
@@ -73,7 +74,7 @@ function configsMatch(a: SimulationConfig | null, b: SimulationConfig) {
 function simulationErrorMessage(message: string, tr: (value: string) => string, lang: Lang) {
   const normalized = message.toLowerCase();
   if (normalized.includes("healer") || normalized.includes("hps") || normalized.includes("unsupported_combat_model")) {
-    return lang === "ru" ? "Для лекарей нужен отдельный расчёт HPS и приоритетов лечения. Поддельный DPS здесь не показываем." : "Healers require a dedicated HPS and healing-priority model. We do not show fake DPS here.";
+    return rotationLabPageCopy[lang].healersRequireADedicated;
   }
   if (normalized.includes("temporarily_unavailable") || normalized.includes("unavailable") || normalized.includes("503")) {
     return tr("Simulation engine is temporarily unavailable.");
@@ -202,7 +203,7 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
         kind: "rotation", gameBuild: preset.patch || "unknown", profileFingerprint,
         scenario: { id: payload.scenario, durationSeconds: payload.fightLengthSeconds, targets: payload.targets },
         engine: payload.engine, metrics: { dps: payload.dps, deltaPercent: payload.baselineDelta, confidence: payload.confidence, iterations: payload.iterations },
-        label: `${lang === "ru" ? "Ротация" : "Rotation"} · ${payload.scenario}`,
+        label: `${rotationLabPageCopy[lang].rotation} · ${payload.scenario}`,
       }).catch(() => undefined);
     } catch (reason) {
       if (controller.signal.aborted || requestId.current !== id) return;
@@ -294,7 +295,7 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
       kind: "rotation", gameBuild: preset.patch || "unknown", profileFingerprint,
       scenario: { id: optimized.scenario, durationSeconds: optimized.fightLengthSeconds, targets: optimized.targets },
       engine: optimized.engine, metrics: { dps: optimized.dps, deltaPercent: optimized.baselineDelta, confidence: optimized.confidence, iterations: optimized.iterations },
-      label: `${lang === "ru" ? "Оптимизированная ротация" : "Optimized rotation"} · ${optimized.scenario}`,
+      label: `${rotationLabPageCopy[lang].optimizedRotation} · ${optimized.scenario}`,
     }).catch(() => undefined);
   };
   const changePriority = (nextRules: string[]) => {
@@ -319,7 +320,7 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
         </div>
         <div className={styles.titleBlock}>
           <span className={styles.eyebrow}>{theme ? `${lang === "ru" ? theme.classNameRu : theme.className} · ${lang === "ru" ? theme.roleRu : theme.role}`.toUpperCase() : preset.className.toUpperCase()}</span>
-          <div className={styles.titleRow}><strong className={styles.embeddedHeroTitle}>{lang === "ru" ? "Ротация и урон" : "Rotation and damage"}</strong></div>
+          <div className={styles.titleRow}><strong className={styles.embeddedHeroTitle}>{rotationLabPageCopy[lang].rotationAndDamage}</strong></div>
         </div>
       </section> : null}
 
@@ -386,7 +387,7 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
               {displayResult && (!compactAnalysis || analysisView === "opener") ? <details className={`${styles.openerPreview} ${connectedEmbed ? motion.chapter : ""}`} open={compactAnalysis || undefined}><summary><span>{tr("Opening sequence")}</span><small>{tr("First actions from the simulation")}</small><ChevronDown /></summary><ol>{opener.map((ability, index) => ability ? <li key={`${ability.id}-${index}`}><b>{index + 1}</b><AbilityIcon ability={ability} /><span>{ability.name}</span><i aria-hidden="true">›</i></li> : null)}</ol></details> : null}
             </div>
           </BookFoldout>
-          {displayResult ? <p className={`${shell.modelNote} ${connectedEmbed ? spread.leafNotes : ""}`} data-atlas-ui><Info aria-hidden="true" /> {personalReference ? (lang === "ru" ? "SimulationCraft рассчитал DPS, кулдауны, ресурсы и проки по последнему снимку этого персонажа из Battle.net." : "SimulationCraft calculated DPS, cooldowns, resources, and procs from this character's latest Battle.net snapshot.") : liveReference ? (lang === "ru" ? "SimulationCraft рассчитал механику на эталонном профиле специализации. Подключите персонажа для персонального DPS." : "SimulationCraft calculated mechanics on the specialization reference profile. Connect a character for personal DPS.") : (lang === "ru" ? "Точного результата нет: упрощённую оценку не выдаём за SimulationCraft." : "No exact result is available; a simplified estimate is never presented as SimulationCraft.")}</p> : null}
+          {displayResult ? <p className={`${shell.modelNote} ${connectedEmbed ? spread.leafNotes : ""}`} data-atlas-ui><Info aria-hidden="true" /> {personalReference ? rotationLabPageCopy[lang].simulationcraftCalculatedDpsCooldowns : liveReference ? rotationLabPageCopy[lang].simulationcraftCalculatedMechanicsOn : rotationLabPageCopy[lang].noExactResultIs}</p> : null}
         </section>
       </div>}
     </Root>

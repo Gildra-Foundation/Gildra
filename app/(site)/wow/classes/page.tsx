@@ -1,13 +1,9 @@
-import type { Metadata } from "next";
+// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
 import { ClassCatalogPage } from "@/components/wow/classes/ClassCatalogPage";
+import { sectionMetadata } from "@/lib/routes/metadata";
 
-const path = "/wow/classes";
-export const metadata: Metadata = {
-  title: "WoW Classes and Specializations — Gildra",
-  description: "Every Midnight class and specialization with a link to its talent tree from the Raidbots data snapshot.",
-  alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
-  robots: { index: false, follow: true },
-};
+export const metadata = sectionMetadata("classes", "en");
+
 export default function Page() {
   return <ClassCatalogPage locale="en" />;
 }

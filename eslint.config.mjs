@@ -18,6 +18,19 @@ const otherFeature = (feature) => ({
   message: "A feature module uses its own files, components/wow/shared, the kit and lib/ — move shared pieces to components/wow/shared.",
 });
 
+const iconRule = {
+  selector: "Literal[value=/^\\/assets\\/(abilities|classes|specs)\\/[^/]+\\.(jpe?g|png|webp)$/]",
+  message: "Game icons resolve only through lib/games/wow/assets.ts (specIcon, classIcon, abilityIcon).",
+};
+// A word pair, not a path, a locale code or an empty side.
+const words = (side) => `[${side}.type='Literal'][${side}.value=/[A-Za-zА-Яа-яЁё]/]:not([${side}.value=/^(\\/|#|https?:|en$|ru$|en_US$|ru_RU$)/])`;
+const copyMessage = "Put the words in the component's *Copy.ts ({ en, ru }) and read copy[locale].key.";
+const copyRules = [
+  { selector: `ConditionalExpression[test.operator='==='][test.right.value=/^(ru|en)$/]${words("consequent")}${words("alternate")}`, message: copyMessage },
+  { selector: `ConditionalExpression[test.type='Identifier'][test.name=/^(ru|isRu|isRussian)$/]${words("consequent")}${words("alternate")}`, message: copyMessage },
+];
+const frozenCopy = ["components/platform/home/**", "components/platform/navigation/**", "components/wow/audit/**", "components/wow/characters/**"];
+
 const config = [
   ...nextVitals,
   ...nextTs,
@@ -69,14 +82,23 @@ const config = [
   })),
   // Icon rule (roadmap item 7): components and routes take game icons from
   // lib/games/wow/assets.ts, never a hard-coded path (data mappings in lib/ may).
+  // Copy rule (roadmap item 76): words live in a *Copy.ts with en/ru sides
+  // (tests/atlas/copy.test.ts checks both have the same keys), not in inline
+  // `lang === "ru" ? "…" : "…"` ternaries. The landing and the book keep theirs
+  // (they are frozen at 0 px); a *Copy.ts may branch on the locale itself.
   {
     files: ["components/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
-    rules: {
-      "no-restricted-syntax": ["error", {
-        selector: "Literal[value=/^\\/assets\\/(abilities|classes|specs)\\/[^/]+\\.(jpe?g|png|webp)$/]",
-        message: "Game icons resolve only through lib/games/wow/assets.ts (specIcon, classIcon, abilityIcon).",
-      }],
-    },
+    ignores: [...frozenCopy, "**/*Copy.ts"],
+    rules: { "no-restricted-syntax": ["error", iconRule, ...copyRules] },
+  },
+  {
+    files: [...frozenCopy, "components/**/*Copy.ts"],
+    rules: { "no-restricted-syntax": ["error", iconRule] },
+  },
+  {
+    files: ["lib/**/*.{ts,tsx}"],
+    ignores: ["lib/wow/battleNet*.ts", "lib/platform/home/**", "**/*Copy.ts"],
+    rules: { "no-restricted-syntax": ["error", ...copyRules] },
   },
   {
     files: ["**/*.cjs"],

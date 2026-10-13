@@ -1,3 +1,4 @@
+// Generated from app/(site)/cms-preview/page.tsx by npm run routes:mirror — edit the English page.
 import { ArticlePreviewPage, previewMetadata } from "@/components/cms/ArticlePreview";
 
 export const dynamic = "force-dynamic";

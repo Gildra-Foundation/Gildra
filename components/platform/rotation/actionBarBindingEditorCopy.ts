@@ -1,0 +1,31 @@
+/** Strings of ActionBarBindingEditor.tsx in both languages (roadmap item 76). */
+export const actionBarBindingEditorCopy = {
+  en: {
+    cancelKeyBinding: "Cancel key binding",
+    keyRecorder: "Key recorder",
+    theBrowserDidNot: "The browser did not recognise this key. Try another.",
+    pressAKeyOr: "Press a key or combination…",
+    newBinding: "New binding",
+    recordAgain: "Record again",
+    reassign: "Reassign",
+    assign: "Assign",
+    clearBinding: "Clear binding",
+    chooseAssignToSave: "Choose Assign to save.",
+    yourBrowserOrOperating: "Your browser or operating system may intercept this combination. Another binding is more reliable for training.",
+    lettersIncludingNonLatin: "Letters (including non-Latin layouts), numbers, F-keys, NumPad, Tab, Space and arrows; Ctrl / Shift / Alt / Meta. For mouse bindings, use right/middle/side click or scroll over the recorder. Esc cancels. Left click is reserved for the interface; system shortcuts may be unavailable.",
+  },
+  ru: {
+    cancelKeyBinding: "Отменить назначение клавиши",
+    keyRecorder: "Запись клавиши",
+    theBrowserDidNot: "Эту клавишу браузер не распознал. Попробуйте другую.",
+    pressAKeyOr: "Нажмите клавишу или сочетание…",
+    newBinding: "Новое назначение",
+    recordAgain: "Другая клавиша",
+    reassign: "Переназначить",
+    assign: "Назначить",
+    clearBinding: "Убрать бинд",
+    chooseAssignToSave: "Нажмите «Назначить», чтобы сохранить.",
+    yourBrowserOrOperating: "Эту комбинацию может перехватывать браузер или система. Для тренировки надёжнее выбрать другую.",
+    lettersIncludingNonLatin: "Буквы (в том числе при русской раскладке), цифры, F-клавиши, NumPad, Tab, пробел и стрелки; Ctrl / Shift / Alt / Meta. Для мыши — наведите сюда и нажмите ПКМ, колесо, боковую кнопку или прокрутите колесо. Esc — отмена. ЛКМ оставлена для управления сайтом; системные сочетания могут быть недоступны.",
+  },
+};

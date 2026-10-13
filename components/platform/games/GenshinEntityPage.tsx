@@ -9,6 +9,7 @@ import type { Lang } from "@/lib/i18n";
 import type { GenshinDetailRecord, GenshinEntityDetail, GenshinEntityKind } from "@/lib/games/genshin/detail";
 import type { PlatformHomeData } from "@/lib/platform/home/types";
 import styles from "./genshinEntity.module.css";
+import { genshinEntityPageCopy } from "./genshinEntityPageCopy";
 
 const text = {
   en: { back: "Genshin command center", source: "Live PostgreSQL catalog", overview: "Overview", records: "Database records", talents: "Talents", constellations: "Constellations", refinements: "Refinements", pieces: "Artifact pieces", sources: "Acquisition sources", empty: "No additional records in this release", id: "Game ID" },
@@ -49,9 +50,9 @@ export function GenshinEntityPage({ home, entity, kind, lang }: { home: Platform
   const description = entity.description || entity.passiveDescription || entity.fourPieceBonus || entity.twoPieceBonus || entity.title || "";
   const metrics = [
     [t.id, entity.externalId],
-    [lang === "ru" ? "Редкость" : "Rarity", rarity],
-    [lang === "ru" ? "Тип" : "Type", entity.weaponType || entity.element || (kind === "artifact-sets" ? "Artifact Set" : "Character")],
-    [lang === "ru" ? "Регион" : "Region", entity.region || entity.secondaryStat || (entity.baseAttack ? String(entity.baseAttack) : "—")],
+    [genshinEntityPageCopy[lang].rarity, rarity],
+    [genshinEntityPageCopy[lang].type, entity.weaponType || entity.element || (kind === "artifact-sets" ? "Artifact Set" : "Character")],
+    [genshinEntityPageCopy[lang].region, entity.region || entity.secondaryStat || (entity.baseAttack ? String(entity.baseAttack) : "—")],
   ];
   const sectionNames = kind === "characters" ? [t.talents, t.constellations] : kind === "weapons" ? [t.refinements, ""] : [t.pieces, t.sources];
 

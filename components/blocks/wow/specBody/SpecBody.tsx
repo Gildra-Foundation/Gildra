@@ -5,6 +5,7 @@ import { p as lp, t as tr } from "@/lib/i18n";
 import type { BlockComponentProps } from "@/lib/blocks/types";
 import type { SpecBodyData, SpecBodyProps } from "./schema";
 import { num } from "./data";
+import { specBodyCopy } from "./specBodyCopy";
 
 const DIR = { up: "▲", down: "▼", flat: "—" } as const;
 
@@ -113,7 +114,7 @@ export function SpecBody({ data, lang, game }: BlockComponentProps<SpecBodyProps
       </div>
 
       <p className="sp-note">
-        {lang === "ru" ? "Сезонный срез по" : "Season snapshot based on"} {liveStats.runs}+{" "}
+        {specBodyCopy[lang].seasonSnapshotBasedOn} {liveStats.runs}+{" "}
         {tt("runs, updated")} {tt(liveStats.updated)}.
       </p>
 

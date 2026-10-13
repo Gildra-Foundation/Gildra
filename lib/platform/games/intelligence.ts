@@ -4,6 +4,7 @@ import type { PlatformGameId } from "@/lib/platform/home/types";
 import { getCatalogEntityTypes, getLibraryDatasets } from "@/lib/api/client";
 import { apiInternalUrl } from "@/lib/env";
 import { runtimeFlags } from "@/lib/flags";
+import { intelligenceCopy } from "./intelligenceCopy";
 
 export type IntelligenceStatus = "live" | "degraded" | "unavailable";
 export type TierRole = "dps" | "healer" | "tank";
@@ -162,11 +163,11 @@ function unavailable(gameId: PlatformGameId, lang: Lang, message?: string): Game
     mode: "pending",
     version: "—",
     updatedAt: new Date(0).toISOString(),
-    providerLabel: lang === "ru" ? "Источник не подключён" : "Provider not connected",
+    providerLabel: intelligenceCopy[lang].providerNotConnected,
     metrics: [],
     entities: [],
     sources: [],
-    message: message ?? (lang === "ru" ? "Живой источник данных пока недоступен." : "The live data provider is not available yet."),
+    message: message ?? intelligenceCopy[lang].theLiveDataProvider,
   };
 }
 
@@ -194,14 +195,14 @@ async function wowIntelligence(lang: Lang): Promise<GameIntelligence> {
     updatedAt: dps.updatedAt,
     providerLabel: "Wowhead + wow.gg",
     metrics: [
-      { label: lang === "ru" ? "Специализации" : "Specializations", value: entityTypes.find((type) => type.type === "specialization")?.count ?? dps.entries.length, href: `${lang === "ru" ? "/ru" : ""}/tier-lists` },
-      { label: lang === "ru" ? "Записи библиотеки" : "Library records", value: totalEntities, href: `${lang === "ru" ? "/ru" : ""}/library` },
-      { label: lang === "ru" ? "Активные источники" : "Active sources", value: liveSources },
+      { label: intelligenceCopy[lang].specializations, value: entityTypes.find((type) => type.type === "specialization")?.count ?? dps.entries.length, href: `${lang === "ru" ? "/ru" : ""}/tier-lists` },
+      { label: intelligenceCopy[lang].libraryRecords, value: totalEntities, href: `${lang === "ru" ? "/ru" : ""}/library` },
+      { label: intelligenceCopy[lang].activeSources, value: liveSources },
     ],
     entities: datasets.filter((item) => item.entityCount > 0).slice(0, 5).map((item) => ({
       id: item.slug,
       name: item.name,
-      subtitle: `${item.entityCount.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} · ${item.freshness}`,
+      subtitle: `${item.entityCount.toLocaleString(intelligenceCopy[lang].numberLocale)} · ${item.freshness}`,
       imageUrl: item.previewImageUrl,
       href: `${lang === "ru" ? "/ru" : ""}/library/${item.slug}`,
     })),
@@ -229,10 +230,10 @@ async function genshinIntelligence(lang: Lang): Promise<GameIntelligence> {
     updatedAt: status.publishedAt ?? new Date(0).toISOString(),
     providerLabel: "Genshin DB · Gildra API",
     metrics: [
-      { label: lang === "ru" ? "Персонажи" : "Characters", value: status.characters, href: `${lang === "ru" ? "/ru" : ""}/search?game=genshin&type=characters` },
-      { label: lang === "ru" ? "Оружие" : "Weapons", value: status.weapons, href: `${lang === "ru" ? "/ru" : ""}/search?game=genshin&type=items` },
-      { label: lang === "ru" ? "Сеты артефактов" : "Artifact sets", value: status.artifactSets, href: `${lang === "ru" ? "/ru" : ""}/compare?game=genshin&kind=artifact-sets` },
-      { label: lang === "ru" ? "Записи мира" : "World records", value: status.contentEntries },
+      { label: intelligenceCopy[lang].characters, value: status.characters, href: `${lang === "ru" ? "/ru" : ""}/search?game=genshin&type=characters` },
+      { label: intelligenceCopy[lang].weapons, value: status.weapons, href: `${lang === "ru" ? "/ru" : ""}/search?game=genshin&type=items` },
+      { label: intelligenceCopy[lang].artifactSets, value: status.artifactSets, href: `${lang === "ru" ? "/ru" : ""}/compare?game=genshin&kind=artifact-sets` },
+      { label: intelligenceCopy[lang].worldRecords, value: status.contentEntries },
     ],
     entities: characters.data.map((item) => ({
       id: String(item.id), name: item.name,
@@ -258,10 +259,10 @@ async function leagueIntelligence(lang: Lang): Promise<GameIntelligence> {
     updatedAt: status.publishedAt ?? new Date(0).toISOString(),
     providerLabel: "Riot Data Dragon · Gildra API",
     metrics: [
-      { label: lang === "ru" ? "Чемпионы" : "Champions", value: status.champions, href: `${lang === "ru" ? "/ru" : ""}/search?game=league&type=characters` },
-      { label: lang === "ru" ? "Умения" : "Abilities", value: status.abilities },
-      { label: lang === "ru" ? "Предметы" : "Items", value: status.contentByCategory.items ?? 0, href: `${lang === "ru" ? "/ru" : ""}/compare?game=league&kind=items` },
-      { label: lang === "ru" ? "Руны" : "Runes", value: status.contentByCategory.runes ?? 0, href: `${lang === "ru" ? "/ru" : ""}/compare?game=league&kind=runes` },
+      { label: intelligenceCopy[lang].champions, value: status.champions, href: `${lang === "ru" ? "/ru" : ""}/search?game=league&type=characters` },
+      { label: intelligenceCopy[lang].abilities, value: status.abilities },
+      { label: intelligenceCopy[lang].items, value: status.contentByCategory.items ?? 0, href: `${lang === "ru" ? "/ru" : ""}/compare?game=league&kind=items` },
+      { label: intelligenceCopy[lang].runes, value: status.contentByCategory.runes ?? 0, href: `${lang === "ru" ? "/ru" : ""}/compare?game=league&kind=runes` },
     ],
     entities: champions.data.map((item) => ({
       id: String(item.id), name: item.name,
@@ -278,16 +279,12 @@ export async function getGameIntelligence(gameId: PlatformGameId, lang: Lang): P
     // /v1/meta/wow is not in the currently deployed OpenAPI contract. Do not
     // generate six known 404 requests and then present an ambiguous fallback.
     if (gameId === "wow" && !runtimeFlags().wowMetaApi) {
-      return unavailable("wow", lang, lang === "ru"
-        ? "API меты WoW ещё не опубликован. Рейтинги не заменяются демонстрационными данными."
-        : "The WoW meta API is not published yet. Rankings are not replaced with demo data.");
+      return unavailable("wow", lang, intelligenceCopy[lang].theWowMetaApi);
     }
     if (gameId === "wow") return await wowIntelligence(lang);
     if (gameId === "genshin") return await genshinIntelligence(lang);
     if (gameId === "league") return await leagueIntelligence(lang);
-    return unavailable("diablo", lang, lang === "ru"
-      ? "API меты Diablo IV ещё не подключён. Страница не подменяет его демонстрационными рейтингами."
-      : "The Diablo IV meta API is not connected yet. This page does not replace it with demo rankings.");
+    return unavailable("diablo", lang, intelligenceCopy[lang].theDiabloIvMeta);
   } catch (error) {
     console.error(`game intelligence unavailable for ${gameId}`, error);
     return unavailable(gameId, lang);

@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import { SpecEmblem } from "./SpecEmblem";
 import styles from "./TalentTreePanel.module.css";
+import { talentTreePanelCopy } from "./talentTreePanelCopy";
 
 type PanelVariant = "class" | "hero" | "spec";
 
@@ -43,9 +44,9 @@ export function TalentTreePanel({ lang = "ru", appearance = "atlas", specSlug, v
         <div className={styles.heading}><small>{eyebrow}</small><h2>{title}</h2></div>
       </div>
       {secondary ? <div className={styles.secondary}>{secondary}</div> : null}
-      <span className={styles.counter} aria-label={loading ? lang === "ru" ? "Данные дерева загружаются" : "Loading talent tree" : lang === "ru" ? `${spent} из ${budget} очков, ${nodeCount} узлов` : `${spent} of ${budget} points, ${nodeCount} nodes`}>
+      <span className={styles.counter} aria-label={loading ? talentTreePanelCopy[lang].loadingTalentTree : lang === "ru" ? `${spent} из ${budget} очков, ${nodeCount} узлов` : `${spent} of ${budget} points, ${nodeCount} nodes`}>
         <strong><b>{loading ? "—" : spent}</b><i>/</i>{loading ? "—" : budget}</strong>
-        <small>{loading ? lang === "ru" ? "загрузка" : "loading" : `${nodeCount} ${lang === "ru" ? "узлов" : "nodes"}`}</small>
+        <small>{loading ? talentTreePanelCopy[lang].loading : `${nodeCount} ${talentTreePanelCopy[lang].nodes}`}</small>
       </span>
       {manuscript ? <span className={styles.manuscriptRule} aria-hidden="true"><Image src="/assets/wow/character-book/talent-divider-v1.png" alt="" width={2079} height={756} sizes="(max-width: 768px) 760px, 1200px" draggable={false} /></span> : null}
     </header>

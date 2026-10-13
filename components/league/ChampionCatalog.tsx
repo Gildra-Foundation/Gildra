@@ -7,6 +7,7 @@ import type { LeagueChampion } from "@/lib/games/league-of-legends/api";
 import { GAMES, gameHref } from "@/lib/games/registry";
 import type { Lang } from "@/lib/i18n";
 import styles from "./league.module.css";
+import { championCatalogCopy } from "./championCatalogCopy";
 
 const roles = ["All", "Assassin", "Fighter", "Mage", "Marksman", "Support", "Tank"];
 const game = GAMES["league-of-legends"];
@@ -25,7 +26,7 @@ export function ChampionCatalog({ champions, lang }: { champions: LeagueChampion
       <label className={styles.search}>
         <span aria-hidden="true">⌕</span>
         <span className="sr-only">Search champions</span>
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={lang === "ru" ? "Найти чемпиона" : "Search champions"} />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={championCatalogCopy[lang].searchChampions} />
         <kbd>/</kbd>
       </label>
       <div className={styles.roleTabs} aria-label="Champion role">

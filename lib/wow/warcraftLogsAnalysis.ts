@@ -1,3 +1,4 @@
+import { warcraftLogsAnalysisCopy } from "./warcraftLogsAnalysisCopy";
 export type WarcraftLogsCooldownReference = { spellId: number; name: string; expectedIntervalSeconds: number; expectedFirstUseSeconds?: number; expectedUses?: number[] };
 export type WarcraftLogsSimComparison = { status: "comparable" | "duration_mismatch" | "target_mismatch" | "dynamic_targets" | "death" | "unavailable"; durationDeltaPercent?: number; observedTargets: number; simulatedTargets?: number };
 export type WarcraftLogsEvent = { type?: string; timestamp?: number; abilityGameID?: number; sourceID?: number; targetID?: number; amount?: number; absorbed?: number; resourceChange?: number; waste?: number };
@@ -46,7 +47,7 @@ function finding(id: string, severity: WarcraftLogsFinding["severity"], title: s
 }
 
 export function analyzeWarcraftLog(payload: AnalyzePayload, input: { fightID: number; actorID: number; specSlug: string; locale?: "en" | "ru"; simDps?: number; simDurationSeconds?: number; simTargets?: number; cooldowns: WarcraftLogsCooldownReference[] }): WarcraftLogsAnalysis {
-  const locale = input.locale === "en" ? "en-US" : "ru-RU";
+  const locale = warcraftLogsAnalysisCopy[input.locale === "ru" ? "ru" : "en"].numberLocale;
   const text = (ru: string, en: string) => input.locale === "en" ? en : ru;
   const decimal = (value: number) => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value);
   const integer = (value: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value);

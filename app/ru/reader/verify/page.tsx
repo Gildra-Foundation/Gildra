@@ -1,3 +1,4 @@
+// Generated from app/(site)/reader/verify/page.tsx by npm run routes:mirror — edit the English page.
 import { ReaderPage, readerMetadata } from "@/components/cms/ReaderPage";
 
 export const dynamic = "force-dynamic";

@@ -1,3 +1,4 @@
+// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
 // Hidden for the WoW-only MVP: renderGenshinEntityPage() answers 404 (see lib/mvp.ts).
 import { renderGenshinEntityPage } from "@/lib/games/genshin/detail-page";
 export const dynamic = "force-dynamic";
