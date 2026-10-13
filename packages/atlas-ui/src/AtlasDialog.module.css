@@ -12,8 +12,9 @@
 }
 
 .dialog::backdrop {
-  background: rgba(3, 4, 5, .72);
-  backdrop-filter: blur(3px);
+  /* A plain veil: a blur under the dialog was recomputed for every frame of the
+     page's living layers and made typing in the dialog sluggish. */
+  background: rgba(3, 4, 5, .78);
 }
 
 .dialog[open] { animation: atlas-dialog-in var(--atlas-duration) var(--atlas-ease) both; }

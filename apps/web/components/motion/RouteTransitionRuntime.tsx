@@ -7,6 +7,7 @@ import { isBookPagePath, isCharacterAuthRedirect, shouldTurnBook } from "./route
 import { RouteThemeController } from "./RouteThemeController";
 import styles from "./routeTransition.module.css";
 import { lessMotion } from "@/lib/client/motionPreference";
+import { nameMorphArt } from "@gildra/atlas-ui/morph";
 
 /**
  * Page-to-page transition of the whole site. A burning fuse along the top bar
@@ -173,7 +174,11 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
         // Remember the intent so the eventual App Router commit stays quiet too.
         expectedPath.current = destination.pathname;
         settle();
-      } else if (destination) begin(destination.pathname);
+      } else if (destination) {
+        // Only the tapped picture becomes the shared element of the hand-over.
+        if (anchor) nameMorphArt(anchor);
+        begin(destination.pathname);
+      }
     };
     const navigateAnchor = (event: MouseEvent) => {
       if (event.defaultPrevented) return; // Next Link and local handlers already own navigation.
