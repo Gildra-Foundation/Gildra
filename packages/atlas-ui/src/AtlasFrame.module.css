@@ -74,17 +74,12 @@
   animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
 }
 
-/* The living layers rest while nobody can watch them: during a page hand-over
-   (the new page's snapshot then stays still instead of being re-rendered every
-   frame) and while a dialog covers the page (its backdrop is then painted once,
-   not under moving layers: search typing went from ~520 to ~130 ms per key on a
-   desktop, 2026-10-13). The browser already stops them when scrolled away. */
-:global(:root:active-view-transition) .atmosphere::before,
-:global(:root:active-view-transition) .art,
-:global(:root:active-view-transition) .artLayer,
-:global(:root:active-view-transition) .artLayer *,
-:global(:root:active-view-transition) .embers::before,
-:global(:root:active-view-transition) .embers::after,
+/* The living layers rest while a dialog covers the page: its backdrop is then
+   painted once, not under moving layers (search typing went from ~490 to ~110 ms
+   per key on a desktop, 2026-10-13). The browser already stops them when
+   scrolled away. They keep running through a page hand-over: a
+   :root:active-view-transition pause cost the first new frame 40–110 ms on a
+   phone (a restyle right before the snapshot) and gained nothing measurable. */
 :global(:root:has(dialog[open])) .atmosphere::before,
 :global(:root:has(dialog[open])) .art,
 :global(:root:has(dialog[open])) .artLayer,
