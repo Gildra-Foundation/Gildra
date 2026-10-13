@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ApiLocale } from "@/lib/games/registry";
+import { apiInternalUrl } from "@/lib/env";
 
 export type GenshinEntityKind = "characters" | "weapons" | "artifact-sets";
 
@@ -50,7 +51,7 @@ export type GenshinEntityDetail = {
   sources?: GenshinDetailRecord[];
 };
 
-const apiURL = () => (process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
+const apiURL = () => apiInternalUrl();
 
 export async function getGenshinEntityDetail(kind: GenshinEntityKind, slug: string, locale: ApiLocale) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;

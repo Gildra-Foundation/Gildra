@@ -3,8 +3,9 @@ import type { Lang } from "@/lib/i18n";
 import { fallbackPlatformHome } from "./fallback";
 import { upgradePlatformHomeMedia } from "./media";
 import type { PlatformHomeData } from "./types";
+import { apiInternalUrl } from "@/lib/env";
 
-const apiURL = () => (process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
+const apiURL = () => apiInternalUrl();
 
 function isPlatformHomeData(value: unknown): value is PlatformHomeData {
   if (!value || typeof value !== "object") return false;

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { apiInternalUrl } from "@/lib/env";
 
 export async function POST(request: NextRequest) {
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > 64 * 1024) {
     return NextResponse.json({ message: "Payload too large" }, { status: 413 });
   }
-  const apiURL = process.env.API_INTERNAL_URL ?? "http://api:8080";
+  const apiURL = apiInternalUrl();
   const response = await fetch(`${apiURL}/v1/analytics/events`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

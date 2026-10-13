@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { apiInternalUrl } from "@/lib/env";
 
 export async function GET(
   request: NextRequest,
@@ -10,7 +11,7 @@ export async function GET(
     return NextResponse.json({ message: "Invalid catalog entity ID" }, { status: 400 });
   }
   const locale = request.nextUrl.searchParams.get("locale") === "ru_RU" ? "ru_RU" : "en_US";
-  const apiURL = process.env.API_INTERNAL_URL ?? "http://api:8080";
+  const apiURL = apiInternalUrl();
   const session = request.cookies.get("gildra_admin_session")?.value;
   const headers = session ? { Cookie: `gildra_admin_session=${encodeURIComponent(session)}` } : undefined;
   let response: Response;

@@ -7,8 +7,9 @@ import type { RotationPreset } from "./types";
 import { resolveRotationAbilitySpellId } from "./spellIds";
 import { localizeRotationCatalog, rotationResourceLabel } from "./locale";
 import { getLocalizedTalentSpells } from "@/lib/wow/localizedTalentSpells";
+import { apiInternalUrl } from "@/lib/env";
 
-const apiURL = () => (process.env.ROTATION_WORKER_URL ?? process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
+const apiURL = () => (process.env.ROTATION_WORKER_URL ?? apiInternalUrl()).replace(/\/$/, "");
 
 function isPreset(value: unknown): value is RotationPreset {
   if (!value || typeof value !== "object") return false;

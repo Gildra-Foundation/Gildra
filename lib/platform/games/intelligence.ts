@@ -2,6 +2,7 @@ import "server-only";
 import type { Lang } from "@/lib/i18n";
 import type { PlatformGameId } from "@/lib/platform/home/types";
 import { getCatalogEntityTypes, getLibraryDatasets } from "@/lib/api/client";
+import { apiInternalUrl } from "@/lib/env";
 
 export type IntelligenceStatus = "live" | "degraded" | "unavailable";
 export type TierRole = "dps" | "healer" | "tank";
@@ -141,7 +142,7 @@ type TierContextsResponse = { contexts: TierContext[] };
 
 type RemotePage<T> = { data: T[] };
 
-const apiURL = () => (process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
+const apiURL = () => apiInternalUrl();
 const gameIntelligenceTimeoutMs = 3_000;
 
 async function apiRequest<T>(path: string, revalidate = 300): Promise<T> {

@@ -9,6 +9,7 @@ import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from
 import { getBattleNetCharacterBySlug } from "@/lib/wow/battleNetCharacters";
 import { attachBattleNetArmory } from "@/lib/platform/rotation/battleNetEngineInput";
 import { validateAplRules } from "@/lib/platform/rotation/apl";
+import { apiInternalUrl } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ const MAX_BODY_BYTES = 16_384;
 const RESULT_CACHE_MS = 30_000;
 const configuredRateLimit = Number(process.env.ROTATION_RATE_LIMIT_PER_MINUTE ?? 40);
 const RATE_LIMIT_PER_MINUTE = Number.isFinite(configuredRateLimit) ? Math.min(60, Math.max(20, configuredRateLimit)) : 40;
-const apiURL = () => (process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
+const apiURL = () => apiInternalUrl();
 const workerURL = () => process.env.ROTATION_WORKER_URL?.replace(/\/$/, "");
 const scenarios = new Set<RotationScenario>(["single-target", "aoe", "execute"]);
 const abilityId = /^[a-z0-9][a-z0-9-]{1,63}$/;

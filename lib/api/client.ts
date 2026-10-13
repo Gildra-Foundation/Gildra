@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { components } from "./schema";
+import { apiInternalUrl } from "@/lib/env";
 
 export type AnalyticsOverview = components["schemas"]["AnalyticsOverview"];
 export type GameEntity = components["schemas"]["GameEntity"];
@@ -39,7 +40,7 @@ const emptyOverview = (hours: number): AnalyticsOverview => ({
 });
 
 function apiURL() {
-  return process.env.API_INTERNAL_URL ?? "http://api:8080";
+  return apiInternalUrl();
 }
 
 async function catalogFetchOptions(revalidate: number, tags: string[] = []) {

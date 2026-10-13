@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiInternalUrl } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +8,7 @@ const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
 export async function GET(_request: Request, context: { params: Promise<{ token: string }> }) {
   const { token } = await context.params;
   if (!tokenPattern.test(token)) return NextResponse.json({ code: "share_unavailable" }, { status: 404 });
-  const upstreamBase = (process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
+  const upstreamBase = apiInternalUrl();
   try {
     const response = await fetch(`${upstreamBase}/v1/wow/shared/${token}`, { cache: "no-store", signal: AbortSignal.timeout(8_000) });
     const body = await response.text();

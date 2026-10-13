@@ -9,6 +9,7 @@ import {
   type PlatformCatalogItem,
   type SearchKind,
 } from "./types";
+import { apiInternalUrl } from "@/lib/env";
 
 type RemotePage<T> = { data: T[]; pagination?: { hasMore?: boolean; nextCursor?: string } };
 type GenshinWeapon = {
@@ -33,7 +34,7 @@ type LeagueChampion = {
   assets?: { icon?: string };
 };
 
-const apiURL = () => (process.env.API_INTERNAL_URL ?? "http://api:8080").replace(/\/$/, "");
+const apiURL = () => apiInternalUrl();
 // Unfiltered catalog text search ranks every locale and alias and takes
 // 6–20 s on production (2026-10-12); a 3 s cut-off showed "temporarily
 // unavailable" for most queries. Stopgap until the API query is indexed.
