@@ -229,3 +229,8 @@ export const midnightRaids: Record<RaidSlug, RaidDefinition> = {
 export function getMidnightRaid(slug?: string) {
   return slug ? midnightRaids[slug as RaidSlug] : undefined;
 }
+
+/** The painting behind a raid's page: The Voidspire has a wide scene of its own, the others use their artwork. */
+export function raidSceneArt(raid: { slug: string; artwork: string }) {
+  return raid.slug === "the-voidspire" ? "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp" : raid.artwork;
+}

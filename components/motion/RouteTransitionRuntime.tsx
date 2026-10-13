@@ -59,6 +59,14 @@ function clickDestination(event: MouseEvent, includeOptOut = false) {
 }
 
 const reducedMotion = () => lessMotion();
+
+/** "deeper" into a section, "up" towards its hub (or back in history), "across" between siblings. */
+function navigationDirection(from: string, to: string, popped: boolean) {
+  if (popped) return "up";
+  const depth = (path: string) => path.replace(/^\/ru(?=\/|$)/, "").split("/").filter(Boolean).length;
+  const [a, b] = [depth(from), depth(to)];
+  return b > a ? "deeper" : b < a ? "up" : "across";
+}
 const viewTransitions = () => typeof document.startViewTransition === "function";
 
 /** One shell survives App Router navigation. Page content never gets an artificial remount key. */
@@ -71,6 +79,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const router = useRouter();
   const frameRef = useRef<HTMLDivElement>(null);
   const committedPath = useRef(pathname);
+  const poppedHistory = useRef(false);
   const expectedPath = useRef(pathname);
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const arrival = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -138,6 +147,10 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     if (pathname === committedPath.current) return;
     const from = committedPath.current;
     committedPath.current = pathname;
+    // Direction of the page hand-over (app/styles/view-transitions.css). Set during the
+    // commit, before the browser builds the ::view-transition tree.
+    document.documentElement.dataset.navDirection = navigationDirection(from, pathname, poppedHistory.current);
+    poppedHistory.current = false;
     if (isCharacterAuthRedirect(from, pathname) && expectedPath.current === from) {
       // A protected character page resolved through the sign-in redirect: same turn.
       expectedPath.current = pathname;
@@ -168,7 +181,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       event.preventDefault();
       router.push(destination.pathname + destination.search + destination.hash);
     };
-    const history = () => begin(window.location.pathname);
+    const history = () => { poppedHistory.current = true; begin(window.location.pathname); };
     let prefetchTimer: ReturnType<typeof setTimeout> | undefined;
     const warm = (event: PointerEvent | FocusEvent) => {
       const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;

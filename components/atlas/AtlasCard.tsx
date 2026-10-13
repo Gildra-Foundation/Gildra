@@ -1,8 +1,10 @@
-import type { CSSProperties, ReactNode } from "react";
+import { ViewTransition, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
+import { artMorphName } from "@/lib/atlas/morph";
+import { AtlasMorphPreload } from "./AtlasMorphPreload";
 import styles from "./AtlasCard.module.css";
 
 export type AtlasCardImage = { src: string; alt: string; sizes?: string; priority?: boolean; position?: string };
@@ -35,27 +37,33 @@ export type AtlasCardProps = {
   headingLevel?: 2 | 3;
   /** Portrait entries (bosses) lean towards the pointer. */
   tilt?: boolean;
+  /** The picture morphs into the opened page's scene (that page sets AtlasFrame morphKey). Only for one card per destination on a page. */
+  morph?: boolean;
+  /** Scene of the opened page when it is not the card's own picture (warmed on hover for the morph). */
+  morphArt?: string;
   className?: string;
 };
 
 /** Illustrated entry of an atlas list: raid, dungeon, boss, lair. */
-export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, tilt = false, className }: AtlasCardProps) {
+export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, tilt = false, morph = false, morphArt, className }: AtlasCardProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const style = { "--atlas-card-accent": accent, "--atlas-card-art-ratio": artRatio } as CSSProperties;
+  const picture = image ? (
+    <Image
+      src={image.src}
+      alt={image.alt}
+      fill
+      sizes={image.sizes ?? (layout === "feature" ? "(max-width: 900px) 100vw, 55vw" : "(max-width: 620px) 100vw, (max-width: 1100px) 50vw, 25vw")}
+      priority={image.priority}
+      style={image.position ? { objectPosition: image.position } : undefined}
+    />
+  ) : null;
   return (
     <article className={clsx(styles.card, styles[layout], className)} style={style} data-spotlight data-tilt={tilt || undefined}>
       <Link className={styles.link} href={href}>
         <div className={styles.art}>
-          {image ? (
-            <Image
-              src={image.src}
-              alt={image.alt}
-              fill
-              sizes={image.sizes ?? (layout === "feature" ? "(max-width: 900px) 100vw, 55vw" : "(max-width: 620px) 100vw, (max-width: 1100px) 50vw, 25vw")}
-              priority={image.priority}
-              style={image.position ? { objectPosition: image.position } : undefined}
-            />
-          ) : <span className={styles.artEmpty} aria-hidden="true" />}
+          {picture ? (morph ? <ViewTransition name={artMorphName(href)} share="atlas-art-morph">{picture}</ViewTransition> : picture) : <span className={styles.artEmpty} aria-hidden="true" />}
+          {morph && (morphArt ?? image?.src) ? <AtlasMorphPreload art={(morphArt ?? image?.src) as string} /> : null}
           <span className={styles.shade} aria-hidden="true" />
           {artBadge ? <span className={styles.artBadge}>{artBadge}</span> : null}
           {artCaption ? <span className={styles.artCaption}>{artCaption}</span> : null}

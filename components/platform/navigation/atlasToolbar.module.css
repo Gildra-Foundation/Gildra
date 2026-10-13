@@ -45,7 +45,7 @@
   cursor: pointer;
   font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   letter-spacing: .04em;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .launcher:hover { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
@@ -111,3 +111,7 @@
   .locale a { min-width: 34px; padding: 0 6px; }
   .title { font-size: 17px; letter-spacing: .14em; }
 }
+
+/* Press feedback, as on every atlas control. */
+.launcher:active { scale: var(--atlas-press-scale); }
+@media (prefers-reduced-motion: reduce) { .launcher:active { scale: none; } }

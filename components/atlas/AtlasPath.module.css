@@ -53,7 +53,7 @@
   border: 1px solid var(--atlas-line-soft);
   background: var(--atlas-surface);
   text-decoration: none;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .card::before {
@@ -227,3 +227,7 @@
   .card:hover .art img,
   .card:focus-visible .art img { transform: none; }
 }
+
+/* Press feedback (path steps). */
+.card:active { scale: var(--atlas-press-scale-card); }
+@media (prefers-reduced-motion: reduce) { .card:active { scale: none; } }

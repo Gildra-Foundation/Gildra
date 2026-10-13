@@ -9,7 +9,7 @@
   border: 1px solid var(--atlas-line-soft);
   background: var(--atlas-surface);
   text-decoration: none;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .tile:hover { border-color: var(--atlas-accent); background: var(--atlas-surface-raised); }
@@ -104,7 +104,18 @@
       animation-timeline: view();
       animation-range: entry 0% entry 80%;
     }
+    /* Arriving from another page: tiles follow one after another (order from AtlasGrid). */
+    :global([data-route-arrived]) .tile {
+      animation: atlas-tile-rise linear both, atlas-tile-arrive .48s var(--atlas-ease) both;
+      animation-timeline: view(), auto;
+      animation-range: entry 0% entry 80%, normal;
+      animation-delay: 0s, calc(var(--atlas-stagger) * (6 + var(--atlas-cascade-index, 0)));
+    }
   }
+}
+
+@keyframes atlas-tile-arrive {
+  from { opacity: 0; translate: 0 calc(var(--atlas-reveal-shift) / 3); }
 }
 
 @keyframes atlas-tile-rise {
@@ -117,3 +128,7 @@
   .chevron { transition: none; }
   .tile:hover .chevron { transform: none; }
 }
+
+/* Press feedback (tiles). */
+.tile:active { scale: var(--atlas-press-scale-card); }
+@media (prefers-reduced-motion: reduce) { .tile:active { scale: none; } }

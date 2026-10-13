@@ -11,7 +11,7 @@
   background: var(--atlas-surface-sunken);
   cursor: pointer;
   font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
-  transition: color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
+  transition: color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .trigger:hover { color: var(--atlas-text-strong); border-color: var(--atlas-accent); }
@@ -125,3 +125,8 @@
   /* Icon only on phones; the label stays for screen readers. */
   .triggerLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
+
+/* Press feedback, as on every atlas control. */
+.trigger:active,
+.close:active { scale: var(--atlas-press-scale); }
+@media (prefers-reduced-motion: reduce) { .trigger:active, .close:active { scale: none; } }

@@ -16,7 +16,7 @@
   line-height: 1.2;
   text-decoration: none;
   cursor: pointer;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .button svg { width: 16px; height: 16px; flex: none; transition: transform var(--atlas-duration) var(--atlas-ease); }
@@ -48,3 +48,7 @@
 @media (max-width: 720px) {
   .sm { min-height: var(--atlas-control-height); }
 }
+
+/* Press feedback, the same on every control of the atlas. */
+.button:active:not(:disabled, [aria-disabled="true"]) { scale: var(--atlas-press-scale); }
+@media (prefers-reduced-motion: reduce) { .button:active { scale: none; } }

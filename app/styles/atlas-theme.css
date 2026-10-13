@@ -119,6 +119,9 @@
   --atlas-duration-art: .55s;           /* artwork zoom on hover */
   --atlas-duration-enter: .62s;         /* arrival of a page: hero and sections */
   --atlas-stagger: 60ms;                /* step of an arrival cascade */
+  /* Press: every control answers a press the same way (roadmap item 47) */
+  --atlas-press-scale: .97;             /* buttons and small controls */
+  --atlas-press-scale-card: .99;        /* cards, tiles, path steps */
   /* Scroll reveal of cards and section flourishes (CSS scroll-driven, no JS) */
   --atlas-reveal-shift: 26px;
 
