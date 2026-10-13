@@ -4,8 +4,13 @@ import { Suspense } from "react";
 import { TalentCalculatorWithLocalization } from "@/components/talents/TalentCalculatorWithLocalization";
 import { TalentCalculatorSkeleton } from "@/components/TalentCalculatorSkeleton";
 import { getMidnightTalentPageData } from "@/lib/talentCalculatorData";
-import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
+import { getTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
+import { pairedAlternates } from "@/lib/seo/metadata";
 import { getTalentSpecStyles } from "@/lib/talentSpecStyles";
+
+// Only the known specs exist: any other slug is a 404 before the loading screen streams.
+export const dynamicParams = false;
+export const generateStaticParams = () => talentSpecThemes.map(({ slug }) => ({ spec: slug }));
 
 type PageProps = { params: Promise<{ spec: string }>; searchParams: Promise<{ hero?: string }> };
 
@@ -15,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${theme.specName} ${theme.className} Talent Calculator — Gildra`,
     description: `Interactive Midnight talent calculator for ${theme.specName} ${theme.className}, sourced from a provenance-marked community snapshot.`,
-    alternates: { canonical: `/talents/${theme.slug}` },
+    alternates: pairedAlternates("en", `/talents/${theme.slug}`),
     robots: { index: false, follow: true },
   };
 }
