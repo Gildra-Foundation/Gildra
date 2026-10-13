@@ -1,19 +1,35 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useTenantSelection } from "@payloadcms/plugin-multi-tenant/client";
+import { useRouteTransition } from "@payloadcms/ui";
+import { useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { SITE_COOKIE } from "../admin/siteCookie";
 
-/** Select `siteID` in the sidebar "Site" selector (cookie `payload-tenant`) and open `href`. */
-export function chooseSite(siteID: string, href: string) {
-  document.cookie = `${SITE_COOKIE}=${encodeURIComponent(siteID)}; Path=/; SameSite=Lax`;
-  window.location.assign(href);
+/**
+ * Select a site in the sidebar "Site" selector (cookie `payload-tenant`) and
+ * open `href` inside the app, without reloading the page. Payload's list and
+ * create views follow the selected site.
+ */
+export function useChooseSite() {
+  const router = useRouter();
+  const { startRouteTransition } = useRouteTransition();
+  const tenants = useTenantSelection();
+  return useCallback(
+    (siteID: string, href: string) => {
+      const option = tenants?.options?.find((o) => String(o.value) === siteID);
+      if (option && tenants?.setTenant) tenants.setTenant({ id: option.value, refresh: false });
+      else document.cookie = `${SITE_COOKIE}=${encodeURIComponent(siteID)}; Path=/; SameSite=Lax`;
+      startRouteTransition(() => router.push(href));
+    },
+    [router, startRouteTransition, tenants],
+  );
 }
 
 /**
- * Admin link scoped to one site. Payload's list and create views follow the
- * selected site, so the link switches the selector first; without JavaScript it
- * still opens `href` with whatever site is selected.
+ * Admin link scoped to one site: switches the site selector first, then opens
+ * `href`. Without JavaScript it still opens `href` with whatever site is selected.
  */
 export function SiteLink({
   siteID,
@@ -28,13 +44,14 @@ export function SiteLink({
   children: React.ReactNode;
   title?: string;
 }) {
+  const chooseSite = useChooseSite();
   return (
     <a
       href={href}
       className={className}
       title={title}
       onClick={(event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
         event.preventDefault();
         chooseSite(siteID, href);
       }}

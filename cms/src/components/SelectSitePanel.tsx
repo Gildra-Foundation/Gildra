@@ -1,9 +1,10 @@
 "use client";
 
+import { Link } from "@payloadcms/ui";
 import React, { useEffect, useRef, useState } from "react";
 
 import { type AdminLang, ADMIN_TEXT } from "../admin/text";
-import { chooseSite } from "./SiteLink";
+import { useChooseSite } from "./SiteLink";
 
 type Site = { id: string; name: string; domain: string; game: string };
 
@@ -26,12 +27,13 @@ export function SelectSitePanel({
   const noun = t.nouns[collection] ?? collection;
   const heading = useRef<HTMLParagraphElement>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const chooseSite = useChooseSite();
   useEffect(() => heading.current?.focus(), []);
 
   if (sites.length === 0) {
     return (
       <p role="alert" tabIndex={-1} ref={heading}>
-        {t.chooseSiteNone(noun)} <a href={listHref}>{t.back}</a>
+        {t.chooseSiteNone(noun)} <Link href={listHref}>{t.back}</Link>
       </p>
     );
   }
@@ -61,7 +63,7 @@ export function SelectSitePanel({
         ))}
       </ul>
       <p style={{ marginTop: 16 }}>
-        <a href={listHref}>{t.cancel}</a>
+        <Link href={listHref}>{t.cancel}</Link>
       </p>
     </div>
   );
