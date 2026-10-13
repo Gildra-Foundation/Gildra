@@ -15,7 +15,7 @@ file or secret touched. RiftDen details: `riftden-platform/docs/cms.md`.
 | Guides link | `components/blocks/wow/guides/GuidesSection.tsx` ("View All Guides" → `/wow/articles` when the CMS is configured, otherwise the existing dead link) |
 | Invalidation | `app/api/cms/revalidate/route.ts` |
 | Readers | `app/api/readers/[action]/route.ts`, `components/cms/{ReaderApp,ReaderPage}.tsx`, `components/cms/reader.module.css`, `app/reader/{,verify,reset-password}/page.tsx`, `app/ru/reader/...` |
-| Plausible | `components/cms/PlausibleTracker.tsx` in `app/layout.tsx` |
+| Plausible | `components/cms/PlausibleTracker.tsx` in `app/root-document.tsx` (apps/web) |
 | Tests | `tests/cms/{richtext,revalidation,readers}.test.ts`, `tests/cms/revalidate-e2e.mjs`, `tests/cms/readers-e2e.mjs`; scripts `test:cms`, `test:cms:revalidate-e2e`, `test:cms:readers-e2e` in `package.json` |
 
 Environment (all server-side): `CMS_INTERNAL_URL`, `CMS_SITE_SLUG` (default

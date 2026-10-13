@@ -18,7 +18,7 @@ the values are. Do not duplicate the contract here.
 2. **Understand the flow.** Identify the affected user flow and the existing
    components/patterns that own it. Check `git status`/`git diff` and the
    current render before planning. Reuse existing tokens, components,
-   `data/site.ts` and `lib/gameAssets.ts` — no duplicate sources, no invented
+   `data/site.ts` and `lib/games/wow/assets.ts` (paths under `apps/web/`) — no duplicate sources, no invented
    assets or data.
 
 3. **Capture a baseline.** With a local server running:

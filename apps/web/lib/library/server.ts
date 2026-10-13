@@ -13,6 +13,22 @@ export async function catalogSessionPresent() {
   return Boolean((await cookies()).get("gildra_admin_session")?.value);
 }
 
+/** The catalog can be read on this request: public mode or an administrator session. */
+export async function catalogReadable() {
+  return runtimeFlags().catalogPublic || (await catalogSessionPresent());
+}
+
+/** Display name of a library dataset ("pvp-talents" → "PvP-таланты"), or a tidy slug when the catalog is closed or unavailable. */
+export async function libraryDatasetName(slug: string, locale: "en_US" | "ru_RU") {
+  const fallback = slug.replaceAll("-", " ").replace(/^\w/, (letter) => letter.toUpperCase());
+  if (!(await catalogReadable())) return fallback;
+  try {
+    return (await getLibraryDatasets(locale)).find((dataset) => dataset.slug === slug)?.name ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function requireCatalogSession(path: string) {
   if (runtimeFlags().catalogPublic) return;
   if (await catalogSessionPresent()) return;

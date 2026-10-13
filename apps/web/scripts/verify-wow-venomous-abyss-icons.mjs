@@ -190,7 +190,7 @@ async function mapConcurrent(rows, worker) {
 }
 
 function serializable(row) {
-  const { bytes, issues, verified, ...result } = row;
+  const { bytes: _bytes, issues: _issues, verified: _verified, ...result } = row;
   return result;
 }
 
