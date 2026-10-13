@@ -1,3 +1,4 @@
+// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
 import { ogImage } from "@/lib/og/routes";
 
 export const alt = "Gildra — World of Warcraft";

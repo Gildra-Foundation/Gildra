@@ -1,3 +1,4 @@
+// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
 import { ArticlePreviewPage, previewMetadata } from "@/components/cms/ArticlePreview";
 
 export const dynamic = "force-dynamic";

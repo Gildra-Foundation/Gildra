@@ -1,3 +1,4 @@
+// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
 import { ArticleDetailPage, articleMetadata } from "@/components/cms/Articles";
 
 // New CMS slugs render on first request; cached fetches are tagged for /api/cms/revalidate.

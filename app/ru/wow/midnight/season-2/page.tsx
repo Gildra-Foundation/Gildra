@@ -1,12 +1,8 @@
-import type { Metadata } from "next";
+// Generated from app/(site)/wow/midnight/season-2/page.tsx by npm run routes:mirror — edit the English page.
 import { SeasonTwoHub } from "@/components/wow/season2/SeasonTwoHub";
+import { sectionMetadata } from "@/lib/routes/metadata";
 
-export const metadata: Metadata = {
-  title: "WoW Midnight Season 2 — гайд Gildra",
-  description: "Обзор Midnight Season 2 с отслеживаемыми источниками. Непроверенные item level и награды не считаются достоверными.",
-  alternates: { canonical: "/ru/wow/midnight/season-2", languages: { en: "/wow/midnight/season-2", ru: "/ru/wow/midnight/season-2", "x-default": "/wow/midnight/season-2" } },
-  robots: { index: false, follow: true },
-};
+export const metadata = sectionMetadata("season2", "ru");
 
 export default function Page() {
   return <SeasonTwoHub locale="ru" />;

@@ -19,3 +19,6 @@ lairs, delves…) and follows one contract:
 - **Routes:** `npm run new:page -- <path> <name>` writes `app/(site)/<path>/page.tsx`
   and its `app/ru/<path>/page.tsx` mirror (`npm run routes:check` keeps them paired);
   `npm run new:og -- <path> <kind>` adds the link-preview images.
+  When the page takes its words from `*Copy.ts` and its metadata from
+  `lib/routes/metadata.ts`, start it with the `// routes:mirror` line and let
+  `npm run routes:mirror` write the `/ru` twin.

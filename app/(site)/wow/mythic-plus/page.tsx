@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
 import { MythicAtlasPage } from "@/components/wow/mythic/MythicAtlasPage";
+import { sectionMetadata } from "@/lib/routes/metadata";
 
-export const metadata: Metadata = { title: "Midnight Mythic+ — Gildra", robots: { index: false, follow: true } };
+export const metadata = sectionMetadata("mythicPlus", "en");
 export default function Page() { return <MythicAtlasPage locale="en" />; }

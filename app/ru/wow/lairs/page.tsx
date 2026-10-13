@@ -1,13 +1,6 @@
-import type { Metadata } from "next";
+// Generated from app/(site)/wow/lairs/page.tsx by npm run routes:mirror — edit the English page.
 import { LairsHub } from "@/components/wow/lairs/LairsHub";
+import { sectionMetadata } from "@/lib/routes/metadata";
 
-export const metadata: Metadata = {
-  title: "Логова и мировые боссы Midnight Season 2 — Gildra",
-  description: "Логово и мировые боссы Midnight Season 2: где найти, способности, сложность и добыча.",
-  alternates: { canonical: "/ru/wow/lairs", languages: { en: "/wow/lairs", ru: "/ru/wow/lairs", "x-default": "/wow/lairs" } },
-  robots: { index: false, follow: true },
-};
-
-export default function LairsPage() {
-  return <LairsHub />;
-}
+export const metadata = sectionMetadata("lairs", "ru");
+export default function LairsPage() { return <LairsHub locale="ru" />; }

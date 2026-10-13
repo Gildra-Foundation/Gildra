@@ -1,3 +1,4 @@
+// Generated from app/(site)/wow/articles/page.tsx by npm run routes:mirror — edit the English page.
 import { ArticlesIndexPage, articlesIndexMetadata } from "@/components/cms/Articles";
 
 export const metadata = articlesIndexMetadata("ru");

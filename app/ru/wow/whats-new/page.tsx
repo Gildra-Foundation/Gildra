@@ -1,9 +1,7 @@
-import type { Metadata } from "next";
+// Generated from app/(site)/wow/whats-new/page.tsx by npm run routes:mirror — edit the English page.
 import { WhatsNewPage } from "@/components/wow/whats-new";
+import { sectionMetadata } from "@/lib/routes/metadata";
 
-export const metadata: Metadata = {
-  title: "Что нового — Gildra",
-  alternates: { canonical: "/ru/wow/whats-new", languages: { en: "/wow/whats-new", ru: "/ru/wow/whats-new" } },
-  robots: { index: false, follow: true },
-};
+export const metadata = sectionMetadata("whatsNew", "ru");
+
 export default function Page() { return <WhatsNewPage locale="ru" />; }
