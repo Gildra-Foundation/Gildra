@@ -1,7 +1,5 @@
 import "server-only";
-import contentManifest from "@/data/wow/content-manifest.json";
-import { midnightDelves } from "@/data/wow/midnight-delves";
-import { midnightLairEncounters } from "@/data/wow/midnight-lairs";
+import { contentManifest, midnightDelves, midnightLairEncounters } from "@gildra/game-data";
 
 type Words = { en: string | null; ru: string | null };
 type Instance = { canonicalSlug: string; season: string; activity: string; names: Words; encounterCount?: number | null; pagePath?: string | null };

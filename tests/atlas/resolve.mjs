@@ -1,12 +1,18 @@
 // Test-only module resolution for `node --test`: the "@/..." alias of
-// tsconfig.json and extensionless relative imports (./file → ./file.ts).
+// tsconfig.json, extensionless relative imports (./file → ./file.ts) and JSON
+// imports without an import attribute.
 import { existsSync } from "node:fs";
 import { register } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
-export async function resolve(specifier, context, next) {
+export async function resolve(specifier, context, nextResolve) {
+  // JSON modules imported the way the app does (no `with { type: "json" }`).
+  const next = async (target, ctx) => {
+    const result = await nextResolve(target, ctx);
+    return result.url.endsWith(".json") ? { ...result, importAttributes: { ...result.importAttributes, type: "json" } } : result;
+  };
   let target = specifier;
   if (specifier.startsWith("@/")) target = pathToFileURL(root + specifier.slice(2)).href;
   else if (!(specifier.startsWith("./") || specifier.startsWith("../")) || /\.[cm]?[jt]sx?$|\.json$/.test(specifier)) return next(specifier, context);

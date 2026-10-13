@@ -44,6 +44,20 @@ Two deliberate exceptions keep their own shape: **block pages** (`definePage` in
 `/privacy`, League of Legends) and **workbenches** (database, search, API
 console, rotation lab), which are client-heavy tools on the same kit and tokens.
 
+### CMS boundary and block contracts (roadmap item 85)
+
+The CMS (Payload, `cms/`) owns editorial content only: articles, readers, site
+design previews and, for block pages, the *order and props* of blocks in a
+page's `blocks` JSON. Everything else — block code, data loading, routes,
+game data — stays in the web app. The contract between the two is
+`contracts/blocks.schema.json`: the JSON Schema of every block's props,
+generated from the block types (`npm run blocks:contracts`, checked for
+freshness in CI). The web app accepts a CMS override only if every block's
+type exists and its props match the contract (`lib/blocks/contracts.ts` in
+`lib/cms/pages.ts`); anything else falls back to the TypeScript page, so an
+editor's typo never breaks a page. The CMS can validate the same file before
+publishing.
+
 ## Ownership
 
 - `app`, `components`, `lib`: Next.js 16 public website, Tailwind CSS, shadcn/ui, next-intl and Recharts.

@@ -1,7 +1,7 @@
 /** WoW adapter: client-safe search index over published, source-tracked entities. */
 import type { GameAdapter, SearchItem } from "@/lib/games/adapter";
 import { specIcon } from "./assets";
-import { midnightClasses, midnightSpecializations } from "@/data/wow/midnight-specializations";
+import { midnightClasses, midnightSpecializations } from "@gildra/game-data";
 
 const index = (lang: "en" | "ru"): SearchItem[] => [
   { group: "Pages", label: lang === "ru" ? "Рейды" : "Raids", path: "/wow/raids", sprite: "#ic-shield" },

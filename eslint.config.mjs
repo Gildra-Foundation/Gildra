@@ -5,7 +5,7 @@ import fs from "node:fs";
 
 const noApp = { regex: "^@/app/(?!styles/)", message: "app/ is the top of the tree: move shared code to components/ or lib/." };
 const noKitInLib = { regex: "^@/components/atlas(/(?!format$).*)?$", message: "lib/ is data and logic; it must not depend on kit components." };
-const noRawGameData = { regex: "^@/data/", message: "Game data reaches components and routes through lib/data (e.g. @/lib/data/wow), on the server." };
+const noRawGameData = { regex: "^(@/data/|@gildra/game-data)", message: "Game data reaches components and routes through lib/data (e.g. @/lib/data/wow), on the server." };
 const kitStaysIndependent = { regex: "^@/components/(?!atlas(/|$))", message: "The atlas kit stays independent of features: pass data in through props." };
 
 // Feature modules of World of Warcraft (roadmap item 71): each uses its own

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Motion budget and smoothness of the inner pages (roadmap items 45, 50).
 // Budget, checked per page at 1440×900:
-//   - at most 8 endless (ambient) animations running at once;
+//   - at most 10 endless (ambient) animations running at once: the torchlight,
+//     the art drift (and its living layer), four ember tracks and up to three
+//     living lights on the painting;
 //   - every running animation moves only compositor properties (transform,
 //     translate, scale, rotate, opacity, filter) — no layout or paint work;
 //   - none at all under prefers-reduced-motion or the site's "less motion" switch.
@@ -18,7 +20,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, arg, index,
 const base = args.base ?? "http://127.0.0.1:3100";
 const routes = (args.routes ?? "/ru/wow,/wow/raids,/ru/wow/raids/the-voidspire,/ru/wow/lairs,/wow/classes,/ru/wow/mythic-plus,/ru/database,/tier-lists").split(",");
 const COMPOSITOR = new Set(["transform", "translate", "scale", "rotate", "opacity", "filter", "offset", "computedOffset", "easing", "composite"]);
-const MAX_AMBIENT = 8;
+const MAX_AMBIENT = 10;
 const MAX_BLOCKED = 300;
 const MAX_TASK = 150;
 

@@ -1,4 +1,4 @@
-import contentManifest from "./wow/content-manifest.json";
+import contentManifest from "./content-manifest.json";
 
 export type Lang = "en" | "ru";
 export type Difficulty = "normal" | "heroic" | "mythic";

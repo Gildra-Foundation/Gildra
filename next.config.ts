@@ -47,6 +47,8 @@ const nextConfig: NextConfig = {
     pagesBufferLength: 12,
   },
   output: "standalone",
+  // Workspace packages ship TypeScript source (roadmap item 81).
+  transpilePackages: ["@gildra/game-data"],
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   outputFileTracingIncludes: {
     "/talents/[spec]": ["./app/styles/talents/specs/**/*.css"],

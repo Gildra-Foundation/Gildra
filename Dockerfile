@@ -1,6 +1,8 @@
 FROM node:22.23.2-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# npm workspaces (packages/*): each package's manifest must exist for npm ci.
+COPY packages/game-data/package.json packages/game-data/package.json
 RUN npm ci
 
 FROM node:22.23.2-alpine AS builder
