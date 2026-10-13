@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import { formatSeason, pluralRu } from "../../components/atlas/format.ts";
@@ -8,6 +8,8 @@ import { normalize, searchIndex } from "../../components/platform/search/siteSea
 import { dungeonRoutes, dungeonSlugs } from "../../components/wow/mythic/dungeonRoutes.ts";
 import { routeTextEn } from "../../components/wow/mythic/routeStopsEn.ts";
 import { atlasScenes } from "../../lib/atlas/scenes.ts";
+
+const placeholders = JSON.parse(readFileSync(new URL("../../lib/atlas/artPlaceholders.json", import.meta.url), "utf8")) as Record<string, string>;
 
 describe("atlas format helpers", () => {
   it("picks the Russian plural form", () => {
@@ -54,8 +56,9 @@ describe("quick search matching", () => {
 
 describe("scene registry", () => {
   for (const [id, scene] of Object.entries(atlasScenes)) {
-    it(`${id}: art exists and the preview focus is inside the picture`, () => {
+    it(`${id}: art exists, has a blurred placeholder and the preview focus is inside the picture`, () => {
       assert.ok(existsSync(new URL(`../../public${scene.art}`, import.meta.url)), scene.art);
+      assert.ok(placeholders[scene.art]?.startsWith("data:image/webp;base64,"), `placeholder for ${scene.art} (npm run art:placeholders)`);
       assert.ok(scene.og.every((value) => value >= 0 && value <= 1));
     });
   }

@@ -6,6 +6,7 @@ import clsx from "clsx";
 import { artMorphName } from "@/lib/atlas/morph";
 import { AtlasMorphPreload } from "./AtlasMorphPreload";
 import styles from "./AtlasCard.module.css";
+import { artPlaceholder } from "@/lib/atlas/placeholders";
 
 export type AtlasCardImage = { src: string; alt: string; sizes?: string; priority?: boolean; position?: string };
 export type AtlasCardMeta = { icon?: ReactNode; label: ReactNode };
@@ -56,6 +57,7 @@ export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, s
       sizes={image.sizes ?? (layout === "feature" ? "(max-width: 900px) 100vw, 55vw" : "(max-width: 620px) 100vw, (max-width: 1100px) 50vw, 25vw")}
       priority={image.priority}
       style={image.position ? { objectPosition: image.position } : undefined}
+      {...artPlaceholder(image.src)}
     />
   ) : null;
   return (

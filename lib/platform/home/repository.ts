@@ -4,6 +4,7 @@ import { fallbackPlatformHome } from "./fallback";
 import { upgradePlatformHomeMedia } from "./media";
 import type { PlatformHomeData } from "./types";
 import { apiInternalUrl } from "@/lib/env";
+import { runtimeFlags } from "@/lib/flags";
 
 const apiURL = () => apiInternalUrl();
 
@@ -34,7 +35,7 @@ export async function getPlatformHomeData(lang: Lang): Promise<PlatformHomeData>
   // This endpoint is not part of the deployed OpenAPI contract yet. Keep the
   // public page honest and avoid a known 404 on every render until deployment
   // explicitly opts into a compatible API release.
-  if (process.env.PLATFORM_HOME_API_ENABLED !== "true") return upgradePlatformHomeMedia(fallbackPlatformHome(lang));
+  if (!runtimeFlags().platformHomeApi) return upgradePlatformHomeMedia(fallbackPlatformHome(lang));
   const locale = lang === "ru" ? "ru_RU" : "en_US";
   try {
     const response = await fetch(`${apiURL()}/v1/platform/home?locale=${locale}`, {

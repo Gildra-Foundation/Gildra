@@ -9,6 +9,8 @@ import { contentManifest } from "@/lib/data/wow";
 import { midnightRaids, raidSceneArt, raidSlugs } from "./midnightRaidData";
 import { raidAtlasCopy } from "./raidAtlasCopy";
 import styles from "./raidAtlasPage.module.css";
+import { trail } from "@/lib/routes/registry";
+import { artPlaceholder } from "@/lib/atlas/placeholders";
 
 type Locale = "ru" | "en";
 
@@ -48,7 +50,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
     <AtlasFrame lang={locale} scene="raids">
       <AtlasHero
         align="center"
-        breadcrumbs={[{ label: "World of Warcraft", href: `${prefix}/wow` }, { label: copy.title }]}
+        breadcrumbs={trail(locale, "raids")}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
         title={copy.title}
@@ -83,7 +85,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
               <article key={slug} className={styles.raid}>
                 <Link className={styles.raidArt} href={`${prefix}/wow/raids/${slug}`} tabIndex={-1} aria-hidden="true">
                   {/* The picture morphs into the raid page's scene (AtlasFrame morphKey). */}
-                  <ViewTransition name={artMorphName(`/wow/raids/${slug}`)} share="atlas-art-morph"><Image src={raid.artwork} alt="" fill sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw" /></ViewTransition>
+                  <ViewTransition name={artMorphName(`/wow/raids/${slug}`)} share="atlas-art-morph"><Image src={raid.artwork} alt="" fill sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw" {...artPlaceholder(raid.artwork)} /></ViewTransition>
                   <AtlasMorphPreload art={raidSceneArt(raid)} />
                   <span className={styles.shade} />
                 </Link>

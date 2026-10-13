@@ -8,6 +8,7 @@ import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy } from "./raidStrategy";
 import styles from "./raidGuide.module.css";
 import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
+import { trail } from "@/lib/routes/registry";
 
 /** Boss guide of a Midnight Season 1 raid: header, encounter switcher, battle plan, one mechanics list. */
 export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; boss: RaidBoss; locale: RaidLocale }) {
@@ -22,12 +23,7 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
   return (
     <AtlasFrame lang={locale} art={boss.artwork} artPosition="center 28%" morphKey={`/wow/raids/${raid.slug}/${boss.slug}`}>
       <AtlasHero
-        breadcrumbs={[
-          { label: copy.wow, href: `${prefix}/wow` },
-          { label: copy.raids, href: `${prefix}/wow/raids` },
-          { label: raid.nameEn, href: raidHref },
-          { label: boss.nameEn },
-        ]}
+        breadcrumbs={trail(locale, "raids", { label: raid.nameEn, href: raidHref }, { label: boss.nameEn })}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={<>{raid.nameEn} · {copy.encounterOf(order + 1, raid.bosses.length)}</>}
         title={<span data-testid="boss-title">{boss.nameEn}</span>}

@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { midnightDelves } from "@/lib/data/wow";
 import styles from "./delveCatalog.module.css";
+import { trail } from "@/lib/routes/registry";
 
 const copy = {
   ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", title: "Вылазки Midnight", lede: "Вылазки обоих сезонов Midnight. Тактика и награды появятся после проверки.", season2: "Сезон 2 · патч 12.1", season1: "Сезон 1 · патч 12.0", current: "Текущий сезон", delves: "вылазок" },
@@ -20,7 +21,7 @@ export function DelveCatalogPage({ locale }: { locale: "en" | "ru" }) {
   return (
     <AtlasFrame lang={locale} scene="delves">
       <AtlasHero
-        breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
+        breadcrumbs={trail(locale, "delves")}
         breadcrumbsLabel={text.breadcrumbs}
         title={text.title}
         lede={text.lede}

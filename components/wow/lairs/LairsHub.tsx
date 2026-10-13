@@ -4,6 +4,7 @@ import { midnightLairEncounters } from "@/lib/data/wow";
 import { getBoss, lairGuideLastVerifiedAt, lairGuideSourceUrl, type Boss } from "@/lib/lairs";
 import { lairsCopy, type LairsLocale } from "./lairsCopy";
 import styles from "./lairs.module.css";
+import { trail } from "@/lib/routes/registry";
 
 export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
   const copy = lairsCopy[locale];
@@ -20,7 +21,7 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
     <AtlasFrame lang={locale} scene="lairs" dataAttributes={{ "data-lairs-root": true }}>
       <AtlasHero
         align="center"
-        breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.section }]}
+        breadcrumbs={trail(locale, "lairs")}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
         title={copy.title}

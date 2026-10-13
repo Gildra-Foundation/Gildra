@@ -2,10 +2,11 @@ import "server-only";
 import { notFound } from "next/navigation";
 import { registry } from "./registry";
 import type { BlockType } from "./page";
+import { runtimeFlags } from "@/lib/flags";
 
 /** The block gallery is a dev tool: hidden in production unless explicitly enabled. */
 export function assertGalleryEnabled() {
-  if (process.env.NODE_ENV === "production" && process.env.GILDRA_DEV_GALLERY !== "1") {
+  if (!runtimeFlags().devGallery) {
     notFound();
   }
 }

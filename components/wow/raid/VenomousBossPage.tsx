@@ -9,6 +9,7 @@ import { venomousCopy } from "./venomousCopy";
 import guide from "./raidGuide.module.css";
 import styles from "./venomous.module.css";
 import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
+import { trail } from "@/lib/routes/registry";
 
 const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords } as const;
 
@@ -40,12 +41,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
   return (
     <AtlasFrame lang={locale} scene="venomousBoss">
       <AtlasHero
-        breadcrumbs={[
-          { label: shared.wow, href: `${prefix}/wow` },
-          { label: shared.raids, href: `${prefix}/wow/raids` },
-          { label: "The Venomous Abyss", href: raidHref },
-          { label: boss.name.en },
-        ]}
+        breadcrumbs={trail(locale, "raids", { label: "The Venomous Abyss", href: raidHref }, { label: boss.name.en })}
         breadcrumbsLabel={shared.breadcrumbsLabel}
         eyebrow={<>The Venomous Abyss · {shared.encounterOf(order + 1, bosses.length)}</>}
         title={boss.name.en}

@@ -144,6 +144,7 @@ const RU: Record<string, string> = {
   "World of Warcraft® and all related artwork are trademarks or registered trademarks of Blizzard Entertainment, Inc. Gildra is an unofficial fan-made concept and is not affiliated with or endorsed by Blizzard Entertainment.":
     "World of Warcraft® и все связанные материалы — товарные знаки или зарегистрированные товарные знаки Blizzard Entertainment, Inc. Gildra — неофициальный фанатский концепт, не аффилированный с Blizzard Entertainment и не одобренный ею.",
   "Privacy Policy": "Политика конфиденциальности",
+  "What's new": "Что нового",
   // Database
   "Azeroth reference index": "Справочник Азерота",
   "A structured catalog of items, spells, quests, creatures and every system that shapes World of Warcraft.":

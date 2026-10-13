@@ -7,6 +7,7 @@ import styles from "./raidGuide.module.css";
 import { VoidEye } from "./VoidEye";
 import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
 import { raidSceneArt } from "./midnightRaidData";
+import { trail } from "@/lib/routes/registry";
 
 /** Raid page of a Midnight Season 1 raid: what the raid is and its encounters. */
 export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
@@ -31,7 +32,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
       artLayer={raid.slug === "the-voidspire" ? <VoidEye imageSize={[1920, 734]} focus={[0.5, 0.3]} eye={[0.601, 0.2956]} eyeRadius={18} /> : undefined}
     >
       <AtlasHero
-        breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.raids, href: `${prefix}/wow/raids` }, { label: raid.nameEn }]}
+        breadcrumbs={trail(locale, "raids", { label: raid.nameEn })}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={<>{copy.season(1)} · {raid.locationEn}</>}
         title={raid.nameEn}

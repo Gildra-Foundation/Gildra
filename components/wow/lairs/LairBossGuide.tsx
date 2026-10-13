@@ -7,6 +7,7 @@ import { CopyWaypointButton } from "./CopyWaypointButton";
 import { lairsCopy, mechanicActions, type LairsLocale } from "./lairsCopy";
 import styles from "./lairs.module.css";
 import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
+import { trail } from "@/lib/routes/registry";
 
 const toneByMechanic: Record<Mechanic["tone"], AtlasBadgeTone> = { danger: "negative", frost: "info", control: "caution", tank: "neutral" };
 const difficultyIcons = [UsersRound, Shield, Swords, Crown];
@@ -35,7 +36,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
   return (
     <AtlasFrame lang={locale} art={boss.portrait} artPosition="center 24%" artShade="deep" morphKey={`/wow/lairs/${boss.slug}`} dataAttributes={{ "data-lairs-root": true }}>
       <AtlasHero
-        breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.section, href: `${prefix}/wow/lairs` }, { label: boss.name }]}
+        breadcrumbs={trail(locale, "lairs", { label: boss.name })}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={<>{kind} · {boss.zone}</>}
         title={boss.name}

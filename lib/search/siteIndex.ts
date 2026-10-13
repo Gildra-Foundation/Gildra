@@ -6,6 +6,7 @@ import { midnightDelves } from "@/data/wow/midnight-delves";
 import { midnightLairEncounters } from "@/data/wow/midnight-lairs";
 import { midnightClasses, midnightSpecializations } from "@/data/wow/midnight-specializations";
 import { getBoss } from "@/lib/lairs";
+import { routeSections, type RouteSection } from "@/lib/routes/registry";
 
 /**
  * The quick-search index of the site (⌘K): every section, raid, boss, lair,
@@ -29,22 +30,13 @@ const label = {
   delve: { en: "Delve", ru: "Вылазка" },
 } as const;
 
-const sections: Array<{ h: string; en: string; ru: string; k?: string }> = [
-  { h: "/wow", en: "World of Warcraft hub", ru: "Центр World of Warcraft", k: "home главная хаб" },
-  { h: "/wow/raids", en: "Raid journal", ru: "Рейдовый журнал", k: "raids рейды" },
-  { h: "/wow/mythic-plus", en: "Mythic+ atlas", ru: "Атлас Mythic+", k: "mythic plus keys ключи эпохальные" },
-  { h: "/wow/dungeons", en: "Dungeons", ru: "Подземелья" },
-  { h: "/wow/lairs", en: "Lairs and world bosses", ru: "Логова и мировые боссы" },
-  { h: "/wow/classes", en: "Classes and specializations", ru: "Классы и специализации", k: "specs спеки" },
-  { h: "/wow/delves", en: "Delves", ru: "Вылазки" },
-  { h: "/tier-lists", en: "Tier lists", ru: "Тир-листы", k: "tier list рейтинг" },
-  { h: "/database", en: "Database", ru: "База данных", k: "items spells quests предметы заклинания задания" },
-  { h: "/library", en: "Library", ru: "Библиотека", k: "datasets наборы данных" },
-  { h: "/wow/characters", en: "Characters", ru: "Персонажи", k: "battle.net armory оружейная" },
-  { h: "/wow/articles", en: "Articles", ru: "Статьи", k: "guides гайды" },
-  { h: "/wow/gear", en: "Gear", ru: "Экипировка" },
-  { h: "/wow/midnight/season-2", en: "Midnight Season 2", ru: "Midnight · Сезон 2" },
-];
+// Sections come from the route registry (lib/routes/registry.ts).
+const sections = Object.values(routeSections as Record<string, RouteSection>).map((section) => ({
+  h: section.path,
+  en: section.search?.en ?? section.title.en,
+  ru: section.search?.ru ?? section.title.ru,
+  k: section.search?.keywords,
+}));
 
 type Manifest = { canonicalSlug: string; instance?: string; order?: number; names: { en: string | null; ru: string | null } };
 

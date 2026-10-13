@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isHiddenForMvpPath } from "@/lib/mvp";
+import { runtimeFlags } from "@/lib/flags";
 
 export function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
@@ -14,7 +15,7 @@ export function proxy(request: NextRequest) {
   // loading.tsx has already flushed the shell). The locale prefix keeps the
   // Russian chrome on /ru/** URLs.
   // Dev galleries (/dev/blocks, /dev/atlas) exist only with GILDRA_DEV_GALLERY=1 in production.
-  const devGalleryOff = process.env.NODE_ENV === "production" && process.env.GILDRA_DEV_GALLERY !== "1" && /^\/dev(\/|$)/.test(request.nextUrl.pathname);
+  const devGalleryOff = !runtimeFlags().devGallery && /^\/dev(\/|$)/.test(request.nextUrl.pathname);
   if (devGalleryOff || isHiddenForMvpPath(request.nextUrl.pathname)) {
     const hidden = request.nextUrl.clone();
     hidden.pathname = `${locale === "ru" ? "/ru" : ""}/_hidden-for-mvp/404`;

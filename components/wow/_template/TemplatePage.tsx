@@ -1,14 +1,14 @@
 import { AtlasEmpty, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { templateCopy } from "./templateCopy";
 import styles from "./template.module.css";
+import { trail } from "@/lib/routes/registry";
 
 export function TemplatePage({ locale }: { locale: "en" | "ru" }) {
   const copy = templateCopy[locale];
-  const prefix = locale === "ru" ? "/ru" : "";
   return (
     <AtlasFrame lang={locale} scene="archive">
       <AtlasHero
-        breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.title }]}
+        breadcrumbs={trail(locale, "wow", { label: copy.title })}
         breadcrumbsLabel={copy.breadcrumbs}
         title={copy.title}
         lede={copy.lede}

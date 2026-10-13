@@ -9,6 +9,7 @@ import clsx from "clsx";
 import { AtlasMotionToggle } from "./AtlasMotionToggle";
 import { AtlasPointerLight } from "./AtlasPointerLight";
 import styles from "./AtlasFrame.module.css";
+import { artPlaceholder } from "@/lib/atlas/placeholders";
 
 export type AtlasFrameProps = {
   children: ReactNode;
@@ -52,7 +53,7 @@ export function AtlasFrame({ children, scene, art: artProp, artPosition: positio
   const artShade = shadeProp ?? preset.shade ?? "default";
   const tint = tintProp ?? preset.tint;
   const locale = lang === "ru" ? "ru" : "en";
-  const picture = art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" /> : null;
+  const picture = art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" {...artPlaceholder(art)} /> : null;
   // Section sparks (scene `ember`): the spark and its halo in the section's colour.
   const vars: Record<string, string | undefined> = { "--atlas-frame-tint": tint, "--atlas-frame-art-position": artPosition };
   if (preset.ember) Object.assign(vars, { "--atlas-ember": preset.ember, "--atlas-ember-halo": `color-mix(in srgb, ${preset.ember} 24%, transparent)` });
@@ -82,6 +83,7 @@ export function AtlasFrame({ children, scene, art: artProp, artPosition: positio
               <p>{t(locale)(GAMES.wow.legal)}</p>
               <div className={styles.legalLinks}>
                 <AtlasMotionToggle locale={locale} />
+                <Link href={locale === "ru" ? "/ru/wow/whats-new" : "/wow/whats-new"} prefetch={false}>{t(locale)("What's new")}</Link>
                 <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(locale)("Privacy Policy")}</Link>
               </div>
             </footer>

@@ -1,0 +1,70 @@
+{
+  "note": "Decoded bytes (KB) a first visit downloads at 1440×900, cold cache. Measured by npm run budgets; raise a budget only with a reason in the commit.",
+  "routes": {
+    "/ru/wow": {
+      "js": 1329,
+      "css": 561,
+      "img": 170
+    },
+    "/wow/raids": {
+      "js": 1258,
+      "css": 283,
+      "img": 150
+    },
+    "/ru/wow/raids/the-voidspire": {
+      "js": 1276,
+      "css": 334,
+      "img": 223
+    },
+    "/ru/wow/raids/the-voidspire/imperator-averzian": {
+      "js": 1276,
+      "css": 334,
+      "img": 111
+    },
+    "/ru/wow/lairs": {
+      "js": 1275,
+      "css": 322,
+      "img": 143
+    },
+    "/wow/classes": {
+      "js": 1258,
+      "css": 446,
+      "img": 146
+    },
+    "/ru/wow/mythic-plus": {
+      "js": 1239,
+      "css": 311,
+      "img": 120
+    },
+    "/wow/mythic-plus/midnight-season-2/murder-row": {
+      "js": 1348,
+      "css": 319,
+      "img": 136
+    },
+    "/ru/wow/delves": {
+      "js": 1258,
+      "css": 314,
+      "img": 57
+    },
+    "/ru/database": {
+      "js": 1280,
+      "css": 343,
+      "img": 112
+    },
+    "/tier-lists": {
+      "js": 1329,
+      "css": 326,
+      "img": 57
+    },
+    "/ru/search": {
+      "js": 1256,
+      "css": 323,
+      "img": 112
+    },
+    "/ru/wow/whats-new": {
+      "js": 578,
+      "css": 266,
+      "img": 94
+    }
+  }
+}

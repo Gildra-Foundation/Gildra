@@ -1,0 +1,20 @@
+/* "What's new": a dated list of releases on --atlas-* tokens only. */
+.release { display: grid; gap: var(--atlas-space-3); }
+
+.changes { display: grid; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+
+.change {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--atlas-space-4);
+  padding: var(--atlas-space-3) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
+  background: var(--atlas-surface);
+}
+
+.text { max-width: var(--atlas-measure); color: var(--atlas-text); line-height: var(--atlas-leading-body); }
+
+@media (max-width: 600px) {
+  .change { grid-template-columns: 1fr; gap: var(--atlas-space-2); }
+}
