@@ -34,7 +34,7 @@
   min-width: 0;
   min-height: 0;
   align-self: end;
-  color: var(--atlas-title);
+  color: var(--atlas-text-strong);
   font-size: clamp(15px, 1.3vw, 18px);
   line-height: 1.2;
   letter-spacing: .025em;
@@ -48,7 +48,7 @@
   max-width: none;
   align-self: start;
   overflow: visible;
-  color: var(--atlas-muted);
+  color: var(--atlas-text-muted);
   font-size: 11px;
   line-height: 1.35;
   text-overflow: clip;

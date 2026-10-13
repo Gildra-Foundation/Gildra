@@ -55,14 +55,23 @@ func ObserveRequests(next http.Handler, logger *slog.Logger) http.Handler {
 		if pattern == "" {
 			pattern = "unmatched"
 		}
+		// The caller gave up (a frontend timeout or a closed tab) and the handler
+		// then failed on its cancelled context: not a server fault.
+		abandoned := response.status >= http.StatusInternalServerError && request.Context().Err() != nil
+		status := response.status
+		if abandoned {
+			status = statusClientClosedRequest
+		}
 		attributes := []any{
 			"method", request.Method,
 			"route", pattern,
-			"status", response.status,
+			"status", status,
 			"duration_ms", time.Since(started).Milliseconds(),
 			"response_bytes", response.bytes,
 		}
 		switch {
+		case abandoned:
+			logger.Warn("http request abandoned by the client", attributes...)
 		case response.status >= http.StatusInternalServerError:
 			logger.Error("http request completed", attributes...)
 			captureHTTPFailure(request, pattern, response.status)
@@ -73,6 +82,10 @@ func ObserveRequests(next http.Handler, logger *slog.Logger) http.Handler {
 		}
 	})
 }
+
+// statusClientClosedRequest is nginx's 499: the client closed the connection
+// before the response was written.
+const statusClientClosedRequest = 499
 
 func captureHTTPFailure(request *http.Request, pattern string, status int) {
 	hub := sentry.GetHubFromContext(request.Context())

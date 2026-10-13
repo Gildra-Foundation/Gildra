@@ -4,6 +4,7 @@ import { CookieNoticeGate } from "@/components/CookieNoticeGate";
 import { PlausibleTracker } from "@/components/cms/PlausibleTracker";
 import { RouteTransitionGate } from "@/components/motion/RouteTransitionGate";
 import { WorkspaceNavigator } from "@/components/platform/navigation/WorkspaceNavigator";
+import { motionPreferenceScript } from "@/lib/client/motionPreference";
 import "./globals.css";
 
 const display = Chakra_Petch({
@@ -60,7 +61,12 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${display.variable} ${ui.variable} ${atlasDisplay.variable}`} data-scroll-behavior="smooth" data-route-theme="wow">
+    // suppressHydrationWarning: the head script may set data-motion before React hydrates.
+    <html lang="en" className={`${display.variable} ${ui.variable} ${atlasDisplay.variable}`} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
+      <head>
+        {/* The reader's "less motion" choice, applied before the first paint (lib/client/motionPreference.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript }} />
+      </head>
       <body>
         <WorkspaceNavigator />
         <RouteTransitionGate>{children}</RouteTransitionGate>

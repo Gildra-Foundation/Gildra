@@ -16,6 +16,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogpipeline"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogrelease"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -570,6 +571,28 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 	result, err = runner.Run(ctx, options)
 	if err == nil || !strings.Contains(err.Error(), "import-wago") {
 		t.Fatalf("production import with valid recovery proof error = %v, want importer lookup failure after the gate", err)
+	}
+	assertPipelineStage(t, ctx, database, result.RunID, "recovery-gate", "succeeded", "")
+
+	// The nightly backup is a whole-database dump taken by the wow run; it must
+	// also clear the Classic editions (they failed this gate every night).
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO catalog_backup_manifests(
+			component,backup_kind,status,storage_uri,content_hash,byte_size,database_version,product_id,
+			completed_at,restore_started_at,restore_completed_at,verification)
+		SELECT
+			'postgres','logical','verified','file:///var/lib/gildra/catalog-backups/wow/nightly.dump',
+			decode(repeat('cc',32),'hex'),1,$1,product.id,
+			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}'
+		FROM game_products product WHERE product.slug='wow'`, latestCatalogSchemaVersion); err != nil {
+		t.Fatal(err)
+	}
+	classic := options
+	classic.Profile, classic.Product = catalogpipeline.ProfileClassicFoundation, "wow_classic"
+	classic.RecoveryPolicy = catalogquality.RecoveryPolicyVerifiedSameHost
+	result, err = runner.Run(ctx, classic)
+	if errors.Is(err, catalogpipeline.ErrRecoveryGate) {
+		t.Fatalf("classic import with the nightly wow backup error = %v, want the gate to pass", err)
 	}
 	assertPipelineStage(t, ctx, database, result.RunID, "recovery-gate", "succeeded", "")
 }

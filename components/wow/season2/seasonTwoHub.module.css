@@ -4,7 +4,7 @@
   --gold: var(--atlas-accent);
   min-height: 100dvh;
   color: var(--atlas-text);
-  background: var(--atlas-background);
+  background: var(--atlas-bg);
 }
 
 .hero { position: relative; min-height: 610px; overflow: hidden; border-bottom: 1px solid rgba(173, 209, 83, .3); background: #07110d; isolation: isolate; }

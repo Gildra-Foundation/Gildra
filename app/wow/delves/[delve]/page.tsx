@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DelveIdentityPage } from "@/components/wow/delves/DelveIdentityPage";
-import { getMidnightDelve, midnightDelves } from "@/data/wow/midnight-delves";
+import { getMidnightDelve, midnightDelves } from "@/lib/data/wow";
 
 export const dynamicParams = false;
 export function generateStaticParams() { return midnightDelves.map(({ slug }) => ({ delve: slug })); }

@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import styles from "./AtlasCountUp.module.css";
+import { lessMotion } from "@/lib/client/motionPreference";
 
 /**
  * A headline number that counts up as its page arrives through in-site
@@ -17,7 +18,7 @@ export function AtlasCountUp({ value }: { value: number }) {
     const element = live.current;
     // The page is mounting while the route runtime is still leaving/loading: an arrival.
     if (!element?.closest('[data-route-state="leaving"], [data-route-state="loading"]')) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (lessMotion()) return;
     const start = performance.now() + 260;
     const duration = 900;
     let frame = 0;

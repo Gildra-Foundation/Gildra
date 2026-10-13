@@ -23,7 +23,7 @@
 | Размеры текста | `--atlas-text-hero`, `-h2`, `-h3`, `-title`, `-lead`, `-body` (15 px), `-small` (13 px), `-meta` (12 px), `-label` (11 px) | |
 | Сетка | `--atlas-container` (1540 px), `--atlas-gutter` (14–26 px), `--atlas-sticky-top` (64 px), `--atlas-space-1…8` | |
 
-Старые имена (`--gold`, `--ink`, `--panel`, `--display`, `--atlas-border`, `--folio-*` и др.) — псевдонимы этих токенов: правка токена меняет и старые страницы. В новом коде используются только `--atlas-*`.
+Старые короткие имена (`--gold`, `--ink`, `--panel`, `--display`, `--folio-*` и др.) — мост для старых блоков: правка токена меняет и их. Старые псевдонимы `--atlas-*` (`--atlas-border`, `--atlas-muted` и др.) удалены, `npm run atlas:check` их не пропустит. В новом коде — только `--atlas-*`.
 
 ## Правила
 

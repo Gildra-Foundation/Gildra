@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { RaidBossGuide } from "@/components/wow/raid/RaidBossGuide";
 import { getMidnightRaid, raidSlugs } from "@/components/wow/raid/midnightRaidData";
 
+// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
+export const dynamicParams = false;
+
 type PageProps = { params: Promise<{ raid: string; boss: string }> };
 
 export function generateStaticParams() {

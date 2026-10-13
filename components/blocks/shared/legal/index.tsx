@@ -15,7 +15,7 @@ export type LegalProps = {
 /** Legal/prose page on the atlas kit: archive artwork, h1 with the update date, a readable column of h2 + paragraph sections. */
 function Legal({ title, updated, sections, backLabel, lang }: BlockComponentProps<LegalProps, undefined>) {
   return (
-    <AtlasFrame as="div" lang={lang} art="/assets/wow/loading/archive.webp" artPosition="center 45%" artShade="deep">
+    <AtlasFrame as="div" lang={lang} scene="archiveDeep">
       <AtlasHero title={title} lede={updated} />
       <div className={styles.prose}>
         {sections.map((section) => (

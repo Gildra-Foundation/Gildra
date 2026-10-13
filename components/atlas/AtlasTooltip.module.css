@@ -20,7 +20,7 @@
   visibility: hidden;
   pointer-events: none;
   translate: -50% 4px;
-  transition: opacity .15s var(--atlas-ease), translate .15s var(--atlas-ease), visibility 0s .15s;
+  transition: opacity var(--atlas-duration-fast) var(--atlas-ease), translate var(--atlas-duration-fast) var(--atlas-ease), visibility 0s var(--atlas-duration-fast);
 }
 
 .top .tip { bottom: calc(100% + 8px); }
@@ -28,7 +28,7 @@
 
 .anchor:hover .tip,
 .anchor:focus-within .tip,
-.anchor:focus-visible .tip { opacity: 1; visibility: visible; translate: -50% 0; transition-delay: .12s, .12s, 0s; }
+.anchor:focus-visible .tip { opacity: 1; visibility: visible; translate: -50% 0; transition-delay: calc(var(--atlas-stagger) * 2), calc(var(--atlas-stagger) * 2), 0s; }
 
 @media (prefers-reduced-motion: reduce) {
   .tip { transition: none; translate: -50% 0; }

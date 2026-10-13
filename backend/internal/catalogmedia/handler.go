@@ -66,11 +66,13 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 	}
 	var key, mimeType, sourceURL string
 	var hash []byte
+	var expired bool
 	// Publication is open (owner decision 2026-09-02): serve any cached media
 	// of a published entity whose source artifact is proven; the source policy
 	// only contributes an optional retention window.
 	query := `
-		SELECT media.cache_key,media.mime_type,media.cached_content_hash,media.source_url
+		SELECT media.cache_key,media.mime_type,media.cached_content_hash,media.source_url,
+		  policy.retention_days IS NOT NULL AND media.cached_at<=now()-make_interval(days=>policy.retention_days)
 		FROM catalog_entity_media media
 		JOIN game_entities entity ON entity.id=media.entity_id
 		JOIN game_entity_versions published ON published.id=entity.published_version_id
@@ -83,11 +85,23 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		LEFT JOIN catalog_source_policies policy ON policy.source=media.source
 		WHERE media.id=$1 AND media.cache_status='cached'
 		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
-		  AND media_build.build_number<=published_build.build_number
-		  AND (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))`
+		  AND media_build.build_number<=published_build.build_number`
 	args := []any{id}
-	err = h.db.QueryRow(request.Context(), query, args...).Scan(&key, &mimeType, &hash, &sourceURL)
+	err = h.db.QueryRow(request.Context(), query, args...).Scan(&key, &mimeType, &hash, &sourceURL, &expired)
 	if errors.Is(err, pgx.ErrNoRows) {
+		http.NotFound(response, request)
+		return
+	}
+	if expired {
+		// Past the source's retention window (Blizzard API media: 30 days) the
+		// cached copy must not be served; until the cache worker refreshes it,
+		// send the browser to the same vetted source instead of a broken image.
+		// Every Blizzard icon was a 404 from 2026-10-09 while the catalog
+		// refresh was down.
+		if fallback, ok := verifiedRemoteMediaURL(sourceURL); ok {
+			http.Redirect(response, request, fallback, http.StatusTemporaryRedirect)
+			return
+		}
 		http.NotFound(response, request)
 		return
 	}

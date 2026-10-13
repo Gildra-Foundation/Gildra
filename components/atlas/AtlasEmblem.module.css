@@ -7,7 +7,7 @@
   border: 1px solid var(--atlas-line-strong);
   outline: 5px solid rgba(0, 0, 0, .76);
   background: radial-gradient(circle, var(--atlas-accent-wash-strong), var(--atlas-surface) 68%);
-  box-shadow: 0 0 0 6px var(--atlas-accent-wash-strong), inset 0 0 20px #000, 0 0 28px var(--atlas-accent-glow);
+  box-shadow: 0 0 0 6px var(--atlas-accent-wash-strong), inset 0 0 20px #000, var(--atlas-glow-lg);
 }
 
 .lg { width: 78px; height: 78px; }

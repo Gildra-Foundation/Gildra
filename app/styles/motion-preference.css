@@ -1,0 +1,22 @@
+/* "Less motion" chosen on the site (lib/client/motionPreference.ts): the same
+   stillness the atlas gives prefers-reduced-motion, for inner pages only — the
+   landing scene and the contents book keep their own rules. */
+html[data-motion="reduced"] .gildra-atlas *,
+html[data-motion="reduced"] .gildra-atlas *::before,
+html[data-motion="reduced"] .gildra-atlas *::after,
+html[data-motion="reduced"] [data-atlas-scope] *,
+html[data-motion="reduced"] [data-atlas-scope] *::before,
+html[data-motion="reduced"] [data-atlas-scope] *::after {
+  animation: none !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-motion="reduced"] .gildra-atlas [data-motion-layer] { display: none; }
+
+html[data-motion="reduced"]::view-transition-group(*),
+html[data-motion="reduced"]::view-transition-old(*),
+html[data-motion="reduced"]::view-transition-new(*) {
+  animation: none !important;
+}

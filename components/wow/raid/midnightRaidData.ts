@@ -1,4 +1,4 @@
-import seasonOnePublication from "@/data/wow/midnight-season-one-publication.json";
+import { seasonOnePublication } from "@/lib/data/wow";
 
 export const raidSlugs = ["the-voidspire", "the-dreamrift", "march-on-queldanas"] as const;
 

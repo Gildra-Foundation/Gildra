@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Castle, Hourglass, Skull } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
-import contentManifest from "@/data/wow/content-manifest.json";
+import { contentManifest } from "@/lib/data/wow";
 import { midnightRaids, raidSlugs } from "./midnightRaidData";
 import { raidAtlasCopy } from "./raidAtlasCopy";
 import styles from "./raidAtlasPage.module.css";
@@ -42,7 +42,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
   }
 
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp" artPosition="center 30%" tint="rgba(95, 46, 151, .2)">
+    <AtlasFrame lang={locale} scene="raids">
       <AtlasHero
         align="center"
         breadcrumbs={[{ label: "World of Warcraft", href: `${prefix}/wow` }, { label: copy.title }]}

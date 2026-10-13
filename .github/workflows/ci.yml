@@ -49,6 +49,7 @@ jobs:
           WEB_IMAGE: ghcr.io/gildra-foundation/gildra-web@sha256:0000000000000000000000000000000000000000000000000000000000000000
           API_IMAGE: ghcr.io/gildra-foundation/gildra-api@sha256:1111111111111111111111111111111111111111111111111111111111111111
           CMS_IMAGE: ghcr.io/gildra-foundation/gildra-cms@sha256:2222222222222222222222222222222222222222222222222222222222222222
+          CMS_JOBS_IMAGE: ghcr.io/gildra-foundation/gildra-cms-jobs@sha256:5555555555555555555555555555555555555555555555555555555555555555
           SCRAPER_IMAGE: ghcr.io/gildra-foundation/gildra-scraper@sha256:3333333333333333333333333333333333333333333333333333333333333333
           ROTATION_WORKER_IMAGE: ghcr.io/gildra-foundation/gildra-rotation-sim-worker@sha256:4444444444444444444444444444444444444444444444444444444444444444
           GILDRA_SOURCE_REVISION: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -74,6 +75,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run atlas:check
+      - run: npm run test:atlas
+      - run: npm run routes:check
       - run: npm run build
         env:
           SENTRY_AUTH_TOKEN: ""

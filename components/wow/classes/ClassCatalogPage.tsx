@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasSection } from "@/components/atlas";
 import { formatAtlasDate, pluralRu } from "@/components/atlas/format";
-import { midnightSpecializations, TALENT_SNAPSHOT } from "@/data/wow/midnight-specializations";
+import { midnightSpecializations, TALENT_SNAPSHOT } from "@/lib/data/wow";
 import styles from "./classCatalog.module.css";
 
 type Locale = "en" | "ru";
@@ -55,7 +55,7 @@ export function ClassCatalogPage({ locale }: { locale: Locale }) {
   const classes = [...bySlug.values()].sort((left, right) => left[0].classId - right[0].classId);
 
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/loading/talents-wow.webp" artPosition="center 40%">
+    <AtlasFrame lang={locale} scene="classes">
       <AtlasHero
         align="center"
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}

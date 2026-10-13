@@ -1,0 +1,29 @@
+.region {
+  position: fixed;
+  left: 50%;
+  bottom: max(var(--atlas-space-5), env(safe-area-inset-bottom));
+  z-index: 120;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.toast {
+  margin: 0;
+  padding: 12px 18px;
+  color: var(--atlas-text-strong);
+  border: 1px solid var(--atlas-line);
+  border-left: 3px solid var(--atlas-accent);
+  background: var(--atlas-surface-raised);
+  box-shadow: var(--atlas-shadow-card), var(--atlas-glow-sm);
+  font: 600 var(--atlas-text-small) / 1.3 var(--atlas-font-ui);
+  white-space: nowrap;
+  animation: atlas-toast-in var(--atlas-duration) var(--atlas-ease) both;
+}
+
+.toast[data-tone="negative"] { border-left-color: var(--atlas-negative); }
+
+@keyframes atlas-toast-in { from { opacity: 0; translate: 0 8px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+}

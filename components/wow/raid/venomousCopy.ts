@@ -1,5 +1,5 @@
 import { formatAtlasDate, pluralRu } from "@/components/atlas/format";
-import type { Difficulty } from "@/data/venomousAbyss";
+import type { Difficulty } from "@/lib/data/wow";
 
 /**
  * Interface copy of The Venomous Abyss hub and boss pages. Raid, boss, spell,

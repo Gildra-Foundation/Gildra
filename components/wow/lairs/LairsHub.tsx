@@ -1,6 +1,6 @@
 import { CalendarClock, Gem, MapPin, ShieldCheck, Skull, Swords, UsersRound } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasPanel, AtlasSection } from "@/components/atlas";
-import { midnightLairEncounters } from "@/data/wow/midnight-lairs";
+import { midnightLairEncounters } from "@/lib/data/wow";
 import { getBoss, lairGuideLastVerifiedAt, lairGuideSourceUrl, type Boss } from "@/lib/lairs";
 import { lairsCopy, type LairsLocale } from "./lairsCopy";
 import styles from "./lairs.module.css";
@@ -17,7 +17,7 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
   const announcement = midnightLairEncounters[0]?.sourceUrl;
 
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/lairs/bosses/nymrissa.jpg" artPosition="center 30%" dataAttributes={{ "data-lairs-root": true }}>
+    <AtlasFrame lang={locale} scene="lairs" dataAttributes={{ "data-lairs-root": true }}>
       <AtlasHero
         align="center"
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.section }]}

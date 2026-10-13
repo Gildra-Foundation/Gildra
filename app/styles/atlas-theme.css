@@ -78,6 +78,9 @@
   --atlas-gutter: clamp(14px, 2.2vw, 26px);
   --atlas-radius: 2px;
   --atlas-control-height: 44px;
+  /* Reading width: one comfortable line of body text, and of longer notes */
+  --atlas-measure: 68ch;
+  --atlas-measure-wide: 72ch;
   /* Height of the sticky top bar; sticky page navigation sits under it. */
   --atlas-sticky-top: 64px;
 
@@ -95,12 +98,25 @@
   --atlas-shadow-panel: inset 0 0 0 3px rgba(0, 0, 0, .58), inset 0 0 0 4px rgba(174, 127, 54, .06), 0 24px 55px rgba(0, 0, 0, .4);
   --atlas-shadow-card: inset 0 0 0 3px rgba(0, 0, 0, .58), 0 20px 45px rgba(0, 0, 0, .32);
   --atlas-shadow-lift: inset 0 0 0 3px rgba(0, 0, 0, .58), 0 26px 58px rgba(0, 0, 0, .46), 0 0 26px var(--atlas-accent-glow);
+  /* Glows and rings — light that belongs to the amber, not decoration */
+  --atlas-glow-sm: 0 0 12px var(--atlas-accent-glow);
+  --atlas-glow: 0 0 18px var(--atlas-accent-glow);
+  --atlas-glow-lg: 0 0 28px var(--atlas-accent-glow);
+  --atlas-ring-focus: 0 0 0 3px var(--atlas-accent-wash-strong);
+  /* Text set directly on artwork */
+  --atlas-text-shadow-art: 0 1px 2px #000, 0 0 18px rgba(0, 0, 0, .6);
+  --atlas-text-shadow-hero: 0 2px 2px #000, 0 0 24px var(--atlas-accent-glow);
   --atlas-art-shade: linear-gradient(0deg, rgba(6, 7, 8, .94), rgba(6, 7, 8, .2) 62%, transparent), linear-gradient(90deg, rgba(0, 0, 0, .38), transparent 46%);
 
-  /* Motion */
+  /* Motion — one tempo for the whole atlas (reduced motion turns it off per component) */
   --atlas-ease: cubic-bezier(.2, .7, .2, 1);
-  --atlas-duration: .2s;
-  --atlas-duration-art: .55s;
+  --atlas-ease-ambient: ease-in-out;    /* slow loops: torchlight, drift, embers */
+  --atlas-duration-fast: .15s;          /* tooltips, small state flips */
+  --atlas-duration: .2s;                /* hover, focus, colour changes */
+  --atlas-duration-slow: .35s;          /* torchlight fades, glows */
+  --atlas-duration-art: .55s;           /* artwork zoom on hover */
+  --atlas-duration-enter: .62s;         /* arrival of a page: hero and sections */
+  --atlas-stagger: 60ms;                /* step of an arrival cascade */
   /* Scroll reveal of cards and section flourishes (CSS scroll-driven, no JS) */
   --atlas-reveal-shift: 26px;
 
@@ -110,18 +126,11 @@
   font-variant-numeric: lining-nums;
 
   /* ---------------------------------------------------------------------------
-     Compatibility aliases. Older page styles read these names; they follow the
-     tokens above, so editing a token restyles legacy pages too. New code must
-     use the --atlas-* names.
+     Bridge for legacy block styles (they predate the atlas and read the old
+     short names). They follow the tokens above, so editing a token restyles
+     those blocks too. New code uses the --atlas-* names only; the old
+     --atlas-* aliases are gone and `npm run atlas:check` rejects them.
      ------------------------------------------------------------------------- */
-  --atlas-background: var(--atlas-bg);
-  --atlas-title: var(--atlas-text-strong);
-  --atlas-muted: var(--atlas-text-muted);
-  --atlas-accent-bright: var(--atlas-accent-strong);
-  --atlas-border: var(--atlas-line);
-  --atlas-rule: var(--atlas-line-soft);
-  --atlas-display: var(--atlas-font-display);
-  --atlas-ui: var(--atlas-font-ui);
   --bg: var(--atlas-bg);
   --panel: var(--atlas-surface);
   --panel-2: var(--atlas-surface-raised);
@@ -159,4 +168,18 @@
   --folio-ribbon-edge: var(--atlas-line);
   --folio-ribbon-active: var(--atlas-accent-wash);
   --book-gutter: 24px;
+}
+
+/* More contrast when the reader asks the system for it: brighter secondary text,
+   firmer lines, a darker shade under text set on artwork. */
+@media (prefers-contrast: more) {
+  .gildra-atlas,
+  [data-atlas-scope] {
+    --atlas-text: #ece4d6;
+    --atlas-text-muted: #d2c9ba;
+    --atlas-text-subtle: #b8b0a2;
+    --atlas-line: rgba(209, 162, 75, .72);
+    --atlas-line-soft: rgba(209, 162, 75, .5);
+    --atlas-art-shade: linear-gradient(0deg, rgba(6, 7, 8, .97), rgba(6, 7, 8, .55) 62%, rgba(6, 7, 8, .3)), linear-gradient(90deg, rgba(0, 0, 0, .55), transparent 52%);
+  }
 }

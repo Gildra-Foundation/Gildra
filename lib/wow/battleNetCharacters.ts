@@ -1,3 +1,4 @@
+import "server-only";
 export const BATTLE_NET_REGIONS = ["eu", "us", "kr", "tw"] as const;
 export type BattleNetRegion = (typeof BATTLE_NET_REGIONS)[number];
 

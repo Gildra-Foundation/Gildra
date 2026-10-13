@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
-import { midnightDelves } from "@/data/wow/midnight-delves";
+import { midnightDelves } from "@/lib/data/wow";
 import styles from "./delveCatalog.module.css";
 
 const copy = {
@@ -18,7 +18,7 @@ export function DelveCatalogPage({ locale }: { locale: "en" | "ru" }) {
     { id: "midnight-season-1", title: text.season1 },
   ] as const;
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/loading/dungeon.webp" artPosition="center 45%">
+    <AtlasFrame lang={locale} scene="delves">
       <AtlasHero
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
         breadcrumbsLabel={text.breadcrumbs}

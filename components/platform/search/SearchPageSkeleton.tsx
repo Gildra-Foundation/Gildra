@@ -7,7 +7,7 @@ import styles from "./searchPage.module.css";
 export function SearchPageSkeleton({ lang }: { lang: Lang }) {
   const t = searchCopy[lang];
   return (
-    <AtlasFrame lang={lang} art="/assets/wow/loading/archive.webp" artPosition="center 45%" dataAttributes={{ "data-book-route-loading": true }}>
+    <AtlasFrame lang={lang} scene="archive" dataAttributes={{ "data-book-route-loading": true }}>
       <AtlasHero
         title={t.title}
         lede={t.lede}

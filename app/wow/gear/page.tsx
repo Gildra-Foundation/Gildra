@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IdentityStatusPage } from "@/components/wow/identity/IdentityStatusPage";
+import { IdentityStatusPage } from "@/components/wow/shared/IdentityStatusPage";
 
 const path = "/wow/gear";
 export const metadata: Metadata = {

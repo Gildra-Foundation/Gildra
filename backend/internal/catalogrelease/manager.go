@@ -581,11 +581,23 @@ func validateReleaseProvenance(ctx context.Context, tx pgx.Tx, releaseID uuid.UU
 				  AND (source_artifact.locale='' OR source_artifact.locale=observation.locale)
 			) AND NOT (localized.locale='ru_RU' AND localized.name=english.name)
 		), invalid_entity_icons AS (
+			-- Same rule as the readiness audit (icon_provenance): an icon needs a
+			-- complete source artifact, whatever happened to that artifact's
+			-- snapshot later. The indexer carries icons forward across builds, so
+			-- icons first fetched by a release that failed for another reason
+			-- (132,854 on build 162) kept every later release from publishing.
 			SELECT icon.external_id
 			FROM catalog_entity_icons icon
-			LEFT JOIN release_artifacts reference ON reference.id=icon.source_artifact_id
-			LEFT JOIN release_artifacts asset ON asset.id=icon.asset_source_artifact_id
-			WHERE icon.build_id=$2 AND (reference.id IS NULL OR (icon.file_data_id IS NOT NULL AND asset.id IS NULL))
+			LEFT JOIN catalog_source_artifacts reference ON reference.id=icon.source_artifact_id
+			LEFT JOIN catalog_source_artifacts asset ON asset.id=icon.asset_source_artifact_id
+			WHERE icon.build_id=$2 AND (
+				reference.id IS NULL OR reference.status<>'ready'
+				OR reference.content_hash IS NULL OR reference.byte_size IS NULL
+				OR (icon.file_data_id IS NOT NULL AND (
+					asset.id IS NULL OR asset.status<>'ready'
+					OR asset.content_hash IS NULL OR asset.byte_size IS NULL
+				))
+			)
 		)
 		SELECT
 			(SELECT count(*) FROM unproven_versions),

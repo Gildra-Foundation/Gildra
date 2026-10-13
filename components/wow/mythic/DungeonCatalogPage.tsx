@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasSection } from "@/components/atlas";
-import { DungeonCardGrid } from "@/components/wow/mythic/DungeonCardGrid";
-import { dungeonSlugs } from "@/components/wow/mythic/dungeonRoutes";
+import { DungeonCardGrid } from "./DungeonCardGrid";
+import { dungeonSlugs } from "./dungeonRoutes";
 
 const copy = {
   ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", eyebrow: "Midnight · Сезон 2", title: "Подземелья", lede: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого.", dungeons: "подземелий", list: "Подземелья сезона", source: "Анонс Blizzard" },
@@ -12,7 +12,7 @@ export function DungeonCatalogPage({ locale }: { locale: "en" | "ru" }) {
   const text = copy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/mythic/backgrounds/nalorakk.webp" artPosition="center 40%">
+    <AtlasFrame lang={locale} scene="dungeons">
       <AtlasHero
         breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
         breadcrumbsLabel={text.breadcrumbs}

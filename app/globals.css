@@ -26,6 +26,7 @@
 @import "./styles/atlas-theme.css";
 @import "./styles/atlas-pages.css";
 @import "./styles/view-transitions.css";
+@import "./styles/motion-preference.css";
 
 html[data-route-theme="wow"]:has([data-grimoire-home]) body {
   background-color: #0d0e0d;

@@ -1,14 +1,18 @@
 import { ViewTransition, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { GAMES } from "@/lib/games/registry";
 import { t } from "@/lib/i18n";
 import clsx from "clsx";
+import { AtlasMotionToggle } from "./AtlasMotionToggle";
 import { AtlasPointerLight } from "./AtlasPointerLight";
 import styles from "./AtlasFrame.module.css";
 
 export type AtlasFrameProps = {
   children: ReactNode;
+  /** Section scene from lib/atlas/scenes.ts (art, crop, shade, tint); explicit props below override it. */
+  scene?: AtlasSceneId;
   /** Decorative artwork behind the top of the page; it fades into the solid body. */
   art?: string;
   /** Focal point of the artwork, CSS object-position (default "center 18%"). */
@@ -38,7 +42,12 @@ export type AtlasFrameProps = {
  * The atmosphere is alive: the artwork settles in and drifts slowly, embers rise
  * through the torchlight. All of it is CSS and stops under reduced motion.
  */
-export function AtlasFrame({ children, art, artPosition, artShade = "default", tint, still = false, artLayer, as: Element = "main", className, lang, id, dataAttributes, footer = true }: AtlasFrameProps) {
+export function AtlasFrame({ children, scene, art: artProp, artPosition: positionProp, artShade: shadeProp, tint: tintProp, still = false, artLayer, as: Element = "main", className, lang, id, dataAttributes, footer = true }: AtlasFrameProps) {
+  const preset: Partial<(typeof atlasScenes)[AtlasSceneId]> & { shade?: "deep"; tint?: string } = scene ? atlasScenes[scene] : {};
+  const art = artProp ?? preset.art;
+  const artPosition = positionProp ?? preset.position;
+  const artShade = shadeProp ?? preset.shade ?? "default";
+  const tint = tintProp ?? preset.tint;
   const locale = lang === "ru" ? "ru" : "en";
   const style = { "--atlas-frame-tint": tint, "--atlas-frame-art-position": artPosition } as CSSProperties;
   return (
@@ -54,12 +63,16 @@ export function AtlasFrame({ children, art, artPosition, artShade = "default", t
           <span className={styles.embers} />
         </div>
         <AtlasPointerLight />
-        <div className={styles.column}>
+        {/* Target of the toolbar's "skip to content" link. */}
+        <div className={styles.column} id="atlas-content" tabIndex={-1}>
           {children}
           {footer ? (
             <footer className={styles.legal}>
               <p>{t(locale)(GAMES.wow.legal)}</p>
-              <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(locale)("Privacy Policy")}</Link>
+              <div className={styles.legalLinks}>
+                <AtlasMotionToggle locale={locale} />
+                <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(locale)("Privacy Policy")}</Link>
+              </div>
             </footer>
           ) : null}
         </div>

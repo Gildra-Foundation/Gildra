@@ -1,3 +1,4 @@
+import "server-only";
 import { Activity, CheckCircle2, Clock3, ShieldCheck, Target } from "lucide-react";
 import type { CharacterRunMetrics, CharacterRunScenario, CharacterRunKind } from "@/lib/wow/characterRunHistory";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";

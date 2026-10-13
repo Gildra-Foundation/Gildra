@@ -36,6 +36,11 @@ jobs:
           - name: cms
             context: ./cms
             file: ./cms/Dockerfile
+          # Same source, the `jobs` stage: the only runner of scheduled CMS jobs.
+          - name: cms-jobs
+            context: ./cms
+            file: ./cms/Dockerfile
+            target: jobs
           - name: scraper
             context: ./scraper
             file: ./scraper/Dockerfile
@@ -62,6 +67,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
+          target: ${{ matrix.target }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -102,12 +108,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for name in web api cms scraper rotation-sim-worker; do
+          for name in web api cms cms-jobs scraper rotation-sim-worker; do
             ref="$IMAGE_PREFIX-$name:$IMAGE_SHA"
             digest="$(docker buildx imagetools inspect "$ref" --format '{{json .Manifest.Digest}}' | tr -d '"')"
             printf '%s\n' "$digest" | grep -Eq '^sha256:[0-9a-f]{64}$'
             case "$name" in
               rotation-sim-worker) key=ROTATION_WORKER_IMAGE ;;
+              cms-jobs) key=CMS_JOBS_IMAGE ;;
               *) key="$(printf '%s_IMAGE' "$name" | tr '[:lower:]' '[:upper:]')" ;;
             esac
             printf '%s=%s\n' "$key" "$IMAGE_PREFIX-$name@$digest" >> "$GITHUB_OUTPUT"
@@ -117,6 +124,7 @@ jobs:
           WEB_IMAGE: ${{ steps.images.outputs.WEB_IMAGE }}
           API_IMAGE: ${{ steps.images.outputs.API_IMAGE }}
           CMS_IMAGE: ${{ steps.images.outputs.CMS_IMAGE }}
+          CMS_JOBS_IMAGE: ${{ steps.images.outputs.CMS_JOBS_IMAGE }}
           SCRAPER_IMAGE: ${{ steps.images.outputs.SCRAPER_IMAGE }}
           ROTATION_WORKER_IMAGE: ${{ steps.images.outputs.ROTATION_WORKER_IMAGE }}
           GILDRA_SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
@@ -218,13 +226,14 @@ jobs:
           WEB_IMAGE: ${{ steps.images.outputs.WEB_IMAGE }}
           API_IMAGE: ${{ steps.images.outputs.API_IMAGE }}
           CMS_IMAGE: ${{ steps.images.outputs.CMS_IMAGE }}
+          CMS_JOBS_IMAGE: ${{ steps.images.outputs.CMS_JOBS_IMAGE }}
           SCRAPER_IMAGE: ${{ steps.images.outputs.SCRAPER_IMAGE }}
           ROTATION_WORKER_IMAGE: ${{ steps.images.outputs.ROTATION_WORKER_IMAGE }}
           GILDRA_SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
           GILDRA_RELEASE_ID: ${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.head_sha }}
         run: |
           ssh "$OVH_USER@$OVH_HOST" \
-            "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' ROTATION_WORKER_IMAGE='$ROTATION_WORKER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
+            "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' CMS_JOBS_IMAGE='$CMS_JOBS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' ROTATION_WORKER_IMAGE='$ROTATION_WORKER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
       - name: Deploy web image
         if: steps.mode.outputs.mode == 'web'
         env:

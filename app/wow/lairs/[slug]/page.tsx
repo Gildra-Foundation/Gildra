@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LairBossGuide } from "@/components/wow/lairs/LairBossGuide";
-import { getMidnightLairEncounter, midnightLairEncounters } from "@/data/wow/midnight-lairs";
+import { getMidnightLairEncounter, midnightLairEncounters } from "@/lib/data/wow";
 import { getBoss } from "@/lib/lairs";
+
+// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
+export const dynamicParams = false;
 
 export function generateStaticParams() { return midnightLairEncounters.map(({ slug }) => ({ slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

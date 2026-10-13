@@ -2,6 +2,7 @@
 
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import { copyText } from "@/components/atlas/clipboard";
 import styles from "./lairs.module.css";
 
 type Labels = { label: string; copied: string; failed: string };
@@ -11,20 +12,7 @@ export function CopyWaypointButton({ waypoint, labels }: { waypoint: string; lab
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
   async function copy() {
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(waypoint);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = waypoint;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        const copied = document.execCommand("copy");
-        textarea.remove();
-        if (!copied) throw new Error("Copy command was rejected");
-      }
+      await copyText(waypoint);
       setStatus("copied");
     } catch {
       setStatus("error");

@@ -59,7 +59,7 @@ export function WowHome({ lang }: { lang: Lang }) {
   const href = (path: string) => `${locale === "ru" ? "/ru" : ""}${path}`;
 
   return (
-    <AtlasFrame lang={locale} art="/assets/characters/furybar-horde-hero-v1-optimized.webp" artPosition="72% 30%" dataAttributes={{ "data-wow-atlas": true }}>
+    <AtlasFrame lang={locale} scene="wow" dataAttributes={{ "data-wow-atlas": true }}>
       <AtlasHero
         align="center"
         eyebrow={t.eyebrow}

@@ -11,6 +11,7 @@ import { ANCHORS } from "@/lib/anchors";
 import type { GameIntelligence, TierActivity, TierContext, TierEntry, TierRole } from "@/lib/platform/games/intelligence";
 import { tierCopy, type KeyRange, type TierCopy } from "@/components/blocks/wow/tierWorkspace/tierCopy";
 import styles from "@/components/blocks/wow/tierWorkspace/tierWorkspace.module.css";
+import { lessMotion } from "@/lib/client/motionPreference";
 
 const CLASS_KEYS: Record<string, string> = {
   "death-knight": "dk", "demon-hunter": "dh", evoker: "evoker", mage: "mage",
@@ -217,7 +218,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     setSelectedSlug(entryKey(entry));
     if (!window.matchMedia("(max-width: 1199px)").matches) return;
     window.requestAnimationFrame(() => {
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reduce = lessMotion();
       document.getElementById("spec-detail")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
       detailTitle.current?.focus({ preventScroll: true });
     });

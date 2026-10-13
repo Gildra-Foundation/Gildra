@@ -1,13 +1,14 @@
 import Image from "next/image";
 import { ExternalLink, Flame, HeartPulse, MapPin, Shield, Swords } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable } from "@/components/atlas";
-import { difficulties, type BossGuide, type VerifiedAbilityIdentity } from "@/data/venomousAbyss";
+import { difficulties, type BossGuide, type VerifiedAbilityIdentity } from "@/lib/data/wow";
 import { EncounterSwitcher, RaidPager } from "./RaidNavigation";
 import { lootBandIndexForBoss, raidLootBands, tierRewards, venomousRaidLootSource, venomousRaidVerifiedAt } from "./venomousAbyssIntel";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
 import guide from "./raidGuide.module.css";
 import styles from "./venomous.module.css";
+import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
 
 const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords } as const;
 
@@ -37,7 +38,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
   const isDraft = boss.strategyVerificationStatus === "source_tracked";
 
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/mythic/backgrounds/altar.webp" artPosition="center 45%">
+    <AtlasFrame lang={locale} scene="venomousBoss">
       <AtlasHero
         breadcrumbs={[
           { label: shared.wow, href: `${prefix}/wow` },
@@ -49,6 +50,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
         eyebrow={<>The Venomous Abyss · {shared.encounterOf(order + 1, bosses.length)}</>}
         title={boss.name.en}
         lede={boss.identityDescription[locale]}
+        actions={<AtlasShareButton title={`${boss.name.en} — The Venomous Abyss`} locale={locale} />}
       />
 
       <EncounterSwitcher items={encounters} label={shared.encountersLabel} />

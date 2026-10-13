@@ -1,5 +1,5 @@
-import type { MidnightDelve } from "@/data/wow/midnight-delves";
-import { IdentityStatusPage } from "@/components/wow/identity/IdentityStatusPage";
+import type { MidnightDelve } from "@/lib/data/wow";
+import { IdentityStatusPage } from "@/components/wow/shared/IdentityStatusPage";
 
 export function DelveIdentityPage({ delve, locale }: { delve: MidnightDelve; locale: "en" | "ru" }) {
   const seasonNumber = delve.season.endsWith("2") ? "2" : "1";

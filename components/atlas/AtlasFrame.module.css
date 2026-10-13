@@ -26,7 +26,7 @@
   inset: 0;
   content: "";
   background: radial-gradient(circle at 74% 8%, var(--atlas-frame-tint), transparent 34%);
-  animation: atlas-torch 9s ease-in-out infinite;
+  animation: atlas-torch 9s var(--atlas-ease-ambient) infinite;
 }
 
 .atmosphere::after {
@@ -45,19 +45,28 @@
     linear-gradient(180deg, rgba(5, 6, 7, .25) 0%, rgba(5, 6, 7, .55) 45%, var(--atlas-bg) 92%);
 }
 
+/* More contrast requested: every scene gets the deep shade. */
+@media (prefers-contrast: more) {
+  .atmosphere::after {
+    background:
+      linear-gradient(90deg, rgba(4, 5, 6, .93), rgba(4, 5, 6, .62) 50%, rgba(4, 5, 6, .5)),
+      linear-gradient(180deg, rgba(5, 6, 7, .25) 0%, rgba(5, 6, 7, .55) 45%, var(--atlas-bg) 92%);
+  }
+}
+
 .art {
   object-fit: cover;
   object-position: var(--atlas-frame-art-position, center 18%);
   filter: saturate(.86) contrast(1.06) brightness(.92);
   /* The scene settles in when the page arrives, then drifts slowly — a living painting. */
-  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s ease-in-out 1.8s infinite alternate;
+  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
 }
 
 /* A living layer over the scene moves exactly like the art beneath it. */
 .artLayer {
   position: absolute;
   inset: 0;
-  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s ease-in-out 1.8s infinite alternate;
+  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
 }
 
 /* Embers: two parallax layers of sparks rising through the torchlight over the
@@ -85,7 +94,7 @@
     radial-gradient(circle at 40% 83%, var(--atlas-ember-halo), transparent 9px),
     radial-gradient(circle at 87% 11%, var(--atlas-ember) 0 .9px, transparent 1.6px);
   background-size: 380px 520px;
-  animation: atlas-ember-rise 26s linear infinite, atlas-ember-sway 7s ease-in-out infinite alternate, atlas-ember-in 2.4s ease-out both;
+  animation: atlas-ember-rise 26s linear infinite, atlas-ember-sway 7s var(--atlas-ease-ambient) infinite alternate, atlas-ember-in 2.4s ease-out both;
 }
 
 /* The far layer: smaller, slower, dimmer. */
@@ -104,6 +113,8 @@
   padding: var(--atlas-space-7) var(--atlas-gutter) var(--atlas-space-8);
 }
 
+.column:focus { outline: none; }
+
 .legal {
   display: flex;
   flex-wrap: wrap;
@@ -121,6 +132,45 @@
 .legal p { max-width: 90ch; margin: 0; }
 .legal a { color: var(--atlas-accent); }
 .legal a:hover { color: var(--atlas-accent-strong); }
+.legalLinks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-5); }
+
+/* "Less motion" switch (AtlasMotionToggle) */
+.motionToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: 44px;
+  padding: 0;
+  color: var(--atlas-text-muted);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+.motionToggle:hover { color: var(--atlas-text-strong); }
+.motionToggle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.motionSwitch {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  border: 1px solid var(--atlas-line);
+  border-radius: 8px;
+  background: var(--atlas-surface-sunken);
+  transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
+}
+.motionSwitch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--atlas-text-subtle);
+  transition: translate var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+}
+.motionToggle[aria-pressed="true"] .motionSwitch { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
+.motionToggle[aria-pressed="true"] .motionSwitch::after { translate: 12px 0; background: var(--atlas-accent-strong); }
 
 @keyframes atlas-torch {
   0%, 100% { opacity: .78; }

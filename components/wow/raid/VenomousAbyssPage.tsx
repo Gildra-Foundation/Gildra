@@ -1,7 +1,6 @@
 import { Castle, ExternalLink, Layers, MapPin } from "lucide-react";
 import { AtlasDisclosure, AtlasFrame, AtlasGrid, AtlasHero, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTable, AtlasTile } from "@/components/atlas";
-import contentManifest from "@/data/wow/content-manifest.json";
-import { venomousAbyss } from "@/data/venomousAbyss";
+import { contentManifest, venomousAbyss } from "@/lib/data/wow";
 import {
   gloryAchievements,
   headlineRewards,
@@ -48,7 +47,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
   const bossName = (slug: string) => bosses.find((boss) => boss.canonicalSlug === slug)?.names.en ?? slug;
 
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/mythic/backgrounds/altar.webp" artPosition="center 35%" tint="rgba(96, 150, 70, .16)">
+    <AtlasFrame lang={locale} scene="venomousAbyss">
       <AtlasHero
         breadcrumbs={[{ label: shared.wow, href: `${prefix}/wow` }, { label: shared.raids, href: `${prefix}/wow/raids` }, { label: raid.names.en }]}
         breadcrumbsLabel={shared.breadcrumbsLabel}

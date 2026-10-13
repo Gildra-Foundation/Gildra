@@ -1,3 +1,4 @@
+import "server-only";
 import NextAuth from "next-auth";
 import BattleNet from "next-auth/providers/battlenet";
 

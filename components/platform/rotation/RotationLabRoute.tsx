@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Image from "next/image";
 import { AtlasFrame, AtlasHero, AtlasNotice } from "@/components/atlas";
-import { midnightSpecializations } from "@/data/wow/midnight-specializations";
+import { midnightSpecializations } from "@/lib/data/wow";
 import type { RotationPreset } from "@/lib/platform/rotation/types";
 import type { TalentSpecTheme } from "@/lib/talentSpecThemes";
 import { RotationLabPage } from "./RotationLabPage";

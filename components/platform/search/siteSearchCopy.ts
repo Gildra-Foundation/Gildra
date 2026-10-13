@@ -1,3 +1,5 @@
+import { pluralRu } from "@/components/atlas/format";
+
 /** Strings of the quick search (⌘K): the toolbar button and its dialog. */
 export const siteSearchCopy = {
   en: {
@@ -30,12 +32,7 @@ export const siteSearchCopy = {
     database: (query: string) => `Искать «${query}» в базе данных`,
     databaseGroup: "База данных",
     hints: [["↑↓", "выбрать"], ["Enter", "открыть"], ["Esc", "закрыть"]] as const,
-    count: (n: number) => {
-      const mod10 = n % 10;
-      const mod100 = n % 100;
-      const word = mod10 === 1 && mod100 !== 11 ? "результат" : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? "результата" : "результатов";
-      return `${n} ${word}`;
-    },
+    count: (n: number) => `${n} ${pluralRu(n, "результат", "результата", "результатов")}`,
   },
 } as const;
 

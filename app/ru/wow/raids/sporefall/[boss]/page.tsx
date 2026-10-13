@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SporefallPage } from "@/components/wow/raid/SporefallPage";
 
+// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
+export const dynamicParams = false;
+
 const path = "/ru/wow/raids/sporefall/rotmire";
 export const metadata: Metadata = {
   title: "Rotmire — Sporefall — Gildra",

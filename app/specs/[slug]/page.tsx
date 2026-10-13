@@ -1,5 +1,8 @@
 import { notFound, permanentRedirect } from "next/navigation";
 
+// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
+export const dynamicParams = false;
+
 const redirects: Record<string, string> = {
   "frost-death-knight": "/wow/classes/death-knight/frost-death-knight",
   "arcane-mage": "/wow/classes/mage/arcane-mage",

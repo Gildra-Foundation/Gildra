@@ -1222,44 +1222,44 @@
 /* The standalone lab and personal lab share the dark internal atlas. */
 .lab:global(#rotation-lab-content) {
   --lab-gold: var(--atlas-accent);
-  --lab-gold-2: var(--atlas-accent-bright);
-  --lab-line: var(--atlas-border);
-  --lab-line-soft: var(--atlas-rule);
+  --lab-gold-2: var(--atlas-accent-strong);
+  --lab-line: var(--atlas-line);
+  --lab-line-soft: var(--atlas-line-soft);
   --lab-text: var(--atlas-text);
-  --lab-muted: var(--atlas-muted);
-  --lab-subtle: var(--atlas-muted);
+  --lab-muted: var(--atlas-text-muted);
+  --lab-subtle: var(--atlas-text-muted);
   --lab-paper: var(--atlas-surface);
   --lab-ink: var(--atlas-text);
-  --lab-ink-muted: var(--atlas-muted);
-  --lab-ink-soft: var(--atlas-muted);
-  --lab-paper-rule: var(--atlas-border);
-  --lab-title-font: var(--atlas-display);
-  --lab-ui-font: var(--atlas-ui);
+  --lab-ink-muted: var(--atlas-text-muted);
+  --lab-ink-soft: var(--atlas-text-muted);
+  --lab-paper-rule: var(--atlas-line);
+  --lab-title-font: var(--atlas-font-display);
+  --lab-ui-font: var(--atlas-font-ui);
   --lab-button-skin: var(--atlas-accent-wash);
   color: var(--atlas-text);
-  font-family: var(--atlas-ui);
+  font-family: var(--atlas-font-ui);
 }
 .lab:global(#rotation-lab-content) :is(.combatDeck, .hero, .priorityPanel, .timelinePanel, .findingsPanel, .trainer, .comboLibrary, .comboCard, .combatState, .comboEditor, .trainerStage, .trainerHeader, .trainerConfig, .trainerConfigTitle, .trainerConfigFooter) {
-  border-color: var(--atlas-border);
+  border-color: var(--atlas-line);
   border-radius: 2px;
   background: var(--atlas-surface);
   background-image: none;
   box-shadow: none;
 }
 .lab:global(#rotation-lab-content) :is(.hero)::before,.lab:global(#rotation-lab-content) :is(.hero)::after { display: none; }
-.lab:global(#rotation-lab-content) :is(h1, h2, h3, .titleRow, .embeddedHeroTitle, .specPicker > strong, .comboLibrary summary strong):not([data-atlas-ui] *) { color: var(--atlas-title) !important; font-family: var(--atlas-display); font-weight: 400; text-shadow: none !important; }
-.lab:global(#rotation-lab-content) :is(p, small, label > span):not([data-atlas-ui] *) { color: var(--atlas-muted); text-shadow: none; }
+.lab:global(#rotation-lab-content) :is(h1, h2, h3, .titleRow, .embeddedHeroTitle, .specPicker > strong, .comboLibrary summary strong):not([data-atlas-ui] *) { color: var(--atlas-text-strong) !important; font-family: var(--atlas-font-display); font-weight: 400; text-shadow: none !important; }
+.lab:global(#rotation-lab-content) :is(p, small, label > span):not([data-atlas-ui] *) { color: var(--atlas-text-muted); text-shadow: none; }
 .lab:global(#rotation-lab-content) summary:not([data-atlas-ui] *),
 .lab:global(#rotation-lab-content) summary:not([data-atlas-ui] *) :is(strong, b),
-.lab:global(#rotation-lab-content) summary:not([data-atlas-ui] *) > span { color: var(--atlas-title) !important; text-shadow: none !important; }
+.lab:global(#rotation-lab-content) summary:not([data-atlas-ui] *) > span { color: var(--atlas-text-strong) !important; text-shadow: none !important; }
 .lab:global(#rotation-lab-content) summary:not([data-atlas-ui] *) svg { color: var(--atlas-accent); filter: none; }
-.lab:global(#rotation-lab-content) :is(.eyebrow, .embeddedCharacter) { color: var(--atlas-accent-bright) !important; text-shadow: none; }
-.lab:global(#rotation-lab-content) :is(button, select, input, textarea):not([data-atlas-ui] *) { color: var(--atlas-text); border-color: var(--atlas-border); background: var(--atlas-background); background-image: none; box-shadow: none; text-shadow: none; }
+.lab:global(#rotation-lab-content) :is(.eyebrow, .embeddedCharacter) { color: var(--atlas-accent-strong) !important; text-shadow: none; }
+.lab:global(#rotation-lab-content) :is(button, select, input, textarea):not([data-atlas-ui] *) { color: var(--atlas-text); border-color: var(--atlas-line); background: var(--atlas-bg); background-image: none; box-shadow: none; text-shadow: none; }
 .lab:global(#rotation-lab-content) button:not([data-atlas-ui] *) { min-height: 44px; }
-.lab:global(#rotation-lab-content) button.conditionToggle:not([data-atlas-ui] *) { width: auto; min-height: 32px; color: var(--atlas-accent); background: transparent; border: 0; font: 600 12px/1.3 var(--atlas-ui); letter-spacing: 0; text-align: left; text-transform: none; }
-.lab:global(#rotation-lab-content) :is(.trainerConfigButton, .trainerResetButton, .rotationSaveBar button, .rotationShare button) { color: var(--atlas-text) !important; background: var(--atlas-background) !important; border-color: var(--atlas-border) !important; box-shadow: none !important; text-shadow: none; }
-.lab:global(#rotation-lab-content) :is(.primaryMini, .readyTrain, .trainerStartButton, .trainerConfigDone, .comboActions .comboUse) { color: var(--atlas-title) !important; background: var(--atlas-accent-wash) !important; border-color: var(--atlas-accent) !important; border-radius: 2px !important; box-shadow: none !important; text-shadow: none; }
-.lab:global(#rotation-lab-content) button[aria-pressed="true"]:not([data-atlas-ui] *) { color: var(--atlas-accent-bright); background: var(--atlas-accent-wash); }
-.lab:global(#rotation-lab-content) :is(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--atlas-accent-bright); outline-offset: 3px; }
+.lab:global(#rotation-lab-content) button.conditionToggle:not([data-atlas-ui] *) { width: auto; min-height: 32px; color: var(--atlas-accent); background: transparent; border: 0; font: 600 12px/1.3 var(--atlas-font-ui); letter-spacing: 0; text-align: left; text-transform: none; }
+.lab:global(#rotation-lab-content) :is(.trainerConfigButton, .trainerResetButton, .rotationSaveBar button, .rotationShare button) { color: var(--atlas-text) !important; background: var(--atlas-bg) !important; border-color: var(--atlas-line) !important; box-shadow: none !important; text-shadow: none; }
+.lab:global(#rotation-lab-content) :is(.primaryMini, .readyTrain, .trainerStartButton, .trainerConfigDone, .comboActions .comboUse) { color: var(--atlas-text-strong) !important; background: var(--atlas-accent-wash) !important; border-color: var(--atlas-accent) !important; border-radius: 2px !important; box-shadow: none !important; text-shadow: none; }
+.lab:global(#rotation-lab-content) button[aria-pressed="true"]:not([data-atlas-ui] *) { color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
+.lab:global(#rotation-lab-content) :is(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .lab:global(#rotation-lab-content) .comboLibrary { margin: var(--atlas-space-4) 0 0; }
-.lab:global(#rotation-lab-content) .comboLibrary > summary > b { border-color: var(--atlas-line); background: transparent; color: var(--atlas-accent-bright); }
+.lab:global(#rotation-lab-content) .comboLibrary > summary > b { border-color: var(--atlas-line); background: transparent; color: var(--atlas-accent-strong); }

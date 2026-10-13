@@ -16,8 +16,8 @@
   backdrop-filter: blur(3px);
 }
 
-.dialog[open] { animation: atlas-dialog-in .22s var(--atlas-ease) both; }
-.dialog[open]::backdrop { animation: atlas-backdrop-in .22s ease both; }
+.dialog[open] { animation: atlas-dialog-in var(--atlas-duration) var(--atlas-ease) both; }
+.dialog[open]::backdrop { animation: atlas-backdrop-in var(--atlas-duration) ease both; }
 
 .body { display: grid; max-height: inherit; overflow: hidden; }
 

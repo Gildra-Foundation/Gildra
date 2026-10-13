@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { lessMotion } from "@/lib/client/motionPreference";
 
 /**
  * Torchlight under the cursor for everything marked `data-spotlight` (cards,
@@ -13,7 +14,7 @@ import { useEffect } from "react";
 export function AtlasPointerLight() {
   useEffect(() => {
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = lessMotion();
     let target: HTMLElement | null = null;
     let frame = 0;
     let x = 0;

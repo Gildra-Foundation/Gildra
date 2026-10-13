@@ -36,6 +36,7 @@
 }
 
 .nav a:hover { color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
+.nav a[aria-current="location"] { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); box-shadow: inset 0 -2px 0 var(--atlas-accent); }
 .nav a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
 
 .nav b {

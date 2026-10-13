@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { VenomousBossPage } from "@/components/wow/raid/VenomousBossPage";
-import { bossBySlug, lt, venomousAbyss } from "@/data/venomousAbyss";
+import { bossBySlug, lt, venomousAbyss } from "@/lib/data/wow";
+
+// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
+export const dynamicParams = false;
 
 export function generateStaticParams() {
   return venomousAbyss.map((boss) => ({ boss: boss.slug }));
