@@ -1,4 +1,4 @@
-type SentryClient = typeof import("@sentry/nextjs");
+type SentryClient = typeof import("@/lib/observability/sentryClient");
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 let sentryModule: Promise<SentryClient> | undefined;
@@ -13,7 +13,7 @@ const rememberError = (event: ErrorEvent | PromiseRejectionEvent) => {
 };
 
 function loadSentry() {
-  return sentryModule ??= import("@sentry/nextjs");
+  return sentryModule ??= import("@/lib/observability/sentryClient");
 }
 
 function initializeSentry() {
@@ -47,11 +47,4 @@ if (typeof window !== "undefined" && dsn) {
 
   if (document.readyState === "complete") scheduleSentry();
   else window.addEventListener("load", scheduleSentry, { once: true });
-}
-
-export function onRouterTransitionStart(href: string, navigationType: string) {
-  if (!dsn) return;
-  void initializeSentry().then(() => loadSentry()).then((Sentry) => {
-    Sentry.captureRouterTransitionStart(href, navigationType);
-  });
 }
