@@ -1,5 +1,5 @@
 import { pluralRu } from "@/components/atlas/format";
-import { getMidnightRaid, raidSlugs } from "@/components/wow/raid/midnightRaidData";
+import { getMidnightRaid, raidSceneArt, raidSlugs } from "@/components/wow/raid/midnightRaidData";
 import { getBossStrategy } from "@/components/wow/raid/raidStrategy";
 import { dungeonRoutes, getDungeonRoute, type DungeonSlug } from "@/components/wow/mythic/dungeonRoutes";
 import contentManifest from "@/data/wow/content-manifest.json";
@@ -54,7 +54,7 @@ const kinds = {
     const raid = getMidnightRaid(slug);
     if (!raid) return hubs.raids(locale);
     return {
-      art: raid.slug === "the-voidspire" ? "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp" : raid.artwork,
+      art: raidSceneArt(raid),
       focus: [0.5, 0.35],
       eyebrow: ru(locale) ? `Midnight · Сезон 1 · ${raid.locationRu}` : `Midnight · Season 1 · ${raid.locationEn}`,
       title: raid.nameEn,

@@ -2,6 +2,7 @@ import Image from "next/image";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasSection, AtlasTile } from "@/components/atlas";
 import type { Lang } from "@/lib/i18n";
+import { atlasScenes } from "@/lib/atlas/scenes";
 
 const copy = {
   ru: {
@@ -40,11 +41,11 @@ const copy = {
 
 const sections = [
   { key: "characters", href: "/wow/characters", art: "/assets/wow/loading/city.webp", position: "center 45%" },
-  { key: "mythic", href: "/wow/mythic-plus", art: "/assets/wow/mythic/ruby-depth-v3-light-fast.webp", position: "center 40%" },
-  { key: "raids", href: "/wow/raids", art: "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp", position: "center 35%" },
-  { key: "lairs", href: "/wow/lairs", art: "/assets/wow/lairs/bosses/nymrissa.jpg", position: "center 22%" },
-  { key: "tierLists", href: "/tier-lists", art: "/assets/wow/mythic/backgrounds/kings.webp", position: "center 40%" },
-  { key: "database", href: "/database", art: "/assets/wow/loading/archive.webp", position: "center 45%" },
+  { key: "mythic", href: "/wow/mythic-plus", art: atlasScenes.mythicPlus.art, position: "center 40%" },
+  { key: "raids", href: "/wow/raids", art: atlasScenes.raids.art, position: "center 35%" },
+  { key: "lairs", href: "/wow/lairs", art: atlasScenes.lairs.art, position: "center 22%" },
+  { key: "tierLists", href: "/tier-lists", art: atlasScenes.tierLists.art, position: "center 40%" },
+  { key: "database", href: "/database", art: atlasScenes.archive.art, position: "center 45%" },
 ] as const;
 
 const builds = [

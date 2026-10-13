@@ -49,6 +49,45 @@ header[data-atlas-scope] {
   60% { filter: blur(0); }
 }
 
+/* Art morph (AtlasCard/AtlasPath morph + AtlasFrame morphKey): the card's picture
+   grows into the opened page's scene; both keep their crop while the box moves. */
+::view-transition-group(.atlas-art-morph) {
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(.2, .7, .2, 1);
+}
+
+::view-transition-old(.atlas-art-morph),
+::view-transition-new(.atlas-art-morph) {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Direction (RouteTransitionRuntime sets html[data-nav-direction]): going deeper the
+   next page arrives from the right, going up or back it arrives from the left;
+   between siblings it rises as above. */
+html[data-nav-direction="deeper"]::view-transition-old(.atlas-page-out) { animation-name: atlas-page-out-left; }
+html[data-nav-direction="deeper"]::view-transition-new(.atlas-page-in) { animation-name: atlas-page-in-right; }
+html[data-nav-direction="up"]::view-transition-old(.atlas-page-out) { animation-name: atlas-page-out-right; }
+html[data-nav-direction="up"]::view-transition-new(.atlas-page-in) { animation-name: atlas-page-in-left; }
+
+@keyframes atlas-page-out-left {
+  to { opacity: 0; filter: blur(3px); transform: translateX(-28px); }
+}
+
+@keyframes atlas-page-out-right {
+  to { opacity: 0; filter: blur(3px); transform: translateX(28px); }
+}
+
+@keyframes atlas-page-in-right {
+  from { opacity: 0; filter: blur(5px); transform: translateX(36px); }
+  60% { filter: blur(0); }
+}
+
+@keyframes atlas-page-in-left {
+  from { opacity: 0; filter: blur(5px); transform: translateX(-36px); }
+  60% { filter: blur(0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),
   ::view-transition-old(*),

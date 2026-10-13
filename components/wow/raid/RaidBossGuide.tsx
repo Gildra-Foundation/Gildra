@@ -20,7 +20,7 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
   const hasMechanics = Boolean(strategy?.guide) || boss.mechanics.length > 0;
 
   return (
-    <AtlasFrame lang={locale} art={boss.artwork} artPosition="center 28%">
+    <AtlasFrame lang={locale} art={boss.artwork} artPosition="center 28%" morphKey={`/wow/raids/${raid.slug}/${boss.slug}`}>
       <AtlasHero
         breadcrumbs={[
           { label: copy.wow, href: `${prefix}/wow` },

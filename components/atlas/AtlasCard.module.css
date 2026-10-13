@@ -6,7 +6,7 @@
   box-shadow: var(--atlas-shadow-card);
   content-visibility: auto;
   contain-intrinsic-size: auto 440px;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .card:hover,
@@ -242,7 +242,19 @@
       animation-timeline: view();
       animation-range: entry 0% entry 60%;
     }
+    /* Arriving from another page: the first cards also rise one after another
+       (order from AtlasGrid), after the hero and the section title. */
+    :global([data-route-arrived]) .card {
+      animation: atlas-card-rise linear both, atlas-card-arrive .48s var(--atlas-ease) both;
+      animation-timeline: view(), auto;
+      animation-range: entry 0% entry 60%, normal;
+      animation-delay: 0s, calc(var(--atlas-stagger) * (6 + var(--atlas-cascade-index, 0)));
+    }
   }
+}
+
+@keyframes atlas-card-arrive {
+  from { opacity: 0; translate: 0 calc(var(--atlas-reveal-shift) / 2); }
 }
 
 @keyframes atlas-card-rise {
@@ -263,3 +275,7 @@
   .card:hover .art > img,
   .card:focus-within .art > img { transform: none; }
 }
+
+/* Press feedback (cards). */
+.card:active { scale: var(--atlas-press-scale-card); }
+@media (prefers-reduced-motion: reduce) { .card:active { scale: none; } }

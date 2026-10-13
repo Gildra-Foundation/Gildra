@@ -6,6 +6,7 @@ import { getBossStrategy, isRaidStrategyPublished } from "./raidStrategy";
 import styles from "./raidGuide.module.css";
 import { VoidEye } from "./VoidEye";
 import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
+import { raidSceneArt } from "./midnightRaidData";
 
 /** Raid page of a Midnight Season 1 raid: what the raid is and its encounters. */
 export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
@@ -22,7 +23,8 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
   return (
     <AtlasFrame
       lang={locale}
-      art={raid.slug === "the-voidspire" ? "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp" : raid.artwork}
+      morphKey={`/wow/raids/${raid.slug}`}
+      art={raidSceneArt(raid)}
       artPosition="center 30%"
       tint={`${raid.accent}2e`}
       // The Voidspire's eye is alive: a shader of our own over the painting's void.
@@ -43,6 +45,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
           {single ? (
             <AtlasCard
               href={`${raidHref}/${raid.bosses[0].slug}`}
+              morph
               layout="feature"
               image={{ src: raid.bosses[0].artwork, alt: "", priority: true }}
               title={raid.bosses[0].nameEn}
@@ -53,6 +56,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
           ) : (
             // The encounters in the order the raid meets them.
             <AtlasPath
+              morph
               label={copy.bossesTitle}
               steps={raid.bosses.map((boss) => ({
                 href: `${raidHref}/${boss.slug}`,

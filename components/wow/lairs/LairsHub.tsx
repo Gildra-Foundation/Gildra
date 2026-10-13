@@ -39,6 +39,7 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
             layout="feature"
             headingLevel={3}
             href={`${prefix}/wow/lairs/${lair.boss.slug}`}
+            morph
             image={{ src: lair.boss.portrait, alt: lair.boss.name, priority: true, position: "center 62%" }}
             accent={lair.boss.accent}
             eyebrow={<><MapPin aria-hidden="true" />{lair.boss.zone}</>}
@@ -71,6 +72,7 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
             <AtlasCard
               key={boss.slug}
               href={`${prefix}/wow/lairs/${boss.slug}`}
+              morph
               image={{ src: boss.portrait, alt: boss.name, position: "center 24%", sizes: "(max-width: 620px) 100vw, (max-width: 1100px) 50vw, 25vw" }}
               artRatio="4 / 3.6"
               tilt
