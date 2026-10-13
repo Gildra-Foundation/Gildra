@@ -18,6 +18,7 @@ export const raidGuideCopy = {
     patch: (patch: string) => `Патч ${patch}`,
     encounterOf: (order: number, total: number) => `Встреча ${order} из ${total}`,
     encountersLabel: "Встречи рейда",
+    pagerLabel: "К следующей встрече",
 
     // Raid overview
     bossesTitle: "Боссы",
@@ -97,6 +98,7 @@ export const raidGuideCopy = {
     patch: (patch: string) => `Patch ${patch}`,
     encounterOf: (order: number, total: number) => `Encounter ${order} of ${total}`,
     encountersLabel: "Raid encounters",
+    pagerLabel: "On to the next encounter",
 
     bossesTitle: "Bosses",
     bossesText: "Each encounter page has the phase-by-phase plan and what to do with every mechanic.",

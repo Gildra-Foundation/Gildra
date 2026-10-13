@@ -384,8 +384,8 @@
   text-transform: uppercase;
 }
 
-.sources ul { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
-.sources a { color: var(--atlas-accent); text-decoration: none; }
+.sources ul { display: flex; flex-wrap: wrap; gap: 0 var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.sources a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-accent); text-decoration: none; }
 .sources a:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
 .sources a span { color: var(--atlas-text-subtle); }
 
@@ -438,4 +438,16 @@
   .search,
   .chevron { transition: none; }
   .preview[data-state="loading"] { animation: none; }
+}
+
+/* Phones: catalogue controls are 44 px touch targets (roadmap item 51). */
+@media (max-width: 720px) {
+  .primary,
+  .quiet,
+  .type,
+  .section,
+  .taxonomyTree a,
+  .search input,
+  .search button { min-height: 44px; }
+  .preview { width: 44px; height: 44px; }
 }

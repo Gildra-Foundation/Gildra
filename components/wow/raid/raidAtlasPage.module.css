@@ -64,7 +64,9 @@
   line-height: 1.1;
 }
 
-.raidBody h3 a { color: var(--atlas-text-strong); text-decoration: none; }
+.raidBody h3 a { position: relative; color: var(--atlas-text-strong); text-decoration: none; }
+/* 44 px hit area around the title line (the art above leads to the same raid). */
+.raidBody h3 a::after { content: ""; position: absolute; inset: -9px 0; }
 .raidBody h3 a:hover { color: var(--atlas-accent-strong); }
 
 .pending {
@@ -92,6 +94,7 @@
 }
 
 .encounters li {
+  position: relative;
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: center;
@@ -113,6 +116,8 @@
 }
 
 .encounters a:hover { color: var(--atlas-accent-strong); text-decoration: underline; }
+/* The whole row (portrait included) is the boss link's target. */
+.encounters a::after { content: ""; position: absolute; inset: 0; }
 
 .raidFooter {
   display: flex;
@@ -133,7 +138,12 @@
 .raidFooter a {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  /* A 44 px target that does not make the footer taller. */
+  min-width: 44px;
+  min-height: 44px;
+  margin-block: -14px;
   color: var(--atlas-accent-strong);
   font-weight: 650;
   letter-spacing: .08em;
@@ -149,4 +159,9 @@
   .raidArt > img,
   .raidFooter a svg { transition: none; }
   .raid:hover .raidArt > img { transform: none; }
+}
+
+/* Phones: 44 px boss rows. */
+@media (max-width: 720px) {
+  .encounters li { min-height: 44px; }
 }

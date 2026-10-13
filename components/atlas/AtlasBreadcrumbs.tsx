@@ -8,7 +8,7 @@ export type AtlasCrumb = { label: string; href?: string };
 /** Trail back to the section hub. The last item is the current page. */
 export function AtlasBreadcrumbs({ items, label, className }: { items: AtlasCrumb[]; label: string; className?: string }) {
   return (
-    <nav className={clsx(styles.trail, className)} aria-label={label}>
+    <nav className={clsx(styles.trail, className)} aria-label={label} data-text-links>
       <ol>
         {items.map((item, index) => {
           const last = index === items.length - 1;

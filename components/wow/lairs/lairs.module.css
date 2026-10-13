@@ -285,7 +285,7 @@
   border-top: 1px solid var(--atlas-line-soft);
 }
 
-.pagerBack { color: var(--atlas-accent); font-size: var(--atlas-text-small); font-weight: 600; }
+.pagerBack { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-accent); font-size: var(--atlas-text-small); font-weight: 600; }
 .pagerBack:hover { color: var(--atlas-accent-strong); }
 
 .pagerNext {
@@ -316,3 +316,7 @@
   .ability { grid-template-columns: 40px minmax(0, 1fr); gap: var(--atlas-space-3); padding: var(--atlas-space-4); }
   .abilityIcon { width: 40px; height: 40px; }
 }
+
+/* Ability names link to Wowhead: a 44 px hit area around the heading line. */
+.ability h3 a { position: relative; }
+.ability h3 a::after { content: ""; position: absolute; inset: -8px 0; }

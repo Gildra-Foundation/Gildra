@@ -50,7 +50,7 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
       {hasMechanics ? (
         <AtlasSection id="mechanics" title={copy.mechanicsTitle} description={strategy?.guide ? copy.mechanicsText : copy.mechanicsJournalText}>
           <RaidMechanicList guide={strategy?.guide} journal={boss.mechanics} locale={locale} />
-          <p className={styles.sources}>
+          <p className={styles.sources} data-text-links>
             {strategy?.guide ? (
               <>
                 {copy.strategySource(strategy.guide.sourceUpdatedAt, strategy.guide.checkedAt)}{" "}
@@ -62,7 +62,7 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
         </AtlasSection>
       ) : null}
 
-      <RaidPager label={copy.encountersLabel} back={{ href: raidHref, label: copy.allBosses(raid.nameEn) }} next={encounters[order + 1]} nextLabel={copy.nextBoss} />
+      <RaidPager label={copy.pagerLabel} back={{ href: raidHref, label: copy.allBosses(raid.nameEn) }} next={encounters[order + 1]} nextLabel={copy.nextBoss} />
     </AtlasFrame>
   );
 }

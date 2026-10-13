@@ -35,7 +35,7 @@ export function AtlasTable<T>({ columns, rows, rowKey, label, caption, layout = 
   testId?: string;
 }) {
   return (
-    <div className={clsx(styles.region, layout === "cards" && styles.cards, className)} role="region" aria-label={label} tabIndex={0} style={maxWidth ? { maxWidth } : undefined}>
+    <div className={clsx(styles.region, layout === "cards" && styles.cards, className)} role="group" aria-label={label} tabIndex={0} style={maxWidth ? { maxWidth } : undefined}>
       <table className={styles.table} data-testid={testId}>
         {caption ? <caption className={styles.caption}>{caption}</caption> : null}
         <thead>

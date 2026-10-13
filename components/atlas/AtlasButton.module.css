@@ -44,3 +44,7 @@
 .ghost:hover { color: var(--atlas-accent-strong); border-color: transparent; background: transparent; }
 
 .sm { min-height: 36px; padding: 7px 12px; font-size: var(--atlas-text-meta); }
+/* Phones: every button is a 44 px touch target. */
+@media (max-width: 720px) {
+  .sm { min-height: var(--atlas-control-height); }
+}

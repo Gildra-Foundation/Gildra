@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import { ResilientImage } from "@/components/media/ResilientImage";
-import { ITEM_QUALITY_COLORS } from "@/components/database/databaseCopy";
+import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import styles from "./catalogRecordRow.module.css";
 
@@ -29,10 +29,10 @@ export type CatalogRecordRowProps = {
  * single line of facts. Shared by /database, /library/<dataset> and /search.
  */
 export function CatalogRecordRow({ href, name, typeLabel, iconUrl, iconSymbol = "#ic-gem", quality, description, meta = [], action, track }: CatalogRecordRowProps) {
-  const qualityColor = quality !== undefined ? ITEM_QUALITY_COLORS[quality] : undefined;
+  const qualityColor = quality !== undefined ? itemQualityColors[quality as keyof typeof itemQualityColors] : undefined;
   const facts = meta.filter((entry) => entry !== null && entry !== undefined && entry !== "");
   return (
-    <li className={styles.row} data-quality={qualityColor ? quality : undefined} style={qualityColor ? { "--record-quality": qualityColor } as CSSProperties : undefined}>
+    <li className={styles.row} data-quality={qualityColor ? quality : undefined} style={qualityColor ? { "--record-quality": qualityColor.frame, "--record-quality-text": qualityColor.text } as CSSProperties : undefined}>
       <span className={styles.icon} aria-hidden="true">
         <ResilientImage src={iconUrl} alt="" width={48} height={48} loading="lazy" fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
       </span>

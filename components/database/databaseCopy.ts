@@ -1,4 +1,5 @@
 import type { Lang } from "@/lib/i18n";
+import { itemQualityColors } from "@/lib/atlas/dataPalette";
 
 /**
  * Interface copy of the WoW database hub, its record rows and the library
@@ -174,9 +175,8 @@ export function highlightLabel(key: string, value: string, lang: Lang) {
 }
 
 /** Blizzard item quality colours — data colours, used only on the item they describe. */
-export const ITEM_QUALITY_COLORS: Record<number, string> = {
-  0: "#9d9d9d", 1: "#ffffff", 2: "#1eff00", 3: "#0070dd", 4: "#a335ee", 5: "#ff8000", 6: "#e6cc80", 7: "#00ccff",
-};
+/** Item quality frame colours (lib/atlas/dataPalette.ts; text uses the AA variant there). */
+export const ITEM_QUALITY_COLORS: Record<number, string> = Object.fromEntries(Object.entries(itemQualityColors).map(([quality, color]) => [quality, color.frame]));
 
 export function formatCount(value: number, lang: Lang) {
   return value.toLocaleString(lang === "ru" ? "ru-RU" : "en-US");

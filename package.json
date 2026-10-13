@@ -94,6 +94,7 @@
     "design:capture": "node scripts/capture-design.mjs",
     "design:compare": "node scripts/compare-design.mjs",
     "visual:diff": "node scripts/visual-diff.mjs",
+    "qa:a11y": "node scripts/qa-a11y.mjs",
     "test:cms": "node --experimental-strip-types --no-warnings --test tests/cms/*.test.ts",
     "test:cms:revalidate-e2e": "node tests/cms/revalidate-e2e.mjs",
     "test:cms:readers-e2e": "node --experimental-strip-types --no-warnings tests/cms/readers-e2e.mjs",

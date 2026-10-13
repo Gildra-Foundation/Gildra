@@ -18,6 +18,7 @@
 .trigger:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
 .triggerLabel { min-width: 3.5em; text-align: left; }
+.triggerKey::before { content: attr(data-key); }
 
 .triggerKey,
 .hints kbd {
@@ -119,7 +120,8 @@
 
 @media (max-width: 720px) {
   .trigger { justify-content: center; min-width: 44px; min-height: 44px; padding: 0; }
-  .triggerLabel,
   .triggerKey,
   .foot { display: none; }
+  /* Icon only on phones; the label stays for screen readers. */
+  .triggerLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }

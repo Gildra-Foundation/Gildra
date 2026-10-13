@@ -88,7 +88,7 @@
 
 /* The whole row is the link; the corner action sits above it. */
 .link::after { content: ""; position: absolute; inset: 0; z-index: 0; }
-.row[data-quality] .link { color: var(--record-quality); }
+.row[data-quality] .link { color: var(--record-quality-text, var(--record-quality)); }
 .row:hover .link { text-decoration: underline; text-underline-offset: 3px; }
 .link:focus-visible { outline: none; }
 .link:focus-visible::after { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }

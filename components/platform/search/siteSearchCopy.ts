@@ -4,7 +4,7 @@ import { pluralRu } from "@/components/atlas/format";
 export const siteSearchCopy = {
   en: {
     button: "Search",
-    open: "Search the site",
+    buttonRest: " the site",
     dialog: "Site search",
     placeholder: "Raid, boss, dungeon, class, section…",
     recent: "Recently opened",
@@ -20,7 +20,7 @@ export const siteSearchCopy = {
   },
   ru: {
     button: "Поиск",
-    open: "Поиск по сайту",
+    buttonRest: " по сайту",
     dialog: "Поиск по сайту",
     placeholder: "Рейд, босс, подземелье, класс, раздел…",
     recent: "Недавно открытые",

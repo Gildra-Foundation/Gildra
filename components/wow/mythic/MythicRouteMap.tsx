@@ -156,7 +156,7 @@ const RouteMapMarker = memo(function RouteMapMarker({ stop, index, active, compl
   complete: boolean;
   onSelect: (stopId: number) => void;
 }) {
-  return <button type="button" className={`${styles.marker} ${stopTone(stop.kind)}`} data-active={active || undefined} data-complete={complete || undefined} style={{ left: `${stop.x}%`, top: `${stop.y}%` }} onClick={() => onSelect(stop.id)} aria-label={`${index + 1}. ${stop.title}`} aria-pressed={active}>{complete ? <Check aria-hidden="true" /> : index + 1}{stop.bloodlust ? <Flame aria-hidden="true" /> : null}</button>;
+  return <button type="button" className={`${styles.marker} ${stopTone(stop.kind)}`} data-equivalent-targets data-active={active || undefined} data-complete={complete || undefined} style={{ left: `${stop.x}%`, top: `${stop.y}%` }} onClick={() => onSelect(stop.id)} aria-label={`${index + 1}. ${stop.title}`} aria-pressed={active}>{complete ? <Check aria-hidden="true" /> : index + 1}{stop.bloodlust ? <Flame aria-hidden="true" /> : null}</button>;
 });
 
 const RouteNoteField = memo(function RouteNoteField({ copy, initialValue, onChange, noteRef }: {

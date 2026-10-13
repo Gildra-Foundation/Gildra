@@ -164,6 +164,8 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
       <div className={showTaxonomy ? `${styles.catalog} ${styles.withTaxonomy}` : styles.catalog}>
         {showTaxonomy ? <Taxonomy categories={categories} selectedPath={selectedCategory} copy={copy} lang={lang} hrefFor={(path) => href({ category: path, cursor: "" })} /> : null}
         <div className={styles.results} id={RESULTS_ID}>
+          {/* Record names are h3: this keeps the outline h1 → h2 → h3 for screen readers. */}
+          <h2 className="sr-only">{copy.resultsLabel}</h2>
           {/* Text-search totals are not counted (too slow on common terms): the rows and paging answer instead. */}
           {narrowed && !query.trim() ? <p className={styles.resultsHead} aria-live="polite">{copy.found}: <b>{foundCount}</b></p> : null}
           {catalog.data.length ? (
