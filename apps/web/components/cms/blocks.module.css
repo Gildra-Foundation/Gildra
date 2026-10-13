@@ -1,15 +1,17 @@
-/* Article blocks from the CMS editor (video, spoiler, pros/cons, steps, button), atlas tokens only. */
+/* Article blocks from the CMS editor (video, spoiler, pros/cons, steps, button), atlas tokens only.
+   Doubled classes outrank the reading-column rules of cms.module.css (.prose ol, .prose a). */
 .video {
-  margin: var(--atlas-space-6) 0;
+  margin: 2em 0;
 }
 
 .videoFrame {
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border: 1px solid var(--atlas-line);
+  border: 1px solid var(--atlas-line-soft);
   border-radius: var(--atlas-radius);
   background: var(--atlas-surface-sunken);
+  box-shadow: var(--atlas-shadow-card);
 }
 
 .videoFrame iframe {
@@ -22,100 +24,179 @@
 
 .videoCaption {
   margin-top: var(--atlas-space-2);
-  color: var(--atlas-text-muted);
-  font-size: 0.9em;
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-meta);
 }
 
+/* Spoiler: a quiet row with a chevron that turns when it opens (same motion as AtlasDisclosure). */
 .details {
-  margin: var(--atlas-space-5) 0;
-  border: 1px solid var(--atlas-line);
+  margin: 1.6em 0;
+  border: 1px solid var(--atlas-line-soft);
   border-radius: var(--atlas-radius);
-  background: var(--atlas-surface-raised);
+  background: var(--atlas-surface);
+  transition: border-color var(--atlas-duration) var(--atlas-ease);
 }
+
+.details[open],
+.details:hover { border-color: var(--atlas-line); }
 
 .detailsSummary {
-  padding: var(--atlas-space-3) var(--atlas-space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-3);
+  min-height: var(--atlas-control-height);
+  padding: var(--atlas-space-2) var(--atlas-space-4);
   color: var(--atlas-text-strong);
   font-weight: 600;
+  list-style: none;
   cursor: pointer;
 }
+
+.detailsSummary::-webkit-details-marker { display: none; }
+
+.detailsSummary::after {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: -3px;
+  border: solid var(--atlas-accent);
+  border-width: 0 1.5px 1.5px 0;
+  content: "";
+  transform: rotate(45deg);
+  transition: transform var(--atlas-duration) var(--atlas-ease);
+}
+
+.details[open] > .detailsSummary::after { margin-top: 3px; transform: rotate(-135deg); }
+.detailsSummary:hover { color: var(--atlas-accent-strong); }
+.detailsSummary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
 .detailsBody {
   margin: 0;
   padding: 0 var(--atlas-space-4) var(--atlas-space-4);
+  color: var(--atlas-text-muted);
 }
 
 .prosCons {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  gap: var(--atlas-space-4);
-  margin: var(--atlas-space-6) 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--atlas-space-3);
+  margin: 1.8em 0;
+  font-size: .94em;
 }
 
 .pros,
 .cons {
-  padding: var(--atlas-space-4);
-  border: 1px solid var(--atlas-line);
+  padding: var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
   border-radius: var(--atlas-radius);
   background: var(--atlas-surface-raised);
 }
 
-.pros {
-  box-shadow: inset 3px 0 0 var(--atlas-accent);
-}
-
-.cons {
-  box-shadow: inset 3px 0 0 var(--atlas-text-subtle);
-}
+.pros { border-top: 2px solid var(--atlas-positive); }
+.cons { border-top: 2px solid var(--atlas-negative); }
 
 .prosConsTitle {
-  margin: 0 0 var(--atlas-space-2);
+  margin: 0 0 var(--atlas-space-2) !important;
   color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-label);
   font-weight: 700;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
 }
 
+/* "+" and "−" marks: the column is told apart by its sign and title, not by colour alone. */
 .pros ul,
 .cons ul {
-  margin: 0;
-  padding-left: 1.2em;
+  margin: 0 !important;
+  padding-left: 1.3em !important;
 }
 
-.steps {
-  margin: var(--atlas-space-6) 0;
-  padding-left: 1.6em;
+.pros.pros li::marker { color: var(--atlas-positive); content: "+  "; font-weight: 700; }
+.cons.cons li::marker { color: var(--atlas-negative); content: "−  "; font-weight: 700; }
+
+/* Steps: numbered medallions on a thread. */
+.steps.steps {
+  margin: 1.8em 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: cms-step;
 }
 
-.steps > li + li {
-  margin-top: var(--atlas-space-3);
+.steps.steps > li {
+  position: relative;
+  padding: 0 0 0 3.1em;
+  counter-increment: cms-step;
+}
+
+.steps.steps > li + li { margin-top: var(--atlas-space-5); }
+
+.steps.steps > li::before {
+  position: absolute;
+  top: -.1em;
+  left: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 2.1em;
+  height: 2.1em;
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: 50%;
+  background: var(--atlas-surface-raised);
+  color: var(--atlas-accent-strong);
+  content: counter(cms-step);
+  font-family: var(--atlas-font-display);
+  font-size: .95em;
+  font-weight: 700;
+  font-variant-numeric: lining-nums;
+  box-shadow: var(--atlas-glow-sm);
+}
+
+/* The thread between two medallions. */
+.steps.steps > li:not(:last-child)::after {
+  position: absolute;
+  top: 2.2em;
+  bottom: calc(var(--atlas-space-5) * -1 + 4px);
+  left: 1.05em;
+  width: 1px;
+  background: linear-gradient(var(--atlas-line), var(--atlas-line-soft));
+  content: "";
 }
 
 .stepTitle {
-  margin: 0;
+  margin: 0 !important;
   color: var(--atlas-text-strong);
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .stepBody {
-  margin: var(--atlas-space-1) 0 0;
+  margin: var(--atlas-space-1) 0 0 !important;
+  color: var(--atlas-text-muted);
 }
 
-/* Doubled class: outranks the prose link colour rule (.prose a). */
 .button.button {
-  display: inline-block;
-  padding: var(--atlas-space-2) var(--atlas-space-5);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--atlas-control-height);
+  padding: 0 var(--atlas-space-5);
   border: 1px solid var(--atlas-accent);
   border-radius: var(--atlas-radius);
   background: var(--atlas-accent);
   color: var(--atlas-accent-ink);
+  font-size: var(--atlas-text-body);
   font-weight: 700;
   text-decoration: none;
+  transition: background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .button.button:hover,
 .button.button:focus-visible {
   background: var(--atlas-accent-strong);
+  box-shadow: var(--atlas-glow);
+  color: var(--atlas-accent-ink);
 }
+
+.button.button:active { transform: scale(var(--atlas-press-scale)); }
 
 .button.buttonSecondary {
   background: transparent;
@@ -125,4 +206,12 @@
 .button.buttonSecondary:hover,
 .button.buttonSecondary:focus-visible {
   background: var(--atlas-accent-wash-strong);
+  color: var(--atlas-text-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .details,
+  .detailsSummary::after,
+  .button.button { transition: none; }
+  .button.button:active { transform: none; }
 }
