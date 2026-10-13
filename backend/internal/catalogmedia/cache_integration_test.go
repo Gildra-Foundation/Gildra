@@ -547,6 +547,12 @@ func seedMediaCandidate(t *testing.T, ctx context.Context, database *sql.DB) see
 		WHERE id=$1`, entityID, versionID); err != nil {
 		t.Fatal(err)
 	}
+	// The public catalog only serves entities with a display name.
+	if _, err := transaction.ExecContext(ctx, `
+		INSERT INTO game_entity_localizations(version_id,locale,name,description)
+		VALUES($1,'en_US','Integration Blade','')`, versionID); err != nil {
+		t.Fatal(err)
+	}
 	var mediaID uuid.UUID
 	if err := transaction.QueryRowContext(ctx, `
 		INSERT INTO catalog_entity_media(
