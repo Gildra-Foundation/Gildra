@@ -1,4 +1,4 @@
-import { Gutter } from "@payloadcms/ui";
+import { Gutter, Link } from "@payloadcms/ui";
 import type { Payload, TypedUser, VisibleEntities } from "payload";
 import React from "react";
 
@@ -286,9 +286,9 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
         )
           .filter(([slug]) => visible.has(slug))
           .map(([slug, label]) => (
-            <a key={slug} href={`/admin/collections/${slug}`} className="gd-chip">
+            <Link key={slug} href={`/admin/collections/${slug}`} prefetch={false} className="gd-chip">
               {label}
-            </a>
+            </Link>
           ))}
       </nav>
     </Gutter>
@@ -305,7 +305,15 @@ function Stat({ label, value, warn }: { label: string; value: number; warn?: boo
 }
 
 function ScopedLink({ site, href, children }: { site: ID | null; href: string; children: React.ReactNode }) {
-  return site === null ? <a href={href}>{children}</a> : <SiteLink siteID={String(site)} href={href}>{children}</SiteLink>;
+  return site === null ? (
+    <Link href={href} prefetch={false}>
+      {children}
+    </Link>
+  ) : (
+    <SiteLink siteID={String(site)} href={href}>
+      {children}
+    </SiteLink>
+  );
 }
 
 async function siteCounts(payload: Payload, user: TypedUser | null | undefined, site: SiteRow): Promise<Counts> {
@@ -408,29 +416,46 @@ async function upcomingJobs(
     depth: 0,
     overrideAccess: true,
   });
-  return Promise.all(
-    (docs as unknown as { id: ID; waitUntil?: string; site?: unknown; input?: Record<string, unknown> }[]).map(async (job) => {
-      const input = job.input ?? {};
-      const doc = input.doc as { relationTo?: string; value?: unknown } | undefined;
-      const collection = doc?.relationTo === "pages" ? "pages" : "guides";
-      const docID = relationID(doc?.value);
-      let [title, titleLocale] = ["", locale];
-      if (docID !== null) {
-        [title, titleLocale] = await payload
-          .findByID({ collection, id: docID, draft: true, depth: 0, locale: "all", overrideAccess: false, user, select: { title: true } as never })
-          .then((d) => pickTitle((d as { title?: unknown }).title, locale))
-          .catch(() => ["", locale] as [string, string]);
+  const jobs = (docs as unknown as { id: ID; waitUntil?: string; site?: unknown; input?: Record<string, unknown> }[]).map((job) => {
+    const input = job.input ?? {};
+    const doc = input.doc as { relationTo?: string; value?: unknown } | undefined;
+    return { job, input, collection: (doc?.relationTo === "pages" ? "pages" : "guides") as "guides" | "pages", docID: relationID(doc?.value) };
+  });
+  // One title query per collection instead of one per scheduled job.
+  const titles = new Map<string, [string, string]>();
+  await Promise.all(
+    (["guides", "pages"] as const).map(async (collection) => {
+      const ids = jobs.filter((j) => j.collection === collection && j.docID !== null).map((j) => j.docID as ID);
+      if (ids.length === 0) return;
+      const found = await payload
+        .find({
+          collection,
+          where: { id: { in: ids } },
+          draft: true,
+          depth: 0,
+          locale: "all",
+          pagination: false,
+          overrideAccess: false,
+          user,
+          select: { title: true } as never,
+        })
+        .catch(() => ({ docs: [] }));
+      for (const doc of found.docs as unknown as { id: ID; title?: unknown }[]) {
+        titles.set(`${collection}:${doc.id}`, pickTitle(doc.title, locale));
       }
-      return {
-        id: job.id,
-        when: job.waitUntil ?? "",
-        action: input.type === "unpublish" ? "unpublish" : "publish",
-        collection,
-        docID,
-        title,
-        titleLocale,
-        site: relationID(job.site),
-      } satisfies UpcomingItem;
     }),
   );
+  return jobs.map(({ job, input, collection, docID }) => {
+    const [title, titleLocale] = docID !== null ? (titles.get(`${collection}:${docID}`) ?? ["", locale]) : ["", locale];
+    return {
+      id: job.id,
+      when: job.waitUntil ?? "",
+      action: input.type === "unpublish" ? "unpublish" : "publish",
+      collection,
+      docID,
+      title,
+      titleLocale,
+      site: relationID(job.site),
+    } satisfies UpcomingItem;
+  });
 }
