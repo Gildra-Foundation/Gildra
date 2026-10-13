@@ -49,6 +49,8 @@ const nextConfig: NextConfig = {
     pagesBufferLength: 12,
   },
   output: "standalone",
+  // Local profiling only (GILDRA_SOURCEMAPS=1): ship browser source maps to map CPU profiles to source.
+  productionBrowserSourceMaps: process.env.GILDRA_SOURCEMAPS === "1",
   // Workspace packages ship TypeScript source (roadmap item 81).
   transpilePackages: ["@gildra/game-data", "@gildra/atlas-ui"],
   distDir: process.env.NEXT_DIST_DIR ?? ".next",

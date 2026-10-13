@@ -61,7 +61,6 @@
   z-index: 2;
   inset: 0;
   padding: 1px;
-  content: "";
   pointer-events: none;
   opacity: 0;
   background: radial-gradient(200px circle at var(--spot-x, 50%) var(--spot-y, 40%), var(--atlas-card-accent, var(--atlas-accent-strong)), transparent 75%);
@@ -78,7 +77,6 @@
   position: absolute;
   z-index: 2;
   inset: 0;
-  content: "";
   pointer-events: none;
   opacity: 0;
   background: radial-gradient(280px circle at var(--spot-x, 50%) var(--spot-y, 40%), color-mix(in srgb, var(--atlas-card-accent, var(--atlas-accent-strong)) 16%, transparent), transparent 70%);
@@ -86,7 +84,11 @@
   transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
 }
 
+/* The light layers exist only where a pointer can hover: on touch screens they
+   would never show, yet every entry would still pay for two masked, blended boxes. */
 @media (hover: hover) and (pointer: fine) {
+  .card::before,
+  .card::after { content: ""; }
   .card:hover::before,
   .card:hover::after { opacity: 1; }
 }

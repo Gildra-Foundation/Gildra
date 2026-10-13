@@ -23,6 +23,7 @@ export function WorkspaceNavigatorContent() {
   const [BookNavigationDialog, setBookNavigationDialog] = useState<BookNavigationDialogComponent | null>(null);
   const prefetchTimer = useRef<number | null>(null);
   const dialogLoad = useRef<Promise<BookNavigationDialogComponent> | null>(null);
+  const bookCover = useRef<HTMLImageElement>(null);
   const livePath = useSyncExternalStore(noSubscribe, () => pathname, () => renderedPath(pathname));
   const ru = /^\/ru(?:\/|$)/.test(livePath);
   const path = pathname.replace(/^\/ru(?=\/|$)/, "") || "/";
@@ -58,8 +59,8 @@ export function WorkspaceNavigatorContent() {
   return <>
     <header className={toolbarStyles.toolbar} data-atlas-scope data-toolbar-path={livePath}>
     <a className={toolbarStyles.skip} href="#atlas-content">{ru ? "К содержанию" : "Skip to content"}</a>
-    <button className={toolbarStyles.launcher} type="button" onPointerEnter={prefetchAfterHover} onPointerLeave={cancelHoverPrefetch} onFocus={warmBookNavigation} onClick={() => { setOpen(true); warmBookNavigation(); }} aria-haspopup="dialog" aria-label={ru ? "Открыть оглавление книги" : "Open the book contents"}>
-      <img src="/assets/wow/character-book/intro/chronicle-cover-toolbar.webp" width={20} height={30} decoding="async" alt="" />
+    <button className={toolbarStyles.launcher} type="button" onPointerEnter={prefetchAfterHover} onPointerLeave={cancelHoverPrefetch} onPointerDown={warmBookNavigation} onFocus={warmBookNavigation} onClick={() => { setOpen(true); warmBookNavigation(); }} aria-haspopup="dialog" aria-expanded={open} aria-label={ru ? "Открыть оглавление книги" : "Open the book contents"}>
+      <img ref={bookCover} src="/assets/wow/character-book/intro/chronicle-cover-toolbar.webp" width={20} height={30} decoding="async" alt="" />
       <span>{ru ? "Оглавление" : "Contents"}</span>
     </button>
       <div className={toolbarStyles.end}>
@@ -71,6 +72,6 @@ export function WorkspaceNavigatorContent() {
         <span className={toolbarStyles.title}>GILDRA<small>WORLD OF WARCRAFT</small></span>
       </div>
     </header>
-      {warmed && BookNavigationDialog ? <BookNavigationDialog open={open} onClose={() => setOpen(false)} lang={ru ? "ru" : "en"} /> : null}
+      {warmed && BookNavigationDialog ? <BookNavigationDialog open={open} onClose={() => setOpen(false)} lang={ru ? "ru" : "en"} coverFrom={() => bookCover.current?.getBoundingClientRect() ?? null} /> : null}
   </>;
 }
