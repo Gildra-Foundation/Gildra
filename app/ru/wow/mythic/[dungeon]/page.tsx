@@ -5,6 +5,9 @@ import { getDungeonCombatIntel } from "@/components/wow/mythic/dungeonCombatInte
 import { dungeonSlugs, getDungeonRoute, getDungeonSelectorOptions } from "@/components/wow/mythic/dungeonRoutes";
 import { preloadDungeonBackdrop } from "@/lib/wow/dungeonBackdropPreload";
 
+// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
+export const dynamicParams = false;
+
 type PageProps = { params: Promise<{ dungeon: string }> };
 
 export function generateStaticParams() {

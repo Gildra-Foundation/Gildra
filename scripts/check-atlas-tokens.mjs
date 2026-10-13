@@ -26,7 +26,6 @@ const exempt = {
   "components/motion/routeTransition.module.css": "global route chrome, rendered outside the atlas scope",
   "components/blueprints/": "legacy blueprint skin — to be moved onto tokens (roadmap wave 3)",
   "components/platform/shared/platformAtmosphere.module.css": "atmosphere of the hidden fixture pages",
-  "components/wow/shared/wowTooltip.module.css": "in-game WoW tooltip look — joins AtlasTooltip with roadmap item 14",
   "components/wow/season2/": "Season 2 status hub skin — to tokens in roadmap wave 3",
   "components/talents/TalentTreePanel.module.css": "talent tree — class colours of the game",
 };

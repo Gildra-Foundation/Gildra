@@ -7,6 +7,7 @@ import type { RaidBoss, RaidDefinition } from "./midnightRaidData";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy } from "./raidStrategy";
 import styles from "./raidGuide.module.css";
+import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
 
 /** Boss guide of a Midnight Season 1 raid: header, encounter switcher, battle plan, one mechanics list. */
 export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; boss: RaidBoss; locale: RaidLocale }) {
@@ -31,6 +32,7 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
         eyebrow={<>{raid.nameEn} · {copy.encounterOf(order + 1, raid.bosses.length)}</>}
         title={<span data-testid="boss-title">{boss.nameEn}</span>}
         lede={locale === "ru" ? boss.descriptionRu : boss.descriptionEn}
+        actions={<AtlasShareButton title={`${boss.nameEn} — ${raid.nameEn}`} locale={locale} />}
       />
 
       <EncounterSwitcher items={encounters} label={copy.encountersLabel} />

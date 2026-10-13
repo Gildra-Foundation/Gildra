@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import styles from "./voidEye.module.css";
+import { lessMotion } from "@/lib/client/motionPreference";
 
 /**
  * The living void over The Voidspire's eye: a slow vortex of violet energy,
@@ -98,7 +99,7 @@ export function VoidEye({ imageSize, focus, eye, eyeRadius }: Props) {
     const canvas = canvasRef.current;
     const layer = canvas?.parentElement;
     if (!canvas || !layer) return;
-    const wanted = window.matchMedia("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)").matches
+    const wanted = window.matchMedia("(hover: hover) and (pointer: fine)").matches && !lessMotion()
       && !(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
     if (!wanted) return;
     const gl = canvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: "low-power" });
@@ -169,5 +170,5 @@ export function VoidEye({ imageSize, focus, eye, eyeRadius }: Props) {
     };
   }, [imageSize, focus, eye, eyeRadius]);
 
-  return <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />;
+  return <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" data-motion-layer />;
 }

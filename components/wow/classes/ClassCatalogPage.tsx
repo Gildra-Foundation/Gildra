@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasSection } from "@/components/atlas";
 import { formatAtlasDate, pluralRu } from "@/components/atlas/format";
-import { midnightSpecializations, TALENT_SNAPSHOT } from "@/data/wow/midnight-specializations";
+import { midnightSpecializations, TALENT_SNAPSHOT } from "@/lib/data/wow";
 import styles from "./classCatalog.module.css";
 
 type Locale = "en" | "ru";

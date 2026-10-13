@@ -5,6 +5,7 @@ import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { GAMES } from "@/lib/games/registry";
 import { t } from "@/lib/i18n";
 import clsx from "clsx";
+import { AtlasMotionToggle } from "./AtlasMotionToggle";
 import { AtlasPointerLight } from "./AtlasPointerLight";
 import styles from "./AtlasFrame.module.css";
 
@@ -62,12 +63,16 @@ export function AtlasFrame({ children, scene, art: artProp, artPosition: positio
           <span className={styles.embers} />
         </div>
         <AtlasPointerLight />
-        <div className={styles.column}>
+        {/* Target of the toolbar's "skip to content" link. */}
+        <div className={styles.column} id="atlas-content" tabIndex={-1}>
           {children}
           {footer ? (
             <footer className={styles.legal}>
               <p>{t(locale)(GAMES.wow.legal)}</p>
-              <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(locale)("Privacy Policy")}</Link>
+              <div className={styles.legalLinks}>
+                <AtlasMotionToggle locale={locale} />
+                <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(locale)("Privacy Policy")}</Link>
+              </div>
             </footer>
           ) : null}
         </div>

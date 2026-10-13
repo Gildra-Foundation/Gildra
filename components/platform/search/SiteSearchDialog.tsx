@@ -6,41 +6,27 @@ import { useRouter } from "next/navigation";
 import { Clock3, CornerDownLeft, Database, Search } from "lucide-react";
 import { AtlasDialog } from "@/components/atlas/AtlasDialog";
 import { AtlasInput } from "@/components/atlas/AtlasField";
-import type { SiteSearchEntry } from "@/lib/search/siteIndex";
 import { readRecentPages } from "./recentPages";
+import { loadedIndex, loadIndex, type SiteIndex as Index } from "./siteSearchIndex";
 import { siteSearchCopy, type SiteSearchLang } from "./siteSearchCopy";
 import { searchIndex } from "./siteSearchMatch";
 import styles from "./siteSearch.module.css";
 
-type Index = Record<SiteSearchLang, SiteSearchEntry[]>;
 type Row = { key: string; href: string; title: string; kind: string; icon?: "recent" | "database" };
 type Group = { label: string; rows: Row[] };
-
-let loaded: Index | null = null;
-let indexLoad: Promise<Index> | null = null;
-function loadIndex() {
-  indexLoad ??= fetch("/api/platform/site-search").then((response) => {
-    if (!response.ok) throw new Error(String(response.status));
-    return response.json() as Promise<Index>;
-  }).then((data) => (loaded = data)).catch((error: unknown) => {
-    indexLoad = null;
-    throw error;
-  });
-  return indexLoad;
-}
 
 /**
  * The quick search dialog. Loaded only when the reader first opens it and
  * mounted afresh on every opening, so the query and history start clean.
  */
-export function SiteSearchDialog({ onClose, lang }: { onClose: () => void; lang: SiteSearchLang }) {
+export function SiteSearchDialog({ onClose, lang, initialQuery = "" }: { onClose: () => void; lang: SiteSearchLang; initialQuery?: string }) {
   const copy = siteSearchCopy[lang];
   const router = useRouter();
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
-  const [index, setIndex] = useState<Index | null>(loaded);
+  const [index, setIndex] = useState<Index | null>(loadedIndex);
   const [failed, setFailed] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [active, setActive] = useState(0);
   const [recent] = useState(readRecentPages);
   const prefix = lang === "ru" ? "/ru" : "";
@@ -48,7 +34,7 @@ export function SiteSearchDialog({ onClose, lang }: { onClose: () => void; lang:
 
   useEffect(() => {
     input.current?.focus();
-    if (loaded) return;
+    if (loadedIndex()) return;
     let alive = true;
     loadIndex().then((data) => { if (alive) setIndex(data); }, () => { if (alive) setFailed(true); });
     return () => { alive = false; };

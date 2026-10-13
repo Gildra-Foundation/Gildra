@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { IdentityStatusPage } from "@/components/wow/identity/IdentityStatusPage";
-import { getMidnightClass, getMidnightClassSpecs, midnightClasses, TALENT_SNAPSHOT } from "@/data/wow/midnight-specializations";
+import { IdentityStatusPage } from "@/components/wow/shared/IdentityStatusPage";
+import { getMidnightClass, getMidnightClassSpecs, midnightClasses, TALENT_SNAPSHOT } from "@/lib/data/wow";
+
+// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
+export const dynamicParams = false;
 
 export const generateStaticParams = () => midnightClasses.map(({ slug }) => ({ class: slug }));
 export async function generateMetadata({ params }: { params: Promise<{ class: string }> }): Promise<Metadata> {

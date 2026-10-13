@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { lessMotion } from "@/lib/client/motionPreference";
 
 /** Сдержанный reveal секций: только opacity/transform, уважает
  *  prefers-reduced-motion, страховка 2.2s — контент не может остаться скрытым. */
@@ -8,7 +9,7 @@ export function Reveal() {
   useEffect(() => {
     if (
       !("IntersectionObserver" in window) ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      lessMotion()
     ) {
       return;
     }

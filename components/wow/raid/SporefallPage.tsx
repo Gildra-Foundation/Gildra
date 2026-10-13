@@ -1,6 +1,6 @@
 import { ExternalLink, Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
-import contentManifest from "@/data/wow/content-manifest.json";
+import { contentManifest } from "@/lib/data/wow";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import styles from "./raidGuide.module.css";
 

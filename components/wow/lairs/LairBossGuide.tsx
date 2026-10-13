@@ -6,6 +6,7 @@ import { getLootIcon, lairGuideLastVerifiedAt, type Boss, type Mechanic } from "
 import { CopyWaypointButton } from "./CopyWaypointButton";
 import { lairsCopy, mechanicActions, type LairsLocale } from "./lairsCopy";
 import styles from "./lairs.module.css";
+import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
 
 const toneByMechanic: Record<Mechanic["tone"], AtlasBadgeTone> = { danger: "negative", frost: "info", control: "caution", tank: "neutral" };
 const difficultyIcons = [UsersRound, Shield, Swords, Crown];
@@ -41,6 +42,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
         lede={<><em className={styles.epithet}>{boss.title}.</em> {boss.summary}</>}
         actions={<>
           {boss.farm.waypoint ? <CopyWaypointButton waypoint={boss.farm.waypoint} labels={{ label: copy.copyWaypoint, copied: copy.copied, failed: copy.copyFailed }} /> : null}
+          <AtlasShareButton title={boss.name} locale={locale} />
           {boss.sourceUrl ? <AtlasLinkButton variant="ghost" href={boss.sourceUrl} external iconAfter={<ExternalLink aria-hidden="true" />}>{copy.strategySource}</AtlasLinkButton> : null}
         </>}
       />

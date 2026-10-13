@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { NotFoundActions, NotFoundLede, NotFoundTitle } from "@/components/layout/NotFoundCopy";
+import { NotFoundSuggestions } from "@/components/layout/NotFoundSuggestions";
 
 export const metadata: Metadata = {
   title: "404 — Gildra",
@@ -17,6 +18,7 @@ export default function NotFound() {
         lede={<NotFoundLede />}
         actions={<NotFoundActions />}
       />
+      <NotFoundSuggestions />
     </AtlasFrame>
   );
 }

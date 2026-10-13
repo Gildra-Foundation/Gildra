@@ -16,6 +16,20 @@
   backdrop-filter: blur(10px);
 }
 
+/* "Skip to content": hidden until a keyboard user tabs onto it. */
+.skip {
+  position: absolute;
+  top: 8px;
+  left: var(--atlas-gutter);
+  z-index: 2;
+  padding: 10px 14px;
+  color: var(--atlas-accent-ink);
+  background: var(--atlas-accent);
+  font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
+  translate: 0 -200%;
+}
+.skip:focus-visible { translate: 0 0; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
 .launcher {
   position: relative;
   display: flex;

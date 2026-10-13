@@ -5,6 +5,7 @@ import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy, isRaidStrategyPublished } from "./raidStrategy";
 import styles from "./raidGuide.module.css";
 import { VoidEye } from "./VoidEye";
+import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
 
 /** Raid page of a Midnight Season 1 raid: what the raid is and its encounters. */
 export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
@@ -33,6 +34,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
         eyebrow={<>{copy.season(1)} · {raid.locationEn}</>}
         title={raid.nameEn}
         lede={locale === "ru" ? raid.descriptionRu : raid.descriptionEn}
+        actions={<AtlasShareButton title={raid.nameEn} locale={locale} />}
       />
 
       <AtlasSection id="bosses" title={copy.bossesTitle} description={published ? copy.bossesText : copy.bossesTextPending}>

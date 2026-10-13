@@ -87,9 +87,7 @@ export class BattleNetCharacterDataError extends Error {
   }
 }
 
-export function characterSlug(character: Pick<BattleNetCharacter, "region" | "realm" | "name">) {
-  return `${character.region}--${character.realm.slug}--${encodeURIComponent(character.name.toLowerCase())}`;
-}
+export { characterSlug } from "./characterSlug.ts";
 
 async function api<T>(url: string, token: string): Promise<T | null> {
   try {

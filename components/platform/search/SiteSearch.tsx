@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { pageTitle, rememberPage } from "./recentPages";
 import { siteSearchCopy, type SiteSearchLang } from "./siteSearchCopy";
+import { OPEN_SITE_SEARCH } from "./siteSearchIndex";
 import styles from "./siteSearch.module.css";
 
-type DialogComponent = ComponentType<{ onClose: () => void; lang: SiteSearchLang }>;
+type DialogComponent = ComponentType<{ onClose: () => void; lang: SiteSearchLang; initialQuery?: string }>;
 let dialogLoad: Promise<DialogComponent> | null = null;
 const loadDialog = () => (dialogLoad ??= import("./SiteSearchDialog").then((module) => module.SiteSearchDialog).catch((error: unknown) => {
   dialogLoad = null;
@@ -24,18 +25,20 @@ const isApple = () => /Mac|iPhone|iPad/.test(navigator.platform);
  * (the landing page) without drawing a button there. Also remembers the inner
  * pages the reader opens for the dialog's "Recently opened".
  */
-export function SiteSearch({ hotkeysOnly = false }: { hotkeysOnly?: boolean }) {
+export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnly?: boolean; lang?: SiteSearchLang }) {
   const pathname = usePathname();
-  const lang: SiteSearchLang = /^\/ru(?:\/|$)/.test(pathname) ? "ru" : "en";
+  // The toolbar passes its hydration-safe language; the landing page derives it from the URL.
+  const lang: SiteSearchLang = langProp ?? (/^\/ru(?:\/|$)/.test(pathname) ? "ru" : "en");
   const copy = siteSearchCopy[lang];
   // The dialog belongs to the page it was opened on, so any navigation closes it.
   const [openOn, setOpenOn] = useState<string | null>(null);
+  const [initialQuery, setInitialQuery] = useState("");
   const open = openOn === pathname;
   const [Dialog, setDialog] = useState<DialogComponent | null>(null);
   const apple = useSyncExternalStore(noSubscribe, isApple, () => false);
 
   const warm = () => { void loadDialog().then((component) => setDialog(() => component), () => undefined); };
-  const show = () => { warm(); setOpenOn(pathname); };
+  const show = (query = "") => { warm(); setInitialQuery(query); setOpenOn(pathname); };
 
   const onKey = useEffectEvent((event: KeyboardEvent) => {
     if (event.defaultPrevented || event.altKey) return;
@@ -48,10 +51,17 @@ export function SiteSearch({ hotkeysOnly = false }: { hotkeysOnly?: boolean }) {
     else show();
   });
 
+  const onOpenRequest = useEffectEvent((event: Event) => show(typeof (event as CustomEvent).detail === "string" ? (event as CustomEvent<string>).detail : ""));
+
   useEffect(() => {
     const listener = (event: KeyboardEvent) => onKey(event);
+    const request = (event: Event) => onOpenRequest(event);
     window.addEventListener("keydown", listener);
-    return () => window.removeEventListener("keydown", listener);
+    window.addEventListener(OPEN_SITE_SEARCH, request);
+    return () => {
+      window.removeEventListener("keydown", listener);
+      window.removeEventListener(OPEN_SITE_SEARCH, request);
+    };
   }, []);
 
   // Remember the page once its title has settled.
@@ -63,12 +73,12 @@ export function SiteSearch({ hotkeysOnly = false }: { hotkeysOnly?: boolean }) {
 
   return <>
     {hotkeysOnly ? null : (
-      <button className={styles.trigger} type="button" onClick={show} onPointerEnter={warm} onFocus={warm} aria-haspopup="dialog" aria-label={copy.open} aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
+      <button className={styles.trigger} type="button" onClick={() => show()} onPointerEnter={warm} onFocus={warm} aria-haspopup="dialog" aria-label={copy.open} aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
         <Search size={16} strokeWidth={1.9} aria-hidden="true" />
         <span className={styles.triggerLabel}>{copy.button}</span>
         <kbd className={styles.triggerKey} aria-hidden="true">{apple ? "⌘K" : "Ctrl K"}</kbd>
       </button>
     )}
-    {open && Dialog ? <Dialog onClose={() => setOpenOn(null)} lang={lang} /> : null}
+    {open && Dialog ? <Dialog onClose={() => setOpenOn(null)} lang={lang} initialQuery={initialQuery} /> : null}
   </>;
 }

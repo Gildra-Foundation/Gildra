@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
-import { midnightDelves } from "@/data/wow/midnight-delves";
+import { midnightDelves } from "@/lib/data/wow";
 import styles from "./delveCatalog.module.css";
 
 const copy = {

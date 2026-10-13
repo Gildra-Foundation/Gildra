@@ -12,6 +12,7 @@ import type { CatalogEntityComparison, CatalogEntityQuality, CatalogEntityType, 
 import { formatQuestText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
 import styles from "./entityDetail.module.css";
+import { AtlasShareButton } from "@/components/atlas/AtlasShareButton";
 
 type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships: CatalogRelationship[]; quality: CatalogEntityQuality | null; versions: CatalogEntityVersion[]; comparison: CatalogEntityComparison | null; selectedFromBuildId?: number; selectedToBuildId?: number; lang: Lang; libraryDataset?: { slug: string; name: string } };
 
@@ -93,7 +94,10 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
           eyebrow={typeLabel}
           title={displayName}
           lede={description ? <span className={styles.lede}>{description}</span> : undefined}
-          actions={unresolvedDescription ? <p className={styles.warning} role="status">{copy.unresolved}</p> : undefined}
+          actions={<>
+            {unresolvedDescription ? <p className={styles.warning} role="status">{copy.unresolved}</p> : null}
+            <AtlasShareButton title={String(displayName)} locale={lang === "ru" ? "ru" : "en"} />
+          </>}
           aside={(
             <AtlasMetaList columns={1} className={styles.facts} items={[
               { label: copy.gameId, value: entity.externalId },

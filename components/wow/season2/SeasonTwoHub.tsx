@@ -1,4 +1,4 @@
-import { IdentityStatusPage } from "../identity/IdentityStatusPage";
+import { IdentityStatusPage } from "@/components/wow/shared/IdentityStatusPage";
 
 type Locale = "ru" | "en";
 

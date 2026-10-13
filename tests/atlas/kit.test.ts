@@ -72,3 +72,17 @@ describe("English Mythic+ route text", () => {
     });
   }
 });
+
+describe("kit documentation", () => {
+  it("components/atlas/README.md describes every exported component", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const index = await readFile(new URL("../../components/atlas/index.ts", import.meta.url), "utf8");
+    const readme = await readFile(new URL("../../components/atlas/README.md", import.meta.url), "utf8");
+    const components = [...index.matchAll(/export \{([^}]+)\}/g)]
+      .flatMap((match) => match[1].split(","))
+      .map((name) => name.trim().replace(/^type\s+/, ""))
+      .filter((name) => /^Atlas[A-Z]/.test(name) && !/^Atlas(Stat|Anchor|CardImage|CardMeta|MetaItem|Crumb|Column|Tab|PathStep|BadgeTone|Locale)$/.test(name));
+    const missing = components.filter((name) => !readme.includes(`\`${name}\``));
+    assert.deepEqual(missing, [], `README lacks ${missing.join(", ")}`);
+  });
+});

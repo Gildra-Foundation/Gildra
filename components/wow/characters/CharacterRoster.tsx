@@ -7,7 +7,7 @@ import { AtlasNotice } from "@/components/atlas/AtlasNotice";
 import { AtlasPanel } from "@/components/atlas/AtlasPanel";
 import { BattleNetSignIn } from "@/components/auth/BattleNetActions";
 import type { BattleNetCharacter, BattleNetRegion } from "@/lib/wow/battleNetCharacters";
-import { characterSlug } from "@/lib/wow/battleNetCharacterDetails";
+import { characterSlug } from "@/lib/wow/characterSlug";
 import { BattleNetConnectPanel } from "./BattleNetConnectPanel";
 import type { RosterCopy } from "./characterCopy";
 import styles from "./characterRosterPage.module.css";

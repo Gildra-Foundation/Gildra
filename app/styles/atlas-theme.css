@@ -169,3 +169,17 @@
   --folio-ribbon-active: var(--atlas-accent-wash);
   --book-gutter: 24px;
 }
+
+/* More contrast when the reader asks the system for it: brighter secondary text,
+   firmer lines, a darker shade under text set on artwork. */
+@media (prefers-contrast: more) {
+  .gildra-atlas,
+  [data-atlas-scope] {
+    --atlas-text: #ece4d6;
+    --atlas-text-muted: #d2c9ba;
+    --atlas-text-subtle: #b8b0a2;
+    --atlas-line: rgba(209, 162, 75, .72);
+    --atlas-line-soft: rgba(209, 162, 75, .5);
+    --atlas-art-shade: linear-gradient(0deg, rgba(6, 7, 8, .97), rgba(6, 7, 8, .55) 62%, rgba(6, 7, 8, .3)), linear-gradient(90deg, rgba(0, 0, 0, .55), transparent 52%);
+  }
+}

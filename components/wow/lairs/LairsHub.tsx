@@ -1,6 +1,6 @@
 import { CalendarClock, Gem, MapPin, ShieldCheck, Skull, Swords, UsersRound } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasPanel, AtlasSection } from "@/components/atlas";
-import { midnightLairEncounters } from "@/data/wow/midnight-lairs";
+import { midnightLairEncounters } from "@/lib/data/wow";
 import { getBoss, lairGuideLastVerifiedAt, lairGuideSourceUrl, type Boss } from "@/lib/lairs";
 import { lairsCopy, type LairsLocale } from "./lairsCopy";
 import styles from "./lairs.module.css";

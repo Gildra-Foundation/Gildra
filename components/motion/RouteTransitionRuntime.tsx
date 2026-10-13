@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { isBookPagePath, isCharacterAuthRedirect, shouldTurnBook } from "./routeTransitionPolicy";
 import { RouteThemeController } from "./RouteThemeController";
 import styles from "./routeTransition.module.css";
+import { lessMotion } from "@/lib/client/motionPreference";
 
 /**
  * Page-to-page transition of the whole site. A burning fuse along the top bar
@@ -57,7 +58,7 @@ function clickDestination(event: MouseEvent, includeOptOut = false) {
   return destinationFromTarget(event.target, includeOptOut);
 }
 
-const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reducedMotion = () => lessMotion();
 const viewTransitions = () => typeof document.startViewTransition === "function";
 
 /** One shell survives App Router navigation. Page content never gets an artificial remount key. */

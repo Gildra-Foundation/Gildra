@@ -1,7 +1,6 @@
 import { Castle, ExternalLink, Layers, MapPin } from "lucide-react";
 import { AtlasDisclosure, AtlasFrame, AtlasGrid, AtlasHero, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTable, AtlasTile } from "@/components/atlas";
-import contentManifest from "@/data/wow/content-manifest.json";
-import { venomousAbyss } from "@/data/venomousAbyss";
+import { contentManifest, venomousAbyss } from "@/lib/data/wow";
 import {
   gloryAchievements,
   headlineRewards,

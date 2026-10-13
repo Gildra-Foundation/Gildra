@@ -16,6 +16,7 @@ import { TalentDescription } from "@/components/talents/TalentDescription";
 import { getPerformanceTier, type PerformanceTier } from "@/lib/client/performanceTier";
 import { navigateTalentPage } from "@/lib/client/viewTransitionNavigation";
 import { heroPathName, talentCalculatorCopy, talentThemeNames, type TalentCalculatorCopy, type TalentCopyLang } from "@/components/talents/talentCalculatorCopy";
+import { lessMotion } from "@/lib/client/motionPreference";
 
 // Interface copy for the whole calculator tree (tooltips render through a portal,
 // which keeps React context).
@@ -101,7 +102,7 @@ const furyEffectPalette: Record<string, { core: string; hot: string }> = {
 };
 
 function playTalentBurst(target: HTMLButtonElement) {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (lessMotion()) return;
   const restingScale = target.matches(":hover") ? 1.12 : 1;
   target.animate([
     { transform: `translate(-50%,-50%) scale(${restingScale})` },
@@ -140,7 +141,7 @@ function scheduleWhenIdle(callback: () => void, timeout: number) {
 }
 
 function playPvpBurst(target: HTMLButtonElement, action: "equip" | "remove" = "equip") {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (lessMotion()) return;
   const performanceTier = getPerformanceTier();
   const root = target.closest<HTMLElement>(".talent-calculator");
   const sigil = target.querySelector<SVGElement>(".tc-node-sigil");

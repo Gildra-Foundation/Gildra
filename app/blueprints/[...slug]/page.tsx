@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { BlueprintViewer } from "@/components/blueprints/BlueprintViewer";
 import { blueprints, getBlueprint, getBlueprintsForGame } from "@/components/blueprints/catalog";
 
+// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
+export const dynamicParams = false;
+
 type BlueprintPageProps = {
   params: Promise<{ slug: string[] }>;
 };

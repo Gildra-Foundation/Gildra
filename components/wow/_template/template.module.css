@@ -1,0 +1,6 @@
+/* Styles of the Template section: --atlas-* tokens only (npm run atlas:check). */
+.intro {
+  max-width: var(--atlas-measure);
+  color: var(--atlas-text);
+  line-height: var(--atlas-leading-body);
+}
