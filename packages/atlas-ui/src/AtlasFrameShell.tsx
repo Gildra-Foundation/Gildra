@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { AtlasArtGlow, type ArtGlowPoint } from "./AtlasArtGlow";
 import { AtlasMotionToggle } from "./AtlasMotionToggle";
 import { AtlasPointerLight } from "./AtlasPointerLight";
-import { artMorphName } from "./morph";
+import { morphSceneStyle } from "./morph";
 import { artPlaceholder } from "./placeholders";
 import styles from "./AtlasFrame.module.css";
 
@@ -64,8 +64,10 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
   const vars: Record<string, string | undefined> = { "--atlas-frame-tint": tint, "--atlas-frame-art-position": artPosition };
   if (ember) Object.assign(vars, { "--atlas-ember": ember, "--atlas-ember-halo": `color-mix(in srgb, ${ember} 24%, transparent)` });
   const style = vars as CSSProperties;
+  // With morphKey the whole atmosphere (art, shade, embers) is the receiving end of
+  // the shared picture, so the card's picture lands on exactly what the page shows.
   const atmosphere = (
-    <div className={styles.atmosphere} aria-hidden="true">
+    <div className={styles.atmosphere} aria-hidden="true" style={morphKey ? morphSceneStyle(morphKey) : undefined}>
       {/* Decorative, but it is the largest paint of every route that has it: fetch it at high priority. */}
       {picture}
       {layer ? <div className={styles.artLayer}>{layer}</div> : null}
@@ -78,9 +80,7 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
     // the dark (::view-transition rules in app/styles/view-transitions.css).
     <ViewTransition enter="atlas-page-in" exit="atlas-page-out" default="none">
       <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} data-atlas-frame data-morph={morphKey ? "" : undefined} {...dataAttributes}>
-        {/* With morphKey the whole atmosphere (art, shade, embers) is the shared element, so the
-            card's picture lands on exactly what the page shows. */}
-        {morphKey ? <ViewTransition name={artMorphName(morphKey)} share="atlas-art-morph">{atmosphere}</ViewTransition> : atmosphere}
+        {atmosphere}
         <AtlasPointerLight />
         <div className={styles.column}>
           {children}

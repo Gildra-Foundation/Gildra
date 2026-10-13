@@ -130,3 +130,9 @@
 .trigger:active,
 .close:active { scale: var(--atlas-press-scale); }
 @media (prefers-reduced-motion: reduce) { .trigger:active, .close:active { scale: none; } }
+
+/* Phones: the sheet keeps its height while results arrive, so its header does
+   not jump up the screen (layout shift 0.29 measured 2026-10-13). */
+@media (max-width: 720px) {
+  .list { min-height: min(56vh, 520px); }
+}

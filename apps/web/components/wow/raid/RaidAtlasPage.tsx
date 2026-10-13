@@ -1,10 +1,9 @@
-import { ViewTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Castle, Hourglass, Skull } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { AtlasMorphPreload } from "@gildra/atlas-ui/AtlasMorphPreload";
-import { artMorphName } from "@gildra/atlas-ui/morph";
+import { morphArtProps } from "@gildra/atlas-ui/morph";
 import { contentManifest } from "@/lib/data/wow";
 import { midnightRaids, raidSceneArt, raidSlugs } from "./midnightRaidData";
 import { raidAtlasCopy } from "./raidAtlasCopy";
@@ -85,7 +84,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
               <article key={slug} className={styles.raid}>
                 <Link className={styles.raidArt} href={`${prefix}/wow/raids/${slug}`} tabIndex={-1} aria-hidden="true">
                   {/* The picture morphs into the raid page's scene (AtlasFrame morphKey). */}
-                  <ViewTransition name={artMorphName(`/wow/raids/${slug}`)} share="atlas-art-morph"><Image src={raid.artwork} alt="" fill sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw" {...artPlaceholder(raid.artwork)} /></ViewTransition>
+                  <Image src={raid.artwork} alt="" fill sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw" {...artPlaceholder(raid.artwork)} {...morphArtProps(`/wow/raids/${slug}`)} />
                   <AtlasMorphPreload art={raidSceneArt(raid)} />
                   <span className={styles.shade} />
                 </Link>

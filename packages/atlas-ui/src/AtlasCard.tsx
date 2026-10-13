@@ -1,9 +1,9 @@
-import { ViewTransition, type CSSProperties, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
-import { artMorphName } from "./morph";
+import { morphArtProps } from "./morph";
 import { AtlasMorphPreload } from "./AtlasMorphPreload";
 import styles from "./AtlasCard.module.css";
 import { artPlaceholder } from "./placeholders";
@@ -58,13 +58,14 @@ export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, s
       priority={image.priority}
       style={image.position ? { objectPosition: image.position } : undefined}
       {...artPlaceholder(image.src)}
+      {...(morph ? morphArtProps(href) : {})}
     />
   ) : null;
   return (
     <article className={clsx(styles.card, styles[layout], className)} style={style} data-spotlight data-tilt={tilt || undefined}>
       <Link className={styles.link} href={href}>
         <div className={styles.art}>
-          {picture ? (morph ? <ViewTransition name={artMorphName(href)} share="atlas-art-morph">{picture}</ViewTransition> : picture) : <span className={styles.artEmpty} aria-hidden="true" />}
+          {picture ?? <span className={styles.artEmpty} aria-hidden="true" />}
           {morph && (morphArt ?? image?.src) ? <AtlasMorphPreload art={(morphArt ?? image?.src) as string} /> : null}
           <span className={styles.shade} aria-hidden="true" />
           {artBadge ? <span className={styles.artBadge}>{artBadge}</span> : null}

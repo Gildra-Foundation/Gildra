@@ -1,9 +1,9 @@
-import { ViewTransition, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
-import { artMorphName } from "./morph";
+import { morphArtProps } from "./morph";
 import { AtlasMorphPreload } from "./AtlasMorphPreload";
 import styles from "./AtlasPath.module.css";
 import { artPlaceholder } from "./placeholders";
@@ -25,8 +25,8 @@ export type AtlasPathStep = {
  * the order you meet them. Numbered seals sit on one spine; the artwork swaps
  * sides from step to step, and each step slides in from its side on scroll.
  */
-const stepPicture = (step: AtlasPathStep) => (
-  <Image src={step.image.src} alt={step.image.alt ?? ""} fill sizes="(max-width: 720px) 100vw, 380px" style={step.image.position ? { objectPosition: step.image.position } : undefined} {...artPlaceholder(step.image.src)} />
+const stepPicture = (step: AtlasPathStep, morph: boolean) => (
+  <Image src={step.image.src} alt={step.image.alt ?? ""} fill sizes="(max-width: 720px) 100vw, 380px" style={step.image.position ? { objectPosition: step.image.position } : undefined} {...artPlaceholder(step.image.src)} {...(morph ? morphArtProps(step.href) : {})} />
 );
 
 export function AtlasPath({ steps, label, headingLevel = 3, morph = false, className }: { steps: AtlasPathStep[]; label?: string; headingLevel?: 2 | 3; /** Step pictures morph into the opened page's scene (AtlasFrame morphKey). */ morph?: boolean; className?: string }) {
@@ -38,7 +38,7 @@ export function AtlasPath({ steps, label, headingLevel = 3, morph = false, class
           <span className={styles.seal} aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
           <Link href={step.href} className={styles.card} data-spotlight>
             <div className={styles.art}>
-              {morph ? <ViewTransition name={artMorphName(step.href)} share="atlas-art-morph">{stepPicture(step)}</ViewTransition> : stepPicture(step)}
+              {stepPicture(step, morph)}
               {morph ? <AtlasMorphPreload art={step.image.src} /> : null}
             </div>
             <div className={styles.body}>

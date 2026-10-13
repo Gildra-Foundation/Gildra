@@ -74,6 +74,26 @@
   animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
 }
 
+/* The living layers rest while nobody can watch them: during a page hand-over
+   (the new page's snapshot then stays still instead of being re-rendered every
+   frame) and while a dialog covers the page (its backdrop is then painted once,
+   not under moving layers: search typing went from ~520 to ~130 ms per key on a
+   desktop, 2026-10-13). The browser already stops them when scrolled away. */
+:global(:root:active-view-transition) .atmosphere::before,
+:global(:root:active-view-transition) .art,
+:global(:root:active-view-transition) .artLayer,
+:global(:root:active-view-transition) .artLayer *,
+:global(:root:active-view-transition) .embers::before,
+:global(:root:active-view-transition) .embers::after,
+:global(:root:has(dialog[open])) .atmosphere::before,
+:global(:root:has(dialog[open])) .art,
+:global(:root:has(dialog[open])) .artLayer,
+:global(:root:has(dialog[open])) .artLayer *,
+:global(:root:has(dialog[open])) .embers::before,
+:global(:root:has(dialog[open])) .embers::after {
+  animation-play-state: paused;
+}
+
 /* Embers: two parallax layers of sparks rising through the torchlight over the
    artwork's focal area. Each layer is one repeating tile moved by exactly its
    own height, so the loop never jumps. */

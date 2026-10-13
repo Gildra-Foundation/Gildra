@@ -149,9 +149,12 @@ export function VoidEye({ imageSize, focus, eye, eyeRadius }: Props) {
     // for 30 fps instead of on every display refresh.
     let timer: ReturnType<typeof setTimeout> | undefined;
     const running = () => visible && onScreen && !document.hidden;
+    // Like the CSS living layers, the eye holds still during a page hand-over and under a dialog.
+    const resting = () => Boolean((document as Document & { activeViewTransition?: unknown }).activeViewTransition) || document.querySelector("dialog[open]") !== null;
     const draw = (now: number) => {
       frame = 0;
       if (!running()) return;
+      if (resting()) { timer = setTimeout(() => { timer = undefined; frame = requestAnimationFrame(draw); }, 250); return; }
       gl.uniform2f(uRes, canvas.width, canvas.height);
       gl.uniform1f(uTime, (now - started) / 1000);
       gl.uniform1f(uR, radius * ratio);

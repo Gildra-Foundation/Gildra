@@ -1,8 +1,10 @@
 /*
   Page-to-page transition of the atlas pages. AtlasFrame wraps every inner page
   in React's <ViewTransition enter="atlas-page-in" exit="atlas-page-out">, so a
-  navigation hands one page to the next: the leaving page lets go quickly and
-  sinks into a soft blur, the next one rises out of the dark a beat later.
+  navigation hands one page to the next: the leaving page lets go quickly, the
+  next one rises out of the dark a beat later. Only opacity and transform move:
+  a blur on full-page snapshots dropped phones to 5–24 fps during the hand-over
+  (2026-10-13), so the motion stays short and compositor-only.
   Everything else (the root: top bar, background, the home scene) keeps the
   browser's short cross-fade, so the identical top bar stays visually still.
   Browsers without View Transitions get the RouteTransitionRuntime fade instead.
@@ -33,26 +35,25 @@ header[data-atlas-scope] {
 }
 
 ::view-transition-old(.atlas-page-out) {
-  animation: atlas-page-out 220ms cubic-bezier(.4, 0, 1, 1) both;
+  animation: atlas-page-out 180ms cubic-bezier(.4, 0, 1, 1) both;
 }
 
 ::view-transition-new(.atlas-page-in) {
-  animation: atlas-page-in 520ms cubic-bezier(.2, .7, .2, 1) 110ms both;
+  animation: atlas-page-in 320ms cubic-bezier(.2, .7, .2, 1) 40ms both;
 }
 
 @keyframes atlas-page-out {
-  to { opacity: 0; filter: blur(3px); transform: translateY(-10px); }
+  to { opacity: 0; transform: translateY(-10px); }
 }
 
 @keyframes atlas-page-in {
-  from { opacity: 0; filter: blur(5px); transform: translateY(22px); }
-  60% { filter: blur(0); }
+  from { opacity: 0; transform: translateY(22px); }
 }
 
 /* Art morph (AtlasCard/AtlasPath morph + AtlasFrame morphKey): the card's picture
    grows into the opened page's scene; both keep their crop while the box moves. */
 ::view-transition-group(.atlas-art-morph) {
-  animation-duration: 560ms;
+  animation-duration: 420ms;
   animation-timing-function: cubic-bezier(.2, .7, .2, 1);
 }
 
@@ -71,21 +72,19 @@ html[data-nav-direction="up"]::view-transition-old(.atlas-page-out) { animation-
 html[data-nav-direction="up"]::view-transition-new(.atlas-page-in) { animation-name: atlas-page-in-left; }
 
 @keyframes atlas-page-out-left {
-  to { opacity: 0; filter: blur(3px); transform: translateX(-28px); }
+  to { opacity: 0; transform: translateX(-28px); }
 }
 
 @keyframes atlas-page-out-right {
-  to { opacity: 0; filter: blur(3px); transform: translateX(28px); }
+  to { opacity: 0; transform: translateX(28px); }
 }
 
 @keyframes atlas-page-in-right {
-  from { opacity: 0; filter: blur(5px); transform: translateX(36px); }
-  60% { filter: blur(0); }
+  from { opacity: 0; transform: translateX(36px); }
 }
 
 @keyframes atlas-page-in-left {
-  from { opacity: 0; filter: blur(5px); transform: translateX(-36px); }
-  60% { filter: blur(0); }
+  from { opacity: 0; transform: translateX(-36px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
