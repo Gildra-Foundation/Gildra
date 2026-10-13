@@ -60,7 +60,7 @@ export async function ArticlePreviewPage({ lang, token }: { lang: Lang; token: s
   );
   return (
     <>
-      <ArticleView article={result.article} lang={lang} banner={banner} />
+      <ArticleView article={result.article} lang={lang} banner={banner} preview />
       {live}
     </>
   );

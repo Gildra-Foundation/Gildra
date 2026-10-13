@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { RootDocument, rootMetadata } from "../root-document";
+import { RootDocument, rootMetadataFor } from "../root-document";
 
-export const metadata = rootMetadata;
+export const metadata = rootMetadataFor("ru");
 
 /** Root layout of the Russian site: the server sends <html lang="ru">. */
 export default function RussianRootLayout({ children }: { children: ReactNode }) {

@@ -1,30 +1,76 @@
 /* atlas:strict — CMS articles: layout and reading typography; the frame, hero, cards and notices come from the atlas kit. */
+
+/* The article is one centred column — hero, byline, text and contents share its left edge. */
+.article,
+.related {
+  width: 100%;
+  max-width: calc(42rem + 16rem + 88px);
+  margin-inline: auto;
+}
+.article:not(:has(.withToc)) { max-width: 42rem; }
+
+/* Byline under the hero: author, dates, reading time — and the share button. */
+.byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-2) var(--atlas-space-4);
+  padding: var(--atlas-space-2) 0;
+  border-block: 1px solid var(--atlas-line-soft);
+}
+
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--atlas-space-2) var(--atlas-space-4);
-  margin: var(--atlas-space-4) 0 0;
+  align-items: center;
+  gap: var(--atlas-space-1) 0;
+  margin: 0;
   color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-meta);
+  font-size: var(--atlas-text-small);
+  font-variant-numeric: lining-nums;
 }
 
 .meta span { display: inline-flex; align-items: center; gap: 6px; }
+/* A dot between facts; the row wraps without a dangling separator at the line start. */
+.meta span + span::before {
+  width: 3px;
+  height: 3px;
+  margin-inline: var(--atlas-space-3);
+  border-radius: 50%;
+  background: var(--atlas-line-strong);
+  content: "";
+}
 .meta svg { width: 14px; height: 14px; color: var(--atlas-accent); }
 
-.cover { margin: var(--atlas-space-5) 0 0; }
-.cover img { display: block; width: 100%; height: auto; border: 1px solid var(--atlas-line-soft); }
-
+/* Text column on the left, under the hero copy; the contents beside it on wide screens. */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--atlas-space-6);
+  gap: var(--atlas-space-5);
   margin-top: var(--atlas-space-6);
 }
 
+.body { min-width: 0; max-width: 42rem; }
+
+.cover { margin: 0 0 var(--atlas-space-6); }
+.cover img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: cover;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  box-shadow: var(--atlas-shadow-card);
+}
+.cover figcaption { margin-top: var(--atlas-space-2); color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+
 .toc {
-  position: sticky;
-  top: calc(var(--atlas-sticky-top) + var(--atlas-space-4));
   align-self: start;
+  padding: var(--atlas-space-3) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
+  background: var(--atlas-surface);
   font-size: var(--atlas-text-small);
 }
 
@@ -37,19 +83,28 @@
   text-transform: uppercase;
 }
 
-.toc ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.toc a { color: var(--atlas-text-muted); }
-.toc a:hover { color: var(--atlas-accent-strong); }
-.toc a[aria-current="location"] { color: var(--atlas-text-strong); box-shadow: inset 2px 0 0 var(--atlas-accent); padding-left: var(--atlas-space-2); }
-
-/* Reading column: ≤ 75ch, display serif for headings like every atlas page. */
-.prose {
-  max-width: 75ch;
-  color: var(--atlas-text);
-  font-size: var(--atlas-text-body);
-  line-height: var(--atlas-leading-body);
-  overflow-wrap: anywhere;
+.toc ol { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.toc a {
+  display: block;
+  padding: 5px 0 5px var(--atlas-space-3);
+  color: var(--atlas-text-muted);
+  line-height: var(--atlas-leading-snug);
+  box-shadow: inset 1px 0 0 var(--atlas-line-soft);
+  transition: color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
+.toc a:hover { color: var(--atlas-accent-strong); }
+.toc a[aria-current="location"] { color: var(--atlas-text-strong); box-shadow: inset 2px 0 0 var(--atlas-accent); }
+
+/* Reading column: 17 px Inter on a ~70-character line, display serif headings like every atlas page. */
+.prose {
+  color: var(--atlas-text);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+.prose > :first-child { margin-top: 0; }
 
 .prose h2,
 .prose h3,
@@ -57,68 +112,225 @@
   color: var(--atlas-text-strong);
   font-family: var(--atlas-font-display);
   font-weight: var(--atlas-weight-display);
+  letter-spacing: var(--atlas-tracking-display);
   line-height: var(--atlas-leading-snug);
-  scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4));
+  text-wrap: balance;
+  scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5));
 }
 
-.prose h2 { margin: 2em 0 .6em; font-size: var(--atlas-text-h2); }
-.prose h3 { margin: 1.7em 0 .5em; font-size: var(--atlas-text-h3); }
-.prose h4 { margin: 1.4em 0 .4em; font-size: var(--atlas-text-title); }
+.prose h2 { margin: 2.4em 0 .8em; font-size: clamp(1.5rem, 1.3rem + .7vw, 1.875rem); }
+/* The atlas map-legend flourish (AtlasSection) under every chapter heading. */
+.prose h2::after {
+  display: block;
+  width: 64px;
+  height: 7px;
+  margin-top: 10px;
+  content: "";
+  background:
+    radial-gradient(circle at 3.5px 50%, var(--atlas-accent-strong) 0 2.6px, transparent 3.4px),
+    linear-gradient(90deg, var(--atlas-accent), transparent) 12px 50% / calc(100% - 12px) 1px no-repeat;
+  filter: drop-shadow(0 0 5px var(--atlas-accent-glow));
+}
+.prose h3 { margin: 2em 0 .5em; font-size: var(--atlas-text-h3); }
+.prose h4 { margin: 1.6em 0 .4em; font-size: var(--atlas-text-title); }
 .prose p,
 .prose ul,
-.prose ol { margin: 0 0 1em; }
-.prose ul { padding-left: 1.2em; list-style: disc; }
-.prose ol { padding-left: 1.4em; list-style: decimal; }
-.prose a { color: var(--atlas-accent); text-decoration: underline; text-underline-offset: 3px; }
-.prose a:hover { color: var(--atlas-accent-strong); }
+.prose ol { margin: 0 0 1.15em; }
+.prose ul { padding-left: 1.25em; list-style: disc; }
+.prose ol { padding-left: 1.5em; list-style: decimal; }
+.prose li { padding-left: .2em; }
+.prose li + li { margin-top: .4em; }
+.prose li::marker { color: var(--atlas-accent); font-variant-numeric: lining-nums tabular-nums; }
+.prose strong { color: var(--atlas-text-strong); font-weight: 650; }
+.prose a {
+  color: var(--atlas-accent-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--atlas-line-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color var(--atlas-duration) var(--atlas-ease), text-decoration-color var(--atlas-duration) var(--atlas-ease);
+}
+.prose a:hover { color: var(--atlas-text-strong); text-decoration-color: var(--atlas-accent-strong); }
 .prose a:focus-visible,
-.toc a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
-.prose code { padding: 1px 5px; background: var(--atlas-surface-raised); font-family: var(--atlas-font-mono); font-size: .92em; }
-.prose hr { margin: 2em 0; border: 0; border-top: 1px solid var(--atlas-line-soft); }
+.toc a:focus-visible,
+.back:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.prose code {
+  padding: 1px 6px;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-raised);
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-mono);
+  font-size: .88em;
+}
+/* A divider fades out to both sides instead of a hard rule. */
+.prose hr {
+  height: 1px;
+  margin: 2.6em 0;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--atlas-line), transparent);
+}
+
+/* Checklist items (Lexical "check" lists): a box, filled amber when done; the state is also announced. */
+.prose ul[data-list="check"] { padding-left: 0; list-style: none; }
+.prose ul[data-list="check"] li { position: relative; padding-left: 1.9em; }
+.prose ul[data-list="check"] li::before {
+  position: absolute;
+  top: .32em;
+  left: 0;
+  box-sizing: border-box;
+  width: 1.05em;
+  height: 1.05em;
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: var(--atlas-radius);
+  content: "";
+}
+.prose ul[data-list="check"] li[aria-checked="true"]::before { border-color: var(--atlas-accent); background: var(--atlas-accent); }
+.prose ul[data-list="check"] li[aria-checked="true"]::after {
+  position: absolute;
+  top: .47em;
+  left: .37em;
+  width: .3em;
+  height: .55em;
+  border: solid var(--atlas-accent-ink);
+  border-width: 0 2px 2px 0;
+  content: "";
+  transform: rotate(45deg);
+}
+.prose ul[data-list="check"] li[aria-checked="true"] { color: var(--atlas-text-muted); }
 
 .quote {
-  margin: 1.4em 0;
-  padding: 4px 0 4px var(--atlas-space-4);
-  border-left: 3px solid var(--atlas-accent);
-  color: var(--atlas-text-muted);
+  margin: 1.8em 0;
+  padding: 2px 0 2px 1.1em;
+  border-left: 2px solid var(--atlas-accent);
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: 1.2em;
+  line-height: 1.5;
 }
+.quote p:last-child { margin-bottom: 0; }
 
-.figure { margin: 1.6em 0; }
-.image { display: block; max-width: 100%; height: auto; }
-.caption { margin-top: 6px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.figure { margin: 2em 0; }
+.image { display: block; max-width: 100%; height: auto; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); }
+.caption { margin-top: var(--atlas-space-2); color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-body); }
 
+/* Callout: a panel with the tone on its edge and in its label (tone is never colour alone — the label names it). */
 .callout {
-  margin: 1.4em 0;
+  --cms-tone: var(--atlas-accent);
+  margin: 1.6em 0;
   padding: var(--atlas-space-3) var(--atlas-space-4);
-  border: 1px solid var(--atlas-line);
-  border-left: 3px solid var(--atlas-accent);
-  background: var(--atlas-accent-wash);
+  border: 1px solid var(--atlas-line-soft);
+  border-left: 3px solid var(--cms-tone);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-raised);
+  font-size: .94em;
 }
-
-.callout[data-tone="warning"] { border-left-color: var(--atlas-negative); }
-.callout[data-tone="tip"] { border-left-color: var(--atlas-positive); }
-.calloutTitle { margin: 0 0 6px !important; color: var(--atlas-text-strong); font-weight: 650; }
+.callout[data-tone="warning"] { --cms-tone: var(--atlas-negative); }
+.callout[data-tone="tip"] { --cms-tone: var(--atlas-positive); }
+.calloutTitle {
+  margin: 0 0 4px !important;
+  color: var(--cms-tone);
+  font-size: var(--atlas-text-label);
+  font-weight: 700;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
 .calloutBody { margin: 0 !important; }
 
-.tableWrap { margin: 1.4em 0; overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; font-size: var(--atlas-text-small); font-variant-numeric: lining-nums tabular-nums; }
+.tableWrap { margin: 1.8em 0; overflow-x: auto; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); }
+.table {
+  width: 100%;
+  min-width: 30rem;
+  border-collapse: collapse;
+  font-size: var(--atlas-text-small);
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: var(--atlas-leading-body);
+  overflow-wrap: normal;
+}
 .table th,
-.table td { padding: 8px 10px; border: 1px solid var(--atlas-line-soft); text-align: left; }
-.table th { color: var(--atlas-text-strong); background: var(--atlas-surface-raised); }
-.table caption { padding-bottom: 6px; color: var(--atlas-text-subtle); caption-side: top; text-align: left; }
+.table td { padding: 10px 14px; border-bottom: 1px solid var(--atlas-line-soft); text-align: left; vertical-align: top; }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:nth-child(even) { background: var(--atlas-surface); }
+.table th {
+  color: var(--atlas-accent);
+  background: var(--atlas-surface-raised);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.table td:first-child { color: var(--atlas-text-strong); font-weight: 600; }
+.table caption { padding: var(--atlas-space-2) 14px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); caption-side: top; text-align: left; }
 
+/* End of the article: tags and the way back to the list. */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-3) var(--atlas-space-5);
+  margin-top: var(--atlas-space-7);
+  padding-top: var(--atlas-space-4);
+  border-top: 1px solid var(--atlas-line-soft);
+}
+.footer:empty { display: none; }
+.tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); }
+.tags ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tagsLabel {
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--atlas-accent-strong);
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
+}
+.back svg { width: 15px; height: 15px; transition: transform var(--atlas-duration) var(--atlas-ease); }
+.back:hover { color: var(--atlas-text-strong); }
+.back:hover svg { transform: translateX(-3px); }
 
 @media (min-width: 1100px) {
-  .layout.withToc { grid-template-columns: 220px minmax(0, 1fr); }
+  .layout.withToc {
+    grid-template-columns: minmax(0, 42rem) minmax(13rem, 16rem);
+    grid-template-areas: "body toc";
+    column-gap: clamp(40px, 5vw, 88px);
+  }
+  .layout.withToc .body { grid-area: body; }
+  /* Beside the text the contents is a quiet rail under the toolbar, not a panel. */
+  .layout.withToc .toc {
+    grid-area: toc;
+    position: sticky;
+    top: calc(var(--atlas-sticky-top) + var(--atlas-space-5));
+    max-height: calc(100vh - var(--atlas-sticky-top) - var(--atlas-space-7));
+    padding: 0;
+    overflow-y: auto;
+    border: 0;
+    background: none;
+  }
 }
 
 /* Long reading on phones (roadmap item 56): a size made for the hand, a looser
-   line, the contents as a compact strip that does not push the text away. */
+   line, the contents as a compact panel that does not push the text away. */
 @media (max-width: 600px) {
   .prose { font-size: var(--atlas-text-lead); line-height: 1.7; }
-  .prose h2 { margin-top: 1.6em; }
+  .prose h2 { margin-top: 1.9em; }
+  .layout { margin-top: var(--atlas-space-5); }
   .toc ol { max-height: 11.5em; overflow-y: auto; overscroll-behavior: contain; }
-  .tableWrap { margin-inline: calc(var(--atlas-gutter) * -1); padding-inline: var(--atlas-gutter); }
+  .tableWrap { margin-inline: calc(var(--atlas-gutter) * -1); border-inline: 0; border-radius: 0; }
+  .byline { padding-block: var(--atlas-space-1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back svg,
+  .toc a { transition: none; }
+  .back:hover svg { transform: none; }
 }
 
 /* Reading progress of an article (scroll-driven, no script). */
@@ -144,4 +356,3 @@
 }
 
 @keyframes cms-reading { to { scale: 1 1; } }
-
