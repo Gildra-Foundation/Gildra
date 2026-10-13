@@ -120,7 +120,6 @@ export function VoidEye({ imageSize, focus, eye, eyeRadius }: Props) {
     let visible = true;
     let onScreen = false;
     let frame = 0;
-    let last = 0;
     let radius = 0;
     const started = performance.now();
     const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -146,12 +145,13 @@ export function VoidEye({ imageSize, focus, eye, eyeRadius }: Props) {
 
     // The loop runs only while the eye can be seen: off screen or in a background
     // tab it stops completely (no idle animation frames), and resumes on return.
+    // Between frames it sleeps on a timer, so the page is woken 30 times a second
+    // for 30 fps instead of on every display refresh.
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const running = () => visible && onScreen && !document.hidden;
     const draw = (now: number) => {
-      if (!running()) { frame = 0; return; }
-      frame = requestAnimationFrame(draw);
-      if (now - last < FRAME_MS) return;
-      last = now;
+      frame = 0;
+      if (!running()) return;
       gl.uniform2f(uRes, canvas.width, canvas.height);
       gl.uniform1f(uTime, (now - started) / 1000);
       gl.uniform1f(uR, radius * ratio);
@@ -159,8 +159,9 @@ export function VoidEye({ imageSize, focus, eye, eyeRadius }: Props) {
       // Mark the canvas live once (fades it in); an attribute write per frame
       // would invalidate styles 30 times a second.
       if (!("live" in canvas.dataset)) canvas.dataset.live = "";
+      timer = setTimeout(() => { timer = undefined; frame = requestAnimationFrame(draw); }, FRAME_MS - 8);
     };
-    const wake = () => { if (!frame && running()) frame = requestAnimationFrame(draw); };
+    const wake = () => { if (!frame && timer === undefined && running()) frame = requestAnimationFrame(draw); };
 
     place();
     const resize = new ResizeObserver(() => { place(); wake(); });
@@ -172,6 +173,7 @@ export function VoidEye({ imageSize, focus, eye, eyeRadius }: Props) {
 
     return () => {
       cancelAnimationFrame(frame);
+      clearTimeout(timer);
       resize.disconnect();
       sight.disconnect();
       document.removeEventListener("visibilitychange", wake);

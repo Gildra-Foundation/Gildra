@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "postinstall": "node scripts/patch-next.mjs",
     "dev": "npm run dev -w @gildra/web --",
     "dev:fast": "npm run dev:fast -w @gildra/web --",
     "build": "npm run build -w @gildra/web --",
