@@ -128,6 +128,9 @@ try {
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Развернуть карту" }).waitFor();
 
+  // The step tools are folded in the detail panel (roadmap item 34): open them like a reader would.
+  const stepTools = page.locator("details", { has: page.locator("button", { hasText: "Добавить заметку" }) });
+  if (!(await stepTools.evaluate((element) => element.open))) await stepTools.locator("summary").click();
   await page.getByRole("button", { name: "Добавить заметку" }).click();
   const note = page.getByLabel("Заметка группы");
   await note.fill("QA: второй кик после Nova");

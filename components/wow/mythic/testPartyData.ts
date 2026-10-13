@@ -1,3 +1,4 @@
+import { classIcon, specIcon } from "@/lib/games/wow/assets";
 export type PartyRole = "tank" | "healer" | "dps";
 
 export type PartyTalent = {
@@ -42,7 +43,7 @@ export const partyMembers: PartyMember[] = [
     role: "tank",
     itemLevel: 704,
     rating: 2864,
-    portrait: "/assets/classes/warrior.jpg",
+    portrait: classIcon("war") ?? "",
     accent: "#c79c6e",
     buildCode: "CkEAAAAAAAAAAAAAAAAAAAAAAAYEDAAAAAAAzMzMmZmxMmZWGGjZZmZGzYGDzMDAAAAMbAGYD",
     talents: [
@@ -64,7 +65,7 @@ export const partyMembers: PartyMember[] = [
     role: "healer",
     itemLevel: 701,
     rating: 2798,
-    portrait: "/assets/specs/resto-shaman.jpg",
+    portrait: specIcon("Restoration Shaman") ?? "",
     accent: "#0070de",
     buildCode: "CgQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYmZmZmZmxMmxMzwMmZmFzMzMMLzYmxyMzMDA",
     talents: [
@@ -86,7 +87,7 @@ export const partyMembers: PartyMember[] = [
     role: "dps",
     itemLevel: 706,
     rating: 2912,
-    portrait: "/assets/specs/arcane-mage.jpg",
+    portrait: specIcon("Arcane Mage") ?? "",
     accent: "#69ccf0",
     buildCode: "C4DAAAAAAAAAAAAAAAAAAAAAAYGMbzCmxMmZmxMzMjZGAAAAAAwMzMzYYmZMzYmZMzMMzMzwA",
     talents: [
@@ -108,7 +109,7 @@ export const partyMembers: PartyMember[] = [
     role: "dps",
     itemLevel: 702,
     rating: 2751,
-    portrait: "/assets/specs/frost-dk.jpg",
+    portrait: specIcon("Frost Death Knight") ?? "",
     accent: "#c41e3a",
     buildCode: "CsPAAAAAAAAAAAAAAAAAAAAAAMzMzYmxMmxMzMzMmZGDjZmxMAAAAAAAAAAAAwMDDzYmZmxA",
     talents: [
@@ -130,7 +131,7 @@ export const partyMembers: PartyMember[] = [
     role: "dps",
     itemLevel: 700,
     rating: 2689,
-    portrait: "/assets/specs/bm-hunter.jpg",
+    portrait: specIcon("Beast Mastery Hunter") ?? "",
     accent: "#abd473",
     buildCode: "C0PAAAAAAAAAAAAAAAAAAAAAAYMbDMgBMbsFYmZmZmZmxMmZAAAAAAwMzMzgZGDzMzMzMzMLA",
     talents: [

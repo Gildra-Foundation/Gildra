@@ -234,20 +234,36 @@
 .versionPicker button:focus-visible,
 .versionPicker select:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
-.versionList { display: grid; margin: 0; padding: 0; list-style: none; }
+/* Version timeline (roadmap item 38): builds on one line, newest on top, the
+   current build lit, each with its date and source. */
+.versionList { position: relative; display: grid; margin: 0; padding: 0; list-style: none; }
+.versionList::before { content: ""; position: absolute; inset-block: 24px; inset-inline-start: 7px; width: 2px; background: linear-gradient(var(--atlas-accent), var(--atlas-line-soft)); }
 
 .versionList li {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--atlas-space-4);
   min-height: 48px;
-  padding-inline-start: var(--atlas-space-3);
+  padding-inline-start: calc(var(--atlas-space-5) + 4px);
   border-bottom: 1px solid var(--atlas-line-soft);
-  border-inline-start: 2px solid transparent;
 }
 
-.versionList li[data-current] { border-inline-start-color: var(--atlas-accent); }
+.versionList li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 2px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--atlas-line);
+  border-radius: 50%;
+  background: var(--atlas-surface);
+  translate: 0 -50%;
+}
+
+.versionList li[data-current]::before { border-color: var(--atlas-accent-strong); background: var(--atlas-accent); box-shadow: var(--atlas-glow-sm); }
 .versionList li > span { display: grid; min-width: 0; }
 .versionList strong { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 600; }
 .versionList small,

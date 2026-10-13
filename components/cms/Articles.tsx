@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, Clock3 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { AtlasCard, AtlasEmpty, AtlasFrame, AtlasGrid, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
+import { AtlasCard, AtlasEmpty, AtlasFrame, AtlasGrid, AtlasHero, AtlasNotice, AtlasPagination, AtlasSection, AtlasTooltip } from "@/components/atlas";
 import { fetchArticle, fetchArticles } from "@/lib/cms/client";
 import { cmsConfig } from "@/lib/cms/config";
 import type { CmsLocale, PublicArticle } from "@/lib/cms/contract";
@@ -14,6 +13,7 @@ import { CmsRichText } from "./CmsRichText";
 import { articleHref, articlesIndexHref } from "./paths";
 import styles from "./cms.module.css";
 import { trail } from "@/lib/routes/registry";
+import { AtlasAnchorSpy } from "@/components/atlas/AtlasAnchorSpy";
 
 const TEXT = {
   en: {
@@ -32,8 +32,10 @@ const TEXT = {
     fallback: "This article is not available in Russian yet; the English original is shown.",
     fallbackBadge: "EN",
     otherOnly: "This article is only available in Russian; the Russian original is shown.",
-    prev: "← Newer",
-    next: "Older →",
+    prev: "Newer",
+    next: "Older",
+    pages: "Pages",
+    pageOf: (page: number, total: number) => `Page ${page} of ${total}`,
   },
   ru: {
     title: "Статьи о World of Warcraft",
@@ -51,8 +53,10 @@ const TEXT = {
     fallback: "Перевода на русский пока нет — показан английский оригинал.",
     fallbackBadge: "EN",
     otherOnly: "Статья доступна только на английском — показан английский оригинал.",
-    prev: "← Новее",
-    next: "Старее →",
+    prev: "Новее",
+    next: "Старее",
+    pages: "Страницы",
+    pageOf: (page: number, total: number) => `Страница ${page} из ${total}`,
   },
 } as const;
 
@@ -142,7 +146,7 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
                   description={a.summary || undefined}
                   meta={[
                     ...(date ? [{ icon: <CalendarDays aria-hidden="true" />, label: date }] : []),
-                    ...(fallback ? [{ label: <span title={t.fallback}>{a.resolvedLocale?.toUpperCase()}</span> }] : []),
+                    ...(fallback ? [{ label: <AtlasTooltip content={t.fallback}><span>{a.resolvedLocale?.toUpperCase()}<span className="sr-only"> — {t.fallback}</span></span></AtlasTooltip> }] : []),
                   ]}
                 />
               );
@@ -150,10 +154,12 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
           </AtlasGrid>
         ) : null}
         {totalPages > 1 ? (
-          <nav className={styles.pager} aria-label="Pagination">
-            {page > 1 ? <Link href={`${articlesIndexHref(lang)}${page > 2 ? `?page=${page - 1}` : ""}`}>{t.prev}</Link> : null}
-            {page < totalPages ? <Link href={`${articlesIndexHref(lang)}?page=${page + 1}`}>{t.next}</Link> : null}
-          </nav>
+          <AtlasPagination
+            label={t.pages}
+            prev={page > 1 ? { href: `${articlesIndexHref(lang)}${page > 2 ? `?page=${page - 1}` : ""}`, label: t.prev } : undefined}
+            next={page < totalPages ? { href: `${articlesIndexHref(lang)}?page=${page + 1}`, label: t.next } : undefined}
+            status={t.pageOf(page, totalPages)}
+          />
         ) : null}
       </AtlasSection>
     </AtlasFrame>
@@ -212,6 +218,8 @@ export function ArticleView({ article: a, lang, banner }: { article: PublicArtic
             <img src={cover} alt={a.cover?.alt ?? ""} width={a.cover?.width ?? undefined} height={a.cover?.height ?? undefined} />
           </figure>
         ) : null}
+        {/* Reading progress: a hairline under the toolbar that fills as the page scrolls (CSS only). */}
+        <div className={styles.progress} aria-hidden="true" />
         <div className={`${styles.layout} ${toc.length > 1 ? styles.withToc : ""}`}>
           {toc.length > 1 ? (
             <nav className={styles.toc} aria-label={t.contents}>
@@ -223,6 +231,8 @@ export function ArticleView({ article: a, lang, banner }: { article: PublicArtic
                   </li>
                 ))}
               </ol>
+              {/* Marks the chapter being read (aria-current), as on every atlas chapter strip. */}
+              <AtlasAnchorSpy />
             </nav>
           ) : null}
           <CmsRichText content={a.content} lang={lang} />

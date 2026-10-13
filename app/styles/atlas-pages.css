@@ -103,3 +103,15 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
   .workspace-content.gildra-atlas .section { padding-inline: 16px; }
   .workspace-content.gildra-atlas .route-section { padding-top: 24px; }
 }
+
+/* Reading (roadmap items 3, 56): long Russian words hyphenate instead of
+   leaving ragged lines on phones, paragraphs avoid one-word last lines.
+   The language comes from AtlasFrame's lang attribute; headings stay whole.
+   Atlas pages only: the landing scene and the books keep their typesetting. */
+[data-atlas-frame] p,
+[data-atlas-frame] li {
+  hyphens: auto;
+  hyphenate-limit-chars: 10 4 4;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}

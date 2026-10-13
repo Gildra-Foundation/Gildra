@@ -1,0 +1,16 @@
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-3);
+  margin-top: var(--atlas-space-5);
+  padding-top: var(--atlas-space-4);
+  border-top: 1px solid var(--atlas-line-soft);
+}
+
+.status {
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-meta);
+  font-variant-numeric: tabular-nums;
+}

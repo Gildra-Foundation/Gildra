@@ -84,7 +84,7 @@ describe("kit documentation", () => {
     const components = [...index.matchAll(/export \{([^}]+)\}/g)]
       .flatMap((match) => match[1].split(","))
       .map((name) => name.trim().replace(/^type\s+/, ""))
-      .filter((name) => /^Atlas[A-Z]/.test(name) && !/^Atlas(Stat|Anchor|CardImage|CardMeta|MetaItem|Crumb|Column|Tab|PathStep|BadgeTone|Locale)$/.test(name));
+      .filter((name) => /^Atlas[A-Z]/.test(name) && !/^Atlas(Stat|Anchor|CardImage|CardMeta|MetaItem|Crumb|Column|Tab|PathStep|BadgeTone|Locale|ChartDatum)$/.test(name));
     const missing = components.filter((name) => !readme.includes(`\`${name}\``));
     assert.deepEqual(missing, [], `README lacks ${missing.join(", ")}`);
   });

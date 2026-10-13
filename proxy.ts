@@ -16,12 +16,18 @@ export function proxy(request: NextRequest) {
   // Russian chrome on /ru/** URLs.
   // Dev galleries (/dev/blocks, /dev/atlas) exist only with GILDRA_DEV_GALLERY=1 in production.
   const devGalleryOff = !runtimeFlags().devGallery && /^\/dev(\/|$)/.test(request.nextUrl.pathname);
-  if (devGalleryOff || isHiddenForMvpPath(request.nextUrl.pathname)) {
-    const hidden = request.nextUrl.clone();
-    hidden.pathname = `${locale === "ru" ? "/ru" : ""}/_hidden-for-mvp/404`;
-    return NextResponse.rewrite(hidden, { request: { headers: requestHeaders } });
-  }
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  const response = devGalleryOff || isHiddenForMvpPath(request.nextUrl.pathname)
+    ? NextResponse.rewrite(Object.assign(request.nextUrl.clone(), { pathname: `${locale === "ru" ? "/ru" : ""}/_hidden-for-mvp/404` }), { request: { headers: requestHeaders } })
+    : NextResponse.next({ request: { headers: requestHeaders } });
+  return staging(response);
+}
+
+/** Staging copy (GILDRA_STAGING=1): never indexed, and the page shows a badge (StagingBadge reads the cookie). */
+function staging(response: NextResponse) {
+  if (!runtimeFlags().staging) return response;
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  response.cookies.set("gildra-env", "staging", { path: "/", sameSite: "lax" });
+  return response;
 }
 
 export const config = {

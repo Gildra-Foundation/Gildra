@@ -12,17 +12,20 @@ export type AtlasTab = { id: string; label: ReactNode; content: ReactNode; count
  * tab list follows the ARIA pattern: arrows / Home / End move and select,
  * one tab stop. `segmented` is the compact pill group for two–four options.
  */
-export function AtlasTabs({ tabs, label, defaultTab, variant = "underline", className, onChange }: {
+export function AtlasTabs({ tabs, label, defaultTab, value, variant = "underline", className, onChange }: {
   tabs: AtlasTab[];
   /** Accessible name of the tab list. */
   label: string;
   defaultTab?: string;
+  /** Controlled selection: the parent owns the active tab (with onChange). */
+  value?: string;
   variant?: "underline" | "segmented";
   className?: string;
   onChange?: (id: string) => void;
 }) {
   const base = useId();
-  const [active, setActive] = useState(defaultTab && tabs.some((tab) => tab.id === defaultTab) ? defaultTab : tabs[0]?.id);
+  const [own, setActive] = useState(defaultTab && tabs.some((tab) => tab.id === defaultTab) ? defaultTab : tabs[0]?.id);
+  const active = value !== undefined && tabs.some((tab) => tab.id === value) ? value : own;
   const listRef = useRef<HTMLDivElement>(null);
 
   const select = (id: string, focus = false) => {

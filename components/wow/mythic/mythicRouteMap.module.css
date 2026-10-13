@@ -876,28 +876,13 @@
   transform: rotate(45deg);
 }
 
-.roleTabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border: 1px solid var(--atlas-line);
-  background: var(--atlas-surface-sunken);
-}
-
-.roleTabs button {
-  min-height: 40px;
-  padding: 6px;
-  color: var(--atlas-text-muted);
-  border: 0;
-  background: transparent;
-  font-size: var(--atlas-text-small);
-  font-weight: 600;
-}
-
-.roleTabs button:hover { color: var(--atlas-accent-strong); }
-.roleTabs button[aria-pressed="true"] { color: var(--atlas-accent-ink); background: var(--atlas-accent); }
+/* Role tabs (AtlasTabs, segmented) stretched over the panel, the role note attached below. */
+.roleTabs { gap: 0; }
+.roleTabs [role="tablist"] { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: auto; }
+.roleTabs [role="tab"] { justify-content: center; padding-inline: 6px; }
 
 .roleText {
-  margin-top: calc(var(--atlas-space-2) * -1);
+  margin: 0;
   padding: var(--atlas-space-3);
   color: var(--atlas-text);
   border: 1px solid var(--atlas-line-soft);
@@ -1193,7 +1178,6 @@
   .primaryButton,
   .moreList button,
   .floorTabs button,
-  .roleTabs button,
   .affixes button,
   .importTop button { min-height: 44px; }
   .zoomControls button,
@@ -1202,3 +1186,22 @@
   .resourceLinks a,
   .mapFooter a { display: inline-flex; align-items: center; min-height: 44px; }
 }
+
+/* Folded step tools in the detail panel (roadmap item 34). */
+.stepTools { display: grid; gap: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); padding-top: var(--atlas-space-3); }
+.stepTools > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--atlas-control-height);
+  color: var(--atlas-text-muted);
+  cursor: pointer;
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
+  list-style: none;
+}
+.stepTools > summary::-webkit-details-marker { display: none; }
+.stepTools > summary::before { content: "+"; display: inline-grid; place-items: center; width: 20px; margin-right: var(--atlas-space-2); color: var(--atlas-accent); font-weight: 700; }
+.stepTools[open] > summary::before { content: "−"; }
+.stepTools > summary:hover { color: var(--atlas-text-strong); }
+.stepTools > summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+

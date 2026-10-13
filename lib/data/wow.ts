@@ -12,3 +12,4 @@ export * from "@/data/wow/midnight-lairs";
 export * from "@/data/venomousAbyss";
 export { default as contentManifest } from "@/data/wow/content-manifest.json";
 export { default as seasonOnePublication } from "@/data/wow/midnight-season-one-publication.json";
+export { liveSeason } from "./season";
