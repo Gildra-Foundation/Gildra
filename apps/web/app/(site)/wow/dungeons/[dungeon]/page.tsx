@@ -10,7 +10,7 @@ export const dynamicParams = false;
 export function generateStaticParams() { return Object.keys(dungeonRoutes).map((dungeon) => ({ dungeon })); }
 export async function generateMetadata({ params }: { params: Promise<{ dungeon: string }> }): Promise<Metadata> {
   const dungeon = getDungeonRoute((await params).dungeon as DungeonSlug);
-  return dungeon ? { title: `${dungeon.name} — Midnight Dungeon | Gildra`, robots: { index: false, follow: true } } : {};
+  return dungeon ? { title: `${dungeon.name} — Midnight Dungeon — Gildra`, robots: { index: false, follow: true } } : {};
 }
 export default async function Page({ params }: { params: Promise<{ dungeon: string }> }) {
   const slug = (await params).dungeon as DungeonSlug;

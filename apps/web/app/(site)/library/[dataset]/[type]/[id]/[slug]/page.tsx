@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EntityDetailPage } from "@/components/database/EntityDetailPage";
 import { getCatalogEntity, getCatalogEntityComparison, getCatalogEntityQuality, getCatalogEntityTypes, getCatalogEntityVersions, getCatalogRelationships, getLibraryDatasets } from "@/lib/api/client";
-import { catalogSessionPresent, requireCatalogSession } from "@/lib/library/server";
+import { catalogReadable, requireCatalogSession } from "@/lib/library/server";
 
 type Props = { params: Promise<{ dataset: string; type: string; id: string; slug: string }>; searchParams?: Promise<{ fromBuildId?: string; toBuildId?: string; product?: string }> };
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  if (!(await catalogSessionPresent())) return { title: "Gildra Library" };
+  if (!(await catalogReadable())) return { title: "Gildra Library" };
   const [{ id, type, dataset }, filters] = await Promise.all([params, searchParams]);
   const entity = await getCatalogEntity(id, "en_US", dataset);
   if (!entity || entity.type !== type) return {};

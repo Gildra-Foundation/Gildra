@@ -11,7 +11,7 @@ export const contentPage = definePage<{ category: string }, { cursor?: string }>
   meta: ({ params }) => {
     const config = CONTENT_CATEGORIES[params.category];
     return {
-      title: config ? `${config.title} — League of Legends | Gildra` : "League of Legends Content Database — Gildra",
+      title: config ? `${config.title} — League of Legends — Gildra` : "League of Legends Content Database — Gildra",
       description: config?.description,
     };
   },

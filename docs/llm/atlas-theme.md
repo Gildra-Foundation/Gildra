@@ -1,6 +1,6 @@
 # Atlas theme — recipes for AI edits
 
-Read first: [design.md](../../design.md) (rules), [components/atlas/README.md](../../components/atlas/README.md)
+Read first: [design.md](../../design.md) (rules), [packages/atlas-ui/README.md](../../packages/atlas-ui/README.md)
 (components), [app/styles/atlas-theme.css](../../app/styles/atlas-theme.css) (tokens).
 Never touch the landing scene or the contents book while doing these.
 
@@ -25,7 +25,7 @@ After a token change: `npm run build`, then `npm run visual:diff` (local build a
 ## Change one component everywhere
 
 Edit `components/atlas/<Component>.module.css` (look) or `.tsx` (structure). Keep props
-backward compatible — many pages use them. Update the table in `components/atlas/README.md`.
+backward compatible — many pages use them. Update the table in `packages/atlas-ui/README.md`.
 
 ## Build a new inner page
 

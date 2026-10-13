@@ -5,6 +5,7 @@ import { RichDescription, TooltipOwners, verifiedMediaURL } from "@/components/d
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import type { CatalogRecord } from "@/lib/api/client";
+import { formatAtlasDate } from "@gildra/atlas-ui/format";
 import { tooltipContentCopy } from "./tooltipContentCopy";
 
 const PLAYABLE_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
@@ -333,7 +334,7 @@ function LootTables({ tables, lang }: { tables: Record<string, unknown>[]; lang:
 function TooltipProvenance({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
 	const sourceURL = String(block.source_url ?? "");
 	const updated = block.updated_at ? new Date(String(block.updated_at)) : null;
-	return <div className="db-tooltip-provenance"><span>{tooltipContentCopy[lang].build}: {String(block.build || block.build_number || "—")}</span>{updated && !Number.isNaN(updated.valueOf()) ? <span>{tooltipContentCopy[lang].updated}: {updated.toLocaleDateString(tooltipContentCopy[lang].numberLocale)}</span> : null}{sourceURL ? <a href={sourceURL} target="_blank" rel="noreferrer">{tooltipContentCopy[lang].dataSource} ↗</a> : null}</div>;
+	return <div className="db-tooltip-provenance"><span>{tooltipContentCopy[lang].build}: {String(block.build || block.build_number || "—")}</span>{updated && !Number.isNaN(updated.valueOf()) ? <span>{tooltipContentCopy[lang].updated}: {formatAtlasDate(String(block.updated_at), lang)}</span> : null}{sourceURL ? <a href={sourceURL} target="_blank" rel="noreferrer">{tooltipContentCopy[lang].dataSource} ↗</a> : null}</div>;
 }
 
 function SpellEffects({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {

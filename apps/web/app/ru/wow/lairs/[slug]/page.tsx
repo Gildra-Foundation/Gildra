@@ -13,7 +13,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const encounter = getMidnightLairEncounter((await params).slug);
-  return encounter ? { title: `${encounter.name} — Midnight Season 2 | Gildra`, description: `${encounter.name}: где найти, способности, сложность и добыча — Midnight Season 2.`, robots: { index: false, follow: true } } : {};
+  return encounter ? { title: `${encounter.name} — Midnight Season 2 — Gildra`, description: `${encounter.name}: где найти, способности, сложность и добыча — Midnight Season 2.`, robots: { index: false, follow: true } } : {};
 }
 
 export default async function BossPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ class: st
   const entry = getMidnightClass((await params).class);
   if (!entry) return {};
   const path = `/ru/wow/classes/${entry.slug}`;
-  return { title: `${entry.nameRu} — Midnight | Gildra`, description: `${entry.nameRu}: инвентаризация специализаций из маркированного community snapshot талантов.`, alternates: { canonical: path, languages: { en: path.replace("/ru", ""), ru: path, "x-default": path.replace("/ru", "") } }, robots: { index: false, follow: true } };
+  return { title: `${entry.nameRu} — Midnight — Gildra`, description: `${entry.nameRu}: инвентаризация специализаций из маркированного community snapshot талантов.`, alternates: { canonical: path, languages: { en: path.replace("/ru", ""), ru: path, "x-default": path.replace("/ru", "") } }, robots: { index: false, follow: true } };
 }
 export default async function Page({ params }: { params: Promise<{ class: string }> }) {
   const entry = getMidnightClass((await params).class);

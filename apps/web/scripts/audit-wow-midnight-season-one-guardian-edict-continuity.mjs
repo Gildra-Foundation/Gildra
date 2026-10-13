@@ -21,7 +21,7 @@ const [descriptionAuditSource, effectAuditSource, candidateAuditSource] = await 
   fs.readFile(candidateAuditPath, "utf8"),
 ]);
 const descriptionAudit = JSON.parse(descriptionAuditSource);
-const effectAudit = JSON.parse(effectAuditSource);
+JSON.parse(effectAuditSource); // must be valid JSON; only its hash is pinned below
 const candidateAudit = JSON.parse(candidateAuditSource);
 const spellId = 1260763;
 const dependencySpellId = 1260826;

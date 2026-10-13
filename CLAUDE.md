@@ -48,7 +48,7 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   `lib/anchors.ts`.
 - Styling: inner pages (everything except the landing scene and the contents
   book) use the **atlas theme**: tokens in `app/styles/atlas-theme.css`, the
-  server-component kit in `components/atlas/` (README there), rules in
+  kit `@gildra/atlas-ui` (`packages/atlas-ui/`, README there; the app adapter is `components/atlas/`), rules in
   `design.md`, recipes in `docs/llm/atlas-theme.md`; `npm run atlas:check`
   guards token-only stylesheets. `app/globals.css` is only an ordered `@import`
   index; legacy tokens in `app/styles/tokens.css`, shared rules in

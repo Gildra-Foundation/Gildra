@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AtlasFrame, AtlasHero, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable } from "@/components/atlas";
 import { AtlasDisclosure } from "@/components/atlas";
+import { formatAtlasDate } from "@gildra/atlas-ui/format";
 import { PageShell } from "@/components/layout/PageShell";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph, TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
@@ -13,7 +14,6 @@ import { formatQuestText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
 import styles from "./entityDetail.module.css";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
-import { entityDetailPageCopy } from "./entityDetailPageCopy";
 
 type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships: CatalogRelationship[]; quality: CatalogEntityQuality | null; versions: CatalogEntityVersion[]; comparison: CatalogEntityComparison | null; selectedFromBuildId?: number; selectedToBuildId?: number; lang: Lang; libraryDataset?: { slug: string; name: string } };
 
@@ -61,7 +61,6 @@ function Disclosure({ title, meta, open, children }: { title: ReactNode; meta?: 
 export function EntityDetailPage({ entity, entityType, relationships, quality, versions, comparison, selectedFromBuildId, selectedToBuildId, lang, libraryDataset }: Props) {
   const copy = entityDetailCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
-  const locale = entityDetailPageCopy[lang].numberLocale;
   const builds = Array.from(new Map(versions.map((version) => [version.buildId, version])).values());
   const rawDescription = entity.type === "quest" ? formatQuestText(entity.description, lang) : entity.description;
   const unresolvedDescription = hasUnresolvedTemplate(rawDescription);
@@ -103,7 +102,7 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
             <AtlasMetaList columns={1} className={styles.facts} items={[
               { label: copy.gameId, value: entity.externalId },
               ...(buildFact ? [{ label: copy.build, value: buildFact }] : []),
-              { label: copy.updated, value: new Date(entity.updatedAt).toLocaleDateString(locale) },
+              { label: copy.updated, value: formatAtlasDate(entity.updatedAt, lang) },
             ]} />
           )}
         />
@@ -221,7 +220,7 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
                   {versions.map((version, index) => (
                     <li key={version.id} data-current={index === 0 || undefined}>
                       <span><strong>{versionLabel(version)}</strong><small>{copy.buildLine(version.buildNumber, version.revision)}</small></span>
-                      <time dateTime={version.observedAt}>{new Date(version.observedAt).toLocaleDateString(locale)}</time>
+                      <time dateTime={version.observedAt}>{formatAtlasDate(version.observedAt, lang)}</time>
                       {version.sourceUrl ? <a href={version.sourceUrl} target="_blank" rel="noreferrer">{copy.source} ↗</a> : <span />}
                     </li>
                   ))}
