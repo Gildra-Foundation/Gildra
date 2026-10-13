@@ -19,17 +19,24 @@ export function AtlasCountUp({ value }: { value: number }) {
     // The page is mounting while the route runtime is still leaving/loading: an arrival.
     if (!element?.closest('[data-route-state="leaving"], [data-route-state="loading"]')) return;
     if (lessMotion()) return;
-    const start = performance.now() + 260;
-    const duration = 900;
+    const duration = 800;
     let frame = 0;
+    let cancelled = false;
+    let start = 0;
     const tick = (now: number) => {
-      const progress = Math.min(1, Math.max(0, (now - start) / duration));
+      start ||= now;
+      const progress = Math.min(1, (now - start) / duration);
       element.textContent = String(Math.round(value * (1 - (1 - progress) ** 3)));
       if (progress < 1) frame = requestAnimationFrame(tick);
     };
     element.textContent = "0";
-    frame = requestAnimationFrame(tick);
+    // Count once the page has landed: digits changing while the View Transition
+    // runs would re-render the live "new" snapshot on every frame.
+    const transition = (document as Document & { activeViewTransition?: ViewTransition | null }).activeViewTransition;
+    const landed = transition ? transition.finished.catch(() => undefined) : new Promise((resolve) => setTimeout(resolve, 260));
+    landed.then(() => { if (!cancelled) frame = requestAnimationFrame(tick); });
     return () => {
+      cancelled = true;
       cancelAnimationFrame(frame);
       element.textContent = String(value);
     };
