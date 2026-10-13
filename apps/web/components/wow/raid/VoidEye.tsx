@@ -9,7 +9,7 @@ import { lessMotion } from "@/lib/client/motionPreference";
  * crackling tendrils leaving the rim and a breathing ring of light. Gildra's own
  * WebGL2 fragment shader (no library); it sits in AtlasFrame's art layer, so it
  * drifts with the painting. It only runs where it is cheap and wanted: fine
- * pointers, WebGL2, no reduced motion or data saving, eye on screen; paused off
+ * pointers, WebGL2, no reduced motion or data saving, eye on screen; the loop stops off
  * screen and in background tabs, 30 fps.
  */
 type Props = {
@@ -144,28 +144,37 @@ export function VoidEye({ imageSize, focus, eye, eyeRadius }: Props) {
       gl.viewport(0, 0, canvas.width, canvas.height);
     };
 
+    // The loop runs only while the eye can be seen: off screen or in a background
+    // tab it stops completely (no idle animation frames), and resumes on return.
+    const running = () => visible && onScreen && !document.hidden;
     const draw = (now: number) => {
+      if (!running()) { frame = 0; return; }
       frame = requestAnimationFrame(draw);
-      if (!visible || !onScreen || document.hidden || now - last < FRAME_MS) return;
+      if (now - last < FRAME_MS) return;
       last = now;
       gl.uniform2f(uRes, canvas.width, canvas.height);
       gl.uniform1f(uTime, (now - started) / 1000);
       gl.uniform1f(uR, radius * ratio);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
-      canvas.dataset.live = "";
+      // Mark the canvas live once (fades it in); an attribute write per frame
+      // would invalidate styles 30 times a second.
+      if (!("live" in canvas.dataset)) canvas.dataset.live = "";
     };
+    const wake = () => { if (!frame && running()) frame = requestAnimationFrame(draw); };
 
     place();
-    const resize = new ResizeObserver(place);
+    const resize = new ResizeObserver(() => { place(); wake(); });
     resize.observe(layer);
-    const sight = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; });
+    const sight = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; wake(); });
     sight.observe(canvas);
-    frame = requestAnimationFrame(draw);
+    document.addEventListener("visibilitychange", wake);
+    wake();
 
     return () => {
       cancelAnimationFrame(frame);
       resize.disconnect();
       sight.disconnect();
+      document.removeEventListener("visibilitychange", wake);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
   }, [imageSize, focus, eye, eyeRadius]);
