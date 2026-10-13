@@ -16,6 +16,7 @@
     "new:page": "node scripts/new.mjs page",
     "new:og": "node scripts/new.mjs og",
     "smoke:console": "node scripts/console-smoke.mjs",
+    "smoke:routes": "node scripts/smoke-routes.mjs",
     "preflight:api": "node scripts/check-api-readiness.mjs",
     "qa:talents": "node scripts/qa-talents.mjs",
     "qa:character-talents": "node --experimental-strip-types scripts/qa-character-talents.mjs",

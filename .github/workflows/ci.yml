@@ -81,6 +81,10 @@ jobs:
       - run: npm run build
         env:
           SENTRY_AUTH_TOKEN: ""
+      # Roadmap 94: the built site serves the main EN/RU routes without page
+      # errors, hydration mismatches or 5xx (no API in CI: "unavailable" states).
+      - run: npx playwright install --with-deps chromium
+      - run: npm run smoke:routes
 
   cms:
     runs-on: ubuntu-latest
