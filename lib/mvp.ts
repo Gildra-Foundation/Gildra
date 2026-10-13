@@ -28,9 +28,10 @@
 import { notFound } from "next/navigation";
 import { altPath } from "@/lib/i18n-paths";
 import { GAMES, GAME_ORDER, isGameVisible, type GameSlug } from "@/lib/games/registry";
+import { flags } from "@/lib/flags";
 
-/** Flip to `true` only after the deferred pages are backed by real data. */
-export const MVP_DEFERRED_PAGES_PUBLIC = false;
+/** Flip `flags.deferredPagesPublic` (lib/flags.ts) only after the deferred pages are backed by real data. */
+export const MVP_DEFERRED_PAGES_PUBLIC = flags.deferredPagesPublic;
 
 /** Language-less URL prefixes of the deferred pages (see above). */
 const DEFERRED_PATH_PREFIXES = ["/patches", "/compare", "/profile", "/diablo", "/genshin"] as const;

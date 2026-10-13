@@ -15,6 +15,7 @@ import {
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
 import styles from "./venomous.module.css";
+import { trail } from "@/lib/routes/registry";
 
 type ManifestIdentity = {
   canonicalSlug: string;
@@ -49,7 +50,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
   return (
     <AtlasFrame lang={locale} scene="venomousAbyss">
       <AtlasHero
-        breadcrumbs={[{ label: shared.wow, href: `${prefix}/wow` }, { label: shared.raids, href: `${prefix}/wow/raids` }, { label: raid.names.en }]}
+        breadcrumbs={trail(locale, "raids", { label: raid.names.en })}
         breadcrumbsLabel={shared.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
         title={raid.names.en}

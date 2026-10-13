@@ -86,6 +86,9 @@ jobs:
       # errors, hydration mismatches or 5xx (no API in CI: "unavailable" states).
       - run: npx playwright install --with-deps chromium
       - run: npm run smoke:routes
+      # Lighthouse (roadmap item 95): accessibility and layout shift are gates, speed is a warning
+      # (CI runners are noisy); budgets in lighthouserc.json, reports as an artifact.
+      - run: npx --yes @lhci/cli@0.15.1 autorun
 
   cms:
     runs-on: ubuntu-latest

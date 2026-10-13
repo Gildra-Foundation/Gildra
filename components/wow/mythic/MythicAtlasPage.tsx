@@ -2,6 +2,7 @@ import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { DungeonCardGrid } from "./DungeonCardGrid";
 import { dungeonRoutes, dungeonSlugs } from "./dungeonRoutes";
 import { mythicAtlasCopy } from "./mythicAtlasCopy";
+import { trail } from "@/lib/routes/registry";
 
 export function MythicAtlasPage({ locale }: { locale: "ru" | "en" }) {
   const copy = mythicAtlasCopy[locale];
@@ -11,7 +12,7 @@ export function MythicAtlasPage({ locale }: { locale: "ru" | "en" }) {
     <AtlasFrame lang={locale} scene="mythicPlus">
       <AtlasHero
         align="center"
-        breadcrumbs={[{ label: "World of Warcraft", href: `${locale === "ru" ? "/ru" : ""}/wow` }, { label: "Mythic+" }]}
+        breadcrumbs={trail(locale, "mythicPlus")}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
         title={copy.title}

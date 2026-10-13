@@ -3,6 +3,7 @@ import type { Lang } from "@/lib/i18n";
 import type { PlatformGameId } from "@/lib/platform/home/types";
 import { getCatalogEntityTypes, getLibraryDatasets } from "@/lib/api/client";
 import { apiInternalUrl } from "@/lib/env";
+import { runtimeFlags } from "@/lib/flags";
 
 export type IntelligenceStatus = "live" | "degraded" | "unavailable";
 export type TierRole = "dps" | "healer" | "tank";
@@ -276,7 +277,7 @@ export async function getGameIntelligence(gameId: PlatformGameId, lang: Lang): P
   try {
     // /v1/meta/wow is not in the currently deployed OpenAPI contract. Do not
     // generate six known 404 requests and then present an ambiguous fallback.
-    if (gameId === "wow" && process.env.WOW_META_API_ENABLED !== "true") {
+    if (gameId === "wow" && !runtimeFlags().wowMetaApi) {
       return unavailable("wow", lang, lang === "ru"
         ? "API меты WoW ещё не опубликован. Рейтинги не заменяются демонстрационными данными."
         : "The WoW meta API is not published yet. Rankings are not replaced with demo data.");

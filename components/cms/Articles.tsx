@@ -13,6 +13,7 @@ import type { Lang } from "@/lib/i18n";
 import { CmsRichText } from "./CmsRichText";
 import { articleHref, articlesIndexHref } from "./paths";
 import styles from "./cms.module.css";
+import { trail } from "@/lib/routes/registry";
 
 const TEXT = {
   en: {
@@ -115,12 +116,11 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
   const docs = result.status === "ok" ? result.data.docs : [];
   const totalPages = result.status === "ok" ? result.data.totalPages : 0;
 
-  const wow = lang === "ru" ? "/ru/wow" : "/wow";
 
   return (
     <AtlasFrame lang={lang} scene="articles">
       <AtlasHero
-        breadcrumbs={[{ label: "World of Warcraft", href: wow }, { label: t.articles }]}
+        breadcrumbs={trail(lang, "articles")}
         breadcrumbsLabel={t.crumbs}
         title={t.title}
         lede={t.lead}
@@ -186,14 +186,13 @@ export function ArticleView({ article: a, lang, banner }: { article: PublicArtic
   const published = formatDate(a.publishedAt, lang);
   const reviewed = formatDate(a.game.lastReviewedAt, lang);
 
-  const wow = lang === "ru" ? "/ru/wow" : "/wow";
 
   return (
     <AtlasFrame lang={lang}>
       {banner}
       <article lang={a.resolvedLocale ?? undefined}>
         <AtlasHero
-          breadcrumbs={[{ label: "World of Warcraft", href: wow }, { label: t.articles, href: articlesIndexHref(lang) }, { label: a.title ?? slug }]}
+          breadcrumbs={trail(lang, "articles", { label: a.title ?? slug })}
           breadcrumbsLabel={t.crumbs}
           eyebrow={a.categories[0]?.title}
           title={a.title ?? slug}

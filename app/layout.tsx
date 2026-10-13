@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Alegreya, Chakra_Petch, Inter } from "next/font/google";
 import { CookieNoticeGate } from "@/components/CookieNoticeGate";
 import { PlausibleTracker } from "@/components/cms/PlausibleTracker";
+import { WebVitals } from "@/components/analytics/WebVitals";
+import { plausibleTracker } from "@/lib/cms/plausible";
 import { RouteTransitionGate } from "@/components/motion/RouteTransitionGate";
 import { WorkspaceNavigator } from "@/components/platform/navigation/WorkspaceNavigator";
 import { motionPreferenceScript } from "@/lib/client/motionPreference";
@@ -72,6 +74,7 @@ export default async function RootLayout({
         <RouteTransitionGate>{children}</RouteTransitionGate>
         <CookieNoticeGate />
         <PlausibleTracker />
+        {plausibleTracker() ? <WebVitals /> : null}
       </body>
     </html>
   );

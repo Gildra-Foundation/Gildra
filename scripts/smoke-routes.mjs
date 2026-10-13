@@ -15,6 +15,11 @@ import { chromium } from "playwright";
 
 const port = Number(process.env.SMOKE_PORT ?? 3199);
 const origin = process.env.SMOKE_URL ?? `http://127.0.0.1:${port}`;
+// A local build pointed at the public API (API_INTERNAL_URL=https://api.gildra.net)
+// proxies /v1/* with the local Host header, which Cloudflare refuses (403, so the
+// rewrite answers 500). Production (internal http://api:8080) and CI (no API) do
+// not proxy that way, so those requests are not counted here.
+const externalApiProxy = !process.env.SMOKE_URL && /^https:\/\//.test(process.env.API_INTERNAL_URL ?? "");
 
 // [path, expected status]
 const routes = [
@@ -74,7 +79,9 @@ try {
     });
     page.on("response", (response) => {
       const url = response.url();
-      if (url.startsWith(origin) && response.status() >= 500) problems.push(`HTTP ${response.status()} ${url.slice(origin.length)}`);
+      if (!url.startsWith(origin) || response.status() < 500) return;
+      if (externalApiProxy && new URL(url).pathname.startsWith("/v1/")) return;
+      problems.push(`HTTP ${response.status()} ${url.slice(origin.length)}`);
     });
     const started = Date.now();
     const response = await page.goto(origin + path, { waitUntil: "load", timeout: 60000 }).catch((error) => {

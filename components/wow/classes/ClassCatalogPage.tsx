@@ -6,6 +6,7 @@ import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasSection } from "@/componen
 import { formatAtlasDate, pluralRu } from "@/components/atlas/format";
 import { midnightSpecializations, TALENT_SNAPSHOT } from "@/lib/data/wow";
 import styles from "./classCatalog.module.css";
+import { trail } from "@/lib/routes/registry";
 
 type Locale = "en" | "ru";
 
@@ -58,7 +59,7 @@ export function ClassCatalogPage({ locale }: { locale: Locale }) {
     <AtlasFrame lang={locale} scene="classes">
       <AtlasHero
         align="center"
-        breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.title }]}
+        breadcrumbs={trail(locale, "classes")}
         breadcrumbsLabel={text.breadcrumbs}
         title={text.title}
         lede={text.lede}

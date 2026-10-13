@@ -3,11 +3,11 @@ import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components
 import { TierSection } from "@/components/TierSection";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
 import { midnightSpecializations } from "@/data/wow/midnight-specializations";
-import { p } from "@/lib/i18n";
 import { tierCopy } from "./tierCopy";
 import { sampleCount, sampleRoles, usesSample } from "./tierData";
 import styles from "./tierWorkspace.module.css";
 import "./tierWorkspace.css";
+import { trail } from "@/lib/routes/registry";
 
 /** Internal spec pages that exist (class/spec), so table rows can link to them. */
 const specPaths = midnightSpecializations.map((spec) => `${spec.classSlug}/${spec.slug}`);
@@ -31,7 +31,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntel
   return (
     <AtlasFrame as="div" lang={lang} scene="tierLists" className={styles.frame} dataAttributes={{ "data-tier-workspace": true }}>
       <AtlasHero
-        breadcrumbs={[{ label: copy.wow, href: p(lang, "/wow") }, { label: copy.section }]}
+        breadcrumbs={trail(lang, "tierLists")}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
         title={copy.title}

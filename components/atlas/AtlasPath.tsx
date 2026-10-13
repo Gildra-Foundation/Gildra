@@ -6,6 +6,7 @@ import clsx from "clsx";
 import { artMorphName } from "@/lib/atlas/morph";
 import { AtlasMorphPreload } from "./AtlasMorphPreload";
 import styles from "./AtlasPath.module.css";
+import { artPlaceholder } from "@/lib/atlas/placeholders";
 
 export type AtlasPathStep = {
   href: string;
@@ -25,7 +26,7 @@ export type AtlasPathStep = {
  * sides from step to step, and each step slides in from its side on scroll.
  */
 const stepPicture = (step: AtlasPathStep) => (
-  <Image src={step.image.src} alt={step.image.alt ?? ""} fill sizes="(max-width: 720px) 100vw, 380px" style={step.image.position ? { objectPosition: step.image.position } : undefined} />
+  <Image src={step.image.src} alt={step.image.alt ?? ""} fill sizes="(max-width: 720px) 100vw, 380px" style={step.image.position ? { objectPosition: step.image.position } : undefined} {...artPlaceholder(step.image.src)} />
 );
 
 export function AtlasPath({ steps, label, headingLevel = 3, morph = false, className }: { steps: AtlasPathStep[]; label?: string; headingLevel?: 2 | 3; /** Step pictures morph into the opened page's scene (AtlasFrame morphKey). */ morph?: boolean; className?: string }) {

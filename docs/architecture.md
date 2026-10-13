@@ -17,6 +17,33 @@ Go API -> PostgreSQL (catalog, users, subscriptions, River jobs)
        -> Redis (short-lived analytics cache)
 ```
 
+## Web front end: one page architecture
+
+Every public page is built the same way (roadmap items 71–80):
+
+- **Feature module** — `components/wow/<feature>/` with a public `index.ts`, a
+  page component that takes `locale: "en" | "ru"`, its `*Copy.ts` (same keys in
+  both languages, checked by `npm run test:atlas`) and a CSS module on `--atlas-*`
+  tokens (`npm run atlas:check`). `npm run new:feature` copies the template
+  (`components/wow/_template`, README there). Features never import another
+  feature's insides — shared pieces live in `components/wow/shared`, the kit in
+  `components/atlas` (ESLint `no-restricted-imports`).
+- **Routes** — `app/<path>/page.tsx` and its `app/ru/<path>/page.tsx` mirror are
+  thin wrappers (`npm run new:page`); `npm run routes:check` keeps every page and
+  link preview paired. Link previews: `npm run new:og`.
+- **Sections** — `lib/routes/registry.ts` holds every section's path, parent and
+  short name; breadcrumbs come from `trail(locale, section, …)` and the quick
+  search lists the same sections. Scenes (art, crop, tint, sparks) come from
+  `lib/atlas/scenes.ts`.
+- **Data** — game data reaches components only through `@/lib/data/wow`
+  (server-only); ESLint forbids `@/data/*` outside `lib/`. Feature switches live
+  in `lib/flags.ts`.
+
+Two deliberate exceptions keep their own shape: **block pages** (`definePage` in
+`lib/games/<slug>/pages`, CMS can override their block list — `/tier-lists`,
+`/privacy`, League of Legends) and **workbenches** (database, search, API
+console, rotation lab), which are client-heavy tools on the same kit and tokens.
+
 ## Ownership
 
 - `app`, `components`, `lib`: Next.js 16 public website, Tailwind CSS, shadcn/ui, next-intl and Recharts.

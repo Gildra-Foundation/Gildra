@@ -29,6 +29,7 @@ const WATCHDOG_MS = 12000;
 const ARRIVAL_MS = 1300;
 // In development, prefetching a route can make Next compile it before the
 // user navigates there. Keep that CPU work out of the active page interaction.
+// Literal NODE_ENV: the bundler inlines it in the browser (see routePrefetch in lib/flags.ts).
 const routePrefetchEnabled = process.env.NODE_ENV !== "development";
 
 function destinationFromTarget(target: EventTarget | null, includeOptOut = false) {

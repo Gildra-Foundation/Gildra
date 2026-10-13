@@ -2,6 +2,7 @@ import { ExternalLink, Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
 import { DungeonCardGrid } from "./DungeonCardGrid";
 import { dungeonSlugs } from "./dungeonRoutes";
+import { trail } from "@/lib/routes/registry";
 
 type Season = "midnight-season-1" | "midnight-season-2";
 
@@ -40,7 +41,7 @@ export function MythicPlusCatalogPage({ locale, season = "midnight-season-2" }: 
   return (
     <AtlasFrame lang={locale} scene="dungeons">
       <AtlasHero
-        breadcrumbs={[{ label: text.wow, href: `${prefix}/wow` }, { label: text.hub, href: `${prefix}/wow/mythic-plus` }, { label: text.title(isCurrent ? "2" : "1") }]}
+        breadcrumbs={trail(locale, "mythicPlus", { label: text.title(isCurrent ? "2" : "1") })}
         breadcrumbsLabel={text.breadcrumbs}
         eyebrow={text.eyebrow}
         title={text.title(isCurrent ? "2" : "1")}

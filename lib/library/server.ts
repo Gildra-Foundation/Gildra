@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
+import { runtimeFlags } from "@/lib/flags";
 
 /**
  * Catalog reads are private in the current owner-approved deployment. Keep the
@@ -13,7 +14,7 @@ export async function catalogSessionPresent() {
 }
 
 export async function requireCatalogSession(path: string) {
-  if ((process.env.CATALOG_ACCESS_MODE ?? "private").toLowerCase() === "public") return;
+  if (runtimeFlags().catalogPublic) return;
   if (await catalogSessionPresent()) return;
   const next = path.startsWith("/") ? path : "/library";
   redirect(`/api-console?next=${encodeURIComponent(next)}`);
