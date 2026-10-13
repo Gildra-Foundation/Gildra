@@ -10,7 +10,7 @@ Never touch the landing scene or the contents book while doing these.
 | --- | --- |
 | "Make the accent more gold / more orange" | `--atlas-accent`, `--atlas-accent-strong`, and the rgba in `--atlas-accent-wash*`, `--atlas-line*` |
 | "Darker / lighter panels" | `--atlas-bg`, `--atlas-surface*` (keep text contrast ≥ 4.5 — the comment in the file lists ratios) |
-| "Another heading font" | load it in `app/layout.tsx` with `next/font/google` (subsets `latin`, `cyrillic`, `variable: "--font-atlas-display"`), keep `--atlas-font-display` pointing at it |
+| "Another heading font" | load it in `app/root-document.tsx` with `next/font/google` (subsets `latin`, `cyrillic`, `variable: "--font-atlas-display"`), keep `--atlas-font-display` pointing at it |
 | "Bigger / smaller text" | `--atlas-text-*` scale; never go below 11 px for `--atlas-text-label` |
 | "Bolder headings" | `--atlas-weight-display`, `--atlas-weight-display-hero` (Alegreya is variable 400–900) |
 | "Wider / narrower page" | `--atlas-container`, `--atlas-gutter` |
@@ -52,8 +52,8 @@ backward compatible — many pages use them. Update the table in `components/atl
   never import `lib/i18n` in client code (~64 KB of dictionary).
 - Don't render UI and hide it with CSS; don't preload images the page does not paint.
 - A game's block registry is imported whole: delete blocks no page uses.
-- Never read request headers in `app/not-found.tsx` (it is evaluated for every route and makes
-  the whole site dynamic).
+- Never read request headers in the 404 files (`app/global-not-found.tsx`, the trees' `not-found.tsx`):
+  they are prerendered, and headers would make every route dynamic.
 
 ## Migrate an old page
 
@@ -70,7 +70,7 @@ backward compatible — many pages use them. Update the table in `components/atl
 | Tokens | `app/styles/atlas-theme.css` |
 | Kit | `components/atlas/*` |
 | Top bar (book contents, EN/RU, GILDRA) | `components/platform/navigation/WorkspaceNavigatorContent.tsx`, `atlasToolbar.module.css` |
-| 404 | `app/not-found.tsx` + `components/layout/NotFoundCopy.tsx` |
+| 404 | `components/layout/NotFoundPage.tsx` (used by `app/(site)/not-found.tsx`, `app/ru/not-found.tsx`, `app/global-not-found.tsx`) + `NotFoundCopy.tsx` |
 | Raid guides | `components/wow/raid/RaidBossGuide.tsx`, `RaidMechanicList.tsx`, `raidGuideCopy.ts` |
 | Articles (shared CMS) | `components/cms/Articles.tsx`, `cms.module.css` |
 | Legacy skin for old pages | `app/styles/atlas-pages.css`, `app/styles/wow-skin.css` |

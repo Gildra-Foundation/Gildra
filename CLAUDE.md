@@ -9,7 +9,9 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   Payload CMS, PostgreSQL, ClickHouse and Redis.
 - **Pages are configs of blocks.** Page definitions live in
   `lib/games/<slug>/pages/*.ts` (`definePage` → `{ en, ru }`); route files
-  `app/**/page.tsx` and their `app/ru/**` mirrors are three-line wrappers.
+  `app/(site)/**/page.tsx` and their `app/ru/**` mirrors are three-line wrappers
+  (two root layouts, so the server sends the right `<html lang>`; shared
+  document in `app/root-document.tsx`, unmatched URLs → `app/global-not-found.tsx`).
   Blocks live in `components/blocks/<game|shared>/<name>/` and are mapped in
   `lib/blocks/registry.ts`. The page wrapper (Icons, `.app/.main`, Reveal)
   comes only from `components/layout/PageShell.tsx`; the one top bar (book
@@ -33,7 +35,7 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   `/league-of-legends/**` (+ `/ru` mirrors). The WoW hub `/wow` is the atlas
   page `components/wow/home/WowHome.tsx` (links only; the full tier
   filters/table/detail experience lives only on `/tier-lists`). `/database`,
-  `/library` and `app/not-found.tsx` (atlas kit, client copy only) are app
+  `/library` and the 404 (`components/layout/NotFoundPage.tsx`) are app
   pages. UI strings via `lib/i18n.ts` (`t`, `tNav`) in server code — client
   components take strings as props or from a local `*Copy.ts`; game terms stay
   English; links through `p(lang, href)` / `gameHref`; anchors through

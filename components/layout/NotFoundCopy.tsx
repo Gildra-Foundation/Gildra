@@ -24,25 +24,27 @@ const copy = {
 const subscribe = () => () => {};
 const isRussianUrl = () => /^\/ru(?:\/|$)/.test(window.location.pathname);
 
-/** The locale-dependent parts of the 404. The root not-found is evaluated for
- *  every route, so it cannot read request headers without making the whole site
- *  dynamic, and its HTML is prerendered once (English). The URL picks the
- *  language after hydration; the server snapshot keeps hydration consistent. */
-function useNotFoundCopy() {
-  const ru = useSyncExternalStore(subscribe, isRussianUrl, () => false);
+type Locale = "en" | "ru";
+
+/** The locale-dependent parts of the 404. A tree's not-found (app/(site), app/ru)
+ *  knows its language and renders it on the server; the 404 of unmatched URLs
+ *  (app/global-not-found.tsx) is prerendered once in English and the URL picks
+ *  the language after hydration. The server snapshot keeps hydration consistent. */
+function useNotFoundCopy(locale?: Locale) {
+  const ru = useSyncExternalStore(subscribe, isRussianUrl, () => locale === "ru");
   return { text: copy[ru ? "ru" : "en"], prefix: ru ? "/ru" : "" };
 }
 
-export function NotFoundTitle() {
-  return <>{useNotFoundCopy().text.title}</>;
+export function NotFoundTitle({ locale }: { locale?: Locale }) {
+  return <>{useNotFoundCopy(locale).text.title}</>;
 }
 
-export function NotFoundLede() {
-  return <>{useNotFoundCopy().text.lede}</>;
+export function NotFoundLede({ locale }: { locale?: Locale }) {
+  return <>{useNotFoundCopy(locale).text.lede}</>;
 }
 
-export function NotFoundActions() {
-  const { text, prefix } = useNotFoundCopy();
+export function NotFoundActions({ locale }: { locale?: Locale }) {
+  const { text, prefix } = useNotFoundCopy(locale);
   return <>
     <Link className={clsx(buttonStyles.button, buttonStyles.primary)} href={`${prefix}/wow`}><span>{text.hub}</span><ArrowRight aria-hidden="true" /></Link>
     <Link className={buttonStyles.button} href={`${prefix}/wow/mythic-plus`}><span>{text.mythic}</span></Link>

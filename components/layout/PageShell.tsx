@@ -7,7 +7,7 @@ import { GAMES, type GameSlug } from "@/lib/games/registry";
 /**
  * The page wrapper of block and catalog pages: icon sprite, `.app > .main` and
  * the optional Reveal script. Navigation and the legal footer come from the
- * global atlas bar (app/layout.tsx) and AtlasFrame, so the shell renders no
+ * global atlas bar (app/root-document.tsx) and AtlasFrame, so the shell renders no
  * header or footer of its own. `variant="route"` wraps children in the
  * `.section .route-section` column used by pages without a hero.
  */
