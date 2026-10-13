@@ -15,7 +15,7 @@ ARG PLAUSIBLE_SITE_DOMAIN=gildra.net
 # by design: every browser receives it, and reports reach the internal GlitchTip
 # only through /monitoring (app/monitoring/route.ts), which accepts this DSN
 # alone. Baked into the client bundle; pass an empty value to build without it.
-ARG NEXT_PUBLIC_SENTRY_DSN=http://dc8456a7-f083-4868-9f50-4db20d5fc692@glitchtip:8000/1
+ARG NEXT_PUBLIC_SENTRY_DSN=http://dc8456a7f08348689f504db20d5fc692@glitchtip:8000/1
 ENV NEXT_TELEMETRY_DISABLED=1 \
     PLAUSIBLE_SCRIPT_URL=$PLAUSIBLE_SCRIPT_URL PLAUSIBLE_API_URL=$PLAUSIBLE_API_URL PLAUSIBLE_SITE_DOMAIN=$PLAUSIBLE_SITE_DOMAIN \
     NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
