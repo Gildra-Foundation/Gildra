@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageOpenGraph, pairedAlternates } from "@/lib/seo/metadata";
 import { routeSections, type SectionId } from "./registry";
 
 /**
@@ -15,7 +16,7 @@ type SectionMeta = { en: Words; ru: Words; noindex?: true };
 const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   wow: {
     en: { title: "World of Warcraft — Gildra", description: "World of Warcraft hub with source-tracked Midnight routes and explicit verification status." },
-    ru: { title: "World of Warcraft — Gildra", description: "Хаб World of Warcraft с маршрутами Midnight, источниками и явным статусом проверки." },
+    ru: { title: "World of Warcraft — хаб Gildra", description: "Хаб World of Warcraft с маршрутами Midnight, источниками и явным статусом проверки." },
     noindex: true,
   },
   raids: {
@@ -23,8 +24,16 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     ru: { title: "Рейдовый журнал World of Warcraft — Gildra", description: "Маршруты рейдов Midnight с источниками и инвентаризация архива. Полнота покрытия не заявляется." },
     noindex: true,
   },
-  mythicPlus: { en: { title: "Midnight Mythic+ — Gildra" }, ru: { title: "Mythic+ Midnight — Gildra" }, noindex: true },
-  dungeons: { en: { title: "Midnight Dungeons — Gildra" }, ru: { title: "Подземелья Midnight — Gildra" }, noindex: true },
+  mythicPlus: {
+    en: { title: "Midnight Mythic+ — Gildra", description: "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments." },
+    ru: { title: "Mythic+ Midnight — Gildra", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
+    noindex: true,
+  },
+  dungeons: {
+    en: { title: "Midnight Dungeons — Gildra", description: "Dungeons of the current season: route, bosses, timer and strategy for each." },
+    ru: { title: "Подземелья Midnight — Gildra", description: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого." },
+    noindex: true,
+  },
   lairs: {
     en: { title: "Midnight Season 2 Lairs and World Bosses — Gildra", description: "Midnight Season 2 Lair and world bosses: locations, abilities, difficulty and loot." },
     ru: { title: "Логова и мировые боссы Midnight Season 2 — Gildra", description: "Логово и мировые боссы Midnight Season 2: где найти, способности, сложность и добыча." },
@@ -35,13 +44,21 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     ru: { title: "Классы и специализации WoW — Gildra", description: "Все классы и специализации Midnight со ссылками на деревья талантов из снимка данных Raidbots." },
     noindex: true,
   },
-  delves: { en: { title: "Midnight Delves — Gildra" }, ru: { title: "Вылазки Midnight — Gildra" }, noindex: true },
+  delves: {
+    en: { title: "Midnight Delves — Gildra", description: "Delves of both Midnight seasons. Strategy and rewards will appear once verified." },
+    ru: { title: "Вылазки Midnight — Gildra", description: "Вылазки обоих сезонов Midnight. Тактика и награды появятся после проверки." },
+    noindex: true,
+  },
   season2: {
     en: { title: "WoW Midnight Season 2 Guide — Gildra", description: "Midnight Season 2 source-tracked overview. Unverified item levels and rewards are not treated as authoritative." },
     ru: { title: "WoW Midnight Season 2 — гайд Gildra", description: "Обзор Midnight Season 2 с отслеживаемыми источниками. Непроверенные item level и награды не считаются достоверными." },
     noindex: true,
   },
-  whatsNew: { en: { title: "What's new — Gildra" }, ru: { title: "Что нового — Gildra" }, noindex: true },
+  whatsNew: {
+    en: { title: "What's new — Gildra", description: "What changed on Gildra for players, newest first. Data updates of the season are announced on their own pages." },
+    ru: { title: "Что нового — Gildra", description: "Что изменилось на Gildra для игроков, сначала свежее. Обновления данных сезона объявляются на их страницах." },
+    noindex: true,
+  },
   database: {
     en: { title: "World of Warcraft Database — Gildra", description: "Browse Gildra's structured World of Warcraft catalog: items, spells, quests, creatures, maps and game systems." },
     ru: { title: "База данных World of Warcraft — Gildra", description: "Структурированный каталог World of Warcraft: предметы, заклинания, задания, существа, карты и игровые системы." },
@@ -54,10 +71,12 @@ export function sectionMetadata(id: SectionId, locale: Locale): Metadata {
   if (!meta) throw new Error(`lib/routes/metadata.ts: no metadata for section "${id}"`);
   const path = routeSections[id].path;
   const words = meta[locale];
+  const alternates = pairedAlternates(locale, path);
   return {
     title: words.title,
     ...(words.description ? { description: words.description } : {}),
-    alternates: { canonical: locale === "ru" ? `/ru${path}` : path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
+    alternates,
+    openGraph: pageOpenGraph(locale, { title: words.title, description: words.description, path: String(alternates.canonical) }),
     ...(meta.noindex ? { robots: { index: false, follow: true } } : {}),
   };
 }

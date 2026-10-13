@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
+import { pairedAlternates } from "@/lib/seo/metadata";
 import { SearchPage } from "@/components/platform/search/SearchPage";
 import { searchCatalogGame } from "@/lib/platform/catalog/repository";
 import { catalogGames, isCatalogGame, type CatalogGameId, type SearchKind } from "@/lib/platform/catalog/types";
 
-export const metadata: Metadata = { title: "Поиск — Gildra", description: "Поиск по опубликованным игровым каталогам Gildra." };
+// Result pages are endless query variants: kept out of the index, links still followed.
+export const metadata: Metadata = {
+  title: "Поиск — Gildra",
+  description: "Поиск по опубликованным игровым каталогам Gildra.",
+  alternates: pairedAlternates("ru", "/search"),
+  robots: { index: false, follow: true },
+};
 
 type Params = { q?: string; type?: string; game?: string | string[] };
 

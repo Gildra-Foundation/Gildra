@@ -45,23 +45,27 @@ const atlasDisplay = Alegreya({
   preload: false,
 });
 
-export const rootMetadata: Metadata = {
-  metadataBase: new URL("https://gildra.net"),
-  title: "Gildra — Master the Meta",
-  description:
-    "Live World of Warcraft tier lists, Mythic+ and raid meta statistics, builds and guides.",
-  alternates: { languages: { en: "/", ru: "/ru" } },
-  openGraph: {
-    siteName: "Gildra",
-    type: "website",
-    title: "Gildra — Master the Meta",
-    description:
-      "Live World of Warcraft tier lists, Mythic+ and raid meta statistics, builds and guides.",
-  },
-  twitter: {
-    card: "summary_large_image",
-  },
-};
+const rootWords = {
+  en: { title: "Gildra — Master the Meta", description: "World of Warcraft tier lists, Mythic+ and raid statistics, builds and guides." },
+  ru: { title: "Gildra — мета World of Warcraft", description: "Тир-листы World of Warcraft, статистика Mythic+ и рейдов, билды и гайды." },
+} as const;
+
+/**
+ * Defaults of every page in one language tree. No og:title/description and no
+ * hreflang here: a page without its own would inherit the home page's (link
+ * previews fall back to the page <title>, alternates belong to each page).
+ */
+export function rootMetadataFor(lang: "en" | "ru"): Metadata {
+  return {
+    metadataBase: new URL("https://gildra.net"),
+    title: rootWords[lang].title,
+    description: rootWords[lang].description,
+    openGraph: { siteName: "Gildra", type: "website", locale: lang === "ru" ? "ru_RU" : "en_US" },
+    twitter: { card: "summary_large_image" },
+  };
+}
+
+export const rootMetadata = rootMetadataFor("en");
 
 export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: ReactNode }) {
   return (
