@@ -1,5 +1,6 @@
 "use client";
 
+import { catalogLocaleView } from "@/lib/catalogLocale";
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
 import { Eye } from "lucide-react";
@@ -38,7 +39,7 @@ export function RecordPreviewButton({ id, externalId, type, lang, iconSymbol, la
     try {
       const response = await fetch(`/api/catalog/entities/${id}?locale=${lang === "ru" ? "ru_RU" : "en_US"}`);
       if (!response.ok) throw new Error(String(response.status));
-      const detail = await response.json() as CatalogRecord;
+      const detail = catalogLocaleView(await response.json() as CatalogRecord, lang);
       if (!detail.tooltip) throw new Error("no tooltip");
       loaded.current = detail;
       setEntity(detail);

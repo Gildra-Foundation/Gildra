@@ -1,4 +1,5 @@
 import { IdentityStatusPage } from "@/components/wow/shared/IdentityStatusPage";
+import { contentManifest } from "@/lib/data/wow";
 import { seasonTwoHubCopy } from "./seasonTwoHubCopy";
 
 type Locale = "ru" | "en";
@@ -6,6 +7,8 @@ type Locale = "ru" | "en";
 const OFFICIAL_SEASON_SOURCE = "https://worldofwarcraft.blizzard.com/en-us/news/24294369/midnight-season-2-is-now-live";
 
 export function SeasonTwoHub({ locale }: { locale: Locale }) {
+  const raidName = contentManifest.instances.find((entry) => entry.canonicalSlug === "venomous-abyss")?.names[locale] ?? "";
+  const copy = seasonTwoHubCopy[locale];
   return (
     <IdentityStatusPage
       art="/assets/wow/loading/raid-wow-optimized.webp"
@@ -13,7 +16,7 @@ export function SeasonTwoHub({ locale }: { locale: Locale }) {
       tint="rgba(122, 64, 196, .2)"
       locale={locale}
       eyebrow="Midnight"
-      title="Midnight Season 2"
+      title={copy.title}
       summary={seasonTwoHubCopy[locale].blizzardSOfficialOverview}
       patch="12.1"
       season="Midnight Season 2"
@@ -21,11 +24,11 @@ export function SeasonTwoHub({ locale }: { locale: Locale }) {
       sourceLabel={seasonTwoHubCopy[locale].officialBlizzardOverview}
       lastVerifiedAt="2026-09-13"
       links={[
-        { href: "/wow/raids/venomous-abyss", label: "The Venomous Abyss" },
-        { href: "/wow/mythic-plus/seasons/midnight-season-2", label: "Mythic+ Season 2" },
-        { href: "/wow/delves", label: "Delves" },
-        { href: "/wow/prey", label: "Prey" },
-        { href: "/wow/lairs", label: "Lairs" },
+        { href: "/wow/raids/venomous-abyss", label: raidName },
+        { href: "/wow/mythic-plus/seasons/midnight-season-2", label: copy.mythicSeason },
+        { href: "/wow/delves", label: copy.delves },
+        { href: "/wow/prey", label: copy.prey },
+        { href: "/wow/lairs", label: copy.lairs },
       ]}
     />
   );

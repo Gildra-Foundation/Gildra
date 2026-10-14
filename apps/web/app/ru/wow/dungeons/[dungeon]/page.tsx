@@ -1,3 +1,4 @@
+import { wowSourceName } from "@/lib/wow/sourceLocale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MythicRouteMap } from "@/components/wow/mythic/MythicRouteMap";
@@ -9,7 +10,7 @@ export const dynamicParams = false;
 export function generateStaticParams() { return Object.keys(dungeonRoutes).map((dungeon) => ({ dungeon })); }
 export async function generateMetadata({ params }: { params: Promise<{ dungeon: string }> }): Promise<Metadata> {
   const dungeon = getDungeonRoute((await params).dungeon as DungeonSlug);
-  return dungeon ? { title: `${dungeon.nameRu} — подземелье Midnight — Gildra`, robots: { index: false, follow: true } } : {};
+  return dungeon ? { title: `${wowSourceName(dungeon.name, "ru", dungeon.nameRu)} — подземелье Midnight — Gildra`, robots: { index: false, follow: true } } : {};
 }
 export default async function Page({ params }: { params: Promise<{ dungeon: string }> }) {
   const slug = (await params).dungeon as DungeonSlug;

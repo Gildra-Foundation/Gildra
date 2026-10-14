@@ -29,6 +29,7 @@ const roleLabelsEn: Record<TalentSpecTheme["role"], string> = {
 type NodeAriaInput = { names: string; tiered: boolean; selectedName?: string; rank: number; maxRanks: number; lockReason?: string };
 
 const ru = {
+  apex: "Высший талант",
   locale: "ru-RU",
   treeLabels: { class: "Дерево класса", hero: "Путь героя", spec: "Специализация" } satisfies Record<TalentKind, string>,
   treeTabs: { class: "Класс", hero: "Путь героя", spec: "Специализация" } satisfies Record<TalentKind, string>,
@@ -209,6 +210,7 @@ const ru = {
 export type TalentCalculatorCopy = typeof ru;
 
 const en: TalentCalculatorCopy = {
+  apex: "Apex Talent",
   locale: "en-GB",
   treeLabels: { class: "Class tree", hero: "Hero path", spec: "Specialization" },
   treeTabs: { class: "Class", hero: "Hero path", spec: "Spec" },

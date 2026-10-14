@@ -25,22 +25,22 @@ export const tierRewards: Record<string, LocalizedRaidText> = {
   "vashnik-the-malignant": { en: "Chest tier token", ru: "Токен комплекта: грудь" },
   sszorak: { en: "Legs tier token", ru: "Токен комплекта: ноги" },
   "the-twin-fangs": { en: "Head tier token", ru: "Токен комплекта: голова" },
-  ulatek: { en: "Slumbering Coil Curio", ru: "Slumbering Coil Curio" },
+  ulatek: { en: "Slumbering Coil Curio", ru: "Диковинка дремлющего змея" },
 };
 
 export const gloryAchievements: Array<{ name: string; requirement: LocalizedRaidText }> = [
-  { name: "Well, Well, Little Sky", requirement: { en: "Defeat Nek'zali after returning Kupamanduka to the Soulcoil Well on Normal or higher.", ru: "Победите Нек'зали после возвращения Купамандуки в Soulcoil Well на обычной сложности или выше." } },
-  { name: "Is Venom Stasis A Joke To You?", requirement: { en: "Defeat the Sentinels after each restores more than half of its total health with Vitriolic Stasis.", ru: "Победите стражей после того, как каждый восстановит больше половины здоровья через Vitriolic Stasis." } },
+  { name: "Well, Well, Little Sky", requirement: { en: "Defeat Nek'zali after returning Kupamanduka to the Soulcoil Well on Normal or higher.", ru: "Победите Нек'зали после возвращения Купамандуки в Колодец душителей душ на обычной сложности или выше." } },
+  { name: "Is Venom Stasis A Joke To You?", requirement: { en: "Defeat the Sentinels after each restores more than half of its total health with Vitriolic Stasis.", ru: "Победите стражей после того, как каждый восстановит больше половины здоровья через Агрессивный стазис." } },
   { name: "Accidental Inclusion", requirement: { en: "Defeat The Lost Explorers including Hoji on Normal or higher.", ru: "Победите Потерявшихся исследователей, включая Ходжи, на обычной сложности или выше." } },
   { name: "Kept You Waiting Huh?", requirement: { en: "Defeat Vashnik after killing the Solidified Snake Venom.", ru: "Победите Вашника после убийства Solidified Snake Venom." } },
   { name: "Jumping Through Hoops", requirement: { en: "Defeat Sszorak after jumping through every ring that appears.", ru: "Победите Ссзорака, прыгнув через каждое появившееся кольцо." } },
-  { name: "Taking a Bite out of Slime", requirement: { en: "Defeat The Twin Fangs after feeding Ithraz the required slimes in order during Ravenous Feast.", ru: "Победите Два Клыка, скормив Итразу требуемых слизней по порядку во время Ravenous Feast." } },
-  { name: "Watch Out Behind You", requirement: { en: "Defeat The Coiled Altar while every player is affected by Unnerving Fixation.", ru: "Победите Спиральный алтарь, пока все игроки находятся под Unnerving Fixation." } },
-  { name: "No Egg Scramble", requirement: { en: "Defeat Ula'tek before the Greasy Hatchling breaks on Normal or higher; also rewards the Ula'took pet.", ru: "Победите Ула'тек до разрушения Greasy Hatchling на обычной сложности или выше; также даёт питомца Ula'took." } },
+  { name: "Taking a Bite out of Slime", requirement: { en: "Defeat The Twin Fangs after feeding Ithraz the required slimes in order during Ravenous Feast.", ru: "Победите Два Клыка, скормив Итразу требуемых слизней по порядку во время Яростное пожирание." } },
+  { name: "Watch Out Behind You", requirement: { en: "Defeat The Coiled Altar while every player is affected by Unnerving Fixation.", ru: "Победите Спиральный алтарь, пока все игроки находятся под Зловещее преследование." } },
+  { name: "No Egg Scramble", requirement: { en: "Defeat Ula'tek before the Greasy Hatchling breaks on Normal or higher; also rewards the Ula'took pet.", ru: "Победите Ула'тек до разрушения Скользкий детеныш на обычной сложности или выше; также даёт питомца Ула'тук." } },
 ];
 
 export const headlineRewards: Array<{ name: string; detail: LocalizedRaidText }> = [
-  { name: "Crimson Venomfang", detail: { en: "Mount awarded by Glory of the Venomous Raider.", ru: "Средство передвижения за Glory of the Venomous Raider." } },
+  { name: "Crimson Venomfang", detail: { en: "Mount awarded by Glory of the Venomous Raider.", ru: "Средство передвижения за Слава отравленному рейдеру." } },
   { name: "Primeval Skyfriend", detail: { en: "Mythic Ula'tek reward; the guide reports three mounts per kill until the next expansion.", ru: "Награда за эпохальную Ула'тек; по данным гайда, до следующего дополнения за убийство выдаются три маунта." } },
   { name: "The Venom's End", detail: { en: "Title awarded for defeating Ula'tek on Mythic difficulty.", ru: "Титул за победу над Ула'тек на эпохальной сложности." } },
   { name: "Ahead of the Curve / Cutting Edge", detail: { en: "Seasonal Heroic and Mythic Ula'tek achievements.", ru: "Сезонные достижения за героическую и эпохальную Ула'тек." } },

@@ -1,3 +1,4 @@
+import { wowSourceName } from "@/lib/wow/sourceLocale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MythicRouteMap } from "@/components/wow/mythic/MythicRouteMap";
@@ -18,8 +19,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const route = getDungeonRoute((await params).dungeon);
   if (!route) return {};
   return {
-    title: `${route.nameRu}: маршрут Mythic+ — Gildra`,
-    description: `Интерактивный маршрут ${route.nameRu}: паки, боссы, прерывания и назначения группы для Midnight Season 2.`,
+    title: `${wowSourceName(route.name, "ru", route.nameRu)}: маршрут Эпохальный+ — Gildra`,
+    description: `Интерактивный маршрут ${wowSourceName(route.name, "ru", route.nameRu)}: паки, боссы, прерывания и назначения группы для Midnight · Сезон 2.`,
   };
 }
 

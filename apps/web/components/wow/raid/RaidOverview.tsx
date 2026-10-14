@@ -12,6 +12,8 @@ import { trail } from "@/lib/routes/registry";
 /** Raid page of a Midnight Season 1 raid: what the raid is and its encounters. */
 export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
   const copy = raidGuideCopy[locale];
+  const raidName = locale === "ru" ? raid.nameRu : raid.nameEn;
+  const bossName = (entry: RaidBoss) => locale === "ru" ? entry.nameRu : entry.nameEn;
   const prefix = locale === "ru" ? "/ru" : "";
   const raidHref = `${prefix}/wow/raids/${raid.slug}`;
   const published = isRaidStrategyPublished(raid);
@@ -32,12 +34,12 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
       artLayer={raid.slug === "the-voidspire" ? <VoidEye imageSize={[1920, 734]} focus={[0.5, 0.3]} eye={[0.601, 0.2956]} eyeRadius={18} /> : undefined}
     >
       <AtlasHero
-        breadcrumbs={trail(locale, "raids", { label: raid.nameEn })}
+        breadcrumbs={trail(locale, "raids", { label: raidName })}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        eyebrow={<>{copy.season(1)} · {raid.locationEn}</>}
-        title={raid.nameEn}
+        eyebrow={<>{copy.season(1)} · {locale === "ru" ? raid.locationRu : raid.locationEn}</>}
+        title={raidName}
         lede={locale === "ru" ? raid.descriptionRu : raid.descriptionEn}
-        actions={<AtlasShareButton title={raid.nameEn} locale={locale} />}
+        actions={<AtlasShareButton title={raidName} locale={locale} />}
       />
 
       <AtlasSection id="bosses" title={copy.bossesTitle} description={published ? copy.bossesText : copy.bossesTextPending}>
@@ -49,7 +51,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
               morph
               layout="feature"
               image={{ src: raid.bosses[0].artwork, alt: "", priority: true }}
-              title={raid.bosses[0].nameEn}
+              title={bossName(raid.bosses[0])}
               description={locale === "ru" ? raid.bosses[0].descriptionRu : raid.bosses[0].descriptionEn}
               meta={mechanicsMeta(raid.bosses[0])}
               cta={copy.openGuide}
@@ -61,7 +63,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
               label={copy.bossesTitle}
               steps={raid.bosses.map((boss) => ({
                 href: `${raidHref}/${boss.slug}`,
-                title: boss.nameEn,
+                title: bossName(boss),
                 image: { src: boss.artwork, position: "center 30%" },
                 description: locale === "ru" ? boss.descriptionRu : boss.descriptionEn,
                 meta: mechanicsMeta(boss),

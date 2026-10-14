@@ -22,7 +22,7 @@ export type RouteSection = {
 export const routeSections = {
   wow: { path: "/wow", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
   raids: { path: "/wow/raids", parent: "wow", title: { en: "Raids", ru: "Рейды" }, scene: "raids", search: { en: "Raid journal", ru: "Рейдовый журнал", keywords: "raids рейды" } },
-  mythicPlus: { path: "/wow/mythic-plus", parent: "wow", title: { en: "Mythic+", ru: "Mythic+" }, scene: "mythicPlus", search: { en: "Mythic+ atlas", ru: "Атлас Mythic+", keywords: "mythic plus keys ключи эпохальные" } },
+  mythicPlus: { path: "/wow/mythic-plus", parent: "wow", title: { en: "Mythic+", ru: "Эпохальный+" }, scene: "mythicPlus", search: { en: "Mythic+ atlas", ru: "Атлас Эпохальный+", keywords: "mythic plus keys ключи эпохальные" } },
   dungeons: { path: "/wow/dungeons", parent: "wow", title: { en: "Dungeons", ru: "Подземелья" }, scene: "dungeons" },
   lairs: { path: "/wow/lairs", parent: "wow", title: { en: "Lairs and world bosses", ru: "Логова и мировые боссы" }, scene: "lairs" },
   classes: { path: "/wow/classes", parent: "wow", title: { en: "Classes and specializations", ru: "Классы и специализации" }, scene: "classes", search: { keywords: "specs спеки" } },

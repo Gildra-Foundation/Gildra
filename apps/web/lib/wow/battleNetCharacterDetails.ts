@@ -257,11 +257,11 @@ export async function getBattleNetCharacterDetails(token: string, character: Bat
     const mediaData = item.media?.key?.href ? await api<{ assets?: Array<{ key?: string; value?: string }> }>(withLocale(item.media.key.href, region, locale), token) : null;
     return {
       id: item.item?.id ?? 0, slot: item.slot?.name ?? item.slot?.type ?? "—", slotType: item.slot?.type ?? "UNKNOWN",
-      name: item.name ?? `Item ${item.item?.id ?? ""}`, quality: item.quality?.type || item.quality?.name || "", itemLevel: item.level?.value ?? 0,
+      name: item.name ?? `${locale === "ru" ? "Предмет" : "Item"} #${item.item?.id ?? ""}`, quality: item.quality?.type || item.quality?.name || "", itemLevel: item.level?.value ?? 0,
       iconUrl: mediaData?.assets?.find((asset) => asset.key === "icon")?.value,
       stats: (item.stats ?? []).map((stat) => stat.display?.display_string ?? `${stat.type?.name ?? stat.type?.type ?? ""} ${stat.value ?? ""}`.trim()),
       enchantments: (item.enchantments ?? []).map((entry) => entry.display_string ?? `#${entry.enchantment_id}`).filter(Boolean),
-      sockets: (item.sockets ?? []).map((socket) => ({ filled: Boolean(socket.item), label: socket.item?.name ?? socket.display_string ?? socket.socket_type?.name ?? "Socket" })),
+      sockets: (item.sockets ?? []).map((socket) => ({ filled: Boolean(socket.item), label: socket.item?.name ?? socket.display_string ?? socket.socket_type?.name ?? (locale === "ru" ? "Гнездо" : "Socket") })),
       setName: item.set?.display_string,
       appearanceId: item.modified_appearance_id,
       modificationIds: {

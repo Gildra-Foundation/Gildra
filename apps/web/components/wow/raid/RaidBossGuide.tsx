@@ -13,22 +13,24 @@ import { trail } from "@/lib/routes/registry";
 /** Boss guide of a Midnight Season 1 raid: header, encounter switcher, battle plan, one mechanics list. */
 export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; boss: RaidBoss; locale: RaidLocale }) {
   const copy = raidGuideCopy[locale];
+  const raidName = locale === "ru" ? raid.nameRu : raid.nameEn;
+  const bossName = (entry: RaidBoss) => locale === "ru" ? entry.nameRu : entry.nameEn;
   const prefix = locale === "ru" ? "/ru" : "";
   const raidHref = `${prefix}/wow/raids/${raid.slug}`;
   const order = raid.bosses.indexOf(boss);
   const strategy = getBossStrategy(raid, boss);
-  const encounters = raid.bosses.map((item) => ({ href: `${raidHref}/${item.slug}`, name: item.nameEn, image: item.artwork, current: item.slug === boss.slug }));
+  const encounters = raid.bosses.map((item) => ({ href: `${raidHref}/${item.slug}`, name: bossName(item), image: item.artwork, current: item.slug === boss.slug }));
   const hasMechanics = Boolean(strategy?.guide) || boss.mechanics.length > 0;
 
   return (
     <AtlasFrame lang={locale} art={boss.artwork} artPosition="center 28%" morphKey={`/wow/raids/${raid.slug}/${boss.slug}`}>
       <AtlasHero
-        breadcrumbs={trail(locale, "raids", { label: raid.nameEn, href: raidHref }, { label: boss.nameEn })}
+        breadcrumbs={trail(locale, "raids", { label: raidName, href: raidHref }, { label: bossName(boss) })}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        eyebrow={<>{raid.nameEn} · {copy.encounterOf(order + 1, raid.bosses.length)}</>}
-        title={<span data-testid="boss-title">{boss.nameEn}</span>}
+        eyebrow={<>{raidName} · {copy.encounterOf(order + 1, raid.bosses.length)}</>}
+        title={<span data-testid="boss-title">{bossName(boss)}</span>}
         lede={locale === "ru" ? boss.descriptionRu : boss.descriptionEn}
-        actions={<AtlasShareButton title={`${boss.nameEn} — ${raid.nameEn}`} locale={locale} />}
+        actions={<AtlasShareButton title={`${bossName(boss)} — ${raidName}`} locale={locale} />}
       />
 
       <EncounterSwitcher items={encounters} label={copy.encountersLabel} />
@@ -58,7 +60,7 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
         </AtlasSection>
       ) : null}
 
-      <RaidPager label={copy.pagerLabel} back={{ href: raidHref, label: copy.allBosses(raid.nameEn) }} next={encounters[order + 1]} nextLabel={copy.nextBoss} />
+      <RaidPager label={copy.pagerLabel} back={{ href: raidHref, label: copy.allBosses(raidName) }} next={encounters[order + 1]} nextLabel={copy.nextBoss} />
     </AtlasFrame>
   );
 }

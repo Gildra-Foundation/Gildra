@@ -1,3 +1,4 @@
+import { wowSourceName } from "@/lib/wow/sourceLocale";
 import type { MidnightDelve } from "@/lib/data/wow";
 import { IdentityStatusPage } from "@/components/wow/shared/IdentityStatusPage";
 import { delveIdentityPageCopy } from "./delveIdentityPageCopy";
@@ -10,7 +11,7 @@ export function DelveIdentityPage({ delve, locale }: { delve: MidnightDelve; loc
       artPosition="center 45%"
       locale={locale}
       eyebrow={locale === "ru" ? `Вылазка · Midnight · Сезон ${seasonNumber}` : `Delve · Midnight · Season ${seasonNumber}`}
-      title={delve.name}
+      title={wowSourceName(delve.name, locale)}
       summary={delveIdentityPageCopy[locale].theDelveIsConfirmed}
       patch={delve.patch}
       season={`Midnight Season ${seasonNumber}`}

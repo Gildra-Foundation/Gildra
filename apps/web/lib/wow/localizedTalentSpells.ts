@@ -40,7 +40,8 @@ async function spellTooltip(spellId: number, lang: Lang, signal: AbortSignal): P
     if (!response.ok) return null;
     const payload = await response.json() as { name?: unknown; tooltip?: unknown };
     const name = typeof payload.name === "string" ? plainText(payload.name) : "";
-    if (!name) return null;
+    // The provider can fall back to English even when locale=7 was requested.
+    if (!name || (lang === "ru" && !/[А-Яа-яЁё]/.test(name)) || (lang === "en" && /[А-Яа-яЁё]/.test(name))) return null;
     const tooltip = typeof payload.tooltip === "string" ? payload.tooltip : "";
     const descriptions = [...tooltip.matchAll(/<div\s+class=(?:"q"|'q')>([\s\S]*?)<\/div>/gi)];
     const value = { name, description: plainText(descriptions.at(-1)?.[1] ?? "") };

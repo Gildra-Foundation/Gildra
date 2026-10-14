@@ -4,7 +4,7 @@ import { pluralRu } from "@gildra/atlas-ui/format";
 export const mythicAtlasCopy = {
   ru: {
     eyebrow: "Midnight · Сезон 2",
-    title: "Атлас Mythic+",
+    title: "Атлас Эпохальный+",
     breadcrumbsLabel: "Навигация",
     lede: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения.",
     statsLabel: "Сводка сезона",

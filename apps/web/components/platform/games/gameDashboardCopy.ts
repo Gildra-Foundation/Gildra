@@ -13,7 +13,7 @@ export const gameDashboardCopy = {
     numberLocale: "ru-RU",
     preview: "ПРЕВЬЮ",
     noNewSignals: "Новых сигналов нет.",
-    liveMythicTierList: "Живой тир-лист Mythic+",
+    liveMythicTierList: "Живой тир-лист Эпохальный+",
     liveLibrary: "Живая библиотека",
     dataConnection: "Подключение данных",
     waitingForAData: "Ожидается провайдер данных",

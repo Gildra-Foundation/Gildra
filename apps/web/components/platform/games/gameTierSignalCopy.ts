@@ -11,7 +11,7 @@ export const gameTierSignalCopy = {
     healers: "ЛЕКАРИ",
     tanks: "ТАНКИ",
     numberLocale: "ru-RU",
-    liveMythicTierList: "Живой тир-лист Mythic+",
+    liveMythicTierList: "Живой тир-лист Эпохальный+",
     roleLeader: "Лидер роли",
   },
 };

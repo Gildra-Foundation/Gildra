@@ -105,7 +105,7 @@ const strategyDrafts: BossStrategyDraft[] = [
       { marker: "P1", title: tx("Coffins awaken", "Пробуждение саркофагов"), detail: tx("Shields, Essence Rend and tank combo.", "Щиты, Essence Rend и танковая серия.") },
       { marker: "100", title: tx("Soulcoil Ignition", "Soulcoil Ignition"), detail: tx("Heavy raid damage; dodge Anguished Echoes.", "Сильный урон по рейду; уклоняйтесь от Anguished Echoes.") },
       { marker: "INT", title: tx("Two Echoes of Jawae", "Два Echo of Jawae"), detail: tx("Kill one at a time and burn corpse piles.", "Убивайте по одному и сжигайте кучи тел.") },
-      { marker: "P2", title: tx("Uncoiled race", "Финальная гонка"), detail: tx("Bloodlust, permanent Rite stacks, kill before 100 energy.", "Героизм, постоянные стаки Rite, убийство до 100 энергии.") },
+      { marker: "P2", title: tx("Uncoiled race", "Финальная гонка"), detail: tx("Bloodlust, permanent Rite stacks, kill before 100 energy.", "Героизм, постоянные стаки усиления, убийство до 100 энергии.") },
     ],
     difficulty: {
       normal: { headline: tx("Learn the corpse-and-Well loop", "Освойте цикл тел и колодца"), changes: [tx("One main Hungering Pyre group clears corpse piles.", "Одна основная группа Hungering Pyre чистит тела."), tx("Essence Rend is safe when dispelled at the wall.", "Essence Rend безопасно снимать у стены.")] },

@@ -1,3 +1,4 @@
+import { wowSourceName } from "@/lib/wow/sourceLocale";
 import { Clock3, MapPin, Route, Skull } from "lucide-react";
 import { AtlasCard, AtlasGrid } from "@/components/atlas";
 import { dungeonRoutes, dungeonSlugs } from "./dungeonRoutes";
@@ -26,8 +27,7 @@ export function DungeonCardGrid({ locale, hrefBase, priority = true }: { locale:
             accent={dungeon.accent}
             artCaption={<><Clock3 aria-hidden="true" /><span className={styles.srOnly}>{copy.timer}: </span>{formatTimer(dungeon.timerSeconds)}</>}
             eyebrow={location ? <><MapPin aria-hidden="true" />{location}</> : "Mythic+"}
-            title={locale === "ru" ? dungeon.nameRu : dungeon.name}
-            subtitle={locale === "ru" ? dungeon.name : undefined}
+            title={wowSourceName(dungeon.name, locale, dungeon.nameRu)}
             meta={[
               { icon: <Skull aria-hidden="true" />, label: copy.bossCount(bosses.length) },
               { icon: <Route aria-hidden="true" />, label: copy.stops(dungeon.stops.length) },

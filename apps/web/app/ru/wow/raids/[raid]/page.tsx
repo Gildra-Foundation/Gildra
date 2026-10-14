@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!raid) return {};
   return {
     title: `${raid.nameRu}: рейдовый журнал — Gildra`,
-    description: `${raid.bosses.length} встреч Midnight Season 1 в черновике тактики с источником. Проверка на уровне сущностей продолжается.`,
+    description: `${raid.bosses.length} встреч Midnight · Сезон 1 в черновике тактики с источником. Проверка на уровне сущностей продолжается.`,
     alternates: {
       canonical: `/ru/wow/raids/${raid.slug}`,
       languages: { en: `/wow/raids/${raid.slug}`, ru: `/ru/wow/raids/${raid.slug}`, "x-default": `/wow/raids/${raid.slug}` },

@@ -51,20 +51,13 @@ async function localizePreset(preset: RotationPreset, lang: Lang): Promise<Rotat
 
   // Only names shown by this preset are needed here. Loading full live talent
   // trees also visits unrelated PvP/talent entries and can trigger dozens of
-  // tooltip lookups; keep the request bounded and use English names if a
+  // tooltip lookups; keep the request bounded and show the spell ID if a
   // localized tooltip is temporarily unavailable.
   try {
     const spellIds = preset.abilities.map((ability) => ability.spellId ?? 0);
-    let deadline: ReturnType<typeof setTimeout> | undefined;
-    const localized = await Promise.race([
-      getLocalizedTalentSpells(spellIds, lang, 1_500),
-      new Promise<Map<number, { name: string; description: string }>>((resolve) => {
-        deadline = setTimeout(() => resolve(new Map()), 1_600);
-      }),
-    ]);
-    if (deadline) clearTimeout(deadline);
+    const localized = await getLocalizedTalentSpells(spellIds, lang, 5_000);
     return localizeRotationCatalog(preset, localized, lang);
   } catch {
-    return preset;
+    return localizeRotationCatalog(preset, new Map(), lang);
   }
 }

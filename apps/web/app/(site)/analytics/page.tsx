@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Azeroth live analytics — Gildra", description: "Live usage and realm telemetry for the Gildra Warcraft command center." };
 
 export default async function AnalyticsPage() {
-  const t = await getTranslations("Analytics");
+  const t = await getTranslations({ locale: "en", namespace: "Analytics" });
   const data = await getAnalyticsOverview(24);
   return (
     <>

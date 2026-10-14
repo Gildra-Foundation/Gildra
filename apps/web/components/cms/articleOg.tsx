@@ -25,7 +25,7 @@ export const articlesIndexOgImage = (locale: Locale) => async function Image() {
 
 export const articleOgImage = (locale: Locale) => async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const result = await fetchArticle((await params).slug, locale);
-  if (result.status !== "ok" || !result.data.title) return atlasOgImage(indexSpec(locale));
+  if (result.status !== "ok" || result.data.resolvedLocale !== locale || !result.data.title) return atlasOgImage(indexSpec(locale));
   const a = { ...result.data, title: result.data.title };
   const date = a.publishedAt ? new Date(a.publishedAt) : null;
   const facts = [

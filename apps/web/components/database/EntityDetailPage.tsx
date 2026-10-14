@@ -1,3 +1,4 @@
+import { catalogLocaleView } from "@/lib/catalogLocale";
 import type { ReactNode } from "react";
 import { AtlasFrame, AtlasHero, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable } from "@/components/atlas";
 import { AtlasDisclosure } from "@/components/atlas";
@@ -59,6 +60,7 @@ function Disclosure({ title, meta, open, children }: { title: ReactNode; meta?: 
  * the tooltip markup renders here, no tooltip code ships to the browser.
  */
 export function EntityDetailPage({ entity, entityType, relationships, quality, versions, comparison, selectedFromBuildId, selectedToBuildId, lang, libraryDataset }: Props) {
+  entity = catalogLocaleView(entity, lang);
   const copy = entityDetailCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
   const builds = Array.from(new Map(versions.map((version) => [version.buildId, version])).values());
@@ -135,7 +137,7 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
                           <CatalogRecordRow
                             key={related.id}
                             href={`${prefix}/database/${encodeURIComponent(related.type)}/${related.id}/${encodeURIComponent(related.slug || String(related.externalId))}`}
-                            name={related.name || `${relatedType} #${related.externalId}`}
+                            name={catalogLocaleView(related, lang).name || `${relatedType} #${related.externalId}`}
                             typeLabel={relatedType}
                             iconUrl={related.iconUrl}
                             iconSymbol={TYPE_SYMBOLS[related.type]}
@@ -154,17 +156,17 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
 
         <AtlasSection id="record" title={copy.recordTitle} description={copy.recordText}>
           <div className={styles.disclosures}>
-            <Disclosure title={copy.names} meta="EN · RU">
+            <Disclosure title={copy.names} meta={copy.localeName}>
               <p className={styles.note}>{copy.namesNote}</p>
               <div className={styles.localizations}>
-                {(["en_US", "ru_RU"] as const).map((localeKey) => {
+                {([lang === "ru" ? "ru_RU" : "en_US"] as const).map((localeKey) => {
                   const localized = entity.localizations?.[localeKey];
                   const unresolved = Boolean(localized?.description && hasUnresolvedTemplate(localized.description));
                   const clientText = unresolved ? copy.unresolvedValue : localized?.description || copy.noValue;
                   const resolvedText = unresolved ? copy.unresolvedValue : localized?.resolvedDescription || localized?.description || copy.noValue;
                   return (
                     <article key={localeKey} lang={localeKey === "ru_RU" ? "ru" : "en"} className={styles.localization}>
-                      <h4>{localeKey === "ru_RU" ? "Русский" : "English"}</h4>
+                      <h4>{copy.localeName}</h4>
                       <dl>
                         <div><dt>{copy.name}</dt><dd>{localized?.name || copy.noValue}</dd></div>
                         <div><dt>{copy.clientText}</dt><dd>{clientText}</dd></div>

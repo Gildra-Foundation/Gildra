@@ -1,3 +1,5 @@
+import { wowGuideText } from "@/lib/wow/sourceLocale";
+import { sourceSpellNames } from "@/lib/wow/sourceSpellNames";
 import Image from "next/image";
 import { CircleHelp, Crosshair, Footprints, Shield, Swords, Users } from "lucide-react";
 import { AtlasBadge, AtlasDisclosure } from "@/components/atlas";
@@ -54,21 +56,20 @@ function GuideMechanic({ mechanic, journal, locale }: { mechanic: VoidspireMecha
       <div className={styles.mechanicBody}>
         <div className={styles.mechanicHead}>
           <h3>
-            {mechanic.name.en}
-            {locale === "ru" && mechanic.name.ru !== mechanic.name.en ? <small lang="ru">{mechanic.name.ru}</small> : null}
+            {journal ? (locale === "ru" ? journal.nameRu : journal.nameEn) : mechanic.spell ? sourceSpellNames[mechanic.spell.id]?.[locale] ?? (locale === "ru" ? copy.spellPending : mechanic.name.en) : mechanic.name[locale]}
           </h3>
           <div className={styles.mechanicTags}>
             {mechanic.tags.map((tag) => <AtlasBadge key={tag} tone="neutral">{copy.tags[tag]}</AtlasBadge>)}
           </div>
         </div>
-        <p className={styles.mechanicWho}><b>{copy.who}:</b> {mechanic.who[locale]}</p>
-        <p className={styles.mechanicAction}><strong>{copy.doThis}:</strong> {mechanic.action[locale]}</p>
+        <p className={styles.mechanicWho}><b>{copy.who}:</b> {wowGuideText(mechanic.who[locale], locale)}</p>
+        <p className={styles.mechanicAction}><strong>{copy.doThis}:</strong> {wowGuideText(mechanic.action[locale], locale)}</p>
         <AtlasDisclosure summary={copy.more}>
           <dl className={styles.facts}>
-            <div><dt>{copy.position}</dt><dd>{mechanic.position[locale]}</dd></div>
-            <div><dt>{copy.timing}</dt><dd>{mechanic.timing[locale]}</dd></div>
-            <div data-tone="failure"><dt>{copy.failure}</dt><dd>{mechanic.failure[locale]}</dd></div>
-            <div><dt>{copy.difficulty}</dt><dd>{mechanic.difficulty[locale]}</dd></div>
+            <div><dt>{copy.position}</dt><dd>{wowGuideText(mechanic.position[locale], locale)}</dd></div>
+            <div><dt>{copy.timing}</dt><dd>{wowGuideText(mechanic.timing[locale], locale)}</dd></div>
+            <div data-tone="failure"><dt>{copy.failure}</dt><dd>{wowGuideText(mechanic.failure[locale], locale)}</dd></div>
+            <div><dt>{copy.difficulty}</dt><dd>{wowGuideText(mechanic.difficulty[locale], locale)}</dd></div>
           </dl>
           {journal ? (
             <p className={styles.journalNote}>
@@ -94,8 +95,7 @@ function JournalAbility({ ability, locale }: { ability: RaidMechanic; locale: Ra
       <div className={styles.mechanicBody}>
         <div className={styles.mechanicHead}>
           <h3>
-            {ability.nameEn}
-            {locale === "ru" && ability.nameRu !== ability.nameEn ? <small lang="ru">{ability.nameRu}</small> : null}
+            {locale === "ru" ? ability.nameRu : ability.nameEn}
           </h3>
           <div className={styles.mechanicTags}><AtlasBadge tone="neutral">{copy.roles[ability.role]}</AtlasBadge></div>
         </div>

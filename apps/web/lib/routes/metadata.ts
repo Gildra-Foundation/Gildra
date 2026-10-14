@@ -26,7 +26,7 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   },
   mythicPlus: {
     en: { title: "Midnight Mythic+ — Gildra", description: "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments." },
-    ru: { title: "Mythic+ Midnight — Gildra", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
+    ru: { title: "Эпохальный+ Midnight — Gildra", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
     noindex: true,
   },
   dungeons: {
@@ -36,7 +36,7 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   },
   lairs: {
     en: { title: "Midnight Season 2 Lairs and World Bosses — Gildra", description: "Midnight Season 2 Lair and world bosses: locations, abilities, difficulty and loot." },
-    ru: { title: "Логова и мировые боссы Midnight Season 2 — Gildra", description: "Логово и мировые боссы Midnight Season 2: где найти, способности, сложность и добыча." },
+    ru: { title: "Логова и мировые боссы Midnight Сезон 2 — Gildra", description: "Логово и мировые боссы Midnight Сезон 2: где найти, способности, сложность и добыча." },
     noindex: true,
   },
   classes: {
@@ -51,7 +51,7 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   },
   season2: {
     en: { title: "WoW Midnight Season 2 Guide — Gildra", description: "Midnight Season 2 source-tracked overview. Unverified item levels and rewards are not treated as authoritative." },
-    ru: { title: "WoW Midnight Season 2 — гайд Gildra", description: "Обзор Midnight Season 2 с отслеживаемыми источниками. Непроверенные item level и награды не считаются достоверными." },
+    ru: { title: "WoW Midnight Сезон 2 — гайд Gildra", description: "Обзор Midnight Сезон 2 с отслеживаемыми источниками. Непроверенные уровни предметов и награды не считаются достоверными." },
     noindex: true,
   },
   whatsNew: {

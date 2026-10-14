@@ -8,7 +8,7 @@ import styles from "./grimoireHome.module.css";
 const sections = [
   { label: { en: "Characters", ru: "Персонажи" }, path: "/wow/characters" },
   { label: { en: "Bosses", ru: "Боссы" }, path: "/lairs" },
-  { label: { en: "Mythic+", ru: "Mythic+" }, path: "/wow/mythic-plus" },
+  { label: { en: "Mythic+", ru: "Эпохальный+" }, path: "/wow/mythic-plus" },
   { label: { en: "Raids", ru: "Рейды" }, path: "/wow/raids" },
   { label: { en: "Tier Lists", ru: "Тир-листы" }, path: "/tier-lists" },
 ];

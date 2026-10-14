@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { ArrowRight } from "lucide-react";
 import buttonStyles from "@gildra/atlas-ui/AtlasButton.module.css";
 
@@ -17,7 +17,7 @@ const copy = {
     title: "Эта страница пала в бою",
     lede: "Похоже, маршрут перенесён или больше не существует. Все разделы, которые работают сегодня, собраны в центре World of Warcraft.",
     hub: "Открыть центр WoW",
-    mythic: "Маршруты Mythic+",
+    mythic: "Маршруты Эпохальный+",
   },
 };
 
@@ -36,7 +36,9 @@ function useNotFoundCopy(locale?: Locale) {
 }
 
 export function NotFoundTitle({ locale }: { locale?: Locale }) {
-  return <>{useNotFoundCopy(locale).text.title}</>;
+  const { text } = useNotFoundCopy(locale);
+  useEffect(() => { document.title = `${text.title} — Gildra`; }, [text.title]);
+  return <>{text.title}</>;
 }
 
 export function NotFoundLede({ locale }: { locale?: Locale }) {

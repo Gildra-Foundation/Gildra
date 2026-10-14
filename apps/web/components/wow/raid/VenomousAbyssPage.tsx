@@ -1,3 +1,4 @@
+import { wowSourceName, wowSourceText } from "@/lib/wow/sourceLocale";
 import { Castle, ExternalLink, Layers, MapPin } from "lucide-react";
 import { AtlasDisclosure, AtlasFrame, AtlasGrid, AtlasHero, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTable, AtlasTile } from "@/components/atlas";
 import { contentManifest, venomousAbyss } from "@/lib/data/wow";
@@ -45,15 +46,15 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
   if (!raid?.names.en || !raid.descriptions.en || !raid.descriptions.ru || !raid.patch || bosses.length !== 8) {
     throw new Error("Verified Venomous Abyss identity projection is incomplete");
   }
-  const bossName = (slug: string) => bosses.find((boss) => boss.canonicalSlug === slug)?.names.en ?? slug;
+  const bossName = (slug: string) => bosses.find((boss) => boss.canonicalSlug === slug)?.names[locale] ?? "";
 
   return (
     <AtlasFrame lang={locale} scene="venomousAbyss">
       <AtlasHero
-        breadcrumbs={trail(locale, "raids", { label: raid.names.en })}
+        breadcrumbs={trail(locale, "raids", { label: raid.names[locale] ?? "" })}
         breadcrumbsLabel={shared.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
-        title={raid.names.en}
+        title={raid.names[locale] ?? ""}
         lede={locale === "ru" ? raid.descriptions.ru : raid.descriptions.en}
         statsLabel={copy.statsLabel}
         stats={[{ value: bosses.length, label: copy.bossesStat(bosses.length) }, { value: raid.patch, label: copy.patchStat }]}
@@ -68,7 +69,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
                 <AtlasTile
                   href={`${prefix}/wow/raids/venomous-abyss/${boss.canonicalSlug}`}
                   index={String(index + 1).padStart(2, "0")}
-                  title={boss.names.en}
+                  title={boss.names[locale] ?? ""}
                   text={guide ? guide.type[locale] : undefined}
                 />
               </li>
@@ -81,8 +82,8 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
         <div className={styles.accessGrid}>
           <AtlasPanel padding="none">
             <AtlasMetaList columns={1} className={styles.flush} items={[
-              { icon: <MapPin />, label: copy.zone, value: "The Coiled Isle" },
-              { icon: <Castle />, label: copy.entrance, value: "Vaults of Atal’Utek" },
+              { icon: <MapPin />, label: copy.zone, value: wowSourceName("The Coiled Isle", locale) },
+              { icon: <Castle />, label: copy.entrance, value: wowSourceName("Vaults of Atal’Utek", locale) },
               { icon: <Layers />, label: copy.difficulties, value: copy.difficultyList },
               {
                 icon: <MapPin />,
@@ -104,8 +105,8 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
               {raidFinderWings.map((wing) => (
                 <li key={wing.number}>
                   <span className={styles.wingMeta}>{copy.wing(wing.number)} · <time>{locale === "ru" ? wing.dateRu : wing.dateEn}</time></span>
-                  <strong>{wing.name}</strong>
-                  <span className={styles.wingBosses}>{wing.bosses.join(" · ")}</span>
+                  <strong>{wowSourceName(wing.name, locale)}</strong>
+                  <span className={styles.wingBosses}>{wowSourceText(wing.bosses.join(" · "), locale)}</span>
                 </li>
               ))}
             </ol>
@@ -124,12 +125,12 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
           columns={[
             { key: "difficulty", header: copy.difficulty, rowHeader: true, cell: (row) => row.difficulty[locale] },
             ...copy.bossBand.map((band, index) => ({ key: `band-${index}`, header: band, numeric: true, cell: (row: (typeof raidLootBands)[number]) => row.levels[index] })),
-            { key: "track", header: copy.track, cell: (row) => row.track },
+            { key: "track", header: copy.track, cell: (row) => copy.tracks[row.track] },
           ]}
         />
         <dl className={styles.tokens}>
           <dt>{copy.tierTokens}</dt>
-          {Object.entries(tierRewards).map(([slug, reward]) => <dd key={slug}><span>{bossName(slug)}</span>{reward[locale]}</dd>)}
+          {Object.entries(tierRewards).map(([slug, reward]) => <dd key={slug}><span>{bossName(slug)}</span>{wowSourceText(reward[locale], locale)}</dd>)}
         </dl>
         <p className={styles.footnote}>
           {copy.dropChance} <a href={venomousRaidLootSource} target="_blank" rel="noreferrer">{copy.lootSource}<ExternalLink aria-hidden="true" /></a> · {copy.checked(venomousRaidVerifiedAt)}
@@ -139,13 +140,13 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
       <AtlasSection id="rewards" title={copy.rewardsTitle}>
         <ul className={styles.rewards}>
           {headlineRewards.map((reward) => (
-            <li key={reward.name}><span><strong>{reward.name}</strong>{reward.detail[locale]}</span></li>
+            <li key={wowSourceName(reward.name, locale)}><span><strong>{wowSourceName(reward.name, locale)}</strong>{wowSourceText(reward.detail[locale], locale)}</span></li>
           ))}
         </ul>
-        <AtlasDisclosure summary={<>Glory of the Venomous Raider · {copy.gloryRequirements(gloryAchievements.length)}</>} className={styles.glory}>
+        <AtlasDisclosure summary={<>{wowSourceName("Glory of the Venomous Raider", locale)} · {copy.gloryRequirements(gloryAchievements.length)}</>} className={styles.glory}>
           <ol className={styles.gloryList} data-testid="raid-glory-requirements">
             {gloryAchievements.map((achievement) => (
-              <li key={achievement.name}><strong>{achievement.name}</strong><span>{achievement.requirement[locale]}</span></li>
+              <li key={wowSourceName(achievement.name, locale)}><strong>{wowSourceName(achievement.name, locale)}</strong><span>{wowSourceText(achievement.requirement[locale], locale)}</span></li>
             ))}
           </ol>
           <p className={styles.footnote}>

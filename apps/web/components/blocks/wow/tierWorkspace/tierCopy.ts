@@ -1,5 +1,5 @@
 /** Interface copy of the tier workspace (/tier-lists, /ru/tier-lists).
- *  Game terms (class, spec, dungeon, raid names, Mythic+) stay English. */
+ *  Game names are resolved from the existing localized game catalog. */
 import type { TierRole } from "@/lib/platform/games/intelligence";
 
 export type TierLocale = "ru" | "en";
@@ -16,9 +16,9 @@ export const tierCopy = {
     wow: "World of Warcraft",
     section: "Тир-листы",
     eyebrow: "Midnight",
-    title: "Тир-листы Mythic+ и рейдов",
-    ledeSample: "Как специализации расставлены по тирам для Mythic+ и рейдов: роль, класс, поиск и карточка спека в одном месте.",
-    ledeLive: "Тиры специализаций для Mythic+ и рейдов по данным Wowhead, числовые метрики — из совпадающего среза wow.gg. Фильтруйте по роли, классу, подземелью и уровню ключа.",
+    title: "Тир-листы Эпохальный+ и рейдов",
+    ledeSample: "Как специализации расставлены по тирам для Эпохальный+ и рейдов: роль, класс, поиск и карточка спека в одном месте.",
+    ledeLive: "Тиры специализаций для Эпохальный+ и рейдов по данным Wowhead, числовые метрики — из совпадающего среза wow.gg. Фильтруйте по роли, классу, подземелью и уровню ключа.",
     statsLabel: "Сводка рейтинга",
     statSpecs: "спеков в рейтинге",
     statDungeons: "подземелий",
@@ -28,7 +28,7 @@ export const tierCopy = {
     // Controls
     controlsLabel: "Параметры рейтинга",
     mode: "Режим",
-    modes: { mythic_plus: "Mythic+", raid: "Рейды" },
+    modes: { mythic_plus: "Эпохальный+", raid: "Рейды" },
     content: "Подземелье или рейд",
     allDungeons: "Все подземелья",
     allRaids: "Все рейды",
@@ -50,7 +50,7 @@ export const tierCopy = {
     allClasses: "Все классы",
     updating: "Обновление…",
     // Results heading
-    resultsMythic: "Рейтинг Mythic+",
+    resultsMythic: "Рейтинг Эпохальный+",
     resultsRaid: "Рейтинг рейдов",
     // Table
     tableCaption: (scope: string, role: string) => `${scope}: ${role}`,
@@ -66,7 +66,7 @@ export const tierCopy = {
     loadingSlice: "Собираем выбранный срез",
     loadError: "Не удалось загрузить выбранный срез. Показан общий рейтинг.",
     empty: "По выбранным фильтрам специализаций нет.",
-    emptySample: "В образце есть только DPS-специализации Mythic+.",
+    emptySample: "В образце есть только DPS-специализации Эпохальный+.",
     // Detail
     detailLabel: "Карточка специализации",
     rankLine: (rank: number, role: string) => `№${rank} · ${role}`,

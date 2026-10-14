@@ -3,8 +3,8 @@ import { ApiConsole } from "@/components/api-console/ApiConsole";
 import "@/app/styles/tailwind-app.css";
 
 export const metadata: Metadata = {
-  title: "Gildra API — Панель управления",
-  description: "Состояние Gildra API, датасеты и история обновлений.",
+  title: "Gildra API — Dashboard",
+  description: "Gildra API status, datasets and update history.",
   robots: { index: false, follow: false },
 };
 

@@ -1,3 +1,4 @@
+import { wowSourceName } from "@/lib/wow/sourceLocale";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
@@ -37,7 +38,7 @@ export function DelveCatalogPage({ locale }: { locale: "en" | "ru" }) {
               {delves.map((delve) => (
                 <li key={delve.id}>
                   <Link className={styles.entry} href={`${prefix}/wow/delves/${delve.slug}`}>
-                    <span className={styles.name}>{delve.name}</span>
+                    <span className={styles.name}>{wowSourceName(delve.name, locale)}</span>
                     <span className={styles.leader} aria-hidden="true" />
                     <ArrowRight className={styles.arrow} aria-hidden="true" />
                   </Link>

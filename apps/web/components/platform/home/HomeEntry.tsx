@@ -57,19 +57,19 @@ export function HomeEntry({ lang }: { lang: Lang }) {
       setConsent(readBrowserConsent() ?? "declined");
       setSettingsOpen(true);
     }}>
-      {ru ? "Настройки cookies" : "Cookie settings"}
+      {ru ? "Настройки файлов cookie" : "Cookie settings"}
     </button>}
     <dialog ref={dialog} className={styles.dialog} lang={lang} aria-labelledby="home-entry-title" aria-describedby={started ? undefined : "home-entry-description"} data-home-entry
       onCancel={event => { event.preventDefault(); if (started) closeSettings(); }}>
       <div className={styles.topline}>
         <span>GILDRA <span aria-hidden="true"> / </span> {ru ? "ХРОНИКИ АЗЕРОТА" : "CHRONICLES OF AZEROTH"}</span>
         <nav className={styles.language} aria-label={ru ? "Язык сайта" : "Site language"}>
-          <Link href="/ru" prefetch={false} aria-current={ru ? "page" : undefined} lang="ru">Русский</Link>
-          <Link href="/" prefetch={false} aria-current={!ru ? "page" : undefined} lang="en">English</Link>
+          <Link href="/ru" prefetch={false} aria-current={ru ? "page" : undefined} lang="ru">{ru ? "Русский" : "Russian"}</Link>
+          <Link href="/" prefetch={false} aria-current={!ru ? "page" : undefined} lang="en">{ru ? "Английский" : "English"}</Link>
         </nav>
         {started && <button className={styles.close} type="button" aria-label={ru ? "Закрыть настройки" : "Close settings"} onClick={closeSettings}><X size={20} /></button>}
       </div>
-      <h2 ref={title} id="home-entry-title" tabIndex={-1}>{started ? (ru ? "Настройки cookies" : "Cookie settings") : (ru ? "Прежде чем открыть хроники" : "Before the chronicles begin")}</h2>
+      <h2 ref={title} id="home-entry-title" tabIndex={-1}>{started ? (ru ? "Настройки файлов cookie" : "Cookie settings") : (ru ? "Прежде чем открыть хроники" : "Before the chronicles begin")}</h2>
       {!started && <>
         <p id="home-entry-description" className={styles.description}>{ru
           ? "Вступительная сцена содержит музыку и озвученные реплики. Для лучшего погружения рекомендуем включить звук. Вы сможете выключить его или изменить громкость в любой момент."
@@ -77,7 +77,7 @@ export function HomeEntry({ lang }: { lang: Lang }) {
         <p className={styles.waiting}>{ru ? "Выберите звук и нажмите «Продолжить» — тогда начнётся вступительная сцена." : "Choose your sound setting and press Continue to begin the opening scene."}</p>
       </>}
       <fieldset className={styles.cookies}>
-        <legend>Cookies</legend>
+        <legend>{ru ? "Файлы cookie" : "Cookies"}</legend>
         <p>{ru ? "Необходимое хранилище сохраняет настройки сайта и ваш выбор. Необязательная статистика помогает улучшать Gildra." : "Necessary storage saves site preferences and your choice. Optional usage statistics help us improve Gildra."}</p>
         <div className={styles.cookieChoices}>
           <label><input type="radio" name="home-consent" value="declined" checked={consent === "declined"} onChange={() => changeConsent("declined")} />{ru ? "Только необходимые" : "Necessary only"}</label>
