@@ -443,7 +443,7 @@ function RouteInteractionLayer({
             <div className={styles.mapCommandDeck}>
               {dungeon.floors.length > 1 ? <div className={styles.floorTabs} role="group" aria-label={copy.floorGroup}>
                 <span aria-hidden="true">{copy.floor}</span>
-                {dungeon.floors.map((item) => <button key={item.id} type="button" onClick={() => setFloor(item.id)} aria-label={`${item.id}F`} aria-pressed={floor === item.id}><b>{item.id}F</b>{floorLabel(item.label, locale) ? <small>{floorLabel(item.label, locale)}</small> : null}</button>)}
+                {dungeon.floors.map((item) => <button key={item.id} type="button" onClick={() => setFloor(item.id)} aria-pressed={floor === item.id}><b>{copy.floorMarker(item.id)}</b>{floorLabel(item.label, locale) ? <small>{floorLabel(item.label, locale)}</small> : null}</button>)}
               </div> : null}
               <MapZoomControls
                 copy={copy}

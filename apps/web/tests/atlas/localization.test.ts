@@ -86,6 +86,8 @@ test("deep route names resolve original identities without changing stored keys"
   assert.equal(wowRouteText("Cinderweaver + Scorchlings", "ru"), "Пеплоплет воинов стихий + Сполох");
   assert.equal(wowRouteText("Мелидрусса Хладообраз", "ru"), "Мелидрусса Истощенная Холодом");
   assert.equal(wowRouteText("Radiant Drake · переход", "ru"), "дракон для перелёта · переход");
+  assert.equal(wowRouteText("Adderis и Aspix", "en"), "Adderis and Aspix");
+  assert.equal(wowRouteText("Mirror Images", "ru"), "зеркальные образы");
   assert.equal(wowRouteText("Primal Serpents + Harrowers", "en"), "Primal Serpents + Harrowers");
   assert.equal(initialStops[0].enemies[0].name, "Flashfrost Chillweaver");
   assert.equal(initialStops[3].title, "Defier Draghar");
@@ -111,5 +113,11 @@ test("every built-in route step keeps its Russian display free of untranslated n
       assert.equal(/[A-Za-z]/.test(text.replace(/\bID\b/g, "")), false, `${slug} step ${stop.id} has untranslated display text`);
     }
     assert.equal(JSON.stringify(route.stops), original);
+  }
+});
+
+test("all built-in caster labels use English on English routes", () => {
+  for (const { slug } of getDungeonSelectorOptions()) for (const stop of getDungeonRoute(slug)!.stops) for (const ability of stop.abilities) {
+    if (ability.source) assert.equal(/[А-Яа-яЁё]/.test(wowRouteText(ability.source, "en")), false, `${slug} ${ability.name}`);
   }
 });

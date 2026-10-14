@@ -21,6 +21,7 @@ function plural(count: number, one: string, few: string, many: string) {
 
 const ru = {
   // Page chrome
+  floorMarker: (id: number) => `${id} эт.`,
   breadcrumbsLabel: "Навигация",
   hub: "Эпохальный+",
   season: "Midnight · Сезон 2",
@@ -183,6 +184,7 @@ const ru = {
 export type MythicRouteCopy = typeof ru;
 
 const en: MythicRouteCopy = {
+  floorMarker: (id: number) => `${id}F`,
   breadcrumbsLabel: "Breadcrumbs",
   hub: "Mythic+",
   season: "Midnight · Season 2",
