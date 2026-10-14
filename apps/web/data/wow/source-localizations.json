@@ -6016,6 +6016,457 @@
       "ru": "Приливный грот",
       "type": "instance",
       "sourceUrl": "https://worldofwarcraft.blizzard.com/ru-ru/worldsoul/eu/armory/character/howling-fjord/%D0%B2%D0%BB%D0%B0%D0%B4%D0%B8%D0%BC%D0%B8%D1%80%D0%BE%D0%B2/achievements/dungeons-raids/midnight-raid"
+    },
+    {
+      "en": "Primal Juggernaut",
+      "ru": "Изначальный исполин",
+      "aliases": [],
+      "type": "creature",
+      "id": 188244,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/188244?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Earthbound Guardian",
+      "ru": "Землеподобный страж",
+      "aliases": [],
+      "type": "creature",
+      "id": 188011,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/188011?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Infused Whelp",
+      "ru": "Заряженный дракончик",
+      "aliases": [],
+      "type": "creature",
+      "id": 187894,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/187894?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Defier Draghar",
+      "ru": "Драгхар Отрицатель",
+      "aliases": [],
+      "type": "creature",
+      "id": 187897,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/187897?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Deepstone Earthshaper",
+      "ru": "Глубиннокаменный ваятель земли",
+      "aliases": [],
+      "type": "creature",
+      "id": 187969,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/187969?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Melidrussa Chillworn",
+      "ru": "Мелидрусса Истощенная Холодом",
+      "aliases": [],
+      "type": "creature",
+      "id": 188252,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/188252?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Primalist Cinderweaver",
+      "ru": "Пеплоплет воинов стихий",
+      "aliases": [],
+      "type": "creature",
+      "id": 190207,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/190207?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Blazebound Destroyer",
+      "ru": "Пламенный разрушитель",
+      "aliases": [],
+      "type": "creature",
+      "id": 190034,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/190034?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Thunderhead",
+      "ru": "Громоголов",
+      "aliases": [],
+      "type": "creature",
+      "id": 197698,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/197698?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Scorchling",
+      "ru": "Сполох",
+      "aliases": [],
+      "type": "creature",
+      "id": 190205,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/190205?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Flamegullet",
+      "ru": "Огнезев",
+      "aliases": [],
+      "type": "creature",
+      "id": 197697,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/197697?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Kokia Blazehoof",
+      "ru": "Кокия Пламенное Копыто",
+      "aliases": [],
+      "type": "creature",
+      "id": 189232,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/189232?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Blazebound Firestorm",
+      "ru": "Шторм бушующего пламени",
+      "aliases": [],
+      "type": "creature",
+      "id": 189886,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/189886?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Storm Warrior",
+      "ru": "Воин бури",
+      "aliases": [],
+      "type": "creature",
+      "id": 197982,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/197982?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Ashseer Flamelasher",
+      "ru": "Пеплозрящий огнехлестатель",
+      "aliases": [],
+      "type": "creature",
+      "id": 190206,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/190206?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Flashfrost Chillweaver",
+      "ru": "Ткач Холода Морозной Вспышки",
+      "aliases": [],
+      "type": "creature",
+      "id": 188067,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/188067?dataEnv=1&locale=7"
+    },
+    {
+      "en": "High Channeler Ryvati",
+      "ru": "Верховная чаротворица Ривати",
+      "aliases": [],
+      "type": "creature",
+      "id": 197535,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/197535?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Erkhart Stormvein",
+      "ru": "Эркхарт Кровь Бури",
+      "aliases": [],
+      "type": "creature",
+      "id": 190485,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/190485?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Flame Channeler",
+      "ru": "Чаротворец пламени",
+      "aliases": [],
+      "type": "creature",
+      "id": 197985,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/197985?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Primal Thundercloud",
+      "ru": "Изначальная грозовая туча",
+      "aliases": [],
+      "type": "creature",
+      "id": 197509,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/197509?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Tempest Channeler",
+      "ru": "Чаротворица бури",
+      "aliases": [],
+      "type": "creature",
+      "id": 198047,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/198047?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Cold Claws",
+      "ru": "Хладные когти",
+      "aliases": [],
+      "type": "spell",
+      "id": 1305234,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1305234?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Frostbolt",
+      "ru": "Ледяная стрела",
+      "aliases": [],
+      "type": "spell",
+      "id": 371984,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/371984?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Earthbound's Imprint",
+      "ru": "Отпечаток землеподобного",
+      "aliases": [],
+      "type": "spell",
+      "id": 1307205,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1307205?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Excavating Blast",
+      "ru": "Раскапывающий взрыв",
+      "aliases": [],
+      "type": "spell",
+      "id": 1305201,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1305201?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Steel Barrage",
+      "ru": "Ураган стали",
+      "aliases": [],
+      "type": "spell",
+      "id": 1309705,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1309705?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Crushing Smash",
+      "ru": "Мощный сокрушающий удар",
+      "aliases": [],
+      "type": "spell",
+      "id": 1305213,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1305213?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Chillstorm",
+      "ru": "Ледяная буря",
+      "aliases": [],
+      "type": "spell",
+      "id": 372851,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/372851?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Kyrakka",
+      "ru": "Киракка",
+      "aliases": [],
+      "type": "creature",
+      "id": 190484,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/npc/190484?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Inferno",
+      "ru": "Преисподняя",
+      "aliases": [],
+      "type": "spell",
+      "id": 373692,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/373692?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Ice Shield",
+      "ru": "Ледяной щит",
+      "aliases": [],
+      "type": "spell",
+      "id": 372743,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/372743?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Molten Steel",
+      "ru": "Жидкая сталь",
+      "aliases": [],
+      "type": "spell",
+      "id": 385292,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/385292?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Frost Overload",
+      "ru": "Ледяная перегрузка",
+      "aliases": [],
+      "type": "spell",
+      "id": 373680,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/373680?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Fiery Blast",
+      "ru": "Горячая вспышка",
+      "aliases": [],
+      "type": "spell",
+      "id": 1305955,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1305955?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Burnout",
+      "ru": "Выгорание",
+      "aliases": [],
+      "type": "spell",
+      "id": 373614,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/373614?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Storm Breath",
+      "ru": "Дыхание бури",
+      "aliases": [],
+      "type": "spell",
+      "id": 391726,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/391726?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Rolling Thunder",
+      "ru": "Громовые раскаты",
+      "aliases": [],
+      "type": "spell",
+      "id": 392640,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/392640?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Flame Breath",
+      "ru": "Огненное дыхание",
+      "aliases": [],
+      "type": "spell",
+      "id": 391723,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/391723?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Thunder Jaw",
+      "ru": "Громовая челюсть",
+      "aliases": [],
+      "type": "spell",
+      "id": 392395,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/392395?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Blaze of Glory",
+      "ru": "Пламя славы",
+      "aliases": [],
+      "type": "spell",
+      "id": 373972,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/373972?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Flaming Barrage",
+      "ru": "Поджигающий обстрел",
+      "aliases": [],
+      "type": "spell",
+      "id": 385536,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/385536?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Fire Maw",
+      "ru": "Пылающая пасть",
+      "aliases": [],
+      "type": "spell",
+      "id": 392394,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/392394?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Searing Blows",
+      "ru": "Раскаленные удары",
+      "aliases": [],
+      "type": "spell",
+      "id": 372858,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/372858?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Ritual of Blazebinding",
+      "ru": "Ритуал подчинения огня",
+      "aliases": [],
+      "type": "spell",
+      "id": 1309540,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1309540?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Molten Blood",
+      "ru": "Расплавленная кровь",
+      "aliases": [],
+      "type": "spell",
+      "id": 392569,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/392569?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Thunder Blast",
+      "ru": "Разряд грома",
+      "aliases": [],
+      "type": "spell",
+      "id": 392576,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/392576?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Molten Boulder",
+      "ru": "Пылающий валун",
+      "aliases": [],
+      "type": "spell",
+      "id": 1306272,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1306272?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Thunderous Stomp",
+      "ru": "Громыхающий топот",
+      "aliases": [],
+      "type": "spell",
+      "id": 392406,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/392406?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Tempest Stormshield",
+      "ru": "Бушующий щит бури",
+      "aliases": [],
+      "type": "spell",
+      "id": 1310355,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1310355?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Flashfire",
+      "ru": "Огненная вспышка",
+      "aliases": [],
+      "type": "spell",
+      "id": 392451,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/392451?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Roaring Firebreath",
+      "ru": "Ревущее огненное дыхание",
+      "aliases": [],
+      "type": "spell",
+      "id": 381525,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/381525?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Stormslam",
+      "ru": "Сметающая буря",
+      "aliases": [],
+      "type": "spell",
+      "id": 381512,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/381512?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Winds of Change",
+      "ru": "Ветер перемен",
+      "aliases": [],
+      "type": "spell",
+      "id": 381517,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/381517?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Shock Blast",
+      "ru": "Шоковый удар",
+      "aliases": [],
+      "type": "spell",
+      "id": 392924,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/392924?dataEnv=1&locale=7"
+    },
+    {
+      "en": "Lightning Storm",
+      "ru": "Грозовой шторм",
+      "aliases": [],
+      "type": "spell",
+      "id": 392488,
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/392488?dataEnv=1&locale=7"
+    },
+    {
+      "en": "The Gorging Pit",
+      "ru": "Зияющее чрево",
+      "type": "area",
+      "id": 16804,
+      "entityId": "3ab7d72a-d3d0-4e49-85c3-4a537968ca8b",
+      "aliases": [
+        "Gorging Pit"
+      ],
+      "sourceUrl": "https://api.gildra.net/v1/game/entities/3ab7d72a-d3d0-4e49-85c3-4a537968ca8b?locale=ru_RU"
     }
   ]
 }

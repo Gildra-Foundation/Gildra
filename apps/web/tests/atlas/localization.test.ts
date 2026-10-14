@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { catalogLocaleView } from "../../lib/catalogLocale.ts";
 import { sourceSpellNames } from "../../lib/wow/sourceSpellNames.ts";
+import { wowRouteText } from "../../lib/wow/routeSourceLocale.ts";
+import { getDungeonSelectorOptions, getDungeonRoute } from "../../components/wow/mythic/dungeonRoutes.ts";
+import { plainLanguage, stopSubtitle } from "../../components/wow/mythic/mythicRouteCopy.ts";
+import { initialStops } from "../../components/wow/mythic/rubyLifePoolsData.ts";
 import { consoleEnglish } from "../../components/api-console/consoleCopy.ts";
 import { rotationResourceLabel } from "../../lib/platform/rotation/locale.ts";
 import { langOf, altPath } from "../../lib/i18n-paths.ts";
-import { wowSourceName, wowSourceText } from "../../lib/wow/sourceLocale.ts";
+import { wowSourceName, wowSourceText, wowNpcName, wowSpellName } from "../../lib/wow/sourceLocale.ts";
 import { localizeRotationCatalog, mergeRotationAbility, localizeRotationResult, rotationComboName } from "../../lib/platform/rotation/locale.ts";
 import type { RotationPreset, RotationSimulationResult, SavedRotationCombo } from "../../lib/platform/rotation/types.ts";
 
@@ -70,5 +74,42 @@ test("resource names keep their game meaning and console UI translations stay En
   assert.equal(rotationResourceLabel("Fury", "ru"), "Гнев");
   for (const [source, translated] of Object.entries(consoleEnglish)) {
     assert.ok(!/[А-Яа-яЁё]/.test(translated), `${source}: the English console label contains Russian`);
+  }
+});
+
+test("deep route names resolve original identities without changing stored keys", () => {
+  assert.equal(wowNpcName("Defier Draghar", "ru", 187897), "Драгхар Отрицатель");
+  assert.equal(wowNpcName("Flashfrost Chillweaver", "ru", 188067), "Ткач Холода Морозной Вспышки");
+  assert.equal(wowSpellName("Cold Claws", "ru", 1305234), "Хладные когти");
+  assert.equal(wowSpellName("Cold Claws", "en", 1305234), "Cold Claws");
+  assert.equal(wowSpellName("Bloodthirsty Gaze", "ru", 1317906), "Способность #1317906: перевод не подтверждён", "A ru_RU payload with an English name is still untranslated");
+  assert.equal(wowRouteText("Cinderweaver + Scorchlings", "ru"), "Пеплоплет воинов стихий + Сполох");
+  assert.equal(wowRouteText("Мелидрусса Хладообраз", "ru"), "Мелидрусса Истощенная Холодом");
+  assert.equal(wowRouteText("Radiant Drake · переход", "ru"), "дракон для перелёта · переход");
+  assert.equal(wowRouteText("Primal Serpents + Harrowers", "en"), "Primal Serpents + Harrowers");
+  assert.equal(initialStops[0].enemies[0].name, "Flashfrost Chillweaver");
+  assert.equal(initialStops[3].title, "Defier Draghar");
+  assert.equal(initialStops[3].forces, 7);
+});
+
+test("catalog rejects English text mislabeled as ru_RU without altering the source", () => {
+  const source = { name: "Bloodthirsty Gaze", description: "Original English description", locale: "ru_RU", resolvedLocale: "ru_RU", localeFallback: false,
+    localizations: { ru_RU: { name: "Bloodthirsty Gaze", description: "Original English description", resolvedDescription: "Original English description" } } };
+  const display = catalogLocaleView(source, "ru");
+  assert.equal(display.name, "");
+  assert.equal(display.description, "");
+  assert.equal(source.name, "Bloodthirsty Gaze");
+});
+
+test("every built-in route step keeps its Russian display free of untranslated names", () => {
+  for (const { slug } of getDungeonSelectorOptions()) {
+    const route = getDungeonRoute(slug)!;
+    const original = JSON.stringify(route.stops);
+    for (const stop of route.stops) {
+      const text = [wowRouteText(stop.title, "ru"), stopSubtitle(stop.subtitle, "ru", stop.enemies),
+        ...[stop.summary, stop.tank, stop.healer, stop.dps, ...stop.callouts].map((value) => plainLanguage(value))].join(" ");
+      assert.equal(/[A-Za-z]/.test(text.replace(/\bID\b/g, "")), false, `${slug} step ${stop.id} has untranslated display text`);
+    }
+    assert.equal(JSON.stringify(route.stops), original);
   }
 });

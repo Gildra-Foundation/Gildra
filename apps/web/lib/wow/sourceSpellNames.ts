@@ -1,5 +1,5 @@
 // Generated from original catalog and verified journal records.
-export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
+export const sourceSpellNames: Record<number, { en: string; ru?: string }> = {
   "6612": {
     "en": "Rage",
     "ru": "Гнев"
@@ -352,6 +352,10 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
     "en": "Firestorm",
     "ru": "Огненная буря"
   },
+  "371984": {
+    "en": "Frostbolt",
+    "ru": "Ледяная стрела"
+  },
   "372087": {
     "en": "Blazing Rush",
     "ru": "Пылающий натиск"
@@ -359,6 +363,10 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
   "372710": {
     "en": "Excavating Blast",
     "ru": "Раскапывающий взрыв"
+  },
+  "372743": {
+    "en": "Ice Shield",
+    "ru": "Ледяной щит"
   },
   "372794": {
     "en": "Steel Barrage",
@@ -371,6 +379,14 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
   "372808": {
     "en": "Frigid Shard",
     "ru": "Морозный осколок"
+  },
+  "372851": {
+    "en": "Chillstorm",
+    "ru": "Ледяная буря"
+  },
+  "372858": {
+    "en": "Searing Blows",
+    "ru": "Раскаленные удары"
   },
   "372859": {
     "en": "Searing Blows",
@@ -388,13 +404,33 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
     "en": "Blaze Volley",
     "ru": "Пламенный залп"
   },
+  "373614": {
+    "en": "Burnout",
+    "ru": "Выгорание"
+  },
+  "373680": {
+    "en": "Frost Overload",
+    "ru": "Ледяная перегрузка"
+  },
   "373688": {
     "en": "Frost Overload",
     "ru": "Ледяная перегрузка"
   },
+  "373692": {
+    "en": "Inferno",
+    "ru": "Преисподняя"
+  },
+  "373972": {
+    "en": "Blaze of Glory",
+    "ru": "Пламя славы"
+  },
   "375576": {
     "en": "Divine Toll",
     "ru": "Божественный благовест"
+  },
+  "381512": {
+    "en": "Stormslam",
+    "ru": "Сметающая буря"
   },
   "381515": {
     "en": "Stormslam",
@@ -403,6 +439,14 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
   "381516": {
     "en": "Interrupting Cloudburst",
     "ru": "Прерывающая гроза"
+  },
+  "381517": {
+    "en": "Winds of Change",
+    "ru": "Ветер перемен"
+  },
+  "381525": {
+    "en": "Roaring Firebreath",
+    "ru": "Ревущее огненное дыхание"
   },
   "381602": {
     "en": "Inferno Spit",
@@ -436,6 +480,14 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
     "en": "Cinderbolt",
     "ru": "Тлеющая стрела"
   },
+  "385292": {
+    "en": "Molten Steel",
+    "ru": "Жидкая сталь"
+  },
+  "385536": {
+    "en": "Flaming Barrage",
+    "ru": "Поджигающий обстрел"
+  },
   "385568": {
     "en": "Flaming Barrage",
     "ru": "Поджигающий обстрел"
@@ -459,6 +511,50 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
   "391031": {
     "en": "Stormcloud Barrier",
     "ru": "Барьер грозовой тучи"
+  },
+  "391723": {
+    "en": "Flame Breath",
+    "ru": "Огненное дыхание"
+  },
+  "391726": {
+    "en": "Storm Breath",
+    "ru": "Дыхание бури"
+  },
+  "392394": {
+    "en": "Fire Maw",
+    "ru": "Пылающая пасть"
+  },
+  "392395": {
+    "en": "Thunder Jaw",
+    "ru": "Громовая челюсть"
+  },
+  "392406": {
+    "en": "Thunderous Stomp",
+    "ru": "Громыхающий топот"
+  },
+  "392451": {
+    "en": "Flashfire",
+    "ru": "Огненная вспышка"
+  },
+  "392488": {
+    "en": "Lightning Storm",
+    "ru": "Грозовой шторм"
+  },
+  "392569": {
+    "en": "Molten Blood",
+    "ru": "Расплавленная кровь"
+  },
+  "392576": {
+    "en": "Thunder Blast",
+    "ru": "Разряд грома"
+  },
+  "392640": {
+    "en": "Rolling Thunder",
+    "ru": "Громовые раскаты"
+  },
+  "392924": {
+    "en": "Shock Blast",
+    "ru": "Шоковый удар"
   },
   "394993": {
     "en": "Storm Breath",
@@ -1756,11 +1852,23 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
     "en": "Regurgitate",
     "ru": "Срыгивание"
   },
+  "1305201": {
+    "en": "Excavating Blast",
+    "ru": "Раскапывающий взрыв"
+  },
+  "1305213": {
+    "en": "Crushing Smash",
+    "ru": "Мощный сокрушающий удар"
+  },
   "1305225": {
     "en": "Tectonic Strike",
     "ru": "Тектонический удар"
   },
   "1305233": {
+    "en": "Cold Claws",
+    "ru": "Хладные когти"
+  },
+  "1305234": {
     "en": "Cold Claws",
     "ru": "Хладные когти"
   },
@@ -1780,9 +1888,17 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
     "en": "Arc Lightning",
     "ru": "Дуговая молния"
   },
+  "1305955": {
+    "en": "Fiery Blast",
+    "ru": "Горячая вспышка"
+  },
   "1305959": {
     "en": "Venomous Surge",
     "ru": "Ядовитый поток"
+  },
+  "1306272": {
+    "en": "Molten Boulder",
+    "ru": "Пылающий валун"
   },
   "1306342": {
     "en": "Ravenous Claws",
@@ -1801,6 +1917,10 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
     "ru": "Огненный шок"
   },
   "1307202": {
+    "en": "Earthbound's Imprint",
+    "ru": "Отпечаток землеподобного"
+  },
+  "1307205": {
     "en": "Earthbound's Imprint",
     "ru": "Отпечаток землеподобного"
   },
@@ -1868,6 +1988,14 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
     "en": "Induction",
     "ru": "Индукция"
   },
+  "1309540": {
+    "en": "Ritual of Blazebinding",
+    "ru": "Ритуал подчинения огня"
+  },
+  "1309705": {
+    "en": "Steel Barrage",
+    "ru": "Ураган стали"
+  },
   "1309919": {
     "en": "Frigid Roar",
     "ru": "Леденящий рык"
@@ -1907,6 +2035,10 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
   "1310324": {
     "en": "Mending Void",
     "ru": "Исцеляющая Бездна"
+  },
+  "1310355": {
+    "en": "Tempest Stormshield",
+    "ru": "Бушующий щит бури"
   },
   "1310413": {
     "en": "Ravenous Stomp",
@@ -2029,7 +2161,6 @@ export const sourceSpellNames: Record<number, { en: string; ru: string }> = {
     "ru": "Призрачные кольца"
   },
   "1317906": {
-    "en": "Bloodthirsty Gaze",
-    "ru": "Bloodthirsty Gaze"
+    "en": "Bloodthirsty Gaze"
   }
 };
