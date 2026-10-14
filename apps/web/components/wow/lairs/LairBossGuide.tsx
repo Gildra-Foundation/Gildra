@@ -1,3 +1,4 @@
+import { wowGuideText } from "@/lib/wow/sourceLocale";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CalendarClock, Crown, ExternalLink, Gem, MapPin, Shield, Swords, UsersRound } from "lucide-react";
@@ -82,7 +83,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
                     <h3>{mechanic.spellId ? <a href={`https://www.wowhead.com/spell=${mechanic.spellId}`} target="_blank" rel="noreferrer">{mechanic.name}</a> : mechanic.name}</h3>
                     <div className={styles.abilityTags}>
                       {tags.map((tag) => <AtlasBadge key={tag} tone={toneByMechanic[mechanic.tone]}>{actions[tag]}</AtlasBadge>)}
-                      <AtlasBadge tone="neutral">{copy.whoResponds}: {mechanic.role}</AtlasBadge>
+                      <AtlasBadge tone="neutral">{copy.whoResponds}: {wowGuideText(mechanic.role, locale)}</AtlasBadge>
                     </div>
                   </div>
                   <p>{mechanic.description}</p>

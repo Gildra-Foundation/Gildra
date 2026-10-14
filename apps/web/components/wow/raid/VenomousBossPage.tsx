@@ -2,6 +2,8 @@ import Image from "next/image";
 import { ExternalLink, Flame, HeartPulse, MapPin, Shield, Swords } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable } from "@/components/atlas";
 import { difficulties, type BossGuide, type VerifiedAbilityIdentity } from "@/lib/data/wow";
+import { wowGuideText } from "@/lib/wow/sourceLocale";
+import { contentManifest } from "@/lib/data/wow";
 import { EncounterSwitcher, RaidPager } from "./RaidNavigation";
 import { lootBandIndexForBoss, raidLootBands, tierRewards, venomousRaidLootSource, venomousRaidVerifiedAt } from "./venomousAbyssIntel";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
@@ -27,11 +29,12 @@ function labelled(text: string) {
  */
 export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bosses: BossGuide[]; locale: RaidLocale }) {
   const shared = raidGuideCopy[locale];
+  const raidName = contentManifest.instances.find((entry) => entry.canonicalSlug === "venomous-abyss")?.names[locale] ?? "";
   const copy = venomousCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   const raidHref = `${prefix}/wow/raids/venomous-abyss`;
   const order = bosses.indexOf(boss);
-  const encounters = bosses.map((item) => ({ href: `${raidHref}/${item.slug}`, name: item.name.en, current: item.slug === boss.slug }));
+  const encounters = bosses.map((item) => ({ href: `${raidHref}/${item.slug}`, name: item.name[locale], current: item.slug === boss.slug }));
   const published = boss.journalAbilities.filter((ability) => ability.description);
   const withheld = boss.journalAbilities.filter((ability) => !ability.description);
   const lootBandIndex = lootBandIndexForBoss(boss.number);
@@ -41,12 +44,12 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
   return (
     <AtlasFrame lang={locale} scene="venomousBoss">
       <AtlasHero
-        breadcrumbs={trail(locale, "raids", { label: "The Venomous Abyss", href: raidHref }, { label: boss.name.en })}
+        breadcrumbs={trail(locale, "raids", { label: raidName, href: raidHref }, { label: boss.name[locale] })}
         breadcrumbsLabel={shared.breadcrumbsLabel}
-        eyebrow={<>The Venomous Abyss · {shared.encounterOf(order + 1, bosses.length)}</>}
-        title={boss.name.en}
+        eyebrow={<>{raidName} · {shared.encounterOf(order + 1, bosses.length)}</>}
+        title={boss.name[locale]}
         lede={boss.identityDescription[locale]}
-        actions={<AtlasShareButton title={`${boss.name.en} — The Venomous Abyss`} locale={locale} />}
+        actions={<AtlasShareButton title={`${boss.name[locale]} — ${raidName}`} locale={locale} />}
       />
 
       <EncounterSwitcher items={encounters} label={shared.encountersLabel} />
@@ -64,30 +67,30 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
       ) : null}
 
       <AtlasSection id="plan" title={shared.planTitle} description={boss.type[locale]}>
-        <p className={styles.summary}>{boss.summary[locale]}</p>
+        <p className={styles.summary}>{wowGuideText((boss.slug === "nekzali-the-soulcoiler" ? boss.summary[locale].replace(/Nek[’']zali/g, boss.name[locale]) : boss.summary[locale]), locale)}</p>
         <div className={styles.roleGrid}>
           {(["tank", "healer", "dps"] as const).map((role) => {
             const RoleIcon = roleIcons[role];
             return (
               <article key={role} className={styles.role}>
                 <h3><RoleIcon aria-hidden="true" />{shared.roles[role]}</h3>
-                <ul>{boss.roles[role].map((item) => <li key={item.en}>{item[locale]}</li>)}</ul>
+                <ul>{boss.roles[role].map((item) => <li key={item.en}>{wowGuideText(item[locale], locale)}</li>)}</ul>
               </article>
             );
           })}
         </div>
         <AtlasMetaList columns={2} className={styles.planFacts} items={[
-          { icon: <MapPin />, label: copy.positioning, value: boss.positioning[locale] },
-          { icon: <Flame />, ...labelled(boss.pull[locale]) },
+          { icon: <MapPin />, label: copy.positioning, value: wowGuideText(boss.positioning[locale], locale) },
+          { icon: <Flame />, ...labelled(wowGuideText(boss.pull[locale], locale)) },
         ]} />
       </AtlasSection>
 
       <AtlasSection id="timeline" title={copy.timelineTitle} description={copy.timelineText}>
         <ol className={styles.timeline}>
           {boss.timeline.map((event, index) => (
-            <li key={`${event.marker}-${index}`}>
-              <span className={styles.marker}>{event.marker}</span>
-              <span><strong>{event.title[locale]}</strong>{event.detail[locale]}</span>
+            <li key={`${event.marker === "INT" ? shared.tags.INTERRUPT : event.marker}-${index}`}>
+              <span className={styles.marker}>{event.marker === "INT" ? shared.tags.INTERRUPT : event.marker}</span>
+              <span><strong>{wowGuideText(event.title[locale], locale)}</strong>{wowGuideText(event.detail[locale], locale)}</span>
             </li>
           ))}
         </ol>
@@ -110,8 +113,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
                 <li key={ability.spellId} className={styles.chip} data-testid="verified-ability" data-spell-id={ability.spellId} data-description-status={ability.descriptionVerificationStatus}>
                   <Image src={ability.iconUrl} alt="" width={32} height={32} />
                   <span>
-                    <strong>{ability.name.en}</strong>
-                    {locale === "ru" && ability.name.ru !== ability.name.en ? <small lang="ru">{ability.name.ru}</small> : null}
+                    <strong>{ability.name[locale]}</strong>
                   </span>
                   <small className={styles.srOnly} data-testid="withheld-ability-description">{copy.withheldDescription}</small>
                 </li>
@@ -129,9 +131,9 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
             return (
               <article key={mode} className={styles.difficulty}>
                 <span className={styles.difficultyName}>{copy.difficultyNames[mode]}</span>
-                <h3>{detail.headline[locale]}</h3>
-                <ul>{detail.changes.map((change) => <li key={change.en}>{change[locale]}</li>)}</ul>
-                <p className={styles.composition}><strong>{copy.composition(comp.tanks, comp.healers, comp.dps)}</strong>{comp.note[locale]}</p>
+                <h3>{wowGuideText(detail.headline[locale], locale)}</h3>
+                <ul>{detail.changes.map((change) => <li key={change.en}>{wowGuideText(change[locale], locale)}</li>)}</ul>
+                <p className={styles.composition}><strong>{copy.composition(comp.tanks, comp.healers, comp.dps)}</strong>{wowGuideText(comp.note[locale], locale)}</p>
               </article>
             );
           })}
@@ -149,7 +151,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
             columns={[
               { key: "difficulty", header: copy.difficulty, rowHeader: true, cell: (row) => row.difficulty[locale] },
               { key: "level", header: copy.itemLevel, numeric: true, cell: (row) => row.levels[lootBandIndex] },
-              { key: "track", header: copy.track, cell: (row) => row.track },
+              { key: "track", header: copy.track, cell: (row) => copy.tracks[row.track] },
             ]}
           />
           <div className={styles.lootNotes}>
@@ -161,7 +163,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
         </div>
       </AtlasSection>
 
-      <RaidPager label={shared.pagerLabel} back={{ href: raidHref, label: shared.allBosses("The Venomous Abyss") }} next={encounters[order + 1]} nextLabel={shared.nextBoss} />
+      <RaidPager label={shared.pagerLabel} back={{ href: raidHref, label: shared.allBosses(raidName) }} next={encounters[order + 1]} nextLabel={shared.nextBoss} />
     </AtlasFrame>
   );
 }
@@ -172,8 +174,7 @@ function AbilityRow({ ability, locale }: { ability: VerifiedAbilityIdentity; loc
       <Image src={ability.iconUrl} alt="" width={44} height={44} />
       <div>
         <h3>
-          {ability.name.en}
-          {locale === "ru" && ability.name.ru !== ability.name.en ? <small lang="ru">{ability.name.ru}</small> : null}
+          {ability.name[locale]}
         </h3>
         {ability.description ? <p data-testid="verified-ability-description">{ability.description[locale]}</p> : null}
       </div>

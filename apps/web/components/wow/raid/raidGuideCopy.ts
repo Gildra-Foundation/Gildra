@@ -6,7 +6,7 @@ export type RaidLocale = "ru" | "en";
 
 /**
  * Interface copy of the raid pages (Midnight raid overviews, boss guides,
- * Sporefall). Game terms — raid, boss, spell and zone names — stay English and
+ * Sporefall). Game terms — raid, boss, spell and zone names — use original localized sources and
  * come from the data files, never from here.
  */
 export const raidGuideCopy = {
@@ -83,7 +83,7 @@ export const raidGuideCopy = {
     // Sporefall
     pendingTitle: "Подробности позже",
     sporefallLede: "Рейд из одной встречи. Названия рейда и босса подтверждены Blizzard.",
-    rotmireLede: "Единственный босс рейда Sporefall. Имя подтверждено Blizzard.",
+    rotmireLede: "Единственный босс рейда Споропад. Имя подтверждено Blizzard.",
     pendingText: "Описание, портреты, способности и тактика появятся после проверки данных.",
     pendingBoss: "Босс · подробности позже",
     officialSource: "Анонс Blizzard",

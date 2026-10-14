@@ -1,3 +1,4 @@
+import { wowSourceName } from "@/lib/wow/sourceLocale";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Castle, Hourglass, Skull } from "lucide-react";
@@ -36,7 +37,7 @@ const rotmire = (contentManifest.encounters as ManifestIdentity[]).find((entry) 
 export function RaidAtlasPage({ locale }: { locale: Locale }) {
   const copy = raidAtlasCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
-  const localized = (value: { en: string | null; ru: string | null }) => (locale === "ru" ? value.ru : value.en) ?? value.en ?? "";
+  const localized = (value: { en: string | null; ru: string | null }) => (locale === "ru" ? value.ru : value.en) ?? "";
   const seasonOneBosses = raidSlugs.reduce((total, slug) => total + midnightRaids[slug].bosses.length, 0);
   const publishedRaidCount = raidSlugs.length + 1 + (sporefall ? 1 : 0);
   const publishedBossCount = seasonOneBosses + currentBosses.length + (rotmire ? 1 : 0);
@@ -68,7 +69,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
           headingLevel={3}
           href={`${prefix}/wow/raids/venomous-abyss`}
           image={{ src: "/assets/wow/mythic/backgrounds/altar.webp", alt: "", priority: true }}
-          title={currentRaid.names.en}
+          title={localized(currentRaid.names)}
           description={localized(currentRaid.descriptions)}
           meta={[{ icon: <Skull aria-hidden="true" />, label: copy.bossCount(currentBosses.length) }]}
           cta={copy.openRaid}
@@ -79,7 +80,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
         <div className={styles.archiveGrid}>
           {raidSlugs.map((slug) => {
             const raid = midnightRaids[slug];
-            const name = raid.nameEn;
+            const name = locale === "ru" ? raid.nameRu : raid.nameEn;
             return (
               <article key={slug} className={styles.raid}>
                 <Link className={styles.raidArt} href={`${prefix}/wow/raids/${slug}`} tabIndex={-1} aria-hidden="true">
@@ -94,7 +95,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
                     {raid.bosses.map((boss) => (
                       <li key={boss.slug}>
                         <Image src={boss.artwork} alt="" width={28} height={28} />
-                        <Link href={`${prefix}/wow/raids/${slug}/${boss.slug}`}>{boss.nameEn}</Link>
+                        <Link href={`${prefix}/wow/raids/${slug}/${boss.slug}`}>{locale === "ru" ? boss.nameRu : boss.nameEn}</Link>
                       </li>
                     ))}
                   </ol>
@@ -112,10 +113,10 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
               <Castle />
             </Link>
             <div className={styles.raidBody}>
-              <h3><Link href={`${prefix}/wow/raids/sporefall`}>{sporefall.names.en}</Link></h3>
+              <h3><Link href={`${prefix}/wow/raids/sporefall`}>{wowSourceName(sporefall.names.en!,  locale, sporefall.names.ru ?? undefined)}</Link></h3>
               <p className={styles.pending}><Hourglass aria-hidden="true" /><span><strong>{copy.pendingTitle}.</strong> {copy.pendingText}</span></p>
               <ol className={styles.encounters} aria-label={copy.bossesLabel}>
-                <li><Skull aria-hidden="true" /><Link href={`${prefix}/wow/raids/sporefall/rotmire`}>{rotmire.names.en}</Link></li>
+                <li><Skull aria-hidden="true" /><Link href={`${prefix}/wow/raids/sporefall/rotmire`}>{wowSourceName(rotmire.names.en!,  locale, rotmire.names.ru ?? undefined)}</Link></li>
               </ol>
               <footer className={styles.raidFooter}>
                 <span><Skull aria-hidden="true" />{copy.bossCount(1)}</span>

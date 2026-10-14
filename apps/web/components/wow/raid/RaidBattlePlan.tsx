@@ -1,3 +1,4 @@
+import { wowGuideText } from "@/lib/wow/sourceLocale";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { Flag, Swords } from "lucide-react";
@@ -18,22 +19,22 @@ export function RaidBattlePlan({ tactic, bossArtwork, locale }: { tactic: RaidTa
         <li key={phase.id} className={styles.phase}>
           <span className={styles.phaseIndex} aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
           <div className={styles.phaseBody}>
-            <h3 className={styles.phaseName}>{phase.name[locale]}</h3>
-            <p className={styles.phaseCall}>{phase.summary[locale]}</p>
+            <h3 className={styles.phaseName}>{wowGuideText(phase.name[locale], locale)}</h3>
+            <p className={styles.phaseCall}>{wowGuideText(phase.summary[locale], locale)}</p>
             <AtlasDisclosure summary={copy.planMore}>
               <div className={styles.phaseDetail}>
                 <div className={styles.phaseLists}>
                   <section>
                     <h4>{copy.steps}</h4>
-                    <ol className={styles.numbered}>{phase.steps.map((step) => <li key={step.en}>{step[locale]}</li>)}</ol>
+                    <ol className={styles.numbered}>{phase.steps.map((step) => <li key={step.en}>{wowGuideText(step[locale], locale)}</li>)}</ol>
                   </section>
                   <section>
                     <h4>{copy.priorities}</h4>
-                    <ol className={styles.numbered}>{phase.priorities.map((item) => <li key={item.en}>{item[locale]}</li>)}</ol>
+                    <ol className={styles.numbered}>{phase.priorities.map((item) => <li key={item.en}>{wowGuideText(item[locale], locale)}</li>)}</ol>
                   </section>
                   <section>
                     <h4>{copy.dangers}</h4>
-                    <ul className={styles.warnings}>{phase.dangers.map((item) => <li key={item.en}>{item[locale]}</li>)}</ul>
+                    <ul className={styles.warnings}>{phase.dangers.map((item) => <li key={item.en}>{wowGuideText(item[locale], locale)}</li>)}</ul>
                   </section>
                 </div>
                 <ArenaPlan phase={phase} bossArtwork={bossArtwork} locale={locale} />
@@ -67,8 +68,8 @@ function ArenaPlan({ phase, bossArtwork, locale }: { phase: TacticalPhase; bossA
             <span className={styles.markerIcon}>
               {marker.kind === "boss" ? <Image src={bossArtwork} alt="" width={40} height={40} /> : marker.kind === "add" ? <Swords /> : <Flag />}
             </span>
-            {/* Boss names are game terms and stay English. */}
-            <b>{marker.kind === "boss" ? marker.label.en : marker.label[locale]}</b>
+            {/* Names come from the original localized source. */}
+            <b>{wowGuideText(marker.label[locale], locale)}</b>
           </span>
         ))}
       </div>

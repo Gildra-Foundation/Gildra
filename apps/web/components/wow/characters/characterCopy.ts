@@ -1,7 +1,7 @@
 /**
  * Interface copy of the account pages: sign-in (/login), the character roster
  * (/wow/characters) and the character profile states (error, loading).
- * Game terms stay English; everything else is localized.
+ * Game terms use original localized sources; user names are preserved.
  */
 export type CharacterLocale = "en" | "ru";
 

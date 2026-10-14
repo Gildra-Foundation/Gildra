@@ -1,5 +1,6 @@
 "use client";
 
+import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -98,7 +99,10 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   const suppliedRoles = intelligence.tierLists?.[activity]?.roles ?? (activity === "mythic_plus" ? intelligence.roles : undefined);
   const baseRoles = suppliedRoles ?? (sample && activity === "mythic_plus" && sampleRoles ? sampleRoles : EMPTY_ROLES);
   const activeRoles = remoteRoles ?? baseRoles;
-  const roleEntries = useMemo(() => activeRoles[role] ?? [], [activeRoles, role]);
+  const roleEntries = useMemo(() => (activeRoles[role] ?? []).map((entry) => {
+    const theme = getTalentSpecTheme(entry.specSlug) ?? getTalentSpecTheme(`${entry.specSlug}-${entry.classSlug}`);
+    return theme ? { ...entry, specName: lang === "ru" ? theme.specNameRu : theme.specName, className: lang === "ru" ? theme.classNameRu : theme.className } : entry;
+  }), [activeRoles, role, lang]);
   const classes = useMemo(() => {
     const seen = new Map<string, string>();
     roleEntries.forEach((entry) => seen.set(entry.classSlug, entry.className));

@@ -2,7 +2,7 @@ import type { PartyRole, PartyTalent } from "./testPartyData";
 
 /**
  * Interface copy of the demo party panel (lazy chunk of the route planner).
- * Character, class, spec and ability names stay English; the fixture itself
+ * Character names are preserved; class, spec and ability names use original localized sources. The fixture itself
  * lives in testPartyData.ts.
  */
 type TalentTree = PartyTalent["tree"];

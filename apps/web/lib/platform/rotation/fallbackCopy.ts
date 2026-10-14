@@ -19,8 +19,8 @@ export const fallbackCopy = {
   ru: {
     localEngineReady: "локальный движок готов",
     rage: "Ярость",
-    useAt80Rage: "При Rage ≥ 80",
-    maintainEnrage: "Поддерживать Enrage",
+    useAt80Rage: "При Гнев ≥ 80",
+    maintainEnrage: "Поддерживать Исступление",
     spendCharges: "Использовать заряды",
     targetBelow20: "При здоровье цели < 20%",
     useOnCooldown: "По готовности",

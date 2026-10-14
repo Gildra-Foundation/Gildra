@@ -3,6 +3,7 @@ import type { Lang } from "@/lib/i18n";
 /** Interface copy of a catalog record page (/database/<type>/<id>/<slug> and the library mirror). */
 export const entityDetailCopy = {
   ru: {
+    localeName: "Русский",
     breadcrumbsLabel: "Навигация",
     database: "База данных",
     library: "Библиотека",
@@ -18,7 +19,7 @@ export const entityDetailCopy = {
     relationsTitle: "Связанные записи",
     relationsCount: (n: number) => `Связей: ${n}`,
     recordTitle: "Данные записи",
-    recordText: "Названия на обоих языках, изображения, история версий клиента и полнота данных.",
+    recordText: "Названия на выбранном языке, изображения, история версий клиента и полнота данных.",
     names: "Названия и описания",
     namesNote: "Только тексты из игрового клиента, без машинного перевода.",
     name: "Название",
@@ -52,6 +53,7 @@ export const entityDetailCopy = {
     no: "нет",
   },
   en: {
+    localeName: "English",
     breadcrumbsLabel: "Breadcrumbs",
     database: "Database",
     library: "Library",
@@ -67,7 +69,7 @@ export const entityDetailCopy = {
     relationsTitle: "Related records",
     relationsCount: (n: number) => `${n} ${n === 1 ? "relation" : "relations"}`,
     recordTitle: "Record data",
-    recordText: "Names in both languages, images, client build history and data completeness.",
+    recordText: "Names in the selected language, images, client build history and data completeness.",
     names: "Names and descriptions",
     namesNote: "Only texts from the game client, no machine translation.",
     name: "Name",

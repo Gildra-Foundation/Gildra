@@ -1,3 +1,4 @@
+import { catalogLocaleView } from "@/lib/catalogLocale";
 import type { ReactNode } from "react";
 import { ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import type { Lang } from "@/lib/i18n-paths";
@@ -199,7 +200,7 @@ function RecordRow({ entity, registeredType, href, lang, copy, preview, hideType
   entity: CatalogRecord; registeredType?: CatalogEntityType; href: string; lang: Lang; copy: DatabaseCopy; preview: ReturnType<typeof previewCopy>; hideType?: boolean;
 }) {
   const typeLabel = entityTypeLabel(entity.type, lang, registeredType?.label);
-  const name = entity.name || `${typeLabel} #${entity.externalId}`;
+  const name = catalogLocaleView(entity, lang).name || `${typeLabel} #${entity.externalId}`;
   const meta: ReactNode[] = [
     entity.itemLevel ? `${copy.itemLevel}\u00a0${entity.itemLevel}` : null,
     ...(entity.highlights ?? []).map((highlight) => highlightLabel(highlight.key, highlight.value, lang)),

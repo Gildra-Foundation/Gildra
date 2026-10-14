@@ -8,7 +8,7 @@ type Season = "midnight-season-1" | "midnight-season-2";
 
 const copy = {
   ru: {
-    breadcrumbs: "Навигация", wow: "World of Warcraft", hub: "Атлас Mythic+", eyebrow: "Midnight",
+    breadcrumbs: "Навигация", wow: "World of Warcraft", hub: "Атлас Эпохальный+", eyebrow: "Midnight",
     title: (n: string) => `Mythic+ · сезон ${n}`,
     current: "Подземелья текущего сезона ключей с маршрутами, таймерами и тактикой.",
     past: "Архив первого сезона Midnight.",

@@ -14,9 +14,9 @@ export function AdSlot({ variant = "billboard", lang }: BlockComponentProps<AdSl
   return (
     <aside
       className={`pslot ${variant === "rect" ? "pslot-tall" : "pslot-wide"}`}
-      aria-label="Advertisement"
+      aria-label={tt("Advertisement")}
     >
-      <span className="pslot-cap">Ad</span>
+      <span className="pslot-cap">{tt("Ad")}</span>
       <Link className="pslot-promo" href={p(lang, anchorHref(ANCHORS.premium))}>
         <Image
           className="pp-helm"

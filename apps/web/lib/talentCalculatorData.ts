@@ -1,3 +1,4 @@
+import { catalogLocaleView } from "@/lib/catalogLocale";
 import { getCatalogEntity, getCatalogEntityTypes, getCatalogPage, type CatalogRecord, type GameEntity } from "@/lib/api/client";
 import { midnightManifest } from "@/lib/midnightManifest";
 import { defaultTalentSpecTheme, getTalentSpecTheme, type TalentSpecTheme } from "@/lib/talentSpecThemes";
@@ -347,7 +348,7 @@ async function getAllTalentSummaries(locale: TalentLocale, requestedFacet = face
   let cursor = "";
   for (let page = 0; page < 100; page += 1) {
     const result = await getCatalogPage({ locale, product: "wow", type: "talent", facets: [requestedFacet], cursor, limit: 100, includeTotal: false, fresh: false });
-    rows.push(...result.data);
+    rows.push(...result.data.map((entry) => catalogLocaleView(entry, locale === "ru_RU" ? "ru" : "en")));
     if (!result.pagination.hasMore || !result.pagination.nextCursor) break;
     cursor = result.pagination.nextCursor;
     if (page === 99) throw new Error("Talent catalog pagination exceeded the safety limit");
@@ -392,7 +393,7 @@ function getPvpTalentSummaryById(externalId: number, locale: TalentLocale) {
     query: String(externalId),
     limit: 1,
     includeTotal: false,
-  }).then((page) => page.data.find((row) => row.externalId === externalId) ?? null).catch((error) => {
+  }).then((page) => page.data.map((row) => catalogLocaleView(row, locale === "ru_RU" ? "ru" : "en")).find((row) => row.externalId === externalId) ?? null).catch((error) => {
     pvpTalentSummaryPromises.delete(key);
     throw error;
   });
@@ -416,7 +417,7 @@ async function loadAllPvpTalentSummaries(locale: TalentLocale) {
   let cursor = "";
   for (let page = 0; page < 10; page += 1) {
     const result = await getCatalogPage({ locale, product: "wow", type: "pvp_talent", cursor, limit: 100, includeTotal: false, fresh: false });
-    rows.push(...result.data);
+    rows.push(...result.data.map((entry) => catalogLocaleView(entry, locale === "ru_RU" ? "ru" : "en")));
     if (!result.pagination.hasMore || !result.pagination.nextCursor) break;
     cursor = result.pagination.nextCursor;
   }
@@ -461,7 +462,7 @@ async function getEntityWithRetry(id: string, locale: TalentLocale, attempts = 3
   let lastError: unknown;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
-      return await getCatalogEntity(id, locale, "", false);
+      return await getCatalogEntity(id, locale, "", false).then((entry) => entry ? catalogLocaleView(entry, locale === "ru_RU" ? "ru" : "en") : null);
     } catch (error) {
       lastError = error;
       if (attempt + 1 < attempts) await new Promise((resolve) => setTimeout(resolve, 180 * (attempt + 1)));
@@ -648,14 +649,15 @@ function loadoutNodes(topology: Topology): TalentCalculatorData["loadoutNodes"] 
 }
 
 function directChoice(entry: RawEntry, lang: TalentLang, localized?: Pick<CatalogRecord, "name" | "description" | "iconUrl">, fallbackIconUrl = unverifiedIconUrl): TalentChoice {
+  const source = localized && (lang === "ru" ? /[А-Яа-яЁё]/.test(localized.name) : !/[А-Яа-яЁё]/.test(localized.name)) ? localized : undefined;
   const resolvedIcon = resolveTalentIcon(entry.icon, localized?.iconUrl, entry.icon ? `https://render.worldofwarcraft.com/us/icons/56/${entry.icon}.jpg` : undefined);
   return {
     externalId: entry.id,
     spellId: entry.spellId,
     definitionId: entry.definitionId,
     entryIndex: entry.index,
-    name: localized?.name || entry.name || `${talentCalculatorDataCopy[lang].talent} ${entry.id}`,
-    description: cleanTalentDescription(localized?.description, lang) || "",
+    name: source?.name || (lang === "en" ? entry.name : "") || `${talentCalculatorDataCopy[lang].talent} #${entry.spellId ?? entry.id}`,
+    description: cleanTalentDescription(source?.description, lang) || "",
     iconUrl: resolvedIcon.iconFallback ? fallbackIconUrl : resolvedIcon.iconUrl,
     iconName: entry.icon,
     iconSource: resolvedIcon.iconSource,
@@ -927,7 +929,7 @@ export function getMidnightTalentPageData(specSlug: string, heroPathId?: number,
         // Fall back to the provenance-marked community snapshot below.
       }
     }
-    return loadRaidbotsTalentData(theme, requestedHeroId, lang, false);
+    return loadRaidbotsTalentData(theme, requestedHeroId, lang);
   })().catch((error) => {
     talentPageDataPromises.delete(cacheKey);
     throw error;

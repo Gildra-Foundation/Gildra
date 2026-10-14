@@ -1,3 +1,4 @@
+import { wowSourceName, wowGuideText } from "@/lib/wow/sourceLocale";
 import { seasonGuideBosses } from "@/lib/lairSeasonBosses";
 
 export type BossKind = "lair" | "world" | "dungeon" | "delve";
@@ -52,7 +53,7 @@ const lootIconNames: Record<string, string> = {
 };
 
 export function getLootIcon(name: string) {
-  const icon = lootIconNames[name] ?? "inv_misc_tournaments_banner_bloodelf";
+  const icon = lootIconNames[name] ?? lootIconNames[Object.keys(lootIconNames).find((key) => wowSourceName(key, "ru") === name) ?? ""] ?? "inv_misc_tournaments_banner_bloodelf";
   return `/assets/wow/lairs/loot/${icon}.jpg`;
 }
 
@@ -520,5 +521,18 @@ function translateBossToEnglish(boss: Boss): Boss {
 const bossesEn = bosses.map(translateBossToEnglish);
 
 export function getBoss(slug: string, locale: "ru" | "en" = "ru") {
-  return (locale === "en" ? bossesEn : bosses).find((boss) => boss.slug === slug);
+  const boss = (locale === "en" ? bossesEn : bosses).find((boss) => boss.slug === slug);
+  if (!boss || locale === "en") return boss;
+  const text = (value: string) => wowGuideText(value, locale);
+  const labels: Record<string, string> = { World: "Мир", Normal: "Обычная", Heroic: "Героическая", Mythic: "Эпохальная", Veteran: "Ветеран", Champion: "Защитник", Hero: "Герой", Myth: "Легенда" };
+  const label = (value: string) => text(value).replace(/\b(World|Normal|Heroic|Mythic|Veteran|Champion|Hero|Myth)\b/g, (key) => labels[key]);
+  return {
+    ...boss, name: wowSourceName(boss.name, locale), zone: text(boss.zone), summary: text(boss.summary),
+    composition: { ...boss.composition, size: label(boss.composition.size) },
+    farm: { ...boss.farm, access: label(boss.farm.access), best: label(boss.farm.best) },
+    difficulties: boss.difficulties.map((entry) => ({ ...entry, name: label(entry.name), reward: label(entry.reward), note: text(entry.note) })),
+    mechanics: boss.mechanics.map((entry) => ({ ...entry, name: wowSourceName(entry.name, locale), castBy: entry.castBy ? text(entry.castBy) : undefined, description: text(entry.description), response: text(entry.response) })),
+    loot: boss.loot.map((entry) => ({ ...entry, name: wowSourceName(entry.name, locale) })),
+    positioning: boss.positioning?.map((entry) => ({ ...entry, text: text(entry.text) })),
+  };
 }

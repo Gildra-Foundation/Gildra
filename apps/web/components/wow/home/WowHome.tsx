@@ -15,7 +15,7 @@ const copy = {
     talents: "Калькулятор талантов",
     sections: "Разделы",
     characters: "Персонажи", charactersText: "Ростер, экипировка и показатели",
-    mythic: "Mythic+", mythicText: "Маршруты, таймер и тактика",
+    mythic: "Эпохальный+", mythicText: "Маршруты, таймер и тактика",
     raids: "Рейды", raidsText: "Боссы, способности и тактика",
     lairs: "Логова и мировые боссы", lairsText: "Где найти, что делать, что падает",
     builds: "Начните с проверенной специализации",
@@ -101,9 +101,9 @@ export function WowHome({ lang }: { lang: Lang }) {
         // Live in the game: the season's content straight from the verified manifest.
         <AtlasSection id="now" title={t.now} description={t.nowText(formatAtlasDate(season.verifiedAt, locale))}>
           <AtlasGrid min={250} fit>
-            <AtlasTile href={href("/wow/midnight/season-2")} icon={<CalendarDays aria-hidden="true" />} title={season.names[locale] ?? season.names.en ?? ""} text={t.patch(season.patch)} />
+            <AtlasTile href={href("/wow/midnight/season-2")} icon={<CalendarDays aria-hidden="true" />} title={season.names[locale] ?? ""} text={t.patch(season.patch)} />
             {season.raids.map((raid) => (
-              <AtlasTile key={raid.slug} href={href(raid.path ?? "/wow/raids")} icon={<Skull aria-hidden="true" />} title={raid.names.en ?? raid.slug} text={raid.bosses ? `${t.currentRaid} · ${t.bosses(raid.bosses)}` : t.currentRaid} />
+              <AtlasTile key={raid.slug} href={href(raid.path ?? "/wow/raids")} icon={<Skull aria-hidden="true" />} title={raid.names[locale] ?? t.currentRaid} text={raid.bosses ? `${t.currentRaid} · ${t.bosses(raid.bosses)}` : t.currentRaid} />
             ))}
             <AtlasTile href={href("/wow/mythic-plus")} icon={<KeyRound aria-hidden="true" />} title={t.dungeons(season.dungeons)} text={t.dungeonsText} />
             <AtlasTile href={href("/wow/delves")} icon={<Compass aria-hidden="true" />} title={t.delves(season.delves)} text={t.delvesText} />

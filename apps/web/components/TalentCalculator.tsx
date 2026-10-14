@@ -471,7 +471,7 @@ function TalentTieredTooltip({ node }: { node: TalentNode }) {
     <div className="tc-tooltip-tiered">
       <div className="tc-tooltip-heading">
         {icon ? <img src={icon} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; }} /> : null}
-        <div><strong>{node.choices[0]?.name ?? "Apex Talent"}</strong><span>Apex Talent · {copy.apexSequential}{node.choices[0]?.iconFallback ? ` · ${copy.iconReplacement}` : ""}</span></div>
+        <div><strong>{node.choices[0]?.name ?? copy.apex}</strong><span>{copy.apex} · {copy.apexSequential}{node.choices[0]?.iconFallback ? ` · ${copy.iconReplacement}` : ""}</span></div>
       </div>
       {node.choices.map((choice) => {
         const start = firstRank;
@@ -543,7 +543,7 @@ const TalentNodeButton = memo(function TalentNodeButton({ view, tabIndex, openTo
       type="button"
       data-node-id={node.id}
       tabIndex={tabIndex}
-      aria-label={copy.nodeAria({ names: node.nodeType === "tiered" ? (node.choices[0]?.name ?? "Apex Talent") : node.choices.map((choice) => choice.name).join(copy.or), tiered: node.nodeType === "tiered", selectedName: selected?.name, rank, maxRanks: node.maxRanks, lockReason: available ? undefined : lockReason })}
+      aria-label={copy.nodeAria({ names: node.nodeType === "tiered" ? (node.choices[0]?.name ?? copy.apex) : node.choices.map((choice) => choice.name).join(copy.or), tiered: node.nodeType === "tiered", selectedName: selected?.name, rank, maxRanks: node.maxRanks, lockReason: available ? undefined : lockReason })}
       aria-describedby={`tooltip-${node.id}`}
       aria-pressed={rank > 0}
       aria-disabled={!available}

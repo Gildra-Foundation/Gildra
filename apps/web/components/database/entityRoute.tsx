@@ -1,3 +1,4 @@
+import { catalogLocaleView } from "@/lib/catalogLocale";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { EntityDetailPage } from "@/components/database/EntityDetailPage";
@@ -45,7 +46,7 @@ export async function entityMetadata(params: EntityRouteParams, lang: Lang): Pro
   if (!RECORD_ID.test(id)) return {};
   const other: Lang = lang === "ru" ? "en" : "ru";
   const [entity, twin, types] = await Promise.all([
-    getCatalogEntity(id, catalogLocale(lang)),
+    getCatalogEntity(id, catalogLocale(lang)).then((record) => record ? catalogLocaleView(record, lang) : null),
     getCatalogEntity(id, catalogLocale(other)).catch(() => null),
     getCatalogEntityTypes(catalogLocale(lang)).catch(() => []),
   ]);
@@ -78,7 +79,7 @@ export async function EntityRoute({ params, searchParams, lang }: { params: Enti
     getCatalogEntityVersions(id, locale), getCatalogEntityComparison(id, locale, fromBuildId, toBuildId),
   ]);
   rest.catch(() => undefined);
-  const entity = await getCatalogEntity(id, locale);
+  const entity = await getCatalogEntity(id, locale).then((record) => record ? catalogLocaleView(record, lang) : null);
   if (!entity || entity.type !== type) notFound();
   if (entity.slug && decoded(slug) !== entity.slug) {
     const query = new URLSearchParams();

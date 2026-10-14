@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Живая аналитика Азерота — Gildra", description: "Живая телеметрия и активность командного центра World of Warcraft." };
 
 export default async function AnalyticsPageRu() {
-  const t = await getTranslations("Analytics");
+  const t = await getTranslations({ locale: "ru", namespace: "Analytics" });
   const data = await getAnalyticsOverview(24);
   return (
     <>
@@ -22,7 +22,7 @@ export default async function AnalyticsPageRu() {
             <source media="(max-width: 720px)" srcSet="/assets/wow/mythic/ruby-depth-v3-mobile-optimized.webp" />
             <img src="/assets/wow/mythic/ruby-depth-v3-light-fast.webp" width="1500" height="844" fetchPriority="high" decoding="async" alt="" />
           </picture>
-          <p className={styles.eyebrow}>Разведка Азерота · Gildra pulse</p>
+          <p className={styles.eyebrow}>Аналитика Азерота · Активность Gildra</p>
           <h1 className={styles.title}>{t("title")}</h1>
           <p className={styles.subtitle}>{t("subtitle")}</p>
           <span className={styles.ribbon}><i />Данные игрового мира в реальном времени</span>

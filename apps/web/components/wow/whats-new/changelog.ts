@@ -23,9 +23,9 @@ export const changelog: Release[] = [
     date: "2026-10-12",
     changes: [
       { kind: "new", en: "Site search: press ⌘K / Ctrl+K or \"/\" anywhere; recently opened pages are one key away.", ru: "Поиск по сайту: ⌘K / Ctrl+K или «/» на любой странице; недавно открытые — под рукой." },
-      { kind: "new", en: "Mythic+ route steps are now written in English on English pages.", ru: "Шаги маршрутов Mythic+ на английских страницах теперь написаны по-английски." },
+      { kind: "new", en: "Mythic+ route steps are now written in English on English pages.", ru: "Шаги маршрутов Эпохальный+ на английских страницах теперь написаны по-английски." },
       { kind: "new", en: "Link previews with section art when you share any page.", ru: "Превью ссылок с картиной раздела, когда вы делитесь любой страницей." },
-      { kind: "new", en: "A living void over The Voidspire and torchlight under the cursor on cards.", ru: "Живая Бездна над The Voidspire и свет факела под курсором на карточках." },
+      { kind: "new", en: "A living void over The Voidspire and torchlight under the cursor on cards.", ru: "Живая Бездна над Шпиль Бездны и свет факела под курсором на карточках." },
       { kind: "new", en: "Class catalogue with every specialization of Midnight.", ru: "Каталог классов со всеми специализациями Midnight." },
       { kind: "better", en: "Pages arrive with a soft transition instead of a jump.", ru: "Страницы появляются мягким переходом вместо скачка." },
     ],

@@ -33,7 +33,10 @@ const RU: Record<string, string> = {
   // Hero
   "Master the": "Владей",
   Meta: "метой",
-  Live: "Live",
+  Live: "В реальном времени",
+  Advertisement: "Реклама",
+  Ad: "Реклама",
+  "Mythic+": "Эпохальный+",
   runs: "забегов",
   specs: "спеков",
   regions: "региона",
@@ -44,7 +47,7 @@ const RU: Record<string, string> = {
   updates: "пунктов",
   "Class tuning updates": "Обновление баланса классов",
   "Three Midnight raids now open": "Открыты три рейда Midnight",
-  "New Mythic+ affix rotation": "Новая ротация аффиксов Mythic+",
+  "New Mythic+ affix rotation": "Новая ротация аффиксов Эпохальный+",
   "PvP balance adjustments": "Правки баланса PvP",
   // SectionNav
   "Season 1": "Сезон 1",
@@ -64,10 +67,10 @@ const RU: Record<string, string> = {
   "Best Specs": "Лучшие спеки",
   // Guides
   // TierPreview
-  "Mythic+ Tier List": "Тир-лист Mythic+",
+  "Mythic+ Tier List": "Тир-лист Эпохальный+",
   // TierSection
   Home: "Главная",
-  "Tier Lists · Mythic+ · Overall": "Тир-листы · Mythic+ · Общий",
+  "Tier Lists · Mythic+ · Overall": "Тир-листы · Эпохальный+ · Общий",
   "MYTHIC+ TIER LIST": "ТИР-ЛИСТ MYTHIC+",
   "Ranked by weighted score across timed runs, popularity and consistency.":
     "Рейтинг по взвешенным очкам: тайм-раны, популярность, стабильность.",
@@ -97,13 +100,13 @@ const RU: Record<string, string> = {
   "Pop.": "Поп.",
   "Avg Key": "Ср. ключ",
   Trend: "Тренд",
-  "Mythic+ runs · Updated 2 hours ago": "забегов Mythic+ · Обновлено 2 часа назад",
+  "Mythic+ runs · Updated 2 hours ago": "забегов Эпохальный+ · Обновлено 2 часа назад",
   "How are scores calculated?": "Как считаются очки?",
   "Timed-run performance (50%), consistency (30%) and popularity (20%), weighted over the selected period.":
     "Результаты тайм-ранов (50%), стабильность (30%) и популярность (20%), взвешенные за выбранный период.",
   Hide: "Скрыть",
   View: "Показать",
-  "Frost Death Knight details": "детали Frost Death Knight",
+  "Frost Death Knight details": "детали Рыцарь смерти: лед",
   "TIER LISTS": "ТИР-ЛИСТЫ",
   "About Tier Lists": "О тир-листах",
   "Learn how we calculate our tier lists.": "Как мы считаем наши тир-листы.",
@@ -150,7 +153,7 @@ const RU: Record<string, string> = {
   "A structured catalog of items, spells, quests, creatures and every system that shapes World of Warcraft.":
     "Структурированный каталог предметов, заклинаний, заданий, существ и всех систем World of Warcraft.",
   "Catalog scope": "Охват каталога",
-  "Retail & Classic": "Retail и Classic",
+  "Retail & Classic": "Retail и World of Warcraft",
   "Build-aware": "С учётом версий",
   "English & Russian": "Русский и английский",
   "Source manifest": "Источники данных",
@@ -333,7 +336,7 @@ const RU: Record<string, string> = {
   "7-day trend": "Тренд за 7 дней",
   BUILDS: "БИЛДЫ",
   GUIDES: "ГАЙДЫ",
-  "← Full Mythic+ tier list": "← Полный тир-лист Mythic+",
+  "← Full Mythic+ tier list": "← Полный тир-лист Эпохальный+",
   "demo data — based on": "демо-данные — по",
   "runs, updated": "забегам, обновлено",
   // Game registry (lib/games/registry.ts)
@@ -406,7 +409,7 @@ const RU: Record<string, string> = {
   "Midnight raid routes and bosses": "Маршруты и боссы рейдов Midnight",
   "Dungeon routes and tactics": "Маршруты и тактика подземелий",
   "Gaming intelligence for Azeroth — raid journals, Mythic+ routes and character tools.":
-    "Игровая аналитика для Азерота — рейдовые журналы, маршруты Mythic+ и инструменты персонажа.",
+    "Игровая аналитика для Азерота — рейдовые журналы, маршруты Эпохальный+ и инструменты персонажа.",
   Sections: "Разделы сайта",
   // Account chip (TopNav, platform header)
   "Sign in": "Войти",

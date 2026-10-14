@@ -14,7 +14,7 @@ function withTranslations(data: TalentCalculatorData, translations: Record<strin
     return translated ? {
       ...entry,
       name: translated.name || entry.name,
-      description: translated.description || entry.description,
+      description: translated.description,
     } : entry;
   };
 
@@ -37,7 +37,7 @@ export function TalentCalculatorWithLocalization({ data, theme, lang }: Props) {
 
   useEffect(() => {
     setRenderData(data);
-    if (!data || lang !== "ru" || data.source.kind !== "community_snapshot") return;
+    if (!data || lang !== "ru" || !Object.values(data.trees).some((tree) => tree.nodes.some((node) => node.choices.some((choice) => /^Талант #/.test(choice.name))))) return;
 
     const ids = [...new Set(Object.values(data.trees)
       .flatMap((tree) => tree.nodes.flatMap((node) => node.choices.map((choice) => choice.spellId ?? 0)))

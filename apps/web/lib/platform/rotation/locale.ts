@@ -1,3 +1,4 @@
+import { wowSourceName } from "@/lib/wow/sourceLocale";
 import type { Lang } from "@/lib/i18n";
 import { rotationT as t } from "./rotationDictionary";
 import type { RotationAbility, RotationPreset, RotationScenario, RotationSimulationResult, SavedRotationCombo } from "./types";
@@ -43,7 +44,7 @@ export function localizeRotationCatalog(preset: RotationPreset, localized: Reado
   const gameLabels: Record<string, string> = {};
   const abilities = preset.abilities.map((ability) => {
     const local = ability.spellId ? localized.get(ability.spellId) : undefined;
-    if (!local) return ability;
+    if (!local) return lang === "ru" ? { ...ability, name: ability.spellId ? `${localeCopy[lang].ability} #${ability.spellId}` : localeCopy[lang].nameUnavailable, hint: "" } : ability;
     gameLabels[rotationLabelKey(ability.name)] = local.name;
     gameLabels[rotationLabelKey(ability.id)] = local.name;
     return { ...ability, name: local.name, hint: local.description || ability.hint };
@@ -57,7 +58,7 @@ export function localizeRotationCatalog(preset: RotationPreset, localized: Reado
 
 export function localizeRotationResult(result: RotationSimulationResult, abilities: RotationAbility[], lang: Lang, gameLabels: Record<string, string> = {}): RotationSimulationResult {
   const byId = new Map(abilities.map((ability) => [ability.id, ability]));
-  const name = (value: string) => gameLabels[rotationLabelKey(value)] ?? value;
+  const name = (value: string) => gameLabels[rotationLabelKey(value)] ?? wowSourceName(value, lang);
   const tr = t(lang);
   return {
     ...result,

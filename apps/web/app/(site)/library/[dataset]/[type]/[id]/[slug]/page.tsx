@@ -1,3 +1,4 @@
+import { catalogLocaleView } from "@/lib/catalogLocale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EntityDetailPage } from "@/components/database/EntityDetailPage";
@@ -9,7 +10,7 @@ type Props = { params: Promise<{ dataset: string; type: string; id: string; slug
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   if (!(await catalogReadable())) return { title: "Gildra Library" };
   const [{ id, type, dataset }, filters] = await Promise.all([params, searchParams]);
-  const entity = await getCatalogEntity(id, "en_US", dataset);
+  const entity = await getCatalogEntity(id, "en_US", dataset).then((record) => record ? catalogLocaleView(record, "en") : null);
   if (!entity || entity.type !== type) return {};
   const name = entity.name || `${type.replaceAll("_", " ")} #${entity.externalId}`;
   const product = filters?.product ?? "wow";

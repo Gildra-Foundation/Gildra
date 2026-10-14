@@ -98,6 +98,7 @@ export async function articleMetadata(slug: string, lang: Lang): Promise<Metadat
   if (result.status !== "ok") return { robots: { index: false } };
   const a = result.data;
   const served = a.resolvedLocale;
+  if (served !== locale(lang)) return { robots: { index: false, follow: true } };
   const alternates = articleAlternates(a);
   const title = a.seo.title || a.title || slug;
   const description = a.seo.description || a.summary || undefined;
@@ -144,7 +145,7 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
   const t = TEXT[lang];
   const result = await fetchArticles(locale(lang), page, PAGE_SIZE);
   if (result.status === "disabled") notFound();
-  const docs = result.status === "ok" ? result.data.docs : [];
+  const docs = result.status === "ok" ? result.data.docs.filter((article) => article.resolvedLocale === locale(lang)) : [];
   const totalPages = result.status === "ok" ? result.data.totalPages : 0;
 
 
@@ -172,7 +173,6 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
         {docs.length > 0 ? (
           <AtlasGrid min={320} fit>
             {docs.map((a) => {
-              const fallback = a.resolvedLocale !== null && a.resolvedLocale !== locale(lang);
               const date = formatDate(a.publishedAt, lang);
               return (
                 <AtlasCard
@@ -183,7 +183,6 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
                   description={a.summary || undefined}
                   meta={[
                     ...(date ? [{ icon: <CalendarDays aria-hidden="true" />, label: date }] : []),
-                    ...(fallback ? [{ label: <AtlasTooltip content={t.fallback}><span>{a.resolvedLocale?.toUpperCase()}<span className="sr-only"> — {t.fallback}</span></span></AtlasTooltip> }] : []),
                   ]}
                 />
               );
@@ -210,10 +209,10 @@ export async function ArticleDetailPage({ slug, lang }: { slug: string; lang: La
   // an uncached page shows the error boundary instead of invented content.
   if (result.status === "error") throw new Error(`CMS article unavailable (${result.reason})`);
   const a = result.data;
-  if (!a.resolvedLocale || a.slug !== slug) notFound();
+  if (a.resolvedLocale !== locale(lang) || a.slug !== slug) notFound();
   // Newest other articles for the end of the page (same cached list the index reads).
   const latest = await fetchArticles(locale(lang), 1, 4);
-  const related = latest.status === "ok" ? latest.data.docs.filter((d) => d.slug !== a.slug).slice(0, 3) : [];
+  const related = latest.status === "ok" ? latest.data.docs.filter((d) => d.slug !== a.slug && d.resolvedLocale === locale(lang)).slice(0, 3) : [];
   const config = cmsConfig();
   const image = safeMediaUrl(a.seo.image?.url ?? a.cover?.url, config.mediaOrigins, config.publicUrl || undefined);
   const path = articleHref(lang, a.slug);

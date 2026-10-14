@@ -3,7 +3,7 @@ import { formatAtlasDate as formatDate, pluralRu } from "@gildra/atlas-ui/format
 
 /**
  * Interface copy of the Lairs and world bosses section. Game terms (boss,
- * ability, item and zone names) stay English, as everywhere on Gildra; facts
+ * ability, item and zone names) use original localized sources; facts
  * come from lib/lairs.ts, never from this file.
  */
 export const lairsCopy = {

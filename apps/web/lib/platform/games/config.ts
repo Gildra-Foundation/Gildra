@@ -77,7 +77,7 @@ const seeds: Record<PlatformGameId, DefinitionSeed> = {
     accent: "#50b9e8", accentSoft: "#d9b56f", signalLabel: "AZEROTH // LIVE",
     copy: {
       en: { ...sharedCopy.en, eyebrow: "TACTICAL INDEX · THE WAR WITHIN", tagline: "Own the meta before the first pull.", description: "Mythic+, raid and specialization intelligence distilled into one live command view." },
-      ru: { ...sharedCopy.ru, eyebrow: "ТАКТИЧЕСКИЙ ИНДЕКС · THE WAR WITHIN", tagline: "Владей метой до первого пула.", description: "Mythic+, рейды и специализации, собранные в единую живую командную картину." },
+      ru: { ...sharedCopy.ru, eyebrow: "ТАКТИЧЕСКИЙ ИНДЕКС · Сокрытая война", tagline: "Владей метой до первого пула.", description: "Эпохальный+, рейды и специализации, собранные в единую живую командную картину." },
     },
     modules: {
       en: [
@@ -88,9 +88,9 @@ const seeds: Record<PlatformGameId, DefinitionSeed> = {
       ],
       ru: [
         { icon: "radar", title: "Разведка специализаций", description: "Ранги, билды и контекст энкаунтеров.", badge: "LIVE", href: "/search?game=wow&type=characters" },
-        { icon: "route", title: "Планировщик Mythic+", description: "Маршруты, аффиксы и приоритеты недели.", badge: "ТАКТИКА", href: "/search?game=wow&q=Mythic" },
+        { icon: "route", title: "Планировщик Эпохальный+", description: "Маршруты, аффиксы и приоритеты недели.", badge: "ТАКТИКА", href: "/search?game=wow&q=Mythic" },
         { icon: "swords", title: "Оптимизатор экипировки", description: "Сравнение предметов внутри базы WoW.", badge: "БАЗА", href: "/compare?game=wow&kind=items" },
-        { icon: "target", title: "Лаборатория ротации", description: "Приоритеты, Rage и синхронизация кулдаунов.", badge: "MVP", href: "/ru/wow/rotation/fury-warrior" },
+        { icon: "target", title: "Лаборатория ротации", description: "Приоритеты, Гнев и синхронизация кулдаунов.", badge: "MVP", href: "/ru/wow/rotation/fury-warrior" },
       ],
     },
   },
@@ -143,7 +143,7 @@ const seeds: Record<PlatformGameId, DefinitionSeed> = {
     accent: "#e4a13c", accentSoft: "#48bad1", signalLabel: "RIFT // LIVE QUEUE",
     copy: {
       en: { ...sharedCopy.en, eyebrow: "RIFT INTELLIGENCE · PATCH 14.10", tagline: "See the winning line before the minions arrive.", description: "Champions, matchups, builds and live patch movement fused into one ranked command view." },
-      ru: { ...sharedCopy.ru, eyebrow: "РАЗВЕДКА УЩЕЛЬЯ · PATCH 14.10", tagline: "Увидь победную линию до выхода миньонов.", description: "Чемпионы, матчапы, билды и движения патча в едином рейтинговом командном центре." },
+      ru: { ...sharedCopy.ru, eyebrow: "РАЗВЕДКА УЩЕЛЬЯ · Заплата 14.10", tagline: "Увидь победную линию до выхода миньонов.", description: "Чемпионы, матчапы, билды и движения патча в едином рейтинговом командном центре." },
     },
     modules: {
       en: [

@@ -3,11 +3,12 @@ import type { Difficulty } from "@/lib/data/wow";
 
 /**
  * Interface copy of The Venomous Abyss hub and boss pages. Raid, boss, spell,
- * item and achievement names stay English and come from the data files.
+ * item and achievement names come from the source data in the selected locale.
  * Shared labels (breadcrumbs, encounter switcher, pager) live in raidGuideCopy.ts.
  */
 export const venomousCopy = {
   ru: {
+    tracks: { Veteran: "Ветеран", Champion: "Защитник", Hero: "Герой", Myth: "Легенда" },
     // Hub
     eyebrow: "Midnight · Сезон 2",
     statsLabel: "Сводка рейда",
@@ -23,7 +24,7 @@ export const venomousCopy = {
     difficulties: "Сложности",
     difficultyList: "сюжетный режим · поиск рейда · обычная · героическая · эпохальная",
     waypoints: "Координаты входа",
-    waypointsNote: "Источники указывают разные точки внутри Vaults of Atal’Utek — сверьтесь с маркером на карте.",
+    waypointsNote: "Источники указывают разные точки внутри Хранилища Атал'Утека — сверьтесь с маркером на карте.",
     wingsTitle: "Крылья поиска рейда",
     wing: (number: number) => `Крыло ${number}`,
     lootTitle: "Уровни добычи",
@@ -38,7 +39,7 @@ export const venomousCopy = {
     lootSource: "Источник уровней и токенов",
     rewardsTitle: "Награды рейда",
     gloryRequirements: (count: number) => `Условия ${count} ${pluralRu(count, "достижения", "достижений", "достижений")}`,
-    gloryReward: "Мета-достижение даёт средство передвижения Crimson Venomfang.",
+    gloryReward: "Мета-достижение даёт средство передвижения Багровый ядоклык.",
     source: "Источник",
     checked: (date: string) => `проверено ${formatAtlasDate(date, "ru")}`,
 
@@ -64,6 +65,7 @@ export const venomousCopy = {
     rewardNote: "Конкретные предметы появятся после проверки. Шанс выпадения Blizzard не публикует.",
   },
   en: {
+    tracks: { Veteran: "Veteran", Champion: "Champion", Hero: "Hero", Myth: "Myth" },
     eyebrow: "Midnight · Season 2",
     statsLabel: "Raid summary",
     bossesStat: (count: number) => (count === 1 ? "boss" : "bosses"),

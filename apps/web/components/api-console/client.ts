@@ -62,18 +62,19 @@ async function attempt<T>(path: string, init: RequestOptions, signal?: AbortSign
       response = await fetch(path, { credentials: "include", ...rest, signal: controller.signal });
     } catch (reason) {
       if (timedOut) {
-        throw new ConsoleError(`Сервис не ответил за ${Math.round(timeoutMs / 1000)} с.`, { status: 0, code: "timeout", retryable: true });
+        throw new ConsoleError(`The service did not respond within ${Math.round(timeoutMs / 1000)} seconds.`, { status: 0, code: "timeout", retryable: true });
       }
       if (signal?.aborted || isAbortError(reason)) throw abortError();
-      throw new ConsoleError("Нет соединения с API. Проверьте сеть и повторите запрос.", { status: 0, code: "network", retryable: true });
+      throw new ConsoleError("No connection to the API. Check your network and retry.", { status: 0, code: "network", retryable: true });
     }
     if (!response.ok) {
-      let message = response.status >= 500 ? "Сервис временно недоступен" : "Запрос не выполнен";
+      let message = response.status >= 500 ? "The service is temporarily unavailable" : "The request failed";
       let code = "";
       try {
         const problem = await response.json() as { message?: string; detail?: string; code?: string };
         code = problem.code ?? "";
         message = problem.detail ?? problem.message ?? (code ? `${code}: ${message}` : message);
+        if (/[А-Яа-яЁё]/.test(message)) message = response.status >= 500 ? "The service is temporarily unavailable" : "The request failed";
       } catch { /* non-JSON error body */ }
       throw new ConsoleError(message, { status: response.status, code, retryable: response.status >= 500 || response.status === 429 });
     }

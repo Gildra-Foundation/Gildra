@@ -1,5 +1,6 @@
 "use client";
 
+import { wowSourceName } from "@/lib/wow/sourceLocale";
 import Image from "next/image";
 import { memo, useEffect, useId, useRef, useState, useTransition, type KeyboardEvent, type ReactNode } from "react";
 import { Check, ChevronDown, Gem, LoaderCircle, Map } from "lucide-react";
@@ -158,8 +159,8 @@ export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale,
   const [isNavigating, startNavigation] = useTransition();
   const options: SelectorOption<DungeonSlug>[] = dungeonOptions.map((route) => ({
     value: route.slug,
-    title: locale === "ru" ? route.nameRu : route.name,
-    subtitle: copy.dungeonSubtitle({ name: route.name, nameRu: route.nameRu, timer: formatTimer(route.timerSeconds) }),
+    title: wowSourceName(route.name, locale, route.nameRu),
+    subtitle: copy.dungeonSubtitle({ name: wowSourceName(route.name, locale, route.nameRu), nameRu: wowSourceName(route.name, locale, route.nameRu), timer: formatTimer(route.timerSeconds) }),
     artwork: route.backdropImage,
   }));
   const keyOptions: SelectorOption<number>[] = keyLevels.map((level) => ({ value: level, title: `+${level}`, subtitle: copy.keyOptions[level] }));

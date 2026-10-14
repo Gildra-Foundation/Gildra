@@ -1,3 +1,4 @@
+import { wowSourceText } from "@/lib/wow/sourceLocale";
 import type { RouteAbility, RouteEnemy, RouteStop } from "./rubyLifePoolsData";
 
 /**
@@ -20,7 +21,7 @@ function plural(count: number, one: string, few: string, many: string) {
 const ru = {
   // Page chrome
   breadcrumbsLabel: "Навигация",
-  hub: "Mythic+",
+  hub: "Эпохальный+",
   season: "Midnight · Сезон 2",
   eyebrow: (location: string) => `Маршрут подземелья · ${location} · Обновление 12.1`,
   goal: "Цель:",
@@ -36,7 +37,7 @@ const ru = {
   resetRoute: "Сбросить маршрут",
   draftTitle: "Маршрут — черновик",
   draftText: "Blizzard подтвердил только список подземелий сезона. Маршрут, проценты сил, тайминги и советы по механикам — наш черновик, сверьте их в игре.",
-  draftSource: "Blizzard · Midnight Season 2",
+  draftSource: "Blizzard · Midnight Сезон 2",
 
   // Run summary
   summaryLabel: "Сводка прохождения",
@@ -55,7 +56,7 @@ const ru = {
   tyrannicalNote: "Обычные враги сильнее и опаснее",
   seasonAffix: "Сезон 2",
   seasonAffixTitle: "Условия текущего сезона",
-  seasonAffixNote: "Действуют условия Midnight Season 2",
+  seasonAffixNote: "Действуют условия Midnight Сезон 2",
 
   // Workspace
   plannerLabel: (dungeon: string) => `Планировщик маршрута ${dungeon}`,
@@ -411,8 +412,12 @@ const subtitlesEn: Record<string, string> = {
 };
 
 /** Short step subtitles; English pages get the translated label when one exists. */
+const subtitlesRu: Record<string, string> = {
+  "Felonious crew": "Банда противников", "Mages + smugglers": "Маги и контрабандисты", "Barrels + freight": "Бочки и груз",
+  Wrathguards: "Стражи", "Invokers + flayers": "Заклинатели и свежеватели", "Freight gauntlet": "Проход с грузом",
+};
 export function stopSubtitle(subtitle: string, locale: RouteLocale) {
-  return locale === "en" ? subtitlesEn[subtitle] ?? subtitle : plainLanguage(subtitle);
+  return locale === "en" ? subtitlesEn[subtitle] ?? subtitle : subtitlesRu[subtitle] ?? plainLanguage(subtitle);
 }
 
 export function floorLabel(label: string, locale: RouteLocale) {
@@ -422,7 +427,7 @@ export function floorLabel(label: string, locale: RouteLocale) {
 /** Route notes are written by players for players; this keeps the Russian notes free of raid slang. */
 export function plainLanguage(text: string, locale: RouteLocale = "ru") {
   if (locale === "en") return text;
-  return text
+  return wowSourceText(text, locale)
     .replaceAll("Стакайте пак", "Соберите врагов вместе")
     .replaceAll("Стак у стены", "Соберитесь у стены")
     .replaceAll("треш", "обычные группы врагов")
