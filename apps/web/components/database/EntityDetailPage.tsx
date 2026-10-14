@@ -160,7 +160,7 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
               <p className={styles.note}>{copy.namesNote}</p>
               <div className={styles.localizations}>
                 {([lang === "ru" ? "ru_RU" : "en_US"] as const).map((localeKey) => {
-                  const localized = entity.localizations?.[localeKey];
+                  const localized = entity.localizations?.[localeKey] ? { name: entity.name, description: entity.rawDescription, resolvedDescription: entity.resolvedDescription } : undefined;
                   const unresolved = Boolean(localized?.description && hasUnresolvedTemplate(localized.description));
                   const clientText = unresolved ? copy.unresolvedValue : localized?.description || copy.noValue;
                   const resolvedText = unresolved ? copy.unresolvedValue : localized?.resolvedDescription || localized?.description || copy.noValue;
