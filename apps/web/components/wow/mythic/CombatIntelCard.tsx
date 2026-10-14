@@ -1,6 +1,7 @@
 "use client";
 
-import { wowSourceName, wowSourceText } from "@/lib/wow/sourceLocale";
+import { wowNpcName, wowSpellName } from "@/lib/wow/sourceLocale";
+import { wowRouteText } from "@/lib/wow/routeSourceLocale";
 import { AlertTriangle, CheckCircle2, ChevronDown, CircleHelp, ShieldAlert, Swords, UserRound } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { ResilientImage } from "@/components/media/ResilientImage";
@@ -75,10 +76,10 @@ export function EnemyIntelCard({
           <header><span><ShieldAlert aria-hidden="true" /> {copy.creature()}</span><b>{priorityLabel}</b></header>
           <div className={styles.tooltipSubject}>
             <span className={media ? `${styles.gameIcon} ${styles.tooltipPortrait}` : styles.gameIcon} style={portraitStyle}>{portraitUrl ? <ResilientImage src={portraitUrl} alt="" loading="eager" fallback={icon} /> : icon}</span>
-            <span><small>{dungeonName ?? "Mythic+"}{encounter ? ` · ${encounter ? wowSourceText(encounter, locale) : encounter}` : ""}</small><b>{wowSourceName(name, locale)}</b></span>
+            <span><small>{dungeonName ?? "Mythic+"}{encounter ? ` · ${encounter ? wowRouteText(encounter, locale) : encounter}` : ""}</small><b>{wowNpcName(name, locale, media?.identityVerified ? media.npcId : undefined)}</b></span>
           </div>
-          <p>{wowSourceText(intel.summary, locale)}</p>
-          <div className={styles.warning}><AlertTriangle aria-hidden="true" /><span><b>{copy.whyDangerous}</b>{wowSourceText(intel.danger, locale)}</span></div>
+          <p>{wowRouteText(intel.summary, locale)}</p>
+          <div className={styles.warning}><AlertTriangle aria-hidden="true" /><span><b>{copy.whyDangerous}</b>{wowRouteText(intel.danger, locale)}</span></div>
           <footer><span>{copy.countInGroup}</span><strong>×{count}</strong></footer>
         </div>}
       >
@@ -91,7 +92,7 @@ export function EnemyIntelCard({
           <span className={`${styles.gameIcon}${portraitClass}`} style={portraitStyle}>
             {portraitUrl ? <ResilientImage src={portraitUrl} alt="" loading="lazy" fallback={icon} /> : icon}
           </span>
-          <span className={styles.identity}><b>{wowSourceName(name, locale)}</b><small>{priorityLabel} · {portraitStatus}</small></span>
+          <span className={styles.identity}><b>{wowNpcName(name, locale, media?.identityVerified ? media.npcId : undefined)}</b><small>{priorityLabel} · {portraitStatus}</small></span>
           <strong>×{count}</strong>
           <span className={styles.more}><CircleHelp aria-hidden="true" /><span>{copy.whatItDoes}</span><ChevronDown aria-hidden="true" /></span>
         </button>}
@@ -148,12 +149,12 @@ export function AbilityIntelCard({
           <header><span><ShieldAlert aria-hidden="true" /> {copy.spell(resolvedMedia?.exact ? media?.spellId : undefined)}</span><b>{action}</b></header>
           <div className={styles.tooltipSubject}>
             <span className={styles.gameIcon}>{media ? <ResilientImage src={media.iconUrl} alt="" loading="lazy" fallback={icon} /> : icon}</span>
-            <span><small>{wowSourceText(source, locale)}{encounter ? ` · ${encounter ? wowSourceText(encounter, locale) : encounter}` : ""}</small><b>{wowSourceName(name, locale)}</b></span>
+            <span><small>{wowRouteText(source, locale)}{encounter ? ` · ${encounter ? wowRouteText(encounter, locale) : encounter}` : ""}</small><b>{wowSpellName(name, locale, resolvedMedia?.exact ? media?.spellId : undefined)}</b></span>
           </div>
-          <p>{wowSourceText(intel.effect, locale)}</p>
-          <div className={styles.warning}><AlertTriangle aria-hidden="true" /><span><b>{copy.ifIgnored}</b>{wowSourceText(intel.failure, locale)}</span></div>
+          <p>{wowRouteText(intel.effect, locale)}</p>
+          <div className={styles.warning}><AlertTriangle aria-hidden="true" /><span><b>{copy.ifIgnored}</b>{wowRouteText(intel.failure, locale)}</span></div>
           <footer className={styles.response}>
-            <span><Swords aria-hidden="true" /><i><small>{copy.castBy}</small><b>{source ? wowSourceText(source, locale) : source}</b></i></span>
+            <span><Swords aria-hidden="true" /><i><small>{copy.castBy}</small><b>{source ? wowRouteText(source, locale) : source}</b></i></span>
             <span><CheckCircle2 aria-hidden="true" /><i><small>{copy.whatToDo}</small><b>{action}</b></i></span>
             <span><UserRound aria-hidden="true" /><i><small>{copy.responsible}</small><b>{responsible}</b></i></span>
           </footer>
@@ -168,7 +169,7 @@ export function AbilityIntelCard({
           <span className={styles.gameIcon}>
             {media ? <ResilientImage src={media.iconUrl} alt="" loading="lazy" fallback={icon} /> : icon}
           </span>
-          <span className={styles.identity}><b>{wowSourceName(name, locale)}</b><small>{copy.castByShort(wowSourceText(source, locale))}</small></span>
+          <span className={styles.identity}><b>{wowSpellName(name, locale, resolvedMedia?.exact ? media?.spellId : undefined)}</b><small>{copy.castByShort(wowRouteText(source, locale))}</small></span>
           <strong>{action}</strong>
           <span className={styles.more}><CircleHelp aria-hidden="true" /><span>{copy.responseShort(responsible)}</span><ChevronDown aria-hidden="true" /></span>
         </button>}

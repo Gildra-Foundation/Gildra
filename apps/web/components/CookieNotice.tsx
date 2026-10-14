@@ -8,8 +8,8 @@ import { readBrowserConsent, saveBrowserConsent, consentChanged } from "@/lib/br
 import styles from "./cookieNotice.module.css";
 
 const copy = {
-  ru: { text: "Gildra хранит настройки в браузере и собирает анонимную статистику использования. Подробнее — в", link: "политике конфиденциальности", accept: "Принять", decline: "Отклонить" },
-  en: { text: "Gildra stores your preferences in the browser and collects anonymous usage statistics. See the", link: "privacy policy", accept: "Accept", decline: "Decline" },
+  ru: { label: "Файлы cookie", text: "Gildra хранит настройки в браузере и собирает анонимную статистику использования. Подробнее — в", link: "политике конфиденциальности", accept: "Принять", decline: "Отклонить" },
+  en: { label: "Cookies", text: "Gildra stores your preferences in the browser and collects anonymous usage statistics. See the", link: "privacy policy", accept: "Accept", decline: "Decline" },
 } as const;
 
 /**
@@ -44,7 +44,7 @@ export function CookieNotice() {
 
   if (!visible) return null;
   return (
-    <aside className={styles.notice} role="region" aria-label="Cookies" data-atlas-scope>
+    <aside className={styles.notice} role="region" aria-label={text.label} data-atlas-scope>
       <p className={styles.text}>
         {text.text}{" "}
         <Link href={text === copy.ru ? "/ru/privacy" : "/privacy"} prefetch={false}>{text.link}</Link>.

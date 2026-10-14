@@ -1,4 +1,5 @@
-import { wowSourceText } from "@/lib/wow/sourceLocale";
+import { wowRouteText } from "@/lib/wow/routeSourceLocale";
+import { wowSourceName } from "@/lib/wow/sourceLocale";
 import type { RouteAbility, RouteEnemy, RouteStop } from "./rubyLifePoolsData";
 
 /**
@@ -416,8 +417,13 @@ const subtitlesRu: Record<string, string> = {
   "Felonious crew": "Банда противников", "Mages + smugglers": "Маги и контрабандисты", "Barrels + freight": "Бочки и груз",
   Wrathguards: "Стражи", "Invokers + flayers": "Заклинатели и свежеватели", "Freight gauntlet": "Проход с грузом",
 };
-export function stopSubtitle(subtitle: string, locale: RouteLocale) {
-  return locale === "en" ? subtitlesEn[subtitle] ?? subtitle : subtitlesRu[subtitle] ?? plainLanguage(subtitle);
+export function stopSubtitle(subtitle: string, locale: RouteLocale, enemies?: readonly { name: string }[]) {
+  if (locale === "en") return subtitlesEn[subtitle] ?? subtitle;
+  const text = subtitlesRu[subtitle] ?? plainLanguage(subtitle);
+  // Group subtitles use the original NPC names carried by the route, rather
+  // than abbreviated English labels. Stored names and route keys stay intact.
+  if (/[A-Za-z]/.test(text) && enemies?.length) return [...new Set(enemies.map((enemy) => wowSourceName(enemy.name, locale)))].join(" + ");
+  return text;
 }
 
 export function floorLabel(label: string, locale: RouteLocale) {
@@ -427,7 +433,7 @@ export function floorLabel(label: string, locale: RouteLocale) {
 /** Route notes are written by players for players; this keeps the Russian notes free of raid slang. */
 export function plainLanguage(text: string, locale: RouteLocale = "ru") {
   if (locale === "en") return text;
-  return wowSourceText(text, locale)
+  return wowRouteText(text, locale)
     .replaceAll("Стакайте пак", "Соберите врагов вместе")
     .replaceAll("Стак у стены", "Соберитесь у стены")
     .replaceAll("треш", "обычные группы врагов")
@@ -474,6 +480,12 @@ export function plainLanguage(text: string, locale: RouteLocale = "ru") {
     .replaceAll("whelps", "маленьких драконов")
     .replaceAll("DoT", "периодического урона")
     .replaceAll("cleave", "урона по нескольким целям")
+    .replaceAll("stop", "остановите")
+    .replaceAll("abilities", "способностей")
+    .replaceAll("tactical draft", "черновом плане боя")
+    .replaceAll("NPC-сущности", "существа")
+    .replaceAll("NPC ID", "игровых ID")
+    .replaceAll("Skull/Cross", "череп/крест")
     .replaceAll("стаков", "уровней эффекта")
     .replaceAll("стаками", "уровнями эффекта")
     .replaceAll("дебафф", "негативный эффект")

@@ -136,10 +136,10 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
         `${tr("Patch")} ${preset.patch}`,
         characterIdentity?.name?.trim(),
         characterIdentity && Number.isFinite(characterIdentity.itemLevel) && characterIdentity.itemLevel > 0
-          ? `${characterIdentity.itemLevel} ilvl`
+          ? `${characterIdentity.itemLevel} ${copy.itemLevelUnit}`
           : undefined,
       ].filter(Boolean).join(" · ")
-    : `${tr("Patch")} ${preset.patch} · ${preset.character.name} · ${preset.character.itemLevel} ilvl`;
+    : `${tr("Patch")} ${preset.patch} · ${preset.character.name} · ${preset.character.itemLevel} ${copy.itemLevelUnit}`;
   const rotationStyle = theme ? {
     "--rotation-accent": theme.accent,
     "--rotation-hot": theme.hot,

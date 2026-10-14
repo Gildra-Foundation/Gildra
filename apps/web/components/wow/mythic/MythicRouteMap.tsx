@@ -1,6 +1,7 @@
 "use client";
 
-import { wowSourceName, wowSourceText } from "@/lib/wow/sourceLocale";
+import { wowSourceName } from "@/lib/wow/sourceLocale";
+import { wowRouteText } from "@/lib/wow/routeSourceLocale";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { createContext, memo, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties, type RefObject } from "react";
@@ -141,8 +142,8 @@ const RouteStopListItem = memo(function RouteStopListItem({ stop, index, active,
     <button type="button" onClick={() => onSelect(stop.id)} className={styles.stopButton} aria-pressed={active}>
       <span className={`${styles.stopIndex} ${stopTone(stop.kind)}`} data-complete={complete || undefined}>{complete ? <Check aria-hidden="true" /> : index + 1}</span>
       <span className={styles.stopCopy}>
-        <b>{wowSourceText(stop.title, locale)}</b>
-        <small>{stopKindLabels[locale][stop.kind]} · {stopSubtitle(stop.subtitle, locale)}</small>
+        <b>{wowRouteText(stop.title, locale)}</b>
+        <small>{stopKindLabels[locale][stop.kind]} · {stopSubtitle(stop.subtitle, locale, stop.enemies)}</small>
         <em><Clock3 aria-hidden="true" /> ~{formatTime(stop.duration)}{stop.forces ? ` · ${copy.gives(stop.forces.toFixed(1))}` : ""}</em>
       </span>
       {stop.bloodlust ? <Flame className={styles.lustIcon} aria-label={copy.lust} /> : null}
@@ -159,7 +160,7 @@ const RouteMapMarker = memo(function RouteMapMarker({ stop, index, active, compl
   complete: boolean;
   onSelect: (stopId: number) => void;
 }) {
-  return <button type="button" className={`${styles.marker} ${stopTone(stop.kind)}`} data-equivalent-targets data-active={active || undefined} data-complete={complete || undefined} style={{ left: `${stop.x}%`, top: `${stop.y}%` }} onClick={() => onSelect(stop.id)} aria-label={`${index + 1}. ${wowSourceText(stop.title, locale)}`} aria-pressed={active}>{complete ? <Check aria-hidden="true" /> : index + 1}{stop.bloodlust ? <Flame aria-hidden="true" /> : null}</button>;
+  return <button type="button" className={`${styles.marker} ${stopTone(stop.kind)}`} data-equivalent-targets data-active={active || undefined} data-complete={complete || undefined} style={{ left: `${stop.x}%`, top: `${stop.y}%` }} onClick={() => onSelect(stop.id)} aria-label={`${index + 1}. ${wowRouteText(stop.title, locale)}`} aria-pressed={active}>{complete ? <Check aria-hidden="true" /> : index + 1}{stop.bloodlust ? <Flame aria-hidden="true" /> : null}</button>;
 });
 
 const RouteNoteField = memo(function RouteNoteField({ copy, initialValue, onChange, noteRef }: {
@@ -206,7 +207,7 @@ const RouteStepNarrative = memo(function RouteStepNarrative({ locale, dungeon, d
       {selected.enemies.length ? <ul className={styles.intelList}>{selected.enemies.map((enemy) => {
         const data = combatIntel.enemies[enemy.name];
         const intel = handWritten ? data?.intel : routeEnemyIntel(enemy, selected, dungeonName, locale);
-        return <EnemyIntelCard key={enemy.name} locale={locale} dungeonName={dungeonName} encounter={wowSourceText(selected.title, locale)} name={enemy.name} count={enemy.count} priority={enemy.priority} priorityLabel={priorityLabels[locale][enemy.priority]} summary={intel?.summary} danger={intel?.danger} media={data?.media} icon={<span className={styles.intelInitial}>{enemy.name.slice(0, 1)}</span>} />;
+        return <EnemyIntelCard key={enemy.name} locale={locale} dungeonName={dungeonName} encounter={wowRouteText(selected.title, locale)} name={enemy.name} count={enemy.count} priority={enemy.priority} priorityLabel={priorityLabels[locale][enemy.priority]} summary={intel?.summary} danger={intel?.danger} media={data?.media} icon={<span className={styles.intelInitial}>{enemy.name.slice(0, 1)}</span>} />;
       })}</ul> : <p className={styles.emptyNote}>{copy.noFight}</p>}
     </section>
     <section className={styles.detailSection}>
@@ -214,7 +215,7 @@ const RouteStepNarrative = memo(function RouteStepNarrative({ locale, dungeon, d
       {selected.abilities.length ? <ul className={styles.intelList}>{selected.abilities.map((ability) => {
         const data = combatIntel.abilities[ability.name];
         const intel = handWritten ? data?.intel : routeAbilityIntel(ability, selected, locale);
-        return <AbilityIntelCard key={ability.name} locale={locale} name={ability.name} action={actionLabels[locale][ability.action]} interrupt={ability.action === "Кик"} dispel={ability.action === "Диспел" || ability.action === "Пурж"} responsible={targetLabel(ability.target, locale)} source={ability.source ?? data?.source} encounter={wowSourceText(selected.title, locale)} effect={intel?.effect} failure={intel?.failure} media={data?.media} icon={<span className={styles.intelInitial}>{ability.name.slice(0, 1)}</span>} />;
+        return <AbilityIntelCard key={ability.name} locale={locale} name={ability.name} action={actionLabels[locale][ability.action]} interrupt={ability.action === "Кик"} dispel={ability.action === "Диспел" || ability.action === "Пурж"} responsible={targetLabel(ability.target, locale)} source={ability.source ?? data?.source} encounter={wowRouteText(selected.title, locale)} effect={intel?.effect} failure={intel?.failure} media={data?.media} icon={<span className={styles.intelInitial}>{ability.name.slice(0, 1)}</span>} />;
       })}</ul> : <p className={styles.emptyNote}>{copy.noAbilities}</p>}
     </section>
     <section className={styles.detailSection}>
@@ -256,7 +257,7 @@ const RouteDetails = memo(function RouteDetails({ locale, dungeon, dungeonName, 
   const copy = mythicRouteCopy[locale];
   return <aside className={`${styles.panel} ${styles.details}`} aria-live="polite">
     <div className={styles.detailTop}><p>{copy.nowStep(selectedIndex + 1, totalSteps)}</p><span className={`${styles.kindTag} ${stopTone(selected.kind)}`}>{stopKindLabels[locale][selected.kind]}</span></div>
-    <div key={selected.id} className={styles.detailHeading}><span className={`${styles.stopIndex} ${stopTone(selected.kind)}`}>{selectedIndex + 1}</span><div><h2>{wowSourceText(selected.title, locale)}</h2><p>{copy.stepMeta(formatTime(selected.duration), selected.forces.toFixed(1), selected.cumulative.toFixed(1))}</p></div></div>
+    <div key={selected.id} className={styles.detailHeading}><span className={`${styles.stopIndex} ${stopTone(selected.kind)}`}>{selectedIndex + 1}</span><div><h2>{wowRouteText(selected.title, locale)}</h2><p>{copy.stepMeta(formatTime(selected.duration), selected.forces.toFixed(1), selected.cumulative.toFixed(1))}</p></div></div>
     <RouteStepNarrative locale={locale} dungeon={dungeon} dungeonName={dungeonName} selected={selected} role={role} combatIntel={combatIntel} onRoleChange={onRoleChange} />
     <button type="button" className={styles.primaryButton} onClick={onToggleComplete}>{isComplete ? <Undo2 aria-hidden="true" /> : <Check aria-hidden="true" />}{isComplete ? copy.reopenStep : copy.completeStep}</button>
     {/* Secondary step tools fold away so the panel reads first; a step with a note keeps them open. */}
