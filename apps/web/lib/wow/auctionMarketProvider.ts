@@ -32,7 +32,7 @@ async function readJSON(response: Response) {
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
 }
-export async function getCharacterAuctionMarket(character: BattleNetCharacter, accessToken: string) {
+export async function getCharacterAuctionMarket(character: BattleNetCharacter, accessToken: string, options: { refresh?: boolean } = {}) {
   if (!["eu", "us", "kr", "tw"].includes(character.region)) throw new Error("market_region_unsupported");
   const root = `https://${character.region}.api.blizzard.com`;
   const namespace = `dynamic-${character.region}`;
@@ -59,7 +59,7 @@ export async function getCharacterAuctionMarket(character: BattleNetCharacter, a
   const key = `${character.region}:${connectedRealmId}`;
   const existing = markets.get(key);
   if (existing?.pending) return existing.pending;
-  if (existing?.value && Date.now() - existing.checkedAt < 5 * 60_000) {
+  if (!options.refresh && existing?.value && Date.now() - existing.checkedAt < 5 * 60_000) {
     assertFreshMarket(existing.value);
     return existing.value;
   }

@@ -56,3 +56,5 @@ assert.equal(normalizeInventoryType("TWOHWEAPON"),17);assert.equal(normalizeInve
 const symbolic={...entity,tooltip:{blocks:entity.tooltip.blocks.map(b=>b.type==="item_registry"?{...b,inventory_type:"CHEST"}:b)}};assert.equal(normalizeGearCandidate(symbolic,ctx).eligible,true);
 
 validateGearLoadout([{slotType:"MAIN_HAND",itemId:248074,inventoryType:17,itemSubclassId:6},{slotType:"OFF_HAND",itemId:251255,inventoryType:17,itemSubclassId:8}],72);
+
+await import("./test-auction-gear-exhaustive.mjs");

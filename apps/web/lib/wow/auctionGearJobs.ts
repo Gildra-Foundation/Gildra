@@ -16,13 +16,16 @@ type Job = AuctionGearJob & {
   task?: Task;
   expires: number;
 };
+type Starts = { searches: number[]; continuations: number[] };
 const state = globalThis as typeof globalThis & {
   __gildraAuctionJobs?: Map<string, Job>;
   __gildraAuctionQueue?: string[];
   __gildraAuctionRunning?: boolean;
+  __gildraAuctionStarts?: Map<string, Starts>;
 };
 const jobs = state.__gildraAuctionJobs ??= new Map<string, Job>(),
-  queue = state.__gildraAuctionQueue ??= [];
+  queue = state.__gildraAuctionQueue ??= [],
+  starts = state.__gildraAuctionStarts ??= new Map<string, Starts>();
 function view(j: Job): AuctionGearJob {
   return {
     id: j.id,
@@ -33,9 +36,15 @@ function view(j: Job): AuctionGearJob {
   };
 }
 function cleanup() {
-  for (const [id, j] of jobs) if (j.expires < Date.now()) {
+  const now = Date.now();
+  for (const [id, j] of jobs) if (j.expires < now) {
     j.controller.abort();
     jobs.delete(id);
+  }
+  for (const [owner, history] of starts) {
+    history.searches = history.searches.filter(time => time > now - 60_000);
+    history.continuations = history.continuations.filter(time => time > now - 60_000);
+    if (!history.searches.length && !history.continuations.length) starts.delete(owner);
   }
   // Cancelled and expired jobs must not occupy capacity while another
   // character's simulation keeps the queue waiting.
@@ -76,11 +85,13 @@ async function drain() {
     state.__gildraAuctionRunning = false;
   }
 }
-export function enqueueAuctionGearJob(owner: string, task: Task) {
+export function enqueueAuctionGearJob(owner: string, task: Task, options: { continuation?: boolean } = {}) {
   cleanup();
   if ([...jobs.values()].some(j => j.owner === owner && (j.status === "queued" || j.status === "running"))) throw new Error("plan_already_running");
   if (queue.length >= 8) throw new Error("plan_queue_full");
-  if ([...jobs.values()].filter(j => j.owner === owner && j.expires > Date.now() + 29 * 60_000).length >= 3) throw new Error("plan_rate_limited");
+  const history = starts.get(owner) ?? { searches: [], continuations: [] };
+  const kind = options.continuation ? "continuations" : "searches";
+  if (history[kind].length >= (options.continuation ? 60 : 3)) throw new Error("plan_rate_limited");
   // Bound retained results as well as active work.
   if (jobs.size >= 200) {
     const old = [...jobs].find(([, j]) => !["queued", "running"].includes(j.status));
@@ -98,6 +109,8 @@ export function enqueueAuctionGearJob(owner: string, task: Task) {
     error: null
   };
   jobs.set(j.id, j);
+  history[kind].push(Date.now());
+  starts.set(owner, history);
   queue.push(j.id);
   const result = view(j);
   void drain();

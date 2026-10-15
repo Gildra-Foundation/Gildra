@@ -89,11 +89,12 @@ export class BattleNetCharacterDataError extends Error {
 
 export { characterSlug } from "./characterSlug.ts";
 
-async function api<T>(url: string, token: string): Promise<T | null> {
+async function api<T>(url: string, token: string, signal?: AbortSignal): Promise<T | null> {
+  signal?.throwIfAborted();
   try {
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : undefined });
     return response.ok ? await response.json() as T : null;
-  } catch { return null; }
+  } catch { signal?.throwIfAborted(); return null; }
 }
 
 async function requiredApi<T>(url: string, token: string, endpoint: string): Promise<T> {
@@ -118,13 +119,13 @@ async function requiredApi<T>(url: string, token: string, endpoint: string): Pro
   }
 }
 
-export async function getBattleNetSimulationSnapshot(token: string, character: BattleNetCharacter): Promise<BattleNetSimulationSnapshot> {
+export async function getBattleNetSimulationSnapshot(token: string, character: BattleNetCharacter, signal?: AbortSignal): Promise<BattleNetSimulationSnapshot> {
   const region = character.region;
   const root = `https://${region}.api.blizzard.com/profile/wow/character/${character.realm.slug}/${encodeURIComponent(character.name.toLowerCase())}`;
   const [profile, specializations, equipment] = await Promise.all([
-    api<Record<string, unknown>>(withLocale(root, region, "en"), token),
-    api<RawSpecializations & Record<string, unknown>>(withLocale(`${root}/specializations`, region, "en"), token),
-    api<Record<string, unknown>>(withLocale(`${root}/equipment`, region, "en"), token),
+    api<Record<string, unknown>>(withLocale(root, region, "en"), token, signal),
+    api<RawSpecializations & Record<string, unknown>>(withLocale(`${root}/specializations`, region, "en"), token, signal),
+    api<Record<string, unknown>>(withLocale(`${root}/equipment`, region, "en"), token, signal),
   ]);
   if (!profile || !specializations || !equipment) throw new Error("Battle.net character simulation data is incomplete");
   const activeSpecializationId = specializations.active_specialization?.id ?? 0;

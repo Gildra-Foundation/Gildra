@@ -48,7 +48,8 @@ export class BattleNetProfileError extends Error {
   }
 }
 
-export async function getBattleNetCharacters(accessToken: string, locale: "en" | "ru", onlyRegion?: BattleNetRegion): Promise<BattleNetCharacter[]> {
+export async function getBattleNetCharacters(accessToken: string, locale: "en" | "ru", onlyRegion?: BattleNetRegion, signal?: AbortSignal): Promise<BattleNetCharacter[]> {
+  signal?.throwIfAborted();
   const preferred = getBattleNetPreferredRegion();
   const regions: BattleNetRegion[] = onlyRegion
     ? [onlyRegion]
@@ -62,10 +63,12 @@ export async function getBattleNetCharacters(accessToken: string, locale: "en" |
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
         cache: "no-store",
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : undefined,
       });
       if (!response.ok) return { region, status: response.status, profile: null };
       return { region, status: response.status, profile: await response.json() as ProfileResponse };
     } catch {
+      signal?.throwIfAborted();
       return { region, status: 503, profile: null };
     }
   }));
@@ -100,13 +103,14 @@ export async function getBattleNetCharacters(accessToken: string, locale: "en" |
   return characters.sort((a, b) => b.level - a.level || a.name.localeCompare(b.name, locale === "ru" ? "ru-RU" : "en-US"));
 }
 
-export async function getBattleNetCharacterBySlug(accessToken: string, locale: "en" | "ru", slug: string): Promise<BattleNetCharacter | undefined> {
+export async function getBattleNetCharacterBySlug(accessToken: string, locale: "en" | "ru", slug: string, signal?: AbortSignal): Promise<BattleNetCharacter | undefined> {
   const requested = decodeURIComponent(slug).toLowerCase();
   const requestedRegion = requested.split("--", 1)[0];
   const characters = await getBattleNetCharacters(
     accessToken,
     locale,
     isBattleNetRegion(requestedRegion) ? requestedRegion : undefined,
+    signal,
   );
   return characters.find((character) =>
     `${character.region}--${character.realm.slug}--${character.name.toLowerCase()}` === requested,

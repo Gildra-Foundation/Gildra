@@ -2,8 +2,10 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { goldToCopper } from "@/lib/wow/auctionMarket";
-import { runAuctionGearPlan } from "@/lib/wow/auctionGearRunner";
+import { startAuctionGearSearch, continueAuctionGearSearch, assembleAuctionGearSearch, selectedAuctionGearOptions, verifyAuctionGearSearch } from "@/lib/wow/auctionGearRunner";
 import { enqueueAuctionGearJob, getAuctionGearJob, cancelAuctionGearJob } from "@/lib/wow/auctionGearJobs";
+import { getAuctionGearSearch } from "@/lib/wow/auctionGearSearchStore";
+import { auctionGearSlots, parseAuctionGearSlots } from "@/lib/wow/auctionGearSelection";
 import type { GearSimulationScenario } from "@/lib/wow/gearSimulation";
 export const dynamic = "force-dynamic";
 function reply(body: unknown, status = 200) {
@@ -67,25 +69,56 @@ export async function POST(request: Request) {
   if (!user) return reply({
     error: "session_expired"
   }, 401);
-  const text = await request.text();
-  if (text.length > 2048) return reply({
-    error: "request_too_large"
-  }, 413);
+  const reader = request.body?.getReader(), chunks: Uint8Array[] = [];
+  let bytes = 0;
+  if (reader) for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    bytes += value.byteLength;
+    if (bytes > 512 * 1024) {
+      await reader.cancel();
+      return reply({ error: "request_too_large" }, 413);
+    }
+    chunks.push(value);
+  }
   let body: Record<string, unknown>;
   try {
-    body = JSON.parse(text);
+    body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
     if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error();
   } catch {
     return reply({
       error: "invalid_plan_request"
     }, 400);
   }
+  const action = body.action ?? "search";
+  if (action !== "search" && action !== "resume" && action !== "assemble") return reply({ error: "invalid_plan_request" }, 400);
+  if (action !== "search") {
+    const keys = action === "resume" ? ["action", "searchId"] : ["action", "searchId", "allowedOptionIds"];
+    if (Object.keys(body).some(key => !keys.includes(key)) || typeof body.searchId !== "string" || body.searchId.length > 100) return reply({ error: "invalid_plan_request" }, 400);
+    const entry = getAuctionGearSearch(user.id, body.searchId);
+    if (!entry) return reply({ error: "search_not_found" }, 404);
+    try {
+      if (action === "assemble") selectedAuctionGearOptions(entry, body.allowedOptionIds);
+      return reply(enqueueAuctionGearJob(user.id, async (signal, progress) => {
+        entry.busy = true;
+        try {
+          await verifyAuctionGearSearch(entry, user.token, signal);
+          return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress)
+            : await assembleAuctionGearSearch(entry, body.allowedOptionIds, signal, progress);
+        } finally { entry.busy = false; }
+      }, { continuation: true }), 202);
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "plan_queue_full";
+      return reply({ error: code }, code === "invalid_auction_selection" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
+    }
+  }
+  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "locale"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
   const {
     characterSlug,
     scenario = "single-target",
     locale = "ru"
   } = body;
-  if (typeof characterSlug !== "string" || !characterSlug || characterSlug.length > 180 || typeof scenario !== "string" || !["single-target", "aoe", "execute"].includes(scenario) || !["ru", "en"].includes(String(locale))) return reply({
+  if (typeof characterSlug !== "string" || !characterSlug || characterSlug.length > 180 || typeof scenario !== "string" || !["single-target", "aoe", "execute"].includes(scenario) || typeof locale !== "string" || !["ru", "en"].includes(locale)) return reply({
     error: "invalid_plan_request"
   }, 400);
   let budgetCopper: number;
@@ -96,13 +129,17 @@ export async function POST(request: Request) {
       error: "invalid_budget"
     }, 400);
   }
+  let selectedSlots;
+  try { selectedSlots = parseAuctionGearSlots(body.selectedSlots ?? [...auctionGearSlots]); }
+  catch { return reply({ error: "invalid_equipment_slots" }, 400); }
   try {
-    return reply(enqueueAuctionGearJob(user.id, (signal, progress) => runAuctionGearPlan({
+    return reply(enqueueAuctionGearJob(user.id, (signal, progress) => startAuctionGearSearch({
       characterSlug,
       budgetCopper,
+      selectedSlots,
       scenario: scenario as GearSimulationScenario,
       locale: locale as "ru" | "en"
-    }, user.token, signal, progress)), 202);
+    }, user.id, user.token, signal, progress)), 202);
   } catch (error) {
     const code = error instanceof Error ? error.message : "plan_queue_full";
     return reply({

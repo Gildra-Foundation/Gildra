@@ -47,6 +47,46 @@
 }
 .controls button { cursor: pointer; border-color: var(--atlas-accent); color: var(--atlas-accent); }
 .controls button:disabled { opacity: .6; cursor: default; }
+.button, .listToolbar select {
+  min-height: var(--atlas-control-height);
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--atlas-space-2) var(--atlas-space-3);
+  border: 1px solid var(--atlas-accent);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-raised);
+  color: var(--atlas-accent);
+  font: inherit;
+}
+.button { cursor: pointer; }
+.button:disabled { opacity: .6; cursor: default; }
+.actions, .selectionActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3); }
+.actions { margin-block: var(--atlas-space-4); }
+.selectionActions { margin-block: var(--atlas-space-2) var(--atlas-space-3); }
+.selectionActions .button { font-size: var(--atlas-text-small); }
+.slotFieldset { min-width: 0; margin: var(--atlas-space-4) 0; padding: var(--atlas-space-3) var(--atlas-space-4); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); }
+.slotFieldset legend { padding-inline: var(--atlas-space-2); color: var(--atlas-text-strong); font-weight: 700; }
+.slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-1) var(--atlas-space-3); }
+.slots label, .include { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: var(--atlas-control-height); min-width: 0; cursor: pointer; font-size: var(--atlas-text-small); }
+.slots label span, .include span { overflow-wrap: anywhere; }
+.slots input, .include input { flex: 0 0 auto; width: 18px; height: 18px; margin: 0; accent-color: var(--atlas-accent); }
+.slotFieldset:disabled label, .include:has(input:disabled) { cursor: default; }
+.slotFieldset:disabled { opacity: .7; }
+.listToolbar { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--atlas-space-3); margin-block: var(--atlas-space-4); }
+.listToolbar label { display: grid; gap: var(--atlas-space-2); min-width: 0; font-size: var(--atlas-text-small); }
+.listToolbar select { color: var(--atlas-text); border-color: var(--atlas-line); }
+.listToolbar p { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.optionDetails { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--atlas-space-4); margin-block: var(--atlas-space-4); align-items: center; }
+.individual { display: grid; gap: var(--atlas-space-1); min-width: 0; }
+.individual > strong { font-size: var(--atlas-text-small); color: var(--atlas-text-muted); }
+.delta { font: var(--atlas-weight-display) var(--atlas-text-title)/var(--atlas-leading-snug) var(--atlas-font-display); color: var(--atlas-text-strong); font-variant-numeric: tabular-nums; }
+.delta small { font: var(--atlas-text-small)/var(--atlas-leading-body) var(--atlas-font-ui); }
+.individual[data-positive] .delta, .confirmed { color: var(--atlas-positive); }
+.replacement { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3); min-width: 0; padding: var(--atlas-space-3); background: var(--atlas-surface-raised); border-left: 2px solid var(--atlas-line-strong); }
+.replacement > span:first-child { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.assembly { margin-top: var(--atlas-space-6); padding: var(--atlas-space-5); border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius); min-width: 0; }
+.assembly .result { margin-top: var(--atlas-space-5); }
+.feedback { padding-block: var(--atlas-space-3); border-block: 1px solid var(--atlas-line-strong); }
 .panel :is(input, select, button, summary):focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 3px; }
 .note, .market { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
 .totals, .dpsMetrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-5); }
@@ -71,7 +111,7 @@
 .lotHeader { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--atlas-space-5); align-items: start; }
 .purchase { display: grid; gap: var(--atlas-space-2); min-width: 0; }
 .price { display: grid; gap: var(--atlas-space-1); min-width: 0; text-align: end; }
-.price strong { color: var(--atlas-text-strong); font-size: var(--atlas-text-title); font-variant-numeric: tabular-nums; }
+.price strong { min-width: 0; overflow-wrap: anywhere; color: var(--atlas-text-strong); font-size: var(--atlas-text-title); font-variant-numeric: tabular-nums; }
 .price > span:last-child { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); overflow-wrap: anywhere; }
 .replacements { margin-top: var(--atlas-space-4); padding: var(--atlas-space-4); background: var(--atlas-surface-raised); border-left: 2px solid var(--atlas-line-strong); }
 .replacements > li { display: grid; grid-template-columns: minmax(8rem, .6fr) minmax(0, 1fr); align-items: center; gap: var(--atlas-space-4); }
@@ -82,10 +122,21 @@
 .empty { padding-block: var(--atlas-space-4); }
 .calculation { border-top: 1px solid var(--atlas-line-soft); margin-top: var(--atlas-space-4); }
 .calculation summary { min-height: var(--atlas-control-height); padding-block: var(--atlas-space-3); cursor: pointer; color: var(--atlas-accent); }
+@media (max-width: 760px) {
+  .slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 640px) {
   .panel { padding: var(--atlas-space-4); }
   .controls { gap: var(--atlas-space-3); }
   .controls button { width: 100%; }
+  .actions .button { width: 100%; }
+  .selectionActions { gap: var(--atlas-space-2); }
+  .selectionActions .button { flex: 1 1 8rem; }
+  .slotFieldset { padding-inline: var(--atlas-space-3); }
+  .listToolbar, .listToolbar label { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .optionDetails { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .replacement { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .assembly { padding: var(--atlas-space-3); }
   .totals, .dpsMetrics { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
   .totals > div, .dpsMetrics > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--atlas-space-3); }
   .totals dd, .dpsMetrics dd { margin: 0; text-align: end; font-size: var(--atlas-text-title); }
