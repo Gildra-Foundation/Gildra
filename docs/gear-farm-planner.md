@@ -2,6 +2,21 @@
 
 Published to `gildra.net` on 2026-10-15 at 20:43 UTC as `farm-gear-20261015-dcce589`, code revision `dcce589ea6e05051e42a51ffe2a25103f0d7060b`. The RU/EN character equipment panel and private `/api/wow/gear-farm-plans` jobs resolve source-specific leveling rewards and compare independent drops with the character's actual equipped baseline. Both web and the patched native worker were deployed. Fresh EN/RU character checks, public checks and the reviewed final observation passed. See the [deployment report](reports/farm-gear-deployment-20261015.md).
 
+## Result presentation
+
+Web release `gear-ui-20261015-2ae23b1` adds genuine framed location artwork,
+reward and current-item icons, boss/source labels and an explicit equipped-item
+comparison. Both planners share the character equipment tooltip, including
+verified native/current levels and stats, hover/focus, click/tap pinning,
+Escape and disclosure-close cleanup. Unknown scaling remains explicit and
+receives no guessed stats or item level. Independent DPS gains and their
+95% margins retain separate labels. Nine official instance images have
+hash/pixel provenance beside `public/assets/wow/instances/`; Tidebound Grotto
+uses the existing genuine Nymrissa portrait. Fresh postdeployment EN/RU Elkardia
+checks reproduced 9 exact variants, 15 simulations and 10 positive replacements,
+with all 10 source images and 88 reward/current icons. See the
+[verified UI release report](reports/gear-planner-ui-deployment-20261015.md).
+
 ## Proof chain
 
 1. Resolve the owned character on the server and read fresh Blizzard profile, specialization, talents and equipment. Developer QA accepts a trusted public snapshot internally; HTTP never accepts a client-supplied snapshot.

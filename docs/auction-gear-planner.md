@@ -53,8 +53,9 @@ Supported item modifiers follow the official SimC add-on exporter:
 
 Unknown types, duplicate types, invalid values and oversized lists are rejected.
 Context is preserved and serialized; SimC itself treats it as context metadata,
-while bonus IDs and supported modifiers determine the combat item. Result details
-retain the raw bonuses/context/modifiers so a player can identify the exact lot.
+while bonus IDs and supported modifiers determine the combat item. Server results
+retain the raw bonuses/context/modifiers; the purchase interface presents the
+resolved item properties, whole-lot price and equipped-item replacement.
 
 Equipment rules cover slot, class proficiency, armor specialization, weapon
 specialization, class/race/faction/level restrictions, unique equipped IDs and
@@ -72,6 +73,20 @@ than the comparison uncertainty; estimated training engines are rejected.
 The existing single-slot comparison now also validates the complete loadout.
 The worker accepts structured multiple-slot replacements and real-size armory
 JSON bodies (2 MiB HTTP limit; each armory section remains limited to 512 KiB).
+
+## Result presentation
+
+Release `gear-ui-20261015-2ae23b1` shows framed genuine new/current item icons and
+the shared character equipment tooltip with the exact native auction variant.
+Budget/spend/remaining gold, whole-lot quantity and price, current/candidate DPS
+and the measured whole-loadout gain are separately labelled. The interface
+explains DPS and the 95% comparison margin. Unknown properties are not replaced
+by catalog base stats. Late-created cancelled jobs are deleted, failed polls
+allow retry, and character/snapshot/specialization/locale changes clear results.
+Fresh postdeployment Elkardia EN/RU checks reproduced 15 gold within a 10,000-gold
+budget and 14,273 → 14,645 DPS (+2.6063%). See the
+[verified UI release report](reports/gear-planner-ui-deployment-20261015.md)
+for source/image identities, browser coverage and its authentication limit.
 
 ## Bounds and operational requirements
 
