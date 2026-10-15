@@ -85,15 +85,19 @@ export function WarcraftTooltip({ children, content, block = false, pinned = fal
       });
     };
     updatePosition();
-    const closeHidden = () => {
-      if (anchorRef.current?.getClientRects().length) return;
+    const dismissHidden = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       setHoverOpen(false);
       if (pinned) pinnedCloseRef.current?.();
     };
+    const closeHidden = () => {
+      if (anchorRef.current?.getClientRects().length) return;
+      dismissHidden();
+    };
     const onDisclosureToggle = (event: Event) => {
       const details = event.target;
-      if (details instanceof HTMLDetailsElement && !details.open && anchorRef.current && details.contains(anchorRef.current)) closeHidden();
+      // Closed details can retain layout rectangles in Chromium.
+      if (details instanceof HTMLDetailsElement && !details.open && anchorRef.current && details.contains(anchorRef.current)) dismissHidden();
     };
     const observer = new ResizeObserver(closeHidden);
     if (anchorRef.current) observer.observe(anchorRef.current);
