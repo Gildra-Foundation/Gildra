@@ -1,14 +1,47 @@
-# Auction gear planner: first stage
+# Auction gear search and exact loadout assembly
 
 Implementation: `apps/web/lib/wow/auctionGear*`, `auctionMarket*`,
 `gearCompatibility.ts`, `/api/wow/auction-gear-plans` and the character equipment page.
 
 ## Behaviour
 
-An authenticated player enters a gold budget and encounter type. The server
+An authenticated player selects combat slots, a gold budget and encounter type. The server
 resolves an owned Battle.net character, active specialization, talents, equipped
 items and the character's connected realm. Prices come from the regional Blizzard
 connected-realm auctions endpoint. There are no purchases or inventory mutations.
+
+Search and assembly are separate actions. Search returns every retained real
+lot/slot option, classified as a confirmed upgrade, not an upgrade, inconclusive,
+requiring a combined replacement, or pending. Price and DPS sorting and the
+incremental list display never truncate the server pool. Actual icons, native
+variant properties and the actual equipped replacement appear in the shared
+character tooltip, including independently localized current-item names.
+
+The private server context binds the original budget, selected slots, character,
+equipment, talents, encounter and market. Assembly accepts only retained option
+IDs allowed by the owner; client prices or statistics are never accepted.
+Unselected slots retain their current items. A non-Fury two-handed replacement
+can remove an equipped offhand only when OFF_HAND is also selected. Before each
+continuation/assembly, the server checks ownership, the canonical character
+snapshot and every retained lot's price, quantity and exact variant against a
+fresh conditional market read. Changed facts require a new search.
+
+The 28-option shortlist and beam have been removed. Assembly deterministically
+enumerates keep-current or one allowed option for every selected slot. Positive,
+negative and individually incompatible options remain available for interactions.
+Only monotone total-lot-cost/quantity constraints prune incomplete states; unique
+categories and hand compatibility are checked on the completed loadout. Equal
+item effects share native simulations without collapsing lot cost/quantity
+choices. Combined DPS is measured directly, never summed from individual gains.
+
+A serializable cursor, simulation cache and best measured result survive a chunk
+boundary. The default chunk allows 48 new native calls, 100,000 visited assignments
+and a 90-second runner window. These are continuation boundaries, not permanent
+pool or combination caps. Cache-only traversal yields cooperatively for
+cancellation. The highest measured DPS is claimed only when exhaustiveComplete
+is true; partial results show the best evaluated result so far. Equal maximum
+DPS uses the lowest total lot cost. Statistical significance is reported
+separately from the measured maximum; a noisy positive result is inconclusive.
 
 The planner identifies an auction variant by **item ID + context + exact bonus ID
 set + every modifier type/value pair**. Auction ID, price and quantity stay on
@@ -60,7 +93,8 @@ resolved item properties, whole-lot price and equipped-item replacement.
 Equipment rules cover slot, class proficiency, armor specialization, weapon
 specialization, class/race/faction/level restrictions, unique equipped IDs and
 limit categories. Fury two-handed pairs are handled separately; other two-handed
-replacements remove the off-hand item from the candidate snapshot. Profession,
+replacements remove the off-hand item from the candidate snapshot only if that
+slot was selected. Profession,
 ability, reputation and holiday requirements that cannot be confirmed from the
 snapshot exclude the candidate. Catalog limit-category quantities are respected.
 
@@ -68,8 +102,10 @@ All prices and budget calculations use integer copper. Buying a quantity-two lot
 costs its whole buyout once; a quantity-one lot cannot fill both ring slots.
 Alternatives and simultaneous swaps are simulated against the same immutable
 armory, talent and encounter snapshot. Set interactions can beat an individually
-negative swap. Results require the SimulationCraft engine and a gain greater
-than the comparison uncertainty; estimated training engines are rejected.
+negative swap. Results require the SimulationCraft engine; estimated training
+engines are rejected. Search marks a positive single replacement as confirmed
+only when its gain exceeds the 95% comparison margin. Exact assembly ranks
+measured full-loadout DPS and reports the margin independently.
 The existing single-slot comparison now also validates the complete loadout.
 The worker accepts structured multiple-slot replacements and real-size armory
 JSON bodies (2 MiB HTTP limit; each armory section remains limited to 512 KiB).
@@ -88,6 +124,40 @@ budget and 14,273 → 14,645 DPS (+2.6063%). See the
 [verified UI release report](reports/gear-planner-ui-deployment-20261015.md)
 for source/image identities, browser coverage and its authentication limit.
 
+## Slot-search verification
+
+Code source ca51c38621790f9f8b91ad00d62d316dd883bdef is bound to the actual QA by
+file hashes; the checks ran trusted host source rather than inside candidate web
+and did not create an authenticated browser session. Fresh Elkardia EN/RU checks
+returned all 608 retained lot/slot rows across 16 selected slots, naturally paused
+and continued over three chunks and 134 native simulations, and found ten
+confirmed wrist improvements. All 608 recommended/current icons are present.
+All 47 distinct Russian candidate names match fresh official Russian controls;
+current names match the official Russian equipment snapshot. Mechanical fields,
+prices and DPS match across locales independently of translated text.
+
+For the complete found HEAD/WRIST pool, an independent recursion checks all 22
+assignments against actual cached native results, proving a 15-gold maximum at
+14,645 DPS from the 14,273 baseline. An explicit selected-option exclusion checks
+all remaining 20 assignments and finds an alternative real lot at the same
+maximum. Locked slots remain unchanged. Full 16-slot assembly was not attempted.
+
+The existing normal auction regression entry point includes the exhaustive suite
+(ten-slot nonlinear synergy, resumability, shared-lot economics, repaired unique
+pairs, locking, uncertainty, engine drift and cancellation). A separate explicitly
+synthetic offline 16-slot oracle covers 65,536 states with an independent nonlinear
+objective and budget; 54,951 are valid and 10,585 are over budget. It makes no
+native or API request and is not real-character evidence.
+
+The first focused QA failure is preserved separately: the published catalog API
+rejects externalIds combined with category. Corrected code uses the supported externalIds contract. Release
+`auction-slots-20261015-ca51c38` was deployed at 23:08:31 UTC and verified at
+23:17:49 UTC. Fresh production EN/RU repeated the 608-row search and complete
+22/20-assignment focused/excluded assemblies. The seven staging gates, public
+checks and 527.975-second observation pass. See the
+[verified slot-search release report](reports/auction-slot-plans-deployment-20261015.md)
+for image identities, exact scope, recovery and evidence.
+
 ## Bounds and operational requirements
 
 - DPS optimization supports melee and ranged damage specializations. Tank,
@@ -103,23 +173,29 @@ for source/image identities, browser coverage and its authentication limit.
   items and resolves at most 256 distinct variants, up to three per item. Cheap
   and high-base-ilvl catalog items seed that bounded pool; effective ilvl is always
   resolved natively before recommendation. Native resolution batches contain at
-  most 16 items and have a 60-second deadline. At most 28 options across slots and
-  48 DPS simulations test singles, paired weapon/category swaps and a beam of
-  combined loadouts. This is the best tested loadout, not proof of a global optimum.
-  The UI discloses bounds and matched-lot coverage.
+  most 16 items and have a 60-second deadline. Every retained lot/slot option is
+  returned; discovery limits remain visible through searchLimited and coverage.
+  Search and exact assembly continue in bounded chunks. exhaustiveComplete proves
+  the highest measured DPS over the allowed found pool, not the entire market.
+  A large Cartesian pool can require many continuations; no full-market or
+  uncompleted maximum is claimed.
 - Baseline constraints must be available for every equipped combat item. Missing
   constraints stop the calculation rather than assume equipment is compatible.
 - Whole-lot prices exclude new enchants and gems. The unchanged slots retain
   their current enchants and gems. Offers are snapshots and cannot be reserved.
-- Jobs are private to the authenticated owner. One active job per owner, a bounded
-  queue, start throttling, cancellation, a ten-minute execution deadline and
-  thirty-minute result expiry bound resource use.
+- Jobs are private to the authenticated owner. One active job per owner, eight
+  queued jobs, start throttling (three new searches and sixty continuations per
+  minute), cancellation, a ten-minute execution deadline and thirty-minute result
+  expiry bound resource use. Private search contexts expire after thirty inactive
+  minutes and are limited to three per owner and forty globally; inactive contexts
+  can be evicted. Continuation refreshes the active context lifetime.
 - Jobs/cache are **in process**, following the current optimizer architecture.
   A restart loses them. Multiple replicas require sticky routing or a shared
   durable queue before horizontal scaling. Browser cancellation does not cancel
   unrelated users' work.
-- Deploy the web and backend changes together. No database migration is needed.
-  The worker must include `infra/simc/gear-metadata.patch` and the new
+- The slot-search release changes web only and uses the existing API/worker. No
+  database migration or import is needed.
+  The worker must include `infra/simc/gear-metadata.patch` and the existing
   `POST /v1/wow/gear/variants` endpoint. An old binary fails explicitly with
   `variant_metadata_worker_upgrade_required`; it is never accepted as a resolver.
   The patch exports native metadata, includes active proc-only items in that
@@ -138,6 +214,9 @@ node --experimental-strip-types --no-warnings --import ./tests/atlas/resolve.mjs
 node --experimental-strip-types --no-warnings --import ./tests/atlas/resolve.mjs scripts/test-auction-gear.mjs
 node --experimental-strip-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-services.mjs
 node --experimental-strip-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-variants.mjs
+node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-api.mjs
+node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-search-store.mjs
+node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-equipment.mjs
 ```
 
 From `backend`: `go test ./internal/rotationlab ./internal/catalog ./internal/httpapi`.
