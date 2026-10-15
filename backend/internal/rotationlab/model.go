@@ -14,12 +14,19 @@ type ArmorySnapshot struct {
 // GearChange is one explicit, actor-scoped equipment replacement. The worker
 // deliberately accepts structured numeric modifiers instead of a raw SimC
 // fragment so callers cannot smuggle arbitrary simulator options through it.
+type ItemModifier struct {
+	Type  int `json:"type"`
+	Value int `json:"value"`
+}
+
 type GearChange struct {
-	Slot      string `json:"slot"`
-	ItemID    int    `json:"itemId"`
-	BonusIDs  []int  `json:"bonusIds,omitempty"`
-	EnchantID int    `json:"enchantId,omitempty"`
-	GemIDs    []int  `json:"gemIds,omitempty"`
+	ContextID int            `json:"contextId,omitempty"`
+	Modifiers []ItemModifier `json:"modifiers,omitempty"`
+	Slot      string         `json:"slot"`
+	ItemID    int            `json:"itemId"`
+	BonusIDs  []int          `json:"bonusIds,omitempty"`
+	EnchantID int            `json:"enchantId,omitempty"`
+	GemIDs    []int          `json:"gemIds,omitempty"`
 }
 
 type SimulationInput struct {
@@ -31,6 +38,7 @@ type SimulationInput struct {
 	APLRules           []APLRule       `json:"aplRules,omitempty"`
 	TalentLoadout      string          `json:"talentLoadout,omitempty"`
 	Armory             *ArmorySnapshot `json:"armory,omitempty"`
+	GearChanges        []GearChange    `json:"gearChanges,omitempty"`
 	GearChange         *GearChange     `json:"gearChange,omitempty"`
 	SkipBaseline       bool            `json:"skipBaseline,omitempty"`
 }

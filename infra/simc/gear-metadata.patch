@@ -1,0 +1,47 @@
+--- a/engine/report/json/report_json.cpp
++++ b/engine/report/json/report_json.cpp
+@@ -384,7 +384,7 @@
+   for ( slot_e slot = SLOT_MIN; slot < SLOT_MAX; slot++ )
+   {
+     const item_t& item = p.items[ slot ];
+-    if ( !item.active() || !item.has_stats() )
++    if ( !item.active() )
+     {
+       continue;
+     }
+@@ -393,6 +393,25 @@
+     slotnode[ "name" ] = item.name_str;
+     slotnode[ "encoded_item" ] = item.encoded_item();
+     slotnode[ "ilevel" ] = item.item_level();
++    // Gildra: expose resolved item metadata, without changing simulator mechanics.
++    slotnode[ "gildra_metadata_version" ] = 1;
++    slotnode[ "id" ] = item.parsed.data.id;
++    slotnode[ "required_level" ] = item.parsed.data.req_level;
++    slotnode[ "item_class" ] = item.parsed.data.item_class;
++    slotnode[ "item_subclass" ] = item.parsed.data.item_subclass;
++    slotnode[ "inventory_type" ] = item.parsed.data.inventory_type;
++    slotnode[ "quality" ] = item.parsed.data.quality;
++    slotnode[ "unique_equipped" ] = ( item.parsed.data.flags_1 & ITEM_FLAG_UNIQUE_EQUIPPED ) != 0;
++    slotnode[ "set_id" ] = item.parsed.data.id_set;
++    int unknown_bonuses = 0;
++    for ( auto bonus : item.parsed.bonus_id )
++      if ( p.dbc->item_bonus( bonus ).empty() ) ++unknown_bonuses;
++    slotnode[ "unknown_bonus_count" ] = unknown_bonuses;
++    slotnode[ "redirected_stats_known" ] = item.parsed.redirect_item_id == 0 ||
++      p.dbc->item( item.parsed.redirect_item_id ).id != 0;
++    slotnode[ "content_tuning_known" ] = item.parsed.content_tuning_id == 0 ||
++      p.dbc->content_tuning( item.parsed.content_tuning_id ).id != 0;
++
+ 
+     for ( size_t i = 0; i < std::size( item.parsed.data.stat_type_e ); i++ )
+     {
+--- a/engine/item/item.cpp
++++ b/engine/item/item.cpp
+@@ -89,6 +89,7 @@
+     data(),
+     initial_cd( timespan_t::zero() ),
+     drop_level( 0 ),
++    content_tuning_id( 0 ),
+     has_midnight_scaling( false ),
+     redirect_item_id( 0 ),
+     base_level_priority( std::numeric_limits<int>::max() ),

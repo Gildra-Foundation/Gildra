@@ -1093,6 +1093,8 @@ export interface operations {
                 category?: string;
                 /** @description Repeatable taxonomy paths combined with AND semantics. Use one value per facet, for example class plus specialization plus equipment slot. */
                 facet?: string[];
+                /** @description Exact published IDs, comma separated. Requires limit=100; cannot combine with q, category, facet, dataset or cursor. Counts are omitted. */
+                externalIds?: number[];
                 /** @description Stable game item class identifier, for example 2 for weapons and 4 for armor. */
                 itemClassId?: number;
                 /** @description Minimum stored base item level. Applies to item records. */

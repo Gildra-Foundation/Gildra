@@ -42,6 +42,7 @@ import {
   type TalentScenarioId,
 } from "@/lib/wow/testCharacterTalentAudit";
 import { SpecSignatureFx } from "@/components/talents/spec-signature/SpecSignatureFx";
+import { AuctionGearOptimizer } from "./AuctionGearOptimizer";
 import { DeferredMount } from "./DeferredMount";
 import { CharacterBookNavigation } from "./CharacterBookNavigation";
 import { CharacterBookChapter as CharacterChapter } from "./CharacterBookChapter";
@@ -383,7 +384,10 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
           </div>
         </section>
 
-        {dataMode === "battle-net" ? <DeferredMount minHeight={420}><CharacterGearOptimizer localePrefix={localePrefix} characterSlug={snapshot.slug} specializationSlug={snapshot.specialization.slug} gear={snapshot.gear} snapshotKey={snapshotKey} /></DeferredMount> : null}
+        {dataMode === "battle-net" ? <DeferredMount minHeight={420}>
+          <AuctionGearOptimizer key={`auction:${snapshotKey}`} characterSlug={snapshot.slug} snapshotKey={snapshotKey} specializationSlug={snapshot.specialization.slug} localePrefix={localePrefix} />
+          <CharacterGearOptimizer key={`gear:${snapshotKey}`} localePrefix={localePrefix} characterSlug={snapshot.slug} specializationSlug={snapshot.specialization.slug} gear={snapshot.gear} snapshotKey={snapshotKey} />
+        </DeferredMount> : null}
 
         {talentAudit ? <><section className={styles.plan} id="audit-actions">
           <div className={`${styles.panelMotion} ${styles.motionPlan}`} aria-hidden="true"><i /><i /><i /><span /></div>

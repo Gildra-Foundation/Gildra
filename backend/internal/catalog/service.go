@@ -359,6 +359,7 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 		) recipe_info ON e.entity_type='recipe'
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','item_requirements','class_mask',requirements.allowable_class_mask::text,
+				'required_level',requirements.required_level,'required_skill_id',requirements.required_skill_id,'required_skill_rank',requirements.required_skill_rank,
 				'race_mask_0',requirements.allowable_race_mask_0::text,'race_mask_1',requirements.allowable_race_mask_1::text,
 				'required_ability_id',requirements.required_ability_id,'faction_id',requirements.min_faction_id,'reputation',requirements.min_reputation,
 				'holiday_id',requirements.required_holiday_id,'transmog_holiday_id',requirements.required_transmog_holiday_id))
@@ -369,6 +370,9 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 			SELECT CASE WHEN count(*)=0 THEN '[]'::jsonb ELSE jsonb_build_array(jsonb_build_object(
 				'type','item_variants','entries',jsonb_agg(jsonb_build_object(
 					'key',variant.variant_key,'item_level',variant.item_level,'quality',variant.quality,
+					'context_id',variant.context_id,'bonus_list_ids',variant.bonus_list_ids,
+					'crafted_quality',variant.crafted_quality,'upgrade_track_id',variant.upgrade_track_id,
+					'upgrade_rank',variant.upgrade_rank,'modifiers',COALESCE(variant.attributes->'modifiers','[]'::jsonb),
 					'source_artifact_id',variant.source_artifact_id,
 					'stats',COALESCE((SELECT jsonb_agg(jsonb_build_object(
 						'index',stat.stat_index,'type',stat.stat_type,'value',stat.value,
@@ -742,6 +746,7 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 		) recipe_info ON e.entity_type='recipe'
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','item_requirements','class_mask',requirements.allowable_class_mask::text,
+				'required_level',requirements.required_level,'required_skill_id',requirements.required_skill_id,'required_skill_rank',requirements.required_skill_rank,
 				'race_mask_0',requirements.allowable_race_mask_0::text,'race_mask_1',requirements.allowable_race_mask_1::text,
 				'required_ability_id',requirements.required_ability_id,'faction_id',requirements.min_faction_id,'reputation',requirements.min_reputation,
 				'holiday_id',requirements.required_holiday_id,'transmog_holiday_id',requirements.required_transmog_holiday_id))
@@ -752,6 +757,9 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 			SELECT CASE WHEN count(*)=0 THEN '[]'::jsonb ELSE jsonb_build_array(jsonb_build_object(
 				'type','item_variants','entries',jsonb_agg(jsonb_build_object(
 					'key',variant.variant_key,'item_level',variant.item_level,'quality',variant.quality,
+					'context_id',variant.context_id,'bonus_list_ids',variant.bonus_list_ids,
+					'crafted_quality',variant.crafted_quality,'upgrade_track_id',variant.upgrade_track_id,
+					'upgrade_rank',variant.upgrade_rank,'modifiers',COALESCE(variant.attributes->'modifiers','[]'::jsonb),
 					'source_artifact_id',variant.source_artifact_id,
 					'stats',COALESCE((SELECT jsonb_agg(jsonb_build_object(
 						'index',stat.stat_index,'type',stat.stat_type,'value',stat.value,

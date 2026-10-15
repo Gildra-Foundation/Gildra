@@ -96,8 +96,8 @@ func TestValidateInputRejectsInvalidGearReplacementBeforeSimulation(t *testing.T
 	}
 	input.GearChange.Slot = "trinket1"
 	input.GearChange.BonusIDs = nil
-	if err := ValidateInput(input); err == nil {
-		t.Fatal("unversioned item accepted")
+	if err := ValidateInput(input); err != nil {
+		t.Fatalf("base variant without bonuses rejected: %v", err)
 	}
 	input.GearChange.BonusIDs = []int{12345, 12345}
 	if err := ValidateInput(input); err == nil {

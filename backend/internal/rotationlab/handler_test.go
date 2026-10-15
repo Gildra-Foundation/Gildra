@@ -45,3 +45,18 @@ func TestSimulateRejectsInvalidRules(t *testing.T) {
 		t.Fatalf("status = %d", response.Code)
 	}
 }
+
+func TestSimulateAcceptsRealArmoryLargerThan16KiB(t *testing.T) {
+	mux := http.NewServeMux()
+	NewHandler(fakeAPI{}).Register(mux)
+	input := SimulationInput{Spec: "fury-warrior", Scenario: "single-target", FightLengthSeconds: 120, Targets: 1, Rules: []string{"rampage"}, TalentLoadout: strings.Repeat("A", 30), Armory: &ArmorySnapshot{Profile: json.RawMessage(`{"name":"` + strings.Repeat("x", 20<<10) + `"}`), Specializations: json.RawMessage(`{}`), Equipment: json.RawMessage(`{}`)}, GearChanges: []GearChange{{Slot: "head", ItemID: 123}}}
+	data, err := json.Marshal(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/v1/wow/rotation/simulations", strings.NewReader(string(data))))
+	if response.Code != http.StatusCreated {
+		t.Fatalf("armory rejected: %d %s", response.Code, response.Body.String())
+	}
+}

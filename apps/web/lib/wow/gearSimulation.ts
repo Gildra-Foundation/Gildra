@@ -1,4 +1,6 @@
+import { supportedAuctionModifiers } from "./gearItemModifiers";
 import { createHash } from "node:crypto";
+import { isTwoHandWeapon, supportsTitanGrip, validateGearLoadout, type GearLoadoutItem } from "./gearCompatibility";
 import type { GearCandidate, GearCandidateVariant } from "./gearCandidates";
 
 export type GearSimulationScenario = "single-target" | "aoe" | "execute";
@@ -12,6 +14,8 @@ export type SimcGearChange = {
   slot: string;
   itemId: number;
   bonusIds: number[];
+  contextId?: number;
+  modifiers?: Array<{type:number;value:number}>;
   enchantId?: number;
   gemIds?: number[];
 };
@@ -19,6 +23,8 @@ export type SimcGearChange = {
 type RawEquippedItem = {
   item?: { id?: number };
   slot?: { type?: string };
+  bonus_list?: number[];
+  inventory_type?: { type?: string };
 };
 
 const simcSlotByBattleNet: Record<string, string> = {
@@ -41,7 +47,8 @@ function equippedItems(equipment: Record<string, unknown>) {
 
 export function selectGearVariant(candidate: GearCandidate, key: string): GearCandidateVariant {
   const variant = candidate.variants.find((entry) => entry.key === key);
-  if (!variant || !variant.bonusIds.length) throw new Error("simulation_variant_not_found");
+  if (!variant) throw new Error("simulation_variant_not_found");
+  if (!supportedAuctionModifiers(variant.modifiers??[])) throw new Error("unsupported_item_modifiers");
   return variant;
 }
 
@@ -51,6 +58,7 @@ export function prepareGearChange(input: {
   variantKey: string;
   customization?: GearCustomization;
   equipment: Record<string, unknown>;
+  loadout?: GearLoadoutItem[];
 }): SimcGearChange {
   const slotType = input.slotType.toUpperCase();
   const simcSlot = simcSlotByBattleNet[slotType];
@@ -58,14 +66,21 @@ export function prepareGearChange(input: {
   const variant = selectGearVariant(input.candidate, input.variantKey);
   const equipped = equippedItems(input.equipment);
   const current = equipped.find((item) => item.slot?.type === slotType);
-  if (!current?.item?.id) throw new Error("equipped_slot_missing");
-  if (current.item.id === input.candidate.itemId) throw new Error("candidate_matches_equipped_item");
+  if (current?.item?.id === input.candidate.itemId) {
+    if (!Array.isArray(current.bonus_list)) throw new Error("equipped_variant_unverified");
+    if ([...current.bonus_list].sort((a,b)=>a-b).join(",") === [...variant.bonusIds].sort((a,b)=>a-b).join(",") && !variant.modifiers?.length && input.customization?.enchantId === undefined && !input.customization?.gemIds?.length) throw new Error("candidate_matches_equipped_variant");
+  }
   if (input.candidate.constraints.uniqueEquipped && equipped.some((item) => item.slot?.type !== slotType && item.item?.id === input.candidate.itemId)) {
     throw new Error("unique_equipped_conflict");
   }
-  if (slotType === "MAIN_HAND" && input.candidate.inventoryType === 17 && equipped.some((item) => item.slot?.type === "OFF_HAND" && item.item?.id)) {
+  if (slotType === "MAIN_HAND" && isTwoHandWeapon(input.candidate.inventoryType) && !supportsTitanGrip(input.candidate.compatibility.specId, input.candidate.itemSubclassId) && equipped.some((item) => item.slot?.type === "OFF_HAND" && item.item?.id)) {
     throw new Error("two_hand_requires_offhand_removal");
   }
+  if (input.loadout) validateGearLoadout([
+    ...input.loadout.filter((item) => item.slotType !== slotType),
+    candidateLoadoutItem(input.candidate),
+  ], input.candidate.compatibility.specId);
+  else if (input.candidate.constraints.limitCategoryId) throw new Error("equipment_constraints_unverified");
   const enchantId = input.customization?.enchantId;
   const gemIds = input.customization?.gemIds ?? [];
   if (enchantId !== undefined && (!integerId(enchantId) || !enchantableSlots.has(slotType))) throw new Error("invalid_enchant_for_slot");
@@ -74,6 +89,8 @@ export function prepareGearChange(input: {
     slot: simcSlot,
     itemId: input.candidate.itemId,
     bonusIds: [...variant.bonusIds],
+    ...(variant.contextId ? {contextId:variant.contextId}:{}),
+    ...(variant.modifiers?.length ? {modifiers:[...variant.modifiers]}:{}),
     ...(enchantId ? { enchantId } : {}),
     ...(gemIds.length ? { gemIds: [...gemIds] } : {}),
   };
@@ -87,6 +104,8 @@ export function gearComparisonFingerprint(input: {
   targets: number;
   rules: string[];
   change?: SimcGearChange;
+  changes?: SimcGearChange[];
+  engineVersion?: string;
 }) {
   return createHash("sha256").update(JSON.stringify(input)).digest("hex");
 }
@@ -109,4 +128,27 @@ export function compareGearSimulationResults(
     confidence: Math.min(baseline.confidence || 95, candidate.confidence || 95),
     uncertainty: { marginDps: Math.ceil(marginDps), marginPercent: marginDps / baseline.dps * 100, significant: Math.abs(deltaDps) > marginDps },
   };
+}
+
+export function candidateLoadoutItem(candidate: GearCandidate): GearLoadoutItem {
+  return { slotType: candidate.slotType, itemId: candidate.itemId, inventoryType: candidate.inventoryType,
+    itemSubclassId: candidate.itemSubclassId, ...candidate.constraints };
+}
+export function prepareGearLoadout(input: {
+  selections: Array<{candidate: GearCandidate; variantKey: string; customization?: GearCustomization}>;
+  equipment: Record<string, unknown>; loadout: GearLoadoutItem[]; specId: number;
+}) {
+  const replaced = new Set(input.selections.map((s)=>s.candidate.slotType));
+  if (replaced.size !== input.selections.length) throw new Error("duplicate_equipment_slot");
+  const main = input.selections.find((s)=>s.candidate.slotType === "MAIN_HAND")?.candidate;
+  const removeOffhand = Boolean(main && isTwoHandWeapon(main.inventoryType) && !supportsTitanGrip(input.specId, main.itemSubclassId));
+  if (removeOffhand && replaced.has("OFF_HAND")) throw new Error("two_hand_offhand_conflict");
+  const final = [...input.loadout.filter((item)=>!replaced.has(item.slotType) && !(removeOffhand && item.slotType === "OFF_HAND")), ...input.selections.map(s=>candidateLoadoutItem(s.candidate))];
+  validateGearLoadout(final, input.specId);
+  const equipment = removeOffhand ? {...input.equipment, equipped_items: equippedItems(input.equipment).filter((item)=>item.slot?.type !== "OFF_HAND")} : input.equipment;
+  // Validate each replacement against the final state, allowing simultaneous swaps of unique categories.
+  const changes = input.selections.map(({candidate,variantKey,customization})=>prepareGearChange({slotType:candidate.slotType,candidate,variantKey,customization,equipment: {
+    ...equipment, equipped_items: equippedItems(equipment).filter(item=>!replaced.has(item.slot?.type ?? "") || item.slot?.type === candidate.slotType),
+  },loadout: final.filter(item=>item.slotType!==candidate.slotType)}));
+  return { changes, equipment, removedSlots: removeOffhand && input.loadout.some(i=>i.slotType==="OFF_HAND") ? ["OFF_HAND"] : [] };
 }

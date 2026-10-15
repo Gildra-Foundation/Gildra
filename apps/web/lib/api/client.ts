@@ -159,6 +159,7 @@ export async function getCatalogPreview(locale: "en_US" | "ru_RU"): Promise<Cata
 }
 
 export type CatalogPageParams = {
+  externalIds?: number[];
   locale: "en_US" | "ru_RU";
   product?: string;
   dataset?: string;
@@ -179,6 +180,7 @@ export type CatalogPageParams = {
 };
 
 export async function getCatalogPage({
+  externalIds,
   locale,
   product = "wow",
   dataset = "",
@@ -200,6 +202,7 @@ export async function getCatalogPage({
   timeoutMs = 15_000,
 }: CatalogPageParams): Promise<CatalogPage> {
   const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: String(includeTotal) });
+  if (externalIds?.length) params.set("externalIds", externalIds.join(","));
   if (dataset) params.set("dataset", dataset);
   if (type) params.set("type", type);
   if (query) params.set("q", query);

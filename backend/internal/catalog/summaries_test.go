@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -95,5 +96,26 @@ func TestSummaryOrderByUsesIndexFriendlyOrderWithoutSearch(t *testing.T) {
 	}
 	if got := summaryOrderBy("frost"); got != "search_match.rank DESC NULLS LAST,entity.id" {
 		t.Fatalf("ranked-query order=%q", got)
+	}
+}
+
+func TestExternalIDsRejectsAmbiguousBatchFilters(t *testing.T) {
+	for _, params := range []SummaryParams{
+		{ExternalIDs: []int64{1}, Limit: 20},
+		{ExternalIDs: []int64{1}, Limit: 100, Query: "sword"},
+		{ExternalIDs: []int64{1}, Limit: 100, Category: "equipment"},
+		{ExternalIDs: []int64{0}, Limit: 100},
+		{ExternalIDs: []int64{10000001}, Limit: 100},
+		{ExternalIDs: make([]int64, 101), Limit: 100},
+	} {
+		if err := validateExternalIDs(params); err == nil {
+			t.Fatalf("invalid batch accepted: %+v", params)
+		}
+	}
+	if err := validateExternalIDs(SummaryParams{ExternalIDs: []int64{1, 9999}, Limit: 100}); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(summaryFastQuery, "$11") {
+		t.Fatal("ordinary queries must retain their existing parameter and index path")
 	}
 }

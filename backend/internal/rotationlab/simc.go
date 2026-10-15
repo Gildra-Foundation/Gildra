@@ -198,6 +198,9 @@ func (e *SimCEngine) profileForInput(input SimulationInput, tempDir string) (str
 		if input.GearChange != nil {
 			profile += serializeGearChange(*input.GearChange) + "\n"
 		}
+		for _, change := range input.GearChanges {
+			profile += serializeGearChange(change) + "\n"
+		}
 		if err := os.WriteFile(path, []byte(profile), 0o600); err != nil {
 			return "", fmt.Errorf("write armory SimulationCraft profile: %w", err)
 		}
@@ -251,7 +254,32 @@ func (e *SimCEngine) profileForInput(input SimulationInput, tempDir string) (str
 }
 
 func serializeGearChange(change GearChange) string {
-	parts := []string{change.Slot + "=gildra_candidate", "id=" + strconv.Itoa(change.ItemID)}
+	parts := []string{change.Slot + "=gildra_candidate", "id=" + strconv.Itoa(change.ItemID), "source=local"}
+	if change.ContextID > 0 {
+		parts = append(parts, "context="+strconv.Itoa(change.ContextID))
+	}
+	crafted := map[int]int{}
+	for _, m := range change.Modifiers {
+		switch m.Type {
+		case 9:
+			parts = append(parts, "drop_level="+strconv.Itoa(m.Value))
+		case 28:
+			parts = append(parts, "content_tuning="+strconv.Itoa(m.Value))
+		case 64:
+			parts = append(parts, "redirected_base_stats="+strconv.Itoa(m.Value))
+		case 29, 30:
+			crafted[m.Type] = m.Value
+		}
+	}
+	var stats []string
+	for _, t := range []int{29, 30} {
+		if crafted[t] > 0 {
+			stats = append(stats, strconv.Itoa(crafted[t]))
+		}
+	}
+	if len(stats) > 0 {
+		parts = append(parts, "crafted_stats="+strings.Join(stats, "/"))
+	}
 	if len(change.BonusIDs) > 0 {
 		values := make([]string, len(change.BonusIDs))
 		for index, id := range change.BonusIDs {

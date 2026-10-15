@@ -16,6 +16,7 @@ func NewWorkerHandler(engine SimulationEngine) *WorkerHandler { return &WorkerHa
 
 func (h *WorkerHandler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /healthz", h.health)
+	h.RegisterGearVariants(mux)
 	mux.HandleFunc("GET /v1/wow/rotation/{slug}", h.preset)
 	mux.HandleFunc("POST /v1/wow/rotation/simulations", h.simulate)
 }
@@ -74,4 +75,8 @@ func (h *WorkerHandler) simulate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Gildra-Engine", "simulationcraft")
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(result)
+}
+
+func (h *WorkerHandler) RegisterGearVariants(mux *http.ServeMux) {
+	mux.HandleFunc("POST /v1/wow/gear/variants", h.resolveVariants)
 }

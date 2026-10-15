@@ -80,15 +80,29 @@ func ValidateInput(input SimulationInput) error {
 			return errors.New("armory simulations require an explicit talent loadout")
 		}
 	}
+	if len(input.GearChanges) > 19 || (input.GearChange != nil && len(input.GearChanges) > 0) {
+		return errors.New("invalid gear replacement count")
+	}
+	changes := input.GearChanges
 	if input.GearChange != nil {
-		change := input.GearChange
+		changes = append(changes, *input.GearChange)
+	}
+	seenSlots := map[string]bool{}
+	for _, change := range changes {
+		if seenSlots[change.Slot] {
+			return errors.New("duplicate gear slot")
+		}
+		seenSlots[change.Slot] = true
 		if input.Armory == nil {
 			return errors.New("gear replacement requires an armory snapshot")
 		}
 		if !simCGearSlots[change.Slot] || change.ItemID <= 0 || change.ItemID > 10_000_000 {
 			return errors.New("invalid gear replacement")
 		}
-		if len(change.BonusIDs) == 0 || len(change.BonusIDs) > 20 || change.EnchantID < 0 || change.EnchantID > 10_000_000 || len(change.GemIDs) > 3 {
+		if err := validateItemModifiers(change); err != nil {
+			return err
+		}
+		if len(change.BonusIDs) > 20 || change.EnchantID < 0 || change.EnchantID > 10_000_000 || len(change.GemIDs) > 3 {
 			return errors.New("invalid gear modifiers")
 		}
 		seenModifiers := map[int]bool{}
@@ -248,4 +262,38 @@ func indexOf(values []string, value string) int {
 func round(value float64, precision int) float64 {
 	power := math.Pow10(precision)
 	return math.Round(value*power) / power
+}
+
+// Mirrors the official SimC add-on's item-link exporter; raw crafting reagent
+// identities are retained in the request, while their effects come from bonuses.
+func validateItemModifiers(change GearChange) error {
+	if change.ContextID < 0 || change.ContextID > 10000 || len(change.Modifiers) > 24 {
+		return errors.New("invalid item context or modifiers")
+	}
+	seen := map[int]bool{}
+	for _, m := range change.Modifiers {
+		if seen[m.Type] || m.Value < 0 || m.Value > 10000000 {
+			return errors.New("invalid or duplicate item modifier")
+		}
+		seen[m.Type] = true
+		switch m.Type {
+		case 9:
+			if m.Value < 1 || m.Value > 90 {
+				return errors.New("invalid drop level")
+			}
+		case 28, 64:
+			if m.Value < 1 {
+				return errors.New("invalid item modifier")
+			}
+		case 29, 30:
+			if m.Value != 32 && m.Value != 36 && m.Value != 40 && m.Value != 49 {
+				return errors.New("unsupported crafted stat")
+			}
+		default:
+			if m.Type < 38 || m.Type > 51 {
+				return errors.New("unsupported item modifier")
+			}
+		}
+	}
+	return nil
 }

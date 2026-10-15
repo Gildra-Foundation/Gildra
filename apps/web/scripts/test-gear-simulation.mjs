@@ -24,7 +24,7 @@ function candidate(overrides = {}) {
 }
 
 const ordinary = prepareGearChange({ slotType: "CHEST", candidate: candidate(), variantKey: "mythic", equipment });
-assert.deepEqual(ordinary, { slot: "chest", itemId: 2001, bonusIds: [12040, 12345] });
+assert.deepEqual(ordinary, { slot: "chest", itemId: 2001, bonusIds: [12040, 12345], contextId:16 });
 
 const setPiece = prepareGearChange({ slotType: "CHEST", candidate: candidate({ itemId: 2002, constraints: { uniqueEquipped: false, crafted: false, setId: 991, setName: "Season set", allowableClassMask: "1", requiredLevel: 90 } }), variantKey: "mythic", equipment });
 assert.equal(setPiece.itemId, 2002, "set item was not preserved as an ordinary verified replacement");
@@ -39,7 +39,7 @@ assert.equal(prepareGearChange({ slotType: "TRINKET_1", candidate: trinket, vari
 const wrist = candidate({ itemId: 2005, slotType: "WRIST", inventoryType: 9 });
 assert.deepEqual(prepareGearChange({ slotType: "WRIST", candidate: wrist, variantKey: "mythic", customization: { enchantId: 8888, gemIds: [250001] }, equipment }).gemIds, [250001]);
 assert.throws(() => prepareGearChange({ slotType: "TRINKET_1", candidate: trinket, variantKey: "mythic", customization: { gemIds: [250001] }, equipment }), /invalid_gems_for_slot/);
-assert.throws(() => prepareGearChange({ slotType: "CHEST", candidate: candidate({ itemId: 1001 }), variantKey: "mythic", equipment }), /candidate_matches_equipped_item/);
+assert.throws(() => prepareGearChange({ slotType: "CHEST", candidate: candidate({ itemId: 1001 }), variantKey: "mythic", equipment }), /equipped_variant_unverified/);
 assert.throws(() => prepareGearChange({ slotType: "CHEST", candidate: candidate({ eligible: false }), variantKey: "mythic", equipment }), /candidate_slot_mismatch/);
 assert.throws(() => prepareGearChange({ slotType: "CHEST", candidate: candidate(), variantKey: "invented", equipment }), /simulation_variant_not_found/);
 

@@ -39,6 +39,7 @@ type CardSummary struct {
 }
 
 type SummaryParams struct {
+	ExternalIDs      []int64
 	Product          string
 	Type             string
 	Locale           string
@@ -104,6 +105,13 @@ var summaryFastQuery = `
 	ORDER BY entity.id LIMIT $5`
 
 func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryPage, error) {
+	if len(params.ExternalIDs) > 0 {
+		if err := validateExternalIDs(params); err != nil {
+			return SummaryPage{}, err
+		}
+		params.IncludeTotal = false
+	}
+
 	if params.Limit < 1 || params.Limit > 100 {
 		return SummaryPage{}, errors.New("limit must be between 1 and 100")
 	}
@@ -277,8 +285,14 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		return nil
 	}
 	if query == "" && len(filterPaths) == 0 {
-		rows, err := s.postgres.Query(ctx, summaryFastQuery, product, strings.TrimSpace(params.Type), cursorID, locale,
-			params.Limit+1, params.MinItemLevel, params.MaxItemLevel, params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID)
+		queryText := summaryFastQuery
+		args := []any{product, strings.TrimSpace(params.Type), cursorID, locale,
+			params.Limit + 1, params.MinItemLevel, params.MaxItemLevel, params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID}
+		if len(params.ExternalIDs) > 0 {
+			queryText = strings.Replace(queryText, "AND entity.id>$3", "AND entity.external_id=ANY($11::bigint[]) AND entity.id>$3", 1)
+			args = append(args, params.ExternalIDs)
+		}
+		rows, err := s.postgres.Query(ctx, queryText, args...)
 		if err != nil {
 			return SummaryPage{}, fmt.Errorf("list game entity summaries: %w", err)
 		}
@@ -612,4 +626,17 @@ func (s *Service) inSearchTransaction(ctx context.Context, run func(pgx.Tx) erro
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+// Batch ID lookups use the indexed publication path, without search ranking.
+func validateExternalIDs(params SummaryParams) error {
+	if len(params.ExternalIDs) > 100 || params.Limit != 100 || params.Query != "" || params.Category != "" || len(params.Facets) > 0 || params.Dataset != "" || params.Cursor != "" {
+		return errors.New("externalIds requires at most 100 IDs, limit=100, and no search, category, dataset or cursor")
+	}
+	for _, id := range params.ExternalIDs {
+		if id <= 0 || id > 10000000 {
+			return errors.New("invalid externalIds")
+		}
+	}
+	return nil
 }

@@ -46,7 +46,7 @@ func (h *Handler) getPreset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) simulate(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
+	r.Body = http.MaxBytesReader(w, r.Body, 2<<20)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	var input SimulationInput

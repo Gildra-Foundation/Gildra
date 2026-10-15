@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     if (!theme) return reply({ error: "specialization_unresolved" }, 422);
     const pool = await getGearCandidatesForEquippedItem({
       itemId: equipped.id, itemName: equipped.name, itemLevel: equipped.itemLevel, slotType,
-      classId: character.playableClass.id, specId: theme.specId, characterLevel: character.level, locale,
+      classId: character.playableClass.id, specId: theme.specId, characterLevel: character.level, raceId:character.playableRace.id, faction:character.faction.type, locale,
     });
     return reply({
       character: { slug: body!.characterSlug, name: character.name, classId: character.playableClass.id, specId: theme.specId },

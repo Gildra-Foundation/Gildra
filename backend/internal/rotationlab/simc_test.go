@@ -56,7 +56,7 @@ func TestSimCProfileAppliesOnlyStructuredGearReplacement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "main_hand=gildra_candidate,id=268264,bonus_id=12040/12345,enchant_id=7777,gem_id=250001/250002"
+	want := "main_hand=gildra_candidate,id=268264,source=local,bonus_id=12040/12345,enchant_id=7777,gem_id=250001/250002"
 	if !strings.Contains(string(payload), want) {
 		t.Fatalf("gear override missing: %q", payload)
 	}
@@ -371,5 +371,40 @@ func TestSimCCastsPreservesPlaybackTraceDensity(t *testing.T) {
 	}
 	if casts[0].Time != 0 || casts[len(casts)-1].Time != 299.5 {
 		t.Fatalf("sampling lost timeline endpoints: first=%v last=%v", casts[0].Time, casts[len(casts)-1].Time)
+	}
+}
+
+func TestSimCMultipleGearChangesAreSerializedAfterArmory(t *testing.T) {
+	engine := &SimCEngine{iterations: 1}
+	input := SimulationInput{Spec: "fury-warrior", TalentLoadout: strings.Repeat("A", 30), Armory: &ArmorySnapshot{Profile: json.RawMessage(`{}`), Specializations: json.RawMessage(`{}`), Equipment: json.RawMessage(`{"equipped_items":[]}`)}, GearChanges: []GearChange{{Slot: "head", ItemID: 123, BonusIDs: []int{12, 34}}, {Slot: "chest", ItemID: 456}}}
+	input.Scenario = "single-target"
+	input.Targets = 1
+	input.FightLengthSeconds = 60
+	input.Rules = []string{"rampage"}
+	if err := ValidateInput(input); err != nil {
+		t.Fatal(err)
+	}
+	path, err := engine.profileForInput(input, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	profile := string(data)
+	for _, line := range []string{"head=gildra_candidate,id=123,source=local,bonus_id=12/34", "chest=gildra_candidate,id=456"} {
+		if !strings.Contains(profile, line) || strings.Index(profile, line) < strings.Index(profile, "local_json=") {
+			t.Fatalf("override missing or misplaced: %s", profile)
+		}
+	}
+	input.GearChanges = append(input.GearChanges, input.GearChanges[0])
+	if ValidateInput(input) == nil {
+		t.Fatal("duplicate slot accepted")
+	}
+	input.GearChanges = input.GearChanges[:2]
+	input.GearChange = &GearChange{Slot: "feet", ItemID: 789}
+	if ValidateInput(input) == nil {
+		t.Fatal("mixed single and multiple changes accepted")
 	}
 }

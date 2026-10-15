@@ -56,6 +56,7 @@ func run() error {
 			return err
 		}
 		rotationlab.NewHandler(rotationlab.NewServiceWithEngine(postgres, engine)).Register(mux)
+		rotationlab.NewWorkerHandler(engine).RegisterGearVariants(mux)
 		mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			_, _ = w.Write([]byte(`{"status":"ok","engine":"simulationcraft","storage":"postgres"}`))
@@ -66,7 +67,7 @@ func run() error {
 		Handler:           mux,
 		ReadHeaderTimeout: 3 * time.Second,
 		ReadTimeout:       5 * time.Second,
-		WriteTimeout:      55 * time.Second,
+		WriteTimeout:      70 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

@@ -97,12 +97,12 @@ export function CharacterGearOptimizer({ characterSlug, specializationSlug, gear
     return () => { active = false; controller.abort(); };
   }, [characterSlug, slotType, snapshotKey, reloadNonce, locale]);
 
-  const verified = useMemo(() => (payload?.candidates ?? []).filter((candidate) => candidate.eligible && candidate.source.evidence === "catalog" && candidate.season.status === "current" && candidate.variants.some((variant) => variant.bonusIds.length)), [payload]);
+  const verified = useMemo(() => (payload?.candidates ?? []).filter((candidate) => candidate.eligible && candidate.source.evidence === "catalog" && candidate.season.status === "current" && candidate.variants.some((variant) => Array.isArray(variant.bonusIds))).flatMap(candidate => candidate.variants.map(variant => ({...candidate, variants:[variant]}))), [payload]);
   const filtered = useMemo(() => verified.filter((candidate) => filter === "all" || sourceGroup(candidate.source) === filter).sort((a, b) => {
     const aVariant = a.variants[0], bVariant = b.variants[0];
     const aResult = aVariant && results[resultKey(a, aVariant, scenario)];
     const bResult = bVariant && results[resultKey(b, bVariant, scenario)];
-    return Number(Boolean(bResult)) - Number(Boolean(aResult)) || (bResult?.deltaPercent ?? -Infinity) - (aResult?.deltaPercent ?? -Infinity) || b.itemLevel - a.itemLevel;
+    return Number(Boolean(bResult)) - Number(Boolean(aResult)) || (bResult?.deltaPercent ?? -Infinity) - (aResult?.deltaPercent ?? -Infinity) || bVariant.itemLevel - aVariant.itemLevel;
   }), [verified, filter, results, scenario]);
 
   async function simulate(candidate: Candidate) {

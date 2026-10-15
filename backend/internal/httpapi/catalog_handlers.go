@@ -147,6 +147,9 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 	if request.Params.Facet != nil {
 		params.Facets = append([]string(nil), (*request.Params.Facet)...)
 	}
+	if request.Params.ExternalIds != nil {
+		params.ExternalIDs = *request.Params.ExternalIds
+	}
 	params.ItemClassID = request.Params.ItemClassId
 	params.MinItemLevel = request.Params.MinItemLevel
 	params.MaxItemLevel = request.Params.MaxItemLevel
@@ -163,7 +166,7 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 	}
 	page, err := s.catalog.Summaries(ctx, params)
 	if err != nil {
-		if strings.Contains(err.Error(), "cursor") || strings.Contains(err.Error(), "limit") || strings.Contains(err.Error(), "ItemLevel") || strings.Contains(err.Error(), "item level") || strings.Contains(err.Error(), "RequiredLevel") || strings.Contains(err.Error(), "required level") || strings.Contains(err.Error(), "itemClassId") || strings.Contains(err.Error(), "dataset") || strings.Contains(err.Error(), "facet") {
+		if strings.Contains(err.Error(), "cursor") || strings.Contains(err.Error(), "limit") || strings.Contains(err.Error(), "ItemLevel") || strings.Contains(err.Error(), "item level") || strings.Contains(err.Error(), "RequiredLevel") || strings.Contains(err.Error(), "required level") || strings.Contains(err.Error(), "itemClassId") || strings.Contains(err.Error(), "dataset") || strings.Contains(err.Error(), "facet") || strings.Contains(err.Error(), "externalIds") {
 			return api.ListGameEntitySummaries400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{
 				Code: "invalid_page", Message: err.Error(),
 			}}, nil
