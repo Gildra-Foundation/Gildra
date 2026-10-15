@@ -2,6 +2,9 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { getRotationPreset } from "@/lib/platform/rotation/repository";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
+import { journalInstanceIcon } from "@/lib/games/wow/assets";
+import { getBoss } from "@/lib/lairs";
+import { addPlannerItemIcons } from "../gearPlannerMedia";
 import { getBattleNetCharacterBySlug, type BattleNetCharacter } from "../battleNetCharacters";
 import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from "../battleNetCharacterDetails";
 import { catalogLoadoutItem, gearSlotCategoryPaths } from "../gearCandidates";
@@ -10,6 +13,7 @@ import { farmRules, endgameFarmRules, farmAccess, normalLootMask } from "./rules
 import { getFarmLoot, type FarmLoot } from "./repository";
 import { sourceTargets, sortFarmActivities, type EquippedFarmItem } from "./planner";
 import { resolveFarmRewards } from "./rewards";
+import { equippedFarmItemPresentation } from "./presentation";
 import { confirmFarmImprovements, farmSimulationScenario } from "./confirmation";
 import type { GearPlanSimulation } from "../auctionGearPlanner";
 import type { FarmActivity, FarmProgress, GearFarmInput, GearFarmResult } from "./types";
@@ -50,6 +54,7 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
   const loadout = equipment.map(e => {
     const entity = entities.find(i => i.externalId === e.itemId);
     if (!entity) throw new Error("equipment_constraints_unverified");
+    e.presentation = equippedFarmItemPresentation(raw.find(item => item.item?.id === e.itemId && item.slot?.type === e.slotType), entity);
     return catalogLoadoutItem(entity, e.slotType);
   });
   const activities: FarmActivity[] = [];
@@ -64,6 +69,7 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
     });
     const activity: FarmActivity = {
       ...rule,
+      imageUrl: journalInstanceIcon(rule.slug) ?? (rule.slug === "tidebound-grotto" ? getBoss("nymrissa-wavecaller", input.locale)?.portrait : undefined),
       access: farmAccess(rule, character.level, equippedItemLevel),
       targets: [],
       lootItemsChecked: 0,
@@ -86,6 +92,7 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
       // exact published instance lookup, not a fuzzy item-name match.
       activity.instanceEntityId = source.instance.id;
       activity.journalInstanceId = source.instance.externalId;
+      activity.imageUrl ??= source.instance.iconUrl;
     }
     const loot = source.loot.filter(l => normalLootMask(l.difficultyMask));
     lootByActivity.set(activity.id, loot);
@@ -143,6 +150,7 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
     const rank = (state: typeof activity.targets[number]["verification"]) => ({ simulated: 0, item_level: 1, variant_verified: 2, scaling_unverified: 3, not_upgrade: 4 })[state];
     activity.targets.sort((a, b) => rank(a.verification) - rank(b.verification) || (b.deltaPercent ?? 0) - (a.deltaPercent ?? 0) || a.currentItemLevel - b.currentItemLevel || a.itemId - b.itemId || a.slotType.localeCompare(b.slotType));
   }
+  await addPlannerItemIcons(activities.flatMap(activity => activity.targets.flatMap(target => [target, ...(target.currentItem ? [target.currentItem] : [])])), character.region, token, signal);
   signal.throwIfAborted();
   return {
     character: {

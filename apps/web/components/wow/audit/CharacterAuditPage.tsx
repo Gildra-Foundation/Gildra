@@ -1,7 +1,7 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, createContext, useContext, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { type CSSProperties, type ReactNode, createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { WarcraftTooltip as SharedWarcraftTooltip } from "./WarcraftTooltip";
 import dynamic from "next/dynamic";
 import {
   AlertTriangle,
@@ -24,7 +24,6 @@ import {
   Trophy,
   Users,
   Wrench,
-  X,
   Zap,
 } from "lucide-react";
 import {
@@ -499,115 +498,10 @@ function GearItem({ item, pinned, hoverDisabled, onSelect, onHighlight }: { item
   return <WarcraftTooltip block pinned={pinned} hoverDisabled={hoverDisabled} onPinnedClose={() => onSelect(item)} content={<GearTooltipContent item={item} pinned={pinned} />}><button type="button" aria-pressed={pinned} aria-label={`${item.name}, ${tr("Уровень предмета")} ${item.itemLevel}. ${tr(gearStateLabels[item.state])}. ${pinned ? tr("Описание открыто") : tr("Открыть описание предмета")}`} data-quality={item.details.quality} className={`${styles.gearItem} ${stateClass} ${weaponClass} ${pinned ? styles.gearPinned : ""}`} onClick={() => onSelect(item)} onPointerEnter={() => onHighlight(item.slot)} onPointerLeave={() => onHighlight(null)} onFocus={() => onHighlight(item.slot)} onBlur={() => onHighlight(null)}><ItemIcon src={item.iconUrl} tone={iconTone} level={item.itemLevel} /><span className={styles.gearCopy}><small>{item.slot}</small><b>{item.name}</b><em className={styles.gearItemMeta}><strong>{item.itemLevel}</strong>{item.details.enchant ? <i data-active={item.details.enchant.active || undefined} title={item.details.enchant.active ? tr("Чары установлены") : tr("Чары отсутствуют")}>✦</i> : null}{item.details.sockets?.map((socket, index) => <i key={`${socket.gem}-${index}`} data-socket={socket.color} data-active={socket.filled || undefined} title={socket.gem} />)}</em></span>{item.state === "issue" || item.state === "missing" ? <AlertTriangle /> : null}</button></WarcraftTooltip>;
 }
 
-function WarcraftTooltip({ children, content, block = false, pinned = false, hoverDisabled = false, onPinnedClose }: { children: ReactNode; content: ReactNode; block?: boolean; pinned?: boolean; hoverDisabled?: boolean; onPinnedClose?: () => void }) {
-  const tr = useCharacterText();
-  const bookTheme = useContext(CharacterBookTheme);
-  const id = useId();
-  const anchorRef = useRef<HTMLSpanElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const pinnedCloseRef = useRef(onPinnedClose);
-  pinnedCloseRef.current = onPinnedClose;
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wasPinnedRef = useRef(pinned);
-  const suppressHoverRef = useRef(false);
-  const [hoverOpen, setHoverOpen] = useState(false);
-  const [position, setPosition] = useState({ left: 12, top: 12, side: "bottom" as "top" | "bottom" });
-  const open = pinned || hoverOpen;
-
-  const updatePosition = useCallback(() => {
-    const anchor = anchorRef.current;
-    if (!anchor) return;
-    const rect = anchor.getBoundingClientRect();
-    const tooltipWidth = Math.min(420, window.innerWidth - 24);
-    const tooltipHeight = Math.min(tooltipRef.current?.offsetHeight ?? 420, window.innerHeight - 24);
-    const left = Math.max(12, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 12));
-    const spaceAbove = rect.top - 12;
-    const spaceBelow = window.innerHeight - rect.bottom - 12;
-    const side = spaceAbove >= tooltipHeight || spaceAbove > spaceBelow ? "top" : "bottom";
-    const top = side === "top"
-      ? Math.max(tooltipHeight + 12, rect.top - 10)
-      : Math.min(rect.bottom + 10, window.innerHeight - tooltipHeight - 12);
-    setPosition({ left, top, side });
-  }, []);
-
-  const show = () => {
-    if (hoverDisabled || suppressHoverRef.current) return;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      updatePosition();
-      setHoverOpen(true);
-    }, 120);
-  };
-  const hide = () => {
-    suppressHoverRef.current = false;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setHoverOpen(false), 70);
-  };
-
-  useEffect(() => {
-    if (pinned) {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      suppressHoverRef.current = false;
-      setHoverOpen(false);
-      updatePosition();
-    } else if (wasPinnedRef.current) {
-      suppressHoverRef.current = true;
-      setHoverOpen(false);
-    }
-    wasPinnedRef.current = pinned;
-  }, [pinned, updatePosition]);
-
-  useEffect(() => {
-    if (hoverDisabled) setHoverOpen(false);
-  }, [hoverDisabled]);
-
-  useEffect(() => {
-    if (!open) return;
-    let frame = 0;
-    const schedulePosition = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(() => {
-        frame = 0;
-        updatePosition();
-      });
-    };
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", schedulePosition, { capture: true, passive: true });
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", schedulePosition, true);
-    };
-  }, [open, updatePosition]);
-
-  const hasPinnedClose = Boolean(onPinnedClose);
-  useEffect(() => {
-    if (!pinned || !hasPinnedClose) return;
-    if (window.matchMedia("(max-width: 560px)").matches) closeRef.current?.focus();
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      pinnedCloseRef.current?.();
-      anchorRef.current?.querySelector("button")?.focus();
-    };
-    window.addEventListener("keydown", onEscape);
-    return () => window.removeEventListener("keydown", onEscape);
-  }, [pinned, hasPinnedClose]);
-
-  useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }, []);
-
-  const closePinned = () => {
-    onPinnedClose?.();
-    anchorRef.current?.querySelector("button")?.focus();
-  };
-
-  return <>
-    <span ref={anchorRef} className={`${styles.tooltipAnchor} ${block ? styles.tooltipBlock : ""}`} aria-describedby={open ? id : undefined} onPointerEnter={show} onPointerLeave={hide} onFocusCapture={show} onBlurCapture={hide}>{children}</span>
-    {open ? createPortal(<div ref={tooltipRef} id={id} role={pinned ? "dialog" : "tooltip"} aria-label={pinned ? tr("Описание предмета") : undefined} data-pinned={pinned || undefined} data-character-atlas={bookTheme || undefined} className={`${styles.warcraftTooltip} ${position.side === "top" ? styles.tooltipTop : styles.tooltipBottom} ${bookTheme ? `gildra-atlas ${atlas.tooltip}` : ""}`} style={{ left: position.left, top: position.top } as CSSProperties}>{pinned && onPinnedClose ? <div className={styles.tooltipControls}><button ref={closeRef} type="button" onClick={closePinned} aria-label={tr("Закрыть описание предмета")}><X /></button></div> : null}{content}</div>, document.body) : null}
-  </>;
+function WarcraftTooltip(props: { children: ReactNode; content: ReactNode; block?: boolean; pinned?: boolean; hoverDisabled?: boolean; onPinnedClose?: () => void }) {
+  const locale = useContext(CharacterPageLanguage);
+  const atlasScope = useContext(CharacterBookTheme);
+  return <SharedWarcraftTooltip {...props} locale={locale} atlasScope={atlasScope} />;
 }
 
 function HelpTip({ title, children }: { title: string; children: ReactNode }) {

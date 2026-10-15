@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import { MapPin } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import type { FarmActivity, FarmTarget, GearFarmJob, GearFarmResult } from "@/lib/wow/gearFarm/types";
+import { GearPlannerItem } from "./GearPlannerItem";
 import styles from "./gearFarmPlanner.module.css";
 
 const copy = {
@@ -16,7 +19,7 @@ const copy = {
     normal: "Обычная сложность", raidFinder: "Поиск рейда", world: "Мировая сложность логова", worldGroup: "Совместный бой на 5–40 игроков; можно встать в очередь одному", recommended: "Рекомендуется ур. предметов", alternativeUnlock: "Альтернатива: персонаж {level} ур. в отряде.", moreLoot: "Ещё целей добычи",
     assumptions: "Открытие заданий и наличие дополнения на аккаунте не подтверждены. Подходящий уровень не гарантирует прохождение: учитывайте группу и механики.",
     potential: "Возможное улучшение по уровню предмета; прирост DPS не рассчитан.", scaling: "Для целей с отметкой «Масштабирование не подтверждено» уровень награды нужно проверить в игровом атласе.", scalingStatus: "Масштабирование не подтверждено", noConfirmed: "В проверенных вариантах подтверждённых улучшений не найдено.", variantVerified: "Вариант награды проверен; прирост DPS ещё не рассчитан.", notUpgrade: "Прирост DPS выше погрешности не подтверждён.", comparisonNote: "Прирост каждой вещи рассчитан отдельно от текущей экипировки: одна цель, 120 секунд. Эти проценты не суммируются.", queueGear: "Поиск группы: минимум ур. предметов", queueMet: "условие экипировки выполнено", queueNotMet: "экипировки для очереди недостаточно", queueUnknown: "условие экипировки не подтверждено", margin95: "95% доверительный интервал", baseline: "DPS текущей экипировки",
-    measured: "Проверено симуляцией", current: "Сейчас", loot: "Добыча", boss: "Босс", source: "Условия доступа — Blizzard", details: "Покрытие и проверка данных",
+    measured: "Проверено симуляцией", dpsGain: "Прирост DPS", replaces: "Заменяет", current: "Надето", loot: "Добыча", boss: "Босс", source: "Условия доступа — Blizzard", details: "Покрытие и проверка данных",
     checked: "Проверено предметов добычи", variants: "Точных вариантов", simulations: "Симуляций", instances: "Мест проверено", unverified: "Вариантов с неподтверждённым масштабированием",
     limited: "Поиск ограничен опубликованными местами и подтверждёнными таблицами добычи. Это не полный список способов получить экипировку.",
     empty: "В проверенной добыче не найдено подходящих улучшений. Неподтверждённые варианты не считаются улучшением.",
@@ -36,7 +39,7 @@ const copy = {
     normal: "Normal difficulty", raidFinder: "Raid Finder", world: "World difficulty lair", worldGroup: "Shared encounter for 5–40 players; you can queue alone", recommended: "Recommended item level", alternativeUnlock: "Alternative: a level {level} character in your Warband.", moreLoot: "More loot targets",
     assumptions: "Quest unlocks and expansion ownership are not confirmed. Meeting the level requirement does not guarantee a clear: group composition and mechanics still matter.",
     potential: "Potential item-level improvement; DPS gain has not been measured.", scaling: "Check the reward level in the in-game Adventure Guide for targets marked “Scaling unverified”.", scalingStatus: "Scaling unverified", noConfirmed: "No upgrades were confirmed among the tested options.", variantVerified: "Reward variant verified; DPS gain has not been measured yet.", notUpgrade: "No DPS gain beyond uncertainty was confirmed.", comparisonNote: "Each item is compared separately with your equipped gear: one target, 120 seconds. These percentages cannot be added together.", queueGear: "Dungeon Finder: minimum item level", queueMet: "gear requirement met", queueNotMet: "gear requirement not met", queueUnknown: "gear requirement unverified", margin95: "95% confidence interval", baseline: "Equipped-gear DPS",
-    measured: "Verified by simulation", current: "Equipped", loot: "Loot", boss: "Boss", source: "Access requirements — Blizzard", details: "Coverage and data verification",
+    measured: "Verified by simulation", dpsGain: "DPS gain", replaces: "Replaces", current: "Equipped", loot: "Loot", boss: "Boss", source: "Access requirements — Blizzard", details: "Coverage and data verification",
     checked: "Loot items checked", variants: "Exact variants", simulations: "Simulations", instances: "Locations checked", unverified: "Variants with unverified scaling",
     limited: "Search covers published locations and confirmed loot tables. It does not cover every way to obtain gear.",
     empty: "No compatible upgrades were found in the checked loot. Unverified variants are not counted as upgrades.",
@@ -64,23 +67,36 @@ function waitForPoll(signal: AbortSignal) {
     signal.addEventListener("abort", abort, { once: true });
   });
 }
-function Target({ target, c, ru }: { target: FarmTarget; c: Copy; ru: boolean }) {
+function ActivityIcon({ src }: { src?: string }) {
+  const [failed, setFailed] = useState<string | null>(null);
+  return <span className={styles.activityIcon} aria-hidden="true">{src && failed !== src ? <Image src={src} alt="" fill sizes="64px" unoptimized onError={() => setFailed(src)} /> : <MapPin />}</span>;
+}
+function Target({ target, activityName, c, ru }: { target: FarmTarget; activityName: string; c: Copy; ru: boolean }) {
   const number = (n: number) => new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2 }).format(n);
+  const verified = target.verification !== "scaling_unverified";
+  const item = {
+    itemId: target.itemId, name: target.name, iconUrl: target.iconUrl, quality: target.quality,
+    slotType: target.slotType, source: target.source ?? `${activityName} · ${target.encounterName}`,
+    ...(verified ? { itemLevel: target.itemLevel, requiredLevel: target.requiredLevel, stats: target.stats, statLines: target.statLines, effects: target.effects } : {}),
+  };
+  const measured = target.verification === "simulated" && target.deltaPercent !== undefined && target.deltaDps !== undefined;
   return <li className={styles.target} data-farm-verification={target.verification}>
-    <div><strong>{target.name}</strong><span>{slotNames[target.slotType]?.[ru ? 0 : 1] ?? c.slots} · {c.boss}: {target.encounterName}</span></div>
-    <p>{c.current}: {number(target.currentItemLevel)}{target.verification !== "scaling_unverified" && target.itemLevel !== undefined ? <> → {c.loot}: {number(target.itemLevel)}</> : null}</p>
-    {target.verification === "simulated" && target.deltaPercent !== undefined && target.deltaDps !== undefined ? <p className={styles.gain}>{c.measured}: +{number(target.deltaPercent)}% DPS · +{number(target.deltaDps)} DPS{target.marginPercent !== undefined ? ` · ${c.margin95}: ±${number(target.marginPercent)}%` : ""}</p> : <p className={styles.note}>{target.verification === "item_level" ? c.potential : target.verification === "not_upgrade" ? c.notUpgrade : target.verification === "variant_verified" ? c.variantVerified : c.scalingStatus}</p>}
+    <div className={styles.targetHeading}>
+      <div className={styles.reward}><GearPlannerItem item={item} locale={ru ? "ru" : "en"} verified={verified} /><span className={styles.rewardMeta}>{slotNames[target.slotType]?.[ru ? 0 : 1] ?? c.slots} · {c.boss}: {target.encounterName}</span></div>
+      {measured ? <div className={styles.gain}><span>{c.dpsGain}</span><strong>+{number(target.deltaPercent!)}%</strong><span>+{number(target.deltaDps!)} DPS</span>{target.marginPercent !== undefined ? <span>{c.margin95}: ±{number(target.marginPercent)}%</span> : null}</div> : <p className={styles.verification}>{target.verification === "item_level" ? c.potential : target.verification === "not_upgrade" ? c.notUpgrade : target.verification === "variant_verified" ? c.variantVerified : c.scalingStatus}</p>}
+    </div>
+    <div className={styles.replacement}><span>{c.replaces}</span>{target.currentItem ? <GearPlannerItem item={target.currentItem} locale={ru ? "ru" : "en"} /> : <span>{c.current}: {number(target.currentItemLevel)}</span>}</div>
   </li>;
 }
 function Activity({ activity, c, ru }: { activity: FarmActivity; c: Copy; ru: boolean }) {
   return <li className={styles.activity} data-farm-access={activity.access}>
-    <header className={styles.activityHeader}><h4>{activity.name}</h4><span>{activity.difficulty === "raid-finder" ? c.raidFinder : activity.difficulty === "world" ? c.world : c.normal}</span></header>
+    <header className={styles.activityHeader}><ActivityIcon src={activity.imageUrl} /><div><h4>{activity.name}</h4><span>{activity.difficulty === "raid-finder" ? c.raidFinder : activity.difficulty === "world" ? c.world : c.normal}</span></div></header>
     <p className={styles.requirements}>{activity.difficulty === "world" ? c.worldGroup : activity.group === "raid" ? c.groupRaid : c.groupDungeon}{activity.minLevel !== undefined ? ` · ${c.requiresLevel}: ${activity.minLevel}` : ""}{activity.minItemLevel !== undefined ? ` · ${c.requiresGear}: ${activity.minItemLevel}` : ""}</p>
     {activity.queueMinItemLevel !== undefined ? <p className={styles.note}>{c.queueGear}: {activity.queueMinItemLevel} · {activity.queueGearSatisfied === true ? c.queueMet : activity.queueGearSatisfied === false ? c.queueNotMet : c.queueUnknown}</p> : null}
     {activity.recommendedItemLevel !== undefined ? <p className={styles.note}>{c.recommended}: {activity.recommendedItemLevel}</p> : null}
     {activity.access === "unlock_unverified" ? <p className={styles.note}>{c.unlock}{activity.unlockLevel !== undefined ? ` ${c.alternativeUnlock.replace("{level}", String(activity.unlockLevel))}` : ""}</p> : null}
     {activity.targets.some(target => target.verification === "scaling_unverified") ? <p className={styles.note}>{c.scaling}</p> : null}
-    {activity.targets.length ? <><ul className={styles.targets}>{activity.targets.slice(0, 4).map(target => <Target key={`${target.itemId}:${target.slotType}:${target.encounterId}`} target={target} c={c} ru={ru} />)}</ul>{activity.targets.length > 4 ? <details className={styles.moreTargets}><summary>{c.moreLoot}: {activity.targets.length - 4}</summary><ul className={styles.targets}>{activity.targets.slice(4).map(target => <Target key={`${target.itemId}:${target.slotType}:${target.encounterId}`} target={target} c={c} ru={ru} />)}</ul></details> : null}</> : <p className={styles.note}>{c.noTargets}</p>}
+    {activity.targets.length ? <><ul className={styles.targets}>{activity.targets.slice(0, 4).map(target => <Target key={`${target.itemId}:${target.slotType}:${target.encounterId}`} target={target} activityName={activity.name} c={c} ru={ru} />)}</ul>{activity.targets.length > 4 ? <details className={styles.moreTargets}><summary>{c.moreLoot}: {activity.targets.length - 4}</summary><ul className={styles.targets}>{activity.targets.slice(4).map(target => <Target key={`${target.itemId}:${target.slotType}:${target.encounterId}`} target={target} activityName={activity.name} c={c} ru={ru} />)}</ul></details> : null}</> : <p className={styles.note}>{c.noTargets}</p>}
     <a href={activity.sourceUrl} target="_blank" rel="noopener noreferrer">{c.source}</a>
   </li>;
 }

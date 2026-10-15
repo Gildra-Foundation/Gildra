@@ -2,11 +2,13 @@ import { normalizeGearCandidate, type CatalogGearEntity, type GearCandidateConte
 import { candidateLoadoutItem } from "../gearSimulation";
 import { normalizeInventoryType, isTwoHandWeapon, supportsTitanGrip, validateGearLoadout, type GearLoadoutItem } from "../gearCompatibility";
 import type { FarmActivity, FarmTarget } from "./types";
+import type { GearPlannerItemData } from "../gearPlannerPresentation";
 import type { FarmLoot } from "./repository";
 export type EquippedFarmItem = {
   itemId: number;
   slotType: string;
   itemLevel: number;
+  presentation?: GearPlannerItemData;
 };
 export function primaryStatFor(classId: number, specId: number) {
   const byClass: Record<number, string> = {
@@ -106,11 +108,14 @@ export function sourceTargets(input: {
       itemId: candidate.itemId,
       entityId: candidate.entityId,
       name: candidate.name,
+      ...(candidate.iconUrl ? { iconUrl: candidate.iconUrl } : {}),
       slotType: equipped.slotType,
       currentItemId: equipped.itemId,
       currentItemLevel: equipped.itemLevel,
+      ...(equipped.presentation ? { currentItem: equipped.presentation } : {}),
       encounterId: loot.encounterId,
       encounterName: loot.encounterName,
+      source: `${input.activity.name} · ${loot.encounterName}`,
       verification: "scaling_unverified"
     });
   }

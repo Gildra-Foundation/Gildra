@@ -100,6 +100,25 @@ export const ABILITY_ICONS: Record<string, string> = {
   "bloodlust": "/assets/abilities/bloodlust.jpg",
 };
 
+/** Official JournalInstance.ButtonSmallFileDataID images from client 12.1.5.
+ * Source identities, archive ranges and lossless conversion hashes accompany
+ * the local files in /assets/wow/instances/provenance.json. */
+export const JOURNAL_INSTANCE_ICONS: Record<string, string> = {
+  "windrunner-spire": "/assets/wow/instances/windrunner-spire.webp",
+  "magisters-terrace": "/assets/wow/instances/magisters-terrace.webp",
+  "murder-row": "/assets/wow/instances/murder-row.webp",
+  "the-blinding-vale": "/assets/wow/instances/the-blinding-vale.webp",
+  "maisara-caverns": "/assets/wow/instances/maisara-caverns.webp",
+  "den-of-nalorakk": "/assets/wow/instances/den-of-nalorakk.webp",
+  "voidscar-arena": "/assets/wow/instances/voidscar-arena.webp",
+  "nexus-point-xenas": "/assets/wow/instances/nexus-point-xenas.webp",
+  "venomous-abyss": "/assets/wow/instances/venomous-abyss.webp",
+};
+
+export function journalInstanceIcon(slug: string): string | null {
+  return Object.hasOwn(JOURNAL_INSTANCE_ICONS, slug) ? JOURNAL_INSTANCE_ICONS[slug] : null;
+}
+
 export function specIcon(name: string, classSlug?: string, specSlug?: string): string | null {
   const a = SPEC_ICONS[name] ?? (classSlug && specSlug ? SPEC_SLUG_ICONS[`${classSlug}:${specSlug}`] : undefined);
   return a ? `/assets/specs/${a}.jpg` : null;

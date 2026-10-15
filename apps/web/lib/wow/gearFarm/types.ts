@@ -1,16 +1,19 @@
+import type { GearPlannerItemData } from "../gearPlannerPresentation";
+
 export type FarmAccess = "level_condition_met" | "unlock_unverified" | "level_locked" | "gear_locked";
 export type FarmProgress = {
   phase: "sources" | "rewards" | "simulating";
   completed: number;
   total: number;
 };
-export type FarmTarget = {
+export type FarmTarget = GearPlannerItemData & {
   itemId: number;
   entityId: string;
   name: string;
   slotType: string;
   currentItemId: number;
   currentItemLevel: number;
+  currentItem?: GearPlannerItemData;
   encounterId: number;
   encounterName: string;
   verification: "simulated" | "item_level" | "scaling_unverified" | "not_upgrade" | "variant_verified";
@@ -33,6 +36,7 @@ export type FarmActivity = {
   slug: string;
   instanceEntityId?: string;
   journalInstanceId?: number;
+  imageUrl?: string;
   difficulty: "normal" | "raid-finder" | "world";
   access: FarmAccess;
   unlockLevel?: number;

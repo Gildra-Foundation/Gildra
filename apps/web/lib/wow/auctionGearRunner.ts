@@ -10,10 +10,11 @@ import { auctionVariantKey, resolvedAuctionVariant } from "./auctionItemVariant"
 import { supportedAuctionModifiers } from "./gearItemModifiers";
 import { resolveAuctionVariants } from "./auctionVariantResolver";
 import { getAuctionItemReferences, nativeMatchesItemReference } from "./auctionItemReference";
+import { addPlannerItemIcons } from "./gearPlannerMedia";
 import { currentGearSeason, gearEntityDetails, lookupGearEntities, lookupGearRecords } from "./gearCandidateRepository";
 import { catalogLoadoutItem, gearSlotCategoryPaths, normalizeGearCandidate } from "./gearCandidates";
 import { prepareGearLoadout, type GearSimulationScenario } from "./gearSimulation";
-import { planAuctionGear, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
+import { planAuctionGear, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 export type AuctionGearRunInput = {
   characterSlug: string;
   budgetCopper: number;
@@ -51,15 +52,40 @@ export async function runAuctionGearPlanFromSnapshot(input: AuctionGearRunInput,
     item?: {
       id?: number;
     };
+    name?: string;
+    quality?: { type?: string };
+    level?: { value?: number };
+    requirements?: { level?: { value?: number } };
+    stats?: Array<{ type?: { type?: string }; value?: number; is_negated?: boolean }>;
+    armor?: { value?: number };
+    spells?: Array<{ description?: string }>;
   }> | undefined;
   if (!Array.isArray(raw) || !raw.length) throw new Error("equipment_constraints_unverified");
   const equipped = raw.filter(i => i.item?.id && i.slot?.type && gearSlotCategoryPaths[i.slot.type]);
   const locale = input.locale === "en" ? "en_US" : "ru_RU";
   const baselineEntities = await lookupGearEntities(equipped.map(i => i.item!.id!), locale);
   check();
+  const qualityIds: Record<string, number> = { POOR: 0, COMMON: 1, UNCOMMON: 2, RARE: 3, EPIC: 4, LEGENDARY: 5, ARTIFACT: 6, HEIRLOOM: 7 };
+  const statKeys: Record<string, string> = { STRENGTH: "strength", AGILITY: "agility", INTELLECT: "intellect", STAMINA: "stamina", CRIT_RATING: "crit_rating", HASTE_RATING: "haste_rating", MASTERY_RATING: "mastery_rating", VERSATILITY: "versatility_rating", LIFESTEAL: "leech_rating", AVOIDANCE: "avoidance_rating", SPEED: "speed_rating" };
+  const currentBySlot = new Map<string, AuctionEquippedItem>();
   const loadout = equipped.map(item => {
     const entity = baselineEntities.find(e => e.externalId === item.item!.id);
     if (!entity) throw new Error("equipment_constraints_unverified");
+    // Snapshot stats and levels describe the actual equipped variant. Catalog
+    // defaults supply presentation only and never substitute their stats.
+    const stats = Object.fromEntries((item.stats ?? []).flatMap(stat => {
+      const key = statKeys[stat.type?.type ?? ""];
+      return key && !stat.is_negated && Number.isFinite(stat.value) ? [[key, Number(stat.value)]] : [];
+    }));
+    if (Number.isFinite(item.armor?.value)) stats.armor = Number(item.armor!.value);
+    currentBySlot.set(item.slot!.type!, {
+      itemId: item.item!.id!, name: item.name || entity.name, slotType: item.slot!.type!,
+      iconUrl: entity.iconUrl, quality: qualityIds[item.quality?.type ?? ""] ?? entity.quality,
+      ...(Number.isInteger(item.level?.value) ? { itemLevel: Number(item.level!.value) } : {}),
+      ...(Number.isInteger(item.requirements?.level?.value) ? { requiredLevel: Number(item.requirements!.level!.value) } : {}),
+      ...(Object.keys(stats).length ? { stats } : {}),
+      effects: (item.spells ?? []).flatMap(spell => typeof spell.description === "string" && spell.description ? [spell.description] : []),
+    });
     return catalogLoadoutItem(entity, item.slot!.type!);
   });
   const affordable = market.offers.filter(o => o.buyoutCopper <= input.budgetCopper);
@@ -283,8 +309,12 @@ export async function runAuctionGearPlanFromSnapshot(input: AuctionGearRunInput,
       return result;
     }
   });
+  const purchases = plan.purchases.map(purchase => ({ ...purchase, currentItem: currentBySlot.get(purchase.slotType) }));
+  await addPlannerItemIcons(purchases.flatMap(purchase => [purchase, ...(purchase.currentItem ? [purchase.currentItem] : [])]), character.region, token, signal);
+  check();
   return {
     ...plan,
+    purchases,
     searchLimited: plan.searchLimited || scannedIds.length < ids.length || selectedMap.size < records.length || variantSearchLimited,
     market: {
       snapshotId: market.id,

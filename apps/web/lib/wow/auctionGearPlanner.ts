@@ -18,6 +18,17 @@ export type GearPlanSimulation = {
   iterations: number;
   engine: string;
 };
+export type AuctionEquippedItem = {
+  itemId: number;
+  name: string;
+  slotType: string;
+  iconUrl?: string;
+  quality?: number;
+  itemLevel?: number;
+  requiredLevel?: number;
+  stats?: Record<string, number>;
+  effects?: string[];
+};
 export type AuctionGearPlan = {
   budgetCopper: number;
   spentCopper: number;
@@ -26,6 +37,8 @@ export type AuctionGearPlan = {
     auctionId: number;
     itemId: number;
     name: string;
+    iconUrl?: string;
+    quality?: number;
     slotType: string;
     variantKey: string;
     itemLevel: number;
@@ -37,6 +50,7 @@ export type AuctionGearPlan = {
       value: number;
     }>;
     stats?: Record<string, number>;
+    currentItem?: AuctionEquippedItem;
     lotCostCopper: number;
     quantity: number;
   }>;
@@ -219,6 +233,8 @@ export async function planAuctionGear(input: {
       auctionId: o.auctionId,
       itemId: o.candidate.itemId,
       name: o.candidate.name,
+      iconUrl: o.candidate.iconUrl,
+      quality: o.candidate.quality,
       slotType: o.candidate.slotType,
       variantKey: o.variantKey,
       itemLevel: o.candidate.variants.find(v => v.key === o.variantKey)!.itemLevel,

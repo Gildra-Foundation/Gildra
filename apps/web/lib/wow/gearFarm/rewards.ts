@@ -299,6 +299,7 @@ export async function resolveFarmRewards(input: {
         loadout: input.loadout, specId: input.armory.activeSpecializationId });
     } catch { searchLimited = true; continue; }
     Object.assign(probe.target, { verification: "variant_verified", itemLevel: actual.itemLevel, requiredLevel: actual.requiredLevel,
+      quality: actual.quality, stats: { ...actual.stats },
       bonusIds: [...probe.offer.bonusIds], contextId: probe.offer.contextId, modifiers: [...probe.offer.modifiers],
       evidence: { build: data.staticBuild, sourceHash, contextPickerId: probe.pickerId, treeIds: probe.treeIds } });
     options.push({ activityId: probe.activity.id, target: probe.target, candidate, variantKey: variant.key });
