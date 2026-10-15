@@ -37,6 +37,11 @@ function cleanup() {
     j.controller.abort();
     jobs.delete(id);
   }
+  // Cancelled and expired jobs must not occupy capacity while another
+  // character's simulation keeps the queue waiting.
+  for (let index = queue.length - 1; index >= 0; index--) {
+    if (jobs.get(queue[index])?.status !== "queued") queue.splice(index, 1);
+  }
 }
 async function drain() {
   if (state.__gildraAuctionRunning) return;
@@ -112,6 +117,8 @@ export function cancelAuctionGearJob(owner: string, id: string) {
     j.status = "cancelled";
     j.error = "cancelled";
     delete j.task;
+    const queuedIndex = queue.indexOf(id);
+    if (queuedIndex !== -1) queue.splice(queuedIndex, 1);
   }
   return view(j);
 }

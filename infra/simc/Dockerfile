@@ -35,9 +35,8 @@ COPY --from=simc-build /src/simc/engine/simc /opt/simc/simc
 COPY --from=simc-build /src/simc/COPYING /opt/simc/COPYING
 COPY --from=simc-build /src/simc/profiles/MID2 /opt/gildra/profiles/MID2
 COPY --from=worker-build /out/rotation-sim-worker /usr/local/bin/rotation-sim-worker
-COPY backend/internal/rotationlab/profiles/MID2_Warrior_Fury.simc /opt/gildra/profiles/MID2_Warrior_Fury.simc
 ENV SIMC_BINARY=/opt/simc/simc \
-    SIMC_FURY_PROFILE=/opt/gildra/profiles/MID2_Warrior_Fury.simc \
+    SIMC_FURY_PROFILE=/opt/gildra/profiles/MID2/MID2_Warrior_Fury.simc \
     SIMC_PROFILE_DIR=/opt/gildra/profiles/MID2 \
     SIMC_ITERATIONS=750 \
     ROTATION_WORKER_ADDR=0.0.0.0:8080

@@ -43,6 +43,7 @@ import {
 } from "@/lib/wow/testCharacterTalentAudit";
 import { SpecSignatureFx } from "@/components/talents/spec-signature/SpecSignatureFx";
 import { AuctionGearOptimizer } from "./AuctionGearOptimizer";
+import { GearFarmPlanner } from "./GearFarmPlanner";
 import { DeferredMount } from "./DeferredMount";
 import { CharacterBookNavigation } from "./CharacterBookNavigation";
 import { CharacterBookChapter as CharacterChapter } from "./CharacterBookChapter";
@@ -385,6 +386,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
         </section>
 
         {dataMode === "battle-net" ? <DeferredMount minHeight={420}>
+          <GearFarmPlanner key={`farm:${snapshotKey}`} characterSlug={snapshot.slug} snapshotKey={snapshotKey} localePrefix={localePrefix} />
           <AuctionGearOptimizer key={`auction:${snapshotKey}`} characterSlug={snapshot.slug} snapshotKey={snapshotKey} specializationSlug={snapshot.specialization.slug} localePrefix={localePrefix} />
           <CharacterGearOptimizer key={`gear:${snapshotKey}`} localePrefix={localePrefix} characterSlug={snapshot.slug} specializationSlug={snapshot.specialization.slug} gear={snapshot.gear} snapshotKey={snapshotKey} />
         </DeferredMount> : null}

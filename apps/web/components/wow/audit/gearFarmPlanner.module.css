@@ -1,0 +1,39 @@
+/* atlas:strict */
+.panel { grid-column:1 / -1; min-width:0; padding:var(--atlas-space-5); border:1px solid var(--atlas-line); border-radius:var(--atlas-radius); background:var(--atlas-surface); color:var(--atlas-text); font:var(--atlas-text-body)/var(--atlas-leading-body) var(--atlas-font-ui); }
+.panel > header small { color:var(--atlas-accent); font-size:var(--atlas-text-label); font-weight:700; letter-spacing:var(--atlas-tracking-label); }
+.panel h2,.panel h3,.panel h4 { color:var(--atlas-text-strong); font-family:var(--atlas-font-display); font-weight:var(--atlas-weight-display); line-height:var(--atlas-leading-snug); overflow-wrap:anywhere; }
+.panel h2 { margin:var(--atlas-space-2) 0; font-size:var(--atlas-text-h2); }
+.panel h3 { margin:0 0 var(--atlas-space-4); font-size:var(--atlas-text-h3); }
+.panel h4 { margin:0; font-size:var(--atlas-text-title); }
+.panel p { margin:var(--atlas-space-2) 0; }
+.panel > header p { max-width:var(--atlas-measure); }
+.controls { display:flex; flex-wrap:wrap; gap:var(--atlas-space-3); margin:var(--atlas-space-5) 0 var(--atlas-space-3); }
+.controls button { min-height:var(--atlas-control-height); max-width:100%; padding:var(--atlas-space-2) var(--atlas-space-4); border:1px solid var(--atlas-accent); border-radius:var(--atlas-radius); background:var(--atlas-surface-raised); color:var(--atlas-accent); font:inherit; cursor:pointer; }
+.controls button:disabled { opacity:.6; cursor:default; }
+.panel :is(button,summary,a):focus-visible { outline:2px solid var(--atlas-accent); outline-offset:3px; }
+.panel a { display:inline-flex; align-items:center; min-height:var(--atlas-control-height); color:var(--atlas-accent); text-underline-offset:.2em; }
+.note,.requirements,.target span,.activityHeader > span { color:var(--atlas-text-muted); font-size:var(--atlas-text-small); }
+.notice { padding:var(--atlas-space-3) var(--atlas-space-4); border-inline-start:2px solid var(--atlas-accent); background:var(--atlas-accent-wash); }
+.summary { display:flex; flex-wrap:wrap; gap:var(--atlas-space-5); margin:var(--atlas-space-5) 0 var(--atlas-space-4); padding-block:var(--atlas-space-4); border-block:1px solid var(--atlas-line); }
+.summary dt { color:var(--atlas-text-muted); font-size:var(--atlas-text-small); }
+.summary dd { margin:var(--atlas-space-1) 0 0; color:var(--atlas-text-strong); font:var(--atlas-text-stat)/var(--atlas-leading-snug) var(--atlas-font-display); font-variant-numeric:tabular-nums; }
+.group { margin-top:var(--atlas-space-6); }
+.activities,.targets { list-style:none; padding:0; margin:0; }
+.activity { padding-block:var(--atlas-space-4); border-top:1px solid var(--atlas-line); }
+.activityHeader { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:var(--atlas-space-2) var(--atlas-space-4); }
+.activityHeader > span { flex-shrink:0; }
+.targets { margin-top:var(--atlas-space-3); padding-inline-start:var(--atlas-space-4); border-inline-start:1px solid var(--atlas-line-soft); }
+.target { padding-block:var(--atlas-space-3); overflow-wrap:anywhere; }
+.target + .target { border-top:1px solid var(--atlas-line-soft); }
+.target > div { display:grid; gap:var(--atlas-space-1); }
+.target strong { color:var(--atlas-text-strong); }
+.target p { font-size:var(--atlas-text-small); }
+.target .gain { color:var(--atlas-positive); }
+.details { margin-top:var(--atlas-space-5); padding-top:var(--atlas-space-3); border-top:1px solid var(--atlas-line); font-size:var(--atlas-text-small); }
+.details summary,.moreTargets summary { min-height:var(--atlas-control-height); padding-block:var(--atlas-space-2); color:var(--atlas-accent); cursor:pointer; }
+.moreTargets { margin-top:var(--atlas-space-2); font-size:var(--atlas-text-small); }
+.coverage { margin-block:var(--atlas-space-3); max-width:var(--atlas-measure); }
+.coverage > div { display:flex; justify-content:space-between; gap:var(--atlas-space-4); padding-block:var(--atlas-space-1); }
+.coverage dt { color:var(--atlas-text-muted); }
+.coverage dd { margin:0; font-variant-numeric:tabular-nums; }
+@media(max-width:480px){.panel{padding:var(--atlas-space-4)}.controls button{width:100%}.summary{gap:var(--atlas-space-4)}.targets{padding-inline-start:var(--atlas-space-3)}}

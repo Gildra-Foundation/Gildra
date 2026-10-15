@@ -21,5 +21,20 @@ try{
  assert.throws(()=>enqueueAuctionGearJob('owner-a',async()=>({})),/already_running/);
  assert.equal(cancelAuctionGearJob('owner-a',j.id).status,'cancelled');finish();await new Promise(r=>setTimeout(r,5));assert.equal(getAuctionGearJob('owner-a',j.id).status,'cancelled');
  const completed=enqueueAuctionGearJob('owner-b',async()=>({spentCopper:1}));await new Promise(r=>setTimeout(r,5));assert.equal(getAuctionGearJob('owner-b',completed.id).status,'completed');
- console.log('Auction service checks passed: realm binding, shared snapshot, freshness, owner isolation, duplicate work, cancellation race.');
+ let releaseQueue,cancelledTasksRun=0;
+ const held=enqueueAuctionGearJob('capacity-active',async()=>{await new Promise(r=>{releaseQueue=r});return {};});
+ for(let index=0;index<16;index++) {
+  const owner=`capacity-cancel-${index}`;
+  const queued=enqueueAuctionGearJob(owner,async()=>{cancelledTasksRun++;return {};});
+  assert.equal(queued.status,'queued');
+  assert.equal(cancelAuctionGearJob(owner,queued.id).status,'cancelled');
+ }
+ const waiting=Array.from({length:8},(_,index)=>({owner:`capacity-wait-${index}`,job:enqueueAuctionGearJob(`capacity-wait-${index}`,async()=>({}))}));
+ assert(waiting.every(({job})=>job.status==='queued'));
+ assert.throws(()=>enqueueAuctionGearJob('capacity-overflow',async()=>({})),/plan_queue_full/);
+ releaseQueue();await new Promise(r=>setTimeout(r,5));
+ assert.equal(getAuctionGearJob('capacity-active',held.id).status,'completed');
+ assert(waiting.every(({owner,job})=>getAuctionGearJob(owner,job.id).status==='completed'));
+ assert.equal(cancelledTasksRun,0,'Cancelled queued work ran');
+ console.log('Auction service checks passed: realm binding, shared snapshot, freshness, owner isolation, duplicate work, cancellation race, capacity after 16 queued cancellations.');
 }finally{globalThis.fetch=savedFetch;}

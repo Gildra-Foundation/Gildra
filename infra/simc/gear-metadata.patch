@@ -45,3 +45,27 @@
      has_midnight_scaling( false ),
      redirect_item_id( 0 ),
      base_level_priority( std::numeric_limits<int>::max() ),
+--- a/engine/dbc/sc_item_data.cpp
++++ b/engine/dbc/sc_item_data.cpp
+@@ -223,7 +223,10 @@
+             util::round( curve_point_value( *item.player->dbc, offset_entry.curve_id, scaling_entry.item_level ) ) );
+       item.parsed.data.level += offset_entry.offset;
+       item.parsed.has_midnight_scaling = true;
+-      item.parsed.data.req_level       = level;
++      // A zero required-level override means the template requirement remains.
++      // ItemScalingConfig (and the live item preview) preserve it in that case.
++      if ( level > 0 )
++        item.parsed.data.req_level = level;
+       break;
+     }
+     case ITEM_BONUS_SCALE_CONFIG_2:
+@@ -255,7 +258,8 @@
+             util::round( curve_point_value( *item.player->dbc, offset_entry.curve_id, scaling_entry.item_level ) ) );
+       item.parsed.data.level += offset_entry.offset;
+       item.parsed.has_midnight_scaling = true;
+-      item.parsed.data.req_level       = scaling_entry.player_level;
++      // SCALE_CONFIG_2 changes item level using the drop level; it does not
++      // replace the template's required level (source ItemBonus type 51).
+       break;
+     }
+     // Adjust quality, bonus item level value is in 'value_1' field, `value_3` is crafting quality. Value 2 unknown
