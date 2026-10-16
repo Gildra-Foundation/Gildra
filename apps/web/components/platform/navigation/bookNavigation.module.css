@@ -150,6 +150,7 @@
   font: clamp(17px, 2.12cqw, 27px)/1.25 "Gildra Kurale", Georgia, serif;
   transition: background-color 140ms ease;
 }
+.chapters .entry { padding-block: 6px; }
 .entry:hover, .entry[aria-current="page"] { background: linear-gradient(90deg, transparent, #292c310c 20%, #292c310c 80%, transparent); }
 .chapter {
   flex: 0 0 26px;
