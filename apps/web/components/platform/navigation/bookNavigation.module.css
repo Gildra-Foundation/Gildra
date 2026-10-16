@@ -150,6 +150,7 @@
   font: clamp(17px, 2.12cqw, 27px)/1.25 "Gildra Kurale", Georgia, serif;
   transition: background-color 140ms ease;
 }
+.chapters .entry { padding-block: 6px; }
 .entry:hover, .entry[aria-current="page"] { background: linear-gradient(90deg, transparent, #292c310c 20%, #292c310c 80%, transparent); }
 .chapter {
   flex: 0 0 26px;
@@ -230,6 +231,9 @@
 /* A small spread (the home page book on a short screen) keeps chapter titles
    only; lifting the book to full size shows the descriptions again. */
 @media (min-width: 821px) {
+  @container (max-width: 1060px) {
+    .chapters .entryDetail { display: none; }
+  }
   @container (max-width: 760px) {
     .runningTitle, .entryDetail, .accountKicker, .accountDetail { display: none; }
     .ornament { height: clamp(16px, 3.4cqw, 26px); margin-bottom: 2px; }

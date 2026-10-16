@@ -13,6 +13,7 @@ type NavigationItem = { href: string; ru: string; en: string; detailRu: string; 
 const primaryItems: NavigationItem[] = [
   { href: "/", ru: "Игровой портал", en: "Game portal", detailRu: "Начало ваших приключений", detailEn: "Where your adventures begin" },
   { href: "/wow/characters", ru: "Персонажи", en: "Characters", detailRu: "Герои, экипировка и прогресс", detailEn: "Heroes, equipment and progress" },
+  { href: "/tier-lists", ru: "Тир-листы", en: "Tier lists", detailRu: "Рейтинги специализаций для Mythic+ и рейдов", detailEn: "Specialization rankings for Mythic+ and raids" },
   { href: "/wow/mythic-plus", ru: "Эпохальный+", en: "Mythic+", detailRu: "Подземелья и ключи", detailEn: "Dungeons and keystones" },
   { href: "/wow/raids", ru: "Рейдовый журнал", en: "Raid journal", detailRu: "Рейды и их обитатели", detailEn: "Raids and their inhabitants" },
   { href: "/wow/lairs", ru: "Логова и мировые боссы", en: "Lairs & world bosses", detailRu: "Испытания открытого мира", detailEn: "Challenges of the open world" },
@@ -87,7 +88,7 @@ export function BookVolume({ lang, active, titleId, onNavigate, closeButton, lay
     return <Link key={item.href} className={styles.entry} href={href} prefetch={false}
       aria-label={ru ? item.ru : item.en} aria-describedby={detailId}
       aria-current={active ? "page" : undefined} onPointerEnter={warmDestination} onFocus={warmDestination} onClick={onNavigate}>
-      {numbered && <span className={styles.chapter} aria-hidden="true">{["I", "II", "III", "IV", "V"][index]}</span>}
+      {numbered && <span className={styles.chapter} aria-hidden="true">{["I", "II", "III", "IV", "V", "VI"][index]}</span>}
       <span className={styles.entryCopy}><span className={styles.entryLabel}>{ru ? item.ru : item.en}</span>
         <span className={styles.entryDetail} id={detailId}>{ru ? item.detailRu : item.detailEn}</span></span>
     </Link>;

@@ -5,7 +5,7 @@
 .page[data-home-theme="varok"]{--accent:#f0a28f;--paper:#f0ded5;--heading:#fff0e5;--muted:#d8bdb1;--subtle:#c5a397;--bright:#fff1e3;--metal:#ca8b79;--metal-dark:#9e5748;--button-top:#6b302c;--button-bottom:#311716;--night:#180d0c;--shade:19,6,4;--particle:#ffb66d;--home-art:url("/assets/wow/character-book/intro/varok-home-background-v2.webp")}
 .page *{box-sizing:border-box}.header a{color:inherit;text-decoration:none}.page button{font:inherit;cursor:pointer}.header a:focus-visible,.header button:focus-visible,.hero button:focus-visible{outline:2px solid var(--accent);outline-offset:7px}
 .header{max-width:1500px;margin:auto;padding:30px clamp(24px,5vw,86px);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px}
-.brand{display:flex;min-height:44px;align-items:center;gap:12px;width:max-content;color:var(--paper)!important;transition:filter 280ms}
+.brand{--game-switcher-font:"Gildra Kurale",Georgia,serif;display:flex;min-height:44px;align-items:center;gap:12px;width:max-content;color:var(--paper)!important;transition:filter 280ms}
 .brandMark{width:52px;height:59px;flex:none;filter:drop-shadow(0 2px 8px color-mix(in srgb,var(--accent) 14%,transparent));transition:filter 300ms,transform 300ms}
 .brandWordmark{display:grid;gap:7px}.brandWordmark>span{font:30px/1 "Gildra Kurale",Georgia,serif;letter-spacing:.2em;background:linear-gradient(180deg,var(--bright) 12%,var(--paper) 58%,var(--metal-dark));background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 18px color-mix(in srgb,var(--accent) 10%,transparent)}
 .brandWordmark small{font:7px/1.3 "Gildra Atlas",Georgia,serif;letter-spacing:.26em;color:var(--subtle)}
