@@ -1,72 +1,57 @@
-# Auction reliability repair — active handoff
+# Auction reliability repair — verified release
 
-User: add regression tests for all fourteen detailed review findings, then fix
-them fully; use branches, agents and documentation as needed.
+User requested tests first, then repair all fourteen review findings. Completed
+on branch `fix/auction-reliability-20261016`, isolated worktree
+`/home/debian/Gildra-auction-reliability-20261016`. Existing worktrees and original
+RED proofs remain unchanged. Test-first commit `127d22b`; runtime source
+`764210f7e26b51546e0b602f8f87d9b955872530`, tagged
+`auction-reliability-20261016-764210f`. Documentation publication follows runtime.
 
-Worktree `/home/debian/Gildra-auction-reliability-20261016`, branch
-`fix/auction-reliability-20261016`, base `ff9bf18`. Existing worktree and release
-proofs remain unchanged. Installed packages are linked inside an ignored real
-`node_modules` directory; no dependencies were installed.
+All fourteen findings and additional regression-discovered request/scope/Azerite/
+weapon paths are repaired. Original barrier:56 cases,41 expected failures and15
+controls before implementation. Final65 focused checks and80 StrictMode browser
+checks passed; existing regressions, Go, TypeScript,151atlas tests, routes and both
+production builds passed. Full lint0errors/273existing warnings; changed files
+pass scoped lint. See `docs/auction-reliability-plan-20261016.md`.
 
-Read `docs/auction-reliability-plan-20261016.md` for acceptance criteria,
-ownership and contracts. Root session `auction-reliability-20261016` holds narrow
-source claims and private UI port58088 in the canonical
-`/var/lib/gildra/codex-team` store. Use sudo for the coordinator; unprivileged
-fallback state is a different store. No production locks have been acquired.
+Release is verified on gildra.net: final web `e77e773b` and worker `3d676fd9`, both
+healthy/0restarts, deployed10:22:19UTC, verified10:30:21UTC. Fresh actual deployed
+native EN/RU on Элкардия:63 verified WRIST options,36 effect states,64 independent
+lot assignments; confirmed14,776DPS, +503/+3.524%, cost300.89gold under10,000gold.
+Exclusion and recovery passed. Separate16slot traversal is partial. Missing data
+remains explicit; no whole-market optimum or authenticated browser claim.
+Actual results replayed in4 EN/RU390/1440 views/12PNGs;999source hashes unchanged.
+Public16views/9assets/8boundaries and424.714seconds observation passed with0errors;
+eight protected containers unchanged. Existing nginx reloaded; no DB/API/CMS/
+import rollout, queries, migration or data-invariance claim.
 
-Test-first barrier passed at 2026-10-16 09:07:58 UTC on unchanged product source:
-56 cases, 41 expected failures, 15 passing controls. Six immutable per-suite RED
-proofs and their hashes are in `.artifacts/auction-reliability-20261016/red-baseline.json`.
-UI baseline covers all 13 desired behaviours at EN390; full 52-case EN/RU ×
-390/1440 GREEN matrix is required after repair. Initial UI setup failures were
-preserved and are not counted as product regressions.
+Exact-image staging7gates passed. Staging now uses final web and productionworker.
+Own QA worker and UI process removed;58088/58089closed; rollback images retained.
+Retained worktree runner `.artifacts/auction-reliability-20261016/rollout.py --rollback`
+restores previous worker3d320982/web571a7537 and exact previous manifest after
+acquiring prod/service/edge locks. Operation gate, pinned TLS CA and foreign-state
+checks remain active. Use this retained worktree invocation for rollback.
 
-Current phase: all known repairs implemented and frozen for final commit/build.
-Test-first commit127d22b precedes product changes. Core focused cases65/65 pass:
-market26,optimizer9,root10,Azerite3,nativeparser4,initialrequest13. Existing
-auction/gear/API/store checks pass; full TypeScript, ESLint0errors (273existing
-warnings),151atlas tests, atlas/routes pass. Final browser ui-final-green.json
-is a single80/80PASS run:76 regressions+4capture observers, StrictMode true,
-EN/RU390/1440,8PNGs, no browser errors,975product hashes unchanged. All RED,
-old failed setup/focus proofs and older68/72 matrices remain immutable.
+Evidence is in `.artifacts/auction-reliability-20261016/` and
+`/opt/gildra/releases/auction-reliability-20261016-764210f/verification-final`.
+The verified local journal continues prior chain to2records, tip
+`sha256:51521661d45e7bf8efb6023f27cfe6437aa7d2d88c0b979b964877cde16f58c1`;
+all455new-record archive hashes independently checked. Source/runtime proof,
+plan, policy authority, initial/helper failures and passing corrections are saved.
+No external immutable audit sink or fresh DB restore is claimed.
 
-Additional nonce request recovery is complete: lost initial202/POSTtimeout,
-owner+scope GET, canonical request idempotency, immutable budget, queue/quota
-replay, scope cleanup and StrictEffects replay all tested. Backend/market/
-optimizer/UI agents are frozen. Root owns commit/build/release integration.
+Full release/result/limitations/recovery:
+`docs/reports/auction-reliability-deployment-20261016.md`.
+Source commits use `[skip ci]` to avoid unrelated full-stack GitHub deployment.
+Runtime and documentation are published by normal fast-forward to remote master
+and this feature branch; the release tag points at runtime764210f. Final remote
+refs and coordination completion are recorded in ignored publication evidence
+and the canonical coordinator. Session `auction-reliability-20261016` releases
+its locks after recording the verified release. Future work must read the live
+canonical state first. Do not mutate other worktrees, DB/API/CMS/import services,
+old evidence or deploy again for documentation.
 
-Fresh native weapon QA found raw SimC DBC DPS differs from Blizzard tooltip DPS
-for rounded damage endpoints. Durable extraGo RED then API-only normalization
-(avg resolved min/max /speed), full rotationlab GREEN. Native candidate-v2 build
-and fresh four weapon/control comparisons PASS with original tolerances (DPS
-error<0.000001). Native mechanics/pin18428cd remain unchanged. Private worker
-name gildra-auction-reliability-worker-qa, containerf1179dc6..., image9039918e...,
-loopback58089 on gildra_default; no credentials/data mounts. Prior candidate-v1
-failure/proofs preserved. Source405file build manifests are in evidence.
-
-Next: commit clean source [skip ci] (full-stack GitHub deploy must not run for
-this scoped web/worker release), pushfeaturebranch, freezeGitarchive, buildweb
-and final labeledworker (native cache). Replace only ownQAworker withfinalimage,
-run fresh weapon+mainEN private native QA. Bind allfunctional source/test hashes,
-stage sameweb+privateworker, run7officialgates, then claimprod4locks andprepare/
-review/apply scopedplan under persistent user authorization. Fresh deployed
-Elkardia EN/RU/publicchecks+observation+ledger+docs+normalFFmasterpublication
-remain required. No production changes yet. Staging locks owned but no stage
-changes yet. Do not touch DB/API/CMS/imports or otherworktrees.
-
-Agents: `review_optimizer` owns planner/effects/types after the barrier;
-`review_market` owns discovery/provider/reference; `review_ui_jobs` owns
-optimizer UI/client helpers/copy and browser tests. Root owns runner,
-fingerprint, recovery store/jobs/API, item presentation and integration. Shared
-types and recovery contracts are in the plan; ask root before changing them.
-
-Node: `/tmp/gildra-audit-python/playwright/driver/node` (v24).
-Node test cwd: `apps/web`, flags `--experimental-strip-types --no-warnings
---import ./tests/auction/resolve.mjs`.
-rg: `/home/debian/.codex/packages/standalone/releases/0.162.1-x86_64-unknown-linux-musl/codex-path/rg`.
-Browser cache: `/home/debian/.cache/ms-playwright` (headless shell available).
-New evidence: `.artifacts/auction-reliability-20261016/`.
-
-Keep the user updated in Russian at meaningful milestones and at least roughly
-once a minute. Do not ask again for permissions already granted. Do not send a
-final answer until the requested repairs and required verification are complete.
+Jobs remain process-local and do not survive a web restart; multiple replicas
+need shared durable queue/sticky routing. Full-market optimum is not asserted.
+Node24 `/tmp/gildra-audit-python/playwright/driver/node`; browser cache
+`/home/debian/.cache/ms-playwright`. No package dependencies were added.

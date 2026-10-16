@@ -356,3 +356,8 @@ keyboard submission, visible focus and reduced motion; no page errors occurred.
 The initial implementation was verified locally; production publication at
 2026-10-15 18:40 UTC is recorded in the
 [deployment report](reports/auction-gear-deployment-20261015.md). The subsequent live public-armory verification is recorded in auction-gear-live-verification.md.
+
+The fourteen-finding reliability repair is deployed as runtime source `764210f`.
+Test-first regressions, fresh postdeployment Elkardia EN/RU, actual-result UI
+replay, scoped web/worker rollout and recovery are recorded in
+[the verified reliability release](reports/auction-reliability-deployment-20261016.md).

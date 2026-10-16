@@ -147,3 +147,10 @@ exact official item references. Displayed DPS is derived from resolved damage
 endpoints/speed; combat mechanics remain unchanged. Release/build/live-loadout
 and postdeployment verification are recorded separately, after the final source
 commit and immutable build freeze.
+
+## Publication completed
+
+Runtime source `764210f` is deployed as web plus worker. Fresh deployed Elkardia
+EN/RU, four actual-result UI views, public checks, observation and verified ledger
+are recorded in [the release report](reports/auction-reliability-deployment-20261016.md).
+Original RED and setup failure evidence remains preserved.
