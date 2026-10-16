@@ -154,8 +154,14 @@ function catalogPriorityHint(record: CatalogRecord): CatalogPriorityHint {
 }
 
 function compareCatalogHints(left: CatalogPriorityHint | undefined, right: CatalogPriorityHint | undefined, characterLevel: number) {
+  // Raw base item levels span historical stat squishes and are not comparable
+  // across level brackets. Prefer the closest known wearable requirement first.
+  const levelFit = (hint: CatalogPriorityHint | undefined) => hint?.requiredLevel && hint.requiredLevel <= characterLevel
+    ? characterLevel - hint.requiredLevel : Infinity;
+  const leftFit = levelFit(left), rightFit = levelFit(right);
   const overLevel = (hint: CatalogPriorityHint | undefined) => Number((hint?.requiredLevel ?? 0) > characterLevel);
-  return overLevel(left) - overLevel(right) || (right?.itemLevel ?? 0) - (left?.itemLevel ?? 0);
+  return (leftFit === rightFit ? 0 : leftFit - rightFit) || overLevel(left) - overLevel(right) ||
+    (right?.itemLevel ?? 0) - (left?.itemLevel ?? 0);
 }
 
 function prioritizePendingDiscovery(state: AuctionGearDiscovery, characterLevel: number) {

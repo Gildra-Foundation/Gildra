@@ -11,7 +11,7 @@ import { planAuctionGear } from "../../../lib/wow/auctionGearPlanner.ts";
 
 // Actual discovery, eligibility, native-reference validation and exhaustive planner;
 // only catalog/reference/native transports use deterministic synthetic facts.
-async function setup(rows, locale = "en_US") {
+async function setup(rows, locale = "en_US", characterLevel = 81) {
   const facts = new Map(rows.map(row => [row.id, row]));
   const makeRecord = row => ({ ...record(row.id), itemLevel: row.level,
     highlights: [{ key: "inventory_type", value: locale === "ru_RU" ? "Запястья" : "Wrist" },
@@ -50,8 +50,8 @@ async function setup(rows, locale = "en_US") {
       },
     });
   const discovery = d.createAuctionGearDiscovery(market(rows.map(row => makeOffer(row.id))), 10000);
-  const input = { locale, region: "eu", token: "synthetic-no-auth", spec: "fury-warrior", characterLevel: 81,
-    selectedSlots: ["WRIST"], context, signal: new AbortController().signal, maxSteps: 1,
+  const input = { locale, region: "eu", token: "synthetic-no-auth", spec: "fury-warrior", characterLevel,
+    selectedSlots: ["WRIST"], context: slot => ({ ...context(slot), characterLevel }), signal: new AbortController().signal, maxSteps: 1,
     onCheckpoint: () => state.checkpoints++ };
   const advance = overrides => d.advanceAuctionGearDiscovery(discovery, { ...input, ...overrides });
   const finish = async () => {
@@ -98,6 +98,29 @@ test("EN/RU hints only reorder: unknown, malformed and scaled base requirements 
     assert.deepEqual(prioritized.purchases.map(row => row.variantKey), originalOrder.purchases.map(row => row.variantKey));
   }
   assert.deepEqual(orders[0], orders[1]);
+});
+
+test("cross-squish base levels use known wearable level fit first, then base level; no hints discard candidates", async () => {
+  // Mirrors the actual failure shape (catalog610 resolves natively98/99), using
+  // unrelated synthetic IDs and multiple character levels rather than an item list.
+  for (const characterLevel of [81, 90]) for (const locale of ["en_US", "ru_RU"]) {
+    const rows = [{ id: 900, level: 610, required: characterLevel - 1, native: 98 },
+      { id: 40, level: 197, required: characterLevel, native: 140 },
+      { id: 500, level: 180, required: characterLevel, native: 130 },
+      { id: 3, level: 1000, required: 0, native: 200 },
+      { id: 2, level: 999, required: "unknown", native: 190 },
+      { id: 20, level: 900, required: characterLevel + 1, native: 150 }];
+    const h = await setup(rows, locale, characterLevel);
+    const options = await h.finish();
+    const details = h.state.events.find(event => event.type === "details");
+    assert.equal(details.ids[0], 40, "Comparable character-level fit must precede incomparable raw cross-squish item levels");
+    assert.equal(details.ids[1], 500, "Base item level breaks ties among equally fitting requirements");
+    assert.equal(h.state.events.find(event => event.type === "native").ids[0], 40);
+    assert.deepEqual(Array.from(options, option => option.candidate.itemId).sort((a, b) => a - b), rows.map(row => row.id).sort((a, b) => a - b));
+    assert(options.some(option => option.candidate.itemId === 20), "Above-character base requirements may scale to eligible native requirements");
+    assert(options.some(option => option.candidate.itemId === 2), "Malformed hints are retained as unknown");
+    assert(options.some(option => option.candidate.itemId === 3), "Zero/unknown requirements are retained");
+  }
 });
 
 test("cancelled or failed summary batches preserve their cursor/checkpoint and retry successfully", async () => {
