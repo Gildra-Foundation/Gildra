@@ -3,6 +3,8 @@
 Implementation: `apps/web/lib/wow/auctionGear*`, `auctionMarket*`,
 `gearCompatibility.ts`, `/api/wow/auction-gear-plans` and the character equipment page.
 
+Latest verified deployment: [six auction planner review fixes](reports/auction-fixes-deployment-20261016.md). Fresh WRIST exact results and bounded 16-slot checks are reported separately.
+
 ## Behaviour
 
 An authenticated player selects combat slots, a gold budget and encounter type. The server
