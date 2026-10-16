@@ -59,6 +59,7 @@
   font: inherit;
 }
 .button { cursor: pointer; }
+.primaryButton { background: var(--atlas-accent); color: var(--atlas-accent-ink); font-weight: 700; }
 .button:disabled { opacity: .6; cursor: default; }
 .actions, .selectionActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3); }
 .actions { margin-block: var(--atlas-space-4); }
@@ -84,10 +85,11 @@
 .individual[data-positive] .delta, .confirmed { color: var(--atlas-positive); }
 .replacement { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3); min-width: 0; padding: var(--atlas-space-3); background: var(--atlas-surface-raised); border-left: 2px solid var(--atlas-line-strong); }
 .replacement > span:first-child { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-.assembly { margin-top: var(--atlas-space-6); padding: var(--atlas-space-5); border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius); min-width: 0; }
+.assembly { margin-block: 0 var(--atlas-space-6); padding: var(--atlas-space-5); border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius); min-width: 0; scroll-margin-block-start: var(--atlas-space-8); }
 .assembly .result { margin-top: var(--atlas-space-5); }
+.returnToAssembly { display: inline-flex; align-items: center; min-height: var(--atlas-control-height); color: var(--atlas-accent); }
 .feedback { padding-block: var(--atlas-space-3); border-block: 1px solid var(--atlas-line-strong); }
-.panel :is(input, select, button, summary):focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 3px; }
+.panel :is(input, select, button, summary, a):focus-visible, .assembly:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 3px; }
 .note, .market { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
 .totals, .dpsMetrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-5); }
 .totals { margin-block: var(--atlas-space-5); padding-block: var(--atlas-space-4); border-block: 1px solid var(--atlas-line); }
