@@ -15,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -34,6 +36,9 @@ type SimulationEngine interface {
 type DeterministicEngine struct{}
 
 func (DeterministicEngine) Simulate(_ context.Context, input SimulationInput) (SimulationResult, error) {
+	if input.ActionListMode == ActionListModeNative {
+		return SimulationResult{}, fmt.Errorf("%w: native action lists require SimulationCraft", ErrUnsupportedCombatModel)
+	}
 	return Calculate(input), nil
 }
 
@@ -605,33 +610,39 @@ func (e *SimCEngine) arguments(input SimulationInput, reportPath, profilePath st
 	if input.TalentLoadout != "" {
 		args = append(args, "talents="+input.TalentLoadout)
 	}
-	// A SimulationCraft action list is a priority list: the engine scans from
-	// the first action until it finds one that is currently usable. The UI rules
-	// are restricted to registered ability IDs, so they can safely become the
-	// actor's custom APL instead of silently falling back to the spec default.
-	// Source: https://github.com/simulationcraft/simc/wiki/ActionLists#behaviour
-	args = append(args, "default_actions=0")
-	hasAutomaticAction := false
-	if reference, ok := supportedSpecs[input.Spec]; ok {
-		switch {
-		case reference.Class == "hunter":
-			args = append(args, "actions=auto_shot")
-			hasAutomaticAction = true
-		case reference.Role == "attack" || reference.Role == "tank":
-			args = append(args, "actions=auto_attack")
-			hasAutomaticAction = true
+	// With no explicit actions, SimC builds its maintained specialization APL.
+	// Gear ranking needs that complete list: it retains item activation, native
+	// conditions, cooldown alignment and precombat setup for the actual talents.
+	// https://github.com/simulationcraft/simc/wiki/ActionLists#default
+	if input.ActionListMode != ActionListModeNative {
+		// A SimulationCraft action list is a priority list: the engine scans from
+		// the first action until it finds one that is currently usable. The UI rules
+		// are restricted to registered ability IDs, so they can safely become the
+		// actor's custom APL instead of silently falling back to the spec default.
+		// Source: https://github.com/simulationcraft/simc/wiki/ActionLists#behaviour
+		args = append(args, "default_actions=0")
+		hasAutomaticAction := false
+		if reference, ok := supportedSpecs[input.Spec]; ok {
+			switch {
+			case reference.Class == "hunter":
+				args = append(args, "actions=auto_shot")
+				hasAutomaticAction = true
+			case reference.Role == "attack" || reference.Role == "tank":
+				args = append(args, "actions=auto_attack")
+				hasAutomaticAction = true
+			}
 		}
-	}
-	for index, rule := range input.Rules {
-		action := strings.ReplaceAll(rule, "-", "_")
-		if len(input.APLRules) > 0 {
-			action = serializeAPLRule(input.APLRules[index])
+		for index, rule := range input.Rules {
+			action := strings.ReplaceAll(rule, "-", "_")
+			if len(input.APLRules) > 0 {
+				action = serializeAPLRule(input.APLRules[index])
+			}
+			if !hasAutomaticAction && index == 0 {
+				args = append(args, "actions="+action)
+				continue
+			}
+			args = append(args, "actions+=/"+action)
 		}
-		if !hasAutomaticAction && index == 0 {
-			args = append(args, "actions="+action)
-			continue
-		}
-		args = append(args, "actions+=/"+action)
 	}
 	if input.Scenario == "execute" {
 		args = append(args, "override.bloodlust=1", "bloodlust_percent=20")
@@ -771,7 +782,13 @@ func resultFromSimC(input SimulationInput, report simcReport, baselineDPS int) (
 		return SimulationResult{}, errors.New("SimulationCraft report has no players")
 	}
 	player := report.Sim.Players[0]
-	result := Calculate(input)
+	var result SimulationResult
+	if input.ActionListMode == ActionListModeNative {
+		result = SimulationResult{ID: uuid.NewString(), Status: "completed", Scenario: input.Scenario,
+			FightLengthSeconds: input.FightLengthSeconds, Targets: input.Targets}
+	} else {
+		result = Calculate(input)
+	}
 	result.Engine = "SimulationCraft " + report.Version
 	if report.GitRevision != "" {
 		result.Engine += " · " + report.GitRevision[:min(7, len(report.GitRevision))]
@@ -785,6 +802,9 @@ func resultFromSimC(input SimulationInput, report simcReport, baselineDPS int) (
 		profileLabel = "character gear imported from the Battle.net Profile API"
 	}
 	priorityLabel := "user-configured action priority list"
+	if input.ActionListMode == ActionListModeNative {
+		priorityLabel = "maintained default action priority list"
+	}
 	if input.TalentLoadout != "" {
 		result.ModelNotice = "SimulationCraft used the selected talent loadout with the specialization's " + profileLabel + " and " + priorityLabel + "."
 	} else {
@@ -837,6 +857,11 @@ func resultFromSimC(input SimulationInput, report simcReport, baselineDPS int) (
 		{"Actions Per Min", fmt.Sprintf("%.1f", result.CastsPerMinute)},
 	}
 	limitations := []string{"The custom priority uses automatic usability checks; no arbitrary SimulationCraft expressions are accepted."}
+	rotationSource := "user-priority-model"
+	if input.ActionListMode == ActionListModeNative {
+		rotationSource = "simulationcraft-default-apl"
+		limitations[0] = "The pinned SimulationCraft build supplies its maintained specialization APL, including equipment activation and native conditions."
+	}
 	if len(input.APLRules) > 0 {
 		limitations[0] = "Per-action resource, buff, cooldown, target-count, and execute conditions were applied by the typed APL editor."
 	}
@@ -854,7 +879,7 @@ func resultFromSimC(input SimulationInput, report simcReport, baselineDPS int) (
 		limitations = append(limitations, "Damage alone is not a complete performance metric for healer or support specializations.")
 	}
 	result.Accuracy = Accuracy{
-		Mode: mode, RotationSource: "user-priority-model",
+		Mode: mode, RotationSource: rotationSource,
 		Considers:   []string{"global cooldown", "ability cooldowns", "resources", "active buffs and procs", "talents", "target count", "execute conditions"},
 		Limitations: limitations,
 	}

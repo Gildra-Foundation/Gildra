@@ -32,7 +32,14 @@ func ValidateInput(input SimulationInput) error {
 	if input.FightLengthSeconds < 30 || input.FightLengthSeconds > 300 || input.Targets < 1 || input.Targets > 8 {
 		return errors.New("simulation bounds exceeded")
 	}
-	if len(input.Rules) == 0 || len(input.Rules) > 10 {
+	if input.ActionListMode != "" && input.ActionListMode != ActionListModeCustom && input.ActionListMode != ActionListModeNative {
+		return errors.New("invalid action list mode")
+	}
+	if input.ActionListMode == ActionListModeNative {
+		if input.Armory == nil || len(input.Rules) != 0 || len(input.APLRules) != 0 {
+			return errors.New("native action list requires an armory snapshot and no custom priority")
+		}
+	} else if len(input.Rules) == 0 || len(input.Rules) > 10 {
 		return errors.New("invalid rule count")
 	}
 	seen := map[string]bool{}

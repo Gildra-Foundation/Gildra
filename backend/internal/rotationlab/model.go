@@ -29,11 +29,19 @@ type GearChange struct {
 	GemIDs    []int          `json:"gemIds,omitempty"`
 }
 
+type ActionListMode string
+
+const (
+	ActionListModeCustom ActionListMode = "custom"
+	ActionListModeNative ActionListMode = "native"
+)
+
 type SimulationInput struct {
 	Spec               string          `json:"spec"`
 	Scenario           string          `json:"scenario"`
 	FightLengthSeconds int             `json:"fightLengthSeconds"`
 	Targets            int             `json:"targets"`
+	ActionListMode     ActionListMode  `json:"actionListMode,omitempty"`
 	Rules              []string        `json:"rules"`
 	APLRules           []APLRule       `json:"aplRules,omitempty"`
 	TalentLoadout      string          `json:"talentLoadout,omitempty"`
