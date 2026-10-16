@@ -10,7 +10,11 @@ export type AuctionItemReference = {
     type: string;
     value: number;
   }>;
+  weapon?: { minDamage: number; maxDamage: number; dps: number; speedSeconds: number };
+  effects: string[];
+  effectsVerified: boolean;
 };
+export const AUCTION_ITEM_REFERENCE_TTL_MS = 15 * 60_000;
 const object = (v: unknown): Record<string, unknown> => v && typeof v === "object" ? v as Record<string, unknown> : {};
 export function parseAuctionItemReference(raw: unknown, itemId: number): AuctionItemReference | null {
   const item = object(raw),
@@ -39,6 +43,21 @@ export function parseAuctionItemReference(raw: unknown, itemId: number): Auction
     value: Number(object(v).value)
   }));
   if (stats.some(v => !v.type || !Number.isFinite(v.value) || v.value < 0)) return null;
+  let weapon: AuctionItemReference["weapon"];
+  if (preview.weapon !== undefined) {
+    const rawWeapon = object(preview.weapon), damage = object(rawWeapon.damage);
+    const minimum = damage.min_value, maximum = damage.max_value;
+    const speed = object(rawWeapon.attack_speed).value, dps = object(rawWeapon.dps).value;
+    if ([minimum, maximum, speed, dps].some(value => typeof value !== "number" || !Number.isFinite(value)) ||
+        Number(minimum) < 0 || Number(maximum) < Number(minimum) || Number(dps) < 0 || Number(speed) <= 0) return null;
+    weapon = { minDamage: Number(minimum), maxDamage: Number(maximum), dps: Number(dps), speedSeconds: Number(speed) / 1000 };
+  }
+  const spells = preview.spells;
+  const effectsVerified = Array.isArray(spells) && spells.length <= 128 && spells.every(value => {
+    const description = object(value).description;
+    return typeof description === "string" && description.trim().length > 0;
+  });
+  const effects = effectsVerified ? (spells as unknown[]).map(value => String(object(value).description)) : [];
   return {
     offer: {
       auctionId: 0,
@@ -51,7 +70,10 @@ export function parseAuctionItemReference(raw: unknown, itemId: number): Auction
     },
     itemLevel: Number(itemLevel),
     requiredLevel: Number(requiredLevel),
-    stats
+    stats,
+    ...(weapon ? { weapon } : {}),
+    effects,
+    effectsVerified
   };
 }
 const statKeys: Record<string, string[]> = {
@@ -66,24 +88,34 @@ const statKeys: Record<string, string[]> = {
 };
 export function nativeMatchesItemReference(reference: AuctionItemReference | undefined, native: ResolvedAuctionVariant | undefined) {
   if (!reference || !native || native.error || native.itemId !== reference.offer.itemId || native.itemLevel !== reference.itemLevel || native.requiredLevel !== reference.requiredLevel) return false;
+  if (reference.weapon && native.weapon) {
+    // Permit sub-unit rounding in published weapon values while rejecting
+    // differences in damage or speed; localized display names are irrelevant.
+    const close = (a: number, b: number, precision: number) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= precision;
+    if (!close(reference.weapon.minDamage, native.weapon.minDamage, 0.51) ||
+        !close(reference.weapon.maxDamage, native.weapon.maxDamage, 0.51) ||
+        !close(reference.weapon.dps, native.weapon.dps, 0.11) ||
+        !close(reference.weapon.speedSeconds, native.weapon.speedSeconds, 0.001)) return false;
+  }
   return reference.stats.every(stat => !statKeys[stat.type] || statKeys[stat.type].some(key => native.stats[key] === stat.value));
 }
 const references = new Map<string, {
   value: AuctionItemReference | null;
   expires: number;
 }>();
-export async function getAuctionItemReferences(ids: number[], region: string, token: string, signal: AbortSignal) {
-  if (!["eu", "us", "kr", "tw"].includes(region) || ids.length > 256) throw new Error("invalid_item_reference_request");
+export async function getAuctionItemReferences(ids: number[], region: string, token: string, signal: AbortSignal, locale = "en_GB") {
+  if (!["eu", "us", "kr", "tw"].includes(region) || ids.length > 256 || !["en_GB", "en_US", "ru_RU"].includes(locale)) throw new Error("invalid_item_reference_request");
+  const apiLocale = locale === "ru_RU" && region === "eu" ? "ru_RU" : region === "us" ? "en_US" : "en_GB";
   const result = new Map<number, AuctionItemReference>();
   for (let offset = 0; offset < ids.length; offset += 4) await Promise.all(ids.slice(offset, offset + 4).map(async itemId => {
     signal.throwIfAborted();
-    const key = `${region}:${itemId}`,
+    const key = `${region}:${itemId}:${apiLocale}`,
       cached = references.get(key);
     if (cached && cached.expires > Date.now()) {
       if (cached.value) result.set(itemId, cached.value);
       return;
     }
-    const response = await fetch(`https://${region}.api.blizzard.com/data/wow/item/${itemId}?namespace=static-${region}&locale=en_GB`, {
+    const response = await fetch(`https://${region}.api.blizzard.com/data/wow/item/${itemId}?namespace=static-${region}&locale=${apiLocale}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json"
@@ -115,7 +147,7 @@ export async function getAuctionItemReferences(ids: number[], region: string, to
     }
     references.set(key, {
       value,
-      expires: Date.now() + 15 * 60000
+      expires: Date.now() + AUCTION_ITEM_REFERENCE_TTL_MS
     });
     while (references.size > 512) references.delete(references.keys().next().value!);
     if (value) result.set(itemId, value);

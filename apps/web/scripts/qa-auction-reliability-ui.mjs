@@ -16,6 +16,7 @@ const phase = option("--phase", "green");
 const port = Number(option("--port", "58088"));
 const label = option("--label", `ui-${phase}`);
 const selectedProject = option("--project", "");
+const grep = option("--grep", "");
 if (selectedProject && !/^(?:en|ru)-(?:390|1440)$/.test(selectedProject)) throw new Error("Unknown UI matrix project");
 if (!["red", "green"].includes(phase) || !Number.isInteger(port) || port < 1024 || port > 65535 || !/^[a-z0-9-]+$/.test(label)) throw new Error("Invalid phase, private port, or artifact label");
 if (Number(process.versions.node.split(".")[0]) < 20) throw new Error("The private Next harness requires Node.js 20.9+.");
@@ -38,15 +39,16 @@ const next = require.resolve("next/dist/bin/next");
 const cli = path.join(path.dirname(require.resolve("playwright")), "cli.js");
 symlinkSync(path.join(project, "node_modules"), path.join(harness, "node_modules"), "dir");
 writeFileSync(path.join(harness, "package.json"), JSON.stringify({ name: "gildra-private-auction-reliability", private: true }));
-writeFileSync(path.join(harness, "next.config.mjs"), `export default {reactStrictMode:false,devIndicators:false,allowedDevOrigins:['127.0.0.1'],outputFileTracingRoot:${JSON.stringify(project)},webpack(config){config.resolve.alias['@']=${JSON.stringify(web)};return config;}};\n`);
+writeFileSync(path.join(harness, "next.config.mjs"), `export default {reactStrictMode:true,devIndicators:false,allowedDevOrigins:['127.0.0.1'],outputFileTracingRoot:${JSON.stringify(project)},webpack(config){config.resolve.alias['@']=${JSON.stringify(web)};return config;}};\n`);
 writeFileSync(path.join(harness, "tsconfig.json"), JSON.stringify({ compilerOptions: { target: "ES2020", lib: ["dom", "dom.iterable", "esnext"], allowJs: true, skipLibCheck: true, strict: true, noEmit: true, esModuleInterop: true, module: "esnext", moduleResolution: "bundler", resolveJsonModule: true, isolatedModules: true, jsx: "react-jsx", plugins: [{ name: "next" }], paths: { "@/*": [web + "/*"] } }, include: ["**/*.ts", "**/*.tsx", ".next/types/**/*.ts"], exclude: ["node_modules"] }, null, 2));
 writeFileSync(path.join(harness, "app/layout.tsx"), `import type {ReactNode} from 'react';import '@/app/globals.css';import './qa.css';export default function Layout({children}:{children:ReactNode}){return <html lang="en" className="gildra-atlas"><body>{children}</body></html>;}\n`);
 writeFileSync(path.join(harness, "app/qa.css"), `.private-auction-qa{max-width:1540px;min-width:0;margin:auto;padding:32px 26px 48px;container:auditPage/inline-size}.private-auction-qa>header{padding-bottom:24px}.private-auction-qa h1{color:var(--atlas-text-strong)}.private-auction-qa [data-character-sections]{display:grid;grid-template-columns:minmax(0,1fr);min-width:0}@media(max-width:820px){.private-auction-qa{padding:24px 16px 40px}}\n`);
-writeFileSync(path.join(harness, "app/page.tsx"), `import {ReliabilityPanels} from ${JSON.stringify(path.join(web, "tests/auction/reliability/ui-harness"))};export const dynamic='force-dynamic';export default async function Page({searchParams}:{searchParams:Promise<{lang?:string;tooltip?:string;weapon?:string}>}){const q=await searchParams;const locale=q.lang==='ru'?'ru':'en';return <main className="gildra-atlas private-auction-qa" data-atlas-scope lang={locale}><header><h1>Offline auction reliability fixtures</h1><p>Private synthetic QA: all characters, lots, prices, effects and DPS are fixtures. No authenticated or native jobs.</p></header><ReliabilityPanels locale={locale} tooltip={q.tooltip==='1'} weapon={q.weapon==='1'}/></main>;}\n`);
+writeFileSync(path.join(harness, "app/page.tsx"), `import {ReliabilityPanels} from ${JSON.stringify(path.join(web, "tests/auction/reliability/ui-harness"))};export const dynamic='force-dynamic';export default async function Page({searchParams}:{searchParams:Promise<{lang?:string;tooltip?:string;weapon?:string;controls?:string}>}){const q=await searchParams;const locale=q.lang==='ru'?'ru':'en';return <main className="gildra-atlas private-auction-qa" data-atlas-scope lang={locale}><header><h1>Offline auction reliability fixtures</h1><p>Private synthetic QA: all characters, lots, prices, effects and DPS are fixtures. No authenticated or native jobs.</p></header><ReliabilityPanels locale={locale} tooltip={q.tooltip==='1'} weapon={q.weapon==='1'} controls={q.controls==='1'}/></main>;}\n`);
 await new Promise((resolve, reject) => { const probe = net.createServer(); probe.once("error", reject); probe.listen(port, "127.0.0.1", () => probe.close(resolve)); });
 const baseURL = `http://127.0.0.1:${port}`;
 const serverArgs = [next, "dev", "--webpack", "--hostname", "127.0.0.1", "--port", String(port)];
 const report = { status: "running", phase, sourceRevision, startedAt: new Date().toISOString(),
+  harnessReactStrictMode: true,
   scope: "Versioned Playwright tests of actual current UI in a generated private loopback harness. All market/item/DPS/job facts are synthetic. No auth, upstream/native, or production jobs.",
   sourceFilesSHA256AtStart: startHashes, cases: [], browserErrors: [], unresolvedFailures: [] };
 const server = spawn(process.execPath, serverArgs, { cwd: harness, detached: true, env: { ...process.env, NEXT_TELEMETRY_DISABLED: "1", NEXT_PRIVATE_DISABLE_DEV_OVERLAY_UX: "1" }, stdio: ["ignore", "pipe", "pipe"] });
@@ -67,7 +69,7 @@ try {
   report.server = { pid: server.pid, cwd: readlinkSync(`/proc/${server.pid}/cwd`), argv: readFileSync(`/proc/${server.pid}/cmdline`).toString().split("\0").filter(Boolean), baseURL };
   console.log(`Private synthetic harness ready on ${baseURL}; product revision ${sourceRevision}`);
   const rawPath = path.join(runRoot, "playwright.json");
-  const tests = spawn(process.execPath, [cli, "test", "--config", path.join(web, "tests/auction/reliability/ui.config.ts"), ...(selectedProject ? ["--project", selectedProject] : [])], { cwd: web, env: { ...process.env,
+  const tests = spawn(process.execPath, [cli, "test", "--config", path.join(web, "tests/auction/reliability/ui.config.ts"), ...(selectedProject ? ["--project", selectedProject] : []), ...(grep ? ["--grep", grep] : [])], { cwd: web, env: { ...process.env,
     AUCTION_UI_BASE_URL: baseURL, AUCTION_UI_RAW_REPORT: rawPath, AUCTION_UI_RESULTS: path.join(runRoot, "results"), NEXT_TELEMETRY_DISABLED: "1" }, stdio: "inherit" });
   const execution = await finished(tests);
   report.testExecution = execution;

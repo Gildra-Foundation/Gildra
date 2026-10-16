@@ -87,6 +87,12 @@
 .replacement > span:first-child { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
 .assembly { margin-block: 0 var(--atlas-space-6); padding: var(--atlas-space-5); border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius); min-width: 0; scroll-margin-block-start: var(--atlas-space-8); }
 .assembly .result { margin-top: var(--atlas-space-5); }
+.staleResult { padding: var(--atlas-space-3); border-left: 2px solid var(--atlas-caution); background: var(--atlas-surface-raised); color: var(--atlas-text); }
+.excludedLots { margin-block: var(--atlas-space-4); }
+.excludedLots ul { display: grid; gap: var(--atlas-space-3); padding: 0; list-style: none; }
+.excludedLots li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-width: 0; }
+.excludedLots li > span { overflow-wrap: anywhere; }
+.excludeLot { margin-top: var(--atlas-space-3); font-size: var(--atlas-text-small); }
 .returnToAssembly { display: inline-flex; align-items: center; min-height: var(--atlas-control-height); color: var(--atlas-accent); }
 .feedback { padding-block: var(--atlas-space-3); border-block: 1px solid var(--atlas-line-strong); }
 .panel :is(input, select, button, summary, a):focus-visible, .assembly:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 3px; }

@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import type { AuctionGearContext } from "./auctionGearRunner";
-import type { AuctionGearAssemblyCheckpoint, AuctionGearSearchCheckpoint, AuctionGearSearchResult, AuctionGearSimulationCache, GearPlanSimulation } from "./auctionGearTypes";
+import type { AuctionGearContext, AuctionGearRunMetadata } from "./auctionGearRunner";
+import type { AuctionGearAssemblyCheckpoint, AuctionGearAssemblyResult, AuctionGearIncumbent, AuctionGearSearchCheckpoint, AuctionGearSearchResult, AuctionGearSimulationCache, GearPlanSimulation } from "./auctionGearTypes";
 
 /** Private server state. Never serialize an entry or its context into an HTTP response. */
 export type AuctionGearSearchEntry = {
@@ -15,11 +15,14 @@ export type AuctionGearSearchEntry = {
   searchCheckpoint?: AuctionGearSearchCheckpoint;
   assemblyCheckpoint?: AuctionGearAssemblyCheckpoint;
   allowedKey?: string;
-  latestSearchResult?: AuctionGearSearchResult;
+  latestSearchResult?: AuctionGearSearchResult & Partial<AuctionGearRunMetadata>;
+  latestAssemblyResult?: AuctionGearAssemblyResult & AuctionGearRunMetadata;
+  excludedOptionIds?: string[];
   /** Stable ownership validation includes previously discovered, now sold lots. */
   knownOptionIds: Set<string>;
   retainedSimulationCache?: AuctionGearSimulationCache;
   retainedBaseline?: GearPlanSimulation;
+  retainedIncumbents?: AuctionGearIncumbent[];
 };
 const retention = 30 * 60_000;
 const state = globalThis as typeof globalThis & { __gildraAuctionGearSearches?: Map<string, AuctionGearSearchEntry> };

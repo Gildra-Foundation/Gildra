@@ -150,7 +150,7 @@ try {
 }
 const mode = process.argv[2] ?? "green";
 assert(["red", "green"].includes(mode));
-const report = { mode, sourceRevision: "ff9bf1894963339256924cfbe43c0386cf47b90b", method: "Actual current runner/variant/planner/store/jobs/API, synthetic response/data/auth/transport only; zero external/native calls", cases: rows,
+const report = { mode, sourceRevision: process.env.RELIABILITY_SOURCE_REVISION ?? null, method: "Actual current runner/variant/planner/store/jobs/API, synthetic response/data/auth/transport only; zero external/native calls", cases: rows,
   passed: rows.filter(row => row.status === "passed").length, failed: rows.filter(row => row.status === "failed").length };
 const output = resolve(process.cwd(), "../../.artifacts/auction-reliability-20261016");await mkdir(output, { recursive: true });
 await writeFile(resolve(output, `root-${mode}.json`), JSON.stringify(report, null, 2) + "\n", { flag: mode === "red" ? "wx" : "w" });

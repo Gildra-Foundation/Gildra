@@ -34,8 +34,9 @@ The current UI sends excludedOptionIds; an empty exclusion list considers the
 entire verified pool with the same original budget. Legacy allowedOptionIds
 remain supported for older callers. The two selection modes are mutually
 exclusive, and forged or foreign IDs are rejected. New searches,
-selection changes and resumed searches clear the previous assembly; resumed
-search may confirm additional upgrades.
+selection changes clear the assembly because its allowed pool changes. Resumed
+searches, cancellation and errors retain the previous confirmed assembly as a
+read-only snapshot with unverified prices until a successful current result arrives.
 Unselected slots retain their current items. A non-Fury two-handed replacement
 can remove an equipped offhand only when OFF_HAND is also selected. Before each
 continuation/assembly, the server checks ownership, the canonical character
@@ -56,11 +57,16 @@ Only monotone total-lot-cost/quantity constraints prune incomplete states; uniqu
 categories and hand compatibility are checked on the completed loadout. Equal
 item effects share native simulations without collapsing lot cost/quantity
 choices. Combined DPS is measured directly, never summed from individual gains.
-An early pair pass finds useful simultaneous swaps before the full cursor reaches
-them; this affects evaluation order and does not truncate the exhaustive domain.
+Bounded full-set seeds and an early pair pass find useful simultaneous swaps
+before the full cursor reaches them. These change evaluation order without
+truncating the exhaustive domain. Before a pool or exclusion reset, previous
+measured/confirmed effect choices become warm-start proposals. Each proposal is
+reallocated to currently allowed real lots and rechecked for current price,
+quantity, budget and compatibility before its cached measurement can be reused.
 
-A serializable cursor, simulation cache and best measured result survive a chunk
-boundary. Assembly checkpoint version 2 records effect groups and the pair cursor;
+A serializable cursor, compact five-field simulation cache and separate best
+measured/best confirmed results survive a chunk boundary. Assembly checkpoint
+version 3 records full-set seeds, the pair cursor and both best choices;
 combinationKind=effects identifies the count semantics. The default chunk allows
 48 new native calls, 100,000 visited assignments
 and a 90-second runner window. These are continuation boundaries, not permanent
@@ -68,7 +74,10 @@ pool or combination caps. Cache-only traversal yields cooperatively for
 cancellation. The highest measured DPS is claimed only when exhaustiveComplete
 is true; partial results show the best evaluated result so far. Equal maximum
 DPS uses the lowest total lot cost. Statistical significance is reported
-separately from the measured maximum; a noisy positive result is inconclusive.
+separately from the measured maximum. A noisy positive maximum is inconclusive
+and cannot erase a lower, confirmed upgrade. `bestConfirmed` contains the
+actionable shopping list and its own cost/comparison; the existing main result
+fields continue to describe the highest measured result. The UI labels both.
 
 The planner identifies an auction variant by **item ID + context + exact bonus ID
 set + every modifier type/value pair**. Auction ID, price and quantity stay on
@@ -79,7 +88,15 @@ Published catalog records supply equipment restrictions and acquisition evidence
 Their imported variant list is no longer the authority for live auction variants.
 The offline worker resolves the actual auction payload with the same pinned
 SimulationCraft database used for DPS comparisons. It returns effective item
-level, required character level, stats, quality, equip type, uniqueness and set.
+level, required character level, stats, quality, equip type, uniqueness, set and
+exact weapon damage/DPS/speed when available. Displayed weapon DPS is the mean
+of resolved minimum/maximum damage divided by swing time, matching the official
+preview's endpoint rounding; the unrounded DBC combat value is not substituted
+for tooltip DPS. This presentation conversion leaves native combat unchanged. The optional weapon report is
+backwards compatible with workers that do not yet expose it. Effect descriptions
+come only from a localized official reference with the same context, bonuses and
+modifiers after native control verification. Missing descriptions/weapon details
+are explicit in the tooltip; base descriptions never substitute for scaled facts.
 The planner checks native/catalog equip types agree and excludes items above the
 character's level. Unknown bonuses, content tuning or redirected stat sources
 exclude the variant rather than silently substituting base stats.
@@ -246,6 +263,25 @@ for image identities, exact scope, recovery and evidence.
   expiry bound resource use. Private search contexts expire after thirty inactive
   minutes and are limited to three per owner and forty globally; inactive contexts
   can be evicted. Continuation refreshes the active context lifetime.
+- Reload recovery uses private owner-bound GET with searchId, characterSlug and
+  locale. Session storage retains opaque job/search IDs and exclusion IDs, never
+  credentials or authoritative prices. Recovery restores the original server
+  budget and marks prices unverified; the next continuation refreshes them.
+  An initial request ID is stored before POST, so reload can recover an accepted
+  search even when its202response has not arrived. Repeating the same owned
+  request cannot create a duplicate calculation or change its original budget.
+  Unsaved local exclusions survive reload and cancel incompatible active work.
+  Exhausted polling can reconnect to the same job; changing exclusions retires
+  that job before starting a new assembly. A delayed POST cannot erase its
+  intended search/assembly mode during reload. Brief network failure retries
+  polling without duplicate POSTs. Character/locale/profile changes invalidate
+  the corresponding client scope and cancel outstanding work.
+- Snapshot fingerprints cover native mechanical inputs, exact gear, talents and
+  quantitative stats. Presentation names, links, achievements and JSON ordering
+  do not reset work. Legacy Azerite projection follows the pinned native importer.
+- Shared market requests have a bounded upstream lifetime; an individual caller
+  can stop waiting without cancelling another consumer. Negative item references
+  retry after15minutes, requeueing affected variants while preserving good work.
 - Jobs/cache are **in process**, following the current optimizer architecture.
   A restart loses them. Multiple replicas require sticky routing or a shared
   durable queue before horizontal scaling. Browser cancellation does not cancel
@@ -283,6 +319,15 @@ The recommendation guard has synthetic offline cases. An explicitly supplied
 saved-result replay is historical evidence, not a fresh market calculation.
 
 From `backend`: `go test ./internal/rotationlab ./internal/catalog ./internal/httpapi`.
+The test-first reliability suite is `npm run test:auction-reliability` from
+`apps/web`; it exercises actual modules with synthetic offline transports.
+`npm run qa:auction-reliability-ui -- --phase green --label <unique-label>` runs
+versioned Playwright regressions in a generated private loopback project. No QA
+route is added to the published application. Set `PLAYWRIGHT_BROWSERS_PATH` to the
+installed browser cache when it is outside the default location. The complete
+14-finding acceptance matrix and preserved RED baseline are documented in
+[the reliability plan](auction-reliability-plan-20261016.md).
+
 The regression checks cover raw modifier identity/order, crafted stats, native
 metadata requirements, unknown native bonuses, native level underflow, Blizzard control-variant
 level/stat mismatches, resolver response binding, old

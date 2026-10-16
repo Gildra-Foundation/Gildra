@@ -1,7 +1,7 @@
 import { defineConfig } from "playwright/test";
 
 export default defineConfig({
-  testDir: ".", testMatch: "ui.spec.ts", timeout: 30_000,
+  testDir: ".", testMatch: ["ui.spec.ts", ...(process.env.AUCTION_UI_CAPTURE ? ["ui-capture.spec.ts"] : [])], timeout: 30_000,
   expect: { timeout: 2500 }, fullyParallel: true, workers: 2, retries: 0,
   reporter: [["line"], ["json", { outputFile: process.env.AUCTION_UI_RAW_REPORT }]],
   outputDir: process.env.AUCTION_UI_RESULTS,

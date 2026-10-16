@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { AuctionOffer } from "./auctionMarket";
 import type { GearCandidateVariant } from "./gearCandidates";
+import type { GearPlannerWeapon } from "./gearPlannerPresentation";
 export type AuctionModifier = {
   type: number;
   value: number;
@@ -32,6 +33,9 @@ export type ResolvedAuctionVariant = {
   uniqueEquipped: boolean;
   setId: number;
   stats: Record<string, number>;
+  weapon?: GearPlannerWeapon;
+  effects?: string[];
+  effectsVerified?: boolean;
   error?: string;
 };
 export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAuctionVariant, engine: string): GearCandidateVariant {
@@ -45,7 +49,16 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
     resolution: {
       engine,
       requiredLevel: resolved.requiredLevel,
-      stats: resolved.stats
+      stats: resolved.stats,
+      ...(validAuctionWeapon(resolved.weapon) ? { weapon: { ...resolved.weapon } } : {}),
+      ...(resolved.effectsVerified === true && Array.isArray(resolved.effects) && resolved.effects.every(effect =>
+        typeof effect === "string" && effect.length > 0 && effect.length <= 4096) && resolved.effects.length <= 32
+        ? { effects: [...resolved.effects], effectsVerified: true } : { effectsVerified: false }),
     }
   };
+}
+
+export function validAuctionWeapon(weapon: GearPlannerWeapon | undefined): weapon is GearPlannerWeapon {
+  return Boolean(weapon && [weapon.minDamage, weapon.maxDamage, weapon.dps, weapon.speedSeconds].every(Number.isFinite) &&
+    weapon.minDamage > 0 && weapon.maxDamage >= weapon.minDamage && weapon.dps > 0 && weapon.speedSeconds > 0);
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
@@ -36,8 +37,28 @@ type GearVariantMetadata struct {
 	UniqueEquipped bool               `json:"uniqueEquipped"`
 	SetID          int                `json:"setId"`
 	Stats          map[string]float64 `json:"stats"`
+	Weapon         *GearVariantWeapon `json:"weapon,omitempty"`
 	Error          string             `json:"error,omitempty"`
 }
+type GearVariantWeapon struct {
+	MinDamage    float64 `json:"minDamage"`
+	MaxDamage    float64 `json:"maxDamage"`
+	DPS          float64 `json:"dps"`
+	SpeedSeconds float64 `json:"speedSeconds"`
+}
+
+func validGearVariantWeapon(weapon *GearVariantWeapon) bool {
+	if weapon == nil || weapon.MinDamage <= 0 || weapon.MaxDamage < weapon.MinDamage || weapon.DPS <= 0 || weapon.SpeedSeconds <= 0 {
+		return false
+	}
+	for _, value := range []float64{weapon.MinDamage, weapon.MaxDamage, weapon.DPS, weapon.SpeedSeconds} {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
+
 type GearVariantResponse struct {
 	Engine   string                `json:"engine"`
 	Variants []GearVariantMetadata `json:"variants"`
@@ -213,6 +234,22 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		result.Quality = n("quality")
 		result.SetID = n("set_id")
 		_ = json.Unmarshal(item["unique_equipped"], &result.UniqueEquipped)
+		if rawWeapon, present := item["gildra_weapon"]; present {
+			var weapon GearVariantWeapon
+			if json.Unmarshal(rawWeapon, &weapon) != nil || !validGearVariantWeapon(&weapon) {
+				result.Error = "item_variant_unverified"
+			} else {
+				// Tooltip DPS uses the resolved damage endpoints, as Blizzard's
+				// preview does. SimC's raw DBC DPS precedes endpoint rounding.
+				// This report conversion does not change any combat mechanics.
+				weapon.DPS = (weapon.MinDamage/2 + weapon.MaxDamage/2) / weapon.SpeedSeconds
+				if validGearVariantWeapon(&weapon) {
+					result.Weapon = &weapon
+				} else {
+					result.Error = "item_variant_unverified"
+				}
+			}
+		}
 		if n("id") != v.Change.ItemID || n("unknown_bonus_count") > 0 || !tuningKnown || !redirectedKnown || result.ItemLevel < 1 || result.ItemLevel > 1000 || result.RequiredLevel < 0 || result.RequiredLevel > 90 {
 			result.Error = "item_variant_unverified"
 		}

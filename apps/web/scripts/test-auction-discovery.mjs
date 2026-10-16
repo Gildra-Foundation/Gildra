@@ -6,10 +6,11 @@ import vm from "node:vm";
 import * as planner from "../lib/wow/auctionGearPlanner.ts";
 import * as searchStore from "../lib/wow/auctionGearSearchStore.ts";
 import { normalizeGearCandidate, catalogLoadoutItem, gearSlotCategoryPaths } from "../lib/wow/gearCandidates.ts";
-import { auctionVariantKey, resolvedAuctionVariant } from "../lib/wow/auctionItemVariant.ts";
+import { auctionVariantKey, resolvedAuctionVariant, validAuctionWeapon } from "../lib/wow/auctionItemVariant.ts";
 import { supportedAuctionModifiers } from "../lib/wow/gearItemModifiers.ts";
 import { assertFreshMarket } from "../lib/wow/auctionMarket.ts";
-import { nativeMatchesItemReference } from "../lib/wow/auctionItemReference.ts";
+import { auctionGearProfileFingerprint } from "../lib/wow/auctionGearFingerprint.ts";
+import { nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS } from "../lib/wow/auctionItemReference.ts";
 
 // All item data and measurements below are synthetic offline guard cases.
 // Execute unchanged discovery/runner code with fixed transport dependencies;
@@ -55,10 +56,10 @@ const resolveAuctionVariants = async ({ offers }) => {
 const discoverySource = await readFile(new URL("../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
 const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
   .runInNewContext({ Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
-    supportedAuctionModifiers, nativeMatchesItemReference, lookupGearRecords, gearEntityDetails, getAuctionItemReferences, resolveAuctionVariants });
+    supportedAuctionModifiers, nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS, Date, lookupGearRecords, gearEntityDetails, getAuctionItemReferences, resolveAuctionVariants });
 const runnerSource = await readFile(new URL("../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
 const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions})")
-  .runInNewContext({ createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery,
+  .runInNewContext({ createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery, auctionGearProfileFingerprint, validAuctionWeapon,
     talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
     getCharacterAuctionMarket: async () => fixture.market,
     getBattleNetSimulationSnapshot: async () => armory,

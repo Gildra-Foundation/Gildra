@@ -8,10 +8,15 @@ export type AuctionGearJob = {
   progress: AuctionPlanProgress | null;
   result: AuctionGearRunResult | null;
   error: string | null;
+  scope?: { characterSlug: string; locale: "en" | "ru" };
+  searchId?: string;
 };
 type Task = (signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) => Promise<AuctionGearRunResult>;
 type Job = AuctionGearJob & {
   owner: string;
+  /** Private idempotency identity; never include these fields in view(). */
+  clientRequestId?: string;
+  requestFingerprint?: string;
   controller: AbortController;
   task?: Task;
   expires: number;
@@ -32,7 +37,9 @@ function view(j: Job): AuctionGearJob {
     status: j.status,
     progress: j.progress,
     result: j.result,
-    error: j.error
+    error: j.error,
+    ...(j.scope ? { scope: { ...j.scope } } : {}),
+    ...(j.searchId ? { searchId: j.searchId } : {}),
   };
 }
 function cleanup() {
@@ -70,6 +77,7 @@ async function drain() {
         });
         signal.throwIfAborted();
         j.result = result;
+        j.searchId = result.searchId;
         j.status = "completed";
       } catch (error) {
         j.status = j.controller.signal.aborted ? "cancelled" : "failed";
@@ -85,8 +93,25 @@ async function drain() {
     state.__gildraAuctionRunning = false;
   }
 }
-export function enqueueAuctionGearJob(owner: string, task: Task, options: { continuation?: boolean } = {}) {
+export function enqueueAuctionGearJob(owner: string, task: Task, options: {
+  continuation?: boolean;
+  scope?: AuctionGearJob["scope"];
+  searchId?: string;
+  clientRequestId?: string;
+  requestFingerprint?: string;
+} = {}) {
   cleanup();
+  if (options.clientRequestId !== undefined || options.requestFingerprint !== undefined) {
+    if (!validAuctionGearClientRequestId(options.clientRequestId) || !/^[a-f0-9]{64}$/.test(options.requestFingerprint ?? "") ||
+        !options.scope?.characterSlug || !["en", "ru"].includes(options.scope.locale)) throw new Error("invalid_plan_request");
+    // An accepted request remains recoverable even if its response was lost,
+    // the queue filled, or this owner has since exhausted the search quota.
+    const existing = [...jobs.values()].find(job => job.owner === owner && job.clientRequestId === options.clientRequestId);
+    if (existing) {
+      if (existing.requestFingerprint !== options.requestFingerprint) throw new Error("invalid_plan_request");
+      return view(existing);
+    }
+  }
   if ([...jobs.values()].some(j => j.owner === owner && (j.status === "queued" || j.status === "running"))) throw new Error("plan_already_running");
   if (queue.length >= 8) throw new Error("plan_queue_full");
   const history = starts.get(owner) ?? { searches: [], continuations: [] };
@@ -106,7 +131,10 @@ export function enqueueAuctionGearJob(owner: string, task: Task, options: { cont
     status: "queued",
     progress: null,
     result: null,
-    error: null
+    error: null,
+    ...(options.scope ? { scope: { ...options.scope } } : {}),
+    ...(options.searchId ? { searchId: options.searchId } : {}),
+    ...(options.clientRequestId ? { clientRequestId: options.clientRequestId, requestFingerprint: options.requestFingerprint } : {}),
   };
   jobs.set(j.id, j);
   history[kind].push(Date.now());
@@ -120,6 +148,21 @@ export function getAuctionGearJob(owner: string, id: string) {
   cleanup();
   const j = jobs.get(id);
   return j?.owner === owner ? view(j) : null;
+}
+export function validAuctionGearClientRequestId(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{16,100}$/.test(value);
+}
+export function getAuctionGearJobByRequest(owner: string, clientRequestId: string, scope: NonNullable<AuctionGearJob["scope"]>) {
+  cleanup();
+  const job = [...jobs.values()].find(job => job.owner === owner && job.clientRequestId === clientRequestId &&
+    job.scope?.characterSlug === scope.characterSlug && job.scope.locale === scope.locale);
+  return job ? view(job) : null;
+}
+export function getActiveAuctionGearJob(owner: string, searchId: string) {
+  cleanup();
+  const job = [...jobs.values()].find(job => job.owner === owner && job.searchId === searchId &&
+    (job.status === "queued" || job.status === "running"));
+  return job ? view(job) : null;
 }
 export function cancelAuctionGearJob(owner: string, id: string) {
   cleanup();

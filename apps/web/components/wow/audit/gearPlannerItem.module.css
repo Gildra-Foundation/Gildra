@@ -21,6 +21,9 @@
 .stats { display:grid; gap:var(--atlas-space-1); padding:0; margin:0; list-style:none; color:var(--atlas-text); }
 .stats > div { display:flex; align-items:baseline; justify-content:space-between; gap:var(--atlas-space-4); }
 .stats dd { margin:0; color:var(--atlas-positive); font-weight:650; }
+.weapon { display:grid; gap:var(--atlas-space-1); margin:0; padding-block:var(--atlas-space-2); border-block:1px solid var(--atlas-line-soft); }
+.weapon > div { display:flex; align-items:baseline; justify-content:space-between; gap:var(--atlas-space-4); }
+.weapon dd { margin:0; color:var(--atlas-text-strong); }
 .effects p,.unverified { margin:0; color:var(--atlas-positive); }
 .unverified { color:var(--atlas-caution); }
 .source { padding-top:var(--atlas-space-2); border-top:1px solid var(--atlas-line-soft); }

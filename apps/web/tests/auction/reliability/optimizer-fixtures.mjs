@@ -7,6 +7,7 @@ import * as planner from "../../../lib/wow/auctionGearPlanner.ts";
 import { auctionVariantKey } from "../../../lib/wow/auctionItemVariant.ts";
 import { supportedAuctionModifiers } from "../../../lib/wow/gearItemModifiers.ts";
 import { equipmentCompatibility } from "../../../lib/wow/gearCompatibility.ts";
+import { auctionGearProfileFingerprint } from "../../../lib/wow/auctionGearFingerprint.ts";
 
 // Synthetic offline fixtures. Market, armory and native transports never run.
 export const slots = ["HEAD", "NECK", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "WAIST", "LEGS", "FEET",
@@ -72,7 +73,7 @@ export async function growingMarketRunner() {
     discovery: state, coverage: discovery.auctionGearDiscoveryCoverage(state), searchLimited: false,
     publicMarket: { snapshotId: market.id, region: "eu", realm: "Synthetic", connectedRealmId: 1,
       updatedAt: market.sourceUpdatedAt, validatedAt: market.fetchedAt }, market: { ...market, offers: [] },
-    profileFingerprint: createHash("sha256").update(JSON.stringify(armory)).digest("hex"), scenario: "single-target",
+    profileFingerprint: auctionGearProfileFingerprint(armory), scenario: "single-target",
     marketChange: { removedLots: 0, repricedLots: 0, quantityChangedLots: 0, variantsChangedLots: 0 } };
   const signal = new AbortController().signal;
   const searched = await planner.searchAuctionGearOptions(input(context.options, { searchId: "synthetic-runner-entry",
@@ -81,7 +82,7 @@ export async function growingMarketRunner() {
     searchCheckpoint: searched.checkpoint, latestSearchResult: searched.result, busy: false };
   const runner = new vm.Script(executable(readProduct("lib/wow/auctionGearRunner.ts")) +
     "\n;({verifyAuctionGearSearch,assembleAuctionGearSearch})").runInNewContext({ createHash, Date, Map, Set, Object,
-    Number, JSON, AbortSignal, process, ...planner, ...discovery, touchAuctionGearSearch: () => {},
+    Number, JSON, AbortSignal, process, ...planner, ...discovery, auctionGearProfileFingerprint, touchAuctionGearSearch: () => {},
     getBattleNetSimulationSnapshot: async () => armory, getCharacterAuctionMarket: async () => market,
     addPlannerItemIcons: async () => {}, auctionVariantKey,
     advanceAuctionGearDiscovery: async () => { throw Error("unexpected_native_metadata_discovery"); } });

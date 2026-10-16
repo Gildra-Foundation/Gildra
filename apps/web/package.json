@@ -106,7 +106,9 @@
     "test:cms": "node --experimental-strip-types --no-warnings --test tests/cms/*.test.ts",
     "test:cms:revalidate-e2e": "node tests/cms/revalidate-e2e.mjs",
     "test:cms:readers-e2e": "node --experimental-strip-types --no-warnings tests/cms/readers-e2e.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:auction-reliability": "node scripts/test-auction-reliability.mjs",
+    "qa:auction-reliability-ui": "node scripts/qa-auction-reliability-ui.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.11",

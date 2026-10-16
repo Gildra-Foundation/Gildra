@@ -2,12 +2,12 @@ import { createHash } from "node:crypto";
 import { assertFreshMarket, type AuctionSnapshot } from "./auctionMarket";
 import { candidateLoadoutItem, compareGearSimulationResults } from "./gearSimulation";
 import { isTwoHandWeapon, supportsTitanGrip, validateGearLoadout, type GearLoadoutItem } from "./gearCompatibility";
-import { auctionEffectGroups, auctionSelectionEffectKey, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
+import { auctionEffectGroupKey, auctionEffectGroups, auctionSelectionEffectKey, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
 export { auctionSelectionEffectKey } from "./auctionGearEffects";
 import type {
   AuctionGearAssemblyCheckpoint, AuctionGearAssemblyResult, AuctionGearOption, AuctionGearPlan,
   AuctionGearPurchase, AuctionGearSearchCheckpoint, AuctionGearSearchItem, AuctionGearSearchResult,
-  AuctionGearSimulationCache, AuctionPlanProgress, GearPlanSimulation,
+  AuctionGearSimulationCache, AuctionGearIncumbent, AuctionPlanProgress, GearPlanSimulation,
 } from "./auctionGearTypes";
 export type * from "./auctionGearTypes";
 
@@ -48,10 +48,13 @@ export function auctionGearPurchase(option: AuctionGearOption): AuctionGearPurch
   if (!variant) throw new Error("simulation_variant_not_found");
   return {
     auctionId: option.auctionId, itemId: option.candidate.itemId, name: option.candidate.name,
-    iconUrl: option.candidate.iconUrl, quality: option.candidate.quality, slotType: option.candidate.slotType,
+    iconUrl: option.candidate.iconUrl, quality: option.candidate.quality, itemClassId: option.candidate.itemClassId, slotType: option.candidate.slotType,
     variantKey: option.variantKey, itemLevel: variant.itemLevel,
     requiredLevel: option.candidate.constraints.requiredLevel, bonusIds: variant.bonusIds,
     contextId: variant.contextId, modifiers: variant.modifiers, stats: variant.resolution?.stats,
+    weapon: variant.resolution?.weapon,
+    effects: variant.resolution?.effectsVerified ? variant.resolution.effects : undefined,
+    effectsVerified: variant.resolution?.effectsVerified,
     lotCostCopper: option.costCopper, quantity: option.quantity,
   };
 }
@@ -62,7 +65,25 @@ function validSimulation(result: GearPlanSimulation, engine?: string) {
       result.confidence !== 95 || typeof result.engine !== "string" || !result.engine.startsWith("SimulationCraft") ||
       !Number.isInteger(result.iterations) || result.iterations <= 0) throw new Error("invalid_simulation_result");
   if (engine && result.engine !== engine) throw new Error("simulation_version_changed");
-  return result;
+  // Worker responses may also contain logs, reports, timelines and spell data.
+  // Only these five validated measurements belong in retained planner state.
+  return { dps: result.dps, dpsError: result.dpsError, confidence: result.confidence,
+    iterations: result.iterations, engine: result.engine };
+}
+
+/** Capture before replacing the old offer pool; procurement is redone against current offers on reuse. */
+export function captureAuctionGearIncumbents(checkpoint: AuctionGearAssemblyCheckpoint | undefined,
+  options: AuctionGearOption[]): AuctionGearIncumbent[] {
+  if (!checkpoint) return [];
+  const byId = new Map(options.map(option => [option.id, option])), unique = new Map<string, AuctionGearIncumbent>();
+  for (const best of [checkpoint.best, checkpoint.bestConfirmed]) {
+    if (!best?.optionIds.length) continue;
+    const selection = best.optionIds.map(id => byId.get(id));
+    if (selection.some(option => !option)) continue;
+    const effects = selection.map(option => auctionEffectGroupKey(option!)).sort();
+    unique.set(effects.join("|"), { effects, simulation: validSimulation(best.simulation, checkpoint.baseline.engine) });
+  }
+  return [...unique.values()];
 }
 
 type PlannerInput = {
@@ -81,6 +102,7 @@ type PlannerInput = {
   shouldYield?: () => boolean;
   baseline?: GearPlanSimulation;
   simulationCache?: AuctionGearSimulationCache;
+  incumbents?: AuctionGearIncumbent[];
 };
 
 function prepare(input: PlannerInput) {
@@ -103,8 +125,7 @@ function prepare(input: PlannerInput) {
 }
 
 function cloneCache(cache: AuctionGearSimulationCache = {}, engine?: string) {
-  for (const result of Object.values(cache)) validSimulation(result, engine);
-  return structuredClone(cache);
+  return Object.fromEntries(Object.entries(cache).map(([key, result]) => [key, validSimulation(result, engine)]));
 }
 
 async function baselineFor(input: PlannerInput, cache: AuctionGearSimulationCache) {
@@ -131,7 +152,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
   if (input.checkpoint) {
     requireCheckpoint(inputKey, input.checkpoint);
     checkpoint = structuredClone(input.checkpoint);
-    validSimulation(checkpoint.baseline);
+    checkpoint.baseline = validSimulation(checkpoint.baseline);
     checkpoint.simulationCache = cloneCache(checkpoint.simulationCache, checkpoint.baseline.engine);
     if (!Number.isInteger(checkpoint.nextOption) || checkpoint.nextOption < 0 || checkpoint.nextOption > options.length) throw new Error("invalid_search_checkpoint");
   } else {
@@ -193,36 +214,30 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const combinationCount = radices.reduce((product, radix) => product * BigInt(radix), 1n).toString();
   let checkpoint: AuctionGearAssemblyCheckpoint, calls = 0;
   if (input.checkpoint) {
-    requireCheckpoint(inputKey, input.checkpoint, 2);
+    requireCheckpoint(inputKey, input.checkpoint, 3);
     checkpoint = structuredClone(input.checkpoint);
-    validSimulation(checkpoint.baseline);
+    checkpoint.baseline = validSimulation(checkpoint.baseline);
     checkpoint.simulationCache = cloneCache(checkpoint.simulationCache, checkpoint.baseline.engine);
     if (checkpoint.cursor.length !== slots.length || checkpoint.cursor.some((index, slot) => !Number.isInteger(index) || index < 0 || index >= radices[slot])) throw new Error("invalid_search_checkpoint");
     if (checkpoint.pairScores.length !== flatGroups.length || checkpoint.pairScores.some(score => !Number.isFinite(score) || score <= 0) ||
         !Number.isSafeInteger(checkpoint.nextPair) || checkpoint.nextPair < 0) throw new Error("invalid_search_checkpoint");
-    validSimulation(checkpoint.best.simulation, checkpoint.baseline.engine);
+    if (!Number.isSafeInteger(checkpoint.nextSeed) || checkpoint.nextSeed < 0 ||
+        checkpoint.seedSelections !== null && (!Array.isArray(checkpoint.seedSelections) || checkpoint.seedSelections.length > 3 ||
+          checkpoint.seedSelections.some(seed => !Array.isArray(seed) || seed.length < 3 || seed.length > slots.length ||
+            new Set(seed.map(index => flatGroups[index]?.options[0].candidate.slotType)).size !== seed.length ||
+            seed.some(index => !Number.isSafeInteger(index) || index < 0 || index >= flatGroups.length))) ||
+        checkpoint.nextSeed > (checkpoint.seedSelections?.length ?? 0) || checkpoint.exhausted && checkpoint.seedSelections === null ||
+        checkpoint.bestConfirmed === undefined) throw new Error("invalid_search_checkpoint");
+    checkpoint.best.simulation = validSimulation(checkpoint.best.simulation, checkpoint.baseline.engine);
+    if (checkpoint.bestConfirmed) checkpoint.bestConfirmed.simulation = validSimulation(checkpoint.bestConfirmed.simulation, checkpoint.baseline.engine);
   } else {
     const cache = cloneCache(input.simulationCache);
     const baseline = await baselineFor(input, cache);
     calls = baseline.calls;
-    checkpoint = { version: 2, inputKey, cursor: slots.map(() => 0), exhausted: false,
-      baseline: baseline.baseline, best: { optionIds: [], simulation: baseline.baseline }, simulationCache: cache,
-      simulations: calls, combinationsChecked: 0, validCombinations: 0, nextPair: 0,
+    checkpoint = { version: 3, inputKey, cursor: slots.map(() => 0), exhausted: false,
+      baseline: baseline.baseline, best: { optionIds: [], simulation: baseline.baseline }, bestConfirmed: null, simulationCache: cache,
+      simulations: calls, combinationsChecked: 0, validCombinations: 0, nextPair: 0, seedSelections: null, nextSeed: 0,
       pairScores: flatGroups.map(group => cache[auctionSelectionEffectKey([group.options[0]])]?.dps ?? baseline.baseline.dps) };
-    // Search already measured legal singles. They provide an early useful bound
-    // while enumeration still visits every assignment required for completion.
-    let seedCost = 0, seedId = "";
-    for (const option of options) {
-      const simulation = cache[auctionSelectionEffectKey([option])];
-      if (!simulation) continue;
-      try { auctionPlanLoadout(input.loadout, [option], input.specId, slots); } catch { continue; }
-      if (simulation.dps > checkpoint.best.simulation.dps || simulation.dps === checkpoint.best.simulation.dps &&
-          (option.costCopper < seedCost || option.costCopper === seedCost && option.id < seedId)) {
-        checkpoint.best = { optionIds: [option.id], simulation };
-        seedCost = option.costCopper;
-        seedId = option.id;
-      }
-    }
   }
   const save = () => input.onCheckpoint?.(checkpoint);
   const advance = (from = checkpoint.cursor.length - 1) => {
@@ -236,16 +251,97 @@ export async function assembleAuctionGear(input: PlannerInput & {
     checkpoint.exhausted = true;
   };
   const byId = new Map(options.map(option => [option.id, option]));
-  const bestOptions = () => checkpoint.best.optionIds.map(id => {
+  const optionsFor = (best: typeof checkpoint.best) => best.optionIds.map(id => {
     const option = byId.get(id);
     if (!option) throw new Error("invalid_search_checkpoint");
     return option;
   });
-  auctionPlanLoadout(input.loadout, bestOptions(), input.specId, slots);
-  if (auctionPlanCost(bestOptions()) > input.budgetCopper) throw new Error("invalid_search_checkpoint");
+  const bestOptions = () => optionsFor(checkpoint.best);
+  for (const best of [checkpoint.best, checkpoint.bestConfirmed]) if (best) {
+    auctionPlanLoadout(input.loadout, optionsFor(best), input.specId, slots);
+    if (auctionPlanCost(optionsFor(best)) > input.budgetCopper) throw new Error("invalid_search_checkpoint");
+  }
+  const confirmed = (simulation: GearPlanSimulation) => {
+    const comparison = compareGearSimulationResults(checkpoint.baseline, simulation);
+    return comparison.deltaDps > 0 && comparison.uncertainty.significant;
+  };
+  if (checkpoint.bestConfirmed && !confirmed(checkpoint.bestConfirmed.simulation)) throw new Error("invalid_search_checkpoint");
+  const consider = (selection: AuctionGearOption[], simulation: GearPlanSimulation) => {
+    const cost = auctionPlanCost(selection), key = selectionKey(selection);
+    const preferred = (best: typeof checkpoint.best | null) => !best || simulation.dps > best.simulation.dps ||
+      simulation.dps === best.simulation.dps && (cost < auctionPlanCost(optionsFor(best)) ||
+        cost === auctionPlanCost(optionsFor(best)) && key < best.optionIds.slice().sort().join("|"));
+    const best = { optionIds: selection.map(option => option.id), simulation };
+    if (preferred(checkpoint.best)) checkpoint.best = best;
+    if (confirmed(simulation) && preferred(checkpoint.bestConfirmed)) checkpoint.bestConfirmed = best;
+  };
+  if (!input.checkpoint) {
+    // Recover confirmed singles even when the caller has already requested a yield.
+    for (const option of options) {
+      const simulation = checkpoint.simulationCache[auctionSelectionEffectKey([option])];
+      if (!simulation) continue;
+      try { auctionPlanLoadout(input.loadout, [option], input.specId, slots); } catch { continue; }
+      consider([option], simulation);
+    }
+    const byEffect = new Map(flatGroups.map(group => [auctionEffectGroupKey(group.options[0]), group]));
+    for (const incumbent of input.incumbents ?? []) {
+      input.signal.throwIfAborted();
+      const simulation = validSimulation(incumbent.simulation, checkpoint.baseline.engine);
+      const selection = incumbent.effects.map(effect => byEffect.get(effect));
+      if (selection.some(group => !group) || new Set(selection.map(group => group!.options[0].candidate.slotType)).size !== selection.length) continue;
+      const purchase = await cheapestAuctionEffectSelection(selection as AuctionEffectGroup[], input.budgetCopper, input.signal);
+      if (!purchase) continue;
+      try { auctionPlanLoadout(input.loadout, purchase.options, input.specId, slots); } catch { continue; }
+      checkpoint.simulationCache[auctionSelectionEffectKey(purchase.options)] = simulation;
+      consider(purchase.options, simulation);
+    }
+  }
   save();
   const yieldBeforeEnumeration = input.shouldYield?.() === true;
   const groupIndex = new Map(flatGroups.map((group, index) => [group, index]));
+  const rankedBySlot = groups.map(slotGroups => slotGroups.map(group => groupIndex.get(group)!)
+    .sort((a, b) => checkpoint.pairScores[b] - checkpoint.pairScores[a] || a - b));
+  const groupCosts = flatGroups.map(group => group.options.reduce((cost, option) => Math.min(cost, option.costCopper), Infinity));
+  const compatibleSelection = (selection: AuctionGearOption[]) => {
+    try { auctionPlanLoadout(input.loadout, selection, input.specId, slots); return true; } catch { return false; }
+  };
+  if (!yieldBeforeEnumeration && checkpoint.seedSelections === null) {
+    const seeds: number[][] = [];
+    const addSeed = async (indices: number[]) => {
+      if (indices.length < 3) return;
+      const sorted = indices.slice().sort((a, b) => a - b);
+      if (seeds.some(seed => seed.join(":") === sorted.join(":"))) return;
+      const purchase = await cheapestAuctionEffectSelection(sorted.map(index => flatGroups[index]), input.budgetCopper, input.signal);
+      if (purchase && compatibleSelection(purchase.options)) seeds.push(sorted);
+    };
+    // A bounded warmup supplies useful complete incumbents. These estimates
+    // only order candidates; every result still requires its own simulation.
+    let full = rankedBySlot.flatMap(indices => indices.length ? [indices[0]] : []);
+    while (full.length >= 3 && !input.shouldYield?.()) {
+      input.signal.throwIfAborted();
+      await addSeed(full);
+      if (seeds.length) break;
+      full = full.slice().sort((a, b) => checkpoint.pairScores[b] - checkpoint.pairScores[a] || a - b).slice(0, -1);
+    }
+    if (!input.shouldYield?.()) await addSeed(rankedBySlot.flatMap(indices => indices.length &&
+      checkpoint.pairScores[indices[0]] > checkpoint.baseline.dps ? [indices[0]] : []));
+    const candidates = rankedBySlot.flatMap(indices => indices.slice(0, 2));
+    candidates.sort((a, b) => (checkpoint.pairScores[b] - checkpoint.baseline.dps) / groupCosts[b] -
+      (checkpoint.pairScores[a] - checkpoint.baseline.dps) / groupCosts[a] || a - b);
+    let affordable: number[] = [];
+    for (const index of candidates) {
+      if (input.shouldYield?.()) break;
+      input.signal.throwIfAborted();
+      if (checkpoint.pairScores[index] <= checkpoint.baseline.dps || affordable.some(previous =>
+        flatGroups[previous].options[0].candidate.slotType === flatGroups[index].options[0].candidate.slotType)) continue;
+      const trial = [...affordable, index];
+      const purchase = await cheapestAuctionEffectSelection(trial.map(value => flatGroups[value]), input.budgetCopper, input.signal);
+      if (purchase && compatibleSelection(purchase.options)) affordable = trial;
+    }
+    if (!input.shouldYield?.()) await addSeed(affordable);
+    checkpoint.seedSelections = seeds;
+    save();
+  }
   const singleCompatible = new Map<number, boolean>();
   const compatibleSingle = (index: number) => {
     if (!singleCompatible.has(index)) {
@@ -257,8 +353,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const pairs: Array<{ first: number; second: number; repair: boolean; score: number }> = [];
   let pairWork = 0;
   const priority = new Set<number>();
-  if (!yieldBeforeEnumeration) for (const slotGroups of groups) {
-    const ranked = slotGroups.map(group => groupIndex.get(group)!).sort((a, b) => checkpoint.pairScores[b] - checkpoint.pairScores[a] || a - b);
+  if (!yieldBeforeEnumeration) for (const ranked of rankedBySlot) {
     for (const index of ranked.slice(0, 2)) priority.add(index);
     for (const index of ranked) {
       if (++pairWork % 256 === 0) { await new Promise<void>(resolve => setImmediate(resolve)); input.signal.throwIfAborted(); }
@@ -295,18 +390,25 @@ export async function assembleAuctionGear(input: PlannerInput & {
       input.onProgress?.({ phase: "simulating", completed: calls, total: max });
     }
     checkpoint.validCombinations++;
-    const best = checkpoint.best;
-    const cost = auctionPlanCost(selection), bestCost = auctionPlanCost(bestOptions());
     // DPS is a black box: no sum of individual gains is used to rank results.
-    if (simulation.dps > best.simulation.dps || simulation.dps === best.simulation.dps &&
-        (cost < bestCost || cost === bestCost && selectionKey(selection) < best.optionIds.slice().sort().join("|"))) {
-      checkpoint.best = { optionIds: selection.map(o => o.id), simulation };
-    }
+    consider(selection, simulation);
     return { processed: true, simulated };
   };
   let assignments = 0;
+  const seeds = checkpoint.seedSelections ?? [];
+  while (!yieldBeforeEnumeration && checkpoint.nextSeed < seeds.length && assignments < maxAssignments && !input.shouldYield?.()) {
+    input.signal.throwIfAborted();
+    const purchase = await cheapestAuctionEffectSelection(seeds[checkpoint.nextSeed].map(index => flatGroups[index]), input.budgetCopper, input.signal);
+    const checked = purchase ? await evaluate(purchase.options) : { processed: true, simulated: false };
+    if (!checked.processed) break;
+    checkpoint.nextSeed++;
+    checkpoint.combinationsChecked++;
+    assignments++;
+    if (checked.simulated) save();
+  }
+  const seededSelections = new Set(seeds.map(seed => seed.join(":")));
   // Test compatible repair pairs and promising pairs before the long Cartesian traversal.
-  while (!yieldBeforeEnumeration && checkpoint.nextPair < pairs.length && assignments < maxAssignments && !input.shouldYield?.()) {
+  while (!yieldBeforeEnumeration && checkpoint.nextSeed === seeds.length && checkpoint.nextPair < pairs.length && assignments < maxAssignments && !input.shouldYield?.()) {
     input.signal.throwIfAborted();
     const pair = pairs[checkpoint.nextPair];
     const purchase = await cheapestAuctionEffectSelection([flatGroups[pair.first], flatGroups[pair.second]], input.budgetCopper, input.signal);
@@ -318,12 +420,17 @@ export async function assembleAuctionGear(input: PlannerInput & {
     if (checked.simulated) save();
     if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
   }
-  while (!yieldBeforeEnumeration && checkpoint.nextPair === pairs.length && !checkpoint.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
+  while (!yieldBeforeEnumeration && checkpoint.nextSeed === seeds.length && checkpoint.nextPair === pairs.length && !checkpoint.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
     input.signal.throwIfAborted();
     const chosenGroups = checkpoint.cursor.flatMap((choice, index) => choice ? [groups[index][choice - 1]] : []);
+    const chosenIndices = chosenGroups.map(group => groupIndex.get(group)!).sort((a, b) => a - b);
+    if (seededSelections.has(chosenIndices.join(":"))) {
+      advance(); assignments++;
+      if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+      continue;
+    }
     if (chosenGroups.length === 2) {
-      const indices = chosenGroups.map(group => groupIndex.get(group)!).sort((a, b) => a - b);
-      if (seededPairs.has(`${indices[0]}:${indices[1]}`)) {
+      if (seededPairs.has(`${chosenIndices[0]}:${chosenIndices[1]}`)) {
         advance(); assignments++;
         if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
         continue;
@@ -353,12 +460,20 @@ export async function assembleAuctionGear(input: PlannerInput & {
   save();
   const selection = bestOptions(), spentCopper = auctionPlanCost(selection);
   const final = auctionPlanLoadout(input.loadout, selection, input.specId, slots);
+  const confirmedOptions = checkpoint.bestConfirmed ? optionsFor(checkpoint.bestConfirmed) : null;
+  const confirmedFinal = confirmedOptions ? auctionPlanLoadout(input.loadout, confirmedOptions, input.specId, slots) : null;
+  const confirmedCost = confirmedOptions ? auctionPlanCost(confirmedOptions) : 0;
   input.signal.throwIfAborted();
   assertFreshMarket(input.market);
   return { checkpoint, result: { kind: "assembly", searchId: input.searchId, selectedSlots: slots,
     budgetCopper: input.budgetCopper, spentCopper, remainingCopper: input.budgetCopper - spentCopper,
     purchases: selection.map(auctionGearPurchase), removedSlots: input.loadout.filter(i => !final.some(f => f.slotType === i.slotType)).map(i => i.slotType),
     comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.best.simulation), engine: checkpoint.baseline.engine,
+    bestConfirmed: checkpoint.bestConfirmed && confirmedOptions && confirmedFinal ? {
+      purchases: confirmedOptions.map(auctionGearPurchase), spentCopper: confirmedCost, remainingCopper: input.budgetCopper - confirmedCost,
+      removedSlots: input.loadout.filter(item => !confirmedFinal.some(final => final.slotType === item.slotType)).map(item => item.slotType),
+      comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.bestConfirmed.simulation),
+    } : null,
     simulations: checkpoint.simulations, optionsConsidered: options.length, searchLimited: !checkpoint.exhausted,
     exhaustiveComplete: checkpoint.exhausted, combinationsChecked: checkpoint.combinationsChecked,
     validCombinations: checkpoint.validCombinations, combinationCount, combinationKind: "effects" } };
@@ -373,7 +488,7 @@ export async function planAuctionGear(input: Omit<PlannerInput, "searchId" | "se
     maxNewSimulations: input.maxSimulations });
   // The original entry point promised only confirmed purchase recommendations.
   // The assembly API exposes the measured maximum and its uncertainty separately.
-  return result.comparison.deltaDps > 0 && result.comparison.uncertainty.significant ? result : {
+  return result.bestConfirmed ? { ...result, ...result.bestConfirmed } : {
     ...result, spentCopper: 0, remainingCopper: input.budgetCopper, purchases: [], removedSlots: [],
     comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.baseline),
   };

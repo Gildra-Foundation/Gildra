@@ -3,9 +3,9 @@ import { writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 const baseline = process.argv[2] ?? 'red';
-if (!['red', 'green', 'presentation-red', 'presentation-green'].includes(baseline)) throw new Error('invalid_baseline');
+if (!['red', 'green', 'presentation-red', 'presentation-green', 'locale-red', 'locale-green'].includes(baseline)) throw new Error('invalid_baseline');
 const report = { phase: baseline, mode: 'Synthetic transport fixtures, current actual production modules, zero external/native requests', cases: [] };
-const stream = run({ files: [new URL(baseline.startsWith('presentation-') ? 'market-presentation.test.mjs' : 'market.test.mjs', import.meta.url).pathname], concurrency: false, isolation: "none" });
+const stream = run({ files: [new URL(baseline.startsWith('locale-') ? 'market-locale.test.mjs' : baseline.startsWith('presentation-') ? 'market-presentation.test.mjs' : 'market.test.mjs', import.meta.url).pathname], concurrency: false, isolation: "none" });
 for await (const event of stream) {
   if (!['test:pass', 'test:fail'].includes(event.type)) continue;
   const data = event.data;

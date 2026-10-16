@@ -1,22 +1,30 @@
 import { test as base, expect, type Page, type Route, type TestInfo } from "playwright/test";
 import { aliasIds, assemblyResult, characterSlug, comparison, completedJob, item, scope, searchResult } from "./ui-fixtures";
 
-type Body = { action: string; searchId?: string; excludedOptionIds?: string[] };
-type Mode = "normal" | "running" | "error" | "held-once" | "transient-once" | "initial-running";
+type Body = { clientRequestId?: string; action: string; searchId?: string; excludedOptionIds?: string[]; locale?: "ru" | "en" };
+type Mode = "normal" | "running" | "error" | "held-once" | "transient-once" | "initial-running" | "late" | "network-failed";
 export class AuctionHarness {
   requests: Body[] = [];
   polls: string[] = [];
   deletes: string[] = [];
   recoveries = 0;
+  requestRecoveries = 0;
+  requestRecoveryQueries: string[] = [];
+  private requestJobs = new Map<string, string>();
   recoveryQueries: string[] = [];
   recoveryFailure = false;
   marketError: string | null = null;
   mode: Mode = "normal";
   noisyMaximum = false;
+  incompleteAfterAssembly = false;
   currentExclusions: string[] = [];
   activePolls = 0;
   private jobs = new Map<string, ReturnType<typeof searchResult> | ReturnType<typeof assemblyResult>>();
   private releaseHeld: (() => void) | null = null;
+  private releaseLate: (() => void) | null = null;
+  private latestSearch = searchResult();
+  private lastAssembly: ReturnType<typeof assemblyResult> | null = null;
+  private activeRecoveryJob: { id: string; status: string; result: null; progress: null; error: null; scope: ReturnType<typeof scope>; searchId: string } | null = null;
   readonly language: "en" | "ru";
   constructor(readonly page: Page, info: TestInfo) {
     this.language = info.project.metadata.language as "en" | "ru";
@@ -44,6 +52,7 @@ export class AuctionHarness {
     if (request.method() === "DELETE") {
       const id = url.searchParams.get("id") ?? "";
       this.deletes.push(id);
+      this.activeRecoveryJob = null;
       await route.fulfill({ json: { id, status: "cancelled", progress: null, result: null, error: null, scope: scope(this.language) } });
       return;
     }
@@ -62,6 +71,7 @@ export class AuctionHarness {
         expect(Object.keys(body).sort()).toEqual(["action", "excludedOptionIds", "searchId"]);
         this.currentExclusions = body.excludedOptionIds ?? [];
         result = assemblyResult({ noisyMaximum: this.noisyMaximum });
+        if (this.incompleteAfterAssembly) result.updatedSearch = { ...result.updatedSearch, searchComplete: false, pendingItems: 1 };
         if (aliasIds.every(id => this.currentExclusions.includes(id))) {
           const confirmed = { purchases: [item(780003, "WRIST")], spentCopper: 10000,
             remainingCopper: 99990000, removedSlots: [], comparison: comparison(1050) };
@@ -70,9 +80,28 @@ export class AuctionHarness {
       }
       const id = `synthetic-job-${this.requests.length}`;
       this.jobs.set(id, result);
-      if (this.mode === "normal") await route.fulfill({ status: 202, json: { ...completedJob(this.language, result), id } });
-      else await route.fulfill({ status: 202, json: { id, status: "running", result: null, error: null,
+      if (body.clientRequestId) this.requestJobs.set(body.clientRequestId, id);
+      const heldPost = this.mode === "late";
+      if (this.mode !== "normal") this.activeRecoveryJob = { id, status: "running", result: null, progress: null, error: null,
+        scope: scope(body.locale ?? this.language), searchId: result.searchId };
+      if (heldPost) await new Promise<void>(resolve => { this.releaseLate = resolve; });
+      if (this.mode === "normal") {
+        if ("items" in result) this.latestSearch = result;
+        else { this.latestSearch = result.updatedSearch; this.lastAssembly = result; }
+        try { await route.fulfill({ status: 202, json: { ...completedJob(body.locale ?? this.language, result), id } }); }
+        catch (error) { if (!heldPost) throw error; }
+      } else await route.fulfill({ status: 202, json: { id, status: "running", result: null, error: null,
         progress: { phase: "simulating", completed: 1, total: 8 }, scope: scope(this.language) } });
+      return;
+    }
+    if (url.searchParams.has("clientRequestId")) {
+      this.requestRecoveries++;
+      this.requestRecoveryQueries.push(url.search);
+      expect(url.searchParams.get("characterSlug")).toBe(characterSlug);
+      expect(url.searchParams.get("locale")).toBe(this.language);
+      const id = this.requestJobs.get(url.searchParams.get("clientRequestId") ?? "");
+      if (!id) await route.fulfill({ status: 404, json: { error: "plan_not_found" } });
+      else await route.fulfill({ json: { ...completedJob(this.language, this.jobs.get(id)!), id } });
       return;
     }
     if (url.searchParams.has("searchId")) {
@@ -81,9 +110,9 @@ export class AuctionHarness {
       expect(url.searchParams.get("characterSlug")).toBe(characterSlug);
       expect(url.searchParams.get("locale")).toBe(this.language);
       if (this.recoveryFailure) await route.fulfill({ status: 404, json: { error: "search_not_found" } });
-      else await route.fulfill({ json: { kind: "recovery", search: searchResult(),
-        assembly: assemblyResult({ noisyMaximum: this.noisyMaximum }), excludedOptionIds: this.currentExclusions,
-        activeJob: null, needsRefresh: true } });
+      else await route.fulfill({ json: { kind: "recovery", search: this.latestSearch,
+        assembly: this.lastAssembly, excludedOptionIds: this.currentExclusions,
+        activeJob: this.activeRecoveryJob, needsRefresh: true } });
       return;
     }
     const id = url.searchParams.get("id") ?? "";
@@ -94,7 +123,7 @@ export class AuctionHarness {
       try { await route.fulfill({ json: completedJob(this.language, this.jobs.get(id)!) }); } catch { /* Deadline closed this one request. */ }
       return;
     }
-    if (this.mode === "transient-once" && this.activePolls === 1) { await route.abort("timedout"); return; }
+    if (this.mode === "network-failed" || this.mode === "transient-once" && this.activePolls === 1) { await route.abort("timedout"); return; }
     if (this.mode === "running") await route.fulfill({ json: { id, status: "running", result: null, error: null,
       progress: { phase: "simulating", completed: 2, total: 8 }, scope: scope(this.language) } });
     else if (this.mode === "error") await route.fulfill({ json: { id, status: "failed", result: null,
@@ -106,6 +135,8 @@ export class AuctionHarness {
       }
       const result = this.jobs.get(id);
       expect(result).toBeDefined();
+      if (result && "items" in result) this.latestSearch = result;
+      this.activeRecoveryJob = null;
       await route.fulfill({ json: { ...completedJob(this.language, result!), id } });
     }
   }
@@ -119,20 +150,21 @@ export class AuctionHarness {
     await expect(this.panel.locator("[data-auction-search-result]")).toBeVisible();
   }
   async assemble() { await this.build.click(); await expect(this.result).toBeVisible(); }
-  async release() { this.releaseHeld?.(); await this.page.unrouteAll({ behavior: "ignoreErrors" }); }
+  releasePost() { this.mode = "normal"; this.releaseLate?.(); }
+  async release() { this.releaseHeld?.(); this.releaseLate?.(); await this.page.unrouteAll({ behavior: "ignoreErrors" }); }
 }
 
 export const test = base.extend<{ auction: AuctionHarness }>({
-  auction: async ({ page }, use, info) => {
+  auction: async ({ page }, provide, info) => {
     const errors: string[] = [];
     page.on("pageerror", error => errors.push(error.message));
     const harness = new AuctionHarness(page, info);
     await harness.install();
-    await use(harness);
+    await provide(harness);
     await harness.release();
     await info.attach("synthetic-http-observations", { body: JSON.stringify({ requests: harness.requests,
       polls: harness.polls, deletes: harness.deletes, recoveries: harness.recoveries, recoveryQueries: harness.recoveryQueries,
-      browserErrors: errors }), contentType: "application/json" });
+      requestRecoveries: harness.requestRecoveries, requestRecoveryQueries: harness.requestRecoveryQueries, browserErrors: errors }), contentType: "application/json" });
     expect(errors).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   },

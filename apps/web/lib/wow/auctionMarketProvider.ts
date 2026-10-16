@@ -11,6 +11,19 @@ const globalState = globalThis as typeof globalThis & {
   __gildraAuctionMarkets?: Map<string, Entry>;
 };
 const markets = globalState.__gildraAuctionMarkets ??= new Map<string, Entry>();
+/** The upstream request is shared; cancelling one waiter must not cancel others. */
+function awaitMarket(pending: Promise<AuctionSnapshot>, signal?: AbortSignal) {
+  if (!signal) return pending;
+  return new Promise<AuctionSnapshot>((resolve, reject) => {
+    const cleanup = () => signal.removeEventListener("abort", aborted);
+    const aborted = () => { cleanup(); reject(signal.reason); };
+    signal.addEventListener("abort", aborted, { once: true });
+    // Both handlers remain attached after cancellation, so an abandoned shared
+    // request cannot produce an unhandled rejection when its timeout expires.
+    pending.then(value => { cleanup(); resolve(value); }, error => { cleanup(); reject(error); });
+    if (signal.aborted) aborted();
+  });
+}
 async function readJSON(response: Response) {
   if (!response.ok) throw new Error(response.status === 429 ? "market_rate_limited" : "market_unavailable");
   const reader = response.body?.getReader();
@@ -32,7 +45,8 @@ async function readJSON(response: Response) {
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
 }
-export async function getCharacterAuctionMarket(character: BattleNetCharacter, accessToken: string, options: { refresh?: boolean } = {}) {
+export async function getCharacterAuctionMarket(character: BattleNetCharacter, accessToken: string, options: { refresh?: boolean; signal?: AbortSignal } = {}) {
+  options.signal?.throwIfAborted();
   if (!["eu", "us", "kr", "tw"].includes(character.region)) throw new Error("market_region_unsupported");
   const root = `https://${character.region}.api.blizzard.com`;
   const namespace = `dynamic-${character.region}`;
@@ -43,7 +57,7 @@ export async function getCharacterAuctionMarket(character: BattleNetCharacter, a
   const realmResponse = await fetch(`${root}/data/wow/realm/${encodeURIComponent(character.realm.slug)}?namespace=${namespace}`, {
     headers,
     cache: "no-store",
-    signal: AbortSignal.timeout(15000)
+    signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000)
   });
   const realm = (await readJSON(realmResponse)) as {
     connected_realm?: {
@@ -51,6 +65,7 @@ export async function getCharacterAuctionMarket(character: BattleNetCharacter, a
     };
   };
   const href = realm.connected_realm?.href;
+  options.signal?.throwIfAborted();
   if (!href) throw new Error("connected_realm_unresolved");
   const connected = new URL(href);
   const match = connected.pathname.match(/^\/data\/wow\/connected-realm\/(\d+)$/);
@@ -58,7 +73,7 @@ export async function getCharacterAuctionMarket(character: BattleNetCharacter, a
   const connectedRealmId = Number(match[1]);
   const key = `${character.region}:${connectedRealmId}`;
   const existing = markets.get(key);
-  if (existing?.pending) return existing.pending;
+  if (existing?.pending) return awaitMarket(existing.pending, options.signal);
   if (!options.refresh && existing?.value && Date.now() - existing.checkedAt < 5 * 60_000) {
     assertFreshMarket(existing.value);
     return existing.value;
@@ -67,7 +82,7 @@ export async function getCharacterAuctionMarket(character: BattleNetCharacter, a
   const entry: Entry = existing ?? {
     checkedAt: 0
   };
-  entry.pending = (async () => {
+  const pending = (async () => {
     const response = await fetch(`${root}/data/wow/connected-realm/${connectedRealmId}/auctions?namespace=${namespace}`, {
       headers: {
         ...headers,
@@ -101,15 +116,15 @@ export async function getCharacterAuctionMarket(character: BattleNetCharacter, a
     entry.checkedAt = Date.now();
     return value;
   })();
+  entry.pending = pending;
+  const settled = () => { if (entry.pending === pending) delete entry.pending; };
+  // Cleanup belongs to the request, not a waiter that may cancel sooner.
+  void pending.then(settled, settled);
   markets.set(key, entry);
   while (markets.size > 4) {
     const evict = [...markets].find(([id, e]) => id !== key && !e.pending)?.[0];
     if (!evict) break;
     markets.delete(evict);
   }
-  try {
-    return await entry.pending;
-  } finally {
-    delete entry.pending;
-  }
+  return awaitMarket(pending, options.signal);
 }

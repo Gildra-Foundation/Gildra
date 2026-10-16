@@ -1,5 +1,6 @@
 import { supportedAuctionModifiers } from "./gearItemModifiers";
 import { normalizeInventoryType, equipmentCompatibility, type GearLoadoutItem } from "./gearCompatibility";
+import type { GearPlannerWeapon } from "./gearPlannerPresentation";
 export type GearAcquisitionSource = {
   type: "encounter" | "crafting_recipe" | "quest" | "vendor" | "container" | "world_drop" | "blizzard_api" | "community_provider" | "auction" | "unknown";
   id?: number;
@@ -50,7 +51,8 @@ export type GearCandidateVariant = {
   upgradeTrackId?: number;
   upgradeRank?: number;
   sourceArtifactId?: string;
-  resolution?: {engine:string;requiredLevel:number;stats:Record<string,number>};
+  resolution?: {engine:string;requiredLevel:number;stats:Record<string,number>;
+    weapon?: GearPlannerWeapon; effects?: string[]; effectsVerified?: boolean};
   modifiers?: Array<{ type: number; value: number }>;
 };
 

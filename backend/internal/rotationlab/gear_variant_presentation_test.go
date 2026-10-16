@@ -2,6 +2,7 @@ package rotationlab
 
 import (
 	"encoding/json"
+	"math"
 	"strings"
 	"testing"
 )
@@ -34,6 +35,22 @@ func TestVariantPresentationPreservesExactNativeWeapon(t *testing.T) {
 		if weapon[key] != want {
 			t.Fatalf("weapon.%s=%v; want exact native value %v", key, weapon[key], want)
 		}
+	}
+}
+
+func TestVariantPresentationWeaponDPSUsesResolvedTooltipDamage(t *testing.T) {
+	// Fresh public Elkardia witness: item248074/context11/13573,6652/drop81.
+	// Blizzard reports54–102 /3.6s =>21.666666 DPS. SimC's unrounded DBC
+	// budget is21.8141899; it is not the DPS displayed for rounded endpoints.
+	input := GearVariantRequest{Spec: "fury-warrior", CharacterLevel: 81, Variants: []GearVariantInput{{Key: "auction:tooltip-dps", Change: GearChange{Slot: "main_hand", ItemID: 123}}}}
+	raw := presentationVariantReport(`,"gildra_weapon":{"minDamage":54,"maxDamage":102,"dps":21.814189910888672,"speedSeconds":3.6}`)
+	out, err := parseVariantReport(raw, input)
+	if err != nil || out.Variants[0].Error != "" || out.Variants[0].Weapon == nil {
+		t.Fatalf("valid resolved weapon lost: %+v %v", out, err)
+	}
+	weapon := out.Variants[0].Weapon
+	if weapon.MinDamage != 54 || weapon.MaxDamage != 102 || weapon.SpeedSeconds != 3.6 || math.Abs(weapon.DPS-21.666666666666668) > 0.000001 {
+		t.Fatalf("tooltip weapon facts differ from resolved damage/speed: %+v", weapon)
 	}
 }
 

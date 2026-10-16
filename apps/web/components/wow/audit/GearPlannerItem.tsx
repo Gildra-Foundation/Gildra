@@ -51,6 +51,8 @@ export function GearPlannerItem({ item, locale, verified = true, compact = false
   const statOrder = ["armor", "strength", "agility", "intellect", "stragiint", "stragi", "agiint", "strint", "stamina", "crit_rating", "haste_rating", "mastery_rating", "versatility_rating", "leech_rating", "avoidance_rating", "speed_rating"];
   const stats = verified ? Object.entries(item.stats ?? {}).filter(([key, value]) => statNames[key] && Number.isFinite(value) && value > 0).sort(([a], [b]) => statOrder.indexOf(a) - statOrder.indexOf(b)) : [];
   const statLines = verified ? item.statLines?.filter(Boolean) : undefined;
+  const weapon = verified ? item.weapon : undefined;
+  const weaponExpected = item.itemClassId === 2 || item.slotType === "MAIN_HAND";
   const content = <div className={styles.description}>
     <header className={styles.header} style={qualityStyle(item.quality)}>
       <FramedIcon item={item} showLevel={verified} />
@@ -58,8 +60,14 @@ export function GearPlannerItem({ item, locale, verified = true, compact = false
     </header>
     {verified && item.itemLevel !== undefined ? <dl className={styles.level}><dt>{t("Уровень предмета", "Item level")}</dt><dd>{number(item.itemLevel)}</dd></dl> : null}
     {verified && item.requiredLevel !== undefined && item.requiredLevel > 0 ? <p className={styles.requirement}>{t("Требуется уровень", "Requires level")} {item.requiredLevel}</p> : null}
+    {weapon ? <dl className={styles.weapon}>
+      <div><dt>{t("Урон", "Damage")}</dt><dd>{number(weapon.minDamage)}–{number(weapon.maxDamage)}</dd></div>
+      <div><dt>{t("Скорость оружия", "Weapon speed")}</dt><dd>{number(weapon.speedSeconds)} {t("сек.", "sec")}</dd></div>
+      <div><dt>{t("Урон в секунду", "Damage per second")}</dt><dd>{number(weapon.dps)}</dd></div>
+    </dl> : verified && weaponExpected ? <p className={styles.unverified}>{t("Параметры оружия этого варианта недоступны.", "Weapon properties for this variant are unavailable.")}</p> : null}
     {stats.length ? <dl className={styles.stats}>{stats.map(([key, value]) => <div key={key}><dt>{statNames[key][ru ? 0 : 1]}</dt><dd>+{number(value)}</dd></div>)}</dl> : statLines?.length ? <ul className={styles.stats}>{statLines.map((line, index) => <li key={`${index}:${line}`}>{line}</li>)}</ul> : null}
-    {verified && item.effects?.length ? <div className={styles.effects}>{item.effects.map((effect, index) => <p key={`${index}:${effect}`}>{effect}</p>)}</div> : null}
+    {verified && item.effectsVerified !== false && item.effects?.length ? <div className={styles.effects}>{item.effects.map((effect, index) => <p key={`${index}:${effect}`}>{effect}</p>)}</div> : null}
+    {verified && item.effectsVerified === false ? <p className={styles.unverified}>{t("Описание особых эффектов этого варианта недоступно. Подбор учитывает свойства, рассчитанные симулятором.", "Special effect descriptions for this variant are unavailable. The planner uses the properties resolved by the simulator.")}</p> : null}
     {!verified ? <p className={styles.unverified}>{t("Свойства награды для вашего уровня пока не подтверждены. Этот предмет не считается улучшением.", "The reward properties at your level have not been verified. This item is not counted as an upgrade.")}</p> : null}
     {item.source ? <div className={styles.source}><span>{t("Источник", "Source")}</span><p>{item.source}</p></div> : null}
     <footer>{pinned ? t("Нажмите по предмету ещё раз или Esc, чтобы закрыть", "Click the item again or press Esc to close") : t("Нажмите по предмету, чтобы закрепить описание", "Click the item to keep its details open")}</footer>

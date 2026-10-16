@@ -14,14 +14,19 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[]) {
 
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
+/** Stable across lot refreshes, but changes when native identity or equip constraints change. */
+export function auctionEffectGroupKey(option: AuctionGearOption) {
+  const constraints = Object.entries(candidateLoadoutItem(option.candidate))
+    .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
+  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option]), constraints])).digest("hex");
+}
+
 /** Equal simulation effects are grouped only when their equip constraints also agree. */
 export function auctionEffectGroups(options: AuctionGearOption[], slots: string[]): AuctionEffectGroup[][] {
   return slots.map(slot => {
     const groups = new Map<string, AuctionEffectGroup>();
     for (const option of options.filter(option => option.candidate.slotType === slot)) {
-      const constraints = Object.entries(candidateLoadoutItem(option.candidate))
-        .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-      const key = JSON.stringify([auctionSelectionEffectKey([option]), constraints]);
+      const key = auctionEffectGroupKey(option);
       const group = groups.get(key) ?? { options: [] };
       group.options.push(option);
       groups.set(key, group);

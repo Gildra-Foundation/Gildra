@@ -1,19 +1,19 @@
 import "server-only";
-import { createHash } from "node:crypto";
 import { getRotationPreset } from "@/lib/platform/rotation/repository";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { getBattleNetCharacterBySlug, type BattleNetCharacter } from "./battleNetCharacters";
 import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from "./battleNetCharacterDetails";
+import { auctionGearProfileFingerprint } from "./auctionGearFingerprint";
 import { getCharacterAuctionMarket } from "./auctionMarketProvider";
 import { assertFreshMarket } from "./auctionMarket";
-import { auctionVariantKey } from "./auctionItemVariant";
+import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
 import { addPlannerItemIcons } from "./gearPlannerMedia";
 import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
 import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
 import { prepareGearLoadout, type GearSimulationScenario } from "./gearSimulation";
-import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
+import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
 import { createAuctionGearSearch, deleteAuctionGearSearch, touchAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
 import type { GearLoadoutItem } from "./gearCompatibility";
@@ -49,7 +49,7 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
   const theme = talentSpecThemes.find(t => t.classId === character.playableClass.id && t.specId === armory.activeSpecializationId);
   if (!theme) throw new Error("specialization_unresolved");
   if (!["melee", "ranged"].includes(theme.role)) throw new Error("damage_specialization_required");
-  const market = await getCharacterAuctionMarket(character, token);
+  const market = await getCharacterAuctionMarket(character, token, { signal });
   const selectedSlots = parseAuctionGearSlots(input.selectedSlots ?? [...auctionGearSlots]);
   const localizedEquipped = await getAuctionEquippedPresentation({ character, equipment: armory.equipment, locale: input.locale, token, signal });
   check();
@@ -67,6 +67,7 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
     stats?: Array<{ type?: { type?: string }; value?: number; is_negated?: boolean }>;
     armor?: { value?: number };
     spells?: Array<{ description?: string }>;
+    weapon?: { damage?: { min_value?: number; max_value?: number }; attack_speed?: { value?: number }; dps?: { value?: number } };
   }> | undefined;
   if (!Array.isArray(raw) || !raw.length) throw new Error("equipment_constraints_unverified");
   const equipped = raw.filter(i => i.item?.id && i.slot?.type && gearSlotCategoryPaths[i.slot.type]);
@@ -86,13 +87,18 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
       return key && !stat.is_negated && Number.isFinite(stat.value) ? [[key, Number(stat.value)]] : [];
     }));
     if (Number.isFinite(item.armor?.value)) stats.armor = Number(item.armor!.value);
+    const weapon = item.weapon ? { minDamage: Number(item.weapon.damage?.min_value), maxDamage: Number(item.weapon.damage?.max_value),
+      dps: Number(item.weapon.dps?.value), speedSeconds: Number(item.weapon.attack_speed?.value) / 1000 } : undefined;
     currentBySlot.set(item.slot!.type!, {
       itemId: item.item!.id!, name: localizedEquipped.get(item.slot!.type!)?.name || item.name || entity.name, slotType: item.slot!.type!,
       iconUrl: entity.iconUrl, quality: qualityIds[item.quality?.type ?? ""] ?? entity.quality,
+      itemClassId: [13, 15, 17, 21, 22, 26].includes(catalogLoadoutItem(entity, item.slot!.type!).inventoryType) ? 2 : undefined,
       ...(Number.isInteger(item.level?.value) ? { itemLevel: Number(item.level!.value) } : {}),
       ...(Number.isInteger(item.requirements?.level?.value) ? { requiredLevel: Number(item.requirements!.level!.value) } : {}),
       ...(Object.keys(stats).length ? { stats } : {}),
       effects: localizedEquipped.get(item.slot!.type!)?.effects ?? [],
+      effectsVerified: true,
+      ...(validAuctionWeapon(weapon) ? { weapon } : {}),
     });
     return catalogLoadoutItem(entity, item.slot!.type!);
   });
@@ -123,7 +129,7 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
     publicMarket: { snapshotId: market.id, region: character.region, realm: character.realm.name,
       connectedRealmId: market.connectedRealmId, updatedAt: market.sourceUpdatedAt,
       discoveredSnapshotId: discovery.discoveredSnapshotId, validatedAt: market.fetchedAt },
-    profileFingerprint: createHash("sha256").update(JSON.stringify(armory)).digest("hex"), scenario: input.scenario,
+    profileFingerprint: auctionGearProfileFingerprint(armory), scenario: input.scenario,
     marketChange: { removedLots: 0, repricedLots: 0, quantityChangedLots: 0, variantsChangedLots: 0 },
   };
 }
@@ -151,8 +157,18 @@ function retainAuctionSimulations(entry: AuctionGearSearchEntry) {
   return entry.retainedSimulationCache;
 }
 
+function retainAuctionIncumbents(entry: AuctionGearSearchEntry) {
+  const captured = captureAuctionGearIncumbents(entry.assemblyCheckpoint, entry.context.options);
+  const unique = new Map([...captured, ...(entry.retainedIncumbents ?? [])].map(incumbent =>
+    [JSON.stringify([...incumbent.effects].sort()), incumbent]));
+  // These are warm-start proposals only; the exhaustive domain stays intact.
+  entry.retainedIncumbents = [...unique.values()].slice(0, 4);
+  return entry.retainedIncumbents;
+}
+
 function invalidateAuctionCursors(entry: AuctionGearSearchEntry) {
   retainAuctionSimulations(entry);
+  retainAuctionIncumbents(entry);
   entry.searchCheckpoint = undefined;
   entry.assemblyCheckpoint = undefined;
   entry.allowedKey = undefined;
@@ -213,9 +229,9 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   entry.retainedSimulationCache = checkpoint.simulationCache;
   const discoveryComplete = context.discovery ? context.coverage.discoveryComplete : true;
   const dataComplete = context.discovery ? context.coverage.dataComplete : !context.searchLimited;
-  entry.latestSearchResult = { ...result, discoveryComplete, dataComplete,
+  entry.latestSearchResult = publicAuctionResult(context, { ...result, discoveryComplete, dataComplete,
     searchComplete: result.pendingItems === 0 && discoveryComplete, searchLimited: result.searchLimited || context.searchLimited,
-    items: result.items.map(item => ({ ...item, currentItem: context.currentBySlot.get(item.slotType) })) };
+    items: result.items.map(item => ({ ...item, currentItem: context.currentBySlot.get(item.slotType) })) });
   touchAuctionGearSearch(entry);
   return entry.latestSearchResult;
 }
@@ -259,8 +275,8 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
   }
   const current = await getBattleNetSimulationSnapshot(token, context.character, signal);
   signal.throwIfAborted();
-  if (createHash("sha256").update(JSON.stringify(current)).digest("hex") !== context.profileFingerprint) throw new Error("character_snapshot_changed");
-  const market = await getCharacterAuctionMarket(context.character, token, { refresh: true });
+  if (auctionGearProfileFingerprint(current) !== context.profileFingerprint) throw new Error("character_snapshot_changed");
+  const market = await getCharacterAuctionMarket(context.character, token, { refresh: true, signal });
   signal.throwIfAborted();
   if (market.region !== context.market.region || market.connectedRealmId !== context.market.connectedRealmId) throw new Error("auction_market_changed");
   const offers = new Map(market.offers.map(offer => [offer.auctionId, offer]));
@@ -328,6 +344,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
     const allowedKey = auctionFactsKey(options);
     if (entry.allowedKey !== allowedKey) {
       retainAuctionSimulations(entry);
+      retainAuctionIncumbents(entry);
       entry.assemblyCheckpoint = undefined;
       entry.allowedKey = allowedKey;
     }
@@ -336,6 +353,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
       market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
       baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
+      incumbents: entry.retainedIncumbents,
       shouldYield, onProgress: progress,
       onCheckpoint: state => { entry.assemblyCheckpoint = state; touchAuctionGearSearch(entry); },
     });
@@ -343,8 +361,13 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
     entry.retainedSimulationCache = checkpoint.simulationCache;
     const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true);
     touchAuctionGearSearch(entry);
-    return publicAuctionResult(context, { ...result, updatedSearch, marketChange: context.marketChange,
-      purchases: result.purchases.map(purchase => ({ ...purchase, currentItem: context.currentBySlot.get(purchase.slotType) })) });
+    const present = (purchase: AuctionGearAssemblyResult["purchases"][number]) => ({ ...purchase,
+      currentItem: context.currentBySlot.get(purchase.slotType) });
+    const published = publicAuctionResult(context, { ...result, updatedSearch, marketChange: context.marketChange,
+      purchases: result.purchases.map(present),
+      bestConfirmed: result.bestConfirmed ? { ...result.bestConfirmed, purchases: result.bestConfirmed.purchases.map(present) } : null });
+    entry.latestAssemblyResult = published;
+    return published;
   } finally { entry.busy = false; }
 }
 
@@ -410,6 +433,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       const result = (await response.json()) as GearPlanSimulation;
       if (!Number.isFinite(result.dpsError) || !Number.isFinite(result.confidence) || result.confidence !== 95) throw new Error("invalid_simulation_result");
       if (engine() && result.engine !== engine()) throw new Error("simulation_version_changed");
-      return result;
+      return { dps: result.dps, dpsError: result.dpsError, confidence: result.confidence,
+        iterations: result.iterations, engine: result.engine };
     };
 }

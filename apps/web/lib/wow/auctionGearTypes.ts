@@ -22,10 +22,13 @@ export type AuctionEquippedItem = {
   slotType: string;
   iconUrl?: string;
   quality?: number;
+  itemClassId?: number;
   itemLevel?: number;
   requiredLevel?: number;
   stats?: Record<string, number>;
   effects?: string[];
+  effectsVerified?: boolean;
+  weapon?: { minDamage: number; maxDamage: number; dps: number; speedSeconds: number };
 };
 export type AuctionGearPurchase = {
   auctionId: number;
@@ -33,6 +36,7 @@ export type AuctionGearPurchase = {
   name: string;
   iconUrl?: string;
   quality?: number;
+  itemClassId?: number;
   slotType: string;
   variantKey: string;
   itemLevel: number;
@@ -41,11 +45,21 @@ export type AuctionGearPurchase = {
   contextId?: number;
   modifiers?: Array<{ type: number; value: number }>;
   stats?: Record<string, number>;
+  weapon?: { minDamage: number; maxDamage: number; dps: number; speedSeconds: number };
+  effects?: string[];
+  effectsVerified?: boolean;
   currentItem?: AuctionEquippedItem;
   lotCostCopper: number;
   quantity: number;
 };
 export type AuctionGearComparison = ReturnType<typeof compareGearSimulationResults>;
+export type AuctionGearConfirmed = {
+  spentCopper: number;
+  remainingCopper: number;
+  purchases: AuctionGearPurchase[];
+  removedSlots: string[];
+  comparison: AuctionGearComparison;
+};
 export type AuctionGearPlan = {
   budgetCopper: number;
   spentCopper: number;
@@ -91,6 +105,8 @@ export type AuctionGearAssemblyResult = AuctionGearPlan & {
   kind: "assembly";
   searchId: string;
   selectedSlots: string[];
+  /** Best visited affordable upgrade whose gain is confirmed independently of the measured maximum. */
+  bestConfirmed: AuctionGearConfirmed | null;
   exhaustiveComplete: boolean;
   combinationsChecked: number;
   validCombinations: number;
@@ -109,6 +125,8 @@ export type AuctionGearAssemblyResult = AuctionGearPlan & {
   };
 };
 export type AuctionGearSimulationCache = Record<string, GearPlanSimulation>;
+/** Opaque effect-group identities include the native variant and equip constraints, never lot prices or IDs. */
+export type AuctionGearIncumbent = { effects: string[]; simulation: GearPlanSimulation };
 export type AuctionGearSearchCheckpoint = {
   version: 1;
   inputKey: string;
@@ -118,7 +136,7 @@ export type AuctionGearSearchCheckpoint = {
   simulations: number;
 };
 export type AuctionGearAssemblyCheckpoint = {
-  version: 2;
+  version: 3;
   inputKey: string;
   /** Next mixed-radix effect-group assignment. Zero keeps the current item. */
   cursor: number[];
@@ -126,9 +144,13 @@ export type AuctionGearAssemblyCheckpoint = {
   pairScores: number[];
   /** Next pair in the deterministic early-evaluation order. */
   nextPair: number;
+  /** Bounded complete-set warmup; null means it has not been prepared yet. These are flat effect-group indices. */
+  seedSelections: number[][] | null;
+  nextSeed: number;
   exhausted: boolean;
   baseline: GearPlanSimulation;
   best: { optionIds: string[]; simulation: GearPlanSimulation };
+  bestConfirmed: { optionIds: string[]; simulation: GearPlanSimulation } | null;
   simulationCache: AuctionGearSimulationCache;
   simulations: number;
   combinationsChecked: number;

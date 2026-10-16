@@ -80,9 +80,9 @@ test('market: presentation reference descriptions attach only to the exact confi
   const exact = options.find(option => option.auctionId === 1).candidate.variants[0].resolution;
   const scaled = options.find(option => option.auctionId === 2).candidate.variants[0].resolution;
   assert.equal(exact.effectsVerified, true);
-  assert.deepEqual(exact.effects, reference.effects);
+  assert.deepEqual(Array.from(exact.effects), reference.effects);
   assert.notEqual(scaled.effectsVerified, true);
-  assert.deepEqual(scaled.effects ?? [], [], 'base reference descriptions must not leak to another bonus/context variant');
+  assert.deepEqual(Array.from(scaled.effects ?? []), [], 'base reference descriptions must not leak to another bonus/context variant');
 });
 
 test('market: presentation requests references in the discovery locale', async () => {

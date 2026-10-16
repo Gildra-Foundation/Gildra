@@ -32,6 +32,9 @@ for (const outcome of ["cancel", "error"] as const) {
     await expect(auction.build).toHaveText(/Продолжить|Повторить|Continue|Retry/);
     expect(auction.requests.filter(body => body.action === "assemble")).toHaveLength(2);
     await auction.build.focus();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Shift+Tab");
+    await expect(auction.build).toBeFocused();
     expect(await auction.build.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
     await expect(page.getByRole("dialog")).toHaveCount(0);
   });
@@ -142,4 +145,142 @@ test("exact weapon values and verified proc are rendered without base-data subst
   await expect(dialog).toContainText(/50/);
   await expect(dialog).toContainText(/70/);
   await expect(dialog).not.toContainText(unavailableWeapon);
+});
+
+test("locale change waits for late POST cancellation before starting the next scope", async ({ auction, page }) => {
+  await auction.open("&controls=1"); auction.mode = "late";
+  await auction.panel.getByRole("button", { name: auction.t("Найти улучшения", "Find upgrades"), exact: true }).click();
+  await expect.poll(() => auction.requests.length).toBe(1);
+  await page.getByRole("button", { name: "Private locale change", exact: true }).click();
+  const changed = page.getByRole("region", { name: auction.t("Find gear within your budget", "Найти вещи под бюджет"), exact: true });
+  await changed.getByRole("button", { name: auction.t("Find upgrades", "Найти улучшения"), exact: true }).click();
+  await expect(changed.getByRole("button", { name: auction.t("Searching…", "Ищем вещи…"), exact: true })).toBeDisabled();
+  expect(auction.requests).toHaveLength(1);
+  auction.releasePost();
+  await expect(changed.locator("[data-auction-search-result]")).toBeVisible();
+  expect(auction.deletes).toContain("synthetic-job-1");
+  expect(auction.requests).toHaveLength(2);
+  expect(auction.requests[1].locale).toBe(auction.language === "ru" ? "en" : "ru");
+});
+
+test("changed character snapshot does not restore an old profile result from storage", async ({ auction, page }) => {
+  await auction.open("&controls=1"); await auction.search(); await auction.assemble();
+  await page.getByRole("button", { name: "Private snapshot change", exact: true }).click();
+  await expect(auction.result).toHaveCount(0);
+  await expect(auction.panel.locator("[data-auction-search-result]")).toHaveCount(0);
+  expect(auction.recoveries).toBe(0);
+  await expect(auction.panel.getByRole("button", { name: auction.t("Найти улучшения", "Find upgrades"), exact: true })).toBeEnabled();
+});
+
+test("exhausted polls followed by changed exclusions creates a new correctly filtered assembly", async ({ auction, page }) => {
+  await auction.open(); await auction.search(); await auction.assemble();
+  await page.clock.install(); auction.mode = "network-failed";
+  await auction.build.click();
+  for (let step = 0; step < 12; step++) await page.clock.runFor(1000);
+  await expect(auction.assembly.getByRole("button", { name: /Повторить подключение|Reconnect to calculation/ })).toBeVisible();
+  auction.mode = "normal";
+  await auction.result.getByRole("button", { name: /Исключить лот|Exclude lot/i }).first().click();
+  await auction.assemble();
+  expect(auction.requests.filter(body => body.action === "assemble")).toHaveLength(3);
+  expect(auction.requests.at(-1)?.excludedOptionIds?.slice().sort()).toEqual(aliasIds.slice().sort());
+  expect(auction.deletes).toContain("synthetic-job-3");
+});
+
+test("delayed resume POST followed by reload recovers the intended search job mode", async ({ auction, page }) => {
+  await auction.open(); await auction.search(); auction.incompleteAfterAssembly = true;
+  await auction.assemble(); auction.mode = "late";
+  await auction.panel.getByRole("button", { name: /Продолжить проверку вещей|Continue item comparisons/ }).click();
+  await expect.poll(() => auction.requests.length).toBe(3);
+  await expect.poll(() => page.evaluate(() => {
+    const entry = Object.entries(sessionStorage).find(([key]) => key.startsWith("gildra:auction:v1:"));
+    return entry ? JSON.parse(entry[1]).mode : null;
+  })).toBe("search");
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(auction.panel.getByText(/Проверка найденных вариантов завершена|Evaluation of discovered options is complete/)).toBeVisible();
+  await expect(auction.panel.getByRole("alert")).toHaveCount(0);
+  expect(auction.requests.filter(body => body.action === "resume")).toHaveLength(1);
+  expect(auction.polls).toContain("synthetic-job-3");
+  auction.releasePost();
+});
+
+
+test("accepted initial search survives lost 202, reload and transport-timeout recovery without a duplicate POST", async ({ auction, page }) => {
+  await auction.open(); auction.mode = "late";
+  const find = auction.panel.getByRole("button", { name: auction.t("Найти улучшения", "Find upgrades"), exact: true });
+  await find.click();
+  await expect.poll(() => auction.requests.length).toBe(1);
+  const requestId = auction.requests[0].clientRequestId;
+  expect(requestId).toMatch(/^[A-Za-z0-9_-]{16,100}$/);
+  await expect.poll(() => page.evaluate(() => JSON.stringify({ ...sessionStorage }))).toContain(requestId!);
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  expect(auction.requestRecoveries).toBe(1);
+  expect(auction.requests.filter(body => body.action === "search")).toHaveLength(1);
+  await expect.poll(() => page.evaluate(() => {
+    const entry = Object.entries(sessionStorage).find(([key]) => key.startsWith("gildra:auction:v1:"));
+    return entry ? JSON.parse(entry[1]).clientRequestId : null;
+  })).toBeUndefined();
+  auction.releasePost();
+
+  await page.clock.install(); auction.mode = "late";
+  await auction.panel.getByRole("button", { name: auction.t("Новый поиск", "New search"), exact: true }).click();
+  await expect.poll(() => auction.requests.length).toBe(2);
+  for (let step = 0; step < 32; step++) await page.clock.runFor(1000);
+  const retry = auction.panel.getByRole("button", { name: /Повторить восстановление|Retry recovery/ });
+  await expect(retry).toBeVisible();
+  await retry.click();
+  for (let step = 0; step < 3; step++) await page.clock.runFor(1000);
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  expect(auction.requestRecoveries).toBe(2);
+  expect(auction.requests.filter(body => body.action === "search")).toHaveLength(2);
+  expect(new Set(auction.requests.map(body => body.clientRequestId)).size).toBe(2);
+  auction.releasePost();
+});
+
+test("scope change after initial response timeout retires the prior job before restoring another cached job", async ({ auction, page }, info) => {
+  await auction.open("&controls=1");
+  await page.clock.install(); auction.mode = "late";
+  await auction.panel.getByRole("button", { name: auction.t("Найти улучшения", "Find upgrades"), exact: true }).click();
+  await expect.poll(() => auction.requests.length).toBe(1);
+  for (let step = 0; step < 32; step++) await page.clock.runFor(1000);
+  await expect(auction.panel.getByRole("button", { name: /Повторить восстановление|Retry recovery/ })).toBeVisible();
+  const nextLocale = auction.language === "en" ? "ru" : "en";
+  const priorCachedId = "synthetic-cancelled-other-scope";
+  await page.evaluate(({ nextLocale, priorCachedId }) => {
+    const entry = Object.entries(sessionStorage).find(([key]) => key.startsWith("gildra:auction:v1:"));
+    if (!entry) throw new Error("Pending initial request cache missing");
+    const saved = JSON.parse(entry[1]);
+    sessionStorage.setItem(entry[0].replace(/:(en|ru)$/, `:${nextLocale}`), JSON.stringify({
+      ...saved, jobId: priorCachedId, searchId: undefined, clientRequestId: undefined,
+    }));
+  }, { nextLocale, priorCachedId });
+  const blockedNewSearches: unknown[] = [];
+  let restoredPriorScope = false;
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(); const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("id") === priorCachedId) {
+      expect(url.searchParams.get("locale")).toBe(nextLocale);
+      restoredPriorScope = true;
+      await route.fulfill({ json: { id: priorCachedId, status: "cancelled", result: null, progress: null, error: null,
+        scope: { characterSlug: url.searchParams.get("characterSlug"), locale: nextLocale } } });
+    } else if (request.method() === "POST" && request.postDataJSON().locale === nextLocale && !auction.deletes.includes("synthetic-job-1")) {
+      // Model the API's existing one-running-job-per-owner contract.
+      blockedNewSearches.push(request.postDataJSON());
+      await route.fulfill({ status: 409, json: { error: "plan_already_running" } });
+    } else await route.fallback();
+  });
+  await page.getByRole("button", { name: "Private locale change", exact: true }).click();
+  const changed = page.getByRole("region", { name: auction.t("Find gear within your budget", "Найти вещи под бюджет"), exact: true });
+  for (let step = 0; step < 3; step++) await page.clock.runFor(1000);
+  await expect(changed.getByText(/Поиск отменён|Search cancelled/)).toBeVisible();
+  expect(restoredPriorScope).toBe(true);
+  auction.mode = "normal";
+  await changed.getByRole("button", { name: auction.t("Find upgrades", "Найти улучшения"), exact: true }).click();
+  for (let step = 0; step < 3; step++) await page.clock.runFor(1000);
+  await info.attach("pending-scope-retirement", { body: JSON.stringify({ nextLocale, restoredPriorScope,
+    blockedNewSearches, deletes: auction.deletes }), contentType: "application/json" });
+  await expect(changed.locator("[data-auction-search-result]")).toBeVisible();
+  expect(blockedNewSearches).toEqual([]);
+  expect(auction.deletes).toContain("synthetic-job-1");
+  auction.releasePost();
 });

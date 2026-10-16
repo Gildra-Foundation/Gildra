@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { goldToCopper } from "@/lib/wow/auctionMarket";
 import { startAuctionGearSearch, continueAuctionGearSearch, assembleAuctionGearSearch, selectedAuctionGearAssemblyOptions, verifyAuctionGearSearch } from "@/lib/wow/auctionGearRunner";
-import { enqueueAuctionGearJob, getAuctionGearJob, cancelAuctionGearJob } from "@/lib/wow/auctionGearJobs";
+import { enqueueAuctionGearJob, getAuctionGearJob, getAuctionGearJobByRequest, validAuctionGearClientRequestId, cancelAuctionGearJob } from "@/lib/wow/auctionGearJobs";
 import { getAuctionGearSearch } from "@/lib/wow/auctionGearSearchStore";
+import { recoverAuctionGearSearch } from "@/lib/wow/auctionGearRecovery";
 import { auctionGearSlots, parseAuctionGearSlots } from "@/lib/wow/auctionGearSelection";
 import type { GearSimulationScenario } from "@/lib/wow/gearSimulation";
 export const dynamic = "force-dynamic";
@@ -43,7 +44,26 @@ export async function GET(request: Request) {
   if (!user) return reply({
     error: "session_expired"
   }, 401);
-  const job = getAuctionGearJob(user.id, new URL(request.url).searchParams.get("id") ?? "");
+  const params = new URL(request.url).searchParams;
+  if (params.has("clientRequestId")) {
+    const clientRequestId = params.get("clientRequestId"), characterSlug = params.get("characterSlug") ?? "", locale = params.get("locale");
+    if (params.has("id") || params.has("searchId") || !validAuctionGearClientRequestId(clientRequestId) ||
+        !characterSlug || characterSlug.length > 180 || (locale !== "en" && locale !== "ru")) return reply({ error: "invalid_plan_request" }, 400);
+    const job = getAuctionGearJobByRequest(user.id, clientRequestId, { characterSlug, locale });
+    return job ? reply(job) : reply({ error: "plan_not_found" }, 404);
+  }
+  if (params.has("searchId")) {
+    const searchId = params.get("searchId") ?? "", characterSlug = params.get("characterSlug") ?? "", locale = params.get("locale");
+    if (params.has("id") || !searchId || searchId.length > 100 || !characterSlug || characterSlug.length > 180 ||
+        (locale !== "en" && locale !== "ru")) return reply({ error: "invalid_plan_request" }, 400);
+    const recovered = recoverAuctionGearSearch(user.id, searchId, characterSlug, locale);
+    return recovered ? reply(recovered) : reply({ error: "search_not_found" }, 404);
+  }
+  const job = getAuctionGearJob(user.id, params.get("id") ?? "");
+  if (job && (params.has("characterSlug") || params.has("locale")) &&
+      (!job.scope || params.get("characterSlug") !== job.scope.characterSlug || params.get("locale") !== job.scope.locale)) {
+    return reply({ error: "plan_not_found" }, 404);
+  }
   return job ? reply(job) : reply({
     error: "plan_not_found"
   }, 404);
@@ -102,21 +122,32 @@ export async function POST(request: Request) {
     const entry = getAuctionGearSearch(user.id, body.searchId);
     if (!entry) return reply({ error: "search_not_found" }, 404);
     try {
-      if (action === "assemble") selectedAuctionGearAssemblyOptions(entry, selection);
-      return reply(enqueueAuctionGearJob(user.id, async (signal, progress) => {
+      const allowed = action === "assemble" ? selectedAuctionGearAssemblyOptions(entry, selection) : null;
+      const job = enqueueAuctionGearJob(user.id, async (signal, progress) => {
         entry.busy = true;
         try {
           await verifyAuctionGearSearch(entry, user.token, signal);
           return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress, user.token)
             : await assembleAuctionGearSearch(entry, selection, signal, progress, user.token);
         } finally { entry.busy = false; }
-      }, { continuation: true }), 202);
+      }, { continuation: true, searchId: entry.id, scope: { characterSlug: entry.context.input.characterSlug, locale: entry.context.input.locale } });
+      if (allowed) {
+        const ids = new Set(allowed.map(option => option.id));
+        entry.excludedOptionIds = hasExcluded ? [...body.excludedOptionIds as string[]]
+          : entry.context.options.filter(option => !ids.has(option.id)).map(option => option.id);
+      }
+      return reply(job, 202);
     } catch (error) {
       const code = error instanceof Error ? error.message : "plan_queue_full";
       return reply({ error: code }, code === "invalid_auction_selection" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
     }
   }
-  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "locale"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
+  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "locale", "clientRequestId"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
+  let clientRequestId: string | undefined;
+  if (Object.hasOwn(body, "clientRequestId")) {
+    if (!validAuctionGearClientRequestId(body.clientRequestId)) return reply({ error: "invalid_plan_request" }, 400);
+    clientRequestId = body.clientRequestId;
+  }
   const {
     characterSlug,
     scenario = "single-target",
@@ -136,6 +167,9 @@ export async function POST(request: Request) {
   let selectedSlots;
   try { selectedSlots = parseAuctionGearSlots(body.selectedSlots ?? [...auctionGearSlots]); }
   catch { return reply({ error: "invalid_equipment_slots" }, 400); }
+  const requestFingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify({
+    characterSlug, locale, budgetCopper, selectedSlots, scenario,
+  })).digest("hex") : undefined;
   try {
     return reply(enqueueAuctionGearJob(user.id, (signal, progress) => startAuctionGearSearch({
       characterSlug,
@@ -143,11 +177,12 @@ export async function POST(request: Request) {
       selectedSlots,
       scenario: scenario as GearSimulationScenario,
       locale: locale as "ru" | "en"
-    }, user.id, user.token, signal, progress)), 202);
+    }, user.id, user.token, signal, progress), { scope: { characterSlug, locale: locale as "ru" | "en" },
+      ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) }), 202);
   } catch (error) {
     const code = error instanceof Error ? error.message : "plan_queue_full";
     return reply({
       error: code
-    }, code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
+    }, code === "invalid_plan_request" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
   }
 }

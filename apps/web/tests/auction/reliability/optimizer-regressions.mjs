@@ -4,8 +4,10 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { performance } from "node:perf_hooks";
-import { assembleAuctionGear, auctionPlanCost, auctionPlanLoadout, planAuctionGear, searchAuctionGearOptions } from "../../../lib/wow/auctionGearPlanner.ts";
+import { assembleAuctionGear, auctionPlanCost, auctionPlanLoadout, auctionSelectionEffectKey,
+  captureAuctionGearIncumbents, planAuctionGear, searchAuctionGearOptions } from "../../../lib/wow/auctionGearPlanner.ts";
 import { candidate, growingMarketRunner, input, option, simulation, slots } from "./optimizer-fixtures.mjs";
+import { compareGearSimulationResults } from "../../../lib/wow/gearSimulation.ts";
 
 // Desired behavior tests, not assertions that preserve the reported defects.
 // Each case runs independently so a RED baseline records every regression.
@@ -130,6 +132,101 @@ export const cases = [
     const selected = result.purchases.map(purchase => options.find(value => value.auctionId === purchase.auctionId));
     assert.equal(auctionPlanCost(selected), result.spentCopper); auctionPlanLoadout([], selected, 72, fixture.selectedSlots);
     await assert.rejects(assembleAuctionGear({ ...fixture, budgetCopper: 99, checkpoint }), /auction_search_changed/);
+  } },
+  { id: "compound-incumbents-reallocate-and-recheck-current-financial-and-equip-facts", regression: false, async run(record) {
+    const original = ["HEAD", "CHEST", "WRIST"].map((slot, index) => option(700 + index, slot));
+    const fixture = input(original, { simulate: async selections => simulation(selections.length === 3 ? 1500 : selections.length ? 990 : 1000) });
+    const before = await assembleAuctionGear(fixture);
+    const incumbents = captureAuctionGearIncumbents(before.checkpoint, original);
+    assert.equal(incumbents.length, 1, "same measured/confirmed identity is captured once");
+    const current = original.map((value, index) => ({ ...value, id: `${800 + index}:${value.candidate.slotType}`,
+      auctionId: 800 + index, costCopper: 2 }));
+    const restore = extra => assembleAuctionGear({ ...fixture, options: current, baseline: before.checkpoint.baseline,
+      simulationCache: before.checkpoint.simulationCache, incumbents, shouldYield: () => true,
+      simulate: async () => { throw Error("restoring a known incumbent must not call native"); }, ...extra });
+    const repriced = (await restore({})).result;
+    assert.equal(repriced.comparison.candidateDps, 1500); assert.equal(repriced.spentCopper, 6);
+    assert(repriced.purchases.every(value => value.auctionId >= 800), "retired lot IDs are never reused");
+    const sold = (await restore({ options: current.slice(0, 2) })).result;
+    assert.equal(sold.comparison.candidateDps, 1000); assert.equal(sold.purchases.length, 0);
+    const overBudget = (await restore({ budgetCopper: 5 })).result;
+    assert.equal(overBudget.comparison.candidateDps, 1000); assert.equal(overBudget.bestConfirmed, null);
+    const changedConstraints = current.map((value, index) => index ? value : { ...value,
+      candidate: { ...value.candidate, constraints: { ...value.candidate.constraints, limitCategoryId: 9, limitQuantity: 1 } } });
+    const incompatible = (await restore({ options: changedConstraints, loadout: [{ slotType: "NECK", itemId: 999,
+      inventoryType: 2, itemSubclassId: 0, limitCategoryId: 9, limitQuantity: 1 }] })).result;
+    assert.equal(incompatible.comparison.candidateDps, 1000); assert.equal(incompatible.purchases.length, 0);
+    record({ repriced, sold, overBudget, incompatible });
+  } },
+  { id: "retained-simulations-contain-only-five-validated-fields", regression: false, async run(record) {
+    const options = [option(900, "HEAD")], extra = { reports: ["synthetic".repeat(10000)], timeline: [1, 2, 3], actors: [{ spells: [] }] };
+    const cache = { [auctionSelectionEffectKey([])]: { ...simulation(1000), ...extra },
+      [auctionSelectionEffectKey(options)]: { ...simulation(1100), ...extra } };
+    const fixture = input(options, { simulationCache: cache,
+      simulate: async selections => ({ ...simulation(selections.length ? 1100 : 1000), ...extra }) });
+    const searched = await searchAuctionGearOptions(fixture), assembled = await assembleAuctionGear({ ...fixture,
+      baseline: searched.result.baseline, simulationCache: searched.checkpoint.simulationCache });
+    const expected = ["confidence", "dps", "dpsError", "engine", "iterations"];
+    for (const checkpoint of [searched.checkpoint, assembled.checkpoint]) {
+      assert.deepEqual(Object.keys(checkpoint.baseline).sort(), expected);
+      for (const value of Object.values(checkpoint.simulationCache)) assert.deepEqual(Object.keys(value).sort(), expected);
+    }
+    for (const incumbent of captureAuctionGearIncumbents(assembled.checkpoint, options))
+      assert.deepEqual(Object.keys(incumbent.simulation).sort(), expected);
+    assert(!JSON.stringify(assembled.checkpoint).includes("reports"));
+    record({ originalCacheBytes: JSON.stringify(cache).length, retainedCacheBytes: JSON.stringify(assembled.checkpoint.simulationCache).length });
+  } },
+  { id: "independent-raw-choice-oracle-for-measured-and-confirmed-objectives", regression: false, async run(record) {
+    const checked = [];
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const ringSlots = ["FINGER_1", "FINGER_2"], offset = attempt * 20;
+      const options = ringSlots.flatMap((slot, index) => [
+        option(1000 + offset, slot, 2000 + offset, { quantity: 1, costCopper: 6 + attempt % 5 }),
+        option(1001 + offset, slot, 2000 + offset, { quantity: 2, costCopper: 10 + attempt % 7 }),
+        option(1002 + offset + index, slot, 2001 + offset + index, { costCopper: 5 + (attempt + index) % 9,
+          candidate: candidate(slot, 2001 + offset + index, { limitCategoryId: 99, limitQuantity: 1 }) }),
+      ]).concat([option(1004 + offset, "HEAD", 2004 + offset, { costCopper: 7 + attempt % 8 }),
+        option(1005 + offset, "HEAD", 2005 + offset, { costCopper: 9 + attempt % 10 })]);
+      const baseline = simulation(1000, 10), budget = 18 + attempt % 15;
+      const measure = selection => {
+        if (!selection.length) return baseline;
+        const key = selection.map(value => `${value.candidate.slotType}:${value.candidate.itemId}`).sort().join("|");
+        const n = parseInt(createHash("sha256").update(key).digest("hex").slice(0, 8), 16);
+        return simulation(850 + n % 601, n % 4 === 0 ? 200 : 1);
+      };
+      let best = { dps: 1000, cost: 0 }, bestConfirmed = null;
+      const walk = (slotIndex, selection) => {
+        const selectedSlots = ["FINGER_1", "FINGER_2", "HEAD"];
+        if (slotIndex < selectedSlots.length) {
+          walk(slotIndex + 1, selection);
+          for (const value of options.filter(value => value.candidate.slotType === selectedSlots[slotIndex]))
+            walk(slotIndex + 1, [...selection, value]);
+          return;
+        }
+        const lots = new Map();
+        for (const value of selection) {
+          const lot = lots.get(value.auctionId) ?? { used: 0, quantity: value.quantity, cost: value.costCopper };
+          lot.used++; lots.set(value.auctionId, lot); if (lot.used > lot.quantity) return;
+        }
+        if (selection.filter(value => value.candidate.constraints.limitCategoryId === 99).length > 1) return;
+        const cost = [...lots.values()].reduce((total, lot) => total + lot.cost, 0); if (cost > budget) return;
+        const value = measure(selection), comparison = compareGearSimulationResults(baseline, value);
+        if (value.dps > best.dps || value.dps === best.dps && cost < best.cost) best = { dps: value.dps, cost };
+        if (comparison.deltaDps > 0 && comparison.uncertainty.significant && (!bestConfirmed || value.dps > bestConfirmed.dps ||
+          value.dps === bestConfirmed.dps && cost < bestConfirmed.cost)) bestConfirmed = { dps: value.dps, cost };
+      };
+      walk(0, []);
+      const fixture = input(options, { budgetCopper: budget, baseline, maxNewSimulations: 1000,
+        simulate: async selection => measure(selection) });
+      const searched = await searchAuctionGearOptions(fixture);
+      const { result } = await assembleAuctionGear({ ...fixture, simulationCache: searched.checkpoint.simulationCache });
+      assert.equal(result.exhaustiveComplete, true, `oracle completion:${attempt}`);
+      assert.deepEqual({ dps: result.comparison.candidateDps, cost: result.spentCopper }, best, `measured oracle:${attempt}`);
+      assert.deepEqual(result.bestConfirmed ? { dps: result.bestConfirmed.comparison.candidateDps,
+        cost: result.bestConfirmed.spentCopper } : null, bestConfirmed, `confirmed oracle:${attempt}`);
+      checked.push({ attempt, best, bestConfirmed });
+    }
+    record({ independentRawAssignmentOracleCases: checked.length, checked });
   } },
 ];
 

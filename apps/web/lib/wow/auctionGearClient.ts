@@ -1,0 +1,99 @@
+/** Browser transport and opaque recovery handles; prices/stats are always recovered from the server. */
+export type AuctionClientScope = { characterSlug: string; locale: "ru" | "en" };
+export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[] };
+const activeKey = "gildra:auction-active:v1";
+let retiring: Promise<unknown> = Promise.resolve();
+
+export function retireAuctionClient(...work: Promise<unknown>[]) {
+  retiring = Promise.allSettled([retiring, ...work]);
+}
+export function waitForAuctionClientRetirement() { return retiring; }
+export function auctionClientCacheKey(scope: AuctionClientScope, specialization: string) {
+  return `gildra:auction:v1:${encodeURIComponent(scope.characterSlug)}:${encodeURIComponent(specialization)}:${scope.locale}`;
+}
+const requestIdentity = (value: unknown): value is string => typeof value === "string" && /^[A-Za-z0-9_-]{16,100}$/.test(value);
+const identity = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.length <= 180;
+export function readAuctionClientCache(key: string): AuctionClientCache | null {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(key) ?? "null") as Partial<AuctionClientCache> | null;
+    return value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
+      (value.mode === "search" || value.mode === "assembly") && Array.isArray(value.excludedOptionIds) &&
+      value.excludedOptionIds.length <= 20000 && value.excludedOptionIds.every(identity)
+      ? { version: 1, profileKey: value.profileKey, searchId: identity(value.searchId) ? value.searchId : undefined,
+        jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)] } : null;
+  } catch { return null; }
+}
+export function writeAuctionClientCache(key: string, value: AuctionClientCache | null) {
+  try { if (value) sessionStorage.setItem(key, JSON.stringify(value)); else sessionStorage.removeItem(key); } catch { /* Storage may be disabled. */ }
+}
+export function rememberAuctionClientRequest(scope: AuctionClientScope, clientRequestId: string) {
+  try { sessionStorage.setItem(activeKey, JSON.stringify({ ...scope, clientRequestId })); } catch { /* Storage may be disabled. */ }
+}
+export function forgetAuctionClientRequest(clientRequestId: string) {
+  try { if (JSON.parse(sessionStorage.getItem(activeKey) ?? "null")?.clientRequestId === clientRequestId) sessionStorage.removeItem(activeKey); } catch { /* Invalid saved state is ignored. */ }
+}
+export function auctionClientRequestUrl(clientRequestId: string, scope: AuctionClientScope) {
+  return `/api/wow/auction-gear-plans?${new URLSearchParams({ clientRequestId, ...scope })}`;
+}
+export function rememberAuctionClientJob(scope: AuctionClientScope, id: string) {
+  try { sessionStorage.setItem(activeKey, JSON.stringify({ ...scope, id })); } catch { /* Recovery is optional when storage is disabled. */ }
+}
+export function forgetAuctionClientJob(id: string) {
+  try { if (JSON.parse(sessionStorage.getItem(activeKey) ?? "null")?.id === id) sessionStorage.removeItem(activeKey); } catch { /* Invalid saved state is ignored. */ }
+}
+export function removeAuctionClientJob(id: string) {
+  return fetch(`/api/wow/auction-gear-plans?id=${encodeURIComponent(id)}`, {
+    method: "DELETE", keepalive: true, signal: AbortSignal.timeout(10_000),
+  }).then(response => { if (response.ok || response.status === 404) forgetAuctionClientJob(id); return response; }).catch(() => undefined);
+}
+export async function releasePriorAuctionClientJob() {
+  try {
+    const prior = JSON.parse(sessionStorage.getItem(activeKey) ?? "null") as { id?: unknown; clientRequestId?: unknown; characterSlug?: unknown; locale?: unknown } | null;
+    if (identity(prior?.id)) await removeAuctionClientJob(prior.id);
+    else if (requestIdentity(prior?.clientRequestId) && identity(prior.characterSlug) && (prior.locale === "ru" || prior.locale === "en")) {
+      const response = await fetch(auctionClientRequestUrl(prior.clientRequestId, { characterSlug: prior.characterSlug, locale: prior.locale }), {
+        cache: "no-store", signal: AbortSignal.timeout(10_000),
+      });
+      if (response.status === 404) forgetAuctionClientRequest(prior.clientRequestId);
+      else if (response.ok) {
+        const job = await response.json() as { id?: unknown };
+        if (identity(job.id)) {
+          const removed = await removeAuctionClientJob(job.id);
+          if (removed?.ok || removed?.status === 404) forgetAuctionClientRequest(prior.clientRequestId);
+        }
+      }
+    }
+  } catch { /* The owner-checked server endpoint remains authoritative. */ }
+}
+export function auctionClientJobUrl(id: string, scope: AuctionClientScope) {
+  return `/api/wow/auction-gear-plans?${new URLSearchParams({ id, ...scope })}`;
+}
+export class AuctionClientError extends Error {
+  constructor(message: string, readonly reconnect = false) { super(message); }
+}
+export function auctionClientDelay(milliseconds: number, signal: AbortSignal) {
+  signal.throwIfAborted();
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => { signal.removeEventListener("abort", abort); resolve(); }, milliseconds);
+    function abort() { clearTimeout(timer); reject(signal.reason ?? new DOMException("Aborted", "AbortError")); }
+    signal.addEventListener("abort", abort, { once: true });
+  });
+}
+export async function fetchAuctionClientResult<T>(url: string, signal: AbortSignal, onReconnect: () => void): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    signal.throwIfAborted();
+    try {
+      const response = await fetch(url, { cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]) });
+      if (response.status >= 500) throw new AuctionClientError("plan_connection_interrupted", true);
+      const payload = await response.json() as T & { error?: string };
+      if (!response.ok) throw new AuctionClientError(payload.error ?? "auction_plan_unavailable");
+      return payload;
+    } catch (error) {
+      signal.throwIfAborted();
+      if (error instanceof AuctionClientError && !error.reconnect) throw error;
+      if (attempt >= 3) throw new AuctionClientError("plan_connection_interrupted", true);
+      onReconnect();
+      await auctionClientDelay(750 * (attempt + 1), signal);
+    }
+  }
+}

@@ -9,7 +9,7 @@
      {
        continue;
      }
-@@ -393,6 +393,25 @@
+@@ -393,6 +393,38 @@
      slotnode[ "name" ] = item.name_str;
      slotnode[ "encoded_item" ] = item.encoded_item();
      slotnode[ "ilevel" ] = item.item_level();
@@ -21,6 +21,19 @@
 +    slotnode[ "item_subclass" ] = item.parsed.data.item_subclass;
 +    slotnode[ "inventory_type" ] = item.parsed.data.inventory_type;
 +    slotnode[ "quality" ] = item.parsed.data.quality;
++    if ( item.parsed.data.item_class == ITEM_CLASS_WEAPON )
++    {
++      const auto* weapon = item.weapon();
++      if ( weapon && weapon->min_dmg > 0 && weapon->max_dmg >= weapon->min_dmg &&
++           weapon->dps > 0 && weapon->swing_time.total_seconds() > 0 )
++      {
++        auto weapon_node = slotnode[ "gildra_weapon" ];
++        weapon_node[ "minDamage" ] = weapon->min_dmg;
++        weapon_node[ "maxDamage" ] = weapon->max_dmg;
++        weapon_node[ "dps" ] = weapon->dps;
++        weapon_node[ "speedSeconds" ] = weapon->swing_time.total_seconds();
++      }
++    }
 +    slotnode[ "unique_equipped" ] = ( item.parsed.data.flags_1 & ITEM_FLAG_UNIQUE_EQUIPPED ) != 0;
 +    slotnode[ "set_id" ] = item.parsed.data.id_set;
 +    int unknown_bonuses = 0;

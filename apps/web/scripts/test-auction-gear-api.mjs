@@ -6,6 +6,7 @@ import { registerHooks } from "node:module";
 import { selectedAuctionGearAssemblyOptions, verifyAuctionGearSearch } from "../lib/wow/auctionGearRunner.ts";
 import { createAuctionGearSearch, deleteAuctionGearSearch } from "../lib/wow/auctionGearSearchStore.ts";
 import { getBattleNetSimulationSnapshot } from "../lib/wow/battleNetCharacterDetails.ts";
+import { auctionGearProfileFingerprint } from "../lib/wow/auctionGearFingerprint.ts";
 import { auctionVariantKey } from "../lib/wow/auctionItemVariant.ts";
 import { assembleAuctionGear, searchAuctionGearOptions } from "../lib/wow/auctionGearPlanner.ts";
 import { getAuctionGearRecommendations } from "../lib/wow/auctionGearRecommendations.ts";
@@ -190,7 +191,7 @@ try {
   const verifiedContext = {
     input: { characterSlug: "eu--synthetic-api--synthetic", locale: "ru", budgetCopper: 100001, selectedSlots: ["WRIST"] }, character,
     options: [verifiedOption],
-    profileFingerprint: createHash("sha256").update(JSON.stringify(canonical)).digest("hex"),
+    profileFingerprint: auctionGearProfileFingerprint(canonical),
     market: { id: "old-snapshot", region: "eu", connectedRealmId: connectedRealm, offers: [], sourceUpdatedAt: modified, fetchedAt: "old-fetch" },
     publicMarket: { snapshotId: "old-snapshot", region: "eu", realm: "Synthetic", connectedRealmId: connectedRealm, updatedAt: modified },
   };
