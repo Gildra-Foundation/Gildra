@@ -226,7 +226,10 @@ for image identities, exact scope, recovery and evidence.
   discoveryComplete describes completed traversal; dataComplete separately reports
   unresolved references, variants, modifiers and missing catalog records. IDs not
   matched by the equipment catalog are reported as unknown, not assumed to be
-  equipment or silently counted as verified. Search and exact assembly continue
+  equipment or silently counted as verified. Missing equip metadata and skill,
+  reputation or other equip requirements absent from the character snapshot are
+  counted separately as eligibilityUnverifiedItems. These items remain excluded
+  and make dataComplete false. Search and exact assembly continue
   in bounded chunks. exhaustiveComplete proves the highest measured DPS over the
   selected verified discovered pool, including keeping current equipment.
   A large Cartesian pool can require many continuations; no full-market or

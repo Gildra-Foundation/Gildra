@@ -208,4 +208,35 @@ run = await finish(await start([record(1)], [{ ...offer(1), modifiers: [{ type: 
 assert.equal(run.result.coverage.unsupportedModifierLots, 1);
 assert.equal(run.result.dataComplete, false);
 
-console.log("Auction discovery checks passed: bounded resumable catalog >6,000 IDs, compatibility before native work, all 300 exact variants, retained baseline/effect cache, refreshed prices/availability/new variants, safe historical selections and explicit unknown coverage (synthetic offline inputs only).");
+// Unsupported account requirements and absent registry data are unknown
+// eligibility, not evidence that the character cannot wear the item. Keep them
+// excluded without making a native probe or claiming complete data coverage.
+const profession = record(1);
+profession.tooltip.blocks.push({ type: "item_requirements", required_level: 1, required_skill_id: 164 });
+run = await finish(await start([profession], [offer(1)]));
+assert.equal(run.result.items.length, 0);
+assert.equal(run.result.discoveryComplete, true);
+assert.equal(run.result.dataComplete, false);
+assert.equal(run.result.searchLimited, true);
+assert.equal(run.result.coverage.eligibilityUnverifiedItems, 1);
+assert.equal(batches.variants, 0, "An unverified profession requirement must remain excluded before native variant work");
+for (const field of ["class_id", "subclass_id", "inventory_type", "all-registry"]) {
+  const missingRegistry = record(1);
+  if (field === "all-registry") missingRegistry.tooltip.blocks = [];
+  else delete missingRegistry.tooltip.blocks[0][field];
+  run = await finish(await start([missingRegistry], [offer(1)]));
+  assert.equal(run.result.items.length, 0);
+  assert.equal(run.result.discoveryComplete, true);
+  assert.equal(run.result.dataComplete, false);
+  assert.equal(run.result.coverage.eligibilityUnverifiedItems, 1, `Unverified equip field not counted: ${field}`);
+  assert.equal(batches.variants, 0);
+  fixture.market = market([]);
+  await runner.verifyAuctionGearSearch(run.entry, "synthetic-unused-token", signal(), false);
+  assert.equal(run.entry.context.coverage.eligibilityUnverifiedItems, 0, "Unavailable historical items must not keep current coverage incomplete");
+}
+run = await finish(await start([record(1, { compatible: false })], [offer(1)]));
+assert.equal(run.result.items.length, 0);
+assert.equal(run.result.coverage.eligibilityUnverifiedItems, 0);
+assert.equal(run.result.dataComplete, true, "Known armor incompatibility is not missing eligibility data");
+
+console.log("Auction discovery checks passed: bounded resumable catalog >6,000 IDs, compatibility before native work, all 300 exact variants, retained baseline/effect cache, refreshed prices/availability/new variants, safe historical selections, unknown eligibility versus known incompatibility and explicit unknown coverage (synthetic offline inputs only).");

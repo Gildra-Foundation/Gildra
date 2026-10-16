@@ -32,6 +32,7 @@ export type AuctionGearDiscovery = {
   rejectedReferences: Set<number>;
   catalogMissing: Set<number>;
   catalogUnmatched: Set<number>;
+  eligibilityUnverifiedItems: Set<number>;
   scannedItems: Set<number>;
   detailedItems: Set<number>;
   affordableLots: number;
@@ -43,7 +44,8 @@ export function createAuctionGearDiscovery(market: AuctionSnapshot, budgetCopper
   const state: AuctionGearDiscovery = { marketId: market.id, budgetCopper, offers: new Map(), itemVariants: new Map(), itemIds: [], itemCursor: 0,
     queuedItems: new Set(), records: [], entities: new Map(), variantKeys: [], variantCursor: 0, queuedVariants: new Set(),
     candidates: new Map(), rejectedVariants: new Set(), references: new Map(),
-    verifiedReferences: new Set(), rejectedReferences: new Set(), catalogMissing: new Set(), catalogUnmatched: new Set(), scannedItems: new Set(),
+    verifiedReferences: new Set(), rejectedReferences: new Set(), catalogMissing: new Set(), catalogUnmatched: new Set(),
+    eligibilityUnverifiedItems: new Set(), scannedItems: new Set(),
     detailedItems: new Set(), affordableLots: 0, unsupportedModifierLots: 0, engine: "" };
   refreshAuctionGearDiscovery(state, market);
   return state;
@@ -196,7 +198,14 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         if (!entity) { state.catalogMissing.add(record.externalId); state.entities.set(record.externalId, null); continue; }
         const offer = state.offers.get(state.itemVariants.get(entity.externalId)?.[0] ?? "")?.[0];
         if (!offer) { state.entities.set(entity.externalId, entity); continue; }
-        const eligible = input.selectedSlots.some(slot => normalizeGearCandidate(variantEntity(entity, offer), input.context(slot)).eligible);
+        const normalized = input.selectedSlots.map(slot => normalizeGearCandidate(variantEntity(entity, offer), input.context(slot)));
+        // Exclusion is safe, but unknown profession/account requirements or
+        // missing equip metadata do not prove that an item is unusable.
+        if (normalized.some(candidate => candidate.rejectionReasons.includes("equip_requirements_unverified") ||
+            candidate.itemClassId < 0 || candidate.itemSubclassId < 0 || candidate.inventoryType < 0)) {
+          state.eligibilityUnverifiedItems.add(entity.externalId);
+        }
+        const eligible = normalized.some(candidate => candidate.eligible);
         state.entities.set(entity.externalId, eligible ? entity : null);
         if (eligible) queueVariants(state, entity.externalId);
       }
@@ -233,6 +242,7 @@ export function auctionGearDiscoveryCoverage(state: AuctionGearDiscovery) {
   const referenceRejected = [...state.rejectedReferences].filter(id => currentIds.has(id)).length;
   const catalogMissing = [...state.catalogMissing].filter(id => currentIds.has(id)).length;
   const catalogUnmatched = [...state.catalogUnmatched].filter(id => currentIds.has(id)).length;
+  const eligibilityUnverifiedItems = [...state.eligibilityUnverifiedItems].filter(id => currentIds.has(id)).length;
   const discoveryComplete = auctionGearDiscoveryComplete(state);
   return {
     affordableLots: state.affordableLots,
@@ -243,7 +253,7 @@ export function auctionGearDiscoveryCoverage(state: AuctionGearDiscovery) {
     variantsPending: state.variantKeys.length - state.variantCursor,
     variantsResolved: [...state.candidates.keys()].filter(key => keys.has(key)).length, variantsRejected: rejected,
     referenceItemsVerified: [...state.verifiedReferences].filter(id => currentIds.has(id)).length, referenceItemsRejected: referenceRejected,
-    catalogItemsMissing: catalogMissing, catalogUnmatchedItemIds: catalogUnmatched, discoveryComplete,
-    dataComplete: !state.unsupportedModifierLots && !rejected && !referenceRejected && !catalogMissing && !catalogUnmatched,
+    catalogItemsMissing: catalogMissing, catalogUnmatchedItemIds: catalogUnmatched, eligibilityUnverifiedItems, discoveryComplete,
+    dataComplete: !state.unsupportedModifierLots && !rejected && !referenceRejected && !catalogMissing && !catalogUnmatched && !eligibilityUnverifiedItems,
   };
 }
