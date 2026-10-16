@@ -231,6 +231,9 @@
 /* A small spread (the home page book on a short screen) keeps chapter titles
    only; lifting the book to full size shows the descriptions again. */
 @media (min-width: 821px) {
+  @container (max-width: 1060px) {
+    .chapters .entryDetail { display: none; }
+  }
   @container (max-width: 760px) {
     .runningTitle, .entryDetail, .accountKicker, .accountDetail { display: none; }
     .ornament { height: clamp(16px, 3.4cqw, 26px); margin-bottom: 2px; }
