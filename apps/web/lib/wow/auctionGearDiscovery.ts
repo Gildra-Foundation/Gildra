@@ -10,9 +10,11 @@ import type { AuctionOffer, AuctionSnapshot } from "./auctionMarket";
 import type { AuctionGearOption, AuctionPlanProgress } from "./auctionGearTypes";
 
 /** Limits bound one continuation's work, never the retained candidate domain. */
-const catalogBatch = 100, detailBatch = 8, variantBatch = 4;
+// lookupGearRecords still uses bounded 100-ID pages and at most four per wave.
+const catalogBatch = 500, detailBatch = 8, variantBatch = 4;
 /** A repaired catalog can join a retained search without retrying on every poll. */
 const catalogRetryMs = 60_000;
+type CatalogPriorityHint = { itemLevel: number; requiredLevel?: number };
 export type AuctionGearDiscovery = {
   marketId: string;
   discoveredSnapshotId?: string;
@@ -23,6 +25,8 @@ export type AuctionGearDiscovery = {
   itemCursor: number;
   queuedItems: Set<number>;
   records: CatalogRecord[];
+  /** Optional for checkpoints written before summary-first discovery. Hints never exclude lots. */
+  catalogHints?: Map<number, CatalogPriorityHint>;
   entities: Map<number, CatalogGearEntity | null>;
   variantKeys: string[];
   variantCursor: number;
@@ -47,7 +51,7 @@ export type AuctionGearDiscovery = {
 
 export function createAuctionGearDiscovery(market: AuctionSnapshot, budgetCopper: number): AuctionGearDiscovery {
   const state: AuctionGearDiscovery = { marketId: market.id, budgetCopper, offers: new Map(), itemVariants: new Map(), itemIds: [], itemCursor: 0,
-    queuedItems: new Set(), records: [], entities: new Map(), variantKeys: [], variantCursor: 0, queuedVariants: new Set(),
+    queuedItems: new Set(), records: [], catalogHints: new Map(), entities: new Map(), variantKeys: [], variantCursor: 0, queuedVariants: new Set(),
     candidates: new Map(), rejectedVariants: new Set(), references: new Map(),
     verifiedReferences: new Set(), rejectedReferences: new Set(), referenceRetryAt: new Map(), referenceRejectedVariants: new Map(),
     catalogMissing: new Set(), catalogUnmatched: new Set(),
@@ -140,6 +144,33 @@ function summaryMayMatch(record: CatalogRecord, slots: readonly string[]) {
   return !inventory || !summarySlots[inventory] || summarySlots[inventory].some(slot => slots.includes(slot));
 }
 
+function catalogPriorityHint(record: CatalogRecord): CatalogPriorityHint {
+  // The catalog renders both EN/RU required-level highlights with a trailing number.
+  // These base values only schedule work; native metadata decides scaled eligibility.
+  const required = record.highlights?.find(highlight => highlight.key === "required_level")?.value.match(/\b(\d+)\s*$/)?.[1];
+  const requiredLevel = required ? Number(required) : undefined;
+  return { itemLevel: Number.isFinite(record.itemLevel) && record.itemLevel! > 0 ? record.itemLevel! : 0,
+    requiredLevel: requiredLevel && Number.isSafeInteger(requiredLevel) ? requiredLevel : undefined };
+}
+
+function compareCatalogHints(left: CatalogPriorityHint | undefined, right: CatalogPriorityHint | undefined, characterLevel: number) {
+  const overLevel = (hint: CatalogPriorityHint | undefined) => Number((hint?.requiredLevel ?? 0) > characterLevel);
+  return overLevel(left) - overLevel(right) || (right?.itemLevel ?? 0) - (left?.itemLevel ?? 0);
+}
+
+function prioritizePendingDiscovery(state: AuctionGearDiscovery, characterLevel: number) {
+  const hints = state.catalogHints ??= new Map();
+  // Older checkpoints can recover retained summary hints. Already detailed items
+  // without a summary remain unknown rather than guessing from presentation.
+  for (const record of state.records) if (!hints.has(record.externalId)) hints.set(record.externalId, catalogPriorityHint(record));
+  state.records.sort((left, right) => compareCatalogHints(hints.get(left.externalId), hints.get(right.externalId), characterLevel));
+  const pending = state.variantKeys.slice(state.variantCursor);
+  pending.sort((left, right) => compareCatalogHints(hints.get(state.offers.get(left)?.[0]?.itemId ?? 0),
+    hints.get(state.offers.get(right)?.[0]?.itemId ?? 0), characterLevel));
+  // Stable metadata ties retain arrival order; item IDs never estimate usefulness.
+  state.variantKeys = state.variantKeys.slice(0, state.variantCursor).concat(pending);
+}
+
 function variantEntity(entity: CatalogGearEntity, offer: AuctionOffer, requiredLevel = 0, itemLevel = 1): CatalogGearEntity {
   return { ...entity, tooltip: { blocks: [...(entity.tooltip?.blocks ?? []).filter(block => block.type !== "item_variants" && block.type !== "item_requirements"),
     { ...entity.tooltip?.blocks?.find(block => block.type === "item_requirements"), type: "item_requirements", required_level: requiredLevel },
@@ -164,9 +195,38 @@ type DiscoveryInput = {
 
 /** Persist cursors only after a whole batch succeeds, so cancellation is retryable. */
 export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, input: DiscoveryInput) {
+  let prioritized = false;
   for (let step = 0; step < (input.maxSteps ?? 12) && !input.shouldYield?.(); step++) {
     input.signal.throwIfAborted();
-    if (state.variantCursor < state.variantKeys.length) {
+    if (state.itemCursor === state.itemIds.length && !prioritized) {
+      prioritizePendingDiscovery(state, input.characterLevel);
+      prioritized = true;
+    }
+    if (state.itemCursor < state.itemIds.length) {
+      const ids = state.itemIds.slice(state.itemCursor, state.itemCursor + catalogBatch);
+      // See the complete bounded summary domain before spending detail/native work.
+      // Base required level is not an auction variant's actual scaled requirement.
+      const records = (await Promise.all([2, 4].map(itemClass => lookupGearRecords(ids, input.locale, itemClass, undefined, input.signal)))).flat();
+      input.signal.throwIfAborted();
+      for (const id of ids) state.scannedItems.add(id);
+      const found = new Set(records.map(record => record.externalId));
+      for (const id of ids) {
+        if (!found.has(id)) {
+          state.catalogUnmatched.add(id);
+          state.catalogRetryAt.set(id, Date.now() + catalogRetryMs);
+        } else {
+          state.catalogUnmatched.delete(id);
+          state.catalogRetryAt.delete(id);
+        }
+      }
+      const hints = state.catalogHints ??= new Map();
+      for (const record of records) hints.set(record.externalId, catalogPriorityHint(record));
+      state.records.push(...records.filter(record => summaryMayMatch(record, input.selectedSlots)));
+      state.itemCursor += ids.length;
+      input.onProgress?.({ phase: "catalog", completed: state.itemCursor, total: state.itemIds.length });
+    } else if (state.variantCursor < state.variantKeys.length && (!state.records.length || compareCatalogHints(
+      state.catalogHints?.get(state.offers.get(state.variantKeys[state.variantCursor])?.[0]?.itemId ?? 0),
+      state.catalogHints?.get(state.records[0].externalId), input.characterLevel) <= 0)) {
       const keys = state.variantKeys.slice(state.variantCursor, state.variantCursor + variantBatch);
       const probes = keys.flatMap(key => {
         const offer = state.offers.get(key)?.[0], entity = offer && state.entities.get(offer.itemId);
@@ -279,24 +339,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         if (eligible) queueVariants(state, entity.externalId);
       }
       state.records.splice(0, records.length);
-    } else if (state.itemCursor < state.itemIds.length) {
-      const ids = state.itemIds.slice(state.itemCursor, state.itemCursor + catalogBatch);
-      // Base required level is not an auction variant's actual scaled requirement.
-      const records = (await Promise.all([2, 4].map(itemClass => lookupGearRecords(ids, input.locale, itemClass, undefined, input.signal)))).flat();
-      for (const id of ids) state.scannedItems.add(id);
-      const found = new Set(records.map(record => record.externalId));
-      for (const id of ids) {
-        if (!found.has(id)) {
-          state.catalogUnmatched.add(id);
-          state.catalogRetryAt.set(id, Date.now() + catalogRetryMs);
-        } else {
-          state.catalogUnmatched.delete(id);
-          state.catalogRetryAt.delete(id);
-        }
-      }
-      state.records.push(...records.filter(record => summaryMayMatch(record, input.selectedSlots)));
-      state.itemCursor += ids.length;
-      input.onProgress?.({ phase: "catalog", completed: state.itemCursor, total: state.itemIds.length });
+      prioritized = false;
     } else break;
     input.onCheckpoint?.();
   }

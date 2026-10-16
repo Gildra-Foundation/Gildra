@@ -33,7 +33,7 @@ const character = { id: 1, level: 81, playableClass: { id: 1 }, playableRace: { 
 const armory = { activeSpecializationId: 72, equipment: { equipped_items: [{ item: { id: 999999 }, slot: { type: "WRIST" }, name: "Synthetic baseline" }] } };
 const lookupGearRecords = async (ids, _locale, itemClass, maxRequiredLevel) => {
   assert.equal(maxRequiredLevel, undefined, "Do not filter actual auction variants using catalog base required level");
-  assert(ids.length <= 100, "Catalog work must be batched");
+  assert(ids.length <= 500, "Discovery summaries stay bounded; repository pages remain limited to 100 IDs");
   batches.catalog++;
   return itemClass === 4 ? fixture.records.filter(record => ids.includes(record.externalId)) : [];
 };
