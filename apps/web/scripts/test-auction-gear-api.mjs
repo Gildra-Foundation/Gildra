@@ -3,16 +3,19 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { registerHooks } from "node:module";
-import { selectedAuctionGearOptions, verifyAuctionGearSearch } from "../lib/wow/auctionGearRunner.ts";
+import { selectedAuctionGearAssemblyOptions, verifyAuctionGearSearch } from "../lib/wow/auctionGearRunner.ts";
 import { createAuctionGearSearch, deleteAuctionGearSearch } from "../lib/wow/auctionGearSearchStore.ts";
 import { getBattleNetSimulationSnapshot } from "../lib/wow/battleNetCharacterDetails.ts";
 import { auctionVariantKey } from "../lib/wow/auctionItemVariant.ts";
+import { assembleAuctionGear, searchAuctionGearOptions } from "../lib/wow/auctionGearPlanner.ts";
+import { getAuctionGearRecommendations } from "../lib/wow/auctionGearRecommendations.ts";
+import { equipmentCompatibility } from "../lib/wow/gearCompatibility.ts";
 
 const owner = token => createHash("sha256").update(`battle-net:${token}`).digest("hex");
 const tokenA = "synthetic-api-owner-a", tokenB = "synthetic-api-owner-b";
 const state = {
   session: { battleNetAccessToken: tokenA }, authCalls: 0, starts: [], continuations: [], assemblies: [], verifies: [],
-  select: selectedAuctionGearOptions,
+  select: selectedAuctionGearAssemblyOptions,
   start: async (input, actor, token, signal) => {
     signal.throwIfAborted();state.starts.push({ input, actor, token });
     return { kind: "search", searchId: "synthetic-search", budgetCopper: input.budgetCopper, items: [], searchComplete: true };
@@ -36,7 +39,7 @@ export const startAuctionGearSearch=(...args)=>s.start(...args);
 export const continueAuctionGearSearch=(...args)=>s.resume(...args);
 export const assembleAuctionGearSearch=(...args)=>s.assemble(...args);
 export const verifyAuctionGearSearch=(...args)=>s.verify(...args);
-export const selectedAuctionGearOptions=(...args)=>s.select(...args);
+export const selectedAuctionGearAssemblyOptions=(...args)=>s.select(...args);
 `);
 const hooks = registerHooks({ resolve(specifier, context, nextResolve) {
   if (specifier === "@/auth") return { url: authStub, shortCircuit: true };
@@ -128,6 +131,16 @@ try {
   assert.equal(state.continuations[0], entry);assert.equal(state.assemblies[0].entry, entry);
   assert.deepEqual(state.assemblies[0].ids, [context.options[0].id]);assert.equal(state.verifies.length, 2);
   assert(state.verifies.every(check => check.entry === entry && check.token === tokenA));assert.equal(entry.busy, false);
+  for (const excludedOptionIds of [["unknown-option"], ["another-pool:WRIST:variant"], [context.options[0].id, context.options[0].id], [123], "all", null]) {
+    await expectError("POST", { action: "assemble", searchId: entry.id, excludedOptionIds }, 400, "invalid_auction_selection");
+  }
+  await expectError("POST", { action: "assemble", searchId: entry.id, allowedOptionIds: [context.options[0].id], excludedOptionIds: [] }, 400, "invalid_auction_selection");
+  const defaultAssembly = await send("POST", { action: "assemble", searchId: entry.id });
+  assert.equal(defaultAssembly.status, 202);await waitFor(defaultAssembly.payload);
+  assert.equal(state.assemblies.at(-1).ids, undefined, "Omitting a selector must preserve the server-owned full-pool default");
+  const excludingAssembly = await send("POST", { action: "assemble", searchId: entry.id, excludedOptionIds: [context.options[0].id] });
+  assert.equal(excludingAssembly.status, 202);await waitFor(excludingAssembly.payload);
+  assert.deepEqual(state.assemblies.at(-1).ids, { excludedOptionIds: [context.options[0].id] });
   // DELETE aborts real running job state, including the route's continuation wrapper.
   let release, activeSignal;
   state.verify = async (_entry, _token, signal) => { activeSignal = signal;await new Promise(resolve => { release = resolve; });signal.throwIfAborted(); };
@@ -173,9 +186,10 @@ try {
     assert.fail(`Unexpected offline fixture endpoint: ${endpoint.pathname}`);
   };
   const canonical = await getBattleNetSimulationSnapshot(tokenA, character);
+  const verifiedOption = { id: "verified-option", auctionId: lot.id, quantity: lot.quantity, costCopper: lot.buyout, variantKey: auctionVariantKey(offer) };
   const verifiedContext = {
     input: { characterSlug: "eu--synthetic-api--synthetic", locale: "ru", budgetCopper: 100001, selectedSlots: ["WRIST"] }, character,
-    options: [{ id: "verified-option", auctionId: lot.id, quantity: lot.quantity, costCopper: lot.buyout, variantKey: auctionVariantKey(offer) }],
+    options: [verifiedOption],
     profileFingerprint: createHash("sha256").update(JSON.stringify(canonical)).digest("hex"),
     market: { id: "old-snapshot", region: "eu", connectedRealmId: connectedRealm, offers: [], sourceUpdatedAt: modified, fetchedAt: "old-fetch" },
     publicMarket: { snapshotId: "old-snapshot", region: "eu", realm: "Synthetic", connectedRealmId: connectedRealm, updatedAt: modified },
@@ -191,20 +205,30 @@ try {
     { name: "ownership disappeared", change: () => { ownedCharacter = null; }, error: /character_not_found/ },
     { name: "ownership identity changed", change: () => { ownedCharacter = { ...rawCharacter, id: character.id + 1 }; }, error: /character_not_found/ },
     { name: "profile changed", change: () => { currentProfile = { ...profile, level: 82 }; }, error: /character_snapshot_changed/ },
-    { name: "lot removed", change: () => { currentLots = []; }, error: /auction_market_changed/ },
-    { name: "price changed", change: () => { currentLots = [{ ...lot, buyout: lot.buyout + 1 }]; }, error: /auction_market_changed/ },
-    { name: "quantity changed", change: () => { currentLots = [{ ...lot, quantity: 1 }]; }, error: /auction_market_changed/ },
-    { name: "item identity changed", change: () => { currentLots = [{ ...lot, item: { ...lot.item, id: lot.item.id + 1 } }]; }, error: /auction_market_changed/ },
-    { name: "context changed", change: () => { currentLots = [{ ...lot, item: { ...lot.item, context: 2 } }]; }, error: /auction_market_changed/ },
-    { name: "bonuses changed", change: () => { currentLots = [{ ...lot, item: { ...lot.item, bonus_lists: [124] } }]; }, error: /auction_market_changed/ },
-    { name: "modifiers changed", change: () => { currentLots = [{ ...lot, item: { ...lot.item, modifiers: [{ type: 9, value: 82 }] } }]; }, error: /auction_market_changed/ },
+    { name: "lot removed", change: () => { currentLots = []; }, field: "removedLots", remaining: 0 },
+    { name: "price changed", change: () => { currentLots = [{ ...lot, buyout: lot.buyout + 1 }]; }, field: "repricedLots", remaining: 1 },
+    { name: "quantity changed", change: () => { currentLots = [{ ...lot, quantity: 1 }]; }, field: "quantityChangedLots", remaining: 1 },
+    { name: "item identity changed", change: () => { currentLots = [{ ...lot, item: { ...lot.item, id: lot.item.id + 1 } }]; }, field: "variantsChangedLots", remaining: 0 },
+    { name: "context changed", change: () => { currentLots = [{ ...lot, item: { ...lot.item, context: 2 } }]; }, field: "variantsChangedLots", remaining: 0 },
+    { name: "bonuses changed", change: () => { currentLots = [{ ...lot, item: { ...lot.item, bonus_lists: [124] } }]; }, field: "variantsChangedLots", remaining: 0 },
+    { name: "modifiers changed", change: () => { currentLots = [{ ...lot, item: { ...lot.item, modifiers: [{ type: 9, value: 82 }] } }]; }, field: "variantsChangedLots", remaining: 0 },
     { name: "realm changed", change: () => { connectedRealm = 910008; }, error: /auction_market_changed/ },
     { name: "market stale", change: () => { modified = new Date(Date.now() - 3 * 60 * 60_000).toUTCString(); }, error: /market_stale/ },
     { name: "market timestamp absent", change: () => { modified = ""; }, error: /market_timestamp_unverified/ },
   ];
   for (const test of cases) {
     ownedCharacter = rawCharacter;currentProfile = profile;currentLots = [lot];connectedRealm = 910007;modified = new Date().toUTCString();
-    test.change();await assert.rejects(verifyAuctionGearSearch(verified, tokenA, signal), test.error, test.name);
+    verifiedContext.options = [verifiedOption];
+    test.change();
+    if (test.error) await assert.rejects(verifyAuctionGearSearch(verified, tokenA, signal), test.error, test.name);
+    else {
+      await verifyAuctionGearSearch(verified, tokenA, signal);
+      assert.equal(verifiedContext.marketChange[test.field], 1, test.name);
+      assert.equal(verifiedContext.options.length, test.remaining, test.name);
+      if (test.field === "repricedLots") assert.equal(verifiedContext.options[0].costCopper, lot.buyout + 1);
+      if (test.field === "quantityChangedLots") assert.equal(verifiedContext.options[0].quantity, 1);
+      assert.deepEqual(selectedAuctionGearAssemblyOptions(verified, [verifiedOption.id]), verifiedContext.options, "A previously valid sold option ID must be accepted and removed by the server");
+    }
   }
   const aborted = new AbortController();aborted.abort();const beforeAbort = transportCalls;
   await assert.rejects(verifyAuctionGearSearch(verified, tokenA, aborted.signal), { name: "AbortError" });
@@ -244,7 +268,72 @@ try {
     state.session = { battleNetAccessToken: tokenA };
     assert.equal((await waitFor(blocked.payload)).status, "cancelled");
   }
-  console.log(`Auction API checks passed (${checks} HTTP responses + ${cases.length + 3} actual freshness/abort checks + 2 blocked-profile cancellation cases): route/selection, CSRF, body cap, private caching, owner isolation, immutable budget, foreign option rejection, cancellation releases queued work and real market/profile revalidation; offline synthetic transports only.`);
+  // End-to-end selection boundary: real search -> public positive filter -> HTTP
+  // assembly -> real full-pool validator and planner. Only upstream authentication
+  // and Runner transport are stubbed; no network or native simulations run.
+  const simulation = dps => ({ dps, dpsError: 0.1, confidence: 95, iterations: 750, engine: "SimulationCraft synthetic-api-pairs" });
+  function pairCandidate(slotType, itemId, constraints = {}) {
+    const ring = slotType.startsWith("FINGER");
+    const inventoryType = ring ? 11 : slotType === "HEAD" ? 1 : 5;
+    const itemSubclassId = ring ? 0 : 4;
+    const result = { entityId: `synthetic-${itemId}`, itemId, name: `Synthetic ${itemId}`, slotType, itemLevel: 100,
+      inventoryType, itemClassId: 4, itemSubclassId,
+      season: { id: "synthetic", patch: "synthetic", status: "current", evidence: "synthetic" },
+      source: { type: "auction", evidence: "auction" }, constraints: { uniqueEquipped: false, requiredLevel: 1, ...constraints },
+      compatibility: { specId: 72, method: "specialization", itemClassId: 4, itemSubclassId }, provenance: { buildId: 1 },
+      eligible: true, rejectionReasons: [], variants: [{ key: "base", itemLevel: 100, contextId: 0, bonusIds: [] }] };
+    assert.equal(equipmentCompatibility({ classId: 1, specId: 72, slotType, itemClassId: 4, itemSubclassId, inventoryType }), null);
+    return result;
+  }
+  const pairOption = (id, slot, constraints) => ({ id: `synthetic-${id}:${slot}`, auctionId: id, quantity: 1, costCopper: 10000,
+    candidate: pairCandidate(slot, id, constraints), variantKey: "base" });
+  const pairCases = [
+    { name: "nonlinear", slots: ["HEAD", "CHEST"], options: [pairOption(930001, "HEAD"), pairOption(930002, "CHEST")], loadout: [],
+      simulate: async selection => simulation(selection.length === 2 ? 1200 : selection.length ? 990 : 1000), evaluation: "not_upgrade" },
+    { name: "unique-repair", slots: ["FINGER_1", "FINGER_2"],
+      options: [pairOption(930003, "FINGER_1", { limitCategoryId: 10, limitQuantity: 1 }), pairOption(930004, "FINGER_2", { limitCategoryId: 9, limitQuantity: 1 })],
+      loadout: [{ slotType: "FINGER_1", itemId: 930005, inventoryType: 11, itemSubclassId: 0, limitCategoryId: 9, limitQuantity: 1 },
+        { slotType: "FINGER_2", itemId: 930006, inventoryType: 11, itemSubclassId: 0, limitCategoryId: 10, limitQuantity: 1 }],
+      simulate: async selection => simulation(1000 + selection.length * 100), evaluation: "requires_combination" },
+  ];
+  state.verify = async (_entry, _token, signal) => signal.throwIfAborted();
+  for (const fixture of pairCases) {
+    state.start = async (input, actor, _token, signal) => {
+      const pairContext = { input, options: fixture.options, loadout: fixture.loadout, specId: 72,
+        market: { sourceUpdatedAt: new Date().toISOString() }, simulate: fixture.simulate };
+      const pairEntry = createAuctionGearSearch(actor, pairContext);entries.push(pairEntry);
+      const searched = await searchAuctionGearOptions({ ...pairContext, searchId: pairEntry.id, selectedSlots: input.selectedSlots,
+        budgetCopper: input.budgetCopper, signal });
+      pairEntry.searchCheckpoint = searched.checkpoint;
+      pairEntry.latestSearchResult = { ...searched.result, discoveryComplete: true, dataComplete: true };
+      return pairEntry.latestSearchResult;
+    };
+    state.assemble = async (pairEntry, selection, signal, progress) => {
+      const selected = selectedAuctionGearAssemblyOptions(pairEntry, selection);
+      const assembled = await assembleAuctionGear({ ...pairEntry.context, options: selected, searchId: pairEntry.id,
+        selectedSlots: pairEntry.context.input.selectedSlots, budgetCopper: pairEntry.context.input.budgetCopper,
+        signal, onProgress: progress, baseline: pairEntry.searchCheckpoint.baseline, simulationCache: pairEntry.searchCheckpoint.simulationCache });
+      return assembled.result;
+    };
+    const pairSearch = await send("POST", { ...searchBody, characterSlug: `synthetic-${fixture.name}`, budgetGold: "2", selectedSlots: fixture.slots });
+    assert.equal(pairSearch.status, 202);
+    const pairResult = (await waitFor(pairSearch.payload)).result;
+    assert(pairResult.items.every(item => item.evaluation === fixture.evaluation));
+    assert.equal(getAuctionGearRecommendations(pairResult.items).length, 0, "Public list must keep non-upgrade singles hidden");
+    const pairAssembly = await send("POST", { action: "assemble", searchId: pairResult.searchId, excludedOptionIds: [] });
+    assert.equal(pairAssembly.status, 202);
+    const assembledPair = (await waitFor(pairAssembly.payload)).result;
+    assert.equal(assembledPair.comparison.deltaDps, 200, `${fixture.name}: full-pool assembly lost the combined gain`);
+    assert.equal(assembledPair.comparison.uncertainty.significant, true);
+    assert.equal(assembledPair.purchases.length, 2);
+    assert.equal(assembledPair.spentCopper, 20000);assert.equal(assembledPair.budgetCopper, 20000);
+    const excludedPair = await send("POST", { action: "assemble", searchId: pairResult.searchId, excludedOptionIds: [fixture.options[0].id] });
+    assert.equal(excludedPair.status, 202);
+    const excludedResult = (await waitFor(excludedPair.payload)).result;
+    assert.equal(excludedResult.comparison.deltaDps, 0, `${fixture.name}: explicitly excluded item was still assembled`);
+    assert.deepEqual(excludedResult.purchases, []);
+  }
+  console.log(`Auction API checks passed (${checks} HTTP responses + ${cases.length + 3} actual freshness/abort checks + 2 blocked-profile cancellation cases + nonlinear/unique-repair full-pool HTTP assembly): route/selection, CSRF, body cap, private caching, owner isolation, immutable budget, full-pool default/exclusions/legacy selection, hidden non-upgrades, cancellation and actual market/profile revalidation; offline synthetic transports only.`);
 } finally {
   for (const entry of entries) deleteAuctionGearSearch(entry.owner, entry.id);
   globalThis.fetch = savedFetch;hooks.deregister();delete globalThis.__gildraAuctionApiTest;

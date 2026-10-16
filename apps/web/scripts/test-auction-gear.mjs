@@ -24,7 +24,7 @@ const weapons=[{slotType:"MAIN_HAND",itemId:1,inventoryType:17,itemSubclassId:8}
 const prepared=prepareGearLoadout({selections:[{candidate:candidate("MAIN_HAND",3,{inventoryType:17,itemClassId:2,itemSubclassId:8,compatibility:{specId:71,method:"specialization"}}),variantKey:"base"}],specId:71,loadout:weapons,equipment:{equipped_items:weapons.map(w=>({item:{id:w.itemId},slot:{type:w.slotType}}))}});
 assert.deepEqual(prepared.removedSlots,["OFF_HAND"]);assert.equal(prepared.equipment.equipped_items.length,1);
 assert.equal(prepareGearChange({slotType:"CHEST",candidate:c,variantKey:"base",equipment:{equipped_items:[{slot:{type:"CHEST"},item:{id:100},bonus_list:[1]}]}}).itemId,100);
-assert.throws(()=>prepareGearChange({slotType:"CHEST",candidate:c,variantKey:"base",equipment:{equipped_items:[{slot:{type:"CHEST"},item:{id:100},bonus_list:[]}]}}),/matches_equipped_variant/);
+assert.equal(prepareGearChange({slotType:"CHEST",candidate:c,variantKey:"base",equipment:{equipped_items:[{slot:{type:"CHEST"},item:{id:100},bonus_list:[]}]}}).itemId,100);
 const entity={id:"id",externalId:12,name:"base",payload:{db2:{ExpansionID:11,BaseItemLevel:100}},tooltip:{blocks:[{type:"item_registry",class_id:4,subclass_id:4,inventory_type:5},{type:"item_variants",entries:[{key:"base",item_level:300,bonus_list_ids:[],context_id:0}]}]}};
 assert.equal(normalizeGearCandidate(entity,{classId:1,specId:72,slotType:"CHEST",characterLevel:90,currentItemLevel:250,anchorItemClassId:-1,anchorItemSubclassId:-1,acquisition:{type:"auction",evidence:"auction"},season:{id:"s",patch:"p",expansionId:11,sourceUrl:"test",activityNames:[]}}).eligible,true);
 const ctx={classId:1,specId:72,slotType:"CHEST",characterLevel:90,currentItemLevel:400,anchorItemClassId:-1,anchorItemSubclassId:-1,raceId:1,faction:"ALLIANCE",acquisition:{type:"auction",evidence:"auction"},season:{id:"s",patch:"p",expansionId:11,sourceUrl:"test",activityNames:[]}};
@@ -58,3 +58,4 @@ const symbolic={...entity,tooltip:{blocks:entity.tooltip.blocks.map(b=>b.type===
 validateGearLoadout([{slotType:"MAIN_HAND",itemId:248074,inventoryType:17,itemSubclassId:6},{slotType:"OFF_HAND",itemId:251255,inventoryType:17,itemSubclassId:8}],72);
 
 await import("./test-auction-gear-exhaustive.mjs");
+await import("./test-auction-gear-review-fixes.mjs");

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { getAuctionGearRecommendations } from "../lib/wow/auctionGearRecommendations.ts";
-import { assembleAuctionGear, auctionSelectionEffectKey } from "../lib/wow/auctionGearPlanner.ts";
+import { assembleAuctionGear, auctionPlanCost, auctionPlanLoadout, auctionSelectionEffectKey } from "../lib/wow/auctionGearPlanner.ts";
 import { auctionGearSlots } from "../lib/wow/auctionGearSelection.ts";
 
 // These small guard cases are synthetic offline inputs, never market evidence.
@@ -93,6 +93,33 @@ if (proofRoot) {
   const originalNow = Date.now;
   Date.now = () => Date.parse(source.verifiedAt);
   let assembly, exclusion;
+  const excludedOptions = options.filter(option => option.id !== expectedIds[0]);
+  const lotOracles = [];
+  // Independent small-pool replay enumerates original financial assignments,
+  // rather than assuming compressed effect-state counts prove the same result.
+  function lotOracle(pool) {
+    const groups = auctionGearSlots.map(slot => pool.filter(option => option.candidate.slotType === slot));
+    let best = { optionIds: [], dps: checkpoint.baseline.dps, cost: 0 }, assignments = 0;
+    function visit(index, selection) {
+      if (index < groups.length) {
+        visit(index + 1, selection);
+        for (const option of groups[index]) visit(index + 1, [...selection, option]);
+        return;
+      }
+      let cost;
+      try { cost = auctionPlanCost(selection); auctionPlanLoadout(domain.loadout, selection, domain.specId, auctionGearSlots); }
+      catch { return; }
+      if (cost > search.budgetCopper) return;
+      assignments++;
+      const measured = checkpoint.simulationCache[auctionSelectionEffectKey(selection)];
+      assert(measured, "missing_recorded_native_effect_for_lot_oracle");
+      const optionIds = selection.map(option => option.id).sort();
+      if (measured.dps > best.dps || measured.dps === best.dps && (cost < best.cost ||
+          cost === best.cost && optionIds.join("|") < best.optionIds.join("|"))) best = { optionIds, dps: measured.dps, cost };
+    }
+    visit(0, []);
+    return { ...best, assignments };
+  }
   try {
     const common = { searchId: search.searchId, budgetCopper: search.budgetCopper, options,
       selectedSlots: [...auctionGearSlots], loadout: domain.loadout, specId: domain.specId,
@@ -102,12 +129,15 @@ if (proofRoot) {
     assembly = await assembleAuctionGear(common);
     const bestId = assembly.result.purchases.map(item => `${item.auctionId}:${item.slotType}:${item.variantKey}`)[0];
     assert.equal(bestId, expectedIds[0]);
-    exclusion = await assembleAuctionGear({ ...common, options: options.filter(option => option.id !== bestId) });
+    exclusion = await assembleAuctionGear({ ...common, options: excludedOptions });
+    lotOracles.push(lotOracle(options), lotOracle(excludedOptions));
   } finally {
     Date.now = originalNow;
   }
-  for (const [result, count] of [[assembly.result, 11], [exclusion.result, 10]]) {
+  for (const [index, result] of [assembly.result, exclusion.result].entries()) {
+    const count = 4, oracle = lotOracles[index];
     assert.equal(result.exhaustiveComplete, true);
+    assert.equal(result.combinationKind, "effects");
     assert.equal(result.combinationCount, String(count));
     assert.equal(result.combinationsChecked, count);
     assert.equal(result.validCombinations, count);
@@ -119,6 +149,9 @@ if (proofRoot) {
     assert.equal(result.comparison.uncertainty.significant, true);
     assert.equal(result.purchases.length, 1);
     assert(result.purchases.every(item => expectedIds.includes(`${item.auctionId}:${item.slotType}:${item.variantKey}`)));
+    assert.equal(result.comparison.candidateDps, oracle.dps);
+    assert.equal(result.spentCopper, oracle.cost);
+    assert.deepEqual(result.purchases.map(item => `${item.auctionId}:${item.slotType}:${item.variantKey}`).sort(), oracle.optionIds);
   }
   assert.notEqual(exclusion.result.purchases[0].auctionId, assembly.result.purchases[0].auctionId);
   assert.deepEqual(search.items, original);
@@ -127,8 +160,8 @@ if (proofRoot) {
     syntheticGuardCases: synthetic.length, rawRows: 608, confirmedPositiveLots: recommended.length,
     recommendationIds: expectedIds, selectedSlots: [...auctionGearSlots],
     assembly: assembly.result, excludedOptionIds: [expectedIds[0]], exclusion: exclusion.result,
-    nativeRequests: 0, apiRequests: 0, originalStatsPricesAndInputsPreserved: true, evidence };
+    nativeRequests: 0, apiRequests: 0, originalStatsPricesAndInputsPreserved: true, independentFinancialLotOracles: lotOracles, evidence };
   if (process.env.AUCTION_RECOMMENDATIONS_OUTPUT) await writeFile(resolve(process.env.AUCTION_RECOMMENDATIONS_OUTPUT),
     JSON.stringify(proof, null, 2) + "\n", { mode: 0o600, flag: "wx" });
-  console.log(`PASS: saved real ${source.locale} 608 rows → 10 positive lots; all 16 slots, 11 exact assignments; exclusion 10; 15 gold / +372 DPS; zero network/native requests.`);
+  console.log(`PASS: saved real ${source.locale} 608 rows → 10 positive lots; all 16 slots, 4 exact effect assignments; independent lot oracles 11/10; 15 gold / +372 DPS; zero network/native requests.`);
 }

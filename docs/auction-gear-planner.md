@@ -14,8 +14,11 @@ Search and assembly are separate actions. The server retains every found real
 lot/slot option with its classification. The interface displays and selects
 only confirmed upgrades: evaluation=upgrade, positive individual DPS gain and
 a gain above the 95% comparison margin. Negative, inconclusive, pending and
-individually incompatible rows remain in the private raw pool; they are not
-displayed or silently included in the default assembly request. All genuine
+individually incompatible rows remain in the private raw pool. Assembly checks
+the complete verified pool, including combinations that repair an individual
+conflict or improve DPS despite individually weak ingredients. These ingredients
+appear in a purchase list only when the measured whole set is a confirmed
+improvement. All genuine
 positive financial choices remain available without deduplication. Default
 ordering is price ascending, then DPS gain descending for equal prices.
 Sorting and incremental display never truncate the server pool. Actual icons, native
@@ -24,28 +27,40 @@ character tooltip, including independently localized current-item names.
 
 The private server context binds the original budget, selected slots, character,
 equipment, talents, encounter and market. Assembly accepts only retained option
-IDs allowed by the owner; client prices or statistics are never accepted.
-The current UI sends only selected confirmed-positive optionId values, minus
-slot-specific exclusions, with the same original budget. New searches,
+IDs known to the owner; client prices or statistics are never accepted.
+The current UI sends excludedOptionIds; an empty exclusion list considers the
+entire verified pool with the same original budget. Legacy allowedOptionIds
+remain supported for older callers. The two selection modes are mutually
+exclusive, and forged or foreign IDs are rejected. New searches,
 selection changes and resumed searches clear the previous assembly; resumed
 search may confirm additional upgrades.
 Unselected slots retain their current items. A non-Fury two-handed replacement
 can remove an equipped offhand only when OFF_HAND is also selected. Before each
 continuation/assembly, the server checks ownership, the canonical character
-snapshot and every retained lot's price, quantity and exact variant against a
-fresh conditional market read. Changed facts require a new search.
+snapshot and the current lot prices, quantities and exact variants against a
+fresh conditional market read. Sold lots are removed, changed prices/quantities
+replace the old facts, and new effects enter discovery. Economic changes reset
+the affected traversal while preserving mechanical simulation results. An
+authoritative updatedSearch replaces stale visible rows after assembly.
 
 The 28-option shortlist and beam have been removed. Assembly deterministically
-enumerates keep-current or one allowed option for every selected slot. In the
-current UI those allowed options are selected confirmed-positive upgrades;
-the complete classified raw pool remains on the server.
+enumerates keep-current or one distinct item effect for every selected slot.
+Groups share both native input identity and equipment constraints. An exact
+allocator chooses real lots for each effect assignment, including shared-lot
+quantity and whole-buyout cost. Ten equivalent offers in four slots therefore
+require 16 effect assignments rather than 14,641 lot assignments, while every
+offer remains available for procurement and explicit exclusions.
 Only monotone total-lot-cost/quantity constraints prune incomplete states; unique
 categories and hand compatibility are checked on the completed loadout. Equal
 item effects share native simulations without collapsing lot cost/quantity
 choices. Combined DPS is measured directly, never summed from individual gains.
+An early pair pass finds useful simultaneous swaps before the full cursor reaches
+them; this affects evaluation order and does not truncate the exhaustive domain.
 
 A serializable cursor, simulation cache and best measured result survive a chunk
-boundary. The default chunk allows 48 new native calls, 100,000 visited assignments
+boundary. Assembly checkpoint version 2 records effect groups and the pair cursor;
+combinationKind=effects identifies the count semantics. The default chunk allows
+48 new native calls, 100,000 visited assignments
 and a 90-second runner window. These are continuation boundaries, not permanent
 pool or combination caps. Cache-only traversal yields cooperatively for
 cancellation. The highest measured DPS is claimed only when exhaustiveComplete
@@ -117,6 +132,9 @@ engines are rejected. Search marks a positive single replacement as confirmed
 only when its gain exceeds the 95% comparison margin. Exact assembly ranks
 measured full-loadout DPS and reports the margin independently.
 The existing single-slot comparison now also validates the complete loadout.
+Replacing an item with the same item ID/bonus list still goes through native
+simulation: modifiers, gems, enchants and the actual replacement snapshot can
+differ. A superficially equal item never aborts the entire search.
 The worker accepts structured multiple-slot replacements and real-size armory
 JSON bodies (2 MiB HTTP limit; each armory section remains limited to 512 KiB).
 
@@ -136,8 +154,8 @@ for source/image identities, browser coverage and its authentication limit.
 
 The current confirmed-upgrade interface places one **Build a loadout within
 budget** panel immediately after the original-budget/current-DPS/upgrade-count
-summary, before the item list. The action is visible but disabled before a
-search result and when no confirmed upgrade exists, with an explanation.
+summary, before the item list. The action becomes available when the verified
+internal pool has candidates, even if no individual replacement is an upgrade.
 Partial searches show already confirmed upgrades and aggregate remaining
 progress; they do not display unfinished or unconfirmed rows.
 
@@ -145,12 +163,15 @@ Whole-loadout baseline/candidate DPS, total lot cost and remaining budget are
 separately labelled. **Items to buy for this loadout** lists replacements;
 other slots keep their equipped items. A return link below the list focuses
 the single assembly panel. A maximum is claimed only after exhaustive
-enumeration of the selected retained confirmed-positive pool, including
+enumeration of the selected verified discovered pool, including
 keeping current equipment. It is not a whole-market maximum. Partial
-results and statistical significance remain explicit. See the
+results and statistical significance remain explicit. One click runs one bounded
+assembly chunk, displays its best measured result and offers Continue when more
+work remains. Completion describes the verified discovered pool; missing data
+never becomes a claim that no upgrades exist. See the historical
 [confirmed-upgrade release report](reports/auction-improvements-deployment-20261016.md).
 
-## Slot-search verification
+## Historical slot-search verification
 
 Code source ca51c38621790f9f8b91ad00d62d316dd883bdef is bound to the actual QA by
 file hashes; the checks ran trusted host source rather than inside candidate web
@@ -195,16 +216,19 @@ for image identities, exact scope, recovery and evidence.
   Unpublished/missing catalog items and variants the native DB cannot verify are
   excluded. Coverage reports distinguish unsupported modifiers and failed native
   resolutions. A later SimC data refresh can be needed for newly added bonuses.
-- The search scans at most 6,000 affordable item IDs, details at most 240 catalog
-  items and resolves at most 256 distinct variants, up to three per item. Cheap
-  and high-base-ilvl catalog items seed that bounded pool; effective ilvl is always
-  resolved natively before recommendation. Native resolution batches contain at
-  most 16 items and have a 60-second deadline. Every retained lot/slot option
-  remains in the server result; the UI displays only confirmed upgrades.
-  Discovery limits remain visible through searchLimited and coverage. Search
-  and exact assembly continue in bounded chunks. exhaustiveComplete proves
-  the highest measured DPS over selected retained confirmed-positive options,
-  including keeping current equipment, not the entire market.
+- Discovery has no permanent item-ID, detail, per-item variant or global variant
+  cap. Persisted cursors process catalog IDs in batches of 100, details in batches
+  of eight and exact variants in batches of four. Known slot summaries filter
+  irrelevant records before expensive detail/native work; actual restrictions
+  remain authoritative. One continuation performs bounded work and yields.
+  Effective ilvl is always resolved natively before recommendation. Every retained
+  lot/slot option remains in the server result; the UI displays confirmed singles.
+  discoveryComplete describes completed traversal; dataComplete separately reports
+  unresolved references, variants, modifiers and missing catalog records. IDs not
+  matched by the equipment catalog are reported as unknown, not assumed to be
+  equipment or silently counted as verified. Search and exact assembly continue
+  in bounded chunks. exhaustiveComplete proves the highest measured DPS over the
+  selected verified discovered pool, including keeping current equipment.
   A large Cartesian pool can require many continuations; no full-market or
   uncompleted maximum is claimed.
 - Baseline constraints must be available for every equipped combat item. Missing
@@ -246,6 +270,8 @@ node --experimental-transform-types --no-warnings --import ./tests/auction/resol
 node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-search-store.mjs
 node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-equipment.mjs
 node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-recommendations.mjs
+node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-discovery.mjs
+node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-review-fixes.mjs
 ```
 
 The recommendation guard has synthetic offline cases. An explicitly supplied

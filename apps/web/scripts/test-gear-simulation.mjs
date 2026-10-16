@@ -39,7 +39,7 @@ assert.equal(prepareGearChange({ slotType: "TRINKET_1", candidate: trinket, vari
 const wrist = candidate({ itemId: 2005, slotType: "WRIST", inventoryType: 9 });
 assert.deepEqual(prepareGearChange({ slotType: "WRIST", candidate: wrist, variantKey: "mythic", customization: { enchantId: 8888, gemIds: [250001] }, equipment }).gemIds, [250001]);
 assert.throws(() => prepareGearChange({ slotType: "TRINKET_1", candidate: trinket, variantKey: "mythic", customization: { gemIds: [250001] }, equipment }), /invalid_gems_for_slot/);
-assert.throws(() => prepareGearChange({ slotType: "CHEST", candidate: candidate({ itemId: 1001 }), variantKey: "mythic", equipment }), /equipped_variant_unverified/);
+assert.equal(prepareGearChange({ slotType: "CHEST", candidate: candidate({ itemId: 1001 }), variantKey: "mythic", equipment }).itemId, 1001);
 assert.throws(() => prepareGearChange({ slotType: "CHEST", candidate: candidate({ eligible: false }), variantKey: "mythic", equipment }), /candidate_slot_mismatch/);
 assert.throws(() => prepareGearChange({ slotType: "CHEST", candidate: candidate(), variantKey: "invented", equipment }), /simulation_variant_not_found/);
 

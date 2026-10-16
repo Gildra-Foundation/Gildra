@@ -131,6 +131,7 @@ await assert.rejects(assembleAuctionGear(common(slots.map((slot, i) => option(i 
   signal: cachedAborter.signal, simulationCache: synergy.checkpoint.simulationCache,
   onCheckpoint: state => { cachedCheckpoint = state; }, simulate: async () => { throw new Error("Unexpected native call"); },
 })), /abort/i);
-assert(cachedCheckpoint.combinationsChecked >= 256 && cachedCheckpoint.combinationsChecked < 1024);
+assert(cachedCheckpoint.combinationsChecked > 0 && cachedCheckpoint.combinationsChecked < 1024);
+assert.equal(cachedCheckpoint.exhausted, false);
 
 console.log("Exact auction search checks passed: complete pools, ten-slot synergy, resumable cursors, repaired unique pairs, shared-lot cost/quantity, effect memoization, locked slots, uncertainty, warm start, source drift and cancellation.");

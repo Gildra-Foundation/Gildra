@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { AuctionGearContext } from "./auctionGearRunner";
-import type { AuctionGearAssemblyCheckpoint, AuctionGearSearchCheckpoint, AuctionGearSearchResult } from "./auctionGearTypes";
+import type { AuctionGearAssemblyCheckpoint, AuctionGearSearchCheckpoint, AuctionGearSearchResult, AuctionGearSimulationCache, GearPlanSimulation } from "./auctionGearTypes";
 
 /** Private server state. Never serialize an entry or its context into an HTTP response. */
 export type AuctionGearSearchEntry = {
@@ -16,6 +16,10 @@ export type AuctionGearSearchEntry = {
   assemblyCheckpoint?: AuctionGearAssemblyCheckpoint;
   allowedKey?: string;
   latestSearchResult?: AuctionGearSearchResult;
+  /** Stable ownership validation includes previously discovered, now sold lots. */
+  knownOptionIds: Set<string>;
+  retainedSimulationCache?: AuctionGearSimulationCache;
+  retainedBaseline?: GearPlanSimulation;
 };
 const retention = 30 * 60_000;
 const state = globalThis as typeof globalThis & { __gildraAuctionGearSearches?: Map<string, AuctionGearSearchEntry> };
@@ -50,7 +54,8 @@ export function createAuctionGearSearch(owner: string, context: AuctionGearConte
     if (!oldest) throw new Error("search_capacity");
     entries.delete(oldest.id);
   }
-  const entry: AuctionGearSearchEntry = { id: randomUUID(), owner, context, createdAt: now, touchedAt: now, expiresAt: now + retention, busy: false };
+  const entry: AuctionGearSearchEntry = { id: randomUUID(), owner, context, createdAt: now, touchedAt: now, expiresAt: now + retention,
+    busy: false, knownOptionIds: new Set(context.options.map(option => option.id)) };
   entries.set(entry.id, entry);
   return entry;
 }

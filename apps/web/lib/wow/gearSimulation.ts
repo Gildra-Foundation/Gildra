@@ -65,11 +65,8 @@ export function prepareGearChange(input: {
   if (!simcSlot || !input.candidate.eligible || input.candidate.slotType !== slotType) throw new Error("candidate_slot_mismatch");
   const variant = selectGearVariant(input.candidate, input.variantKey);
   const equipped = equippedItems(input.equipment);
-  const current = equipped.find((item) => item.slot?.type === slotType);
-  if (current?.item?.id === input.candidate.itemId) {
-    if (!Array.isArray(current.bonus_list)) throw new Error("equipped_variant_unverified");
-    if ([...current.bonus_list].sort((a,b)=>a-b).join(",") === [...variant.bonusIds].sort((a,b)=>a-b).join(",") && !variant.modifiers?.length && input.customization?.enchantId === undefined && !input.customization?.gemIds?.length) throw new Error("candidate_matches_equipped_variant");
-  }
+  // The same item/bonuses can still change context, modifiers or customization.
+  // Submit the exact replacement to native simulation instead of aborting a search.
   if (input.candidate.constraints.uniqueEquipped && equipped.some((item) => item.slot?.type !== slotType && item.item?.id === input.candidate.itemId)) {
     throw new Error("unique_equipped_conflict");
   }

@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { assertFreshMarket, type AuctionSnapshot } from "./auctionMarket";
 import { candidateLoadoutItem, compareGearSimulationResults } from "./gearSimulation";
 import { isTwoHandWeapon, supportsTitanGrip, validateGearLoadout, type GearLoadoutItem } from "./gearCompatibility";
+import { auctionEffectGroups, auctionSelectionEffectKey, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
+export { auctionSelectionEffectKey } from "./auctionGearEffects";
 import type {
   AuctionGearAssemblyCheckpoint, AuctionGearAssemblyResult, AuctionGearOption, AuctionGearPlan,
   AuctionGearPurchase, AuctionGearSearchCheckpoint, AuctionGearSearchItem, AuctionGearSearchResult,
@@ -52,16 +54,6 @@ export function auctionGearPurchase(option: AuctionGearOption): AuctionGearPurch
     contextId: variant.contextId, modifiers: variant.modifiers, stats: variant.resolution?.stats,
     lotCostCopper: option.costCopper, quantity: option.quantity,
   };
-}
-
-/** Native input identity: auction price/lot identity does not change item effects. */
-export function auctionSelectionEffectKey(options: AuctionGearOption[]) {
-  return createHash("sha256").update(JSON.stringify(options.map(option => {
-    const variant = option.candidate.variants.find(v => v.key === option.variantKey);
-    if (!variant) throw new Error("simulation_variant_not_found");
-    return [option.candidate.slotType, option.candidate.itemId, [...variant.bonusIds].sort((a, b) => a - b),
-      variant.contextId ?? 0, [...(variant.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value)];
-  }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
 }
 
 const selectionKey = (items: AuctionGearOption[]) => items.map(o => o.id).sort().join("|");
@@ -125,8 +117,8 @@ async function baselineFor(input: PlannerInput, cache: AuctionGearSimulationCach
   return { baseline, calls: cached ? 0 : 1 };
 }
 
-function requireCheckpoint(key: string, checkpoint: { version: number; inputKey: string }) {
-  if (checkpoint.version !== 1 || checkpoint.inputKey !== key) throw new Error("auction_search_changed");
+function requireCheckpoint(key: string, checkpoint: { version: number; inputKey: string }, version = 1) {
+  if (checkpoint.version !== version || checkpoint.inputKey !== key) throw new Error("auction_search_changed");
 }
 
 /** Every distinct purchasable option remains visible; repeated native effects share a simulation. */
@@ -189,30 +181,34 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
     engine: checkpoint.baseline.engine, searchLimited: false, optionsConsidered: options.length } };
 }
 
-/** Complete mixed-radix enumeration, yielding only at a persisted next assignment. */
+/** Complete effect enumeration with exact procurement, yielding at a persisted assignment. */
 export async function assembleAuctionGear(input: PlannerInput & {
   checkpoint?: AuctionGearAssemblyCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
 }): Promise<{ result: AuctionGearAssemblyResult; checkpoint: AuctionGearAssemblyCheckpoint }> {
   const { options, slots, inputKey, max, maxAssignments } = prepare(input);
-  const groups = slots.map(slot => options.filter(o => o.candidate.slotType === slot));
+  const groups = auctionEffectGroups(options, slots);
+  const flatGroups = groups.flat();
   const radices = groups.map(group => group.length + 1);
   const combinationCount = radices.reduce((product, radix) => product * BigInt(radix), 1n).toString();
   let checkpoint: AuctionGearAssemblyCheckpoint, calls = 0;
   if (input.checkpoint) {
-    requireCheckpoint(inputKey, input.checkpoint);
+    requireCheckpoint(inputKey, input.checkpoint, 2);
     checkpoint = structuredClone(input.checkpoint);
     validSimulation(checkpoint.baseline);
     checkpoint.simulationCache = cloneCache(checkpoint.simulationCache, checkpoint.baseline.engine);
     if (checkpoint.cursor.length !== slots.length || checkpoint.cursor.some((index, slot) => !Number.isInteger(index) || index < 0 || index >= radices[slot])) throw new Error("invalid_search_checkpoint");
+    if (checkpoint.pairScores.length !== flatGroups.length || checkpoint.pairScores.some(score => !Number.isFinite(score) || score <= 0) ||
+        !Number.isSafeInteger(checkpoint.nextPair) || checkpoint.nextPair < 0) throw new Error("invalid_search_checkpoint");
     validSimulation(checkpoint.best.simulation, checkpoint.baseline.engine);
   } else {
     const cache = cloneCache(input.simulationCache);
     const baseline = await baselineFor(input, cache);
     calls = baseline.calls;
-    checkpoint = { version: 1, inputKey, cursor: slots.map(() => 0), exhausted: false,
+    checkpoint = { version: 2, inputKey, cursor: slots.map(() => 0), exhausted: false,
       baseline: baseline.baseline, best: { optionIds: [], simulation: baseline.baseline }, simulationCache: cache,
-      simulations: calls, combinationsChecked: 0, validCombinations: 0 };
+      simulations: calls, combinationsChecked: 0, validCombinations: 0, nextPair: 0,
+      pairScores: flatGroups.map(group => cache[auctionSelectionEffectKey([group.options[0]])]?.dps ?? baseline.baseline.dps) };
     // Search already measured legal singles. They provide an early useful bound
     // while enumeration still visits every assignment required for completion.
     let seedCost = 0, seedId = "";
@@ -248,50 +244,110 @@ export async function assembleAuctionGear(input: PlannerInput & {
   auctionPlanLoadout(input.loadout, bestOptions(), input.specId, slots);
   if (auctionPlanCost(bestOptions()) > input.budgetCopper) throw new Error("invalid_search_checkpoint");
   save();
+  const yieldBeforeEnumeration = input.shouldYield?.() === true;
+  const groupIndex = new Map(flatGroups.map((group, index) => [group, index]));
+  const singleCompatible = new Map<number, boolean>();
+  const compatibleSingle = (index: number) => {
+    if (!singleCompatible.has(index)) {
+      try { auctionPlanLoadout(input.loadout, [flatGroups[index].options[0]], input.specId, slots); singleCompatible.set(index, true); }
+      catch { singleCompatible.set(index, false); }
+    }
+    return singleCompatible.get(index)!;
+  };
+  const pairs: Array<{ first: number; second: number; repair: boolean; score: number }> = [];
+  let pairWork = 0;
+  const priority = new Set<number>();
+  if (!yieldBeforeEnumeration) for (const slotGroups of groups) {
+    const ranked = slotGroups.map(group => groupIndex.get(group)!).sort((a, b) => checkpoint.pairScores[b] - checkpoint.pairScores[a] || a - b);
+    for (const index of ranked.slice(0, 2)) priority.add(index);
+    for (const index of ranked) {
+      if (++pairWork % 256 === 0) { await new Promise<void>(resolve => setImmediate(resolve)); input.signal.throwIfAborted(); }
+      if (!compatibleSingle(index)) { priority.add(index); break; }
+    }
+  }
+  const priorityIndices = [...priority].sort((a, b) => a - b);
+  for (const [position, first] of priorityIndices.entries()) for (const second of priorityIndices.slice(position + 1)) {
+    if (++pairWork % 256 === 0) { await new Promise<void>(resolve => setImmediate(resolve)); input.signal.throwIfAborted(); }
+    const a = flatGroups[first].options[0], b = flatGroups[second].options[0];
+    if (a.candidate.slotType === b.candidate.slotType) continue;
+    try { auctionPlanLoadout(input.loadout, [a, b], input.specId, slots); } catch { continue; }
+    pairs.push({ first, second, repair: !compatibleSingle(first) || !compatibleSingle(second),
+      score: checkpoint.pairScores[first] / 2 + checkpoint.pairScores[second] / 2 });
+  }
+  // This bounded prefix changes evaluation order only. Every other pair and
+  // effect remains in the exact full traversal; these limits never narrow it.
+  pairs.sort((a, b) => Number(b.repair) - Number(a.repair) || b.score - a.score || a.first - b.first || a.second - b.second);
+  pairs.length = Math.min(pairs.length, 256);
+  if (!yieldBeforeEnumeration && (checkpoint.nextPair > pairs.length || checkpoint.exhausted && checkpoint.nextPair !== pairs.length)) throw new Error("invalid_search_checkpoint");
+  const seededPairs = new Set(pairs.map(pair => `${pair.first}:${pair.second}`));
+  const evaluate = async (selection: AuctionGearOption[]) => {
+    try { auctionPlanLoadout(input.loadout, selection, input.specId, slots); }
+    catch { return { processed: true, simulated: false }; }
+    const key = auctionSelectionEffectKey(selection);
+    let simulation = checkpoint.simulationCache[key], simulated = false;
+    if (!simulation) {
+      if (calls >= max) return { processed: false, simulated: false };
+      simulation = validSimulation(await input.simulate(selection, input.signal), checkpoint.baseline.engine);
+      checkpoint.simulationCache[key] = simulation;
+      checkpoint.simulations++;
+      calls++;
+      simulated = true;
+      input.onProgress?.({ phase: "simulating", completed: calls, total: max });
+    }
+    checkpoint.validCombinations++;
+    const best = checkpoint.best;
+    const cost = auctionPlanCost(selection), bestCost = auctionPlanCost(bestOptions());
+    // DPS is a black box: no sum of individual gains is used to rank results.
+    if (simulation.dps > best.simulation.dps || simulation.dps === best.simulation.dps &&
+        (cost < bestCost || cost === bestCost && selectionKey(selection) < best.optionIds.slice().sort().join("|"))) {
+      checkpoint.best = { optionIds: selection.map(o => o.id), simulation };
+    }
+    return { processed: true, simulated };
+  };
   let assignments = 0;
-  while (!checkpoint.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
+  // Test compatible repair pairs and promising pairs before the long Cartesian traversal.
+  while (!yieldBeforeEnumeration && checkpoint.nextPair < pairs.length && assignments < maxAssignments && !input.shouldYield?.()) {
     input.signal.throwIfAborted();
-    const selection: AuctionGearOption[] = [];
+    const pair = pairs[checkpoint.nextPair];
+    const purchase = await cheapestAuctionEffectSelection([flatGroups[pair.first], flatGroups[pair.second]], input.budgetCopper, input.signal);
+    const checked = purchase ? await evaluate(purchase.options) : { processed: true, simulated: false };
+    if (!checked.processed) break;
+    checkpoint.nextPair++;
+    checkpoint.combinationsChecked++;
+    assignments++;
+    if (checked.simulated) save();
+    if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+  }
+  while (!yieldBeforeEnumeration && checkpoint.nextPair === pairs.length && !checkpoint.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
+    input.signal.throwIfAborted();
+    const chosenGroups = checkpoint.cursor.flatMap((choice, index) => choice ? [groups[index][choice - 1]] : []);
+    if (chosenGroups.length === 2) {
+      const indices = chosenGroups.map(group => groupIndex.get(group)!).sort((a, b) => a - b);
+      if (seededPairs.has(`${indices[0]}:${indices[1]}`)) {
+        advance(); assignments++;
+        if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+        continue;
+      }
+    }
+    const effectSelection: AuctionEffectGroup[] = [];
+    let selection: AuctionGearOption[] = [];
     let invalidPrefix = -1;
     // Only monotone financial/lot constraints can prune an incomplete state.
     // Unique categories and hand compatibility are checked on the final loadout.
     for (let index = 0; index < groups.length; index++) {
       const choice = checkpoint.cursor[index];
-      if (choice) selection.push(groups[index][choice - 1]);
-      try { if (auctionPlanCost(selection) > input.budgetCopper) invalidPrefix = index; }
-      catch { invalidPrefix = index; }
+      if (choice) effectSelection.push(groups[index][choice - 1]);
+      const purchase = await cheapestAuctionEffectSelection(effectSelection, input.budgetCopper, input.signal);
+      if (!purchase) invalidPrefix = index;
+      else selection = purchase.options;
       if (invalidPrefix >= 0) break;
     }
-    let compatible = invalidPrefix < 0;
-    let simulated = false;
-    if (compatible) {
-      try { auctionPlanLoadout(input.loadout, selection, input.specId, slots); } catch { compatible = false; }
-    }
-    if (compatible) {
-      const key = auctionSelectionEffectKey(selection);
-      let simulation = checkpoint.simulationCache[key];
-      if (!simulation) {
-        if (calls >= max) break;
-        simulation = validSimulation(await input.simulate(selection, input.signal), checkpoint.baseline.engine);
-        checkpoint.simulationCache[key] = simulation;
-        checkpoint.simulations++;
-        calls++;
-        simulated = true;
-        input.onProgress?.({ phase: "simulating", completed: calls, total: max });
-      }
-      checkpoint.validCombinations++;
-      const best = checkpoint.best;
-      const cost = auctionPlanCost(selection), bestCost = auctionPlanCost(bestOptions());
-      // DPS is a black box: no sum of individual gains is used to rank combinations.
-      if (simulation.dps > best.simulation.dps || simulation.dps === best.simulation.dps &&
-          (cost < bestCost || cost === bestCost && selectionKey(selection) < best.optionIds.slice().sort().join("|"))) {
-        checkpoint.best = { optionIds: selection.map(o => o.id), simulation };
-      }
-    }
+    const checked = invalidPrefix < 0 ? await evaluate(selection) : { processed: true, simulated: false };
+    if (!checked.processed) break;
     checkpoint.combinationsChecked++;
     assignments++;
     advance(invalidPrefix >= 0 ? invalidPrefix : undefined);
-    if (simulated) save();
+    if (checked.simulated) save();
     if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
   }
   save();
@@ -305,7 +361,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.best.simulation), engine: checkpoint.baseline.engine,
     simulations: checkpoint.simulations, optionsConsidered: options.length, searchLimited: !checkpoint.exhausted,
     exhaustiveComplete: checkpoint.exhausted, combinationsChecked: checkpoint.combinationsChecked,
-    validCombinations: checkpoint.validCombinations, combinationCount } };
+    validCombinations: checkpoint.validCombinations, combinationCount, combinationKind: "effects" } };
 }
 
 /** Backward-compatible entry point; its result is now an exhaustive resumable search. */

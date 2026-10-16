@@ -4,10 +4,11 @@ import {createAuctionGearSearch, getAuctionGearSearch, touchAuctionGearSearch, d
 const actualNow = Date.now;
 let now = actualNow();
 Date.now = () => now;
-const context = { input: { characterSlug: "synthetic-test", selectedSlots: ["HEAD"] }, simulate: async () => ({}) };
+const context = { input: { characterSlug: "synthetic-test", selectedSlots: ["HEAD"] }, options: [], simulate: async () => ({}) };
 try {
   const original = createAuctionGearSearch("owner-a", context);
   assert.match(original.id, /^[0-9a-f-]{36}$/);assert.equal(original.context, context);assert.equal(original.busy, false);
+  assert.equal(original.knownOptionIds.size, 0, "An undiscovered pool has no selectable owner IDs");
   assert.equal(getAuctionGearSearch("owner-b", original.id), null);assert.equal(deleteAuctionGearSearch("owner-b", original.id), false);
   const expiry = original.expiresAt;now += 60_000;
   assert.equal(getAuctionGearSearch("owner-b", original.id), null);assert.equal(original.expiresAt, expiry, "Another owner cannot extend retention");

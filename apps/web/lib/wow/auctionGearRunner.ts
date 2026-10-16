@@ -6,21 +6,19 @@ import { getBattleNetCharacterBySlug, type BattleNetCharacter } from "./battleNe
 import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from "./battleNetCharacterDetails";
 import { getCharacterAuctionMarket } from "./auctionMarketProvider";
 import { assertFreshMarket } from "./auctionMarket";
-import { auctionVariantKey, resolvedAuctionVariant } from "./auctionItemVariant";
-import { supportedAuctionModifiers } from "./gearItemModifiers";
-import { resolveAuctionVariants } from "./auctionVariantResolver";
-import { getAuctionItemReferences, nativeMatchesItemReference } from "./auctionItemReference";
+import { auctionVariantKey } from "./auctionItemVariant";
 import { addPlannerItemIcons } from "./gearPlannerMedia";
 import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
-import { currentGearSeason, gearEntityDetails, lookupGearEntities, lookupGearRecords } from "./gearCandidateRepository";
-import { catalogLoadoutItem, gearSlotCategoryPaths, normalizeGearCandidate } from "./gearCandidates";
+import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
+import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
 import { prepareGearLoadout, type GearSimulationScenario } from "./gearSimulation";
 import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
 import { createAuctionGearSearch, deleteAuctionGearSearch, touchAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
 import type { GearLoadoutItem } from "./gearCompatibility";
 import type { AuctionSnapshot } from "./auctionMarket";
+import { createAuctionGearDiscovery, advanceAuctionGearDiscovery, refreshAuctionGearDiscovery, auctionGearDiscoveryCoverage, auctionGearDiscoveryOptions } from "./auctionGearDiscovery";
 export type AuctionGearRunInput = {
   characterSlug: string;
   budgetCopper: number;
@@ -98,212 +96,35 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
     });
     return catalogLoadoutItem(entity, item.slot!.type!);
   });
-  const affordable = market.offers.filter(o => o.buyoutCopper <= input.budgetCopper);
-  const supported = affordable.filter(o => supportedAuctionModifiers(o.modifiers));
-  const ids = [...new Set([...supported].sort((a, b) => a.buyoutCopper - b.buyoutCopper || a.auctionId - b.auctionId).map(o => o.itemId))];
-  const scannedIds = ids.slice(0, 6000);
-  progress({
-    phase: "catalog",
-    completed: 0,
-    total: scannedIds.length
-  });
-  const records = (await Promise.all([2, 4].map(c => lookupGearRecords(scannedIds, locale, c, character.level)))).flat();
-  check();
-  // Alternate cheap and high-level catalog items. The engine resolves their
-  // actual levels below; catalog base ilvl is only a bounded search seed.
-  const byId = new Map(records.map(r => [r.externalId, r]));
-  const cheap = ids.flatMap(id => byId.has(id) ? [byId.get(id)!] : []);
-  const high = [...records].sort((a, b) => (b.itemLevel ?? 0) - (a.itemLevel ?? 0) || a.externalId - b.externalId);
-  const selectedMap = new Map<string, typeof records[number]>();
-  for (let i = 0; i < Math.max(cheap.length, high.length) && selectedMap.size < 240; i++) for (const record of [cheap[i], high[i]]) if (record && selectedMap.size < 240) selectedMap.set(record.id, record);
-  const entities = await gearEntityDetails([...selectedMap.values()], locale, false);
-  check();
-  const offersByItem = new Map<number, typeof supported>();
-  for (const offer of supported) {
-    const list = offersByItem.get(offer.itemId) ?? [];
-    list.push(offer);
-    offersByItem.set(offer.itemId, list);
-  }
   const season = currentGearSeason();
-  const context = (slotType: string) => ({
-    classId: character.playableClass.id,
-    specId: theme.specId,
-    characterLevel: character.level,
-    raceId: character.playableRace.id,
-    faction: character.faction.type,
-    slotType,
-    currentItemLevel: 0,
-    anchorItemClassId: -1,
-    anchorItemSubclassId: -1,
-    season,
-    acquisition: {
-      type: "auction" as const,
-      evidence: "auction" as const
-    }
-  });
-  const withVariant = (entity: typeof entities[number], offer: typeof supported[number], requiredLevel: number, itemLevel: number) => ({
-    ...entity,
-    tooltip: {
-      blocks: [...(entity.tooltip?.blocks ?? []).filter(b => b.type !== "item_variants" && b.type !== "item_requirements"), {
-        ...entity.tooltip?.blocks?.find(b => b.type === "item_requirements"),
-        type: "item_requirements",
-        required_level: requiredLevel
-      }, {
-        type: "item_variants",
-        entries: [{
-          key: auctionVariantKey(offer),
-          item_level: itemLevel,
-          context_id: offer.contextId,
-          bonus_list_ids: offer.bonusIds,
-          modifiers: offer.modifiers
-        }]
-      }]
-    }
-  });
-  const probes = new Map<string, {
-    offer: typeof supported[number];
-    entity: typeof entities[number];
-    slot: string;
-  }>();
-  const pools = entities.map(entity => [...new Map((offersByItem.get(entity.externalId) ?? []).sort((a, b) => a.buyoutCopper - b.buyoutCopper).map(o => [auctionVariantKey(o), o])).values()]);
-  let variantSearchLimited = false;
-  for (let depth = 0; depth < 3; depth++) for (let index = 0; index < entities.length; index++) {
-    const entity = entities[index],
-      offer = pools[index][depth];
-    if (!offer) continue;
-    const synthetic = withVariant(entity, offer, 0, 1);
-    const slot = selectedSlots.find(slot => normalizeGearCandidate(synthetic, context(slot)).eligible);
-    if (!slot) continue;
-    if (probes.size >= 256) {
-      variantSearchLimited = true;
-      continue;
-    }
-    const simcSlot: Record<string, string> = {
-      FINGER_1: "finger1",
-      FINGER_2: "finger2",
-      TRINKET_1: "trinket1",
-      TRINKET_2: "trinket2"
-    };
-    probes.set(auctionVariantKey(offer), {
-      offer,
-      entity,
-      slot: simcSlot[slot] ?? slot.toLowerCase()
-    });
-  }
-  if (pools.some(pool => pool.length > 3)) variantSearchLimited = true;
-  progress({
-    phase: "variants",
-    completed: 0,
-    total: probes.size
-  });
-  const references = await getAuctionItemReferences([...new Set([...probes.values()].map(p => p.offer.itemId))], character.region, token, signal);
-  const referenceProbes = [...references.values()].map(reference => ({
-    offer: reference.offer,
-    slot: [...probes.values()].find(p => p.offer.itemId === reference.offer.itemId)!.slot
-  }));
-  const resolution = await resolveAuctionVariants({
-    offers: [...referenceProbes, ...probes.values()],
-    spec: theme.slug,
-    characterLevel: character.level,
-    signal,
-    onProgress: (completed, total) => progress({
-      phase: "variants",
-      completed,
-      total
-    })
-  });
-  check();
-  const options: AuctionGearOption[] = [],
-    matched = new Set<number>();
-  let unresolvedVariants = 0;
-  const referenceVerified = new Set([...references].filter(([, ref]) => nativeMatchesItemReference(ref, resolution.variants.get(auctionVariantKey(ref.offer)))).map(([id]) => id));
-  for (const [key, probe] of probes) {
-    const metadata = resolution.variants.get(key);
-    if (!metadata || metadata.error || !referenceVerified.has(probe.offer.itemId) || metadata.itemLevel > 1000 || metadata.requiredLevel === 0 && (references.get(probe.offer.itemId)?.requiredLevel ?? 0) > 0) {
-      unresolvedVariants++;
-      continue;
-    }
-    if (metadata.requiredLevel > character.level) continue;
-    const variant = resolvedAuctionVariant(probe.offer, metadata, resolution.engine);
-    const entity = withVariant(probe.entity, probe.offer, metadata.requiredLevel, metadata.itemLevel);
-    // The published registry and native database must agree about equip type.
-    const registry = normalizeGearCandidate(entity, context(Object.keys(gearSlotCategoryPaths).find(s => s.toLowerCase() === probe.slot) ?? "FINGER_1"));
-    if (registry.itemClassId !== metadata.itemClassId || registry.itemSubclassId !== metadata.itemSubclassId || registry.inventoryType !== metadata.inventoryType) {
-      unresolvedVariants++;
-      continue;
-    }
-    for (const slotType of selectedSlots) {
-      const candidate = normalizeGearCandidate(entity, context(slotType));
-      if (!candidate.eligible) continue;
-      candidate.itemLevel = metadata.itemLevel;
-      candidate.quality = metadata.quality;
-      candidate.variants = [variant];
-      candidate.constraints.uniqueEquipped ||= metadata.uniqueEquipped;
-      candidate.constraints.setId = metadata.setId || candidate.constraints.setId;
-      for (const offer of offersByItem.get(entity.externalId) ?? []) {
-        if (auctionVariantKey(offer) !== key) continue;
-        options.push({
-          id: `${offer.auctionId}:${slotType}:${key}`,
-          auctionId: offer.auctionId,
-          quantity: offer.quantity,
-          costCopper: offer.buyoutCopper,
-          candidate,
-          variantKey: key
-        });
-        matched.add(offer.auctionId);
-      }
-    }
-  }
-  progress({
-    phase: "catalog",
-    completed: scannedIds.length,
-    total: scannedIds.length
+  const discovery = createAuctionGearDiscovery(market, input.budgetCopper);
+  progress({ phase: "catalog", completed: 0, total: discovery.itemIds.length });
+  const discoveryContext = (slotType: string) => ({
+    classId: character.playableClass.id, specId: theme.specId, characterLevel: character.level,
+    raceId: character.playableRace.id, faction: character.faction.type, slotType,
+    currentItemLevel: 0, anchorItemClassId: -1, anchorItemSubclassId: -1, season,
+    acquisition: { type: "auction" as const, evidence: "auction" as const },
   });
   const preset = await getRotationPreset(theme.slug, input.locale);
   check();
   if (!preset.defaultRules.length) throw new Error("rotation_unavailable");
-  const encounter = input.scenario === "aoe" ? {
-    fightLengthSeconds: 60,
-    targets: 5
-  } : input.scenario === "execute" ? {
-    fightLengthSeconds: 90,
-    targets: 1
-  } : {
-    fightLengthSeconds: 120,
-    targets: 1
-  };
+  const encounter = input.scenario === "aoe" ? { fightLengthSeconds: 60, targets: 5 }
+    : input.scenario === "execute" ? { fightLengthSeconds: 90, targets: 1 } : { fightLengthSeconds: 120, targets: 1 };
   const retainedMarket = { ...market, offers: [] };
   const simulate = createAuctionSimulator({ armory, loadout, specId: theme.specId, specSlug: theme.slug,
-    scenario: input.scenario, encounter, rules: preset.defaultRules, market: retainedMarket, engine: resolution.engine });
-  const optionMedia = options.map(option => ({ itemId: option.candidate.itemId, name: option.candidate.name, iconUrl: option.candidate.iconUrl }));
-  await addPlannerItemIcons([...optionMedia, ...currentBySlot.values()], character.region, token, signal);
-  options.forEach((option, index) => { option.candidate.iconUrl = optionMedia[index].iconUrl; });
+    scenario: input.scenario, encounter, rules: preset.defaultRules, market: retainedMarket, engine: () => discovery.engine });
+  await addPlannerItemIcons([...currentBySlot.values()], character.region, token, signal);
   check();
+  const coverage = auctionGearDiscoveryCoverage(discovery);
   return {
-    input: { ...input, selectedSlots }, character, armory, options, loadout,
-    specId: theme.specId, market: retainedMarket, currentBySlot, simulate,
-    searchLimited: scannedIds.length < ids.length || selectedMap.size < records.length || variantSearchLimited,
-    publicMarket: {
-      snapshotId: market.id,
-      region: character.region,
-      realm: character.realm.name,
-      connectedRealmId: market.connectedRealmId,
-      updatedAt: market.sourceUpdatedAt
-    },
-    profileFingerprint: createHash("sha256").update(JSON.stringify(armory)).digest("hex"),
-    scenario: input.scenario,
-    coverage: {
-      affordableLots: affordable.length,
-      matchedLots: matched.size,
-      itemsScanned: scannedIds.length,
-      itemsDetailed: entities.length,
-      supportedModifierLots: supported.length,
-      unsupportedModifierLots: affordable.length - supported.length,
-      variantsResolved: probes.size - unresolvedVariants,
-      variantsRejected: unresolvedVariants,
-      referenceItemsVerified: referenceVerified.size,
-      referenceItemsRejected: new Set([...probes.values()].map(p => p.offer.itemId)).size - referenceVerified.size
-    }
+    input: { ...input, selectedSlots }, character, armory, options: [] as AuctionGearOption[], loadout,
+    specId: theme.specId, specSlug: theme.slug, market: retainedMarket, currentBySlot, simulate,
+    discovery, discoveryContext, coverage, searchLimited: true,
+    publicMarket: { snapshotId: market.id, region: character.region, realm: character.realm.name,
+      connectedRealmId: market.connectedRealmId, updatedAt: market.sourceUpdatedAt,
+      discoveredSnapshotId: discovery.discoveredSnapshotId, validatedAt: market.fetchedAt },
+    profileFingerprint: createHash("sha256").update(JSON.stringify(armory)).digest("hex"), scenario: input.scenario,
+    marketChange: { removedLots: 0, repricedLots: 0, quantityChangedLots: 0, variantsChangedLots: 0 },
   };
 }
 
@@ -314,11 +135,90 @@ function publicAuctionResult(context: AuctionGearContext, result: AuctionGearAss
 function publicAuctionResult(context: AuctionGearContext, result: AuctionGearSearchResult | AuctionGearAssemblyResult): AuctionGearRunResult {
   const metadata: AuctionGearRunMetadata = { market: context.publicMarket,
     profileFingerprint: context.profileFingerprint, scenario: context.input.scenario, coverage: context.coverage };
+  const discoveryComplete = context.discovery ? context.coverage.discoveryComplete : true;
+  const dataComplete = context.discovery ? context.coverage.dataComplete : !context.searchLimited;
   return result.kind === "search"
-    ? { ...result, ...metadata, searchLimited: result.searchLimited || context.searchLimited }
-    : { ...result, ...metadata, searchLimited: result.searchLimited || context.searchLimited };
+    ? { ...result, ...metadata, discoveryComplete, dataComplete,
+      searchComplete: result.searchComplete && discoveryComplete, searchLimited: result.searchLimited || context.searchLimited }
+    : { ...result, ...metadata, discoveryComplete, dataComplete,
+      exhaustiveComplete: result.exhaustiveComplete && discoveryComplete, searchLimited: result.searchLimited || context.searchLimited };
 }
 
+function retainAuctionSimulations(entry: AuctionGearSearchEntry) {
+  entry.retainedSimulationCache = { ...entry.retainedSimulationCache, ...entry.searchCheckpoint?.simulationCache,
+    ...entry.assemblyCheckpoint?.simulationCache };
+  entry.retainedBaseline ??= entry.searchCheckpoint?.baseline ?? entry.assemblyCheckpoint?.baseline;
+  return entry.retainedSimulationCache;
+}
+
+function invalidateAuctionCursors(entry: AuctionGearSearchEntry) {
+  retainAuctionSimulations(entry);
+  entry.searchCheckpoint = undefined;
+  entry.assemblyCheckpoint = undefined;
+  entry.allowedKey = undefined;
+}
+
+const auctionFactsKey = (options: AuctionGearOption[]) => JSON.stringify(options.map(option =>
+  [option.id, option.auctionId, option.costCopper, option.quantity, option.variantKey]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
+
+function synchronizeAuctionOptions(entry: AuctionGearSearchEntry, options: AuctionGearOption[]) {
+  const context = entry.context;
+  entry.knownOptionIds ??= new Set(context.options.map(option => option.id));
+  for (const option of options) entry.knownOptionIds.add(option.id);
+  if (auctionFactsKey(context.options) !== auctionFactsKey(options)) invalidateAuctionCursors(entry);
+  context.options = options;
+  if (context.discovery) {
+    context.coverage = auctionGearDiscoveryCoverage(context.discovery);
+    context.searchLimited = !context.coverage.discoveryComplete || !context.coverage.dataComplete;
+    context.publicMarket.discoveredSnapshotId = context.discovery.discoveredSnapshotId;
+  }
+}
+
+async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: string | undefined, signal: AbortSignal,
+  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxSteps = 12) {
+  const context = entry.context;
+  if (!context.discovery) return; // Backward-compatible trusted in-memory fixtures.
+  if (!context.coverage.discoveryComplete) {
+    if (!token) throw new Error("auction_discovery_authorization_required");
+    await advanceAuctionGearDiscovery(context.discovery, { locale: context.input.locale === "en" ? "en_US" : "ru_RU",
+      region: context.character.region, token, spec: context.specSlug, characterLevel: context.character.level,
+      selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps, onProgress: progress });
+  }
+  if (context.discovery.engine && entry.retainedBaseline && context.discovery.engine !== entry.retainedBaseline.engine) throw new Error("simulation_version_changed");
+  const options = auctionGearDiscoveryOptions(context.discovery);
+  const media = [...new Map(options.filter(option => !option.candidate.iconUrl).map(option => [option.candidate.itemId,
+    { itemId: option.candidate.itemId, name: option.candidate.name, iconUrl: option.candidate.iconUrl }])).values()];
+  if (media.length && token && !shouldYield()) {
+    await addPlannerItemIcons(media, context.character.region, token, signal);
+    const icons = new Map(media.map(item => [item.itemId, item.iconUrl]));
+    for (const option of options) option.candidate.iconUrl ||= icons.get(option.candidate.itemId);
+  }
+  synchronizeAuctionOptions(entry, options);
+}
+
+async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: AbortSignal,
+  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean) {
+  const context = entry.context;
+  const cache = retainAuctionSimulations(entry);
+  if (entry.searchCheckpoint) Object.assign(entry.searchCheckpoint.simulationCache, cache);
+  const { result, checkpoint } = await searchAuctionGearOptions({
+    searchId: entry.id, budgetCopper: context.input.budgetCopper, options: context.options,
+    selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
+    market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
+    baseline: entry.retainedBaseline, simulationCache: cache, shouldYield, onProgress: progress,
+    onCheckpoint: state => { entry.searchCheckpoint = state; touchAuctionGearSearch(entry); },
+  });
+  entry.searchCheckpoint = checkpoint;
+  entry.retainedBaseline = checkpoint.baseline;
+  entry.retainedSimulationCache = checkpoint.simulationCache;
+  const discoveryComplete = context.discovery ? context.coverage.discoveryComplete : true;
+  const dataComplete = context.discovery ? context.coverage.dataComplete : !context.searchLimited;
+  entry.latestSearchResult = { ...result, discoveryComplete, dataComplete,
+    searchComplete: result.pendingItems === 0 && discoveryComplete, searchLimited: result.searchLimited || context.searchLimited,
+    items: result.items.map(item => ({ ...item, currentItem: context.currentBySlot.get(item.slotType) })) };
+  touchAuctionGearSearch(entry);
+  return entry.latestSearchResult;
+}
 export async function startAuctionGearSearch(input: AuctionGearRunInput, owner: string, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
   progress({ phase: "market", completed: 0, total: 1 });
   const character = await getBattleNetCharacterBySlug(token, input.locale, input.characterSlug, signal);
@@ -333,32 +233,22 @@ export async function startAuctionGearSearchFromSnapshot(input: AuctionGearRunIn
   signal.throwIfAborted();
   const entry = createAuctionGearSearch(owner, context);
   try {
-    return await continueAuctionGearSearch(entry, signal, progress);
+    return await continueAuctionGearSearch(entry, signal, progress, token);
   } catch (error) {
     if (!entry.latestSearchResult) deleteAuctionGearSearch(owner, entry.id);
     throw error;
   }
 }
 
-export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
-  const context = entry.context, started = Date.now();
+export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, signal: AbortSignal,
+  progress: (p: AuctionPlanProgress) => void, token?: string) {
+  const started = Date.now(), shouldYield = () => Date.now() - started >= 90_000;
   entry.busy = true;
   try {
-    const { result, checkpoint } = await searchAuctionGearOptions({
-      searchId: entry.id, budgetCopper: context.input.budgetCopper, options: context.options,
-      selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
-      market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
-      shouldYield: () => Date.now() - started >= 90_000, onProgress: progress,
-      onCheckpoint: state => { entry.searchCheckpoint = state; touchAuctionGearSearch(entry); },
-    });
-    entry.searchCheckpoint = checkpoint;
-    const items = result.items.map(item => ({ ...item, currentItem: context.currentBySlot.get(item.slotType) }));
-    entry.latestSearchResult = { ...result, items };
-    touchAuctionGearSearch(entry);
-    return publicAuctionResult(context, entry.latestSearchResult);
+    await discoverAuctionOptions(entry, token, signal, progress, shouldYield);
+    return publicAuctionResult(entry.context, await updateAuctionSearchResult(entry, signal, progress, shouldYield));
   } finally { entry.busy = false; }
 }
-
 /** Refresh actual character and lot facts without trusting client prices/stats. */
 export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, token: string, signal: AbortSignal, verifyOwnership = true) {
   const context = entry.context;
@@ -374,59 +264,100 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
   signal.throwIfAborted();
   if (market.region !== context.market.region || market.connectedRealmId !== context.market.connectedRealmId) throw new Error("auction_market_changed");
   const offers = new Map(market.offers.map(offer => [offer.auctionId, offer]));
-  for (const option of context.options) {
-    const offer = offers.get(option.auctionId);
-    if (!offer || offer.buyoutCopper !== option.costCopper || offer.quantity !== option.quantity || auctionVariantKey(offer) !== option.variantKey) throw new Error("auction_market_changed");
+  const previous = new Map(context.options.map(option => [option.auctionId, option]));
+  const changes = { removedLots: 0, repricedLots: 0, quantityChangedLots: 0, variantsChangedLots: 0 };
+  for (const [id, option] of previous) {
+    const offer = offers.get(id);
+    if (!offer) changes.removedLots++;
+    else if (auctionVariantKey(offer) !== option.variantKey) changes.variantsChangedLots++;
+    else {
+      if (offer.buyoutCopper !== option.costCopper) changes.repricedLots++;
+      if (offer.quantity !== option.quantity) changes.quantityChangedLots++;
+    }
+  }
+  context.marketChange = changes;
+  if (context.discovery) {
+    refreshAuctionGearDiscovery(context.discovery, market);
+    synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery));
+  } else {
+    // Trusted historical contexts have no discovery state. Refresh only their
+    // known variants, still never trusting a client-supplied price or quantity.
+    const options = context.options.flatMap(option => {
+      const offer = offers.get(option.auctionId);
+      return offer && auctionVariantKey(offer) === option.variantKey && offer.buyoutCopper <= context.input.budgetCopper
+        ? [{ ...option, costCopper: offer.buyoutCopper, quantity: offer.quantity }] : [];
+    });
+    synchronizeAuctionOptions(entry, options);
   }
   context.market.id = market.id;
   context.market.sourceUpdatedAt = market.sourceUpdatedAt;
   context.market.fetchedAt = market.fetchedAt;
-  context.publicMarket = { ...context.publicMarket, snapshotId: market.id, updatedAt: market.sourceUpdatedAt };
+  context.publicMarket = { ...context.publicMarket, snapshotId: market.id, updatedAt: market.sourceUpdatedAt, validatedAt: market.fetchedAt };
   touchAuctionGearSearch(entry);
 }
 
-export function selectedAuctionGearOptions(entry: AuctionGearSearchEntry, value: unknown) {
-  if (!Array.isArray(value) || !value.length || value.length > entry.context.options.length ||
-      value.some(id => typeof id !== "string" || id.length > 180) || new Set(value).size !== value.length) throw new Error("invalid_auction_selection");
-  const known = new Map(entry.context.options.map(option => [option.id, option]));
-  return value.map(id => {
-    const option = known.get(id);
-    if (!option) throw new Error("invalid_auction_selection");
-    return option;
-  });
+export type AuctionGearAssemblySelection = { excludedOptionIds: string[] } | string[] | undefined;
+export function selectedAuctionGearAssemblyOptions(entry: AuctionGearSearchEntry, value: unknown): AuctionGearOption[] {
+  const exclusion = value !== undefined && !Array.isArray(value);
+  if (exclusion && (!value || typeof value !== "object" || Object.keys(value).length !== 1 || !("excludedOptionIds" in value))) throw new Error("invalid_auction_selection");
+  const ids = exclusion ? (value as { excludedOptionIds: unknown }).excludedOptionIds : value;
+  if (exclusion && !Array.isArray(ids)) throw new Error("invalid_auction_selection");
+  const known = entry.knownOptionIds ?? new Set(entry.context.options.map(option => option.id));
+  if (ids !== undefined && (!Array.isArray(ids) || (!exclusion && !ids.length) || ids.length > known.size ||
+      ids.some(id => typeof id !== "string" || id.length > 180 || !known.has(id)) || new Set(ids).size !== ids.length)) throw new Error("invalid_auction_selection");
+  const selected = new Set(ids as string[] | undefined);
+  return entry.context.options.filter(option => ids === undefined || (exclusion ? !selected.has(option.id) : selected.has(option.id)));
 }
 
-export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, allowedOptionIds: unknown, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
-  const context = entry.context, started = Date.now();
-  if (!entry.searchCheckpoint || !entry.latestSearchResult) throw new Error("search_not_ready");
-  const options = selectedAuctionGearOptions(entry, allowedOptionIds);
-  const allowedKey = options.map(option => option.id).sort().join("|");
-  if (entry.allowedKey !== allowedKey) {
-    if (entry.assemblyCheckpoint) Object.assign(entry.searchCheckpoint.simulationCache, entry.assemblyCheckpoint.simulationCache);
-    entry.assemblyCheckpoint = undefined;
-    entry.allowedKey = allowedKey;
-  }
+export function selectedAuctionGearOptions(entry: AuctionGearSearchEntry, value: unknown) {
+  if (!Array.isArray(value)) throw new Error("invalid_auction_selection");
+  return selectedAuctionGearAssemblyOptions(entry, value);
+}
+
+export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, selection: unknown, signal: AbortSignal,
+  progress: (p: AuctionPlanProgress) => void, token?: string) {
+  const context = entry.context, started = Date.now(), shouldYield = () => Date.now() - started >= 90_000;
+  if (!entry.latestSearchResult || !(entry.retainedBaseline ?? entry.searchCheckpoint?.baseline)) throw new Error("search_not_ready");
+  selectedAuctionGearAssemblyOptions(entry, selection);
   entry.busy = true;
   try {
+    // Discovery also advances during assembly; its finite batch never declares
+    // the current sub-pool a market-wide maximum while unvisited variants remain.
+    await discoverAuctionOptions(entry, token, signal, progress, shouldYield, 4);
+    const options = selectedAuctionGearAssemblyOptions(entry, selection);
+    const allowedKey = auctionFactsKey(options);
+    if (entry.allowedKey !== allowedKey) {
+      retainAuctionSimulations(entry);
+      entry.assemblyCheckpoint = undefined;
+      entry.allowedKey = allowedKey;
+    }
     const { result, checkpoint } = await assembleAuctionGear({
       searchId: entry.id, budgetCopper: context.input.budgetCopper, options,
       selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
       market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
-      baseline: entry.searchCheckpoint.baseline, simulationCache: entry.searchCheckpoint.simulationCache,
-      shouldYield: () => Date.now() - started >= 90_000, onProgress: progress,
+      baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
+      shouldYield, onProgress: progress,
       onCheckpoint: state => { entry.assemblyCheckpoint = state; touchAuctionGearSearch(entry); },
     });
     entry.assemblyCheckpoint = checkpoint;
+    entry.retainedSimulationCache = checkpoint.simulationCache;
+    const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true);
     touchAuctionGearSearch(entry);
-    return publicAuctionResult(context, { ...result, purchases: result.purchases.map(purchase => ({
-      ...purchase, currentItem: context.currentBySlot.get(purchase.slotType),
-    })) });
+    return publicAuctionResult(context, { ...result, updatedSearch, marketChange: context.marketChange,
+      purchases: result.purchases.map(purchase => ({ ...purchase, currentItem: context.currentBySlot.get(purchase.slotType) })) });
   } finally { entry.busy = false; }
 }
 
 /** Kept for trusted CLI checks; HTTP uses explicit search and assembly stages. */
 export async function runAuctionGearPlanFromSnapshot(input: AuctionGearRunInput, character: BattleNetCharacter, armory: BattleNetSimulationSnapshot, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
   const context = await createAuctionGearContextFromSnapshot(input, character, armory, token, signal, progress);
+  const started = Date.now();
+  await advanceAuctionGearDiscovery(context.discovery, { locale: input.locale === "en" ? "en_US" : "ru_RU", region: character.region,
+    token, spec: context.specSlug, characterLevel: character.level, selectedSlots: context.input.selectedSlots,
+    context: context.discoveryContext, signal, shouldYield: () => Date.now() - started >= 90_000, onProgress: progress });
+  context.options = auctionGearDiscoveryOptions(context.discovery);
+  context.coverage = auctionGearDiscoveryCoverage(context.discovery);
+  context.searchLimited = !context.coverage.discoveryComplete || !context.coverage.dataComplete;
   const plan = await planAuctionGear({ budgetCopper: input.budgetCopper, options: context.options,
     loadout: context.loadout, specId: context.specId, market: context.market, signal,
     simulate: context.simulate, onProgress: progress });
@@ -441,7 +372,7 @@ export async function runAuctionGearPlanFromSnapshot(input: AuctionGearRunInput,
 function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, encounter, rules, market, engine }: {
   armory: BattleNetSimulationSnapshot; loadout: GearLoadoutItem[]; specId: number; specSlug: string;
   scenario: GearSimulationScenario; encounter: { fightLengthSeconds: number; targets: number };
-  rules: string[]; market: Pick<AuctionSnapshot, "sourceUpdatedAt">; engine: string;
+  rules: string[]; market: Pick<AuctionSnapshot, "sourceUpdatedAt">; engine: () => string;
 }) {
   return async (selections: AuctionGearOption[], simSignal: AbortSignal): Promise<GearPlanSimulation> => {
       assertFreshMarket(market);
@@ -478,7 +409,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       if (!response.ok || response.headers.get("x-gildra-engine") !== "simulationcraft") throw new Error("simulation_unavailable");
       const result = (await response.json()) as GearPlanSimulation;
       if (!Number.isFinite(result.dpsError) || !Number.isFinite(result.confidence) || result.confidence !== 95) throw new Error("invalid_simulation_result");
-      if (engine && result.engine !== engine) throw new Error("simulation_version_changed");
+      if (engine() && result.engine !== engine()) throw new Error("simulation_version_changed");
       return result;
     };
 }

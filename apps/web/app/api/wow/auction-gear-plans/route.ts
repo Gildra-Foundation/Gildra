@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { goldToCopper } from "@/lib/wow/auctionMarket";
-import { startAuctionGearSearch, continueAuctionGearSearch, assembleAuctionGearSearch, selectedAuctionGearOptions, verifyAuctionGearSearch } from "@/lib/wow/auctionGearRunner";
+import { startAuctionGearSearch, continueAuctionGearSearch, assembleAuctionGearSearch, selectedAuctionGearAssemblyOptions, verifyAuctionGearSearch } from "@/lib/wow/auctionGearRunner";
 import { enqueueAuctionGearJob, getAuctionGearJob, cancelAuctionGearJob } from "@/lib/wow/auctionGearJobs";
 import { getAuctionGearSearch } from "@/lib/wow/auctionGearSearchStore";
 import { auctionGearSlots, parseAuctionGearSlots } from "@/lib/wow/auctionGearSelection";
@@ -93,18 +93,22 @@ export async function POST(request: Request) {
   const action = body.action ?? "search";
   if (action !== "search" && action !== "resume" && action !== "assemble") return reply({ error: "invalid_plan_request" }, 400);
   if (action !== "search") {
-    const keys = action === "resume" ? ["action", "searchId"] : ["action", "searchId", "allowedOptionIds"];
+    const keys = action === "resume" ? ["action", "searchId"] : ["action", "searchId", "allowedOptionIds", "excludedOptionIds"];
     if (Object.keys(body).some(key => !keys.includes(key)) || typeof body.searchId !== "string" || body.searchId.length > 100) return reply({ error: "invalid_plan_request" }, 400);
+    const hasAllowed = Object.hasOwn(body, "allowedOptionIds"), hasExcluded = Object.hasOwn(body, "excludedOptionIds");
+    if (hasAllowed && hasExcluded) return reply({ error: "invalid_auction_selection" }, 400);
+    // Only IDs cross the boundary. Prices, item effects and budget stay server-owned.
+    const selection = hasAllowed ? body.allowedOptionIds : hasExcluded ? { excludedOptionIds: body.excludedOptionIds } : undefined;
     const entry = getAuctionGearSearch(user.id, body.searchId);
     if (!entry) return reply({ error: "search_not_found" }, 404);
     try {
-      if (action === "assemble") selectedAuctionGearOptions(entry, body.allowedOptionIds);
+      if (action === "assemble") selectedAuctionGearAssemblyOptions(entry, selection);
       return reply(enqueueAuctionGearJob(user.id, async (signal, progress) => {
         entry.busy = true;
         try {
           await verifyAuctionGearSearch(entry, user.token, signal);
-          return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress)
-            : await assembleAuctionGearSearch(entry, body.allowedOptionIds, signal, progress);
+          return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress, user.token)
+            : await assembleAuctionGearSearch(entry, selection, signal, progress, user.token);
         } finally { entry.busy = false; }
       }, { continuation: true }), 202);
     } catch (error) {

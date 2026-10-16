@@ -77,6 +77,10 @@ export type AuctionGearSearchResult = {
   baseline: GearPlanSimulation;
   items: AuctionGearSearchItem[];
   searchComplete: boolean;
+  /** Every affordable item/variant in this market snapshot has been inspected. */
+  discoveryComplete?: boolean;
+  /** No item or variant remains unverified because required data was unavailable. */
+  dataComplete?: boolean;
   pendingItems: number;
   simulations: number;
   engine: string;
@@ -90,8 +94,19 @@ export type AuctionGearAssemblyResult = AuctionGearPlan & {
   exhaustiveComplete: boolean;
   combinationsChecked: number;
   validCombinations: number;
-  /** Exact Cartesian upper bound, including incompatible and over-budget states. */
+  combinationKind: "effects";
+  /** Exact effect-choice Cartesian upper bound, including incompatible and over-budget states. */
   combinationCount: string;
+  discoveryComplete?: boolean;
+  dataComplete?: boolean;
+  /** Refreshed candidates and prices after market availability is revalidated. */
+  updatedSearch?: AuctionGearSearchResult;
+  marketChange?: {
+    removedLots: number;
+    repricedLots: number;
+    quantityChangedLots: number;
+    variantsChangedLots: number;
+  };
 };
 export type AuctionGearSimulationCache = Record<string, GearPlanSimulation>;
 export type AuctionGearSearchCheckpoint = {
@@ -103,10 +118,14 @@ export type AuctionGearSearchCheckpoint = {
   simulations: number;
 };
 export type AuctionGearAssemblyCheckpoint = {
-  version: 1;
+  version: 2;
   inputKey: string;
-  /** Next mixed-radix assignment. Zero keeps the current item. */
+  /** Next mixed-radix effect-group assignment. Zero keeps the current item. */
   cursor: number[];
+  /** Frozen cached-single scores keep useful-pair ordering stable across resumes. */
+  pairScores: number[];
+  /** Next pair in the deterministic early-evaluation order. */
+  nextPair: number;
   exhausted: boolean;
   baseline: GearPlanSimulation;
   best: { optionIds: string[]; simulation: GearPlanSimulation };
