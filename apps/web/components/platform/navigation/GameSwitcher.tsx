@@ -34,7 +34,7 @@ export function GameSwitcher({ lang, pathname = "/", home = false }: { lang: Lan
         trigger.current?.focus();
       }
     }}>
-    <summary ref={trigger} className={styles.trigger} aria-label={`${ru ? "Выбрать игру" : "Choose game"}: ${current.name}`} aria-controls={id}>
+    <summary ref={trigger} className={styles.trigger} aria-controls={id}>
       <span className={styles.identity}>
         <span className={styles.brand}>GILDRA</span>
         <span className={styles.current}><span className={styles.fullName}>{current.name}</span><span className={styles.shortName}>{current.shortName}</span></span>
