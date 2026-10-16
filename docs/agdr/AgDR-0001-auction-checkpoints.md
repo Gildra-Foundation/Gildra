@@ -5,7 +5,7 @@ agent: codex
 model: gpt-6
 session: auction-completion-20261016
 trigger: user-prompt
-status: accepted
+status: executed
 ---
 
 # Durable auction checkpoints on the current single web instance
@@ -16,7 +16,7 @@ status: accepted
 
 - User authorized all audited fixes, integration, publication and deployment. The current web keeps at most forty searches and two hundred job handles in memory.
 - Search context includes Maps/Sets, measured native results and two reconstructable functions. Battle.net bearer tokens and executable tasks must never be persisted.
-- Existing web runs as UID1001 with a read-only root filesystem. Recovery must retain server ownership, profile/market/engine validation and bounded retention.
+- Existing web runs as UID 1001 with a read-only root filesystem. Recovery must retain server ownership, profile/market/engine validation and bounded retention.
 - Native gear ranking changes from a flat editor APL to the maintained native APL; old scores must not be loaded into the new simulation contract.
 
 ## Options considered
@@ -31,7 +31,7 @@ status: accepted
 
 Chosen: **atomic private checkpoint files**, because it closes the actual restart failure within the current single-instance topology without changing shared databases or unrelated services. This is not a distributed queue. Any future multi-replica deployment must replace or coordinate the writer before scaling web.
 
-Store only explicit serializable data and restartable task intent; strip simulator/discovery closures and rebuild them from trusted stored character/armory/context fields. Encode Maps/Sets with Node's built-in V8 serialization, wrap in schema v2 and semantic contract `native-apl-v1`, compress and atomically replace each record. A bounded JSON header indexes owner, scope, expiry, logical recency and job mode; startup scans headers only. An owned read reconstructs one context. Derive option aliases from the stored discovery graph rather than storing a duplicate graph. Lifecycle touches rewrite the header without inflating/recompressing its body. Use private directory/file permissions, validated opaque IDs, record-size limits and existing count/TTL eviction. A different schema or simulation contract must be rejected.
+Store only explicit serializable data and restartable task intent; strip simulator/discovery closures and rebuild them from trusted stored character/armory/context fields. Encode Maps/Sets with Node's built-in V 8 serialization, wrap in schema v 2 and semantic contract `native-apl-v1`, compress and atomically replace each record. A bounded JSON header indexes owner, scope, expiry, logical recency and job mode; startup scans headers only. An owned read reconstructs one context. Derive option aliases from the stored discovery graph rather than storing a duplicate graph. Lifecycle touches rewrite the header without inflating/recompressing its body. Use private directory/file permissions, validated opaque IDs, record-size limits and existing count/TTL eviction. A different schema or simulation contract must be rejected.
 
 Persist a job before returning acceptance, and completed state before reporting success. Persist measured checkpoints at their existing commit boundaries. A restarted unfinished job is parked until an authenticated request from its owner supplies a current token, then resumes from its stored search or restarts only unfinished preparation. Do not persist bearer tokens, promises, callbacks, AbortControllers or native processes. Cross-record ordering writes search checkpoints before linking/publishing the corresponding job result. Reserve queued/running search contexts until settlement. Durable cancellation tombstones stop a late POST from recreating cancelled work; a 30-second acceptance deadline also rejects a delayed request body. Missing/invalid records fail closed. Transient filesystem errors preserve acknowledged files and return a fixed retryable error. New record replacement commits before evicting the previous record; failed acknowledgements cannot strand unaccepted capacity.
 
@@ -55,3 +55,4 @@ Persist a job before returning acceptance, and completed state before reporting 
 - Separate-process restart, HTTP task reattachment, admission/cancellation races and seven filesystem fault regressions cover the implemented lifecycle. Tests are under `apps/web/tests/auction/completion/`; run `node apps/web/scripts/test-auction-completion.mjs --output-dir <new-output-directory>` with Node 24.
 - On this host, a synthetic 50,000-option checkpoint serialized in 162–237 ms; indexing forty such records took 2.8–4.4 ms without context inflation. The first owned read reconstructed one context in 371–425 ms; touches took 8.8–11 ms. These measurements are not a capacity SLA.
 - Production mount: `/var/lib/gildra/auction-state`, UID/GID 1001, directory 0700, records 0600. Web health checks verify read/write access. Provision before startup; `create_host_path` is false.
+- Released and verified 2026-10-16: exact final web image passed six separate-container restart/privacy phases under its actual Node 22 runtime. Live mount ownership, permissions, health and protected service identities were verified. [Release record](../reports/auction-completion-deployment-20261016.md).
