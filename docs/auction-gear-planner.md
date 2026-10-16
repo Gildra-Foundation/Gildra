@@ -10,16 +10,25 @@ resolves an owned Battle.net character, active specialization, talents, equipped
 items and the character's connected realm. Prices come from the regional Blizzard
 connected-realm auctions endpoint. There are no purchases or inventory mutations.
 
-Search and assembly are separate actions. Search returns every retained real
-lot/slot option, classified as a confirmed upgrade, not an upgrade, inconclusive,
-requiring a combined replacement, or pending. Price and DPS sorting and the
-incremental list display never truncate the server pool. Actual icons, native
+Search and assembly are separate actions. The server retains every found real
+lot/slot option with its classification. The interface displays and selects
+only confirmed upgrades: evaluation=upgrade, positive individual DPS gain and
+a gain above the 95% comparison margin. Negative, inconclusive, pending and
+individually incompatible rows remain in the private raw pool; they are not
+displayed or silently included in the default assembly request. All genuine
+positive financial choices remain available without deduplication. Default
+ordering is price ascending, then DPS gain descending for equal prices.
+Sorting and incremental display never truncate the server pool. Actual icons, native
 variant properties and the actual equipped replacement appear in the shared
 character tooltip, including independently localized current-item names.
 
 The private server context binds the original budget, selected slots, character,
 equipment, talents, encounter and market. Assembly accepts only retained option
 IDs allowed by the owner; client prices or statistics are never accepted.
+The current UI sends only selected confirmed-positive optionId values, minus
+slot-specific exclusions, with the same original budget. New searches,
+selection changes and resumed searches clear the previous assembly; resumed
+search may confirm additional upgrades.
 Unselected slots retain their current items. A non-Fury two-handed replacement
 can remove an equipped offhand only when OFF_HAND is also selected. Before each
 continuation/assembly, the server checks ownership, the canonical character
@@ -27,8 +36,9 @@ snapshot and every retained lot's price, quantity and exact variant against a
 fresh conditional market read. Changed facts require a new search.
 
 The 28-option shortlist and beam have been removed. Assembly deterministically
-enumerates keep-current or one allowed option for every selected slot. Positive,
-negative and individually incompatible options remain available for interactions.
+enumerates keep-current or one allowed option for every selected slot. In the
+current UI those allowed options are selected confirmed-positive upgrades;
+the complete classified raw pool remains on the server.
 Only monotone total-lot-cost/quantity constraints prune incomplete states; unique
 categories and hand compatibility are checked on the completed loadout. Equal
 item effects share native simulations without collapsing lot cost/quantity
@@ -101,8 +111,8 @@ snapshot exclude the candidate. Catalog limit-category quantities are respected.
 All prices and budget calculations use integer copper. Buying a quantity-two lot
 costs its whole buyout once; a quantity-one lot cannot fill both ring slots.
 Alternatives and simultaneous swaps are simulated against the same immutable
-armory, talent and encounter snapshot. Set interactions can beat an individually
-negative swap. Results require the SimulationCraft engine; estimated training
+armory, talent and encounter snapshot. Results require the SimulationCraft
+engine; estimated training
 engines are rejected. Search marks a positive single replacement as confirmed
 only when its gain exceeds the 95% comparison margin. Exact assembly ranks
 measured full-loadout DPS and reports the margin independently.
@@ -123,6 +133,22 @@ Fresh postdeployment Elkardia EN/RU checks reproduced 15 gold within a 10,000-go
 budget and 14,273 → 14,645 DPS (+2.6063%). See the
 [verified UI release report](reports/gear-planner-ui-deployment-20261015.md)
 for source/image identities, browser coverage and its authentication limit.
+
+The current confirmed-upgrade interface places one **Build a loadout within
+budget** panel immediately after the original-budget/current-DPS/upgrade-count
+summary, before the item list. The action is visible but disabled before a
+search result and when no confirmed upgrade exists, with an explanation.
+Partial searches show already confirmed upgrades and aggregate remaining
+progress; they do not display unfinished or unconfirmed rows.
+
+Whole-loadout baseline/candidate DPS, total lot cost and remaining budget are
+separately labelled. **Items to buy for this loadout** lists replacements;
+other slots keep their equipped items. A return link below the list focuses
+the single assembly panel. A maximum is claimed only after exhaustive
+enumeration of the selected retained confirmed-positive pool, including
+keeping current equipment. It is not a whole-market maximum. Partial
+results and statistical significance remain explicit. See the
+[confirmed-upgrade release report](reports/auction-improvements-deployment-20261016.md).
 
 ## Slot-search verification
 
@@ -173,10 +199,12 @@ for image identities, exact scope, recovery and evidence.
   items and resolves at most 256 distinct variants, up to three per item. Cheap
   and high-base-ilvl catalog items seed that bounded pool; effective ilvl is always
   resolved natively before recommendation. Native resolution batches contain at
-  most 16 items and have a 60-second deadline. Every retained lot/slot option is
-  returned; discovery limits remain visible through searchLimited and coverage.
-  Search and exact assembly continue in bounded chunks. exhaustiveComplete proves
-  the highest measured DPS over the allowed found pool, not the entire market.
+  most 16 items and have a 60-second deadline. Every retained lot/slot option
+  remains in the server result; the UI displays only confirmed upgrades.
+  Discovery limits remain visible through searchLimited and coverage. Search
+  and exact assembly continue in bounded chunks. exhaustiveComplete proves
+  the highest measured DPS over selected retained confirmed-positive options,
+  including keeping current equipment, not the entire market.
   A large Cartesian pool can require many continuations; no full-market or
   uncompleted maximum is claimed.
 - Baseline constraints must be available for every equipped combat item. Missing
@@ -217,7 +245,11 @@ node --experimental-strip-types --no-warnings --import ./tests/auction/resolve.m
 node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-api.mjs
 node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-search-store.mjs
 node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-equipment.mjs
+node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs scripts/test-auction-gear-recommendations.mjs
 ```
+
+The recommendation guard has synthetic offline cases. An explicitly supplied
+saved-result replay is historical evidence, not a fresh market calculation.
 
 From `backend`: `go test ./internal/rotationlab ./internal/catalog ./internal/httpapi`.
 The regression checks cover raw modifier identity/order, crafted stats, native
