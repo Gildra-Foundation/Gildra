@@ -49,6 +49,8 @@ type SimCEngine struct {
 	iterations int
 	timeout    time.Duration
 	limit      chan struct{}
+	waiting    chan struct{}
+	queueWait  time.Duration
 	cacheMu    sync.RWMutex
 	baseline   map[string]int
 }
@@ -71,7 +73,8 @@ func NewSimCEngine(binary, profile string, iterations int) (*SimCEngine, error) 
 	}
 	return &SimCEngine{
 		binary: binary, profile: profile, profileDir: profileDir, iterations: iterations, timeout: 45 * time.Second,
-		limit: make(chan struct{}, 1), baseline: make(map[string]int),
+		limit: make(chan struct{}, 1), waiting: make(chan struct{}, maxSimCWaiting), queueWait: defaultSimCQueueWait,
+		baseline: make(map[string]int),
 	}, nil
 }
 
@@ -101,14 +104,10 @@ func (e *SimCEngine) Simulate(ctx context.Context, input SimulationInput) (Simul
 	if supportedSpecs[input.Spec].Role == "heal" {
 		return SimulationResult{}, fmt.Errorf("%w: healer rotations require a dedicated HPS and triage model", ErrUnsupportedCombatModel)
 	}
-	select {
-	case e.limit <- struct{}{}:
-		defer func() { <-e.limit }()
-	case <-ctx.Done():
-		return SimulationResult{}, ctx.Err()
-	default:
-		return SimulationResult{}, ErrSimulationBusy
+	if err := e.acquire(ctx); err != nil {
+		return SimulationResult{}, err
 	}
+	defer e.release()
 
 	report, err := e.run(ctx, input)
 	if err != nil {

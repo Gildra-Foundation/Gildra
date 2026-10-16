@@ -90,14 +90,10 @@ func (e *SimCEngine) ResolveGearVariants(ctx context.Context, input GearVariantR
 	if err := validateVariantRequest(input); err != nil {
 		return GearVariantResponse{}, err
 	}
-	select {
-	case e.limit <- struct{}{}:
-		defer func() { <-e.limit }()
-	case <-ctx.Done():
-		return GearVariantResponse{}, ctx.Err()
-	default:
-		return GearVariantResponse{}, ErrSimulationBusy
+	if err := e.acquire(ctx); err != nil {
+		return GearVariantResponse{}, err
 	}
+	defer e.release()
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 	return e.resolveVariantBatch(ctx, input)
@@ -283,6 +279,9 @@ func (h *WorkerHandler) resolveVariants(w http.ResponseWriter, r *http.Request) 
 	result, err := resolver.ResolveGearVariants(r.Context(), input)
 	if err != nil {
 		code := "variant_resolution_unavailable"
+		if errors.Is(err, ErrSimulationBusy) {
+			w.Header().Set("Retry-After", "1")
+		}
 		if errors.Is(err, errVariantMetadataMissing) {
 			code = "variant_metadata_worker_upgrade_required"
 		}
