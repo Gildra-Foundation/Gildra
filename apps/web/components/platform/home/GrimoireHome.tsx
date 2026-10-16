@@ -12,6 +12,7 @@ import { HomeMusic } from "./HomeMusic";
 import { HomeScene } from "./HomeScene";
 import { HomeEntry } from "./HomeEntry";
 import { ThemePicker } from "./ThemePicker";
+import { GameSwitcher } from "@/components/platform/navigation/GameSwitcher";
 import { homeThemeCookie, homeThemes, isHomeTheme } from "./homeThemes";
 import styles from "./grimoireHome.module.css";
 
@@ -71,10 +72,10 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
       } as CSSProperties} />)}
     </div>
     <header className={styles.header}>
-      <Link href={prefix || "/"} className={styles.brand} aria-label="Gildra">
-        <GildraMark />
-        <span className={styles.brandWordmark}><span>GILDRA</span><small>WORLD OF WARCRAFT</small></span>
-      </Link>
+      <div className={styles.brand}>
+        <Link href={prefix || "/"} aria-label={ru ? "Gildra — главная" : "Gildra home"}><GildraMark /></Link>
+        <GameSwitcher lang={lang} home />
+      </div>
       <HomeNavigation lang={lang} />
       <div className={styles.headerRight}>
         <ThemePicker lang={lang} />

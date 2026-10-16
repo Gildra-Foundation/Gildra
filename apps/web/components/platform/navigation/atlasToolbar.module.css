@@ -45,6 +45,7 @@
   cursor: pointer;
   font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   letter-spacing: .04em;
+  text-decoration: none;
   transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
@@ -110,6 +111,8 @@
   .end { gap: 10px; }
   .locale a { min-width: 34px; padding: 0 6px; }
   .title { font-size: 17px; letter-spacing: .14em; }
+  .launcher { width: 44px; min-width: 44px; justify-content: center; padding: 6px; }
+  .launcher > span { display: none; }
 }
 
 /* Press feedback, as on every atlas control. */
