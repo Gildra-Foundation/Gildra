@@ -1,6 +1,9 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { AuctionGearContext, AuctionGearRunMetadata } from "./auctionGearRunner";
+import { restoreAuctionGearContext, snapshotAuctionGearContext } from "./auctionGearRunner";
+import { auctionPersistenceEnabled, listAuctionStateHeaders, readAuctionState, removeAuctionState, touchAuctionState, writeAuctionState } from "./auctionGearPersistence";
+import { getActiveAuctionGearJob } from "./auctionGearJobs";
 import type { AuctionGearAssemblyCheckpoint, AuctionGearAssemblyResult, AuctionGearIncumbent, AuctionGearSearchCheckpoint, AuctionGearSearchResult, AuctionGearSimulationCache, GearPlanSimulation } from "./auctionGearTypes";
 
 /** Private server state. Never serialize an entry or its context into an HTTP response. */
@@ -12,6 +15,8 @@ export type AuctionGearSearchEntry = {
   touchedAt: number;
   expiresAt: number;
   busy: boolean;
+  /** Persisted logical order preserves recency when wall-clock timestamps tie. */
+  recency: number;
   searchCheckpoint?: AuctionGearSearchCheckpoint;
   assemblyCheckpoint?: AuctionGearAssemblyCheckpoint;
   allowedKey?: string;
@@ -25,54 +30,150 @@ export type AuctionGearSearchEntry = {
   retainedIncumbents?: AuctionGearIncumbent[];
 };
 const retention = 30 * 60_000;
-const state = globalThis as typeof globalThis & { __gildraAuctionGearSearches?: Map<string, AuctionGearSearchEntry> };
+type SearchMetadata = { owner: string; createdAt: number; touchedAt: number; recency: number };
+type SearchIndex = SearchMetadata & { id: string; expiresAt: number };
+const state = globalThis as typeof globalThis & {
+  __gildraAuctionGearSearches?: Map<string, AuctionGearSearchEntry>;
+  __gildraAuctionSearchIndex?: Map<string, SearchIndex>;
+  __gildraAuctionPendingSearchRemovals?: Set<string>;
+  __gildraAuctionSearchRecency?: number;
+  __gildraAuctionGearReservations?: WeakMap<AuctionGearSearchEntry, number>;
+  __gildraAuctionSearchesRestored?: boolean;
+};
 const entries = state.__gildraAuctionGearSearches ??= new Map<string, AuctionGearSearchEntry>();
-
-function cleanup(now: number) {
-  for (const [id, entry] of entries) if (!entry.busy && entry.expiresAt <= now) entries.delete(id);
+const index = state.__gildraAuctionSearchIndex ??= new Map<string, SearchIndex>();
+const pendingRemovals = state.__gildraAuctionPendingSearchRemovals ??= new Set<string>();
+const reservations = state.__gildraAuctionGearReservations ??= new WeakMap<AuctionGearSearchEntry, number>();
+type StoredEntry = Omit<AuctionGearSearchEntry, "context"> & { context: ReturnType<typeof snapshotAuctionGearContext> };
+const metadata = (entry: SearchMetadata): SearchMetadata => ({ owner: entry.owner, createdAt: entry.createdAt, touchedAt: entry.touchedAt, recency: entry.recency });
+const indexed = (entry: AuctionGearSearchEntry): SearchIndex => ({ ...metadata(entry), id: entry.id, expiresAt: entry.expiresAt });
+function nextRecency() {
+  state.__gildraAuctionSearchRecency = (state.__gildraAuctionSearchRecency ?? 0) + 1;
+  return state.__gildraAuctionSearchRecency;
 }
-
+function active(record: SearchIndex) {
+  const entry = entries.get(record.id);
+  return Boolean(entry && (entry.busy || (reservations.get(entry) ?? 0) > 0)) || Boolean(getActiveAuctionGearJob(record.owner, record.id));
+}
+function validMetadata(value: SearchMetadata) {
+  return value && typeof value.owner === "string" && Boolean(value.owner) && Number.isFinite(value.createdAt) &&
+    Number.isFinite(value.touchedAt) && Number.isSafeInteger(value.recency) && value.recency > 0;
+}
+function restore() {
+  if (state.__gildraAuctionSearchesRestored || !auctionPersistenceEnabled()) return;
+  for (const record of listAuctionStateHeaders<SearchMetadata>("search").reverse()) {
+    if (!validMetadata(record.metadata)) { removeAuctionState("search", record.id); continue; }
+    index.set(record.id, { ...record.metadata, id: record.id, expiresAt: record.expiresAt });
+    state.__gildraAuctionSearchRecency = Math.max(state.__gildraAuctionSearchRecency ?? 0, record.metadata.recency);
+  }
+  state.__gildraAuctionSearchesRestored = true;
+}
+function load(id: string) {
+  const present = entries.get(id);
+  if (present) return present;
+  const record = readAuctionState<StoredEntry, SearchMetadata>("search", id);
+  if (!record) { index.delete(id); return null; }
+  const data = record.data;
+  try {
+    if (!data || data.id !== id || data.owner !== record.metadata.owner || data.expiresAt > record.expiresAt ||
+        data.recency > record.metadata.recency || data.createdAt !== record.metadata.createdAt ||
+        !(data.knownOptionIds instanceof Set)) throw new Error();
+    const entry = { ...data, ...record.metadata, expiresAt: record.expiresAt, context: restoreAuctionGearContext(data.context), busy: false };
+    entries.set(id, entry);
+    return entry;
+  } catch { remove(id); return null; }
+}
+export function saveAuctionGearSearch(entry: AuctionGearSearchEntry, replaceId?: string) {
+  if (!auctionPersistenceEnabled()) return;
+  if (entries.get(entry.id) !== entry) throw new Error("search_expired");
+  writeAuctionState("search", entry.id, entry.expiresAt, {
+    id: entry.id, owner: entry.owner, context: snapshotAuctionGearContext(entry.context),
+    createdAt: entry.createdAt, touchedAt: entry.touchedAt, expiresAt: entry.expiresAt, busy: false, recency: entry.recency,
+    knownOptionIds: entry.knownOptionIds, searchCheckpoint: entry.searchCheckpoint,
+    assemblyCheckpoint: entry.assemblyCheckpoint, allowedKey: entry.allowedKey,
+    latestSearchResult: entry.latestSearchResult, latestAssemblyResult: entry.latestAssemblyResult,
+    excludedOptionIds: entry.excludedOptionIds, retainedSimulationCache: entry.retainedSimulationCache,
+    retainedBaseline: entry.retainedBaseline, retainedIncumbents: entry.retainedIncumbents,
+  } satisfies StoredEntry, { replaceId, metadata: metadata(entry) });
+}
+function remove(id: string) {
+  removeAuctionState("search", id);
+  index.delete(id);
+  return entries.delete(id);
+}
+function cleanup(now: number) {
+  restore();
+  // A committed replacement remains accepted if obsolete-file deletion has a
+  // transient failure. Retry before allowing another replacement to accumulate.
+  for (const id of pendingRemovals) {
+    try { removeAuctionState("search", id); pendingRemovals.delete(id); }
+    catch { /* Existing owned records remain readable during storage failure. */ }
+  }
+  for (const [id, record] of index) if (!active(record) && record.expiresAt <= now) remove(id);
+}
+/** Queued work owns its context until it is cancelled or its task settles. */
+export function reserveAuctionGearSearch(entry: AuctionGearSearchEntry) {
+  touchAuctionGearSearch(entry);
+  reservations.set(entry, (reservations.get(entry) ?? 0) + 1);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    const remaining = (reservations.get(entry) ?? 1) - 1;
+    if (remaining) reservations.set(entry, remaining); else reservations.delete(entry);
+  };
+}
 export function touchAuctionGearSearch(entry: AuctionGearSearchEntry) {
   const now = Date.now();
   cleanup(now);
   if (entries.get(entry.id) !== entry) throw new Error("search_expired");
-  entry.touchedAt = now;
-  entry.expiresAt = now + retention;
-  // Map order records recency even when several accesses share a millisecond.
-  entries.delete(entry.id);
-  entries.set(entry.id, entry);
+  const expiresAt = Math.max(entry.expiresAt, now + retention), recency = nextRecency();
+  touchAuctionState("search", entry.id, expiresAt, { touchedAt: now, recency });
+  entry.touchedAt = now; entry.expiresAt = expiresAt; entry.recency = recency;
+  entries.delete(entry.id); entries.set(entry.id, entry);
+  index.delete(entry.id); index.set(entry.id, indexed(entry));
 }
-
 export function createAuctionGearSearch(owner: string, context: AuctionGearContext): AuctionGearSearchEntry {
   const now = Date.now();
   cleanup(now);
-  const owned = [...entries.values()].filter(entry => entry.owner === owner);
+  if (pendingRemovals.size) throw new Error("auction_storage_unavailable");
+  const owned = [...index.values()].filter(record => record.owner === owner);
+  let replaced: SearchIndex | undefined;
   if (owned.length >= 3) {
-    const oldest = owned.find(entry => !entry.busy);
-    if (!oldest) throw new Error("search_capacity");
-    entries.delete(oldest.id);
+    replaced = owned.find(record => !active(record));
+    if (!replaced) throw new Error("search_capacity");
   }
-  if (entries.size >= 40) {
-    const oldest = [...entries.values()].find(entry => !entry.busy);
-    if (!oldest) throw new Error("search_capacity");
-    entries.delete(oldest.id);
+  if (index.size >= 40) {
+    replaced ??= [...index.values()].find(record => !active(record));
+    if (!replaced) throw new Error("search_capacity");
   }
   const entry: AuctionGearSearchEntry = { id: randomUUID(), owner, context, createdAt: now, touchedAt: now, expiresAt: now + retention,
-    busy: false, knownOptionIds: new Set(context.options.map(option => option.id)) };
+    busy: false, recency: nextRecency(), knownOptionIds: new Set(context.options.map(option => option.id)) };
   entries.set(entry.id, entry);
+  try { saveAuctionGearSearch(entry, replaced?.id); }
+  catch (error) { entries.delete(entry.id); throw error; }
+  index.set(entry.id, indexed(entry));
+  if (replaced) {
+    try { remove(replaced.id); }
+    catch {
+      // The new durable file is the commit point. Keep only one obsolete disk
+      // record pending; startup's header index also prunes it by logical order.
+      entries.delete(replaced.id); index.delete(replaced.id); pendingRemovals.add(replaced.id);
+    }
+  }
   return entry;
 }
-
 export function getAuctionGearSearch(owner: string, id: string): AuctionGearSearchEntry | null {
   cleanup(Date.now());
-  const entry = entries.get(id);
-  if (!entry || entry.owner !== owner) return null;
+  if (index.get(id)?.owner !== owner) return null;
+  const entry = load(id);
+  if (!entry) return null;
   touchAuctionGearSearch(entry);
   return entry;
 }
-
 export function deleteAuctionGearSearch(owner: string, id: string): boolean {
   cleanup(Date.now());
-  const entry = entries.get(id);
-  return entry?.owner === owner ? entries.delete(id) : false;
+  if (index.get(id)?.owner !== owner) return false;
+  remove(id);
+  return true;
 }

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { registerHooks } from "node:module";
 import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 import * as jobs from "../../../lib/wow/auctionGearJobs.ts";
 
 // Actual API and Jobs modules; only auth and expensive Runner transports are
@@ -185,8 +186,9 @@ const report = { phase, status: rows.some(value => value.status === "failed") ? 
   sourceFilesSHA256AtStart: beforeSources, sourceFilesSHA256AtEnd: afterSources,
   testSHA256: digest(await readFile(fileURLToPath(import.meta.url))),
   cases: rows, passed: rows.filter(value => value.status === "passed").length, failed: rows.filter(value => value.status === "failed").length };
-const output = new URL(`../../../../../.artifacts/auction-reliability-20261016/request-${phase}.json`, import.meta.url);
-await mkdir(new URL(".", output), { recursive: true });
+const output = process.env.AUCTION_REGRESSION_OUTPUT_DIR ? resolve(process.env.AUCTION_REGRESSION_OUTPUT_DIR, `request-${phase}.json`)
+  : fileURLToPath(new URL(`../../../../../.artifacts/auction-reliability-20261016/request-${phase}.json`, import.meta.url));
+await mkdir(dirname(output), { recursive: true });
 await writeFile(output, JSON.stringify(report, null, 2) + "\n", { flag: phase === "red" ? "wx" : "w" });
 for (const row of rows) console.log(`${row.status === "passed" ? "PASS" : "FAIL"} ${row.name}${row.error ? `: ${row.error.message.split("\n")[0]}` : ""}`);
 console.log(JSON.stringify({ phase, passed: report.passed, failed: report.failed }));

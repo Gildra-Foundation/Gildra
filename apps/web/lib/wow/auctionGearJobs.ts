@@ -1,7 +1,9 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { AuctionPlanProgress } from "./auctionGearPlanner";
-import type { AuctionGearRunResult } from "./auctionGearRunner";
+import type { AuctionGearRunInput, AuctionGearRunResult, AuctionGearAssemblySelection } from "./auctionGearRunner";
+import { auctionPersistenceEnabled, listAuctionStateHeaders, readAuctionState, removeAuctionState, writeAuctionState } from "./auctionGearPersistence";
+import { parseAuctionGearSlots } from "./auctionGearSelection";
 export type AuctionGearJob = {
   id: string;
   status: "queued" | "running" | "completed" | "failed" | "cancelled";
@@ -10,16 +12,30 @@ export type AuctionGearJob = {
   error: string | null;
   scope?: { characterSlug: string; locale: "en" | "ru" };
   searchId?: string;
+  /** Safe intent kind for recovery across tabs; no private work payload. */
+  mode?: "search" | "assembly";
 };
-type Task = (signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) => Promise<AuctionGearRunResult>;
+export type AuctionGearWork = { action: "search"; input: AuctionGearRunInput }
+  | { action: "resume"; searchId: string }
+  | { action: "assemble"; searchId: string; selection: AuctionGearAssemblySelection };
+export type AuctionGearTask = (signal: AbortSignal, progress: (p: AuctionPlanProgress) => void,
+  hooks: { searchCreated: (searchId: string) => void }) => Promise<AuctionGearRunResult>;
 type Job = AuctionGearJob & {
   owner: string;
   /** Private idempotency identity; never include these fields in view(). */
   clientRequestId?: string;
   requestFingerprint?: string;
   controller: AbortController;
-  task?: Task;
+  task?: AuctionGearTask;
+  work?: AuctionGearWork;
+  onSettled?: () => void;
   expires: number;
+  createdAt: number;
+  continuation: boolean;
+  cancelledBeforeAcceptance?: boolean;
+  recency: number;
+  lazy?: boolean;
+  recoverable?: boolean;
 };
 type Starts = { searches: number[]; continuations: number[] };
 const state = globalThis as typeof globalThis & {
@@ -27,10 +43,91 @@ const state = globalThis as typeof globalThis & {
   __gildraAuctionQueue?: string[];
   __gildraAuctionRunning?: boolean;
   __gildraAuctionStarts?: Map<string, Starts>;
+  __gildraAuctionJobsRestored?: boolean;
+  __gildraAuctionJobRecency?: number;
 };
 const jobs = state.__gildraAuctionJobs ??= new Map<string, Job>(),
   queue = state.__gildraAuctionQueue ??= [],
   starts = state.__gildraAuctionStarts ??= new Map<string, Starts>();
+type StoredJob = Omit<Job, "task" | "controller" | "onSettled" | "lazy" | "recoverable">;
+type JobMetadata = Omit<StoredJob, "result" | "progress" | "work"> & { hasWork: boolean };
+const lastPersisted = new WeakMap<Job, number>();
+function nextRecency() { return state.__gildraAuctionJobRecency = (state.__gildraAuctionJobRecency ?? 0) + 1; }
+function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefined {
+  if (!work) return;
+  if (typeof work !== "object" || !["search", "resume", "assemble"].includes(work.action)) throw new Error("invalid_plan_request");
+  if (work.action === "search") {
+    if (!work.input || typeof work.input !== "object") throw new Error("invalid_plan_request");
+    const { characterSlug, budgetCopper, scenario, locale, selectedSlots } = work.input;
+    if (typeof characterSlug !== "string" || !characterSlug || characterSlug.length > 180 ||
+        !Number.isSafeInteger(budgetCopper) || budgetCopper < 0 || budgetCopper > 999_999_999_999 ||
+        !["single-target", "aoe", "execute"].includes(scenario) || !["en", "ru"].includes(locale)) throw new Error("invalid_plan_request");
+    return { action: "search", input: { characterSlug, budgetCopper, scenario, locale,
+      ...(selectedSlots !== undefined ? { selectedSlots: parseAuctionGearSlots(selectedSlots) } : {}) } };
+  }
+  if (typeof work.searchId !== "string" || !work.searchId || work.searchId.length > 100) throw new Error("invalid_plan_request");
+  if (work.action === "resume") return { action: "resume", searchId: work.searchId };
+  const selection = work.selection;
+  const ids = Array.isArray(selection) ? selection : selection?.excludedOptionIds;
+  if (selection !== undefined && (!Array.isArray(ids) || ids.length > 20000 || new Set(ids).size !== ids.length ||
+      ids.some(id => typeof id !== "string" || !id || id.length > 180))) throw new Error("invalid_plan_request");
+  return { action: "assemble", searchId: work.searchId, selection: Array.isArray(selection) ? [...selection]
+    : selection ? { excludedOptionIds: [...selection.excludedOptionIds] } : undefined };
+}
+function metadata(j: Job): JobMetadata {
+  return { id: j.id, owner: j.owner, status: j.status, error: j.error, scope: j.scope, searchId: j.searchId,
+    expires: j.expires, createdAt: j.createdAt, continuation: j.continuation, recency: j.recency,
+    clientRequestId: j.clientRequestId, requestFingerprint: j.requestFingerprint,
+    cancelledBeforeAcceptance: j.cancelledBeforeAcceptance, hasWork: Boolean(j.work ?? j.recoverable), mode: j.mode };
+}
+function hydrate(j: Job) {
+  if (!j.lazy) return true;
+  const record = readAuctionState<StoredJob, JobMetadata>("job", j.id), data = record?.data;
+  if (!record || !data || data.id !== j.id || data.owner !== j.owner || data.expires !== record.expiresAt ||
+      data.clientRequestId !== j.clientRequestId || data.requestFingerprint !== j.requestFingerprint || data.recency !== j.recency) {
+    removeAuctionState("job", j.id); jobs.delete(j.id); return false;
+  }
+  try { j.work = copyWork(data.work); }
+  catch { removeAuctionState("job", j.id); jobs.delete(j.id); return false; }
+  j.recoverable = Boolean(j.work);
+  j.result = data.result; j.progress = data.progress; j.lazy = false;
+  return true;
+}
+function persist(j: Job, replaceId?: string) {
+  if (!hydrate(j)) throw new Error("auction_storage_unavailable");
+  writeAuctionState("job", j.id, j.expires, { ...view(j), owner: j.owner, expires: j.expires,
+    createdAt: j.createdAt, continuation: j.continuation, work: j.work,
+    clientRequestId: j.clientRequestId, requestFingerprint: j.requestFingerprint,
+    cancelledBeforeAcceptance: j.cancelledBeforeAcceptance, recency: j.recency } satisfies StoredJob,
+  { replaceId, metadata: metadata(j) });
+  lastPersisted.set(j, Date.now());
+}
+function restore() {
+  if (state.__gildraAuctionJobsRestored || !auctionPersistenceEnabled()) return;
+  for (const record of listAuctionStateHeaders<JobMetadata>("job").reverse()) {
+    const data = record.metadata;
+    if (!data || data.id !== record.id || typeof data.owner !== "string" || !data.owner || data.expires !== record.expiresAt ||
+        !["queued", "running", "completed", "failed", "cancelled"].includes(data.status) || !Number.isFinite(data.createdAt) ||
+        !Number.isSafeInteger(data.recency) || data.recency <= 0) {
+      removeAuctionState("job", record.id); continue;
+    }
+    const interrupted = data.status === "queued" || data.status === "running";
+    const j: Job = { ...data, result: null, progress: null, controller: new AbortController(), lazy: true, recoverable: data.hasWork,
+      ...(interrupted ? { status: data.hasWork ? "queued" : "failed", error: data.hasWork ? null : "plan_interrupted" } : {}) };
+    state.__gildraAuctionJobRecency = Math.max(state.__gildraAuctionJobRecency ?? 0, data.recency);
+    jobs.set(j.id, j);
+    if (!j.cancelledBeforeAcceptance && j.createdAt > Date.now() - 60_000) {
+      const history = starts.get(j.owner) ?? { searches: [], continuations: [] };
+      history[j.continuation ? "continuations" : "searches"].push(j.createdAt); starts.set(j.owner, history);
+    }
+  }
+  state.__gildraAuctionJobsRestored = true;
+}
+function settle(j: Job) {
+  const callback = j.onSettled;
+  delete j.onSettled;
+  callback?.();
+}
 function view(j: Job): AuctionGearJob {
   return {
     id: j.id,
@@ -40,12 +137,16 @@ function view(j: Job): AuctionGearJob {
     error: j.error,
     ...(j.scope ? { scope: { ...j.scope } } : {}),
     ...(j.searchId ? { searchId: j.searchId } : {}),
+    ...(j.mode ? { mode: j.mode } : {}),
   };
 }
 function cleanup() {
+  restore();
   const now = Date.now();
   for (const [id, j] of jobs) if (j.expires < now) {
     j.controller.abort();
+    if (j.status === "queued") settle(j);
+    removeAuctionState("job", id);
     jobs.delete(id);
   }
   for (const [owner, history] of starts) {
@@ -68,24 +169,33 @@ async function drain() {
       if (!j || j.status !== "queued") continue;
       j.status = "running";
       try {
+        persist(j);
         const signal = AbortSignal.any([j.controller.signal, AbortSignal.timeout(10 * 60_000)]);
         const result = await j.task!(signal, p => {
           if (!signal.aborted) {
             j.progress = p;
             j.expires = Date.now() + 30 * 60_000;
+            if (Date.now() - (lastPersisted.get(j) ?? 0) >= 30_000) persist(j);
           }
-        });
+        }, { searchCreated: searchId => {
+          signal.throwIfAborted(); j.searchId = searchId; persist(j);
+        } });
         signal.throwIfAborted();
         j.result = result;
         j.searchId = result.searchId;
         j.status = "completed";
+        j.expires = Date.now() + 30 * 60_000;
+        persist(j);
       } catch (error) {
         j.status = j.controller.signal.aborted ? "cancelled" : "failed";
         // Only fixed internal identifiers reach clients, never upstream URLs or tokens.
         const message = error instanceof Error ? error.message : "";
         j.error = /^[a-z_]{3,80}$/.test(message) ? message : "auction_plan_unavailable";
+        j.expires = Date.now() + 30 * 60_000;
+        try { persist(j); } catch { j.error = "auction_storage_unavailable"; }
       } finally {
         delete j.task;
+        settle(j);
         j.expires = Date.now() + 30 * 60_000;
       }
     }
@@ -93,12 +203,15 @@ async function drain() {
     state.__gildraAuctionRunning = false;
   }
 }
-export function enqueueAuctionGearJob(owner: string, task: Task, options: {
+export function enqueueAuctionGearJob(owner: string, task: AuctionGearTask, options: {
   continuation?: boolean;
   scope?: AuctionGearJob["scope"];
   searchId?: string;
   clientRequestId?: string;
   requestFingerprint?: string;
+  onSettled?: () => void;
+  work?: AuctionGearWork;
+  beforeAcceptance?: () => void;
 } = {}) {
   cleanup();
   if (options.clientRequestId !== undefined || options.requestFingerprint !== undefined) {
@@ -106,11 +219,8 @@ export function enqueueAuctionGearJob(owner: string, task: Task, options: {
         !options.scope?.characterSlug || !["en", "ru"].includes(options.scope.locale)) throw new Error("invalid_plan_request");
     // An accepted request remains recoverable even if its response was lost,
     // the queue filled, or this owner has since exhausted the search quota.
-    const existing = [...jobs.values()].find(job => job.owner === owner && job.clientRequestId === options.clientRequestId);
-    if (existing) {
-      if (existing.requestFingerprint !== options.requestFingerprint) throw new Error("invalid_plan_request");
-      return view(existing);
-    }
+    const existing = replayAuctionGearJob(owner, options.clientRequestId, options.requestFingerprint!);
+    if (existing) { options.onSettled?.(); return existing; }
   }
   if ([...jobs.values()].some(j => j.owner === owner && (j.status === "queued" || j.status === "running"))) throw new Error("plan_already_running");
   if (queue.length >= 8) throw new Error("plan_queue_full");
@@ -118,16 +228,22 @@ export function enqueueAuctionGearJob(owner: string, task: Task, options: {
   const kind = options.continuation ? "continuations" : "searches";
   if (history[kind].length >= (options.continuation ? 60 : 3)) throw new Error("plan_rate_limited");
   // Bound retained results as well as active work.
+  let replaced: [string, Job] | undefined;
   if (jobs.size >= 200) {
-    const old = [...jobs].find(([, j]) => !["queued", "running"].includes(j.status));
-    if (old) jobs.delete(old[0]);else throw new Error("plan_queue_full");
+    replaced = [...jobs].find(([, j]) => !j.cancelledBeforeAcceptance && !["queued", "running"].includes(j.status));
+    if (!replaced) throw new Error("plan_queue_full");
   }
   const j: Job = {
     id: randomUUID(),
     owner,
     task,
+    ...(options.work ? { work: copyWork(options.work) } : {}),
+    ...(options.work ? { mode: options.work.action === "assemble" ? "assembly" as const : "search" as const } : {}),
+    ...(options.onSettled ? { onSettled: options.onSettled } : {}),
     controller: new AbortController(),
     expires: Date.now() + 30 * 60_000,
+    createdAt: Date.now(), continuation: Boolean(options.continuation),
+    recency: nextRecency(),
     status: "queued",
     progress: null,
     result: null,
@@ -136,6 +252,13 @@ export function enqueueAuctionGearJob(owner: string, task: Task, options: {
     ...(options.searchId ? { searchId: options.searchId } : {}),
     ...(options.clientRequestId ? { clientRequestId: options.clientRequestId, requestFingerprint: options.requestFingerprint } : {}),
   };
+  options.beforeAcceptance?.();
+  persist(j, replaced?.[0]);
+  if (replaced) {
+    try { removeAuctionState("job", replaced[0]); }
+    catch (error) { removeAuctionState("job", j.id); throw error; }
+    jobs.delete(replaced[0]);
+  }
   jobs.set(j.id, j);
   history[kind].push(Date.now());
   starts.set(owner, history);
@@ -147,16 +270,25 @@ export function enqueueAuctionGearJob(owner: string, task: Task, options: {
 export function getAuctionGearJob(owner: string, id: string) {
   cleanup();
   const j = jobs.get(id);
-  return j?.owner === owner ? view(j) : null;
+  return j?.owner === owner && hydrate(j) ? view(j) : null;
 }
 export function validAuctionGearClientRequestId(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9_-]{16,100}$/.test(value);
+}
+/** Private fingerprint comparison also permits replay after context eviction. */
+export function replayAuctionGearJob(owner: string, clientRequestId: string, requestFingerprint: string) {
+  cleanup();
+  const job = [...jobs.values()].find(job => job.owner === owner && job.clientRequestId === clientRequestId);
+  if (!job || !hydrate(job)) return null;
+  if (job.cancelledBeforeAcceptance) return view(job);
+  if (job.requestFingerprint !== requestFingerprint) throw new Error("invalid_plan_request");
+  return view(job);
 }
 export function getAuctionGearJobByRequest(owner: string, clientRequestId: string, scope: NonNullable<AuctionGearJob["scope"]>) {
   cleanup();
   const job = [...jobs.values()].find(job => job.owner === owner && job.clientRequestId === clientRequestId &&
     job.scope?.characterSlug === scope.characterSlug && job.scope.locale === scope.locale);
-  return job ? view(job) : null;
+  return job && hydrate(job) ? view(job) : null;
 }
 export function getActiveAuctionGearJob(owner: string, searchId: string) {
   cleanup();
@@ -167,14 +299,55 @@ export function getActiveAuctionGearJob(owner: string, searchId: string) {
 export function cancelAuctionGearJob(owner: string, id: string) {
   cleanup();
   const j = jobs.get(id);
-  if (!j || j.owner !== owner) return null;
+  if (!j || j.owner !== owner || !hydrate(j)) return null;
   if (j.status === "queued" || j.status === "running") {
+    const queued = j.status === "queued";
     j.controller.abort();
     j.status = "cancelled";
     j.error = "cancelled";
     delete j.task;
+    if (queued) settle(j);
     const queuedIndex = queue.indexOf(id);
     if (queuedIndex !== -1) queue.splice(queuedIndex, 1);
+    persist(j);
   }
   return view(j);
+}
+
+/** Cancel even when its launching POST has not reached the queue yet. */
+export function cancelAuctionGearRequest(owner: string, clientRequestId: string, scope: NonNullable<AuctionGearJob["scope"]>) {
+  cleanup();
+  if (!validAuctionGearClientRequestId(clientRequestId) || !scope.characterSlug || !["en", "ru"].includes(scope.locale)) throw new Error("invalid_plan_request");
+  const existing = [...jobs.values()].find(j => j.owner === owner && j.clientRequestId === clientRequestId);
+  if (existing) {
+    if (existing.scope?.characterSlug !== scope.characterSlug || existing.scope.locale !== scope.locale) throw new Error("invalid_plan_request");
+    return cancelAuctionGearJob(owner, existing.id);
+  }
+  // Never evict an unexpired cancellation acknowledgement to admit later work.
+  if (jobs.size >= 200) throw new Error("plan_queue_full");
+  if ([...jobs.values()].filter(j => j.owner === owner && j.cancelledBeforeAcceptance).length >= 10) throw new Error("plan_rate_limited");
+  const j: Job = { id: randomUUID(), owner, clientRequestId, scope: { ...scope },
+    status: "cancelled", progress: null, result: null, error: "cancelled", cancelledBeforeAcceptance: true,
+    controller: new AbortController(), expires: Date.now() + 30 * 60_000, createdAt: Date.now(), continuation: false, recency: nextRecency() };
+  persist(j); jobs.set(j.id, j);
+  return view(j);
+}
+
+/** Only an authenticated owner's route may attach a fresh token to parked work. */
+export function getAuctionGearPendingWork(owner: string, id: string) {
+  cleanup();
+  const j = jobs.get(id);
+  return j?.owner === owner && j.status === "queued" && !j.task && hydrate(j) ? j.work ?? null : null;
+}
+
+export function resumeAuctionGearJob(owner: string, id: string, task: AuctionGearTask,
+  options: { onSettled?: () => void } = {}) {
+  cleanup();
+  const j = jobs.get(id);
+  if (!j || j.owner !== owner || j.status !== "queued" || j.task || !hydrate(j) || !j.work) return false;
+  if (queue.length >= 8) throw new Error("plan_queue_full");
+  j.task = task; j.onSettled = options.onSettled;
+  queue.push(j.id);
+  void drain();
+  return true;
 }

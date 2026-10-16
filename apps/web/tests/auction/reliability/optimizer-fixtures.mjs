@@ -83,6 +83,8 @@ export async function growingMarketRunner() {
   const runner = new vm.Script(executable(readProduct("lib/wow/auctionGearRunner.ts")) +
     "\n;({verifyAuctionGearSearch,assembleAuctionGearSearch})").runInNewContext({ createHash, Date, Map, Set, Object,
     Number, JSON, AbortSignal, process, ...planner, ...discovery, auctionGearProfileFingerprint, touchAuctionGearSearch: () => {},
+    // This domain fixture uses a virtual entry; real disk checkpoints have separate process tests.
+    saveAuctionGearSearch: () => {},
     getBattleNetSimulationSnapshot: async () => armory, getCharacterAuctionMarket: async () => market,
     addPlannerItemIcons: async () => {}, auctionVariantKey,
     advanceAuctionGearDiscovery: async () => { throw Error("unexpected_native_metadata_discovery"); } });

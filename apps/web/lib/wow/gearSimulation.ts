@@ -4,6 +4,7 @@ import { isTwoHandWeapon, supportsTitanGrip, validateGearLoadout, type GearLoado
 import type { GearCandidate, GearCandidateVariant } from "./gearCandidates";
 
 export type GearSimulationScenario = "single-target" | "aoe" | "execute";
+export const nativeGearSimulationContract = "native-apl-v1";
 
 export type GearCustomization = {
   enchantId?: number;
@@ -99,12 +100,12 @@ export function gearComparisonFingerprint(input: {
   scenario: GearSimulationScenario;
   duration: number;
   targets: number;
-  rules: string[];
   change?: SimcGearChange;
   changes?: SimcGearChange[];
   engineVersion?: string;
-}) {
-  return createHash("sha256").update(JSON.stringify(input)).digest("hex");
+} & ({ actionListMode: "native"; rules?: never } | { actionListMode?: "custom"; rules: string[] })) {
+  const contract = input.actionListMode === "native" ? { ...input, simulationContract: nativeGearSimulationContract } : input;
+  return createHash("sha256").update(JSON.stringify(contract)).digest("hex");
 }
 
 export function compareGearSimulationResults(

@@ -46,22 +46,22 @@ export function removeAuctionClientJob(id: string) {
     method: "DELETE", keepalive: true, signal: AbortSignal.timeout(10_000),
   }).then(response => { if (response.ok || response.status === 404) forgetAuctionClientJob(id); return response; }).catch(() => undefined);
 }
+export function removeAuctionClientRequest(clientRequestId: string, scope: AuctionClientScope) {
+  return fetch(auctionClientRequestUrl(clientRequestId, scope), {
+    method: "DELETE", keepalive: true, signal: AbortSignal.timeout(10_000),
+  }).then(response => {
+    if (response.ok) forgetAuctionClientRequest(clientRequestId);
+    return response;
+  }).catch(() => undefined);
+}
 export async function releasePriorAuctionClientJob() {
   try {
     const prior = JSON.parse(sessionStorage.getItem(activeKey) ?? "null") as { id?: unknown; clientRequestId?: unknown; characterSlug?: unknown; locale?: unknown } | null;
-    if (identity(prior?.id)) await removeAuctionClientJob(prior.id);
+    if (identity(prior?.id)) return await removeAuctionClientJob(prior.id);
     else if (requestIdentity(prior?.clientRequestId) && identity(prior.characterSlug) && (prior.locale === "ru" || prior.locale === "en")) {
-      const response = await fetch(auctionClientRequestUrl(prior.clientRequestId, { characterSlug: prior.characterSlug, locale: prior.locale }), {
-        cache: "no-store", signal: AbortSignal.timeout(10_000),
-      });
-      if (response.status === 404) forgetAuctionClientRequest(prior.clientRequestId);
-      else if (response.ok) {
-        const job = await response.json() as { id?: unknown };
-        if (identity(job.id)) {
-          const removed = await removeAuctionClientJob(job.id);
-          if (removed?.ok || removed?.status === 404) forgetAuctionClientRequest(prior.clientRequestId);
-        }
-      }
+      // The server durably cancels this identity even before its POST arrives.
+      // A missing lookup is not cancellation acknowledgement.
+      return await removeAuctionClientRequest(prior.clientRequestId, { characterSlug: prior.characterSlug, locale: prior.locale });
     }
   } catch { /* The owner-checked server endpoint remains authoritative. */ }
 }

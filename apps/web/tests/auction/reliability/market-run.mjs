@@ -2,6 +2,7 @@ import { run } from 'node:test';
 import { writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 const baseline = process.argv[2] ?? 'red';
 if (!['red', 'green', 'presentation-red', 'presentation-green', 'locale-red', 'locale-green'].includes(baseline)) throw new Error('invalid_baseline');
 const report = { phase: baseline, mode: 'Synthetic transport fixtures, current actual production modules, zero external/native requests', cases: [] };
@@ -19,6 +20,9 @@ report.sourceHashes = {};
 for (const name of ['auctionGearRunner.ts', 'auctionGearDiscovery.ts', 'auctionMarketProvider.ts', 'auctionItemReference.ts', 'auctionGearJobs.ts']) {
   report.sourceHashes[name] = createHash('sha256').update(await readFile(new URL('../../../lib/wow/' + name, import.meta.url))).digest('hex');
 }
-await writeFile(new URL('../../../../../.artifacts/auction-reliability-20261016/market-' + baseline + '.json', import.meta.url), JSON.stringify(report, null, 2) + '\n');
+const output = process.env.AUCTION_REGRESSION_OUTPUT_DIR
+  ? resolve(process.env.AUCTION_REGRESSION_OUTPUT_DIR, 'market-' + baseline + '.json')
+  : new URL('../../../../../.artifacts/auction-reliability-20261016/market-' + baseline + '.json', import.meta.url);
+await writeFile(output, JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
 if (!report.cases.length || (baseline.endsWith('green') && report.failed)) process.exitCode = 1;

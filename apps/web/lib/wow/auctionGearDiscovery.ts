@@ -11,6 +11,8 @@ import type { AuctionGearOption, AuctionPlanProgress } from "./auctionGearTypes"
 
 /** Limits bound one continuation's work, never the retained candidate domain. */
 const catalogBatch = 100, detailBatch = 8, variantBatch = 4;
+/** A repaired catalog can join a retained search without retrying on every poll. */
+const catalogRetryMs = 60_000;
 export type AuctionGearDiscovery = {
   marketId: string;
   discoveredSnapshotId?: string;
@@ -35,6 +37,7 @@ export type AuctionGearDiscovery = {
   catalogMissing: Set<number>;
   catalogUnmatched: Set<number>;
   eligibilityUnverifiedItems: Set<number>;
+  catalogRetryAt: Map<number, number>;
   scannedItems: Set<number>;
   detailedItems: Set<number>;
   affordableLots: number;
@@ -48,7 +51,7 @@ export function createAuctionGearDiscovery(market: AuctionSnapshot, budgetCopper
     candidates: new Map(), rejectedVariants: new Set(), references: new Map(),
     verifiedReferences: new Set(), rejectedReferences: new Set(), referenceRetryAt: new Map(), referenceRejectedVariants: new Map(),
     catalogMissing: new Set(), catalogUnmatched: new Set(),
-    eligibilityUnverifiedItems: new Set(), scannedItems: new Set(),
+    eligibilityUnverifiedItems: new Set(), catalogRetryAt: new Map(), scannedItems: new Set(),
     detailedItems: new Set(), affordableLots: 0, unsupportedModifierLots: 0, engine: "" };
   refreshAuctionGearDiscovery(state, market);
   return state;
@@ -62,7 +65,8 @@ function queueVariants(state: AuctionGearDiscovery, itemId: number) {
 }
 
 /** A new snapshot changes prices/availability immediately; only new effects need native work. */
-export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market: AuctionSnapshot) {
+export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market: AuctionSnapshot,
+  { retryCatalog = true }: { retryCatalog?: boolean } = {}) {
   const affordable = market.offers.filter(offer => offer.buyoutCopper <= state.budgetCopper);
   const supported = affordable.filter(offer => supportedAuctionModifiers(offer.modifiers));
   const offers = new Map<string, AuctionOffer[]>();
@@ -83,6 +87,20 @@ export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market:
   state.unsupportedModifierLots = affordable.length - supported.length;
   const ids = [...new Set(supported.map(offer => offer.itemId))].sort((a, b) => a - b);
   const now = Date.now();
+  // A long active traversal must finish before missing IDs can cycle again.
+  const retry = new Set(retryCatalog && auctionGearDiscoveryComplete(state)
+    ? ids.filter(id => (state.catalogRetryAt.get(id) ?? Infinity) <= now) : []);
+  if (retry.size) {
+    // Recycle processed positions instead of appending duplicate IDs forever.
+    // Pending catalog/detail work already owns its queue position.
+    const waitingDetails = new Set(state.records.map(record => record.externalId));
+    const again = state.itemIds.slice(0, state.itemCursor).filter(id => retry.has(id) && !waitingDetails.has(id));
+    const requeued = new Set(again);
+    const processed = state.itemIds.slice(0, state.itemCursor).filter(id => !requeued.has(id));
+    state.itemIds = [...processed, ...state.itemIds.slice(state.itemCursor), ...again];
+    state.itemCursor = processed.length;
+    for (const id of again) state.catalogRetryAt.delete(id);
+  }
   for (const itemId of ids) {
     if (state.rejectedReferences.has(itemId) && (state.referenceRetryAt.get(itemId) ?? Infinity) <= now) {
       state.references.delete(itemId);
@@ -133,6 +151,7 @@ function rememberUnverifiedEligibility(state: AuctionGearDiscovery, itemId: numb
   if (candidates.some(candidate => candidate.rejectionReasons.includes("equip_requirements_unverified") ||
       candidate.itemClassId < 0 || candidate.itemSubclassId < 0 || candidate.inventoryType < 0)) {
     state.eligibilityUnverifiedItems.add(itemId);
+    state.catalogRetryAt.set(itemId, Date.now() + catalogRetryMs);
   }
 }
 
@@ -140,6 +159,7 @@ type DiscoveryInput = {
   locale: "en_US" | "ru_RU"; region: string; token: string; spec: string; characterLevel: number;
   selectedSlots: readonly string[]; context: (slot: string) => GearCandidateContext;
   signal: AbortSignal; shouldYield?: () => boolean; maxSteps?: number; onProgress?: (progress: AuctionPlanProgress) => void;
+  onCheckpoint?: () => void;
 };
 
 /** Persist cursors only after a whole batch succeeds, so cancellation is retryable. */
@@ -238,11 +258,18 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       input.onProgress?.({ phase: "variants", completed: state.variantCursor, total: state.variantKeys.length });
     } else if (state.records.length) {
       const records = state.records.slice(0, detailBatch);
-      const entities = await gearEntityDetails(records, input.locale, false);
+      const entities = await gearEntityDetails(records, input.locale, false, input.signal);
       for (const record of records) {
         state.detailedItems.add(record.externalId);
         const entity = entities.find(entity => entity.externalId === record.externalId);
-        if (!entity) { state.catalogMissing.add(record.externalId); state.entities.set(record.externalId, null); continue; }
+        if (!entity) {
+          state.catalogMissing.add(record.externalId); state.entities.set(record.externalId, null);
+          state.catalogRetryAt.set(record.externalId, Date.now() + catalogRetryMs);
+          continue;
+        }
+        state.catalogMissing.delete(record.externalId);
+        state.eligibilityUnverifiedItems.delete(record.externalId);
+        state.catalogRetryAt.delete(record.externalId);
         const offer = state.offers.get(state.itemVariants.get(entity.externalId)?.[0] ?? "")?.[0];
         const normalized = input.selectedSlots.map(slot => normalizeGearCandidate(offer ? variantEntity(entity, offer) : entity, input.context(slot)));
         rememberUnverifiedEligibility(state, entity.externalId, normalized);
@@ -255,14 +282,23 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
     } else if (state.itemCursor < state.itemIds.length) {
       const ids = state.itemIds.slice(state.itemCursor, state.itemCursor + catalogBatch);
       // Base required level is not an auction variant's actual scaled requirement.
-      const records = (await Promise.all([2, 4].map(itemClass => lookupGearRecords(ids, input.locale, itemClass)))).flat();
+      const records = (await Promise.all([2, 4].map(itemClass => lookupGearRecords(ids, input.locale, itemClass, undefined, input.signal)))).flat();
       for (const id of ids) state.scannedItems.add(id);
       const found = new Set(records.map(record => record.externalId));
-      for (const id of ids) if (!found.has(id)) state.catalogUnmatched.add(id);
+      for (const id of ids) {
+        if (!found.has(id)) {
+          state.catalogUnmatched.add(id);
+          state.catalogRetryAt.set(id, Date.now() + catalogRetryMs);
+        } else {
+          state.catalogUnmatched.delete(id);
+          state.catalogRetryAt.delete(id);
+        }
+      }
       state.records.push(...records.filter(record => summaryMayMatch(record, input.selectedSlots)));
       state.itemCursor += ids.length;
       input.onProgress?.({ phase: "catalog", completed: state.itemCursor, total: state.itemIds.length });
     } else break;
+    input.onCheckpoint?.();
   }
   input.signal.throwIfAborted();
   if (auctionGearDiscoveryComplete(state)) state.discoveredSnapshotId = state.marketId;

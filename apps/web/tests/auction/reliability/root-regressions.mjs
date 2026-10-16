@@ -152,7 +152,7 @@ const mode = process.argv[2] ?? "green";
 assert(["red", "green"].includes(mode));
 const report = { mode, sourceRevision: process.env.RELIABILITY_SOURCE_REVISION ?? null, method: "Actual current runner/variant/planner/store/jobs/API, synthetic response/data/auth/transport only; zero external/native calls", cases: rows,
   passed: rows.filter(row => row.status === "passed").length, failed: rows.filter(row => row.status === "failed").length };
-const output = resolve(process.cwd(), "../../.artifacts/auction-reliability-20261016");await mkdir(output, { recursive: true });
+const output = resolve(process.env.AUCTION_REGRESSION_OUTPUT_DIR ?? resolve(process.cwd(), "../../.artifacts/auction-reliability-20261016"));await mkdir(output, { recursive: true });
 await writeFile(resolve(output, `root-${mode}.json`), JSON.stringify(report, null, 2) + "\n", { flag: mode === "red" ? "wx" : "w" });
 console.log(JSON.stringify(report));
 if (mode === "red") assert(report.failed >= 6, "Baseline must reproduce desired behaviour failures");

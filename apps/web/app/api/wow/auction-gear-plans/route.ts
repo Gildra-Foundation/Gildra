@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { goldToCopper } from "@/lib/wow/auctionMarket";
 import { startAuctionGearSearch, continueAuctionGearSearch, assembleAuctionGearSearch, selectedAuctionGearAssemblyOptions, verifyAuctionGearSearch } from "@/lib/wow/auctionGearRunner";
-import { enqueueAuctionGearJob, getAuctionGearJob, getAuctionGearJobByRequest, validAuctionGearClientRequestId, cancelAuctionGearJob } from "@/lib/wow/auctionGearJobs";
-import { getAuctionGearSearch } from "@/lib/wow/auctionGearSearchStore";
+import { enqueueAuctionGearJob, getAuctionGearJob, getAuctionGearJobByRequest, validAuctionGearClientRequestId, replayAuctionGearJob, cancelAuctionGearJob, cancelAuctionGearRequest } from "@/lib/wow/auctionGearJobs";
+import { getAuctionGearSearch, reserveAuctionGearSearch, saveAuctionGearSearch } from "@/lib/wow/auctionGearSearchStore";
+import { resumeOwnedAuctionGearWork } from "@/lib/wow/auctionGearWork";
 import { recoverAuctionGearSearch } from "@/lib/wow/auctionGearRecovery";
 import { auctionGearSlots, parseAuctionGearSlots } from "@/lib/wow/auctionGearSelection";
 import type { GearSimulationScenario } from "@/lib/wow/gearSimulation";
@@ -36,7 +37,7 @@ async function owner() {
     token
   } : null;
 }
-export async function GET(request: Request) {
+async function readPlan(request: Request) {
   if (!sameOrigin(request)) return reply({
     error: "cross_site_blocked"
   }, 403);
@@ -50,13 +51,18 @@ export async function GET(request: Request) {
     if (params.has("id") || params.has("searchId") || !validAuctionGearClientRequestId(clientRequestId) ||
         !characterSlug || characterSlug.length > 180 || (locale !== "en" && locale !== "ru")) return reply({ error: "invalid_plan_request" }, 400);
     const job = getAuctionGearJobByRequest(user.id, clientRequestId, { characterSlug, locale });
-    return job ? reply(job) : reply({ error: "plan_not_found" }, 404);
+    if (job) resumeOwnedAuctionGearWork(user.id, job.id, user.token);
+    return job ? reply(getAuctionGearJob(user.id, job.id)) : reply({ error: "plan_not_found" }, 404);
   }
   if (params.has("searchId")) {
     const searchId = params.get("searchId") ?? "", characterSlug = params.get("characterSlug") ?? "", locale = params.get("locale");
     if (params.has("id") || !searchId || searchId.length > 100 || !characterSlug || characterSlug.length > 180 ||
         (locale !== "en" && locale !== "ru")) return reply({ error: "invalid_plan_request" }, 400);
     const recovered = recoverAuctionGearSearch(user.id, searchId, characterSlug, locale);
+    if (recovered?.activeJob) {
+      resumeOwnedAuctionGearWork(user.id, recovered.activeJob.id, user.token);
+      return reply(recoverAuctionGearSearch(user.id, searchId, characterSlug, locale));
+    }
     return recovered ? reply(recovered) : reply({ error: "search_not_found" }, 404);
   }
   const job = getAuctionGearJob(user.id, params.get("id") ?? "");
@@ -64,11 +70,12 @@ export async function GET(request: Request) {
       (!job.scope || params.get("characterSlug") !== job.scope.characterSlug || params.get("locale") !== job.scope.locale)) {
     return reply({ error: "plan_not_found" }, 404);
   }
-  return job ? reply(job) : reply({
+  if (job) resumeOwnedAuctionGearWork(user.id, job.id, user.token);
+  return job ? reply(getAuctionGearJob(user.id, job.id)) : reply({
     error: "plan_not_found"
   }, 404);
 }
-export async function DELETE(request: Request) {
+async function deletePlan(request: Request) {
   if (!sameOrigin(request)) return reply({
     error: "cross_site_blocked"
   }, 403);
@@ -76,12 +83,24 @@ export async function DELETE(request: Request) {
   if (!user) return reply({
     error: "session_expired"
   }, 401);
-  const job = cancelAuctionGearJob(user.id, new URL(request.url).searchParams.get("id") ?? "");
+  const params = new URL(request.url).searchParams;
+  if (params.has("clientRequestId")) {
+    const nonce = params.get("clientRequestId"), characterSlug = params.get("characterSlug") ?? "", locale = params.get("locale");
+    if (params.has("id") || !validAuctionGearClientRequestId(nonce) || !characterSlug || characterSlug.length > 180 ||
+        (locale !== "en" && locale !== "ru")) return reply({ error: "invalid_plan_request" }, 400);
+    try { return reply(cancelAuctionGearRequest(user.id, nonce, { characterSlug, locale })); }
+    catch (error) {
+      const code = error instanceof Error ? error.message : "auction_storage_unavailable";
+      return reply({ error: code }, code === "invalid_plan_request" ? 400 : code === "plan_rate_limited" ? 429 : 503);
+    }
+  }
+  const job = cancelAuctionGearJob(user.id, params.get("id") ?? "");
   return job ? reply(job) : reply({
     error: "plan_not_found"
   }, 404);
 }
-export async function POST(request: Request) {
+async function postPlan(request: Request) {
+  const acceptBefore = Date.now() + 30_000;
   if (!sameOrigin(request)) return reply({
     error: "cross_site_blocked"
   }, 403);
@@ -112,17 +131,49 @@ export async function POST(request: Request) {
   }
   const action = body.action ?? "search";
   if (action !== "search" && action !== "resume" && action !== "assemble") return reply({ error: "invalid_plan_request" }, 400);
+  let clientRequestId: string | undefined;
+  if (Object.hasOwn(body, "clientRequestId")) {
+    if (!validAuctionGearClientRequestId(body.clientRequestId)) return reply({ error: "invalid_plan_request" }, 400);
+    clientRequestId = body.clientRequestId;
+  }
   if (action !== "search") {
-    const keys = action === "resume" ? ["action", "searchId"] : ["action", "searchId", "allowedOptionIds", "excludedOptionIds"];
+    const keys = action === "resume" ? ["action", "searchId", "clientRequestId"] : ["action", "searchId", "allowedOptionIds", "excludedOptionIds", "clientRequestId"];
     if (Object.keys(body).some(key => !keys.includes(key)) || typeof body.searchId !== "string" || body.searchId.length > 100) return reply({ error: "invalid_plan_request" }, 400);
     const hasAllowed = Object.hasOwn(body, "allowedOptionIds"), hasExcluded = Object.hasOwn(body, "excludedOptionIds");
     if (hasAllowed && hasExcluded) return reply({ error: "invalid_auction_selection" }, 400);
+    const ids = hasAllowed ? body.allowedOptionIds : hasExcluded ? body.excludedOptionIds : undefined;
+    if (ids !== undefined && (!Array.isArray(ids) || (hasAllowed && !ids.length) ||
+        ids.some(id => typeof id !== "string" || !id || id.length > 180) || new Set(ids).size !== ids.length)) return reply({ error: "invalid_auction_selection" }, 400);
+    const requestFingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify({ action, searchId: body.searchId,
+      ...(action === "assemble" ? { selection: { [hasAllowed ? "allowedOptionIds" : "excludedOptionIds"]: [...((ids as string[] | undefined) ?? [])].sort() } } : {}),
+    })).digest("hex") : undefined;
+    if (clientRequestId) {
+      try {
+        const existing = replayAuctionGearJob(user.id, clientRequestId, requestFingerprint!);
+        if (existing) {
+          resumeOwnedAuctionGearWork(user.id, existing.id, user.token);
+          return reply(getAuctionGearJob(user.id, existing.id), 202);
+        }
+      } catch { return reply({ error: "invalid_plan_request" }, 400); }
+    }
     // Only IDs cross the boundary. Prices, item effects and budget stay server-owned.
     const selection = hasAllowed ? body.allowedOptionIds : hasExcluded ? { excludedOptionIds: body.excludedOptionIds } : undefined;
     const entry = getAuctionGearSearch(user.id, body.searchId);
     if (!entry) return reply({ error: "search_not_found" }, 404);
+    let release: (() => void) | undefined;
     try {
       const allowed = action === "assemble" ? selectedAuctionGearAssemblyOptions(entry, selection) : null;
+      release = reserveAuctionGearSearch(entry);
+      request.signal.throwIfAborted();
+      if (Date.now() > acceptBefore) throw new Error("plan_request_expired");
+      const beforeAcceptance = allowed ? () => {
+        const previous = entry.excludedOptionIds;
+        const ids = new Set(allowed.map(option => option.id));
+        entry.excludedOptionIds = hasExcluded ? [...body.excludedOptionIds as string[]]
+          : entry.context.options.filter(option => !ids.has(option.id)).map(option => option.id);
+        try { saveAuctionGearSearch(entry); }
+        catch (error) { entry.excludedOptionIds = previous; throw error; }
+      } : undefined;
       const job = enqueueAuctionGearJob(user.id, async (signal, progress) => {
         entry.busy = true;
         try {
@@ -130,24 +181,17 @@ export async function POST(request: Request) {
           return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress, user.token)
             : await assembleAuctionGearSearch(entry, selection, signal, progress, user.token);
         } finally { entry.busy = false; }
-      }, { continuation: true, searchId: entry.id, scope: { characterSlug: entry.context.input.characterSlug, locale: entry.context.input.locale } });
-      if (allowed) {
-        const ids = new Set(allowed.map(option => option.id));
-        entry.excludedOptionIds = hasExcluded ? [...body.excludedOptionIds as string[]]
-          : entry.context.options.filter(option => !ids.has(option.id)).map(option => option.id);
-      }
+      }, { continuation: true, searchId: entry.id, scope: { characterSlug: entry.context.input.characterSlug, locale: entry.context.input.locale },
+        onSettled: release, beforeAcceptance, work: action === "assemble" ? { action, searchId: entry.id, selection: selection as { excludedOptionIds: string[] } | string[] | undefined }
+          : { action, searchId: entry.id }, ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) });
       return reply(job, 202);
     } catch (error) {
+      release?.();
       const code = error instanceof Error ? error.message : "plan_queue_full";
-      return reply({ error: code }, code === "invalid_auction_selection" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
+      return reply({ error: code }, code === "invalid_auction_selection" || code === "invalid_plan_request" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
     }
   }
   if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "locale", "clientRequestId"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
-  let clientRequestId: string | undefined;
-  if (Object.hasOwn(body, "clientRequestId")) {
-    if (!validAuctionGearClientRequestId(body.clientRequestId)) return reply({ error: "invalid_plan_request" }, 400);
-    clientRequestId = body.clientRequestId;
-  }
   const {
     characterSlug,
     scenario = "single-target",
@@ -171,14 +215,20 @@ export async function POST(request: Request) {
     characterSlug, locale, budgetCopper, selectedSlots, scenario,
   })).digest("hex") : undefined;
   try {
-    return reply(enqueueAuctionGearJob(user.id, (signal, progress) => startAuctionGearSearch({
+    const input = {
       characterSlug,
       budgetCopper,
       selectedSlots,
       scenario: scenario as GearSimulationScenario,
       locale: locale as "ru" | "en"
-    }, user.id, user.token, signal, progress), { scope: { characterSlug, locale: locale as "ru" | "en" },
-      ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) }), 202);
+    };
+    request.signal.throwIfAborted();
+    if (Date.now() > acceptBefore) throw new Error("plan_request_expired");
+    const job = enqueueAuctionGearJob(user.id, (signal, progress, hooks) => startAuctionGearSearch(input,
+      user.id, user.token, signal, progress, hooks.searchCreated), { scope: { characterSlug, locale: locale as "ru" | "en" },
+      work: { action: "search", input }, ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) });
+    resumeOwnedAuctionGearWork(user.id, job.id, user.token);
+    return reply(job, 202);
   } catch (error) {
     const code = error instanceof Error ? error.message : "plan_queue_full";
     return reply({
@@ -186,3 +236,17 @@ export async function POST(request: Request) {
     }, code === "invalid_plan_request" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
   }
 }
+
+function guarded(handler: (request: Request) => Promise<Response>) {
+  return async (request: Request) => {
+    try { return await handler(request); }
+    catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      const code = /^[a-z_]{3,80}$/.test(message) ? message : "auction_plan_unavailable";
+      return reply({ error: code }, 503);
+    }
+  };
+}
+export const GET = guarded(readPlan);
+export const DELETE = guarded(deletePlan);
+export const POST = guarded(postPlan);

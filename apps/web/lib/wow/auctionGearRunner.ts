@@ -1,5 +1,4 @@
 import "server-only";
-import { getRotationPreset } from "@/lib/platform/rotation/repository";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { getBattleNetCharacterBySlug, type BattleNetCharacter } from "./battleNetCharacters";
 import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from "./battleNetCharacterDetails";
@@ -15,7 +14,7 @@ import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
 import { prepareGearLoadout, type GearSimulationScenario } from "./gearSimulation";
 import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
-import { createAuctionGearSearch, deleteAuctionGearSearch, touchAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
+import { createAuctionGearSearch, deleteAuctionGearSearch, saveAuctionGearSearch, touchAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
 import type { GearLoadoutItem } from "./gearCompatibility";
 import type { AuctionSnapshot } from "./auctionMarket";
 import { createAuctionGearDiscovery, advanceAuctionGearDiscovery, refreshAuctionGearDiscovery, auctionGearDiscoveryCoverage, auctionGearDiscoveryOptions } from "./auctionGearDiscovery";
@@ -72,7 +71,7 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
   if (!Array.isArray(raw) || !raw.length) throw new Error("equipment_constraints_unverified");
   const equipped = raw.filter(i => i.item?.id && i.slot?.type && gearSlotCategoryPaths[i.slot.type]);
   const locale = input.locale === "en" ? "en_US" : "ru_RU";
-  const baselineEntities = await lookupGearEntities(equipped.map(i => i.item!.id!), locale);
+  const baselineEntities = await lookupGearEntities(equipped.map(i => i.item!.id!), locale, signal);
   check();
   const qualityIds: Record<string, number> = { POOR: 0, COMMON: 1, UNCOMMON: 2, RARE: 3, EPIC: 4, LEGENDARY: 5, ARTIFACT: 6, HEIRLOOM: 7 };
   const statKeys: Record<string, string> = { STRENGTH: "strength", AGILITY: "agility", INTELLECT: "intellect", STAMINA: "stamina", CRIT_RATING: "crit_rating", HASTE_RATING: "haste_rating", MASTERY_RATING: "mastery_rating", VERSATILITY: "versatility_rating", LIFESTEAL: "leech_rating", AVOIDANCE: "avoidance_rating", SPEED: "speed_rating" };
@@ -111,21 +110,18 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
     currentItemLevel: 0, anchorItemClassId: -1, anchorItemSubclassId: -1, season,
     acquisition: { type: "auction" as const, evidence: "auction" as const },
   });
-  const preset = await getRotationPreset(theme.slug, input.locale);
-  check();
-  if (!preset.defaultRules.length) throw new Error("rotation_unavailable");
   const encounter = input.scenario === "aoe" ? { fightLengthSeconds: 60, targets: 5 }
     : input.scenario === "execute" ? { fightLengthSeconds: 90, targets: 1 } : { fightLengthSeconds: 120, targets: 1 };
   const retainedMarket = { ...market, offers: [] };
   const simulate = createAuctionSimulator({ armory, loadout, specId: theme.specId, specSlug: theme.slug,
-    scenario: input.scenario, encounter, rules: preset.defaultRules, market: retainedMarket, engine: () => discovery.engine });
+    scenario: input.scenario, encounter, market: retainedMarket, engine: () => discovery.engine });
   await addPlannerItemIcons([...currentBySlot.values()], character.region, token, signal);
   check();
   const coverage = auctionGearDiscoveryCoverage(discovery);
   return {
     input: { ...input, selectedSlots }, character, armory, options: [] as AuctionGearOption[], loadout,
     specId: theme.specId, specSlug: theme.slug, market: retainedMarket, currentBySlot, simulate,
-    discovery, discoveryContext, coverage, searchLimited: true,
+    discovery, discoveryContext, discoverySeason: season, encounter, coverage, searchLimited: true,
     publicMarket: { snapshotId: market.id, region: character.region, realm: character.realm.name,
       connectedRealmId: market.connectedRealmId, updatedAt: market.sourceUpdatedAt,
       discoveredSnapshotId: discovery.discoveredSnapshotId, validatedAt: market.fetchedAt },
@@ -198,7 +194,8 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
     if (!token) throw new Error("auction_discovery_authorization_required");
     await advanceAuctionGearDiscovery(context.discovery, { locale: context.input.locale === "en" ? "en_US" : "ru_RU",
       region: context.character.region, token, spec: context.specSlug, characterLevel: context.character.level,
-      selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps, onProgress: progress });
+      selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps, onProgress: progress,
+      onCheckpoint: () => { synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery)); saveAuctionGearSearch(entry); } });
   }
   if (context.discovery.engine && entry.retainedBaseline && context.discovery.engine !== entry.retainedBaseline.engine) throw new Error("simulation_version_changed");
   const options = auctionGearDiscoveryOptions(context.discovery);
@@ -222,7 +219,7 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
     selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
     market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
     baseline: entry.retainedBaseline, simulationCache: cache, shouldYield, onProgress: progress,
-    onCheckpoint: state => { entry.searchCheckpoint = state; touchAuctionGearSearch(entry); },
+    onCheckpoint: state => { entry.searchCheckpoint = state; touchAuctionGearSearch(entry); saveAuctionGearSearch(entry); },
   });
   entry.searchCheckpoint = checkpoint;
   entry.retainedBaseline = checkpoint.baseline;
@@ -233,22 +230,26 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
     searchComplete: result.pendingItems === 0 && discoveryComplete, searchLimited: result.searchLimited || context.searchLimited,
     items: result.items.map(item => ({ ...item, currentItem: context.currentBySlot.get(item.slotType) })) });
   touchAuctionGearSearch(entry);
+  saveAuctionGearSearch(entry);
   return entry.latestSearchResult;
 }
-export async function startAuctionGearSearch(input: AuctionGearRunInput, owner: string, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
+export async function startAuctionGearSearch(input: AuctionGearRunInput, owner: string, token: string, signal: AbortSignal,
+  progress: (p: AuctionPlanProgress) => void, searchCreated?: (searchId: string) => void) {
   progress({ phase: "market", completed: 0, total: 1 });
   const character = await getBattleNetCharacterBySlug(token, input.locale, input.characterSlug, signal);
   if (!character) throw new Error("character_not_found");
   const armory = await getBattleNetSimulationSnapshot(token, character, signal);
-  return startAuctionGearSearchFromSnapshot(input, character, armory, owner, token, signal, progress);
+  return startAuctionGearSearchFromSnapshot(input, character, armory, owner, token, signal, progress, searchCreated);
 }
 
 /** Trusted developer QA entry point. The HTTP route never accepts a snapshot. */
-export async function startAuctionGearSearchFromSnapshot(input: AuctionGearRunInput, character: BattleNetCharacter, armory: BattleNetSimulationSnapshot, owner: string, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
+export async function startAuctionGearSearchFromSnapshot(input: AuctionGearRunInput, character: BattleNetCharacter, armory: BattleNetSimulationSnapshot,
+  owner: string, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void, searchCreated?: (searchId: string) => void) {
   const context = await createAuctionGearContextFromSnapshot(input, character, armory, token, signal, progress);
   signal.throwIfAborted();
   const entry = createAuctionGearSearch(owner, context);
   try {
+    searchCreated?.(entry.id);
     return await continueAuctionGearSearch(entry, signal, progress, token);
   } catch (error) {
     if (!entry.latestSearchResult) deleteAuctionGearSearch(owner, entry.id);
@@ -293,7 +294,7 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
   }
   context.marketChange = changes;
   if (context.discovery) {
-    refreshAuctionGearDiscovery(context.discovery, market);
+    refreshAuctionGearDiscovery(context.discovery, market, { retryCatalog: entry.latestSearchResult?.searchComplete === true });
     synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery));
   } else {
     // Trusted historical contexts have no discovery state. Refresh only their
@@ -310,6 +311,7 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
   context.market.fetchedAt = market.fetchedAt;
   context.publicMarket = { ...context.publicMarket, snapshotId: market.id, updatedAt: market.sourceUpdatedAt, validatedAt: market.fetchedAt };
   touchAuctionGearSearch(entry);
+  saveAuctionGearSearch(entry);
 }
 
 export type AuctionGearAssemblySelection = { excludedOptionIds: string[] } | string[] | undefined;
@@ -355,7 +357,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
       incumbents: entry.retainedIncumbents,
       shouldYield, onProgress: progress,
-      onCheckpoint: state => { entry.assemblyCheckpoint = state; touchAuctionGearSearch(entry); },
+      onCheckpoint: state => { entry.assemblyCheckpoint = state; touchAuctionGearSearch(entry); saveAuctionGearSearch(entry); },
     });
     entry.assemblyCheckpoint = checkpoint;
     entry.retainedSimulationCache = checkpoint.simulationCache;
@@ -367,6 +369,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       purchases: result.purchases.map(present),
       bestConfirmed: result.bestConfirmed ? { ...result.bestConfirmed, purchases: result.bestConfirmed.purchases.map(present) } : null });
     entry.latestAssemblyResult = published;
+    saveAuctionGearSearch(entry);
     return published;
   } finally { entry.busy = false; }
 }
@@ -392,10 +395,39 @@ export async function runAuctionGearPlanFromSnapshot(input: AuctionGearRunInput,
     coverage: context.coverage };
 }
 
-function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, encounter, rules, market, engine }: {
+/** Explicit data allow-list: credentials and executable closures never reach disk. */
+export function snapshotAuctionGearContext(context: AuctionGearContext) {
+  return {
+    input: context.input, character: context.character, armory: context.armory,
+    loadout: context.loadout, specId: context.specId, specSlug: context.specSlug, market: context.market,
+    currentBySlot: context.currentBySlot, discovery: context.discovery, discoverySeason: context.discoverySeason,
+    encounter: context.encounter, coverage: context.coverage, searchLimited: context.searchLimited,
+    publicMarket: context.publicMarket, profileFingerprint: context.profileFingerprint,
+    scenario: context.scenario, marketChange: context.marketChange,
+  };
+}
+
+export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctionGearContext>): AuctionGearContext {
+  if (!data || !data.input || !Array.isArray(data.loadout) ||
+      !(data.currentBySlot instanceof Map) || !data.discovery || !(data.discovery.offers instanceof Map) ||
+      !(data.discovery.queuedItems instanceof Set) || !data.discoverySeason || !data.encounter ||
+      !data.character?.playableClass || !data.armory || !data.profileFingerprint) throw new Error("invalid_auction_checkpoint");
+  const discoveryContext = (slotType: string) => ({
+    classId: data.character.playableClass.id, specId: data.specId, characterLevel: data.character.level,
+    raceId: data.character.playableRace.id, faction: data.character.faction.type, slotType,
+    currentItemLevel: 0, anchorItemClassId: -1, anchorItemSubclassId: -1, season: data.discoverySeason,
+    acquisition: { type: "auction" as const, evidence: "auction" as const },
+  });
+  const simulate = createAuctionSimulator({ armory: data.armory, loadout: data.loadout,
+    specId: data.specId, specSlug: data.specSlug, scenario: data.input.scenario, encounter: data.encounter,
+    market: data.market, engine: () => data.discovery.engine });
+  return { ...data, options: auctionGearDiscoveryOptions(data.discovery), discoveryContext, simulate };
+}
+
+function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, encounter, market, engine }: {
   armory: BattleNetSimulationSnapshot; loadout: GearLoadoutItem[]; specId: number; specSlug: string;
   scenario: GearSimulationScenario; encounter: { fightLengthSeconds: number; targets: number };
-  rules: string[]; market: Pick<AuctionSnapshot, "sourceUpdatedAt">; engine: () => string;
+  market: Pick<AuctionSnapshot, "sourceUpdatedAt">; engine: () => string;
 }) {
   return async (selections: AuctionGearOption[], simSignal: AbortSignal): Promise<GearPlanSimulation> => {
       assertFreshMarket(market);
@@ -417,7 +449,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
           spec: specSlug,
           scenario: scenario,
           ...encounter,
-          rules: rules,
+          actionListMode: "native",
           talentLoadout: armory.activeTalentLoadout,
           armory: {
             profile: armory.profile,

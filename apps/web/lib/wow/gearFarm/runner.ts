@@ -1,6 +1,5 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { getRotationPreset } from "@/lib/platform/rotation/repository";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { journalInstanceIcon } from "@/lib/games/wow/assets";
 import { getBoss } from "@/lib/lairs";
@@ -125,8 +124,6 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
   // Damage simulation only confirms damage specializations. Exact rewards for
   // tanks and healers stay explicitly unmeasured instead of claiming readiness.
   const supportsDamage = ["melee", "ranged"].includes(theme.role);
-  const preset = supportsDamage && rewards.options.length ? await getRotationPreset(theme.slug, input.locale) : null;
-  if (preset && !preset.defaultRules.length) throw new Error("rotation_unavailable");
   const confirmation = await confirmFarmImprovements({
     activities, options: supportsDamage ? rewards.options : [], equipment: armory.equipment, loadout,
     specId: armory.activeSpecializationId, characterLevel: character.level, signal, onProgress: progress,
@@ -136,7 +133,7 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
         signal: AbortSignal.any([simSignal, AbortSignal.timeout(50_000)]),
         body: JSON.stringify({
           spec: theme.slug, scenario: farmSimulationScenario, fightLengthSeconds: 120, targets: 1,
-          rules: preset!.defaultRules, talentLoadout: armory.activeTalentLoadout,
+          actionListMode: "native", talentLoadout: armory.activeTalentLoadout,
           armory: { profile: armory.profile, specializations: armory.specializations, equipment: prepared.equipment },
           ...(prepared.changes.length ? { gearChanges: prepared.changes } : {}),
         }),

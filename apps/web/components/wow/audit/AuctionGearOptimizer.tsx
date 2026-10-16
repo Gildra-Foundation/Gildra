@@ -4,12 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { AuctionGearJob } from "@/lib/wow/auctionGearJobs";
 import type { AuctionGearAssemblyResult, AuctionGearSearchResult, AuctionPlanProgress } from "@/lib/wow/auctionGearTypes";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "@/lib/wow/auctionGearSelection";
-import { goldToCopper } from "@/lib/wow/auctionMarket";
+import { normalizeAuctionBudgetGold } from "@/lib/wow/auctionGearBudget";
 import { getAuctionGearRecommendations } from "@/lib/wow/auctionGearRecommendations";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientJobUrl, auctionClientRequestUrl, fetchAuctionClientResult,
   forgetAuctionClientJob, forgetAuctionClientRequest, readAuctionClientCache, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
-  removeAuctionClientJob, retireAuctionClient, waitForAuctionClientRetirement, writeAuctionClientCache,
+  removeAuctionClientJob, removeAuctionClientRequest, retireAuctionClient, waitForAuctionClientRetirement, writeAuctionClientCache,
   type AuctionClientCache } from "@/lib/wow/auctionGearClient";
 import { auctionGearServiceMessage } from "@/lib/wow/auctionGearCopy";
 import { GearPlannerItem } from "./GearPlannerItem";
@@ -31,7 +31,7 @@ type PlannerJob = Omit<AuctionGearJob, "result"> & { result: SearchResult | Asse
 type Mode = "search" | "assembly";
 type Transport = { mode: Mode; status: PlannerJob["status"] | "starting"; progress: AuctionPlanProgress | null; error: string | null };
 type SearchRequest = { action: "search"; clientRequestId?: string; characterSlug: string; budgetGold: string; selectedSlots: AuctionGearSlot[]; scenario: string; locale: "ru" | "en" };
-type RequestBody = SearchRequest | { action: "resume"; searchId: string } | { action: "assemble"; searchId: string; excludedOptionIds: string[] } | { action: "poll"; id: string };
+type RequestBody = SearchRequest | { action: "resume"; searchId: string; clientRequestId?: string } | { action: "assemble"; searchId: string; excludedOptionIds: string[]; clientRequestId?: string } | { action: "poll"; id: string };
 type ActiveRequest = { mode: Mode; controller: AbortController; id?: string; done: Promise<void>; finish: () => void };
 type Recovery = { kind: "recovery"; search: SearchResult; assembly: AssemblyResult | null;
   excludedOptionIds: string[]; activeJob: PlannerJob | null; needsRefresh: true };
@@ -58,6 +58,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const [visibleItems, setVisibleItems] = useState(20);
   const [transport, setTransport] = useState<Transport | null>(null);
   const active = useRef<ActiveRequest | null>(null);
+  const recoveryController = useRef<AbortController | null>(null);
   const mountGeneration = useRef(0);
   const cache = useRef<AuctionClientCache | null>(null);
   const runRef = useRef<((body: RequestBody, mode: Mode) => Promise<void>) | null>(null);
@@ -86,7 +87,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const lots = confirmed ? [...new Map(confirmed.purchases.map(item => [item.auctionId, item])).values()] : [];
   const excludedLots = search ? [...new Map(search.items.filter(item => excluded.has(item.optionId)).map(item => [item.auctionId, item])).values()] : [];
   const messages: Record<string, string> = {
-    invalid_budget: t("Введите сумму в золоте: от 0, не более четырёх знаков после запятой.", "Enter a gold budget of 0 or more, with up to four decimal places."),
+    invalid_budget: t("Введите сумму от 0 до 99 999 999,9999 золота. Пример: 10 000,1234.", "Enter a budget from 0 to 99,999,999.9999 gold. Example: 10,000.1234."),
     invalid_equipment_slots: t("Выберите хотя бы один слот экипировки.", "Choose at least one equipment slot."),
     session_expired: t("Войдите в Battle.net повторно.", "Sign in to Battle.net again."),
     market_stale: t("Снимок аукциона устарел. Запустите новый поиск после обновления рынка.", "The auction snapshot is too old. Start a new search after the market updates."),
@@ -112,16 +113,16 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   };
   const failureText = (error: string | null) => error ? auctionGearServiceMessage(error, ru) ?? messages[error] ?? t("Не удалось завершить расчёт. Повторите попытку.", "The calculation could not finish. Try again.") : "";
 
-  // Retire a pending initial request only on a real scope unmount. Recovery
+  // Retire a pending request only on a real scope unmount. Recovery
   // retries and StrictMode effect replay must keep the same server job alive.
   useEffect(() => {
     const generation = ++mountGeneration.current;
     const isLatestMount = () => mountGeneration.current === generation;
     return () => {
-      const pendingInitial = !active.current && Boolean(cache.current?.clientRequestId);
+      const pendingRequestId = !active.current ? cache.current?.clientRequestId : undefined;
       queueMicrotask(() => {
-        if (isLatestMount() && pendingInitial) {
-          retireAuctionClient(releasePriorAuctionClientJob());
+        if (isLatestMount() && pendingRequestId) {
+          retireAuctionClient(removeAuctionClientRequest(pendingRequestId, { characterSlug, locale }));
         }
       });
     };
@@ -139,28 +140,54 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       if (!mounted || !saved) return;
       if (saved.jobId && !saved.searchId) { setExcluded(new Set(saved.excludedOptionIds)); await runRef.current?.({ action: "poll", id: saved.jobId }, saved.mode); return; }
       if (!saved.searchId && !saved.clientRequestId) return;
-      setTransport({ mode: "search", status: "starting", progress: null, error: null });
+      recoveryController.current = controller;
+      setTransport({ mode: saved.mode, status: "starting", progress: null, error: null });
       try {
         await waitForAuctionClientRetirement();
         controller.signal.throwIfAborted();
-        if (!saved.searchId && saved.clientRequestId) {
+        if (saved.clientRequestId) {
           const job = await fetchAuctionClientResult<PlannerJob>(auctionClientRequestUrl(saved.clientRequestId, { characterSlug, locale }), controller.signal, () => {
-            if (mounted) setTransport({ mode: "search", status: "starting", progress: null, error: "plan_reconnecting" });
+            if (mounted) setTransport({ mode: saved.mode, status: "starting", progress: null, error: "plan_reconnecting" });
           });
-          if (!mounted) return;
+          if (!mounted || controller.signal.aborted) return;
           if (typeof job.id !== "string" || !job.id) throw new Error("invalid_plan_result");
-          cache.current = { ...saved, jobId: job.id };
+          // A pending assembly may be restored after a reload. Keep its owned
+          // search/checkpoint visible even if that job was interrupted.
+          if (saved.searchId) {
+            const query = new URLSearchParams({ searchId: saved.searchId, characterSlug, locale });
+            const previous = await fetchAuctionClientResult<Recovery>(`/api/wow/auction-gear-plans?${query}`, controller.signal, () => {});
+            if (!mounted || controller.signal.aborted) return;
+            if (previous.kind !== "recovery" || previous.search.searchId !== saved.searchId) throw new Error("invalid_plan_result");
+            const currentExclusions = new Set(saved.excludedOptionIds);
+            const previousExclusions = new Set(previous.excludedOptionIds);
+            const selectionChanged = currentExclusions.size !== previousExclusions.size || [...currentExclusions].some(id => !previousExclusions.has(id));
+            setSearch(previous.search); setAssembly(selectionChanged ? null : previous.assembly); setExcluded(currentExclusions);
+            setBudget(String(previous.search.budgetCopper / 10000)); setScenario(previous.search.scenario);
+            setSelectedSlots(parseAuctionGearSlots(previous.search.selectedSlots));
+            setAssemblyStale(true); setMarketStale(true);
+            if (selectionChanged) {
+              await removeAuctionClientJob(job.id);
+              if (!mounted || controller.signal.aborted) return;
+              forgetAuctionClientRequest(saved.clientRequestId);
+              cache.current = { ...saved, jobId: undefined, clientRequestId: undefined };
+              writeAuctionClientCache(cacheKey, cache.current);
+              setHasRecovery(false); setTransport({ mode: "search", status: "completed", progress: null, error: null });
+              return;
+            }
+          }
+          const recoveredMode = job.mode ?? saved.mode;
+          cache.current = { ...saved, jobId: job.id, mode: recoveredMode };
           writeAuctionClientCache(cacheKey, cache.current);
           rememberAuctionClientJob({ characterSlug, locale }, job.id);
           setHasRecovery(false);
-          await runRef.current?.({ action: "poll", id: job.id }, saved.mode);
+          await runRef.current?.({ action: "poll", id: job.id }, recoveredMode);
           return;
         }
         const query = new URLSearchParams({ searchId: saved.searchId!, characterSlug, locale });
         const result = await fetchAuctionClientResult<Recovery>(`/api/wow/auction-gear-plans?${query}`, controller.signal, () => {
           if (mounted) setTransport({ mode: "search", status: "starting", progress: null, error: "plan_reconnecting" });
         });
-        if (!mounted) return;
+        if (!mounted || controller.signal.aborted) return;
         if (result.kind !== "recovery" || result.search.searchId !== saved.searchId) throw new Error("invalid_plan_result");
         const restoredExclusions = new Set(saved.excludedOptionIds ?? result.excludedOptionIds);
         const previousExclusions = new Set(result.excludedOptionIds);
@@ -172,27 +199,67 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         setBudget(String(result.search.budgetCopper / 10000)); setScenario(result.search.scenario);
         setSelectedSlots(parseAuctionGearSlots(result.search.selectedSlots));
         setTransport({ mode: "search", status: "completed", progress: null, error: null });
-        if (result.activeJob && !selectionChanged) await runRef.current?.({ action: "poll", id: result.activeJob.id }, result.activeJob.result?.kind ?? saved.mode);
+        if (result.activeJob && !selectionChanged) await runRef.current?.({ action: "poll", id: result.activeJob.id }, result.activeJob.mode ?? result.activeJob.result?.kind ?? saved.mode);
         else if (result.activeJob) await removeAuctionClientJob(result.activeJob.id);
         else if (saved.jobId) forgetAuctionClientJob(saved.jobId);
       } catch (error) {
         if (!mounted || controller.signal.aborted) return;
         const code = error instanceof Error ? error.message : "auction_plan_unavailable";
         if (["search_not_found", "search_expired", "plan_not_found"].includes(code)) {
-          if (saved.clientRequestId) forgetAuctionClientRequest(saved.clientRequestId);
+          if (saved.clientRequestId) {
+            // A missing lookup can race a delayed POST. Cancel its identity
+            // durably before allowing the browser to forget that intent.
+            const cancelled = await removeAuctionClientRequest(saved.clientRequestId, { characterSlug, locale });
+            if (!mounted || controller.signal.aborted) return;
+            if (!cancelled?.ok) {
+              setHasRecovery(true); setTransport({ mode: saved.mode, status: "failed", progress: null, error: "plan_connection_interrupted" });
+              return;
+            }
+          }
+          if (saved.clientRequestId && saved.searchId) {
+            try {
+              const query = new URLSearchParams({ searchId: saved.searchId, characterSlug, locale });
+              const previous = await fetchAuctionClientResult<Recovery>(`/api/wow/auction-gear-plans?${query}`, controller.signal, () => {});
+              if (!mounted || controller.signal.aborted) return;
+              if (previous.kind !== "recovery" || previous.search.searchId !== saved.searchId) throw new Error("invalid_plan_result");
+              const restoredExclusions = new Set(saved.excludedOptionIds);
+              const previousExclusions = new Set(previous.excludedOptionIds);
+              const selectionChanged = restoredExclusions.size !== previousExclusions.size || [...restoredExclusions].some(id => !previousExclusions.has(id));
+              setExcluded(restoredExclusions); setSearch(previous.search); setAssembly(selectionChanged ? null : previous.assembly);
+              setAssemblyStale(true); setMarketStale(true);
+              setBudget(String(previous.search.budgetCopper / 10000)); setScenario(previous.search.scenario);
+              setSelectedSlots(parseAuctionGearSlots(previous.search.selectedSlots));
+              cache.current = { ...saved, jobId: undefined, clientRequestId: undefined };
+              writeAuctionClientCache(cacheKey, cache.current);
+              // The old intent was cancelled. Keep its owned checkpoint; any
+              // newer active job needs an explicit, separately validated action.
+              setHasRecovery(false); setTransport({ mode: "search", status: "completed", progress: null, error: null });
+              return;
+            } catch (fallbackError) {
+              if (!mounted || controller.signal.aborted) return;
+              const fallbackCode = fallbackError instanceof Error ? fallbackError.message : "auction_plan_unavailable";
+              if (!["search_not_found", "search_expired", "plan_not_found"].includes(fallbackCode)) {
+                setHasRecovery(true); setTransport({ mode: saved.mode, status: "failed", progress: null, error: fallbackCode });
+                return;
+              }
+            }
+          }
           cache.current = null; writeAuctionClientCache(cacheKey, null);
           setHasRecovery(false);
-          setTransport({ mode: "search", status: "failed", progress: null, error: "recovery_expired" });
-        } else { setHasRecovery(true); setTransport({ mode: "search", status: "failed", progress: null, error: code }); }
+          setTransport({ mode: saved.mode, status: "failed", progress: null, error: "recovery_expired" });
+        } else { setHasRecovery(true); setTransport({ mode: saved.mode, status: "failed", progress: null, error: code }); }
+      } finally {
+        if (recoveryController.current === controller) recoveryController.current = null;
       }
     })();
     return () => {
       mounted = false; controller.abort();
+      if (recoveryController.current === controller) recoveryController.current = null;
       const current = active.current;
       active.current = null;
       current?.controller.abort();
       if (current) {
-        const deletion = current.id ? removeAuctionClientJob(current.id) : cache.current?.clientRequestId ? releasePriorAuctionClientJob() : Promise.resolve();
+        const deletion = current.id ? removeAuctionClientJob(current.id) : cache.current?.clientRequestId ? removeAuctionClientRequest(cache.current.clientRequestId, { characterSlug, locale }) : Promise.resolve();
         retireAuctionClient(current.done, deletion);
       }
     };
@@ -203,6 +270,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     writeAuctionClientCache(cacheKey, cache.current.searchId || cache.current.jobId || cache.current.clientRequestId ? cache.current : null);
   }
   function invalidate() {
+    if (retryJob) retireAuctionClient(removeAuctionClientJob(retryJob.id));
+    else if (hasRecovery && cache.current?.clientRequestId) retireAuctionClient(removeAuctionClientRequest(cache.current.clientRequestId, { characterSlug, locale }));
     setSearch(null); setAssembly(null); setAssemblyStale(false); setMarketStale(false); setExcluded(new Set()); setTransport(null); setVisibleItems(20);
     setRetryJob(null); setHasRecovery(false); cache.current = null; writeAuctionClientCache(cacheKey, null);
   }
@@ -232,11 +301,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         } else {
           request.id = undefined;
           // Recovery can observe the server job before this POST's 202 reaches us.
-          if (body.action === "search") {
-            body = { ...body, clientRequestId: body.clientRequestId ?? crypto.randomUUID() };
-            remember({ mode, clientRequestId: body.clientRequestId });
-            rememberAuctionClientRequest({ characterSlug, locale }, body.clientRequestId!);
-          } else remember({ mode });
+          body = { ...body, clientRequestId: body.clientRequestId ?? crypto.randomUUID() };
+          remember({ mode, clientRequestId: body.clientRequestId });
+          rememberAuctionClientRequest({ characterSlug, locale }, body.clientRequestId!);
           const response = await fetch("/api/wow/auction-gear-plans", {
             method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
             // Keep receiving the created ID after cancellation or unmount.
@@ -244,17 +311,30 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           });
           payload = await response.json() as PlannerJob;
           if (!response.ok) {
-            if (body.action === "search" && body.clientRequestId) {
+            if (body.clientRequestId) {
               forgetAuctionClientRequest(body.clientRequestId);
               remember({ clientRequestId: undefined });
             }
-            throw new Error(payload.error ?? "auction_plan_unavailable");
+            // A previous unknown POST can already own this search. Recover it
+            // before offering another expensive action.
+            if (payload.error === "plan_already_running" && body.action !== "search") {
+              const query = new URLSearchParams({ searchId: body.searchId, characterSlug, locale });
+              const recovered = await fetchAuctionClientResult<Recovery>(`/api/wow/auction-gear-plans?${query}`, request.controller.signal, onReconnect);
+              if (!recovered.activeJob) throw new Error(payload.error);
+              if (body.action === "assemble") {
+                const intended = new Set(body.excludedOptionIds), current = new Set(recovered.excludedOptionIds);
+                if (intended.size !== current.size || [...intended].some(id => !current.has(id))) throw new Error(payload.error);
+              }
+              mode = recovered.activeJob.mode ?? mode;
+              request.mode = mode;
+              payload = recovered.activeJob;
+            } else throw new Error(payload.error ?? "auction_plan_unavailable");
           }
         }
         request.id = payload.id;
         if (active.current !== request || request.controller.signal.aborted) {
           const removed = await removeAuctionClientJob(payload.id);
-          if ((removed?.ok || removed?.status === 404) && body.action === "search" && body.clientRequestId) forgetAuctionClientRequest(body.clientRequestId);
+          if ((removed?.ok || removed?.status === 404) && body.action !== "poll" && body.clientRequestId) forgetAuctionClientRequest(body.clientRequestId);
           return;
         }
         remember({ jobId: payload.id, mode });
@@ -323,25 +403,34 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   function startSearch() {
     if (active.current) return;
     try {
-      goldToCopper(budget);
+      const budgetGold = normalizeAuctionBudgetGold(budget, locale);
       const slots = parseAuctionGearSlots(selectedSlots);
       invalidate();
-      void run({ action: "search", characterSlug, budgetGold: budget, selectedSlots: slots, scenario, locale }, "search");
+      void run({ action: "search", characterSlug, budgetGold, selectedSlots: slots, scenario, locale }, "search");
     } catch (reason) {
       setTransport({ mode: "search", status: "failed", progress: null, error: reason instanceof Error ? reason.message : "invalid_plan_request" });
     }
   }
   function startAssembly() {
     if (!search || !available.length || active.current) return;
+    if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
     if (retryJob?.mode === "assembly") { void run({ action: "poll", id: retryJob.id }, "assembly"); return; }
     void run({ action: "assemble", searchId: search.searchId, excludedOptionIds: [...excluded] }, "assembly");
   }
   function cancel() {
     const current = active.current;
-    if (!current) return;
+    if (!current) {
+      const recovery = recoveryController.current;
+      if (!recovery) return;
+      recoveryController.current = null; recovery.abort();
+      retireAuctionClient(cache.current?.clientRequestId ? removeAuctionClientRequest(cache.current.clientRequestId, { characterSlug, locale }) : releasePriorAuctionClientJob());
+      setRetryJob(null); setHasRecovery(false); remember({ jobId: undefined, clientRequestId: undefined });
+      setTransport({ mode: cache.current?.mode ?? "search", status: "cancelled", progress: null, error: null });
+      return;
+    }
     active.current = null;
     current.controller.abort();
-    const deletion = current.id ? removeAuctionClientJob(current.id) : cache.current?.clientRequestId ? releasePriorAuctionClientJob() : Promise.resolve();
+    const deletion = current.id ? removeAuctionClientJob(current.id) : cache.current?.clientRequestId ? removeAuctionClientRequest(cache.current.clientRequestId, { characterSlug, locale }) : Promise.resolve();
     retireAuctionClient(current.done, deletion);
     setRetryJob(null); remember({ jobId: undefined, clientRequestId: undefined });
     setTransport({ mode: current.mode, status: "cancelled", progress: null, error: null });
@@ -352,7 +441,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   }
   function changeExclusions(next: Set<string>) {
     if (retryJob) retireAuctionClient(removeAuctionClientJob(retryJob.id));
-    setRetryJob(null); setExcluded(next); remember({ excludedOptionIds: [...next], jobId: undefined });
+    else if (hasRecovery && cache.current?.clientRequestId) retireAuctionClient(removeAuctionClientRequest(cache.current.clientRequestId, { characterSlug, locale }));
+    setRetryJob(null); setHasRecovery(false); setExcluded(next); remember({ excludedOptionIds: [...next], jobId: undefined, clientRequestId: undefined });
     setAssembly(null); setTransport(null);
   }
   function setLotAllowed(auctionId: number, value: boolean) {
@@ -367,6 +457,11 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     if (next.size === excluded.size && [...next].every(id => excluded.has(id))) return;
     changeExclusions(next);
   }
+  function continueSearch() {
+    if (!search || active.current) return;
+    if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
+    void run({ action: "resume", searchId: search.searchId }, "search");
+  }
   const progress = transport?.progress;
   const progressText = !progress ? t("Ожидаем расчёта…", "Waiting for calculation…")
     : progress?.phase === "market" ? t("Загружаем рынок сервера…", "Loading your realm market…")
@@ -379,7 +474,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     {transport.status === "failed" ? <p role="alert" className={styles.feedback}>{failureText(transport.error)}</p> : null}
     {transport.status === "cancelled" ? <p role="status" className={styles.note}>{search ? t("Расчёт остановлен. Полученные результаты сохранены.", "Calculation stopped. Available results have been kept.") : t("Поиск отменён.", "Search cancelled.")}</p> : null}
     {transport.status === "failed" && retryJob ? <button type="button" className={styles.button} onClick={() => void run({ action: "poll", id: retryJob.id }, retryJob.mode)}>{t("Повторить подключение", "Reconnect to calculation")}</button> : null}
-    {transport.status === "failed" && !retryJob && hasRecovery && !search ? <button type="button" className={styles.button} onClick={() => setRecoveryAttempt(value => value + 1)}>{t("Повторить восстановление", "Retry recovery")}</button> : null}
+    {transport.status === "failed" && !retryJob && hasRecovery ? <button type="button" className={styles.button} onClick={() => setRecoveryAttempt(value => value + 1)}>{t("Повторить восстановление", "Retry recovery")}</button> : null}
   </>;
   const significantGain = Boolean(confirmed);
   const incompleteData = Boolean(search && (search.dataComplete === false || search.coverage.unsupportedModifierLots > 0 ||
@@ -404,11 +499,12 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         <div className={styles.selectionActions}><button className={styles.button} type="button" onClick={() => { setSelectedSlots([...auctionGearSlots]); invalidate(); }}>{t("Выбрать все", "Select all")}</button><button className={styles.button} type="button" onClick={() => { setSelectedSlots([]); invalidate(); }}>{t("Снять выбор", "Clear selection")}</button></div>
         <div className={styles.slots}>{auctionGearSlots.map(slot => <label key={slot}><input type="checkbox" name="selectedSlots" value={slot} checked={selectedSlots.includes(slot)} onChange={event => { setSelectedSlots(previous => event.target.checked ? auctionGearSlots.filter(value => value === slot || previous.includes(value)) : previous.filter(value => value !== slot)); invalidate(); }} /><span>{slotName(slot)}</span></label>)}</div>
       </fieldset>
-      <p id="auction-budget-help" className={styles.note}>{t("Покажем улучшения не дороже бюджета. Единый сет тоже останется в этой сумме. Цена — за целый лот; покупки вы совершаете сами.", "Each listed upgrade costs no more than your budget. The whole loadout also stays within that amount. Prices cover whole lots; you make the purchases yourself.")}</p>
-      <div className={styles.actions}><button className={styles.button} type="submit" disabled={running}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</button>{!search ? <button className={`${styles.button} ${styles.primaryButton}`} type="button" disabled aria-describedby="auction-assembly-start-help">{t("Собрать сет под бюджет", "Build a loadout within budget")}</button> : null}{running && transport?.mode === "search" ? <button className={styles.button} type="button" onClick={cancel}>{t("Отменить поиск", "Cancel search")}</button> : null}</div>
+      <p id="auction-budget-help" className={styles.note}>{t("Формат суммы: 10 000,1234. Покажем улучшения не дороже бюджета. Единый сет тоже останется в этой сумме. Цена — за целый лот; покупки вы совершаете сами.", "Budget format: 10,000.1234. Each listed upgrade costs no more than your budget. The whole loadout also stays within that amount. Prices cover whole lots; you make the purchases yourself.")}</p>
+      <div className={styles.actions}><button className={styles.button} type="submit" disabled={running}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</button>{!search ? <button className={`${styles.button} ${styles.primaryButton}`} type="button" disabled aria-describedby="auction-assembly-start-help">{t("Собрать сет под бюджет", "Build a loadout within budget")}</button> : null}{running && (transport?.mode === "search" || !search) ? <button className={styles.button} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}</div>
       {!search ? <p id="auction-assembly-start-help" className={styles.note}>{t("Сначала запустите поиск вещей. Затем можно проверить их сочетания и собрать совместимый сет в пределах бюджета.", "Search for gear first, then compare combinations and build a compatible loadout within your budget.")}</p> : null}
     </form>}
     {feedback("search")}
+    {!search ? feedback("assembly") : null}
     {search ? <div className={styles.searchResult} data-auction-search-result>
       <p className={styles.market}>{search.market.region.toUpperCase()} · {search.market.realm} · {t("Рынок обновлён", "Market updated")} <time dateTime={new Date(search.market.updatedAt).toISOString()}>{new Date(search.market.updatedAt).toLocaleString(ru ? "ru-RU" : "en-US")}</time></p>
       {marketStale ? <p className={styles.note}>{t("Показан предыдущий снимок рынка. Цены и доступность не подтверждены до следующего успешного расчёта.", "This is the previous market snapshot. Prices and availability are not verified until the next successful calculation.")}</p> : null}
@@ -442,7 +538,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       <p className={styles.note}>{search.searchComplete ? t("Проверка найденных вариантов завершена. Показаны только подтверждённые улучшения по отдельности.", "Evaluation of discovered options is complete. Only confirmed individual upgrades are shown.") : `${t("Осталось сравнить найденных замен", "Discovered replacements still to compare")}: ${number(search.pendingItems)}.`} {discoveryIncomplete ? t("Поиск вариантов по рынку ещё не завершён.", "Discovery of market options is not complete yet.") : ""} {incompleteData ? t("Часть вещей не удалось проверить из-за недостающих данных. Отсутствие улучшений в списке не означает, что их нет на аукционе.", "Some items could not be verified because required data is missing. An empty upgrade list does not mean the auction house has no upgrades.") : ""}</p>
       {search.coverage.catalogUnmatchedItemIds > 0 ? <p className={styles.note}>{t(`Для ${number(search.coverage.catalogUnmatchedItemIds)} предметов с рынка в каталоге не определён тип. Неизвестно, могут ли они быть экипировкой.`, `The catalog has no item type for ${number(search.coverage.catalogUnmatchedItemIds)} market items. Whether these can be equipment is unknown.`)}</p> : null}
       {search.coverage.eligibilityUnverifiedItems > 0 ? <p className={styles.note}>{t("Предметов с неподтверждёнными требованиями или совместимостью", "Items with unverified requirements or compatibility")}: {number(search.coverage.eligibilityUnverifiedItems)}. {t("Они не участвуют в подборе, поэтому вывод по рынку неполный.", "They are excluded from selection, so market coverage is incomplete.")}</p> : null}
-      {!search.searchComplete && !running ? <button className={styles.button} type="button" onClick={() => void run({ action: "resume", searchId: search.searchId }, "search")}>{t("Продолжить проверку вещей", "Continue item comparisons")}</button> : null}
+      {!search.searchComplete && !running ? <button className={styles.button} type="button" onClick={continueSearch}>{t("Продолжить проверку вещей", "Continue item comparisons")}</button> : null}
+      {search.searchComplete && (incompleteData || discoveryIncomplete) ? <div><button className={styles.button} type="button" disabled={running} onClick={continueSearch}>{t("Обновить варианты", "Refresh options")}</button><p className={styles.note}>{t("Если недостающие варианты ещё не появились, попробуйте обновить их позже.", "If missing options have not appeared yet, try refreshing again later.")}</p></div> : null}
       {recommendations.length ? <>
         <div className={styles.listToolbar}><label>{t("Сортировка", "Sort by")}<select value={sort} onChange={event => { setSort(event.target.value as "price" | "dps"); setVisibleItems(20); }}><option value="price">{t("Цена: от дешёвых", "Price: lowest first")}</option><option value="dps">{t("Изменение DPS: от большего", "DPS change: highest first")}</option></select></label><p>{t("Исключено показанных улучшений", "Displayed upgrades excluded")}: <strong>{recommendations.filter(item => excluded.has(item.optionId)).length} / {recommendations.length}</strong></p></div>
         <ul className={styles.lots}>{sortedItems.slice(0, visibleItems).map(item => <li className={styles.lot} key={item.optionId} data-auction-option={item.optionId} data-auction-evaluation={item.evaluation}>

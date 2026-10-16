@@ -17,12 +17,15 @@ export function currentGearSeason() {
   };
 }
 
-export async function gearEntityDetails(records: CatalogRecord[], locale: "en_US" | "ru_RU", includeSources = true) {
+export async function gearEntityDetails(records: CatalogRecord[], locale: "en_US" | "ru_RU", includeSources = true, signal?: AbortSignal) {
+  signal?.throwIfAborted();
   const output: CatalogGearEntity[] = [];
   for (let offset = 0; offset < records.length; offset += 8) {
+    signal?.throwIfAborted();
     const group = await Promise.all(records.slice(offset, offset + 8).map(async (record) => {
-      const localized = await getCatalogEntity(record.id, locale, "", true);
-      const english = locale === "en_US" || !includeSources ? localized : await getCatalogEntity(record.id, "en_US", "", true);
+      const localized = await getCatalogEntity(record.id, locale, "", true, signal);
+      signal?.throwIfAborted();
+      const english = locale === "en_US" || !includeSources ? localized : await getCatalogEntity(record.id, "en_US", "", true, signal);
       if (!localized) return null;
       const localizedBlocks = localized.tooltip?.blocks ?? [];
       const englishAcquisition = english?.tooltip?.blocks?.filter((entry) => entry.type === "acquisition") ?? [];
@@ -56,16 +59,18 @@ export async function getGearCandidatesForEquippedItem(input: {
 
 }
 
-export async function lookupGearRecords(ids: number[], locale: "en_US" | "ru_RU", classId?: number, maxRequiredLevel?: number) {
+export async function lookupGearRecords(ids: number[], locale: "en_US" | "ru_RU", classId?: number, maxRequiredLevel?: number, signal?: AbortSignal) {
+  signal?.throwIfAborted();
   const unique = [...new Set(ids)];
   const result: CatalogRecord[] = [];
   for (let offset = 0; offset < unique.length; offset += 400) {
+    signal?.throwIfAborted();
     const pages = await Promise.all(Array.from({length: Math.min(4, Math.ceil((unique.length-offset)/100))}, (_, group) =>
-      getCatalogPage({ externalIds: unique.slice(offset+group*100, offset+(group+1)*100), locale, type: "item", limit: 100, includeTotal: false, itemClassId: classId, maxRequiredLevel, fresh: true })));
+      getCatalogPage({ externalIds: unique.slice(offset+group*100, offset+(group+1)*100), locale, type: "item", limit: 100, includeTotal: false, itemClassId: classId, maxRequiredLevel, fresh: true, signal })));
     for (const page of pages) result.push(...page.data);
   }
   return result;
 }
-export async function lookupGearEntities(ids: number[], locale: "en_US" | "ru_RU") {
-  return gearEntityDetails(await lookupGearRecords(ids, locale), locale);
+export async function lookupGearEntities(ids: number[], locale: "en_US" | "ru_RU", signal?: AbortSignal) {
+  return gearEntityDetails(await lookupGearRecords(ids, locale, undefined, undefined, signal), locale, true, signal);
 }

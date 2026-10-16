@@ -11,6 +11,9 @@ export function auctionGearServiceMessage(error: string, ru: boolean): string | 
     plan_reconnecting: ["Связь с расчётом прервалась. Подключаемся к той же задаче повторно…", "The calculation connection was interrupted. Reconnecting to the same job…"],
     plan_connection_interrupted: ["Не удалось восстановить связь с расчётом. Повторите подключение; новая задача не создаётся.", "The calculation connection could not be restored. Reconnect to the existing job; this does not create a new calculation."],
     recovery_expired: ["Предыдущий поиск устарел или больше недоступен. Запустите новый поиск.", "The previous search has expired or is no longer available. Start a new search."],
+    auction_storage_unavailable: ["Не удалось сохранить расчёт. Повторите позже.", "The calculation could not be saved. Try again later."],
+    plan_request_expired: ["Запрос не успел запустить расчёт. Повторите попытку.", "The request timed out before starting a calculation. Try again."],
+    plan_interrupted: ["Расчёт был прерван обновлением сервиса. Восстановите сохранённый поиск или запустите новый.", "The calculation was interrupted by a service update. Recover the saved search or start a new one."],
   };
   return messages[error]?.[ru ? 0 : 1];
 }

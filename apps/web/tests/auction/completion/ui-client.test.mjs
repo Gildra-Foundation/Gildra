@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import { rememberAuctionClientRequest, rememberAuctionClientJob, releasePriorAuctionClientJob, removeAuctionClientRequest } from '../../../lib/wow/auctionGearClient.ts';
+const storage=new Map(),calls=[],cases=[];
+globalThis.sessionStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
+const scope={characterSlug:'synthetic-cancel-character',locale:'en'},nonce='synthetic-before-admission-nonce';
+let status=200;
+globalThis.fetch=async(url,options)=>{calls.push({url,options});return new Response('{}',{status});};
+rememberAuctionClientRequest(scope,nonce);await releasePriorAuctionClientJob();
+assert.equal(calls.length,1);assert.equal(calls[0].options.method,'DELETE');assert.equal(calls[0].options.keepalive,true);
+assert.equal(new URL(calls[0].url,'https://synthetic.example').searchParams.get('clientRequestId'),nonce);
+assert.equal(new URL(calls[0].url,'https://synthetic.example').searchParams.get('characterSlug'),scope.characterSlug);
+assert.equal(storage.size,0);cases.push('unknown admission is cancelled by scoped DELETE with no preceding GET');
+status=503;rememberAuctionClientRequest(scope,nonce);await releasePriorAuctionClientJob();assert.equal(storage.size,1);cases.push('failed durable cancellation retains nonce for retry');
+status=404;await releasePriorAuctionClientJob();assert.equal(storage.size,1);cases.push('missing lookup is not cancellation acknowledgement');
+status=200;await removeAuctionClientRequest(nonce,scope);assert.equal(storage.size,0);cases.push('explicit scoped cancellation clears only after acknowledgement');
+rememberAuctionClientJob(scope,'synthetic-known-job');status=404;await releasePriorAuctionClientJob();assert.equal(storage.size,0);assert.equal(new URL(calls.at(-1).url,'https://synthetic.example').searchParams.get('id'),'synthetic-known-job');cases.push('already removed known job remains idempotently cancelled');
+console.log(JSON.stringify({status:'passed',cases}));

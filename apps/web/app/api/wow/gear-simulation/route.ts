@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getRotationPreset } from "@/lib/platform/rotation/repository";
 import type { RotationSimulationResult } from "@/lib/platform/rotation/types";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { getBattleNetCharacterDetails, getBattleNetSimulationSnapshot } from "@/lib/wow/battleNetCharacterDetails";
@@ -44,7 +43,7 @@ function sameOrigin(request: Request) {
 
 async function simulate(input: {
   key: string; spec: string; scenario: GearSimulationScenario; duration: number; targets: number;
-  rules: string[]; talentLoadout: string; armory: { profile: Record<string, unknown>; specializations: Record<string, unknown>; equipment: Record<string, unknown> };
+  talentLoadout: string; armory: { profile: Record<string, unknown>; specializations: Record<string, unknown>; equipment: Record<string, unknown> };
   gearChanges?: SimcGearChange[]; signal: AbortSignal;
 }) {
   const cached = cache.get(input.key);
@@ -53,7 +52,7 @@ async function simulate(input: {
     method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, cache: "no-store",
     body: JSON.stringify({
       spec: input.spec, scenario: input.scenario, fightLengthSeconds: input.duration, targets: input.targets,
-      rules: input.rules, talentLoadout: input.talentLoadout, armory: input.armory, gearChanges: input.gearChanges,
+      actionListMode: "native", talentLoadout: input.talentLoadout, armory: input.armory, gearChanges: input.gearChanges,
     }),
     signal: AbortSignal.any([input.signal, AbortSignal.timeout(50_000)]),
   });
@@ -106,14 +105,12 @@ export async function POST(request: Request) {
     });
     const prepared = prepareGearLoadout({ selections:[{candidate,variantKey:body.variantKey,customization:{enchantId:body.enchantId,gemIds:body.gemIds}}],equipment:armory.equipment,loadout,specId:theme.specId });
     const change=prepared.changes[0];
-    const preset = await getRotationPreset(theme.slug, "ru");
-    if (!preset.defaultRules.length) throw new Error("rotation_unavailable");
     const encounter = scenario === "aoe" ? { duration: 60, targets: 5 } : scenario === "execute" ? { duration: 90, targets: 1 } : { duration: 120, targets: 1 };
     const profileFingerprint = createHash("sha256").update(JSON.stringify(armory)).digest("hex");
-    const common = { profileFingerprint, talentLoadout: armory.activeTalentLoadout, scenario, duration: encounter.duration, targets: encounter.targets, rules: preset.defaultRules };
+    const common = { profileFingerprint, talentLoadout: armory.activeTalentLoadout, scenario, duration: encounter.duration, targets: encounter.targets, actionListMode: "native" as const };
     const baselineKey = gearComparisonFingerprint(common);
     const candidateKey = gearComparisonFingerprint({ ...common, change });
-    const workerInput = { spec: theme.slug, scenario, ...encounter, rules: preset.defaultRules, talentLoadout: armory.activeTalentLoadout, armory, signal: request.signal };
+    const workerInput = { spec: theme.slug, scenario, ...encounter, talentLoadout: armory.activeTalentLoadout, armory, signal: request.signal };
     // The worker intentionally serializes jobs. Sequential execution also makes
     // it impossible for one side of the comparison to observe another snapshot.
     const baseline = await simulate({ ...workerInput, key: baselineKey });

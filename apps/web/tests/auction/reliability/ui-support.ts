@@ -50,7 +50,7 @@ export class AuctionHarness {
     const request = route.request();
     const url = new URL(request.url());
     if (request.method() === "DELETE") {
-      const id = url.searchParams.get("id") ?? "";
+      const id = url.searchParams.get("id") ?? this.requestJobs.get(url.searchParams.get("clientRequestId") ?? "") ?? "";
       this.deletes.push(id);
       this.activeRecoveryJob = null;
       await route.fulfill({ json: { id, status: "cancelled", progress: null, result: null, error: null, scope: scope(this.language) } });
@@ -68,7 +68,8 @@ export class AuctionHarness {
       let result: ReturnType<typeof searchResult> | ReturnType<typeof assemblyResult>;
       if (body.action !== "assemble") result = searchResult();
       else {
-        expect(Object.keys(body).sort()).toEqual(["action", "excludedOptionIds", "searchId"]);
+        expect(Object.keys(body).sort()).toEqual(["action", "clientRequestId", "excludedOptionIds", "searchId"]);
+        expect(body.clientRequestId).toMatch(/^[A-Za-z0-9_-]{16,100}$/);
         this.currentExclusions = body.excludedOptionIds ?? [];
         result = assemblyResult({ noisyMaximum: this.noisyMaximum });
         if (this.incompleteAfterAssembly) result.updatedSearch = { ...result.updatedSearch, searchComplete: false, pendingItems: 1 };

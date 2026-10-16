@@ -91,6 +91,14 @@ services:
       - /app/.next/cache/images:size=512m,mode=0750,uid=1001,gid=1001
     security_opt:
       - no-new-privileges:true
+    # One web writer; private optimizer checkpoints survive container replacement.
+    # Provision the host directory as UID/GID1001 before starting this service.
+    volumes:
+      - type: bind
+        source: ${AUCTION_STATE_HOST_PATH:-/var/lib/gildra/auction-state}
+        target: /var/lib/gildra/auction-state
+        bind:
+          create_host_path: false
     # Shared CMS (/wow/articles, signed cache refresh) and the first-party Plausible
     # tracker; read by web builds that include the shared-cms integration.
     environment:
@@ -101,8 +109,9 @@ services:
       PLAUSIBLE_SCRIPT_URL: https://gildra.net/stats/js/script.js
       PLAUSIBLE_API_URL: /stats/api/event
       PLAUSIBLE_SITE_DOMAIN: gildra.net
+      GILDRA_AUCTION_STATE_DIR: /var/lib/gildra/auction-state
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "const fs=require('node:fs');if(process.env.GILDRA_AUCTION_STATE_DIR)fs.accessSync(process.env.GILDRA_AUCTION_STATE_DIR,fs.constants.R_OK|fs.constants.W_OK);fetch('http://127.0.0.1:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 12

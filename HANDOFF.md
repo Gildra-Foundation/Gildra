@@ -1,3 +1,13 @@
+# Auction completion — 2026-10-16
+
+Active branch `fix/auction-completion-20261016`, based on `2db7c04`; implementation and meaningful RED/GREEN tests are integrated. See [implementation plan](docs/auction-completion-20261016.md) and [durability decision](docs/agdr/AgDR-0001-auction-checkpoints.md). New evidence is `.artifacts/auction-completion-20261016/`; previous worktrees/evidence are retained.
+
+Native APL preserves item activations in auction, farm and single-item gear comparisons. Web persists private versioned checkpoints and owned restartable intents; tokens and executable tasks are never stored. Deploy the worker first, then web with the private single-writer checkpoint bind mount. Roll back web before worker and preserve the state directory. No API/database/import rollout is needed.
+
+Final offline/browser/image/release verification is in progress. Do not infer publication from this implementation handoff; require the final production evidence and exact image identities.
+
+---
+
 # Auction reliability repair — verified release
 
 User requested tests first, then repair all fourteen review findings. Completed

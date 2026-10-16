@@ -100,7 +100,8 @@ function writeDevelopmentCatalogCache(key: string, value: unknown, ttlSeconds: n
   developmentCatalogCache.bytes += bytes;
 }
 
-async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestCache = "force-cache", timeoutMs = 15_000): Promise<T> {
+async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestCache = "force-cache", timeoutMs = 15_000, signal?: AbortSignal): Promise<T> {
+  signal?.throwIfAborted();
   const cacheOptions = cache === "no-store"
     ? { cache: "no-store" as const }
     : await catalogFetchOptions(revalidate, ["catalog"]);
@@ -116,7 +117,7 @@ async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestC
 
   const response = await fetch(`${apiURL()}${path}`, {
     ...cacheOptions,
-    signal: AbortSignal.timeout(timeoutMs),
+    signal: AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(timeoutMs)]),
   });
   if (!response.ok) {
     let message = `Catalog request failed (${response.status})`;
@@ -177,6 +178,7 @@ export type CatalogPageParams = {
   itemClassId?: number;
   fresh?: boolean;
   timeoutMs?: number;
+  signal?: AbortSignal;
 };
 
 export async function getCatalogPage({
@@ -200,6 +202,7 @@ export async function getCatalogPage({
   itemClassId,
   fresh = false,
   timeoutMs = 15_000,
+  signal,
 }: CatalogPageParams): Promise<CatalogPage> {
   const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: String(includeTotal) });
   if (externalIds?.length) params.set("externalIds", externalIds.join(","));
@@ -216,7 +219,7 @@ export async function getCatalogPage({
   if (minRequiredLevel !== undefined) params.set("minRequiredLevel", String(minRequiredLevel));
   if (maxRequiredLevel !== undefined) params.set("maxRequiredLevel", String(maxRequiredLevel));
   if (itemClassId !== undefined) params.set("itemClassId", String(itemClassId));
-  const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`, fresh ? 0 : 300, fresh ? "no-store" : "force-cache", timeoutMs);
+  const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${params}`, fresh ? 0 : 300, fresh ? "no-store" : "force-cache", timeoutMs, signal);
   return { data: page.data, pagination: page.pagination };
 }
 
@@ -260,14 +263,15 @@ export async function getLibraryDatasets(
 }
 
 /** `fresh` bypasses the ISR cache (talent calculator reads live catalog data). */
-export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", dataset = "", fresh = false): Promise<GameEntity | null> {
+export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", dataset = "", fresh = false, signal?: AbortSignal): Promise<GameEntity | null> {
+  signal?.throwIfAborted();
   const params = new URLSearchParams({ locale });
   if (dataset) params.set("dataset", dataset);
   const response = await fetch(
     `${apiURL()}/v1/game/entities/${encodeURIComponent(id)}?${params}`,
     {
       ...(fresh ? { cache: "no-store" as const } : await catalogFetchOptions(300, [`catalog-entity-${id}`])),
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(15_000)]),
     },
   );
   if (response.status === 404) return null;
