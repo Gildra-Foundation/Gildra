@@ -50,6 +50,8 @@ export type AuctionGearDiscovery = {
   /** Optional for checkpoints predating noncombat classification of unsupported lots. */
   unsupportedLotsByItem?: Map<number, number>;
   catalogItemClasses?: Map<number, number>;
+  /** A summary visited with supported offers can intentionally omit other slots. */
+  supportedSummaryItems?: Set<number>;
   engine: string;
 };
 
@@ -61,7 +63,7 @@ export function createAuctionGearDiscovery(market: AuctionSnapshot, budgetCopper
     catalogMissing: new Set(), catalogUnmatched: new Set(),
     eligibilityUnverifiedItems: new Set(), catalogRetryAt: new Map(), scannedItems: new Set(),
     detailedItems: new Set(), affordableLots: 0, unsupportedModifierLots: 0,
-    unsupportedLotsByItem: new Map(), catalogItemClasses: new Map(), engine: "" };
+    unsupportedLotsByItem: new Map(), catalogItemClasses: new Map(), supportedSummaryItems: new Set(), engine: "" };
   refreshAuctionGearDiscovery(state, market);
   return state;
 }
@@ -80,6 +82,7 @@ export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market:
   const supported = affordable.filter(offer => supportedAuctionModifiers(offer.modifiers));
   const legacyClasses = !state.catalogItemClasses;
   state.catalogItemClasses ??= new Map();
+  state.supportedSummaryItems ??= new Set();
   state.unsupportedLotsByItem = new Map();
   for (const offer of affordable) if (!supportedAuctionModifiers(offer.modifiers)) {
     state.unsupportedLotsByItem.set(offer.itemId, (state.unsupportedLotsByItem.get(offer.itemId) ?? 0) + 1);
@@ -110,6 +113,17 @@ export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market:
   // A long active traversal must finish before missing IDs can cycle again.
   const retry = new Set(retryCatalog && auctionGearDiscoveryComplete(state)
     ? ids.filter(id => (state.catalogRetryAt.get(id) ?? Infinity) <= now) : []);
+  for (const id of ids) {
+    const itemClass = state.catalogItemClasses.get(id);
+    // An unsupported-only combat item had its cheap summary classified but
+    // never needed details. Its first supported offer needs that first pass,
+    // even during another traversal or when timed catalog retries are disabled.
+    // Legacy checkpoints get one bounded pass, including ones saved after the
+    // old refresh had populated supported maps without opening details.
+    // A recorded null entity is a previous attempt and keeps its retry policy.
+    if ((itemClass === 2 || itemClass === 4) && state.itemVariants.has(id) && !state.supportedSummaryItems.has(id) &&
+        state.queuedItems.has(id) && !state.entities.has(id)) retry.add(id);
+  }
   if (retry.size) {
     // Recycle processed positions instead of appending duplicate IDs forever.
     // Pending catalog/detail work already owns its queue position.
@@ -265,7 +279,11 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       // Base required level is not an auction variant's actual scaled requirement.
       const records = await lookupGearRecords(ids, input.locale, undefined, undefined, input.signal);
       input.signal.throwIfAborted();
-      for (const id of ids) state.scannedItems.add(id);
+      const supportedSummaryItems = state.supportedSummaryItems ??= new Set();
+      for (const id of ids) {
+        state.scannedItems.add(id);
+        if (state.itemVariants.has(id)) supportedSummaryItems.add(id);
+      }
       const found = new Set(records.map(record => record.externalId));
       for (const id of ids) {
         if (!found.has(id)) {

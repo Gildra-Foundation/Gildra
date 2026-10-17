@@ -8,6 +8,7 @@ import { getAuctionGearSearch, reserveAuctionGearSearch, saveAuctionGearSearch }
 import { resumeOwnedAuctionGearWork } from "@/lib/wow/auctionGearWork";
 import { recoverAuctionGearSearch } from "@/lib/wow/auctionGearRecovery";
 import { auctionGearSlots, parseAuctionGearSlots } from "@/lib/wow/auctionGearSelection";
+import { auctionGearSelectionBodyLimit, decodeAuctionGearSelectionTransport } from "@/lib/wow/auctionGearSelectionTransport";
 import type { GearSimulationScenario } from "@/lib/wow/gearSimulation";
 export const dynamic = "force-dynamic";
 function reply(body: unknown, status = 200) {
@@ -114,7 +115,7 @@ async function postPlan(request: Request) {
     const { value, done } = await reader.read();
     if (done) break;
     bytes += value.byteLength;
-    if (bytes > 512 * 1024) {
+    if (bytes > auctionGearSelectionBodyLimit) {
       await reader.cancel();
       return reply({ error: "request_too_large" }, 413);
     }
@@ -131,6 +132,10 @@ async function postPlan(request: Request) {
   }
   const action = body.action ?? "search";
   if (action !== "search" && action !== "resume" && action !== "assemble") return reply({ error: "invalid_plan_request" }, 400);
+  if (action === "assemble") {
+    try { body = decodeAuctionGearSelectionTransport(body); }
+    catch { return reply({ error: "invalid_auction_selection" }, 400); }
+  }
   let clientRequestId: string | undefined;
   if (Object.hasOwn(body, "clientRequestId")) {
     if (!validAuctionGearClientRequestId(body.clientRequestId)) return reply({ error: "invalid_plan_request" }, 400);

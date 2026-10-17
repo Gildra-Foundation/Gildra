@@ -91,7 +91,7 @@ try {
     await expectError(method, method === "POST" ? searchBody : undefined, 401, "session_expired");
     state.session = { battleNetAccessToken: tokenA };
   }
-  await expectError("POST", "{".repeat(512 * 1024 + 1), 413, "request_too_large", { raw: true });
+  await expectError("POST", "{".repeat(4 * 1024 * 1024 + 1), 413, "request_too_large", { raw: true });
   for (const invalid of [null, [], "not an object"]) await expectError("POST", invalid, 400, "invalid_plan_request");
   await expectError("POST", "{", 400, "invalid_plan_request", { raw: true });
   await expectError("POST", { ...searchBody, action: "replace" }, 400, "invalid_plan_request");
