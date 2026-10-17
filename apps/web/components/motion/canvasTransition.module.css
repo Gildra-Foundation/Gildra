@@ -1,0 +1,17 @@
+.host {
+  composes: transition from "./routeTransition.module.css";
+  contain: layout style paint;
+}
+.outgoing { composes: piece from "./routeTransition.module.css"; }
+.frozen { composes: frozen from "./routeTransition.module.css"; }
+.surface {
+  composes: frost from "./routeTransition.module.css";
+  contain: strict;
+  pointer-events: none;
+}
+/* The surface becomes ice before it leaves. Only its lightweight bitmap
+   fragments move; the content tree is never multiplied or relaid out per shard. */
+.host[data-effect="arthas"][data-phase="shattering"] > .outgoing {
+  animation: source-dismiss 150ms ease-out both;
+}
+@keyframes source-dismiss { from { opacity: 1; } to { opacity: 0; } }

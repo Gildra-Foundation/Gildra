@@ -74,13 +74,15 @@ try {
     await page.waitForFunction(() => document.querySelector("[data-themed-transition]")?.getAttribute("data-phase") === "cracking", null, { timeout: 15000 }).catch(async error => { await page.screenshot({ path: path.join(output, `failure-${theme}.png`) }); console.error(await page.evaluate(() => ({ url:location.href, phase:document.querySelector("[data-themed-transition]")?.outerHTML.slice(0,500), theme:document.documentElement.dataset.siteTheme }))); throw error; });
     assert.equal(await page.locator("[data-themed-transition]").getAttribute("data-effect"), theme);
     if (theme === "arthas") {
-      assert.ok(await page.locator("[data-ice-shard]").count() >= 18);
-      assert.match(await page.locator("[data-ice-shard]").first().evaluate(el => getComputedStyle(el, "::after").backgroundImage), /blob:/, "ice must remain on the frozen fragments");
+      assert.equal(await page.locator("[data-transition-snapshot]").count(), 1);
+      assert.equal(await page.locator("[data-ice-surface]").count(), 1);
+      assert.ok(await page.locator("[data-themed-transition] *").count() < 700, "transition must keep a single bounded snapshot tree");
+      assert.equal(await page.locator("[data-ice-surface]").getAttribute("data-renderer"), "worker");
       await page.screenshot({ path: path.join(output, "arthas-cracking.png") });
       assert.equal(await page.locator("[data-themed-transition]").evaluate(el => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0)", "fragment gaps must reveal the destination");
 
       await page.waitForFunction(() => document.querySelector("[data-themed-transition]")?.getAttribute("data-phase") === "shattering", null, { timeout: 15000 });
-      await page.evaluate(() => document.querySelector("[data-themed-transition]").getAnimations({ subtree: true }).forEach(animation => { animation.pause(); animation.currentTime = animation.effect.getTiming().duration === 740 ? 330 : 230; }));
+      await page.waitForTimeout(300);
       await page.screenshot({ path: path.join(output, "arthas-shattering.png") });
       await page.evaluate(() => { window.setTimeout = window.__qaTimeout; delete window.__qaTimeout; });
     }
@@ -140,6 +142,14 @@ try {
   await other.close();
   await page.evaluate(() => { localStorage.setItem("gildra-home-theme", "arthas"); window.dispatchEvent(new StorageEvent("storage", { key:"gildra-home-theme",newValue:"arthas" })); });
   console.log("Passed: theme synchronizes across tabs.");
+  await link(page, "/privacy"); await page.waitForURL(base + "/privacy"); await idle(page);
+  await link(page, "/login");
+  await page.waitForFunction(() => document.querySelector("[data-themed-transition]")?.dataset.phase === "freezing");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await idle(page);
+  assert.equal(await page.locator("[data-themed-transition] *").count(), 0, "changing motion preference must cancel active rendering");
+  await page.waitForURL(base + "/login");
+  await link(page, "/privacy"); await page.waitForURL(base + "/privacy");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await link(page, "/login"); await page.waitForURL(base + "/login");
   assert.equal(await page.locator("[data-themed-transition]").getAttribute("data-phase"), null);

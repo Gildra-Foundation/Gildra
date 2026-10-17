@@ -17,8 +17,8 @@ import { homeThemeCookie, homeThemes, isHomeTheme } from "./homeThemes";
 import styles from "./grimoireHome.module.css";
 
 const coverSizes = "(max-width: 400px) 70vw, (max-width: 760px) 280px, (min-width: 1600px) 470px, 440px";
-const coverAvifSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320.avif 320w, /assets/wow/character-book/intro/chronicle-cover-v2-640.avif 640w, /assets/wow/character-book/intro/chronicle-cover-v2-1024.avif 1024w";
-const coverWebpSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320.webp 320w, /assets/wow/character-book/intro/chronicle-cover-v2-640.webp 640w, /assets/wow/character-book/intro/chronicle-cover-v2-1024.webp 1024w";
+const coverAvifSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v3-320.avif 320w, /assets/wow/character-book/intro/chronicle-cover-v3-640.avif 640w, /assets/wow/character-book/intro/chronicle-cover-v3-1024.avif 1024w";
+const coverWebpSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v3-320.webp 320w, /assets/wow/character-book/intro/chronicle-cover-v3-640.webp 640w, /assets/wow/character-book/intro/chronicle-cover-v3-1024.webp 1024w";
 
 // Kurale (headings, nav) and PT Serif (body) subsets the first screen renders
 // in. Discovered only through CSS they land ~1 s after the first paint on a
@@ -33,7 +33,7 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
   for (const font of firstScreenFonts[lang === "ru" ? "ru" : "en"]) {
     preload(`/assets/wow/fonts/${font}.woff2`, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   }
-  preload("/assets/wow/character-book/intro/chronicle-cover-v2-640.avif", {
+  preload("/assets/wow/character-book/intro/chronicle-cover-v3-640.avif", {
     as: "image",
     type: "image/avif",
     imageSrcSet: coverAvifSrcSet,
@@ -53,7 +53,7 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
     <picture>
       <source type="image/avif" srcSet={coverAvifSrcSet} sizes={coverSizes} />
       <source type="image/webp" srcSet={coverWebpSrcSet} sizes={coverSizes} />
-      <img className={styles.coverImage} src="/assets/wow/character-book/intro/chronicle-cover-v2-640.webp" srcSet={coverWebpSrcSet} sizes={coverSizes} width={1024} height={1536} fetchPriority="high" loading="eager" decoding="async" alt="" draggable={false} />
+      <img className={styles.coverImage} src="/assets/wow/character-book/intro/chronicle-cover-v3-640.webp" srcSet={coverWebpSrcSet} sizes={coverSizes} width={1024} height={1536} fetchPriority="high" loading="eager" decoding="async" alt="" draggable={false} />
     </picture>
     <span className={styles.coverLight} aria-hidden="true" />
     <span className={styles.coverGems} aria-hidden="true"><i /><i /></span>

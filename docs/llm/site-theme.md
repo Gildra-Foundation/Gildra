@@ -141,3 +141,40 @@ The realistic frost refinement is now published and publicly verified. See
 [revision deployment evidence](../reports/realistic-frost-deployment-20261017.md).
 Future web releases must include application commit `99634f6` as well as the
 original global-theme commit `a052e48`.
+
+
+## Performance refinement (17 October 2026)
+
+`ThemedPageTransition` now re-exports `CanvasPageTransition`. One inert viewport
+copy is made by `transitionSnapshot.ts`: offscreen descendants are omitted before
+cloning, canvas pixels copy directly without PNG/base64 conversion, and input/
+textarea values are removed. No copy of the page is made for each shard.
+`iceMaterial.ts` keeps at most one worker frame in flight and coalesces newer
+frames. The versioned worker asset `assets/motion/ice-renderer-v3.js` generates
+and caches one bounded frost material away from the UI thread, paints growing
+frost/branching fractures, then moves lightweight bitmap ice fragments. The old
+page fades behind the thickened ice. The finite main-thread RAF only advances
+phase/progress; no pixel loops, texture encoding or fragment DOM trees remain
+on the navigation gesture. The canvas resolution is capped at 1024 px on its
+longest side, independent of device pixel ratio. The worker rests while idle
+and terminates after 60 seconds; cancellation drops its active canvas.
+Unsupported/blocked workers use a small gradient/fracture fallback.
+
+The worker warms after document loading and browser idle, only for the selected
+Arthas theme with motion enabled. It does not compete with critical page assets.
+Other theme effects, motion preferences, cancellation and sound consent retain
+the existing behaviour. Future worker changes must use a new versioned asset URL
+to respect long-lived asset caches.
+
+The homepage uses compressed `chronicle-cover-v3` AVIF/WebP variants with the
+same artwork, dimensions, transparency and responsive sizes. The 640px AVIF is
+75,733 bytes instead of 138,779. The original v2 assets remain for other uses;
+`generate-book-cover-variants.mjs` reproduces the new delivery variants.
+
+`qa-ice-renderer.mjs` checks progressive pixel coverage on a black background,
+crack/shatter rendering, latest-frame coalescing, cleanup and worker fallback.
+`qa-ice-material.mjs` checks integration/phase timing and a single snapshot on
+390/1440/2560px. `qa-site-performance.mjs` records repeatable desktop/mobile load
+and transition observations (three runs each), CDP traces, long tasks, DOM size,
+canvas/clone operations and network resource sizes. These are lab observations,
+not aggregated real-user INP or CrUX.
