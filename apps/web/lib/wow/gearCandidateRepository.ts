@@ -7,8 +7,10 @@ import { buildGearCandidatePool, gearCandidateCatalogQuery, type CatalogGearEnti
 type ManifestEntry = { season?: string | null; status?: string; activity?: string; names?: { en?: string | null; ru?: string | null }; build?: string | null };
 
 // Auction-only public catalog facts. Prices, ownership, native variants and
-// eligibility decisions are never cached here. Match discovery's repair retry.
-const auctionFactLifetime = 60_000;
+// eligibility decisions are never cached here. Positive catalog facts survive
+// a full calculation; missing facts still follow discovery's short repair retry.
+const auctionFactLifetime = 5 * 60_000;
+const missingAuctionFactLifetime = 60_000;
 type Fact<T> = { value: T | null; expiresAt: number };
 const auctionRecords = new Map<string, Fact<CatalogRecord>>();
 const auctionEntities = new Map<string, Fact<NonNullable<Awaited<ReturnType<typeof getCatalogEntity>>>>>();
@@ -22,7 +24,7 @@ function cachedFact<T>(cache: Map<string, Fact<T>>, key: string): T | null | und
 }
 function rememberFact<T>(cache: Map<string, Fact<T>>, key: string, value: T | null, capacity: number) {
   cache.delete(key);
-  cache.set(key, { value: structuredClone(value), expiresAt: Date.now() + auctionFactLifetime });
+  cache.set(key, { value: structuredClone(value), expiresAt: Date.now() + (value === null ? missingAuctionFactLifetime : auctionFactLifetime) });
   while (cache.size > capacity) cache.delete(cache.keys().next().value!);
 }
 async function catalogDetail(id: string, locale: "en_US" | "ru_RU", signal: AbortSignal | undefined, auctionCache: boolean) {
