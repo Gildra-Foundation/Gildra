@@ -13,6 +13,7 @@ import { supportedAuctionModifiers } from "../lib/wow/gearItemModifiers.ts";
 import { assertFreshMarket } from "../lib/wow/auctionMarket.ts";
 import { auctionGearProfileFingerprint } from "../lib/wow/auctionGearFingerprint.ts";
 import { nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS } from "../lib/wow/auctionItemReference.ts";
+import { nativeGearSimulationMeasurement } from "../lib/wow/gearSimulation.ts";
 
 // All item data and measurements below are synthetic offline guard cases.
 // Execute unchanged discovery/runner code with fixed transport dependencies;
@@ -66,7 +67,7 @@ const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGear
     supportedAuctionModifiers, nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS, Date, lookupGearRecords, gearEntityDetails, getAuctionItemReferences, resolveAuctionVariants });
 const runnerSource = await readFile(new URL("../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
 const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions,snapshotAuctionGearContext,restoreAuctionGearContext})")
-  .runInNewContext({ createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery, auctionGearProfileFingerprint, validAuctionWeapon, auctionGearMechanicalCache, auctionGearMechanicalKey, resolveAuctionVariants, auctionGearVariantSelectionKey,
+  .runInNewContext({ createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery, auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, auctionGearMechanicalCache, auctionGearMechanicalKey, resolveAuctionVariants, auctionGearVariantSelectionKey,
     talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
     getCharacterAuctionMarket: async () => { contextStarts.push("market"); if (contextGate) await contextGate; return fixture.market; },
     getBattleNetSimulationSnapshot: async () => armory,
@@ -83,7 +84,8 @@ const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchF
       const changes = JSON.parse(options.body).gearChanges ?? [];
       const key = JSON.stringify(changes);
       nativeCalls.set(key, (nativeCalls.get(key) ?? 0) + 1);
-      return Response.json({ dps: 1000 + changes.reduce((sum, change) => sum + change.bonusIds[0] * 10, 0),
+      const dps = 1000 + changes.reduce((sum, change) => sum + change.bonusIds[0] * 10, 0);
+      return Response.json({ dps, dpsMean: dps,
         dpsError: 1, confidence: 95, iterations: 1000, engine: currentEngine }, { headers: { "x-gildra-engine": "simulationcraft" } });
     } });
 const signal = () => new AbortController().signal;
