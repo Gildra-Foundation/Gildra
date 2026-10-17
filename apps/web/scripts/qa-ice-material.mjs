@@ -40,7 +40,13 @@ try {
   assert.equal(await page.locator("[data-themed-transition]").getAttribute("data-phase"),"shattering");await painted("shattering");await shot("shatter");
   await page.clock.runFor(1000);assert.equal(await page.locator("[data-themed-transition]").getAttribute("data-phase"),null);
   assert.equal(await page.locator("[data-themed-transition] *").count(),0);
-  await navigate("/login");await page.clock.runFor(200);await page.keyboard.press("Escape");await page.clock.runFor(1800);
+  await navigate("/login");
+  // Real network/React commits continue independently of the fake animation
+  // clock. Cancel an already committed route here; the normal-time journey
+  // separately verifies cancellation followed by a late destination arrival.
+  await page.waitForURL(base+"/login");
+  await page.locator('[data-book-route-frame][data-route-state="idle"]').waitFor();
+  await page.clock.runFor(200);await page.keyboard.press("Escape");await page.clock.runFor(1800);
   assert.equal(await page.locator("[data-themed-transition]").getAttribute("data-phase"),null);assert.deepEqual(errors,[]);
   results.push({width,early,late,nodes,errors});await context.close();console.log(`Ice integration passed: ${width}px, worker phases, one snapshot, cancellation and cleanup.`);
  }
