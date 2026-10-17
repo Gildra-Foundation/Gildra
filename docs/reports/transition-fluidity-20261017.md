@@ -8,8 +8,9 @@ red: a 330ms UI task produced zero worker frames during the task and a 505ms gap
 v6 owns a finite animation clock in the dedicated worker. Freezing and cracking
 run as a sequence without a UI hand-off between frames. Only phase/progress
 summaries and completion reach the page, at most once per120ms plus boundaries.
-The worker stops its own loop at completion/disposal, with no idle loop. Native
-worker RAF is preferred; unavailable implementations use a finite worker timer.
+The worker stops its own loop at completion/disposal, with no idle loop. A finite ~60Hz worker timer advances from elapsed time with one pending tick.
+Native worker RAF was rejected after actual-image tests still found owner-render
+pipeline delays. Hidden documents cancel the effect, including pending capture.
 Failure still cancels or falls back without trapping navigation.
 
 The broken sheet becomes one immutable ImageBitmap for repeated cropped drawing,
@@ -30,3 +31,12 @@ will be appended when complete. Preserve content-on-shards and character-list
 scope fixes from cf238c6, plus all published auction changes.
 
 API reference: [DedicatedWorkerGlobalScope.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/DedicatedWorkerGlobalScope/requestAnimationFrame).
+
+
+The first autonomous native-RAF image f1dd647/33609b5 was rejected, never
+published: only7/12 frame-stall cases passed; desktop shattering still had roughly
+63ms frame gaps. A timestamp-only timer prototype passed6/6 desktop cases; a CDP
+screencast check also confirmed changing pictures during the UI stall. These are
+separate diagnostic prototypes, not final-image publication proof. A lower
+resolution trial did not remove the native-RAF delay and was discarded. Final
+textures keep their1024px cap; no quality budget was weakened to pass the test.

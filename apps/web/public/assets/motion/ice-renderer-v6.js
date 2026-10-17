@@ -1,5 +1,5 @@
 /* Finite, off-main-thread ice renderer. One material cache; no idle frame loop. */
-let cached, active, playback, animationFrame, animationTimer;
+let cached, active, playback, animationTimer;
 function random(seed = 491) {
   return () => { seed = Math.imul(1664525, seed) + 1013904223 | 0; return (seed >>> 0) / 4294967296; };
 }
@@ -105,8 +105,7 @@ function content({ id, bitmap }) {
 }
 function stopPlayback() {
   playback = undefined;
-  if (animationFrame !== undefined) self.cancelAnimationFrame?.(animationFrame);
-  clearTimeout(animationTimer); animationFrame = animationTimer = undefined;
+  clearTimeout(animationTimer); animationTimer = undefined;
 }
 function dispose() { stopPlayback(); active?.page?.close(); active?.brokenBitmap?.close(); active = undefined; }
 // The renderer owns its finite clock. Route rendering/serialization must never
@@ -128,12 +127,10 @@ function play({ id, phases, token }) {
       }
       program.origin = performance.now(); program.reported = -Infinity;
     }
-    // Native worker RAF follows the display. Older implementations retain a
-    // bounded worker timer, never a continuous idle loop or a parent RAF loop.
-    try {
-      if (typeof self.requestAnimationFrame !== "function") throw new Error("worker RAF unavailable");
-      animationFrame = self.requestAnimationFrame(tick);
-    } catch { animationTimer = setTimeout(tick, 16); }
+    // Worker RAF can itself wait for the owner's busy rendering pipeline.
+    // A finite ~60Hz worker timer keeps advancing without that dependency.
+    // There is one pending tick, no catch-up queue, and no loop after release.
+    animationTimer = setTimeout(tick, 16);
   };
   tick();
 }

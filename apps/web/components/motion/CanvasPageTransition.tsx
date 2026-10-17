@@ -62,7 +62,7 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
     cancel,
     start(frame, theme) {
       cancel();
-      if (lessMotion() || !host.current) return;
+      if (document.hidden || lessMotion() || !host.current) return;
       const root = host.current;
       const piece = document.createElement("div");
       piece.className = styles.outgoing;
@@ -125,18 +125,21 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
     let idle: number | undefined;
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const changed = () => { if (lessMotion()) cancel(); };
+    const visibility = () => { if (document.hidden) cancel(); };
+    document.addEventListener("visibilitychange", visibility);
     motion.addEventListener("change", changed);
     const unsubscribe = subscribeSiteMotion(changed);
     const warm = () => {
       if (document.hidden || lessMotion() || document.documentElement.dataset.siteTheme !== "arthas") return;
       if (window.requestIdleCallback) idle = window.requestIdleCallback(() => { if (!lessMotion() && !document.hidden) { warmIceMaterial(); warmPageRaster(); warmPageCapture(); } }, { timeout: 4000 });
-      else idle = window.setTimeout(() => { warmIceMaterial(); warmPageRaster(); warmPageCapture(); }, 1500);
+      else idle = window.setTimeout(() => { if (!lessMotion() && !document.hidden) { warmIceMaterial(); warmPageRaster(); warmPageCapture(); } }, 1500);
     };
     if (document.readyState === "complete") warm();
     else window.addEventListener("load", warm, { once: true });
     window.addEventListener("resize", cancel);
     return () => {
       window.removeEventListener("load", warm); window.removeEventListener("resize", cancel);
+      document.removeEventListener("visibilitychange", visibility);
       if (idle !== undefined) { window.cancelIdleCallback?.(idle); clearTimeout(idle); }
       motion.removeEventListener("change", changed); unsubscribe();
       cancel();
