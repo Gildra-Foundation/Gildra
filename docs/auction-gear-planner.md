@@ -382,7 +382,7 @@ items useful only in combinations. Assembly still maximizes measured loadout DPS
 within the budget and retains its separately confirmed incumbent. Individual
 DPS gains must never be added together to estimate a set.
 
-The first search response stops discovery after its first usable variant batch
+A fresh search's first response stops discovery after its first usable variant batch
 and performs the baseline plus at most two new native single-item comparisons.
 Subsequent automatic responses evaluate up to eight new effects; the first
 assembly evaluates up to eight new sets. Explicit assembly continuations retain
@@ -410,3 +410,6 @@ keyboard controls, 320/390/1440 layouts, cancellations and recovery). The privat
 UI runner hashes the recommendations component, selector and stylesheet along
 with the existing request/recovery components. Synthetic UI cases are never
 presented as live market evidence.
+
+The value/performance update and postdeployment public-armory verification are
+recorded in [the verified web release](reports/auction-value-speed-20261017.md).
