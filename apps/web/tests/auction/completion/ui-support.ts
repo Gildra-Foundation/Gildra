@@ -1,8 +1,9 @@
 import { test as base, expect, type Page, type Route, type TestInfo } from "playwright/test";
+import { decodeAuctionGearSelectionTransport } from "../../../lib/wow/auctionGearSelectionTransport";
 import { goldToCopper } from "../../../lib/wow/auctionMarket";
 import { assemblyResult, completedJob, scope, searchResult } from "../reliability/ui-fixtures";
 
-type Body = { action: "search" | "resume" | "assemble"; clientRequestId?: string; budgetGold?: string; searchId?: string; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; objective?: "value" | "dps"; locale?: string; selectedSlots?: string[]; scenario?: string };
+type Body = { action: "search" | "resume" | "assemble"; clientRequestId?: string; budgetGold?: string; searchId?: string; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; excludedVariantIds?: Array<[number,string]>; objective?: "value" | "dps"; locale?: string; selectedSlots?: string[]; scenario?: string };
 type Result = ReturnType<typeof searchResult> | ReturnType<typeof assemblyResult>;
 export class CompletionHarness {
   readonly language: "en" | "ru";
@@ -23,6 +24,8 @@ export class CompletionHarness {
   holdRequestRecovery = false;
   requestRecoveryMissing = false;
   cancelFailure = false;
+  holdCancel = false;
+  oversizedNext = false;
   recoveryFailure = false;
   dropAction: "resume" | "assemble" | null = null;
   conflictNext = false;
@@ -31,6 +34,7 @@ export class CompletionHarness {
   valueChoices = false;
   valueMaximum: "confirmed" | "unconfirmed" | null = null;
   aliasVariants = false;
+  canonicalVariant = false;
   manyDuplicateLots = false;
   serverVariantExclusions: string[] = [];
   private serverObjective: "value" | "dps" = "dps";
@@ -82,13 +86,14 @@ export class CompletionHarness {
   seedBusyAssembly(excludedOptionIds: string[] = []) {
     this.lastAssembly = assemblyResult(); this.seedBusyMode("assembly", excludedOptionIds);
   }
-  release() { this.holdPriorDelete = false; this.holdPost = false; this.holdContinuation = false; this.holdRecovery = false; this.holdAcceptance = false; this.holdRequestRecovery = false; for (const release of this.held.splice(0)) release(); }
+  release() { this.holdCancel = false; this.holdPriorDelete = false; this.holdPost = false; this.holdContinuation = false; this.holdRecovery = false; this.holdAcceptance = false; this.holdRequestRecovery = false; for (const release of this.held.splice(0)) release(); }
   async dispose() { this.release(); await this.page.unrouteAll({ behavior: "ignoreErrors" }); }
   private async intercept(route: Route) {
     const request = route.request(), url = new URL(request.url());
     if (request.method() === "DELETE") {
       const nonce = url.searchParams.get("clientRequestId");
-      if (nonce && this.cancelFailure) { await route.fulfill({ status: 503, json: { error: "auction_storage_unavailable" } }); return; }
+      if (this.holdCancel) await new Promise<void>(resolve => this.held.push(resolve));
+      if (this.cancelFailure) { await route.fulfill({ status: 503, json: { error: "auction_storage_unavailable" } }); return; }
       if (nonce) { this.cancelledRequests.add(nonce); this.nonceDeletes.push(nonce); }
       const id = url.searchParams.get("id") ?? this.byRequest.get(nonce ?? "") ?? "";
       if (id) { this.deletes.push(id); const job = this.jobs.get(id); if (job) job.cancelled = true; }
@@ -98,6 +103,7 @@ export class CompletionHarness {
     }
     if (request.method() === "POST") {
       const body = request.postDataJSON() as Body; this.requests.push(body);
+      if (this.oversizedNext) { this.oversizedNext = false; await route.fulfill({status:413,json:{error:"request_too_large"}}); return; }
       if (this.holdAcceptance) await new Promise<void>(resolve => this.held.push(resolve));
       if (body.clientRequestId && this.cancelledRequests.has(body.clientRequestId)) {
         const id = `completion-cancelled-${this.requests.length}`;
@@ -109,7 +115,7 @@ export class CompletionHarness {
       if (this.conflictNext) { this.conflictNext = false; await route.fulfill({ status: 409, json: { error: "plan_already_running" } }); return; }
       let result: Result;
       if (body.action === "assemble") { result = assemblyResult({ noisyMaximum: Boolean(this.valueMaximum) });
-        if (this.valueMaximum) { result.spentCopper = 500000; result.comparison.uncertainty.significant = this.valueMaximum === "confirmed"; } this.lastAssembly = result; this.serverExclusions = body.excludedOptionIds ?? []; this.serverVariantExclusions = body.excludedVariantKeys ?? []; }
+        if (this.valueMaximum) { result.spentCopper = 500000; result.comparison.uncertainty.significant = this.valueMaximum === "confirmed"; } this.lastAssembly = result; this.serverExclusions = body.excludedOptionIds ?? []; this.serverVariantExclusions = decodeAuctionGearSelectionTransport(body).excludedVariantKeys as string[] ?? []; }
       else {
         result = searchResult();
         if (body.action === "search") {
@@ -139,6 +145,7 @@ export class CompletionHarness {
             variantKey: `exact-identity-${index}`, itemLevel: index && this.excludedVariantLevels === "different" ? 120 : 100,
             stats: { ...base.stats, strength: 21, crit_rating: index ? 0 : 40, haste_rating: index ? 40 : 0 } }));
         }
+        if (this.canonicalVariant) result.items = result.items.map(item => ({ ...item, variantKey: `auction:${"a".repeat(32)}` }));
         if (this.empty) result.items = [];
         if (this.incompleteData) result.dataComplete = false;
         if (body.action === "search" && this.incompleteSearchOnce) { result.searchComplete = false; result.pendingItems = 1; this.incompleteSearchOnce = false; }

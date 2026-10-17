@@ -454,3 +454,80 @@ test("postfix fixes: new search intent survives reload while a prior job is stil
   expect(auction.requests.at(-1)).toMatchObject({ budgetGold:'333.33', scenario:'aoe', objective:'dps' });
   expect(auction.nonceDeletes).not.toContain(auction.requests.at(-1)!.clientRequestId);
 });
+
+for (const source of ["known job", "unaccepted nonce"] as const) test(`regression: rejected cancellation retains ${source}, blocks replacement POST and retries after reload`, async ({ auction, page }, info) => {
+  auction.pendingInitial = source === "known job"; auction.holdAcceptance = source === "unaccepted nonce";
+  await auction.open(); await auction.find.click(); await expect.poll(() => auction.requests.length).toBe(1);
+  if (source === "known job") await expect.poll(() => page.evaluate(() => Object.entries(sessionStorage).some(([k,v]) => k.startsWith("gildra:auction:v1:") && Boolean(JSON.parse(v).jobId)))).toBe(true);
+  const nonce = auction.requests[0].clientRequestId!;
+  auction.cancelFailure = true; await auction.panel.getByRole("button", { name: /Отменить поиск|Cancel search/ }).click();
+  const retry = auction.panel.getByRole("button", { name: /Повторить отмену|Retry cancellation/ });
+  await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled();
+  await expect(auction.panel.getByRole("alert")).toContainText(/не подтверждена|not confirmed/i);
+  let saved = await page.evaluate(() => Object.entries(sessionStorage).filter(([k]) => k.startsWith("gildra:auction:v1:")).map(([,v]) => JSON.parse(v)));
+  expect(saved).toHaveLength(1); expect(saved[0].clientRequestId).toBe(nonce); expect(saved[0].cancellationRequested).toBe(true);
+  expect(auction.requests).toHaveLength(1);
+  if (source === "known job") { await page.reload({ waitUntil: "networkidle" }); await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled(); }
+  await info.attach("unconfirmed-cancellation", { body: await page.screenshot({fullPage:true}), contentType:"image/png" });
+  auction.cancelFailure = false; await retry.focus(); await page.keyboard.press("Enter"); await expect(auction.find).toBeEnabled();
+  await auction.find.click(); auction.release(); await expect.poll(() => auction.requests.length).toBe(2);
+  expect(auction.requests[1].clientRequestId).not.toBe(nonce);
+  expect(auction.workStarted.filter(action => action === "search")).toHaveLength(source === "known job" ? 2 : 1);
+});
+
+for (const change of ["select all", "equivalent budget"] as const) test(`regression: no-op ${change} preserves completed set, exact exclusions and recovery`, async ({ auction, page }) => {
+  await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]'); await card.locator('summary').click(); await card.getByRole('checkbox').uncheck();
+  await auction.build.click(); await expect(auction.result).toBeVisible();
+  const before = await page.evaluate(() => Object.fromEntries(Object.entries(sessionStorage)));
+  if (change === "select all") { await auction.panel.locator('summary').filter({hasText:/Слоты экипировки|Equipment slots/}).click(); await auction.panel.getByRole('button',{name:/Выбрать все|Select all/,exact:true}).click(); }
+  else await auction.panel.locator('[name="budgetGold"]').fill(auction.t('10 000','10,000'));
+  await expect(auction.result).toBeVisible(); await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).not.toBeChecked();
+  expect(await page.evaluate(() => Object.fromEntries(Object.entries(sessionStorage)))).toEqual(before); expect(auction.requests).toHaveLength(2);
+  await page.reload({waitUntil:'networkidle'}); await expect(auction.result).toBeVisible(); await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).not.toBeChecked();
+});
+
+test("regression: cancellation waits for the DELETE acknowledgement before unlocking", async ({ auction, page }) => {
+ auction.pendingInitial = true; await auction.open(); await auction.find.click();
+ await expect.poll(() => page.evaluate(() => Object.entries(sessionStorage).some(([k,v]) => k.startsWith('gildra:auction:v1:') && Boolean(JSON.parse(v).jobId)))).toBe(true);
+ auction.holdCancel = true; await auction.panel.getByRole('button',{name:/Отменить поиск|Cancel search/}).click();
+ await expect(auction.find).toBeDisabled(); await expect(auction.panel.getByRole('status')).toContainText(/Подтверждаем|Confirming/);
+ expect(await page.evaluate(() => Object.entries(sessionStorage).filter(([k])=>k.startsWith('gildra:auction:v1:')).map(([,v])=>JSON.parse(v))[0].jobId)).toBe('completion-job-1');
+ auction.release(); await expect(auction.find).toBeEnabled(); await expect(auction.panel.getByRole('status')).toContainText(/отменён|cancelled/); expect(auction.requests).toHaveLength(1);
+});
+test("regression: prior scope retirement failure keeps its global owner and blocks a fresh POST", async ({ auction, page }) => {
+ await auction.open(); await page.evaluate(() => sessionStorage.setItem('gildra:auction-active:v1',JSON.stringify({characterSlug:'older-scope',locale:'en',id:'prior-held-job'})));
+ auction.cancelFailure = true; await auction.find.click(); const retry = auction.panel.getByRole('button',{name:/Повторить отмену|Retry cancellation/});
+ await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled(); expect(auction.requests).toHaveLength(0);
+ expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('gildra:auction-active:v1')!).id)).toBe('prior-held-job');
+ auction.cancelFailure = false; await retry.click(); await expect(auction.find).toBeEnabled(); await auction.search(); expect(auction.requests).toHaveLength(1); expect(auction.deletes).toContain('prior-held-job');
+});
+test("regression: actual budget changes and invalid drafts remove actionable recommendations", async ({ auction }) => {
+ await auction.open(); await auction.search(); await auction.build.click(); await expect(auction.result).toBeVisible();
+ await auction.panel.locator('[name="budgetGold"]').fill('9999'); await expect(auction.result).toHaveCount(0); await expect(auction.panel.locator('[data-auction-search-result]')).toHaveCount(0);
+ await auction.search(); expect(auction.requests.at(-1)?.budgetGold).toBe('9999');
+ await auction.panel.locator('[name="budgetGold"]').fill('invalid'); await auction.find.click(); await expect(auction.panel.getByRole('alert')).toContainText(/золот|gold/); await expect(auction.panel.locator('[data-auction-search-result]')).toHaveCount(0);
+});
+test("regression: oversized selection provides an actionable localized message", async ({ auction }) => {
+ await auction.open(); await auction.search(); auction.oversizedNext = true; await auction.build.click();
+ await expect(auction.panel.getByRole('alert')).toContainText(/Список исключений слишком велик|exclusion list is too large/);
+ await expect(auction.panel.getByRole('alert')).toContainText(/Уменьшите|Reduce/); await expect(auction.build).toBeEnabled();
+});
+
+test("regression: canonical wire exclusions stay compact while409 and reload use exact original keys", async ({ auction, page }) => {
+ auction.canonicalVariant = true; await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]'); await card.locator('summary').click(); await card.getByRole('checkbox').uncheck();
+ const key = JSON.stringify([880003,`auction:${'a'.repeat(32)}`]); auction.seedBusyAssembly(); auction.serverVariantExclusions = [key];
+ await auction.build.click(); await expect(auction.result).toBeVisible(); const sent = auction.requests.at(-1)!;
+ expect(sent.excludedVariantKeys).toEqual([]); expect(sent.excludedVariantIds).toEqual([[880003,'a'.repeat(32)]]); expect(sent.excludedOptionIds).toEqual([]);
+ expect(await page.evaluate(() => Object.entries(sessionStorage).filter(([k])=>k.startsWith('gildra:auction:v1:')).map(([,v])=>JSON.parse(v))[0].excludedVariantKeys)).toEqual([key]);
+ await page.reload({waitUntil:'networkidle'}); await expect(auction.result).toBeVisible(); await expect(auction.panel.getByRole('alert')).toHaveCount(0); await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).not.toBeChecked();
+ expect(auction.requests.filter(body=>body.action==='assemble')).toHaveLength(1);
+});
+test("regression: cancellation retry after reload preserves its existing search checkpoint and exclusions", async ({ auction, page }) => {
+ await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]'); await card.locator('summary').click(); await card.getByRole('checkbox').uncheck();
+ auction.holdAcceptance = true; await auction.build.click(); await expect.poll(()=>auction.requests.length).toBe(2); const nonce = auction.requests[1].clientRequestId!;
+ auction.cancelFailure = true; await auction.assembly.getByRole('button',{name:/Отменить сборку|Cancel assembly/}).click(); const retry = auction.panel.getByRole('button',{name:/Повторить отмену|Retry cancellation/}); await expect(retry).toBeVisible();
+ await page.reload({waitUntil:'networkidle'}); await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled(); auction.cancelFailure = false; await retry.click(); auction.release();
+ await expect(auction.panel.locator('[data-auction-search-result]')).toBeVisible(); await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).not.toBeChecked(); await expect(auction.build).toBeEnabled();
+ expect(auction.requests).toHaveLength(2); expect(auction.nonceDeletes).toContain(nonce);
+ const saved = await page.evaluate(()=>Object.entries(sessionStorage).filter(([k])=>k.startsWith('gildra:auction:v1:')).map(([,v])=>JSON.parse(v))[0]); expect(saved.searchId).toBe('synthetic-reliability-search'); expect(saved.cancellationRequested).toBeUndefined(); expect(saved.excludedVariantKeys).toHaveLength(1);
+});

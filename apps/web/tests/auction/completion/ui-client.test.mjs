@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { rememberAuctionClientRequest, rememberAuctionClientJob, releasePriorAuctionClientJob, removeAuctionClientRequest, readAuctionClientCache, writeAuctionClientCache } from '../../../lib/wow/auctionGearClient.ts';
+import { hasPendingAuctionClientJob, rememberAuctionClientRequest, rememberAuctionClientJob, releasePriorAuctionClientJob, removeAuctionClientRequest, readAuctionClientCache, writeAuctionClientCache } from '../../../lib/wow/auctionGearClient.ts';
 const storage=new Map(),calls=[],cases=[];
 globalThis.sessionStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
 const scope={characterSlug:'synthetic-cancel-character',locale:'en'},nonce='synthetic-before-admission-nonce';
@@ -38,4 +38,13 @@ for(const patch of [{budgetGold:'-1'},{budgetGold:'100000000'},{budgetGold:'NaN'
  assert.equal(readAuctionClientCache(cacheKey),null,'Invalid cached form intent must not be restored');
 }
 cases.push('pending search intent is bounded, whitelisted and rejects invalid budget, objective, scenario, locale and slots');
+writeAuctionClientCache(cacheKey,{...legacy,jobId:'still-owned',clientRequestId:nonce,cancellationRequested:true});
+assert.equal(readAuctionClientCache(cacheKey)?.cancellationRequested,true);
+assert.equal(readAuctionClientCache(cacheKey)?.jobId,'still-owned');
+assert.equal(readAuctionClientCache(cacheKey)?.clientRequestId,nonce);
+for(const value of ['yes',1,null]) { writeAuctionClientCache(cacheKey,{...legacy,cancellationRequested:value});assert.equal(readAuctionClientCache(cacheKey),null); }
+cases.push('unacknowledged cancellation retains exact recovery handles across reload; malformed cancellation intent rejected');
+rememberAuctionClientJob(scope,'unconfirmed-owner'); status=503;await releasePriorAuctionClientJob();assert.equal(hasPendingAuctionClientJob(),true);
+status=200;await releasePriorAuctionClientJob();assert.equal(hasPendingAuctionClientJob(),false);
+cases.push('unacknowledged global retirement is detectable until its owned DELETE succeeds');
 console.log(JSON.stringify({status:'passed',cases}));

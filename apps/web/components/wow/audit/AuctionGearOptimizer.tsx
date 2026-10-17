@@ -4,12 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { AuctionGearJob } from "@/lib/wow/auctionGearJobs";
 import type { AuctionGearAssemblyResult, AuctionGearSearchResult, AuctionPlanProgress } from "@/lib/wow/auctionGearTypes";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "@/lib/wow/auctionGearSelection";
+import { encodeAuctionGearSelectionTransport } from "@/lib/wow/auctionGearSelectionTransport";
 import { normalizeAuctionBudgetGold } from "@/lib/wow/auctionGearBudget";
 import { auctionGearVariantSelectionKey } from "@/lib/wow/auctionGearExclusions";
 import { getAuctionGearRecommendationGroups } from "@/lib/wow/auctionGearRecommendations";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientJobUrl, auctionClientRequestUrl, fetchAuctionClientResult,
-  forgetAuctionClientJob, forgetAuctionClientRequest, readAuctionClientCache, parseAuctionClientFormIntent, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
+  forgetAuctionClientJob, forgetAuctionClientRequest, hasPendingAuctionClientJob, readAuctionClientCache, parseAuctionClientFormIntent, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
   removeAuctionClientJob, removeAuctionClientRequest, retireAuctionClient, waitForAuctionClientRetirement, writeAuctionClientCache,
   type AuctionClientCache } from "@/lib/wow/auctionGearClient";
 import { auctionGearServiceMessage } from "@/lib/wow/auctionGearCopy";
@@ -62,6 +63,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const [retryJob, setRetryJob] = useState<{ id: string; mode: Mode } | null>(null);
   const [hasRecovery, setHasRecovery] = useState(false);
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  const [cancellation, setCancellation] = useState<"pending" | "failed" | null>(null);
+  const cancelling = useRef<Promise<boolean> | null>(null);
+  const restoreAfterCancellation = useRef(false);
   const [transport, setTransport] = useState<Transport | null>(null);
   const active = useRef<ActiveRequest | null>(null);
   const recoveryController = useRef<AbortController | null>(null);
@@ -72,7 +76,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const theme = getTalentSpecTheme(specializationSlug);
   const supported = theme && ["melee", "ranged"].includes(theme.role);
   const running = transport?.status === "starting" || transport?.status === "queued" || transport?.status === "running";
-  const formLocked = initializing || running;
+  const formLocked = initializing || running || Boolean(cancellation);
   const numeric = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2 });
   const signed = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2, signDisplay: "exceptZero" });
   const gold = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 4 });
@@ -81,7 +85,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const slotName = (slot: string) => slotNames[slot]?.[ru ? 0 : 1] ?? slot;
   const recommendationGroups = useMemo(() => getAuctionGearRecommendationGroups(search?.items ?? []), [search]);
   const available = search?.items.filter(item => !excluded.has(item.optionId) && !excludedVariantKeys.has(auctionGearVariantSelectionKey(item))) ?? [];
-  const selectionLocked = Boolean(running && transport?.mode !== "search");
+  const selectionLocked = Boolean(cancellation || running && transport?.mode !== "search");
   const measuredSignificant = Boolean(assembly && assembly.comparison.deltaDps > 0 && assembly.comparison.uncertainty.significant);
   const confirmed = assembly?.bestConfirmed ?? (measuredSignificant ? assembly : null);
   const displayed = confirmed ?? assembly;
@@ -154,6 +158,11 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       if (intent?.characterSlug === characterSlug && intent.locale === locale) {
         setBudget(intent.budgetGold); setScenario(intent.scenario); setObjective(intent.objective); setSelectedSlots(intent.selectedSlots);
       }
+      if (saved.cancellationRequested) {
+        restoreAfterCancellation.current = Boolean(saved.searchId);
+        setExcluded(new Set(saved.excludedOptionIds)); setExcludedVariantKeys(new Set(saved.excludedVariantKeys ?? []));
+        await cancel(); return;
+      }
       if (saved.jobId && !saved.searchId) { setExcluded(new Set(saved.excludedOptionIds)); setExcludedVariantKeys(new Set(saved.excludedVariantKeys ?? [])); await runRef.current?.({ action: "poll", id: saved.jobId }, saved.mode); return; }
       if (!saved.searchId && !saved.clientRequestId) return;
       recoveryController.current = controller;
@@ -182,12 +191,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
             setSelectedSlots(parseAuctionGearSlots(previous.search.selectedSlots));
             setAssemblyStale(true); setMarketStale(true);
             if (selectionChanged) {
-              await removeAuctionClientJob(job.id);
-              if (!mounted || controller.signal.aborted) return;
-              forgetAuctionClientRequest(saved.clientRequestId);
-              cache.current = { ...saved, jobId: undefined, clientRequestId: undefined };
-              writeAuctionClientCache(cacheKey, cache.current);
-              setHasRecovery(false); setTransport({ mode: "search", status: "completed", progress: null, error: null });
+              remember({ jobId: job.id });
+              await cancel();
               return;
             }
           }
@@ -216,7 +221,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         setSelectedSlots(parseAuctionGearSlots(result.search.selectedSlots));
         setTransport({ mode: "search", status: "completed", progress: null, error: null });
         if (result.activeJob && !selectionChanged) await runRef.current?.({ action: "poll", id: result.activeJob.id }, result.activeJob.mode ?? result.activeJob.result?.kind ?? saved.mode);
-        else if (result.activeJob) await removeAuctionClientJob(result.activeJob.id);
+        else if (result.activeJob) { remember({ jobId: result.activeJob.id }); await cancel(); }
         else if (saved.jobId) forgetAuctionClientJob(saved.jobId);
       } catch (error) {
         if (!mounted || controller.signal.aborted) return;
@@ -292,7 +297,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     setRetryJob(null); setHasRecovery(false); cache.current = null; writeAuctionClientCache(cacheKey, null);
   }
   async function run(initial: RequestBody, mode: Mode) {
-    if (active.current) return;
+    if (active.current || cache.current?.cancellationRequested) return;
     let finish!: () => void;
     const request: ActiveRequest = { mode, controller: new AbortController(), done: new Promise(resolve => { finish = resolve; }), finish: () => finish() };
     const cleanup = waitForAuctionClientRetirement();
@@ -313,7 +318,10 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       }
       // A new action waits for cancellation cleanup, including a late POST ID.
       await cleanup;
-      if (body.action !== "poll") await releasePriorAuctionClientJob();
+      if (body.action !== "poll") {
+        await releasePriorAuctionClientJob();
+        if (hasPendingAuctionClientJob()) throw new Error("plan_cancellation_unconfirmed");
+      }
       while (active.current === request && !request.controller.signal.aborted) {
         const onReconnect = () => {
           if (active.current === request) setTransport(previous => ({ mode, status: "running", progress: previous?.progress ?? null, error: "plan_reconnecting" }));
@@ -329,7 +337,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           remember({ mode, clientRequestId: body.clientRequestId });
           rememberAuctionClientRequest({ characterSlug, locale }, body.clientRequestId!);
           const response = await fetch("/api/wow/auction-gear-plans", {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(encodeAuctionGearSelectionTransport(body)),
             // Keep receiving the created ID after cancellation or unmount.
             signal: AbortSignal.timeout(30_000),
           });
@@ -409,9 +417,22 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       }
     } catch (reason) {
       if (active.current === request && !request.controller.signal.aborted) {
+        if (reason instanceof Error && reason.message === "plan_cancellation_unconfirmed") {
+          remember({ cancellationRequested: true }); setCancellation("failed");
+          setTransport({ mode, status: "failed", progress: null, error: reason.message });
+          return;
+        }
         if (reason instanceof AuctionClientError && reason.reconnect && request.id) {
           setRetryJob({ id: request.id, mode });
-        } else if (request.id) { await removeAuctionClientJob(request.id); remember({ jobId: undefined, clientRequestId: undefined }); }
+        } else if (request.id) {
+          const removed = await removeAuctionClientJob(request.id);
+          if (!removed?.ok && removed?.status !== 404) {
+            remember({ cancellationRequested: true }); setCancellation("failed");
+            setTransport({ mode, status: "failed", progress: null, error: "plan_cancellation_unconfirmed" });
+            return;
+          }
+          remember({ jobId: undefined, clientRequestId: undefined });
+        }
         const pendingInitial = Boolean(!request.id && cache.current?.clientRequestId);
         if (pendingInitial) setHasRecovery(true);
         if (active.current === request && !request.controller.signal.aborted) {
@@ -425,7 +446,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   }
   useEffect(() => { runRef.current = run; });
   function startSearch() {
-    if (initializing || active.current) return;
+    if (initializing || active.current || cache.current?.cancellationRequested) return;
     try {
       const budgetGold = normalizeAuctionBudgetGold(budget, locale);
       const slots = parseAuctionGearSlots(selectedSlots);
@@ -435,35 +456,63 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       setTransport({ mode: "search", status: "failed", progress: null, error: reason instanceof Error ? reason.message : "invalid_plan_request" });
     }
   }
-  function startAssembly() {
-    if (!search || !available.length) return;
+  async function startAssembly() {
+    if (!search || !available.length || cache.current?.cancellationRequested) return;
     if (active.current) {
       if (active.current.mode !== "search") return;
       // Reuse the existing cancellation/retirement barrier: the assembly POST
       // waits until the owned discovery job has been retired on the server.
-      cancel();
+      if (!await cancel()) return;
     }
     if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
     if (retryJob?.mode === "assembly") { void run({ action: "poll", id: retryJob.id }, "assembly"); return; }
     void run({ action: "assemble", searchId: search.searchId, excludedOptionIds: [...excluded], excludedVariantKeys: [...excludedVariantKeys] }, "assembly");
   }
-  function cancel() {
+  async function cancel(): Promise<boolean> {
+    if (cancelling.current) return cancelling.current;
     const current = active.current;
-    if (!current) {
-      const recovery = recoveryController.current;
-      if (!recovery) return;
-      recoveryController.current = null; recovery.abort();
-      retireAuctionClient(cache.current?.clientRequestId ? removeAuctionClientRequest(cache.current.clientRequestId, { characterSlug, locale }) : releasePriorAuctionClientJob());
-      setRetryJob(null); setHasRecovery(false); remember({ jobId: undefined, clientRequestId: undefined });
-      setTransport({ mode: cache.current?.mode ?? "search", status: "cancelled", progress: null, error: null });
-      return;
-    }
-    active.current = null;
-    current.controller.abort();
-    const deletion = current.id ? removeAuctionClientJob(current.id) : cache.current?.clientRequestId ? removeAuctionClientRequest(cache.current.clientRequestId, { characterSlug, locale }) : Promise.resolve();
-    retireAuctionClient(current.done, deletion);
-    setRetryJob(null); remember({ jobId: undefined, clientRequestId: undefined });
-    setTransport({ mode: current.mode, status: "cancelled", progress: null, error: null });
+    const mode = current?.mode ?? cache.current?.mode ?? "search";
+    const ownedId = current?.id ?? cache.current?.jobId;
+    const nonce = cache.current?.clientRequestId;
+    active.current = null; current?.controller.abort();
+    const recovery = recoveryController.current;
+    recoveryController.current = null; recovery?.abort();
+    // The handles remain recoverable until the server acknowledges retirement.
+    remember({ cancellationRequested: true });
+    setCancellation("pending"); setRetryJob(null); setHasRecovery(false);
+    setTransport({ mode, status: "starting", progress: null, error: "plan_cancelling" });
+    const generation = mountGeneration.current;
+    const work = (async () => {
+      let acknowledged = true;
+      if (ownedId || nonce) {
+        const response = ownedId ? await removeAuctionClientJob(ownedId) : await removeAuctionClientRequest(nonce!, { characterSlug, locale });
+        acknowledged = Boolean(response?.ok || ownedId && response?.status === 404);
+      }
+      // A different scope may have left the globally owned job awaiting cleanup.
+      if (acknowledged && hasPendingAuctionClientJob()) {
+        await releasePriorAuctionClientJob();
+        acknowledged = !hasPendingAuctionClientJob();
+      }
+      if (mountGeneration.current !== generation) return acknowledged;
+      if (acknowledged) {
+        if (nonce) forgetAuctionClientRequest(nonce);
+        remember({ jobId: undefined, clientRequestId: undefined, cancellationRequested: undefined });
+        setCancellation(null); setTransport({ mode, status: "cancelled", progress: null, error: null });
+        if (restoreAfterCancellation.current) {
+          restoreAfterCancellation.current = false;
+          setRecoveryAttempt(value => value + 1);
+        }
+      } else {
+        setCancellation("failed");
+        setTransport({ mode, status: "failed", progress: null, error: "plan_cancellation_unconfirmed" });
+      }
+      return acknowledged;
+    })();
+    cancelling.current = work;
+    // A successful nonce cancellation is durable even before a late POST arrives.
+    // The next POST still waits for its late acknowledgement/ID cleanup.
+    retireAuctionClient(...(current ? [current.done] : []), work);
+    try { return await work; } finally { if (cancelling.current === work) cancelling.current = null; }
   }
   function setAllowed(optionId: string, value: boolean) {
     const item = search?.items.find(item => item.optionId === optionId);
@@ -476,15 +525,13 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     changeExclusions(next, variants);
   }
   function changeExclusions(next: Set<string>, variants = excludedVariantKeys) {
-    // Editing already measured choices pauses discovery and retains the same
-    // retirement barrier used by assembly, including late POST acceptance.
-    if (active.current?.mode === "assembly") return;
-    if (active.current?.mode === "search" || recoveryController.current) cancel();
-    if (retryJob) retireAuctionClient(removeAuctionClientJob(retryJob.id));
-    else if (hasRecovery && cache.current?.clientRequestId) retireAuctionClient(removeAuctionClientRequest(cache.current.clientRequestId, { characterSlug, locale }));
-    setRetryJob(null); setHasRecovery(false); setExcluded(next); setExcludedVariantKeys(variants);
-    remember({ excludedOptionIds: [...next], excludedVariantKeys: [...variants], jobId: undefined, clientRequestId: undefined });
-    setAssembly(null); setTransport(null);
+    if (active.current?.mode === "assembly" || cancellation) return;
+    const needsCancellation = Boolean(active.current?.mode === "search" || recoveryController.current || retryJob || hasRecovery);
+    if (needsCancellation) void cancel();
+    setExcluded(next); setExcludedVariantKeys(variants);
+    remember({ excludedOptionIds: [...next], excludedVariantKeys: [...variants] });
+    setAssembly(null);
+    if (!needsCancellation) { setRetryJob(null); setHasRecovery(false); setTransport(null); }
   }
   function setLotAllowed(auctionId: number, value: boolean) {
     const next = new Set(excluded);
@@ -499,7 +546,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     changeExclusions(new Set(), variants);
   }
   function continueSearch() {
-    if (!search || active.current) return;
+    if (!search || active.current || cache.current?.cancellationRequested) return;
     if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
     void run({ action: "resume", searchId: search.searchId }, "search");
   }
@@ -511,11 +558,12 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     : transport?.mode === "assembly" ? t("Проверяем совместимые комплекты…", "Comparing compatible loadouts…")
     : t("Рассчитываем DPS каждой замены…", "Calculating DPS for each replacement…");
   const feedback = (mode: Mode) => transport?.mode !== mode ? null : <>
-    {running ? <p role="status" className={styles.note}>{transport.error === "plan_reconnecting" ? failureText(transport.error) : progressText}{progress ? ` ${number(progress.completed)} / ${number(progress.total)}` : ""}</p> : null}
+    {running ? <p role="status" className={styles.note}>{["plan_reconnecting", "plan_cancelling"].includes(transport.error ?? "") ? failureText(transport.error) : progressText}{progress ? ` ${number(progress.completed)} / ${number(progress.total)}` : ""}</p> : null}
     {transport.status === "failed" ? <p role="alert" className={styles.feedback}>{failureText(transport.error)}</p> : null}
     {transport.status === "cancelled" ? <p role="status" className={styles.note}>{search ? t("Расчёт остановлен. Полученные результаты сохранены.", "Calculation stopped. Available results have been kept.") : t("Поиск отменён.", "Search cancelled.")}</p> : null}
-    {transport.status === "failed" && retryJob ? <button type="button" className={styles.button} onClick={() => void run({ action: "poll", id: retryJob.id }, retryJob.mode)}>{t("Повторить подключение", "Reconnect to calculation")}</button> : null}
-    {transport.status === "failed" && !retryJob && hasRecovery ? <button type="button" className={styles.button} onClick={() => setRecoveryAttempt(value => value + 1)}>{t("Повторить восстановление", "Retry recovery")}</button> : null}
+    {transport.status === "failed" && cancellation === "failed" ? <button type="button" className={styles.button} onClick={() => void cancel()}>{t("Повторить отмену", "Retry cancellation")}</button> : null}
+    {transport.status === "failed" && !cancellation && retryJob ? <button type="button" className={styles.button} onClick={() => void run({ action: "poll", id: retryJob.id }, retryJob.mode)}>{t("Повторить подключение", "Reconnect to calculation")}</button> : null}
+    {transport.status === "failed" && !cancellation && !retryJob && hasRecovery ? <button type="button" className={styles.button} onClick={() => setRecoveryAttempt(value => value + 1)}>{t("Повторить восстановление", "Retry recovery")}</button> : null}
   </>;
   const significantGain = Boolean(confirmed);
   const incompleteData = Boolean(search && (search.dataComplete === false || search.coverage.unsupportedModifierLots > 0 ||
@@ -530,7 +578,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     <header><small>{t("АУКЦИОН СЕРВЕРА", "REALM AUCTION HOUSE")}</small><h2 id="auction-gear-title">{t("Найти вещи под бюджет", "Find gear within your budget")}</h2><p>{t("Выгодные улучшения с аукциона и совместимый сет в вашем бюджете.", "Good-value auction upgrades and a compatible loadout within your budget.")}</p></header>
     {!supported ? <p>{messages.damage_specialization_required}</p> : <form onSubmit={event => { event.preventDefault(); startSearch(); }}>
       <div className={styles.controls}>
-        <label>{t("Бюджет, золото", "Budget, gold")}<input name="budgetGold" inputMode="decimal" value={budget} onChange={event => { setBudget(event.target.value); invalidate(); }} disabled={formLocked} required aria-describedby="auction-budget-help" /></label>
+        <label>{t("Бюджет, золото", "Budget, gold")}<input name="budgetGold" inputMode="decimal" value={budget} onChange={event => { const next = event.target.value; setBudget(next);
+          try { if (normalizeAuctionBudgetGold(next, locale) === normalizeAuctionBudgetGold(budget, locale)) return; } catch { /* An invalid draft must not keep actionable recommendations. */ }
+          invalidate(); }} disabled={formLocked} required aria-describedby="auction-budget-help" /></label>
         <label>{t("Сценарий", "Encounter")}<select value={scenario} onChange={event => { setScenario(event.target.value); invalidate(); }} disabled={formLocked}>
           <option value="single-target">{t("Одна цель · 120 секунд", "Single target · 120 seconds")}</option><option value="aoe">{t("5 целей · 60 секунд", "5 targets · 60 seconds")}</option><option value="execute">{t("Короткий бой · 90 секунд", "Short fight · 90 seconds")}</option>
         </select></label>
@@ -539,11 +589,11 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       <div className={styles.controls}><label>{t("Цель подбора", "Selection objective")}<select name="objective" value={objective} onChange={event => { setObjective(event.target.value as "value" | "dps"); invalidate(); }} disabled={formLocked}><option value="value">{t("Цена / прирост DPS", "Price / DPS gain")}</option><option value="dps">{t("Максимум DPS", "Maximum DPS")}</option></select></label></div>
       <fieldset className={styles.slotFieldset} disabled={formLocked}>
         <legend>{t("Какие слоты искать", "Equipment slots to search")}</legend>
-        <div className={styles.selectionActions}><button className={styles.button} type="button" onClick={() => { setSelectedSlots([...auctionGearSlots]); invalidate(); }}>{t("Выбрать все", "Select all")}</button><button className={styles.button} type="button" onClick={() => { setSelectedSlots([]); invalidate(); }}>{t("Снять выбор", "Clear selection")}</button></div>
+        <div className={styles.selectionActions}><button className={styles.button} type="button" onClick={() => { if (sameSelection(selectedSlots, auctionGearSlots)) return; setSelectedSlots([...auctionGearSlots]); invalidate(); }}>{t("Выбрать все", "Select all")}</button><button className={styles.button} type="button" onClick={() => { if (!selectedSlots.length) return; setSelectedSlots([]); invalidate(); }}>{t("Снять выбор", "Clear selection")}</button></div>
         <div className={styles.slots}>{auctionGearSlots.map(slot => <label key={slot}><input type="checkbox" name="selectedSlots" value={slot} checked={selectedSlots.includes(slot)} onChange={event => { setSelectedSlots(previous => event.target.checked ? auctionGearSlots.filter(value => value === slot || previous.includes(value)) : previous.filter(value => value !== slot)); invalidate(); }} /><span>{slotName(slot)}</span></label>)}</div>
       </fieldset></details>
       <p id="auction-budget-help" className={styles.note}>{t("Цены указаны за целый лот.", "Prices cover whole lots.")}</p>
-      <div className={styles.actions}><button className={styles.button} type="submit" disabled={formLocked}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</button>{search ? <a className={styles.returnToAssembly} href="#auction-assembly">{t("К сборке сета", "Build a loadout")}</a> : null}{running && (transport?.mode === "search" || !search) ? <button className={styles.button} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}</div>
+      <div className={styles.actions}><button className={styles.button} type="submit" disabled={formLocked}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</button>{search ? <a className={styles.returnToAssembly} href="#auction-assembly">{t("К сборке сета", "Build a loadout")}</a> : null}{!cancellation && running && (transport?.mode === "search" || !search) ? <button className={styles.button} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}</div>
       {!search ? <p id="auction-assembly-start-help" className={styles.note}>{t("Сначала запустите поиск вещей. Затем можно проверить их сочетания и собрать совместимый сет в пределах бюджета.", "Search for gear first, then compare combinations and build a compatible loadout within your budget.")}</p> : null}
     </form>}
     {feedback("search")}
@@ -559,8 +609,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       {search.coverage.catalogUnmatchedItemIds > 0 ? <p className={styles.note}>{t(`Для ${number(search.coverage.catalogUnmatchedItemIds)} предметов с рынка в каталоге не определён тип. Неизвестно, могут ли они быть экипировкой.`, `The catalog has no item type for ${number(search.coverage.catalogUnmatchedItemIds)} market items. Whether these can be equipment is unknown.`)}</p> : null}
       {search.coverage.eligibilityUnverifiedItems > 0 ? <p className={styles.note}>{t("Предметов с неподтверждёнными требованиями или совместимостью", "Items with unverified requirements or compatibility")}: {number(search.coverage.eligibilityUnverifiedItems)}. {t("Они не участвуют в подборе, поэтому вывод по рынку неполный.", "They are excluded from selection, so market coverage is incomplete.")}</p> : null}
       </details> : null}
-      {!search.searchComplete && !running ? <button className={styles.button} type="button" onClick={continueSearch}>{t("Продолжить проверку вещей", "Continue item comparisons")}</button> : null}
-      {search.searchComplete && (incompleteData || discoveryIncomplete) ? <div><button className={styles.button} type="button" disabled={running} onClick={continueSearch}>{t("Обновить варианты", "Refresh options")}</button><p className={styles.note}>{t("Если недостающие варианты ещё не появились, попробуйте обновить их позже.", "If missing options have not appeared yet, try refreshing again later.")}</p></div> : null}
+      {!search.searchComplete && !running && !cancellation ? <button className={styles.button} type="button" onClick={continueSearch}>{t("Продолжить проверку вещей", "Continue item comparisons")}</button> : null}
+      {search.searchComplete && (incompleteData || discoveryIncomplete) ? <div><button className={styles.button} type="button" disabled={running || Boolean(cancellation)} onClick={continueSearch}>{t("Обновить варианты", "Refresh options")}</button><p className={styles.note}>{t("Если недостающие варианты ещё не появились, попробуйте обновить их позже.", "If missing options have not appeared yet, try refreshing again later.")}</p></div> : null}
       {recommendationGroups.length ? <>
         <p className={styles.note}>{t("Меньше золота за +1 DPS — выгоднее покупка. По кнопке — до двух альтернатив на слот.", "Lower gold per +1 DPS means better value. Open up to two alternatives for each slot.")}</p>
         {running && transport?.mode === "search" ? <p className={styles.note}>{t("Выбор можно менять сейчас: поиск остановится и сохранит найденные варианты.", "You can edit choices now: discovery will pause and keep the options already found.")}</p> : null}
@@ -568,7 +618,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       </> : <p role="status" className={styles.empty}>{search.searchComplete && !discoveryIncomplete && !incompleteData ? t("Подтверждённых улучшений по отдельности не найдено. Сборка сета всё ещё может найти прирост от сочетания вещей.", "No individual upgrades were confirmed. Loadout assembly can still find a gain from combining items.") : t("В проверенной части рынка улучшений по отдельности пока нет. Поиск или проверка данных ещё не завершены; это не окончательный вывод по аукциону.", "No individual upgrades have been confirmed in the verified part of the market yet. Discovery or data verification is incomplete; this is not a final conclusion about the auction house.")}</p>}
         <section id="auction-assembly" tabIndex={-1} className={styles.assembly} aria-labelledby="auction-assembly-title" data-auction-assembly>
           <h3 id="auction-assembly-title">{t("Собрать сет под бюджет", "Build a loadout within budget")}</h3><p className={styles.note}>{(search.objective ?? "dps") === "value" ? t("Подбираем наименьшую цену за подтверждённый прирост DPS всего сета. Иногда выгоднее одна замена и часть бюджета остаётся. Лимит покупок", "Find the lowest price per confirmed DPS gained by the whole loadout. Sometimes one replacement offers better value and leaves budget unspent. Purchase limit") : t("Подбираем наибольший подтверждённый DPS в пределах бюджета. Лимит покупок", "Find the highest confirmed DPS within budget. Purchase limit")} <strong>{money(search.budgetCopper)}</strong>.</p>
-          <div className={styles.actions}><button className={`${styles.button} ${styles.primaryButton}`} type="button" disabled={selectionLocked || !available.length} aria-describedby={!available.length ? "auction-assembly-disabled-reason" : undefined} onClick={startAssembly}>{running && transport?.mode === "assembly" ? t("Собираем сет…", "Building loadout…") : assembly?.exhaustiveComplete ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : assembly ? t("Продолжить сборку сета", "Continue loadout assembly") : t("Собрать сет под бюджет", "Build a loadout within budget")}</button>{running && transport?.mode === "assembly" ? <button className={styles.button} type="button" onClick={cancel}>{t("Отменить сборку", "Cancel assembly")}</button> : null}</div>
+          <div className={styles.actions}><button className={`${styles.button} ${styles.primaryButton}`} type="button" disabled={selectionLocked || !available.length} aria-describedby={!available.length ? "auction-assembly-disabled-reason" : undefined} onClick={startAssembly}>{running && transport?.mode === "assembly" ? t("Собираем сет…", "Building loadout…") : assembly?.exhaustiveComplete ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : assembly ? t("Продолжить сборку сета", "Continue loadout assembly") : t("Собрать сет под бюджет", "Build a loadout within budget")}</button>{!cancellation && running && transport?.mode === "assembly" ? <button className={styles.button} type="button" onClick={cancel}>{t("Отменить сборку", "Cancel assembly")}</button> : null}</div>
           {!available.length ? <p id="auction-assembly-disabled-reason" data-assembly-disabled-reason className={styles.note}>{search.items.length ? t("Все найденные варианты исключены. Разрешите вариант в карточке или восстановите исключённые варианты ниже.", "All discovered options are excluded. Allow a variant in its card or restore excluded variants below.") : t("Проверенных доступных вариантов для сборки пока нет.", "No verified, available options have been found for assembly yet.")}</p> : null}
           <details className={styles.calculation}><summary>{t("Настроить варианты для сета", "Loadout options")}</summary>
           {search.items.length ? <div className={styles.selectionActions}><button className={styles.button} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(true)}>{t("Разрешить все варианты", "Allow all options")}</button><button className={styles.button} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(false)}>{t("Исключить все варианты", "Exclude all options")}</button></div> : null}

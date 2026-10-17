@@ -22,7 +22,7 @@ export function parseAuctionClientFormIntent(input: unknown): AuctionClientFormI
   } catch { return null; }
 }
 export type AuctionClientScope = { characterSlug: string; locale: "ru" | "en" };
-export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; formIntent?: AuctionClientFormIntent };
+export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; cancellationRequested?: boolean; formIntent?: AuctionClientFormIntent };
 const activeKey = "gildra:auction-active:v1";
 let retiring: Promise<unknown> = Promise.resolve();
 
@@ -39,12 +39,12 @@ export function readAuctionClientCache(key: string): AuctionClientCache | null {
   try {
     const value = JSON.parse(sessionStorage.getItem(key) ?? "null") as Partial<AuctionClientCache> | null;
     const formIntent = value?.formIntent === undefined ? undefined : parseAuctionClientFormIntent(value.formIntent);
-    return (value?.formIntent === undefined || formIntent !== null) && value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
+    return (value?.formIntent === undefined || formIntent !== null) && (value?.cancellationRequested === undefined || typeof value.cancellationRequested === "boolean") && value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
       (value.mode === "search" || value.mode === "assembly") && Array.isArray(value.excludedOptionIds) &&
       value.excludedOptionIds.length <= 20000 && value.excludedOptionIds.every(identity) &&
       (value.excludedVariantKeys === undefined || Array.isArray(value.excludedVariantKeys) && value.excludedVariantKeys.length <= 20000 && value.excludedVariantKeys.every(key => typeof key === "string" && key.length > 0 && key.length <= 240))
       ? { version: 1, profileKey: value.profileKey, searchId: identity(value.searchId) ? value.searchId : undefined,
-        jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)], excludedVariantKeys: [...new Set(value.excludedVariantKeys ?? [])], ...(formIntent ? { formIntent } : {}) } : null;
+        jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)], excludedVariantKeys: [...new Set(value.excludedVariantKeys ?? [])], ...(formIntent ? { formIntent } : {}), ...(value.cancellationRequested ? { cancellationRequested: true } : {}) } : null;
   } catch { return null; }
 }
 export function writeAuctionClientCache(key: string, value: AuctionClientCache | null) {
@@ -77,6 +77,13 @@ export function removeAuctionClientRequest(clientRequestId: string, scope: Aucti
     if (response.ok) forgetAuctionClientRequest(clientRequestId);
     return response;
   }).catch(() => undefined);
+}
+/** A retained valid handle means retirement is not yet acknowledged. */
+export function hasPendingAuctionClientJob() {
+  try {
+    const prior = JSON.parse(sessionStorage.getItem(activeKey) ?? "null");
+    return identity(prior?.id) || requestIdentity(prior?.clientRequestId) && identity(prior.characterSlug) && (prior.locale === "ru" || prior.locale === "en");
+  } catch { return false; }
 }
 export async function releasePriorAuctionClientJob() {
   try {

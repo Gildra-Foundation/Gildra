@@ -1,6 +1,9 @@
 /** Fixed public transport/service messages; upstream error text is never displayed. */
 export function auctionGearServiceMessage(error: string, ru: boolean): string | undefined {
   const messages: Record<string, [string, string]> = {
+    plan_cancelling: ["Подтверждаем остановку расчёта…", "Confirming cancellation…"],
+    plan_cancellation_unconfirmed: ["Отмена расчёта не подтверждена. Повторите отмену; новый расчёт пока недоступен.", "Cancellation is not confirmed. Retry cancellation before starting another calculation."],
+    request_too_large: ["Список исключений слишком велик. Уменьшите число исключений и повторите сборку.", "The exclusion list is too large. Reduce the exclusions and retry assembly."],
     market_busy: ["Сервис аукциона занят. Подождите немного и повторите поиск.", "The auction market service is busy. Wait briefly and try again."],
     market_rate_limited: ["Сервис аукциона ограничил запросы. Подождите минуту и повторите поиск.", "The auction market service is rate limited. Wait a minute and try again."],
     market_unavailable: ["Не удалось загрузить рынок аукциона. Повторите позже.", "The auction market could not be loaded. Try again later."],
