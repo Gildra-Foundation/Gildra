@@ -26,6 +26,11 @@ export function transitionSnapshot(frame: HTMLElement, className: string) {
   };
   const viewport = document.createElement("div");
   viewport.className = className;
+  // RouteTransitionGate changes its atlas scope when the destination is home.
+  // The outgoing copy must keep its own scope until the ice has left, otherwise
+  // its inherited tokens/fonts disappear and the frozen page reflows mid-turn.
+  const scope = frame.closest<HTMLElement>(".workspace-content");
+  if (scope) viewport.classList.add(...scope.classList);
   viewport.style.cssText = `position:absolute;inset:0;overflow:hidden;width:${innerWidth}px;height:${innerHeight}px`;
   const capture = (source: HTMLElement) => {
     const copy = visibleCopy(source) as HTMLElement | null;

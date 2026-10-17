@@ -13,12 +13,24 @@ export function iceRandom(seed = 73) {
 
 export function iceFracture(width: number, height: number) {
   const random = iceRandom();
-  const columns = Math.max(2, Math.min(6, Math.round(Math.sqrt(18 * width / height))));
-  const rows = Math.ceil(18 / columns);
-  const seeds: IcePoint[] = Array.from({ length: columns * rows }, (_, index) => [
-    (index % columns + .2 + random() * .6) * width / columns,
-    (Math.floor(index / columns) + .2 + random() * .6) * height / rows,
-  ]);
+  // A crushed pressure point surrounded by larger, uneven plates. Best-candidate
+  // sampling avoids the visible rows/columns of a jittered rectangular grid.
+  const pressure: IcePoint = [width * .63, height * .31];
+  const seeds: IcePoint[] = [pressure];
+  for (let i = 0; i < 4; i++) {
+    const angle = (i + .2 + random() * .35) * Math.PI / 2;
+    const reach = Math.min(width, height) * (.075 + random() * .045);
+    seeds.push([pressure[0] + Math.cos(angle) * reach, pressure[1] + Math.sin(angle) * reach]);
+  }
+  while (seeds.length < 18) {
+    let best: IcePoint = [0, 0], clearance = -1;
+    for (let i = 0; i < 48; i++) {
+      const candidate: IcePoint = [(.025 + random() * .95) * width, (.025 + random() * .95) * height];
+      const nearest = Math.min(...seeds.map(([x, y]) => (x - candidate[0]) ** 2 + (y - candidate[1]) ** 2));
+      if (nearest > clearance) { best = candidate; clearance = nearest; }
+    }
+    seeds.push(best);
+  }
   const edges = new Map<string, { points: IcePoint[]; border: boolean }>();
   const cells = seeds.map(centre => {
     let polygon: IcePoint[] = [[0, 0], [width, 0], [width, height], [0, height]];
@@ -72,13 +84,13 @@ export function iceFracture(width: number, height: number) {
   const hairlines = cracks.filter((_, index) => index % 2 === 0).map(({ points, delay }, index) => {
     const a = points[1], b = points[2], dx = b[0] - a[0], dy = b[1] - a[1];
     const side = index % 2 ? 1 : -1;
-    const length = Math.hypot(dx, dy) || 1;
     const reach = Math.min(width, height) * (.018 + random() * .025);
+    const angle = Math.atan2(dy, dx) + side * (.55 + random() * .45);
+    const branch = (t: number, bend: number): IcePoint => [a[0] + Math.cos(angle + bend) * reach * t, a[1] + Math.sin(angle + bend) * reach * t];
     return {
       fine: true,
       delay: delay + 65,
-      points: [a, [a[0] + dy / length * reach * side, a[1] - dx / length * reach * side],
-        [a[0] + dy / length * reach * side + dx * .15, a[1] - dx / length * reach * side + dy * .15]]
+      points: [a, branch(.38, -.08 * side), branch(.72, .1 * side), branch(1, .06 * side)]
         .map(([x, y]) => [Math.max(0, Math.min(width, x)), Math.max(0, Math.min(height, y))] as IcePoint),
     };
   });
