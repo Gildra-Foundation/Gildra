@@ -178,3 +178,12 @@ crack/shatter rendering, latest-frame coalescing, cleanup and worker fallback.
 and transition observations (three runs each), CDP traces, long tasks, DOM size,
 canvas/clone operations and network resource sizes. These are lab observations,
 not aggregated real-user INP or CrUX.
+
+
+The performance refinement is published and publicly verified. See
+[performance measurements and release evidence](../reports/site-performance-20261017.md).
+Future web releases must retain `e75ab13` and the integrated production auction
+changes from `82528e43`. The release image is
+`sha256:14f9a715fd5ea392e7576183cedaf9dcbcf23039b2884ef867873856346d445b`.
+Public all-theme/material checks passed; 120-second observation found zero web
+restarts/runtime errors and nine other containers unchanged.
