@@ -18,8 +18,10 @@ const port = Number(option("--port", "58091"));
 const label = option("--label", `ui-${phase}`);
 const legacy = args.includes("--legacy");
 const selectedProject = option("--project", "");
+const selectedWorkers = option("--workers", "");
 const grep = option("--grep", phase === "red" ? "regression:" : "");
 if (selectedProject && !/^(?:en|ru)-(?:390|1440)$/.test(selectedProject)) throw new Error("Unknown UI matrix project");
+if (selectedWorkers && !/^[1-4]$/.test(selectedWorkers)) throw new Error("UI workers must be between one and four");
 if (!["red", "green"].includes(phase) || !Number.isInteger(port) || port < 1024 || port > 65535 || !/^[a-z0-9-]+$/.test(label)) throw new Error("Invalid phase, private port, or artifact label");
 if (Number(process.versions.node.split(".")[0]) < 20) throw new Error("The private Next harness requires Node.js 20.9+.");
 const root = path.resolve(option("--output-dir", path.join(project, ".artifacts/auction-completion-20261016/ui")));
@@ -75,7 +77,7 @@ try {
   report.server = { pid: server.pid, cwd: readlinkSync(`/proc/${server.pid}/cwd`), argv: readFileSync(`/proc/${server.pid}/cmdline`).toString().split("\0").filter(Boolean), baseURL };
   console.log(`Private synthetic harness ready on ${baseURL}; product revision ${sourceRevision}`);
   const rawPath = path.join(runRoot, "playwright.json");
-  const tests = spawn(process.execPath, [cli, "test", "--config", path.join(web, "tests/auction/completion/ui.config.ts"), ...(selectedProject ? ["--project", selectedProject] : []), ...(grep ? ["--grep", grep] : [])], { cwd: web, env: { ...process.env,
+  const tests = spawn(process.execPath, [cli, "test", "--config", path.join(web, "tests/auction/completion/ui.config.ts"), ...(selectedProject ? ["--project", selectedProject] : []), ...(selectedWorkers ? ["--workers", selectedWorkers] : []), ...(grep ? ["--grep", grep] : [])], { cwd: web, env: { ...process.env,
     AUCTION_COMPLETION_UI_LEGACY:legacy?"1":"", AUCTION_COMPLETION_UI_PHASE:phase, AUCTION_UI_BASE_URL: baseURL, AUCTION_UI_RAW_REPORT: rawPath, AUCTION_UI_RESULTS: path.join(runRoot, "results"), NEXT_TELEMETRY_DISABLED: "1" }, stdio: "inherit" });
   const execution = await finished(tests);
   report.testExecution = execution;

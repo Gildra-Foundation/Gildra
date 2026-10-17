@@ -35,8 +35,9 @@ type PlannerJob = Omit<AuctionGearJob, "result"> & { result: SearchResult | Asse
 type Mode = "search" | "assembly";
 type Transport = { mode: Mode; status: PlannerJob["status"] | "starting"; progress: AuctionPlanProgress | null; error: string | null };
 type SearchRequest = { action: "search"; clientRequestId?: string; characterSlug: string; budgetGold: string; selectedSlots: AuctionGearSlot[]; scenario: string; objective: "value" | "dps"; locale: "ru" | "en" };
-type RequestBody = SearchRequest | { action: "resume"; searchId: string; clientRequestId?: string } | { action: "assemble"; searchId: string; excludedOptionIds: string[]; excludedVariantKeys: string[]; clientRequestId?: string } | { action: "poll"; id: string };
-type ActiveRequest = { mode: Mode; controller: AbortController; id?: string; done: Promise<void>; finish: () => void };
+type RequestBody = SearchRequest | { action: "resume"; searchId: string; clientRequestId?: string } | { action: "assemble"; searchId: string; excludedOptionIds: string[]; excludedVariantKeys: string[]; clientRequestId?: string } | { action: "poll"; id: string; observedActive?: boolean };
+type ActiveRequest = { mode: Mode; controller: AbortController; id?: string; observedActive?: boolean; done: Promise<void>; finish: () => void };
+const jobIsActive = (job: Pick<PlannerJob, "status">) => job.status === "queued" || job.status === "running";
 const intentMatchesSearch = (intent: NonNullable<ReturnType<typeof parseAuctionClientFormIntent>>, result: SearchResult) =>
   Number(intent.budgetGold) === result.budgetCopper / 10000 && intent.scenario === result.scenario &&
   intent.objective === (result.objective ?? "dps") && sameSelection(intent.selectedSlots, parseAuctionGearSlots(result.selectedSlots));
@@ -75,7 +76,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const [assemblyStale, setAssemblyStale] = useState(false);
   const [marketStale, setMarketStale] = useState(false);
   const [recoveryAttempt, setRecoveryAttempt] = useState(0);
-  const [retryJob, setRetryJob] = useState<{ id: string; mode: Mode } | null>(null);
+  const [retryJob, setRetryJob] = useState<{ id: string; mode: Mode; observedActive?: boolean } | null>(null);
   const [hasRecovery, setHasRecovery] = useState(false);
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [cancellation, setCancellation] = useState<"pending" | "failed" | null>(null);
@@ -246,7 +247,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           writeAuctionClientCache(cacheKey, cache.current);
           rememberAuctionClientJob({ characterSlug, locale }, job.id);
           setHasRecovery(false);
-          await runRef.current?.({ action: "poll", id: job.id }, recoveredMode);
+          await runRef.current?.({ action: "poll", id: job.id, observedActive: jobIsActive(job) }, recoveredMode);
           return;
         }
         const query = new URLSearchParams({ searchId: saved.searchId!, characterSlug, locale });
@@ -272,7 +273,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         setBudget(String(result.search.budgetCopper / 10000)); setScenario(result.search.scenario); setObjective(result.search.objective ?? "dps");
         setSelectedSlots(parseAuctionGearSlots(result.search.selectedSlots));
         setTransport({ mode: "search", status: "completed", progress: null, error: null });
-        if (result.activeJob && !selectionChanged) await runRef.current?.({ action: "poll", id: result.activeJob.id }, result.activeJob.mode ?? result.activeJob.result?.kind ?? saved.mode);
+        if (result.activeJob && !selectionChanged) await runRef.current?.({ action: "poll", id: result.activeJob.id, observedActive: jobIsActive(result.activeJob) }, result.activeJob.mode ?? result.activeJob.result?.kind ?? saved.mode);
         else if (result.activeJob) { remember({ jobId: result.activeJob.id }); await cancel(); }
         else if (saved.jobId) forgetAuctionClientJob(saved.jobId);
       } catch (error) {
@@ -366,7 +367,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     const generation = mountGeneration.current;
     const ownsScope = () => scopeAlive.current && mountGeneration.current === generation;
     let finish!: () => void;
-    const request: ActiveRequest = { mode, controller: new AbortController(), done: new Promise(resolve => { finish = resolve; }), finish: () => finish() };
+    const request: ActiveRequest = { mode, controller: new AbortController(), observedActive: initial.action === "poll" && initial.observedActive === true,
+      done: new Promise(resolve => { finish = resolve; }), finish: () => finish() };
     const isCurrent = () => ownsScope() && active.current === request && !request.controller.signal.aborted;
     const cleanup = waitForAuctionClientRetirement();
     active.current = request;
@@ -450,7 +452,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         rememberAuctionClientJob({ characterSlug, locale }, payload.id);
         // Reattaching an already completed job is recovery, not a new market
         // check. An observed active job may publish newly verified facts later.
-        const recoveredCompleted = body.action === "poll" && payload.status === "completed";
+        request.observedActive = body.action !== "poll" || body.observedActive === true || jobIsActive(payload);
+        const recoveredCompleted = body.action === "poll" && payload.status === "completed" && !request.observedActive;
         let pollAttempt = 0;
         while (payload.status === "queued" || payload.status === "running") {
           setTransport({ mode, status: payload.status, progress: payload.progress, error: null });
@@ -507,7 +510,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           return;
         }
         if (reason instanceof AuctionClientError && reason.reconnect && request.id) {
-          setRetryJob({ id: request.id, mode });
+          setRetryJob({ id: request.id, mode, observedActive: request.observedActive });
         } else if (request.id) {
           const owner = { profileKey: snapshotKey, jobId: cache.current?.jobId, clientRequestId: cache.current?.clientRequestId };
           const removed = await removeAuctionClientJob(request.id);
@@ -563,7 +566,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     // Cancellation may finish after this keyed character/profile/locale scope was removed.
     if (!scopeAlive.current || mountGeneration.current !== generation) return;
     if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
-    if (retryJob?.mode === "assembly") { void run({ action: "poll", id: retryJob.id }, "assembly"); return; }
+    if (retryJob?.mode === "assembly") { void run({ action: "poll", id: retryJob.id, observedActive: retryJob.observedActive }, "assembly"); return; }
     void run({ action: "assemble", searchId: search.searchId, excludedOptionIds: [...excluded], excludedVariantKeys: [...excludedVariantKeys] }, "assembly");
   }
   async function editParameters() {
@@ -671,7 +674,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     {transport.status === "failed" ? <p role="alert" className={styles.feedback}>{failureText(transport.error)}</p> : null}
     {transport.status === "cancelled" ? <p role="status" className={styles.note}>{search ? t("Расчёт остановлен. Полученные результаты сохранены.", "Calculation stopped. Available results have been kept.") : t("Поиск отменён.", "Search cancelled.")}</p> : null}
     {transport.status === "failed" && cancellation === "failed" ? <button type="button" className={styles.button} onClick={() => void cancel()}>{t("Повторить отмену", "Retry cancellation")}</button> : null}
-    {transport.status === "failed" && !cancellation && retryJob ? <button type="button" className={styles.button} disabled={!validBudget} onClick={() => void run({ action: "poll", id: retryJob.id }, retryJob.mode)}>{t("Повторить подключение", "Reconnect to calculation")}</button> : null}
+    {transport.status === "failed" && !cancellation && retryJob ? <button type="button" className={styles.button} disabled={!validBudget} onClick={() => void run({ action: "poll", id: retryJob.id, observedActive: retryJob.observedActive }, retryJob.mode)}>{t("Повторить подключение", "Reconnect to calculation")}</button> : null}
     {transport.status === "failed" && !cancellation && !retryJob && hasRecovery ? <button type="button" className={styles.button} disabled={!validBudget} onClick={() => setRecoveryAttempt(value => value + 1)}>{t("Повторить восстановление", "Retry recovery")}</button> : null}
   </>;
   const significantGain = Boolean(confirmed);

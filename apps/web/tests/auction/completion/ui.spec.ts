@@ -73,7 +73,7 @@ test("repeat-audit regression: an open loadout becomes stale when its market exp
   expect(auction.requests).toHaveLength(requests);
 });
 
-test("repeat-audit control: a recovered active job can publish newly verified prices", async ({ auction, page }) => {
+test("repeat-audit control: a recovered active job can finish before its first poll with fresh prices", async ({ auction, page }) => {
   const freshMarket = { ...market, updatedAt: new Date().toISOString(), validatedAt: new Date().toISOString() };
   const freshSearch = { ...searchResult(), market: freshMarket };
   const freshAssembly = { ...assemblyResult(), market: freshMarket, updatedSearch: freshSearch };
@@ -89,12 +89,12 @@ test("repeat-audit control: a recovered active job can publish newly verified pr
     const running = { id: "still-active-assembly", status: "running", mode: "assembly", result: null, progress: null, error: null };
     if (url.searchParams.has("searchId")) {
       await route.fulfill({ json: { kind: "recovery", search: freshSearch, assembly: null, excludedOptionIds: [], excludedVariantKeys: [], activeJob: running, needsRefresh: true } });
-    } else if (url.searchParams.has("clientRequestId") || ++polls === 1) await route.fulfill({ json: running });
-    else await route.fulfill({ json: { ...completedJob(auction.language, freshAssembly), id: running.id, mode: "assembly" } });
+    } else if (url.searchParams.has("clientRequestId")) await route.fulfill({ json: running });
+    else { polls++; await route.fulfill({ json: { ...completedJob(auction.language, freshAssembly), id: running.id, mode: "assembly" } }); }
   });
   await auction.open();
   await expect(auction.result).toHaveAttribute("data-price-state", "verified");
-  expect(polls).toBeGreaterThanOrEqual(2);
+  expect(polls).toBe(1);
 });
 
 test("repeat-audit control: rejected parameter-change cancellation keeps the form locked until retry", async ({ auction }) => {
