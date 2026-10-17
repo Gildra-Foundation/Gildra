@@ -37,7 +37,7 @@ type Job = AuctionGearJob & {
   lazy?: boolean;
   recoverable?: boolean;
 };
-type Starts = { searches: number[]; continuations: number[] };
+type Starts = { searches: number[]; continuations: number[]; cancellations?: number[] };
 const state = globalThis as typeof globalThis & {
   __gildraAuctionJobs?: Map<string, Job>;
   __gildraAuctionQueue?: string[];
@@ -118,9 +118,11 @@ function restore() {
       ...(interrupted ? { status: data.hasWork ? "queued" : "failed", error: data.hasWork ? null : "plan_interrupted" } : {}) };
     state.__gildraAuctionJobRecency = Math.max(state.__gildraAuctionJobRecency ?? 0, data.recency);
     jobs.set(j.id, j);
-    if (!j.cancelledBeforeAcceptance && j.createdAt > Date.now() - 60_000) {
+    if (j.createdAt > Date.now() - 60_000) {
       const history = starts.get(j.owner) ?? { searches: [], continuations: [] };
-      history[j.continuation ? "continuations" : "searches"].push(j.createdAt); starts.set(j.owner, history);
+      if (j.cancelledBeforeAcceptance) (history.cancellations ??= []).push(j.createdAt);
+      else history[j.continuation ? "continuations" : "searches"].push(j.createdAt);
+      starts.set(j.owner, history);
     }
   }
   state.__gildraAuctionJobsRestored = true;
@@ -129,6 +131,22 @@ function settle(j: Job) {
   const callback = j.onSettled;
   delete j.onSettled;
   callback?.();
+}
+/** Protected cancellation ACKs and active work are never replaceable. */
+function availableReplacement() {
+  if (jobs.size < 200) return;
+  const replaced = [...jobs].find(([, j]) => !j.cancelledBeforeAcceptance && !["queued", "running"].includes(j.status));
+  if (!replaced) throw new Error("plan_queue_full");
+  return replaced;
+}
+function retainJob(j: Job, replaced: [string, Job] | undefined) {
+  persist(j, replaced?.[0]);
+  if (replaced) {
+    try { removeAuctionState("job", replaced[0]); }
+    catch (error) { removeAuctionState("job", j.id); throw error; }
+    jobs.delete(replaced[0]);
+  }
+  jobs.set(j.id, j);
 }
 function view(j: Job): AuctionGearJob {
   return {
@@ -154,7 +172,8 @@ function cleanup() {
   for (const [owner, history] of starts) {
     history.searches = history.searches.filter(time => time > now - 60_000);
     history.continuations = history.continuations.filter(time => time > now - 60_000);
-    if (!history.searches.length && !history.continuations.length) starts.delete(owner);
+    history.cancellations = history.cancellations?.filter(time => time > now - 60_000);
+    if (!history.searches.length && !history.continuations.length && !history.cancellations?.length) starts.delete(owner);
   }
   // Cancelled and expired jobs must not occupy capacity while another
   // character's simulation keeps the queue waiting.
@@ -230,11 +249,7 @@ export function enqueueAuctionGearJob(owner: string, task: AuctionGearTask, opti
   const kind = options.continuation ? "continuations" : "searches";
   if (history[kind].length >= (options.continuation ? 60 : 3)) throw new Error("plan_rate_limited");
   // Bound retained results as well as active work.
-  let replaced: [string, Job] | undefined;
-  if (jobs.size >= 200) {
-    replaced = [...jobs].find(([, j]) => !j.cancelledBeforeAcceptance && !["queued", "running"].includes(j.status));
-    if (!replaced) throw new Error("plan_queue_full");
-  }
+  const replaced = availableReplacement();
   const j: Job = {
     id: randomUUID(),
     owner,
@@ -255,13 +270,7 @@ export function enqueueAuctionGearJob(owner: string, task: AuctionGearTask, opti
     ...(options.clientRequestId ? { clientRequestId: options.clientRequestId, requestFingerprint: options.requestFingerprint } : {}),
   };
   options.beforeAcceptance?.();
-  persist(j, replaced?.[0]);
-  if (replaced) {
-    try { removeAuctionState("job", replaced[0]); }
-    catch (error) { removeAuctionState("job", j.id); throw error; }
-    jobs.delete(replaced[0]);
-  }
-  jobs.set(j.id, j);
+  retainJob(j, replaced);
   history[kind].push(Date.now());
   starts.set(owner, history);
   queue.push(j.id);
@@ -325,13 +334,16 @@ export function cancelAuctionGearRequest(owner: string, clientRequestId: string,
     if (existing.scope?.characterSlug !== scope.characterSlug || existing.scope.locale !== scope.locale) throw new Error("invalid_plan_request");
     return cancelAuctionGearJob(owner, existing.id);
   }
-  // Never evict an unexpired cancellation acknowledgement to admit later work.
-  if (jobs.size >= 200) throw new Error("plan_queue_full");
-  if ([...jobs.values()].filter(j => j.owner === owner && j.cancelledBeforeAcceptance).length >= 10) throw new Error("plan_rate_limited");
+  const replaced = availableReplacement();
+  const history = starts.get(owner) ?? { searches: [], continuations: [] };
+  // Admission is a short rate window, independent of the thirty-minute ACK
+  // lifetime. Existing identities above bypass it, including accepted jobs.
+  if ((history.cancellations?.length ?? 0) >= 60) throw new Error("plan_rate_limited");
   const j: Job = { id: randomUUID(), owner, clientRequestId, scope: { ...scope },
     status: "cancelled", progress: null, result: null, error: "cancelled", cancelledBeforeAcceptance: true,
     controller: new AbortController(), expires: Date.now() + 30 * 60_000, createdAt: Date.now(), continuation: false, recency: nextRecency() };
-  persist(j); jobs.set(j.id, j);
+  retainJob(j, replaced);
+  (history.cancellations ??= []).push(j.createdAt); starts.set(owner, history);
   return view(j);
 }
 

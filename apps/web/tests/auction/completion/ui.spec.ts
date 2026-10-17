@@ -472,7 +472,7 @@ for (const source of ["known job", "unaccepted nonce"] as const) test(`regressio
   const retry = auction.panel.getByRole("button", { name: /Повторить отмену|Retry cancellation/ });
   await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled();
   await expect(auction.panel.getByRole("alert")).toContainText(/не подтверждена|not confirmed/i);
-  let saved = await page.evaluate(() => Object.entries(sessionStorage).filter(([k]) => k.startsWith("gildra:auction:v1:")).map(([,v]) => JSON.parse(v)));
+  const saved = await page.evaluate(() => Object.entries(sessionStorage).filter(([k]) => k.startsWith("gildra:auction:v1:")).map(([,v]) => JSON.parse(v)));
   expect(saved).toHaveLength(1); expect(saved[0].clientRequestId).toBe(nonce); expect(saved[0].cancellationRequested).toBe(true);
   expect(auction.requests).toHaveLength(1);
   if (source === "known job") { await page.reload({ waitUntil: "networkidle" }); await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled(); }
@@ -554,4 +554,112 @@ for (const rejected of [true,false]) test(`regression: changed form preserves sc
  await expect(auction.find).toBeEnabled(); await page.reload({waitUntil:'networkidle'}); await expect(auction.find).toBeEnabled();
  await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue('9999'); await expect(auction.panel.locator('[data-auction-search-result]')).toHaveCount(0); expect(auction.requests).toHaveLength(2);
  expect(auction.nonceDeletes).toContain(nonce); auction.pendingInitial=false; await auction.search(); expect(auction.requests).toHaveLength(3); expect(auction.requests[2].budgetGold).toBe('9999'); expect(auction.requests[2].clientRequestId).not.toBe(nonce);
+});
+
+for (const spelling of ["fractional-zero", "leading-zero", "fractional-precision"] as const) test(`three-fix regression: equal budget ${spelling} preserves completed loadout and explicit choices`, async ({ auction, page }, info) => {
+  const initial = spelling === "fractional-precision" ? auction.t("10000,12", "10000.12") : "10000";
+  await auction.open(); await auction.panel.locator('[name="budgetGold"]').fill(initial); await auction.search();
+  await auction.build.click(); await expect(auction.result).toBeVisible();
+  // A physical-lot exclusion is cached independently of the currently displayed set.
+  await auction.panel.getByRole("button", { name: /Исключить лот из сборки|Exclude lot from loadout/ }).first().click();
+  const before = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")));
+  expect(JSON.parse(before[0][1]).excludedOptionIds.length).toBeGreaterThan(0);
+  const draft = spelling === "fractional-zero" ? auction.t("10000,0", "10000.0") : spelling === "leading-zero" ? "010000" : auction.t("10000,1200", "10000.1200");
+  await auction.panel.locator('[name="budgetGold"]').fill(draft);
+  await expect(auction.panel.locator('[data-auction-search-result]')).toBeVisible();
+  expect(await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")))).toEqual(before);
+  await expect(auction.panel.locator('summary').filter({ hasText: /Исключения|Exclusions/ })).toBeVisible();
+  await auction.build.click(); await expect(auction.result).toBeVisible();
+  const resultBefore = await auction.result.textContent(); const requestsBefore = auction.requests.length;
+  await auction.panel.locator('[name="budgetGold"]').fill(initial);
+  expect(await auction.result.textContent()).toBe(resultBefore); expect(auction.requests).toHaveLength(requestsBefore);
+  await page.screenshot({ path: info.outputPath(`equal-${spelling}.png`), fullPage: true });
+});
+
+for (const control of ["Private optimizer unmount", "Private snapshot change", "Private locale change"] as const) test(`three-fix regression: acknowledged cancellation cannot start assembly after ${control}`, async ({ auction, page }, info) => {
+  await auction.open(true); auction.incompleteSearchOnce = true; auction.holdContinuation = true;
+  await auction.search(); await expect.poll(() => auction.requests.some(body => body.action === "resume")).toBe(true);
+  auction.holdCancel = true; await auction.build.click();
+  await expect.poll(() => auction.cancellationRequests.length).toBeGreaterThan(0);
+  const before = auction.requests.length;
+  await page.getByRole("button", { name: control, exact: true }).click();
+  if (control === "Private optimizer unmount") await expect(auction.panel).toHaveCount(0);
+  else await expect(auction.find).toBeEnabled();
+  auction.release();
+  await expect.poll(() => auction.deletes).toContain("completion-job-2");
+  // Observe beyond the normal polling interval: no detached POST or delayed poll may appear.
+  await page.waitForTimeout(1800);
+  expect(auction.requests).toHaveLength(before);
+  expect(auction.requests.filter(body => body.action === "assemble")).toEqual([]);
+  await info.attach("retired-scope-network", { body: JSON.stringify({ requests: auction.requests, cancellationRequests: auction.cancellationRequests, deletes: auction.deletes }), contentType: "application/json" });
+  await page.screenshot({ path: info.outputPath("retired-scope.png"), fullPage: true });
+});
+
+test("three-fix control: acknowledged cancellation builds once while its scope remains mounted", async ({ auction }) => {
+  await auction.open(); auction.incompleteSearchOnce = true; auction.holdContinuation = true;
+  await auction.search(); await expect.poll(() => auction.requests.some(body => body.action === "resume")).toBe(true);
+  auction.holdCancel = true; await auction.build.click(); await expect.poll(() => auction.cancellationRequests.length).toBeGreaterThan(0);
+  expect(auction.requests.filter(body => body.action === "assemble")).toEqual([]);
+  auction.release(); await expect(auction.result).toBeVisible();
+  expect(auction.requests.filter(body => body.action === "assemble")).toHaveLength(1);
+});
+
+test("three-fix stale-ACK regression: retired cancellation cannot overwrite a newer snapshot intent before POST or reload", async ({ auction, page }, info) => {
+  await auction.open(true); auction.incompleteSearchOnce = true; auction.holdContinuation = true;
+  await auction.search(); await expect.poll(() => auction.requests.some(body => body.action === "resume")).toBe(true);
+  const oldNonce = auction.requests[1].clientRequestId!;
+  let holdAcknowledgements = true; const acknowledgements: Array<() => void> = [];
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    if (route.request().method() === "DELETE" && holdAcknowledgements) await new Promise<void>(resolve => acknowledgements.push(resolve));
+    await route.fallback();
+  });
+  await auction.build.click(); await expect.poll(() => acknowledgements.length).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Private snapshot change", exact: true }).click(); await expect(auction.find).toBeEnabled();
+  await auction.panel.locator('[name="budgetGold"]').fill("9000"); await auction.find.click();
+  const readCache = () => page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, value]) => JSON.parse(value))[0]);
+  const newer = await readCache(); expect(newer.profileKey).toBe("synthetic-reliability:1"); expect(newer.formIntent.budgetGold).toBe("9000");
+  expect(newer.clientRequestId).not.toBe(oldNonce); expect(auction.requests).toHaveLength(2);
+  holdAcknowledgements = false; for (const acknowledge of acknowledgements.splice(0)) acknowledge();
+  await expect.poll(() => auction.nonceDeletes).toContain(oldNonce); await page.waitForTimeout(100);
+  const after = await readCache();
+  await info.attach("old-ACK-new-intent", { body: JSON.stringify({ newer, after, requests: auction.requests, deletes: auction.nonceDeletes }), contentType: "application/json" });
+  expect(after).toEqual(newer); expect(auction.requests).toHaveLength(2);
+  // Keep the prior POST held; reload into the same server-side snapshot to recover the newer intent.
+  await page.goto(`/?lang=${auction.language}&controls=1&snapshot=1`, { waitUntil: "networkidle" });
+  await expect(auction.find).toBeEnabled(); await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("9000");
+  expect(auction.requests).toHaveLength(2); auction.release(); await auction.search();
+  expect(auction.requests.at(-1)?.budgetGold).toBe("9000"); expect(auction.requests.some(body => body.action === "assemble")).toBe(false);
+});
+
+test("three-fix late-error regression: retired POST503 preserves a newer retired snapshot intent", async ({ auction, page }, info) => {
+  await auction.open(true); auction.incompleteSearchOnce = true; auction.holdContinuation = true; auction.lateResumeHttpError = true;
+  await auction.search(); await expect.poll(() => auction.requests.some(body => body.action === "resume")).toBe(true);
+  const oldNonce = auction.requests[1].clientRequestId!;
+  await auction.build.click(); await expect.poll(() => auction.nonceDeletes).toContain(oldNonce);
+  await page.getByRole("button", { name: "Private snapshot change", exact: true }).click(); await expect(auction.find).toBeEnabled();
+  await auction.panel.locator('[name="budgetGold"]').fill("9000"); await auction.find.click();
+  const readCache = () => page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, value]) => JSON.parse(value))[0]);
+  const newer = await readCache(); expect(newer.profileKey).toBe("synthetic-reliability:1"); expect(newer.formIntent.budgetGold).toBe("9000"); expect(newer.clientRequestId).not.toBe(oldNonce);
+  await page.getByRole("button", { name: "Private optimizer unmount", exact: true }).click(); await expect(auction.panel).toHaveCount(0);
+  auction.release(); await expect.poll(() => auction.resumeHttpErrorsServed).toBe(1); await page.waitForTimeout(100);
+  const after = await readCache(); await info.attach("retired-late-503", { body: JSON.stringify({ newer, after, requests: auction.requests }), contentType: "application/json" });
+  expect(after).toEqual(newer); expect(auction.requests).toHaveLength(2);
+  await page.goto(`/?lang=${auction.language}&controls=1&snapshot=1`, { waitUntil: "networkidle" });
+  await expect(auction.find).toBeEnabled(); await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("9000");
+});
+
+for (const rejected of [false, true]) test(`three-fix late-error regression: retired failed-job cleanup ${rejected ? '503' : '200'} preserves newer snapshot intent`, async ({ auction, page }, info) => {
+  await auction.open(true); await auction.search(); auction.fail = true; auction.holdCancel = true;
+  await auction.build.click(); await expect.poll(() => auction.cancellationRequests.length).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Private snapshot change", exact: true }).click(); await expect(auction.find).toBeEnabled();
+  await auction.panel.locator('[name="budgetGold"]').fill("9000"); await auction.find.click();
+  const readCache = () => page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, value]) => JSON.parse(value))[0]);
+  const newer = await readCache(); expect(newer.profileKey).toBe("synthetic-reliability:1"); expect(newer.formIntent.budgetGold).toBe("9000");
+  await page.getByRole("button", { name: "Private optimizer unmount", exact: true }).click(); await expect(auction.panel).toHaveCount(0);
+  auction.fail = false; auction.cancelFailure = rejected; auction.release(); await page.waitForTimeout(300);
+  const after = await readCache(); await info.attach("retired-catch-cleanup", { body: JSON.stringify({ rejected, newer, after, requests: auction.requests, cancellationRequests: auction.cancellationRequests }), contentType: "application/json" });
+  expect(after).toEqual(newer); expect(auction.requests).toHaveLength(2);
+  auction.cancelFailure = false;
+  await page.goto(`/?lang=${auction.language}&controls=1&snapshot=1`, { waitUntil: "networkidle" });
+  await expect(auction.find).toBeEnabled(); await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("9000");
 });

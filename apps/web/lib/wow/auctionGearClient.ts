@@ -50,6 +50,15 @@ export function readAuctionClientCache(key: string): AuctionClientCache | null {
 export function writeAuctionClientCache(key: string, value: AuctionClientCache | null) {
   try { if (value) sessionStorage.setItem(key, JSON.stringify(value)); else sessionStorage.removeItem(key); } catch { /* Storage may be disabled. */ }
 }
+/** An acknowledged retired controller may clear only its exact saved ownership, preserving newer input. */
+export function clearAcknowledgedAuctionClientCache(key: string, owner: { profileKey: string; jobId?: string; clientRequestId?: string }) {
+  const saved = readAuctionClientCache(key);
+  if (!saved || !owner.jobId && !owner.clientRequestId || saved.profileKey !== owner.profileKey ||
+      saved.jobId !== owner.jobId || saved.clientRequestId !== owner.clientRequestId) return false;
+  const next = { ...saved, jobId: undefined, clientRequestId: undefined, cancellationRequested: undefined };
+  writeAuctionClientCache(key, next.searchId ? next : null);
+  return true;
+}
 export function rememberAuctionClientRequest(scope: AuctionClientScope, clientRequestId: string) {
   try { sessionStorage.setItem(activeKey, JSON.stringify({ ...scope, clientRequestId })); } catch { /* Storage may be disabled. */ }
 }

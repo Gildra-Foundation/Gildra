@@ -145,12 +145,12 @@ test("at 200 retained jobs a failed replacement preserves the old result and can
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
-test("cancellation acknowledgements have a bounded owner quota and expire to free it", async () => {
+test("new cancellation identities have a minute rate while acknowledged retries remain available", async () => {
   const previous = session, actualNow = Date.now;
   session = { battleNetAccessToken: "synthetic-marker-cap-token" };
   try {
     let first;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 60; i++) {
       const cancelled = await send("DELETE", undefined, query(`synthetic-marker-cap-${i}`));
       assert.equal(cancelled.status, 200);
       if (i === 0) first = cancelled.body.id;
@@ -158,9 +158,10 @@ test("cancellation acknowledgements have a bounded owner quota and expire to fre
     const full = await send("DELETE", undefined, query("synthetic-marker-cap-overflow"));
     assert.equal(full.status, 429); assert.equal(full.body.error, "plan_rate_limited");
     assert.equal((await send("DELETE", undefined, query("synthetic-marker-cap-0"))).body.id, first);
-    const later = actualNow() + 31 * 60000; Date.now = () => later;
+    const later = actualNow() + 60_001; Date.now = () => later;
     const afterExpiry = await send("DELETE", undefined, query("synthetic-marker-cap-after-expiry"));
     assert.equal(afterExpiry.status, 200); assert.equal(afterExpiry.body.status, "cancelled");
+    assert.equal((await send("DELETE", undefined, query("synthetic-marker-cap-0"))).body.id, first, "Minute admission renewal preserves the existing cancellation ACK");
   } finally { session = previous; Date.now = actualNow; }
 });
 
