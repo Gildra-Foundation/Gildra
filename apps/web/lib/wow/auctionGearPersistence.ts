@@ -244,8 +244,19 @@ export function listAuctionStateHeaders<M = Record<string, unknown>>(kind: Kind)
     return Number.isSafeInteger(value) ? Number(value) : header.expiresAt;
   };
   records.sort((a, b) => recency(b) - recency(a) || b.expiresAt - a.expiresAt || a.id.localeCompare(b.id));
-  for (const record of records.slice(limits[kind])) removeAuctionState(kind, record.id);
-  return records.slice(0, limits[kind]);
+  let retained = records.slice(0, limits[kind]);
+  if (kind === "job" && records.length > limits.job) {
+    // A crash after a replacement's durable rename can leave201 files until
+    // restart. Evict a terminal result, never an older ACK or interrupted work.
+    const protectedJob = (record: AuctionStateHeader<M>) => {
+      const data = record.metadata as Record<string, unknown>;
+      return data.cancelledBeforeAcceptance === true || data.status === "queued" || data.status === "running";
+    };
+    retained = [...records.filter(protectedJob), ...records.filter(record => !protectedJob(record))].slice(0, limits.job);
+  }
+  const retainedIds = new Set(retained.map(record => record.id));
+  for (const record of records) if (!retainedIds.has(record.id)) removeAuctionState(kind, record.id);
+  return records.filter(record => retainedIds.has(record.id));
 }
 
 /** Inflate one explicitly selected record, checking the body against its metadata prefix. */
