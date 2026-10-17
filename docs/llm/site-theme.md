@@ -101,3 +101,12 @@ read-only in this sandbox. Isolated development was registered in
 
 No commit, push, production deployment, database change or service restart was
 performed. Review the isolated working-tree diff before publication.
+
+## Production publication
+
+The user subsequently authorized deployment. Published and verified on
+17 October 2026: see [production evidence](../reports/site-theme-deployment-20261017.md).
+The installed source `a052e488c7fc03800014368cdad6758c0ffc49b9` incorporates the
+newer production auction fixes. Web only was replaced; all public transition
+checks and a two-minute health observation passed. The deployment source is
+committed locally; future web releases must include it. No remote push occurred.
