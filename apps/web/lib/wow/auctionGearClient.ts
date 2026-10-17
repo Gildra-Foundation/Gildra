@@ -1,6 +1,6 @@
 /** Browser transport and opaque recovery handles; prices/stats are always recovered from the server. */
 export type AuctionClientScope = { characterSlug: string; locale: "ru" | "en" };
-export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[] };
+export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[] };
 const activeKey = "gildra:auction-active:v1";
 let retiring: Promise<unknown> = Promise.resolve();
 
@@ -18,9 +18,10 @@ export function readAuctionClientCache(key: string): AuctionClientCache | null {
     const value = JSON.parse(sessionStorage.getItem(key) ?? "null") as Partial<AuctionClientCache> | null;
     return value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
       (value.mode === "search" || value.mode === "assembly") && Array.isArray(value.excludedOptionIds) &&
-      value.excludedOptionIds.length <= 20000 && value.excludedOptionIds.every(identity)
+      value.excludedOptionIds.length <= 20000 && value.excludedOptionIds.every(identity) &&
+      (value.excludedVariantKeys === undefined || Array.isArray(value.excludedVariantKeys) && value.excludedVariantKeys.length <= 20000 && value.excludedVariantKeys.every(key => typeof key === "string" && key.length > 0 && key.length <= 240))
       ? { version: 1, profileKey: value.profileKey, searchId: identity(value.searchId) ? value.searchId : undefined,
-        jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)] } : null;
+        jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)], excludedVariantKeys: [...new Set(value.excludedVariantKeys ?? [])] } : null;
   } catch { return null; }
 }
 export function writeAuctionClientCache(key: string, value: AuctionClientCache | null) {

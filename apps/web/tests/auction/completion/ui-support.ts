@@ -2,7 +2,7 @@ import { test as base, expect, type Page, type Route, type TestInfo } from "play
 import { goldToCopper } from "../../../lib/wow/auctionMarket";
 import { assemblyResult, completedJob, scope, searchResult } from "../reliability/ui-fixtures";
 
-type Body = { action: "search" | "resume" | "assemble"; clientRequestId?: string; budgetGold?: string; searchId?: string; excludedOptionIds?: string[]; locale?: string; selectedSlots?: string[]; scenario?: string };
+type Body = { action: "search" | "resume" | "assemble"; clientRequestId?: string; budgetGold?: string; searchId?: string; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; objective?: "value" | "dps"; locale?: string; selectedSlots?: string[]; scenario?: string };
 type Result = ReturnType<typeof searchResult> | ReturnType<typeof assemblyResult>;
 export class CompletionHarness {
   readonly language: "en" | "ru";
@@ -26,6 +26,11 @@ export class CompletionHarness {
   conflictResumeMode: "search" | "assembly" | null = null;
   empty = false;
   valueChoices = false;
+  valueMaximum: "confirmed" | "unconfirmed" | null = null;
+  aliasVariants = false;
+  manyDuplicateLots = false;
+  serverVariantExclusions: string[] = [];
+  private serverObjective: "value" | "dps" = "dps";
   incompleteData = false;
   incompleteSearchOnce = false;
   fail = false;
@@ -99,10 +104,12 @@ export class CompletionHarness {
       }
       if (this.conflictNext) { this.conflictNext = false; await route.fulfill({ status: 409, json: { error: "plan_already_running" } }); return; }
       let result: Result;
-      if (body.action === "assemble") { result = assemblyResult(); this.lastAssembly = result; this.serverExclusions = body.excludedOptionIds ?? []; }
+      if (body.action === "assemble") { result = assemblyResult({ noisyMaximum: Boolean(this.valueMaximum) });
+        if (this.valueMaximum) { result.spentCopper = 500000; result.comparison.uncertainty.significant = this.valueMaximum === "confirmed"; } this.lastAssembly = result; this.serverExclusions = body.excludedOptionIds ?? []; this.serverVariantExclusions = body.excludedVariantKeys ?? []; }
       else {
         result = searchResult();
         if (body.action === "search") {
+          this.serverObjective = body.objective ?? "dps";
           try { result.budgetCopper = goldToCopper(body.budgetGold); }
           catch { await route.fulfill({ status: 400, json: { error: "invalid_budget" } }); return; }
           result.selectedSlots = body.selectedSlots ?? result.selectedSlots; result.scenario = body.scenario ?? result.scenario;
@@ -115,11 +122,19 @@ export class CompletionHarness {
           result.items = [choice("cheap", 880001, 10000, 1), choice("strong", 880003, 100000, 30),
             choice("value-best", 880002, 40000, 20), { ...choice("duplicate", 880002, 60000, 20), auctionId: 889999 }];
         }
+        if (this.aliasVariants || this.manyDuplicateLots) {
+          const base = result.items.find(item => item.evaluation === "upgrade")!;
+          result.items = Array.from({ length: this.manyDuplicateLots ? 400 : 4 }, (_, index) => ({ ...base,
+            optionId: `alias-${index}`, auctionId: 990000 + Math.floor(index / 2), itemId: 880002,
+            variantKey: "same-exact-variant", slotType: index % 2 ? "FINGER_2" : "FINGER_1" }));
+        }
         if (this.empty) result.items = [];
         if (this.incompleteData) result.dataComplete = false;
         if (body.action === "search" && this.incompleteSearchOnce) { result.searchComplete = false; result.pendingItems = 1; this.incompleteSearchOnce = false; }
         this.latestSearch = result;
       }
+      Object.assign(result, { objective: this.serverObjective });
+      if ("updatedSearch" in result) Object.assign(result.updatedSearch, { objective: this.serverObjective });
       const existing = body.clientRequestId ? this.byRequest.get(body.clientRequestId) : undefined;
       const id = existing ?? `completion-job-${this.requests.length}`;
       this.workStarted.push(body.action);
@@ -146,7 +161,7 @@ export class CompletionHarness {
       if (this.holdRecovery) await new Promise<void>(resolve => this.held.push(resolve));
       if (this.recoveryFailure) { await route.fulfill({ status: 404, json: { error: "search_not_found" } }); return; }
       const activeJob = this.activeJobId ? { id: this.activeJobId, status: "running", result: null, progress: null, error: null, scope: scope(this.language), mode: this.jobs.get(this.activeJobId)?.result.kind } : null;
-      await route.fulfill({ json: { kind: "recovery", search: this.latestSearch, assembly: this.lastAssembly, excludedOptionIds: this.serverExclusions, activeJob, needsRefresh: true } }); return;
+      await route.fulfill({ json: { kind: "recovery", search: this.latestSearch, assembly: this.lastAssembly, excludedOptionIds: this.serverExclusions, excludedVariantKeys: this.serverVariantExclusions, activeJob, needsRefresh: true } }); return;
     }
     const id = url.searchParams.get("id") ?? "", job = this.jobs.get(id);
     if (!job) { await route.fulfill({ status: 404, json: { error: "plan_not_found" } }); return; }

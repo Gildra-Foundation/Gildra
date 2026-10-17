@@ -20,9 +20,10 @@ individually incompatible rows remain in the private raw pool. Assembly checks
 the complete verified pool, including combinations that repair an individual
 conflict or improve DPS despite individually weak ingredients. These ingredients
 appear in a purchase list only when the measured whole set is a confirmed
-improvement. All genuine
-positive financial choices remain available without deduplication. Default
-ordering is price ascending, then DPS gain descending for equal prices.
+improvement. The interface groups by slot, chooses the lowest whole-lot price per additional
+confirmed DPS, and opens up to two distinct nondominated alternatives. Duplicate
+lots remain available internally for exact procurement but are not repeated as
+recommendations.
 Sorting and incremental display never truncate the server pool. Actual icons, native
 variant properties and the actual equipped replacement appear in the shared
 character tooltip, including independently localized current-item names.
@@ -30,8 +31,11 @@ character tooltip, including independently localized current-item names.
 The private server context binds the original budget, selected slots, character,
 equipment, talents, encounter and market. Assembly accepts only retained option
 IDs known to the owner; client prices or statistics are never accepted.
-The current UI sends excludedOptionIds; an empty exclusion list considers the
-entire verified pool with the same original budget. Legacy allowedOptionIds
+The current UI sends physical-lot `excludedOptionIds` and exact-item
+`excludedVariantKeys`. Variant keys bind item ID and exact native variant, and
+exclude all its lots and slot aliases, including lots discovered later. Physical
+lot exclusions cover its eligible slot aliases without banning other lots. An
+empty exclusion list considers the entire verified pool with the original budget. Legacy allowedOptionIds
 remain supported for older callers. The two selection modes are mutually
 exclusive, and forged or foreign IDs are rejected. New searches,
 selection changes clear the assembly because its allowed pool changes. Resumed
@@ -67,8 +71,9 @@ quantity, budget and compatibility before its cached measurement can be reused.
 A serializable cursor, compact five-field simulation cache and separate best
 measured/best confirmed results survive a chunk boundary. Assembly checkpoint
 version 3 records full-set seeds, the pair cursor and both best choices;
-combinationKind=effects identifies the count semantics. The default chunk allows
-48 new native calls, 100,000 visited assignments
+combinationKind=effects identifies the count semantics. The first search chunk allows baseline plus two new comparisons; later search
+chunks allow eight. The first assembly chunk allows eight new native calls,
+later explicit assembly steps allow 48. Chunks allow 100,000 visited assignments
 and a 90-second runner window. These are continuation boundaries, not permanent
 pool or combination caps. Cache-only traversal yields cooperatively for
 cancellation. The highest measured DPS is claimed only when exhaustiveComplete
@@ -78,6 +83,34 @@ separately from the measured maximum. A noisy positive maximum is inconclusive
 and cannot erase a lower, confirmed upgrade. `bestConfirmed` contains the
 actionable shopping list and its own cost/comparison; the existing main result
 fields continue to describe the highest measured result. The UI labels both.
+
+Two explicit objectives are available. The web UI defaults to `value`: minimize
+whole-set copper divided by its positive, statistically confirmed native DPS gain.
+This may choose fewer replacements and leave budget unused. `dps` maximizes the
+confirmed combined DPS within budget. Legacy requests without an objective keep
+`dps` semantics and existing checkpoints. Main measured-result fields remain the
+highest measured DPS diagnostic; `bestConfirmed` follows the selected objective.
+The UI labels an unconfirmed maximum separately from a confirmed but less
+cost-efficient maximum. Individual gains are never added to calculate set value.
+
+Changing variant/lot choices pauses an active discovery job through the existing
+cancellation barrier. Exclusions remain editable while discovery is running;
+assembly actions remain protected. Excluded groups are collapsed and rendered in
+bounded batches, with the no-allowed-items reason next to the build button.
+
+Mechanical measurements share a bounded 15-minute, 4096-entry cache across searches
+and budget changes. Keys bind canonical profile, talents/equipment, exact native
+changes, encounter and currently verified SimulationCraft engine. Prices and
+ownership are checked separately. Restored contexts verify the live worker engine
+before reusing retained measurements. Optional media enriches presentation without
+blocking simulations. Unfiltered catalog summaries distinguish known nongear from
+truly unknown IDs; known recipes/bags/quest items do not inflate missing-gear counts.
+
+Frequent search checkpoints coalesce and use asynchronous gzip, bulk writes and
+fsync; completed/cancelled runner steps await the durable flush. Admission remains
+synchronous and bounded, as do one V8 serialization and the short atomic rename.
+Generation guards prevent stale writers from overwriting a newer save or reviving
+a deleted search. Disk failures remain explicit and retryable.
 
 The planner identifies an auction variant by **item ID + context + exact bonus ID
 set + every modifier type/value pair**. Auction ID, price and quantity stay on

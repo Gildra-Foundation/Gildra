@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {selectedAuctionGearAssemblyOptions} from '../../../lib/wow/auctionGearRunner.ts';
+const key=JSON.stringify([1,'exact-a']), other=JSON.stringify([2,'exact-b']);
+const row=(id,itemId,variantKey,slot='FINGER_1')=>({id,auctionId:Number(id),candidate:{itemId,slotType:slot},variantKey});
+const a=row('11',1,'exact-a'),alias=row('12',1,'exact-a','FINGER_2'),duplicate=row('13',1,'exact-a'),b=row('14',2,'exact-b');
+const entry={context:{options:[a,alias,b]},knownOptionIds:new Set(['11','12','13','14','sold']),knownVariantKeys:new Set([key,other])};
+assert.deepEqual(selectedAuctionGearAssemblyOptions(entry,{excludedOptionIds:[],excludedVariantKeys:[key]}),[b]);
+entry.context.options.push(duplicate);
+assert.deepEqual(selectedAuctionGearAssemblyOptions(entry,{excludedOptionIds:[],excludedVariantKeys:[key]}),[b],'Previously excluded variant must cover later discovered duplicate lots');
+assert.deepEqual(selectedAuctionGearAssemblyOptions(entry,{excludedOptionIds:['11','12']}),[b,duplicate],'Physical lot exclusions must not ban other lots of the same variant');
+assert.deepEqual(selectedAuctionGearAssemblyOptions(entry,['11']),[a],'Legacy explicit allowlists remain supported');
+for(const bad of [null,{excludedOptionIds:[],excludedVariantKeys:['foreign']},{excludedOptionIds:[],excludedVariantKeys:[key,key]},{excludedOptionIds:[],excludedVariantKeys:null},{excludedOptionIds:[],excludedVariantKeys:[other],extra:true}])assert.throws(()=>selectedAuctionGearAssemblyOptions(entry,bad),/invalid_auction_selection/);
+entry.context.options=[b];
+assert.deepEqual(selectedAuctionGearAssemblyOptions(entry,{excludedOptionIds:['sold'],excludedVariantKeys:[key]}),[b],'Known sold variant exclusion remains valid across market refresh');
+console.log('PASS selection: exact variant ban survives all slot aliases/new lots/market refresh, physical lot bans stay separate, foreign keys rejected and legacy allowlists preserved.');

@@ -1,3 +1,5 @@
+import { auctionGearVariantSelectionKey } from "../../../lib/wow/auctionGearExclusions.ts";
+import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { stripTypeScriptTypes } from "node:module";
@@ -42,7 +44,7 @@ export async function harness({ entity = record(), availableReference = true, re
   const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
     .runInNewContext({ Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
       supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
-      lookupGearRecords: async (_ids, _locale, itemClass) => itemClass === 4 ? [state.entity] : [],
+      lookupGearRecords: async (_ids, _locale, itemClass) => itemClass === undefined || itemClass === 4 ? [state.entity] : [],
       gearEntityDetails: async records => records,
       getAuctionItemReferences: async (ids, _region, _token, _signal, locale) => {
         state.referenceCalls++; state.referenceLocales.push(locale);
@@ -55,14 +57,14 @@ export async function harness({ entity = record(), availableReference = true, re
     });
   const runnerSource = await readFile(new URL("../../../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
   const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch})")
-    .runInNewContext({ auctionGearProfileFingerprint, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...store, ...discovery,
+    .runInNewContext({ auctionGearVariantSelectionKey, auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...store, ...discovery,
       talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
       getCharacterAuctionMarket: async (_character, _token, options) => { state.marketCalls++; state.marketSignals.push(options?.signal); return state.market; },
       getBattleNetSimulationSnapshot: async () => state.armory,
       getAuctionEquippedPresentation: async () => new Map(),
       parseAuctionGearSlots: slots => slots, auctionGearSlots: ["WRIST"], gearSlotCategoryPaths, catalogLoadoutItem, auctionVariantKey,
       lookupGearEntities: async () => [record(99999)], currentGearSeason: () => context("WRIST").season,
-      getRotationPreset: async () => ({ defaultRules: ["synthetic-rule"] }), addPlannerItemIcons: async () => {}, assertFreshMarket,
+      getRotationPreset: async () => ({ defaultRules: ["synthetic-rule"] }), schedulePlannerItemIcons: () => {}, assertFreshMarket,
       prepareGearLoadout: ({ selections }) => ({ equipment: state.armory.equipment,
         changes: selections.map(selection => ({ itemId: selection.candidate.itemId,
           bonusIds: selection.candidate.variants.find(variant => variant.key === selection.variantKey).bonusIds })) }),

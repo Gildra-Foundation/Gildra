@@ -105,7 +105,7 @@ try {
   assert.equal(started.status, 202);
   const completed = await waitFor(started.payload);
   assert.equal(completed.status, "completed");assert.equal(completed.result.budgetCopper, 100001);
-  assert.deepEqual(state.starts[0].input, { characterSlug: searchBody.characterSlug, budgetCopper: 100001, selectedSlots: ["WRIST"], scenario: "single-target", locale: "ru" });
+  assert.deepEqual(state.starts[0].input, { characterSlug: searchBody.characterSlug, budgetCopper: 100001, selectedSlots: ["WRIST"], scenario: "single-target", objective: "dps", locale: "ru" });
   assert.equal(state.starts[0].actor, owner(tokenA));assert.equal(state.starts[0].token, tokenA);
   state.session = { battleNetAccessToken: tokenB };
   await expectError("GET", undefined, 404, "plan_not_found", { query: `?id=${started.payload.id}` });
@@ -187,7 +187,7 @@ try {
     assert.fail(`Unexpected offline fixture endpoint: ${endpoint.pathname}`);
   };
   const canonical = await getBattleNetSimulationSnapshot(tokenA, character);
-  const verifiedOption = { id: "verified-option", auctionId: lot.id, quantity: lot.quantity, costCopper: lot.buyout, variantKey: auctionVariantKey(offer) };
+  const verifiedOption = { id: "verified-option", auctionId: lot.id, quantity: lot.quantity, costCopper: lot.buyout, variantKey: auctionVariantKey(offer), candidate: { itemId: offer.itemId } };
   const verifiedContext = {
     input: { characterSlug: "eu--synthetic-api--synthetic", locale: "ru", budgetCopper: 100001, selectedSlots: ["WRIST"] }, character,
     options: [verifiedOption],

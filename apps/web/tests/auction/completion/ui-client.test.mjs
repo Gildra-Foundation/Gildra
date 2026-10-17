@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { rememberAuctionClientRequest, rememberAuctionClientJob, releasePriorAuctionClientJob, removeAuctionClientRequest } from '../../../lib/wow/auctionGearClient.ts';
+import { rememberAuctionClientRequest, rememberAuctionClientJob, releasePriorAuctionClientJob, removeAuctionClientRequest, readAuctionClientCache, writeAuctionClientCache } from '../../../lib/wow/auctionGearClient.ts';
 const storage=new Map(),calls=[],cases=[];
 globalThis.sessionStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
 const scope={characterSlug:'synthetic-cancel-character',locale:'en'},nonce='synthetic-before-admission-nonce';
@@ -14,4 +14,20 @@ status=503;rememberAuctionClientRequest(scope,nonce);await releasePriorAuctionCl
 status=404;await releasePriorAuctionClientJob();assert.equal(storage.size,1);cases.push('missing lookup is not cancellation acknowledgement');
 status=200;await removeAuctionClientRequest(nonce,scope);assert.equal(storage.size,0);cases.push('explicit scoped cancellation clears only after acknowledgement');
 rememberAuctionClientJob(scope,'synthetic-known-job');status=404;await releasePriorAuctionClientJob();assert.equal(storage.size,0);assert.equal(new URL(calls.at(-1).url,'https://synthetic.example').searchParams.get('id'),'synthetic-known-job');cases.push('already removed known job remains idempotently cancelled');
+const cacheKey='synthetic-cache';
+const legacy={version:1,profileKey:'snapshot',searchId:'search',mode:'search',excludedOptionIds:['physical-lot-slot']};
+writeAuctionClientCache(cacheKey,legacy);
+assert.deepEqual(readAuctionClientCache(cacheKey),{...legacy,jobId:undefined,clientRequestId:undefined,excludedVariantKeys:[]});
+cases.push('legacy physical exclusions recover without a variant ban');
+const variant=JSON.stringify([1234,'exact-variant']);
+writeAuctionClientCache(cacheKey,{...legacy,excludedVariantKeys:[variant,variant]});
+assert.deepEqual(readAuctionClientCache(cacheKey).excludedVariantKeys,[variant]);
+const maximumKey='x'.repeat(240);
+writeAuctionClientCache(cacheKey,{...legacy,excludedVariantKeys:[maximumKey]});
+assert.deepEqual(readAuctionClientCache(cacheKey)?.excludedVariantKeys,[maximumKey]);
+for(const invalid of [null,{},['x'.repeat(241)],[''],[42]]){
+  writeAuctionClientCache(cacheKey,{...legacy,excludedVariantKeys:invalid});
+  assert.equal(readAuctionClientCache(cacheKey),null,'Malformed variant exclusions must reject opaque recovery state');
+}
+cases.push('exact variant keys persist and deduplicate with matching server limits; malformed keys rejected');
 console.log(JSON.stringify({status:'passed',cases}));

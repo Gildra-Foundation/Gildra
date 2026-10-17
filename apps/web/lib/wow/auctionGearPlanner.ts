@@ -88,6 +88,7 @@ export function captureAuctionGearIncumbents(checkpoint: AuctionGearAssemblyChec
 
 type PlannerInput = {
   searchId: string;
+  objective?: "value" | "dps";
   budgetCopper: number;
   options: AuctionGearOption[];
   selectedSlots: string[];
@@ -107,6 +108,7 @@ type PlannerInput = {
 
 function prepare(input: PlannerInput) {
   input.signal.throwIfAborted();
+  if (input.objective !== undefined && input.objective !== "value" && input.objective !== "dps") throw new Error("invalid_auction_objective");
   if (!Number.isSafeInteger(input.budgetCopper) || input.budgetCopper < 0) throw new Error("invalid_budget");
   if (!Array.isArray(input.selectedSlots) || new Set(input.selectedSlots).size !== input.selectedSlots.length) throw new Error("invalid_equipment_slots");
   assertFreshMarket(input.market);
@@ -116,6 +118,7 @@ function prepare(input: PlannerInput) {
   if (new Set(options.map(o => o.id)).size !== options.length) throw new Error("invalid_auction_selection");
   for (const option of options) auctionPlanCost([option]);
   const inputKey = createHash("sha256").update(JSON.stringify({ searchId: input.searchId, budget: input.budgetCopper,
+    ...(input.objective === "value" ? { objective: "value" } : {}),
     slots, loadout: input.loadout, specId: input.specId,
     options: options.map(o => [o.id, o.auctionId, o.quantity, o.costCopper, auctionSelectionEffectKey([o]), candidateLoadoutItem(o.candidate)]),
   })).digest("hex");
@@ -196,7 +199,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
   }).sort((a, b) => a.lotCostCopper - b.lotCostCopper || (b.comparison?.deltaDps ?? -Infinity) - (a.comparison?.deltaDps ?? -Infinity) || a.optionId.localeCompare(b.optionId));
   input.signal.throwIfAborted();
   assertFreshMarket(input.market);
-  return { checkpoint, result: { kind: "search", searchId: input.searchId, selectedSlots: slots,
+  return { checkpoint, result: { kind: "search", objective: input.objective ?? "dps", searchId: input.searchId, selectedSlots: slots,
     budgetCopper: input.budgetCopper, baseline: checkpoint.baseline, items, searchComplete: checkpoint.nextOption === options.length,
     pendingItems: items.filter(item => item.evaluation === "pending").length, simulations: checkpoint.simulations,
     engine: checkpoint.baseline.engine, searchLimited: false, optionsConsidered: options.length } };
@@ -273,7 +276,17 @@ export async function assembleAuctionGear(input: PlannerInput & {
         cost === auctionPlanCost(optionsFor(best)) && key < best.optionIds.slice().sort().join("|"));
     const best = { optionIds: selection.map(option => option.id), simulation };
     if (preferred(checkpoint.best)) checkpoint.best = best;
-    if (confirmed(simulation) && preferred(checkpoint.bestConfirmed)) checkpoint.bestConfirmed = best;
+    if (confirmed(simulation)) {
+      const previous = checkpoint.bestConfirmed;
+      // Native whole-set gain is essential: weak singles may form an efficient
+      // combination. The unchanged baseline is never a positive-value purchase.
+      const value = cost / (simulation.dps - checkpoint.baseline.dps);
+      const priorValue = previous ? auctionPlanCost(optionsFor(previous)) / (previous.simulation.dps - checkpoint.baseline.dps) : Infinity;
+      const better = input.objective === "value"
+        ? value < priorValue || value === priorValue && preferred(previous)
+        : preferred(previous);
+      if (better) checkpoint.bestConfirmed = best;
+    }
   };
   if (!input.checkpoint) {
     // Recover confirmed singles even when the caller has already requested a yield.
@@ -465,7 +478,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const confirmedCost = confirmedOptions ? auctionPlanCost(confirmedOptions) : 0;
   input.signal.throwIfAborted();
   assertFreshMarket(input.market);
-  return { checkpoint, result: { kind: "assembly", searchId: input.searchId, selectedSlots: slots,
+  return { checkpoint, result: { kind: "assembly", objective: input.objective ?? "dps", searchId: input.searchId, selectedSlots: slots,
     budgetCopper: input.budgetCopper, spentCopper, remainingCopper: input.budgetCopper - spentCopper,
     purchases: selection.map(auctionGearPurchase), removedSlots: input.loadout.filter(i => !final.some(f => f.slotType === i.slotType)).map(i => i.slotType),
     comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.best.simulation), engine: checkpoint.baseline.engine,

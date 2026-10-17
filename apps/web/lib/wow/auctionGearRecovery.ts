@@ -10,9 +10,10 @@ export function recoverAuctionGearSearch(owner: string, searchId: string, charac
   return {
     kind: "recovery" as const,
     search: { market: context.publicMarket, profileFingerprint: context.profileFingerprint,
-      scenario: context.input.scenario, coverage: context.coverage, ...entry.latestSearchResult },
+      scenario: context.input.scenario, objective: context.input.objective ?? "dps", coverage: context.coverage, ...entry.latestSearchResult },
     assembly: entry.latestAssemblyResult ?? null,
     excludedOptionIds: [...(entry.excludedOptionIds ?? [])],
+    excludedVariantKeys: [...(entry.excludedVariantKeys ?? [])],
     activeJob: getActiveAuctionGearJob(owner, searchId),
     // Recovery does not contact Blizzard or run a simulation. A subsequent
     // resume/assembly verifies the mechanical snapshot and current market.

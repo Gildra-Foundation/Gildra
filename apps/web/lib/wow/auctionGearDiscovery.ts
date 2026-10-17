@@ -138,6 +138,18 @@ const summarySlots: Record<string, readonly string[]> = {
   "Off Hand": ["OFF_HAND"], "Held In Off-hand": ["OFF_HAND"], "Левая рука": ["OFF_HAND"], Shield: ["OFF_HAND"], Щит: ["OFF_HAND"],
   Ranged: ["MAIN_HAND"], "Дальний бой": ["MAIN_HAND"],
 };
+function catalogItemClass(record: Pick<CatalogGearEntity, "tooltip" | "payload">): number | undefined {
+  const registry = record.tooltip?.blocks?.find(block => block.type === "item_registry");
+  const subclass = record.tooltip?.blocks?.find(block => block.type === "subclass");
+  const payload = (record as CatalogGearEntity).payload;
+  const value = registry?.class_id ?? subclass?.class_id ?? payload?.ItemClass ?? payload?.itemClass;
+  return Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : undefined;
+}
+const knownNonGear = (record: Pick<CatalogGearEntity, "tooltip" | "payload">) => {
+  const itemClass = catalogItemClass(record);
+  return itemClass !== undefined && itemClass !== 2 && itemClass !== 4;
+};
+
 function summaryMayMatch(record: CatalogRecord, slots: readonly string[]) {
   const inventory = record.highlights?.find(highlight => highlight.key === "inventory_type")?.value;
   // Missing/unknown presentation is never evidence that a candidate is unusable.
@@ -215,7 +227,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       const ids = state.itemIds.slice(state.itemCursor, state.itemCursor + catalogBatch);
       // See the complete bounded summary domain before spending detail/native work.
       // Base required level is not an auction variant's actual scaled requirement.
-      const records = (await Promise.all([2, 4].map(itemClass => lookupGearRecords(ids, input.locale, itemClass, undefined, input.signal)))).flat();
+      const records = await lookupGearRecords(ids, input.locale, undefined, undefined, input.signal);
       input.signal.throwIfAborted();
       for (const id of ids) state.scannedItems.add(id);
       const found = new Set(records.map(record => record.externalId));
@@ -230,7 +242,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       }
       const hints = state.catalogHints ??= new Map();
       for (const record of records) hints.set(record.externalId, catalogPriorityHint(record));
-      state.records.push(...records.filter(record => summaryMayMatch(record, input.selectedSlots)));
+      state.records.push(...records.filter(record => !knownNonGear(record) && summaryMayMatch(record, input.selectedSlots)));
       state.itemCursor += ids.length;
       input.onProgress?.({ phase: "catalog", completed: state.itemCursor, total: state.itemIds.length });
     } else if (state.variantCursor < state.variantKeys.length && (!state.records.length || compareCatalogHints(
@@ -339,6 +351,9 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         state.catalogMissing.delete(record.externalId);
         state.eligibilityUnverifiedItems.delete(record.externalId);
         state.catalogRetryAt.delete(record.externalId);
+        // Public summaries may omit the registry; classify from authoritative
+        // details before treating missing equip fields as unknown gear data.
+        if (knownNonGear(entity)) { state.entities.set(record.externalId, null); continue; }
         const offer = state.offers.get(state.itemVariants.get(entity.externalId)?.[0] ?? "")?.[0];
         const normalized = input.selectedSlots.map(slot => normalizeGearCandidate(offer ? variantEntity(entity, offer) : entity, input.context(slot)));
         rememberUnverifiedEligibility(state, entity.externalId, normalized);

@@ -1,8 +1,10 @@
+import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
 import { test } from "node:test";
 import vm from "node:vm";
+import { auctionGearProfileFingerprint } from "../../../lib/wow/auctionGearFingerprint.ts";
 import { prepareGearLoadout } from "../../../lib/wow/gearSimulation.ts";
 import { assertFreshMarket } from "../../../lib/wow/auctionMarket.ts";
 
@@ -11,7 +13,7 @@ test("auction baseline and exact candidate request the native maintained APL", a
   const body = stripTypeScriptTypes(source.slice(source.indexOf("function createAuctionSimulator(")), { mode: "strip" });
   const captured = [];
   const createSimulator = new vm.Script(body + "\n;createAuctionSimulator").runInNewContext({
-    prepareGearLoadout, assertFreshMarket, process, AbortSignal, Number, Error, JSON,
+    auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, prepareGearLoadout, assertFreshMarket, process, AbortSignal, Number, Error, JSON,
     fetch: async (_url, request) => {
       captured.push(JSON.parse(request.body));
       return { ok: true, headers: { get: () => "simulationcraft" }, json: async () => ({

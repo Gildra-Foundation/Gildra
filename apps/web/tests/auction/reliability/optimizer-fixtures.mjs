@@ -1,3 +1,4 @@
+import { auctionGearVariantSelectionKey } from "../../../lib/wow/auctionGearExclusions.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -82,11 +83,11 @@ export async function growingMarketRunner() {
     searchCheckpoint: searched.checkpoint, latestSearchResult: searched.result, busy: false };
   const runner = new vm.Script(executable(readProduct("lib/wow/auctionGearRunner.ts")) +
     "\n;({verifyAuctionGearSearch,assembleAuctionGearSearch})").runInNewContext({ createHash, Date, Map, Set, Object,
-    Number, JSON, AbortSignal, process, ...planner, ...discovery, auctionGearProfileFingerprint, touchAuctionGearSearch: () => {},
+    Number, JSON, AbortSignal, process, auctionGearVariantSelectionKey, ...planner, ...discovery, auctionGearProfileFingerprint, touchAuctionGearSearch: () => {},
     // This domain fixture uses a virtual entry; real disk checkpoints have separate process tests.
-    saveAuctionGearSearch: () => {},
+    saveAuctionGearSearch: () => {}, scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: async () => {},
     getBattleNetSimulationSnapshot: async () => armory, getCharacterAuctionMarket: async () => market,
-    addPlannerItemIcons: async () => {}, auctionVariantKey,
+    schedulePlannerItemIcons: () => {}, auctionVariantKey,
     advanceAuctionGearDiscovery: async () => { throw Error("unexpected_native_metadata_discovery"); } });
   return { entry, runner, signal, get calls() { return calls; }, grow() { market = snapshot(offers); },
     assemble: selection => runner.assembleAuctionGearSearch(entry, selection, signal, () => {}, "synthetic-token"),

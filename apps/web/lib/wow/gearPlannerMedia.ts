@@ -1,13 +1,32 @@
 import "server-only";
 import type { GearPlannerItemData } from "./gearPlannerPresentation";
 
+type ItemIconTarget = Pick<GearPlannerItemData, "itemId" | "iconUrl">;
+
 const icons = new Map<string, { url: string; expiresAt: number }>();
 const maximum = 512;
 
+/** Populate the current response immediately without waiting for the network. */
+export function applyCachedPlannerItemIcons(items: ItemIconTarget[], region: string) {
+  for (const item of items) {
+    const icon = icons.get(`${region}:${item.itemId}`);
+    if (!item.iconUrl && icon && icon.expiresAt > Date.now()) item.iconUrl = icon.url;
+  }
+}
+
+/** Imagery enriches later checkpoints; optional media never gates simulation. */
+export function schedulePlannerItemIcons(items: ItemIconTarget[], region: string, token: string, signal: AbortSignal) {
+  applyCachedPlannerItemIcons(items, region);
+  void addPlannerItemIcons(items, region, token, signal).catch(() => {
+    // Cancellation/media failures must not create an unhandled rejection.
+  });
+}
+
 /** Item identity imagery is independent of the item's scaled combat properties. */
-export async function addPlannerItemIcons(items: GearPlannerItemData[], region: string, token: string, signal: AbortSignal) {
+export async function addPlannerItemIcons(items: ItemIconTarget[], region: string, token: string, signal: AbortSignal) {
   if (!["eu", "us", "kr", "tw"].includes(region)) return;
-  const pending = new Map<number, GearPlannerItemData[]>();
+  applyCachedPlannerItemIcons(items, region);
+  const pending = new Map<number, ItemIconTarget[]>();
   for (const item of items) {
     if (item.iconUrl || !Number.isSafeInteger(item.itemId) || item.itemId <= 0) continue;
     const entries = pending.get(item.itemId) ?? [];

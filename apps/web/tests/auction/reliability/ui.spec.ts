@@ -9,7 +9,8 @@ test("exclude a hidden purchased lot across all slot aliases and undo with keybo
   const exclude = auction.result.getByRole("button", { name: /Исключить лот|Exclude (?:auction )?lot/i }).first();
   await expect(exclude).toBeVisible();
   await exclude.focus(); await page.keyboard.press("Enter");
-  const undo = auction.assembly.getByRole("button", { name: /Вернуть лот|Отменить исключение|Restore lot|Undo exclusion/i }).first();
+  await auction.assembly.locator("summary").filter({ hasText: /Исключения|Exclusions/ }).click();
+  const undo = auction.assembly.getByRole("button", { name: /Вернуть вариант|Restore variant/i }).first();
   await expect(undo).toBeVisible();
   await auction.assemble();
   expect(auction.requests.at(-1)?.excludedOptionIds?.slice().sort()).toEqual(aliasIds.slice().sort());
@@ -58,7 +59,7 @@ for (const kind of ["held-once", "transient-once"] as const) {
 
 test("reload restores owned search, exclusions and previous loadout through server validation", async ({ auction, page }) => {
   await auction.open(); await auction.search();
-  const wristCheckbox = auction.panel.getByRole("checkbox", { name: new RegExp(`(?:Учитывать при сборке|Allow in assembly): ${wrist.name}`) });
+  const wristCheckbox = auction.panel.getByRole("checkbox", { name: new RegExp(`(?:Учитывать вариант при сборке|Allow variant in assembly): ${wrist.name}`) });
   await auction.panel.locator("[data-auction-option] summary").click();
   await wristCheckbox.uncheck(); await auction.assemble();
   await page.reload({ waitUntil: "networkidle" });
@@ -72,7 +73,7 @@ test("reload restores owned search, exclusions and previous loadout through serv
 
 test("reload preserves exclusions changed locally before the next assembly", async ({ auction, page }) => {
   await auction.open(); await auction.search();
-  const checkbox = auction.panel.getByRole("checkbox", { name: new RegExp(`(?:Учитывать при сборке|Allow in assembly): ${wrist.name}`) });
+  const checkbox = auction.panel.getByRole("checkbox", { name: new RegExp(`(?:Учитывать вариант при сборке|Allow variant in assembly): ${wrist.name}`) });
   await auction.panel.locator("[data-auction-option] summary").click();
   await checkbox.uncheck();
   await page.reload({ waitUntil: "networkidle" });
@@ -80,7 +81,8 @@ test("reload preserves exclusions changed locally before the next assembly", asy
   await auction.panel.locator("[data-auction-option] summary").click();
   await expect(checkbox).not.toBeChecked();
   await auction.assemble();
-  expect(auction.requests.at(-1)?.excludedOptionIds).toEqual([wrist.optionId]);
+  expect(auction.requests.at(-1)?.excludedOptionIds).toEqual([]);
+  expect(auction.requests.at(-1)?.excludedVariantKeys).toEqual([JSON.stringify([wrist.itemId, wrist.variantKey])]);
 });
 
 test("expired or different-owner search is discarded with a localized restart action", async ({ auction, page }) => {
@@ -287,4 +289,16 @@ test("scope change after initial response timeout retires the prior job before r
   expect(blockedNewSearches).toEqual([]);
   expect(auction.deletes).toContain("synthetic-job-1");
   auction.releasePost();
+});
+
+test("audit fixes: purchased lot can be excluded while background discovery retires safely", async ({ auction }) => {
+  await auction.open(); await auction.search(); auction.incompleteAfterAssembly = true; await auction.assemble();
+  auction.mode = "late";
+  await auction.panel.getByRole("button", { name: /Продолжить проверку вещей|Continue item comparisons/ }).click();
+  await expect.poll(() => auction.requests.at(-1)?.action).toBe("resume");
+  const exclude = auction.result.getByRole("button", { name: /Исключить лот|Exclude lot/i }).first();
+  await expect(exclude).toBeEnabled(); await exclude.click();
+  auction.releasePost(); await auction.assemble();
+  expect(auction.requests.at(-1)?.excludedOptionIds?.slice().sort()).toEqual(aliasIds.slice().sort());
+  expect(auction.deletes).toContain("synthetic-job-3");
 });

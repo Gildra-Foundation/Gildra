@@ -5,8 +5,11 @@ import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from
 import { auctionGearProfileFingerprint } from "./auctionGearFingerprint";
 import { getCharacterAuctionMarket } from "./auctionMarketProvider";
 import { assertFreshMarket } from "./auctionMarket";
+import { auctionGearVariantSelectionKey } from "./auctionGearExclusions";
 import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
-import { addPlannerItemIcons } from "./gearPlannerMedia";
+import { schedulePlannerItemIcons } from "./gearPlannerMedia";
+import { resolveAuctionVariants } from "./auctionVariantResolver";
+import { auctionGearMechanicalCache, auctionGearMechanicalKey } from "./auctionGearMechanicalCache";
 import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
@@ -14,7 +17,7 @@ import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
 import { prepareGearLoadout, type GearSimulationScenario } from "./gearSimulation";
 import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
-import { createAuctionGearSearch, deleteAuctionGearSearch, saveAuctionGearSearch, touchAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
+import { createAuctionGearSearch, deleteAuctionGearSearch, scheduleAuctionGearSearchSave, flushAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
 import type { GearLoadoutItem } from "./gearCompatibility";
 import type { AuctionSnapshot } from "./auctionMarket";
 import { createAuctionGearDiscovery, advanceAuctionGearDiscovery, refreshAuctionGearDiscovery, auctionGearDiscoveryCoverage, auctionGearDiscoveryOptions } from "./auctionGearDiscovery";
@@ -24,8 +27,9 @@ export type AuctionGearRunInput = {
   scenario: GearSimulationScenario;
   locale: "ru" | "en";
   selectedSlots?: AuctionGearSlot[];
+  objective?: "value" | "dps";
 };
-export type AuctionGearRunMetadata = { market: AuctionGearContext["publicMarket"]; profileFingerprint: string; scenario: GearSimulationScenario; coverage: AuctionGearContext["coverage"] };
+export type AuctionGearRunMetadata = { market: AuctionGearContext["publicMarket"]; profileFingerprint: string; scenario: GearSimulationScenario; objective: "value" | "dps"; coverage: AuctionGearContext["coverage"] };
 export type AuctionGearRunResult = (AuctionGearSearchResult | AuctionGearAssemblyResult) & AuctionGearRunMetadata;
 export async function runAuctionGearPlan(input: AuctionGearRunInput, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
   const check = () => signal.throwIfAborted();
@@ -117,13 +121,13 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
   const retainedMarket = { ...market, offers: [] };
   const simulate = createAuctionSimulator({ armory, loadout, specId: theme.specId, specSlug: theme.slug,
     scenario: input.scenario, encounter, market: retainedMarket, engine: () => discovery.engine });
-  await addPlannerItemIcons([...currentBySlot.values()], character.region, token, signal);
+  schedulePlannerItemIcons([...currentBySlot.values()], character.region, token, signal);
   check();
   const coverage = auctionGearDiscoveryCoverage(discovery);
   return {
     input: { ...input, selectedSlots }, character, armory, options: [] as AuctionGearOption[], loadout,
     specId: theme.specId, specSlug: theme.slug, market: retainedMarket, currentBySlot, simulate,
-    discovery, discoveryContext, discoverySeason: season, encounter, coverage, searchLimited: true,
+    discovery, discoveryContext, discoverySeason: season, encounter, coverage, searchLimited: true, engineVerificationRequired: false,
     publicMarket: { snapshotId: market.id, region: character.region, realm: character.realm.name,
       connectedRealmId: market.connectedRealmId, updatedAt: market.sourceUpdatedAt,
       discoveredSnapshotId: discovery.discoveredSnapshotId, validatedAt: market.fetchedAt },
@@ -138,7 +142,7 @@ function publicAuctionResult(context: AuctionGearContext, result: AuctionGearSea
 function publicAuctionResult(context: AuctionGearContext, result: AuctionGearAssemblyResult): AuctionGearAssemblyResult & AuctionGearRunMetadata;
 function publicAuctionResult(context: AuctionGearContext, result: AuctionGearSearchResult | AuctionGearAssemblyResult): AuctionGearRunResult {
   const metadata: AuctionGearRunMetadata = { market: context.publicMarket,
-    profileFingerprint: context.profileFingerprint, scenario: context.input.scenario, coverage: context.coverage };
+    profileFingerprint: context.profileFingerprint, scenario: context.input.scenario, objective: context.input.objective ?? "dps", coverage: context.coverage };
   const discoveryComplete = context.discovery ? context.coverage.discoveryComplete : true;
   const dataComplete = context.discovery ? context.coverage.dataComplete : !context.searchLimited;
   return result.kind === "search"
@@ -179,6 +183,8 @@ function synchronizeAuctionOptions(entry: AuctionGearSearchEntry, options: Aucti
   const context = entry.context;
   entry.knownOptionIds ??= new Set(context.options.map(option => option.id));
   for (const option of options) entry.knownOptionIds.add(option.id);
+  entry.knownVariantKeys ??= new Set(context.options.map(option => auctionGearVariantSelectionKey({ itemId: option.candidate.itemId, variantKey: option.variantKey })));
+  for (const option of options) entry.knownVariantKeys.add(auctionGearVariantSelectionKey({ itemId: option.candidate.itemId, variantKey: option.variantKey }));
   if (auctionFactsKey(context.options) !== auctionFactsKey(options)) invalidateAuctionCursors(entry);
   context.options = options;
   if (context.discovery) {
@@ -192,23 +198,33 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
   progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxSteps = 12) {
   const context = entry.context;
   if (!context.discovery) return; // Backward-compatible trusted in-memory fixtures.
+  if (context.engineVerificationRequired) {
+    // A persisted engine label is historical, not proof about today's worker.
+    const candidate = auctionGearDiscoveryOptions(context.discovery).find(option => option.candidate.variants.some(variant =>
+      variant.key === option.variantKey && variant.resolution?.engine === context.discovery.engine));
+    const offer = candidate && context.discovery.offers.get(candidate.variantKey)?.find(row => row.auctionId === candidate.auctionId);
+    if (offer && candidate) {
+      const slot = ({ FINGER_1: "finger1", FINGER_2: "finger2", TRINKET_1: "trinket1", TRINKET_2: "trinket2" } as Record<string, string>)[candidate.candidate.slotType] ?? candidate.candidate.slotType.toLowerCase();
+      const validation = await resolveAuctionVariants({ offers: [{ offer, slot }],
+        spec: context.specSlug, characterLevel: context.character.level, signal });
+      if (!validation.engine || context.discovery.engine && validation.engine !== context.discovery.engine) throw new Error("simulation_version_changed");
+      context.discovery.engine = validation.engine;
+    } else {
+      await context.simulate([], signal);
+    }
+    context.engineVerificationRequired = false;
+  }
   if (!context.coverage.discoveryComplete) {
     if (!token) throw new Error("auction_discovery_authorization_required");
     await advanceAuctionGearDiscovery(context.discovery, { locale: context.input.locale === "en" ? "en_US" : "ru_RU",
       region: context.character.region, token, spec: context.specSlug, characterLevel: context.character.level,
       selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps,
       stopAfterNewCandidates: !entry.latestSearchResult?.items.some(item => item.comparison), onProgress: progress,
-      onCheckpoint: () => { synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery)); saveAuctionGearSearch(entry); } });
+      onCheckpoint: () => { synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery)); scheduleAuctionGearSearchSave(entry); } });
   }
   if (context.discovery.engine && entry.retainedBaseline && context.discovery.engine !== entry.retainedBaseline.engine) throw new Error("simulation_version_changed");
   const options = auctionGearDiscoveryOptions(context.discovery);
-  const media = [...new Map(options.filter(option => !option.candidate.iconUrl).map(option => [option.candidate.itemId,
-    { itemId: option.candidate.itemId, name: option.candidate.name, iconUrl: option.candidate.iconUrl }])).values()];
-  if (media.length && token && !shouldYield()) {
-    await addPlannerItemIcons(media, context.character.region, token, signal);
-    const icons = new Map(media.map(item => [item.itemId, item.iconUrl]));
-    for (const option of options) option.candidate.iconUrl ||= icons.get(option.candidate.itemId);
-  }
+  if (token) schedulePlannerItemIcons(options.map(option => option.candidate), context.character.region, token, signal);
   synchronizeAuctionOptions(entry, options);
 }
 
@@ -218,7 +234,7 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   const cache = retainAuctionSimulations(entry);
   if (entry.searchCheckpoint) Object.assign(entry.searchCheckpoint.simulationCache, cache);
   const { result, checkpoint } = await searchAuctionGearOptions({
-    searchId: entry.id, budgetCopper: context.input.budgetCopper, options: context.options,
+    searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options: context.options,
     selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
     market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
     baseline: entry.retainedBaseline, simulationCache: cache,
@@ -226,7 +242,7 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
     // Subsequent responses update the visible choices after eight new effects.
     maxNewSimulations: entry.latestSearchResult ? 8 : 3,
     shouldYield, onProgress: progress,
-    onCheckpoint: state => { entry.searchCheckpoint = state; touchAuctionGearSearch(entry); saveAuctionGearSearch(entry); },
+    onCheckpoint: state => { entry.searchCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
   });
   entry.searchCheckpoint = checkpoint;
   entry.retainedBaseline = checkpoint.baseline;
@@ -236,8 +252,7 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   entry.latestSearchResult = publicAuctionResult(context, { ...result, discoveryComplete, dataComplete,
     searchComplete: result.pendingItems === 0 && discoveryComplete, searchLimited: result.searchLimited || context.searchLimited,
     items: result.items.map(item => ({ ...item, currentItem: context.currentBySlot.get(item.slotType) })) });
-  touchAuctionGearSearch(entry);
-  saveAuctionGearSearch(entry);
+  scheduleAuctionGearSearchSave(entry);
   return entry.latestSearchResult;
 }
 export async function startAuctionGearSearch(input: AuctionGearRunInput, owner: string, token: string, signal: AbortSignal,
@@ -271,7 +286,9 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
   try {
     await discoverAuctionOptions(entry, token, signal, progress, shouldYield);
     return publicAuctionResult(entry.context, await updateAuctionSearchResult(entry, signal, progress, shouldYield));
-  } finally { entry.busy = false; }
+  } finally {
+    try { await flushAuctionGearSearch(entry); } finally { entry.busy = false; }
+  }
 }
 /** Refresh actual character and lot facts without trusting client prices/stats. */
 export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, token: string, signal: AbortSignal, verifyOwnership = true) {
@@ -317,21 +334,33 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
   context.market.sourceUpdatedAt = market.sourceUpdatedAt;
   context.market.fetchedAt = market.fetchedAt;
   context.publicMarket = { ...context.publicMarket, snapshotId: market.id, updatedAt: market.sourceUpdatedAt, validatedAt: market.fetchedAt };
-  touchAuctionGearSearch(entry);
-  saveAuctionGearSearch(entry);
+  await flushAuctionGearSearch(entry);
 }
 
-export type AuctionGearAssemblySelection = { excludedOptionIds: string[] } | string[] | undefined;
+export type AuctionGearAssemblySelection = { excludedOptionIds: string[]; excludedVariantKeys?: string[] } | string[] | undefined;
 export function selectedAuctionGearAssemblyOptions(entry: AuctionGearSearchEntry, value: unknown): AuctionGearOption[] {
   const exclusion = value !== undefined && !Array.isArray(value);
-  if (exclusion && (!value || typeof value !== "object" || Object.keys(value).length !== 1 || !("excludedOptionIds" in value))) throw new Error("invalid_auction_selection");
-  const ids = exclusion ? (value as { excludedOptionIds: unknown }).excludedOptionIds : value;
+  if (exclusion && (!value || typeof value !== "object" || !("excludedOptionIds" in value) ||
+      Object.keys(value).some(key => key !== "excludedOptionIds" && key !== "excludedVariantKeys"))) throw new Error("invalid_auction_selection");
+  const object = exclusion ? value as { excludedOptionIds: unknown; excludedVariantKeys?: unknown } : undefined;
+  const ids = object ? object.excludedOptionIds : value;
   if (exclusion && !Array.isArray(ids)) throw new Error("invalid_auction_selection");
   const known = entry.knownOptionIds ?? new Set(entry.context.options.map(option => option.id));
   if (ids !== undefined && (!Array.isArray(ids) || (!exclusion && !ids.length) || ids.length > known.size ||
       ids.some(id => typeof id !== "string" || id.length > 180 || !known.has(id)) || new Set(ids).size !== ids.length)) throw new Error("invalid_auction_selection");
+  const variants = object?.excludedVariantKeys;
+  if (variants !== undefined && (!Array.isArray(variants) || variants.length > 20000 ||
+      variants.some(key => typeof key !== "string" || !key || key.length > 240) || new Set(variants).size !== variants.length)) throw new Error("invalid_auction_selection");
+  const bannedVariants = new Set(variants as string[] | undefined);
+  if (bannedVariants.size) {
+    const knownVariants = new Set(entry.knownVariantKeys ?? []);
+    for (const option of entry.context.options) knownVariants.add(auctionGearVariantSelectionKey({ itemId: option.candidate.itemId, variantKey: option.variantKey }));
+    if ([...bannedVariants].some(key => !knownVariants.has(key))) throw new Error("invalid_auction_selection");
+  }
   const selected = new Set(ids as string[] | undefined);
-  return entry.context.options.filter(option => ids === undefined || (exclusion ? !selected.has(option.id) : selected.has(option.id)));
+  return entry.context.options.filter(option =>
+    (ids === undefined || (exclusion ? !selected.has(option.id) : selected.has(option.id))) &&
+    (!bannedVariants.size || !bannedVariants.has(auctionGearVariantSelectionKey({ itemId: option.candidate.itemId, variantKey: option.variantKey }))));
 }
 
 export function selectedAuctionGearOptions(entry: AuctionGearSearchEntry, value: unknown) {
@@ -358,7 +387,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       entry.allowedKey = allowedKey;
     }
     const { result, checkpoint } = await assembleAuctionGear({
-      searchId: entry.id, budgetCopper: context.input.budgetCopper, options,
+      searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options,
       selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
       market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
       baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
@@ -367,21 +396,22 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       // continuations keep the original complete search and its larger batch.
       maxNewSimulations: entry.latestAssemblyResult ? 48 : 8,
       shouldYield, onProgress: progress,
-      onCheckpoint: state => { entry.assemblyCheckpoint = state; touchAuctionGearSearch(entry); saveAuctionGearSearch(entry); },
+      onCheckpoint: state => { entry.assemblyCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
     });
     entry.assemblyCheckpoint = checkpoint;
     entry.retainedSimulationCache = checkpoint.simulationCache;
     const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true);
-    touchAuctionGearSearch(entry);
     const present = (purchase: AuctionGearAssemblyResult["purchases"][number]) => ({ ...purchase,
       currentItem: context.currentBySlot.get(purchase.slotType) });
     const published = publicAuctionResult(context, { ...result, updatedSearch, marketChange: context.marketChange,
       purchases: result.purchases.map(present),
       bestConfirmed: result.bestConfirmed ? { ...result.bestConfirmed, purchases: result.bestConfirmed.purchases.map(present) } : null });
     entry.latestAssemblyResult = published;
-    saveAuctionGearSearch(entry);
+    scheduleAuctionGearSearchSave(entry);
     return published;
-  } finally { entry.busy = false; }
+  } finally {
+    try { await flushAuctionGearSearch(entry); } finally { entry.busy = false; }
+  }
 }
 
 /** Kept for trusted CLI checks; HTTP uses explicit search and assembly stages. */
@@ -394,11 +424,11 @@ export async function runAuctionGearPlanFromSnapshot(input: AuctionGearRunInput,
   context.options = auctionGearDiscoveryOptions(context.discovery);
   context.coverage = auctionGearDiscoveryCoverage(context.discovery);
   context.searchLimited = !context.coverage.discoveryComplete || !context.coverage.dataComplete;
-  const plan = await planAuctionGear({ budgetCopper: input.budgetCopper, options: context.options,
+  const plan = await planAuctionGear({ objective: input.objective, budgetCopper: input.budgetCopper, options: context.options,
     loadout: context.loadout, specId: context.specId, market: context.market, signal,
     simulate: context.simulate, onProgress: progress });
   const purchases = plan.purchases.map(purchase => ({ ...purchase, currentItem: context.currentBySlot.get(purchase.slotType) }));
-  await addPlannerItemIcons(purchases.flatMap(purchase => [purchase, ...(purchase.currentItem ? [purchase.currentItem] : [])]), character.region, token, signal);
+  schedulePlannerItemIcons(purchases.flatMap(purchase => [purchase, ...(purchase.currentItem ? [purchase.currentItem] : [])]), character.region, token, signal);
   signal.throwIfAborted();
   return { ...plan, purchases, searchLimited: plan.searchLimited || context.searchLimited,
     market: context.publicMarket, profileFingerprint: context.profileFingerprint, scenario: input.scenario,
@@ -430,15 +460,19 @@ export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctio
   });
   const simulate = createAuctionSimulator({ armory: data.armory, loadout: data.loadout,
     specId: data.specId, specSlug: data.specSlug, scenario: data.input.scenario, encounter: data.encounter,
-    market: data.market, engine: () => data.discovery.engine });
-  return { ...data, options: auctionGearDiscoveryOptions(data.discovery), discoveryContext, simulate };
+    market: data.market, engine: () => data.discovery.engine, freshMetadata: false });
+  return { ...data, options: auctionGearDiscoveryOptions(data.discovery), discoveryContext, simulate, engineVerificationRequired: true };
 }
 
-function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, encounter, market, engine }: {
+function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, encounter, market, engine, freshMetadata = true }: {
   armory: BattleNetSimulationSnapshot; loadout: GearLoadoutItem[]; specId: number; specSlug: string;
   scenario: GearSimulationScenario; encounter: { fightLengthSeconds: number; targets: number };
-  market: Pick<AuctionSnapshot, "sourceUpdatedAt">; engine: () => string;
+  market: Pick<AuctionSnapshot, "sourceUpdatedAt">; engine: () => string; freshMetadata?: boolean;
 }) {
+  // Discovery in a fresh context obtains current native metadata over HTTP.
+  // Restored metadata is historical: one real native result must validate it.
+  let verified = freshMetadata;
+  const fingerprint = auctionGearProfileFingerprint(armory);
   return async (selections: AuctionGearOption[], simSignal: AbortSignal): Promise<GearPlanSimulation> => {
       assertFreshMarket(market);
       const prepared = prepareGearLoadout({
@@ -447,6 +481,10 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
         loadout,
         specId: specId
       });
+      const cacheKey = auctionGearMechanicalKey(fingerprint, { spec: specSlug, scenario, ...encounter, gearChanges: prepared.changes });
+      simSignal.throwIfAborted();
+      const cached = verified ? auctionGearMechanicalCache.get(cacheKey, engine()) : undefined;
+      if (cached) return cached;
       const response = await fetch(`${(process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "")}/v1/wow/rotation/simulations`, {
         method: "POST",
         headers: {
@@ -475,7 +513,10 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       const result = (await response.json()) as GearPlanSimulation;
       if (!Number.isFinite(result.dpsError) || !Number.isFinite(result.confidence) || result.confidence !== 95) throw new Error("invalid_simulation_result");
       if (engine() && result.engine !== engine()) throw new Error("simulation_version_changed");
-      return { dps: result.dps, dpsError: result.dpsError, confidence: result.confidence,
+      const simulation = { dps: result.dps, dpsError: result.dpsError, confidence: result.confidence,
         iterations: result.iterations, engine: result.engine };
+      auctionGearMechanicalCache.set(cacheKey, simulation);
+      verified = true;
+      return simulation;
     };
 }

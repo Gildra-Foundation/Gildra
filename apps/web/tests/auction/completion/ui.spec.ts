@@ -129,7 +129,8 @@ test("changing exclusions after a lost response retires the old nonce before a n
   await auction.build.click(); await expect(auction.result).toBeVisible();
   expect(auction.nonceDeletes).toContain(oldNonce);
   expect(auction.requests.filter(body => body.action === "assemble")).toHaveLength(2);
-  expect(auction.requests[2].excludedOptionIds).toEqual(["synthetic-780003:WRIST"]);
+  expect(auction.requests[2].excludedOptionIds).toEqual([]);
+  expect(auction.requests[2].excludedVariantKeys).toEqual([JSON.stringify([880003, "synthetic-exact-780003"])]);
   expect(auction.requests[2].clientRequestId).not.toBe(oldNonce);
 });
 
@@ -293,4 +294,68 @@ test("value: build immediately from published choices safely retires background 
   expect(auction.requests.map(body => body.action)).toEqual(['search', 'resume', 'assemble']);
   expect(auction.deletes).toContain('completion-job-2');
   await expect(auction.panel.getByRole('alert')).toHaveCount(0);
+});
+
+
+test("audit fixes: variant checkbox excludes every slot alias, survives reload and reaches assembly", async ({ auction, page }) => {
+  auction.aliasVariants = true; await auction.open(); await auction.search();
+  const cards = auction.panel.locator('[data-auction-option]');
+  for (const card of await cards.all()) await card.locator('summary').click();
+  await cards.first().getByRole('checkbox').uncheck();
+  await expect(cards.nth(1).getByRole('checkbox')).not.toBeChecked();
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(auction.panel.locator('[data-auction-search-result]')).toBeVisible();
+  for (const card of await cards.all()) await card.locator('summary').click();
+  await expect(cards.nth(1).getByRole('checkbox')).not.toBeChecked();
+  await expect(auction.build).toBeDisabled();
+  await cards.first().getByRole('checkbox').check();
+  await expect(cards.nth(1).getByRole('checkbox')).toBeChecked();
+  await auction.build.click(); await expect(auction.result).toBeVisible();
+  expect(auction.requests.find(body => body.action === 'assemble')?.excludedVariantKeys).toEqual([]);
+});
+
+test("audit fixes: selecting during background discovery retires it before assembling", async ({ auction }) => {
+  auction.valueChoices = true; auction.incompleteSearchOnce = true; auction.holdContinuation = true;
+  await auction.open(); await auction.search();
+  await expect.poll(() => auction.requests.map(body => body.action)).toEqual(['search', 'resume']);
+  const card = auction.panel.locator('[data-best-value]'); await card.locator('summary').click();
+  await expect(card.getByRole('checkbox')).toBeEnabled(); await card.getByRole('checkbox').uncheck();
+  await auction.build.click(); auction.release(); await expect(auction.result).toBeVisible();
+  expect(auction.deletes).toContain('completion-job-2');
+  expect(auction.requests.find(body => body.action === 'assemble')?.excludedVariantKeys).toEqual([JSON.stringify([880002, 'synthetic-value-base'])]);
+});
+
+test("audit fixes: hundreds of excluded duplicates stay folded and restore together", async ({ auction, page }) => {
+  auction.manyDuplicateLots = true; await auction.open(); await auction.search();
+  await auction.assembly.locator('summary').filter({ hasText: /Настроить варианты|Loadout options/ }).click();
+  await auction.assembly.getByRole('button', { name: /Исключить все варианты|Exclude all options/, exact: true }).click();
+  await expect(auction.build).toBeDisabled();
+  await expect(auction.assembly.locator('[data-assembly-disabled-reason]')).toBeVisible();
+  await expect(auction.panel.locator('[data-excluded-restore]')).toHaveCount(0);
+  await auction.assembly.locator('summary').filter({ hasText: /Исключения|Exclusions/ }).click();
+  await expect(auction.panel.locator('[data-excluded-restore]')).toHaveCount(1);
+  expect((await auction.panel.boundingBox())!.height).toBeLessThan(4500);
+  await auction.panel.locator('[data-excluded-restore]').click(); await expect(auction.build).toBeEnabled();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("audit fixes: value is default objective and maximum DPS is an explicit search choice", async ({ auction }) => {
+  await auction.open();
+  await auction.panel.locator('summary').filter({ hasText: /Слоты экипировки|Equipment slots/ }).click();
+  const objective = auction.panel.locator('select[name="objective"]'); await expect(objective).toHaveValue('value');
+  await objective.selectOption('dps'); await auction.search();
+  expect(auction.requests[0].objective).toBe('dps');
+  await expect(auction.assembly).toContainText(auction.t('наибольший подтверждённый DPS', 'highest confirmed DPS'));
+});
+
+
+for (const maximum of ["confirmed", "unconfirmed"] as const) test(`audit fixes: value result explains a ${maximum} maximum-DPS diagnostic accurately`, async ({ auction }) => {
+  auction.valueMaximum = maximum; await auction.open(); await auction.search();
+  await expect(auction.assembly).toContainText(auction.t('Иногда выгоднее одна замена', 'Sometimes one replacement offers better value'));
+  await auction.build.click(); await expect(auction.result).toBeVisible();
+  await auction.result.locator('summary').filter({ hasText: /максимальным измеренным DPS|highest measured DPS/ }).click();
+  await expect(auction.result).toContainText(maximum === 'confirmed'
+    ? auction.t('сет выгоднее по цене за прирост DPS', 'offers better value per DPS gained')
+    : auction.t('Его прирост не подтверждён', 'Its gain is not confirmed'));
+  await expect(auction.result).toContainText(auction.t('Цена за +1 DPS всего сета', 'Whole-loadout cost per +1 DPS'));
 });

@@ -137,15 +137,17 @@ async function postPlan(request: Request) {
     clientRequestId = body.clientRequestId;
   }
   if (action !== "search") {
-    const keys = action === "resume" ? ["action", "searchId", "clientRequestId"] : ["action", "searchId", "allowedOptionIds", "excludedOptionIds", "clientRequestId"];
+    const keys = action === "resume" ? ["action", "searchId", "clientRequestId"] : ["action", "searchId", "allowedOptionIds", "excludedOptionIds", "excludedVariantKeys", "clientRequestId"];
     if (Object.keys(body).some(key => !keys.includes(key)) || typeof body.searchId !== "string" || body.searchId.length > 100) return reply({ error: "invalid_plan_request" }, 400);
     const hasAllowed = Object.hasOwn(body, "allowedOptionIds"), hasExcluded = Object.hasOwn(body, "excludedOptionIds");
+    const hasVariants = Object.hasOwn(body, "excludedVariantKeys"), variants = body.excludedVariantKeys;
+    if (hasVariants && (!hasExcluded || !Array.isArray(variants) || variants.length > 20000 || variants.some(key => typeof key !== "string" || !key || key.length > 240) || new Set(variants).size !== variants.length)) return reply({ error: "invalid_auction_selection" }, 400);
     if (hasAllowed && hasExcluded) return reply({ error: "invalid_auction_selection" }, 400);
     const ids = hasAllowed ? body.allowedOptionIds : hasExcluded ? body.excludedOptionIds : undefined;
     if (ids !== undefined && (!Array.isArray(ids) || (hasAllowed && !ids.length) ||
         ids.some(id => typeof id !== "string" || !id || id.length > 180) || new Set(ids).size !== ids.length)) return reply({ error: "invalid_auction_selection" }, 400);
     const requestFingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify({ action, searchId: body.searchId,
-      ...(action === "assemble" ? { selection: { [hasAllowed ? "allowedOptionIds" : "excludedOptionIds"]: [...((ids as string[] | undefined) ?? [])].sort() } } : {}),
+      ...(action === "assemble" ? { selection: { [hasAllowed ? "allowedOptionIds" : "excludedOptionIds"]: [...((ids as string[] | undefined) ?? [])].sort(), ...(hasVariants ? { excludedVariantKeys: [...variants as string[]].sort() } : {}) } } : {}),
     })).digest("hex") : undefined;
     if (clientRequestId) {
       try {
@@ -157,7 +159,7 @@ async function postPlan(request: Request) {
       } catch { return reply({ error: "invalid_plan_request" }, 400); }
     }
     // Only IDs cross the boundary. Prices, item effects and budget stay server-owned.
-    const selection = hasAllowed ? body.allowedOptionIds : hasExcluded ? { excludedOptionIds: body.excludedOptionIds } : undefined;
+    const selection = hasAllowed ? body.allowedOptionIds : hasExcluded ? { excludedOptionIds: body.excludedOptionIds, ...(hasVariants ? { excludedVariantKeys: variants } : {}) } : undefined;
     const entry = getAuctionGearSearch(user.id, body.searchId);
     if (!entry) return reply({ error: "search_not_found" }, 404);
     let release: (() => void) | undefined;
@@ -167,12 +169,13 @@ async function postPlan(request: Request) {
       request.signal.throwIfAborted();
       if (Date.now() > acceptBefore) throw new Error("plan_request_expired");
       const beforeAcceptance = allowed ? () => {
-        const previous = entry.excludedOptionIds;
+        const previous = entry.excludedOptionIds, previousVariants = entry.excludedVariantKeys;
         const ids = new Set(allowed.map(option => option.id));
         entry.excludedOptionIds = hasExcluded ? [...body.excludedOptionIds as string[]]
           : entry.context.options.filter(option => !ids.has(option.id)).map(option => option.id);
+        entry.excludedVariantKeys = hasVariants ? [...variants as string[]] : [];
         try { saveAuctionGearSearch(entry); }
-        catch (error) { entry.excludedOptionIds = previous; throw error; }
+        catch (error) { entry.excludedOptionIds = previous; entry.excludedVariantKeys = previousVariants; throw error; }
       } : undefined;
       const job = enqueueAuctionGearJob(user.id, async (signal, progress) => {
         entry.busy = true;
@@ -182,7 +185,7 @@ async function postPlan(request: Request) {
             : await assembleAuctionGearSearch(entry, selection, signal, progress, user.token);
         } finally { entry.busy = false; }
       }, { continuation: true, searchId: entry.id, scope: { characterSlug: entry.context.input.characterSlug, locale: entry.context.input.locale },
-        onSettled: release, beforeAcceptance, work: action === "assemble" ? { action, searchId: entry.id, selection: selection as { excludedOptionIds: string[] } | string[] | undefined }
+        onSettled: release, beforeAcceptance, work: action === "assemble" ? { action, searchId: entry.id, selection: selection as { excludedOptionIds: string[]; excludedVariantKeys?: string[] } | string[] | undefined }
           : { action, searchId: entry.id }, ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) });
       return reply(job, 202);
     } catch (error) {
@@ -191,15 +194,17 @@ async function postPlan(request: Request) {
       return reply({ error: code }, code === "invalid_auction_selection" || code === "invalid_plan_request" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
     }
   }
-  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "locale", "clientRequestId"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
+  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "objective", "locale", "clientRequestId"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
   const {
     characterSlug,
     scenario = "single-target",
+    objective = "dps",
     locale = "ru"
   } = body;
   if (typeof characterSlug !== "string" || !characterSlug || characterSlug.length > 180 || typeof scenario !== "string" || !["single-target", "aoe", "execute"].includes(scenario) || typeof locale !== "string" || !["ru", "en"].includes(locale)) return reply({
     error: "invalid_plan_request"
   }, 400);
+  if (objective !== "value" && objective !== "dps") return reply({ error: "invalid_auction_objective" }, 400);
   let budgetCopper: number;
   try {
     budgetCopper = goldToCopper(body.budgetGold);
@@ -212,7 +217,7 @@ async function postPlan(request: Request) {
   try { selectedSlots = parseAuctionGearSlots(body.selectedSlots ?? [...auctionGearSlots]); }
   catch { return reply({ error: "invalid_equipment_slots" }, 400); }
   const requestFingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify({
-    characterSlug, locale, budgetCopper, selectedSlots, scenario,
+    characterSlug, locale, budgetCopper, selectedSlots, scenario, ...(objective === "value" ? { objective } : {}),
   })).digest("hex") : undefined;
   try {
     const input = {
@@ -220,6 +225,7 @@ async function postPlan(request: Request) {
       budgetCopper,
       selectedSlots,
       scenario: scenario as GearSimulationScenario,
+      objective: objective as "value" | "dps",
       locale: locale as "ru" | "en"
     };
     request.signal.throwIfAborted();

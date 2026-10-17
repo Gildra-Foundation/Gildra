@@ -175,3 +175,7 @@
 }
 .recommendationHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-3); margin-top: var(--atlas-space-4); }
 .recommendationHeading h3 { margin: 0; }
+
+.excludedLots > summary { cursor: pointer; color: var(--atlas-accent); }
+.excludedLots > summary:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: var(--atlas-space-1); }
+.optionDetails > p:last-child { grid-column: 1 / -1; }

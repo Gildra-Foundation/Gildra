@@ -21,7 +21,7 @@ async function setup(missing) {
       resolvedAuctionVariant, supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
       lookupGearRecords: async (_ids, _locale, itemClass) => {
         state.lookupCalls++;
-        return itemClass === 4 && (missing !== "summary" || state.repaired) ? [entity] : [];
+        return (itemClass === undefined || itemClass === 4) && (missing !== "summary" || state.repaired) ? [entity] : [];
       },
       gearEntityDetails: async () => {
         state.detailCalls++;
@@ -74,9 +74,9 @@ test("catalog repair: continued missing data retries at most once per retry inte
   for (let attempt = 0; attempt < 4; attempt++) {
     const calls = h.state.lookupCalls;
     h.advanceClock(60_001); h.refresh(); h.refresh(); await h.advance();
-    assert.equal(h.state.lookupCalls, calls + 2);
+    assert.equal(h.state.lookupCalls, calls + 1);
     h.refresh(); await h.advance();
-    assert.equal(h.state.lookupCalls, calls + 2);
+    assert.equal(h.state.lookupCalls, calls + 1);
     assert.equal(h.discovery.itemIds.length, 1);
     assert.equal(h.d.auctionGearDiscoveryCoverage(h.discovery).dataComplete, false);
   }

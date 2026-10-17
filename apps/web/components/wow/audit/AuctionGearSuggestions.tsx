@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { auctionGearPricePerDps, type AuctionGearRecommendationGroup } from "@/lib/wow/auctionGearRecommendations";
+import { auctionGearVariantSelectionKey } from "@/lib/wow/auctionGearExclusions";
 import type { AuctionGearSearchItem } from "@/lib/wow/auctionGearTypes";
 import { GearPlannerItem } from "./GearPlannerItem";
 import styles from "./auctionGearOptimizer.module.css";
@@ -20,6 +21,7 @@ type Props = {
   groups: AuctionGearRecommendationGroup[];
   locale: "ru" | "en";
   excluded: Set<string>;
+  excludedVariantKeys: Set<string>;
   running: boolean;
   marketStale: boolean;
   slotName: (slot: string) => string;
@@ -31,7 +33,7 @@ export function AuctionGearSuggestions(props: Props) {
     <SlotSuggestion key={group.slotType} {...props} group={group} />)}</ul>;
 }
 
-function SlotSuggestion({ group, locale, excluded, running, marketStale, slotName, onAllowed }: Props & { group: AuctionGearRecommendationGroup }) {
+function SlotSuggestion({ group, locale, excluded, excludedVariantKeys, running, marketStale, slotName, onAllowed }: Props & { group: AuctionGearRecommendationGroup }) {
   const [expanded, setExpanded] = useState(false);
   const alternativesId = useId();
   const ru = locale === "ru";
@@ -47,11 +49,11 @@ function SlotSuggestion({ group, locale, excluded, running, marketStale, slotNam
     </div>
     <details className={styles.itemDetails}><summary>{t("Сравнение и выбор для сета", "Comparison and loadout selection")}</summary>
       <div className={styles.optionDetails}><p className={styles.note}>{numeric.format(item.comparison!.confidence)}% {t("доверительный интервал", "confidence interval")}: ±{numeric.format(item.comparison!.uncertainty.marginPercent)}%. {t("Количество в лоте", "Lot quantity")}: {item.quantity}.</p>
-        <label className={styles.include}><input type="checkbox" checked={!excluded.has(item.optionId)} disabled={running} onChange={event => onAllowed(item.optionId, event.target.checked)} aria-label={`${t("Учитывать при сборке", "Allow in assembly")}: ${item.name}, ${slotName(item.slotType)}`} /><span>{t("Учитывать при сборке", "Allow in assembly")}</span></label>
+        <label className={styles.include}><input type="checkbox" checked={!excludedVariantKeys.has(auctionGearVariantSelectionKey(item))} disabled={running} onChange={event => onAllowed(item.optionId, event.target.checked)} aria-label={`${t("Учитывать вариант при сборке", "Allow variant in assembly")}: ${item.name}, ${slotName(item.slotType)}`} /><span>{t("Учитывать вариант при сборке", "Allow variant in assembly")}</span></label><p className={styles.note}>{t("Выбор действует на все лоты этого варианта и все подходящие слоты.", "This choice applies to every lot of this exact variant across all eligible slots.")}</p>
       </div>
       <div className={styles.replacement}><span>{t("Заменяет", "Replaces")}</span>{item.currentItem ? <GearPlannerItem item={item.currentItem} locale={locale} /> : <span className={styles.note}>{t("Надетый предмет не указан.", "Equipped item details are unavailable.")}</span>}</div>
     </details>
-    {excluded.has(item.optionId) ? <p className={styles.note}>{t("Исключён из сборки сета", "Excluded from loadout assembly")}</p> : null}
+    {excludedVariantKeys.has(auctionGearVariantSelectionKey(item)) ? <p className={styles.note}>{t("Исключён из сборки сета", "Excluded from loadout assembly")}</p> : excluded.has(item.optionId) ? <p className={styles.note}>{t("Этот лот исключён. Другие лоты варианта разрешены.", "This lot is excluded. Other lots of this variant remain allowed.")}</p> : null}
   </div>;
   return <li className={styles.slotSuggestion} data-auction-slot={group.slotType}>
     <div className={styles.suggestionHeading}><h3>{slotName(group.slotType)}</h3><span className={styles.valueLabel}>{t("Лучшее соотношение цены и DPS", "Best value for DPS")}</span></div>

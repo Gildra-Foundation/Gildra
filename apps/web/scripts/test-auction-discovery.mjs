@@ -3,8 +3,10 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { stripTypeScriptTypes } from "node:module";
 import vm from "node:vm";
+import { auctionGearVariantSelectionKey } from "../lib/wow/auctionGearExclusions.ts";
 import * as planner from "../lib/wow/auctionGearPlanner.ts";
 import * as searchStore from "../lib/wow/auctionGearSearchStore.ts";
+import { auctionGearMechanicalCache, auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../lib/wow/auctionGearMechanicalCache.ts";
 import { normalizeGearCandidate, catalogLoadoutItem, gearSlotCategoryPaths } from "../lib/wow/gearCandidates.ts";
 import { auctionVariantKey, resolvedAuctionVariant, validAuctionWeapon } from "../lib/wow/auctionItemVariant.ts";
 import { supportedAuctionModifiers } from "../lib/wow/gearItemModifiers.ts";
@@ -20,6 +22,9 @@ const strip = source => stripTypeScriptTypes(source, { mode: "strip" })
 let fixture, batches, nativeCalls;
 let contextGate = null;
 let contextStarts = [];
+let mediaGate = null;
+let mediaStarts = 0;
+let currentEngine = "SimulationCraft offline-discovery-test";
 const engine = "SimulationCraft offline-discovery-test";
 const record = (id, { compatible = true, slot = "Wrist" } = {}) => ({ id: `synthetic-${id}`, externalId: id,
   type: "item", slug: `synthetic-${id}`, name: `Synthetic item ${id}`, iconUrl: "https://example.invalid/synthetic.jpg",
@@ -37,7 +42,7 @@ const lookupGearRecords = async (ids, _locale, itemClass, maxRequiredLevel) => {
   assert.equal(maxRequiredLevel, undefined, "Do not filter actual auction variants using catalog base required level");
   assert(ids.length <= 500, "Discovery summaries stay bounded; repository pages remain limited to 100 IDs");
   batches.catalog++;
-  return itemClass === 4 ? fixture.records.filter(record => ids.includes(record.externalId)) : [];
+  return fixture.records.filter(record => ids.includes(record.externalId) && (itemClass === undefined || record.tooltip?.blocks?.some(block => block.type === "item_registry" && block.class_id === itemClass)));
 };
 const gearEntityDetails = async records => {
   assert(records.length <= 8, "Expensive entity details must be batched");
@@ -49,7 +54,7 @@ const resolveAuctionVariants = async ({ offers }) => {
   assert(offers.length <= 8, "At most four exact variants and four control references per work batch");
   batches.variants++;
   for (const { offer } of offers) batches.keys.add(auctionVariantKey(offer));
-  return { engine, variants: new Map(offers.map(({ offer }) => [auctionVariantKey(offer), {
+  return { engine: currentEngine, variants: new Map(offers.map(({ offer }) => [auctionVariantKey(offer), {
     key: auctionVariantKey(offer), itemId: offer.itemId, itemLevel: 100, requiredLevel: 1, inventoryType: 9,
     itemClassId: 4, itemSubclassId: 4, quality: 3, uniqueEquipped: false, setId: 0, stats: {},
     ...(fixture.reject?.has(auctionVariantKey(offer)) ? { error: "synthetic_unresolved_variant" } : {}),
@@ -60,8 +65,8 @@ const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGear
   .runInNewContext({ Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
     supportedAuctionModifiers, nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS, Date, lookupGearRecords, gearEntityDetails, getAuctionItemReferences, resolveAuctionVariants });
 const runnerSource = await readFile(new URL("../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
-const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions})")
-  .runInNewContext({ createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery, auctionGearProfileFingerprint, validAuctionWeapon,
+const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions,snapshotAuctionGearContext,restoreAuctionGearContext})")
+  .runInNewContext({ createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery, auctionGearProfileFingerprint, validAuctionWeapon, auctionGearMechanicalCache, auctionGearMechanicalKey, resolveAuctionVariants, auctionGearVariantSelectionKey,
     talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
     getCharacterAuctionMarket: async () => { contextStarts.push("market"); if (contextGate) await contextGate; return fixture.market; },
     getBattleNetSimulationSnapshot: async () => armory,
@@ -70,7 +75,7 @@ const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchF
     lookupGearEntities: async () => { contextStarts.push("constraints"); if (contextGate) await contextGate; return [record(999999)]; },
     currentGearSeason: () => ({ id: "synthetic", patch: "synthetic", expansionId: 11, activityNames: [] }),
     getRotationPreset: async () => ({ defaultRules: ["synthetic-rule"] }),
-    addPlannerItemIcons: async () => {}, assertFreshMarket, auctionVariantKey,
+    schedulePlannerItemIcons: () => { mediaStarts++; if (mediaGate) void mediaGate.catch(() => {}); }, assertFreshMarket, auctionVariantKey,
     prepareGearLoadout: ({ selections }) => ({ equipment: armory.equipment,
       changes: selections.map(selection => ({ itemId: selection.candidate.itemId,
         bonusIds: selection.candidate.variants.find(variant => variant.key === selection.variantKey).bonusIds })) }),
@@ -79,18 +84,19 @@ const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchF
       const key = JSON.stringify(changes);
       nativeCalls.set(key, (nativeCalls.get(key) ?? 0) + 1);
       return Response.json({ dps: 1000 + changes.reduce((sum, change) => sum + change.bonusIds[0] * 10, 0),
-        dpsError: 1, confidence: 95, iterations: 1000, engine }, { headers: { "x-gildra-engine": "simulationcraft" } });
+        dpsError: 1, confidence: 95, iterations: 1000, engine: currentEngine }, { headers: { "x-gildra-engine": "simulationcraft" } });
     } });
 const signal = () => new AbortController().signal;
 const progress = () => {};
 let sequence = 0;
-async function start(records, offers, reject) {
+async function start(records, offers, reject, { reuse = false, ...input } = {}) {
+  if (!reuse) auctionGearMechanicalCache.clear();
   fixture = { records, market: market(offers), reject };
   batches = { catalog: 0, details: 0, variants: 0, keys: new Set() };
   nativeCalls = new Map();
   const owner = `offline-discovery-${++sequence}`;
   const result = await runner.startAuctionGearSearchFromSnapshot({ characterSlug: "synthetic", budgetCopper: 1000,
-    scenario: "single-target", locale: "en", selectedSlots: ["WRIST"] }, character, armory, owner, "synthetic-unused-token", signal(), progress);
+    scenario: "single-target", locale: "en", selectedSlots: ["WRIST"], ...input }, character, armory, owner, "synthetic-unused-token", signal(), progress);
   const entry = searchStore.getAuctionGearSearch(owner, result.searchId);
   assert(entry);
   return { result, entry, owner, chunks: 1 };
@@ -103,6 +109,82 @@ async function finish(run) {
   assert.equal(nativeCalls.get("[]"), 1, "Continuations must retain the baseline");
   return run;
 }
+
+// Known non-equipment is classified, not reported as missing catalog gear.
+const recipe = { ...record(61001), tooltip: { blocks: [{ type: "subclass", class_id: 9, subclass_id: 6 }] } };
+const bag = { ...record(61002), tooltip: { blocks: [{ type: "item_registry", class_id: 1, subclass_id: 0 }] } };
+const quest = { ...record(61003), tooltip: { blocks: [{ type: "subclass", class_id: 12, subclass_id: 0 }] } };
+const classified = await start([recipe, bag, quest, record(61004)], [offer(61001), offer(61002), offer(61003), offer(61004), offer(61005)]);
+assert.equal(classified.result.coverage.catalogUnmatchedItemIds, 1, "Only an absent ID is catalog-unmatched; known recipes, bags and quest items are not gear");
+assert.equal(classified.result.coverage.itemsDetailed, 1, "Known nongear must not consume expensive detail/native work");
+assert.equal(batches.catalog, 1, "All summary classes must be read once instead of separate class queries");
+
+// Metadata must validate the engine again, but unchanged mechanics can reuse
+// native results across owners/budgets/locales while prices remain current.
+await start([record(62001)], [offer(62001)]);
+assert.equal([...nativeCalls.values()].reduce((sum, count) => sum + count, 0), 2);
+const repeated = await start([record(62001)], [offer(62001, 1, 15)], undefined, { reuse: true, budgetCopper: 2000, locale: "ru" });
+assert.equal([...nativeCalls.values()].reduce((sum, count) => sum + count, 0), 0, "Budget/locale/new auction prices must not rerun the same verified mechanics");
+assert.equal(batches.variants, 1, "Every fresh search must validate current native metadata before cache reuse");
+assert.equal(repeated.result.items[0].lotCostCopper, 15, "Mechanical reuse must never reuse procurement prices");
+currentEngine = "SimulationCraft offline-discovery-new-engine";
+await start([record(62001)], [offer(62001)], undefined, { reuse: true });
+assert.equal([...nativeCalls.values()].reduce((sum, count) => sum + count, 0), 2, "Changed current engine invalidates every baseline and item cache hit");
+currentEngine = engine;
+await start([record(62001)], [offer(62001)], undefined, { reuse: true, scenario: "aoe" });
+assert.equal([...nativeCalls.values()].reduce((sum, count) => sum + count, 0), 2, "A different encounter must be measured independently");
+
+// Restored completed checkpoints must verify the worker before even retained
+// baseline/item measurements can be published without a new simulation call.
+const restored = await start([record(62003)], [offer(62003)]);
+restored.entry.context = runner.restoreAuctionGearContext(runner.snapshotAuctionGearContext(restored.entry.context));
+currentEngine = "SimulationCraft changed-after-restoration";
+await assert.rejects(() => runner.continueAuctionGearSearch(restored.entry, signal(), progress, "synthetic-unused-token"), /simulation_version_changed/);
+currentEngine = engine;
+
+// Unresolved optional imagery never gates actual native comparisons.
+let releaseMedia;
+mediaGate = new Promise(resolve => { releaseMedia = resolve; });
+const mediaPending = await start([record(62002)], [offer(62002)]);
+assert(mediaStarts > 0);
+assert(mediaPending.result.items.some(item => item.comparison), "Native work and publication finish while optional media is still unresolved");
+releaseMedia(); mediaGate = null;
+
+// Actual media helper: scheduling returns before unresolved HTTP; the next
+// response uses the exact cached image synchronously, and aborts are handled.
+let resolveImage;
+let imageCalls = 0;
+const imageResponse = new Promise(resolve => { resolveImage = resolve; });
+const mediaSource = await readFile(new URL("../lib/wow/gearPlannerMedia.ts", import.meta.url), "utf8");
+const media = new vm.Script(strip(mediaSource) + "\n;({schedulePlannerItemIcons,applyCachedPlannerItemIcons})")
+  .runInNewContext({ Map, Date, Number, AbortSignal, fetch: () => { imageCalls++; return imageResponse; } });
+const target = { itemId: 62002 };
+assert.equal(media.schedulePlannerItemIcons([target], "eu", "offline-token", signal()), undefined);
+assert.equal(target.iconUrl, undefined);
+assert.equal(imageCalls, 1);
+resolveImage(Response.json({ assets: [{ key: "icon", value: "https://example.invalid/exact-item-icon.jpg" }] }));
+await new Promise(setImmediate);
+assert.equal(target.iconUrl, "https://example.invalid/exact-item-icon.jpg");
+const cachedTarget = { itemId: 62002 };
+media.applyCachedPlannerItemIcons([cachedTarget], "eu");
+assert.equal(cachedTarget.iconUrl, target.iconUrl, "Cached exact identity imagery must be applied synchronously");
+const cancelledMedia = new AbortController(); cancelledMedia.abort();
+media.schedulePlannerItemIcons([{ itemId: 62003 }], "eu", "offline-token", cancelledMedia.signal);
+await new Promise(setImmediate);
+
+// The process-wide cache has a fixed TTL/capacity and cannot leak mutable values.
+let cacheNow = 0;
+const boundedCache = createAuctionGearMechanicalCache(() => cacheNow, 2, 100);
+const measurement = { dps: 100, dpsError: 1, confidence: 95, iterations: 1000, engine };
+boundedCache.set("a", measurement); boundedCache.set("b", measurement);
+boundedCache.get("a", engine).dps = 1;
+assert.equal(boundedCache.get("a", engine).dps, 100);
+boundedCache.set("c", measurement);
+assert.equal(boundedCache.get("b", engine), undefined, "Least recently used native result must be evicted");
+assert.equal(boundedCache.get("a", ""), undefined, "Unverified metadata can never access a cached simulation");
+assert.equal(boundedCache.get("a", `${engine}-changed`), undefined);
+cacheNow = 101;
+assert.equal(boundedCache.get("a", engine), undefined, "TTL expiration must force remeasurement");
 
 // Independent upstream reads must start together; a barrier catches sequential
 // awaits without relying on scheduler timings or sleeping in the test.

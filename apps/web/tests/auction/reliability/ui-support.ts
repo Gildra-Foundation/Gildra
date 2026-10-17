@@ -1,7 +1,7 @@
 import { test as base, expect, type Page, type Route, type TestInfo } from "playwright/test";
 import { aliasIds, assemblyResult, characterSlug, comparison, completedJob, item, scope, searchResult } from "./ui-fixtures";
 
-type Body = { clientRequestId?: string; action: string; searchId?: string; excludedOptionIds?: string[]; locale?: "ru" | "en" };
+type Body = { clientRequestId?: string; action: string; searchId?: string; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; locale?: "ru" | "en" };
 type Mode = "normal" | "running" | "error" | "held-once" | "transient-once" | "initial-running" | "late" | "network-failed";
 export class AuctionHarness {
   requests: Body[] = [];
@@ -18,6 +18,7 @@ export class AuctionHarness {
   noisyMaximum = false;
   incompleteAfterAssembly = false;
   currentExclusions: string[] = [];
+  currentVariantExclusions: string[] = [];
   activePolls = 0;
   private jobs = new Map<string, ReturnType<typeof searchResult> | ReturnType<typeof assemblyResult>>();
   private releaseHeld: (() => void) | null = null;
@@ -68,9 +69,9 @@ export class AuctionHarness {
       let result: ReturnType<typeof searchResult> | ReturnType<typeof assemblyResult>;
       if (body.action !== "assemble") result = searchResult();
       else {
-        expect(Object.keys(body).sort()).toEqual(["action", "clientRequestId", "excludedOptionIds", "searchId"]);
+        expect(Object.keys(body).sort()).toEqual(["action", "clientRequestId", "excludedOptionIds", "excludedVariantKeys", "searchId"]);
         expect(body.clientRequestId).toMatch(/^[A-Za-z0-9_-]{16,100}$/);
-        this.currentExclusions = body.excludedOptionIds ?? [];
+        this.currentExclusions = body.excludedOptionIds ?? []; this.currentVariantExclusions = body.excludedVariantKeys ?? [];
         result = assemblyResult({ noisyMaximum: this.noisyMaximum });
         if (this.incompleteAfterAssembly) result.updatedSearch = { ...result.updatedSearch, searchComplete: false, pendingItems: 1 };
         if (aliasIds.every(id => this.currentExclusions.includes(id))) {
@@ -112,7 +113,7 @@ export class AuctionHarness {
       expect(url.searchParams.get("locale")).toBe(this.language);
       if (this.recoveryFailure) await route.fulfill({ status: 404, json: { error: "search_not_found" } });
       else await route.fulfill({ json: { kind: "recovery", search: this.latestSearch,
-        assembly: this.lastAssembly, excludedOptionIds: this.currentExclusions,
+        assembly: this.lastAssembly, excludedOptionIds: this.currentExclusions, excludedVariantKeys: this.currentVariantExclusions,
         activeJob: this.activeRecoveryJob, needsRefresh: true } });
       return;
     }

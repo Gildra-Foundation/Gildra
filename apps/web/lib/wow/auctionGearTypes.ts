@@ -1,6 +1,8 @@
 import type { GearCandidate } from "./gearCandidates";
 import type { compareGearSimulationResults } from "./gearSimulation";
 
+export type AuctionGearObjective = "value" | "dps";
+
 export type AuctionGearOption = {
   id: string;
   auctionId: number;
@@ -85,6 +87,7 @@ export type AuctionGearSearchItem = AuctionGearPurchase & {
 };
 export type AuctionGearSearchResult = {
   kind: "search";
+  objective?: AuctionGearObjective;
   searchId: string;
   selectedSlots: string[];
   budgetCopper: number;
@@ -103,6 +106,7 @@ export type AuctionGearSearchResult = {
 };
 export type AuctionGearAssemblyResult = AuctionGearPlan & {
   kind: "assembly";
+  objective?: AuctionGearObjective;
   searchId: string;
   selectedSlots: string[];
   /** Best visited affordable upgrade whose gain is confirmed independently of the measured maximum. */

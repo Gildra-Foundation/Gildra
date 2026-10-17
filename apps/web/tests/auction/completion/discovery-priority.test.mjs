@@ -30,7 +30,7 @@ async function setup(rows, locale = "en_US", characterLevel = 81) {
         if (state.hold) await state.hold;
         signal.throwIfAborted();
         if (state.fail) throw new Error("synthetic_catalog_failure");
-        if (itemClass !== 4) return [];
+        if (itemClass !== undefined && itemClass !== 4) return [];
         for (const id of ids) state.scanned.add(id);
         return ids.flatMap(id => facts.has(id) ? [makeRecord(facts.get(id))] : []);
       },

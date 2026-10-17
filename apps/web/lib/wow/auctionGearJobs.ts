@@ -58,11 +58,11 @@ function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefine
   if (typeof work !== "object" || !["search", "resume", "assemble"].includes(work.action)) throw new Error("invalid_plan_request");
   if (work.action === "search") {
     if (!work.input || typeof work.input !== "object") throw new Error("invalid_plan_request");
-    const { characterSlug, budgetCopper, scenario, locale, selectedSlots } = work.input;
+    const { characterSlug, budgetCopper, scenario, objective, locale, selectedSlots } = work.input;
     if (typeof characterSlug !== "string" || !characterSlug || characterSlug.length > 180 ||
         !Number.isSafeInteger(budgetCopper) || budgetCopper < 0 || budgetCopper > 999_999_999_999 ||
-        !["single-target", "aoe", "execute"].includes(scenario) || !["en", "ru"].includes(locale)) throw new Error("invalid_plan_request");
-    return { action: "search", input: { characterSlug, budgetCopper, scenario, locale,
+        !["single-target", "aoe", "execute"].includes(scenario) || objective !== undefined && objective !== "value" && objective !== "dps" || !["en", "ru"].includes(locale)) throw new Error("invalid_plan_request");
+    return { action: "search", input: { characterSlug, budgetCopper, scenario, locale, ...(objective ? { objective } : {}),
       ...(selectedSlots !== undefined ? { selectedSlots: parseAuctionGearSlots(selectedSlots) } : {}) } };
   }
   if (typeof work.searchId !== "string" || !work.searchId || work.searchId.length > 100) throw new Error("invalid_plan_request");
@@ -71,8 +71,10 @@ function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefine
   const ids = Array.isArray(selection) ? selection : selection?.excludedOptionIds;
   if (selection !== undefined && (!Array.isArray(ids) || ids.length > 20000 || new Set(ids).size !== ids.length ||
       ids.some(id => typeof id !== "string" || !id || id.length > 180))) throw new Error("invalid_plan_request");
+  const variants = !Array.isArray(selection) ? selection?.excludedVariantKeys : undefined;
+  if (variants !== undefined && (!Array.isArray(variants) || variants.length > 20000 || new Set(variants).size !== variants.length || variants.some(key => typeof key !== "string" || !key || key.length > 240))) throw new Error("invalid_plan_request");
   return { action: "assemble", searchId: work.searchId, selection: Array.isArray(selection) ? [...selection]
-    : selection ? { excludedOptionIds: [...selection.excludedOptionIds] } : undefined };
+    : selection ? { excludedOptionIds: [...selection.excludedOptionIds], ...(variants ? { excludedVariantKeys: [...variants] } : {}) } : undefined };
 }
 function metadata(j: Job): JobMetadata {
   return { id: j.id, owner: j.owner, status: j.status, error: j.error, scope: j.scope, searchId: j.searchId,
