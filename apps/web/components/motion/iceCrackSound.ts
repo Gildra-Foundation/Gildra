@@ -1,7 +1,7 @@
 import { transitionSoundVolume } from "../platform/home/useSoundPreferences";
 
 /** A brief brittle crack, synthesized locally; silent unless scene sound is on. */
-export function iceCrackSound() {
+export function iceCrackSound(delaySeconds = .34) {
   const volume = transitionSoundVolume();
   if (!volume || typeof AudioContext === "undefined") return () => {};
   let context: AudioContext;
@@ -23,7 +23,7 @@ export function iceCrackSound() {
   // Creation/resume happens during the navigation gesture, before the crack.
   void context.resume().then(() => {
     if (context.state !== "running") return;
-    source.start(context.currentTime + .34);
+    source.start(context.currentTime + delaySeconds);
     source.onended = stop;
   }).catch(stop);
   return stop;

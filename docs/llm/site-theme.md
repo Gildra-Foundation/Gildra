@@ -25,8 +25,9 @@ scripts/media are omitted, canvases are copied when permitted, input values are
 cleared, and IDs/SVG references are namespaced per fragment. No snapshot, canvas loop or animation is
 kept while idle. No screenshot service or external animation dependency is used.
 
-- Arthas: 340 ms of frost, 220 ms of growing cracks, then 12 clipped fragments
-  disperse over the loaded destination in 620 ms. A short synthesized ice crack
+- Arthas: 820 ms of edge-grown crystalline frost, 420 ms of spreading fractures,
+  then 18–20 irregular frozen shards fall/rotate over the loaded destination in
+  740 ms, accompanied by small ice chips. A short synthesized ice crack
   follows the existing explicit scene-sound choice and volume; it is silent by
   default and releases its AudioContext afterwards.
 - Illidan: a diagonal fel rift.
@@ -42,7 +43,7 @@ changes, hub aliases, downloads and external/new-tab links. Explicit
 `data-no-book-transition` is respected on capture and on route commit.
 Programmatic navigations without a captured source get an arrival effect.
 Phase clocks start after capture. The crack phase receives a rendered frame and
-220 ms before fragments can leave, including instant cached navigations. The
+the complete crack duration before fragments can leave, including instant cached navigations. The
 transition host stays transparent despite legacy shell background rules, so gaps
 between fragments expose the actual destination.
 
@@ -51,10 +52,13 @@ between fragments expose the actual destination.
 From `apps/web`:
 
 ```sh
+node scripts/test-ice-fracture.mjs
 node scripts/test-site-theme.mjs
 node scripts/test-route-transition-policy.mjs
 node scripts/check-atlas-tokens.mjs
 node scripts/qa-site-theme.mjs --serve
+# Against an already running preview:
+node scripts/qa-ice-material.mjs
 ```
 
 Browser QA uses the installed Playwright and its Chromium. Set `CHROMIUM_PATH`
@@ -110,3 +114,25 @@ The installed source `a052e488c7fc03800014368cdad6758c0ffc49b9` incorporates the
 newer production auction fixes. Web only was replaced; all public transition
 checks and a two-minute health observation passed. The deployment source is
 committed locally; future web releases must include it. No remote push occurred.
+
+
+## Realistic frost revision (17 October 2026)
+
+`iceFracture.ts` clips a deterministic Voronoi sheet and gives neighbouring
+shards the same jagged boundaries. Fractures advance from a pressure point,
+follow those boundaries and sprout smaller hairlines. Each fragment rotates
+about its own centre, with staggered release and downward acceleration.
+`iceFrost.ts` draws a translucent, grainy ice sheet with feathered crystals once
+per navigation. A small, irregular distance mask advances from all edges during
+the frost phase; only this finite phase uses requestAnimationFrame.
+The resulting texture and fracture highlights stay attached to the outgoing
+content as it breaks up. Blob URLs avoid the browser's CSS-variable size limit
+for noisy transparent images and are all revoked on completion/cancellation.
+The audio delay follows the longer frost phase; existing sound consent applies.
+
+Geometry tests verify full viewport coverage without holes/overlaps, common
+fracture edges and bounds at mobile/desktop sizes. `qa-ice-material.mjs` uses
+controlled browser time to check increasing frost coverage, edge-first growth,
+texture decoding (390/1440/2560 px), and release/cancellation cleanup, and saves
+screenshots of each stage. Normal-time `qa-site-theme.mjs` retains the full
+navigation/theme/sound/reduced-motion regression journey.

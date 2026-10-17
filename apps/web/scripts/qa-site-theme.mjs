@@ -61,7 +61,7 @@ try {
     assert.equal(await page.locator("[data-grimoire-home]").getAttribute("data-home-theme"), theme);
     if (theme === "arthas") await page.evaluate(() => {
       window.__qaTimeout = window.setTimeout;
-      window.setTimeout = (callback, delay, ...args) => window.__qaTimeout(callback, delay === 760 ? 4000 : delay, ...args);
+      window.setTimeout = (callback, delay, ...args) => window.__qaTimeout(callback, delay === 920 ? 4000 : delay, ...args);
     });
     await page.evaluate(() => {
       window.__qaPhases = [];
@@ -74,11 +74,13 @@ try {
     await page.waitForFunction(() => document.querySelector("[data-themed-transition]")?.getAttribute("data-phase") === "cracking", null, { timeout: 15000 }).catch(async error => { await page.screenshot({ path: path.join(output, `failure-${theme}.png`) }); console.error(await page.evaluate(() => ({ url:location.href, phase:document.querySelector("[data-themed-transition]")?.outerHTML.slice(0,500), theme:document.documentElement.dataset.siteTheme }))); throw error; });
     assert.equal(await page.locator("[data-themed-transition]").getAttribute("data-effect"), theme);
     if (theme === "arthas") {
-      assert.equal(await page.locator("[data-themed-transition] > div").count(), 12);
+      assert.ok(await page.locator("[data-ice-shard]").count() >= 18);
+      assert.match(await page.locator("[data-ice-shard]").first().evaluate(el => getComputedStyle(el, "::after").backgroundImage), /blob:/, "ice must remain on the frozen fragments");
+      await page.screenshot({ path: path.join(output, "arthas-cracking.png") });
       assert.equal(await page.locator("[data-themed-transition]").evaluate(el => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0)", "fragment gaps must reveal the destination");
 
       await page.waitForFunction(() => document.querySelector("[data-themed-transition]")?.getAttribute("data-phase") === "shattering", null, { timeout: 15000 });
-      await page.evaluate(() => document.querySelector("[data-themed-transition]").getAnimations({ subtree: true }).forEach(animation => { animation.pause(); animation.currentTime = 230; }));
+      await page.evaluate(() => document.querySelector("[data-themed-transition]").getAnimations({ subtree: true }).forEach(animation => { animation.pause(); animation.currentTime = animation.effect.getTiming().duration === 740 ? 330 : 230; }));
       await page.screenshot({ path: path.join(output, "arthas-shattering.png") });
       await page.evaluate(() => { window.setTimeout = window.__qaTimeout; delete window.__qaTimeout; });
     }
