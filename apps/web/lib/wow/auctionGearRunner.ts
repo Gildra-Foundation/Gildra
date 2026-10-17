@@ -370,7 +370,10 @@ export function selectedAuctionGearOptions(entry: AuctionGearSearchEntry, value:
 
 export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, selection: unknown, signal: AbortSignal,
   progress: (p: AuctionPlanProgress) => void, token?: string) {
-  const context = entry.context, started = Date.now(), shouldYield = () => Date.now() - started >= 90_000;
+  // Publish a useful bounded step on both the first request and continuations.
+  // Include discovery in the time budget; an in-flight upstream request may
+  // finish after it, but no further native comparison starts after yielding.
+  const context = entry.context, started = Date.now(), shouldYield = () => Date.now() - started >= 10_000;
   if (!entry.latestSearchResult || !(entry.retainedBaseline ?? entry.searchCheckpoint?.baseline)) throw new Error("search_not_ready");
   selectedAuctionGearAssemblyOptions(entry, selection);
   entry.busy = true;
@@ -392,9 +395,9 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
       baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
       incumbents: entry.retainedIncumbents,
-      // Publish a first confirmed set after bounded native work. Later explicit
-      // continuations keep the original complete search and its larger batch.
-      maxNewSimulations: entry.latestAssemblyResult ? 48 : 8,
+      // Small continuations retain the full exhaustive cursor and incumbents.
+      // They must not hold the next visible result behind 48 serial native calls.
+      maxNewSimulations: 8,
       shouldYield, onProgress: progress,
       onCheckpoint: state => { entry.assemblyCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
     });
