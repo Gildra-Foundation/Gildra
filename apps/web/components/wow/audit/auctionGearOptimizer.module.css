@@ -173,3 +173,5 @@
   .suggestionMetrics > span { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--atlas-space-2); }
   .alternatives { padding-left: var(--atlas-space-3); }
 }
+.recommendationHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-3); margin-top: var(--atlas-space-4); }
+.recommendationHeading h3 { margin: 0; }

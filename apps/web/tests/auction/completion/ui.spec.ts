@@ -244,6 +244,9 @@ test("value: one efficient choice per slot, two alternatives on demand and compl
   await auction.open(); auction.valueChoices = true; await auction.search();
   const main = auction.panel.locator('[data-best-value]');
   await expect(main).toHaveAttribute('data-auction-option', 'value-best');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  expect((await main.boundingBox())!.y).toBeLessThan(1000);
+  await expect(auction.panel.getByRole('link', { name: auction.t('К сборке сета', 'Build a loadout'), exact: true })).toBeVisible();
   await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(1);
   await expect(main).toContainText(auction.t('Цена за +1 DPS', 'Cost per +1 DPS'));
   await expect(main).toContainText('20 DPS');

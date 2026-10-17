@@ -396,7 +396,10 @@ A user can build from published choices while discovery continues. This action
 uses the existing durable cancellation/retirement barrier before submitting the
 assembly request, so it cannot race a previous search job. Missing variants can
 still be inspected through later continuations. Excluded purchases retain a
-visible restore action; bulk exclusion controls and slot filters start folded.
+visible restore action; bulk exclusion controls and slot filters start folded. The recommendations precede
+the full assembly work area; a link beside the search action reaches assembly.
+Repeated budget statistics and long introductory explanations are omitted from
+the default results view.
 
 Regression coverage includes `tests/auction/completion/value.test.mjs` (250
 independent ratio-oracle pools, duplicate/dominated choices, stable ordering and
