@@ -187,3 +187,26 @@ changes from `82528e43`. The release image is
 `sha256:14f9a715fd5ea392e7576183cedaf9dcbcf23039b2884ef867873856346d445b`.
 Public all-theme/material checks passed; 120-second observation found zero web
 restarts/runtime errors and nine other containers unchanged.
+
+
+## Character-list navigation and ice v4 (17 October 2026)
+
+The current renderer is `assets/motion/ice-renderer-v4.js`: uneven pressure-point
+fragments, branching hairlines, varied dendritic frost, cached sheet reflection,
+bevels and falling/rotating/foreshortened faces. The bounded worker/canvas and
+single-snapshot performance architecture remain unchanged; v3 is retained for
+immutable-cache compatibility.
+
+`transitionSnapshot.ts` carries the source `.workspace-content` scope classes on
+its own viewport. Home arrival removes `.gildra-atlas` from the live gate, so the
+outgoing copy must retain this scope independently to preserve tokens/fonts and
+avoid reflowing the frozen character list. Keep this when changing route scopes.
+`qa-character-transitions.mjs` verifies actual roster → Gildra → home navigation
+on RU/EN, mobile/desktop and a deeply scrolled list. Authenticated data is an
+explicit localhost-only fixture; public verification uses anonymous entry.
+
+Published combined source `17c1411` preserves frost fix `71d1e30` and production
+auction `2950e8e`/docs `95f5cda`. See
+[regression and release evidence](../reports/frost-characters-20261017.md).
+Future web releases must preserve this source; future worker changes must use a
+new versioned asset URL.
