@@ -103,7 +103,7 @@ export function saveAuctionGearSearch(entry: AuctionGearSearchEntry, replaceId?:
   if (entries.get(entry.id) !== entry) throw new Error("search_expired");
   writeAuctionState("search", entry.id, entry.expiresAt, storedEntry(entry), { replaceId, metadata: metadata(entry) });
 }
-type SaveQueue = { pending: boolean; running?: Promise<void>; error?: Error };
+type SaveQueue = { pending: boolean; running?: Promise<void>; expedite?: () => void; error?: Error };
 const saveQueues = state.__gildraAuctionSearchSaveQueues ??= new WeakMap<AuctionGearSearchEntry, SaveQueue>();
 function refreshSearchLifecycle(entry: AuctionGearSearchEntry) {
   if (entries.get(entry.id) !== entry) throw new Error("search_expired");
@@ -127,9 +127,14 @@ export function scheduleAuctionGearSearchSave(entry: AuctionGearSearchEntry) {
   queue.pending = true;
   if (queue.running) return;
   const current = queue;
-  // A macrotask lets synchronous checkpoint bursts coalesce before serializing
-  // the allow-listed DTO once. Later updates keep only one pending generation.
-  current.running = new Promise<void>(resolve => setImmediate(resolve)).then(async () => {
+  // Cached catalog traversal also yields between batches. A short bounded
+  // window coalesces those turns; publication explicitly expedites this wait.
+  // Cold native work still checkpoints during its much longer network calls.
+  current.running = new Promise<void>(resolve => {
+    const timer = setTimeout(resolve, 25);
+    current.expedite = () => { clearTimeout(timer); resolve(); };
+  }).then(async () => {
+    current.expedite = undefined;
     while (current.pending && entries.get(entry.id) === entry) {
       current.pending = false;
       const committed = await writeAuctionStateAsync("search", entry.id, entry.expiresAt, storedEntry(entry), { metadata: metadata(entry) });
@@ -150,7 +155,7 @@ export async function flushAuctionGearSearch(entry: AuctionGearSearchEntry) {
   if (previous) consumeSaveError(previous);
   scheduleAuctionGearSearchSave(entry);
   const queue = saveQueues.get(entry)!;
-  while (queue.running) { await queue.running; consumeSaveError(queue); }
+  while (queue.running) { queue.expedite?.(); await queue.running; consumeSaveError(queue); }
   if (entries.get(entry.id) !== entry) throw new Error("search_expired");
 }
 

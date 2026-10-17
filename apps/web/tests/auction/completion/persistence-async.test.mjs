@@ -48,6 +48,28 @@ function compressionBarrier() {
 }
 const read = entry => persistence.readAuctionState("search", entry.id);
 
+test("warm checkpoint bursts across async catalog turns serialize only the latest state", async t => isolated(async () => {
+  const entry = store.createAuctionGearSearch(owner, context());
+  const barrier = compressionBarrier(), intercepted = zlib.gzip;
+  let compressions = 0;
+  zlib.gzip = (...args) => { compressions++; return intercepted(...args); };
+  syncBuiltinESMExports();
+  // Hold only the debounce clock. Real async turns and compression still run;
+  // flush must expedite the pending snapshot before returning to the caller.
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  try {
+    for (let cursor = 1; cursor <= 8; cursor++) {
+      entry.allowedKey = `async-catalog-${cursor}`;
+      store.scheduleAuctionGearSearchSave(entry);
+      await new Promise(resolve => setImmediate(resolve));
+    }
+    const durable = store.flushAuctionGearSearch(entry);
+    barrier.release(); await durable;
+    assert.equal(read(entry).data.allowedKey, "async-catalog-8");
+    assert.equal(compressions, 1, "Warm async bursts should not serialize an obsolete intermediate snapshot");
+  } finally { barrier.release(); barrier.restore(); t.mock.timers.reset(); }
+}));
+
 test("checkpoint bursts coalesce into one asynchronous durable snapshot of the latest data", async () => isolated(async directory => {
   const entry = store.createAuctionGearSearch(owner, context());
   const originals = { gzip: zlib.gzip, gzipSync: zlib.gzipSync, writeFileSync: fs.writeFileSync, fsyncSync: fs.fsyncSync };
