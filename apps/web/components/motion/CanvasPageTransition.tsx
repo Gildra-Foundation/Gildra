@@ -7,7 +7,7 @@ import { iceCrackSound } from "./iceCrackSound";
 import { iceFracture, ICE_FREEZE_MS, ICE_CRACK_MS, ICE_RELEASE_MS } from "./iceFracture";
 import { iceMaterial, warmIceMaterial } from "./iceMaterial";
 import { transitionSnapshot } from "./transitionSnapshot";
-import { pageRaster } from "./pageRaster";
+import { pageRaster, warmPageCapture } from "./pageRaster";
 import { warmPageRaster } from "./pageRasterHost";
 import styles from "./canvasTransition.module.css";
 
@@ -86,7 +86,7 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
             if (capture.current !== controller || controller.signal.aborted || !capturePending.current) return;
             piece.dataset.pageRaster = "timeout";
             controller.abort(); capturePending.current = false; shatter();
-          }, 1600));
+          }, 2300));
           void pageRaster(piece, controller.signal).then(bitmap => {
             if (controller.signal.aborted || surface.current !== material) { bitmap.close(); return; }
             piece.dataset.pageRaster = material.content(bitmap) ? "ready" : "unavailable";
@@ -123,8 +123,8 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
     const unsubscribe = subscribeSiteMotion(changed);
     const warm = () => {
       if (document.hidden || lessMotion() || document.documentElement.dataset.siteTheme !== "arthas") return;
-      if (window.requestIdleCallback) idle = window.requestIdleCallback(() => { if (!lessMotion() && !document.hidden) { warmIceMaterial(); warmPageRaster(); } }, { timeout: 4000 });
-      else idle = window.setTimeout(() => { warmIceMaterial(); warmPageRaster(); }, 1500);
+      if (window.requestIdleCallback) idle = window.requestIdleCallback(() => { if (!lessMotion() && !document.hidden) { warmIceMaterial(); warmPageRaster(); warmPageCapture(); } }, { timeout: 4000 });
+      else idle = window.setTimeout(() => { warmIceMaterial(); warmPageRaster(); warmPageCapture(); }, 1500);
     };
     if (document.readyState === "complete") warm();
     else window.addEventListener("load", warm, { once: true });

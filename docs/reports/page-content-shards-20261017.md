@@ -12,7 +12,7 @@ no DOM or full-size image is allocated per shard. The worker uses the existing
 1024px cap, finite frame queue and idle termination. Public static asset caching
 is bounded; private images/page contents are never cached by the module.
 
-Capture has a 1600ms deadline and shares lifecycle cancellation with the effect.
+Capture has a 2300ms deadline and shares lifecycle cancellation with the effect.
 Routing proceeds underneath. Blocked resources/unsupported bitmap transfer use
 the lightweight ice fallback. No screen recording permission or upload is used.
 
@@ -41,3 +41,18 @@ images, matching normal Chrome Site Isolation. This is recorded as a lab setting
 not a guarantee for every browser; runtime parallelism is checked independently.
 The helper is also tested with production CSP `frame-ancestors self` and
 `X-Frame-Options: SAMEORIGIN`.
+
+Cold-source correction: capture source stylesheet references, ancestry and loaded
+fonts before router changes; reuse parsed immutable CSS by sheet/URL. Warm only
+already loaded public asset bytes after the host handshake. The capture no
+longer queries computed styles for every element/pseudo-element, and does not
+re-encode images on the UI thread. Resource timing plus a bounded public URL
+index identifies CSS images already used by the page. The snapshot pins decoded
+images to currentSrc and excludes unpainted lazy images from closed menus.
+
+The first combined44df image was rejected: only3/12 cold-network cases produced
+content before the old deadline. Its12 storage errors came from QA preference
+init scripts running inside the opaque sandbox, not from the helper itself.
+The four relevant harnesses now initialize preferences only in the top frame.
+Original rejected reports are retained. Final image/live proof is required after
+this correction; labelled injected prototypes alone do not qualify as a release.

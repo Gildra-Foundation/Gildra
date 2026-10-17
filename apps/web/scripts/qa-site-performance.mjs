@@ -11,6 +11,7 @@ const profiles = [{ id:"desktop", viewport:{width:1440,height:900}, cpu:1 }, { i
 const runs = Number(process.env.PERF_RUNS || 3);
 const results = { base, label, browserIsolation:process.env.CHROMIUM_ISOLATION || "browser default", tool:"Playwright + Chrome DevTools Protocol", field:"Unavailable: unauthenticated PSI quota 429; no analytics credentials accessed", profiles:[], loads:[], transitions:[] };
 const probe = () => {
+  if (window !== window.top) return;
   window.__perf = { long:[], lcp:0, cls:0, frames:[], measuring:false, operations:{} };
   for (const type of ["longtask", "largest-contentful-paint", "layout-shift"]) {
     try { new PerformanceObserver(list => { for (const e of list.getEntries()) {
@@ -32,6 +33,7 @@ const probe = () => {
 async function session(profile) {
   const context=await browser.newContext({ viewport:profile.viewport, reducedMotion:"no-preference" });
   await context.addInitScript(() => {
+    if (window !== window.top) return;
     localStorage.setItem("gildra-consent","declined");
     localStorage.setItem("gildra-home-music",JSON.stringify({confirmed:true,enabled:false,volume:0}));
   });

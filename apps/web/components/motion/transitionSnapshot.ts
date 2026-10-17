@@ -5,6 +5,12 @@ export function transitionSnapshot(frame: HTMLElement, className: string) {
   const visibleCopy = (source: Element): Element | null => {
     if (/^(SCRIPT|IFRAME|AUDIO|VIDEO)$/.test(source.tagName)) return null;
     const copy = source.cloneNode(false) as Element;
+    if (source instanceof HTMLImageElement && copy instanceof HTMLImageElement) {
+      copy.removeAttribute("srcset"); copy.removeAttribute("sizes"); copy.removeAttribute("loading");
+      if (source.complete && source.naturalWidth) {
+        copy.src = source.currentSrc || source.src; copy.dataset.transitionImageReady = "";
+      } else copy.removeAttribute("src");
+    }
     const box = source.getBoundingClientRect();
     if (!box.width && !box.height && source instanceof HTMLElement && getComputedStyle(source).display === "none") return copy;
     if (box.width && box.height && (box.bottom < 0 || box.top > innerHeight || box.right < 0 || box.left > innerWidth)) {

@@ -10,7 +10,7 @@ const results=[];
 try {
  for(const width of [390,1440,2560]) {
   const context=await browser.newContext({viewport:{width,height:900},reducedMotion:"no-preference"});
-  await context.addInitScript(()=>{localStorage.setItem("gildra-home-music",JSON.stringify({enabled:false,confirmed:true,volume:0}));localStorage.setItem("gildra-consent","declined");});
+  await context.addInitScript(()=>{if(window!==window.top)return;localStorage.setItem("gildra-home-music",JSON.stringify({enabled:false,confirmed:true,volume:0}));localStorage.setItem("gildra-consent","declined");});
   const page=await context.newPage(), errors=[];page.on("pageerror",e=>errors.push(e.message));
   await page.clock.install({time:new Date("2026-10-17T10:00:00Z")});
   await page.goto(base+"/");await page.locator("[data-book-route-frame][data-view-transitions]").waitFor();await page.evaluate(()=>document.fonts.ready);

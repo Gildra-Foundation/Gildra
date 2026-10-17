@@ -42,6 +42,7 @@ try {
   browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "no-preference" });
   await context.addInitScript(() => {
+    if (window !== window.top) return;
     localStorage.setItem("gildra-home-music", JSON.stringify({ volume: 0, lastVolume: 20, enabled: false, confirmed: true }));
   });
   context.setDefaultTimeout(20000);
@@ -159,6 +160,7 @@ try {
   assert.equal(await page.locator("[data-themed-transition]").getAttribute("data-phase"), null);
   const soundContext = await browser.newContext({ viewport: { width: 1024, height: 768 }, reducedMotion: "no-preference" });
   await soundContext.addInitScript(() => {
+    if (window !== window.top) return;
     localStorage.setItem("gildra-home-music", JSON.stringify({ volume: 20, enabled: false, confirmed: true }));
     window.__qaAudio = [];
     const OriginalAudio = window.AudioContext;

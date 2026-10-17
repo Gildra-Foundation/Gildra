@@ -29,6 +29,7 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: "no-preference" });
     if (fixture) await localRoster(context);
     await context.addInitScript(() => {
+    if (window !== window.top) return;
       localStorage.setItem("gildra-consent", "declined");
       localStorage.setItem("gildra-home-music", JSON.stringify({ confirmed: true, enabled: false, volume: 0 }));
     });

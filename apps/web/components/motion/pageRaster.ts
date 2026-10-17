@@ -11,32 +11,10 @@ const dataURL = (blob: Blob) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject;
   reader.readAsDataURL(blob);
 });
-let imageJobs = 0;
-const imageQueue: (() => void)[] = [];
-async function compactImage(blob: Blob, signal: AbortSignal) {
-  if (!blob.type.startsWith("image/") || blob.type.includes("svg")) return blob;
-  await new Promise<void>(resolve => {
-    const run = () => { imageJobs++; resolve(); };
-    if (imageJobs < 2) run(); else imageQueue.push(run);
-  });
-  let bitmap: ImageBitmap | undefined;
-  try {
-    if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-    // Decode large artwork asynchronously before embedding it in the SVG.
-    // Otherwise the SVG's first paint synchronously decodes those images again.
-    bitmap = await createImageBitmap(blob);
-    if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-    const ratio = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-    if (ratio === 1 && !blob.type.includes("avif")) return blob;
-    const canvas = new OffscreenCanvas(Math.ceil(bitmap.width * ratio), Math.ceil(bitmap.height * ratio));
-    canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return await canvas.convertToBlob({ type: "image/webp", quality: .88 });
-  } finally { bitmap?.close(); imageJobs--; imageQueue.shift()?.(); }
-}
 function asset(url: string, signal: AbortSignal) {
   if (url.startsWith("data:")) return Promise.resolve(url);
   const parsed = new URL(url, document.baseURI), absolute = parsed.href;
-  const reusable = parsed.origin === location.origin && /^\/(assets\/|_next\/static\/)/.test(parsed.pathname);
+  const reusable = staticAsset(parsed);
   const cached = reusable ? assets.get(absolute) : undefined;
   if (cached) return cached.promise;
   const promise = fetch(absolute, { cache: "force-cache", signal }).then(response => {
@@ -44,7 +22,7 @@ function asset(url: string, signal: AbortSignal) {
       return response.blob();
     }).then(async blob => {
       if (blob.size > 2_000_000) throw new Error("snapshot asset too large");
-      return dataURL(await compactImage(blob, signal));
+      return dataURL(blob);
     });
   if (reusable) {
     const entry = { promise, chars: 0 }; assets.set(absolute, entry);
@@ -61,6 +39,83 @@ function asset(url: string, signal: AbortSignal) {
 }
 const normalise = (value: string) => value.replace(/["'\s]/g, "").toLowerCase();
 
+function staticAsset(url: URL) {
+  return url.origin === location.origin && (/^\/(assets\/|_next\/static\/|platform\/icons\/)/.test(url.pathname) ||
+    url.pathname === "/_next/image" && (url.searchParams.get("url") || "").startsWith("/assets/"));
+}
+type PreparedRule =
+  | { kind: "style"; text: string; selectors: (string[] | null)[] | null }
+  | { kind: "group"; prefix: string; children: PreparedRule[] }
+  | { kind: "font"; key: string; family: string; src: string; text: string };
+// CSSOM strings/selector classes are immutable for each production stylesheet.
+// Prepare them after loading instead of reading thousands of DOM properties on
+// every click. The WeakMap releases sheets removed by the router.
+const styleCache = new WeakMap<CSSStyleSheet, Promise<PreparedRule[]>>();
+const stylesheetURLs = new Map<string, Promise<PreparedRule[]>>();
+const loadedStaticURLs = new Set<string>();
+let resourceObserver: PerformanceObserver | undefined;
+function rememberResource(name: string) {
+  const url = new URL(name, document.baseURI);
+  if (!staticAsset(url)) return;
+  loadedStaticURLs.add(url.href);
+  if (loadedStaticURLs.size > 256) loadedStaticURLs.delete(loadedStaticURLs.values().next().value!);
+}
+function preparedSheet(sheet: CSSStyleSheet) {
+  let cached = styleCache.get(sheet) || (sheet.href ? stylesheetURLs.get(sheet.href) : undefined);
+  if (cached) { styleCache.set(sheet, cached); return cached; }
+  cached = (async () => {
+    await yieldTask();
+    let slice = performance.now();
+    const base = sheet.href || document.baseURI;
+    const absoluteURLs = (text: string) => text.replace(URL_PATTERN, (match, url: string) => /^(#|data:)/.test(url) ? match : `url("${new URL(url, base).href}")`);
+    const read = async (rules: CSSRuleList): Promise<PreparedRule[]> => {
+      const output: PreparedRule[] = [];
+      for (const rule of rules) {
+        if (performance.now() - slice > 6) { await yieldTask(); slice = performance.now(); }
+        if (rule instanceof CSSKeyframesRule) continue;
+        if (rule instanceof CSSFontFaceRule) {
+          const src = absoluteURLs(rule.style.getPropertyValue("src").split(/,(?=\s*(?:url|local)\()/)[0]);
+          output.push({ kind: "font", family: normalise(rule.style.fontFamily),
+            key: normalise(`${rule.style.fontFamily}|${rule.style.fontWeight || "normal"}|${rule.style.fontStyle || "normal"}|${rule.style.getPropertyValue("unicode-range") || "U+0-10FFFF"}`),
+            src, text: absoluteURLs(rule.cssText.replace(/src:[^;]+;/, `src:${src};`)) });
+        } else if (rule instanceof CSSGroupingRule) {
+          const prefix = rule instanceof CSSMediaRule ? `@media ${rule.conditionText}{` : rule instanceof CSSSupportsRule ? `@supports ${rule.conditionText}{` : rule.cssText.slice(0, rule.cssText.indexOf("{") + 1);
+          output.push({ kind: "group", prefix, children: await read(rule.cssRules) });
+        } else {
+          const selectors = rule instanceof CSSStyleRule ? rule.selectorText.split(",").map(branch =>
+            /:(is|where|not|has)\(/.test(branch) ? null : Array.from(branch.matchAll(/\.([_a-zA-Z][_a-zA-Z0-9-]*)/g), match => match[1])) : null;
+          output.push({ kind: "style", selectors, text: absoluteURLs(rule.cssText) });
+        }
+      }
+      return output;
+    };
+    try { return await read(sheet.cssRules); } catch { return []; /* Opaque stylesheet. */ }
+  })();
+  styleCache.set(sheet, cached);
+  if (sheet.href) {
+    stylesheetURLs.set(sheet.href, cached);
+    if (stylesheetURLs.size > 24) stylesheetURLs.delete(stylesheetURLs.keys().next().value!);
+  }
+  return cached;
+}
+/** Warm only immutable public styles/assets; never page or form data. */
+export function warmPageCapture() {
+  // Let the lightweight host handshake finish before CPU/network warming can
+  // compete with its parallelism probe or its bootstrap script request.
+  void rasterHostReady().then(() => {
+    if (document.hidden) return;
+    if (!resourceObserver) {
+      resourceObserver = new PerformanceObserver(list => { for (const entry of list.getEntries()) rememberResource(entry.name); });
+      resourceObserver.observe({ type: "resource", buffered: true });
+    }
+    const controller = new AbortController();
+    void Promise.all(Array.from(document.styleSheets, preparedSheet));
+    const loaded = performance.getEntriesByType("resource").map(entry => new URL(entry.name, document.baseURI))
+      .filter(url => staticAsset(url) && (/\.(avif|webp|png|jpe?g|svg|woff2)$/i.test(url.pathname) || url.pathname === "/_next/image"));
+    for (const url of loaded.slice(-24)) void asset(url.href, controller.signal).catch(() => {});
+  }).catch(() => {});
+}
+
 /** One bounded, transient raster shared by all shards. Reuse the loaded CSS,
  * rather than reading hundreds of computed properties for every element. The
  * viewport copy is already inert and excludes offscreen list descendants.
@@ -69,7 +124,17 @@ export async function pageRaster(source: HTMLElement, signal: AbortSignal): Prom
   const started = performance.now();
   const check = () => { if (signal.aborted || !source.isConnected) throw new DOMException("Cancelled", "AbortError"); };
   check();
+  // Freeze source CSS/ancestry before the router swaps its links and scope.
+  // Reading destination styles later both wasted time and missed the warm cache.
+  const sourceSheets = Array.from(document.styleSheets), ancestors: Element[] = [];
+  const loadedURLs = new Set([...loadedStaticURLs, ...performance.getEntriesByType("resource").map(entry => entry.name)]);
+  for (let parent = source.parentElement; parent; parent = parent.parentElement) ancestors.push(parent.cloneNode(false) as Element);
+  const loadedFaces = new Set(Array.from(document.fonts).filter(face => face.status === "loaded").map(face => normalise(`${face.family}|${face.weight}|${face.style}|${face.unicodeRange}`)));
+  let cachedSheets = 0;
+  for (const sheet of sourceSheets) void (styleCache.get(sheet) || (sheet.href ? stylesheetURLs.get(sheet.href) : undefined))?.then(() => { cachedSheets++; });
   await rasterHostReady();
+  source.dataset.rasterHostMs = String(Math.round(performance.now() - started));
+  source.dataset.rasterCachedSheets = `${cachedSheets}/${sourceSheets.length}`;
   await yieldTask();
   check();
   const width = innerWidth, height = innerHeight, scale = Math.min(1, MAX_EDGE / Math.max(width, height));
@@ -77,10 +142,6 @@ export async function pageRaster(source: HTMLElement, signal: AbortSignal): Prom
   const classes = new Set<string>();
   for (const element of [source, ...source.querySelectorAll("*")]) for (const name of element.classList) classes.add(name);
   for (let ancestor = source.parentElement; ancestor; ancestor = ancestor.parentElement) for (const name of ancestor.classList) classes.add(name);
-  const relevant = (selector: string) => selector.split(",").some(branch => {
-    if (/:(is|where|not|has)\(/.test(branch)) return true;
-    return Array.from(branch.matchAll(/\.([_a-zA-Z][_a-zA-Z0-9-]*)/g)).every(match => classes.has(match[1]));
-  });
   const collectURLs = (value: string, base = document.baseURI, cssAsset = true) => {
     for (const match of value.matchAll(URL_PATTERN)) if (!/^(#|data:)/.test(match[1])) {
       const url = new URL(match[1], base);
@@ -89,21 +150,18 @@ export async function pageRaster(source: HTMLElement, signal: AbortSignal): Prom
       if (cssAsset) cssURLs.add(url.href);
     }
   };
-  const loadedFaces = new Set(Array.from(document.fonts).filter(face => face.status === "loaded").map(face => normalise(`${face.family}|${face.weight}|${face.style}|${face.unicodeRange}`)));
   const clone = source.cloneNode(true) as HTMLElement;
   const originals = [source, ...source.querySelectorAll("*")], copies = [clone, ...clone.querySelectorAll("*")];
-  const families = new Set<string>();
   let slice = performance.now();
   for (let index = 0; index < originals.length; index++) {
     check();
     const original = originals[index], copy = copies[index];
     const box = original.getBoundingClientRect();
-    if (box.bottom < 0 || box.top > height || box.right < 0 || box.left > width) { copy.removeAttribute("src"); continue; }
-    for (const pseudo of [null, "::before", "::after"]) {
-      const paint = getComputedStyle(original, pseudo);
-      if (!pseudo) families.add(paint.fontFamily);
-      collectURLs(paint.backgroundImage); collectURLs(paint.maskImage); collectURLs(paint.content);
-    }
+    if ((!box.width && !box.height) || box.bottom < 0 || box.top > height || box.right < 0 || box.left > width) { copy.removeAttribute("src"); copy.removeAttribute("srcset"); continue; }
+    // The isolated image renderer resolves the actual CSS. Here we only need
+    // the already loaded assets it may reference, not computed styles for every
+    // element/pseudo-element (which forced repeated UI style/layout work).
+    collectURLs(copy.getAttribute("style") || "");
     copy.removeAttribute("srcset"); copy.removeAttribute("sizes"); copy.removeAttribute("loading");
     for (const { name } of Array.from(copy.attributes)) if (name.startsWith("on")) copy.removeAttribute(name);
     if (original instanceof HTMLImageElement) {
@@ -112,7 +170,7 @@ export async function pageRaster(source: HTMLElement, signal: AbortSignal): Prom
       if (!copy.hasAttribute("width") && original.naturalWidth) copy.setAttribute("width", String(original.naturalWidth));
       if (!copy.hasAttribute("height") && original.naturalHeight) copy.setAttribute("height", String(original.naturalHeight));
       // A freshly cloned image may still be decoding its already cached bytes.
-      if (src && !(original.complete && !original.naturalWidth)) { copy.setAttribute("data-raster-src", src); urls.add(src); }
+      if (src && (original.hasAttribute("data-transition-image-ready") || original.complete && original.naturalWidth)) { copy.setAttribute("data-raster-src", src); urls.add(src); }
     } else if (original instanceof HTMLCanvasElement) {
       // Protected canvases are deliberately omitted from this decorative copy.
       const image = document.createElement("img"); image.style.cssText = original.style.cssText; image.width = original.width; image.height = original.height;
@@ -124,35 +182,27 @@ export async function pageRaster(source: HTMLElement, signal: AbortSignal): Prom
     }
     if (performance.now() - slice > 6) { await yieldTask(); check(); slice = performance.now(); }
   }
-  let ruleSlice = performance.now();
-  const readRules = async (rules: CSSRuleList, base: string): Promise<string> => {
+  source.dataset.rasterDomMs = String(Math.round(performance.now() - started));
+  const selectRules = async (rules: PreparedRule[]): Promise<string> => {
     const output: string[] = [];
     for (const rule of rules) {
       check();
-      if (performance.now() - ruleSlice > 6) { await yieldTask(); check(); ruleSlice = performance.now(); }
-      if (rule instanceof CSSStyleRule && !relevant(rule.selectorText)) continue;
-      if (rule instanceof CSSKeyframesRule) continue;
-      if (rule instanceof CSSFontFaceRule) {
-        const key = normalise(`${rule.style.fontFamily}|${rule.style.fontWeight || "normal"}|${rule.style.fontStyle || "normal"}|${rule.style.getPropertyValue("unicode-range") || "U+0-10FFFF"}`);
-        if (loadedFaces.has(key) && Array.from(families).some(family => normalise(family).includes(normalise(rule.style.fontFamily)))) {
-          const first = rule.style.getPropertyValue("src").split(/,(?=\s*(?:url|local)\()/)[0];
-          const face = rule.cssText.replace(/src:[^;]+;/, `src:${first};`).replace(URL_PATTERN, (match, url: string) => /^(#|data:)/.test(url) ? match : `url("${new URL(url, base).href}")`);
-          collectURLs(first, base, false); fonts.push(face);
+      if (performance.now() - slice > 6) { await yieldTask(); check(); slice = performance.now(); }
+      if (rule.kind === "font") {
+        if (loadedFaces.has(rule.key)) {
+          collectURLs(rule.src, document.baseURI, false); fonts.push(rule.text);
         }
-        continue;
-      }
-      if (rule instanceof CSSGroupingRule) {
-        const prefix = rule instanceof CSSMediaRule ? `@media ${rule.conditionText}{` : rule instanceof CSSSupportsRule ? `@supports ${rule.conditionText}{` : rule.cssText.slice(0, rule.cssText.indexOf("{") + 1);
-        output.push(prefix + await readRules(rule.cssRules, base) + "}");
-        continue;
-      }
-      // CSS assets use absolute URL keys; unused images are stripped below.
-      output.push(rule.cssText.replace(URL_PATTERN, (match, url: string) => /^(#|data:)/.test(url) ? match : `url("${new URL(url, base).href}")`));
+      } else if (rule.kind === "group") output.push(rule.prefix + await selectRules(rule.children) + "}");
+      else if (!rule.selectors || rule.selectors.some(branch => !branch || branch.every(name => classes.has(name)))) output.push(rule.text);
     }
     return output.join("\n");
   };
-  for (const sheet of document.styleSheets) {
-    try { sheets.push(await readRules(sheet.cssRules, sheet.href || document.baseURI)); } catch { check(); /* Opaque cross-origin stylesheet. */ }
+  for (const sheet of sourceSheets) sheets.push(await selectRules(await preparedSheet(sheet)));
+  for (const ancestor of ancestors) collectURLs(ancestor.getAttribute("style") || "");
+  for (const match of sheets.join("\n").matchAll(URL_PATTERN)) {
+    if (/^(#|data:)/.test(match[1])) continue;
+    const url = new URL(match[1], document.baseURI).href;
+    if (loadedURLs.has(url) || assets.has(url) || url.startsWith("blob:")) collectURLs(match[0]);
   }
   source.dataset.rasterStylesMs = String(Math.round(performance.now() - started));
   check();
@@ -180,9 +230,7 @@ export async function pageRaster(source: HTMLElement, signal: AbortSignal): Prom
   // Preserve the source's real CSS ancestry, including its retained atlas scope
   // when the live destination switches to home. Siblings are never copied.
   let content: Element = clone;
-  for (let parent = source.parentElement; parent; parent = parent.parentElement) {
-    const ancestor = parent.cloneNode(false) as Element; ancestor.append(content); content = ancestor;
-  }
+  for (const ancestor of ancestors) { ancestor.append(content); content = ancestor; }
   content.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
   const fontCSS = fonts.join("\n").replace(URL_PATTERN, (match, url: string) => /^(#|data:)/.test(url) ? match : `url("${embedded.get(url) || "data:,"}")`);
   const css = `:root{${variables.join(";")}}${inlineCSS(sheets.join("\n"))}${fontCSS}*,*::before,*::after{animation:none!important;transition:none!important;view-transition-name:none!important}`;
