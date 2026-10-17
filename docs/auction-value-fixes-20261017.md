@@ -58,8 +58,49 @@ coverage. The audit and private reproduction evidence are retained under
   Discovery/assembly were partial and explicitly labelled as best evaluated so
   far. This is a trusted server QA run, not an authenticated browser session.
 
-Final immutable-source, both-objective, image, deployment and post-deployment
-records are recorded by the release process and appended after verification.
+## Verified deployment
+
+Release `auction-fixes-release-20261017-e56075f` was deployed to gildra.net and
+fully verified at **2026-10-17 15:41:12 UTC**. Runtime source is
+`e56075f2541cd7dd0c639248200d182336c71c63`, image
+`sha256:10a3583692897bb398da2f4b5c3d2e87cc2b98050f1aebfaa80d6645c07372ef`.
+The native worker image/engine and all nine protected containers retained their
+identities and restart counts. Only web was recreated; nginx reloaded the same
+configuration. No database, schema, importer or worker rollout occurred.
+
+Both objectives were checked on the same freshly verified real market domain.
+After deployment, four independent uncached native worker requests rechecked the
+baseline and each recommended set against current profile/market facts:
+
+| Objective | Whole-set cost | Confirmed gain | 95% comparison margin |
+| --- | ---: | ---: | ---: |
+| Price per additional DPS | 30 gold | +721 DPS / +3.5654% | ±83 DPS |
+| Maximum DPS, first bounded step | 529.96 gold | +1,464 DPS / +7.2396% | ±84 DPS |
+
+The value set uses Кровокаленые наголенники; the maximum-DPS set additionally
+uses Кровокаленый нагрудник. Both remain partial-search results, not a claimed
+auction-wide exhaustive optimum. Native engine: SimulationCraft 1210-01 ·18428cd.
+The real variant exclusion path also rejected all copies/slot aliases of the
+selected boots as intended. The clean committed source's first useful search
+result arrived in 8.07 seconds after the public profile snapshot was loaded;
+this is one server QA measurement, not an authenticated browser/end-to-end SLA.
+
+The private exact-image check passed seven published paths, nine assets, eight
+anonymous/cross-site auth contracts and checkpoint-directory writability. Public
+RU/EN character pages returned 200 without page errors/overflow; the new planner
+client chunk exactly matched the image SHA-256. Thirteen health samples over
+122.75 seconds showed zero restarts/runtime errors. The owned QA container was
+removed and production services remained unchanged during checks.
+
+Image/archive/source manifests, frozen test/native/browser evidence, policy gate,
+plan `sha256:5507f8bc4b9e8d2a1ce1e28b8b06a135cc037da0c6b7194e80ebd49e6e8d8952`
+and the verified operation ledger are retained under
+`/opt/gildra/releases/auction-fixes-release-20261017-e56075f`.
+Rollback manifest:
+`/opt/gildra/auction-fixes-release-20261017-e56075f-previous.env`.
+The unchanged previous immutable web image is retained. Deployment and code
+commits are authored and committed by Shpuntyara; the annotated release tag pins
+the runtime revision. This final verification update changes documentation only.
 
 Evidence roots: `.artifacts/auction-fixes-release-20261017/`,
 `.artifacts/auction-fixes-20261017/`,
