@@ -361,3 +361,49 @@ The fourteen-finding reliability repair is deployed as runtime source `764210f`.
 Test-first regressions, fresh postdeployment Elkardia EN/RU, actual-result UI
 replay, scoped web/worker rollout and recovery are recorded in
 [the verified reliability release](reports/auction-reliability-deployment-20261016.md).
+
+## Value recommendations and responsive results (2026-10-17)
+
+Individual upgrades are presented as one recommendation per equipment slot,
+ranked by **whole-lot copper / confirmed additional DPS**. Total character DPS,
+item level and purchase price alone do not determine value. Only positive,
+statistically significant individual comparisons enter this view. Duplicate lots
+of the same item/variant are represented by the cheapest lot. Choices that cost
+at least as much for no greater gain are omitted from the presentation. Up to two
+alternatives, covering lower price and greater DPS where available, are mounted
+only after the user presses the alternatives button. Exact item icons/tooltips,
+price, gain and cost per +1 DPS remain visible; equipped-item comparisons,
+uncertainty and inclusion controls live in a disclosure. Sub-copper cost per DPS
+is displayed as less than one copper rather than rounded to zero.
+
+This grouping is **presentation only**. Assembly retains every discovered,
+affordable native option, its lot quantities and equip constraints, including
+items useful only in combinations. Assembly still maximizes measured loadout DPS
+within the budget and retains its separately confirmed incumbent. Individual
+DPS gains must never be added together to estimate a set.
+
+The first search response stops discovery after its first usable variant batch
+and performs the baseline plus at most two new native single-item comparisons.
+Subsequent automatic responses evaluate up to eight new effects; the first
+assembly evaluates up to eight new sets. Explicit assembly continuations retain
+the original 48-simulation batch and full resumable effect space. Checkpoints,
+baseline and effect caches are shared across these stages. Incomplete discovery
+or enumeration is never reported as complete. Simulation iterations and
+confidence checks are unchanged. Independent market, equipped presentation and
+catalog-constraint reads start concurrently.
+
+A user can build from published choices while discovery continues. This action
+uses the existing durable cancellation/retirement barrier before submitting the
+assembly request, so it cannot race a previous search job. Missing variants can
+still be inspected through later continuations. Excluded purchases retain a
+visible restore action; bulk exclusion controls and slot filters start folded.
+
+Regression coverage includes `tests/auction/completion/value.test.mjs` (250
+independent ratio-oracle pools, duplicate/dominated choices, stable ordering and
+finite inputs), `scripts/test-auction-discovery.mjs` (first-response work bounds,
+parallel preparation, bounded first set and eventual complete optimum), and the
+versioned completion/reliability Playwright suites (EN/RU, alternatives,
+keyboard controls, 320/390/1440 layouts, cancellations and recovery). The private
+UI runner hashes the recommendations component, selector and stylesheet along
+with the existing request/recovery components. Synthetic UI cases are never
+presented as live market evidence.

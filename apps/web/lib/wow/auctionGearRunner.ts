@@ -48,9 +48,7 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
   const theme = talentSpecThemes.find(t => t.classId === character.playableClass.id && t.specId === armory.activeSpecializationId);
   if (!theme) throw new Error("specialization_unresolved");
   if (!["melee", "ranged"].includes(theme.role)) throw new Error("damage_specialization_required");
-  const market = await getCharacterAuctionMarket(character, token, { signal });
   const selectedSlots = parseAuctionGearSlots(input.selectedSlots ?? [...auctionGearSlots]);
-  const localizedEquipped = await getAuctionEquippedPresentation({ character, equipment: armory.equipment, locale: input.locale, token, signal });
   check();
   const raw = armory.equipment.equipped_items as Array<{
     slot?: {
@@ -71,7 +69,11 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
   if (!Array.isArray(raw) || !raw.length) throw new Error("equipment_constraints_unverified");
   const equipped = raw.filter(i => i.item?.id && i.slot?.type && gearSlotCategoryPaths[i.slot.type]);
   const locale = input.locale === "en" ? "en_US" : "ru_RU";
-  const baselineEntities = await lookupGearEntities(equipped.map(i => i.item!.id!), locale, signal);
+  const [market, localizedEquipped, baselineEntities] = await Promise.all([
+    getCharacterAuctionMarket(character, token, { signal }),
+    getAuctionEquippedPresentation({ character, equipment: armory.equipment, locale: input.locale, token, signal }),
+    lookupGearEntities(equipped.map(i => i.item!.id!), locale, signal),
+  ]);
   check();
   const qualityIds: Record<string, number> = { POOR: 0, COMMON: 1, UNCOMMON: 2, RARE: 3, EPIC: 4, LEGENDARY: 5, ARTIFACT: 6, HEIRLOOM: 7 };
   const statKeys: Record<string, string> = { STRENGTH: "strength", AGILITY: "agility", INTELLECT: "intellect", STAMINA: "stamina", CRIT_RATING: "crit_rating", HASTE_RATING: "haste_rating", MASTERY_RATING: "mastery_rating", VERSATILITY: "versatility_rating", LIFESTEAL: "leech_rating", AVOIDANCE: "avoidance_rating", SPEED: "speed_rating" };
@@ -194,7 +196,8 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
     if (!token) throw new Error("auction_discovery_authorization_required");
     await advanceAuctionGearDiscovery(context.discovery, { locale: context.input.locale === "en" ? "en_US" : "ru_RU",
       region: context.character.region, token, spec: context.specSlug, characterLevel: context.character.level,
-      selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps, onProgress: progress,
+      selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps,
+      stopAfterNewCandidates: !entry.latestSearchResult?.items.some(item => item.comparison), onProgress: progress,
       onCheckpoint: () => { synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery)); saveAuctionGearSearch(entry); } });
   }
   if (context.discovery.engine && entry.retainedBaseline && context.discovery.engine !== entry.retainedBaseline.engine) throw new Error("simulation_version_changed");
@@ -218,7 +221,11 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
     searchId: entry.id, budgetCopper: context.input.budgetCopper, options: context.options,
     selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
     market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
-    baseline: entry.retainedBaseline, simulationCache: cache, shouldYield, onProgress: progress,
+    baseline: entry.retainedBaseline, simulationCache: cache,
+    // The initial response includes baseline plus two native comparisons.
+    // Subsequent responses update the visible choices after eight new effects.
+    maxNewSimulations: entry.latestSearchResult ? 8 : 3,
+    shouldYield, onProgress: progress,
     onCheckpoint: state => { entry.searchCheckpoint = state; touchAuctionGearSearch(entry); saveAuctionGearSearch(entry); },
   });
   entry.searchCheckpoint = checkpoint;
@@ -356,6 +363,9 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
       baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
       incumbents: entry.retainedIncumbents,
+      // Publish a first confirmed set after bounded native work. Later explicit
+      // continuations keep the original complete search and its larger batch.
+      maxNewSimulations: entry.latestAssemblyResult ? 48 : 8,
       shouldYield, onProgress: progress,
       onCheckpoint: state => { entry.assemblyCheckpoint = state; touchAuctionGearSearch(entry); saveAuctionGearSearch(entry); },
     });

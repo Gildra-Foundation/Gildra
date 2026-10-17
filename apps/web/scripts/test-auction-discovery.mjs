@@ -18,6 +18,8 @@ import { nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS } from "../li
 const strip = source => stripTypeScriptTypes(source, { mode: "strip" })
   .replace(/^import .*;\s*$/gm, "").replace(/^export /gm, "");
 let fixture, batches, nativeCalls;
+let contextGate = null;
+let contextStarts = [];
 const engine = "SimulationCraft offline-discovery-test";
 const record = (id, { compatible = true, slot = "Wrist" } = {}) => ({ id: `synthetic-${id}`, externalId: id,
   type: "item", slug: `synthetic-${id}`, name: `Synthetic item ${id}`, iconUrl: "https://example.invalid/synthetic.jpg",
@@ -61,11 +63,11 @@ const runnerSource = await readFile(new URL("../lib/wow/auctionGearRunner.ts", i
 const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions})")
   .runInNewContext({ createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery, auctionGearProfileFingerprint, validAuctionWeapon,
     talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
-    getCharacterAuctionMarket: async () => fixture.market,
+    getCharacterAuctionMarket: async () => { contextStarts.push("market"); if (contextGate) await contextGate; return fixture.market; },
     getBattleNetSimulationSnapshot: async () => armory,
-    getAuctionEquippedPresentation: async () => new Map(),
+    getAuctionEquippedPresentation: async () => { contextStarts.push("presentation"); if (contextGate) await contextGate; return new Map(); },
     parseAuctionGearSlots: slots => slots, auctionGearSlots: ["WRIST"], gearSlotCategoryPaths, catalogLoadoutItem,
-    lookupGearEntities: async () => [record(999999)],
+    lookupGearEntities: async () => { contextStarts.push("constraints"); if (contextGate) await contextGate; return [record(999999)]; },
     currentGearSeason: () => ({ id: "synthetic", patch: "synthetic", expansionId: 11, activityNames: [] }),
     getRotationPreset: async () => ({ defaultRules: ["synthetic-rule"] }),
     addPlannerItemIcons: async () => {}, assertFreshMarket, auctionVariantKey,
@@ -101,6 +103,43 @@ async function finish(run) {
   assert.equal(nativeCalls.get("[]"), 1, "Continuations must retain the baseline");
   return run;
 }
+
+// Independent upstream reads must start together; a barrier catches sequential
+// awaits without relying on scheduler timings or sleeping in the test.
+let releaseContext;
+contextGate = new Promise(resolve => { releaseContext = resolve; });
+contextStarts = [];
+const preparing = start([record(1)], [offer(1)]);
+await Promise.resolve(); await Promise.resolve();
+const startedTogether = [...contextStarts].sort();
+releaseContext(); contextGate = null;
+const parallelContext = await preparing;
+assert.deepEqual(startedTogether, ["constraints", "market", "presentation"], "Independent context reads must run concurrently");
+await finish(parallelContext);
+
+// First useful results must not wait for ten more native metadata batches.
+// Transport work is counted deterministically; no wall-clock or live data claims.
+const early = await start([record(1)], Array.from({ length: 120 }, (_, i) => offer(1, i + 1)));
+console.log(JSON.stringify({firstResultNativeMetadataBatches:batches.variants,firstResultMeasuredChoices:early.result.items.filter(item=>item.comparison).length,domain:120}));
+assert(batches.variants <= 1, "First result must be published after one usable variant batch, before further discovery");
+assert(early.result.items.some(item=>item.comparison), "First batch must include actual native DPS comparisons");
+assert(early.result.items.filter(item=>item.comparison).length <= 2, "Initial feedback must not wait for more than two new comparisons plus baseline");
+assert.equal(early.result.searchComplete, false, "A fast first result must not pretend the remaining market was inspected");
+const measuredCount = () => [...nativeCalls.values()].reduce((sum, count) => sum + count, 0);
+const beforeAssembly = measuredCount();
+const earlyAssembly = await runner.assembleAuctionGearSearch(early.entry, undefined, signal(), progress, "synthetic-unused-token");
+assert(measuredCount() - beforeAssembly <= 8, "The first set must publish after at most eight new native comparisons");
+assert(earlyAssembly.bestConfirmed, "Bounded assembly must retain its actually confirmed incumbent");
+assert.equal(earlyAssembly.exhaustiveComplete, false, "The bounded first set cannot claim completion");
+await finish(early);
+assert.equal(early.result.items.length,120,"Publishing early must retain and eventually inspect the whole domain");
+let completeAssembly = earlyAssembly;
+for (let pass = 0; !completeAssembly.exhaustiveComplete; pass++) {
+  assert(pass < 10, "Assembly must remain resumable to the full optimum");
+  completeAssembly = await runner.assembleAuctionGearSearch(early.entry, undefined, signal(), progress, "synthetic-unused-token");
+}
+assert.equal(completeAssembly.comparison.candidateDps, 2200, "All 120 real effect choices remain in the completed native test domain");
+assert.equal(nativeCalls.get("[]"), 1, "Early feedback and set assembly must reuse the exact baseline");
 
 // The 240th record is no longer a permanent boundary; actual compatibility
 // rejects cloth before any native probe and eventually reaches plate.

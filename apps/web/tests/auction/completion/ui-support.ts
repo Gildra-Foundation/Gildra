@@ -15,6 +15,7 @@ export class CompletionHarness {
   searchLookups = 0;
   holdRecovery = false;
   holdPost = false;
+  holdContinuation = false;
   holdAcceptance = false;
   holdRequestRecovery = false;
   requestRecoveryMissing = false;
@@ -24,6 +25,7 @@ export class CompletionHarness {
   conflictNext = false;
   conflictResumeMode: "search" | "assembly" | null = null;
   empty = false;
+  valueChoices = false;
   incompleteData = false;
   incompleteSearchOnce = false;
   fail = false;
@@ -72,7 +74,7 @@ export class CompletionHarness {
   seedBusyAssembly(excludedOptionIds: string[] = []) {
     this.lastAssembly = assemblyResult(); this.seedBusyMode("assembly", excludedOptionIds);
   }
-  release() { this.holdPost = false; this.holdRecovery = false; this.holdAcceptance = false; this.holdRequestRecovery = false; for (const release of this.held.splice(0)) release(); }
+  release() { this.holdPost = false; this.holdContinuation = false; this.holdRecovery = false; this.holdAcceptance = false; this.holdRequestRecovery = false; for (const release of this.held.splice(0)) release(); }
   async dispose() { this.release(); await this.page.unrouteAll({ behavior: "ignoreErrors" }); }
   private async intercept(route: Route) {
     const request = route.request(), url = new URL(request.url());
@@ -105,6 +107,14 @@ export class CompletionHarness {
           catch { await route.fulfill({ status: 400, json: { error: "invalid_budget" } }); return; }
           result.selectedSlots = body.selectedSlots ?? result.selectedSlots; result.scenario = body.scenario ?? result.scenario;
         }
+        if (this.valueChoices) {
+          const base = result.items.find(item => item.evaluation === "upgrade")!;
+          const choice = (optionId: string, itemId: number, cost: number, gain: number) => ({ ...base,
+            optionId, itemId, auctionId: itemId + 1000, name: `Synthetic ${optionId}`, variantKey: "synthetic-value-base", lotCostCopper: cost,
+            comparison: { ...base.comparison, candidateDps: 1000 + gain, deltaDps: gain, deltaPercent: gain / 10 } });
+          result.items = [choice("cheap", 880001, 10000, 1), choice("strong", 880003, 100000, 30),
+            choice("value-best", 880002, 40000, 20), { ...choice("duplicate", 880002, 60000, 20), auctionId: 889999 }];
+        }
         if (this.empty) result.items = [];
         if (this.incompleteData) result.dataComplete = false;
         if (body.action === "search" && this.incompleteSearchOnce) { result.searchComplete = false; result.pendingItems = 1; this.incompleteSearchOnce = false; }
@@ -116,7 +126,7 @@ export class CompletionHarness {
       this.jobs.set(id, { result, clientRequestId: body.clientRequestId });
       if (body.clientRequestId) this.byRequest.set(body.clientRequestId, id);
       this.activeJobId = id;
-      if (this.holdPost) await new Promise<void>(resolve => this.held.push(resolve));
+      if (this.holdPost || body.action === "resume" && this.holdContinuation) await new Promise<void>(resolve => this.held.push(resolve));
       if (this.dropAction === body.action) { this.dropAction = null; await route.abort("failed"); return; }
       this.activeJobId = null;
       await route.fulfill({ status: 202, json: this.fail ? { id, status: "failed", result: null, progress: null, error: "simulation_unavailable", scope: scope(this.language) } : { ...completedJob(this.language, result), id, mode: result.kind } }); return;

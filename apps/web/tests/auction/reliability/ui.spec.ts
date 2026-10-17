@@ -59,10 +59,12 @@ for (const kind of ["held-once", "transient-once"] as const) {
 test("reload restores owned search, exclusions and previous loadout through server validation", async ({ auction, page }) => {
   await auction.open(); await auction.search();
   const wristCheckbox = auction.panel.getByRole("checkbox", { name: new RegExp(`(?:Учитывать при сборке|Allow in assembly): ${wrist.name}`) });
+  await auction.panel.locator("[data-auction-option] summary").click();
   await wristCheckbox.uncheck(); await auction.assemble();
   await page.reload({ waitUntil: "networkidle" });
   await expect.poll(() => auction.recoveries).toBe(1);
   await expect(auction.result).toBeVisible();
+  await auction.panel.locator("[data-auction-option] summary").click();
   await expect(wristCheckbox).not.toBeChecked();
   await expect(auction.assembly).toContainText(stale);
   expect(auction.requests.filter(body => body.action === "search")).toHaveLength(1);
@@ -71,9 +73,11 @@ test("reload restores owned search, exclusions and previous loadout through serv
 test("reload preserves exclusions changed locally before the next assembly", async ({ auction, page }) => {
   await auction.open(); await auction.search();
   const checkbox = auction.panel.getByRole("checkbox", { name: new RegExp(`(?:Учитывать при сборке|Allow in assembly): ${wrist.name}`) });
+  await auction.panel.locator("[data-auction-option] summary").click();
   await checkbox.uncheck();
   await page.reload({ waitUntil: "networkidle" });
   await expect.poll(() => auction.recoveries).toBe(1);
+  await auction.panel.locator("[data-auction-option] summary").click();
   await expect(checkbox).not.toBeChecked();
   await auction.assemble();
   expect(auction.requests.at(-1)?.excludedOptionIds).toEqual([wrist.optionId]);

@@ -197,11 +197,14 @@ type DiscoveryInput = {
   selectedSlots: readonly string[]; context: (slot: string) => GearCandidateContext;
   signal: AbortSignal; shouldYield?: () => boolean; maxSteps?: number; onProgress?: (progress: AuctionPlanProgress) => void;
   onCheckpoint?: () => void;
+  /** Publish a useful verified batch before resolving the rest of the market. */
+  stopAfterNewCandidates?: boolean;
 };
 
 /** Persist cursors only after a whole batch succeeds, so cancellation is retryable. */
 export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, input: DiscoveryInput) {
   let prioritized = false;
+  const initialCandidates = state.candidates.size;
   for (let step = 0; step < (input.maxSteps ?? 12) && !input.shouldYield?.(); step++) {
     input.signal.throwIfAborted();
     if (state.itemCursor === state.itemIds.length && !prioritized) {
@@ -348,6 +351,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       prioritized = false;
     } else break;
     input.onCheckpoint?.();
+    if (input.stopAfterNewCandidates && state.candidates.size > initialCandidates) break;
   }
   input.signal.throwIfAborted();
   if (auctionGearDiscoveryComplete(state)) state.discoveredSnapshotId = state.marketId;

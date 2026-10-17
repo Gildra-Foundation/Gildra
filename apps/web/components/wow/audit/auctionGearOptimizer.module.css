@@ -152,3 +152,24 @@
   .price { grid-template-columns: minmax(0, 1fr) auto; text-align: start; align-items: baseline; }
   .price > span:last-child { grid-column: 1 / -1; }
 }
+.suggestions, .alternatives { padding: 0; list-style: none; }
+.suggestions { margin-block: var(--atlas-space-4); }
+.slotSuggestion { padding-block: var(--atlas-space-5); border-top: 1px solid var(--atlas-line); min-width: 0; }
+.suggestionHeading { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-3); margin-bottom: var(--atlas-space-3); }
+.suggestionHeading h3 { margin: 0; }
+.valueLabel { color: var(--atlas-accent); font-size: var(--atlas-text-meta); }
+.suggestion { min-width: 0; margin-bottom: var(--atlas-space-3); }
+.suggestionItem { min-width: 0; }
+.suggestionMetrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); margin-block: var(--atlas-space-3); }
+.suggestionMetrics > span { display: grid; align-content: start; gap: var(--atlas-space-1); min-width: 0; }
+.suggestionMetrics strong { font-size: var(--atlas-text-body); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.suggestionMetrics small { font-size: var(--atlas-text-meta); }
+.itemDetails summary { min-height: var(--atlas-control-height); padding-block: var(--atlas-space-2); cursor: pointer; color: var(--atlas-accent); font-size: var(--atlas-text-small); }
+.alternatives { margin: var(--atlas-space-3) 0 0; padding-left: var(--atlas-space-4); border-left: 2px solid var(--atlas-line); }
+.alternatives > li + li { padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 640px) {
+  .suggestionMetrics { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .suggestionMetrics > span { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--atlas-space-2); }
+  .alternatives { padding-left: var(--atlas-space-3); }
+}

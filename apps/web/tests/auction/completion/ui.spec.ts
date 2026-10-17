@@ -124,6 +124,7 @@ test("changing exclusions after a lost response retires the old nonce before a n
   await auction.open(); await auction.search(); auction.dropAction = "assemble"; await auction.build.click();
   await expect(auction.assembly.getByRole("button", { name: /Повторить восстановление|Retry recovery/ })).toBeVisible();
   const oldNonce = auction.requests[1].clientRequestId!;
+  await auction.panel.locator('[data-auction-option] summary').click();
   await auction.panel.locator('[data-auction-option] input[type="checkbox"]').uncheck();
   await auction.build.click(); await expect(auction.result).toBeVisible();
   expect(auction.nonceDeletes).toContain(oldNonce);
@@ -236,4 +237,57 @@ test("mode regression: resume 409 reconnects to an active owned assembly", async
   await expect(auction.panel.locator("[data-auction-search-result]")).toContainText("MODE ASSEMBLY COMPLETED");
   await expect(auction.panel.getByRole("alert")).toHaveCount(0);
   expect(auction.requests.map(body => body.action)).toEqual(["search", "resume"]);
+});
+
+
+test("value: one efficient choice per slot, two alternatives on demand and complete assembly domain", async ({ auction, page }, info) => {
+  await auction.open(); auction.valueChoices = true; await auction.search();
+  const main = auction.panel.locator('[data-best-value]');
+  await expect(main).toHaveAttribute('data-auction-option', 'value-best');
+  await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(1);
+  await expect(main).toContainText(auction.t('Цена за +1 DPS', 'Cost per +1 DPS'));
+  await expect(main).toContainText('20 DPS');
+  await expect(main).toContainText(auction.t('0,2 зол.', '0.2 gold'));
+  const alternatives = auction.panel.getByRole('button', { name: /альтернативы|alternatives/i });
+  await expect(alternatives).toHaveAttribute('aria-expanded', 'false');
+  await alternatives.focus(); await page.keyboard.press('Enter');
+  await expect(alternatives).toHaveAttribute('aria-expanded', 'true');
+  await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(3);
+  await expect(auction.panel.locator('[data-auction-option="duplicate"]')).toHaveCount(0);
+  await expect(main.locator('input[type="checkbox"]')).toBeHidden();
+  await main.locator('summary').click();
+  await expect(main.locator('input[type="checkbox"]')).toBeVisible();
+  await main.locator('input[type="checkbox"]').uncheck();
+  await expect(main).toContainText(auction.t('Исключён из сборки сета', 'Excluded from loadout assembly'));
+  await main.locator('input[type="checkbox"]').check();
+  await alternatives.click();
+  await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(1);
+  await info.attach('value-interface', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+  await auction.build.click(); await expect(auction.result).toBeVisible();
+  expect(auction.requests.find(body => body.action === 'assemble')?.excludedOptionIds).toEqual([]);
+});
+
+test("value: slot controls start collapsed and remain usable on a narrow screen", async ({ auction, page }) => {
+  await page.setViewportSize({ width: 320, height: 1000 });
+  await auction.open();
+  const slot = auction.panel.locator('[name="selectedSlots"]').first();
+  await expect(slot).toBeHidden();
+  await auction.panel.locator('summary').filter({ hasText: /Слоты экипировки|Equipment slots/ }).click();
+  await expect(slot).toBeVisible(); await slot.uncheck();
+  auction.valueChoices = true; await auction.search();
+  await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+
+test("value: build immediately from published choices safely retires background discovery", async ({ auction }) => {
+  await auction.open(); auction.incompleteSearchOnce = true; auction.holdContinuation = true;
+  await auction.search();
+  await expect.poll(() => auction.requests.map(body => body.action)).toEqual(['search', 'resume']);
+  await expect(auction.build).toBeEnabled();
+  await auction.build.click(); auction.release();
+  await expect(auction.result).toBeVisible();
+  expect(auction.requests.map(body => body.action)).toEqual(['search', 'resume', 'assemble']);
+  expect(auction.deletes).toContain('completion-job-2');
+  await expect(auction.panel.getByRole('alert')).toHaveCount(0);
 });
