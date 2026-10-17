@@ -127,11 +127,11 @@ export function scheduleAuctionGearSearchSave(entry: AuctionGearSearchEntry) {
   queue.pending = true;
   if (queue.running) return;
   const current = queue;
-  // Cached catalog traversal also yields between batches. A short bounded
-  // window coalesces those turns; publication explicitly expedites this wait.
+  // Cached catalog traversal also yields between batches. The bounded window
+  // covers measured metadata/network turns; publication expedites this wait.
   // Cold native work still checkpoints during its much longer network calls.
   current.running = new Promise<void>(resolve => {
-    const timer = setTimeout(resolve, 25);
+    const timer = setTimeout(resolve, 500);
     current.expedite = () => { clearTimeout(timer); resolve(); };
   }).then(async () => {
     current.expedite = undefined;

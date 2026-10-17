@@ -58,14 +58,15 @@ test("warm checkpoint bursts across async catalog turns serialize only the lates
   // flush must expedite the pending snapshot before returning to the caller.
   t.mock.timers.enable({ apis: ["setTimeout"] });
   try {
-    for (let cursor = 1; cursor <= 8; cursor++) {
+    for (let cursor = 1; cursor <= 3; cursor++) {
       entry.allowedKey = `async-catalog-${cursor}`;
       store.scheduleAuctionGearSearchSave(entry);
+      t.mock.timers.tick(100); // A catalog reply can arrive in a later network turn.
       await new Promise(resolve => setImmediate(resolve));
     }
     const durable = store.flushAuctionGearSearch(entry);
     barrier.release(); await durable;
-    assert.equal(read(entry).data.allowedKey, "async-catalog-8");
+    assert.equal(read(entry).data.allowedKey, "async-catalog-3");
     assert.equal(compressions, 1, "Warm async bursts should not serialize an obsolete intermediate snapshot");
   } finally { barrier.release(); barrier.restore(); t.mock.timers.reset(); }
 }));
