@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { AuctionGearContext, AuctionGearRunMetadata } from "./auctionGearRunner";
 import { restoreAuctionGearContext, snapshotAuctionGearContext } from "./auctionGearRunner";
-import { auctionPersistenceEnabled, listAuctionStateHeaders, readAuctionState, removeAuctionState, touchAuctionState, writeAuctionState } from "./auctionGearPersistence";
+import { auctionPersistenceEnabled, listAuctionStateHeaders, readAuctionState, removeAuctionState, touchAuctionState, writeAuctionState, writeAuctionStateAsync } from "./auctionGearPersistence";
 import { getActiveAuctionGearJob } from "./auctionGearJobs";
 import type { AuctionGearAssemblyCheckpoint, AuctionGearAssemblyResult, AuctionGearIncumbent, AuctionGearSearchCheckpoint, AuctionGearSearchResult, AuctionGearSimulationCache, GearPlanSimulation } from "./auctionGearTypes";
 
@@ -23,6 +23,8 @@ export type AuctionGearSearchEntry = {
   latestSearchResult?: AuctionGearSearchResult & Partial<AuctionGearRunMetadata>;
   latestAssemblyResult?: AuctionGearAssemblyResult & AuctionGearRunMetadata;
   excludedOptionIds?: string[];
+  excludedVariantKeys?: string[];
+  knownVariantKeys?: Set<string>;
   /** Stable ownership validation includes previously discovered, now sold lots. */
   knownOptionIds: Set<string>;
   retainedSimulationCache?: AuctionGearSimulationCache;
@@ -39,6 +41,7 @@ const state = globalThis as typeof globalThis & {
   __gildraAuctionSearchRecency?: number;
   __gildraAuctionGearReservations?: WeakMap<AuctionGearSearchEntry, number>;
   __gildraAuctionSearchesRestored?: boolean;
+  __gildraAuctionSearchSaveQueues?: WeakMap<AuctionGearSearchEntry, SaveQueue>;
 };
 const entries = state.__gildraAuctionGearSearches ??= new Map<string, AuctionGearSearchEntry>();
 const index = state.__gildraAuctionSearchIndex ??= new Map<string, SearchIndex>();
@@ -83,19 +86,74 @@ function load(id: string) {
     return entry;
   } catch { remove(id); return null; }
 }
-export function saveAuctionGearSearch(entry: AuctionGearSearchEntry, replaceId?: string) {
-  if (!auctionPersistenceEnabled()) return;
-  if (entries.get(entry.id) !== entry) throw new Error("search_expired");
-  writeAuctionState("search", entry.id, entry.expiresAt, {
+function storedEntry(entry: AuctionGearSearchEntry): StoredEntry {
+  return {
     id: entry.id, owner: entry.owner, context: snapshotAuctionGearContext(entry.context),
     createdAt: entry.createdAt, touchedAt: entry.touchedAt, expiresAt: entry.expiresAt, busy: false, recency: entry.recency,
     knownOptionIds: entry.knownOptionIds, searchCheckpoint: entry.searchCheckpoint,
     assemblyCheckpoint: entry.assemblyCheckpoint, allowedKey: entry.allowedKey,
     latestSearchResult: entry.latestSearchResult, latestAssemblyResult: entry.latestAssemblyResult,
-    excludedOptionIds: entry.excludedOptionIds, retainedSimulationCache: entry.retainedSimulationCache,
+    excludedOptionIds: entry.excludedOptionIds, excludedVariantKeys: entry.excludedVariantKeys, knownVariantKeys: entry.knownVariantKeys,
+    retainedSimulationCache: entry.retainedSimulationCache,
     retainedBaseline: entry.retainedBaseline, retainedIncumbents: entry.retainedIncumbents,
-  } satisfies StoredEntry, { replaceId, metadata: metadata(entry) });
+  };
 }
+export function saveAuctionGearSearch(entry: AuctionGearSearchEntry, replaceId?: string) {
+  if (!auctionPersistenceEnabled()) return;
+  if (entries.get(entry.id) !== entry) throw new Error("search_expired");
+  writeAuctionState("search", entry.id, entry.expiresAt, storedEntry(entry), { replaceId, metadata: metadata(entry) });
+}
+type SaveQueue = { pending: boolean; running?: Promise<void>; error?: Error };
+const saveQueues = state.__gildraAuctionSearchSaveQueues ??= new WeakMap<AuctionGearSearchEntry, SaveQueue>();
+function refreshSearchLifecycle(entry: AuctionGearSearchEntry) {
+  if (entries.get(entry.id) !== entry) throw new Error("search_expired");
+  const now = Date.now();
+  entry.touchedAt = now; entry.expiresAt = Math.max(entry.expiresAt, now + retention); entry.recency = nextRecency();
+  entries.delete(entry.id); entries.set(entry.id, entry);
+  index.delete(entry.id); index.set(entry.id, indexed(entry));
+}
+function consumeSaveError(queue: SaveQueue) {
+  if (!queue.error) return;
+  const error = queue.error; queue.error = undefined;
+  throw error;
+}
+/** Latest-state coalescing: no cloning, compression or disk work in the callback. */
+export function scheduleAuctionGearSearchSave(entry: AuctionGearSearchEntry) {
+  if (!auctionPersistenceEnabled()) return;
+  refreshSearchLifecycle(entry);
+  let queue = saveQueues.get(entry);
+  if (!queue) { queue = { pending: false }; saveQueues.set(entry, queue); }
+  consumeSaveError(queue);
+  queue.pending = true;
+  if (queue.running) return;
+  const current = queue;
+  // A macrotask lets synchronous checkpoint bursts coalesce before serializing
+  // the allow-listed DTO once. Later updates keep only one pending generation.
+  current.running = new Promise<void>(resolve => setImmediate(resolve)).then(async () => {
+    while (current.pending && entries.get(entry.id) === entry) {
+      current.pending = false;
+      const committed = await writeAuctionStateAsync("search", entry.id, entry.expiresAt, storedEntry(entry), { metadata: metadata(entry) });
+      if (!committed && entries.get(entry.id) === entry) current.pending = true;
+    }
+  }).catch(error => {
+    current.error = error instanceof Error ? error : new Error("auction_storage_unavailable");
+    current.pending = true;
+  }).finally(() => {
+    current.running = undefined;
+    if (current.pending && !current.error && entries.get(entry.id) === entry) scheduleAuctionGearSearchSave(entry);
+  });
+}
+/** Result/job publication must await this barrier; background failures surface. */
+export async function flushAuctionGearSearch(entry: AuctionGearSearchEntry) {
+  if (!auctionPersistenceEnabled()) return;
+  const previous = saveQueues.get(entry);
+  if (previous) consumeSaveError(previous);
+  scheduleAuctionGearSearchSave(entry);
+  const queue = saveQueues.get(entry)!;
+  while (queue.running) { await queue.running; consumeSaveError(queue); }
+  if (entries.get(entry.id) !== entry) throw new Error("search_expired");
+}
+
 function remove(id: string) {
   removeAuctionState("search", id);
   index.delete(id);

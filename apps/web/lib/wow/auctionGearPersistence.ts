@@ -1,9 +1,10 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { closeSync, constants, existsSync, fstatSync, fsyncSync, mkdirSync, openSync, readSync, readdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { mkdir, open, unlink } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import { deserialize, serialize } from "node:v8";
-import { gunzipSync, gzipSync } from "node:zlib";
+import { gunzipSync, gzip, gzipSync } from "node:zlib";
 
 /** Private single-writer checkpoints. No bearer tokens or executable tasks. */
 const version = 2;
@@ -15,6 +16,16 @@ export type AuctionStateHeader<M = Record<string, unknown>> = {
   version: number; simulationContract: string; kind: Kind; id: string; expiresAt: number; metadata: M;
 };
 type Envelope = AuctionStateHeader & { data: unknown };
+// Async bulk writes share one atomic commit boundary with the small synchronous
+// admission/lifecycle APIs. A delete or newer write must never be resurrected.
+type PendingWrite = { revision: number; active: number; lifecycle?: { expiresAt: number; touchedAt: number; recency: number } };
+const writeState = globalThis as typeof globalThis & { __gildraAuctionPendingWrites?: Map<string, PendingWrite> };
+const pendingWrites = writeState.__gildraAuctionPendingWrites ??= new Map<string, PendingWrite>();
+const pendingKey = (dir: string, kind: Kind, id: string) => join(dir, `${kind}-${id}.bin`);
+function supersedeWrite(dir: string, kind: Kind, id: string) {
+  const pending = pendingWrites.get(pendingKey(dir, kind, id));
+  if (pending) pending.revision++;
+}
 const validId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id);
 
 function directory() {
@@ -101,8 +112,79 @@ export function writeAuctionState(kind: Kind, id: string, expiresAt: number, dat
     const compressed = gzipSync(bytes, { level: 1 });
     if (compressed.length > maxCompressed) throw new Error();
     replaceFile(dir, kind, id, header, compressed);
+    supersedeWrite(dir, kind, id);
   } catch {
     throw new Error("auction_storage_unavailable");
+  }
+}
+
+/**
+ * Repeated search checkpoints compress and write off the event loop. The final
+ * rename is deliberately synchronous: it is a tiny atomic operation with no
+ * intervening await, so synchronous deletion/admission cannot race its commit.
+ * Bulk writes and both durability barriers remain asynchronous.
+ * false means a newer synchronous save/delete or async writer superseded it.
+ */
+export async function writeAuctionStateAsync(kind: Kind, id: string, expiresAt: number, data: unknown,
+  { metadata = {} }: { metadata?: Record<string, unknown> } = {}): Promise<boolean> {
+  const dir = process.env.GILDRA_AUCTION_STATE_DIR;
+  if (!dir) return true;
+  if (!isAbsolute(dir) || !validId(id) || !Number.isFinite(expiresAt)) throw new Error("auction_storage_unavailable");
+  const key = pendingKey(dir, kind, id);
+  const pending = pendingWrites.get(key) ?? { revision: 0, active: 0 };
+  pendingWrites.set(key, pending); pending.active++;
+  const revision = ++pending.revision;
+  const temporary = join(dir, `.${kind}-${id}.${randomUUID()}.tmp`);
+  let file: Awaited<ReturnType<typeof open>> | undefined;
+  try {
+    // Async checkpoints only replace a synchronously admitted record. Keeping
+    // admission synchronous preserves the existing forty-search capacity bound.
+    const header: AuctionStateHeader = { version, simulationContract: auctionSimulationContract, kind, id, expiresAt,
+      metadata: JSON.parse(JSON.stringify(metadata)) as Record<string, unknown> };
+    if (Buffer.byteLength(JSON.stringify(header)) > maxHeader) throw new Error();
+    const bytes = serialize({ ...header, data } satisfies Envelope);
+    if (bytes.length > maxUncompressed) throw new Error();
+    const compressed = await new Promise<Buffer>((resolve, reject) => gzip(bytes, { level: 1 },
+      (error, result) => error ? reject(error) : resolve(result)));
+    if (compressed.length > maxCompressed) throw new Error();
+    if (revision !== pending.revision) return false;
+    await mkdir(dir, { recursive: true, mode: 0o700 });
+    file = await open(temporary, "wx", 0o600);
+    // Lifecycle touches may advance while compression is running. Refresh the
+    // prefix immediately before commit below as well, without re-compressing.
+    const rawHeader = Buffer.from(JSON.stringify(header)), prefix = Buffer.alloc(4);
+    prefix.writeUInt32BE(rawHeader.length);
+    await file.writeFile(Buffer.concat([prefix, rawHeader, compressed]));
+    await file.sync(); await file.close(); file = undefined;
+    if (revision !== pending.revision) return false;
+    const lifecycle = pending.lifecycle;
+    if (lifecycle && lifecycle.recency > Number(header.metadata.recency ?? 0)) {
+      // Touches normally retain the same-length prefix, but timestamps and
+      // recency can grow. Rewrite the temp file, never the acknowledged file.
+      const updated = { ...header, expiresAt: Math.max(header.expiresAt, lifecycle.expiresAt),
+        metadata: { ...header.metadata, touchedAt: lifecycle.touchedAt, recency: lifecycle.recency } };
+      const raw = Buffer.from(JSON.stringify(updated)), updatedPrefix = Buffer.alloc(4);
+      updatedPrefix.writeUInt32BE(raw.length);
+      file = await open(temporary, "w", 0o600);
+      await file.writeFile(Buffer.concat([updatedPrefix, raw, compressed]));
+      await file.sync(); await file.close(); file = undefined;
+      // A second touch while writing must not lose lifecycle. Retry through the
+      // caller's coalescing queue rather than commit an obsolete prefix.
+      if (revision !== pending.revision || pending.lifecycle !== lifecycle) return false;
+    }
+    // No await between checking revision and the rename: stale async data can
+    // never overwrite a newer synchronous write or resurrect a deleted search.
+    if (!existsSync(key)) throw new Error();
+    renameSync(temporary, key);
+    const directoryHandle = await open(dir, "r");
+    try { await directoryHandle.sync(); } finally { await directoryHandle.close(); }
+    return true;
+  } catch {
+    throw new Error("auction_storage_unavailable");
+  } finally {
+    if (file) await file.close().catch(() => {});
+    await unlink(temporary).catch(() => {});
+    if (--pending.active === 0) pendingWrites.delete(key);
   }
 }
 
@@ -119,6 +201,8 @@ export function touchAuctionState(kind: Kind, id: string, expiresAt: number, lif
     const compressed = readExactly(fd, fstatSync(fd).size - offset, offset);
     closeSync(fd); fd = undefined;
     replaceFile(dir, kind, id, { ...header, expiresAt, metadata: { ...header.metadata, ...lifecycle } }, compressed);
+    const pending = pendingWrites.get(pendingKey(dir, kind, id));
+    if (pending) pending.lifecycle = { expiresAt, ...lifecycle };
   } catch {
     if (fd !== undefined) closeSync(fd);
     throw new Error("auction_storage_unavailable");
@@ -131,6 +215,7 @@ export function removeAuctionState(kind: Kind, id: string) {
   catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw new Error("auction_storage_unavailable");
   }
+  supersedeWrite(dir, kind, id);
   try { syncDirectory(dir); } catch { throw new Error("auction_storage_unavailable"); }
 }
 
