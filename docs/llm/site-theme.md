@@ -136,3 +136,8 @@ controlled browser time to check increasing frost coverage, edge-first growth,
 texture decoding (390/1440/2560 px), and release/cancellation cleanup, and saves
 screenshots of each stage. Normal-time `qa-site-theme.mjs` retains the full
 navigation/theme/sound/reduced-motion regression journey.
+
+The realistic frost refinement is now published and publicly verified. See
+[revision deployment evidence](../reports/realistic-frost-deployment-20261017.md).
+Future web releases must include application commit `99634f6` as well as the
+original global-theme commit `a052e48`.
