@@ -6,10 +6,11 @@ import type { AuctionGearAssemblyResult, AuctionGearSearchResult, AuctionPlanPro
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "@/lib/wow/auctionGearSelection";
 import { encodeAuctionGearSelectionTransport } from "@/lib/wow/auctionGearSelectionTransport";
 import { normalizeAuctionBudgetGold } from "@/lib/wow/auctionGearBudget";
+import { auctionGearMarketExpiry, auctionGearPricesAreFresh } from "@/lib/wow/auctionGearFreshness";
 import { auctionGearVariantSelectionKey } from "@/lib/wow/auctionGearExclusions";
 import { getAuctionGearRecommendationGroups } from "@/lib/wow/auctionGearRecommendations";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
-import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientJobUrl, auctionClientRequestUrl, clearAcknowledgedAuctionClientCache, fetchAuctionClientResult,
+import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientPollDelay, auctionClientJobUrl, auctionClientRequestUrl, clearAcknowledgedAuctionClientCache, fetchAuctionClientResult,
   forgetAuctionClientJob, forgetAuctionClientRequest, hasPendingAuctionClientJob, readAuctionClientCache, parseAuctionClientFormIntent, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
   removeAuctionClientJob, removeAuctionClientRequest, retireAuctionClient, waitForAuctionClientRetirement, writeAuctionClientCache,
   type AuctionClientCache } from "@/lib/wow/auctionGearClient";
@@ -55,6 +56,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   // Keep the accepted amount separate from intermediate keyboard drafts. Recovery
   // restores valid server-owned intent through this setter; typing uses raw input.
   const acceptedBudget = useRef("10000");
+  const budgetInput = useRef<HTMLInputElement>(null);
+  const editFocusRequested = useRef(false);
   const setBudget = useCallback((value: string) => {
     acceptedBudget.current = normalizeAuctionBudgetGold(value, locale);
     setBudgetInput(value);
@@ -90,6 +93,33 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const supported = theme && ["melee", "ranged"].includes(theme.role);
   const running = transport?.status === "starting" || transport?.status === "queued" || transport?.status === "running";
   const formLocked = initializing || running || Boolean(cancellation);
+  useEffect(() => {
+    if (!formLocked && editFocusRequested.current) {
+      editFocusRequested.current = false;
+      budgetInput.current?.focus();
+    }
+  }, [formLocked]);
+  // Timers and tab re-entry can only expire prices. Only newly verified server
+  // work may clear stale state, never a cached completed job or wall-clock tick.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = () => {
+      clearTimeout(timer);
+      const now = Date.now();
+      let nextExpiry = Infinity;
+      for (const [market, expire] of [[search?.market, setMarketStale], [assembly?.market, setAssemblyStale]] as const) {
+        if (!market) continue;
+        if (!auctionGearPricesAreFresh(market, now)) expire(true);
+        else nextExpiry = Math.min(nextExpiry, auctionGearMarketExpiry(market));
+      }
+      if (Number.isFinite(nextExpiry)) timer = setTimeout(check, Math.max(1, nextExpiry - now + 1));
+    };
+    check();
+    const visible = () => { if (document.visibilityState === "visible") check(); };
+    window.addEventListener("focus", check);
+    document.addEventListener("visibilitychange", visible);
+    return () => { clearTimeout(timer); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", visible); };
+  }, [search?.market, assembly?.market]);
   const numeric = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2 });
   const signed = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2, signDisplay: "exceptZero" });
   const gold = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 4 });
@@ -418,9 +448,13 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         }
         remember({ jobId: payload.id, mode });
         rememberAuctionClientJob({ characterSlug, locale }, payload.id);
+        // Reattaching an already completed job is recovery, not a new market
+        // check. An observed active job may publish newly verified facts later.
+        const recoveredCompleted = body.action === "poll" && payload.status === "completed";
+        let pollAttempt = 0;
         while (payload.status === "queued" || payload.status === "running") {
           setTransport({ mode, status: payload.status, progress: payload.progress, error: null });
-          await auctionClientDelay(1500, request.controller.signal);
+          await auctionClientDelay(auctionClientPollDelay(pollAttempt++), request.controller.signal);
           payload = await fetchAuctionClientResult<PlannerJob>(auctionClientJobUrl(request.id, { characterSlug, locale }), request.controller.signal, onReconnect);
           if (!isCurrent()) return;
         }
@@ -442,20 +476,21 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
             scenario: result.scenario, objective: result.objective ?? "dps", selectedSlots: parseAuctionGearSlots(result.selectedSlots) }) ?? undefined : cache.current?.formIntent });
         forgetAuctionClientJob(payload.id);
         request.id = undefined;
+        const pricesStale = recoveredCompleted || !auctionGearPricesAreFresh(result.market);
         let complete: boolean;
         if (result.kind === "search") {
           // Each response is an authoritative snapshot: sold lots must disappear.
           setSearch(result);
-          setMarketStale(false);
+          setMarketStale(pricesStale);
           complete = result.searchComplete;
           body = { action: "resume", searchId: result.searchId };
         } else {
           setAssembly(result);
-          setAssemblyStale(false);
+          setAssemblyStale(pricesStale);
           if (result.updatedSearch) {
             setSearch({ ...result.updatedSearch, market: result.market,
               profileFingerprint: result.profileFingerprint, scenario: result.scenario, objective: result.objective, coverage: result.coverage });
-            setMarketStale(false);
+            setMarketStale(pricesStale);
           }
           // Assembly can have a very large effect space. Publish this bounded
           // step and let the user explicitly continue from its checkpoint.
@@ -530,6 +565,11 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
     if (retryJob?.mode === "assembly") { void run({ action: "poll", id: retryJob.id }, "assembly"); return; }
     void run({ action: "assemble", searchId: search.searchId, excludedOptionIds: [...excluded], excludedVariantKeys: [...excludedVariantKeys] }, "assembly");
+  }
+  async function editParameters() {
+    const generation = mountGeneration.current;
+    editFocusRequested.current = true;
+    if (!await cancel() || !scopeAlive.current || mountGeneration.current !== generation) editFocusRequested.current = false;
   }
   async function cancel(): Promise<boolean> {
     if (cancelling.current) return cancelling.current;
@@ -646,8 +686,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   return <section className={styles.panel} aria-labelledby="auction-gear-title" data-auction-gear>
     <header><small>{t("АУКЦИОН СЕРВЕРА", "REALM AUCTION HOUSE")}</small><h2 id="auction-gear-title">{t("Найти вещи под бюджет", "Find gear within your budget")}</h2><p>{t("Выгодные улучшения с аукциона и совместимый сет в вашем бюджете.", "Good-value auction upgrades and a compatible loadout within your budget.")}</p></header>
     {!supported ? <p>{messages.damage_specialization_required}</p> : <form onSubmit={event => { event.preventDefault(); startSearch(); }}>
+      {running && !cancellation ? <button className={styles.button} type="button" onClick={() => void editParameters()}>{t("Изменить параметры", "Change parameters")}</button> : null}
       <div className={styles.controls}>
-        <label>{t("Бюджет, золото", "Budget, gold")}<input name="budgetGold" inputMode="decimal" value={budget} onChange={event => {
+        <label>{t("Бюджет, золото", "Budget, gold")}<input ref={budgetInput} name="budgetGold" inputMode="decimal" value={budget} onChange={event => {
           const next = event.target.value; setBudgetInput(next);
           let amount: string;
           try { amount = normalizeAuctionBudgetGold(next, locale); }

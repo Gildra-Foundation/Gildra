@@ -1,4 +1,116 @@
 import { test, expect } from "./ui-support";
+import { assemblyResult, characterSlug, completedJob, market, searchResult } from "../reliability/ui-fixtures";
+
+for (const expired of [false, true]) test(`repeat-audit regression: restored completed loadout keeps ${expired ? "expired" : "unrefreshed"} prices stale`, async ({ auction, page }, info) => {
+  const now = Date.now();
+  const sourceTime = now - (expired ? 121 : 1) * 60_000;
+  const completedAt = now - (expired ? 15 : 0.5) * 60_000;
+  const recoveredMarket = { ...market, updatedAt: new Date(sourceTime).toISOString(), validatedAt: new Date(completedAt).toISOString() };
+  const recoveredSearch = { ...searchResult(), market: recoveredMarket };
+  const recoveredAssembly = { ...assemblyResult(), market: recoveredMarket };
+  const requests: string[] = [];
+  await page.addInitScript(({ language, characterSlug }) => {
+    sessionStorage.setItem(`gildra:auction:v1:${encodeURIComponent(characterSlug)}:fury-warrior:${language}`, JSON.stringify({
+      version: 1, profileKey: "synthetic-reliability:0", searchId: "synthetic-reliability-search", jobId: "old-completed-assembly",
+      clientRequestId: "synthetic-old-completed-assembly-nonce", mode: "assembly", excludedOptionIds: [], excludedVariantKeys: [],
+    }));
+  }, { language: auction.language, characterSlug });
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), url = new URL(request.url()); requests.push(request.method());
+    if (url.searchParams.has("searchId")) {
+      await route.fulfill({ json: { kind: "recovery", search: recoveredSearch, assembly: recoveredAssembly,
+        excludedOptionIds: [], excludedVariantKeys: [], activeJob: null, needsRefresh: true } });
+    } else await route.fulfill({ json: { ...completedJob(auction.language, recoveredAssembly), id: "old-completed-assembly", mode: "assembly", completedAt } });
+  });
+  await auction.open();
+  await expect(auction.result).toBeVisible();
+  await expect(auction.find).toBeEnabled();
+  expect(requests).not.toContain("POST");
+  await expect(auction.result).toHaveAttribute("data-price-state", "stale");
+  await page.screenshot({ path: info.outputPath(`restored-${expired ? "expired" : "unrefreshed"}.png`), fullPage: true });
+});
+
+test("repeat-audit regression: changing parameters retires background discovery and focuses the budget", async ({ auction, page }, info) => {
+  await auction.open(); auction.incompleteSearchOnce = true; auction.holdContinuation = true;
+  await auction.search(); await expect.poll(() => auction.requests.some(body => body.action === "resume")).toBe(true);
+  const budget = auction.panel.getByRole("textbox", { name: /Бюджет, золото|Budget, gold/ });
+  auction.holdCancel = true;
+  const edit = auction.panel.getByRole("button", { name: /Изменить параметры|Change parameters/, exact: true });
+  await expect(edit).toBeVisible(); await edit.click();
+  await expect.poll(() => auction.cancellationRequests.length).toBeGreaterThan(0);
+  await expect(budget).toBeDisabled();
+  expect(auction.requests.filter(body => body.action === "search")).toHaveLength(1);
+  auction.release();
+  await expect(budget).toBeEnabled(); await expect(budget).toBeFocused();
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  await budget.fill("9000");
+  await auction.panel.locator("summary").filter({ hasText: /Слоты экипировки и цель подбора|Equipment slots and objective/ }).click();
+  await auction.panel.getByRole("combobox", { name: /Цель подбора|Selection objective/ }).selectOption("dps");
+  await auction.search();
+  expect(auction.requests.filter(body => body.action === "search")).toHaveLength(2);
+  expect(auction.requests.at(-1)).toMatchObject({ action: "search", budgetGold: "9000", objective: "dps" });
+  await page.screenshot({ path: info.outputPath("changed-background-parameters.png"), fullPage: true });
+});
+
+test("repeat-audit regression: a warm queued result appears within the first simulated second", async ({ auction, page }) => {
+  await auction.open(); auction.pendingInitial = true;
+  await page.clock.install(); await page.clock.pauseAt(new Date());
+  await auction.find.click();
+  await expect.poll(() => auction.requests.length).toBe(1);
+  // Only the server completion changes. The paused browser clock controls polling exactly.
+  auction.pendingInitial = false;
+  await page.clock.runFor(1000);
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+});
+
+test("repeat-audit regression: an open loadout becomes stale when its market expires", async ({ auction, page }) => {
+  await page.clock.install();
+  await auction.open(); await auction.search(); await auction.build.click();
+  await expect(auction.result).toHaveAttribute("data-price-state", "verified");
+  const requests = auction.requests.length;
+  await page.clock.fastForward(2 * 60 * 60_000 + 60_000);
+  await expect(auction.result).toHaveAttribute("data-price-state", "stale");
+  expect(auction.requests).toHaveLength(requests);
+});
+
+test("repeat-audit control: a recovered active job can publish newly verified prices", async ({ auction, page }) => {
+  const freshMarket = { ...market, updatedAt: new Date().toISOString(), validatedAt: new Date().toISOString() };
+  const freshSearch = { ...searchResult(), market: freshMarket };
+  const freshAssembly = { ...assemblyResult(), market: freshMarket, updatedSearch: freshSearch };
+  let polls = 0;
+  await page.addInitScript(({ language, characterSlug }) => {
+    sessionStorage.setItem(`gildra:auction:v1:${encodeURIComponent(characterSlug)}:fury-warrior:${language}`, JSON.stringify({
+      version: 1, profileKey: "synthetic-reliability:0", searchId: "synthetic-reliability-search", jobId: "still-active-assembly",
+      clientRequestId: "synthetic-active-assembly-nonce", mode: "assembly", excludedOptionIds: [], excludedVariantKeys: [],
+    }));
+  }, { language: auction.language, characterSlug });
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const url = new URL(route.request().url());
+    const running = { id: "still-active-assembly", status: "running", mode: "assembly", result: null, progress: null, error: null };
+    if (url.searchParams.has("searchId")) {
+      await route.fulfill({ json: { kind: "recovery", search: freshSearch, assembly: null, excludedOptionIds: [], excludedVariantKeys: [], activeJob: running, needsRefresh: true } });
+    } else if (url.searchParams.has("clientRequestId") || ++polls === 1) await route.fulfill({ json: running });
+    else await route.fulfill({ json: { ...completedJob(auction.language, freshAssembly), id: running.id, mode: "assembly" } });
+  });
+  await auction.open();
+  await expect(auction.result).toHaveAttribute("data-price-state", "verified");
+  expect(polls).toBeGreaterThanOrEqual(2);
+});
+
+test("repeat-audit control: rejected parameter-change cancellation keeps the form locked until retry", async ({ auction }) => {
+  await auction.open(); auction.incompleteSearchOnce = true; auction.holdContinuation = true;
+  await auction.search(); await expect.poll(() => auction.requests.some(body => body.action === "resume")).toBe(true);
+  auction.cancelFailure = true;
+  await auction.panel.getByRole("button", { name: /Изменить параметры|Change parameters/, exact: true }).click();
+  const retry = auction.panel.getByRole("button", { name: /Повторить отмену|Retry cancellation/ });
+  await expect(retry).toBeVisible();
+  await expect(auction.panel.getByRole("textbox", { name: /Бюджет, золото|Budget, gold/ })).toBeDisabled();
+  await expect(auction.find).toBeDisabled();
+  expect(auction.requests).toHaveLength(2);
+  auction.cancelFailure = false; await retry.click(); auction.release();
+  await expect(auction.find).toBeEnabled();
+  expect(auction.requests).toHaveLength(2);
+});
 
 test("regression: locale grouped budget preserves four decimal places in the actual POST", async ({ auction }) => {
   await auction.open();

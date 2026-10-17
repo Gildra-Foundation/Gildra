@@ -24,12 +24,15 @@ export function parseAuctionClientFormIntent(input: unknown): AuctionClientFormI
 export type AuctionClientScope = { characterSlug: string; locale: "ru" | "en" };
 export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; cancellationRequested?: boolean; formIntent?: AuctionClientFormIntent };
 const activeKey = "gildra:auction-active:v1";
-let retiring: Promise<unknown> = Promise.resolve();
+let retiring: Promise<void> = Promise.resolve();
 
 export function retireAuctionClient(...work: Promise<unknown>[]) {
-  retiring = Promise.allSettled([retiring, ...work]);
+  // Keep the ordering barrier, discard settled responses and the previous chain.
+  retiring = Promise.allSettled([retiring, ...work]).then(() => undefined);
 }
 export function waitForAuctionClientRetirement() { return retiring; }
+/** Fast cached results should not wait a full native-calculation polling interval. */
+export function auctionClientPollDelay(attempt: number) { return attempt < 4 ? 250 : 1500; }
 export function auctionClientCacheKey(scope: AuctionClientScope, specialization: string) {
   return `gildra:auction:v1:${encodeURIComponent(scope.characterSlug)}:${encodeURIComponent(specialization)}:${scope.locale}`;
 }

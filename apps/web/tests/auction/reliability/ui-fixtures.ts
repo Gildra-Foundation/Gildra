@@ -7,8 +7,9 @@ export const comparison = (candidateDps: number, significant = true) => ({
   deltaPercent: (candidateDps - 1000) / 10, confidence: 95,
   uncertainty: { marginDps: significant ? 1 : 400, marginPercent: significant ? .1 : 40, significant },
 });
+const syntheticMarketTime = new Date().toISOString();
 export const market = { snapshotId: "synthetic-reliability-market", region: "eu", realm: "SYNTHETIC FIXTURE",
-  connectedRealmId: 1, updatedAt: "2026-10-16T12:00:00.000Z", validatedAt: "2026-10-16T12:00:00.000Z" };
+  connectedRealmId: 1, updatedAt: syntheticMarketTime, validatedAt: syntheticMarketTime };
 export const coverage = { discoveryComplete: true, dataComplete: true, itemsTotal: 2, itemsScanned: 2,
   itemsDetailed: 2, catalogItemsMissing: 0, catalogUnmatchedItemIds: 0, eligibilityUnverifiedItems: 0,
   supportedModifierLots: 2, unsupportedModifierLots: 0, variantsPending: 0, variantsResolved: 2,
