@@ -27,6 +27,7 @@ export type AuctionGearDiscovery = {
   records: CatalogRecord[];
   /** Optional for checkpoints written before summary-first discovery. Hints never exclude lots. */
   catalogHints?: Map<number, CatalogPriorityHint>;
+  catalogPriorityLevel?: number;
   entities: Map<number, CatalogGearEntity | null>;
   variantKeys: string[];
   variantCursor: number;
@@ -46,6 +47,9 @@ export type AuctionGearDiscovery = {
   detailedItems: Set<number>;
   affordableLots: number;
   unsupportedModifierLots: number;
+  /** Optional for checkpoints predating noncombat classification of unsupported lots. */
+  unsupportedLotsByItem?: Map<number, number>;
+  catalogItemClasses?: Map<number, number>;
   engine: string;
 };
 
@@ -56,7 +60,8 @@ export function createAuctionGearDiscovery(market: AuctionSnapshot, budgetCopper
     verifiedReferences: new Set(), rejectedReferences: new Set(), referenceRetryAt: new Map(), referenceRejectedVariants: new Map(),
     catalogMissing: new Set(), catalogUnmatched: new Set(),
     eligibilityUnverifiedItems: new Set(), catalogRetryAt: new Map(), scannedItems: new Set(),
-    detailedItems: new Set(), affordableLots: 0, unsupportedModifierLots: 0, engine: "" };
+    detailedItems: new Set(), affordableLots: 0, unsupportedModifierLots: 0,
+    unsupportedLotsByItem: new Map(), catalogItemClasses: new Map(), engine: "" };
   refreshAuctionGearDiscovery(state, market);
   return state;
 }
@@ -73,6 +78,15 @@ export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market:
   { retryCatalog = true }: { retryCatalog?: boolean } = {}) {
   const affordable = market.offers.filter(offer => offer.buyoutCopper <= state.budgetCopper);
   const supported = affordable.filter(offer => supportedAuctionModifiers(offer.modifiers));
+  const legacyClasses = !state.catalogItemClasses;
+  state.catalogItemClasses ??= new Map();
+  state.unsupportedLotsByItem = new Map();
+  for (const offer of affordable) if (!supportedAuctionModifiers(offer.modifiers)) {
+    state.unsupportedLotsByItem.set(offer.itemId, (state.unsupportedLotsByItem.get(offer.itemId) ?? 0) + 1);
+    // Older checkpoints may have already visited the same ID through a
+    // supported lot without retaining its authoritative noncombat class.
+    if (legacyClasses && state.queuedItems.has(offer.itemId)) state.catalogRetryAt.set(offer.itemId, 0);
+  }
   const offers = new Map<string, AuctionOffer[]>();
   for (const offer of supported) {
     const key = auctionVariantKey(offer), list = offers.get(key) ?? [];
@@ -88,8 +102,10 @@ export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market:
   }
   state.marketId = market.id;
   state.affordableLots = affordable.length;
-  state.unsupportedModifierLots = affordable.length - supported.length;
-  const ids = [...new Set(supported.map(offer => offer.itemId))].sort((a, b) => a - b);
+  updateUnsupportedCoverage(state);
+  // Unsupported variants never enter native work, but their cheap summaries
+  // can establish that profession equipment/recipes are outside combat gear.
+  const ids = [...new Set(affordable.map(offer => offer.itemId))].sort((a, b) => a - b);
   const now = Date.now();
   // A long active traversal must finish before missing IDs can cycle again.
   const retry = new Set(retryCatalog && auctionGearDiscoveryComplete(state)
@@ -149,6 +165,24 @@ const knownNonGear = (record: Pick<CatalogGearEntity, "tooltip" | "payload">) =>
   const itemClass = catalogItemClass(record);
   return itemClass !== undefined && itemClass !== 2 && itemClass !== 4;
 };
+function updateUnsupportedCoverage(state: AuctionGearDiscovery) {
+  if (!state.unsupportedLotsByItem) return;
+  state.unsupportedModifierLots = [...state.unsupportedLotsByItem].reduce((count, [id, lots]) => {
+    const itemClass = state.catalogItemClasses?.get(id);
+    return count + (itemClass === undefined || itemClass === 2 || itemClass === 4 ? lots : 0);
+  }, 0);
+}
+function rememberCatalogClass(state: AuctionGearDiscovery, record: CatalogGearEntity) {
+  const itemClass = catalogItemClass(record);
+  if (itemClass === undefined) return;
+  (state.catalogItemClasses ??= new Map()).set(record.externalId, itemClass);
+  if (knownNonGear(record)) {
+    state.catalogMissing.delete(record.externalId);
+    state.catalogUnmatched.delete(record.externalId);
+    state.eligibilityUnverifiedItems.delete(record.externalId);
+    state.catalogRetryAt.delete(record.externalId);
+  }
+}
 
 function summaryMayMatch(record: CatalogRecord, slots: readonly string[]) {
   const inventory = record.highlights?.find(highlight => highlight.key === "inventory_type")?.value;
@@ -215,6 +249,8 @@ type DiscoveryInput = {
 
 /** Persist cursors only after a whole batch succeeds, so cancellation is retryable. */
 export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, input: DiscoveryInput) {
+  input.signal.throwIfAborted();
+  state.catalogPriorityLevel = input.characterLevel;
   let prioritized = false;
   const initialCandidates = state.candidates.size;
   for (let step = 0; step < (input.maxSteps ?? 12) && !input.shouldYield?.(); step++) {
@@ -241,8 +277,14 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         }
       }
       const hints = state.catalogHints ??= new Map();
-      for (const record of records) hints.set(record.externalId, catalogPriorityHint(record));
-      state.records.push(...records.filter(record => !knownNonGear(record) && summaryMayMatch(record, input.selectedSlots)));
+      for (const record of records) {
+        hints.set(record.externalId, catalogPriorityHint(record));
+        rememberCatalogClass(state, record);
+      }
+      updateUnsupportedCoverage(state);
+      state.records.push(...records.filter(record => !knownNonGear(record) &&
+        (state.itemVariants.has(record.externalId) && summaryMayMatch(record, input.selectedSlots) ||
+          state.unsupportedLotsByItem?.has(record.externalId) && !state.catalogItemClasses?.has(record.externalId))));
       state.itemCursor += ids.length;
       input.onProgress?.({ phase: "catalog", completed: state.itemCursor, total: state.itemIds.length });
     } else if (state.variantCursor < state.variantKeys.length && (!state.records.length || compareCatalogHints(
@@ -340,6 +382,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
     } else if (state.records.length) {
       const records = state.records.slice(0, detailBatch);
       const entities = await gearEntityDetails(records, input.locale, false, input.signal);
+      input.signal.throwIfAborted();
       for (const record of records) {
         state.detailedItems.add(record.externalId);
         const entity = entities.find(entity => entity.externalId === record.externalId);
@@ -351,6 +394,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         state.catalogMissing.delete(record.externalId);
         state.eligibilityUnverifiedItems.delete(record.externalId);
         state.catalogRetryAt.delete(record.externalId);
+        rememberCatalogClass(state, entity);
         // Public summaries may omit the registry; classify from authoritative
         // details before treating missing equip fields as unknown gear data.
         if (knownNonGear(entity)) { state.entities.set(record.externalId, null); continue; }
@@ -362,6 +406,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         state.entities.set(entity.externalId, eligible ? entity : null);
         if (eligible) queueVariants(state, entity.externalId);
       }
+      updateUnsupportedCoverage(state);
       state.records.splice(0, records.length);
       prioritized = false;
     } else break;
@@ -374,7 +419,12 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
 
 export function auctionGearDiscoveryOptions(state: AuctionGearDiscovery): AuctionGearOption[] {
   const options: AuctionGearOption[] = [];
-  for (const [key, candidates] of state.candidates) for (const offer of state.offers.get(key) ?? []) for (const candidate of candidates) options.push({
+  const entries = [...state.candidates];
+  // Refresh can resolve a newly arrived high-priority item after older items.
+  // Publish the same global hint order; Map insertion order is only a stable tie.
+  if (state.catalogPriorityLevel !== undefined) entries.sort(([, left], [, right]) => compareCatalogHints(
+    state.catalogHints?.get(left[0]?.itemId), state.catalogHints?.get(right[0]?.itemId), state.catalogPriorityLevel!));
+  for (const [key, candidates] of entries) for (const offer of state.offers.get(key) ?? []) for (const candidate of candidates) options.push({
     id: `${offer.auctionId}:${candidate.slotType}:${key}`, auctionId: offer.auctionId, quantity: offer.quantity,
     costCopper: offer.buyoutCopper, candidate, variantKey: key,
   });
