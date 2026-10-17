@@ -28,6 +28,13 @@ function savePreferences(value: Preferences) {
   catch { /* Audio still works with storage disabled. */ }
 }
 
+/** Route sound follows the same explicit choice and volume as the home scene. */
+export function transitionSoundVolume() {
+  let saved = visitPreferences;
+  try { saved ??= readPreferences(localStorage.getItem(preferencesKey)); } catch { /* Quiet by default. */ }
+  return saved?.confirmed && saved.enabled ? saved.volume / 100 : 0;
+}
+
 export function useSoundPreferences() {
   const lastVolume = useRef(20);
   const [volume, setVolume] = useState(20);

@@ -94,3 +94,121 @@
   }
   .system:is([data-route-state="leaving"], [data-route-state="loading"]) .spark { animation: none; }
 }
+
+/* Document theme supplies the materials even outside an atlas page. */
+.system {
+  --route-accent: var(--site-accent);
+  --route-soft: var(--site-accent-strong);
+  --route-glow: rgba(var(--site-accent-rgb), .22);
+  background: var(--site-bg);
+}
+.progress { background: var(--site-accent); box-shadow: 0 0 10px var(--site-accent); }
+.spark { background: var(--site-accent-strong); box-shadow: 0 0 14px var(--site-accent); }
+
+.transition {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  overflow: clip;
+  isolation: isolate;
+  pointer-events: none;
+  perspective: 1400px;
+  /* The legacy atlas gives every direct shell child a background. Gaps between
+     fragments must expose the destination rather than that opaque surface. */
+  background: transparent !important;
+  /* No work or full-screen compositing layers while the site is idle. */
+  display: none;
+}
+.transition[data-phase] { display: block; }
+.piece {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--site-bg);
+  transform-origin: 48% 46%;
+}
+.frozen, .frozen :global(*), .frozen :global(*::before), .frozen :global(*::after) {
+  animation: none !important;
+  transition: none !important;
+  caret-color: transparent !important;
+  view-transition-name: none !important;
+}
+.piece::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  animation: ice-freeze 340ms ease-out both;
+}
+.transition[data-effect="arthas"] .piece::after {
+  background-image: var(--ice-skin);
+  background-size: 100% 100%;
+  animation: none;
+}
+.transition[data-effect="arthas"]:is([data-phase="cracking"], [data-phase="shattering"]) .piece::after { opacity: 1; }
+.frost, .cracks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.cracks {
+  fill: none;
+  stroke: #e7faff;
+  stroke-width: 1.25px;
+  stroke-linejoin: bevel;
+  opacity: 0;
+}
+.cracks .crackShadow { stroke: rgba(9, 42, 62, .8); stroke-width: 3.5px; }
+.cracks .hairline { stroke-width: .6px; opacity: .75; }
+.cracks .crackShadow.hairline { stroke-width: 1.5px; }
+.cracks path { stroke-dasharray: 100; stroke-dashoffset: 100; }
+.transition[data-phase="cracking"] .cracks { opacity: 1; }
+.transition[data-phase="cracking"] .cracks path { animation: ice-crack 200ms cubic-bezier(.15, .7, .25, 1) var(--crack-delay) both; }
+/* Fracture lines are baked into the skin at release and follow each shard. */
+.transition[data-phase="shattering"] .cracks { display: none; }
+.transition[data-phase="shattering"] .piece {
+  will-change: transform, opacity;
+  animation: ice-shatter 740ms cubic-bezier(.32, .03, .7, .45) var(--shard-delay, 0ms) both;
+}
+.chip {
+  position: absolute;
+  display: none;
+  width: var(--chip-size);
+  height: calc(var(--chip-size) * 1.8);
+  background: linear-gradient(130deg, #effcff, #9bcde4 45%, rgba(112, 179, 211, .5) 48%, #dcf6ff);
+  clip-path: polygon(18% 0, 100% 22%, 65% 100%, 0 62%);
+}
+.transition[data-phase="shattering"] .chip { display: block; animation: ice-chip 700ms cubic-bezier(.25, .05, .65, .4) both; }
+@keyframes ice-freeze { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ice-crack { to { stroke-dashoffset: 0; } }
+@keyframes ice-shatter {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) rotateX(0); }
+  16% { opacity: 1; }
+  55% { opacity: .9; }
+  100% { opacity: 0; transform: translate3d(var(--shard-x), var(--shard-y), 120px) rotate(var(--shard-turn)) rotateX(var(--shard-tilt, 0deg)); }
+}
+@keyframes ice-chip {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0); }
+  100% { opacity: 0; transform: translate(var(--shard-x), var(--shard-y)) rotate(var(--shard-turn)); }
+}
+/* Illidan: a diagonal fel rift. Garek: a circle of light. Varok: burning embers. */
+.transition:not([data-effect="arthas"]) .piece::after {
+  background: radial-gradient(ellipse at 50% 65%, rgba(var(--site-accent-rgb), .08), rgba(var(--site-accent-rgb), .38));
+}
+.transition[data-effect="illidan"] .piece::after {
+  background: linear-gradient(112deg, transparent 30%, rgba(168, 239, 120, .7) 49%, rgba(232, 255, 203, .9) 50%, transparent 52%);
+}
+.transition[data-effect="illidan"][data-phase="shattering"] .piece { animation: fel-rift 620ms ease-in both; }
+.transition[data-effect="garek"][data-phase="shattering"] .piece { animation: light-reveal 620ms ease-in both; }
+.transition[data-effect="varok"] .piece::after {
+  background: radial-gradient(ellipse at 50% 100%, rgba(255, 110, 30, .6), transparent 75%), repeating-linear-gradient(120deg, transparent 0 80px, rgba(var(--site-accent-rgb), .6) 82px, transparent 85px 160px);
+}
+.transition[data-effect="varok"][data-phase="shattering"] .piece { animation: ember-release 620ms ease-in both; }
+@keyframes fel-rift { from { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } to { clip-path: polygon(100% 0, 100% 0, 65% 100%, 65% 100%); opacity: 0; } }
+@keyframes light-reveal { from { clip-path: circle(100% at 50% 50%); } to { clip-path: circle(0 at 50% 50%); opacity: 0; } }
+@keyframes ember-release { to { opacity: 0; transform: translateY(-8vh) scale(1.04); clip-path: polygon(0 0, 100% 0, 100% 15%, 82% 5%, 65% 20%, 41% 3%, 22% 15%, 0 4%); } }
+html:global([data-page-transition]) .frame { opacity: 1; transition: none; }
+html:global([data-motion="reduced"]) .transition { display: none; }
+@media (prefers-reduced-motion: reduce) { .transition { display: none; } }
