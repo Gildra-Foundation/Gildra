@@ -5,19 +5,14 @@ import { preconnect } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { isBookPagePath, isCharacterAuthRedirect, shouldTurnBook } from "./routeTransitionPolicy";
 import { RouteThemeController } from "./RouteThemeController";
+import { ThemedPageTransition, type PageTransitionHandle } from "./ThemedPageTransition";
+import { isHomeTheme } from "../platform/home/homeThemes";
 import styles from "./routeTransition.module.css";
 import { lessMotion } from "@/lib/client/motionPreference";
 import { nameMorphArt } from "@gildra/atlas-ui/morph";
 
-/**
- * Page-to-page transition of the whole site. A burning fuse along the top bar
- * shows that the next page is on its way. Atlas pages hand over with a View
- * Transition (AtlasFrame + app/styles/view-transitions.css); elsewhere, or
- * without View Transitions, the leaving page dims and the new one fades in.
- * Either way the new page's hero arrives as a short cascade (data-route-arrived).
- * The states are data attributes on `.system` / `.frame`; the look lives in
- * routeTransition.module.css.
- */
+/** Persistent navigation shell. The selected character owns the transition;
+ * loading, watchdogs and route identity stay independent of its visual phases. */
 type RouteState = "idle" | "leaving" | "loading";
 
 // The new page starts dimmed rather than invisible, so the swap never shows an
@@ -80,32 +75,42 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   }
   const router = useRouter();
   const frameRef = useRef<HTMLDivElement>(null);
+  const effectRef = useRef<PageTransitionHandle>(null);
   const committedPath = useRef(pathname);
   const poppedHistory = useRef(false);
   const expectedPath = useRef(pathname);
+  const quietPath = useRef<string | null>(null);
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const arrival = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [state, setState] = useState<RouteState>("idle");
 
   const settle = useCallback(() => {
     clearTimeout(watchdog.current);
+    effectRef.current?.cancel();
     setState("idle");
   }, []);
 
   /** The new page is in place: hand it over and let its hero arrive (unless the reader asked for less motion). */
   const enter = useCallback(() => {
-    settle();
+    clearTimeout(watchdog.current);
+    setState("idle");
     const frame = frameRef.current;
     if (!frame) return;
     // A dimming transition that started on the old page must not finish on the new one.
     frame.getAnimations().forEach((animation) => animation.cancel());
-    if (reducedMotion()) return;
+    if (reducedMotion()) { effectRef.current?.cancel(); return; }
+    // Also cover programmatic navigation, where there was no link to capture.
+    if (!document.documentElement.dataset.pageTransition) {
+      const theme = document.documentElement.dataset.siteTheme;
+      effectRef.current?.start(frame, isHomeTheme(theme) ? theme : "arthas");
+    }
+    if (effectRef.current?.reveal()) return;
     // Atlas pages already rise in through their View Transition.
     if (!(viewTransitions() && frame.querySelector("[data-atlas-frame]"))) frame.animate(ENTER_FRAMES, ENTER);
     clearTimeout(arrival.current);
     frame.dataset.routeArrived = "";
     arrival.current = setTimeout(() => { delete frame.dataset.routeArrived; }, ARRIVAL_MS);
-  }, [settle]);
+  }, []);
 
   /** A route with loading.tsx first commits its skeleton; wait for the real page. */
   const enterWhenLoaded = useCallback(() => {
@@ -120,6 +125,9 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       return;
     }
     expectedPath.current = destination;
+    quietPath.current = null;
+    const theme = document.documentElement.dataset.siteTheme;
+    if (frameRef.current) effectRef.current?.start(frameRef.current, isHomeTheme(theme) ? theme : "arthas");
     setState("leaving");
     clearTimeout(watchdog.current);
     watchdog.current = setTimeout(settle, WATCHDOG_MS);
@@ -160,6 +168,11 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       return;
     }
     expectedPath.current = pathname;
+    if (quietPath.current === pathname) {
+      quietPath.current = null;
+      settle();
+      return;
+    }
     // Router.push/replace and history also land here; language switches stay still.
     if (shouldTurnBook(from, pathname)) enterWhenLoaded();
     else settle();
@@ -173,6 +186,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       if (destination && anchor?.hasAttribute("data-no-book-transition")) {
         // Remember the intent so the eventual App Router commit stays quiet too.
         expectedPath.current = destination.pathname;
+        quietPath.current = destination.pathname;
         settle();
       } else if (destination) {
         // Only the tapped picture becomes the shared element of the hand-over.
@@ -227,6 +241,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const active = state !== "idle";
   return <div className={styles.system} data-theme="wow" data-book-navigation={active ? "turn" : "idle"} data-route-state={state}>
     <RouteThemeController />
+    <ThemedPageTransition ref={effectRef} />
     <span className={styles.progress} aria-hidden="true" />
     <span className={styles.spark} aria-hidden="true" />
     <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-route-state={state} aria-busy={active || undefined}>

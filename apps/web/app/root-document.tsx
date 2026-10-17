@@ -9,6 +9,8 @@ import { plausibleTracker } from "@/lib/cms/plausible";
 import { RouteTransitionGate } from "@/components/motion/RouteTransitionGate";
 import { WorkspaceNavigator } from "@/components/platform/navigation/WorkspaceNavigator";
 import { motionPreferenceScript } from "@/lib/client/motionPreference";
+import { SiteTheme } from "@/components/motion/SiteTheme";
+import { siteThemeScript } from "@/components/platform/home/homeThemes";
 import "./globals.css";
 
 // The site has two root layouts — English (app/(site)/layout.tsx) and Russian
@@ -73,11 +75,13 @@ export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: 
     <html lang={lang} className={`${display.variable} ${ui.variable} ${atlasDisplay.variable}`} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
       <head>
         {/* The reader's "less motion" choice, applied before the first paint (lib/client/motionPreference.ts). */}
-        <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript }} />
+        <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript + ";" + siteThemeScript }} />
       </head>
       <body>
-        <WorkspaceNavigator />
-        <RouteTransitionGate>{children}</RouteTransitionGate>
+        <SiteTheme>
+          <WorkspaceNavigator />
+          <RouteTransitionGate>{children}</RouteTransitionGate>
+        </SiteTheme>
         <CookieNoticeGate />
         <PlausibleTracker />
         {plausibleTracker() ? <WebVitals /> : null}

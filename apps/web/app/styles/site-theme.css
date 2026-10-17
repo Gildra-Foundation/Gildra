@@ -1,0 +1,79 @@
+/* The selected character owns site chrome; game data keeps its semantic colours. */
+:root {
+  --site-accent: #80cdef;
+  --site-accent-strong: #b7ecff;
+  --site-accent-ink: #05141f;
+  --site-accent-rgb: 128, 205, 239;
+  --site-bg: #050a10;
+  --site-surface: #090f17;
+  --site-raised: #101c28;
+  --site-text: #d2e0e9;
+  --site-muted: #a1b5c5;
+  --site-subtle: #849aab;
+}
+html[data-site-theme="illidan"] {
+  --site-accent: #c4a3f3;
+  --site-accent-strong: #f4eaff;
+  --site-accent-ink: #160d22;
+  --site-accent-rgb: 196, 163, 243;
+  --site-bg: #110d19;
+  --site-surface: #15101f;
+  --site-raised: #251c32;
+  --site-text: #e5dcef;
+  --site-muted: #c4b9d1;
+  --site-subtle: #b4a5c4;
+}
+html[data-site-theme="garek"] {
+  --site-accent: #a5dba7;
+  --site-accent-strong: #ebffec;
+  --site-accent-ink: #08190c;
+  --site-accent-rgb: 165, 219, 167;
+  --site-bg: #0a130f;
+  --site-surface: #0d1913;
+  --site-raised: #182a20;
+  --site-text: #dcebdd;
+  --site-muted: #bbcebf;
+  --site-subtle: #a3baa8;
+}
+html[data-site-theme="varok"] {
+  --site-accent: #f0a28f;
+  --site-accent-strong: #fff1e3;
+  --site-accent-ink: #211006;
+  --site-accent-rgb: 240, 162, 143;
+  --site-bg: #180d0c;
+  --site-surface: #201210;
+  --site-raised: #301b18;
+  --site-text: #f0ded5;
+  --site-muted: #d8bdb1;
+  --site-subtle: #c5a397;
+}
+/* Explicit scope beats the atlas' defaults, including nested and portal scopes. */
+html :is(.gildra-atlas, [data-atlas-scope]) {
+  --atlas-bg: var(--site-bg);
+  --atlas-surface: var(--site-surface);
+  --atlas-surface-raised: var(--site-raised);
+  --atlas-surface-selected: rgba(var(--site-accent-rgb), .13);
+  --atlas-surface-sunken: var(--site-bg);
+  --atlas-scrim: rgba(3, 7, 11, .9);
+  --atlas-accent: var(--site-accent);
+  --atlas-accent-strong: var(--site-accent-strong);
+  --atlas-accent-ink: var(--site-accent-ink);
+  --atlas-accent-wash: rgba(var(--site-accent-rgb), .09);
+  --atlas-accent-wash-strong: rgba(var(--site-accent-rgb), .17);
+  --atlas-accent-glow: rgba(var(--site-accent-rgb), .15);
+  --atlas-line: rgba(var(--site-accent-rgb), .36);
+  --atlas-line-soft: rgba(var(--site-accent-rgb), .2);
+  --atlas-line-strong: rgba(var(--site-accent-rgb), .68);
+  --atlas-text-strong: var(--site-accent-strong);
+  --atlas-text: var(--site-text);
+  --atlas-text-muted: var(--site-muted);
+  --atlas-text-subtle: var(--site-subtle);
+  --atlas-ember: var(--site-accent-strong);
+  --atlas-ember-halo: rgba(var(--site-accent-rgb), .2);
+  --atlas-shadow-panel: inset 0 0 0 3px rgba(0, 0, 0, .58), inset 0 0 0 4px rgba(var(--site-accent-rgb), .06), 0 24px 55px rgba(0, 0, 0, .4);
+}
+/* The DOM snapshot effect owns the hand-over; do not stack atlas morphs on it. */
+html[data-page-transition]::view-transition-group(*),
+html[data-page-transition]::view-transition-old(*),
+html[data-page-transition]::view-transition-new(*) { animation: none !important; }
+html[data-page-transition]::view-transition-old(*) { display: none; }

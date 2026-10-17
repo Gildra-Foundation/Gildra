@@ -10,3 +10,6 @@ export const homeThemeCookie = "gildra-home-theme";
 export function isHomeTheme(value: unknown): value is HomeThemeId {
   return homeThemes.some(theme => theme.id === value);
 }
+
+/** Apply before paint, including direct visits and language reloads. */
+export const siteThemeScript = `(()=>{let t;try{t=document.cookie.split("; ").find(v=>v.startsWith("${homeThemeCookie}="))?.split("=")[1]}catch(e){}try{t=t||localStorage.getItem("${homeThemeCookie}")}catch(e){}document.documentElement.dataset.siteTheme=${JSON.stringify(homeThemes.map(theme => theme.id))}.includes(t)?t:"arthas"})()`;

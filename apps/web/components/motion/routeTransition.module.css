@@ -94,3 +94,102 @@
   }
   .system:is([data-route-state="leaving"], [data-route-state="loading"]) .spark { animation: none; }
 }
+
+/* Document theme supplies the materials even outside an atlas page. */
+.system {
+  --route-accent: var(--site-accent);
+  --route-soft: var(--site-accent-strong);
+  --route-glow: rgba(var(--site-accent-rgb), .22);
+  background: var(--site-bg);
+}
+.progress { background: var(--site-accent); box-shadow: 0 0 10px var(--site-accent); }
+.spark { background: var(--site-accent-strong); box-shadow: 0 0 14px var(--site-accent); }
+
+.transition {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  overflow: clip;
+  isolation: isolate;
+  pointer-events: none;
+  perspective: 1400px;
+  /* The legacy atlas gives every direct shell child a background. Gaps between
+     fragments must expose the destination rather than that opaque surface. */
+  background: transparent !important;
+  /* No work or full-screen compositing layers while the site is idle. */
+  display: none;
+}
+.transition[data-phase] { display: block; }
+.piece {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--site-bg);
+  transform-origin: 48% 46%;
+}
+.frozen, .frozen :global(*), .frozen :global(*::before), .frozen :global(*::after) {
+  animation: none !important;
+  transition: none !important;
+  caret-color: transparent !important;
+  view-transition-name: none !important;
+}
+.piece::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 48% 46%, rgba(215, 246, 255, .08), rgba(129, 203, 238, .56) 70%, rgba(228, 249, 255, .88)),
+    repeating-linear-gradient(118deg, transparent 0 31px, rgba(224, 249, 255, .12) 32px, transparent 34px 96px),
+    repeating-linear-gradient(31deg, transparent 0 55px, rgba(195, 237, 255, .1) 57px, transparent 59px 121px);
+  opacity: 0;
+  animation: ice-freeze 340ms ease-out both;
+}
+.cracks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #e0f7ff;
+  stroke-width: .14;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 3px #60c4fa);
+  opacity: 0;
+}
+.cracks path { stroke-dasharray: 100; stroke-dashoffset: 100; }
+.transition[data-phase="cracking"] .cracks,
+.transition[data-phase="shattering"] .cracks { opacity: 1; }
+.transition[data-phase="cracking"] .cracks path { animation: ice-crack 220ms ease-out both; }
+.transition[data-phase="shattering"] .cracks { animation: crack-release 160ms ease-out both; }
+.transition[data-phase="shattering"] .piece {
+  will-change: transform, opacity;
+  animation: ice-shatter 620ms cubic-bezier(.3, .05, .7, .4) var(--shard-delay, 0ms) both;
+}
+@keyframes ice-freeze { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ice-crack { to { stroke-dashoffset: 0; } }
+@keyframes crack-release { to { opacity: 0; transform: scale(1.08); } }
+@keyframes ice-shatter {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0); }
+  22% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--shard-x), var(--shard-y), 180px) rotate(var(--shard-turn)); }
+}
+/* Illidan: a diagonal fel rift. Garek: a circle of light. Varok: burning embers. */
+.transition:not([data-effect="arthas"]) .piece::after {
+  background: radial-gradient(ellipse at 50% 65%, rgba(var(--site-accent-rgb), .08), rgba(var(--site-accent-rgb), .38));
+}
+.transition[data-effect="illidan"] .piece::after {
+  background: linear-gradient(112deg, transparent 30%, rgba(168, 239, 120, .7) 49%, rgba(232, 255, 203, .9) 50%, transparent 52%);
+}
+.transition[data-effect="illidan"][data-phase="shattering"] .piece { animation: fel-rift 620ms ease-in both; }
+.transition[data-effect="garek"][data-phase="shattering"] .piece { animation: light-reveal 620ms ease-in both; }
+.transition[data-effect="varok"] .piece::after {
+  background: radial-gradient(ellipse at 50% 100%, rgba(255, 110, 30, .6), transparent 75%), repeating-linear-gradient(120deg, transparent 0 80px, rgba(var(--site-accent-rgb), .6) 82px, transparent 85px 160px);
+}
+.transition[data-effect="varok"][data-phase="shattering"] .piece { animation: ember-release 620ms ease-in both; }
+@keyframes fel-rift { from { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } to { clip-path: polygon(100% 0, 100% 0, 65% 100%, 65% 100%); opacity: 0; } }
+@keyframes light-reveal { from { clip-path: circle(100% at 50% 50%); } to { clip-path: circle(0 at 50% 50%); opacity: 0; } }
+@keyframes ember-release { to { opacity: 0; transform: translateY(-8vh) scale(1.04); clip-path: polygon(0 0, 100% 0, 100% 15%, 82% 5%, 65% 20%, 41% 3%, 22% 15%, 0 4%); } }
+html:global([data-page-transition]) .frame { opacity: 1; transition: none; }
+html:global([data-motion="reduced"]) .transition { display: none; }
+@media (prefers-reduced-motion: reduce) { .transition { display: none; } }
