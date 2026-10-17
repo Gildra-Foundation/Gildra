@@ -6,6 +6,16 @@ import type { AuctionGearSearchItem } from "@/lib/wow/auctionGearTypes";
 import { GearPlannerItem } from "./GearPlannerItem";
 import styles from "./auctionGearOptimizer.module.css";
 
+// Formatting is shared across slots and progress renders for each locale.
+const formats = Object.fromEntries((["ru", "en"] as const).map(locale => {
+  const tag = locale === "ru" ? "ru-RU" : "en-US";
+  return [locale, {
+    numeric: new Intl.NumberFormat(tag, { maximumFractionDigits: 2 }),
+    signed: new Intl.NumberFormat(tag, { maximumFractionDigits: 2, signDisplay: "exceptZero" }),
+    gold: new Intl.NumberFormat(tag, { maximumFractionDigits: 4 }),
+  }];
+}));
+
 type Props = {
   groups: AuctionGearRecommendationGroup[];
   locale: "ru" | "en";
@@ -26,9 +36,7 @@ function SlotSuggestion({ group, locale, excluded, running, marketStale, slotNam
   const alternativesId = useId();
   const ru = locale === "ru";
   const t = (r: string, e: string) => ru ? r : e;
-  const numeric = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2 });
-  const signed = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2, signDisplay: "exceptZero" });
-  const gold = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 4 });
+  const { numeric, signed, gold } = formats[locale];
   const money = (copper: number) => `${gold.format(copper / 10000)} ${t("зол.", "gold")}`;
   const row = (item: AuctionGearSearchItem, best: boolean) => <div className={styles.suggestion} data-auction-option={item.optionId} data-auction-evaluation={item.evaluation} data-best-value={best || undefined}>
     <div className={styles.suggestionItem}><GearPlannerItem item={item} locale={locale} /></div>
