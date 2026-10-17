@@ -20,4 +20,25 @@ Independent review additionally checks exact budget amounts against a BigInt ref
 
 ## Release evidence
 
-Publication is being verified. The final record will identify immutable source/image revisions, executed test counts, fresh Elkardia results and rollback evidence. No pending check is represented here as passed.
+Published to [gildra.net](https://gildra.net/ru/wow/characters) and verified at **2026-10-17T21:15:23+02:00 (Europe/Warsaw)**.
+
+- Application source: `2950e8e49f5b85cb7678ee20af58ea7ab6fb5e19`; immutable web image: `sha256:1bc12864fcf668c4739afe8b15637a137b156d88f7a9cc2480ce820c1708ccfd`. Code commits [f94b844](https://github.com/Gildra-Foundation/Gildra/commit/f94b8442a8fc11803f8d1b4838879cea72c5cc0b) and [2950e8e](https://github.com/Gildra-Foundation/Gildra/commit/2950e8e49f5b85cb7678ee20af58ea7ab6fb5e19) were pushed to `master` and `fix/auction-value-speed-20261017`. GitHub confirms **Shpuntyara** as author and committer of both. Source tag: `release/auction-three-fixes-20261017-2950e8e`.
+- Final source-bound gates passed: **46/46 offline suites; 248/248 completion UI, 84/84 legacy UI and 4/4 fresh real-DTO UI cases**, across English/Russian and 390/1440px. The 44 new completion scenarios are included in 248, not counted twice. TypeScript, route parity/mirrors, atlas tokens and scoped lint passed; lint has zero errors and two existing warnings. Independent review checked exact decimal money against 15,014 BigInt-reference cases and the real process-exit persistence boundary.
+- An earlier offline attempt passed 45/46 with empty child logs and was rejected. A separate sentinel proved that sandboxed Node child pipes suppressed output. The unchanged isolated API suite then passed 10/10, followed by the complete unchanged 46/46 run outside that sandbox, with all logs retained. The original exit-1 assertion cannot be recovered; an internal deadline under load remains an inference. Original failure evidence is preserved separately and was not used as a release gate.
+
+Fresh public profile and market data confirmed **Elkardia, level81, Eversong EU**, baseline **20,222 DPS**, single target, budget **10,000 gold**:
+
+| Objective | Confirmed purchases | Cost | Confirmed DPS | Improvement |
+| --- | --- | ---: | ---: | ---: |
+| Price/DPS | Кровокаленые наголенники (237917) | 32 gold | 20,943 | +721 / +3.5654% |
+| Maximum DPS | Кровокаленый нагрудник (237918) + наголенники | 531.96 gold | 21,922 | +1700 / +8.4067% |
+
+Both improvements exceed simulation uncertainty (83 and84 DPS margins). They were reconfirmed **after deployment with four uncached native calls** in total: baseline plus complete selected loadout for each objective. A further actual continuation made 5 native calls, checked additional combinations, preserved the confirmed value result and stayed within budget and unique-auction quantities. Search remains explicitly non-exhaustive; these results do not claim the global market optimum.
+
+The fresh initial search took 15.40s in this run; the changed-budget repeat took 4.55s and reused existing DPS results. These are individual measurements under concurrent verification load, not a latency guarantee.
+
+All 11 UI source hashes match the committed application, and all 2,916 source archive entries match the tested worktree. The immutable deployment plan freezes 15 QA files, including the exact five public-character DTOs and their copy provenance. Actual-component browser replay verifies both objectives, exact price/DPS/item identities, tooltips, exclusions and layout; published anonymous RU/EN character pages and the publicly served new planner JavaScript also passed checks. Real calculation uses the existing production native worker with private verification state. This evidence does not claim access to an authenticated production account/browser.
+
+The exact image passed isolated seven-route, nine-asset, eight-auth-boundary and writable-private-state checks before deployment. Production web was healthy with zero restarts throughout the two-minute observation (13 samples), with zero matching runtime errors. All nine protected container IDs, images, start times and restart counts stayed unchanged. The owned QA container was removed after verification.
+
+Release evidence and the verified operation ledger are archived at `/opt/gildra/releases/auction-three-fixes-release-20261017-2950e8e`. Rollback restores the previous immutable web image and the byte-exact manifest `/opt/gildra/auction-three-fixes-release-20261017-2950e8e-previous.env`; no database restore is required. This later documentation-only commit records the release; the running application source remains `2950e8e49f5b85cb7678ee20af58ea7ab6fb5e19`.
