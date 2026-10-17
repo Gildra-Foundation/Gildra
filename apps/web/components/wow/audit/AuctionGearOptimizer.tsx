@@ -36,6 +36,9 @@ type Transport = { mode: Mode; status: PlannerJob["status"] | "starting"; progre
 type SearchRequest = { action: "search"; clientRequestId?: string; characterSlug: string; budgetGold: string; selectedSlots: AuctionGearSlot[]; scenario: string; objective: "value" | "dps"; locale: "ru" | "en" };
 type RequestBody = SearchRequest | { action: "resume"; searchId: string; clientRequestId?: string } | { action: "assemble"; searchId: string; excludedOptionIds: string[]; excludedVariantKeys: string[]; clientRequestId?: string } | { action: "poll"; id: string };
 type ActiveRequest = { mode: Mode; controller: AbortController; id?: string; done: Promise<void>; finish: () => void };
+const intentMatchesSearch = (intent: NonNullable<ReturnType<typeof parseAuctionClientFormIntent>>, result: SearchResult) =>
+  Number(intent.budgetGold) === result.budgetCopper / 10000 && intent.scenario === result.scenario &&
+  intent.objective === (result.objective ?? "dps") && sameSelection(intent.selectedSlots, parseAuctionGearSlots(result.selectedSlots));
 const sameSelection = (a: readonly string[] = [], b: readonly string[] = []) => { const left = new Set(a), right = new Set(b); return left.size === right.size && [...left].every(key => right.has(key)); };
 type Recovery = { kind: "recovery"; search: SearchResult; assembly: AssemblyResult | null;
   excludedOptionIds: string[]; excludedVariantKeys?: string[]; activeJob: PlannerJob | null; needsRefresh: true };
@@ -70,6 +73,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const active = useRef<ActiveRequest | null>(null);
   const recoveryController = useRef<AbortController | null>(null);
   const mountGeneration = useRef(0);
+  const scopeAlive = useRef(true);
   const cache = useRef<AuctionClientCache | null>(null);
   const runRef = useRef<((body: RequestBody, mode: Mode) => Promise<void>) | null>(null);
   const cacheKey = auctionClientCacheKey({ characterSlug, locale }, specializationSlug);
@@ -131,12 +135,14 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   // retries and StrictMode effect replay must keep the same server job alive.
   useEffect(() => {
     const generation = ++mountGeneration.current;
+    scopeAlive.current = true;
     const isLatestMount = () => mountGeneration.current === generation;
     return () => {
       const pendingRequestId = !active.current ? cache.current?.clientRequestId : undefined;
       queueMicrotask(() => {
-        if (isLatestMount() && pendingRequestId) {
-          retireAuctionClient(removeAuctionClientRequest(pendingRequestId, { characterSlug, locale }));
+        if (isLatestMount()) {
+          scopeAlive.current = false;
+          if (pendingRequestId) retireAuctionClient(removeAuctionClientRequest(pendingRequestId, { characterSlug, locale }));
         }
       });
     };
@@ -210,6 +216,13 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         });
         if (!mounted || controller.signal.aborted) return;
         if (result.kind !== "recovery" || result.search.searchId !== saved.searchId) throw new Error("invalid_plan_result");
+        // A form edit can retire an old job while preserving a newer safe draft.
+        // The owned old checkpoint anchors recovery; its prices/results do not apply to that draft.
+        if (saved.formIntent && !intentMatchesSearch(saved.formIntent, result.search)) {
+          setSearch(null); setAssembly(null); setAssemblyStale(false); setMarketStale(false);
+          setHasRecovery(false); setTransport(null);
+          return;
+        }
         const restoredExclusions = new Set(saved.excludedOptionIds ?? result.excludedOptionIds);
         const previousExclusions = new Set(result.excludedOptionIds);
         const selectionChanged = restoredExclusions.size !== previousExclusions.size || [...restoredExclusions].some(id => !previousExclusions.has(id)) || !sameSelection(saved.excludedVariantKeys, result.excludedVariantKeys);
@@ -290,11 +303,24 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     cache.current = { version: 1, profileKey: snapshotKey, mode: "search", excludedOptionIds: [], ...cache.current, ...update };
     writeAuctionClientCache(cacheKey, cache.current.searchId || cache.current.jobId || cache.current.clientRequestId ? cache.current : null);
   }
-  function invalidate() {
-    if (retryJob) retireAuctionClient(removeAuctionClientJob(retryJob.id));
-    else if (hasRecovery && cache.current?.clientRequestId) retireAuctionClient(removeAuctionClientRequest(cache.current.clientRequestId, { characterSlug, locale }));
-    setSearch(null); setAssembly(null); setAssemblyStale(false); setMarketStale(false); setExcluded(new Set()); setExcludedVariantKeys(new Set()); setExcludedOpen(false); setExcludedLimit(20); setTransport(null);
-    setRetryJob(null); setHasRecovery(false); cache.current = null; writeAuctionClientCache(cacheKey, null);
+  function invalidate(draft: Partial<{ budget: string; scenario: string; objective: "value" | "dps"; selectedSlots: AuctionGearSlot[] }> = {}): Promise<boolean> | null {
+    const needsRetirement = Boolean(retryJob || hasRecovery || cache.current?.jobId || cache.current?.clientRequestId || cache.current?.cancellationRequested);
+    let retirement: Promise<boolean> | null = null;
+    if (needsRetirement) {
+      try {
+        const intent = parseAuctionClientFormIntent({ characterSlug, locale,
+          budgetGold: normalizeAuctionBudgetGold(draft.budget ?? budget, locale), scenario: draft.scenario ?? scenario,
+          objective: draft.objective ?? objective, selectedSlots: draft.selectedSlots ?? selectedSlots });
+        if (intent) remember({ formIntent: intent });
+      } catch { /* Invalid drafts are not restored from storage. Keep the owned handles until acknowledgement. */ }
+      retirement = cancel();
+    }
+    setSearch(null); setAssembly(null); setAssemblyStale(false); setMarketStale(false); setExcluded(new Set()); setExcludedVariantKeys(new Set()); setExcludedOpen(false); setExcludedLimit(20);
+    if (!needsRetirement) {
+      setTransport(null); setRetryJob(null); setHasRecovery(false);
+      cache.current = null; writeAuctionClientCache(cacheKey, null);
+    }
+    return retirement;
   }
   async function run(initial: RequestBody, mode: Mode) {
     if (active.current || cache.current?.cancellationRequested) return;
@@ -390,7 +416,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           setBudget(String(result.budgetCopper / 10000)); setScenario(result.scenario); setObjective(result.objective ?? "dps");
           setSelectedSlots(parseAuctionGearSlots(result.selectedSlots));
         }
-        remember({ searchId: result.searchId, jobId: undefined, clientRequestId: undefined, mode });
+        remember({ searchId: result.searchId, jobId: undefined, clientRequestId: undefined, mode,
+          formIntent: result.kind === "search" ? parseAuctionClientFormIntent({ characterSlug, locale, budgetGold: String(result.budgetCopper / 10000),
+            scenario: result.scenario, objective: result.objective ?? "dps", selectedSlots: parseAuctionGearSlots(result.selectedSlots) }) ?? undefined : cache.current?.formIntent });
         forgetAuctionClientJob(payload.id);
         request.id = undefined;
         let complete: boolean;
@@ -445,12 +473,15 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     }
   }
   useEffect(() => { runRef.current = run; });
-  function startSearch() {
+  async function startSearch() {
     if (initializing || active.current || cache.current?.cancellationRequested) return;
     try {
       const budgetGold = normalizeAuctionBudgetGold(budget, locale);
       const slots = parseAuctionGearSlots(selectedSlots);
-      invalidate();
+      const generation = mountGeneration.current;
+      const retirement = invalidate();
+      if (retirement && !await retirement) return;
+      if (!scopeAlive.current || mountGeneration.current !== generation) return;
       void run({ action: "search", characterSlug, budgetGold, selectedSlots: slots, scenario, objective, locale }, "search");
     } catch (reason) {
       setTransport({ mode: "search", status: "failed", progress: null, error: reason instanceof Error ? reason.message : "invalid_plan_request" });
@@ -580,17 +611,17 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       <div className={styles.controls}>
         <label>{t("Бюджет, золото", "Budget, gold")}<input name="budgetGold" inputMode="decimal" value={budget} onChange={event => { const next = event.target.value; setBudget(next);
           try { if (normalizeAuctionBudgetGold(next, locale) === normalizeAuctionBudgetGold(budget, locale)) return; } catch { /* An invalid draft must not keep actionable recommendations. */ }
-          invalidate(); }} disabled={formLocked} required aria-describedby="auction-budget-help" /></label>
-        <label>{t("Сценарий", "Encounter")}<select value={scenario} onChange={event => { setScenario(event.target.value); invalidate(); }} disabled={formLocked}>
+          invalidate({ budget: next }); }} disabled={formLocked} required aria-describedby="auction-budget-help" /></label>
+        <label>{t("Сценарий", "Encounter")}<select value={scenario} onChange={event => { setScenario(event.target.value); invalidate({ scenario: event.target.value }); }} disabled={formLocked}>
           <option value="single-target">{t("Одна цель · 120 секунд", "Single target · 120 seconds")}</option><option value="aoe">{t("5 целей · 60 секунд", "5 targets · 60 seconds")}</option><option value="execute">{t("Короткий бой · 90 секунд", "Short fight · 90 seconds")}</option>
         </select></label>
       </div>
       <details className={styles.calculation}><summary>{t("Слоты экипировки и цель подбора", "Equipment slots and objective")} · {selectedSlots.length} / {auctionGearSlots.length}</summary>
-      <div className={styles.controls}><label>{t("Цель подбора", "Selection objective")}<select name="objective" value={objective} onChange={event => { setObjective(event.target.value as "value" | "dps"); invalidate(); }} disabled={formLocked}><option value="value">{t("Цена / прирост DPS", "Price / DPS gain")}</option><option value="dps">{t("Максимум DPS", "Maximum DPS")}</option></select></label></div>
+      <div className={styles.controls}><label>{t("Цель подбора", "Selection objective")}<select name="objective" value={objective} onChange={event => { setObjective(event.target.value as "value" | "dps"); invalidate({ objective: event.target.value as "value" | "dps" }); }} disabled={formLocked}><option value="value">{t("Цена / прирост DPS", "Price / DPS gain")}</option><option value="dps">{t("Максимум DPS", "Maximum DPS")}</option></select></label></div>
       <fieldset className={styles.slotFieldset} disabled={formLocked}>
         <legend>{t("Какие слоты искать", "Equipment slots to search")}</legend>
-        <div className={styles.selectionActions}><button className={styles.button} type="button" onClick={() => { if (sameSelection(selectedSlots, auctionGearSlots)) return; setSelectedSlots([...auctionGearSlots]); invalidate(); }}>{t("Выбрать все", "Select all")}</button><button className={styles.button} type="button" onClick={() => { if (!selectedSlots.length) return; setSelectedSlots([]); invalidate(); }}>{t("Снять выбор", "Clear selection")}</button></div>
-        <div className={styles.slots}>{auctionGearSlots.map(slot => <label key={slot}><input type="checkbox" name="selectedSlots" value={slot} checked={selectedSlots.includes(slot)} onChange={event => { setSelectedSlots(previous => event.target.checked ? auctionGearSlots.filter(value => value === slot || previous.includes(value)) : previous.filter(value => value !== slot)); invalidate(); }} /><span>{slotName(slot)}</span></label>)}</div>
+        <div className={styles.selectionActions}><button className={styles.button} type="button" onClick={() => { if (sameSelection(selectedSlots, auctionGearSlots)) return; setSelectedSlots([...auctionGearSlots]); invalidate({ selectedSlots: [...auctionGearSlots] }); }}>{t("Выбрать все", "Select all")}</button><button className={styles.button} type="button" onClick={() => { if (!selectedSlots.length) return; setSelectedSlots([]); invalidate({ selectedSlots: [] }); }}>{t("Снять выбор", "Clear selection")}</button></div>
+        <div className={styles.slots}>{auctionGearSlots.map(slot => <label key={slot}><input type="checkbox" name="selectedSlots" value={slot} checked={selectedSlots.includes(slot)} onChange={event => { const next = event.target.checked ? auctionGearSlots.filter(value => value === slot || selectedSlots.includes(value)) : selectedSlots.filter(value => value !== slot); setSelectedSlots(next); invalidate({ selectedSlots: next }); }} /><span>{slotName(slot)}</span></label>)}</div>
       </fieldset></details>
       <p id="auction-budget-help" className={styles.note}>{t("Цены указаны за целый лот.", "Prices cover whole lots.")}</p>
       <div className={styles.actions}><button className={styles.button} type="submit" disabled={formLocked}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</button>{search ? <a className={styles.returnToAssembly} href="#auction-assembly">{t("К сборке сета", "Build a loadout")}</a> : null}{!cancellation && running && (transport?.mode === "search" || !search) ? <button className={styles.button} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}</div>

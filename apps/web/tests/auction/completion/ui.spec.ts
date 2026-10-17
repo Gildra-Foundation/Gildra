@@ -449,6 +449,14 @@ test("postfix fixes: new search intent survives reload while a prior job is stil
   await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue('333.33');
   await expect(auction.panel.locator('form select').first()).toHaveValue('aoe');
   auction.release();
+  // Reload can abort the old keepalive DELETE before its acknowledgement arrives.
+  // The preserved owner must then be explicitly retired, rather than silently unlocked.
+  const retryCancellation = auction.panel.getByRole('button', { name: /Повторить отмену|Retry cancellation/ });
+  await expect.poll(async () => await auction.find.isEnabled() || await retryCancellation.isVisible(), { timeout: 15000 }).toBe(true);
+  if (await retryCancellation.isVisible()) {
+    await expect(auction.find).toBeDisabled(); expect(auction.requests).toHaveLength(0);
+    await retryCancellation.click();
+  }
   await expect(auction.find).toBeEnabled(); const beforeRetry = auction.requests.length; await auction.find.click();
   await expect.poll(() => auction.requests.length).toBe(beforeRetry + 1);
   expect(auction.requests.at(-1)).toMatchObject({ budgetGold:'333.33', scenario:'aoe', objective:'dps' });
@@ -530,4 +538,20 @@ test("regression: cancellation retry after reload preserves its existing search 
  await expect(auction.panel.locator('[data-auction-search-result]')).toBeVisible(); await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).not.toBeChecked(); await expect(auction.build).toBeEnabled();
  expect(auction.requests).toHaveLength(2); expect(auction.nonceDeletes).toContain(nonce);
  const saved = await page.evaluate(()=>Object.entries(sessionStorage).filter(([k])=>k.startsWith('gildra:auction:v1:')).map(([,v])=>JSON.parse(v))[0]); expect(saved.searchId).toBe('synthetic-reliability-search'); expect(saved.cancellationRequested).toBeUndefined(); expect(saved.excludedVariantKeys).toHaveLength(1);
+});
+
+for (const rejected of [true,false]) test(`regression: changed form preserves scoped-only retirement and new draft after ${rejected ? 'rejected' : 'successful'} acknowledgement`, async ({ auction, page }) => {
+ await auction.open(); await auction.search(); auction.pendingInitial=true; auction.dropAction='assemble'; await auction.build.click(); await expect(auction.panel.getByRole('button',{name:/Повторить восстановление|Retry recovery/})).toBeVisible(); const nonce=auction.requests[1].clientRequestId!;
+ await page.evaluate(()=>sessionStorage.removeItem('gildra:auction-active:v1')); auction.cancelFailure=rejected;
+ await auction.panel.locator('[name="budgetGold"]').fill('9999');
+ const retry=auction.panel.getByRole('button',{name:/Повторить отмену|Retry cancellation/});
+ if(rejected){
+  await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled();
+  const saved=await page.evaluate(()=>Object.entries(sessionStorage).filter(([k])=>k.startsWith('gildra:auction:v1:')).map(([,v])=>JSON.parse(v))[0]); expect(saved.clientRequestId).toBe(nonce); expect(saved.cancellationRequested).toBe(true); expect(saved.formIntent.budgetGold).toBe('9999');
+  await page.reload({waitUntil:'networkidle'}); await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled(); await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue('9999'); expect(auction.requests).toHaveLength(2);
+  auction.cancelFailure=false; await retry.click();
+ }
+ await expect(auction.find).toBeEnabled(); await page.reload({waitUntil:'networkidle'}); await expect(auction.find).toBeEnabled();
+ await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue('9999'); await expect(auction.panel.locator('[data-auction-search-result]')).toHaveCount(0); expect(auction.requests).toHaveLength(2);
+ expect(auction.nonceDeletes).toContain(nonce); auction.pendingInitial=false; await auction.search(); expect(auction.requests).toHaveLength(3); expect(auction.requests[2].budgetGold).toBe('9999'); expect(auction.requests[2].clientRequestId).not.toBe(nonce);
 });
