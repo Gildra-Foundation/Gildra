@@ -24,6 +24,7 @@ try {
     await page.clock.install({ time:new Date("2026-10-17T10:00:00Z") });
     await page.goto(base + "/");
     await page.getByRole("button", { name:/Choose theme:|Выбрать тему:/ }).waitFor();
+    await page.locator("[data-book-route-frame][data-view-transitions]").waitFor();
     await page.evaluate(() => document.fonts.ready);
     await page.clock.pauseAt(new Date("2026-10-17T12:00:00Z"));
     const navigate = () => page.evaluate(() => { const a = document.createElement("a"); a.href = "/privacy"; document.body.append(a); a.click(); });
