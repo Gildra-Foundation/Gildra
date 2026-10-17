@@ -30,4 +30,12 @@ for(const invalid of [null,{},['x'.repeat(241)],[''],[42]]){
   assert.equal(readAuctionClientCache(cacheKey),null,'Malformed variant exclusions must reject opaque recovery state');
 }
 cases.push('exact variant keys persist and deduplicate with matching server limits; malformed keys rejected');
+const intent={characterSlug:scope.characterSlug,locale:'en',budgetGold:'333.33',scenario:'aoe',objective:'dps',selectedSlots:['WRIST']};
+writeAuctionClientCache(cacheKey,{...legacy,formIntent:{...intent,prices:{notTrusted:1},stats:{strength:999}}});
+assert.deepEqual(readAuctionClientCache(cacheKey)?.formIntent,intent,'Pending recovery preserves only validated non-sensitive form inputs');
+for(const patch of [{budgetGold:'-1'},{budgetGold:'100000000'},{budgetGold:'NaN'},{budgetGold:'333.33333'},{scenario:'unknown'},{objective:'unknown'},{selectedSlots:[]},{selectedSlots:['WRIST','WRIST']},{selectedSlots:['PROFESSION']},{characterSlug:''},{locale:'foreign'}]){
+ writeAuctionClientCache(cacheKey,{...legacy,formIntent:{...intent,...patch}});
+ assert.equal(readAuctionClientCache(cacheKey),null,'Invalid cached form intent must not be restored');
+}
+cases.push('pending search intent is bounded, whitelisted and rejects invalid budget, objective, scenario, locale and slots');
 console.log(JSON.stringify({status:'passed',cases}));

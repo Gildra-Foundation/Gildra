@@ -179,3 +179,6 @@
 .excludedLots > summary { cursor: pointer; color: var(--atlas-accent); }
 .excludedLots > summary:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: var(--atlas-space-1); }
 .optionDetails > p:last-child { grid-column: 1 / -1; }
+
+.excludedItem { display: grid; gap: var(--atlas-space-2); flex: 1 1 16rem; min-width: 0; }
+.excludedItem > span { overflow-wrap: anywhere; }

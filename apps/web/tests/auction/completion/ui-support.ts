@@ -14,6 +14,9 @@ export class CompletionHarness {
   serverExclusions: string[] = [];
   searchLookups = 0;
   holdRecovery = false;
+  holdPriorDelete = false;
+  pendingInitial = false;
+  excludedVariantLevels: "same" | "different" | null = null;
   holdPost = false;
   holdContinuation = false;
   holdAcceptance = false;
@@ -79,7 +82,7 @@ export class CompletionHarness {
   seedBusyAssembly(excludedOptionIds: string[] = []) {
     this.lastAssembly = assemblyResult(); this.seedBusyMode("assembly", excludedOptionIds);
   }
-  release() { this.holdPost = false; this.holdContinuation = false; this.holdRecovery = false; this.holdAcceptance = false; this.holdRequestRecovery = false; for (const release of this.held.splice(0)) release(); }
+  release() { this.holdPriorDelete = false; this.holdPost = false; this.holdContinuation = false; this.holdRecovery = false; this.holdAcceptance = false; this.holdRequestRecovery = false; for (const release of this.held.splice(0)) release(); }
   async dispose() { this.release(); await this.page.unrouteAll({ behavior: "ignoreErrors" }); }
   private async intercept(route: Route) {
     const request = route.request(), url = new URL(request.url());
@@ -90,6 +93,7 @@ export class CompletionHarness {
       const id = url.searchParams.get("id") ?? this.byRequest.get(nonce ?? "") ?? "";
       if (id) { this.deletes.push(id); const job = this.jobs.get(id); if (job) job.cancelled = true; }
       if (this.activeJobId === id) this.activeJobId = null;
+      if (this.holdPriorDelete && id === "prior-held-job") await new Promise<void>(resolve => this.held.push(resolve));
       await route.fulfill({ json: { id, status: "cancelled", progress: null, result: null, error: null, scope: scope(this.language) } }); return;
     }
     if (request.method() === "POST") {
@@ -128,6 +132,13 @@ export class CompletionHarness {
             optionId: `alias-${index}`, auctionId: 990000 + Math.floor(index / 2), itemId: 880002,
             variantKey: "same-exact-variant", slotType: index % 2 ? "FINGER_2" : "FINGER_1" }));
         }
+        if (this.excludedVariantLevels) {
+          const base = result.items.find(item => item.evaluation === "upgrade")!;
+          result.items = [0, 1].map(index => ({ ...base, name: "Synthetic shared variant name",
+            optionId: `identity-${index}`, auctionId: 770000 + index, itemId: 880002,
+            variantKey: `exact-identity-${index}`, itemLevel: index && this.excludedVariantLevels === "different" ? 120 : 100,
+            stats: { ...base.stats, strength: 21, crit_rating: index ? 0 : 40, haste_rating: index ? 40 : 0 } }));
+        }
         if (this.empty) result.items = [];
         if (this.incompleteData) result.dataComplete = false;
         if (body.action === "search" && this.incompleteSearchOnce) { result.searchComplete = false; result.pendingItems = 1; this.incompleteSearchOnce = false; }
@@ -141,6 +152,9 @@ export class CompletionHarness {
       this.jobs.set(id, { result, clientRequestId: body.clientRequestId });
       if (body.clientRequestId) this.byRequest.set(body.clientRequestId, id);
       this.activeJobId = id;
+      if (body.action === "search" && this.pendingInitial && !this.holdPost) {
+        await route.fulfill({ status: 202, json: { id, status: "queued", mode: "search", result: null, progress: null, error: null, scope: scope(this.language) } }); return;
+      }
       if (this.holdPost || body.action === "resume" && this.holdContinuation) await new Promise<void>(resolve => this.held.push(resolve));
       if (this.dropAction === body.action) { this.dropAction = null; await route.abort("failed"); return; }
       this.activeJobId = null;
@@ -153,6 +167,7 @@ export class CompletionHarness {
       if (this.requestRecoveryMissing) { await route.fulfill({ status: 404, json: { error: "plan_not_found" } }); return; }
       const id = this.byRequest.get(requestId), job = id ? this.jobs.get(id) : undefined;
       if (!id || !job) { await route.fulfill({ status: 404, json: { error: "plan_not_found" } }); return; }
+      if (this.pendingInitial && !job.cancelled) { await route.fulfill({ json: { id, status: "running", mode: "search", result: null, progress: null, error: null, scope: scope(this.language) } }); return; }
       this.activeJobId = null;
       await route.fulfill({ json: job.cancelled ? { id, status: "cancelled", result: null, progress: null, error: null, scope: scope(this.language) } : { ...completedJob(this.language, job.result), id, mode: job.result.kind } }); return;
     }
@@ -165,6 +180,7 @@ export class CompletionHarness {
     }
     const id = url.searchParams.get("id") ?? "", job = this.jobs.get(id);
     if (!job) { await route.fulfill({ status: 404, json: { error: "plan_not_found" } }); return; }
+    if (this.pendingInitial && !job.cancelled) { await route.fulfill({ json: { id, status: "running", mode: "search", result: null, progress: null, error: null, scope: scope(this.language) } }); return; }
     this.activeJobId = null;
     await route.fulfill({ json: { ...completedJob(this.language, job.result), id, mode: job.result.kind } });
   }

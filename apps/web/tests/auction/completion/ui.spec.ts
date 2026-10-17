@@ -359,3 +359,98 @@ for (const maximum of ["confirmed", "unconfirmed"] as const) test(`audit fixes: 
     : auction.t('Его прирост не подтверждён', 'Its gain is not confirmed'));
   await expect(auction.result).toContainText(auction.t('Цена за +1 DPS всего сета', 'Whole-loadout cost per +1 DPS'));
 });
+
+
+for (const handle of ["job", "nonce"] as const) test(`postfix fixes: pending ${handle} recovery preserves original form intent before a result`, async ({ auction, page }, info) => {
+  await auction.open();
+  await auction.panel.locator('[name="budgetGold"]').fill(auction.t('333,33', '333.33'));
+  await auction.panel.locator('form select').first().selectOption('aoe');
+  await auction.panel.locator('summary').filter({ hasText: /Слоты экипировки|Equipment slots/ }).click();
+  await auction.panel.locator('[name="objective"]').selectOption('dps');
+  await auction.panel.getByRole('button', { name: /Снять выбор|Clear selection/, exact: true }).click();
+  await auction.panel.locator('[name="selectedSlots"][value="WRIST"]').check();
+  auction.pendingInitial = true; auction.holdPost = handle === 'nonce'; await auction.find.click();
+  await expect.poll(() => auction.requests.length).toBe(1);
+  if (handle === 'job') await expect.poll(() => page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith('gildra:auction:v1:')).some(([, value]) => Boolean(JSON.parse(value).jobId)))).toBe(true);
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue('333.33');
+  await expect(auction.panel.locator('form select').first()).toHaveValue('aoe');
+  await auction.panel.locator('summary').filter({ hasText: /Слоты экипировки|Equipment slots/ }).click();
+  await expect(auction.panel.locator('[name="objective"]')).toHaveValue('dps');
+  await expect(auction.panel.locator('[name="selectedSlots"]:checked')).toHaveCount(1);
+  await expect(auction.panel.locator('[name="selectedSlots"][value="WRIST"]')).toBeChecked();
+  await info.attach(`pending-${handle}-intent`, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+  await auction.panel.getByRole('button', { name: /Отменить поиск|Cancel search/ }).click();
+  auction.pendingInitial = false; auction.release(); await auction.find.click();
+  await expect.poll(() => auction.requests.length).toBe(2);
+  expect(auction.requests[1]).toMatchObject({ budgetGold: '333.33', scenario: 'aoe', objective: 'dps', selectedSlots: ['WRIST'] });
+});
+
+for (const levels of ["same", "different"] as const) test(`postfix fixes: excluded ${levels}-level exact variants remain distinguishable with keyboard details`, async ({ auction, page }, info) => {
+  auction.excludedVariantLevels = levels; await auction.open(); await auction.search();
+  await auction.assembly.locator('summary').filter({ hasText: /Настроить варианты|Loadout options/ }).click();
+  await auction.assembly.getByRole('button', { name: /Исключить все варианты|Exclude all options/, exact: true }).click();
+  await auction.assembly.locator('summary').filter({ hasText: /Исключения|Exclusions/ }).click();
+  const rows = auction.assembly.locator('[data-excluded-restore]').locator('..'); await expect(rows).toHaveCount(2);
+  const restores = auction.panel.locator('[data-excluded-restore]');
+  const names = await restores.evaluateAll(elements => elements.map(element => element.getAttribute('aria-label') ?? element.textContent));
+  expect(new Set(names).size).toBe(2);
+  await expect(rows.nth(0)).toContainText(auction.t('Критический удар', 'Critical strike'));
+  await expect(rows.nth(1)).toContainText(auction.t('Скорость', 'Haste'));
+  await info.attach(`identified-exclusion-pair-${levels}`, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+  const details = rows.nth(1).getByRole('button', { name: /Описание предмета|Item details/ });
+  await details.focus(); await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toContainText(auction.t('Скорость', 'Haste'));
+  await info.attach(`excluded-exact-tooltip-${levels}`, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+  await page.keyboard.press('Escape'); await restores.nth(1).focus(); await page.keyboard.press('Enter');
+  await expect(restores).toHaveCount(1); await expect(auction.build).toBeEnabled();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await info.attach(`identified-exclusions-${levels}`, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+});
+
+
+test("postfix fixes: pending form intent remains bound to character locale and profile", async ({ auction, page }) => {
+  await auction.open();
+  for (const binding of ['character', 'locale', 'profile']) {
+    auction.pendingInitial = true;
+    await auction.panel.locator('[name="budgetGold"]').fill('333.33'); await auction.find.click();
+    await expect.poll(() => page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith('gildra:auction:v1:')).some(([, value]) => Boolean(JSON.parse(value).jobId)))).toBe(true);
+    await page.evaluate(binding => {
+      const [key, json] = Object.entries(sessionStorage).find(([key]) => key.startsWith('gildra:auction:v1:'))!;
+      const value = JSON.parse(json);
+      if (binding === 'character') value.formIntent.characterSlug = 'synthetic-other-character';
+      else if (binding === 'locale') value.formIntent.locale = value.formIntent.locale === 'en' ? 'ru' : 'en';
+      else value.profileKey = 'synthetic-other-profile';
+      sessionStorage.setItem(key, JSON.stringify(value));
+    }, binding);
+    await page.reload({ waitUntil: 'networkidle' });
+    await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue('10000');
+    await expect(auction.panel.locator('form select').first()).toHaveValue('single-target');
+    const cancel = auction.panel.getByRole('button', { name: /Отменить поиск|Cancel search/ });
+    if (binding !== 'profile') await cancel.click();
+    await expect(auction.find).toBeEnabled();
+    auction.pendingInitial = false; auction.release();
+  }
+});
+
+
+test("postfix fixes: new search intent survives reload while a prior job is still retiring", async ({ auction, page }) => {
+  await auction.open();
+  await page.evaluate(locale => sessionStorage.setItem('gildra:auction-active:v1', JSON.stringify({ characterSlug:'eu--synthetic-reliability--synthetic', locale, id:'prior-held-job' })), auction.language);
+  await auction.panel.locator('[name="budgetGold"]').fill('333.33');
+  await auction.panel.locator('form select').first().selectOption('aoe');
+  await auction.panel.locator('summary').filter({ hasText: /Слоты экипировки|Equipment slots/ }).click();
+  await auction.panel.locator('[name="objective"]').selectOption('dps');
+  auction.holdPriorDelete = true; await auction.find.click();
+  await expect.poll(() => auction.deletes).toContain('prior-held-job'); expect(auction.requests).toHaveLength(0);
+  const storedIntent = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith('gildra:auction:v1:')).map(([, json]) => JSON.parse(json).formIntent)[0]);
+  expect(storedIntent).toMatchObject({ budgetGold:'333.33', scenario:'aoe', objective:'dps' });
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue('333.33');
+  await expect(auction.panel.locator('form select').first()).toHaveValue('aoe');
+  auction.release();
+  await expect(auction.find).toBeEnabled(); const beforeRetry = auction.requests.length; await auction.find.click();
+  await expect.poll(() => auction.requests.length).toBe(beforeRetry + 1);
+  expect(auction.requests.at(-1)).toMatchObject({ budgetGold:'333.33', scenario:'aoe', objective:'dps' });
+  expect(auction.nonceDeletes).not.toContain(auction.requests.at(-1)!.clientRequestId);
+});

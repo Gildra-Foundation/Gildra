@@ -9,11 +9,11 @@ import { auctionGearVariantSelectionKey } from "@/lib/wow/auctionGearExclusions"
 import { getAuctionGearRecommendationGroups } from "@/lib/wow/auctionGearRecommendations";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientJobUrl, auctionClientRequestUrl, fetchAuctionClientResult,
-  forgetAuctionClientJob, forgetAuctionClientRequest, readAuctionClientCache, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
+  forgetAuctionClientJob, forgetAuctionClientRequest, readAuctionClientCache, parseAuctionClientFormIntent, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
   removeAuctionClientJob, removeAuctionClientRequest, retireAuctionClient, waitForAuctionClientRetirement, writeAuctionClientCache,
   type AuctionClientCache } from "@/lib/wow/auctionGearClient";
 import { auctionGearServiceMessage } from "@/lib/wow/auctionGearCopy";
-import { GearPlannerItem } from "./GearPlannerItem";
+import { GearPlannerItem, gearPlannerItemStatDescription } from "./GearPlannerItem";
 import { AuctionGearSuggestions } from "./AuctionGearSuggestions";
 import styles from "./auctionGearOptimizer.module.css";
 
@@ -46,6 +46,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const locale = localePrefix === "/ru" ? "ru" : "en";
   const ru = locale === "ru";
   const t = (r: string, e: string) => ru ? r : e;
+  const [initializing, setInitializing] = useState(true);
   const [budget, setBudget] = useState("10000");
   const [objective, setObjective] = useState<"value" | "dps">("value");
   const [excludedVariantKeys, setExcludedVariantKeys] = useState<Set<string>>(new Set());
@@ -71,6 +72,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const theme = getTalentSpecTheme(specializationSlug);
   const supported = theme && ["melee", "ranged"].includes(theme.role);
   const running = transport?.status === "starting" || transport?.status === "queued" || transport?.status === "running";
+  const formLocked = initializing || running;
   const numeric = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2 });
   const signed = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2, signDisplay: "exceptZero" });
   const gold = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 4 });
@@ -145,7 +147,13 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     let mounted = true;
     void (async () => {
       await Promise.resolve();
-      if (!mounted || !saved) return;
+      if (!mounted) return;
+      setInitializing(false);
+      if (!saved) return;
+      const intent = saved.formIntent;
+      if (intent?.characterSlug === characterSlug && intent.locale === locale) {
+        setBudget(intent.budgetGold); setScenario(intent.scenario); setObjective(intent.objective); setSelectedSlots(intent.selectedSlots);
+      }
       if (saved.jobId && !saved.searchId) { setExcluded(new Set(saved.excludedOptionIds)); setExcludedVariantKeys(new Set(saved.excludedVariantKeys ?? [])); await runRef.current?.({ action: "poll", id: saved.jobId }, saved.mode); return; }
       if (!saved.searchId && !saved.clientRequestId) return;
       recoveryController.current = controller;
@@ -295,6 +303,14 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     setMarketStale(true); setRetryJob(null); setHasRecovery(false);
     let body = initial;
     try {
+      if (body.action === "search") {
+        body = { ...body, clientRequestId: body.clientRequestId ?? crypto.randomUUID() };
+        const formIntent = parseAuctionClientFormIntent(body);
+        if (!formIntent) throw new Error("invalid_plan_request");
+        // Preserve retry input even if retiring an older job delays this POST.
+        // Keep the global active handle unchanged until that older job retires.
+        remember({ mode, clientRequestId: body.clientRequestId, formIntent });
+      }
       // A new action waits for cancellation cleanup, including a late POST ID.
       await cleanup;
       if (body.action !== "poll") await releasePriorAuctionClientJob();
@@ -409,7 +425,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   }
   useEffect(() => { runRef.current = run; });
   function startSearch() {
-    if (active.current) return;
+    if (initializing || active.current) return;
     try {
       const budgetGold = normalizeAuctionBudgetGold(budget, locale);
       const slots = parseAuctionGearSlots(selectedSlots);
@@ -514,20 +530,20 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     <header><small>{t("АУКЦИОН СЕРВЕРА", "REALM AUCTION HOUSE")}</small><h2 id="auction-gear-title">{t("Найти вещи под бюджет", "Find gear within your budget")}</h2><p>{t("Выгодные улучшения с аукциона и совместимый сет в вашем бюджете.", "Good-value auction upgrades and a compatible loadout within your budget.")}</p></header>
     {!supported ? <p>{messages.damage_specialization_required}</p> : <form onSubmit={event => { event.preventDefault(); startSearch(); }}>
       <div className={styles.controls}>
-        <label>{t("Бюджет, золото", "Budget, gold")}<input name="budgetGold" inputMode="decimal" value={budget} onChange={event => { setBudget(event.target.value); invalidate(); }} disabled={running} required aria-describedby="auction-budget-help" /></label>
-        <label>{t("Сценарий", "Encounter")}<select value={scenario} onChange={event => { setScenario(event.target.value); invalidate(); }} disabled={running}>
+        <label>{t("Бюджет, золото", "Budget, gold")}<input name="budgetGold" inputMode="decimal" value={budget} onChange={event => { setBudget(event.target.value); invalidate(); }} disabled={formLocked} required aria-describedby="auction-budget-help" /></label>
+        <label>{t("Сценарий", "Encounter")}<select value={scenario} onChange={event => { setScenario(event.target.value); invalidate(); }} disabled={formLocked}>
           <option value="single-target">{t("Одна цель · 120 секунд", "Single target · 120 seconds")}</option><option value="aoe">{t("5 целей · 60 секунд", "5 targets · 60 seconds")}</option><option value="execute">{t("Короткий бой · 90 секунд", "Short fight · 90 seconds")}</option>
         </select></label>
       </div>
       <details className={styles.calculation}><summary>{t("Слоты экипировки и цель подбора", "Equipment slots and objective")} · {selectedSlots.length} / {auctionGearSlots.length}</summary>
-      <div className={styles.controls}><label>{t("Цель подбора", "Selection objective")}<select name="objective" value={objective} onChange={event => { setObjective(event.target.value as "value" | "dps"); invalidate(); }} disabled={running}><option value="value">{t("Цена / прирост DPS", "Price / DPS gain")}</option><option value="dps">{t("Максимум DPS", "Maximum DPS")}</option></select></label></div>
-      <fieldset className={styles.slotFieldset} disabled={running}>
+      <div className={styles.controls}><label>{t("Цель подбора", "Selection objective")}<select name="objective" value={objective} onChange={event => { setObjective(event.target.value as "value" | "dps"); invalidate(); }} disabled={formLocked}><option value="value">{t("Цена / прирост DPS", "Price / DPS gain")}</option><option value="dps">{t("Максимум DPS", "Maximum DPS")}</option></select></label></div>
+      <fieldset className={styles.slotFieldset} disabled={formLocked}>
         <legend>{t("Какие слоты искать", "Equipment slots to search")}</legend>
         <div className={styles.selectionActions}><button className={styles.button} type="button" onClick={() => { setSelectedSlots([...auctionGearSlots]); invalidate(); }}>{t("Выбрать все", "Select all")}</button><button className={styles.button} type="button" onClick={() => { setSelectedSlots([]); invalidate(); }}>{t("Снять выбор", "Clear selection")}</button></div>
         <div className={styles.slots}>{auctionGearSlots.map(slot => <label key={slot}><input type="checkbox" name="selectedSlots" value={slot} checked={selectedSlots.includes(slot)} onChange={event => { setSelectedSlots(previous => event.target.checked ? auctionGearSlots.filter(value => value === slot || previous.includes(value)) : previous.filter(value => value !== slot)); invalidate(); }} /><span>{slotName(slot)}</span></label>)}</div>
       </fieldset></details>
       <p id="auction-budget-help" className={styles.note}>{t("Цены указаны за целый лот.", "Prices cover whole lots.")}</p>
-      <div className={styles.actions}><button className={styles.button} type="submit" disabled={running}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</button>{search ? <a className={styles.returnToAssembly} href="#auction-assembly">{t("К сборке сета", "Build a loadout")}</a> : null}{running && (transport?.mode === "search" || !search) ? <button className={styles.button} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}</div>
+      <div className={styles.actions}><button className={styles.button} type="submit" disabled={formLocked}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</button>{search ? <a className={styles.returnToAssembly} href="#auction-assembly">{t("К сборке сета", "Build a loadout")}</a> : null}{running && (transport?.mode === "search" || !search) ? <button className={styles.button} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}</div>
       {!search ? <p id="auction-assembly-start-help" className={styles.note}>{t("Сначала запустите поиск вещей. Затем можно проверить их сочетания и собрать совместимый сет в пределах бюджета.", "Search for gear first, then compare combinations and build a compatible loadout within your budget.")}</p> : null}
     </form>}
     {feedback("search")}
@@ -559,7 +575,11 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           </details>
           {excludedGroups.length ? <details className={styles.excludedLots} onToggle={event => setExcludedOpen(event.currentTarget.open)}><summary>{t("Исключения", "Exclusions")}: {number(excludedGroups.length)}</summary>
             <p className={styles.note}>{t("Выбор в карточке исключает вариант во всех лотах и слотах. Исключение покупки запрещает только её лот во всех слотах.", "A card selection excludes that variant across all lots and slots. Excluding a purchase blocks only that lot across all slots.")}</p>
-            {excludedOpen ? <><ul>{excludedGroups.slice(0, excludedLimit).map(([key, group]) => <li key={key}><span>{group.item.name} · {t("лотов", "lots")}: {number(group.lots.size)}</span><button data-excluded-restore type="button" disabled={selectionLocked} className={styles.button} onClick={() => setAllowed(group.item.optionId, true)}>{t("Вернуть вариант в подбор", "Restore variant to assembly")}: {group.item.name}</button></li>)}</ul>{excludedGroups.length > excludedLimit ? <button type="button" className={styles.button} onClick={() => setExcludedLimit(limit => limit + 20)}>{t("Показать ещё 20", "Show 20 more")}</button> : null}</> : null}
+            {excludedOpen ? <><ul>{excludedGroups.slice(0, excludedLimit).map(([key, group], index) => {
+              const facts = gearPlannerItemStatDescription(group.item, locale);
+              const context = [`${t("Вариант", "Variant")} ${index + 1}`, group.item.itemLevel !== undefined ? `${t("Уровень предмета", "Item level")} ${number(group.item.itemLevel)}` : "", ...facts].filter(Boolean).join(" · ");
+              return <li key={key}><div className={styles.excludedItem}><GearPlannerItem item={group.item} locale={locale} /><span className={styles.note}>{context}</span><span className={styles.note}>{t("Лотов", "Lots")}: {number(group.lots.size)}</span></div><button data-excluded-restore type="button" disabled={selectionLocked} className={styles.button} aria-label={`${t("Вернуть вариант в подбор", "Restore variant to assembly")}: ${group.item.name}; ${context}`} onClick={() => setAllowed(group.item.optionId, true)}>{t("Вернуть вариант в подбор", "Restore variant to assembly")}</button></li>;
+            })}</ul>{excludedGroups.length > excludedLimit ? <button type="button" className={styles.button} onClick={() => setExcludedLimit(limit => limit + 20)}>{t("Показать ещё 20", "Show 20 more")}</button> : null}</> : null}
           </details> : null}
           {running && transport?.mode === "search" ? <p className={styles.note}>{t("Можно собрать сет из уже найденных вариантов. Поиск остановится; позднее его можно продолжить.", "You can build from the options already found. Discovery will stop and can be continued later.")}</p> : !search.searchComplete && available.length ? <p className={styles.note}>{t("Поиск ещё не завершён. Сет будет собран из доступных на момент сборки проверенных вариантов.", "The search is incomplete. The loadout will use the verified options available when assembly runs.")}</p> : null}
           {feedback("assembly")}

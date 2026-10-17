@@ -23,6 +23,14 @@ const statNames: Record<string, [string, string]> = {
   strint: ["Сила или интеллект", "Strength or intellect"], speed_rating: ["Скорость передвижения", "Speed"],
   leech_rating: ["Самоисцеление", "Leech"], avoidance_rating: ["Избегание", "Avoidance"],
 };
+/** Exact, localized properties used to identify same-name auction variants. */
+export function gearPlannerItemStatDescription(item: GearPlannerItemData, locale: "ru" | "en"): string[] {
+  const format = new Intl.NumberFormat(locale === "ru" ? "ru-RU" : "en-US", { maximumFractionDigits: 2 });
+  const stats = Object.entries(item.stats ?? {}).filter(([key, value]) => statNames[key] && Number.isFinite(value) && value > 0)
+    .sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => `${statNames[key][locale === "ru" ? 0 : 1]} +${format.format(value)}`);
+  return stats.length ? stats : item.statLines?.filter(Boolean) ?? [];
+}
+
 function qualityStyle(quality?: number): CSSProperties | undefined {
   const palette = itemQualityColors[quality as keyof typeof itemQualityColors];
   return palette ? { "--gear-quality-frame": palette.frame, "--gear-quality-text": palette.text } as CSSProperties : undefined;

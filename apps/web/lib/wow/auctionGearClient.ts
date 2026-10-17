@@ -1,6 +1,28 @@
-/** Browser transport and opaque recovery handles; prices/stats are always recovered from the server. */
+import { normalizeAuctionBudgetGold } from "./auctionGearBudget";
+import { parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
+
+/** Browser transport, recovery handles and safe input intent. Prices/stats always come from the server. */
+export type AuctionClientFormIntent = {
+  characterSlug: string; locale: "ru" | "en"; budgetGold: string;
+  scenario: "single-target" | "aoe" | "execute"; objective: "value" | "dps"; selectedSlots: AuctionGearSlot[];
+};
+/** Whitelist bounded user inputs; never restore cached prices, stats or account facts. */
+export function parseAuctionClientFormIntent(input: unknown): AuctionClientFormIntent | null {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const value = input as Record<string, unknown>;
+  if (typeof value.characterSlug !== "string" || !value.characterSlug || value.characterSlug.length > 180 ||
+      value.locale !== "en" && value.locale !== "ru" || typeof value.budgetGold !== "string" || value.budgetGold.length > 30 ||
+      !/^\d+(?:\.\d{1,4})?$/.test(value.budgetGold) ||
+      !["single-target", "aoe", "execute"].includes(value.scenario as string) || value.objective !== "value" && value.objective !== "dps") return null;
+  try {
+    return { characterSlug: value.characterSlug, locale: value.locale,
+      budgetGold: normalizeAuctionBudgetGold(value.budgetGold, "en"),
+      scenario: value.scenario as AuctionClientFormIntent["scenario"], objective: value.objective,
+      selectedSlots: parseAuctionGearSlots(value.selectedSlots) };
+  } catch { return null; }
+}
 export type AuctionClientScope = { characterSlug: string; locale: "ru" | "en" };
-export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[] };
+export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; formIntent?: AuctionClientFormIntent };
 const activeKey = "gildra:auction-active:v1";
 let retiring: Promise<unknown> = Promise.resolve();
 
@@ -16,12 +38,13 @@ const identity = (value: unknown): value is string => typeof value === "string" 
 export function readAuctionClientCache(key: string): AuctionClientCache | null {
   try {
     const value = JSON.parse(sessionStorage.getItem(key) ?? "null") as Partial<AuctionClientCache> | null;
-    return value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
+    const formIntent = value?.formIntent === undefined ? undefined : parseAuctionClientFormIntent(value.formIntent);
+    return (value?.formIntent === undefined || formIntent !== null) && value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
       (value.mode === "search" || value.mode === "assembly") && Array.isArray(value.excludedOptionIds) &&
       value.excludedOptionIds.length <= 20000 && value.excludedOptionIds.every(identity) &&
       (value.excludedVariantKeys === undefined || Array.isArray(value.excludedVariantKeys) && value.excludedVariantKeys.length <= 20000 && value.excludedVariantKeys.every(key => typeof key === "string" && key.length > 0 && key.length <= 240))
       ? { version: 1, profileKey: value.profileKey, searchId: identity(value.searchId) ? value.searchId : undefined,
-        jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)], excludedVariantKeys: [...new Set(value.excludedVariantKeys ?? [])] } : null;
+        jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)], excludedVariantKeys: [...new Set(value.excludedVariantKeys ?? [])], ...(formIntent ? { formIntent } : {}) } : null;
   } catch { return null; }
 }
 export function writeAuctionClientCache(key: string, value: AuctionClientCache | null) {
