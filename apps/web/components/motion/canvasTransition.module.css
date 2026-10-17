@@ -4,6 +4,11 @@
 }
 .outgoing { composes: piece from "./routeTransition.module.css"; }
 .frozen { composes: frozen from "./routeTransition.module.css"; }
+/* The inert copy is a still image. Live backdrop sampling would re-rasterize
+   glass panels as the ice changes above them. Keep the actual page untouched. */
+.frozen, .frozen :global(*) {
+  backdrop-filter: none !important;
+}
 .surface {
   composes: frost from "./routeTransition.module.css";
   contain: strict;

@@ -8,9 +8,9 @@ import { chromium } from 'playwright';
 import { iceFracture } from '../components/motion/iceFracture.ts';
 
 const root=path.resolve(import.meta.dirname,'..'), control=process.env.SHARD_CONTROL==='1';
-const output=path.join(root,'.artifacts/page-shards',control?'control-v4':'renderer-v5');fs.mkdirSync(output,{recursive:true});
+const output=path.join(root,'.artifacts/page-shards',control?'control-v4':'renderer-v6');fs.mkdirSync(output,{recursive:true});
 const moduleCode=name=>ts.transpileModule(fs.readFileSync(path.join(root,'components/motion',name+'.ts'),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/^export /gm,'').replace(/^import .+$/gm,'');
-const worker=fs.readFileSync(path.join(root,`public/assets/motion/ice-renderer-v${control?4:5}.js`));
+const worker=fs.readFileSync(path.join(root,`public/assets/motion/ice-renderer-v${control?4:6}.js`));
 const markup=`<!doctype html><html><head><style>
 body{margin:0;background:#001a4a;color:white;font-family:Arial,sans-serif}.scene{position:relative;height:1200px;background:#08121a}.title{position:absolute;left:30px;top:60px;margin:0;font:700 66px/1 Arial;color:#ff00db}.photo{position:absolute;top:210px;left:30px;width:70vw;height:280px;object-fit:cover;border:4px solid #fff}.label{position:absolute;top:520px;left:30px;font-size:30px;color:#ff00db}.background{position:absolute;top:600px;left:30px;width:70vw;height:170px;background: url(/picture.svg) center/cover}.below{position:absolute;top:2000px}.outgoing{position:fixed;inset:0;z-index:2;overflow:hidden;background:#08121a}.canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:3}
 </style></head><body><main class="scene" data-book-route-frame><h1 class="title">OLD PAGE</h1><img class="photo" src="/picture.svg"><p class="label">Текст на осколках</p><div class="background"></div><div class="below">${'<p>Offscreen content must never become a shard DOM copy</p>'.repeat(1000)}</div></main></body></html>`;

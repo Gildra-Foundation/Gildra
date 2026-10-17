@@ -42,6 +42,7 @@ try {
     if (verifyShards) await page.evaluate(() => {
       const send = Worker.prototype.postMessage;
       Worker.prototype.postMessage = function(message, ...rest) {
+        if (message?.type === "play") message = { ...message, phases: message.phases.map(phase => phase.phase === "shattering" ? { ...phase, duration: 5000 } : phase) };
         if (message?.type === "frame" && message.phase === "shattering") message = { ...message, progress: Math.min(.35, message.progress) };
         return send.call(this, message, ...rest);
       };

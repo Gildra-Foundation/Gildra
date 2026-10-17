@@ -9,7 +9,7 @@ import { iceFracture } from "../components/motion/iceFracture.ts";
 
 const output=path.resolve(import.meta.dirname,"../.artifacts/site-performance/renderer");fs.mkdirSync(output,{recursive:true});
 const code=ts.transpileModule(fs.readFileSync(path.resolve(import.meta.dirname,"../components/motion/iceMaterial.ts"),"utf8"),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/^export /gm,"");
-const worker=fs.readFileSync(path.resolve(import.meta.dirname,"../public/assets/motion/ice-renderer-v5.js"));
+const worker=fs.readFileSync(path.resolve(import.meta.dirname,"../public/assets/motion/ice-renderer-v6.js"));
 const server=http.createServer((req,res)=>{res.setHeader("Content-Type",req.url.includes(".js") ? "application/javascript" : "text/html");res.end(req.url.includes(".js") ? worker : '<!doctype html><body style="margin:0;background:#000"></body>')});
 await new Promise(resolve=>server.listen(5188,"127.0.0.1",resolve));
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH,args:["--no-sandbox"]});
@@ -49,7 +49,7 @@ try {
  await p.evaluate(geometry=>{const m=window.__createIce(390,900,geometry);document.body.append(m.canvas);m.draw("cracking",1);m.draw("shattering",.5);m.dispose()},iceFracture(390,900));
  assert.equal(await p.locator("canvas").getAttribute("data-render-phase"),"shattering");await p.close();
  const blocked=await browser.newPage(),blockedErrors=[];blocked.on("pageerror",e=>blockedErrors.push(e.message));
- await blocked.route("**/ice-renderer-v5.js",route=>route.abort());await blocked.goto("http://127.0.0.1:5188");await blocked.addScriptTag({content:code+"\nwindow.__createIce=iceMaterial;"});
+ await blocked.route("**/ice-renderer-v6.js",route=>route.abort());await blocked.goto("http://127.0.0.1:5188");await blocked.addScriptTag({content:code+"\nwindow.__createIce=iceMaterial;"});
  await blocked.evaluate(geometry=>{window.__material=window.__createIce(390,900,geometry);document.body.append(window.__material.canvas);window.__material.draw("freezing",.5)},iceFracture(390,900));
  await blocked.waitForFunction(()=>document.querySelector("canvas")?.dataset.renderer==="fallback");
  assert.equal(await blocked.locator("canvas").getAttribute("data-render-phase"),"freezing");assert.deepEqual(blockedErrors,[]);await blocked.evaluate(()=>window.__material.dispose());await blocked.close();

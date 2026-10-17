@@ -55,7 +55,7 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
     capture.current?.abort();
     revealing.current = true;
     host.current.dataset.phase = "shattering";
-    if (surface.current) animate("shattering", ICE_RELEASE_MS, () => {});
+    if (surface.current && !surface.current.play([{ phase: "shattering", duration: ICE_RELEASE_MS }], () => {}, cancel)) animate("shattering", ICE_RELEASE_MS, () => {});
     timers.current.push(setTimeout(cancel, surface.current ? ICE_RELEASE_MS : 760));
   }
   useImperativeHandle(ref, () => ({
@@ -104,7 +104,13 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
         if (ice) animate("cracking", ICE_CRACK_MS, ready);
         else timers.current.push(setTimeout(ready, 220));
       };
-      if (ice) animate("freezing", ICE_FREEZE_MS, crack);
+      if (ice) {
+        const autonomous = surface.current?.play([
+          { phase: "freezing", duration: ICE_FREEZE_MS },
+          { phase: "cracking", duration: ICE_CRACK_MS },
+        ], phase => { root.dataset.phase = phase; }, () => { cracksReady.current = true; shatter(); });
+        if (!autonomous) animate("freezing", ICE_FREEZE_MS, crack);
+      }
       else timers.current.push(setTimeout(crack, 340));
       timers.current.push(setTimeout(cancel, 12000));
     },
