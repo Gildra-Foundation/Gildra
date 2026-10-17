@@ -10,7 +10,7 @@ let sequence = 0;
 function worker() {
   if (unavailable || typeof Worker === "undefined" || !HTMLCanvasElement.prototype.transferControlToOffscreen) return;
   clearTimeout(idle);
-  try { return renderer ??= new Worker("/assets/motion/ice-renderer-v5.js"); }
+  try { return renderer ??= new Worker("/assets/motion/ice-renderer-v6.js"); }
   catch { unavailable = true; return; }
 }
 
@@ -30,6 +30,13 @@ export function iceMaterial(width: number, height: number, geometry: ReturnType<
   const id = ++sequence, engine = worker();
   canvas.dataset.renderer = engine ? "worker" : "fallback";
   let ready = false, busy = false, disposed = false, latest: Frame | undefined, lastRequested: Frame | undefined;
+  let program: { phases: { phase: Phase; duration: number }[]; token: number; phase: (value: Phase) => void; complete: () => void } | undefined;
+  let playSequence = 0;
+  const startProgram = () => {
+    if (engine && ready && program && !disposed && !fallback) {
+      engine.postMessage({ type: "play", id, phases: program.phases, token: program.token });
+    }
+  };
   let fallback: CanvasRenderingContext2D | null = null;
   const fallbackFrame = ({ phase, progress }: Frame) => {
     if (!fallback) return;
@@ -56,6 +63,7 @@ export function iceMaterial(width: number, height: number, geometry: ReturnType<
     delete canvas.dataset.pageContent;
     fallback = canvas.getContext("2d");
     if (lastRequested) fallbackFrame(lastRequested);
+    if (program) { const complete = program.complete; program = undefined; complete(); }
   };
   const failure = (event: Event) => { event.preventDefault(); activateFallback(); };
   const flush = () => {
@@ -70,11 +78,13 @@ export function iceMaterial(width: number, height: number, geometry: ReturnType<
     if (data.id !== id || disposed) return;
     if (data.type === "failed") { activateFallback(); return; }
     if (data.type === "content") canvas.dataset.pageContent = "ready";
-    if (data.type === "ready") ready = true;
+    if (data.type === "ready") { ready = true; startProgram(); }
     if (data.type === "painted") {
       busy = false;
-      canvas.dataset.renderPhase = data.phase; canvas.dataset.renderProgress = String(data.progress);
+      if (canvas.dataset.renderPhase !== data.phase) { canvas.dataset.renderPhase = data.phase; program?.phase(data.phase); }
+      canvas.dataset.renderProgress = String(data.progress);
     }
+    if (data.type === "complete" && program && program.token === data.token) { const complete = program.complete; program = undefined; complete(); }
     flush();
   };
   if (engine) {
@@ -90,8 +100,14 @@ export function iceMaterial(width: number, height: number, geometry: ReturnType<
       catch { bitmap.close(); return false; }
     },
     draw(phase: Phase, progress: number) { lastRequested = latest = { phase, progress }; flush(); },
+    play(phases: { phase: Phase; duration: number }[], phase: (value: Phase) => void, complete: () => void) {
+      if (!engine || fallback || disposed) return false;
+      latest = undefined; busy = false;
+      program = { phases, token: ++playSequence, phase, complete };
+      startProgram(); return true;
+    },
     dispose() {
-      disposed = true; latest = undefined; lastRequested = undefined;
+      disposed = true; latest = undefined; lastRequested = undefined; program = undefined;
       if (engine) { engine.postMessage({ type: "dispose", id }); engine.removeEventListener("message", receive); engine.removeEventListener("error", failure); }
       clearTimeout(idle); idle = setTimeout(() => { renderer?.terminate(); renderer = undefined; }, 60000);
     },

@@ -191,7 +191,7 @@ restarts/runtime errors and nine other containers unchanged.
 
 ## Character-list navigation and ice v4 (17 October 2026)
 
-The current renderer is `assets/motion/ice-renderer-v4.js`: uneven pressure-point
+The v4 renderer is `assets/motion/ice-renderer-v4.js`: uneven pressure-point
 fragments, branching hairlines, varied dendritic frost, cached sheet reflection,
 bevels and falling/rotating/foreshortened faces. The bounded worker/canvas and
 single-snapshot performance architecture remain unchanged; v3 is retained for
@@ -211,7 +211,7 @@ auction `2950e8e`/docs `95f5cda`. See
 Future web releases must preserve this source; future worker changes must use a
 new versioned asset URL.
 
-## Page content on ice shards (v5 implementation)
+## Page content on ice shards (v5, published 17 October 2026)
 
 `ice-renderer-v5.js` accepts one transferable outgoing-page `ImageBitmap`. Its
 broken sheet combines those pixels with translucent frost, reflections and the
@@ -264,3 +264,17 @@ init scripts running inside the opaque sandbox, not from the helper itself.
 The four relevant harnesses now initialize preferences only in the top frame.
 Original rejected reports are retained. Final image/live proof is required after
 this correction; labelled injected prototypes alone do not qualify as a release.
+
+
+The corrected v5 implementation is published and publicly verified from frozen
+source `cf238c65af828eb2e32b0b439508899a057a0e52`, preserving auction `a1f93cb`
+and master `07f5159c`. Current web image:
+`sha256:0dc322024c2fa63ae4d9910c30f428c4ffcc4637a14b0cd67a1c81bd0f055151`.
+Future web releases must retain this source. Rotation worker remains a98dc5d.
+See [actual source pixels, performance and publication evidence](../reports/page-content-shards-20261017.md).
+Exact-image cold content readiness12/12; local authenticated fixture8/8 and public
+anonymous entry8/8 preserve geometry and hide outgoing DOM while content-bearing
+shards draw. Alltheme/material/reduced motion checks and public8 asset hashes
+pass;120-second observation:0errors/restarts,9 protected containers unchanged.
+Preparation overhead is nonzero, documented in the report; avoid claiming a
+universal speed-up or guaranteed FPS. Shared-thread/blocked helpers retain fallback.
