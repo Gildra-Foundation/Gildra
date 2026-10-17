@@ -10,7 +10,7 @@ let sequence = 0;
 function worker() {
   if (unavailable || typeof Worker === "undefined" || !HTMLCanvasElement.prototype.transferControlToOffscreen) return;
   clearTimeout(idle);
-  try { return renderer ??= new Worker("/assets/motion/ice-renderer-v4.js"); }
+  try { return renderer ??= new Worker("/assets/motion/ice-renderer-v5.js"); }
   catch { unavailable = true; return; }
 }
 
@@ -53,6 +53,7 @@ export function iceMaterial(width: number, height: number, geometry: ReturnType<
       canvas.replaceWith(replacement); canvas = replacement;
     }
     canvas.dataset.renderer = "fallback";
+    delete canvas.dataset.pageContent;
     fallback = canvas.getContext("2d");
     if (lastRequested) fallbackFrame(lastRequested);
   };
@@ -68,6 +69,7 @@ export function iceMaterial(width: number, height: number, geometry: ReturnType<
   const receive = ({ data }: MessageEvent) => {
     if (data.id !== id || disposed) return;
     if (data.type === "failed") { activateFallback(); return; }
+    if (data.type === "content") canvas.dataset.pageContent = "ready";
     if (data.type === "ready") ready = true;
     if (data.type === "painted") {
       busy = false;
@@ -82,6 +84,11 @@ export function iceMaterial(width: number, height: number, geometry: ReturnType<
   } else activateFallback();
   return {
     get canvas() { return canvas; },
+    content(bitmap: ImageBitmap) {
+      if (disposed || !engine || fallback) { bitmap.close(); return false; }
+      try { engine.postMessage({ type: "content", id, bitmap }, [bitmap]); return true; }
+      catch { bitmap.close(); return false; }
+    },
     draw(phase: Phase, progress: number) { lastRequested = latest = { phase, progress }; flush(); },
     dispose() {
       disposed = true; latest = undefined; lastRequested = undefined;

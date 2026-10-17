@@ -9,9 +9,14 @@
   contain: strict;
   pointer-events: none;
 }
-/* The surface becomes ice before it leaves. Only its lightweight bitmap
-   fragments move; the content tree is never multiplied or relaid out per shard. */
+/* The one page texture follows the ice geometry. The inert DOM is removed
+   from view once its pixels are on the worker surface. */
 .host[data-effect="arthas"][data-phase="shattering"] > .outgoing {
   animation: source-dismiss 150ms ease-out both;
 }
 @keyframes source-dismiss { from { opacity: 1; } to { opacity: 0; } }
+
+.host[data-effect="arthas"][data-phase="shattering"]:has(> .surface[data-page-content="ready"][data-render-phase="shattering"]) > .outgoing {
+  visibility: hidden;
+  animation: none;
+}

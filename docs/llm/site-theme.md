@@ -210,3 +210,42 @@ auction `2950e8e`/docs `95f5cda`. See
 [regression and release evidence](../reports/frost-characters-20261017.md).
 Future web releases must preserve this source; future worker changes must use a
 new versioned asset URL.
+
+## Page content on ice shards (v5 implementation)
+
+`ice-renderer-v5.js` accepts one transferable outgoing-page `ImageBitmap`. Its
+broken sheet combines those pixels with translucent frost, reflections and the
+shared cracks. All cells sample bounded crops of this one sheet; text/images
+rotate with their fragment. During release the inert DOM is hidden only after
+the worker is painting content-bearing shards. Old v3/v4 assets stay immutable.
+
+`pageRaster.ts` serializes the existing viewport-limited snapshot with its real
+CSS ancestry. It retains relevant loaded CSS, embeds visible images and loaded
+font faces, and rasterizes once at a longest edge of 1024px independently of DPR.
+CSS preparation yields in short tasks. There is no per-shard DOM tree, synchronous
+`toDataURL`, screen-capture permission or server upload. Only same-origin static
+assets can enter a bounded 4M-character/24-entry cache; private images and page
+contents are transient. Aborted/late bitmaps close and worker disposal closes its
+page bitmap. A 1600ms capture deadline bounds the hold before release; unavailable
+resources retain the inexpensive ice effect. Escape/resize/re-navigation/unmount
+and reduced motion abort capture as well as rendering.
+
+`qa-page-shards.mjs` is a red-capable pixel test: v4 has no outgoing glyph/image
+pixels; v5 carries both on moving shards at 390/1440px. A 1000-paragraph offscreen
+fixture retains only seven snapshot descendants. `VERIFY_PAGE_SHARDS=1` additionally
+checks real character-list → Gildra → home journeys with the outgoing DOM hidden
+and worker content ready. See the corresponding report for release verification.
+
+The final raster stage uses an ephemeral, sandboxed static helper with a private
+MessagePort. Before receiving page data it must demonstrate that its event loop
+can run in parallel with the parent; shared-thread/blocked helpers use the light
+ice fallback. This avoids the measured synchronous SVG raster cost in the UI
+context. The helper only decodes an inert SVG image and returns a bitmap: no DOM
+insertion, storage or network upload. It clears the image after transfer and is
+removed after 15 seconds idle. Main CSS preparation still yields in short tasks.
+
+Headless-shell tests explicitly use `--site-per-process` for both old and new
+images, matching normal Chrome Site Isolation. This is recorded as a lab setting,
+not a guarantee for every browser; runtime parallelism is checked independently.
+The helper is also tested with production CSP `frame-ancestors self` and
+`X-Frame-Options: SAMEORIGIN`.

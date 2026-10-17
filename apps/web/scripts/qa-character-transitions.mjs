@@ -6,6 +6,7 @@ import { encode } from "next-auth/jwt";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:5187";
 const fixture = process.env.FIXTURE === "1";
+const verifyShards = process.env.VERIFY_PAGE_SHARDS === "1";
 const output = path.resolve(import.meta.dirname, "../.artifacts/frost-characters");
 fs.mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] });
@@ -37,6 +38,13 @@ try {
     await page.locator("[data-book-route-frame][data-view-transitions]").waitFor();
     if (fixture) await page.locator("[data-roster-view=roster] li").first().waitFor();
     await page.evaluate(() => document.fonts.ready);
+    if (verifyShards) await page.evaluate(() => {
+      const send = Worker.prototype.postMessage;
+      Worker.prototype.postMessage = function(message, ...rest) {
+        if (message?.type === "frame" && message.phase === "shattering") message = { ...message, progress: Math.min(.35, message.progress) };
+        return send.call(this, message, ...rest);
+      };
+    });
     await page.waitForTimeout(700);
     await page.evaluate(y => window.scrollTo(0, y), scroll);
     await page.locator("header [data-game-switcher] summary").click();
@@ -79,6 +87,13 @@ try {
     await page.screenshot({ path: path.join(output, `${label}-frozen.png`) });
     const failures = comparison.filter(v => v.missing || v.delta > 3);
     const row = { locale, width, scroll, fixture, clickMs: initial.clickMs, nodes: initial.nodes, maxDelta: Math.max(0, ...comparison.map(v => v.delta || 0)), failures, errors };
+    if (verifyShards) {
+      await page.waitForFunction(() => document.querySelector('[data-ice-surface][data-page-content="ready"][data-render-phase="shattering"]'), null, { timeout: 10000 });
+      row.raster = await page.locator('[data-transition-snapshot]').evaluate(el => ({ ...el.dataset, visibility: getComputedStyle(el).visibility }));
+      assert.equal(row.raster.visibility, "hidden", "the worker bitmap must carry content after the DOM is hidden");
+      assert.equal(row.raster.pageRaster, "ready");
+      await page.screenshot({ path: path.join(output, `${label}-content-shards.png`) });
+    }
     results.push(row);
     console.log(JSON.stringify(row));
     await context.close();
