@@ -1,6 +1,6 @@
 import { goldToCopper } from "./auctionMarket";
 
-/** Accept the locale's displayed grouping, then send an exact decimal string to the API. */
+/** Accept locale grouping and canonicalize equal amounts without floating-point rounding. */
 export function normalizeAuctionBudgetGold(value: string, locale: "en" | "ru"): string {
   const input = value.trim();
   const pattern = locale === "en"
@@ -9,7 +9,9 @@ export function normalizeAuctionBudgetGold(value: string, locale: "en" | "ru"): 
   const match = pattern.exec(input);
   if (!match) throw new Error("invalid_budget");
   const integer = match[1].replace(/[, \u00a0\u202f]/g, "");
-  const canonical = integer + (match[2] ? `.${match[2]}` : "");
-  goldToCopper(canonical);
-  return canonical;
+  const decimal = integer + (match[2] ? `.${match[2]}` : "");
+  // Validate before removing zeros so accepted precision and digit limits stay unchanged.
+  goldToCopper(decimal);
+  const fraction = (match[2] ?? "").replace(/0+$/, "");
+  return integer.replace(/^0+(?=\d)/, "") + (fraction ? `.${fraction}` : "");
 }

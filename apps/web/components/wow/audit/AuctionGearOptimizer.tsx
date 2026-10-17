@@ -9,7 +9,7 @@ import { normalizeAuctionBudgetGold } from "@/lib/wow/auctionGearBudget";
 import { auctionGearVariantSelectionKey } from "@/lib/wow/auctionGearExclusions";
 import { getAuctionGearRecommendationGroups } from "@/lib/wow/auctionGearRecommendations";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
-import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientJobUrl, auctionClientRequestUrl, fetchAuctionClientResult,
+import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientJobUrl, auctionClientRequestUrl, clearAcknowledgedAuctionClientCache, fetchAuctionClientResult,
   forgetAuctionClientJob, forgetAuctionClientRequest, hasPendingAuctionClientJob, readAuctionClientCache, parseAuctionClientFormIntent, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
   removeAuctionClientJob, removeAuctionClientRequest, retireAuctionClient, waitForAuctionClientRetirement, writeAuctionClientCache,
   type AuctionClientCache } from "@/lib/wow/auctionGearClient";
@@ -323,9 +323,12 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     return retirement;
   }
   async function run(initial: RequestBody, mode: Mode) {
-    if (active.current || cache.current?.cancellationRequested) return;
+    if (!scopeAlive.current || active.current || cache.current?.cancellationRequested) return;
+    const generation = mountGeneration.current;
+    const ownsScope = () => scopeAlive.current && mountGeneration.current === generation;
     let finish!: () => void;
     const request: ActiveRequest = { mode, controller: new AbortController(), done: new Promise(resolve => { finish = resolve; }), finish: () => finish() };
+    const isCurrent = () => ownsScope() && active.current === request && !request.controller.signal.aborted;
     const cleanup = waitForAuctionClientRetirement();
     active.current = request;
     setTransport({ mode, status: "starting", progress: null, error: null });
@@ -344,13 +347,16 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       }
       // A new action waits for cancellation cleanup, including a late POST ID.
       await cleanup;
+      if (!isCurrent()) return;
       if (body.action !== "poll") {
         await releasePriorAuctionClientJob();
+        if (!isCurrent()) return;
         if (hasPendingAuctionClientJob()) throw new Error("plan_cancellation_unconfirmed");
       }
-      while (active.current === request && !request.controller.signal.aborted) {
+      while (isCurrent()) {
+        let transportOwner = { profileKey: snapshotKey, jobId: cache.current?.jobId, clientRequestId: cache.current?.clientRequestId };
         const onReconnect = () => {
-          if (active.current === request) setTransport(previous => ({ mode, status: "running", progress: previous?.progress ?? null, error: "plan_reconnecting" }));
+          if (isCurrent()) setTransport(previous => ({ mode, status: "running", progress: previous?.progress ?? null, error: "plan_reconnecting" }));
         };
         let payload: PlannerJob;
         if (body.action === "poll") {
@@ -362,6 +368,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           body = { ...body, clientRequestId: body.clientRequestId ?? crypto.randomUUID() };
           remember({ mode, clientRequestId: body.clientRequestId });
           rememberAuctionClientRequest({ characterSlug, locale }, body.clientRequestId!);
+          transportOwner = { profileKey: snapshotKey, jobId: cache.current?.jobId, clientRequestId: body.clientRequestId };
           const response = await fetch("/api/wow/auction-gear-plans", {
             method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(encodeAuctionGearSelectionTransport(body)),
             // Keep receiving the created ID after cancellation or unmount.
@@ -369,6 +376,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           });
           payload = await response.json() as PlannerJob;
           if (!response.ok) {
+            // An old error response must not clear a replacement request's saved intent.
+            if (!isCurrent()) return;
             if (body.clientRequestId) {
               forgetAuctionClientRequest(body.clientRequestId);
               remember({ clientRequestId: undefined });
@@ -390,9 +399,12 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           }
         }
         request.id = payload.id;
-        if (active.current !== request || request.controller.signal.aborted) {
+        if (!isCurrent()) {
           const removed = await removeAuctionClientJob(payload.id);
-          if ((removed?.ok || removed?.status === 404) && body.action !== "poll" && body.clientRequestId) forgetAuctionClientRequest(body.clientRequestId);
+          if (removed?.ok || removed?.status === 404) {
+            if (transportOwner.clientRequestId) forgetAuctionClientRequest(transportOwner.clientRequestId);
+            clearAcknowledgedAuctionClientCache(cacheKey, transportOwner);
+          }
           return;
         }
         remember({ jobId: payload.id, mode });
@@ -401,9 +413,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           setTransport({ mode, status: payload.status, progress: payload.progress, error: null });
           await auctionClientDelay(1500, request.controller.signal);
           payload = await fetchAuctionClientResult<PlannerJob>(auctionClientJobUrl(request.id, { characterSlug, locale }), request.controller.signal, onReconnect);
-          if (active.current !== request || request.controller.signal.aborted) return;
+          if (!isCurrent()) return;
         }
-        if (active.current !== request || request.controller.signal.aborted) return;
+        if (!isCurrent()) return;
         if (payload.status === "failed") throw new Error(payload.error ?? "auction_plan_unavailable");
         if (payload.status === "cancelled") {
           remember({ jobId: undefined, clientRequestId: undefined }); forgetAuctionClientJob(payload.id); request.id = undefined;
@@ -444,7 +456,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         setTransport({ mode, status: "starting", progress: null, error: null });
       }
     } catch (reason) {
-      if (active.current === request && !request.controller.signal.aborted) {
+      if (isCurrent()) {
         if (reason instanceof Error && reason.message === "plan_cancellation_unconfirmed") {
           remember({ cancellationRequested: true }); setCancellation("failed");
           setTransport({ mode, status: "failed", progress: null, error: reason.message });
@@ -453,7 +465,15 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         if (reason instanceof AuctionClientError && reason.reconnect && request.id) {
           setRetryJob({ id: request.id, mode });
         } else if (request.id) {
+          const owner = { profileKey: snapshotKey, jobId: cache.current?.jobId, clientRequestId: cache.current?.clientRequestId };
           const removed = await removeAuctionClientJob(request.id);
+          if (!isCurrent()) {
+            if (removed?.ok || removed?.status === 404) {
+              if (owner.clientRequestId) forgetAuctionClientRequest(owner.clientRequestId);
+              clearAcknowledgedAuctionClientCache(cacheKey, owner);
+            }
+            return;
+          }
           if (!removed?.ok && removed?.status !== 404) {
             remember({ cancellationRequested: true }); setCancellation("failed");
             setTransport({ mode, status: "failed", progress: null, error: "plan_cancellation_unconfirmed" });
@@ -463,7 +483,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         }
         const pendingInitial = Boolean(!request.id && cache.current?.clientRequestId);
         if (pendingInitial) setHasRecovery(true);
-        if (active.current === request && !request.controller.signal.aborted) {
+        if (isCurrent()) {
           setTransport({ mode, status: "failed", progress: null, error: pendingInitial ? "plan_connection_interrupted" : reason instanceof Error ? reason.message : "auction_plan_unavailable" });
         }
       }
@@ -489,12 +509,15 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   }
   async function startAssembly() {
     if (!search || !available.length || cache.current?.cancellationRequested) return;
+    const generation = mountGeneration.current;
     if (active.current) {
       if (active.current.mode !== "search") return;
       // Reuse the existing cancellation/retirement barrier: the assembly POST
       // waits until the owned discovery job has been retired on the server.
       if (!await cancel()) return;
     }
+    // Cancellation may finish after this keyed character/profile/locale scope was removed.
+    if (!scopeAlive.current || mountGeneration.current !== generation) return;
     if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
     if (retryJob?.mode === "assembly") { void run({ action: "poll", id: retryJob.id }, "assembly"); return; }
     void run({ action: "assemble", searchId: search.searchId, excludedOptionIds: [...excluded], excludedVariantKeys: [...excludedVariantKeys] }, "assembly");
@@ -524,7 +547,13 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         await releasePriorAuctionClientJob();
         acknowledged = !hasPendingAuctionClientJob();
       }
-      if (mountGeneration.current !== generation) return acknowledged;
+      if (!scopeAlive.current || mountGeneration.current !== generation) {
+        if (acknowledged) {
+          if (nonce) forgetAuctionClientRequest(nonce);
+          clearAcknowledgedAuctionClientCache(cacheKey, { profileKey: snapshotKey, jobId: ownedId, clientRequestId: nonce });
+        }
+        return acknowledged;
+      }
       if (acknowledged) {
         if (nonce) forgetAuctionClientRequest(nonce);
         remember({ jobId: undefined, clientRequestId: undefined, cancellationRequested: undefined });

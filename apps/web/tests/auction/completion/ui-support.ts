@@ -9,6 +9,7 @@ export class CompletionHarness {
   readonly language: "en" | "ru";
   requests: Body[] = [];
   deletes: string[] = [];
+  cancellationRequests: string[] = [];
   requestLookups: string[] = [];
   nonceDeletes: string[] = [];
   workStarted: string[] = [];
@@ -25,6 +26,8 @@ export class CompletionHarness {
   requestRecoveryMissing = false;
   cancelFailure = false;
   holdCancel = false;
+  lateResumeHttpError = false;
+  resumeHttpErrorsServed = 0;
   oversizedNext = false;
   recoveryFailure = false;
   dropAction: "resume" | "assemble" | null = null;
@@ -91,6 +94,7 @@ export class CompletionHarness {
   private async intercept(route: Route) {
     const request = route.request(), url = new URL(request.url());
     if (request.method() === "DELETE") {
+      this.cancellationRequests.push(request.url());
       const nonce = url.searchParams.get("clientRequestId");
       if (this.holdCancel) await new Promise<void>(resolve => this.held.push(resolve));
       if (this.cancelFailure) { await route.fulfill({ status: 503, json: { error: "auction_storage_unavailable" } }); return; }
@@ -163,6 +167,10 @@ export class CompletionHarness {
         await route.fulfill({ status: 202, json: { id, status: "queued", mode: "search", result: null, progress: null, error: null, scope: scope(this.language) } }); return;
       }
       if (this.holdPost || body.action === "resume" && this.holdContinuation) await new Promise<void>(resolve => this.held.push(resolve));
+      if (body.action === "resume" && this.lateResumeHttpError) {
+        this.resumeHttpErrorsServed++;
+        await route.fulfill({ status: 503, json: { error: "auction_storage_unavailable" } }); return;
+      }
       if (this.dropAction === body.action) { this.dropAction = null; await route.abort("failed"); return; }
       this.activeJobId = null;
       await route.fulfill({ status: 202, json: this.fail ? { id, status: "failed", result: null, progress: null, error: "simulation_unavailable", scope: scope(this.language) } : { ...completedJob(this.language, result), id, mode: result.kind } }); return;
