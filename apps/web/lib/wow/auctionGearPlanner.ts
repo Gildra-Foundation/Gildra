@@ -114,7 +114,11 @@ function prepare(input: PlannerInput) {
   assertFreshMarket(input.market);
   const slots = [...input.selectedSlots].sort();
   const options = input.options.filter(o => slots.includes(o.candidate.slotType) && o.candidate.eligible &&
-    o.candidate.variants.some(v => v.key === o.variantKey) && o.costCopper <= input.budgetCopper).sort((a, b) => a.id.localeCompare(b.id));
+    o.candidate.variants.some(v => v.key === o.variantKey) && o.costCopper <= input.budgetCopper);
+  // Input identity and exhaustive assembly stay canonical. Expensive DPS work
+  // follows discovery priority, which has no relationship to physical lot IDs.
+  const priorityOptions = [...options];
+  options.sort((a, b) => a.id.localeCompare(b.id));
   if (new Set(options.map(o => o.id)).size !== options.length) throw new Error("invalid_auction_selection");
   for (const option of options) auctionPlanCost([option]);
   const inputKey = createHash("sha256").update(JSON.stringify({ searchId: input.searchId, budget: input.budgetCopper,
@@ -124,7 +128,7 @@ function prepare(input: PlannerInput) {
   })).digest("hex");
   const max = input.maxNewSimulations ?? 48, maxAssignments = input.maxAssignments ?? 100_000;
   if (!Number.isSafeInteger(max) || max < 1 || !Number.isSafeInteger(maxAssignments) || maxAssignments < 1) throw new Error("invalid_search_limit");
-  return { options, slots, inputKey, max, maxAssignments };
+  return { options, priorityOptions, slots, inputKey, max, maxAssignments };
 }
 
 function cloneCache(cache: AuctionGearSimulationCache = {}, engine?: string) {
@@ -150,10 +154,10 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
   checkpoint?: AuctionGearSearchCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearSearchCheckpoint) => void;
 }): Promise<{ result: AuctionGearSearchResult; checkpoint: AuctionGearSearchCheckpoint }> {
-  const { options, slots, inputKey, max, maxAssignments } = prepare(input);
+  const { options, priorityOptions, slots, inputKey, max, maxAssignments } = prepare(input);
   let checkpoint: AuctionGearSearchCheckpoint, calls = 0;
   if (input.checkpoint) {
-    requireCheckpoint(inputKey, input.checkpoint);
+    requireCheckpoint(inputKey, input.checkpoint, input.checkpoint.version === 1 ? 1 : 2);
     checkpoint = structuredClone(input.checkpoint);
     checkpoint.baseline = validSimulation(checkpoint.baseline);
     checkpoint.simulationCache = cloneCache(checkpoint.simulationCache, checkpoint.baseline.engine);
@@ -162,14 +166,22 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
     const cache = cloneCache(input.simulationCache);
     const baseline = await baselineFor(input, cache);
     calls = baseline.calls;
-    checkpoint = { version: 1, inputKey, nextOption: 0, baseline: baseline.baseline, simulationCache: cache, simulations: calls };
+    checkpoint = { version: 2, inputKey, nextOption: 0, optionOrder: priorityOptions.map(option => option.id), baseline: baseline.baseline, simulationCache: cache, simulations: calls };
   }
+  const byId = new Map(options.map(option => [option.id, option]));
+  // Version 2 guards older deployed readers from misreading a priority cursor.
+  // Legacy v1 has canonical order; local predeployment v1+order remains readable.
+  const order = checkpoint.optionOrder;
+  if ((checkpoint.version === 2 && order === undefined) || order !== undefined && (!Array.isArray(order) || order.length !== options.length ||
+      new Set(order).size !== order.length || order.some(id => typeof id !== "string" || !byId.has(id)))) throw new Error("invalid_search_checkpoint");
+  if (order !== undefined) checkpoint.version = 2;
+  const evaluationOptions = order ? order.map(id => byId.get(id)!) : options;
   const save = () => input.onCheckpoint?.(checkpoint);
   save();
   let assignments = 0;
   while (checkpoint.nextOption < options.length && assignments < maxAssignments && !input.shouldYield?.()) {
     input.signal.throwIfAborted();
-    const option = options[checkpoint.nextOption], key = auctionSelectionEffectKey([option]);
+    const option = evaluationOptions[checkpoint.nextOption], key = auctionSelectionEffectKey([option]);
     let compatible = true;
     try { auctionPlanLoadout(input.loadout, [option], input.specId, slots); } catch { compatible = false; }
     let simulated = false;
@@ -187,13 +199,14 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
     if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
   }
   save();
-  const items = options.map<AuctionGearSearchItem>((option, index) => {
+  const processed = new Set(evaluationOptions.slice(0, checkpoint.nextOption).map(option => option.id));
+  const items = options.map<AuctionGearSearchItem>(option => {
     let compatible = true;
     try { auctionPlanLoadout(input.loadout, [option], input.specId, slots); } catch { compatible = false; }
     const simulation = compatible ? checkpoint.simulationCache[auctionSelectionEffectKey([option])] : undefined;
     const comparison = simulation ? compareGearSimulationResults(checkpoint.baseline, simulation) : null;
     return { ...auctionGearPurchase(option), optionId: option.id, comparison,
-      evaluation: !compatible ? "requires_combination" : !comparison && index >= checkpoint.nextOption ? "pending" :
+      evaluation: !compatible ? "requires_combination" : !comparison && !processed.has(option.id) ? "pending" :
         comparison && comparison.deltaDps > 0 && comparison.uncertainty.significant ? "upgrade" :
           comparison && comparison.deltaDps <= 0 && comparison.uncertainty.significant ? "not_upgrade" : "inconclusive" };
   }).sort((a, b) => a.lotCostCopper - b.lotCostCopper || (b.comparison?.deltaDps ?? -Infinity) - (a.comparison?.deltaDps ?? -Infinity) || a.optionId.localeCompare(b.optionId));

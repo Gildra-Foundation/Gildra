@@ -132,9 +132,11 @@ export type AuctionGearSimulationCache = Record<string, GearPlanSimulation>;
 /** Opaque effect-group identities include the native variant and equip constraints, never lot prices or IDs. */
 export type AuctionGearIncumbent = { effects: string[]; simulation: GearPlanSimulation };
 export type AuctionGearSearchCheckpoint = {
-  version: 1;
+  version: 1 | 2;
   inputKey: string;
   nextOption: number;
+  /** Required for v2 priority cursors; absent in legacy v1 canonical cursors. */
+  optionOrder?: string[];
   baseline: GearPlanSimulation;
   simulationCache: AuctionGearSimulationCache;
   simulations: number;
