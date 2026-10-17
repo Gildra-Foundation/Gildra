@@ -5,13 +5,16 @@ import { mkdir, open, unlink } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import { deserialize, serialize } from "node:v8";
 import { gunzipSync, gzip, gzipSync } from "node:zlib";
+import { nativeGearMeasurementContract, nativeGearSimulationContract } from "./gearSimulation";
 
 /** Private single-writer checkpoints. No bearer tokens or executable tasks. */
 const version = 2;
-export const auctionSimulationContract = "native-apl-v1";
+export const auctionSimulationContract = nativeGearSimulationContract;
+export const auctionMeasurementContract = nativeGearMeasurementContract;
 const maxHeader = 64 * 1024, maxCompressed = 16 * 1024 * 1024, maxUncompressed = 128 * 1024 * 1024;
 const limits = { search: 40, job: 200 };
 type Kind = keyof typeof limits;
+const simulationContract = (kind: Kind) => kind === "search" ? `${auctionSimulationContract}:${auctionMeasurementContract}` : auctionSimulationContract;
 export type AuctionStateHeader<M = Record<string, unknown>> = {
   version: number; simulationContract: string; kind: Kind; id: string; expiresAt: number; metadata: M;
 };
@@ -57,7 +60,7 @@ function readExactly(fd: number, length: number, position: number) {
 function validHeader(value: unknown, kind: Kind, id: string, fresh = true): value is AuctionStateHeader {
   if (!value || typeof value !== "object") return false;
   const header = value as AuctionStateHeader;
-  return header.version === version && header.simulationContract === auctionSimulationContract && header.kind === kind && header.id === id &&
+  return header.version === version && header.simulationContract === simulationContract(kind) && header.kind === kind && header.id === id &&
     Number.isFinite(header.expiresAt) && (!fresh || header.expiresAt > Date.now()) && Boolean(header.metadata) && typeof header.metadata === "object" && !Array.isArray(header.metadata);
 }
 function readHeader(fd: number, kind: Kind, id: string) {
@@ -104,7 +107,7 @@ export function writeAuctionState(kind: Kind, id: string, expiresAt: number, dat
     const count = readdirSync(dir).filter(name => name.startsWith(`${kind}-`) && name.endsWith(".bin")).length;
     const replacing = replaceId && replaceId !== id && validId(replaceId) && existsSync(join(dir, `${kind}-${replaceId}.bin`));
     if (!existsSync(target) && count >= limits[kind] && !(count === limits[kind] && replacing)) throw new Error();
-    const rawHeader = Buffer.from(JSON.stringify({ version, simulationContract: auctionSimulationContract, kind, id, expiresAt, metadata }));
+    const rawHeader = Buffer.from(JSON.stringify({ version, simulationContract: simulationContract(kind), kind, id, expiresAt, metadata }));
     if (rawHeader.length > maxHeader) throw new Error();
     const header = JSON.parse(rawHeader.toString("utf8")) as AuctionStateHeader;
     const bytes = serialize({ ...header, data } satisfies Envelope);
@@ -139,7 +142,7 @@ export async function writeAuctionStateAsync(kind: Kind, id: string, expiresAt: 
   try {
     // Async checkpoints only replace a synchronously admitted record. Keeping
     // admission synchronous preserves the existing forty-search capacity bound.
-    const header: AuctionStateHeader = { version, simulationContract: auctionSimulationContract, kind, id, expiresAt,
+    const header: AuctionStateHeader = { version, simulationContract: simulationContract(kind), kind, id, expiresAt,
       metadata: JSON.parse(JSON.stringify(metadata)) as Record<string, unknown> };
     if (Buffer.byteLength(JSON.stringify(header)) > maxHeader) throw new Error();
     const bytes = serialize({ ...header, data } satisfies Envelope);
@@ -245,6 +248,23 @@ export function listAuctionStateHeaders<M = Record<string, unknown>>(kind: Kind)
   };
   records.sort((a, b) => recency(b) - recency(a) || b.expiresAt - a.expiresAt || a.id.localeCompare(b.id));
   let retained = records.slice(0, limits[kind]);
+  if (kind === "search" && records.length > limits.search) {
+    // A replacement can leave41 files if the process exits before the chosen
+    // inactive victim is unlinked. Parked jobs still own their checkpoints.
+    // Establish protection before deleting anything; metadata I/O fails closed.
+    const ownersBySearch = new Map<string, Set<string>>();
+    for (const job of listAuctionStateHeaders<{ owner?: string; searchId?: string; status?: string }>("job")) {
+      const { owner, searchId, status } = job.metadata;
+      if (typeof owner !== "string" || typeof searchId !== "string" || status !== "queued" && status !== "running") continue;
+      const owners = ownersBySearch.get(searchId) ?? new Set<string>();
+      owners.add(owner); ownersBySearch.set(searchId, owners);
+    }
+    const protectedSearch = (record: AuctionStateHeader<M>) => {
+      const owner = (record.metadata as Record<string, unknown>).owner;
+      return typeof owner === "string" && Boolean(ownersBySearch.get(record.id)?.has(owner));
+    };
+    retained = [...records.filter(protectedSearch), ...records.filter(record => !protectedSearch(record))].slice(0, limits.search);
+  }
   if (kind === "job" && records.length > limits.job) {
     // A crash after a replacement's durable rename can leave201 files until
     // restart. Evict a terminal result, never an older ACK or interrupted work.

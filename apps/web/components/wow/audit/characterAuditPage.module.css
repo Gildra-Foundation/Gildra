@@ -3817,10 +3817,38 @@
 }
 
 /* Gear details are portaled to the body, so they need their own typography and
-   a scrollable, dismissible inspection surface on narrow touch screens. */
+   a scrollable, dismissible pinned inspection surface at every viewport size. */
 .warcraftTooltip { font-family: Arial, "Helvetica Neue", sans-serif; }
 .warcraftTooltip .tooltipItemHeader strong { font-family: var(--atlas-font-display, "Gildra Atlas", Georgia, serif); font-size: 16px; }
 .tooltipControls { display: none; }
+.warcraftTooltip[data-pinned="true"] {
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+}
+.warcraftTooltip[data-pinned="true"] .tooltipControls {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 30px;
+  margin: -6px -7px 7px;
+  padding: 0 3px;
+  display: flex;
+  justify-content: flex-end;
+  background: linear-gradient(#100d0bf2, #100d0be0);
+}
+.tooltipControls button {
+  width: 32px;
+  height: 29px;
+  padding: 4px;
+  border: 0;
+  color: #ffe2a2;
+  background: url("/assets/wow/ui-textures/character/dark-gold-button-up.png") center / 100% 133.333333% no-repeat;
+  cursor: pointer;
+}
+.tooltipControls button svg { width: 16px; height: 16px; }
+.tooltipControls button:focus-visible { outline: 2px solid #ffe2a2; outline-offset: 1px; }
 @media (max-width: 560px) {
   .warcraftTooltip[data-pinned="true"] {
     top: 12px !important;
@@ -3828,34 +3856,9 @@
     width: calc(100vw - 24px);
     max-height: calc(100vh - 88px);
     max-height: calc(100dvh - 88px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    pointer-events: auto;
     transform: none !important;
     animation: none !important;
   }
-  .warcraftTooltip[data-pinned="true"] .tooltipControls {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    min-height: 30px;
-    margin: -6px -7px 7px;
-    padding: 0 3px;
-    display: flex;
-    justify-content: flex-end;
-    background: linear-gradient(#100d0bf2, #100d0be0);
-  }
-  .tooltipControls button {
-    width: 32px;
-    height: 29px;
-    padding: 4px;
-    border: 0;
-    color: #ffe2a2;
-    background: url("/assets/wow/ui-textures/character/dark-gold-button-up.png") center / 100% 133.333333% no-repeat;
-    cursor: pointer;
-  }
-  .tooltipControls button svg { width: 16px; height: 16px; }
-  .tooltipControls button:focus-visible { outline: 2px solid #ffe2a2; outline-offset: 1px; }
   .warcraftTooltip[data-pinned="true"] .gearTooltipContent footer { display: none; }
 }
 

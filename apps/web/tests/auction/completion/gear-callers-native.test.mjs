@@ -27,7 +27,7 @@ function sourceModule(path, bindings, expose) {
 function transport(captured) {
   return async (_url, request) => {
     captured.push(JSON.parse(request.body));
-    return { ok: true, headers: { get: () => "simulationcraft" }, json: async () => ({ dps: 10000, dpsError: 10, confidence: 95, iterations: 750, engine }) };
+    return { ok: true, headers: { get: () => "simulationcraft" }, json: async () => ({ dps: 10000, dpsMean: 10000.125, dpsError: 10, confidence: 95, iterations: 750, engine }) };
   };
 }
 function assertNative(request) {
@@ -67,15 +67,15 @@ test("farm baseline and independent reward use native APL without an editor pres
   const captured = [];
   let presetRequests = 0;
   const { runGearFarmFromSnapshot } = sourceModule("../../../lib/wow/gearFarm/runner.ts", {
-    createHash, process, AbortSignal, Number, Error, JSON, Map, Set, Date, Math,
+    createHash, process, AbortSignal, Number, Error, JSON, Map, Set, Date, Math, nativeGearSimulationMeasurement: gear.nativeGearSimulationMeasurement,
     currentGearSeason: () => ({ id: "midnight-season-2" }), gearSlotCategoryPaths: { HEAD: [] },
     lookupGearEntities: async () => [{ externalId: 1001 }], catalogLoadoutItem: () => loadoutItem,
     equippedFarmItemPresentation: () => ({}), farmRules: [], endgameFarmRules: [], talentSpecThemes: [theme],
     resolveFarmRewards: async () => ({ options: [{}], exactVariants: 1, searchLimited: false }),
     getRotationPreset: async () => { presetRequests++; return { defaultRules: rules }; },
     confirmFarmImprovements: async input => {
-      await input.simulate({ equipment, changes: [] }, input.signal);
-      await input.simulate(gear.prepareGearLoadout({ selections: [{ candidate, variantKey: "exact" }], equipment, loadout: [loadoutItem], specId: 72 }), input.signal);
+      assert.equal((await input.simulate({ equipment, changes: [] }, input.signal)).dps, 10000.125);
+      assert.equal((await input.simulate(gear.prepareGearLoadout({ selections: [{ candidate, variantKey: "exact" }], equipment, loadout: [loadoutItem], specId: 72 }), input.signal)).dps, 10000.125);
       return { engine, baselineDps: 10000, simulations: 2, searchLimited: false };
     },
     farmSimulationScenario: "single-target", sortFarmActivities: activities => activities, addPlannerItemIcons: async () => {},
@@ -115,10 +115,10 @@ test("native gear cache is versioned and cannot reuse a legacy custom-priority e
   const result = await route.POST(request());
   assert.equal(result.status, 200);
   assert.equal(captured.length, 2, "native simulations must bypass both legacy cache entries");
-  assert.equal(result.body.baselineDps, 10000);
+  assert.equal(result.body.baselineDps, 10000.125);
   const native = { ...common, actionListMode: "native" };
   assert.equal(gear.nativeGearSimulationContract, "native-apl-v1");
-  const expected = createHash("sha256").update(JSON.stringify({ ...native, simulationContract: "native-apl-v1" })).digest("hex");
+  const expected = createHash("sha256").update(JSON.stringify({ ...native, simulationContract: "native-apl-v1", measurementContract: gear.nativeGearMeasurementContract })).digest("hex");
   assert.equal(gear.gearComparisonFingerprint(native), expected, "native cache keys must include the explicit simulation semantics version");
   assert.notEqual(gear.gearComparisonFingerprint(native), gear.gearComparisonFingerprint(legacy));
   assert.notEqual(gear.gearComparisonFingerprint(native), gear.gearComparisonFingerprint({ ...native, talentLoadout: "other-talents" }));

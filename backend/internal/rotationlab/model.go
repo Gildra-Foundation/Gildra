@@ -198,6 +198,7 @@ type SimulationResult struct {
 	Iterations          int                  `json:"iterations"`
 	Confidence          int                  `json:"confidence"`
 	DPS                 int                  `json:"dps"`
+	DPSMean             float64              `json:"dpsMean,omitempty"` // Exact native mean; DPS stays compatible for existing clients.
 	DPSError            float64              `json:"dpsError"`
 	BaselineIncluded    *bool                `json:"baselineIncluded,omitempty"`
 	CombatStats         SimulatedCombatStats `json:"combatStats"`

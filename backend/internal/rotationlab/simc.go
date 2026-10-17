@@ -810,7 +810,8 @@ func resultFromSimC(input SimulationInput, report simcReport, baselineDPS int) (
 		result.ModelNotice = "SimulationCraft used the specialization's " + profileLabel + " and " + priorityLabel + "."
 	}
 	result.DPS = int(math.Round(player.CollectedData.DPS.Mean))
-	result.DPSError = round(player.CollectedData.DPS.MeanStdDev, 3)
+	result.DPSMean = player.CollectedData.DPS.Mean
+	result.DPSError = player.CollectedData.DPS.MeanStdDev
 	baselineIncluded := !input.SkipBaseline
 	result.BaselineIncluded = &baselineIncluded
 	result.CombatStats = SimulatedCombatStats{

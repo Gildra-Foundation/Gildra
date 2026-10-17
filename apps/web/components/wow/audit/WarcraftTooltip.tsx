@@ -29,15 +29,17 @@ export function WarcraftTooltip({ children, content, block = false, pinned = fal
     const anchor = anchorRef.current;
     if (!anchor) return;
     const rect = anchor.getBoundingClientRect();
-    const tooltipWidth = Math.min(420, window.innerWidth - 24);
+    const tooltipWidth = Math.min(tooltipRef.current?.offsetWidth ?? 420, window.innerWidth - 24);
     const tooltipHeight = Math.min(tooltipRef.current?.offsetHeight ?? 420, window.innerHeight - 24);
     const left = Math.max(12, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 12));
     const spaceAbove = rect.top - 12;
     const spaceBelow = window.innerHeight - rect.bottom - 12;
     const side = spaceAbove >= tooltipHeight || spaceAbove > spaceBelow ? "top" : "bottom";
-    const top = side === "top"
-      ? Math.max(tooltipHeight + 12, rect.top - 10)
-      : Math.min(rect.bottom + 10, window.innerHeight - tooltipHeight - 12);
+    const desiredTop = side === "top" ? rect.top - 10 - tooltipHeight : rect.bottom + 10;
+    // An anchor can move outside the viewport after rotation or scrolling.
+    // Clamp the final rectangle, then compensate for the top-side CSS transform.
+    const visibleTop = Math.max(12, Math.min(desiredTop, window.innerHeight - tooltipHeight - 12));
+    const top = side === "top" ? visibleTop + tooltipHeight : visibleTop;
     setPosition({ left, top, side });
   }, []);
 
@@ -99,8 +101,9 @@ export function WarcraftTooltip({ children, content, block = false, pinned = fal
       // Closed details can retain layout rectangles in Chromium.
       if (details instanceof HTMLDetailsElement && !details.open && anchorRef.current && details.contains(anchorRef.current)) dismissHidden();
     };
-    const observer = new ResizeObserver(closeHidden);
+    const observer = new ResizeObserver(() => { closeHidden(); schedulePosition(); });
     if (anchorRef.current) observer.observe(anchorRef.current);
+    if (tooltipRef.current) observer.observe(tooltipRef.current);
     document.addEventListener("toggle", onDisclosureToggle, true);
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", schedulePosition, { capture: true, passive: true });
@@ -144,7 +147,7 @@ export function WarcraftTooltip({ children, content, block = false, pinned = fal
   }, [open, pinned]);
   useEffect(() => {
     if (!pinned || !hasPinnedClose) return;
-    if (window.matchMedia("(max-width: 560px)").matches) closeRef.current?.focus();
+    closeRef.current?.focus({ preventScroll: true });
     const onEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (timerRef.current) clearTimeout(timerRef.current);

@@ -8,6 +8,7 @@ import { resolve } from "node:path";
 import vm from "node:vm";
 import { resolvedAuctionVariant, auctionVariantKey } from "../../../lib/wow/auctionItemVariant.ts";
 import { auctionGearProfileFingerprint } from "../../../lib/wow/auctionGearFingerprint.ts";
+import { nativeGearSimulationMeasurement } from "../../../lib/wow/gearSimulation.ts";
 import { auctionGearPurchase } from "../../../lib/wow/auctionGearPlanner.ts";
 import { createAuctionGearSearch, deleteAuctionGearSearch } from "../../../lib/wow/auctionGearSearchStore.ts";
 import { enqueueAuctionGearJob } from "../../../lib/wow/auctionGearJobs.ts";
@@ -18,7 +19,7 @@ const cases = [];
 const check = (name, run) => cases.push({ name, run });
 const engine = "SimulationCraft synthetic-reliability";
 const minimal = { dps: 1000, dpsError: 1, confidence: 95, iterations: 750, engine };
-const full = { ...minimal, casts: [{ abilityId: "synthetic", time: 0 }], dpsSeries: [1000],
+const full = { ...minimal, dpsMean: minimal.dps, casts: [{ abilityId: "synthetic", time: 0 }], dpsSeries: [1000],
   resources: [{ name: "synthetic", points: [1, 2] }], modelNotice: "Synthetic timeline not needed by gear ranking" };
 const source = await readFile(new URL("../../../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
 const selectionCode = stripTypeScriptTypes(source.slice(source.indexOf("export function selectedAuctionGearAssemblyOptions("),
@@ -26,7 +27,7 @@ const selectionCode = stripTypeScriptTypes(source.slice(source.indexOf("export f
 const selectedAuctionGearAssemblyOptions = new vm.Script(selectionCode + "\n;selectedAuctionGearAssemblyOptions").runInNewContext({auctionGearVariantSelectionKey});
 const simulatorCode = stripTypeScriptTypes(source.slice(source.indexOf("function createAuctionSimulator(")), { mode: "strip" });
 const createSimulator = new vm.Script(simulatorCode + "\n;createAuctionSimulator").runInNewContext({
-  auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, AbortSignal, process: { env: { ROTATION_WORKER_URL: "http://synthetic.invalid" } }, Number, JSON, Error,
+  auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, AbortSignal, process: { env: { ROTATION_WORKER_URL: "http://synthetic.invalid" } }, Number, JSON, Error,
   assertFreshMarket() {}, prepareGearLoadout: () => ({ equipment: {}, changes: [] }),
   fetch: async () => Response.json(full, { headers: { "x-gildra-engine": "simulationcraft" } }),
 });

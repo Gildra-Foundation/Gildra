@@ -14,7 +14,7 @@ import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
 import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
-import { prepareGearLoadout, type GearSimulationScenario } from "./gearSimulation";
+import { prepareGearLoadout, nativeGearSimulationMeasurement, type GearSimulationScenario } from "./gearSimulation";
 import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
 import { createAuctionGearSearch, deleteAuctionGearSearch, scheduleAuctionGearSearchSave, flushAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
@@ -76,7 +76,7 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
   const [market, localizedEquipped, baselineEntities] = await Promise.all([
     getCharacterAuctionMarket(character, token, { signal }),
     getAuctionEquippedPresentation({ character, equipment: armory.equipment, locale: input.locale, token, signal }),
-    lookupGearEntities(equipped.map(i => i.item!.id!), locale, signal),
+    lookupGearEntities(equipped.map(i => i.item!.id!), locale, signal, { includeSources: false, auctionCache: true }),
   ]);
   check();
   const qualityIds: Record<string, number> = { POOR: 0, COMMON: 1, UNCOMMON: 2, RARE: 3, EPIC: 4, LEGENDARY: 5, ARTIFACT: 6, HEIRLOOM: 7 };
@@ -513,11 +513,8 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
         })
       });
       if (!response.ok || response.headers.get("x-gildra-engine") !== "simulationcraft") throw new Error("simulation_unavailable");
-      const result = (await response.json()) as GearPlanSimulation;
-      if (!Number.isFinite(result.dpsError) || !Number.isFinite(result.confidence) || result.confidence !== 95) throw new Error("invalid_simulation_result");
-      if (engine() && result.engine !== engine()) throw new Error("simulation_version_changed");
-      const simulation = { dps: result.dps, dpsError: result.dpsError, confidence: result.confidence,
-        iterations: result.iterations, engine: result.engine };
+      const simulation = nativeGearSimulationMeasurement(await response.json());
+      if (engine() && simulation.engine !== engine()) throw new Error("simulation_version_changed");
       auctionGearMechanicalCache.set(cacheKey, simulation);
       verified = true;
       return simulation;

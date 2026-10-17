@@ -15,6 +15,7 @@ import { resolveFarmRewards } from "./rewards";
 import { equippedFarmItemPresentation } from "./presentation";
 import { confirmFarmImprovements, farmSimulationScenario } from "./confirmation";
 import type { GearPlanSimulation } from "../auctionGearPlanner";
+import { nativeGearSimulationMeasurement } from "../gearSimulation";
 import type { FarmActivity, FarmProgress, GearFarmInput, GearFarmResult } from "./types";
 export async function runGearFarmPlan(input: GearFarmInput, token: string, signal: AbortSignal, progress: (p: FarmProgress) => void): Promise<GearFarmResult> {
   signal.throwIfAborted();
@@ -139,7 +140,7 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
         }),
       });
       if (!response.ok || response.headers.get("x-gildra-engine") !== "simulationcraft") throw new Error("simulation_unavailable");
-      return await response.json() as GearPlanSimulation;
+      return nativeGearSimulationMeasurement(await response.json());
     },
   });
   for (const activity of activities) {

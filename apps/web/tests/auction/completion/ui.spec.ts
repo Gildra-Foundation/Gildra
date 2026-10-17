@@ -93,7 +93,7 @@ for (const action of ["assemble", "resume"] as const) test(`late ${action} respo
 test("locale formats reject mixed separators and preserve the old result until a valid new search", async ({ auction }) => {
   await auction.open();
   for (const invalid of auction.language === "en" ? ["10,00", "10.000,1234", "1,000.12345"] : ["10 00", "10,000.1234", "1 000,12345"]) {
-    await auction.panel.locator('[name="budgetGold"]').fill(invalid); await auction.find.click();
+    await auction.panel.locator('[name="budgetGold"]').fill(invalid); await expect(auction.find).toBeDisabled();
     await expect(auction.panel.getByRole("alert")).toContainText(/золот|gold/i);
   }
   expect(auction.requests).toHaveLength(0);
@@ -509,11 +509,11 @@ test("regression: prior scope retirement failure keeps its global owner and bloc
  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('gildra:auction-active:v1')!).id)).toBe('prior-held-job');
  auction.cancelFailure = false; await retry.click(); await expect(auction.find).toBeEnabled(); await auction.search(); expect(auction.requests).toHaveLength(1); expect(auction.deletes).toContain('prior-held-job');
 });
-test("regression: actual budget changes and invalid drafts remove actionable recommendations", async ({ auction }) => {
+test("regression: actual budget changes clear results while invalid drafts suspend actions", async ({ auction }) => {
  await auction.open(); await auction.search(); await auction.build.click(); await expect(auction.result).toBeVisible();
  await auction.panel.locator('[name="budgetGold"]').fill('9999'); await expect(auction.result).toHaveCount(0); await expect(auction.panel.locator('[data-auction-search-result]')).toHaveCount(0);
  await auction.search(); expect(auction.requests.at(-1)?.budgetGold).toBe('9999');
- await auction.panel.locator('[name="budgetGold"]').fill('invalid'); await auction.find.click(); await expect(auction.panel.getByRole('alert')).toContainText(/золот|gold/); await expect(auction.panel.locator('[data-auction-search-result]')).toHaveCount(0);
+ await auction.panel.locator('[name="budgetGold"]').fill('invalid'); await expect(auction.find).toBeDisabled(); await expect(auction.build).toBeDisabled(); await expect(auction.panel.getByRole('alert')).toContainText(/золот|gold/); await expect(auction.panel.locator('[data-auction-search-result]')).toBeVisible();
 });
 test("regression: oversized selection provides an actionable localized message", async ({ auction }) => {
  await auction.open(); await auction.search(); auction.oversizedNext = true; await auction.build.click();
@@ -662,4 +662,102 @@ for (const rejected of [false, true]) test(`three-fix late-error regression: ret
   auction.cancelFailure = false;
   await page.goto(`/?lang=${auction.language}&controls=1&snapshot=1`, { waitUntil: "networkidle" });
   await expect(auction.find).toBeEnabled(); await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("9000");
+});
+
+
+test("five-speed regression: typed equivalent decimal keeps completed result and cache across invalid intermediate draft", async ({ auction, page }, info) => {
+  await auction.open(); await auction.search(); await auction.build.click(); await expect(auction.result).toBeVisible();
+  const input = auction.panel.locator('[name="budgetGold"]');
+  const beforeResult = await auction.result.textContent();
+  const readCache = () => page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")));
+  const beforeCache = await readCache(); const beforeRequests = auction.requests.length;
+  // Pasted/fill equivalent is a control for the earlier atomic normalization fix.
+  await input.fill(auction.t("10000,0", "10000.0")); await expect(auction.result).toBeVisible(); await input.fill("10000");
+  await input.press("End"); await input.pressSequentially(auction.t(",", "."));
+  await expect(auction.result).toBeVisible();
+  await expect(input).toHaveAttribute("aria-invalid", "true"); await expect(auction.find).toBeDisabled(); await expect(auction.build).toBeDisabled();
+  expect(await readCache()).toEqual(beforeCache);
+  await input.pressSequentially("0");
+  await expect(input).not.toHaveAttribute("aria-invalid", "true"); await expect(auction.find).toBeEnabled(); await expect(auction.build).toBeEnabled();
+  expect(await auction.result.textContent()).toBe(beforeResult); expect(await readCache()).toEqual(beforeCache); expect(auction.requests).toHaveLength(beforeRequests);
+  await page.screenshot({ path: info.outputPath("typed-equivalent-preserved.png"), fullPage: true });
+});
+
+test("five-speed regression: pinned item remains in viewport and interactive after portrait to landscape rotation", async ({ auction, page }, info) => {
+  await auction.open(); await auction.search(); await auction.build.click(); await expect(auction.result).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const actualTrigger = auction.result.getByRole("button", { name: /Описание предмета|Item details/ }).first();
+  await actualTrigger.click(); const dialog = page.getByRole("dialog"); await expect(dialog).toBeVisible();
+  await page.setViewportSize({ width: 844, height: 390 });
+  const close = dialog.getByRole("button", { name: /Закрыть описание предмета|Close item details/ });
+  await expect(close).toBeVisible();
+  await expect.poll(() => dialog.evaluate(node => { const r = node.getBoundingClientRect(); return r.top >= 11 && r.bottom <= innerHeight - 11 && r.left >= 11 && r.right <= innerWidth - 11; })).toBe(true);
+  await expect.poll(() => dialog.evaluate(node => getComputedStyle(node).pointerEvents)).toBe("auto");
+  await page.screenshot({ path: info.outputPath("landscape-pinned-accessible.png") });
+  await close.click(); await expect(dialog).toHaveCount(0); await expect(actualTrigger).toBeFocused();
+});
+
+
+test("five-speed control: invalid budget preserves excluded variants through correction and reload, changed amount clears them", async ({ auction, page }) => {
+  await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]');
+  await card.locator("summary").click(); await card.getByRole("checkbox").uncheck();
+  const readCache = () => page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([,value]) => JSON.parse(value))[0]);
+  const saved = await readCache(); expect(saved.excludedVariantKeys).toHaveLength(1);
+  const input = auction.panel.locator('[name="budgetGold"]'); await input.fill(auction.t("10000,", "10000."));
+  await expect(card.getByRole("checkbox")).toBeDisabled(); await expect(auction.find).toBeDisabled(); expect(await readCache()).toEqual(saved);
+  await input.pressSequentially("0000"); await expect(card.getByRole("checkbox")).not.toBeChecked(); await expect(card.getByRole("checkbox")).toBeEnabled();
+  await page.reload({ waitUntil: "networkidle" }); await card.locator("summary").click(); await expect(card.getByRole("checkbox")).not.toBeChecked();
+  await expect(input).toHaveValue("10000"); expect(auction.requests).toHaveLength(1);
+  await input.fill(auction.t("10000,", "10000.")); await input.pressSequentially("1");
+  await expect(auction.panel.locator('[data-auction-search-result]')).toHaveCount(0); await expect(auction.find).toBeEnabled();
+  await auction.search(); expect(auction.requests.at(-1)?.budgetGold).toBe("10000.1");
+  await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).toBeChecked();
+});
+
+test("five-speed control: empty or invalid draft disables submit, resume and assembly without losing previous facts", async ({ auction, page }) => {
+  await auction.open(); await auction.search(); await auction.build.click(); await expect(auction.result).toBeVisible();
+  const input = auction.panel.locator('[name="budgetGold"]'); const count = auction.requests.length;
+  for (const value of ["", "wrong", auction.t("10000,", "10000.")]) {
+    await input.fill(value); await expect(auction.find).toBeDisabled(); await expect(auction.build).toBeDisabled(); await expect(input).toHaveAttribute("aria-invalid", "true");
+    // The controller must guard even a programmatic/native form submit, not just disabled button clicks.
+    await input.evaluate(node => (node as HTMLInputElement).form!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+    await expect(auction.result).toBeVisible(); expect(auction.requests).toHaveLength(count);
+  }
+  await input.fill("10000"); await expect(auction.find).toBeEnabled(); await expect(auction.build).toBeEnabled();
+});
+
+test("five-speed control: invalid draft preserves accepted lost-response nonce and blocks reconnect until corrected", async ({ auction, page }) => {
+  await auction.open(); await auction.search(); auction.dropAction = "assemble"; await auction.build.click();
+  const retry = auction.panel.getByRole("button", { name: /Повторить восстановление|Retry recovery/ }); await expect(retry).toBeVisible();
+  const before = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")));
+  const input = auction.panel.locator('[name="budgetGold"]'); await input.fill(auction.t("10000,", "10000."));
+  await expect(retry).toBeDisabled(); expect(await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")))).toEqual(before);
+  expect(auction.cancellationRequests).toHaveLength(0); await input.pressSequentially("0"); await retry.click(); await expect(auction.result).toBeVisible();
+  expect(auction.requests.filter(body => body.action === "assemble")).toHaveLength(1);
+});
+
+for (const motion of ["reduce", "no-preference"] as const) test(`five-speed control: pinned weapon supports short viewport scrolling and keyboard dismissal with motion ${motion}`, async ({ auction, page }, info) => {
+  await page.emulateMedia({ reducedMotion: motion });
+  await page.goto(`/?lang=${auction.language}&tooltip=1&weapon=1`, { waitUntil: "networkidle" }); await page.evaluate(() => document.fonts.ready);
+  const trigger = page.getByRole("button", { name: /Synthetic exact weapon/ }); await trigger.focus(); await trigger.press("Enter");
+  const dialog = page.getByRole("dialog"), close = dialog.getByRole("button", { name: /Закрыть описание предмета|Close item details/ });
+  await expect(close).toBeFocused();
+  for (const viewport of [{width:844,height:390},{width:1440,height:320},{width:390,height:260}]) {
+    await page.setViewportSize(viewport);
+    await expect.poll(() => dialog.evaluate(node => { const r = node.getBoundingClientRect(); return r.top >= 11 && r.bottom <= innerHeight - 11 && r.left >= 11 && r.right <= innerWidth - 11; })).toBe(true);
+    await expect(close).toBeVisible();
+  }
+  const metrics = await dialog.evaluate(node => ({ height: node.clientHeight, content: node.scrollHeight })); expect(metrics.content).toBeGreaterThan(metrics.height);
+  const box = await dialog.boundingBox(); await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2); await page.mouse.wheel(0, 500);
+  await expect.poll(() => dialog.evaluate(node => node.scrollTop)).toBeGreaterThan(0);
+  await page.screenshot({ path: info.outputPath(`short-scroll-${motion}.png`) });
+  await page.keyboard.press("Escape"); await expect(dialog).toHaveCount(0); await expect(trigger).toBeFocused();
+});
+
+test("five-speed control: hover description clamps at a short viewport edge and Escape closes it", async ({ auction, page }) => {
+  await page.setViewportSize({ width: 844, height: 320 });
+  await page.goto(`/?lang=${auction.language}&tooltip=1&weapon=1`, { waitUntil: "networkidle" }); await page.evaluate(() => document.fonts.ready);
+  const trigger = page.getByRole("button", { name: /Synthetic exact weapon/ }); await trigger.focus(); const tooltip = page.getByRole("tooltip");
+  await expect(tooltip).toBeVisible(); await expect.poll(() => tooltip.evaluate(node => { const r = node.getBoundingClientRect(); return r.top >= 11 && r.bottom <= innerHeight - 11; })).toBe(true);
+  await page.keyboard.press("Escape"); await expect(tooltip).toHaveCount(0); await expect(trigger).toBeFocused();
 });

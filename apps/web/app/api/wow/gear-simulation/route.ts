@@ -7,7 +7,7 @@ import { getBattleNetCharacterDetails, getBattleNetSimulationSnapshot } from "@/
 import { getBattleNetCharacterBySlug } from "@/lib/wow/battleNetCharacters";
 import { getGearCandidatesForEquippedItem, lookupGearEntities } from "@/lib/wow/gearCandidateRepository";
 import { catalogLoadoutItem, gearSlotCategoryPaths } from "@/lib/wow/gearCandidates";
-import { compareGearSimulationResults, gearComparisonFingerprint, prepareGearLoadout, type GearSimulationScenario, type SimcGearChange } from "@/lib/wow/gearSimulation";
+import { compareGearSimulationResults, gearComparisonFingerprint, nativeGearSimulationMeasurement, prepareGearLoadout, type GearSimulationScenario, type SimcGearChange } from "@/lib/wow/gearSimulation";
 
 export const dynamic = "force-dynamic";
 
@@ -58,8 +58,7 @@ async function simulate(input: {
   });
   if (!response.ok || response.headers.get("x-gildra-engine") !== "simulationcraft") throw new Error("simulation_unavailable");
   const payload = await response.json() as RotationSimulationResult & { combatStats?: CombatStats };
-  if (!Number.isFinite(payload.dps) || payload.dps <= 0 || !Number.isFinite(payload.dpsError) || Number(payload.dpsError) < 0 || !Number.isInteger(payload.iterations) || payload.iterations <= 0 || payload.confidence !== 95 || !String(payload.engine).startsWith("SimulationCraft")) throw new Error("invalid_simulation_result");
-  const value = { dps: payload.dps, dpsError: Math.max(0, payload.dpsError ?? 0), confidence: payload.confidence || 95, iterations: payload.iterations, engine: payload.engine, combatStats: payload.combatStats };
+  const value = { ...nativeGearSimulationMeasurement(payload), combatStats: payload.combatStats };
   cache.set(input.key, { expires: Date.now() + 10 * 60_000, value });
   if (cache.size > 300) cache.delete(cache.keys().next().value as string);
   return value;

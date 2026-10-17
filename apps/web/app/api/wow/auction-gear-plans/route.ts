@@ -161,7 +161,10 @@ async function postPlan(request: Request) {
           resumeOwnedAuctionGearWork(user.id, existing.id, user.token);
           return reply(getAuctionGearJob(user.id, existing.id), 202);
         }
-      } catch { return reply({ error: "invalid_plan_request" }, 400); }
+      } catch (error) {
+        if (error instanceof Error && error.message === "auction_storage_unavailable") throw error;
+        return reply({ error: "invalid_plan_request" }, 400);
+      }
     }
     // Only IDs cross the boundary. Prices, item effects and budget stay server-owned.
     const selection = hasAllowed ? body.allowedOptionIds : hasExcluded ? { excludedOptionIds: body.excludedOptionIds, ...(hasVariants ? { excludedVariantKeys: variants } : {}) } : undefined;

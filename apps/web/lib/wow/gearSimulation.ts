@@ -5,6 +5,21 @@ import type { GearCandidate, GearCandidateVariant } from "./gearCandidates";
 
 export type GearSimulationScenario = "single-target" | "aoe" | "execute";
 export const nativeGearSimulationContract = "native-apl-v1";
+export const nativeGearMeasurementContract = "native-dps-mean-v1";
+
+/** Native gear ranking uses unrounded means/standard errors. An older worker
+ * must fail closed instead of silently relabelling integer DPS as precise. */
+export function nativeGearSimulationMeasurement(value: unknown) {
+  if (!value || typeof value !== "object") throw new Error("invalid_simulation_result");
+  const result = value as { dps: number; dpsMean: number; dpsError: number; confidence: number; iterations: number; engine: string };
+  if (!Number.isFinite(result.dpsMean) || result.dpsMean <= 0 ||
+      !Number.isSafeInteger(result.dps) || result.dps !== Math.round(result.dpsMean) ||
+      !Number.isFinite(result.dpsError) || result.dpsError < 0 || result.confidence !== 95 ||
+      !Number.isSafeInteger(result.iterations) || result.iterations <= 0 ||
+      typeof result.engine !== "string" || !result.engine.startsWith("SimulationCraft")) throw new Error("invalid_simulation_result");
+  return { dps: result.dpsMean, dpsError: result.dpsError, confidence: result.confidence,
+    iterations: result.iterations, engine: result.engine };
+}
 
 export type GearCustomization = {
   enchantId?: number;
@@ -104,7 +119,8 @@ export function gearComparisonFingerprint(input: {
   changes?: SimcGearChange[];
   engineVersion?: string;
 } & ({ actionListMode: "native"; rules?: never } | { actionListMode?: "custom"; rules: string[] })) {
-  const contract = input.actionListMode === "native" ? { ...input, simulationContract: nativeGearSimulationContract } : input;
+  const contract = input.actionListMode === "native" ? { ...input, simulationContract: nativeGearSimulationContract,
+    measurementContract: nativeGearMeasurementContract } : input;
   return createHash("sha256").update(JSON.stringify(contract)).digest("hex");
 }
 

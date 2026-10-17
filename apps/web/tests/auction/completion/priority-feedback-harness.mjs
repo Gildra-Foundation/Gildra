@@ -10,6 +10,7 @@ import { normalizeGearCandidate, catalogLoadoutItem, gearSlotCategoryPaths } fro
 import { auctionVariantKey, resolvedAuctionVariant, validAuctionWeapon } from "../../../lib/wow/auctionItemVariant.ts";
 import { supportedAuctionModifiers } from "../../../lib/wow/gearItemModifiers.ts";
 import { auctionGearProfileFingerprint } from "../../../lib/wow/auctionGearFingerprint.ts";
+import { nativeGearSimulationMeasurement } from "../../../lib/wow/gearSimulation.ts";
 import { assertFreshMarket } from "../../../lib/wow/auctionMarket.ts";
 import { AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference } from "../../../lib/wow/auctionItemReference.ts";
 
@@ -57,7 +58,7 @@ export async function harness({ entity = record(), availableReference = true, re
     });
   const runnerSource = await readFile(new URL("../../../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
   const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch})")
-    .runInNewContext({ auctionGearVariantSelectionKey, auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...store, ...discovery,
+    .runInNewContext({ auctionGearVariantSelectionKey, auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...store, ...discovery,
       talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
       getCharacterAuctionMarket: async (_character, _token, options) => { state.marketCalls++; state.marketSignals.push(options?.signal); return state.market; },
       getBattleNetSimulationSnapshot: async () => state.armory,
@@ -71,7 +72,8 @@ export async function harness({ entity = record(), availableReference = true, re
       fetch: async (_url, options) => {
         state.simulationCalls++;
         const changes = JSON.parse(options.body).gearChanges ?? []; state.simulationOrder.push(changes.map(c=>c.itemId));
-        return Response.json({ dps: 1000 + changes.reduce((sum, change) => sum + (change.itemId === 90000 ? 100 : -100), 0),
+        const dps = 1000 + changes.reduce((sum, change) => sum + (change.itemId === 90000 ? 100 : -100), 0);
+        return Response.json({ dps, dpsMean: dps,
           dpsError: 1, confidence: 95, iterations: 1000, engine: state.workerEngine }, { headers: { "x-gildra-engine": "simulationcraft" } });
       } });
   const signal = () => new AbortController().signal;

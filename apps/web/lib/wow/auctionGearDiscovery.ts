@@ -277,7 +277,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       const ids = state.itemIds.slice(state.itemCursor, state.itemCursor + catalogBatch);
       // See the complete bounded summary domain before spending detail/native work.
       // Base required level is not an auction variant's actual scaled requirement.
-      const records = await lookupGearRecords(ids, input.locale, undefined, undefined, input.signal);
+      const records = await lookupGearRecords(ids, input.locale, undefined, undefined, input.signal, true);
       input.signal.throwIfAborted();
       const supportedSummaryItems = state.supportedSummaryItems ??= new Set();
       for (const id of ids) {
@@ -399,7 +399,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       input.onProgress?.({ phase: "variants", completed: state.variantCursor, total: state.variantKeys.length });
     } else if (state.records.length) {
       const records = state.records.slice(0, detailBatch);
-      const entities = await gearEntityDetails(records, input.locale, false, input.signal);
+      const entities = await gearEntityDetails(records, input.locale, false, input.signal, true);
       input.signal.throwIfAborted();
       for (const record of records) {
         state.detailedItems.add(record.externalId);

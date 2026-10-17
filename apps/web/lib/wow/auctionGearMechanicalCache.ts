@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { GearPlanSimulation } from "./auctionGearTypes";
+import { nativeGearMeasurementContract } from "./gearSimulation";
 
 const ttlMs = 15 * 60_000;
 const maximum = 4096;
@@ -16,7 +17,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
 }) {
   const changes = (request.gearChanges ?? []).map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, gearChanges: changes,
-    actionListMode: "native", version: 1 }))).digest("hex");
+    actionListMode: "native", version: 2, measurementContract: nativeGearMeasurementContract }))).digest("hex");
 }
 
 export function createAuctionGearMechanicalCache(now = Date.now, capacity = maximum, lifetime = ttlMs) {

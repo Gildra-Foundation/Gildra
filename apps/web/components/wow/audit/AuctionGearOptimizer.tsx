@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AuctionGearJob } from "@/lib/wow/auctionGearJobs";
 import type { AuctionGearAssemblyResult, AuctionGearSearchResult, AuctionPlanProgress } from "@/lib/wow/auctionGearTypes";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "@/lib/wow/auctionGearSelection";
@@ -51,7 +51,16 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const ru = locale === "ru";
   const t = (r: string, e: string) => ru ? r : e;
   const [initializing, setInitializing] = useState(true);
-  const [budget, setBudget] = useState("10000");
+  const [budget, setBudgetInput] = useState("10000");
+  // Keep the accepted amount separate from intermediate keyboard drafts. Recovery
+  // restores valid server-owned intent through this setter; typing uses raw input.
+  const acceptedBudget = useRef("10000");
+  const setBudget = useCallback((value: string) => {
+    acceptedBudget.current = normalizeAuctionBudgetGold(value, locale);
+    setBudgetInput(value);
+  }, [locale]);
+  let validBudget = true;
+  try { normalizeAuctionBudgetGold(budget, locale); } catch { validBudget = false; }
   const [objective, setObjective] = useState<"value" | "dps">("value");
   const [excludedVariantKeys, setExcludedVariantKeys] = useState<Set<string>>(new Set());
   const [excludedOpen, setExcludedOpen] = useState(false);
@@ -89,7 +98,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const slotName = (slot: string) => slotNames[slot]?.[ru ? 0 : 1] ?? slot;
   const recommendationGroups = useMemo(() => getAuctionGearRecommendationGroups(search?.items ?? []), [search]);
   const available = search?.items.filter(item => !excluded.has(item.optionId) && !excludedVariantKeys.has(auctionGearVariantSelectionKey(item))) ?? [];
-  const selectionLocked = Boolean(cancellation || running && transport?.mode !== "search");
+  const selectionLocked = !validBudget || Boolean(cancellation || running && transport?.mode !== "search");
   const measuredSignificant = Boolean(assembly && assembly.comparison.deltaDps > 0 && assembly.comparison.uncertainty.significant);
   const confirmed = assembly?.bestConfirmed ?? (measuredSignificant ? assembly : null);
   const displayed = confirmed ?? assembly;
@@ -297,7 +306,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         retireAuctionClient(current.done, deletion);
       }
     };
-  }, [cacheKey, characterSlug, locale, recoveryAttempt, snapshotKey]);
+  }, [cacheKey, characterSlug, locale, recoveryAttempt, setBudget, snapshotKey]);
 
   function remember(update: Partial<AuctionClientCache>) {
     cache.current = { version: 1, profileKey: snapshotKey, mode: "search", excludedOptionIds: [], ...cache.current, ...update };
@@ -494,7 +503,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   }
   useEffect(() => { runRef.current = run; });
   async function startSearch() {
-    if (initializing || active.current || cache.current?.cancellationRequested) return;
+    if (!validBudget || initializing || active.current || cache.current?.cancellationRequested) return;
     try {
       const budgetGold = normalizeAuctionBudgetGold(budget, locale);
       const slots = parseAuctionGearSlots(selectedSlots);
@@ -508,7 +517,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     }
   }
   async function startAssembly() {
-    if (!search || !available.length || cache.current?.cancellationRequested) return;
+    if (!validBudget || !search || !available.length || cache.current?.cancellationRequested) return;
     const generation = mountGeneration.current;
     if (active.current) {
       if (active.current.mode !== "search") return;
@@ -585,7 +594,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     changeExclusions(next, variants);
   }
   function changeExclusions(next: Set<string>, variants = excludedVariantKeys) {
-    if (active.current?.mode === "assembly" || cancellation) return;
+    if (!validBudget || active.current?.mode === "assembly" || cancellation) return;
     const needsCancellation = Boolean(active.current?.mode === "search" || recoveryController.current || retryJob || hasRecovery);
     if (needsCancellation) void cancel();
     setExcluded(next); setExcludedVariantKeys(variants);
@@ -606,7 +615,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     changeExclusions(new Set(), variants);
   }
   function continueSearch() {
-    if (!search || active.current || cache.current?.cancellationRequested) return;
+    if (!validBudget || !search || active.current || cache.current?.cancellationRequested) return;
     if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
     void run({ action: "resume", searchId: search.searchId }, "search");
   }
@@ -622,8 +631,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     {transport.status === "failed" ? <p role="alert" className={styles.feedback}>{failureText(transport.error)}</p> : null}
     {transport.status === "cancelled" ? <p role="status" className={styles.note}>{search ? t("Расчёт остановлен. Полученные результаты сохранены.", "Calculation stopped. Available results have been kept.") : t("Поиск отменён.", "Search cancelled.")}</p> : null}
     {transport.status === "failed" && cancellation === "failed" ? <button type="button" className={styles.button} onClick={() => void cancel()}>{t("Повторить отмену", "Retry cancellation")}</button> : null}
-    {transport.status === "failed" && !cancellation && retryJob ? <button type="button" className={styles.button} onClick={() => void run({ action: "poll", id: retryJob.id }, retryJob.mode)}>{t("Повторить подключение", "Reconnect to calculation")}</button> : null}
-    {transport.status === "failed" && !cancellation && !retryJob && hasRecovery ? <button type="button" className={styles.button} onClick={() => setRecoveryAttempt(value => value + 1)}>{t("Повторить восстановление", "Retry recovery")}</button> : null}
+    {transport.status === "failed" && !cancellation && retryJob ? <button type="button" className={styles.button} disabled={!validBudget} onClick={() => void run({ action: "poll", id: retryJob.id }, retryJob.mode)}>{t("Повторить подключение", "Reconnect to calculation")}</button> : null}
+    {transport.status === "failed" && !cancellation && !retryJob && hasRecovery ? <button type="button" className={styles.button} disabled={!validBudget} onClick={() => setRecoveryAttempt(value => value + 1)}>{t("Повторить восстановление", "Retry recovery")}</button> : null}
   </>;
   const significantGain = Boolean(confirmed);
   const incompleteData = Boolean(search && (search.dataComplete === false || search.coverage.unsupportedModifierLots > 0 ||
@@ -638,9 +647,15 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     <header><small>{t("АУКЦИОН СЕРВЕРА", "REALM AUCTION HOUSE")}</small><h2 id="auction-gear-title">{t("Найти вещи под бюджет", "Find gear within your budget")}</h2><p>{t("Выгодные улучшения с аукциона и совместимый сет в вашем бюджете.", "Good-value auction upgrades and a compatible loadout within your budget.")}</p></header>
     {!supported ? <p>{messages.damage_specialization_required}</p> : <form onSubmit={event => { event.preventDefault(); startSearch(); }}>
       <div className={styles.controls}>
-        <label>{t("Бюджет, золото", "Budget, gold")}<input name="budgetGold" inputMode="decimal" value={budget} onChange={event => { const next = event.target.value; setBudget(next);
-          try { if (normalizeAuctionBudgetGold(next, locale) === normalizeAuctionBudgetGold(budget, locale)) return; } catch { /* An invalid draft must not keep actionable recommendations. */ }
-          invalidate({ budget: next }); }} disabled={formLocked} required aria-describedby="auction-budget-help" /></label>
+        <label>{t("Бюджет, золото", "Budget, gold")}<input name="budgetGold" inputMode="decimal" value={budget} onChange={event => {
+          const next = event.target.value; setBudgetInput(next);
+          let amount: string;
+          try { amount = normalizeAuctionBudgetGold(next, locale); }
+          catch { return; } // Retain facts and ownership while the draft is incomplete; actions stay disabled.
+          if (amount === acceptedBudget.current) return;
+          acceptedBudget.current = amount;
+          invalidate({ budget: next });
+        }} disabled={formLocked} required aria-invalid={!validBudget || undefined} aria-describedby={validBudget ? "auction-budget-help" : "auction-budget-help auction-budget-error"} /></label>
         <label>{t("Сценарий", "Encounter")}<select value={scenario} onChange={event => { setScenario(event.target.value); invalidate({ scenario: event.target.value }); }} disabled={formLocked}>
           <option value="single-target">{t("Одна цель · 120 секунд", "Single target · 120 seconds")}</option><option value="aoe">{t("5 целей · 60 секунд", "5 targets · 60 seconds")}</option><option value="execute">{t("Короткий бой · 90 секунд", "Short fight · 90 seconds")}</option>
         </select></label>
@@ -653,7 +668,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         <div className={styles.slots}>{auctionGearSlots.map(slot => <label key={slot}><input type="checkbox" name="selectedSlots" value={slot} checked={selectedSlots.includes(slot)} onChange={event => { const next = event.target.checked ? auctionGearSlots.filter(value => value === slot || selectedSlots.includes(value)) : selectedSlots.filter(value => value !== slot); setSelectedSlots(next); invalidate({ selectedSlots: next }); }} /><span>{slotName(slot)}</span></label>)}</div>
       </fieldset></details>
       <p id="auction-budget-help" className={styles.note}>{t("Цены указаны за целый лот.", "Prices cover whole lots.")}</p>
-      <div className={styles.actions}><button className={styles.button} type="submit" disabled={formLocked}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</button>{search ? <a className={styles.returnToAssembly} href="#auction-assembly">{t("К сборке сета", "Build a loadout")}</a> : null}{!cancellation && running && (transport?.mode === "search" || !search) ? <button className={styles.button} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}</div>
+      {!validBudget ? <p id="auction-budget-error" role="alert" className={styles.note}>{messages.invalid_budget} {search ? t("Сохранённый результат относится к последнему корректному бюджету. Исправьте ввод, чтобы продолжить подбор.", "The saved result uses your last valid budget. Correct the input to continue selection.") : ""}</p> : null}
+      <div className={styles.actions}><button className={styles.button} type="submit" disabled={formLocked || !validBudget}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</button>{search ? <a className={styles.returnToAssembly} href="#auction-assembly">{t("К сборке сета", "Build a loadout")}</a> : null}{!cancellation && running && (transport?.mode === "search" || !search) ? <button className={styles.button} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}</div>
       {!search ? <p id="auction-assembly-start-help" className={styles.note}>{t("Сначала запустите поиск вещей. Затем можно проверить их сочетания и собрать совместимый сет в пределах бюджета.", "Search for gear first, then compare combinations and build a compatible loadout within your budget.")}</p> : null}
     </form>}
     {feedback("search")}
@@ -669,8 +685,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       {search.coverage.catalogUnmatchedItemIds > 0 ? <p className={styles.note}>{t(`Для ${number(search.coverage.catalogUnmatchedItemIds)} предметов с рынка в каталоге не определён тип. Неизвестно, могут ли они быть экипировкой.`, `The catalog has no item type for ${number(search.coverage.catalogUnmatchedItemIds)} market items. Whether these can be equipment is unknown.`)}</p> : null}
       {search.coverage.eligibilityUnverifiedItems > 0 ? <p className={styles.note}>{t("Предметов с неподтверждёнными требованиями или совместимостью", "Items with unverified requirements or compatibility")}: {number(search.coverage.eligibilityUnverifiedItems)}. {t("Они не участвуют в подборе, поэтому вывод по рынку неполный.", "They are excluded from selection, so market coverage is incomplete.")}</p> : null}
       </details> : null}
-      {!search.searchComplete && !running && !cancellation ? <button className={styles.button} type="button" onClick={continueSearch}>{t("Продолжить проверку вещей", "Continue item comparisons")}</button> : null}
-      {search.searchComplete && (incompleteData || discoveryIncomplete) ? <div><button className={styles.button} type="button" disabled={running || Boolean(cancellation)} onClick={continueSearch}>{t("Обновить варианты", "Refresh options")}</button><p className={styles.note}>{t("Если недостающие варианты ещё не появились, попробуйте обновить их позже.", "If missing options have not appeared yet, try refreshing again later.")}</p></div> : null}
+      {!search.searchComplete && !running && !cancellation ? <button disabled={!validBudget} className={styles.button} type="button" onClick={continueSearch}>{t("Продолжить проверку вещей", "Continue item comparisons")}</button> : null}
+      {search.searchComplete && (incompleteData || discoveryIncomplete) ? <div><button className={styles.button} type="button" disabled={!validBudget || running || Boolean(cancellation)} onClick={continueSearch}>{t("Обновить варианты", "Refresh options")}</button><p className={styles.note}>{t("Если недостающие варианты ещё не появились, попробуйте обновить их позже.", "If missing options have not appeared yet, try refreshing again later.")}</p></div> : null}
       {recommendationGroups.length ? <>
         <p className={styles.note}>{t("Меньше золота за +1 DPS — выгоднее покупка. По кнопке — до двух альтернатив на слот.", "Lower gold per +1 DPS means better value. Open up to two alternatives for each slot.")}</p>
         {running && transport?.mode === "search" ? <p className={styles.note}>{t("Выбор можно менять сейчас: поиск остановится и сохранит найденные варианты.", "You can edit choices now: discovery will pause and keep the options already found.")}</p> : null}
@@ -678,7 +694,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       </> : <p role="status" className={styles.empty}>{search.searchComplete && !discoveryIncomplete && !incompleteData ? t("Подтверждённых улучшений по отдельности не найдено. Сборка сета всё ещё может найти прирост от сочетания вещей.", "No individual upgrades were confirmed. Loadout assembly can still find a gain from combining items.") : t("В проверенной части рынка улучшений по отдельности пока нет. Поиск или проверка данных ещё не завершены; это не окончательный вывод по аукциону.", "No individual upgrades have been confirmed in the verified part of the market yet. Discovery or data verification is incomplete; this is not a final conclusion about the auction house.")}</p>}
         <section id="auction-assembly" tabIndex={-1} className={styles.assembly} aria-labelledby="auction-assembly-title" data-auction-assembly>
           <h3 id="auction-assembly-title">{t("Собрать сет под бюджет", "Build a loadout within budget")}</h3><p className={styles.note}>{(search.objective ?? "dps") === "value" ? t("Подбираем наименьшую цену за подтверждённый прирост DPS всего сета. Иногда выгоднее одна замена и часть бюджета остаётся. Лимит покупок", "Find the lowest price per confirmed DPS gained by the whole loadout. Sometimes one replacement offers better value and leaves budget unspent. Purchase limit") : t("Подбираем наибольший подтверждённый DPS в пределах бюджета. Лимит покупок", "Find the highest confirmed DPS within budget. Purchase limit")} <strong>{money(search.budgetCopper)}</strong>.</p>
-          <div className={styles.actions}><button className={`${styles.button} ${styles.primaryButton}`} type="button" disabled={selectionLocked || !available.length} aria-describedby={!available.length ? "auction-assembly-disabled-reason" : undefined} onClick={startAssembly}>{running && transport?.mode === "assembly" ? t("Собираем сет…", "Building loadout…") : assembly?.exhaustiveComplete ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : assembly ? t("Продолжить сборку сета", "Continue loadout assembly") : t("Собрать сет под бюджет", "Build a loadout within budget")}</button>{!cancellation && running && transport?.mode === "assembly" ? <button className={styles.button} type="button" onClick={cancel}>{t("Отменить сборку", "Cancel assembly")}</button> : null}</div>
+          <div className={styles.actions}><button className={`${styles.button} ${styles.primaryButton}`} type="button" disabled={selectionLocked || !available.length} aria-describedby={!validBudget ? "auction-budget-error" : !available.length ? "auction-assembly-disabled-reason" : undefined} onClick={startAssembly}>{running && transport?.mode === "assembly" ? t("Собираем сет…", "Building loadout…") : assembly?.exhaustiveComplete ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : assembly ? t("Продолжить сборку сета", "Continue loadout assembly") : t("Собрать сет под бюджет", "Build a loadout within budget")}</button>{!cancellation && running && transport?.mode === "assembly" ? <button className={styles.button} type="button" onClick={cancel}>{t("Отменить сборку", "Cancel assembly")}</button> : null}</div>
           {!available.length ? <p id="auction-assembly-disabled-reason" data-assembly-disabled-reason className={styles.note}>{search.items.length ? t("Все найденные варианты исключены. Разрешите вариант в карточке или восстановите исключённые варианты ниже.", "All discovered options are excluded. Allow a variant in its card or restore excluded variants below.") : t("Проверенных доступных вариантов для сборки пока нет.", "No verified, available options have been found for assembly yet.")}</p> : null}
           <details className={styles.calculation}><summary>{t("Настроить варианты для сета", "Loadout options")}</summary>
           {search.items.length ? <div className={styles.selectionActions}><button className={styles.button} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(true)}>{t("Разрешить все варианты", "Allow all options")}</button><button className={styles.button} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(false)}>{t("Исключить все варианты", "Exclude all options")}</button></div> : null}
