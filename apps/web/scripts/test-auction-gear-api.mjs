@@ -111,7 +111,7 @@ try {
   await expectError("GET", undefined, 404, "plan_not_found", { query: `?id=${started.payload.id}` });
   await expectError("DELETE", undefined, 404, "plan_not_found", { query: `?id=${started.payload.id}` });
   state.session = { battleNetAccessToken: tokenA };
-  const context = { input: { budgetCopper: 100001, selectedSlots: ["WRIST"] }, options: [{ id: "synthetic-lot:WRIST:variant" }, { id: "synthetic-other:WRIST:variant" }] };
+  const context = { input: { characterSlug: searchBody.characterSlug, locale: "ru", scenario: "single-target", objective: "dps", budgetCopper: 100001, selectedSlots: ["WRIST"] }, options: [{ id: "synthetic-lot:WRIST:variant" }, { id: "synthetic-other:WRIST:variant" }] };
   const entry = createAuctionGearSearch(owner(tokenA), context);entries.push(entry);
   const foreign = createAuctionGearSearch(owner(tokenB), context);entries.push(foreign);
   const sameOwnerOther = createAuctionGearSearch(owner(tokenA), { ...context, options: [{ id: "another-pool:WRIST:variant" }] });entries.push(sameOwnerOther);
@@ -147,7 +147,13 @@ try {
   state.verify = async (_entry, _token, signal) => { activeSignal = signal;await new Promise(resolve => { release = resolve; });signal.throwIfAborted(); };
   const held = await send("POST", { action: "resume", searchId: entry.id });
   assert.equal(held.status, 202);assert.equal(entry.busy, true);
-  await expectError("POST", { action: "resume", searchId: entry.id }, 409, "plan_already_running");
+  const blocked = await send("POST", { action: "resume", searchId: entry.id });
+  const activeJob = { id: held.payload.id, status: "running", progress: null, result: null, error: null,
+    scope: { characterSlug: searchBody.characterSlug, locale: "ru" }, searchId: entry.id, mode: "search" };
+  const formIntent = { ...context.input };
+  assert.deepEqual(blocked, { status: 409, payload: { error: "plan_already_running", activeJob, formIntent } });
+  assert.deepEqual(await send("GET", undefined, { query: "?active=1" }), { status: 200, payload: { activeJob, formIntent } });
+  assert.equal(state.continuations.length, 1, "Discovering active work must not resume a second continuation");
   state.session = { battleNetAccessToken: tokenB };
   await expectError("DELETE", undefined, 404, "plan_not_found", { query: `?id=${held.payload.id}` });
   assert.equal(activeSignal.aborted, false);
