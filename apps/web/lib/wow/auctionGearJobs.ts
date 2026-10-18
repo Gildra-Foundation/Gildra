@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { AuctionPlanProgress } from "./auctionGearPlanner";
 import type { AuctionGearRunInput, AuctionGearRunResult, AuctionGearAssemblySelection } from "./auctionGearRunner";
 import { auctionMeasurementContract, auctionPersistenceEnabled, listAuctionStateHeaders, readAuctionState, removeAuctionState, writeAuctionState } from "./auctionGearPersistence";
-import { parseAuctionGearSlots } from "./auctionGearSelection";
+import { auctionGearSlots, parseAuctionGearSlots } from "./auctionGearSelection";
 export type AuctionGearJob = {
   id: string;
   status: "queued" | "running" | "completed" | "failed" | "cancelled";
@@ -18,6 +18,12 @@ export type AuctionGearJob = {
 export type AuctionGearWork = { action: "search"; input: AuctionGearRunInput }
   | { action: "resume"; searchId: string }
   | { action: "assemble"; searchId: string; selection: AuctionGearAssemblySelection };
+/** Form fields copied only from validated, server-owned work or context. */
+export type AuctionGearFormIntent = AuctionGearRunInput & {
+  objective: "value" | "dps";
+  selectedSlots: ReturnType<typeof parseAuctionGearSlots>;
+};
+export type AuctionGearActiveRecovery = { activeJob: AuctionGearJob | null; formIntent: AuctionGearFormIntent | null };
 export type AuctionGearTask = (signal: AbortSignal, progress: (p: AuctionPlanProgress) => void,
   hooks: { searchCreated: (searchId: string) => void }) => Promise<AuctionGearRunResult>;
 type Job = AuctionGearJob & {
@@ -78,6 +84,15 @@ function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefine
   if (variants !== undefined && (!Array.isArray(variants) || variants.length > 20000 || new Set(variants).size !== variants.length || variants.some(key => typeof key !== "string" || !key || key.length > 240))) throw new Error("invalid_plan_request");
   return { action: "assemble", searchId: work.searchId, selection: Array.isArray(selection) ? [...selection]
     : selection ? { excludedOptionIds: [...selection.excludedOptionIds], ...(variants ? { excludedVariantKeys: [...variants] } : {}) } : undefined };
+}
+export function auctionGearFormIntent(input: AuctionGearRunInput | undefined, scope: AuctionGearJob["scope"]): AuctionGearFormIntent | null {
+  if (!input || !scope || input.characterSlug !== scope.characterSlug || input.locale !== scope.locale) return null;
+  try {
+    const copied = copyWork({ action: "search", input });
+    if (!copied || copied.action !== "search") return null;
+    return { ...copied.input, objective: copied.input.objective ?? "dps",
+      selectedSlots: copied.input.selectedSlots ?? [...auctionGearSlots] };
+  } catch { return null; }
 }
 function metadata(j: Job): JobMetadata {
   return { id: j.id, owner: j.owner, status: j.status, error: j.error, scope: j.scope, searchId: j.searchId,
@@ -323,6 +338,13 @@ export function getActiveAuctionGearJob(owner: string, searchId: string) {
   const job = [...jobs.values()].find(job => job.owner === owner && job.searchId === searchId &&
     (job.status === "queued" || job.status === "running"));
   return job ? view(job) : null;
+}
+/** Discovery never queues or resumes work; the owner must explicitly open it. */
+export function getOwnerActiveAuctionGearJob(owner: string): AuctionGearActiveRecovery {
+  cleanup();
+  const job = [...jobs.values()].find(job => job.owner === owner && (job.status === "queued" || job.status === "running"));
+  if (!job || !hydrate(job)) return { activeJob: null, formIntent: null };
+  return { activeJob: view(job), formIntent: job.work?.action === "search" ? auctionGearFormIntent(job.work.input, job.scope) : null };
 }
 export function cancelAuctionGearJob(owner: string, id: string) {
   cleanup();
