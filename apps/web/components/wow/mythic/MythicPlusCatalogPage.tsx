@@ -1,6 +1,8 @@
 import { ExternalLink, Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
 import { DungeonCardGrid } from "./DungeonCardGrid";
+import { MythicDataNotice } from "./MythicDataNotice";
+import { mythicVerification } from "./mythicVerification";
 import { dungeonSlugs } from "./dungeonRoutes";
 import { trail } from "@/lib/routes/registry";
 
@@ -30,7 +32,7 @@ const copy = {
 } as const;
 
 const sources: Record<Season, string> = {
-  "midnight-season-2": "https://worldofwarcraft.blizzard.com/en-us/news/24280285",
+  "midnight-season-2": mythicVerification.season.source,
   "midnight-season-1": "https://worldofwarcraft.blizzard.com/en-us/news/24266321/midnight-season-1-has-begun",
 };
 
@@ -48,6 +50,7 @@ export function MythicPlusCatalogPage({ locale, season = "midnight-season-2" }: 
         lede={isCurrent ? text.current : text.past}
         stats={isCurrent ? [{ value: dungeonSlugs.length, label: text.dungeons }] : undefined}
       />
+      {isCurrent ? <MythicDataNotice locale={locale} /> : null}
       <AtlasSection id="dungeons" title={isCurrent ? text.list : undefined} aside={<AtlasLinkButton variant="ghost" size="sm" href={sources[season]} external iconAfter={<ExternalLink aria-hidden="true" />}>{text.source}</AtlasLinkButton>}>
         {isCurrent
           ? <DungeonCardGrid locale={locale} hrefBase={`/wow/mythic-plus/${season}`} />

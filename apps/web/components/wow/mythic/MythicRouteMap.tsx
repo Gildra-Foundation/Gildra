@@ -34,7 +34,7 @@ import {
   X,
 } from "lucide-react";
 import { AtlasBreadcrumbs } from "@gildra/atlas-ui/AtlasBreadcrumbs";
-import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
+import { MythicDataNotice } from "./MythicDataNotice";
 import { dungeonBackdropSource } from "@/lib/wow/dungeonBackdropSource";
 import { MythicRouteSelectors } from "./MythicRouteSelectors";
 import { AbilityIntelCard, EnemyIntelCard } from "./CombatIntelCard";
@@ -766,9 +766,7 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
           </div>
         </section>
 
-        <AtlasNotice tone="caution" title={copy.draftTitle} action={<a className={styles.noticeLink} href="https://worldofwarcraft.blizzard.com/en-us/news/24280285" rel="noreferrer">{copy.draftSource}</a>}>
-          {copy.draftText}
-        </AtlasNotice>
+        <MythicDataNotice locale={locale} route />
 
         <section className={styles.runSummary} aria-label={copy.summaryLabel}>
           <article><span><Clock3 aria-hidden="true" /> {copy.timer}</span><b>{formatTime(timerSeconds)}</b><small className={totalDuration <= timerSeconds ? styles.positive : styles.negative}>{copy.plan(formatTime(totalDuration), formatTime(reserveSeconds))}</small></article>

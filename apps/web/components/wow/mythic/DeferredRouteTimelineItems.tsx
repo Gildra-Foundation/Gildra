@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { Flame } from "lucide-react";
+import { wowRouteText } from "@/lib/wow/routeSourceLocale";
 import { mythicRouteCopy, type RouteLocale } from "./mythicRouteCopy";
 import type { RouteStop } from "./rubyLifePoolsData";
 import styles from "./mythicRouteMap.module.css";
@@ -19,7 +20,7 @@ const RouteTimelineItem = memo(function RouteTimelineItem({ stop, index, active,
   onSelect: (stopId: number) => void;
 }) {
   const copy = mythicRouteCopy[locale];
-  return <button type="button" onClick={() => onSelect(stop.id)} aria-pressed={active}><span>{index + 1}{stop.bloodlust ? <Flame aria-hidden="true" /> : null}</span><b>{stop.title}</b><small>{formatTime(stop.duration)}</small><em>{stop.forces ? `${stop.forces.toFixed(1)}%` : stop.kind === "boss" ? copy.bossShort : copy.transitionShort}</em></button>;
+  return <button type="button" onClick={() => onSelect(stop.id)} aria-pressed={active}><span>{index + 1}{stop.bloodlust ? <Flame aria-hidden="true" /> : null}</span><b>{wowRouteText(stop.title, locale)}</b><small>{formatTime(stop.duration)}</small><em>{stop.forces ? `${stop.forces.toFixed(1)}%` : stop.kind === "boss" ? copy.bossShort : copy.transitionShort}</em></button>;
 });
 
 export function DeferredRouteTimelineItems({ locale, stops, selectedId, onSelect }: {

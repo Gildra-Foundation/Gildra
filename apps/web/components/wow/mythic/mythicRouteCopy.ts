@@ -25,7 +25,7 @@ const ru = {
   breadcrumbsLabel: "Навигация",
   hub: "Эпохальный+",
   season: "Midnight · Сезон 2",
-  eyebrow: (location: string) => `Маршрут подземелья · ${location} · Обновление 12.1`,
+  eyebrow: (location: string) => `Маршрут подземелья · ${location} · Черновик`,
   goal: "Цель:",
   goalText: (description: string, _bosses: number) => description,
   keyLevelLabel: "Уровень ключа",
@@ -37,9 +37,6 @@ const ru = {
   moreActions: "Дополнительные действия",
   downloadJson: "Скачать JSON",
   resetRoute: "Сбросить маршрут",
-  draftTitle: "Маршрут — черновик",
-  draftText: "Blizzard подтвердил только список подземелий сезона. Маршрут, проценты сил, тайминги и советы по механикам — наш черновик, сверьте их в игре.",
-  draftSource: "Blizzard · Midnight Сезон 2",
 
   // Run summary
   summaryLabel: "Сводка прохождения",
@@ -188,7 +185,7 @@ const en: MythicRouteCopy = {
   breadcrumbsLabel: "Breadcrumbs",
   hub: "Mythic+",
   season: "Midnight · Season 2",
-  eyebrow: (location) => `Dungeon route · ${location} · Patch 12.1`,
+  eyebrow: (location) => `Dungeon route · ${location} · Draft`,
   goal: "Goal:",
   goalText: (description) => description,
   keyLevelLabel: "Key level",
@@ -200,9 +197,6 @@ const en: MythicRouteCopy = {
   moreActions: "More actions",
   downloadJson: "Download JSON",
   resetRoute: "Reset route",
-  draftTitle: "This route is a draft",
-  draftText: "Blizzard has confirmed only the season's dungeon list. The route, enemy forces, timings and mechanic tips are our draft — check them in game.",
-  draftSource: "Blizzard · Midnight Season 2",
 
   summaryLabel: "Run summary",
   timer: "Timer",
@@ -416,6 +410,7 @@ const subtitlesEn: Record<string, string> = {
 
 /** Short step subtitles; English pages get the translated label when one exists. */
 const subtitlesRu: Record<string, string> = {
+  "Опасный большой пулл": "Большая опасная группа врагов",
   "Felonious crew": "Банда противников", "Mages + smugglers": "Маги и контрабандисты", "Barrels + freight": "Бочки и груз",
   Wrathguards: "Стражи", "Invokers + flayers": "Заклинатели и свежеватели", "Freight gauntlet": "Проход с грузом",
 };
