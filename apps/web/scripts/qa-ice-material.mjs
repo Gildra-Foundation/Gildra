@@ -15,10 +15,10 @@ try {
    // Only the QA pace changes. A fake page clock cannot drive an independent
    // worker clock. Extend phases so screenshots cannot skip a phase on slow CI.
    const send=Worker.prototype.postMessage;Worker.prototype.postMessage=function(message,...rest){
-    if(message?.type==='play')message={...message,phases:message.phases.map(p=>({...p,duration:p.phase==='freezing'?3000:p.phase==='cracking'?1500:1600}))};
+    if(message?.type==='play')message={...message,phases:message.phases.map(p=>({...p,duration:p.phase==='freezing'?3000:p.phase==='cracking'?3000:2500}))};
     return send.call(this,message,...rest);
    };
-   const schedule=window.setTimeout;window.setTimeout=(fn,delay,...args)=>schedule(fn,delay===920?2000:delay,...args);
+   const schedule=window.setTimeout;window.setTimeout=(fn,delay,...args)=>schedule(fn,delay===920?3500:delay,...args);
   });
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/',{waitUntil:'load'});await page.locator('[data-book-route-frame][data-view-transitions]').waitFor();await page.evaluate(()=>document.fonts.ready);

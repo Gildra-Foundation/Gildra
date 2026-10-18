@@ -10,7 +10,7 @@ let sequence = 0;
 function worker() {
   if (unavailable || typeof Worker === "undefined" || !HTMLCanvasElement.prototype.transferControlToOffscreen) return;
   clearTimeout(idle);
-  try { return renderer ??= new Worker("/assets/motion/ice-renderer-v6.js"); }
+  try { return renderer ??= new Worker("/assets/motion/ice-renderer-v7.js"); }
   catch { unavailable = true; return; }
 }
 

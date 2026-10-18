@@ -182,6 +182,9 @@ export async function pageRaster(source: HTMLElement, signal: AbortSignal): Prom
     }
     if (performance.now() - slice > 6) { await yieldTask(); check(); slice = performance.now(); }
   }
+  // CSS is collected through CSSOM below. Document metadata is never page
+  // content; in particular noscript changes meaning in an SVG image document.
+  clone.querySelectorAll("script,noscript,style,link,meta,base,template").forEach(node => node.remove());
   source.dataset.rasterDomMs = String(Math.round(performance.now() - started));
   const selectRules = async (rules: PreparedRule[]): Promise<string> => {
     const output: string[] = [];
@@ -234,7 +237,8 @@ export async function pageRaster(source: HTMLElement, signal: AbortSignal): Prom
   content.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
   const fontCSS = fonts.join("\n").replace(URL_PATTERN, (match, url: string) => /^(#|data:)/.test(url) ? match : `url("${embedded.get(url) || "data:,"}")`);
   const css = `:root{${variables.join(";")}}${inlineCSS(sheets.join("\n"))}${fontCSS}*,*::before,*::after{animation:none!important;transition:none!important;view-transition-name:none!important}`;
-  const style = document.createElement("style"); style.textContent = css; content.prepend(style);
+  const style = document.createElement("style"); style.textContent = css;
+  style.setAttribute("style", "display:none!important"); content.prepend(style);
   source.dataset.rasterCssBytes = String(css.length);
   // Keep CSS viewport units at their original size; the destination raster is
   // capped independently, so high-DPI/4K screens don't multiply shard textures.

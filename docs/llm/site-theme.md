@@ -278,3 +278,25 @@ shards draw. Alltheme/material/reduced motion checks and public8 asset hashes
 pass;120-second observation:0errors/restarts,9 protected containers unchanged.
 Preparation overhead is nonzero, documented in the report; avoid claiming a
 universal speed-up or guaranteed FPS. Shared-thread/blocked helpers retain fallback.
+
+
+## Independent animation clock (v6, published 17 October2026)
+
+The current renderer is `ice-renderer-v6.js`. The dedicated worker owns a finite
+~60Hz elapsed-time clock (one pending timer, no catch-up/idle loop). Freezing and
+cracking run without a UI frame request; the page receives phase/progress summaries
+at most once per120ms plus boundaries, and completion. An earlier native worker
+RAF implementation still paced with owner rendering and was rejected. The UI
+cancels hidden-tab animation/capture and skips transitions while hidden.
+The broken sheet is one immutable ImageBitmap; its lifetime ends at disposal.
+The1024px texture cap and existing source-content/atlas-scope protections remain.
+Backdrop sampling is disabled only inside the inert still copy. Fragment opacity
+settles smoothly; no per-fragment DOM or full-screen blur filter is introduced.
+
+Published source `79cfd7f1bbf573b19182085b4b5b8a0322ada20a`, image `sha256:f0ff29842ac89c7081dafe54ba163054b2f1b36ca80e38a850b261b3dc585881`.
+Future web releases must retain this source. The rotation worker remainsa98dc5d.
+See [frame-stall regression and publication evidence](../reports/transition-fluidity-20261017.md).
+Twelve matched330ms UI-stall cases passed; four cold source-content checks,
+local roster8/8 and public anonymous entry8/8 retained geometry. Alltheme/material
+and public clock4/4 passed;120s observation0errors/restarts,9 protected unchanged.
+Worker timestamps are not physical display FPS; preserve this measurement limit.
