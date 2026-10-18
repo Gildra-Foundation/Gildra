@@ -8,12 +8,12 @@ import { chromium } from 'playwright';
 import { iceFracture } from '../components/motion/iceFracture.ts';
 
 const root=path.resolve(import.meta.dirname,'..'), control=process.env.SHARD_CONTROL==='1';
-const output=path.join(root,'.artifacts/page-shards',control?'control-v4':'renderer-v6');fs.mkdirSync(output,{recursive:true});
+const output=path.join(root,'.artifacts/page-shards',control?'control-v4':'renderer-v7');fs.mkdirSync(output,{recursive:true});
 const moduleCode=name=>ts.transpileModule(fs.readFileSync(path.join(root,'components/motion',name+'.ts'),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/^export /gm,'').replace(/^import .+$/gm,'');
-const worker=fs.readFileSync(path.join(root,`public/assets/motion/ice-renderer-v${control?4:6}.js`));
-const markup=`<!doctype html><html><head><style>
+const worker=fs.readFileSync(path.join(root,`public/assets/motion/ice-renderer-v${control?4:7}.js`));
+const markup=`<!doctype html><html><head><meta charset="utf-8"><style>
 body{margin:0;background:#001a4a;color:white;font-family:Arial,sans-serif}.scene{position:relative;height:1200px;background:#08121a}.title{position:absolute;left:30px;top:60px;margin:0;font:700 66px/1 Arial;color:#ff00db}.photo{position:absolute;top:210px;left:30px;width:70vw;height:280px;object-fit:cover;border:4px solid #fff}.label{position:absolute;top:520px;left:30px;font-size:30px;color:#ff00db}.background{position:absolute;top:600px;left:30px;width:70vw;height:170px;background: url(/picture.svg) center/cover}.below{position:absolute;top:2000px}.outgoing{position:fixed;inset:0;z-index:2;overflow:hidden;background:#08121a}.canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:3}
-</style></head><body><main class="scene" data-book-route-frame><h1 class="title">OLD PAGE</h1><img class="photo" src="/picture.svg"><p class="label">Текст на осколках</p><div class="background"></div><div class="below">${'<p>Offscreen content must never become a shard DOM copy</p>'.repeat(1000)}</div></main></body></html>`;
+</style></head><body><main class="scene" data-book-route-frame><h1 class="title">OLD PAGE</h1><noscript style="position:absolute;left:30px;top:140px;color:#00ff60;font:18px Arial"><style>.no-script-css-sentinel{opacity:1}</style></noscript><img class="photo" src="/picture.svg"><p class="label">Текст на осколках</p><div class="background"></div><div class="below">${'<p>Offscreen content must never become a shard DOM copy</p>'.repeat(1000)}</div></main></body></html>`;
 const server=http.createServer((req,res)=>{
  if(['/assets/motion/page-raster-v1.html','/assets/motion/page-raster-v1.js'].includes(req.url)){res.setHeader('Content-Security-Policy',"frame-ancestors 'self'");res.setHeader('X-Frame-Options','SAMEORIGIN');res.setHeader('Content-Type',req.url.endsWith('.js')?'application/javascript':'text/html');return res.end(fs.readFileSync(path.join(root,'public',req.url)))}
  if(req.url.includes('ice-renderer')){res.setHeader('Content-Type','application/javascript');return res.end(worker)}
@@ -23,9 +23,9 @@ const server=http.createServer((req,res)=>{
 await new Promise(resolve=>server.listen(5188,'127.0.0.1',resolve));
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox','--site-per-process']});const results=[];let sharedThreadFallback=false;
 const inspect=buffer=>{
- const {width,height,data}=PNG.sync.read(buffer);let text=0,picture=0,backgroundImage=0,sumX=0,sumY=0;
- for(let y=0;y<height;y++)for(let x=0;x<width;x++){const i=(y*width+x)*4,r=data[i],g=data[i+1],b=data[i+2];if(r>110&&b>90&&g<r*.65){text++;sumX+=x;sumY+=y}if(r>140&&g>65&&b<g*.65){picture++;if(y>600)backgroundImage++}}
- return {text,picture,backgroundImage,centre:[sumX/Math.max(1,text),sumY/Math.max(1,text)]};
+ const {width,height,data}=PNG.sync.read(buffer);let text=0,picture=0,backgroundImage=0,metadata=0,sumX=0,sumY=0;
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){const i=(y*width+x)*4,r=data[i],g=data[i+1],b=data[i+2];if(g>140&&g>r*1.5&&g>b*1.4)metadata++;if(r>110&&b>90&&g<r*.65){text++;sumX+=x;sumY+=y}if(r>140&&g>65&&b<g*.65){picture++;if(y>600)backgroundImage++}}
+ return {text,picture,backgroundImage,metadata,centre:[sumX/Math.max(1,text),sumY/Math.max(1,text)]};
 };
 try{
  for(const width of [390,1440]){
@@ -40,6 +40,7 @@ try{
   },iceFracture(width,900));
   const frame=async progress=>{await page.evaluate(p=>window.__material.draw('shattering',p),progress);await page.waitForFunction(p=>document.querySelector('canvas')?.dataset.renderProgress===String(p),progress);await page.waitForTimeout(50);return inspect(await page.screenshot({path:path.join(output,`${width}-${progress}.png`)}))};
   const initial=await frame(0),moving=await frame(.35);
+  assert.equal(initial.metadata,0,'noscript CSS must not become visible glyphs on shards');
   assert.ok(initial.text>100,`old-page glyph pixels must be on shards: ${JSON.stringify(initial)}`);
   assert.ok(initial.picture>1000,'old-page image must be on shards');
   assert.ok(initial.backgroundImage>500,'CSS background images must also be embedded');

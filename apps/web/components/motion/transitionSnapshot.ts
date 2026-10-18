@@ -3,7 +3,9 @@ let sequence = 0;
 /** One inert viewport copy; offscreen descendants are never cloned. */
 export function transitionSnapshot(frame: HTMLElement, className: string) {
   const visibleCopy = (source: Element): Element | null => {
-    if (/^(SCRIPT|IFRAME|AUDIO|VIDEO)$/.test(source.tagName)) return null;
+    // SVG image documents disable scripting. A copied noscript text child
+    // would then become visible, including escaped fallback <style> markup.
+    if (/^(SCRIPT|NOSCRIPT|TEMPLATE|IFRAME|AUDIO|VIDEO)$/.test(source.tagName)) return null;
     const copy = source.cloneNode(false) as Element;
     if (source instanceof HTMLImageElement && copy instanceof HTMLImageElement) {
       copy.removeAttribute("srcset"); copy.removeAttribute("sizes"); copy.removeAttribute("loading");

@@ -61,8 +61,15 @@ try {
     assert.equal(await page.locator("html").getAttribute("data-site-theme"), theme);
     assert.equal(await page.locator("[data-grimoire-home]").getAttribute("data-home-theme"), theme);
     if (theme === "arthas") await page.evaluate(() => {
+      // Screenshot pacing only: the worker now completes independently of the
+      // main-page cleanup timer, so extend its phases as well as the guard.
       window.__qaTimeout = window.setTimeout;
-      window.setTimeout = (callback, delay, ...args) => window.__qaTimeout(callback, delay === 920 ? 4000 : delay, ...args);
+      window.setTimeout = (callback, delay, ...args) => window.__qaTimeout(callback, delay === 920 ? 5000 : delay, ...args);
+      window.__qaWorkerSend = Worker.prototype.postMessage;
+      Worker.prototype.postMessage = function(message, ...rest) {
+        if (message?.type === "play") message = { ...message, phases: message.phases.map(p => ({ ...p, duration: p.phase === "freezing" ? 2000 : p.phase === "cracking" ? 3000 : 4000 })) };
+        return window.__qaWorkerSend.call(this, message, ...rest);
+      };
     });
     await page.evaluate(() => {
       window.__qaPhases = [];
@@ -85,7 +92,7 @@ try {
       await page.waitForFunction(() => document.querySelector("[data-themed-transition]")?.getAttribute("data-phase") === "shattering", null, { timeout: 15000 });
       await page.waitForTimeout(300);
       await page.screenshot({ path: path.join(output, "arthas-shattering.png") });
-      await page.evaluate(() => { window.setTimeout = window.__qaTimeout; delete window.__qaTimeout; });
+      await page.evaluate(() => { window.setTimeout = window.__qaTimeout; delete window.__qaTimeout; Worker.prototype.postMessage = window.__qaWorkerSend; delete window.__qaWorkerSend; });
     }
     await page.waitForURL(base + "/privacy"); await idle(page);
     const phases = await page.evaluate(() => window.__qaPhases);
