@@ -45,7 +45,7 @@ export async function harness({ entity = record(), availableReference = true, re
   const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
     .runInNewContext({ Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
       supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
-      lookupGearRecords: async (ids, _locale, itemClass) => itemClass === undefined || itemClass === 4 ? (entities ?? [state.entity]).filter(row=>ids.includes(row.externalId)) : [],
+      lookupGearRecords: async (ids, _locale, itemClass, _level, _signal, _cache, { cachedOnly = false } = {}) => !cachedOnly && (itemClass === undefined || itemClass === 4) ? (entities ?? [state.entity]).filter(row=>ids.includes(row.externalId)) : [],
       gearEntityDetails: async records => records,
       getAuctionItemReferences: async (ids, _region, _token, _signal, locale) => {
         state.referenceCalls++; state.referenceLocales.push(locale);

@@ -92,9 +92,12 @@ export async function getGearCandidatesForEquippedItem(input: {
 
 }
 
-export async function lookupGearRecords(ids: number[], locale: "en_US" | "ru_RU", classId?: number, maxRequiredLevel?: number, signal?: AbortSignal, auctionCache = false) {
+/** cachedOnly reads detached unexpired facts without HTTP or renewing their TTL. */
+export async function lookupGearRecords(ids: number[], locale: "en_US" | "ru_RU", classId?: number, maxRequiredLevel?: number, signal?: AbortSignal, auctionCache = false,
+  { cachedOnly = false }: { cachedOnly?: boolean } = {}) {
   signal?.throwIfAborted();
   const unique = [...new Set(ids)];
+  if (cachedOnly && !auctionCache) throw new Error("auction_cache_required");
   if (auctionCache) {
     const prefix = `${apiInternalUrl()}|${locale}|${classId ?? ""}|${maxRequiredLevel ?? ""}|`;
     const known = new Map<number, CatalogRecord | null>();
@@ -103,7 +106,7 @@ export async function lookupGearRecords(ids: number[], locale: "en_US" | "ru_RU"
       if (hit === undefined) return true;
       known.set(id, hit); return false;
     });
-    if (missing.length) {
+    if (missing.length && !cachedOnly) {
       const loaded = await lookupGearRecords(missing, locale, classId, maxRequiredLevel, signal);
       signal?.throwIfAborted();
       const found = new Map(loaded.map(record => [record.externalId, record]));

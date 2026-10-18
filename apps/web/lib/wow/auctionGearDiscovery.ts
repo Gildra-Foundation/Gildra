@@ -252,6 +252,34 @@ function rememberUnverifiedEligibility(state: AuctionGearDiscovery, itemId: numb
   }
 }
 
+function acceptCatalogSummaries(state: AuctionGearDiscovery, ids: number[], records: CatalogRecord[], selectedSlots: readonly string[]) {
+  const supportedSummaryItems = state.supportedSummaryItems ??= new Set();
+  for (const id of ids) {
+    state.scannedItems.add(id);
+    if (state.itemVariants.has(id)) supportedSummaryItems.add(id);
+  }
+  const found = new Set(records.map(record => record.externalId));
+  for (const id of ids) {
+    if (!found.has(id)) {
+      state.catalogUnmatched.add(id);
+      state.catalogRetryAt.set(id, Date.now() + catalogRetryMs);
+    } else {
+      state.catalogUnmatched.delete(id);
+      state.catalogRetryAt.delete(id);
+    }
+  }
+  const hints = state.catalogHints ??= new Map();
+  for (const record of records) {
+    hints.set(record.externalId, catalogPriorityHint(record));
+    rememberCatalogClass(state, record);
+  }
+  updateUnsupportedCoverage(state);
+  state.records.push(...records.filter(record => !knownNonGear(record) &&
+    (state.itemVariants.has(record.externalId) && summaryMayMatch(record, selectedSlots) ||
+      state.unsupportedLotsByItem?.has(record.externalId) && !state.catalogItemClasses?.has(record.externalId))));
+  state.itemCursor += ids.length;
+}
+
 type DiscoveryInput = {
   locale: "en_US" | "ru_RU"; region: string; token: string; spec: string; characterLevel: number;
   selectedSlots: readonly string[]; context: (slot: string) => GearCandidateContext;
@@ -267,43 +295,40 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
   state.catalogPriorityLevel = input.characterLevel;
   let prioritized = false;
   const initialCandidates = state.candidates.size;
+  let warmCandidatesFirst = false;
+  if (input.stopAfterNewCandidates && !state.itemCursor && !state.records.length && !state.variantKeys.length) {
+    // A repeat search can already know most raw summaries while a handful of
+    // absent IDs have expired. Do not hold its first verified result behind
+    // those repairs. Cache hits are scheduling facts, never native/stat proof.
+    const cached = await lookupGearRecords(state.itemIds, input.locale, undefined, undefined, input.signal, true, { cachedOnly: true });
+    input.signal.throwIfAborted();
+    const byId = new Map(cached.filter(record => state.queuedItems.has(record.externalId)).map(record => [record.externalId, record]));
+    if (byId.size) {
+      const known = state.itemIds.filter(id => byId.has(id));
+      state.itemIds = [...known, ...state.itemIds.filter(id => !byId.has(id))];
+      acceptCatalogSummaries(state, known, known.map(id => byId.get(id)!), input.selectedSlots);
+      warmCandidatesFirst = Boolean(state.records.length);
+      input.onProgress?.({ phase: "catalog", completed: state.itemCursor, total: state.itemIds.length });
+      input.onCheckpoint?.();
+    }
+  }
   for (let step = 0; step < (input.maxSteps ?? 12) && !input.shouldYield?.(); step++) {
     input.signal.throwIfAborted();
-    if (state.itemCursor === state.itemIds.length && !prioritized) {
+    if (warmCandidatesFirst && !state.records.length && state.variantCursor === state.variantKeys.length) {
+      warmCandidatesFirst = false;
+      prioritized = false;
+    }
+    if ((warmCandidatesFirst || state.itemCursor === state.itemIds.length) && !prioritized) {
       prioritizePendingDiscovery(state, input.characterLevel);
       prioritized = true;
     }
-    if (state.itemCursor < state.itemIds.length) {
+    if (state.itemCursor < state.itemIds.length && !warmCandidatesFirst) {
       const ids = state.itemIds.slice(state.itemCursor, state.itemCursor + catalogBatch);
       // See the complete bounded summary domain before spending detail/native work.
       // Base required level is not an auction variant's actual scaled requirement.
       const records = await lookupGearRecords(ids, input.locale, undefined, undefined, input.signal, true);
       input.signal.throwIfAborted();
-      const supportedSummaryItems = state.supportedSummaryItems ??= new Set();
-      for (const id of ids) {
-        state.scannedItems.add(id);
-        if (state.itemVariants.has(id)) supportedSummaryItems.add(id);
-      }
-      const found = new Set(records.map(record => record.externalId));
-      for (const id of ids) {
-        if (!found.has(id)) {
-          state.catalogUnmatched.add(id);
-          state.catalogRetryAt.set(id, Date.now() + catalogRetryMs);
-        } else {
-          state.catalogUnmatched.delete(id);
-          state.catalogRetryAt.delete(id);
-        }
-      }
-      const hints = state.catalogHints ??= new Map();
-      for (const record of records) {
-        hints.set(record.externalId, catalogPriorityHint(record));
-        rememberCatalogClass(state, record);
-      }
-      updateUnsupportedCoverage(state);
-      state.records.push(...records.filter(record => !knownNonGear(record) &&
-        (state.itemVariants.has(record.externalId) && summaryMayMatch(record, input.selectedSlots) ||
-          state.unsupportedLotsByItem?.has(record.externalId) && !state.catalogItemClasses?.has(record.externalId))));
-      state.itemCursor += ids.length;
+      acceptCatalogSummaries(state, ids, records, input.selectedSlots);
       input.onProgress?.({ phase: "catalog", completed: state.itemCursor, total: state.itemIds.length });
     } else if (state.variantCursor < state.variantKeys.length && (!state.records.length || compareCatalogHints(
       state.catalogHints?.get(state.offers.get(state.variantKeys[state.variantCursor])?.[0]?.itemId ?? 0),
