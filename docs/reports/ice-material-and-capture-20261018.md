@@ -45,3 +45,21 @@ full route/character/theme QA and public verification will be recorded below.
 
 Worker draw timestamps are not display FPS. CPU throttling is not a physical
 phone, and no field RUM series or universal zero-lag guarantee is claimed.
+
+
+## Preparation correction before release
+
+The first b264/c895 image was rejected and never published. Its functional and
+primary twelve-case clock gates passed, but desktop freezing p95 draw cost
+median15.2ms exceeded the predeclared baseline3.7ms+2ms budget. The gate refused it.
+Targeted Canvas API timing located325ms in the first putImageData of the small
+128×80 mask, plus37ms of first surface setup. Immutable texture, forced texture
+readback, combined bevel alone and CPU mask hint alone were insufficient in
+separate diagnostic prototypes; those changes are not adopted indiscriminately.
+
+The final implementation initializes the mask and surface before starting play,
+hoists the mask byte array and threshold out of its per-pixel loop, and combines
+all refractive bevels into one clipped source-image pass. It retains the full
+material, resolution and timing budgets. A three-case diagnostic prototype passed
+with median p95 draw5ms and first draws5–10ms; this is not final-image proof.
+Final immutable-image and public verification remain required below.

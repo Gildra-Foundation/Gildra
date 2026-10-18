@@ -45,6 +45,9 @@ function material(width, height) {
   paint.stroke();
   const mask = new OffscreenCanvas(Math.max(32, Math.ceil(w / 8)), Math.max(32, Math.ceil(h / 8)));
   const maskContext = mask.getContext("2d"), growth = maskContext.createImageData(mask.width, mask.height), arrival = new Float32Array(mask.width * mask.height);
+  // Allocate the mask backing store during preparation. Deferring the first
+  // putImageData until playback can consume a large part of the freeze phase.
+  maskContext.putImageData(growth, 0, 0);
   for (let y = 0; y < mask.height; y++) for (let x = 0; x < mask.width; x++) {
     const u = x / (mask.width - 1), v = y / (mask.height - 1);
     arrival[y * mask.width + x] = Math.max(0, Math.min(u, 1 - u, v, 1 - v) * 2 + Math.sin(u * 29 + Math.sin(v * 17) * 3) * .095 + Math.sin(v * 41 + u * 19) * .045 + rand() * .025);
@@ -78,6 +81,7 @@ function init(message) {
   const { canvas, width, height, geometry, id } = message, sheet = material(width, height);
   canvas.width = sheet.w; canvas.height = sheet.h;
   const ctx = canvas.getContext("2d"), cracks = [...geometry.cracks, ...geometry.hairlines];
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, sheet.w, sheet.h);
   const body = new OffscreenCanvas(sheet.w, sheet.h), ice = body.getContext("2d");
   const depth = ice.createLinearGradient(0, 0, sheet.w, sheet.h);
   depth.addColorStop(0, "rgba(112,189,216,.12)"); depth.addColorStop(.48, "rgba(16,72,96,.05)"); depth.addColorStop(1, "rgba(58,132,164,.2)");
@@ -114,27 +118,25 @@ function init(message) {
 function content({ id, bitmap }) {
   if (active?.id !== id || active.released) { bitmap.close(); return; }
   active.page?.close(); active.page = bitmap;
-  const ctx = active.broken.getContext("2d");
+  const ctx = active.broken.getContext("2d"), s = active.sheet.scale;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, active.sheet.w, active.sheet.h);
   ctx.drawImage(bitmap, 0, 0, active.sheet.w, active.sheet.h);
-  ctx.save(); ctx.scale(active.sheet.scale, active.sheet.scale);
+  // One combined bevel mask and source-image pass for the whole sheet.
+  // Each cell uses the same small optical offset, so separate passes add no detail.
+  const bevel = new Path2D(), glint = new Path2D();
   for (const cell of active.cells) {
-    // A narrow, inward bevel refracts a few source pixels. This is baked once
-    // into the same shared sheet, never recalculated during moving frames.
-    const bevel = new Path2D(), [cx, cy] = cell.centre;
+    const [cx, cy] = cell.centre;
     for (let i = 0; i < cell.points.length; i++) {
       const a = cell.points[i], b = cell.points[(i + 1) % cell.points.length];
       const inset = p => { const t = Math.min(.1, 3.5 / Math.max(1, Math.hypot(p[0] - cx, p[1] - cy))); return [p[0] + (cx - p[0]) * t, p[1] + (cy - p[1]) * t]; };
-      const ai = inset(a), bi = inset(b);bevel.moveTo(...a);bevel.lineTo(...b);bevel.lineTo(...bi);bevel.lineTo(...ai);bevel.closePath();
+      const ai = inset(a), bi = inset(b); bevel.moveTo(...a); bevel.lineTo(...b); bevel.lineTo(...bi); bevel.lineTo(...ai); bevel.closePath();
     }
-    const w = cell.right - cell.left, h = cell.bottom - cell.top, s = active.sheet.scale;
-    ctx.save();ctx.clip(bevel);
-    ctx.drawImage(bitmap, (cell.left + 2.2) * s, (cell.top - 1.5) * s, w * s, h * s, cell.left, cell.top, w, h);
-    ctx.restore();
-    ctx.strokeStyle = "rgba(176,229,248,.24)";ctx.lineWidth = 1.8;ctx.stroke(cell.glint);
+    glint.addPath(cell.glint);
   }
-  ctx.restore(); ctx.drawImage(active.body, 0, 0);
-  ctx.scale(active.sheet.scale, active.sheet.scale); fractures(ctx, active.cracks, 1);
+  ctx.save(); ctx.scale(s, s); ctx.save(); ctx.clip(bevel);
+  ctx.drawImage(bitmap, -2.2, 1.5, active.width, active.height); ctx.restore();
+  ctx.strokeStyle = "rgba(176,229,248,.24)"; ctx.lineWidth = 1.8; ctx.stroke(glint); ctx.restore();
+  ctx.drawImage(active.body, 0, 0); ctx.scale(s, s); fractures(ctx, active.cracks, 1);
   postMessage({ type:"content", id });
 }
 function stopPlayback() {
@@ -176,7 +178,8 @@ function draw({ id, phase, progress, autonomous = false }) {
     ctx.drawImage(sheet.texture, 0, 0);
     if (progress < 1) {
       const { growth, arrival, mask, maskContext } = sheet;
-      for (let i = 0; i < arrival.length; i++) growth.data[i * 4 + 3] = Math.max(0, Math.min(1, (progress * 1.26 - arrival[i]) * 9)) * 255;
+      const pixels = growth.data, threshold = progress * 1.26;
+      for (let i = 0; i < arrival.length; i++) pixels[i * 4 + 3] = Math.max(0, Math.min(1, (threshold - arrival[i]) * 9)) * 255;
       maskContext.putImageData(growth, 0, 0); ctx.globalCompositeOperation = "destination-in";
       ctx.drawImage(mask, 0, 0, sheet.w, sheet.h); ctx.globalCompositeOperation = "source-over";
     }
