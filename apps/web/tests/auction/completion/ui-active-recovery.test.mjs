@@ -10,3 +10,15 @@ for(const patch of [{budgetCopper:-1},{budgetCopper:1.5},{budgetCopper:Infinity}
 for(const patch of [{id:''},{status:'completed'},{mode:'bad'},{scope:{characterSlug:'',locale:'ru'}},{scope:{characterSlug:'one',locale:'foreign'}}]) assert.throws(()=>parseAuctionClientActiveRecovery({activeJob:{...job,...patch},formIntent}),/invalid_plan_result/);
 assert.throws(()=>parseAuctionClientActiveRecovery({result:job}),/invalid_plan_result/);
 console.log('PASS active recovery client: safe original intent, no extra server facts, malformed/incorrect-scope data rejected, explicit active/completed distinction.');
+
+// Missing context may bypass directly to an explicitly owned search job only on
+// this precise HTTP404. The transport must preserve status, not just error text.
+const { AuctionClientError, fetchAuctionClientResult } = await import('../../../lib/wow/auctionGearClient.ts');
+const legacyError = new AuctionClientError('legacy-reconnect', true);
+assert.equal(legacyError.reconnect, true);
+assert.equal(legacyError.status, undefined, 'Existing two-argument constructor stays compatible');
+for (const status of [400, 404]) {
+  globalThis.fetch = async () => new Response(JSON.stringify({error:'search_not_found'}), {status});
+  await assert.rejects(fetchAuctionClientResult('/synthetic-context', new AbortController().signal, () => {}), error => error instanceof AuctionClientError && error.message === 'search_not_found' && error.status === status && error.reconnect === false);
+}
+console.log('PASS exact recovery transport status: HTTP400 remains distinct from HTTP404; legacy constructor compatible.');

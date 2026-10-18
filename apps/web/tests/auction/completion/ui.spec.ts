@@ -1032,3 +1032,136 @@ test("four-fix regression: cold-tab assembly restores durable current exclusions
   await auction.build.click(); await expect.poll(() => bodies.length).toBe(2);
   expect(bodies[1]).toMatchObject({ action: "assemble", searchId: source.searchId, excludedOptionIds: [blockedLot], excludedVariantKeys: [exactVariant] });
 });
+
+// A search persists its ID before the first public search DTO exists. After a
+// service restart only an explicit scoped job lookup can resume this phase.
+test("four-fix midflight regression: cold-tab initial search resumes by exact job when its first DTO is not ready", async ({ auction, page }, info) => {
+  const result = { ...searchResult(), budgetCopper: 3333300, scenario: "aoe", objective: "value", selectedSlots: ["WRIST"] };
+  const job = { id: "initial-search-before-first-dto", searchId: result.searchId, status: "queued", mode: "search", result: null, error: null, progress: null, scope: { characterSlug, locale: auction.language } };
+  const reads: Array<{ id: string | null; searchId: string | null; characterSlug: string | null; locale: string | null }> = [];
+  let posts = 0;
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), query = new URL(request.url()).searchParams;
+    if (request.method() === "POST") { posts++; await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: result.budgetCopper, scenario: result.scenario, objective: result.objective, selectedSlots: result.selectedSlots } } }); }
+    else {
+      reads.push({ id: query.get("id"), searchId: query.get("searchId"), characterSlug: query.get("characterSlug"), locale: query.get("locale") });
+      if (query.has("searchId")) await route.fulfill({ status: 404, json: { error: "search_not_found" } });
+      else await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode: "search" } });
+    }
+  });
+  await auction.open(); await auction.find.click(); expect(reads).toEqual([]);
+  await auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true }).click();
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  expect(posts).toBe(1);
+  expect(reads).toEqual([{ id: null, searchId: result.searchId, characterSlug, locale: auction.language }, { id: job.id, searchId: null, characterSlug, locale: auction.language }]);
+  await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("333.33");
+  await expect(auction.panel.getByRole("combobox", { name: /Сценарий|Encounter/ })).toHaveValue("aoe");
+  await expect(auction.panel.locator("[data-auction-owned-recovery]")).toHaveCount(0);
+  await info.attach("midflight-scoped-reads", { body: JSON.stringify({ reads, posts }), contentType: "application/json" });
+});
+
+for (const fault of ["assembly-missing", "wrong-status", "other-code", "malformed", "null-dto", "network"] as const) test(`four-fix midflight control: ${fault} keeps context recovery explicit and preserves assembly exclusions`, async ({ auction, page }) => {
+  const source = { ...searchResult(), budgetCopper: 3333300, scenario: "execute", objective: "value", selectedSlots: ["WRIST"] };
+  const variant = JSON.stringify([source.items[3].itemId, source.items[3].variantKey]);
+  const mode = fault === "assembly-missing" ? "assembly" : "search";
+  const job = { id: `midflight-guard-${fault}`, searchId: source.searchId, status: "queued", mode, result: null, error: null, progress: null, scope: { characterSlug, locale: auction.language } };
+  let faultActive = true, posts = 0, jobReads = 0, contextReads = 0, releaseFault!: () => void;
+  const faultDelivered = new Promise<void>(resolve => { releaseFault = resolve; });
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), query = new URL(request.url()).searchParams;
+    if (request.method() === "POST") { posts++; await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots } } }); }
+    else if (query.has("searchId")) {
+      contextReads++;
+      if (faultActive) {
+        if (fault === "malformed") await route.fulfill({ json: { kind: "invalid-recovery" } });
+        else if (fault === "null-dto") await route.fulfill({ contentType: "application/json", body: "null" });
+        else await route.fulfill({ status: fault === "network" ? 503 : fault === "wrong-status" ? 400 : 404, json: { error: fault === "other-code" ? "invalid_plan_result" : fault === "network" ? "auction_storage_unavailable" : "search_not_found" } });
+        if (fault !== "network" || contextReads === 4) releaseFault();
+      } else await route.fulfill({ json: { kind: "recovery", search: source, assembly: null, excludedOptionIds: [], excludedVariantKeys: [variant], activeJob: job, needsRefresh: true } });
+    } else {
+      jobReads++;
+      const result = mode === "assembly" ? { ...assemblyResult(), budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots, updatedSearch: source } : source;
+      await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode } });
+    }
+  });
+  await auction.open(); await auction.find.click();
+  const open = auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true });
+  await open.click(); await faultDelivered;
+  await expect(open).toBeEnabled(); await expect(auction.find).toBeDisabled();
+  await expect(auction.panel.getByRole("alert")).toBeVisible();
+  await expect(auction.panel.locator("[data-auction-owned-recovery]")).toBeVisible();
+  expect(jobReads).toBe(0); expect(posts).toBe(1);
+  faultActive = false; await open.click();
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  expect(jobReads).toBe(1); expect(posts).toBe(1);
+  const saved = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, json]) => JSON.parse(json))[0]);
+  expect(saved.excludedVariantKeys).toEqual([variant]);
+  await expect(auction.panel.locator("[data-best-value=true]")).toHaveCount(0);
+  await expect(auction.panel.locator("[data-auction-exclusions] > summary")).toBeVisible();
+});
+
+for (const status of [404, 503]) test(`four-fix reload regression: failed assembly context HTTP${status} never leaves a context-less job handle`, async ({ auction, page }) => {
+  const source = { ...searchResult(), budgetCopper: 3333300, scenario: "aoe", objective: "value", selectedSlots: ["WRIST"] };
+  const variant = JSON.stringify([source.items[3].itemId, source.items[3].variantKey]);
+  const result = { ...assemblyResult(), budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots, updatedSearch: source };
+  const job = { id: `assembly-context-before-reload-${status}`, searchId: source.searchId, status: "queued", mode: "assembly", result: null, error: null, progress: null, scope: { characterSlug, locale: auction.language } };
+  let failedContext = true, jobReads = 0, contextReads = 0, posts = 0, releaseFault!: () => void;
+  const faultDelivered = new Promise<void>(resolve => { releaseFault = resolve; });
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), query = new URL(request.url()).searchParams;
+    if (request.method() === "POST") { posts++; await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots } } }); }
+    else if (query.has("searchId")) {
+      contextReads++;
+      if (failedContext) { await route.fulfill({ status, json: { error: status === 404 ? "search_not_found" : "auction_storage_unavailable" } }); if (contextReads === (status === 503 ? 4 : 1)) releaseFault(); }
+      else await route.fulfill({ json: { kind: "recovery", search: source, assembly: null, excludedOptionIds: [], excludedVariantKeys: [variant], activeJob: job, needsRefresh: true } });
+    } else { jobReads++; await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode: "assembly" } }); }
+  });
+  await auction.open(); await auction.find.click();
+  const open = auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true });
+  await open.click(); await faultDelivered; await expect(open).toBeEnabled();
+  await page.reload({ waitUntil: "networkidle" });
+  expect(jobReads).toBe(0);
+  expect(posts).toBe(1);
+  await expect(auction.find).toBeEnabled();
+  const stored = await page.evaluate(() => Object.entries(sessionStorage));
+  expect(stored.some(([, value]) => value.includes(job.id))).toBe(false);
+  failedContext = false;
+  await auction.find.click(); await expect(open).toBeVisible();
+  expect(jobReads).toBe(0); expect(posts).toBe(2);
+  await open.click(); await expect(auction.result).toBeVisible();
+  expect(jobReads).toBe(1); expect(posts).toBe(2);
+  const saved = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, json]) => JSON.parse(json))[0]);
+  expect(saved.excludedVariantKeys).toEqual([variant]);
+  await expect(auction.panel.locator("[data-best-value=true]")).toHaveCount(0);
+  await expect(auction.panel.locator("[data-auction-exclusions] > summary")).toBeVisible();
+});
+
+test("four-fix reload control: cancelling an opened pending context retains the owned ID until acknowledgement", async ({ auction, page }) => {
+  const source = searchResult();
+  const job = { id: "owned-pending-context-to-cancel", searchId: source.searchId, status: "queued", mode: "assembly", result: null, error: null, progress: null, scope: { characterSlug, locale: auction.language } };
+  let releaseContext!: () => void, signalContext!: () => void, rejectDelete = true, jobReads = 0;
+  const contextStarted = new Promise<void>(resolve => { signalContext = resolve; });
+  const contextHeld = new Promise<void>(resolve => { releaseContext = resolve; });
+  const deletedIds: string[] = [];
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), query = new URL(request.url()).searchParams;
+    if (request.method() === "POST") await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: "dps", selectedSlots: source.selectedSlots } } });
+    else if (request.method() === "DELETE") { deletedIds.push(query.get("id")!); await route.fulfill(rejectDelete ? { status: 503, json: { error: "auction_storage_unavailable" } } : { json: { ...job, status: "cancelled" } }); }
+    else if (query.has("searchId")) { signalContext(); await contextHeld; await route.fulfill({ status: 503, json: { error: "auction_storage_unavailable" } }).catch(() => {}); }
+    else { jobReads++; await route.fulfill({ json: { ...completedJob(auction.language, assemblyResult()), id: job.id, mode: "assembly" } }); }
+  });
+  try {
+    await auction.open(); await auction.find.click();
+    await auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true }).click();
+    await contextStarted;
+    await auction.panel.getByRole("button", { name: /Отменить сборку|Cancel assembly/, exact: true }).click();
+    const retry = auction.panel.getByRole("button", { name: /Повторить отмену|Retry cancellation/ });
+    await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled();
+    const saved = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, json]) => JSON.parse(json))[0]);
+    expect(saved.jobId).toBe(job.id); expect(saved.cancellationRequested).toBe(true);
+    await page.reload({ waitUntil: "networkidle" }); await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled();
+    expect(jobReads).toBe(0);
+    rejectDelete = false; await retry.click(); await expect(auction.find).toBeEnabled();
+    expect(deletedIds.length).toBeGreaterThanOrEqual(3); expect(deletedIds.every(id => id === job.id)).toBe(true); expect(jobReads).toBe(0);
+  } finally { releaseContext(); }
+});

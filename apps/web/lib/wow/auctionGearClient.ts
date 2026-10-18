@@ -132,7 +132,7 @@ export function auctionClientJobUrl(id: string, scope: AuctionClientScope) {
   return `/api/wow/auction-gear-plans?${new URLSearchParams({ id, ...scope })}`;
 }
 export class AuctionClientError extends Error {
-  constructor(message: string, readonly reconnect = false) { super(message); }
+  constructor(message: string, readonly reconnect = false, readonly status?: number) { super(message); }
 }
 export function auctionClientDelay(milliseconds: number, signal: AbortSignal) {
   signal.throwIfAborted();
@@ -149,7 +149,7 @@ export async function fetchAuctionClientResult<T>(url: string, signal: AbortSign
       const response = await fetch(url, { cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]) });
       if (response.status >= 500) throw new AuctionClientError("plan_connection_interrupted", true);
       const payload = await response.json() as T & { error?: string };
-      if (!response.ok) throw new AuctionClientError(payload.error ?? "auction_plan_unavailable");
+      if (!response.ok) throw new AuctionClientError(payload.error ?? "auction_plan_unavailable", false, response.status);
       return payload;
     } catch (error) {
       signal.throwIfAborted();

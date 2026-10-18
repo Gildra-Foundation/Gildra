@@ -585,20 +585,35 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     const current = () => scopeAlive.current && mountGeneration.current === generation && !controller.signal.aborted;
     recoveryController.current = controller;
     setBudget(intent.budgetGold); setScenario(intent.scenario); setObjective(intent.objective); setSelectedSlots(intent.selectedSlots);
-    remember({ jobId: job.id, clientRequestId: undefined, mode: job.mode, formIntent: intent });
-    rememberAuctionClientJob(job.scope, job.id);
     setTransport({ mode: job.mode, status: "starting", progress: null, error: null });
+    let restoredContext: Partial<AuctionClientCache> = {};
     try {
       if (job.searchId) {
         const query = new URLSearchParams({ searchId: job.searchId, characterSlug, locale });
-        const previous = await fetchAuctionClientResult<Recovery>(`/api/wow/auction-gear-plans?${query}`, controller.signal, () => {});
+        let previous: Recovery | undefined;
+        let initialSearchDtoMissing = false;
+        try {
+          previous = await fetchAuctionClientResult<Recovery>(`/api/wow/auction-gear-plans?${query}`, controller.signal, () => {});
+        } catch (error) {
+          // Initial search IDs are durable before their first public DTO. Only
+          // this exact missing-DTO response may fall through to the explicitly
+          // opened, scoped job. Assembly must restore its current exclusions.
+          if (job.mode !== "search" || !(error instanceof AuctionClientError) || error.status !== 404 || error.message !== "search_not_found") throw error;
+          initialSearchDtoMissing = true;
+        }
         if (!current()) return;
-        if (previous.kind !== "recovery" || previous.search.searchId !== job.searchId || !intentMatchesSearch(intent, previous.search)) throw new Error("invalid_plan_result");
-        setSearch(previous.search); setAssembly(previous.assembly); setExcluded(new Set(previous.excludedOptionIds)); setExcludedVariantKeys(new Set(previous.excludedVariantKeys ?? []));
-        setMarketStale(true); setAssemblyStale(true);
-        remember({ searchId: job.searchId, excludedOptionIds: previous.excludedOptionIds, excludedVariantKeys: previous.excludedVariantKeys ?? [] });
+        if (!initialSearchDtoMissing) {
+          if (!previous || previous.kind !== "recovery" || previous.search.searchId !== job.searchId || !intentMatchesSearch(intent, previous.search)) throw new Error("invalid_plan_result");
+          setSearch(previous.search); setAssembly(previous.assembly); setExcluded(new Set(previous.excludedOptionIds)); setExcludedVariantKeys(new Set(previous.excludedVariantKeys ?? []));
+          setMarketStale(true); setAssemblyStale(true);
+          restoredContext = { searchId: job.searchId, excludedOptionIds: previous.excludedOptionIds, excludedVariantKeys: previous.excludedVariantKeys ?? [] };
+        }
       }
       if (!current()) return;
+      // Persist a polling handle only with its authoritative assembly selection.
+      // A failed context lookup can be retried through owner discovery after reload.
+      remember({ jobId: job.id, clientRequestId: undefined, mode: job.mode, formIntent: intent, ...restoredContext });
+      rememberAuctionClientJob(job.scope, job.id);
       setDiscovered(null); setOwnerLookupFailed(false);
       await run({ action: "poll", id: job.id, observedActive: true }, job.mode);
     } catch (error) {
@@ -652,14 +667,14 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   async function cancel(): Promise<boolean> {
     if (cancelling.current) return cancelling.current;
     const current = active.current;
-    const mode = current?.mode ?? cache.current?.mode ?? "search";
-    const ownedId = current?.id ?? cache.current?.jobId;
+    const mode = current?.mode ?? discovered?.activeJob?.mode ?? cache.current?.mode ?? "search";
+    const ownedId = current?.id ?? cache.current?.jobId ?? discovered?.activeJob?.id;
     const nonce = cache.current?.clientRequestId;
     active.current = null; current?.controller.abort();
     const recovery = recoveryController.current;
     recoveryController.current = null; recovery?.abort();
     // The handles remain recoverable until the server acknowledges retirement.
-    remember({ cancellationRequested: true });
+    remember({ jobId: ownedId, mode, cancellationRequested: true });
     setCancellation("pending"); setRetryJob(null); setHasRecovery(false);
     setTransport({ mode, status: "starting", progress: null, error: "plan_cancelling" });
     const generation = mountGeneration.current;
