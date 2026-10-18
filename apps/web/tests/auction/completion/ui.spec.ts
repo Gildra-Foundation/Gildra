@@ -244,8 +244,13 @@ test("changing exclusions after a lost response retires the old nonce before a n
   await expect(auction.assembly.getByRole("button", { name: /Повторить восстановление|Retry recovery/ })).toBeVisible();
   const oldNonce = auction.requests[1].clientRequestId!;
   await auction.panel.locator('[data-auction-option] summary').click();
-  await auction.panel.locator('[data-auction-option] input[type="checkbox"]').uncheck();
+  await auction.panel.locator('[data-auction-option] input[type="checkbox"]').click();
+  await expectExcludedRecommendations(auction);
+  const expectedVariant = JSON.stringify([880003, "synthetic-exact-780003"]);
+  const selected = await auction.page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, value]) => JSON.parse(value))[0]);
+  expect(selected.excludedOptionIds).toEqual([]); expect(selected.excludedVariantKeys).toEqual([expectedVariant]);
   await auction.build.click(); await expect(auction.result).toBeVisible();
+  await expectExcludedRecommendations(auction);
   expect(auction.nonceDeletes).toContain(oldNonce);
   expect(auction.requests.filter(body => body.action === "assemble")).toHaveLength(2);
   expect(auction.requests[2].excludedOptionIds).toEqual([]);
@@ -380,14 +385,25 @@ test("value: one efficient choice per slot, two alternatives on demand and compl
   await expect(main.locator('input[type="checkbox"]')).toBeHidden();
   await main.locator('summary').click();
   await expect(main.locator('input[type="checkbox"]')).toBeVisible();
-  await main.locator('input[type="checkbox"]').uncheck();
-  await expect(main).toContainText(auction.t('Исключён из сборки сета', 'Excluded from loadout assembly'));
-  await main.locator('input[type="checkbox"]').check();
+  await main.locator('input[type="checkbox"]').click();
+  await expect(auction.panel.locator('[data-auction-option="value-best"]')).toHaveCount(0);
+  await expect(main).toHaveAttribute('data-auction-option', 'strong');
+  await expect(auction.panel.locator('[data-auction-option="duplicate"]')).toHaveCount(0);
+  const selected = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, value]) => JSON.parse(value))[0]);
+  expect(selected.excludedOptionIds).toEqual([]); expect(selected.excludedVariantKeys).toEqual([JSON.stringify([880002, "synthetic-value-base"])]);
+  await auction.panel.locator('[data-auction-exclusions] > summary').click();
+  await auction.panel.locator('[data-excluded-restore]').click();
+  await expect(main).toHaveAttribute('data-auction-option', 'value-best');
+  await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(3);
+  await expect(auction.panel.locator('[data-auction-option="duplicate"]')).toHaveCount(0);
   await alternatives.click();
   await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(1);
   await info.attach('value-interface', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
   await auction.build.click(); await expect(auction.result).toBeVisible();
-  expect(auction.requests.find(body => body.action === 'assemble')?.excludedOptionIds).toEqual([]);
+  const assembled = auction.requests.find(body => body.action === 'assemble');
+  expect(assembled?.excludedOptionIds).toEqual([]); expect(assembled?.excludedVariantKeys).toEqual([]);
+  expect(assembled).not.toHaveProperty('allowedOptionIds');
+  expect(auction.requests.map(body => body.action)).toEqual(['search', 'assemble']);
 });
 
 test("value: slot controls start collapsed and remain usable on a narrow screen", async ({ auction, page }) => {
