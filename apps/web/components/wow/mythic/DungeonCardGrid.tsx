@@ -1,6 +1,6 @@
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import { Clock3, MapPin, Route, Skull } from "lucide-react";
-import { AtlasCard, AtlasGrid } from "@/components/atlas";
+import { AtlasBadge, AtlasCard, AtlasGrid } from "@/components/atlas";
 import { dungeonRoutes, dungeonSlugs } from "./dungeonRoutes";
 import { dungeonLocationEn, mythicAtlasCopy } from "./mythicAtlasCopy";
 import styles from "./mythicAtlasPage.module.css";
@@ -25,6 +25,7 @@ export function DungeonCardGrid({ locale, hrefBase, priority = true }: { locale:
             href={`${prefix}${hrefBase}/${slug}`}
             image={{ src: dungeon.backdropImage, alt: "", priority: priority && index < 2 }}
             accent={dungeon.accent}
+            artBadge={hrefBase.startsWith("/wow/mythic-plus/") ? <AtlasBadge tone="caution">{copy.draft}</AtlasBadge> : undefined}
             artCaption={<><Clock3 aria-hidden="true" /><span className={styles.srOnly}>{copy.timer}: </span>{formatTimer(dungeon.timerSeconds)}</>}
             eyebrow={location ? <><MapPin aria-hidden="true" />{location}</> : "Mythic+"}
             title={wowSourceName(dungeon.name, locale, dungeon.nameRu)}

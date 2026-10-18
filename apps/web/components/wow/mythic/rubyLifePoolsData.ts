@@ -35,7 +35,7 @@ export type RouteStop = {
 export const initialStops: RouteStop[] = [
   {
     id: 1, title: "Входной пак", subtitle: "Chillweaver + whelps", x: 48, y: 89, floor: 1, kind: "pull", duration: 65, forces: 7.2, cumulative: 7.2,
-    summary: "Безопасный старт: соберите мобов у входа, но не ведите их через яйца — лишние Infused Whelp быстро перегружают танка стаками холода.",
+    summary: "Безопасный старт: соберите врагов у входа, но не ведите их через яйца — дополнительные дракончики быстро перегружают танка уровнями эффекта холода.",
     enemies: [{ name: "Flashfrost Chillweaver", count: 2, priority: "high" }, { name: "Infused Whelp", count: 4, priority: "medium" }],
     abilities: [{ name: "Ice Shield", action: "Кик", target: "ShadowNova" }, { name: "Cold Claws", action: "Диспел", target: "MysticHeals" }, { name: "Frostbolt", action: "Кик", target: "Windborne" }],
     callouts: ["Не наступайте на кладки яиц.", "Первый Ice Shield — маг, второй — охотник.", "Снять Cold Claws до 20 стаков."],
