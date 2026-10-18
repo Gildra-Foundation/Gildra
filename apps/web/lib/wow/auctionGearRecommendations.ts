@@ -1,3 +1,4 @@
+import { auctionGearVariantSelectionKey } from "./auctionGearExclusions";
 import type { AuctionGearSearchItem } from "./auctionGearTypes";
 
 /** Preserve every purchasable lot whose individual improvement is confirmed. */
@@ -24,9 +25,14 @@ const byValue = (a: AuctionGearSearchItem, b: AuctionGearSearchItem) =>
   a.lotCostCopper - b.lotCostCopper || a.optionId.localeCompare(b.optionId);
 
 /** Presentation only: the complete native/financial domain remains available to assembly. */
-export function getAuctionGearRecommendationGroups(items: readonly AuctionGearSearchItem[]): AuctionGearRecommendationGroup[] {
+export function getAuctionGearRecommendationGroups(items: readonly AuctionGearSearchItem[], exclusions?: {
+  excludedOptionIds: ReadonlySet<string>; excludedVariantKeys: ReadonlySet<string>;
+}): AuctionGearRecommendationGroup[] {
   const slots = new Map<string, Map<string, AuctionGearSearchItem>>();
   for (const item of getAuctionGearRecommendations(items)) {
+    // Filter before deduplication and the value frontier: a disallowed leader
+    // must not hide an allowed copy, its actual price, or a lower-gain tradeoff.
+    if (exclusions?.excludedOptionIds.has(item.optionId) || exclusions?.excludedVariantKeys.has(auctionGearVariantSelectionKey(item))) continue;
     if (!Number.isFinite(gain(item)) || !Number.isSafeInteger(item.lotCostCopper) || item.lotCostCopper <= 0) continue;
     const choices = slots.get(item.slotType) ?? new Map<string, AuctionGearSearchItem>();
     const key = JSON.stringify([item.itemId, item.variantKey]);

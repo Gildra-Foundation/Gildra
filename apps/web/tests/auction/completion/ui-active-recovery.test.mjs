@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { parseAuctionClientActiveRecovery } from '../../../lib/wow/auctionGearClient.ts';
+const job={id:'owned-job',status:'queued',mode:'search',scope:{characterSlug:'eu--synthetic--one',locale:'ru'},result:null,error:null,progress:null};
+const formIntent={...job.scope,budgetCopper:3333300,scenario:'aoe',objective:'dps',selectedSlots:['WRIST'],privateFacts:{never:'restore'}};
+const recovered=parseAuctionClientActiveRecovery({activeJob:job,formIntent});
+assert.deepEqual(recovered.formIntent,{...job.scope,budgetGold:'333.33',scenario:'aoe',objective:'dps',selectedSlots:['WRIST']});
+assert.equal(recovered.activeJob.id,job.id);
+assert.deepEqual(parseAuctionClientActiveRecovery({activeJob:null,formIntent:null}),{activeJob:null,formIntent:null});
+for(const patch of [{budgetCopper:-1},{budgetCopper:1.5},{budgetCopper:Infinity},{scenario:'bad'},{objective:'bad'},{selectedSlots:[]},{selectedSlots:['WRIST','WRIST']},{characterSlug:'different'},{locale:'en'}]) assert.equal(parseAuctionClientActiveRecovery({activeJob:job,formIntent:{...formIntent,...patch}}).formIntent,null);
+for(const patch of [{id:''},{status:'completed'},{mode:'bad'},{scope:{characterSlug:'',locale:'ru'}},{scope:{characterSlug:'one',locale:'foreign'}}]) assert.throws(()=>parseAuctionClientActiveRecovery({activeJob:{...job,...patch},formIntent}),/invalid_plan_result/);
+assert.throws(()=>parseAuctionClientActiveRecovery({result:job}),/invalid_plan_result/);
+console.log('PASS active recovery client: safe original intent, no extra server facts, malformed/incorrect-scope data rejected, explicit active/completed distinction.');
