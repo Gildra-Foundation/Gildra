@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { goldToCopper } from "@/lib/wow/auctionMarket";
 import { startAuctionGearSearch, continueAuctionGearSearch, assembleAuctionGearSearch, selectedAuctionGearAssemblyOptions, verifyAuctionGearSearch } from "@/lib/wow/auctionGearRunner";
-import { enqueueAuctionGearJob, getAuctionGearJob, getAuctionGearJobByRequest, validAuctionGearClientRequestId, replayAuctionGearJob, cancelAuctionGearJob, cancelAuctionGearRequest } from "@/lib/wow/auctionGearJobs";
+import { enqueueAuctionGearJob, getAuctionGearJob, getAuctionGearJobByRequest, validAuctionGearClientRequestId, replayAuctionGearJob, cancelAuctionGearJob, cancelAuctionGearRequest, getOwnerActiveAuctionGearJob, auctionGearFormIntent } from "@/lib/wow/auctionGearJobs";
 import { getAuctionGearSearch, reserveAuctionGearSearch, saveAuctionGearSearch } from "@/lib/wow/auctionGearSearchStore";
 import { resumeOwnedAuctionGearWork } from "@/lib/wow/auctionGearWork";
 import { recoverAuctionGearSearch } from "@/lib/wow/auctionGearRecovery";
@@ -38,6 +38,19 @@ async function owner() {
     token
   } : null;
 }
+function activePlan(ownerId: string) {
+  const recovery = getOwnerActiveAuctionGearJob(ownerId);
+  const job = recovery.activeJob;
+  if (job?.searchId && !recovery.formIntent) {
+    const entry = getAuctionGearSearch(ownerId, job.searchId);
+    recovery.formIntent = auctionGearFormIntent(entry?.context.input, job.scope);
+  }
+  return recovery;
+}
+function queueFailure(ownerId: string, code: string) {
+  return reply({ error: code, ...(code === "plan_already_running" ? activePlan(ownerId) : {}) },
+    code === "invalid_auction_selection" || code === "invalid_plan_request" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
+}
 async function readPlan(request: Request) {
   if (!sameOrigin(request)) return reply({
     error: "cross_site_blocked"
@@ -47,6 +60,10 @@ async function readPlan(request: Request) {
     error: "session_expired"
   }, 401);
   const params = new URL(request.url).searchParams;
+  if (params.has("active")) {
+    if (params.get("active") !== "1" || params.size !== 1) return reply({ error: "invalid_plan_request" }, 400);
+    return reply(activePlan(user.id));
+  }
   if (params.has("clientRequestId")) {
     const clientRequestId = params.get("clientRequestId"), characterSlug = params.get("characterSlug") ?? "", locale = params.get("locale");
     if (params.has("id") || params.has("searchId") || !validAuctionGearClientRequestId(clientRequestId) ||
@@ -199,7 +216,7 @@ async function postPlan(request: Request) {
     } catch (error) {
       release?.();
       const code = error instanceof Error ? error.message : "plan_queue_full";
-      return reply({ error: code }, code === "invalid_auction_selection" || code === "invalid_plan_request" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
+      return queueFailure(user.id, code);
     }
   }
   if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "objective", "locale", "clientRequestId"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
@@ -245,9 +262,7 @@ async function postPlan(request: Request) {
     return reply(job, 202);
   } catch (error) {
     const code = error instanceof Error ? error.message : "plan_queue_full";
-    return reply({
-      error: code
-    }, code === "invalid_plan_request" ? 400 : code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
+    return queueFailure(user.id, code);
   }
 }
 

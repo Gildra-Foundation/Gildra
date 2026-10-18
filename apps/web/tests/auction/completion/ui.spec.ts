@@ -1,5 +1,12 @@
-import { test, expect } from "./ui-support";
+import { test, expect, type CompletionHarness } from "./ui-support";
 import { assemblyResult, characterSlug, completedJob, market, searchResult } from "../reliability/ui-fixtures";
+
+async function expectExcludedRecommendations(auction: CompletionHarness) {
+  await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(0);
+  await expect(auction.panel.locator('[data-auction-exclusions] > summary')).toBeVisible();
+  const keys = await auction.page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith('gildra:auction:v1:')).flatMap(([, value]) => JSON.parse(value).excludedVariantKeys ?? []));
+  expect(keys.length).toBeGreaterThan(0);
+}
 
 for (const expired of [false, true]) test(`repeat-audit regression: restored completed loadout keeps ${expired ? "expired" : "unrefreshed"} prices stale`, async ({ auction, page }, info) => {
   const now = Date.now();
@@ -237,8 +244,13 @@ test("changing exclusions after a lost response retires the old nonce before a n
   await expect(auction.assembly.getByRole("button", { name: /Повторить восстановление|Retry recovery/ })).toBeVisible();
   const oldNonce = auction.requests[1].clientRequestId!;
   await auction.panel.locator('[data-auction-option] summary').click();
-  await auction.panel.locator('[data-auction-option] input[type="checkbox"]').uncheck();
+  await auction.panel.locator('[data-auction-option] input[type="checkbox"]').click();
+  await expectExcludedRecommendations(auction);
+  const expectedVariant = JSON.stringify([880003, "synthetic-exact-780003"]);
+  const selected = await auction.page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, value]) => JSON.parse(value))[0]);
+  expect(selected.excludedOptionIds).toEqual([]); expect(selected.excludedVariantKeys).toEqual([expectedVariant]);
   await auction.build.click(); await expect(auction.result).toBeVisible();
+  await expectExcludedRecommendations(auction);
   expect(auction.nonceDeletes).toContain(oldNonce);
   expect(auction.requests.filter(body => body.action === "assemble")).toHaveLength(2);
   expect(auction.requests[2].excludedOptionIds).toEqual([]);
@@ -373,14 +385,25 @@ test("value: one efficient choice per slot, two alternatives on demand and compl
   await expect(main.locator('input[type="checkbox"]')).toBeHidden();
   await main.locator('summary').click();
   await expect(main.locator('input[type="checkbox"]')).toBeVisible();
-  await main.locator('input[type="checkbox"]').uncheck();
-  await expect(main).toContainText(auction.t('Исключён из сборки сета', 'Excluded from loadout assembly'));
-  await main.locator('input[type="checkbox"]').check();
+  await main.locator('input[type="checkbox"]').click();
+  await expect(auction.panel.locator('[data-auction-option="value-best"]')).toHaveCount(0);
+  await expect(main).toHaveAttribute('data-auction-option', 'strong');
+  await expect(auction.panel.locator('[data-auction-option="duplicate"]')).toHaveCount(0);
+  const selected = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, value]) => JSON.parse(value))[0]);
+  expect(selected.excludedOptionIds).toEqual([]); expect(selected.excludedVariantKeys).toEqual([JSON.stringify([880002, "synthetic-value-base"])]);
+  await auction.panel.locator('[data-auction-exclusions] > summary').click();
+  await auction.panel.locator('[data-excluded-restore]').click();
+  await expect(main).toHaveAttribute('data-auction-option', 'value-best');
+  await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(3);
+  await expect(auction.panel.locator('[data-auction-option="duplicate"]')).toHaveCount(0);
   await alternatives.click();
   await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(1);
   await info.attach('value-interface', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
   await auction.build.click(); await expect(auction.result).toBeVisible();
-  expect(auction.requests.find(body => body.action === 'assemble')?.excludedOptionIds).toEqual([]);
+  const assembled = auction.requests.find(body => body.action === 'assemble');
+  expect(assembled?.excludedOptionIds).toEqual([]); expect(assembled?.excludedVariantKeys).toEqual([]);
+  expect(assembled).not.toHaveProperty('allowedOptionIds');
+  expect(auction.requests.map(body => body.action)).toEqual(['search', 'assemble']);
 });
 
 test("value: slot controls start collapsed and remain usable on a narrow screen", async ({ auction, page }) => {
@@ -413,14 +436,17 @@ test("audit fixes: variant checkbox excludes every slot alias, survives reload a
   auction.aliasVariants = true; await auction.open(); await auction.search();
   const cards = auction.panel.locator('[data-auction-option]');
   for (const card of await cards.all()) await card.locator('summary').click();
-  await cards.first().getByRole('checkbox').uncheck();
-  await expect(cards.nth(1).getByRole('checkbox')).not.toBeChecked();
+  await cards.first().getByRole('checkbox').click();
+  await expectExcludedRecommendations(auction);
   await page.reload({ waitUntil: 'networkidle' });
   await expect(auction.panel.locator('[data-auction-search-result]')).toBeVisible();
   for (const card of await cards.all()) await card.locator('summary').click();
-  await expect(cards.nth(1).getByRole('checkbox')).not.toBeChecked();
+  await expectExcludedRecommendations(auction);
   await expect(auction.build).toBeDisabled();
-  await cards.first().getByRole('checkbox').check();
+  await auction.assembly.locator('summary').filter({ hasText: /Исключения|Exclusions/ }).click();
+  await auction.panel.locator('[data-excluded-restore]').click();
+  await expect(cards).toHaveCount(2);
+  for (const restoredCard of await cards.all()) await restoredCard.locator('summary').click();
   await expect(cards.nth(1).getByRole('checkbox')).toBeChecked();
   await auction.build.click(); await expect(auction.result).toBeVisible();
   expect(auction.requests.find(body => body.action === 'assemble')?.excludedVariantKeys).toEqual([]);
@@ -431,7 +457,7 @@ test("audit fixes: selecting during background discovery retires it before assem
   await auction.open(); await auction.search();
   await expect.poll(() => auction.requests.map(body => body.action)).toEqual(['search', 'resume']);
   const card = auction.panel.locator('[data-best-value]'); await card.locator('summary').click();
-  await expect(card.getByRole('checkbox')).toBeEnabled(); await card.getByRole('checkbox').uncheck();
+  await expect(card.getByRole('checkbox')).toBeEnabled(); await card.getByRole('checkbox').click();
   await auction.build.click(); auction.release(); await expect(auction.result).toBeVisible();
   expect(auction.deletes).toContain('completion-job-2');
   expect(auction.requests.find(body => body.action === 'assemble')?.excludedVariantKeys).toEqual([JSON.stringify([880002, 'synthetic-value-base'])]);
@@ -596,14 +622,14 @@ for (const source of ["known job", "unaccepted nonce"] as const) test(`regressio
 });
 
 for (const change of ["select all", "equivalent budget"] as const) test(`regression: no-op ${change} preserves completed set, exact exclusions and recovery`, async ({ auction, page }) => {
-  await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]'); await card.locator('summary').click(); await card.getByRole('checkbox').uncheck();
+  await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]'); await card.locator('summary').click(); await card.getByRole('checkbox').click();
   await auction.build.click(); await expect(auction.result).toBeVisible();
   const before = await page.evaluate(() => Object.fromEntries(Object.entries(sessionStorage)));
   if (change === "select all") { await auction.panel.locator('summary').filter({hasText:/Слоты экипировки|Equipment slots/}).click(); await auction.panel.getByRole('button',{name:/Выбрать все|Select all/,exact:true}).click(); }
   else await auction.panel.locator('[name="budgetGold"]').fill(auction.t('10 000','10,000'));
-  await expect(auction.result).toBeVisible(); await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).not.toBeChecked();
+  await expect(auction.result).toBeVisible(); await expectExcludedRecommendations(auction);
   expect(await page.evaluate(() => Object.fromEntries(Object.entries(sessionStorage)))).toEqual(before); expect(auction.requests).toHaveLength(2);
-  await page.reload({waitUntil:'networkidle'}); await expect(auction.result).toBeVisible(); await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).not.toBeChecked();
+  await page.reload({waitUntil:'networkidle'}); await expect(auction.result).toBeVisible(); await expectExcludedRecommendations(auction);
 });
 
 test("regression: cancellation waits for the DELETE acknowledgement before unlocking", async ({ auction, page }) => {
@@ -634,20 +660,20 @@ test("regression: oversized selection provides an actionable localized message",
 });
 
 test("regression: canonical wire exclusions stay compact while409 and reload use exact original keys", async ({ auction, page }) => {
- auction.canonicalVariant = true; await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]'); await card.locator('summary').click(); await card.getByRole('checkbox').uncheck();
+ auction.canonicalVariant = true; await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]'); await card.locator('summary').click(); await card.getByRole('checkbox').click();
  const key = JSON.stringify([880003,`auction:${'a'.repeat(32)}`]); auction.seedBusyAssembly(); auction.serverVariantExclusions = [key];
  await auction.build.click(); await expect(auction.result).toBeVisible(); const sent = auction.requests.at(-1)!;
  expect(sent.excludedVariantKeys).toEqual([]); expect(sent.excludedVariantIds).toEqual([[880003,'a'.repeat(32)]]); expect(sent.excludedOptionIds).toEqual([]);
  expect(await page.evaluate(() => Object.entries(sessionStorage).filter(([k])=>k.startsWith('gildra:auction:v1:')).map(([,v])=>JSON.parse(v))[0].excludedVariantKeys)).toEqual([key]);
- await page.reload({waitUntil:'networkidle'}); await expect(auction.result).toBeVisible(); await expect(auction.panel.getByRole('alert')).toHaveCount(0); await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).not.toBeChecked();
+ await page.reload({waitUntil:'networkidle'}); await expect(auction.result).toBeVisible(); await expect(auction.panel.getByRole('alert')).toHaveCount(0); await expectExcludedRecommendations(auction);
  expect(auction.requests.filter(body=>body.action==='assemble')).toHaveLength(1);
 });
 test("regression: cancellation retry after reload preserves its existing search checkpoint and exclusions", async ({ auction, page }) => {
- await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]'); await card.locator('summary').click(); await card.getByRole('checkbox').uncheck();
+ await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]'); await card.locator('summary').click(); await card.getByRole('checkbox').click();
  auction.holdAcceptance = true; await auction.build.click(); await expect.poll(()=>auction.requests.length).toBe(2); const nonce = auction.requests[1].clientRequestId!;
  auction.cancelFailure = true; await auction.assembly.getByRole('button',{name:/Отменить сборку|Cancel assembly/}).click(); const retry = auction.panel.getByRole('button',{name:/Повторить отмену|Retry cancellation/}); await expect(retry).toBeVisible();
  await page.reload({waitUntil:'networkidle'}); await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled(); auction.cancelFailure = false; await retry.click(); auction.release();
- await expect(auction.panel.locator('[data-auction-search-result]')).toBeVisible(); await expect(auction.panel.locator('[data-auction-option] input[type="checkbox"]')).not.toBeChecked(); await expect(auction.build).toBeEnabled();
+ await expect(auction.panel.locator('[data-auction-search-result]')).toBeVisible(); await expectExcludedRecommendations(auction); await expect(auction.build).toBeEnabled();
  expect(auction.requests).toHaveLength(2); expect(auction.nonceDeletes).toContain(nonce);
  const saved = await page.evaluate(()=>Object.entries(sessionStorage).filter(([k])=>k.startsWith('gildra:auction:v1:')).map(([,v])=>JSON.parse(v))[0]); expect(saved.searchId).toBe('synthetic-reliability-search'); expect(saved.cancellationRequested).toBeUndefined(); expect(saved.excludedVariantKeys).toHaveLength(1);
 });
@@ -812,13 +838,13 @@ test("five-speed regression: pinned item remains in viewport and interactive aft
 
 test("five-speed control: invalid budget preserves excluded variants through correction and reload, changed amount clears them", async ({ auction, page }) => {
   await auction.open(); await auction.search(); const card = auction.panel.locator('[data-auction-option]');
-  await card.locator("summary").click(); await card.getByRole("checkbox").uncheck();
+  await card.locator("summary").click(); await card.getByRole("checkbox").click();
   const readCache = () => page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([,value]) => JSON.parse(value))[0]);
   const saved = await readCache(); expect(saved.excludedVariantKeys).toHaveLength(1);
   const input = auction.panel.locator('[name="budgetGold"]'); await input.fill(auction.t("10000,", "10000."));
-  await expect(card.getByRole("checkbox")).toBeDisabled(); await expect(auction.find).toBeDisabled(); expect(await readCache()).toEqual(saved);
-  await input.pressSequentially("0000"); await expect(card.getByRole("checkbox")).not.toBeChecked(); await expect(card.getByRole("checkbox")).toBeEnabled();
-  await page.reload({ waitUntil: "networkidle" }); await card.locator("summary").click(); await expect(card.getByRole("checkbox")).not.toBeChecked();
+  await expectExcludedRecommendations(auction); await expect(auction.find).toBeDisabled(); expect(await readCache()).toEqual(saved);
+  await input.pressSequentially("0000"); await expectExcludedRecommendations(auction); await expect(auction.find).toBeEnabled();
+  await page.reload({ waitUntil: "networkidle" }); await expectExcludedRecommendations(auction);
   await expect(input).toHaveValue("10000"); expect(auction.requests).toHaveLength(1);
   await input.fill(auction.t("10000,", "10000.")); await input.pressSequentially("1");
   await expect(auction.panel.locator('[data-auction-search-result]')).toHaveCount(0); await expect(auction.find).toBeEnabled();
@@ -872,4 +898,286 @@ test("five-speed control: hover description clamps at a short viewport edge and 
   const trigger = page.getByRole("button", { name: /Synthetic exact weapon/ }); await trigger.focus(); const tooltip = page.getByRole("tooltip");
   await expect(tooltip).toBeVisible(); await expect.poll(() => tooltip.evaluate(node => { const r = node.getBoundingClientRect(); return r.top >= 11 && r.bottom <= innerHeight - 11; })).toBe(true);
   await page.keyboard.press("Escape"); await expect(tooltip).toHaveCount(0); await expect(trigger).toBeFocused();
+});
+
+
+for (const countKey of ["unsupportedModifierLots", "variantsRejected", "referenceItemsRejected", "catalogItemsMissing", "catalogUnmatchedItemIds", "eligibilityUnverifiedItems", "generic"] as const) test(`four-fix regression: unverified coverage explains ${countKey}`, async ({ auction, page }, info) => {
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const source = searchResult();
+    source.coverage = { ...source.coverage, unsupportedModifierLots: 0, variantsRejected: 0, referenceItemsRejected: 0, catalogItemsMissing: 0, catalogUnmatchedItemIds: 0, eligibilityUnverifiedItems: 0, ...(countKey === "generic" ? {} : { [countKey]: 7 }) };
+    source.dataComplete = false;
+    await route.fulfill({ status: 202, json: completedJob(auction.language, source) });
+  });
+  await auction.open(); await auction.search();
+  const details = auction.panel.locator("details").filter({ has: page.getByText(auction.t("Часть рынка пока не проверена", "Part of the market is unverified"), { exact: true }) });
+  await details.locator("summary").click();
+  await expect(details.locator(":scope > p")).not.toHaveCount(0);
+  if (countKey !== "generic") await expect(details).toContainText("7");
+  await details.scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  if (countKey === "unsupportedModifierLots") await page.screenshot({ path: info.outputPath("coverage-explanation.png"), fullPage: true });
+});
+
+test("four-fix regression: excluding the best variant reranks cards and keeps an explicit restore action", async ({ auction }) => {
+  auction.valueChoices = true; await auction.open(); await auction.search();
+  const best = auction.panel.locator("[data-best-value=true]");
+  const oldId = await best.getAttribute("data-auction-option");
+  await best.locator("summary").click();
+  await best.getByRole("checkbox").click();
+  await expect(auction.panel.locator(`[data-best-value=true][data-auction-option=${JSON.stringify(oldId)}]`)).toHaveCount(0);
+  await expect(auction.panel.locator("[data-best-value=true]")).toHaveCount(1);
+  const exclusions = auction.assembly.locator("details").filter({ has: auction.page.getByText(/^Исключения:|^Exclusions:/) });
+  await exclusions.locator("summary").click();
+  await exclusions.getByRole("button", { name: /Вернуть вариант в подбор|Restore variant to assembly/ }).click();
+  await expect(auction.panel.locator("[data-best-value=true]")).toHaveAttribute("data-auction-option", oldId!);
+});
+
+test("four-fix regression: cold-tab conflict offers explicit recovery with the original budget and selection", async ({ auction, page }, info) => {
+  const requests: string[] = [], job = { id: "cold-tab-active", status: "queued", mode: "search", result: null, progress: null, error: null, scope: { characterSlug, locale: auction.language } };
+  const formIntent = { ...job.scope, budgetCopper: 3333300, scenario: "aoe", objective: "dps", selectedSlots: ["WRIST"] };
+  const result = { ...searchResult(), budgetCopper: formIntent.budgetCopper, scenario: formIntent.scenario, objective: formIntent.objective, selectedSlots: formIntent.selectedSlots };
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    requests.push(route.request().method() + new URL(route.request().url()).search);
+    if (route.request().method() === "POST") await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent } });
+    else await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode: "search" } });
+  });
+  await auction.open(); await auction.find.click();
+  const open = auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true });
+  await expect(open).toBeVisible(); await expect(auction.find).toBeDisabled();
+  expect(requests).toHaveLength(1);
+  await open.click(); await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("333.33");
+  await auction.panel.locator("summary").filter({ hasText: /Слоты экипировки и цель подбора|Equipment slots and objective/ }).click();
+  await expect(auction.panel.locator('[name="objective"]')).toHaveValue("dps");
+  await expect(auction.panel.getByRole("combobox", { name: /Сценарий|Encounter/ })).toHaveValue("aoe");
+  await expect(auction.panel.locator('[name="selectedSlots"]:checked')).toHaveCount(1);
+  await expect(auction.panel.locator('[name="selectedSlots"][value="WRIST"]')).toBeChecked();
+  expect(requests.filter(x => x.startsWith("POST"))).toHaveLength(1);
+  await page.screenshot({ path: info.outputPath("cold-tab-original-intent-restored.png"), fullPage: true });
+});
+
+for (const foreign of ["character", "locale"] as const) test(`four-fix regression: a cold-tab ${foreign} mismatch cannot silently open the wrong calculation`, async ({ auction, page }) => {
+  const foreignScope = { characterSlug: foreign === "character" ? "eu--synthetic-other--different" : characterSlug, locale: foreign === "locale" ? auction.language === "ru" ? "en" : "ru" : auction.language };
+  const job = { id: "foreign-owned-active", status: "queued", mode: "search", result: null, progress: null, error: null, scope: foreignScope };
+  const requests: string[] = [];
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    requests.push(route.request().method());
+    if (route.request().method() === "DELETE") await route.fulfill({ json: { ...job, status: "cancelled" } });
+    else await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...foreignScope, budgetCopper: 200000, scenario: "aoe", objective: "dps", selectedSlots: ["WRIST"] } } });
+  });
+  await auction.open(); await auction.find.click();
+  await expect(auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true })).toHaveCount(0);
+  const cancel = auction.panel.getByRole("button", { name: /Отменить и изменить параметры|Cancel and change parameters/, exact: true });
+  await expect(cancel).toBeVisible(); expect(requests).toEqual(["POST"]);
+  await cancel.click(); await expect(auction.find).toBeEnabled();
+  await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("10000");
+  expect(requests).toEqual(["POST", "DELETE"]);
+});
+
+test("four-fix regression: cold-tab cancellation retains ownership until a retry is acknowledged", async ({ auction, page }) => {
+  let reject = true, deletes = 0, posts = 0;
+  const job = { id: "owned-active-to-cancel", status: "queued", mode: "search", result: null, progress: null, error: null, scope: { characterSlug, locale: auction.language } };
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    if (route.request().method() === "POST") { posts++; await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: null } }); }
+    else if (route.request().method() === "DELETE") { deletes++; await route.fulfill(reject ? { status: 503, json: { error: "auction_storage_unavailable" } } : { json: { ...job, status: "cancelled" } }); }
+  });
+  await auction.open(); await auction.find.click();
+  await auction.panel.getByRole("button", { name: /Отменить и изменить параметры|Cancel and change parameters/, exact: true }).click();
+  await expect(auction.find).toBeDisabled();
+  await expect(auction.panel.getByRole("button", { name: /Повторить отмену|Retry cancellation/ })).toBeVisible();
+  expect(await page.evaluate(() => Object.entries(sessionStorage).some(([, value]) => value.includes('"cancellationRequested":true') && value.includes('owned-active-to-cancel')))).toBe(true);
+  reject = false; await auction.panel.getByRole("button", { name: /Повторить отмену|Retry cancellation/ }).click();
+  await expect(auction.find).toBeEnabled(); await expect(auction.panel.locator('[name="budgetGold"]')).toBeFocused();
+  expect(posts).toBe(1); expect(deletes).toBeGreaterThan(1);
+});
+
+// Covers the minimum supported phone width independently of the ordinary 390/1440 matrix.
+test("four-fix regression: 320px recovery, exclusions and explanation stay readable with keyboard focus", async ({ auction, page }, info) => {
+  await page.setViewportSize({ width: 320, height: 1000 });
+  const job = { id: "phone-owned-active", status: "queued", mode: "search", result: null, progress: null, error: null, scope: { characterSlug, locale: auction.language } };
+  const source = searchResult(); source.dataComplete = false; source.coverage = { ...source.coverage, unsupportedModifierLots: 7 };
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    if (route.request().method() === "POST") await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: "dps", selectedSlots: source.selectedSlots } } });
+    else await route.fulfill({ json: { ...completedJob(auction.language, source), id: job.id, mode: "search" } });
+  });
+  await auction.open(); await auction.find.click();
+  await expect(auction.panel.locator("[data-auction-owned-recovery]")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.screenshot({ path: info.outputPath("320px-owned-recovery.png"), fullPage: true });
+  const open = auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true });
+  await open.focus(); await page.keyboard.press("Enter");
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  const card = auction.panel.locator("[data-best-value=true]"); await card.locator("summary").click();
+  await card.getByRole("checkbox").focus(); await page.keyboard.press("Space");
+  await expectExcludedRecommendations(auction);
+  const exclusions = auction.panel.locator("[data-auction-exclusions] > summary");
+  await expect(exclusions).toBeFocused();
+  await expect(auction.panel).toContainText(auction.t("Найденные подтверждённые улучшения исключены", "The confirmed upgrades found are excluded"));
+  await exclusions.click(); await auction.panel.locator("[data-excluded-restore]").click();
+  await expect(auction.panel.locator("[data-best-value=true] summary")).toBeFocused();
+  const coverage = auction.panel.locator("summary").filter({ hasText: /Часть рынка пока не проверена|Part of the market is unverified/ });
+  await coverage.click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.screenshot({ path: info.outputPath("320px-restored-explanation.png"), fullPage: true });
+});
+
+test("four-fix regression: cold-tab assembly restores durable current exclusions before continuing", async ({ auction, page }) => {
+  const source = { ...searchResult(), budgetCopper: 3333300, scenario: "execute", objective: "value", selectedSlots: ["HEAD", "WRIST"] };
+  const exactVariant = JSON.stringify([source.items[3].itemId, source.items[3].variantKey]);
+  const blockedLot = source.items[0].optionId;
+  const result = { ...assemblyResult(), budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots, updatedSearch: source };
+  const job = { id: "parked-owned-assembly", searchId: source.searchId, status: "queued", mode: "assembly", result: null, progress: null, error: null, scope: { characterSlug, locale: auction.language } };
+  const bodies: Array<Record<string, unknown>> = [], reads: string[] = [];
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), query = new URL(request.url()).searchParams;
+    if (request.method() === "POST") {
+      const body = request.postDataJSON(); bodies.push(body);
+      if (body.action === "search") await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots } } });
+      else await route.fulfill({ status: 202, json: { ...completedJob(auction.language, result), id: "continued-same-selection", mode: "assembly" } });
+    } else if (query.has("searchId")) {
+      reads.push("search"); await route.fulfill({ json: { kind: "recovery", search: source, assembly: null, excludedOptionIds: [blockedLot], excludedVariantKeys: [exactVariant], activeJob: job, needsRefresh: true } });
+    } else { reads.push("job"); await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode: "assembly" } }); }
+  });
+  await auction.open(); await auction.find.click(); expect(reads).toEqual([]);
+  await auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true }).click();
+  await expect(auction.result).toBeVisible(); expect(reads).toEqual(["search", "job"]);
+  await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("333.33");
+  const cache = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, json]) => JSON.parse(json))[0]);
+  expect(cache.excludedOptionIds).toEqual([blockedLot]); expect(cache.excludedVariantKeys).toEqual([exactVariant]);
+  await expect(auction.panel.locator("[data-best-value=true]")).toHaveCount(0);
+  await auction.build.click(); await expect.poll(() => bodies.length).toBe(2);
+  expect(bodies[1]).toMatchObject({ action: "assemble", searchId: source.searchId, excludedOptionIds: [blockedLot], excludedVariantKeys: [exactVariant] });
+});
+
+// A search persists its ID before the first public search DTO exists. After a
+// service restart only an explicit scoped job lookup can resume this phase.
+test("four-fix midflight regression: cold-tab initial search resumes by exact job when its first DTO is not ready", async ({ auction, page }, info) => {
+  const result = { ...searchResult(), budgetCopper: 3333300, scenario: "aoe", objective: "value", selectedSlots: ["WRIST"] };
+  const job = { id: "initial-search-before-first-dto", searchId: result.searchId, status: "queued", mode: "search", result: null, error: null, progress: null, scope: { characterSlug, locale: auction.language } };
+  const reads: Array<{ id: string | null; searchId: string | null; characterSlug: string | null; locale: string | null }> = [];
+  let posts = 0;
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), query = new URL(request.url()).searchParams;
+    if (request.method() === "POST") { posts++; await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: result.budgetCopper, scenario: result.scenario, objective: result.objective, selectedSlots: result.selectedSlots } } }); }
+    else {
+      reads.push({ id: query.get("id"), searchId: query.get("searchId"), characterSlug: query.get("characterSlug"), locale: query.get("locale") });
+      if (query.has("searchId")) await route.fulfill({ status: 404, json: { error: "search_not_found" } });
+      else await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode: "search" } });
+    }
+  });
+  await auction.open(); await auction.find.click(); expect(reads).toEqual([]);
+  await auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true }).click();
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  expect(posts).toBe(1);
+  expect(reads).toEqual([{ id: null, searchId: result.searchId, characterSlug, locale: auction.language }, { id: job.id, searchId: null, characterSlug, locale: auction.language }]);
+  await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("333.33");
+  await expect(auction.panel.getByRole("combobox", { name: /Сценарий|Encounter/ })).toHaveValue("aoe");
+  await expect(auction.panel.locator("[data-auction-owned-recovery]")).toHaveCount(0);
+  await info.attach("midflight-scoped-reads", { body: JSON.stringify({ reads, posts }), contentType: "application/json" });
+});
+
+for (const fault of ["assembly-missing", "wrong-status", "other-code", "malformed", "null-dto", "network"] as const) test(`four-fix midflight control: ${fault} keeps context recovery explicit and preserves assembly exclusions`, async ({ auction, page }) => {
+  const source = { ...searchResult(), budgetCopper: 3333300, scenario: "execute", objective: "value", selectedSlots: ["WRIST"] };
+  const variant = JSON.stringify([source.items[3].itemId, source.items[3].variantKey]);
+  const mode = fault === "assembly-missing" ? "assembly" : "search";
+  const job = { id: `midflight-guard-${fault}`, searchId: source.searchId, status: "queued", mode, result: null, error: null, progress: null, scope: { characterSlug, locale: auction.language } };
+  let faultActive = true, posts = 0, jobReads = 0, contextReads = 0, releaseFault!: () => void;
+  const faultDelivered = new Promise<void>(resolve => { releaseFault = resolve; });
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), query = new URL(request.url()).searchParams;
+    if (request.method() === "POST") { posts++; await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots } } }); }
+    else if (query.has("searchId")) {
+      contextReads++;
+      if (faultActive) {
+        if (fault === "malformed") await route.fulfill({ json: { kind: "invalid-recovery" } });
+        else if (fault === "null-dto") await route.fulfill({ contentType: "application/json", body: "null" });
+        else await route.fulfill({ status: fault === "network" ? 503 : fault === "wrong-status" ? 400 : 404, json: { error: fault === "other-code" ? "invalid_plan_result" : fault === "network" ? "auction_storage_unavailable" : "search_not_found" } });
+        if (fault !== "network" || contextReads === 4) releaseFault();
+      } else await route.fulfill({ json: { kind: "recovery", search: source, assembly: null, excludedOptionIds: [], excludedVariantKeys: [variant], activeJob: job, needsRefresh: true } });
+    } else {
+      jobReads++;
+      const result = mode === "assembly" ? { ...assemblyResult(), budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots, updatedSearch: source } : source;
+      await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode } });
+    }
+  });
+  await auction.open(); await auction.find.click();
+  const open = auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true });
+  await open.click(); await faultDelivered;
+  await expect(open).toBeEnabled(); await expect(auction.find).toBeDisabled();
+  await expect(auction.panel.getByRole("alert")).toBeVisible();
+  await expect(auction.panel.locator("[data-auction-owned-recovery]")).toBeVisible();
+  expect(jobReads).toBe(0); expect(posts).toBe(1);
+  faultActive = false; await open.click();
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  expect(jobReads).toBe(1); expect(posts).toBe(1);
+  const saved = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, json]) => JSON.parse(json))[0]);
+  expect(saved.excludedVariantKeys).toEqual([variant]);
+  await expect(auction.panel.locator("[data-best-value=true]")).toHaveCount(0);
+  await expect(auction.panel.locator("[data-auction-exclusions] > summary")).toBeVisible();
+});
+
+for (const status of [404, 503]) test(`four-fix reload regression: failed assembly context HTTP${status} never leaves a context-less job handle`, async ({ auction, page }) => {
+  const source = { ...searchResult(), budgetCopper: 3333300, scenario: "aoe", objective: "value", selectedSlots: ["WRIST"] };
+  const variant = JSON.stringify([source.items[3].itemId, source.items[3].variantKey]);
+  const result = { ...assemblyResult(), budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots, updatedSearch: source };
+  const job = { id: `assembly-context-before-reload-${status}`, searchId: source.searchId, status: "queued", mode: "assembly", result: null, error: null, progress: null, scope: { characterSlug, locale: auction.language } };
+  let failedContext = true, jobReads = 0, contextReads = 0, posts = 0, releaseFault!: () => void;
+  const faultDelivered = new Promise<void>(resolve => { releaseFault = resolve; });
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), query = new URL(request.url()).searchParams;
+    if (request.method() === "POST") { posts++; await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots } } }); }
+    else if (query.has("searchId")) {
+      contextReads++;
+      if (failedContext) { await route.fulfill({ status, json: { error: status === 404 ? "search_not_found" : "auction_storage_unavailable" } }); if (contextReads === (status === 503 ? 4 : 1)) releaseFault(); }
+      else await route.fulfill({ json: { kind: "recovery", search: source, assembly: null, excludedOptionIds: [], excludedVariantKeys: [variant], activeJob: job, needsRefresh: true } });
+    } else { jobReads++; await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode: "assembly" } }); }
+  });
+  await auction.open(); await auction.find.click();
+  const open = auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true });
+  await open.click(); await faultDelivered; await expect(open).toBeEnabled();
+  await page.reload({ waitUntil: "networkidle" });
+  expect(jobReads).toBe(0);
+  expect(posts).toBe(1);
+  await expect(auction.find).toBeEnabled();
+  const stored = await page.evaluate(() => Object.entries(sessionStorage));
+  expect(stored.some(([, value]) => value.includes(job.id))).toBe(false);
+  failedContext = false;
+  await auction.find.click(); await expect(open).toBeVisible();
+  expect(jobReads).toBe(0); expect(posts).toBe(2);
+  await open.click(); await expect(auction.result).toBeVisible();
+  expect(jobReads).toBe(1); expect(posts).toBe(2);
+  const saved = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, json]) => JSON.parse(json))[0]);
+  expect(saved.excludedVariantKeys).toEqual([variant]);
+  await expect(auction.panel.locator("[data-best-value=true]")).toHaveCount(0);
+  await expect(auction.panel.locator("[data-auction-exclusions] > summary")).toBeVisible();
+});
+
+test("four-fix reload control: cancelling an opened pending context retains the owned ID until acknowledgement", async ({ auction, page }) => {
+  const source = searchResult();
+  const job = { id: "owned-pending-context-to-cancel", searchId: source.searchId, status: "queued", mode: "assembly", result: null, error: null, progress: null, scope: { characterSlug, locale: auction.language } };
+  let releaseContext!: () => void, signalContext!: () => void, rejectDelete = true, jobReads = 0;
+  const contextStarted = new Promise<void>(resolve => { signalContext = resolve; });
+  const contextHeld = new Promise<void>(resolve => { releaseContext = resolve; });
+  const deletedIds: string[] = [];
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), query = new URL(request.url()).searchParams;
+    if (request.method() === "POST") await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: "dps", selectedSlots: source.selectedSlots } } });
+    else if (request.method() === "DELETE") { deletedIds.push(query.get("id")!); await route.fulfill(rejectDelete ? { status: 503, json: { error: "auction_storage_unavailable" } } : { json: { ...job, status: "cancelled" } }); }
+    else if (query.has("searchId")) { signalContext(); await contextHeld; await route.fulfill({ status: 503, json: { error: "auction_storage_unavailable" } }).catch(() => {}); }
+    else { jobReads++; await route.fulfill({ json: { ...completedJob(auction.language, assemblyResult()), id: job.id, mode: "assembly" } }); }
+  });
+  try {
+    await auction.open(); await auction.find.click();
+    await auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true }).click();
+    await contextStarted;
+    await auction.panel.getByRole("button", { name: /Отменить сборку|Cancel assembly/, exact: true }).click();
+    const retry = auction.panel.getByRole("button", { name: /Повторить отмену|Retry cancellation/ });
+    await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled();
+    const saved = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, json]) => JSON.parse(json))[0]);
+    expect(saved.jobId).toBe(job.id); expect(saved.cancellationRequested).toBe(true);
+    await page.reload({ waitUntil: "networkidle" }); await expect(retry).toBeVisible(); await expect(auction.find).toBeDisabled();
+    expect(jobReads).toBe(0);
+    rejectDelete = false; await retry.click(); await expect(auction.find).toBeEnabled();
+    expect(deletedIds.length).toBeGreaterThanOrEqual(3); expect(deletedIds.every(id => id === job.id)).toBe(true); expect(jobReads).toBe(0);
+  } finally { releaseContext(); }
 });

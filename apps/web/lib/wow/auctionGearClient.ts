@@ -21,6 +21,26 @@ export function parseAuctionClientFormIntent(input: unknown): AuctionClientFormI
       selectedSlots: parseAuctionGearSlots(value.selectedSlots) };
   } catch { return null; }
 }
+export type AuctionClientActiveJob = {
+  id: string; status: "queued" | "running"; mode: "search" | "assembly";
+  scope: { characterSlug: string; locale: "en" | "ru" }; searchId?: string;
+};
+export type AuctionClientActiveRecovery = { activeJob: AuctionClientActiveJob | null; formIntent: AuctionClientFormIntent | null };
+/** Discovery is an owner-checked handle, never permission to adopt arbitrary cached scope or input. */
+export function parseAuctionClientActiveRecovery(input: unknown): AuctionClientActiveRecovery {
+  if (!input || typeof input !== "object" || !("activeJob" in input)) throw new Error("invalid_plan_result");
+  const value = input as Record<string, unknown>;
+  if (value.activeJob === null) return { activeJob: null, formIntent: null };
+  const job = value.activeJob as Partial<AuctionClientActiveJob> | null;
+  if (!job || typeof job !== "object" || !identity(job.id) || !["queued", "running"].includes(job.status ?? "") ||
+      job.mode !== "search" && job.mode !== "assembly" || !job.scope || !identity(job.scope.characterSlug) ||
+      job.scope.locale !== "en" && job.scope.locale !== "ru" || job.searchId !== undefined && !identity(job.searchId)) throw new Error("invalid_plan_result");
+  const intent = value.formIntent as Record<string, unknown> | null;
+  const parsed = intent && Number.isSafeInteger(intent.budgetCopper) && (intent.budgetCopper as number) >= 0
+    ? parseAuctionClientFormIntent({ ...intent, budgetGold: String((intent.budgetCopper as number) / 10000) }) : null;
+  return { activeJob: { id: job.id, status: job.status as "queued" | "running", mode: job.mode, scope: { characterSlug: job.scope.characterSlug, locale: job.scope.locale }, ...(job.searchId ? { searchId: job.searchId } : {}) },
+    formIntent: parsed?.characterSlug === job.scope.characterSlug && parsed.locale === job.scope.locale ? parsed : null };
+}
 export type AuctionClientScope = { characterSlug: string; locale: "ru" | "en" };
 export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; cancellationRequested?: boolean; formIntent?: AuctionClientFormIntent };
 const activeKey = "gildra:auction-active:v1";
@@ -112,7 +132,7 @@ export function auctionClientJobUrl(id: string, scope: AuctionClientScope) {
   return `/api/wow/auction-gear-plans?${new URLSearchParams({ id, ...scope })}`;
 }
 export class AuctionClientError extends Error {
-  constructor(message: string, readonly reconnect = false) { super(message); }
+  constructor(message: string, readonly reconnect = false, readonly status?: number) { super(message); }
 }
 export function auctionClientDelay(milliseconds: number, signal: AbortSignal) {
   signal.throwIfAborted();
@@ -129,7 +149,7 @@ export async function fetchAuctionClientResult<T>(url: string, signal: AbortSign
       const response = await fetch(url, { cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]) });
       if (response.status >= 500) throw new AuctionClientError("plan_connection_interrupted", true);
       const payload = await response.json() as T & { error?: string };
-      if (!response.ok) throw new AuctionClientError(payload.error ?? "auction_plan_unavailable");
+      if (!response.ok) throw new AuctionClientError(payload.error ?? "auction_plan_unavailable", false, response.status);
       return payload;
     } catch (error) {
       signal.throwIfAborted();

@@ -45,4 +45,4 @@ Evidence: `/home/debian/exports/mythic-plus-fixes-20261018/` (`timers-{ru,en}-{1
 
 ## Boundaries
 
-This change does not certify route mechanics or enemy-force totals, or remove `noindex` from tactical drafts. User-saved routes and their stored identifiers are preserved. No production service, database, deployment setting or other session's worktree was changed.
+This change does not certify route mechanics or enemy-force totals, or remove `noindex` from tactical drafts. User-saved routes and their stored identifiers are preserved. The authorized publication updates only the web image and its release metadata. Database operations and replacement of other services are outside scope. The published auction source `469a0161aed6a4cce6968d0a3e6bf7e47c6ed231` is preserved in the release; deployment evidence and current publication status are recorded in `/home/debian/gildra-mythic-publish-20261018/`.

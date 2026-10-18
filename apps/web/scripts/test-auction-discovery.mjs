@@ -39,7 +39,8 @@ const market = offers => ({ id: createHash("sha256").update(JSON.stringify(offer
 const character = { id: 1, level: 81, playableClass: { id: 1 }, playableRace: { id: 1 }, faction: { type: "ALLIANCE" },
   region: "eu", realm: { name: "Synthetic", slug: "synthetic" } };
 const armory = { activeSpecializationId: 72, equipment: { equipped_items: [{ item: { id: 999999 }, slot: { type: "WRIST" }, name: "Synthetic baseline" }] } };
-const lookupGearRecords = async (ids, _locale, itemClass, maxRequiredLevel) => {
+const lookupGearRecords = async (ids, _locale, itemClass, maxRequiredLevel, _signal, _cache, { cachedOnly = false } = {}) => {
+  if (cachedOnly) return []; // This fixture models cold transport, with no raw-fact cache.
   assert.equal(maxRequiredLevel, undefined, "Do not filter actual auction variants using catalog base required level");
   assert(ids.length <= 500, "Discovery summaries stay bounded; repository pages remain limited to 100 IDs");
   batches.catalog++;
