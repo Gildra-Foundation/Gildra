@@ -94,10 +94,20 @@ try {
       await page.screenshot({ path: path.join(output, "arthas-shattering.png") });
       await page.evaluate(() => { window.setTimeout = window.__qaTimeout; delete window.__qaTimeout; Worker.prototype.postMessage = window.__qaWorkerSend; delete window.__qaWorkerSend; });
     }
+    if (theme === "illidan") {
+      assert.equal(await page.locator("[data-transition-snapshot]").count(), 1);
+      assert.equal(await page.locator("[data-fel-surface]").count(), 1);
+      assert.equal(await page.locator("[data-fel-surface]").getAttribute("data-renderer"), "worker");
+      assert.ok(await page.locator("[data-themed-transition] *").count() < 700);
+    }
     await page.waitForURL(base + "/privacy"); await idle(page);
     const phases = await page.evaluate(() => window.__qaPhases);
     const crack = phases.find(item => item.phase === "cracking"), shatter = phases.find(item => item.phase === "shattering");
-    assert.ok(crack && shatter && shatter.at - crack.at >= 200, `${theme} must paint its cracks before shattering`);
+    // Fel has seeded corrosion, not a visible cracking stage. Its worker's
+    // pixels and actual cadence are checked by qa-fel-transition.mjs. The
+    // generic runtime labels can arrive late at a busy parent event loop.
+    if (theme === "illidan") assert.ok(crack && shatter, "fel must seed the page before its dissolve program");
+    else assert.ok(crack && shatter && shatter.at - crack.at >= 200, `${theme} must paint its cracks before shattering`);
     assert.equal(await page.locator("html").getAttribute("data-site-theme"), theme);
     const accent = await page.locator(".gildra-atlas").evaluate(el => getComputedStyle(el).getPropertyValue("--atlas-accent").trim());
     const expected = { arthas: "#80cdef", illidan: "#c4a3f3", garek: "#a5dba7", varok: "#f0a28f" };

@@ -6,6 +6,7 @@ import { lessMotion, subscribeSiteMotion } from "@/lib/client/motionPreference";
 import { iceCrackSound } from "./iceCrackSound";
 import { iceFracture, ICE_FREEZE_MS, ICE_CRACK_MS, ICE_RELEASE_MS } from "./iceFracture";
 import { iceMaterial, warmIceMaterial } from "./iceMaterial";
+import { felMaterial, warmFelMaterial, FEL_SEED_MS, FEL_HOLD_MS, FEL_RELEASE_MS } from "./felMaterial";
 import { transitionSnapshot } from "./transitionSnapshot";
 import { pageRaster, warmPageCapture } from "./pageRaster";
 import { warmPageRaster } from "./pageRasterHost";
@@ -23,7 +24,7 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
   const active = useRef(false), destinationReady = useRef(false), cracksReady = useRef(false), revealing = useRef(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const animationFrame = useRef(0);
-  const surface = useRef<ReturnType<typeof iceMaterial> | null>(null);
+  const surface = useRef<ReturnType<typeof iceMaterial> | ReturnType<typeof felMaterial> | null>(null);
   const capture = useRef<AbortController | null>(null);
   const capturePending = useRef(false);
   const stopSound = useRef<(() => void) | undefined>(undefined);
@@ -55,8 +56,10 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
     capture.current?.abort();
     revealing.current = true;
     host.current.dataset.phase = "shattering";
-    if (surface.current && !surface.current.play([{ phase: "shattering", duration: ICE_RELEASE_MS }], () => {}, cancel)) animate("shattering", ICE_RELEASE_MS, () => {});
-    timers.current.push(setTimeout(cancel, surface.current ? ICE_RELEASE_MS : 760));
+    const fel = host.current.dataset.effect === "illidan";
+    const duration = fel ? FEL_RELEASE_MS : ICE_RELEASE_MS;
+    if (surface.current && !surface.current.play([{ phase: "shattering", duration }], () => {}, cancel) && !fel) animate("shattering", duration, () => {});
+    timers.current.push(setTimeout(cancel, surface.current ? duration : 760));
   }
   useImperativeHandle(ref, () => ({
     cancel,
@@ -72,8 +75,9 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
       document.documentElement.dataset.pageTransition = theme;
       root.append(piece);
       const ice = theme === "arthas";
-      if (ice) {
-        surface.current = iceMaterial(innerWidth, innerHeight, iceFracture(innerWidth, innerHeight));
+      const fel = theme === "illidan";
+      if (ice || fel) {
+        surface.current = ice ? iceMaterial(innerWidth, innerHeight, iceFracture(innerWidth, innerHeight)) : felMaterial(innerWidth, innerHeight);
         surface.current.canvas.className = styles.surface;
         root.append(surface.current.canvas);
         if (surface.current.canvas.dataset.renderer === "worker") {
@@ -95,7 +99,7 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
             capturePending.current = false; shatter();
           });
         }
-        stopSound.current = iceCrackSound(ICE_FREEZE_MS / 1000);
+        if (ice) stopSound.current = iceCrackSound(ICE_FREEZE_MS / 1000);
       }
       active.current = true;
       const crack = () => {
@@ -104,12 +108,15 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
         if (ice) animate("cracking", ICE_CRACK_MS, ready);
         else timers.current.push(setTimeout(ready, 220));
       };
-      if (ice) {
+      if (ice || fel) {
         const autonomous = surface.current?.play([
-          { phase: "freezing", duration: ICE_FREEZE_MS },
-          { phase: "cracking", duration: ICE_CRACK_MS },
+          { phase: "freezing", duration: ice ? ICE_FREEZE_MS : FEL_SEED_MS },
+          { phase: "cracking", duration: ice ? ICE_CRACK_MS : FEL_HOLD_MS },
         ], phase => { root.dataset.phase = phase; }, () => { cracksReady.current = true; shatter(); });
-        if (!autonomous) animate("freezing", ICE_FREEZE_MS, crack);
+        if (!autonomous) {
+          if (ice) animate("freezing", ICE_FREEZE_MS, crack);
+          else timers.current.push(setTimeout(crack, FEL_SEED_MS));
+        }
       }
       else timers.current.push(setTimeout(crack, 340));
       timers.current.push(setTimeout(cancel, 12000));
@@ -121,7 +128,7 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
     },
   }));
   useEffect(() => {
-    // Prepare only the selected frost material, after critical resources load.
+    // Prepare only the selected material, after critical resources load.
     let idle: number | undefined;
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const changed = () => { if (lessMotion()) cancel(); };
@@ -130,9 +137,16 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
     motion.addEventListener("change", changed);
     const unsubscribe = subscribeSiteMotion(changed);
     const warm = () => {
-      if (document.hidden || lessMotion() || document.documentElement.dataset.siteTheme !== "arthas") return;
-      if (window.requestIdleCallback) idle = window.requestIdleCallback(() => { if (!lessMotion() && !document.hidden) { warmIceMaterial(); warmPageRaster(); warmPageCapture(); } }, { timeout: 4000 });
-      else idle = window.setTimeout(() => { if (!lessMotion() && !document.hidden) { warmIceMaterial(); warmPageRaster(); warmPageCapture(); } }, 1500);
+      const prepare = () => {
+        if (lessMotion() || document.hidden) return;
+        const theme = document.documentElement.dataset.siteTheme;
+        if (theme !== "arthas" && theme !== "illidan") return;
+        if (theme === "arthas") warmIceMaterial(); else if (!warmFelMaterial()) return;
+        warmPageRaster(); warmPageCapture();
+      };
+      if (document.hidden || lessMotion()) return;
+      if (window.requestIdleCallback) idle = window.requestIdleCallback(prepare, { timeout: 4000 });
+      else idle = window.setTimeout(prepare, 1500);
     };
     if (document.readyState === "complete") warm();
     else window.addEventListener("load", warm, { once: true });
