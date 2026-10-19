@@ -19,7 +19,9 @@
 .choice > svg { color: var(--atlas-accent); }
 .choiceText { display: grid; gap: var(--atlas-space-1); flex: 1; font: 500 var(--atlas-text-small) / 1.4 var(--atlas-font-ui); }
 .choiceText small { color: var(--atlas-accent); font: 500 var(--atlas-text-label) / 1.4 var(--atlas-font-ui); letter-spacing: .04em; }
-.home { --atlas-font-display: var(--game-switcher-font); --atlas-text-strong: var(--paper); --atlas-text-muted: var(--muted); --atlas-accent: var(--accent); --atlas-accent-strong: var(--bright); --atlas-line-strong: color-mix(in srgb, var(--accent) 55%, transparent); --atlas-accent-wash-strong: color-mix(in srgb, var(--accent) 16%, transparent); --atlas-surface-raised: var(--night); }
+/* .root.home outranks the global [data-atlas-scope] tokens whatever the stylesheet order
+   (the switcher now loads with the layout, before globals.css). */
+.root.home { --atlas-font-display: var(--game-switcher-font); --atlas-text-strong: var(--paper); --atlas-text-muted: var(--muted); --atlas-accent: var(--accent); --atlas-accent-strong: var(--bright); --atlas-line-strong: color-mix(in srgb, var(--accent) 55%, transparent); --atlas-accent-wash-strong: color-mix(in srgb, var(--accent) 16%, transparent); --atlas-surface-raised: var(--night); }
 .home .brand { font-size: var(--atlas-text-h3); }
 .home .panel { left: 0; right: auto; }
 @media (max-width: 480px) {

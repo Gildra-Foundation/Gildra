@@ -2,6 +2,9 @@
   composes: transition from "./routeTransition.module.css";
   contain: layout style paint;
 }
+/* While the effect plays it takes the pointer: a tap skips it (CanvasPageTransition
+   skip) instead of reaching the hidden page underneath. The copy itself is inert. */
+.host[data-phase] { pointer-events: auto; }
 .outgoing { composes: piece from "./routeTransition.module.css"; }
 .frozen { composes: frozen from "./routeTransition.module.css"; }
 /* The inert copy is a still image. Live backdrop sampling would re-rasterize
@@ -25,3 +28,18 @@
   visibility: hidden;
   animation: none;
 }
+
+/* Fel consumes the page pixels in one offscreen surface. The untouched inert
+   DOM stays visible until the bitmap and its first dissolve frame are ready. */
+.host[data-effect="illidan"] > .outgoing::after { display: none; }
+.host[data-effect="illidan"][data-phase="shattering"] > .outgoing {
+  animation: fel-fallback 1080ms ease-in both;
+  will-change: opacity;
+}
+.host[data-effect="illidan"][data-phase="shattering"]:has(> .surface[data-page-content="ready"][data-render-phase="shattering"]) > .outgoing {
+  visibility: hidden;
+  animation: none;
+  will-change: auto;
+}
+.surface[data-fel-surface][data-renderer="fallback"] { display: none; }
+@keyframes fel-fallback { from { opacity: 1; } to { opacity: 0; } }

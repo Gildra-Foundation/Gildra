@@ -30,7 +30,7 @@ try {
   });
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   const cdp=await context.newCDPSession(page);await cdp.send('Emulation.setCPUThrottlingRate',{rate:profile.cpu});
-  await page.goto(base+'/ru/wow/raids',{waitUntil:'load'});await page.locator('[data-book-route-frame][data-view-transitions]').waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1500);
+  await page.goto(base+'/ru/wow/raids',{waitUntil:'load'});await page.locator('[data-book-route-frame][data-route-ready]').waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1500);
   const clickMs=await page.evaluate(()=>{const a=document.createElement('a');a.href='/ru/privacy';document.body.append(a);const start=performance.now();a.click();return performance.now()-start;});
   await page.waitForFunction(()=>window.__stall,null,{timeout:15000});
   await page.waitForFunction(()=>!document.querySelector('[data-themed-transition][data-phase]'),null,{timeout:15000});await page.waitForTimeout(50);

@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import { ChevronRight, ExternalLink, Search } from "lucide-react";
 import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
 import { AtlasPanel } from "@gildra/atlas-ui/AtlasPanel";
+import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { BattleNetSignIn } from "@/components/auth/BattleNetActions";
 import type { BattleNetCharacter, BattleNetRegion } from "@/lib/wow/battleNetCharacters";
 import { characterSlug } from "@/lib/wow/characterSlug";
+import { classColors } from "@/lib/atlas/dataPalette";
 import { BattleNetConnectPanel } from "./BattleNetConnectPanel";
 import type { RosterCopy } from "./characterCopy";
 import styles from "./characterRosterPage.module.css";
@@ -20,6 +22,14 @@ const classIcons: Record<number, string> = {
   6: "deathknight", 7: "shaman", 8: "mage", 9: "warlock", 10: "monk",
   11: "druid", 12: "demonhunter", 13: "evoker",
 };
+/** Game class colours mark the data (the card's edge and portrait ring), never the chrome. */
+const classColorKeys: Record<number, keyof typeof classColors> = {
+  1: "warrior", 2: "paladin", 3: "hunter", 4: "rogue", 5: "priest",
+  6: "death-knight", 7: "shaman", 8: "mage", 9: "warlock", 10: "monk",
+  11: "druid", 12: "demon-hunter", 13: "evoker",
+};
+/** Placeholders while Battle.net answers: the cards' own box, so nothing moves when they arrive. */
+const SKELETON_CARDS = 6;
 
 /**
  * Body of the signed-in roster: loads every Battle.net region once, then
@@ -91,18 +101,43 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
   }
 
   if (loading && !characters.length) {
-    return <div className={styles.status} role="status" aria-busy="true"><AtlasNotice title={copy.loadingRegions}>{copy.loadingText}</AtlasNotice></div>;
+    return (
+      <section className={styles.roster} aria-labelledby="character-roster-title" aria-busy="true">
+        <div className={styles.rosterHeader}>
+          <h2 id="character-roster-title">{copy.rosterTitle}</h2>
+          <p role="status">{copy.loadingRegions}</p>
+        </div>
+        <ul className={styles.grid} aria-hidden="true">
+          {Array.from({ length: SKELETON_CARDS }, (_, index) => (
+            <li key={index} className={`${styles.card} ${styles.skeleton}`}>
+              <span className={styles.classMark} />
+              <span className={styles.cardCopy}><i /><i /><i /></span>
+              <span className={styles.level} />
+            </li>
+          ))}
+        </ul>
+        <p className={styles.loadingNote}>{copy.loadingText}</p>
+      </section>
+    );
   }
 
   const filtersActive = Boolean(query) || classId !== 0;
   const count = (filtersActive ? copy.countFiltered : copy.countAll).replace("{shown}", String(filtered.length)).replace("{total}", String(characters.length));
+  const topLevel = characters.reduce((highest, character) => Math.max(highest, character.level), 0);
+  const summary = characters.length ? [
+    { label: copy.statCharacters, value: characters.length },
+    { label: copy.statTopLevel.replace("{level}", String(topLevel)), value: characters.filter((character) => character.level === topLevel).length },
+    { label: copy.statRealms, value: new Set(characters.map((character) => `${character.region}:${character.realm.slug}`)).size },
+  ] : [];
 
   return (
     <section className={styles.roster} aria-labelledby="character-roster-title">
       <div className={styles.rosterHeader}>
         <h2 id="character-roster-title">{copy.rosterTitle}</h2>
-        <p role="status">{count}{loading ? ` · ${copy.loadingRegions}` : ""}</p>
+        {/* The summary below carries the totals; the line only reports filtering and late regions. */}
+        <p role="status">{filtersActive ? count : ""}{loading ? `${filtersActive ? " · " : ""}${copy.loadingRegions}` : ""}</p>
       </div>
+      {summary.length ? <AtlasStats items={summary} label={copy.summaryLabel} className={styles.summary} /> : null}
 
       {characters.length ? (
         <div className={styles.filters}>
@@ -122,10 +157,12 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
 
       {filtered.length ? (
         <ul className={styles.grid}>
-          {filtered.map((character) => {
+          {filtered.map((character, index) => {
             const icon = classIcons[character.playableClass.id];
+            const colorKey = classColorKeys[character.playableClass.id];
+            const style = { "--class-color": colorKey ? classColors[colorKey] : "var(--atlas-accent)", "--roster-index": Math.min(index, 11) } as CSSProperties;
             return (
-              <li key={`${character.region}:${character.accountId}:${character.id}`} className={styles.card}>
+              <li key={`${character.region}:${character.accountId}:${character.id}`} className={styles.card} style={style}>
                 <span className={styles.classMark} aria-hidden="true">
                   {icon ? <Image src={`/assets/classes/${icon}.jpg`} alt="" width={48} height={48} sizes="48px" /> : character.playableClass.name.slice(0, 1)}
                 </span>

@@ -27,9 +27,9 @@ export function MetricCards({ result, lang, stale = false, lastRunAt }: {
   const tr = t(lang);
   const liveSimC = result.engine.startsWith("SimulationCraft");
   const labels = {
-    "single-target": tr("Single Target Simulation"),
+    "single-target": tr("Single-target simulation"),
     aoe: tr("AoE Simulation"),
-    execute: tr("Execute Simulation"),
+    execute: tr("Execute simulation"),
   };
   return (
     <section className={styles.metricGrid} aria-label={tr("Simulation metrics")}>
@@ -45,9 +45,9 @@ export function MetricCards({ result, lang, stale = false, lastRunAt }: {
         <div className={styles.metricRows}>{result.metrics.map((metric) => <span key={metric.label}><strong>{metric.value}</strong><small>{tr(metric.label)}</small></span>)}</div>
       </article>
       <article className={styles.detailCard}>
-        <header><span>{tr("Simulation Details")}</span><small><DatabaseZap /> {liveSimC ? "SIMULATIONCRAFT" : metricCardsCopy[lang].localCalculation}</small></header>
+        <header><span>{tr("Simulation details")}</span><small><DatabaseZap /> {liveSimC ? "SIMULATIONCRAFT" : metricCardsCopy[lang].localCalculation}</small></header>
         <dl>
-          <div><dt>{tr("Fight Length")}</dt><dd>{result.fightLengthSeconds} {metricCardsCopy[lang].unitS}</dd></div>
+          <div><dt>{tr("Fight length")}</dt><dd>{result.fightLengthSeconds} {metricCardsCopy[lang].unitS}</dd></div>
           <div><dt>{tr("Targets")}</dt><dd>{result.targets}</dd></div>
           <div><dt>{tr("Iterations")}</dt><dd>{result.iterations.toLocaleString(metricCardsCopy[lang].numberLocale)}</dd></div>
           <div><dt>{tr("Engine")}</dt><dd>{liveSimC ? result.engine : metricCardsCopy[lang].gildraBuiltInModel}</dd></div>

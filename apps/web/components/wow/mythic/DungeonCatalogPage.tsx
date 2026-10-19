@@ -14,6 +14,7 @@ export function DungeonCatalogPage({ locale }: { locale: "en" | "ru" }) {
   return (
     <AtlasFrame lang={locale} scene="dungeons">
       <AtlasHero
+        align="center"
         breadcrumbs={trail(locale, "dungeons")}
         breadcrumbsLabel={text.breadcrumbs}
         eyebrow={text.eyebrow}

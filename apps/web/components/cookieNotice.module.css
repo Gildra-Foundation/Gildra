@@ -30,7 +30,24 @@
 .text a { color: var(--atlas-accent-strong); }
 .text a:hover { color: var(--atlas-text-strong); }
 
-.actions { display: flex; flex: 0 0 auto; gap: var(--atlas-space-2); }
+.actions { display: flex; flex: 0 0 auto; gap: var(--atlas-space-4); }
+
+/* Phones: a slim bar flush with the bottom edge — two or three lines of text and
+   one row of 44 px buttons (≈110–125 px instead of ≈170 px). */
+@media (max-width: 560px) {
+  .notice {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    gap: var(--atlas-space-2) var(--atlas-space-3);
+    width: auto;
+    padding: 10px max(var(--atlas-gutter), env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(var(--atlas-gutter), env(safe-area-inset-left));
+    border-width: 1px 0 0;
+    box-shadow: 0 -14px 32px rgba(0, 0, 0, .5);
+  }
+
+  .text { flex-basis: 100%; font-size: var(--atlas-text-meta); line-height: 1.45; }
+}
 
 @keyframes cookie-in { from { opacity: 0; translate: 0 10px; } }
 

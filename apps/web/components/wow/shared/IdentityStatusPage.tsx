@@ -65,7 +65,8 @@ export function IdentityStatusPage({
         title={title}
         lede={summary}
         actions={<>
-          {links.map((link) => <AtlasLinkButton key={link.href} href={`${prefix}${link.href}`} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{link.label}</AtlasLinkButton>)}
+          {/* One primary action per block (design rule 8); the rest stay secondary. */}
+          {links.map((link, index) => <AtlasLinkButton key={link.href} href={`${prefix}${link.href}`} variant={index === 0 ? "primary" : "secondary"} iconAfter={<ArrowRight aria-hidden="true" />}>{link.label}</AtlasLinkButton>)}
           <AtlasLinkButton href={sourceUrl} external variant="ghost" iconAfter={<ExternalLink aria-hidden="true" />}>{text.source}: {sourceLabel}</AtlasLinkButton>
         </>}
       />

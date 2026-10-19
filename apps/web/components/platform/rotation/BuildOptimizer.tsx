@@ -153,12 +153,12 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
 	  for (const combo of combos) for (const ability of combo.abilities ?? []) {
 	    const existing = catalog.get(ability.id);
 	    const incomingIcon = ability.iconUrl && !ability.iconUrl.includes("/assets/specs/") ? ability.iconUrl : "";
-    catalog.set(ability.id, { ...mergeRotationAbility(existing, ability), iconUrl: incomingIcon || existing?.iconUrl || ability.iconUrl || "" });
+    catalog.set(ability.id, { ...mergeRotationAbility(existing, ability), iconUrl: incomingIcon || existing?.iconUrl || "" });
 	  }
 	  for (const score of scores) for (const ability of score.result.abilities ?? []) {
 	    const existing = catalog.get(ability.id);
 	    const incomingIcon = ability.iconUrl && !ability.iconUrl.includes("/assets/specs/") ? ability.iconUrl : "";
-    catalog.set(ability.id, { ...mergeRotationAbility(existing, ability), iconUrl: incomingIcon || existing?.iconUrl || ability.iconUrl || "" });
+    catalog.set(ability.id, { ...mergeRotationAbility(existing, ability), iconUrl: incomingIcon || existing?.iconUrl || "" });
 	  }
 	  return catalog;
 	}, [abilities, combos, scores]);

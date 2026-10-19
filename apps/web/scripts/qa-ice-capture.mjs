@@ -34,7 +34,7 @@ try {
    };
   });
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/',{waitUntil:'load'});await page.locator('[data-book-route-frame][data-view-transitions]').waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>document.querySelector('[data-page-raster-helper][data-parallel="true"]'),null,{timeout:15000});
+  await page.goto(base+'/',{waitUntil:'load'});await page.locator('[data-book-route-frame][data-route-ready]').waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>document.querySelector('[data-page-raster-helper][data-parallel="true"]'),null,{timeout:15000});
   await page.evaluate(()=>{const a=document.createElement('a');a.href='/privacy';document.body.append(a);a.click()});
   await page.waitForFunction(()=>window.__qaCapturedPage,null,{timeout:12000}).catch(async e=>{console.error(await page.evaluate(()=>({phase:document.querySelector('[data-themed-transition]')?.dataset.phase,snapshot:document.querySelector('[data-transition-snapshot]')?.dataset,styles:window.__qaStyleMetadata,helper:document.querySelector('[data-page-raster-helper]')?.outerHTML.slice(0,400)})));throw e});
   const {png,...capture}=await page.evaluate(()=>window.__qaCapturedPage);

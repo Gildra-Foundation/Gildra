@@ -5,7 +5,7 @@ import { pairedAlternates, pageOpenGraph } from "@/lib/seo/metadata";
 import { gameComingSoonCopy as copy } from "./gameComingSoonCopy";
 
 export function gameComingSoonMetadata(game: UpcomingGame, lang: Lang): Metadata {
-  const title = `${game.name} — Coming soon · Gildra`;
+  const title = `${game.name} — ${copy[lang].eyebrow} · Gildra`;
   return {
     title,
     description: copy[lang].description,

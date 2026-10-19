@@ -52,8 +52,10 @@
   --atlas-info: #93b3d8;
 
   /* Typography */
-  --atlas-font-display: var(--font-atlas-display), Georgia, "Times New Roman", serif;
-  --atlas-font-ui: var(--font-ui), "Segoe UI", Roboto, Arial, sans-serif;
+  /* "… Local" faces (end of file) keep the metric-matched fallback where
+     Times New Roman / Arial are not installed, so the web fonts swap in place. */
+  --atlas-font-display: var(--font-atlas-display), "Alegreya Fallback Local", Georgia, "Times New Roman", serif;
+  --atlas-font-ui: var(--font-ui), "Inter Fallback Local", "Segoe UI", Roboto, Arial, sans-serif;
   --atlas-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --atlas-weight-display: 600;
   --atlas-weight-display-hero: 500;
@@ -187,4 +189,30 @@
     --atlas-line-soft: rgba(209, 162, 75, .5);
     --atlas-art-shade: linear-gradient(0deg, rgba(6, 7, 8, .97), rgba(6, 7, 8, .55) 62%, rgba(6, 7, 8, .3)), linear-gradient(90deg, rgba(0, 0, 0, .55), transparent 52%);
   }
+}
+
+/* Metric-matched fallbacks beyond Windows/macOS. next/font derives its fallback
+   faces from local("Times New Roman") and local("Arial") only; on Linux,
+   ChromeOS and Android neither exists, headings first drew in an unrelated
+   serif and jumped when Alegreya arrived (CLS ≈0.09 on /tier-lists). The same
+   overrides (from next/font's generated "Alegreya Fallback" / "Inter Fallback")
+   applied to the metric-compatible clones keep the swap in place; on Android the
+   ascent/descent overrides still hold the line boxes. Re-copy the numbers from
+   the built CSS if the font versions change. */
+@font-face {
+  font-family: "Alegreya Fallback Local";
+  src: local("Liberation Serif"), local("Tinos"), local("Noto Serif"), local("DejaVu Serif");
+  ascent-override: 100.67%;
+  descent-override: 34.18%;
+  line-gap-override: 0%;
+  size-adjust: 100.92%;
+}
+
+@font-face {
+  font-family: "Inter Fallback Local";
+  src: local("Liberation Sans"), local("Arimo"), local("Roboto"), local("DejaVu Sans");
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+  size-adjust: 107.12%;
 }

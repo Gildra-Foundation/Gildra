@@ -22,12 +22,14 @@ const aliases: Record<string, string> = {
   "Mirror Images": "зеркальные образы",
   "Lightblossom Trinity": `${sourceNpcNames[243028].ru}, ${sourceNpcNames[243030].ru} и ${sourceNpcNames[243029].ru}`,
   Lightblossom: "цветок",
-  "Bloodthirsty Gaze": "способности #1317906 (перевод не подтверждён)",
+  // No confirmed Russian name for this spell: the prose describes the mechanic instead of showing an ID.
+  "цель Bloodthirsty Gaze": "игрок под взглядом босса",
   "Radiant Drake": "дракон для перелёта", Hailbomb: "отмеченные эффекты", Summon: "призыва",
   "Киракка и Эркхарт": `${sourceNpcNames[190484].ru} и ${sourceNpcNames[190485].ru}`,
 };
-for (const [alias, id] of Object.entries(npcAliases)) aliases[alias] = sourceNpcNames[id].ru ?? "Русское название не подтверждено";
-for (const [name, id] of Object.entries({ "Fiery Blast": 1305955, Burnout: 373614, "Blaze of Glory": 373972, Flashfire: 392451 })) aliases[name] = sourceSpellNames[id].ru ?? `Способность #${id}: перевод не подтверждён`;
+// Names without a confirmed Russian translation stay in their original English form.
+for (const [alias, id] of Object.entries(npcAliases)) { const ru = sourceNpcNames[id].ru; if (ru) aliases[alias] = ru; }
+for (const [name, id] of Object.entries({ "Fiery Blast": 1305955, Burnout: 373614, "Blaze of Glory": 373972, Flashfire: 392451 })) { const ru = sourceSpellNames[id].ru; if (ru) aliases[name] = ru; }
 const names = new Map(Object.entries({ ...sourceNames, ...aliases }));
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const pattern = new RegExp(`(?<![A-Za-z])(?:${[...names.keys()].sort((a, b) => b.length - a.length).map(escape).join("|")})(?![A-Za-z])`, "g");

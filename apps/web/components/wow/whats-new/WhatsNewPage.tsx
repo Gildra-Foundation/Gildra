@@ -24,7 +24,7 @@ export function WhatsNewPage({ locale }: { locale: "en" | "ru" }) {
             <ul className={styles.changes}>
               {release.changes.map((change) => (
                 <li key={change.en} className={styles.change}>
-                  <AtlasBadge tone={tone[change.kind]}>{copy.kinds[change.kind]}</AtlasBadge>
+                  <AtlasBadge tone={tone[change.kind]} className={styles.kind}>{copy.kinds[change.kind]}</AtlasBadge>
                   <span className={styles.text}>{change[locale]}</span>
                 </li>
               ))}

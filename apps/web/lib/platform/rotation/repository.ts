@@ -5,6 +5,7 @@ import { abilityIcon } from "@/lib/games/wow/assets";
 import { fallbackRotationPreset } from "./fallback";
 import type { RotationPreset } from "./types";
 import { resolveRotationAbilitySpellId } from "./spellIds";
+import { gameAbilityName } from "./abilityNames";
 import { localizeRotationCatalog, rotationResourceLabel } from "./locale";
 import { getLocalizedTalentSpells } from "@/lib/wow/localizedTalentSpells";
 import { apiInternalUrl } from "@/lib/env";
@@ -34,7 +35,9 @@ export async function getRotationPreset(slug: string, lang: Lang): Promise<Rotat
       character: { ...payload.character, iconUrl: payload.character.iconUrl || theme?.iconUrl || "" },
       abilities: payload.abilities.map((entry) => {
         const spellId = resolveRotationAbilitySpellId(entry.id, entry.spellId);
-        return { ...entry, iconUrl: entry.iconUrl || abilityIcon(entry.id) || theme?.iconUrl || "", ...(spellId ? { spellId } : {}) };
+        // No real ability icon → empty: AbilityIcon draws a neutral placeholder
+        // instead of repeating the specialization portrait on every ability.
+        return { ...entry, name: gameAbilityName(entry.name), iconUrl: entry.iconUrl || abilityIcon(entry.id) || "", ...(spellId ? { spellId } : {}) };
       }),
     }, lang);
   } catch (error) {

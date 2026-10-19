@@ -33,7 +33,7 @@ export const changelog: Release[] = [
   {
     date: "2026-10-11",
     changes: [
-      { kind: "new", en: "New look of every inner page: section paintings, one amber atlas theme.", ru: "Новый облик всех внутренних страниц: картины разделов, единая янтарная тема атласа." },
+      { kind: "new", en: "New look of every inner page: dark atlas panels and a painting for each section.", ru: "Новый облик всех внутренних страниц: тёмные панели атласа и своя картина у каждого раздела." },
       { kind: "new", en: "Articles from the Gildra editors.", ru: "Статьи от редакции Gildra." },
     ],
   },

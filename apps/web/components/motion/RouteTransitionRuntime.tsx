@@ -3,22 +3,28 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { preconnect } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
-import { isBookPagePath, isCharacterAuthRedirect, shouldTurnBook } from "./routeTransitionPolicy";
+import { isBookPagePath, isCharacterAuthRedirect, navigationDirection, routeTransitionKind, type RouteTransitionKind } from "./routeTransitionPolicy";
 import { RouteThemeController } from "./RouteThemeController";
 import { ThemedPageTransition, type PageTransitionHandle } from "./ThemedPageTransition";
 import { isHomeTheme } from "../platform/home/homeThemes";
 import styles from "./routeTransition.module.css";
 import { lessMotion } from "@/lib/client/motionPreference";
-import { nameMorphArt } from "@gildra/atlas-ui/morph";
+import { captureMorphArt, playMorphArt, type MorphArtSource } from "@gildra/atlas-ui/morph";
 
-/** Persistent navigation shell. The selected character owns the transition;
- * loading, watchdogs and route identity stay independent of its visual phases. */
+/**
+ * Persistent navigation shell and the single owner of page hand-overs
+ * (routeTransitionKind): the selected character's full effect when the homepage
+ * scene is entered or left, a quick atlas hand-over between inner pages. Loading,
+ * watchdogs and route identity stay independent of the visual phases.
+ */
 type RouteState = "idle" | "leaving" | "loading";
+type Direction = ReturnType<typeof navigationDirection>;
 
 // The new page starts dimmed rather than invisible, so the swap never shows an
-// empty frame between the two pages; it brightens and settles by 4 px.
-const ENTER: KeyframeAnimationOptions = { duration: 240, easing: "cubic-bezier(.2, .7, .2, 1)" };
-const ENTER_FRAMES: Keyframe[] = [{ opacity: .35, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }];
+// empty frame between the two pages; it brightens and settles from the side it
+// came from (deeper: from the right, up/back: from the left, siblings: from below).
+const ENTER: KeyframeAnimationOptions = { duration: 300, easing: "cubic-bezier(.2, .7, .2, 1)" };
+const ENTER_FROM: Record<Direction, string> = { deeper: "translate3d(18px, 0, 0)", up: "translate3d(-18px, 0, 0)", across: "translate3d(0, 10px, 0)" };
 /** Give up on a navigation that never commits (aborted, offline). */
 const WATCHDOG_MS = 12000;
 /** How long the arrival cascade marker stays on the frame (longest hero/section delay + duration). */
@@ -56,15 +62,10 @@ function clickDestination(event: MouseEvent, includeOptOut = false) {
 }
 
 const reducedMotion = () => lessMotion();
-
-/** "deeper" into a section, "up" towards its hub (or back in history), "across" between siblings. */
-function navigationDirection(from: string, to: string, popped: boolean) {
-  if (popped) return "up";
-  const depth = (path: string) => path.replace(/^\/ru(?=\/|$)/, "").split("/").filter(Boolean).length;
-  const [a, b] = [depth(from), depth(to)];
-  return b > a ? "deeper" : b < a ? "up" : "across";
-}
-const viewTransitions = () => typeof document.startViewTransition === "function";
+const selectedTheme = () => {
+  const theme = document.documentElement.dataset.siteTheme;
+  return isHomeTheme(theme) ? theme : "arthas";
+};
 
 /** One shell survives App Router navigation. Page content never gets an artificial remount key. */
 export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
@@ -80,6 +81,9 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const poppedHistory = useRef(false);
   const expectedPath = useRef(pathname);
   const quietPath = useRef<string | null>(null);
+  /** The hand-over planned by the click/history event for `expectedPath`. */
+  const plannedKind = useRef<RouteTransitionKind>("still");
+  const morphSource = useRef<MorphArtSource | null>(null);
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const arrival = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [state, setState] = useState<RouteState>("idle");
@@ -87,55 +91,60 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const settle = useCallback(() => {
     clearTimeout(watchdog.current);
     effectRef.current?.cancel();
+    morphSource.current = null;
+    plannedKind.current = "still";
     setState("idle");
   }, []);
 
-  /** The new page is in place: hand it over and let its hero arrive (unless the reader asked for less motion). */
-  const enter = useCallback(() => {
+  /** The new page is in place: hand it over (unless the reader asked for less motion). */
+  const enter = useCallback((kind: RouteTransitionKind, direction: Direction) => {
     clearTimeout(watchdog.current);
     setState("idle");
+    plannedKind.current = "still";
     const frame = frameRef.current;
+    const morph = morphSource.current;
+    morphSource.current = null;
     if (!frame) return;
     // A dimming transition that started on the old page must not finish on the new one.
     frame.getAnimations().forEach((animation) => animation.cancel());
     if (reducedMotion()) { effectRef.current?.cancel(); return; }
-    // Also cover programmatic navigation, where there was no link to capture.
-    if (!document.documentElement.dataset.pageTransition) {
-      const theme = document.documentElement.dataset.siteTheme;
-      effectRef.current?.start(frame, isHomeTheme(theme) ? theme : "arthas");
-    }
-    if (effectRef.current?.reveal()) return;
-    // Atlas pages already rise in through their View Transition.
-    if (!(viewTransitions() && frame.querySelector("[data-atlas-frame]"))) frame.animate(ENTER_FRAMES, ENTER);
+    // The character's effect covers the scene change and reveals the page itself.
+    if (kind === "scene" && effectRef.current?.reveal()) return;
+    effectRef.current?.cancel();
+    frame.animate([{ opacity: .35, transform: ENTER_FROM[direction] }, { opacity: 1, transform: "none" }], ENTER);
     clearTimeout(arrival.current);
     frame.dataset.routeArrived = "";
     arrival.current = setTimeout(() => { delete frame.dataset.routeArrived; }, ARRIVAL_MS);
+    // Measure the scene after the router has restored the scroll position.
+    if (morph) requestAnimationFrame(() => playMorphArt(morph, frame));
   }, []);
 
   /** A route with loading.tsx first commits its skeleton; wait for the real page. */
+  const pendingArrival = useRef<{ kind: RouteTransitionKind; direction: Direction }>({ kind: "page", direction: "across" });
   const enterWhenLoaded = useCallback(() => {
     if (frameRef.current?.querySelector("[data-book-route-loading]")) setState("loading");
-    else enter();
+    else enter(pendingArrival.current.kind, pendingArrival.current.direction);
   }, [enter]);
 
-  const begin = useCallback((destination: string) => {
-    if (!shouldTurnBook(committedPath.current, destination)) {
+  const begin = useCallback((destination: string, anchor?: Element | null) => {
+    const kind = routeTransitionKind(committedPath.current, destination);
+    if (kind === "still") {
       expectedPath.current = committedPath.current;
       settle();
       return;
     }
     expectedPath.current = destination;
     quietPath.current = null;
-    const theme = document.documentElement.dataset.siteTheme;
-    if (frameRef.current) effectRef.current?.start(frameRef.current, isHomeTheme(theme) ? theme : "arthas");
+    plannedKind.current = kind;
+    morphSource.current = kind === "page" && anchor && !reducedMotion() ? captureMorphArt(anchor) : null;
+    if (kind === "scene" && frameRef.current) effectRef.current?.start(frameRef.current, selectedTheme());
+    else effectRef.current?.cancel();
     setState("leaving");
     clearTimeout(watchdog.current);
     watchdog.current = setTimeout(settle, WATCHDOG_MS);
   }, [settle]);
 
   useEffect(() => {
-    // With View Transitions the leaving page stays bright: its snapshot would not carry the dim.
-    if (viewTransitions() && frameRef.current) frameRef.current.dataset.viewTransitions = "";
     const escape = (event: KeyboardEvent) => { if (event.key === "Escape") settle(); };
     document.addEventListener("keydown", escape);
     return () => {
@@ -157,13 +166,12 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     if (pathname === committedPath.current) return;
     const from = committedPath.current;
     committedPath.current = pathname;
-    // Direction of the page hand-over (app/styles/view-transitions.css). Set during the
-    // commit, before the browser builds the ::view-transition tree.
-    document.documentElement.dataset.navDirection = navigationDirection(from, pathname, poppedHistory.current);
+    const direction = navigationDirection(from, pathname, poppedHistory.current);
     poppedHistory.current = false;
     if (isCharacterAuthRedirect(from, pathname) && expectedPath.current === from) {
       // A protected character page resolved through the sign-in redirect: same turn.
       expectedPath.current = pathname;
+      pendingArrival.current = { kind: plannedKind.current, direction };
       enterWhenLoaded();
       return;
     }
@@ -174,8 +182,13 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       return;
     }
     // Router.push/replace and history also land here; language switches stay still.
-    if (shouldTurnBook(from, pathname)) enterWhenLoaded();
-    else settle();
+    const kind = routeTransitionKind(from, pathname);
+    if (kind === "still") { settle(); return; }
+    // A planned scene change keeps its effect through server redirects (/lairs →
+    // /wow/lairs). Programmatic navigation (router.push from code) had no click to
+    // plan it: it gets the quick hand-over, never a character effect without a source.
+    pendingArrival.current = { kind: kind === "scene" && plannedKind.current === "scene" ? "scene" : "page", direction };
+    enterWhenLoaded();
   }, [pathname, enterWhenLoaded, settle]);
 
   useEffect(() => {
@@ -189,9 +202,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
         quietPath.current = destination.pathname;
         settle();
       } else if (destination) {
-        // Only the tapped picture becomes the shared element of the hand-over.
-        if (anchor) nameMorphArt(anchor);
-        begin(destination.pathname);
+        begin(destination.pathname, anchor);
       }
     };
     const navigateAnchor = (event: MouseEvent) => {
@@ -207,7 +218,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
       if (event instanceof PointerEvent && anchor && event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return;
       const destination = destinationFromTarget(event.target);
-      if (!destination || !shouldTurnBook(committedPath.current, destination.pathname)) return;
+      if (!destination || routeTransitionKind(committedPath.current, destination.pathname) === "still") return;
       clearTimeout(prefetchTimer);
       prefetchTimer = setTimeout(() => router.prefetch(destination.pathname + destination.search), event.type === "focusin" ? 0 : 100);
     };
@@ -225,7 +236,11 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       document.addEventListener("focusin", warm, true);
     }
     document.addEventListener("click", navigateAnchor);
+    // Hydrated and intercepting: browser QA waits for this marker before clicking.
+    const frame = frameRef.current;
+    if (frame) frame.dataset.routeReady = "";
     return () => {
+      if (frame) delete frame.dataset.routeReady;
       document.removeEventListener("click", capture, true);
       window.removeEventListener("popstate", history);
       if (routePrefetchEnabled) {

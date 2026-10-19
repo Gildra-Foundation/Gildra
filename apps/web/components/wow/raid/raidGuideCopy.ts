@@ -38,7 +38,7 @@ export const raidGuideCopy = {
     arenaNorth: "Босс — вверху схемы",
     zoneKinds: { safe: "безопасно", soak: "замачивание", danger: "опасно", wall: "стена" },
     strategyPendingTitle: "Тактика готовится",
-    strategyPendingText: "План боя и разбор механик появятся после проверки источников и привязки способностей к ID.",
+    strategyPendingText: "План боя и разбор механик появятся, когда мы проверим источники и сверим способности с игровыми данными.",
 
     // Mechanics
     mechanicsTitle: "Механики",
@@ -53,8 +53,7 @@ export const raidGuideCopy = {
     difficulty: "Сложности",
     journal: "Журнал приключений",
     journalSource: (build: string, date: string) => `Журнал приключений, сборка ${build}, проверено ${formatAtlasDate(date, "ru")}`,
-    spellPending: "ID способности ещё не подтверждён",
-    spellLink: (spellId: number) => `Способность #${spellId} на Wowhead ↗`,
+    wowheadLink: "Способность на Wowhead ↗",
     roles: { raid: "Весь рейд", tank: "Танки", healer: "Лекари", dps: "Бойцы" } satisfies Record<RaidAudience, string>,
     tags: {
       DODGE: "Уклонение",
@@ -116,7 +115,7 @@ export const raidGuideCopy = {
     arenaNorth: "Boss at the top of the plan",
     zoneKinds: { safe: "safe", soak: "soak", danger: "danger", wall: "wall" },
     strategyPendingTitle: "Strategy in preparation",
-    strategyPendingText: "The battle plan and mechanic breakdown will appear once the sources are verified and abilities are linked to their IDs.",
+    strategyPendingText: "The battle plan and mechanic breakdown will appear once we have verified the sources and matched the abilities to the game data.",
 
     mechanicsTitle: "Mechanics",
     mechanicsText: "Who handles it and what to do. Positioning, timing, the cost of failure and difficulty notes are under “More”.",
@@ -130,8 +129,7 @@ export const raidGuideCopy = {
     difficulty: "Difficulty",
     journal: "Adventure Guide",
     journalSource: (build: string, date: string) => `Adventure Guide, build ${build}, checked ${formatAtlasDate(date, "en")}`,
-    spellPending: "Spell ID not confirmed yet",
-    spellLink: (spellId: number) => `Spell #${spellId} on Wowhead ↗`,
+    wowheadLink: "Spell on Wowhead ↗",
     roles: { raid: "All players", tank: "Tanks", healer: "Healers", dps: "Damage" } satisfies Record<RaidAudience, string>,
     tags: {
       DODGE: "Dodge",

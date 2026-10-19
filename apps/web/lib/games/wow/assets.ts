@@ -119,8 +119,14 @@ export function journalInstanceIcon(slug: string): string | null {
   return Object.hasOwn(JOURNAL_INSTANCE_ICONS, slug) ? JOURNAL_INSTANCE_ICONS[slug] : null;
 }
 
+/**
+ * Spec icon by the stable class/spec slug pair ("death-knight" + "frost"; a class-suffixed
+ * "frost-death-knight" also resolves). The English display name is only a fallback for callers
+ * without slugs: localized names (RU pages) never match the name keys.
+ */
 export function specIcon(name: string, classSlug?: string, specSlug?: string): string | null {
-  const a = SPEC_ICONS[name] ?? (classSlug && specSlug ? SPEC_SLUG_ICONS[`${classSlug}:${specSlug}`] : undefined);
+  const spec = classSlug && specSlug?.endsWith(`-${classSlug}`) ? specSlug.slice(0, -classSlug.length - 1) : specSlug;
+  const a = (classSlug && spec ? SPEC_SLUG_ICONS[`${classSlug}:${spec}`] : undefined) ?? SPEC_ICONS[name];
   return a ? `/assets/specs/${a}.jpg` : null;
 }
 

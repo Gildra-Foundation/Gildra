@@ -91,7 +91,7 @@ export function TrainerBarConfig({ open, lang, abilities, slots, storageLabel, o
     <dialog ref={dialogRef} className={styles.trainerConfigDialog} onCancel={(event) => { event.preventDefault(); onClose(); }} onClose={onClose} aria-labelledby="trainer-config-title">
       <div className={styles.trainerConfig} data-binding-editor>
         <header className={styles.trainerConfigTitle}>
-          <div><strong id="trainer-config-title">{tr("Action Bar Setup")}</strong><small>{tr("Choose abilities and assign your real in-game keys.")} {trainerBarConfigCopy[lang].clickABindingThen}</small></div>
+          <div><strong id="trainer-config-title">{tr("Action bar setup")}</strong><small>{tr("Choose abilities and assign your real in-game keys.")} {trainerBarConfigCopy[lang].clickABindingThen}</small></div>
           <div><button onClick={restoreDefaults}><RotateCcw /> {trainerBarConfigCopy[lang].defaultLayout}</button><button ref={closeRef} className={styles.trainerConfigClose} onClick={onClose} aria-label={tr("Close action bar setup")}><X /></button></div>
         </header>
         <ol>
@@ -114,7 +114,7 @@ export function TrainerBarConfig({ open, lang, abilities, slots, storageLabel, o
           })}
         </ol>
         <footer className={styles.trainerConfigFooter}>
-          <button className={styles.trainerAddSlot} disabled={slots.length >= ACTION_BAR_SLOT_COUNT || slots.length >= abilities.length} onClick={onAddSlot}><Plus /> {tr("Add Skill Slot")}</button>
+          <button className={styles.trainerAddSlot} disabled={slots.length >= ACTION_BAR_SLOT_COUNT || slots.length >= abilities.length} onClick={onAddSlot}><Plus /> {tr("Add skill slot")}</button>
           <button className={styles.trainerResetLayoutMobile} onClick={restoreDefaults}><RotateCcw /> {trainerBarConfigCopy[lang].defaultLayout2}</button>
           <span role="status" aria-live="polite">{bindingNotice || storageLabel}</span>
           <button className={styles.trainerConfigDone} onClick={onClose}>{tr("Done")}</button>

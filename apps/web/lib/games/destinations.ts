@@ -6,7 +6,8 @@ import { p, type Lang } from "@/lib/i18n-paths";
 export const gameDestinations = [
   { id: "wow", name: GAMES.wow.name, shortName: "WoW", path: "/", icon: "/platform/icons/wow.svg", soon: false },
   { id: "wow-forever", name: "WoW Forever", shortName: "WoW Forever", path: "/games/wow-forever", icon: "/platform/icons/wow.svg", art: "/assets/wow/character-book/intro/icecrown-home-background-v1.webp", soon: true },
-  { id: "diablo-4", name: GAMES["diablo-4"].name, shortName: "Diablo IV", path: "/games/diablo-4", icon: "/platform/icons/diablo.svg", art: "/assets/wow/loading/archive.webp", soon: true },
+  // No Diablo IV scene with confirmed provenance in the project: a neutral frame instead of WoW art.
+  { id: "diablo-4", name: GAMES["diablo-4"].name, shortName: "Diablo IV", path: "/games/diablo-4", icon: "/platform/icons/diablo.svg", art: undefined, soon: true },
 ] as const;
 
 export type GameDestination = typeof gameDestinations[number];

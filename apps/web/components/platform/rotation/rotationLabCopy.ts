@@ -29,7 +29,7 @@ export const rotationLabCopy = {
     trainingTitle: "Training",
     currentDrill: "Current drill",
     practiceRotation: (spec: string) => `${spec} practice rotation`,
-    trainingHint: "Check your keybinds, then press Start Training.",
+    trainingHint: "Check your keybinds, then press “Start training”.",
   },
   ru: {
     breadcrumbsLabel: "Навигационная цепочка",

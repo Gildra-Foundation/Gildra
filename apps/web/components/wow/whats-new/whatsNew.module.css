@@ -13,6 +13,9 @@
   background: var(--atlas-surface);
 }
 
+/* The badge sizes to its label instead of stretching across the grid column. */
+.kind { justify-self: start; }
+
 .text { max-width: var(--atlas-measure); color: var(--atlas-text); line-height: var(--atlas-leading-body); }
 
 @media (max-width: 600px) {

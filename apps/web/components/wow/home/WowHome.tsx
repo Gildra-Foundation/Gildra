@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowRight, CalendarDays, Castle, Compass, KeyRound, Skull, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, Castle, Compass, KeyRound, Skull } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasSection, AtlasTile, formatAtlasDate, pluralRu } from "@/components/atlas";
 import { liveSeason } from "@/lib/data/wow";
 import type { Lang } from "@/lib/i18n";
@@ -12,13 +12,12 @@ const copy = {
     title: "Ваш командный центр в Азероте",
     lede: "Соберите персонажа, продумайте таланты и подготовьте маршрут — всё необходимое для следующего ключа в одном месте.",
     character: "Открыть персонажа",
-    talents: "Калькулятор талантов",
     sections: "Разделы",
-    characters: "Персонажи", charactersText: "Ростер, экипировка и показатели",
     mythic: "Эпохальный+", mythicText: "Маршруты, таймер и тактика",
     raids: "Рейды", raidsText: "Боссы, способности и тактика",
     lairs: "Логова и мировые боссы", lairsText: "Где найти, что делать, что падает",
-    builds: "Начните с проверенной специализации",
+    builds: "Калькулятор талантов",
+    buildsText: "Начните с одной из этих специализаций — остальные выбираются в меню калькулятора.",
     open: "Открыть таланты",
     tierLists: "Тир-листы", tierListsText: "Сила специализаций в ключах и рейдах",
     database: "База данных", databaseText: "Предметы, заклинания и задания",
@@ -39,13 +38,12 @@ const copy = {
     title: "Your command center in Azeroth",
     lede: "Shape your character, plan talents and prepare a route — everything for the next key in one place.",
     character: "Open character",
-    talents: "Talent calculator",
     sections: "Sections",
-    characters: "Characters", charactersText: "Roster, gear and performance",
     mythic: "Mythic+", mythicText: "Routes, timer and tactics",
     raids: "Raids", raidsText: "Bosses, abilities and strategy",
     lairs: "Lairs and world bosses", lairsText: "Where to find them, what to do, what drops",
-    builds: "Start with a tested specialization",
+    builds: "Talent calculator",
+    buildsText: "Start with one of these specializations — every other one is in the calculator's menu.",
     open: "Open talents",
     tierLists: "Tier lists", tierListsText: "Specialization strength in keys and raids",
     database: "Database", databaseText: "Items, spells and quests",
@@ -63,13 +61,14 @@ const copy = {
   },
 } as const;
 
+// Characters open from the hero; Mythic+ and Lairs are cards only when the live season
+// tiles (which link to the same hubs) are absent — every destination appears once (design rule 8).
 const sections = [
-  { key: "characters", href: "/wow/characters", art: "/assets/wow/loading/city.webp", position: "center 45%" },
-  { key: "mythic", href: "/wow/mythic-plus", art: atlasScenes.mythicPlus.art, position: "center 40%" },
-  { key: "raids", href: "/wow/raids", art: atlasScenes.raids.art, position: "center 35%" },
-  { key: "lairs", href: "/wow/lairs", art: atlasScenes.lairs.art, position: "center 22%" },
-  { key: "tierLists", href: "/tier-lists", art: atlasScenes.tierLists.art, position: "center 40%" },
-  { key: "database", href: "/database", art: atlasScenes.archive.art, position: "center 45%" },
+  { key: "mythic", href: "/wow/mythic-plus", art: atlasScenes.mythicPlus.art, position: "center 40%", inSeason: true },
+  { key: "raids", href: "/wow/raids", art: atlasScenes.raids.art, position: "center 35%", inSeason: false },
+  { key: "lairs", href: "/wow/lairs", art: atlasScenes.lairs.art, position: "center 22%", inSeason: true },
+  { key: "tierLists", href: "/tier-lists", art: atlasScenes.tierLists.art, position: "center 40%", inSeason: false },
+  { key: "database", href: "/database", art: atlasScenes.archive.art, position: "center 45%", inSeason: false },
 ] as const;
 
 const builds = [
@@ -91,10 +90,7 @@ export function WowHome({ lang }: { lang: Lang }) {
         eyebrow={t.eyebrow}
         title={t.title}
         lede={t.lede}
-        actions={<>
-          <AtlasLinkButton href={href("/wow/characters")} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{t.character}</AtlasLinkButton>
-          <AtlasLinkButton href={href("/talents/fury-warrior")} icon={<Sparkles aria-hidden="true" />}>{t.talents}</AtlasLinkButton>
-        </>}
+        actions={<AtlasLinkButton href={href("/wow/characters")} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{t.character}</AtlasLinkButton>}
       />
 
       {season ? (
@@ -113,9 +109,9 @@ export function WowHome({ lang }: { lang: Lang }) {
       ) : null}
 
       <AtlasSection id="sections" title={t.sections}>
-        {/* Six sections, each with its own scene: three columns on desktop, never an orphan. */}
+        {/* Each section with its own scene: three cards (one row on desktop) beside the live season. */}
         <AtlasGrid min={340} fit>
-          {sections.map((section) => (
+          {sections.filter((section) => !(season && section.inSeason)).map((section) => (
             <AtlasCard
               key={section.href}
               href={href(section.href)}
@@ -129,7 +125,7 @@ export function WowHome({ lang }: { lang: Lang }) {
         </AtlasGrid>
       </AtlasSection>
 
-      <AtlasSection id="builds" title={t.builds}>
+      <AtlasSection id="builds" title={t.builds} description={t.buildsText}>
         <AtlasGrid min={260} fit>
           {builds.map((build) => {
             const [spec, className] = build[locale];

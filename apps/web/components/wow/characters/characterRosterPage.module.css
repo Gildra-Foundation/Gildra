@@ -1,45 +1,50 @@
 /* atlas:strict — Account pages (/wow/characters, /login, profile states): layout only; colours, fonts and sizes come from the atlas tokens. */
 
-/* ---------- Signed-out entry: artwork + sign-in card ---------- */
-.entry {
+/* ---------- Signed-out entry: the sign-in card beside the hero ---------- */
+.signInCard {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
-  margin-top: var(--atlas-space-6);
-  overflow: hidden;
+  gap: var(--atlas-space-5);
+  width: min(100%, 440px);
+  border-color: var(--atlas-line);
+  background: color-mix(in srgb, var(--atlas-surface) 88%, transparent);
+  backdrop-filter: blur(6px);
 }
 
-.entryArt {
-  position: relative;
-  min-height: 380px;
-  background: var(--atlas-surface-sunken);
-}
-
-.entryArt img {
-  object-fit: cover;
-  object-position: center 34%;
-  filter: saturate(.8) brightness(.86);
-}
-
-.entryArt::after {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background: linear-gradient(90deg, transparent 55%, var(--atlas-surface));
-}
-
-.entryBody {
+.unlocks {
   display: grid;
-  align-content: center;
-  padding: var(--atlas-space-6);
-  border-left: 1px solid var(--atlas-line-soft);
+  gap: var(--atlas-space-3);
+  padding-top: var(--atlas-space-4);
+  border-top: 1px solid var(--atlas-line-soft);
 }
+
+.unlocks h3 {
+  margin: 0;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+
+.unlocks ul { display: grid; gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+
+.unlocks li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: var(--atlas-space-3);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  line-height: 1.5;
+}
+
+.unlocks li svg { width: 18px; height: 18px; margin-top: 1px; color: var(--atlas-accent); }
+.unlocks strong { display: block; color: var(--atlas-text-strong); font-weight: 600; }
 
 /* ---------- Hero toolbar ---------- */
 .signOut :global(button) { min-height: 36px; padding-block: 6px; }
 
 /* ---------- Signed-in roster ---------- */
 .state { max-width: 720px; margin: var(--atlas-space-6) auto 0; }
-.status { margin-top: var(--atlas-space-6); }
 
 .roster { margin-top: var(--atlas-space-7); }
 
@@ -64,6 +69,11 @@
 }
 
 .rosterHeader p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+
+/* Real counts over the loaded roster, under the section title. */
+.summary { margin-bottom: var(--atlas-space-5); }
+
+.loadingNote { margin: var(--atlas-space-4) 0 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-small); }
 
 .filters {
   display: grid;
@@ -130,31 +140,53 @@
 }
 
 .card {
+  --class-color: var(--atlas-accent);
   position: relative;
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
   grid-template-areas: "mark copy level" "mark armory arrow";
   align-items: center;
   gap: var(--atlas-space-2) var(--atlas-space-3);
   min-width: 0;
-  padding: var(--atlas-space-4);
+  min-height: 112px;
+  padding: var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-4) calc(var(--atlas-space-4) + 3px);
   border: 1px solid var(--atlas-line);
-  background: var(--atlas-surface);
-  box-shadow: var(--atlas-shadow-card);
-  transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--class-color) 12%, transparent), transparent 60%),
+    var(--atlas-surface);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--class-color) 78%, transparent), var(--atlas-shadow-card);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease);
 }
 
 .card:hover,
-.card:focus-within { border-color: var(--atlas-accent); box-shadow: var(--atlas-shadow-lift); }
+.card:focus-within {
+  border-color: var(--atlas-accent);
+  box-shadow: inset 3px 0 0 var(--class-color), var(--atlas-shadow-lift);
+  translate: 0 -2px;
+}
+
+/* Loaded characters settle in one after another (the first dozen; the rest at once). */
+@media (prefers-reduced-motion: no-preference) {
+  .grid:not([aria-hidden]) .card {
+    animation: roster-card-in .42s var(--atlas-ease) both;
+    animation-delay: calc(var(--roster-index, 0) * 35ms);
+  }
+}
+
+@keyframes roster-card-in {
+  from { opacity: 0; translate: 0 10px; }
+}
 
 .classMark {
   grid-area: mark;
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   overflow: hidden;
-  border: 1px solid var(--atlas-line);
+  border: 1px solid color-mix(in srgb, var(--class-color) 60%, var(--atlas-line));
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--class-color) 14%, transparent);
   color: var(--atlas-accent);
   font-family: var(--atlas-font-display);
   font-size: var(--atlas-text-title);
@@ -193,7 +225,38 @@
   text-align: center;
 }
 
-.cardArrow { grid-area: arrow; justify-self: end; width: 18px; height: 18px; color: var(--atlas-accent); }
+.cardArrow { grid-area: arrow; justify-self: end; width: 18px; height: 18px; color: var(--atlas-accent); transition: translate var(--atlas-duration) var(--atlas-ease); }
+.card:hover .cardArrow { translate: 3px 0; }
+
+/* ---------- Loading placeholders (same box as a card) ---------- */
+.skeleton { pointer-events: none; }
+.skeleton .classMark,
+.skeleton .level,
+.skeleton .cardCopy i {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--atlas-line-soft);
+  background: var(--atlas-surface-raised);
+  box-shadow: none;
+}
+.skeleton .level { width: 44px; height: 32px; }
+.skeleton .cardCopy { display: grid; gap: 8px; }
+.skeleton .cardCopy i { display: block; height: 12px; }
+.skeleton .cardCopy i:first-child { width: 58%; height: 18px; }
+.skeleton .cardCopy i:nth-child(2) { width: 74%; }
+.skeleton .cardCopy i:nth-child(3) { width: 46%; }
+.skeleton .classMark::after,
+.skeleton .level::after,
+.skeleton .cardCopy i::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--atlas-text-strong) 7%, transparent), transparent);
+  translate: -100% 0;
+  animation: roster-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes roster-shimmer { to { translate: 100% 0; } }
 
 .armory {
   position: relative;
@@ -214,12 +277,17 @@
 .armory svg { width: 13px; height: 13px; }
 
 /* ---------- Narrow screens ---------- */
+@media (max-width: 1100px) {
+  .signInCard { width: min(100%, 560px); }
+}
+
 @media (max-width: 860px) {
-  .entry { grid-template-columns: minmax(0, 1fr); }
-  .entryArt { min-height: 220px; }
-  .entryArt::after { background: linear-gradient(180deg, transparent 55%, var(--atlas-surface)); }
-  .entryBody { padding: var(--atlas-space-5) var(--atlas-space-4); border-left: 0; border-top: 1px solid var(--atlas-line-soft); }
   .filters { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 720px) {
+  /* The sign-in action stays in the first screen: a tighter card on phones. */
+  .signInCard { gap: var(--atlas-space-4); padding: var(--atlas-space-5) var(--atlas-space-4); }
 }
 
 @media (max-width: 420px) {
@@ -227,5 +295,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card { transition: none; }
+  .card, .cardArrow { transition: none; }
+  .card:hover, .card:focus-within { translate: none; }
+  .card:hover .cardArrow { translate: none; }
+  .skeleton .classMark::after, .skeleton .level::after, .skeleton .cardCopy i::after { animation: none; display: none; }
 }

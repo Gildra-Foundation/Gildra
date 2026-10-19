@@ -25,6 +25,22 @@ function coveredPercent(value: number, total: number) {
 }
 
 /**
+ * Distinct records across the datasets. Category and item-class datasets (Weapons, Armor, Gems…) are
+ * subsets of their entity type's whole dataset, so each entity type is counted once. Returns null when
+ * the union cannot be known (several filtered datasets of one type without a whole-type dataset).
+ */
+function distinctRecordCount(datasets: LibraryDataset[]): number | null {
+  let total = 0;
+  for (const entries of Map.groupBy(datasets, (dataset) => dataset.entityType).values()) {
+    const whole = entries.filter((dataset) => !dataset.categoryPath && dataset.itemClassId == null);
+    if (whole.length) total += Math.max(...whole.map((dataset) => dataset.entityCount));
+    else if (entries.length === 1) total += entries[0].entityCount;
+    else return null;
+  }
+  return total;
+}
+
+/**
  * /library and /ru/library: hero, edition switch, ONE freshness notice for the
  * shown edition, then the datasets grouped by area. A card states coverage only
  * where it is incomplete, and a state badge only for datasets that do not apply.
@@ -33,7 +49,7 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
   const copy = libraryCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
   const formatter = new Intl.NumberFormat(libraryLandingCopy[lang].numberLocale);
-  const total = datasets.reduce((sum, dataset) => sum + dataset.entityCount, 0);
+  const total = distinctRecordCount(datasets);
   const groups = Array.from(Map.groupBy(datasets, (dataset) => dataset.group));
   const productQuery = selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`;
 
@@ -63,7 +79,7 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
         lede={copy.lede}
         statsLabel={copy.statsLabel}
         stats={unavailable ? undefined : [
-          { value: formatter.format(total), label: copy.statRecords },
+          ...(total === null ? [] : [{ value: formatter.format(total), label: copy.statRecords }]),
           { value: formatter.format(datasets.length), label: copy.statDatasets },
         ]}
       />

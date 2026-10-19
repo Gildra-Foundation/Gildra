@@ -300,3 +300,29 @@ Twelve matched330ms UI-stall cases passed; four cold source-content checks,
 local roster8/8 and public anonymous entry8/8 retained geometry. Alltheme/material
 and public clock4/4 passed;120s observation0errors/restarts,9 protected unchanged.
 Worker timestamps are not physical display FPS; preserve this measurement limit.
+
+
+## One owner per navigation (18 October 2026)
+
+The 18 October review recorded the character effect and React's document View
+Transition running together: frost froze while React held the old snapshot (up to
+500 ms for images), the destination flashed for 100–450 ms, then the frozen page
+returned and shattered. Clicks reached the hidden page for 1.4–3.3 s.
+
+`routeTransitionKind(from, to)` (routeTransitionPolicy.ts, unit-tested) now decides:
+`still` (language, filters, anchors), `scene` (the homepage is entered or left: the
+selected character's full effect) or `page` (between atlas pages: quick hand-over).
+`AtlasFrameShell` no longer renders `<ViewTransition>`, and
+`app/styles/view-transitions.css` is removed, so React never starts a document
+transition on route commits. Programmatic navigations get the quick hand-over; a
+planned scene change keeps its effect through server redirects.
+
+The quick hand-over dims a slow leaving page after 120 ms, slides the new page in
+from its direction (300 ms, opacity .35→1), sets `data-route-arrived` so the hero,
+sections and cards arrive in their existing cascade (it never ran before), counts
+hero numbers, and grows a tapped card picture into the page scene with one fixed
+image (`playMorphArt` in `@gildra/atlas-ui/morph`, `data-morph-art` →
+`data-morph-scene`). The character effect is skippable: while it plays the host
+takes the pointer, a tap reveals the page (or arrives with the quick hand-over if
+the route has not committed yet), and the inert copy can no longer pass clicks
+to the invisible destination. Browser QA waits for `[data-book-route-frame][data-route-ready]`.

@@ -13,6 +13,9 @@
   font-size: var(--atlas-text-h3);
   font-weight: var(--atlas-weight-display);
   letter-spacing: var(--atlas-tracking-display);
+  /* Alegreya's space is narrow (≈0.17em) and the display tracking narrows it further: at this size
+     "What we" read as "Whatwe". A little word spacing restores the gap without touching the letters. */
+  word-spacing: .1em;
   line-height: var(--atlas-leading-snug);
 }
 

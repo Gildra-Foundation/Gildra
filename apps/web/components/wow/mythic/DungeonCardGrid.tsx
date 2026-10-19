@@ -9,7 +9,8 @@ function formatTimer(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-/** Illustrated cards of the season's dungeons; `hrefBase` is the route prefix without /ru (e.g. "/wow/dungeons"). */
+/** Illustrated cards of the season's dungeons; `hrefBase` is the route prefix without /ru (e.g. "/wow/dungeons").
+ *  Every target opens the same draft route map, so every card carries the draft badge. */
 export function DungeonCardGrid({ locale, hrefBase, priority = true }: { locale: "ru" | "en"; hrefBase: string; priority?: boolean }) {
   const copy = mythicAtlasCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
@@ -25,7 +26,7 @@ export function DungeonCardGrid({ locale, hrefBase, priority = true }: { locale:
             href={`${prefix}${hrefBase}/${slug}`}
             image={{ src: dungeon.backdropImage, alt: "", priority: priority && index < 2 }}
             accent={dungeon.accent}
-            artBadge={hrefBase.startsWith("/wow/mythic-plus/") ? <AtlasBadge tone="caution">{copy.draft}</AtlasBadge> : undefined}
+            artBadge={<AtlasBadge tone="caution">{copy.draft}</AtlasBadge>}
             artCaption={<><Clock3 aria-hidden="true" /><span className={styles.srOnly}>{copy.timer}: </span>{formatTimer(dungeon.timerSeconds)}</>}
             eyebrow={location ? <><MapPin aria-hidden="true" />{location}</> : "Mythic+"}
             title={wowSourceName(dungeon.name, locale, dungeon.nameRu)}

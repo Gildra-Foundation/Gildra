@@ -160,7 +160,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
                 </span>
               ),
             },
-            { key: "slot", header: copy.slot, cell: (item) => <>{item.slot}<small className={styles.lootArmor}>{item.armor}</small></> },
+            { key: "slot", header: copy.slot, cell: (item) => <span>{item.slot}<small className={styles.lootArmor}>{item.armor}</small></span> },
             { key: "stats", header: copy.stats, cell: (item) => item.stats },
             { key: "priority", header: copy.priority, cell: (item) => item.priority },
           ]}

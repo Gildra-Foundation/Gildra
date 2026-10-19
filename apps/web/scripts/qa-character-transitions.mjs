@@ -36,7 +36,7 @@ try {
     const page = await context.newPage(), errors = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(base + prefix + "/wow/characters", { waitUntil: "load" });
-    await page.locator("[data-book-route-frame][data-view-transitions]").waitFor();
+    await page.locator("[data-book-route-frame][data-route-ready]").waitFor();
     if (fixture) await page.locator("[data-roster-view=roster] li").first().waitFor();
     await page.evaluate(() => document.fonts.ready);
     if (verifyShards) await page.evaluate(() => {

@@ -11,20 +11,26 @@ const CLASS_SLUGS: Record<string, string> = {
   hunter: "hunter", shaman: "shaman", lock: "warlock", monk: "monk", war: "warrior",
 };
 
-const sampleDps: TierEntry[] = specPages.map((entry) => ({
-  rank: entry.rank,
-  tier: entry.tier.toUpperCase(),
-  role: "dps",
-  className: entry.className,
-  classSlug: CLASS_SLUGS[entry.row.spec.cls] ?? entry.row.spec.cls,
-  specName: entry.row.spec.name.replace(new RegExp(` ${entry.className}$`), ""),
-  specSlug: entry.slug,
-  score: Number(entry.row.score),
-  popularity: Number(entry.row.pop.replace("%", "")) / 100,
-  maxKey: Number(entry.row.key.replace("+", "")),
-  rankChange: entry.row.trend.dir === "up" ? entry.row.trend.val : entry.row.trend.dir === "down" ? -(entry.row.trend.val ?? 0) : 0,
-  sourceUrl: `/specs/${entry.slug}`,
-}));
+/** Spec slug without the class suffix, as the meta API sends it ("frost" for "frost-death-knight"). */
+const shortSpecSlug = (slug: string, classSlug: string) => slug.endsWith(`-${classSlug}`) ? slug.slice(0, -classSlug.length - 1) : slug;
+
+const sampleDps: TierEntry[] = specPages.map((entry) => {
+  const classSlug = CLASS_SLUGS[entry.row.spec.cls] ?? entry.row.spec.cls;
+  return {
+    rank: entry.rank,
+    tier: entry.tier.toUpperCase(),
+    role: "dps",
+    className: entry.className,
+    classSlug,
+    specName: entry.row.spec.name.replace(new RegExp(` ${entry.className}$`), ""),
+    specSlug: shortSpecSlug(entry.slug, classSlug),
+    score: Number(entry.row.score),
+    popularity: Number(entry.row.pop.replace("%", "")) / 100,
+    maxKey: Number(entry.row.key.replace("+", "")),
+    rankChange: entry.row.trend.dir === "up" ? entry.row.trend.val : entry.row.trend.dir === "down" ? -(entry.row.trend.val ?? 0) : 0,
+    sourceUrl: `/specs/${entry.slug}`,
+  };
+});
 
 export const emptyRoles: Record<TierRole, TierEntry[]> = { dps: [], healer: [], tank: [] };
 export const sampleRoles: Record<TierRole, TierEntry[]> = { ...emptyRoles, dps: sampleDps };

@@ -60,7 +60,6 @@ export function EnemyIntelCard({
     "--portrait-y": media?.portraitY ?? "34%",
   } as CSSProperties;
   const tone = priorityTone[priority];
-  const portraitStatus = portraitVerified ? copy.portraitVerified : portraitUnavailable ? copy.portraitUnavailable : copy.portraitUnverified;
 
   return (
     <li
@@ -92,7 +91,7 @@ export function EnemyIntelCard({
           <span className={`${styles.gameIcon}${portraitClass}`} style={portraitStyle}>
             {portraitUrl ? <ResilientImage src={portraitUrl} alt="" loading="lazy" fallback={icon} /> : icon}
           </span>
-          <span className={styles.identity}><b>{wowNpcName(name, locale, media?.identityVerified ? media.npcId : undefined)}</b><small>{priorityLabel} · {portraitStatus}</small></span>
+          <span className={styles.identity}><b>{wowNpcName(name, locale, media?.identityVerified ? media.npcId : undefined)}</b><small>{priorityLabel}</small></span>
           <strong>×{count}</strong>
           <span className={styles.more}><CircleHelp aria-hidden="true" /><span>{copy.whatItDoes}</span><ChevronDown aria-hidden="true" /></span>
         </button>}

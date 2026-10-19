@@ -17,7 +17,7 @@ export const rotationTrainerCopy = {
     trainingEstimate: "TRAINING ESTIMATE",
     accuracyAndPaceRelative: "accuracy and pace relative to SimC only",
     readyToGo: "Ready to go",
-    pressStartTrainingWait: "Press Start Training, wait for 3–2–1, and hit only the glowing ability. The next skill appears automatically.",
+    pressStartTrainingWait: "Press “Start training”, wait for 3–2–1, and hit only the glowing ability. The next skill appears automatically.",
     noSimcBenchmarkNo: "No SimC benchmark — no DPS is invented",
     unitMs: "ms",
     resetResult: "Reset result",

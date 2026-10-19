@@ -2,13 +2,13 @@
 export const seasonTwoHubCopy = {
   en: {
     title: "Midnight Season 2",
-    blizzardSOfficialOverview: "Blizzard's official overview confirms the Season 2 launch and its main activity families. Reward tables, item levels, game IDs, and detailed schedules are withheld until row-level reconciliation with the canonical manifest.",
+    blizzardSOfficialOverview: "Blizzard's official overview confirms that Season 2 is live and lists its main activities. Reward tables, item levels and detailed schedules will appear here once we have checked them against the game data.",
     officialBlizzardOverview: "Official Blizzard overview",
     mythicSeason: "Mythic+ Season 2", delves: "Delves", prey: "Prey", lairs: "Lairs",
   },
   ru: {
     title: "Midnight · Сезон 2",
-    blizzardSOfficialOverview: "Официальный обзор подтверждает запуск сезона 2 и его основные семейства активностей. Таблицы наград, уровни предметов, игровые ID и детальные расписания скрыты до построчной сверки с проверенным перечнем данных.",
+    blizzardSOfficialOverview: "Официальный обзор Blizzard подтверждает, что сезон 2 начался, и перечисляет его основные активности. Таблицы наград, уровни предметов и подробные расписания появятся здесь, когда мы сверим их с игровыми данными.",
     officialBlizzardOverview: "Официальный обзор Blizzard",
     mythicSeason: "Эпохальные подземелья · Сезон 2", delves: "Вылазки", prey: "Активность сезона", lairs: "Логова",
   },

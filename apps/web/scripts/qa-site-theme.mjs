@@ -94,10 +94,20 @@ try {
       await page.screenshot({ path: path.join(output, "arthas-shattering.png") });
       await page.evaluate(() => { window.setTimeout = window.__qaTimeout; delete window.__qaTimeout; Worker.prototype.postMessage = window.__qaWorkerSend; delete window.__qaWorkerSend; });
     }
+    if (theme === "illidan") {
+      assert.equal(await page.locator("[data-transition-snapshot]").count(), 1);
+      assert.equal(await page.locator("[data-fel-surface]").count(), 1);
+      assert.equal(await page.locator("[data-fel-surface]").getAttribute("data-renderer"), "worker");
+      assert.ok(await page.locator("[data-themed-transition] *").count() < 700);
+    }
     await page.waitForURL(base + "/privacy"); await idle(page);
     const phases = await page.evaluate(() => window.__qaPhases);
     const crack = phases.find(item => item.phase === "cracking"), shatter = phases.find(item => item.phase === "shattering");
-    assert.ok(crack && shatter && shatter.at - crack.at >= 200, `${theme} must paint its cracks before shattering`);
+    // Fel has seeded corrosion, not a visible cracking stage. Its worker's
+    // pixels and actual cadence are checked by qa-fel-transition.mjs. The
+    // generic runtime labels can arrive late at a busy parent event loop.
+    if (theme === "illidan") assert.ok(crack && shatter, "fel must seed the page before its dissolve program");
+    else assert.ok(crack && shatter && shatter.at - crack.at >= 200, `${theme} must paint its cracks before shattering`);
     assert.equal(await page.locator("html").getAttribute("data-site-theme"), theme);
     const accent = await page.locator(".gildra-atlas").evaluate(el => getComputedStyle(el).getPropertyValue("--atlas-accent").trim());
     const expected = { arthas: "#80cdef", illidan: "#c4a3f3", garek: "#a5dba7", varok: "#f0a28f" };
@@ -112,7 +122,9 @@ try {
   await page.getByRole("button", { name: /Choose theme:/ }).click();
   await page.locator('[data-theme-choice="arthas"]').click();
   await link(page, "/privacy"); await page.waitForURL(base + "/privacy"); await idle(page);
-  await link(page, "/login"); await page.waitForURL(base + "/login"); await idle(page);
+  await link(page, "/login"); await page.waitForURL(base + "/login");
+  assert.equal(await page.locator("[data-themed-transition]").getAttribute("data-phase"), null, "between atlas pages the quick hand-over plays, not the character effect");
+  await idle(page);
   await page.goBack(); await page.waitForURL(base + "/privacy"); await idle(page);
   await page.goForward(); await page.waitForURL(base + "/login"); await idle(page);
   await link(page, "/privacy", { "data-no-book-transition": "" });
@@ -129,8 +141,9 @@ try {
     assert.equal(overflow, false, `overflow at ${width}`);
     await page.screenshot({ path: path.join(output, `arthas-ru-${width}.png`) });
   }
-  await link(page, "/privacy"); await page.waitForURL(base + "/privacy"); await idle(page);
-  await page.locator("[data-book-route-frame][data-view-transitions]").waitFor();
+  // The character effect belongs to scene changes (routeTransitionKind): hold a route left from the homepage.
+  await link(page, "/"); await page.waitForURL(base + "/"); await idle(page);
+  await page.locator("[data-book-route-frame][data-route-ready]").waitFor();
   let release;
   const held = new Promise(resolve => { release = resolve; });
   await page.route("**/wow/raids*", async route => { await held; await route.continue(); });
@@ -150,7 +163,7 @@ try {
   await other.close();
   await page.evaluate(() => { localStorage.setItem("gildra-home-theme", "arthas"); window.dispatchEvent(new StorageEvent("storage", { key:"gildra-home-theme",newValue:"arthas" })); });
   console.log("Passed: theme synchronizes across tabs.");
-  await link(page, "/privacy"); await page.waitForURL(base + "/privacy"); await idle(page);
+  await link(page, "/"); await page.waitForURL(base + "/"); await idle(page);
   await link(page, "/login");
   await page.waitForFunction(() => document.querySelector("[data-themed-transition]")?.dataset.phase === "freezing");
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -168,7 +181,7 @@ try {
   const soundContext = await browser.newContext({ viewport: { width: 1024, height: 768 }, reducedMotion: "no-preference" });
   await soundContext.addInitScript(() => {
     if (window !== window.top) return;
-    localStorage.setItem("gildra-home-music", JSON.stringify({ volume: 20, enabled: false, confirmed: true }));
+    if (!localStorage.getItem("gildra-home-music")) localStorage.setItem("gildra-home-music", JSON.stringify({ volume: 20, enabled: false, confirmed: true }));
     window.__qaAudio = [];
     const OriginalAudio = window.AudioContext;
     window.AudioContext = class extends OriginalAudio {
@@ -178,11 +191,14 @@ try {
   const soundPage = await soundContext.newPage();
   soundPage.on("pageerror", error => errors.push(error.message));
   await soundPage.goto(base + "/privacy", { waitUntil: "domcontentloaded" });
-  await soundPage.locator("[data-book-route-frame][data-view-transitions]").waitFor();
-  await link(soundPage, "/login"); await soundPage.waitForURL(base + "/login"); await idle(soundPage);
+  await soundPage.locator("[data-book-route-frame][data-route-ready]").waitFor();
+  await link(soundPage, "/"); await soundPage.waitForURL(base + "/"); await idle(soundPage);
   assert.equal(await soundPage.evaluate(() => window.__qaAudio.length), 0);
+  // The homepage player keeps its own sound state: enable sound before an atlas page loads, then enter the scene.
   await soundPage.evaluate(() => localStorage.setItem("gildra-home-music", JSON.stringify({ volume: 20, enabled: true, confirmed: true })));
-  await link(soundPage, "/privacy"); await soundPage.waitForURL(base + "/privacy"); await idle(soundPage);
+  await soundPage.goto(base + "/privacy", { waitUntil: "domcontentloaded" });
+  await soundPage.locator("[data-book-route-frame][data-route-ready]").waitFor();
+  await link(soundPage, "/"); await soundPage.waitForURL(base + "/"); await idle(soundPage);
   assert.equal(await soundPage.evaluate(() => window.__qaAudio.length), 1);
   assert.deepEqual(await soundPage.evaluate(() => window.__qaAudio.map(audio => audio.state)), ["closed"]);
   await soundContext.close();

@@ -48,6 +48,10 @@ export function RaidMechanicList({ guide, journal, locale }: { guide?: Voidspire
 function GuideMechanic({ mechanic, journal, locale }: { mechanic: VoidspireMechanic; journal?: RaidMechanic; locale: RaidLocale }) {
   const copy = raidGuideCopy[locale];
   const FallbackIcon = tagIcons[mechanic.tags[0]] ?? CircleHelp;
+  // A spell without a confirmed name in this language keeps its original English name.
+  const spellName = mechanic.spell ? sourceSpellNames[mechanic.spell.id]?.[locale] : undefined;
+  const title = journal ? (locale === "ru" ? journal.nameRu : journal.nameEn) : mechanic.spell ? spellName ?? mechanic.name.en : mechanic.name[locale];
+  const titleLang = !journal && mechanic.spell && !spellName && locale === "ru" ? "en" : undefined;
   return (
     <li id={`mechanic-${mechanic.id}`} className={styles.mechanic} data-testid="voidspire-action-card">
       {mechanic.spell
@@ -55,9 +59,7 @@ function GuideMechanic({ mechanic, journal, locale }: { mechanic: VoidspireMecha
         : <span className={styles.mechanicGlyph} aria-hidden="true"><FallbackIcon /></span>}
       <div className={styles.mechanicBody}>
         <div className={styles.mechanicHead}>
-          <h3>
-            {journal ? (locale === "ru" ? journal.nameRu : journal.nameEn) : mechanic.spell ? sourceSpellNames[mechanic.spell.id]?.[locale] ?? (locale === "ru" ? copy.spellPending : mechanic.name.en) : mechanic.name[locale]}
-          </h3>
+          <h3 lang={titleLang}>{title}</h3>
           <div className={styles.mechanicTags}>
             {mechanic.tags.map((tag) => <AtlasBadge key={tag} tone="neutral">{copy.tags[tag]}</AtlasBadge>)}
           </div>
@@ -76,11 +78,11 @@ function GuideMechanic({ mechanic, journal, locale }: { mechanic: VoidspireMecha
               <b>{copy.journal}:</b> {locale === "ru" ? journal.description : journal.descriptionEn}
             </p>
           ) : null}
-          <p className={styles.mechanicSource}>
-            {mechanic.spell
-              ? <a href={wowheadSpell(mechanic.spell.id, locale)} target="_blank" rel="noreferrer">{copy.spellLink(mechanic.spell.id)}</a>
-              : copy.spellPending}
-          </p>
+          {mechanic.spell ? (
+            <p className={styles.mechanicSource}>
+              <a href={wowheadSpell(mechanic.spell.id, locale)} target="_blank" rel="noreferrer">{copy.wowheadLink}</a>
+            </p>
+          ) : null}
         </AtlasDisclosure>
       </div>
     </li>
@@ -100,11 +102,14 @@ function JournalAbility({ ability, locale }: { ability: RaidMechanic; locale: Ra
           <div className={styles.mechanicTags}><AtlasBadge tone="neutral">{copy.roles[ability.role]}</AtlasBadge></div>
         </div>
         <p className={styles.mechanicText}>{locale === "ru" ? ability.description : ability.descriptionEn}</p>
-        <p className={styles.mechanicSource}>
-          {copy.journalSource(ability.descriptionBuild, ability.descriptionVerifiedAt)}
-          {" · "}
-          <a href={wowheadSpell(ability.spellId, locale)} target="_blank" rel="noreferrer">{copy.spellLink(ability.spellId)}</a>
-        </p>
+        {/* Source and build are provenance, folded like the guide cards' details. */}
+        <AtlasDisclosure summary={copy.more}>
+          <p className={styles.mechanicSource}>
+            {copy.journalSource(ability.descriptionBuild, ability.descriptionVerifiedAt)}
+            {" · "}
+            <a href={wowheadSpell(ability.spellId, locale)} target="_blank" rel="noreferrer">{copy.wowheadLink}</a>
+          </p>
+        </AtlasDisclosure>
       </div>
     </li>
   );
