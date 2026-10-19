@@ -10,8 +10,8 @@ import { searchIndex, type SiteSearchHit } from "@/components/platform/search/si
 import styles from "./notFoundSuggestions.module.css";
 
 const copy = {
-  en: { title: "Maybe you were looking for", search: "Search the site", none: "Nothing close to this address — try the search." },
-  ru: { title: "Возможно, вы искали", search: "Искать на сайте", none: "Ничего похожего на этот адрес — попробуйте поиск." },
+  en: { title: "Maybe you were looking for", search: "Search the site" },
+  ru: { title: "Возможно, вы искали", search: "Искать на сайте" },
 };
 
 const subscribe = () => () => {};
@@ -52,21 +52,22 @@ export function NotFoundSuggestions() {
 
   if (!path) return null;
   const prefix = ru ? "/ru" : "";
+  const search = <AtlasButton variant="secondary" icon={<Search aria-hidden="true" />} onClick={() => openSiteSearch(last)}>{text.search}</AtlasButton>;
+  // Without matches (or while the index loads) only the search action, never an empty heading.
+  if (!hits?.length) return <div className={styles.searchOnly}>{search}</div>;
   return (
-    <AtlasSection title={text.title} aside={<AtlasButton variant="secondary" icon={<Search aria-hidden="true" />} onClick={() => openSiteSearch(last)}>{text.search}</AtlasButton>}>
-      {hits === null ? null : hits.length ? (
-        <ul className={styles.list}>
-          {hits.map((hit) => (
-            <li key={hit.h}>
-              <Link href={`${prefix}${hit.h}`} className={styles.link}>
-                <span className={styles.title}>{hit.t}</span>
-                <span className={styles.kind}>{hit.s}</span>
-                <ArrowRight aria-hidden="true" className={styles.arrow} />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : <p className={styles.none}>{text.none}</p>}
+    <AtlasSection title={text.title} aside={search}>
+      <ul className={styles.list}>
+        {hits.map((hit) => (
+          <li key={hit.h}>
+            <Link href={`${prefix}${hit.h}`} className={styles.link}>
+              <span className={styles.title}>{hit.t}</span>
+              <span className={styles.kind}>{hit.s}</span>
+              <ArrowRight aria-hidden="true" className={styles.arrow} />
+            </Link>
+          </li>
+        ))}
+      </ul>
     </AtlasSection>
   );
 }

@@ -10,7 +10,11 @@ import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import type { RotationAbility, RotationAplRule, RotationPreset, RotationScenario, RotationSimulationResult, SavedRotationCombo } from "@/lib/platform/rotation/types";
 import { priorityToAplRules } from "@/lib/platform/rotation/apl";
 import { localizeRotationResult, mergeRotationAbility, rotationComboName } from "@/lib/platform/rotation/locale";
-import { AbilityIcon } from "./AbilityIcon";
+import { gameAbilityName } from "@/lib/platform/rotation/abilityNames";
+import { AbilityIcon, hasAbilityArt } from "./AbilityIcon";
+// Static, not dynamic(): the build form is the first screen of the lab, and a
+// lazily loaded chunk swapped a 160 px placeholder for ~430 px of form (CLS).
+import { BuildOptimizer } from "./BuildOptimizer";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { characterStorageScope, withCharacterContext } from "@/lib/platform/rotation/characterRequestContext";
 import { recordCharacterRun } from "@/lib/wow/characterRunHistory";
@@ -28,7 +32,7 @@ function BookFoldout({ enabled, children }: { enabled: boolean; children: ReactN
   return enabled ? <div className={spread.foldout} data-atlas-surface="foldout">{children}</div> : <>{children}</>;
 }
 
-/** Mounts heavy widgets once they come within `rootMargin` of the viewport; the placeholder is a short dashed box. */
+/** Mounts heavy widgets once they come within `rootMargin` of the viewport; the placeholder reserves the widget's usual height. */
 function DeferredMount({ children, placeholder, className, rootMargin = "0px" }: { children: ReactNode; placeholder: ReactNode; className?: string; rootMargin?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -53,10 +57,12 @@ function DeferredMount({ children, placeholder, className, rootMargin = "0px" }:
 }
 
 const placeholder = () => <div className={shell.placeholder} aria-busy="true" />;
+// The action bar and the priority list keep their usual height while loading (no shift when they arrive).
+const barPlaceholder = () => <div className={`${shell.placeholder} ${shell.placeholderBar}`} aria-busy="true" />;
+const rulesPlaceholder = () => <div className={`${shell.placeholder} ${shell.placeholderRules}`} aria-busy="true" />;
 const RotationTimeline = dynamic(() => import("./RotationTimeline"), { loading: placeholder });
-const BuildOptimizer = dynamic(() => import("./BuildOptimizer").then((module) => module.BuildOptimizer), { loading: placeholder });
-const CombatActionBar = dynamic(() => import("./CombatActionBar").then((module) => module.CombatActionBar), { loading: placeholder });
-const PriorityEditor = dynamic(() => import("./PriorityEditor").then((module) => module.PriorityEditor), { loading: placeholder });
+const CombatActionBar = dynamic(() => import("./CombatActionBar").then((module) => module.CombatActionBar), { loading: barPlaceholder });
+const PriorityEditor = dynamic(() => import("./PriorityEditor").then((module) => module.PriorityEditor), { loading: rulesPlaceholder });
 const RotationTrainer = dynamic(() => import("./RotationTrainer").then((module) => module.RotationTrainer), { loading: placeholder });
 const RotationResultGuide = dynamic(() => import("./RotationResultGuide").then((module) => module.RotationResultGuide));
 const MetricCards = dynamic(() => import("./MetricCards").then((module) => module.MetricCards));
@@ -154,8 +160,11 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
     const catalog = new Map<string, RotationAbility>([...preset.abilities, ...spellbookAbilities].map((ability) => [ability.id, ability]));
     for (const ability of [...(selectedCombo?.abilities ?? []), ...(result?.abilities ?? [])]) {
       const existing = catalog.get(ability.id);
-      const incomingIcon = ability.iconUrl && ability.iconUrl !== preset.character.iconUrl ? ability.iconUrl : "";
-      catalog.set(ability.id, { ...mergeRotationAbility(existing, ability), iconUrl: incomingIcon || existing?.iconUrl || preset.character.iconUrl });
+      // A specialization portrait is never an ability's icon: without real art the
+      // icon stays empty and AbilityIcon shows its neutral placeholder.
+      const incomingIcon = hasAbilityArt(ability.iconUrl) && ability.iconUrl !== preset.character.iconUrl ? ability.iconUrl : "";
+      const merged = mergeRotationAbility(existing, ability);
+      catalog.set(ability.id, { ...merged, name: gameAbilityName(merged.name), iconUrl: incomingIcon || existing?.iconUrl || "" });
     }
     return [...catalog.values()];
   }, [preset.abilities, preset.character.iconUrl, result?.abilities, selectedCombo?.abilities, spellbookAbilities]);
@@ -309,7 +318,7 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
   };
   const Root = embedded ? "section" : "div";
   const specLabel = lang === "ru" ? theme?.specNameRu ?? preset.specialization : theme?.specName ?? preset.specialization;
-  const simulateLabel = status === "running" ? tr("Simulating") : tr("Start Simulation");
+  const simulateLabel = status === "running" ? tr("Simulating") : tr("Start simulation");
   return (
     <Root id="rotation-lab-content" data-spec={preset.slug} style={rotationStyle} className={`${styles.lab} ${styles.furyLab} ${shell.lab} ${embedded ? styles.embeddedLab : ""} ${trainingActive ? styles.labTrainingActive : ""} ${connectedEmbed ? `${spread.bookSpread} ${motion.motion}` : ""}`}>
       {embedded ? <section className={`${styles.hero} ${styles.simpleHero} ${connectedEmbed ? `${identityStyles.identityHero} ${spread.leafPair}` : ""}`}>
@@ -366,7 +375,7 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
           </header>
           {status === "running" && <div className={shell.progress} role="progressbar" aria-label={tr("Simulation progress")} aria-valuetext={tr("SimulationCraft is calculating your result")}><span /></div>}
 
-          <DeferredMount rootMargin="600px 0px" placeholder={<div className={shell.placeholder} aria-busy="true" />}>
+          <DeferredMount rootMargin="600px 0px" placeholder={barPlaceholder()}>
             <CombatActionBar abilities={displayAbilities} rules={rules} result={displayResult} fightLength={fightLength} lang={lang} stale={staleResult} slug={preset.slug} storageScope={characterStorageScope(characterSlug, dataMode)} characterSlug={characterSlug} dataMode={dataMode} manuscript={connectedEmbed} onCursor={setCursor} />
           </DeferredMount>
 
@@ -382,7 +391,7 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
           <BookFoldout enabled={connectedEmbed}>
             {displayResult ? <nav className={styles.analysisTabs} aria-label={tr("Analysis sections")}>{(["timeline", "priority", "opener"] as const).map((view) => <button key={view} type="button" aria-pressed={analysisView === view} onClick={() => setAnalysisView(view)}>{tr(view === "timeline" ? "Timeline" : view === "priority" ? "Priority" : "Opener")}</button>)}</nav> : null}
             <div className={shell.analysis} data-result={Boolean(displayResult)} data-view={analysisView} aria-busy={status === "running"}>
-              {(!displayResult || !compactAnalysis || analysisView === "priority") ? <div className={styles.priorityPane}><DeferredMount rootMargin="600px 0px" placeholder={<div className={shell.placeholder} aria-busy="true" />}><PriorityEditor abilities={displayAbilities} rules={rules} aplRules={aplRules} aplOptions={preset.aplOptions ?? { resources: [], buffs: [], cooldowns: preset.defaultRules }} sourceLabel={preset.aplSource?.label ?? preset.engineLabel} defaults={preset.defaultRules} lang={lang} wide={!displayResult} onChange={changePriority} onAplChange={changeApl} onReset={() => reset(true)} interactionsDisabled={status === "running"} /></DeferredMount></div> : null}
+              {(!displayResult || !compactAnalysis || analysisView === "priority") ? <div className={styles.priorityPane} style={{ "--rule-count": rules.length, "--rule-rows": Math.ceil(rules.length / 2) } as CSSProperties}><DeferredMount rootMargin="600px 0px" placeholder={rulesPlaceholder()}><PriorityEditor abilities={displayAbilities} rules={rules} aplRules={aplRules} aplOptions={preset.aplOptions ?? { resources: [], buffs: [], cooldowns: preset.defaultRules }} sourceLabel={preset.aplSource?.label ?? preset.engineLabel} defaults={preset.defaultRules} lang={lang} wide={!displayResult} onChange={changePriority} onAplChange={changeApl} onReset={() => reset(true)} interactionsDisabled={status === "running"} /></DeferredMount></div> : null}
               {displayResult && (!compactAnalysis || analysisView === "timeline") ? <div className={styles.timelinePane}><DeferredMount rootMargin="400px 0px" placeholder={<div className={shell.placeholder} aria-busy="true" />}><RotationCursorValueContext.Consumer>{(cursor) => <RotationTimeline result={displayResult} abilities={displayAbilities} lang={lang} cursor={cursor} onCursor={setCursor} />}</RotationCursorValueContext.Consumer></DeferredMount></div> : null}
               {displayResult && (!compactAnalysis || analysisView === "opener") ? <details className={`${styles.openerPreview} ${connectedEmbed ? motion.chapter : ""}`} open={compactAnalysis || undefined}><summary><span>{tr("Opening sequence")}</span><small>{tr("First actions from the simulation")}</small><ChevronDown /></summary><ol>{opener.map((ability, index) => ability ? <li key={`${ability.id}-${index}`}><b>{index + 1}</b><AbilityIcon ability={ability} /><span>{ability.name}</span><i aria-hidden="true">›</i></li> : null)}</ol></details> : null}
             </div>

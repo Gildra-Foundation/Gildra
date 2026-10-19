@@ -2,6 +2,9 @@
   composes: transition from "./routeTransition.module.css";
   contain: layout style paint;
 }
+/* While the effect plays it takes the pointer: a tap skips it (CanvasPageTransition
+   skip) instead of reaching the hidden page underneath. The copy itself is inert. */
+.host[data-phase] { pointer-events: auto; }
 .outgoing { composes: piece from "./routeTransition.module.css"; }
 .frozen { composes: frozen from "./routeTransition.module.css"; }
 /* The inert copy is a still image. Live backdrop sampling would re-rasterize

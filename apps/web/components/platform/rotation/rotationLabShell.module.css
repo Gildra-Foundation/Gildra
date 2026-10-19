@@ -2,7 +2,9 @@
 
 /* ---------- Hero and streaming fallback ---------- */
 .specEmblem { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
-.loading { margin-top: var(--atlas-space-6); }
+/* The streamed lab replaces this notice; holding the first screen keeps the legal
+   line (and anything else below) from jumping when the lab arrives. */
+.loading { min-height: calc(100dvh - var(--atlas-sticky-top)); margin-top: var(--atlas-space-6); }
 
 /* ---------- Lab root ---------- */
 .lab {
@@ -215,6 +217,19 @@
   border: 1px dashed var(--atlas-line-soft);
   color: var(--atlas-text-subtle);
   font-size: var(--atlas-text-small);
+}
+
+/* Deferred widgets reserve their usual height (measured at 1440 and 390 px) so
+   the swap from placeholder to widget does not move the page. */
+.placeholderBar { min-height: 312px; }
+.analysis[data-result="false"] .placeholderRules { min-height: calc(136px + var(--rule-rows, 3) * 92px); }
+
+@media (max-width: 760px) {
+  .analysis[data-result="false"] .placeholderRules { min-height: calc(148px + var(--rule-count, 6) * 96px); }
+}
+
+@media (max-width: 720px) {
+  .placeholderBar { min-height: 340px; }
 }
 
 .stack { display: grid; gap: var(--atlas-space-3); margin-top: var(--atlas-space-4); }

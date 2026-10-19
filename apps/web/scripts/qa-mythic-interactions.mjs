@@ -52,19 +52,17 @@ try {
       const copy = await readIntelCard(card);
       assert.ok(copy.includes("Чем опасен") && copy.includes("Что делает"), `Enemy intel is incomplete at step ${step}`);
       assert.match(copy, /Существо/, `Enemy card label is missing at step ${step}`);
+      assert.ok(!copy.includes("Портрет"), `Portrait verification status is shown at step ${step}`);
       const portraitStatus = await card.getAttribute("data-portrait-status");
       const portrait = card.locator("[data-intel-trigger] img");
       if (portraitStatus === "verified") {
-        assert.ok(copy.includes("Портрет проверен"), `Verified portrait is not labelled at step ${step}`);
         await portrait.waitFor({ state: "visible" });
         await portrait.evaluate((image) => image instanceof HTMLImageElement && image.decode ? image.decode().catch(() => undefined) : undefined);
         assert.ok(await portrait.evaluate((image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0), `Verified portrait failed to load at step ${step}`);
       } else if (portraitStatus === "model-unavailable") {
-        assert.ok(copy.includes("Модель недоступна"), `Verified model-unavailable placeholder is not labelled at step ${step}`);
         assert.equal(await portrait.count(), 0, `Model-unavailable placeholder rendered an image at step ${step}`);
       } else {
         assert.equal(portraitStatus, "unverified", `Unknown portrait status at step ${step}`);
-        assert.ok(copy.includes("Портрет не проверен"), `Unverified portrait is not labelled at step ${step}`);
         assert.equal(await portrait.count(), 0, `Unverified portrait image is visible at step ${step}`);
       }
       assert.ok(!copy.includes("undefined"), `Enemy intel is missing at step ${step}`);
@@ -72,7 +70,8 @@ try {
     for (const card of await abilitySection.locator('[data-intel-card="ability"]').all()) {
       const copy = await readIntelCard(card);
       assert.ok(copy.includes("Кто применяет") && copy.includes("Кто отвечает") && copy.includes("Что сделать"), `Ability intel is incomplete at step ${step}`);
-      assert.match(copy, /Spell #\d+/i, `Spell catalog ID is missing at step ${step}`);
+      assert.match(copy, /Заклинание/, `Spell card label is missing at step ${step}`);
+      assert.doesNotMatch(copy, /Spell #\d+/i, `Spell catalog ID is shown at step ${step}`);
       const spellIcon = card.locator("[data-intel-trigger] img");
       await spellIcon.waitFor({ state: "visible" });
       await spellIcon.evaluate((image) => image instanceof HTMLImageElement && image.decode ? image.decode().catch(() => undefined) : undefined);

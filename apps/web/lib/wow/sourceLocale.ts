@@ -13,15 +13,20 @@ export function wowSourceText(value: string, lang: Lang) {
   if (lang === "en") return value;
   return apostrophes(value).replace(pattern, (name) => names.get(name) ?? name);
 }
+/** Without a confirmed Russian name the original English name is shown (game names may stay English). */
 export function wowSourceName(value: string, lang: Lang, existingRu?: string) {
-  return lang === "en" ? value : names.get(apostrophes(value)) ?? existingRu ?? "Русское название не подтверждено";
+  return lang === "en" ? value : names.get(apostrophes(value)) ?? existingRu ?? value;
+}
+/** `lang` attribute for a rendered source name: "en" when a Russian page falls back to the English original. */
+export function wowSourceNameLang(value: string, lang: Lang, existingRu?: string): "en" | undefined {
+  return lang === "ru" && !names.has(apostrophes(value)) && !existingRu ? "en" : undefined;
 }
 
 export function wowNpcName(value: string, lang: Lang, npcId?: number) {
   return npcId ? sourceNpcNames[npcId]?.[lang] ?? wowSourceName(value, lang) : wowSourceName(value, lang);
 }
 export function wowSpellName(value: string, lang: Lang, spellId?: number) {
-  return spellId ? sourceSpellNames[spellId]?.[lang] ?? (lang === "ru" ? `Способность #${spellId}: перевод не подтверждён` : value) : wowSourceName(value, lang);
+  return spellId ? sourceSpellNames[spellId]?.[lang] ?? wowSourceName(value, lang) : wowSourceName(value, lang);
 }
 
 /** Strategy prose also contains interface terms for modes, roles and combat notation. */

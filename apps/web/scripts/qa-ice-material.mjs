@@ -21,7 +21,7 @@ try {
    const schedule=window.setTimeout;window.setTimeout=(fn,delay,...args)=>schedule(fn,delay===920?3500:delay,...args);
   });
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/',{waitUntil:'load'});await page.locator('[data-book-route-frame][data-view-transitions]').waitFor();await page.evaluate(()=>document.fonts.ready);
+  await page.goto(base+'/',{waitUntil:'load'});await page.locator('[data-book-route-frame][data-route-ready]').waitFor();await page.evaluate(()=>document.fonts.ready);
   const navigate=href=>page.evaluate(href=>{const a=document.createElement('a');a.href=href;document.body.append(a);a.click()},href);
   const painted=async(phase,minimum=0)=>{
    const handle=await page.waitForFunction(({phase,minimum})=>{const c=document.querySelector('[data-ice-surface]');return c?.dataset.renderPhase===phase&&Number(c.dataset.renderProgress)>=minimum ? {phase:c.dataset.renderPhase,progress:Number(c.dataset.renderProgress),renderer:c.dataset.renderer}:false},{phase,minimum},{timeout:12000});

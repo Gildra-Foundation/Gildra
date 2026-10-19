@@ -116,6 +116,11 @@
 .card:focus-within .art::after { translate: 110% 0; transition: translate .9s var(--atlas-ease); }
 
 .artBadge { position: absolute; top: 10px; right: 10px; }
+/* Over a bright painting the badge's light wash disappears: give it a solid dark base. */
+.artBadge > * {
+  background: color-mix(in srgb, var(--badge-color, var(--atlas-accent)) 18%, var(--atlas-bg));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--badge-color, var(--atlas-accent)) 35%, transparent), 0 4px 12px rgba(0, 0, 0, .45);
+}
 
 .artCaption {
   position: absolute;

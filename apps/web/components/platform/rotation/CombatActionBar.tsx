@@ -199,6 +199,12 @@ export function CombatActionBar({
 
   const byId = useMemo(() => new Map(abilities.map((ability) => [ability.id, ability])), [abilities]);
   const slotsByPosition = useMemo(() => new Map(actionBar.slots.map((slot) => [slot.position, slot])), [actionBar.slots]);
+  // Rows without abilities are only drop targets: they appear while the spellbook
+  // or key binding is open (and always in the manuscript), never as empty strips.
+  const visibleRows = useMemo(() => Array.from({ length: ACTION_BAR_ROWS }, (_, rowIndex) => rowIndex).filter((rowIndex) => (
+    rowIndex === 0 || manuscript || spellbookOpen || bindingMode
+    || Array.from({ length: ACTION_BAR_COLUMNS }, (_, columnIndex) => slotsByPosition.get(rowIndex * ACTION_BAR_COLUMNS + columnIndex)).some((slot) => slot && byId.has(slot.abilityId))
+  )), [bindingMode, byId, manuscript, slotsByPosition, spellbookOpen]);
   const casts = useMemo(() => [...(result?.casts ?? [])].filter((cast) => cast.lane !== "proc").sort((left, right) => left.time - right.time), [result?.casts]);
   const cooldownsByAbility = useMemo(() => new Map((result?.cooldowns ?? []).map((cooldown) => [cooldown.abilityId, cooldown])), [result?.cooldowns]);
   const labelAt = (position: number) => byId.get(slotsByPosition.get(position)?.abilityId ?? "")?.name ?? combatActionBarCopy[lang].emptySlot;
@@ -290,7 +296,7 @@ export function CombatActionBar({
                 <RotationCursorValueContext.Consumer>{(cursor) => {
                   const { next: nextCast, last: lastCast } = castsAt(casts, cursor);
                   return <div className={`${styles.wowActionRows} ${folio.rows}`}>
-                  {Array.from({ length: ACTION_BAR_ROWS }, (_, rowIndex) => <div className={`${deferredLabStyles.actionBarLane} ${folio.lane}`} key={rowIndex}>
+                  {visibleRows.map((rowIndex) => <div className={`${deferredLabStyles.actionBarLane} ${folio.lane}`} key={rowIndex}>
                     {manuscript && <span className={folio.rowLabel} aria-hidden="true"><b>{["I", "II", "III"][rowIndex]}</b><small>{combatActionBarCopy[lang].row}</small></span>}
                     <div className={`${styles.wowActionBar} ${folio.actionRow}`} role="group" aria-label={ru ? `Панель ${rowIndex + 1}: 12 ячеек` : `Action bar ${rowIndex + 1}: 12 slots`}>
                       {Array.from({ length: ACTION_BAR_COLUMNS }, (_, columnIndex) => {

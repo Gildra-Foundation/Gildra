@@ -28,6 +28,12 @@ export type RosterCopy = {
   stateText: Record<"expired" | "forbidden" | "rate-limited" | "unavailable", string>;
   reconnectEyebrow: string;
   retry: string;
+  /** Account summary over the loaded roster (real counts only). */
+  summaryLabel: string;
+  statCharacters: string;
+  /** "{level}" is the highest level on the account. */
+  statTopLevel: string;
+  statRealms: string;
 };
 
 const en = {
@@ -46,6 +52,12 @@ const en = {
     panelText: "Gildra never shows sample characters — only the ones on your account.",
     expiredTitle: "Battle.net session expired",
     expiredText: "Connect your account again to refresh access to your character list.",
+    unlocksTitle: "Each hero opens with",
+    unlocks: [
+      ["Equipment", "Gear and item level from the official profile."],
+      ["Talents", "The active build in the talent calculator."],
+      ["Combat tools", "Rotation and damage tools for the hero’s specialization."],
+    ] as [string, string][],
   },
   roster: {
     eyebrowConnected: "Battle.net connected",
@@ -116,6 +128,10 @@ const en = {
     },
     reconnectEyebrow: "Battle.net",
     retry: "Try again",
+    summaryLabel: "Account summary",
+    statCharacters: "Characters",
+    statTopLevel: "At level {level}",
+    statRealms: "Realms",
   } satisfies RosterCopy,
 };
 
@@ -135,6 +151,12 @@ const ru: typeof en = {
     panelText: "Gildra не показывает тестовых персонажей — только тех, что есть на вашем аккаунте.",
     expiredTitle: "Сессия Battle.net истекла",
     expiredText: "Подключите аккаунт заново, чтобы обновить доступ к списку персонажей.",
+    unlocksTitle: "Для каждого героя откроются",
+    unlocks: [
+      ["Экипировка", "Снаряжение и уровень предметов из официального профиля."],
+      ["Таланты", "Активная сборка в калькуляторе талантов."],
+      ["Боевые инструменты", "Ротация и расчёт урона для специализации героя."],
+    ],
   },
   roster: {
     eyebrowConnected: "Battle.net подключён",
@@ -205,6 +227,10 @@ const ru: typeof en = {
     },
     reconnectEyebrow: "Battle.net",
     retry: "Повторить",
+    summaryLabel: "Сводка аккаунта",
+    statCharacters: "Персонажей",
+    statTopLevel: "{level} уровня",
+    statRealms: "Серверов",
   },
 };
 

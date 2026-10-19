@@ -428,16 +428,9 @@ function specializationName(id: number, lang: Lang) {
 
 function TooltipPrice({ buy, sell, lang }: { buy: number; sell: number; lang: Lang }) {
   return <div className="db-tooltip-price">
-    {buy > 0 ? <span>{tooltipContentCopy[lang].buyPrice}: {formatCopper(buy)}</span> : null}
-    {sell > 0 ? <span>{tooltipContentCopy[lang].sellPrice}: {formatCopper(sell)}</span> : null}
+    {buy > 0 ? <span>{tooltipContentCopy[lang].buyPrice}: {formatQuestMoney(buy, lang)}</span> : null}
+    {sell > 0 ? <span>{tooltipContentCopy[lang].sellPrice}: {formatQuestMoney(sell, lang)}</span> : null}
   </div>;
-}
-
-function formatCopper(value: number) {
-  const gold = Math.floor(value / 10000);
-  const silver = Math.floor((value % 10000) / 100);
-  const copper = value % 100;
-  return [gold ? `${gold}з` : "", silver ? `${silver}с` : "", copper || (!gold && !silver) ? `${copper}м` : ""].filter(Boolean).join(" ");
 }
 
 function TooltipStats({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {

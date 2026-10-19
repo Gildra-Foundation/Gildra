@@ -1,7 +1,11 @@
 .frame {
   --atlas-frame-tint: var(--atlas-accent-glow);
   position: relative;
-  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* Fills the screen under the sticky top bar, no more: a short page does not
+     scroll, and its legal line rests at the bottom of the screen (see .legal). */
+  min-height: calc(100dvh - var(--atlas-sticky-top, 0px) - var(--cookie-notice-space, 0px));
   overflow: clip;
   color: var(--atlas-text);
   background: var(--atlas-bg);
@@ -128,12 +132,18 @@
 }
 
 .column {
+  flex: 1 0 auto;
   width: min(100%, var(--atlas-container));
   margin-inline: auto;
   padding: var(--atlas-space-7) var(--atlas-gutter) var(--atlas-space-8);
 }
 
+/* The column keeps block flow (its sections' margins collapse as before). On a short
+   page it is taller than its content, and the sticky offset lowers the legal line to
+   the column's foot; on a long page there is no room below it, so it never moves. */
 .legal {
+  position: sticky;
+  top: 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;

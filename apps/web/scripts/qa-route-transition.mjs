@@ -14,7 +14,7 @@ async function open(options = {}) {
   page.on("pageerror", (error) => errors.push(error.stack));
   await page.addInitScript(() => {
     window.routeQA = { id: Math.random(), events: [], viewTransitions: 0, arrivals: 0 };
-    // Count the View Transitions React starts for atlas pages.
+    // The route runtime owns every hand-over: no document View Transition may start.
     const start = Document.prototype.startViewTransition;
     if (start) Document.prototype.startViewTransition = function (...args) { window.routeQA.viewTransitions += 1; return start.apply(this, args); };
     new MutationObserver(() => {
@@ -42,9 +42,9 @@ try {
   assert.equal(await page.evaluate(() => window.routeQA.id), documentId, "Navigation must keep the app shell");
   assert.ok((await states(page)).includes("leaving"), "The leaving state must be set on click");
   const handOver = await page.evaluate(() => window.routeQA);
-  assert.ok(handOver.viewTransitions > 0, "Atlas pages must hand over with a View Transition");
+  assert.equal(handOver.viewTransitions, 0, "Atlas pages hand over without a document View Transition");
   assert.ok(handOver.arrivals > 0, "The new page's hero must arrive as a cascade");
-  assert.equal(await page.locator("[data-book-route-frame]").getAttribute("data-view-transitions"), "", "With View Transitions the leaving page is not dimmed");
+  assert.equal(await page.locator("[data-themed-transition][data-phase]").count(), 0, "Between atlas pages the character effect stays idle");
 
   // Query and hash changes on the same page do not transition.
   const before = (await states(page)).length;

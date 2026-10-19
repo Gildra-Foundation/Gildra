@@ -36,7 +36,7 @@ test("original names localize labels and prose, while brands and unknown names s
   assert.equal(wowSourceName("Nymrissa Wavecaller", "en"), "Nymrissa Wavecaller");
   assert.equal(wowSourceText("Midnight · Umbral Collapse", "ru"), "Midnight · Темный коллапс");
   assert.equal(wowSourceText("Unknown effect", "ru"), "Unknown effect", "Never manufacture a game translation");
-  assert.equal(wowSourceName("Unknown record", "ru"), "Русское название не подтверждено");
+  assert.equal(wowSourceName("Unknown record", "ru"), "Unknown record", "Without a confirmed translation the English original is shown");
 });
 
 test("rotation matches spell IDs and preserves locale when saved English payloads arrive", () => {
@@ -82,7 +82,7 @@ test("deep route names resolve original identities without changing stored keys"
   assert.equal(wowNpcName("Flashfrost Chillweaver", "ru", 188067), "Ткач Холода Морозной Вспышки");
   assert.equal(wowSpellName("Cold Claws", "ru", 1305234), "Хладные когти");
   assert.equal(wowSpellName("Cold Claws", "en", 1305234), "Cold Claws");
-  assert.equal(wowSpellName("Bloodthirsty Gaze", "ru", 1317906), "Способность #1317906: перевод не подтверждён", "A ru_RU payload with an English name is still untranslated");
+  assert.equal(wowSpellName("Bloodthirsty Gaze", "ru", 1317906), "Bloodthirsty Gaze", "An untranslated spell keeps its English name instead of an ID");
   assert.equal(wowRouteText("Cinderweaver + Scorchlings", "ru"), "Пеплоплет воинов стихий + Сполох");
   assert.equal(wowRouteText("Мелидрусса Хладообраз", "ru"), "Мелидрусса Истощенная Холодом");
   assert.equal(wowRouteText("Radiant Drake · переход", "ru"), "дракон для перелёта · переход");

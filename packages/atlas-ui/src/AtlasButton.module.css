@@ -34,16 +34,20 @@
 
 .primary:hover { color: var(--atlas-accent-ink); border-color: var(--atlas-accent-strong); background: var(--atlas-accent-strong); }
 
+/* Ghost buttons read as links: the label sits on the text edge of its column
+   (no inline padding or border at any size — see .ghost.sm below). */
 .ghost {
   color: var(--atlas-accent);
   border-color: transparent;
+  border-inline-width: 0;
   background: transparent;
-  padding-inline: 4px;
+  padding-inline: 0;
 }
 
 .ghost:hover { color: var(--atlas-accent-strong); border-color: transparent; background: transparent; }
 
 .sm { min-height: 36px; padding: 7px 12px; font-size: var(--atlas-text-meta); }
+.ghost.sm { padding-inline: 0; }
 /* Phones: every button is a 44 px touch target. */
 @media (max-width: 720px) {
   .sm { min-height: var(--atlas-control-height); }

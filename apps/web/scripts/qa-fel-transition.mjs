@@ -66,7 +66,7 @@ async function controls() {
     const page = await context.newPage(), errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(base + prefix + '/login', { waitUntil: 'load' });
-    await page.locator('[data-book-route-frame][data-view-transitions]').waitFor(); await page.evaluate(() => document.fonts.ready);
+    await page.locator('[data-book-route-frame][data-route-ready]').waitFor(); await page.evaluate(() => document.fonts.ready);
     let release;
     const held = new Promise(resolve => { release = resolve; });
     await page.route('**/privacy?fel-hold=1*', async route => { await held; await route.continue(); });
@@ -96,7 +96,7 @@ async function controls() {
     if (failure === 'capture') await context.route('**/assets/motion/page-raster-*', route => route.fulfill({ status: 503, body: 'QA unavailable' }));
     if (failure === 'worker-load') await context.route('**/fel-renderer-v1.js', async route => { await new Promise(resolve => setTimeout(resolve, 4000)); await route.fulfill({ status: 503, body: 'QA delayed' }).catch(() => {}); });
     const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
-    await page.goto(base + '/privacy', { waitUntil: 'load' }); await page.locator('[data-book-route-frame][data-view-transitions]').waitFor();
+    await page.goto(base + '/privacy', { waitUntil: 'load' }); await page.locator('[data-book-route-frame][data-route-ready]').waitFor();
     await page.evaluate(() => { const a = document.createElement('a'); a.href = '/login'; document.body.append(a); a.click(); });
     await page.waitForURL(base + '/login'); await page.waitForFunction(() => !document.querySelector('[data-themed-transition][data-phase]'), null, { timeout: 15000 });
     assert.equal(await page.locator('[data-themed-transition] *').count(), 0); assert.deepEqual(errors, []);
@@ -196,7 +196,7 @@ try {
       const cdp = await context.newCDPSession(page);
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: profile.cpu });
       await page.goto(base + '/ru/privacy', { waitUntil: 'load' });
-      await page.locator('[data-book-route-frame][data-view-transitions]').waitFor();
+      await page.locator('[data-book-route-frame][data-route-ready]').waitFor();
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(1600);
       const click = await page.evaluate(() => {

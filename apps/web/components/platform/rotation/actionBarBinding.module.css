@@ -1,8 +1,8 @@
 .editor {
-  --bind-ink: #e7d2ac;
-  --bind-muted: #bba684;
-  --bind-line: #89704f66;
-  --bind-wash: #96714a1a;
+  --bind-ink: var(--atlas-text);
+  --bind-muted: var(--atlas-text-muted);
+  --bind-line: var(--atlas-line);
+  --bind-wash: var(--atlas-accent-wash);
   margin-block: 12px;
   padding: 16px;
   color: var(--bind-ink);
@@ -37,6 +37,6 @@
 /* Keep the control named on touch layouts where legacy toolbar labels are hidden. */
 button.toggle > span { display: inline !important; }
 .cell[data-binding-mode] { cursor: crosshair; }
-.cell[data-binding-mode]:hover { outline: 2px dashed #966734; outline-offset: 3px; }
-.cell[data-binding-selected] { outline: 2px solid #9e4822 !important; outline-offset: 3px; }
+.cell[data-binding-mode]:hover { outline: 2px dashed var(--atlas-line-strong); outline-offset: 3px; }
+.cell[data-binding-selected] { outline: 2px solid var(--atlas-line-strong) !important; outline-offset: 3px; }
 .cell > button > kbd { max-width: calc(100% + 4px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

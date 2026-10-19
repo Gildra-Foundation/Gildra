@@ -22,6 +22,8 @@ export type PageTransitionHandle = {
 export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }) {
   const host = useRef<HTMLDivElement>(null);
   const active = useRef(false), destinationReady = useRef(false), cracksReady = useRef(false), revealing = useRef(false);
+  /** The reader tapped the effect before the new page was in place. */
+  const skipRequested = useRef(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const animationFrame = useRef(0);
   const surface = useRef<ReturnType<typeof iceMaterial> | ReturnType<typeof felMaterial> | null>(null);
@@ -39,6 +41,14 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
     if (host.current) delete host.current.dataset.phase;
     delete document.documentElement.dataset.pageTransition;
     active.current = false; revealing.current = false; destinationReady.current = false; cracksReady.current = false;
+    skipRequested.current = false;
+  }
+  /** A tap on the effect skips it, like a cutscene: the page it covers is the one the
+   *  reader wants, and a click must never land on a page they cannot see yet. */
+  function skip() {
+    if (!active.current) return;
+    if (destinationReady.current) cancel();
+    else skipRequested.current = true;
   }
   function animate(phase: "freezing" | "cracking" | "shattering", duration: number, complete: () => void) {
     const origin = performance.now();
@@ -70,6 +80,7 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
       const piece = document.createElement("div");
       piece.className = styles.outgoing;
       piece.dataset.transitionSnapshot = "";
+      piece.inert = true;
       piece.append(transitionSnapshot(frame, styles.frozen));
       root.dataset.effect = theme; root.dataset.phase = "freezing";
       document.documentElement.dataset.pageTransition = theme;
@@ -123,7 +134,7 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
     },
     reveal() {
       if (!active.current || !host.current) return false;
-      if (lessMotion()) { cancel(); return false; }
+      if (lessMotion() || skipRequested.current) { cancel(); return false; }
       destinationReady.current = true; shatter(); return true;
     },
   }));
@@ -159,5 +170,5 @@ export function CanvasPageTransition({ ref }: { ref: Ref<PageTransitionHandle> }
       cancel();
     };
   }, []);
-  return <div ref={host} className={styles.host} data-themed-transition aria-hidden="true" inert />;
+  return <div ref={host} className={styles.host} data-themed-transition aria-hidden="true" onPointerDown={skip} />;
 }

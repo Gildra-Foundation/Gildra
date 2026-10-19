@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { CurrentEncounterInView } from "./CurrentEncounterInView";
 import styles from "./raidNavigation.module.css";
 
 export type RaidEncounterLink = { href: string; name: string; image?: string; current?: boolean };
@@ -8,8 +9,10 @@ export type RaidEncounterLink = { href: string; name: string; image?: string; cu
 /** Compact row of the raid's encounters; scrolls sideways on phones. */
 export function EncounterSwitcher({ items, label }: { items: RaidEncounterLink[]; label: string }) {
   if (items.length < 2) return null;
+  const current = items.find((item) => item.current)?.href;
   return (
     <nav className={styles.switcher} aria-label={label}>
+      {current ? <CurrentEncounterInView current={current} /> : null}
       <ol>
         {items.map((item, index) => (
           <li key={item.href}>

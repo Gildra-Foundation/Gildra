@@ -50,7 +50,7 @@ export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceL
   return (
     <aside className={styles.priorityPanel} aria-labelledby="priority-rules-title">
       <header className={styles.panelHeader}>
-        <div><h2 id="priority-rules-title">{tr("Priority Rules")}</h2><small>{sourceLabel} · {tr("Drag to reorder")}</small></div>
+        <div><h2 id="priority-rules-title">{tr("Priority rules")}</h2><small>{sourceLabel} · {tr("Drag to reorder")}</small></div>
         <button className={deferredLabStyles.iconButton} onClick={onReset} disabled={interactionsDisabled} aria-label={tr("Reset priority rules")} title={tr("Reset priority rules")}><RotateCcw /></button>
       </header>
       <ol className={`${styles.ruleList} ${wide ? shell.ruleListWide : ""}`}>
@@ -82,7 +82,7 @@ export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceL
         })}
       </ol>
       {missing.length ? (
-        <div className={styles.priorityAdd}><select aria-label={priorityEditorCopy[lang].abilityToAdd} value={selectedMissing?.id ?? ""} disabled={interactionsDisabled || rules.length >= 10} onChange={(event) => setAbilityToAdd(event.target.value)}>{missing.map((ability) => <option key={ability.id} value={ability.id}>{ability.name}</option>)}</select><button className={styles.addRule} disabled={interactionsDisabled || rules.length >= 10 || !selectedMissing} onClick={() => selectedMissing && onChange([...rules, selectedMissing.id])}><Plus /> {tr("Add Rule")}</button></div>
+        <div className={styles.priorityAdd}><select aria-label={priorityEditorCopy[lang].abilityToAdd} value={selectedMissing?.id ?? ""} disabled={interactionsDisabled || rules.length >= 10} onChange={(event) => setAbilityToAdd(event.target.value)}>{missing.map((ability) => <option key={ability.id} value={ability.id}>{ability.name}</option>)}</select><button className={styles.addRule} disabled={interactionsDisabled || rules.length >= 10 || !selectedMissing} onClick={() => selectedMissing && onChange([...rules, selectedMissing.id])}><Plus /> {tr("Add rule")}</button></div>
       ) : (
         <div className={deferredLabStyles.rulesStatus} role="status"><CheckCircle2 /> {tr("All priority rules are active")}</div>
       )}

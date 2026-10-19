@@ -3,7 +3,11 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
   background: #050607;
 }
 .workspace-content.gildra-atlas {
-  min-height: 100svh;
+  /* Below the 64 px top bar: a short page ends at the bottom of the screen, above
+     the cookie notice while it is open (its height is reserved here, in the page
+     colour, instead of padding the body). */
+  min-height: calc(100svh - var(--atlas-sticky-top));
+  padding-bottom: var(--cookie-notice-space, 0px);
   color: var(--atlas-text);
   background: var(--atlas-bg);
   font-family: var(--atlas-font-ui);

@@ -18,8 +18,9 @@
 .title { flex: 1; min-width: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / 1.25 var(--atlas-font-display); }
 .kind { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); letter-spacing: .06em; text-transform: uppercase; }
 .arrow { width: 18px; height: 18px; flex: none; color: var(--atlas-accent); }
-.none { margin: 0; color: var(--atlas-text-muted); }
 
 @media (max-width: 600px) {
   .kind { display: none; }
 }
+
+.searchOnly { margin-top: var(--atlas-space-6); }

@@ -19,7 +19,7 @@ export function FindingsPanel({ findings, lang, onSelect, selectedTime }: {
   return (
     <aside className={styles.findingsPanel} aria-labelledby="findings-title">
       <header className={styles.panelHeader}>
-        <div><h2 id="findings-title">{tr("Lab Findings")}</h2><small>{tr("Select a finding to inspect it on the timeline")}</small></div>
+        <div><h2 id="findings-title">{tr("Lab findings")}</h2><small>{tr("Select a finding to inspect it on the timeline")}</small></div>
         <span className={deferredLabStyles.findingCount}>{findings.length}</span>
       </header>
       <div className={deferredLabStyles.findingList} aria-live="polite">

@@ -111,9 +111,25 @@
 .next:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 
 @media (max-width: 720px) {
-  /* Phones: one swipeable row instead of a tall stack. */
-  .switcher ol { flex-wrap: nowrap; padding-bottom: var(--atlas-space-1); overflow-x: auto; scrollbar-width: thin; }
-  .switcher li { flex: 0 0 min(220px, 68vw); }
+  /* Phones: one swipeable row instead of a tall stack. Items are as wide as their
+     name (capped), the right edge fades to hint at more, and the current encounter
+     is scrolled into view on load (CurrentEncounterInView). */
+  .switcher ol {
+    flex-wrap: nowrap;
+    gap: var(--atlas-space-1);
+    padding-bottom: var(--atlas-space-1);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - var(--atlas-space-6)), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - var(--atlas-space-6)), transparent);
+  }
+  /* Lets the last encounter scroll clear of the fade. */
+  .switcher ol::after { content: ""; flex: 0 0 var(--atlas-space-5); }
+  .switcher li { flex: 0 0 auto; width: max-content; max-width: min(196px, 56vw); }
+  .switcher a { gap: 6px; min-height: 48px; padding: 6px var(--atlas-space-2); }
+  .art { width: 32px; height: 32px; }
+  .name { overflow-wrap: break-word; }
   .next { width: 100%; }
 }
 

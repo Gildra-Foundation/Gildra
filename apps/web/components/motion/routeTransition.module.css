@@ -8,6 +8,9 @@
   background: #080706;
 }
 .frame { min-height: 100vh; }
+/* Inner pages sit below the 64 px top bar: no extra scroll on short pages. */
+:global(.gildra-atlas) > .system,
+:global(.gildra-atlas) .frame { min-height: calc(100dvh - var(--atlas-sticky-top) - var(--cookie-notice-space, 0px)); }
 .frame[data-theme="wow"] :global([data-platform-home]) {
   --ph-gold: #c58b36;
   --ph-gold-soft: #f0cb78;
@@ -17,15 +20,15 @@
   --ph-surface: #12100c;
 }
 
-/* Page-to-page transition (RouteTransitionRuntime). Without View Transitions
-   the leaving page dims only if the next one takes a moment (120 ms delay), so
-   instant navigations never flicker; the new page fades in from the runtime.
-   With View Transitions the hand-over lives in app/styles/view-transitions.css. */
+/* Atlas hand-over (RouteTransitionRuntime, kind "page"): the leaving page dims
+   only if the next one takes a moment (120 ms delay), so instant navigations
+   never flicker; the new page rises in from the runtime with its hero cascade.
+   A scene change is covered by the character's effect instead (see below). */
 .frame {
   transition: opacity 180ms ease;
 }
 
-.frame[data-route-state="leaving"]:not([data-view-transitions]) {
+.frame[data-route-state="leaving"] {
   opacity: .45;
   transition-delay: 120ms;
 }

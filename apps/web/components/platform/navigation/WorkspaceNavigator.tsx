@@ -2,14 +2,13 @@
 import dynamic from "next/dynamic";
 import { lazy, Suspense } from "react";
 import { usePathname } from "next/navigation";
-// Load the top bar styles with the initial bundle; the bar itself mounts lazily
-// and would otherwise paint unstyled for a frame and shift the page.
-import "./atlasToolbar.module.css";
+// The bar hydrates with the page (≈7 KB gzip). As a lazy chunk its server HTML
+// was discarded whenever an update reached the root before the chunk arrived:
+// the bar vanished for ~0.5 s and every inner page shifted (CLS 0.09–0.16).
+import { WorkspaceNavigatorContent } from "./WorkspaceNavigatorContent";
+import toolbarStyles from "./atlasToolbar.module.css";
 import "@/components/platform/search/siteSearch.module.css";
 
-const WorkspaceNavigatorContent = lazy(
-  () => import("./WorkspaceNavigatorContent").then((module) => ({ default: module.WorkspaceNavigatorContent })),
-);
 // The landing scene draws its own toolbar; it only gets the search hotkeys.
 const SearchHotkeys = lazy(
   () => import("@/components/platform/search/SiteSearch").then((module) => ({ default: () => <module.SiteSearch hotkeysOnly /> })),
@@ -25,6 +24,8 @@ export function WorkspaceNavigator() {
 
   return <>
     {DevelopmentRouteNavigation ? <DevelopmentRouteNavigation /> : null}
-    <Suspense fallback={null}><WorkspaceNavigatorContent /></Suspense>
+    {/* Same box as the bar: if anything inside it ever suspends (search, dialogs),
+        the page below keeps its place (no layout shift). */}
+    <Suspense fallback={<div className={toolbarStyles.toolbar} data-atlas-scope aria-hidden="true" />}><WorkspaceNavigatorContent /></Suspense>
   </>;
 }

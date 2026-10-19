@@ -70,7 +70,7 @@ try {
       const {context,page,cdp}=await session(profile);
       const errors=[];page.on("pageerror",e=>errors.push(e.message));
       await page.goto(base+route,{waitUntil:"load",timeout:90000});
-      await page.locator("[data-book-route-frame][data-view-transitions]").waitFor();
+      await page.locator("[data-book-route-frame][data-route-ready]").waitFor();
       await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1200);
       const trace=run===0 && profile.id==="desktop" && route==="/ru";
       if(trace) await cdp.send("Tracing.start",{categories:"devtools.timeline,v8,blink.user_timing,disabled-by-default-v8.cpu_profiler",transferMode:"ReturnAsStream"});

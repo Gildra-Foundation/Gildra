@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
@@ -20,6 +20,7 @@ const copy = {
  */
 export function CookieNotice() {
   const [visible, setVisible] = useState(false);
+  const notice = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const text = copy[pathname === "/ru" || pathname?.startsWith("/ru/") ? "ru" : "en"];
 
@@ -37,6 +38,26 @@ export function CookieNotice() {
     return () => window.removeEventListener(consentChanged, update);
   }, []);
 
+  // The space the notice covers at the bottom of the viewport (--cookie-notice-space):
+  // atlas pages reserve it under their content (app/styles/atlas-pages.css), so a
+  // short page's legal line rests just above the notice and a long one scrolls clear.
+  useEffect(() => {
+    const element = notice.current;
+    if (!visible || !element) return;
+    const root = document.documentElement;
+    const measure = () => {
+      const bottom = Number.parseFloat(getComputedStyle(element).bottom) || 0;
+      root.style.setProperty("--cookie-notice-space", `${Math.ceil(element.offsetHeight + bottom)}px`);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--cookie-notice-space");
+    };
+  }, [visible]);
+
   const choose = (value: "accepted" | "declined") => {
     saveBrowserConsent(value);
     setVisible(false);
@@ -44,7 +65,7 @@ export function CookieNotice() {
 
   if (!visible) return null;
   return (
-    <aside className={styles.notice} role="region" aria-label={text.label} data-atlas-scope>
+    <aside ref={notice} className={styles.notice} role="region" aria-label={text.label} data-atlas-scope>
       <p className={styles.text}>
         {text.text}{" "}
         <Link href={text === copy.ru ? "/ru/privacy" : "/privacy"} prefetch={false}>{text.link}</Link>.
