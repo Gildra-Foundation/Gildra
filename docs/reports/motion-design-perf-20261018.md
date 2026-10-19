@@ -1,7 +1,10 @@
 # Motion, design and performance pass — 18 October 2026
 
 Branch `feature/motion-design-perf-20261018` from production source `f4da729`.
-Not committed, pushed or deployed. Review that led to it:
+Released to gildra.net on 19 October 2026, 08:45 UTC: web image
+`gildra-web:motion-design-20261019-7357c61` (`0104dafb`), commit `7357c61`; rollback
+target `fba239aa` with the manifest backup `/opt/gildra/motion-design-20261019-7357c61-r1-previous.env`.
+Review that led to it:
 `/home/debian/gildra-design-review-20261018/REPORT.md` (live screenshots and frames).
 
 ## Transitions: one owner per navigation
@@ -64,7 +67,15 @@ palette on theme tokens and sentence case.
 - Local preview (dummy auth, no API backend): `qa-route-transition.mjs` and
   `qa-site-theme.mjs` (both updated to the new model) pass;
   `.artifacts/motion-design/verify.mjs` (page/scene/skip/reduced/CLS/characters) passes.
-- Pages that need the API (database, library, item) were checked in code only.
+- Staging with the production API (`http://127.0.0.1:3200`, same image): landing and book
+  0 px against live, 28 smoke routes, both transition suites, page/scene/skip/reduced/CLS
+  (CLS identical to the local build; scene effect clears in 1.4–2.4 s; tap skip 0.53 s),
+  motion budget, database/library/item pages. `qa:a11y` reports the same 6 page views as
+  live (catalog row contrast on /ru/database and /ru/search, M+ source links 20 px tall).
+- The landing release gate caught one regression: with the bar loading before
+  `globals.css`, the switcher's landing overrides lost to the global tokens (wordmark in
+  Alegreya, nav 2.5 px off); `.root.home` fixes it (`7357c61`).
+- After the release: smoke, `qa-route-transition` and `qa-site-theme` pass on https://gildra.net.
 
 ## Remaining
 
