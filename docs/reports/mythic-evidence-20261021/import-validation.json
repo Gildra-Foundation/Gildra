@@ -1,0 +1,85 @@
+[
+  {
+    "slug": "ruby-life-pools",
+    "status": "dataset-matched",
+    "pulls": 14,
+    "clones": 82,
+    "forces": 552,
+    "total": 551,
+    "percent": 100.1815,
+    "errors": []
+  },
+  {
+    "slug": "altar-of-fangs",
+    "status": "dataset-matched",
+    "pulls": 19,
+    "clones": 110,
+    "forces": 819,
+    "total": 817,
+    "percent": 100.2448,
+    "errors": []
+  },
+  {
+    "slug": "murder-row",
+    "status": "dataset-matched",
+    "pulls": 18,
+    "clones": 133,
+    "forces": 658,
+    "total": 655,
+    "percent": 100.458,
+    "errors": []
+  },
+  {
+    "slug": "den-of-nalorakk",
+    "status": "dataset-matched",
+    "pulls": 17,
+    "clones": 109,
+    "forces": 730,
+    "total": 729,
+    "percent": 100.1372,
+    "errors": []
+  },
+  {
+    "slug": "the-blinding-vale",
+    "status": "dataset-matched",
+    "pulls": 15,
+    "clones": 95,
+    "forces": 688,
+    "total": 686,
+    "percent": 100.2915,
+    "errors": []
+  },
+  {
+    "slug": "voidscar-arena",
+    "status": "dataset-matched",
+    "pulls": 16,
+    "clones": 122,
+    "forces": 743,
+    "total": 738,
+    "percent": 100.6775,
+    "errors": []
+  },
+  {
+    "slug": "kings-rest",
+    "status": "dataset-matched",
+    "pulls": 18,
+    "clones": 91,
+    "forces": 617,
+    "total": 608,
+    "percent": 101.4803,
+    "errors": []
+  },
+  {
+    "slug": "temple-of-sethraliss",
+    "status": "incompatible",
+    "pulls": 19,
+    "clones": 114,
+    "forces": 675,
+    "total": 687,
+    "percent": 98.2533,
+    "errors": [
+      "missing clone 2:14",
+      "missing clone 11:7"
+    ]
+  }
+]

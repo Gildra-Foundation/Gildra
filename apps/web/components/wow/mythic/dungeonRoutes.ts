@@ -637,37 +637,37 @@ export const dungeonRoutes: Record<DungeonSlug, DungeonRoute> = {
   "altar-of-fangs": {
     slug: "altar-of-fangs", name: "Altar of Fangs", nameRu: "Алтарь Клыков", location: "Извилистый остров", timerSeconds: 30 * 60,
     mapImage: "/assets/wow/maps/altar.webp", backdropImage: "/assets/wow/mythic/backgrounds/altar.webp", floors: [{ id: 1, label: "Алтарь" }], accent: "#75b855", description: "Пройдите ритуальные залы, остановите мутации и сорвите финальный ритуал Зул'джана.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/altar-of-fangs-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/altar-of-fangs", stops: altarOfFangs,
+    guideUrl: "https://www.wowhead.com/guide/midnight/altar-of-fangs-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/qak6G3Uvs", stops: altarOfFangs,
   },
   "murder-row": {
     slug: "murder-row", name: "Murder Row", nameRu: "Закоулок душегубов", location: "Луносвет", timerSeconds: 34 * 60,
     mapImage: "/assets/wow/maps/murder.webp", backdropImage: "/assets/wow/mythic/backgrounds/murder.webp", floors: [{ id: 1, label: "Переулок" }], accent: "#c044d8", description: "Зачистите подпольный квартал Луносвета и остановите ритуал Литиэль Пепельной Ярости.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/murder-row-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/murder-row", stops: murderRow,
+    guideUrl: "https://www.wowhead.com/guide/midnight/murder-row-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/mWO70E5hA", stops: murderRow,
   },
   "den-of-nalorakk": {
     slug: "den-of-nalorakk", name: "Den of Nalorakk", nameRu: "Берлога Налоракка", location: "Зул'Аман", timerSeconds: 32 * 60,
     mapImage: "/assets/wow/maps/nalorakk.webp", backdropImage: "/assets/wow/mythic/backgrounds/nalorakk.webp", floors: [{ id: 1, label: "Сон" }], accent: "#69a9c7", description: "Соберите припасы, переживите вечную зиму и докажите силу перед лоа войны.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/den-of-nalorakk-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/den-of-nalorakk", stops: denOfNalorakk,
+    guideUrl: "https://www.wowhead.com/guide/midnight/den-of-nalorakk-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/b69_rKkRL", stops: denOfNalorakk,
   },
   "the-blinding-vale": {
     slug: "the-blinding-vale", name: "The Blinding Vale", nameRu: "Слепящая долина", location: "Харандар", timerSeconds: 30 * 60,
     mapImage: "/assets/wow/maps/blinding.webp", backdropImage: "/assets/wow/mythic/backgrounds/blinding.webp", floors: [{ id: 1, label: "Долина" }], accent: "#8ccf5a", description: "Проложите безопасный путь через Светоцвет и очистите долину от искажённых хранителей.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/the-blinding-vale-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/the-blinding-vale", stops: blindingVale,
+    guideUrl: "https://www.wowhead.com/guide/midnight/the-blinding-vale-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/HLI3Wq7sA", stops: blindingVale,
   },
   "voidscar-arena": {
     slug: "voidscar-arena", name: "Voidscar Arena", nameRu: "Арена Шрама Бездны", location: "Буря Бездны", timerSeconds: 30 * 60,
     mapImage: "/assets/wow/maps/voidscar.webp", backdropImage: "/assets/wow/mythic/backgrounds/voidscar.webp", floors: [{ id: 1, label: "Арена" }], accent: "#8d67dc", description: "Выберите усиление, победите чемпионов арены и подчините гравитацию в финальном бою.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/voidscar-arena-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/voidscar-arena", stops: voidscarArena,
+    guideUrl: "https://www.wowhead.com/guide/midnight/voidscar-arena-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/1s56kmJ_N", stops: voidscarArena,
   },
   "kings-rest": {
     slug: "kings-rest", name: "Kings' Rest", nameRu: "Гробница королей", location: "Зулдазар", timerSeconds: 33 * 60,
     mapImage: "/assets/wow/maps/kings.webp", backdropImage: "/assets/wow/mythic/backgrounds/kings.webp", floors: [{ id: 1, label: "Гробница" }], accent: "#d6aa4e", description: "Пройдите королевские залы, уничтожьте тени Зула и бросьте вызов первому королю.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/kings-rest", stops: kingsRest,
+    guideUrl: "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", mdtRouteUrl: "https://wago.io/U22_Bys16", stops: kingsRest,
   },
   "temple-of-sethraliss": {
     slug: "temple-of-sethraliss", name: "Temple of Sethraliss", nameRu: "Храм Сетралисс", location: "Вол'дун", timerSeconds: 32 * 60,
     mapImage: "/assets/wow/maps/temple.webp", backdropImage: "/assets/wow/mythic/backgrounds/temple.webp", floors: [{ id: 1, label: "Храм" }], accent: "#55b9ce", description: "Верните Око Сетралисс, очистите храм и восстановите силы павшего аватара.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/temple-of-sethraliss", stops: templeOfSethraliss,
+    guideUrl: "https://www.wowhead.com/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus", mdtRouteUrl: "https://wago.io/1pqM1h0ez", stops: templeOfSethraliss,
   },
 };
 

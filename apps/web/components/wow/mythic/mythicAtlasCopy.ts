@@ -3,10 +3,12 @@ import { pluralRu } from "@gildra/atlas-ui/format";
 /** Interface copy of the Mythic+ hub. Dungeon, boss and zone names are game terms. */
 export const mythicAtlasCopy = {
   ru: {
+    mdtChecked: "Маршрут MDT · по источнику",
+    importUpdate: "Импорт требует обновления",
     eyebrow: "Midnight · Сезон 2",
     title: "Атлас Эпохальный+",
     breadcrumbsLabel: "Навигация",
-    lede: "Сравните таймеры и выберите подземелье. В маршруте — порядок боёв, группы врагов и назначения игроков.",
+    lede: "Сравните таймеры и выберите подземелье. В маршруте — реальные группы мобов MDT, порядок пуллов и механики со ссылками.",
     statsLabel: "Сводка сезона",
     dungeons: "подземелий",
     bosses: "боссов",
@@ -25,10 +27,12 @@ export const mythicAtlasCopy = {
     timer: "Таймер",
   },
   en: {
+    mdtChecked: "MDT route · source checked",
+    importUpdate: "Import needs an update",
     eyebrow: "Midnight · Season 2",
     title: "Mythic+ atlas",
     breadcrumbsLabel: "Breadcrumbs",
-    lede: "Compare time limits and choose a dungeon. Each route outlines fight order, enemy groups and player assignments.",
+    lede: "Compare time limits and choose a dungeon. Routes show MDT enemy groups, pull order and sourced mechanics.",
     statsLabel: "Season summary",
     dungeons: "dungeons",
     bosses: "bosses",

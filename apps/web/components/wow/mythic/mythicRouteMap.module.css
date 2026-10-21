@@ -1220,3 +1220,8 @@
 .stepTools > summary:hover { color: var(--atlas-text-strong); }
 .stepTools > summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
+
+.legacyDraft { min-width: 0; border: 1px solid var(--atlas-line); padding: var(--atlas-space-3); }
+.legacyDraft > summary { min-height: 44px; cursor: pointer; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.legacyDraft > summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.legacyDraft[open] > summary { margin-bottom: var(--atlas-space-3); }

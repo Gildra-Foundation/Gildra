@@ -1,0 +1,129 @@
+{
+  "slug": "kings-rest",
+  "checkedAt": "2026-10-21",
+  "season": "Midnight Season 2",
+  "status": "source-reviewed",
+  "sources": [
+    {
+      "url": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus",
+      "title": "Wowhead: Kings’ Rest overview, updated 27 August 2026",
+      "scope": "Boss order, timer and reproduced encounter journal; damage numbers excluded."
+    },
+    {
+      "url": "https://www.method.gg/guides/dungeons/kings-rest",
+      "title": "Method / Tactyks: King’s Rest, 18 August 2026",
+      "scope": "Authored mechanics and route reference; predates subsequent hotfixes."
+    },
+    {
+      "url": "https://www.icy-veins.com/wow/kings-rest-dungeon-guide",
+      "title": "Icy Veins / Petko: King’s Rest, 12 October 2026",
+      "scope": "Boss and trash mechanics; not proof of Gildra pull geometry."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/master/Midnight/KingsRest.lua",
+      "title": "MythicDungeonTools: Midnight/KingsRest.lua",
+      "scope": "Live mutable dataset: NPC IDs, clone groups and forces; no Gildra coordinate conversion validated."
+    },
+    {
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24296142/hotfixes-october-14-2026",
+      "title": "Blizzard: cumulative 2026 hotfixes, article 24296142",
+      "scope": "Indexed official text confirms Shadow Bolt replaces Shadowfrost Bolt; URL/title dates differ, do not infer change date."
+    },
+    {
+      "url": "https://wago.io/U22_Bys16",
+      "title": "Tactyks route linked by Method",
+      "scope": "Author-specific MDT reference; Wago body/import was not extractable and route not imported."
+    }
+  ],
+  "facts": [
+    {
+      "ru": "Четыре босса: The Golden Serpent → Mchimba → Council of Tribes → Dazar. Таймер: 33 минуты.",
+      "en": "Four bosses: The Golden Serpent → Mchimba → Council of Tribes → Dazar. Timer: 33 minutes.",
+      "source": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus"
+    },
+    {
+      "ru": "Golden Serpent: складывайте Spit Gold вместе вдали от босса; убивайте Animated Gold до контакта с ним. Serpentine Gust требует лечения.",
+      "en": "Golden Serpent: group Spit Gold puddles away from the boss; kill Animated Gold before contact. Heal Serpentine Gust.",
+      "source": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus"
+    },
+    {
+      "ru": "Mchimba: сигнализируйте из гроба; союзники открывают правильный. После Drain Fluids восстановите цели больше 90% здоровья.",
+      "en": "Mchimba: signal from the coffin; allies open the correct one. Heal Drain Fluids targets above 90% afterward.",
+      "source": "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus"
+    },
+    {
+      "ru": "Council: совместно закрывайте Barrel Through, прерывайте Poison Nova, быстро убивайте Explosive Totem.",
+      "en": "Council: share Barrel Through, interrupt Poison Nova, destroy Explosive Totem promptly.",
+      "source": "https://www.icy-veins.com/wow/kings-rest-dungeon-guide"
+    },
+    {
+      "ru": "Dazar: прерывайте Deathly Roar у Reban; защищайте танка от Blade Combo; переживайте Gilded Destruction лечением и защитой.",
+      "en": "Dazar: interrupt Reban’s Deathly Roar; mitigate Blade Combo; use healing and defensives for Gilded Destruction.",
+      "source": "https://www.icy-veins.com/wow/kings-rest-dungeon-guide"
+    },
+    {
+      "ru": "Треш: Hex Volley / Risen Hexer и Wretched Discharge / Half-Finished Mummy требуют прерываний; Healing Tide Totem / Spectral Shaman — быстрого уничтожения.",
+      "en": "Trash: interrupt Risen Hexer’s Hex Volley and Half-Finished Mummy’s Wretched Discharge; destroy Spectral Shaman’s Healing Tide Totem.",
+      "source": "https://www.icy-veins.com/wow/kings-rest-dungeon-guide"
+    },
+    {
+      "ru": "Shadow of Zul: занимайте Pool of Darkness; Dark Revelation выносите от союзников.",
+      "en": "Shadow of Zul: occupy Pool of Darkness; move Dark Revelation away from allies.",
+      "source": "https://www.method.gg/guides/dungeons/kings-rest"
+    },
+    {
+      "ru": "Minion of Zul погибает после снятия Bound by Shadow. Уклоняйтесь от Suppression Slam / Animated Guardian.",
+      "en": "Purging Bound by Shadow kills Minion of Zul. Dodge Animated Guardian’s Suppression Slam.",
+      "source": "https://www.method.gg/guides/dungeons/kings-rest"
+    },
+    {
+      "ru": "MDT: Minion of Zul (133943) даёт 0 сил; полный счёт подземелья — 608. Это не подтверждает проценты текущих пуллов Gildra.",
+      "en": "MDT: Minion of Zul (133943) awards 0 forces; dungeon total is 608. This does not validate Gildra pull percentages.",
+      "source": "https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/master/Midnight/KingsRest.lua"
+    },
+    {
+      "ru": "Blizzard заменил Shadowfrost Bolt у Risen Hexer на Shadow Bolt; старое название в раннем гайде устарело.",
+      "en": "Blizzard replaced Risen Hexer’s Shadowfrost Bolt with Shadow Bolt; the early guide’s name is outdated.",
+      "source": "https://worldofwarcraft.blizzard.com/en-us/news/24296142/hotfixes-october-14-2026"
+    }
+  ],
+  "route": {
+    "status": "draft",
+    "ru": "Порядок: вход → Golden Serpent → случайные королевские волны → Mchimba → треш Council → Council → Shadow of Zul → Dazar. Конкретные clone ID, путь танка, точки сбора и проценты требуют импорта MDT и проверки геометрии.",
+    "en": "Order: entrance → Golden Serpent → random royal waves → Mchimba → Council trash → Council → Shadow of Zul → Dazar. Exact clone IDs, tank path, gathering points and percentages need an MDT import and geometry validation."
+  },
+  "corrections": [
+    {
+      "ru": "Перенести Shadow of Zul: после Council, перед Dazar.",
+      "en": "Move Shadow of Zul after Council, before Dazar."
+    },
+    {
+      "ru": "Reban и T’zala — участники боя Dazar, не отдельный треш-пулл.",
+      "en": "Reban and T’zala belong to Dazar’s encounter, not a separate trash pull."
+    },
+    {
+      "ru": "Barrel Through принадлежит Aka’ali; нужен совместный soak, не уклонение.",
+      "en": "Barrel Through belongs to Aka’ali; share its damage instead of dodging."
+    },
+    {
+      "ru": "Serpentine Gust — групповой урон; заменить действие «Уклонение» на защиту/лечение.",
+      "en": "Serpentine Gust deals party damage; replace Dodge with defensives/healing."
+    },
+    {
+      "ru": "Royal Berserker: Bloodthirsty Axe и Violent Lunge. Blade Combo относится к Dazar; Severing Blade не подтверждён.",
+      "en": "Royal Berserker uses Bloodthirsty Axe and Violent Lunge. Blade Combo belongs to Dazar; Severing Blade is unsupported."
+    },
+    {
+      "ru": "Не назначать Quaking Leap обычному Honored Raptor: у него Hunting Leap.",
+      "en": "Do not assign Quaking Leap to Honored Raptor; it uses Hunting Leap."
+    },
+    {
+      "ru": "Не представлять Queen Wasi и Seneschal M’bara как повторяемые группы после Mchimba: это королевское событие перед ним.",
+      "en": "Do not depict Queen Wasi and Seneschal M’bara as repeated packs after Mchimba: they belong to the preceding royal event."
+    },
+    {
+      "ru": "Убрать неподтверждённые количества, длительности и 100%: текущие пулы не связаны с MDT clones.",
+      "en": "Remove unsupported counts, durations and 100%: current pulls have no MDT clone mapping."
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "slug": "den-of-nalorakk",
+  "checkedAt": "2026-10-21",
+  "season": "Midnight Season 2",
+  "status": "source-reviewed",
+  "sources": [
+    {
+      "url": "https://wow-site-bwa-production-eks-prod-use1-01.worldofwarcraft.blizzard.com/en-us/news/24294369/midnight-season-2-is-now-live",
+      "title": "Blizzard — Midnight Season 2 is Now Live!",
+      "scope": "Официальное подтверждение ротации; canonical URL вернул 403, доступен официальный production hostname."
+    },
+    {
+      "url": "https://www.method.gg/guides/dungeons/den-of-nalorakk",
+      "title": "Method — Den of Nalorakk Mythic+ Guide & Route",
+      "scope": "Автор Tactyks; обновлено 2026-10-14; механики и ссылка на MDT-маршрут."
+    },
+    {
+      "url": "https://www.icy-veins.com/wow/den-of-nalorakk-dungeon-guide",
+      "title": "Icy Veins — Den of Nalorakk Dungeon Guide",
+      "scope": "Автор Petko; обновлено 2026-10-12; боссы и trash."
+    },
+    {
+      "url": "https://github.com/Nnoggie/MythicDungeonTools/blob/master/Midnight/DenOfNalorakk.lua",
+      "title": "Mythic Dungeon Tools — Midnight/DenOfNalorakk.lua",
+      "scope": "Первичный dataset аддона; master изменяемый, импорт и пересчёт маршрута не выполнены."
+    }
+  ],
+  "facts": [
+    {
+      "ru": "Den of Nalorakk входит в ротацию Midnight Season 2.",
+      "en": "Den of Nalorakk belongs to the Midnight Season 2 rotation.",
+      "source": "https://wow-site-bwa-production-eks-prod-use1-01.worldofwarcraft.blizzard.com/en-us/news/24294369/midnight-season-2-is-now-live"
+    },
+    {
+      "ru": "Порядок боссов: The Hoardmonger → Sentinel of Winter → Nalorakk.",
+      "en": "Boss order: The Hoardmonger → Sentinel of Winter → Nalorakk.",
+      "source": "https://www.icy-veins.com/wow/den-of-nalorakk-dungeon-guide"
+    },
+    {
+      "ru": "Перед первым боссом нужны шесть пригодных подношений; Scavenge может украсть ягоды.",
+      "en": "Collect six viable offerings before the first boss; Scavenge can steal berries.",
+      "source": "https://www.method.gg/guides/dungeons/den-of-nalorakk"
+    },
+    {
+      "ru": "Earthwhisper Tender: прерывайте Healing Breeze. Spirit of Hunger: приоритет Starvation Effigy.",
+      "en": "Earthwhisper Tender: interrupt Healing Breeze. Spirit of Hunger: prioritize Starvation Effigy.",
+      "source": "https://www.icy-veins.com/wow/den-of-nalorakk-dungeon-guide"
+    },
+    {
+      "ru": "The Hoardmonger: закрывайте грибы Spoiled Supplies; пропущенный гриб вызывает Putrid Burst.",
+      "en": "The Hoardmonger: soak Spoiled Supplies mushrooms; missed mushrooms trigger Putrid Burst.",
+      "source": "https://www.icy-veins.com/wow/den-of-nalorakk-dungeon-guide"
+    },
+    {
+      "ru": "На зимнем участке прерывайте Frigid Roar; смерть The Winter Squall прекращает Harsh Winds.",
+      "en": "In winter, interrupt Frigid Roar; killing The Winter Squall stops Harsh Winds.",
+      "source": "https://www.method.gg/guides/dungeons/den-of-nalorakk"
+    },
+    {
+      "ru": "Sentinel: прерывайте Winter's Shroud у Fractured Shivercore; закрывайте Rimeshatter после их смерти.",
+      "en": "Sentinel: interrupt Fractured Shivercore’s Winter’s Shroud; soak Rimeshatter after their deaths.",
+      "source": "https://www.icy-veins.com/wow/den-of-nalorakk-dungeon-guide"
+    },
+    {
+      "ru": "Stormbound Mystic: прерывайте Arc Lightning. Ruthless Totemcaller: уничтожайте Magma Totem.",
+      "en": "Stormbound Mystic: interrupt Arc Lightning. Ruthless Totemcaller: destroy Magma Totem.",
+      "source": "https://www.method.gg/guides/dungeons/den-of-nalorakk"
+    },
+    {
+      "ru": "Nalorakk: на Overwhelming Onslaught группа прячется за щитом Zul'jarra; танк перехватывает Forceful Slam.",
+      "en": "Nalorakk: hide behind Zul’jarra’s shield for Overwhelming Onslaught; the tank intercepts Forceful Slam.",
+      "source": "https://www.method.gg/guides/dungeons/den-of-nalorakk"
+    },
+    {
+      "ru": "На Fury of the War God перехватывайте медведей до Zul'jarra.",
+      "en": "During Fury of the War God intercept bears before they reach Zul’jarra.",
+      "source": "https://www.method.gg/guides/dungeons/den-of-nalorakk"
+    },
+    {
+      "ru": "MDT публикует NPC ID, клонов и группы; их привязка к этой карте ещё не сверена.",
+      "en": "MDT provides NPC IDs, clones and groups; their mapping to this map remains unchecked.",
+      "source": "https://github.com/Nnoggie/MythicDungeonTools/blob/master/Midnight/DenOfNalorakk.lua"
+    }
+  ],
+  "route": {
+    "status": "draft",
+    "ru": "Пулы, проценты и координаты этой схемы не проверены по клонам MDT. Method ссылается на https://wago.io/b69_rKkRL; содержимое экспорта недоступно для проверки. Нужны версия dataset, NPC/clone ID каждого пула и пересчёт сил врага.",
+    "en": "This diagram’s pulls, percentages and coordinates have not been matched to MDT clones. Method links https://wago.io/b69_rKkRL; its export contents could not be inspected. A dataset version, NPC/clone IDs per pull and recalculated forces are required."
+  },
+  "corrections": [
+    {
+      "ru": "Forceful Slam: заменить «делить с танком» на перехват танком.",
+      "en": "Forceful Slam: replace group sharing with a tank intercept."
+    },
+    {
+      "ru": "Заменить неподтверждённый Forceful Roar на подтверждённый Overwhelming Onslaught и инструкцию щита.",
+      "en": "Replace unsupported Forceful Roar with sourced Overwhelming Onslaught and shield instructions."
+    },
+    {
+      "ru": "Spoiled Supplies: категория «закрыть», а не «уклонение».",
+      "en": "Spoiled Supplies: classify as a soak, rather than a dodge."
+    },
+    {
+      "ru": "Winter's Shroud кастуют Fractured Shivercore; исправить владельца способности.",
+      "en": "Fractured Shivercore cast Winter’s Shroud; correct the caster."
+    },
+    {
+      "ru": "Rising Winds заменить на Harsh Winds. Devouring Lunge и Storm Rush требуют отдельного подтверждения.",
+      "en": "Replace Rising Winds with Harsh Winds. Devouring Lunge and Storm Rush require separate evidence."
+    },
+    {
+      "ru": "Составы trash и положение Fractured Shivercore до босса не подтверждены; не выдавать их за проверенные пулы.",
+      "en": "Trash compositions and pre-boss Fractured Shivercore placement are unsupported; do not present them as verified pulls."
+    },
+    {
+      "ru": "Координаты, длительности, силы врага и назначения на вымышленные имена остаются черновиком.",
+      "en": "Coordinates, durations, enemy forces and fictional player assignments remain draft data."
+    }
+  ]
+}

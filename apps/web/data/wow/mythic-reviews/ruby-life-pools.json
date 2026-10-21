@@ -1,0 +1,102 @@
+{
+  "slug": "ruby-life-pools",
+  "checkedAt": "2026-10-21",
+  "season": "Midnight Season 2",
+  "status": "source-reviewed",
+  "sources": [
+    {
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/",
+      "title": "Blizzard — Midnight Season 2 is Now Live!",
+      "scope": "Official seasonal rotation; search index readable; direct open returned HTTP 403."
+    },
+    {
+      "url": "https://www.method.gg/guides/dungeons/ruby-life-pools",
+      "title": "Method / Tactyks — Ruby Life Pools, updated 14 October 2026",
+      "scope": "Current author guide; mechanics and MDT route reference; some spell links target PTR."
+    },
+    {
+      "url": "https://www.icy-veins.com/wow/ruby-life-pools-dungeon-guide/",
+      "title": "Icy Veins / Petko — Ruby Life Pools, updated 12 October 2026",
+      "scope": "Boss order and encounter mechanics; some trash text conflicts with newer Method guide."
+    },
+    {
+      "url": "https://www.wowhead.com/spell=1307476/thunder-stomper",
+      "title": "Wowhead live spell 1307476 — Thunder Stomper",
+      "scope": "Live spell effect and instant passive nature; no damage scaling claim."
+    },
+    {
+      "url": "https://www.wowhead.com/spell=392399/stormcloud-detonation",
+      "title": "Wowhead live spell 392399 — Stormcloud Detonation",
+      "scope": "Detonation moves to a player and explodes nearby; no damage scaling claim."
+    },
+    {
+      "url": "https://wago.io/IEtQSuWgA",
+      "title": "Tactyks MDT route linked by Method",
+      "scope": "Reference URL only; payload and coordinates not retrieved or decoded."
+    }
+  ],
+  "facts": [
+    {
+      "ru": "Ruby Life Pools входит в официальную ротацию второго сезона Midnight.",
+      "en": "Ruby Life Pools belongs to the official Midnight Season 2 rotation.",
+      "source": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/"
+    },
+    {
+      "ru": "Порядок боссов: Melidrussa Chillworn → Kokia Blazehoof → Kyrakka и Erkhart Stormvein.",
+      "en": "Boss order: Melidrussa Chillworn → Kokia Blazehoof → Kyrakka and Erkhart Stormvein.",
+      "source": "https://www.icy-veins.com/wow/ruby-life-pools-dungeon-guide/"
+    },
+    {
+      "ru": "Melidrussa: складывайте лёд компактно; выходите с Chillstorm так, чтобы финальное отбрасывание не отправило в ледяные мины.",
+      "en": "Melidrussa: group ice drops together; position Chillstorm so its final knockback avoids ice mines.",
+      "source": "https://www.icy-veins.com/wow/ruby-life-pools-dungeon-guide/"
+    },
+    {
+      "ru": "Tectonic Strike принадлежит Deepstone Earthshaper; Primal Juggernaut невосприимчив к контролю.",
+      "en": "Deepstone Earthshaper owns Tectonic Strike; Primal Juggernaut is immune to crowd control.",
+      "source": "https://www.method.gg/guides/dungeons/ruby-life-pools"
+    },
+    {
+      "ru": "Thunder Stomper — периодический мгновенный урон вокруг Storm Warrior, а не произносимое заклинание для прерывания.",
+      "en": "Thunder Stomper is periodic instant damage around Storm Warrior, not an interruptible cast.",
+      "source": "https://www.wowhead.com/spell=1307476/thunder-stomper"
+    },
+    {
+      "ru": "Stormcloud Detonation направляет облако к игроку и взрывает его рядом с целью.",
+      "en": "Stormcloud Detonation sends the cloud towards a player and explodes near the target.",
+      "source": "https://www.wowhead.com/spell=392399/stormcloud-detonation"
+    },
+    {
+      "ru": "Штормовые щиты облаков снимайте с учётом взрывов; массовое одновременное снятие опасно.",
+      "en": "Account for cloud detonations when purging shields; simultaneous removals are dangerous.",
+      "source": "https://www.method.gg/guides/dungeons/ruby-life-pools"
+    }
+  ],
+  "route": {
+    "status": "draft",
+    "ru": "Схема требует сверки с импортом MDT: координаты, состав паков и ровно 100% не подтверждены. Method публикует MDT-ссылку; данные импорта недоступны.",
+    "en": "The diagram needs an MDT import comparison: coordinates, pack composition and exactly 100% are unverified. Method supplies an MDT link; its import data was unavailable."
+  },
+  "corrections": [
+    {
+      "ru": "В abilitySource исправить владельца Tectonic Strike; убрать совет контролировать Juggernaut.",
+      "en": "Correct Tectonic Strike ownership in abilitySource; remove the Juggernaut control instruction."
+    },
+    {
+      "ru": "Заменить действие «Стоп» для Thunder Stomper на защиту/лечение.",
+      "en": "Replace the Thunder Stomper stop action with mitigation/healing."
+    },
+    {
+      "ru": "Дополнить пурж Stormcloud Barrier предупреждением о взрывах.",
+      "en": "Add a detonation warning to Stormcloud Barrier purges."
+    },
+    {
+      "ru": "Lightning Storm / Shock Blast у Channeler и Ryvati требуют перепроверки: свежий Method указывает Lightning Torrent; часть его ссылок ведёт на PTR.",
+      "en": "Recheck Channeler/Ryvati Lightning Storm and Shock Blast: current Method lists Lightning Torrent; some linked spells are PTR."
+    },
+    {
+      "ru": "Убрать утверждение о гарантированных 100% и не выдавать имена примерных игроков за состав посетителя.",
+      "en": "Remove guaranteed 100% claims and avoid presenting example player names as the visitor’s party."
+    }
+  ]
+}

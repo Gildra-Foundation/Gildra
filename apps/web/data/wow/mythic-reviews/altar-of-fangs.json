@@ -1,0 +1,83 @@
+{
+  "slug": "altar-of-fangs",
+  "checkedAt": "2026-10-21",
+  "season": "Midnight Season 2",
+  "status": "source-reviewed",
+  "sources": [
+    {
+      "url": "https://www.icy-veins.com/wow/altar-of-fangs-dungeon-guide",
+      "title": "Icy Veins: Altar of Fangs Dungeon Guide (updated 12 Oct 2026)",
+      "scope": "Boss mechanics and enemy names; guide predates October 13 tuning."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/master/Midnight/AltarOfFangs.lua",
+      "title": "MythicDungeonTools: Midnight/AltarOfFangs.lua",
+      "scope": "Enemy IDs, clone groups, MDT coordinate space and force values; master is mutable, no Gildra route validated."
+    },
+    {
+      "url": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026",
+      "title": "Blizzard: Hotfixes October 20, 2026",
+      "scope": "October 13 Altar tuning confirmed by indexed official result; full page fetch unavailable."
+    }
+  ],
+  "facts": [
+    {
+      "ru": "Боссы: Rav'i → The Writhing Coil → Zul'jan.",
+      "en": "Boss order: Rav'i → The Writhing Coil → Zul'jan.",
+      "source": "https://www.icy-veins.com/wow/altar-of-fangs-dungeon-guide"
+    },
+    {
+      "ru": "Rav'i: уклоняйтесь от Regurgitate; переживайте Ravenous Stomp лечением и защитой.",
+      "en": "Rav'i: dodge Regurgitate; heal and mitigate Ravenous Stomp.",
+      "source": "https://www.icy-veins.com/wow/altar-of-fangs-dungeon-guide"
+    },
+    {
+      "ru": "The Writhing Coil: назначьте три прерывания Toxic Barrage; разорвите Vine Grip, отбежав от босса.",
+      "en": "The Writhing Coil: assign three Toxic Barrage interrupts; break Vine Grip by moving away.",
+      "source": "https://www.icy-veins.com/wow/altar-of-fangs-dungeon-guide"
+    },
+    {
+      "ru": "Zul'jan: перекрывайте четыре луча; снимайте Ritual Venom через Boneslicer или вращающиеся Axegrinder, выходите из оставшейся крови.",
+      "en": "Zul'jan: block four beams; clear Ritual Venom using Boneslicer or rotating Axegrinder, then leave the blood pools.",
+      "source": "https://www.icy-veins.com/wow/altar-of-fangs-dungeon-guide"
+    },
+    {
+      "ru": "MDT различает Rattling Writhe (262011; 25 сил) и Uncoiled Writhe (262398/270417; 0 сил).",
+      "en": "MDT distinguishes Rattling Writhe (262011; 25 forces) from Uncoiled Writhe (262398/270417; 0 forces).",
+      "source": "https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/master/Midnight/AltarOfFangs.lua"
+    },
+    {
+      "ru": "MDT содержит позиции отдельных противников, группы и общий порог 817 сил; эти данные ещё не привязаны к карте Gildra.",
+      "en": "MDT contains individual enemy positions, groups and an 817-force requirement; these data are not yet mapped to Gildra's image.",
+      "source": "https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/master/Midnight/AltarOfFangs.lua"
+    },
+    {
+      "ru": "В опубликованной Blizzard записи за 13 октября Piercing Hiss ослаблен на 25%, а длительность Paralyzing Shot сокращена до 14 секунд.",
+      "en": "Blizzard's October 13 entry reduces Piercing Hiss damage by 25% and Paralyzing Shot duration to 14 seconds.",
+      "source": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+    }
+  ],
+  "route": {
+    "status": "draft",
+    "ru": "Пулы, координаты, длительности и проценты текущего маршрута не подтверждены. Нужны версия MDT, привязка карты и проверка конкретных enemy/clone ID в каждом пуле.",
+    "en": "Current pulls, coordinates, durations and percentages are unverified. A pinned MDT version, map calibration and enemy/clone IDs for each pull are required."
+  },
+  "corrections": [
+    {
+      "ru": "Regurgitate ошибочно помечен как диспел; Ravenous Stomp — как уклонение. Исправить действия.",
+      "en": "Regurgitate is incorrectly marked as dispel; Ravenous Stomp as dodge. Correct both actions."
+    },
+    {
+      "ru": "Прерывания второго босса относятся к Toxic Barrage; Toxic Atrophy — дебафф.",
+      "en": "The second boss interrupt sequence is Toxic Barrage; Toxic Atrophy is the debuff."
+    },
+    {
+      "ru": "Uncoiled Writhe нельзя считать обычным трешем с положительными силами. Не подменять им Rattling Writhe.",
+      "en": "Uncoiled Writhe cannot supply positive trash forces. Do not substitute it for Rattling Writhe."
+    },
+    {
+      "ru": "Заявление «Ровно 100%» и численность паков не имеют связи с MDT clone ID; считать черновиком.",
+      "en": "The exact 100% claim and pack sizes are not linked to MDT clone IDs; treat them as draft."
+    }
+  ]
+}

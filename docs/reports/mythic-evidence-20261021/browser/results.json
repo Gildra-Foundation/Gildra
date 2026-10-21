@@ -1,0 +1,386 @@
+[
+  {
+    "slug": "ruby-life-pools",
+    "locale": "ru",
+    "width": 320,
+    "clones": 147,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "ruby-life-pools",
+    "locale": "ru",
+    "width": 768,
+    "clones": 147,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "ruby-life-pools",
+    "locale": "ru",
+    "width": 1440,
+    "clones": 147,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "altar-of-fangs",
+    "locale": "ru",
+    "width": 320,
+    "clones": 160,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "altar-of-fangs",
+    "locale": "ru",
+    "width": 768,
+    "clones": 160,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "altar-of-fangs",
+    "locale": "ru",
+    "width": 1440,
+    "clones": 160,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "murder-row",
+    "locale": "ru",
+    "width": 320,
+    "clones": 225,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "murder-row",
+    "locale": "ru",
+    "width": 768,
+    "clones": 225,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "murder-row",
+    "locale": "ru",
+    "width": 1440,
+    "clones": 225,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "den-of-nalorakk",
+    "locale": "ru",
+    "width": 320,
+    "clones": 199,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "den-of-nalorakk",
+    "locale": "ru",
+    "width": 768,
+    "clones": 199,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "den-of-nalorakk",
+    "locale": "ru",
+    "width": 1440,
+    "clones": 199,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "the-blinding-vale",
+    "locale": "ru",
+    "width": 320,
+    "clones": 276,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "the-blinding-vale",
+    "locale": "ru",
+    "width": 768,
+    "clones": 276,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "the-blinding-vale",
+    "locale": "ru",
+    "width": 1440,
+    "clones": 276,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "voidscar-arena",
+    "locale": "ru",
+    "width": 320,
+    "clones": 212,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "voidscar-arena",
+    "locale": "ru",
+    "width": 768,
+    "clones": 212,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "voidscar-arena",
+    "locale": "ru",
+    "width": 1440,
+    "clones": 212,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "kings-rest",
+    "locale": "ru",
+    "width": 320,
+    "clones": 98,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "kings-rest",
+    "locale": "ru",
+    "width": 768,
+    "clones": 98,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "kings-rest",
+    "locale": "ru",
+    "width": 1440,
+    "clones": 98,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "temple-of-sethraliss",
+    "locale": "ru",
+    "width": 320,
+    "clones": 127,
+    "status": "incompatible",
+    "passed": true
+  },
+  {
+    "slug": "temple-of-sethraliss",
+    "locale": "ru",
+    "width": 768,
+    "clones": 127,
+    "status": "incompatible",
+    "passed": true
+  },
+  {
+    "slug": "temple-of-sethraliss",
+    "locale": "ru",
+    "width": 1440,
+    "clones": 127,
+    "status": "incompatible",
+    "passed": true
+  },
+  {
+    "slug": "ruby-life-pools",
+    "locale": "en",
+    "width": 320,
+    "clones": 147,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "ruby-life-pools",
+    "locale": "en",
+    "width": 768,
+    "clones": 147,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "ruby-life-pools",
+    "locale": "en",
+    "width": 1440,
+    "clones": 147,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "altar-of-fangs",
+    "locale": "en",
+    "width": 320,
+    "clones": 160,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "altar-of-fangs",
+    "locale": "en",
+    "width": 768,
+    "clones": 160,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "altar-of-fangs",
+    "locale": "en",
+    "width": 1440,
+    "clones": 160,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "murder-row",
+    "locale": "en",
+    "width": 320,
+    "clones": 225,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "murder-row",
+    "locale": "en",
+    "width": 768,
+    "clones": 225,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "murder-row",
+    "locale": "en",
+    "width": 1440,
+    "clones": 225,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "den-of-nalorakk",
+    "locale": "en",
+    "width": 320,
+    "clones": 199,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "den-of-nalorakk",
+    "locale": "en",
+    "width": 768,
+    "clones": 199,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "den-of-nalorakk",
+    "locale": "en",
+    "width": 1440,
+    "clones": 199,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "the-blinding-vale",
+    "locale": "en",
+    "width": 320,
+    "clones": 276,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "the-blinding-vale",
+    "locale": "en",
+    "width": 768,
+    "clones": 276,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "the-blinding-vale",
+    "locale": "en",
+    "width": 1440,
+    "clones": 276,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "voidscar-arena",
+    "locale": "en",
+    "width": 320,
+    "clones": 212,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "voidscar-arena",
+    "locale": "en",
+    "width": 768,
+    "clones": 212,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "voidscar-arena",
+    "locale": "en",
+    "width": 1440,
+    "clones": 212,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "kings-rest",
+    "locale": "en",
+    "width": 320,
+    "clones": 98,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "kings-rest",
+    "locale": "en",
+    "width": 768,
+    "clones": 98,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "kings-rest",
+    "locale": "en",
+    "width": 1440,
+    "clones": 98,
+    "status": "dataset-matched",
+    "passed": true
+  },
+  {
+    "slug": "temple-of-sethraliss",
+    "locale": "en",
+    "width": 320,
+    "clones": 127,
+    "status": "incompatible",
+    "passed": true
+  },
+  {
+    "slug": "temple-of-sethraliss",
+    "locale": "en",
+    "width": 768,
+    "clones": 127,
+    "status": "incompatible",
+    "passed": true
+  },
+  {
+    "slug": "temple-of-sethraliss",
+    "locale": "en",
+    "width": 1440,
+    "clones": 127,
+    "status": "incompatible",
+    "passed": true
+  }
+]

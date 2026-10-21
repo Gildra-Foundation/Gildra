@@ -1,0 +1,29 @@
+{
+  "sourceReviews": 8,
+  "datasetNodes": 1444,
+  "pinnedMdtCommit": "5b944f4b615f24cc345b067aa7e33bff57b13140",
+  "pinnedLuaHashes": 8,
+  "sourceMatchedRoutes": 7,
+  "incompatibleRoutes": {
+    "temple-of-sethraliss": [
+      "2:14",
+      "11:7"
+    ]
+  },
+  "typecheck": "PASS",
+  "targetedNewCodeEslint": "PASS",
+  "atlasTokens": "PASS",
+  "browserResponsiveCases": 48,
+  "browserInteractionExportCatalog": "PASS",
+  "gitDiffCheck": "PASS",
+  "productionBuild": "PASS",
+  "productionChanges": false,
+  "commitPush": false,
+  "buildStaticPages": 766,
+  "legacyEslint": {
+    "errors": 0,
+    "warnings": 11,
+    "newDiagnostics": 0
+  },
+  "completedAt": "2026-10-21T20:32:08.904484+00:00"
+}

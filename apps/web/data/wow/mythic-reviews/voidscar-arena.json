@@ -1,0 +1,111 @@
+{
+  "slug": "voidscar-arena",
+  "checkedAt": "2026-10-21",
+  "season": "Midnight Season 2",
+  "status": "source-reviewed",
+  "sources": [
+    {
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/les-ombres-s%C3%A9tendent-la-saison-2-de-midnight-commence-le-19-ao%C3%BBt",
+      "title": "Blizzard: Midnight Season 2 is Now Live!",
+      "scope": "Official rotation; search indexed content, direct fetch restricted."
+    },
+    {
+      "url": "https://www.method.gg/guides/dungeons/voidscar-arena",
+      "title": "Method — Voidscar Arena (Tactyks, 18 Aug 2026)",
+      "scope": "Author guide: branches, trash, mechanics and MDT import."
+    },
+    {
+      "url": "https://raider.io/uk/news/754-quick-boss-guide-voidscar-arena",
+      "title": "Raider.IO — Quick Boss Guide: Voidscar Arena",
+      "scope": "Boss order, timer, role mechanics."
+    },
+    {
+      "url": "https://www.icy-veins.com/wow/voidscar-arena-dungeon-guide/",
+      "title": "Icy Veins — Voidscar Arena Dungeon Guide",
+      "scope": "Boss mechanics cross-check; branch recommendation differs from Method."
+    },
+    {
+      "url": "https://github.com/Nnoggie/MythicDungeonTools/blob/master/Midnight/VoidscarArena.lua",
+      "title": "Mythic Dungeon Tools — VoidscarArena.lua",
+      "scope": "Primary addon dataset inspected; no coordinate transform or selected route validated."
+    },
+    {
+      "url": "https://wago.io/1s56kmJ_N",
+      "title": "Method recommended MDT route",
+      "scope": "Import URL linked by Method; payload not decoded or validated."
+    }
+  ],
+  "facts": [
+    {
+      "ru": "Voidscar Arena входит в ротацию Midnight Season 2.",
+      "en": "Voidscar Arena is in the Midnight Season 2 rotation.",
+      "source": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/les-ombres-s%C3%A9tendent-la-saison-2-de-midnight-commence-le-19-ao%C3%BBt"
+    },
+    {
+      "ru": "Боссы: Taz’Rah → Atroxus → Charonus. Таймер: 30:00.",
+      "en": "Boss order: Taz’Rah → Atroxus → Charonus. Timer: 30:00.",
+      "source": "https://raider.io/uk/news/754-quick-boss-guide-voidscar-arena"
+    },
+    {
+      "ru": "Слева: Aegyra / Proof of Endurance; справа: Raj’kess / Proof of Mastery.",
+      "en": "Left: Aegyra / Proof of Endurance; right: Raj’kess / Proof of Mastery.",
+      "source": "https://www.method.gg/guides/dungeons/voidscar-arena"
+    },
+    {
+      "ru": "Taz’Rah: разнесите Nether Dash у края; после Umbral Rupture смещайтесь от луж и уклоняйтесь от сфер Dark Bloom.",
+      "en": "Taz’Rah: spread Nether Dash near the edge; rotate after Umbral Rupture and dodge Dark Bloom orbs.",
+      "source": "https://www.icy-veins.com/wow/voidscar-arena-dungeon-guide/"
+    },
+    {
+      "ru": "Atroxus: танк кайтит Toxic Creeper, DPS быстро убивают его. Избегайте Noxious Breath; защиту готовьте под Hulking Claw.",
+      "en": "Atroxus: tank kites Toxic Creeper while DPS kill it quickly. Dodge Noxious Breath; prepare mitigation for Hulking Claw.",
+      "source": "https://raider.io/uk/news/754-quick-boss-guide-voidscar-arena"
+    },
+    {
+      "ru": "После Atroxus убейте всех трёх Devouring Brutalizers, чтобы открыть Charonus.",
+      "en": "After Atroxus, kill all three Devouring Brutalizers to unlock Charonus.",
+      "source": "https://www.method.gg/guides/dungeons/voidscar-arena"
+    },
+    {
+      "ru": "Charonus: заведите преследующую Gravitic Orb через сингулярность, сами внутрь не заходите. Dark Waves направляйте от группы; для Void Cascade увеличивайте дистанцию.",
+      "en": "Charonus: kite Gravitic Orb through a singularity without entering it yourself. Face Dark Waves away; gain distance for Void Cascade.",
+      "source": "https://raider.io/uk/news/754-quick-boss-guide-voidscar-arena"
+    },
+    {
+      "ru": "MDT содержит отдельные NPC, клоны, группы и координаты; текущие точки Gildra с ними не сопоставлены.",
+      "en": "MDT provides NPCs, clones, groups and coordinates; current Gildra markers are not mapped to them.",
+      "source": "https://github.com/Nnoggie/MythicDungeonTools/blob/master/Midnight/VoidscarArena.lua"
+    }
+  ],
+  "route": {
+    "status": "draft",
+    "ru": "Схема: левая ветка → Aegyra → Taz’Rah → выбранная ветка второго участка → Atroxus → три Brutalizers → Charonus. Точные пулы и 100% требуют импорта MDT и проверки на карте.",
+    "en": "Outline: left branch → Aegyra → Taz’Rah → selected second-section branch → Atroxus → three Brutalizers → Charonus. Exact pulls and 100% require MDT import and map validation."
+  },
+  "corrections": [
+    {
+      "ru": "Kilivore Screamer / Mad Shriek → Killvore Screamer / Mass Shriek.",
+      "en": "Kilivore Screamer / Mad Shriek → Killvore Screamer / Mass Shriek."
+    },
+    {
+      "ru": "Bolster снимается soothe (исступление); Corrosive Essence — снятием яда.",
+      "en": "Bolster requires soothe (enrage); Corrosive Essence requires poison dispel."
+    },
+    {
+      "ru": "Левая ветка: добавьте Aegyra; Magi/Tuskarr относятся правой.",
+      "en": "Left branch: add Aegyra; Magi/Tuskarr belong to the right branch."
+    },
+    {
+      "ru": "До Atroxus не размещайте обязательного Brutalizer: все три нужны после.",
+      "en": "Do not place a required Brutalizer before Atroxus: all three belong after it."
+    },
+    {
+      "ru": "Для Devour убейте выбранного моба; это не освобождение игрока.",
+      "en": "For Devour, kill the selected mob; this is not a player rescue."
+    },
+    {
+      "ru": "Не подтверждены: x/y, составы пуллов, длительности, 100% и назначения вымышленных игроков.",
+      "en": "Unverified: x/y, pull compositions, durations, 100% and fictional player assignments."
+    }
+  ]
+}

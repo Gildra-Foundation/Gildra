@@ -1,0 +1,65 @@
+{
+  "ruby-life-pools": [
+    {
+      "ru": "Жажда крови: пулл 1; пулл 8 вместе с 7 либо второй босс; финальный босс.",
+      "en": "Bloodlust: first pull; pull 8 combined with 7 or boss two; final boss."
+    }
+  ],
+  "altar-of-fangs": [
+    {
+      "ru": "Группу G50 заберите отдельно провокацией.",
+      "en": "Use a taunt to isolate group G50."
+    },
+    {
+      "ru": "Жажда крови: первый пулл; переходная фаза второго босса; финальный босс.",
+      "en": "Bloodlust: opening pull, boss two intermission, then the final boss."
+    }
+  ],
+  "murder-row": [
+    {
+      "ru": "Жажда крови: первый пулл; второй босс, при желании вместе с пуллом 7; финальный босс.",
+      "en": "Bloodlust: opening pull, boss two optionally combined with pull 7, then the final boss."
+    }
+  ],
+  "den-of-nalorakk": [
+    {
+      "ru": "Переходите к верхней группе после гибели предыдущих Tenders.",
+      "en": "Chain to the upper group once the preceding Tenders die."
+    },
+    {
+      "ru": "Автор предупреждает: отсутствующего Terra Rumbler из G45 заменил G53 ради сил. Фактическое появление моба требует проверки.",
+      "en": "The author substitutes G53 for a missing Terra Rumbler in G45 to reach forces. Actual spawning still needs verification."
+    },
+    {
+      "ru": "Жажда крови: пулл 1; пулл 8 либо 10; пулл 15 вместе с 14 либо финальный босс.",
+      "en": "Bloodlust: pull 1; either 8 or 10; 15 combined with 14 or the final boss."
+    }
+  ],
+  "the-blinding-vale": [
+    {
+      "ru": "Жажда крови: первый пулл, второй и финальный боссы.",
+      "en": "Bloodlust: opening pull, second boss, final boss."
+    }
+  ],
+  "voidscar-arena": [
+    {
+      "ru": "При необходимости удерживайте Brawler контролем, чтобы снизить риск пропущенного прерывания.",
+      "en": "Control a Brawler when needed to reduce missed interrupts."
+    },
+    {
+      "ru": "Жажда крови: пулл 1; пулл 9 либо второй босс; финальный босс.",
+      "en": "Bloodlust: opening pull; pull 9 or boss two; final boss."
+    }
+  ],
+  "kings-rest": [
+    {
+      "ru": "Жажда крови: пулл 2, второй и финальный боссы.",
+      "en": "Bloodlust: pull 2, boss two, final boss."
+    },
+    {
+      "ru": "Первую группу можно завести в комнату и объединить с появившимися мобами под Жажду крови.",
+      "en": "Bring the first pack into the room and combine it with spawned enemies for Bloodlust."
+    }
+  ],
+  "temple-of-sethraliss": []
+}

@@ -1,0 +1,35 @@
+{
+  "slug": "murder-row",
+  "checkedAt": "2026-10-21",
+  "season": "Midnight Season 2",
+  "status": "source-reviewed",
+  "sources": [
+    {"url":"https://news.blizzard.com/en-us/article/24294369/midnight-season-2-is-now-live","title":"Blizzard: Midnight Season 2 is Now Live","scope":"Official seasonal dungeon rotation"},
+    {"url":"https://worldofwarcraft.blizzard.com/en-us/news/24307310/hotfixes-16-de-octubre-de-2026","title":"Blizzard: Hotfixes, October 20, 2026","scope":"October 16 barrel safe-zone change; search-index text available, direct fetch returned 403"},
+    {"url":"https://www.method.gg/guides/dungeons/murder-row","title":"Tactyks / Method: Murder Row Mythic+ Dungeon Guide","scope":"Author guide dated August 18, 2026; mechanics, events and external MDT route"},
+    {"url":"https://www.icy-veins.com/wow/murder-row-dungeon-guide","title":"Petko / Icy Veins: Murder Row Dungeon Guide","scope":"Guide updated October 12, 2026; bosses and trash"},
+    {"url":"https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/refs/heads/master/Midnight/MurderRow.lua","title":"Mythic Dungeon Tools: MurderRow.lua","scope":"Actual raw NPC/clone dataset, not the stale search snippet; no local route matching performed"}
+  ],
+  "facts": [
+    {"ru":"Murder Row входит в официальную ротацию Mythic+ второго сезона Midnight.","en":"Murder Row belongs to the official Midnight Season 2 Mythic+ rotation.","source":"https://news.blizzard.com/en-us/article/24294369/midnight-season-2-is-now-live"},
+    {"ru":"Перед Kystia опросите четырёх Snitches. После неё пройдите маскировку и событие работы в баре.","en":"Question four Snitches before Kystia. After her, complete the disguise and bar-work event.","source":"https://www.method.gg/guides/dungeons/murder-row"},
+    {"ru":"Kystia Manaheart: сначала снизьте здоровье Nibbles до 20%; затем используйте окно уязвимости. Снимайте Corroding Spittle, останавливайте образы.","en":"Kystia Manaheart: bring Nibbles to 20% first, then use the vulnerability window. Dispel Corroding Spittle; stop images.","source":"https://www.icy-veins.com/wow/murder-row-dungeon-guide"},
+    {"ru":"Zaen Bladesorrow: уничтожайте опасный груз Fire Bomb, сохраняя укрытия для Murder in a Row; лечите Killing Spree.","en":"Zaen Bladesorrow: destroy dangerous freight with Fire Bomb while preserving cover for Murder in a Row; heal Killing Spree.","source":"https://www.icy-veins.com/wow/murder-row-dungeon-guide"},
+    {"ru":"Исправление 16 октября: для Murder in a Row стойте близко за бочкой, внутри показанной безопасной зоны.","en":"October 16 hotfix: during Murder in a Row, stand close behind a barrel inside its displayed safe zone.","source":"https://worldofwarcraft.blizzard.com/en-us/news/24307310/hotfixes-16-de-octubre-de-2026"},
+    {"ru":"Xathuux: ставьте Legion Axe рядом для быстрого убийства; танк ведёт Demonic Rage вдоль края, фронталом от группы.","en":"Xathuux: place Legion Axe nearby and kill it quickly; tank Demonic Rage along the edge, facing away from allies.","source":"https://www.method.gg/guides/dungeons/murder-row"},
+    {"ru":"Lithiel Cinderfury: прерывайте Chaos Bolt, убивайте призванных демонов и пересекайте Malefic Wave через Demonic Gateway.","en":"Lithiel Cinderfury: interrupt Chaos Bolt, kill summoned demons, and cross Malefic Wave using Demonic Gateway.","source":"https://www.icy-veins.com/wow/murder-row-dungeon-guide"},
+    {"ru":"Приоритеты треша: Bribed Captain усиливает соседей; прерывайте Seduction, Fel Missiles, Fel Rage и Health Funnel. Избегайте Fel Beam голема.","en":"Trash priorities: Bribed Captain buffs allies; interrupt Seduction, Fel Missiles, Fel Rage and Health Funnel. Avoid the golem's Fel Beam.","source":"https://www.icy-veins.com/wow/murder-row-dungeon-guide"},
+    {"ru":"В открытом MDT dataset порог сил — 655; Furious Vilefiend имеет count=0. Это не подтверждает проценты существующих пуллов.","en":"The opened MDT dataset requires 655 forces; Furious Vilefiend has count=0. This does not validate existing pull percentages.","source":"https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/refs/heads/master/Midnight/MurderRow.lua"}
+  ],
+  "route": {
+    "status": "draft",
+    "ru": "Последовательность: Snitches → Kystia/Nibbles → бар → склад/Zaen → Xathuux → Lithiel. Авторский импорт MDT: https://wago.io/mWO70E5hA (ссылка из Method; экспорт не декодирован). Координаты карты, составы пуллов и их проценты ещё не сопоставлены с MDT; 100% не гарантируется.",
+    "en": "Sequence: Snitches → Kystia/Nibbles → bar → warehouse/Zaen → Xathuux → Lithiel. Author MDT import: https://wago.io/mWO70E5hA (linked by Method; export not decoded). Map coordinates, pull membership and percentages remain unmatched to MDT; 100% is not guaranteed."
+  },
+  "corrections": [
+    {"ru":"В черновике пропущены Nibbles и обязательные события; Fel Missiles не подтверждает клонов у обычного мага.","en":"The draft omits Nibbles and required events; Fel Missiles does not establish that ordinary mages spawn clones."},
+    {"ru":"Фраза о неподтверждённых грузчиках устарела: Warehouse Worker и Keen Taskmaster описаны в текущих гайдах; их число в пулле ещё неизвестно.","en":"The claim that warehouse mobs are unconfirmed is outdated: current guides describe Warehouse Worker and Keen Taskmaster; pull quantities remain unknown."},
+    {"ru":"Призывы Furious Vilefiend нельзя засчитывать в силы. Удалить обещание 100% после нарисованной охраны и неподтверждённые две волны.","en":"Furious Vilefiend summons must not contribute forces. Remove the 100% promise after schematic guards and the unsupported two-wave claim."},
+    {"ru":"Заменить вымышленные имена исполнителей ролью игрока. Точные позиции, патрули, длительности и доли сил требуют отдельной сверки маршрута.","en":"Replace invented assignee names with player roles. Exact positions, patrols, durations and force shares require separate route validation."}
+  ]
+}

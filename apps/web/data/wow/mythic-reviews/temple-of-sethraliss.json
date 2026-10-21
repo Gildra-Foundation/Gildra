@@ -1,0 +1,115 @@
+{
+  "slug": "temple-of-sethraliss",
+  "checkedAt": "2026-10-21",
+  "season": "Midnight Season 2",
+  "status": "source-reviewed",
+  "sources": [
+    {
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/",
+      "title": "Blizzard — Midnight Season 2 is Now Live!",
+      "scope": "Official rotation; search index readable, direct article open returned 403."
+    },
+    {
+      "url": "https://www.wowhead.com/de/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus",
+      "title": "Wowhead / iMX3 — Temple of Sethraliss, updated 27 August 2026",
+      "scope": "Current encounter journal and ownership; original EN URL unavailable, DE path contains English body. Timer says 33 minutes and conflicts with current 32-minute guides."
+    },
+    {
+      "url": "https://www.icy-veins.com/wow/temple-of-sethraliss-dungeon-guide",
+      "title": "Icy Veins / Petko — Temple of Sethraliss, updated 12 October 2026",
+      "scope": "Author guide: trash, bosses, Eye event. Not a measured pull/coordinate dataset."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/master/Midnight/TempleOfSethraliss.lua",
+      "title": "Nnoggie MythicDungeonTools — Midnight/TempleOfSethraliss.lua",
+      "scope": "Primary addon data, fetched through web on 21 October 2026; mutable master, not pinned. Coordinates use addon texture space; not verified against site image."
+    }
+  ],
+  "facts": [
+    {
+      "ru": "Храм Сетралисс входит в ротацию Midnight Season 2.",
+      "en": "Temple of Sethraliss is in the Midnight Season 2 rotation.",
+      "source": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/"
+    },
+    {
+      "ru": "Боссы: Adderis и Aspix → Merektha → Galvazzt → Avatar of Sethraliss.",
+      "en": "Bosses: Adderis and Aspix → Merektha → Galvazzt → Avatar of Sethraliss.",
+      "source": "https://www.icy-veins.com/wow/temple-of-sethraliss-dungeon-guide"
+    },
+    {
+      "ru": "Adderis/Aspix: бейте цель без Storm Blessed; Thunder and Lightning делите группой.",
+      "en": "Adderis/Aspix: attack the target without Storm Blessed; share Thunder and Lightning.",
+      "source": "https://www.wowhead.com/de/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus"
+    },
+    {
+      "ru": "Перед первым боссом: прерывайте Lightning Bolt Storm Adept; останавливайте Arrow Barrage Sandswept Hunter.",
+      "en": "Before the first boss: interrupt Storm Adept’s Lightning Bolt; stop Sandswept Hunter’s Arrow Barrage.",
+      "source": "https://www.icy-veins.com/wow/temple-of-sethraliss-dungeon-guide"
+    },
+    {
+      "ru": "Sand-Sworn Rider — приоритет: призывает Swarming Krolusks; избегайте Scouring Sand.",
+      "en": "Prioritize Sand-Sworn Rider: it summons Swarming Krolusks; avoid Scouring Sand.",
+      "source": "https://www.icy-veins.com/wow/temple-of-sethraliss-dungeon-guide"
+    },
+    {
+      "ru": "Merektha: Poison Spit принадлежит Toxic Viper; A Knot of Snakes снимается уничтожением или incapacitate.",
+      "en": "Merektha: Toxic Viper owns Poison Spit; killing or incapacitating A Knot of Snakes frees its victim.",
+      "source": "https://www.wowhead.com/de/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus"
+    },
+    {
+      "ru": "Galvazzt: перекрывайте лучи; Induction наносит групповой урон и оставляет опасное поле.",
+      "en": "Galvazzt: intercept beams; Induction damages the party and leaves a hazardous field.",
+      "source": "https://www.wowhead.com/de/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus"
+    },
+    {
+      "ru": "Око: контролируйте Temple Disruptor, отводите Orb Watcher; используйте Siphon Energy.",
+      "en": "Eye event: control Temple Disruptor, move Orb Watcher away; use Siphon Energy.",
+      "source": "https://www.icy-veins.com/wow/temple-of-sethraliss-dungeon-guide"
+    },
+    {
+      "ru": "Avatar: убивайте Essence Defiler, блокирующего лечение; Latent Hex принадлежит Twisted Hexxer.",
+      "en": "Avatar: kill healing-blocking Essence Defiler; Twisted Hexxer owns Latent Hex.",
+      "source": "https://www.wowhead.com/de/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus"
+    },
+    {
+      "ru": "MDT содержит NPC ID, clone/group и координаты; denominator сил — 687. Это данные аддона, не импорт нашего маршрута.",
+      "en": "MDT provides NPC IDs, clones/groups and coordinates; enemy-forces denominator is 687. This is addon data, not our route import.",
+      "source": "https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/master/Midnight/TempleOfSethraliss.lua"
+    }
+  ],
+  "route": {
+    "status": "draft",
+    "ru": "Схема: вход → Adderis/Aspix → Merektha → Galvazzt → событие Ока → Avatar. MDT dataset доступен, но выбранные clone ID и преобразование на карту сайта не сверены. Составы пулов, проценты и время черновые.",
+    "en": "Diagram: entrance → Adderis/Aspix → Merektha → Galvazzt → Eye event → Avatar. An MDT dataset is available, but selected clone IDs and site-map transformation remain unverified. Packs, percentages and timings are draft."
+  },
+  "corrections": [
+    {
+      "ru": "Poison Spit: заменить источник Merektha на Toxic Viper.",
+      "en": "Poison Spit: replace Merektha with Toxic Viper as source."
+    },
+    {
+      "ru": "Defiling Taint: источник Essence Defiler, действие — фокус/убийство вместо кика Faithless Tormentor.",
+      "en": "Defiling Taint: source Essence Defiler; focus/kill it instead of interrupting Faithless Tormentor."
+    },
+    {
+      "ru": "Heart Guardian заменить на Corrupted Guardian; Latent Hex отнести к Twisted Hexxer.",
+      "en": "Replace Heart Guardian with Corrupted Guardian; assign Latent Hex to Twisted Hexxer."
+    },
+    {
+      "ru": "В пуле перед Merektha приоритет Rider; дополнить Scouring Sand и Swarming Krolusks.",
+      "en": "Prioritize Rider before Merektha; add Scouring Sand and Swarming Krolusks."
+    },
+    {
+      "ru": "В событии Ока добавить Orb Watcher и Siphon Energy; убийство Disruptor не является единственным способом.",
+      "en": "Add Orb Watcher and Siphon Energy to the Eye event; killing Disruptor is not the only completion method."
+    },
+    {
+      "ru": "Induction дополнить групповым уроном; фиксированные четыре шпиля не подтверждены, актуальный гайд описывает три.",
+      "en": "Include Induction party damage; four fixed spires are unsupported, while the current guide describes three."
+    },
+    {
+      "ru": "Сумма ручных forces равна 100; это не подтверждает игровые 100%. Составы, координаты и тайминги требуют clone ID и проверенного импорта.",
+      "en": "Manual forces sum to 100; this does not establish in-game 100%. Packs, coordinates and timings require clone IDs and a validated import."
+    }
+  ]
+}

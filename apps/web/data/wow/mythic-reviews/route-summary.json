@@ -1,0 +1,50 @@
+{
+  "ruby-life-pools": {
+    "status": "dataset-matched",
+    "pulls": 14,
+    "percent": 100.18,
+    "checkedAt": "2026-10-21"
+  },
+  "altar-of-fangs": {
+    "status": "dataset-matched",
+    "pulls": 19,
+    "percent": 100.24,
+    "checkedAt": "2026-10-21"
+  },
+  "murder-row": {
+    "status": "dataset-matched",
+    "pulls": 18,
+    "percent": 100.46,
+    "checkedAt": "2026-10-21"
+  },
+  "den-of-nalorakk": {
+    "status": "dataset-matched",
+    "pulls": 17,
+    "percent": 100.14,
+    "checkedAt": "2026-10-21"
+  },
+  "the-blinding-vale": {
+    "status": "dataset-matched",
+    "pulls": 15,
+    "percent": 100.29,
+    "checkedAt": "2026-10-21"
+  },
+  "voidscar-arena": {
+    "status": "dataset-matched",
+    "pulls": 16,
+    "percent": 100.68,
+    "checkedAt": "2026-10-21"
+  },
+  "kings-rest": {
+    "status": "dataset-matched",
+    "pulls": 18,
+    "percent": 101.48,
+    "checkedAt": "2026-10-21"
+  },
+  "temple-of-sethraliss": {
+    "status": "incompatible",
+    "pulls": 0,
+    "percent": 98.25,
+    "checkedAt": "2026-10-21"
+  }
+}

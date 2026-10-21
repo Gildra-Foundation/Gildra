@@ -1,3 +1,4 @@
+import { routeSummary } from "@/lib/data/wow/mythicReviewSummary";
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import { Clock3, MapPin, Route, Skull } from "lucide-react";
 import { AtlasBadge, AtlasCard, AtlasGrid } from "@/components/atlas";
@@ -10,7 +11,7 @@ function formatTimer(seconds: number) {
 }
 
 /** Illustrated cards of the season's dungeons; `hrefBase` is the route prefix without /ru (e.g. "/wow/dungeons").
- *  Every target opens the same draft route map, so every card carries the draft badge. */
+ *  Routes show pinned MDT imports when their clone IDs match the dataset. */
 export function DungeonCardGrid({ locale, hrefBase, priority = true }: { locale: "ru" | "en"; hrefBase: string; priority?: boolean }) {
   const copy = mythicAtlasCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
@@ -26,13 +27,13 @@ export function DungeonCardGrid({ locale, hrefBase, priority = true }: { locale:
             href={`${prefix}${hrefBase}/${slug}`}
             image={{ src: dungeon.backdropImage, alt: "", priority: priority && index < 2 }}
             accent={dungeon.accent}
-            artBadge={<AtlasBadge tone="caution">{copy.draft}</AtlasBadge>}
+            artBadge={<AtlasBadge tone="caution">{routeSummary[slug].status === "dataset-matched" ? copy.mdtChecked : copy.draft}</AtlasBadge>}
             artCaption={<><Clock3 aria-hidden="true" /><span className={styles.srOnly}>{copy.timer}: </span>{formatTimer(dungeon.timerSeconds)}</>}
             eyebrow={location ? <><MapPin aria-hidden="true" />{location}</> : "Mythic+"}
             title={wowSourceName(dungeon.name, locale, dungeon.nameRu)}
             meta={[
               { icon: <Skull aria-hidden="true" />, label: copy.bossCount(bosses.length) },
-              { icon: <Route aria-hidden="true" />, label: copy.stops(dungeon.stops.length) },
+              { icon: <Route aria-hidden="true" />, label: routeSummary[slug].status === "dataset-matched" ? copy.stops(routeSummary[slug].pulls) : copy.importUpdate },
             ]}
             cta={copy.open}
           />

@@ -35,6 +35,8 @@ import {
 } from "lucide-react";
 import { AtlasBreadcrumbs } from "@gildra/atlas-ui/AtlasBreadcrumbs";
 import { MythicDataNotice } from "./MythicDataNotice";
+import { mythicVerificationCopy } from "./mythicVerificationCopy";
+import { DungeonSourceReview } from "./DungeonSourceReview";
 import { dungeonBackdropSource } from "@/lib/wow/dungeonBackdropSource";
 import { MythicRouteSelectors } from "./MythicRouteSelectors";
 import { AbilityIntelCard, EnemyIntelCard } from "./CombatIntelCard";
@@ -45,6 +47,8 @@ import { routeAbilityIntel, routeEnemyIntel } from "./routeIntel";
 import type { RouteStop } from "./rubyLifePoolsData";
 import styles from "./mythicRouteMap.module.css";
 import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
+
+const MdtPullMap = dynamic(() => import("./MdtPullMap"), { ssr: false, loading: () => <p role="status">MDT…</p> });
 
 const DeferredTestPartyPanel = dynamic(
   () => import("./TestPartyPanel").then((module) => module.TestPartyPanel),
@@ -754,6 +758,15 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
             <div className={styles.selectorRow}>
               <MythicRouteSelectors locale={locale} dungeonSlug={dungeon.slug} dungeonOptions={dungeonOptions} keyLevel={keyLevel} onKeyLevelChange={setKeyLevel} />
             </div>
+
+          </div>
+        </section>
+
+        <DungeonSourceReview review={combatIntel.review} locale={locale} />
+        <div className={styles.panel}><MdtPullMap key={dungeon.slug} slug={dungeon.slug} locale={locale} routeUrl={dungeon.mdtRouteUrl} data={combatIntel.mdt} /></div>
+        <details className={styles.legacyDraft}>
+          <summary>{mythicVerificationCopy[locale].legacyEditor}</summary>
+        <MythicDataNotice locale={locale} route />
             <div className={styles.buttonRow}>
               <RouteEditToggle pageRef={pageRef} copy={copy} />
               <button type="button" className={styles.toolButton} onClick={shareRoute}><Share2 aria-hidden="true" /> {copy.share}</button>
@@ -763,10 +776,6 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
                 {moreOpen ? <div className={styles.moreList}><button type="button" onClick={exportRoute}><Download aria-hidden="true" /> {copy.downloadJson}</button><button type="button" onClick={resetRoute}><RotateCcw aria-hidden="true" /> {copy.resetRoute}</button></div> : null}
               </div>
             </div>
-          </div>
-        </section>
-
-        <MythicDataNotice locale={locale} route />
 
         <section className={styles.runSummary} aria-label={copy.summaryLabel}>
           <article><span><Clock3 aria-hidden="true" /> {copy.timer}</span><b>{formatTime(timerSeconds)}</b><small className={totalDuration <= timerSeconds ? styles.positive : styles.negative}>{copy.plan(formatTime(totalDuration), formatTime(reserveSeconds))}</small></article>
@@ -804,6 +813,7 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
           onUndo={undoRoute}
           onRedo={redoRoute}
         />
+        </details>
       </div>
 
       {importOpen ? <dialog open className={styles.importDialog} aria-labelledby="import-title"><div className={styles.importTop}><span><Import aria-hidden="true" /> {copy.importTitle}</span><button type="button" onClick={() => setImportOpen(false)} aria-label={copy.close}><X aria-hidden="true" /></button></div><h2 id="import-title">{copy.importHeading}</h2><p>{copy.importText}</p><textarea value={importValue} onChange={(event) => setImportValue(event.target.value)} placeholder={'{"stops": [...]}'} /><footer className={styles.buttonRow}><button type="button" className={styles.toolButton} onClick={() => setImportOpen(false)}>{copy.cancel}</button><button type="button" className={styles.primaryButton} onClick={importRoute}><Import aria-hidden="true" /> {copy.importAction}</button></footer></dialog> : null}

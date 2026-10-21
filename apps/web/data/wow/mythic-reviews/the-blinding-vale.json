@@ -1,0 +1,37 @@
+{
+  "slug": "the-blinding-vale",
+  "checkedAt": "2026-10-21",
+  "season": "Midnight Season 2",
+  "status": "source-reviewed",
+  "sources": [
+    {"url":"https://news.blizzard.com/en-us/article/24294369/midnight-season-2-is-now-live","title":"Blizzard: Midnight Season 2 is Now Live","scope":"Official seasonal rotation; article opened successfully"},
+    {"url":"https://www.method.gg/guides/dungeons/the-blinding-vale","title":"Tactyks / Method: The Blinding Vale Mythic+ Dungeon Guide","scope":"Author guide updated October 14, 2026; mechanics and linked MDT route"},
+    {"url":"https://www.icy-veins.com/wow/blinding-vale-dungeon-guide","title":"Petko / Icy Veins: The Blinding Vale Dungeon Guide","scope":"Author guide updated October 12, 2026 for patch 12.1.5; bosses and trash"},
+    {"url":"https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/refs/heads/master/Midnight/TheBlindingVale.lua","title":"Mythic Dungeon Tools: TheBlindingVale.lua","scope":"Opened raw NPC, spell, clone and force dataset; existing route not matched to clone IDs"},
+    {"url":"https://wago.io/HLI3Wq7sA","title":"Tactyks: The Blinding Vale MDT route","scope":"Linked by Method; Wago yielded no readable export, so pull membership remains unverified"}
+  ],
+  "facts": [
+    {"ru":"The Blinding Vale входит в официальную ротацию Mythic+ второго сезона Midnight.","en":"The Blinding Vale belongs to the official Midnight Season 2 Mythic+ rotation.","source":"https://news.blizzard.com/en-us/article/24294369/midnight-season-2-is-now-live"},
+    {"ru":"Lightblossom Trinity: прерывайте Kezkitt; цветы во время Lightblossom Beam закрываются игроками внутри них.","en":"Lightblossom Trinity: interrupt Kezkitt; players soak inside flowers during Lightblossom Beam.","source":"https://www.icy-veins.com/wow/blinding-vale-dungeon-guide"},
+    {"ru":"Ikuzz: уводите фиксацию через корни; избегайте отбрасывания в заросли. Ниже 50% усиливается длительный урон.","en":"Ikuzz: kite fixation through roots; avoid knockbacks into them. Sustained damage increases below 50%.","source":"https://www.icy-veins.com/wow/blinding-vale-dungeon-guide"},
+    {"ru":"Ruia: разносите конусы Pulverizing Strikes, прерывайте Warden's Wrath; Grievous Thrash снимается полным лечением.","en":"Ruia: spread Pulverizing Strikes cones, interrupt Warden's Wrath; heal Grievous Thrash targets to full.","source":"https://www.icy-veins.com/wow/blinding-vale-dungeon-guide"},
+    {"ru":"Ziekket: убейте призванных lashers, направьте луч через трупы; распределяйте сферы между игроками.","en":"Ziekket: kill summoned lashers, aim the beam through corpses; distribute orbs among players.","source":"https://www.icy-veins.com/wow/blinding-vale-dungeon-guide"},
+    {"ru":"Radiant Spellsower: прерывайте Volley и остановите пробуждение соседей. Lightfeather Petalwing: прерывайте Screech.","en":"Radiant Spellsower: interrupt Volley and prevent nearby awakenings. Lightfeather Petalwing: interrupt Screech.","source":"https://www.method.gg/guides/dungeons/the-blinding-vale"},
+    {"ru":"Sporeblight Belcher: лечите Spouting Floret, обходите Belch Spores. Potatoad Matriarch: уничтожайте яйца, снимайте Toxic Spew.","en":"Sporeblight Belcher: heal Spouting Floret, avoid Belch Spores. Potatoad Matriarch: destroy eggs, dispel Toxic Spew.","source":"https://www.method.gg/guides/dungeons/the-blinding-vale"},
+    {"ru":"После первых двух боссов используйте птицу для перелёта. У Ruia заражённые враги оставляют опасные лужи после смерти.","en":"Use the bird after both initial bosses. Near Ruia, infected enemies leave hazardous death puddles.","source":"https://www.method.gg/guides/dungeons/the-blinding-vale"},
+    {"ru":"MDT указывает 686 сил. Lightspawn Lasher (247755) имеет count=0 и прерываемый Lightspore Shot (1247669).",
+     "en":"MDT requires 686 forces. Lightspawn Lasher (247755) has count=0 and interruptible Lightspore Shot (1247669).","source":"https://raw.githubusercontent.com/Nnoggie/MythicDungeonTools/refs/heads/master/Midnight/TheBlindingVale.lua"}
+  ],
+  "route": {
+    "status": "draft",
+    "ru": "Направление: налево к Trinity → Ikuzz → птица → Ruia → Potatoad → Ziekket. Авторский MDT: https://wago.io/HLI3Wq7sA; экспорт не прочитан. Координаты, составы пуллов, проценты и длительности черновика не подтверждены; 100% не гарантируется.",
+    "en": "Direction: left to Trinity → Ikuzz → bird → Ruia → Potatoad → Ziekket. Author MDT: https://wago.io/HLI3Wq7sA; export unread. Draft coordinates, pull membership, percentages and durations remain unverified; 100% is not guaranteed."
+  },
+  "corrections": [
+    {"ru":"Убрать Lightspore Shot из способностей Ziekket: это каст его adds.","en":"Remove Lightspore Shot from Ziekket's abilities: his adds cast it."},
+    {"ru":"Не засчитывать Lightspawn Lasher в силы и не изображать summons подтверждённой охраной перед боссом.","en":"Do not count Lightspawn Lasher toward forces or present summons as verified guards before the boss."},
+    {"ru":"Добавить пропущенные перелёт, Potatoad Matriarch и проверенные способности Belcher; они отсутствуют в последовательности черновика.","en":"Add the omitted flight, Potatoad Matriarch and verified Belcher abilities to the draft sequence."},
+    {"ru":"Screech помечать прерыванием; обещание остановить любым контролем не подтверждено.","en":"Mark Screech as an interrupt; the claim that any control works is unverified."},
+    {"ru":"Заменить Ironclad, ShadowNova и MysticHeals ролями. Удалить обещание 100% после нарисованного последнего пулла.","en":"Replace Ironclad, ShadowNova and MysticHeals with roles. Remove the 100% promise after the schematic final pull."}
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "baselineErrors": 0,
+  "baselineWarnings": 11,
+  "currentErrors": 0,
+  "currentWarnings": 11,
+  "addedDiagnostics": [],
+  "note": "Diagnostic text includes shifted code locations; compared rule/severity/first-line message."
+}

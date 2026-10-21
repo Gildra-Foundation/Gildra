@@ -1,5 +1,8 @@
 export const mythicVerificationCopy = {
   ru: {
+    reviewedTitle: "8 подземелий сверены с источниками",
+    reviewedSummary: (count: number) => `${count} маршрутов MDT сопоставлены с реальными ID мобов и силами (21.10.2026). Импорт Храма Сетралисс несовместим с текущими данными; на его странице доступна карта для ручного плана. Проверка прохождения в игре не проводилась.`,
+    legacyEditor: "Старый черновой редактор: пулы и советы не подтверждены",
     catalogTitle: "Маршруты — черновики",
     routeTitle: "Маршрут — черновик",
     draft: "Порядок боёв, проценты сил противника, длительность этапов и назначения ещё не проверены в игре.",
@@ -18,6 +21,9 @@ export const mythicVerificationCopy = {
     scope: "Ссылки подтверждают только указанные сведения. Они не подтверждают авторский маршрут или его расчётное время.",
   },
   en: {
+    reviewedTitle: "8 dungeons reviewed against sources",
+    reviewedSummary: (count: number) => `${count} MDT routes matched to enemy IDs and forces (21 Oct 2026). The Temple of Sethraliss import is incompatible with current data; its map supports manual planning. No in-game run was performed.`,
+    legacyEditor: "Old draft editor: pulls and advice are unverified",
     catalogTitle: "These routes are drafts",
     routeTitle: "This route is a draft",
     draft: "Fight order, enemy forces, estimated step durations and assignments have not yet been verified in game.",

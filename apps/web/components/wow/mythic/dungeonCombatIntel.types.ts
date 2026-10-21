@@ -1,3 +1,4 @@
+import type { MdtDataset, DungeonSourceReviewData } from "@/lib/data/wow/mythicReview.types";
 export type EnemyMediaPayload = {
   npcId?: number;
   portraitUrl?: string;
@@ -15,6 +16,8 @@ export type AbilityMediaPayload = {
 };
 
 export type DungeonCombatIntel = {
+  review: DungeonSourceReviewData;
+  mdt: MdtDataset;
   enemies: Record<string, {
     intel?: { summary: string; danger: string };
     media?: EnemyMediaPayload;

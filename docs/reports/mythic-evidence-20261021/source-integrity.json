@@ -1,0 +1,23 @@
+{
+  "commit": "5b944f4b615f24cc345b067aa7e33bff57b13140",
+  "luaHashesMatched": [
+    "ruby-life-pools",
+    "altar-of-fangs",
+    "murder-row",
+    "den-of-nalorakk",
+    "the-blinding-vale",
+    "voidscar-arena",
+    "kings-rest",
+    "temple-of-sethraliss"
+  ],
+  "derivedMapSha256": {
+    "murder-row.webp": "f89e96ebb9493de71cf1975614347d14fd10361a2ab28aabb77fa1ae9aabae85",
+    "voidscar-arena.webp": "7b1bda2184445b1f0be1f2c9273b1493b0b831ac55c1a2ec7de39df269ee0220",
+    "the-blinding-vale.webp": "1256982d33f31d838c370f28b86b3caaa3ebda607f3eebf8f4dd13358d7488a8",
+    "altar-of-fangs.webp": "71fe0256d05a63a03b507d8ec72bd66faa3194ca19bdf70c7c9211792df029cc",
+    "temple-of-sethraliss.webp": "7d75e2e54476b973672fc8483a19e8d9f3d9cf8ae64a4f5ff4843183dfc52e05",
+    "kings-rest.webp": "5989969e5ce34932590f2bee278a41e3bd1b2e7f74232264456e2758a19b5509",
+    "den-of-nalorakk.webp": "ee496f2734c3e3b8348036efbd204368e7b335e9ef59e0a4fbd57b0834cb0335",
+    "ruby-life-pools.webp": "b6972293a2e201d4e6c9d3f135be7e7e1e73774540e5f1c9045244e3a299169f"
+  }
+}
