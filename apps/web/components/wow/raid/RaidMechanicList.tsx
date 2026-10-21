@@ -50,8 +50,8 @@ function GuideMechanic({ mechanic, journal, locale }: { mechanic: VoidspireMecha
   const FallbackIcon = tagIcons[mechanic.tags[0]] ?? CircleHelp;
   // A spell without a confirmed name in this language keeps its original English name.
   const spellName = mechanic.spell ? sourceSpellNames[mechanic.spell.id]?.[locale] : undefined;
-  const title = journal ? (locale === "ru" ? journal.nameRu : journal.nameEn) : mechanic.spell ? spellName ?? mechanic.name.en : mechanic.name[locale];
-  const titleLang = !journal && mechanic.spell && !spellName && locale === "ru" ? "en" : undefined;
+  const title = mechanic.preserveName ? mechanic.name[locale] : journal ? (locale === "ru" ? journal.nameRu : journal.nameEn) : mechanic.spell ? spellName ?? mechanic.name.en : mechanic.name[locale];
+  const titleLang = !mechanic.preserveName && !journal && mechanic.spell && !spellName && locale === "ru" ? "en" : undefined;
   return (
     <li id={`mechanic-${mechanic.id}`} className={styles.mechanic} data-testid="voidspire-action-card">
       {mechanic.spell

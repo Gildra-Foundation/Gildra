@@ -1,0 +1,443 @@
+{
+  "raidSlug": "sporefall",
+  "reviewedAt": "2026-10-21T20:17:45Z",
+  "sources": [
+    {
+      "title": "Blizzard — Prepare to Face Rotmire in the Sporefall Raid",
+      "url": "https://worldofwarcraft.blizzard.com/en-gb/news/24272110/prepare-to-face-rotmire-in-the-sporefall-raid"
+    },
+    {
+      "title": "Blizzard — Midnight Season 2 is Now Live",
+      "url": "https://worldofwarcraft.blizzard.com/en-gb/news/24294369/the-shadows-deepen-midnight-season-2-begins-19-august"
+    },
+    {
+      "title": "Sporefall — live game-data tooltip, EN/RU",
+      "url": "https://www.wowhead.com/zone=16279/sporefall"
+    },
+    {
+      "title": "Rotmire — live game-data tooltip, EN/RU",
+      "url": "https://www.wowhead.com/npc=254176/rotmire"
+    }
+  ],
+  "summaryRu": "Споропад — дополнительный рейд первого сезона Midnight, добавленный в 12.0.7: один босс, Гнилотоп, в Харандаре. Для входа нужен 90-й уровень; в поиске рейдов — уровень предметов 240. Доступны LFR, Normal, Heroic и Mythic, причем Mythic допускает 15–25 игроков. Сейчас идет второй сезон, поэтому этот рейд относится к прежнему сезону. За четыре еженедельных Delicious Sporesnack можно получить Luminous Sporeglider: одна закуска в неделю на учетную запись за победу на любой сложности.",
+  "summaryEn": "Sporefall is the bonus Midnight Season 1 raid added in 12.0.7: one boss, Rotmire, in Harandar. Entry requires level 90; Raid Finder requires item level 240. LFR, Normal, Heroic and Mythic are available, with Mythic supporting 15–25 players. Season 2 is now live, so this is previous-season content. Collect four weekly Delicious Sporesnacks for the Luminous Sporeglider: one snack per week per account from a kill on any difficulty.",
+  "bosses": [
+    {
+      "slug": "rotmire",
+      "summaryRu": "Гнилотоп — бой с повторяющимся циклом грибных прислужников. Главное — заранее выбрать места их гибели: на 100 энергии «Плеснецвет» превращает трупы в разрывающиеся грибы, а живых прислужников лечит и усиливает.",
+      "summaryEn": "Rotmire repeats a cycle of fungal minions. Plan where they die: at 100 energy, Fungal Bloom turns corpses into explosive mushrooms while healing and empowering surviving minions.",
+      "tipsRu": [
+        "«Грибное пробуждение»: выходите из кругов появления прислужников; фиксацию ведите к согласованному месту, чтобы трупы лежали компактно.",
+        "«Плеснецвет»: добивайте живых прислужников до применения, затем быстро убивайте появившиеся на трупах грибы. Целители готовят защиту от общего урона и последующего периодического урона.",
+        "«Гнойные лианы»: отходите к краю арены, не задевая союзников своим кругом; после окончания эффекта обходите оставшуюся область.",
+        "Танки: меняйтесь после каждого «Гнилостного кулака»; готовьте снижение урона к удару и подбрасыванию.",
+        "Heroic/Mythic: назначьте прерывания «Выброса яда» Sporecap и перемещайте босса к этому неподвижному прислужнику.",
+        "Mythic: выделите раздельные места для трупов Shroomling и Fungling, дальше 10 м друг от друга. «Перекрестное удобрение» создает Doom Shroom, если разные типы оказываются слишком близко.",
+        "Целители: учитывайте накапливающиеся «Гнойные пустулы» — урон по всему рейду растет с продолжительностью боя."
+      ],
+      "tipsEn": [
+        "Awaken Fungi: leave the spawn circles. Bring fixating minions to the agreed kill location to keep their corpses together.",
+        "Fungal Bloom: finish living minions before the cast, then quickly kill the mushrooms growing from their corpses. Healers should cover both the raid hit and the damage over time.",
+        "Festering Vines: move to the arena edge without clipping allies with your circle; avoid the area left behind when it expires.",
+        "Tanks: swap after every Putrid Fist and prepare mitigation for its hit and upward knockback.",
+        "Heroic/Mythic: assign Poison Burst interrupts on the stationary Sporecap and move the boss to it.",
+        "Mythic: designate separate corpse piles for Shroomlings and Funglings, more than 10 yards apart. Cross Fertilization creates a Doom Shroom when the two types die too close together.",
+        "Healers: account for stacking Rotting Pustules, which increases raid damage as the encounter continues."
+      ],
+      "sources": [
+        {
+          "title": "Panthea — Rotmire raid guide (Icy Veins)",
+          "url": "https://www.icy-veins.com/wow/rotmire-raid-guide/"
+        },
+        {
+          "title": "iMX3 — Rotmire strategy and Adventure Guide (Wowhead)",
+          "url": "https://www.wowhead.com/guide/midnight/raids/sporefall-rotmire-boss-strategy-abilities-cheat-sheet-rewards"
+        },
+        {
+          "title": "Awaken Fungi — live EN/RU spell tooltip",
+          "url": "https://www.wowhead.com/spell=1221622"
+        },
+        {
+          "title": "Fungal Bloom — live EN/RU spell tooltip",
+          "url": "https://www.wowhead.com/spell=1221637"
+        },
+        {
+          "title": "Festering Vines — live EN/RU spell tooltip",
+          "url": "https://www.wowhead.com/spell=1222088"
+        },
+        {
+          "title": "Putrid Fist — live EN/RU spell tooltip",
+          "url": "https://www.wowhead.com/spell=1221781"
+        },
+        {
+          "title": "Cross Fertilization — live EN/RU spell tooltip",
+          "url": "https://www.wowhead.com/spell=1222684"
+        },
+        {
+          "title": "Bursting Shroom — live EN/RU spell tooltip",
+          "url": "https://www.wowhead.com/spell=1221965"
+        },
+        {
+          "title": "Poison Burst — live EN/RU spell tooltip",
+          "url": "https://www.wowhead.com/spell=1221714"
+        },
+        {
+          "title": "Rotting Pustules — live EN/RU spell tooltip",
+          "url": "https://www.wowhead.com/spell=1222176"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1221622,
+          "nameEn": "Awaken Fungi",
+          "nameRu": "Грибное пробуждение",
+          "iconName": "inv_misc_food_96_zangarcaps",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_food_96_zangarcaps.jpg",
+          "sha256": "69c215e4de2922484e269a1d817ce1566be1afda3c590b690c2fe544abcc656c",
+          "bytes": 2609,
+          "sourceUrl": "https://www.wowhead.com/spell=1221622",
+          "localTmpPath": "/tmp/gildra-sporefall-evidence/1221622.jpg",
+          "localIcon": "/assets/wow/raids/reviewed-spells/1221622.jpg"
+        },
+        {
+          "spellId": 1221637,
+          "nameEn": "Fungal Bloom",
+          "nameRu": "Плеснецвет",
+          "iconName": "inv_misc_herb_plaguebloom",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_herb_plaguebloom.jpg",
+          "sha256": "1ed6ec6d4baf6fb779dc32002b49721d6cd4c139d289aadf57093e7be1729a1f",
+          "bytes": 2726,
+          "sourceUrl": "https://www.wowhead.com/spell=1221637",
+          "localTmpPath": "/tmp/gildra-sporefall-evidence/1221637.jpg",
+          "localIcon": "/assets/wow/raids/reviewed-spells/1221637.jpg"
+        },
+        {
+          "spellId": 1222088,
+          "nameEn": "Festering Vines",
+          "nameRu": "Гнойные лианы",
+          "iconName": "ability_creature_poison_04",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_creature_poison_04.jpg",
+          "sha256": "e94b1dc7bb84aff659d5e8a6c499b29a1d9e74cb1e987e77cb77d743b1054851",
+          "bytes": 2519,
+          "sourceUrl": "https://www.wowhead.com/spell=1222088",
+          "localTmpPath": "/tmp/gildra-sporefall-evidence/1222088.jpg",
+          "localIcon": "/assets/wow/raids/reviewed-spells/1222088.jpg"
+        },
+        {
+          "spellId": 1221781,
+          "nameEn": "Putrid Fist",
+          "nameRu": "Гнилостный кулак",
+          "iconName": "inv_misc_herb_ancientlichen",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_herb_ancientlichen.jpg",
+          "sha256": "56b0a9fd6b1f207d6b18f09b73bc19a2d3580d63d3c2b66347048e0b58e3940c",
+          "bytes": 2494,
+          "sourceUrl": "https://www.wowhead.com/spell=1221781",
+          "localTmpPath": "/tmp/gildra-sporefall-evidence/1221781.jpg",
+          "localIcon": "/assets/wow/raids/reviewed-spells/1221781.jpg"
+        },
+        {
+          "spellId": 1222684,
+          "nameEn": "Cross Fertilization",
+          "nameRu": "Перекрестное удобрение",
+          "iconName": "inv_misc_herb_07",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_herb_07.jpg",
+          "sha256": "1674ccffcd0f8650c20cd0416c9542d67171bbbed708e5ab5ae6b0281965feb7",
+          "bytes": 2414,
+          "sourceUrl": "https://www.wowhead.com/spell=1222684",
+          "localTmpPath": "/tmp/gildra-sporefall-evidence/1222684.jpg",
+          "localIcon": "/assets/wow/raids/reviewed-spells/1222684.jpg"
+        },
+        {
+          "spellId": 1221965,
+          "nameEn": "Bursting Shroom",
+          "nameRu": "Разрывающийся гриб",
+          "iconName": "inv_misc_starspecklemushroom",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_starspecklemushroom.jpg",
+          "sha256": "e3cfc1214aa37f9dd2d4dec174136dcdf6c5cba294a3b249717c582612bea208",
+          "bytes": 2376,
+          "sourceUrl": "https://www.wowhead.com/spell=1221965",
+          "localTmpPath": "/tmp/gildra-sporefall-evidence/1221965.jpg",
+          "localIcon": "/assets/wow/raids/reviewed-spells/1221965.jpg"
+        },
+        {
+          "spellId": 1221714,
+          "nameEn": "Poison Burst",
+          "nameRu": "Выброс яда",
+          "iconName": "spell_nature_elementalshields",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_elementalshields.jpg",
+          "sha256": "91b759b1c2da671fd82965f3f4dd0d428c102f6160e470c824e4b76dd6ff456a",
+          "bytes": 2762,
+          "sourceUrl": "https://www.wowhead.com/spell=1221714",
+          "localTmpPath": "/tmp/gildra-sporefall-evidence/1221714.jpg",
+          "localIcon": "/assets/wow/raids/reviewed-spells/1221714.jpg"
+        },
+        {
+          "spellId": 1222176,
+          "nameEn": "Rotting Pustules",
+          "nameRu": "Гнойные пустулы",
+          "iconName": "ability_creature_poison_06",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_creature_poison_06.jpg",
+          "sha256": "65d8dc7647d88781d47dea7e63123038ea65a7105ebd26bd418dacda6bd71e20",
+          "bytes": 2629,
+          "sourceUrl": "https://www.wowhead.com/spell=1222176",
+          "localTmpPath": "/tmp/gildra-sporefall-evidence/1222176.jpg",
+          "localIcon": "/assets/wow/raids/reviewed-spells/1222176.jpg"
+        }
+      ]
+    }
+  ],
+  "corrections": [
+    {
+      "field": "SporefallPage placeholder",
+      "issue": "Only names were shown despite publicly verified encounter mechanics, location, difficulty rules, rewards and authentic game spell icons. Add reviewed qualitative notes while preserving exact-build numerical publication gates.",
+      "sources": [
+        "https://worldofwarcraft.blizzard.com/en-gb/news/24272110/prepare-to-face-rotmire-in-the-sporefall-raid",
+        "https://www.icy-veins.com/wow/rotmire-raid-guide/",
+        "https://www.wowhead.com/guide/midnight/raids/sporefall-rotmire-boss-strategy-abilities-cheat-sheet-rewards"
+      ]
+    },
+    {
+      "field": "content-manifest instances.sporefall.names.ru / encounters.rotmire.names.ru",
+      "issue": "Live ruRU game tooltips verify Споропад (zone 16279) and Гнилотоп (NPC 254176); these are currently null. Root must update canonical localization separately.",
+      "sources": [
+        "https://nether.wowhead.com/tooltip/zone/16279?dataEnv=1&locale=7",
+        "https://nether.wowhead.com/tooltip/npc/254176?dataEnv=1&locale=7"
+      ]
+    },
+    {
+      "field": "season / rewards",
+      "issue": "12.0.7 Season 1 identity is correct. Do not imply a current Season 2 raid, current best gear, or publish release-era item levels as current guaranteed drops.",
+      "sources": [
+        "https://worldofwarcraft.blizzard.com/en-gb/news/24294369/the-shadows-deepen-midnight-season-2-begins-19-august"
+      ]
+    },
+    {
+      "field": "numeric spell data",
+      "issue": "Public current tooltips verify identities and qualitative mechanics but do not prove exact build/difficulty parity. Damage numbers and tuning claims are intentionally omitted. NPC tooltip level84 conflicts with official entry90 and is not used.",
+      "sources": [
+        "https://worldofwarcraft.blizzard.com/en-gb/news/24272110/prepare-to-face-rotmire-in-the-sporefall-raid",
+        "https://nether.wowhead.com/tooltip/npc/254176?dataEnv=1&locale=0"
+      ]
+    }
+  ],
+  "iconAudit": {
+    "checkedAt": "2026-10-21T20:17:45Z",
+    "source": "Wowhead live retail EN/RU tooltip icon fields, official Blizzard render CDN bytes",
+    "checkedIcons": 8,
+    "missingLocalIcons": [
+      1221622,
+      1221637,
+      1222088,
+      1221781,
+      1222684,
+      1221965,
+      1221714,
+      1222176
+    ],
+    "bindings": [
+      {
+        "spellId": 1221622,
+        "nameEn": "Awaken Fungi",
+        "nameRu": "Грибное пробуждение",
+        "iconName": "inv_misc_food_96_zangarcaps",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_food_96_zangarcaps.jpg",
+        "sha256": "69c215e4de2922484e269a1d817ce1566be1afda3c590b690c2fe544abcc656c",
+        "bytes": 2609,
+        "sourceUrl": "https://www.wowhead.com/spell=1221622",
+        "localTmpPath": "/tmp/gildra-sporefall-evidence/1221622.jpg",
+        "localIcon": "/assets/wow/raids/reviewed-spells/1221622.jpg"
+      },
+      {
+        "spellId": 1221637,
+        "nameEn": "Fungal Bloom",
+        "nameRu": "Плеснецвет",
+        "iconName": "inv_misc_herb_plaguebloom",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_herb_plaguebloom.jpg",
+        "sha256": "1ed6ec6d4baf6fb779dc32002b49721d6cd4c139d289aadf57093e7be1729a1f",
+        "bytes": 2726,
+        "sourceUrl": "https://www.wowhead.com/spell=1221637",
+        "localTmpPath": "/tmp/gildra-sporefall-evidence/1221637.jpg",
+        "localIcon": "/assets/wow/raids/reviewed-spells/1221637.jpg"
+      },
+      {
+        "spellId": 1222088,
+        "nameEn": "Festering Vines",
+        "nameRu": "Гнойные лианы",
+        "iconName": "ability_creature_poison_04",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_creature_poison_04.jpg",
+        "sha256": "e94b1dc7bb84aff659d5e8a6c499b29a1d9e74cb1e987e77cb77d743b1054851",
+        "bytes": 2519,
+        "sourceUrl": "https://www.wowhead.com/spell=1222088",
+        "localTmpPath": "/tmp/gildra-sporefall-evidence/1222088.jpg",
+        "localIcon": "/assets/wow/raids/reviewed-spells/1222088.jpg"
+      },
+      {
+        "spellId": 1221781,
+        "nameEn": "Putrid Fist",
+        "nameRu": "Гнилостный кулак",
+        "iconName": "inv_misc_herb_ancientlichen",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_herb_ancientlichen.jpg",
+        "sha256": "56b0a9fd6b1f207d6b18f09b73bc19a2d3580d63d3c2b66347048e0b58e3940c",
+        "bytes": 2494,
+        "sourceUrl": "https://www.wowhead.com/spell=1221781",
+        "localTmpPath": "/tmp/gildra-sporefall-evidence/1221781.jpg",
+        "localIcon": "/assets/wow/raids/reviewed-spells/1221781.jpg"
+      },
+      {
+        "spellId": 1222684,
+        "nameEn": "Cross Fertilization",
+        "nameRu": "Перекрестное удобрение",
+        "iconName": "inv_misc_herb_07",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_herb_07.jpg",
+        "sha256": "1674ccffcd0f8650c20cd0416c9542d67171bbbed708e5ab5ae6b0281965feb7",
+        "bytes": 2414,
+        "sourceUrl": "https://www.wowhead.com/spell=1222684",
+        "localTmpPath": "/tmp/gildra-sporefall-evidence/1222684.jpg",
+        "localIcon": "/assets/wow/raids/reviewed-spells/1222684.jpg"
+      },
+      {
+        "spellId": 1221965,
+        "nameEn": "Bursting Shroom",
+        "nameRu": "Разрывающийся гриб",
+        "iconName": "inv_misc_starspecklemushroom",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_starspecklemushroom.jpg",
+        "sha256": "e3cfc1214aa37f9dd2d4dec174136dcdf6c5cba294a3b249717c582612bea208",
+        "bytes": 2376,
+        "sourceUrl": "https://www.wowhead.com/spell=1221965",
+        "localTmpPath": "/tmp/gildra-sporefall-evidence/1221965.jpg",
+        "localIcon": "/assets/wow/raids/reviewed-spells/1221965.jpg"
+      },
+      {
+        "spellId": 1221714,
+        "nameEn": "Poison Burst",
+        "nameRu": "Выброс яда",
+        "iconName": "spell_nature_elementalshields",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_elementalshields.jpg",
+        "sha256": "91b759b1c2da671fd82965f3f4dd0d428c102f6160e470c824e4b76dd6ff456a",
+        "bytes": 2762,
+        "sourceUrl": "https://www.wowhead.com/spell=1221714",
+        "localTmpPath": "/tmp/gildra-sporefall-evidence/1221714.jpg",
+        "localIcon": "/assets/wow/raids/reviewed-spells/1221714.jpg"
+      },
+      {
+        "spellId": 1222176,
+        "nameEn": "Rotting Pustules",
+        "nameRu": "Гнойные пустулы",
+        "iconName": "ability_creature_poison_06",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_creature_poison_06.jpg",
+        "sha256": "65d8dc7647d88781d47dea7e63123038ea65a7105ebd26bd418dacda6bd71e20",
+        "bytes": 2629,
+        "sourceUrl": "https://www.wowhead.com/spell=1222176",
+        "localTmpPath": "/tmp/gildra-sporefall-evidence/1222176.jpg",
+        "localIcon": "/assets/wow/raids/reviewed-spells/1222176.jpg"
+      }
+    ],
+    "unresolved": [],
+    "identityEvidence": {
+      "zoneId": 16279,
+      "npcId": 254176,
+      "nameRu": "Споропад",
+      "bossNameRu": "Гнилотоп",
+      "journalPortrait": "https://wow.zamimg.com/images/wow/journal/ui-ej-boss-fungariangiant.png"
+    },
+    "limits": "No new spell damage values, difficulty-specific tuning numbers or exact-build journal publication evidence supplied."
+  },
+  "iconBindings": [
+    {
+      "spellId": 1221622,
+      "nameEn": "Awaken Fungi",
+      "nameRu": "Грибное пробуждение",
+      "iconName": "inv_misc_food_96_zangarcaps",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_food_96_zangarcaps.jpg",
+      "sha256": "69c215e4de2922484e269a1d817ce1566be1afda3c590b690c2fe544abcc656c",
+      "bytes": 2609,
+      "sourceUrl": "https://www.wowhead.com/spell=1221622",
+      "localTmpPath": "/tmp/gildra-sporefall-evidence/1221622.jpg",
+      "localIcon": "/assets/wow/raids/reviewed-spells/1221622.jpg"
+    },
+    {
+      "spellId": 1221637,
+      "nameEn": "Fungal Bloom",
+      "nameRu": "Плеснецвет",
+      "iconName": "inv_misc_herb_plaguebloom",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_herb_plaguebloom.jpg",
+      "sha256": "1ed6ec6d4baf6fb779dc32002b49721d6cd4c139d289aadf57093e7be1729a1f",
+      "bytes": 2726,
+      "sourceUrl": "https://www.wowhead.com/spell=1221637",
+      "localTmpPath": "/tmp/gildra-sporefall-evidence/1221637.jpg",
+      "localIcon": "/assets/wow/raids/reviewed-spells/1221637.jpg"
+    },
+    {
+      "spellId": 1222088,
+      "nameEn": "Festering Vines",
+      "nameRu": "Гнойные лианы",
+      "iconName": "ability_creature_poison_04",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_creature_poison_04.jpg",
+      "sha256": "e94b1dc7bb84aff659d5e8a6c499b29a1d9e74cb1e987e77cb77d743b1054851",
+      "bytes": 2519,
+      "sourceUrl": "https://www.wowhead.com/spell=1222088",
+      "localTmpPath": "/tmp/gildra-sporefall-evidence/1222088.jpg",
+      "localIcon": "/assets/wow/raids/reviewed-spells/1222088.jpg"
+    },
+    {
+      "spellId": 1221781,
+      "nameEn": "Putrid Fist",
+      "nameRu": "Гнилостный кулак",
+      "iconName": "inv_misc_herb_ancientlichen",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_herb_ancientlichen.jpg",
+      "sha256": "56b0a9fd6b1f207d6b18f09b73bc19a2d3580d63d3c2b66347048e0b58e3940c",
+      "bytes": 2494,
+      "sourceUrl": "https://www.wowhead.com/spell=1221781",
+      "localTmpPath": "/tmp/gildra-sporefall-evidence/1221781.jpg",
+      "localIcon": "/assets/wow/raids/reviewed-spells/1221781.jpg"
+    },
+    {
+      "spellId": 1222684,
+      "nameEn": "Cross Fertilization",
+      "nameRu": "Перекрестное удобрение",
+      "iconName": "inv_misc_herb_07",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_herb_07.jpg",
+      "sha256": "1674ccffcd0f8650c20cd0416c9542d67171bbbed708e5ab5ae6b0281965feb7",
+      "bytes": 2414,
+      "sourceUrl": "https://www.wowhead.com/spell=1222684",
+      "localTmpPath": "/tmp/gildra-sporefall-evidence/1222684.jpg",
+      "localIcon": "/assets/wow/raids/reviewed-spells/1222684.jpg"
+    },
+    {
+      "spellId": 1221965,
+      "nameEn": "Bursting Shroom",
+      "nameRu": "Разрывающийся гриб",
+      "iconName": "inv_misc_starspecklemushroom",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_misc_starspecklemushroom.jpg",
+      "sha256": "e3cfc1214aa37f9dd2d4dec174136dcdf6c5cba294a3b249717c582612bea208",
+      "bytes": 2376,
+      "sourceUrl": "https://www.wowhead.com/spell=1221965",
+      "localTmpPath": "/tmp/gildra-sporefall-evidence/1221965.jpg",
+      "localIcon": "/assets/wow/raids/reviewed-spells/1221965.jpg"
+    },
+    {
+      "spellId": 1221714,
+      "nameEn": "Poison Burst",
+      "nameRu": "Выброс яда",
+      "iconName": "spell_nature_elementalshields",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_elementalshields.jpg",
+      "sha256": "91b759b1c2da671fd82965f3f4dd0d428c102f6160e470c824e4b76dd6ff456a",
+      "bytes": 2762,
+      "sourceUrl": "https://www.wowhead.com/spell=1221714",
+      "localTmpPath": "/tmp/gildra-sporefall-evidence/1221714.jpg",
+      "localIcon": "/assets/wow/raids/reviewed-spells/1221714.jpg"
+    },
+    {
+      "spellId": 1222176,
+      "nameEn": "Rotting Pustules",
+      "nameRu": "Гнойные пустулы",
+      "iconName": "ability_creature_poison_06",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_creature_poison_06.jpg",
+      "sha256": "65d8dc7647d88781d47dea7e63123038ea65a7105ebd26bd418dacda6bd71e20",
+      "bytes": 2629,
+      "sourceUrl": "https://www.wowhead.com/spell=1222176",
+      "localTmpPath": "/tmp/gildra-sporefall-evidence/1222176.jpg",
+      "localIcon": "/assets/wow/raids/reviewed-spells/1222176.jpg"
+    }
+  ]
+}

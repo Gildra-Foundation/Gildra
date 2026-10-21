@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-10-21T20:21:20.145Z",
+  "gameBuild": "12.1.0.69587",
+  "online": false,
+  "write": false,
+  "sourceBytesCompared": false,
+  "abilities": 32,
+  "directDescriptions": 28,
+  "referencedDescriptions": 4,
+  "publicationSafeAbilities": 4,
+  "publicationSafeSpellIds": [
+    1243320,
+    1244419,
+    1255749,
+    1282027
+  ],
+  "withheldAbilities": 28,
+  "requiredCategoryAbilityCounts": {
+    "difficulty_conditional": 1,
+    "duration": 9,
+    "effect_period": 2,
+    "effect_value": 28,
+    "expression": 1,
+    "grammar": 1,
+    "journal_supplement": 3,
+    "radius": 6,
+    "spell_name": 8
+  },
+  "verified": true,
+  "violations": []
+}

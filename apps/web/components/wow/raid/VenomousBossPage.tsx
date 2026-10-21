@@ -11,6 +11,7 @@ import { venomousCopy } from "./venomousCopy";
 import guide from "./raidGuide.module.css";
 import styles from "./venomous.module.css";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
+import { RaidReviewNotes } from "./RaidReviewNotes";
 import { trail } from "@/lib/routes/registry";
 
 const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords } as const;
@@ -53,6 +54,8 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
       />
 
       <EncounterSwitcher items={encounters} label={shared.encountersLabel} />
+
+      <RaidReviewNotes raidSlug="venomous-abyss" bossSlug={boss.slug} locale={locale} />
 
       {isDraft ? (
         <AtlasSection>

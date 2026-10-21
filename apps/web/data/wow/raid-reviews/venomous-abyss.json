@@ -1,0 +1,1483 @@
+{
+  "raidSlug": "venomous-abyss",
+  "reviewedAt": "2026-10-21T20:17:18Z",
+  "sources": [
+    {
+      "title": "Blizzard: Venomous Abyss encounters and regional unlock schedule",
+      "url": "https://news.blizzard.com/en-us/article/24294062/curse-of-ulatek-the-venomous-abyss-raid-finder-wing-3-now-live"
+    },
+    {
+      "title": "Blizzard: Midnight Season 2",
+      "url": "https://news.blizzard.com/en-us/article/24294369/midnight-season-2-is-now-live"
+    },
+    {
+      "title": "Blizzard: hotfixes through October 20, 2026",
+      "url": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+    },
+    {
+      "title": "Blizzard: October 6, 2026 raid tuning",
+      "url": "https://news.blizzard.com/en-gb/article/24296142/hotfixes-october-6-2026"
+    },
+    {
+      "title": "Icy Veins: Mythic final-boss loot and Curio exception",
+      "url": "https://www.icy-veins.com/wow/news/venomous-abysss-final-two-bosses-drop-gear-10-item-levels-past-max/"
+    },
+    {
+      "title": "Icy Veins: raid rewards and loot bands",
+      "url": "https://www.icy-veins.com/wow/venomous-abyss-raid-guide"
+    }
+  ],
+  "summaryRu": "Отравленная бездна — восемь боссов второго сезона Midnight. Проверены все встречи, 37 настоящих иконок и изменения Blizzard до 20 октября. Уточнены механики Ссзорака, Спирального алтаря и Ула’тек. Эпохальная добыча двух финальных боссов — 344; диковинка для обмена на комплект имеет отдельное правило.",
+  "summaryEn": "The Venomous Abyss contains eight Midnight Season 2 encounters. All encounters, 37 authentic icons, and Blizzard changes through October 20 were reviewed. Sszorak, Coiled Altar, and Ula’tek guidance includes recent fixes. Final two Mythic bosses drop item level 344; the tier Curio follows a separate rule.",
+  "bosses": [
+    {
+      "slug": "nekzali-the-soulcoiler",
+      "summaryRu": "Контролируйте путь аддов к колодцу и место снятия Essence Rend. На переходке добивайте эхо и очищайте тела.",
+      "summaryEn": "Control adds approaching the Well and choose Essence Rend dispel positions. During intermission, kill Echoes and clear corpses.",
+      "tipsRu": [
+        "Магическим уроном разбивайте щиты Restless Amani до их подхода к колодцу; затем собирайте их для клива.",
+        "Essence Rend снимайте после выхода цели к краю: снятие оставляет опасную зону.",
+        "Танк отходит с Possession Barrage; остальные освобождают линию между ним и боссом.",
+        "На переходке сосредоточьте урон на активном Echo of Jawae; Hungering Pyre поглощайте вместе над телами."
+      ],
+      "tipsEn": [
+        "Break Restless Amani shields with magic damage before they reach the Well; gather them for cleave afterwards.",
+        "Dispel Essence Rend after its target reaches the edge; dispelling leaves a hazardous area.",
+        "The Possession Barrage tank moves away; everyone else clears the boss-to-tank line.",
+        "Focus the active Echo of Jawae during intermission; group-soak Hungering Pyre over corpses."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: nekzali-the-soulcoiler",
+          "url": "https://www.icy-veins.com/wow/nekzali-raid-guide/"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1284032,
+          "nameEn": "Soulcoil Well",
+          "nameRu": "Колодец душителей душ",
+          "iconName": "achievment_boss_wellofeternity",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/achievment_boss_wellofeternity.jpg",
+          "sha256": "1ae1474b45352bf286b22528d25e16ef7960237a5961ab32dcc1acd14b3b97f4",
+          "bytes": 2952,
+          "sourceUrl": "https://www.wowhead.com/spell=1284032",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1284032.jpg",
+          "iconId": 574792,
+          "currentTooltipIcon": "achievment_boss_wellofeternity",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1288772,
+          "nameEn": "Soulcoil Rite",
+          "nameRu": "Обряд душителя душ",
+          "iconName": "spell_necro_deathsknell",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_necro_deathsknell.jpg",
+          "sha256": "54be703154be9bcd903b9b2f5d817a9fbbcf6e42e77dc975e522b35c0c642bdb",
+          "bytes": 2849,
+          "sourceUrl": "https://www.wowhead.com/spell=1288772",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1288772.jpg",
+          "iconId": 2576091,
+          "currentTooltipIcon": "spell_necro_deathsknell",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1289919,
+          "nameEn": "Restless Amani",
+          "nameRu": "Неупокоенный тролль из племени Амани",
+          "iconName": "inv_12_nonmasculinecharacter_troll",
+          "iconSourceUrl": "https://wago.tools/api/casc/7214199?product=wow&version=12.1.0.69587",
+          "sha256": "0b0bf505e374ccc4788f363069a23962bc7ec88ae8e2b19d54dfda83edaee122",
+          "bytes": 5823,
+          "sourceUrl": "https://www.wowhead.com/spell=1289919",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289919.png",
+          "iconId": 7214199,
+          "currentTooltipIcon": "inv_12_nonmasculinecharacter_troll",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1289683,
+          "nameEn": "Ritual of Awakening",
+          "nameRu": "Ритуал пробуждения",
+          "iconName": "inv_helm_mail_raidshamanmythic_s_01",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_helm_mail_raidshamanmythic_s_01.jpg",
+          "sha256": "2325afed70466a5b546fa6c71a33f7450613ca5ad1d39d64d5712d3868898a5f",
+          "bytes": 3108,
+          "sourceUrl": "https://www.wowhead.com/spell=1289683",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289683.jpg",
+          "iconId": 1568673,
+          "currentTooltipIcon": "inv_helm_mail_raidshamanmythic_s_01",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1289696,
+          "nameEn": "Tether of Awakening",
+          "nameRu": "Нить пробуждения",
+          "iconName": "spell_animamaldraxxus_beam",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_animamaldraxxus_beam.jpg",
+          "sha256": "2e943a20debe4cc80fccfbab1c7693bcc751320903f432034bb21f1934567418",
+          "bytes": 2362,
+          "sourceUrl": "https://www.wowhead.com/spell=1289696",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289696.jpg",
+          "iconId": 3528290,
+          "currentTooltipIcon": "spell_animamaldraxxus_beam",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1290003,
+          "nameEn": "Uncoiling",
+          "nameRu": "Расплетение",
+          "iconName": "inv_12_profession_thematicfoozles_moteofpurelight_green",
+          "iconSourceUrl": "https://wago.tools/api/casc/7549439?product=wow&version=12.1.0.69587",
+          "sha256": "b92426693bb63b005f5610fe1bea4fa9611c1cddcfcdfea7d9fa971c4fba6d76",
+          "bytes": 6075,
+          "sourceUrl": "https://www.wowhead.com/spell=1290003",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1290003.png",
+          "iconId": 7549439,
+          "currentTooltipIcon": "inv_12_profession_thematicfoozles_moteofpurelight_green",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        }
+      ]
+    },
+    {
+      "slug": "entombed-sentinels",
+      "summaryRu": "Два независимых запаса здоровья: разделяйте боссов и выравнивайте урон перед стазисом.",
+      "summaryEn": "Two independent health pools: keep the bosses apart and balance damage before Stasis.",
+      "tipsRu": [
+        "Назначьте два лагеря; сохраняйте расстояние между боссами не менее 40 м.",
+        "Перед Vitriolic Stasis выравнивайте здоровье: отстающий босс восстанавливает его до значения второго.",
+        "Приоритет — Venom Coagulation; наступайте на Toxic Droplets. Heroic: уклоняйтесь от возвращающегося Living Venom.",
+        "После переходки лагеря остаются на местах, танки обмениваются боссами; Blighted Blood снимайте быстро."
+      ],
+      "tipsEn": [
+        "Assign two camps and keep the bosses at least 40 yards apart.",
+        "Balance health before Vitriolic Stasis: the lower-health boss heals to match its partner.",
+        "Prioritize Venom Coagulation and step on Toxic Droplets. Heroic: dodge returning Living Venom.",
+        "After intermission, camps stay put while tanks exchange bosses; dispel Blighted Blood promptly."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: entombed-sentinels",
+          "url": "https://www.icy-veins.com/wow/entombed-sentinels-raid-guide"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1284588,
+          "nameEn": "Vitriolic Stasis",
+          "nameRu": "Агрессивный стазис",
+          "iconName": "inv_10_enchanting2_magicswirl_red",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_10_enchanting2_magicswirl_red.jpg",
+          "sha256": "a2cfbe546e8fec0cf44dc4d9ea44460a1e3ae45b730033d42d075f1b79a6978a",
+          "bytes": 2582,
+          "sourceUrl": "https://www.wowhead.com/spell=1284588",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1284588.jpg",
+          "iconId": 4631369,
+          "currentTooltipIcon": "inv_10_enchanting2_magicswirl_red",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1284590,
+          "nameEn": "Helical Toxins",
+          "nameRu": "Спиральный токсин",
+          "iconName": "inv_112_warlock_bloodstone",
+          "iconSourceUrl": "https://wago.tools/api/casc/6866618?product=wow&version=12.1.0.69587",
+          "sha256": "fe9efab0ab8e6ce648c62f7e0e251e4dee11f5e99f68f80d8621e40f943630f6",
+          "bytes": 6487,
+          "sourceUrl": "https://www.wowhead.com/spell=1284590",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1284590.png",
+          "iconId": 6866618,
+          "currentTooltipIcon": "inv_112_warlock_bloodstone",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        }
+      ]
+    },
+    {
+      "slug": "the-lost-explorers",
+      "summaryRu": "Рыба из ящиков определяет порядок усилений; держите две цели под кливом и сохраняйте прерывания.",
+      "summaryEn": "Fish from crates selects the empowerment order; cleave two targets and maintain interrupt coverage.",
+      "tipsRu": [
+        "Сводите двух боссов; не собирайте всех троих вместе из-за United Defense.",
+        "Назначьте переносчика рыбы: накормите выбранного босса до завершения Empower. Рекомендуемый порядок: Gebbo → Nama → Iku.",
+        "Прерывайте Icebound Flames по ротации. Взрывы уводите от грибов; гриб используйте перед подходом Blast Wave."
+      ],
+      "tipsEn": [
+        "Keep two bosses together; avoid bringing all three into United Defense range.",
+        "Assign a fish carrier and feed the chosen boss before Empower completes. Suggested order: Gebbo → Nama → Iku.",
+        "Rotate interrupts on Icebound Flames. Place bombs away from mushrooms and trigger a mushroom as Blast Wave approaches."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: the-lost-explorers",
+          "url": "https://www.icy-veins.com/wow/lost-explorers-raid-guide"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1295451,
+          "nameEn": "Dark Whispers",
+          "nameRu": "Темный шепот",
+          "iconName": "inv_hextrollpet_red",
+          "iconSourceUrl": "https://wago.tools/api/casc/7558869?product=wow&version=12.1.0.69587",
+          "sha256": "59a50c1deb359fd55b237186d18d499198ee8255b2278cc82276cd8a3b416ee3",
+          "bytes": 6225,
+          "sourceUrl": "https://www.wowhead.com/spell=1295451",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1295451.png",
+          "iconId": 7558869,
+          "currentTooltipIcon": "inv_hextrollpet_red",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1297024,
+          "nameEn": "Mor'zahi's Command",
+          "nameRu": "Приказ Мор'захи",
+          "iconName": "inv_anguish_missile",
+          "iconSourceUrl": "https://wago.tools/api/casc/7816851?product=wow&version=12.1.0.69587",
+          "sha256": "6ab5111a9920a3056317e94e3e53df3ebbfc6389854c73d052bd0cc592a8f97e",
+          "bytes": 5506,
+          "sourceUrl": "https://www.wowhead.com/spell=1297024",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1297024.png",
+          "iconId": 7816851,
+          "currentTooltipIcon": "inv_anguish_missile",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1292779,
+          "nameEn": "Final Ascension",
+          "nameRu": "Последнее вознесение",
+          "iconName": "spell_animarevendreth_nova",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_animarevendreth_nova.jpg",
+          "sha256": "a5ef71a7f177246ff2a425802b69a0c76314477c40e2edca1b9740a41194cdee",
+          "bytes": 2679,
+          "sourceUrl": "https://www.wowhead.com/spell=1292779",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1292779.jpg",
+          "iconId": 3528311,
+          "currentTooltipIcon": "spell_animarevendreth_nova",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        }
+      ]
+    },
+    {
+      "slug": "vashnik-the-malignant",
+      "summaryRu": "Положение босса выбирает два ближайших фонтана. Контролируйте усиления и не пропускайте аддов в центр.",
+      "summaryEn": "Boss positioning selects the nearest two fountains. Rotate infusions and prevent adds reaching the center.",
+      "tipsRu": [
+        "Перед Imbibe ставьте Vashnik между нужными фонтанами; к кровавому фонтану требуется подойти ближе.",
+        "Чередуйте пары фонтанов: Shadow + Flame → Flame + Blood → Blood + Shadow.",
+        "Замедляйте и убивайте аддов до Malignant Cavity. Plague Wave направляйте мимо рейда."
+      ],
+      "tipsEn": [
+        "Before Imbibe, place Vashnik between the intended fountains; move sufficiently close when selecting Blood.",
+        "Rotate fountain pairs: Shadow + Flame → Flame + Blood → Blood + Shadow.",
+        "Slow and kill adds before they reach Malignant Cavity. Aim Plague Wave away from the raid."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: vashnik-the-malignant",
+          "url": "https://www.icy-veins.com/wow/vashnik-raid-guide/"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1283164,
+          "nameEn": "Imbibe",
+          "nameRu": "Питье",
+          "iconName": "spell_nature_poisoncleansingtotem",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_poisoncleansingtotem.jpg",
+          "sha256": "3a403c6ec01117ff714188a8eafa9212bf4f3114a9251339b741ac7d65d83040",
+          "bytes": 2855,
+          "sourceUrl": "https://www.wowhead.com/spell=1283164",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1283164.jpg",
+          "iconId": 136070,
+          "currentTooltipIcon": "spell_nature_poisoncleansingtotem",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1280189,
+          "nameEn": "Malignant Burst",
+          "nameRu": "Тлетворный взрыв",
+          "iconName": "ability_rogue_deviouspoisons",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_rogue_deviouspoisons.jpg",
+          "sha256": "c7df43079af519d8c26ea712706289bc41517cb65c305f38a198989140b8887e",
+          "bytes": 2580,
+          "sourceUrl": "https://www.wowhead.com/spell=1280189",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1280189.jpg",
+          "iconId": 236271,
+          "currentTooltipIcon": "ability_rogue_deviouspoisons",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        }
+      ]
+    },
+    {
+      "slug": "sszorak",
+      "summaryRu": "Цисты страхуют рейд от ветра; направления считываются заранее. Учтены сентябрьские и октябрьские исправления.",
+      "summaryEn": "Cysts protect the raid from wind pushes; read directions in advance. September and October changes are included.",
+      "tipsRu": [
+        "По ветрам разметьте точки Venomous Surge; оставляйте по одной цисте напротив нужного тоннеля.",
+        "Ravage разворачивайте от рейда; Mutilate поглощайте группой. Heroic: чередуйте две группы.",
+        "Raging Crosswinds: найдите партнера с противоположным направлением; в переходке используйте подготовленные цисты.",
+        "Heroic: Caustic Claws больше не оставляет Caustic Residue. Mythic: с 13 октября набор до 100 ярости занимает на 5 секунд дольше."
+      ],
+      "tipsEn": [
+        "Mark Venomous Surge positions from wind directions; place one cyst opposite each required tunnel.",
+        "Face Ravage away and group-soak Mutilate. Heroic: alternate two soak groups.",
+        "For Raging Crosswinds, pair with an opposite direction; use prepared cysts during intermission.",
+        "Heroic: Caustic Claws no longer creates Caustic Residue. Mythic: reaching 100 rage takes 5 seconds longer following October 13 tuning."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: sszorak",
+          "url": "https://www.icy-veins.com/wow/sszorak-raid-guide/"
+        },
+        {
+          "title": "Blizzard: October 6, 2026 raid tuning",
+          "url": "https://news.blizzard.com/en-gb/article/24296142/hotfixes-october-6-2026"
+        },
+        {
+          "title": "Blizzard: hotfixes through October 20, 2026",
+          "url": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1277025,
+          "nameEn": "Apex Predator",
+          "nameRu": "Сверххищник",
+          "iconName": "ability_hunter_aspectoftheviper",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_hunter_aspectoftheviper.jpg",
+          "sha256": "2f0b524132e44c4e75118f89c22ae3295b56b16036ff4a10405f46e80cfc4d3f",
+          "bytes": 2612,
+          "sourceUrl": "https://www.wowhead.com/spell=1277025",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1277025.jpg",
+          "iconId": 132160,
+          "currentTooltipIcon": "ability_hunter_aspectoftheviper",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1305959,
+          "nameEn": "Venomous Surge",
+          "nameRu": "Ядовитый поток",
+          "iconName": "ability_creature_poison_06",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_creature_poison_06.jpg",
+          "sha256": "65d8dc7647d88781d47dea7e63123038ea65a7105ebd26bd418dacda6bd71e20",
+          "bytes": 2629,
+          "sourceUrl": "https://www.wowhead.com/spell=1305959",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1305959.jpg",
+          "iconId": 132108,
+          "currentTooltipIcon": "ability_creature_poison_06",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1285419,
+          "nameEn": "Raging Crosswinds",
+          "nameRu": "Яростные завихрения",
+          "iconName": "ability_skyreach_wind",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_skyreach_wind.jpg",
+          "sha256": "07ab8e69ab22c78e1d5f7bf79c43dc7c1b1f08c8c3b158aa3f3771f39a668d7e",
+          "bytes": 1885,
+          "sourceUrl": "https://www.wowhead.com/spell=1285419",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1285419.jpg",
+          "iconId": 1029595,
+          "currentTooltipIcon": "ability_skyreach_wind",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1285732,
+          "nameEn": "Howling Maelstrom",
+          "nameRu": "Воющий вихрь",
+          "iconName": "spell_nature_cyclone",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_cyclone.jpg",
+          "sha256": "fe0cc6c793c7471c972623c6ed7e0217e47a266e9e56537ba7d1f82cc064f3fd",
+          "bytes": 2108,
+          "sourceUrl": "https://www.wowhead.com/spell=1285732",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1285732.jpg",
+          "iconId": 136018,
+          "currentTooltipIcon": "spell_nature_cyclone",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        }
+      ]
+    },
+    {
+      "slug": "the-twin-fangs",
+      "summaryRu": "Выравнивайте здоровье Vexhul и Ithraz, распределяйте сбор яда по стакам Eternal Venom.",
+      "summaryEn": "Balance Vexhul and Ithraz health, and assign venom collection by Eternal Venom stacks.",
+      "tipsRu": [
+        "Боссы не делят здоровье; готовьте одновременное убийство. Танки сохраняют мили-дистанцию и меняются после Stone Breaker.",
+        "Caustic Globule собирают игроки с малым числом стаков; не ловите соседние сферы случайно.",
+        "Ravenous Feast снимает стаки Eternal Venom. На Heroic достижение 10 стаков смертельно."
+      ],
+      "tipsEn": [
+        "The bosses do not share health; plan simultaneous kills. Tanks maintain melee range and swap after Stone Breaker.",
+        "Assign Caustic Globules to players with low stacks; avoid accidentally collecting neighboring orbs.",
+        "Ravenous Feast removes Eternal Venom stacks. Reaching 10 stacks is lethal on Heroic."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: the-twin-fangs",
+          "url": "https://www.icy-veins.com/wow/twin-fangs-raid-guide"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1290336,
+          "nameEn": "Eternal Venom",
+          "nameRu": "Вечный яд",
+          "iconName": "spell_nature_nullifypoison",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_nullifypoison.jpg",
+          "sha256": "dcf2e8e1ffdd0dd7a1964b349805e28bedc83e4d8bd207e43743361bb4d31b26",
+          "bytes": 2385,
+          "sourceUrl": "https://www.wowhead.com/spell=1290336",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1290336.jpg",
+          "iconId": 136067,
+          "currentTooltipIcon": "spell_nature_nullifypoison",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1289192,
+          "nameEn": "Caustic Deluge",
+          "nameRu": "Едкое наводнение",
+          "iconName": "inv_ability_poison_beam",
+          "iconSourceUrl": "https://wago.tools/api/casc/5764918?product=wow&version=12.1.0.69587",
+          "sha256": "32a201248f2735e6773feae32756861f5225eee3d93ff6953dc1ab48f1def056",
+          "bytes": 5289,
+          "sourceUrl": "https://www.wowhead.com/spell=1289192",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289192.png",
+          "iconId": 5764918,
+          "currentTooltipIcon": "inv_ability_poison_beam",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1289993,
+          "nameEn": "Caustic Globule",
+          "nameRu": "Едкий комок",
+          "iconName": "inv_ability_poison_orb",
+          "iconSourceUrl": "https://wago.tools/api/casc/5764924?product=wow&version=12.1.0.69587",
+          "sha256": "e2218fe2e89fbd3b150274821ed308d04aa43d99c620775824d6ffd93ad9e01a",
+          "bytes": 5168,
+          "sourceUrl": "https://www.wowhead.com/spell=1289993",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289993.png",
+          "iconId": 5764924,
+          "currentTooltipIcon": "inv_ability_poison_orb",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1291404,
+          "nameEn": "Venomous Emergence",
+          "nameRu": "Ядовитое появление",
+          "iconName": "spell_nature_poisoncleansingtotem",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_poisoncleansingtotem.jpg",
+          "sha256": "3a403c6ec01117ff714188a8eafa9212bf4f3114a9251339b741ac7d65d83040",
+          "bytes": 2855,
+          "sourceUrl": "https://www.wowhead.com/spell=1291404",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1291404.jpg",
+          "iconId": 136070,
+          "currentTooltipIcon": "spell_nature_poisoncleansingtotem",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1290516,
+          "nameEn": "Ravenous Feast",
+          "nameRu": "Яростное пожирание",
+          "iconName": "ability_warrior_bloodnova",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_warrior_bloodnova.jpg",
+          "sha256": "4cb2f2ba5180a715df5f7d9f6993015881198d7e1a1efe2d184eddfc86db91c8",
+          "bytes": 2234,
+          "sourceUrl": "https://www.wowhead.com/spell=1290516",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1290516.jpg",
+          "iconId": 236305,
+          "currentTooltipIcon": "ability_warrior_bloodnova",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1288538,
+          "nameEn": "Stone Breaker",
+          "nameRu": "Крушитель камня",
+          "iconName": "ability_smash",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_smash.jpg",
+          "sha256": "5556e6cc95da1ff35ca2c05491892ed29384d37fe5fd302e5505e0671bb0bd74",
+          "bytes": 2645,
+          "sourceUrl": "https://www.wowhead.com/spell=1288538",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1288538.jpg",
+          "iconId": 132318,
+          "currentTooltipIcon": "ability_smash",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1293749,
+          "nameEn": "Vile Flood",
+          "nameRu": "Гнусный потоп",
+          "iconName": "ability_rogue_deviouspoisons",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_rogue_deviouspoisons.jpg",
+          "sha256": "c7df43079af519d8c26ea712706289bc41517cb65c305f38a198989140b8887e",
+          "bytes": 2580,
+          "sourceUrl": "https://www.wowhead.com/spell=1293749",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1293749.jpg",
+          "iconId": 236271,
+          "currentTooltipIcon": "ability_rogue_deviouspoisons",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1306872,
+          "nameEn": "Sanguine Storm",
+          "nameRu": "Кровавая буря",
+          "iconName": "inv_artifact_bloodoftheassassinated",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_artifact_bloodoftheassassinated.jpg",
+          "sha256": "b4c573bd3272f8fafe3d94d7efc84bd4e89d38cb54b5c7083f5ee48afa84d951",
+          "bytes": 2529,
+          "sourceUrl": "https://www.wowhead.com/spell=1306872",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1306872.jpg",
+          "iconId": 1394887,
+          "currentTooltipIcon": "inv_artifact_bloodoftheassassinated",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        }
+      ]
+    },
+    {
+      "slug": "the-coiled-altar",
+      "summaryRu": "Управляйте сбором яда и призраками. Mythic обновлен по хотфиксу 13 октября; достижение исправлено 16 октября.",
+      "summaryEn": "Control venom collection and ghosts. Mythic reflects October 13 tuning; the achievement received an October 16 fix.",
+      "tipsRu": [
+        "Собирайте Coalesced Venom под Sever вне путей Axegrinder; танк меняется после конуса. Heroic: согласуйте число одновременных взрывов с лекарями.",
+        "Снимайте щиты Dreadmarch; фиксированный игрок смотрит на призрака, удерживая его под Soul Sever.",
+        "Mythic: теперь 8 начальных сфер, 4 Virulent Mutations, радиус Mutation/Mutagenic Venom — 6 м; Dreadmarch выбирает 3 игроков.",
+        "Watch Out Behind You теперь исправлено для групп больше 20 игроков. Это не отменяет условия достижения."
+      ],
+      "tipsEn": [
+        "Collect Coalesced Venom for Sever away from Axegrinder paths; swap tanks after the cone. Heroic: coordinate simultaneous detonations with healers.",
+        "Break Dreadmarch shields; fixated players face ghosts to hold them for Soul Sever.",
+        "Mythic now has 8 initial orbs, 4 Virulent Mutations, a 6-yard Mutation/Mutagenic Venom radius, and 3 Dreadmarch targets.",
+        "Watch Out Behind You now works for groups larger than 20. Its achievement requirements still apply."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: the-coiled-altar",
+          "url": "https://www.icy-veins.com/wow/coiled-altar-raid-guide"
+        },
+        {
+          "title": "Blizzard: hotfixes through October 20, 2026",
+          "url": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1282403,
+          "nameEn": "Coalesced Venom",
+          "nameRu": "Сгустившийся яд",
+          "iconName": "inv_ability_poison_orb",
+          "iconSourceUrl": "https://wago.tools/api/casc/5764924?product=wow&version=12.1.0.69587",
+          "sha256": "e2218fe2e89fbd3b150274821ed308d04aa43d99c620775824d6ffd93ad9e01a",
+          "bytes": 5168,
+          "sourceUrl": "https://www.wowhead.com/spell=1282403",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1282403.png",
+          "iconId": 5764924,
+          "currentTooltipIcon": "inv_ability_poison_orb",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1299680,
+          "nameEn": "Sever",
+          "nameRu": "Рассечение",
+          "iconName": "ability_criticalstrike",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_criticalstrike.jpg",
+          "sha256": "16a6eb3dbcaeb9659b9b402d043e44d80bc18c107dc8c1910cda0998779c1e66",
+          "bytes": 2774,
+          "sourceUrl": "https://www.wowhead.com/spell=1299680",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1299680.jpg",
+          "iconId": 132109,
+          "currentTooltipIcon": "ability_criticalstrike",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1285643,
+          "nameEn": "Dreadmarch",
+          "nameRu": "Марш ужаса",
+          "iconName": "spell_nzinsanity_fearofdeath",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nzinsanity_fearofdeath.jpg",
+          "sha256": "c08912ad2b9bacf6e8411b2d72faab5c66b1bb47e452ddc62ba14b269aabd262",
+          "bytes": 2243,
+          "sourceUrl": "https://www.wowhead.com/spell=1285643",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1285643.jpg",
+          "iconId": 3163624,
+          "currentTooltipIcon": "spell_nzinsanity_fearofdeath",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1286620,
+          "nameEn": "Soul Sever",
+          "nameRu": "Отделение души",
+          "iconName": "ability_demonhunter_soulcleave2",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_demonhunter_soulcleave2.jpg",
+          "sha256": "de22d46dc7a11e87775567789ee569428b33ce7ff0256f1f91f006a72f86de33",
+          "bytes": 2605,
+          "sourceUrl": "https://www.wowhead.com/spell=1286620",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1286620.jpg",
+          "iconId": 1354410,
+          "currentTooltipIcon": "ability_demonhunter_soulcleave2",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1304032,
+          "nameEn": "Soulbinding",
+          "nameRu": "Связь душ",
+          "iconName": "spell_necro_deathall",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_necro_deathall.jpg",
+          "sha256": "6541b9d8c1b789d5186d062e175ea3f745621c7f699040cb627590010b4d376c",
+          "bytes": 2517,
+          "sourceUrl": "https://www.wowhead.com/spell=1304032",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1304032.jpg",
+          "iconId": 2576086,
+          "currentTooltipIcon": "spell_necro_deathall",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        }
+      ]
+    },
+    {
+      "slug": "ulatek",
+      "summaryRu": "Контролируйте яйца, заранее разделитесь для коридоров и двигайтесь до разрушения платформ. Учтено ослабление 6 октября.",
+      "summaryEn": "Control eggs, preassign corridor teams, and move before platforms collapse. October 6 tuning is included.",
+      "tipsRu": [
+        "Доставляйте яйца в Spectral Coils, избегая Caustic Waves; Heroic: чередуйте назначенные группы поглощения.",
+        "В коридорах убейте Warden; разрывайте Grasping Fangs парами после спадания эффекта. В котел сначала сдавайте малые яйца, затем Doomscale Egg.",
+        "На финальной фазе прерывайте Shriekers, разводите Volatile Purge и уходите до Circling Prey.",
+        "С 6 октября для Serpent’s Bite достаточно максимум трех поглощающих на каждую цель независимо от размера рейда; Mythic: хвост дает 3 волны вместо 7."
+      ],
+      "tipsEn": [
+        "Carry eggs into Spectral Coils and avoid Caustic Waves; Heroic: alternate assigned soak teams.",
+        "In corridors, kill the Warden and break Grasping Fangs in pairs after the effect expires. Feed small eggs before the Doomscale Egg.",
+        "In the final phase, interrupt Shriekers, spread Volatile Purge, and move before Circling Prey.",
+        "Since October 6, each Serpent’s Bite needs no more than three soakers regardless of raid size; Mythic tails emit 3 waves instead of 7."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: ulatek",
+          "url": "https://www.icy-veins.com/wow/ulatek-raid-guide/"
+        },
+        {
+          "title": "Blizzard: October 6, 2026 raid tuning",
+          "url": "https://news.blizzard.com/en-gb/article/24296142/hotfixes-october-6-2026"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1292403,
+          "nameEn": "Caustic Waves",
+          "nameRu": "Едкие волны",
+          "iconName": "inv_ability_poison_wave",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_ability_poison_wave.jpg",
+          "sha256": "81181a3483fd905d9b1f47a2f22c95c5a325f71c3325154785c88eb4299ac9c1",
+          "bytes": 2697,
+          "sourceUrl": "https://www.wowhead.com/spell=1292403",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1292403.jpg",
+          "iconId": 5764925,
+          "currentTooltipIcon": "inv_ability_poison_wave",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1301268,
+          "nameEn": "Putrid Membrane",
+          "nameRu": "Гнилостная капсула",
+          "iconName": "achievement_halloween_rottenegg_01",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/achievement_halloween_rottenegg_01.jpg",
+          "sha256": "0359c4e7baa23fbbab7b03005af1137ca93062c7bb4152bf3c0c44c5fbd4b890",
+          "bytes": 2354,
+          "sourceUrl": "https://www.wowhead.com/spell=1301268",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1301268.jpg",
+          "iconId": 236549,
+          "currentTooltipIcon": "achievement_halloween_rottenegg_01",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1287265,
+          "nameEn": "Spectral Coils",
+          "nameRu": "Призрачные кольца",
+          "iconName": "spell_animamaldraxxus_nova",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_animamaldraxxus_nova.jpg",
+          "sha256": "32ed90052ef52a6a4c5284a237d4577f7fc99b45866313021a34f38e1bc09e62",
+          "bytes": 3178,
+          "sourceUrl": "https://www.wowhead.com/spell=1287265",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1287265.jpg",
+          "iconId": 3528295,
+          "currentTooltipIcon": "spell_animamaldraxxus_nova",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1286860,
+          "nameEn": "Rage of the Shackled",
+          "nameRu": "Ярость пленницы",
+          "iconName": "inv_121_raid_achievement_ulatek",
+          "iconSourceUrl": "https://wago.tools/api/casc/7966624?product=wow&version=12.1.0.69587",
+          "sha256": "c72f9158476a9ca75e41dbc1bc73eecb56216030319b0420911cb745a3a8b6fd",
+          "bytes": 6646,
+          "sourceUrl": "https://www.wowhead.com/spell=1286860",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1286860.png",
+          "iconId": 7966624,
+          "currentTooltipIcon": "inv_121_raid_achievement_ulatek",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1290990,
+          "nameEn": "Writhing Gestation",
+          "nameRu": "Извивающееся порождение",
+          "iconName": "rogue_leeching_poison",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/rogue_leeching_poison.jpg",
+          "sha256": "07cf2a327323101701830afd4fab4234ac9383bbc44a008fc96f09e4b2bb0de5",
+          "bytes": 3023,
+          "sourceUrl": "https://www.wowhead.com/spell=1290990",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1290990.jpg",
+          "iconId": 538440,
+          "currentTooltipIcon": "rogue_leeching_poison",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1300751,
+          "nameEn": "Call of the Serpent",
+          "nameRu": "Зов змеи",
+          "iconName": "inv_121_pet_babywindserpent_green",
+          "iconSourceUrl": "https://wago.tools/api/casc/8125100?product=wow&version=12.1.0.69587",
+          "sha256": "ba36a99089fda405dc00f0c0ef3138424d1418b1bbfe93f721c0e87fae35a3d8",
+          "bytes": 6659,
+          "sourceUrl": "https://www.wowhead.com/spell=1300751",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1300751.png",
+          "iconId": 8125100,
+          "currentTooltipIcon": "8125100",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        },
+        {
+          "spellId": 1301510,
+          "nameEn": "Circling Prey",
+          "nameRu": "Обвивание добычи",
+          "iconName": "inv_offhand_1h_ulatek_d_01",
+          "iconSourceUrl": "https://wago.tools/api/casc/7500005?product=wow&version=12.1.0.69587",
+          "sha256": "94eebbcbbb93d2b5fc6ade12592bdf62fcbddc062dedd0722f56d3f26cff78be",
+          "bytes": 5764,
+          "sourceUrl": "https://www.wowhead.com/spell=1301510",
+          "localIcon": "/assets/wow/raids/venomous-abyss/spells/1301510.png",
+          "iconId": 7500005,
+          "currentTooltipIcon": "inv_offhand_1h_ulatek_d_01",
+          "sourceByteMatch": true,
+          "localByteMatch": true,
+          "tooltipIconIdentityMatches": true
+        }
+      ]
+    }
+  ],
+  "corrections": [
+    {
+      "field": "raidLootBands.mythic.final",
+      "issue": "344 is confirmed by the current published loot guide (Myth 9/6); do not revert to 324. Slumbering Coil Curio is an exception: redeemed tier uses its original boss item level. This is editorial guide confirmation, not an authenticated live item API audit.",
+      "sources": [
+        "https://www.icy-veins.com/wow/news/venomous-abysss-final-two-bosses-drop-gear-10-item-levels-past-max/"
+      ]
+    },
+    {
+      "field": "venomousAbyss.the-coiled-altar.difficulty.mythic",
+      "issue": "Replace obsolete 8-yard mutation radius with 6 yards. October 13: 8 initial orbs, 4 mutations, 3 Dreadmarch targets.",
+      "sources": [
+        "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+      ]
+    },
+    {
+      "field": "venomousAbyss.sszorak.difficulty.heroic",
+      "issue": "Do not instruct Heroic players to manage Caustic Claws residue: September 15 removed those pools on Heroic. Mythic 100-rage timing increased by 5 seconds October 13.",
+      "sources": [
+        "https://news.blizzard.com/en-gb/article/24296142/hotfixes-october-6-2026",
+        "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+      ]
+    },
+    {
+      "field": "venomousAbyss.ulatek.phase3",
+      "issue": "Do not scale Serpent’s Bite soaking teams with raid size: October 6 caps required soakers at 3 per target. Mythic tail waves reduced 7 to3.",
+      "sources": [
+        "https://news.blizzard.com/en-gb/article/24296142/hotfixes-october-6-2026"
+      ]
+    },
+    {
+      "field": "season and rewards",
+      "issue": "Raid belongs to Midnight Season 2, all four LFR wings opened by September8 regional reset. AOTC/CE remain season-bound; Hall of Fame availability and exact live mount quantity were not independently reverified.",
+      "sources": [
+        "https://news.blizzard.com/en-us/article/24294062/curse-of-ulatek-the-venomous-abyss-raid-finder-wing-3-now-live",
+        "https://news.blizzard.com/en-us/article/24294369/midnight-season-2-is-now-live"
+      ]
+    },
+    {
+      "field": "publication boundary",
+      "issue": "These are dated editorial strategy notes. Do not use current tooltip/icon evidence to publish unresolved exact-build spell descriptions, numerical damage or duration values. Existing publication guards remain authoritative.",
+      "sources": []
+    }
+  ],
+  "iconAudit": {
+    "checkedAt": "2026-10-21T20:17:18Z",
+    "source": "Current Wowhead retail tooltip icon identity, original Blizzard render/Wago file bytes and existing local hashes",
+    "checkedIcons": 37,
+    "existingByteMatches": 37,
+    "currentTooltipIdentityMatches": 37,
+    "originalSourceByteMatches": 37,
+    "missingLocalIcons": [],
+    "bindings": [
+      {
+        "spellId": 1284032,
+        "nameEn": "Soulcoil Well",
+        "nameRu": "Колодец душителей душ",
+        "iconName": "achievment_boss_wellofeternity",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/achievment_boss_wellofeternity.jpg",
+        "sha256": "1ae1474b45352bf286b22528d25e16ef7960237a5961ab32dcc1acd14b3b97f4",
+        "bytes": 2952,
+        "sourceUrl": "https://www.wowhead.com/spell=1284032",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1284032.jpg",
+        "iconId": 574792,
+        "currentTooltipIcon": "achievment_boss_wellofeternity",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1288772,
+        "nameEn": "Soulcoil Rite",
+        "nameRu": "Обряд душителя душ",
+        "iconName": "spell_necro_deathsknell",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_necro_deathsknell.jpg",
+        "sha256": "54be703154be9bcd903b9b2f5d817a9fbbcf6e42e77dc975e522b35c0c642bdb",
+        "bytes": 2849,
+        "sourceUrl": "https://www.wowhead.com/spell=1288772",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1288772.jpg",
+        "iconId": 2576091,
+        "currentTooltipIcon": "spell_necro_deathsknell",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1289919,
+        "nameEn": "Restless Amani",
+        "nameRu": "Неупокоенный тролль из племени Амани",
+        "iconName": "inv_12_nonmasculinecharacter_troll",
+        "iconSourceUrl": "https://wago.tools/api/casc/7214199?product=wow&version=12.1.0.69587",
+        "sha256": "0b0bf505e374ccc4788f363069a23962bc7ec88ae8e2b19d54dfda83edaee122",
+        "bytes": 5823,
+        "sourceUrl": "https://www.wowhead.com/spell=1289919",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289919.png",
+        "iconId": 7214199,
+        "currentTooltipIcon": "inv_12_nonmasculinecharacter_troll",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1289683,
+        "nameEn": "Ritual of Awakening",
+        "nameRu": "Ритуал пробуждения",
+        "iconName": "inv_helm_mail_raidshamanmythic_s_01",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_helm_mail_raidshamanmythic_s_01.jpg",
+        "sha256": "2325afed70466a5b546fa6c71a33f7450613ca5ad1d39d64d5712d3868898a5f",
+        "bytes": 3108,
+        "sourceUrl": "https://www.wowhead.com/spell=1289683",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289683.jpg",
+        "iconId": 1568673,
+        "currentTooltipIcon": "inv_helm_mail_raidshamanmythic_s_01",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1289696,
+        "nameEn": "Tether of Awakening",
+        "nameRu": "Нить пробуждения",
+        "iconName": "spell_animamaldraxxus_beam",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_animamaldraxxus_beam.jpg",
+        "sha256": "2e943a20debe4cc80fccfbab1c7693bcc751320903f432034bb21f1934567418",
+        "bytes": 2362,
+        "sourceUrl": "https://www.wowhead.com/spell=1289696",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289696.jpg",
+        "iconId": 3528290,
+        "currentTooltipIcon": "spell_animamaldraxxus_beam",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1290003,
+        "nameEn": "Uncoiling",
+        "nameRu": "Расплетение",
+        "iconName": "inv_12_profession_thematicfoozles_moteofpurelight_green",
+        "iconSourceUrl": "https://wago.tools/api/casc/7549439?product=wow&version=12.1.0.69587",
+        "sha256": "b92426693bb63b005f5610fe1bea4fa9611c1cddcfcdfea7d9fa971c4fba6d76",
+        "bytes": 6075,
+        "sourceUrl": "https://www.wowhead.com/spell=1290003",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1290003.png",
+        "iconId": 7549439,
+        "currentTooltipIcon": "inv_12_profession_thematicfoozles_moteofpurelight_green",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1284588,
+        "nameEn": "Vitriolic Stasis",
+        "nameRu": "Агрессивный стазис",
+        "iconName": "inv_10_enchanting2_magicswirl_red",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_10_enchanting2_magicswirl_red.jpg",
+        "sha256": "a2cfbe546e8fec0cf44dc4d9ea44460a1e3ae45b730033d42d075f1b79a6978a",
+        "bytes": 2582,
+        "sourceUrl": "https://www.wowhead.com/spell=1284588",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1284588.jpg",
+        "iconId": 4631369,
+        "currentTooltipIcon": "inv_10_enchanting2_magicswirl_red",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1284590,
+        "nameEn": "Helical Toxins",
+        "nameRu": "Спиральный токсин",
+        "iconName": "inv_112_warlock_bloodstone",
+        "iconSourceUrl": "https://wago.tools/api/casc/6866618?product=wow&version=12.1.0.69587",
+        "sha256": "fe9efab0ab8e6ce648c62f7e0e251e4dee11f5e99f68f80d8621e40f943630f6",
+        "bytes": 6487,
+        "sourceUrl": "https://www.wowhead.com/spell=1284590",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1284590.png",
+        "iconId": 6866618,
+        "currentTooltipIcon": "inv_112_warlock_bloodstone",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1295451,
+        "nameEn": "Dark Whispers",
+        "nameRu": "Темный шепот",
+        "iconName": "inv_hextrollpet_red",
+        "iconSourceUrl": "https://wago.tools/api/casc/7558869?product=wow&version=12.1.0.69587",
+        "sha256": "59a50c1deb359fd55b237186d18d499198ee8255b2278cc82276cd8a3b416ee3",
+        "bytes": 6225,
+        "sourceUrl": "https://www.wowhead.com/spell=1295451",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1295451.png",
+        "iconId": 7558869,
+        "currentTooltipIcon": "inv_hextrollpet_red",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1297024,
+        "nameEn": "Mor'zahi's Command",
+        "nameRu": "Приказ Мор'захи",
+        "iconName": "inv_anguish_missile",
+        "iconSourceUrl": "https://wago.tools/api/casc/7816851?product=wow&version=12.1.0.69587",
+        "sha256": "6ab5111a9920a3056317e94e3e53df3ebbfc6389854c73d052bd0cc592a8f97e",
+        "bytes": 5506,
+        "sourceUrl": "https://www.wowhead.com/spell=1297024",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1297024.png",
+        "iconId": 7816851,
+        "currentTooltipIcon": "inv_anguish_missile",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1292779,
+        "nameEn": "Final Ascension",
+        "nameRu": "Последнее вознесение",
+        "iconName": "spell_animarevendreth_nova",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_animarevendreth_nova.jpg",
+        "sha256": "a5ef71a7f177246ff2a425802b69a0c76314477c40e2edca1b9740a41194cdee",
+        "bytes": 2679,
+        "sourceUrl": "https://www.wowhead.com/spell=1292779",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1292779.jpg",
+        "iconId": 3528311,
+        "currentTooltipIcon": "spell_animarevendreth_nova",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1283164,
+        "nameEn": "Imbibe",
+        "nameRu": "Питье",
+        "iconName": "spell_nature_poisoncleansingtotem",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_poisoncleansingtotem.jpg",
+        "sha256": "3a403c6ec01117ff714188a8eafa9212bf4f3114a9251339b741ac7d65d83040",
+        "bytes": 2855,
+        "sourceUrl": "https://www.wowhead.com/spell=1283164",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1283164.jpg",
+        "iconId": 136070,
+        "currentTooltipIcon": "spell_nature_poisoncleansingtotem",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1280189,
+        "nameEn": "Malignant Burst",
+        "nameRu": "Тлетворный взрыв",
+        "iconName": "ability_rogue_deviouspoisons",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_rogue_deviouspoisons.jpg",
+        "sha256": "c7df43079af519d8c26ea712706289bc41517cb65c305f38a198989140b8887e",
+        "bytes": 2580,
+        "sourceUrl": "https://www.wowhead.com/spell=1280189",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1280189.jpg",
+        "iconId": 236271,
+        "currentTooltipIcon": "ability_rogue_deviouspoisons",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1277025,
+        "nameEn": "Apex Predator",
+        "nameRu": "Сверххищник",
+        "iconName": "ability_hunter_aspectoftheviper",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_hunter_aspectoftheviper.jpg",
+        "sha256": "2f0b524132e44c4e75118f89c22ae3295b56b16036ff4a10405f46e80cfc4d3f",
+        "bytes": 2612,
+        "sourceUrl": "https://www.wowhead.com/spell=1277025",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1277025.jpg",
+        "iconId": 132160,
+        "currentTooltipIcon": "ability_hunter_aspectoftheviper",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1305959,
+        "nameEn": "Venomous Surge",
+        "nameRu": "Ядовитый поток",
+        "iconName": "ability_creature_poison_06",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_creature_poison_06.jpg",
+        "sha256": "65d8dc7647d88781d47dea7e63123038ea65a7105ebd26bd418dacda6bd71e20",
+        "bytes": 2629,
+        "sourceUrl": "https://www.wowhead.com/spell=1305959",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1305959.jpg",
+        "iconId": 132108,
+        "currentTooltipIcon": "ability_creature_poison_06",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1285419,
+        "nameEn": "Raging Crosswinds",
+        "nameRu": "Яростные завихрения",
+        "iconName": "ability_skyreach_wind",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_skyreach_wind.jpg",
+        "sha256": "07ab8e69ab22c78e1d5f7bf79c43dc7c1b1f08c8c3b158aa3f3771f39a668d7e",
+        "bytes": 1885,
+        "sourceUrl": "https://www.wowhead.com/spell=1285419",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1285419.jpg",
+        "iconId": 1029595,
+        "currentTooltipIcon": "ability_skyreach_wind",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1285732,
+        "nameEn": "Howling Maelstrom",
+        "nameRu": "Воющий вихрь",
+        "iconName": "spell_nature_cyclone",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_cyclone.jpg",
+        "sha256": "fe0cc6c793c7471c972623c6ed7e0217e47a266e9e56537ba7d1f82cc064f3fd",
+        "bytes": 2108,
+        "sourceUrl": "https://www.wowhead.com/spell=1285732",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1285732.jpg",
+        "iconId": 136018,
+        "currentTooltipIcon": "spell_nature_cyclone",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1290336,
+        "nameEn": "Eternal Venom",
+        "nameRu": "Вечный яд",
+        "iconName": "spell_nature_nullifypoison",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_nullifypoison.jpg",
+        "sha256": "dcf2e8e1ffdd0dd7a1964b349805e28bedc83e4d8bd207e43743361bb4d31b26",
+        "bytes": 2385,
+        "sourceUrl": "https://www.wowhead.com/spell=1290336",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1290336.jpg",
+        "iconId": 136067,
+        "currentTooltipIcon": "spell_nature_nullifypoison",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1289192,
+        "nameEn": "Caustic Deluge",
+        "nameRu": "Едкое наводнение",
+        "iconName": "inv_ability_poison_beam",
+        "iconSourceUrl": "https://wago.tools/api/casc/5764918?product=wow&version=12.1.0.69587",
+        "sha256": "32a201248f2735e6773feae32756861f5225eee3d93ff6953dc1ab48f1def056",
+        "bytes": 5289,
+        "sourceUrl": "https://www.wowhead.com/spell=1289192",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289192.png",
+        "iconId": 5764918,
+        "currentTooltipIcon": "inv_ability_poison_beam",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1289993,
+        "nameEn": "Caustic Globule",
+        "nameRu": "Едкий комок",
+        "iconName": "inv_ability_poison_orb",
+        "iconSourceUrl": "https://wago.tools/api/casc/5764924?product=wow&version=12.1.0.69587",
+        "sha256": "e2218fe2e89fbd3b150274821ed308d04aa43d99c620775824d6ffd93ad9e01a",
+        "bytes": 5168,
+        "sourceUrl": "https://www.wowhead.com/spell=1289993",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1289993.png",
+        "iconId": 5764924,
+        "currentTooltipIcon": "inv_ability_poison_orb",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1291404,
+        "nameEn": "Venomous Emergence",
+        "nameRu": "Ядовитое появление",
+        "iconName": "spell_nature_poisoncleansingtotem",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_poisoncleansingtotem.jpg",
+        "sha256": "3a403c6ec01117ff714188a8eafa9212bf4f3114a9251339b741ac7d65d83040",
+        "bytes": 2855,
+        "sourceUrl": "https://www.wowhead.com/spell=1291404",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1291404.jpg",
+        "iconId": 136070,
+        "currentTooltipIcon": "spell_nature_poisoncleansingtotem",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1290516,
+        "nameEn": "Ravenous Feast",
+        "nameRu": "Яростное пожирание",
+        "iconName": "ability_warrior_bloodnova",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_warrior_bloodnova.jpg",
+        "sha256": "4cb2f2ba5180a715df5f7d9f6993015881198d7e1a1efe2d184eddfc86db91c8",
+        "bytes": 2234,
+        "sourceUrl": "https://www.wowhead.com/spell=1290516",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1290516.jpg",
+        "iconId": 236305,
+        "currentTooltipIcon": "ability_warrior_bloodnova",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1288538,
+        "nameEn": "Stone Breaker",
+        "nameRu": "Крушитель камня",
+        "iconName": "ability_smash",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_smash.jpg",
+        "sha256": "5556e6cc95da1ff35ca2c05491892ed29384d37fe5fd302e5505e0671bb0bd74",
+        "bytes": 2645,
+        "sourceUrl": "https://www.wowhead.com/spell=1288538",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1288538.jpg",
+        "iconId": 132318,
+        "currentTooltipIcon": "ability_smash",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1293749,
+        "nameEn": "Vile Flood",
+        "nameRu": "Гнусный потоп",
+        "iconName": "ability_rogue_deviouspoisons",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_rogue_deviouspoisons.jpg",
+        "sha256": "c7df43079af519d8c26ea712706289bc41517cb65c305f38a198989140b8887e",
+        "bytes": 2580,
+        "sourceUrl": "https://www.wowhead.com/spell=1293749",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1293749.jpg",
+        "iconId": 236271,
+        "currentTooltipIcon": "ability_rogue_deviouspoisons",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1306872,
+        "nameEn": "Sanguine Storm",
+        "nameRu": "Кровавая буря",
+        "iconName": "inv_artifact_bloodoftheassassinated",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_artifact_bloodoftheassassinated.jpg",
+        "sha256": "b4c573bd3272f8fafe3d94d7efc84bd4e89d38cb54b5c7083f5ee48afa84d951",
+        "bytes": 2529,
+        "sourceUrl": "https://www.wowhead.com/spell=1306872",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1306872.jpg",
+        "iconId": 1394887,
+        "currentTooltipIcon": "inv_artifact_bloodoftheassassinated",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1282403,
+        "nameEn": "Coalesced Venom",
+        "nameRu": "Сгустившийся яд",
+        "iconName": "inv_ability_poison_orb",
+        "iconSourceUrl": "https://wago.tools/api/casc/5764924?product=wow&version=12.1.0.69587",
+        "sha256": "e2218fe2e89fbd3b150274821ed308d04aa43d99c620775824d6ffd93ad9e01a",
+        "bytes": 5168,
+        "sourceUrl": "https://www.wowhead.com/spell=1282403",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1282403.png",
+        "iconId": 5764924,
+        "currentTooltipIcon": "inv_ability_poison_orb",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1299680,
+        "nameEn": "Sever",
+        "nameRu": "Рассечение",
+        "iconName": "ability_criticalstrike",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_criticalstrike.jpg",
+        "sha256": "16a6eb3dbcaeb9659b9b402d043e44d80bc18c107dc8c1910cda0998779c1e66",
+        "bytes": 2774,
+        "sourceUrl": "https://www.wowhead.com/spell=1299680",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1299680.jpg",
+        "iconId": 132109,
+        "currentTooltipIcon": "ability_criticalstrike",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1285643,
+        "nameEn": "Dreadmarch",
+        "nameRu": "Марш ужаса",
+        "iconName": "spell_nzinsanity_fearofdeath",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_nzinsanity_fearofdeath.jpg",
+        "sha256": "c08912ad2b9bacf6e8411b2d72faab5c66b1bb47e452ddc62ba14b269aabd262",
+        "bytes": 2243,
+        "sourceUrl": "https://www.wowhead.com/spell=1285643",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1285643.jpg",
+        "iconId": 3163624,
+        "currentTooltipIcon": "spell_nzinsanity_fearofdeath",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1286620,
+        "nameEn": "Soul Sever",
+        "nameRu": "Отделение души",
+        "iconName": "ability_demonhunter_soulcleave2",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_demonhunter_soulcleave2.jpg",
+        "sha256": "de22d46dc7a11e87775567789ee569428b33ce7ff0256f1f91f006a72f86de33",
+        "bytes": 2605,
+        "sourceUrl": "https://www.wowhead.com/spell=1286620",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1286620.jpg",
+        "iconId": 1354410,
+        "currentTooltipIcon": "ability_demonhunter_soulcleave2",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1304032,
+        "nameEn": "Soulbinding",
+        "nameRu": "Связь душ",
+        "iconName": "spell_necro_deathall",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_necro_deathall.jpg",
+        "sha256": "6541b9d8c1b789d5186d062e175ea3f745621c7f699040cb627590010b4d376c",
+        "bytes": 2517,
+        "sourceUrl": "https://www.wowhead.com/spell=1304032",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1304032.jpg",
+        "iconId": 2576086,
+        "currentTooltipIcon": "spell_necro_deathall",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1292403,
+        "nameEn": "Caustic Waves",
+        "nameRu": "Едкие волны",
+        "iconName": "inv_ability_poison_wave",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/inv_ability_poison_wave.jpg",
+        "sha256": "81181a3483fd905d9b1f47a2f22c95c5a325f71c3325154785c88eb4299ac9c1",
+        "bytes": 2697,
+        "sourceUrl": "https://www.wowhead.com/spell=1292403",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1292403.jpg",
+        "iconId": 5764925,
+        "currentTooltipIcon": "inv_ability_poison_wave",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1301268,
+        "nameEn": "Putrid Membrane",
+        "nameRu": "Гнилостная капсула",
+        "iconName": "achievement_halloween_rottenegg_01",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/achievement_halloween_rottenegg_01.jpg",
+        "sha256": "0359c4e7baa23fbbab7b03005af1137ca93062c7bb4152bf3c0c44c5fbd4b890",
+        "bytes": 2354,
+        "sourceUrl": "https://www.wowhead.com/spell=1301268",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1301268.jpg",
+        "iconId": 236549,
+        "currentTooltipIcon": "achievement_halloween_rottenegg_01",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1287265,
+        "nameEn": "Spectral Coils",
+        "nameRu": "Призрачные кольца",
+        "iconName": "spell_animamaldraxxus_nova",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_animamaldraxxus_nova.jpg",
+        "sha256": "32ed90052ef52a6a4c5284a237d4577f7fc99b45866313021a34f38e1bc09e62",
+        "bytes": 3178,
+        "sourceUrl": "https://www.wowhead.com/spell=1287265",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1287265.jpg",
+        "iconId": 3528295,
+        "currentTooltipIcon": "spell_animamaldraxxus_nova",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1286860,
+        "nameEn": "Rage of the Shackled",
+        "nameRu": "Ярость пленницы",
+        "iconName": "inv_121_raid_achievement_ulatek",
+        "iconSourceUrl": "https://wago.tools/api/casc/7966624?product=wow&version=12.1.0.69587",
+        "sha256": "c72f9158476a9ca75e41dbc1bc73eecb56216030319b0420911cb745a3a8b6fd",
+        "bytes": 6646,
+        "sourceUrl": "https://www.wowhead.com/spell=1286860",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1286860.png",
+        "iconId": 7966624,
+        "currentTooltipIcon": "inv_121_raid_achievement_ulatek",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1290990,
+        "nameEn": "Writhing Gestation",
+        "nameRu": "Извивающееся порождение",
+        "iconName": "rogue_leeching_poison",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/rogue_leeching_poison.jpg",
+        "sha256": "07cf2a327323101701830afd4fab4234ac9383bbc44a008fc96f09e4b2bb0de5",
+        "bytes": 3023,
+        "sourceUrl": "https://www.wowhead.com/spell=1290990",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1290990.jpg",
+        "iconId": 538440,
+        "currentTooltipIcon": "rogue_leeching_poison",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1300751,
+        "nameEn": "Call of the Serpent",
+        "nameRu": "Зов змеи",
+        "iconName": "inv_121_pet_babywindserpent_green",
+        "iconSourceUrl": "https://wago.tools/api/casc/8125100?product=wow&version=12.1.0.69587",
+        "sha256": "ba36a99089fda405dc00f0c0ef3138424d1418b1bbfe93f721c0e87fae35a3d8",
+        "bytes": 6659,
+        "sourceUrl": "https://www.wowhead.com/spell=1300751",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1300751.png",
+        "iconId": 8125100,
+        "currentTooltipIcon": "8125100",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      },
+      {
+        "spellId": 1301510,
+        "nameEn": "Circling Prey",
+        "nameRu": "Обвивание добычи",
+        "iconName": "inv_offhand_1h_ulatek_d_01",
+        "iconSourceUrl": "https://wago.tools/api/casc/7500005?product=wow&version=12.1.0.69587",
+        "sha256": "94eebbcbbb93d2b5fc6ade12592bdf62fcbddc062dedd0722f56d3f26cff78be",
+        "bytes": 5764,
+        "sourceUrl": "https://www.wowhead.com/spell=1301510",
+        "localIcon": "/assets/wow/raids/venomous-abyss/spells/1301510.png",
+        "iconId": 7500005,
+        "currentTooltipIcon": "inv_offhand_1h_ulatek_d_01",
+        "sourceByteMatch": true,
+        "localByteMatch": true,
+        "tooltipIconIdentityMatches": true
+      }
+    ]
+  }
+}

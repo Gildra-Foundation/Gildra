@@ -8,11 +8,15 @@ import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy } from "./raidStrategy";
 import styles from "./raidGuide.module.css";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
+import { getRaidReview } from "@/lib/data/raidReviews";
+import { RaidReviewNotes } from "./RaidReviewNotes";
+import { RaidSpellReference } from "./RaidSpellReference";
 import { trail } from "@/lib/routes/registry";
 
 /** Boss guide of a Midnight Season 1 raid: header, encounter switcher, battle plan, one mechanics list. */
 export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; boss: RaidBoss; locale: RaidLocale }) {
   const copy = raidGuideCopy[locale];
+  const reviewed = Boolean(getRaidReview(raid.slug));
   const raidName = locale === "ru" ? raid.nameRu : raid.nameEn;
   const bossName = (entry: RaidBoss) => locale === "ru" ? entry.nameRu : entry.nameEn;
   const prefix = locale === "ru" ? "/ru" : "";
@@ -35,11 +39,13 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
 
       <EncounterSwitcher items={encounters} label={copy.encountersLabel} />
 
+      <RaidReviewNotes raidSlug={raid.slug} bossSlug={boss.slug} locale={locale} />
+
       {strategy?.tactic ? (
         <AtlasSection id="plan" title={copy.planTitle} description={copy.planText}>
           <RaidBattlePlan tactic={strategy.tactic} bossArtwork={boss.artwork} locale={locale} />
         </AtlasSection>
-      ) : (
+      ) : reviewed ? null : (
         <AtlasSection>
           <AtlasNotice tone="caution" icon={<Hourglass />} title={copy.strategyPendingTitle}>{copy.strategyPendingText}</AtlasNotice>
         </AtlasSection>
@@ -59,6 +65,8 @@ export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
           </p>
         </AtlasSection>
       ) : null}
+
+      <RaidSpellReference encounterId={boss.encounterId} exclude={[...boss.mechanics.map((ability) => ability.spellId), ...(strategy?.guide?.mechanics.flatMap((mechanic) => mechanic.spell ? [mechanic.spell.id] : []) ?? [])]} locale={locale} />
 
       <RaidPager label={copy.pagerLabel} back={{ href: raidHref, label: copy.allBosses(raidName) }} next={encounters[order + 1]} nextLabel={copy.nextBoss} />
     </AtlasFrame>
