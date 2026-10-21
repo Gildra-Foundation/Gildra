@@ -1,0 +1,540 @@
+{
+  "raidSlug": "the-dreamrift",
+  "reviewedAt": "2026-10-21T20:14:34Z",
+  "sources": [
+    {
+      "title": "Blizzard: Midnight Season 1 schedule",
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24266321/"
+    },
+    {
+      "title": "Blizzard: Midnight Season 2 is now live",
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/"
+    },
+    {
+      "title": "Blizzard: Season 1 achievements and rewards ending",
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24293280/"
+    },
+    {
+      "title": "Blizzard: hotfixes through April 17, 2026",
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24266320/"
+    },
+    {
+      "title": "Chimaerus game Encounter Journal on Wowhead",
+      "url": "https://www.wowhead.com/npc=256116/chimaerus"
+    },
+    {
+      "title": "Icy Veins: Chimaerus Normal/Heroic and Mythic",
+      "url": "https://www.icy-veins.com/wow/chimaerus-raid-guide"
+    },
+    {
+      "title": "Method: Mythic Chimaerus strategy",
+      "url": "https://www.method.gg/guides/the-dreamrift/chimaerus-the-undreamt-god"
+    }
+  ],
+  "summaryRu": "Провал Снов — рейд первого сезона Midnight с одним боссом, Химерием. Проверены разделение на Альн и реальность, приоритет порождений и отличия Heroic/Mythic. Сейчас идет второй сезон: сезонные достижения первого сезона уже недоступны.",
+  "summaryEn": "The Dreamrift is a one-boss raid from Midnight Season 1. The realm split, manifestation priorities, and Heroic/Mythic differences were reviewed. Season 2 is now live; Season 1 time-limited achievements are no longer available.",
+  "bosses": [
+    {
+      "slug": "chimaerus",
+      "summaryRu": "Два слоя, щиты порождений в Альн и их добивание в реальности. Переходка проверяет движение и прерывания; Heroic добавляет очистку луж через миазмы, Mythic — дистанцию между слоями и обмен игроков.",
+      "summaryEn": "Break manifestation shields in Aln, then finish them in Reality. Intermission tests movement and interrupts; Heroic adds miasma pool clearing, while Mythic adds cross-realm spacing and player swaps.",
+      "tipsRu": [
+        "Normal / Heroic / Mythic: назначьте две группы с танком и лекарями; группа поглощения Alndust Upheaval уходит в Альн, вторая убивает появившиеся в реальности порождения.",
+        "В Альн сначала разбейте щит Colossal Horror. Haunting Essence прерывайте на Fearsome Cry; держите порождения вдали от босса.",
+        "Наверху немедленно переключайтесь на порождения: Insatiable поглощает дошедших до босса. Добейте оставшихся до окончания Consume и приземления Ravenous Dive.",
+        "Танк разворачивает Rending Tear от рейда и учитывает отбрасывание; во время Corrupted Devastation все уходят с линий пролета.",
+        "Heroic / Mythic: Consuming Miasma снимайте отдельно от рейда, охватив кругом существующие лужи. Вставать в саму лужу не нужно; на Heroic приземление больше не очищает площадку.",
+        "Mythic: Dissonance требует дистанции 8 м от игроков другого слоя. Для Rift Madness назначьте замены лекаря и бойца; подходите к жертвам для обмена только после подъема и ужаса.",
+        "Mythic: поглотите дополнительный Alndust Upheaval перед переходкой; разделение на слои сохраняется. На переходке назначьте прерывания быстрых Fearsome Cry."
+      ],
+      "tipsEn": [
+        "Normal / Heroic / Mythic: assign two teams with a tank and healers; the Alndust Upheaval team enters Aln while the other team kills manifestations appearing in Reality.",
+        "In Aln, break the Colossal Horror shield first. Interrupt Haunting Essence’s Fearsome Cry; keep manifestations far from the boss.",
+        "In Reality, immediately switch to manifestations: Insatiable consumes those reaching the boss. Finish survivors before Consume completes and before Ravenous Dive lands.",
+        "Face Rending Tear away from the raid and allow room for its knockback; leave Corrupted Devastation flight lanes.",
+        "Heroic / Mythic: dispel Consuming Miasma away from the raid with its circle covering existing pools. You need not stand inside a pool; on Heroic the landing no longer clears the floor.",
+        "Mythic: Dissonance requires 8 yards from players in the opposite realm. Assign healer and DPS replacements for Rift Madness; approach victims for swaps after they become lifted and horrified.",
+        "Mythic: soak the extra Alndust Upheaval before intermission; the realm split continues. Assign interrupts for fast intermission Fearsome Cry casts."
+      ],
+      "sources": [
+        {
+          "title": "Chimaerus game Encounter Journal on Wowhead",
+          "url": "https://www.wowhead.com/npc=256116/chimaerus"
+        },
+        {
+          "title": "Icy Veins: Chimaerus Normal/Heroic and Mythic",
+          "url": "https://www.icy-veins.com/wow/chimaerus-raid-guide"
+        },
+        {
+          "title": "Method: Mythic Chimaerus strategy",
+          "url": "https://www.method.gg/guides/the-dreamrift/chimaerus-the-undreamt-god"
+        }
+      ],
+      "iconBindings": [
+        {
+          "spellId": 1262305,
+          "nameEn": "Alndust Upheaval",
+          "nameRu": "Встряска пыли Альн",
+          "iconName": "ability_earthen_azeritesurge",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_earthen_azeritesurge.jpg",
+          "sha256": "1162807571fa9a60dd216e43cb0da15aa1b6854846d2fc490117a89c3c95a9ac",
+          "bytes": 2321,
+          "sourceUrl": "https://www.wowhead.com/spell=1262305",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1262305.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1262305.jpg"
+        },
+        {
+          "spellId": 1252863,
+          "nameEn": "Insatiable",
+          "nameRu": "Ненасытность",
+          "iconName": "spell_shadow_lifedrain",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_shadow_lifedrain.jpg",
+          "sha256": "f783e1f493858b7af26a9c724847f3767dfb7bf985c6552db090eb1654018dfe",
+          "bytes": 1866,
+          "sourceUrl": "https://www.wowhead.com/spell=1252863",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1252863.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1252863.jpg"
+        },
+        {
+          "spellId": 1245486,
+          "nameEn": "Corrupted Devastation",
+          "nameRu": "Опустошение порчи",
+          "iconName": "spell_azerite_essence02",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_azerite_essence02.jpg",
+          "sha256": "29061c01ca30f75b8153d740b732a183703b892cf8c2f1d01e6066477412ee36",
+          "bytes": 2374,
+          "sourceUrl": "https://www.wowhead.com/spell=1245486",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1245486.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1245486.jpg"
+        },
+        {
+          "spellId": 1250953,
+          "nameEn": "Rift Sickness",
+          "nameRu": "Хворь Провала",
+          "iconName": "ability_warlock_fireandbrimstonegreen",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_warlock_fireandbrimstonegreen.jpg",
+          "sha256": "4a82ce6f3b77779d7a2267e80158cd48d62a45b0dd04ac3330604707c5e9d863",
+          "bytes": 3000,
+          "sourceUrl": "https://www.wowhead.com/spell=1250953",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1250953.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1250953.jpg"
+        },
+        {
+          "spellId": 1262020,
+          "nameEn": "Colossal Strikes",
+          "nameRu": "Неимоверные удары",
+          "iconName": "ability_golemthunderclap",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_golemthunderclap.jpg",
+          "sha256": "f873c48ab59d4a3e2dd5dc9af264149c19754499bfc94e60eba7dadcfc23ed7a",
+          "bytes": 2618,
+          "sourceUrl": "https://www.wowhead.com/spell=1262020",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1262020.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1262020.jpg"
+        },
+        {
+          "spellId": 1257087,
+          "nameEn": "Consuming Miasma",
+          "nameRu": "Всепоглощающие миазмы",
+          "iconName": "spell_azerite_essence_16",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_azerite_essence_16.jpg",
+          "sha256": "849aa5bd898e3bff2d93391e8a01e9e11ffbd394937573015157098b1a13fef6",
+          "bytes": 2810,
+          "sourceUrl": "https://www.wowhead.com/spell=1257087",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1257087.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1257087.jpg"
+        },
+        {
+          "spellId": 1264780,
+          "nameEn": "Rift Madness",
+          "nameRu": "Безумие Провала",
+          "iconName": "sha_spell_warlock_demonsoul",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/sha_spell_warlock_demonsoul.jpg",
+          "sha256": "419269cd34591421a856adebe077b14a2d2984837557de731d5627f90c7015f8",
+          "bytes": 2764,
+          "sourceUrl": "https://www.wowhead.com/spell=1264780",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1264780.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1264780.jpg"
+        },
+        {
+          "spellId": 1245396,
+          "nameEn": "Consume",
+          "nameRu": "Поглощение",
+          "iconName": "spell_deathknight_gnaw_ghoul",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_deathknight_gnaw_ghoul.jpg",
+          "sha256": "03dcc675ed8f152a442639a8f67ca4a17bba575f6fd6f800a1e0410c4e378302",
+          "bytes": 2985,
+          "sourceUrl": "https://www.wowhead.com/spell=1245396",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1245396.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1245396.jpg"
+        },
+        {
+          "spellId": 1272726,
+          "nameEn": "Rending Tear",
+          "nameRu": "Терзающий разрыв",
+          "iconName": "spell_druid_bloodythrash",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_druid_bloodythrash.jpg",
+          "sha256": "de6ff84f39b525e6abbdeef88a5317696eb21a0c6f779f68d8511a3059da709c",
+          "bytes": 1878,
+          "sourceUrl": "https://www.wowhead.com/spell=1272726",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1272726.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1272726.jpg"
+        },
+        {
+          "spellId": 1249017,
+          "nameEn": "Fearsome Cry",
+          "nameRu": "Пугающий крик",
+          "iconName": "spell_shadow_deathscream",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_shadow_deathscream.jpg",
+          "sha256": "4262b0f9ad23c4dde9cb80bc779bdaf3c91c371e9f762f44b09dc1f76b470e96",
+          "bytes": 2483,
+          "sourceUrl": "https://www.wowhead.com/spell=1249017",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1249017.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1249017.jpg"
+        },
+        {
+          "spellId": 1245406,
+          "nameEn": "Ravenous Dive",
+          "nameRu": "Голодное пикирование",
+          "iconName": "ability_earthen_pillar",
+          "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_earthen_pillar.jpg",
+          "sha256": "337175dd8acfb59994ed07f64fb6cae6b08e072e5d9a91cea2576ba590c4aa7b",
+          "bytes": 2763,
+          "sourceUrl": "https://www.wowhead.com/spell=1245406",
+          "localTmpPath": "/tmp/gildra-dreamrift-evidence/1245406.jpg",
+          "localIcon": "/assets/wow/raids/midnight/spells/1245406.jpg"
+        }
+      ]
+    }
+  ],
+  "corrections": [
+    {
+      "field": "midnightRaidTactics.chimaerus.split-realms.dangers",
+      "issue": "Dissonance is not limited to a player counterpart. It damages players of the opposing realm within 8 yards.",
+      "sources": [
+        "https://www.wowhead.com/npc=256116/chimaerus",
+        "https://www.method.gg/guides/the-dreamrift/chimaerus-the-undreamt-god"
+      ]
+    },
+    {
+      "field": "midnightRaidTactics.chimaerus.devastation.summary",
+      "issue": "Scope Miasma to Heroic/Mythic, explain dispel circle overlaps pools without standing inside, and keep Mythic groups apart during intermission.",
+      "sources": [
+        "https://www.icy-veins.com/wow/chimaerus-raid-guide",
+        "https://www.method.gg/guides/the-dreamrift/chimaerus-the-undreamt-god"
+      ]
+    },
+    {
+      "field": "season status",
+      "issue": "Dreamrift is Season 1 legacy content; do not imply current Season 2 or obtainable Season 1 Ahead of the Curve / Cutting Edge.",
+      "sources": [
+        "https://worldofwarcraft.blizzard.com/en-us/news/24294369/",
+        "https://worldofwarcraft.blizzard.com/en-us/news/24293280/"
+      ]
+    },
+    {
+      "field": "publication boundary",
+      "issue": "Canonical publication has 4 recorded, 0 publication-safe and 4 withheld abilities for encounter 2795. Old midnightRaidSpells.json is not the rendering source. New qualitative editorial content must preserve the exact-build publication gate.",
+      "sources": []
+    },
+    {
+      "field": "numeric tooltips",
+      "issue": "Public live tooltips return scaled values and do not prove repository build/difficulty parity; no numerical damage values are published by this review. Consume ruRU tooltip reports Physical while enUS reports Nature; omit school-specific wording.",
+      "sources": [
+        "https://www.wowhead.com/spell=1245396"
+      ]
+    }
+  ],
+  "iconAudit": {
+    "checkedAt": "2026-10-21T20:14:34Z",
+    "source": "Current Wowhead retail EN/RU tooltip icon fields plus Blizzard render CDN bytes",
+    "checkedIcons": 11,
+    "existingByteMatches": 5,
+    "missingLocalIcons": [
+      1257087,
+      1264780,
+      1245396,
+      1272726,
+      1249017,
+      1245406
+    ],
+    "bindings": [
+      {
+        "spellId": 1262305,
+        "nameEn": "Alndust Upheaval",
+        "nameRu": "Встряска пыли Альн",
+        "iconName": "ability_earthen_azeritesurge",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_earthen_azeritesurge.jpg",
+        "sha256": "1162807571fa9a60dd216e43cb0da15aa1b6854846d2fc490117a89c3c95a9ac",
+        "bytes": 2321,
+        "sourceUrl": "https://www.wowhead.com/spell=1262305",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1262305.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1262305.jpg"
+      },
+      {
+        "spellId": 1252863,
+        "nameEn": "Insatiable",
+        "nameRu": "Ненасытность",
+        "iconName": "spell_shadow_lifedrain",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_shadow_lifedrain.jpg",
+        "sha256": "f783e1f493858b7af26a9c724847f3767dfb7bf985c6552db090eb1654018dfe",
+        "bytes": 1866,
+        "sourceUrl": "https://www.wowhead.com/spell=1252863",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1252863.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1252863.jpg"
+      },
+      {
+        "spellId": 1245486,
+        "nameEn": "Corrupted Devastation",
+        "nameRu": "Опустошение порчи",
+        "iconName": "spell_azerite_essence02",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_azerite_essence02.jpg",
+        "sha256": "29061c01ca30f75b8153d740b732a183703b892cf8c2f1d01e6066477412ee36",
+        "bytes": 2374,
+        "sourceUrl": "https://www.wowhead.com/spell=1245486",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1245486.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1245486.jpg"
+      },
+      {
+        "spellId": 1250953,
+        "nameEn": "Rift Sickness",
+        "nameRu": "Хворь Провала",
+        "iconName": "ability_warlock_fireandbrimstonegreen",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_warlock_fireandbrimstonegreen.jpg",
+        "sha256": "4a82ce6f3b77779d7a2267e80158cd48d62a45b0dd04ac3330604707c5e9d863",
+        "bytes": 3000,
+        "sourceUrl": "https://www.wowhead.com/spell=1250953",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1250953.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1250953.jpg"
+      },
+      {
+        "spellId": 1262020,
+        "nameEn": "Colossal Strikes",
+        "nameRu": "Неимоверные удары",
+        "iconName": "ability_golemthunderclap",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_golemthunderclap.jpg",
+        "sha256": "f873c48ab59d4a3e2dd5dc9af264149c19754499bfc94e60eba7dadcfc23ed7a",
+        "bytes": 2618,
+        "sourceUrl": "https://www.wowhead.com/spell=1262020",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1262020.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1262020.jpg"
+      },
+      {
+        "spellId": 1257087,
+        "nameEn": "Consuming Miasma",
+        "nameRu": "Всепоглощающие миазмы",
+        "iconName": "spell_azerite_essence_16",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_azerite_essence_16.jpg",
+        "sha256": "849aa5bd898e3bff2d93391e8a01e9e11ffbd394937573015157098b1a13fef6",
+        "bytes": 2810,
+        "sourceUrl": "https://www.wowhead.com/spell=1257087",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1257087.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1257087.jpg"
+      },
+      {
+        "spellId": 1264780,
+        "nameEn": "Rift Madness",
+        "nameRu": "Безумие Провала",
+        "iconName": "sha_spell_warlock_demonsoul",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/sha_spell_warlock_demonsoul.jpg",
+        "sha256": "419269cd34591421a856adebe077b14a2d2984837557de731d5627f90c7015f8",
+        "bytes": 2764,
+        "sourceUrl": "https://www.wowhead.com/spell=1264780",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1264780.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1264780.jpg"
+      },
+      {
+        "spellId": 1245396,
+        "nameEn": "Consume",
+        "nameRu": "Поглощение",
+        "iconName": "spell_deathknight_gnaw_ghoul",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_deathknight_gnaw_ghoul.jpg",
+        "sha256": "03dcc675ed8f152a442639a8f67ca4a17bba575f6fd6f800a1e0410c4e378302",
+        "bytes": 2985,
+        "sourceUrl": "https://www.wowhead.com/spell=1245396",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1245396.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1245396.jpg"
+      },
+      {
+        "spellId": 1272726,
+        "nameEn": "Rending Tear",
+        "nameRu": "Терзающий разрыв",
+        "iconName": "spell_druid_bloodythrash",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_druid_bloodythrash.jpg",
+        "sha256": "de6ff84f39b525e6abbdeef88a5317696eb21a0c6f779f68d8511a3059da709c",
+        "bytes": 1878,
+        "sourceUrl": "https://www.wowhead.com/spell=1272726",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1272726.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1272726.jpg"
+      },
+      {
+        "spellId": 1249017,
+        "nameEn": "Fearsome Cry",
+        "nameRu": "Пугающий крик",
+        "iconName": "spell_shadow_deathscream",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_shadow_deathscream.jpg",
+        "sha256": "4262b0f9ad23c4dde9cb80bc779bdaf3c91c371e9f762f44b09dc1f76b470e96",
+        "bytes": 2483,
+        "sourceUrl": "https://www.wowhead.com/spell=1249017",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1249017.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1249017.jpg"
+      },
+      {
+        "spellId": 1245406,
+        "nameEn": "Ravenous Dive",
+        "nameRu": "Голодное пикирование",
+        "iconName": "ability_earthen_pillar",
+        "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_earthen_pillar.jpg",
+        "sha256": "337175dd8acfb59994ed07f64fb6cae6b08e072e5d9a91cea2576ba590c4aa7b",
+        "bytes": 2763,
+        "sourceUrl": "https://www.wowhead.com/spell=1245406",
+        "localTmpPath": "/tmp/gildra-dreamrift-evidence/1245406.jpg",
+        "localIcon": "/assets/wow/raids/midnight/spells/1245406.jpg"
+      }
+    ],
+    "unresolved": [
+      {
+        "spellId": 1245727,
+        "reason": "EN/RU tooltip names verified; hyphenated tooltip icon slug returned HTTP 403 at Blizzard CDN. Existing local icon was not independently byte-verified."
+      },
+      {
+        "spellId": 1245698,
+        "reason": "EN/RU tooltip names verified; hyphenated tooltip icon slug returned HTTP 403 at Blizzard CDN. Existing local icon was not independently byte-verified."
+      }
+    ],
+    "liveRouteCheck": "Public route returned HTTP 403 to direct read-only urllib; no live UI rendering claimed."
+  },
+  "iconBindings": [
+    {
+      "spellId": 1262305,
+      "nameEn": "Alndust Upheaval",
+      "nameRu": "Встряска пыли Альн",
+      "iconName": "ability_earthen_azeritesurge",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_earthen_azeritesurge.jpg",
+      "sha256": "1162807571fa9a60dd216e43cb0da15aa1b6854846d2fc490117a89c3c95a9ac",
+      "bytes": 2321,
+      "sourceUrl": "https://www.wowhead.com/spell=1262305",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1262305.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1262305.jpg"
+    },
+    {
+      "spellId": 1252863,
+      "nameEn": "Insatiable",
+      "nameRu": "Ненасытность",
+      "iconName": "spell_shadow_lifedrain",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_shadow_lifedrain.jpg",
+      "sha256": "f783e1f493858b7af26a9c724847f3767dfb7bf985c6552db090eb1654018dfe",
+      "bytes": 1866,
+      "sourceUrl": "https://www.wowhead.com/spell=1252863",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1252863.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1252863.jpg"
+    },
+    {
+      "spellId": 1245486,
+      "nameEn": "Corrupted Devastation",
+      "nameRu": "Опустошение порчи",
+      "iconName": "spell_azerite_essence02",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_azerite_essence02.jpg",
+      "sha256": "29061c01ca30f75b8153d740b732a183703b892cf8c2f1d01e6066477412ee36",
+      "bytes": 2374,
+      "sourceUrl": "https://www.wowhead.com/spell=1245486",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1245486.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1245486.jpg"
+    },
+    {
+      "spellId": 1250953,
+      "nameEn": "Rift Sickness",
+      "nameRu": "Хворь Провала",
+      "iconName": "ability_warlock_fireandbrimstonegreen",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_warlock_fireandbrimstonegreen.jpg",
+      "sha256": "4a82ce6f3b77779d7a2267e80158cd48d62a45b0dd04ac3330604707c5e9d863",
+      "bytes": 3000,
+      "sourceUrl": "https://www.wowhead.com/spell=1250953",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1250953.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1250953.jpg"
+    },
+    {
+      "spellId": 1262020,
+      "nameEn": "Colossal Strikes",
+      "nameRu": "Неимоверные удары",
+      "iconName": "ability_golemthunderclap",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_golemthunderclap.jpg",
+      "sha256": "f873c48ab59d4a3e2dd5dc9af264149c19754499bfc94e60eba7dadcfc23ed7a",
+      "bytes": 2618,
+      "sourceUrl": "https://www.wowhead.com/spell=1262020",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1262020.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1262020.jpg"
+    },
+    {
+      "spellId": 1257087,
+      "nameEn": "Consuming Miasma",
+      "nameRu": "Всепоглощающие миазмы",
+      "iconName": "spell_azerite_essence_16",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_azerite_essence_16.jpg",
+      "sha256": "849aa5bd898e3bff2d93391e8a01e9e11ffbd394937573015157098b1a13fef6",
+      "bytes": 2810,
+      "sourceUrl": "https://www.wowhead.com/spell=1257087",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1257087.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1257087.jpg"
+    },
+    {
+      "spellId": 1264780,
+      "nameEn": "Rift Madness",
+      "nameRu": "Безумие Провала",
+      "iconName": "sha_spell_warlock_demonsoul",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/sha_spell_warlock_demonsoul.jpg",
+      "sha256": "419269cd34591421a856adebe077b14a2d2984837557de731d5627f90c7015f8",
+      "bytes": 2764,
+      "sourceUrl": "https://www.wowhead.com/spell=1264780",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1264780.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1264780.jpg"
+    },
+    {
+      "spellId": 1245396,
+      "nameEn": "Consume",
+      "nameRu": "Поглощение",
+      "iconName": "spell_deathknight_gnaw_ghoul",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_deathknight_gnaw_ghoul.jpg",
+      "sha256": "03dcc675ed8f152a442639a8f67ca4a17bba575f6fd6f800a1e0410c4e378302",
+      "bytes": 2985,
+      "sourceUrl": "https://www.wowhead.com/spell=1245396",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1245396.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1245396.jpg"
+    },
+    {
+      "spellId": 1272726,
+      "nameEn": "Rending Tear",
+      "nameRu": "Терзающий разрыв",
+      "iconName": "spell_druid_bloodythrash",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_druid_bloodythrash.jpg",
+      "sha256": "de6ff84f39b525e6abbdeef88a5317696eb21a0c6f779f68d8511a3059da709c",
+      "bytes": 1878,
+      "sourceUrl": "https://www.wowhead.com/spell=1272726",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1272726.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1272726.jpg"
+    },
+    {
+      "spellId": 1249017,
+      "nameEn": "Fearsome Cry",
+      "nameRu": "Пугающий крик",
+      "iconName": "spell_shadow_deathscream",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/spell_shadow_deathscream.jpg",
+      "sha256": "4262b0f9ad23c4dde9cb80bc779bdaf3c91c371e9f762f44b09dc1f76b470e96",
+      "bytes": 2483,
+      "sourceUrl": "https://www.wowhead.com/spell=1249017",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1249017.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1249017.jpg"
+    },
+    {
+      "spellId": 1245406,
+      "nameEn": "Ravenous Dive",
+      "nameRu": "Голодное пикирование",
+      "iconName": "ability_earthen_pillar",
+      "iconSourceUrl": "https://render.worldofwarcraft.com/eu/icons/56/ability_earthen_pillar.jpg",
+      "sha256": "337175dd8acfb59994ed07f64fb6cae6b08e072e5d9a91cea2576ba590c4aa7b",
+      "bytes": 2763,
+      "sourceUrl": "https://www.wowhead.com/spell=1245406",
+      "localTmpPath": "/tmp/gildra-dreamrift-evidence/1245406.jpg",
+      "localIcon": "/assets/wow/raids/midnight/spells/1245406.jpg"
+    }
+  ]
+}

@@ -1,0 +1,676 @@
+[
+  {
+    "raidSlug": "the-voidspire",
+    "reviewedAt": "2026-10-21T20:15:06Z",
+    "summaryRu": "Шпиль Бездны — рейд первого сезона Midnight в Буре Бездны, шесть сражений. Это материал сезона 1: актуальные числовые значения и добыча требуют проверки выбранной сложности.",
+    "summaryEn": "The Voidspire is a six-encounter Midnight Season 1 raid in Voidstorm. This is Season 1 reference content; numerical tuning and rewards require difficulty-specific verification.",
+    "sources": [
+      {
+        "title": "Blizzard: Midnight Season 1 schedule",
+        "url": "https://worldofwarcraft.blizzard.com/en-us/news/24266321/midnight-season-1-mythic-now-available"
+      },
+      {
+        "title": "Blizzard: October 2026 hotfix feed",
+        "url": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+      },
+      {
+        "title": "Icy Veins: imperator-averzian",
+        "url": "https://www.icy-veins.com/wow/imperator-averzian-raid-guide"
+      },
+      {
+        "title": "Icy Veins: vorasius",
+        "url": "https://www.icy-veins.com/wow/vorasius-raid-guide"
+      },
+      {
+        "title": "Icy Veins: fallen-king-salhadaar",
+        "url": "https://www.icy-veins.com/wow/fallen-king-salhadaar-raid-guide"
+      },
+      {
+        "title": "Icy Veins: vaelgor-ezzorak",
+        "url": "https://www.icy-veins.com/wow/vaelgor-and-ezzorak-raid-guide"
+      },
+      {
+        "title": "Icy Veins: lightblinded-vanguard",
+        "url": "https://www.icy-veins.com/wow/lightblinded-vanguard-raid-guide"
+      },
+      {
+        "title": "Icy Veins: crown-of-the-cosmos",
+        "url": "https://www.icy-veins.com/wow/crown-of-the-cosmos-raid-guide"
+      }
+    ],
+    "bosses": [
+      {
+        "slug": "imperator-averzian",
+        "summaryRu": "Контроль девяти клеток: двумя замачиваниями убирайте выбранных ваятелей и не давайте порталам сложиться в линию.",
+        "summaryEn": "Control nine floor tiles: remove two called Voidshapers with group soaks and prevent a line of claimed portals.",
+        "tipsRu": [
+          "Босс остается вне занятых клеток.",
+          "В переходке прерывайте Pitch Bulwark и обходите копья и движущиеся стены.",
+          "Смена танков около 8 стаков — ориентир тактики, а не жесткое требование журнала."
+        ],
+        "tipsEn": [
+          "Keep the boss outside claimed tiles.",
+          "Interrupt Pitch Bulwark during intermissions; dodge lances and moving walls.",
+          "A swap around eight stacks is strategy guidance rather than a fixed journal requirement."
+        ],
+        "sources": [
+          {
+            "title": "www.icy-veins.com",
+            "url": "https://www.icy-veins.com/wow/imperator-averzian-raid-guide"
+          }
+        ]
+      },
+      {
+        "slug": "vorasius",
+        "summaryRu": "Танки принимают Shadowclaw Slam; фиксации ведут аддов к стенам, открывая путь от дыхания.",
+        "summaryEn": "Tanks soak Shadowclaw Slam while fixated players bring adds to walls to open the escape route for the breath.",
+        "tipsRu": [
+          "Не убивайте огнежальщиков в центре: взрыв должен задеть стену.",
+          "От расходящихся колец Aftershock уходите в разрыв.",
+          "На дыхании выбирайте край напротив светящейся руки."
+        ],
+        "tipsEn": [
+          "Kill Blistercreeps against walls, keeping explosions out of the center.",
+          "Use gaps in the expanding Aftershock rings.",
+          "For the breath, move to the edge opposite the glowing hand."
+        ],
+        "sources": [
+          {
+            "title": "www.icy-veins.com",
+            "url": "https://www.icy-veins.com/wow/vorasius-raid-guide"
+          }
+        ]
+      },
+      {
+        "slug": "fallen-king-salhadaar",
+        "summaryRu": "Не подпускайте сферы к Салхадаару; распределяйте контроль проекций и сохраняйте место для вращающихся лучей.",
+        "summaryEn": "Keep orbs away from Salhadaar, assign Projection control, and preserve movement space for rotating beams.",
+        "tipsRu": [
+          "Сферы добивайте последовательно, учитывая рейдовый DoT.",
+          "С Despotic Command выходите к краю до окончания эффекта.",
+          "К 100 энергии оставьте место для движения и подготовьте кулдауны на Entropic Unraveling."
+        ],
+        "tipsEn": [
+          "Stagger orb kills around the raid damage-over-time effect.",
+          "Move Despotic Command to the edge before it expires.",
+          "Before 100 energy, prepare space and damage cooldowns for Entropic Unraveling."
+        ],
+        "sources": [
+          {
+            "title": "www.icy-veins.com",
+            "url": "https://www.icy-veins.com/wow/fallen-king-salhadaar-raid-guide"
+          }
+        ]
+      },
+      {
+        "slug": "vaelgor-ezzorak",
+        "summaryRu": "Разведите драконов, согласуйте замачивания и сохраняйте свободные участки арены.",
+        "summaryEn": "Separate the dragons, coordinate soaks, and preserve clean arena space.",
+        "tipsRu": [
+          "Dread Breath направляйте от группы.",
+          "На Heroic чередуйте группы Gloom из-за дебаффа повторного замачивания.",
+          "На 100 энергии входите в Radiant Barrier и убивайте адда; с Shadowmark отходите от центра группы."
+        ],
+        "tipsEn": [
+          "Aim Dread Breath away from the group.",
+          "On Heroic rotate Gloom teams because repeated soaking carries a debuff.",
+          "At 100 energy enter Radiant Barrier and kill the add; Shadowmarked players leave the group center."
+        ],
+        "sources": [
+          {
+            "title": "www.icy-veins.com",
+            "url": "https://www.icy-veins.com/wow/vaelgor-and-ezzorak-raid-guide"
+          }
+        ]
+      },
+      {
+        "slug": "lightblinded-vanguard",
+        "summaryRu": "Три паладина: отслеживайте энергию, отделяйте босса с активной аурой и сохраняйте управляемое здоровье всех целей.",
+        "summaryEn": "Three paladins: track energy, isolate the active aura caster, and control all three health bars.",
+        "tipsRu": [
+          "После Sacred Shield пробейте щит и прервите Blinding Light.",
+          "После Judgment меняйте танка до соответствующего завершающего удара.",
+          "Массовое рассеивание снимает Divine Shield в ответ на Bloodlust."
+        ],
+        "tipsEn": [
+          "Break Sacred Shield before interrupting Blinding Light.",
+          "Swap tanks after Judgment before its matching finisher.",
+          "Mass Dispel removes the Divine Shield response to Bloodlust."
+        ],
+        "sources": [
+          {
+            "title": "www.icy-veins.com",
+            "url": "https://www.icy-veins.com/wow/lightblinded-vanguard-raid-guide"
+          }
+        ]
+      },
+      {
+        "slug": "crown-of-the-cosmos",
+        "summaryRu": "Три основные фазы: полубоссы, Аллерия с двойником и финальные платформы.",
+        "summaryEn": "Three main phases: demibosses, Alleria with her clone, and the final platforms.",
+        "tipsRu": [
+          "Silverstrike Arrow снимайте бессмертие полубоссов; не стирайте их уязвимость лишней стрелой.",
+          "В переходках снимайте замедление назначенной стрелой и избегайте повторного попадания подряд.",
+          "Во второй фазе проводите рикошет через аддов; в финале двигайтесь группой и вовремя прыгайте с разрушающейся платформы."
+        ],
+        "tipsEn": [
+          "Use Silverstrike Arrow to remove demiboss immortality; avoid erasing vulnerability with unnecessary arrows.",
+          "During intermissions clear slows with assigned arrows and avoid consecutive hits.",
+          "Route phase-two ricochets through adds; in the final phase move together and jump before the platform is destroyed."
+        ],
+        "sources": [
+          {
+            "title": "www.icy-veins.com",
+            "url": "https://www.icy-veins.com/wow/crown-of-the-cosmos-raid-guide"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "raidSlug": "the-dreamrift",
+    "reviewedAt": "2026-10-21T20:14:34Z",
+    "summaryRu": "Провал Снов — рейд первого сезона Midnight с одним боссом, Химерием. Проверены разделение на Альн и реальность, приоритет порождений и отличия Heroic/Mythic. Сейчас идет второй сезон: сезонные достижения первого сезона уже недоступны.",
+    "summaryEn": "The Dreamrift is a one-boss raid from Midnight Season 1. The realm split, manifestation priorities, and Heroic/Mythic differences were reviewed. Season 2 is now live; Season 1 time-limited achievements are no longer available.",
+    "sources": [
+      {
+        "title": "Blizzard: Midnight Season 1 schedule",
+        "url": "https://worldofwarcraft.blizzard.com/en-us/news/24266321/"
+      },
+      {
+        "title": "Blizzard: Midnight Season 2 is now live",
+        "url": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/"
+      },
+      {
+        "title": "Blizzard: Season 1 achievements and rewards ending",
+        "url": "https://worldofwarcraft.blizzard.com/en-us/news/24293280/"
+      },
+      {
+        "title": "Blizzard: hotfixes through April 17, 2026",
+        "url": "https://worldofwarcraft.blizzard.com/en-us/news/24266320/"
+      },
+      {
+        "title": "Chimaerus game Encounter Journal on Wowhead",
+        "url": "https://www.wowhead.com/npc=256116/chimaerus"
+      },
+      {
+        "title": "Icy Veins: Chimaerus Normal/Heroic and Mythic",
+        "url": "https://www.icy-veins.com/wow/chimaerus-raid-guide"
+      },
+      {
+        "title": "Method: Mythic Chimaerus strategy",
+        "url": "https://www.method.gg/guides/the-dreamrift/chimaerus-the-undreamt-god"
+      }
+    ],
+    "bosses": [
+      {
+        "slug": "chimaerus",
+        "summaryRu": "Два слоя, щиты порождений в Альн и их добивание в реальности. Переходка проверяет движение и прерывания; Heroic добавляет очистку луж через миазмы, Mythic — дистанцию между слоями и обмен игроков.",
+        "summaryEn": "Break manifestation shields in Aln, then finish them in Reality. Intermission tests movement and interrupts; Heroic adds miasma pool clearing, while Mythic adds cross-realm spacing and player swaps.",
+        "tipsRu": [
+          "Normal / Heroic / Mythic: назначьте две группы с танком и лекарями; группа поглощения Alndust Upheaval уходит в Альн, вторая убивает появившиеся в реальности порождения.",
+          "В Альн сначала разбейте щит Colossal Horror. Haunting Essence прерывайте на Fearsome Cry; держите порождения вдали от босса.",
+          "Наверху немедленно переключайтесь на порождения: Insatiable поглощает дошедших до босса. Добейте оставшихся до окончания Consume и приземления Ravenous Dive.",
+          "Танк разворачивает Rending Tear от рейда и учитывает отбрасывание; во время Corrupted Devastation все уходят с линий пролета.",
+          "Heroic / Mythic: Consuming Miasma снимайте отдельно от рейда, охватив кругом существующие лужи. Вставать в саму лужу не нужно; на Heroic приземление больше не очищает площадку.",
+          "Mythic: Dissonance требует дистанции 8 м от игроков другого слоя. Для Rift Madness назначьте замены лекаря и бойца; подходите к жертвам для обмена только после подъема и ужаса.",
+          "Mythic: поглотите дополнительный Alndust Upheaval перед переходкой; разделение на слои сохраняется. На переходке назначьте прерывания быстрых Fearsome Cry."
+        ],
+        "tipsEn": [
+          "Normal / Heroic / Mythic: assign two teams with a tank and healers; the Alndust Upheaval team enters Aln while the other team kills manifestations appearing in Reality.",
+          "In Aln, break the Colossal Horror shield first. Interrupt Haunting Essence’s Fearsome Cry; keep manifestations far from the boss.",
+          "In Reality, immediately switch to manifestations: Insatiable consumes those reaching the boss. Finish survivors before Consume completes and before Ravenous Dive lands.",
+          "Face Rending Tear away from the raid and allow room for its knockback; leave Corrupted Devastation flight lanes.",
+          "Heroic / Mythic: dispel Consuming Miasma away from the raid with its circle covering existing pools. You need not stand inside a pool; on Heroic the landing no longer clears the floor.",
+          "Mythic: Dissonance requires 8 yards from players in the opposite realm. Assign healer and DPS replacements for Rift Madness; approach victims for swaps after they become lifted and horrified.",
+          "Mythic: soak the extra Alndust Upheaval before intermission; the realm split continues. Assign interrupts for fast intermission Fearsome Cry casts."
+        ],
+        "sources": [
+          {
+            "title": "Chimaerus game Encounter Journal on Wowhead",
+            "url": "https://www.wowhead.com/npc=256116/chimaerus"
+          },
+          {
+            "title": "Icy Veins: Chimaerus Normal/Heroic and Mythic",
+            "url": "https://www.icy-veins.com/wow/chimaerus-raid-guide"
+          },
+          {
+            "title": "Method: Mythic Chimaerus strategy",
+            "url": "https://www.method.gg/guides/the-dreamrift/chimaerus-the-undreamt-god"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "raidSlug": "march-on-queldanas",
+    "reviewedAt": "2026-10-21T20:14:27.900567Z",
+    "summaryRu": "Два босса Midnight, сезон 1: Бело’рен и Торжество Полуночи (Л’ура). Доступны поиск рейда, обычная, героическая, эпохальная сложности и сюжетный режим. Это рейд предыдущего сезона: сезон 2 уже начался. Ниже — проверенные советы для обычной и героической сложности; эпохальные отличия отмечены отдельно.",
+    "summaryEn": "Two Midnight Season 1 encounters: Belo’ren and Midnight Falls (L’ura). Raid Finder, Normal, Heroic, Mythic and Story Mode are available. This is a previous-season raid: Season 2 has started. The reviewed tips cover Normal and Heroic, with Mythic differences explicitly marked.",
+    "sources": [
+      {
+        "title": "Blizzard: Midnight raid overview and schedule",
+        "url": "https://worldofwarcraft.blizzard.com/en-us/news/24264416/midnight-raid-overview-and-schedule"
+      },
+      {
+        "title": "Blizzard: Midnight Season 2 is now live",
+        "url": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/midnight-season-2-is-now-live"
+      },
+      {
+        "title": "Icy Veins: Belo’ren Normal/Heroic mechanics (19 May 2026)",
+        "url": "https://www.icy-veins.com/wow/beloren-raid-guide"
+      },
+      {
+        "title": "Method: Belo’ren Heroic",
+        "url": "https://www.method.gg/guides/march-on-queldanas/beloren-child-of-alar-heroic"
+      },
+      {
+        "title": "Method: Belo’ren Mythic (28 May 2026)",
+        "url": "https://www.method.gg/guides/march-on-queldanas/beloren-child-of-alar"
+      },
+      {
+        "title": "Icy Veins: Midnight Falls Normal/Heroic mechanics (19 May 2026)",
+        "url": "https://www.icy-veins.com/wow/midnight-falls-raid-guide"
+      },
+      {
+        "title": "Method: Midnight Falls Heroic",
+        "url": "https://www.method.gg/guides/march-on-queldanas/midnight-falls-heroic"
+      },
+      {
+        "title": "Method: Midnight Falls Mythic (30 May 2026)",
+        "url": "https://www.method.gg/guides/march-on-queldanas/midnight-falls"
+      }
+    ],
+    "bosses": [
+      {
+        "slug": "beloren",
+        "summaryRu": "Совпадающая полярность определяет замачивание и прерывания; главный урон сохраняйте для яйца босса.",
+        "summaryEn": "Matching polarity controls soaks and interrupts; save major damage for the boss egg.",
+        "tipsRu": [
+          "Обычная/героическая: проверяйте Light Feather или Void Feather после каждого Voidlight Convergence; замачивайте Dive и открывайте проходы в Radiant Echoes игроками нужного цвета.",
+          "Уводите Dive к заранее выбранным внешним меткам: оставшиеся зоны расширяются. Убейте Ember, затем его яйцо до возрождения; Eruption прерывает игрок совпадающей полярности.",
+          "Guardian’s Edict: каждый конус принимает танк соответствующего цвета; пустой конус или неверная полярность усиливают босса.",
+          "После Death Drop займите сектор своего цвета. Приоритет атакующих кулдаунов и Bloodlust — яйцо Бело’рена, а не форма феникса.",
+          "Героическая: Infused Quills перехватывает игрок цвета самого пера, встав между ним и целью.",
+          "Эпохальная: перехватчик Quills стоит отдельно из-за урона вокруг него; орбы Radiant Echoes нельзя подпускать к боссу."
+        ],
+        "tipsEn": [
+          "Normal/Heroic: recheck Light Feather or Void Feather after each Voidlight Convergence; use matching-colour players for Dive soaks and Radiant Echoes gaps.",
+          "Place Dive at agreed outer markers because its pools expand. Kill the Ember and then its egg before rebirth; only matching-polarity players interrupt Eruption.",
+          "Guardian’s Edict: the matching-colour tank takes each cone; an empty cone or wrong polarity empowers the boss.",
+          "After Death Drop, enter your matching-colour sector. Save major damage cooldowns and Bloodlust for Belo’ren’s egg rather than the phoenix form.",
+          "Heroic: intercept Infused Quills with a player matching the quill itself, between the quill and its target.",
+          "Mythic: isolate the Quills interceptor because of splash damage; prevent Radiant Echoes orbs from reaching the boss."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: Belo’ren Normal/Heroic mechanics (19 May 2026)",
+            "url": "https://www.icy-veins.com/wow/beloren-raid-guide"
+          },
+          {
+            "title": "Method: Belo’ren Heroic",
+            "url": "https://www.method.gg/guides/march-on-queldanas/beloren-child-of-alar-heroic"
+          },
+          {
+            "title": "Method: Belo’ren Mythic (28 May 2026)",
+            "url": "https://www.method.gg/guides/march-on-queldanas/beloren-child-of-alar"
+          }
+        ]
+      },
+      {
+        "slug": "midnight-falls",
+        "summaryRu": "Сохраните вылеченные кристаллы для финала; пройдите последовательность рун, переходку и уничтожение ядер.",
+        "summaryEn": "Preserve healed crystals for the finale; complete the rune sequence, intermission and core phase.",
+        "tipsRu": [
+          "Обычная/героическая: запоминайте порядок Death’s Dirge. Игроки с рунами выстраиваются по часовой стрелке от активного танка; рисунок с тремя рунами — только пример.",
+          "Прерывайте и контролируйте матрицы призмы; убивайте Midnight Crystals до Cosmic Fracture. Лекари полностью восстанавливают Dusk Crystals; назначенные носители подбирают полученные Dawn Crystals.",
+          "Между первой и второй фазами есть Total Eclipse: сопротивляйтесь притягиванию в смертельный Darkwell, рассредоточьтесь под Starsplinter и уклоняйтесь от лучей.",
+          "Galvanize направляйте в разные ядра с разных сторон, оставаясь внутри Iris of Oblivion. На героической сложности распределите четыре луча; дополнительно замачивайте их рейдом.",
+          "Финал: оставайтесь в свете носителей; на каждый Dark Archangel тратьте один Dawn Crystal для барьера. Затем уходите от Black Tide; замачивайте Light Siphon.",
+          "Эпохальная: это отдельная тактика — руны разделены между тремя мирами, позднее рейд разделяется надвое, а после третьей фазы есть дополнительная четвёртая."
+        ],
+        "tipsEn": [
+          "Normal/Heroic: remember Death’s Dirge order. Rune players line up clockwise from the active tank; a three-rune diagram is only an example.",
+          "Interrupt and control prism matrices; kill Midnight Crystals before Cosmic Fracture. Healers fully restore Dusk Crystals; assigned carriers collect the resulting Dawn Crystals.",
+          "Total Eclipse separates phases one and two: resist the pull into the lethal Darkwell, spread for Starsplinter and dodge beams.",
+          "Aim Galvanize into separate cores from different sides while staying inside Iris of Oblivion. Heroic requires four beam assignments and additional raid soakers.",
+          "Final phase: stay in carrier light; spend one Dawn Crystal per Dark Archangel to create a barrier. Then leave Black Tide and soak Light Siphon.",
+          "Mythic requires a separate strategy: runes span three realms, the raid later splits into two dimensions, and an additional fourth phase follows phase three."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: Midnight Falls Normal/Heroic mechanics (19 May 2026)",
+            "url": "https://www.icy-veins.com/wow/midnight-falls-raid-guide"
+          },
+          {
+            "title": "Method: Midnight Falls Heroic",
+            "url": "https://www.method.gg/guides/march-on-queldanas/midnight-falls-heroic"
+          },
+          {
+            "title": "Method: Midnight Falls Mythic (30 May 2026)",
+            "url": "https://www.method.gg/guides/march-on-queldanas/midnight-falls"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "raidSlug": "venomous-abyss",
+    "reviewedAt": "2026-10-21T20:17:18Z",
+    "summaryRu": "Отравленная бездна — восемь боссов второго сезона Midnight. Проверены все встречи, 37 настоящих иконок и изменения Blizzard до 20 октября. Уточнены механики Ссзорака, Спирального алтаря и Ула’тек. Эпохальная добыча двух финальных боссов — 344; диковинка для обмена на комплект имеет отдельное правило.",
+    "summaryEn": "The Venomous Abyss contains eight Midnight Season 2 encounters. All encounters, 37 authentic icons, and Blizzard changes through October 20 were reviewed. Sszorak, Coiled Altar, and Ula’tek guidance includes recent fixes. Final two Mythic bosses drop item level 344; the tier Curio follows a separate rule.",
+    "sources": [
+      {
+        "title": "Blizzard: Venomous Abyss encounters and regional unlock schedule",
+        "url": "https://news.blizzard.com/en-us/article/24294062/curse-of-ulatek-the-venomous-abyss-raid-finder-wing-3-now-live"
+      },
+      {
+        "title": "Blizzard: Midnight Season 2",
+        "url": "https://news.blizzard.com/en-us/article/24294369/midnight-season-2-is-now-live"
+      },
+      {
+        "title": "Blizzard: hotfixes through October 20, 2026",
+        "url": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+      },
+      {
+        "title": "Blizzard: October 6, 2026 raid tuning",
+        "url": "https://news.blizzard.com/en-gb/article/24296142/hotfixes-october-6-2026"
+      },
+      {
+        "title": "Icy Veins: Mythic final-boss loot and Curio exception",
+        "url": "https://www.icy-veins.com/wow/news/venomous-abysss-final-two-bosses-drop-gear-10-item-levels-past-max/"
+      },
+      {
+        "title": "Icy Veins: raid rewards and loot bands",
+        "url": "https://www.icy-veins.com/wow/venomous-abyss-raid-guide"
+      }
+    ],
+    "bosses": [
+      {
+        "slug": "nekzali-the-soulcoiler",
+        "summaryRu": "Контролируйте путь аддов к колодцу и место снятия Essence Rend. На переходке добивайте эхо и очищайте тела.",
+        "summaryEn": "Control adds approaching the Well and choose Essence Rend dispel positions. During intermission, kill Echoes and clear corpses.",
+        "tipsRu": [
+          "Магическим уроном разбивайте щиты Restless Amani до их подхода к колодцу; затем собирайте их для клива.",
+          "Essence Rend снимайте после выхода цели к краю: снятие оставляет опасную зону.",
+          "Танк отходит с Possession Barrage; остальные освобождают линию между ним и боссом.",
+          "На переходке сосредоточьте урон на активном Echo of Jawae; Hungering Pyre поглощайте вместе над телами."
+        ],
+        "tipsEn": [
+          "Break Restless Amani shields with magic damage before they reach the Well; gather them for cleave afterwards.",
+          "Dispel Essence Rend after its target reaches the edge; dispelling leaves a hazardous area.",
+          "The Possession Barrage tank moves away; everyone else clears the boss-to-tank line.",
+          "Focus the active Echo of Jawae during intermission; group-soak Hungering Pyre over corpses."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: nekzali-the-soulcoiler",
+            "url": "https://www.icy-veins.com/wow/nekzali-raid-guide/"
+          }
+        ]
+      },
+      {
+        "slug": "entombed-sentinels",
+        "summaryRu": "Два независимых запаса здоровья: разделяйте боссов и выравнивайте урон перед стазисом.",
+        "summaryEn": "Two independent health pools: keep the bosses apart and balance damage before Stasis.",
+        "tipsRu": [
+          "Назначьте два лагеря; сохраняйте расстояние между боссами не менее 40 м.",
+          "Перед Vitriolic Stasis выравнивайте здоровье: отстающий босс восстанавливает его до значения второго.",
+          "Приоритет — Venom Coagulation; наступайте на Toxic Droplets. Heroic: уклоняйтесь от возвращающегося Living Venom.",
+          "После переходки лагеря остаются на местах, танки обмениваются боссами; Blighted Blood снимайте быстро."
+        ],
+        "tipsEn": [
+          "Assign two camps and keep the bosses at least 40 yards apart.",
+          "Balance health before Vitriolic Stasis: the lower-health boss heals to match its partner.",
+          "Prioritize Venom Coagulation and step on Toxic Droplets. Heroic: dodge returning Living Venom.",
+          "After intermission, camps stay put while tanks exchange bosses; dispel Blighted Blood promptly."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: entombed-sentinels",
+            "url": "https://www.icy-veins.com/wow/entombed-sentinels-raid-guide"
+          }
+        ]
+      },
+      {
+        "slug": "the-lost-explorers",
+        "summaryRu": "Рыба из ящиков определяет порядок усилений; держите две цели под кливом и сохраняйте прерывания.",
+        "summaryEn": "Fish from crates selects the empowerment order; cleave two targets and maintain interrupt coverage.",
+        "tipsRu": [
+          "Сводите двух боссов; не собирайте всех троих вместе из-за United Defense.",
+          "Назначьте переносчика рыбы: накормите выбранного босса до завершения Empower. Рекомендуемый порядок: Gebbo → Nama → Iku.",
+          "Прерывайте Icebound Flames по ротации. Взрывы уводите от грибов; гриб используйте перед подходом Blast Wave."
+        ],
+        "tipsEn": [
+          "Keep two bosses together; avoid bringing all three into United Defense range.",
+          "Assign a fish carrier and feed the chosen boss before Empower completes. Suggested order: Gebbo → Nama → Iku.",
+          "Rotate interrupts on Icebound Flames. Place bombs away from mushrooms and trigger a mushroom as Blast Wave approaches."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: the-lost-explorers",
+            "url": "https://www.icy-veins.com/wow/lost-explorers-raid-guide"
+          }
+        ]
+      },
+      {
+        "slug": "vashnik-the-malignant",
+        "summaryRu": "Положение босса выбирает два ближайших фонтана. Контролируйте усиления и не пропускайте аддов в центр.",
+        "summaryEn": "Boss positioning selects the nearest two fountains. Rotate infusions and prevent adds reaching the center.",
+        "tipsRu": [
+          "Перед Imbibe ставьте Vashnik между нужными фонтанами; к кровавому фонтану требуется подойти ближе.",
+          "Чередуйте пары фонтанов: Shadow + Flame → Flame + Blood → Blood + Shadow.",
+          "Замедляйте и убивайте аддов до Malignant Cavity. Plague Wave направляйте мимо рейда."
+        ],
+        "tipsEn": [
+          "Before Imbibe, place Vashnik between the intended fountains; move sufficiently close when selecting Blood.",
+          "Rotate fountain pairs: Shadow + Flame → Flame + Blood → Blood + Shadow.",
+          "Slow and kill adds before they reach Malignant Cavity. Aim Plague Wave away from the raid."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: vashnik-the-malignant",
+            "url": "https://www.icy-veins.com/wow/vashnik-raid-guide/"
+          }
+        ]
+      },
+      {
+        "slug": "sszorak",
+        "summaryRu": "Цисты страхуют рейд от ветра; направления считываются заранее. Учтены сентябрьские и октябрьские исправления.",
+        "summaryEn": "Cysts protect the raid from wind pushes; read directions in advance. September and October changes are included.",
+        "tipsRu": [
+          "По ветрам разметьте точки Venomous Surge; оставляйте по одной цисте напротив нужного тоннеля.",
+          "Ravage разворачивайте от рейда; Mutilate поглощайте группой. Heroic: чередуйте две группы.",
+          "Raging Crosswinds: найдите партнера с противоположным направлением; в переходке используйте подготовленные цисты.",
+          "Heroic: Caustic Claws больше не оставляет Caustic Residue. Mythic: с 13 октября набор до 100 ярости занимает на 5 секунд дольше."
+        ],
+        "tipsEn": [
+          "Mark Venomous Surge positions from wind directions; place one cyst opposite each required tunnel.",
+          "Face Ravage away and group-soak Mutilate. Heroic: alternate two soak groups.",
+          "For Raging Crosswinds, pair with an opposite direction; use prepared cysts during intermission.",
+          "Heroic: Caustic Claws no longer creates Caustic Residue. Mythic: reaching 100 rage takes 5 seconds longer following October 13 tuning."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: sszorak",
+            "url": "https://www.icy-veins.com/wow/sszorak-raid-guide/"
+          },
+          {
+            "title": "Blizzard: October 6, 2026 raid tuning",
+            "url": "https://news.blizzard.com/en-gb/article/24296142/hotfixes-october-6-2026"
+          },
+          {
+            "title": "Blizzard: hotfixes through October 20, 2026",
+            "url": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+          }
+        ]
+      },
+      {
+        "slug": "the-twin-fangs",
+        "summaryRu": "Выравнивайте здоровье Vexhul и Ithraz, распределяйте сбор яда по стакам Eternal Venom.",
+        "summaryEn": "Balance Vexhul and Ithraz health, and assign venom collection by Eternal Venom stacks.",
+        "tipsRu": [
+          "Боссы не делят здоровье; готовьте одновременное убийство. Танки сохраняют мили-дистанцию и меняются после Stone Breaker.",
+          "Caustic Globule собирают игроки с малым числом стаков; не ловите соседние сферы случайно.",
+          "Ravenous Feast снимает стаки Eternal Venom. На Heroic достижение 10 стаков смертельно."
+        ],
+        "tipsEn": [
+          "The bosses do not share health; plan simultaneous kills. Tanks maintain melee range and swap after Stone Breaker.",
+          "Assign Caustic Globules to players with low stacks; avoid accidentally collecting neighboring orbs.",
+          "Ravenous Feast removes Eternal Venom stacks. Reaching 10 stacks is lethal on Heroic."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: the-twin-fangs",
+            "url": "https://www.icy-veins.com/wow/twin-fangs-raid-guide"
+          }
+        ]
+      },
+      {
+        "slug": "the-coiled-altar",
+        "summaryRu": "Управляйте сбором яда и призраками. Mythic обновлен по хотфиксу 13 октября; достижение исправлено 16 октября.",
+        "summaryEn": "Control venom collection and ghosts. Mythic reflects October 13 tuning; the achievement received an October 16 fix.",
+        "tipsRu": [
+          "Собирайте Coalesced Venom под Sever вне путей Axegrinder; танк меняется после конуса. Heroic: согласуйте число одновременных взрывов с лекарями.",
+          "Снимайте щиты Dreadmarch; фиксированный игрок смотрит на призрака, удерживая его под Soul Sever.",
+          "Mythic: теперь 8 начальных сфер, 4 Virulent Mutations, радиус Mutation/Mutagenic Venom — 6 м; Dreadmarch выбирает 3 игроков.",
+          "Watch Out Behind You теперь исправлено для групп больше 20 игроков. Это не отменяет условия достижения."
+        ],
+        "tipsEn": [
+          "Collect Coalesced Venom for Sever away from Axegrinder paths; swap tanks after the cone. Heroic: coordinate simultaneous detonations with healers.",
+          "Break Dreadmarch shields; fixated players face ghosts to hold them for Soul Sever.",
+          "Mythic now has 8 initial orbs, 4 Virulent Mutations, a 6-yard Mutation/Mutagenic Venom radius, and 3 Dreadmarch targets.",
+          "Watch Out Behind You now works for groups larger than 20. Its achievement requirements still apply."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: the-coiled-altar",
+            "url": "https://www.icy-veins.com/wow/coiled-altar-raid-guide"
+          },
+          {
+            "title": "Blizzard: hotfixes through October 20, 2026",
+            "url": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+          }
+        ]
+      },
+      {
+        "slug": "ulatek",
+        "summaryRu": "Контролируйте яйца, заранее разделитесь для коридоров и двигайтесь до разрушения платформ. Учтено ослабление 6 октября.",
+        "summaryEn": "Control eggs, preassign corridor teams, and move before platforms collapse. October 6 tuning is included.",
+        "tipsRu": [
+          "Доставляйте яйца в Spectral Coils, избегая Caustic Waves; Heroic: чередуйте назначенные группы поглощения.",
+          "В коридорах убейте Warden; разрывайте Grasping Fangs парами после спадания эффекта. В котел сначала сдавайте малые яйца, затем Doomscale Egg.",
+          "На финальной фазе прерывайте Shriekers, разводите Volatile Purge и уходите до Circling Prey.",
+          "С 6 октября для Serpent’s Bite достаточно максимум трех поглощающих на каждую цель независимо от размера рейда; Mythic: хвост дает 3 волны вместо 7."
+        ],
+        "tipsEn": [
+          "Carry eggs into Spectral Coils and avoid Caustic Waves; Heroic: alternate assigned soak teams.",
+          "In corridors, kill the Warden and break Grasping Fangs in pairs after the effect expires. Feed small eggs before the Doomscale Egg.",
+          "In the final phase, interrupt Shriekers, spread Volatile Purge, and move before Circling Prey.",
+          "Since October 6, each Serpent’s Bite needs no more than three soakers regardless of raid size; Mythic tails emit 3 waves instead of 7."
+        ],
+        "sources": [
+          {
+            "title": "Icy Veins: ulatek",
+            "url": "https://www.icy-veins.com/wow/ulatek-raid-guide/"
+          },
+          {
+            "title": "Blizzard: October 6, 2026 raid tuning",
+            "url": "https://news.blizzard.com/en-gb/article/24296142/hotfixes-october-6-2026"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "raidSlug": "sporefall",
+    "reviewedAt": "2026-10-21T20:17:45Z",
+    "summaryRu": "Споропад — дополнительный рейд первого сезона Midnight, добавленный в 12.0.7: один босс, Гнилотоп, в Харандаре. Для входа нужен 90-й уровень; в поиске рейдов — уровень предметов 240. Доступны LFR, Normal, Heroic и Mythic, причем Mythic допускает 15–25 игроков. Сейчас идет второй сезон, поэтому этот рейд относится к прежнему сезону. За четыре еженедельных Delicious Sporesnack можно получить Luminous Sporeglider: одна закуска в неделю на учетную запись за победу на любой сложности.",
+    "summaryEn": "Sporefall is the bonus Midnight Season 1 raid added in 12.0.7: one boss, Rotmire, in Harandar. Entry requires level 90; Raid Finder requires item level 240. LFR, Normal, Heroic and Mythic are available, with Mythic supporting 15–25 players. Season 2 is now live, so this is previous-season content. Collect four weekly Delicious Sporesnacks for the Luminous Sporeglider: one snack per week per account from a kill on any difficulty.",
+    "sources": [
+      {
+        "title": "Blizzard — Prepare to Face Rotmire in the Sporefall Raid",
+        "url": "https://worldofwarcraft.blizzard.com/en-gb/news/24272110/prepare-to-face-rotmire-in-the-sporefall-raid"
+      },
+      {
+        "title": "Blizzard — Midnight Season 2 is Now Live",
+        "url": "https://worldofwarcraft.blizzard.com/en-gb/news/24294369/the-shadows-deepen-midnight-season-2-begins-19-august"
+      },
+      {
+        "title": "Sporefall — live game-data tooltip, EN/RU",
+        "url": "https://www.wowhead.com/zone=16279/sporefall"
+      },
+      {
+        "title": "Rotmire — live game-data tooltip, EN/RU",
+        "url": "https://www.wowhead.com/npc=254176/rotmire"
+      }
+    ],
+    "bosses": [
+      {
+        "slug": "rotmire",
+        "summaryRu": "Гнилотоп — бой с повторяющимся циклом грибных прислужников. Главное — заранее выбрать места их гибели: на 100 энергии «Плеснецвет» превращает трупы в разрывающиеся грибы, а живых прислужников лечит и усиливает.",
+        "summaryEn": "Rotmire repeats a cycle of fungal minions. Plan where they die: at 100 energy, Fungal Bloom turns corpses into explosive mushrooms while healing and empowering surviving minions.",
+        "tipsRu": [
+          "«Грибное пробуждение»: выходите из кругов появления прислужников; фиксацию ведите к согласованному месту, чтобы трупы лежали компактно.",
+          "«Плеснецвет»: добивайте живых прислужников до применения, затем быстро убивайте появившиеся на трупах грибы. Целители готовят защиту от общего урона и последующего периодического урона.",
+          "«Гнойные лианы»: отходите к краю арены, не задевая союзников своим кругом; после окончания эффекта обходите оставшуюся область.",
+          "Танки: меняйтесь после каждого «Гнилостного кулака»; готовьте снижение урона к удару и подбрасыванию.",
+          "Heroic/Mythic: назначьте прерывания «Выброса яда» Sporecap и перемещайте босса к этому неподвижному прислужнику.",
+          "Mythic: выделите раздельные места для трупов Shroomling и Fungling, дальше 10 м друг от друга. «Перекрестное удобрение» создает Doom Shroom, если разные типы оказываются слишком близко.",
+          "Целители: учитывайте накапливающиеся «Гнойные пустулы» — урон по всему рейду растет с продолжительностью боя."
+        ],
+        "tipsEn": [
+          "Awaken Fungi: leave the spawn circles. Bring fixating minions to the agreed kill location to keep their corpses together.",
+          "Fungal Bloom: finish living minions before the cast, then quickly kill the mushrooms growing from their corpses. Healers should cover both the raid hit and the damage over time.",
+          "Festering Vines: move to the arena edge without clipping allies with your circle; avoid the area left behind when it expires.",
+          "Tanks: swap after every Putrid Fist and prepare mitigation for its hit and upward knockback.",
+          "Heroic/Mythic: assign Poison Burst interrupts on the stationary Sporecap and move the boss to it.",
+          "Mythic: designate separate corpse piles for Shroomlings and Funglings, more than 10 yards apart. Cross Fertilization creates a Doom Shroom when the two types die too close together.",
+          "Healers: account for stacking Rotting Pustules, which increases raid damage as the encounter continues."
+        ],
+        "sources": [
+          {
+            "title": "Panthea — Rotmire raid guide (Icy Veins)",
+            "url": "https://www.icy-veins.com/wow/rotmire-raid-guide/"
+          },
+          {
+            "title": "iMX3 — Rotmire strategy and Adventure Guide (Wowhead)",
+            "url": "https://www.wowhead.com/guide/midnight/raids/sporefall-rotmire-boss-strategy-abilities-cheat-sheet-rewards"
+          },
+          {
+            "title": "Awaken Fungi — live EN/RU spell tooltip",
+            "url": "https://www.wowhead.com/spell=1221622"
+          },
+          {
+            "title": "Fungal Bloom — live EN/RU spell tooltip",
+            "url": "https://www.wowhead.com/spell=1221637"
+          },
+          {
+            "title": "Festering Vines — live EN/RU spell tooltip",
+            "url": "https://www.wowhead.com/spell=1222088"
+          },
+          {
+            "title": "Putrid Fist — live EN/RU spell tooltip",
+            "url": "https://www.wowhead.com/spell=1221781"
+          },
+          {
+            "title": "Cross Fertilization — live EN/RU spell tooltip",
+            "url": "https://www.wowhead.com/spell=1222684"
+          },
+          {
+            "title": "Bursting Shroom — live EN/RU spell tooltip",
+            "url": "https://www.wowhead.com/spell=1221965"
+          },
+          {
+            "title": "Poison Burst — live EN/RU spell tooltip",
+            "url": "https://www.wowhead.com/spell=1221714"
+          },
+          {
+            "title": "Rotting Pustules — live EN/RU spell tooltip",
+            "url": "https://www.wowhead.com/spell=1222176"
+          }
+        ]
+      }
+    ]
+  }
+]

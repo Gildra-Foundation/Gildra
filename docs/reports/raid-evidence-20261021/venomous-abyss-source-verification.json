@@ -1,0 +1,15 @@
+{
+  "summary": {
+    "generatedAt": "2026-10-21T20:30:43.755Z",
+    "gameBuild": "12.1.0.69814",
+    "online": false,
+    "encounters": 8,
+    "overviewAbilities": 37,
+    "explicitJournalPhases": 11,
+    "withheldTokenizedDescriptions": 25,
+    "verified": true,
+    "violations": 0
+  },
+  "issues": [],
+  "onlineResults": []
+}

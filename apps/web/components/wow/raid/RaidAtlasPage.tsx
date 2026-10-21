@@ -1,13 +1,14 @@
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Castle, Hourglass, Skull } from "lucide-react";
+import { ArrowRight, Skull } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { AtlasMorphPreload } from "@gildra/atlas-ui/AtlasMorphPreload";
 import { morphArtProps } from "@gildra/atlas-ui/morph";
 import { contentManifest } from "@/lib/data/wow";
 import { midnightRaids, raidSceneArt, raidSlugs } from "./midnightRaidData";
 import { raidAtlasCopy } from "./raidAtlasCopy";
+import { raidReviewCopy } from "./raidReviewCopy";
 import styles from "./raidAtlasPage.module.css";
 import { trail } from "@/lib/routes/registry";
 import { artPlaceholder } from "@/lib/atlas/placeholders";
@@ -35,6 +36,7 @@ const sporefall = contentManifest.instances.find((entry) => entry.canonicalSlug 
 const rotmire = (contentManifest.encounters as ManifestIdentity[]).find((entry) => entry.instance === "sporefall");
 
 export function RaidAtlasPage({ locale }: { locale: Locale }) {
+  const reviewCopy = raidReviewCopy[locale];
   const copy = raidAtlasCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   const localized = (value: { en: string | null; ru: string | null }) => (locale === "ru" ? value.ru : value.en) ?? "";
@@ -110,11 +112,11 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
 
           <article className={styles.raid} data-testid="sporefall-identity-card">
             <Link className={`${styles.raidArt} ${styles.raidArtEmpty}`} href={`${prefix}/wow/raids/sporefall`} tabIndex={-1} aria-hidden="true">
-              <Castle />
+              <Image src="/assets/wow/raids/sporefall/rotmire-journal.png" alt="" width={128} height={64} />
             </Link>
             <div className={styles.raidBody}>
               <h3><Link href={`${prefix}/wow/raids/sporefall`}>{wowSourceName(sporefall.names.en!,  locale, sporefall.names.ru ?? undefined)}</Link></h3>
-              <p className={styles.pending}><Hourglass aria-hidden="true" /><span><strong>{copy.pendingTitle}.</strong> {copy.pendingText}</span></p>
+              <p className={styles.pending}>{reviewCopy.sporefallCard}</p>
               <ol className={styles.encounters} aria-label={copy.bossesLabel}>
                 <li><Skull aria-hidden="true" /><Link href={`${prefix}/wow/raids/sporefall/rotmire`}>{wowSourceName(rotmire.names.en!,  locale, rotmire.names.ru ?? undefined)}</Link></li>
               </ol>

@@ -1,0 +1,561 @@
+{
+  "generatedAt": "2026-10-21T20:32:08.145565+00:00",
+  "files": [
+    {
+      "path": "apps/web/components/wow/raid/RaidAtlasPage.tsx",
+      "sha256": "499dc5370b66b29432a21bd6fbca808ddbb29ceb00e57e8f7a03c7f70af71019"
+    },
+    {
+      "path": "apps/web/components/wow/raid/RaidBossGuide.tsx",
+      "sha256": "3796546623fb22dfb46e9b71b6b1395f22fa16ca8ff425f5f29fdd2fb8cced4b"
+    },
+    {
+      "path": "apps/web/components/wow/raid/RaidMechanicList.tsx",
+      "sha256": "a97045eef26171082a849dc015bc3101d95239a66d97d5cef9bc331777ab48f7"
+    },
+    {
+      "path": "apps/web/components/wow/raid/RaidOverview.tsx",
+      "sha256": "8c0693cd0c961c3c622ea20cf945ca672db966dfc5d24524920d5af6b2cd5856"
+    },
+    {
+      "path": "apps/web/components/wow/raid/RaidReviewNotes.tsx",
+      "sha256": "bd6996501730e1afb9e102b3f58c40e273a5296bed227b968107ba0e0b2faa17"
+    },
+    {
+      "path": "apps/web/components/wow/raid/RaidSpellReference.tsx",
+      "sha256": "a242744c98978f2086c0fa3d894e11f004816bcc937e6ba7fc52b4f040bd5b4f"
+    },
+    {
+      "path": "apps/web/components/wow/raid/SporefallPage.tsx",
+      "sha256": "73985be832d482af5a93fcc9402abb2e4447026c679212026295672ef1c14a51"
+    },
+    {
+      "path": "apps/web/components/wow/raid/VenomousAbyssPage.tsx",
+      "sha256": "acf1269a38d4ca5f828823aad02d52706b17b49a3859a7ffd87734671880a5e6"
+    },
+    {
+      "path": "apps/web/components/wow/raid/VenomousBossPage.tsx",
+      "sha256": "2de85180c57ce6749e88d622fac868790fd160f9389199475faa86933b3dea9a"
+    },
+    {
+      "path": "apps/web/components/wow/raid/midnightRaidTactics.ts",
+      "sha256": "e706d482601f3be6a03623707a4b2fbea2811cc164aef7440162b3a982dca1b8"
+    },
+    {
+      "path": "apps/web/components/wow/raid/raidReview.module.css",
+      "sha256": "3146160838eafcf1ca8cefc74dc154b9a4c501699f49677a7ddb0a3554d6a3ed"
+    },
+    {
+      "path": "apps/web/components/wow/raid/raidReviewCopy.ts",
+      "sha256": "5abf87f6b3babd595602e0f3cb54072ecb71ba1bff90d1dacce589bfc3ab68ca"
+    },
+    {
+      "path": "apps/web/components/wow/raid/venomousCopy.ts",
+      "sha256": "e1234fb637a47b9a9862cd47d5a6822c08ed9cefe706a10b72d205a71f970022"
+    },
+    {
+      "path": "apps/web/components/wow/raid/voidspireMechanicGuide.ts",
+      "sha256": "d2e0cf1780cc2351f72bb1c4730b2584eb2972ac90f01c298989fdbb7be7ef2d"
+    },
+    {
+      "path": "apps/web/data/wow/raid-reviews/march-on-queldanas.json",
+      "sha256": "fdc4441e0adc99c92fe28795135c4c13fed96bcef7bcdc056661400e9c261799"
+    },
+    {
+      "path": "apps/web/data/wow/raid-reviews/published-reviews.json",
+      "sha256": "a75b71116e572b4fd9107654599f007a169d3fa22e4ed407360ab59e8ef2352f"
+    },
+    {
+      "path": "apps/web/data/wow/raid-reviews/spell-identities.json",
+      "sha256": "8be51979b512bb25d365e1430c9092567ad891a41d00f30a583a5de48cac40cf"
+    },
+    {
+      "path": "apps/web/data/wow/raid-reviews/sporefall.json",
+      "sha256": "f1a6282c67381ae1982e48d7658e0c5ce9b0364b33a5e76b515d3f43896d66fd"
+    },
+    {
+      "path": "apps/web/data/wow/raid-reviews/the-dreamrift.json",
+      "sha256": "6dff3252dc47bc5d35c662dfcb85d71af4ab9e01eed383407e0dfadd08b86440"
+    },
+    {
+      "path": "apps/web/data/wow/raid-reviews/the-voidspire.json",
+      "sha256": "89af2346ce88fef5784287e80537f97906c7c9bd5c1d5cf86c8dc1bad7f923f4"
+    },
+    {
+      "path": "apps/web/data/wow/raid-reviews/venomous-abyss.json",
+      "sha256": "7f3b668bcaf5ead662d5315328a7b4d42ecb0826e97855ff7ddb99f92caf4111"
+    },
+    {
+      "path": "apps/web/lib/data/raidReviews.ts",
+      "sha256": "602c662b485bb6edfd954db7d4fd368f6db036fc259044421ca3cd36ce557cdb"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1232467.jpg",
+      "sha256": "d5770486847e789474b057100fdb870e996a8964627f4fbe9de62d81eb53bbf8"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1233602.jpg",
+      "sha256": "4ec36243d9296cdc33546b38d89a9e195692fe91d011a3731e3d9d5d3d741515"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1233819.jpg",
+      "sha256": "2fe98dc0221bc88ba8946fef61ef925fe3447ba19eca8919b7d977d79afd46a5"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1233865.jpg",
+      "sha256": "2018c9cade333cc4590ab351542de73fa4c93afab69485612080cf9be432f85a"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1237040.jpg",
+      "sha256": "872388dbdede36a6a8f28aef71bbc80c5361d48948ef471d28c2890dd004d213"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1237729.jpg",
+      "sha256": "098e78412d3ce4065d7dbfe2cad3158a434f155b27963b3407bbe4a5f5442dd2"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1239080.jpg",
+      "sha256": "3be6ffd79335123cf7a1a275daa527eff9b6457c125e8fbde9f1dca292582eba"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1241520.jpg",
+      "sha256": "e6594a4908fc46e3df88b2a650b705d67cb987d31181811d84d3d5242f267733"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1241864.jpg",
+      "sha256": "9fafc143a99eff7d604a79bed5749342d0073e761dac84a7472dc76f8ec6297c"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1243453.jpg",
+      "sha256": "d73a8ee7a246504ce81df1a463bd5a53251184d9713420cffe6b4dfa3a4b08fc"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1243982.jpg",
+      "sha256": "80ab7e70d1383886b6be9d1035833a5cd8fcbcf894ab9af9a6a24ad20f230ec4"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1244012.jpg",
+      "sha256": "3ca4f5899b6ddb8312afe750b9a742d2315fe9c5b536c4427fe6a568a2e9f5a6"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1244221.jpg",
+      "sha256": "ba5240c1dbe236ee9a590c38e65a2e7331de4883b53ad8a68f25aba3889ef11f"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1245058.jpg",
+      "sha256": "06dd85c5181ed26793a5b94948c1281623f6b688e6d9834f087ae98f7c1c715a"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1245391.jpg",
+      "sha256": "d8d7d7a863a49acff5d62438cb453e614fb764aa5bea68f7037f10718fe96684"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1245645.jpg",
+      "sha256": "42ed80b2a0ed6bb9b18742f7d81fca7aa82238a17a68140ed130324e8a4169d8"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1246162.jpg",
+      "sha256": "d439c66886b477670deecdcfa228663131bc6c086541b3933667fa3f8fe7ba9e"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1246175.jpg",
+      "sha256": "db134514b4dcedbf702f9e8c5ec912b00a76a383fe096c294aa365578bfca23f"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1246384.jpg",
+      "sha256": "32e4368a39b17277c224e2d9513db313282809c6c0f7a70338492875db8f02e1"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1246485.jpg",
+      "sha256": "6c02596389cbe5147820a2a4f0a0907fb99810c8b383701c0d00d79279b3a89d"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1246736.jpg",
+      "sha256": "d7f4f187177473bc9dd8c1cd3a76f3bf4db13472319f5724cb31adfac4e15ae9"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1248644.jpg",
+      "sha256": "6f8cb4ce9c8798254483c312cc1b69594e8f4a3ad7fd4b0d789f21304af1ebf9"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1248674.jpg",
+      "sha256": "9be326898e20345fff99de43e050f1c2ba8733ccd13c769460912a711e657477"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1248721.jpg",
+      "sha256": "54d4e0e702290e29426b73251d26f49ae0965349995bee058d239c75747b463c"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1248847.jpg",
+      "sha256": "f0deecf2c5fe23570b05da8c91e86a874aca37a99ab47189b9876e4166b53183"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1248983.jpg",
+      "sha256": "c3fd698fdefb7b96ab9eff58263a3f35749165485bb324a75577b1aa22757c64"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1249262.jpg",
+      "sha256": "a12f24f1a7e3696cb1f7b2d129f1d6210e3a0b95aa3114d847bbeb6a0a7d02c6"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1253032.jpg",
+      "sha256": "85cb3151b2b63ac12b21c4a7e774c0c5185b3ed5d85d33879c43e671b41dcbd5"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1254088.jpg",
+      "sha256": "b843298b63e2adc99ea2098cf8155f7fd8e862360719cae90b7e41c746641250"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1255702.jpg",
+      "sha256": "981dabb8dc07a42d348d56e217e59daaaed4dc33d4d702b7829e66c2a3c3d89b"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1255749.jpg",
+      "sha256": "20faed5c2767f27b2dfb95c52b98129a6ecaa39c8f80034dcb3b511d7c2d569e"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1258883.jpg",
+      "sha256": "2fe98dc0221bc88ba8946fef61ef925fe3447ba19eca8919b7d977d79afd46a5"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1259184.jpg",
+      "sha256": "06b17b1060811d69e1123966e526afe00db965be08fe872c294ec6dcce45fa1c"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1260046.jpg",
+      "sha256": "983a6004d9e8c06cf15d5726dcc62843c110c8cca5f22ffaed2023e9e9308ea8"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1260835.jpg",
+      "sha256": "abc521dbdcc54661801fb8bf9ac09cd4b07152ea5b82e80f99cd53223ac97c62"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1262623.jpg",
+      "sha256": "872388dbdede36a6a8f28aef71bbc80c5361d48948ef471d28c2890dd004d213"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1265540.jpg",
+      "sha256": "ea7773c3a1a4c93d3b7102f4c5e47022d44085faa0bee85b5eb37b118c9044b3"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1271577.jpg",
+      "sha256": "576e111c49edc22f8ad4ef9e8e8cd4985a2ca48d0bf38957a19c8668a5173d04"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1273067.jpg",
+      "sha256": "aa0d9c4833b7c34da89f1258a9f4956abc0f4f25f54f72340d1a2115815624de"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1281735.jpg",
+      "sha256": "3e531e7278798b83796e5f7e4cbfbff7d7d20c0b409c6fd78f77b9f93e961160"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-mechanics/1284786.jpg",
+      "sha256": "96ac12d1a77d0f160df33afcad741ee0c4dd94969f7dd30192a444c0009e05ab"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1221622.jpg",
+      "sha256": "69c215e4de2922484e269a1d817ce1566be1afda3c590b690c2fe544abcc656c"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1221637.jpg",
+      "sha256": "1ed6ec6d4baf6fb779dc32002b49721d6cd4c139d289aadf57093e7be1729a1f"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1221714.jpg",
+      "sha256": "91b759b1c2da671fd82965f3f4dd0d428c102f6160e470c824e4b76dd6ff456a"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1221781.jpg",
+      "sha256": "56b0a9fd6b1f207d6b18f09b73bc19a2d3580d63d3c2b66347048e0b58e3940c"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1221965.jpg",
+      "sha256": "e3cfc1214aa37f9dd2d4dec174136dcdf6c5cba294a3b249717c582612bea208"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1222088.jpg",
+      "sha256": "e94b1dc7bb84aff659d5e8a6c499b29a1d9e74cb1e987e77cb77d743b1054851"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1222176.jpg",
+      "sha256": "65d8dc7647d88781d47dea7e63123038ea65a7105ebd26bd418dacda6bd71e20"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1222684.jpg",
+      "sha256": "1674ccffcd0f8650c20cd0416c9542d67171bbbed708e5ab5ae6b0281965feb7"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1233602.jpg",
+      "sha256": "cfcc933850203cc1cf9cf810349c9cdaba9d125da4fe4aab256c80399e103bf1"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1233865.jpg",
+      "sha256": "9701adbd964ef0536b90033406426d6bf15b75a43a948454789372fa4237923b"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1237614.jpg",
+      "sha256": "69a60605114b9c253ce287f8032e1c3944539150f8c35a9969f8a0c24849e197"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1237837.jpg",
+      "sha256": "3d63db6010c17f4dbd6a3c4696718faedb3d39762850a368d33524faf508b47b"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1239089.jpg",
+      "sha256": "079fdbf1bcaf5ee3918d551578b24c837fa9b375df89299a1c0b0244f95ac1c6"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1241162.jpg",
+      "sha256": "09721974bcf7a0a7fac8adb5af72583e147ff7e1af41659ccfa789a7b3af139b"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1241163.jpg",
+      "sha256": "4298d20f47edc4d0ca56b92e70ebb5fa442e9e254f975e349b79c6921e193eec"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1241520.jpg",
+      "sha256": "a777f0028809b8e7f38a2c31e58605d8449c8ee6c5e571ba39ce06d533452e6e"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1241864.jpg",
+      "sha256": "687251668c99eb5c7c1e0386eb8dc6a5e9ef4b0db3e2f8b7ee9fbaffb487475a"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1242515.jpg",
+      "sha256": "313f5e9bd6542be402fefab34c7f99530aec126ccf8fb00c50075b615bc453fa"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1243320.jpg",
+      "sha256": "a877f2200b7947151f914db7e5ecfb8e0e5e78abc74bb900822b7b2400e140f0"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1244012.jpg",
+      "sha256": "b5b40802c811e6e02e868944576899ccba9522af374bdd25bec8a887a0f65f21"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1244221.jpg",
+      "sha256": "f5c735c012dfa4889b073357fba98f598a6ebd9395b6b2cafc2dc4c0c6096a6c"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1244412.jpg",
+      "sha256": "4a47846a691ad21769aef3cfb1cf29775b16a4ff6e55642246a4aa63e921c2a3"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1244419.jpg",
+      "sha256": "9701adbd964ef0536b90033406426d6bf15b75a43a948454789372fa4237923b"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1244672.jpg",
+      "sha256": "66ecec395fd8e201da3f08dd9f3c4eca18b090b6de185cf4ce05eaa555c9cc01"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1245391.jpg",
+      "sha256": "8cd459414b953b133ccdb815b1918c8366346ed166b288c39dbc457f6deef9e1"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1245396.jpg",
+      "sha256": "03dcc675ed8f152a442639a8f67ca4a17bba575f6fd6f800a1e0410c4e378302"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1245406.jpg",
+      "sha256": "337175dd8acfb59994ed07f64fb6cae6b08e072e5d9a91cea2576ba590c4aa7b"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1245486.jpg",
+      "sha256": "29061c01ca30f75b8153d740b732a183703b892cf8c2f1d01e6066477412ee36"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1245645.jpg",
+      "sha256": "23e3c703f5ebc6d45b60d322d84f9c3bc345d84f3480ecfc0925d439753c9c0e"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1245960.jpg",
+      "sha256": "28133373ce67b3c9bcdec0b37ff977ed1d58a42e1a015da87befef8e266559e5"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1246175.jpg",
+      "sha256": "68ed605209b69824c29a8eb698ab19f426470eb69ac46293a64db3aab79aadb3"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1246736.jpg",
+      "sha256": "0d7962cfea073587de4e6255eac61bea18bdcf0a3422cfc8115e3e54fcd926e2"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1248451.jpg",
+      "sha256": "518cd3bafaf8291c43d951b6cddfbd59b7737f52a6ffbf810f09f77bed2cbd2a"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1248674.jpg",
+      "sha256": "2ae3ce452e6dbb20039611dbc515f943aec94bfb7452d3734b1e86ab719a1aaa"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1248847.jpg",
+      "sha256": "746acc61be662aa073cef194ebef072f7dab6cd138907b132b58d9feb3edac99"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1248983.jpg",
+      "sha256": "2ab9a4dae74b82566e848afe8032a39015ae262509f91124eaf9f99161556d9c"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1249017.jpg",
+      "sha256": "4262b0f9ad23c4dde9cb80bc779bdaf3c91c371e9f762f44b09dc1f76b470e96"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1249251.jpg",
+      "sha256": "b6709caa7cd541986ff86811e214142dc6f69e2e841fd20b43d01d74e455810e"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1249262.jpg",
+      "sha256": "93795c1a28c441b5df212f63968eac417bac23f92f81a798505500a1a6ab0f49"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1249748.jpg",
+      "sha256": "0b60d747f297e7f0ae50c9840f3fb0126ca3bb12f187d22a3c9a987f161860d0"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1250898.jpg",
+      "sha256": "4a2f2b40c804ea159832bd1fbee39d7909d964983560e5efb62da83cd923257d"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1250953.jpg",
+      "sha256": "4a82ce6f3b77779d7a2267e80158cd48d62a45b0dd04ac3330604707c5e9d863"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1250991.jpg",
+      "sha256": "10d7c0427301fc7456778c9f2c9ef858d46d9a3038f64d003117edd4bec0e54e"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1251361.jpg",
+      "sha256": "6d990f49a9cc7d01d3cfb31b6ece1938e02311288d50c87c26646b0e0eeaded2"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1251583.jpg",
+      "sha256": "45b3e6978dc397fcb4dc49ab13da02561b4a049722c78080f6dbe68aaaa2e4b5"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1251807.jpg",
+      "sha256": "41a7d915c620a7b9490efda8026e4890fdef4ec3f629d3ab70372a52b49b96bc"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1251812.jpg",
+      "sha256": "4f670cbda4ae56fa13e6414f062f718619fe7fd24a605fdb48671d6697e60cf0"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1252863.jpg",
+      "sha256": "f783e1f493858b7af26a9c724847f3767dfb7bf985c6552db090eb1654018dfe"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1252974.jpg",
+      "sha256": "871e947e50e7041d86a86834331c9c90185deebf13174b67958f31c8a8c18e7a"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1253032.jpg",
+      "sha256": "12570728cfd2c33dd8cb23f71cb28d81589beb69f00e8870aa616cafc4d6e175"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1253104.jpg",
+      "sha256": "29bf0377034471b7010e3cfd6eef522cdc487d7d546bb4243a4f9b0b132c1e21"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1253915.jpg",
+      "sha256": "918d989f07c3f5cf1180c357a1779433eeda2bee8b2b6d1db041ca5a5f0d72a6"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1254088.jpg",
+      "sha256": "a869ac49bbdaff0341bef532972018ce1af693d6f68b2f4dfb48da0e8bb1d624"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1255749.jpg",
+      "sha256": "8a2515df5b7806db198c5cf16bb89486af79ca625a4254d4ce85fa193821f8ff"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1257087.jpg",
+      "sha256": "849aa5bd898e3bff2d93391e8a01e9e11ffbd394937573015157098b1a13fef6"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1259184.jpg",
+      "sha256": "641b1e66d3f8a3dc85620311eb3ffeab763f8497e2437a6ab46f4576478784d5"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1260046.jpg",
+      "sha256": "cfbcacd22c550adf112b2aae7a7a1f0585a0f51c2ca767bde4452cb48c3388ca"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1260261.jpg",
+      "sha256": "05c48353ad6d54b3ef88a06280a25cb25445b75016c6ea7d0363a46e884a68d4"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1260763.jpg",
+      "sha256": "d208ccd3343546948c46bfb7b6f61afcf8a921b64cc120accdcd1d3cd9bad108"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1262020.jpg",
+      "sha256": "f873c48ab59d4a3e2dd5dc9af264149c19754499bfc94e60eba7dadcfc23ed7a"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1262305.jpg",
+      "sha256": "1162807571fa9a60dd216e43cb0da15aa1b6854846d2fc490117a89c3c95a9ac"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1262623.jpg",
+      "sha256": "190cf4e7f9ff97464e584404352164ce8fd5df6592f3c515393b0b1758f27883"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1263970.jpg",
+      "sha256": "5436b2173f9b62ebcfa185bc574d1dbadba19af4fcb215a7652f46da6c3de082"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1264780.jpg",
+      "sha256": "419269cd34591421a856adebe077b14a2d2984837557de731d5627f90c7015f8"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1265540.jpg",
+      "sha256": "99f08ceb324f53874b37f5bb45fd636140a52d98f9f54e5dab66ed65481f848f"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1266622.jpg",
+      "sha256": "a3c4fec272a3f70ecb94766172b0ffc6c9f5e3d04392e9f18c4514b0e8231264"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1271577.jpg",
+      "sha256": "25c8205121fd452dd99f3465f99d88e2f7e369901bab3713877310270084e90a"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1272726.jpg",
+      "sha256": "de6ff84f39b525e6abbdeef88a5317696eb21a0c6f779f68d8511a3059da709c"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1272937.jpg",
+      "sha256": "a777f0028809b8e7f38a2c31e58605d8449c8ee6c5e571ba39ce06d533452e6e"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1273067.jpg",
+      "sha256": "27343362974d162de5b85d43bf21c7736dfd5a1aa55d111001fc9e6715470b0b"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1282027.jpg",
+      "sha256": "8c862749065872e23c2d141b85bd51ddf4993338e8f9d693e8d093d8478d14b3"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/reviewed-spells/1284525.jpg",
+      "sha256": "8d5f78956c1d52a1e79c9e3e07e309239ba88849f023c735ad1b562b146bc135"
+    },
+    {
+      "path": "apps/web/public/assets/wow/raids/sporefall/rotmire-journal.png",
+      "sha256": "d1c5f18e7e520f28513e57ff94d6eaf8b40bbdf511cd0379b426d4d749c5971d"
+    },
+    {
+      "path": "apps/web/scripts/verify-wow-venomous-abyss.mjs",
+      "sha256": "810410d33f60c706e34f4883fd28d99c81d389ab71a361d1ca430996ef49226e"
+    },
+    {
+      "path": "packages/game-data/src/content-manifest.json",
+      "sha256": "d81937c613a11daafb8bde6d14978798d982cd9cba92ee387338bf36fd8cc709"
+    },
+    {
+      "path": "packages/game-data/src/venomous-abyss.ts",
+      "sha256": "730f10526dd42ace78bc8414dd55e61ee9fa61f3ecd074049e743a9d4ef8de4c"
+    }
+  ]
+}

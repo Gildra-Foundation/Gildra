@@ -1,0 +1,7 @@
+{
+  "head": "50e4b0d1",
+  "baselineHasHardcodedManifestPath": false,
+  "baselineUsesCanonicalDataDoor": true,
+  "baselineHasOldEnglishPhrase": true,
+  "finding": "Hardcoded manifest path already failed on unchanged HEAD after canonical data-door refactor; English sentence matching is not the disclosure contract."
+}

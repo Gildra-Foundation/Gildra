@@ -25,6 +25,8 @@ export type VoidspireMechanic = {
   timing: LocalizedText;
   failure: LocalizedText;
   difficulty: LocalizedText;
+  /** A card can describe several mechanics while linking one representative spell. */
+  preserveName?: boolean;
   spell?: { id: number; icon: string };
 };
 
@@ -36,13 +38,13 @@ export type VoidspireBossGuide = {
 };
 
 const l = (ru: string, en: string): LocalizedText => ({ ru, en });
-const spell = (id: number) => ({ id, icon: `/assets/wow/raids/midnight/spells/${id}.jpg` });
+const spell = (id: number) => ({ id, icon: `/assets/wow/raids/reviewed-mechanics/${id}.jpg` });
 
 export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
   "imperator-averzian": {
     sourceUrl: "https://www.icy-veins.com/wow/imperator-averzian-raid-guide",
     sourceUpdatedAt: "2026-05-19",
-    checkedAt: "2026-09-14",
+    checkedAt: "2026-10-21",
     mechanics: [
       {
         id: "umbral-collapse",
@@ -66,6 +68,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Всю основную фазу и перед каждой переходкой", "Throughout the main phase and before every intermission"),
         failure: l("Падает максимальное здоровье танка; неверная позиция также уменьшает получаемый боссом урон", "The tank loses maximum health; bad boss placement also reduces damage taken by the boss"),
         difficulty: l("Базовое правило Normal/Heroic; на Mythic сохраняется", "Baseline Normal/Heroic rule; unchanged on Mythic"),
+        spell: spell(1265540),
       },
       {
         id: "pitch-bulwark",
@@ -77,6 +80,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Сразу при появлении полосы каста в переходке", "As soon as the cast bar appears during the intermission"),
         failure: l("Адды получают щиты, переходка затягивается и механики наслаиваются", "Adds gain shields, extending the intermission into overlapping mechanics"),
         difficulty: l("На Heroic дистанция аддов от босса обязательна", "On Heroic, adds must remain separated from the boss"),
+        spell: spell(1255702),
       },
       {
         id: "void-fall",
@@ -88,6 +92,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Во время каждой переходки", "During every intermission"),
         failure: l("Получаете лишний урон и перекрываете путь группе", "You take avoidable damage and block the raid's movement lane"),
         difficulty: l("Повторяется из каждого ранее созданного портала", "Repeats from every portal created earlier in the fight"),
+        spell: spell(1258883),
       },
       {
         id: "oblivions-wrath",
@@ -99,6 +104,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("В переходках после появления копий от босса", "During intermissions when lances fan out from the boss"),
         failure: l("Попадание наносит тяжелый урон; на Mythic копья возвращаются", "A hit deals heavy damage; on Mythic the lances return"),
         difficulty: l("Mythic: запомните исходную линию и уклонитесь от обратного прохода", "Mythic: remember the outgoing line and dodge the return path"),
+        spell: spell(1281735),
       },
       {
         id: "shadow-phalanx",
@@ -110,6 +116,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("В конце переходок 2, 4 и 6", "At the end of intermissions 2, 4, and 6"),
         failure: l("Стена сбивает позицию и обычно убивает на совпадении с другими зонами", "The wall displaces the raid and commonly kills during overlapping hazards"),
         difficulty: l("Normal/Heroic; на Mythic совпадает с возвращающимися копьями", "Normal/Heroic; on Mythic it overlaps returning lances"),
+        spell: spell(1284786),
       },
       {
         id: "gathering-darkness",
@@ -128,7 +135,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
   vorasius: {
     sourceUrl: "https://www.icy-veins.com/wow/vorasius-raid-guide",
     sourceUpdatedAt: "2026-05-19",
-    checkedAt: "2026-09-14",
+    checkedAt: "2026-10-21",
     mechanics: [
       {
         id: "primordial-roar",
@@ -168,6 +175,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
       },
       {
         id: "blisterburst",
+        preserveName: true,
         name: l("Огнежальщики / Обжигающий взрыв", "Blistercreeps / Blisterburst"),
         tags: ["MOVE", "TARGET_PRIORITY", "DEFENSIVE"],
         who: l("Игроки с фиксацией, танки и бойцы", "Fixated players, tanks, and damage dealers"),
@@ -188,16 +196,18 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("В конце переходки после убийства огнежальщиков", "At the end of the intermission after killing Blistercreeps"),
         failure: l("Луч смертелен для игроков перед боссом и быстро убивает на своей траектории", "The frontal beam is lethal and rapidly kills anyone caught in its path"),
         difficulty: l("Схема одинакова; на Mythic меньше права на неверно сломанную стену", "Same pattern; Mythic leaves less margin for a wrongly opened wall"),
+        spell: spell(1241864),
       },
     ],
   },
   "fallen-king-salhadaar": {
     sourceUrl: "https://www.icy-veins.com/wow/fallen-king-salhadaar-raid-guide",
     sourceUpdatedAt: "2026-05-19",
-    checkedAt: "2026-09-14",
+    checkedAt: "2026-10-21",
     mechanics: [
       {
         id: "void-convergence",
+        preserveName: true,
         name: l("Схождение Бездны / Сгустки Бездны", "Void Convergence / Concentrated Void"),
         tags: ["TARGET_PRIORITY", "MOVE"],
         who: l("Все бойцы; танки ведут босса", "All damage dealers; tanks kite the boss"),
@@ -206,9 +216,11 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Каждое появление двух сфер", "Every two-orb spawn"),
         failure: l("Касание сферы усиливает босса и приводит к вайпу", "An orb reaching the boss empowers him and causes a wipe"),
         difficulty: l("Heroic: не складывайте два 8-секундных рейдовых DoT; Mythic: старые сферы возвращаются", "Heroic: do not overlap the two 8-second raid DoTs; Mythic: old orbs return"),
+        spell: spell(1243453),
       },
       {
         id: "shadow-fracture",
+        preserveName: true,
         name: l("Раскол Тьмы / Расколотая проекция", "Shadow Fracture / Fractured Projection"),
         tags: ["INTERRUPT", "STOP", "HARD_CC"],
         who: l("Игроки, назначенные на сектора и ротацию контроля", "Players assigned to sectors and the control rotation"),
@@ -229,17 +241,19 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("До детонации звездного рисунка", "Before the star pattern detonates"),
         failure: l("Шипы пересекают стак и наносят массовый урон", "Spikes cut through the stack and deal heavy group damage"),
         difficulty: l("Heroic: дополнительные игроки разводят линии отдельно", "Heroic: additional players spread their line patterns separately"),
+        spell: spell(1253032),
       },
       {
         id: "despotic-command",
         name: l("Деспотичный приказ", "Despotic Command"),
-        tags: ["SPREAD", "MOVE", "DISPEL_MAGIC"],
+        tags: ["SPREAD", "MOVE"],
         who: l("Отмеченные игроки и лекари", "Marked players and healers"),
-        action: l("Цели сначала уходят к краю и разрывают дистанцию, затем лекарь диспелит и быстро снимает heal absorb.", "Targets move to the edge and spread first; a healer then dispels and quickly clears the heal absorb."),
+        action: l("Цели расходятся к краям; после завершения ауры лекари снимают поглощение лечением.", "Targets spread toward the edges; after the aura ends, healers clear the healing absorb."),
         position: l("По разным краям, не рядом с рабочей зоной", "At separate edges, away from the working area"),
-        timing: l("Диспел только после выхода цели", "Dispel only after the target is out"),
-        failure: l("Пульсирующий круг бьет союзников, а диспел оставляет лужу в неверном месте", "The pulsing circle hits allies and an early dispel drops a pool in the wrong place"),
-        difficulty: l("Normal/Heroic/Mythic: порядок «выйти → диспел» сохраняется", "Normal/Heroic/Mythic: keep the move-then-dispel order"),
+        timing: l("Выйдите из группы до завершения ауры", "Leave the group before the aura ends"),
+        failure: l("Пульсирующий круг задевает союзников; завершение ауры оставляет лужу", "The pulsing circle hits allies; the aura ending leaves a pool"),
+        difficulty: l("Выход к краю обязателен; возможность диспела сверяйте для выбранной сложности", "Move to the edge; check dispellability for the selected difficulty"),
+        spell: spell(1260835),
       },
       {
         id: "destabilizing-strikes",
@@ -251,6 +265,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("На автоатаках всю основную фазу", "On melee attacks throughout the main phase"),
         failure: l("Следующие удары становятся смертельными, а неверный маршрут кормит босса сферой", "Following hits become lethal and a bad path feeds an orb to the boss"),
         difficulty: l("Базовая танковская механика всех сложностей", "Baseline tank mechanic on all difficulties"),
+        spell: spell(1271577),
       },
       {
         id: "entropic-unraveling",
@@ -262,13 +277,14 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("20 секунд на 100 энергии", "For 20 seconds at 100 energy"),
         failure: l("Касание луча каждую секунду наносит тяжелый урон; потеря окна увеличивает длину боя", "Touching a beam deals heavy damage every second; wasting the window extends the fight"),
         difficulty: l("Босс получает +25% входящего урона во время окна", "The boss takes 25% increased damage during the window"),
+        spell: spell(1246175),
       },
     ],
   },
   "vaelgor-ezzorak": {
     sourceUrl: "https://www.icy-veins.com/wow/vaelgor-and-ezzorak-raid-guide",
     sourceUpdatedAt: "2026-05-19",
-    checkedAt: "2026-09-14",
+    checkedAt: "2026-10-21",
     mechanics: [
       {
         id: "dread-breath",
@@ -280,9 +296,11 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("При повороте Ваэлгора к выбранному игроку", "When Vaelgor turns toward the selected player"),
         failure: l("Конус накрывает рейд и накладывает страх на 9 секунд", "The cone clips the raid and applies a 9-second fear"),
         difficulty: l("Иммунитеты к страху можно назначить заранее", "Fear immunities can be assigned in advance"),
+        spell: spell(1244221),
       },
       {
         id: "nullbeam-nullzone",
+        preserveName: true,
         name: l("Нуль-луч и Нуль-зона", "Nullbeam and Nullzone"),
         tags: ["SOAK", "MOVE", "DEFENSIVE"],
         who: l("Танк и минимум один помощник; затем весь рейд", "Tank plus at least one helper; then the whole raid"),
@@ -291,6 +309,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Луч 4 секунды, затем немедленный выход из зоны", "Four-second beam followed by an immediate exit from the zone"),
         failure: l("Слишком мало попаданий создают большую зону; медленный выход усиливает притяжение и урон", "Too few beam hits create a large zone; a slow exit increases pull and damage"),
         difficulty: l("Heroic: выход последнего игрока наносит сильный рейдовый взрыв", "Heroic: the last player leaving triggers a heavy raid burst"),
+        spell: spell(1262623),
       },
       {
         id: "gloom",
@@ -302,6 +321,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("До того, как сфера достигнет края", "Before the orb reaches the edge"),
         failure: l("Недостаточное замачивание создает слишком большую долгую лужу", "Insufficient soaking creates an oversized long-lasting pool"),
         difficulty: l("Heroic: команды чередуются из-за минутного дебаффа; Mythic: нужно 7 игроков и больше позиций", "Heroic: rotate teams due to a one-minute debuff; Mythic: 7 players and additional positions"),
+        spell: spell(1245391),
       },
       {
         id: "void-howl",
@@ -313,9 +333,11 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Сначала spread, сразу после появления — контроль и фокус", "Spread first, then immediate control and focus when adds spawn"),
         failure: l("Адды продолжают кастовать рейдовый урон и растягивают позицию", "Adds continue casting raid damage and pull the formation apart"),
         difficulty: l("Mythic: после первого контроля сферы сами к рейду не подплывают", "Mythic: orbs no longer drift toward the raid after the first stop"),
+        spell: spell(1245058),
       },
       {
         id: "twilight-bond-rakfang",
+        preserveName: true,
         name: l("Сумеречные узы и Клык Эззорака", "Twilight Bond and Rakfang"),
         tags: ["TANK_SWAP", "DEFENSIVE", "MOVE"],
         who: l("Танки", "Tanks"),
@@ -328,6 +350,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
       },
       {
         id: "radiant-barrier-shadowmark",
+        preserveName: true,
         name: l("Сияющий барьер и Метка Тьмы", "Radiant Barrier and Shadowmark"),
         tags: ["STACK", "SPREAD", "DEFENSIVE", "TARGET_PRIORITY"],
         who: l("Весь рейд; отмеченные игроки выходят", "Whole raid; marked players move out"),
@@ -336,13 +359,14 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("На 100 энергии", "At 100 energy"),
         failure: l("Игрок вне щита погибает от Midnight Flames; метка в центре накрывает группу", "A player outside the shield dies to Midnight Flames; a mark in center hits the group"),
         difficulty: l("Shadowmark появляется на Heroic и выше", "Shadowmark appears on Heroic and above"),
+        spell: spell(1248847),
       },
     ],
   },
   "lightblinded-vanguard": {
     sourceUrl: "https://www.icy-veins.com/wow/lightblinded-vanguard-raid-guide",
     sourceUpdatedAt: "2026-05-19",
-    checkedAt: "2026-09-14",
+    checkedAt: "2026-10-21",
     mechanics: [
       {
         id: "avengers-shield",
@@ -354,9 +378,11 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("При появлении кругов от Беллами", "When Bellamy marks players with circles"),
         failure: l("Круги наносят урон всем рядом и цепная ошибка быстро убивает группу", "Circles damage nearby allies and chained overlaps quickly kill the group"),
         difficulty: l("Mythic: метки получает весь рейд, нужен заранее назначенный массовый диспел", "Mythic: the whole raid is marked, requiring a pre-assigned mass dispel"),
+        spell: spell(1246485),
       },
       {
         id: "sacred-shield-blinding-light",
+        preserveName: true,
         name: l("Священный щит и Слепящий свет", "Sacred Shield and Blinding Light"),
         tags: ["TARGET_PRIORITY", "INTERRUPT", "DODGE"],
         who: l("Все бойцы и назначенный кик", "All damage dealers and the assigned interrupt"),
@@ -377,9 +403,11 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Сразу после каждого Bloodlust/Heroism", "Immediately after Bloodlust/Heroism"),
         failure: l("Рейд теряет основное окно урона", "The raid loses its main damage window"),
         difficulty: l("Одинаковая реакция на всех сложностях", "Same response on all difficulties"),
+        spell: spell(1246384),
       },
       {
         id: "boss-auras",
+        preserveName: true,
         name: l("Ауры на 100 энергии", "100-energy auras"),
         tags: ["MOVE", "TARGET_PRIORITY"],
         who: l("Танки и весь рейд", "Tanks and whole raid"),
@@ -388,6 +416,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Непосредственно перед 100 энергией", "Immediately before 100 energy"),
         failure: l("Aura of Devotion снижает урон по боссам, Aura of Wrath удваивает их урон, Aura of Peace блокирует атаки", "Aura of Devotion reduces boss damage taken, Aura of Wrath doubles their damage, and Aura of Peace blocks attacks"),
         difficulty: l("Heroic: после цикла остается постоянная Consecration", "Heroic: each cycle leaves a permanent Consecration"),
+        spell: spell(1246162),
       },
       {
         id: "divine-toll",
@@ -399,6 +428,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Беллами на 100 энергии — циклы 1 и 4", "Bellamy at 100 energy — cycles 1 and 4"),
         failure: l("Щит наносит тяжелый урон и накладывает немоту", "A shield deals heavy damage and silences"),
         difficulty: l("Mythic: может совпадать с усиленными механиками другого босса", "Mythic: may overlap an empowered mechanic from another boss"),
+        spell: spell(1248644),
       },
       {
         id: "execution-sentence",
@@ -410,6 +440,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Венел на 100 энергии — циклы 2 и 5", "Venel at 100 energy — cycles 2 and 5"),
         failure: l("Неполное замачивание убивает цель; наложенные круги поражают несколько групп", "An undersoaked circle kills its target; overlapping circles hit multiple groups"),
         difficulty: l("Mythic: Divine Storm дополнительно создает торнадо", "Mythic: Divine Storm also creates tornadoes"),
+        spell: spell(1248983),
       },
       {
         id: "tyrs-wrath",
@@ -421,9 +452,11 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Сенн на 100 энергии — циклы 3 и 6", "Senn at 100 energy — cycles 3 and 6"),
         failure: l("Случайные игроки получают поглощение, а неверная позиция в Aura of Peace лишает возможности действовать", "Random players receive the absorb and bad Aura of Peace positioning prevents actions"),
         difficulty: l("Mythic: способность накладывается на цикл Беллами через Zealous Spirit", "Mythic: overlaps Bellamy's cycle through Zealous Spirit"),
+        spell: spell(1248721),
       },
       {
         id: "judgment-combo",
+        preserveName: true,
         name: l("Правосудие → финишер", "Judgment → spender combo"),
         tags: ["TANK_SWAP", "DEFENSIVE"],
         who: l("Танки", "Tanks"),
@@ -439,7 +472,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
   "crown-of-the-cosmos": {
     sourceUrl: "https://www.icy-veins.com/wow/crown-of-the-cosmos-raid-guide",
     sourceUpdatedAt: "2026-05-19",
-    checkedAt: "2026-09-14",
+    checkedAt: "2026-10-21",
     mechanics: [
       {
         id: "grasp-of-emptiness",
@@ -451,6 +484,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("До выстрела из отмеченного круга", "Before the marked circle fires"),
         failure: l("Стрелы пересекают рейд и отнимают безопасное пространство", "Arrows cut through the raid and remove safe movement space"),
         difficulty: l("Heroic: одновременно появляются две цели", "Heroic: two targets appear at once"),
+        spell: spell(1232467),
       },
       {
         id: "void-expulsion",
@@ -462,9 +496,11 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("До детонации и появления постоянной растущей лужи", "Before detonation and the permanent growing pool appears"),
         failure: l("Лужа перекрывает рабочую область на оставшуюся часть фазы", "The pool blocks working space for the rest of the phase"),
         difficulty: l("Heroic: после первой лужи дополнительные игроки получают последовательные метки", "Heroic: the first pool applies follow-up marks to additional players"),
+        spell: spell(1233819),
       },
       {
         id: "void-droplets",
+        preserveName: true,
         name: l("Капли Бездны / Оскверняющая сущность", "Void Droplets / Corrupting Essence"),
         tags: ["TARGET_PRIORITY", "MOVE", "DEFENSIVE"],
         who: l("Танк, бойцы и игроки с угрозой аддов", "Tank, damage dealers, and players with add threat"),
@@ -509,9 +545,11 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Переходки 1 и 2", "Intermissions 1 and 2"),
         failure: l("Слишком много замедления затягивает в смертельный центр; повторное попадание на Heroic опасно", "Too much slow pulls you into the lethal center; consecutive Heroic hits are dangerous"),
         difficulty: l("Heroic: дебафф запрещает принимать две стрелы подряд", "Heroic: a debuff prevents taking two arrows consecutively"),
+        spell: spell(1243982),
       },
       {
         id: "ricochet-barrier",
+        preserveName: true,
         name: l("Рикошет Серебряной стрелы и Космический барьер", "Silverstrike Ricochet and Cosmic Barrier"),
         tags: ["INTERRUPT", "STOP", "MOVE", "TARGET_PRIORITY"],
         who: l("Три отмеченных игрока, контролеры аддов и бойцы", "Three marked players, add controllers, and damage dealers"),
@@ -520,6 +558,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Каждый цикл второй фазы", "Every phase-two cycle"),
         failure: l("Выжившие адды продолжают касты, а непробитый щит ломает цикл смены танков", "Surviving adds continue casting and an unbroken shield disrupts the tank-swap cycle"),
         difficulty: l("После рикошета и пробитого щита танки меняют цели провокацией с места", "After ricochet and shield break, tanks swap targets by taunting from position"),
+        spell: spell(1237729),
       },
       {
         id: "voidstalker-sting",
@@ -531,6 +570,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("До опасного количества стаков", "Before stacks become dangerous"),
         failure: l("Накопленный периодический урон становится смертельным", "Stacking periodic damage becomes lethal"),
         difficulty: l("В третьей фазе снять стрелой уже нельзя", "Cannot be removed by an arrow in phase three"),
+        spell: spell(1237040),
       },
       {
         id: "aspect-of-the-end",
@@ -542,6 +582,7 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
         timing: l("Каждый набор связей в третьей фазе", "Every tether set in phase three"),
         failure: l("Неверный порядок накладывает опасные механики; поздний прыжок оставляет на разрушенной платформе", "Wrong order overlaps dangerous mechanics; a late jump leaves players on the destroyed platform"),
         difficulty: l("Проверенная тактика Normal/Heroic; Mythic-раздел источника еще не опубликован", "Source-backed Normal/Heroic strategy; the source's Mythic section is not yet published"),
+        spell: spell(1239080),
       },
     ],
   },

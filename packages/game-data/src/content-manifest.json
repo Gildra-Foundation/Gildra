@@ -3059,7 +3059,7 @@
       "activity": "raid",
       "names": {
         "en": "Sporefall",
-        "ru": null
+        "ru": "Споропад"
       },
       "descriptions": {
         "en": null,
@@ -3086,9 +3086,18 @@
           "at": "2026-09-12T23:54:00Z",
           "change": "baseline_verified",
           "sourceUrl": "https://worldofwarcraft.blizzard.com/en-us/news/24272110"
+        },
+        {
+          "at": "2026-10-21T20:17:45Z",
+          "change": "russian_name_verified",
+          "sourceUrl": "https://nether.wowhead.com/tooltip/zone/16279?dataEnv=1&locale=7"
         }
       ],
-      "status": "legacy"
+      "status": "legacy",
+      "sourceUrls": {
+        "nameRu": "https://nether.wowhead.com/tooltip/zone/16279?dataEnv=1&locale=7"
+      },
+      "nameRuVerifiedAt": "2026-10-21T20:17:45Z"
     },
     {
       "id": "wow:retail:midnight:raid:venomous-abyss",
@@ -3889,7 +3898,7 @@
       "instance": "sporefall",
       "names": {
         "en": "Rotmire",
-        "ru": null
+        "ru": "Гнилотоп"
       },
       "descriptions": {
         "en": null,
@@ -3915,8 +3924,17 @@
           "at": "2026-09-12T23:54:00Z",
           "change": "baseline_verified",
           "sourceUrl": "https://worldofwarcraft.blizzard.com/en-us/news/24272110"
+        },
+        {
+          "at": "2026-10-21T20:17:45Z",
+          "change": "russian_name_verified",
+          "sourceUrl": "https://nether.wowhead.com/tooltip/npc/254176?dataEnv=1&locale=7"
         }
-      ]
+      ],
+      "sourceUrls": {
+        "nameRu": "https://nether.wowhead.com/tooltip/npc/254176?dataEnv=1&locale=7"
+      },
+      "nameRuVerifiedAt": "2026-10-21T20:17:45Z"
     },
     {
       "id": "wow:retail:midnight:encounter:venomous-abyss:nekzali-the-soulcoiler",

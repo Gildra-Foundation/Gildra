@@ -7,11 +7,14 @@ import styles from "./raidGuide.module.css";
 import { VoidEye } from "./VoidEye";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { raidSceneArt } from "./midnightRaidData";
+import { getRaidReview } from "@/lib/data/raidReviews";
+import { RaidReviewNotes } from "./RaidReviewNotes";
 import { trail } from "@/lib/routes/registry";
 
 /** Raid page of a Midnight Season 1 raid: what the raid is and its encounters. */
 export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
   const copy = raidGuideCopy[locale];
+  const reviewed = Boolean(getRaidReview(raid.slug));
   const raidName = locale === "ru" ? raid.nameRu : raid.nameEn;
   const bossName = (entry: RaidBoss) => locale === "ru" ? entry.nameRu : entry.nameEn;
   const prefix = locale === "ru" ? "/ru" : "";
@@ -42,9 +45,11 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
         actions={<AtlasShareButton title={raidName} locale={locale} />}
       />
 
-      <AtlasSection id="bosses" title={copy.bossesTitle} description={published ? copy.bossesText : copy.bossesTextPending}>
+      <RaidReviewNotes raidSlug={raid.slug} locale={locale} />
+
+      <AtlasSection id="bosses" title={copy.bossesTitle} description={published || reviewed ? copy.bossesText : copy.bossesTextPending}>
         <div className={styles.stack}>
-          {published ? null : <AtlasNotice tone="caution" icon={<Hourglass />} title={copy.strategyPendingTitle}>{copy.strategyPendingText}</AtlasNotice>}
+          {published || reviewed ? null : <AtlasNotice tone="caution" icon={<Hourglass />} title={copy.strategyPendingTitle}>{copy.strategyPendingText}</AtlasNotice>}
           {single ? (
             <AtlasCard
               href={`${raidHref}/${raid.bosses[0].slug}`}

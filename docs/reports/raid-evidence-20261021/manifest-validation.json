@@ -1,0 +1,38 @@
+{
+  "summary": {
+    "generatedAt": "2026-10-21T20:25:49.559Z",
+    "manifestVersion": "2026-09-13.baseline.17",
+    "hierarchy": [
+      "editions",
+      "expansions",
+      "patches",
+      "seasons",
+      "activities",
+      "instances",
+      "encounters",
+      "phases",
+      "abilities",
+      "loot"
+    ],
+    "completionContractVersion": 2,
+    "mechanicTags": 19,
+    "collections": {
+      "editions": 4,
+      "expansions": 1,
+      "patches": 3,
+      "seasons": 2,
+      "activities": 6,
+      "instances": 14,
+      "encounters": 19,
+      "phases": 11,
+      "abilities": 69,
+      "loot": 0,
+      "classes": 13,
+      "specializations": 40
+    },
+    "records": 182,
+    "violations": 0,
+    "valid": true
+  },
+  "violations": []
+}

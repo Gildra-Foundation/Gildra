@@ -16,6 +16,7 @@ import {
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
 import styles from "./venomous.module.css";
+import { RaidReviewNotes } from "./RaidReviewNotes";
 import { trail } from "@/lib/routes/registry";
 
 type ManifestIdentity = {
@@ -59,6 +60,8 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
         statsLabel={copy.statsLabel}
         stats={[{ value: bosses.length, label: copy.bossesStat(bosses.length) }, { value: raid.patch, label: copy.patchStat }]}
       />
+
+      <RaidReviewNotes raidSlug="venomous-abyss" locale={locale} />
 
       <AtlasSection id="bosses" title={copy.bossesTitle} description={copy.bossesText}>
         <AtlasGrid min={320} gap="sm" as="ol" className={styles.bossGrid}>
