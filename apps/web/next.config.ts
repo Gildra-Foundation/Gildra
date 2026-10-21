@@ -77,6 +77,9 @@ const nextConfig: NextConfig = {
     // 20 KB): small route modules (characters, login, book) no longer ride
     // along in the layout chunk of every inner page; −30…100 KB CSS per route
     // for the same 5–9 requests (measured 2026-10-11).
+    // Bound image prerendering so builds do not exhaust memory on the shared host.
+    cpus: 2,
+    staticGenerationMaxConcurrency: 2,
     cssChunking: { type: "graph", requestCost: 6000 },
     // Two root layouts (app/(site), app/ru) for a server-side <html lang>: the
     // 404 of unmatched URLs is app/global-not-found.tsx.
