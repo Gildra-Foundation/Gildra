@@ -1,4 +1,4 @@
-import Script from "next/script";
+import { PlausibleScript } from "./PlausibleScript";
 
 import { plausibleTracker } from "@/lib/cms/plausible";
 
@@ -6,14 +6,5 @@ import { plausibleTracker } from "@/lib/cms/plausible";
 export function PlausibleTracker() {
   const tracker = plausibleTracker();
   if (!tracker) return null;
-  return (
-    <Script
-      id="plausible"
-      strategy="afterInteractive"
-      defer
-      data-domain={tracker.domain}
-      data-api={tracker.api}
-      src={tracker.src}
-    />
-  );
+  return <PlausibleScript {...tracker} />;
 }
