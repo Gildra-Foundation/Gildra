@@ -1,7 +1,7 @@
 import { defineConfig } from "playwright/test";
 
 export default defineConfig({
-  testDir: process.env.AUCTION_COMPLETION_UI_LEGACY ? "../reliability" : ".", testMatch: process.env.AUCTION_COMPLETION_UI_LEGACY ? ["ui.spec.ts", "ui-capture.spec.ts"] : ["ui.spec.ts"], timeout: 40_000,
+  testDir: process.env.AUCTION_COMPLETION_UI_LEGACY ? "../reliability" : ".", testMatch: process.env.AUCTION_COMPLETION_UI_LEGACY ? ["ui.spec.ts", "ui-capture.spec.ts"] : ["ui.spec.ts", "ui-autoassembly.spec.ts"], timeout: 40_000,
   expect: { timeout: 2500 }, fullyParallel: true, workers: 2, retries: 0,
   reporter: [["line"], ["json", { outputFile: process.env.AUCTION_UI_RAW_REPORT }]],
   outputDir: process.env.AUCTION_UI_RESULTS,

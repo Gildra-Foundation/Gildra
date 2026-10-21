@@ -72,7 +72,7 @@ export class AuctionHarness {
         expect(Object.keys(body).sort()).toEqual(["action", "clientRequestId", "excludedOptionIds", "excludedVariantKeys", "searchId"]);
         expect(body.clientRequestId).toMatch(/^[A-Za-z0-9_-]{16,100}$/);
         this.currentExclusions = body.excludedOptionIds ?? []; this.currentVariantExclusions = body.excludedVariantKeys ?? [];
-        result = assemblyResult({ noisyMaximum: this.noisyMaximum });
+        result = assemblyResult({ complete: true, noisyMaximum: this.noisyMaximum });
         if (this.incompleteAfterAssembly) result.updatedSearch = { ...result.updatedSearch, searchComplete: false, pendingItems: 1 };
         if (aliasIds.every(id => this.currentExclusions.includes(id))) {
           const confirmed = { purchases: [item(780003, "WRIST")], spentCopper: 10000,
