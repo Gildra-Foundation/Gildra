@@ -1,0 +1,338 @@
+{
+  "raidSlug": "march-on-queldanas",
+  "reviewedAt": "2026-10-21T20:14:27.900567Z",
+  "sources": [
+    {
+      "title": "Blizzard: Midnight raid overview and schedule",
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24264416/midnight-raid-overview-and-schedule"
+    },
+    {
+      "title": "Blizzard: Midnight Season 2 is now live",
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24294369/midnight-season-2-is-now-live"
+    },
+    {
+      "title": "Icy Veins: Belo’ren Normal/Heroic mechanics (19 May 2026)",
+      "url": "https://www.icy-veins.com/wow/beloren-raid-guide"
+    },
+    {
+      "title": "Method: Belo’ren Heroic",
+      "url": "https://www.method.gg/guides/march-on-queldanas/beloren-child-of-alar-heroic"
+    },
+    {
+      "title": "Method: Belo’ren Mythic (28 May 2026)",
+      "url": "https://www.method.gg/guides/march-on-queldanas/beloren-child-of-alar"
+    },
+    {
+      "title": "Icy Veins: Midnight Falls Normal/Heroic mechanics (19 May 2026)",
+      "url": "https://www.icy-veins.com/wow/midnight-falls-raid-guide"
+    },
+    {
+      "title": "Method: Midnight Falls Heroic",
+      "url": "https://www.method.gg/guides/march-on-queldanas/midnight-falls-heroic"
+    },
+    {
+      "title": "Method: Midnight Falls Mythic (30 May 2026)",
+      "url": "https://www.method.gg/guides/march-on-queldanas/midnight-falls"
+    }
+  ],
+  "summaryRu": "Два босса Midnight, сезон 1: Бело’рен и Торжество Полуночи (Л’ура). Доступны поиск рейда, обычная, героическая, эпохальная сложности и сюжетный режим. Это рейд предыдущего сезона: сезон 2 уже начался. Ниже — проверенные советы для обычной и героической сложности; эпохальные отличия отмечены отдельно.",
+  "summaryEn": "Two Midnight Season 1 encounters: Belo’ren and Midnight Falls (L’ura). Raid Finder, Normal, Heroic, Mythic and Story Mode are available. This is a previous-season raid: Season 2 has started. The reviewed tips cover Normal and Heroic, with Mythic differences explicitly marked.",
+  "bosses": [
+    {
+      "slug": "beloren",
+      "summaryRu": "Совпадающая полярность определяет замачивание и прерывания; главный урон сохраняйте для яйца босса.",
+      "summaryEn": "Matching polarity controls soaks and interrupts; save major damage for the boss egg.",
+      "tipsRu": [
+        "Обычная/героическая: проверяйте Light Feather или Void Feather после каждого Voidlight Convergence; замачивайте Dive и открывайте проходы в Radiant Echoes игроками нужного цвета.",
+        "Уводите Dive к заранее выбранным внешним меткам: оставшиеся зоны расширяются. Убейте Ember, затем его яйцо до возрождения; Eruption прерывает игрок совпадающей полярности.",
+        "Guardian’s Edict: каждый конус принимает танк соответствующего цвета; пустой конус или неверная полярность усиливают босса.",
+        "После Death Drop займите сектор своего цвета. Приоритет атакующих кулдаунов и Bloodlust — яйцо Бело’рена, а не форма феникса.",
+        "Героическая: Infused Quills перехватывает игрок цвета самого пера, встав между ним и целью.",
+        "Эпохальная: перехватчик Quills стоит отдельно из-за урона вокруг него; орбы Radiant Echoes нельзя подпускать к боссу."
+      ],
+      "tipsEn": [
+        "Normal/Heroic: recheck Light Feather or Void Feather after each Voidlight Convergence; use matching-colour players for Dive soaks and Radiant Echoes gaps.",
+        "Place Dive at agreed outer markers because its pools expand. Kill the Ember and then its egg before rebirth; only matching-polarity players interrupt Eruption.",
+        "Guardian’s Edict: the matching-colour tank takes each cone; an empty cone or wrong polarity empowers the boss.",
+        "After Death Drop, enter your matching-colour sector. Save major damage cooldowns and Bloodlust for Belo’ren’s egg rather than the phoenix form.",
+        "Heroic: intercept Infused Quills with a player matching the quill itself, between the quill and its target.",
+        "Mythic: isolate the Quills interceptor because of splash damage; prevent Radiant Echoes orbs from reaching the boss."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: Belo’ren Normal/Heroic mechanics (19 May 2026)",
+          "url": "https://www.icy-veins.com/wow/beloren-raid-guide"
+        },
+        {
+          "title": "Method: Belo’ren Heroic",
+          "url": "https://www.method.gg/guides/march-on-queldanas/beloren-child-of-alar-heroic"
+        },
+        {
+          "title": "Method: Belo’ren Mythic (28 May 2026)",
+          "url": "https://www.method.gg/guides/march-on-queldanas/beloren-child-of-alar"
+        }
+      ]
+    },
+    {
+      "slug": "midnight-falls",
+      "summaryRu": "Сохраните вылеченные кристаллы для финала; пройдите последовательность рун, переходку и уничтожение ядер.",
+      "summaryEn": "Preserve healed crystals for the finale; complete the rune sequence, intermission and core phase.",
+      "tipsRu": [
+        "Обычная/героическая: запоминайте порядок Death’s Dirge. Игроки с рунами выстраиваются по часовой стрелке от активного танка; рисунок с тремя рунами — только пример.",
+        "Прерывайте и контролируйте матрицы призмы; убивайте Midnight Crystals до Cosmic Fracture. Лекари полностью восстанавливают Dusk Crystals; назначенные носители подбирают полученные Dawn Crystals.",
+        "Между первой и второй фазами есть Total Eclipse: сопротивляйтесь притягиванию в смертельный Darkwell, рассредоточьтесь под Starsplinter и уклоняйтесь от лучей.",
+        "Galvanize направляйте в разные ядра с разных сторон, оставаясь внутри Iris of Oblivion. На героической сложности распределите четыре луча; дополнительно замачивайте их рейдом.",
+        "Финал: оставайтесь в свете носителей; на каждый Dark Archangel тратьте один Dawn Crystal для барьера. Затем уходите от Black Tide; замачивайте Light Siphon.",
+        "Эпохальная: это отдельная тактика — руны разделены между тремя мирами, позднее рейд разделяется надвое, а после третьей фазы есть дополнительная четвёртая."
+      ],
+      "tipsEn": [
+        "Normal/Heroic: remember Death’s Dirge order. Rune players line up clockwise from the active tank; a three-rune diagram is only an example.",
+        "Interrupt and control prism matrices; kill Midnight Crystals before Cosmic Fracture. Healers fully restore Dusk Crystals; assigned carriers collect the resulting Dawn Crystals.",
+        "Total Eclipse separates phases one and two: resist the pull into the lethal Darkwell, spread for Starsplinter and dodge beams.",
+        "Aim Galvanize into separate cores from different sides while staying inside Iris of Oblivion. Heroic requires four beam assignments and additional raid soakers.",
+        "Final phase: stay in carrier light; spend one Dawn Crystal per Dark Archangel to create a barrier. Then leave Black Tide and soak Light Siphon.",
+        "Mythic requires a separate strategy: runes span three realms, the raid later splits into two dimensions, and an additional fourth phase follows phase three."
+      ],
+      "sources": [
+        {
+          "title": "Icy Veins: Midnight Falls Normal/Heroic mechanics (19 May 2026)",
+          "url": "https://www.icy-veins.com/wow/midnight-falls-raid-guide"
+        },
+        {
+          "title": "Method: Midnight Falls Heroic",
+          "url": "https://www.method.gg/guides/march-on-queldanas/midnight-falls-heroic"
+        },
+        {
+          "title": "Method: Midnight Falls Mythic (30 May 2026)",
+          "url": "https://www.method.gg/guides/march-on-queldanas/midnight-falls"
+        }
+      ]
+    }
+  ],
+  "corrections": [
+    {
+      "field": "season",
+      "finding": "Season 1 raid, not the current Season 2 tier; verified against Blizzard 24294369."
+    },
+    {
+      "field": "beloren.GuardiansEdict",
+      "finding": "Do not publish a fixed duration or permanent buff. Live tooltip 1260763 says 20% for 5 min; local raw says 20%/30 sec; Method says 30%/30 sec; Icy says permanent. Safe action: matching tank takes each cone."
+    },
+    {
+      "field": "beloren.Rebirth",
+      "finding": "Do not publish exact timer: live tooltip1241313 says40sec; May guides30sec. The verified strategic point is egg damage rather than phoenix damage."
+    },
+    {
+      "field": "midnight-falls.intermission",
+      "finding": "Add Total Eclipse/Starsplinter intermission; existing tactics jumps directly from phase1 to cores."
+    },
+    {
+      "field": "midnight-falls.memory",
+      "finding": "Mark3-rune schematic illustrative; Heroic guide uses5 rune players."
+    },
+    {
+      "field": "midnight-falls.cores",
+      "finding": "Mark2-beam schematic illustrative; Heroic guide describes4 Galvanize beams and raid soaking."
+    },
+    {
+      "field": "midnight-falls.archangel",
+      "finding": "Replace forced clockwise movement with move out of Black Tide while staying in crystal light. Direction is a raid plan."
+    },
+    {
+      "field": "midnight-falls.LightSiphon",
+      "finding": "Do not hardcode3 soaks: source versions differ (Icy3, Method2). Safe action: soak every spawned circle."
+    },
+    {
+      "field": "midnight-falls.prism",
+      "finding": "Current Heroic Method calls it Safeguard Prism; Icy and Mythic Method use Termination Prism. Keep generic prism/matrices text unless difficulty and ID specified."
+    }
+  ],
+  "iconAudit": {
+    "checkedAt": "2026-10-21T20:14:27.900635Z",
+    "provider": "Wowhead live tooltip (dataEnv=1, locale=0) and wow.zamimg.com large icon CDN",
+    "existing": [
+      {
+        "spellId": 1242515,
+        "name": "Voidlight Convergence",
+        "iconName": "inv_12_dualityphoenix_lightvoid_channel",
+        "iconBytes": 1748,
+        "sha256": "1dbbb6c81366c99a4ed3280ad4ecbc532758f6db18c451988674863509d00943",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1242515?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2383
+      },
+      {
+        "spellId": 1241313,
+        "name": "Rebirth",
+        "iconName": "inv_12_dualityphoenix_phoenix_rebirth",
+        "iconBytes": 1863,
+        "sha256": "ce74f6bf3f1db0bfa3b966b62a1b7832e30c4bf1985003db783fbdec25433f0d",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1241313?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 6516
+      },
+      {
+        "spellId": 1243320,
+        "name": "Immortal Flame",
+        "iconName": "inv_ridingphoenix2",
+        "iconBytes": 2054,
+        "sha256": "0fdb58a4142a16165fe99f662eda16c49d496c53a05b10eb23d785824fea6e79",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1243320?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2754
+      },
+      {
+        "spellId": 1241162,
+        "name": "Light Feather",
+        "iconName": "inv_12_dualityphoenix_holy_feather",
+        "iconBytes": 1717,
+        "sha256": "ae7fa5378ee4aadc23db53c9fdcbfa61774650aff264e648e65cb88fe45d0234",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1241162?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2368
+      },
+      {
+        "spellId": 1241163,
+        "name": "Void Feather",
+        "iconName": "inv_12_dualityphoenix_void_feather",
+        "iconBytes": 1629,
+        "sha256": "05d4fd28cb759a91ac6eeba7e6683429de88463e5d1510ec89788062be237d4c",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1241163?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2250
+      },
+      {
+        "spellId": 1260763,
+        "name": "Guardian's Edict",
+        "iconName": "spell_holy_serendipity",
+        "iconBytes": 1805,
+        "sha256": "f02f4cfc999ec0be528c6a71650d57512754aef0ebda700283fdd39fbaf44c7c",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1260763?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2513
+      },
+      {
+        "spellId": 1244412,
+        "name": "Death's Dirge",
+        "iconName": "inv_120_raid_marchonqueldanas_lura",
+        "iconBytes": 2161,
+        "sha256": "062be6df57a8552ddc1ccd94f62f387e5b1c7dd2c23488e763a23755c4bfc6cb",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1244412?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2945
+      },
+      {
+        "spellId": 1253915,
+        "name": "Heaven's Glaives",
+        "iconName": "inv_glaive_1h_darknaaru_d_01",
+        "iconBytes": 1675,
+        "sha256": "1e807f945cfcd47f00b320d2d609761c0826f10a842baa0afa03bad2e4ee2a37",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1253915?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2284
+      },
+      {
+        "spellId": 1282027,
+        "name": "The Darkwell",
+        "iconName": "ability_druid_cresentburn",
+        "iconBytes": 1755,
+        "sha256": "e71db87623a24514257c92ccf3cc9a28a25b57d1444b97f0615a6e320aefc9ae",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1282027?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2339
+      },
+      {
+        "spellId": 1266622,
+        "name": "Midnight",
+        "iconName": "ability_demonhunter_darkness",
+        "iconBytes": 1613,
+        "sha256": "c959c634391b50698fe5eb445935bc517ba276665ff26208042f7a662e324df8",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1266622?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2219
+      },
+      {
+        "spellId": 1251807,
+        "name": "Cosmic Fracture",
+        "iconName": "inv_ability_spellslingermage_splintersblue",
+        "iconBytes": 2239,
+        "sha256": "6b524349c02d5249856ba0e61488892250b9641cbc2d249eae2af3bfc35bf553",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1251807?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2916
+      },
+      {
+        "spellId": 1252974,
+        "name": "Dimming",
+        "iconName": "inv_elemental_crystal_fire",
+        "iconBytes": 2065,
+        "sha256": "564d2b327e5e554602d4dc1306cef9367216127d9ca104d92d78c302722e836d",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1252974?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2777
+      },
+      {
+        "spellId": 1263970,
+        "name": "Heaven's Lance",
+        "iconName": "inv_chest_armor_voidelf_d_01",
+        "iconBytes": 1731,
+        "sha256": "254f1bb9746f98859f72afc0cabc3c316462ab511e2a25368b154208da58b6dc",
+        "localMatches": false,
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1263970?dataEnv=1&locale=0",
+        "localExists": true,
+        "localBytes": 2397
+      }
+    ],
+    "additions": [
+      {
+        "spellId": 1284525,
+        "name": "Galvanize",
+        "iconName": "ability_vehicle_electrocharge",
+        "iconBytes": 1927,
+        "sha256": "8d5f78956c1d52a1e79c9e3e07e309239ba88849f023c735ad1b562b146bc135",
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1284525?dataEnv=1&locale=0",
+        "addedCandidate": true
+      },
+      {
+        "spellId": 1250898,
+        "name": "The Dark Archangel",
+        "iconName": "ability_priest_darkarchangel",
+        "iconBytes": 1995,
+        "sha256": "4a2f2b40c804ea159832bd1fbee39d7909d964983560e5efb62da83cd923257d",
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1250898?dataEnv=1&locale=0",
+        "addedCandidate": true
+      },
+      {
+        "spellId": 1253104,
+        "name": "Dawnlight Barrier",
+        "iconName": "spell_holy_powerwordbarrier",
+        "iconBytes": 1628,
+        "sha256": "29bf0377034471b7010e3cfd6eef522cdc487d7d546bb4243a4f9b0b132c1e21",
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1253104?dataEnv=1&locale=0",
+        "addedCandidate": true
+      },
+      {
+        "spellId": 1260261,
+        "name": "Total Eclipse",
+        "iconName": "inv12_ability_druid_totaleclipse",
+        "iconBytes": 1676,
+        "sha256": "05c48353ad6d54b3ef88a06280a25cb25445b75016c6ea7d0363a46e884a68d4",
+        "tooltipUrl": "https://nether.wowhead.com/tooltip/spell/1260261?dataEnv=1&locale=0",
+        "addedCandidate": true
+      }
+    ],
+    "interpretationRu": "Все 13 существующих файлов присутствуют и имеют размер 56×56; все 13 iconName совпали с живыми tooltip. Различие JPEG-байтов не доказывает неверную картинку: локальные файлы могли быть перекодированы. Четыре дополнительных spell ID и JPEG проверены; файлы в /tmp/gildra-queldanas-audit, интеграцию выполняет основной агент."
+  }
+}

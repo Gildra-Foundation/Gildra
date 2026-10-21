@@ -129,10 +129,12 @@ for (const url of [instance?.sourceUrl, ...manifest.encounters.filter((row) => r
 for (const forbidden of ["Strategy reviewed", "Тактика проверена", "LFR minimum", "минимум LFR"]) {
   check(!bossPageSource.includes(forbidden) && !raidPageSource.includes(forbidden), `unsafe-publication-label:${forbidden}`);
 }
-check(bossPageSource.includes("source_tracked") && bossPageSource.includes("not verified"), "boss-page-source-tracked-disclosure-missing");
+check(bossPageSource.includes("source_tracked") && bossPageSource.includes("{isDraft ? (")
+  && bossPageSource.includes("title={copy.draftTitle}") && bossPageSource.includes("{copy.draftText}"), "boss-page-source-tracked-disclosure-missing");
 check(bossPageSource.includes("journalAbilities") && bossPageSource.includes("Description will appear once verified"), "boss-page-verified-ability-disclosure-missing");
 check(bossPageSource.includes("journalPhases") && bossPageSource.includes("does not split this fight into phases"), "boss-page-verified-phase-disclosure-missing");
-check(raidPageSource.includes("content-manifest.json"), "raid-page-canonical-manifest-projection-missing");
+check(raidPageSource.includes('from "@/lib/data/wow"') && raidPageSource.includes("contentManifest.instances")
+  && raidPageSource.includes("contentManifest.encounters"), "raid-page-canonical-manifest-projection-missing");
 
 const onlineResults = [];
 if (online) {

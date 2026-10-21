@@ -1,0 +1,555 @@
+{
+  "raidSlug": "the-voidspire",
+  "reviewedAt": "2026-10-21T20:15:06Z",
+  "sources": [
+    {
+      "title": "Blizzard: Midnight Season 1 schedule",
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/24266321/midnight-season-1-mythic-now-available"
+    },
+    {
+      "title": "Blizzard: October 2026 hotfix feed",
+      "url": "https://news.blizzard.com/en-gb/article/24307310/hotfixes-october-20-2026"
+    },
+    {
+      "title": "Icy Veins: imperator-averzian",
+      "url": "https://www.icy-veins.com/wow/imperator-averzian-raid-guide"
+    },
+    {
+      "title": "Icy Veins: vorasius",
+      "url": "https://www.icy-veins.com/wow/vorasius-raid-guide"
+    },
+    {
+      "title": "Icy Veins: fallen-king-salhadaar",
+      "url": "https://www.icy-veins.com/wow/fallen-king-salhadaar-raid-guide"
+    },
+    {
+      "title": "Icy Veins: vaelgor-ezzorak",
+      "url": "https://www.icy-veins.com/wow/vaelgor-and-ezzorak-raid-guide"
+    },
+    {
+      "title": "Icy Veins: lightblinded-vanguard",
+      "url": "https://www.icy-veins.com/wow/lightblinded-vanguard-raid-guide"
+    },
+    {
+      "title": "Icy Veins: crown-of-the-cosmos",
+      "url": "https://www.icy-veins.com/wow/crown-of-the-cosmos-raid-guide"
+    }
+  ],
+  "summaryRu": "Шпиль Бездны — рейд первого сезона Midnight в Буре Бездны, шесть сражений. Это материал сезона 1: актуальные числовые значения и добыча требуют проверки выбранной сложности.",
+  "summaryEn": "The Voidspire is a six-encounter Midnight Season 1 raid in Voidstorm. This is Season 1 reference content; numerical tuning and rewards require difficulty-specific verification.",
+  "bosses": [
+    {
+      "slug": "imperator-averzian",
+      "summaryRu": "Контроль девяти клеток: двумя замачиваниями убирайте выбранных ваятелей и не давайте порталам сложиться в линию.",
+      "summaryEn": "Control nine floor tiles: remove two called Voidshapers with group soaks and prevent a line of claimed portals.",
+      "tipsRu": [
+        "Босс остается вне занятых клеток.",
+        "В переходке прерывайте Pitch Bulwark и обходите копья и движущиеся стены.",
+        "Смена танков около 8 стаков — ориентир тактики, а не жесткое требование журнала."
+      ],
+      "tipsEn": [
+        "Keep the boss outside claimed tiles.",
+        "Interrupt Pitch Bulwark during intermissions; dodge lances and moving walls.",
+        "A swap around eight stacks is strategy guidance rather than a fixed journal requirement."
+      ],
+      "sources": [
+        "https://www.icy-veins.com/wow/imperator-averzian-raid-guide"
+      ],
+      "scope": "Normal/Heroic baseline; explicitly marked difficulty exceptions only."
+    },
+    {
+      "slug": "vorasius",
+      "summaryRu": "Танки принимают Shadowclaw Slam; фиксации ведут аддов к стенам, открывая путь от дыхания.",
+      "summaryEn": "Tanks soak Shadowclaw Slam while fixated players bring adds to walls to open the escape route for the breath.",
+      "tipsRu": [
+        "Не убивайте огнежальщиков в центре: взрыв должен задеть стену.",
+        "От расходящихся колец Aftershock уходите в разрыв.",
+        "На дыхании выбирайте край напротив светящейся руки."
+      ],
+      "tipsEn": [
+        "Kill Blistercreeps against walls, keeping explosions out of the center.",
+        "Use gaps in the expanding Aftershock rings.",
+        "For the breath, move to the edge opposite the glowing hand."
+      ],
+      "sources": [
+        "https://www.icy-veins.com/wow/vorasius-raid-guide"
+      ],
+      "scope": "Normal/Heroic baseline; explicitly marked difficulty exceptions only."
+    },
+    {
+      "slug": "fallen-king-salhadaar",
+      "summaryRu": "Не подпускайте сферы к Салхадаару; распределяйте контроль проекций и сохраняйте место для вращающихся лучей.",
+      "summaryEn": "Keep orbs away from Salhadaar, assign Projection control, and preserve movement space for rotating beams.",
+      "tipsRu": [
+        "Сферы добивайте последовательно, учитывая рейдовый DoT.",
+        "С Despotic Command выходите к краю до окончания эффекта.",
+        "К 100 энергии оставьте место для движения и подготовьте кулдауны на Entropic Unraveling."
+      ],
+      "tipsEn": [
+        "Stagger orb kills around the raid damage-over-time effect.",
+        "Move Despotic Command to the edge before it expires.",
+        "Before 100 energy, prepare space and damage cooldowns for Entropic Unraveling."
+      ],
+      "sources": [
+        "https://www.icy-veins.com/wow/fallen-king-salhadaar-raid-guide"
+      ],
+      "scope": "Normal/Heroic baseline; explicitly marked difficulty exceptions only."
+    },
+    {
+      "slug": "vaelgor-ezzorak",
+      "summaryRu": "Разведите драконов, согласуйте замачивания и сохраняйте свободные участки арены.",
+      "summaryEn": "Separate the dragons, coordinate soaks, and preserve clean arena space.",
+      "tipsRu": [
+        "Dread Breath направляйте от группы.",
+        "На Heroic чередуйте группы Gloom из-за дебаффа повторного замачивания.",
+        "На 100 энергии входите в Radiant Barrier и убивайте адда; с Shadowmark отходите от центра группы."
+      ],
+      "tipsEn": [
+        "Aim Dread Breath away from the group.",
+        "On Heroic rotate Gloom teams because repeated soaking carries a debuff.",
+        "At 100 energy enter Radiant Barrier and kill the add; Shadowmarked players leave the group center."
+      ],
+      "sources": [
+        "https://www.icy-veins.com/wow/vaelgor-and-ezzorak-raid-guide"
+      ],
+      "scope": "Normal/Heroic baseline; explicitly marked difficulty exceptions only."
+    },
+    {
+      "slug": "lightblinded-vanguard",
+      "summaryRu": "Три паладина: отслеживайте энергию, отделяйте босса с активной аурой и сохраняйте управляемое здоровье всех целей.",
+      "summaryEn": "Three paladins: track energy, isolate the active aura caster, and control all three health bars.",
+      "tipsRu": [
+        "После Sacred Shield пробейте щит и прервите Blinding Light.",
+        "После Judgment меняйте танка до соответствующего завершающего удара.",
+        "Массовое рассеивание снимает Divine Shield в ответ на Bloodlust."
+      ],
+      "tipsEn": [
+        "Break Sacred Shield before interrupting Blinding Light.",
+        "Swap tanks after Judgment before its matching finisher.",
+        "Mass Dispel removes the Divine Shield response to Bloodlust."
+      ],
+      "sources": [
+        "https://www.icy-veins.com/wow/lightblinded-vanguard-raid-guide"
+      ],
+      "scope": "Normal/Heroic baseline; explicitly marked difficulty exceptions only."
+    },
+    {
+      "slug": "crown-of-the-cosmos",
+      "summaryRu": "Три основные фазы: полубоссы, Аллерия с двойником и финальные платформы.",
+      "summaryEn": "Three main phases: demibosses, Alleria with her clone, and the final platforms.",
+      "tipsRu": [
+        "Silverstrike Arrow снимайте бессмертие полубоссов; не стирайте их уязвимость лишней стрелой.",
+        "В переходках снимайте замедление назначенной стрелой и избегайте повторного попадания подряд.",
+        "Во второй фазе проводите рикошет через аддов; в финале двигайтесь группой и вовремя прыгайте с разрушающейся платформы."
+      ],
+      "tipsEn": [
+        "Use Silverstrike Arrow to remove demiboss immortality; avoid erasing vulnerability with unnecessary arrows.",
+        "During intermissions clear slows with assigned arrows and avoid consecutive hits.",
+        "Route phase-two ricochets through adds; in the final phase move together and jump before the platform is destroyed."
+      ],
+      "sources": [
+        "https://www.icy-veins.com/wow/crown-of-the-cosmos-raid-guide"
+      ],
+      "scope": "Normal/Heroic baseline; explicitly marked difficulty exceptions only."
+    }
+  ],
+  "corrections": [
+    {
+      "target": "midnightRaidTactics.imperator-averzian.intermission.name",
+      "old": "Переходка · Бесконечный марш / Intermission · Endless march",
+      "newRu": "Переходка · Подкрепления и уклонение",
+      "newEn": "Intermission · Reinforcements and dodging",
+      "reason": "March of the Endless is the failure triggered by three adjacent claimed portals, not the normal intermission.",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1251583?dataEnv=1&locale=0"
+    },
+    {
+      "target": "midnightRaidTactics.imperator-averzian.grid.steps",
+      "old": "Добейте оставшуюся цель",
+      "newRu": "Оставшийся ваятель создаст портал: запомните занятую клетку и переключитесь на появившееся подкрепление.",
+      "newEn": "The remaining Voidshaper creates a portal: track its claimed tile and switch to the spawned reinforcements.",
+      "reason": "Grid Voidshapers are immune and removed by Umbral Collapse; the third claims its tile.",
+      "sourceUrl": "https://www.icy-veins.com/wow/imperator-averzian-raid-guide"
+    },
+    {
+      "target": "voidspireMechanicGuide.despotic-command.action",
+      "old": "Dispel Despotic Command after moving out",
+      "newRu": "Сначала вынесите эффект к краю. По текущему tooltip лужа и поглощение появляются при завершении ауры; не обещайте снятие обычным диспелом без проверки сложности.",
+      "newEn": "Move the effect to the edge first. The current tooltip creates the pool and healing absorb when the aura ends; do not promise a standard dispel without difficulty-specific verification.",
+      "reason": "Current spell1260835 describes expiry rather than a dispel trigger; old guide language does not prove present dispellability.",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1260835?dataEnv=1&locale=0"
+    }
+  ],
+  "iconBindings": [
+    {
+      "mechanicId": "umbral-collapse",
+      "spellId": 1249262,
+      "iconName": "spell_arcane_arcanetorrent",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_arcane_arcanetorrent.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1249262?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "blackening-wounds",
+      "spellId": 1265540,
+      "iconName": "spell_arcane_arcanepotency_nightborne",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_arcane_arcanepotency_nightborne.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1265540?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "pitch-bulwark",
+      "spellId": 1255702,
+      "iconName": "spell_arcane_arcaneresilience",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_arcane_arcaneresilience.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1255702?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "void-fall",
+      "spellId": 1258883,
+      "iconName": "inv_nullstone_void",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_nullstone_void.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1258883?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "oblivions-wrath",
+      "spellId": 1281735,
+      "iconName": "spell_priest_void-blast",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_priest_void-blast.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1281735?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "shadow-phalanx",
+      "spellId": 1284786,
+      "iconName": "inv_soulbarrier",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_soulbarrier.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1284786?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "gathering-darkness",
+      "spellId": 1255749,
+      "iconName": "spell_shadow_summonvoidwalker",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_summonvoidwalker.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1255749?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "primordial-roar",
+      "spellId": 1260046,
+      "iconName": "spell_fire_twilightflamebreath",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_fire_twilightflamebreath.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1260046?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "shadowclaw-slam",
+      "spellId": 1244012,
+      "iconName": "inv_misc_rylakclaw",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_misc_rylakclaw.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1244012?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "aftershock",
+      "spellId": 1273067,
+      "iconName": "spell_nature_earthquake",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_nature_earthquake.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1273067?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "blisterburst",
+      "spellId": 1259184,
+      "iconName": "ability_argus_soulburst",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/ability_argus_soulburst.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1259184?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "void-breath",
+      "spellId": 1241864,
+      "iconName": "inv_cosmicvoid_missile",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_cosmicvoid_missile.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1241864?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "void-convergence",
+      "spellId": 1243453,
+      "iconName": "inv_112_raiddimensius_gravity",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_112_raiddimensius_gravity.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1243453?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "shadow-fracture",
+      "spellId": 1254088,
+      "iconName": "inv_netherportal",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_netherportal.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1254088?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "shattering-twilight",
+      "spellId": 1253032,
+      "iconName": "inv_mace_2h_etherealking_d_01",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_mace_2h_etherealking_d_01.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1253032?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "despotic-command",
+      "spellId": 1260835,
+      "iconName": "inv_cosmicvoid_debuff",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_cosmicvoid_debuff.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1260835?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "destabilizing-strikes",
+      "spellId": 1271577,
+      "iconName": "spell_shadow_twistedfaith",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_twistedfaith.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1271577?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "entropic-unraveling",
+      "spellId": 1246175,
+      "iconName": "inv_112_etherealwraps_empowered_blue",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_112_etherealwraps_empowered_blue.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1246175?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "dread-breath",
+      "spellId": 1244221,
+      "iconName": "ability_rogue_envelopingshadows",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/ability_rogue_envelopingshadows.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1244221?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "nullbeam-nullzone",
+      "spellId": 1262623,
+      "iconName": "ability_ironmaidens_convulsiveshadows",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/ability_ironmaidens_convulsiveshadows.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1262623?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z",
+      "note": "Composite card: icon belongs to the named primary spell only, not every mechanic in the card."
+    },
+    {
+      "mechanicId": "gloom",
+      "spellId": 1245391,
+      "iconName": "inv_cosmicvoid_nova",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_cosmicvoid_nova.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1245391?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "void-howl",
+      "spellId": 1245058,
+      "iconName": "inv_cosmicvoid_orb",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_cosmicvoid_orb.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1245058?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "twilight-bond-rakfang",
+      "spellId": 1245645,
+      "iconName": "inv_misc_rubysanctum4",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_misc_rubysanctum4.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1245645?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z",
+      "note": "Composite card: icon belongs to the named primary spell only, not every mechanic in the card."
+    },
+    {
+      "mechanicId": "radiant-barrier-shadowmark",
+      "spellId": 1248847,
+      "iconName": "spell_holy_blessedresillience",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_holy_blessedresillience.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1248847?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z",
+      "note": "Composite card: icon belongs to the named primary spell only, not every mechanic in the card."
+    },
+    {
+      "mechanicId": "avengers-shield",
+      "spellId": 1246485,
+      "iconName": "spell_holy_avengersshield",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_holy_avengersshield.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1246485?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "sacred-shield-blinding-light",
+      "spellId": 1248674,
+      "iconName": "ability_paladin_blessedmending",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/ability_paladin_blessedmending.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1248674?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z",
+      "note": "Composite card: icon belongs to the named primary spell only, not every mechanic in the card."
+    },
+    {
+      "mechanicId": "divine-shield",
+      "spellId": 1246384,
+      "iconName": "spell_holy_divineshield",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_holy_divineshield.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1246384?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "boss-auras",
+      "spellId": 1246162,
+      "iconName": "spell_holy_devotionaura",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_holy_devotionaura.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1246162?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z",
+      "note": "Composite card: icon belongs to the named primary spell only, not every mechanic in the card."
+    },
+    {
+      "mechanicId": "divine-toll",
+      "spellId": 1248644,
+      "iconName": "inv_ability_paladin_divinetoll",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_ability_paladin_divinetoll.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1248644?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "execution-sentence",
+      "spellId": 1248983,
+      "iconName": "spell_paladin_executionsentence",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_paladin_executionsentence.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1248983?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "tyrs-wrath",
+      "spellId": 1248721,
+      "iconName": "inv_ability_holyfire_debuff",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_ability_holyfire_debuff.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1248721?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "judgment-combo",
+      "spellId": 1246736,
+      "iconName": "ability_paladin_judgementred",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/ability_paladin_judgementred.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1246736?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z",
+      "note": "Composite card: icon belongs to the named primary spell only, not every mechanic in the card."
+    },
+    {
+      "mechanicId": "grasp-of-emptiness",
+      "spellId": 1232467,
+      "iconName": "inv_shadowelementalmount",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_shadowelementalmount.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1232467?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "void-expulsion",
+      "spellId": 1233819,
+      "iconName": "inv_nullstone_void",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_nullstone_void.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1233819?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "void-droplets",
+      "spellId": 1241520,
+      "iconName": "inv_elemental_primal_shadow",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_elemental_primal_shadow.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1241520?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z",
+      "note": "Composite card: icon belongs to the named primary spell only, not every mechanic in the card."
+    },
+    {
+      "mechanicId": "null-corona",
+      "spellId": 1233865,
+      "iconName": "inv_cosmicvoid_groundsate",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_cosmicvoid_groundsate.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1233865?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "silverstrike-arrow",
+      "spellId": 1233602,
+      "iconName": "inv_ammo_arrow_03",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_ammo_arrow_03.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1233602?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "silverstrike-barrage",
+      "spellId": 1243982,
+      "iconName": "ability_shootwand",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/ability_shootwand.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1243982?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "ricochet-barrier",
+      "spellId": 1237729,
+      "iconName": "inv_ammo_arrow_02",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_ammo_arrow_02.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1237729?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z",
+      "note": "Composite card: icon belongs to the named primary spell only, not every mechanic in the card."
+    },
+    {
+      "mechanicId": "voidstalker-sting",
+      "spellId": 1237040,
+      "iconName": "ability_ironmaidens_convulsiveshadows",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/ability_ironmaidens_convulsiveshadows.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1237040?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    },
+    {
+      "mechanicId": "aspect-of-the-end",
+      "spellId": 1239080,
+      "iconName": "spell_warlock_demonsoul",
+      "iconSourceUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_warlock_demonsoul.jpg",
+      "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1239080?dataEnv=1&locale=0",
+      "verifiedAt": "2026-10-21T20:15:06Z"
+    }
+  ],
+  "iconAudit": {
+    "baselineRowsChecked": 38,
+    "baselineNameIconMatches": 38,
+    "baselineLocalAssetsPresent": 38,
+    "mechanicCards": 41,
+    "bindingsVerified": 41,
+    "previouslyBoundCards": 13,
+    "newlyBoundCards": 28,
+    "metadataSource": "Wowhead live tooltip dataEnv=1 locale=0, read-only fetch on reviewedAt; no current client build attestation",
+    "assetStagingDirectory": "/tmp/voidspire-icons",
+    "pitfalls": [
+      {
+        "spellId": 1264326,
+        "note": "Shadow Phalanx knockback near Voidshapers; not marching wall1284786."
+      },
+      {
+        "spellId": 1259998,
+        "note": "Secondary Silverstrike Ricochet effect has a different icon; card uses arrow1237729."
+      },
+      {
+        "spellId": 375576,
+        "note": "Player Divine Toll; use boss1248644."
+      },
+      {
+        "spellId": 365626,
+        "note": "Unrelated Cosmic Barrier; boss shield is1246918."
+      }
+    ]
+  },
+  "limitationsRu": [
+    "Live gildra.net возвращал HTTP403 из сетевого клиента; текущий UI не объявлен проверенным.",
+    "Гайды Icy Veins обновлены 19 мая 2026; свежая проверка источника не означает обновление тактики под текущий билд.",
+    "Точные урон, таймеры, пороги, Mythic Crown и весь loot pool не объявлены полностью проверенными.",
+    "Publication projection сохраняет строгую верификацию описаний: новые icon bindings не разрешают автоматически публикацию старых чисел."
+  ]
+}

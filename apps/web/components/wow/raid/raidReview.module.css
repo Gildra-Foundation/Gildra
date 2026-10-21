@@ -1,0 +1,13 @@
+/* atlas:strict */
+.notes { display: grid; gap: var(--atlas-space-3); color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: 1.6; }
+.notes p { margin: 0; }
+.tips { display: grid; gap: var(--atlas-space-2); margin: 0; padding-inline-start: var(--atlas-space-5); }
+.tips li::marker { color: var(--atlas-accent); }
+.sources { display: grid; gap: var(--atlas-space-2); padding-inline-start: var(--atlas-space-5); margin-block: var(--atlas-space-2); overflow-wrap: anywhere; }
+.sources a, .spells a { color: var(--atlas-accent); text-underline-offset: .2em; }
+.sources a:focus-visible, .spells a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.date { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.spells { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--atlas-space-3); padding: 0; margin: 0; list-style: none; }
+.spells li { display: flex; gap: var(--atlas-space-3); align-items: center; min-width: 0; padding: var(--atlas-space-3); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: var(--atlas-surface); }
+.spells img { flex-shrink: 0; border-radius: var(--atlas-radius); }
+.spells a { font-size: var(--atlas-text-body); overflow-wrap: anywhere; }

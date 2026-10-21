@@ -1,0 +1,22 @@
+[
+  {
+    "spellId": 1250898,
+    "nameRu": "Темный архангел",
+    "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1250898?dataEnv=1&locale=7"
+  },
+  {
+    "spellId": 1253104,
+    "nameRu": "Рассветный барьер",
+    "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1253104?dataEnv=1&locale=7"
+  },
+  {
+    "spellId": 1260261,
+    "nameRu": "Полное затмение",
+    "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1260261?dataEnv=1&locale=7"
+  },
+  {
+    "spellId": 1284525,
+    "nameRu": "Гальванизация",
+    "sourceUrl": "https://nether.wowhead.com/tooltip/spell/1284525?dataEnv=1&locale=7"
+  }
+]

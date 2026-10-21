@@ -44,8 +44,8 @@ export const venomousCopy = {
     checked: (date: string) => `проверено ${formatAtlasDate(date, "ru")}`,
 
     // Boss page
-    draftTitle: "Тактика — черновик",
-    draftText: "Босс и его способности сверены с журналом приключений. Ход боя, назначения и отличия сложностей — пересказ гайда Icy Veins, мы их ещё не проверили.",
+    draftTitle: "Подробная тактика проверяется",
+    draftText: "Проверенные обновления — в блоке «Перед пуллом». Подробный ход боя, назначения и состав ниже основаны на гайде Icy Veins; полная сверка всех деталей ещё продолжается.",
     strategySource: "Источник тактики",
     positioning: "Где стоять",
     timelineTitle: "Ход боя",
@@ -99,8 +99,8 @@ export const venomousCopy = {
     source: "Source",
     checked: (date: string) => `checked ${formatAtlasDate(date, "en")}`,
 
-    draftTitle: "Strategy is a draft",
-    draftText: "The boss and its abilities match the Adventure Guide. The fight flow, assignments and difficulty differences are paraphrased from the Icy Veins guide and are not verified by us yet.",
+    draftTitle: "Detailed strategy under review",
+    draftText: "Reviewed updates appear under “Before the pull”. The detailed fight flow, assignments and composition below follow Icy Veins; a full review of every detail is still in progress.",
     strategySource: "Strategy source",
     positioning: "Positioning",
     timelineTitle: "Fight flow",
