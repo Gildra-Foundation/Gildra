@@ -1,0 +1,17 @@
+{
+  "status": "verified",
+  "at": "2026-10-21T21:07:45.143541+00:00",
+  "imageId": "sha256:3a8daeb2998cd5807e5ae821cbd95900d9d1d62a19106a8dd14a0026c999e34b",
+  "revision": "e6e759a94c39c73b90ff68f09dc5204355afaa9a",
+  "observedSeconds": 141,
+  "candidateBrowserCases": 48,
+  "liveBrowserCases": 48,
+  "publicHttpsChecks": 26,
+  "mapHashesMatched": 8,
+  "health": "healthy",
+  "restarts": 0,
+  "runtimeEnvironmentPreserved": true,
+  "persistentMountsPreserved": true,
+  "protectedNeighbourCount": 33,
+  "rollbackImage": "sha256:45767e0b792ca544e069e0d6bc800aaedbd310a1a5054218f26532c4457e9018"
+}

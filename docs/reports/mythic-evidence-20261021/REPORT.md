@@ -52,3 +52,7 @@ Temple не показывает частичный импорт как полн
 Production build завершился exit 0: 766 статических страниц; компиляция и встроенный TypeScript PASS. Имеются предупреждения Sentry navigation hook и tracing старого auctionGearPersistence.ts, эти файлы не менялись. Внешние авторизации/CMS не настраивались.
 
 ESLint всех новых компонентов, Copy и server loader — PASS. У изменённого старого MythicRouteMap.tsx: 0 ошибок / 11 прежних предупреждений, как в HEAD; новых диагностик нет (lint-baseline-comparison.json). Повторные 48 browser cases после server-boundary/copy правок — PASS. diff/check-paths — PASS, конфликтов нет. Автогенерация next-env/tsconfig/agent files убрана из diff. Только собственный localhost dev сервер остановлен. Commit/push/deploy отсутствуют.
+
+## Production publication — 2026-10-21
+
+По последующей явной команде владельца изменения закоммичены от Shpuntyara, запушены и опубликованы. Итог: **verified**. Подробности — [PRODUCTION.md](PRODUCTION.md) и production-checks.json. Предыдущие отметки «без публикации» описывают подготовительный этап.
