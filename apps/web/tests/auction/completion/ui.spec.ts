@@ -83,7 +83,7 @@ test("repeat-audit regression: an open loadout becomes stale when its market exp
 test("repeat-audit control: a recovered active job can finish before its first poll with fresh prices", async ({ auction, page }) => {
   const freshMarket = { ...market, updatedAt: new Date().toISOString(), validatedAt: new Date().toISOString() };
   const freshSearch = { ...searchResult(), market: freshMarket };
-  const freshAssembly = { ...assemblyResult(), market: freshMarket, updatedSearch: freshSearch };
+  const freshAssembly = { ...assemblyResult({ complete: true }), market: freshMarket, updatedSearch: freshSearch };
   let polls = 0;
   await page.addInitScript(({ language, characterSlug }) => {
     sessionStorage.setItem(`gildra:auction:v1:${encodeURIComponent(characterSlug)}:fury-warrior:${language}`, JSON.stringify({
@@ -1033,7 +1033,7 @@ test("four-fix regression: cold-tab assembly restores durable current exclusions
     if (request.method() === "POST") {
       const body = request.postDataJSON(); bodies.push(body);
       if (body.action === "search") await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots } } });
-      else await route.fulfill({ status: 202, json: { ...completedJob(auction.language, result), id: "continued-same-selection", mode: "assembly" } });
+      else await route.fulfill({ status: 202, json: { ...completedJob(auction.language, { ...result, exhaustiveComplete: true, searchLimited: false }), id: "continued-same-selection", mode: "assembly" } });
     } else if (query.has("searchId")) {
       reads.push("search"); await route.fulfill({ json: { kind: "recovery", search: source, assembly: null, excludedOptionIds: [blockedLot], excludedVariantKeys: [exactVariant], activeJob: job, needsRefresh: true } });
     } else { reads.push("job"); await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode: "assembly" } }); }
@@ -1045,7 +1045,8 @@ test("four-fix regression: cold-tab assembly restores durable current exclusions
   const cache = await page.evaluate(() => Object.entries(sessionStorage).filter(([key]) => key.startsWith("gildra:auction:v1:")).map(([, json]) => JSON.parse(json))[0]);
   expect(cache.excludedOptionIds).toEqual([blockedLot]); expect(cache.excludedVariantKeys).toEqual([exactVariant]);
   await expect(auction.panel.locator("[data-best-value=true]")).toHaveCount(0);
-  await auction.build.click(); await expect.poll(() => bodies.length).toBe(2);
+  await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
+  await expect.poll(() => bodies.length).toBe(2);
   expect(bodies[1]).toMatchObject({ action: "assemble", searchId: source.searchId, excludedOptionIds: [blockedLot], excludedVariantKeys: [exactVariant] });
 });
 
@@ -1096,7 +1097,7 @@ for (const fault of ["assembly-missing", "wrong-status", "other-code", "malforme
       } else await route.fulfill({ json: { kind: "recovery", search: source, assembly: null, excludedOptionIds: [], excludedVariantKeys: [variant], activeJob: job, needsRefresh: true } });
     } else {
       jobReads++;
-      const result = mode === "assembly" ? { ...assemblyResult(), budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots, updatedSearch: source } : source;
+      const result = mode === "assembly" ? { ...assemblyResult({ complete: true }), budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots, updatedSearch: source } : source;
       await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode } });
     }
   });
@@ -1119,7 +1120,7 @@ for (const fault of ["assembly-missing", "wrong-status", "other-code", "malforme
 for (const status of [404, 503]) test(`four-fix reload regression: failed assembly context HTTP${status} never leaves a context-less job handle`, async ({ auction, page }) => {
   const source = { ...searchResult(), budgetCopper: 3333300, scenario: "aoe", objective: "value", selectedSlots: ["WRIST"] };
   const variant = JSON.stringify([source.items[3].itemId, source.items[3].variantKey]);
-  const result = { ...assemblyResult(), budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots, updatedSearch: source };
+  const result = { ...assemblyResult({ complete: true }), budgetCopper: source.budgetCopper, scenario: source.scenario, objective: source.objective, selectedSlots: source.selectedSlots, updatedSearch: source };
   const job = { id: `assembly-context-before-reload-${status}`, searchId: source.searchId, status: "queued", mode: "assembly", result: null, error: null, progress: null, scope: { characterSlug, locale: auction.language } };
   let failedContext = true, jobReads = 0, contextReads = 0, posts = 0, releaseFault!: () => void;
   const faultDelivered = new Promise<void>(resolve => { releaseFault = resolve; });
@@ -1164,7 +1165,7 @@ test("four-fix reload control: cancelling an opened pending context retains the 
     if (request.method() === "POST") await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent: { ...job.scope, budgetCopper: source.budgetCopper, scenario: source.scenario, objective: "dps", selectedSlots: source.selectedSlots } } });
     else if (request.method() === "DELETE") { deletedIds.push(query.get("id")!); await route.fulfill(rejectDelete ? { status: 503, json: { error: "auction_storage_unavailable" } } : { json: { ...job, status: "cancelled" } }); }
     else if (query.has("searchId")) { signalContext(); await contextHeld; await route.fulfill({ status: 503, json: { error: "auction_storage_unavailable" } }).catch(() => {}); }
-    else { jobReads++; await route.fulfill({ json: { ...completedJob(auction.language, assemblyResult()), id: job.id, mode: "assembly" } }); }
+    else { jobReads++; await route.fulfill({ json: { ...completedJob(auction.language, assemblyResult({ complete: true })), id: job.id, mode: "assembly" } }); }
   });
   try {
     await auction.open(); await auction.find.click();

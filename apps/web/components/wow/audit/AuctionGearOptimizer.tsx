@@ -168,6 +168,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     damage_specialization_required: t("Сравнение DPS доступно для специализаций, наносящих урон.", "DPS comparisons are available for damage specializations."),
     plan_already_running: t("Предыдущий расчёт ещё выполняется.", "Your previous calculation is still running."),
     plan_rate_limited: t("Слишком много запусков. Подождите минуту и продолжите расчёт.", "Too many searches. Wait a minute and continue."),
+    plan_waiting_for_quota: t("Ожидаем освобождения очереди. Сборка продолжится автоматически…", "Waiting for calculation capacity. Loadout assembly will continue automatically…"),
     plan_queue_full: t("Очередь расчётов заполнена. Повторите позже.", "The calculation queue is full. Try again later."),
     simulation_unavailable: t("Сервис SimulationCraft сейчас недоступен. Повторите позже.", "SimulationCraft is unavailable. Try again later."),
     variant_metadata_worker_upgrade_required: t("Проверка характеристик вещей сейчас недоступна. Повторите позже.", "Item property verification is unavailable. Try again later."),
@@ -391,6 +392,10 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     setAssemblyStale(true);
     setMarketStale(true); setRetryJob(null); setHasRecovery(false);
     let body = initial;
+    let assemblySelection = {
+      excludedOptionIds: initial.action === "assemble" ? [...initial.excludedOptionIds] : [...(cache.current?.excludedOptionIds ?? [])],
+      excludedVariantKeys: initial.action === "assemble" ? [...initial.excludedVariantKeys] : [...(cache.current?.excludedVariantKeys ?? [])],
+    };
     try {
       if (body.action === "search") {
         body = { ...body, clientRequestId: body.clientRequestId ?? crypto.randomUUID() };
@@ -437,6 +442,14 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
               forgetAuctionClientRequest(body.clientRequestId);
               remember({ clientRequestId: undefined });
             }
+            // This response confirms that no job was admitted. Keep the same
+            // calculation alive, but use a new request identity after the quota resets.
+            if (response.status === 429 && payload.error === "plan_rate_limited" && body.action === "assemble") {
+              body = { ...body, clientRequestId: undefined };
+              setTransport(previous => ({ mode, status: "starting", progress: previous?.progress ?? null, error: "plan_waiting_for_quota" }));
+              await auctionClientDelay(60_000, request.controller.signal);
+              continue;
+            }
             // A previous unknown POST can already own this search. Recover it
             // before offering another expensive action.
             if (payload.error === "plan_already_running" && body.action === "search") {
@@ -459,6 +472,11 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
               }
               mode = recovered.activeJob.mode ?? mode;
               request.mode = mode;
+              if (mode === "assembly") {
+                assemblySelection = { excludedOptionIds: [...recovered.excludedOptionIds], excludedVariantKeys: [...(recovered.excludedVariantKeys ?? [])] };
+                remember(assemblySelection);
+                setExcluded(new Set(assemblySelection.excludedOptionIds)); setExcludedVariantKeys(new Set(assemblySelection.excludedVariantKeys));
+              }
               payload = recovered.activeJob;
             } else throw new Error(payload.error ?? "auction_plan_unavailable");
           }
@@ -488,6 +506,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         if (!isCurrent()) return;
         if (payload.status === "failed") throw new Error(payload.error ?? "auction_plan_unavailable");
         if (payload.status === "cancelled") {
+          setAssemblyStale(true); setMarketStale(true);
           remember({ jobId: undefined, clientRequestId: undefined }); forgetAuctionClientJob(payload.id); request.id = undefined;
           setTransport({ mode, status: "cancelled", progress: null, error: null }); return;
         }
@@ -519,15 +538,20 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
               profileFingerprint: result.profileFingerprint, scenario: result.scenario, objective: result.objective, coverage: result.coverage });
             setMarketStale(pricesStale);
           }
-          // Assembly can have a very large effect space. Publish this bounded
-          // step and let the user explicitly continue from its checkpoint.
-          complete = true;
+          // Keep publishing checkpoints while one user-started calculation
+          // advances. Reading an old completed job must not silently start new work.
+          complete = result.exhaustiveComplete || recoveredCompleted;
+          // A fresh identity is allocated on the next POST; reusing the previous
+          // nonce would replay that completed step without advancing the cursor.
+          body = { action: "assemble", searchId: result.searchId, ...assemblySelection };
         }
         if (complete) { setTransport({ mode, status: "completed", progress: null, error: null }); return; }
         setTransport({ mode, status: "starting", progress: null, error: null });
       }
     } catch (reason) {
       if (isCurrent()) {
+        // A later step may have observed changed lots before it failed.
+        setAssemblyStale(true); setMarketStale(true);
         if (reason instanceof Error && reason.message === "plan_cancellation_unconfirmed") {
           remember({ cancellationRequested: true }); setCancellation("failed");
           setTransport({ mode, status: "failed", progress: null, error: reason.message });
@@ -670,6 +694,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     const mode = current?.mode ?? discovered?.activeJob?.mode ?? cache.current?.mode ?? "search";
     const ownedId = current?.id ?? cache.current?.jobId ?? discovered?.activeJob?.id;
     const nonce = cache.current?.clientRequestId;
+    // Keep intermediate DPS results, but require a successful market check
+    // before treating their purchases as verified after an interrupted step.
+    setAssemblyStale(true); setMarketStale(true);
     active.current = null; current?.controller.abort();
     const recovery = recoveryController.current;
     recoveryController.current = null; recovery?.abort();
@@ -761,7 +788,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     : transport?.mode === "assembly" ? t("Проверяем совместимые комплекты…", "Comparing compatible loadouts…")
     : t("Рассчитываем DPS каждой замены…", "Calculating DPS for each replacement…");
   const feedback = (mode: Mode) => transport?.mode !== mode ? null : <>
-    {running ? <p role="status" className={styles.note}>{["plan_reconnecting", "plan_cancelling"].includes(transport.error ?? "") ? failureText(transport.error) : progressText}{progress ? ` ${number(progress.completed)} / ${number(progress.total)}` : ""}</p> : null}
+    {running ? <p role="status" className={styles.note}>{["plan_reconnecting", "plan_cancelling", "plan_waiting_for_quota"].includes(transport.error ?? "") ? failureText(transport.error) : progressText}{progress ? ` ${number(progress.completed)} / ${number(progress.total)}` : ""}</p> : null}
     {transport.status === "failed" ? <p role="alert" className={styles.feedback}>{failureText(transport.error)}</p> : null}
     {transport.status === "cancelled" ? <p role="status" className={styles.note}>{search ? t("Расчёт остановлен. Полученные результаты сохранены.", "Calculation stopped. Available results have been kept.") : t("Поиск отменён.", "Search cancelled.")}</p> : null}
     {transport.status === "failed" && cancellation === "failed" ? <button type="button" className={styles.button} onClick={() => void cancel()}>{t("Повторить отмену", "Retry cancellation")}</button> : null}
@@ -852,7 +879,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           {assembly && displayed ? <div className={styles.result} data-auction-assembly-result data-exhaustive={assembly.exhaustiveComplete} data-price-state={assemblyStale ? "stale" : "verified"}>
             <h3>{confirmed ? (assembly.objective ?? "dps") === "value" ? t("Самый выгодный подтверждённый сет среди проверенных", "Best-value confirmed loadout evaluated so far") : t("Лучший подтверждённый сет среди проверенных", "Best confirmed loadout evaluated so far") : assembly.exhaustiveComplete ? t("Подтверждённого улучшения пока нет", "No confirmed upgrade yet") : t("Лучший из проверенных комплектов", "Best loadout evaluated so far")}</h3>
             {assemblyStale ? <p role="status" className={styles.staleResult}>{t("Предыдущий результат сохранён. Цены и доступность лотов не подтверждены: обновите и пересоберите сет перед покупкой.", "The previous result has been kept. Prices and availability are not verified: refresh and rebuild the loadout before buying.")}</p> : null}
-            <p className={styles.note}>{assembly.exhaustiveComplete ? t("Все сочетания свойств разрешённых вариантов проверены; для каждого выбраны доступные лоты под бюджет.", "All effect combinations of allowed options have been checked, with available lots allocated within budget for each.") : t("Завершён один шаг проверки. Показан лучший найденный результат для выбранной цели; проверка ещё не завершена. Нажмите «Продолжить сборку сета», чтобы проверить следующие сочетания.", "One evaluation step is complete. This is the best result found for the selected objective; evaluation is still incomplete. Select “Continue loadout assembly” to compare more combinations.")} {discoveryIncomplete || incompleteData ? t("Проверена только доступная часть рынка: это не подтверждение лучшего сета на всём аукционе.", "Only the verified part of the market is covered; this does not establish the best loadout across the whole auction house.") : ""} {t("Рассмотрено сочетаний свойств", "Effect combinations checked")}: {number(assembly.combinationsChecked)}.</p>
+            <p className={styles.note}>{assembly.exhaustiveComplete ? t("Все сочетания свойств разрешённых вариантов проверены; для каждого выбраны доступные лоты под бюджет.", "All effect combinations of allowed options have been checked, with available lots allocated within budget for each.") : running && transport?.mode === "assembly" ? t("Перебор сочетаний продолжается автоматически. Показан лучший найденный результат для выбранной цели. Расчёт можно остановить.", "Combination evaluation continues automatically. This is the best result found for the selected objective. You can stop the calculation.") : t("Перебор сочетаний не завершён. Показан лучший найденный результат для выбранной цели. Нажмите «Продолжить сборку сета», чтобы возобновить автоматическую проверку.", "Combination evaluation is incomplete. This is the best result found for the selected objective. Select “Continue loadout assembly” to resume automatic evaluation.")} {discoveryIncomplete || incompleteData ? t("Проверена только доступная часть рынка: это не подтверждение лучшего сета на всём аукционе.", "Only the verified part of the market is covered; this does not establish the best loadout across the whole auction house.") : ""} {t("Рассмотрено сочетаний свойств", "Effect combinations checked")}: {number(assembly.combinationsChecked)}.</p>
             {!assemblyStale && marketChanged && marketChange ? <p role="status" className={styles.note}>{t("Доступность лотов обновлена перед сборкой.", "Lot availability was refreshed before assembly.")} {t("Недоступно", "Unavailable")}: {marketChange.removedLots}; {t("цена изменилась", "price changed")}: {marketChange.repricedLots}; {t("количество изменилось", "quantity changed")}: {marketChange.quantityChangedLots}; {t("свойства изменились", "properties changed")}: {marketChange.variantsChangedLots}. {t("Список вещей и стоимость сета пересчитаны.", "The item list and loadout cost have been recalculated.")}</p> : null}
             <dl className={styles.totals}><div><dt>{t("Бюджет", "Budget")}</dt><dd>{money(assembly.budgetCopper)}</dd></div><div><dt>{assemblyStale ? t("Предыдущая стоимость", "Previous cost") : t("Стоимость комплекта", "Loadout cost")}</dt><dd>{money(displayed.spentCopper)}</dd></div><div><dt>{t("Останется", "Remaining")}</dt><dd>{money(displayed.remainingCopper)}</dd></div>{confirmed && displayed.comparison.deltaDps > 0 ? <div><dt>{t("Цена за +1 DPS всего сета", "Whole-loadout cost per +1 DPS")}</dt><dd>{displayed.spentCopper / displayed.comparison.deltaDps < 1 ? `<${money(1)}` : money(displayed.spentCopper / displayed.comparison.deltaDps)}</dd></div> : null}</dl>
             <dl className={styles.dpsMetrics}><div><dt>{t("Сейчас", "Current gear")}</dt><dd>{number(displayed.comparison.baselineDps)} <span>DPS</span></dd></div><div><dt>{t("С этим комплектом", "With this loadout")}</dt><dd>{number(displayed.comparison.candidateDps)} <span>DPS</span></dd></div><div className={significantGain ? styles.gain : undefined}><dt>{t("Изменение всего комплекта", "Whole-loadout change")}</dt><dd>{signed.format(displayed.comparison.deltaPercent)}% <span>{signed.format(displayed.comparison.deltaDps)} DPS</span></dd></div></dl>

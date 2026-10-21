@@ -21,6 +21,9 @@ export class CompletionHarness {
   excludedVariantLevels: "same" | "different" | null = null;
   holdPost = false;
   holdContinuation = false;
+  assemblyCompleteness: boolean[] = [];
+  holdAssemblyStep: number | null = null;
+  rateLimitedAssemblySteps = new Set<number>();
   holdAcceptance = false;
   holdRequestRecovery = false;
   requestRecoveryMissing = false;
@@ -62,7 +65,7 @@ export class CompletionHarness {
   async open(controls = false) {
     await this.page.goto(`/?lang=${this.language}${controls ? "&controls=1" : ""}`, { waitUntil: "networkidle" });
     await this.page.evaluate(() => document.fonts.ready);
-    await expect.poll(() => this.find.evaluate(element => Object.keys(element).some(key => key.startsWith("__reactProps")))).toBe(true);
+    await expect.poll(() => this.find.evaluate(element => Object.keys(element).some(key => key.startsWith("__reactProps"))), { timeout: 10_000 }).toBe(true);
   }
   async search() { await this.find.click(); await expect(this.panel.locator("[data-auction-search-result]")).toBeVisible(); }
   async seedRecovery() {
@@ -72,7 +75,7 @@ export class CompletionHarness {
   }
   async seedRecoveryMode(cachedMode: "search" | "assembly", activeMode: "search" | "assembly") {
     this.seedBusyMode(activeMode, [], true); this.conflictNext = false;
-    this.lastAssembly = cachedMode === "assembly" ? assemblyResult() : null;
+    this.lastAssembly = cachedMode === "assembly" ? assemblyResult({ complete: true }) : null;
     await this.seedRecovery();
     await this.page.evaluate(({ locale, cachedMode }) => {
       const key = `gildra:auction:v1:eu--synthetic-reliability--synthetic:fury-warrior:${locale}`;
@@ -80,14 +83,14 @@ export class CompletionHarness {
     }, { locale: this.language, cachedMode });
   }
   seedBusyMode(mode: "search" | "assembly", excludedOptionIds: string[] = [], marker = false) {
-    const result = mode === "assembly" ? assemblyResult() : searchResult();
+    const result = mode === "assembly" ? assemblyResult({ complete: true }) : searchResult();
     if (marker) result.market = { ...result.market, realm: `MODE ${mode.toUpperCase()} COMPLETED` };
     this.serverExclusions = excludedOptionIds;
     this.activeJobId = `completion-conflicting-${mode}`;
     this.jobs.set(this.activeJobId, { result }); this.conflictNext = true;
   }
   seedBusyAssembly(excludedOptionIds: string[] = []) {
-    this.lastAssembly = assemblyResult(); this.seedBusyMode("assembly", excludedOptionIds);
+    this.lastAssembly = assemblyResult({ complete: true }); this.seedBusyMode("assembly", excludedOptionIds);
   }
   release() { this.holdCancel = false; this.holdPriorDelete = false; this.holdPost = false; this.holdContinuation = false; this.holdRecovery = false; this.holdAcceptance = false; this.holdRequestRecovery = false; for (const release of this.held.splice(0)) release(); }
   async dispose() { this.release(); await this.page.unrouteAll({ behavior: "ignoreErrors" }); }
@@ -107,6 +110,10 @@ export class CompletionHarness {
     }
     if (request.method() === "POST") {
       const body = request.postDataJSON() as Body; this.requests.push(body);
+      const assemblyStep = this.requests.filter(request => request.action === "assemble").length;
+      if (body.action === "assemble" && this.rateLimitedAssemblySteps.delete(assemblyStep)) {
+        await route.fulfill({ status: 429, json: { error: "plan_rate_limited" } }); return;
+      }
       if (this.oversizedNext) { this.oversizedNext = false; await route.fulfill({status:413,json:{error:"request_too_large"}}); return; }
       if (this.holdAcceptance) await new Promise<void>(resolve => this.held.push(resolve));
       if (body.clientRequestId && this.cancelledRequests.has(body.clientRequestId)) {
@@ -118,7 +125,7 @@ export class CompletionHarness {
       }
       if (this.conflictNext) { this.conflictNext = false; await route.fulfill({ status: 409, json: { error: "plan_already_running" } }); return; }
       let result: Result;
-      if (body.action === "assemble") { result = assemblyResult({ noisyMaximum: Boolean(this.valueMaximum) });
+      if (body.action === "assemble") { result = assemblyResult({ complete: this.assemblyCompleteness.shift() ?? true, noisyMaximum: Boolean(this.valueMaximum) });
         if (this.valueMaximum) { result.spentCopper = 500000; result.comparison.uncertainty.significant = this.valueMaximum === "confirmed"; } this.lastAssembly = result; this.serverExclusions = body.excludedOptionIds ?? []; this.serverVariantExclusions = decodeAuctionGearSelectionTransport(body).excludedVariantKeys as string[] ?? []; }
       else {
         result = searchResult();
@@ -166,7 +173,7 @@ export class CompletionHarness {
       if (body.action === "search" && this.pendingInitial && !this.holdPost) {
         await route.fulfill({ status: 202, json: { id, status: "queued", mode: "search", result: null, progress: null, error: null, scope: scope(this.language) } }); return;
       }
-      if (this.holdPost || body.action === "resume" && this.holdContinuation) await new Promise<void>(resolve => this.held.push(resolve));
+      if (this.holdPost || body.action === "resume" && this.holdContinuation || body.action === "assemble" && this.holdAssemblyStep === assemblyStep) await new Promise<void>(resolve => this.held.push(resolve));
       if (body.action === "resume" && this.lateResumeHttpError) {
         this.resumeHttpErrorsServed++;
         await route.fulfill({ status: 503, json: { error: "auction_storage_unavailable" } }); return;
