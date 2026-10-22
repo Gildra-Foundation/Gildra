@@ -20,17 +20,41 @@
   --ph-surface: #12100c;
 }
 
-/* Atlas hand-over (RouteTransitionRuntime, kind "page"): the leaving page dims
-   only if the next one takes a moment (120 ms delay), so instant navigations
-   never flicker; the new page rises in from the runtime with its hero cascade.
-   A scene change is covered by the character's effect instead (see below). */
+/* Atlas portal hand-over (RouteTransitionRuntime, kind "page"): the leaving page
+   dims and recedes towards the touched point only if the next one takes a moment
+   (120 ms delay), so instant navigations never flicker; the new page opens out of
+   the same point with its hero cascade. */
 .frame {
-  transition: opacity 180ms ease;
+  transform-origin: var(--route-origin, 50% 30vh);
+  transition: opacity 220ms ease, transform 420ms cubic-bezier(.2, .8, .25, 1);
+}
+.frame[data-route-state="leaving"] {
+  opacity: .42;
+  transform: scale(.985);
+  transition-delay: 120ms;
 }
 
-.frame[data-route-state="leaving"] {
-  opacity: .45;
-  transition-delay: 120ms;
+/* The portal ring: a spark that charges at the click and bursts across the screen
+   when the next page arrives (RouteTransitionRuntime animates it). Idle: invisible,
+   no layer work. */
+.portalRing {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 119;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+  background: radial-gradient(circle,
+    rgba(var(--site-accent-rgb), .12) 0 52%,
+    rgba(var(--site-accent-rgb), .55) 62%,
+    var(--site-accent-strong) 66%,
+    rgba(var(--site-accent-rgb), .4) 70%,
+    transparent 76%);
+  mix-blend-mode: screen;
 }
 
 /* A burning fuse over the top bar while the next page is on its way: a thin
@@ -89,7 +113,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .frame,
-  .frame[data-route-state="leaving"] { transition: none; opacity: 1; }
+  .frame[data-route-state="leaving"] { transition: none; opacity: 1; transform: none; }
+  .portalRing { display: none; }
   .system:is([data-route-state="leaving"], [data-route-state="loading"]) .progress {
     animation: none;
     opacity: 1;
@@ -213,5 +238,7 @@
 @keyframes light-reveal { from { clip-path: circle(100% at 50% 50%); } to { clip-path: circle(0 at 50% 50%); opacity: 0; } }
 @keyframes ember-release { to { opacity: 0; transform: translateY(-8vh) scale(1.04); clip-path: polygon(0 0, 100% 0, 100% 15%, 82% 5%, 65% 20%, 41% 3%, 22% 15%, 0 4%); } }
 html:global([data-page-transition]) .frame { opacity: 1; transition: none; }
+html:global([data-motion="reduced"]) .portalRing { display: none; }
+html:global([data-motion="reduced"]) .frame[data-route-state="leaving"] { transform: none; }
 html:global([data-motion="reduced"]) .transition { display: none; }
 @media (prefers-reduced-motion: reduce) { .transition { display: none; } }
