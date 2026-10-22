@@ -39,7 +39,7 @@ field() { [ -f "$s/images/$1" ] || exit 1; cut -d' ' -f"$2" "$s/images/$1"; }
 case $1 in
   info) echo /var/lib/docker ;;
   build)
-    tag= label=
+    tag= label= context=${!#}
     while [ "$#" -gt 0 ]; do
       case $1 in
         -t) tag=$2; shift 2 ;;
@@ -47,7 +47,8 @@ case $1 in
         *) shift ;;
       esac
     done
-    cat > "$s/context.tar"
+    ls -A "$context" > "$s/context.list"
+    cp "$context/Dockerfile" "$s/context.dockerfile"
     [ -z "${TEST_BUILD_FAILS:-}" ] || exit 1
     printf 'sha256:%s %s %s\n' "${tag##*:}" "2026-10-22 22:00:00 +0000 UTC" "$label" > "$s/images/$tag"
     ;;
@@ -96,7 +97,7 @@ cat > "$fake_bin/curl" <<'FAKE_CURL'
 #!/bin/bash
 # Fails while the bad image runs; serves a marker page otherwise.
 [ "$(cat "$TEST_STATE_DIR/web.image")" != "${TEST_BAD_WEB:-never}" ] || exit 22
-echo '<html data-release-marker>'
+case " $* " in *" -o "*) ;; *) echo '<html data-release-marker>' ;; esac
 FAKE_CURL
 
 cat > "$fake_bin/df" <<'FAKE_DF'
@@ -116,7 +117,7 @@ head=$(git -C "$source_repo" rev-parse HEAD)
 run() {
   PATH="$fake_bin:$PATH" TEST_STATE_DIR=$state GILDRA_DEPLOY_DIR=$deployment_directory \
     GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock GILDRA_SOURCE_DIR=$source_repo \
-    GILDRA_LOCK_WAIT=1 "$@" > "$test_directory/run.log" 2>&1
+    GILDRA_BUILD_DIR=$test_directory/build GILDRA_LOCK_WAIT=1 "$@" > "$test_directory/run.log" 2>&1
 }
 expect_ok() { run "$@" || { cat "$test_directory/run.log" >&2; echo "test: expected success: $*" >&2; exit 1; }; }
 expect_fail() { if run "$@"; then cat "$test_directory/run.log" >&2; echo "test: expected failure: $*" >&2; exit 1; fi; }
@@ -127,7 +128,9 @@ new_web=gildra-web:rel1-${head:0:12}
 reset_host
 cp "$manifest" "$test_directory/manifest.before"
 expect_ok env "$deployment_script" rel1 --expect /ru:data-release-marker
-tar -tf "$state/context.tar" | grep -qx Dockerfile
+# Only the committed tree reaches the build: no .git, no stray or edited files.
+[ "$(cat "$state/context.list")" = Dockerfile ]
+grep -qx 'FROM scratch' "$state/context.dockerfile"
 grep -q -- '--label net.gildra.patch=rel1' "$state/docker.log"
 grep -q -- "--label org.opencontainers.image.revision=$head" "$state/docker.log"
 [ "$(cat "$state/web.image")" = "$new_web" ]
@@ -179,7 +182,7 @@ echo 'test: a failed build or an unhealthy current release leaves production alo
 reset_host
 echo 5 > "$state/free.gb"
 expect_fail env "$deployment_script" rel1
-[ ! -f "$state/context.tar" ] && grep -q 'less than 20 GB free' "$test_directory/run.log"
+[ ! -f "$state/context.list" ] && grep -q 'less than 20 GB free' "$test_directory/run.log"
 echo 'test: low disk space stops the release before the build'
 
 # --- a held deployment lock stops the release ----------------------------------
@@ -205,7 +208,7 @@ echo 'test: bad arguments and mislabelled images are refused'
 reset_host
 add_image gildra-web:prebuilt sha256:pre "2026-10-22 11:00:00 +0000 UTC" rel2
 expect_ok env TEST_REVISION="$head" "$deployment_script" rel2 --image gildra-web:prebuilt
-[ ! -f "$state/context.tar" ] && grep -qx 'WEB_IMAGE=gildra-web:prebuilt' "$manifest"
+[ ! -f "$state/context.list" ] && grep -qx 'WEB_IMAGE=gildra-web:prebuilt' "$manifest"
 echo 'test: --image rolls out a prebuilt image'
 
 # --- --prune-dry-run lists without removing anything ----------------------------
@@ -237,5 +240,23 @@ gone gildra-web:r15; gone gildra-web:r14; gone gildra-web:r10; gone gildra-web:r
 grep -q '^builder prune -f --filter until=168h' "$state/docker.log"
 grep -q '^builder prune -f --max-used-space 30GB' "$state/docker.log"
 echo 'test: --prune keeps recent, current, rollback and in-use images'
+
+# --- the build copy follows the requested commit and drops stray files ----------
+reset_host
+printf 'FROM scratch\nLABEL v=2\n' > "$source_repo/Dockerfile"
+printf 'x\n' > "$source_repo/extra.txt"
+git -C "$source_repo" add Dockerfile extra.txt
+git -C "$source_repo" -c user.name=t -c user.email=t@t commit -qm two
+printf 'uncommitted\n' >> "$source_repo/Dockerfile"
+touch "$test_directory/build/src/stray"
+expect_ok env "$deployment_script" rel2
+[ "$(cat "$state/context.list")" = "$(printf 'Dockerfile\nextra.txt')" ]
+grep -qx 'LABEL v=2' "$state/context.dockerfile" && ! grep -q uncommitted "$state/context.dockerfile"
+reset_host
+expect_ok env "$deployment_script" rel3 --ref HEAD~1
+[ "$(cat "$state/context.list")" = Dockerfile ]
+git -C "$source_repo" checkout -q -- Dockerfile
+[ "$(git -C "$source_repo" rev-parse HEAD)" != "$head" ] && git -C "$source_repo" diff --quiet
+echo 'test: the build copy follows the requested commit and drops stray files'
 
 echo 'test: deploy-web-host contract verified'
