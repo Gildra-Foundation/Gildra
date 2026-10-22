@@ -27,7 +27,22 @@
      these surfaces reveal it without changing game/status colours. */
   --atlas-glass-fill: color-mix(in srgb, var(--atlas-surface) 40%, transparent);
   --atlas-glass-raised: color-mix(in srgb, var(--atlas-surface-raised) 65%, transparent);
-  --atlas-glass-sheen: linear-gradient(135deg, color-mix(in srgb, var(--atlas-text-strong) 7%, transparent), transparent 55%);
+  /* Fine grain of worn vellum on every glass surface: a static 160 px tile, painted once. */
+  --atlas-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 .075 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --atlas-glass-sheen: linear-gradient(135deg, color-mix(in srgb, var(--atlas-text-strong) 7%, transparent), transparent 55%), var(--atlas-grain);
+  /* Gilded corner brackets of a framed picture (cards, the bar's portals): four L-shaped
+     strokes drawn as background layers in the scope's accent; fade them with opacity. */
+  --atlas-filigree:
+    linear-gradient(var(--atlas-accent-strong) 0 0) top left / 18px 1px no-repeat,
+    linear-gradient(var(--atlas-accent-strong) 0 0) top left / 1px 18px no-repeat,
+    linear-gradient(var(--atlas-accent-strong) 0 0) top right / 18px 1px no-repeat,
+    linear-gradient(var(--atlas-accent-strong) 0 0) top right / 1px 18px no-repeat,
+    linear-gradient(var(--atlas-accent-strong) 0 0) bottom left / 18px 1px no-repeat,
+    linear-gradient(var(--atlas-accent-strong) 0 0) bottom left / 1px 18px no-repeat,
+    linear-gradient(var(--atlas-accent-strong) 0 0) bottom right / 18px 1px no-repeat,
+    linear-gradient(var(--atlas-accent-strong) 0 0) bottom right / 1px 18px no-repeat;
+  /* Section rhythm: more air between chapters on wide screens. */
+  --atlas-section-gap: clamp(var(--atlas-space-6), 2.4rem + 2vw, var(--atlas-space-8));
   --atlas-glass-edge: color-mix(in srgb, var(--atlas-accent) 38%, transparent);
   --atlas-glass-inset: inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 12%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--atlas-text-strong) 4%, transparent);
   --atlas-glass-depth: 0 16px 40px color-mix(in srgb, var(--atlas-bg) 34%, transparent);

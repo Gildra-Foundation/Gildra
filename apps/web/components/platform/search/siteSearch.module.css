@@ -118,6 +118,8 @@
 
 .hints { display: flex; gap: var(--atlas-space-3); }
 
+/* Next to the full realm bar the shortcut hint gives way to the sections. */
+@media (min-width: 721px) and (max-width: 1359px) { .triggerKey { display: none; } }
 @media (max-width: 720px) {
   .trigger { justify-content: center; min-width: 44px; min-height: 44px; padding: 0; }
   .triggerKey,
