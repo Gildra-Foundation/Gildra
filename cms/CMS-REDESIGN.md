@@ -92,3 +92,22 @@ browser diagnostics. Fixture screenshots contain synthetic data; they do not
 claim to validate production authentication or a real database. Build and
 production release are coordinated after integration; no deployment was made
 from this branch.
+
+## Mobile article results — 22 October 2026
+
+Below 641 px, Articles renders one semantic list of compact records instead of
+the wide table. It uses the same real rows and cell renderers: title/slug, site,
+complete latest-version badge, update time, editor and live-page links. Title
+links are underlined in both layouts. Desktop retains all five Valyro DataTable
+columns. A media-query subscription selects one result tree; no duplicate hidden
+list/table is mounted. Native site-aware links, queries and access remain unchanged.
+Mobile loading uses Valyro Skeleton; existing empty/error/recovery states remain.
+
+Validation: TypeScript and 70 unit tests passed. Existing 25 UI fixture checks
+passed. Nine focused fixture groups cover EN/RU at 320/390/1440 px, long text and
+status wrapping, title/editor/live keyboard access, full mobile action visibility,
+loading replacement, distinct empty/error states, reset and responsive resizing
+with all desktop columns retained. Reduced motion passed; no page errors.
+Evidence: `.artifacts/cms-v2/mobile-results/` in the implementation worktree.
+These focused screenshots use synthetic rows and local routing/API adapters;
+no new image build, native-auth integration run or deployment was performed.

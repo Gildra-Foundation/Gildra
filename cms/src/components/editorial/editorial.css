@@ -41,7 +41,7 @@
 .gd-valyro .gd-workspace__status strong { color: var(--theme-text); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .gd-valyro .gd-article-scope { display: inline-flex; gap: 8px; font-size: 12px; }
 .gd-valyro .gd-article-identity { display: grid; justify-items: start; gap: 6px; min-width: 160px; }
-.gd-valyro .gd-article-identity > a { font-weight: 600; text-decoration: none; }
+.gd-valyro .gd-article-identity > a { font-weight: 600; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 55%, transparent); text-underline-offset: 3px; }
 .gd-valyro .gd-article-identity > a:hover { color: var(--gd-amber); text-decoration: underline; }
 .gd-valyro .gd-article-identity .gd-kind { margin: 0; }
 .gd-valyro .gd-filter-reset { transition: opacity 160ms ease, transform 160ms ease; }
@@ -66,3 +66,17 @@
   .gd-valyro .gd-article-filters { grid-template-columns: minmax(0, 1fr); gap: 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .gd-valyro .gd-filter-reset { transition: none; transform: none; } }
+
+/* The compact result list uses the same real row cells as the desktop table. */
+.gd-valyro .gd-article-list { list-style: none; display: grid; gap: 12px; padding: 0; margin: 0; }
+.gd-valyro .gd-article-card { display: grid; gap: 16px; min-width: 0; padding: 16px; border: 1px solid var(--gd-line); border-radius: 12px; background: var(--gd-card); }
+.gd-valyro .gd-article-card .gd-article-identity { min-width: 0; overflow-wrap: anywhere; }
+.gd-valyro .gd-article-card .gd-article-identity > a { font-size: 16px; line-height: 1.5; }
+.gd-valyro .gd-article-card dl { display: grid; gap: 12px; margin: 0; }
+.gd-valyro .gd-article-card dl > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; align-items: baseline; }
+.gd-valyro .gd-article-card dt { color: var(--gd-muted); font-size: 12px; }
+.gd-valyro .gd-article-card dd { margin: 0; font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+.gd-valyro .gd-article-card .ui-badge { white-space: normal; max-width: 100%; min-height: 24px; height: auto; padding-block: 3px; line-height: 1.5; }
+.gd-valyro .gd-article-card .gd-workspace__actions { padding-top: 12px; border-top: 1px solid var(--gd-line); }
+.gd-valyro .gd-article-card .gd-workspace__actions > a { min-height: 40px; display: inline-flex; align-items: center; }
+.gd-valyro .gd-article-card .gd-workspace__actions > a:not(.ui-button) { padding-inline: 8px; text-decoration: underline; text-underline-offset: 3px; }

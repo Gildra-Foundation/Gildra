@@ -6,13 +6,13 @@ import type { AdminLang } from "../../admin/text";
 import type { ArticleRow, ArticlesResult } from "../../articles/data";
 import { articlesQueryString, hasArticleFilters, resetArticlesQuery, type ArticlesQuery } from "../../articles/query";
 import { useArticlesQuery } from "./useArticlesQuery";
+import { ArticleResults } from "./ArticleResults";
 import { AdminSurface } from "../AdminSurface";
 import { LocalTime, SiteLink } from "../SiteLink";
-import { tableLabels } from "../tableLabels";
 import { Badge } from "../valyro-ui/basic/Badge";
 import { Button } from "../valyro-ui/basic/Button";
 import { Spinner } from "../valyro-ui/basic/Spinner";
-import { DataTable, type DataTableColumn } from "../valyro-ui/data-display/DataTable";
+import type { DataTableColumn } from "../valyro-ui/data-display/DataTable";
 import { EmptyState } from "../valyro-ui/data-display/EmptyState";
 import { Select } from "../valyro-ui/forms/Select";
 import { TextInput } from "../valyro-ui/forms/TextInput";
@@ -50,7 +50,7 @@ export function ArticlesPanel({ initial, initialQuery, lang }: { initial: Articl
     <Button asChild variant="accent"><Link href={`/admin/select-site?collection=guides&locale=${locale}`}>{t.create}</Link></Button>) : null;
   const columns: DataTableColumn<ArticleRow>[] = [
     { key: "title", header: t.item, cell: (row) => <div className="gd-article-identity"><SiteLink siteID={row.siteID} href={row.href}>{row.title || t.untitled}</SiteLink><span className="gd-kind">/{row.slug}</span>{!row.title ? <Badge color="amber">{e.missingTitle} · {locale.toUpperCase()}</Badge> : null}</div> },
-    { key: "siteName", header: t.site },
+    { key: "siteName", header: t.site, cell: (row) => row.siteName },
     { key: "status", header: t.status, cell: (row) => <Badge color={row.status === "published" ? "green" : "amber"}>{row.status === "published" ? t.published : row.live ? t.edits : t.draft}</Badge> },
     { key: "updatedAt", header: t.updated, cell: (row) => <LocalTime iso={row.updatedAt} lang={lang} /> },
     { key: "actions", header: t.edit, cell: (row) => <div className="gd-workspace__actions"><SiteLink siteID={row.siteID} href={row.href} variant="secondary">{t.edit}</SiteLink>{row.liveUrl ? <a href={row.liveUrl} target="_blank" rel="noreferrer">{t.live} ↗</a> : null}</div> },
@@ -76,7 +76,7 @@ export function ArticlesPanel({ initial, initialQuery, lang }: { initial: Articl
     </div>
     <div key={`${articlesQueryString(query)}:${loading ? "pending" : error ? "error" : "ready"}`} className="gd-workspace__results">
     {error ? <EmptyState title={error === 403 || error === 401 ? t.denied : t.error} primaryAction={<Button onClick={retry}>{t.retry}</Button>} /> :
-      <DataTable data={data?.rows ?? []} columns={columns} label={t.title} locale={lang} labels={tableLabels(lang)} loading={loading} empty={empty} />}
+      <ArticleResults data={data?.rows ?? []} columns={columns} label={t.title} lang={lang} loading={loading} empty={empty} />}
     </div>
     {data ? <Pager page={data.page} totalPages={data.totalPages} totalDocs={data.totalDocs} busy={loading} onPage={(page) => navigate({ ...query, page })} lang={lang} /> : null}
     <p className="gd-workspace__hint">{t.note}</p>
