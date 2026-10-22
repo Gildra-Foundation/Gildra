@@ -1,0 +1,124 @@
+/* =============================================================================
+   Gildra atlas tokens for the admin — copied from the site's single source,
+   apps/web/app/styles/atlas-theme.css (raids / Mythic+ look, brand.md).
+
+   The CMS is built and shipped on its own, so it cannot import that file.
+   tests/unit/atlas-tokens.test.ts fails when a value here drifts from the
+   site; change the site file first, then copy the value here.
+   Payload's theme (custom.scss) and Valyro (components/admin-surface.css)
+   read these tokens; screens never hardcode the colours.
+   ============================================================================= */
+:root {
+  /* Surfaces — page → panel → raised → selected */
+  --atlas-bg: #050607;
+  --atlas-surface: #090a0b;
+  --atlas-surface-raised: #11110f;
+  --atlas-surface-selected: #1a160e;
+  --atlas-surface-sunken: #030404;
+  --atlas-scrim: rgba(5, 6, 7, .86);
+
+  /* Text — contrast on --atlas-surface: strong 15.4, text 13, muted 7.8, subtle 5.1 (AA ≥ 4.5 on every surface) */
+  --atlas-text-strong: #f2e1c3;
+  --atlas-text: #d9d0c0;
+  --atlas-text-muted: #aaa294;
+  --atlas-text-subtle: #878074;
+
+  /* Accent — the one amber of the Raid and Mythic+ atlases */
+  --atlas-accent: #d1a24b;
+  --atlas-accent-strong: #f0b55a;
+  --atlas-accent-ink: #140d03;
+  --atlas-accent-wash: rgba(209, 162, 75, .09);
+  --atlas-accent-wash-strong: rgba(209, 162, 75, .17);
+  --atlas-accent-glow: rgba(230, 172, 77, .12);
+
+  /* Lines */
+  --atlas-line: rgba(157, 112, 48, .45);
+  --atlas-line-soft: rgba(157, 112, 48, .24);
+  --atlas-line-strong: rgba(209, 162, 75, .72);
+
+  /* Status — data meaning only (trends, availability), never chrome */
+  --atlas-positive: #8fc47a;
+  --atlas-negative: #e2735f;
+  --atlas-caution: #e3b25a;
+  --atlas-info: #93b3d8;
+
+  /* Typography (families: next/font in app/(payload)/layout.tsx) */
+  --atlas-font-display: var(--font-atlas-display), "Alegreya Fallback Local", Georgia, "Times New Roman", serif;
+  --atlas-font-ui: var(--font-ui), "Inter Fallback Local", "Segoe UI", Roboto, Arial, sans-serif;
+  --atlas-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --atlas-weight-display: 600;
+  --atlas-text-h2: clamp(1.625rem, 1.25rem + 1.3vw, 2.375rem);
+  --atlas-text-h3: clamp(1.25rem, 1.1rem + .5vw, 1.5rem);
+  --atlas-text-title: 1.125rem;
+  --atlas-text-lead: 1rem;
+  --atlas-text-body: .9375rem;
+  --atlas-text-small: .8125rem;
+  --atlas-text-meta: .75rem;
+  --atlas-text-label: .6875rem;
+  --atlas-text-stat: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  --atlas-leading-tight: 1.04;
+  --atlas-leading-snug: 1.25;
+  --atlas-leading-body: 1.6;
+  --atlas-tracking-display: -.015em;
+  --atlas-tracking-label: .14em;
+
+  /* Layout */
+  --atlas-radius: 2px;
+  --atlas-control-height: 44px;
+
+  /* Spacing scale */
+  --atlas-space-1: 4px;
+  --atlas-space-2: 8px;
+  --atlas-space-3: 12px;
+  --atlas-space-4: 16px;
+  --atlas-space-5: 24px;
+  --atlas-space-6: 32px;
+  --atlas-space-7: 48px;
+  --atlas-space-8: 72px;
+
+  /* Depth: the site's glass panels without the blur (the admin has no artwork behind it) */
+  --atlas-glass-inset: inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 12%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--atlas-text-strong) 4%, transparent);
+  --atlas-glass-depth: 0 16px 40px color-mix(in srgb, var(--atlas-bg) 34%, transparent);
+  --atlas-shadow-panel: var(--atlas-glass-inset), var(--atlas-glass-depth);
+  --atlas-glow-sm: 0 0 12px var(--atlas-accent-glow);
+  --atlas-ring-focus: 0 0 0 3px var(--atlas-accent-wash-strong);
+
+  /* Motion — one tempo (reduced motion turns it off per component) */
+  --atlas-ease: cubic-bezier(.2, .7, .2, 1);
+  --atlas-duration-fast: .15s;
+  --atlas-duration: .2s;
+  --atlas-duration-slow: .35s;
+  --atlas-press-scale: .97;
+
+  color-scheme: dark;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --atlas-text: #ece4d6;
+    --atlas-text-muted: #d2c9ba;
+    --atlas-text-subtle: #b8b0a2;
+    --atlas-line: rgba(209, 162, 75, .72);
+    --atlas-line-soft: rgba(209, 162, 75, .5);
+  }
+}
+
+/* Metric-matched fallbacks (same numbers as the site) keep headings and UI
+   text in place while Alegreya and Inter swap in: no layout shift on Linux,
+   ChromeOS or Android, where next/font's Times New Roman / Arial are missing. */
+@font-face {
+  font-family: "Alegreya Fallback Local";
+  src: local("Liberation Serif"), local("Tinos"), local("Noto Serif"), local("DejaVu Serif");
+  ascent-override: 100.67%;
+  descent-override: 34.18%;
+  line-gap-override: 0%;
+  size-adjust: 100.92%;
+}
+@font-face {
+  font-family: "Inter Fallback Local";
+  src: local("Liberation Sans"), local("Arimo"), local("Roboto"), local("DejaVu Sans");
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+  size-adjust: 107.12%;
+}

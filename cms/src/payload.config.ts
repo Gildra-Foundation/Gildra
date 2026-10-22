@@ -75,6 +75,8 @@ export default buildConfig({
       beforeLogin: ["/components/auth/AuthIntro#AuthIntro"],
       // Ctrl+K / ⌘K palette and its "Find…" button in the header.
       actions: ["/components/command/CommandButton#CommandButton"],
+      // GILDRA wordmark above the site selector (the multi-tenant plugin appends its selector to beforeNav).
+      beforeNav: ["/components/nav/NavBrand#NavBrand"],
       beforeNavLinks: ["/components/nav/AdminNav#AdminNav"],
       views: {
         dashboard: { Component: "/components/Dashboard#Dashboard" },
