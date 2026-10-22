@@ -7,6 +7,7 @@
 }
 
 .tab {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -29,10 +30,12 @@
 /* Underline: the active tab stands on an amber rule. */
 .underline .list { border-bottom: 1px solid var(--atlas-line-soft); }
 .underline .tab { margin-bottom: -1px; border-bottom: 2px solid transparent; }
-.underline .tab[aria-selected="true"] { color: var(--atlas-text-strong); border-bottom-color: var(--atlas-accent-strong); }
+.underline .tab[aria-selected="true"] { color: var(--atlas-text-strong); border-bottom-color: transparent; }
 
 /* Segmented: a compact pill group. */
-.segmented .list { width: fit-content; padding: 3px; border: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
+.segmented .list { width: fit-content; padding: 3px; border: 1px solid var(--atlas-line-soft); background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter); }
 .segmented .tab { min-height: 36px; }
 .segmented .tab[aria-selected="true"] { color: var(--atlas-accent-ink); background: var(--atlas-accent); box-shadow: 0 0 14px var(--atlas-accent-glow); }
 .segmented .tab[aria-selected="true"] .count { color: var(--atlas-accent-ink); }
@@ -47,3 +50,8 @@
 @media (prefers-reduced-motion: reduce) {
   .tab { transition: none; }
 }
+
+/* Valyro FLIP moves this one selection marker between tabs on pointer/keyboard
+   changes. Content stays mounted and native ARIA tabs semantics are unchanged. */
+.indicator { position: absolute; right: 0; bottom: -2px; left: 0; height: 2px; background: var(--atlas-accent-strong); pointer-events: none; }
+.segmented .indicator { right: var(--atlas-space-3); bottom: 3px; left: var(--atlas-space-3); background: var(--atlas-accent-ink); }

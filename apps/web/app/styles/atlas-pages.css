@@ -1,6 +1,6 @@
 /* Route content is scoped separately from the homepage and the book dialog. */
 body:has(.workspace-content[data-atlas-theme="dark"]) {
-  background: #050607;
+  background: var(--site-bg, #050607);
 }
 .workspace-content.gildra-atlas {
   /* Below the 64 px top bar: a short page ends at the bottom of the screen, above
@@ -45,8 +45,7 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
 }
 .workspace-content.gildra-atlas .pslot {
   border-color: var(--atlas-line-soft);
-  background-color: var(--atlas-surface);
-  box-shadow: none;
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill); box-shadow: var(--atlas-shadow-panel); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter);
 }
 .workspace-content.gildra-atlas :is(a, button, input, select, textarea, summary):focus-visible {
   outline: 2px solid var(--atlas-accent-strong);
@@ -70,7 +69,7 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
 }
 .workspace-content.gildra-atlas :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a):hover:not(:disabled) {
   border-color: var(--atlas-accent);
-  background: rgba(209, 162, 75, .17);
+  background: var(--atlas-accent-wash-strong);
 }
 .workspace-content.gildra-atlas [data-folio-action="quiet"] { color: var(--atlas-accent); background: transparent; }
 .workspace-content.gildra-atlas :is([data-folio-action], [data-folio-tools] > button, [data-folio-tools] > a) svg { width: 16px; height: 16px; flex-shrink: 0; }
@@ -81,8 +80,7 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
 }
 .workspace-content.gildra-atlas :is(.db-detail, .db-detail-block, .db-localization-card, .db-media-gallery figure, .db-raw-payload) {
   border-color: var(--atlas-line);
-  background: var(--atlas-surface);
-  box-shadow: none;
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill); box-shadow: var(--atlas-shadow-panel); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter);
   clip-path: none;
 }
 .workspace-content.gildra-atlas .db-media-gallery figure > a { background: var(--atlas-bg); border-color: var(--atlas-line-soft); }
@@ -100,7 +98,9 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
 .workspace-content.gildra-atlas [data-api-console] { background: var(--atlas-bg) !important; }
 .workspace-content.gildra-atlas [data-api-console] :is(header, aside, input, .rounded-xl, .rounded-sm) {
   border-color: var(--atlas-line) !important;
-  background-color: var(--atlas-surface) !important;
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill) !important;
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
 }
 .workspace-content.gildra-atlas [data-api-console] input { color: var(--atlas-text) !important; }
 @media (max-width: 760px) {

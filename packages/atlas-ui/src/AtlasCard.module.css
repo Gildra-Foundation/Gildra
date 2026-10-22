@@ -1,8 +1,10 @@
 .card {
   position: relative;
   min-width: 0;
-  border: 1px solid var(--atlas-line-soft);
-  background: var(--atlas-surface);
+  border: 1px solid var(--atlas-glass-edge);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
   box-shadow: var(--atlas-shadow-card);
   content-visibility: auto;
   contain-intrinsic-size: auto 440px;

@@ -2,7 +2,10 @@
   max-width: 100%;
   overflow-x: auto;
   border: 1px solid var(--atlas-line);
-  background: var(--atlas-surface);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
+  box-shadow: var(--atlas-shadow-card);
   overscroll-behavior-x: contain;
 }
 
@@ -56,10 +59,10 @@
 
 /* Short tables on phones: every row becomes a card of label: value lines. */
 @media (max-width: 600px) {
-  .cards { overflow: visible; border: 0; background: none; }
+  .cards { overflow: visible; border: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .cards .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .cards .table tbody { display: grid; gap: var(--atlas-space-2); }
-  .cards .table tbody tr { display: grid; gap: 2px; padding: var(--atlas-space-3) var(--atlas-space-4); border: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
+  .cards .table tbody tr { display: grid; gap: 2px; padding: var(--atlas-space-3) var(--atlas-space-4); border: 1px solid var(--atlas-glass-edge); background: var(--atlas-glass-sheen), var(--atlas-glass-fill); box-shadow: var(--atlas-shadow-card); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter); }
   .cards .table tbody th,
   .cards .table tbody td { display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr); gap: var(--atlas-space-3); padding: 2px 0; border: 0; text-align: left; }
   .cards .table tbody th { padding-bottom: var(--atlas-space-1); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); }

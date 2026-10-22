@@ -19,8 +19,9 @@
 .panel .body {
   padding: var(--atlas-space-6) clamp(var(--atlas-space-4), 3vw, 40px);
   border: 1px solid var(--atlas-line);
-  outline: 1px solid #020303;
-  background: linear-gradient(110deg, rgba(9, 10, 11, .97), rgba(9, 10, 11, .76));
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
   box-shadow: var(--atlas-shadow-panel);
 }
 

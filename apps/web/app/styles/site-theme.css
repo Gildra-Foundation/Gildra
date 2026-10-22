@@ -70,7 +70,7 @@ html :is(.gildra-atlas, [data-atlas-scope]) {
   --atlas-text-subtle: var(--site-subtle);
   --atlas-ember: var(--site-accent-strong);
   --atlas-ember-halo: rgba(var(--site-accent-rgb), .2);
-  --atlas-shadow-panel: inset 0 0 0 3px rgba(0, 0, 0, .58), inset 0 0 0 4px rgba(var(--site-accent-rgb), .06), 0 24px 55px rgba(0, 0, 0, .4);
+  --atlas-shadow-panel: var(--atlas-glass-inset), var(--atlas-glass-depth);
 }
 /* The DOM snapshot effect owns the hand-over; do not stack atlas morphs on it. */
 html[data-page-transition]::view-transition-group(*),
