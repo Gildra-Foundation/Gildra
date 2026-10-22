@@ -11,6 +11,7 @@ import { WorkspaceNavigator } from "@/components/platform/navigation/WorkspaceNa
 import { motionPreferenceScript } from "@/lib/client/motionPreference";
 import { SiteTheme } from "@/components/motion/SiteTheme";
 import { siteThemeScript } from "@/components/platform/home/homeThemes";
+import { localeArrivalScript } from "@/components/platform/locale/localeArrivalScript";
 import { AtlasValyroScope } from "@gildra/atlas-ui/AtlasValyroScope";
 import "./globals.css";
 
@@ -76,7 +77,7 @@ export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: 
     <html lang={lang} className={`${display.variable} ${ui.variable} ${atlasDisplay.variable}`} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
       <head>
         {/* The reader's "less motion" choice, applied before the first paint (lib/client/motionPreference.ts). */}
-        <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript + ";" + siteThemeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript + ";" + siteThemeScript + ";" + localeArrivalScript }} />
       </head>
       <body>
         <SiteTheme>

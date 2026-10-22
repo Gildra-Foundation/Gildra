@@ -276,23 +276,6 @@
 
 /* ── End of the bar ─────────────────────────────────────────────────── */
 .end { display: flex; align-items: center; justify-content: flex-end; gap: var(--atlas-space-3); min-width: 0; }
-.locale { display: flex; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); }
-.locale a {
-  display: grid;
-  place-items: center;
-  min-width: 36px;
-  min-height: var(--atlas-control-height);
-  padding: 0 var(--atlas-space-2);
-  color: var(--atlas-text-muted);
-  font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
-  letter-spacing: var(--atlas-tracking-label);
-  text-decoration: none;
-  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
-}
-.locale a + a { border-left: 1px solid var(--atlas-line-soft); }
-.locale a:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
-.locale a[aria-current] { color: var(--atlas-accent-strong); background: var(--atlas-accent-wash-strong); box-shadow: inset 0 -2px 0 var(--atlas-accent); }
-.locale a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
 /* ── Phone and tablet sheet ─────────────────────────────────────────── */
 .sheetRoot { display: none; }
@@ -386,10 +369,9 @@
   .brand .sigil { width: 22px; height: 22px; }
   .menuToggle { padding: var(--atlas-space-2); }
   .menuToggle > span { display: none; }
-  .locale a { min-width: 32px; padding: 0 var(--atlas-space-1); }
 }
 @media (max-width: 359px) { .brand > span { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .toolbar, .sigil, .realmLink, .realmToggle, .realmToggle > svg, .rune[data-ready], .portalArt, .portalFeature::before, .portalLink, .portalLink::before, .portalLink > svg, .portalGo > svg, .locale a { transition: none; }
+  .toolbar, .sigil, .realmLink, .realmToggle, .realmToggle > svg, .rune[data-ready], .portalArt, .portalFeature::before, .portalLink, .portalLink::before, .portalLink > svg, .portalGo > svg { transition: none; }
   .portal, .sheet, .sheetRealms > li { animation: none; }
 }

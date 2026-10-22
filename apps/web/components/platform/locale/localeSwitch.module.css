@@ -1,0 +1,52 @@
+/* atlas:strict — EN/RU switch of the toolbar (LocaleSwitch.tsx). */
+.switch {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  isolation: isolate;
+}
+
+/* The active language sits on a pill that travels between the two halves. Its
+   leading edge leaves first and the trailing edge follows, so it stretches
+   towards the chosen language and settles there (left/right of one absolutely
+   positioned span: no layout outside it, no shift). */
+.pill {
+  position: absolute;
+  inset: 0 50% 0 0;
+  z-index: -1;
+  background: var(--atlas-accent);
+  box-shadow: 0 0 0 1px var(--atlas-accent-strong) inset;
+  transition:
+    left var(--atlas-duration-slow) var(--atlas-ease) var(--pill-left-delay, 0s),
+    right var(--atlas-duration-slow) var(--atlas-ease) var(--pill-right-delay, 0s),
+    box-shadow var(--atlas-duration) var(--atlas-ease);
+}
+.switch[data-active="en"] .pill { --pill-right-delay: 70ms; }
+.switch[data-active="ru"] .pill { inset: 0 0 0 50%; --pill-left-delay: 70ms; }
+.switch[aria-busy] .pill { box-shadow: 0 0 0 1px var(--atlas-accent-strong) inset, 0 0 14px var(--atlas-accent-glow); }
+
+.option {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  min-height: var(--atlas-control-height);
+  padding: 0 var(--atlas-space-2);
+  color: var(--atlas-text-muted);
+  font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
+  letter-spacing: var(--atlas-tracking-label);
+  text-decoration: none;
+  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+}
+.option:not([data-shown]):hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
+.option:not([data-shown]):active { background: var(--atlas-accent-wash-strong); }
+.option[data-shown] { color: var(--atlas-accent-ink); cursor: default; }
+.option:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+@media (max-width: 480px) {
+  .option { min-width: 32px; padding: 0 var(--atlas-space-1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pill, .option { transition: none; }
+}
