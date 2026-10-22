@@ -157,6 +157,8 @@
   overflow: hidden;
   pointer-events: none;
   mask-image: linear-gradient(180deg, transparent, #000 45%);
+  /* Off screen its layers are neither painted nor animated. */
+  content-visibility: auto;
 }
 
 /* The horizon: the scene's colours rising from the bottom edge. */
