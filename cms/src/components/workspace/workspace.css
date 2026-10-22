@@ -11,9 +11,9 @@
 .gd-workspace__pager > span { margin-right: auto; }
 .gd-workspace__hint { margin-block: 16px; }
 .gd-auth-intro { margin-bottom: 24px; }
-.gd-auth-intro h1 { font-size: 1.75rem; margin: 0 0 12px; }
-.gd-auth-intro p { margin: 0 0 12px; color: var(--gd-muted); }
-.gd-auth-intro [role="status"] { padding: 12px; border: 1px solid var(--gd-line); border-radius: 8px; color: var(--theme-text); }
+.gd-auth-intro h1 { font-size: var(--atlas-text-h3); margin: 0 0 12px; }
+.gd-auth-intro p { margin: 0 0 12px; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: 1.5; }
+.gd-auth-intro [role="status"] { padding: 12px; border: 1px solid var(--gd-line); border-radius: var(--atlas-radius); color: var(--atlas-text); background: var(--atlas-surface); }
 @media (max-width: 480px) { .gd-workspace__head > .ui-button { width: 100%; } }
 
 .gd-workspace__query-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-block: 12px; }

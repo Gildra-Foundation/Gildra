@@ -53,7 +53,7 @@ function useDockedNav() {
   return setNavOpen;
 }
 
-function Links({ items, pathname, onFollow }: { items: NavItem[]; pathname: string; onFollow: () => void }) {
+function Links({ items, pathname, counts, onFollow }: { items: NavItem[]; pathname: string; counts: Record<string, number>; onFollow: () => void }) {
   return (
     <ul className="gd-nav__list">
       {items.map((item) => {
@@ -68,7 +68,8 @@ function Links({ items, pathname, onFollow }: { items: NavItem[]; pathname: stri
               onClick={onFollow}
             >
               {active ? <span className="gd-nav__active-marker" data-flip-id="active-section" aria-hidden="true" /> : null}
-              {item.label}
+              <span className="gd-nav__label">{item.label}</span>
+              {counts[item.href] !== undefined ? <span className="gd-nav__count">{counts[item.href]}</span> : null}
             </Link>
           </li>
         );
@@ -83,7 +84,7 @@ function Links({ items, pathname, onFollow }: { items: NavItem[]; pathname: stri
  * "More" section stay as they are. "More" opens by itself when it holds the
  * current page.
  */
-export function AdminNavLinks({ sections }: { sections: NavSection[] }) {
+export function AdminNavLinks({ sections, counts = {} }: { sections: NavSection[]; counts?: Record<string, number> }) {
   const pathname = usePathname() ?? "";
   const navRef = useRef<HTMLElement>(null);
   useFlip(navRef, { auto: true, animateEnter: false, spring: "smooth" });
@@ -99,14 +100,14 @@ export function AdminNavLinks({ sections }: { sections: NavSection[] }) {
           return (
             <details key={index} className="gd-nav__section gd-nav__more" open={open || undefined}>
               <summary>{section.title}</summary>
-              <Links items={section.items} pathname={pathname} onFollow={onFollow} />
+              <Links items={section.items} pathname={pathname} counts={counts} onFollow={onFollow} />
             </details>
           );
         }
         return (
           <div key={index} className="gd-nav__section">
             {section.title ? <p className="gd-nav__title">{section.title}</p> : null}
-            <Links items={section.items} pathname={pathname} onFollow={onFollow} />
+            <Links items={section.items} pathname={pathname} counts={counts} onFollow={onFollow} />
           </div>
         );
       })}
