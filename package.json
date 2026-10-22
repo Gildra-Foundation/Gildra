@@ -14,6 +14,8 @@
     "build": "npm run build -w @gildra/web --",
     "start": "npm run start -w @gildra/web --",
     "typecheck": "npm run typecheck -w @gildra/web --",
+    "valyro:generate": "node scripts/generate-public-valyro-theme.mjs",
+    "valyro:check": "node scripts/generate-public-valyro-theme.mjs --check && node --test scripts/test-public-valyro-theme.mjs",
     "atlas:check": "npm run atlas:check -w @gildra/web --",
     "test:atlas": "npm run test:atlas -w @gildra/web --",
     "test:observability": "npm run test:observability -w @gildra/web --",

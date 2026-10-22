@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import clsx from "clsx";
 import { ThemeScope } from "./valyro-ui/theme/ThemeScope";
 import "./valyro-ui/styles/tokens.css";
-import "./valyro-ui/styles/themes/vercel.css";
+import "./valyro-public-theme.css";
 import "./valyro-ui/styles/base.css";
 import "./valyro-ui/styles/motion.css";
 import bridge from "./valyroAtlasBridge.module.css";
