@@ -12,7 +12,8 @@
     "./morph": "./src/morph.ts",
     "./format": "./src/format.ts",
     "./clipboard": "./src/clipboard.ts",
-    "./*.module.css": "./src/*.module.css"
+    "./*.module.css": "./src/*.module.css",
+    "./valyro-ui/primitives/*": "./src/valyro-ui/primitives/*.ts"
   },
   "peerDependencies": {
     "clsx": "*",

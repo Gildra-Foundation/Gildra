@@ -3,6 +3,8 @@ import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { useFlip } from "@gildra/atlas-ui/valyro-ui/primitives/useFlip";
+import { lessMotion, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreference";
 import { altPath, p } from "@/lib/i18n-paths";
 import { gameDestinationForPath } from "@/lib/games/destinations";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
@@ -26,42 +28,48 @@ const destinations = [
 ] as const;
 
 function PrimaryNavigation({ path, ru }: { path: string; ru: boolean }) {
-  const [open, setOpen] = useState(false);
+  const [openPath, setOpenPath] = useState<string | null>(null);
+  const open = openPath === path;
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const links = useRef<HTMLElement>(null);
+  const reduced = useSyncExternalStore(subscribeSiteMotion, lessMotion, () => true);
+  useFlip(links, { auto: true, animateEnter: false, enabled: !reduced && !open, spring: "smooth" });
   const id = useId();
   const barePath = path.replace(/^\/ru(?=\/|$)/, "").replace(/\/$/, "") || "/";
 
   useEffect(() => {
     if (!open) return;
     const outside = (event: PointerEvent) => {
-      if (event.target instanceof Node && !root.current?.contains(event.target)) setOpen(false);
+      if (event.target instanceof Node && !root.current?.contains(event.target)) setOpenPath(null);
     };
     document.addEventListener("pointerdown", outside);
     return () => document.removeEventListener("pointerdown", outside);
   }, [open]);
 
   return <div ref={root} className={toolbarStyles.navigation}
-    onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}
+    onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpenPath(null); }}
     onKeyDown={event => {
       if (event.key === "Escape" && open) {
         event.preventDefault();
-        setOpen(false);
+        setOpenPath(null);
         trigger.current?.focus();
       }
     }}>
     <button ref={trigger} type="button" className={toolbarStyles.menuToggle} aria-controls={id} aria-expanded={open}
       aria-label={ru ? (open ? "Закрыть меню" : "Открыть меню") : (open ? "Close menu" : "Open menu")}
-      onClick={() => setOpen(value => !value)}>
+      onClick={() => setOpenPath(open ? null : path)}>
       {open ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
       <span>{ru ? "Меню" : "Menu"}</span>
     </button>
-    <nav id={id} className={toolbarStyles.links} data-open={open || undefined} aria-label={ru ? "Основная навигация" : "Main navigation"}>
-      {destinations.map(item => {
+    <nav ref={links} id={id} className={toolbarStyles.links} data-open={open || undefined} aria-label={ru ? "Основная навигация" : "Main navigation"}>
+      {destinations.map((item, index) => {
         const current = item.href === "/" ? barePath === "/" : barePath === item.href || barePath.startsWith(`${item.href}/`);
         return <Link key={item.href} href={p(ru ? "ru" : "en", item.href)} prefetch={false}
-          className={toolbarStyles.link} aria-current={current ? "page" : undefined} onClick={() => setOpen(false)}>
-          {ru ? item.ru : item.en}
+          className={toolbarStyles.link} aria-current={current ? "page" : undefined} onClick={() => setOpenPath(null)}>
+          <span className={toolbarStyles.index} aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+          <span className={toolbarStyles.label}>{ru ? item.ru : item.en}</span>
+          {current && <span className={toolbarStyles.activeMarker} data-flip-id="active-section" aria-hidden="true" />}
         </Link>;
       })}
     </nav>
@@ -84,14 +92,14 @@ export function WorkspaceNavigatorContent() {
       content.focus({ preventScroll: true });
       content.scrollIntoView({ block: "start", behavior: "instant" });
     }}>{ru ? "К содержанию" : "Skip to content"}</a>
-    <PrimaryNavigation key={livePath} path={livePath} ru={ru} />
+    <div className={toolbarStyles.identity}><GameSwitcher key={livePath} lang={ru ? "ru" : "en"} pathname={livePath} /></div>
+    <PrimaryNavigation path={livePath} ru={ru} />
     <div className={toolbarStyles.end}>
       {!comingSoon && <SiteSearch lang={ru ? "ru" : "en"} />}
       <nav className={toolbarStyles.locale} aria-label={ru ? "Язык" : "Language"}>
         <Link href={altPath(livePath, "en")} hrefLang="en" lang="en" aria-current={ru ? undefined : "true"} prefetch={false}>EN</Link>
         <Link href={altPath(livePath, "ru")} hrefLang="ru" lang="ru" aria-current={ru ? "true" : undefined} prefetch={false}>RU</Link>
       </nav>
-      <GameSwitcher key={livePath} lang={ru ? "ru" : "en"} pathname={livePath} />
     </div>
   </header>;
 }

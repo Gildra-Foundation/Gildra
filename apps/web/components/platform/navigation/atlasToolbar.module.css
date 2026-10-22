@@ -1,19 +1,30 @@
-/* atlas:strict — shared horizontal navigation, including the home page. */
+/* atlas:strict — an editorial masthead with numbered, direct atlas destinations. */
 .toolbar {
   position: sticky;
   top: 0;
   z-index: 80;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: var(--atlas-space-5);
   min-height: var(--atlas-sticky-top);
-  padding: var(--atlas-space-2) var(--atlas-gutter);
+  padding: 0 var(--atlas-gutter);
   border-bottom: 1px solid var(--atlas-line-soft);
   background: var(--atlas-scrim);
   backdrop-filter: blur(18px);
 }
-
+.toolbar::after {
+  content: "";
+  position: absolute;
+  inset: auto var(--atlas-gutter) -1px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--atlas-line-strong), var(--atlas-line-soft) 35%, transparent);
+  pointer-events: none;
+}
+.identity {
+  padding-right: var(--atlas-space-5);
+  border-right: 1px solid var(--atlas-line-soft);
+}
 .skip {
   position: absolute;
   top: var(--atlas-space-2);
@@ -24,26 +35,52 @@
   background: var(--atlas-accent);
   font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   translate: 0 -200%;
+  clip-path: inset(50%);
 }
-.skip:focus-visible { translate: 0 0; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.skip:focus-visible { translate: 0 0; clip-path: none; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 .navigation { min-width: 0; }
-.links { display: flex; align-items: center; gap: var(--atlas-space-1); }
+.links { display: flex; justify-content: center; align-items: stretch; gap: var(--atlas-space-1); }
 .link {
-  display: flex;
-  align-items: center;
-  min-height: var(--atlas-control-height);
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--atlas-space-1);
+  min-height: calc(var(--atlas-sticky-top) - 1px);
   padding: var(--atlas-space-2) var(--atlas-space-3);
-  border: 1px solid transparent;
-  border-radius: var(--atlas-radius);
   color: var(--atlas-text-muted);
-  font: 600 var(--atlas-text-small) / 1.3 var(--atlas-font-ui);
   text-decoration: none;
   white-space: nowrap;
-  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
+  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
 }
-.link:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
-.link[aria-current] { color: var(--atlas-accent-strong); border-color: var(--atlas-line); background: var(--atlas-accent-wash-strong); }
-.link:focus-visible, .menuToggle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.index {
+  color: var(--atlas-text-subtle);
+  font: 500 var(--atlas-text-label) / 1 var(--atlas-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--atlas-tracking-label);
+}
+.label { font: 600 var(--atlas-text-title) / 1.1 var(--atlas-font-display); }
+.link::after {
+  content: "";
+  position: absolute;
+  inset: auto var(--atlas-space-3) 0;
+  height: 1px;
+  background: var(--atlas-line-strong);
+  opacity: 0;
+  transition: opacity var(--atlas-duration) var(--atlas-ease);
+}
+.link:hover { color: var(--atlas-text-strong); background: linear-gradient(transparent, var(--atlas-accent-wash)); }
+.link:hover::after { opacity: 1; }
+.link[aria-current] { color: var(--atlas-text-strong); }
+.link[aria-current] .index { color: var(--atlas-accent-strong); }
+.activeMarker {
+  position: absolute;
+  inset: auto var(--atlas-space-3) -1px;
+  height: 2px;
+  background: var(--atlas-accent);
+  pointer-events: none;
+}
+.link:focus-visible, .menuToggle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
 .menuToggle {
   display: none;
   align-items: center;
@@ -52,56 +89,73 @@
   min-height: var(--atlas-control-height);
   min-width: var(--atlas-control-height);
   padding: var(--atlas-space-2) var(--atlas-space-3);
-  border: 1px solid var(--atlas-line);
+  border: 1px solid var(--atlas-line-soft);
   border-radius: var(--atlas-radius);
   color: var(--atlas-text-strong);
-  background: var(--atlas-accent-wash);
+  background: transparent;
   cursor: pointer;
   font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
 }
-.menuToggle:hover, .menuToggle[aria-expanded="true"] { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
-.end { display: flex; flex: none; align-items: center; gap: var(--atlas-space-4); }
-.locale { display: flex; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); }
+.menuToggle:hover, .menuToggle[aria-expanded="true"] { border-color: var(--atlas-accent); background: var(--atlas-accent-wash); }
+.end { display: flex; align-items: center; gap: var(--atlas-space-4); }
+.locale { display: flex; gap: var(--atlas-space-1); }
 .locale a {
   display: grid;
   place-items: center;
-  min-width: 36px;
+  min-width: 32px;
   min-height: var(--atlas-control-height);
-  padding: 0 var(--atlas-space-2);
-  color: var(--atlas-text-muted);
+  padding: 0 var(--atlas-space-1);
+  border-bottom: 1px solid transparent;
+  color: var(--atlas-text-subtle);
   font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
   letter-spacing: var(--atlas-tracking-label);
   text-decoration: none;
-  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+  transition: color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
 }
-.locale a + a { border-left: 1px solid var(--atlas-line); }
 .locale a:hover { color: var(--atlas-text-strong); }
-.locale a[aria-current] { color: var(--atlas-accent-ink); background: var(--atlas-accent); }
+.locale a[aria-current] { color: var(--atlas-accent-strong); border-color: var(--atlas-accent); }
 .locale a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
 @media (max-width: 1199px) {
+  .toolbar { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .navigation { display: flex; justify-content: flex-end; }
+  .identity { border-right: 0; padding-right: 0; }
   .menuToggle { display: flex; }
   .links {
     display: none;
     position: absolute;
-    top: calc(100% + var(--atlas-space-2));
+    top: 100%;
     left: var(--atlas-gutter);
     right: var(--atlas-gutter);
     max-height: calc(100dvh - var(--atlas-sticky-top) - var(--atlas-space-5));
     overflow-y: auto;
-    padding: var(--atlas-space-2);
+    overscroll-behavior: contain;
+    padding: var(--atlas-space-4);
+    gap: 0 var(--atlas-space-5);
     border: 1px solid var(--atlas-line);
-    border-radius: var(--atlas-radius);
+    border-top: 0;
     background: var(--atlas-surface-raised);
     box-shadow: var(--atlas-shadow-panel);
   }
   .links[data-open] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .link { grid-template-columns: var(--atlas-space-7) minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3); padding: var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line-soft); }
+  .activeMarker { inset: var(--atlas-space-4) auto var(--atlas-space-4) 0; width: 2px; height: auto; }
+  .link[aria-current] { background: var(--atlas-accent-wash); }
 }
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .toolbar, .end { gap: var(--atlas-space-2); }
   .menuToggle { padding: var(--atlas-space-2); }
   .menuToggle > span { display: none; }
-  .locale a { min-width: 32px; padding: 0 var(--atlas-space-1); }
+  .locale { gap: 0; }
+  .locale a { min-width: 28px; }
+  .links { padding: var(--atlas-space-2); }
   .links[data-open] { grid-template-columns: minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { .link, .locale a { transition: none; } }
+:global(html[data-motion="reduced"]) .link,
+:global(html[data-motion="reduced"]) .link::after,
+:global(html[data-motion="reduced"]) .locale a { transition: none; }
+:global(html[data-motion="reduced"]) .activeMarker { translate: none !important; scale: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .link, .link::after, .locale a { transition: none; }
+  .activeMarker { translate: none !important; scale: none !important; }
+}
