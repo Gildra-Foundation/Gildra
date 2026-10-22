@@ -37,9 +37,9 @@
   position: absolute;
   inset: 0;
   content: "";
-  background:
+  background: var(--atlas-frame-veil,
     linear-gradient(90deg, rgba(4, 5, 6, .88), rgba(4, 5, 6, .32) 46%, rgba(4, 5, 6, .12) 72%, rgba(4, 5, 6, .45)),
-    linear-gradient(180deg, rgba(5, 6, 7, .1) 0%, rgba(5, 6, 7, .35) 45%, var(--atlas-bg) 94%);
+    linear-gradient(180deg, rgba(5, 6, 7, .1) 0%, rgba(5, 6, 7, .35) 45%, var(--atlas-bg) 94%));
 }
 
 /* Bright artwork: a heavier veil, the scene stays readable as texture. */
@@ -61,7 +61,7 @@
 .art {
   object-fit: cover;
   object-position: var(--atlas-frame-art-position, center 18%);
-  filter: saturate(.86) contrast(1.06) brightness(.92);
+  filter: var(--atlas-frame-art-filter, saturate(.86) contrast(1.06) brightness(.92));
   /* The scene settles in when the page arrives, then drifts slowly — a living painting. */
   animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
 }
