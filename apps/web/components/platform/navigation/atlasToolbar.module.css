@@ -6,7 +6,7 @@
   height: 86px;
   display: flex;
   align-items: center;
-  padding: 0 clamp(20px, 2.2vw, 40px);
+  padding: 14px clamp(20px, 2.2vw, 40px) 0;
   border-block: 1px solid var(--atlas-line-soft);
   background: var(--atlas-surface-sunken);
   box-shadow: 0 1px 0 var(--atlas-line-strong);
@@ -16,7 +16,7 @@
   z-index: 2;
   left: 50%;
   top: -7px;
-  width: 360px;
+  width: 400px;
   height: 108px;
   transform: translateX(-50%);
   display: grid;
@@ -73,7 +73,7 @@
   .desktopLinks { grid-template-columns: minmax(0, 1fr) 340px minmax(0, 1fr); }
 }
 @media (max-width: 1279px) {
-  .toolbar { height: 64px; padding-inline: 16px; }
+  .toolbar { height: 64px; padding: 0 16px; }
   .brand { left: 12px; top: 0; width: 180px; height: 64px; transform: none; }
   .brand:focus-visible { outline-offset: -4px; }
   .desktopLinks, .portraitToggle, .preferencesPanel { display: none; }
