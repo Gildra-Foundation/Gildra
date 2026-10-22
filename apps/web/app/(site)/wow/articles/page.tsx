@@ -3,6 +3,6 @@ import { ArticlesIndexPage, articlesIndexMetadata } from "@/components/cms/Artic
 
 export const generateMetadata = () => articlesIndexMetadata("en");
 export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const page = Math.max(1, Math.min(1000, Number((await searchParams).page) || 1));
+  const page = Math.max(1, Math.min(1000, Math.floor(Number((await searchParams).page)) || 1));
   return <ArticlesIndexPage lang="en" page={page} />;
 }

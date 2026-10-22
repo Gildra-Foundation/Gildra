@@ -1,5 +1,33 @@
 /* atlas:strict — CMS articles: layout and reading typography; the frame, hero, cards and notices come from the atlas kit. */
 
+/* The index follows Characters: open hero and one useful panel beside it. */
+.indexState { width: min(100%, 440px); }
+.indexState h2 {
+  margin: 0 0 var(--atlas-space-3);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-h3);
+  line-height: var(--atlas-leading-snug);
+  color: var(--atlas-text-strong);
+}
+.indexState p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.stateLinks { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin-top: var(--atlas-space-5); }
+
+.articleCard { min-width: 0; overflow: hidden; }
+.articleCardLink { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; }
+.articleCardLink:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -3px; }
+.cardCover { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 1px solid var(--atlas-line-soft); }
+.cardBody { display: flex; flex: 1; flex-direction: column; gap: var(--atlas-space-3); padding: var(--atlas-space-5); }
+.cardCategory { color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.cardBody h3 { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); line-height: var(--atlas-leading-snug); overflow-wrap: anywhere; }
+.cardBody > p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.articleCardLink:hover h3 { color: var(--atlas-accent-strong); }
+.cardFooter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); margin-top: auto; padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
+.cardMeta { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.cardMeta > span, .cardRead { display: inline-flex; align-items: center; gap: var(--atlas-space-2); }
+.cardMeta svg { width: 14px; height: 14px; flex: none; color: var(--atlas-accent); }
+.cardRead { color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); font-weight: 600; }
+.cardRead svg { width: 16px; height: 16px; flex: none; }
+
 /* The article is one centred column — hero, byline, text and contents share its left edge. */
 .article,
 .related {
