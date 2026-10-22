@@ -264,18 +264,12 @@ export interface Page {
   id: number;
   site?: (number | null) | Site;
   title: string;
-  /**
-   * Page id used by the web app, e.g. "wow/home" or "league-of-legends/home". Unique within the site.
-   */
   slug: string;
   game?: ('wow' | 'league-of-legends') | null;
-  /**
-   * Game-relative canonical path ("/", "/tier-lists"). Informational; routing stays in code.
-   */
   path?: string | null;
   layout?: ('default' | 'bare') | null;
   /**
-   * Block list in the web app format: [{ "type": "wow.hero" }, { "type": "container", "children": [ ... ] }]. Leave empty to keep the code config.
+   * Blocks of this language. Empty keeps the page from code for this language.
    */
   blocks?:
     | {

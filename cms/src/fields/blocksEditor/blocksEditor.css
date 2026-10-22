@@ -1,0 +1,2 @@
+.gd-pageid { display: grid; gap: 6px; margin-bottom: var(--spacing-field, 24px); }
+.gd-pageid__hint { margin: 0; color: var(--gd-muted); font-size: 12px; }

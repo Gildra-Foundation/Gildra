@@ -134,9 +134,8 @@ registry (applied as CSS variables on `.app`).
 ## Payload CMS overrides
 
 Editors can replace a page's block list without a deploy. In the CMS
-(`cms/`, collection **Pages**) create a document whose `slug` is the page id
-(`wow/tier-lists`, `wow/privacy`, `league-of-legends/home`…) and put a
-`BlockInstance[]` JSON into `blocks`, e.g.
+(`cms/`, collection **Pages**) they pick the page from the site's list of
+overridable pages and fill its blocks per language, e.g.
 
 ```json
 [
@@ -147,14 +146,21 @@ Editors can replace a page's block list without a deploy. In the CMS
 ]
 ```
 
-`lib/cms/pages.ts` fetches `CMS_INTERNAL_URL/api/pages?where[slug][equals]=<id>`
-(published documents only, cached 60 s) and validates the JSON against the
-page game's registry: unknown block types, non-object props or `children` on a
-non-container make the whole override invalid and the TS config renders
-instead. Drafts are ignored; `layout` may switch between `default` and `bare`.
-Unset `CMS_INTERNAL_URL` to disable CMS lookups (local dev without the CMS).
-Block types available to editors are exactly the registry keys listed by
-`/dev/blocks/manifest`.
+`npm run blocks:contracts` generates both `contracts/blocks.schema.json` and the
+CMS copy `cms/src/blocks/contract.generated.json`, which also lists the
+overridable pages: every static `definePage` (no route params) with the block
+types its code config uses, plus `CMS_EXTRA_BLOCKS` in the generator. The CMS
+refuses any save whose blocks fail that contract and names block, field and
+reason.
+
+`lib/cms/pages.ts` reads `/api/public/<site>/page?slug=<id>&locale=<lang>`
+(published, no locale fallback) and validates the JSON against the page game's
+registry and the contract: unknown block types, props that break the contract
+or `children` on a non-container make the whole override invalid and the TS
+config renders instead. A language without its own blocks keeps the TS config.
+Drafts render only in `/cms-preview` (signed link from the admin); `layout`
+may switch between `default` and `bare`. Unset `CMS_INTERNAL_URL` to disable
+CMS lookups (local dev without the CMS).
 
 ## Sitemaps
 

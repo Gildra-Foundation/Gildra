@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { migrations } from "../src/migrations";
 import { ROLLBACK_CHECKS } from "../src/migrations/20261008_174758_shared_cms";
+import { ROLLBACK_CHECKS as BLOCKS_ROLLBACK_CHECKS } from "../src/migrations/20261022_225420_localized_page_blocks";
 import { seedSites } from "../src/seed/sites";
 import { withClient } from "./helpers/db";
 import { bootPayload } from "./helpers/payload";
@@ -105,7 +106,9 @@ describe("upgrade from the production schema", () => {
   });
 
   it("keeps every legacy row, ID and credential", async () => {
-    for (const table of LEGACY_TABLES) expect(await count(table), table).toBe(legacyCounts[table]);
+    // Localized blocks: the Russian locale row of each block page/version is new.
+    const added: Record<string, number> = { pages_locales: 2, _pages_v_locales: 2 };
+    for (const table of LEGACY_TABLES) expect(await count(table), table).toBe(legacyCounts[table] + (added[table] ?? 0));
     for (const [table, list] of Object.entries(legacyIDs)) expect(await ids(table), table).toEqual(list);
     const admin = (await q(`SELECT email, salt, hash, platform_role FROM admins WHERE id = 7`)).rows[0];
     expect(admin).toEqual({ email: "legacy@test.local", salt: "legacy-salt", hash: LEGACY_HASH, platform_role: "owner" });
@@ -120,8 +123,26 @@ describe("upgrade from the production schema", () => {
       const rows = (await q(`SELECT DISTINCT ${column} AS s FROM "${table}"`)).rows.map((r) => r.s);
       expect(rows, table).toEqual([gildra]);
     }
-    const lol = (await q(`SELECT slug, game, layout, blocks FROM pages WHERE id = 42`)).rows[0];
-    expect(lol).toEqual({ slug: "league-of-legends/home", game: "league-of-legends", layout: "bare", blocks: [{ type: "lol.hero" }] });
+    const lol = (await q(`SELECT slug, game, layout FROM pages WHERE id = 42`)).rows[0];
+    expect(lol).toEqual({ slug: "league-of-legends/home", game: "league-of-legends", layout: "bare" });
+  });
+
+  it("copies the shared blocks of pages and versions into both languages", async () => {
+    const live = (await q(`SELECT _parent_id AS id, _locale AS l, title, blocks FROM pages_locales ORDER BY _parent_id, _locale`)).rows;
+    expect(live).toEqual([
+      { id: 41, l: "en", title: "Home", blocks: [{ type: "wow.hero" }] },
+      { id: 41, l: "ru", title: null, blocks: [{ type: "wow.hero" }] },
+      { id: 42, l: "en", title: "LoL home", blocks: [{ type: "lol.hero" }] },
+      { id: 42, l: "ru", title: null, blocks: [{ type: "lol.hero" }] },
+    ]);
+    const versions = (await q(`SELECT _parent_id AS id, _locale AS l, version_blocks AS b FROM _pages_v_locales ORDER BY _parent_id, _locale`)).rows;
+    expect(versions.map((r) => [r.id, r.l, r.b])).toEqual([
+      [51, "en", [{ type: "wow.hero" }]],
+      [51, "ru", [{ type: "wow.hero" }]],
+      [52, "en", [{ type: "lol.hero" }]],
+      [52, "ru", [{ type: "lol.hero" }]],
+    ]);
+    expect((await q(`SELECT count(*)::int AS n FROM information_schema.columns WHERE table_name IN ('pages', '_pages_v') AND column_name IN ('blocks', 'version_blocks')`)).rows[0].n).toBe(0);
   });
 
   it("has the expected constraints", async () => {
@@ -145,6 +166,29 @@ describe("upgrade from the production schema", () => {
     expect(media.alt).toBe("Герой");
     const page = await payload.find({ collection: "pages", where: { slug: { equals: "wow/home" } }, overrideAccess: false });
     expect(page.docs[0]?.blocks).toEqual([{ type: "wow.hero" }]);
+    const ru = await payload.find({ collection: "pages", where: { slug: { equals: "wow/home" } }, overrideAccess: false, locale: "ru", fallbackLocale: false });
+    expect(ru.docs[0]?.blocks).toEqual([{ type: "wow.hero" }]);
+  });
+});
+
+describe("localized page blocks rollback", () => {
+  const blocksBlockers = async () => {
+    const out: string[] = [];
+    for (const [label, query] of BLOCKS_ROLLBACK_CHECKS) if (Number((await q(query)).rows[0]?.n ?? 0) > 0) out.push(label);
+    return out;
+  };
+
+  it("refuses while a language has its own blocks, and changes nothing", async () => {
+    await q(`UPDATE pages_locales SET blocks = '[{"type":"legal"}]' WHERE _parent_id = 41 AND _locale = 'ru'`);
+    await q(`UPDATE _pages_v_locales SET version_blocks = NULL WHERE _parent_id = 52 AND _locale = 'ru'`);
+    expect(await blocksBlockers()).toEqual(["pages with different blocks per language", "page versions with different blocks per language"]);
+    const down = await cli("migrate:down");
+    expect(down.ok).toBe(false);
+    expect(down.output).toMatch(/Refusing to roll back 20261022_225420_localized_page_blocks.*pages with different blocks per language: 1/);
+    expect((await q(`SELECT blocks FROM pages_locales WHERE _parent_id = 41 AND _locale = 'ru'`)).rows[0].blocks).toEqual([{ type: "legal" }]);
+    await q(`UPDATE pages_locales SET blocks = '[{"type":"wow.hero"}]' WHERE _parent_id = 41 AND _locale = 'ru'`);
+    await q(`UPDATE _pages_v_locales SET version_blocks = '[{"type":"lol.hero"}]' WHERE _parent_id = 52 AND _locale = 'ru'`);
+    expect(await blocksBlockers()).toEqual([]);
   });
 });
 
@@ -157,6 +201,8 @@ describe("rollback", () => {
     expect(await indexDef("pages_slug_idx")).toMatch(/UNIQUE/);
     for (const table of LEGACY_TABLES) expect(await count(table), table).toBe(legacyCounts[table]);
     expect((await q(`SELECT hash FROM admins WHERE id = 7`)).rows[0].hash).toBe(LEGACY_HASH);
+    expect((await q(`SELECT id, blocks FROM pages ORDER BY id`)).rows).toEqual([{ id: 41, blocks: [{ type: "wow.hero" }] }, { id: 42, blocks: [{ type: "lol.hero" }] }]);
+    expect((await q(`SELECT id, version_blocks AS b FROM _pages_v ORDER BY id`)).rows).toEqual([{ id: 51, b: [{ type: "wow.hero" }] }, { id: 52, b: [{ type: "lol.hero" }] }]);
     const cols = (await q(`SELECT column_name FROM information_schema.columns WHERE table_name = 'guides' ORDER BY column_name`)).rows.map((r) => r.column_name);
     expect(cols).toEqual(["_status", "category", "created_at", "hero_id", "id", "published_at", "slug", "updated_at"]);
   });
