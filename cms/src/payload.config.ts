@@ -28,6 +28,8 @@ import { Sites } from "./collections/Sites";
 import { SiteSettings } from "./collections/SiteSettings";
 import { Categories, Tags } from "./collections/Taxonomy";
 import { buildEmailAdapter } from "./email";
+import { reportRequestError } from "./monitoring/report";
+import { csrfOrigins } from "./security/origin";
 import { jobsConfig } from "./jobs";
 import { migrations } from "./migrations";
 import { publicEndpoints } from "./public/endpoints";
@@ -55,6 +57,11 @@ const dirname = path.dirname(filename);
 
 export default buildConfig({
   serverURL: process.env.PAYLOAD_PUBLIC_URL ?? "http://localhost:3001",
+  // Explicit allow-lists: cookie-authenticated requests are accepted only from the CMS origin.
+  csrf: csrfOrigins(),
+  // Matches nginx `client_max_body_size 25m`; Payload would otherwise accept any size.
+  upload: { limits: { fileSize: 25 * 1024 * 1024 }, abortOnLimit: true },
+  hooks: { afterError: [reportRequestError] },
   admin: {
     user: Admins.slug,
     importMap: {

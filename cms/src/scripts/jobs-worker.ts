@@ -8,6 +8,8 @@
  */
 import { getPayload } from "payload";
 
+import { reportFailedJobs } from "../monitoring/jobs";
+import { captureError, flushMonitoring } from "../monitoring/sentry";
 import config from "../payload.config";
 
 const intervalMs = Math.max(5, Number(process.env.CMS_JOBS_INTERVAL_SECONDS || 30)) * 1000;
@@ -30,12 +32,15 @@ while (!stopping) {
     const result = await payload.jobs.run({ queue: "default", limit });
     const ran = Object.keys(result.jobStatus ?? {}).length;
     if (ran) payload.logger.info(`Jobs worker processed ${ran} job(s).`);
+    await reportFailedJobs(payload);
   } catch (error) {
     payload.logger.error({ err: error, msg: "Jobs run failed" });
+    captureError(error, { source: "jobs-worker" });
   }
   for (let waited = 0; waited < intervalMs && !stopping; waited += 1000) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 }
 payload.logger.info("Jobs worker stopped.");
+await flushMonitoring();
 process.exit(0);

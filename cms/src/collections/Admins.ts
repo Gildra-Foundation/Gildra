@@ -2,6 +2,7 @@ import { APIError, type CollectionConfig, type FieldAccess, type Where } from "p
 
 import { asStaff, canUseAdmin, isOwner, SITE_ROLES, siteIDsWithRole } from "../access/roles";
 import { assertStaffRecoveryAvailable } from "../email";
+import { staffCookies } from "../security/origin";
 import { auditAfterChange, auditAfterDelete } from "../hooks/audit";
 
 const BOOTSTRAP = "gildra:bootstrapOwner";
@@ -26,7 +27,15 @@ async function otherOwners(req: Parameters<FieldAccess>[0]["req"], id: unknown):
  */
 export const Admins: CollectionConfig = {
   slug: "admins",
-  auth: true,
+  auth: {
+    useSessions: true,
+    // Five wrong passwords lock the account for 15 minutes (owners can unlock).
+    maxLoginAttempts: 5,
+    lockTime: 15 * 60 * 1000,
+    // A working day; the admin UI refreshes the token while someone is active.
+    tokenExpiration: 12 * 60 * 60,
+    cookies: staffCookies(),
+  },
   labels: { singular: { en: "Staff member", ru: "Сотрудник" }, plural: { en: "Staff", ru: "Сотрудники" } },
   access: {
     admin: ({ req }) => canUseAdmin(req.user),
