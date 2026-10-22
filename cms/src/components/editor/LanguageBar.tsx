@@ -4,14 +4,13 @@ import {
   toast,
   useDocumentInfo,
   useFormModified,
-  useRouteTransition,
-  useServerFunctions,
+  useForm,
   useTranslation,
 } from "@payloadcms/ui";
-import { useRouter } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { emptyLocaleFields } from "../../admin/localeCopy";
 import { CONTENT_LOCALES, filled, hasText, missingParts, stateLevel } from "../../admin/completeness";
 import { LexicalPreview } from "./LexicalPreview";
 import { forgetLocaleDocs, type LocaleDoc, loadLocaleDoc, useLocaleStates, useSwitchLocale } from "./useLocaleStates";
@@ -21,6 +20,7 @@ const COMPARE_KEY = "gd-compare-open";
 const COPY = {
   ru: {
     label: "Язык версии",
+    publication: "RU и EN публикуются и снимаются с публикации вместе. Автосохранение сохраняет только черновик.",
     editing: "редактируете",
     complete: "заполнена",
     empty: "пусто",
@@ -32,12 +32,14 @@ const COPY = {
     fill: (from: string) => `Заполнить пустые поля из версии «${from}»`,
     fillHint: "Скопирует текст в пустые поля этой версии — переводите поверх. Заполненные поля не меняются.",
     filling: "Копирую…",
-    filled: "Текст скопирован — переводите поверх.",
+    filled: "Текст добавлен в форму. Проверьте перевод и сохраните черновик.",
+    failed: "Не удалось загрузить исходную версию. Поля не изменены.",
     waitSave: "Дождитесь автосохранения и повторите.",
     fallback: (name: string) => `Пока у этой версии нет заголовка, описания и текста, сайт показывает версию «${name}».`,
   },
   en: {
     label: "Language",
+    publication: "RU and EN are published and unpublished together. Autosave only saves a draft.",
     editing: "editing",
     complete: "complete",
     empty: "empty",
@@ -49,7 +51,8 @@ const COPY = {
     fill: (from: string) => `Fill empty fields from the ${from} version`,
     fillHint: "Copies text into the empty fields of this version to translate over. Filled fields are kept.",
     filling: "Copying…",
-    filled: "Text copied — translate over it.",
+    filled: "Text added to the form. Review the translation and save a draft.",
+    failed: "Could not load the source version. No fields were changed.",
     waitSave: "Wait for the autosave and try again.",
     fallback: (name: string) => `Until this version has a title, summary and text, the site shows the ${name} version.`,
   },
@@ -70,9 +73,11 @@ export function LanguageBar() {
   const { switchTo, pending, stalled } = useSwitchLocale();
   const { docPermissions } = useDocumentInfo();
   const modified = useFormModified();
-  const { copyDataFromLocale } = useServerFunctions();
-  const router = useRouter();
-  const { startRouteTransition } = useRouteTransition();
+  const { dispatchFields, getData, setModified } = useForm();
+  const active = useRef(true);
+  const context = useRef("");
+  useEffect(() => { context.current = `${collection}:${id}:${current}`; }, [collection, id, current]);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   const [compare, setCompare] = useState(false);
   const [copying, setCopying] = useState(false);
 
@@ -97,7 +102,14 @@ export function LanguageBar() {
   const name = (l: (typeof CONTENT_LOCALES)[number]) => (lang === "ru" ? l.ru : l.en);
   const currentLevel = stateLevel(states[current], collection);
   const otherLevel = stateLevel(states[other.code], collection);
-  const canFill = Boolean(id) && loaded && docPermissions?.update === true && currentLevel !== "complete" && otherLevel !== "empty";
+  // Payload's initial permissions are sanitized booleans; its access refresh
+  // after autosave may return the original { permission, where } object.
+  const updatePermission: unknown = docPermissions?.update;
+  const canUpdate = updatePermission === true || (
+    updatePermission !== null && typeof updatePermission === "object" &&
+    "permission" in updatePermission && updatePermission.permission === true
+  );
+  const canFill = Boolean(id) && loaded && canUpdate && currentLevel !== "complete" && otherLevel !== "empty";
 
   const fill = async () => {
     if (!id) return;
@@ -107,10 +119,19 @@ export function LanguageBar() {
     }
     setCopying(true);
     try {
-      await copyDataFromLocale({ collectionSlug: collection, docID: id, fromLocale: other.code, toLocale: current, overrideData: false });
+      const target = context.current;
+      const source = await loadLocaleDoc(collection, id, other.code, current);
+      if (!active.current || context.current !== target) return;
+      if (!source) throw new Error(t.failed);
+      const patch = emptyLocaleFields(getData(), source);
+      for (const [path, value] of Object.entries(patch)) {
+        // Payload's Lexical field refreshes its editor when initialValue changes.
+        // The form value alone would save text while leaving the editor blank.
+        dispatchFields({ type: "UPDATE", path, value, ...(path === "content" ? { initialValue: structuredClone(value) } : {}) });
+      }
+      if (Object.keys(patch).length) setModified(true);
       forgetLocaleDocs(collection, id);
       toast.success(t.filled);
-      startRouteTransition(() => router.push(`/admin/collections/${collection}/${id}?locale=${current}`));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error));
     } finally {
@@ -120,6 +141,7 @@ export function LanguageBar() {
 
   return (
     <div className="gd-langbar" role="group" aria-label={t.label}>
+      {collection === "guides" ? <p className="gd-langbar__note">{t.publication}</p> : null}
       <div className="gd-langbar__row">
         <span className="gd-langbar__label">{t.label}</span>
         <div className="gd-langbar__switch">
@@ -140,7 +162,7 @@ export function LanguageBar() {
                 type="button"
                 className={`gd-langbar__btn${active ? " is-active" : ""}`}
                 aria-pressed={active}
-                disabled={!id && !active}
+                disabled={(!id && !active) || copying || Boolean(pending)}
                 onClick={() => (active ? undefined : switchTo(l.code))}
                 title={detail}
               >

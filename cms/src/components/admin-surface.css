@@ -1,0 +1,50 @@
+/* Payload remains the owner of <html>. Valyro only styles the custom screens. */
+.gd-valyro[data-theme][data-mode] {
+  --ui-font-sans: var(--font-body, system-ui, sans-serif);
+  --ui-accent: var(--gd-amber);
+  --ui-accent-hover: var(--gd-amber);
+  --ui-accent-fg: #10131a;
+  --ui-accent-soft: rgba(217, 164, 65, 0.14);
+  --ui-focus-color: var(--gd-amber);
+  --ui-page-bg: transparent;
+  --ui-surface: var(--gd-card);
+  --ui-elevated: var(--theme-elevation-100);
+  --ui-fg: var(--theme-text);
+  --ui-fg-muted: var(--gd-muted);
+  --ui-glass-border: var(--gd-line);
+  --ui-border: var(--gd-line);
+  --ui-radius-card: 10px;
+  background: transparent;
+  min-width: 0;
+  font-family: inherit;
+}
+.gd-valyro .gd-sites, .gd-valyro .gd-columns, .gd-valyro .gd-site { min-width: 0; }
+.gd-valyro .gd-site { container-type: inline-size; container-name: gd-site; }
+.gd-valyro .gd-site__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gd-valyro .ui-stats-card__label { white-space: normal; min-height: 2.4em; }
+.gd-valyro .ui-stats-card { min-width: 0; padding: var(--ui-space-3); }
+.gd-valyro .gd-stat--warn .ui-stats-card__value { color: var(--gd-amber); }
+.gd-valyro .gd-site__actions .ui-button { text-decoration: none; }
+.gd-valyro .gd-panel .ui-data-table { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.gd-valyro .ui-data-table__scroll { max-width: 100%; }
+.gd-valyro .ui-empty-state { padding-inline: var(--ui-space-3); }
+.gd-valyro .gd-analytics__filters { margin-block: var(--ui-space-4); }
+.gd-valyro .gd-analytics__site { display: grid; gap: var(--ui-space-2); max-width: 320px; margin-bottom: var(--ui-space-3); }
+.gd-valyro .gd-analytics__status { min-height: 1.5em; margin-block: var(--ui-space-3); color: var(--gd-muted); }
+.gd-valyro .gd-analytics__stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--ui-space-3); margin-bottom: var(--ui-space-6); }
+.gd-valyro .gd-analytics__tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: var(--ui-space-6); margin-top: var(--ui-space-6); }
+.gd-valyro .gd-analytics__footer { color: var(--gd-muted); margin-top: var(--ui-space-4); }
+.gd-valyro :focus-visible { outline-color: var(--gd-amber); }
+@container gd-site (min-width: 600px) {
+  .gd-valyro .gd-site__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .gd-valyro .gd-analytics__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 380px) {
+  .gd-valyro .gd-analytics__stats { grid-template-columns: minmax(0, 1fr); }
+  .gd-valyro .gd-site__actions .ui-button { max-width: 100%; white-space: normal; height: auto; min-height: var(--ui-control-h-sm); }
+}
+
+.gd-valyro .gd-choose__site.ui-button { height: auto; display: grid; justify-content: stretch; padding: var(--ui-space-4); }
+.gd-valyro .gd-choose__site .ui-button__label { display: grid; justify-items: start; gap: var(--ui-space-1); }

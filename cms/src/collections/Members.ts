@@ -32,6 +32,9 @@ const RESET_FLOW = "gildra:memberResetFlow";
 const MEMBER_SELF_FIELDS = new Set(["password"]);
 /** Site admins manage only memberships of their own sites. */
 const SITE_ADMIN_FIELDS = new Set(["memberships"]);
+// Payload's native form posts read-only values too. Accept only unchanged
+// copies of these known scalars, then remove them before the actual write.
+const SITE_ADMIN_FORM_FIELDS = new Set(["id", "email", "_verified", "blocked", "blockedReason", "createdAt", "updatedAt"]);
 
 type Membership = { site?: unknown; status?: unknown; joinedAt?: unknown; id?: unknown };
 
@@ -63,7 +66,7 @@ function membershipKey(rows: Membership[] | null | undefined, sites: ID[]): stri
   return JSON.stringify(
     (rows ?? [])
       .filter((row) => sites.some((s) => sameID(s, row.site)))
-      .map((row) => [String(relationID(row.site)), row.status ?? "active"])
+      .map(rowKey)
       .sort(),
   );
 }
@@ -133,13 +136,14 @@ export const Members: CollectionConfig = {
   endpoints: memberEndpoints,
   hooks: {
     beforeOperation: [
-      ({ args, operation, req }) => {
+      async ({ args, operation, req }) => {
         if (operation === "forgotPassword" && emailMode() === "disabled") {
           throw new APIError("Email delivery is not configured.", 503, undefined, true);
         }
         if (operation === "resetPassword") req.context[RESET_FLOW] = true;
         if (operation !== "update") return args;
-        const keys = Object.keys((args as { data?: object }).data ?? {});
+        const data = (args as { data?: Record<string, unknown> }).data ?? {};
+        const keys = Object.keys(data);
         if (isOwner(req.user)) return args;
         const join = req.context[MEMBER_JOIN] as { member?: unknown } | undefined;
         const joining =
@@ -151,7 +155,20 @@ export const Members: CollectionConfig = {
           if (req.user) throw new Forbidden(req.t);
           return args;
         }
-        if (keys.some((key) => !allowed.has(key))) throw new Forbidden(req.t);
+        const extra = keys.filter((key) => !allowed.has(key));
+        if (extra.length) {
+          const id = (args as { id?: string | number }).id;
+          if (!asStaff(req.user) || id === undefined || extra.some((key) => !SITE_ADMIN_FORM_FIELDS.has(key))) throw new Forbidden(req.t);
+          const original = await req.payload.findByID({ collection: "members", id, req, user: req.user,
+            overrideAccess: false, depth: 0,
+            select: { email: true, _verified: true, blocked: true, blockedReason: true, createdAt: true, updatedAt: true } });
+          for (const key of extra) {
+            const before = original[key as keyof typeof original];
+            const equal = key === "id" ? sameID(data[key], before) : key === "blockedReason" ? (data[key] || null) === (before || null) : data[key] === before;
+            if (!equal) throw new Forbidden(req.t);
+          }
+          for (const key of extra) delete data[key];
+        }
         return args;
       },
     ],

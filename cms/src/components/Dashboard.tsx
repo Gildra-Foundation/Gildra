@@ -19,6 +19,12 @@ import {
 } from "../access/roles";
 import { LocalTime, SiteLink } from "./SiteLink";
 
+import { AdminSurface } from "./AdminSurface";
+import { RecentEditsTable } from "./RecentEditsTable";
+import { StatsCard } from "./valyro-ui/data-display/StatsCard";
+import { EmptyState } from "./valyro-ui/data-display/EmptyState";
+import { Badge } from "./valyro-ui/basic/Badge";
+
 const STALE_DAYS = 90;
 const RECENT_LIMIT = 8;
 const UPCOMING_LIMIT = 6;
@@ -102,6 +108,7 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
   const visible = new Set(visibleEntities?.collections ?? []);
 
   return (
+    <AdminSurface lang={lang}>
     <Gutter className="dashboard gd-home">
       <header className="gd-home__head">
         <h1>{t.greeting}</h1>
@@ -109,7 +116,7 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
       </header>
 
       {sites.length === 0 ? (
-        <p role="alert">{t.noSites}</p>
+        <EmptyState title={t.noSites} role="status" />
       ) : (
         <div className="gd-sites">
           {sites.map((site, index) => {
@@ -136,12 +143,12 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
                   ) : null}
                 </div>
 
-                <dl className="gd-site__stats">
-                  <Stat label={t.published} value={c.published} />
-                  <Stat label={t.drafts} value={c.drafts} />
-                  <Stat label={t.scheduled} value={c.scheduled} />
-                  <Stat label={t.stale} value={c.stale} warn={c.stale > 0} />
-                </dl>
+                <div className="gd-site__stats">
+                  <StatsCard label={t.published} value={c.published} locale={lang} />
+                  <StatsCard label={t.drafts} value={c.drafts} locale={lang} />
+                  <StatsCard label={t.scheduled} value={c.scheduled} locale={lang} />
+                  <StatsCard label={t.stale} value={c.stale} locale={lang} className={c.stale > 0 ? "gd-stat--warn" : undefined} />
+                </div>
 
                 <p className="gd-site__meta">
                   {c.readers !== null ? (
@@ -149,10 +156,10 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
                       {t.readers}: <strong>{c.readers}</strong>
                     </span>
                   ) : null}
-                  <span>{site.registrationEnabled ? t.registrationOpen : t.registrationClosed}</span>
-                  <span className={statsServer && site.plausibleSiteId ? "gd-ok" : "gd-muted"}>
+                  <Badge color="gray">{site.registrationEnabled ? t.registrationOpen : t.registrationClosed}</Badge>
+                  <Badge color={statsServer && site.plausibleSiteId ? "green" : "gray"}>
                     {statsServer && site.plausibleSiteId ? t.statsConnected : t.statsMissing}
-                  </span>
+                  </Badge>
                 </p>
 
                 <div className="gd-site__actions">
@@ -160,31 +167,31 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
                     <SiteLink
                       siteID={id}
                       href={`/admin/collections/guides/create?locale=${site.defaultLocale ?? "en"}`}
-                      className="gd-btn gd-btn--primary"
+                      variant="accent"
                     >
                       + {t.newArticle}
                     </SiteLink>
                   ) : null}
-                  <SiteLink siteID={id} href="/admin/collections/guides" className="gd-btn">
+                  <SiteLink siteID={id} href="/admin/collections/guides" variant="secondary">
                     {t.allArticles}
                   </SiteLink>
                   {canPublish ? (
-                    <SiteLink siteID={id} href="/admin/collections/pages" className="gd-btn">
+                    <SiteLink siteID={id} href="/admin/collections/pages" variant="secondary">
                       {t.pages}
                     </SiteLink>
                   ) : null}
                   {canWrite ? (
-                    <SiteLink siteID={id} href="/admin/collections/media" className="gd-btn">
+                    <SiteLink siteID={id} href="/admin/collections/media" variant="secondary">
                       {t.media}
                     </SiteLink>
                   ) : null}
                   {canSettings ? (
-                    <SiteLink siteID={id} href="/admin/collections/site-settings" className="gd-btn">
+                    <SiteLink siteID={id} href="/admin/collections/site-settings" variant="secondary">
                       {t.settings}
                     </SiteLink>
                   ) : null}
                   {canAnalyse ? (
-                    <SiteLink siteID={id} href="/admin/analytics" className="gd-btn">
+                    <SiteLink siteID={id} href="/admin/analytics" variant="secondary">
                       {t.analytics}
                     </SiteLink>
                   ) : null}
@@ -198,47 +205,19 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
       <div className="gd-columns">
         <section className="gd-panel" aria-labelledby="gd-recent">
           <h2 id="gd-recent">{t.recent}</h2>
-          {recent.length === 0 ? (
-            <p className="gd-muted">{t.recentEmpty}</p>
-          ) : (
-            <table className="gd-table">
-              <thead>
-                <tr>
-                  <th>{t.colTitle}</th>
-                  <th>{t.colSite}</th>
-                  <th>{t.colStatus}</th>
-                  <th className="gd-num">{t.colUpdated}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map((item) => (
-                  <tr key={`${item.collection}-${item.id}`}>
-                    <td>
-                      <ScopedLink site={item.site} href={`/admin/collections/${item.collection}/${item.id}?locale=${item.titleLocale}`}>
-                        {item.title || t.untitled}
-                      </ScopedLink>
-                      <span className="gd-kind">{item.collection === "guides" ? t.article : t.page}</span>
-                    </td>
-                    <td>{item.site !== null ? (siteName.get(String(item.site)) ?? "—") : "—"}</td>
-                    <td>
-                      <span className={`gd-pill gd-pill--${item.status === "published" ? "ok" : "draft"}`}>
-                        {item.status === "published" ? t.statusPublished : t.statusDraft}
-                      </span>
-                    </td>
-                    <td className="gd-num">
-                      <LocalTime iso={item.updatedAt} lang={lang} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <RecentEditsTable lang={lang} rows={recent.map((item) => ({
+            id: `${item.collection}-${item.id}`, title: item.title, kind: item.collection,
+            href: `/admin/collections/${item.collection}/${item.id}?locale=${item.titleLocale}`,
+            siteID: item.site === null ? null : String(item.site),
+            siteName: item.site !== null ? (siteName.get(String(item.site)) ?? "—") : "—",
+            status: item.status, updatedAt: item.updatedAt,
+          }))} />
         </section>
 
         <section className="gd-panel" aria-labelledby="gd-upcoming">
           <h2 id="gd-upcoming">{t.upcoming}</h2>
           {upcoming.length === 0 ? (
-            <p className="gd-muted">{t.upcomingEmpty}</p>
+            <EmptyState size="sm" title={t.upcomingEmpty} />
           ) : (
             <table className="gd-table">
               <thead>
@@ -292,15 +271,7 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
           ))}
       </nav>
     </Gutter>
-  );
-}
-
-function Stat({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
-  return (
-    <div className={warn ? "gd-stat gd-stat--warn" : "gd-stat"}>
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-    </div>
+    </AdminSurface>
   );
 }
 

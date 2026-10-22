@@ -1,14 +1,21 @@
 import { type CollectionConfig, type FieldAccess, Forbidden, type Where } from "payload";
 
 import { asMember, asStaff, isOwner, relationID, sameID, siteIDsWithRole } from "../access/roles";
+import { profilePageWhere } from "../access/profilePage";
 
 /** Fields a reader may change on their own profile. */
 const PROFILE_SELF_FIELDS = new Set(["displayName", "bio", "handle", "visibility"]);
 
 export const HANDLE_PATTERN = /^[a-z0-9_-]{3,30}$/;
 
-const staffOrOwnerOfProfile: FieldAccess = ({ req, doc }) =>
-  Boolean(asStaff(req.user)) || (asMember(req.user) !== null && sameID(doc?.member, req.user?.id));
+const staffOrOwnerOfProfile: FieldAccess = async ({ req, doc, data, siblingData }) => {
+  const member = relationID(doc?.member ?? data?.member ?? siblingData?.member);
+  if (isOwner(req.user) || (asMember(req.user) !== null && sameID(member, req.user?.id))) return true;
+  if (member === null || !siteIDsWithRole(req.user, ["admin"]).length) return false;
+  const result = await req.payload.count({ collection: "members", req, user: req.user, overrideAccess: false,
+    where: { id: { equals: member } } });
+  return result.totalDocs > 0;
+};
 
 /** Moderation: owners, plus site admins for readers who are members of their sites. */
 function moderatorWhere(user: unknown): Where | true | null {
@@ -27,13 +34,14 @@ export const MemberProfiles: CollectionConfig = {
   admin: { useAsTitle: "handle", defaultColumns: ["handle", "displayName", "visibility"], group: { en: "Readers", ru: "Читатели" } },
   access: {
     read: ({ req }) => {
+      const page = profilePageWhere(req);
       const moderator = moderatorWhere(req.user);
-      if (moderator === true) return true;
+      if (moderator === true) return page ?? true;
       const member = asMember(req.user);
-      const clauses: Where[] = [{ visibility: { equals: "public" } }];
+      const clauses: Where[] = [{ and: [{ visibility: { equals: "public" } }, { "member.blocked": { not_equals: true } }] }];
       if (member) clauses.push({ member: { equals: member.id } });
       if (moderator) clauses.push(moderator);
-      return { or: clauses };
+      return page ? { and: [{ or: clauses }, page] } : { or: clauses };
     },
     create: ({ req }) => isOwner(req.user) || asMember(req.user) !== null,
     update: ({ req }) => {

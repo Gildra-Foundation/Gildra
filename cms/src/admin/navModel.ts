@@ -1,8 +1,14 @@
 import { ANALYTICS_ROLES, asStaff, isOwner, siteIDsWithRole } from "../access/roles";
 import { adminText } from "./text";
 
-export type NavItem = { href: string; label: string; exact?: boolean };
+export type NavItem = { href: string; label: string; exact?: boolean; activePaths?: string[] };
 export type NavSection = { title?: string; collapsible?: boolean; items: NavItem[] };
+
+/** Native forms belong to their workbench; path boundaries prevent sibling matches. */
+export function isAdminNavItemActive(pathname: string, item: NavItem): boolean {
+  const matches = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
+  return (item.exact ? pathname === item.href : matches(item.href)) || Boolean(item.activePaths?.some(matches));
+}
 
 type Permissions = { collections?: Record<string, { read?: unknown } | undefined> } | null | undefined;
 
@@ -33,13 +39,13 @@ export function adminSections(user: unknown, permissions: Permissions, language:
     {
       items: [
         { href: "/admin", label: t.navDesk, exact: true },
-        link("guides", t.navArticles),
+        can("guides") ? { href: "/admin/articles", label: t.navArticles, activePaths: ["/admin/collections/guides"] } : null,
         link("media", t.media),
         analytics ? { href: "/admin/analytics", label: t.analyticsTitle } : null,
       ],
     },
     { title: t.navSite, items: [link("pages", t.pages), link("categories", t.categories), link("tags", t.tags), link("site-settings", t.settings)] },
-    { title: t.navPeople, items: [link("members", t.readers), link("admins", t.staff)] },
+    { title: t.navPeople, items: [{ href: "/admin/users", label: language === "en" ? "Users" : "Пользователи" }, link("members", t.readers), link("admins", t.staff)] },
     { title: t.navMore, collapsible: true, items: [link("sites", t.sites), link("member-profiles", t.navReaderProfiles), link("audit-log", t.audit)] },
   ];
   return sections
