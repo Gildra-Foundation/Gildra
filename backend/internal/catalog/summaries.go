@@ -113,19 +113,19 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	}
 
 	if params.Limit < 1 || params.Limit > 100 {
-		return SummaryPage{}, errors.New("limit must be between 1 and 100")
+		return SummaryPage{}, invalidRequest("limit must be between 1 and 100")
 	}
 	if params.MinItemLevel != nil && (*params.MinItemLevel < 0 || *params.MinItemLevel > 9999) || params.MaxItemLevel != nil && (*params.MaxItemLevel < 0 || *params.MaxItemLevel > 9999) {
-		return SummaryPage{}, errors.New("item level must be between 0 and 9999")
+		return SummaryPage{}, invalidRequest("item level must be between 0 and 9999")
 	}
 	if params.MinItemLevel != nil && params.MaxItemLevel != nil && *params.MinItemLevel > *params.MaxItemLevel {
-		return SummaryPage{}, errors.New("minItemLevel must not exceed maxItemLevel")
+		return SummaryPage{}, invalidRequest("minItemLevel must not exceed maxItemLevel")
 	}
 	dataset := strings.TrimSpace(params.Dataset)
 	datasetTotalCached := dataset != "" && strings.TrimSpace(params.Query) == "" && strings.TrimSpace(params.Category) == "" && len(params.Facets) == 0 && params.ItemClassID == nil && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil
 	if dataset != "" {
 		if len(dataset) < 2 || len(dataset) > 64 {
-			return SummaryPage{}, errors.New("dataset must be between 2 and 64 characters")
+			return SummaryPage{}, invalidRequest("dataset must be between 2 and 64 characters")
 		}
 		var datasetType, datasetCategory string
 		var datasetItemClass *int
@@ -134,16 +134,16 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			FROM catalog_library_dataset_definitions
 			WHERE slug=$1 AND is_public`, dataset).Scan(&datasetType, &datasetCategory, &datasetItemClass)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return SummaryPage{}, errors.New("dataset is not public")
+			return SummaryPage{}, invalidRequest("dataset is not public")
 		}
 		if err != nil {
 			return SummaryPage{}, fmt.Errorf("resolve public dataset: %w", err)
 		}
 		if params.Type != "" && strings.TrimSpace(params.Type) != datasetType {
-			return SummaryPage{}, errors.New("dataset conflicts with the requested entity type")
+			return SummaryPage{}, invalidRequest("dataset conflicts with the requested entity type")
 		}
 		if params.ItemClassID != nil && datasetItemClass != nil && *params.ItemClassID != *datasetItemClass {
-			return SummaryPage{}, errors.New("dataset conflicts with the requested item class")
+			return SummaryPage{}, invalidRequest("dataset conflicts with the requested item class")
 		}
 		params.Type = datasetType
 		params.Dataset = dataset
@@ -162,13 +162,13 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		return SummaryPage{}, err
 	}
 	if params.MinRequiredLevel != nil && (*params.MinRequiredLevel < 0 || *params.MinRequiredLevel > 9999) || params.MaxRequiredLevel != nil && (*params.MaxRequiredLevel < 0 || *params.MaxRequiredLevel > 9999) {
-		return SummaryPage{}, errors.New("required level must be between 0 and 9999")
+		return SummaryPage{}, invalidRequest("required level must be between 0 and 9999")
 	}
 	if params.MinRequiredLevel != nil && params.MaxRequiredLevel != nil && *params.MinRequiredLevel > *params.MaxRequiredLevel {
-		return SummaryPage{}, errors.New("minRequiredLevel must not exceed maxRequiredLevel")
+		return SummaryPage{}, invalidRequest("minRequiredLevel must not exceed maxRequiredLevel")
 	}
 	if params.ItemClassID != nil && (*params.ItemClassID < 0 || *params.ItemClassID > 99) {
-		return SummaryPage{}, errors.New("itemClassId must be between 0 and 99")
+		return SummaryPage{}, invalidRequest("itemClassId must be between 0 and 99")
 	}
 	product := strings.TrimSpace(params.Product)
 	if product == "" {
@@ -291,10 +291,12 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			queryText = strings.Replace(queryText, "AND entity.id>$3", "AND entity.external_id=ANY($11::bigint[]) AND entity.id>$3", 1)
 			args = append(args, params.ExternalIDs)
 		}
-		rows, err := s.postgres.Query(ctx, queryText, args...)
-		if err != nil {
-			return SummaryPage{}, fmt.Errorf("list game entity summaries: %w", err)
+		rows, queryErr := s.postgres.Query(ctx, queryText, args...)
+		if queryErr != nil {
+			return SummaryPage{}, fmt.Errorf("list game entity summaries: %w", queryErr)
 		}
+		// Assign the outer err: a scan or iteration failure must fail the
+		// request instead of returning a silently truncated page.
 		err = scan(rows)
 	} else {
 		err = s.inSearchTransaction(ctx, func(tx pgx.Tx) error {
@@ -466,7 +468,7 @@ func summaryFilterPaths(category string, facets []string) ([]string, error) {
 			continue
 		}
 		if len(path) > 192 {
-			return nil, errors.New("facet path must not exceed 192 characters")
+			return nil, invalidRequest("facet path must not exceed 192 characters")
 		}
 		if _, ok := seen[path]; ok {
 			continue
@@ -475,7 +477,7 @@ func summaryFilterPaths(category string, facets []string) ([]string, error) {
 		paths = append(paths, path)
 	}
 	if len(paths) > 8 {
-		return nil, errors.New("at most 8 facet paths are allowed")
+		return nil, invalidRequest("at most 8 facet paths are allowed")
 	}
 	return paths, nil
 }
@@ -497,19 +499,19 @@ func decodeSummaryCursor(cursor string, ranked bool) (uuid.UUID, *int, error) {
 	}
 	decoded, err := base64.RawURLEncoding.DecodeString(cursor)
 	if err != nil {
-		return uuid.Nil, nil, errors.New("cursor is invalid")
+		return uuid.Nil, nil, invalidRequest("cursor is invalid")
 	}
 	parts := strings.Split(string(decoded), "\x1f")
 	if len(parts) != 2 {
-		return uuid.Nil, nil, errors.New("cursor is invalid for ranked search")
+		return uuid.Nil, nil, invalidRequest("cursor is invalid for ranked search")
 	}
 	rank, err := strconv.Atoi(parts[0])
 	if err != nil || rank < 0 {
-		return uuid.Nil, nil, errors.New("cursor is invalid for ranked search")
+		return uuid.Nil, nil, invalidRequest("cursor is invalid for ranked search")
 	}
 	id, err := uuid.Parse(parts[1])
 	if err != nil {
-		return uuid.Nil, nil, errors.New("cursor is invalid for ranked search")
+		return uuid.Nil, nil, invalidRequest("cursor is invalid for ranked search")
 	}
 	return id, &rank, nil
 }
@@ -646,11 +648,11 @@ func (s *Service) inSearchTransaction(ctx context.Context, run func(pgx.Tx) erro
 // Batch ID lookups use the indexed publication path, without search ranking.
 func validateExternalIDs(params SummaryParams) error {
 	if len(params.ExternalIDs) > 100 || params.Limit != 100 || params.Query != "" || params.Category != "" || len(params.Facets) > 0 || params.Dataset != "" || params.Cursor != "" {
-		return errors.New("externalIds requires at most 100 IDs, limit=100, and no search, category, dataset or cursor")
+		return invalidRequest("externalIds requires at most 100 IDs, limit=100, and no search, category, dataset or cursor")
 	}
 	for _, id := range params.ExternalIDs {
 		if id <= 0 || id > 10000000 {
-			return errors.New("invalid externalIds")
+			return invalidRequest("invalid externalIds")
 		}
 	}
 	return nil

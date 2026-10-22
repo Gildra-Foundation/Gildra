@@ -216,7 +216,7 @@ func productFreshness(activeBuild, releaseStatus, releaseBuild, checkStatus, obs
 
 func (s *Service) Categories(ctx context.Context, product, entityType, locale string) ([]Category, error) {
 	if strings.TrimSpace(entityType) == "" {
-		return nil, errors.New("entity type is required")
+		return nil, invalidRequest("entity type is required")
 	}
 	rows, err := s.postgres.Query(ctx, `
 		SELECT c.id, c.entity_type, c.facet, c.slug, c.path, COALESCE(parent.path, ''),
@@ -253,7 +253,7 @@ func (s *Service) Categories(ctx context.Context, product, entityType, locale st
 
 func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 	if params.Limit < 1 || params.Limit > 100 {
-		return Page{}, errors.New("limit must be between 1 and 100")
+		return Page{}, invalidRequest("limit must be between 1 and 100")
 	}
 	cursorID, err := decodeCursor(params.Cursor)
 	if err != nil {
@@ -1144,11 +1144,11 @@ func decodeCursor(cursor string) (uuid.UUID, error) {
 	}
 	decoded, err := base64.RawURLEncoding.DecodeString(cursor)
 	if err != nil {
-		return uuid.Nil, errors.New("cursor is invalid")
+		return uuid.Nil, invalidRequest("cursor is invalid")
 	}
 	id, err := uuid.Parse(string(decoded))
 	if err != nil {
-		return uuid.Nil, errors.New("cursor is invalid")
+		return uuid.Nil, invalidRequest("cursor is invalid")
 	}
 	return id, nil
 }
