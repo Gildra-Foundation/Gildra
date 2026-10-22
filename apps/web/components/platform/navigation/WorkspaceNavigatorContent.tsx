@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
-import { altPath, p, type Lang } from "@/lib/i18n-paths";
+import { p, type Lang } from "@/lib/i18n-paths";
 import { gameDestinationForPath } from "@/lib/games/destinations";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
+import { LocaleSwitch } from "@/components/platform/locale/LocaleSwitch";
 import { GameSwitcher } from "./GameSwitcher";
 import { barePathOf, currentRealm, navigationRealms, realmArt, type NavigationRealm } from "./navigationMap";
 import toolbarStyles from "./atlasToolbar.module.css";
@@ -269,10 +270,7 @@ export function WorkspaceNavigatorContent() {
     <RealmNavigation path={livePath} lang={lang} />
     <div className={toolbarStyles.end}>
       {!comingSoon && <SiteSearch lang={lang} />}
-      <nav className={toolbarStyles.locale} aria-label={ru ? "Язык" : "Language"}>
-        <Link href={altPath(livePath, "en")} hrefLang="en" lang="en" aria-current={ru ? undefined : "true"} prefetch={false}>EN</Link>
-        <Link href={altPath(livePath, "ru")} hrefLang="ru" lang="ru" aria-current={ru ? "true" : undefined} prefetch={false}>RU</Link>
-      </nav>
+      <LocaleSwitch path={livePath} lang={lang} />
       <GameSwitcher key={livePath} lang={lang} pathname={livePath} brandless />
     </div>
   </header>;

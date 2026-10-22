@@ -1,0 +1,52 @@
+/* atlas:strict — cross-document hand-over of an EN ↔ RU switch.
+   Every document opts in, and its head script (localeArrivalScript.ts) skips
+   the transition for anything but a language switch, so other full loads stay
+   instant. Reduced motion never opts in; the site's own "less motion" choice
+   is skipped by the script and stilled in app/styles/motion-preference.css.
+   data-locale-switch on <html> names the target language for one transition. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+
+/* The toolbar stays still while the page under it changes language; the
+   active-language pill glides to the chosen side under the two labels (each
+   label is its own group, painted above the pill as on the page). */
+html[data-locale-switch] header:has([data-locale-switch-root]) { view-transition-name: gildra-locale-bar; }
+html[data-locale-switch] [data-locale-switch-pill] { view-transition-name: gildra-locale-pill; }
+html[data-locale-switch] [data-locale-switch-root] a[hreflang="en"] { view-transition-name: gildra-locale-en; }
+html[data-locale-switch] [data-locale-switch-root] a[hreflang="ru"] { view-transition-name: gildra-locale-ru; }
+
+::view-transition-group(gildra-locale-bar),
+::view-transition-group(gildra-locale-en),
+::view-transition-group(gildra-locale-ru) { animation-duration: .2s; }
+::view-transition-group(gildra-locale-pill) { animation-duration: .3s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+
+/* The page: the old words drift towards the language left behind and soften
+   away, the new ones arrive from the chosen side (EN is on the left, RU on the
+   right of the switch). Opacity, translate and a small blur only — the new page
+   is in its final layout from the first frame. */
+html[data-locale-switch]::view-transition-old(root),
+html[data-locale-switch]::view-transition-new(root) { mix-blend-mode: normal; }
+html[data-locale-switch]::view-transition-old(root) { animation: .16s cubic-bezier(.4, 0, 1, 1) both gildra-locale-out-left; }
+html[data-locale-switch]::view-transition-new(root) { animation: .34s cubic-bezier(.2, .7, .2, 1) .08s both gildra-locale-in-right; }
+html[data-locale-switch="en"]::view-transition-old(root) { animation-name: gildra-locale-out-right; }
+html[data-locale-switch="en"]::view-transition-new(root) { animation-name: gildra-locale-in-left; }
+
+@keyframes gildra-locale-out-left { to { opacity: 0; translate: -8px 0; filter: blur(2px); } }
+@keyframes gildra-locale-out-right { to { opacity: 0; translate: 8px 0; filter: blur(2px); } }
+@keyframes gildra-locale-in-right { from { opacity: 0; translate: 12px 0; filter: blur(3px); } }
+@keyframes gildra-locale-in-left { from { opacity: 0; translate: -12px 0; filter: blur(3px); } }
+
+/* Phones: no blur over a full-screen layer, the drift alone carries it. */
+@media (max-width: 640px) {
+  @keyframes gildra-locale-out-left { to { opacity: 0; translate: -6px 0; } }
+  @keyframes gildra-locale-out-right { to { opacity: 0; translate: 6px 0; } }
+  @keyframes gildra-locale-in-right { from { opacity: 0; translate: 10px 0; } }
+  @keyframes gildra-locale-in-left { from { opacity: 0; translate: -10px 0; } }
+}
+
+/* Without cross-document view transitions: the content brightens in place. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-locale-fallback]:not([data-motion="reduced"]) #atlas-content { animation: gildra-locale-fade .32s cubic-bezier(.2, .7, .2, 1) both; }
+}
+@keyframes gildra-locale-fade { from { opacity: .3; } }
