@@ -72,10 +72,14 @@ vendor files. When a vendor edit is unavoidable:
 
 Current adaptations: theme roots `:root` / `html[data-theme]` → `.gd-valyro` (portals
 stay inside the Characters token scope; no ThemeProvider mutates the document theme),
-atlas spring tokens scoped to `.gildra-atlas, [data-atlas-scope]`, and the Pro
-`AnalyticsFilterBar` `showCompare` / `showGranularity` flags (manual merge).
-Upstream moved the spring tokens to `styles/motion.css` (`:root`); scope them again
-during the next update.
+atlas spring and follow easing tokens in `styles/motion.css` scoped to
+`.gildra-atlas, [data-atlas-scope]`, and the Pro `AnalyticsFilterBar` `showCompare` /
+`showGranularity` flags (manual merge: re-add the two optional props with `true`
+defaults).
+
+After an update of `atlas`, `valyro-public-theme.css` must stay a small derivative
+(`scripts/test-public-valyro-theme.mjs` fails above 30 % of the theme); a computed
+token name with only the bare `--ui-` prefix is ignored by the generator.
 
 ## Pro
 
