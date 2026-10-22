@@ -25,7 +25,7 @@ const isApple = () => /Mac|iPhone|iPad/.test(navigator.platform);
  * (the landing page) without drawing a button there. Also remembers the inner
  * pages the reader opens for the dialog's "Recently opened".
  */
-export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnly?: boolean; lang?: SiteSearchLang }) {
+export function SiteSearch({ hotkeysOnly = false, lang: langProp, compact = false, onOpen }: { hotkeysOnly?: boolean; lang?: SiteSearchLang; compact?: boolean; onOpen?: () => void }) {
   const pathname = usePathname();
   // The toolbar passes its hydration-safe language; the landing page derives it from the URL.
   const lang: SiteSearchLang = langProp ?? (/^\/ru(?:\/|$)/.test(pathname) ? "ru" : "en");
@@ -38,7 +38,7 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
   const apple = useSyncExternalStore(noSubscribe, isApple, () => false);
 
   const warm = () => { void loadDialog().then((component) => setDialog(() => component), () => undefined); };
-  const show = (query = "") => { warm(); setInitialQuery(query); setOpenOn(pathname); };
+  const show = (query = "") => { onOpen?.(); warm(); setInitialQuery(query); setOpenOn(pathname); };
 
   const onKey = useEffectEvent((event: KeyboardEvent) => {
     if (event.defaultPrevented || event.altKey) return;
@@ -75,7 +75,7 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
   // shortcut is drawn by CSS and announced through aria-keyshortcuts.
   return <>
     {hotkeysOnly ? null : (
-      <button className={styles.trigger} type="button" onClick={() => show()} onPointerEnter={warm} onFocus={warm} aria-haspopup="dialog" aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
+      <button className={styles.trigger} data-compact={compact || undefined} type="button" onClick={() => show()} onPointerEnter={warm} onFocus={warm} aria-haspopup="dialog" aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
         <Search size={16} strokeWidth={1.9} aria-hidden="true" />
         <span className={styles.triggerLabel}>{copy.button}<span className="sr-only">{copy.buttonRest}</span></span>
         <kbd className={styles.triggerKey} data-key={apple ? "⌘K" : "Ctrl K"} aria-hidden="true" />
