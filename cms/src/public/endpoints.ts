@@ -239,7 +239,9 @@ const getPage: Endpoint = {
       draft: false,
       overrideAccess: true,
       locale: loc,
-      fallbackLocale: "en",
+      // No fallback: a language without its own blocks keeps the site's code
+      // page instead of showing the other language's text.
+      fallbackLocale: false,
     });
     const doc = docs[0] as unknown as Doc | undefined;
     if (!doc) return json({ status: "not-found" }, 404, PUBLIC_CACHE);
@@ -348,7 +350,7 @@ export async function loadPreview(req: PayloadRequest, token: unknown, loc: Loca
   const staff = user ? { ...user, collection: "admins" as const } : null;
   if (!staff || !hasSiteRole(staff, claims.site, WRITE_ROLES)) return { status: 403 as const };
   const doc = (await req.payload
-    .findByID({ collection: claims.c, id: claims.id, depth: 0, draft: true, overrideAccess: false, user: staff, locale: loc, fallbackLocale: "en", disableErrors: true })
+    .findByID({ collection: claims.c, id: claims.id, depth: 0, draft: true, overrideAccess: false, user: staff, locale: loc, fallbackLocale: claims.c === "pages" ? false : "en", disableErrors: true })
     .catch(() => null)) as Doc | null;
   if (!doc || !sameID(doc.site, claims.site)) return { status: 404 as const };
   const site = relationID(doc.site)!;

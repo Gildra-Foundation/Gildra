@@ -293,6 +293,14 @@ use; it is not connected to any live `/opt` project.
 
 ## Migrations, backup and rollback
 
+Migration `20261022_225420_localized_page_blocks` makes page `blocks` per
+language: `up` copies each page's and version's shared value into both `en`
+and `ru` (creating the missing locale row) and drops the shared column;
+`down` refuses and changes nothing while any page or version has different
+blocks per language (its own `ROLLBACK_CHECKS`; it runs before the shared CMS
+rollback, so that list needs no page-blocks entry), otherwise it restores the
+shared column and deletes the locale rows that hold nothing but blocks.
+
 Migration `20261008_191911_payload_3_90_auth` adds the nullable
 `reset_password_requested_at` column that Payload 3.90 uses on auth
 collections (`admins`, `members`); its `down` drops it.
