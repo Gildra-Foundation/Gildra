@@ -32,6 +32,7 @@ const poll = async (condition) => {
   throw new Error('Timed out waiting for the saved state');
 };
 let server, browser, page;
+let serverLog = '';
 const mutations = [];
 let checks = 0;
 const ok = (message) => { console.log(`ok - ${message}`); checks++; };
@@ -44,7 +45,7 @@ try {
     cwd: CMS, env: { ...process.env, PAYLOAD_DATABASE_URL: dbUrl.toString(), PAYLOAD_PUBLIC_URL: origin, NODE_ENV: 'production', EMAIL_TRANSPORT: 'disabled', CMS_JOBS_AUTORUN: 'false' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
-  let serverLog = '';
+
   server.stdout.on('data', (data) => { serverLog += data; });
   server.stderr.on('data', (data) => { serverLog += data; });
   await poll(async () => { try { return (await fetch(`${origin}/admin/login`)).ok; } catch { return false; } });
@@ -213,6 +214,7 @@ try {
   assert.deepEqual(errors, []);
   console.log(`\n${checks} workflow browser checks passed.`);
 } catch (error) {
+  console.error('Server log tail:', serverLog.slice(-1500));
   console.error('Article mutation diagnostics:', JSON.stringify(mutations));
   if (page?.url().includes('/collections/guides/')) console.error('Saved article diagnostics:', await page.evaluate(async () => {
     const id = /guides\/(\d+)/.exec(location.pathname)?.[1];

@@ -1,12 +1,11 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
 import {createHmac} from 'node:crypto';
-const out=process.env.CMS_QA_DIR;if(!out)throw Error('CMS_QA_DIR required');
-const qa=JSON.parse(await fs.readFile(out+'/qa.json','utf8')),fixture=JSON.parse(await fs.readFile(out+'/fixture.json','utf8'));
+import {startStand} from './stand.mjs';
+const stand=await startStand({name:'publication_browser',fixture:'publication-fixture.ts'}),{qa,fixture}=stand;
 const cms=qa.origins.cms,tokens={},results=[];
 async function request(base,path,user,method='GET',data){
  const r=await fetch(base+path,{method,headers:{...(user?{authorization:'JWT '+tokens[user]}:{}),...(data?{'Content-Type':'application/json'}:{})},body:data?JSON.stringify(data):undefined,signal:AbortSignal.timeout(20000)});
- const text=await r.text();let body;try{body=JSON.parse(text);}catch{}return {status:r.status,body,text,headers:r.headers};
+ const text=await r.text();let body;try{body=JSON.parse(text);}catch{/* body is not JSON */}return {status:r.status,body,text,headers:r.headers};
 }
 const api=(p,u,m,d)=>request(cms,p,u,m,d);
 const allowed=r=>r.status>=200&&r.status<300;
@@ -117,5 +116,5 @@ for(const site of ['gildra','riftden'])await check(`${site}: real cached EN/RU d
  r=await api('/api/guides/'+doc,editor,'DELETE');assert(allowed(r));
 });
 }
-await fs.writeFile(out+`/http-${process.env.CMS_QA_PHASE||'all'}-results.json`,JSON.stringify({at:new Date().toISOString(),passed:results.every(r=>r.passed),results},null,2)+'\n');
+await stand.stop();
 console.log(JSON.stringify({passed:results.filter(r=>r.passed).length,failed:results.filter(r=>!r.passed).length}));if(results.some(r=>!r.passed))process.exitCode=1;
