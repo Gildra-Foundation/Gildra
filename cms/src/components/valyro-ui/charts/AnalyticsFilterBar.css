@@ -62,7 +62,8 @@
   gap: 6px;
   max-width: 100%;
   height: var(--ui-control-h-sm);
-  padding: 0 3px 0 10px;
+  padding-block: 0;
+  padding-inline: 10px 3px;
   border: var(--ui-border-width, 1px) solid var(--ui-analytics-filter-bar-chip-border-color);
   border-radius: var(--ui-radius-button);
   background: var(--ui-bg);

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type CSSProperties, type RefObject } from 'react';
 import { formatDate } from '../primitives';
+import { parseColor } from '../theme/createThemeCSS';
 import { useThemeTokens } from '../theme/useThemeTokens';
 import { formatNumber } from './scale';
 import { useId, useLayoutEffect, useSyncExternalStore } from '../primitives/react-compat';
@@ -20,18 +21,23 @@ export function seriesColor(index: number, color?: string) {
   return color ?? `var(--ui-chart-${(index % 8) + 1})`;
 }
 
-/** The palette and the text colour of the reference theme, until the element's own are read. */
-const PALETTE_TOKENS = {
-  '--ui-fg': '#171717',
+/**
+ * The reference theme's chart palette (vercel.css, light), the value a chart works with until the
+ * element's own tokens are read. charts.test.ts keeps it equal to the theme file.
+ */
+export const REFERENCE_CHART_PALETTE = {
   '--ui-chart-1': '#0070f3',
   '--ui-chart-2': '#7928ca',
   '--ui-chart-3': '#ff0080',
-  '--ui-chart-4': '#f5a623',
-  '--ui-chart-5': '#50e3c2',
+  '--ui-chart-4': '#c4841a',
+  '--ui-chart-5': '#0ca386',
   '--ui-chart-6': '#171717',
   '--ui-chart-7': '#8f8f8f',
-  '--ui-chart-8': '#29bc9b',
+  '--ui-chart-8': '#e5600b',
 };
+
+/** The palette and the text colour of the reference theme, until the element's own are read. */
+const PALETTE_TOKENS = { '--ui-fg': '#171717', ...REFERENCE_CHART_PALETTE };
 
 /**
  * `seriesColor` for categories (sankey nodes, treemap groups): the `--ui-chart-N` tokens in
@@ -211,20 +217,11 @@ export function wrapText(text: string, maxWidth: number, measure: MeasureText = 
 
 /* ───────────────────────── Colors ───────────────────────── */
 
-/** Hue (degrees) and HSL saturation of a hex or rgb() colour — the form theme palettes are written in; null otherwise. */
+/** Hue (degrees) and HSL saturation of a hex, rgb() or oklch() colour — the forms theme palettes are written in; null otherwise. */
 export function colorHue(color: string): { hue: number; saturation: number } | null {
-  const value = color.trim();
-  let rgb: number[] | null = null;
-  const hex = /^#([\da-f]{3}|[\da-f]{6})$/i.exec(value);
-  if (hex) {
-    const h = hex[1].length === 3 ? [...hex[1]].map((c) => c + c).join('') : hex[1];
-    rgb = [0, 2, 4].map((k) => parseInt(h.slice(k, k + 2), 16));
-  } else {
-    const fn = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i.exec(value);
-    if (fn) rgb = fn.slice(1, 4).map(Number);
-  }
-  if (!rgb || rgb.some((c) => !Number.isFinite(c))) return null;
-  const [r, g, b] = rgb.map((c) => c / 255);
+  const parsed = parseColor(color);
+  if (!parsed) return null;
+  const [r, g, b] = [parsed.r, parsed.g, parsed.b].map((c) => c / 255);
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const d = max - min;
