@@ -1,17 +1,16 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE??'playwright-core');
-const out=process.env.CMS_QA_DIR,qa=JSON.parse(await fs.readFile(out+'/qa.json','utf8')),fixture=JSON.parse(await fs.readFile(out+'/fixture.json','utf8'));
-const origin=qa.browser_origin,browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH,args:['--host-resolver-rules=MAP mail.gildra.net '+qa.browser_ip]});const results=[];
+import {startStand,launchOptions,loadChromium,PASSWORD} from './stand.mjs';
+const stand=await startStand({name:'roles_browser',fixture:'publication-fixture.ts'}),{qa,fixture}=stand;
+const origin=qa.browser_origin,browser=await (await loadChromium()).launch(launchOptions());const results=[];
 const check=async(name,fn)=>{try{await fn();results.push({name,passed:true});console.log('PASS '+name);}catch(e){const error=String(e);results.push({name,passed:false,error});console.log('FAIL '+name+' '+error);}};
 try{
 for(const site of ['gildra','riftden'])for(const role of ['owner','admin','editor','author','analyst'])await check(`${site}/${role}: browser lists, native form, direct foreign URL`,async()=>{
  const user=role==='owner'?'owner':site+'_'+role;
- const login=await fetch(qa.origins.cms+'/api/admins/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:fixture.users[user].email,password:'local-test-password-1'})});assert.equal(login.status,200);const {token}=await login.json();
+ const login=await fetch(qa.origins.cms+'/api/admins/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:fixture.users[user].email,password:PASSWORD})});assert.equal(login.status,200);const {token}=await login.json();
  const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'payload-token',value:token,url:origin,httpOnly:true,secure:true,sameSite:'Lax'},{name:'payload-lng',value:'en',url:origin},{name:'payload-tenant',value:String(fixture.sites[site]),url:origin}]);
  const p=await context.newPage(),errors=[];p.setDefaultTimeout(8000);const actions=[];p.on('pageerror',e=>errors.push(e.message));p.on('request',r=>{if(r.headers()['next-action'])actions.push({url:r.url(),id:r.headers()['next-action'],body:r.postData()});});
  try{
-  const r=await p.goto(origin+'/admin/articles?site='+fixture.sites[site]+'&locale=en');assert.equal(r.headers()['x-gildra-publish-qa'],'owned-20261019');await p.getByRole('heading',{name:'Articles',exact:true}).waitFor();
+  const r=await p.goto(origin+'/admin/articles?site='+fixture.sites[site]+'&locale=en');assert.equal(r.status(),200);await p.getByRole('heading',{name:'Articles',exact:true}).waitFor();
   const workspace=p.locator('.gd-workspace');const visible=await workspace.innerText();const foreign=site==='gildra'?'riftden':'gildra';if(role!=='owner')assert(!visible.includes(foreign+' author draft'));if(role==='analyst')assert(!visible.includes(site+' author draft'));
   await p.goto(origin+'/admin/collections/guides/'+fixture.articles[site+'_author_draft']+'?locale=en');
   if(role==='analyst'){
@@ -33,5 +32,4 @@ for(const site of ['gildra','riftden'])for(const role of ['owner','admin','edito
   assert.deepEqual(errors,[]);results.push({name:site+'/'+role+' runtime',passed:true,serverActionsObserved:actions.length});
  }catch(e){console.log('UI diagnostic '+site+'/'+role+': '+(await p.locator('body').innerText()).slice(-600));throw e;}finally{await context.close();}
 });
-}finally{await browser.close();}
-await fs.writeFile(out+'/browser-roles-results.json',JSON.stringify({at:new Date().toISOString(),passed:results.every(r=>r.passed),results},null,2)+'\n');console.log(JSON.stringify({passed:results.filter(r=>r.passed).length,failed:results.filter(r=>!r.passed).length}));if(results.some(r=>!r.passed))process.exitCode=1;
+}finally{await browser.close();await stand.stop();}console.log(JSON.stringify({passed:results.filter(r=>r.passed).length,failed:results.filter(r=>!r.passed).length}));if(results.some(r=>!r.passed))process.exitCode=1;
