@@ -60,7 +60,7 @@
 
 .art {
   object-fit: cover;
-  object-position: var(--atlas-frame-art-position, center 18%);
+  object-position: var(--atlas-frame-art-crop, var(--atlas-frame-art-position, center 18%));
   filter: var(--atlas-frame-art-filter, saturate(.86) contrast(1.06) brightness(.92));
   /* The scene settles in when the page arrives, then drifts slowly — a living painting. */
   animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;

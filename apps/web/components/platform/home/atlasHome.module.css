@@ -52,6 +52,7 @@
   .fieldNotes > p { width: 100%; }
 }
 @media (max-width: 700px) {
+  .page { --atlas-frame-art-crop: 34% top; }
   .edition { letter-spacing: .06em; }
   .edition > :last-child { display: none; }
   .heroBody { display: block; min-height: auto; padding-top: 180px; padding-bottom: var(--atlas-space-5); }
