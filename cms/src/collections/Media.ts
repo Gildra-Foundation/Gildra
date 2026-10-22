@@ -28,15 +28,43 @@ export const Media: CollectionConfig = withEditorialPolicy(
   {
     slug: "media",
     labels: { singular: { en: "Media", ru: "Медиа" }, plural: { en: "Media", ru: "Медиа" } },
-    admin: { group: { en: "Content", ru: "Контент" } },
+    admin: {
+      group: { en: "Content", ru: "Контент" },
+      listSearchableFields: ["filename", "alt", "caption"],
+      defaultColumns: ["filename", "alt", "mimeType", "updatedAt"],
+    },
     upload: {
       staticDir: process.env.PAYLOAD_MEDIA_DIR ?? "media",
       mimeTypes: MEDIA_MIME_TYPES,
       adminThumbnail: adminThumbnail,
     },
     fields: [
-      { name: "alt", type: "text", localized: true, required: true },
-      { name: "caption", type: "textarea", localized: true },
+      {
+        name: "mediaGuidance",
+        type: "ui",
+        admin: {
+          components: {
+            Field: {
+              path: "/components/media/MediaGuidance#MediaGuidance",
+              clientProps: { formats: MEDIA_MIME_TYPES.map((mime) => mime.slice("image/".length).toUpperCase()) },
+            },
+          },
+        },
+      },
+      {
+        name: "alt", type: "text", localized: true, required: true,
+        admin: { description: {
+          en: "Briefly describe what the image communicates for people who cannot see it. Use a description, not a filename.",
+          ru: "Кратко опишите смысл изображения для тех, кто его не видит. Нужен текст описания, а не имя файла.",
+        } },
+      },
+      {
+        name: "caption", type: "textarea", localized: true,
+        admin: { description: {
+          en: "Optional context or image credit. You can also find this image by its description or caption in the media library.",
+          ru: "Необязательный контекст или автор изображения. По описанию и подписи можно найти изображение в медиатеке.",
+        } },
+      },
     ],
   },
   {
