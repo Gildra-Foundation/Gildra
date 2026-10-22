@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Alegreya, Chakra_Petch, Inter } from "next/font/google";
+import { Alegreya, Chakra_Petch, Cormorant_Garamond, Inter } from "next/font/google";
 import { CookieNoticeGate } from "@/components/CookieNoticeGate";
 import { PlausibleTracker } from "@/components/cms/PlausibleTracker";
 import { WebVitals } from "@/components/analytics/WebVitals";
@@ -48,6 +48,13 @@ const atlasDisplay = Alegreya({
   preload: false,
 });
 
+// Portal typography follows the approved illustrated landing concept.
+const portalDisplay = Cormorant_Garamond({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-portal-display",
+  preload: false,
+});
+
 const rootWords = {
   en: { title: "Gildra — Master the Meta", description: "World of Warcraft tier lists, Mythic+ and raid statistics, builds and guides." },
   ru: { title: "Gildra — мета World of Warcraft", description: "Тир-листы World of Warcraft, статистика Mythic+ и рейдов, билды и гайды." },
@@ -73,7 +80,7 @@ export const rootMetadata = rootMetadataFor("en");
 export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: ReactNode }) {
   return (
     // suppressHydrationWarning: the head script may set data-motion before React hydrates.
-    <html lang={lang} className={`${display.variable} ${ui.variable} ${atlasDisplay.variable}`} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
+    <html lang={lang} className={`${display.variable} ${ui.variable} ${atlasDisplay.variable} ${portalDisplay.variable}`} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
       <head>
         {/* The reader's "less motion" choice, applied before the first paint (lib/client/motionPreference.ts). */}
         <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript + ";" + siteThemeScript }} />

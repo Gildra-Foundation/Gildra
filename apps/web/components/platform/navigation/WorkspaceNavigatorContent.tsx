@@ -91,7 +91,7 @@ export function WorkspaceNavigatorContent() {
     }}>{ru ? "К содержанию" : "Skip to content"}</a>
     <Link className={styles.brand} href={p(lang, "/")} aria-label={ru ? "Gildra — главная" : "Gildra — home"}
       aria-current={barePath === "/" ? "page" : undefined} prefetch={false} onClick={close}>
-      <Image src="/assets/gildra/portal/crest.png" alt="GILDRA" width={2172} height={724} sizes="(max-width: 1279px) 180px, 360px" priority />
+      <Image src="/assets/gildra/portal/crest.webp" alt="GILDRA" quality={50} width={2172} height={724} sizes="(max-width: 380px) 150px, (max-width: 1279px) 180px, (max-width: 1399px) 340px, 400px" priority />
     </Link>
     <nav ref={links} className={styles.desktopLinks} aria-label={ru ? "Основная навигация" : "Main navigation"}>
       <div className={styles.leftLinks}>{destinations.slice(1, 4).map(item => renderLink(item, true))}</div>
