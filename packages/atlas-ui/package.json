@@ -14,6 +14,9 @@
     "./clipboard": "./src/clipboard.ts",
     "./*.module.css": "./src/*.module.css"
   },
+  "sideEffects": [
+    "**/*.css"
+  ],
   "peerDependencies": {
     "clsx": "*",
     "lucide-react": "*",
