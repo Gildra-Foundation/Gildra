@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/sync/errgroup"
 )
 
 var ErrNotFound = errors.New("game entity not found")
@@ -116,10 +117,11 @@ type Page struct {
 
 type Service struct {
 	postgres *pgxpool.Pool
+	totals   *totalCache
 }
 
 func NewService(postgres *pgxpool.Pool) *Service {
-	return &Service{postgres: postgres}
+	return &Service{postgres: postgres, totals: newTotalCache()}
 }
 
 func (s *Service) Products(ctx context.Context) ([]Product, error) {
@@ -257,11 +259,65 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 	if err != nil {
 		return Page{}, err
 	}
-	total, err := s.count(ctx, params)
-	if err != nil {
+	// The total does not depend on the page, so count while the page loads.
+	var (
+		total    int64
+		entities []Entity
+		hasMore  bool
+	)
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.Go(func() (err error) {
+		total, err = s.totals.get(groupCtx, listTotalKey(params), func(ctx context.Context) (int64, error) {
+			return s.count(ctx, params)
+		})
+		return err
+	})
+	group.Go(func() (err error) {
+		entities, hasMore, err = s.listPage(groupCtx, params, cursorID)
+		return err
+	})
+	if err := group.Wait(); err != nil {
 		return Page{}, err
 	}
+	if err := s.enrichMentions(ctx, entities); err != nil {
+		return Page{}, err
+	}
+	if err := s.enrichTalentOwners(ctx, entities); err != nil {
+		return Page{}, err
+	}
+	entityPointers := make([]*Entity, 0, len(entities))
+	for index := range entities {
+		entityPointers = append(entityPointers, &entities[index])
+	}
+	if err := s.enrichLocalizations(ctx, entityPointers); err != nil {
+		return Page{}, err
+	}
+	// Lists carry the same tooltip payload as detail pages. Resolve the
+	// build-pinned Blizzard templates here as well, otherwise cards expose
+	// raw `$s1`/`$d` tokens while the detail endpoint shows clean text.
+	if err := s.resolveDescriptions(ctx, entityPointers); err != nil {
+		return Page{}, err
+	}
+	if err := s.enrichMedia(ctx, entityPointers); err != nil {
+		return Page{}, err
+	}
+	tooltips := make([]*Tooltip, 0, len(entities))
+	for index := range entities {
+		tooltips = append(tooltips, entities[index].Tooltip)
+	}
+	if err := s.enrichTooltipMedia(ctx, tooltips...); err != nil {
+		return Page{}, err
+	}
+	nextCursor := ""
+	if hasMore && len(entities) > 0 {
+		nextCursor = encodeCursor(entities[len(entities)-1].ID)
+	}
+	return Page{Entities: entities, NextCursor: nextCursor, HasMore: hasMore, Total: total}, nil
+}
 
+// listPage loads one keyset page of published entities (plus one row to
+// detect a next page) without enrichment.
+func (s *Service) listPage(ctx context.Context, params ListParams, cursorID uuid.UUID) ([]Entity, bool, error) {
 	rows, err := s.postgres.Query(ctx, `
 		WITH RECURSIVE selected_categories AS (
 			SELECT c.id
@@ -536,7 +592,7 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 		strings.TrimSpace(params.Category),
 	)
 	if err != nil {
-		return Page{}, fmt.Errorf("list game entities: %w", err)
+		return nil, false, fmt.Errorf("list game entities: %w", err)
 	}
 	defer rows.Close()
 
@@ -544,52 +600,25 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 	for rows.Next() {
 		entity, err := scanEntity(rows)
 		if err != nil {
-			return Page{}, err
+			return nil, false, err
 		}
 		entities = append(entities, entity)
 	}
 	if err := rows.Err(); err != nil {
-		return Page{}, fmt.Errorf("iterate game entities: %w", err)
+		return nil, false, fmt.Errorf("iterate game entities: %w", err)
 	}
 
 	hasMore := len(entities) > params.Limit
 	if hasMore {
 		entities = entities[:params.Limit]
 	}
-	if err := s.enrichMentions(ctx, entities); err != nil {
-		return Page{}, err
-	}
-	if err := s.enrichTalentOwners(ctx, entities); err != nil {
-		return Page{}, err
-	}
-	entityPointers := make([]*Entity, 0, len(entities))
-	for index := range entities {
-		entityPointers = append(entityPointers, &entities[index])
-	}
-	if err := s.enrichLocalizations(ctx, entityPointers); err != nil {
-		return Page{}, err
-	}
-	// Lists carry the same tooltip payload as detail pages. Resolve the
-	// build-pinned Blizzard templates here as well, otherwise cards expose
-	// raw `$s1`/`$d` tokens while the detail endpoint shows clean text.
-	if err := s.resolveDescriptions(ctx, entityPointers); err != nil {
-		return Page{}, err
-	}
-	if err := s.enrichMedia(ctx, entityPointers); err != nil {
-		return Page{}, err
-	}
-	tooltips := make([]*Tooltip, 0, len(entities))
-	for index := range entities {
-		tooltips = append(tooltips, entities[index].Tooltip)
-	}
-	if err := s.enrichTooltipMedia(ctx, tooltips...); err != nil {
-		return Page{}, err
-	}
-	nextCursor := ""
-	if hasMore && len(entities) > 0 {
-		nextCursor = encodeCursor(entities[len(entities)-1].ID)
-	}
-	return Page{Entities: entities, NextCursor: nextCursor, HasMore: hasMore, Total: total}, nil
+	return entities, hasMore, nil
+}
+
+// listTotalKey identifies the filters that determine a List total.
+func listTotalKey(params ListParams) string {
+	return strings.Join([]string{"list", strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
+		strings.TrimSpace(params.Category), normalizeLocale(params.Locale), strings.TrimSpace(params.Query)}, "\x00")
 }
 
 func (s *Service) count(ctx context.Context, params ListParams) (int64, error) {

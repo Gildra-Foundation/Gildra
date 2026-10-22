@@ -184,13 +184,12 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	locale := normalizeLocale(params.Locale)
 	var total *int64
 	if params.IncludeTotal {
-		var value int64
-		var err error
-		if datasetTotalCached {
-			value, err = s.datasetSummaryCount(ctx, dataset, product, locale)
-		} else {
-			value, err = s.summaryCount(ctx, params, product, locale)
-		}
+		value, err := s.totals.get(ctx, summaryTotalKey(params, product, locale, datasetTotalCached), func(ctx context.Context) (int64, error) {
+			if datasetTotalCached {
+				return s.datasetSummaryCount(ctx, dataset, product, locale)
+			}
+			return s.summaryCount(ctx, params, product, locale)
+		})
 		if err != nil {
 			return SummaryPage{}, err
 		}
@@ -358,6 +357,22 @@ func (s *Service) datasetSummaryCount(ctx context.Context, dataset, product, loc
 		return 0, fmt.Errorf("read cached dataset summary count: %w", err)
 	}
 	return total, nil
+}
+
+// summaryTotalKey identifies the effective filters (after dataset
+// resolution) that determine a Summaries total.
+func summaryTotalKey(params SummaryParams, product, locale string, datasetTotal bool) string {
+	optional := func(value *int) string {
+		if value == nil {
+			return "-"
+		}
+		return strconv.Itoa(*value)
+	}
+	return strings.Join([]string{"summary", product, locale, strconv.FormatBool(datasetTotal),
+		strings.TrimSpace(params.Type), strings.TrimSpace(params.Dataset), strings.TrimSpace(params.Query),
+		strings.TrimSpace(params.Category), strings.Join(params.Facets, "\x01"),
+		optional(params.ItemClassID), optional(params.MinItemLevel), optional(params.MaxItemLevel),
+		optional(params.MinRequiredLevel), optional(params.MaxRequiredLevel)}, "\x00")
 }
 
 func (s *Service) summaryCount(ctx context.Context, params SummaryParams, product, locale string) (int64, error) {
