@@ -1,10 +1,8 @@
 "use client";
 
-import clsx from "clsx";
-import Link from "next/link";
 import { useEffect, useSyncExternalStore } from "react";
 import { ArrowRight } from "lucide-react";
-import buttonStyles from "@gildra/atlas-ui/AtlasButton.module.css";
+import { AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
 
 const copy = {
   en: {
@@ -48,7 +46,7 @@ export function NotFoundLede({ locale }: { locale?: Locale }) {
 export function NotFoundActions({ locale }: { locale?: Locale }) {
   const { text, prefix } = useNotFoundCopy(locale);
   return <>
-    <Link className={clsx(buttonStyles.button, buttonStyles.primary)} href={`${prefix}/wow`}><span>{text.hub}</span><ArrowRight aria-hidden="true" /></Link>
-    <Link className={buttonStyles.button} href={`${prefix}/wow/mythic-plus`}><span>{text.mythic}</span></Link>
+    <AtlasLinkButton href={`${prefix}/wow`} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />} prefetch={false}>{text.hub}</AtlasLinkButton>
+    <AtlasLinkButton href={`${prefix}/wow/mythic-plus`} prefetch={false}>{text.mythic}</AtlasLinkButton>
   </>;
 }
