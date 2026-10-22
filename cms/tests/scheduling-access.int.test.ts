@@ -17,7 +17,7 @@ it("refuses cancelling a publication schedule without publishing rights on its s
   const doc=await payload.create({collection:"guides",draft:true,...as(editor),data:{site:g,slug:"schedule-"+actor.id,title:"Scheduled",summary:"Summary",content:lexical("Body")}});
   const job=await payload.jobs.queue({task:"schedulePublish",input:{type:"publish",doc:{relationTo:"guides",value:String(doc.id)},user:{relationTo:"admins",value:editor.id}} as never,waitUntil:new Date(Date.now()+86400000)});
   const req=await createLocalReq({user:actor as never},payload);
-  try{await schedulePublishHandler({deleteID:job.id,req} as never);}catch{}
+  try{await schedulePublishHandler({deleteID:job.id,req} as never);}catch{/* denial is the expected outcome */}
   expect((await payload.count({collection:"payload-jobs",where:{id:{equals:job.id}},overrideAccess:true})).totalDocs).toBe(1);
  }
 });

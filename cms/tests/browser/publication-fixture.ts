@@ -3,7 +3,7 @@ import { as, bootPayload, lexical, makeStaff } from "../helpers/payload";
 const artifact = process.env.CMS_QA_DIR;
 if (!artifact) throw new Error("CMS_QA_DIR is required");
 const qa = JSON.parse(readFileSync(`${artifact}/qa.json`, "utf8"));
-const { payload } = await bootPayload("publication_browser");
+const { payload } = await bootPayload(process.env.CMS_QA_DB ?? "publication_browser");
 try {
  const sites = (await payload.find({ collection: "sites", overrideAccess: true, depth: 0 })).docs;
  const siteIDs = Object.fromEntries(sites.map((s) => [s.slug, s.id]));

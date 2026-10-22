@@ -83,7 +83,15 @@ npm test
 node tests/browser/workflows.mjs
 node tests/browser/analytics-switch.mjs
 node tests/browser/select-site.mjs
+node tests/browser/roles-ui.mjs
+node tests/browser/publication-access.mjs
+node tests/browser/schedule-server-action.mjs
 ```
+
+The last three share `tests/browser/stand.mjs`: it builds their fixture, starts
+the CMS plus stub frontends for both sites (signed revalidation webhook, public
+pages, sitemap, preview) and removes everything afterwards; no external QA
+directory is needed. `npm run lint` runs the CMS ESLint config.
 
 Browser scripts accept `PLAYWRIGHT_MODULE` and `PLAYWRIGHT_EXECUTABLE_PATH` for
 an installed Playwright and Chromium. They create only explicit test fixtures,
