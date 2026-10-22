@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import type { components } from "./schema";
 import { apiInternalUrl } from "@/lib/env";
+import { fetchAnalyticsOverview } from "@/lib/analytics/overview";
 
 export type AnalyticsOverview = components["schemas"]["AnalyticsOverview"];
 export type GameEntity = components["schemas"]["GameEntity"];
@@ -30,14 +31,6 @@ export type CatalogPage = {
   data: CatalogRecord[];
   pagination: { hasMore: boolean; nextCursor?: string; total?: number };
 };
-
-const emptyOverview = (hours: number): AnalyticsOverview => ({
-  hours,
-  events: 0,
-  uniqueUsers: 0,
-  activeSubscriptions: 0,
-  series: [],
-});
 
 function apiURL() {
   return apiInternalUrl();
@@ -137,17 +130,8 @@ async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestC
   return value;
 }
 
-export async function getAnalyticsOverview(hours = 24): Promise<AnalyticsOverview> {
-  try {
-    const response = await fetch(`${apiURL()}/v1/analytics/overview?hours=${hours}`, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!response.ok) return emptyOverview(hours);
-    return await response.json() as AnalyticsOverview;
-  } catch {
-    return emptyOverview(hours);
-  }
+export async function getAnalyticsOverview(hours = 24): Promise<AnalyticsOverview | null> {
+  return fetchAnalyticsOverview(apiURL(), hours);
 }
 
 export async function getCatalogPreview(locale: "en_US" | "ru_RU"): Promise<CatalogRecord[]> {

@@ -1,12 +1,18 @@
 {
   "Analytics": {
-    "title": "Live analytics",
-    "subtitle": "Product activity over the selected period",
+    "title": "Gildra activity",
+    "subtitle": "A summary of site events and users over the last 24 hours. Refresh the page to request new data.",
     "events": "Events",
     "users": "Unique users",
     "subscriptions": "Active subscriptions",
     "activity": "Hourly activity",
     "hours": "Last {hours} hours",
-    "empty": "Analytics will appear after the first events arrive."
+    "empty": "No hourly activity has been recorded for this period. The chart will appear when events arrive.",
+    "emptyTitle": "No hourly data yet",
+    "errorTitle": "The summary could not be loaded",
+    "error": "Analytics is temporarily unavailable. Try refreshing the summary again.",
+    "refresh": "Refresh summary",
+    "metrics": "Activity metrics",
+    "navigation": "Breadcrumbs"
   }
 }
