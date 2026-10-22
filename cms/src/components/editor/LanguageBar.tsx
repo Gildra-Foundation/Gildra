@@ -11,6 +11,8 @@ import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { emptyLocaleFields } from "../../admin/localeCopy";
 import { CONTENT_LOCALES, missingParts, stateLevel } from "../../admin/completeness";
+import { AdminSurface } from "../AdminSurface";
+import { Button } from "../valyro-ui/basic/Button";
 import { ComparePanel } from "./ComparePanel";
 import { usePresence } from "../valyro-ui/primitives/usePresence";
 import { forgetLocaleDocs, loadLocaleDoc, useLocaleStates, useSwitchLocale } from "./useLocaleStates";
@@ -143,6 +145,7 @@ export function LanguageBar() {
   };
 
   return (
+    <AdminSurface lang={lang}>
     <div className="gd-langbar" role="group" aria-label={t.label}>
       {collection === "guides" ? <p className="gd-langbar__note">{t.publication}</p> : null}
       <div className="gd-langbar__row">
@@ -160,7 +163,8 @@ export function LanguageBar() {
                   ? t.empty
                   : t.missing(missingParts(states[l.code], collection, lang));
             return (
-              <button
+              <Button
+                variant="ghost"
                 key={l.code}
                 type="button"
                 className={`gd-langbar__btn${active ? " is-active" : ""}`}
@@ -172,12 +176,13 @@ export function LanguageBar() {
                 <span className={`gd-dot ${known ? `gd-dot--${level === "complete" ? "ok" : level === "empty" ? "none" : "warn"}` : ""}`} aria-hidden="true" />
                 <span className="gd-langbar__name">{name(l)}</span>
                 <span className="gd-langbar__state">{active ? t.editing : detail}</span>
-              </button>
+              </Button>
             );
           })}
         </div>
         {id ? (
-          <button
+          <Button
+            variant="ghost"
             type="button"
             ref={compareTrigger}
             className={`gd-langbar__compare${compare ? " is-active" : ""}`}
@@ -188,7 +193,7 @@ export function LanguageBar() {
             onClick={() => toggleCompare(!compare)}
           >
             ⇆ {t.compare(name(other))}
-          </button>
+          </Button>
         ) : null}
       </div>
       {pending ? <p className="gd-langbar__note" role="status">{t.saving}</p> : null}
@@ -196,9 +201,9 @@ export function LanguageBar() {
       {canFill ? (
         <div className="gd-langbar__fill">
           <span>{collection === "guides" && otherLevel === "complete" ? t.fallback(name(other)) : t.fillHint}</span>
-          <button type="button" className="gd-btn" disabled={copying} onClick={fill} title={t.fillHint}>
+          <Button type="button" variant="secondary" className="gd-langbar__fill-button" loading={copying} disabled={copying} onClick={fill} title={t.fillHint}>
             {copying ? t.filling : t.fill(name(other))}
-          </button>
+          </Button>
         </div>
       ) : null}
       {comparePresence.isMounted && id ? (
@@ -216,5 +221,6 @@ export function LanguageBar() {
         />
       ) : null}
     </div>
+    </AdminSurface>
   );
 }

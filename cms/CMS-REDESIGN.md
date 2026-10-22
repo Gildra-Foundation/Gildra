@@ -134,3 +134,22 @@ focus, keyboard closing, non-modal editing, retry, clipboard success/denial,
 restored preference, reduced motion and browser errors. Before/after screenshots
 and results are in `.artifacts/editor-compare` of the implementation worktree.
 Native authenticated integration and release are coordinated after integration.
+
+## Native editor controls and readable guidance — 22 October 2026
+
+Payload's 12px root made the custom language-state labels 9px and publication
+instructions/checklist copy 10.2px. These native-editor additions now set scoped,
+root-scaled minimums: 14px language names, 12px state labels, and 13px guidance.
+The language choices wrap as cards with 56px targets; comparison, fill, language
+warning and published links use genuine Valyro Buttons with 40px targets.
+The sidebar warning and checklist remain readable in a narrow native sidebar.
+Published links retain their original URLs and have explicit accessible names.
+No global Payload typography, language-save/fill policy, permissions or
+publication behavior changed.
+
+TypeScript and 70 unit tests passed. The actual LanguageBar/ArticlePanel fixture
+uses Payload's 12px root and passed 60 checks across EN/RU at 1440/390/320px with
+normal and 200% text, including keyboard switching, fill/Lexical initial content,
+comparison focus return, reduced motion and containment. Evidence lives under
+`.artifacts/native-readability` in the implementation worktree. Native-session
+verification and production release follow the integrated candidate build.
