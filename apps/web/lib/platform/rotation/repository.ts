@@ -21,8 +21,10 @@ function isPreset(value: unknown): value is RotationPreset {
 export async function getRotationPreset(slug: string, lang: Lang): Promise<RotationPreset> {
   const locale = lang === "ru" ? "ru_RU" : "en_US";
   try {
+    // A preset depends only on spec and locale: share it for five minutes
+    // instead of asking the worker again on every rotation page view.
     const response = await fetch(`${apiURL()}/v1/wow/rotation/${encodeURIComponent(slug)}?locale=${locale}`, {
-      cache: "no-store",
+      next: { revalidate: 300 },
       signal: AbortSignal.timeout(2_500),
     });
     if (!response.ok) throw new Error(`rotation preset request failed (${response.status})`);
