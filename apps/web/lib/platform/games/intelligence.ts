@@ -2,7 +2,7 @@ import "server-only";
 import type { Lang } from "@/lib/i18n";
 import type { PlatformGameId } from "@/lib/platform/home/types";
 import { getCatalogEntityTypes, getLibraryDatasets } from "@/lib/api/client";
-import { apiInternalUrl } from "@/lib/env";
+import { internalApiJson } from "@/lib/api/internal";
 import { runtimeFlags } from "@/lib/flags";
 import { intelligenceCopy } from "./intelligenceCopy";
 
@@ -144,16 +144,10 @@ type TierContextsResponse = { contexts: TierContext[] };
 
 type RemotePage<T> = { data: T[] };
 
-const apiURL = () => apiInternalUrl();
 const gameIntelligenceTimeoutMs = 3_000;
 
-async function apiRequest<T>(path: string, revalidate = 300): Promise<T> {
-  const response = await fetch(`${apiURL()}${path}`, {
-    next: { revalidate, tags: ["game-intelligence"] },
-    signal: AbortSignal.timeout(gameIntelligenceTimeoutMs),
-  });
-  if (!response.ok) throw new Error(`game intelligence request failed (${response.status})`);
-  return await response.json() as T;
+function apiRequest<T>(path: string, revalidate = 300): Promise<T> {
+  return internalApiJson<T>(path, { label: "game intelligence", timeoutMs: gameIntelligenceTimeoutMs, next: { revalidate, tags: ["game-intelligence"] } });
 }
 
 function unavailable(gameId: PlatformGameId, lang: Lang, message?: string): GameIntelligence {
