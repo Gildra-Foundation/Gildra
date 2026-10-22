@@ -58,15 +58,18 @@
   letter-spacing: .22em;
   text-decoration: none;
 }
+/* The crest: the gilded helmet. It catches the light on hover (a lift and a warmer
+   glow); the picture keeps its own gold, the glow follows the theme accent. */
 .sigil {
+  display: block;
   flex: none;
-  width: 26px;
-  height: 26px;
-  color: var(--atlas-accent);
-  filter: drop-shadow(0 0 6px var(--atlas-accent-glow));
-  transition: rotate var(--atlas-duration-art) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease);
+  width: 23px;
+  height: 30px;
+  filter: drop-shadow(0 0 5px var(--atlas-accent-glow)) drop-shadow(0 1px 1px rgba(0, 0, 0, .6));
+  transition: translate var(--atlas-duration) var(--atlas-ease), filter var(--atlas-duration) var(--atlas-ease);
 }
-.brand:hover .sigil { rotate: 45deg; color: var(--atlas-accent-strong); }
+.sigil img { display: block; width: 100%; height: 100%; }
+.brand:hover .sigil { translate: 0 -1px; filter: drop-shadow(0 0 9px var(--atlas-accent-glow)) drop-shadow(0 0 2px var(--atlas-accent-strong)); }
 .brand:hover > span { color: var(--atlas-accent-strong); }
 .brand > span { transition: color var(--atlas-duration) var(--atlas-ease); }
 
@@ -366,7 +369,7 @@
 @media (max-width: 480px) {
   .toolbar, .end, .start { gap: var(--atlas-space-2); }
   .brand { gap: var(--atlas-space-2); letter-spacing: .16em; }
-  .brand .sigil { width: 22px; height: 22px; }
+  .brand .sigil { width: 20px; height: 26px; }
   .menuToggle { padding: var(--atlas-space-2); }
   .menuToggle > span { display: none; }
 }
