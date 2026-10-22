@@ -18,12 +18,18 @@ command -v awk >/dev/null 2>&1 || fail 'awk is required to normalize the release
 web_image=$(sed -n 's/^WEB_IMAGE=//p' "$manifest")
 api_image=$(sed -n 's/^API_IMAGE=//p' "$manifest")
 cms_image=$(sed -n 's/^CMS_IMAGE=//p' "$manifest")
+cms_jobs_image=$(sed -n 's/^CMS_JOBS_IMAGE=//p' "$manifest")
 scraper_image=$(sed -n 's/^SCRAPER_IMAGE=//p' "$manifest")
 
 for key in WEB_IMAGE API_IMAGE CMS_IMAGE SCRAPER_IMAGE; do
   count=$(grep -c "^${key}=" "$manifest" || true)
   [ "$count" -eq 1 ] || fail "$manifest must contain exactly one $key entry"
 done
+
+# Manifests from before the dedicated worker may omit this key. Reject
+# duplicates before resolving any images or replacing the manifest.
+count=$(grep -c '^CMS_JOBS_IMAGE=' "$manifest" || true)
+[ "$count" -le 1 ] || fail "$manifest must contain at most one CMS_JOBS_IMAGE entry"
 
 normalize_image_id() {
   image=$1
@@ -44,11 +50,14 @@ normalize_image_id() {
 normalized_web=$(normalize_image_id "$web_image" gildra-web)
 normalized_api=$(normalize_image_id "$api_image" gildra-api)
 normalized_cms=$(normalize_image_id "$cms_image" gildra-cms)
+# The deployed CMS jobs stage was tagged under the same gildra-cms repository.
+normalized_cms_jobs=$(normalize_image_id "$cms_jobs_image" gildra-cms)
 normalized_scraper=$(normalize_image_id "$scraper_image" gildra-scraper)
 
 if [ "$normalized_web" = "$web_image" ] &&
   [ "$normalized_api" = "$api_image" ] &&
   [ "$normalized_cms" = "$cms_image" ] &&
+  [ "$normalized_cms_jobs" = "$cms_jobs_image" ] &&
   [ "$normalized_scraper" = "$scraper_image" ]; then
   printf 'deploy: release manifest already uses usable image references\n'
   exit 0
@@ -62,10 +71,12 @@ awk \
   -v web="$normalized_web" \
   -v api="$normalized_api" \
   -v cms="$normalized_cms" \
+  -v cms_jobs="$normalized_cms_jobs" \
   -v scraper="$normalized_scraper" '
   /^WEB_IMAGE=/ { print "WEB_IMAGE=" web; next }
   /^API_IMAGE=/ { print "API_IMAGE=" api; next }
   /^CMS_IMAGE=/ { print "CMS_IMAGE=" cms; next }
+  /^CMS_JOBS_IMAGE=/ { print "CMS_JOBS_IMAGE=" cms_jobs; next }
   /^SCRAPER_IMAGE=/ { print "SCRAPER_IMAGE=" scraper; next }
   { print }
 ' "$manifest" > "$temporary"

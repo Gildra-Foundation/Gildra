@@ -110,6 +110,9 @@ if [ "$1" = image ] && [ "$2" = inspect ]; then
     sha256:4444444444444444444444444444444444444444444444444444444444444444)
       printf 'gildra-scraper:legacy\n'
       ;;
+    sha256:5555555555555555555555555555555555555555555555555555555555555555)
+      printf 'unrelated:latest\ngildra-cms:legacy-jobs\n'
+      ;;
     *) exit 1 ;;
   esac
   exit 0
@@ -465,8 +468,41 @@ bootstrap_manifest=$test_directory/legacy-release.env
   printf 'CMS_IMAGE=sha256:3333333333333333333333333333333333333333333333333333333333333333\n'
   printf 'SCRAPER_IMAGE=sha256:4444444444444444444444444444444444444444444444444444444444444444\n'
 } > "$bootstrap_manifest"
+cp "$bootstrap_manifest" "$test_directory/legacy-original.env"
 PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
 grep -q '^WEB_IMAGE=gildra-web:legacy$' "$bootstrap_manifest"
 grep -q '^API_IMAGE=gildra-api:legacy$' "$bootstrap_manifest"
 grep -q '^CMS_IMAGE=gildra-cms:legacy$' "$bootstrap_manifest"
 grep -q '^SCRAPER_IMAGE=gildra-scraper:legacy$' "$bootstrap_manifest"
+[ "$(grep -c '^CMS_JOBS_IMAGE=' "$bootstrap_manifest" || true)" -eq 0 ]
+
+# Only the worker needs normalization here: the no-op guard must include it.
+printf 'CMS_JOBS_IMAGE=sha256:5555555555555555555555555555555555555555555555555555555555555555\n' >> "$bootstrap_manifest"
+PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
+grep -q '^CMS_JOBS_IMAGE=gildra-cms:legacy-jobs$' "$bootstrap_manifest"
+[ "$(stat -c '%a' "$bootstrap_manifest")" = 600 ]
+cp "$bootstrap_manifest" "$test_directory/normalized.env"
+PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
+cmp "$bootstrap_manifest" "$test_directory/normalized.env"
+
+# An unresolvable worker cannot partially rewrite the other legacy images.
+cp "$test_directory/legacy-original.env" "$bootstrap_manifest"
+printf 'CMS_JOBS_IMAGE=sha256:9999999999999999999999999999999999999999999999999999999999999999\n' >> "$bootstrap_manifest"
+cp "$bootstrap_manifest" "$test_directory/unmappable.env"
+if PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" > "$test_directory/unmappable.log" 2>&1; then
+  printf 'test: an unmappable CMS jobs image must fail normalization\n' >&2
+  exit 1
+fi
+grep -q 'could not map legacy image id' "$test_directory/unmappable.log"
+cmp "$bootstrap_manifest" "$test_directory/unmappable.env"
+
+cp "$test_directory/normalized.env" "$bootstrap_manifest"
+printf 'CMS_JOBS_IMAGE=gildra-cms:other-jobs\n' >> "$bootstrap_manifest"
+cp "$bootstrap_manifest" "$test_directory/duplicate.env"
+if PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" > "$test_directory/duplicate.log" 2>&1; then
+  printf 'test: duplicate CMS jobs image entries must fail normalization\n' >&2
+  exit 1
+fi
+grep -q 'at most one CMS_JOBS_IMAGE entry' "$test_directory/duplicate.log"
+cmp "$bootstrap_manifest" "$test_directory/duplicate.env"
+printf 'test: optional CMS jobs legacy images normalize atomically and reject duplicates\n'
