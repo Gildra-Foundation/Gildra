@@ -2,7 +2,7 @@ import { routeSummary } from "@/lib/data/wow/mythicReviewSummary";
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import { Clock3, MapPin, Route, Skull } from "lucide-react";
 import { AtlasBadge, AtlasCard, AtlasGrid } from "@/components/atlas";
-import { dungeonRoutes, dungeonSlugs } from "./dungeonRoutes";
+import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { dungeonLocationEn, mythicAtlasCopy } from "./mythicAtlasCopy";
 import styles from "./mythicAtlasPage.module.css";
 

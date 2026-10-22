@@ -4,7 +4,7 @@ import { memo } from "react";
 import { Flame } from "lucide-react";
 import { wowRouteText } from "@/lib/wow/routeSourceLocale";
 import { mythicRouteCopy, type RouteLocale } from "./mythicRouteCopy";
-import type { RouteStop } from "./rubyLifePoolsData";
+import type { RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 import styles from "./mythicRouteMap.module.css";
 
 function formatTime(seconds: number) {

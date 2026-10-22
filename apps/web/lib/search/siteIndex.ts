@@ -1,6 +1,6 @@
 import "server-only";
-import { dungeonRoutes, dungeonSlugs } from "@/components/wow/mythic/dungeonRoutes";
-import { getMidnightRaid, raidSlugs } from "@/components/wow/raid/midnightRaidData";
+import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
+import { getMidnightRaid, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 import { contentManifest, midnightDelves, midnightLairEncounters } from "@gildra/game-data";
 import { midnightClasses, midnightSpecializations } from "@/lib/data/wow/specializations";
 import { getBoss } from "@/lib/lairs";

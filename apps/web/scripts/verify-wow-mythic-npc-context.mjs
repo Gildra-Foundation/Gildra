@@ -30,8 +30,8 @@ function extractEnemyNames(source, pattern) {
 }
 
 const [rubyRoutes, dungeonRoutes, rubyMediaSource, seasonMediaSource] = await Promise.all([
-  fs.readFile(path.join(root, "components/wow/mythic/rubyLifePoolsData.ts"), "utf8"),
-  fs.readFile(path.join(root, "components/wow/mythic/dungeonRoutes.ts"), "utf8"),
+  fs.readFile(path.join(root, "lib/data/wow/mythic/rubyLifePoolsData.ts"), "utf8"),
+  fs.readFile(path.join(root, "lib/data/wow/mythic/dungeonRoutes.ts"), "utf8"),
   fs.readFile(path.join(root, "components/wow/mythic/rubyLifePoolsMedia.ts"), "utf8"),
   fs.readFile(path.join(root, "components/wow/mythic/seasonTwoEnemyMedia.json"), "utf8"),
 ]);

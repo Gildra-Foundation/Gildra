@@ -1,5 +1,5 @@
 import { preload } from "react-dom";
-import type { DungeonRoute } from "@/components/wow/mythic/dungeonRoutes";
+import type { DungeonRoute } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { dungeonBackdropSource } from "@/lib/wow/dungeonBackdropSource";
 
 const RUBY_MOBILE_BACKDROP = "/assets/wow/mythic/ruby-depth-v3-mobile-optimized.webp";

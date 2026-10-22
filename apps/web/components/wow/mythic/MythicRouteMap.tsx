@@ -40,11 +40,11 @@ import { DungeonSourceReview } from "./DungeonSourceReview";
 import { dungeonBackdropSource } from "@/lib/wow/dungeonBackdropSource";
 import { MythicRouteSelectors } from "./MythicRouteSelectors";
 import { AbilityIntelCard, EnemyIntelCard } from "./CombatIntelCard";
-import type { DungeonRoute, DungeonSelectorOption } from "./dungeonRoutes";
+import type { DungeonRoute, DungeonSelectorOption } from "@/lib/data/wow/mythic/dungeonRoutes";
 import type { DungeonCombatIntel } from "./dungeonCombatIntel.types";
 import { actionLabels, floorLabel, mythicRouteCopy, plainLanguage, priorityLabels, roleLabels, stopKindLabels, stopSubtitle, targetLabel, type MythicRouteCopy, type RouteLocale, type RouteRole } from "./mythicRouteCopy";
 import { routeAbilityIntel, routeEnemyIntel } from "./routeIntel";
-import type { RouteStop } from "./rubyLifePoolsData";
+import type { RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 import styles from "./mythicRouteMap.module.css";
 import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
 

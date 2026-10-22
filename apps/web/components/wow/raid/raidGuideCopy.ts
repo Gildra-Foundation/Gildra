@@ -1,6 +1,6 @@
 import { formatAtlasDate, pluralRu } from "@gildra/atlas-ui/format";
-import type { RaidAudience } from "./midnightRaidData";
-import type { VoidspireMechanicTag } from "./voidspireMechanicGuide";
+import type { RaidAudience } from "@/lib/data/wow/raid/midnightRaidData";
+import type { VoidspireMechanicTag } from "@/lib/data/wow/raid/voidspireMechanicGuide";
 
 export type RaidLocale = "ru" | "en";
 

@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 import { formatSeason, pluralRu } from "../../../../packages/atlas-ui/src/format.ts";
 import { siteSearchCopy } from "../../components/platform/search/siteSearchCopy.ts";
 import { normalize, searchIndex } from "../../components/platform/search/siteSearchMatch.ts";
-import { dungeonRoutes, dungeonSlugs } from "../../components/wow/mythic/dungeonRoutes.ts";
+import { dungeonRoutes, dungeonSlugs } from "../../lib/data/wow/mythic/dungeonRoutes.ts";
 import { routeTextEn } from "../../components/wow/mythic/routeStopsEn.ts";
 import { atlasScenes } from "../../lib/atlas/scenes.ts";
 

@@ -1,12 +1,12 @@
 import { Hourglass, ListChecks } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasHero, AtlasNotice, AtlasPath, AtlasSection } from "@/components/atlas";
-import type { RaidBoss, RaidDefinition } from "./midnightRaidData";
+import type { RaidBoss, RaidDefinition } from "@/lib/data/wow/raid/midnightRaidData";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
-import { getBossStrategy, isRaidStrategyPublished } from "./raidStrategy";
+import { getBossStrategy, isRaidStrategyPublished } from "@/lib/data/wow/raid/raidStrategy";
 import styles from "./raidGuide.module.css";
 import { VoidEye } from "./VoidEye";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
-import { raidSceneArt } from "./midnightRaidData";
+import { raidSceneArt } from "@/lib/data/wow/raid/midnightRaidData";
 import { getRaidReview } from "@/lib/data/raidReviews";
 import { RaidReviewNotes } from "./RaidReviewNotes";
 import { trail } from "@/lib/routes/registry";

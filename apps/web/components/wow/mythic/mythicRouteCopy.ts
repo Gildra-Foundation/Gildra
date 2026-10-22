@@ -1,6 +1,6 @@
 import { wowRouteText } from "@/lib/wow/routeSourceLocale";
 import { wowSourceName } from "@/lib/wow/sourceLocale";
-import type { RouteAbility, RouteEnemy, RouteStop } from "./rubyLifePoolsData";
+import type { RouteAbility, RouteEnemy, RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 
 /**
  * Interface copy of the Mythic+ route planner (route map, selectors, combat

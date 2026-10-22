@@ -5,7 +5,7 @@ import Image from "next/image";
 import { memo, useEffect, useId, useRef, useState, useTransition, type KeyboardEvent, type ReactNode } from "react";
 import { Check, ChevronDown, Gem, LoaderCircle, Map } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { DungeonSelectorOption, DungeonSlug } from "./dungeonRoutes";
+import type { DungeonSelectorOption, DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { mythicRouteCopy, type RouteLocale } from "./mythicRouteCopy";
 import styles from "./mythicRouteSelectors.module.css";
 
