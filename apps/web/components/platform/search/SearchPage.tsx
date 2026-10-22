@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
-import { AtlasFrame, AtlasHero } from "@/components/atlas";
+import { AtlasFrame } from "@/components/atlas/AtlasFrame";
+import { AtlasHero } from "@gildra/atlas-ui/AtlasHero";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
