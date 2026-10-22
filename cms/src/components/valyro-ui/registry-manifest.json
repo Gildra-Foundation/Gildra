@@ -1,6 +1,6 @@
 {
   "registry": "https://valyro.xyz/r",
-  "retrievedAt": "2026-10-22T23:00:55.881Z",
+  "retrievedAt": "2026-10-22T23:23:39.467Z",
   "components": [
     "stats-card",
     "badge",
@@ -19,7 +19,8 @@
     "spinner",
     "button-group",
     "tooltip",
-    "text-input"
+    "text-input",
+    "segmented-control"
   ],
   "proComponents": [
     "analytics-filter-bar"
@@ -617,6 +618,30 @@
       "path": "theme/createThemeCSS.ts",
       "registrySha256": "aa3f62f6ee457c8e5985280b5cff6e29062d0aebc53af46920ecab2aa5ec6422",
       "installedSha256": "aa3f62f6ee457c8e5985280b5cff6e29062d0aebc53af46920ecab2aa5ec6422",
+      "adapted": false
+    },
+    {
+      "path": "forms/useRadioGroup.ts",
+      "registrySha256": "c486bda48e689daec033f5c06b62a2a25a32e6144dda9a62919fddb52945ad5f",
+      "installedSha256": "c486bda48e689daec033f5c06b62a2a25a32e6144dda9a62919fddb52945ad5f",
+      "adapted": false
+    },
+    {
+      "path": "navigation/SegmentedControl.css",
+      "registrySha256": "f802fe350d796981727d9301ae3573073f7724b01ef5821b48cf6a4a1555afd0",
+      "installedSha256": "f802fe350d796981727d9301ae3573073f7724b01ef5821b48cf6a4a1555afd0",
+      "adapted": false
+    },
+    {
+      "path": "navigation/SegmentedControl.tsx",
+      "registrySha256": "0a32f0d15c4d67b4147afb56e9a39f676805292588e064f452687aaaa5d50a9e",
+      "installedSha256": "0a32f0d15c4d67b4147afb56e9a39f676805292588e064f452687aaaa5d50a9e",
+      "adapted": false
+    },
+    {
+      "path": "navigation/internal.tsx",
+      "registrySha256": "0215f4d3825dd18fba983f8abd9722996085148ab763ee7567b941b2521a05af",
+      "installedSha256": "0215f4d3825dd18fba983f8abd9722996085148ab763ee7567b941b2521a05af",
       "adapted": false
     }
   ],

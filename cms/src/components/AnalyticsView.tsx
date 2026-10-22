@@ -5,7 +5,8 @@ import React from "react";
 
 import { ANALYTICS_ROLES, asStaff, canUseAdmin, isOwner, siteIDsWithRole } from "../access/roles";
 import { adminLang, adminText } from "../admin/text";
-import { AnalyticsPanel } from "./AnalyticsPanel";
+import { AnalyticsPanelLazy as AnalyticsPanel } from "./AnalyticsPanelLazy";
+import { headerActions } from "./nav/headerActions";
 
 /** /admin/analytics — Plausible statistics for the sites the viewer may analyse. */
 export async function AnalyticsView({ initPageResult, params, searchParams, user }: AdminViewServerProps) {
@@ -46,6 +47,7 @@ export async function AnalyticsView({ initPageResult, params, searchParams, user
       searchParams={searchParams}
       user={user}
       visibleEntities={visibleEntities}
+      viewActions={headerActions(req.payload.config)}
     >
       <div className="gutter--left gutter--right" style={{ paddingBlock: "var(--base)" }}>
         <h1>{t.analyticsTitle}</h1>
