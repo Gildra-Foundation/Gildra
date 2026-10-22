@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@payloadcms/ui";
+import { useRef } from "react";
 import type { AdminLang } from "../../admin/text";
 import type { ArticleRow, ArticlesResult } from "../../articles/data";
 import { articlesQueryString, hasArticleFilters, resetArticlesQuery, type ArticlesQuery } from "../../articles/query";
@@ -17,6 +18,10 @@ import { Select } from "../valyro-ui/forms/Select";
 import { TextInput } from "../valyro-ui/forms/TextInput";
 import { Pager } from "../workspace/Pager";
 import { usePage } from "../workspace/usePage";
+import { EditorialHeading } from "../editorial/EditorialHeading";
+import { editorialCopy } from "../editorial/copy";
+import { useFlip } from "../valyro-ui/primitives/useFlip";
+import { usePresence } from "../valyro-ui/primitives/usePresence";
 
 const COPY = {
   ru: { title: "Статьи", hint: "Пишите, проверяйте переводы и открывайте материал в редакторе.", create: "Новая статья", search: "Заголовок или адрес", site: "Сайт", allSites: "Все доступные сайты", language: "Язык текста", ru: "Русский", en: "Английский", status: "Последняя версия", all: "Все версии", draft: "Черновик", published: "Опубликованная версия", edits: "Правки в черновике", item: "Материал", updated: "Изменено", edit: "Открыть редактор", live: "На сайте", empty: "Статей пока нет", emptyHint: "Создайте первый материал, если у вас есть права на редактирование.", noResults: "По этим фильтрам статей нет", noResultsHint: "Измените условия или сбросьте фильтры.", reset: "Сбросить фильтры", emptyPage: "На этой странице нет статей", firstPage: "На первую страницу", untitled: "Без заголовка в этом языке", loading: "Загружаю статьи…", error: "Не удалось загрузить статьи", denied: "Доступ к статьям ограничен", retry: "Повторить", native: "Полный список и массовые действия", note: "Черновик опубликованной статьи не меняет текст на сайте до следующей публикации." },
@@ -25,12 +30,16 @@ const COPY = {
 
 export function ArticlesPanel({ initial, initialQuery, lang }: { initial: ArticlesResult; initialQuery: ArticlesQuery; lang: AdminLang }) {
   const t = COPY[lang];
+  const e = editorialCopy[lang];
   const { query, search, navigate, searchFor } = useArticlesQuery(initialQuery);
   const { site, status, locale } = query;
   const filtered = hasArticleFilters(query);
+  const viewsRef = useRef<HTMLDivElement>(null);
+  useFlip(viewsRef, { auto: true, animateEnter: false, spring: "smooth" });
+  const resetPresence = usePresence(filtered);
   const { data, error, loading, retry } = usePage<ArticlesResult>("/api/admin/articles", articlesQueryString(query), articlesQueryString(initialQuery), initial);
   const reset = () => navigate(resetArticlesQuery(query));
-  const resetButton = <Button variant="secondary" onClick={reset}>{t.reset}</Button>;
+  const resetButton = <Button variant="ghost" size="sm" disabled={!filtered} onClick={reset}>{t.reset}</Button>;
   const empty = query.page > 1 ? (
     <EmptyState title={t.emptyPage} size="sm" primaryAction={<Button onClick={() => navigate({ ...query, page: 1 })}>{t.firstPage}</Button>} />
   ) : filtered ? (
@@ -40,21 +49,31 @@ export function ArticlesPanel({ initial, initialQuery, lang }: { initial: Articl
     <SiteLink siteID={site} href={`/admin/collections/guides/create?locale=${locale}`} variant="accent">{t.create}</SiteLink> :
     <Button asChild variant="accent"><Link href={`/admin/select-site?collection=guides&locale=${locale}`}>{t.create}</Link></Button>) : null;
   const columns: DataTableColumn<ArticleRow>[] = [
-    { key: "title", header: t.item, cell: (row) => <><SiteLink siteID={row.siteID} href={row.href}>{row.title || t.untitled}</SiteLink><span className="gd-kind">/{row.slug}</span></> },
+    { key: "title", header: t.item, cell: (row) => <div className="gd-article-identity"><SiteLink siteID={row.siteID} href={row.href}>{row.title || t.untitled}</SiteLink><span className="gd-kind">/{row.slug}</span>{!row.title ? <Badge color="amber">{e.missingTitle} · {locale.toUpperCase()}</Badge> : null}</div> },
     { key: "siteName", header: t.site },
     { key: "status", header: t.status, cell: (row) => <Badge color={row.status === "published" ? "green" : "amber"}>{row.status === "published" ? t.published : row.live ? t.edits : t.draft}</Badge> },
     { key: "updatedAt", header: t.updated, cell: (row) => <LocalTime iso={row.updatedAt} lang={lang} /> },
     { key: "actions", header: t.edit, cell: (row) => <div className="gd-workspace__actions"><SiteLink siteID={row.siteID} href={row.href} variant="secondary">{t.edit}</SiteLink>{row.liveUrl ? <a href={row.liveUrl} target="_blank" rel="noreferrer">{t.live} ↗</a> : null}</div> },
   ];
   return <AdminSurface lang={lang}>
-    <header className="gd-workspace__head"><div><h1>{t.title}</h1><p>{t.hint}</p></div>{create}</header>
-    <div className="gd-workspace__filters">
+    <EditorialHeading eyebrow={e.library} title={t.title} description={t.hint} actions={create} />
+    <section className="gd-article-tools" aria-label={e.filters}>
+    <div className="gd-article-views" ref={viewsRef} role="group" aria-label={t.status}>
+      {([["", e.all], ["draft", e.draftsView], ["published", e.publishedView]] as const).map(([value, label]) =>
+        <Button key={value} variant="ghost" aria-pressed={status === value} onClick={() => navigate({ ...query, status: value, page: 1 })}>
+          {status === value ? <span className="gd-article-views__marker" data-flip-id="article-view" aria-hidden="true" /> : null}{label}
+        </Button>)}
+    </div>
+    <div className="gd-workspace__filters gd-article-filters">
       <label><span>{t.search}</span><TextInput value={search} maxLength={120} onChange={(event) => searchFor(event.target.value)} placeholder={t.search} /></label>
       <label><span>{t.site}</span><Select aria-label={t.site} value={site} onValueChange={(value) => navigate({ ...query, site: value, page: 1 })} options={[{ value: "", label: t.allSites }, ...initial.sites.map((s) => ({ value: s.id, label: s.name }))]} /></label>
       <label><span>{t.language}</span><Select aria-label={t.language} value={locale} onValueChange={(value) => navigate({ ...query, locale: value as "ru" | "en", page: 1 })} options={[{ value: "ru", label: t.ru }, { value: "en", label: t.en }]} /></label>
-      <label><span>{t.status}</span><Select aria-label={t.status} value={status} onValueChange={(value) => navigate({ ...query, status: value as ArticlesQuery["status"], page: 1 })} options={[{ value: "", label: t.all }, { value: "draft", label: t.draft }, { value: "published", label: t.published }]} /></label>
     </div>
-    <div className="gd-workspace__query-status"><p role="status" className="gd-workspace__status">{loading ? <><Spinner label={null} size={14} /> {t.loading}</> : ""}</p>{filtered ? resetButton : null}</div>
+    </section>
+    <div className="gd-workspace__query-status">
+      <p role="status" className="gd-workspace__status">{loading ? <><Spinner label={null} size={14} /> {t.loading}</> : data ? <><strong>{e.results}: {data.totalDocs.toLocaleString(lang)}</strong><span className="gd-article-scope">{site ? initial.sites.find((s) => s.id === site)?.name : t.allSites} <span aria-hidden="true">/</span> {locale.toUpperCase()}</span></> : ""}</p>
+      {resetPresence.isMounted ? <div className="gd-filter-reset" data-state={resetPresence.state}>{resetButton}</div> : null}
+    </div>
     <div key={`${articlesQueryString(query)}:${loading ? "pending" : error ? "error" : "ready"}`} className="gd-workspace__results">
     {error ? <EmptyState title={error === 403 || error === 401 ? t.denied : t.error} primaryAction={<Button onClick={retry}>{t.retry}</Button>} /> :
       <DataTable data={data?.rows ?? []} columns={columns} label={t.title} locale={lang} labels={tableLabels(lang)} loading={loading} empty={empty} />}

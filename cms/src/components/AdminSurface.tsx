@@ -9,6 +9,7 @@ import "./valyro-ui/styles/base.css";
 import "./valyro-ui/styles/motion.css";
 import "./admin-surface.css";
 import "./workspace/workspace.css";
+import "./editorial/editorial.css";
 
 /** Keep Valyro context, portals and tokens inside the custom CMS screens. */
 export function AdminSurface({ lang, children }: { lang: AdminLang; children: ReactNode }) {
