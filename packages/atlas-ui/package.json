@@ -9,6 +9,7 @@
     "./*": "./src/*.tsx",
     "./placeholders": "./src/placeholders.ts",
     "./motionPreference": "./src/motionPreference.ts",
+    "./motionTier": "./src/motionTier.ts",
     "./morph": "./src/morph.ts",
     "./format": "./src/format.ts",
     "./clipboard": "./src/clipboard.ts",

@@ -121,6 +121,7 @@
   --ui-weight-heading: var(--ui-weight-semibold);
   --ui-action-fg: var(--ui-fg);
   --ui-tile-border: 1px solid var(--ui-border);
+  --ui-duration-fluid: var(--ui-duration-slow);
   --ui-control-tracking: initial;
   --ui-checked-shadow: none;
   --ui-press-transform: none;
@@ -164,6 +165,7 @@
   --ui-chart-swatch-radius: 2px;
   --ui-bar-chart-bar-radius: 2px;
   --ui-bar-chart-hover-radius: 4px;
+  --ui-card-interactive-transform-hover: none;
   --ui-empty-state-bordered-bg: transparent;
   --ui-empty-state-icon-radius: var(--ui-radius-lg);
   --ui-empty-state-icon-radius-ratio: 0;
