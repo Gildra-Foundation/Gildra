@@ -75,7 +75,15 @@ export function WorkspaceNavigatorContent() {
   const comingSoon = gameDestinationForPath(livePath).soon;
 
   return <header className={toolbarStyles.toolbar} data-atlas-scope data-toolbar-path={livePath}>
-    <a className={toolbarStyles.skip} href="#atlas-content">{ru ? "К содержанию" : "Skip to content"}</a>
+    <a className={toolbarStyles.skip} href="#atlas-content" onClick={event => {
+      const content = document.getElementById("atlas-content");
+      if (!content) return;
+      // Own this in-page jump: route interception must not leave keyboard focus in the header.
+      event.preventDefault();
+      window.history.replaceState(window.history.state, "", "#atlas-content");
+      content.focus({ preventScroll: true });
+      content.scrollIntoView({ block: "start", behavior: "instant" });
+    }}>{ru ? "К содержанию" : "Skip to content"}</a>
     <PrimaryNavigation key={livePath} path={livePath} ru={ru} />
     <div className={toolbarStyles.end}>
       {!comingSoon && <SiteSearch lang={ru ? "ru" : "en"} />}
