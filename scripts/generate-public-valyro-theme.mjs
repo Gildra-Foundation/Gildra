@@ -70,7 +70,8 @@ export function generatePublicTheme(source = defaultSource) {
   const scan = value => { for (const match of value.matchAll(tokenPattern)) needed.add(match[0]); };
   for (const file of inputs.files.filter(file => file.endsWith(".css"))) scan(fs.readFileSync(file, "utf8"));
   // Conservatively include every vendor TS token, even if tree-shaking removes its module.
-  // AST string/template scanning ignores comments and expands computed token prefixes.
+  // AST string/template scanning ignores comments and expands computed token prefixes. A bare `--ui-`
+  // prefix names no token family (theme/createThemeCSS writes theme text with it) and would keep them all.
   const codeFiles = new Set([...inputs.files.filter(file => /\.tsx?$/.test(file)), ...walk(inputs.vendor).filter(file => /\.tsx?$/.test(file))]);
   for (const file of codeFiles) {
     const visit = node => {
@@ -78,13 +79,13 @@ export function generatePublicTheme(source = defaultSource) {
         scan(node.text);
         if (ts.isTemplateHead(node) || ts.isTemplateMiddle(node)) {
           const prefix = node.text.match(/(--ui-[A-Za-z0-9_-]*)$/u)?.[1];
-          if (prefix) dynamicPrefixes.add(prefix);
+          if (prefix && prefix !== "--ui-") dynamicPrefixes.add(prefix);
         }
       }
       // Concatenation is equivalent to a template head for computed token names.
       if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken && ts.isStringLiteralLike(node.left)) {
         const prefix = node.left.text.match(/(--ui-[A-Za-z0-9_-]*)$/u)?.[1];
-        if (prefix) dynamicPrefixes.add(prefix);
+        if (prefix && prefix !== "--ui-") dynamicPrefixes.add(prefix);
       }
       ts.forEachChild(node, visit);
     };
