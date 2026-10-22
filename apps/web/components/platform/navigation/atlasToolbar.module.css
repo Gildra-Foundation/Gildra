@@ -197,6 +197,17 @@
   z-index: -1;
   background: linear-gradient(180deg, transparent 20%, color-mix(in srgb, var(--atlas-bg) 92%, transparent) 92%);
 }
+/* The same gilded brackets as the atlas cards. */
+.portalFeature::before, .sheetFeature::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  opacity: .4;
+  background: var(--atlas-filigree);
+  transition: inset var(--atlas-duration-slow) var(--atlas-ease), opacity var(--atlas-duration-slow) var(--atlas-ease);
+}
+.portalFeature:hover::before, .portalFeature:focus-visible::before { inset: 5px; opacity: .95; }
 .portalFeature:hover .portalArt, .portalFeature:focus-visible .portalArt,
 .sheetFeature:hover .portalArt { scale: 1.05; filter: saturate(1) brightness(.95); }
 .portalFeature:hover, .portalFeature:focus-visible { border-color: var(--atlas-line-strong); box-shadow: var(--atlas-glow-sm); }
@@ -204,7 +215,7 @@
   outline: 2px solid var(--atlas-accent-strong);
   outline-offset: 2px;
 }
-.portalText { display: grid; gap: var(--atlas-space-1); padding: var(--atlas-space-4); }
+.portalText { display: grid; gap: var(--atlas-space-1); padding: var(--atlas-space-5); }
 .portalTitle {
   font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.1 var(--atlas-font-display);
   text-shadow: var(--atlas-text-shadow-art);
@@ -341,7 +352,7 @@
 }
 @keyframes sheet-rise { from { opacity: 0; translate: 0 10px; } }
 .sheetFeature { min-height: 112px; }
-.sheetFeature .portalText { padding: var(--atlas-space-3) var(--atlas-space-4); }
+.sheetFeature .portalText { padding: var(--atlas-space-4) var(--atlas-space-5); }
 .sheetFeature .portalLede { font-size: var(--atlas-text-meta); }
 .sheetRealms > li[data-current] .sheetFeature { border-color: var(--atlas-line-strong); box-shadow: inset 3px 0 0 var(--atlas-accent); }
 .sheetLinks { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
@@ -379,6 +390,6 @@
 }
 @media (max-width: 359px) { .brand > span { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .toolbar, .sigil, .realmLink, .realmToggle, .realmToggle > svg, .rune[data-ready], .portalArt, .portalLink, .portalLink::before, .portalLink > svg, .portalGo > svg, .locale a { transition: none; }
+  .toolbar, .sigil, .realmLink, .realmToggle, .realmToggle > svg, .rune[data-ready], .portalArt, .portalFeature::before, .portalLink, .portalLink::before, .portalLink > svg, .portalGo > svg, .locale a { transition: none; }
   .portal, .sheet, .sheetRealms > li { animation: none; }
 }
