@@ -24,7 +24,7 @@ func (s *Service) SitemapEntries(ctx context.Context, product, entityType, shard
 	}
 	entityType = strings.TrimSpace(entityType)
 	if entityType == "" {
-		return nil, fmt.Errorf("type is required")
+		return nil, invalidRequest("type is required")
 	}
 	lower, upper, err := sitemapShardBounds(shard)
 	if err != nil {
@@ -58,7 +58,7 @@ func (s *Service) SitemapEntries(ctx context.Context, product, entityType, shard
 		return nil, fmt.Errorf("iterate sitemap entries: %w", err)
 	}
 	if len(entries) > 50000 {
-		return nil, fmt.Errorf("sitemap shard exceeds 50000 entries; use a longer shard prefix")
+		return nil, invalidRequest("sitemap shard exceeds 50000 entries; use a longer shard prefix")
 	}
 	return entries, nil
 }
@@ -66,14 +66,14 @@ func (s *Service) SitemapEntries(ctx context.Context, product, entityType, shard
 func sitemapShardBounds(shard string) (uuid.UUID, *uuid.UUID, error) {
 	shard = strings.ToLower(strings.TrimSpace(shard))
 	if len(shard) > 2 {
-		return uuid.Nil, nil, fmt.Errorf("shard must contain at most two hexadecimal characters")
+		return uuid.Nil, nil, invalidRequest("shard must contain at most two hexadecimal characters")
 	}
 	if shard == "" {
 		return uuid.Nil, nil, nil
 	}
 	value, err := strconv.ParseUint(shard, 16, 8)
 	if err != nil {
-		return uuid.Nil, nil, fmt.Errorf("shard must contain lowercase hexadecimal characters")
+		return uuid.Nil, nil, invalidRequest("shard must contain lowercase hexadecimal characters")
 	}
 	lowerText := shard + strings.Repeat("0", 32-len(shard))
 	lower, err := parseCompactUUID(lowerText)

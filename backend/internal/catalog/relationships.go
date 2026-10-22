@@ -3,7 +3,6 @@ package catalog
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -99,13 +98,13 @@ func (s *Service) EntityTypes(ctx context.Context, product, locale string) ([]En
 
 func (s *Service) Relationships(ctx context.Context, params RelationshipParams) (RelationshipPage, error) {
 	if params.Limit < 1 || params.Limit > 100 {
-		return RelationshipPage{}, errors.New("limit must be between 1 and 100")
+		return RelationshipPage{}, invalidRequest("limit must be between 1 and 100")
 	}
 	if params.Direction == "" {
 		params.Direction = "both"
 	}
 	if params.Direction != "outgoing" && params.Direction != "incoming" && params.Direction != "both" {
-		return RelationshipPage{}, errors.New("direction must be outgoing, incoming, or both")
+		return RelationshipPage{}, invalidRequest("direction must be outgoing, incoming, or both")
 	}
 	cursorDirection, cursorRelation, cursorID, err := decodeRelationshipCursor(params.Cursor)
 	if err != nil {
@@ -223,15 +222,15 @@ func decodeRelationshipCursor(cursor string) (string, string, uuid.UUID, error) 
 	}
 	decoded, err := base64.RawURLEncoding.DecodeString(cursor)
 	if err != nil {
-		return "", "", uuid.Nil, errors.New("cursor is invalid")
+		return "", "", uuid.Nil, invalidRequest("cursor is invalid")
 	}
 	parts := strings.Split(string(decoded), "\x1f")
 	if len(parts) != 3 {
-		return "", "", uuid.Nil, errors.New("cursor is invalid")
+		return "", "", uuid.Nil, invalidRequest("cursor is invalid")
 	}
 	id, err := uuid.Parse(parts[2])
 	if err != nil {
-		return "", "", uuid.Nil, errors.New("cursor is invalid")
+		return "", "", uuid.Nil, invalidRequest("cursor is invalid")
 	}
 	return parts[0], parts[1], id, nil
 }
