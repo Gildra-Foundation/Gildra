@@ -653,35 +653,24 @@
   padding: 14px 20px;
   border-bottom: 1px solid var(--gd-line);
   background: var(--theme-elevation-50);
-  button {
-    width: 30px;
-    height: 30px;
-    border: 1px solid var(--gd-line);
-    border-radius: 7px;
-    background: transparent;
-    color: var(--theme-text);
-    font-size: 1.2rem;
-    line-height: 1;
-    cursor: pointer;
-    &:hover, &:focus-visible { border-color: var(--gd-amber); }
-  }
+
 }
 
 .gd-ref__note { margin-top: 10px !important; font-size: 0.78rem; color: var(--gd-muted); }
 .gd-ref__title { font-size: 1.15rem; font-weight: 600; }
-.gd-ref__copy {
-  padding: 2px 8px;
-  border: 1px solid var(--gd-line);
-  border-radius: 5px;
-  background: transparent;
-  color: var(--theme-text);
-  font: inherit;
-  font-size: 0.72rem;
-  letter-spacing: normal;
-  text-transform: none;
-  cursor: pointer;
-  &:hover, &:focus-visible { border-color: var(--gd-amber); }
-}
+// Only transform and opacity animate; editing layout changes once at the boundary.
+.gd-ref { animation: gd-ref-enter 160ms ease-out both; overflow-wrap: anywhere; }
+.gd-ref[data-state="closed"] { animation: gd-ref-exit 160ms ease-in both; pointer-events: none; }
+.gd-ref__head .gd-ref__close { flex: 0 0 auto; min-width: 40px; min-height: 40px; padding: 0; font-size: 1.35rem; }
+.gd-ref__section-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.gd-ref__section-head h3 { padding-top: 8px; margin-bottom: 0; }
+.gd-ref__copy-action { display: grid; justify-items: end; gap: 6px; max-width: 68%; }
+.gd-ref__copy-error { color: var(--gd-amber); font-size: 0.8rem; line-height: 1.4; text-align: right; }
+.gd-ref__announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.gd-ref__feedback { display: grid; justify-items: start; gap: 12px; margin-top: 20px; color: var(--gd-muted); }
+@keyframes gd-ref-enter { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+@keyframes gd-ref-exit { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(12px); } }
+@media (prefers-reduced-motion: reduce) { .gd-ref, .gd-ref[data-state="closed"] { animation: none; } .gd-ref[data-state="closed"] { visibility: hidden; } }
 
 .gd-ref__body {
   font-size: 0.92rem;
@@ -728,11 +717,15 @@
     left: 0;
     width: auto;
     height: 55vh;
+    height: 55dvh;
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
     border-left: 0;
     border-top: 1px solid var(--theme-elevation-150);
     border-radius: 14px 14px 0 0;
   }
-  body.gd-compare-open .template-default__wrap { padding-bottom: 55vh; }
+  body.gd-compare-open .template-default__wrap { padding-bottom: 55vh; padding-bottom: 55dvh; }
+  @keyframes gd-ref-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes gd-ref-exit { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(12px); } }
 }
 
 // ---- Lists ---------------------------------------------------------------------
