@@ -114,7 +114,7 @@ function RealmNavigation({ path, lang }: { path: string; lang: Lang }) {
     return () => { cancelAnimationFrame(ready); observer.disconnect(); };
   }, [currentId]);
 
-  return <nav className={toolbarStyles.realms} aria-label={ru ? "Разделы" : "Sections"}
+  return <nav className={toolbarStyles.realms} aria-label={ru ? "Основная навигация" : "Main navigation"}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) close(); }}
     onKeyDown={event => {
       if (event.key !== "Escape" || !openRealm) return;
