@@ -1,11 +1,10 @@
 "use client";
 
 import { useDocumentInfo, useFormFields, useLocale, useTranslation } from "@payloadcms/ui";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-import { CONTENT_LOCALES, stateLevel } from "../../admin/completeness";
-import { articleUrl } from "../../admin/sitePaths";
-import { useLocaleStates, useSwitchLocale } from "./useLocaleStates";
+import type { PublishedLink } from "../../articles/publishedLinks";
+import { useSwitchLocale } from "./useLocaleStates";
 
 /** Words of a Lexical document: text nodes plus the text fields of blocks (titles, bodies, list items). */
 function countWords(node: unknown, depth = 0): number {
@@ -32,13 +31,11 @@ function countWords(node: unknown, depth = 0): number {
  * form; this card shares its data (no extra requests while typing).
  */
 export function ArticlePanel() {
-  const { id, hasPublishedDoc } = useDocumentInfo();
+  const { id, hasPublishedDoc, lastUpdateTime } = useDocumentInfo();
   const locale = useLocale();
   const { i18n } = useTranslation();
   const ru = i18n.language !== "en";
-  const { states, collection } = useLocaleStates();
   const { switchTo } = useSwitchLocale();
-  const slug = useFormFields(([f]) => f.slug?.value as string | undefined) ?? "";
   const site = {
     slug: useFormFields(([f]) => f.siteSlug?.value),
     name: useFormFields(([f]) => f.siteName?.value),
@@ -56,13 +53,19 @@ export function ArticlePanel() {
   const hasCategory = useFormFields(([f]) => Array.isArray(f.categories?.value) && (f.categories?.value as unknown[]).length > 0);
   const hasPatch = useFormFields(([f]) => Boolean(String(f["gameContext.patch"]?.value ?? "").trim()));
 
+  const [published, setPublished] = useState<{ key: string; links: PublishedLink[] } | null>(null);
+  const key = `${id}:${lastUpdateTime}`;
+  useEffect(() => {
+    if (!id || !hasPublishedDoc) return;
+    const controller = new AbortController();
+    void fetch(`/api/admin/article-links?id=${encodeURIComponent(id)}`, { credentials: "same-origin", signal: controller.signal })
+      .then(async (response) => response.ok ? await response.json() as { links: PublishedLink[] } : { links: [] })
+      .then((result) => { if (!controller.signal.aborted) setPublished({ key, links: result.links }); })
+      .catch(() => { if (!controller.signal.aborted) setPublished({ key, links: [] }); });
+    return () => controller.abort();
+  }, [id, hasPublishedDoc, key]);
   if (!id) return null;
-  const live = hasPublishedDoc
-    ? CONTENT_LOCALES.map((l) => ({
-        ...l,
-        url: stateLevel(states[l.code], collection) === "complete" ? articleUrl(site, slug, l.code) : null,
-      })).filter((l) => l.url)
-    : [];
+  const live = hasPublishedDoc && published?.key === key ? published.links : [];
 
   return (
     <section className="gd-panel gd-article-panel" aria-label={ru ? "Статья на сайте" : "Article on the site"}>

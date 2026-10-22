@@ -23,7 +23,7 @@ export function signRevalidation(secret: string, timestamp: string, body: string
 
 /**
  * Enqueue cache invalidation inside the caller's transaction, so a rolled back
- * publish never leaves a job behind. Concurrency control coalesces bursts.
+ * publish never leaves a job behind. Concurrency control keeps delivery serial.
  */
 export async function queueRevalidation(req: PayloadRequest, input: RevalidationInput): Promise<void> {
   if (input.site === null || input.site === undefined) return;
@@ -68,10 +68,11 @@ export const revalidateSiteTask: TaskConfig<RevalidateTaskIO> = {
     { name: "status", type: "text", required: true },
     { name: "httpStatus", type: "number" },
   ],
-  // Bursts of edits to the same document collapse into one pending delivery.
+  // Preserve every URL transition: replacing a pending notification can lose
+  // an earlier slug invalidation when several renames happen before the worker.
   concurrency: {
     key: ({ input }) => `revalidate:${input.site}:${input.collection}:${input.docId}`,
-    supersedes: true,
+    supersedes: false,
   },
   retries: { attempts: 5, backoff: { type: "exponential", delay: 15_000 } },
   handler: async ({ input, req }) => {

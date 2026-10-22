@@ -1,8 +1,8 @@
 import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
+import nodemailer from "nodemailer";
 import { APIError, type EmailAdapter, type SendEmailOptions } from "payload";
 
 export type EmailMode = "smtp" | "capture" | "disabled";
-type NodemailerTransportOptions = NonNullable<Parameters<typeof nodemailerAdapter>[0]>["transportOptions"];
 
 /**
  * - `smtp`: EMAIL_TRANSPORT=smtp with SMTP_HOST and EMAIL_FROM_ADDRESS.
@@ -33,6 +33,42 @@ export function clearCapturedEmails(): void {
 
 const fromAddress = () => process.env.EMAIL_FROM_ADDRESS || "no-reply@localhost";
 const fromName = () => process.env.EMAIL_FROM_NAME || "Gildra Network";
+
+function smtpTransport() {
+  const port = Number(process.env.SMTP_PORT || 587);
+  const secure = process.env.SMTP_SECURE ? process.env.SMTP_SECURE === "true" : port === 465;
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    secure,
+    // Submission must not fall back to sending credentials over plain SMTP.
+    requireTLS: process.env.NODE_ENV === "production" && !secure,
+    tls: { minVersion: "TLSv1.2" },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
+    logger: false,
+    debug: false,
+    auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS ?? "" } : undefined,
+  });
+}
+
+/** Check service availability before looking up any staff recovery address. */
+export async function assertStaffRecoveryAvailable(): Promise<void> {
+  const unavailable = () => new APIError("Password recovery is unavailable. Contact a platform owner.", 503, undefined, true);
+  const mode = emailMode();
+  if (mode === "disabled") throw unavailable();
+  if (mode !== "smtp") return;
+  const transport = smtpTransport();
+  try {
+    await transport.verify();
+  } catch {
+    // Known and unknown accounts receive the same response when SMTP is down.
+    throw unavailable();
+  } finally {
+    transport.close();
+  }
+}
 
 function recipients(to: SendEmailOptions["to"]): string {
   const out: string[] = [];
@@ -69,20 +105,25 @@ export function buildEmailAdapter(): EmailAdapter | Promise<EmailAdapter> {
   const mode = emailMode();
   if (mode === "capture") return captureAdapter;
   if (mode === "disabled") return disabledAdapter;
-  const port = Number(process.env.SMTP_PORT || 587);
   return nodemailerAdapter({
     defaultFromAddress: fromAddress(),
     defaultFromName: fromName(),
     // Do not block CMS startup on SMTP reachability; failures surface per message.
     skipVerify: true,
-    // Passed to nodemailer.createTransport, which accepts `auth`; nodemailer 10's
-    // own SMTPConnectionOptions type (used by the adapter's signature) omits it.
-    transportOptions: {
-      host: process.env.SMTP_HOST,
-      port,
-      secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === "true" : port === 465,
-      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS ?? "" } : undefined,
-    } as NodemailerTransportOptions,
+    transport: smtpTransport(),
+  }).then((create): EmailAdapter => (args) => {
+    const adapter = create(args);
+    return {
+      ...adapter,
+      sendEmail: async (message) => {
+        try {
+          return await adapter.sendEmail(message);
+        } catch {
+          // SMTP errors can contain recipient addresses and transport details.
+          throw new APIError("Email delivery is temporarily unavailable. Please try again later.", 503, undefined, true);
+        }
+      },
+    };
   });
 }
 

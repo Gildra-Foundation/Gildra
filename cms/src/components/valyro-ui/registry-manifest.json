@@ -1,0 +1,491 @@
+{
+  "registry": "https://valyro.xyz/api/mcp",
+  "retrievedAt": "2026-10-18T20:40:47.858175+00:00",
+  "components": [
+    "stats-card",
+    "badge",
+    "data-table",
+    "empty-state",
+    "skeleton",
+    "button",
+    "analytics-filter-bar",
+    "bar-chart",
+    "select",
+    "styles",
+    "theme",
+    "primitives",
+    "icons",
+    "icon-button",
+    "spinner",
+    "button-group",
+    "tooltip",
+    "text-input"
+  ],
+  "proComponents": [
+    "analytics-filter-bar"
+  ],
+  "adaptations": {
+    "charts/AnalyticsFilterBar.tsx": "Optional showCompare/showGranularity flags; hide unsupported analytics controls.",
+    "styles/tokens.css": "Scope :root to .gd-valyro.",
+    "styles/themes/vercel.css": "Scope :root to .gd-valyro.",
+    "styles/base.css": "Scope html[data-theme] to .gd-valyro[data-theme]."
+  },
+  "files": [
+    {
+      "path": "basic/Badge.css",
+      "registrySha256": "b81e2b04137620b1c9941e1193dcd88d8dfe0c700ae17bb5dbc8066eb0920f8f",
+      "installedSha256": "b81e2b04137620b1c9941e1193dcd88d8dfe0c700ae17bb5dbc8066eb0920f8f",
+      "adapted": false
+    },
+    {
+      "path": "basic/Badge.tsx",
+      "registrySha256": "1a9efa626ad8947a9b0d6691328ada634553d8d60c200f615b138d771958e4ba",
+      "installedSha256": "1a9efa626ad8947a9b0d6691328ada634553d8d60c200f615b138d771958e4ba",
+      "adapted": false
+    },
+    {
+      "path": "basic/Button.css",
+      "registrySha256": "c4473f9eef590fa9dad06e061d6d4f8dc94f9a492d8a3f4318f7d25a599f7d53",
+      "installedSha256": "c4473f9eef590fa9dad06e061d6d4f8dc94f9a492d8a3f4318f7d25a599f7d53",
+      "adapted": false
+    },
+    {
+      "path": "basic/Button.tsx",
+      "registrySha256": "3a0c3810a6afc028b44b56c04716e0c3548d2e77ce59f35b3404c58552cb85ee",
+      "installedSha256": "3a0c3810a6afc028b44b56c04716e0c3548d2e77ce59f35b3404c58552cb85ee",
+      "adapted": false
+    },
+    {
+      "path": "basic/ButtonGroup.css",
+      "registrySha256": "30340aec445e4dffeca82cfd6c4a4f2232178292317f440338c2fb4b48ba8e71",
+      "installedSha256": "30340aec445e4dffeca82cfd6c4a4f2232178292317f440338c2fb4b48ba8e71",
+      "adapted": false
+    },
+    {
+      "path": "basic/ButtonGroup.tsx",
+      "registrySha256": "628ff0302cc355642654b0ee2192879ddb319bb813a0e1d80451c8218c57e860",
+      "installedSha256": "628ff0302cc355642654b0ee2192879ddb319bb813a0e1d80451c8218c57e860",
+      "adapted": false
+    },
+    {
+      "path": "basic/IconButton.css",
+      "registrySha256": "f60a0fbe7d4c4021afbc5e8564993771a689016d9fa484dc44f056e2bbe404b7",
+      "installedSha256": "f60a0fbe7d4c4021afbc5e8564993771a689016d9fa484dc44f056e2bbe404b7",
+      "adapted": false
+    },
+    {
+      "path": "basic/IconButton.tsx",
+      "registrySha256": "278fb34db087a898560a6aaa6d30575340925838004c941d816a54554a81283b",
+      "installedSha256": "278fb34db087a898560a6aaa6d30575340925838004c941d816a54554a81283b",
+      "adapted": false
+    },
+    {
+      "path": "basic/Skeleton.css",
+      "registrySha256": "4c0aaf48509099af625a9de3af74232037a429026eca2c898ac7cbf24c47e194",
+      "installedSha256": "4c0aaf48509099af625a9de3af74232037a429026eca2c898ac7cbf24c47e194",
+      "adapted": false
+    },
+    {
+      "path": "basic/Skeleton.tsx",
+      "registrySha256": "10a00f58eae5968e408f19b3ae8a3d1c03631f7b77c03496f7f4960eac6b4b3d",
+      "installedSha256": "10a00f58eae5968e408f19b3ae8a3d1c03631f7b77c03496f7f4960eac6b4b3d",
+      "adapted": false
+    },
+    {
+      "path": "basic/Spinner.css",
+      "registrySha256": "ff575c4b49efe432c529117e09b25026422c256b1bfe3b6c4453e15097ba95bb",
+      "installedSha256": "ff575c4b49efe432c529117e09b25026422c256b1bfe3b6c4453e15097ba95bb",
+      "adapted": false
+    },
+    {
+      "path": "basic/Spinner.tsx",
+      "registrySha256": "5289cb8feaa6c850f5fba30a391f0e592464187062964e3f9378d770cac541c7",
+      "installedSha256": "5289cb8feaa6c850f5fba30a391f0e592464187062964e3f9378d770cac541c7",
+      "adapted": false
+    },
+    {
+      "path": "basic/Tooltip.css",
+      "registrySha256": "3ae8cf7bd083587feaf07079e6b051afb4918755501bdf17c6a74b80b2c9abb6",
+      "installedSha256": "3ae8cf7bd083587feaf07079e6b051afb4918755501bdf17c6a74b80b2c9abb6",
+      "adapted": false
+    },
+    {
+      "path": "basic/Tooltip.tsx",
+      "registrySha256": "33341dc4627264ce2ae4b48818f55f6d07c0d5ddb0057ae26357faa822c2c96d",
+      "installedSha256": "33341dc4627264ce2ae4b48818f55f6d07c0d5ddb0057ae26357faa822c2c96d",
+      "adapted": false
+    },
+    {
+      "path": "charts/AnalyticsFilterBar.css",
+      "registrySha256": "ac07098354898984aab227cc90f2c7054b2155c555ad3976381a98fdaf47a96e",
+      "installedSha256": "ac07098354898984aab227cc90f2c7054b2155c555ad3976381a98fdaf47a96e",
+      "adapted": false
+    },
+    {
+      "path": "charts/AnalyticsFilterBar.tsx",
+      "registrySha256": "63719312684686b345ab567a8b269e5183dd0df2f10f642ba04c0a60679a8b49",
+      "installedSha256": "99cc03411f42bdfd41c48de26b81b804b9f9458ecbffce94e85a78feef2821f3",
+      "adapted": true
+    },
+    {
+      "path": "charts/BarChart.css",
+      "registrySha256": "73caea41bd45a8798a3dc65fc29a7fcc0b54c3a8023a097ed04fd1a91588aecd",
+      "installedSha256": "73caea41bd45a8798a3dc65fc29a7fcc0b54c3a8023a097ed04fd1a91588aecd",
+      "adapted": false
+    },
+    {
+      "path": "charts/BarChart.tsx",
+      "registrySha256": "bc0d1e6662a4a1eb9dfbb05bb2d0384b01ab2086d7d3e22554a6a6425312ae5c",
+      "installedSha256": "bc0d1e6662a4a1eb9dfbb05bb2d0384b01ab2086d7d3e22554a6a6425312ae5c",
+      "adapted": false
+    },
+    {
+      "path": "charts/Chart.css",
+      "registrySha256": "cab37933f2b6f5fba667f46c01da0825fc7123628af4324aacf3d88b197a61a7",
+      "installedSha256": "cab37933f2b6f5fba667f46c01da0825fc7123628af4324aacf3d88b197a61a7",
+      "adapted": false
+    },
+    {
+      "path": "charts/ChartDataTable.tsx",
+      "registrySha256": "1bac354417df4d80c4a66b48ee86b91b88ea800e8b7ecc22e2896c66052c7a19",
+      "installedSha256": "1bac354417df4d80c4a66b48ee86b91b88ea800e8b7ecc22e2896c66052c7a19",
+      "adapted": false
+    },
+    {
+      "path": "charts/ChartLegend.tsx",
+      "registrySha256": "7d442fff50c235448b95241be0808cf5b8f2c7a734d07426188d80d9a01c269a",
+      "installedSha256": "7d442fff50c235448b95241be0808cf5b8f2c7a734d07426188d80d9a01c269a",
+      "adapted": false
+    },
+    {
+      "path": "charts/ChartTooltip.tsx",
+      "registrySha256": "30c489d433437a552ffe3cd255be17363c7a5c145974525f8adb3ddcb1e321a3",
+      "installedSha256": "30c489d433437a552ffe3cd255be17363c7a5c145974525f8adb3ddcb1e321a3",
+      "adapted": false
+    },
+    {
+      "path": "charts/XYChart.tsx",
+      "registrySha256": "308f3ad4385cf287d7f59b2f795bbfaa59da76ac6a4b1bb124b5ed004f3d8168",
+      "installedSha256": "308f3ad4385cf287d7f59b2f795bbfaa59da76ac6a4b1bb124b5ed004f3d8168",
+      "adapted": false
+    },
+    {
+      "path": "charts/cartesian.tsx",
+      "registrySha256": "753c4a8f4cabe77f4f174b637f3060941d8280a8c60f2d6edb5ba74ce6ab47f6",
+      "installedSha256": "753c4a8f4cabe77f4f174b637f3060941d8280a8c60f2d6edb5ba74ce6ab47f6",
+      "adapted": false
+    },
+    {
+      "path": "charts/scale.ts",
+      "registrySha256": "68c88b4ae173b16b3fbeb919e87a5e74363a4740815d9523e986cf39b1b90a53",
+      "installedSha256": "68c88b4ae173b16b3fbeb919e87a5e74363a4740815d9523e986cf39b1b90a53",
+      "adapted": false
+    },
+    {
+      "path": "charts/useChartSize.ts",
+      "registrySha256": "ec849b61ed30ad9835512b07ea83668aa8e874fc6e6c09f6ffe9fd59a14e0e0d",
+      "installedSha256": "ec849b61ed30ad9835512b07ea83668aa8e874fc6e6c09f6ffe9fd59a14e0e0d",
+      "adapted": false
+    },
+    {
+      "path": "charts/utils.ts",
+      "registrySha256": "8212ccdbba34822e0cc0336845bb6658f9b31be473cb25d437713c755f3461cd",
+      "installedSha256": "8212ccdbba34822e0cc0336845bb6658f9b31be473cb25d437713c755f3461cd",
+      "adapted": false
+    },
+    {
+      "path": "data-display/DataTable.css",
+      "registrySha256": "2316d76adaf9d55dc9bec6e9c9a092f094d2b4b207800bd33c99fed08e792ca5",
+      "installedSha256": "2316d76adaf9d55dc9bec6e9c9a092f094d2b4b207800bd33c99fed08e792ca5",
+      "adapted": false
+    },
+    {
+      "path": "data-display/DataTable.tsx",
+      "registrySha256": "4f202d070c6f847b7002ce501b87b5e9a8d019582d47fe35fae403e6ccd6165e",
+      "installedSha256": "4f202d070c6f847b7002ce501b87b5e9a8d019582d47fe35fae403e6ccd6165e",
+      "adapted": false
+    },
+    {
+      "path": "data-display/EmptyState.css",
+      "registrySha256": "d67a50758ebf00fff56b46d5948256746358349aac5da8d2653d27fe1da822c7",
+      "installedSha256": "d67a50758ebf00fff56b46d5948256746358349aac5da8d2653d27fe1da822c7",
+      "adapted": false
+    },
+    {
+      "path": "data-display/EmptyState.tsx",
+      "registrySha256": "8c5db698f57c26c597d67fb05127218e8cf56006883d7c064dfe9ffbdbfa530f",
+      "installedSha256": "8c5db698f57c26c597d67fb05127218e8cf56006883d7c064dfe9ffbdbfa530f",
+      "adapted": false
+    },
+    {
+      "path": "data-display/StatsCard.css",
+      "registrySha256": "b4320532254414877604f61c0a7dfb91eaff23de6ea2da791e26cbfe307b020d",
+      "installedSha256": "b4320532254414877604f61c0a7dfb91eaff23de6ea2da791e26cbfe307b020d",
+      "adapted": false
+    },
+    {
+      "path": "data-display/StatsCard.tsx",
+      "registrySha256": "c597ba899f3147a0020c95b028a5ba6caf7ebbef145ec2512dfff64ce67ebd04",
+      "installedSha256": "c597ba899f3147a0020c95b028a5ba6caf7ebbef145ec2512dfff64ce67ebd04",
+      "adapted": false
+    },
+    {
+      "path": "data-display/data-table.ts",
+      "registrySha256": "f4b7c6b7b8d94e182132dbbc920385726317a67f26d1afa64532050f0f2f1c7e",
+      "installedSha256": "f4b7c6b7b8d94e182132dbbc920385726317a67f26d1afa64532050f0f2f1c7e",
+      "adapted": false
+    },
+    {
+      "path": "forms/Listbox.css",
+      "registrySha256": "0a743ca43caa3262bad080106c4db7aa9753a1a9c43be1f1406f7ad2a7fb2278",
+      "installedSha256": "0a743ca43caa3262bad080106c4db7aa9753a1a9c43be1f1406f7ad2a7fb2278",
+      "adapted": false
+    },
+    {
+      "path": "forms/Listbox.tsx",
+      "registrySha256": "ec97eaae2b33a4b3344bc7a2cba17d805762e49f9fbb6f51c465a4083a21a1cf",
+      "installedSha256": "ec97eaae2b33a4b3344bc7a2cba17d805762e49f9fbb6f51c465a4083a21a1cf",
+      "adapted": false
+    },
+    {
+      "path": "forms/Select.css",
+      "registrySha256": "94d76764cf59c6722aff213878a5f75d04897bc2b6b6f8bddb487e1dca2431fd",
+      "installedSha256": "94d76764cf59c6722aff213878a5f75d04897bc2b6b6f8bddb487e1dca2431fd",
+      "adapted": false
+    },
+    {
+      "path": "forms/Select.tsx",
+      "registrySha256": "211794a2c3d6c6b096a21392650e928fa1709e5af2e36794cf90207b88543e48",
+      "installedSha256": "211794a2c3d6c6b096a21392650e928fa1709e5af2e36794cf90207b88543e48",
+      "adapted": false
+    },
+    {
+      "path": "icons/index.tsx",
+      "registrySha256": "dcea6e0333b974dac7e9d9d6c5cbc5258b171d92af60ef4a3a8abfcede0b1304",
+      "installedSha256": "dcea6e0333b974dac7e9d9d6c5cbc5258b171d92af60ef4a3a8abfcede0b1304",
+      "adapted": false
+    },
+    {
+      "path": "primitives/Floating.tsx",
+      "registrySha256": "e5d7bc1d92dee11388123690851c0b6bce4956f0c95ef2d70761925f8ffe591c",
+      "installedSha256": "e5d7bc1d92dee11388123690851c0b6bce4956f0c95ef2d70761925f8ffe591c",
+      "adapted": false
+    },
+    {
+      "path": "primitives/ModalLayer.css",
+      "registrySha256": "dd33cdd51668d58c6c487636b7dbd255e4e85157c7cbc83db885112b32eb6a3d",
+      "installedSha256": "dd33cdd51668d58c6c487636b7dbd255e4e85157c7cbc83db885112b32eb6a3d",
+      "adapted": false
+    },
+    {
+      "path": "primitives/ModalLayer.tsx",
+      "registrySha256": "fc1a18c270273ef833ce18f984fdb7d61ba3d14467dd899ff9ef580a48cbb164",
+      "installedSha256": "fc1a18c270273ef833ce18f984fdb7d61ba3d14467dd899ff9ef580a48cbb164",
+      "adapted": false
+    },
+    {
+      "path": "primitives/Portal.tsx",
+      "registrySha256": "84a644005fd67063def143374918e2c15e9a6c925eda4f68ff239ea1e783aa94",
+      "installedSha256": "84a644005fd67063def143374918e2c15e9a6c925eda4f68ff239ea1e783aa94",
+      "adapted": false
+    },
+    {
+      "path": "primitives/Slot.tsx",
+      "registrySha256": "a1e174e8850b5f774284a47669c3a60ee798462bd494bddb33d47c322c9d047a",
+      "installedSha256": "a1e174e8850b5f774284a47669c3a60ee798462bd494bddb33d47c322c9d047a",
+      "adapted": false
+    },
+    {
+      "path": "primitives/compound.ts",
+      "registrySha256": "cbaeaed645765fe33df2911a9c6d2efaa21d39d6159ebc3c7fbb64e605014089",
+      "installedSha256": "cbaeaed645765fe33df2911a9c6d2efaa21d39d6159ebc3c7fbb64e605014089",
+      "adapted": false
+    },
+    {
+      "path": "primitives/date.ts",
+      "registrySha256": "668c9d8503b988d10de08abff90fb96fd03b1cd8620d02a0ae000514d152ccf9",
+      "installedSha256": "668c9d8503b988d10de08abff90fb96fd03b1cd8620d02a0ae000514d152ccf9",
+      "adapted": false
+    },
+    {
+      "path": "primitives/index.ts",
+      "registrySha256": "f4b9e186e700bd277082cf1e3ed09dbb75fcf6839a680353d6fb856eaf417b50",
+      "installedSha256": "f4b9e186e700bd277082cf1e3ed09dbb75fcf6839a680353d6fb856eaf417b50",
+      "adapted": false
+    },
+    {
+      "path": "primitives/motion.css",
+      "registrySha256": "fc20a7abc3fb340f665436fd9a5aac7d1e97ca82aa5b08ba74f5f731f058fb65",
+      "installedSha256": "fc20a7abc3fb340f665436fd9a5aac7d1e97ca82aa5b08ba74f5f731f058fb65",
+      "adapted": false
+    },
+    {
+      "path": "primitives/react-compat.ts",
+      "registrySha256": "a3afa6a53875fb70d2652ed269c1cc60530e21d9264ffbc6212527ac77f56294",
+      "installedSha256": "a3afa6a53875fb70d2652ed269c1cc60530e21d9264ffbc6212527ac77f56294",
+      "adapted": false
+    },
+    {
+      "path": "primitives/spring.ts",
+      "registrySha256": "9e16f3642103f9a38c5f9f37392bfe96d395a89fc6b94694325f1ad293fa569e",
+      "installedSha256": "9e16f3642103f9a38c5f9f37392bfe96d395a89fc6b94694325f1ad293fa569e",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useControllableState.ts",
+      "registrySha256": "b8b1b168190d4dedb3c553c56d25e30faac0609f67750fa33161599c01f59e0a",
+      "installedSha256": "b8b1b168190d4dedb3c553c56d25e30faac0609f67750fa33161599c01f59e0a",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useDismissableLayer.ts",
+      "registrySha256": "4f9cfc70bbdd29102fa4181b28cce56fdf7629b1c0c5f25b72cd95e4cb7976d6",
+      "installedSha256": "4f9cfc70bbdd29102fa4181b28cce56fdf7629b1c0c5f25b72cd95e4cb7976d6",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useFlip.ts",
+      "registrySha256": "abd102ab0615a8bcf8e91b4299eef1d54489830af60849156db5562126b3c3fa",
+      "installedSha256": "abd102ab0615a8bcf8e91b4299eef1d54489830af60849156db5562126b3c3fa",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useFloating.ts",
+      "registrySha256": "90a488bcca7915cd382d022c66929639d09db123cfd0eb7575b8e35921dfaf2f",
+      "installedSha256": "90a488bcca7915cd382d022c66929639d09db123cfd0eb7575b8e35921dfaf2f",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useFocusTrap.ts",
+      "registrySha256": "5120f316c9c6e5a7f336e054756f38fe35d0e5ab436a77b327432afda0e2623e",
+      "installedSha256": "5120f316c9c6e5a7f336e054756f38fe35d0e5ab436a77b327432afda0e2623e",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useListNavigation.ts",
+      "registrySha256": "1c1485c6a5b99f66443a381bc9ec4f0882a09be41fbe05b9f30c42b5a857280f",
+      "installedSha256": "1c1485c6a5b99f66443a381bc9ec4f0882a09be41fbe05b9f30c42b5a857280f",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useNow.ts",
+      "registrySha256": "9744e26fd341ca41affaf7d4e30e19eb1a3021df9bfe6c08a68e6d7f3bf4fefc",
+      "installedSha256": "9744e26fd341ca41affaf7d4e30e19eb1a3021df9bfe6c08a68e6d7f3bf4fefc",
+      "adapted": false
+    },
+    {
+      "path": "primitives/usePresence.ts",
+      "registrySha256": "5776d2bc977f1d034c1751d0746662b2857863d6c90f68a197477d0af0ea553f",
+      "installedSha256": "5776d2bc977f1d034c1751d0746662b2857863d6c90f68a197477d0af0ea553f",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useScrollLock.ts",
+      "registrySha256": "7d792bace93de2e7b51e0ce1012a1c1d298e2aded175fd7ec711d0606483d6bd",
+      "installedSha256": "7d792bace93de2e7b51e0ce1012a1c1d298e2aded175fd7ec711d0606483d6bd",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useSpringValue.ts",
+      "registrySha256": "dbda8bfe0998867b081e170ee8e272e99de55ea7c4c6b5ee1197b44f6341d1c4",
+      "installedSha256": "dbda8bfe0998867b081e170ee8e272e99de55ea7c4c6b5ee1197b44f6341d1c4",
+      "adapted": false
+    },
+    {
+      "path": "primitives/useVirtualizer.ts",
+      "registrySha256": "5498be8edb8ab6cfd5dfa17311b4706e1aa424dcf59af9c1c6fc334af3d8cd70",
+      "installedSha256": "5498be8edb8ab6cfd5dfa17311b4706e1aa424dcf59af9c1c6fc334af3d8cd70",
+      "adapted": false
+    },
+    {
+      "path": "primitives/utils.ts",
+      "registrySha256": "ea48e501df3f9c75975ccac8322f61faf3210124198e71ad5ddcda6da4691f77",
+      "installedSha256": "ea48e501df3f9c75975ccac8322f61faf3210124198e71ad5ddcda6da4691f77",
+      "adapted": false
+    },
+    {
+      "path": "primitives/velocity.ts",
+      "registrySha256": "99394d63a38560490e250087bb47194256e9671e79c4d3a139d3b29dd03e7412",
+      "installedSha256": "99394d63a38560490e250087bb47194256e9671e79c4d3a139d3b29dd03e7412",
+      "adapted": false
+    },
+    {
+      "path": "styles/base.css",
+      "registrySha256": "4d3d54dc483e93105d69074820dcafeb685dd7da360389ee9962970f4804a860",
+      "installedSha256": "95bb87e4d8865277d1719aa2e4007b3fe86c211d4861b3d57defbcaf6ac42bec",
+      "adapted": true
+    },
+    {
+      "path": "styles/motion.css",
+      "registrySha256": "d7dabf1c56dea58f2681759ae79dc5fd9d5d17d71251072427cc316d1d94e42b",
+      "installedSha256": "d7dabf1c56dea58f2681759ae79dc5fd9d5d17d71251072427cc316d1d94e42b",
+      "adapted": false
+    },
+    {
+      "path": "styles/themes/vercel.css",
+      "registrySha256": "15778ad27764633ed6f4c9d8749138f2fced8126b2739ec7fae5a1847b3b6ff0",
+      "installedSha256": "b89472fb5e97a9edac1606af3c95375627f789f6e35ac6b53b08d66df3c43826",
+      "adapted": true
+    },
+    {
+      "path": "styles/tokens.css",
+      "registrySha256": "c4afde2ae037aea9c9cd701bc06bb842ebad26c5de35d873c073a10aa18735c4",
+      "installedSha256": "4d268c20fa7b786a18c5bb6a87f75d47ef45171ed7b02b9a4ffa3f423f37cb6d",
+      "adapted": true
+    },
+    {
+      "path": "theme/ThemeProvider.tsx",
+      "registrySha256": "f860a179fcd2ce5245ea62c901afa0cf55682002ffc415ffbf3f239878456177",
+      "installedSha256": "f860a179fcd2ce5245ea62c901afa0cf55682002ffc415ffbf3f239878456177",
+      "adapted": false
+    },
+    {
+      "path": "theme/ThemeScope.css",
+      "registrySha256": "62af1f2d6bfa49ec9b549a13311b3415ad03b82a54b6460ab08347852242e43d",
+      "installedSha256": "62af1f2d6bfa49ec9b549a13311b3415ad03b82a54b6460ab08347852242e43d",
+      "adapted": false
+    },
+    {
+      "path": "theme/ThemeScope.tsx",
+      "registrySha256": "2b97ddfe6637802ebf842283c4f21ebfe5a18d4812a16c16141c15c8dc0ce9e6",
+      "installedSha256": "2b97ddfe6637802ebf842283c4f21ebfe5a18d4812a16c16141c15c8dc0ce9e6",
+      "adapted": false
+    },
+    {
+      "path": "theme/fonts.ts",
+      "registrySha256": "c32ab3e0ce68be2fe7f056cb7d05b5cebe5abf104c3b5e3709d0227e8cbfa5c1",
+      "installedSha256": "c32ab3e0ce68be2fe7f056cb7d05b5cebe5abf104c3b5e3709d0227e8cbfa5c1",
+      "adapted": false
+    },
+    {
+      "path": "theme/themes.ts",
+      "registrySha256": "fcbb2d50d65cdf10d606b3fdb3f98c0e257e0ac138be0492d11bc8cc1292bd0e",
+      "installedSha256": "fcbb2d50d65cdf10d606b3fdb3f98c0e257e0ac138be0492d11bc8cc1292bd0e",
+      "adapted": false
+    },
+    {
+      "path": "theme/useThemeTokens.ts",
+      "registrySha256": "45cb5698fa98e2988ae3192b05bdefe8047ad591d739080962c397011a6270e4",
+      "installedSha256": "45cb5698fa98e2988ae3192b05bdefe8047ad591d739080962c397011a6270e4",
+      "adapted": false
+    },
+    {
+      "path": "forms/TextInput.css",
+      "registrySha256": "bf7c86225bf95087ae38fee4a94547c595bad17b62c1345e8516b92faada5998",
+      "installedSha256": "bf7c86225bf95087ae38fee4a94547c595bad17b62c1345e8516b92faada5998",
+      "adapted": false
+    },
+    {
+      "path": "forms/TextInput.tsx",
+      "registrySha256": "bf6299c378004652b8e2d5bd8b0a87f6e7c6533e587a0b093a7346dbbe5bb0cc",
+      "installedSha256": "bf6299c378004652b8e2d5bd8b0a87f6e7c6533e587a0b093a7346dbbe5bb0cc",
+      "adapted": false
+    },
+    {
+      "path": "forms/form-reset.ts",
+      "registrySha256": "15ca6ae1f7f55f1f4a94fd5989ebf8a816dd9239740107c82b82a8c22efc624f",
+      "installedSha256": "15ca6ae1f7f55f1f4a94fd5989ebf8a816dd9239740107c82b82a8c22efc624f",
+      "adapted": false
+    }
+  ]
+}

@@ -3,7 +3,16 @@
 import { useTenantSelection } from "@payloadcms/plugin-multi-tenant/client";
 import React, { useEffect, useMemo, useState } from "react";
 
+import { useId } from "react";
 import type { AdminLang } from "../admin/text";
+import { AdminSurface } from "./AdminSurface";
+import { StatsCard } from "./valyro-ui/data-display/StatsCard";
+import { BarChart } from "./valyro-ui/charts/BarChart";
+import { AnalyticsFilterBar } from "./valyro-ui/charts/AnalyticsFilterBar";
+import { DataTable } from "./valyro-ui/data-display/DataTable";
+import { EmptyState } from "./valyro-ui/data-display/EmptyState";
+import { Select } from "./valyro-ui/forms/Select";
+import { tableLabels } from "./tableLabels";
 
 type SiteOption = { id: number | string; name: string; configured: boolean };
 
@@ -100,105 +109,6 @@ const TEXT = {
 } satisfies Record<AdminLang, unknown>;
 
 type Text = (typeof TEXT)["en"];
-const ink = { muted: "var(--theme-elevation-500)", line: "var(--theme-elevation-150)" };
-
-function Tile({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ padding: 12, border: `1px solid ${ink.line}`, borderRadius: 4, minWidth: 150 }}>
-      <div style={{ color: ink.muted, fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{value}</div>
-    </div>
-  );
-}
-
-/** Single-series daily pageviews: one hue, 2px gaps, rounded data ends, native hover titles. */
-function DailyBars({ series, t, fmt }: { series: Report["timeseries"]; t: Text; fmt: Intl.NumberFormat }) {
-  const [hover, setHover] = useState<number | null>(null);
-  if (series.length === 0) return <p style={{ color: ink.muted }}>{t.noDaily}</p>;
-  const width = 720;
-  const height = 140;
-  const max = Math.max(1, ...series.map((d) => d.pageviews));
-  const step = width / series.length;
-  const bar = Math.max(1, step - 2);
-  const active = hover === null ? null : series[hover];
-  return (
-    <figure style={{ margin: 0 }}>
-      <figcaption style={{ color: ink.muted, fontSize: 13, marginBottom: 4 }}>
-        {t.perDay}
-        {active ? t.perDayActive(active.date, fmt.format(active.pageviews), fmt.format(active.visitors)) : ""}
-      </figcaption>
-      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} role="img" aria-label={t.perDay} onMouseLeave={() => setHover(null)}>
-        <line x1={0} x2={width} y1={height - 0.5} y2={height - 0.5} stroke="var(--theme-elevation-200)" strokeWidth={1} />
-        {series.map((d, i) => {
-          const h = Math.max(d.pageviews > 0 ? 2 : 0, (d.pageviews / max) * (height - 8));
-          return (
-            <g key={d.date} onMouseEnter={() => setHover(i)}>
-              <rect x={i * step} y={0} width={step} height={height} fill="transparent" />
-              <rect
-                x={i * step + 1}
-                y={height - h}
-                width={bar}
-                height={h}
-                rx={Math.min(4, bar / 2)}
-                fill="#2a78d6"
-                opacity={hover === null || hover === i ? 1 : 0.55}
-              >
-                <title>{t.barTitle(d.date, fmt.format(d.pageviews))}</title>
-              </rect>
-            </g>
-          );
-        })}
-      </svg>
-    </figure>
-  );
-}
-
-function Table<T>({
-  caption,
-  rows,
-  columns,
-  empty,
-}: {
-  caption: string;
-  rows: T[];
-  columns: [string, (row: T) => React.ReactNode, boolean?][];
-  empty: string;
-}) {
-  return (
-    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-      <caption style={{ textAlign: "left", fontWeight: 600, padding: "8px 0" }}>{caption}</caption>
-      <thead>
-        <tr>
-          {columns.map(([title, , numeric]) => (
-            <th key={title} style={{ textAlign: numeric ? "right" : "left", padding: "4px 8px", borderBottom: `1px solid ${ink.line}` }}>
-              {title}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.length === 0 ? (
-          <tr>
-            <td colSpan={columns.length} style={{ padding: 8, color: ink.muted }}>
-              {empty}
-            </td>
-          </tr>
-        ) : (
-          rows.map((row, i) => (
-            <tr key={i}>
-              {columns.map(([title, render, numeric]) => (
-                <td key={title} style={{ padding: "4px 8px", textAlign: numeric ? "right" : "left", fontVariantNumeric: "tabular-nums" }}>
-                  {render(row)}
-                </td>
-              ))}
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
-  );
-}
-
 function describeError(result: Response, t: Text): string {
   if (result.status === "not-configured") return t.notConfigured(result.missing.join(", "));
   if (result.status === "error") {
@@ -216,7 +126,7 @@ function describeError(result: Response, t: Text): string {
   return t.badRequest;
 }
 
-export function AnalyticsPanel({
+function AnalyticsPanelContent({
   sites,
   initialSiteID,
   lang = "en",
@@ -226,6 +136,7 @@ export function AnalyticsPanel({
   lang?: AdminLang;
 }) {
   const t: Text = TEXT[lang];
+  const siteLabelID = useId();
   const fmt = useMemo(() => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en"), [lang]);
   const PERIODS = t.periods;
   const { selectedTenantID } = useTenantSelection();
@@ -269,83 +180,75 @@ export function AnalyticsPanel({
   const pending = sites.find((s) => String(s.id) === siteID);
 
   return (
-    <div>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", margin: "12px 0 16px" }}>
-        <label>
-          {t.site}{" "}
-          <select value={siteID} onChange={(e) => setSiteID(e.target.value)}>
-            {sites.map((s) => (
-              <option key={String(s.id)} value={String(s.id)}>
-                {s.name}
-                {s.configured ? "" : t.notConfiguredOption}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.period}{" "}
-          <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-            {PERIODS.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <span aria-live="polite" style={{ color: ink.muted }}>
-          {loading ? t.loading(pending?.name ?? "", PERIODS.find(([v]) => v === period)?.[1] ?? period) : ""}
-        </span>
-      </div>
-
-      {result && !report ? (
-        <p role="status" style={{ padding: 12, border: `1px solid ${ink.line}`, borderRadius: 4 }}>
-          {describeError(result, t)}
-        </p>
-      ) : null}
-
-      {report ? (
-        <>
-          <div
-            data-analytics-site={current?.siteID}
-            data-analytics-period={current?.period}
-            style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}
-          >
-            <Tile label={t.visitors(site?.name ?? "")} value={fmt.format(report.aggregate.visitors)} />
-            <Tile label={t.pageviews} value={fmt.format(report.aggregate.pageviews)} />
-            <Tile label={t.bounce} value={report.aggregate.bounceRate === null ? "—" : `${report.aggregate.bounceRate}%`} />
-            <Tile
-              label={t.duration}
-              value={report.aggregate.visitDuration === null ? "—" : `${Math.round(report.aggregate.visitDuration)} ${t.seconds}`}
-            />
+    <AdminSurface lang={lang}>
+      <div className="gd-analytics">
+        <div className="gd-analytics__filters">
+          <div className="gd-analytics__site">
+            <span id={siteLabelID}>{t.site}</span>
+            <Select aria-labelledby={siteLabelID} value={siteID} onValueChange={setSiteID}
+              options={sites.map((s) => ({ value: String(s.id), label: s.name + (s.configured ? "" : t.notConfiguredOption) }))} />
           </div>
-          <DailyBars series={report.timeseries} t={t} fmt={fmt} />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24, marginTop: 16 }}>
-            <Table
-              caption={t.topPages}
-              rows={report.topPages}
-              empty={t.noData}
-              columns={[
-                [t.page, (r) => r.page],
-                [t.visitorsCol, (r) => fmt.format(r.visitors), true],
-                [t.pageviews, (r) => fmt.format(r.pageviews), true],
-              ]}
-            />
-            <Table
-              caption={t.sources}
-              rows={report.sources}
-              empty={t.noData}
-              columns={[
-                [t.source, (r) => r.source],
-                [t.visitorsCol, (r) => fmt.format(r.visitors), true],
-              ]}
-            />
-          </div>
-          <p style={{ color: ink.muted, marginTop: 12 }}>
-            {t.footer}
-            {result?.status === "ok" ? t.fetched(new Date(result.fetchedAt).toLocaleString(lang === "ru" ? "ru-RU" : undefined), result.cached) : ""}.
+          <AnalyticsFilterBar
+            value={{ range: period, filters: [], compare: false, granularity: "day" }}
+            onValueChange={(value) => { if (PERIODS.some(([key]) => key === value.range)) setPeriod(value.range); }}
+            ranges={PERIODS.map(([value, label]) => ({ value, label }))}
+            showCompare={false} showGranularity={false}
+            labels={{ group: t.period, dateRange: t.period }}
+          />
+          <p className="gd-analytics__status" role="status" aria-live="polite">
+            {loading ? t.loading(pending?.name ?? "", PERIODS.find(([v]) => v === period)?.[1] ?? period) : ""}
           </p>
-        </>
-      ) : null}
-    </div>
+        </div>
+
+        {result && !report ? <EmptyState title={describeError(result, t)} role="status" bordered /> : null}
+
+        {loading ? <div className="gd-analytics__stats" aria-busy="true">
+          {[t.visitors(pending?.name ?? ""), t.pageviews, t.bounce, t.duration].map((label) => <StatsCard key={label} label={label} value="" loading />)}
+        </div> : null}
+
+        {report ? <>
+          <div data-analytics-site={current?.siteID} data-analytics-period={current?.period} className="gd-analytics__stats">
+            <StatsCard label={t.visitors(site?.name ?? "")} value={report.aggregate.visitors} locale={lang} />
+            <StatsCard label={t.pageviews} value={report.aggregate.pageviews} locale={lang} />
+            <StatsCard label={t.bounce} value={report.aggregate.bounceRate === null ? "—" : `${fmt.format(report.aggregate.bounceRate)}%`} />
+            <StatsCard label={t.duration} value={report.aggregate.visitDuration === null ? "—" : `${fmt.format(Math.round(report.aggregate.visitDuration))} ${t.seconds}`} />
+          </div>
+          {report.timeseries.length === 0 ? <EmptyState size="sm" title={t.noDaily} /> :
+            <BarChart data={report.timeseries} x="date" series={[{ key: "pageviews", label: t.pageviews, color: "var(--gd-amber)" }]}
+              ariaLabel={t.perDay} xLabel={lang === "ru" ? "Дата" : "Date"} locale={lang} valueFormatter={(value) => fmt.format(value)}
+              labels={{ empty: t.noData, total: lang === "ru" ? "Всего" : "Total" }} />}
+          <div className="gd-analytics__tables">
+            <section aria-label={t.topPages}>
+              <h2>{t.topPages}</h2>
+              <DataTable data={report.topPages} label={t.topPages} locale={lang} density="compact" labels={tableLabels(lang)}
+                getRowId={(row) => row.page} empty={<EmptyState size="sm" title={t.noData} />}
+                columns={[
+                  { key: "page", header: t.page, sortable: true },
+                  { key: "visitors", header: t.visitorsCol, sortable: true, align: "right" },
+                  { key: "pageviews", header: t.pageviews, sortable: true, align: "right" },
+                ]} />
+            </section>
+            <section aria-label={t.sources}>
+              <h2>{t.sources}</h2>
+              <DataTable data={report.sources} label={t.sources} locale={lang} density="compact" labels={tableLabels(lang)}
+                getRowId={(row) => row.source} empty={<EmptyState size="sm" title={t.noData} />}
+                columns={[
+                  { key: "source", header: t.source, sortable: true },
+                  { key: "visitors", header: t.visitorsCol, sortable: true, align: "right" },
+                ]} />
+            </section>
+          </div>
+          <p className="gd-analytics__footer">{t.footer}
+            {result?.status === "ok" ? t.fetched(new Date(result.fetchedAt).toLocaleString(lang === "ru" ? "ru-RU" : "en-GB"), result.cached) : ""}.
+          </p>
+        </> : null}
+      </div>
+    </AdminSurface>
   );
+}
+
+export function AnalyticsPanel(props: { sites: SiteOption[]; initialSiteID: number | string | null; lang?: AdminLang }) {
+  const lang = props.lang ?? "en";
+  if (props.sites.length === 0) return <AdminSurface lang={lang}><EmptyState title={TEXT[lang].forbidden} role="status" /></AdminSurface>;
+  return <AnalyticsPanelContent {...props} />;
 }

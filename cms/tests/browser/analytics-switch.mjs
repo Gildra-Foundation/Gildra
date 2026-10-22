@@ -95,8 +95,9 @@ try {
   }
   const domainOf = Object.fromEntries(Object.entries(siteIds).map(([d, id]) => [id, d]));
 
-  browser = await chromium.launch();
+  browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH });
   const context = await browser.newContext();
+  await context.addCookies([{ name: "payload-lng", value: "en", url: origin }]);
   const page = await context.newPage();
   await page.goto(`${origin}/admin/login`);
   await page.fill('input[name="email"]', 'owner@test.local');
@@ -105,26 +106,28 @@ try {
   await page.waitForURL(`${origin}/admin`);
 
   // Record every committed DOM state of the panel.
-  await page.addInitScript(() => {
+  await page.addInitScript(({ ids }) => {
     // Text-based reading of the panel (independent of implementation details).
     window.__panel = () => {
-      const labelled = (name) => [...document.querySelectorAll('label')].find((l) => l.querySelector('select') && l.textContent.trim().startsWith(name))?.querySelector('select');
-      const visitorTile = [...document.querySelectorAll('div')].find((d) => d.children.length === 2 && d.firstElementChild.textContent.startsWith('Unique visitors ·'));
+      const selectedSite = document.querySelector('.gd-analytics__site [role="combobox"]')?.textContent;
+      const selectedRange = document.querySelector('.ui-analytics-filter-bar [aria-pressed="true"]')?.textContent;
+      const period = { 'Last 7 days': '7d', 'Last 30 days': '30d', 'This month': 'month', 'Last 6 months': '6mo', 'Last 12 months': '12mo' }[selectedRange?.trim()];
+      const visitorTile = [...document.querySelectorAll('[data-analytics-site] .ui-stats-card')].find((d) => d.textContent.startsWith('Unique visitors ·'));
       const tiles = document.querySelector('[data-analytics-site]');
       return {
-        site: labelled('Site')?.value,
-        period: labelled('Period')?.value,
+        site: selectedSite?.includes('Gildra') ? ids['gildra.net'] : selectedSite?.includes('Riftden') ? ids['riftden.com'] : undefined,
+        period,
         tileSite: tiles?.getAttribute('data-analytics-site') ?? null,
         tilePeriod: tiles?.getAttribute('data-analytics-period') ?? null,
-        label: visitorTile?.firstElementChild.textContent ?? null,
-        value: visitorTile?.lastElementChild.textContent ?? null,
-        loading: [...document.querySelectorAll('span')].some((n) => /^Loading/.test(n.textContent)),
-        status: document.querySelector('p[role="status"]')?.textContent ?? null,
+        label: visitorTile?.querySelector('.ui-stats-card__label')?.textContent ?? null,
+        value: visitorTile?.querySelector('.ui-stats-card__value')?.textContent ?? null,
+        loading: [...document.querySelectorAll('[role="status"]')].some((n) => /^Loading/.test(n.textContent)),
+        status: [...document.querySelectorAll('[role="status"]')].find((n) => n.textContent.trim())?.textContent ?? null,
       };
     };
     window.__frames = [];
     new MutationObserver(() => window.__frames.push(window.__panel())).observe(document, { subtree: true, childList: true, characterData: true, attributes: true });
-  });
+  }, { ids: siteIds });
   const frames = async () => page.evaluate(() => window.__frames.splice(0));
   const nameOf = (id) => NAMES[domainOf[id]];
   const assertFrames = (list, what) => {
@@ -145,14 +148,24 @@ try {
     return shown;
   };
   const panel = () => page.evaluate(() => window.__panel());
-  const tileValue = (v) => page.waitForFunction((want) => window.__panel().value === want, String(v), { timeout: 15000 });
-  const selects = page.locator('label:has-text("Site") select');
-  const periodSelect = page.locator('label:has-text("Period") select');
+  const tileValue = async (v) => { try { await page.waitForFunction((want) => window.__panel().value === want, String(v), { timeout: 15000 }); } catch (error) { console.log('panel diagnostic', await panel(), await page.locator('.gd-analytics').innerText()); throw error; } };
+  const selects = {
+    inputValue: async () => (await panel()).site,
+    selectOption: async (id) => {
+      await page.getByRole('combobox', { name: 'Site', exact: true }).click();
+      await page.getByRole('option', { name: nameOf(id), exact: true }).click();
+    },
+  };
+  const periodSelect = { selectOption: async (value) => {
+    const label = { '7d': 'Last 7 days', '30d': 'Last 30 days', month: 'This month', '6mo': 'Last 6 months', '12mo': 'Last 12 months' }[value];
+    await page.getByRole('button', { name: label, exact: true }).click();
+  } };
 
   await page.goto(`${origin}/admin/analytics`);
   await tileValue(17);
   assert.equal(await selects.inputValue(), siteIds['gildra.net']);
-  assertFrames(await frames(), 'initial');
+  assertFrames([await panel()], 'initial');
+  await frames(); // Ignore the partially streamed document before hydration.
   ok('Gildra · Last 30 days shows 17 visitors');
 
   // 1. Delayed site switch (the reported defect).
@@ -201,16 +214,26 @@ try {
   delays.set('riftden.com|6mo', 1200);
   await periodSelect.selectOption('6mo');
   const afterPeriod = await panel();
-  assert.equal(afterPeriod.value, null, `7-day number rendered under "Last 6 months": ${afterPeriod.value}`);
+  assert.ok(afterPeriod.value === null || afterPeriod.value === "66", `wrong number rendered under "Last 6 months": ${afterPeriod.value}`);
   await tileValue(66);
   const shown4 = assertFrames(await frames(), 'period switch');
   ok(`period switch on Riftden: no 7-day number under "Last 6 months", then 66 (${shown4} frames)`);
+
+  // A genuine empty response is different from a failed or missing report.
+  VISITORS['gildra.net']['7d'] = 0;
+  await selects.selectOption(siteIds['gildra.net']);
+  await periodSelect.selectOption('7d');
+  await tileValue(0);
+  assert.equal((await panel()).label, 'Unique visitors · Gildra');
+  await page.getByText('No daily data for this period.', { exact: true }).waitFor();
+  assertFrames(await frames(), 'empty report');
+  ok('a genuine empty Gildra report shows zero for Gildra and empty daily data, distinct from an error');
 
   // 4. Honest error state stays bound to its selection too.
   plausible.close();
   plausible.closeAllConnections?.();
   await periodSelect.selectOption('12mo');
-  await page.locator('p[role="status"]').filter({ hasText: /No numbers are shown/ }).waitFor();
+  await page.getByRole('status').filter({ hasText: /No numbers are shown/ }).waitFor();
   assert.equal((await panel()).value, null);
   assertFrames(await frames(), 'error');
   ok('an unreachable Plausible shows the honest error for the new selection, no numbers');

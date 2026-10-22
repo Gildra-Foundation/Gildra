@@ -354,22 +354,26 @@ export async function loadPreview(req: PayloadRequest, token: unknown, loc: Loca
   const site = relationID(doc.site)!;
   if (claims.c === "guides") {
     const [article] = await presentArticles(req, site, loc, [doc], true, { draft: true, user: staff });
-    return { status: 200 as const, collection: claims.c, doc: article, canPublish: hasSiteRole(staff, site, PUBLISH_ROLES), user: staff };
+    return { status: 200 as const, collection: claims.c, doc: article, site, canPublish: hasSiteRole(staff, site, PUBLISH_ROLES), user: staff };
   }
   const resolver = await buildResolver(req, site, [doc.content], [(doc.seo as Doc | undefined)?.image]);
-  return { status: 200 as const, collection: claims.c, doc: projectPage(doc, resolver), canPublish: hasSiteRole(staff, site, PUBLISH_ROLES), user: staff };
+  return { status: 200 as const, collection: claims.c, doc: projectPage(doc, resolver), site, canPublish: hasSiteRole(staff, site, PUBLISH_ROLES), user: staff };
 }
 
 const previewContent: Endpoint = {
   path: "/preview-content",
   method: "get",
   handler: async (req) => {
+    const headers = { "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer" };
     const result = await loadPreview(req, req.searchParams.get("token"), locale(req));
-    if (result.status !== 200) return json({ status: result.status === 404 ? "not-found" : "forbidden" }, result.status);
+    if (result.status !== 200) return json({ status: result.status === 404 ? "not-found" : "forbidden" }, result.status, headers);
     // A staff session on the CMS domain must match the token's user when present.
     const sessionUser = asStaff(req.user);
-    if (sessionUser && !sameID(sessionUser.id, result.user.id)) return json({ status: "forbidden" }, 403);
-    return json({ preview: true, collection: result.collection, doc: result.doc }, 200, { "x-robots-tag": "noindex" });
+    if (sessionUser && !sameID(sessionUser.id, result.user.id)) return json({ status: "forbidden" }, 403, headers);
+    const site = await req.payload.findByID({ collection: "sites", id: result.site, depth: 0, overrideAccess: true, disableErrors: true });
+    const expected = req.searchParams.get("site");
+    if (!site || (expected !== null && expected !== site.slug)) return json({ status: "not-found" }, 404, headers);
+    return json({ preview: true, collection: result.collection, site: { slug: site.slug }, doc: result.doc }, 200, headers);
   },
 };
 
