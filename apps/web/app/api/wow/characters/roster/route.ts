@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   const locale = url.searchParams.get("locale") === "ru" ? "ru" : "en";
   const results = await Promise.all(regions.map(async (region) => {
     try {
-      const characters = await getBattleNetCharacters(accessToken, locale, region);
+      const characters = await getBattleNetCharacters(accessToken, locale, region, request.signal);
       return { region, characters, status: 200 };
     } catch (error) {
       const status = error instanceof BattleNetProfileError ? error.status : 503;
