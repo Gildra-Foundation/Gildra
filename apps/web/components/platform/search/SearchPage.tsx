@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
+import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
 import { entityTypeLabel } from "@/components/database/databaseCopy";
@@ -58,13 +59,14 @@ export function SearchPage({
         actions={(
           <SearchRouteForm className={styles.searchForm} action={`${prefix}/search`} role="search">
             <Search className={styles.searchIcon} aria-hidden="true" />
-            <input id="platform-search-input" name="q" type="search" defaultValue={query} aria-label={t.inputLabel} placeholder={t.placeholder} autoComplete="off" autoFocus={!query} />
+            {/* Reset an edited draft when Clear or browser history changes the URL query. */}
+            <input key={query} id="platform-search-input" name="q" type="search" defaultValue={query} aria-label={t.inputLabel} placeholder={t.placeholder} autoComplete="off" autoFocus={!query} />
             {kind !== "all" ? <input type="hidden" name="type" value={kind} /> : null}
             {selectedGames.length < catalogGames.length ? selectedGames.map((game) => <input key={game} type="hidden" name="game" value={game} />) : null}
             {query
               ? <Link className={styles.clearQuery} href={searchHref(lang, "", kind, selectedGames)} aria-label={t.clearQuery}><X aria-hidden="true" /></Link>
               : <kbd title={t.shortcut} aria-label={t.shortcut}>/</kbd>}
-            <button type="submit">{t.submit}</button>
+            <AtlasButton className={styles.submit} type="submit" variant="primary">{t.submit}</AtlasButton>
           </SearchRouteForm>
         )}
       />
@@ -97,7 +99,7 @@ export function SearchPage({
                   {!game.available ? <small>{t.soon}</small> : null}
                 </label>
               ))}
-              <button type="submit">{t.apply}</button>
+              <AtlasButton className={styles.apply} type="submit">{t.apply}</AtlasButton>
             </SearchRouteForm>
           </aside>
         ) : null}
