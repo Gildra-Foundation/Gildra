@@ -3,6 +3,30 @@
 The admin work continues the existing Valyro implementation; it does not replace
 Payload authentication, permissions, tenant access, native editing or publication.
 
+## Verified release baseline — v6, 22 October 2026
+
+The deployed CMS source is `55297e8a6ad01df9b186eff224c4fdcae5bcd1a9`
+(media discovery/upload guidance, integrated by `f7a61da7`). Its CMS subtree is
+identical to local main `32171f98e349b36ca433c02b88dab607a12cc9c1`, the v6 web
+release. Production publication is verified; GitHub remote main is **not**
+updated: the last v6 write probe returned 403 and server Git lacked HTTPS
+credentials. Local integration and deployment must not be described as a
+successful remote push.
+
+Release evidence is retained locally in the integration checkout under
+`.artifacts/polish-v6/RELEASE.md`, `release-summary.json`, `deployment.json` and
+`admin/QA.md` (these artifacts are not guaranteed to exist in a fresh clone).
+The v6 native Payload media gate covers 42 checks in 6 EN/RU desktop/mobile cases
+with isolated synthetic accounts, actual upload/search/cover selection and
+draft-only autosave. The v5 editorial/language/comparison gate covers 124 checks
+on its own earlier image; it was not rerun or counted as v6 media evidence.
+Neither gate certifies every admin flow or authenticated public Characters.
+
+The adoption checklist and iteration notes below preserve what was verified
+**at each implementation stage**. Their unchecked items and “release follows”
+statements are historical, not the current release status. They are retained
+rather than retrospectively marking tests as run on a different source/image.
+
 ## Adopted source
 
 The integration repository's CMS preceded the deployed Valyro workbench. This
@@ -31,7 +55,7 @@ network requests are introduced. `VALYRO.md` and `WORKFLOWS.md` describe the ear
 18 October work; their "not deployed" statements are historical, superseded by
 the 19 October release record above.
 
-## Current improvement
+## Initial adoption improvements
 
 - The Articles navigation item stays active on native article creation, editing
   and version routes. Permission-gated navigation and the command palette keep
@@ -50,7 +74,7 @@ the 19 October release record above.
 - Valyro loading indicators and a brief result entrance provide feedback. Data is
   never retained for an exit animation; reduced motion disables result movement.
 
-## Verification checklist
+## Initial adoption verification checklist (historical)
 
 - [x] TypeScript check.
 - [x] Unit suite: 61 tests, including URL normalization and active alias coverage.
