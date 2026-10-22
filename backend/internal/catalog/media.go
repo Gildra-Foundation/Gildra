@@ -3,7 +3,9 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -29,21 +31,28 @@ func iconURLFromName(name string) (string, bool) {
 	return officialIconOrigin + url.PathEscape(name) + ".jpg", true
 }
 
-func (s *Service) enrichTooltipMedia(ctx context.Context, tooltip *Tooltip) error {
-	if tooltip == nil || len(tooltip.Blocks) == 0 {
+// enrichTooltipMedia attaches cached icon URLs to the entity references in
+// all given tooltips with a single lookup, so a list page costs one query
+// instead of one per entity.
+func (s *Service) enrichTooltipMedia(ctx context.Context, tooltips ...*Tooltip) error {
+	unique := make(map[uuid.UUID]struct{})
+	for _, tooltip := range tooltips {
+		if tooltip != nil {
+			collectTooltipEntityIDs(tooltip.Blocks, unique)
+		}
+	}
+	if len(unique) == 0 {
 		return nil
 	}
-	unique := make(map[uuid.UUID]struct{})
-	collectTooltipEntityIDs(tooltip.Blocks, unique)
-	ids := make([]uuid.UUID, 0, len(unique))
-	for id := range unique {
-		ids = append(ids, id)
-	}
-	urls, err := s.cachedIconURLs(ctx, ids)
+	urls, err := s.cachedIconURLs(ctx, slices.Collect(maps.Keys(unique)))
 	if err != nil {
 		return err
 	}
-	attachTooltipMediaURLs(tooltip.Blocks, urls)
+	for _, tooltip := range tooltips {
+		if tooltip != nil {
+			attachTooltipMediaURLs(tooltip.Blocks, urls)
+		}
+	}
 	return nil
 }
 
