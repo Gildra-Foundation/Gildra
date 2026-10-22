@@ -4,7 +4,7 @@
 }
 
 /* Open hero: the title sits on the page artwork with room to breathe. */
-.open .body { padding-block: var(--atlas-space-5) var(--atlas-space-3); }
+.open .body { padding-block: var(--atlas-space-6) var(--atlas-space-5); }
 
 .topRow {
   display: flex;
@@ -183,4 +183,30 @@
 @media (max-width: 720px) {
   .center .copy::before { inset: -32px -24px; }
   .center .title::after { width: 128px; }
+}
+
+/* A chapter masthead uses real page context and facts instead of another panel. */
+.chapter .body {
+  align-items: end;
+  gap: var(--atlas-space-7);
+  padding-block: var(--atlas-space-7) var(--atlas-space-6);
+  border-bottom: 1px solid var(--atlas-line);
+}
+.chapter .copy { max-width: 52rem; }
+.chapter .eyebrow { margin-bottom: var(--atlas-space-4); }
+.chapter .eyebrow::before { width: 40px; background: currentColor; }
+.chapter .title { max-width: 18ch; }
+.chapter .lede { max-width: 56ch; margin-top: var(--atlas-space-4); }
+.chapter .side {
+  padding-block: var(--atlas-space-4);
+  padding-inline-start: var(--atlas-space-6);
+  border-inline-start: 1px solid var(--atlas-line);
+}
+@media (max-width: 1100px) {
+  .chapter .body { gap: var(--atlas-space-5); }
+  .chapter .side { padding: var(--atlas-space-4) 0 0; border-inline-start: 0; border-top: 1px solid var(--atlas-line-soft); }
+}
+@media (max-width: 720px) {
+  .chapter .body { padding-block: var(--atlas-space-5); }
+  .chapter .eyebrow { margin-bottom: var(--atlas-space-3); }
 }

@@ -9,7 +9,10 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--atlas-space-3) var(--atlas-space-5);
-  margin-bottom: var(--atlas-space-4);
+  position: relative;
+  margin-bottom: var(--atlas-space-5);
+  padding-top: var(--atlas-space-5);
+  border-top: 1px solid var(--atlas-line-soft);
 }
 
 .headingCopy { flex: 1 1 auto; min-width: 0; view-timeline: --atlas-section block; }
@@ -39,38 +42,17 @@
   text-wrap: balance;
 }
 
-/* Map-legend flourish under the heading: an ember dot and a fading amber rule.
-   It draws itself as the section scrolls into view. */
-.title::after {
-  display: block;
-  width: 88px;
-  height: 7px;
-  margin-top: 9px;
+/* A short engraved rule starts each chapter without inventing section numbers. */
+.header::before {
+  position: absolute;
+  inset-block-start: -1px;
+  inset-inline-start: 0;
+  width: 48px;
+  height: 1px;
   content: "";
-  background:
-    radial-gradient(circle at 3.5px 50%, var(--atlas-accent-strong) 0 2.6px, transparent 3.4px),
-    linear-gradient(90deg, var(--atlas-accent), transparent) 12px 50% / calc(100% - 12px) 1px no-repeat;
-  filter: drop-shadow(0 0 5px var(--atlas-accent-glow));
-  transform-origin: left center;
+  background: var(--atlas-accent);
 }
-
 .titleSmall { font-size: var(--atlas-text-h3); }
-.titleSmall::after { width: 64px; margin-top: 7px; }
-
-@supports (animation-timeline: view()) {
-  @media screen and (prefers-reduced-motion: no-preference) {
-    .title::after {
-      animation: atlas-flourish linear both;
-      animation-timeline: --atlas-section;
-      animation-range: entry 30% cover 35%;
-    }
-  }
-}
-
-@keyframes atlas-flourish {
-  from { opacity: 0; transform: scaleX(.08); }
-  to { opacity: 1; transform: none; }
-}
 
 .description {
   max-width: var(--atlas-measure-wide);
