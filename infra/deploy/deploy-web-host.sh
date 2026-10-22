@@ -6,9 +6,11 @@
 #   sudo infra/deploy/deploy-web-host.sh <label> [--ref <git-ref>] [--staging]
 #        [--image <local-image>] [--expect <path>:<text>] [--prune | --prune-dry-run] [--keep <n>]
 #
-# The image is built from the committed tree of <git-ref> (default HEAD) via
-# `git archive`, so uncommitted or ignored files never reach production. It is
-# tagged gildra-web:<label>-<sha12> and labelled with the label and revision.
+# The image is built from the committed tree of <git-ref> (default HEAD), so
+# uncommitted or ignored files never reach production: a private build copy
+# ($GILDRA_BUILD_DIR) is reset to that tree with its own index, rewriting only
+# the files that changed, so BuildKit sends a small incremental context. The
+# image is tagged gildra-web:<label>-<sha12> and labelled with label and revision.
 # The release itself keeps the safety of the earlier hand-made host scripts:
 #  * the shared deployment lock (/run/lock/gildra-deploy.lock), taken after the
 #    build so a slow build never blocks another deployment;
@@ -32,6 +34,7 @@ manifest=$root/current-release.env
 lock=${GILDRA_DEPLOY_LOCK_FILE:-/run/lock/gildra-deploy.lock}
 lock_wait=${GILDRA_LOCK_WAIT:-600}
 source_dir=${GILDRA_SOURCE_DIR:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel)}
+build_dir=${GILDRA_BUILD_DIR:-/var/cache/gildra/web-build}
 smoke_host=${GILDRA_SMOKE_HOST:-127.0.0.1}
 smoke_port=${GILDRA_SMOKE_PORT:-443}
 smoke_paths=${GILDRA_WEB_SMOKE_PATHS:-"/ /ru /wow /ru/wow /login /ru/login /tier-lists /ru/tier-lists /database /ru/database /sitemap.xml /wow/raids /ru/wow/raids /wow/mythic-plus /ru/wow/mythic-plus /ru/wow/characters /ru/talents/fury-warrior /ru/search /library /ru/library /ru/privacy /wow/lairs /ru/wow/dungeons /ru/wow/gear /ru/wow/rotation/fury-warrior"}
@@ -101,7 +104,7 @@ reload_nginx() {
   nginx=$(compose ps -q nginx)
   [ -n "$nginx" ] || return 1
   docker exec "$nginx" nginx -t >/dev/null 2>&1
-  docker exec "$nginx" nginx -s reload >/dev/null
+  docker exec "$nginx" nginx -s reload >/dev/null 2>&1
 }
 
 # Every path through nginx, eight at a time; any failure fails the check.
@@ -192,15 +195,23 @@ if [ -z "$image" ]; then
   revision=$(git -C "$source_dir" rev-parse --verify "$ref^{commit}")
   image=gildra-web:$label-${revision:0:12}
 
+  step "source $(printf '%.12s' "$revision")"
+  # Like `git reset --hard <revision> && git clean -fdx` on a private worktree,
+  # without touching HEAD or the index of the source checkout.
+  git_dir=$(git -C "$source_dir" rev-parse --path-format=absolute --git-common-dir)
+  umask 022
+  mkdir -p "$build_dir/src"
+  GIT_INDEX_FILE=$build_dir/index git --git-dir="$git_dir" --work-tree="$build_dir/src" read-tree --reset -u "$revision"
+  GIT_INDEX_FILE=$build_dir/index git --git-dir="$git_dir" --work-tree="$build_dir/src" clean -fdxq
+
   step build
   # BuildKit keeps the npm and Next.js caches in cache mounts (Dockerfile), so a
   # rebuild only redoes what the commit changed.
-  git -C "$source_dir" archive --format=tar "$revision" |
-    DOCKER_BUILDKIT=1 docker build --progress="${GILDRA_BUILD_PROGRESS:-auto}" \
-      --label "net.gildra.patch=$label" \
-      --label "org.opencontainers.image.revision=$revision" \
-      --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-      -t "$image" -
+  DOCKER_BUILDKIT=1 docker build --progress="${GILDRA_BUILD_PROGRESS:-auto}" \
+    --label "net.gildra.patch=$label" \
+    --label "org.opencontainers.image.revision=$revision" \
+    --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    -t "$image" "$build_dir/src"
 else
   revision=$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")
 fi
