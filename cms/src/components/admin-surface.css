@@ -168,3 +168,21 @@
 
 .gd-valyro .gd-choose__site.ui-button { height: auto; display: grid; justify-content: stretch; padding: var(--ui-space-4); }
 .gd-valyro .gd-choose__site .ui-button__label { display: grid; justify-items: start; gap: var(--ui-space-1); }
+
+/* Header RU / EN switch: the selected language on the amber, as in the mockups. */
+.gd-valyro .gd-lang-switch {
+  --ui-segmented-control-bg: var(--atlas-surface-sunken);
+  --ui-segmented-control-shadow: inset 0 0 0 1px var(--atlas-line);
+  --ui-segmented-control-radius: var(--atlas-radius);
+  --ui-segmented-control-pad: 2px;
+  --ui-segmented-control-item-fg: var(--atlas-text-muted);
+  --ui-segmented-control-item-tracking: .04em;
+  --ui-segmented-control-thumb-bg: var(--atlas-accent);
+  --ui-segmented-control-thumb-shadow: none;
+  --ui-fg: var(--atlas-accent-ink);
+  --ui-control-h-sm: 32px;
+  font-weight: 600;
+}
+/* The sliding thumb is measured after hydration; until then (and without JS) the
+   selected segment carries the same amber itself, so its dark label stays legible. */
+.gd-valyro .gd-lang-switch .ui-segmented-control__item[data-active] { background: var(--atlas-accent); border-radius: var(--atlas-radius); }

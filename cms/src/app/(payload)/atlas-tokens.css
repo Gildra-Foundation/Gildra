@@ -42,20 +42,22 @@
   --atlas-caution: #e3b25a;
   --atlas-info: #93b3d8;
 
-  /* Typography (families: next/font in app/(payload)/layout.tsx) */
+  /* Typography (families: next/font in app/(payload)/layout.tsx). Sizes are the
+     site's rem values in px (1rem = 16px there): Payload sets the admin's root
+     font size to 13px, so rem would shrink every size to 81%. */
   --atlas-font-display: var(--font-atlas-display), "Alegreya Fallback Local", Georgia, "Times New Roman", serif;
   --atlas-font-ui: var(--font-ui), "Inter Fallback Local", "Segoe UI", Roboto, Arial, sans-serif;
   --atlas-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --atlas-weight-display: 600;
-  --atlas-text-h2: clamp(1.625rem, 1.25rem + 1.3vw, 2.375rem);
-  --atlas-text-h3: clamp(1.25rem, 1.1rem + .5vw, 1.5rem);
-  --atlas-text-title: 1.125rem;
-  --atlas-text-lead: 1rem;
-  --atlas-text-body: .9375rem;
-  --atlas-text-small: .8125rem;
-  --atlas-text-meta: .75rem;
-  --atlas-text-label: .6875rem;
-  --atlas-text-stat: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  --atlas-text-h2: clamp(26px, 20px + 1.3vw, 38px);
+  --atlas-text-h3: clamp(20px, 17.6px + .5vw, 24px);
+  --atlas-text-title: 18px;
+  --atlas-text-lead: 16px;
+  --atlas-text-body: 15px;
+  --atlas-text-small: 13px;
+  --atlas-text-meta: 12px;
+  --atlas-text-label: 11px;
+  --atlas-text-stat: clamp(24px, 19.2px + 1vw, 32px);
   --atlas-leading-tight: 1.04;
   --atlas-leading-snug: 1.25;
   --atlas-leading-body: 1.6;
