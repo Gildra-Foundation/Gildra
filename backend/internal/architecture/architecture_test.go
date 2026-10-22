@@ -24,7 +24,7 @@ var transports = map[string]bool{"httpapi": true, "graphqlapi": true, "adminpane
 
 // leaves are shared helper packages any package may import. A leaf imports
 // no other internal package, so it can never pull a domain into another one.
-var leaves = map[string]bool{"httpjson": true}
+var leaves = map[string]bool{"httpjson": true, "mediafiles": true, "pagination": true}
 
 // allowedEdges is the complete list of imports between internal packages
 // (production code). Keep it short: prefer wiring in cmd/* over a new edge.
