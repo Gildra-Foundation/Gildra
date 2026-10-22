@@ -227,10 +227,6 @@ func run() error {
 	return nil
 }
 
-func observeDB2LocalizationArtifacts(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext) error {
-	return observeDB2LocalizationArtifactsForTables(ctx, db, ic, nil)
-}
-
 func existingItemProjectionContext(ctx context.Context, db *pgxpool.Pool, product string, buildNumber int) (catalogimport.ImportContext, error) {
 	return existingCompleteProjectionContext(ctx, db, product, buildNumber, "db2.item")
 }
@@ -1752,10 +1748,6 @@ func projectPvpTalents(ctx context.Context, db *pgxpool.Pool, ic catalogimport.I
 		return nil
 	})
 	return projected, err
-}
-
-func projectCollections(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext) (int64, error) {
-	return projectCollectionsForTables(ctx, db, ic, nil)
 }
 
 func projectCollectionsForTables(

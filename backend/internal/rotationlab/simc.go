@@ -1303,15 +1303,6 @@ func isObservedCast(action simcAction, cooldowns []CooldownWindow) bool {
 	return true
 }
 
-func hasSimCBuff(action simcAction, name string) bool {
-	for _, buff := range action.Buffs {
-		if buff.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
 func buffUptime(player simcPlayer, name string) float64 {
 	for _, buff := range player.Buffs {
 		if buff.Name == name {
@@ -1382,16 +1373,4 @@ func simcFindings(resources []ResourceTrack, cooldowns []CooldownWindow, fightLe
 		}
 	}
 	return findings
-}
-
-func sameRules(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for index := range left {
-		if left[index] != right[index] {
-			return false
-		}
-	}
-	return true
 }

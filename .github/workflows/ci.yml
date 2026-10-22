@@ -128,7 +128,10 @@ jobs:
       - run: git diff --exit-code
       - run: go tool goose -dir migrations/postgres validate
       - run: go tool goose -dir migrations/clickhouse validate
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
       - run: go vet ./...
+      - run: go run honnef.co/go/tools/cmd/staticcheck@2026.2.1 ./...
       - run: go test -race -coverprofile=coverage.out ./...
 
   integration:
