@@ -1,0 +1,24 @@
+/* atlas:strict — touch talent inspection, readable description and explicit rank actions. */
+.sheet > div { grid-template-rows: auto minmax(0, 1fr) auto; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--atlas-space-3); padding: var(--atlas-space-4); border-bottom: 1px solid var(--atlas-line-soft); }
+.header > div { min-width: 0; }
+.header p { margin: 0 0 var(--atlas-space-2); color: var(--atlas-accent); font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.header h2 { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); line-height: var(--atlas-leading-snug); overflow-wrap: anywhere; }
+.close:global(.ui-button) { flex: none; width: 44px; min-height: 44px; padding: 0; }
+.content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--atlas-space-4); color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.content p { margin: 0 0 var(--atlas-space-3); }
+.rank { display: flex; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-3); color: var(--atlas-text-muted); }
+.rank strong { color: var(--atlas-accent-strong); font-size: var(--atlas-text-title); font-variant-numeric: tabular-nums; }
+.notice { padding: var(--atlas-space-3); border-left: 2px solid var(--atlas-accent); background: var(--atlas-accent-wash); }
+.choice + .choice { margin-top: var(--atlas-space-4); padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
+.choice h3 { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); line-height: var(--atlas-leading-snug); }
+.choice h3 span { display: block; margin-top: var(--atlas-space-1); color: var(--atlas-accent); font-family: var(--atlas-font-ui); font-size: var(--atlas-text-meta); }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); padding: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
+.actions > button { width: 100%; }
+.switchChoice { grid-column: 1 / -1; }
+
+/* Keep room for the scrollable description when a phone rotates. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sheet { max-height: calc(100dvh - 2 * var(--atlas-space-2)); margin: var(--atlas-space-2) auto; }
+  .header, .content, .actions { padding: var(--atlas-space-3); }
+}
