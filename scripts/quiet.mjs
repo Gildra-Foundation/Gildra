@@ -9,10 +9,12 @@
  *   - one verdict line (OK/FAIL, exit code, duration, log path);
  *   - on success the last few lines (build summary);
  *   - on failure the distinct error-looking lines and the tail.
+ * The command runs through the shared server queue (`gildra-heavy`: 2 slots, nice/ionice) when it exists
+ * (GILDRA_HEAVY=/path overrides, GILDRA_HEAVY=off bypasses); otherwise directly.
  * Exit code is the command's. Tune with QUIET_TAIL (default 8 ok / 25 fail) and QUIET_ERRORS (default 40).
  */
 import { spawn } from "node:child_process";
-import { createWriteStream, mkdirSync } from "node:fs";
+import { accessSync, constants, createWriteStream, mkdirSync } from "node:fs";
 import path from "node:path";
 
 const argv = process.argv.slice(2);
@@ -35,10 +37,26 @@ const tailOk = Number(process.env.QUIET_TAIL ?? 8);
 const tailFail = Number(process.env.QUIET_TAIL ?? 25);
 const maxErrors = Number(process.env.QUIET_ERRORS ?? 40);
 
+function findHeavy() {
+  const pref = process.env.GILDRA_HEAVY;
+  if (pref === "off") return null;
+  const candidates = [pref, path.join(process.env.HOME ?? "", "bin/gildra-heavy"), ...(process.env.PATH ?? "").split(":").map((d) => path.join(d, "gildra-heavy"))];
+  for (const c of candidates) {
+    if (!c) continue;
+    try {
+      accessSync(c, constants.X_OK);
+      return c;
+    } catch {}
+  }
+  return null;
+}
+const heavy = findHeavy();
+
 const lines = [];
 let partial = "";
 const started = Date.now();
-const child = spawn(command, { shell: true, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, FORCE_COLOR: "0", NO_COLOR: "1" } });
+const spawnOpts = { stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, FORCE_COLOR: "0", NO_COLOR: "1" } };
+const child = heavy ? spawn(heavy, ["bash", "-c", command], spawnOpts) : spawn(command, { ...spawnOpts, shell: true });
 
 function onData(chunk) {
   log.write(chunk);
@@ -57,7 +75,7 @@ child.on("close", (code, signal) => {
   const secs = (Date.now() - started) / 1000;
   const dur = secs >= 60 ? `${Math.floor(secs / 60)}m${Math.round(secs % 60)}s` : `${secs.toFixed(1)}s`;
   const rel = path.relative(process.cwd(), logPath);
-  console.log(`[quiet] ${label} ${ok ? "OK" : "FAIL"} exit=${code ?? signal} ${dur} lines=${lines.length} log=${rel}`);
+  console.log(`[quiet] ${label} ${ok ? "OK" : "FAIL"} exit=${code ?? signal} ${dur}${heavy ? " (queued via gildra-heavy)" : ""} lines=${lines.length} log=${rel}`);
   const nonEmpty = lines.filter((l) => l.trim());
   if (ok) {
     console.log(nonEmpty.slice(-tailOk).join("\n"));
