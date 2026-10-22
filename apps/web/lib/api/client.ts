@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { cache as perRequest } from "react";
 import type { components } from "./schema";
 import { apiInternalUrl } from "@/lib/env";
 
@@ -100,7 +101,18 @@ function writeDevelopmentCatalogCache(key: string, value: unknown, ttlSeconds: n
   developmentCatalogCache.bytes += bytes;
 }
 
-async function catalogRequest<T>(path: string, revalidate = 300, cache: RequestCache = "force-cache", timeoutMs = 15_000, signal?: AbortSignal): Promise<T> {
+// Next skips its per-request fetch dedupe for any fetch that carries a signal,
+// and every catalog fetch carries its timeout. Without a caller's signal the same
+// read is therefore shared within the request here (generateMetadata + page).
+const sharedCatalogRequest = perRequest((path: string, revalidate: number, cache: RequestCache, timeoutMs: number) =>
+  requestCatalog<unknown>(path, revalidate, cache, timeoutMs));
+
+function catalogRequest<T>(path: string, revalidate = 300, cache: RequestCache = "force-cache", timeoutMs = 15_000, signal?: AbortSignal): Promise<T> {
+  if (signal) return requestCatalog<T>(path, revalidate, cache, timeoutMs, signal);
+  return sharedCatalogRequest(path, revalidate, cache, timeoutMs) as Promise<T>;
+}
+
+async function requestCatalog<T>(path: string, revalidate: number, cache: RequestCache, timeoutMs: number, signal?: AbortSignal): Promise<T> {
   signal?.throwIfAborted();
   const cacheOptions = cache === "no-store"
     ? { cache: "no-store" as const }
@@ -263,7 +275,14 @@ export async function getLibraryDatasets(
 }
 
 /** `fresh` bypasses the ISR cache (talent calculator reads live catalog data). */
-export async function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", dataset = "", fresh = false, signal?: AbortSignal): Promise<GameEntity | null> {
+export function getCatalogEntity(id: string, locale: "en_US" | "ru_RU", dataset = "", fresh = false, signal?: AbortSignal): Promise<GameEntity | null> {
+  return signal ? requestCatalogEntity(id, locale, dataset, fresh, signal) : sharedCatalogEntity(id, locale, dataset, fresh);
+}
+
+const sharedCatalogEntity = perRequest((id: string, locale: "en_US" | "ru_RU", dataset: string, fresh: boolean) =>
+  requestCatalogEntity(id, locale, dataset, fresh));
+
+async function requestCatalogEntity(id: string, locale: "en_US" | "ru_RU", dataset: string, fresh: boolean, signal?: AbortSignal): Promise<GameEntity | null> {
   signal?.throwIfAborted();
   const params = new URLSearchParams({ locale });
   if (dataset) params.set("dataset", dataset);
