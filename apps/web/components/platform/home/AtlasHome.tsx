@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AtlasFrame, AtlasLinkButton } from "@/components/atlas";
+import { AtlasFrame } from "@/components/atlas/AtlasFrame";
+import { AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
 import { characterScene } from "@/components/wow/characters/characterScene";
 import { sectionHref } from "@/lib/routes/registry";
 import { artPlaceholder } from "@gildra/atlas-ui/placeholders";
