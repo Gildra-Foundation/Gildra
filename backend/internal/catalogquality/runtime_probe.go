@@ -12,7 +12,7 @@ var publicTooltipFallback = regexp.MustCompile(`(?i)(?:a game-defined value|зн
 // public API payload. Stored tooltip tokens are deliberately not evidence of
 // a public defect; the API may resolve them before serializing the response.
 type RuntimeTemplateValidation struct {
-	RawTokens             int64
+	RawTokens            int64
 	FallbackPhrases      int64
 	ExplicitEffectStatus bool
 }

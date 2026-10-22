@@ -409,15 +409,13 @@ func wagoRecordWithSpellText(entityType, locale, sourceURL string, row map[strin
 	if name == "" {
 		return catalogimport.Record{}, fmt.Errorf("%w: %s %d", errWagoRecordMissingName, entityType, id)
 	}
-	description := strings.TrimSpace(row["Description_lang"])
 	payload := map[string]any{
 		"id": id, "name": name, "description": strings.TrimSpace(row["Description_lang"]),
 		"db2": row,
 	}
 	if entityType == "spell" {
 		if text, ok := spellTexts[id]; ok {
-			description = text.Description
-			payload["description"] = description
+			payload["description"] = text.Description
 			payload["subtext"] = text.Subtext
 			payload["aura_description"] = text.AuraDescription
 		}
@@ -1249,20 +1247,6 @@ func fetchAndStoreBattleNetMedia(
 		}
 	}
 	return nil
-}
-
-func fetchAndStoreBattleNetMediaHref(
-	ctx context.Context,
-	client *battlenet.Client,
-	store *catalogimport.Store,
-	importContext catalogimport.ImportContext,
-	artifactID uuid.UUID,
-	region, entityType, locale string,
-	id int64,
-	href string,
-) error {
-	return fetchAndStoreBattleNetMediaLink(ctx, client, store, importContext, artifactID,
-		region, entityType, locale, id, battleNetMediaLink{Href: href})
 }
 
 type battleNetMediaLink struct {

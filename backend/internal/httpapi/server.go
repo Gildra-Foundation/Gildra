@@ -74,6 +74,3 @@ func (s *Server) GetReadiness(ctx context.Context, _ api.GetReadinessRequestObje
 	}
 	return api.GetReadiness200JSONResponse{Status: api.Ok}, nil
 }
-
-//go:fix inline
-func pointer[T any](value T) *T { return new(value) }

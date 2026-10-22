@@ -30,7 +30,7 @@ func NewMediaHandler(root string) (*MediaHandler, error) {
 func (h *MediaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		w.Header().Set("Allow", "GET, HEAD")
-		http.Error(w, "method not allowed", 405)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	storageKey := strings.TrimPrefix(r.URL.Path, mediaBase)
@@ -45,7 +45,7 @@ func (h *MediaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		http.Error(w, "media unavailable", 503)
+		http.Error(w, "media unavailable", http.StatusServiceUnavailable)
 		return
 	}
 	defer file.Close() //nolint:errcheck
