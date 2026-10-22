@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { MdtNode as Node, MdtDataset } from "@/lib/data/wow/mythicReview.types";
-import type { DungeonSlug } from "./dungeonRoutes";
+import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { mdtPullMapCopy } from "./mdtPullMapCopy";
 import styles from "./mdtPullMap.module.css";
 

@@ -1,6 +1,6 @@
 import "server-only";
 import mdt from "@/data/wow/mythic-reviews/mdt.json";
-import type { DungeonSlug } from "@/components/wow/mythic/dungeonRoutes";
+import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import ruby from "@/data/wow/mythic-reviews/ruby-life-pools.json";
 import altar from "@/data/wow/mythic-reviews/altar-of-fangs.json";
 import murder from "@/data/wow/mythic-reviews/murder-row.json";

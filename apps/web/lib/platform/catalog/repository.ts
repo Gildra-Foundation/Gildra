@@ -1,5 +1,5 @@
 import { catalogLocaleView } from "@/lib/catalogLocale";
-import { entityTypeLabel } from "@/components/database/databaseCopy";
+import { entityTypeLabel } from "./entityTypeLabel";
 import "server-only";
 import { getCatalogPage } from "@/lib/api/client";
 import type { ApiLocale } from "@/lib/games/registry";
