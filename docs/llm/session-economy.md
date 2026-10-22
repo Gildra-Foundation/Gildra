@@ -29,7 +29,7 @@ Not the problem: permission prompts (all sessions run `bypassPermissions`), MCP 
 2. **Batch.** One Bash call per logical step (`a && echo == && b`), and independent tool calls (Read×3, Grep×2) in a single message. Do not spend a turn per `ls`.
 3. **Find, then range-read.** `Grep`/`grep -rn` to locate; `grep -n '^#' doc.md` then `sed -n 'A,Bp'`; Read with `offset`/`limit`. Never dump files over ~200 lines. Wide search ("where is X used") → `scout` subagent (Haiku) or `Agent` with `model: "haiku"`.
 4. **Do not re-read what is loaded.** `CLAUDE.md` and `AGENTS.md` are already in context (hook blocks the re-read). Pick docs from [README.md](README.md); skip `docs/archive/**`.
-5. **Quiet heavy commands.** `npm run build:quiet`, `typecheck:quiet`, `lint:quiet`, or `npm run quiet -- <label> -- <cmd>`: one verdict line + errors, full log in `.artifacts/logs/` (grep it, never cat). Builds take ~5.5 min: background them, at most **two full production builds per task** (iterate with `typecheck:quiet` and targeted `qa:*`/`test:*`; one final build).
+5. **Quiet heavy commands, through the server queue.** Production shares this machine: run every heavy command (build, typecheck, lint, tests, docker build, full QA) via `/home/zulut/bin/gildra-heavy <cmd>` — 2 slots for the whole server, `nice`/`ionice`, `NODE_OPTIONS=--max-old-space-size=4096`; it waits for a free slot. `build:quiet`/`typecheck:quiet`/`lint:quiet`/`npm run quiet` use it automatically when it exists (`GILDRA_HEAVY=off` bypasses the queue — only for trivial commands). Check `uptime` first; if load is far above the core count, do not start a second heavy job. Quiet wrappers: `npm run build:quiet`, `typecheck:quiet`, `lint:quiet`, or `npm run quiet -- <label> -- <cmd>`: one verdict line + errors, full log in `.artifacts/logs/` (grep it, never cat). Builds take ~5.5 min: background them, at most **two full production builds per task** (iterate with `typecheck:quiet` and targeted `qa:*`/`test:*`; one final build).
 6. **Delegate mechanics.** Checks → `check-runner` subagent (Sonnet, returns ≤15 lines). Subagent briefs name the exact question and the output size; always pass a cheaper `model` unless the subagent must design.
 7. **Screenshots.** Never view images to "see if it changed": `npm run design:capture -- --deterministic --only <routes>` then `npm run design:compare <baseline> <run>` (numbers). Look only at the flagged diffs; iterate at 1440 + 390, run the full 1440/1280/768/390 matrix once at the end; prefer viewport/element crops to tall full-page PNGs (they are downscaled anyway); ≤4 images per iteration.
 8. **Terse output.** Final report = result + paths + verification, not logs, diffs or the plan again. No re-explaining the task back.
@@ -54,7 +54,7 @@ Goal: <one sentence + done-when>.
 Scope: <files/area>. Out of scope: <list>.
 Model/effort: <Sonnet|Opus|Haiku> / <low|medium|high>.
 Read first (only these; sections, not whole files): <paths#headings>. CLAUDE.md/AGENTS.md are already loaded.
-Rules: ranged reads; batch commands; heavy checks via build:quiet/typecheck:quiet or check-runner; ≤2 full builds;
+Rules: ranged reads; batch commands; heavy checks via build:quiet/typecheck:quiet or check-runner (all go through /home/zulut/bin/gildra-heavy, 2 server-wide slots); ≤2 full builds;
   wide search via scout/haiku subagent; screenshots via design:capture + design:compare, not by eye.
 Context: stop at ~200k, write a handoff note to <notes folder> and report.
 Deliver: <branch/commit/PR> — no push, no merge, no deploy without the user's OK.
@@ -76,6 +76,6 @@ Targets: mean context per call ≤ 150k (was ~209k), calls above 200k ≤ 25 % o
 
 - `.claude/settings.json` — read-only/check commands allowed, `git push` asks, force-push denied, third-party skills name-only, `BASH_MAX_OUTPUT_LENGTH=16000`, `MAX_MCP_OUTPUT_TOKENS=15000`, `PreToolUse` guard.
 - `.claude/hooks/token-guard.py` — blocks full re-reads of CLAUDE.md/AGENTS.md, raw `npm run build|typecheck|lint` without pipe/redirect, whole-file `cat`/Read of files >80 KB. Disable once with `GILDRA_TOKEN_GUARD=off`.
-- `scripts/quiet.mjs` + `npm run build:quiet|typecheck:quiet|lint:quiet|quiet`.
+- `scripts/quiet.mjs` + `npm run build:quiet|typecheck:quiet|lint:quiet|quiet` (queued via `gildra-heavy` when present).
 - `.claude/agents/check-runner.md` (Sonnet), `.claude/agents/scout.md` (Haiku).
 - `scripts/claude-usage-report.py` — the measurement above.

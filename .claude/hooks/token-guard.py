@@ -73,5 +73,7 @@ for part in re.split(r"\s*(?:&&|\|\||;|\n)\s*", cmd):
     if not piped and re.match(r"(npm run (build|typecheck|lint)|npx next build|next build|npx tsc|tsc)(\s|$)", part):
         deny("raw build/typecheck/lint output floods the context; run `npm run build:quiet` / `typecheck:quiet` / `lint:quiet` "
              "(or `npm run quiet -- <label> -- <cmd>`). Full log lands in .artifacts/logs/; grep it for details. "
+             "They also go through the shared server queue (`/home/zulut/bin/gildra-heavy`, 2 slots) when it exists; "
+             "run any other heavy command (tests, docker build) as `/home/zulut/bin/gildra-heavy <cmd>`. "
              "To keep raw output, redirect it (`> file 2>&1`) or pipe to tail/grep.")
 sys.exit(0)
