@@ -16,7 +16,7 @@ import bindingStyles from "./actionBarBinding.module.css";
 import spread from "./rotationBookSpread.module.css";
 import motion from "./rotationMotion.module.css";
 import shell from "./rotationLabShell.module.css";
-import { AtlasDisclosure } from "@/components/atlas";
+import { AtlasDisclosure } from "@gildra/atlas-ui/AtlasDisclosure";
 import { combatActionBarCopy } from "./combatActionBarCopy";
 
 const ActionBarBindingEditor = dynamic(

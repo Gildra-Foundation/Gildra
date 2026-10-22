@@ -12,7 +12,10 @@ A workspace package (`packages/atlas-ui`, roadmap item 82): TypeScript and CSS
 modules compiled by the app (`transpilePackages`), no imports from the app
 (ESLint). The app imports it through `@/components/atlas`, which adds its
 `AtlasFrame` (scenes, legal line) and hands the kit the blurred placeholders of
-its paintings; deep imports use `@gildra/atlas-ui/<Component>`.
+its paintings; deep imports use `@gildra/atlas-ui/<Component>` (client components
+always do). `package.json` marks the kit side-effect free except its CSS, so a
+page bundles only the client islands it actually renders — keep modules free of
+import-time side effects.
 
 ## Rules
 
