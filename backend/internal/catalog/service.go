@@ -569,21 +569,21 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 	if err := s.enrichLocalizations(ctx, entityPointers); err != nil {
 		return Page{}, err
 	}
-	for index := range entities {
-		// Lists carry the same tooltip payload as detail pages. Resolve the
-		// build-pinned Blizzard templates here as well, otherwise cards expose
-		// raw `$s1`/`$d` tokens while the detail endpoint shows clean text.
-		if err := s.resolveEntityDescriptions(ctx, &entities[index]); err != nil {
-			return Page{}, err
-		}
+	// Lists carry the same tooltip payload as detail pages. Resolve the
+	// build-pinned Blizzard templates here as well, otherwise cards expose
+	// raw `$s1`/`$d` tokens while the detail endpoint shows clean text.
+	if err := s.resolveDescriptions(ctx, entityPointers); err != nil {
+		return Page{}, err
 	}
 	if err := s.enrichMedia(ctx, entityPointers); err != nil {
 		return Page{}, err
 	}
+	tooltips := make([]*Tooltip, 0, len(entities))
 	for index := range entities {
-		if err := s.enrichTooltipMedia(ctx, entities[index].Tooltip); err != nil {
-			return Page{}, err
-		}
+		tooltips = append(tooltips, entities[index].Tooltip)
+	}
+	if err := s.enrichTooltipMedia(ctx, tooltips...); err != nil {
+		return Page{}, err
 	}
 	nextCursor := ""
 	if hasMore && len(entities) > 0 {
@@ -917,7 +917,7 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 	if err := s.enrichLocalizations(ctx, []*Entity{&entity}); err != nil {
 		return Entity{}, err
 	}
-	if err := s.resolveEntityDescriptions(ctx, &entity); err != nil {
+	if err := s.resolveDescriptions(ctx, []*Entity{&entity}); err != nil {
 		return Entity{}, err
 	}
 	if err := s.enrichMedia(ctx, []*Entity{&entity}); err != nil {
