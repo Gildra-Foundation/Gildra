@@ -1,8 +1,10 @@
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
 import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
-import { TierSection } from "@/components/TierSection";
+import { TierSection, type TierSpecNames } from "@/components/TierSection";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
 import { midnightSpecializations } from "@/lib/data/wow/specializations";
+import { talentSpecThemes } from "@/lib/talentSpecThemes";
+import type { Lang } from "@/lib/i18n-paths";
 import { tierCopy } from "./tierCopy";
 import { sampleCount, sampleRoles, usesSample } from "./tierData";
 import styles from "./tierWorkspace.module.css";
@@ -11,6 +13,12 @@ import { trail } from "@/lib/routes/registry";
 
 /** Internal spec pages that exist (class/spec), so table rows can link to them. */
 const specPaths = midnightSpecializations.map((spec) => `${spec.classSlug}/${spec.slug}`);
+
+/** Row names for the table, so the client does not bundle the whole spec theme file for them. */
+const specNames: Record<Lang, TierSpecNames> = {
+  en: Object.fromEntries(talentSpecThemes.map((theme) => [theme.slug, { specName: theme.specName, className: theme.className }])),
+  ru: Object.fromEntries(talentSpecThemes.map((theme) => [theme.slug, { specName: theme.specNameRu, className: theme.classNameRu }])),
+};
 
 /** The full tier workspace: atlas hero, ONE honest sample notice when the meta
  *  API is off, then the interactive table + spec card (client). Hero counters
@@ -40,7 +48,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntel
         stats={stats}
       />
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
-      <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} />
+      <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} specNames={specNames[lang]} />
     </AtlasFrame>
   );
 }
