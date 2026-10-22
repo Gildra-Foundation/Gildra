@@ -17,11 +17,17 @@ import { captureMorphArt, playMorphArt, type MorphArtSource } from "@gildra/atla
 type RouteState = "idle" | "leaving" | "loading";
 type Direction = ReturnType<typeof navigationDirection>;
 
-// The new page starts dimmed rather than invisible, so the swap never shows an
-// empty frame between the two pages; it brightens and settles from the side it
-// came from (deeper: from the right, up/back: from the left, siblings: from below).
-const ENTER: KeyframeAnimationOptions = { duration: 300, easing: "cubic-bezier(.2, .7, .2, 1)" };
-const ENTER_FROM: Record<Direction, string> = { deeper: "translate3d(18px, 0, 0)", up: "translate3d(-18px, 0, 0)", across: "translate3d(0, 10px, 0)" };
+// The portal hand-over. The new page starts dimmed rather than invisible, so the
+// swap never shows an empty frame between the two pages; it opens out of the point
+// the reader touched (a link, a card, a realm of the top bar) and settles from the
+// side it came from (deeper: from the right, up/back: from the left, siblings: from
+// below). A ring of light in the theme's accent bursts from the same point.
+const ENTER: KeyframeAnimationOptions = { duration: 460, easing: "cubic-bezier(.16, 1, .3, 1)" };
+const ENTER_FROM: Record<Direction, string> = { deeper: "translate3d(22px, 0, 0) scale(.975)", up: "translate3d(-22px, 0, 0) scale(.975)", across: "translate3d(0, 12px, 0) scale(.975)" };
+/** Ring burst: from a spark at the point of the click to beyond the farthest corner. */
+const RING_SIZE = 160;
+const BURST: KeyframeAnimationOptions = { duration: 640, easing: "cubic-bezier(.2, .8, .25, 1)" };
+type Origin = { x: number; y: number };
 /** Give up on a navigation that never commits (aborted, offline). */
 const WATCHDOG_MS = 12000;
 /** How long the arrival cascade marker stays on the frame (longest hero/section delay + duration). */
@@ -60,6 +66,19 @@ function clickDestination(event: MouseEvent, includeOptOut = false) {
 
 const reducedMotion = () => lessMotion();
 
+/** Where the hand-over starts: the pointer, or the centre of a keyboard-activated link. */
+function originOf(event: MouseEvent, anchor: Element | null): Origin | null {
+  if (event.detail > 0 && (event.clientX || event.clientY)) return { x: event.clientX, y: event.clientY };
+  const box = anchor?.getBoundingClientRect();
+  return box && box.width ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : null;
+}
+
+/** Scale that carries the ring from `origin` past the farthest corner of the viewport. */
+function burstScale(origin: Origin) {
+  const far = Math.hypot(Math.max(origin.x, innerWidth - origin.x), Math.max(origin.y, innerHeight - origin.y));
+  return (far * 2) / RING_SIZE;
+}
+
 
 /** One shell survives App Router navigation. Page content never gets an artificial remount key. */
 export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
@@ -77,6 +96,8 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   /** The hand-over planned by the click/history event for `expectedPath`. */
   const plannedKind = useRef<RouteTransitionKind>("still");
   const morphSource = useRef<MorphArtSource | null>(null);
+  const origin = useRef<Origin | null>(null);
+  const ringRef = useRef<HTMLSpanElement>(null);
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const arrival = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [state, setState] = useState<RouteState>("idle");
@@ -84,6 +105,9 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const settle = useCallback(() => {
     clearTimeout(watchdog.current);
     morphSource.current = null;
+    origin.current = null;
+    // A charged portal that never opens (aborted, same page) fades with the navigation.
+    ringRef.current?.getAnimations().forEach((animation) => animation.cancel());
     plannedKind.current = "still";
     setState("idle");
   }, []);
@@ -96,11 +120,30 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     const frame = frameRef.current;
     const morph = morphSource.current;
     morphSource.current = null;
+    const from = origin.current;
+    origin.current = null;
     if (!frame) return;
     // A dimming transition that started on the old page must not finish on the new one.
     frame.getAnimations().forEach((animation) => animation.cancel());
     if (reducedMotion()) return;
-    frame.animate([{ opacity: .35, transform: ENTER_FROM[direction] }, { opacity: 1, transform: "none" }], ENTER);
+    // The page opens out of the touched point (in frame coordinates, after scroll restoration).
+    const box = frame.getBoundingClientRect();
+    const transformOrigin = from ? `${from.x - box.left}px ${from.y - box.top}px` : `50% ${Math.max(0, -box.top) + innerHeight / 3}px`;
+    frame.animate([
+      { opacity: .3, transform: ENTER_FROM[direction], transformOrigin },
+      { opacity: 1, transform: "none", transformOrigin },
+    ], ENTER);
+    const ring = ringRef.current;
+    if (ring && from) {
+      ring.getAnimations().forEach((animation) => animation.cancel());
+      ring.style.left = `${from.x}px`;
+      ring.style.top = `${from.y}px`;
+      ring.animate([
+        { opacity: 0, transform: "translate(-50%, -50%) scale(.15)" },
+        { opacity: 1, transform: "translate(-50%, -50%) scale(.6)", offset: .12 },
+        { opacity: 0, transform: `translate(-50%, -50%) scale(${burstScale(from)})` },
+      ], BURST);
+    }
     clearTimeout(arrival.current);
     frame.dataset.routeArrived = "";
     arrival.current = setTimeout(() => { delete frame.dataset.routeArrived; }, ARRIVAL_MS);
@@ -115,7 +158,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     else enter(pendingArrival.current.direction);
   }, [enter]);
 
-  const begin = useCallback((destination: string, anchor?: Element | null) => {
+  const begin = useCallback((destination: string, anchor?: Element | null, from?: Origin | null) => {
     const kind = routeTransitionKind(committedPath.current, destination);
     if (kind === "still") {
       expectedPath.current = committedPath.current;
@@ -126,6 +169,23 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     quietPath.current = null;
     plannedKind.current = kind;
     morphSource.current = kind === "page" && anchor && !reducedMotion() ? captureMorphArt(anchor) : null;
+    origin.current = from ?? null;
+    const frame = frameRef.current;
+    if (frame && from) {
+      const box = frame.getBoundingClientRect();
+      frame.style.setProperty("--route-origin", `${from.x - box.left}px ${from.y - box.top}px`);
+    }
+    const ring = ringRef.current;
+    if (ring && from && !reducedMotion()) {
+      // The portal charges where the reader touched while the next page is on its way.
+      ring.getAnimations().forEach((animation) => animation.cancel());
+      ring.style.left = `${from.x}px`;
+      ring.style.top = `${from.y}px`;
+      ring.animate([
+        { opacity: 0, transform: "translate(-50%, -50%) scale(.05)" },
+        { opacity: .9, transform: "translate(-50%, -50%) scale(.28)" },
+      ], { duration: 260, easing: "cubic-bezier(.2, .8, .25, 1)", fill: "forwards" });
+    }
     setState("leaving");
     clearTimeout(watchdog.current);
     watchdog.current = setTimeout(settle, WATCHDOG_MS);
@@ -186,7 +246,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
         quietPath.current = destination.pathname;
         settle();
       } else if (destination) {
-        begin(destination.pathname, anchor);
+        begin(destination.pathname, anchor, originOf(event, anchor));
       }
     };
     const navigateAnchor = (event: MouseEvent) => {
@@ -242,6 +302,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     <RouteThemeController />
     <span className={styles.progress} aria-hidden="true" />
     <span className={styles.spark} aria-hidden="true" />
+    <span ref={ringRef} className={styles.portalRing} aria-hidden="true" />
     <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-route-state={state} aria-busy={active || undefined}>
       {children}
     </div>
