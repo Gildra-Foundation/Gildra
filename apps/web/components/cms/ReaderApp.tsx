@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import styles from "./reader.module.css";
+import type { Lang } from "@/lib/i18n-paths";
 
 /**
  * Minimal reader (member) account UI for one site. Talks only to this site's
  * /api/readers proxy; the CMS token stays in an httpOnly cookie. Separate from
  * the Battle.net sign-in at /login.
  */
-type Lang = "en" | "ru";
 type Mode = "account" | "verify" | "reset";
 
 const TEXT = {
