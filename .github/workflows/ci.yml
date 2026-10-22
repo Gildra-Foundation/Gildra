@@ -75,6 +75,7 @@ jobs:
       - run: git diff --exit-code -- apps/web/lib/api/schema.d.ts
       - run: npm run typecheck
       - run: npm run lint
+      - run: npm run valyro:check
       - run: npm run atlas:check
       - run: npm run test:atlas
       - run: npm run test:observability
