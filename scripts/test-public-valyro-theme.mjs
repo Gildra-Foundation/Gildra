@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { test } from "node:test";
-import { defaultSource, generatePublicTheme } from "./generate-public-valyro-theme.mjs";
+import { defaultSource, generatePublicMotion, generatePublicTheme } from "./generate-public-valyro-theme.mjs";
 const requireWeb = createRequire(new URL("../apps/web/package.json", import.meta.url));
 const postcss = createRequire(requireWeb.resolve("next/package.json"))("postcss");
 
@@ -57,5 +57,39 @@ test("new nested imports, re-exports, CSS imports, computed tokens and chained v
     assert.ok(!props.has("--ui-unused"));
     assert.deepEqual(declarations(generated.css).filter(decl => decl.prop === "--ui-base").map(decl => decl.value), ["blue", "white"]);
     assert.ok(generated.files.some(file => file.endsWith("nested.css")));
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test("public motion keeps springs and the reduce switch, and drops kit features no public code sets", () => {
+  const result = generatePublicMotion();
+  assert.equal(fs.readFileSync(result.output, "utf8"), result.css, "Regenerate after changing public imports");
+  for (const token of ["--ui-spring-smooth", "--ui-spring-snappy", "--ui-spring-bouncy", "--ui-ease-follow"]) assert.match(result.css, new RegExp(token), token);
+  assert.match(result.css, /\[data-ui-motion='reduce'\]/u);
+  assert.match(result.css, /\.gildra-atlas,\n\[data-atlas-scope\]/u, "springs stay in the atlas scope");
+  const scope = fs.readFileSync(path.join(defaultSource, "AtlasValyroScope.tsx"), "utf8");
+  assert.match(scope, /import "\.\/valyro-public-motion\.css"/u);
+  assert.doesNotMatch(scope, /valyro-ui\/styles\/motion\.css/u);
+});
+
+test("public motion follows the data-ui attributes the code sets", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "valyro-motion-contract-"));
+  try {
+    const put = (file, content) => { const full = path.join(root, file); fs.mkdirSync(path.dirname(full), { recursive: true }); fs.writeFileSync(full, content); };
+    put("Adapter.tsx", 'import { Fold } from "./valyro-ui/widget/Fold"; export const A = () => <Fold />;');
+    put("valyro-ui/widget/Fold.tsx", '// data-ui-enter is only mentioned here\nexport const Fold = () => <div data-ui-fold="spring" />;');
+    put("valyro-ui/styles/themes/vercel.css", "[data-theme=vercel] { --ui-a: 1; }");
+    put("valyro-ui/styles/motion.css", `
+      :root { --ui-spring: linear(0, 1); }
+      @media (prefers-reduced-motion: no-preference) { [data-ui-enter] { animation: ui-enter 1s; } }
+      [data-ui-fold], [data-ui-intro] { animation: ui-fold 1s; }
+      @keyframes ui-enter { from { opacity: 0; } }
+      @keyframes ui-fold { from { height: 0; } }
+      @property --ui-view-progress { syntax: "<number>"; inherits: false; initial-value: 0; }
+    `);
+    const { css } = generatePublicMotion(root);
+    assert.match(css, /--ui-spring/u);
+    assert.match(css, /\[data-ui-fold\] \{/u);
+    assert.doesNotMatch(css, /data-ui-enter|data-ui-intro|@media|ui-enter|--ui-view-progress/u);
+    assert.match(css, /@keyframes ui-fold/u);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
