@@ -5,6 +5,8 @@ import { useRouteTransition } from "@payloadcms/ui";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
+import { Button, type ButtonVariant } from "./valyro-ui/basic/Button";
+
 import { SITE_COOKIE } from "../admin/siteCookie";
 
 /**
@@ -37,15 +39,17 @@ export function SiteLink({
   className,
   children,
   title,
+  variant,
 }: {
   siteID: string;
   href: string;
   className?: string;
   children: React.ReactNode;
   title?: string;
+  variant?: ButtonVariant;
 }) {
   const chooseSite = useChooseSite();
-  return (
+  const link = (
     <a
       href={href}
       className={className}
@@ -59,6 +63,7 @@ export function SiteLink({
       {children}
     </a>
   );
+  return variant ? <Button asChild variant={variant} size="sm">{link}</Button> : link;
 }
 
 /** Date in the viewer's own time zone; the server renders the ISO date until hydration. */

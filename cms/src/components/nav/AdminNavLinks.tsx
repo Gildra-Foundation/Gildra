@@ -4,16 +4,13 @@ import { Link, useNav, usePreferences } from "@payloadcms/ui";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useLayoutEffect, useRef } from "react";
 
-import type { NavItem, NavSection } from "../../admin/navModel";
+import { isAdminNavItemActive, type NavItem, type NavSection } from "../../admin/navModel";
+import { useFlip } from "../valyro-ui/primitives/useFlip";
 
 /** Laptop widths where Payload hides the sidebar on every page load (it docks it only above 1440 px). */
 const LAPTOP = "(min-width: 1025px) and (max-width: 1440px)";
 /** Below this the sidebar is an overlay that should close after a link is followed. */
 const OVERLAY = "(max-width: 1024px)";
-
-function isActive(pathname: string, item: NavItem): boolean {
-  return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
-}
 
 /**
  * Keeps the sidebar docked on laptop screens. Payload closes it on load (and
@@ -60,7 +57,7 @@ function Links({ items, pathname, onFollow }: { items: NavItem[]; pathname: stri
   return (
     <ul className="gd-nav__list">
       {items.map((item) => {
-        const active = isActive(pathname, item);
+        const active = isAdminNavItemActive(pathname, item);
         return (
           <li key={item.href}>
             <Link
@@ -70,6 +67,7 @@ function Links({ items, pathname, onFollow }: { items: NavItem[]; pathname: stri
               aria-current={active ? "page" : undefined}
               onClick={onFollow}
             >
+              {active ? <span className="gd-nav__active-marker" data-flip-id="active-section" aria-hidden="true" /> : null}
               {item.label}
             </Link>
           </li>
@@ -87,15 +85,17 @@ function Links({ items, pathname, onFollow }: { items: NavItem[]; pathname: stri
  */
 export function AdminNavLinks({ sections }: { sections: NavSection[] }) {
   const pathname = usePathname() ?? "";
+  const navRef = useRef<HTMLElement>(null);
+  useFlip(navRef, { auto: true, animateEnter: false, spring: "smooth" });
   const setNavOpen = useDockedNav();
   const onFollow = () => {
     if (window.matchMedia(OVERLAY).matches) setNavOpen(false);
   };
   return (
-    <nav className="gd-nav">
+    <nav className="gd-nav" ref={navRef}>
       {sections.map((section, index) => {
         if (section.collapsible) {
-          const open = section.items.some((item) => isActive(pathname, item));
+          const open = section.items.some((item) => isAdminNavItemActive(pathname, item));
           return (
             <details key={index} className="gd-nav__section gd-nav__more" open={open || undefined}>
               <summary>{section.title}</summary>

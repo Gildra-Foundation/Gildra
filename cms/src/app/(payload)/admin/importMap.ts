@@ -32,10 +32,13 @@ import { BrandIcon as BrandIcon_42af45a2e169122dea8a98337d41efda } from '../../.
 import { BrandLogo as BrandLogo_42af45a2e169122dea8a98337d41efda } from '../../../components/Brand'
 import { CommandButton as CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b } from '../../../components/command/CommandButton'
 import { GlobalViewRedirect as GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
+import { AuthIntro as AuthIntro_4bca73cc1e75f6058ab4520e4458e193 } from '../../../components/auth/AuthIntro'
 import { TenantSelector as TenantSelector_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
 import { AdminNav as AdminNav_12a5d2e4943f1ef280c26afffa50cbd6 } from '../../../components/nav/AdminNav'
 import { TenantSelectionProvider as TenantSelectionProvider_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
 import { Dashboard as Dashboard_9a680279bc487e655cb510fd8d9dadff } from '../../../components/Dashboard'
+import { PeopleView as PeopleView_11e3c684cb15031bcd2299560d525f16 } from '../../../components/people/PeopleView'
+import { ArticlesView as ArticlesView_9a6162fe67d9a81757110274152f791e } from '../../../components/articles/ArticlesView'
 import { AnalyticsView as AnalyticsView_bf97cfe8cf7e4182aa63ced32aae9f52 } from '../../../components/AnalyticsView'
 import { SelectSiteView as SelectSiteView_8a65042a5460f97c4197318fd58352af } from '../../../components/SelectSiteView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
@@ -76,10 +79,13 @@ export const importMap = {
   "/components/Brand#BrandLogo": BrandLogo_42af45a2e169122dea8a98337d41efda,
   "/components/command/CommandButton#CommandButton": CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b,
   "@payloadcms/plugin-multi-tenant/rsc#GlobalViewRedirect": GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62,
+  "/components/auth/AuthIntro#AuthIntro": AuthIntro_4bca73cc1e75f6058ab4520e4458e193,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelector": TenantSelector_d6d5f193a167989e2ee7d14202901e62,
   "/components/nav/AdminNav#AdminNav": AdminNav_12a5d2e4943f1ef280c26afffa50cbd6,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelectionProvider": TenantSelectionProvider_d6d5f193a167989e2ee7d14202901e62,
   "/components/Dashboard#Dashboard": Dashboard_9a680279bc487e655cb510fd8d9dadff,
+  "/components/people/PeopleView#PeopleView": PeopleView_11e3c684cb15031bcd2299560d525f16,
+  "/components/articles/ArticlesView#ArticlesView": ArticlesView_9a6162fe67d9a81757110274152f791e,
   "/components/AnalyticsView#AnalyticsView": AnalyticsView_bf97cfe8cf7e4182aa63ced32aae9f52,
   "/components/SelectSiteView#SelectSiteView": SelectSiteView_8a65042a5460f97c4197318fd58352af,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1

@@ -73,6 +73,8 @@ export const ARTICLE_POLICY: EditorialPolicy = {
 };
 
 const draftWriteKey = (slug: string) => `gildra:draftWrite:${slug}`;
+const publishedBeforeKey = (slug: string) => `gildra:publishedBefore:${slug}`;
+type PublishedBefore = { slug?: unknown; _status?: unknown };
 /** Context flag for server-side bootstrap writes (seed) that need no site cache invalidation. */
 export const SKIP_REVALIDATION = "gildra:skipRevalidation";
 
@@ -100,8 +102,13 @@ export function editorialAccess(policy: EditorialPolicy): CollectionConfig["acce
 
   const create: Access = ({ req }) => isOwner(req.user) || siteIDsWithRole(req.user, policy.writeRoles).length > 0;
 
-  const update: Access = ({ req }) => {
+  const update: Access = ({ req, data }) => {
     if (isOwner(req.user)) return true;
+    // Payload also calls access with this data to decide whether to enable
+    // Publish and Schedule in the native editor. Authors retain draft editing.
+    if (policy.drafts && data?._status === "published") {
+      return inSites("site", siteIDsWithRole(req.user, policy.publishRoles));
+    }
     const writers = siteIDsWithRole(req.user, policy.writeRoles);
     if (!policy.authorField || !req.user) return inSites("site", writers);
     // Publishers edit everything on their sites; authors only their own documents.
@@ -278,6 +285,15 @@ export function enforceSiteIntegrity(policy: EditorialPolicy, richTextFields: st
     const site = incoming ?? before;
     if (site === null || site === undefined) throw invalid(slug, "site", "A site is required.");
 
+    // originalDoc can be the latest draft. Keep the live row's URL and status
+    // before this write so publishing a renamed draft expires the old URL,
+    // and withdrawing a document still notifies when its latest version is a draft.
+    let publishedBefore: PublishedBefore | null = null;
+    if (policy.drafts && operation === "update" && originalDoc?.id !== undefined && !isDraftWrite(req, slug)) {
+      publishedBefore = await req.payload.db.findOne({ collection: slug, where: { id: { equals: originalDoc.id } }, req }) as PublishedBefore | null;
+    }
+    req.context[publishedBeforeKey(slug)] = publishedBefore;
+
     const user = req.user;
     if (user) {
       if (!asStaff(user) || !hasSiteRole(user, site, policy.writeRoles)) throw new Forbidden(req.t);
@@ -296,11 +312,7 @@ export function enforceSiteIntegrity(policy: EditorialPolicy, richTextFields: st
       if (policy.drafts && !isDraftWrite(req, slug) && !canPublish) {
         // `originalDoc` is the latest *version* (often a newer draft), not the
         // live row, so the live status is read from the main table itself.
-        let liveStatus: unknown;
-        if (operation === "update" && originalDoc?.id !== undefined) {
-          const live = await req.payload.db.findOne({ collection: slug, where: { id: { equals: originalDoc.id } }, req });
-          liveStatus = (live as { _status?: unknown } | null)?._status;
-        }
+        const liveStatus = publishedBefore?._status;
         const resulting = (data._status as string | undefined) ?? (originalDoc?._status as string | undefined) ?? "draft";
         if (resulting === "published" || liveStatus === "published" || originalDoc?._status === "published") {
           throw new Forbidden(req.t);
@@ -322,15 +334,16 @@ export function enforceSiteIntegrity(policy: EditorialPolicy, richTextFields: st
 export const revalidateAfterChange: CollectionAfterChangeHook = async ({ collection, doc, previousDoc, req }) => {
   if (req.context[SKIP_REVALIDATION] === true) return doc;
   const drafts = Boolean(collection.versions && typeof collection.versions === "object" && collection.versions.drafts);
+  const previous = drafts ? req.context[publishedBeforeKey(collection.slug)] as PublishedBefore | null : previousDoc;
   if (drafts) {
     if (isDraftWrite(req, collection.slug)) return doc;
-    if (doc._status !== "published" && previousDoc?._status !== "published") return doc;
+    if (doc._status !== "published" && previous?._status !== "published") return doc;
   }
   await queueRevalidation(req, {
     action: drafts && doc._status !== "published" ? "unpublish" : "change",
     collection: collection.slug,
     id: doc.id,
-    previousSlug: typeof previousDoc?.slug === "string" ? previousDoc.slug : undefined,
+    previousSlug: typeof previous?.slug === "string" ? previous.slug : undefined,
     site: relationID(doc.site),
     slug: typeof doc.slug === "string" ? doc.slug : undefined,
   });

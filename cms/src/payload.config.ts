@@ -8,6 +8,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
+import { hardenAuthFields } from "./access/authFields";
+import { peopleEndpoint } from "./people/data";
+import { articleLinksEndpoint } from "./articles/publishedLinks";
+import { articlesEndpoint } from "./articles/data";
+
 import { hardenInternalCollections, requireSiteField } from "./access/internal";
 import { localizeCollection } from "./admin/fieldLabels";
 import { isOwner } from "./access/roles";
@@ -67,11 +72,14 @@ export default buildConfig({
         Icon: "/components/Brand#BrandIcon",
         Logo: "/components/Brand#BrandLogo",
       },
+      beforeLogin: ["/components/auth/AuthIntro#AuthIntro"],
       // Ctrl+K / ⌘K palette and its "Find…" button in the header.
       actions: ["/components/command/CommandButton#CommandButton"],
       beforeNavLinks: ["/components/nav/AdminNav#AdminNav"],
       views: {
         dashboard: { Component: "/components/Dashboard#Dashboard" },
+        users: { Component: "/components/people/PeopleView#PeopleView", path: "/users" },
+        articles: { Component: "/components/articles/ArticlesView#ArticlesView", path: "/articles" },
         analytics: { Component: "/components/AnalyticsView#AnalyticsView", path: "/analytics" },
         selectSite: { Component: "/components/SelectSiteView#SelectSiteView", path: "/select-site" },
       },
@@ -97,7 +105,7 @@ export default buildConfig({
   },
   editor: lexicalEditor(),
   email: buildEmailAdapter(),
-  endpoints: [analyticsReportEndpoint, ...publicEndpoints],
+  endpoints: [peopleEndpoint, articlesEndpoint, articleLinksEndpoint, analyticsReportEndpoint, ...publicEndpoints],
   jobs: jobsConfig,
   graphQL: { disable: true },
   secret: process.env.PAYLOAD_SECRET ?? "",
@@ -149,5 +157,5 @@ export default buildConfig({
     const general = ((translations[lang] ??= {}).general ??= {}) as unknown as Record<string, string>;
     Object.assign(general, labels);
   }
-  return hardenInternalCollections(config);
+  return hardenAuthFields(hardenInternalCollections(config));
 });
