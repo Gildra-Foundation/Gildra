@@ -13,7 +13,7 @@ business rules.
 | Sources | `battlenet`, `wago`, `raidbots`, `attparser`, `attimport`, `datasetrefresh` | Fetch and parse external data; no HTTP serving. |
 | Product features | `analytics`, `auth`, `characterworkspace`, `rotationlab`, `platformhome`, `gamemeta`, `indexnow` | Each registers its own routes or is served by `httpapi`. |
 | Other games | `genshin`, `genshinimport`, `league`, `leagueimport` | Hidden by the WoW-only MVP on the site, still served by the API. |
-| Shared | `config`, `joberrors`, `httpjson` | `httpjson` is a *leaf*: any package may import it, and it imports no internal package. |
+| Shared | `config`, `joberrors`; leaves `httpjson`, `pagination`, `mediafiles` | A *leaf* may be imported by any package and imports no internal package (enforced by the architecture test). |
 
 ## Rules
 
