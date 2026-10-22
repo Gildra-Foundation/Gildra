@@ -2,7 +2,7 @@ import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/bl
 import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
 import { TierSection } from "@/components/TierSection";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
-import { midnightSpecializations } from "@gildra/game-data";
+import { midnightSpecializations } from "@/lib/data/wow/specializations";
 import { tierCopy } from "./tierCopy";
 import { sampleCount, sampleRoles, usesSample } from "./tierData";
 import styles from "./tierWorkspace.module.css";

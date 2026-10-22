@@ -7,11 +7,11 @@ is the contract — read it before adding or changing UI.
 ```
 lib/blocks/          core: types.ts (BlockDef), page.ts (PageConfig), registry.ts, anchors.ts, metadata.ts, gallery.ts
 lib/pages/           definePage.tsx — one definition → { en, ru } route exports
-lib/games/           registry.ts (GAMES, prefixes, nav, footer, legal) · adapter.ts · <slug>/{assets,client,api,pages/*}
+lib/games/           registry.ts (GAMES, prefixes, nav, footer, legal) · <slug>/{assets,api,pages/*}
 lib/data/            DataSource contract + demo implementation (data/site.ts stays the demo dataset)
 lib/anchors.ts       ANCHORS — every #id used by nav, footer, search and blocks
 components/blocks/   shared/<name>/ · <game>/<name>/ · _template/ · BlockRenderer · Page
-components/layout/   PageShell (Icons + .app/.main + Reveal; the top bar is global, the legal line is AtlasFrame's), Container, Section
+components/layout/   PageShell (Icons + .app/.main + Reveal; the top bar is global, the legal line is AtlasFrame's), Container
 app/(site)/**/page.tsx  thin wrappers; app/ru/** mirrors them with `.ru`
 app/dev/blocks       gallery of every block at 1440/768/390 (dev only; GILDRA_DEV_GALLERY=1 in prod)
 ```
@@ -113,8 +113,8 @@ and wrap it in `PageShell` — they do not need to become block pages.
    `GameDefinition` (`prefix: "/<slug>"`, `status: "beta"`, nav tasks, footer, legal,
    seo, optional `theme` overrides for `--gold`/`--blue`…).
 2. `components/Icons.tsx`: add `<symbol id="gm-<slug>">`.
-3. `lib/games/<slug>/client.ts`: adapter with a search index over real destinations
-   (register it in `lib/games/adapter.ts`); `assets.ts`/`api.ts` as needed.
+3. Add the game's real destinations to the site search index (`lib/search/siteIndex.ts`);
+   `lib/games/<slug>/assets.ts`/`api.ts` as needed.
 4. `lib/games/<slug>/pages/home.ts` with `definePage`, and blocks under
    `components/blocks/<slug>/`.
 5. `app/(site)/<slug>/page.tsx` + `app/ru/<slug>/page.tsx` wrappers.
@@ -125,7 +125,7 @@ registry automatically. URLs compose as `[/ru]` + `prefix` + path; never create
 `app/[game]` (a root catch-all segment would shadow the branded 404).
 
 Reference implementation: League of Legends — `lib/games/league-of-legends/`
-(`api.ts`, `client.ts`, `sitemap.ts`, `pages/{home,champion,content}.ts`) and
+(`api.ts`, `sitemap.ts`, `pages/{home,champion,content}.ts`) and
 `components/blocks/league-of-legends/*`. Its pages set `legacyLocaleQuery: true`,
 so old `?locale=ru_RU` links 308 to `/ru/…`. Wide game columns are a game block
 (`lol.main`), not `.section`; the game's ground colour comes from `theme` in the

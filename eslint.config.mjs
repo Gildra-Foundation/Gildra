@@ -7,7 +7,7 @@ import fs from "node:fs";
 const noApp = { regex: "^@/app/(?!styles/)", message: "app/ is the top of the tree: move shared code to components/ or lib/." };
 const noKitInLib = { regex: "^(@/components/atlas|@gildra/atlas-ui)(/(?!format$|placeholders$|motionPreference$|morph$).*)?$", message: "lib/ is data and logic; it must not depend on kit components (helpers like format are fine)." };
 const noRawGameData = { regex: "^(@/data/|@gildra/game-data)", message: "Game data reaches components and routes through lib/data (e.g. @/lib/data/wow), on the server." };
-const kitStaysIndependent = { regex: "^@/", message: "@gildra/atlas-ui is a package: no imports from the app — pass data in through props (the app adapts it in components/atlas)." };
+const kitStaysIndependent = { regex: "^@/", message: "Packages (@gildra/atlas-ui, @gildra/game-data) never import the app — pass data in through props, or keep app-derived data in apps/web/lib." };
 
 // Feature modules of World of Warcraft (roadmap item 71): each uses its own
 // files, components/wow/shared, the kit and lib/ — never another feature's insides.
@@ -77,7 +77,7 @@ const config = [
     rules: { "no-restricted-imports": ["error", { patterns: [noApp, noKitInLib] }] },
   },
   {
-    files: ["packages/atlas-ui/**/*.{ts,tsx}"],
+    files: ["packages/atlas-ui/**/*.{ts,tsx}", "packages/game-data/**/*.{ts,tsx}"],
     rules: { "no-restricted-imports": ["error", { patterns: [kitStaysIndependent] }] },
   },
   ...wowFeatures.map((feature) => ({

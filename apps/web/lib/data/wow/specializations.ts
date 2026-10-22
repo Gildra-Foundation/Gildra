@@ -14,6 +14,7 @@ const classSlugs: Record<string, string> = {
   mage: "mage", warrior: "warrior", warlock: "warlock", monk: "monk", demonhunter: "demon-hunter",
 };
 
+/** Playable Midnight specializations: the talent spec themes plus their class URL slug. */
 export const midnightSpecializations = talentSpecThemes.map((spec) => ({
   ...spec,
   classSlug: classSlugs[spec.classKey],
