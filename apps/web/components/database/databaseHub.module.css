@@ -283,25 +283,22 @@
 .workspace[data-pending] .records,
 .workspace[data-pending] .empty { opacity: .55; }
 
-/* Tooltip preview: a small icon button in the row corner. */
-.preview {
+/* Valyro tooltip action: a consistent 44px target beside the complete name. */
+.preview:global(.ui-button[data-variant="ghost"][data-size="sm"]) {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
   place-items: center;
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-text-subtle);
-  background: transparent;
-  cursor: pointer;
 }
-
-.preview svg { width: 18px; height: 18px; }
-.preview:hover,
-.preview[aria-expanded="true"] { border-color: var(--atlas-line); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
-.preview[data-state="loading"] { color: var(--atlas-accent); animation: pulse 1s ease-in-out infinite alternate; }
-.preview[data-state="error"] { color: var(--atlas-negative); }
+.preview:global(.ui-button) { border-color: transparent; color: var(--atlas-text-subtle); background: transparent; }
+.preview:global(.ui-button) svg { width: 18px; height: 18px; }
+.preview:global(.ui-button):hover,
+.preview:global(.ui-button)[aria-expanded="true"] { border-color: var(--atlas-line); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
+.preview:global(.ui-button)[aria-disabled="true"] { cursor: wait; }
+.preview:global(.ui-button)[data-state="loading"] { color: var(--atlas-accent); animation: pulse 1s ease-in-out infinite alternate; }
+.preview:global(.ui-button)[data-state="error"] { color: var(--atlas-negative); }
 
 @keyframes pulse { to { opacity: .35; } }
 
@@ -428,7 +425,7 @@
   .type,
   .search,
   .chevron { transition: none; }
-  .preview[data-state="loading"] { animation: none; }
+  .preview:global(.ui-button)[data-state="loading"] { animation: none; }
 }
 
 /* Phones: catalogue controls are 44 px touch targets (roadmap item 51). */
@@ -440,5 +437,4 @@
   .taxonomyTree a,
   .search input,
   .search button { min-height: 44px; }
-  .preview { width: 44px; height: 44px; }
 }

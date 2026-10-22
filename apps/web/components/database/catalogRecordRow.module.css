@@ -5,7 +5,7 @@
   position: relative;
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: start;
   gap: var(--atlas-space-3);
   min-height: 76px;
   padding: var(--atlas-space-3);
@@ -79,11 +79,13 @@
 
 .link {
   display: block;
-  overflow: hidden;
   color: var(--atlas-text-strong);
   text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* The ending often distinguishes an item or spell from its neighbours.
+     Keep the complete identity visible, including on narrow result cards. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  hyphens: none;
 }
 
 /* The whole row is the link; the corner action sits above it. */
