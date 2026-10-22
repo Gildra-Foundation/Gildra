@@ -3,13 +3,24 @@
   position: sticky;
   top: 0;
   z-index: 80;
+  isolation: isolate;
   height: 86px;
   display: flex;
   align-items: center;
   padding: 14px clamp(20px, 2.2vw, 40px) 0;
   border-block: 1px solid var(--atlas-line-soft);
-  background: var(--atlas-surface-sunken) url("/assets/gildra/portal/rail.webp") center / 100% 100% no-repeat;
+  background: var(--atlas-surface-sunken);
   box-shadow: 0 1px 0 var(--atlas-line-strong);
+}
+/* Keep the real steel texture quiet behind readable links and focus rings. */
+.toolbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url("/assets/gildra/portal/rail.webp") center / 100% 100% no-repeat;
+  opacity: .45;
+  pointer-events: none;
 }
 .brand {
   position: absolute;
