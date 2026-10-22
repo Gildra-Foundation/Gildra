@@ -1,5 +1,5 @@
 .section {
-  margin-top: var(--atlas-space-7);
+  margin-top: var(--atlas-section-gap, var(--atlas-space-7));
   scroll-margin-top: calc(var(--atlas-sticky-top) + 64px);
 }
 
@@ -9,10 +9,21 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--atlas-space-3) var(--atlas-space-5);
-  margin-bottom: var(--atlas-space-4);
+  margin-bottom: var(--atlas-space-5);
+  view-timeline: --atlas-section block;
 }
 
-.headingCopy { flex: 1 1 auto; min-width: 0; view-timeline: --atlas-section block; }
+/* Chapter rule: an engraved line under the whole heading row, lit at its start. */
+.header::after {
+  flex: 0 0 100%;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, var(--atlas-accent) 0, color-mix(in srgb, var(--atlas-accent) 35%, transparent) 22%, var(--atlas-line-soft) 60%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--atlas-bg) 60%, transparent);
+  transform-origin: left center;
+}
+
+.headingCopy { flex: 1 1 auto; min-width: 0; }
 
 .eyebrow {
   display: flex;
@@ -39,36 +50,34 @@
   text-wrap: balance;
 }
 
-/* Map-legend flourish under the heading: an ember dot and a fading amber rule.
-   It draws itself as the section scrolls into view. */
-.title::after {
-  display: block;
-  width: 88px;
-  height: 7px;
-  margin-top: 9px;
+/* The Gildra sigil before every chapter title: a gilded gem with a soft glow,
+   the same mark as the top bar and its rune. */
+.title::before {
+  display: inline-block;
+  width: .3em;
+  height: .3em;
+  margin: 0 .5em .16em .08em;
   content: "";
-  background:
-    radial-gradient(circle at 3.5px 50%, var(--atlas-accent-strong) 0 2.6px, transparent 3.4px),
-    linear-gradient(90deg, var(--atlas-accent), transparent) 12px 50% / calc(100% - 12px) 1px no-repeat;
-  filter: drop-shadow(0 0 5px var(--atlas-accent-glow));
-  transform-origin: left center;
+  vertical-align: middle;
+  rotate: 45deg;
+  background: var(--atlas-accent-strong);
+  box-shadow: 0 0 0 3px var(--atlas-accent-wash-strong), 0 0 12px var(--atlas-accent);
 }
 
 .titleSmall { font-size: var(--atlas-text-h3); }
-.titleSmall::after { width: 64px; margin-top: 7px; }
 
 @supports (animation-timeline: view()) {
   @media screen and (prefers-reduced-motion: no-preference) {
-    .title::after {
+    .header::after {
       animation: atlas-flourish linear both;
       animation-timeline: --atlas-section;
-      animation-range: entry 30% cover 35%;
+      animation-range: entry 30% cover 45%;
     }
   }
 }
 
 @keyframes atlas-flourish {
-  from { opacity: 0; transform: scaleX(.08); }
+  from { opacity: 0; transform: scaleX(.04); }
   to { opacity: 1; transform: none; }
 }
 
@@ -91,6 +100,7 @@
 
 @media (max-width: 720px) {
   .section { margin-top: var(--atlas-space-6); }
+  .header { margin-bottom: var(--atlas-space-4); }
 }
 
 /* Arrival after an in-site navigation: the page body follows the hero cascade. */

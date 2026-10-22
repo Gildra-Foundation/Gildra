@@ -104,6 +104,25 @@
 
 .shade { position: absolute; inset: 0; background: var(--atlas-art-shade); }
 
+/* Gilded corner brackets frame every picture; they open out and catch the light
+   when the card is picked. */
+.art::before {
+  position: absolute;
+  z-index: 1;
+  inset: 10px;
+  content: "";
+  pointer-events: none;
+  opacity: .28;
+  background: var(--atlas-filigree);
+  transition: inset var(--atlas-duration-slow) var(--atlas-ease), opacity var(--atlas-duration-slow) var(--atlas-ease);
+}
+
+.card:hover .art::before,
+.card:focus-within .art::before { inset: 6px; opacity: .95; filter: drop-shadow(0 0 4px var(--atlas-accent)); }
+
+.card:hover .title,
+.card:focus-within .title { color: var(--atlas-accent-strong); }
+
 /* Torchlight passing over the artwork when the card is picked. */
 .art::after {
   position: absolute;
@@ -117,7 +136,7 @@
 .card:hover .art::after,
 .card:focus-within .art::after { translate: 110% 0; transition: translate .9s var(--atlas-ease); }
 
-.artBadge { position: absolute; top: 10px; right: 10px; }
+.artBadge { position: absolute; z-index: 2; top: 10px; right: 10px; }
 /* Over a bright painting the badge's light wash disappears: give it a solid dark base. */
 .artBadge > * {
   background: color-mix(in srgb, var(--badge-color, var(--atlas-accent)) 18%, var(--atlas-bg));
@@ -171,6 +190,7 @@
   letter-spacing: var(--atlas-tracking-display);
   line-height: 1.1;
   text-wrap: balance;
+  transition: color var(--atlas-duration) var(--atlas-ease);
 }
 
 .subtitle { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
