@@ -28,7 +28,7 @@ export function ArticleContents({ title, items }: { title: string; items: Entry[
       <ol id={listId} className={styles.tocList} data-expanded={expanded}>
         {items.map((item) => <li key={item.id}><a href={`#${item.id}`}>{item.text}</a></li>)}
       </ol>
-      <AtlasAnchorSpy />
+      <AtlasAnchorSpy mode="reading" />
     </nav>
   );
 }
