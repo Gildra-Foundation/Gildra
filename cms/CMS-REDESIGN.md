@@ -64,3 +64,31 @@ the 19 October release record above.
 The fixture browser harness, when run, renders the actual workbench and Valyro
 components with explicit synthetic rows and local routing/API adapters. It cannot
 validate native Payload sessions, real tenant permissions or server rendering.
+
+## Editorial desk iteration — 22 October 2026
+
+The desk and article workbench share a Gildra editorial masthead, restrained
+site accents and readable serif headings. The latest accessible edit opens its
+native editor with its original site and title language. Site actions now open
+`/admin/articles` with explicit site, content locale and optional draft filter;
+they no longer depend solely on the sidebar tenant cookie. Publishing schedules
+and scheduled counters are hidden from roles that cannot inspect that queue.
+Existing server queries, access checks and publication semantics are unchanged.
+
+Articles have three URL-backed working views (all, drafts/edits, published
+versions), a search/site/language toolbar, the exact scoped result count and an
+explicit missing-title indication for the selected content language. Filters,
+reload and browser history use the same normalized query contract. Valyro
+Button, Badge, DataTable, StatsCard and EmptyState remain the real components;
+its useFlip animates the selected view and usePresence retains the reset control
+for its brief exit transition. Reduced-motion users receive no transition.
+The native Payload editor, auth, site selection and jobs worker are retained.
+
+Validation: TypeScript and all 70 unit tests passed. The isolated UI fixture
+checks article history/reload, stale response cancellation, error/empty/page
+recovery, keyboard controls, scoped desk actions, role-specific desk visibility,
+missing localized title, EN/RU screenshots at 390/1440 px, reduced motion and
+browser diagnostics. Fixture screenshots contain synthetic data; they do not
+claim to validate production authentication or a real database. Build and
+production release are coordinated after integration; no deployment was made
+from this branch.

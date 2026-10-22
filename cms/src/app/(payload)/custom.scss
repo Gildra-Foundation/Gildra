@@ -764,3 +764,11 @@
 
 // Valyro useFlip carries the active marker between actual navigation targets.
 .gd-nav__active-marker { position: absolute; top: 0; bottom: 0; left: -2px; width: 2px; background: var(--gd-amber); pointer-events: none; }
+
+// Editorial navigation: keep Payload's drawer behavior and tenant controls.
+.gd-nav__link { display: flex; align-items: center; gap: 10px; padding-block: 9px; }
+.gd-nav__symbol { width: 17px; height: 17px; flex: 0 0 17px; color: var(--gd-muted); }
+.gd-nav__link.is-active { color: var(--gd-amber); background: color-mix(in srgb, var(--gd-amber) 8%, var(--theme-elevation-50)); }
+.gd-nav__link.is-active .gd-nav__symbol { color: var(--gd-amber); }
+.gd-nav__section + .gd-nav__section { padding-top: 12px; border-top: 1px solid var(--gd-line); }
+.gd-logo strong { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: .08em; }

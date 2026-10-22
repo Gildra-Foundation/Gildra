@@ -24,6 +24,9 @@ import { RecentEditsTable } from "./RecentEditsTable";
 import { StatsCard } from "./valyro-ui/data-display/StatsCard";
 import { EmptyState } from "./valyro-ui/data-display/EmptyState";
 import { Badge } from "./valyro-ui/basic/Badge";
+import { Button } from "./valyro-ui/basic/Button";
+import { EditorialHeading } from "./editorial/EditorialHeading";
+import { editorialCopy } from "./editorial/copy";
 
 const STALE_DAYS = 90;
 const RECENT_LIMIT = 8;
@@ -83,6 +86,7 @@ type UpcomingItem = {
 export async function Dashboard({ payload, user, i18n, locale, visibleEntities }: Props) {
   const lang = adminLang(i18n?.language);
   const t = adminText(lang);
+  const e = editorialCopy[lang];
   const staff = asStaff(user);
   if (!staff) return null;
   const owner = isOwner(staff);
@@ -106,14 +110,24 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
     return role ? t[`role${role[0].toUpperCase()}${role.slice(1)}` as "roleAdmin"] : "—";
   };
   const visible = new Set(visibleEntities?.collections ?? []);
+  const latest = recent[0];
+  const canSeeSchedule = owner || siteIDsWithRole(staff, PUBLISH_ROLES).length > 0;
 
   return (
     <AdminSurface lang={lang}>
     <Gutter className="dashboard gd-home">
-      <header className="gd-home__head">
-        <h1>{t.greeting}</h1>
-        <p>{t.greetingHint}</p>
-      </header>
+      <EditorialHeading eyebrow={e.desk} title={e.title} description={e.hint}
+        actions={visible.has("guides") ? <Button asChild variant="secondary"><Link href={`/admin/articles?locale=${contentLocale}`}>{e.viewAll} <span aria-hidden="true">↗</span></Link></Button> : null} />
+
+      {latest ? <section className="gd-resume" aria-labelledby="gd-resume-title">
+        <div className="gd-resume__label"><span className="gd-editorial-eyebrow">{e.resume}</span><LocalTime iso={latest.updatedAt} lang={lang} /></div>
+        <div className="gd-resume__body"><h2 id="gd-resume-title">{latest.title || t.untitled}</h2>
+          <p>{latest.site !== null ? siteName.get(String(latest.site)) : ""} <span aria-hidden="true">·</span> {latest.collection === "guides" ? t.article : t.page} <span aria-hidden="true">·</span> {latest.titleLocale.toUpperCase()}</p></div>
+        {latest.site !== null ? <SiteLink siteID={String(latest.site)} variant="accent" href={`/admin/collections/${latest.collection}/${latest.id}?locale=${latest.titleLocale}`}>{e.open} <span aria-hidden="true">↗</span></SiteLink> :
+          <Button asChild variant="accent"><Link href={`/admin/collections/${latest.collection}/${latest.id}?locale=${latest.titleLocale}`}>{e.open} <span aria-hidden="true">↗</span></Link></Button>}
+      </section> : null}
+
+      {sites.length > 0 ? <div className="gd-editorial-section-head"><h2>{e.workspaces}</h2><p>{e.workspacesHint}</p></div> : null}
 
       {sites.length === 0 ? (
         <EmptyState title={t.noSites} role="status" />
@@ -146,7 +160,7 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
                 <div className="gd-site__stats">
                   <StatsCard label={t.published} value={c.published} locale={lang} />
                   <StatsCard label={t.drafts} value={c.drafts} locale={lang} />
-                  <StatsCard label={t.scheduled} value={c.scheduled} locale={lang} />
+                  {canPublish ? <StatsCard label={t.scheduled} value={c.scheduled} locale={lang} /> : null}
                   <StatsCard label={t.stale} value={c.stale} locale={lang} className={c.stale > 0 ? "gd-stat--warn" : undefined} />
                 </div>
 
@@ -172,9 +186,10 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
                       + {t.newArticle}
                     </SiteLink>
                   ) : null}
-                  <SiteLink siteID={id} href="/admin/collections/guides" variant="secondary">
+                  <SiteLink siteID={id} href={`/admin/articles?site=${encodeURIComponent(id)}&locale=${contentLocale}`} variant="secondary">
                     {t.allArticles}
                   </SiteLink>
+                  {canWrite ? <SiteLink siteID={id} href={`/admin/articles?site=${encodeURIComponent(id)}&locale=${contentLocale}&status=draft`} variant="ghost">{e.drafts}</SiteLink> : null}
                   {canPublish ? (
                     <SiteLink siteID={id} href="/admin/collections/pages" variant="secondary">
                       {t.pages}
@@ -205,6 +220,7 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
       <div className="gd-columns">
         <section className="gd-panel" aria-labelledby="gd-recent">
           <h2 id="gd-recent">{t.recent}</h2>
+          <p className="gd-panel__description">{e.recentHint}</p>
           <RecentEditsTable lang={lang} rows={recent.map((item) => ({
             id: `${item.collection}-${item.id}`, title: item.title, kind: item.collection,
             href: `/admin/collections/${item.collection}/${item.id}?locale=${item.titleLocale}`,
@@ -214,10 +230,11 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
           }))} />
         </section>
 
-        <section className="gd-panel" aria-labelledby="gd-upcoming">
+        {canSeeSchedule ? <section className="gd-panel gd-schedule" aria-labelledby="gd-upcoming">
           <h2 id="gd-upcoming">{t.upcoming}</h2>
+          <p className="gd-panel__description">{e.queueHint}</p>
           {upcoming.length === 0 ? (
-            <EmptyState size="sm" title={t.upcomingEmpty} />
+            <EmptyState size="sm" title={e.queueEmpty} description={e.queueEmptyHint} />
           ) : (
             <table className="gd-table">
               <thead>
@@ -249,7 +266,7 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
               </tbody>
             </table>
           )}
-        </section>
+        </section> : null}
       </div>
 
       <nav className="gd-sections" aria-label={t.sections}>
