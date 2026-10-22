@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
 
 type SnapshotStore interface {
@@ -50,7 +52,5 @@ func (h *Handler) getHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeProblem(w http.ResponseWriter, status int, code, message string) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"code": code, "message": message})
+	httpjson.WriteProblem(w, status, "", map[string]string{"code": code, "message": message})
 }
