@@ -3,8 +3,9 @@ import { canUseAdmin, isOwner, relationID, siteIDsWithRole, SITE_ROLES } from ".
 import { writableSites } from "../admin/siteChoice";
 import { stateLevel, localeState } from "../admin/completeness";
 import { articleUrl } from "../admin/sitePaths";
-import { PAGE_SIZE, optionalID, pageNumber, searchText, type PageResult, type SiteChoice } from "../components/workspace/query";
-import { json, parseLocale } from "../utilities/http";
+import { PAGE_SIZE, optionalID, type PageResult, type SiteChoice } from "../components/workspace/query";
+import { json } from "../utilities/http";
+import { articlesSearchParams, normalizeArticlesQuery } from "./query";
 
 export type ArticleRow = { id: string; title: string; slug: string; siteID: string; siteName: string;
   status: "draft" | "published"; live: boolean; liveUrl: string | null; updatedAt: string; href: string };
@@ -13,22 +14,24 @@ type Params = { site?: unknown; q?: unknown; page?: unknown; status?: unknown; l
 
 export async function articlesData(req: PayloadRequest, params: Params): Promise<ArticlesResult> {
   if (!canUseAdmin(req.user)) throw new Forbidden(req.t);
-  const locale = parseLocale(params.locale ?? req.locale);
+  // SSR and the endpoint must reject/fallback repeated parameters identically.
+  const query = normalizeArticlesQuery(params, req.locale === "en" ? "en" : "ru");
+  const { locale } = query;
   const scope = isOwner(req.user) ? null : siteIDsWithRole(req.user, SITE_ROLES);
   const foundSites = await req.payload.find({ collection: "sites", req, user: req.user, overrideAccess: false,
     depth: 0, pagination: false, select: { name: true, slug: true, publicUrl: true }, sort: "name",
     ...(scope ? { where: { id: { in: scope } } } : {}) });
   const siteMap = new Map(foundSites.docs.map((s) => [String(s.id), s]));
-  const site = optionalID(params.site);
-  if (typeof params.site === "string" && params.site !== "" && (!site || !siteMap.has(site))) throw new Forbidden(req.t);
+  const site = optionalID(query.site);
+  if (query.site !== "" && (!site || !siteMap.has(site))) throw new Forbidden(req.t);
   const filters: Where[] = [{ site: { in: foundSites.docs.map((s) => s.id) } }];
   if (site) filters.push({ site: { equals: site } });
-  const q = searchText(params.q);
+  const q = query.q;
   if (q) filters.push({ or: [{ title: { contains: q } }, { slug: { contains: q } }] });
-  if (params.status === "draft" || params.status === "published") filters.push({ _status: { equals: params.status } });
+  if (query.status) filters.push({ _status: { equals: query.status } });
   const result = await req.payload.find({ collection: "guides", req, user: req.user, overrideAccess: false,
     depth: 0, draft: true, locale, fallbackLocale: false, where: { and: filters }, limit: PAGE_SIZE,
-    page: pageNumber(params.page), sort: ["-updatedAt", "id"],
+    page: query.page, sort: ["-updatedAt", "id"],
     select: { title: true, slug: true, site: true, _status: true, updatedAt: true } });
   // Live links come from the published document, never from an unsaved slug or
   // a translation that exists only in the latest draft.
@@ -51,6 +54,5 @@ export async function articlesData(req: PayloadRequest, params: Params): Promise
 }
 
 export const articlesEndpoint: Endpoint = { path: "/admin/articles", method: "get", handler: async (req) => {
-  const p = req.searchParams;
-  return json(await articlesData(req, { site: p.get("site"), q: p.get("q"), page: p.get("page"), status: p.get("status"), locale: p.get("locale") }));
+  return json(await articlesData(req, articlesSearchParams(req.searchParams)));
 } };
