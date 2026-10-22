@@ -1,92 +1,9 @@
-/** Данные проекта — единый источник для главной. */
+/**
+ * The labelled sample tier table of /tier-lists (shown with its notice while the
+ * meta API is off) — read through lib/specs.ts, never a stand-in for live data.
+ */
 
 export type SpecRef = { name: string; cls: string };
-
-export const liveStats = {
-  runs: "42,841",
-  specs: 39,
-  regions: 4,
-  updated: "2h ago",
-};
-
-export const season = {
-  expansion: "Midnight",
-  season: "Season 1",
-  patch: "12.0.5",
-};
-
-export const patchHighlights = [
-  "Class tuning updates",
-  "Three Midnight raids now open",
-  "New Mythic+ affix rotation",
-  "PvP balance adjustments",
-];
-
-export const mythicSpotlight = {
-  spec: { name: "Frost Death Knight", cls: "dk" } as SpecRef,
-  klass: "Death Knight",
-  role: "DPS",
-  score: "94.2",
-  played: "16.4%",
-  avgKey: "+14.7",
-  trend: 2,
-};
-
-export const mythicRunnersUp = [
-  { spec: { name: "Arcane Mage", cls: "mage" }, score: "92.7", trend: 0 },
-  { spec: { name: "Augmentation Evoker", cls: "evoker" }, score: "91.8", trend: 1 },
-];
-
-export const mythicTierRows: { tier: "a" | "b" | "c"; specs: SpecRef[] }[] = [
-  {
-    tier: "a",
-    specs: [
-      { name: "Retribution Paladin", cls: "pal" },
-      { name: "Outlaw Rogue", cls: "rogue" },
-      { name: "Balance Druid", cls: "druid" },
-      { name: "Elemental Shaman", cls: "shaman" },
-      { name: "Shadow Priest", cls: "priest" },
-    ],
-  },
-  {
-    tier: "b",
-    specs: [
-      { name: "Affliction Warlock", cls: "lock" },
-      { name: "Windwalker Monk", cls: "monk" },
-      { name: "Fury Warrior", cls: "war" },
-      { name: "Marksmanship Hunter", cls: "hunter" },
-    ],
-  },
-  {
-    tier: "c",
-    specs: [
-      { name: "Havoc Demon Hunter", cls: "dh" },
-      { name: "Enhancement Shaman", cls: "shaman" },
-      { name: "Frost Mage", cls: "mage" },
-    ],
-  },
-];
-
-export const trends = [
-  { rank: "I", spec: { name: "Frost Death Knight", cls: "dk" }, pct: "16.4%", dir: "up" },
-  { rank: "II", spec: { name: "Arcane Mage", cls: "mage" }, pct: "15.7%", dir: "flat" },
-  { rank: "III", spec: { name: "Augmentation Evoker", cls: "evoker" }, pct: "13.1%", dir: "up" },
-  { rank: "IV", spec: { name: "Restoration Shaman", cls: "shaman" }, pct: "8.7%", dir: "down" },
-  { rank: "V", spec: { name: "Assassination Rogue", cls: "rogue" }, pct: "7.9%", dir: "flat" },
-] as const;
-
-export const raid = {
-  label: "Current Raid",
-  name: "Midnight Raid Journal",
-  blurb:
-    "The Voidspire, The Dreamrift and March on Quel'Danas — nine encounters with real Adventure Guide mechanics.",
-  links: ["Boss Rankings", "Tier List", "Guides", "Best Specs"],
-  topSpecs: [
-    { name: "Devastation Evoker", cls: "evoker" },
-    { name: "Marksmanship Hunter", cls: "hunter" },
-    { name: "Unholy Death Knight", cls: "dk" },
-  ] as SpecRef[],
-};
 
 export type TableRow = {
   spec: SpecRef;
@@ -141,39 +58,3 @@ export const classChips = [
   { key: "shaman", label: "Shaman" },
   { key: "lock", label: "Warlock" },
 ];
-
-export const builds = [
-  { spec: { name: "Frost Death Knight", cls: "dk" }, title: "Breath of Sindragosa — Frost DK", meta: "By Alexandér · updated 3h ago", tier: "s" },
-  { spec: { name: "Arcane Mage", cls: "mage" }, title: "Sunfury Arcane Burst", meta: "By Neri · updated 6h ago", tier: "s" },
-  { spec: { name: "Augmentation Evoker", cls: "evoker" }, title: "Chrono Flight — Augmentation", meta: "By Velyne · updated 9h ago", tier: "s" },
-  { spec: { name: "Retribution Paladin", cls: "pal" }, title: "Templar's Verdict Cleave", meta: "By Shyra · updated 12h ago", tier: "a" },
-  { spec: { name: "Balance Druid", cls: "druid" }, title: "Elune's Chosen — Starfall", meta: "By Lyra · updated 1d ago", tier: "a" },
-  { spec: { name: "Shadow Priest", cls: "priest" }, title: "Voidweaver Shadow", meta: "By Kael · updated 1d ago", tier: "a" },
-] as const;
-
-export const guidesList = [
-  { art: "dk", cat: "Frost Death Knight", title: "Frost DK Mythic+ Guide — Season 1", meta: "By Alexandér · 3h ago" },
-  { art: "talents", cat: "Mythic+ Guide", title: "Best Talents for +12–16 Keys", meta: "By Shyra · 8h ago" },
-  { art: "arcane", cat: "Class Guide", title: "Arcane Mage Guide — Patch 12.0.5", meta: "By Neri · 10h ago" },
-  { art: "gear", cat: "Gear Guide", title: "Best Items for Healers — Season 1", meta: "By Lyra · 12h ago" },
-] as const;
-
-export const featuredGuide = {
-  cat: "Raid Guide",
-  title: "Midnight — Complete Raid Journal",
-  meta: "By Velyne · 5h ago · 14 min read",
-};
-
-/* ---- Types for DataSource consumers (lib/data/source.ts) ---- */
-export type LiveStats = typeof liveStats;
-export type Season = typeof season;
-export type MythicSpotlight = typeof mythicSpotlight;
-export type RunnerUp = (typeof mythicRunnersUp)[number];
-export type MythicTierRow = (typeof mythicTierRows)[number];
-export type Trend = (typeof trends)[number];
-export type Raid = typeof raid;
-export type TierGroup = (typeof tierTable)[number];
-export type ClassChip = (typeof classChips)[number];
-export type Build = (typeof builds)[number];
-export type GuideItem = (typeof guidesList)[number];
-export type FeaturedGuide = typeof featuredGuide;
