@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestLoadValidatesRequiredSettings(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://gildra:test@localhost:5432/gildra")
@@ -97,5 +100,28 @@ func TestLoadEnforcesPublicationPolicyInProduction(t *testing.T) {
 	}
 	if cfg.CatalogPublicationMode != "enforce" || cfg.CatalogPublicationEnv != "production" {
 		t.Fatalf("unexpected production publication config: mode=%s env=%s", cfg.CatalogPublicationMode, cfg.CatalogPublicationEnv)
+	}
+}
+
+func TestLoadDatabaseLimits(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://gildra:test@localhost:5432/gildra")
+	t.Setenv("CLICKHOUSE_PASSWORD", "test")
+	t.Setenv("INDEXNOW_KEY", "00000000000000000000000000000000")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.RequestTimeout != 20*time.Second || cfg.DatabaseMaxConns != 0 || cfg.WorkerDatabaseMaxConns != 5 {
+		t.Fatalf("defaults = %v, %d, %d", cfg.RequestTimeout, cfg.DatabaseMaxConns, cfg.WorkerDatabaseMaxConns)
+	}
+	t.Setenv("API_REQUEST_TIMEOUT", "5s")
+	t.Setenv("DATABASE_MAX_CONNS", "24")
+	if cfg, err = Load(); err != nil || cfg.RequestTimeout != 5*time.Second || cfg.DatabaseMaxConns != 24 {
+		t.Fatalf("overrides = %v, %d, %v", cfg.RequestTimeout, cfg.DatabaseMaxConns, err)
+	}
+	t.Setenv("DATABASE_MAX_CONNS", "-1")
+	if _, err := Load(); err == nil {
+		t.Fatal("negative DATABASE_MAX_CONNS was accepted")
 	}
 }

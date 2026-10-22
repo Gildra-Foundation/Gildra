@@ -63,11 +63,18 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	postgres, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	postgres, err := newPostgresPool(ctx, cfg.DatabaseURL, "gildra-api", cfg.DatabaseMaxConns)
 	if err != nil {
 		return err
 	}
 	defer postgres.Close()
+	// River holds a LISTEN connection and polls continuously; a pool of its
+	// own keeps job processing and slow API queries from starving each other.
+	workerPostgres, err := newPostgresPool(ctx, cfg.DatabaseURL, "gildra-worker", cfg.WorkerDatabaseMaxConns)
+	if err != nil {
+		return err
+	}
+	defer workerPostgres.Close()
 
 	clickhouseConn, err := clickhouse.Open(&clickhouse.Options{
 		Addr:        []string{cfg.ClickHouseAddr},
@@ -101,7 +108,7 @@ func run() error {
 		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
 		cfg.DatasetWorkerURL,
 	))
-	riverClient, err := river.NewClient(riverpgxv5.New(postgres), &river.Config{
+	riverClient, err := river.NewClient(riverpgxv5.New(workerPostgres), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault:       {MaxWorkers: 10},
 			datasetrefresh.QueueName: {MaxWorkers: 1},
@@ -178,7 +185,7 @@ func run() error {
 	router.Handle("/", restHandler)
 	// Observe the request the router sees: MaxBytesHandler hands the router a
 	// copy, so outside it the matched route pattern was lost ("unmatched").
-	apiHandler := httpapi.ObserveRequests(router, slog.Default())
+	apiHandler := httpapi.ObserveRequests(httpapi.LimitRequestDuration(router, cfg.RequestTimeout, httpapi.LongRunningPrefixes), slog.Default())
 	apiHandler = http.MaxBytesHandler(apiHandler, 8<<20)
 	sentryHandler := sentryhttp.New(sentryhttp.Options{Repanic: true}).Handle(apiHandler)
 
@@ -210,4 +217,20 @@ func run() error {
 		return err
 	}
 	return nil
+}
+
+// newPostgresPool opens a pool tagged with applicationName (visible in
+// pg_stat_activity). maxConns 0 keeps the pgx default of max(4, CPUs).
+func newPostgresPool(ctx context.Context, databaseURL, applicationName string, maxConns int32) (*pgxpool.Pool, error) {
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return nil, err
+	}
+	if maxConns > 0 {
+		poolConfig.MaxConns = maxConns
+	}
+	if poolConfig.ConnConfig.RuntimeParams["application_name"] == "" {
+		poolConfig.ConnConfig.RuntimeParams["application_name"] = applicationName
+	}
+	return pgxpool.NewWithConfig(ctx, poolConfig)
 }
