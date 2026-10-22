@@ -45,7 +45,7 @@ export function TalentTouchInspector({ node, kind, lang, rank, selectedChoice, l
       </div>
       <footer className={styles.actions}>
         <AtlasButton icon={<Minus aria-hidden="true" />} disabled={node.freeNode || rank <= 0} onClick={() => onRank(-1)}>{copy.removeRank}</AtlasButton>
-        <AtlasButton variant="primary" icon={<Plus aria-hidden="true" />} disabled={node.freeNode || Boolean(lockReason) || budgetFull || rank >= node.maxRanks} onClick={() => onRank(1)}>{rank >= node.maxRanks ? copy.maxRank : copy.addRank}</AtlasButton>
+        <AtlasButton variant="primary" icon={<Plus aria-hidden="true" />} disabled={node.freeNode || Boolean(lockReason) || budgetFull || rank >= node.maxRanks} onClick={() => onRank(1)} aria-label={rank >= node.maxRanks ? copy.maxRank : copy.addRank}>{rank >= node.maxRanks ? copy.maxRankShort(node.maxRanks) : copy.addRank}</AtlasButton>
         {node.nodeType === "choice" && rank > 0 ? <AtlasButton className={styles.switchChoice} icon={<RefreshCw aria-hidden="true" />} onClick={onSwitch}>{copy.switchChoice}</AtlasButton> : null}
       </footer>
     </AtlasDialog>
