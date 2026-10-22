@@ -35,13 +35,40 @@ const routes = [
   ["/wow/raids", 200], ["/ru/wow/raids", 200], ["/wow/raids/the-voidspire", 200],
   ["/wow/mythic-plus", 200], ["/ru/wow/mythic-plus", 200],
   ["/wow/classes", 200], ["/wow/lairs", 200], ["/ru/wow/lairs", 200],
-  ["/wow/characters", 200], ["/wow/articles", 200],
+  ["/wow/characters", 200], ["/ru/wow/characters", 200],
+  // The article index is a public destination even with CMS disabled in CI.
+  ["/wow/articles", 200], ["/ru/wow/articles", 200],
   ["/talents/fury-warrior", 200],
   ["/database", 200], ["/ru/database", 200], ["/search", 200], ["/search?q=Thunderfury", 200],
   ["/privacy", 200], ["/ru/privacy", 200],
   ["/foo", 404], ["/ru/foo", 404], ["/wow/raids/no-such-raid", 404],
 ];
 const plain = [["/robots.txt", 200], ["/sitemap.xml", 200]];
+
+// A successful HTTP response must still expose the redesigned public landing
+// and article index, with ordinary locale-correct links in the shared header.
+// Keep these checks independent of whether the optional CMS has publications.
+async function checkPublicShell(page, path, problems) {
+  const ru = path === "/ru" || path.startsWith("/ru/");
+  const bare = path.replace(/^\/ru(?=\/|$)/, "") || "/";
+  if (bare !== "/" && bare !== "/wow/articles") return;
+  const header = page.locator("header[data-toolbar-path]");
+  if (await header.count() !== 1) {
+    problems.push("public shell: expected one shared header");
+    return;
+  }
+  const navigation = header.locator(`nav[aria-label="${ru ? "Основная навигация" : "Main navigation"}"]`);
+  const hrefs = await navigation.locator("a[href]").evaluateAll(links => links.map(link => link.getAttribute("href")));
+  for (const destination of ["/", "/wow/characters", "/wow/lairs", "/wow/mythic-plus", "/wow/raids", "/tier-lists", "/wow/articles"]) {
+    const href = ru ? destination === "/" ? "/ru" : `/ru${destination}` : destination;
+    if (!hrefs.includes(href)) problems.push(`public shell: missing navigation link ${href}`);
+  }
+  const headings = await page.locator("#atlas-content h1").allTextContents();
+  if (headings.length !== 1 || !headings[0].trim()) problems.push("public shell: expected one nonempty main heading");
+  if (bare === "/wow/articles" && !headings.some(text => ru ? /статьи/i.test(text) : /articles/i.test(text))) {
+    problems.push("article index: expected a localized Articles heading, including when CMS is disabled");
+  }
+}
 
 async function startServer() {
   if (process.env.SMOKE_URL) return null;
@@ -98,6 +125,7 @@ try {
     });
     await page.waitForTimeout(800);
     const status = response?.status();
+    if (status === 200) await checkPublicShell(page, path, problems);
     if (status !== expected) problems.unshift(`HTTP ${status}, want ${expected}`);
     console.log(`${problems.length ? "FAIL" : "ok  "} ${String(status).padEnd(3)} ${path} (${Date.now() - started} ms)`);
     for (const problem of problems) failures.push(`${path}: ${problem}`);
