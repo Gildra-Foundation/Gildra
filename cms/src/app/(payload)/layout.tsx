@@ -5,11 +5,15 @@ import type { ServerFunctionClient } from "payload";
 import type { ReactNode } from "react";
 
 import { importMap } from "./admin/importMap";
+import { secureSchedulePublish, secureUpcomingScheduledPublish } from "../../jobs/scheduleActions";
 import "./custom.scss";
 
 const serverFunction: ServerFunctionClient = async (args) => {
   "use server";
-  return handleServerFunctions({ ...args, config, importMap });
+  return handleServerFunctions({ ...args, config, importMap, serverFunctions: {
+    "schedule-publish": secureSchedulePublish,
+    "get-upcoming-scheduled-publish": secureUpcomingScheduledPublish,
+  } });
 };
 
 export default function PayloadLayout({ children }: { children: ReactNode }) {

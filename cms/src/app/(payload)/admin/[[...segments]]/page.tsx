@@ -3,7 +3,7 @@ import config from "@payload-config";
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getPayload } from "payload";
+import { createLocalReq, getPayload } from "payload";
 
 import { selectionAllows, SITE_COOKIE, siteScopedCreate, writableSites } from "@/admin/siteChoice";
 import { importMap } from "../importMap";
@@ -23,11 +23,25 @@ export default async function Page({ params, searchParams }: Args) {
   const collection = siteScopedCreate((await params).segments);
   if (collection) {
     const payload = await getPayload({ config });
-    const { user } = await payload.auth({ headers: await headers() });
+    const requestHeaders = await headers();
+    const { user } = await payload.auth({ headers: requestHeaders });
     if (user) {
       const sites = await writableSites(payload, user, collection);
-      if (!selectionAllows((await cookies()).get(SITE_COOKIE)?.value, sites)) {
-        redirect(`/admin/select-site?collection=${encodeURIComponent(collection)}`);
+      const selected = (await cookies()).get(SITE_COOKIE)?.value;
+      const language = (await searchParams).locale;
+      if (!selectionAllows(selected, sites)) {
+        const suffix = language === "en" || language === "ru" ? `&locale=${language}` : "";
+        redirect(`/admin/select-site?collection=${encodeURIComponent(collection)}${suffix}`);
+      }
+      if ((collection === "guides" || collection === "pages") && (language === "en" || language === "ru")) {
+        // Payload's autosave bootstrap drops the locale from its redirect.
+        // Create the same empty draft with normal access, then keep the chosen
+        // language when entering the native editor.
+        const req = await createLocalReq({ user, locale: language, req: { headers: new Headers(requestHeaders) } }, payload);
+        const doc = await payload.create({ collection, req, user, overrideAccess: false,
+          locale: language, fallbackLocale: false, draft: true, depth: 0,
+          data: { site: selected, _status: "draft" } as never });
+        redirect(`/admin/collections/${collection}/${doc.id}?locale=${language}`);
       }
     }
   }

@@ -1,6 +1,7 @@
-import { APIError, type CollectionConfig, type FieldAccess } from "payload";
+import { APIError, type CollectionConfig, type FieldAccess, type Where } from "payload";
 
 import { asStaff, canUseAdmin, isOwner, SITE_ROLES, siteIDsWithRole } from "../access/roles";
+import { assertStaffRecoveryAvailable } from "../email";
 import { auditAfterChange, auditAfterDelete } from "../hooks/audit";
 
 const BOOTSTRAP = "gildra:bootstrapOwner";
@@ -36,13 +37,14 @@ export const Admins: CollectionConfig = {
       const existing = await req.payload.count({ collection: "admins", overrideAccess: true, req });
       return existing.totalDocs === 0;
     },
-    read: ({ req }) => {
+    read: ({ req }): boolean | Where => {
       const staff = asStaff(req.user);
       if (!staff) return false;
       if (isOwner(staff)) return true;
       // Site admins/editors see colleagues of their sites (the plugin adds that
       // constraint); everyone else only themselves.
-      if (siteIDsWithRole(staff, ["admin", "editor"]).length > 0) return true;
+      const managedSites = siteIDsWithRole(staff, ["admin", "editor"]);
+      if (managedSites.length > 0) return { or: [{ id: { equals: staff.id } }, { "sites.site": { in: managedSites } }] };
       return { id: { equals: staff.id } };
     },
     update: ({ req }) => {
@@ -61,6 +63,9 @@ export const Admins: CollectionConfig = {
   hooks: {
     beforeOperation: [
       async ({ args, operation, req }) => {
+        // Refuse recovery uniformly when email is unavailable, before Payload looks
+        // up the address. Otherwise a 503 for an existing account leaks existence.
+        if (operation === "forgotPassword") await assertStaffRecoveryAvailable();
         if (operation !== "create") return args;
         const existing = await req.payload.count({ collection: "admins", overrideAccess: true, req });
         if (existing.totalDocs === 0) {

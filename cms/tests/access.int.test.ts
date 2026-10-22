@@ -314,6 +314,15 @@ describe("preview", () => {
     const ok = await callEndpoint(payload, "/preview-content", "get", { query: { token } });
     expect(ok.status).toBe(200);
     expect(ok.body.doc.title).toBe("Preview draft");
+    expect(ok.body.site.slug).toBe("gildra");
+    expect(ok.headers.get("cache-control")).toBe("no-store");
+    expect(ok.headers.get("referrer-policy")).toBe("no-referrer");
+    const matched = await callEndpoint(payload, "/preview-content", "get", { query: { token, site: "gildra" } });
+    expect(matched.status).toBe(200);
+    const mismatched = await callEndpoint(payload, "/preview-content", "get", { query: { token, site: "riftden" } });
+    expect(mismatched.status).toBe(404);
+    expect(mismatched.body.doc).toBeUndefined();
+    expect(mismatched.headers.get("cache-control")).toBe("no-store");
 
     const tampered = token.slice(0, -2) + (token.endsWith("A") ? "BB" : "AA");
     expect((await callEndpoint(payload, "/preview-content", "get", { query: { token: tampered } })).status).toBe(401);

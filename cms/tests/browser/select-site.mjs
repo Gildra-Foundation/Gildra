@@ -48,8 +48,9 @@ try {
   const first = await fetch(`${origin}/api/admins/first-register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'owner@test.local', password: 'local-test-password-1', name: 'Owner' }) });
   assert.equal(first.status, 200);
 
-  browser = await chromium.launch();
+  browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH });
   const context = await browser.newContext();
+  await context.addCookies([{ name: "payload-lng", value: "en", url: origin }]);
   const page = await context.newPage();
   await page.goto(`${origin}/admin/login`);
   await page.fill('input[name="email"]', 'owner@test.local');
@@ -64,7 +65,9 @@ try {
     await page.waitForURL(`${origin}/admin/select-site?collection=${collection}`);
     await page.getByRole('heading', { name: 'Choose a site' }).waitFor();
     const buttons = page.getByRole('button', { name: /^Create the (article|page) on / });
-    assert.deepEqual(await buttons.allInnerTexts(), ['Gildra', 'Riftden']);
+    assert.equal(await buttons.count(), 2);
+    assert.equal(await page.getByRole('button', { name: /on Gildra$/ }).count(), 1);
+    assert.equal(await page.getByRole('button', { name: /on Riftden$/ }).count(), 1);
     ok(`${collection}/create without a site shows "Choose a site" with both sites (nothing guessed)`);
 
     // Keyboard only: focus the Riftden choice and press Enter.

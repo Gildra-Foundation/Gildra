@@ -8,7 +8,7 @@ import { adminLang, adminText } from "../admin/text";
 import { AnalyticsPanel } from "./AnalyticsPanel";
 
 /** /admin/analytics — Plausible statistics for the sites the viewer may analyse. */
-export async function AnalyticsView({ initPageResult, params, searchParams }: AdminViewServerProps) {
+export async function AnalyticsView({ initPageResult, params, searchParams, user }: AdminViewServerProps) {
   const { req, permissions, visibleEntities, locale } = initPageResult;
   // Custom admin views are routed even without a session; send those to the login.
   if (!canUseAdmin(req.user)) redirect("/admin/login?redirect=%2Fadmin%2Fanalytics");
@@ -44,7 +44,7 @@ export async function AnalyticsView({ initPageResult, params, searchParams }: Ad
       permissions={permissions}
       req={req}
       searchParams={searchParams}
-      user={req.user ?? undefined}
+      user={user}
       visibleEntities={visibleEntities}
     >
       <div className="gutter--left gutter--right" style={{ paddingBlock: "var(--base)" }}>
