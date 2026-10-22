@@ -1,15 +1,15 @@
 {
-  "note": "Decoded bytes (KB) a first visit downloads at 1440×900, cold cache. Measured by npm run budgets; raise a budget only with a reason in the commit. Murder Row image allowance includes the 361 KiB MDT map introduced in 433f0f5c (2026-10-21), in addition to the former 154 KiB artwork allowance; measured total 434 KiB on 2026-10-22. The map asset and renderer are unchanged by the redesign. Portal first-visit budgets added for / and /ru on 2026-10-22: illustrated character scene and destination rail, shared Valyro navigation, and explicit font allowance. Existing route ceilings are unchanged; fonts and CSS background images are classified before CSS initiators.",
+  "note": "Decoded bytes (KB) a first visit downloads at 1440×900, cold cache. Measured by npm run budgets; raise a budget only with a reason in the commit. Murder Row image allowance includes the 361 KiB MDT map introduced in 433f0f5c (2026-10-21), in addition to the former 154 KiB artwork allowance; measured total 434 KiB on 2026-10-22. The map asset and renderer are unchanged by the redesign. Portal first-visit budgets added for / and /ru on 2026-10-22: illustrated character scene and destination rail, shared Valyro navigation, and explicit font allowance. Existing route ceilings are unchanged; fonts and CSS background images are classified before CSS initiators. Portal CSS ceiling160KiB includes the measured pre-existing global stylesheet(77KiB) and root font/style chunk(19KiB), plus actual header/frame/controls; it replaces an unmeasured100KiB draft ceiling below the shared minimum. Legacy route ceilings are unchanged. Direct imports remove unrelated kit styles and cards no longer prefetch hidden destination artwork.",
   "routes": {
     "/": {
       "js": 850,
-      "css": 100,
+      "css": 160,
       "img": 400,
       "font": 160
     },
     "/ru": {
       "js": 850,
-      "css": 100,
+      "css": 160,
       "img": 400,
       "font": 160
     },

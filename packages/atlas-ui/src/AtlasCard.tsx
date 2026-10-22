@@ -62,7 +62,8 @@ export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, s
   ) : null;
   return (
     <article className={clsx(styles.card, styles[layout], className)} style={style} data-spotlight data-tilt={tilt || undefined}>
-      <Link className={styles.link} href={href}>
+      {/* Automatic route prefetch also fetched destination React image preloads. */}
+      <Link className={styles.link} href={href} prefetch={false}>
         <div className={styles.art}>
           {picture ?? <span className={styles.artEmpty} aria-hidden="true" />}
           <span className={styles.shade} aria-hidden="true" />
