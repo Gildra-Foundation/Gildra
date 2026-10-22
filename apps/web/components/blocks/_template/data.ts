@@ -1,8 +1,9 @@
 import type { RenderContext } from "@/lib/blocks/types";
+import { liveSeason } from "@/lib/data/season";
 import type { ExampleData, ExampleProps } from "./schema";
 
-/** Resolve block data through ctx.source only. */
-export async function load(ctx: RenderContext, _props: ExampleProps): Promise<ExampleData> {
-  const season = await ctx.source.season();
-  return { title: `${season.expansion} · ${season.season}`, items: [] };
+/** Load block data on the server through lib/ data modules (here: the live season). */
+export function load(ctx: RenderContext, _props: ExampleProps): ExampleData {
+  const season = liveSeason();
+  return { title: season?.names[ctx.lang] ?? season?.names.en ?? "", items: [] };
 }

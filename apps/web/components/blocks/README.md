@@ -8,7 +8,7 @@ is the contract — read it before adding or changing UI.
 lib/blocks/          core: types.ts (BlockDef), page.ts (PageConfig), registry.ts, anchors.ts, metadata.ts, gallery.ts
 lib/pages/           definePage.tsx — one definition → { en, ru } route exports
 lib/games/           registry.ts (GAMES, prefixes, nav, footer, legal) · <slug>/{assets,api,pages/*}
-lib/data/            DataSource contract + demo implementation (data/site.ts stays the demo dataset)
+lib/data/            server-side game data (wow.ts, season.ts, wow/{mythic,raid,specializations}) blocks load from
 lib/anchors.ts       ANCHORS — every #id used by nav, footer, search and blocks
 components/blocks/   shared/<name>/ · <game>/<name>/ · _template/ · BlockRenderer · Page
 components/layout/   PageShell (Icons + .app/.main + Reveal; the top bar is global, the legal line is AtlasFrame's), Container
@@ -19,19 +19,20 @@ app/dev/blocks       gallery of every block at 1440/768/390 (dev only; GILDRA_DE
 ## Block anatomy
 
 ```
-components/blocks/wow/specBody/
-  SpecBody.tsx    component: (props + data + lang + game) → JSX. Owns its root element and its #id.
+components/blocks/<game|shared>/<name>/   (components/blocks/_template is the starting point)
+  <Name>.tsx      component: (props + data + lang + game) → JSX. Owns its root element and its #id.
   schema.ts       props (JSON-serialisable) and data types
-  data.ts         load(ctx, props) → data via ctx.source only
+  data.ts         load(ctx, props) → data, on the server, through lib/ data modules
   demo.ts         demo props + data for the gallery
-  index.ts        defineBlock({ type: "wow.specBody", Component, load, anchor, demo })
+  index.ts        defineBlock({ type: "<game>.<name>", Component, load, anchor, demo })
 ```
 
 Rules:
 
-- **The component is pure.** No `data/site.ts`, no `lib/api/*`, no `usePathname` for
-  language — `lang` and `game` arrive as props. Only `demo.ts`/`index.ts` may import
-  the demo dataset.
+- **The component is pure.** No data imports, no `lib/api/*`, no `usePathname` for
+  language — `lang`, `game` and `data` arrive as props. `load` reads real data through
+  lib/ (`@/lib/data/*`, `@/lib/platform/*`); `data/site.ts` is only the tier
+  workspace's labelled sample, never a stand-in for missing live data.
 - **Own your root.** A block renders its own `<section id=…>`; anchor targets use
   `ANCHORS.x` and the definition declares `anchor: { id, label }` (empty label =
   scroll target without a nav item). Props-derived anchors use `anchorOf(props)`.

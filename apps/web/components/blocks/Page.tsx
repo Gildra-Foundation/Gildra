@@ -3,7 +3,6 @@ import { BlockRenderer } from "./BlockRenderer";
 import { collectAnchors } from "@/lib/blocks/anchors";
 import { PAGE_BLOCKS } from "@/lib/blocks/pages";
 import { loadBlockRegistry } from "@/lib/blocks/loadRegistry";
-import { getSource } from "@/lib/data";
 import { getCmsPageOverride } from "@/lib/cms/pages";
 import type { PageConfig } from "@/lib/blocks/page";
 import type { RenderContext } from "@/lib/blocks/types";
@@ -19,7 +18,6 @@ export async function Page({ config, lang }: { config: PageConfig; lang: Lang })
   const ctx: RenderContext = {
     lang,
     game: config.game,
-    source: getSource(config.game),
     path: config.path,
     anchors: collectAnchors(blocks, registry),
       anchorsOf: (pageId) => collectAnchors(PAGE_BLOCKS[pageId] ?? [], registry),

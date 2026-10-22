@@ -56,9 +56,10 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   compaction uses `@container` (containers: `.section`, `.cards-row`); new UI
   uses Tailwind CSS and shadcn/ui on the same tokens without changing the
   visual language.
-- Data: blocks read data only through `ctx.source` (`lib/data/source.ts`);
-  `data/site.ts` is the demo dataset behind it and the only source for
-  `demo.ts` files. Game icons/artwork resolve **only** through
+- Data: block `load` functions read server-side data through `lib/`
+  (`lib/data/*` — game data, the live season, M+ routes and raid guides —
+  and `lib/platform/*`); components receive it as props. `data/site.ts` is
+  only the tier workspace's labelled sample. Game icons/artwork resolve **only** through
   `lib/games/wow/assets.ts` (files in `public/assets/**`, hero/raid artwork
   `public/bg.jpg`). Never invent data, links or game assets.
 

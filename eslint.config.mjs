@@ -68,7 +68,7 @@ const config = [
     rules: { "no-restricted-imports": ["error", { patterns: [noApp, noRawGameData] }] },
   },
   {
-    // Blocks keep their demo dataset (data/site.ts) behind ctx.source.
+    // Blocks may read data modules in their load(); the components stay pure.
     files: [web("components/blocks/**/*.{ts,tsx}")],
     rules: { "no-restricted-imports": ["error", { patterns: [noApp] }] },
   },
