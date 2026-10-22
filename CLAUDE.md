@@ -3,6 +3,10 @@
 Gildra is a WoW gaming-intelligence product: **gaming product first → decision
 tool second → analytics dashboard third**. Production: https://gildra.net
 
+This file and `AGENTS.md` are already in context — never `cat` them again. Token
+economy (model/effort, quiet builds, reading map, brief template):
+[docs/llm/session-economy.md](docs/llm/session-economy.md).
+
 ## Stack & map
 
 - Next.js 16 App Router + React 19 + TypeScript, Go 1.26 API/River worker,
@@ -68,8 +72,8 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   `--bg` data body. No full-page fixed artwork.
 - Honest UI only: no `href="#"`; unimplemented things use `.soon`,
   `.dead-link`, `aria-disabled` states.
-- Full rules live in [design.md](design.md) — **read it before any UI/design
-  work** and follow the `gildra-design-director` skill workflow
+- Full rules live in [design.md](design.md) — **read it before UI/design work only**
+  (not for backend, CMS, deploy or data tasks) and follow the `gildra-design-director` skill workflow
   ([.claude/skills/gildra-design-director/SKILL.md](.claude/skills/gildra-design-director/SKILL.md)).
 
 ## Working on UI
