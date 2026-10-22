@@ -44,7 +44,7 @@ export const ADAPTATIONS = {
   atlas: {
     ...SCOPE,
     "styles/base.css": { ...SCOPE["styles/base.css"], trimTrailingBlank: true },
-    "primitives/motion.css": { pairs: [[":root", ".gildra-atlas,\n[data-atlas-scope]"]] },
+    "styles/motion.css": { pairs: [[":root", ".gildra-atlas,\n[data-atlas-scope]"]] },
   },
   cms: SCOPE,
 };
@@ -143,7 +143,12 @@ function stage(target, names) {
   const packages = [...result.stdout.matchAll(/^Install the required packages: \S+ (?:install|add) (.+)$/gm)]
     .flatMap(match => match[1].split(" ").filter(arg => !arg.startsWith("-")));
   const installDir = path.join(dir, target.config.installDir);
-  const files = new Map(walk(installDir).map(rel => [rel, toLf(fs.readFileSync(path.join(installDir, rel), "utf8"))]));
+  const files = new Map(walk(installDir).map(rel => {
+    const abs = path.join(installDir, rel);
+    const content = toLf(fs.readFileSync(abs, "utf8"));
+    fs.writeFileSync(abs, content); // the staged copy is what manual merges diff against
+    return [rel, content];
+  }));
   return { dir, installDir, resolved, packages, files };
 }
 
