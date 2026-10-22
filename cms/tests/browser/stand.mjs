@@ -100,7 +100,7 @@ export async function startStand({ name, fixture }) {
   const cmsOrigin = `http://localhost:${cmsPort}`;
   const qa = { origins: { cms: cmsOrigin, gildra: `http://127.0.0.1:${gildraPort}`, riftden: `http://127.0.0.1:${riftdenPort}` }, browser_origin: cmsOrigin };
   await writeFile(path.join(out, 'qa.json'), JSON.stringify(qa));
-  const env = { ...process.env, CMS_QA_DIR: out, PAYLOAD_SECRET: SECRET };
+  const env = { ...process.env, CMS_QA_DIR: out, CMS_QA_DB: name, PAYLOAD_SECRET: SECRET };
   await run([path.join(CMS, 'node_modules/payload/bin.js'), 'run', `tests/browser/${fixture}`], { ...env, NODE_ENV: 'test' });
   const stubs = [['gildra', gildraPort], ['riftden', riftdenPort]].map(([site, port]) => {
     const server = stubSite(site, cmsOrigin);
