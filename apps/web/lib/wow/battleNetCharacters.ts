@@ -63,7 +63,7 @@ export async function getBattleNetCharacters(accessToken: string, locale: "en" |
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
         cache: "no-store",
-        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : undefined,
       });
       if (!response.ok) return { region, status: response.status, profile: null };
       return { region, status: response.status, profile: await response.json() as ProfileResponse };

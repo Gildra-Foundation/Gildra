@@ -1,7 +1,6 @@
 import type { ComponentProps } from "react";
 import Link from "next/link";
-import { AtlasFrameShell } from "@gildra/atlas-ui/AtlasFrameShell";
-import "@/lib/atlas/placeholders";
+import { AtlasFrameShell } from "@gildra/atlas-ui";
 import { atlasScenes, type AtlasScene, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { GAMES } from "@/lib/games/registry";
 import { t } from "@/lib/i18n";

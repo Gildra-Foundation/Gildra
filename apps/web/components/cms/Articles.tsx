@@ -4,15 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, CalendarDays, Clock3, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { AtlasFrame } from "@/components/atlas/AtlasFrame";
-import { AtlasBadge } from "@gildra/atlas-ui/AtlasBadge";
-import { AtlasGrid } from "@gildra/atlas-ui/AtlasGrid";
-import { AtlasHero } from "@gildra/atlas-ui/AtlasHero";
-import { AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
-import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
-import { AtlasPagination } from "@gildra/atlas-ui/AtlasPagination";
-import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
-import { AtlasPanel } from "@gildra/atlas-ui/AtlasPanel";
+import { AtlasBadge, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasPagination, AtlasSection, AtlasPanel } from "@/components/atlas";
 import { fetchArticle, fetchArticles } from "@/lib/cms/client";
 import { cmsConfig } from "@/lib/cms/config";
 import type { CmsLocale, PublicArticle } from "@/lib/cms/contract";
@@ -22,7 +14,7 @@ import { CmsRichText } from "./CmsRichText";
 import { articleHref, articlesIndexHref } from "./paths";
 import styles from "./cms.module.css";
 import { routeSections, sectionHref, trail } from "@/lib/routes/registry";
-import { ArticleContents } from "./ArticleContents";
+import { AtlasAnchorSpy } from "@gildra/atlas-ui/AtlasAnchorSpy";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { JsonLd, articleLd, breadcrumbListLd } from "@/lib/seo/jsonld";
 import { pageOpenGraph } from "@/lib/seo/metadata";
@@ -99,7 +91,6 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
   const t = articlesCopy[lang];
   const result = await fetchArticles(locale(lang), page, PAGE_SIZE);
   const docs = result.status === "ok" ? result.data.docs.filter((article) => article.resolvedLocale === locale(lang)) : [];
-  const gridDocs = page === 1 ? docs.slice(1) : docs;
   const totalPages = result.status === "ok" ? result.data.totalPages : 0;
   // An absent index endpoint is a service failure, not proof of an empty library.
   const unavailable = result.status === "error" || result.status === "not-found";
@@ -134,12 +125,9 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
       />
       {docs.length > 0 ? (
         <AtlasSection title={t.latest}>
-          {page === 1 ? <ArticleCard article={docs[0]} lang={lang} featured /> : null}
-          {gridDocs.length > 0 ? (
-            <AtlasGrid min={300} fit>
-              {gridDocs.map((article) => <ArticleCard key={article.id} article={article} lang={lang} />)}
-            </AtlasGrid>
-          ) : null}
+          <AtlasGrid min={300} fit>
+            {docs.map((article) => <ArticleCard key={article.id} article={article} lang={lang} />)}
+          </AtlasGrid>
           {totalPages > 1 ? (
             <AtlasPagination
               label={t.pages}
@@ -155,15 +143,15 @@ export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?:
 }
 
 /** List and related articles share the same published metadata and media allow-list. */
-function ArticleCard({ article: a, lang, featured = false }: { article: PublicArticle; lang: Lang; featured?: boolean }) {
+function ArticleCard({ article: a, lang }: { article: PublicArticle; lang: Lang }) {
   const t = articlesCopy[lang];
   const date = formatDate(a.publishedAt, lang);
   const config = cmsConfig();
   const cover = a.cover ? safeMediaUrl(a.cover.url, config.mediaOrigins, config.publicUrl || undefined) : null;
   const minutes = a.readingTime && Number.isFinite(a.readingTime) && a.readingTime > 0 ? Math.ceil(a.readingTime) : null;
   return (
-    <AtlasPanel as="article" padding="none" className={`${styles.articleCard} ${featured ? styles.featuredCard : ""}`} data-has-cover={Boolean(cover)}>
-      <Link href={articleHref(lang, a.slug)} prefetch={false} className={styles.articleCardLink}>
+    <AtlasPanel as="article" padding="none" className={styles.articleCard}>
+      <Link href={articleHref(lang, a.slug)} className={styles.articleCardLink}>
         {cover ? (
           // CMS origins are allow-listed server-side; no wildcard Next image configuration.
           // eslint-disable-next-line @next/next/no-img-element
@@ -257,7 +245,18 @@ export function ArticleView({ article: a, lang, banner, related = [], preview = 
         <div className={styles.progress} aria-hidden="true" />
         <div className={`${styles.layout} ${withToc ? styles.withToc : ""}`}>
           {withToc ? (
-            <ArticleContents title={t.contents} items={toc} />
+            <nav className={styles.toc} aria-label={t.contents}>
+              <p>{t.contents}</p>
+              <ol>
+                {toc.map((item) => (
+                  <li key={item.id}>
+                    <a href={`#${item.id}`}>{item.text}</a>
+                  </li>
+                ))}
+              </ol>
+              {/* Marks the chapter being read (aria-current), as on every atlas chapter strip. */}
+              <AtlasAnchorSpy />
+            </nav>
           ) : null}
           <div className={styles.body}>
             {cover ? (

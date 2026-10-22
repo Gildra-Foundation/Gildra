@@ -1,6 +1,4 @@
-import { AtlasFrame } from "@/components/atlas/AtlasFrame";
-import { AtlasHero } from "@gildra/atlas-ui/AtlasHero";
-import { AtlasSkeleton } from "@gildra/atlas-ui/AtlasState";
+import { AtlasFrame, AtlasHero, AtlasSkeleton } from "@/components/atlas";
 import type { Lang } from "@/lib/i18n";
 import { searchCopy } from "./searchCopy";
 import styles from "./searchPage.module.css";

@@ -4,7 +4,6 @@ import { catalogLocaleView } from "@/lib/catalogLocale";
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
 import { Eye } from "lucide-react";
-import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import type { CatalogRecord } from "@/lib/api/client";
 import { trackCatalogEvent } from "@/lib/catalogAnalytics";
 
@@ -33,7 +32,6 @@ export function RecordPreviewButton({ id, externalId, type, lang, iconSymbol, la
   const close = useCallback(() => setOpen(false), []);
 
   async function openPreview() {
-    if (state === "loading") return;
     prefetch();
     trackCatalogEvent("catalog_tooltip_opened", lang, { id: externalId, type });
     if (loaded.current) { setEntity(loaded.current); setOpen(true); return; }
@@ -54,10 +52,10 @@ export function RecordPreviewButton({ id, externalId, type, lang, iconSymbol, la
 
   return (
     <>
-      <AtlasButton variant="ghost" size="sm" className={className} aria-disabled={state === "loading" || undefined} aria-haspopup="dialog" aria-expanded={open} aria-label={labels.label} title={labels.label}
+      <button type="button" className={className} aria-haspopup="dialog" aria-expanded={open} aria-label={labels.label} title={labels.label}
         aria-busy={state === "loading" || undefined} data-state={state} onPointerEnter={prefetch} onFocus={prefetch} onClick={() => void openPreview()}>
         <Eye aria-hidden="true" />
-      </AtlasButton>
+      </button>
       {state === "loading" ? <span className="sr-only" role="status">{labels.loading}</span> : null}
       {state === "error" ? <p className={errorClassName} role="alert">{labels.error} <button type="button" onClick={() => void openPreview()}>{labels.retry}</button></p> : null}
       {open && entity ? <EntityTooltip entity={entity} lang={lang} iconSymbol={iconSymbol} onClose={close} /> : null}

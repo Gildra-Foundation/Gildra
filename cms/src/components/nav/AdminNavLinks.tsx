@@ -68,23 +68,13 @@ function Links({ items, pathname, onFollow }: { items: NavItem[]; pathname: stri
               onClick={onFollow}
             >
               {active ? <span className="gd-nav__active-marker" data-flip-id="active-section" aria-hidden="true" /> : null}
-              <NavGlyph href={item.href} /><span>{item.label}</span>
+              {item.label}
             </Link>
           </li>
         );
       })}
     </ul>
   );
-}
-
-function NavGlyph({ href }: { href: string }) {
-  const path = href === "/admin" ? "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"
-    : href.includes("articles") ? "M5 3h10l4 4v14H5zM15 3v5h4M8 12h8M8 16h5"
-    : href.includes("analytics") ? "M4 20V10M10 20V4M16 20v-7M22 20H2"
-    : href.includes("media") ? "M3 4h18v16H3zM3 16l6-6 4 4 3-3 5 5M16 8h.01"
-    : href.includes("users") || href.includes("members") || href.includes("admins") ? "M16 21v-3a4 4 0 0 0-8 0v3M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8"
-    : "M5 4h14v16H5zM8 8h8M8 12h8M8 16h4";
-  return <svg className="gd-nav__symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={path} /></svg>;
 }
 
 /**

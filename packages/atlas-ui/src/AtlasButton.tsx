@@ -18,6 +18,6 @@ export function AtlasLinkButton({ href, external, children, variant = "secondary
 }
 
 /** Shared Valyro action, preserving the atlas API and native button attributes. */
-export function AtlasButton({ children, variant = "secondary", icon, iconAfter, className, size = "md", type = "button", ...rest }: Common & ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean }) {
+export function AtlasButton({ children, variant = "secondary", icon, iconAfter, className, size = "md", type = "button", ...rest }: Common & ButtonHTMLAttributes<HTMLButtonElement>) {
   return <Button type={type} variant={variant} size={size} leftIcon={icon} rightIcon={iconAfter} className={clsx(bridge.scope, styles.button, className)} {...rest}>{children}</Button>;
 }

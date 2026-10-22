@@ -1,9 +1,8 @@
 # @gildra/atlas-ui — the atlas kit
 
-Building blocks of gildra.net. Layout and illustrated links remain server components;
-interactive controls use the actual Valyro adapters. Styling comes from
-[`atlas-theme.css`](../../apps/web/app/styles/atlas-theme.css). The book is preserved
-in source but unmounted. The selected character theme owns the accent.
+Building blocks of every inner page of gildra.net (everything except the
+landing scene and the contents book). Server components, no client JS, styled
+only through the tokens in [`app/styles/atlas-theme.css`](../../app/styles/atlas-theme.css).
 
 ```tsx
 import { AtlasFrame, AtlasHero, AtlasSection, AtlasCard, AtlasGrid } from "@/components/atlas";
@@ -19,7 +18,7 @@ its paintings; deep imports use `@gildra/atlas-ui/<Component>`.
 
 1. **Tokens only.** Page and component CSS uses `var(--atlas-*)`. No hex colours,
    no font names, no raw `px` font sizes. `npm run atlas:check` fails otherwise.
-2. **One selected accent.** Chrome (borders, links, buttons, eyebrows, counters) follows the selected character theme.
+2. **One amber.** Chrome (borders, links, buttons, eyebrows, counters) is amber.
    Class, role, item-quality and status colours are allowed only on the data they
    describe; an entry's illustration colour goes into `accent` (it tints only the
    eyebrow icon and the hover glow).
@@ -32,24 +31,6 @@ its paintings; deep imports use `@gildra/atlas-ui/<Component>`.
    secondary detail goes into `AtlasDisclosure` (see design.md, "Без перегрузки").
 6. **Copy lives apart from markup** (e.g. `components/wow/lairs/lairsCopy.ts`),
    RU and EN side by side. Game terms (boss, zone, item, spell names) stay English.
-
-## Chapter composition — 22 October 2026
-
-Use `AtlasHero align="chapter"` for a section opening that pairs an authored title
-and introduction with a ruled column of real facts. `start` and `center` remain
-available for existing detail and centered layouts. Sections begin with a quiet
-rule; avoid adding decorative numbers that are not part of the content.
-
-`AtlasCard` gives the painting space, with a cut upper edge and an inset caption
-surface. `layout="feature"` overlaps the caption with a wide painting on desktop
-and becomes one column on phones. Existing image, metadata, heading, focus and
-link contracts are unchanged. Destination artwork is not warmed on hover.
-
-The frame exposes CSS overrides `--atlas-frame-veil` and
-`--atlas-frame-art-filter` for an authored scene composition. Deep-shade and
-contrast modes retain their protective veils. No new global assets or client
-modules are needed for these presentation variants. Existing Valyro StatsCard
-and spring-based AtlasCountUp continue to present real facts.
 
 ## Page skeleton
 

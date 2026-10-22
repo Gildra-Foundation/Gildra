@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
 import { morphArtProps } from "./morph";
+import { AtlasMorphPreload } from "./AtlasMorphPreload";
 import styles from "./AtlasCard.module.css";
 import { artPlaceholder } from "./placeholders";
 
@@ -39,13 +40,13 @@ export type AtlasCardProps = {
   tilt?: boolean;
   /** The picture morphs into the opened page's scene (that page sets AtlasFrame morphKey). Only for one card per destination on a page. */
   morph?: boolean;
-  /** Legacy scene hint retained for callers; destination artwork is not preloaded. */
+  /** Scene of the opened page when it is not the card's own picture (warmed on hover for the morph). */
   morphArt?: string;
   className?: string;
 };
 
 /** Illustrated entry of an atlas list: raid, dungeon, boss, lair. */
-export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, tilt = false, morph = false, className }: AtlasCardProps) {
+export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, tilt = false, morph = false, morphArt, className }: AtlasCardProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const style = { "--atlas-card-accent": accent, "--atlas-card-art-ratio": artRatio } as CSSProperties;
   const picture = image ? (
@@ -62,10 +63,10 @@ export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, s
   ) : null;
   return (
     <article className={clsx(styles.card, styles[layout], className)} style={style} data-spotlight data-tilt={tilt || undefined}>
-      {/* Automatic route prefetch also fetched destination React image preloads. */}
-      <Link className={styles.link} href={href} prefetch={false}>
+      <Link className={styles.link} href={href}>
         <div className={styles.art}>
           {picture ?? <span className={styles.artEmpty} aria-hidden="true" />}
+          {morph && (morphArt ?? image?.src) ? <AtlasMorphPreload art={(morphArt ?? image?.src) as string} /> : null}
           <span className={styles.shade} aria-hidden="true" />
           {artBadge ? <span className={styles.artBadge}>{artBadge}</span> : null}
           {artCaption ? <span className={styles.artCaption}>{artCaption}</span> : null}
