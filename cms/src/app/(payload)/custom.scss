@@ -717,3 +717,35 @@
 .gd-nav__link.is-active .gd-nav__symbol { color: var(--gd-amber); }
 .gd-nav__section + .gd-nav__section { padding-top: 12px; border-top: 1px solid var(--gd-line); }
 .gd-logo strong { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: .08em; }
+
+// Media guidance and native upload controls. Keep Payload's file handling,
+// tenant filters and dialogs; increase targets only inside media workflows.
+.gd-media-guide {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid var(--gd-line);
+  border-radius: 10px;
+  background: var(--gd-card);
+  font-size: max(13px, 1.083333rem);
+  line-height: 1.6;
+  p { margin: 10px 0 0; color: var(--gd-muted); }
+  &__formats { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .ui-badge { font-size: max(12px, 1rem); height: auto; min-height: 24px; padding-block: 3px; }
+}
+
+.collection-edit--media {
+  .file-field__dropzoneButtons { flex-wrap: wrap; }
+  .file-field__dropzoneButtons .btn,
+  .file-field__upload-actions .btn,
+  .file-field__add-file-wrap .btn {
+    min-height: 40px;
+    font-size: max(13px, 1.083333rem);
+  }
+  .field-description { font-size: max(13px, 1.083333rem); line-height: 1.6; }
+}
+
+// Cover selection is the other entry point to the same media library.
+.collection-edit--guides #field-hero {
+  .upload__dropzoneContent__buttons { flex-wrap: wrap; }
+  .upload__dropzoneContent__buttons .btn { min-height: 40px; font-size: max(13px, 1.083333rem); }
+}
