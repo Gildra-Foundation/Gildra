@@ -3,9 +3,10 @@ import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { altPath, p } from "@/lib/i18n-paths";
+import { p } from "@/lib/i18n-paths";
 import { gameDestinationForPath } from "@/lib/games/destinations";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
+import { LocaleSwitch } from "@/components/platform/locale/LocaleSwitch";
 import { GameSwitcher } from "./GameSwitcher";
 import toolbarStyles from "./atlasToolbar.module.css";
 
@@ -87,10 +88,7 @@ export function WorkspaceNavigatorContent() {
     <PrimaryNavigation key={livePath} path={livePath} ru={ru} />
     <div className={toolbarStyles.end}>
       {!comingSoon && <SiteSearch lang={ru ? "ru" : "en"} />}
-      <nav className={toolbarStyles.locale} aria-label={ru ? "Язык" : "Language"}>
-        <Link href={altPath(livePath, "en")} hrefLang="en" lang="en" aria-current={ru ? undefined : "true"} prefetch={false}>EN</Link>
-        <Link href={altPath(livePath, "ru")} hrefLang="ru" lang="ru" aria-current={ru ? "true" : undefined} prefetch={false}>RU</Link>
-      </nav>
+      <LocaleSwitch path={livePath} lang={ru ? "ru" : "en"} />
       <GameSwitcher key={livePath} lang={ru ? "ru" : "en"} pathname={livePath} />
     </div>
   </header>;
