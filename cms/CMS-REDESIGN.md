@@ -111,3 +111,26 @@ with all desktop columns retained. Reduced motion passed; no page errors.
 Evidence: `.artifacts/cms-v2/mobile-results/` in the implementation worktree.
 These focused screenshots use synthetic rows and local routing/API adapters;
 no new image build, native-auth integration run or deployment was performed.
+
+## Native editor comparison polish — 22 October 2026
+
+The saved-translation panel now uses Valyro Button, usePresence and
+useDismissableLayer. Opening it from the comparison control moves keyboard
+focus to its visible close action; closing returns focus when it was inside the
+panel. A restored session preference does not take focus from the native editor.
+The panel remains non-modal, so the article stays editable alongside it.
+
+The desktop side panel and mobile bottom panel animate only transform/opacity,
+respect reduced motion, and become inert immediately when closing. Mobile uses
+the dynamic viewport height and bottom safe area. A failed translation request
+has a retry action. Copy buttons distinguish title and summary for assistive
+technology, announce success, and handle clipboard denial/unavailability with
+visible manual-copy guidance. Content language is separate from UI language.
+No save, publication, tenant, permission, database or dependency changes.
+
+Validation: TypeScript and all 70 existing unit tests passed. A synthetic editor
+component fixture passed 52 checks across EN/RU at 1440/390/320 px, including
+focus, keyboard closing, non-modal editing, retry, clipboard success/denial,
+restored preference, reduced motion and browser errors. Before/after screenshots
+and results are in `.artifacts/editor-compare` of the implementation worktree.
+Native authenticated integration and release are coordinated after integration.

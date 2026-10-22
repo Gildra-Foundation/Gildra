@@ -7,13 +7,13 @@ import {
   useForm,
   useTranslation,
 } from "@payloadcms/ui";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { emptyLocaleFields } from "../../admin/localeCopy";
-import { CONTENT_LOCALES, filled, hasText, missingParts, stateLevel } from "../../admin/completeness";
-import { LexicalPreview } from "./LexicalPreview";
-import { forgetLocaleDocs, type LocaleDoc, loadLocaleDoc, useLocaleStates, useSwitchLocale } from "./useLocaleStates";
+import { CONTENT_LOCALES, missingParts, stateLevel } from "../../admin/completeness";
+import { ComparePanel } from "./ComparePanel";
+import { usePresence } from "../valyro-ui/primitives/usePresence";
+import { forgetLocaleDocs, loadLocaleDoc, useLocaleStates, useSwitchLocale } from "./useLocaleStates";
 
 const COMPARE_KEY = "gd-compare-open";
 
@@ -79,6 +79,9 @@ export function LanguageBar() {
   useEffect(() => { context.current = `${collection}:${id}:${current}`; }, [collection, id, current]);
   useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   const [compare, setCompare] = useState(false);
+  const comparePresence = usePresence(compare, 160);
+  const compareId = useId();
+  const compareTrigger = useRef<HTMLButtonElement>(null);
   const [copying, setCopying] = useState(false);
 
   useEffect(() => {
@@ -176,7 +179,10 @@ export function LanguageBar() {
         {id ? (
           <button
             type="button"
+            ref={compareTrigger}
             className={`gd-langbar__compare${compare ? " is-active" : ""}`}
+            aria-expanded={compare}
+            aria-controls={comparePresence.isMounted ? compareId : undefined}
             aria-pressed={compare}
             title={t.compareHint}
             onClick={() => toggleCompare(!compare)}
@@ -195,8 +201,11 @@ export function LanguageBar() {
           </button>
         </div>
       ) : null}
-      {compare && id ? (
+      {comparePresence.isMounted && id ? (
         <ComparePanel
+          open={compare}
+          panelId={compareId}
+          triggerRef={compareTrigger}
           collection={collection}
           id={id}
           locale={other.code}
@@ -207,139 +216,5 @@ export function LanguageBar() {
         />
       ) : null}
     </div>
-  );
-}
-
-const PANEL = {
-  ru: {
-    title: "Заголовок",
-    summary: "Краткое описание",
-    content: "Текст",
-    loading: "Загружаю…",
-    failed: "Не удалось загрузить эту версию.",
-    empty: "— пусто —",
-    close: "Закрыть сверку",
-    copy: "Копировать",
-    copied: "Скопировано",
-    heading: (name: string) => `${name} — для сверки`,
-    note: "Только чтение. Показан последний сохранённый вариант.",
-  },
-  en: {
-    title: "Title",
-    summary: "Summary",
-    content: "Text",
-    loading: "Loading…",
-    failed: "Could not load this version.",
-    empty: "— empty —",
-    close: "Close comparison",
-    copy: "Copy",
-    copied: "Copied",
-    heading: (name: string) => `${name} — for comparison`,
-    note: "Read-only. Shows the latest saved version.",
-  },
-};
-
-function CopyText({ text, lang }: { text: string; lang: Lang }) {
-  const [done, setDone] = useState(false);
-  if (!text) return null;
-  return (
-    <button
-      type="button"
-      className="gd-ref__copy"
-      onClick={() => {
-        void navigator.clipboard?.writeText(text).then(() => {
-          setDone(true);
-          setTimeout(() => setDone(false), 1500);
-        });
-      }}
-    >
-      {done ? PANEL[lang].copied : PANEL[lang].copy}
-    </button>
-  );
-}
-
-/** The other language version, read-only, docked to the right of the editor. */
-function ComparePanel({
-  collection,
-  id,
-  locale,
-  localeName,
-  editing,
-  lang,
-  onClose,
-}: {
-  collection: string;
-  id: string | number;
-  locale: string;
-  localeName: string;
-  editing: string;
-  lang: Lang;
-  onClose: () => void;
-}) {
-  const t = PANEL[lang];
-  const [doc, setDoc] = useState<LocaleDoc | null | undefined>(undefined);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    document.body.classList.add("gd-compare-open");
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.classList.remove("gd-compare-open");
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
-
-  useEffect(() => {
-    let alive = true;
-    setDoc(undefined);
-    void loadLocaleDoc(collection, id, locale, editing).then((value) => alive && setDoc(value));
-    return () => {
-      alive = false;
-    };
-  }, [collection, id, locale, editing]);
-
-  if (!mounted) return null;
-  const title = filled(doc?.title) ? String(doc?.title) : "";
-  const summary = filled(doc?.summary) ? String(doc?.summary) : "";
-  return createPortal(
-    <aside className="gd-ref" aria-label={t.heading(localeName)} lang={locale}>
-      <header className="gd-ref__head">
-        <strong>{t.heading(localeName)}</strong>
-        <button type="button" onClick={onClose} aria-label={t.close} title={t.close}>
-          ×
-        </button>
-      </header>
-      <p className="gd-ref__note">{t.note}</p>
-      {doc === undefined ? (
-        <p className="gd-muted">{t.loading}</p>
-      ) : doc === null ? (
-        <p className="gd-muted">{t.failed}</p>
-      ) : (
-        <>
-          <section>
-            <h3>
-              {t.title} <CopyText text={title} lang={lang} />
-            </h3>
-            <p className="gd-ref__title">{title || t.empty}</p>
-          </section>
-          {collection === "guides" || summary ? (
-            <section>
-              <h3>
-                {t.summary} <CopyText text={summary} lang={lang} />
-              </h3>
-              <p>{summary || t.empty}</p>
-            </section>
-          ) : null}
-          <section>
-            <h3>{t.content}</h3>
-            <LexicalPreview value={doc.content} />
-            {!hasText(doc.content) ? <p className="gd-muted">{t.empty}</p> : null}
-          </section>
-        </>
-      )}
-    </aside>,
-    document.body,
   );
 }
