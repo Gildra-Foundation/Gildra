@@ -1,0 +1,232 @@
+.ui-analytics-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-2) var(--ui-space-3);
+  width: 100%;
+  min-width: 0;
+  color: var(--ui-fg);
+  font-family: var(--ui-font-sans);
+}
+
+/* Segmented range control (built on ButtonGroup); scrolls rather than overflowing on phones */
+.ui-analytics-filter-bar__ranges {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ui-analytics-filter-bar__ranges::-webkit-scrollbar {
+  display: none;
+}
+
+.ui-analytics-filter-bar .ui-analytics-filter-bar__segment {
+  --_fg: var(--ui-fg-muted);
+  flex-shrink: 0;
+}
+
+.ui-analytics-filter-bar .ui-analytics-filter-bar__segment[aria-pressed='true'] {
+  --_fg: var(--ui-fg);
+}
+
+/* The scrolling group clips an outer ring, so the focused segment draws it inside its own edge. */
+.ui-analytics-filter-bar .ui-analytics-filter-bar__segment:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--ui-focus-color);
+}
+
+@media (forced-colors: active) {
+  .ui-analytics-filter-bar .ui-analytics-filter-bar__segment:focus-visible {
+    outline-offset: -3px;
+  }
+}
+
+/* Selected segment (a raised capsule in Glass); specific enough to win over ButtonGroup's attached segments. */
+.ui-analytics-filter-bar .ui-analytics-filter-bar__ranges > .ui-button.ui-analytics-filter-bar__segment[aria-pressed='true'] {
+  --_bg: var(--ui-analytics-filter-bar-segment-selected-bg);
+  --_shadow: var(--ui-analytics-filter-bar-segment-selected-shadow);
+}
+
+/* Does not grow, so the compare toggle and granularity can share its line when there is room (phones). */
+.ui-analytics-filter-bar__filters {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+
+.ui-analytics-filter-bar__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  height: var(--ui-control-h-sm);
+  padding: 0 3px 0 10px;
+  border: var(--ui-border-width, 1px) solid var(--ui-analytics-filter-bar-chip-border-color);
+  border-radius: var(--ui-radius-button);
+  background: var(--ui-bg);
+  box-shadow: var(--ui-analytics-filter-bar-chip-shadow);
+  -webkit-backdrop-filter: var(--ui-blur);
+  backdrop-filter: var(--ui-blur);
+  font-size: var(--ui-text-sm);
+  white-space: nowrap;
+  animation: ui-pop-in var(--ui-duration) var(--ui-ease-spring);
+}
+
+.ui-analytics-filter-bar__chip-field {
+  color: var(--ui-fg-muted);
+}
+
+.ui-analytics-filter-bar__chip-value {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: var(--ui-weight-medium);
+  text-overflow: ellipsis;
+  /* Direction from the label's own text, so the ellipsis lands at its end under dir="rtl" too. */
+  unicode-bidi: plaintext;
+}
+
+.ui-analytics-filter-bar__chip-remove {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-analytics-filter-bar-chip-remove-radius);
+  background: transparent;
+  color: var(--ui-fg-subtle);
+  cursor: pointer;
+  transition:
+    background-color var(--ui-duration-fast) var(--ui-ease),
+    color var(--ui-duration-fast) var(--ui-ease);
+}
+
+.ui-analytics-filter-bar__chip-remove:hover {
+  background: var(--ui-hover);
+  color: var(--ui-fg);
+}
+
+:is(.ui-analytics-filter-bar__chip-remove, .ui-analytics-filter-bar__switch):focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.ui-analytics-filter-bar .ui-analytics-filter-bar__add {
+  --_fg: var(--ui-action-fg-muted);
+}
+
+.ui-analytics-filter-bar__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-2);
+  margin-inline-start: auto;
+}
+
+/* Compare toggle */
+.ui-analytics-filter-bar__switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  height: var(--ui-control-h-sm);
+  padding: 0 var(--ui-space-2);
+  border: 0;
+  border-radius: var(--ui-radius-button);
+  background: transparent;
+  color: var(--ui-fg-muted);
+  font: inherit;
+  font-size: var(--ui-text-sm);
+  font-weight: var(--ui-weight-medium);
+  cursor: pointer;
+  transition: color var(--ui-duration-fast) var(--ui-ease);
+}
+
+.ui-analytics-filter-bar__switch:hover,
+.ui-analytics-filter-bar__switch[aria-checked='true'] {
+  color: var(--ui-fg);
+}
+
+.ui-analytics-filter-bar__switch-track {
+  --_w: var(--ui-analytics-filter-bar-switch-w);
+  --_h: var(--ui-analytics-filter-bar-switch-h);
+  --_pad: 2px;
+
+  position: relative;
+  flex-shrink: 0;
+  width: var(--_w);
+  height: var(--_h);
+  border-radius: var(--ui-radius-full);
+  background: var(--ui-surface-3);
+  /* The same rim and knob as the Switch component, so the off state reads in every theme. */
+  box-shadow: var(--ui-switch-track-shadow);
+  transition: background-color var(--ui-duration) var(--ui-ease);
+}
+
+.ui-analytics-filter-bar__switch[aria-checked='true'] .ui-analytics-filter-bar__switch-track {
+  background: var(--ui-analytics-filter-bar-switch-on-bg);
+  box-shadow: var(--ui-switch-track-shadow-checked);
+}
+
+.ui-analytics-filter-bar__switch-thumb {
+  --_travel: calc(var(--_w) - var(--_h));
+
+  position: absolute;
+  top: var(--_pad);
+  inset-inline-start: var(--_pad);
+  width: calc(var(--_h) - var(--_pad) * 2);
+  height: calc(var(--_h) - var(--_pad) * 2);
+  border-radius: 50%;
+  background: var(--ui-switch-knob-bg-off, var(--ui-switch-knob-bg, var(--ui-switch-knob-bg-active)));
+  box-shadow: var(--ui-switch-knob-shadow);
+  transition: transform var(--ui-duration) var(--ui-ease-spring);
+}
+
+/* On the accent track the knob takes the accent's own foreground. */
+.ui-analytics-filter-bar__switch[aria-checked='true'] .ui-analytics-filter-bar__switch-thumb {
+  background: var(--ui-accent-fg);
+}
+
+.ui-analytics-filter-bar__switch-thumb:dir(rtl) {
+  --_travel: calc(var(--_h) - var(--_w));
+}
+
+.ui-analytics-filter-bar__switch[aria-checked='true'] .ui-analytics-filter-bar__switch-thumb {
+  transform: translateX(var(--_travel));
+}
+
+/* Popover menus */
+.ui-analytics-filter-bar__popover {
+  min-width: 200px;
+  max-height: 320px;
+  padding: var(--ui-popover-padding);
+  overflow-y: auto;
+}
+
+.ui-analytics-filter-bar__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  outline: none;
+}
+
+/* Touch: the chip's remove button gets a 44px-tall hit area (WCAG 2.5.5), kept narrow so it never
+   covers the chip's own label. */
+@media (pointer: coarse) {
+  .ui-analytics-filter-bar__chip-remove {
+    position: relative;
+  }
+
+  .ui-analytics-filter-bar__chip-remove::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 32px;
+    height: 44px;
+    translate: -50% -50%;
+  }
+}

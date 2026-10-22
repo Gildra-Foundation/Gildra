@@ -1,6 +1,8 @@
 import type { ComponentProps, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 import clsx from "clsx";
 import styles from "./AtlasField.module.css";
+import { TextInput } from "./valyro-ui/forms/TextInput";
+import bridge from "./valyroAtlasBridge.module.css";
 
 /**
  * Form controls of the atlas (database filters, search, calculators): native
@@ -17,14 +19,17 @@ export function AtlasField({ label, hint, error, children, className, htmlFor }:
   );
 }
 
-/** Text, search or number input; `icon` sits at the start (search glass). */
-export function AtlasInput({ icon, className, ...props }: ComponentProps<"input"> & { icon?: ReactNode }) {
-  return (
-    <span className={clsx(styles.inputWrap, icon ? styles.withIcon : null, className)}>
+/** Valyro TextInput keeps its native input, including refs and FormData names. */
+export function AtlasInput({ icon, className, size, prefix, ...props }: ComponentProps<"input"> & { icon?: ReactNode }) {
+  // Preserve the uncommon native `size` / RDFa `prefix` contract rather than
+  // interpreting it as Valyro's visual size / attached prefix text.
+  if (size !== undefined || prefix !== undefined || props.type === "password") {
+    return <span className={clsx(styles.inputWrap, icon ? styles.withIcon : null, className)}>
       {icon ? <span className={styles.icon} aria-hidden="true">{icon}</span> : null}
-      <input className={styles.input} {...props} />
-    </span>
-  );
+      <input className={styles.input} size={size} prefix={prefix} {...props} />
+    </span>;
+  }
+  return <TextInput leftIcon={icon} className={clsx(bridge.scope, className)} {...props} />;
 }
 
 export function AtlasSelect({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {

@@ -1,6 +1,4 @@
-/* Top bar of every inner page: the book-contents launcher and the Gildra mark.
-   The header carries data-atlas-scope, so it reads the atlas tokens even though
-   it is mounted outside the page's .gildra-atlas wrapper. */
+/* atlas:strict — shared horizontal navigation, including the home page. */
 .toolbar {
   position: sticky;
   top: 0;
@@ -8,113 +6,102 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--atlas-space-5);
   min-height: var(--atlas-sticky-top);
-  padding: 8px var(--atlas-gutter);
+  padding: var(--atlas-space-2) var(--atlas-gutter);
   border-bottom: 1px solid var(--atlas-line-soft);
-  background: rgba(5, 6, 7, .94);
-  backdrop-filter: blur(10px);
+  background: var(--atlas-scrim);
+  backdrop-filter: blur(18px);
 }
 
-/* "Skip to content": hidden until a keyboard user tabs onto it. */
 .skip {
   position: absolute;
-  top: 8px;
+  top: var(--atlas-space-2);
   left: var(--atlas-gutter);
   z-index: 2;
-  padding: 10px 14px;
+  padding: var(--atlas-space-3) var(--atlas-space-4);
   color: var(--atlas-accent-ink);
   background: var(--atlas-accent);
   font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   translate: 0 -200%;
 }
 .skip:focus-visible { translate: 0 0; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-
-.launcher {
-  position: relative;
+.navigation { min-width: 0; }
+.links { display: flex; align-items: center; gap: var(--atlas-space-1); }
+.link {
   display: flex;
   align-items: center;
-  gap: 10px;
   min-height: var(--atlas-control-height);
-  padding: 6px 14px 6px 7px;
+  padding: var(--atlas-space-2) var(--atlas-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-muted);
+  font: 600 var(--atlas-text-small) / 1.3 var(--atlas-font-ui);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
+}
+.link:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
+.link[aria-current] { color: var(--atlas-accent-strong); border-color: var(--atlas-line); background: var(--atlas-accent-wash-strong); }
+.link:focus-visible, .menuToggle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.menuToggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--atlas-space-2);
+  min-height: var(--atlas-control-height);
+  min-width: var(--atlas-control-height);
+  padding: var(--atlas-space-2) var(--atlas-space-3);
   border: 1px solid var(--atlas-line);
   border-radius: var(--atlas-radius);
   color: var(--atlas-text-strong);
   background: var(--atlas-accent-wash);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, .33);
   cursor: pointer;
   font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
-  letter-spacing: .04em;
-  text-decoration: none;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
-
-.launcher:hover { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
-.launcher:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
-.launcher img { width: 20px; height: 30px; object-fit: contain; filter: grayscale(1); }
-
-.end {
-  display: flex;
-  align-items: center;
-  gap: clamp(14px, 2.4vw, 28px);
-}
-
-/* EN / RU: the same page in the other language. */
-.locale {
-  display: flex;
-  border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
-}
-
+.menuToggle:hover, .menuToggle[aria-expanded="true"] { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
+.end { display: flex; flex: none; align-items: center; gap: var(--atlas-space-4); }
+.locale { display: flex; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); }
 .locale a {
   display: grid;
   place-items: center;
-  min-width: 40px;
-  min-height: 34px;
-  padding: 0 8px;
+  min-width: 36px;
+  min-height: var(--atlas-control-height);
+  padding: 0 var(--atlas-space-2);
   color: var(--atlas-text-muted);
   font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
   letter-spacing: var(--atlas-tracking-label);
+  text-decoration: none;
   transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
 }
-
 .locale a + a { border-left: 1px solid var(--atlas-line); }
-/* A 44 px tall hit area around the 34 px switch (the bar is 64 px tall). */
-.locale a { position: relative; }
-.locale a::after { content: ""; position: absolute; inset: -5px 0; }
 .locale a:hover { color: var(--atlas-text-strong); }
-.locale a[aria-current] { color: var(--atlas-bg); background: var(--atlas-accent); }
+.locale a[aria-current] { color: var(--atlas-accent-ink); background: var(--atlas-accent); }
 .locale a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
-.title {
-  color: var(--atlas-text-strong);
-  font: var(--atlas-weight-display) 20px / 1 var(--atlas-font-display); font-variant-numeric: lining-nums;
-  letter-spacing: .18em;
-  text-align: right;
+@media (max-width: 1199px) {
+  .menuToggle { display: flex; }
+  .links {
+    display: none;
+    position: absolute;
+    top: calc(100% + var(--atlas-space-2));
+    left: var(--atlas-gutter);
+    right: var(--atlas-gutter);
+    max-height: calc(100dvh - var(--atlas-sticky-top) - var(--atlas-space-5));
+    overflow-y: auto;
+    padding: var(--atlas-space-2);
+    border: 1px solid var(--atlas-line);
+    border-radius: var(--atlas-radius);
+    background: var(--atlas-surface-raised);
+    box-shadow: var(--atlas-shadow-panel);
+  }
+  .links[data-open] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-.title small {
-  display: block;
-  margin-top: 5px;
-  color: var(--atlas-text-subtle);
-  font: 650 var(--atlas-text-label) / 1.2 var(--atlas-font-ui);
-  letter-spacing: var(--atlas-tracking-label);
-}
-
-@media (max-width: 720px) {
-  .title small { display: none; }
-}
-
-/* Narrow phones: launcher, search, EN/RU and the mark share 390 px. */
 @media (max-width: 480px) {
-  .toolbar { gap: 10px; }
-  .end { gap: 10px; }
-  .locale a { min-width: 34px; padding: 0 6px; }
-  .title { font-size: 17px; letter-spacing: .14em; }
-  .launcher { width: 44px; min-width: 44px; justify-content: center; padding: 6px; }
-  .launcher > span { display: none; }
+  .toolbar, .end { gap: var(--atlas-space-2); }
+  .menuToggle { padding: var(--atlas-space-2); }
+  .menuToggle > span { display: none; }
+  .locale a { min-width: 32px; padding: 0 var(--atlas-space-1); }
+  .links[data-open] { grid-template-columns: minmax(0, 1fr); }
 }
-
-/* Press feedback, as on every atlas control. */
-.launcher:active { scale: var(--atlas-press-scale); }
-@media (prefers-reduced-motion: reduce) { .launcher:active { scale: none; } }
+@media (prefers-reduced-motion: reduce) { .link, .locale a { transition: none; } }

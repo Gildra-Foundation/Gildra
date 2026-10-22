@@ -1,91 +1,89 @@
 "use client";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { altPath } from "@/lib/i18n-paths";
+import { Menu, X } from "lucide-react";
+import { altPath, p } from "@/lib/i18n-paths";
 import { gameDestinationForPath } from "@/lib/games/destinations";
-import { loadBookNavigationDialog, type BookNavigationDialogComponent } from "./BookNavigationDialogLoader";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
 import { GameSwitcher } from "./GameSwitcher";
 import toolbarStyles from "./atlasToolbar.module.css";
 
 const noSubscribe = () => () => {};
-/** The path the server drew the bar for. The 404 page is prerendered once (for
- *  "/_not-found", in English) and served for every URL, so during hydration the
- *  bar repeats what the HTML says (data-toolbar-path) and switches to the real
- *  URL right after: its language and the EN/RU links follow. */
+/** Prerendered 404 pages must hydrate with their original toolbar language. */
 const renderedPath = (fallback: string) => typeof document === "undefined"
   ? fallback
   : document.querySelector("[data-toolbar-path]")?.getAttribute("data-toolbar-path") ?? fallback;
 
-function HomeLauncher({ ru }: { ru: boolean }) {
-  return <Link className={toolbarStyles.launcher} href={ru ? "/ru" : "/"} prefetch={false} aria-label={ru ? "На главную Gildra" : "Gildra home"}>
-    <ArrowLeft size={18} aria-hidden="true" /><span>{ru ? "Главная" : "Home"}</span>
-  </Link>;
-}
+const destinations = [
+  { href: "/", en: "Home", ru: "Главная" },
+  { href: "/wow/characters", en: "Characters", ru: "Персонажи" },
+  { href: "/wow/lairs", en: "Bosses", ru: "Боссы" },
+  { href: "/wow/mythic-plus", en: "Mythic+", ru: "Mythic+" },
+  { href: "/wow/raids", en: "Raids", ru: "Рейды" },
+  { href: "/tier-lists", en: "Tier lists", ru: "Тир-листы" },
+  { href: "/wow/articles", en: "Articles", ru: "Статьи" },
+] as const;
 
-function ToolbarEnd({ path, ru, comingSoon }: { path: string; ru: boolean; comingSoon: boolean }) {
-  return <div className={toolbarStyles.end}>
-    {!comingSoon && <SiteSearch lang={ru ? "ru" : "en"} />}
-    <nav className={toolbarStyles.locale} aria-label={ru ? "Язык" : "Language"}>
-      <Link href={altPath(path, "en")} hrefLang="en" lang="en" aria-current={ru ? undefined : "true"} prefetch={false}>EN</Link>
-      <Link href={altPath(path, "ru")} hrefLang="ru" lang="ru" aria-current={ru ? "true" : undefined} prefetch={false}>RU</Link>
+function PrimaryNavigation({ path, ru }: { path: string; ru: boolean }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const id = useId();
+  const barePath = path.replace(/^\/ru(?=\/|$)/, "").replace(/\/$/, "") || "/";
+
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !root.current?.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, [open]);
+
+  return <div ref={root} className={toolbarStyles.navigation}
+    onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}
+    onKeyDown={event => {
+      if (event.key === "Escape" && open) {
+        event.preventDefault();
+        setOpen(false);
+        trigger.current?.focus();
+      }
+    }}>
+    <button ref={trigger} type="button" className={toolbarStyles.menuToggle} aria-controls={id} aria-expanded={open}
+      aria-label={ru ? (open ? "Закрыть меню" : "Открыть меню") : (open ? "Close menu" : "Open menu")}
+      onClick={() => setOpen(value => !value)}>
+      {open ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+      <span>{ru ? "Меню" : "Menu"}</span>
+    </button>
+    <nav id={id} className={toolbarStyles.links} data-open={open || undefined} aria-label={ru ? "Основная навигация" : "Main navigation"}>
+      {destinations.map(item => {
+        const current = item.href === "/" ? barePath === "/" : barePath === item.href || barePath.startsWith(`${item.href}/`);
+        return <Link key={item.href} href={p(ru ? "ru" : "en", item.href)} prefetch={false}
+          className={toolbarStyles.link} aria-current={current ? "page" : undefined} onClick={() => setOpen(false)}>
+          {ru ? item.ru : item.en}
+        </Link>;
+      })}
     </nav>
-    <GameSwitcher key={path} lang={ru ? "ru" : "en"} pathname={path} />
   </div>;
 }
 
 export function WorkspaceNavigatorContent() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const [warmed, setWarmed] = useState(false);
-  const [BookNavigationDialog, setBookNavigationDialog] = useState<BookNavigationDialogComponent | null>(null);
-  const prefetchTimer = useRef<number | null>(null);
-  const dialogLoad = useRef<Promise<BookNavigationDialogComponent> | null>(null);
-  const bookCover = useRef<HTMLImageElement>(null);
   const livePath = useSyncExternalStore(noSubscribe, () => pathname, () => renderedPath(pathname));
   const ru = /^\/ru(?:\/|$)/.test(livePath);
   const comingSoon = gameDestinationForPath(livePath).soon;
-  const path = pathname.replace(/^\/ru(?=\/|$)/, "") || "/";
-  const cancelHoverPrefetch = () => {
-    if (prefetchTimer.current !== null) window.clearTimeout(prefetchTimer.current);
-    prefetchTimer.current = null;
-  };
-  const prefetchAfterHover = () => {
-    cancelHoverPrefetch();
-    prefetchTimer.current = window.setTimeout(() => {
-      prefetchTimer.current = null;
-      warmBookNavigation();
-    }, 80);
-  };
-  const warmBookNavigation = () => {
-    setWarmed(true);
-    if (BookNavigationDialog || dialogLoad.current) return;
-    const load = loadBookNavigationDialog().then((module) => module.BookNavigationDialog);
-    dialogLoad.current = load;
-    void load.then((component) => setBookNavigationDialog(() => component)).catch(() => {
-      dialogLoad.current = null;
-    });
-  };
-  useEffect(() => () => {
-    if (prefetchTimer.current !== null) window.clearTimeout(prefetchTimer.current);
-  }, []);
 
-  // The character routes use the same compact book-contents toolbar as every
-  // other inner page. Their parchment ribbon handles chapter navigation; the
-  // old persistent left rail is intentionally not mounted here.
-  if (path === "/") return null;
-
-  return <>
-    <header className={toolbarStyles.toolbar} data-atlas-scope data-toolbar-path={livePath}>
+  return <header className={toolbarStyles.toolbar} data-atlas-scope data-toolbar-path={livePath}>
     <a className={toolbarStyles.skip} href="#atlas-content">{ru ? "К содержанию" : "Skip to content"}</a>
-    {comingSoon ? <HomeLauncher ru={ru} /> : <button className={toolbarStyles.launcher} type="button" onPointerEnter={prefetchAfterHover} onPointerLeave={cancelHoverPrefetch} onPointerDown={warmBookNavigation} onFocus={warmBookNavigation} onClick={() => { setOpen(true); warmBookNavigation(); }} aria-haspopup="dialog" aria-expanded={open} aria-label={ru ? "Открыть оглавление книги" : "Open the book contents"}>
-      <img ref={bookCover} src="/assets/wow/character-book/intro/chronicle-cover-toolbar.webp" width={20} height={30} decoding="async" alt="" />
-      <span>{ru ? "Оглавление" : "Contents"}</span>
-    </button>}
-      <ToolbarEnd path={livePath} ru={ru} comingSoon={comingSoon} />
-    </header>
-      {warmed && BookNavigationDialog ? <BookNavigationDialog open={open} onClose={() => setOpen(false)} lang={ru ? "ru" : "en"} coverFrom={() => bookCover.current?.getBoundingClientRect() ?? null} /> : null}
-  </>;
+    <PrimaryNavigation key={livePath} path={livePath} ru={ru} />
+    <div className={toolbarStyles.end}>
+      {!comingSoon && <SiteSearch lang={ru ? "ru" : "en"} />}
+      <nav className={toolbarStyles.locale} aria-label={ru ? "Язык" : "Language"}>
+        <Link href={altPath(livePath, "en")} hrefLang="en" lang="en" aria-current={ru ? undefined : "true"} prefetch={false}>EN</Link>
+        <Link href={altPath(livePath, "ru")} hrefLang="ru" lang="ru" aria-current={ru ? "true" : undefined} prefetch={false}>RU</Link>
+      </nav>
+      <GameSwitcher key={livePath} lang={ru ? "ru" : "en"} pathname={livePath} />
+    </div>
+  </header>;
 }
