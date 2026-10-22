@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "atlas:check": "node scripts/check-atlas-tokens.mjs",
     "test:atlas": "node --experimental-strip-types --no-warnings --import ./tests/atlas/resolve.mjs --test tests/atlas/*.test.ts",
+    "test:auth": "node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs --test tests/auth/*.test.ts",
     "test:observability": "node --experimental-strip-types --no-warnings --import ./tests/atlas/resolve.mjs --test tests/observability/*.test.ts",
     "routes:check": "node scripts/check-route-parity.mjs && node scripts/generate-route-mirrors.mjs --check",
     "routes:mirror": "node scripts/generate-route-mirrors.mjs",
