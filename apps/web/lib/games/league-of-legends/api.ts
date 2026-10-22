@@ -1,5 +1,5 @@
 import "server-only";
-import { apiInternalUrl } from "@/lib/env";
+import { internalApiJson } from "@/lib/api/internal";
 
 export type LeagueAssets = { icon: string | null; splash: string | null; loading: string | null; tile: string | null };
 export type LeagueChampion = {
@@ -27,16 +27,10 @@ export type LeagueContentEntry = {
   localizedPayload: Record<string, unknown>; locale: string; localeFallback: boolean;
 };
 
-const apiURL = () => apiInternalUrl();
 export const LEAGUE_CONTENT_PAGE_SIZE = 50;
 
-async function leagueRequest<T>(path: string, revalidate = 3600): Promise<T> {
-  const response = await fetch(`${apiURL()}${path}`, {
-    next: { revalidate, tags: ["league-catalog"] },
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!response.ok) throw new Error(`League catalog request failed (${response.status})`);
-  return await response.json() as T;
+function leagueRequest<T>(path: string, revalidate = 3600): Promise<T> {
+  return internalApiJson<T>(path, { label: "League catalog", timeoutMs: 20_000, next: { revalidate, tags: ["league-catalog"] } });
 }
 
 export async function getLeagueStatus(): Promise<LeagueStatus | null> {
