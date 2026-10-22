@@ -1,0 +1,17 @@
+/* atlas:strict — the brand seal of the legal line (AtlasFrame footer). */
+.seal {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  color: var(--atlas-text-muted);
+  font: var(--atlas-weight-display) var(--atlas-text-label) / 1 var(--atlas-font-display);
+  letter-spacing: .32em;
+}
+.crest {
+  display: block;
+  width: 34px;
+  height: 44px;
+  filter: drop-shadow(0 0 10px var(--atlas-accent-glow)) drop-shadow(0 2px 2px rgba(0, 0, 0, .7));
+}
+.crest img { display: block; width: 100%; height: 100%; }
