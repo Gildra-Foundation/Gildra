@@ -8,7 +8,8 @@ import { gameDestinationForPath, gameDestinationHref, gameDestinations } from "@
 import type { Lang } from "@/lib/i18n-paths";
 import styles from "./gameSwitcher.module.css";
 
-export function GameSwitcher({ lang, pathname = "/", home = false }: { lang: Lang; pathname?: string; home?: boolean }) {
+/** `brandless`: the bar already carries the GILDRA mark, so the trigger shows only the game. */
+export function GameSwitcher({ lang, pathname = "/", home = false, brandless = false }: { lang: Lang; pathname?: string; home?: boolean; brandless?: boolean }) {
   const root = useRef<HTMLDetailsElement>(null);
   const trigger = useRef<HTMLElement>(null);
   const id = useId();
@@ -24,7 +25,7 @@ export function GameSwitcher({ lang, pathname = "/", home = false }: { lang: Lan
   }, []);
 
   // Native disclosure works before hydration; preserve a reader's early click.
-  return <details ref={root} suppressHydrationWarning className={`${styles.root}${home ? ` ${styles.home}` : ""}`} data-atlas-scope data-game-switcher
+  return <details ref={root} suppressHydrationWarning className={`${styles.root}${home ? ` ${styles.home}` : ""}${brandless ? ` ${styles.brandless}` : ""}`} data-atlas-scope data-game-switcher
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false; }}
     onKeyDown={event => {
       if (event.key === "Escape" && root.current?.open) {
@@ -35,8 +36,9 @@ export function GameSwitcher({ lang, pathname = "/", home = false }: { lang: Lan
       }
     }}>
     <summary ref={trigger} className={styles.trigger} aria-controls={id}>
+      {brandless && <Image className={styles.gameIcon} src={current.icon} width={22} height={22} alt="" />}
       <span className={styles.identity}>
-        <span className={styles.brand}>GILDRA</span>
+        {!brandless && <span className={styles.brand}>GILDRA</span>}
         <span className={styles.current}><span className={styles.fullName}>{current.name}</span><span className={styles.shortName}>{current.shortName}</span></span>
       </span>
       <ChevronDown size={14} aria-hidden="true" />

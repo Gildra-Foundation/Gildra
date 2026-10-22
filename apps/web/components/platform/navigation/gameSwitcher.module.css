@@ -24,7 +24,14 @@
 .root.home { --atlas-font-display: var(--game-switcher-font); --atlas-text-strong: var(--paper); --atlas-text-muted: var(--muted); --atlas-accent: var(--accent); --atlas-accent-strong: var(--bright); --atlas-line-strong: color-mix(in srgb, var(--accent) 55%, transparent); --atlas-accent-wash-strong: color-mix(in srgb, var(--accent) 16%, transparent); --atlas-surface-raised: var(--night); }
 .home .brand { font-size: var(--atlas-text-h3); }
 .home .panel { left: 0; right: auto; }
+/* In the atlas bar the mark lives at the start; the trigger names the game only. */
+.brandless .trigger { padding: 0 var(--atlas-space-2); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease); }
+.brandless .trigger:hover, .brandless[open] .trigger { border-color: var(--atlas-line); background: var(--atlas-accent-wash); }
+.brandless .current { color: var(--atlas-text); font-size: var(--atlas-text-meta); font-weight: 600; }
+.gameIcon { flex: none; }
+@media (max-width: 1439px) { .brandless .fullName { display: none; } .brandless .shortName { display: inline; } }
 @media (max-width: 480px) {
+  .brandless .identity { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .fullName { display: none; }
   .shortName { display: inline; }
   .home .panel { left: calc(-1 * (var(--atlas-space-7) + var(--atlas-space-1))); width: min(300px, calc(100vw - 48px)); }
