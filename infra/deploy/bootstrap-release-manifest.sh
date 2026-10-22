@@ -34,12 +34,17 @@ count=$(grep -c '^CMS_JOBS_IMAGE=' "$manifest" || true)
 normalize_image_id() {
   image=$1
   prefix=$2
+  fallback_prefix=${3:-}
   case "$image" in
     sha256:*)
       printf '%s\n' "$image" | grep -Eq '^sha256:[0-9a-f]{64}$' ||
         fail "legacy image id is invalid for $prefix: $image"
       tag=$(docker image inspect --format '{{range .RepoTags}}{{println .}}{{end}}' "$image" 2>/dev/null |
-        awk -v prefix="$prefix:" 'index($0, prefix) == 1 { print; exit }')
+        awk -v prefix="$prefix:" -v fallback="$fallback_prefix:" '
+          index($0, prefix) == 1 && !primary { primary = $0 }
+          fallback != ":" && index($0, fallback) == 1 && !secondary { secondary = $0 }
+          END { if (primary) print primary; else if (secondary) print secondary }
+        ')
       [ -n "$tag" ] || fail "could not map legacy image id to a local $prefix tag: $image"
       printf '%s\n' "$tag"
       ;;
@@ -50,8 +55,9 @@ normalize_image_id() {
 normalized_web=$(normalize_image_id "$web_image" gildra-web)
 normalized_api=$(normalize_image_id "$api_image" gildra-api)
 normalized_cms=$(normalize_image_id "$cms_image" gildra-cms)
-# The deployed CMS jobs stage was tagged under the same gildra-cms repository.
-normalized_cms_jobs=$(normalize_image_id "$cms_jobs_image" gildra-cms)
+# Prefer the dedicated worker tag; older shared CMS builds may only have a
+# gildra-cms tag. Resolve both against this exact image ID, never another image.
+normalized_cms_jobs=$(normalize_image_id "$cms_jobs_image" gildra-cms-jobs gildra-cms)
 normalized_scraper=$(normalize_image_id "$scraper_image" gildra-scraper)
 
 if [ "$normalized_web" = "$web_image" ] &&
