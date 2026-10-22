@@ -7,6 +7,10 @@ The custom CMS screens use Valyro source components, retrieved from the authenti
 hosted MCP at `https://valyro.xyz/api/mcp`. No Valyro credentials or runtime requests
 are needed by the browser or CMS server.
 
+Adding or updating Valyro sources: `npm run valyro:add -- <name> --target cms` /
+`npm run valyro:update -- --target cms` from the repository root (configuration in
+`valyro.json`, guide in `../docs/llm/valyro-cli.md`).
+
 ## Integration
 
 - Dashboard: StatsCard counters, Badge statuses, Button actions, a searchable and

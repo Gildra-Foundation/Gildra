@@ -1,25 +1,142 @@
+@use "sass:math";
+
+// ---- Payload theme → Gildra atlas tokens ------------------------------------
+// Values live in atlas-tokens.css (copied from the site). Payload's stylesheet
+// sits in `@layer payload-default`, so these unlayered variables win without
+// targeting Payload's internal classes: native forms, login and Lexical take the
+// look through the theme only.
 :root {
-  --theme-elevation-0: #0b0d13;
-  --theme-elevation-50: #12151e;
-  --theme-elevation-100: #171b26;
-  --theme-text: #e9ecf3;
+  // Elevation: page → panel → raised, bronze lines, then the text ramp.
+  --theme-elevation-0: var(--atlas-bg);
+  --theme-elevation-50: var(--atlas-surface);
+  --theme-elevation-100: var(--atlas-surface-raised);
+  --theme-elevation-150: var(--atlas-line-soft);
+  --theme-elevation-200: var(--atlas-line);
+  --theme-elevation-250: var(--atlas-line-strong);
+  --theme-elevation-300: color-mix(in srgb, var(--atlas-text-subtle) 50%, var(--atlas-surface));
+  --theme-elevation-350: color-mix(in srgb, var(--atlas-text-subtle) 75%, var(--atlas-surface));
+  --theme-elevation-400: var(--atlas-text-subtle);
+  --theme-elevation-450: color-mix(in srgb, var(--atlas-text-subtle), var(--atlas-text-muted));
+  --theme-elevation-500: var(--atlas-text-muted);
+  --theme-elevation-550: color-mix(in srgb, var(--atlas-text-muted) 66%, var(--atlas-text));
+  --theme-elevation-600: color-mix(in srgb, var(--atlas-text-muted) 33%, var(--atlas-text));
+  --theme-elevation-650: var(--atlas-text);
+  --theme-elevation-700: var(--atlas-text);
+  --theme-elevation-750: var(--atlas-text);
+  --theme-elevation-800: var(--atlas-text);
+  --theme-elevation-850: var(--atlas-text-strong);
+  --theme-elevation-900: var(--atlas-text-strong);
+  --theme-elevation-950: var(--atlas-text-strong);
+  --theme-elevation-1000: var(--atlas-text-strong);
+  --theme-bg: var(--atlas-bg);
+  --theme-text: var(--atlas-text);
+  --theme-input-bg: var(--atlas-surface-sunken);
+  --theme-overlay: var(--atlas-scrim);
+  --theme-border-color: var(--atlas-line-soft);
+  --accessibility-outline: 2px solid var(--atlas-accent-strong);
+
+  --font-body: var(--atlas-font-ui);
+  --font-serif: var(--atlas-font-display);
+  --font-mono: var(--atlas-font-mono);
+  --style-radius-s: var(--atlas-radius);
+  --style-radius-m: var(--atlas-radius);
+  --style-radius-l: var(--atlas-radius);
+
+  // Status ramps from the atlas status colours. Payload's dark theme reads them
+  // inverted (theme-*-100 = color-*-900: dark wash, theme-*-600 = color-*-400: text).
+  @each $name, $token in ("success": "positive", "error": "negative", "warning": "caution", "blue": "info") {
+    @for $i from 1 through 19 {
+      $step: $i * 50;
+      @if $step < 500 {
+        --color-#{$name}-#{$step}: color-mix(in srgb, var(--atlas-#{$token}), var(--atlas-text-strong) #{math.round(math.div(500 - $step, 500) * 60%)});
+      } @else if $step == 500 {
+        --color-#{$name}-#{$step}: var(--atlas-#{$token});
+      } @else {
+        --color-#{$name}-#{$step}: color-mix(in srgb, var(--atlas-#{$token}), var(--atlas-bg) #{math.round(math.div($step - 500, 450) * 88%)});
+      }
+    }
+  }
 }
+
+// Display serif for headings, as on the raids and Mythic+ pages (element
+// selectors only: page titles, drawer titles and Lexical headings alike).
+h1, h2, h3, h4 {
+  font-family: var(--atlas-font-display);
+  font-weight: var(--atlas-weight-display);
+  letter-spacing: var(--atlas-tracking-display);
+  color: var(--atlas-text-strong);
+  // Alegreya defaults to old-style figures; counters and dates read better lining.
+  font-variant-numeric: lining-nums;
+}
+
+::selection { background: var(--atlas-accent-wash-strong); }
 
 // ---- Network desk (/admin home) ------------------------------------------
 :root {
-  --gd-amber: #d9a441;
-  --gd-teal: #2fa7c4;
-  --gd-line: var(--theme-elevation-150);
-  --gd-muted: var(--theme-elevation-500);
-  --gd-card: var(--theme-elevation-50);
+  --gd-amber: var(--atlas-accent);
+  --gd-teal: #2fa7c4; // Riftden's own accent: identifies that site's data, never chrome
+  --gd-line: var(--atlas-line-soft);
+  --gd-muted: var(--atlas-text-muted);
+  --gd-card: var(--atlas-surface);
+}
+
+// ---- Brand: GILDRA wordmark (sidebar, login) and header monogram -----------
+.gd-wordmark {
+  display: grid;
+  gap: 2px;
+  line-height: 1.1;
+}
+.gd-wordmark__name {
+  font-family: var(--atlas-font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--atlas-text-strong);
+}
+.gd-wordmark__tagline {
+  font-size: var(--atlas-text-meta);
+  letter-spacing: .04em;
+  color: var(--atlas-text-subtle);
+}
+.gd-wordmark--login {
+  justify-items: center;
+  .gd-wordmark__name { font-size: 2.25rem; letter-spacing: .24em; margin-right: -.24em; }
+  .gd-wordmark__tagline { font-size: var(--atlas-text-small); }
 }
 
 .gd-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  strong { display: block; font-size: 1.35rem; letter-spacing: 0.01em; }
-  small { display: block; color: var(--gd-muted); font-size: 0.85rem; }
+  display: grid;
+  justify-items: center;
+  gap: var(--atlas-space-2);
+  small { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); letter-spacing: .04em; }
+}
+
+// Payload gives the header mark an 18 px slot.
+.gd-monogram {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-selected);
+  color: var(--atlas-accent-strong);
+  font-family: var(--atlas-font-display);
+  font-weight: 700;
+  font-size: .75rem;
+  line-height: 1;
+}
+
+.gd-nav-brand {
+  display: block;
+  align-self: stretch;
+  margin: 0 0 var(--atlas-space-4);
+  padding: 2px 0 var(--atlas-space-3);
+  border-bottom: 1px solid var(--atlas-line-soft);
+  text-decoration: none;
+  &:focus-visible { outline: var(--accessibility-outline); outline-offset: 4px; }
 }
 
 .gd-home {
@@ -34,7 +151,7 @@
 }
 
 .gd-muted { color: var(--gd-muted); }
-.gd-ok { color: #6fcf97; }
+.gd-ok { color: var(--atlas-positive); }
 
 .gd-sites {
   display: grid;
@@ -47,8 +164,8 @@
   position: relative;
   padding: calc(var(--base) * 1) calc(var(--base) * 1.1);
   border: 1px solid var(--gd-line);
-  border-top: 3px solid var(--gd-accent);
-  border-radius: 10px;
+  border-top: 2px solid var(--gd-accent);
+  border-radius: var(--atlas-radius);
   background: var(--gd-card);
   display: grid;
   gap: calc(var(--base) * 0.75);
@@ -93,7 +210,7 @@
 
 .gd-stat {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--atlas-radius);
   background: var(--theme-elevation-100);
   dt { font-size: 0.75rem; color: var(--gd-muted); line-height: 1.2; min-height: 2.4em; }
   dd { margin: 4px 0 0; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
@@ -120,7 +237,7 @@
   display: inline-flex;
   align-items: center;
   padding: 7px 14px;
-  border-radius: 6px;
+  border-radius: var(--atlas-radius);
   border: 1px solid var(--gd-line);
   color: var(--theme-text);
   text-decoration: none;
@@ -130,7 +247,7 @@
   &--primary {
     background: var(--gd-accent, var(--gd-amber));
     border-color: transparent;
-    color: #10131a;
+    color: var(--atlas-accent-ink);
     font-weight: 600;
     &:hover, &:focus-visible { filter: brightness(1.08); }
   }
@@ -145,7 +262,7 @@
 
 .gd-panel {
   border: 1px solid var(--gd-line);
-  border-radius: 10px;
+  border-radius: var(--atlas-radius);
   padding: calc(var(--base) * 0.9) calc(var(--base) * 1);
   min-width: 0;
   h2 { font-size: 1.15rem; margin-bottom: 10px; }
@@ -185,8 +302,8 @@
   border-radius: 999px;
   font-size: 0.75rem;
   white-space: nowrap;
-  &--ok { background: rgba(111, 207, 151, 0.14); color: #6fcf97; }
-  &--draft { background: rgba(217, 164, 65, 0.14); color: var(--gd-amber); }
+  &--ok { background: color-mix(in srgb, var(--atlas-positive) 14%, transparent); color: var(--atlas-positive); }
+  &--draft { background: var(--atlas-accent-wash-strong); color: var(--gd-amber); }
 }
 
 .gd-sections {
@@ -229,9 +346,9 @@
   gap: 4px;
   text-align: left;
   padding: 16px 18px;
-  border-radius: 10px;
+  border-radius: var(--atlas-radius);
   border: 1px solid var(--gd-line);
-  border-top: 3px solid var(--gd-accent);
+  border-top: 2px solid var(--gd-accent);
   background: var(--gd-card);
   color: var(--theme-text);
   font: inherit;
@@ -247,7 +364,7 @@
   margin-top: 6px;
   padding: 4px 10px;
   border: 1px dashed var(--gd-line);
-  border-radius: 6px;
+  border-radius: var(--atlas-radius);
   background: transparent;
   color: var(--theme-text);
   font: inherit;
@@ -282,7 +399,7 @@
   margin-top: 5px;
   border-radius: 50%;
   background: var(--theme-elevation-200);
-  &--ok { background: #6fcf97; }
+  &--ok { background: var(--atlas-positive); }
   &--warn { background: var(--gd-amber); }
 }
 
@@ -296,7 +413,7 @@
 .gd-seo__card {
   max-width: 620px;
   padding: 14px 16px;
-  border-radius: 10px;
+  border-radius: var(--atlas-radius);
   background: #fff;
   font-family: arial, sans-serif;
 }
@@ -314,8 +431,8 @@
 .gd-article-panel__alert {
   margin-top: 10px;
   padding: 8px 10px;
-  border-radius: 6px;
-  background: rgba(217, 164, 65, 0.14);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-accent-wash-strong);
   color: var(--gd-amber);
   font-size: 0.85rem;
   button {
@@ -323,9 +440,9 @@
     margin-top: 6px;
     padding: 4px 10px;
     border: 0;
-    border-radius: 5px;
+    border-radius: var(--atlas-radius);
     background: var(--gd-amber);
-    color: #10131a;
+    color: var(--atlas-accent-ink);
     font: inherit;
     font-weight: 600;
     cursor: pointer;
@@ -339,7 +456,7 @@
   ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 0.85rem; }
   li { display: grid; grid-template-columns: 14px 1fr; gap: 6px; align-items: baseline; }
   li > span:first-child { text-align: center; font-weight: 700; }
-  li.is-ok > span:first-child { color: #6fcf97; }
+  li.is-ok > span:first-child { color: var(--atlas-positive); }
   li.is-missing { color: var(--gd-amber); }
   li.is-optional { color: var(--gd-muted); }
   em { font-style: normal; color: var(--gd-muted); }
@@ -348,26 +465,34 @@
 .gd-article-panel__words { font-size: 0.85rem; color: var(--gd-muted); }
 
 // ---- Sidebar ------------------------------------------------------------------
+// Groups with spaced captions, counters on the right, the current section on a
+// selected surface with the amber edge (raids / Mythic+ atlas navigation).
 .gd-nav {
   display: grid;
-  gap: 18px;
-  margin: 14px 0 8px;
+  align-self: stretch;
+  gap: var(--atlas-space-4);
+  margin: var(--atlas-space-4) 0 var(--atlas-space-2);
 }
 
 .gd-nav__title,
 .gd-nav__more > summary {
-  margin: 0 0 4px;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  margin: 0 0 var(--atlas-space-1);
+  padding: 0 var(--atlas-space-2);
+  font-size: var(--atlas-text-label);
+  font-weight: 600;
+  letter-spacing: var(--atlas-tracking-label);
   text-transform: uppercase;
-  color: var(--gd-muted);
+  color: var(--atlas-text-subtle);
 }
 
 .gd-nav__more > summary {
   cursor: pointer;
   list-style: none;
+  border-radius: var(--atlas-radius);
   &::-webkit-details-marker { display: none; }
   &::after { content: " ▸"; }
+  &:hover { color: var(--atlas-text-muted); }
+  &:focus-visible { outline: var(--accessibility-outline); }
 }
 
 .gd-nav__more[open] > summary::after { content: " ▾"; }
@@ -377,24 +502,43 @@
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 2px;
+  gap: 1px;
 }
 
 .gd-nav__link {
   position: relative;
-  display: block;
-  margin-left: -10px;
-  padding: 5px 10px;
-  border-left: 2px solid transparent;
-  border-radius: 0 6px 6px 0;
-  color: var(--theme-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-2);
+  min-height: 34px;
+  padding: 6px var(--atlas-space-2);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-muted);
   text-decoration: none;
-  &:hover, &:focus-visible { background: var(--theme-elevation-100); }
+  transition: background-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease);
+  &:hover { background: var(--atlas-accent-wash); color: var(--atlas-text); }
+  &:focus-visible { outline: var(--accessibility-outline); outline-offset: -2px; }
   &.is-active {
-
-    background: var(--theme-elevation-100);
+    background: var(--atlas-surface-selected);
+    color: var(--atlas-text-strong);
     font-weight: 600;
   }
+}
+
+.gd-nav__label { min-width: 0; overflow-wrap: anywhere; }
+
+.gd-nav__count {
+  flex-shrink: 0;
+  font-size: var(--atlas-text-meta);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--atlas-text-subtle);
+  .is-active > & { color: var(--atlas-accent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gd-nav__link { transition: none; }
 }
 
 // Laptop widths (1025–1440 px): Payload hides the sidebar until hydration and
@@ -411,30 +555,34 @@
 .gd-cmd-button {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--atlas-space-3);
   height: 32px;
-  margin-right: 8px;
-  padding: 0 8px 0 10px;
-  border: 1px solid var(--gd-line);
-  border-radius: 8px;
-  background: var(--theme-elevation-50);
-  color: var(--gd-muted);
+  min-width: 180px;
+  margin-right: var(--atlas-space-2);
+  padding: 0 6px 0 10px;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-sunken);
+  color: var(--atlas-text-subtle);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--atlas-text-small);
   cursor: pointer;
   white-space: nowrap;
-  &:hover, &:focus-visible { border-color: var(--gd-amber); color: var(--theme-text); }
+  transition: border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease);
+  &:hover { border-color: var(--atlas-line); color: var(--atlas-text); }
+  &:focus-visible { outline: var(--accessibility-outline); outline-offset: 2px; }
+  .gd-cmd-button__text { margin-right: auto; }
   kbd {
-    padding: 1px 6px;
-    border: 1px solid var(--gd-line);
-    border-radius: 5px;
-    font: inherit;
-    font-size: 0.72rem;
+    padding: 1px 5px;
+    border: 1px solid var(--atlas-line-soft);
+    border-radius: var(--atlas-radius);
+    font-family: var(--atlas-font-mono);
+    font-size: var(--atlas-text-label);
   }
 }
 
 @media (max-width: 768px) {
-  .gd-cmd-button { margin-right: 0; padding: 0 8px; .gd-cmd-button__text, kbd { display: none; } }
+  .gd-cmd-button { min-width: 0; margin-right: 0; padding: 0 8px; .gd-cmd-button__text, kbd { display: none; } }
   // Long breadcrumbs clip instead of running under the search button and the language menu.
   .app-header__step-nav-wrapper { min-width: 0; overflow: hidden; }
   .app-header__actions-wrapper { flex-shrink: 0; margin-right: 8px; }
@@ -444,7 +592,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(4, 6, 10, 0.6);
+  background: var(--atlas-scrim);
 }
 
 .gd-cmd__content {
@@ -455,7 +603,7 @@
   transform: translateX(-50%);
   width: min(640px, calc(100vw - 24px));
   border: 1px solid var(--theme-elevation-150);
-  border-radius: 12px;
+  border-radius: var(--atlas-radius);
   background: var(--theme-elevation-50);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
@@ -494,10 +642,10 @@
     align-items: baseline;
     gap: 10px;
     padding: 9px 10px;
-    border-radius: 7px;
+    border-radius: var(--atlas-radius);
     cursor: pointer;
     font-size: 0.92rem;
-    &[data-selected="true"] { background: var(--theme-elevation-150); }
+    &[data-selected="true"] { background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); }
   }
 }
 
@@ -507,7 +655,7 @@
   margin-left: auto;
   display: inline-flex;
   gap: 4px;
-  span { padding: 0 5px; border: 1px solid var(--gd-line); border-radius: 4px; font-size: 0.7rem; color: var(--gd-muted); }
+  span { padding: 0 5px; border: 1px solid var(--gd-line); border-radius: var(--atlas-radius); font-size: 0.7rem; color: var(--gd-muted); }
 }
 .gd-cmd__empty { padding: 18px 12px; color: var(--gd-muted); font-size: 0.9rem; }
 .gd-cmd__hint {
@@ -523,7 +671,7 @@
   margin-bottom: calc(var(--base) * 1.25);
   padding: 10px 12px;
   border: 1px solid var(--gd-line);
-  border-radius: 10px;
+  border-radius: var(--atlas-radius);
   background: var(--gd-card);
 }
 
@@ -556,7 +704,7 @@
   min-width: 150px;
   padding: 6px 12px 7px 10px;
   border: 1px solid var(--gd-line);
-  border-radius: 8px;
+  border-radius: var(--atlas-radius);
   background: transparent;
   color: var(--theme-text);
   font: inherit;
@@ -566,7 +714,7 @@
   &:hover:not(:disabled), &:focus-visible { border-color: var(--gd-amber); }
   &.is-active {
     border-color: var(--gd-amber);
-    background: rgba(217, 164, 65, 0.12);
+    background: var(--atlas-accent-wash);
     cursor: default;
   }
   &:disabled { opacity: 0.55; cursor: not-allowed; }
@@ -579,7 +727,7 @@
   margin-left: auto;
   padding: 6px 12px;
   border: 1px dashed var(--gd-line);
-  border-radius: 8px;
+  border-radius: var(--atlas-radius);
   background: transparent;
   color: var(--theme-text);
   font: inherit;
@@ -657,7 +805,7 @@
     width: 30px;
     height: 30px;
     border: 1px solid var(--gd-line);
-    border-radius: 7px;
+    border-radius: var(--atlas-radius);
     background: transparent;
     color: var(--theme-text);
     font-size: 1.2rem;
@@ -672,7 +820,7 @@
 .gd-ref__copy {
   padding: 2px 8px;
   border: 1px solid var(--gd-line);
-  border-radius: 5px;
+  border-radius: var(--atlas-radius);
   background: transparent;
   color: var(--theme-text);
   font: inherit;
@@ -707,7 +855,7 @@
   margin: 0 0 0.8em;
   padding: 8px 10px;
   border: 1px dashed var(--gd-line);
-  border-radius: 7px;
+  border-radius: var(--atlas-radius);
   > span { display: block; font-size: 0.7rem; color: var(--gd-muted); text-transform: uppercase; letter-spacing: 0.06em; }
   p { margin: 4px 0 0; }
 }
@@ -740,14 +888,14 @@
 
 .gd-lang {
   padding: 1px 6px;
-  border-radius: 5px;
+  border-radius: var(--atlas-radius);
   border: 1px solid var(--gd-line);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--gd-muted);
-  &--complete { border-color: transparent; background: rgba(111, 207, 151, 0.16); color: #6fcf97; }
-  &--partial { border-color: transparent; background: rgba(217, 164, 65, 0.16); color: var(--gd-amber); }
+  &--complete { border-color: transparent; background: color-mix(in srgb, var(--atlas-positive) 16%, transparent); color: var(--atlas-positive); }
+  &--partial { border-color: transparent; background: var(--atlas-accent-wash-strong); color: var(--gd-amber); }
   &--empty { border-style: dashed; opacity: 0.7; }
 }
 
@@ -763,4 +911,4 @@
 }
 
 // Valyro useFlip carries the active marker between actual navigation targets.
-.gd-nav__active-marker { position: absolute; top: 0; bottom: 0; left: -2px; width: 2px; background: var(--gd-amber); pointer-events: none; }
+.gd-nav__active-marker { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--atlas-accent); pointer-events: none; }

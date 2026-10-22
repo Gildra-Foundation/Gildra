@@ -1,31 +1,39 @@
 import React from "react";
 
-/** Mark of the network admin: a faceted gem, amber (Gildra) over teal (Riftden). */
-function Mark({ size }: { size: number }) {
+import { adminLang } from "../admin/text";
+
+type BrandProps = { i18n?: { language?: string } };
+
+/** "Редакция · Network": the shared newsroom of gildra.net and riftden.com. */
+function tagline(language: string | undefined) {
+  return adminLang(language) === "ru" ? "Редакция · Network" : "Newsroom · Network";
+}
+
+/** The GILDRA wordmark of the raids and Mythic+ pages: spaced Alegreya capitals. */
+export function Wordmark({ i18n, size = "nav" }: BrandProps & { size?: "nav" | "login" }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-      <path d="M16 2 29 13 16 30 3 13Z" fill="#d9a441" />
-      <path d="M16 2 29 13H3Z" fill="#f0c56a" />
-      <path d="M16 30 29 13 16 17Z" fill="#2fa7c4" />
-      <path d="M16 30 3 13 16 17Z" fill="#b9822c" />
-    </svg>
+    <span className={`gd-wordmark gd-wordmark--${size}`}>
+      <span className="gd-wordmark__name">Gildra</span>
+      <span className="gd-wordmark__tagline">{tagline(i18n?.language)}</span>
+    </span>
   );
 }
 
-/** Navigation icon (top left of every admin screen). */
+/** Header mark (start of the breadcrumbs, links to the desk): the wordmark's initial in a bronze frame. */
 export function BrandIcon() {
-  return <Mark size={26} />;
+  return (
+    <span className="gd-monogram" aria-label="Gildra">
+      G
+    </span>
+  );
 }
 
-/** Login screen logo. */
-export function BrandLogo() {
+/** Login and password screens. */
+export function BrandLogo({ i18n }: BrandProps) {
   return (
     <span className="gd-logo">
-      <Mark size={44} />
-      <span>
-        <strong>Gildra Network</strong>
-        <small>gildra.net · riftden.com</small>
-      </span>
+      <Wordmark i18n={i18n} size="login" />
+      <small>gildra.net · riftden.com</small>
     </span>
   );
 }
