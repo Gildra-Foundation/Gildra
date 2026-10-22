@@ -111,7 +111,10 @@ if [ "$1" = image ] && [ "$2" = inspect ]; then
       printf 'gildra-scraper:legacy\n'
       ;;
     sha256:5555555555555555555555555555555555555555555555555555555555555555)
-      printf 'unrelated:latest\ngildra-cms:legacy-jobs\n'
+      printf 'unrelated:latest\ngildra-cms:shared-jobs\ngildra-cms-jobs:legacy\n'
+      ;;
+    sha256:6666666666666666666666666666666666666666666666666666666666666666)
+      printf 'gildra-cms:shared-jobs\n'
       ;;
     *) exit 1 ;;
   esac
@@ -479,11 +482,16 @@ grep -q '^SCRAPER_IMAGE=gildra-scraper:legacy$' "$bootstrap_manifest"
 # Only the worker needs normalization here: the no-op guard must include it.
 printf 'CMS_JOBS_IMAGE=sha256:5555555555555555555555555555555555555555555555555555555555555555\n' >> "$bootstrap_manifest"
 PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
-grep -q '^CMS_JOBS_IMAGE=gildra-cms:legacy-jobs$' "$bootstrap_manifest"
+grep -q '^CMS_JOBS_IMAGE=gildra-cms-jobs:legacy$' "$bootstrap_manifest"
 [ "$(stat -c '%a' "$bootstrap_manifest")" = 600 ]
 cp "$bootstrap_manifest" "$test_directory/normalized.env"
 PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
 cmp "$bootstrap_manifest" "$test_directory/normalized.env"
+
+# Shared legacy images remain usable when no dedicated jobs tag exists.
+sed 's/^CMS_JOBS_IMAGE=.*/CMS_JOBS_IMAGE=sha256:6666666666666666666666666666666666666666666666666666666666666666/' "$test_directory/normalized.env" > "$bootstrap_manifest"
+PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
+grep -q '^CMS_JOBS_IMAGE=gildra-cms:shared-jobs$' "$bootstrap_manifest"
 
 # An unresolvable worker cannot partially rewrite the other legacy images.
 cp "$test_directory/legacy-original.env" "$bootstrap_manifest"
