@@ -39,8 +39,10 @@ below are relative to `apps/web/`.
 
 Every public page is built the same way (roadmap items 71–80):
 
-- **Feature module** — `components/wow/<feature>/` with a public `index.ts`, a
-  page component that takes `locale: "en" | "ru"`, its `*Copy.ts` (same keys in
+- **Feature module** — `components/wow/<feature>/` with a page component that
+  takes `locale: "en" | "ru"` (routes import it from its own file — no
+  re-exporting barrels: a server module that re-exports client components makes
+  every route that imports it ship all of them), its `*Copy.ts` (same keys in
   both languages, checked by `npm run test:atlas`) and a CSS module on `--atlas-*`
   tokens (`npm run atlas:check`). `npm run new:feature` copies the template
   (`components/wow/_template`, README there). Features never import another
