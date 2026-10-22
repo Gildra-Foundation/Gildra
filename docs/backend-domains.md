@@ -28,11 +28,26 @@ business rules.
   endpoints outside the contract live in their domain package and are
   registered on the router in `cmd/server/main.go`.
 
+## Runtime limits (cmd/server)
+
+| Variable | Default | Effect |
+|---|---|---|
+| `API_REQUEST_TIMEOUT` | `20s` | Context deadline for public requests; `0` disables. Admin/auth, rotation simulations, gear variants and media are exempt (`httpapi.LongRunningPrefixes`). |
+| `DATABASE_MAX_CONNS` | pgx default, max(4, CPUs) | API pool size (`application_name=gildra-api`). |
+| `WORKER_DATABASE_MAX_CONNS` | `5` | Separate River pool (`application_name=gildra-worker`). |
+
+Catalog list totals are cached per filter for one minute (2048 entries), and
+list descriptions/tooltip icons are loaded per page; the integration test
+`TestCatalogListQueryCountDoesNotGrowWithPageSize` guards the query count.
+It runs in CI through Testcontainers, or locally against any server with
+`GILDRA_INTEGRATION_DATABASE_URL` (it creates and drops its own database).
+
 ## Next steps
 
-- `cmd/db2-import/main.go` (2.4k lines) and `cmd/catalog-import/main.go`
-  (2.0k) keep import logic in `main`; move it into `catalogimport` so it can
-  be unit-tested.
-- `catalogtaxonomy/indexer.go` (2.6k lines) splits naturally by entity family.
+- `cmd/db2-import` and `cmd/catalog-import` are split by concern but still
+  keep import logic in `main`; move it into `catalogimport` so it can be
+  unit-tested.
+- Large files left: `genshin/service.go` (1.5k), `rotationlab/simc.go`
+  (1.4k), `catalogimport/store.go` (1.5k), `adminpanel/handler.go` (1.2k).
 - `analytics` depends on the generated `api` types; give it its own types and
   map them in `httpapi`.
