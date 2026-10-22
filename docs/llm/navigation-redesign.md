@@ -1,10 +1,10 @@
-# Gildra editorial atlas and Valyro CMS
+# Characters-style site and Valyro CMS
 
 Owner direction: 22 October 2026. This supersedes the earlier requirement to use the book as the homepage/navigation.
 
 ## Public site
 
-- `PlatformHome` renders `AtlasHome`: a custom editorial composition inside `AtlasFrame`, with the selected character visible beside the heading, illustrated Mythic+/raid/article destinations and compact supporting links. The second owner iteration explicitly asks for more distinctive compositions than uniform Characters-style glass panels. No cinematic entry gate is mounted.
+- `PlatformHome` renders `AtlasHome`: the same `AtlasFrame`, `AtlasHero`, character art and glass material as Characters. No cinematic entry gate is mounted.
 - `WorkspaceNavigator` renders the shared top bar on all routes. Direct localized links include Characters, bosses, Mythic+, raids, tier lists and articles. Mobile disclosure keeps keyboard focus and Escape behavior.
 - `RouteTransitionGate` scopes every page to `.gildra-atlas`; home uses the ordinary page transition, never the archived cinematic scene transition.
 - `--atlas-glass-*` tokens define the shared material for panels, cards, controls and legacy surfaces. Character/quality/status colors remain data semantics. Section artworks remain section-specific.
@@ -30,14 +30,3 @@ Work is separated into `redesign/characters-style`, `redesign/top-navigation`, `
 ## Main reconciliation
 
 The old `main` contains the Fury calculator commit `da3e604a`, already adapted into the active history as `ae7ba654`, plus metadata-only `85a19bbe`. The integration merge keeps the current monorepo implementation and records the main ancestry. It must not restore the deleted root app or replace the evolved parser and dataset-aware API with their older versions.
-
-## Second design iteration
-
-The owner asked for a more unique homepage, inner pages and masthead after reviewing the first release. Work proceeds in parallel branches `redesign/editorial-v2`, `redesign/nav-v2`, `redesign/surfaces-v2` and `redesign/cms-v2`. Public UI uses existing section paintings and typography instead of introducing invented statistics or new cinematic effects. CMS changes prioritize continuing real editorial work, preserving site/locale filters, and distinguishing draft and published content.
-
-
-## Selected portal concept — iteration 3 (22 October 2026)
-
-The owner selected displayed option 1. `AtlasHome` now uses the approved scene/title/actions/shelf composition; `AtlasFrameShell.fullBleed` removes the inset column and ambient decoration only for that composition, retaining the legal/motion footer. Cormorant Garamond is self-hosted by next/font for the portal; the other atlas headings remain Alegreya. The central crest links home, with Characters/Bosses/Mythic+ on the left and Raids/Tiers/Articles on the right. Appearance and game links sit behind the portrait (inside the compact menu on smaller screens).
-
-Artwork sources and optimization are documented in `apps/web/public/assets/gildra/portal/SOURCE.md`. Runtime images use WebP and next/image; the small button texture is preoptimized because CSS backgrounds bypass next/image. Original generated masters remain in the local task artifacts. No book runtime or scene warmup is reintroduced. Desktop rail is 86px, compact rail64px at1279px, matching --atlas-sticky-top. Valyro Select, presence, dismissable layer and FLIP provide interactive behavior. Final visual evidence is in `design-qa.md`.

@@ -3,30 +3,6 @@
 The admin work continues the existing Valyro implementation; it does not replace
 Payload authentication, permissions, tenant access, native editing or publication.
 
-## Verified release baseline — v6, 22 October 2026
-
-The deployed CMS source is `55297e8a6ad01df9b186eff224c4fdcae5bcd1a9`
-(media discovery/upload guidance, integrated by `f7a61da7`). Its CMS subtree is
-identical to local main `32171f98e349b36ca433c02b88dab607a12cc9c1`, the v6 web
-release. Production publication is verified; GitHub remote main is **not**
-updated: the last v6 write probe returned 403 and server Git lacked HTTPS
-credentials. Local integration and deployment must not be described as a
-successful remote push.
-
-Release evidence is retained locally in the integration checkout under
-`.artifacts/polish-v6/RELEASE.md`, `release-summary.json`, `deployment.json` and
-`admin/QA.md` (these artifacts are not guaranteed to exist in a fresh clone).
-The v6 native Payload media gate covers 42 checks in 6 EN/RU desktop/mobile cases
-with isolated synthetic accounts, actual upload/search/cover selection and
-draft-only autosave. The v5 editorial/language/comparison gate covers 124 checks
-on its own earlier image; it was not rerun or counted as v6 media evidence.
-Neither gate certifies every admin flow or authenticated public Characters.
-
-The adoption checklist and iteration notes below preserve what was verified
-**at each implementation stage**. Their unchecked items and “release follows”
-statements are historical, not the current release status. They are retained
-rather than retrospectively marking tests as run on a different source/image.
-
 ## Adopted source
 
 The integration repository's CMS preceded the deployed Valyro workbench. This
@@ -55,7 +31,7 @@ network requests are introduced. `VALYRO.md` and `WORKFLOWS.md` describe the ear
 18 October work; their "not deployed" statements are historical, superseded by
 the 19 October release record above.
 
-## Initial adoption improvements
+## Current improvement
 
 - The Articles navigation item stays active on native article creation, editing
   and version routes. Permission-gated navigation and the command palette keep
@@ -74,7 +50,7 @@ the 19 October release record above.
 - Valyro loading indicators and a brief result entrance provide feedback. Data is
   never retained for an exit animation; reduced motion disables result movement.
 
-## Initial adoption verification checklist (historical)
+## Verification checklist
 
 - [x] TypeScript check.
 - [x] Unit suite: 61 tests, including URL normalization and active alias coverage.
@@ -88,92 +64,3 @@ the 19 October release record above.
 The fixture browser harness, when run, renders the actual workbench and Valyro
 components with explicit synthetic rows and local routing/API adapters. It cannot
 validate native Payload sessions, real tenant permissions or server rendering.
-
-## Editorial desk iteration — 22 October 2026
-
-The desk and article workbench share a Gildra editorial masthead, restrained
-site accents and readable serif headings. The latest accessible edit opens its
-native editor with its original site and title language. Site actions now open
-`/admin/articles` with explicit site, content locale and optional draft filter;
-they no longer depend solely on the sidebar tenant cookie. Publishing schedules
-and scheduled counters are hidden from roles that cannot inspect that queue.
-Existing server queries, access checks and publication semantics are unchanged.
-
-Articles have three URL-backed working views (all, drafts/edits, published
-versions), a search/site/language toolbar, the exact scoped result count and an
-explicit missing-title indication for the selected content language. Filters,
-reload and browser history use the same normalized query contract. Valyro
-Button, Badge, DataTable, StatsCard and EmptyState remain the real components;
-its useFlip animates the selected view and usePresence retains the reset control
-for its brief exit transition. Reduced-motion users receive no transition.
-The native Payload editor, auth, site selection and jobs worker are retained.
-
-Validation: TypeScript and all 70 unit tests passed. The isolated UI fixture
-checks article history/reload, stale response cancellation, error/empty/page
-recovery, keyboard controls, scoped desk actions, role-specific desk visibility,
-missing localized title, EN/RU screenshots at 390/1440 px, reduced motion and
-browser diagnostics. Fixture screenshots contain synthetic data; they do not
-claim to validate production authentication or a real database. Build and
-production release are coordinated after integration; no deployment was made
-from this branch.
-
-## Mobile article results — 22 October 2026
-
-Below 641 px, Articles renders one semantic list of compact records instead of
-the wide table. It uses the same real rows and cell renderers: title/slug, site,
-complete latest-version badge, update time, editor and live-page links. Title
-links are underlined in both layouts. Desktop retains all five Valyro DataTable
-columns. A media-query subscription selects one result tree; no duplicate hidden
-list/table is mounted. Native site-aware links, queries and access remain unchanged.
-Mobile loading uses Valyro Skeleton; existing empty/error/recovery states remain.
-
-Validation: TypeScript and 70 unit tests passed. Existing 25 UI fixture checks
-passed. Nine focused fixture groups cover EN/RU at 320/390/1440 px, long text and
-status wrapping, title/editor/live keyboard access, full mobile action visibility,
-loading replacement, distinct empty/error states, reset and responsive resizing
-with all desktop columns retained. Reduced motion passed; no page errors.
-Evidence: `.artifacts/cms-v2/mobile-results/` in the implementation worktree.
-These focused screenshots use synthetic rows and local routing/API adapters;
-no new image build, native-auth integration run or deployment was performed.
-
-## Native editor comparison polish — 22 October 2026
-
-The saved-translation panel now uses Valyro Button, usePresence and
-useDismissableLayer. Opening it from the comparison control moves keyboard
-focus to its visible close action; closing returns focus when it was inside the
-panel. A restored session preference does not take focus from the native editor.
-The panel remains non-modal, so the article stays editable alongside it.
-
-The desktop side panel and mobile bottom panel animate only transform/opacity,
-respect reduced motion, and become inert immediately when closing. Mobile uses
-the dynamic viewport height and bottom safe area. A failed translation request
-has a retry action. Copy buttons distinguish title and summary for assistive
-technology, announce success, and handle clipboard denial/unavailability with
-visible manual-copy guidance. Content language is separate from UI language.
-No save, publication, tenant, permission, database or dependency changes.
-
-Validation: TypeScript and all 70 existing unit tests passed. A synthetic editor
-component fixture passed 52 checks across EN/RU at 1440/390/320 px, including
-focus, keyboard closing, non-modal editing, retry, clipboard success/denial,
-restored preference, reduced motion and browser errors. Before/after screenshots
-and results are in `.artifacts/editor-compare` of the implementation worktree.
-Native authenticated integration and release are coordinated after integration.
-
-## Native editor controls and readable guidance — 22 October 2026
-
-Payload's 12px root made the custom language-state labels 9px and publication
-instructions/checklist copy 10.2px. These native-editor additions now set scoped,
-root-scaled minimums: 14px language names, 12px state labels, and 13px guidance.
-The language choices wrap as cards with 56px targets; comparison, fill, language
-warning and published links use genuine Valyro Buttons with 40px targets.
-The sidebar warning and checklist remain readable in a narrow native sidebar.
-Published links retain their original URLs and have explicit accessible names.
-No global Payload typography, language-save/fill policy, permissions or
-publication behavior changed.
-
-TypeScript and 70 unit tests passed. The actual LanguageBar/ArticlePanel fixture
-uses Payload's 12px root and passed 60 checks across EN/RU at 1440/390/320px with
-normal and 200% text, including keyboard switching, fill/Lexical initial content,
-comparison focus return, reduced motion and containment. Evidence lives under
-`.artifacts/native-readability` in the implementation worktree. Native-session
-verification and production release follow the integrated candidate build.

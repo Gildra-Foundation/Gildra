@@ -8,7 +8,7 @@ import { lessMotion } from "./motionPreference";
  * has passed under the sticky bars gets aria-current="location", and on phones
  * the scrolling strip keeps that link in view. Mounted inside AtlasAnchorNav.
  */
-export function AtlasAnchorSpy({ mode = "strip" }: { mode?: "strip" | "reading" }) {
+export function AtlasAnchorSpy() {
   const marker = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -21,9 +21,8 @@ export function AtlasAnchorSpy({ mode = "strip" }: { mode?: "strip" | "reading" 
 
     const update = () => {
       frame = 0;
-      // A horizontal strip obscures the text below it; a sidebar does not.
-      // Reading mode follows each heading's anchor landing position instead.
-      const line = mode === "strip" ? nav.getBoundingClientRect().bottom + 24 : 0;
+      // Just below the toolbar and this strip, or where a jump to the chapter lands (its scroll-margin).
+      const line = nav.getBoundingClientRect().bottom + 24;
       let active: HTMLAnchorElement | null = null;
       targets.forEach((target, index) => {
         if (!target) return;
@@ -53,7 +52,7 @@ export function AtlasAnchorSpy({ mode = "strip" }: { mode?: "strip" | "reading" 
       window.removeEventListener("resize", schedule);
       current?.removeAttribute("aria-current");
     };
-  }, [mode]);
+  }, []);
 
   return <span ref={marker} hidden />;
 }

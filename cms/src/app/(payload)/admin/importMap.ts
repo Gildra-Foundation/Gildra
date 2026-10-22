@@ -1,4 +1,3 @@
-import { MediaGuidance as MediaGuidance_aa554f479b3cb8107f5fbadb08f8e0a9 } from '../../../components/media/MediaGuidance'
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { TenantField as TenantField_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { LanguagesCell as LanguagesCell_53d85114ffcb12245bb9ddc91716ed08 } from '../../../components/list/LanguagesCell'
@@ -46,7 +45,6 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 
 /** @type import('payload').ImportMap */
 export const importMap = {
-  "/components/media/MediaGuidance#MediaGuidance": MediaGuidance_aa554f479b3cb8107f5fbadb08f8e0a9,
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "@payloadcms/plugin-multi-tenant/client#TenantField": TenantField_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/list/LanguagesCell#LanguagesCell": LanguagesCell_53d85114ffcb12245bb9ddc91716ed08,

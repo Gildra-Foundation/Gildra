@@ -11,7 +11,6 @@ import type { TalentSpecTheme } from "@/lib/talentSpecThemes";
 import { pvpVisualTheme, talentVisualTheme } from "@/lib/talentVisualTheme";
 import { decodeWoWTalentLoadout, encodeWoWTalentLoadout, FURY_REFERENCE_LOADOUT, TALENT_HANDOFF_STORAGE_KEY, talentPointBudgets } from "@/lib/wowTalentLoadout";
 import { SpecMenu } from "@/components/talents/SpecMenuLazy";
-import { TalentTouchInspector } from "@/components/talents/TalentTouchInspector";
 import { TalentTreePanel } from "@/components/talents/TalentTreePanel";
 import { TalentDescription } from "@/components/talents/TalentDescription";
 import { getPerformanceTier, type PerformanceTier } from "@/lib/client/performanceTier";
@@ -32,8 +31,8 @@ type PvpTooltipState = Exclude<TooltipState, null> & { kind: "pvp" };
 type TreeTooltipLayerHandle = { show: (tooltip: TreeTooltipState) => void; close: () => void; clear: () => void };
 type ChoiceState = Map<string, number>;
 type Notice = { message: string; persistent?: boolean } | null;
-type OpenTooltip = (node: TalentNode, target: HTMLButtonElement, immediate?: boolean, delayMs?: number, inspect?: boolean) => void;
-type RootOpenTooltip = (node: TalentNode, target: HTMLButtonElement, treeKind: TalentKind, immediate?: boolean, delayMs?: number, inspect?: boolean) => void;
+type OpenTooltip = (node: TalentNode, target: HTMLButtonElement, immediate?: boolean, delayMs?: number) => void;
+type RootOpenTooltip = (node: TalentNode, target: HTMLButtonElement, treeKind: TalentKind, immediate?: boolean, delayMs?: number) => void;
 
 type SavedTalentBuild = { id: string; name: string; loadout: string; savedAt: string; buildVersion: string };
 
@@ -530,7 +529,6 @@ function TalentSigil({ visual }: { visual: TalentVisual }) {
 const TalentNodeButton = memo(function TalentNodeButton({ view, tabIndex, openTooltip, closeTooltip, onRank, onCycleChoice, onMoveFocus, onFocusNode, onInspectRequirements }: { view: TalentNodeView; tabIndex: number; openTooltip: OpenTooltip; closeTooltip: () => void; onRank: (node: TalentNode, direction: 1 | -1) => void; onCycleChoice: (node: TalentNode, direction: 1 | -1) => void; onMoveFocus: (node: TalentNode, direction: MoveDirection) => void; onFocusNode: (nodeId: string) => void; onInspectRequirements: (nodeId: string | null, blockerNodeIds?: string[]) => void }) {
   const copy = useContext(TalentCopyContext);
   const [pointerActive, setPointerActive] = useState(false);
-  const touchPointerRef = useRef(false);
   const pointerActiveTimerRef = useRef<number | null>(null);
   const { node, rank, selectedChoice, available, lockReason, blockerNodeIds, hasMatch } = view;
   const selected = node.choices.find((choice) => choice.externalId === selectedChoice);
@@ -550,7 +548,6 @@ const TalentNodeButton = memo(function TalentNodeButton({ view, tabIndex, openTo
       aria-pressed={rank > 0}
       aria-disabled={!available}
       title={!available ? lockReason : undefined}
-      onPointerDown={(event) => { touchPointerRef.current = event.pointerType === "touch" || event.pointerType === "pen"; }}
       onKeyDown={(event) => {
         if (event.key === "ArrowUp" || event.key === "ArrowDown" || event.key === "ArrowLeft" || event.key === "ArrowRight") {
           event.preventDefault();
@@ -608,31 +605,8 @@ const TalentNodeButton = memo(function TalentNodeButton({ view, tabIndex, openTo
         onInspectRequirements(null);
         closeTooltip();
       }}
-      onClick={(event) => {
-        if (touchPointerRef.current && event.detail > 0) {
-          openTooltip(node, event.currentTarget, true, 0, true);
-          return;
-        }
-        if (available && node.nodeType === "choice" && rank >= node.maxRanks) {
-          scheduleTalentBurst(event.currentTarget);
-          onCycleChoice(node, 1);
-        } else if (available) {
-          scheduleTalentBurst(event.currentTarget);
-          onRank(node, 1);
-        } else {
-          onInspectRequirements(node.id, blockerNodeIds);
-        }
-        openTooltip(node, event.currentTarget);
-      }}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        if (touchPointerRef.current) {
-          openTooltip(node, event.currentTarget, true, 0, true);
-        } else if (rank > 0) {
-          scheduleTalentBurst(event.currentTarget);
-          onRank(node, -1);
-        }
-      }}
+      onClick={(event) => { if (available && node.nodeType === "choice" && rank >= node.maxRanks) { scheduleTalentBurst(event.currentTarget); onCycleChoice(node, 1); } else if (available) { scheduleTalentBurst(event.currentTarget); onRank(node, 1); } else { onInspectRequirements(node.id, blockerNodeIds); } openTooltip(node, event.currentTarget); }}
+      onContextMenu={(event) => { event.preventDefault(); if (rank > 0) { scheduleTalentBurst(event.currentTarget); onRank(node, -1); } }}
     >
       {showSigil ? <><span className="tc-node-vfx" aria-hidden="true" /><TalentSigil visual={visual} /></> : null}
       <span className="tc-node-ring" />
@@ -688,7 +662,7 @@ const TalentTreeView = memo(function TalentTreeView({ tree, ranks, choices, spen
     element: ReactElement;
   }>());
   const highlightedRequirementRef = useRef<Element[]>([]);
-  const openTreeTooltip = useCallback((node: TalentNode, target: HTMLButtonElement, immediate?: boolean, delayMs?: number, inspect?: boolean) => openTooltip(node, target, tree.kind, immediate, delayMs, inspect), [openTooltip, tree.kind]);
+  const openTreeTooltip = useCallback((node: TalentNode, target: HTMLButtonElement, immediate?: boolean, delayMs?: number) => openTooltip(node, target, tree.kind, immediate, delayMs), [openTooltip, tree.kind]);
   const inspectRequirements = useCallback((targetNodeId: string | null, blockerNodeIds: string[] = []) => {
     highlightedRequirementRef.current.forEach((element) => element.classList.remove("is-prerequisite", "is-requirement-target", "is-requirement-path"));
     highlightedRequirementRef.current = [];
@@ -1075,7 +1049,6 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
   const [undoState, setUndoState] = useState<{ ranks: Map<string, number>; choices: ChoiceState; pvp: Array<number | null> } | null>(null);
   const [pvpPickerSlot, setPvpPickerSlot] = useState<number | null>(null);
   const [pvpQuery, setPvpQuery] = useState("");
-  const [touchInspector, setTouchInspector] = useState<{ node: TalentNode; kind: TalentKind; opener: HTMLButtonElement } | null>(null);
   const [tooltip, setTooltip] = useState<PvpTooltipState | null>(null);
   const [tooltipMotion, setTooltipMotion] = useState<TooltipMotion>("open");
   const tooltipRef = useRef<TooltipState>(null);
@@ -1480,18 +1453,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
     return [...searchableChoicesByNode.values()].reduce((total, choices) => total + (choices.some((choice) => choice.includes(normalized)) ? 1 : 0), 0);
   }, [data, deferredQuery, searchableChoicesByNode]);
 
-  const openTooltip = useCallback<RootOpenTooltip>((node, target, treeKind, immediate = false, delayMs = 24, inspect = false) => {
-    if (inspect) {
-      if (tooltipOpenTimerRef.current !== null) window.clearTimeout(tooltipOpenTimerRef.current);
-      if (tooltipCloseTimerRef.current !== null) window.clearTimeout(tooltipCloseTimerRef.current);
-      tooltipOpenTimerRef.current = null;
-      tooltipCloseTimerRef.current = null;
-      tooltipRef.current = null;
-      treeTooltipLayerRef.current?.clear();
-      setTooltip(null);
-      setTouchInspector({ node, kind: treeKind, opener: target });
-      return;
-    }
+  const openTooltip = useCallback<RootOpenTooltip>((node, target, treeKind, immediate = false, delayMs = 24) => {
     if (tooltipCloseTimerRef.current === null
       && tooltipRef.current?.kind === "tree"
       && tooltipRef.current.node.id === node.id
@@ -1918,14 +1880,6 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
         </div>
         <div className="tc-pvp-picker-foot"><span><b>{pvpSelections.filter((id) => id !== null).length}</b>/3 {copy.slotsUsed}</span><button type="button" className="tc-pvp-clear" data-pvp-remove="true" onClick={() => { clearPvpTalent(pvpPickerSlot); closePvpPicker(); }} disabled={!activePvpTalent}>{copy.removeFromSlot(pvpPickerSlot + 1)}</button></div>
       </div> : null}
-      {touchInspector ? <TalentTouchInspector
-        node={touchInspector.node} kind={touchInspector.kind} lang={lang}
-        rank={ranks.get(touchInspector.node.id) ?? 0} selectedChoice={choices.get(touchInspector.node.id)}
-        lockReason={nodeAvailability(touchInspector.node, touchInspector.kind, ranks, rank(touchInspector.kind), nodeCatalog, copy).reason}
-        budgetFull={rank(touchInspector.kind) >= budgets[touchInspector.kind]} budget={budgets[touchInspector.kind]} opener={touchInspector.opener}
-        onRank={(direction) => changeRank(touchInspector.node, direction)}
-        onSwitch={() => cycleChoice(touchInspector.node, 1)} onClose={() => setTouchInspector(null)}
-      /> : null}
       <TreeTooltipLayer ref={treeTooltipLayerRef} theme={theme} ranks={ranks} choices={choices} nodeCatalog={nodeCatalog} data={data} />
       {tooltip && typeof document !== "undefined" ? createPortal(
         <div className="tc-tooltip-layer" data-atlas-scope="" data-spec={theme.slug} data-spec-motif={theme.motif}>

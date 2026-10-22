@@ -1,14 +1,25 @@
 import { handlers, isBattleNetAuthConfigured } from "@/auth";
 import type { NextRequest } from "next/server";
-import { isAuthSessionRequest, publicAuthResponse } from "@/lib/auth/publicSession";
 
-export async function POST(request: NextRequest) {
-  return publicAuthResponse(request.url, await handlers.POST(request));
-}
+export const POST = handlers.POST;
 
 export async function GET(request: NextRequest) {
-  if (!isBattleNetAuthConfigured && isAuthSessionRequest(request.url)) {
-    return publicAuthResponse(request.url, Response.json(null));
+  if (!isBattleNetAuthConfigured && new URL(request.url).pathname.endsWith("/session")) {
+    return Response.json(null);
   }
-  return publicAuthResponse(request.url, await handlers.GET(request));
+  const response = await handlers.GET(request);
+  if (!new URL(request.url).pathname.endsWith("/session") || !response.ok) return response;
+
+  const session = await response.clone().json();
+  if (session && typeof session === "object") {
+    delete session.battleNetAccessToken;
+    delete session.battleNetError;
+  }
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  headers.set("content-type", "application/json; charset=utf-8");
+  return new Response(JSON.stringify(session), {
+    status: response.status,
+    headers,
+  });
 }

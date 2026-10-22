@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { lessMotion, subscribeSiteMotion } from "./motionPreference";
+import { lessMotion } from "./motionPreference";
 
 /**
  * Torchlight under the cursor for everything marked `data-spotlight` (cards,
@@ -9,13 +9,12 @@ import { lessMotion, subscribeSiteMotion } from "./motionPreference";
  * pointer position into --spot-x / --spot-y, and for `data-tilt` elements a
  * gentle 3D tilt into --tilt-x / --tilt-y. After React Bits' Spotlight Card,
  * Border Glow and Tilted Card, rewritten for the atlas: CSS does the drawing,
- * fine pointers only, suspended under reduced motion or while the page is hidden.
+ * fine pointers only, no tilt under reduced motion.
  */
 export function AtlasPointerLight() {
   useEffect(() => {
-    const pointer = window.matchMedia("(hover: hover) and (pointer: fine)");
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let listening = false;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    const still = lessMotion();
     let target: HTMLElement | null = null;
     let frame = 0;
     let x = 0;
@@ -33,7 +32,7 @@ export function AtlasPointerLight() {
       const top = y - box.top;
       target.style.setProperty("--spot-x", `${left.toFixed(1)}px`);
       target.style.setProperty("--spot-y", `${top.toFixed(1)}px`);
-      if (target.hasAttribute("data-tilt")) {
+      if (!still && target.hasAttribute("data-tilt")) {
         target.style.setProperty("--tilt-x", `${((left / box.width - 0.5) * 9).toFixed(2)}deg`);
         target.style.setProperty("--tilt-y", `${((0.5 - top / box.height) * 7).toFixed(2)}deg`);
       }
@@ -50,42 +49,17 @@ export function AtlasPointerLight() {
       if (!frame) frame = requestAnimationFrame(paint);
     };
     const leave = () => {
-      cancelAnimationFrame(frame);
-      frame = 0;
-      target?.style.removeProperty("--spot-x");
-      target?.style.removeProperty("--spot-y");
       release(target);
       target = null;
     };
 
-    const sync = () => {
-      const enabled = pointer.matches && !lessMotion() && !document.hidden;
-      if (enabled === listening) return;
-      listening = enabled;
-      if (enabled) {
-        document.addEventListener("pointermove", move, { passive: true });
-        document.documentElement.addEventListener("pointerleave", leave);
-      } else {
-        document.removeEventListener("pointermove", move);
-        document.documentElement.removeEventListener("pointerleave", leave);
-        leave();
-      }
-    };
-    // Preferences can change without a remount. Cancelling both the listener
-    // and queued frame also stops geometry reads and gradient repaints.
-    const unsubscribe = subscribeSiteMotion(sync);
-    pointer.addEventListener("change", sync);
-    motion.addEventListener("change", sync);
-    document.addEventListener("visibilitychange", sync);
-    sync();
+    document.addEventListener("pointermove", move, { passive: true });
+    document.documentElement.addEventListener("pointerleave", leave);
     return () => {
-      unsubscribe();
-      pointer.removeEventListener("change", sync);
-      motion.removeEventListener("change", sync);
-      document.removeEventListener("visibilitychange", sync);
       document.removeEventListener("pointermove", move);
       document.documentElement.removeEventListener("pointerleave", leave);
-      leave();
+      cancelAnimationFrame(frame);
+      release(target);
     };
   }, []);
   return null;

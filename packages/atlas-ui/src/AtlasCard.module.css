@@ -1,8 +1,11 @@
 .card {
   position: relative;
   min-width: 0;
-  border-bottom: 1px solid var(--atlas-line);
-  background: transparent;
+  border: 1px solid var(--atlas-glass-edge);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
+  box-shadow: var(--atlas-shadow-card);
   content-visibility: auto;
   contain-intrinsic-size: auto 440px;
   transition: border-color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
@@ -11,7 +14,8 @@
 .card:hover,
 .card:focus-within {
   border-color: color-mix(in srgb, var(--atlas-card-accent, var(--atlas-accent)) 60%, var(--atlas-accent));
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--atlas-bg) 24%, transparent);
+  transform: translateY(-3px);
+  box-shadow: var(--atlas-shadow-lift);
 }
 
 /* Torchlight under the cursor (AtlasPointerLight writes --spot-x/--spot-y): a pool
@@ -81,12 +85,11 @@
   aspect-ratio: var(--atlas-card-art-ratio, 16 / 9.4);
   overflow: hidden;
   background: var(--atlas-surface-sunken);
-  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
 }
 
 .art > img {
   object-fit: cover;
-  filter: saturate(.98) brightness(.96);
+  filter: saturate(.9) brightness(.86);
   transition: transform var(--atlas-duration-art) var(--atlas-ease), filter var(--atlas-duration-slow) ease;
 }
 
@@ -124,7 +127,7 @@
 .artCaption {
   position: absolute;
   right: 12px;
-  bottom: 40px;
+  bottom: 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -132,7 +135,7 @@
   font-size: var(--atlas-text-meta);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  text-shadow: var(--atlas-text-halo);
+  text-shadow: 0 1px 6px #000;
 }
 
 .artCaption svg { width: 14px; height: 14px; }
@@ -142,14 +145,7 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  position: relative;
-  z-index: 1;
-  margin: -24px var(--atlas-space-3) 0;
-  padding: var(--atlas-space-5) var(--atlas-space-4);
-  border-top: 1px solid var(--atlas-glass-edge);
-  background: var(--atlas-glass-sheen), var(--atlas-glass-raised);
-  -webkit-backdrop-filter: var(--atlas-glass-filter);
-  backdrop-filter: var(--atlas-glass-filter);
+  padding: var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-4);
 }
 
 .eyebrow {
@@ -170,7 +166,7 @@
   margin: 2px 0 0;
   color: var(--atlas-text-strong);
   font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-h3);
+  font-size: clamp(1.25rem, 1.05rem + .55vw, 1.5rem);
   font-weight: var(--atlas-weight-display);
   letter-spacing: var(--atlas-tracking-display);
   line-height: 1.1;
@@ -199,20 +195,19 @@
   justify-content: space-between;
   gap: var(--atlas-space-2) var(--atlas-space-3);
   margin-top: auto;
-  padding-top: var(--atlas-space-4);
+  padding-top: var(--atlas-space-3);
 }
 
 .meta {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 14px;
-  min-width: 0;
   color: var(--atlas-text-subtle);
   font-size: var(--atlas-text-meta);
 }
 
-.meta > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
-.meta svg { flex: none; width: 14px; height: 14px; color: var(--atlas-accent); }
+.meta > span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.meta svg { width: 14px; height: 14px; color: var(--atlas-accent); }
 
 .cta {
   display: inline-flex;
@@ -236,16 +231,16 @@
 
 /* Feature: one wide entry (the current lair, the current raid). */
 .feature { contain-intrinsic-size: auto 520px; }
-.feature .link { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); grid-template-rows: auto; align-items: center; }
-.feature .art { aspect-ratio: auto; align-self: stretch; min-height: 400px; }
-.feature .body { justify-content: center; gap: var(--atlas-space-3); margin: var(--atlas-space-6) 0 var(--atlas-space-6) -72px; padding: var(--atlas-space-7) var(--atlas-space-6); }
+.feature .link { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-rows: auto; }
+.feature .art { aspect-ratio: auto; min-height: 380px; }
+.feature .body { justify-content: center; gap: 10px; padding: var(--atlas-space-6); }
 .feature .title { font-size: var(--atlas-text-h2); }
 .feature .description { font-size: var(--atlas-text-body); -webkit-line-clamp: 5; }
 
 @media (max-width: 900px) {
   .feature .link { grid-template-columns: minmax(0, 1fr); }
   .feature .art { min-height: 0; aspect-ratio: 16 / 9; }
-  .feature .body { margin: -24px var(--atlas-space-3) 0; padding: var(--atlas-space-5) var(--atlas-space-4); }
+  .feature .body { padding: var(--atlas-space-5) var(--atlas-space-4); }
 }
 
 /* Cards rise into place as they scroll into view (CSS scroll-driven, no JS). */

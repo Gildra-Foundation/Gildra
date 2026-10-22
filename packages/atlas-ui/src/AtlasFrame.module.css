@@ -37,9 +37,9 @@
   position: absolute;
   inset: 0;
   content: "";
-  background: var(--atlas-frame-veil,
+  background:
     linear-gradient(90deg, rgba(4, 5, 6, .88), rgba(4, 5, 6, .32) 46%, rgba(4, 5, 6, .12) 72%, rgba(4, 5, 6, .45)),
-    linear-gradient(180deg, rgba(5, 6, 7, .1) 0%, rgba(5, 6, 7, .35) 45%, var(--atlas-bg) 94%));
+    linear-gradient(180deg, rgba(5, 6, 7, .1) 0%, rgba(5, 6, 7, .35) 45%, var(--atlas-bg) 94%);
 }
 
 /* Bright artwork: a heavier veil, the scene stays readable as texture. */
@@ -60,8 +60,8 @@
 
 .art {
   object-fit: cover;
-  object-position: var(--atlas-frame-art-crop, var(--atlas-frame-art-position, center 18%));
-  filter: var(--atlas-frame-art-filter, saturate(.86) contrast(1.06) brightness(.92));
+  object-position: var(--atlas-frame-art-position, center 18%);
+  filter: saturate(.86) contrast(1.06) brightness(.92);
   /* The scene settles in when the page arrives, then drifts slowly — a living painting. */
   animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
 }
@@ -245,7 +245,3 @@
     background: linear-gradient(180deg, rgba(4, 5, 6, .5), rgba(4, 5, 6, .68) 45%, var(--atlas-bg) 90%);
   }
 }
-
-/* The portal owns its scene; keep the shared footer without an inset column. */
-.fullBleed .column { width: 100%; padding: 0; }
-.fullBleed .legal { margin-top: 0; padding: var(--atlas-space-4) var(--atlas-gutter); }

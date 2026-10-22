@@ -3,8 +3,6 @@
 import { useDocumentInfo, useFormFields, useLocale, useTranslation } from "@payloadcms/ui";
 import React, { useEffect, useState } from "react";
 
-import { AdminSurface } from "../AdminSurface";
-import { Button } from "../valyro-ui/basic/Button";
 import type { PublishedLink } from "../../articles/publishedLinks";
 import { useSwitchLocale } from "./useLocaleStates";
 
@@ -70,7 +68,6 @@ export function ArticlePanel() {
   const live = hasPublishedDoc && published?.key === key ? published.links : [];
 
   return (
-    <AdminSurface lang={ru ? "ru" : "en"}>
     <section className="gd-panel gd-article-panel" aria-label={ru ? "Статья на сайте" : "Article on the site"}>
       <p className="gd-article-panel__site">
         {typeof site.name === "string" ? site.name : ""}
@@ -79,20 +76,18 @@ export function ArticlePanel() {
       {cyrillicInEnglish ? (
         <div className="gd-article-panel__alert" role="status">
           {ru ? "Похоже, текст на русском, а открыта английская версия статьи." : "This looks like Russian text in the English version."}
-          <Button type="button" variant="accent" className="gd-article-panel__switch" onClick={() => switchTo("ru")}>
+          <button type="button" onClick={() => switchTo("ru")}>
             {ru ? "Перейти к русской версии" : "Switch to Russian"}
-          </Button>
+          </button>
         </div>
       ) : null}
       {live.length > 0 ? (
         <p className="gd-article-panel__live">
           {ru ? "На сайте: " : "Live: "}
           {live.map((l) => (
-            <Button key={l.code} asChild variant="secondary" size="sm">
-            <a href={l.url as string} target="_blank" rel="noreferrer" aria-label={`${ru ? "Открыть опубликованную версию" : "Open published version"}: ${l.short}`}>
+            <a key={l.code} href={l.url as string} target="_blank" rel="noreferrer">
               {l.short} ↗
             </a>
-            </Button>
           ))}
         </p>
       ) : null}
@@ -129,6 +124,5 @@ export function ArticlePanel() {
         </p>
       ) : null}
     </section>
-    </AdminSurface>
   );
 }

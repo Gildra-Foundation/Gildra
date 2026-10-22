@@ -136,9 +136,3 @@
 @media (max-width: 720px) {
   .list { min-height: min(56vh, 520px); }
 }
-
-/* The portal masthead keeps the full accessible search name in an icon trigger. */
-.trigger[data-compact] { justify-content: center; width: 40px; min-height: 44px; padding: 0; border-color: transparent; background: transparent; }
-.trigger[data-compact] .triggerLabel { position: absolute; width: 1px; height: 1px; min-width: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.trigger[data-compact] .triggerKey { display: none; }
-.trigger[data-compact] svg { width: 20px; height: 20px; }

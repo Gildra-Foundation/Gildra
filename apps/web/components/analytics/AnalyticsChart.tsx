@@ -23,7 +23,7 @@ export function AnalyticsChart({
   locale,
 }: {
   data: AnalyticsOverview;
-  copy: { events: string; users: string; activity: string };
+  copy: { events: string; users: string };
   locale: string;
 }) {
   const [formatted, setFormatted] = useState<FormattedChartPoints | null>(null);
@@ -63,10 +63,10 @@ export function AnalyticsChart({
       data={points}
       locale={locale}
       seriesLabel={copy.events}
-      ariaLabel={copy.activity}
-      color="var(--atlas-accent)"
-      axisColor="var(--atlas-text-muted)"
-      gridColor="var(--atlas-line-soft)"
+      ariaLabel={`${copy.events} by hour`}
+      color="var(--gold)"
+      axisColor="rgba(215,198,169,.72)"
+      gridColor="rgba(255,255,255,.08)"
       height={260}
     />
   );

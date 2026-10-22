@@ -18,7 +18,7 @@ export function AnalyticsChartViewport({
   locale,
 }: {
   data: AnalyticsOverview;
-  copy: { events: string; users: string; activity: string };
+  copy: { events: string; users: string };
   locale: string;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);

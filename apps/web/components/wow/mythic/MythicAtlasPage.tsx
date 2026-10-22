@@ -16,7 +16,7 @@ export function MythicAtlasPage({ locale }: { locale: "ru" | "en" }) {
   return (
     <AtlasFrame lang={locale} scene="mythicPlus">
       <AtlasHero
-        align="chapter"
+        align="center"
         breadcrumbs={trail(locale, "mythicPlus")}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
@@ -33,10 +33,6 @@ export function MythicAtlasPage({ locale }: { locale: "ru" | "en" }) {
 
       <MythicDataNotice locale={locale} />
 
-      <AtlasSection id="dungeons" title={copy.listTitle}>
-        <DungeonCardGrid locale={locale} hrefBase="/wow/mythic-plus/midnight-season-2" priority={false} />
-      </AtlasSection>
-
       <AtlasSection id="timers" className={styles.timers} title={copy.timersTitle} description={copy.timersText}>
         <p className={styles.timerProvenance}>
           {copy.timerChecked}: <time dateTime={mythicVerification.timers.checkedAt}>{verificationDate(mythicVerification.timers.checkedAt, locale)}</time>
@@ -52,6 +48,10 @@ export function MythicAtlasPage({ locale }: { locale: "ru" | "en" }) {
             </tr>;
           })}</tbody>
         </table>
+      </AtlasSection>
+
+      <AtlasSection id="dungeons" title={copy.listTitle}>
+        <DungeonCardGrid locale={locale} hrefBase="/wow/mythic-plus/midnight-season-2" priority={false} />
       </AtlasSection>
     </AtlasFrame>
   );
