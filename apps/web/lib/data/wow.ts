@@ -7,5 +7,6 @@ import "server-only";
  * ESLint forbids importing data/** from components/ and app/ directly.
  */
 export * from "@gildra/game-data";
+export * from "./wow/specializations";
 export { default as seasonOnePublication } from "@/data/wow/midnight-season-one-publication.json";
 export { liveSeason } from "./season";
