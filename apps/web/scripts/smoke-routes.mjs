@@ -57,9 +57,14 @@ async function checkPublicShell(page, path, problems) {
     problems.push("public shell: expected one shared header");
     return;
   }
+  // The GILDRA mark links home; the realm bar links each realm's hub (its other
+  // pages, such as lairs under Raids, open in the realm's portal).
   const navigation = header.locator(`nav[aria-label="${ru ? "Основная навигация" : "Main navigation"}"]`);
-  const hrefs = await navigation.locator("a[href]").evaluateAll(links => links.map(link => link.getAttribute("href")));
-  for (const destination of ["/", "/wow/characters", "/wow/lairs", "/wow/mythic-plus", "/wow/raids", "/tier-lists", "/wow/articles"]) {
+  const hrefs = [
+    ...await header.locator(":scope > div a[href]").evaluateAll(links => links.map(link => link.getAttribute("href"))),
+    ...await navigation.locator("a[href]").evaluateAll(links => links.map(link => link.getAttribute("href"))),
+  ];
+  for (const destination of ["/", "/wow/characters", "/wow/mythic-plus", "/wow/raids", "/tier-lists", "/wow/articles"]) {
     const href = ru ? destination === "/" ? "/ru" : `/ru${destination}` : destination;
     if (!hrefs.includes(href)) problems.push(`public shell: missing navigation link ${href}`);
   }

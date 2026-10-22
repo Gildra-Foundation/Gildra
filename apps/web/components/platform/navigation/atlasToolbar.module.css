@@ -1,24 +1,43 @@
-/* atlas:strict — shared horizontal navigation, including the home page. */
+/* atlas:strict — shared top bar: sigil, five realms with art portals, search, language, game. */
 .toolbar {
   position: sticky;
   top: 0;
   z-index: 80;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: var(--atlas-space-5);
   min-height: var(--atlas-sticky-top);
   padding: var(--atlas-space-2) var(--atlas-gutter);
   border-bottom: 1px solid var(--atlas-line-soft);
-  background: var(--atlas-scrim);
-  backdrop-filter: blur(18px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--atlas-text-strong) 4%, transparent), transparent 70%),
+    var(--atlas-scrim);
+  backdrop-filter: blur(18px) saturate(120%);
+  transition: background-color var(--atlas-duration-slow) var(--atlas-ease), box-shadow var(--atlas-duration-slow) var(--atlas-ease);
+}
+/* An engraved seam: the bottom edge catches the accent light in its middle. */
+.toolbar::after {
+  content: "";
+  position: absolute;
+  inset: auto 12% -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--atlas-accent) 55%, transparent) 50%, transparent);
+  opacity: .55;
+}
+.toolbar[data-scrolled] {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--atlas-text-strong) 4%, transparent), transparent 70%),
+    color-mix(in srgb, var(--atlas-bg) 94%, transparent);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--atlas-bg) 70%, transparent);
 }
 
 .skip {
   position: absolute;
   top: var(--atlas-space-2);
   left: var(--atlas-gutter);
-  z-index: 2;
+  z-index: 3;
   padding: var(--atlas-space-3) var(--atlas-space-4);
   color: var(--atlas-accent-ink);
   background: var(--atlas-accent);
@@ -26,42 +45,238 @@
   translate: 0 -200%;
 }
 .skip:focus-visible { translate: 0 0; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-.navigation { min-width: 0; }
-.links { display: flex; align-items: center; gap: var(--atlas-space-1); }
-.link {
+
+/* ── Sigil and wordmark ─────────────────────────────────────────────── */
+.start { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  min-height: var(--atlas-control-height);
+  color: var(--atlas-text-strong);
+  font: var(--atlas-weight-display) var(--atlas-text-title) / 1 var(--atlas-font-display);
+  letter-spacing: .22em;
+  text-decoration: none;
+}
+.sigil {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  color: var(--atlas-accent);
+  filter: drop-shadow(0 0 6px var(--atlas-accent-glow));
+  transition: rotate var(--atlas-duration-art) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease);
+}
+.brand:hover .sigil { rotate: 45deg; color: var(--atlas-accent-strong); }
+.brand:hover > span { color: var(--atlas-accent-strong); }
+.brand > span { transition: color var(--atlas-duration) var(--atlas-ease); }
+
+/* ── Realms ─────────────────────────────────────────────────────────── */
+.realms { position: relative; justify-self: center; }
+/* The bar's breathing room above and below the 44 px realm row. */
+.realms { --bar-inset: calc((var(--atlas-sticky-top) - var(--atlas-control-height)) / 2); }
+.realmList { display: flex; align-items: center; gap: var(--atlas-space-1); margin: 0; padding: 0; list-style: none; }
+.realmList > li { display: flex; align-items: center; }
+.realmLink {
+  position: relative;
   display: flex;
   align-items: center;
   min-height: var(--atlas-control-height);
-  padding: var(--atlas-space-2) var(--atlas-space-3);
-  border: 1px solid transparent;
-  border-radius: var(--atlas-radius);
+  padding: 0 var(--atlas-space-1) 0 var(--atlas-space-3);
   color: var(--atlas-text-muted);
-  font: 600 var(--atlas-text-small) / 1.3 var(--atlas-font-ui);
+  font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
+  letter-spacing: .08em;
+  text-transform: uppercase;
   text-decoration: none;
   white-space: nowrap;
-  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
+  transition: color var(--atlas-duration) var(--atlas-ease), text-shadow var(--atlas-duration) var(--atlas-ease);
 }
-.link:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
-.link[aria-current] { color: var(--atlas-accent-strong); border-color: var(--atlas-line); background: var(--atlas-accent-wash-strong); }
-.link:focus-visible, .menuToggle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-.menuToggle {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  gap: var(--atlas-space-2);
-  min-height: var(--atlas-control-height);
-  min-width: var(--atlas-control-height);
-  padding: var(--atlas-space-2) var(--atlas-space-3);
+.realmToggle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: var(--atlas-control-height);
+  padding: 0;
+  border: 0;
+  color: var(--atlas-text-subtle);
+  background: none;
+  cursor: pointer;
+  transition: color var(--atlas-duration) var(--atlas-ease);
+}
+.realmToggle > svg { transition: rotate var(--atlas-duration) var(--atlas-ease); }
+.realmList > li:hover .realmLink,
+.realmList > li[data-open] .realmLink { color: var(--atlas-text-strong); text-shadow: 0 0 14px var(--atlas-accent-glow); }
+.realmList > li:hover .realmToggle,
+.realmToggle[aria-expanded="true"] { color: var(--atlas-accent); }
+.realmToggle[aria-expanded="true"] > svg { rotate: 180deg; }
+.realmLink[aria-current] { color: var(--atlas-accent-strong); }
+.realmLink:focus-visible, .realmToggle:focus-visible, .brand:focus-visible, .menuToggle:focus-visible {
+  outline: 2px solid var(--atlas-accent-strong);
+  outline-offset: 2px;
+}
+
+/* The rune: a lit seam with a gem that marks the current realm and glides to the next one. */
+.rune {
+  position: absolute;
+  bottom: calc(-1px - var(--bar-inset));
+  left: 0;
+  z-index: 1;
+  width: var(--rune-w, 40px);
+  height: 1px;
+  margin-left: calc(var(--rune-w, 40px) / -2);
+  pointer-events: none;
+  translate: var(--rune-x, 0) 0;
+  background: linear-gradient(90deg, transparent, var(--atlas-accent-strong) 30%, var(--atlas-accent-strong) 70%, transparent);
+  box-shadow: 0 0 10px var(--atlas-accent);
+}
+.rune::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: calc(50% - 3.5px);
+  width: 7px;
+  height: 7px;
+  rotate: 45deg;
+  background: var(--atlas-accent-strong);
+  box-shadow: 0 0 8px var(--atlas-accent), 0 0 18px var(--atlas-accent-glow);
+}
+.rune[data-hidden] { opacity: 0; }
+.rune[data-ready] {
+  transition: translate var(--atlas-duration-art) cubic-bezier(.5, 0, .2, 1.2), width var(--atlas-duration-art) var(--atlas-ease), opacity var(--atlas-duration) var(--atlas-ease);
+}
+
+/* ── Portal panel of a realm ────────────────────────────────────────── */
+.portal {
+  position: absolute;
+  top: calc(100% + var(--bar-inset) + var(--atlas-space-2));
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: var(--atlas-space-3);
+  width: min(760px, calc(100vw - 2 * var(--atlas-gutter)));
+  padding: var(--atlas-space-3);
   border: 1px solid var(--atlas-line);
+  border-top-color: var(--atlas-line-strong);
+  border-radius: var(--atlas-radius);
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--atlas-accent-wash), transparent 60%),
+    color-mix(in srgb, var(--atlas-surface-raised) 96%, transparent);
+  box-shadow: var(--atlas-shadow-panel), 0 24px 60px color-mix(in srgb, var(--atlas-bg) 80%, transparent);
+  translate: -50% 0;
+  animation: portal-open var(--atlas-duration-slow) var(--atlas-ease) both;
+}
+/* The pointer can cross the gap between the bar and the panel without closing it. */
+.portal::before { content: ""; position: absolute; inset: calc(-1 * var(--atlas-space-3)) 0 100%; }
+@keyframes portal-open {
+  from { opacity: 0; translate: -50% -8px; clip-path: inset(0 0 100% 0); }
+  to { opacity: 1; translate: -50% 0; clip-path: inset(0 0 0 0); }
+}
+.portalFeature, .sheetFeature {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border: 1px solid var(--atlas-line-soft);
   border-radius: var(--atlas-radius);
   color: var(--atlas-text-strong);
-  background: var(--atlas-accent-wash);
-  cursor: pointer;
-  font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
+  background: var(--atlas-surface-sunken);
+  text-decoration: none;
 }
-.menuToggle:hover, .menuToggle[aria-expanded="true"] { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
-.end { display: flex; flex: none; align-items: center; gap: var(--atlas-space-4); }
-.locale { display: flex; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); }
+.portalFeature { min-height: 212px; }
+.portalArt {
+  z-index: -2;
+  object-fit: cover;
+  filter: saturate(.9) brightness(.82);
+  transition: scale var(--atlas-duration-art) var(--atlas-ease), filter var(--atlas-duration-art) var(--atlas-ease);
+}
+.portalFeature::after, .sheetFeature::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, transparent 20%, color-mix(in srgb, var(--atlas-bg) 92%, transparent) 92%);
+}
+/* The same gilded brackets as the atlas cards. */
+.portalFeature::before, .sheetFeature::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  opacity: .4;
+  background: var(--atlas-filigree);
+  transition: inset var(--atlas-duration-slow) var(--atlas-ease), opacity var(--atlas-duration-slow) var(--atlas-ease);
+}
+.portalFeature:hover::before, .portalFeature:focus-visible::before { inset: 5px; opacity: .95; }
+.portalFeature:hover .portalArt, .portalFeature:focus-visible .portalArt,
+.sheetFeature:hover .portalArt { scale: 1.05; filter: saturate(1) brightness(.95); }
+.portalFeature:hover, .portalFeature:focus-visible { border-color: var(--atlas-line-strong); box-shadow: var(--atlas-glow-sm); }
+.portalFeature:focus-visible, .portalLink:focus-visible, .sheetFeature:focus-visible, .sheetLinks a:focus-visible, .sheetHome:focus-visible {
+  outline: 2px solid var(--atlas-accent-strong);
+  outline-offset: 2px;
+}
+.portalText { display: grid; gap: var(--atlas-space-1); padding: var(--atlas-space-5); }
+.portalTitle {
+  font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.1 var(--atlas-font-display);
+  text-shadow: var(--atlas-text-shadow-art);
+}
+.portalLede { color: var(--atlas-text); font: 400 var(--atlas-text-small) / 1.45 var(--atlas-font-ui); text-shadow: var(--atlas-text-shadow-art); }
+.portalGo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-1);
+  margin-top: var(--atlas-space-2);
+  color: var(--atlas-accent-strong);
+  font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+.portalGo > svg { transition: translate var(--atlas-duration) var(--atlas-ease); }
+.portalFeature:hover .portalGo > svg { translate: 3px 0; }
+
+.portalList { display: grid; align-content: start; gap: var(--atlas-space-2); padding: var(--atlas-space-2) 0; }
+.portalCaption {
+  margin: 0 var(--atlas-space-3);
+  color: var(--atlas-text-subtle);
+  font: 650 var(--atlas-text-label) / 1.4 var(--atlas-font-ui);
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+.portalList ul { display: grid; margin: 0; padding: 0; list-style: none; }
+.portalLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-3);
+  min-height: 60px;
+  padding: var(--atlas-space-3);
+  border-bottom: 1px solid var(--atlas-line-soft);
+  color: var(--atlas-text-strong);
+  text-decoration: none;
+  transition: background-color var(--atlas-duration) var(--atlas-ease);
+}
+.portalLink::before {
+  content: "";
+  position: absolute;
+  inset: var(--atlas-space-2) auto var(--atlas-space-2) 0;
+  width: 2px;
+  background: var(--atlas-accent);
+  box-shadow: var(--atlas-glow-sm);
+  scale: 1 0;
+  transition: scale var(--atlas-duration) var(--atlas-ease);
+}
+.portalLink > span { display: grid; gap: var(--atlas-space-1); }
+.portalLink strong { font: var(--atlas-weight-display) var(--atlas-text-title) / 1.2 var(--atlas-font-display); }
+.portalLink small { color: var(--atlas-text-muted); font: 400 var(--atlas-text-meta) / 1.4 var(--atlas-font-ui); }
+.portalLink > svg { flex: none; color: var(--atlas-accent); opacity: .5; transition: translate var(--atlas-duration) var(--atlas-ease), opacity var(--atlas-duration) var(--atlas-ease); }
+.portalLink:hover, .portalLink[aria-current] { background: var(--atlas-accent-wash); }
+.portalLink:hover::before, .portalLink[aria-current]::before { scale: 1 1; }
+.portalLink:hover > svg { translate: 4px 0; opacity: 1; }
+
+/* ── End of the bar ─────────────────────────────────────────────────── */
+.end { display: flex; align-items: center; justify-content: flex-end; gap: var(--atlas-space-3); min-width: 0; }
+.locale { display: flex; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); }
 .locale a {
   display: grid;
   place-items: center;
@@ -74,34 +289,107 @@
   text-decoration: none;
   transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
 }
-.locale a + a { border-left: 1px solid var(--atlas-line); }
-.locale a:hover { color: var(--atlas-text-strong); }
-.locale a[aria-current] { color: var(--atlas-accent-ink); background: var(--atlas-accent); }
+.locale a + a { border-left: 1px solid var(--atlas-line-soft); }
+.locale a:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
+.locale a[aria-current] { color: var(--atlas-accent-strong); background: var(--atlas-accent-wash-strong); box-shadow: inset 0 -2px 0 var(--atlas-accent); }
 .locale a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
-@media (max-width: 1199px) {
-  .menuToggle { display: flex; }
-  .links {
-    display: none;
-    position: absolute;
-    top: calc(100% + var(--atlas-space-2));
-    left: var(--atlas-gutter);
-    right: var(--atlas-gutter);
-    max-height: calc(100dvh - var(--atlas-sticky-top) - var(--atlas-space-5));
-    overflow-y: auto;
-    padding: var(--atlas-space-2);
-    border: 1px solid var(--atlas-line);
-    border-radius: var(--atlas-radius);
-    background: var(--atlas-surface-raised);
-    box-shadow: var(--atlas-shadow-panel);
-  }
-  .links[data-open] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* ── Phone and tablet sheet ─────────────────────────────────────────── */
+.sheetRoot { display: none; }
+.menuToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--atlas-space-2);
+  min-height: var(--atlas-control-height);
+  min-width: var(--atlas-control-height);
+  padding: var(--atlas-space-2) var(--atlas-space-3);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-strong);
+  background: var(--atlas-accent-wash);
+  cursor: pointer;
+  font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+.menuToggle:hover, .menuToggle[aria-expanded="true"] { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
+.sheet {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--atlas-space-4);
+  height: calc(100dvh - var(--atlas-sticky-top));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--atlas-space-4) var(--atlas-gutter) var(--atlas-space-7);
+  border-top: 1px solid var(--atlas-line-soft);
+  background:
+    radial-gradient(90% 40% at 50% 0%, var(--atlas-accent-wash), transparent 70%),
+    var(--atlas-bg);
+  animation: sheet-open var(--atlas-duration-slow) var(--atlas-ease) both;
+}
+@keyframes sheet-open { from { opacity: 0; } }
+.sheetHome {
+  display: flex;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  min-height: var(--atlas-control-height);
+  color: var(--atlas-text-strong);
+  font: var(--atlas-weight-display) var(--atlas-text-h3) / 1 var(--atlas-font-display);
+  text-decoration: none;
+}
+.sheetHome[aria-current] { color: var(--atlas-accent-strong); }
+.sheetRealms { display: grid; gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.sheetRealms > li {
+  display: grid;
+  gap: var(--atlas-space-2);
+  animation: sheet-rise var(--atlas-duration-enter) var(--atlas-ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms + 60ms);
+}
+@keyframes sheet-rise { from { opacity: 0; translate: 0 10px; } }
+.sheetFeature { min-height: 112px; }
+.sheetFeature .portalText { padding: var(--atlas-space-4) var(--atlas-space-5); }
+.sheetFeature .portalLede { font-size: var(--atlas-text-meta); }
+.sheetRealms > li[data-current] .sheetFeature { border-color: var(--atlas-line-strong); box-shadow: inset 3px 0 0 var(--atlas-accent); }
+.sheetLinks { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.sheetLinks a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: var(--atlas-control-height);
+  padding: 0 var(--atlas-space-3);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text);
+  font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
+  text-decoration: none;
+}
+.sheetLinks a > svg { color: var(--atlas-accent); }
+.sheetLinks a[aria-current] { border-color: var(--atlas-line-strong); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
+
+@media (max-width: 1179px) {
+  .toolbar { grid-template-columns: minmax(0, 1fr) auto; }
+  .realms { display: none; }
+  .sheetRoot { display: block; }
+}
+@media (min-width: 640px) and (max-width: 1179px) {
+  .sheetRealms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sheetFeature { min-height: 148px; }
 }
 @media (max-width: 480px) {
-  .toolbar, .end { gap: var(--atlas-space-2); }
+  .toolbar, .end, .start { gap: var(--atlas-space-2); }
+  .brand { gap: var(--atlas-space-2); letter-spacing: .16em; }
+  .brand .sigil { width: 22px; height: 22px; }
   .menuToggle { padding: var(--atlas-space-2); }
   .menuToggle > span { display: none; }
   .locale a { min-width: 32px; padding: 0 var(--atlas-space-1); }
-  .links[data-open] { grid-template-columns: minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { .link, .locale a { transition: none; } }
+@media (max-width: 359px) { .brand > span { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .toolbar, .sigil, .realmLink, .realmToggle, .realmToggle > svg, .rune[data-ready], .portalArt, .portalFeature::before, .portalLink, .portalLink::before, .portalLink > svg, .portalGo > svg, .locale a { transition: none; }
+  .portal, .sheet, .sheetRealms > li { animation: none; }
+}
