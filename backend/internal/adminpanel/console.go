@@ -201,15 +201,17 @@ func (h *Handler) cachedCatalogHealth(ctx context.Context) (catalogHealth, error
 	}
 	h.healthMu.Unlock()
 
-	health, err := h.catalogHealth(ctx)
-	if err != nil {
-		return catalogHealth{}, err
-	}
-	h.healthMu.Lock()
-	h.healthCached = health
-	h.healthCachedAt = time.Now()
-	h.healthMu.Unlock()
-	return health, nil
+	return shared(ctx, &h.refresh, "health", func() (catalogHealth, error) {
+		health, err := h.catalogHealth(ctx)
+		if err != nil {
+			return catalogHealth{}, err
+		}
+		h.healthMu.Lock()
+		h.healthCached = health
+		h.healthCachedAt = time.Now()
+		h.healthMu.Unlock()
+		return health, nil
+	})
 }
 
 // catalogImportActivity aggregates live source records for the snapshots of
