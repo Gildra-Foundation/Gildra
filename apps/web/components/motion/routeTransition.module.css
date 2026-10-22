@@ -33,6 +33,9 @@
   transform: scale(.985);
   transition-delay: 120ms;
 }
+/* Behind the rune veil the page waits as it is (nothing to see, nothing to raster). */
+.frame[data-veiled] { transition: none; }
+.frame[data-veiled][data-route-state="leaving"] { opacity: 1; transform: none; }
 
 /* The portal ring: a spark that charges at the click and bursts across the screen
    when the next page arrives (RouteTransitionRuntime animates it). Idle: invisible,
@@ -75,14 +78,15 @@
 .veil {
   position: absolute;
   inset: 0;
+  /* Idle: not rendered at all, so neither its crest nor its masks are fetched until a hand-over. */
+  display: none;
   pointer-events: none;
-  visibility: hidden;
   background:
     radial-gradient(ellipse 46% 42% at 50% 50%, rgba(var(--site-accent-rgb), .13), transparent 72%),
     radial-gradient(ellipse 120% 80% at 50% 120%, rgba(var(--site-accent-rgb), .08), transparent 60%),
     linear-gradient(180deg, color-mix(in srgb, var(--site-bg) 82%, #1a2330), var(--site-bg));
 }
-.veil[data-veil] { visibility: visible; will-change: transform; }
+.veil[data-veil] { display: block; will-change: transform; }
 /* Covering (and covered) the veil blocks stray clicks on the page it hides. */
 .veil:is([data-veil="covering"], [data-veil="covered"]) { pointer-events: auto; cursor: progress; }
 
@@ -92,27 +96,16 @@
   position: absolute;
   content: "";
   pointer-events: none;
+  background: linear-gradient(var(--edge), transparent, rgba(var(--site-accent-rgb), .1) 55%, rgba(var(--site-accent-rgb), .55) 94%, var(--site-accent-strong) 99%, #fff);
 }
 .veil[data-axis="x"]::before,
 .veil[data-axis="x"]::after { top: 0; bottom: 0; width: 160px; }
-.veil[data-axis="x"]::before {
-  right: 100%;
-  background: linear-gradient(90deg, transparent, rgba(var(--site-accent-rgb), .1) 55%, rgba(var(--site-accent-rgb), .55) 94%, var(--site-accent-strong) 99%, #fff);
-}
-.veil[data-axis="x"]::after {
-  left: 100%;
-  background: linear-gradient(270deg, transparent, rgba(var(--site-accent-rgb), .1) 55%, rgba(var(--site-accent-rgb), .55) 94%, var(--site-accent-strong) 99%, #fff);
-}
+.veil[data-axis="x"]::before { --edge: 90deg; right: 100%; }
+.veil[data-axis="x"]::after { --edge: 270deg; left: 100%; }
 .veil[data-axis="y"]::before,
 .veil[data-axis="y"]::after { left: 0; right: 0; height: 160px; }
-.veil[data-axis="y"]::before {
-  bottom: 100%;
-  background: linear-gradient(180deg, transparent, rgba(var(--site-accent-rgb), .1) 55%, rgba(var(--site-accent-rgb), .55) 94%, var(--site-accent-strong) 99%, #fff);
-}
-.veil[data-axis="y"]::after {
-  top: 100%;
-  background: linear-gradient(0deg, transparent, rgba(var(--site-accent-rgb), .1) 55%, rgba(var(--site-accent-rgb), .55) 94%, var(--site-accent-strong) 99%, #fff);
-}
+.veil[data-axis="y"]::before { --edge: 180deg; bottom: 100%; }
+.veil[data-axis="y"]::after { --edge: 0deg; top: 100%; }
 
 /* Runes along the inside of each edge. */
 .veilRunes {

@@ -141,6 +141,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     clearVeilTimers();
     veil.dataset.veil = "revealing";
     delete veil.dataset.waiting;
+    if (frameRef.current) delete frameRef.current.dataset.veiled;
     const out = VEIL_OUT[direction];
     veil.dataset.axis = out.axis;
     veil.getAnimations().forEach((animation) => animation.cancel());
@@ -161,6 +162,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     pendingHref.current = null;
     clearVeilTimers();
     const veil = veilRef.current;
+    if (frameRef.current) delete frameRef.current.dataset.veiled;
     if (!veil?.dataset.veil || veil.dataset.veil === "revealing") return;
     veil.dataset.veil = "revealing";
     delete veil.dataset.waiting;
@@ -302,14 +304,22 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     veil.dataset.axis = out.axis;
     veil.dataset.tier = renderTier();
     veil.dataset.veil = "covering";
+    // Under the veil the old page need not recede: no full-page transform to raster.
+    if (frameRef.current) frameRef.current.dataset.veiled = "";
+    const timing = veil.dataset.tier === "cpu" ? DISSOLVE_IN : phone() ? COVER_PHONE : COVER;
     const close = veil.dataset.tier === "cpu"
-      ? veil.animate([{ opacity: 0 }, { opacity: 1 }], { ...DISSOLVE_IN, fill: "forwards" })
-      : veil.animate([{ transform: out.from }, { transform: "translate3d(0, 0, 0)" }], { ...(phone() ? COVER_PHONE : COVER), fill: "forwards" });
-    close.finished.then(() => {
+      ? veil.animate([{ opacity: 0 }, { opacity: 1 }], { ...timing, fill: "forwards" })
+      : veil.animate([{ transform: out.from }, { transform: "translate3d(0, 0, 0)" }], { ...timing, fill: "forwards" });
+    // The router goes on the clock, not on the animation: a machine that drops
+    // frames must not hold the click longer than the sweep was meant to take.
+    const closed = () => {
       if (veil.dataset.veil !== "covering") return;
+      close.finish();
       veil.dataset.veil = "covered";
       go();
-    }, () => {});
+    };
+    veilTimers.current.push(setTimeout(closed, Number(timing.duration)));
+    close.finished.then(closed, () => {});
     return true;
   }, [begin, clearVeilTimers, router]);
 
@@ -435,7 +445,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     <span className={styles.spark} aria-hidden="true" />
     <span ref={ringRef} className={styles.portalRing} aria-hidden="true" />
     <div className={styles.veilPort} aria-hidden="true">
-      <div ref={veilRef} className={styles.veil}>
+      <div ref={veilRef} className={styles.veil} data-route-veil>
         <span className={styles.veilRunes} data-edge="start" />
         <span className={styles.veilRunes} data-edge="end" />
         <span className={styles.veilCrest}><GildraCrest height={88} /></span>
