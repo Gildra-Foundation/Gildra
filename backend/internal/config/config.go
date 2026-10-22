@@ -26,6 +26,13 @@ type Config struct {
 	SentryEnvironment      string
 	SentryTracesSampleRate float64
 	ShutdownTimeout        time.Duration
+	// RequestTimeout bounds public API requests (0 disables it).
+	RequestTimeout time.Duration
+	// DatabaseMaxConns overrides the API pool size (0 keeps the pgx default
+	// of max(4, CPUs)).
+	DatabaseMaxConns int32
+	// WorkerDatabaseMaxConns sizes the separate River worker pool.
+	WorkerDatabaseMaxConns int32
 	AnalyticsCacheTTL      time.Duration
 	DatasetWorkerURL       string
 	DatasetWorkerTimeout   time.Duration
@@ -41,6 +48,18 @@ type Config struct {
 
 func Load() (Config, error) {
 	shutdownTimeout, err := durationEnv("SHUTDOWN_TIMEOUT", 15*time.Second)
+	if err != nil {
+		return Config{}, err
+	}
+	requestTimeout, err := durationEnv("API_REQUEST_TIMEOUT", 20*time.Second)
+	if err != nil {
+		return Config{}, err
+	}
+	databaseMaxConns, err := connectionsEnv("DATABASE_MAX_CONNS", 0)
+	if err != nil {
+		return Config{}, err
+	}
+	workerDatabaseMaxConns, err := connectionsEnv("WORKER_DATABASE_MAX_CONNS", 5)
 	if err != nil {
 		return Config{}, err
 	}
@@ -87,6 +106,9 @@ func Load() (Config, error) {
 		SentryEnvironment:      sentryEnvironment,
 		SentryTracesSampleRate: tracesSampleRate,
 		ShutdownTimeout:        shutdownTimeout,
+		RequestTimeout:         requestTimeout,
+		DatabaseMaxConns:       databaseMaxConns,
+		WorkerDatabaseMaxConns: workerDatabaseMaxConns,
 		AnalyticsCacheTTL:      cacheTTL,
 		DatasetWorkerURL:       envOr("DATASET_WORKER_URL", "http://scraper-worker:8081"),
 		DatasetWorkerTimeout:   datasetWorkerTimeout,
@@ -152,4 +174,16 @@ func durationEnv(key string, fallback time.Duration) (time.Duration, error) {
 		return 0, fmt.Errorf("parse %s=%s: %w", key, strconv.Quote(value), err)
 	}
 	return parsed, nil
+}
+
+func connectionsEnv(key string, fallback int32) (int32, error) {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback, nil
+	}
+	parsed, err := strconv.ParseInt(value, 10, 32)
+	if err != nil || parsed < 0 || parsed > 1000 {
+		return 0, fmt.Errorf("%s must be a number of connections from 0 to 1000", key)
+	}
+	return int32(parsed), nil
 }
