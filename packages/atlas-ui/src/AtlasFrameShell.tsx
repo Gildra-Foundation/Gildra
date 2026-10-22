@@ -32,6 +32,8 @@ export type AtlasFrameShellProps = {
   artLayer?: ReactNode;
   /** Rendered element (default <main>). Use "div" when the route already owns <main>. */
   as?: "main" | "div";
+  /** Edge-to-edge illustrated landing, with the shared legal/footer controls. */
+  fullBleed?: boolean;
   className?: string;
   lang?: string;
   id?: string;
@@ -56,7 +58,7 @@ function objectFocus(position: string | undefined): [number, number] {
  * The app wraps it as `AtlasFrame` (components/atlas), which resolves section
  * scenes and supplies the legal line.
  */
-export function AtlasFrameShell({ children, art, artPosition, artShade = "default", tint, ember, glow, still = false, artLayer, morphKey, as: Element = "main", className, lang, id, dataAttributes, footer = false }: AtlasFrameShellProps) {
+export function AtlasFrameShell({ children, art, artPosition, artShade = "default", tint, ember, glow, still = false, artLayer, morphKey, as: Element = "main", className, fullBleed = false, lang, id, dataAttributes, footer = false }: AtlasFrameShellProps) {
   const locale = lang === "ru" ? "ru" : "en";
   const layer = artLayer ?? (glow ? <AtlasArtGlow imageSize={glow.size} focus={objectFocus(artPosition)} points={glow.points} /> : null);
   const picture = art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" {...artPlaceholder(art)} /> : null;
@@ -78,9 +80,9 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
   return (
     // Page-to-page motion belongs to the app's route runtime (one owner per
     // navigation); the frame only marks itself and its scene.
-    <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} data-atlas-frame data-morph={morphKey ? "" : undefined} {...dataAttributes}>
-      {atmosphere}
-      <AtlasPointerLight />
+    <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, fullBleed && styles.fullBleed, className)} style={style} lang={lang} id={id} data-atlas-frame data-morph={morphKey ? "" : undefined} {...dataAttributes}>
+      {!fullBleed && atmosphere}
+      {!fullBleed && <AtlasPointerLight />}
       <div className={styles.column}>
         {children}
         {footer ? (

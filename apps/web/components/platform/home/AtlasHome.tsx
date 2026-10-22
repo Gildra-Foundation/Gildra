@@ -1,71 +1,47 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight, ArrowRight, ChartNoAxesColumnIncreasing, Swords } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { AtlasFrame, AtlasLinkButton } from "@/components/atlas";
 import { characterScene } from "@/components/wow/characters/characterScene";
-import { atlasScenes } from "@/lib/atlas/scenes";
 import { sectionHref } from "@/lib/routes/registry";
 import { artPlaceholder } from "@gildra/atlas-ui/placeholders";
 import type { Lang } from "@/lib/i18n";
-import { SiteAppearance } from "./SiteAppearance";
 import { atlasHomeCopy } from "./atlasHomeCopy";
 import styles from "./atlasHome.module.css";
 
-/** An illustrated atlas: the selected character gets the stage, destinations the foreground. */
+/** The selected portal concept: character scene, open typography, continuous destinations. */
 export async function AtlasHome({ lang }: { lang: Lang }) {
   const locale = lang === "ru" ? "ru" : "en";
   const copy = atlasHomeCopy[locale];
   const scene = await characterScene();
+  const portalArt = scene.art.endsWith("icecrown-home-background-v1.webp");
+  const art = portalArt ? "/assets/gildra/portal/hero-arthas.webp" : scene.art;
   return (
-    <AtlasFrame lang={locale} art={scene.art} artPosition={scene.position} className={styles.page} dataAttributes={{ "data-atlas-home": true }}>
+    <AtlasFrame lang={locale} fullBleed still className={styles.page} dataAttributes={{ "data-atlas-home": true }}>
       <section className={styles.hero} aria-labelledby="home-title">
-        <div className={styles.edition}>
-          <span>Gildra <span className={styles.editionDivider} aria-hidden="true">/</span> {copy.atlas}</span>
-          <span>World of Warcraft</span>
+        <div className={styles.scene} data-portal-art={portalArt || undefined} aria-hidden="true">
+          {/* The tall phone crop needs the full optimized source, not a viewport-width thumbnail. */}
+          <picture>
+            <source media="(max-width: 700px)" srcSet={art} />
+          <Image src={art} alt="" fill sizes={portalArt ? "100vw" : "(max-width: 700px) 100vw, 112vw"} quality={75} loading="eager" fetchPriority="high" {...artPlaceholder(art)} />
+          </picture>
         </div>
-        <div className={styles.heroBody}>
-          <div className={styles.intro}>
-            <p className={styles.eyebrow}>{copy.eyebrow}</p>
-            <h1 id="home-title">{copy.title}{" "}<em>{copy.titleAccent}</em></h1>
-            <p className={styles.lede}>{copy.lede}</p>
-            <div className={styles.actions}>
-              <AtlasLinkButton href={sectionHref("characters", locale)} variant="primary" iconAfter={<ArrowRight size={18} aria-hidden="true" />} prefetch={false}>{copy.characters}</AtlasLinkButton>
-              <AtlasLinkButton href={sectionHref("wow", locale)} variant="ghost" prefetch={false}>{copy.overview}</AtlasLinkButton>
-            </div>
+        <div className={styles.intro}>
+          <h1 id="home-title"><span>{copy.title}</span><span>{copy.titleAccent}</span></h1>
+          <Image className={styles.divider} src="/assets/gildra/portal/divider.webp" width={600} height={33} alt="" sizes="240px" />
+          <p className={styles.lede}>{copy.lede}</p>
+          <div className={styles.actions}>
+            <AtlasLinkButton href={sectionHref("characters", locale)} variant="primary" className={styles.primary} iconAfter={<ArrowRight size={23} strokeWidth={1} aria-hidden="true" />} prefetch={false}>{copy.characters}</AtlasLinkButton>
+            <AtlasLinkButton href={sectionHref("wow", locale)} variant="ghost" className={styles.secondary} iconAfter={<ArrowRight size={23} strokeWidth={1} aria-hidden="true" />} prefetch={false}>{copy.overview}</AtlasLinkButton>
           </div>
         </div>
-        <div className={styles.heroFoot}>
-          <SiteAppearance locale={locale} label={copy.appearance} />
-          <a href="#home-destinations" className={styles.discover}>{copy.discover}<ArrowDown size={16} aria-hidden="true" /></a>
-        </div>
       </section>
-      <section id="home-destinations" className={styles.destinations} aria-labelledby="home-explore-title">
-        <div className={styles.sectionHeading}>
-          <p className={styles.eyebrow}><span aria-hidden="true">01 /</span> {copy.panelEyebrow}</p>
-          <h2 id="home-explore-title">{copy.panelTitle}</h2>
-        </div>
-        <div className={styles.journeys}>
-          {copy.sections.map((section, index) => {
-            const art = atlasScenes[section.id];
-            return <Link key={section.id} href={sectionHref(section.id, locale)} prefetch={false} className={styles.journey} data-spotlight>
-              <Image src={art.art} alt="" fill quality={50}
-                sizes={index === 0 ? "(max-width: 700px) 100vw, (max-width: 1050px) 100vw, 46vw" : "(max-width: 700px) 100vw, (max-width: 1050px) 50vw, 27vw"}
-                style={{ objectPosition: art.position }} {...artPlaceholder(art.art)} />
-              <span className={styles.journeyTop}><span>{section.category}</span><ArrowUpRight size={22} aria-hidden="true" /></span>
-              <div className={styles.journeyCopy}>
-                <span className={styles.journeyIndex} aria-hidden="true">0{index + 1}</span>
-                <h3>{section.title}</h3>
-                <p>{section.description}</p>
-              </div>
-            </Link>;
-          })}
-        </div>
-        <div className={styles.fieldNotes}>
-          <p>{copy.notes}</p>
-          <Link href={sectionHref("tierLists", locale)} prefetch={false}><ChartNoAxesColumnIncreasing size={18} aria-hidden="true" /><span>{copy.tiers}</span><ArrowUpRight size={16} aria-hidden="true" /></Link>
-          <Link href={sectionHref("lairs", locale)} prefetch={false}><Swords size={18} aria-hidden="true" /><span>{copy.bosses}</span><ArrowUpRight size={16} aria-hidden="true" /></Link>
-        </div>
-      </section>
+      <nav className={styles.destinations} aria-label={copy.explore}>
+        {copy.sections.map(section => <Link key={section.id} href={sectionHref(section.id, locale)} prefetch={false} className={styles.destination}>
+          <Image src={`/assets/gildra/portal/${section.art}.webp`} alt="" fill quality={50} sizes="(max-width: 700px) 100vw, 36vw" />
+          <span className={styles.destinationCopy}><span>{section.title}</span><ArrowRight size={30} strokeWidth={1} aria-hidden="true" /></span>
+        </Link>)}
+      </nav>
     </AtlasFrame>
   );
 }

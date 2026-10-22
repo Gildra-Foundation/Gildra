@@ -65,6 +65,12 @@
   /* "… Local" faces (end of file) keep the metric-matched fallback where
      Times New Roman / Arial are not installed, so the web fonts swap in place. */
   --atlas-font-display: var(--font-atlas-display), "Alegreya Fallback Local", Georgia, "Times New Roman", serif;
+  --atlas-portal-ink: #e6eff8;
+  --atlas-portal-muted: #b3c3d3;
+  --atlas-font-portal: var(--font-portal-display), Georgia, "Times New Roman", serif;
+  --atlas-text-portal: clamp(4rem, 7.4vw, 7.75rem);
+  --atlas-text-portal-lead: clamp(1.25rem, 1.65vw, 1.75rem);
+  --atlas-text-portal-section: clamp(2rem, 2.7vw, 2.75rem);
   --atlas-font-ui: var(--font-ui), "Inter Fallback Local", "Segoe UI", Roboto, Arial, sans-serif;
   --atlas-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --atlas-weight-display: 600;
@@ -94,7 +100,7 @@
   --atlas-measure: 68ch;
   --atlas-measure-wide: 72ch;
   /* Height of the sticky top bar; sticky page navigation sits under it. */
-  --atlas-sticky-top: 64px;
+  --atlas-sticky-top: 86px;
 
   /* Spacing scale */
   --atlas-space-1: 4px;
@@ -243,4 +249,9 @@
     --atlas-glass-sheen: linear-gradient(transparent, transparent);
     --atlas-glass-filter: none;
   }
+}
+
+/* The compact portal rail keeps page-local sticky tools below navigation. */
+@media (max-width: 1279px) {
+  .gildra-atlas, [data-atlas-scope] { --atlas-sticky-top: 64px; }
 }

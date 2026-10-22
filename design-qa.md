@@ -1,46 +1,37 @@
-# Design QA — Champion skill path block
+# Portal concept 1 — design QA
 
-## Evidence
+Date: 22 October 2026. Scope: approved homepage and shared navigation, with regression coverage for the existing public pages and CMS. This is implementation of the owner's explicitly selected displayed option 1, not a new concept proposal.
 
-- Source visual truth: `/home/debian/.codex/attachments/7d265ecf-fc7c-448d-b8c3-655d36b77c8b/codex-clipboard-c4e71173-ec51-40e8-a7c1-db69ecc3fb47.png`.
-- Source pixels: 2072 × 504 px.
-- Browser-rendered desktop page: `/home/debian/Gildra-integrated/artifacts/skill-path/skill-path-desktop.png`.
-- Desktop viewport: 1600 × 900 CSS px, device scale factor 1.
-- Focused desktop implementation: `/home/debian/Gildra-integrated/artifacts/skill-path/skill-path-desktop-focus.png` (1324 × 373 px).
-- Browser-rendered mobile page: `/home/debian/Gildra-integrated/artifacts/skill-path/skill-path-mobile.png`.
-- Mobile viewport: 390 × 844 CSS px, device scale factor 1.
-- Full/focused side-by-side comparison: `/home/debian/Gildra-integrated/artifacts/skill-path/skill-path-comparison.png`.
-- Density normalization: the 2072 × 504 source was proportionally normalized to 1324 × 322 px; the implementation stayed at its native 1324 × 373 px. The remaining height difference is caused by the intentional no-statistics status panel.
-- State: Russian Karthus detail page, demo skill plan Q → E → W, levels 1–18, no statistics provider connected.
+## Source and matched capture
 
-## Findings
+- Selected reference: `/home/zulut/.codex/generated_images/01a162e6-65bb-7a33-87dd-20d4adbea273/exec-11cd524d-da3b-4eb6-9e55-9d58b7c4e1e7.png`.
+- Implementation: `.artifacts/portal-v3/home-reference-size.png`.
+- Both desktop images:1488×1058, viewport1488×1058, DPR1, Russian homepage, default Arthas, consent dismissed, fonts loaded, motion settled.
+- Actual side-by-side comparison: `.artifacts/portal-v3/comparison.png`; focused masthead comparison: `comparison-header.png`. Browser-rendered comparison HTML preserves the two original captures. No density normalization needed.
+- Responsive captures: EN320, RU390, RU768, and1440px Illidan/Garek/Varok in `.artifacts/portal-v3/`. Mobile is an adaptation because the approved source only specifies desktop.
 
-No actionable P0, P1, or P2 differences remain.
+## Iterations and resolved findings
 
-- Fonts and typography: the source hierarchy is preserved through Gildra's existing Chakra Petch/Inter system. Headings, muted explanatory copy, level numbers, and ability labels remain legible at both tested viewports.
-- Spacing and layout rhythm: the desktop panel retains the source's split priority/path composition, five aligned ability rows, and 18-cell rhythm. The mobile variant stacks priority over the grid and keeps horizontal scrolling inside the grid instead of expanding the page.
-- Colors and visual tokens: dark indigo panels, near-black ability labels, muted empty cells, and electric-blue selected cells closely track the reference while remaining consistent with the established League catalog theme.
-- Image quality and asset fidelity: all visible ability artwork is loaded from the existing official League media catalog. Eight rendered image instances loaded successfully; no placeholders, emoji, CSS drawings, or handcrafted replacement assets are used.
-- Copy and content: ability names come from the localized champion record. Because no build-statistics source exists yet, the win rate and match count from the reference were deliberately not copied; the replacement copy clearly labels the state as a demo and says that a statistics source is pending.
-- Icons: priority connectors use the installed Lucide icon family; ability artwork and slot badges are aligned consistently with the reference.
-- States and interactions: all 18 selected level cells are present. The mobile grid was scrolled programmatically and changed scroll position successfully. Browser console errors: 0.
-- Responsiveness and accessibility: desktop and mobile page overflow are both 0 px. Mobile grid overflow is contained (691 px) and scrollable. The grid has row/grid-cell semantics, selected state is exposed with `aria-selected`, and all priority images have accessible names.
+1. Replaced the inset editorial layout and numbered menu with the full-width character scene, centered real crest, six direct links, large serif title and continuous illustrated shelf. Consolidated the source's accidental duplicate Raids link; Home remains the central brand link.
+2. Corrected heading scale, silver color, hero framing, action widths and navigation baseline. Added real generated metal rail, silver button/divider and individual destination paintings. Optimized raster delivery; the button CSS texture fell from1.53MB to22KB.
+3. Replaced the older blurry Arthas artwork with the clean detailed scene derived from the selected reference. Softened the actual rail image to match the source's quiet material.
+4. **P2 fixed:** mobile cover initially selected a640px thumbnail for a roughly1360px-wide crop. `<picture>` now supplies the already optimized1774×887 source on narrow screens. Independent browser probes and fresh390/320 captures confirm sharp details, correct currentSrc and no overflow. See `qa-fixed-mobile.json`, `qa-mobile-iteration.png` and the scoped report `.artifacts/portal-v3/design-qa.md`.
+5. Fixed the divider's intrinsic aspect ratio and made crest sizes match the desktop/compact rail breakpoints.
 
-## Comparison history
+## Required visual surfaces
 
-1. Initial browser pass found a P2 desktop density issue: the minimum grid width caused level 18 to be partially clipped inside the horizontal scroller.
-2. The grid minimum width and cell constraints were reduced while preserving the 18-column structure.
-3. Post-fix evidence in `skill-path-desktop-focus.png` shows all levels 1–18 completely visible at 1600 px. The mobile capture confirms labels remain visible at the initial scroll position and the grid still scrolls independently.
+- **Typography:** self-hosted Cormorant Garamond matches the delicate serif portal direction, with proper Cyrillic/Latin coverage. Two-line title, readable smaller copy, no clipping. Inner pages retain Alegreya. Font400 is slightly lighter than the reference (P3).
+- **Layout/spacing:**86px desktop rail,64px compact rail, hero ending at828px and208px continuous shelf at the matched viewport. Artwork is edge-to-edge; the original book remains archived. On mobile the hero and three destinations stack with44px controls;320/390/768 widths do not overflow.
+- **Colors/materials:** silver text, black steel and icy blue art match the target. Shared theme tokens retain all four character accents. Small over-art text uses the existing dark text halo. No demonstrated contrast blocker in the inspected views; this is not a blanket claim of WCAG certification.
+- **Images:** all ornaments and paintings are actual raster assets, with source/provenance in `apps/web/public/assets/gildra/portal/SOURCE.md`. No decorative CSS/SVG substitute. Sharpness, alpha edges and mobile crop were reviewed. Individual crest/destination details vary slightly from the generated mock (P3).
+- **Copy/content:** heading, lede and calls to action match the source. Links use real bilingual routes. No fabricated statistics, account characters or content previews.
+- **Icons/states:** thin Lucide search/arrow/chevron/menu icons match the source's line treatment. Buttons, menu, current route, focus and hover states are functional; select/popover use actual Valyro primitives.
+- **Accessibility/behavior:**50 navigation checks cover keyboard skip, nested Escape/focus restoration, search shortcut, EN/RU routes,320–1487 widths and reduced motion. Theme changes update actual hero and portrait with no user-triggered scroll jump. Native pointer/keyboard tests distinguish Playwright auto-scroll during an entrance animation from application behavior. Evidence: `.artifacts/portal-v3/navigation/`.
 
-## Verification
+## Related validation
 
-- TypeScript check passed.
-- Optimized Next.js production build passed.
-- Desktop and mobile browser captures passed.
-- Official ability images loaded: passed.
-- Selected level cells: 18.
-- Desktop/mobile page overflow: 0 px.
-- Mobile grid scroll behavior: passed.
-- Browser console errors: 0.
+157 atlas tests passed;86 bilingual routes and46 generated mirrors passed. CMS candidate593ab088 passed45 authenticated checks in6 EN/RU desktop/mobile cases including320px; no production data was used. Production-build and resource-budget results are retained in `.artifacts/portal-v3/` during release verification. The homepage remains server-rendered; only interactive navigation/controls are client components.
+
+No open P0/P1/P2 design findings. P3: slight generated-art and serif-weight differences; they preserve the selected composition and do not block use.
 
 final result: passed

@@ -34,3 +34,10 @@ The old `main` contains the Fury calculator commit `da3e604a`, already adapted i
 ## Second design iteration
 
 The owner asked for a more unique homepage, inner pages and masthead after reviewing the first release. Work proceeds in parallel branches `redesign/editorial-v2`, `redesign/nav-v2`, `redesign/surfaces-v2` and `redesign/cms-v2`. Public UI uses existing section paintings and typography instead of introducing invented statistics or new cinematic effects. CMS changes prioritize continuing real editorial work, preserving site/locale filters, and distinguishing draft and published content.
+
+
+## Selected portal concept — iteration 3 (22 October 2026)
+
+The owner selected displayed option 1. `AtlasHome` now uses the approved scene/title/actions/shelf composition; `AtlasFrameShell.fullBleed` removes the inset column and ambient decoration only for that composition, retaining the legal/motion footer. Cormorant Garamond is self-hosted by next/font for the portal; the other atlas headings remain Alegreya. The central crest links home, with Characters/Bosses/Mythic+ on the left and Raids/Tiers/Articles on the right. Appearance and game links sit behind the portrait (inside the compact menu on smaller screens).
+
+Artwork sources and optimization are documented in `apps/web/public/assets/gildra/portal/SOURCE.md`. Runtime images use WebP and next/image; the small button texture is preoptimized because CSS backgrounds bypass next/image. Original generated masters remain in the local task artifacts. No book runtime or scene warmup is reintroduced. Desktop rail is 86px, compact rail64px at1279px, matching --atlas-sticky-top. Valyro Select, presence, dismissable layer and FLIP provide interactive behavior. Final visual evidence is in `design-qa.md`.
