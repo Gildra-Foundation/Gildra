@@ -13,11 +13,13 @@ business rules.
 | Sources | `battlenet`, `wago`, `raidbots`, `attparser`, `attimport`, `datasetrefresh` | Fetch and parse external data; no HTTP serving. |
 | Product features | `analytics`, `auth`, `characterworkspace`, `rotationlab`, `platformhome`, `gamemeta`, `indexnow` | Each registers its own routes or is served by `httpapi`. |
 | Other games | `genshin`, `genshinimport`, `league`, `leagueimport` | Hidden by the WoW-only MVP on the site, still served by the API. |
-| Shared | `config`, `joberrors` | |
+| Shared | `config`, `joberrors`, `httpjson` | `httpjson` is a *leaf*: any package may import it, and it imports no internal package. |
 
 ## Rules
 
 - A domain never imports a transport (`httpapi`, `graphqlapi`, `adminpanel`).
+- Hand-written JSON handlers write through `httpjson` (`Write`,
+  `WriteProblem`) and only choose their cache policy.
 - Every import between internal packages is listed in
   `backend/internal/architecture/architecture_test.go` (`allowedEdges`); a new
   one fails `go test ./...` until it is added there on purpose. Prefer wiring in

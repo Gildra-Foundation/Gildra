@@ -21,6 +21,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/api"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/auth"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogquality"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
 
 const (
@@ -1167,13 +1168,7 @@ func sameOrigin(r *http.Request) bool {
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(value); err != nil {
-		slog.Warn("encode admin response", "error", err)
-	}
+	httpjson.Write(w, status, httpjson.NoStore, value)
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string) {

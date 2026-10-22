@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
 
 type presetProvider interface {
@@ -32,9 +34,7 @@ func (h *WorkerHandler) preset(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, http.StatusNotFound, "preset_not_found", err.Error())
 		return
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Cache-Control", "public, max-age=300")
-	_ = json.NewEncoder(w).Encode(preset)
+	httpjson.Write(w, http.StatusOK, "public, max-age=300", preset)
 }
 
 func (h *WorkerHandler) health(w http.ResponseWriter, _ *http.Request) {
@@ -70,11 +70,8 @@ func (h *WorkerHandler) simulate(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, http.StatusServiceUnavailable, "simulation_unavailable", err.Error())
 		return
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Cache-Control", "private, no-store")
 	w.Header().Set("X-Gildra-Engine", "simulationcraft")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(result)
+	httpjson.Write(w, http.StatusCreated, httpjson.PrivateNoStore, result)
 }
 
 func (h *WorkerHandler) RegisterGearVariants(mux *http.ServeMux) {

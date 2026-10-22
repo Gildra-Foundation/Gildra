@@ -22,6 +22,10 @@ const module = "github.com/Gildra-Foundation/Gildra/backend/internal/"
 // transports adapt domains to a protocol; only cmd/* and other transports may import them.
 var transports = map[string]bool{"httpapi": true, "graphqlapi": true, "adminpanel": true}
 
+// leaves are shared helper packages any package may import. A leaf imports
+// no other internal package, so it can never pull a domain into another one.
+var leaves = map[string]bool{"httpjson": true}
+
 // allowedEdges is the complete list of imports between internal packages
 // (production code). Keep it short: prefer wiring in cmd/* over a new edge.
 var allowedEdges = map[string][]string{
@@ -49,9 +53,21 @@ func TestInternalPackagesKeepTheirBoundaries(t *testing.T) {
 				t.Errorf("%s imports the transport %s: domains must not depend on HTTP/GraphQL/admin adapters", from, to)
 				continue
 			}
+			if leaves[to] {
+				continue
+			}
 			if !allowed[to] {
 				t.Errorf("new dependency %s -> %s: wire it in cmd/* instead, or add it to allowedEdges in internal/architecture with a reason", from, to)
 			}
+		}
+	}
+}
+
+func TestLeafPackagesImportNoInternalPackage(t *testing.T) {
+	edges := internalEdges(t, "..")
+	for leaf := range leaves {
+		if len(edges[leaf]) > 0 {
+			t.Errorf("leaf package %s imports %v; leaves must stay free of internal dependencies", leaf, edges[leaf])
 		}
 	}
 }
