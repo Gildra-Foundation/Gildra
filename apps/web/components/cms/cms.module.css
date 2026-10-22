@@ -28,6 +28,17 @@
 .cardRead { color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); font-weight: 600; }
 .cardRead svg { width: 16px; height: 16px; flex: none; }
 
+/* The newest published record leads the first page; the remaining articles
+   keep the chronological order and the same metadata. No alternate dataset. */
+.featuredCard { margin-bottom: var(--atlas-space-5); }
+.featuredCard .cardBody { padding: clamp(var(--atlas-space-5), 3vw, var(--atlas-space-7)); }
+.featuredCard .cardBody h3 { font-size: var(--atlas-text-h2); }
+.featuredCard .cardBody > p { max-width: var(--atlas-measure); }
+@media (min-width: 800px) {
+  .featuredCard[data-has-cover="true"] .articleCardLink { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  .featuredCard .cardCover { height: 100%; min-height: 320px; max-height: 480px; border-bottom: 0; border-right: 1px solid var(--atlas-line-soft); }
+}
+
 /* The article is one centred column — hero, byline, text and contents share its left edge. */
 .article,
 .related {
@@ -109,6 +120,20 @@
   font-weight: 650;
   letter-spacing: var(--atlas-tracking-label);
   text-transform: uppercase;
+}
+
+/* The mobile disclosure keeps the first paragraph within reach. The same list
+   stays visible beside the reading column on desktop, without a media-query
+   hydration update or a second copy of the links. */
+.tocToggle { display: none !important; }
+.tocCount { margin-inline-start: var(--atlas-space-2); color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
+@media (max-width: 1099px) {
+  .toc { padding: 0; }
+  .tocDesktopTitle { display: none; }
+  .tocToggle { display: flex !important; width: 100%; justify-content: space-between !important; padding: var(--atlas-space-3) var(--atlas-space-4) !important; }
+  .tocToggle[aria-expanded="true"] svg { rotate: 180deg; }
+  .toc .tocList { padding: 0 var(--atlas-space-4) var(--atlas-space-3); }
+  .tocList[data-expanded="false"] { display: none; }
 }
 
 .toc ol { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
