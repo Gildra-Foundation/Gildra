@@ -23,6 +23,16 @@
   --atlas-surface-sunken: #030404;
   --atlas-scrim: rgba(5, 6, 7, .86);
 
+  /* Shared Characters material. Page artwork stays behind a readable dark veil;
+     these surfaces reveal it without changing game/status colours. */
+  --atlas-glass-fill: color-mix(in srgb, var(--atlas-surface) 40%, transparent);
+  --atlas-glass-raised: color-mix(in srgb, var(--atlas-surface-raised) 65%, transparent);
+  --atlas-glass-sheen: linear-gradient(135deg, color-mix(in srgb, var(--atlas-text-strong) 7%, transparent), transparent 55%);
+  --atlas-glass-edge: color-mix(in srgb, var(--atlas-accent) 38%, transparent);
+  --atlas-glass-inset: inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 12%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--atlas-text-strong) 4%, transparent);
+  --atlas-glass-depth: 0 16px 40px color-mix(in srgb, var(--atlas-bg) 34%, transparent);
+  --atlas-glass-filter: blur(16px) saturate(115%);
+
   /* Text — contrast on --atlas-surface: strong 15.4, text 13, muted 7.8, subtle 5.1 (AA ≥ 4.5 on every surface) */
   --atlas-text-strong: #f2e1c3;
   --atlas-text: #d9d0c0;
@@ -97,9 +107,9 @@
   --atlas-space-8: 72px;
 
   /* Depth */
-  --atlas-shadow-panel: inset 0 0 0 3px rgba(0, 0, 0, .58), inset 0 0 0 4px rgba(174, 127, 54, .06), 0 24px 55px rgba(0, 0, 0, .4);
-  --atlas-shadow-card: inset 0 0 0 3px rgba(0, 0, 0, .58), 0 20px 45px rgba(0, 0, 0, .32);
-  --atlas-shadow-lift: inset 0 0 0 3px rgba(0, 0, 0, .58), 0 26px 58px rgba(0, 0, 0, .46), 0 0 26px var(--atlas-accent-glow);
+  --atlas-shadow-panel: var(--atlas-glass-inset), var(--atlas-glass-depth);
+  --atlas-shadow-card: var(--atlas-glass-inset), var(--atlas-glass-depth);
+  --atlas-shadow-lift: var(--atlas-glass-inset), var(--atlas-glass-depth), var(--atlas-glow-sm);
   /* Glows and rings — light that belongs to the amber, not decoration */
   --atlas-glow-sm: 0 0 12px var(--atlas-accent-glow);
   --atlas-glow: 0 0 18px var(--atlas-accent-glow);
@@ -215,4 +225,22 @@
   descent-override: 22.52%;
   line-gap-override: 0%;
   size-adjust: 107.12%;
+}
+
+/* Keep glass readable in browsers without backdrop support, and honour readers
+   who prefer opaque surfaces. The same tokens cover every component and portal. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .gildra-atlas, [data-atlas-scope] {
+    --atlas-glass-fill: var(--atlas-surface);
+    --atlas-glass-raised: var(--atlas-surface-raised);
+    --atlas-glass-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .gildra-atlas, [data-atlas-scope] {
+    --atlas-glass-fill: var(--atlas-surface);
+    --atlas-glass-raised: var(--atlas-surface-raised);
+    --atlas-glass-sheen: linear-gradient(transparent, transparent);
+    --atlas-glass-filter: none;
+  }
 }

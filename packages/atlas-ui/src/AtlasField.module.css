@@ -24,7 +24,9 @@
   color: var(--atlas-text-strong);
   border: 1px solid var(--atlas-line);
   border-radius: var(--atlas-radius);
-  background: var(--atlas-surface-sunken);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
   font: inherit;
   font-size: var(--atlas-text-body);
   transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
@@ -41,6 +43,8 @@
 .withIcon .input { padding-left: 40px; }
 .icon { position: absolute; top: 50%; left: 13px; display: grid; color: var(--atlas-accent); translate: 0 -50%; pointer-events: none; }
 .icon svg { width: 17px; height: 17px; }
+
+.select option { color: var(--atlas-text); background: var(--atlas-surface); }
 
 .select { padding-right: 36px; appearance: none; cursor: pointer; }
 .selectWrap::after {

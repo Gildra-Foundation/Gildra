@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, Clock3, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Clock3, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { AtlasBadge, AtlasCard, AtlasEmpty, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasPagination, AtlasSection, AtlasTooltip } from "@/components/atlas";
+import { AtlasBadge, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasPagination, AtlasSection, AtlasPanel } from "@/components/atlas";
 import { fetchArticle, fetchArticles } from "@/lib/cms/client";
 import { cmsConfig } from "@/lib/cms/config";
 import type { CmsLocale, PublicArticle } from "@/lib/cms/contract";
@@ -20,60 +20,6 @@ import { JsonLd, articleLd, breadcrumbListLd } from "@/lib/seo/jsonld";
 import { pageOpenGraph } from "@/lib/seo/metadata";
 import { articlesCopy } from "./articlesCopy";
 
-const TEXT = {
-  en: {
-    title: "World of Warcraft articles",
-    lead: "Guides and explainers from the Gildra editors.",
-    description: "World of Warcraft guides and explainers from the Gildra editors.",
-    empty: "No articles have been published yet.",
-    unavailable: "Articles are temporarily unavailable. Please try again later.",
-    crumbs: "Breadcrumbs",
-    articles: "Articles",
-    contents: "Contents",
-    minutes: (n: number) => `${n} min read`,
-    by: (name: string) => `By ${name}`,
-    patch: (v: string) => `Patch ${v}`,
-    reviewed: (d: string) => `Reviewed ${d}`,
-    updated: (d: string) => `Updated ${d}`,
-    tags: "Tags",
-    more: "More articles",
-    all: "All articles",
-    emptyHint: "Meanwhile, the raid journal and the Mythic+ atlas are ready.",
-    fallback: "This article is not available in Russian yet; the English original is shown.",
-    fallbackBadge: "EN",
-    otherOnly: "This article is only available in Russian; the Russian original is shown.",
-    prev: "Newer",
-    next: "Older",
-    pages: "Pages",
-    pageOf: (page: number, total: number) => `Page ${page} of ${total}`,
-  },
-  ru: {
-    title: "Статьи о World of Warcraft",
-    lead: "Гайды и разборы от редакции Gildra.",
-    description: "Гайды и разборы World of Warcraft от редакции Gildra.",
-    empty: "Статьи ещё не опубликованы.",
-    unavailable: "Статьи временно недоступны. Попробуйте позже.",
-    crumbs: "Хлебные крошки",
-    articles: "Статьи",
-    contents: "Содержание",
-    minutes: (n: number) => `${n} мин чтения`,
-    by: (name: string) => `Автор: ${name}`,
-    patch: (v: string) => `Патч ${v}`,
-    reviewed: (d: string) => `Проверено ${d}`,
-    updated: (d: string) => `Обновлено ${d}`,
-    tags: "Теги",
-    more: "Другие статьи",
-    all: "Все статьи",
-    emptyHint: "А пока готовы рейдовый журнал и атлас эпохальных подземелий.",
-    fallback: "Перевода на русский пока нет — показан английский оригинал.",
-    fallbackBadge: "EN",
-    otherOnly: "Статья доступна только на английском — показан английский оригинал.",
-    prev: "Новее",
-    next: "Старее",
-    pages: "Страницы",
-    pageOf: (page: number, total: number) => `Страница ${page} из ${total}`,
-  },
-} as const;
 
 const PAGE_SIZE = 24;
 const locale = (lang: Lang): CmsLocale => (lang === "ru" ? "ru" : "en");
@@ -125,7 +71,7 @@ export async function articleMetadata(slug: string, lang: Lang): Promise<Metadat
 }
 
 export async function articlesIndexMetadata(lang: Lang): Promise<Metadata> {
-  const t = TEXT[lang];
+  const t = articlesCopy[lang];
   // An empty list is not worth a search result: indexed from the first published article on.
   const list = await fetchArticles(locale(lang), 1, 1);
   const empty = list.status !== "ok" || list.data.totalDocs === 0;
@@ -142,63 +88,89 @@ export async function articlesIndexMetadata(lang: Lang): Promise<Metadata> {
 }
 
 export async function ArticlesIndexPage({ lang, page = 1 }: { lang: Lang; page?: number }) {
-  const t = TEXT[lang];
+  const t = articlesCopy[lang];
   const result = await fetchArticles(locale(lang), page, PAGE_SIZE);
-  if (result.status === "disabled") notFound();
   const docs = result.status === "ok" ? result.data.docs.filter((article) => article.resolvedLocale === locale(lang)) : [];
   const totalPages = result.status === "ok" ? result.data.totalPages : 0;
-
+  // An absent index endpoint is a service failure, not proof of an empty library.
+  const unavailable = result.status === "error" || result.status === "not-found";
+  const emptyTitle = result.status === "disabled" ? t.preparing : page > 1 ? t.pageEmpty : t.empty;
 
   return (
-    <AtlasFrame lang={lang} scene="articles">
+    <AtlasFrame lang={lang} scene="articles" dataAttributes={{ "data-articles-view": "index" }}>
       <AtlasHero
         breadcrumbs={trail(lang, "articles")}
         breadcrumbsLabel={t.crumbs}
+        eyebrow={t.eyebrow}
         title={t.title}
         lede={t.lead}
+        aside={docs.length === 0 ? (
+          <AtlasPanel as="section" padding="lg" className={styles.indexState} aria-labelledby="articles-state-title">
+            <div role={unavailable ? "alert" : "status"}>
+              <h2 id="articles-state-title">{unavailable ? t.unavailableTitle : emptyTitle}</h2>
+              <p>{unavailable ? t.unavailable : result.status === "disabled" ? t.preparingHint : t.emptyHint}</p>
+            </div>
+            <div className={styles.stateLinks}>
+              {page > 1 ? (
+                <AtlasLinkButton href={articlesIndexHref(lang)} icon={<ArrowLeft aria-hidden="true" />}>{t.all}</AtlasLinkButton>
+              ) : (
+                <>
+                  <AtlasLinkButton href={sectionHref("raids", lang)} iconAfter={<ArrowRight aria-hidden="true" />}>{routeSections.raids.title[lang]}</AtlasLinkButton>
+                  <AtlasLinkButton variant="ghost" href={sectionHref("mythicPlus", lang)}>{routeSections.mythicPlus.title[lang]}</AtlasLinkButton>
+                </>
+              )}
+            </div>
+          </AtlasPanel>
+        ) : undefined}
       />
-      <AtlasSection>
-        {result.status === "error" ? <AtlasNotice tone="caution" title={t.unavailable} /> : null}
-        {result.status === "ok" && docs.length === 0 ? (
-          <AtlasEmpty
-            title={t.empty}
-            action={<>
-              <AtlasLinkButton href={sectionHref("raids", lang)}>{routeSections.raids.title[lang]}</AtlasLinkButton>
-              <AtlasLinkButton href={sectionHref("mythicPlus", lang)}>{routeSections.mythicPlus.title[lang]}</AtlasLinkButton>
-            </>}
-          >
-            {t.emptyHint}
-          </AtlasEmpty>
-        ) : null}
-        {docs.length > 0 ? (
-          <AtlasGrid min={320} fit>
-            {docs.map((a) => {
-              const date = formatDate(a.publishedAt, lang);
-              return (
-                <AtlasCard
-                  key={a.id}
-                  href={articleHref(lang, a.slug)}
-                  eyebrow={a.categories[0]?.title}
-                  title={<span lang={a.resolvedLocale ?? undefined}>{a.title}</span>}
-                  description={a.summary || undefined}
-                  meta={[
-                    ...(date ? [{ icon: <CalendarDays aria-hidden="true" />, label: date }] : []),
-                  ]}
-                />
-              );
-            })}
+      {docs.length > 0 ? (
+        <AtlasSection title={t.latest}>
+          <AtlasGrid min={300} fit>
+            {docs.map((article) => <ArticleCard key={article.id} article={article} lang={lang} />)}
           </AtlasGrid>
-        ) : null}
-        {totalPages > 1 ? (
-          <AtlasPagination
-            label={t.pages}
-            prev={page > 1 ? { href: `${articlesIndexHref(lang)}${page > 2 ? `?page=${page - 1}` : ""}`, label: t.prev } : undefined}
-            next={page < totalPages ? { href: `${articlesIndexHref(lang)}?page=${page + 1}`, label: t.next } : undefined}
-            status={t.pageOf(page, totalPages)}
-          />
-        ) : null}
-      </AtlasSection>
+          {totalPages > 1 ? (
+            <AtlasPagination
+              label={t.pages}
+              prev={page > 1 ? { href: `${articlesIndexHref(lang)}${page > 2 ? `?page=${page - 1}` : ""}`, label: t.prev } : undefined}
+              next={page < totalPages ? { href: `${articlesIndexHref(lang)}?page=${page + 1}`, label: t.next } : undefined}
+              status={t.pageOf(page, totalPages)}
+            />
+          ) : null}
+        </AtlasSection>
+      ) : null}
     </AtlasFrame>
+  );
+}
+
+/** List and related articles share the same published metadata and media allow-list. */
+function ArticleCard({ article: a, lang }: { article: PublicArticle; lang: Lang }) {
+  const t = articlesCopy[lang];
+  const date = formatDate(a.publishedAt, lang);
+  const config = cmsConfig();
+  const cover = a.cover ? safeMediaUrl(a.cover.url, config.mediaOrigins, config.publicUrl || undefined) : null;
+  const minutes = a.readingTime && Number.isFinite(a.readingTime) && a.readingTime > 0 ? Math.ceil(a.readingTime) : null;
+  return (
+    <AtlasPanel as="article" padding="none" className={styles.articleCard}>
+      <Link href={articleHref(lang, a.slug)} className={styles.articleCardLink}>
+        {cover ? (
+          // CMS origins are allow-listed server-side; no wildcard Next image configuration.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className={styles.cardCover} src={cover} alt={a.cover?.alt ?? ""} width={a.cover?.width ?? undefined} height={a.cover?.height ?? undefined} loading="lazy" decoding="async" />
+        ) : null}
+        <div className={styles.cardBody}>
+          {a.categories[0]?.title ? <span className={styles.cardCategory}>{a.categories[0].title}</span> : null}
+          <h3 lang={a.resolvedLocale ?? undefined}>{a.title ?? a.slug}</h3>
+          {a.summary ? <p>{a.summary}</p> : null}
+          <div className={styles.cardFooter}>
+            <span className={styles.cardMeta}>
+              {date ? <span><CalendarDays aria-hidden="true" /><time dateTime={a.publishedAt!}>{date}</time></span> : null}
+              {minutes ? <span><Clock3 aria-hidden="true" />{t.minutes(minutes)}</span> : null}
+            </span>
+            <span className={styles.cardRead}>{t.read}<ArrowRight aria-hidden="true" /></span>
+          </div>
+        </div>
+      </Link>
+    </AtlasPanel>
   );
 }
 
@@ -235,7 +207,7 @@ const sameDay = (a: string | null, b: string | null) => !a || !b || a.slice(0, 1
  * address carries the preview token) and no list of other articles.
  */
 export function ArticleView({ article: a, lang, banner, related = [], preview = false }: { article: PublicArticle; lang: Lang; banner?: ReactNode; related?: PublicArticle[]; preview?: boolean }) {
-  const t = TEXT[lang];
+  const t = articlesCopy[lang];
   const slug = a.slug;
   const config = cmsConfig();
   const toc = extractToc(a.content);
@@ -314,20 +286,7 @@ export function ArticleView({ article: a, lang, banner, related = [], preview = 
       {related.length ? (
         <AtlasSection title={t.more} className={styles.related}>
           <AtlasGrid min={300} fit>
-            {related.map((r) => {
-              const date = formatDate(r.publishedAt, lang);
-              return (
-                <AtlasCard
-                  key={r.id}
-                  href={articleHref(lang, r.slug)}
-                  headingLevel={3}
-                  eyebrow={r.categories[0]?.title}
-                  title={<span lang={r.resolvedLocale ?? undefined}>{r.title}</span>}
-                  description={r.summary || undefined}
-                  meta={date ? [{ icon: <CalendarDays aria-hidden="true" />, label: date }] : undefined}
-                />
-              );
-            })}
+            {related.map((article) => <ArticleCard key={article.id} article={article} lang={lang} />)}
           </AtlasGrid>
         </AtlasSection>
       ) : null}

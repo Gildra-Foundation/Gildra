@@ -11,6 +11,7 @@ import { WorkspaceNavigator } from "@/components/platform/navigation/WorkspaceNa
 import { motionPreferenceScript } from "@/lib/client/motionPreference";
 import { SiteTheme } from "@/components/motion/SiteTheme";
 import { siteThemeScript } from "@/components/platform/home/homeThemes";
+import { AtlasValyroScope } from "@gildra/atlas-ui/AtlasValyroScope";
 import "./globals.css";
 
 // The site has two root layouts — English (app/(site)/layout.tsx) and Russian
@@ -79,8 +80,10 @@ export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: 
       </head>
       <body>
         <SiteTheme>
-          <WorkspaceNavigator />
-          <RouteTransitionGate>{children}</RouteTransitionGate>
+          <AtlasValyroScope locale={lang === "ru" ? "ru-RU" : "en-GB"}>
+            <WorkspaceNavigator />
+            <RouteTransitionGate>{children}</RouteTransitionGate>
+          </AtlasValyroScope>
         </SiteTheme>
         <CookieNoticeGate />
         <PlausibleTracker />

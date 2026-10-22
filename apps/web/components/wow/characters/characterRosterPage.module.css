@@ -1,28 +1,16 @@
 /* atlas:strict — Account pages (/wow/characters, /login, profile states): layout only; colours, fonts and sizes come from the atlas tokens. */
 
-/* One glass material for the account entry and roster, tinted by the reader's theme. */
-.signInCard,
-.state,
-.filters,
-.grid {
-  --atlas-roster-glass-fill: color-mix(in srgb, var(--atlas-surface) 40%, transparent);
-  --atlas-roster-glass-sheen: linear-gradient(135deg, color-mix(in srgb, var(--atlas-text-strong) 7%, transparent), transparent 55%);
-  --atlas-roster-glass-edge: color-mix(in srgb, var(--atlas-accent) 38%, transparent);
-  --atlas-roster-glass-shadow: inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 12%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--atlas-text-strong) 4%, transparent);
-  --atlas-roster-glass-depth: 0 16px 40px color-mix(in srgb, var(--atlas-bg) 34%, transparent);
-}
-
 /* Repeat panel classes so the shared AtlasPanel's opaque fill cannot win by load order. */
 .signInCard.signInCard,
 .state.state,
 .inputWrap,
 .field select,
 .card {
-  border-color: var(--atlas-roster-glass-edge);
-  background: var(--atlas-roster-glass-sheen), var(--atlas-roster-glass-fill);
-  box-shadow: var(--atlas-roster-glass-shadow), var(--atlas-roster-glass-depth);
-  -webkit-backdrop-filter: blur(16px) saturate(115%);
-  backdrop-filter: blur(16px) saturate(115%);
+  border-color: var(--atlas-glass-edge);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
 }
 
 /* ---------- Signed-out entry: the sign-in card beside the hero ---------- */
@@ -187,15 +175,15 @@
   border-width: 1px;
   background:
     radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--class-color) 12%, transparent), transparent 60%),
-    var(--atlas-roster-glass-sheen), var(--atlas-roster-glass-fill);
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--class-color) 78%, transparent), var(--atlas-roster-glass-shadow), var(--atlas-roster-glass-depth);
+    var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--class-color) 78%, transparent), var(--atlas-glass-inset), var(--atlas-glass-depth);
   transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease);
 }
 
 .card:hover,
 .card:focus-within {
   border-color: var(--atlas-accent);
-  box-shadow: inset 3px 0 0 var(--class-color), var(--atlas-roster-glass-shadow), var(--atlas-roster-glass-depth), var(--atlas-glow-sm);
+  box-shadow: inset 3px 0 0 var(--class-color), var(--atlas-glass-inset), var(--atlas-glass-depth), var(--atlas-glow-sm);
   translate: 0 -2px;
 }
 
@@ -309,26 +297,6 @@
 
 .armory:hover { color: var(--atlas-accent-strong); }
 .armory svg { width: 13px; height: 13px; }
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .signInCard,
-  .state,
-  .filters,
-  .grid { --atlas-roster-glass-fill: color-mix(in srgb, var(--atlas-surface) 92%, transparent); }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .signInCard,
-  .state,
-  .filters,
-  .grid { --atlas-roster-glass-fill: var(--atlas-surface); }
-
-  .signInCard.signInCard,
-  .state.state,
-  .inputWrap,
-  .field select,
-  .card { -webkit-backdrop-filter: none; backdrop-filter: none; }
-}
 
 /* ---------- Narrow screens ---------- */
 @media (max-width: 1100px) {

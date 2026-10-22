@@ -2,7 +2,7 @@
 
 Read first: [design.md](../../design.md) (rules), [packages/atlas-ui/README.md](../../packages/atlas-ui/README.md)
 (components), [app/styles/atlas-theme.css](../../app/styles/atlas-theme.css) (tokens).
-Never touch the landing scene or the contents book while doing these.
+Current owner direction (22 October 2026): the Characters-style shell and direct top navigation apply to the homepage too. The book source remains archived and unmounted. Use actual Valyro components through the atlas adapters. See [navigation-redesign.md](navigation-redesign.md); older book/amber-specific recipes below are historical.
 
 ## Change the look of every inner page
 

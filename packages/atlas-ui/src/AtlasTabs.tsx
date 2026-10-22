@@ -1,7 +1,9 @@
 "use client";
 
-import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import clsx from "clsx";
+import { useFlip } from "./valyro-ui/primitives/useFlip";
+import { lessMotion, subscribeSiteMotion } from "./motionPreference";
 import styles from "./AtlasTabs.module.css";
 
 export type AtlasTab = { id: string; label: ReactNode; content: ReactNode; count?: ReactNode };
@@ -27,8 +29,19 @@ export function AtlasTabs({ tabs, label, defaultTab, value, variant = "underline
   const [own, setActive] = useState(defaultTab && tabs.some((tab) => tab.id === defaultTab) ? defaultTab : tabs[0]?.id);
   const active = value !== undefined && tabs.some((tab) => tab.id === value) ? value : own;
   const listRef = useRef<HTMLDivElement>(null);
+  const reduced = useSyncExternalStore(subscribeSiteMotion, lessMotion, () => true);
+  const captureSelection = useFlip(listRef, { auto: true, enabled: !reduced, animateEnter: false, spring: "snappy" });
+
+  useEffect(() => {
+    if (reduced) {
+      listRef.current?.querySelectorAll<HTMLElement>("[data-flip-id]").forEach(element => {
+        element.getAnimations().filter(animation => animation.id === "ui-flip").forEach(animation => animation.cancel());
+      });
+    }
+  }, [reduced]);
 
   const select = (id: string, focus = false) => {
+    captureSelection();
     setActive(id);
     onChange?.(id);
     if (focus) listRef.current?.querySelector<HTMLButtonElement>(`[data-tab="${CSS.escape(id)}"]`)?.focus();
@@ -63,6 +76,7 @@ export function AtlasTabs({ tabs, label, defaultTab, value, variant = "underline
               className={styles.tab}
               onClick={() => select(tab.id)}
             >
+              {selected ? <span data-flip-id="tab-indicator" className={styles.indicator} aria-hidden="true" /> : null}
               <span>{tab.label}</span>
               {tab.count !== undefined ? <small className={styles.count}>{tab.count}</small> : null}
             </button>

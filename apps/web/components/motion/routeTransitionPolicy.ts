@@ -12,8 +12,7 @@ export function shouldTurnBook(fromPathname: string, toPathname: string) {
 /**
  * How a navigation hands one page to the next. One owner per navigation:
  * - "still": the same page (language, filters, anchors) does not move;
- * - "scene": the homepage scene is entered or left, and the selected character's
- *   full effect plays (CanvasPageTransition);
+ * - "scene": retained for the archived cinematic homepage implementation;
  * - "page": between atlas pages, a quick hand-over (dim while loading, the new
  *   page rises, its hero arrives in a cascade, a tapped picture grows into the scene).
  */
@@ -21,7 +20,8 @@ export type RouteTransitionKind = "still" | "page" | "scene";
 
 export function routeTransitionKind(fromPathname: string, toPathname: string): RouteTransitionKind {
   if (!shouldTurnBook(fromPathname, toPathname)) return "still";
-  return bookPageIdentity(fromPathname) === "/" || bookPageIdentity(toPathname) === "/" ? "scene" : "page";
+  // The homepage now uses the same atlas layout and hand-over as every section.
+  return "page";
 }
 
 /** "deeper" into a section, "up" towards its hub (or back in history), "across" between siblings. */

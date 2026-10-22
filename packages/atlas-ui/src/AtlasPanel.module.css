@@ -1,20 +1,21 @@
 .panel {
   min-width: 0;
-  border: 1px solid var(--atlas-line-soft);
-  background: var(--atlas-surface);
+  border: 1px solid var(--atlas-glass-edge);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
   box-shadow: var(--atlas-shadow-card);
 }
 
 .raised {
   border-color: var(--atlas-line-soft);
   outline: 0;
-  background: var(--atlas-surface-raised);
-  box-shadow: none;
+  background: var(--atlas-glass-sheen), var(--atlas-glass-raised);
 }
 
 .highlight {
   border-color: var(--atlas-line-strong);
-  background: linear-gradient(135deg, var(--atlas-accent-wash), transparent 55%), var(--atlas-surface);
+  background: linear-gradient(135deg, var(--atlas-accent-wash), transparent 55%), var(--atlas-glass-sheen), var(--atlas-glass-fill);
 }
 
 .pad-none { padding: 0; }

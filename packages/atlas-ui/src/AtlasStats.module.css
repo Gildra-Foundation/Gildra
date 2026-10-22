@@ -1,46 +1,9 @@
-/* Headline counters: a quiet row of numbers, no boxes. */
-.stats {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--atlas-space-3) var(--atlas-space-6);
-  margin: 0;
-}
+/* atlas:strict — Compact Valyro metric cards retain the hero's quiet counter row. */
+.stats { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--atlas-space-3) var(--atlas-space-6); margin: 0; }
+.stat.stat { display: flex; flex-direction: column-reverse; gap: 6px; min-width: 0; max-width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.stat.stat + .stat { padding-left: var(--atlas-space-6); border-left: 1px solid var(--atlas-line-soft); }
+.stat :global(.ui-stats-card__value) { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-stat); font-weight: var(--atlas-weight-display); font-variant-numeric: lining-nums tabular-nums; line-height: 1; text-shadow: var(--atlas-text-shadow-art); }
+.stat :global(.ui-stats-card__label) { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 600; letter-spacing: var(--atlas-tracking-label); line-height: 1.2; white-space: normal; overflow: visible; text-transform: uppercase; }
+@media (max-width: 720px) { .stats { gap: var(--atlas-space-3) var(--atlas-space-5); } .stat.stat + .stat { padding-left: var(--atlas-space-5); } }
 
-.stat {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 6px;
-  min-width: 0;
-}
-
-.stat + .stat {
-  padding-left: var(--atlas-space-6);
-  border-left: 1px solid var(--atlas-line-soft);
-}
-
-.value {
-  margin: 0;
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-stat);
-  font-weight: var(--atlas-weight-display);
-  font-variant-numeric: lining-nums tabular-nums;
-  line-height: 1;
-  text-shadow: var(--atlas-text-shadow-art);
-}
-
-.label {
-  color: var(--atlas-text-muted);
-  text-shadow: 0 1px 2px #000;
-  font-size: var(--atlas-text-label);
-  font-weight: 600;
-  letter-spacing: var(--atlas-tracking-label);
-  line-height: 1.2;
-  text-transform: uppercase;
-}
-
-@media (max-width: 720px) {
-  .stats { gap: var(--atlas-space-3) var(--atlas-space-5); }
-  .stat + .stat { padding-left: var(--atlas-space-5); }
-}
+.stat :global(.ui-stats-card__body) { container-type: normal; }

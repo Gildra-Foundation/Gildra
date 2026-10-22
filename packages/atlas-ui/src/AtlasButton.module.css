@@ -1,58 +1,22 @@
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+/* atlas:strict — Valyro owns button interaction and variants; atlas supplies
+   typography and readable wrapping for long translated action labels. */
+.button:global(.ui-button) {
+  height: auto;
   min-height: var(--atlas-control-height);
-  padding: 10px 18px;
-  border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-text-strong);
-  background: var(--atlas-accent-wash);
+  max-width: 100%;
+  padding: var(--atlas-space-3) var(--atlas-space-5);
   font-family: var(--atlas-font-ui);
-  font-size: var(--atlas-text-small);
-  font-weight: 600;
-  letter-spacing: .02em;
-  line-height: 1.2;
-  text-decoration: none;
-  cursor: pointer;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
+  white-space: normal;
+  text-align: center;
 }
-
-.button svg { width: 16px; height: 16px; flex: none; transition: transform var(--atlas-duration) var(--atlas-ease); }
-.button:hover { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
-.button:hover > svg:last-child:not(:first-child) { transform: translateX(3px); }
-.button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
-.button:disabled,
-.button[aria-disabled="true"] { cursor: not-allowed; opacity: .5; }
-
-.primary {
-  color: var(--atlas-accent-ink);
-  border-color: var(--atlas-accent);
-  background: linear-gradient(180deg, var(--atlas-accent-strong), var(--atlas-accent));
-}
-
-.primary:hover { color: var(--atlas-accent-ink); border-color: var(--atlas-accent-strong); background: var(--atlas-accent-strong); }
-
-/* Ghost buttons read as links: the label sits on the text edge of its column
-   (no inline padding or border at any size — see .ghost.sm below). */
-.ghost {
-  color: var(--atlas-accent);
-  border-color: transparent;
-  border-inline-width: 0;
-  background: transparent;
-  padding-inline: 0;
-}
-
-.ghost:hover { color: var(--atlas-accent-strong); border-color: transparent; background: transparent; }
-
-.sm { min-height: 36px; padding: 7px 12px; font-size: var(--atlas-text-meta); }
-.ghost.sm { padding-inline: 0; }
-/* Phones: every button is a 44 px touch target. */
+.button:global(.ui-button[data-size="sm"]) { min-height: 36px; padding: var(--atlas-space-2) var(--atlas-space-3); }
+.button:global(.ui-button[data-variant="ghost"]) { padding-inline: 0; }
+.button:global(.ui-button[data-variant="ghost"]):hover { background: transparent; color: var(--atlas-accent-strong); }
+.button :global(.ui-button__label) { overflow: visible; overflow-wrap: anywhere; }
+.button svg { width: 16px; height: 16px; flex: none; }
 @media (max-width: 720px) {
-  .sm { min-height: var(--atlas-control-height); }
+  .button:global(.ui-button[data-size="sm"]) { min-height: var(--atlas-control-height); }
 }
-
-/* Press feedback, the same on every control of the atlas. */
-.button:active:not(:disabled, [aria-disabled="true"]) { scale: var(--atlas-press-scale); }
-@media (prefers-reduced-motion: reduce) { .button:active { scale: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .button:global(.ui-button) { transition: none; }
+}

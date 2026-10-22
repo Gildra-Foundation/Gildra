@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { PageShell } from "@/components/layout/PageShell";
+import { AtlasFrame } from "@/components/atlas";
 import { isReaderEnabled } from "@/lib/cms/config";
 import type { Lang } from "@/lib/i18n";
 import { ReaderApp } from "./ReaderApp";
@@ -12,8 +12,8 @@ export const readerMetadata: Metadata = { robots: { index: false, follow: false 
 export function ReaderPage({ lang, mode }: { lang: Lang; mode: "account" | "verify" | "reset" }) {
   if (!isReaderEnabled()) notFound();
   return (
-    <PageShell lang={lang} game="wow">
+    <AtlasFrame lang={lang} scene="articles" still>
       <ReaderApp lang={lang} mode={mode} signInHref={lang === "ru" ? "/ru/reader" : "/reader"} />
-    </PageShell>
+    </AtlasFrame>
   );
 }

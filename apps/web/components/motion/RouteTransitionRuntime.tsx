@@ -5,16 +5,13 @@ import { preconnect } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { isBookPagePath, isCharacterAuthRedirect, navigationDirection, routeTransitionKind, type RouteTransitionKind } from "./routeTransitionPolicy";
 import { RouteThemeController } from "./RouteThemeController";
-import { ThemedPageTransition, type PageTransitionHandle } from "./ThemedPageTransition";
-import { isHomeTheme } from "../platform/home/homeThemes";
 import styles from "./routeTransition.module.css";
 import { lessMotion } from "@/lib/client/motionPreference";
 import { captureMorphArt, playMorphArt, type MorphArtSource } from "@gildra/atlas-ui/morph";
 
 /**
  * Persistent navigation shell and the single owner of page hand-overs
- * (routeTransitionKind): the selected character's full effect when the homepage
- * scene is entered or left, a quick atlas hand-over between inner pages. Loading,
+ * (routeTransitionKind): a quick atlas hand-over on every public page. Loading,
  * watchdogs and route identity stay independent of the visual phases.
  */
 type RouteState = "idle" | "leaving" | "loading";
@@ -62,10 +59,7 @@ function clickDestination(event: MouseEvent, includeOptOut = false) {
 }
 
 const reducedMotion = () => lessMotion();
-const selectedTheme = () => {
-  const theme = document.documentElement.dataset.siteTheme;
-  return isHomeTheme(theme) ? theme : "arthas";
-};
+
 
 /** One shell survives App Router navigation. Page content never gets an artificial remount key. */
 export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
@@ -76,7 +70,6 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   }
   const router = useRouter();
   const frameRef = useRef<HTMLDivElement>(null);
-  const effectRef = useRef<PageTransitionHandle>(null);
   const committedPath = useRef(pathname);
   const poppedHistory = useRef(false);
   const expectedPath = useRef(pathname);
@@ -90,14 +83,13 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
 
   const settle = useCallback(() => {
     clearTimeout(watchdog.current);
-    effectRef.current?.cancel();
     morphSource.current = null;
     plannedKind.current = "still";
     setState("idle");
   }, []);
 
   /** The new page is in place: hand it over (unless the reader asked for less motion). */
-  const enter = useCallback((kind: RouteTransitionKind, direction: Direction) => {
+  const enter = useCallback((direction: Direction) => {
     clearTimeout(watchdog.current);
     setState("idle");
     plannedKind.current = "still";
@@ -107,10 +99,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     if (!frame) return;
     // A dimming transition that started on the old page must not finish on the new one.
     frame.getAnimations().forEach((animation) => animation.cancel());
-    if (reducedMotion()) { effectRef.current?.cancel(); return; }
-    // The character's effect covers the scene change and reveals the page itself.
-    if (kind === "scene" && effectRef.current?.reveal()) return;
-    effectRef.current?.cancel();
+    if (reducedMotion()) return;
     frame.animate([{ opacity: .35, transform: ENTER_FROM[direction] }, { opacity: 1, transform: "none" }], ENTER);
     clearTimeout(arrival.current);
     frame.dataset.routeArrived = "";
@@ -123,7 +112,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const pendingArrival = useRef<{ kind: RouteTransitionKind; direction: Direction }>({ kind: "page", direction: "across" });
   const enterWhenLoaded = useCallback(() => {
     if (frameRef.current?.querySelector("[data-book-route-loading]")) setState("loading");
-    else enter(pendingArrival.current.kind, pendingArrival.current.direction);
+    else enter(pendingArrival.current.direction);
   }, [enter]);
 
   const begin = useCallback((destination: string, anchor?: Element | null) => {
@@ -137,8 +126,6 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     quietPath.current = null;
     plannedKind.current = kind;
     morphSource.current = kind === "page" && anchor && !reducedMotion() ? captureMorphArt(anchor) : null;
-    if (kind === "scene" && frameRef.current) effectRef.current?.start(frameRef.current, selectedTheme());
-    else effectRef.current?.cancel();
     setState("leaving");
     clearTimeout(watchdog.current);
     watchdog.current = setTimeout(settle, WATCHDOG_MS);
@@ -184,10 +171,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     // Router.push/replace and history also land here; language switches stay still.
     const kind = routeTransitionKind(from, pathname);
     if (kind === "still") { settle(); return; }
-    // A planned scene change keeps its effect through server redirects (/lairs →
-    // /wow/lairs). Programmatic navigation (router.push from code) had no click to
-    // plan it: it gets the quick hand-over, never a character effect without a source.
-    pendingArrival.current = { kind: kind === "scene" && plannedKind.current === "scene" ? "scene" : "page", direction };
+    pendingArrival.current = { kind: "page", direction };
     enterWhenLoaded();
   }, [pathname, enterWhenLoaded, settle]);
 
@@ -256,7 +240,6 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const active = state !== "idle";
   return <div className={styles.system} data-theme="wow" data-book-navigation={active ? "turn" : "idle"} data-route-state={state}>
     <RouteThemeController />
-    <ThemedPageTransition ref={effectRef} />
     <span className={styles.progress} aria-hidden="true" />
     <span className={styles.spark} aria-hidden="true" />
     <div className={styles.frame} data-theme="wow" ref={frameRef} data-book-route-frame data-route-state={state} aria-busy={active || undefined}>

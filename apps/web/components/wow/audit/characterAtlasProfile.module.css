@@ -20,7 +20,7 @@
   grid-template-areas: none; grid-template-rows: none;
   gap: 24px; min-height: 0; padding: 28px;
   border: 1px solid var(--atlas-line); border-radius: 2px;
-  background: var(--atlas-surface); box-shadow: none;
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill); box-shadow: var(--atlas-shadow-panel); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter);
 }
 .page[data-character-atlas][data-profile-source] :global([data-character-identity]) > * { grid-area: auto; min-width: 0; }
 .page[data-character-atlas][data-profile-source] :global([data-character-identity]) > :first-child { grid-column: 1 / -1; }
@@ -40,12 +40,12 @@
 .page[data-character-atlas][data-profile-source] .evidence > div { border-color: var(--atlas-line); border-radius: 2px; background: var(--atlas-bg); box-shadow: none; }
 .page[data-character-atlas][data-profile-source] :global([data-character-sections]) { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 24px 0; }
 .page[data-character-atlas][data-profile-source] :global([data-character-sections]) > * { grid-column: 1; }
-.page[data-character-atlas][data-profile-source] :global([data-character-equipment]) { border: 1px solid var(--atlas-line); border-radius: 2px; background: var(--atlas-surface); box-shadow: none; }
+.page[data-character-atlas][data-profile-source] :global([data-character-equipment]) { border: 1px solid var(--atlas-line); border-radius: 2px; background: var(--atlas-glass-sheen), var(--atlas-glass-fill); box-shadow: var(--atlas-shadow-panel); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter); }
 .page[data-character-atlas][data-profile-source] :global(#audit-rotation) { border: 0; padding: 0; background: transparent; box-shadow: none; }
 .chapter { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--atlas-line-soft); scroll-margin-top: 140px; }
 .chapter > span { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border: 1px solid var(--atlas-line); color: var(--atlas-accent); }
 .chapter svg { width: 20px; height: 20px; }
-.chapter small { color: var(--atlas-accent); font: 600 10px/1.5 var(--atlas-font-ui); letter-spacing: .12em; text-transform: uppercase; }
+.chapter small { color: var(--atlas-accent); font: 600 var(--atlas-text-label)/1.5 var(--atlas-font-ui); letter-spacing: .12em; text-transform: uppercase; }
 .chapter h2 { margin: 6px 0; color: var(--atlas-text-strong); font: 400 clamp(24px, 2.5vw, 32px)/1.2 var(--atlas-font-display); }
 .chapter p { max-width: 64em; color: var(--atlas-text-muted); font: 13px/1.7 var(--atlas-font-ui); }
 .navigation { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 12px 0; border-bottom: 1px solid var(--atlas-line-soft); background: var(--atlas-bg); }

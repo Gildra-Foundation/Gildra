@@ -105,6 +105,17 @@ const config = [
     rules: { "no-restricted-syntax": ["error", ...copyRules] },
   },
   {
+    // Original Valyro registry source: its virtualizer deliberately memoizes a
+    // getter and mutable measurement cache. React Compiler advisories cannot
+    // preserve that upstream pattern; keep the source/provenance checksums and
+    // all other lint rules intact. This hook is not used by the public adapters.
+    files: ["packages/atlas-ui/src/valyro-ui/primitives/useVirtualizer.ts"],
+    rules: {
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/use-memo": "off",
+    },
+  },
+  {
     files: ["**/*.cjs"],
     rules: { "@typescript-eslint/no-require-imports": "off" },
   },

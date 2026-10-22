@@ -1,21 +1,24 @@
 import type { ReactNode } from "react";
 import clsx from "clsx";
 import { AtlasCountUp } from "./AtlasCountUp";
+import { StatsCard } from "./valyro-ui/data-display/StatsCard";
+import bridge from "./valyroAtlasBridge.module.css";
 import styles from "./AtlasStats.module.css";
 
 export type AtlasStat = { value: ReactNode; label: ReactNode };
 
-/** Row of headline counters ("5 raids · 18 bosses · S2"). Only real, current numbers; plain numbers count up on arrival. */
+/** Compact Valyro metrics. No trends or percentages are inferred from the supplied values. */
 export function AtlasStats({ items, className, label }: { items: AtlasStat[]; className?: string; label?: string }) {
   if (!items.length) return null;
   return (
-    <dl className={clsx(styles.stats, className)} aria-label={label}>
+    <div className={clsx(bridge.scope, styles.stats, className)} role="list" aria-label={label}>
       {items.map((item, index) => (
-        <div key={index} className={styles.stat}>
-          <dt className={styles.label}>{item.label}</dt>
-          <dd className={styles.value}>{typeof item.value === "number" ? <AtlasCountUp value={item.value} /> : item.value}</dd>
-        </div>
+        <StatsCard
+          key={index} role="listitem" className={styles.stat}
+          label={item.label}
+          value={typeof item.value === "number" ? <AtlasCountUp value={item.value} /> : item.value}
+        />
       ))}
-    </dl>
+    </div>
   );
 }

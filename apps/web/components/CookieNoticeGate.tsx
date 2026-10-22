@@ -15,7 +15,6 @@ export function CookieNoticeGate() {
   const [needsNotice, setNeedsNotice] = useState(false);
   const [CookieNotice, setCookieNotice] = useState<CookieNoticeComponent | null>(null);
   const hidden = pathname.startsWith("/api-console")
-    || pathname === "/" || pathname === "/ru" || pathname === "/ru/"
     || pathname.includes("/talents")
     || pathname.includes("/wow/characters/");
 

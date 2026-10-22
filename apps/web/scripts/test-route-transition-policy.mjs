@@ -24,10 +24,10 @@ assert.equal(isCharacterAuthRedirect(`/ru${profile}`, "/ru/wow/characters"), fal
 assert.equal(isCharacterAuthRedirect("/ru/wow/characters", "/ru/login"), false);
 for (const path of ["/api/auth/signin", "/api/wow/export", "/v1/items", "/assets/book.png", "/export.csv", "/_next/static/app.js"]) assert.equal(isBookPagePath(path), false);
 
-// One owner per navigation: the character's effect only for the homepage scene.
-assert.equal(routeTransitionKind("/", "/wow/raids"), "scene", "Leaving the homepage scene plays the character's effect");
-assert.equal(routeTransitionKind("/ru/wow/raids", "/ru"), "scene", "Returning to the scene plays it too");
-assert.equal(routeTransitionKind("/lairs", "/"), "scene");
+// Home shares the atlas shell; the archived cinematic book is never activated.
+assert.equal(routeTransitionKind("/", "/wow/raids"), "page", "Leaving home uses the shared page transition");
+assert.equal(routeTransitionKind("/ru/wow/raids", "/ru"), "page", "Returning home uses the same transition");
+assert.equal(routeTransitionKind("/lairs", "/"), "page");
 assert.equal(routeTransitionKind("/wow/raids", "/wow/raids/the-voidspire"), "page", "Atlas pages hand over quickly");
 assert.equal(routeTransitionKind("/ru/wow/classes", "/talents/arms-warrior"), "page");
 assert.equal(routeTransitionKind("/", "/ru"), "still", "A language switch stays still");

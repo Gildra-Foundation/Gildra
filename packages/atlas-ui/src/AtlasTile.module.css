@@ -6,13 +6,16 @@
   min-height: 76px;
   padding: var(--atlas-space-3) var(--atlas-space-4);
   color: inherit;
-  border: 1px solid var(--atlas-line-soft);
-  background: var(--atlas-surface);
+  border: 1px solid var(--atlas-glass-edge);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
+  box-shadow: var(--atlas-shadow-card);
   text-decoration: none;
   transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
-.tile:hover { border-color: var(--atlas-accent); background: var(--atlas-surface-raised); }
+.tile:hover { border-color: var(--atlas-accent); background: var(--atlas-glass-sheen), var(--atlas-glass-raised); }
 .tile:hover .icon,
 .tile:focus-visible .icon { border-color: var(--atlas-accent); box-shadow: var(--atlas-glow), inset 0 0 12px var(--atlas-accent-wash-strong); }
 .tile:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
