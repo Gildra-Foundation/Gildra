@@ -2,8 +2,8 @@ import Image from "next/image";
 import { ArrowRight, ExternalLink, Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { formatAtlasDate, formatSeason } from "@gildra/atlas-ui/format";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
-type Locale = "en" | "ru";
 type IdentityLink = { href: string; label: string };
 
 const copy = {
