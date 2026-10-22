@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { AtlasFrame, AtlasHero } from "@/components/atlas";
+import { AtlasFrame } from "@/components/atlas/AtlasFrame";
+import { AtlasHero } from "@gildra/atlas-ui/AtlasHero";
 import { NotFoundActions, NotFoundLede, NotFoundTitle } from "./NotFoundCopy";
 import { NotFoundSuggestions } from "./NotFoundSuggestions";
 

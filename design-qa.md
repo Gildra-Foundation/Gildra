@@ -30,7 +30,7 @@ Date: 22 October 2026. Scope: approved homepage and shared navigation, with regr
 
 ## Related validation
 
-157 atlas tests passed;86 bilingual routes and46 generated mirrors passed. CMS candidate593ab088 passed45 authenticated checks in6 EN/RU desktop/mobile cases including320px; no production data was used. Production-build and resource-budget results are retained in `.artifacts/portal-v3/` during release verification. The homepage remains server-rendered; only interactive navigation/controls are client components.
+157 atlas tests passed;86 bilingual routes and46 generated mirrors passed. CMS candidate593ab088 passed45 authenticated checks in6 EN/RU desktop/mobile cases including320px; no production data was used. Production-candidate audit also found eager kit CSS and hidden destination artwork from automatic card route prefetch. Direct imports (including the common404 boundary), explicit card prefetch=false and preencoded AVIF header artwork address these measured costs without changing the composition. Production-build and resource-budget results are retained in `.artifacts/portal-v3/` during release verification. The homepage remains server-rendered; only interactive navigation/controls are client components.
 
 No open P0/P1/P2 design findings. P3: slight generated-art and serif-weight differences; they preserve the selected composition and do not block use.
 
