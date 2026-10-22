@@ -16,6 +16,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/analytics"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/api"
@@ -36,6 +37,10 @@ type Handler struct {
 	clickhouse     driver.Conn
 	redis          *redis.Client
 	recoveryPolicy string
+
+	// refresh collapses concurrent cache misses of the expensive readiness
+	// and health scans into one run per key.
+	refresh singleflight.Group
 
 	readinessMu       sync.Mutex
 	readinessCached   catalogquality.ReadinessReport
@@ -504,15 +509,35 @@ func (h *Handler) cachedCatalogReadiness(ctx context.Context) (catalogquality.Re
 	// The readiness audit scans the published projection and can take minutes
 	// on the production-sized catalog.  Run it outside the cache mutex so an
 	// explicit audit request cannot block dashboard snapshots or other readers.
-	report, err := catalogquality.EvaluateReadinessWithRecoveryPolicy(ctx, h.postgres, "wow", "", h.recoveryPolicy)
-	if err != nil {
-		return catalogquality.ReadinessReport{}, err
+	return shared(ctx, &h.refresh, "readiness", func() (catalogquality.ReadinessReport, error) {
+		report, err := catalogquality.EvaluateReadinessWithRecoveryPolicy(ctx, h.postgres, "wow", "", h.recoveryPolicy)
+		if err != nil {
+			return catalogquality.ReadinessReport{}, err
+		}
+		h.readinessMu.Lock()
+		h.readinessCached = report
+		h.readinessCachedAt = time.Now()
+		h.readinessMu.Unlock()
+		return report, nil
+	})
+}
+
+// shared runs load once for all concurrent callers of key. The first caller's
+// context bounds the run; every caller still stops waiting at its own
+// deadline.
+func shared[T any](ctx context.Context, group *singleflight.Group, key string, load func() (T, error)) (T, error) {
+	result := group.DoChan(key, func() (any, error) { return load() })
+	select {
+	case <-ctx.Done():
+		var zero T
+		return zero, ctx.Err()
+	case outcome := <-result:
+		if outcome.Err != nil {
+			var zero T
+			return zero, outcome.Err
+		}
+		return outcome.Val.(T), nil
 	}
-	h.readinessMu.Lock()
-	h.readinessCached = report
-	h.readinessCachedAt = time.Now()
-	h.readinessMu.Unlock()
-	return report, nil
 }
 
 // dashboardReadiness returns the last completed audit without starting a new
