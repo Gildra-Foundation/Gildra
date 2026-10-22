@@ -10,6 +10,7 @@ Owner direction: 22 October 2026. This supersedes the earlier requirement to use
 - `--atlas-glass-*` tokens define the shared material for panels, cards, controls and legacy surfaces. Character/quality/status colors remain data semantics. Section artworks remain section-specific.
 - `SiteAppearance` preserves the existing theme preference and refreshes server-rendered art. The shared cookie notice now covers home too.
 - `/wow/articles` and `/ru/wow/articles` are the canonical article indexes. Disabled CMS and empty catalogs render honest localized states; upstream failures remain distinct. No invented articles are shipped.
+- Public Valyro theme CSS is generated with `node scripts/generate-public-valyro-theme.mjs`; `npm run valyro:check` verifies token dependency closure and provenance in CI. Full vendor sources remain intact.
 - Actual Valyro source components are used through the shared atlas adapters. Preserve their provenance manifest; do not rename custom components as Valyro. Use reduced-motion-aware transitions only for meaningful changes of state.
 
 ## Preserved book
@@ -25,3 +26,7 @@ The CMS has its own existing Valyro integration, native Payload editor, localize
 Run TypeScript, atlas token checks, route mirrors/parity, CMS public contract tests, the route transition policy regression, and a production build. Inspect home, Characters, articles and representative shared surfaces at desktop/mobile sizes in EN/RU. Check mobile menu, keyboard focus, search, theme changes and reduced motion. Verify CMS filter URL/state behavior and navigation with its focused tests; authenticated integration checks require an isolated test database.
 
 Work is separated into `redesign/characters-style`, `redesign/top-navigation`, `redesign/shared-surfaces`, `redesign/articles`, `redesign/valyro-site`, `redesign/valyro-surfaces` and `redesign/admin-valyro`. The owner explicitly authorized committing, merging into main and releasing to production on 22 October 2026. The release still requires a passing build and access to the configured deployment path.
+
+## Main reconciliation
+
+The old `main` contains the Fury calculator commit `da3e604a`, already adapted into the active history as `ae7ba654`, plus metadata-only `85a19bbe`. The integration merge keeps the current monorepo implementation and records the main ancestry. It must not restore the deleted root app or replace the evolved parser and dataset-aware API with their older versions.
