@@ -55,7 +55,10 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   `app/styles/*.css`, each legacy block's CSS next to the block. Class names are never renamed; block-level
   compaction uses `@container` (containers: `.section`, `.cards-row`); new UI
   uses Tailwind CSS and shadcn/ui on the same tokens without changing the
-  visual language.
+  visual language. **Valyro first:** a component Valyro has (MCP `valyro`,
+  `npm run valyro -- search …`) is installed with `npm run valyro:add -- <name>`
+  and used through an atlas adapter, not hand-written; snapshots, adaptations
+  and updates: [docs/llm/valyro-cli.md](docs/llm/valyro-cli.md).
 - Data: blocks read data only through `ctx.source` (`lib/data/source.ts`);
   `data/site.ts` is the demo dataset behind it and the only source for
   `demo.ts` files. Game icons/artwork resolve **only** through

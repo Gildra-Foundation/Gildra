@@ -7,6 +7,7 @@ import { CREATE_ROLES, writableSites } from "../admin/siteChoice";
 import { adminLang, adminText } from "../admin/text";
 import { canUseAdmin } from "../access/roles";
 import { SelectSitePanel } from "./SelectSitePanel";
+import { headerActions } from "./nav/headerActions";
 
 /**
  * /admin/select-site?collection=<slug> — shown instead of an empty editor when
@@ -35,6 +36,7 @@ export async function SelectSiteView({ initPageResult, params, searchParams, use
       searchParams={searchParams}
       user={user}
       visibleEntities={visibleEntities}
+      viewActions={headerActions(req.payload.config)}
     >
       <div className="gutter--left gutter--right" style={{ paddingBlock: "var(--base)", maxWidth: 720 }}>
         <h1>{t.chooseSite}</h1>

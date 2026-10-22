@@ -1,40 +1,160 @@
-/* Payload remains the owner of <html>. Valyro only styles the custom screens. */
+/* Valyro → Gildra atlas tokens (atlas-tokens.css). The same mapping as the
+   site's packages/atlas-ui/src/valyroAtlasBridge.module.css, so Valyro controls
+   look alike on gildra.net and in the admin; vendor files stay untouched.
+   Payload remains the owner of <html>. Valyro only styles the custom screens. */
 .gd-valyro[data-theme][data-mode] {
-  --ui-font-sans: var(--font-body, system-ui, sans-serif);
-  --ui-accent: var(--gd-amber);
-  --ui-accent-hover: var(--gd-amber);
-  --ui-accent-fg: #10131a;
-  --ui-accent-soft: rgba(217, 164, 65, 0.14);
-  --ui-focus-color: var(--gd-amber);
   --ui-page-bg: transparent;
-  --ui-surface: var(--gd-card);
-  --ui-elevated: var(--theme-elevation-100);
-  --ui-fg: var(--theme-text);
-  --ui-fg-muted: var(--gd-muted);
-  --ui-glass-border: var(--gd-line);
-  --ui-border: var(--gd-line);
-  --ui-radius-card: 10px;
+  --ui-font-sans: var(--atlas-font-ui);
+  --ui-font-display: var(--atlas-font-display);
+  --ui-font-prose: var(--atlas-font-ui);
+  --ui-surface: var(--atlas-surface);
+  --ui-fg-muted: var(--atlas-text-muted);
+  --ui-fg-subtle: var(--atlas-text-subtle);
+  --ui-fg-faint: var(--atlas-text-subtle);
+  --ui-gray: var(--atlas-text-muted);
+  --ui-glass-border: var(--atlas-line);
+  --ui-border: var(--atlas-line-soft);
+  --ui-border-strong: var(--atlas-line-strong);
+  --ui-field-bg: var(--atlas-surface-sunken);
+  --ui-field-shadow: 0 0 transparent;
+  --ui-field-border-hover: var(--atlas-accent);
+  --ui-field-focus-border-color: var(--atlas-accent-strong);
+  --ui-field-placeholder: var(--atlas-text-subtle);
+  --ui-surface-texture: none;
+  --ui-highlight: inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 5%, transparent);
+  --ui-sheen: 0 0 transparent;
+  --ui-shadow-card: var(--atlas-shadow-panel);
+  --ui-shadow-popover: var(--atlas-shadow-panel);
+  --ui-floating-border-color: var(--atlas-line-strong);
+  --ui-blur-strong: blur(20px);
+  --ui-blur-thin: blur(8px);
+  --ui-radius-field: var(--atlas-radius);
+  --ui-radius-card: var(--atlas-radius);
+  --ui-radius-popover: var(--atlas-radius);
+  --ui-radius-sm: var(--atlas-radius);
+  --ui-radius-md: var(--atlas-radius);
+  --ui-radius-chip: var(--atlas-radius);
+  --ui-surface-corner-shape: round;
+  --ui-tooltip-bg: var(--atlas-surface-raised);
+  --ui-tooltip-fg: var(--atlas-text);
+  --ui-tooltip-radius: var(--atlas-radius);
+  --ui-tooltip-padding: var(--atlas-space-2) var(--atlas-space-3);
+  --ui-tooltip-shadow: var(--atlas-shadow-panel);
+  --ui-empty-state-bordered-bg: var(--atlas-surface);
+  --ui-empty-state-icon-bg: var(--atlas-accent-wash);
+  --ui-empty-state-icon-fg: var(--atlas-accent);
+  --ui-empty-state-title-size-sm: var(--atlas-text-title);
+  --ui-stats-card-label-size: var(--atlas-text-meta);
+  --ui-stats-card-value-size: var(--atlas-text-stat);
+  --ui-stats-card-icon-bg: var(--atlas-accent-wash);
+  --ui-stats-card-icon-fg: var(--atlas-accent);
+  --ui-stats-card-padding: var(--atlas-space-4);
+  --ui-stats-card-gap: var(--atlas-space-2);
+  --ui-skeleton-bg: var(--atlas-surface-raised);
+  --ui-skeleton-shine: var(--atlas-accent-wash-strong);
+  --ui-success: var(--atlas-positive);
+  --ui-success-text: var(--atlas-positive);
+  --ui-danger-text: var(--atlas-negative);
+  --ui-accent-soft: var(--atlas-accent-wash);
+  --ui-accent-soft-hover: var(--atlas-accent-wash-strong);
+  --ui-menu-item-hover: var(--atlas-accent-wash);
+  --ui-menu-item-selected: var(--atlas-accent-wash-strong);
+  --ui-text-input-addon-bg: var(--atlas-surface-raised);
+  --ui-space-1: var(--atlas-space-1);
+  --ui-space-2: var(--atlas-space-2);
+  --ui-space-3: var(--atlas-space-3);
+  --ui-space-4: var(--atlas-space-4);
+  --ui-space-5: var(--atlas-space-5);
+  --ui-space-6: var(--atlas-space-6);
+  --ui-space-8: var(--atlas-space-7);
+  --ui-space-10: var(--atlas-space-8);
+  --ui-space-16: calc(var(--atlas-space-8) * 2);
+  --ui-text-xl: var(--atlas-text-h3);
+  --ui-weight-heading: var(--atlas-weight-display);
+  --ui-leading-tight: var(--atlas-leading-snug);
+  --ui-tracking-tight: var(--atlas-tracking-display);
+  --ui-z-popover: 150;
+  --ui-bg: var(--atlas-surface);
+  --ui-fg: var(--atlas-text-strong);
+  --ui-hover: var(--atlas-accent-wash-strong);
+  --ui-active: var(--atlas-accent-wash-strong);
+  --ui-primary: var(--atlas-accent);
+  --ui-primary-hover: var(--atlas-accent-strong);
+  --ui-primary-fg: var(--atlas-accent-ink);
+  --ui-accent: var(--atlas-accent);
+  --ui-accent-hover: var(--atlas-accent-strong);
+  --ui-accent-fg: var(--atlas-accent-ink);
+  --ui-accent-text: var(--atlas-accent);
+  --ui-danger: var(--atlas-negative);
+  --ui-danger-hover: var(--atlas-negative);
+  --ui-danger-fg: var(--atlas-bg);
+  --ui-surface-2: var(--atlas-surface-raised);
+  --ui-elevated: var(--atlas-surface-raised);
+  --ui-border-field: var(--atlas-line);
+  --ui-button-secondary-bg: var(--atlas-accent-wash);
+  --ui-button-secondary-bg-hover: var(--atlas-accent-wash-strong);
+  --ui-button-secondary-bg-active: var(--atlas-accent-wash-strong);
+  --ui-button-secondary-fg: var(--atlas-text-strong);
+  --ui-button-secondary-field: var(--atlas-line);
+  /* An empty glass branch is intentional: Valyro joins its field/glass hooks. */
+  --ui-button-secondary-glass: ;
+  --ui-button-secondary-shadow: 0 0 transparent;
+  --ui-button-ghost-fg: var(--atlas-accent);
+  --ui-button-solid-highlight: inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 12%, transparent);
+  --ui-button-solid-glow: 0 0 transparent;
+  --ui-button-solid-sheen: linear-gradient(180deg, var(--atlas-accent-strong), transparent);
+  --ui-button-transform-active: scale(var(--atlas-press-scale));
+  --ui-blur: blur(8px);
+  --ui-border-width: 1px;
+  --ui-radius-button: var(--atlas-radius);
+  --ui-radius-full: 999px;
+  --ui-control-corner-shape: round;
+  --ui-control-h-sm: 36px;
+  --ui-control-h-md: var(--atlas-control-height);
+  --ui-control-h-lg: 48px;
+  --ui-text-sm: var(--atlas-text-meta);
+  --ui-text-md: var(--atlas-text-small);
+  --ui-text-lg: var(--atlas-text-body);
+  --ui-weight-medium: 600;
+  --ui-leading: 1.3;
+  --ui-label-tracking: .02em;
+  --ui-label-transform: none;
+  --ui-duration-fast: var(--atlas-duration-fast);
+  --ui-duration: var(--atlas-duration);
+  --ui-duration-slow: var(--atlas-duration-slow);
+  --ui-ease: var(--atlas-ease);
+  --ui-ease-spring: var(--atlas-ease);
+  --ui-focus-ring: 0 0 0 3px var(--atlas-bg), 0 0 0 5px var(--atlas-accent-strong);
+  --ui-focus-color: var(--atlas-accent-strong);
   background: transparent;
   min-width: 0;
   font-family: inherit;
+  font-variant-numeric: lining-nums;
+}
+@media (max-width: 720px) {
+  .gd-valyro[data-theme][data-mode] { --ui-control-h-sm: var(--atlas-control-height); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gd-valyro[data-theme][data-mode] { --ui-button-transform-active: none; --ui-duration-fast: 0ms; --ui-duration: 0ms; --ui-duration-slow: 0ms; }
 }
 .gd-valyro .gd-sites, .gd-valyro .gd-columns, .gd-valyro .gd-site { min-width: 0; }
 .gd-valyro .gd-site { container-type: inline-size; container-name: gd-site; }
 .gd-valyro .gd-site__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.gd-valyro .ui-stats-card__label { white-space: normal; min-height: 2.4em; }
+.gd-valyro .ui-stats-card__label { white-space: normal; min-height: 2.4em; text-transform: uppercase; letter-spacing: .1em; font-size: var(--atlas-text-label); color: var(--atlas-text-subtle); }
+.gd-valyro .ui-stats-card__value { font-variant-numeric: lining-nums tabular-nums; color: var(--atlas-text-strong); }
 .gd-valyro .ui-stats-card { min-width: 0; padding: var(--ui-space-3); }
-.gd-valyro .gd-stat--warn .ui-stats-card__value { color: var(--gd-amber); }
+.gd-valyro .gd-stat--warn .ui-stats-card__value { color: var(--atlas-accent); }
 .gd-valyro .gd-site__actions .ui-button { text-decoration: none; }
 .gd-valyro .gd-panel .ui-data-table { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .gd-valyro .ui-data-table__scroll { max-width: 100%; }
 .gd-valyro .ui-empty-state { padding-inline: var(--ui-space-3); }
 .gd-valyro .gd-analytics__filters { margin-block: var(--ui-space-4); }
 .gd-valyro .gd-analytics__site { display: grid; gap: var(--ui-space-2); max-width: 320px; margin-bottom: var(--ui-space-3); }
-.gd-valyro .gd-analytics__status { min-height: 1.5em; margin-block: var(--ui-space-3); color: var(--gd-muted); }
+.gd-valyro .gd-analytics__status { min-height: 1.5em; margin-block: var(--ui-space-3); color: var(--atlas-text-muted); }
 .gd-valyro .gd-analytics__stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--ui-space-3); margin-bottom: var(--ui-space-6); }
 .gd-valyro .gd-analytics__tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: var(--ui-space-6); margin-top: var(--ui-space-6); }
-.gd-valyro .gd-analytics__footer { color: var(--gd-muted); margin-top: var(--ui-space-4); }
-.gd-valyro :focus-visible { outline-color: var(--gd-amber); }
+.gd-valyro .gd-analytics__footer { color: var(--atlas-text-muted); margin-top: var(--ui-space-4); }
+.gd-valyro :focus-visible { outline-color: var(--atlas-accent); }
 @container gd-site (min-width: 600px) {
   .gd-valyro .gd-site__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
@@ -48,3 +168,21 @@
 
 .gd-valyro .gd-choose__site.ui-button { height: auto; display: grid; justify-content: stretch; padding: var(--ui-space-4); }
 .gd-valyro .gd-choose__site .ui-button__label { display: grid; justify-items: start; gap: var(--ui-space-1); }
+
+/* Header RU / EN switch: the selected language on the amber, as in the mockups. */
+.gd-valyro .gd-lang-switch {
+  --ui-segmented-control-bg: var(--atlas-surface-sunken);
+  --ui-segmented-control-shadow: inset 0 0 0 1px var(--atlas-line);
+  --ui-segmented-control-radius: var(--atlas-radius);
+  --ui-segmented-control-pad: 2px;
+  --ui-segmented-control-item-fg: var(--atlas-text-muted);
+  --ui-segmented-control-item-tracking: .04em;
+  --ui-segmented-control-thumb-bg: var(--atlas-accent);
+  --ui-segmented-control-thumb-shadow: none;
+  --ui-fg: var(--atlas-accent-ink);
+  --ui-control-h-sm: 32px;
+  font-weight: 600;
+}
+/* The sliding thumb is measured after hydration; until then (and without JS) the
+   selected segment carries the same amber itself, so its dark label stays legible. */
+.gd-valyro .gd-lang-switch .ui-segmented-control__item[data-active] { background: var(--atlas-accent); border-radius: var(--atlas-radius); }

@@ -31,8 +31,10 @@ import { SeoPreview as SeoPreview_54842116ebf27d5fc41a05116390649c } from '../..
 import { BrandIcon as BrandIcon_42af45a2e169122dea8a98337d41efda } from '../../../components/Brand'
 import { BrandLogo as BrandLogo_42af45a2e169122dea8a98337d41efda } from '../../../components/Brand'
 import { CommandButton as CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b } from '../../../components/command/CommandButton'
+import { LanguageSwitch as LanguageSwitch_a49993c8823beeb757765324433d70c6 } from '../../../components/nav/LanguageSwitch'
 import { GlobalViewRedirect as GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
 import { AuthIntro as AuthIntro_4bca73cc1e75f6058ab4520e4458e193 } from '../../../components/auth/AuthIntro'
+import { NavBrand as NavBrand_435bc162d13c8e2c489b0e28627b5a66 } from '../../../components/nav/NavBrand'
 import { TenantSelector as TenantSelector_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
 import { AdminNav as AdminNav_12a5d2e4943f1ef280c26afffa50cbd6 } from '../../../components/nav/AdminNav'
 import { TenantSelectionProvider as TenantSelectionProvider_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
@@ -78,8 +80,10 @@ export const importMap = {
   "/components/Brand#BrandIcon": BrandIcon_42af45a2e169122dea8a98337d41efda,
   "/components/Brand#BrandLogo": BrandLogo_42af45a2e169122dea8a98337d41efda,
   "/components/command/CommandButton#CommandButton": CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b,
+  "/components/nav/LanguageSwitch#LanguageSwitch": LanguageSwitch_a49993c8823beeb757765324433d70c6,
   "@payloadcms/plugin-multi-tenant/rsc#GlobalViewRedirect": GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62,
   "/components/auth/AuthIntro#AuthIntro": AuthIntro_4bca73cc1e75f6058ab4520e4458e193,
+  "/components/nav/NavBrand#NavBrand": NavBrand_435bc162d13c8e2c489b0e28627b5a66,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelector": TenantSelector_d6d5f193a167989e2ee7d14202901e62,
   "/components/nav/AdminNav#AdminNav": AdminNav_12a5d2e4943f1ef280c26afffa50cbd6,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelectionProvider": TenantSelectionProvider_d6d5f193a167989e2ee7d14202901e62,
