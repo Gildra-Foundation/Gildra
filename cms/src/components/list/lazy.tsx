@@ -13,3 +13,4 @@ export const ListPager = dynamic(() => import("./ListControls").then((m) => m.Li
 export const ResetListButton = dynamic(() => import("./ListControls").then((m) => m.ResetListButton));
 export const ListTable = dynamic(() => import("./ListTable").then((m) => m.ListTable));
 export const ListModeSwitch = dynamic(() => import("./ListTable").then((m) => m.ListModeSwitch));
+export const MediaGrid = dynamic(() => import("./MediaGrid").then((m) => m.MediaGrid));
