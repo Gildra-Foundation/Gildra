@@ -84,7 +84,7 @@ child.on("close", (code, signal) => {
     const errors = [];
     for (const l of nonEmpty) {
       const key = l.trim().slice(0, 160);
-      if (ERROR_LINE.test(l) && !seen.has(key)) {
+      if (ERROR_LINE.test(l) && !/\bwarning\b/i.test(l) && !seen.has(key)) {
         seen.add(key);
         errors.push(l.length > 300 ? `${l.slice(0, 300)}…` : l);
       }
