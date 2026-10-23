@@ -6,7 +6,7 @@ volume and then proves the archive can be restored.
 
 | `GILDRA_RESTORE_PROOF` | What is proven | Extra disk needed |
 | --- | --- | --- |
-| `light` (default) | The stored object matches its SHA-256; the whole archive decrypts and parses (`pg_restore --file=/dev/null`); the schema and the data of tables up to 20 000 rows are restored into the isolated restore database and their counts match the source; larger tables are restored empty. Foreign keys are skipped because partial data cannot satisfy them. | about 6% of the database |
+| `light` (default) | The stored object matches its SHA-256; the whole archive decrypts and parses (`pg_restore --file=/dev/null`); the schema and the data of tables up to 20 000 rows and 64 MiB are restored into the isolated restore database and their counts match the source; larger tables are restored empty. Foreign keys are skipped because partial data cannot satisfy them. | about 2% of the database |
 | `full` | The whole archive is restored into the isolated restore database and every table count matches the source. | one more database |
 
 The signed evidence (`*.manifest.json`) and the manifest's `verification` JSON
@@ -29,7 +29,7 @@ Settings (systemd drop-in or environment):
   deliberately outside `gildra-(web|api|cms|...)` so `prune-host-images.sh` keeps
   it. Once a regular API release contains this build, remove the drop-in
   `/etc/systemd/system/gildra-catalog-backup.service.d/light-proof.conf`.
-- `CATALOG_BACKUP_LIGHT_MAX_TABLE_ROWS` (default 20000)
+- `CATALOG_BACKUP_LIGHT_MAX_TABLE_ROWS` (default 20000) and `CATALOG_BACKUP_LIGHT_MAX_TABLE_BYTES` (default 64 MiB)
 
 To go back to the full proof: set `GILDRA_RESTORE_PROOF=full` (and make sure
 there is about a database of free disk), or remove the drop-in.
