@@ -1,8 +1,9 @@
 import { formatAtlasDate, pluralRu } from "@gildra/atlas-ui/format";
 import type { RaidAudience } from "@/lib/data/wow/raid/midnightRaidData";
 import type { VoidspireMechanicTag } from "@/lib/data/wow/raid/voidspireMechanicGuide";
+import type { Lang } from "@/lib/i18n-paths";
 
-export type RaidLocale = "ru" | "en";
+export type RaidLocale = Lang;
 
 /**
  * Interface copy of the raid pages (Midnight raid overviews, boss guides,

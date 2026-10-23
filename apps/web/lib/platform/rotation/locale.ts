@@ -1,4 +1,4 @@
-import { wowSourceName } from "@/lib/wow/sourceLocale";
+import { emptyWowNameTable, sourceName, type WowNameTable } from "@/lib/wow/wowNameTable";
 import type { Lang } from "@/lib/i18n";
 import { rotationT as t } from "./rotationDictionary";
 import type { RotationAbility, RotationPreset, RotationScenario, RotationSimulationResult, SavedRotationCombo } from "./types";
@@ -56,9 +56,10 @@ export function localizeRotationCatalog(preset: RotationPreset, localized: Reado
   };
 }
 
-export function localizeRotationResult(result: RotationSimulationResult, abilities: RotationAbility[], lang: Lang, gameLabels: Record<string, string> = {}): RotationSimulationResult {
+/** `sourceNames`: Russian pages pass the confirmed source names (loadWowSourceNames) for names the catalog lacks. */
+export function localizeRotationResult(result: RotationSimulationResult, abilities: RotationAbility[], lang: Lang, gameLabels: Record<string, string> = {}, sourceNames: Pick<WowNameTable, "source"> = emptyWowNameTable): RotationSimulationResult {
   const byId = new Map(abilities.map((ability) => [ability.id, ability]));
-  const name = (value: string) => gameLabels[rotationLabelKey(value)] ?? wowSourceName(value, lang);
+  const name = (value: string) => gameLabels[rotationLabelKey(value)] ?? sourceName(sourceNames, value, lang);
   const tr = t(lang);
   return {
     ...result,

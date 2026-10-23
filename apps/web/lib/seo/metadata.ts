@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
-type Locale = "en" | "ru";
 
 /**
  * Open Graph of one page: its own title, description, canonical URL and

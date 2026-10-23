@@ -119,7 +119,6 @@
     "lucide-react": "^0.468.0",
     "next": "16.3.8",
     "next-auth": "^5.0.0-beta.32",
-    "next-intl": "^4.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.0.0"

@@ -5,6 +5,7 @@ import { contentManifest, midnightDelves, midnightLairEncounters } from "@gildra
 import { midnightClasses, midnightSpecializations } from "@/lib/data/wow/specializations";
 import { getBoss } from "@/lib/lairs";
 import { routeSections, type RouteSection } from "@/lib/routes/registry";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
 /**
  * The quick-search index of the site (⌘K): every section, raid, boss, lair,
@@ -14,7 +15,6 @@ import { routeSections, type RouteSection } from "@/lib/routes/registry";
  * language's names so either spelling finds the entry.
  */
 export type SiteSearchEntry = { t: string; s: string; h: string; k?: string };
-type Locale = "en" | "ru";
 
 const label = {
   section: { en: "Section", ru: "Раздел" },
