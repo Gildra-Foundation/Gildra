@@ -1,6 +1,5 @@
 import { DefaultListView } from "@payloadcms/ui";
 import { cookies } from "next/headers";
-import Image from "next/image";
 import Link from "next/link";
 import type { ListViewServerProps } from "payload";
 import type { ReactNode } from "react";
@@ -14,10 +13,10 @@ import { AdminSurface } from "../AdminSurface";
 import { LocalTime, SiteLink } from "../SiteLink";
 import { Badge } from "../valyro-ui/basic/Badge";
 import { Button } from "../valyro-ui/basic/Button";
-import { Card } from "../valyro-ui/data-display/Card";
 import { EmptyState } from "../valyro-ui/data-display/EmptyState";
 import { LanguagesCell } from "./LanguagesCell";
-import { ListControls, ListModeSwitch, ListPager, ListTable, ResetListButton } from "./lazy";
+import { ListControls, ListModeSwitch, ListPager, ListTable, MediaGrid, ResetListButton } from "./lazy";
+import type { MediaTile } from "./MediaGrid";
 import type { ListColumn, ListRow } from "./ListTable";
 import { NATIVE_COOKIE } from "./workbenchList";
 
@@ -117,36 +116,19 @@ export async function CollectionList(props: ListViewServerProps) {
   if (docs.length === 0) {
     body = empty;
   } else if (slug === "media") {
-    body = (
-      <ul className="gd-media" aria-label={copy.title}>
-        {docs.map((doc) => {
-          const alt = text(doc.alt);
-          const file = mediaPath(doc.url);
-          const isImage = typeof doc.mimeType === "string" && doc.mimeType.startsWith("image/");
-          const size = [typeof doc.width === "number" && typeof doc.height === "number" ? `${doc.width}×${doc.height}` : "", bytes(doc.filesize, lang)].filter(Boolean).join(" · ");
-          return (
-            <li key={String(doc.id)}>
-              <Card asChild variant="interactive" padding="none" className="gd-media__card">
-                <Link href={edit(doc)} prefetch={false}>
-                  <span className="gd-media__thumb">
-                    {isImage && file ? (
-                      <Image src={file} alt="" fill sizes="(max-width: 480px) 50vw, 240px" unoptimized={doc.mimeType === "image/gif"} />
-                    ) : (
-                      <span className="gd-media__type">{text(doc.mimeType) || "file"}</span>
-                    )}
-                  </span>
-                  <span className="gd-media__meta">
-                    <strong>{text(doc.filename)}</strong>
-                    <span className={alt ? undefined : "gd-media__missing"}>{alt || t.noAlt}</span>
-                    {size ? <small>{size}</small> : null}
-                  </span>
-                </Link>
-              </Card>
-            </li>
-          );
-        })}
-      </ul>
-    );
+    const tiles: MediaTile[] = docs.map((doc) => {
+      const mimeType = text(doc.mimeType);
+      return {
+        id: String(doc.id),
+        href: edit(doc),
+        filename: text(doc.filename),
+        alt: text(doc.alt),
+        meta: [typeof doc.width === "number" && typeof doc.height === "number" ? `${doc.width}×${doc.height}` : "", bytes(doc.filesize, lang)].filter(Boolean).join(" · "),
+        file: mimeType.startsWith("image/") ? mediaPath(doc.url) : null,
+        mimeType,
+      };
+    });
+    body = <MediaGrid tiles={tiles} label={copy.title} noAlt={t.noAlt} />;
   } else {
     const columns: ListColumn[] =
       slug === "pages"
