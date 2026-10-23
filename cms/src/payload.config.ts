@@ -15,6 +15,8 @@ import { articlesEndpoint } from "./articles/data";
 
 import { hardenInternalCollections, requireSiteField } from "./access/internal";
 import { localizeCollection } from "./admin/fieldLabels";
+import { withTitleSearchInAllLocales } from "./admin/localeSearch";
+import { applyTranslations, PUBLISH_TRANSLATIONS, withPublishToast } from "./admin/publishCopy";
 import { isOwner } from "./access/roles";
 import { analyticsReportEndpoint } from "./analytics/endpoint";
 import { Admins } from "./collections/Admins";
@@ -67,6 +69,8 @@ export default buildConfig({
     // The custom palette (custom.scss) is dark; a light OS theme would mix dark
     // backgrounds with light-theme text colours, so the admin is always dark.
     theme: "dark",
+    // "22 окт. 2026, 20:34" instead of date-fns' "октября 22-е 2026, 8:34 ПП".
+    dateFormat: "d MMM yyyy, HH:mm",
     components: {
       graphics: {
         Icon: "/components/Brand#BrandIcon",
@@ -83,6 +87,7 @@ export default buildConfig({
         dashboard: { Component: "/components/Dashboard#Dashboard" },
         users: { Component: "/components/people/PeopleView#PeopleView", path: "/users" },
         articles: { Component: "/components/articles/ArticlesView#ArticlesView", path: "/articles" },
+        newArticle: { Component: "/components/articles/NewArticleView#NewArticleView", path: "/articles/new" },
         analytics: { Component: "/components/AnalyticsView#AnalyticsView", path: "/analytics" },
         selectSite: { Component: "/components/SelectSiteView#SelectSiteView", path: "/select-site" },
       },
@@ -160,5 +165,6 @@ export default buildConfig({
     const general = ((translations[lang] ??= {}).general ??= {}) as unknown as Record<string, string>;
     Object.assign(general, labels);
   }
-  return hardenAuthFields(hardenInternalCollections(config));
+  applyTranslations(translations as unknown as Record<string, Record<string, Record<string, string>>>, PUBLISH_TRANSLATIONS);
+  return hardenAuthFields(hardenInternalCollections(withTitleSearchInAllLocales(withPublishToast(config))));
 });
