@@ -1,0 +1,20 @@
+[Unit]
+Description=Gildra daily CMS database and media backup
+OnFailure=gildra-notify@%p.service
+OnSuccess=gildra-notify-ok@%p.service
+Requires=docker.service
+After=docker.service
+ConditionPathExists=/opt/gildra/.env
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/gildra
+ExecStart=/opt/gildra/infra/backup/run-cms-backup.sh
+TimeoutStartSec=2h
+Nice=15
+IOSchedulingClass=idle
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
