@@ -8,6 +8,7 @@ import { StagingBadge } from "@/components/StagingBadge";
 import { plausibleTracker } from "@/lib/cms/plausible";
 import { RouteTransitionGate } from "@/components/motion/RouteTransitionGate";
 import { WorkspaceNavigator } from "@/components/platform/navigation/WorkspaceNavigator";
+import { navigationPicks } from "@/components/platform/navigation/navigationPicks";
 import { motionPreferenceScript } from "@/lib/client/motionPreference";
 import { SiteTheme } from "@/components/motion/SiteTheme";
 import { siteThemeScript } from "@/components/platform/home/homeThemes";
@@ -82,7 +83,7 @@ export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: 
       <body>
         <SiteTheme>
           <AtlasValyroScope locale={lang === "ru" ? "ru-RU" : "en-GB"}>
-            <WorkspaceNavigator />
+            <WorkspaceNavigator picks={navigationPicks()} />
             <RouteTransitionGate>{children}</RouteTransitionGate>
           </AtlasValyroScope>
         </SiteTheme>
