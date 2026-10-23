@@ -58,7 +58,7 @@
 @media (max-width: 480px) { .profileFields { grid-template-columns: minmax(0, 1fr); } }
 
 .importPanel { display: grid; gap: var(--atlas-space-2); max-width: 640px; margin-top: var(--atlas-space-4); padding: var(--atlas-space-3); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); background: var(--atlas-surface-raised); }
-.importPanel > label { color: var(--atlas-text-strong); font-weight: 600; }
+.importPanel label { color: var(--atlas-text-strong); font-weight: 600; }
 .importPanel p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
 .codeInput { width: 100%; min-width: 0; }
 .codeInput input { min-height: 44px; }
@@ -67,3 +67,13 @@
 .importStatus { padding-top: var(--atlas-space-2); border-top: 1px solid var(--atlas-line); }
 .importStatus b { color: var(--atlas-accent-strong); font-size: var(--atlas-text-meta); }
 .importPanel [role="alert"] { color: var(--atlas-text-strong); border-left: 2px solid var(--atlas-accent); padding-left: var(--atlas-space-2); }
+
+.importForm, .savedBuilds, .buildNameForm { display: grid; gap: var(--atlas-space-2); min-width: 0; }
+.savedBuilds { padding-bottom: var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line); }
+.savedBuilds > b { color: var(--atlas-text-strong); }
+.savedBuildActions, .buildNameActions { display: flex; align-items: stretch; flex-wrap: wrap; gap: var(--atlas-space-2); min-width: 0; }
+.savedBuildActions > :first-child, .buildNameActions > :first-child { flex: 1 1 240px; min-width: 0; }
+.savedBuildActions select, .buildNameActions input, .savedBuilds button { min-height: 44px; }
+.savedBuildActions select { width: 100%; min-width: 0; }
+.buildFailure { display: grid; gap: var(--atlas-space-2); overflow-wrap: anywhere; }
+@media (max-width: 480px) { .savedBuildActions > :first-child, .buildNameActions > :first-child { flex-basis: 100%; } }
