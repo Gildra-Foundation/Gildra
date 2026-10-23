@@ -1,6 +1,6 @@
 {
   "registry": "https://valyro.xyz/r",
-  "retrievedAt": "2026-10-22T23:23:39.467Z",
+  "retrievedAt": "2026-10-22T23:57:19.886Z",
   "components": [
     "stats-card",
     "badge",
@@ -20,7 +20,8 @@
     "button-group",
     "tooltip",
     "text-input",
-    "segmented-control"
+    "segmented-control",
+    "command-palette"
   ],
   "proComponents": [
     "analytics-filter-bar"
@@ -29,7 +30,8 @@
     "charts/AnalyticsFilterBar.tsx": "Optional showCompare/showGranularity flags; hide unsupported analytics controls.",
     "styles/tokens.css": "Scope :root to .gd-valyro.",
     "styles/themes/vercel.css": "Scope :root to .gd-valyro.",
-    "styles/base.css": "Scope html[data-theme] to .gd-valyro[data-theme]."
+    "styles/base.css": "Scope html[data-theme] to .gd-valyro[data-theme].",
+    "forms/useCombobox.ts": "Highlight the first option when async results arrive after an empty list (CommandPalette search hits)."
   },
   "files": [
     {
@@ -642,6 +644,24 @@
       "path": "navigation/internal.tsx",
       "registrySha256": "0215f4d3825dd18fba983f8abd9722996085148ab763ee7567b941b2521a05af",
       "installedSha256": "0215f4d3825dd18fba983f8abd9722996085148ab763ee7567b941b2521a05af",
+      "adapted": false
+    },
+    {
+      "path": "forms/useCombobox.ts",
+      "registrySha256": "54ec8874c94ed89617bb70305b42ad7187d328e047672cf6934381ed8ad06297",
+      "installedSha256": "510bf0096534c375a977b8e14cb441aa330df84931952a27fe8ea0a4bdae7646",
+      "adapted": true
+    },
+    {
+      "path": "navigation/CommandPalette.css",
+      "registrySha256": "67d8a26a5b30f0272372a7da0c9739bade2673f9019b2d0fc9ee0646a0471839",
+      "installedSha256": "67d8a26a5b30f0272372a7da0c9739bade2673f9019b2d0fc9ee0646a0471839",
+      "adapted": false
+    },
+    {
+      "path": "navigation/CommandPalette.tsx",
+      "registrySha256": "da8eee449f3a40f50572960380e36e0e5934dbf57619ae2ef1ffc30522a1945d",
+      "installedSha256": "da8eee449f3a40f50572960380e36e0e5934dbf57619ae2ef1ffc30522a1945d",
       "adapted": false
     }
   ],

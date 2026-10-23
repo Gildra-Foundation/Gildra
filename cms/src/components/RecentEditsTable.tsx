@@ -29,10 +29,10 @@ function statusLabel(status: string, t: ReturnType<typeof adminText>): string {
 export function RecentEditsTable({ rows, lang }: { rows: RecentEditRow[]; lang: AdminLang }) {
   const t = adminText(lang);
   const columns: DataTableColumn<RecentEditRow>[] = [
-    { key: "title", header: t.colTitle, sortable: true, cell: (row) => <>
+    { key: "title", header: t.colTitle, sortable: true, cell: (row) => <span className="gd-cell-title">
       {row.siteID !== null ? <SiteLink siteID={row.siteID} href={row.href}>{row.title || t.untitled}</SiteLink> : <Link href={row.href}>{row.title || t.untitled}</Link>}
       <span className="gd-kind">{row.kind === "guides" ? t.article : t.page}</span>
-    </> },
+    </span> },
     { key: "siteName", header: t.colSite, sortable: true },
     { key: "status", header: t.colStatus, sortable: true,
       accessor: (row) => statusLabel(row.status, t),

@@ -126,6 +126,8 @@
   --ui-ease-spring: var(--atlas-ease);
   --ui-focus-ring: 0 0 0 3px var(--atlas-bg), 0 0 0 5px var(--atlas-accent-strong);
   --ui-focus-color: var(--atlas-accent-strong);
+  /* Not in the site bridge (the site has no modals yet): the palette and dialogs keep the atlas corners too. */
+  --ui-radius-modal: var(--atlas-radius);
   background: transparent;
   min-width: 0;
   font-family: inherit;
@@ -147,6 +149,11 @@
 .gd-valyro .gd-site__actions .ui-button { text-decoration: none; }
 .gd-valyro .gd-panel .ui-data-table { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .gd-valyro .ui-data-table__scroll { max-width: 100%; }
+/* Desk panels are half the page wide: titles wrap so status and dates stay in view instead of scrolling away. */
+.gd-valyro .gd-panel .ui-data-table__table { width: 100%; }
+.gd-valyro .gd-panel .ui-data-table__table :is(th, td) { white-space: normal; }
+.gd-valyro .gd-panel .ui-data-table__table td:has(> .gd-cell-title) { min-width: 11em; }
+.gd-valyro .gd-cell-title { display: block; overflow-wrap: break-word; }
 .gd-valyro .ui-empty-state { padding-inline: var(--ui-space-3); }
 .gd-valyro .gd-analytics__filters { margin-block: var(--ui-space-4); }
 .gd-valyro .gd-analytics__site { display: grid; gap: var(--ui-space-2); max-width: 320px; margin-bottom: var(--ui-space-3); }
