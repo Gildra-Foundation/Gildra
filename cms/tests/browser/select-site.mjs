@@ -60,7 +60,7 @@ try {
   assert.equal((await context.cookies()).some((c) => c.name === 'payload-tenant'), false);
   ok('owner signed in with no site selection cookie');
 
-  for (const [collection, field] of [['guides', 'title'], ['pages', 'title']]) {
+  for (const collection of ['guides', 'pages']) {
     await page.goto(`${origin}/admin/collections/${collection}/create`);
     await page.waitForURL(`${origin}/admin/select-site?collection=${collection}`);
     await page.getByRole('heading', { name: 'Choose a site' }).waitFor();
