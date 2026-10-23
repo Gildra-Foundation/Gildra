@@ -21,14 +21,23 @@ try {
   assert.equal(response?.status(), 200, `Expected route HTTP 200, got ${response?.status() ?? "no response"}`);
   assert.match(await page.locator('meta[name="robots"]').getAttribute("content") ?? "", /noindex/i, "Unverified tactical draft must remain noindex");
   await page.locator('main[data-interactive="true"]').waitFor();
-  await page.getByText(/^(Маршрут — черновик|This route is a draft)$/).waitFor();
+  // The interactive planner and its draft notice sit in the collapsed "earlier
+  // draft" <details> under the verified review; open it the way a reader does.
+  const draftNotice = page.getByText(/^(Маршрут — черновик|This route is a draft)$/);
+  await draftNotice.waitFor({ state: "attached" });
+  const planner = page.locator("main details", { has: draftNotice }).first();
+  await planner.locator("summary").first().click();
+  await draftNotice.waitFor();
   // The demo party panel is mounted on demand.
   await page.getByRole("button", { name: "Открыть состав группы и тактические назначения" }).click();
   await page.locator("[data-demo-party]").getByText("Демонстрационные тестовые данные.", { exact: true }).waitFor();
 
+  // Jargon is checked in the planner's own copy; the verified review above it
+  // quotes source route names (e.g. "Tactyks PUG Friendly") as published.
+  const plannerCopy = await planner.textContent() ?? "";
   const visibleCopy = await page.locator("main").textContent() ?? "";
   for (const term of ["PUG", "пулл", "ILVL", "SCORE", "LOADOUT", "LIVE ROUTE", "TACTICAL", "колл", "Кик", "Диспел", "Пурж"]) {
-    assert.ok(!visibleCopy.toLocaleLowerCase("ru").includes(term.toLocaleLowerCase("ru")), `Unexplained jargon is visible: ${term}`);
+    assert.ok(!plannerCopy.toLocaleLowerCase("ru").includes(term.toLocaleLowerCase("ru")), `Unexplained jargon is visible: ${term}`);
   }
   for (const meaning of ["Цель:", "Что делать по порядку", "Кого победить", "На что реагировать", "Команда и план действий", "Кто, где и когда"]) {
     assert.ok(visibleCopy.includes(meaning), `Missing novice-facing information: ${meaning}`);
@@ -115,9 +124,10 @@ try {
   await page.getByText("Зал инкубации", { exact: true }).first().click();
   await page.getByRole("heading", { name: "Зал инкубации", level: 2 }).first().waitFor();
 
-  await page.getByRole("button", { name: "2F", exact: true }).click();
-  await page.getByAltText("Карта Ruby Life Pools, этаж 2").waitFor();
-  await page.getByRole("button", { name: "1F", exact: true }).click();
+  const floorTabs = page.locator('[aria-label="Этаж карты"]');
+  await floorTabs.getByRole("button", { name: /^2 эт\./ }).click();
+  await page.getByAltText(/^Карта .+, этаж 2$/).waitFor();
+  await floorTabs.getByRole("button", { name: /^1 эт\./ }).click();
 
   await page.getByRole("button", { name: "Увеличить" }).click();
   assert.equal(await page.locator('[aria-label="Масштаб карты"] output b').textContent(), "110%");
@@ -128,7 +138,7 @@ try {
   await page.getByRole("button", { name: "Развернуть карту" }).waitFor();
 
   // The step tools are folded in the detail panel (roadmap item 34): open them like a reader would.
-  const stepTools = page.locator("details", { has: page.locator("button", { hasText: "Добавить заметку" }) });
+  const stepTools = planner.locator("details", { has: page.locator("button", { hasText: "Добавить заметку" }) });
   if (!(await stepTools.evaluate((element) => element.open))) await stepTools.locator("summary").click();
   await page.getByRole("button", { name: "Добавить заметку" }).click();
   const note = page.getByLabel("Заметка группы");
