@@ -1,5 +1,6 @@
 #!/bin/bash
-# Contract of deploy-web-host.sh against a fake docker/git/curl/df.
+# Contract of deploy-web-host.sh and prune-web-images.sh against a fake
+# docker/curl/df/systemctl/gildra-heavy and a throwaway git repository.
 set -euo pipefail
 
 script_directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
@@ -22,8 +23,8 @@ reset_host() {
   rm -f "$deployment_directory"/*-previous.env
   printf 'SOURCE_REVISION=%s\nWEB_IMAGE=%s\nAPI_IMAGE=%s\nWEB_HOTFIX_SOURCE_REVISION=old\n' \
     "$revision" "$old_web" "$api_image" > "$deployment_directory/current-release.env"
-  # images/<tag>: "<id> <created, four words> <patch label>"
-  add_image "$old_web" sha256:old "2026-10-20 10:00:00 +0000 UTC" old-release
+  # images/<tag>: "<id> <created> <patch label>"
+  add_image "$old_web" sha256:old 2026-10-20T10:00:00Z old-release
   printf '%s\n' "$old_web" > "$state/web.image"
   : > "$state/docker.log"
   printf '100\n' > "$state/free.gb"
@@ -50,7 +51,7 @@ case $1 in
     ls -A "$context" > "$s/context.list"
     cp "$context/Dockerfile" "$s/context.dockerfile"
     [ -z "${TEST_BUILD_FAILS:-}" ] || exit 1
-    printf 'sha256:%s %s %s\n' "${tag##*:}" "2026-10-22 22:00:00 +0000 UTC" "$label" > "$s/images/$tag"
+    printf 'sha256:%s %s %s\n' "${tag##*:}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$label" > "$s/images/$tag"
     ;;
   tag) cp "$s/images/$2" "$s/images/$3" ;;
   image)
@@ -58,16 +59,14 @@ case $1 in
       inspect)
         if [ "$3" = --format ]; then
           case $4 in
-            *net.gildra.patch*) field "$5" 6 ;;
+            *net.gildra.patch*) field "$5" 3 ;;
+            *.Created*) field "$5" 2 ;;
             *revision*) echo "${TEST_REVISION:-}" ;;
             *.Id*) field "$5" 1 ;;
           esac
         else field "$3" 1 >/dev/null; fi ;;
       ls)
-        for f in "$s"/images/*; do
-          read -r id d t z u label < "$f"
-          printf '%s %s %s %s\t%s\t%s\n' "$d" "$t" "$z" "$u" "$(basename "$f")" "$id"
-        done ;;
+        for f in "$s"/images/*; do basename "$f"; done ;;
       rm)
         [ "$3" != "${TEST_IN_USE:-}" ] || exit 1
         rm -f "$s/images/$3"; echo "rm $3" >> "$s/removed.log" ;;
@@ -80,7 +79,6 @@ case $1 in
     esac ;;
   ps) echo container-1 ;;
   exec) case $* in *"nginx -s reload"*) echo reload >> "$s/reload.log" ;; esac ;;
-  builder) ;;
   compose)
     while [ "$#" -gt 0 ]; do
       case $1 in
@@ -104,6 +102,16 @@ cat > "$fake_bin/df" <<'FAKE_DF'
 #!/bin/sh
 printf 'Filesystem 1024-blocks Used Available Capacity Mounted\n/dev/x 1 1 %s 1%% /\n' "$(( $(cat "$TEST_STATE_DIR/free.gb") * 1048576 ))"
 FAKE_DF
+cat > "$fake_bin/systemctl" <<'FAKE_SYSTEMCTL'
+#!/bin/sh
+echo "$*" >> "$TEST_STATE_DIR/systemctl.log"
+FAKE_SYSTEMCTL
+
+cat > "$fake_bin/heavy" <<'FAKE_HEAVY'
+#!/bin/sh
+echo "$1 $2" >> "$TEST_STATE_DIR/heavy.log"
+exec "$@"
+FAKE_HEAVY
 chmod +x "$fake_bin"/*
 
 # A throwaway repository stands in for the source tree.
@@ -117,7 +125,7 @@ head=$(git -C "$source_repo" rev-parse HEAD)
 run() {
   PATH="$fake_bin:$PATH" TEST_STATE_DIR=$state GILDRA_DEPLOY_DIR=$deployment_directory \
     GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock GILDRA_SOURCE_DIR=$source_repo \
-    GILDRA_BUILD_DIR=$test_directory/build GILDRA_LOCK_WAIT=1 "$@" > "$test_directory/run.log" 2>&1
+    GILDRA_BUILD_DIR=$test_directory/build GILDRA_LOCK_WAIT=1 GILDRA_HEAVY=$fake_bin/heavy "$@" > "$test_directory/run.log" 2>&1
 }
 expect_ok() { run "$@" || { cat "$test_directory/run.log" >&2; echo "test: expected success: $*" >&2; exit 1; }; }
 expect_fail() { if run "$@"; then cat "$test_directory/run.log" >&2; echo "test: expected failure: $*" >&2; exit 1; fi; }
@@ -146,10 +154,17 @@ cmp -s "$deployment_directory/rel1-previous.env" "$test_directory/manifest.befor
 grep -q 'timings:' "$test_directory/run.log"
 grep -Eq '^  build +[0-9]+s$' "$test_directory/run.log"
 grep -Eq '^  total +[0-9]+s$' "$test_directory/run.log"
-if grep -q '^builder' "$state/docker.log" || [ -f "$state/removed.log" ]; then
-  echo 'test: nothing may be pruned without --prune' >&2; exit 1
-fi
+[ ! -f "$state/removed.log" ] || { echo 'test: nothing may be pruned without --prune' >&2; exit 1; }
 echo 'test: a healthy release switches only the WEB_* keys and keeps a rollback'
+
+# The build waits for a heavy-command slot and runs in the low-weight build slice.
+grep -qx 'env DOCKER_BUILDKIT=1' "$state/heavy.log"
+grep -qx 'set-property --runtime gildra-build.slice CPUWeight=50 IOWeight=50 MemoryHigh=8G' "$state/systemctl.log"
+grep -q -- '^build --cgroup-parent gildra-build.slice ' "$state/docker.log"
+reset_host
+expect_ok env GILDRA_HEAVY= GILDRA_BUILD_SLICE= "$deployment_script" rel1
+[ ! -f "$state/heavy.log" ] && [ ! -f "$state/systemctl.log" ] && ! grep -q -- --cgroup-parent "$state/docker.log"
+echo 'test: the build is queued and throttled, and both can be turned off'
 
 # --- failing smoke after the switch restores the previous image and manifest --
 reset_host
@@ -198,48 +213,70 @@ echo 'test: a held deployment lock stops the release'
 # --- bad arguments and wrong labels are refused -------------------------------
 reset_host
 expect_fail env "$deployment_script" 'bad label'
-expect_fail env "$deployment_script" rel1 --keep 0
-add_image gildra-web:other sha256:other "2026-10-22 10:00:00 +0000 UTC" something-else
+expect_fail env "$deployment_script" rel1 --keep 3
+add_image gildra-web:other sha256:other 2026-10-22T10:00:00Z something-else
 expect_fail env "$deployment_script" rel1 --image gildra-web:other
 grep -q 'not labelled net.gildra.patch=rel1' "$test_directory/run.log"
 echo 'test: bad arguments and mislabelled images are refused'
 
 # --- --image rolls out an existing image without building ---------------------
 reset_host
-add_image gildra-web:prebuilt sha256:pre "2026-10-22 11:00:00 +0000 UTC" rel2
+add_image gildra-web:prebuilt sha256:pre 2026-10-22T11:00:00Z rel2
 expect_ok env TEST_REVISION="$head" "$deployment_script" rel2 --image gildra-web:prebuilt
 [ ! -f "$state/context.list" ] && grep -qx 'WEB_IMAGE=gildra-web:prebuilt' "$manifest"
 echo 'test: --image rolls out a prebuilt image'
 
 # --- --prune-dry-run lists without removing anything ----------------------------
 reset_host
-add_image gildra-web:r01 sha256:r01 "2026-10-01 10:00:00 +0000 UTC" r01
-for day in 02 03 04 05 06; do add_image "gildra-web:r$day" "sha256:r$day" "2026-10-$day 10:00:00 +0000 UTC" "r$day"; done
+for day in 01 02 03 04 05 06; do add_image "gildra-web:r$day" "sha256:r$day" "2026-10-${day}T10:00:00Z" "r$day"; done
 expect_ok env "$deployment_script" rel1 --prune-dry-run
-grep -q 'would remove image tag gildra-web:r01' "$test_directory/run.log"
+grep -q 'WOULD DELETE gildra-web:r01' "$test_directory/run.log"
 [ -f "$state/images/gildra-web:r01" ] && [ ! -f "$state/removed.log" ]
-if grep -q '^builder' "$state/docker.log"; then echo 'test: a dry run must not prune build cache' >&2; exit 1; fi
 echo 'test: --prune-dry-run removes nothing'
 
-# --- --prune keeps recent, current, rollback and in-use images ----------------
+# --- --prune: current + 2 previous, last rollback/backup, in use, young ------------
 reset_host
-for day in 10 11 12 13 14 15 16; do
-  add_image "gildra-web:r$day" "sha256:r$day" "2026-10-$day 10:00:00 +0000 UTC" "r$day"
-done
-for day in 11 12 13 14; do
-  add_image "gildra-web:rollback-before-r$day" "sha256:x$day" "2026-10-$day 09:00:00 +0000 UTC" "x"
-done
-add_image gildra-web:preview sha256:preview "2026-10-01 10:00:00 +0000 UTC" preview
-expect_ok env TEST_CONTAINER_IMAGE_ID=sha256:preview "$deployment_script" rel1 --prune --keep 3
-kept() { [ -f "$state/images/$1" ] || { echo "test: $1 should be kept" >&2; exit 1; }; }
-gone() { [ ! -f "$state/images/$1" ] || { echo "test: $1 should be removed" >&2; exit 1; }; }
-kept "$new_web"; kept "$old_web"; kept gildra-web:rollback-before-rel1
-kept gildra-web:r16; kept gildra-web:preview
-kept gildra-web:rollback-before-r14; kept gildra-web:rollback-before-r13
-gone gildra-web:r15; gone gildra-web:r14; gone gildra-web:r10; gone gildra-web:rollback-before-r12; gone gildra-web:rollback-before-r11
-grep -q '^builder prune -f --filter until=168h' "$state/docker.log"
-grep -q '^builder prune -f --max-used-space 30GB' "$state/docker.log"
-echo 'test: --prune keeps recent, current, rollback and in-use images'
+for day in 10 11 12 13 14 15 16; do add_image "gildra-web:r$day" "sha256:r$day" "2026-10-${day}T10:00:00Z" "r$day"; done
+for day in 11 12 13 14; do add_image "gildra-web:rollback-before-r$day" "sha256:x$day" "2026-10-${day}T09:00:00Z" x; done
+add_image gildra-web:backup-a sha256:ba 2026-10-05T10:00:00Z x
+add_image gildra-web:backup-b sha256:bb 2026-10-12T10:00:00Z x
+add_image gildra-web:fastdeploy-e2e-a sha256:e2e 2026-10-21T10:00:00Z e2e
+add_image gildra-web:preview sha256:preview 2026-10-01T10:00:00Z preview
+add_image gildra-web:fresh sha256:fresh "$(date -u -d '-1 hour' +%Y-%m-%dT%H:%M:%SZ)" fresh
+# Releases that ran: r15 before r16 before the current old-release (backups name the replaced image).
+printf 'WEB_IMAGE=gildra-web:r15\n' > "$deployment_directory/r16-previous.env"
+printf 'WEB_IMAGE=gildra-web:r16\n' > "$deployment_directory/old-release-previous.env"
+touch -d '-2 days' "$deployment_directory/r16-previous.env"; touch -d '-1 day' "$deployment_directory/old-release-previous.env"
+expect_ok env TEST_CONTAINER_IMAGE_ID=sha256:preview "$deployment_script" rel1 --prune
+kept() { [ -f "$state/images/$1" ] || { cat "$test_directory/run.log" >&2; echo "test: $1 should be kept" >&2; exit 1; }; }
+gone() { [ ! -f "$state/images/$1" ] || { cat "$test_directory/run.log" >&2; echo "test: $1 should be removed" >&2; exit 1; }; }
+# current (new) + previous two (the replaced release and r16)
+kept "$new_web"; kept "$old_web"; kept gildra-web:r16
+# the last deploy's rollback tag (the one just made) and the newest backup
+kept gildra-web:rollback-before-rel1; kept gildra-web:backup-b
+kept gildra-web:preview; kept gildra-web:fresh
+gone gildra-web:r15; gone gildra-web:r10; gone gildra-web:rollback-before-r14; gone gildra-web:rollback-before-r11
+gone gildra-web:backup-a; gone gildra-web:fastdeploy-e2e-a
+grep -q 'KEEP(in use) gildra-web:preview' "$test_directory/run.log"
+grep -q 'KEEP(younger than 6h) gildra-web:fresh' "$test_directory/run.log"
+if grep -q '^builder' "$state/docker.log"; then echo 'test: build cache belongs to the disk guard' >&2; exit 1; fi
+echo 'test: --prune keeps current + 2 previous, the last rollback/backup, in-use and young images'
+
+# --- the retention script alone: dry run by default, refuses without a manifest --
+reset_host
+add_image gildra-web:r01 sha256:r01 2026-10-01T10:00:00Z r01
+PATH="$fake_bin:$PATH" TEST_STATE_DIR=$state GILDRA_DEPLOY_DIR=$deployment_directory \
+  "$script_directory/prune-web-images.sh" > "$test_directory/run.log"
+grep -qx 'KEEP(current) gildra-web:old-release-aaaaaaaaaaaa' "$test_directory/run.log"
+grep -qx 'WOULD DELETE gildra-web:r01' "$test_directory/run.log"
+[ -f "$state/images/gildra-web:r01" ]
+sed -i '/^WEB_IMAGE=/d' "$manifest"
+if PATH="$fake_bin:$PATH" TEST_STATE_DIR=$state GILDRA_DEPLOY_DIR=$deployment_directory \
+  "$script_directory/prune-web-images.sh" --apply > "$test_directory/run.log" 2>&1; then
+  echo 'test: pruning without a current release must fail' >&2; exit 1
+fi
+[ ! -f "$state/removed.log" ]
+echo 'test: prune-web-images.sh is a dry run by default and needs a current release'
 
 # --- the build copy follows the requested commit and drops stray files ----------
 reset_host

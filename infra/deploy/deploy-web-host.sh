@@ -4,7 +4,7 @@
 # with the time of every step printed at the end.
 #
 #   sudo infra/deploy/deploy-web-host.sh <label> [--ref <git-ref>] [--staging]
-#        [--image <local-image>] [--expect <path>:<text>] [--prune | --prune-dry-run] [--keep <n>]
+#        [--image <local-image>] [--expect <path>:<text>] [--prune | --prune-dry-run]
 #
 # The image is built from the committed tree of <git-ref> (default HEAD), so
 # uncommitted or ignored files never reach production: a private build copy
@@ -19,8 +19,13 @@
 #    previous image is tagged gildra-web:rollback-before-<label>;
 #  * any failure after the switch restores the previous image and manifest.
 # Only WEB_* keys of current-release.env change. --prune (or GILDRA_PRUNE=1)
-# then drops old gildra-web images and aged build cache (prune_images below);
-# --prune-dry-run only lists the image tags it would remove.
+# then applies the image retention of prune-web-images.sh (shared with the disk
+# guard); --prune-dry-run only lists what it would remove.
+#
+# The build waits for a slot of the host's heavy-command queue (gildra-heavy)
+# and runs in gildra-build.slice with a low CPU/IO weight and a memory ceiling,
+# so the production containers in system.slice keep the machine; the switch
+# itself is not throttled.
 set -euo pipefail
 
 usage() {
@@ -39,10 +44,10 @@ smoke_host=${GILDRA_SMOKE_HOST:-127.0.0.1}
 smoke_port=${GILDRA_SMOKE_PORT:-443}
 smoke_paths=${GILDRA_WEB_SMOKE_PATHS:-"/ /ru /wow /ru/wow /login /ru/login /tier-lists /ru/tier-lists /database /ru/database /sitemap.xml /wow/raids /ru/wow/raids /wow/mythic-plus /ru/wow/mythic-plus /ru/wow/characters /ru/talents/fury-warrior /ru/search /library /ru/library /ru/privacy /wow/lairs /ru/wow/dungeons /ru/wow/gear /ru/wow/rotation/fury-warrior"}
 min_free_gb=${GILDRA_MIN_FREE_GB:-20}
-keep=${GILDRA_KEEP_IMAGES:-5}
-cache_max_age=${GILDRA_BUILD_CACHE_MAX_AGE:-168h}
-cache_max_size=${GILDRA_BUILD_CACHE_MAX_SIZE:-30GB}
 prune=${GILDRA_PRUNE:-0}
+heavy=${GILDRA_HEAVY-/home/zulut/bin/gildra-heavy}
+build_slice=${GILDRA_BUILD_SLICE-gildra-build.slice}
+build_limits=${GILDRA_BUILD_LIMITS-CPUWeight=50 IOWeight=50 MemoryHigh=8G}
 
 label=${1:-}
 [[ $label =~ ^[0-9A-Za-z][0-9A-Za-z._-]{0,79}$ ]] || usage
@@ -56,11 +61,9 @@ while [ "$#" -gt 0 ]; do
     --expect) expect=${2:?--expect needs <path>:<text>}; shift 2 ;;
     --prune) prune=1; shift ;;
     --prune-dry-run) prune=dry-run; shift ;;
-    --keep) keep=${2:?--keep needs a number}; shift 2 ;;
     *) usage ;;
   esac
 done
-[[ $keep =~ ^[1-9][0-9]*$ ]] || { echo "deploy-web-host: --keep must be a positive number" >&2; exit 64; }
 
 say() { printf 'deploy-web-host[%s]: %s\n' "$label" "$*" >&2; }
 fail() { say "$*"; exit 1; }
@@ -152,35 +155,6 @@ trap 'exit 129' HUP; trap 'exit 130' INT; trap 'exit 143' TERM
 
 free_gb() { df -Pk "$1" | awk 'NR==2 { print int($4 / 1048576) }'; }
 
-# Keep the newest $keep release images, the current and previous web images,
-# the newest three rollback/backup tags and every image a container uses;
-# untag the rest (docker removes an image with its last tag). Build cache that
-# has not been used for $cache_max_age goes, and the rest is capped at
-# $cache_max_size.
-prune_images() {
-  local -A protected=()
-  local listing created ref id releases=0 marked=0
-  protected[$(docker image inspect --format '{{.Id}}' "$image")]=1
-  protected[$(docker image inspect --format '{{.Id}}' "$previous")]=1
-  while read -r id; do protected[$id]=1; done < <(docker ps -aq | xargs -r docker inspect --format '{{.Image}}')
-  listing=$(docker image ls gildra-web --no-trunc --format '{{.CreatedAt}}\t{{.Repository}}:{{.Tag}}\t{{.ID}}' |
-    grep -v '<none>' | sort -r)
-  while IFS=$'\t' read -r created ref id; do
-    case ${ref#gildra-web:} in
-      rollback-*|backup-*) marked=$((marked + 1)); [ "$marked" -gt 3 ] || protected[$id]=1 ;;
-      *) releases=$((releases + 1)); [ "$releases" -gt "$keep" ] || protected[$id]=1 ;;
-    esac
-  done <<< "$listing"
-  while IFS=$'\t' read -r created ref id; do
-    [ -z "$ref" ] || [ -n "${protected[$id]:-}" ] && continue
-    if [ "$prune" = dry-run ]; then say "would remove image tag $ref"; continue; fi
-    say "removing old image tag $ref"
-    docker image rm "$ref" >/dev/null || say "kept $ref (still in use)"
-  done <<< "$listing"
-  [ "$prune" = 1 ] || return 0
-  docker builder prune -f --filter "until=$cache_max_age" >/dev/null
-  docker builder prune -f --max-used-space "$cache_max_size" >/dev/null
-}
 
 step preflight
 for command_name in docker git curl flock xargs df; do
@@ -206,8 +180,21 @@ if [ -z "$image" ]; then
 
   step build
   # BuildKit keeps the npm and Next.js caches in cache mounts (Dockerfile), so a
-  # rebuild only redoes what the commit changed.
-  DOCKER_BUILDKIT=1 docker build --progress="${GILDRA_BUILD_PROGRESS:-auto}" \
+  # rebuild only redoes what the commit changed. BuildKit runs the steps, not
+  # the docker client, so only --cgroup-parent (not nice) lowers their priority.
+  build_cmd=(env DOCKER_BUILDKIT=1 docker build)
+  if [ -n "$build_slice" ]; then
+    if command -v systemctl >/dev/null && [ -n "$build_limits" ]; then
+      # shellcheck disable=SC2086 # one property per word
+      systemctl set-property --runtime "$build_slice" $build_limits || say "could not limit $build_slice"
+    fi
+    build_cmd+=(--cgroup-parent "$build_slice")
+  fi
+  if [ -n "$heavy" ] && [ -x "$heavy" ]; then
+    say "waiting for a heavy-command slot ($heavy)"
+    build_cmd=("$heavy" "${build_cmd[@]}")
+  fi
+  "${build_cmd[@]}" --progress="${GILDRA_BUILD_PROGRESS:-auto}" \
     --label "net.gildra.patch=$label" \
     --label "org.opencontainers.image.revision=$revision" \
     --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -260,5 +247,8 @@ say "$image is live; rollback: gildra-web:rollback-before-$label, manifest $back
 
 if [ "$prune" != 0 ]; then
   step prune
-  prune_images || say "pruning failed; the release itself is fine"
+  prune_args=()
+  [ "$prune" = 1 ] && prune_args=(--apply)
+  GILDRA_DEPLOY_DIR=$root "$(dirname "$0")/prune-web-images.sh" "${prune_args[@]}" >&2 ||
+    say "pruning failed; the release itself is fine"
 fi
