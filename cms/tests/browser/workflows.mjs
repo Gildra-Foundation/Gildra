@@ -155,9 +155,13 @@ try {
   await select('Content language', 'Russian');
   await workspace.getByRole('link', { name: 'New article', exact: true }).click();
   await page.getByRole('button', { name: 'Create the article on Gildra', exact: true }).click();
+  // Nothing is created until the first input: the "new article" step asks for the title.
+  await page.waitForURL(/\/admin\/new-article\?locale=ru$/);
+  await page.locator('.gd-workspace form input').fill('Новая черновая статья');
+  await page.getByRole('button', { name: 'Create draft and continue to the text', exact: true }).click();
   await page.waitForURL(/\/admin\/collections\/guides\/\d+\?locale=ru$/);
   const newID = /guides\/(\d+)/.exec(page.url())[1];
-  await page.locator('input[name=title]').fill('Новая черновая статья');
+  await page.locator('input[name=title]').waitFor();
   await page.locator('textarea[name=summary]').fill('Краткое описание нового материала');
   await page.locator('[contenteditable=true]').first().fill('Текст новой статьи, сохранённый в редакторе.');
   await page.locator('input[name=title]').click();
@@ -196,8 +200,12 @@ try {
   await page.goto(`${origin}/admin/articles`);
   await workspace.getByRole('link', { name: 'New article', exact: true }).click();
   await page.getByRole('button', { name: 'Create the article on Gildra', exact: true }).click();
+  await page.waitForURL(/\/admin\/new-article\?locale=en$/);
+  await page.locator('.gd-workspace form input').fill('Article written by an author');
+  await page.getByRole('button', { name: 'Create draft and continue to the text', exact: true }).click();
   await page.waitForURL(/\/admin\/collections\/guides\/\d+\?locale=en$/);
   const authorID = /guides\/(\d+)/.exec(page.url())[1];
+  await page.locator('input[name=title]').waitFor();
   await page.locator('input[name=title]').fill('Article written by an author');
   await page.locator('textarea[name=summary]').fill('An author saves a draft for editorial review.');
   await page.locator('[contenteditable=true]').first().fill('An authored draft from the native editor.');

@@ -59,8 +59,10 @@ try {
   const blocks = page.locator('.gd-blocks > .gd-blocklist > ul > li');
 
   // The page id is picked from the site's list.
+  // "Create" opens the choose-a-page step; the draft is made only by its submit button.
   await page.goto(`${origin}/admin/collections/pages/create`);
-  await page.locator('.gd-pageid button').first().click();
+  await page.waitForURL(/\/admin\/new-page/);
+  await page.locator('.gd-workspace form button').first().click();
   const options = await page.getByRole('option').allInnerTexts();
   assert.ok(options.some((o) => o.includes('wow/tier-lists')) && options.some((o) => o.includes('wow/privacy')), options.join(' | '));
   await page.keyboard.press('Escape');
