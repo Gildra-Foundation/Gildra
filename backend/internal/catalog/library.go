@@ -2,7 +2,6 @@ package catalog
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -13,7 +12,7 @@ import (
 func (s *Service) DatasetContainsEntity(ctx context.Context, dataset string, entityID uuid.UUID) (bool, error) {
 	dataset = strings.TrimSpace(dataset)
 	if len(dataset) < 2 || len(dataset) > 64 {
-		return false, errors.New("dataset must be between 2 and 64 characters")
+		return false, invalidRequest("dataset must be between 2 and 64 characters")
 	}
 	var contains bool
 	err := s.postgres.QueryRow(ctx, `

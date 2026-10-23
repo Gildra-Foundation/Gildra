@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"testing"
 )
 
@@ -294,7 +297,7 @@ func TestBuildFromClassicResourceLink(t *testing.T) {
 func TestRetryableRequestErrorRecognizesNetworkTimeout(t *testing.T) {
 	t.Parallel()
 	err := &url.Error{Op: "Get", URL: "https://us.api.blizzard.com", Err: context.DeadlineExceeded}
-	if !retryableRequestError(err) {
+	if !RetryableNetworkError(err) {
 		t.Fatal("expected network timeout to be retryable")
 	}
 }
@@ -353,5 +356,27 @@ func TestRequestReauthenticatesAfterRepeatedUnauthorized(t *testing.T) {
 	}
 	if tokenCalls.Load() != 3 {
 		t.Fatalf("token calls = %d, want 3", tokenCalls.Load())
+	}
+}
+
+func TestRetryableNetworkErrorKeepsTemporaryConditions(t *testing.T) {
+	operation := func(err error) error {
+		return &net.OpError{Op: "read", Net: "tcp", Err: os.NewSyscallError("read", err)}
+	}
+	for _, err := range []error{
+		operation(syscall.ECONNRESET), operation(syscall.ECONNABORTED), operation(syscall.ETIMEDOUT),
+		&net.DNSError{Err: "server misbehaving", IsTemporary: true},
+		fmt.Errorf("fetch: %w", operation(syscall.ECONNRESET)),
+	} {
+		if !RetryableNetworkError(err) {
+			t.Errorf("%v must be retried", err)
+		}
+	}
+	for _, err := range []error{
+		operation(syscall.ECONNREFUSED), &net.DNSError{Err: "no such host", IsNotFound: true}, errors.New("bad payload"),
+	} {
+		if RetryableNetworkError(err) {
+			t.Errorf("%v must not be retried", err)
+		}
 	}
 }

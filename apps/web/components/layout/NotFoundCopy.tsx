@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useSyncExternalStore } from "react";
 import { ArrowRight } from "lucide-react";
 import buttonStyles from "@gildra/atlas-ui/AtlasButton.module.css";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
 const copy = {
   en: {
@@ -24,7 +25,6 @@ const copy = {
 const subscribe = () => () => {};
 const isRussianUrl = () => /^\/ru(?:\/|$)/.test(window.location.pathname);
 
-type Locale = "en" | "ru";
 
 /** The locale-dependent parts of the 404. A tree's not-found (app/(site), app/ru)
  *  knows its language and renders it on the server; the 404 of unmatched URLs

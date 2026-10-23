@@ -1,6 +1,7 @@
 import type { CharacterRunKind } from "@/lib/wow/characterRunHistory";
+import type { Lang } from "@/lib/i18n-paths";
 
-export type WorkspaceLocale = "en" | "ru";
+export type WorkspaceLocale = Lang;
 
 // Only application-authored UI copy belongs here; names from game data and users remain unchanged.
 const englishCopy = {

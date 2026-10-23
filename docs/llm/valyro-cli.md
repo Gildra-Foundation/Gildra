@@ -81,16 +81,38 @@ After an update of `atlas`, `valyro-public-theme.css` must stay a small derivati
 (`scripts/test-public-valyro-theme.mjs` fails above 30 % of the theme); a computed
 token name with only the bare `--ui-` prefix is ignored by the generator.
 
+## Performance rules
+
+- `@gildra/atlas-ui` is `"sideEffects": ["*.css"]`: `components/atlas` re-exports the
+  whole kit, and without the flag every page loaded every component's stylesheet.
+  Keep modules of the kit free of top-level side effects.
+- Every Valyro component the kit reaches adds its tokens to `valyro-public-theme.css`
+  (global CSS). Re-export Valyro parts the app uses directly through
+  `packages/atlas-ui/src/valyroParts.ts`, so the generator sees them.
+- Heavy or rarely used components load on demand: `notify()` imports the Toaster on
+  the first toast; the `/tier-lists` board mounts `AtlasTierBoard` with `next/dynamic`
+  when it nears the viewport.
+- Tailwind utilities (API console, /analytics) live in a cascade layer and lose to the
+  unlayered Valyro CSS. Do not put a Valyro component under markup the console styles
+  entirely with utilities; use Valyro where it brings behaviour (focus, keyboard,
+  ARIA) and style it through tokens.
+- Measure with `npm run budgets -- --base <local prod server>`; prefetched routes make
+  single runs vary by tens of KB, so compare repeated runs.
+
 ## Pro
 
 Pro sources need the owner's account: the owner runs `npm run valyro:login` (opens
 valyro.xyz to approve a one-time code; the token is stored in
 `~/.config/valyro/auth.json`). Agents never create, copy or commit tokens; CI uses
 `VALYRO_TOKEN`. Without a login the wrapper skips recorded Pro components and refuses
-to add new ones.
+to add new ones; Pro items it installs are listed in the manifest's `proComponents`.
 
 ## Environment
 
 The scripts need Node 22 with `npm`/`npx` on `PATH` (CI and the Dockerfiles use
 22.23.2). On the shared server `/opt/gildra` is not readable for every user; use a
 personal install such as `~/.local/node22` linked into `~/.local/bin`.
+
+On the shared server, run heavy commands (build, typecheck, lint, full tests, CMS build,
+Playwright screenshots) through `/home/zulut/bin/gildra-heavy <command>` — at most two at a
+time across all sessions, at low priority — and stop dev servers right after use.

@@ -198,7 +198,7 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		t.Fatalf("base variants=%d stats=%d effects=%d, want 3, 2 and 1",
 			variantResult.Variants, variantResult.VariantStats, variantResult.VariantEffects)
 	}
-	if err := observeDB2LocalizationArtifacts(ctx, pool, ic); err != nil {
+	if err := observeDB2LocalizationArtifactsForTables(ctx, pool, ic, nil); err != nil {
 		t.Fatalf("observe DB2 localization artifacts: %v", err)
 	}
 

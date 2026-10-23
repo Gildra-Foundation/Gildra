@@ -1,5 +1,6 @@
 import { talentScenarios, type TalentScenario } from "@/lib/wow/testCharacterTalentAudit";
-export type TalentLang = "ru" | "en";
+import type { Lang } from "@/lib/i18n-paths";
+export type TalentLang = Lang;
 const english = {
   "Класс": "Class",
   "Герой": "Hero",

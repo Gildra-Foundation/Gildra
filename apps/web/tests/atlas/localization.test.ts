@@ -3,13 +3,14 @@ import { test } from "node:test";
 import { catalogLocaleView } from "../../lib/catalogLocale.ts";
 import { sourceSpellNames } from "../../lib/wow/sourceSpellNames.ts";
 import { wowRouteText } from "../../lib/wow/routeSourceLocale.ts";
-import { getDungeonSelectorOptions, getDungeonRoute } from "../../components/wow/mythic/dungeonRoutes.ts";
+import { getDungeonSelectorOptions, getDungeonRoute } from "../../lib/data/wow/mythic/dungeonRoutes.ts";
 import { plainLanguage, stopSubtitle } from "../../components/wow/mythic/mythicRouteCopy.ts";
-import { initialStops } from "../../components/wow/mythic/rubyLifePoolsData.ts";
+import { initialStops } from "../../lib/data/wow/mythic/rubyLifePoolsData.ts";
 import { consoleEnglish } from "../../components/api-console/consoleCopy.ts";
 import { rotationResourceLabel } from "../../lib/platform/rotation/locale.ts";
 import { langOf, altPath } from "../../lib/i18n-paths.ts";
 import { wowSourceName, wowSourceText, wowNpcName, wowSpellName } from "../../lib/wow/sourceLocale.ts";
+import { fullWowNameTable } from "../../lib/wow/fullWowNameTable.ts";
 import { localizeRotationCatalog, mergeRotationAbility, localizeRotationResult, rotationComboName } from "../../lib/platform/rotation/locale.ts";
 import type { RotationPreset, RotationSimulationResult, SavedRotationCombo } from "../../lib/platform/rotation/types.ts";
 
@@ -55,6 +56,9 @@ test("rotation matches spell IDs and preserves locale when saved English payload
   assert.equal(display.resourceLabel, "Ярость");
   assert.equal(display.dps, result.dps);
   assert.equal(display.casts, result.casts);
+  const withProc = { ...result, procs: [{ name: "Murder Row", start: 0, end: 1 }] } as unknown as RotationSimulationResult;
+  assert.equal(localizeRotationResult(withProc, localized.abilities, "ru", {}, fullWowNameTable).procs?.[0].name, "Закоулок душегубов", "Runtime names use the loaded source names");
+  assert.equal(localizeRotationResult(withProc, localized.abilities, "en", {}, fullWowNameTable).procs?.[0].name, "Murder Row");
 });
 
 test("language switching preserves user names and canonical paths", () => {
@@ -108,8 +112,8 @@ test("every built-in route step keeps its Russian display free of untranslated n
     const route = getDungeonRoute(slug)!;
     const original = JSON.stringify(route.stops);
     for (const stop of route.stops) {
-      const text = [wowRouteText(stop.title, "ru"), stopSubtitle(stop.subtitle, "ru", stop.enemies),
-        ...[stop.summary, stop.tank, stop.healer, stop.dps, ...stop.callouts].map((value) => plainLanguage(value))].join(" ");
+      const text = [wowRouteText(stop.title, "ru"), stopSubtitle(stop.subtitle, "ru", fullWowNameTable, stop.enemies),
+        ...[stop.summary, stop.tank, stop.healer, stop.dps, ...stop.callouts].map((value) => plainLanguage(value, "ru", fullWowNameTable))].join(" ");
       assert.equal(/[A-Za-z]/.test(text.replace(/\bID\b/g, "")), false, `${slug} step ${stop.id} has untranslated display text`);
     }
     assert.equal(JSON.stringify(route.stops), original);

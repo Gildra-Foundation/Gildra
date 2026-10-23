@@ -128,6 +128,7 @@ export function SpecMenuCatalog({ current, localePrefix, lang, rootRef, triggerR
                 key={spec.slug}
                 href={href}
                 prefetch
+                data-route-scroll="keep"
                 role="menuitem"
                 aria-current={selected ? "page" : undefined}
                 onClick={(event) => {

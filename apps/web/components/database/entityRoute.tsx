@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { EntityDetailPage } from "@/components/database/EntityDetailPage";
 import { getCatalogEntity, getCatalogEntityComparison, getCatalogEntityQuality, getCatalogEntityTypes, getCatalogEntityVersions, getCatalogRelationships } from "@/lib/api/client";
 import { formatQuestText } from "@/lib/gameText";
+import type { Lang } from "@/lib/i18n-paths";
 
 /**
  * One catalog record page in either language (`/database/:type/:id/:slug` and
@@ -11,7 +12,6 @@ import { formatQuestText } from "@/lib/gameText";
  * is fetched; a wrong slug moves permanently to the record's own slug; hreflang
  * names each language's canonical address (the slugs differ per language).
  */
-type Lang = "en" | "ru";
 export type EntityRouteParams = Promise<{ type: string; id: string; slug: string }>;
 export type EntityRouteSearch = Promise<{ fromBuildId?: string; toBuildId?: string }> | undefined;
 

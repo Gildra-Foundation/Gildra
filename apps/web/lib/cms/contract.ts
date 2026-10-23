@@ -1,10 +1,11 @@
+import type { Lang } from "@/lib/i18n-paths";
 // Shared CMS contract, mirrored in riftden-platform/apps/lol/src/lib/cms; keep both copies identical.
 /**
  * Public projection served by the shared Payload CMS (`/api/public/:site/...`).
  * Only these fields exist publicly; the frontend never talks to Payload's
  * collection REST API for content. Keep in sync with cms/src/public/projection.ts.
  */
-export type CmsLocale = "en" | "ru";
+export type CmsLocale = Lang;
 
 export type PublicMedia = {
   id: number | string;

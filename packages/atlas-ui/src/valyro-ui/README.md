@@ -16,6 +16,12 @@ scope keeps portaled layers in the Characters token scope; the separate
 mutates the document's existing theme attributes. Native AtlasSelect stays
 available for plain forms and existing select-event handlers.
 
+`motion-kit/` (`page-transition`, added with `npm run valyro:add`) serves the
+route veil through `src/motionTier.ts`: its render-tier detection gives GPU
+machines the full sweep and CPU-composited ones a one-layer dissolve. The
+`PageTransition` component itself is not mounted — it keeps the leaving page
+rendered under a key, while the App Router shell never remounts page content.
+
 Run adapter SSR/provenance tests from the repository root:
 
 ```sh

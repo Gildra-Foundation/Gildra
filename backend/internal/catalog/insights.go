@@ -182,7 +182,7 @@ func qualityLabel(locale, en, ru string) string {
 
 func (s *Service) Versions(ctx context.Context, id uuid.UUID, locale string, limit int) ([]EntityVersion, error) {
 	if limit < 1 || limit > 50 {
-		return nil, errors.New("limit must be between 1 and 50")
+		return nil, invalidRequest("limit must be between 1 and 50")
 	}
 	var exists bool
 	if err := s.postgres.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM game_entities WHERE id=$1 AND deleted_at IS NULL AND published_version_id IS NOT NULL)`, id).Scan(&exists); err != nil {
@@ -224,10 +224,10 @@ func (s *Service) Versions(ctx context.Context, id uuid.UUID, locale string, lim
 
 func (s *Service) Compare(ctx context.Context, id uuid.UUID, locale string, fromBuildID, toBuildID *int64) (EntityComparison, error) {
 	if (fromBuildID == nil) != (toBuildID == nil) {
-		return EntityComparison{}, errors.New("fromBuildId and toBuildId must be provided together")
+		return EntityComparison{}, invalidRequest("fromBuildId and toBuildId must be provided together")
 	}
 	if fromBuildID != nil && *fromBuildID == *toBuildID {
-		return EntityComparison{}, errors.New("fromBuildId and toBuildId must differ")
+		return EntityComparison{}, invalidRequest("fromBuildId and toBuildId must differ")
 	}
 	versions, err := s.Versions(ctx, id, locale, 50)
 	if err != nil {

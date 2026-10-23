@@ -1,14 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Radio } from "lucide-react";
+import { AtlasSwitch } from "@gildra/atlas-ui/AtlasSwitch";
 
 export function GameTrackingToggle({ followedLabel, followLabel }: { followedLabel: string; followLabel: string }) {
   const [tracked, setTracked] = useState(true);
-  return (
-    <button type="button" role="switch" aria-checked={tracked} onClick={() => setTracked((value) => !value)}>
-      {tracked ? <Check /> : <Radio />}
-      <b>{tracked ? followedLabel : followLabel}</b>
-    </button>
-  );
+  return <AtlasSwitch size="sm" checked={tracked} onCheckedChange={setTracked} label={tracked ? followedLabel : followLabel} />;
 }

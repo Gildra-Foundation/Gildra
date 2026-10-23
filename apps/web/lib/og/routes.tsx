@@ -1,13 +1,15 @@
 import { pluralRu } from "@gildra/atlas-ui/format";
-import { getMidnightRaid, raidSceneArt, raidSlugs } from "@/components/wow/raid/midnightRaidData";
-import { getBossStrategy } from "@/components/wow/raid/raidStrategy";
-import { dungeonRoutes, getDungeonRoute, type DungeonSlug } from "@/components/wow/mythic/dungeonRoutes";
-import { contentManifest, midnightDelves, midnightLairEncounters, getMidnightClass, getMidnightClassSpec, getMidnightClassSpecs, midnightClasses, midnightSpecializations } from "@gildra/game-data";
+import { getMidnightRaid, raidSceneArt, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
+import { getBossStrategy } from "@/lib/data/wow/raid/raidStrategy";
+import { dungeonRoutes, getDungeonRoute, type DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
+import { contentManifest, midnightDelves, midnightLairEncounters } from "@gildra/game-data";
+import { getMidnightClass, getMidnightClassSpec, getMidnightClassSpecs, midnightClasses, midnightSpecializations } from "@/lib/data/wow/specializations";
 import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { getBoss } from "@/lib/lairs";
 import { getTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
 import { atlasOgImage, type AtlasOgSpec } from "./atlasOg";
 import { upcomingGame } from "@/lib/games/destinations";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
 /**
  * Open Graph cards of the atlas routes. Each `opengraph-image.tsx` in app/ is a
@@ -15,7 +17,6 @@ import { upcomingGame } from "@/lib/games/destinations";
  * the route params into the card (scene, eyebrow, title, facts); unknown params
  * fall back to the section card, so a card is never broken.
  */
-type Locale = "en" | "ru";
 type Params = Record<string, string>;
 type Spec = Omit<AtlasOgSpec, "locale">;
 

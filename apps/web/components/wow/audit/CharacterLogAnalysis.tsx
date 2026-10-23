@@ -33,18 +33,24 @@ export function CharacterLogAnalysis({ characterSlug, specializationSlug, locale
       window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
       window.requestAnimationFrame(() => document.getElementById("audit-logs")?.scrollIntoView({ behavior: "smooth", block: "start" }));
     }
-    fetch("/api/wow/logs/status", { cache: "no-store" }).then(async (response) => setStatus(await response.json() as Status)).catch(() => setStatus({ configured: false, connected: false, error: "unavailable" }));
+    const controller = new AbortController();
+    fetch("/api/wow/logs/status", { cache: "no-store", signal: controller.signal }).then(async (response) => setStatus(await response.json() as Status)).catch(() => {
+      if (!controller.signal.aborted) setStatus({ configured: false, connected: false, error: "unavailable" });
+    });
+    return () => controller.abort();
   }, []);
   useEffect(() => {
     if (!status?.connected) return;
     setReportsState("loading");
-    fetch("/api/wow/logs/reports", { cache: "no-store" }).then(async (response) => {
+    const controller = new AbortController();
+    fetch("/api/wow/logs/reports", { cache: "no-store", signal: controller.signal }).then(async (response) => {
       if (response.status === 401 || response.status === 403) { setStatus((value) => ({ configured: value?.configured ?? true, connected: false })); setReportsState("error"); return; }
       if (!response.ok) { setReportsState("error"); return; }
       const payload = await response.json() as { reports?: ReportOption[] };
       setReports(payload.reports ?? []);
       setReportsState("ready");
-    }).catch(() => setReportsState("error"));
+    }).catch(() => { if (!controller.signal.aborted) setReportsState("error"); });
+    return () => controller.abort();
   }, [status?.connected]);
   const cooldowns = useMemo(() => {
     const byID = new Map(abilities.map((ability) => [ability.id, ability]));

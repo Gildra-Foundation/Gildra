@@ -2,13 +2,14 @@ package league
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
 
 const apiBase = "/league-of-legends/v1"
@@ -23,14 +24,6 @@ type Catalog interface {
 }
 
 type Handler struct{ catalog Catalog }
-
-type problem struct {
-	Type     string `json:"type"`
-	Title    string `json:"title"`
-	Status   int    `json:"status"`
-	Detail   string `json:"detail"`
-	Instance string `json:"instance"`
-}
 
 func NewHandler(catalog Catalog) *Handler { return &Handler{catalog: catalog} }
 
@@ -181,19 +174,10 @@ func handlePage[T any](w http.ResponseWriter, r *http.Request, page Page[T], err
 	writeJSON(w, 200, page)
 }
 func writeJSON(w http.ResponseWriter, status int, value any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(value); err != nil {
-		slog.Warn("encode League response", "error", err)
-	}
+	httpjson.Write(w, status, "", value)
 }
 func writeProblem(w http.ResponseWriter, r *http.Request, status int, kind, title, detail string) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(problem{Type: "https://api.gildra.net/errors/league-of-legends/" + kind, Title: title, Status: status, Detail: detail, Instance: r.URL.Path}); err != nil {
-		slog.Warn("encode League problem", "error", err)
-	}
+	httpjson.WriteProblem(w, status, httpjson.NoStore, httpjson.Problem{
+		Type: "https://api.gildra.net/errors/league-of-legends/" + kind, Title: title, Status: status, Detail: detail, Instance: r.URL.Path,
+	})
 }

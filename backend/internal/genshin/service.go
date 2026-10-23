@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Gildra-Foundation/Gildra/backend/internal/pagination"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -56,11 +57,8 @@ type ListParams struct {
 	WeaponType string
 }
 
-type Pagination struct {
-	NextCursor string `json:"nextCursor,omitempty"`
-	HasMore    bool   `json:"hasMore"`
-	Limit      int    `json:"limit"`
-}
+// Pagination and Page are the shared keyset page types.
+type Pagination = pagination.Info
 
 type CharacterSummary struct {
 	ID             int64   `json:"id"`
@@ -313,10 +311,7 @@ type ContentSummary struct {
 	LocaleFallback   bool                  `json:"localeFallback"`
 }
 
-type Page[T any] struct {
-	Data       []T        `json:"data"`
-	Pagination Pagination `json:"pagination"`
-}
+type Page[T any] = pagination.Page[T]
 
 func NewService(postgres *pgxpool.Pool) *Service {
 	return &Service{postgres: postgres}
@@ -415,7 +410,7 @@ func (s *Service) ListCharacters(ctx context.Context, params ListParams) (Page[C
 	if err := rows.Err(); err != nil {
 		return Page[CharacterSummary]{}, fmt.Errorf("iterate genshin characters: %w", err)
 	}
-	return makePage(items, params.Limit, func(item CharacterSummary) string { return item.Slug }), nil
+	return pagination.Make(items, params.Limit, func(item CharacterSummary) string { return item.Slug }), nil
 }
 
 func (s *Service) GetCharacter(ctx context.Context, slug, locale string) (CharacterDetail, error) {
@@ -1260,7 +1255,7 @@ func (s *Service) ListWeapons(ctx context.Context, params ListParams) (Page[Weap
 	if err := rows.Err(); err != nil {
 		return Page[WeaponSummary]{}, fmt.Errorf("iterate genshin weapons: %w", err)
 	}
-	return makePage(items, params.Limit, func(item WeaponSummary) string { return item.Slug }), nil
+	return pagination.Make(items, params.Limit, func(item WeaponSummary) string { return item.Slug }), nil
 }
 
 func (s *Service) ListArtifactSets(ctx context.Context, params ListParams) (Page[ArtifactSetSummary], error) {
@@ -1308,7 +1303,7 @@ func (s *Service) ListArtifactSets(ctx context.Context, params ListParams) (Page
 	if err := rows.Err(); err != nil {
 		return Page[ArtifactSetSummary]{}, fmt.Errorf("iterate genshin artifact sets: %w", err)
 	}
-	return makePage(items, params.Limit, func(item ArtifactSetSummary) string { return item.Slug }), nil
+	return pagination.Make(items, params.Limit, func(item ArtifactSetSummary) string { return item.Slug }), nil
 }
 
 func (s *Service) ListTalents(ctx context.Context, params ListParams) (Page[TalentSummary], error) {
@@ -1358,7 +1353,7 @@ func (s *Service) ListTalents(ctx context.Context, params ListParams) (Page[Tale
 	if err := rows.Err(); err != nil {
 		return Page[TalentSummary]{}, fmt.Errorf("iterate genshin talents: %w", err)
 	}
-	return makePage(items, params.Limit, func(item TalentSummary) string { return strconv.FormatInt(item.ID, 10) }), nil
+	return pagination.Make(items, params.Limit, func(item TalentSummary) string { return strconv.FormatInt(item.ID, 10) }), nil
 }
 
 func (s *Service) ListContent(ctx context.Context, category string, params ListParams) (Page[ContentSummary], error) {
@@ -1425,7 +1420,7 @@ func (s *Service) ListContent(ctx context.Context, category string, params ListP
 	if err := rows.Err(); err != nil {
 		return Page[ContentSummary]{}, fmt.Errorf("iterate genshin content %s: %w", category, err)
 	}
-	return makePage(items, params.Limit, func(item ContentSummary) string { return item.Slug }), nil
+	return pagination.Make(items, params.Limit, func(item ContentSummary) string { return item.Slug }), nil
 }
 
 func decodeTalentCursor(cursor string) (int64, error) {
@@ -1441,22 +1436,6 @@ func decodeTalentCursor(cursor string) (int64, error) {
 		return 0, ErrInvalidCursor
 	}
 	return afterID, nil
-}
-
-func makePage[T any](items []T, limit int, cursor func(T) string) Page[T] {
-	hasMore := len(items) > limit
-	if hasMore {
-		items = items[:limit]
-	}
-	page := Page[T]{Data: items, Pagination: Pagination{HasMore: hasMore, Limit: limit}}
-	if hasMore && len(items) > 0 {
-		page.Pagination.NextCursor = encodeCursor(cursor(items[len(items)-1]))
-	}
-	return page
-}
-
-func encodeCursor(value string) string {
-	return base64.RawURLEncoding.EncodeToString([]byte(value))
 }
 
 func decodeCursor(cursor string) (string, error) {

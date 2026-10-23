@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MythicRouteMap } from "@/components/wow/mythic/MythicRouteMap";
 import { getDungeonCombatIntel } from "@/components/wow/mythic/dungeonCombatIntel.server";
-import { dungeonSlugs, getDungeonRoute, getDungeonSelectorOptions } from "@/components/wow/mythic/dungeonRoutes";
+import { dungeonSlugs, getDungeonRoute, getDungeonSelectorOptions } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { localizedRoute } from "@/components/wow/mythic/localizedRoute";
 import { preloadDungeonBackdrop } from "@/lib/wow/dungeonBackdropPreload";
 

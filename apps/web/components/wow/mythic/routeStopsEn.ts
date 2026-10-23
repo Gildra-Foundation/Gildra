@@ -1,4 +1,4 @@
-import type { DungeonSlug } from "./dungeonRoutes";
+import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 
 export type StopEn = {
   title: string;

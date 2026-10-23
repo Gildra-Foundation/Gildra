@@ -14,6 +14,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
 
 type GearVariantRequest struct {
@@ -285,11 +287,9 @@ func (h *WorkerHandler) resolveVariants(w http.ResponseWriter, r *http.Request) 
 		if errors.Is(err, errVariantMetadataMissing) {
 			code = "variant_metadata_worker_upgrade_required"
 		}
-		writeProblem(w, 503, code, code)
+		writeProblem(w, http.StatusServiceUnavailable, code, code)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "private, no-store")
 	w.Header().Set("X-Gildra-Engine", "simulationcraft")
-	_ = json.NewEncoder(w).Encode(result)
+	httpjson.Write(w, http.StatusOK, httpjson.PrivateNoStore, result)
 }

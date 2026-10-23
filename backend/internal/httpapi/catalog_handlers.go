@@ -6,7 +6,6 @@ package httpapi
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/api"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
@@ -71,7 +70,7 @@ func (s *Server) ListGameCategories(ctx context.Context, request api.ListGameCat
 	}
 	categories, err := s.catalog.Categories(ctx, product, request.Params.Type, locale)
 	if err != nil {
-		if strings.Contains(err.Error(), "required") {
+		if errors.Is(err, catalog.ErrInvalidRequest) {
 			return api.ListGameCategories400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{
 				Code: "invalid_category_query", Message: err.Error(),
 			}}, nil
@@ -166,7 +165,7 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 	}
 	page, err := s.catalog.Summaries(ctx, params)
 	if err != nil {
-		if strings.Contains(err.Error(), "cursor") || strings.Contains(err.Error(), "limit") || strings.Contains(err.Error(), "ItemLevel") || strings.Contains(err.Error(), "item level") || strings.Contains(err.Error(), "RequiredLevel") || strings.Contains(err.Error(), "required level") || strings.Contains(err.Error(), "itemClassId") || strings.Contains(err.Error(), "dataset") || strings.Contains(err.Error(), "facet") || strings.Contains(err.Error(), "externalIds") {
+		if errors.Is(err, catalog.ErrInvalidRequest) {
 			return api.ListGameEntitySummaries400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{
 				Code: "invalid_page", Message: err.Error(),
 			}}, nil
@@ -207,7 +206,7 @@ func (s *Server) ListGameSitemapEntries(ctx context.Context, request api.ListGam
 	}
 	entries, err := s.catalog.SitemapEntries(ctx, product, request.Params.Type, shard)
 	if err != nil {
-		if strings.Contains(err.Error(), "required") || strings.Contains(err.Error(), "shard") {
+		if errors.Is(err, catalog.ErrInvalidRequest) {
 			return api.ListGameSitemapEntries400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{
 				Code: "invalid_sitemap_shard", Message: err.Error(),
 			}}, nil
@@ -326,7 +325,7 @@ func (s *Server) ListGameEntities(ctx context.Context, request api.ListGameEntit
 	}
 	page, err := s.catalog.List(ctx, params)
 	if err != nil {
-		if strings.Contains(err.Error(), "cursor") || strings.Contains(err.Error(), "limit") {
+		if errors.Is(err, catalog.ErrInvalidRequest) {
 			return api.ListGameEntities400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{
 				Code: "invalid_page", Message: err.Error(),
 			}}, nil
@@ -408,7 +407,7 @@ func (s *Server) ListGameEntityRelationships(ctx context.Context, request api.Li
 		}, nil
 	}
 	if err != nil {
-		if strings.Contains(err.Error(), "cursor") || strings.Contains(err.Error(), "limit") || strings.Contains(err.Error(), "direction") {
+		if errors.Is(err, catalog.ErrInvalidRequest) {
 			return api.ListGameEntityRelationships400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{
 				Code: "invalid_relationship_query", Message: err.Error(),
 			}}, nil
@@ -480,7 +479,7 @@ func (s *Server) ListGameEntityVersions(ctx context.Context, request api.ListGam
 		return api.ListGameEntityVersions404ApplicationProblemPlusJSONResponse{NotFoundApplicationProblemPlusJSONResponse: notFoundProblem("The requested game entity does not exist.")}, nil
 	}
 	if err != nil {
-		if strings.Contains(err.Error(), "limit") {
+		if errors.Is(err, catalog.ErrInvalidRequest) {
 			return api.ListGameEntityVersions400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{Code: "invalid_page", Message: err.Error()}}, nil
 		}
 		return api.ListGameEntityVersions500JSONResponse{InternalErrorJSONResponse: api.InternalErrorJSONResponse{Code: "catalog_unavailable", Message: "version history is temporarily unavailable"}}, nil
@@ -502,7 +501,7 @@ func (s *Server) GetGameEntityComparison(ctx context.Context, request api.GetGam
 		return api.GetGameEntityComparison404ApplicationProblemPlusJSONResponse{NotFoundApplicationProblemPlusJSONResponse: notFoundProblem("Two matching entity versions were not found.")}, nil
 	}
 	if err != nil {
-		if strings.Contains(err.Error(), "provided together") || strings.Contains(err.Error(), "must differ") {
+		if errors.Is(err, catalog.ErrInvalidRequest) {
 			return api.GetGameEntityComparison400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{Code: "invalid_comparison", Message: err.Error()}}, nil
 		}
 		return api.GetGameEntityComparison500JSONResponse{InternalErrorJSONResponse: api.InternalErrorJSONResponse{Code: "catalog_unavailable", Message: "version comparison is temporarily unavailable"}}, nil

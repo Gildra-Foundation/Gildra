@@ -19,6 +19,7 @@ import { auctionGearServiceMessage } from "@/lib/wow/auctionGearCopy";
 import { GearPlannerItem, gearPlannerItemStatDescription } from "./GearPlannerItem";
 import { AuctionGearSuggestions } from "./AuctionGearSuggestions";
 import styles from "./auctionGearOptimizer.module.css";
+import { auctionFormats, formatGold } from "./auctionFormat";
 
 const slotNames: Record<string, [string, string]> = {
   HEAD: ["Голова", "Head"], NECK: ["Шея", "Neck"], SHOULDER: ["Плечи", "Shoulders"],
@@ -126,11 +127,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     document.addEventListener("visibilitychange", visible);
     return () => { clearTimeout(timer); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", visible); };
   }, [search?.market, assembly?.market]);
-  const numeric = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2 });
-  const signed = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2, signDisplay: "exceptZero" });
-  const gold = new Intl.NumberFormat(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 4 });
+  const { numeric, signed } = auctionFormats[ru ? "ru" : "en"];
   const number = (value: number) => numeric.format(value);
-  const money = (value: number) => `${gold.format(value / 10000)} ${t("зол.", "gold")}`;
+  const money = (value: number) => formatGold(value, ru ? "ru" : "en");
   const slotName = (slot: string) => slotNames[slot]?.[ru ? 0 : 1] ?? slot;
   const recommendationGroups = useMemo(() => getAuctionGearRecommendationGroups(search?.items ?? [], { excludedOptionIds: excluded, excludedVariantKeys }), [search, excluded, excludedVariantKeys]);
   useEffect(() => {

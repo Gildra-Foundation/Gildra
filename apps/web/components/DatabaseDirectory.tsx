@@ -7,7 +7,8 @@ import { AtlasDisclosure, AtlasField, AtlasInput, AtlasSelect } from "@/componen
 import { CatalogBehavior } from "@/components/database/CatalogBehavior";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
 import { RecordPreviewButton } from "@/components/database/RecordPreviewButton";
-import { databaseCopy, entityTypeLabel, FACET_LABELS, formatCount, GROUP_LABELS, highlightLabel, previewCopy, type DatabaseCopy } from "@/components/database/databaseCopy";
+import { databaseCopy, FACET_LABELS, formatCount, GROUP_LABELS, highlightLabel, previewCopy, type DatabaseCopy } from "@/components/database/databaseCopy";
+import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
 import styles from "@/components/database/databaseHub.module.css";
 import { AtlasPagination } from "@gildra/atlas-ui/AtlasPagination";
 

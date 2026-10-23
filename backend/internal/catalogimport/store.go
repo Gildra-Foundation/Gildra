@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"hash"
-	"net"
 	"net/url"
 	"sort"
 	"strings"
@@ -1290,8 +1289,7 @@ func classifyImportFailure(err error) importFailure {
 	if errors.Is(err, context.DeadlineExceeded) {
 		return importFailure{Code: "source_timeout", Retryable: true, RetryAfter: retryAt(10 * time.Minute)}
 	}
-	var networkError net.Error
-	if errors.As(err, &networkError) && (networkError.Timeout() || networkError.Temporary()) {
+	if battlenet.RetryableNetworkError(err) {
 		return importFailure{Code: "source_transport", Retryable: true, RetryAfter: retryAt(10 * time.Minute)}
 	}
 	return importFailure{Code: "unclassified", Retryable: false}
@@ -1398,18 +1396,6 @@ func pathString(doc map[string]any, keys ...string) *string {
 		return nil
 	}
 	return &value
-}
-
-func pathInt(doc map[string]any, keys ...string) *int64 {
-	var current any = doc
-	for _, key := range keys {
-		object, ok := current.(map[string]any)
-		if !ok {
-			return nil
-		}
-		current = object[key]
-	}
-	return integer(current)
 }
 
 func pathInt32(doc map[string]any, keys ...string) *int64 {

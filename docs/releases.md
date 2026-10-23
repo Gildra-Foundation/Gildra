@@ -3,7 +3,7 @@
 Один журнал для всех сессий, которые выкатывают сайт (roadmap, пункт 98). Каждая
 выкатка — строка ниже, **до** сообщения соседней сессии о том, что сайт свободен.
 
-Как выкатывают сейчас: образ собирается на хосте из чистого `git worktree` на
+Как выкатывали до `deploy-web-host.sh` (ниже): образ собирается на хосте из чистого `git worktree` на
 коммите релизной ветки `release/atlas-theme-20261011`, ставится на staging
 (`sudo sh infra/deploy/deploy-web-staging.sh <образ>`, http://127.0.0.1:3200),
 проходит `npm run qa:release -- --candidate http://127.0.0.1:3200`, и тот же образ
@@ -12,6 +12,58 @@
 только свои ключи (`WEB_*` / `API_*`). Прежний манифест остаётся в
 `/opt/gildra/<метка>-previous.env` — это и есть откат. После выкатки `master`
 на GitHub получает коммит `[skip ci]` с тем же деревом.
+
+## Веб одной командой (`infra/deploy/deploy-web-host.sh`)
+
+Из checkout на хосте, на закоммиченном релизном коммите:
+
+```bash
+sudo infra/deploy/deploy-web-host.sh <метка> [--ref <коммит>] [--staging] [--expect /ru:<текст>] [--prune]
+```
+
+Скрипт собирает образ `gildra-web:<метка>-<sha12>` из дерева коммита (не из
+рабочей копии), берёт `/run/lock/gildra-deploy.lock` уже после сборки, проверяет,
+что текущий релиз здоров и проходит smoke, ставит тег
+`gildra-web:rollback-before-<метка>` на прежний образ, сохраняет
+`/opt/gildra/<метка>-previous.env`, переключает `web`, перезагружает nginx,
+прогоняет 25 маршрутов параллельно и пишет в манифест только `WEB_*`. Любая
+ошибка после переключения — автоматический откат образа и манифеста. В конце
+печатает время каждого шага. `--staging` сначала ставит образ на staging
+(`deploy-web-staging.sh`), `--image <образ>` выкатывает уже собранный образ,
+`--prune` после успешной выкатки применяет правила хранения, `--prune-dry-run`
+только показывает, что удалит. При свободном месте меньше 20 ГБ скрипт
+останавливается до сборки. Сборка ждёт слот общей очереди
+`/home/zulut/bin/gildra-heavy` и идёт в `gildra-build.slice`
+(`CPUWeight=50 IOWeight=50 MemoryHigh=8G` через `--cgroup-parent`): `nice` на
+клиенте `docker` до шагов BuildKit не доходит, а без slice они делят
+`system.slice` с продом. Сам выкат не ограничивается. Ожидание слота
+печатается отдельной строкой `queue wait`: 2026-10-23 сборка ждала занятые
+dev-задачами слоты ≈18 мин при самой сборке ≈2–3 мин; `GILDRA_HEAVY=` (пусто)
+запускает сборку без очереди, например для срочного исправления.
+
+Правила хранения образов `gildra-web:*` — одни для деплоя и сторожа диска,
+`sudo infra/deploy/prune-web-images.sh [--apply]` (без `--apply` — только
+список). Остаются: образы любых контейнеров; текущий `WEB_IMAGE` и два релиза,
+которые стояли до него (по `WEB_IMAGE` двух самых новых
+`/opt/gildra/*previous*.env`, поэтому кандидаты и тестовые теги релизами не
+считаются); самый новый тег `rollback*` и самый новый `backup*`; всё моложе
+6 часов. Остальные теги снимаются. Build cache чистит сторож диска, по
+возрасту и без `-a`: cache mounts `gildra-npm`, `gildra-web-next`,
+`gildra-web-tsc` (≈0.6 ГБ) и дают тёплую сборку. Тест контракта:
+`bash infra/deploy/test-deploy-web-host.sh`.
+
+Почему быстро (замеры 2026-10-22 на этом хосте, правка одного файла): сборка
+и выкатка 143 с при load 25–30 против ≈690 с у прежнего процесса при той же
+нагрузке (сборка 658 с + ручная выкатка). Реальный выкат `architecture-20261022`
+прежним способом при load ≈50–60: сборка ≈21.5 мин (`npm ci` 98 с, компиляция
+2.5 мин, TypeScript 2.6 мин, пререндер 9.9 мин, экспорт 161 с). Кэши BuildKit (`npm`, `.next/cache` с кэшем Turbopack и
+OG-карточками, `tsbuildinfo`) живут между сборками; typecheck идёт отдельной
+стадией параллельно с `next build`; 322 OG-карточки (≈80 % CPU сборки) берутся
+из кэша, если их входы не менялись (`lib/og/atlasOg.tsx`); слой `public/`
+общий для всех релизов, так что новый образ добавляет на диск ≈220 МБ, а не
+≈1.2 ГБ. Холодная сборка (пустые кэши) по-прежнему ≈9–11 минут.
+
+## Проверки и журнал
 
 Перед выкаткой: `npm run typecheck`, `npm run lint`, `npm run test:atlas`,
 `npm run routes:check`, `npm run atlas:check`, сборка, `npm run visual:diff`,
@@ -62,3 +114,6 @@
 | 2026-10-16 10:22 | auction-reliability-20261016-764210f | web `gildra-web:auction-reliability-20261016-764210f` (`e77e773b`); worker `gildra-rotation-sim-worker:auction-reliability-20261016-764210f` (`3d676fd9`) | 764210f | 14 исправлений надёжности: подтверждённый сет, сохранение результатов, исключения, восстановление потерянных запросов, отмена/повтор, реальные свойства вещей; 65 focused + 80 browser, 7 staging-гейтов; Элкардия EN/RU +503 DPS за 300,89 золота, 4 real UI replay и 16 public views; 424,714 с наблюдения | подбор экипировки | прежние web `571a7537` и worker `3d320982`; `/opt/gildra/auction-reliability-20261016-764210f-previous.env`; [отчёт](reports/auction-reliability-deployment-20261016.md) |
 | 2026-10-19 08:45 | motion-design-20261019-7357c61-r1 | web `gildra-web:motion-design-20261019-7357c61` (image `0104dafb`) | 7357c61 | один владелец переходов (эффект персонажа только у главной, тап пропускает; между страницами 0.1–0.3 с, каскад и перелёт арта), CLS: на телефоне 0, на десктопе ≤0.053; новая страница «Персонажи»; 29 правок текста, данных и мобильной вёрстки; staging: home-gate 0 px, smoke 28, переходы, темы, сцены, CLS; после выкатки smoke/переходы/темы на gildra.net | Claude (motion/design) | `fba239aa` (illidan-acid-20261018-f4da729-r1), манифест `/opt/gildra/motion-design-20261019-7357c61-r1-previous.env` |
 | 2026-10-22 21:06 | nav-locale-20261022 | web `gildra-web:nav-locale-20261022-6a06f0e381e9` (image `e232246610fb`) | 6a06f0e | редизайн меню (realm bar с порталами, мобильное меню-лист, portal-переходы между страницами, gilded identity) + анимированный переключатель EN/RU с cross-document view transition и сохранением позиции чтения; typecheck, atlas:check, test:atlas 164/164, routes:check, сборка 766 страниц; локальный образ и gildra.net: 26 браузерных проверок 1440/390 без ошибок консоли, smoke 25 маршрутов | Claude (release) | `ef70c8dd` (`gildra-web:atlas-valyro-20261022-ce40d85a58a7`, тег `gildra-web:rollback-before-nav-locale-20261022`), манифест `/opt/gildra/nav-locale-20261022-previous.env` |
+| 2026-10-22 22:56 | architecture-20261022 | web `gildra-web:architecture-20261022-9b9cb407127f` (image `62dd68b46378`) | 9b9cb40 | архитектура фронтенда без изменения вида: трассировка auctionGearPersistence, общий React cache каталога/CMS в запросе, ленивые планировщики экипировки, точечные импорты атласа, имена тир-листа с сервера, TTL кэша талантов, отмена устаревших fetch; удалён мёртвый код и `ctx.source`, данные M+/рейдов в `lib/data/wow`; typecheck, lint (0 новых ошибок), atlas:check, test:atlas 163/163, routes:check, Valyro 10/10, сборка 766 страниц; бюджеты: JS −15…−43 КБ, CSS −40…−57 КБ на маршрут против прода; visual:diff 48 снимков 1440/390 = 0 px против прода до выкатки; живые проверки gildra.net (меню, EN↔RU, тир-листы, база, M+, рейды, статьи) без ошибок консоли | Claude (release) | `e232246610fb` (`gildra-web:nav-locale-20261022-6a06f0e381e9`, тег `gildra-web:rollback-before-architecture-20261022`), манифест `/opt/gildra/architecture-20261022-previous.env` |
+| 2026-10-23 10:41 | release-20261023 | web `gildra-web:release-20261023-de5b6f57d7ec` (image `e9b519393a42`) | de5b6f5 | сводный релиз пяти веток: быстрый деплой web (`infra/deploy/deploy-web-host.sh`), token-diet, Valyro CLI (ModalLayer, AtlasSegmented, clipboard), motion/логотип/горизонт у подножия страниц и тир-доска на `/tier-lists`, чистка архитектуры (API-консоль по модулям, без next-intl); typecheck, lint (0 новых ошибок), atlas:check, test:atlas 167/167, valyro:check 8/8, адаптеры Valyro 12/12, routes:check, `infra/deploy/test-*.sh`, сборка 767 страниц, budgets в норме; после выкатки smoke 30 маршрутов и 24 браузерные проверки 1440/390 на gildra.net (EN↔RU, переходы, reduced-motion, мобильное меню) без ошибок консоли; новый скрипт: сборка 249 с + очередь 125 с, переключение 11 с, smoke 6 с (прошлый деплой: сборка ≈21,5 мин) | Claude (release) | `62dd68b46378` (`gildra-web:architecture-20261022-9b9cb407127f`, тег `gildra-web:rollback-before-release-20261023`), манифест `/opt/gildra/release-20261023-previous.env` |
+| 2026-10-23 10:46 | catalog-perf-20261023 | API `gildra-api:catalog-perf-20261023-1289575` (image `d2ae13891048`) | 1289575 | счётчики `total` каталога в фоне, а не на запросе: ожидание ≤ 2 с, затем кэш/оценка планировщика; быстрые (5 с, 4 слота) и медленные (10 мин, 2 слота) подсчёты раздельно; `/v1/game/entities?type=spell&limit=100` — 200 за 9–12 с (было: обрыв по таймауту), `entity-summaries` с `total` 0,04–0,1 с; схема 172 без миграций; промежуточная выкатка `6598dcb` (10:25) заменена из-за голодания дешёвых подсчётов | Claude (release API) | `gildra-api:catalog-perf-20261022-6598dcb` (`/opt/gildra/catalog-perf-20261023-previous.env`); исходный `gildra-api:auction-gear-20261015-57f74f1` — тег `gildra-api:rollback-before-catalog-perf-20261022`, `/opt/gildra/catalog-perf-20261022-previous.env` |

@@ -2,13 +2,13 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
 
 type PublicationEvaluator interface {
@@ -61,10 +61,7 @@ func isCatalogDeliveryPath(path string) bool {
 }
 
 func writePublicationProblem(w http.ResponseWriter, code, detail string) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.Header().Set("Cache-Control", "no-store")
-	w.WriteHeader(http.StatusServiceUnavailable)
-	_ = json.NewEncoder(w).Encode(map[string]any{
+	httpjson.WriteProblem(w, http.StatusServiceUnavailable, httpjson.NoStore, map[string]any{
 		"type":  "https://api.gildra.net/errors/" + strings.ReplaceAll(code, "_", "-"),
 		"title": "Catalog publication unavailable", "status": http.StatusServiceUnavailable,
 		"code": code, "detail": detail,

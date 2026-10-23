@@ -132,12 +132,28 @@ func (e *SimCEngine) Simulate(ctx context.Context, input SimulationInput) (Simul
 				return SimulationResult{}, baselineErr
 			}
 			baselineDPS = int(math.Round(baselineReport.Sim.Players[0].CollectedData.DPS.Mean))
-			e.cacheMu.Lock()
-			e.baseline[key] = baselineDPS
-			e.cacheMu.Unlock()
+			e.storeBaseline(key, baselineDPS)
 		}
 	}
 	return resultFromSimC(input, report, baselineDPS)
+}
+
+// maxSimCBaselines bounds the baseline cache: its key includes the
+// caller's custom APL rules, so it would otherwise grow with every request.
+const maxSimCBaselines = 512
+
+// storeBaseline caches a baseline DPS, evicting an arbitrary entry when full;
+// a dropped baseline only costs one extra simulation later.
+func (e *SimCEngine) storeBaseline(key string, dps int) {
+	e.cacheMu.Lock()
+	defer e.cacheMu.Unlock()
+	if _, exists := e.baseline[key]; !exists && len(e.baseline) >= maxSimCBaselines {
+		for evicted := range e.baseline {
+			delete(e.baseline, evicted)
+			break
+		}
+	}
+	e.baseline[key] = dps
 }
 
 func (e *SimCEngine) run(ctx context.Context, input SimulationInput) (simcReport, error) {
@@ -1303,15 +1319,6 @@ func isObservedCast(action simcAction, cooldowns []CooldownWindow) bool {
 	return true
 }
 
-func hasSimCBuff(action simcAction, name string) bool {
-	for _, buff := range action.Buffs {
-		if buff.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
 func buffUptime(player simcPlayer, name string) float64 {
 	for _, buff := range player.Buffs {
 		if buff.Name == name {
@@ -1382,16 +1389,4 @@ func simcFindings(resources []ResourceTrack, cooldowns []CooldownWindow, fightLe
 		}
 	}
 	return findings
-}
-
-func sameRules(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for index := range left {
-		if left[index] != right[index] {
-			return false
-		}
-	}
-	return true
 }

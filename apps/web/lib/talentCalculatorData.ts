@@ -378,38 +378,41 @@ async function getTalentTreeEntity(locale: TalentLocale) {
   return getCatalogEntity(summary.id, locale, "", true);
 }
 
-const allPvpTalentSummariesPromises = new Map<TalentLocale, Promise<CatalogRecord[]>>();
-const pvpTalentSummaryPromises = new Map<string, Promise<CatalogRecord | null>>();
+type Remembered<T> = { value: Promise<T>; expiresAt: number };
+const rememberedForMs = 300_000;
+
+/**
+ * Per-process memo with the Raidbots snapshot's five-minute expiry, so a result
+ * built while the catalog was degraded is rebuilt instead of served until the
+ * server restarts. Failed loads are forgotten at once.
+ */
+function remember<K, T>(store: Map<K, Remembered<T>>, key: K, load: () => Promise<T>): Promise<T> {
+  const hit = store.get(key);
+  if (hit && hit.expiresAt > Date.now()) return hit.value;
+  const value = load().catch((error) => {
+    if (store.get(key)?.value === value) store.delete(key);
+    throw error;
+  });
+  store.set(key, { value, expiresAt: Date.now() + rememberedForMs });
+  return value;
+}
+
+const allPvpTalentSummariesPromises = new Map<TalentLocale, Remembered<CatalogRecord[]>>();
+const pvpTalentSummaryPromises = new Map<string, Remembered<CatalogRecord | null>>();
 
 function getPvpTalentSummaryById(externalId: number, locale: TalentLocale) {
-  const key = `${locale}:${externalId}`;
-  const cached = pvpTalentSummaryPromises.get(key);
-  if (cached) return cached;
-
-  const request = getCatalogPage({
+  return remember(pvpTalentSummaryPromises, `${locale}:${externalId}`, () => getCatalogPage({
     locale,
     product: "wow",
     type: "pvp_talent",
     query: String(externalId),
     limit: 1,
     includeTotal: false,
-  }).then((page) => page.data.map((row) => catalogLocaleView(row, locale === "ru_RU" ? "ru" : "en")).find((row) => row.externalId === externalId) ?? null).catch((error) => {
-    pvpTalentSummaryPromises.delete(key);
-    throw error;
-  });
-  pvpTalentSummaryPromises.set(key, request);
-  return request;
+  }).then((page) => page.data.map((row) => catalogLocaleView(row, locale === "ru_RU" ? "ru" : "en")).find((row) => row.externalId === externalId) ?? null));
 }
 
 function getAllPvpTalentSummaries(locale: TalentLocale) {
-  const cached = allPvpTalentSummariesPromises.get(locale);
-  if (cached) return cached;
-  const request = loadAllPvpTalentSummaries(locale).catch((error) => {
-    allPvpTalentSummariesPromises.delete(locale);
-    throw error;
-  });
-  allPvpTalentSummariesPromises.set(locale, request);
-  return request;
+  return remember(allPvpTalentSummariesPromises, locale, () => loadAllPvpTalentSummaries(locale));
 }
 
 async function loadAllPvpTalentSummaries(locale: TalentLocale) {
@@ -879,7 +882,7 @@ async function loadMidnightWarriorTalentData(lang: TalentLang): Promise<TalentCa
   };
 }
 
-const midnightWarriorTalentDataPromises = new Map<TalentLang, Promise<TalentCalculatorData>>();
+const midnightWarriorTalentDataPromises = new Map<TalentLang, Remembered<TalentCalculatorData>>();
 
 function loadCatalogWithDeadline(lang: TalentLang, milliseconds = 15_000) {
   return new Promise<TalentCalculatorData>((resolve, reject) => {
@@ -892,21 +895,13 @@ function loadCatalogWithDeadline(lang: TalentLang, milliseconds = 15_000) {
 }
 
 export function getMidnightWarriorTalentData(lang: TalentLang = "ru"): Promise<TalentCalculatorData> {
-  const cached = midnightWarriorTalentDataPromises.get(lang);
-  if (cached) return cached;
-  const request = loadCatalogWithDeadline(lang)
-    .catch(() => loadRaidbotsTalentData(defaultTalentSpecTheme, heroSubtreeId, lang))
-    .catch((error) => {
-      midnightWarriorTalentDataPromises.delete(lang);
-      throw error;
-    });
-  midnightWarriorTalentDataPromises.set(lang, request);
-  return request;
+  return remember(midnightWarriorTalentDataPromises, lang, () => loadCatalogWithDeadline(lang)
+    .catch(() => loadRaidbotsTalentData(defaultTalentSpecTheme, heroSubtreeId, lang)));
 }
 
-const midnightTalentDataPromises = new Map<string, Promise<TalentCalculatorData>>();
+const midnightTalentDataPromises = new Map<string, Remembered<TalentCalculatorData>>();
 
-const talentPageDataPromises = new Map<string, Promise<TalentCalculatorData>>();
+const talentPageDataPromises = new Map<string, Remembered<TalentCalculatorData>>();
 
 /** Load page data without making the first render wait on dozens of tooltip requests. */
 export function getMidnightTalentPageData(specSlug: string, heroPathId?: number, lang: TalentLang = "ru"): Promise<TalentCalculatorData> {
@@ -915,11 +910,7 @@ export function getMidnightTalentPageData(specSlug: string, heroPathId?: number,
   const requestedHeroId = theme.heroPaths.some((hero) => hero.id === heroPathId)
     ? heroPathId
     : theme.specId === specId ? heroSubtreeId : theme.heroPaths[0].id;
-  const cacheKey = `${lang}:${theme.slug}:${requestedHeroId}`;
-  const cached = talentPageDataPromises.get(cacheKey);
-  if (cached) return cached;
-
-  const request = (async () => {
+  return remember(talentPageDataPromises, `${lang}:${theme.slug}:${requestedHeroId}`, async () => {
     // Preserve the verified catalog source for Fury Warrior when it is
     // available. Other trees use the public Raidbots snapshot as before.
     if (theme.specId === specId && requestedHeroId === heroSubtreeId) {
@@ -930,12 +921,7 @@ export function getMidnightTalentPageData(specSlug: string, heroPathId?: number,
       }
     }
     return loadRaidbotsTalentData(theme, requestedHeroId, lang);
-  })().catch((error) => {
-    talentPageDataPromises.delete(cacheKey);
-    throw error;
   });
-  talentPageDataPromises.set(cacheKey, request);
-  return request;
 }
 
 export function getMidnightTalentData(specSlug: string, heroPathId?: number, lang: TalentLang = "ru"): Promise<TalentCalculatorData> {
@@ -945,13 +931,5 @@ export function getMidnightTalentData(specSlug: string, heroPathId?: number, lan
     ? heroPathId
     : theme.specId === specId ? heroSubtreeId : theme.heroPaths[0].id;
   if (theme.specId === specId && requestedHeroId === heroSubtreeId) return getMidnightWarriorTalentData(lang);
-  const cacheKey = `${lang}:${theme.slug}:${requestedHeroId}`;
-  const cached = midnightTalentDataPromises.get(cacheKey);
-  if (cached) return cached;
-  const request = loadRaidbotsTalentData(theme, requestedHeroId, lang).catch((error) => {
-    midnightTalentDataPromises.delete(cacheKey);
-    throw error;
-  });
-  midnightTalentDataPromises.set(cacheKey, request);
-  return request;
+  return remember(midnightTalentDataPromises, `${lang}:${theme.slug}:${requestedHeroId}`, () => loadRaidbotsTalentData(theme, requestedHeroId, lang));
 }

@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/Gildra-Foundation/Gildra/backend/internal/pagination"
 )
 
 type stubCatalog struct {
@@ -95,7 +97,7 @@ func TestCharacterDetailRejectsInvalidSlug(t *testing.T) {
 func TestCursorRoundTrip(t *testing.T) {
 	t.Parallel()
 	want := "staff-of-homa"
-	got, err := decodeCursor(encodeCursor(want))
+	got, err := decodeCursor(pagination.EncodeCursor(want))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +107,7 @@ func TestCursorRoundTrip(t *testing.T) {
 }
 
 func TestTalentCursorRejectsNonNumericValue(t *testing.T) {
-	if _, err := decodeTalentCursor(encodeCursor("abc")); !errors.Is(err, ErrInvalidCursor) {
+	if _, err := decodeTalentCursor(pagination.EncodeCursor("abc")); !errors.Is(err, ErrInvalidCursor) {
 		t.Fatalf("error = %v, want ErrInvalidCursor", err)
 	}
 }
