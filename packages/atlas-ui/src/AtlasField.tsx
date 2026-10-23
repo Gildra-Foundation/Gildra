@@ -1,6 +1,7 @@
 import type { ComponentProps, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 import clsx from "clsx";
 import styles from "./AtlasField.module.css";
+import { Checkbox, type CheckboxProps } from "./valyro-ui/forms/Checkbox";
 import { TextInput } from "./valyro-ui/forms/TextInput";
 import bridge from "./valyroAtlasBridge.module.css";
 
@@ -40,14 +41,9 @@ export function AtlasSelect({ className, children, ...props }: SelectHTMLAttribu
   );
 }
 
-export function AtlasCheckbox({ label, className, ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { label: ReactNode }) {
-  return (
-    <label className={clsx(styles.check, className)}>
-      <input type="checkbox" className={styles.checkInput} {...props} />
-      <span className={styles.box} aria-hidden="true" />
-      <span>{label}</span>
-    </label>
-  );
+/** Valyro's Checkbox (a native input, so it works in plain GET forms) with its label. */
+export function AtlasCheckbox({ className, ...props }: CheckboxProps & { label: ReactNode }) {
+  return <Checkbox {...props} className={clsx(bridge.scope, className)} />;
 }
 
 export function AtlasRange({ className, ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {

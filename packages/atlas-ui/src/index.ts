@@ -27,6 +27,8 @@ export { AtlasTable, type AtlasColumn } from "./AtlasTable";
 export { AtlasTabs, type AtlasTab } from "./AtlasTabs";
 export { AtlasField, AtlasInput, AtlasSelect, AtlasCheckbox, AtlasRange } from "./AtlasField";
 export { AtlasTooltip } from "./AtlasTooltip";
+export { AtlasSwitch } from "./AtlasSwitch";
+export { AtlasSegmented } from "./AtlasSegmented";
 export { AtlasEmpty, AtlasError, AtlasSkeleton } from "./AtlasState";
 export { AtlasDialog } from "./AtlasDialog";
 export { notify } from "./toast";

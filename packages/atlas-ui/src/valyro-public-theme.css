@@ -147,6 +147,11 @@
   --ui-duration-fluid: var(--ui-duration-slow);
   --ui-control-tracking: initial;
   --ui-raised-shadow-focus: var(--ui-focus-ring);
+  --ui-choice-size: 16px;
+  --ui-choice-size-sm: 14px;
+  --ui-choice-size-lg: 20px;
+  --ui-choice-checked-border-color-hover: var(--ui-fg-faint);
+  --ui-checked-sheen: none;
   --ui-checked-shadow: none;
   --ui-press-transform: none;
   --ui-raised-shadow: none;
@@ -195,7 +200,19 @@
   --ui-chart-swatch-radius: 2px;
   --ui-bar-chart-bar-radius: 2px;
   --ui-bar-chart-hover-radius: 4px;
+  --ui-card-padding: var(--ui-space-6);
+  --ui-card-title-size: var(--ui-text-lg);
+  --ui-card-outline-border-color: var(--ui-border);
+  --ui-card-outline-bg: transparent;
+  --ui-card-interactive-border-color-hover: var(--ui-border-strong);
+  --ui-card-interactive-bg-hover: var(--ui-surface);
+  --ui-card-interactive-bg-active: color-mix(in srgb, var(--ui-hover) 50%, var(--ui-surface));
   --ui-card-interactive-transform-hover: none;
+  --ui-card-interactive-transform-active: none;
+  --ui-card-interactive-shadow-hover: var(--ui-highlight), 0 2px 4px -1px oklch(0% 0 0 / 0.04), 0 8px 16px -4px oklch(0% 0 0 / 0.08);
+  --ui-card-interactive-shadow-hover-focus: var(--ui-highlight), var(--ui-shadow-card), var(--ui-focus-ring);
+  --ui-card-interactive-shadow-disabled-hover: var(--ui-highlight), var(--ui-shadow-card);
+  --ui-card-interactive-shadow-disabled-focus: var(--ui-highlight), var(--ui-shadow-card);
   --ui-empty-state-bordered-bg: transparent;
   --ui-empty-state-icon-radius: var(--ui-radius-lg);
   --ui-empty-state-icon-radius-ratio: 0;
@@ -291,6 +308,32 @@
   --ui-text-input-clear-bg-hover: var(--ui-hover);
   --ui-text-input-clear-fg-hover: var(--ui-fg);
   --ui-text-input-clear-icon-size: 12px;
+  --ui-checkbox-radius: 4px;
+  --ui-checkbox-radius-sm: 3px;
+  --ui-checkbox-radius-lg: 5px;
+  --ui-checkbox-invalid-checked-border-color-hover: var(--ui-fg-faint);
+  --ui-checkbox-icon-stroke-width: 2;
+  --ui-checkbox-icon-transform: none;
+  --ui-checkbox-icon-transition: all 0s ease 0s;
+  --ui-switch-w: 32px;
+  --ui-switch-w-sm: 26px;
+  --ui-switch-w-lg: 40px;
+  --ui-switch-h: 18px;
+  --ui-switch-h-sm: 14px;
+  --ui-switch-h-lg: 22px;
+  --ui-switch-knob-stretch: 1;
+  --ui-switch-knob-stretch-active: 0.22;
+  --ui-switch-track-shadow: inset 0 0 0 1px var(--ui-border);
+  --ui-switch-track-bg-hover: color-mix(in srgb, var(--ui-surface-3) 70%, var(--ui-fg-faint));
+  --ui-switch-track-bg-checked: var(--ui-primary);
+  --ui-switch-track-shadow-checked: none;
+  --ui-switch-knob-shadow: var(--ui-shadow-sm), 0 0 0 0.5px var(--ui-border-strong);
+  --ui-switch-knob-transition:
+    inset-inline-start var(--ui-duration) var(--ui-ease-spring),
+    width var(--ui-duration) var(--ui-ease-spring);
+  --ui-switch-knob-bg-active: oklch(100% 0 0);
+  --ui-switch-knob-shadow-active: var(--ui-switch-knob-shadow);
+  --ui-switch-knob-transform-active: none;
   --ui-listbox-check-order: 0;
   --ui-listbox-check-fg-highlight: var(--ui-fg);
   --ui-listbox-label-indent: var(--ui-space-2);
@@ -305,6 +348,16 @@
   --ui-navbar-link-active-shadow: none;
   --ui-sidebar-item-active-shadow: none;
   --ui-tabs-underline-bar-shadow: none;
+  --ui-segmented-control-bg: var(--ui-bg);
+  --ui-segmented-control-shadow: inset 0 0 0 1px var(--ui-border-field);
+  --ui-segmented-control-radius: var(--ui-radius-md);
+  --ui-segmented-control-pad: 3px;
+  --ui-segmented-control-pad-lg: 4px;
+  --ui-segmented-control-item-fg: var(--ui-fg-muted);
+  --ui-segmented-control-item-tracking: normal;
+  --ui-segmented-control-item-press-opacity: 1;
+  --ui-segmented-control-thumb-bg: var(--ui-surface-2);
+  --ui-segmented-control-thumb-shadow: inset 0 0 0 1px var(--ui-border), var(--ui-shadow-sm);
 }
 [data-theme='vercel'][data-mode='dark'] {
   color-scheme: dark;
@@ -396,6 +449,10 @@
   --ui-badge-solid-red: var(--ui-red);
   --ui-badge-solid-purple: var(--ui-purple);
   --ui-badge-solid-pink: var(--ui-pink);
+  --ui-card-interactive-shadow-hover: var(--ui-highlight), 0 8px 24px -8px oklch(0% 0 0 / 0.6);
+  --ui-card-interactive-shadow-hover-focus: var(--ui-card-interactive-shadow-hover);
+  --ui-card-interactive-shadow-disabled-hover: var(--ui-card-interactive-shadow-hover);
+  --ui-switch-track-bg-checked: var(--ui-accent);
 }
 @media (prefers-contrast: more) {
   .gd-valyro:not([data-theme], [data-mode='dark']),

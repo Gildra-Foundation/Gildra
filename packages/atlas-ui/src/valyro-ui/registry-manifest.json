@@ -22,7 +22,12 @@
     "text-input",
     "toast",
     "dialog",
-    "alert"
+    "alert",
+    "segmented-control",
+    "checkbox",
+    "card",
+    "switch",
+    "separator"
   ],
   "proComponents": [
     "analytics-filter-bar"
@@ -681,6 +686,78 @@
       "path": "feedback/useDialog.ts",
       "registrySha256": "57cc9a1879927ef82fac7b0aa9a4b0216ac35f8fd299a9d95a0ee03abf5dc12b",
       "installedSha256": "57cc9a1879927ef82fac7b0aa9a4b0216ac35f8fd299a9d95a0ee03abf5dc12b",
+      "adapted": false
+    },
+    {
+      "path": "basic/Separator.css",
+      "registrySha256": "7be2c78e5592662df44977c209dc1d0bc3368e68cc5bb558b7cb5eb40309140b",
+      "installedSha256": "7be2c78e5592662df44977c209dc1d0bc3368e68cc5bb558b7cb5eb40309140b",
+      "adapted": false
+    },
+    {
+      "path": "basic/Separator.tsx",
+      "registrySha256": "10f929795a48a317aa6cbce6488e65d4561d60e656f629804e1b9594ba487051",
+      "installedSha256": "10f929795a48a317aa6cbce6488e65d4561d60e656f629804e1b9594ba487051",
+      "adapted": false
+    },
+    {
+      "path": "data-display/Card.css",
+      "registrySha256": "0a8ef133717e335af998caf25c0241f30ea47e4fdb5c27d4b30aed6a1728d7b8",
+      "installedSha256": "0a8ef133717e335af998caf25c0241f30ea47e4fdb5c27d4b30aed6a1728d7b8",
+      "adapted": false
+    },
+    {
+      "path": "data-display/Card.tsx",
+      "registrySha256": "6be782ef89e177d3ba883ab21ac549feb246485105335f7dd4d381c67dcc3940",
+      "installedSha256": "6be782ef89e177d3ba883ab21ac549feb246485105335f7dd4d381c67dcc3940",
+      "adapted": false
+    },
+    {
+      "path": "forms/Checkbox.css",
+      "registrySha256": "e0629d41cb0bfb33825fd8a6c1f8aba39d9edebd63e07f975aa96363a554138b",
+      "installedSha256": "e0629d41cb0bfb33825fd8a6c1f8aba39d9edebd63e07f975aa96363a554138b",
+      "adapted": false
+    },
+    {
+      "path": "forms/Checkbox.tsx",
+      "registrySha256": "437f30b22033869269c7d061660eac043a9df3ec00a3256bc1c15f3f68ae9d5a",
+      "installedSha256": "437f30b22033869269c7d061660eac043a9df3ec00a3256bc1c15f3f68ae9d5a",
+      "adapted": false
+    },
+    {
+      "path": "forms/Switch.css",
+      "registrySha256": "c2a0d079f1e7fe5f0d7bdaad340ada24bb6acd9d28e9f434402d096083341460",
+      "installedSha256": "c2a0d079f1e7fe5f0d7bdaad340ada24bb6acd9d28e9f434402d096083341460",
+      "adapted": false
+    },
+    {
+      "path": "forms/Switch.tsx",
+      "registrySha256": "b2aebc4ea88dd1e7ba40ac1ec76d8c4a86af92f1d54289ae2cb89c750428766e",
+      "installedSha256": "b2aebc4ea88dd1e7ba40ac1ec76d8c4a86af92f1d54289ae2cb89c750428766e",
+      "adapted": false
+    },
+    {
+      "path": "forms/useRadioGroup.ts",
+      "registrySha256": "c486bda48e689daec033f5c06b62a2a25a32e6144dda9a62919fddb52945ad5f",
+      "installedSha256": "c486bda48e689daec033f5c06b62a2a25a32e6144dda9a62919fddb52945ad5f",
+      "adapted": false
+    },
+    {
+      "path": "navigation/SegmentedControl.css",
+      "registrySha256": "f802fe350d796981727d9301ae3573073f7724b01ef5821b48cf6a4a1555afd0",
+      "installedSha256": "f802fe350d796981727d9301ae3573073f7724b01ef5821b48cf6a4a1555afd0",
+      "adapted": false
+    },
+    {
+      "path": "navigation/SegmentedControl.tsx",
+      "registrySha256": "0a32f0d15c4d67b4147afb56e9a39f676805292588e064f452687aaaa5d50a9e",
+      "installedSha256": "0a32f0d15c4d67b4147afb56e9a39f676805292588e064f452687aaaa5d50a9e",
+      "adapted": false
+    },
+    {
+      "path": "navigation/internal.tsx",
+      "registrySha256": "0215f4d3825dd18fba983f8abd9722996085148ab763ee7567b941b2521a05af",
+      "installedSha256": "0215f4d3825dd18fba983f8abd9722996085148ab763ee7567b941b2521a05af",
       "adapted": false
     }
   ],
