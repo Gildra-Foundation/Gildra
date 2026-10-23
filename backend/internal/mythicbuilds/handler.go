@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Gildra-Foundation/Gildra/backend/internal/characterworkspace"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 	"github.com/google/uuid"
 )
@@ -19,12 +18,19 @@ type API interface {
 	Delete(context.Context, string, uuid.UUID, DeleteInput) error
 	Import(context.Context, string, []Input) error
 }
-type Handler struct {
-	api      API
-	verifier characterworkspace.IdentityVerifier
+
+// IdentityVerifier resolves the signed-in Battle.net account; cmd/server passes
+// the characterworkspace verifier, so this package does not import it.
+type IdentityVerifier interface {
+	Verify(context.Context, string, string) (string, error)
 }
 
-func NewHandler(api API, verifier characterworkspace.IdentityVerifier) *Handler {
+type Handler struct {
+	api      API
+	verifier IdentityVerifier
+}
+
+func NewHandler(api API, verifier IdentityVerifier) *Handler {
 	return &Handler{api: api, verifier: verifier}
 }
 func (h *Handler) Register(mux *http.ServeMux) {
