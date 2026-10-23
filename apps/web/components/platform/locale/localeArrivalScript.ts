@@ -1,27 +1,21 @@
-import { LOCALE_SWITCH_ID, LOCALE_SWITCH_KEY, LOCALE_SWITCH_TTL_MS } from "./localeSwitch";
+import { LOCALE_SWITCH_KEY, LOCALE_SWITCH_TTL_MS } from "./localeSwitch";
 
 /**
  * Inline <head> script of every document (app/root-document.tsx). It must run
- * before the first paint, so it is plain ES2017 without imports; the URL rules
- * mirror localeSwitch.ts (tests/atlas/localeSwitch.test.ts runs both).
+ * before the first paint, so it is plain ES2017 without imports
+ * (tests/atlas/localeSwitch.test.ts runs it).
  *
- * - pageswap / pagereveal keep the cross-document view transition
- *   (localeTransition.css) for language switches only and skip it for every
- *   other full load and for "less motion";
- * - a switch holds the first paint until the toolbar is parsed (rel=expect):
- *   it must be in the new snapshot; one arriving from
- *   LocaleSwitch then restores the reading position under the
- *   toolbar (and holds it while fonts and images settle, until the reader
- *   acts), then puts the old #hash back without letting it jump;
- * - browsers without cross-document view transitions get a short fade of the
- *   content instead (data-locale-fallback).
+ * One arriving from LocaleSwitch restores the reading position under the
+ * toolbar before the first frame where pagereveal exists (DOMContentLoaded
+ * elsewhere), holds it while fonts and images settle (until the reader acts),
+ * puts the old #hash back without letting it jump, and marks the document for
+ * a short fade of the content (data-locale-arrival, localeTransition.css).
+ * No cross-document view transition: capturing both pages held the new
+ * page's first paint back by 0.3-0.7 s on a slow CPU, and the switch's pill
+ * already moves on the click.
  */
 export const localeArrivalScript = `(function(){
 var d=document,h=d.documentElement,w=window,K=${JSON.stringify(LOCALE_SWITCH_KEY)};
-function bare(p){return p.replace(/^\\/ru(?=\\/|$)/,"").replace(/\\/+$/,"")||"/"}
-function lang(p){return /^\\/ru(?:\\/|$)/.test(p)?"ru":"en"}
-function target(a,b){try{a=new URL(a,location.href);b=new URL(b,location.href)}catch(e){return null}
-return a.origin===b.origin&&bare(a.pathname)===bare(b.pathname)&&lang(a.pathname)!==lang(b.pathname)?lang(b.pathname):null}
 function still(){return h.dataset.motion==="reduced"||w.matchMedia("(prefers-reduced-motion: reduce)").matches}
 var r=null;try{r=JSON.parse(sessionStorage.getItem(K)||"null");sessionStorage.removeItem(K)}catch(e){}
 if(r&&(r.to!==location.pathname+location.search||!(Date.now()-r.at<${LOCALE_SWITCH_TTL_MS})))r=null;
@@ -35,17 +29,7 @@ if(!e)return;
 // Fonts, images and hydration re-wrap the translated page after the first paint: keep the anchor in place until the reader acts.
 function off(){stop=1};["wheel","touchstart","keydown","pointerdown"].forEach(function(n){w.addEventListener(n,off,{once:true,passive:true})});
 var end=Date.now()+3000;(function hold(){align();if(!stop&&Date.now()<end)requestAnimationFrame(hold)})()}
-w.addEventListener("pageswap",function(e){var t=e.viewTransition,a=e.activation;if(!t)return;
-var l=a&&a.entry&&a.entry.url?target(location.href,a.entry.url):null;
-if(!l||still()){t.skipTransition();return}h.dataset.localeSwitch=l});
-if("onpagereveal" in w&&w.CSSViewTransitionRule){
-var n=w.navigation,a=n&&n.activation,l=target(a&&a.from?a.from.url:d.referrer,location.href)||(r?lang(location.pathname):null);
-if(l){var x=d.createElement("link");x.rel="expect";x.href="#${LOCALE_SWITCH_ID}";x.setAttribute("blocking","render");d.head.appendChild(x)}
-w.addEventListener("pagereveal",function(e){var t=e.viewTransition;a=n&&n.activation;
-l=target(a&&a.from?a.from.url:d.referrer,location.href)||(r?lang(location.pathname):null);
-delete h.dataset.localeSwitch;restore();if(!t)return;
-if(!l||still()){t.skipTransition();return}
-h.dataset.localeSwitch=l;t.finished.finally(function(){delete h.dataset.localeSwitch})})}
-else if(r){if(!still()){h.dataset.localeFallback="";setTimeout(function(){delete h.dataset.localeFallback},700)}
-d.addEventListener("DOMContentLoaded",restore)}
+// The page arrives in its final layout and only its content brightens (the toolbar stays still).
+if(r&&!still()){h.dataset.localeArrival="";setTimeout(function(){delete h.dataset.localeArrival},700)}
+if("onpagereveal" in w)w.addEventListener("pagereveal",restore);else d.addEventListener("DOMContentLoaded",restore);
 })()`;
