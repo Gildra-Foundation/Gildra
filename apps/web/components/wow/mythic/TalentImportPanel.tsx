@@ -6,6 +6,7 @@ import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { decodeMythicTalentImport, maxTalentStringLength, type TalentImportError, type TalentImportResult } from "./mythicTalentImport";
 import { playerSpecs, type PlayerProfile } from "./playerTools";
 import type { PullRole } from "./mdtPullIntel";
+import { SavedTalentBuilds } from "./SavedTalentBuilds";
 import { talentImportCopy } from "./talentImportCopy";
 import styles from "./mdtPullMap.module.css";
 
@@ -26,7 +27,9 @@ export function TalentImportPanel({ locale, profile, result, onProfileChange, on
     setError(null);
     setDraft("");
   }
-  return <form className={styles.importPanel} onSubmit={apply} data-testid="pull-talent-import">
+  return <div className={styles.importPanel} data-testid="talent-build-panel">
+    <SavedTalentBuilds locale={locale} result={result} onProfileChange={next => { onProfileChange(next); setError(null); setDraft(""); }} onRoleChange={onRoleChange} />
+    <form className={styles.importForm} onSubmit={apply} data-testid="pull-talent-import">
     <label htmlFor={id}>{t.label}</label>
     <p id={`${id}-help`}>{t.help}</p>
     <AtlasInput id={id} className={styles.codeInput} type="text" dir="ltr" value={draft} onChange={event => { setDraft(event.target.value); setError(null); }} placeholder={t.placeholder} maxLength={maxTalentStringLength} autoComplete="off" autoCapitalize="off" spellCheck={false} aria-invalid={Boolean(error)} aria-describedby={`${id}-help${error ? ` ${id}-error` : ""}`} />
@@ -35,5 +38,5 @@ export function TalentImportPanel({ locale, profile, result, onProfileChange, on
     <div role="status" className={styles.importStatus} data-testid="talent-import-status" data-import-state={result ? result.ok ? "applied" : "invalid" : "none"}>
       {result?.ok && spec ? <><b>{t.applied}: {spec.className[locale]} · {spec.name[locale]}</b><p>{t.active}</p>{!result.hashChecked && <p>{t.hashless}</p>}</> : <p>{result ? t.savedInvalid : t.none}</p>}
     </div>
-  </form>;
+  </form></div>;
 }
