@@ -63,11 +63,12 @@
 h1, h2, h3, h4 {
   font-family: var(--atlas-font-display);
   font-weight: var(--atlas-weight-display);
-  letter-spacing: var(--atlas-tracking-display);
   color: var(--atlas-text-strong);
   // Alegreya defaults to old-style figures; counters and dates read better lining.
   font-variant-numeric: lining-nums;
 }
+// Display tracking only on page titles: at panel and empty-state sizes Alegreya's narrow space would vanish.
+h1 { letter-spacing: var(--atlas-tracking-display); }
 
 ::selection { background: var(--atlas-accent-wash-strong); }
 

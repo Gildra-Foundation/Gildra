@@ -1,5 +1,6 @@
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { TenantField as TenantField_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
+import { CollectionList as CollectionList_c1d26d7b863f8ada147598cc8c1f3eef } from '../../../components/list/CollectionList'
 import { LanguagesCell as LanguagesCell_53d85114ffcb12245bb9ddc91716ed08 } from '../../../components/list/LanguagesCell'
 import { SitePageCell as SitePageCell_ac84347516c1cb30246d4265206b7313 } from '../../../fields/blocksEditor/cells'
 import { BlocksStateCell as BlocksStateCell_ac84347516c1cb30246d4265206b7313 } from '../../../fields/blocksEditor/cells'
@@ -35,8 +36,8 @@ import { SlugField as SlugField_3d836d28318ebd3773170b5e527a3cbc } from '../../.
 import { SeoPreview as SeoPreview_54842116ebf27d5fc41a05116390649c } from '../../../components/editor/SeoPreview'
 import { BrandIcon as BrandIcon_42af45a2e169122dea8a98337d41efda } from '../../../components/Brand'
 import { BrandLogo as BrandLogo_42af45a2e169122dea8a98337d41efda } from '../../../components/Brand'
-import { CommandButton as CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b } from '../../../components/command/CommandButton'
 import { LanguageSwitch as LanguageSwitch_a49993c8823beeb757765324433d70c6 } from '../../../components/nav/LanguageSwitch'
+import { CommandButton as CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b } from '../../../components/command/CommandButton'
 import { GlobalViewRedirect as GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
 import { AuthIntro as AuthIntro_4bca73cc1e75f6058ab4520e4458e193 } from '../../../components/auth/AuthIntro'
 import { NavBrand as NavBrand_435bc162d13c8e2c489b0e28627b5a66 } from '../../../components/nav/NavBrand'
@@ -46,6 +47,7 @@ import { TenantSelectionProvider as TenantSelectionProvider_d6d5f193a167989e2ee7
 import { Dashboard as Dashboard_9a680279bc487e655cb510fd8d9dadff } from '../../../components/Dashboard'
 import { PeopleView as PeopleView_11e3c684cb15031bcd2299560d525f16 } from '../../../components/people/PeopleView'
 import { ArticlesView as ArticlesView_9a6162fe67d9a81757110274152f791e } from '../../../components/articles/ArticlesView'
+import { NewArticleView as NewArticleView_d842449bfdc45fa6ae7821b1fd0ec90b } from '../../../components/articles/NewArticleView'
 import { AnalyticsView as AnalyticsView_bf97cfe8cf7e4182aa63ced32aae9f52 } from '../../../components/AnalyticsView'
 import { SelectSiteView as SelectSiteView_8a65042a5460f97c4197318fd58352af } from '../../../components/SelectSiteView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
@@ -54,6 +56,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 export const importMap = {
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "@payloadcms/plugin-multi-tenant/client#TenantField": TenantField_1d0591e3cf4f332c83a86da13a0de59a,
+  "/components/list/CollectionList#CollectionList": CollectionList_c1d26d7b863f8ada147598cc8c1f3eef,
   "/components/list/LanguagesCell#LanguagesCell": LanguagesCell_53d85114ffcb12245bb9ddc91716ed08,
   "/fields/blocksEditor/cells#SitePageCell": SitePageCell_ac84347516c1cb30246d4265206b7313,
   "/fields/blocksEditor/cells#BlocksStateCell": BlocksStateCell_ac84347516c1cb30246d4265206b7313,
@@ -89,8 +92,8 @@ export const importMap = {
   "/components/editor/SeoPreview#SeoPreview": SeoPreview_54842116ebf27d5fc41a05116390649c,
   "/components/Brand#BrandIcon": BrandIcon_42af45a2e169122dea8a98337d41efda,
   "/components/Brand#BrandLogo": BrandLogo_42af45a2e169122dea8a98337d41efda,
-  "/components/command/CommandButton#CommandButton": CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b,
   "/components/nav/LanguageSwitch#LanguageSwitch": LanguageSwitch_a49993c8823beeb757765324433d70c6,
+  "/components/command/CommandButton#CommandButton": CommandButton_cd1c38ae580899feb0b6c9218b9c6a9b,
   "@payloadcms/plugin-multi-tenant/rsc#GlobalViewRedirect": GlobalViewRedirect_d6d5f193a167989e2ee7d14202901e62,
   "/components/auth/AuthIntro#AuthIntro": AuthIntro_4bca73cc1e75f6058ab4520e4458e193,
   "/components/nav/NavBrand#NavBrand": NavBrand_435bc162d13c8e2c489b0e28627b5a66,
@@ -100,6 +103,7 @@ export const importMap = {
   "/components/Dashboard#Dashboard": Dashboard_9a680279bc487e655cb510fd8d9dadff,
   "/components/people/PeopleView#PeopleView": PeopleView_11e3c684cb15031bcd2299560d525f16,
   "/components/articles/ArticlesView#ArticlesView": ArticlesView_9a6162fe67d9a81757110274152f791e,
+  "/components/articles/NewArticleView#NewArticleView": NewArticleView_d842449bfdc45fa6ae7821b1fd0ec90b,
   "/components/AnalyticsView#AnalyticsView": AnalyticsView_bf97cfe8cf7e4182aa63ced32aae9f52,
   "/components/SelectSiteView#SelectSiteView": SelectSiteView_8a65042a5460f97c4197318fd58352af,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1

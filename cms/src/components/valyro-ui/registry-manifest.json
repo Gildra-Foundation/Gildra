@@ -1,6 +1,6 @@
 {
   "registry": "https://valyro.xyz/r",
-  "retrievedAt": "2026-10-22T23:57:19.886Z",
+  "retrievedAt": "2026-10-23T09:55:57.149Z",
   "components": [
     "stats-card",
     "badge",
@@ -27,7 +27,9 @@
     "sortable",
     "accordion",
     "dialog",
-    "confirm-dialog"
+    "confirm-dialog",
+    "card",
+    "pagination"
   ],
   "proComponents": [
     "analytics-filter-bar"
@@ -788,6 +790,36 @@
       "path": "layout/useSortable.ts",
       "registrySha256": "a03323539c443e12f76e433d579c9890d654a8acdfc46f49fa254fddc45c0370",
       "installedSha256": "a03323539c443e12f76e433d579c9890d654a8acdfc46f49fa254fddc45c0370",
+      "adapted": false
+    },
+    {
+      "path": "data-display/Card.css",
+      "registrySha256": "0a8ef133717e335af998caf25c0241f30ea47e4fdb5c27d4b30aed6a1728d7b8",
+      "installedSha256": "0a8ef133717e335af998caf25c0241f30ea47e4fdb5c27d4b30aed6a1728d7b8",
+      "adapted": false
+    },
+    {
+      "path": "data-display/Card.tsx",
+      "registrySha256": "6be782ef89e177d3ba883ab21ac549feb246485105335f7dd4d381c67dcc3940",
+      "installedSha256": "6be782ef89e177d3ba883ab21ac549feb246485105335f7dd4d381c67dcc3940",
+      "adapted": false
+    },
+    {
+      "path": "navigation/Pagination.css",
+      "registrySha256": "954a9c0c8ac9182e2908f7845a966cb6aae1d664725543c468ed26b836ad3bbd",
+      "installedSha256": "954a9c0c8ac9182e2908f7845a966cb6aae1d664725543c468ed26b836ad3bbd",
+      "adapted": false
+    },
+    {
+      "path": "navigation/Pagination.tsx",
+      "registrySha256": "a889db5cecbb20042acee0f197e3898611820b852d639defc906c4d9eb0bb5b2",
+      "installedSha256": "a889db5cecbb20042acee0f197e3898611820b852d639defc906c4d9eb0bb5b2",
+      "adapted": false
+    },
+    {
+      "path": "navigation/usePagination.ts",
+      "registrySha256": "74099093e4d2e9fc5823f356749ee475ad213491e9c083f529867414939834f3",
+      "installedSha256": "74099093e4d2e9fc5823f356749ee475ad213491e9c083f529867414939834f3",
       "adapted": false
     }
   ],
