@@ -263,3 +263,57 @@ func TestPlanRowsReadsTheTopNode(t *testing.T) {
 		t.Fatal("an empty plan was accepted")
 	}
 }
+
+// memoryTotalStore stands in for Redis; saved signals each save.
+type memoryTotalStore struct {
+	mu     sync.Mutex
+	totals map[string]savedTotal
+	saved  chan string
+}
+
+func (s *memoryTotalStore) load(_ context.Context, key string) (savedTotal, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	total, ok := s.totals[key]
+	return total, ok
+}
+
+func (s *memoryTotalStore) save(_ context.Context, key string, total savedTotal) {
+	s.mu.Lock()
+	s.totals[key] = total
+	s.mu.Unlock()
+	s.saved <- key
+}
+
+func TestTotalCacheResumesSavedCountsAfterRestart(t *testing.T) {
+	store := &memoryTotalStore{totals: map[string]savedTotal{}, saved: make(chan string, 4)}
+	first, clock := newTestTotalCache()
+	first.store = store
+	var calls countCalls
+	count := func(context.Context) (int64, error) { return int64(500 + calls.next()), nil }
+	if got, ok := first.lookup(context.Background(), "spell", time.Second, count); !ok || got != 501 {
+		t.Fatalf("total = %d, %v; want 501", got, ok)
+	}
+	<-store.saved
+
+	// A new process answers from the store without counting again.
+	restarted := newTotalCache()
+	restarted.now = clock.Now
+	restarted.store = store
+	clock.Add(totalFreshTTL / 2)
+	if got, ok := restarted.lookup(context.Background(), "spell", 0, count); !ok || got != 501 {
+		t.Fatalf("restarted total = %d, %v; want the saved 501", got, ok)
+	}
+	if calls.count() != 1 {
+		t.Fatalf("counted %d times, want 1: a fresh saved total was recounted", calls.count())
+	}
+	// Its recount schedule carries over: once due, it recounts in the background.
+	clock.Add(totalFreshTTL)
+	if got, ok := restarted.lookup(context.Background(), "spell", 0, count); !ok || got != 501 {
+		t.Fatalf("stale saved total = %d, %v; want 501 while recounting", got, ok)
+	}
+	<-store.saved
+	if got, _ := restarted.lookup(context.Background(), "spell", 0, count); got != 502 {
+		t.Fatalf("recounted total = %d; want 502", got)
+	}
+}

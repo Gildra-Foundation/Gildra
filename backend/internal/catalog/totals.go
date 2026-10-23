@@ -45,6 +45,30 @@ const (
 	totalCacheEntries = 2048
 )
 
+// totalStore keeps finished counts across API restarts, so a restart does not
+// recount every total at once (minutes of database time); see redisTotalStore.
+// A store that fails only costs the counts it would have saved.
+type totalStore interface {
+	load(ctx context.Context, key string) (savedTotal, bool)
+	save(ctx context.Context, key string, total savedTotal)
+}
+
+// savedTotal is the part of a totalEntry worth keeping: a restart resumes its
+// recount schedule instead of starting over.
+type savedTotal struct {
+	Value    int64         `json:"v"`
+	Counted  time.Time     `json:"c"`
+	FreshFor time.Duration `json:"f"`
+	Slow     bool          `json:"s"`
+}
+
+const (
+	// totalStoreLoadTimeout bounds the store read of a total missing from
+	// memory; it happens once per key and process.
+	totalStoreLoadTimeout = 100 * time.Millisecond
+	totalStoreSaveTimeout = 2 * time.Second
+)
+
 type totalEntry struct {
 	value    int64
 	counted  time.Time // zero until a count has finished
@@ -69,6 +93,7 @@ type totalCache struct {
 	timeout      time.Duration
 	quick        chan struct{}
 	quickTimeout time.Duration
+	store        totalStore // optional
 }
 
 func newTotalCache() *totalCache {
@@ -87,8 +112,19 @@ func newTotalCache() *totalCache {
 // (or until ctx ends). count runs on its own context, detached from ctx.
 func (c *totalCache) lookup(ctx context.Context, key string, wait time.Duration, count func(context.Context) (int64, error)) (int64, bool) {
 	c.mu.Lock()
-	now := c.now()
 	entry, ok := c.entries[key]
+	if !ok && c.store != nil {
+		c.mu.Unlock()
+		loadCtx, cancel := context.WithTimeout(ctx, totalStoreLoadTimeout)
+		saved, found := c.store.load(loadCtx, key)
+		cancel()
+		c.mu.Lock()
+		if entry, ok = c.entries[key]; !ok && found {
+			entry, ok = &totalEntry{value: saved.Value, counted: saved.Counted, freshFor: saved.FreshFor, slow: saved.Slow}, true
+			c.storeLocked(key, entry, c.now())
+		}
+	}
+	now := c.now()
 	if !ok {
 		entry = &totalEntry{}
 		c.storeLocked(key, entry, now)
@@ -96,12 +132,12 @@ func (c *totalCache) lookup(ctx context.Context, key string, wait time.Duration,
 	if !entry.counted.IsZero() && now.Sub(entry.counted) < totalStaleTTL {
 		value := entry.value
 		if now.Sub(entry.counted) >= entry.freshFor {
-			c.startLocked(entry, now, count)
+			c.startLocked(key, entry, now, count)
 		}
 		c.mu.Unlock()
 		return value, true
 	}
-	done := c.startLocked(entry, now, count)
+	done := c.startLocked(key, entry, now, count)
 	c.mu.Unlock()
 	if done == nil || wait <= 0 {
 		return 0, false
@@ -123,11 +159,11 @@ func (c *totalCache) lookup(ctx context.Context, key string, wait time.Duration,
 	return entry.value, true
 }
 
-// startLocked starts a count for entry unless one is running, the last one
+// startLocked starts a count for key's entry unless one is running, the last one
 // failed within totalFailureBackoff or every slot of its kind (quick or slow)
 // is busy. It returns the channel closed when the running count finishes, or
 // nil.
-func (c *totalCache) startLocked(entry *totalEntry, now time.Time, count func(context.Context) (int64, error)) chan struct{} {
+func (c *totalCache) startLocked(key string, entry *totalEntry, now time.Time, count func(context.Context) (int64, error)) chan struct{} {
 	if entry.running != nil {
 		return entry.running
 	}
@@ -165,13 +201,19 @@ func (c *totalCache) startLocked(entry *totalEntry, now time.Time, count func(co
 			entry.failedAt = finished
 		}
 		entry.running = nil
+		saved := savedTotal{Value: entry.value, Counted: entry.counted, FreshFor: entry.freshFor, Slow: entry.slow}
 		if escalate {
-			c.startLocked(entry, finished, count)
+			c.startLocked(key, entry, finished, count)
 		}
 		c.mu.Unlock()
 		close(done)
 		if err != nil && !escalate {
 			slog.Warn("catalog total count failed", "error", err)
+		}
+		if err == nil && c.store != nil {
+			saveCtx, cancel := context.WithTimeout(context.Background(), totalStoreSaveTimeout)
+			c.store.save(saveCtx, key, saved)
+			cancel()
 		}
 	}()
 	return done
