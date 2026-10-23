@@ -1,11 +1,15 @@
 "use client";
 
 import type { MdtNode, MdtDataset } from "@/lib/data/wow/mythicReview.types";
+import type { RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
+import type { DungeonCombatIntel } from "./dungeonCombatIntel.types";
+import { buildMdtPullIntel } from "./mdtPullIntel";
+import { MdtPullDetails } from "./MdtPullDetails";
 import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { mdtPullMapCopy } from "./mdtPullMapCopy";
 import styles from "./mdtPullMap.module.css";
 
-export default function MdtPullMap({ locale, routeUrl, data }: { slug: DungeonSlug; locale: "ru" | "en"; routeUrl: string; data: MdtDataset }) {
+export default function MdtPullMap({ locale, routeUrl, data, stops, combatIntel }: { slug: DungeonSlug; locale: "ru" | "en"; routeUrl: string; data: MdtDataset; stops: RouteStop[]; combatIntel: DungeonCombatIntel }) {
   const copy = mdtPullMapCopy[locale];
   const authored = data.route.status === "dataset-matched" && data.route.pulls.length > 0;
   const nodesById = new Map(data.nodes.map(node => [node.id, node]));
@@ -23,6 +27,7 @@ export default function MdtPullMap({ locale, routeUrl, data }: { slug: DungeonSl
   const totalForces = [...uniqueMembers.values()].reduce((sum, node) => sum + node.forces, 0);
   const forcesPercent = (forces: number) => data.total > 0 ? `${(forces / data.total * 100).toFixed(2)}%` : "—";
   const label = authored ? copy.pull : copy.group;
+  const pullIntel = pulls.map(members => buildMdtPullIntel(members, stops, combatIntel));
 
   return <section className={styles.panel} data-testid="mdt-map" aria-label={copy.mapLabel}>
     <header className={styles.header}>
@@ -45,12 +50,12 @@ export default function MdtPullMap({ locale, routeUrl, data }: { slug: DungeonSl
               const x = local.reduce((sum, node) => sum + node.x, 0) / local.length;
               const y = local.reduce((sum, node) => sum + node.y, 0) / local.length;
               const bossOnly = local.every(node => node.boss);
-              return <div key={members.map(node => node.id).join(",")} className={styles.marker} data-testid="mdt-pull-marker" data-boss={bossOnly || undefined}
-                style={{ left: `${x}%`, top: `${y}%` }} role="img"
+              return <MdtPullDetails key={members.map(node => node.id).join(",")} title={`${label} ${index + 1} · ${copy.enemyCount(members.length)}`} intel={pullIntel[index]} locale={locale}><button type="button" className={styles.marker} data-testid="mdt-pull-marker" data-boss={bossOnly || undefined}
+                style={{ left: `${x}%`, top: `${y}%` }}
                 aria-label={`${label} ${index + 1}: ${copy.enemyCount(local.length)}${bossOnly ? ` · ${copy.boss}` : ""}`}>
                 <span className={styles.markerNumber} aria-hidden="true">№{index + 1}</span>
                 <strong aria-hidden="true">{local.length}</strong>
-              </div>;
+              </button></MdtPullDetails>;
             })}
           </div>
         </div>

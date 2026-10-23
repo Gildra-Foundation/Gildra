@@ -1,0 +1,36 @@
+/* atlas:strict — pull briefing in Valyro hover surface and atlas dialog */
+.tooltip.tooltip { width: min(420px, calc(100vw - 24px)); max-width: min(420px, calc(100vw - 24px)); max-height: min(70dvh, 640px); overflow-y: auto; overscroll-behavior: contain; padding: var(--atlas-space-4); color: var(--atlas-text); font-family: var(--atlas-font-ui); }
+.title { margin: 0 0 var(--atlas-space-3); color: var(--atlas-accent-strong); font: 600 var(--atlas-text-h3)/1.2 var(--atlas-font-display); }
+.briefing { min-width: 0; color: var(--atlas-text); font: 400 var(--atlas-text-small)/1.6 var(--atlas-font-ui); overflow-wrap: anywhere; }
+.briefing section + section { margin-top: var(--atlas-space-4); padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line); }
+.briefing h4 { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font: 600 var(--atlas-text-small)/1.4 var(--atlas-font-ui); }
+.briefing p { margin: var(--atlas-space-1) 0; }
+.briefing ul { margin: 0; padding-left: var(--atlas-space-4); }
+.briefing a { color: var(--atlas-accent-strong); text-underline-offset: .2em; }
+.enemies.enemies, .mechanics.mechanics { padding: 0; list-style: none; }
+.enemies li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--atlas-space-2); margin-block: var(--atlas-space-1); }
+.enemies b { color: var(--atlas-accent-strong); font-variant-numeric: tabular-nums; }
+.enemies small, .muted, .mechanics span { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.mechanics li + li { margin-top: var(--atlas-space-3); }
+.mechanics li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); column-gap: var(--atlas-space-3); }
+.mechanics b, .mechanics span { grid-column: 1; }
+.mechanics p { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--atlas-accent-strong); }
+.roles { margin: 0; }
+.roles > div + div { margin-top: var(--atlas-space-3); }
+.roles dt { color: var(--atlas-accent-strong); font-weight: 600; }
+.roles dd { margin: 0; }
+.roles small { color: var(--atlas-text-muted); }
+.facts li + li { margin-top: var(--atlas-space-2); }
+.notice.notice { margin-top: var(--atlas-space-4); padding-left: var(--atlas-space-3); border-left: 2px solid var(--atlas-line-strong); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.hint.hint { margin-top: var(--atlas-space-3); color: var(--atlas-accent-strong); font-size: var(--atlas-text-meta); }
+.briefing a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+
+.dialogHeader { display: flex; justify-content: space-between; align-items: start; gap: var(--atlas-space-3); padding: var(--atlas-space-4); flex-shrink: 0; border-bottom: 1px solid var(--atlas-line); }
+.dialogHeader h3 { margin: 0; font: 600 var(--atlas-text-h3)/1.2 var(--atlas-font-display); }
+.dialogHeader button { min-height: 44px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); background: var(--atlas-surface-raised); padding: var(--atlas-space-2) var(--atlas-space-3); color: var(--atlas-text); font: inherit; cursor: pointer; }
+.dialogHeader button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+
+.dialogContent { display: flex; flex-direction: column; min-height: 0; max-height: min(76dvh, 700px); }
+.dialogBody { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--atlas-space-4); }
+.dialogBody:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -3px; }
+@media (max-width: 720px) { .dialogContent { max-height: 82dvh; } }
