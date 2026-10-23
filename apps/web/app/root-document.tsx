@@ -50,6 +50,9 @@ const atlasDisplay = Alegreya({
   preload: false,
 });
 
+// BCP 47 tags of the Valyro kit's dates and numbers.
+const valyroLocale = { en: "en-GB", ru: "ru-RU" } as const;
+
 const rootWords = {
   en: { title: "Gildra — Master the Meta", description: "World of Warcraft tier lists, Mythic+ and raid statistics, builds and guides." },
   ru: { title: "Gildra — мета World of Warcraft", description: "Тир-листы World of Warcraft, статистика Mythic+ и рейдов, билды и гайды." },
@@ -82,7 +85,7 @@ export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: 
       </head>
       <body>
         <SiteTheme>
-          <AtlasValyroScope locale={lang === "ru" ? "ru-RU" : "en-GB"}>
+          <AtlasValyroScope locale={valyroLocale[lang]}>
             <WorkspaceNavigator picks={navigationPicks()} />
             <RouteTransitionGate>{children}</RouteTransitionGate>
           </AtlasValyroScope>

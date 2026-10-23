@@ -37,10 +37,13 @@ export class AccountTalentBuildStore {
     this.publish({ ...initial });
     try {
       const response = await this.request("/api/wow/mythic-builds", { cache: "no-store", credentials: "same-origin", signal: AbortSignal.timeout(12_000) });
+      // Read every reply, the guest 401 too: an unread body keeps the request
+      // open until the timeout signal aborts it.
+      const raw = await response.json().catch(() => null);
       if (epoch !== this.epoch) return;
       if (response.status === 401) { this.publish({ ...initial, mode: "guest" }); return; }
       if (!response.ok) throw new Error("Unavailable");
-      const body = parseAccountBuilds(await response.json());
+      const body = parseAccountBuilds(raw);
       if (epoch === this.epoch) this.publish({ ...initial, mode: "account", accountKey: body.accountKey, accountName: body.accountName ?? null, builds: body.builds });
     } catch { if (epoch === this.epoch) this.publish({ ...initial, mode: "error", error: "network" }); }
   }
