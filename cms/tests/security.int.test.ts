@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { MAX_IMAGE_SIDE, SVG_REJECTED } from "../src/collections/Media";
 import { csrfOrigins, staffCookies } from "../src/security/origin";
-import { as, bootPayload, makeStaff, TEST_PASSWORD } from "./helpers/payload";
+import { bootPayload, makeStaff, TEST_PASSWORD } from "./helpers/payload";
 import sharp from "sharp";
 
 let payload: Payload;

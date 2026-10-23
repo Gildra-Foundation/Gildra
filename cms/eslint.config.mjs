@@ -32,6 +32,7 @@ export default tseslint.config(
   // Vendored by valyro-cli (see VALYRO.md): updated by re-adding, never hand-edited, so its hook warnings are not ours to fix.
   {
     files: ["src/components/valyro-ui/**"],
-    rules: { "react-hooks/exhaustive-deps": "off" },
+    // Vendored Valyro sources stay byte-identical to the registry.
+    rules: { "react-hooks/exhaustive-deps": "off", "@typescript-eslint/no-empty-object-type": "off" },
   },
 );
