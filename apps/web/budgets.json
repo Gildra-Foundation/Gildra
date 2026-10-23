@@ -1,5 +1,5 @@
 {
-  "note": "Decoded bytes (KB) a first visit downloads at 1440\u00d7900, cold cache. Measured by npm run budgets; raise a budget only with a reason in the commit. Murder Row image allowance includes the 361 KiB MDT map introduced in 433f0f5c (2026-10-21), in addition to the former 154 KiB artwork allowance; measured total 434 KiB on 2026-10-22. The map asset and renderer are unchanged by the redesign. Murder Row JS/CSS allowance includes the pull-talent-import-20261023 hotfix (talent import and player tools, 1065 / 390 KB measured 2026-10-23), whose 177 KiB talent snapshot and 68 KiB spell catalogue ship with the map chunk.",
+  "note": "Decoded bytes (KB) a first visit downloads at 1440\u00d7900, cold cache. Measured by npm run budgets; raise a budget only with a reason in the commit. Murder Row image allowance includes the 361 KiB MDT map introduced in 433f0f5c (2026-10-21), in addition to the former 154 KiB artwork allowance; measured total 434 KiB on 2026-10-22. The map asset and renderer are unchanged by the redesign. Murder Row JS/CSS allowance includes the pull-talent-import-20261023 hotfix (talent import and player tools, 1065 / 390 KB measured 2026-10-23), whose 177 KiB talent snapshot and 68 KiB spell catalogue ship with the map chunk; pull-build-library-20261023 (saved talent builds) brought it to 1156 KB on production the same day.",
   "routes": {
     "/ru/wow": {
       "js": 885,
@@ -37,7 +37,7 @@
       "img": 379
     },
     "/wow/mythic-plus/midnight-season-2/murder-row": {
-      "js": 1120,
+      "js": 1180,
       "css": 410,
       "img": 520
     },
