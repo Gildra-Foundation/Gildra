@@ -140,6 +140,10 @@ func (r Runner) Run(ctx context.Context, options Options) (result Result, err er
 		if maxRows == 0 {
 			maxRows = DefaultLightMaxTableRows
 		}
+		maxBytes := options.LightMaxTableBytes
+		if maxBytes == 0 {
+			maxBytes = DefaultLightMaxTableBytes
+		}
 		// Authenticate the stored object byte for byte before trusting it.
 		remote, getErr := r.Store.Get(ctx, objectKey)
 		if getErr != nil {
@@ -171,7 +175,7 @@ func (r Runner) Run(ctx context.Context, options Options) (result Result, err er
 			return readCloser{Reader: plain, closer: object.Body}, nil
 		}
 		var report LightRestoreReport
-		restoreState, report, err = light.RestoreLightAndInspect(ctx, options.RestoreDatabaseURL, open, sourceState, maxRows)
+		restoreState, report, err = light.RestoreLightAndInspect(ctx, options.RestoreDatabaseURL, open, sourceState, maxRows, maxBytes)
 		if err != nil {
 			return Result{}, fmt.Errorf("restore downloaded backup: %w", err)
 		}

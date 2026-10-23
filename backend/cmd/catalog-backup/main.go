@@ -28,7 +28,7 @@ func main() {
 
 func run() error {
 	var product, prefix, temporaryDirectory, restoreProof string
-	var lightMaxTableRows int64
+	var lightMaxTableRows, lightMaxTableBytes int64
 	var retainVerified int
 	var timeout time.Duration
 	var preflight bool
@@ -39,6 +39,7 @@ func run() error {
 	flag.BoolVar(&preflight, "preflight", false, "validate backup configuration without accessing databases or object storage")
 	flag.StringVar(&restoreProof, "restore-proof", "", "restore proof mode: full (default) or light; CATALOG_BACKUP_RESTORE_PROOF sets the default")
 	flag.Int64Var(&lightMaxTableRows, "light-max-table-rows", 0, "light proof: largest table (rows) whose data is restored (default 20000)")
+	flag.Int64Var(&lightMaxTableBytes, "light-max-table-bytes", 0, "light proof: largest table (bytes, incl. indexes and TOAST) whose data is restored (default 64 MiB)")
 	flag.IntVar(&retainVerified, "retain-verified", 3, "number of newest verified local PostgreSQL backups to retain")
 	flag.Parse()
 	if retainVerified < 1 {
@@ -60,6 +61,13 @@ func run() error {
 			return errors.New("CATALOG_BACKUP_LIGHT_MAX_TABLE_ROWS must be a positive integer")
 		}
 		lightMaxTableRows = parsed
+	}
+	if value := strings.TrimSpace(os.Getenv("CATALOG_BACKUP_LIGHT_MAX_TABLE_BYTES")); value != "" && lightMaxTableBytes == 0 {
+		parsed, err := strconv.ParseInt(value, 10, 64)
+		if err != nil || parsed < 1 {
+			return errors.New("CATALOG_BACKUP_LIGHT_MAX_TABLE_BYTES must be a positive integer")
+		}
+		lightMaxTableBytes = parsed
 	}
 	if timeout <= 0 {
 		return errors.New("timeout must be positive")
@@ -127,7 +135,7 @@ func run() error {
 		SourceDatabaseURL: sourceDatabaseURL, RestoreDatabaseURL: restoreDatabaseURL,
 		Product: strings.TrimSpace(product), ObjectPrefix: strings.TrimSpace(prefix), TempDirectory: temporaryDirectory,
 		Recipient: recipient, Identity: identity, SigningKey: signingKey,
-		RestoreProof: restoreProof, LightMaxTableRows: lightMaxTableRows,
+		RestoreProof: restoreProof, LightMaxTableRows: lightMaxTableRows, LightMaxTableBytes: lightMaxTableBytes,
 	}
 	if err := options.Validate(); err != nil {
 		return err

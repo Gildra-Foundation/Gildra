@@ -87,6 +87,9 @@ var CriticalTables = []string{
 type State struct {
 	DatabaseVersion int64            `json:"databaseVersion"`
 	Counts          map[string]int64 `json:"counts"`
+	// TableBytes is pg_total_relation_size per counted table; light restore
+	// uses it to keep large tables out of the scratch database.
+	TableBytes map[string]int64 `json:"tableBytes,omitempty"`
 }
 
 func (s State) Validate() error {
@@ -169,6 +172,9 @@ const (
 	// DefaultLightMaxTableRows is the largest critical-table row count whose
 	// data is restored in light mode.
 	DefaultLightMaxTableRows int64 = 20000
+	// DefaultLightMaxTableBytes keeps wide tables (few rows, large JSON or
+	// TOAST data) out of the light restore.
+	DefaultLightMaxTableBytes int64 = 64 << 20
 )
 
 // LightRestoreReport describes what a light restore proved.
@@ -183,7 +189,7 @@ type LightRestoreReport struct {
 // without a full restore. open must return a fresh decrypted stream of the
 // archive on every call because the proof reads it more than once.
 type LightRestoreOperator interface {
-	RestoreLightAndInspect(ctx context.Context, restoreURL string, open func() (io.ReadCloser, error), source State, maxTableRows int64) (State, LightRestoreReport, error)
+	RestoreLightAndInspect(ctx context.Context, restoreURL string, open func() (io.ReadCloser, error), source State, maxTableRows, maxTableBytes int64) (State, LightRestoreReport, error)
 }
 
 type StoredObject struct {
@@ -238,6 +244,9 @@ type Options struct {
 	// LightMaxTableRows bounds which tables get data in light mode; zero
 	// means DefaultLightMaxTableRows.
 	LightMaxTableRows int64
+	// LightMaxTableBytes likewise bounds table size; zero means
+	// DefaultLightMaxTableBytes.
+	LightMaxTableBytes int64
 }
 
 func (o Options) Validate() error {
@@ -246,8 +255,8 @@ func (o Options) Validate() error {
 	default:
 		return fmt.Errorf("restore proof must be %q or %q", RestoreProofFull, RestoreProofLight)
 	}
-	if o.LightMaxTableRows < 0 {
-		return errors.New("light restore row limit cannot be negative")
+	if o.LightMaxTableRows < 0 || o.LightMaxTableBytes < 0 {
+		return errors.New("light restore limits cannot be negative")
 	}
 	if strings.TrimSpace(o.SourceDatabaseURL) == "" {
 		return errors.New("source database URL is required")

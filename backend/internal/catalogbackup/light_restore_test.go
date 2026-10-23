@@ -30,7 +30,7 @@ const sampleTOC = `;
 
 func TestBuildLightRestoreListKeepsSmallDataAndDropsForeignKeys(t *testing.T) {
 	counts := map[string]int64{"users": 12, "game_entities": 5_000_000}
-	list, report, err := BuildLightRestoreList(sampleTOC, counts, 20000)
+	list, report, err := BuildLightRestoreList(sampleTOC, counts, nil, 20000, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +64,7 @@ func TestBuildLightRestoreListKeepsSmallDataAndDropsForeignKeys(t *testing.T) {
 }
 
 func TestBuildLightRestoreListRejectsArchiveWithoutCountedData(t *testing.T) {
-	if _, _, err := BuildLightRestoreList("; empty\n", map[string]int64{"users": 1}, 10); err == nil {
+	if _, _, err := BuildLightRestoreList("; empty\n", map[string]int64{"users": 1}, nil, 10, 0); err == nil {
 		t.Fatal("empty table of contents was accepted")
 	}
 }
@@ -93,7 +93,7 @@ type lightDatabase struct {
 	opened  int
 }
 
-func (l *lightDatabase) RestoreLightAndInspect(_ context.Context, _ string, open func() (io.ReadCloser, error), _ State, maxRows int64) (State, LightRestoreReport, error) {
+func (l *lightDatabase) RestoreLightAndInspect(_ context.Context, _ string, open func() (io.ReadCloser, error), _ State, maxRows, _ int64) (State, LightRestoreReport, error) {
 	for range 3 {
 		stream, err := open()
 		if err != nil {
@@ -255,5 +255,25 @@ func TestRunnerPublishesLocalArchiveWithoutSecondCopy(t *testing.T) {
 	}
 	if len(archives) != 0 {
 		t.Fatalf("temporary archive was not removed from the volume root: %v", archives)
+	}
+}
+
+func TestBuildLightRestoreListKeepsWideTablesOutByBytes(t *testing.T) {
+	counts := map[string]int64{"users": 12, "game_entities": 5}
+	sizes := map[string]int64{"users": 1 << 20, "game_entities": 3 << 30}
+	_, report, err := BuildLightRestoreList(sampleTOC, counts, sizes, 20000, 64<<20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(report.RestoredTables, ",") != "users" || strings.Join(report.SkippedDataTables, ",") != "game_entities" {
+		t.Fatalf("report = %#v", report)
+	}
+	// A table with no recorded size is treated as large.
+	_, report, err = BuildLightRestoreList(sampleTOC, counts, map[string]int64{"users": 1}, 20000, 64<<20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(report.SkippedDataTables, ",") != "game_entities" {
+		t.Fatalf("report = %#v", report)
 	}
 }
