@@ -44,3 +44,19 @@
 .abilityIdentity { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
 .spellIcon { flex-shrink: 0; border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius); }
 .abilitySources { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3); font-size: var(--atlas-text-meta); }
+
+.personal { padding: var(--atlas-space-3); border: 1px solid var(--atlas-accent); border-radius: var(--atlas-radius); background: var(--atlas-surface-raised); }
+.personal h4 { color: var(--atlas-accent-strong); }
+.personalTasks.personalTasks { padding: 0; list-style: none; }
+.personalTasks > li + li { margin-top: var(--atlas-space-3); padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line); }
+.personalTasks small { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+
+.taskSource { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+
+.playerAdvice { margin-top: var(--atlas-space-2); padding: var(--atlas-space-2) var(--atlas-space-3); border-left: 2px solid var(--atlas-accent); background: var(--atlas-bg); }
+.playerAdvice > b { color: var(--atlas-accent-strong); font-size: var(--atlas-text-meta); }
+.playerAdvice ul { padding: 0; list-style: none; }
+.playerAdvice li { margin-top: var(--atlas-space-2); }
+.playerSpell { display: flex; align-items: center; gap: var(--atlas-space-2); width: fit-content; min-height: 44px; }
+.playerSpell img { flex-shrink: 0; border-radius: var(--atlas-radius); border: 1px solid var(--atlas-line); }
+.playerAdvice small { line-height: 1.5; }

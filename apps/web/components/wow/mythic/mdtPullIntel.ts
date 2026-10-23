@@ -91,12 +91,13 @@ function buildReviewedPull(members: MdtNode[], catalogue: NonNullable<DungeonCom
   const mechanics: PullMechanic[] = [];
   const enemies = [...counts].map(([npcId, { name, count }]) => {
     const entry = byNpc.get(npcId);
+    const localizedName = entry?.name[locale] ?? name;
     if (entry) for (const ability of entry.abilities) mechanics.push({
-      name: ability.name.en, source: name, action: actions[ability.action], role: ability.role,
+      name: ability.name[locale], source: localizedName, action: actions[ability.action], role: ability.role,
       npcId, response: ability.response[locale], spellId: ability.spellId, iconUrl: ability.iconUrl ?? undefined,
       url: ability.url, guideUrl: ability.source,
     });
-    return { name, count, npcId, covered: Boolean(entry), portraitUrl: entry?.portraitUrl ?? undefined, note: entry?.note?.[locale], url: entry?.url };
+    return { name: localizedName, count, npcId, covered: Boolean(entry), portraitUrl: entry?.portraitUrl ?? undefined, note: entry?.note?.[locale], url: entry?.url };
   });
   return {
     enemies, mechanics, roleNotes: { tank: [], healer: [], dps: [] }, facts: [], hasConflicts: false,

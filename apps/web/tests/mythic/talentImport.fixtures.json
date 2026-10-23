@@ -1,0 +1,446 @@
+{
+  "description": "Synthetic bitstream fixtures generated independently from live Raidbots nodes and Blizzard ExportUtil. Sparse allocations exercise serialization, not recommended/legal talent builds.",
+  "build": "12.1.5.70529",
+  "specs": [
+    {
+      "specId": 102,
+      "classId": 11,
+      "off": "CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAQhAAAAAAAAAAAAAAAAIAAAALAAAAAAAA",
+      "on": "CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAQhAAwCgNGAAAAgBAAAAAACAAAwCAAAAAAAA",
+      "required": [
+        2782,
+        2908,
+        5211,
+        78675
+      ]
+    },
+    {
+      "specId": 103,
+      "classId": 11,
+      "off": "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAEAAUAAAAAAAAAAAAAAQAAAYBAAAAAAAA",
+      "on": "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAEAAUwCgNmBAAAAAAAAAAAEAAAWAAAAAAAAA",
+      "required": [
+        2782,
+        2908,
+        5211,
+        106839
+      ]
+    },
+    {
+      "specId": 104,
+      "classId": 11,
+      "off": "CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAAAIRAAAAAAAAAAAAAAQAAAgFAAAAAAAA",
+      "on": "CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAAAIRwCgNmBAAAAAAAAAAAEAAAYBAAAAAAAA",
+      "required": [
+        2782,
+        2908,
+        5211,
+        106839
+      ]
+    },
+    {
+      "specId": 105,
+      "classId": 11,
+      "off": "CkGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAACAAAAYBAAQAAAAA",
+      "on": "CkGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAABIAYBwGAAAAAAAAAAgAAAAAWAAAMAAAAA",
+      "required": [
+        2908,
+        5211,
+        392378
+      ]
+    },
+    {
+      "specId": 1467,
+      "classId": 13,
+      "off": "CsbBPJc41CfcseY0baneJ1IHrBAAAAAAAAAAAAAAAACIAAAAAAAAAAAAgAALAAAA",
+      "on": "CsbBPJc41CfcseY0baneJ1IHrBAAAAAAAAAAAAAAwAYaABAAYAAAAAAAAAgAALAAAA",
+      "required": [
+        351338,
+        363916,
+        365585,
+        374251
+      ]
+    },
+    {
+      "specId": 1468,
+      "classId": 13,
+      "off": "CwbBPJc41CfcseY0baneJ1IHrBAAAAAAAAAAAAAAAAEAAAAAEAAAAAAAAIgFAAAA",
+      "on": "CwbBPJc41CfcseY0baneJ1IHrBAAAAAAAAAAAAAAwAYEAAAAAEAAAAAAAAIgFAAAA",
+      "required": [
+        363916,
+        374251
+      ]
+    },
+    {
+      "specId": 1473,
+      "classId": 13,
+      "off": "CEcBPJc41CfcseY0baneJ1IHrBAAAAAAAAAAAAAAAAFAAAAAAAAAAAAAAIwCAAAA",
+      "on": "CEcBPJc41CfcseY0baneJ1IHrBDAAAAAAAAAAAAAAGA1AAAAAAAAAAAAAAABWAAAA",
+      "required": [
+        351338,
+        365585,
+        374251
+      ]
+    },
+    {
+      "specId": 256,
+      "classId": 5,
+      "off": "CAQAR03Gt7xPmcDNOjs2Zlb3yCAAAAAAAAAAAAAAAAAAAAAgIAAgAAAYBAAAAAAAA",
+      "on": "CAQAR03Gt7xPmcDNOjs2Zlb3yCAAAAAAAAAAAAAAAAAAAAMYgIAAgAAAYBAAwwAAADA",
+      "required": [
+        528,
+        8122,
+        19236,
+        32375,
+        390632
+      ]
+    },
+    {
+      "specId": 257,
+      "classId": 5,
+      "off": "CEQAR03Gt7xPmcDNOjs2Zlb3yCAAAAAAAAAAAAAAAAAAAAAAUAAgAAAwCAAAAAAAA",
+      "on": "CEQAR03Gt7xPmcDNOjs2Zlb3yCAAAAAAAAAAAAAAAAAAAAMYAUAAgAAAwCAAwwAAADA",
+      "required": [
+        528,
+        8122,
+        19236,
+        32375,
+        390632
+      ]
+    },
+    {
+      "specId": 258,
+      "classId": 5,
+      "off": "CIQAR03Gt7xPmcDNOjs2Zlb3yCAAAAAAAAAAAAAAAAAAAAEABAAAAACsAAAAAAAAA",
+      "on": "CIQAR03Gt7xPmcDNOjs2Zlb3yCAAAAAAAAAAAAAAAAAAAAEDIAAAAAQgFAAAGAAADA",
+      "required": [
+        528,
+        32375,
+        213634
+      ]
+    },
+    {
+      "specId": 250,
+      "classId": 6,
+      "off": "CoPAkXBWxkyfx9CbGaHonEAhLBAAAACAAAAAAAAAAAAAAAAAAAACgFAAAAAAA",
+      "on": "CoPAkXBWxkyfx9CbGaHonEAhLBAAAWABwYAAAAAAAAAAAAAAAAAAABwCAAAAAAA",
+      "required": [
+        47528,
+        48792,
+        221562
+      ]
+    },
+    {
+      "specId": 251,
+      "classId": 6,
+      "off": "CsPAkXBWxkyfx9CbGaHonEAhLBAAAAAQAAAAAAAAAAAAAAAAAAACwCAAAAAAA",
+      "on": "CsPAkXBWxkyfx9CbGaHonEAhLBAAAWAAIDAAAAAAAAAAAAAAAAAAIALAAAAAAAA",
+      "required": [
+        47528,
+        221562
+      ]
+    },
+    {
+      "specId": 252,
+      "classId": 6,
+      "off": "CwPAkXBWxkyfx9CbGaHonEAhLBAAAAEAAAAAAAAAAAAAAAAAAAAgYBAAAAAAA",
+      "on": "CwPAkXBWxkyfx9CbGaHonEAhLBAAAWACwYAAAAAAAAAAAAAAAAAAAQsAAAAAAAA",
+      "required": [
+        47528,
+        48792,
+        221562
+      ]
+    },
+    {
+      "specId": 253,
+      "classId": 3,
+      "off": "C0PAD57yiELKEty14ekTDtZEqAAAAAAWAAAAAAAAAAAAACAAAAAAAAAAACAAAA",
+      "on": "C0PAD57yiELKEty14ekTDtZEqAAAAAAWAAwAAAAAAAAMAACAAAAAAAAAMAQAAAA",
+      "required": [
+        19577,
+        19801,
+        147362
+      ]
+    },
+    {
+      "specId": 254,
+      "classId": 3,
+      "off": "C4PAD57yiELKEty14ekTDtZEqAAAAgAWAAAAAAAAAAAAAEAAAAAAAAAAAAAAAA",
+      "on": "C4PAD57yiELKEty14ekTDtZEqAAAAgAWAAAAAAAAAAAMAgAAAAwAAAAAYAAAAAA",
+      "required": [
+        19801,
+        147362,
+        474421
+      ]
+    },
+    {
+      "specId": 255,
+      "classId": 3,
+      "off": "C8PAD57yiELKEty14ekTDtZEqAAAAAIYBAAAAAAAAAAAAEAAAAAAAAAAAAAAAA",
+      "on": "C8PAD57yiELKEty14ekTDtZEqMAAAAABLAAAAAAAAAAAAgAAAAYAAAAAYAAAAAA",
+      "required": [
+        19577,
+        19801,
+        187707
+      ]
+    },
+    {
+      "specId": 259,
+      "classId": 4,
+      "off": "CMQA5HmDzx68KWyrW/8Y781L7DAAAAAAAAAAAAAAQAAAAAAAAAAAAAQAsAAAA",
+      "on": "CMQA5HmDzx68KWyrW/8Y781L7DAAAAAAAAAAAAAAQAAAAAAAAAAAAAQAsAAAA",
+      "required": []
+    },
+    {
+      "specId": 260,
+      "classId": 4,
+      "off": "CQQA5HmDzx68KWyrW/8Y781L7DAAAAAAAEAAAAAAAAAAAAAAAAAAABAAWAAAA",
+      "on": "CQQA5HmDzx68KWyrW/8Y781L7DAAAAAAAEAAAAAAAAAAAAAAAAAAABAAWAAAA",
+      "required": []
+    },
+    {
+      "specId": 261,
+      "classId": 4,
+      "off": "CUQA5HmDzx68KWyrW/8Y781L7DAAAAAAAAQAAAAAAAAAAAAAAAAAAAQALAAAA",
+      "on": "CUQA5HmDzx68KWyrW/8Y781L7DAAAAAAAAQAAAAAAAAAAAAAAAAAAAQALAAAA",
+      "required": []
+    },
+    {
+      "specId": 262,
+      "classId": 7,
+      "off": "CYQALMl7AwW51MWzGneuHE3tPCAAAAAAAAAAAAAAAAAIgFAAAgAAAAAAAAAAAAA",
+      "on": "CYQALMl7AwW51MWzGneuHE3tPCAAAAAAAAAAAAAAAAAIgFAYAAEgBMDYBAAAAAAAA",
+      "required": [
+        370,
+        51886,
+        57994,
+        108271,
+        192058
+      ]
+    },
+    {
+      "specId": 263,
+      "classId": 7,
+      "off": "CcQALMl7AwW51MWzGneuHE3tPCAAAAAAAAAAAAAAAAAACWAAAAAAAAAAAAEAAAA",
+      "on": "CcQALMl7AwW51MWzGneuHE3tPCAAAAAAAAAAAAAAAAAACWAYAAAwAmBsAAAAACAAA",
+      "required": [
+        370,
+        51886,
+        57994,
+        108271,
+        192058
+      ]
+    },
+    {
+      "specId": 264,
+      "classId": 7,
+      "off": "CgQALMl7AwW51MWzGneuHE3tPCAAAAAAAAAAAAAAAAAIALAAgAAAAAAAAAAAAAA",
+      "on": "CgQALMl7AwW51MWzGneuHE3tPCAAAAAAAAAAAAYAAAAABYBADgAAAMDYBAAAAAAAA",
+      "required": [
+        370,
+        57994,
+        108271,
+        192058,
+        383016
+      ]
+    },
+    {
+      "specId": 65,
+      "classId": 2,
+      "off": "CEEAzbn3egSOtoSwvPw1U1vTLAAAAAAAAAAAAAAgEAAIAAAAAAgAAAAsAAAAAAAAAA",
+      "on": "CEEAzbn3egSOtoSwvPw1U1vTLAAAAAgBAAAAAAAAkAAgtAAAAAAACAAAwCAAAAAAAAA",
+      "required": [
+        1044,
+        393024
+      ]
+    },
+    {
+      "specId": 66,
+      "classId": 2,
+      "off": "CIEAzbn3egSOtoSwvPw1U1vTLAAAAAAAAAAAAAAgEAAIAAAAAAAAAABWAAAAAAAAAA",
+      "on": "CIEAzbn3egSOtoSwvPw1U1vTLAYAAAAGAAAAAAAAgkBAgtAAAAAAAAAAEYBAAAAAAAAA",
+      "required": [
+        1044,
+        31850,
+        96231,
+        213644
+      ]
+    },
+    {
+      "specId": 70,
+      "classId": 2,
+      "off": "CYEAzbn3egSOtoSwvPw1U1vTLAAAAAABAAAAAAAAUAAAAAAAAAgAAAALAAAAAAAAAA",
+      "on": "CYEAzbn3egSOtoSwvPw1U1vTLAAAAAwIAAAAAAAAgCAAbAAAAAAACAAAsAAAAAAAAADA",
+      "required": [
+        1044,
+        96231,
+        213644
+      ]
+    },
+    {
+      "specId": 62,
+      "classId": 8,
+      "off": "C4DAche08tHz49KSVf7iKFnyuBAAABAAAAAAAAAxCAAAAAAAAAAAAAAAAAAAAA",
+      "on": "C4DAche08tHz49KSVf7iKFnyuNAAADBAAAAAAAAAxCAALAAAAAAAAAAAAAAAAAA",
+      "required": [
+        475,
+        30449,
+        31661
+      ]
+    },
+    {
+      "specId": 63,
+      "classId": 8,
+      "off": "C8DAche08tHz49KSVf7iKFnyuBAAgAAAAAAAAAAsAAAAAAAAAAAAAAAAAIAAAA",
+      "on": "C8DAche08tHz49KSVf7iKFnyuNAAAjAAAAAAAAAAsAAgFAAAAAAAAAAAAAAEAAA",
+      "required": [
+        475,
+        30449,
+        31661
+      ]
+    },
+    {
+      "specId": 64,
+      "classId": 8,
+      "off": "CAEAche08tHz49KSVf7iKFnyuBAAQAAAAAEAAAAsAAAAAAAAAAAAAAAAAAAAAA",
+      "on": "CAEAche08tHz49KSVf7iKFnyuNAAATAAAAAEAAAAsAAALAAAAAAAAAAAAAAAAAA",
+      "required": [
+        475,
+        30449,
+        31661
+      ]
+    },
+    {
+      "specId": 71,
+      "classId": 1,
+      "off": "CcEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAACAAAAAAAAAAABAAAAgAWAAAAAAAAA",
+      "on": "CcEASWsDSHNyPDXnbxuIhH3ZdDDAAAAAAQgBAAAAAAAAAABAAAAgAWAAAAAAAAA",
+      "required": [
+        107570,
+        118038
+      ]
+    },
+    {
+      "specId": 72,
+      "classId": 1,
+      "off": "CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAgAAAAAAAAAAAACAAIAAALAAAAAAAAA",
+      "on": "CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAgAMAAAAYAAAAAACAAIAAALAAAAAAAAA",
+      "required": [
+        107570,
+        184364
+      ]
+    },
+    {
+      "specId": 73,
+      "classId": 1,
+      "off": "CkEASWsDSHNyPDXnbxuIhH3ZdHAAAAAAAgAAAAAAAAAAAAAAAAggFAAAAAAAAA",
+      "on": "CkEASWsDSHNyPDXnbxuIhH3ZdHAAAgBAAAEDAAAAAAAAAAAAAAAggFAAAAAAAAA",
+      "required": [
+        871,
+        107570
+      ]
+    },
+    {
+      "specId": 265,
+      "classId": 9,
+      "off": "CkQAMrNP5kak+EBqLfUa3dMm+CABAAAAAAAAAAAIAAgFAAAAAAAAAAAAAAAAA",
+      "on": "CkQAMrNP5kak+EBqLfUa3dMm+CABsBAAAAAAAAAAEAAwCAAAAAAAAAAAAAAAA",
+      "required": [
+        30283
+      ]
+    },
+    {
+      "specId": 266,
+      "classId": 9,
+      "off": "CoQAMrNP5kak+EBqLfUa3dMm+CABAAAAAAAAAAAAAgwCAAAAAAAAAAAAAAAAA",
+      "on": "CoQAMrNP5kak+EBqLfUa3dMm+CABsBAAAAAAAAAAAAQYBAAAAAAAAAAAAAAAA",
+      "required": [
+        30283
+      ]
+    },
+    {
+      "specId": 267,
+      "classId": 9,
+      "off": "CsQAMrNP5kak+EBqLfUa3dMm+CABAAAAAAAAAAAAAgYBAAAAAAAAAAAAAAAAA",
+      "on": "CsQAMrNP5kak+EBqLfUa3dMm+CABsBAAAAAAAAAAAAQsAAAAAAAAAAAAAAAAA",
+      "required": [
+        30283
+      ]
+    },
+    {
+      "specId": 268,
+      "classId": 10,
+      "off": "CwQAQnG51S19isUJoJoTeJ/IKDAAAAAAAAAAAAAAAAEAAAAAAAAAAAwCCAAAAAAAgAAAA",
+      "on": "CwQAQnG51S19isUJoJoTeJ/IKDAAAAAAAADAAAAAAAgAwAAAwAAAAAAAWQAAAAAAAAEAAAA",
+      "required": [
+        116705,
+        218164,
+        388917
+      ]
+    },
+    {
+      "specId": 269,
+      "classId": 10,
+      "off": "C0QAQnG51S19isUJoJoTeJ/IKDAAAAAAAAAAAAAAAAEAAAAAAgAAAAAAALAIAAAAAAAAA",
+      "on": "C0QAQnG51S19isUJoJoTeJ/IKDAAAAAAAAAAAAAAAAEgBAAAGAgAAAAAAALAIAAAAAAAwAA",
+      "required": [
+        116705,
+        218164,
+        388917
+      ]
+    },
+    {
+      "specId": 270,
+      "classId": 10,
+      "off": "C4QAQnG51S19isUJoJoTeJ/IKDAAAAAAAAAAAAAAAAEAAAAAAgAAAAAAgFAAAAAAAAABA",
+      "on": "C4QAQnG51S19isUJoJoTeJ/IKDAAAAAAAgBAAAAAAAgAAAAAGAgAAAAAAgFAAAAAAAAABA",
+      "required": [
+        388874,
+        388917
+      ]
+    },
+    {
+      "specId": 577,
+      "classId": 12,
+      "off": "CEkAvaDi4uyGvRjRjFbhHwBCvAAAAIAAAAAAAAAAAAAAAAABAsAAAAAAAAAAAAAAA",
+      "on": "CEkAvaDi4uyGvRjRjFbhHwBCvAAAAIAAAAAAAwAADAAAAAAABAsAAAAAAAAAAAAAAA",
+      "required": [
+        179057,
+        278326
+      ]
+    },
+    {
+      "specId": 581,
+      "classId": 12,
+      "off": "CUkAvaDi4uyGvRjRjFbhHwBCvAAAAgAAAAAAAAAAAAAAAAABAWAAAAAAAAAAAAAAA",
+      "on": "CUkAvaDi4uyGvRjRjFbhHwBCvAAAAggBAAAAAAAADAAAAAAABAWAAAAAYAAAAAAAAA",
+      "required": [
+        179057,
+        204021,
+        278326
+      ]
+    },
+    {
+      "specId": 1480,
+      "classId": 12,
+      "off": "CgcBvaDi4uyGvRjRjFbhHwBCvAAAAAAAAAAAAAAAAAAAAAAAAAAAAsIAQAAAAAAAA",
+      "on": "CgcBvaDi4uyGvRjRjFbhHwBCvAAAAAAAAAAAAAAMAAAAAAAAAAAMAAsIAQAAAAAAAA",
+      "required": [
+        278326,
+        1234195
+      ]
+    }
+  ],
+  "special": {
+    "choiceSpecId": 105,
+    "choiceOther": "CkGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAABIAYDAAAAAAAAAAAABAAAAsAAAIAAAAA",
+    "choiceSpell": 33786,
+    "excludedChoiceSpell": 2908,
+    "partial": "CkGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAABIAPAAAAAAAAAAAAAQAAAAALAAACAAAAA",
+    "partialSpell": 108299,
+    "hashless": "CkGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAACAAAAYBAAQAAAAA",
+    "tiered": "CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAgAAAAAAAAAAAACAAIAAALAAAAAAAAPA",
+    "tierFirst": 1269308,
+    "tierOther": 1269310
+  }
+}
