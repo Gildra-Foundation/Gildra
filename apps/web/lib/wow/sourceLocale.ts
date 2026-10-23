@@ -1,33 +1,19 @@
 import type { Lang } from "@/lib/i18n-paths";
-import { sourceNames } from "./sourceNames";
-import { sourceNpcNames } from "./sourceNpcNames";
-import { sourceSpellNames } from "./sourceSpellNames";
+import { fullWowNameTable as table } from "./fullWowNameTable";
+import { npcName, sourceName, sourceNameLang, sourceText, spellName } from "./wowNameTable";
 
-const apostrophes = (value: string) => value.replace(/[‘’]/g, "'");
-const names = new Map(Object.entries(sourceNames).map(([en, ru]) => [apostrophes(en), ru]));
-const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const pattern = new RegExp(`(?<![A-Za-z])(?:${[...names.keys()].sort((a, b) => b.length - a.length).map(escape).join("|")})(?![A-Za-z])`, "g");
+// Server-side lookups over every confirmed name. Client components translate
+// with a page-scoped table instead (lib/wow/wowNameTable.ts), so the
+// dictionaries stay out of the browser bundle.
 
 /** Use exact source names, including inside guide prose; never translate by inference. */
-export function wowSourceText(value: string, lang: Lang) {
-  if (lang === "en") return value;
-  return apostrophes(value).replace(pattern, (name) => names.get(name) ?? name);
-}
+export const wowSourceText = (value: string, lang: Lang) => sourceText(table, value, lang);
 /** Without a confirmed Russian name the original English name is shown (game names may stay English). */
-export function wowSourceName(value: string, lang: Lang, existingRu?: string) {
-  return lang === "en" ? value : names.get(apostrophes(value)) ?? existingRu ?? value;
-}
+export const wowSourceName = (value: string, lang: Lang, existingRu?: string) => sourceName(table, value, lang, existingRu);
 /** `lang` attribute for a rendered source name: "en" when a Russian page falls back to the English original. */
-export function wowSourceNameLang(value: string, lang: Lang, existingRu?: string): "en" | undefined {
-  return lang === "ru" && !names.has(apostrophes(value)) && !existingRu ? "en" : undefined;
-}
-
-export function wowNpcName(value: string, lang: Lang, npcId?: number) {
-  return npcId ? sourceNpcNames[npcId]?.[lang] ?? wowSourceName(value, lang) : wowSourceName(value, lang);
-}
-export function wowSpellName(value: string, lang: Lang, spellId?: number) {
-  return spellId ? sourceSpellNames[spellId]?.[lang] ?? wowSourceName(value, lang) : wowSourceName(value, lang);
-}
+export const wowSourceNameLang = (value: string, lang: Lang, existingRu?: string) => sourceNameLang(table, value, lang, existingRu);
+export const wowNpcName = (value: string, lang: Lang, npcId?: number) => npcName(table, value, lang, npcId);
+export const wowSpellName = (value: string, lang: Lang, spellId?: number) => spellName(table, value, lang, spellId);
 
 /** Strategy prose also contains interface terms for modes, roles and combat notation. */
 export function wowGuideText(value: string, lang: Lang) {

@@ -1,5 +1,4 @@
-import { wowRouteText } from "@/lib/wow/routeSourceLocale";
-import { wowSourceName } from "@/lib/wow/sourceLocale";
+import { routeText, sourceName, type WowNameTable } from "@/lib/wow/wowNameTable";
 import type { RouteAbility, RouteEnemy, RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 
 /**
@@ -408,12 +407,12 @@ const subtitlesRu: Record<string, string> = {
   "Felonious crew": "Банда противников", "Mages + smugglers": "Маги и контрабандисты", "Barrels + freight": "Бочки и груз",
   Wrathguards: "Стражи", "Invokers + flayers": "Заклинатели и свежеватели", "Freight gauntlet": "Проход с грузом",
 };
-export function stopSubtitle(subtitle: string, locale: RouteLocale, enemies?: readonly { name: string }[]) {
+export function stopSubtitle(subtitle: string, locale: RouteLocale, names: WowNameTable, enemies?: readonly { name: string }[]) {
   if (locale === "en") return subtitlesEn[subtitle] ?? subtitle;
-  const text = subtitlesRu[subtitle] ?? plainLanguage(subtitle);
+  const text = subtitlesRu[subtitle] ?? plainLanguage(subtitle, locale, names);
   // Group subtitles use the original NPC names carried by the route, rather
   // than abbreviated English labels. Stored names and route keys stay intact.
-  if (/[A-Za-z]/.test(text) && enemies?.length) return [...new Set(enemies.map((enemy) => wowSourceName(enemy.name, locale)))].join(" + ");
+  if (/[A-Za-z]/.test(text) && enemies?.length) return [...new Set(enemies.map((enemy) => sourceName(names, enemy.name, locale)))].join(" + ");
   return text;
 }
 
@@ -422,9 +421,9 @@ export function floorLabel(label: string, locale: RouteLocale) {
 }
 
 /** Route notes are written by players for players; this keeps the Russian notes free of raid slang. */
-export function plainLanguage(text: string, locale: RouteLocale = "ru") {
+export function plainLanguage(text: string, locale: RouteLocale, names: Pick<WowNameTable, "route">) {
   if (locale === "en") return text;
-  return wowRouteText(text, locale)
+  return routeText(names, text, locale)
     .replaceAll("Стакайте пак", "Соберите врагов вместе")
     .replaceAll("Стак у стены", "Соберитесь у стены")
     .replaceAll("треш", "обычные группы врагов")

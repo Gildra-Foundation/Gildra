@@ -4,10 +4,10 @@ import { toCharacterAuditSnapshot } from "@/lib/wow/battleNetAuditSnapshot";
 import { BattleNetCharacterDataError, characterSlug, getBattleNetCharacterDetails } from "@/lib/wow/battleNetCharacterDetails";
 import { BattleNetProfileError, getBattleNetCharacters, isBattleNetRegion } from "@/lib/wow/battleNetCharacters";
 import { characterProfileFingerprint } from "@/lib/wow/characterProfileFingerprint";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
 export const dynamic = "force-dynamic";
 type RouteContext = { params: Promise<{ slug: string }> };
-type Locale = "en" | "ru";
 
 function sameOrigin(request: Request) {
   if (request.headers.get("sec-fetch-site") === "cross-site") return false;

@@ -1,12 +1,13 @@
 "use client";
 
-import { wowSourceName } from "@/lib/wow/sourceLocale";
+import { sourceName } from "@/lib/wow/wowNameTable";
 import Image from "next/image";
 import { memo, useEffect, useId, useRef, useState, useTransition, type KeyboardEvent, type ReactNode } from "react";
 import { Check, ChevronDown, Gem, LoaderCircle, Map } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { DungeonSelectorOption, DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { mythicRouteCopy, type RouteLocale } from "./mythicRouteCopy";
+import { useRouteNames } from "./routeNames";
 import styles from "./mythicRouteSelectors.module.css";
 
 type SelectorOption<T extends string | number> = {
@@ -156,11 +157,12 @@ function formatTimer(seconds: number) {
 export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale, dungeonSlug, dungeonOptions, keyLevel, onKeyLevelChange }: { locale: RouteLocale; dungeonSlug: DungeonSlug; dungeonOptions: DungeonSelectorOption[]; keyLevel: number; onKeyLevelChange: (level: number) => void }) {
   const router = useRouter();
   const copy = mythicRouteCopy[locale];
+  const names = useRouteNames();
   const [isNavigating, startNavigation] = useTransition();
   const options: SelectorOption<DungeonSlug>[] = dungeonOptions.map((route) => ({
     value: route.slug,
-    title: wowSourceName(route.name, locale, route.nameRu),
-    subtitle: copy.dungeonSubtitle({ name: wowSourceName(route.name, locale, route.nameRu), nameRu: wowSourceName(route.name, locale, route.nameRu), timer: formatTimer(route.timerSeconds) }),
+    title: sourceName(names, route.name, locale, route.nameRu),
+    subtitle: copy.dungeonSubtitle({ name: sourceName(names, route.name, locale, route.nameRu), nameRu: sourceName(names, route.name, locale, route.nameRu), timer: formatTimer(route.timerSeconds) }),
     artwork: route.backdropImage,
   }));
   const keyOptions: SelectorOption<number>[] = keyLevels.map((level) => ({ value: level, title: `+${level}`, subtitle: copy.keyOptions[level] }));
