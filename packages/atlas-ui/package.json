@@ -13,6 +13,7 @@
     "./format": "./src/format.ts",
     "./clipboard": "./src/clipboard.ts",
     "./toast": "./src/toast.ts",
+    "./valyroParts": "./src/valyroParts.ts",
     "./*.module.css": "./src/*.module.css"
   },
   "peerDependencies": {

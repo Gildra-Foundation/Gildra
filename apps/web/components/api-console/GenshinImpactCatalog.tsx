@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModalLayer } from "@gildra/atlas-ui/valyroParts";
 import { cn } from "@/lib/utils";
 
 type Locale = "en_US" | "ru_RU";
@@ -320,24 +321,7 @@ export function GenshinImpactCatalog() {
     return () => { cancelled = true; };
   }, [locale, selectedArtifact]);
 
-  useEffect(() => {
-    if (!selectedCharacter && !selectedWeapon && !selectedArtifact && !imagePreview) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (imagePreview) setImagePreview(null);
-        else if (selectedCharacter) setSelectedCharacter(null);
-        else if (selectedWeapon) setSelectedWeapon(null);
-        else setSelectedArtifact(null);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [imagePreview, selectedArtifact, selectedCharacter, selectedWeapon]);
+  // The dialogs are Valyro ModalLayers: Escape closes the top one, focus stays inside, the page does not scroll.
 
   function switchSection(next: Section) {
     setLoading(true);
@@ -522,7 +506,7 @@ function CharacterDialog({ locale, character, detail, loading, error, onClose, o
   const en = locale === "en_US";
   const profile = detail ?? character;
   const imageURL = profile.portraitUrl ?? profile.iconUrl;
-  return <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#05070b]/85 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-labelledby="genshin-character-dialog-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+  return <ModalLayer open onClose={onClose} aria-labelledby="genshin-character-dialog-title" layerClassName="z-[60] p-3 sm:p-6" className="flex w-full justify-center bg-transparent outline-none">
     <div className="my-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-6xl flex-col overflow-hidden border border-[#4b4029] bg-[#0d1118] shadow-[0_28px_90px_rgba(0,0,0,.65)] sm:max-h-[calc(100vh-3rem)]">
       <div className="flex items-start justify-between gap-4 border-b border-[#2b313e] bg-[#11151d] px-4 py-4 sm:px-6">
         <div className="min-w-0"><div className="text-[10px] uppercase tracking-[.18em] text-[#c9a24f]">{en ? "Character profile" : ct("Профиль персонажа")}</div><h2 id="genshin-character-dialog-title" className="mt-1 truncate font-[family-name:var(--display)] text-xl font-semibold text-[#edf0f5] sm:text-2xl">{profile.name}</h2><p className="mt-1 text-xs text-[#8290a4]">{profile.title || profile.region || "Genshin Impact"}</p></div>
@@ -538,7 +522,7 @@ function CharacterDialog({ locale, character, detail, loading, error, onClose, o
         {loading ? <div className="grid min-h-56 place-items-center p-6"><RefreshCw className="size-6 animate-spin text-[#c9a24f]" /><span className="sr-only">{en ? "Loading profile" : ct("Загрузка профиля")}</span></div> : error ? <div className="m-4 border border-[#693b3e] bg-[#211215] p-4 text-sm text-[#eba0a3] sm:m-6">{error}</div> : <div className="space-y-8 p-4 sm:p-6"><CharacterProgression locale={locale} detail={detail} onOpenImage={onOpenImage} /><div className="grid gap-8 lg:grid-cols-2 lg:gap-10"><CharacterTalentList locale={locale} talents={detail?.talents ?? []} onOpenImage={onOpenImage} /><CharacterConstellationList locale={locale} constellations={detail?.constellations ?? []} onOpenImage={onOpenImage} /></div></div>}
       </div>
     </div>
-  </div>;
+  </ModalLayer>;
 }
 
 function CharacterProgression({ locale, detail, onOpenImage }: { locale: Locale; detail: CharacterDetail | null; onOpenImage: (preview: ImagePreview) => void }) {
@@ -607,7 +591,7 @@ function WeaponDialog({ locale, weapon, detail, loading, error, onClose, onOpenI
   if (!weapon) return null;
   const en = locale === "en_US";
   const profile = detail ?? weapon;
-  return <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#05070b]/85 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-labelledby="genshin-weapon-dialog-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+  return <ModalLayer open onClose={onClose} aria-labelledby="genshin-weapon-dialog-title" layerClassName="z-[60] p-3 sm:p-6" className="flex w-full justify-center bg-transparent outline-none">
     <div className="my-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden border border-[#4b4029] bg-[#0d1118] shadow-[0_28px_90px_rgba(0,0,0,.65)] sm:max-h-[calc(100vh-3rem)]">
       <DialogHeader eyebrow={en ? "Weapon profile" : ct("Профиль оружия")} title={profile.name} subtitle={ct(weaponLabel(profile.weaponType))} onClose={onClose} titleID="genshin-weapon-dialog-title" locale={locale} />
       <div className="min-h-0 overflow-y-auto">
@@ -618,7 +602,7 @@ function WeaponDialog({ locale, weapon, detail, loading, error, onClose, onOpenI
         {loading ? <LoadingDetail /> : error ? <DetailError text={error} /> : <div className="space-y-8 p-4 sm:p-6"><WeaponProgression locale={locale} detail={detail} /><WeaponEffect locale={locale} detail={detail} /><WeaponRefinementList locale={locale} refinements={detail?.refinements ?? []} /><UpgradeCostList title={en ? "Ascension materials" : ct("Ресурсы для возвышения")} stages={detail?.ascensionCosts ?? []} onOpenImage={onOpenImage} locale={locale} /><LevelingCostTable costs={detail?.levelingCosts ?? { levels: [], materials: [] }} locale={locale} onOpenImage={onOpenImage} /></div>}
       </div>
     </div>
-  </div>;
+  </ModalLayer>;
 }
 
 function WeaponProgression({ locale, detail }: { locale: Locale; detail: WeaponDetail | null }) {
@@ -659,7 +643,7 @@ function ArtifactDialog({ locale, artifact, detail, loading, error, onClose, onO
   if (!artifact) return null;
   const en = locale === "en_US";
   const profile = detail ?? artifact;
-  return <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#05070b]/85 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-labelledby="genshin-artifact-dialog-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+  return <ModalLayer open onClose={onClose} aria-labelledby="genshin-artifact-dialog-title" layerClassName="z-[60] p-3 sm:p-6" className="flex w-full justify-center bg-transparent outline-none">
     <div className="my-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden border border-[#4b4029] bg-[#0d1118] shadow-[0_28px_90px_rgba(0,0,0,.65)] sm:max-h-[calc(100vh-3rem)]">
       <DialogHeader eyebrow={en ? "Artifact set profile" : ct("Профиль набора артефактов")} title={profile.name} subtitle={`${profile.minRarity}–${profile.maxRarity} ★`} onClose={onClose} titleID="genshin-artifact-dialog-title" locale={locale} />
       <div className="min-h-0 overflow-y-auto">
@@ -670,7 +654,7 @@ function ArtifactDialog({ locale, artifact, detail, loading, error, onClose, onO
         {loading ? <LoadingDetail /> : error ? <DetailError text={error} /> : <div className="space-y-8 p-4 sm:p-6"><ArtifactSources locale={locale} sources={detail?.sources ?? []} /><ArtifactPieces locale={locale} pieces={detail?.pieces ?? []} onOpenImage={onOpenImage} /></div>}
       </div>
     </div>
-  </div>;
+  </ModalLayer>;
 }
 
 function DialogHeader({ eyebrow, title, subtitle, titleID, onClose, locale }: { eyebrow: string; title: string; subtitle: string; titleID: string; onClose: () => void; locale: Locale }) {
@@ -718,7 +702,7 @@ function EmptyDetail({ text }: { text: string }) {
 function ImageLightbox({ preview, onClose }: { preview: ImagePreview | null; onClose: () => void }) {
   const ct = useConsoleText();
   if (!preview) return null;
-  return <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#030407]/95 p-3 backdrop-blur-md sm:p-8" role="dialog" aria-modal="true" aria-labelledby="genshin-image-preview-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><div className="relative flex max-h-full max-w-6xl flex-col items-center gap-3"><button type="button" onClick={onClose} className="absolute -right-1 -top-1 z-10 grid size-9 place-items-center border border-[#51452e] bg-[#0b0e14]/95 text-[#e6c778] hover:bg-[#171a20]" aria-label={ct("Закрыть изображение")}><X className="size-4" /></button><img src={preview.url} alt={ct(preview.label)} className="max-h-[82vh] max-w-[94vw] object-contain sm:max-h-[86vh] sm:max-w-[88vw]" /><div id="genshin-image-preview-title" className="border border-[#343c4b] bg-[#0b0e14]/95 px-4 py-2 text-center text-xs text-[#cbd2de]">{ct(preview.label)}</div></div></div>;
+  return <ModalLayer open onClose={onClose} aria-labelledby="genshin-image-preview-title" layerClassName="z-[80] p-3 sm:p-6" className="flex w-full justify-center bg-transparent outline-none"><div className="relative flex max-h-full max-w-6xl flex-col items-center gap-3"><button type="button" onClick={onClose} className="absolute -right-1 -top-1 z-10 grid size-9 place-items-center border border-[#51452e] bg-[#0b0e14]/95 text-[#e6c778] hover:bg-[#171a20]" aria-label={ct("Закрыть изображение")}><X className="size-4" /></button><img src={preview.url} alt={ct(preview.label)} className="max-h-[82vh] max-w-[94vw] object-contain sm:max-h-[86vh] sm:max-w-[88vw]" /><div id="genshin-image-preview-title" className="border border-[#343c4b] bg-[#0b0e14]/95 px-4 py-2 text-center text-xs text-[#cbd2de]">{ct(preview.label)}</div></div></ModalLayer>;
 }
 
 function Stars({ count }: { count: number }) {
