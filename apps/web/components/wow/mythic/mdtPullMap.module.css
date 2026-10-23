@@ -82,3 +82,6 @@
 .savedBuildActions select { width: 100%; min-width: 0; }
 .buildFailure { display: grid; gap: var(--atlas-space-2); overflow-wrap: anywhere; }
 @media (max-width: 480px) { .savedBuildActions > :first-child, .buildNameActions > :first-child { flex-basis: 100%; } }
+
+.buildOwner { overflow-wrap: anywhere; }
+.savedBuilds button { max-width: 100%; white-space: normal; }
