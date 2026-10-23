@@ -15,7 +15,12 @@ try {
     failedRequests.push(`${request.url()}: ${request.failure()?.errorText ?? "unknown failure"}`);
   });
   page.on("pageerror", (error) => browserErrors.push(String(error)));
-  page.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
+  page.on("console", (message) => {
+    if (message.type() !== "error") return;
+    // A signed-out reader's account builds probe answers 401 by design (guest mode).
+    if (message.location().url.endsWith("/api/wow/mythic-builds") && message.text().includes("401")) return;
+    browserErrors.push(message.text());
+  });
   page.setDefaultTimeout(30_000);
   const response = await page.goto(routeUrl, { waitUntil: "domcontentloaded", timeout: 120_000 });
   assert.equal(response?.status(), 200, `Expected route HTTP 200, got ${response?.status() ?? "no response"}`);
