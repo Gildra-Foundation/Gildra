@@ -97,16 +97,24 @@ func (r Runner) Run(ctx context.Context, options Options) (result Result, err er
 	}
 	var localHash [32]byte
 	copy(localHash[:], hasher.Sum(nil))
-	if _, err := temporary.Seek(0, io.SeekStart); err != nil {
-		return Result{}, fmt.Errorf("rewind encrypted backup: %w", err)
-	}
 	metadata := map[string]string{
 		"gildra-manifest-id": manifestID.String(),
 		"gildra-sha256":      hex.EncodeToString(localHash[:]),
 		"gildra-product":     options.Product,
 	}
-	if err := r.Store.Put(ctx, objectKey, temporary, info.Size(), "application/vnd.gildra.postgresql.dump+age", metadata); err != nil {
-		return Result{}, fmt.Errorf("upload encrypted backup: %w", err)
+	adopted := false
+	if adopter, ok := r.Store.(objectAdopter); ok {
+		// Same-volume stores take the finished archive by hard link instead
+		// of copying it; any failure falls back to a normal upload.
+		adopted = adopter.Adopt(ctx, objectKey, temporaryName, info.Size()) == nil
+	}
+	if !adopted {
+		if _, err := temporary.Seek(0, io.SeekStart); err != nil {
+			return Result{}, fmt.Errorf("rewind encrypted backup: %w", err)
+		}
+		if err := r.Store.Put(ctx, objectKey, temporary, info.Size(), "application/vnd.gildra.postgresql.dump+age", metadata); err != nil {
+			return Result{}, fmt.Errorf("upload encrypted backup: %w", err)
+		}
 	}
 	backupCompletedAt := now().UTC()
 	if err := r.Manifests.MarkCreated(ctx, manifestID, ManifestCreated{
@@ -254,6 +262,12 @@ func (r Runner) Run(ctx context.Context, options Options) (result Result, err er
 		RestoreDurationMS: restoreDuration.Milliseconds(), SignerFingerprint: signed.PublicKeyFingerprint,
 		RestoreMode: restoreModeLabel(restoreMode), RestoreVerified: true, SourceRestoreMatch: true,
 	}, nil
+}
+
+// objectAdopter is implemented by stores that can take over a finished local
+// file without copying it.
+type objectAdopter interface {
+	Adopt(ctx context.Context, key, path string, size int64) error
 }
 
 type readCloser struct {
