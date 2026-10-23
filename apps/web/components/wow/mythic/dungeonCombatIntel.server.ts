@@ -1,4 +1,5 @@
 import "server-only";
+import { getMythicCombatReview } from "@/lib/data/wow/mythicCombat.server";
 import { getMythicSourceReview } from "@/lib/data/wow/mythicReviews.server";
 
 import type { DungeonRoute } from "@/lib/data/wow/mythic/dungeonRoutes";
@@ -50,5 +51,5 @@ export function getDungeonCombatIntel(dungeon: DungeonRoute): DungeonCombatIntel
     }
   }
 
-  return { enemies, abilities, ...getMythicSourceReview(dungeon.slug) };
+  return { enemies, abilities, reviewed: getMythicCombatReview(dungeon.slug), ...getMythicSourceReview(dungeon.slug) };
 }
