@@ -27,7 +27,7 @@ export default function MdtPullMap({ locale, routeUrl, data, stops, combatIntel 
   const totalForces = [...uniqueMembers.values()].reduce((sum, node) => sum + node.forces, 0);
   const forcesPercent = (forces: number) => data.total > 0 ? `${(forces / data.total * 100).toFixed(2)}%` : "—";
   const label = authored ? copy.pull : copy.group;
-  const pullIntel = pulls.map(members => buildMdtPullIntel(members, stops, combatIntel));
+  const pullIntel = pulls.map(members => buildMdtPullIntel(members, stops, combatIntel, locale));
 
   return <section className={styles.panel} data-testid="mdt-map" aria-label={copy.mapLabel}>
     <header className={styles.header}>
