@@ -158,28 +158,84 @@ func TestTotalCacheKeepsExpensiveCountsFreshLonger(t *testing.T) {
 }
 
 func TestTotalCacheBoundsConcurrentCounts(t *testing.T) {
+	for _, slow := range []bool{false, true} {
+		cache, _ := newTestTotalCache()
+		release := make(chan struct{})
+		blocked := func(context.Context) (int64, error) {
+			<-release
+			return 1, nil
+		}
+		limit := totalQuickConcurrency
+		if slow {
+			limit = totalCountConcurrency
+		}
+		for index := range limit {
+			key := "busy" + strconv.Itoa(index)
+			cache.entries[key] = &totalEntry{slow: slow}
+			cache.lookup(context.Background(), key, 0, blocked)
+		}
+		ran := false
+		cache.entries["spell"] = &totalEntry{slow: slow}
+		if _, ok := cache.lookup(context.Background(), "spell", 10*time.Millisecond, func(context.Context) (int64, error) {
+			ran = true
+			return 1, nil
+		}); ok || ran {
+			t.Fatalf("slow=%v: count started with every slot busy (ok=%v ran=%v)", slow, ok, ran)
+		}
+		close(release)
+		for index := range limit {
+			settle(cache, "busy"+strconv.Itoa(index))
+		}
+		if _, ok := cache.lookup(context.Background(), "spell", time.Second, func(context.Context) (int64, error) { return 1, nil }); !ok {
+			t.Fatalf("slow=%v: count did not start once a slot was free", slow)
+		}
+	}
+}
+
+func TestTotalCacheKeepsCheapCountsAheadOfSlowOnes(t *testing.T) {
 	cache, _ := newTestTotalCache()
 	release := make(chan struct{})
-	blocked := func(context.Context) (int64, error) {
-		<-release
-		return 1, nil
-	}
+	defer close(release)
 	for index := range totalCountConcurrency {
-		cache.lookup(context.Background(), "busy"+strconv.Itoa(index), 0, blocked)
+		key := "spell" + strconv.Itoa(index)
+		cache.entries[key] = &totalEntry{slow: true}
+		cache.lookup(context.Background(), key, 0, func(context.Context) (int64, error) {
+			<-release
+			return 533234, nil
+		})
 	}
-	ran := false
-	if _, ok := cache.lookup(context.Background(), "spell", 10*time.Millisecond, func(context.Context) (int64, error) {
-		ran = true
-		return 1, nil
-	}); ok || ran {
-		t.Fatalf("count started with every slot busy (ok=%v ran=%v)", ok, ran)
+	// Every slow slot is held by a minutes-long count; a projection read
+	// still answers inside the request.
+	if got, ok := cache.lookup(context.Background(), "summary", time.Second, func(context.Context) (int64, error) { return 413935, nil }); !ok || got != 413935 {
+		t.Fatalf("cheap total = %d, %v; want 413935 while slow counts run", got, ok)
 	}
-	close(release)
-	for index := range totalCountConcurrency {
-		settle(cache, "busy"+strconv.Itoa(index))
+}
+
+func TestTotalCacheMovesTimedOutCountsToSlowSlots(t *testing.T) {
+	cache, clock := newTestTotalCache()
+	cache.quickTimeout = 10 * time.Millisecond
+	var calls countCalls
+	count := func(ctx context.Context) (int64, error) {
+		if calls.next() == 1 {
+			<-ctx.Done()
+			return 0, ctx.Err()
+		}
+		clock.Add(2 * time.Minute)
+		return 533234, nil
 	}
-	if _, ok := cache.lookup(context.Background(), "spell", time.Second, func(context.Context) (int64, error) { return 1, nil }); !ok {
-		t.Fatal("count did not start once a slot was free")
+	if _, ok := cache.lookup(context.Background(), "spell", 0, count); ok {
+		t.Fatal("lookup reported a total before any count finished")
+	}
+	settle(cache, "spell") // the quick count times out and starts a slow one
+	settle(cache, "spell")
+	if got, ok := cache.lookup(context.Background(), "spell", 0, count); !ok || got != 533234 {
+		t.Fatalf("total = %d, %v; want 533234 from the slow recount", got, ok)
+	}
+	cache.mu.Lock()
+	entry := cache.entries["spell"]
+	cache.mu.Unlock()
+	if !entry.slow || !entry.failedAt.IsZero() || calls.count() != 2 {
+		t.Fatalf("slow=%v failedAt=%v calls=%d; want a slow entry counted twice without a failure", entry.slow, entry.failedAt, calls.count())
 	}
 }
 
