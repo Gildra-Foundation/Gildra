@@ -1,31 +1,76 @@
-import type { ComponentPropsWithRef } from "react"
-import {
-  Card as ValyroCard,
-  CardContent as ValyroCardContent,
-  CardDescription,
-  CardFooter as ValyroCardFooter,
-  CardHeader as ValyroCardHeader,
-  CardTitle,
-} from "@gildra/atlas-ui/valyroParts"
+import * as React from "react"
+
 import { cn } from "@/lib/utils"
 
-type DivProps = ComponentPropsWithRef<"div">
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-xl border bg-card text-card-foreground shadow",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
 
-/** shadcn's card layout (padded header, content and footer) on Valyro's Card. */
-function Card(props: DivProps) {
-  return <ValyroCard padding="none" {...props} />
-}
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
 
-function CardHeader({ className, ...props }: DivProps) {
-  return <ValyroCardHeader className={cn("p-6", className)} {...props} />
-}
+const CardTitle = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("font-semibold leading-none tracking-tight", className)}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
 
-function CardContent({ className, ...props }: DivProps) {
-  return <ValyroCardContent className={cn("p-6 pt-0", className)} {...props} />
-}
+const CardDescription = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
 
-function CardFooter({ className, ...props }: DivProps) {
-  return <ValyroCardFooter className={cn("flex items-center p-6 pt-0", className)} {...props} />
-}
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
