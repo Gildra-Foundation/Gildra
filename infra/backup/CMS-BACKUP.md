@@ -32,9 +32,10 @@ tables and `payload_migrations` rows, unpacks the media and prints
 
 `sh infra/backup/test-cms-backup.sh` (fake `docker`; no Docker needed).
 
-## Not installed yet
+## Schedule
 
-No systemd timer is installed; scheduling (a `gildra-cms-backup.timer` next to
-the catalog one) is a production step that needs the owner's OK. Backups stay
-on the same host: copy them off-host before relying on them for disaster
-recovery.
+`infra/systemd/gildra-cms-backup.timer` runs the service daily at 03:30 UTC
+(+ up to 20 min random delay, `Persistent=true`) with `Nice=15` and idle I/O
+class; failure/success go through `gildra-notify@`. Install with
+`sudo sh infra/systemd/install-host-units.sh --apply`. Backups stay on the same
+host: copy them off-host before relying on them for disaster recovery.

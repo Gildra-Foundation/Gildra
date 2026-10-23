@@ -22,11 +22,13 @@ gildra-catalog-backup-prune.service gildra-catalog-backup-prune.timer
 gildra-catalog-refresh.service
 gildra-catalog-media-cache.service gildra-catalog-media-cache.timer
 gildra-notify@.service gildra-notify-ok@.service
-gildra-image-prune.service gildra-image-prune.timer"
+gildra-image-prune.service gildra-image-prune.timer
+gildra-cms-backup.service gildra-cms-backup.timer"
 # source (relative to the repo) -> target (relative to /opt/gildra)
 scripts="infra/systemd/notify-unit-failure.py
 infra/systemd/run-gildra-catalog-refresh-all.sh
 infra/backup/run-catalog-backup.sh
+infra/backup/run-cms-backup.sh
 infra/backup/prune-catalog-backups.py
 infra/systemd/prune-host-images.sh"
 # The import now starts from the backup's OnSuccess=, not on its own timer.
@@ -77,7 +79,7 @@ fi
 if [ "$changed" -gt 0 ]; then
   systemctl daemon-reload
   systemctl enable --now gildra-catalog-backup.timer gildra-catalog-backup-prune.timer gildra-catalog-media-cache.timer \
-    gildra-image-prune.timer >/dev/null
+    gildra-image-prune.timer gildra-cms-backup.timer >/dev/null
   systemd-analyze verify $(for unit in $units; do case $unit in *@.service) ;; *) echo "$units_dir/$unit" ;; esac; done) 2>&1 \
     | grep -v -e 'Unknown key name' -e 'is not executable' || true
   echo "installed $changed change(s); previous files in $backup_dir"

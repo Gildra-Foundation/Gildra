@@ -13,13 +13,14 @@ lock_file="${CMS_BACKUP_LOCK_FILE:-$state_directory/run.lock}"
 tool_image="${CMS_BACKUP_TOOL_IMAGE:-postgres@sha256:8189a1f6e40904781fc9e2612687877791d21679866db58b1de996b31fc312e4}"
 database="${CMS_BACKUP_DATABASE:-gildra_cms}"
 media_volume="${CMS_BACKUP_MEDIA_VOLUME:-gildra_cms_media}"
-retention_days="${CMS_BACKUP_RETENTION_DAYS:-14}"
+keep_daily="${CMS_BACKUP_KEEP_DAILY:-7}"
+keep_weekly="${CMS_BACKUP_KEEP_WEEKLY:-4}"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 started_at="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 work_directory=""
 job_status="failed"
 
-for command in date docker flock find install sha256sum tar; do
+for command in date docker flock find install sed sha256sum tar; do
   command -v "$command" >/dev/null 2>&1 || {
     echo "required command is unavailable: $command" >&2
     exit 1
@@ -33,10 +34,12 @@ printf '%s\n' "$database" | grep -Eq '^[0-9A-Za-z_]+$' || {
   echo "cms backup database name is invalid" >&2
   exit 1
 }
-printf '%s\n' "$retention_days" | grep -Eq '^[1-9][0-9]*$' || {
-  echo "cms backup retention must be a positive number of days" >&2
-  exit 1
-}
+for count in "$keep_daily" "$keep_weekly"; do
+  printf '%s\n' "$count" | grep -Eq '^[1-9][0-9]*$' || {
+    echo "cms backup retention counts must be positive integers" >&2
+    exit 1
+  }
+done
 [ -r "$environment_file" ] || {
   echo "cms backup environment file is not readable" >&2
   exit 1
@@ -115,6 +118,34 @@ mv "$work_directory" "$backup_directory/$stamp"
 work_directory=""
 job_status="verified"
 
-# Retention only runs after a verified backup was published.
-find "$backup_directory" -mindepth 1 -maxdepth 1 -type d -name '20??????T??????Z' \
-  -mtime "+$retention_days" -exec rm -rf {} +
+# Rotation runs only after a verified publish: keep the newest backup of each of
+# the last KEEP_DAILY days plus the newest backup of each of the last KEEP_WEEKLY
+# ISO weeks (the current week counts as one); everything else is deleted.
+keep_list="$(mktemp "$state_directory/keep.XXXXXX")"
+days=0
+weeks=0
+last_day=""
+last_week=""
+for directory in $(find "$backup_directory" -mindepth 1 -maxdepth 1 -type d -name '20??????T??????Z' | sort -r); do
+  name="$(basename "$directory")"
+  day="${name%%T*}"
+  week="$(date -u -d "$(printf '%s' "$day" | sed 's/^\(....\)\(..\)\(..\)$/\1-\2-\3/')" +%G-%V)"
+  if [ "$day" != "$last_day" ]; then
+    last_day="$day"
+    if [ "$days" -lt "$keep_daily" ]; then
+      days=$((days + 1))
+      printf '%s\n' "$name" >> "$keep_list"
+    fi
+  fi
+  if [ "$week" != "$last_week" ]; then
+    last_week="$week"
+    if [ "$weeks" -lt "$keep_weekly" ]; then
+      weeks=$((weeks + 1))
+      printf '%s\n' "$name" >> "$keep_list"
+    fi
+  fi
+done
+for directory in $(find "$backup_directory" -mindepth 1 -maxdepth 1 -type d -name '20??????T??????Z'); do
+  grep -qx "$(basename "$directory")" "$keep_list" || rm -rf "$directory"
+done
+rm -f "$keep_list"
