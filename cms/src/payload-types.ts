@@ -257,6 +257,8 @@ export interface Media {
   focalY?: number | null;
 }
 /**
+ * Site pages that can be managed from the CMS. Every other section is built in code.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */

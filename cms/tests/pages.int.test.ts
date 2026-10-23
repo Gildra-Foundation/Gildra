@@ -109,7 +109,13 @@ describe("localized page blocks", () => {
     const otherSite = await rejection(payload.create({ collection: "pages", ...as(owner), ...quiet, data: { site: sites.riftden, slug: "wow/privacy", title: "Privacy" } as never }));
     expect(otherSite).toMatch(/Доступны: league-of-legends\/home/);
     const renamed = await rejection(payload.update({ collection: "pages", id, ...as(owner), ...quiet, data: { slug: "wow/tier-lists" } as never }));
-    expect(renamed).toMatch(/нельзя сменить после создания/);
+    expect(renamed).toMatch(/нельзя сменить после выбора/);
+    // "Create" opens an empty autosaved draft; the page is chosen in it, and it cannot be published without one.
+    const empty = await payload.create({ collection: "pages", ...as(owner), ...quiet, draft: true, data: { site: sites.gildra, title: "" } as never });
+    const unpublishable = await rejection(payload.update({ collection: "pages", id: empty.id, ...as(owner), ...quiet, data: { _status: "published" } as never }));
+    expect(unpublishable).toMatch(/slug/);
+    const chosen = await payload.update({ collection: "pages", id: empty.id, ...as(owner), ...quiet, draft: true, data: { slug: "lol/home" } as never });
+    expect(chosen.game).toBe("league-of-legends");
     const riftden = await payload.create({ collection: "pages", ...as(owner), ...quiet, data: { site: sites.riftden, slug: "league-of-legends/home", title: "Home", blocks: [{ type: "lol.hero", props: { eyebrow: "E", title: "T", description: "D" } }] } as never });
     expect(riftden.game).toBe("league-of-legends");
   });

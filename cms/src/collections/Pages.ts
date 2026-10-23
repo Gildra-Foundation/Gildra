@@ -5,7 +5,7 @@ import { withEditorialPolicy } from "../editorial/policy";
 import { enforcePageRules, validateBlocksField, validatePageId } from "../blocks/rules";
 import { articleEditor } from "../fields/editor";
 import { seoField } from "../fields/shared";
-import { previewUrlFor } from "../preview/token";
+import { previewTarget, sitePreviewTarget } from "../preview/sitePreview";
 
 /**
  * Block pages: a published document whose `slug` is a web page id
@@ -26,10 +26,22 @@ export const Pages: CollectionConfig = withEditorialPolicy(
     labels: { singular: { en: "Page", ru: "Страница" }, plural: { en: "Pages", ru: "Страницы" } },
     admin: {
       useAsTitle: "title",
-      defaultColumns: ["title", "languages", "slug", "site", "_status"],
+      defaultColumns: ["title", "sitePage", "languages", "blocksState", "_status"],
       listSearchableFields: ["title", "slug"],
       group: { en: "Content", ru: "Контент" },
-      preview: previewUrlFor("pages"),
+      description: {
+        en: "Site pages that can be managed from the CMS. Every other section is built in code.",
+        ru: "Страницы сайта, которые можно вести из CMS. Остальные разделы собраны в коде.",
+      },
+      // The page in the site design where the site supports it (CMS_SITE_PREVIEW), else the CMS preview.
+      preview: (doc, { locale, req }) => previewTarget({ collection: "pages", doc, locale, req }),
+      livePreview: {
+        url: ({ data, locale, req }) => sitePreviewTarget({ collection: "pages", doc: data, locale: locale.code, req }),
+        breakpoints: [
+          { name: "mobile", label: "Телефон", width: 390, height: 844 },
+          { name: "desktop", label: "Компьютер", width: 1440, height: 900 },
+        ],
+      },
     },
     versions: { maxPerDoc: 100, drafts: { autosave: { interval: 2000 }, schedulePublish: true } },
     indexes: [{ fields: ["site", "slug"], unique: true }],
@@ -40,6 +52,18 @@ export const Pages: CollectionConfig = withEditorialPolicy(
         type: "ui",
         label: { en: "Languages", ru: "Языки" },
         admin: { components: { Cell: "/components/list/LanguagesCell#LanguagesCell" } },
+      },
+      {
+        name: "sitePage",
+        type: "ui",
+        label: { en: "Site page", ru: "Страница сайта" },
+        admin: { components: { Cell: "/fields/blocksEditor/cells#SitePageCell" } },
+      },
+      {
+        name: "blocksState",
+        type: "ui",
+        label: { en: "Blocks", ru: "Блоки" },
+        admin: { components: { Cell: "/fields/blocksEditor/cells#BlocksStateCell" } },
       },
       { name: "languageBar", type: "ui", admin: { components: { Field: "/components/editor/LanguageBar#LanguageBar" } } },
       { name: "title", type: "text", localized: true, required: true },
@@ -81,11 +105,17 @@ export const Pages: CollectionConfig = withEditorialPolicy(
         localized: true,
         validate: validateBlocksField,
         admin: {
+          components: { Field: "/fields/blocksEditor/BlocksEditor#BlocksEditor" },
           description: {
             en: "Blocks of this language. Empty keeps the page from code for this language.",
             ru: "Блоки этого языка. Пусто — для этого языка сайт показывает страницу из кода.",
           },
         },
+      },
+      {
+        name: "pageStatus",
+        type: "ui",
+        admin: { position: "sidebar", components: { Field: "/fields/blocksEditor/PageSidebar#PageSidebar" } },
       },
       { name: "summary", type: "textarea", localized: true, admin: { hidden: true } },
       { name: "content", type: "richText", localized: true, editor: articleEditor, admin: { hidden: true } },

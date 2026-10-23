@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 
 import { AtlasFrame, AtlasHero, AtlasNotice } from "@/components/atlas";
-import { cmsOrigin, fetchArticlePreview } from "@/lib/cms/preview";
+import { cmsOrigin, fetchCmsPreview } from "@/lib/cms/preview";
 import type { Lang } from "@/lib/i18n";
 import { ArticleView } from "./Articles";
 import { LivePreviewRefresh } from "./LivePreviewRefresh";
+import { PagePreview } from "./PagePreview";
 
 /**
- * Draft preview of a CMS article in the site design. Opened from the admin
+ * Draft preview of a CMS article (or block page, see PagePreview) in the site design. Opened from the admin
  * (Preview button or the Live Preview frame next to the editor) with a signed
  * link; always dynamic, never indexed, the tokenised URL never leaves as Referer.
  */
@@ -39,7 +40,7 @@ export async function ArticlePreviewPage({ lang, token }: { lang: Lang; token: s
   const t = TEXT[lang];
   const origin = cmsOrigin();
   const live = origin ? <LivePreviewRefresh cmsOrigin={origin} /> : null;
-  const result = await fetchArticlePreview(typeof token === "string" ? token : undefined, lang === "ru" ? "ru" : "en");
+  const result = await fetchCmsPreview(typeof token === "string" ? token : undefined, lang === "ru" ? "ru" : "en");
 
   if (result.status !== "ok") {
     const [title, text] = result.status === "not-found" ? t.missing : result.status === "invalid" ? t.invalid : t.error;
@@ -51,6 +52,7 @@ export async function ArticlePreviewPage({ lang, token }: { lang: Lang; token: s
     );
   }
 
+  if (result.kind === "page") return <PagePreview page={result.page} lang={lang} live={live} />;
   const shown = result.article.resolvedLocale;
   const banner = (
     <AtlasNotice tone="caution" title={t.draft}>
