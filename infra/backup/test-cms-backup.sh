@@ -97,13 +97,37 @@ if run_backup env CMS_BACKUP_TOOL_IMAGE=postgres:17 "$backup_script" >/dev/null 
   exit 1
 fi
 
-# Retention removes only old published backups.
-old=$backup_root/20200101T000000Z
-mkdir -p "$old"
-touch -d '2020-01-01' "$old"
-run_backup env CMS_BACKUP_RETENTION_DAYS=14 "$backup_script"
-[ ! -d "$old" ]
-[ -d "$published" ]
+# Rotation: newest per day for 7 days + newest per week for 4 weeks; the rest goes.
+for age in 1 2 3 4 5 6 8 9 15 22 29 60 100; do
+  stamp=$(date -u -d "$age days ago" +%Y%m%dT%H%M%SZ)
+  mkdir -p "$backup_root/$stamp"
+done
+extra=$backup_root/$(date -u -d '2 days ago 1 minute ago' +%Y%m%dT%H%M%SZ)
+mkdir -p "$extra"
+run_backup "$backup_script"
+for age in 1 2 3 4 5 6; do
+  [ -d "$backup_root/$(date -u -d "$age days ago" +%Y%m%dT%H%M%SZ)" ] || {
+    printf 'test: daily backup %s days old was pruned\n' "$age" >&2
+    exit 1
+  }
+done
+[ ! -d "$extra" ] || {
+  printf 'test: a second backup of the same day survived rotation\n' >&2
+  exit 1
+}
+for age in 60 100; do
+  [ ! -d "$backup_root/$(date -u -d "$age days ago" +%Y%m%dT%H%M%SZ)" ] || {
+    printf 'test: backup %s days old survived rotation\n' "$age" >&2
+    exit 1
+  }
+done
+remaining=$(find "$backup_root" -mindepth 1 -maxdepth 1 -type d -name '20*Z' | wc -l)
+[ "$remaining" -ge 8 ] && [ "$remaining" -le 12 ] || {
+  printf 'test: rotation kept %s backups\n' "$remaining" >&2
+  exit 1
+}
+latest=$(find "$backup_root" -mindepth 1 -maxdepth 1 -type d -name '20*Z' | sort | tail -n 1)
+published=$latest
 
 # Restore rehearsal: success, then corrupted checksum.
 output=$(run_backup "$restore_script" "$published")
