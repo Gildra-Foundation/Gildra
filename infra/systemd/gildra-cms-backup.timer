@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule Gildra daily CMS backup
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=20m
+Persistent=true
+Unit=gildra-cms-backup.service
+
+[Install]
+WantedBy=timers.target

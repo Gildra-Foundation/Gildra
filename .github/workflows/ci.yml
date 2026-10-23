@@ -20,6 +20,9 @@ jobs:
       - name: Validate operations scripts
         run: |
           sh -n infra/backup/run-catalog-backup.sh
+          sh -n infra/backup/run-cms-backup.sh
+          sh -n infra/backup/restore-cms-backup.sh
+          sh -n infra/backup/test-cms-backup.sh
           sh -n infra/backup/test-backup-secret-references.sh
           sh -n infra/backup/test-run-catalog-backup.sh
           sh -n infra/deploy/deploy-immutable-release.sh
@@ -35,6 +38,8 @@ jobs:
           sh -n infra/backup/test-prune-catalog-backups.sh
       - name: Verify backup wrapper evidence
         run: infra/backup/test-run-catalog-backup.sh
+      - name: Verify CMS backup rotation and restore rehearsal
+        run: infra/backup/test-cms-backup.sh
       - name: Verify backup secret references
         run: infra/backup/test-backup-secret-references.sh
       - name: Verify hourly media icon seeding contract
