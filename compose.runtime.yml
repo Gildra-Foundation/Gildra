@@ -137,12 +137,15 @@ services:
       # Reader e-mail stays off until the host mail relay is fully live (PTR).
       EMAIL_TRANSPORT: disabled
       EMAIL_FROM_NAME: Gildra Network
+      # Error reporting to GlitchTip (project gildra-cms); off while the DSN is empty.
+      SENTRY_DSN: ${SENTRY_CMS_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
     networks:
       default: {}
       content:
         aliases: [cms]
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/admin').then(r=>{if(r.status>=500)process.exit(1)}).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 18
