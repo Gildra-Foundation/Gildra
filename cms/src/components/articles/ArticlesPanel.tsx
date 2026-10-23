@@ -50,9 +50,9 @@ export function ArticlesPanel({ initial, initialQuery, lang }: { initial: Articl
     <header className="gd-workspace__head"><div><h1>{t.title}</h1><p>{t.hint}</p></div>{create}</header>
     <div className="gd-workspace__filters">
       <label><span>{t.search}</span><TextInput value={search} maxLength={120} onChange={(event) => searchFor(event.target.value)} placeholder={t.search} /></label>
-      <label><span>{t.site}</span><Select aria-label={t.site} value={site} onValueChange={(value) => navigate({ ...query, site: value, page: 1 })} options={[{ value: "", label: t.allSites }, ...initial.sites.map((s) => ({ value: s.id, label: s.name }))]} /></label>
+      <label><span>{t.site}</span><Select aria-label={t.site} placeholder={t.allSites} value={site} onValueChange={(value) => navigate({ ...query, site: value, page: 1 })} options={[{ value: "", label: t.allSites }, ...initial.sites.map((s) => ({ value: s.id, label: s.name }))]} /></label>
       <label><span>{t.language}</span><Select aria-label={t.language} value={locale} onValueChange={(value) => navigate({ ...query, locale: value as "ru" | "en", page: 1 })} options={[{ value: "ru", label: t.ru }, { value: "en", label: t.en }]} /></label>
-      <label><span>{t.status}</span><Select aria-label={t.status} value={status} onValueChange={(value) => navigate({ ...query, status: value as ArticlesQuery["status"], page: 1 })} options={[{ value: "", label: t.all }, { value: "draft", label: t.draft }, { value: "published", label: t.published }]} /></label>
+      <label><span>{t.status}</span><Select aria-label={t.status} placeholder={t.all} value={status} onValueChange={(value) => navigate({ ...query, status: value as ArticlesQuery["status"], page: 1 })} options={[{ value: "", label: t.all }, { value: "draft", label: t.draft }, { value: "published", label: t.published }]} /></label>
     </div>
     <div className="gd-workspace__query-status"><p role="status" className="gd-workspace__status">{loading ? <><Spinner label={null} size={14} /> {t.loading}</> : ""}</p>{filtered ? resetButton : null}</div>
     <div key={`${articlesQueryString(query)}:${loading ? "pending" : error ? "error" : "ready"}`} className="gd-workspace__results">
