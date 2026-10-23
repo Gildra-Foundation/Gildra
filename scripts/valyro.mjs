@@ -46,7 +46,11 @@ export const ADAPTATIONS = {
     "styles/base.css": { ...SCOPE["styles/base.css"], trimTrailingBlank: true },
     "styles/motion.css": { pairs: [[":root", ".gildra-atlas,\n[data-atlas-scope]"]] },
   },
-  cms: SCOPE,
+  cms: {
+    ...SCOPE,
+    // Upstream keeps no highlight when results arrive after an empty list; Enter then ran nothing in the CMS palette.
+    "forms/useCombobox.ts": { pairs: [["    const previous = highlighted.current;\n    if (previous === undefined) return;\n", "    const previous = highlighted.current;\n    // Gildra: results that arrive after an empty list (async search) still get the first highlight.\n    if (previous === undefined) {\n      if (autoHighlight) setActiveIndex(firstEnabledIndex(flat));\n      return;\n    }\n"]] },
+  },
 };
 
 export const sha256 = text => createHash("sha256").update(text).digest("hex");

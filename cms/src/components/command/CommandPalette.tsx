@@ -2,17 +2,18 @@
 
 import { useTenantSelection } from "@payloadcms/plugin-multi-tenant/client";
 import { useAuth, useLocale, useRouteTransition, useTranslation } from "@payloadcms/ui";
-import { Command } from "cmdk";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 
 import { isOwner, PUBLISH_ROLES, siteIDsWithRole, WRITE_ROLES } from "../../access/roles";
 import { CONTENT_LOCALES } from "../../admin/completeness";
 import { adminSections, canReadCollection } from "../../admin/navModel";
+import { AdminSurface } from "../AdminSurface";
 import { useChooseSite } from "../SiteLink";
+import { CommandPalette as ValyroCommandPalette, type CommandPaletteItem, type CommandPaletteLabels } from "../valyro-ui/navigation/CommandPalette";
 
 type Site = { id: number | string; name: string; slug?: string; domain?: string; defaultLocale?: string | null; publicUrl?: string | null };
-type Hit = { key: string; collection: "guides" | "pages"; id: string | number; title: string; locales: string[]; site: string | null; status: string };
+type Hit = { key: string; collection: "guides" | "pages"; id: string | number; title: string; locales: string[]; site: string | null; status: string; query: string };
 
 const COPY = {
   ru: {
@@ -35,8 +36,15 @@ const COPY = {
     page: "страница",
     draft: "черновик",
     untitled: "Без названия",
-    hint: "↑↓ выбрать · Enter открыть · Esc закрыть",
     label: "Поиск по админке",
+    labels: {
+      results: "Разделы, материалы и действия",
+      navigate: "выбрать",
+      run: "открыть",
+      close: "закрыть",
+      escapeKey: "esc",
+      resultCount: (count: number) => `Найдено: ${count}`,
+    } satisfies CommandPaletteLabels,
   },
   en: {
     placeholder: "Section, article or action…",
@@ -58,12 +66,20 @@ const COPY = {
     page: "page",
     draft: "draft",
     untitled: "Untitled",
-    hint: "↑↓ select · Enter open · Esc close",
     label: "Search the admin",
+    labels: {
+      results: "Sections, content and actions",
+      navigate: "select",
+      run: "open",
+      close: "close",
+      escapeKey: "esc",
+      resultCount: (count: number) => `${count} ${count === 1 ? "result" : "results"}`,
+    } satisfies CommandPaletteLabels,
   },
 };
 
 const norm = (text: string) => text.toLowerCase().replace(/ё/g, "е");
+// Valyro filters every command by its label and keywords; search hits carry the query that found them (by title or address).
 /** Every word of the query appears somewhere in `text`. */
 const matches = (text: string, query: string) => {
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -121,6 +137,7 @@ async function searchDocs(query: string, collections: ("guides" | "pages")[], si
         locales: [],
         site: doc.site === null || doc.site === undefined ? null : String(typeof doc.site === "object" ? (doc.site as { id: unknown }).id : doc.site),
         status: doc._status ?? "draft",
+        query,
       };
       const title = typeof doc.title === "string" ? doc.title.trim() : "";
       if (title && (!hit.title || matches(title, query))) hit.title = title;
@@ -133,7 +150,7 @@ async function searchDocs(query: string, collections: ("guides" | "pages")[], si
 }
 
 /**
- * Command palette (cmdk, github.com/pacocoursey/cmdk): jump to any section,
+ * Command palette (Valyro CommandPalette in the Gildra theme): jump to any section,
  * find an article or page by title or address in either language, create on a
  * chosen site, switch the working site or the language version being edited.
  * Everything respects the viewer's permissions; search goes through the REST
@@ -200,17 +217,12 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const publishSites = owner ? sites : sites.filter((s) => siteIDsWithRole(user, PUBLISH_ROLES).map(String).includes(String(s.id)));
   const docMatch = pathname.match(/^\/admin\/collections\/(guides|pages)\/([^/]+)$/);
   const inDocument = docMatch && docMatch[2] !== "create";
-  const q = query.trim();
-  const show = (text: string) => !q || matches(text, q);
-
-  const navItems = sections.flatMap((section) =>
-    section.items.map((item) => ({ ...item, group: section.title ?? "", text: `${item.label} ${section.title ?? ""}` })),
-  );
+  const navItems = sections.flatMap((section) => section.items.map((item) => ({ ...item, group: section.title ?? "" })));
   const createItems = [
     ...(canRead("guides") ? writeSites.map((s) => ({ key: `g${s.id}`, label: t.newArticle(s.name), site: s, href: `/admin/collections/guides/create?locale=${s.defaultLocale ?? "en"}` })) : []),
     ...(canRead("pages") ? publishSites.map((s) => ({ key: `p${s.id}`, label: t.newPage(s.name), site: s, href: `/admin/collections/pages/create?locale=${s.defaultLocale ?? "en"}` })) : []),
     ...(canRead("media") ? writeSites.map((s) => ({ key: `m${s.id}`, label: t.upload(s.name), site: s, href: "/admin/collections/media/create" })) : []),
-  ].filter((item) => show(`${item.label} ${t.create}`));
+  ];
   const tenantOptions = tenants?.options ?? [];
   const siteItems = [
     ...(tenantOptions.length > 1
@@ -218,119 +230,84 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
       : []),
     ...(owner && tenantOptions.length > 1 ? [{ key: "tall", label: t.allSites, run: () => tenants?.setTenant({ id: undefined, refresh: true }), current: tenants?.selectedTenantID === undefined }] : []),
     ...sites.filter((s) => s.publicUrl).map((s) => ({ key: `o${s.id}`, label: t.openSite(s.domain ?? s.name), run: () => window.open(s.publicUrl ?? "", "_blank", "noopener"), current: false })),
-  ].filter((item) => show(`${item.label} ${t.site}`));
+  ];
   const localeItems = inDocument
-    ? CONTENT_LOCALES.filter((l) => l.code !== locale?.code)
-        .map((l) => ({ code: l.code, label: t.openLocale(lang === "ru" ? l.ru : l.en) }))
-        .filter((item) => show(`${item.label} ${t.language} язык language ${item.code}`))
+    ? CONTENT_LOCALES.filter((l) => l.code !== locale?.code).map((l) => ({ code: l.code, label: t.openLocale(lang === "ru" ? l.ru : l.en) }))
     : [];
 
+  // Group order: found content, language version, sections, create, site.
+  const commands: CommandPaletteItem[] = [
+    ...hits.map((hit) => ({
+      id: `hit-${hit.key}`,
+      label: hit.title || t.untitled,
+      group: t.found,
+      keywords: [hit.query],
+      trailing: (
+        <>
+          <span className="gd-cmd__meta">
+            {hit.collection === "guides" ? t.article : t.page}
+            {hit.site ? ` · ${siteName(hit.site)}` : ""}
+            {hit.status !== "published" ? ` · ${t.draft}` : ""}
+          </span>
+          <span className="gd-cmd__langs">
+            {hit.locales.map((code) => (
+              <span key={code}>{code.toUpperCase()}</span>
+            ))}
+          </span>
+        </>
+      ),
+      onSelect: () => go(`/admin/collections/${hit.collection}/${hit.id}?locale=${hit.locales.includes(locale?.code ?? "") ? locale?.code : (hit.locales[0] ?? "en")}`),
+    })),
+    ...localeItems.map((item) => ({
+      id: `locale-${item.code}`,
+      label: item.label,
+      group: t.language,
+      keywords: [t.language, "язык", "language", item.code],
+      onSelect: () => {
+        const params = new URLSearchParams(window.location.search);
+        params.set("locale", item.code);
+        go(`${pathname}?${params.toString()}`);
+      },
+    })),
+    ...navItems.map((item) => ({
+      id: `nav-${item.href}`,
+      label: item.label,
+      group: t.go,
+      keywords: [item.group],
+      trailing: item.group ? <span className="gd-cmd__meta">{item.group}</span> : undefined,
+      onSelect: () => go(item.href),
+    })),
+    ...createItems.map((item) => ({
+      id: `create-${item.key}`,
+      label: `+ ${item.label}`,
+      group: t.create,
+      keywords: [t.create],
+      onSelect: () => chooseSite(String(item.site.id), item.href),
+    })),
+    ...siteItems.map((item) => ({
+      id: `site-${item.key}`,
+      label: item.label,
+      group: t.site,
+      keywords: [t.site],
+      trailing: item.current ? <span className="gd-cmd__meta">✓</span> : undefined,
+      onSelect: item.run,
+    })),
+  ];
+
   return (
-    <Command.Dialog
-      open
-      onOpenChange={(open) => !open && onClose()}
-      label={t.label}
-      shouldFilter={false}
-      loop
-      className="gd-cmd"
-      overlayClassName="gd-cmd__overlay"
-      contentClassName="gd-cmd__content"
-    >
-      <Command.Input value={query} onValueChange={setQuery} placeholder={t.placeholder} className="gd-cmd__input" autoFocus />
-      <Command.List className="gd-cmd__list">
-        <Command.Empty className="gd-cmd__empty">{searching ? t.searching : t.empty}</Command.Empty>
-
-        {hits.length > 0 ? (
-          <Command.Group heading={t.found}>
-            {hits.map((hit) => (
-              <Command.Item
-                key={hit.key}
-                value={hit.key}
-                onSelect={() => go(`/admin/collections/${hit.collection}/${hit.id}?locale=${hit.locales.includes(locale?.code ?? "") ? locale?.code : (hit.locales[0] ?? "en")}`)}
-              >
-                <span className="gd-cmd__title">{hit.title || t.untitled}</span>
-                <span className="gd-cmd__meta">
-                  {hit.collection === "guides" ? t.article : t.page}
-                  {hit.site ? ` · ${siteName(hit.site)}` : ""}
-                  {hit.status !== "published" ? ` · ${t.draft}` : ""}
-                </span>
-                <span className="gd-cmd__langs">
-                  {hit.locales.map((code) => (
-                    <span key={code}>{code.toUpperCase()}</span>
-                  ))}
-                </span>
-              </Command.Item>
-            ))}
-          </Command.Group>
-        ) : null}
-
-        {localeItems.length > 0 ? (
-          <Command.Group heading={t.language}>
-            {localeItems.map((item) => (
-              <Command.Item
-                key={item.code}
-                value={`locale-${item.code}`}
-                onSelect={() => {
-                  const params = new URLSearchParams(window.location.search);
-                  params.set("locale", item.code);
-                  go(`${pathname}?${params.toString()}`);
-                }}
-              >
-                {item.label}
-              </Command.Item>
-            ))}
-          </Command.Group>
-        ) : null}
-
-        {navItems.some((item) => show(item.text)) ? (
-          <Command.Group heading={t.go}>
-            {navItems
-              .filter((item) => show(item.text))
-              .map((item) => (
-                <Command.Item key={item.href} value={`nav-${item.href}`} onSelect={() => go(item.href)}>
-                  <span className="gd-cmd__title">{item.label}</span>
-                  {item.group ? <span className="gd-cmd__meta">{item.group}</span> : null}
-                </Command.Item>
-              ))}
-          </Command.Group>
-        ) : null}
-
-        {createItems.length > 0 ? (
-          <Command.Group heading={t.create}>
-            {createItems.map((item) => (
-              <Command.Item
-                key={item.key}
-                value={`create-${item.key}`}
-                onSelect={() => {
-                  onClose();
-                  chooseSite(String(item.site.id), item.href);
-                }}
-              >
-                + {item.label}
-              </Command.Item>
-            ))}
-          </Command.Group>
-        ) : null}
-
-        {siteItems.length > 0 ? (
-          <Command.Group heading={t.site}>
-            {siteItems.map((item) => (
-              <Command.Item
-                key={item.key}
-                value={`site-${item.key}`}
-                onSelect={() => {
-                  onClose();
-                  item.run();
-                }}
-              >
-                <span className="gd-cmd__title">{item.label}</span>
-                {item.current ? <span className="gd-cmd__meta">✓</span> : null}
-              </Command.Item>
-            ))}
-          </Command.Group>
-        ) : null}
-      </Command.List>
-      <p className="gd-cmd__hint">{t.hint}</p>
-    </Command.Dialog>
+    <AdminSurface lang={lang}>
+      <ValyroCommandPalette
+        open
+        onOpenChange={(open) => !open && onClose()}
+        aria-label={t.label}
+        placeholder={t.placeholder}
+        labels={t.labels}
+        commands={commands}
+        renderEmpty={(text) => (searching && text.length >= 2 ? t.searching : t.empty)}
+        className="gd-cmd"
+        // The palette keeps its query inside; typing bubbles up here to drive the server search.
+        onInput={(event) => setQuery((event.target as HTMLInputElement).value)}
+      />
+    </AdminSurface>
   );
 }

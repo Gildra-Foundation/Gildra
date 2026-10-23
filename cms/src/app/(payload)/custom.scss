@@ -265,7 +265,7 @@ h1, h2, h3, h4 {
   border-radius: var(--atlas-radius);
   padding: calc(var(--base) * 0.9) calc(var(--base) * 1);
   min-width: 0;
-  h2 { font-size: 1.15rem; margin-bottom: 10px; }
+  h2 { font-size: var(--atlas-text-title); margin-bottom: 10px; }
   p { margin: 0; }
 }
 
@@ -588,82 +588,13 @@ h1, h2, h3, h4 {
   .app-header__actions-wrapper { flex-shrink: 0; margin-right: 8px; }
 }
 
-.gd-cmd__overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: var(--atlas-scrim);
-}
-
-.gd-cmd__content {
-  position: fixed;
-  z-index: 201;
-  top: min(14vh, 120px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(640px, calc(100vw - 24px));
-  border: 1px solid var(--theme-elevation-150);
-  border-radius: var(--atlas-radius);
-  background: var(--theme-elevation-50);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
-  color: var(--theme-text);
-}
-
-.gd-cmd__input {
-  width: 100%;
-  padding: 16px 18px;
-  border: 0;
-  border-bottom: 1px solid var(--gd-line);
-  background: transparent;
-  color: var(--theme-text);
-  font: inherit;
-  font-size: 1rem;
-  outline: none;
-  &::placeholder { color: var(--gd-muted); }
-}
-
-.gd-cmd__list {
-  max-height: min(60vh, 460px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 6px;
-
-  [cmdk-group-heading] {
-    padding: 10px 10px 4px;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--gd-muted);
-  }
-
-  [cmdk-item] {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    padding: 9px 10px;
-    border-radius: var(--atlas-radius);
-    cursor: pointer;
-    font-size: 0.92rem;
-    &[data-selected="true"] { background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); }
-  }
-}
-
-.gd-cmd__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gd-cmd__meta { flex-shrink: 0; color: var(--gd-muted); font-size: 0.8rem; }
+// Palette rows (Valyro CommandPalette): content type, site and the languages a hit exists in.
+.gd-cmd__meta { flex-shrink: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 .gd-cmd__langs {
-  margin-left: auto;
   display: inline-flex;
   gap: 4px;
-  span { padding: 0 5px; border: 1px solid var(--gd-line); border-radius: var(--atlas-radius); font-size: 0.7rem; color: var(--gd-muted); }
-}
-.gd-cmd__empty { padding: 18px 12px; color: var(--gd-muted); font-size: 0.9rem; }
-.gd-cmd__hint {
-  margin: 0;
-  padding: 8px 14px;
-  border-top: 1px solid var(--gd-line);
-  color: var(--gd-muted);
-  font-size: 0.75rem;
+  margin-left: var(--atlas-space-2);
+  span { padding: 0 4px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); font-size: var(--atlas-text-label); font-weight: 700; color: var(--atlas-accent-strong); }
 }
 
 // ---- Language bar (article and page editors) ---------------------------------
