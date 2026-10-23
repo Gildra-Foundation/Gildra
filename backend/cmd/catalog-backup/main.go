@@ -27,7 +27,8 @@ func main() {
 }
 
 func run() error {
-	var product, prefix, temporaryDirectory string
+	var product, prefix, temporaryDirectory, restoreProof string
+	var lightMaxTableRows int64
 	var retainVerified int
 	var timeout time.Duration
 	var preflight bool
@@ -36,6 +37,8 @@ func run() error {
 	flag.StringVar(&temporaryDirectory, "temp-directory", "", "directory for the encrypted temporary archive")
 	flag.DurationVar(&timeout, "timeout", 2*time.Hour, "whole backup and restore-verification timeout")
 	flag.BoolVar(&preflight, "preflight", false, "validate backup configuration without accessing databases or object storage")
+	flag.StringVar(&restoreProof, "restore-proof", "", "restore proof mode: full (default) or light; CATALOG_BACKUP_RESTORE_PROOF sets the default")
+	flag.Int64Var(&lightMaxTableRows, "light-max-table-rows", 0, "light proof: largest table (rows) whose data is restored (default 20000)")
 	flag.IntVar(&retainVerified, "retain-verified", 3, "number of newest verified local PostgreSQL backups to retain")
 	flag.Parse()
 	if retainVerified < 1 {
@@ -47,6 +50,16 @@ func run() error {
 			return errors.New("CATALOG_BACKUP_RETAIN_VERIFIED must be a positive integer")
 		}
 		retainVerified = parsed
+	}
+	if restoreProof == "" {
+		restoreProof = strings.TrimSpace(os.Getenv("CATALOG_BACKUP_RESTORE_PROOF"))
+	}
+	if value := strings.TrimSpace(os.Getenv("CATALOG_BACKUP_LIGHT_MAX_TABLE_ROWS")); value != "" && lightMaxTableRows == 0 {
+		parsed, err := strconv.ParseInt(value, 10, 64)
+		if err != nil || parsed < 1 {
+			return errors.New("CATALOG_BACKUP_LIGHT_MAX_TABLE_ROWS must be a positive integer")
+		}
+		lightMaxTableRows = parsed
 	}
 	if timeout <= 0 {
 		return errors.New("timeout must be positive")
@@ -114,17 +127,23 @@ func run() error {
 		SourceDatabaseURL: sourceDatabaseURL, RestoreDatabaseURL: restoreDatabaseURL,
 		Product: strings.TrimSpace(product), ObjectPrefix: strings.TrimSpace(prefix), TempDirectory: temporaryDirectory,
 		Recipient: recipient, Identity: identity, SigningKey: signingKey,
+		RestoreProof: restoreProof, LightMaxTableRows: lightMaxTableRows,
 	}
 	if err := options.Validate(); err != nil {
 		return err
 	}
 	if preflight {
+		proofLabel := options.RestoreProof
+		if proofLabel == "" {
+			proofLabel = catalogbackup.RestoreProofFull
+		}
 		storage := "s3"
 		if localDirectory != "" {
 			storage = "local"
 		}
 		return json.NewEncoder(os.Stdout).Encode(map[string]string{
 			"mode": "configuration", "product": options.Product, "status": "ok", "storage": storage,
+			"restoreProof": proofLabel,
 		})
 	}
 	database, err := pgxpool.New(ctx, sourceDatabaseURL)

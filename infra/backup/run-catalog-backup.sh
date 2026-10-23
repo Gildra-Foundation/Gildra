@@ -11,6 +11,16 @@ restore_network="${CATALOG_BACKUP_DOCKER_NETWORK:-gildra_default}"
 restore_user="gildra_restore"
 restore_database="gildra_restore"
 temporary_directory="${CATALOG_BACKUP_TEMP_DIRECTORY:-/var/lib/gildra/catalog-backups}"
+# light (default): decrypt and parse the whole archive, restore the schema and
+# small tables, prove the large tables are present but empty. A full proof
+# restores the entire database into a scratch volume, so it needs about one
+# more database worth of free disk. Set GILDRA_RESTORE_PROOF=full to get it back.
+restore_proof="${GILDRA_RESTORE_PROOF:-light}"
+# Optional image carrying a catalog-backup build that knows the proof modes;
+# leave empty to use API_IMAGE from the release manifest.
+backup_image="${GILDRA_CATALOG_BACKUP_IMAGE:-}"
+postgres_container="${GILDRA_POSTGRES_CONTAINER:-gildra-postgres-1}"
+space_path="${GILDRA_BACKUP_SPACE_PATH:-/var/lib/docker}"
 run_token="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 restore_container="gildra-catalog-restore-$run_token"
 restore_volume="gildra-catalog-restore-$run_token-data"
@@ -88,14 +98,49 @@ chmod 600 "$runtime_environment" "$result_output"
 restore_password="$(openssl rand -hex 24)"
 
 compose() {
-  docker compose \
-    --env-file "$environment_file" \
-    --env-file "$release_environment_file" \
-    -f "$deployment_directory/compose.yml" \
-    -f "$deployment_directory/compose.prod.yml" \
-    -f "$deployment_directory/compose.runtime.yml" \
-    -f "$deployment_directory/compose.backup.yml" \
-    "$@"
+  (
+    if [ -n "$backup_image" ]; then
+      API_IMAGE="$backup_image"
+      export API_IMAGE
+    fi
+    exec docker compose \
+      --env-file "$environment_file" \
+      --env-file "$release_environment_file" \
+      -f "$deployment_directory/compose.yml" \
+      -f "$deployment_directory/compose.prod.yml" \
+      -f "$deployment_directory/compose.runtime.yml" \
+      -f "$deployment_directory/compose.backup.yml" \
+      "$@"
+  )
+}
+
+# Refuse to start a backup the disk cannot hold: the dump is roughly a ninth
+# of the database, a light proof needs a few percent more for the schema and
+# small tables, a full proof needs another whole database, and a 5 GiB reserve
+# is always left for production.
+check_free_space() {
+  database_bytes="${GILDRA_BACKUP_DATABASE_BYTES:-}"
+  if [ -z "$database_bytes" ]; then
+    database_bytes="$(docker exec "$postgres_container" psql -U gildra -d gildra -At \
+      -c 'SELECT pg_database_size(current_database())' 2>/dev/null | tr -dc '0-9')"
+  fi
+  free_bytes="${GILDRA_BACKUP_FREE_BYTES:-}"
+  if [ -z "$free_bytes" ]; then
+    free_bytes="$(df -B1 --output=avail "$space_path" 2>/dev/null | tail -n 1 | tr -dc '0-9')"
+  fi
+  case "$database_bytes" in ''|*[!0-9]*) echo "cannot read the database size; refusing to start the backup" >&2; return 1 ;; esac
+  case "$free_bytes" in ''|*[!0-9]*) echo "cannot read free disk space; refusing to start the backup" >&2; return 1 ;; esac
+  reserve=$((5 * 1024 * 1024 * 1024))
+  dump_bytes=$((database_bytes / 9))
+  if [ "$restore_proof" = full ]; then
+    needed=$((dump_bytes + database_bytes + reserve))
+  else
+    needed=$((dump_bytes + database_bytes / 16 + reserve))
+  fi
+  if [ "$free_bytes" -lt "$needed" ]; then
+    echo "not enough free disk for a $restore_proof backup: need $((needed / 1073741824)) GiB, have $((free_bytes / 1073741824)) GiB" >&2
+    return 1
+  fi
 }
 
 cleanup() {
@@ -132,10 +177,25 @@ EOF
 
 cd "$deployment_directory"
 
-compose run --rm --no-deps \
+case "$restore_proof" in
+  light|full) ;;
+  *) echo "GILDRA_RESTORE_PROOF must be light or full" >&2; exit 1 ;;
+esac
+
+preflight_output="$(compose run --rm --no-deps \
   -e CATALOG_BACKUP_PREFLIGHT=true \
+  -e "CATALOG_BACKUP_RESTORE_PROOF=$restore_proof" \
   -e "CATALOG_BACKUP_RESTORE_DATABASE_URL=postgres://$restore_user:$restore_password@$restore_container:5432/$restore_database?sslmode=disable" \
-  catalog-backup >/dev/null
+  catalog-backup)"
+# An older catalog-backup build ignores the proof mode and would run a full
+# restore; refuse to run a light backup with it.
+if [ "$restore_proof" = light ]; then
+  printf '%s\n' "$preflight_output" | grep -Eq '"restoreProof"[[:space:]]*:[[:space:]]*"light"' || {
+    echo "the catalog-backup image does not support GILDRA_RESTORE_PROOF=light" >&2
+    exit 1
+  }
+fi
+check_free_space
 docker network inspect "$restore_network" >/dev/null
 docker volume create \
   --label gildra.component=catalog-backup-restore \
@@ -160,6 +220,7 @@ until docker exec "$restore_container" pg_isready -U "$restore_user" -d "$restor
 done
 
 compose run --rm --no-deps \
+  -e "CATALOG_BACKUP_RESTORE_PROOF=$restore_proof" \
   -e "CATALOG_BACKUP_RESTORE_DATABASE_URL=postgres://$restore_user:$restore_password@$restore_container:5432/$restore_database?sslmode=disable" \
   catalog-backup > "$result_output"
 [ -s "$result_output" ] || {
@@ -174,6 +235,12 @@ grep -Eq '"sourceRestoreMatch"[[:space:]]*:[[:space:]]*true' "$result_output" ||
   echo "catalog backup did not report matching source and restore state" >&2
   exit 1
 }
+if [ "$restore_proof" = light ]; then
+  grep -Eq '"restoreMode"[[:space:]]*:[[:space:]]*"light"' "$result_output" || {
+    echo "catalog backup did not report a light restore proof" >&2
+    exit 1
+  }
+fi
 chmod 600 "$result_output"
 mv -f "$result_output" "$state_directory/last-success.json"
 result_output=""

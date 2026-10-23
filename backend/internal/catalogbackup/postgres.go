@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -60,10 +62,134 @@ func (p PostgresOperator) RestoreAndInspect(ctx context.Context, databaseURL str
 	if p.Archive == nil {
 		return State{}, errors.New("PostgreSQL archive tool is required")
 	}
+	if err := ensureEmptyRestoreTarget(ctx, databaseURL); err != nil {
+		return State{}, err
+	}
+	if err := p.Archive.Restore(ctx, databaseURL, source); err != nil {
+		return State{}, err
+	}
+	return inspectRestoredState(ctx, databaseURL)
+}
+
+// LightArchiveTool reads a custom-format archive from a stream without a
+// second copy of the database.
+type LightArchiveTool interface {
+	// ArchiveTOC returns the `pg_restore --list` table of contents.
+	ArchiveTOC(context.Context, io.Reader) (string, error)
+	// ArchiveParse decompresses and parses every block of the archive.
+	ArchiveParse(context.Context, io.Reader) error
+	// RestoreWithList restores only the entries enabled in the list file.
+	RestoreWithList(ctx context.Context, databaseURL, listPath string, source io.Reader) error
+}
+
+var _ LightRestoreOperator = PostgresOperator{}
+
+func (p PostgresOperator) RestoreLightAndInspect(ctx context.Context, databaseURL string, open func() (io.ReadCloser, error), source State, maxTableRows int64) (State, LightRestoreReport, error) {
+	tool, ok := p.Archive.(LightArchiveTool)
+	if !ok {
+		return State{}, LightRestoreReport{}, errors.New("PostgreSQL archive tool does not support light restore")
+	}
+	if err := ensureEmptyRestoreTarget(ctx, databaseURL); err != nil {
+		return State{}, LightRestoreReport{}, err
+	}
+	// Each pass reads a fresh decrypted stream and drains it so the age
+	// authentication tag of the whole object is checked every time.
+	pass := func(run func(io.Reader) error) error {
+		stream, err := open()
+		if err != nil {
+			return err
+		}
+		defer stream.Close()
+		if err := run(stream); err != nil {
+			return err
+		}
+		_, err = io.Copy(io.Discard, stream)
+		return err
+	}
+	var toc string
+	if err := pass(func(r io.Reader) (err error) { toc, err = tool.ArchiveTOC(ctx, r); return }); err != nil {
+		return State{}, LightRestoreReport{}, err
+	}
+	list, report, err := BuildLightRestoreList(toc, source.Counts, maxTableRows)
+	if err != nil {
+		return State{}, LightRestoreReport{}, err
+	}
+	if err := pass(func(r io.Reader) error { return tool.ArchiveParse(ctx, r) }); err != nil {
+		return State{}, LightRestoreReport{}, err
+	}
+	listFile, err := os.CreateTemp("", "gildra-restore-list-*")
+	if err != nil {
+		return State{}, LightRestoreReport{}, fmt.Errorf("create restore list: %w", err)
+	}
+	defer os.Remove(listFile.Name())
+	if _, err := listFile.WriteString(list); err != nil {
+		_ = listFile.Close()
+		return State{}, LightRestoreReport{}, fmt.Errorf("write restore list: %w", err)
+	}
+	if err := listFile.Close(); err != nil {
+		return State{}, LightRestoreReport{}, fmt.Errorf("write restore list: %w", err)
+	}
+	if err := pass(func(r io.Reader) error { return tool.RestoreWithList(ctx, databaseURL, listFile.Name(), r) }); err != nil {
+		return State{}, LightRestoreReport{}, err
+	}
+	state, err := inspectRestoredState(ctx, databaseURL)
+	return state, report, err
+}
+
+var lightTableDataEntry = regexp.MustCompile(`^\d+; \d+ \d+ TABLE DATA (\S+) (\S+)(?: |$)`)
+
+// BuildLightRestoreList turns a `pg_restore --list` table of contents into a
+// `--use-list` file for a light restore. Data of tables with more than
+// maxTableRows rows (or not counted at all), materialized-view refreshes and
+// foreign keys are commented out: with partial data the foreign keys cannot
+// hold, and the large tables are proven empty instead of copied.
+func BuildLightRestoreList(toc string, counts map[string]int64, maxTableRows int64) (string, LightRestoreReport, error) {
+	var out strings.Builder
+	restored := []string{}
+	skipped := []string{}
+	for _, line := range strings.Split(toc, "\n") {
+		trimmed := strings.TrimRight(line, "\r")
+		if trimmed == "" {
+			continue
+		}
+		if strings.HasPrefix(trimmed, ";") {
+			out.WriteString(trimmed + "\n")
+			continue
+		}
+		if match := lightTableDataEntry.FindStringSubmatch(trimmed); match != nil {
+			schema, table := match[1], match[2]
+			count, counted := counts[table]
+			if schema == "public" && counted && count <= maxTableRows {
+				restored = append(restored, table)
+				out.WriteString(trimmed + "\n")
+				continue
+			}
+			if schema == "public" && counted {
+				skipped = append(skipped, table)
+			}
+			out.WriteString(";" + trimmed + "\n")
+			continue
+		}
+		if strings.Contains(trimmed, " FK CONSTRAINT ") || strings.Contains(trimmed, " MATERIALIZED VIEW DATA ") {
+			out.WriteString(";" + trimmed + "\n")
+			continue
+		}
+		out.WriteString(trimmed + "\n")
+	}
+	sort.Strings(restored)
+	sort.Strings(skipped)
+	if len(restored)+len(skipped) == 0 {
+		return "", LightRestoreReport{}, errors.New("archive table of contents lists no counted table data")
+	}
+	return out.String(), LightRestoreReport{RestoredTables: restored, SkippedDataTables: skipped}, nil
+}
+
+func ensureEmptyRestoreTarget(ctx context.Context, databaseURL string) error {
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
-		return State{}, fmt.Errorf("open restore PostgreSQL: %w", err)
+		return fmt.Errorf("open restore PostgreSQL: %w", err)
 	}
+	defer pool.Close()
 	var userRelations int64
 	if err := pool.QueryRow(ctx, `
 		SELECT count(*)
@@ -72,17 +198,16 @@ func (p PostgresOperator) RestoreAndInspect(ctx context.Context, databaseURL str
 		WHERE namespace.nspname NOT IN ('pg_catalog','information_schema')
 		  AND namespace.nspname NOT LIKE 'pg_toast%'
 		  AND relation.relkind IN ('r','p','v','m','S','f')`).Scan(&userRelations); err != nil {
-		pool.Close()
-		return State{}, fmt.Errorf("inspect restore target: %w", err)
+		return fmt.Errorf("inspect restore target: %w", err)
 	}
-	pool.Close()
 	if userRelations != 0 {
-		return State{}, fmt.Errorf("restore database is not empty: found %d user relations", userRelations)
+		return fmt.Errorf("restore database is not empty: found %d user relations", userRelations)
 	}
-	if err := p.Archive.Restore(ctx, databaseURL, source); err != nil {
-		return State{}, err
-	}
-	pool, err = pgxpool.New(ctx, databaseURL)
+	return nil
+}
+
+func inspectRestoredState(ctx context.Context, databaseURL string) (State, error) {
+	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
 		return State{}, fmt.Errorf("reopen restored PostgreSQL: %w", err)
 	}
@@ -187,6 +312,63 @@ func (p ProcessArchiveTool) Restore(ctx context.Context, databaseURL string, sou
 		"--exit-on-error",
 		"--no-owner",
 		"--no-privileges",
+		"--dbname="+target.database,
+	)
+	environment, err := databaseEnvironment(databaseURL)
+	if err != nil {
+		return err
+	}
+	command.Env = environment
+	command.Stdin = source
+	stderr := &boundedBuffer{limit: 8192}
+	command.Stderr = stderr
+	if err := command.Run(); err != nil {
+		return fmt.Errorf("pg_restore failed: %w: %s", err, redactDatabaseURL(stderr.String(), databaseURL))
+	}
+	return nil
+}
+
+func (p ProcessArchiveTool) restoreBinary() string {
+	if p.RestoreBinary != "" {
+		return p.RestoreBinary
+	}
+	return "pg_restore"
+}
+
+func (p ProcessArchiveTool) ArchiveTOC(ctx context.Context, source io.Reader) (string, error) {
+	command := exec.CommandContext(ctx, p.restoreBinary(), "--list")
+	command.Stdin = source
+	var output bytes.Buffer
+	command.Stdout = &output
+	stderr := &boundedBuffer{limit: 8192}
+	command.Stderr = stderr
+	if err := command.Run(); err != nil {
+		return "", fmt.Errorf("pg_restore --list failed: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return output.String(), nil
+}
+
+func (p ProcessArchiveTool) ArchiveParse(ctx context.Context, source io.Reader) error {
+	command := exec.CommandContext(ctx, p.restoreBinary(), "--file="+os.DevNull)
+	command.Stdin = source
+	stderr := &boundedBuffer{limit: 8192}
+	command.Stderr = stderr
+	if err := command.Run(); err != nil {
+		return fmt.Errorf("pg_restore archive read failed: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
+
+func (p ProcessArchiveTool) RestoreWithList(ctx context.Context, databaseURL, listPath string, source io.Reader) error {
+	target, err := parseDatabaseTarget(databaseURL)
+	if err != nil {
+		return err
+	}
+	command := exec.CommandContext(ctx, p.restoreBinary(),
+		"--exit-on-error",
+		"--no-owner",
+		"--no-privileges",
+		"--use-list="+listPath,
 		"--dbname="+target.database,
 	)
 	environment, err := databaseEnvironment(databaseURL)

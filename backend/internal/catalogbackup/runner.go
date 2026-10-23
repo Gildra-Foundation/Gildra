@@ -119,36 +119,93 @@ func (r Runner) Run(ctx context.Context, options Options) (result Result, err er
 	if err := r.Manifests.MarkVerifying(ctx, manifestID, restoreStartedAt); err != nil {
 		return Result{}, err
 	}
-	remote, err := r.Store.Get(ctx, objectKey)
-	if err != nil {
-		return Result{}, fmt.Errorf("download uploaded backup: %w", err)
-	}
-	defer remote.Body.Close()
-	if remote.Size != info.Size() {
-		return Result{}, fmt.Errorf("remote backup size mismatch: uploaded=%d downloaded=%d", info.Size(), remote.Size)
-	}
-	remoteHasher := sha256.New()
-	remoteCiphertext := io.TeeReader(remote.Body, remoteHasher)
-	plaintext, err := age.Decrypt(remoteCiphertext, options.Identity)
-	if err != nil {
-		return Result{}, fmt.Errorf("decrypt downloaded backup: %w", err)
-	}
-	restoreState, err := r.Database.RestoreAndInspect(ctx, options.RestoreDatabaseURL, plaintext)
-	if err != nil {
-		return Result{}, fmt.Errorf("restore downloaded backup: %w", err)
-	}
-	if _, err := io.Copy(io.Discard, plaintext); err != nil {
-		return Result{}, fmt.Errorf("authenticate downloaded backup remainder: %w", err)
-	}
-	if err := restoreState.Validate(); err != nil {
-		return Result{}, fmt.Errorf("validate restored backup state: %w", err)
-	}
-	remoteHash := remoteHasher.Sum(nil)
-	if !equalHash(localHash[:], remoteHash) {
-		return Result{}, errors.New("remote backup SHA-256 does not match the uploaded archive")
-	}
-	if err := sourceState.Equal(restoreState); err != nil {
-		return Result{}, err
+	var restoreState State
+	var skippedTables []string
+	restoreMode := ""
+	if options.RestoreProof == RestoreProofLight {
+		light, ok := r.Database.(LightRestoreOperator)
+		if !ok {
+			return Result{}, errors.New("light restore proof is not supported by this database operator")
+		}
+		restoreMode = RestoreProofLight
+		maxRows := options.LightMaxTableRows
+		if maxRows == 0 {
+			maxRows = DefaultLightMaxTableRows
+		}
+		// Authenticate the stored object byte for byte before trusting it.
+		remote, getErr := r.Store.Get(ctx, objectKey)
+		if getErr != nil {
+			return Result{}, fmt.Errorf("download uploaded backup: %w", getErr)
+		}
+		if remote.Size != info.Size() {
+			_ = remote.Body.Close()
+			return Result{}, fmt.Errorf("remote backup size mismatch: uploaded=%d downloaded=%d", info.Size(), remote.Size)
+		}
+		remoteHasher := sha256.New()
+		_, copyErr := io.Copy(remoteHasher, remote.Body)
+		_ = remote.Body.Close()
+		if copyErr != nil {
+			return Result{}, fmt.Errorf("read uploaded backup: %w", copyErr)
+		}
+		if !equalHash(localHash[:], remoteHasher.Sum(nil)) {
+			return Result{}, errors.New("remote backup SHA-256 does not match the uploaded archive")
+		}
+		open := func() (io.ReadCloser, error) {
+			object, openErr := r.Store.Get(ctx, objectKey)
+			if openErr != nil {
+				return nil, fmt.Errorf("download uploaded backup: %w", openErr)
+			}
+			plain, decryptErr := age.Decrypt(object.Body, options.Identity)
+			if decryptErr != nil {
+				_ = object.Body.Close()
+				return nil, fmt.Errorf("decrypt downloaded backup: %w", decryptErr)
+			}
+			return readCloser{Reader: plain, closer: object.Body}, nil
+		}
+		var report LightRestoreReport
+		restoreState, report, err = light.RestoreLightAndInspect(ctx, options.RestoreDatabaseURL, open, sourceState, maxRows)
+		if err != nil {
+			return Result{}, fmt.Errorf("restore downloaded backup: %w", err)
+		}
+		skippedTables = report.SkippedDataTables
+		if err := restoreState.Validate(); err != nil {
+			return Result{}, fmt.Errorf("validate restored backup state: %w", err)
+		}
+		if err := sourceState.EqualExcept(restoreState, skippedTables); err != nil {
+			return Result{}, err
+		}
+	} else {
+		remote, getErr := r.Store.Get(ctx, objectKey)
+		if getErr != nil {
+			return Result{}, fmt.Errorf("download uploaded backup: %w", getErr)
+		}
+		defer remote.Body.Close()
+		if remote.Size != info.Size() {
+			return Result{}, fmt.Errorf("remote backup size mismatch: uploaded=%d downloaded=%d", info.Size(), remote.Size)
+		}
+		remoteHasher := sha256.New()
+		remoteCiphertext := io.TeeReader(remote.Body, remoteHasher)
+		plaintext, decryptErr := age.Decrypt(remoteCiphertext, options.Identity)
+		if decryptErr != nil {
+			return Result{}, fmt.Errorf("decrypt downloaded backup: %w", decryptErr)
+		}
+		restoreState, err = r.Database.RestoreAndInspect(ctx, options.RestoreDatabaseURL, plaintext)
+		if err != nil {
+			return Result{}, fmt.Errorf("restore downloaded backup: %w", err)
+		}
+		if _, err := io.Copy(io.Discard, plaintext); err != nil {
+			return Result{}, fmt.Errorf("authenticate downloaded backup remainder: %w", err)
+		}
+		if err := restoreState.Validate(); err != nil {
+			return Result{}, fmt.Errorf("validate restored backup state: %w", err)
+		}
+		remoteHash := remoteHasher.Sum(nil)
+		if !equalHash(localHash[:], remoteHash) {
+			return Result{}, errors.New("remote backup SHA-256 does not match the uploaded archive")
+		}
+		if err := sourceState.Equal(restoreState); err != nil {
+			return Result{}, err
+		}
 	}
 	restoreCompletedAt := now().UTC()
 	restoreDuration := restoreCompletedAt.Sub(restoreStartedAt)
@@ -159,6 +216,7 @@ func (r Runner) Run(ctx context.Context, options Options) (result Result, err er
 		BackupCompletedAt: backupCompletedAt, RestoreStartedAt: restoreStartedAt,
 		RestoreCompletedAt: restoreCompletedAt, RestoreDurationMS: restoreDuration.Milliseconds(),
 		VerificationVersion: 1,
+		RestoreMode:         restoreMode, SkippedDataTables: skippedTables,
 	}
 	signed, evidencePayload, err := SignEvidence(evidence, options.SigningKey)
 	if err != nil {
@@ -178,6 +236,8 @@ func (r Runner) Run(ctx context.Context, options Options) (result Result, err er
 		"signature_algorithm":   signed.Algorithm,
 		"signer_fingerprint":    signed.PublicKeyFingerprint,
 		"critical_table_counts": sourceState.Counts,
+		"restore_mode":          restoreModeLabel(restoreMode),
+		"skipped_data_tables":   skippedTables,
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("encode database verification evidence: %w", err)
@@ -192,8 +252,22 @@ func (r Runner) Run(ctx context.Context, options Options) (result Result, err er
 		ManifestID: manifestID, ArtifactURI: artifactURI, EvidenceURI: evidenceURI,
 		SHA256: evidence.SHA256, ByteSize: info.Size(), DatabaseVersion: sourceState.DatabaseVersion,
 		RestoreDurationMS: restoreDuration.Milliseconds(), SignerFingerprint: signed.PublicKeyFingerprint,
-		RestoreVerified: true, SourceRestoreMatch: true,
+		RestoreMode: restoreModeLabel(restoreMode), RestoreVerified: true, SourceRestoreMatch: true,
 	}, nil
+}
+
+type readCloser struct {
+	io.Reader
+	closer io.Closer
+}
+
+func (r readCloser) Close() error { return r.closer.Close() }
+
+func restoreModeLabel(mode string) string {
+	if mode == "" {
+		return RestoreProofFull
+	}
+	return mode
 }
 
 func backupObjectKey(prefix, product string, timestamp time.Time, id uuid.UUID) string {
