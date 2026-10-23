@@ -558,7 +558,10 @@
   .reading,
   .reading[data-toc][data-rail],
   .reading[data-rail]:not([data-toc]) { grid-template-columns: minmax(0, 1fr); }
-  .readingRail { position: static; order: -1; }
+  .readingRail { position: static; order: -1; gap: var(--atlas-space-3); }
+  /* On phones the facts are a two-column card, so the text starts within the first screen. */
+  .facts { padding: var(--atlas-space-3); }
+  .facts dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2) var(--atlas-space-3); }
 }
 
 @media (max-width: 640px) {
