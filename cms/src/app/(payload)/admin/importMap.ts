@@ -1,5 +1,6 @@
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { TenantField as TenantField_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
+import { CollectionList as CollectionList_c1d26d7b863f8ada147598cc8c1f3eef } from '../../../components/list/CollectionList'
 import { LanguagesCell as LanguagesCell_53d85114ffcb12245bb9ddc91716ed08 } from '../../../components/list/LanguagesCell'
 import { SitePageCell as SitePageCell_ac84347516c1cb30246d4265206b7313 } from '../../../fields/blocksEditor/cells'
 import { BlocksStateCell as BlocksStateCell_ac84347516c1cb30246d4265206b7313 } from '../../../fields/blocksEditor/cells'
@@ -30,6 +31,7 @@ import { ChecklistFeatureClient as ChecklistFeatureClient_e70f5e05f09f93e00b997e
 import { BlockquoteFeatureClient as BlockquoteFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { InlineToolbarFeatureClient as InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { StickyPublish as StickyPublish_51c5e6cdd6676333062c31ee8b46a790 } from '../../../components/editor/StickyPublish'
 import { ArticlePanel as ArticlePanel_a522312b181a2969693f4479bb34acb3 } from '../../../components/editor/ArticlePanel'
 import { SlugField as SlugField_3d836d28318ebd3773170b5e527a3cbc } from '../../../components/editor/SlugField'
 import { SeoPreview as SeoPreview_54842116ebf27d5fc41a05116390649c } from '../../../components/editor/SeoPreview'
@@ -56,6 +58,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 export const importMap = {
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "@payloadcms/plugin-multi-tenant/client#TenantField": TenantField_1d0591e3cf4f332c83a86da13a0de59a,
+  "/components/list/CollectionList#CollectionList": CollectionList_c1d26d7b863f8ada147598cc8c1f3eef,
   "/components/list/LanguagesCell#LanguagesCell": LanguagesCell_53d85114ffcb12245bb9ddc91716ed08,
   "/fields/blocksEditor/cells#SitePageCell": SitePageCell_ac84347516c1cb30246d4265206b7313,
   "/fields/blocksEditor/cells#BlocksStateCell": BlocksStateCell_ac84347516c1cb30246d4265206b7313,
@@ -86,6 +89,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BlockquoteFeatureClient": BlockquoteFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#HorizontalRuleFeatureClient": HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#InlineToolbarFeatureClient": InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/components/editor/StickyPublish#StickyPublish": StickyPublish_51c5e6cdd6676333062c31ee8b46a790,
   "/components/editor/ArticlePanel#ArticlePanel": ArticlePanel_a522312b181a2969693f4479bb34acb3,
   "/components/editor/SlugField#SlugField": SlugField_3d836d28318ebd3773170b5e527a3cbc,
   "/components/editor/SeoPreview#SeoPreview": SeoPreview_54842116ebf27d5fc41a05116390649c,
