@@ -85,7 +85,7 @@ publishing.
 
 ## Ownership
 
-- `app`, `components`, `lib`: Next.js 16 public website, Tailwind CSS, shadcn/ui, next-intl and Recharts.
+- `app`, `components`, `lib`: Next.js 16 public website, Tailwind CSS and shadcn/ui; words in each component's `*Copy.ts` (`{ en, ru }`) and `lib/i18n.ts`.
 - `components/database`: focused catalog tooltip and relationship presentation;
   the page directory itself stays responsible for search and navigation.
 - `backend`: Go 1.26 API generated from `backend/api/openapi.yaml` with oapi-codegen.
