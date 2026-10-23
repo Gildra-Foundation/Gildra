@@ -384,3 +384,6 @@
 }
 
 @keyframes cms-reading { to { scale: 1 1; } }
+
+/* Draft banner of a block-page preview: above the page frame, on the frame's gutters. */
+.previewNotice { padding: var(--atlas-space-4) var(--atlas-gutter) 0; }

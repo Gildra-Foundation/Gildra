@@ -1,6 +1,6 @@
 {
   "registry": "https://valyro.xyz/r",
-  "retrievedAt": "2026-10-22T23:00:55.881Z",
+  "retrievedAt": "2026-10-22T23:35:40.221Z",
   "components": [
     "stats-card",
     "badge",
@@ -19,7 +19,13 @@
     "spinner",
     "button-group",
     "tooltip",
-    "text-input"
+    "text-input",
+    "textarea",
+    "switch",
+    "sortable",
+    "accordion",
+    "dialog",
+    "confirm-dialog"
   ],
   "proComponents": [
     "analytics-filter-bar"
@@ -617,6 +623,126 @@
       "path": "theme/createThemeCSS.ts",
       "registrySha256": "aa3f62f6ee457c8e5985280b5cff6e29062d0aebc53af46920ecab2aa5ec6422",
       "installedSha256": "aa3f62f6ee457c8e5985280b5cff6e29062d0aebc53af46920ecab2aa5ec6422",
+      "adapted": false
+    },
+    {
+      "path": "data-display/Accordion.css",
+      "registrySha256": "bce70504e047bfdf520185d08d27e4e220fe444ababd02ef733c6fd6982d4a1b",
+      "installedSha256": "bce70504e047bfdf520185d08d27e4e220fe444ababd02ef733c6fd6982d4a1b",
+      "adapted": false
+    },
+    {
+      "path": "data-display/Accordion.tsx",
+      "registrySha256": "1f410bec170fd9a0d5aebfbb755b5e97a118b57ad0c0cf96fc8461631e04b324",
+      "installedSha256": "1f410bec170fd9a0d5aebfbb755b5e97a118b57ad0c0cf96fc8461631e04b324",
+      "adapted": false
+    },
+    {
+      "path": "data-display/kanban.ts",
+      "registrySha256": "346f6deabd25efab4c03f5a4b1125c677a4b67245bdf0ebc16330e795f0ef13a",
+      "installedSha256": "346f6deabd25efab4c03f5a4b1125c677a4b67245bdf0ebc16330e795f0ef13a",
+      "adapted": false
+    },
+    {
+      "path": "data-display/useAccordion.ts",
+      "registrySha256": "d963ae9ab62454ff820b374190e154cd482b0ddc1796ff029f7e3cb6b874d161",
+      "installedSha256": "d963ae9ab62454ff820b374190e154cd482b0ddc1796ff029f7e3cb6b874d161",
+      "adapted": false
+    },
+    {
+      "path": "feedback/ConfirmDialog.css",
+      "registrySha256": "f12d6b05f76d78918b1cc8cd2399937e69a72c5665e7299e9c5481646dc7dc9b",
+      "installedSha256": "f12d6b05f76d78918b1cc8cd2399937e69a72c5665e7299e9c5481646dc7dc9b",
+      "adapted": false
+    },
+    {
+      "path": "feedback/ConfirmDialog.tsx",
+      "registrySha256": "30eef1aa9203de2f41b34269ce8a56cb722ee793a66bc2bedc2d52dfe9475790",
+      "installedSha256": "30eef1aa9203de2f41b34269ce8a56cb722ee793a66bc2bedc2d52dfe9475790",
+      "adapted": false
+    },
+    {
+      "path": "feedback/Dialog.css",
+      "registrySha256": "184ebf5d15148121b72d0d306732ec9024b2dc6700b8d3c4d187873ec3ef71e5",
+      "installedSha256": "184ebf5d15148121b72d0d306732ec9024b2dc6700b8d3c4d187873ec3ef71e5",
+      "adapted": false
+    },
+    {
+      "path": "feedback/Dialog.tsx",
+      "registrySha256": "b8a2a38fe8feab7e019f4da6c77723a733e83e62ebdc4cf184cb9cd466fda8b0",
+      "installedSha256": "b8a2a38fe8feab7e019f4da6c77723a733e83e62ebdc4cf184cb9cd466fda8b0",
+      "adapted": false
+    },
+    {
+      "path": "feedback/overlay-parts.tsx",
+      "registrySha256": "c9e781b53c8b0e5087dd1120ed5d14cb2f570ce9e92f94fc01d1b2377a3ef3ed",
+      "installedSha256": "c9e781b53c8b0e5087dd1120ed5d14cb2f570ce9e92f94fc01d1b2377a3ef3ed",
+      "adapted": false
+    },
+    {
+      "path": "feedback/useDialog.ts",
+      "registrySha256": "57cc9a1879927ef82fac7b0aa9a4b0216ac35f8fd299a9d95a0ee03abf5dc12b",
+      "installedSha256": "57cc9a1879927ef82fac7b0aa9a4b0216ac35f8fd299a9d95a0ee03abf5dc12b",
+      "adapted": false
+    },
+    {
+      "path": "forms/Switch.css",
+      "registrySha256": "c2a0d079f1e7fe5f0d7bdaad340ada24bb6acd9d28e9f434402d096083341460",
+      "installedSha256": "c2a0d079f1e7fe5f0d7bdaad340ada24bb6acd9d28e9f434402d096083341460",
+      "adapted": false
+    },
+    {
+      "path": "forms/Switch.tsx",
+      "registrySha256": "b2aebc4ea88dd1e7ba40ac1ec76d8c4a86af92f1d54289ae2cb89c750428766e",
+      "installedSha256": "b2aebc4ea88dd1e7ba40ac1ec76d8c4a86af92f1d54289ae2cb89c750428766e",
+      "adapted": false
+    },
+    {
+      "path": "forms/Textarea.css",
+      "registrySha256": "9b633c224719a25eab95c2642bf9e05f5ba1d426266a21c8234f5554fa5cc8c8",
+      "installedSha256": "9b633c224719a25eab95c2642bf9e05f5ba1d426266a21c8234f5554fa5cc8c8",
+      "adapted": false
+    },
+    {
+      "path": "forms/Textarea.tsx",
+      "registrySha256": "c26a9df898281dc45ded62bb0236817438361d87340854dcf1c7d8d2c775693e",
+      "installedSha256": "c26a9df898281dc45ded62bb0236817438361d87340854dcf1c7d8d2c775693e",
+      "adapted": false
+    },
+    {
+      "path": "layout/Sortable.css",
+      "registrySha256": "341ea55c2cdc395f1901cf087e5b1731d1e19c816be7130d51c170d872aefc60",
+      "installedSha256": "341ea55c2cdc395f1901cf087e5b1731d1e19c816be7130d51c170d872aefc60",
+      "adapted": false
+    },
+    {
+      "path": "layout/Sortable.tsx",
+      "registrySha256": "2b27a49441d9cef7280000ad787899e04ea8618dda85fdb6b4c74dd01709f2e4",
+      "installedSha256": "2b27a49441d9cef7280000ad787899e04ea8618dda85fdb6b4c74dd01709f2e4",
+      "adapted": false
+    },
+    {
+      "path": "layout/drag-moves.css",
+      "registrySha256": "687cf920cc701386297e27c74500c0c13d8a17cecb69955c118ba61d9e0f0c1c",
+      "installedSha256": "687cf920cc701386297e27c74500c0c13d8a17cecb69955c118ba61d9e0f0c1c",
+      "adapted": false
+    },
+    {
+      "path": "layout/drag-moves.tsx",
+      "registrySha256": "c3169842dee0238b11c42cc7d4287ae4397dca40494dee4ae2cea302a9aee686",
+      "installedSha256": "c3169842dee0238b11c42cc7d4287ae4397dca40494dee4ae2cea302a9aee686",
+      "adapted": false
+    },
+    {
+      "path": "layout/sorting.ts",
+      "registrySha256": "8086f0fc37e97bcbca31a6b3d7a8b6fc0d18c7e5eb8a036923d4d12dfa491202",
+      "installedSha256": "8086f0fc37e97bcbca31a6b3d7a8b6fc0d18c7e5eb8a036923d4d12dfa491202",
+      "adapted": false
+    },
+    {
+      "path": "layout/useSortable.ts",
+      "registrySha256": "a03323539c443e12f76e433d579c9890d654a8acdfc46f49fa254fddc45c0370",
+      "installedSha256": "a03323539c443e12f76e433d579c9890d654a8acdfc46f49fa254fddc45c0370",
       "adapted": false
     }
   ],

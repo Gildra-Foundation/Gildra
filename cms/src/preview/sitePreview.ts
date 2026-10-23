@@ -46,12 +46,16 @@ function claimsFor({ collection, doc, req }: Args) {
   return { c: collection, id: String(doc.id), site: String(site), uid: String(user.id) };
 }
 
-/** Draft preview on the site itself when that site supports it (articles only). */
+/** Sites whose preview page also renders block pages (Gildra's `/cms-preview`). */
+const PAGE_PREVIEW_SITES = new Set(["gildra"]);
+
+/** Draft preview on the site itself when that site supports it. */
 export async function sitePreviewTarget(args: Args): Promise<string | null> {
   const claims = claimsFor(args);
-  if (!claims || args.collection !== "guides") return null;
+  if (!claims) return null;
   const site = await siteRef(args.req, claims.site);
   if (!site || !nativePreviewSites().has(site.slug)) return null;
+  if (args.collection === "pages" && !PAGE_PREVIEW_SITES.has(site.slug)) return null;
   return sitePreviewUrl(site, args.locale, signSitePreview(claims));
 }
 
