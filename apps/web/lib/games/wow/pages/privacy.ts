@@ -3,11 +3,11 @@ import type { LegalProps } from "@/components/blocks/shared/legal";
 
 const EN: LegalProps = {
   title: "Privacy Policy",
-  updated: "Last updated: October 11, 2026",
+  updated: "Last updated: October 23, 2026",
   sections: [
     {
       heading: "What we store in your browser",
-      text: "Gildra keeps a small amount of data in your browser’s local storage: interface preferences and your cookie choice itself. This data never leaves your device and is not shared with anyone.",
+      text: "Gildra keeps a small amount of data in your browser’s local storage: interface preferences and your cookie choice itself. Local interface preferences stay on your device. If you sign in and save talent builds to your account, their names and talent export strings are stored on Gildra servers so you can access them on other devices. Local builds are transferred only when you choose to move them to your account. You can delete saved builds from the list.",
     },
     {
       heading: "What we collect",
@@ -27,11 +27,11 @@ const EN: LegalProps = {
 
 const RU: LegalProps = {
   title: "Политика конфиденциальности",
-  updated: "Обновлено: 11 октября 2026",
+  updated: "Обновлено: 23 октября 2026",
   sections: [
     {
       heading: "Что мы храним в вашем браузере",
-      text: "Gildra хранит небольшой объём данных в локальном хранилище браузера: настройки интерфейса и ваш выбор в отношении файлов cookie. Эти данные не покидают ваше устройство и никому не передаются.",
+      text: "Gildra хранит небольшой объём данных в локальном хранилище браузера: настройки интерфейса и ваш выбор в отношении файлов cookie. Локальные настройки интерфейса остаются на вашем устройстве. Если вы вошли и сохраняете билды талантов в аккаунт, их названия и строки экспорта хранятся на серверах Gildra, чтобы быть доступными с других устройств. Локальные билды переносятся только по вашей команде. Сохранённые билды можно удалить из списка.",
     },
     {
       heading: "Что мы собираем",

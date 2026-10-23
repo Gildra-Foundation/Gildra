@@ -4,8 +4,8 @@ export const savedTalentBuildsKey = "gildra:mythic:saved-talent-builds";
 export const maxSavedTalentBuilds = 20;
 export const maxBuildNameLength = 64;
 export type SavedTalentBuild = { id: string; name: string; code: string };
-export type BuildSaveError = "name" | "limit" | "invalid";
-export type BuildSaveResult = { ok: true; builds: SavedTalentBuild[] } | { ok: false; error: BuildSaveError };
+export type BuildSaveError = "name" | "limit" | "invalid" | "network" | "conflict" | "account";
+export type BuildSaveResult = { ok: true; builds: SavedTalentBuild[]; duplicate?: boolean } | { ok: false; error: BuildSaveError };
 
 /** Keep outdated exports so users can identify and delete them, never silently apply them. */
 export function parseSavedTalentBuilds(raw: string): { builds: SavedTalentBuild[]; corrupt: boolean } {
