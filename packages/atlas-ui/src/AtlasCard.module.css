@@ -271,19 +271,7 @@
       animation-timeline: view();
       animation-range: entry 0% entry 60%;
     }
-    /* Arriving from another page: the first cards also rise one after another
-       (order from AtlasGrid), after the hero and the section title. */
-    :global([data-route-arrived]) .card {
-      animation: atlas-card-rise linear both, atlas-card-arrive .48s var(--atlas-ease) both;
-      animation-timeline: view(), auto;
-      animation-range: entry 0% entry 60%, normal;
-      animation-delay: 0s, calc(var(--atlas-stagger) * (6 + var(--atlas-cascade-index, 0)));
-    }
   }
-}
-
-@keyframes atlas-card-arrive {
-  from { opacity: 0; translate: 0 calc(var(--atlas-reveal-shift) / 2); }
 }
 
 @keyframes atlas-card-rise {

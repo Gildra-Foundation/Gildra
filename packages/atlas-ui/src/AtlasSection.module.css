@@ -103,11 +103,3 @@
   .header { margin-bottom: var(--atlas-space-4); }
 }
 
-/* Arrival after an in-site navigation: the page body follows the hero cascade. */
-@media (prefers-reduced-motion: no-preference) {
-  :global([data-route-arrived]) .section { animation: atlas-section-arrive var(--atlas-duration-enter) var(--atlas-ease) calc(var(--atlas-stagger) * 7) both; }
-}
-
-@keyframes atlas-section-arrive {
-  from { opacity: 0; translate: 0 20px; }
-}

@@ -125,34 +125,6 @@
   .panel .body { padding: var(--atlas-space-5) var(--atlas-space-4); }
 }
 
-/* Arrival after an in-site navigation (RouteTransitionRuntime sets
-   data-route-arrived for a moment): breadcrumbs, eyebrow, title, lede, actions
-   and counters rise one after another. A first page load stays still. Every
-   rule names its element's own class: a universal or :nth-child target under
-   the page-wide marker made each set/remove restyle the whole page. */
-@media (prefers-reduced-motion: no-preference) {
-  :global([data-route-arrived]) .topRow,
-  :global([data-route-arrived]) .eyebrow,
-  :global([data-route-arrived]) .title,
-  :global([data-route-arrived]) .lede,
-  :global([data-route-arrived]) .actions,
-  :global([data-route-arrived]) .side,
-  :global([data-route-arrived]) .emblem {
-    animation: atlas-hero-arrive var(--atlas-duration-enter) var(--atlas-ease) both;
-  }
-  :global([data-route-arrived]) .topRow { animation-delay: calc(var(--atlas-stagger) * 2); }
-  :global([data-route-arrived]) .emblem,
-  :global([data-route-arrived]) .eyebrow { animation-delay: calc(var(--atlas-stagger) * 3); }
-  :global([data-route-arrived]) .title { animation-delay: calc(var(--atlas-stagger) * 4); }
-  :global([data-route-arrived]) .lede { animation-delay: calc(var(--atlas-stagger) * 5); }
-  :global([data-route-arrived]) .actions,
-  :global([data-route-arrived]) .side { animation-delay: calc(var(--atlas-stagger) * 6); }
-}
-
-@keyframes atlas-hero-arrive {
-  from { opacity: 0; translate: 0 16px; }
-}
-
 /* Centred hub hero: the title page of an atlas chapter. A dark halo keeps the
    copy readable over the middle of the artwork; the eyebrow gets rules on both
    sides and the title an ornament (rule · ember · rule). */
