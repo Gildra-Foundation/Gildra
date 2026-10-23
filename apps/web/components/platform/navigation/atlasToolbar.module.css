@@ -12,8 +12,9 @@
   border-bottom: 1px solid var(--atlas-line-soft);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--atlas-text-strong) 4%, transparent), transparent 70%),
-    var(--atlas-scrim);
-  backdrop-filter: blur(18px) saturate(120%);
+    color-mix(in srgb, var(--atlas-bg) 94%, transparent);
+  /* Near-opaque instead of a backdrop blur: a sticky blur re-filters the page
+     under it on every scroll frame, which weak GPUs drop frames on. */
   transition: background-color var(--atlas-duration-slow) var(--atlas-ease), box-shadow var(--atlas-duration-slow) var(--atlas-ease);
 }
 /* An engraved seam: the bottom edge catches the accent light in its middle. */
