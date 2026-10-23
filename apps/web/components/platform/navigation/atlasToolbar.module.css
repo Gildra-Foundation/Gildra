@@ -1,38 +1,16 @@
-/* atlas:strict — shared top bar: sigil, five realms with art portals, search, language, game. */
+/* atlas:strict — shared command bar: brand, search, language, game and account on top;
+   five section tabs with their menus below (one sheet with every menu on phones). */
 .toolbar {
   position: sticky;
   top: 0;
   z-index: 80;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--atlas-space-5);
-  min-height: var(--atlas-sticky-top);
-  padding: var(--atlas-space-2) var(--atlas-gutter);
+  /* Solid, no backdrop blur: a sticky blur re-filters the page under it on every
+     scroll frame, which weak GPUs drop frames on. */
+  background: var(--atlas-bg);
   border-bottom: 1px solid var(--atlas-line-soft);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--atlas-text-strong) 4%, transparent), transparent 70%),
-    color-mix(in srgb, var(--atlas-bg) 94%, transparent);
-  /* Near-opaque instead of a backdrop blur: a sticky blur re-filters the page
-     under it on every scroll frame, which weak GPUs drop frames on. */
-  transition: background-color var(--atlas-duration-slow) var(--atlas-ease), box-shadow var(--atlas-duration-slow) var(--atlas-ease);
+  transition: box-shadow var(--atlas-duration-slow) var(--atlas-ease);
 }
-/* An engraved seam: the bottom edge catches the accent light in its middle. */
-.toolbar::after {
-  content: "";
-  position: absolute;
-  inset: auto 12% -1px;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--atlas-accent) 55%, transparent) 50%, transparent);
-  opacity: .55;
-}
-.toolbar[data-scrolled] {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--atlas-text-strong) 4%, transparent), transparent 70%),
-    color-mix(in srgb, var(--atlas-bg) 94%, transparent);
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--atlas-bg) 70%, transparent);
-}
+.toolbar[data-scrolled] { box-shadow: 0 12px 32px color-mix(in srgb, #000 55%, transparent); }
 
 .skip {
   position: absolute;
@@ -40,6 +18,7 @@
   left: var(--atlas-gutter);
   z-index: 3;
   padding: var(--atlas-space-3) var(--atlas-space-4);
+  border-radius: var(--atlas-radius-control);
   color: var(--atlas-accent-ink);
   background: var(--atlas-accent);
   font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
@@ -47,335 +26,275 @@
 }
 .skip:focus-visible { translate: 0 0; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
-/* ── Sigil and wordmark ─────────────────────────────────────────────── */
-.start { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+/* ── Top row: brand · search · language, game, account ─────────────── */
+.top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--atlas-space-5);
+  height: 60px;
+  padding-inline: var(--atlas-gutter);
+}
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--atlas-space-3);
+  gap: 10px;
   min-height: var(--atlas-control-height);
   color: var(--atlas-text-strong);
-  font: var(--atlas-weight-display) var(--atlas-text-title) / 1 var(--atlas-font-display);
-  letter-spacing: .22em;
+  font: 700 var(--atlas-text-title) / 1 var(--atlas-font-display);
+  letter-spacing: .2em;
   text-decoration: none;
 }
-/* The crest: the gilded helmet. It catches the light on hover (a lift and a warmer
-   glow); the picture keeps its own gold, the glow follows the theme accent. */
+/* The wordmark is forged: white into the crest's gold. */
+.brand > span {
+  background: linear-gradient(180deg, var(--atlas-text-strong) 30%, var(--atlas-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.brand:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 4px; border-radius: var(--atlas-radius-control); }
+/* The crest: the gilded helmet; it lifts and glows a little on hover. */
 .sigil {
   display: block;
   flex: none;
-  width: 23px;
-  height: 30px;
-  filter: drop-shadow(0 0 5px var(--atlas-accent-glow)) drop-shadow(0 1px 1px rgba(0, 0, 0, .6));
+  width: auto;
+  height: 32px;
+  filter: drop-shadow(0 0 5px var(--atlas-accent-glow)) drop-shadow(0 1px 1px color-mix(in srgb, #000 60%, transparent));
   transition: translate var(--atlas-duration) var(--atlas-ease), filter var(--atlas-duration) var(--atlas-ease);
 }
-.sigil img { display: block; width: 100%; height: 100%; }
-.brand:hover .sigil { translate: 0 -1px; filter: drop-shadow(0 0 9px var(--atlas-accent-glow)) drop-shadow(0 0 2px var(--atlas-accent-strong)); }
-.brand:hover > span { color: var(--atlas-accent-strong); }
-.brand > span { transition: color var(--atlas-duration) var(--atlas-ease); }
+.sigil img { display: block; width: auto; height: 100%; }
+.brand:hover .sigil { translate: 0 -1px; filter: drop-shadow(0 0 9px var(--atlas-accent-glow)) drop-shadow(0 0 2px var(--atlas-accent-2)); }
 
-/* ── Realms ─────────────────────────────────────────────────────────── */
-.realms { position: relative; justify-self: center; }
-/* The bar's breathing room above and below the 44 px realm row. */
-.realms { --bar-inset: calc((var(--atlas-sticky-top) - var(--atlas-control-height)) / 2); }
-.realmList { display: flex; align-items: center; gap: var(--atlas-space-1); margin: 0; padding: 0; list-style: none; }
-.realmList > li { display: flex; align-items: center; }
-.realmLink {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: var(--atlas-control-height);
-  padding: 0 var(--atlas-space-1) 0 var(--atlas-space-3);
+/* The search is the masthead's centrepiece: a full field, not a pill. */
+.search { justify-self: center; width: min(100%, 560px); }
+.search button {
+  width: 100%;
+  min-height: 42px;
+  padding-inline: 14px 8px;
+  border-color: var(--atlas-line);
+  border-radius: var(--atlas-radius-control);
+  background: var(--atlas-surface);
   color: var(--atlas-text-muted);
-  font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color var(--atlas-duration) var(--atlas-ease), text-shadow var(--atlas-duration) var(--atlas-ease);
+  font-weight: 500;
 }
-.realmToggle {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: var(--atlas-control-height);
-  padding: 0;
-  border: 0;
-  color: var(--atlas-text-subtle);
-  background: none;
-  cursor: pointer;
-  transition: color var(--atlas-duration) var(--atlas-ease);
-}
-.realmToggle > svg { transition: rotate var(--atlas-duration) var(--atlas-ease); }
-.realmList > li:hover .realmLink,
-.realmList > li[data-open] .realmLink { color: var(--atlas-text-strong); text-shadow: 0 0 14px var(--atlas-accent-glow); }
-.realmList > li:hover .realmToggle,
-.realmToggle[aria-expanded="true"] { color: var(--atlas-accent); }
-.realmToggle[aria-expanded="true"] > svg { rotate: 180deg; }
-.realmLink[aria-current] { color: var(--atlas-accent-strong); }
-.realmLink:focus-visible, .realmToggle:focus-visible, .brand:focus-visible, .menuToggle:focus-visible {
-  outline: 2px solid var(--atlas-accent-strong);
-  outline-offset: 2px;
-}
+.search button > span:first-of-type { flex: 1; }
+.search button:hover { border-color: var(--atlas-accent); background: var(--atlas-surface-raised); }
 
-/* The rune: a lit seam with a gem that marks the current realm and glides to the next one. */
-.rune {
-  position: absolute;
-  bottom: calc(-1px - var(--bar-inset));
-  left: 0;
-  z-index: 1;
-  width: var(--rune-w, 40px);
-  height: 1px;
-  margin-left: calc(var(--rune-w, 40px) / -2);
-  pointer-events: none;
-  translate: var(--rune-x, 0) 0;
-  background: linear-gradient(90deg, transparent, var(--atlas-accent-strong) 30%, var(--atlas-accent-strong) 70%, transparent);
-  box-shadow: 0 0 10px var(--atlas-accent);
-}
-.rune::after {
-  content: "";
-  position: absolute;
-  top: -3px;
-  left: calc(50% - 3.5px);
-  width: 7px;
-  height: 7px;
-  rotate: 45deg;
-  background: var(--atlas-accent-strong);
-  box-shadow: 0 0 8px var(--atlas-accent), 0 0 18px var(--atlas-accent-glow);
-}
-.rune[data-hidden] { opacity: 0; }
-.rune[data-ready] {
-  transition: translate var(--atlas-duration-art) cubic-bezier(.5, 0, .2, 1.2), width var(--atlas-duration-art) var(--atlas-ease), opacity var(--atlas-duration) var(--atlas-ease);
-}
+.end { display: flex; align-items: center; gap: var(--atlas-space-3); }
 
-/* ── Portal panel of a realm ────────────────────────────────────────── */
-.portal {
-  position: absolute;
-  top: calc(100% + var(--bar-inset) + var(--atlas-space-2));
-  left: 50%;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
-  gap: var(--atlas-space-3);
-  width: min(760px, calc(100vw - 2 * var(--atlas-gutter)));
-  padding: var(--atlas-space-3);
-  border: 1px solid var(--atlas-line);
-  border-top-color: var(--atlas-line-strong);
-  border-radius: var(--atlas-radius);
-  background:
-    radial-gradient(120% 80% at 50% 0%, var(--atlas-accent-wash), transparent 60%),
-    color-mix(in srgb, var(--atlas-surface-raised) 96%, transparent);
-  box-shadow: var(--atlas-shadow-panel), 0 24px 60px color-mix(in srgb, var(--atlas-bg) 80%, transparent);
-  translate: -50% 0;
-  animation: portal-open var(--atlas-duration-slow) var(--atlas-ease) both;
-}
-/* The pointer can cross the gap between the bar and the panel without closing it. */
-.portal::before { content: ""; position: absolute; inset: calc(-1 * var(--atlas-space-3)) 0 100%; }
-@keyframes portal-open {
-  from { opacity: 0; translate: -50% -8px; clip-path: inset(0 0 100% 0); }
-  to { opacity: 1; translate: -50% 0; clip-path: inset(0 0 0 0); }
-}
-.portalFeature, .sheetFeature {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-text-strong);
-  background: var(--atlas-surface-sunken);
-  text-decoration: none;
-}
-.portalFeature { min-height: 212px; }
-.portalArt {
-  z-index: -2;
-  object-fit: cover;
-  filter: saturate(.9) brightness(.82);
-  transition: scale var(--atlas-duration-art) var(--atlas-ease), filter var(--atlas-duration-art) var(--atlas-ease);
-}
-.portalFeature::after, .sheetFeature::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(180deg, transparent 20%, color-mix(in srgb, var(--atlas-bg) 92%, transparent) 92%);
-}
-/* The same gilded brackets as the atlas cards. */
-.portalFeature::before, .sheetFeature::before {
-  content: "";
-  position: absolute;
-  inset: 8px;
-  pointer-events: none;
-  opacity: .4;
-  background: var(--atlas-filigree);
-  transition: inset var(--atlas-duration-slow) var(--atlas-ease), opacity var(--atlas-duration-slow) var(--atlas-ease);
-}
-.portalFeature:hover::before, .portalFeature:focus-visible::before { inset: 5px; opacity: .95; }
-.portalFeature:hover .portalArt, .portalFeature:focus-visible .portalArt,
-.sheetFeature:hover .portalArt { scale: 1.05; filter: saturate(1) brightness(.95); }
-.portalFeature:hover, .portalFeature:focus-visible { border-color: var(--atlas-line-strong); box-shadow: var(--atlas-glow-sm); }
-.portalFeature:focus-visible, .portalLink:focus-visible, .sheetFeature:focus-visible, .sheetLinks a:focus-visible, .sheetHome:focus-visible {
-  outline: 2px solid var(--atlas-accent-strong);
-  outline-offset: 2px;
-}
-.portalText { display: grid; gap: var(--atlas-space-1); padding: var(--atlas-space-5); }
-.portalTitle {
-  font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.1 var(--atlas-font-display);
-  text-shadow: var(--atlas-text-shadow-art);
-}
-.portalLede { color: var(--atlas-text); font: 400 var(--atlas-text-small) / 1.45 var(--atlas-font-ui); text-shadow: var(--atlas-text-shadow-art); }
-.portalGo {
+/* Account: the one gold control (AccountChip — "Sign in" or the Battle.net name). */
+.accountSlot { display: contents; }
+.account {
   display: inline-flex;
   align-items: center;
-  gap: var(--atlas-space-1);
-  margin-top: var(--atlas-space-2);
-  color: var(--atlas-accent-strong);
-  font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-}
-.portalGo > svg { transition: translate var(--atlas-duration) var(--atlas-ease); }
-.portalFeature:hover .portalGo > svg { translate: 3px 0; }
-
-.portalList { display: grid; align-content: start; gap: var(--atlas-space-2); padding: var(--atlas-space-2) 0; }
-.portalCaption {
-  margin: 0 var(--atlas-space-3);
-  color: var(--atlas-text-subtle);
-  font: 650 var(--atlas-text-label) / 1.4 var(--atlas-font-ui);
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-}
-.portalList ul { display: grid; margin: 0; padding: 0; list-style: none; }
-.portalLink {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-3);
-  min-height: 60px;
-  padding: var(--atlas-space-3);
-  border-bottom: 1px solid var(--atlas-line-soft);
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px 0 4px;
+  border: 1px solid color-mix(in srgb, var(--atlas-accent-2) 55%, transparent);
+  border-radius: 999px;
   color: var(--atlas-text-strong);
+  background: color-mix(in srgb, var(--atlas-accent-2) 10%, transparent);
+  font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   text-decoration: none;
-  transition: background-color var(--atlas-duration) var(--atlas-ease);
+  white-space: nowrap;
+  transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
 }
-.portalLink::before {
+.account:hover { border-color: var(--atlas-accent-2); background: color-mix(in srgb, var(--atlas-accent-2) 20%, transparent); }
+.account:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.accountAvatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--atlas-accent-ink); background: var(--atlas-accent-2); }
+.accountLabel { max-width: 12ch; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Section tabs: icon, label and an accent underline, like a game client's tab strip ── */
+.tabs { position: relative; border-top: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
+.tabs > ul { display: flex; gap: 2px; width: min(100%, var(--atlas-container)); margin: 0 auto; padding: 0 var(--atlas-gutter); list-style: none; }
+.tabs > ul > li { display: flex; align-items: center; }
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 4px 0 14px;
+  color: var(--atlas-text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  font: 650 var(--atlas-text-body) / 1 var(--atlas-font-ui);
+  transition: color var(--atlas-duration) var(--atlas-ease);
+}
+.tab svg { flex: none; color: var(--atlas-text-subtle); transition: color var(--atlas-duration) var(--atlas-ease); }
+.tab::after {
   content: "";
   position: absolute;
-  inset: var(--atlas-space-2) auto var(--atlas-space-2) 0;
-  width: 2px;
+  left: 10px;
+  right: -26px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
   background: var(--atlas-accent);
-  box-shadow: var(--atlas-glow-sm);
-  scale: 1 0;
+  scale: 0 1;
   transition: scale var(--atlas-duration) var(--atlas-ease);
 }
-.portalLink > span { display: grid; gap: var(--atlas-space-1); }
-.portalLink strong { font: var(--atlas-weight-display) var(--atlas-text-title) / 1.2 var(--atlas-font-display); }
-.portalLink small { color: var(--atlas-text-muted); font: 400 var(--atlas-text-meta) / 1.4 var(--atlas-font-ui); }
-.portalLink > svg { flex: none; color: var(--atlas-accent); opacity: .5; transition: translate var(--atlas-duration) var(--atlas-ease), opacity var(--atlas-duration) var(--atlas-ease); }
-.portalLink:hover, .portalLink[aria-current] { background: var(--atlas-accent-wash); }
-.portalLink:hover::before, .portalLink[aria-current]::before { scale: 1 1; }
-.portalLink:hover > svg { translate: 4px 0; opacity: 1; }
-
-/* ── End of the bar ─────────────────────────────────────────────────── */
-.end { display: flex; align-items: center; justify-content: flex-end; gap: var(--atlas-space-3); min-width: 0; }
-
-/* ── Phone and tablet sheet ─────────────────────────────────────────── */
-.sheetRoot { display: none; }
-.menuToggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--atlas-space-2);
-  min-height: var(--atlas-control-height);
-  min-width: var(--atlas-control-height);
-  padding: var(--atlas-space-2) var(--atlas-space-3);
-  border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-text-strong);
-  background: var(--atlas-accent-wash);
+.tab:hover, [data-open] > .tab, .tab[aria-current] { color: var(--atlas-text-strong); }
+.tab:hover svg, [data-open] > .tab svg, .tab[aria-current] svg { color: var(--atlas-accent); }
+.tab[aria-current]::after, [data-open] > .tab::after { scale: 1 1; }
+.tab:focus-visible, .toggle:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -4px; border-radius: var(--atlas-radius-control); }
+.toggle {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 46px;
+  margin-right: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--atlas-text-subtle);
   cursor: pointer;
-  font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
 }
-.menuToggle:hover, .menuToggle[aria-expanded="true"] { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
-.sheet {
+.toggle:hover { color: var(--atlas-text-strong); }
+.toggle svg { transition: rotate var(--atlas-duration) var(--atlas-ease); }
+[data-open] > .toggle svg { rotate: 180deg; color: var(--atlas-accent); }
+
+/* Solid menu across the whole bar: nothing of the page bleeds through. */
+.panel {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  display: grid;
-  align-content: start;
-  gap: var(--atlas-space-4);
-  height: calc(100dvh - var(--atlas-sticky-top));
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--atlas-space-4) var(--atlas-gutter) var(--atlas-space-7);
+  padding: var(--atlas-space-5) var(--atlas-gutter) var(--atlas-space-6);
   border-top: 1px solid var(--atlas-line-soft);
-  background:
-    radial-gradient(90% 40% at 50% 0%, var(--atlas-accent-wash), transparent 70%),
-    var(--atlas-bg);
-  animation: sheet-open var(--atlas-duration-slow) var(--atlas-ease) both;
+  border-bottom: 1px solid var(--atlas-line);
+  background: var(--atlas-surface);
+  box-shadow: 0 30px 60px color-mix(in srgb, #000 60%, transparent);
+  animation: drop var(--atlas-duration) var(--atlas-ease);
 }
-@keyframes sheet-open { from { opacity: 0; } }
-.sheetHome {
-  display: flex;
+@keyframes drop { from { opacity: 0; translate: 0 -6px; } }
+
+/* ── Menu body: the section's pages, then its quick picks ───────────── */
+.menu {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: var(--atlas-space-6);
+  width: min(100%, var(--atlas-container));
+  margin-inline: auto;
+}
+.menu[data-compact] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-5); }
+.caption {
+  margin: 0 0 var(--atlas-space-3);
+  color: var(--atlas-text-subtle);
+  font: 700 var(--atlas-text-label) / 1.2 var(--atlas-font-ui);
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+.pages, .picks { margin: 0; padding: 0; list-style: none; }
+.pages { display: grid; gap: 2px; }
+.page {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--atlas-space-3);
-  min-height: var(--atlas-control-height);
-  color: var(--atlas-text-strong);
-  font: var(--atlas-weight-display) var(--atlas-text-h3) / 1 var(--atlas-font-display);
-  text-decoration: none;
-}
-.sheetHome[aria-current] { color: var(--atlas-accent-strong); }
-.sheetRealms { display: grid; gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
-.sheetRealms > li {
-  display: grid;
-  gap: var(--atlas-space-2);
-  animation: sheet-rise var(--atlas-duration-enter) var(--atlas-ease) both;
-  animation-delay: calc(var(--i, 0) * 45ms + 60ms);
-}
-@keyframes sheet-rise { from { opacity: 0; translate: 0 10px; } }
-.sheetFeature { min-height: 112px; }
-.sheetFeature .portalText { padding: var(--atlas-space-4) var(--atlas-space-5); }
-.sheetFeature .portalLede { font-size: var(--atlas-text-meta); }
-.sheetRealms > li[data-current] .sheetFeature { border-color: var(--atlas-line-strong); box-shadow: inset 3px 0 0 var(--atlas-accent); }
-.sheetLinks { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
-.sheetLinks a {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--atlas-space-2);
-  min-height: var(--atlas-control-height);
-  padding: 0 var(--atlas-space-3);
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: var(--atlas-radius);
+  padding: 10px var(--atlas-space-3) 10px 10px;
+  border-radius: var(--atlas-radius-control);
   color: var(--atlas-text);
-  font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   text-decoration: none;
+  transition: background-color var(--atlas-duration) var(--atlas-ease);
 }
-.sheetLinks a > svg { color: var(--atlas-accent); }
-.sheetLinks a[aria-current] { border-color: var(--atlas-line-strong); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
+.page:hover, .page:focus-visible { background: var(--atlas-surface-raised); }
+.page:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -2px; }
+.page[aria-current="page"] { background: var(--atlas-accent-wash-strong); }
+.pageIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: calc(var(--atlas-radius-control) - 2px);
+  color: var(--atlas-accent);
+  background: var(--atlas-accent-wash);
+}
+.pageText { display: grid; gap: 2px; min-width: 0; }
+.pageText strong { color: var(--atlas-text-strong); font: 650 var(--atlas-text-body) / 1.25 var(--atlas-font-ui); }
+.pageText small { color: var(--atlas-text-muted); font: 500 var(--atlas-text-meta) / 1.3 var(--atlas-font-ui); }
+.pageGo { color: var(--atlas-text-subtle); transition: translate var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease); }
+.page:hover .pageGo { color: var(--atlas-accent); translate: 3px 0; }
 
+/* Quick picks: dungeon and raid paintings, or the class roster. */
+.picks[data-kind="art"] { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--atlas-space-3); }
+.picks[data-kind="class"] { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 4px var(--atlas-space-2); }
+.pick { position: relative; display: block; color: var(--atlas-text-strong); text-decoration: none; }
+.pick:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; border-radius: var(--atlas-radius-control); }
+.picks[data-kind="art"] .pick { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius-control); }
+.picks[data-kind="art"] .pick:hover, .picks[data-kind="art"] .pick[aria-current] { border-color: var(--atlas-accent); }
+.picks[data-kind="art"] .pickArt { position: absolute; inset: 0; }
+.picks[data-kind="art"] .pickArt img { object-fit: cover; transition: scale var(--atlas-duration-art) var(--atlas-ease); }
+.picks[data-kind="art"] .pick:hover .pickArt img { scale: 1.06; }
+.picks[data-kind="art"] .pick::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, color-mix(in srgb, var(--atlas-bg) 92%, transparent), transparent 70%); }
+.picks[data-kind="art"] .pickLabel { position: absolute; z-index: 1; inset: auto 10px 8px; font: 650 var(--atlas-text-small) / 1.2 var(--atlas-font-ui); text-shadow: var(--atlas-text-shadow-art); }
+.picks[data-kind="class"] .pick { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--atlas-radius-control); }
+.picks[data-kind="class"] .pick:hover, .picks[data-kind="class"] .pick[aria-current] { background: var(--atlas-surface-raised); }
+.picks[data-kind="class"] .pickArt {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--pick-tint), 0 0 10px color-mix(in srgb, var(--pick-tint) 40%, transparent);
+}
+.picks[data-kind="class"] .pickArt img { object-fit: cover; }
+/* Class names: 62 % class colour into the heading white (AA on every surface, tests/atlas/palette). */
+.picks[data-kind="class"] .pickLabel { color: color-mix(in srgb, var(--pick-tint) 62%, var(--atlas-text-strong)); font: 600 var(--atlas-text-small) / 1.2 var(--atlas-font-ui); }
+.menu[data-compact] .picks[data-kind="art"] { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
+.menu[data-compact] .picks[data-kind="art"] > li { flex: 0 0 62%; scroll-snap-align: start; }
+.menu[data-compact] .picks[data-kind="class"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ── Phones and tablets: icon search, scrolling tab strip, one sheet ── */
+.sheetRoot { display: none; }
 @media (max-width: 1179px) {
-  .toolbar { grid-template-columns: minmax(0, 1fr) auto; }
-  .realms { display: none; }
+  .top { gap: var(--atlas-space-3); height: 56px; }
+  .search { justify-self: end; width: auto; }
+  .search button { width: auto; min-height: 40px; padding-inline: 11px; }
+  .search button > span, .search button > kbd { display: none; }
+  .accountSlot { display: none; }
   .sheetRoot { display: block; }
+  .menuButton {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--atlas-line);
+    border-radius: var(--atlas-radius-control);
+    background: var(--atlas-surface);
+    color: var(--atlas-text-strong);
+    cursor: pointer;
+  }
+  .menuButton:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
+  .menuButton[aria-expanded="true"] { border-color: var(--atlas-accent); }
+  /* The tab strip stays visible and scrolls sideways. */
+  .tabs > ul { overflow-x: auto; scrollbar-width: none; padding-inline: 6px; mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+  .tabs > ul::-webkit-scrollbar { display: none; }
+  .tab { height: 44px; padding-inline: 10px; font-size: var(--atlas-text-small); }
+  .tab::after { right: 10px; left: 10px; }
+  .toggle, .panel { display: none; }
+  .sheet {
+    position: fixed;
+    inset: var(--atlas-sticky-top) 0 0;
+    z-index: 2;
+    display: grid;
+    align-content: start;
+    gap: var(--atlas-space-5);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--atlas-space-4) var(--atlas-gutter) var(--atlas-space-8);
+    background: var(--atlas-bg);
+    animation: drop var(--atlas-duration) var(--atlas-ease);
+  }
+  .sheet > .account { justify-self: start; }
+  .sheetRealm { padding-bottom: var(--atlas-space-5); border-bottom: 1px solid var(--atlas-line-soft); }
 }
-@media (min-width: 640px) and (max-width: 1179px) {
-  .sheetRealms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .sheetFeature { min-height: 148px; }
-}
-@media (max-width: 480px) {
-  .toolbar, .end, .start { gap: var(--atlas-space-2); }
-  .brand { gap: var(--atlas-space-2); letter-spacing: .16em; }
-  .brand .sigil { width: 20px; height: 26px; }
-  .menuToggle { padding: var(--atlas-space-2); }
-  .menuToggle > span { display: none; }
-}
-@media (max-width: 359px) { .brand > span { display: none; } }
+@media (max-width: 420px) { .brand > span { display: none; } }
+
 @media (prefers-reduced-motion: reduce) {
-  .toolbar, .sigil, .realmLink, .realmToggle, .realmToggle > svg, .rune[data-ready], .portalArt, .portalFeature::before, .portalLink, .portalLink::before, .portalLink > svg, .portalGo > svg { transition: none; }
-  .portal, .sheet, .sheetRealms > li { animation: none; }
+  .panel, .sheet { animation: none; }
+  .tab::after, .tab svg, .toggle svg, .page, .pageGo, .picks .pickArt img, .sigil, .account { transition: none; }
 }

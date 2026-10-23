@@ -16,12 +16,12 @@
 .gildra-atlas,
 [data-atlas-scope] {
   /* Surfaces — page → panel → raised → selected */
-  --atlas-bg: #050607;
-  --atlas-surface: #090a0b;
-  --atlas-surface-raised: #11110f;
-  --atlas-surface-selected: #1a160e;
-  --atlas-surface-sunken: #030404;
-  --atlas-scrim: rgba(5, 6, 7, .86);
+  --atlas-bg: #070b10;
+  --atlas-surface: #0d131a;
+  --atlas-surface-raised: #151d27;
+  --atlas-surface-selected: #16212b;
+  --atlas-surface-sunken: #05080c;
+  --atlas-scrim: rgba(7, 11, 16, .92);
 
   /* Shared Characters material. Page artwork stays behind a readable dark veil;
      these surfaces reveal it without changing game/status colours. */
@@ -59,27 +59,31 @@
      drifting artwork it re-filtered every frame (A/B on prod, 2026-10-23). */
   --atlas-glass-filter: none;
 
-  /* Text — contrast on --atlas-surface: strong 15.4, text 13, muted 7.8, subtle 5.1 (AA ≥ 4.5 on every surface) */
-  --atlas-text-strong: #f2e1c3;
-  --atlas-text: #d9d0c0;
-  --atlas-text-muted: #aaa294;
-  --atlas-text-subtle: #878074;
+  /* "Frostforged" defaults; the selected character theme (site-theme.css) maps its
+     own values onto these names. */
+  /* Text — contrast on --atlas-surface: strong 17.6, text 13.6, muted 8.6, subtle 5.9 (AA ≥ 4.5 on every surface) */
+  --atlas-text-strong: #f2f6fa;
+  --atlas-text: #d2dce5;
+  --atlas-text-muted: #a2b2c1;
+  --atlas-text-subtle: #8496a8;
 
-  /* Accent — the one amber of the Raid and Mythic+ atlases */
-  --atlas-accent: #d1a24b;
-  --atlas-accent-strong: #f0b55a;
-  --atlas-accent-ink: #140d03;
-  --atlas-accent-wash: rgba(209, 162, 75, .09);
-  --atlas-accent-wash-strong: rgba(209, 162, 75, .17);
-  --atlas-accent-glow: rgba(230, 172, 77, .12);
-  /* Torchlight embers over page artwork (AtlasFrame) */
-  --atlas-ember: rgba(255, 199, 120, .95);
-  --atlas-ember-halo: rgba(255, 150, 60, .2);
+  /* Accent — the one ice blue of chrome and active states */
+  --atlas-accent: #7cc8ee;
+  --atlas-accent-strong: #b8e5fa;
+  --atlas-accent-ink: #031019;
+  --atlas-accent-wash: rgba(124, 200, 238, .09);
+  --atlas-accent-wash-strong: rgba(124, 200, 238, .16);
+  --atlas-accent-glow: rgba(124, 200, 238, .16);
+  /* Second accent — crest gold, only for the brand mark and the account */
+  --atlas-accent-2: #e2b25a;
+  /* Frost motes over page artwork (AtlasFrame) */
+  --atlas-ember: #b8e5fa;
+  --atlas-ember-halo: rgba(124, 200, 238, .2);
 
-  /* Lines */
-  --atlas-line: rgba(157, 112, 48, .45);
-  --atlas-line-soft: rgba(157, 112, 48, .24);
-  --atlas-line-strong: rgba(209, 162, 75, .72);
+  /* Lines — neutral steel; the accent marks only what is active */
+  --atlas-line: rgba(150, 190, 220, .24);
+  --atlas-line-soft: rgba(150, 190, 220, .13);
+  --atlas-line-strong: rgba(124, 200, 238, .6);
 
   /* Status — data meaning only (trends, availability), never chrome */
   --atlas-positive: #8fc47a;
@@ -115,12 +119,15 @@
   --atlas-container: 1540px;
   --atlas-gutter: clamp(14px, 2.2vw, 26px);
   --atlas-radius: 2px;
+  /* Softer corners of the command bar: search field, menus, picks, controls. */
+  --atlas-radius-control: 10px;
   --atlas-control-height: 44px;
   /* Reading width: one comfortable line of body text, and of longer notes */
   --atlas-measure: 68ch;
   --atlas-measure-wide: 72ch;
-  /* Height of the sticky top bar; sticky page navigation sits under it. */
-  --atlas-sticky-top: 64px;
+  /* Height of the sticky top bar (60 px row + 46 px realm tabs + rule; 56 + 44 + 1
+     below 1180 px); sticky page navigation sits under it. */
+  --atlas-sticky-top: 107px;
 
   /* Spacing scale */
   --atlas-space-1: 4px;
@@ -213,16 +220,21 @@
   --book-gutter: 24px;
 }
 
+@media (max-width: 1179px) {
+  .gildra-atlas,
+  [data-atlas-scope] { --atlas-sticky-top: 101px; }
+}
+
 /* More contrast when the reader asks the system for it: brighter secondary text,
    firmer lines, a darker shade under text set on artwork. */
 @media (prefers-contrast: more) {
   .gildra-atlas,
   [data-atlas-scope] {
-    --atlas-text: #ece4d6;
-    --atlas-text-muted: #d2c9ba;
-    --atlas-text-subtle: #b8b0a2;
-    --atlas-line: rgba(209, 162, 75, .72);
-    --atlas-line-soft: rgba(209, 162, 75, .5);
+    --atlas-text: #e6edf3;
+    --atlas-text-muted: #d2dce5;
+    --atlas-text-subtle: #a2b2c1;
+    --atlas-line: rgba(150, 190, 220, .5);
+    --atlas-line-soft: rgba(150, 190, 220, .32);
     --atlas-art-shade: linear-gradient(0deg, rgba(6, 7, 8, .97), rgba(6, 7, 8, .55) 62%, rgba(6, 7, 8, .3)), linear-gradient(90deg, rgba(0, 0, 0, .55), transparent 52%);
   }
 }
