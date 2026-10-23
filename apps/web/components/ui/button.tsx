@@ -1,18 +1,25 @@
-import { Button as ValyroButton, type ButtonProps as ValyroButtonProps, type ButtonVariant } from "@gildra/atlas-ui/valyroParts"
+import type { ComponentPropsWithRef } from "react"
+import { cn } from "@/lib/utils"
 
-type Variant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
-type Size = "default" | "sm" | "lg" | "icon"
+const base = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+const variants = {
+  default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+  destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+  outline: "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+  secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+  ghost: "hover:bg-accent hover:text-accent-foreground",
+  link: "text-primary underline-offset-4 hover:underline",
+} as const
+const sizes = { default: "h-9 px-4 py-2", sm: "h-8 rounded-md px-3 text-xs", lg: "h-10 rounded-md px-8", icon: "h-9 w-9" } as const
 
-const variants: Record<Variant, ButtonVariant> = { default: "primary", destructive: "danger", outline: "secondary", secondary: "secondary", ghost: "ghost", link: "link" }
-
-export interface ButtonProps extends Omit<ValyroButtonProps, "variant" | "size"> {
-  variant?: Variant | null
-  size?: Size | null
+export interface ButtonProps extends ComponentPropsWithRef<"button"> {
+  variant?: keyof typeof variants | null
+  size?: keyof typeof sizes | null
 }
 
-/** The API console's button: shadcn's variant and size names on Valyro's Button. */
-function Button({ variant, size, ...props }: ButtonProps) {
-  return <ValyroButton variant={variants[variant ?? "default"]} size={size === "sm" ? "sm" : size === "lg" ? "lg" : "md"} data-icon-only={size === "icon" || undefined} {...props} />
+/** The API console's own button look; the console styles it further with Tailwind. */
+function Button({ className, variant, size, ...props }: ButtonProps) {
+  return <button className={cn(base, variants[variant ?? "default"], sizes[size ?? "default"], className)} {...props} />
 }
 
 export { Button }

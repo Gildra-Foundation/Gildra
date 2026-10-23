@@ -180,6 +180,14 @@ export function planSync({ staged, local, manifest, rules }) {
   return { actions, removed };
 }
 
+/** Names of the registry's Pro items (`valyro-cli list --json`). */
+function proNames() {
+  const npx = process.platform === "win32" ? "npx.cmd" : "npx";
+  const result = spawnSync(npx, ["-y", CLI, "list", "--json"], { encoding: "utf8" });
+  if (result.status !== 0) throw new Error(`${CLI} list failed:\n${result.stderr || result.stdout}`);
+  return new Set(JSON.parse(result.stdout).filter(item => item.pro).map(item => item.name));
+}
+
 function localFiles(target, paths) {
   return new Map(paths.map(rel => {
     const abs = path.join(target.installDir, rel);
@@ -263,6 +271,8 @@ function sync(target, requested, { update, dryRun }) {
     manifest.cli = CLI;
     manifest.retrievedAt = new Date().toISOString();
     manifest.components = [...new Set([...manifest.components, ...staged.resolved])];
+    const pro = proNames();
+    manifest.proComponents = [...new Set([...(manifest.proComponents ?? []), ...staged.resolved.filter(name => pro.has(name))])];
     fs.writeFileSync(target.manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
 
     if (manual.length) {
