@@ -103,7 +103,6 @@
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  transition: box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 
 .spec > span { display: grid; gap: 1px; }

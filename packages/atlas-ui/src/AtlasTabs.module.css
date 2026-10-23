@@ -20,7 +20,7 @@
   font-size: var(--atlas-text-small);
   font-weight: 600;
   cursor: pointer;
-  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
 }
 
 .tab:hover { color: var(--atlas-text-strong); }

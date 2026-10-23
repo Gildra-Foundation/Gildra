@@ -177,7 +177,7 @@
     radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--class-color) 12%, transparent), transparent 60%),
     var(--atlas-glass-sheen), var(--atlas-glass-fill);
   box-shadow: inset 3px 0 0 color-mix(in srgb, var(--class-color) 78%, transparent), var(--atlas-glass-inset), var(--atlas-glass-depth);
-  transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease);
+  transition: translate var(--atlas-duration) var(--atlas-ease);
 }
 
 .card:hover,

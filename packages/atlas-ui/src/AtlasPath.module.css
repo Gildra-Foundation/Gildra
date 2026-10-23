@@ -40,7 +40,6 @@
   font-family: var(--atlas-font-display);
   font-size: var(--atlas-text-title);
   font-variant-numeric: lining-nums tabular-nums;
-  transition: box-shadow var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
 }
 
 .card {

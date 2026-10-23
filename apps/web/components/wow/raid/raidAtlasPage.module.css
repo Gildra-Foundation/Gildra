@@ -14,7 +14,6 @@
   outline: 1px solid #020303;
   background: var(--atlas-surface);
   box-shadow: var(--atlas-shadow-card);
-  transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 
 .raid:hover,
