@@ -27,6 +27,7 @@ export async function articlesData(req: PayloadRequest, params: Params): Promise
   const filters: Where[] = [{ site: { in: foundSites.docs.map((s) => s.id) } }];
   if (site) filters.push({ site: { equals: site } });
   const q = query.q;
+  // The guides `find` hook widens the title match to every content language.
   if (q) filters.push({ or: [{ title: { contains: q } }, { slug: { contains: q } }] });
   if (query.status) filters.push({ _status: { equals: query.status } });
   const result = await req.payload.find({ collection: "guides", req, user: req.user, overrideAccess: false,
