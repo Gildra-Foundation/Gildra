@@ -34,3 +34,6 @@ tsconfig.tsbuildinfo
 # local Next build dirs (NEXT_DIST_DIR overrides)
 .next-*/
 .lighthouseci/
+
+# local go build output
+/backend/catalog-backup
