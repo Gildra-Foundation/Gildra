@@ -84,7 +84,7 @@ type LightArchiveTool interface {
 
 var _ LightRestoreOperator = PostgresOperator{}
 
-func (p PostgresOperator) RestoreLightAndInspect(ctx context.Context, databaseURL string, open func() (io.ReadCloser, error), source State, maxTableRows int64) (State, LightRestoreReport, error) {
+func (p PostgresOperator) RestoreLightAndInspect(ctx context.Context, databaseURL string, open func() (io.ReadCloser, error), source State, maxTableRows, maxTableBytes int64) (State, LightRestoreReport, error) {
 	tool, ok := p.Archive.(LightArchiveTool)
 	if !ok {
 		return State{}, LightRestoreReport{}, errors.New("PostgreSQL archive tool does not support light restore")
@@ -110,7 +110,7 @@ func (p PostgresOperator) RestoreLightAndInspect(ctx context.Context, databaseUR
 	if err := pass(func(r io.Reader) (err error) { toc, err = tool.ArchiveTOC(ctx, r); return }); err != nil {
 		return State{}, LightRestoreReport{}, err
 	}
-	list, report, err := BuildLightRestoreList(toc, source.Counts, maxTableRows)
+	list, report, err := BuildLightRestoreList(toc, source.Counts, source.TableBytes, maxTableRows, maxTableBytes)
 	if err != nil {
 		return State{}, LightRestoreReport{}, err
 	}
@@ -140,10 +140,11 @@ var lightTableDataEntry = regexp.MustCompile(`^\d+; \d+ \d+ TABLE DATA (\S+) (\S
 
 // BuildLightRestoreList turns a `pg_restore --list` table of contents into a
 // `--use-list` file for a light restore. Data of tables with more than
-// maxTableRows rows (or not counted at all), materialized-view refreshes and
+// maxTableRows rows or maxTableBytes bytes (or not counted at all),
+// materialized-view refreshes and
 // foreign keys are commented out: with partial data the foreign keys cannot
 // hold, and the large tables are proven empty instead of copied.
-func BuildLightRestoreList(toc string, counts map[string]int64, maxTableRows int64) (string, LightRestoreReport, error) {
+func BuildLightRestoreList(toc string, counts, tableBytes map[string]int64, maxTableRows, maxTableBytes int64) (string, LightRestoreReport, error) {
 	var out strings.Builder
 	restored := []string{}
 	skipped := []string{}
@@ -159,7 +160,13 @@ func BuildLightRestoreList(toc string, counts map[string]int64, maxTableRows int
 		if match := lightTableDataEntry.FindStringSubmatch(trimmed); match != nil {
 			schema, table := match[1], match[2]
 			count, counted := counts[table]
-			if schema == "public" && counted && count <= maxTableRows {
+			small := count <= maxTableRows
+			if small && maxTableBytes > 0 && tableBytes != nil {
+				// A table without a recorded size is treated as large.
+				size, known := tableBytes[table]
+				small = known && size <= maxTableBytes
+			}
+			if schema == "public" && counted && small {
 				restored = append(restored, table)
 				out.WriteString(trimmed + "\n")
 				continue
@@ -228,7 +235,7 @@ type stateQueryer interface {
 }
 
 func inspectState(ctx context.Context, queryer stateQueryer) (State, error) {
-	state := State{Counts: make(map[string]int64, len(CriticalTables))}
+	state := State{Counts: make(map[string]int64, len(CriticalTables)), TableBytes: make(map[string]int64, len(CriticalTables))}
 	if err := queryer.QueryRow(ctx, `SELECT COALESCE(max(version_id),0) FROM goose_db_version WHERE is_applied`).Scan(&state.DatabaseVersion); err != nil {
 		return State{}, fmt.Errorf("read database migration version: %w", err)
 	}
@@ -264,6 +271,11 @@ func inspectState(ctx context.Context, queryer stateQueryer) (State, error) {
 			return State{}, fmt.Errorf("count critical table %s: %w", table, err)
 		}
 		state.Counts[table] = count
+		var size int64
+		if err := queryer.QueryRow(ctx, `SELECT pg_total_relation_size($1::regclass)`, pgx.Identifier{"public", table}.Sanitize()).Scan(&size); err != nil {
+			return State{}, fmt.Errorf("size critical table %s: %w", table, err)
+		}
+		state.TableBytes[table] = size
 	}
 	return state, nil
 }

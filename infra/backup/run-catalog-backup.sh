@@ -115,8 +115,8 @@ compose() {
 }
 
 # Refuse to start a backup the disk cannot hold: the dump is roughly a ninth
-# of the database (it is published by hard link, not copied again), a light proof needs a few percent more for the schema and
-# small tables, a full proof needs another whole database, and a 5 GiB reserve
+# of the database (it is published by hard link, not copied again), a light proof needs a
+# couple of percent for the schema and tables under the size cap, a full proof needs another whole database, and a 5 GiB reserve
 # is always left for production.
 check_free_space() {
   database_bytes="${GILDRA_BACKUP_DATABASE_BYTES:-}"
@@ -136,7 +136,7 @@ check_free_space() {
     # one extra dump covers an older catalog-backup that copies the archive
     needed=$((2 * dump_bytes + database_bytes + reserve))
   else
-    needed=$((dump_bytes + database_bytes / 16 + reserve))
+    needed=$((dump_bytes + database_bytes / 64 + reserve))
   fi
   if [ "$free_bytes" -lt "$needed" ]; then
     echo "not enough free disk for a $restore_proof backup: need $((needed / 1073741824)) GiB, have $((free_bytes / 1073741824)) GiB" >&2
