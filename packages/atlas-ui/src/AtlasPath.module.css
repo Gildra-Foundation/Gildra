@@ -80,7 +80,6 @@
   pointer-events: none;
   opacity: 0;
   background: radial-gradient(280px circle at var(--spot-x, 50%) var(--spot-y, 40%), color-mix(in srgb, var(--atlas-card-accent, var(--atlas-accent-strong)) 16%, transparent), transparent 70%);
-  mix-blend-mode: screen;
   transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
 }
 
@@ -108,7 +107,7 @@
 .art img {
   object-fit: cover;
   filter: saturate(.9) brightness(.86);
-  transition: transform var(--atlas-duration-art) var(--atlas-ease), filter var(--atlas-duration-slow) ease;
+  transition: transform var(--atlas-duration) var(--atlas-ease);
 }
 
 /* The artwork melts into the text side. */
@@ -184,7 +183,7 @@
 .card:hover,
 .card:focus-visible { border-color: var(--atlas-accent); }
 .card:hover .art img,
-.card:focus-visible .art img { transform: scale(1.05); filter: saturate(1.05) brightness(1); }
+.card:focus-visible .art img { transform: scale(1.03); }
 .card:hover .title,
 .card:focus-visible .title { color: var(--atlas-accent-strong); }
 .card:hover .cta svg,

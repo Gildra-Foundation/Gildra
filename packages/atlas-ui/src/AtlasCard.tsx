@@ -36,7 +36,7 @@ export type AtlasCardProps = {
   /** Aspect ratio of the artwork in the vertical layout (default "16 / 8.6"; portraits look better at "4 / 3.4"). */
   artRatio?: string;
   headingLevel?: 2 | 3;
-  /** Portrait entries (bosses) lean towards the pointer. */
+  /** Unused since cards stopped following the pointer (2026-10-23); kept so callers stay valid. */
   tilt?: boolean;
   /** The picture morphs into the opened page's scene (that page sets AtlasFrame morphKey). Only for one card per destination on a page. */
   morph?: boolean;
@@ -46,7 +46,7 @@ export type AtlasCardProps = {
 };
 
 /** Illustrated entry of an atlas list: raid, dungeon, boss, lair. */
-export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, tilt = false, morph = false, morphArt, className }: AtlasCardProps) {
+export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, subtitle, description, children, meta, cta, accent, layout = "vertical", artRatio, headingLevel = 3, morph = false, morphArt, className }: AtlasCardProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const style = { "--atlas-card-accent": accent, "--atlas-card-art-ratio": artRatio } as CSSProperties;
   const picture = image ? (
@@ -62,7 +62,7 @@ export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, s
     />
   ) : null;
   return (
-    <article className={clsx(styles.card, styles[layout], className)} style={style} data-spotlight data-tilt={tilt || undefined}>
+    <article className={clsx(styles.card, styles[layout], className)} style={style} data-spotlight>
       <Link className={styles.link} href={href}>
         <div className={styles.art}>
           {picture ?? <span className={styles.artEmpty} aria-hidden="true" />}
