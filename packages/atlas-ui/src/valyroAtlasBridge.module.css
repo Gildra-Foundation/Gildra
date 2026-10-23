@@ -25,7 +25,7 @@
   --ui-shadow-popover: var(--atlas-shadow-panel);
   --ui-floating-border-color: var(--atlas-line-strong);
   --ui-blur-strong: blur(20px);
-  --ui-blur-thin: blur(8px);
+  --ui-blur-thin: none;
   --ui-radius-field: var(--atlas-radius);
   --ui-radius-card: var(--atlas-radius);
   --ui-radius-popover: var(--atlas-radius);
@@ -102,7 +102,10 @@
   --ui-button-solid-glow: 0 0 transparent;
   --ui-button-solid-sheen: linear-gradient(180deg, var(--atlas-accent-strong), transparent);
   --ui-button-transform-active: scale(var(--atlas-press-scale));
-  --ui-blur: blur(8px);
+  /* Panels, fields and buttons sit on opaque atlas surfaces or are meant to read as
+     open text on the artwork (hero counters): no backdrop blur. Floating layers
+     (menus, dialogs) keep --ui-blur-strong while they are open. */
+  --ui-blur: none;
   --ui-border-width: 1px;
   --ui-radius-button: var(--atlas-radius);
   --ui-radius-full: 999px;

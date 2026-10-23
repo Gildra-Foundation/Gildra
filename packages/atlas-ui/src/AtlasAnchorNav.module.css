@@ -4,8 +4,8 @@
   top: var(--atlas-sticky-top);
   margin-top: var(--atlas-space-4);
   border: 1px solid var(--atlas-line);
-  background: var(--atlas-scrim);
-  backdrop-filter: blur(8px);
+  /* Near-opaque instead of a backdrop blur: a sticky blur re-filters the page under it on every scroll frame. */
+  background: color-mix(in srgb, var(--atlas-bg) 94%, transparent);
 }
 
 .nav ul {
