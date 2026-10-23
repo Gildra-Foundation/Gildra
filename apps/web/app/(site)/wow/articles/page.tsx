@@ -1,8 +1,9 @@
 // routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
 import { ArticlesIndexPage, articlesIndexMetadata } from "@/components/cms/Articles";
+import { parseArticleFilters } from "@/components/cms/articles/model";
 
-export const generateMetadata = () => articlesIndexMetadata("en");
-export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const page = Math.max(1, Math.min(1000, Math.floor(Number((await searchParams).page)) || 1));
-  return <ArticlesIndexPage lang="en" page={page} />;
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+export const generateMetadata = async ({ searchParams }: Props) => articlesIndexMetadata("en", parseArticleFilters(await searchParams));
+export default async function Page({ searchParams }: Props) {
+  return <ArticlesIndexPage lang="en" filters={parseArticleFilters(await searchParams)} />;
 }

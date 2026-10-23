@@ -1,0 +1,100 @@
+.ui-byline {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  min-width: 0;
+  color: var(--ui-fg-muted);
+  font-size: var(--ui-text-sm);
+  line-height: 1.4;
+  text-align: start;
+  overflow-wrap: break-word;
+}
+
+.ui-byline[data-size='sm'] {
+  gap: var(--ui-space-2);
+  font-size: var(--ui-text-xs);
+}
+
+.ui-byline__avatars {
+  display: inline-flex;
+  flex: none;
+}
+
+/* Overlapping stack with a ring in the page colour; small avatars overlap less, so the
+   initials of the one beneath stay readable. */
+.ui-byline__avatar:not(:first-child) {
+  margin-inline-start: -8px;
+  box-shadow: 0 0 0 2px var(--ui-bg);
+}
+
+.ui-byline[data-size='sm'] .ui-byline__avatar:not(:first-child) {
+  margin-inline-start: -4px;
+}
+
+.ui-byline__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ui-byline__names,
+.ui-byline__meta {
+  margin: 0;
+}
+
+.ui-byline__by,
+.ui-byline__role {
+  color: var(--ui-fg-subtle);
+}
+
+.ui-byline__name {
+  color: var(--ui-fg);
+  font-weight: var(--ui-weight-semibold);
+  text-decoration: none;
+}
+
+a.ui-byline__name {
+  text-decoration: var(--ui-link-decoration, none);
+  text-underline-offset: 3px;
+}
+
+a.ui-byline__name:hover {
+  color: var(--ui-action-fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a.ui-byline__name:focus-visible {
+  border-radius: var(--ui-radius-xs);
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.ui-byline__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 14px;
+  /* Each separator sits in the gap before its item, and the row clips its own edge: the dot of an item
+     that wrapped to the start of a line is cut away, so no line begins or ends with "·". */
+  overflow: hidden;
+  color: var(--ui-fg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-byline__meta-item {
+  position: relative;
+  white-space: nowrap;
+}
+
+.ui-byline__dot {
+  color: var(--ui-fg-faint);
+}
+
+.ui-byline__meta-item > .ui-byline__dot {
+  position: absolute;
+  inset-inline-end: 100%;
+  width: 14px;
+  text-align: center;
+}

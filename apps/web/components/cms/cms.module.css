@@ -1,127 +1,7 @@
 /* atlas:strict — CMS articles: layout and reading typography; the frame, hero, cards and notices come from the atlas kit. */
 
-/* The index follows Characters: open hero and one useful panel beside it. */
-.indexState { width: min(100%, 440px); }
-.indexState h2 {
-  margin: 0 0 var(--atlas-space-3);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-h3);
-  line-height: var(--atlas-leading-snug);
-  color: var(--atlas-text-strong);
-}
-.indexState p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
-.stateLinks { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin-top: var(--atlas-space-5); }
-
-.articleCard { min-width: 0; overflow: hidden; }
-.articleCardLink { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; }
-.articleCardLink:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -3px; }
-.cardCover { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 1px solid var(--atlas-line-soft); }
-.cardBody { display: flex; flex: 1; flex-direction: column; gap: var(--atlas-space-3); padding: var(--atlas-space-5); }
-.cardCategory { color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.cardBody h3 { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); line-height: var(--atlas-leading-snug); overflow-wrap: anywhere; }
-.cardBody > p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
-.articleCardLink:hover h3 { color: var(--atlas-accent-strong); }
-.cardFooter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); margin-top: auto; padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
-.cardMeta { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
-.cardMeta > span, .cardRead { display: inline-flex; align-items: center; gap: var(--atlas-space-2); }
-.cardMeta svg { width: 14px; height: 14px; flex: none; color: var(--atlas-accent); }
-.cardRead { color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); font-weight: 600; }
-.cardRead svg { width: 16px; height: 16px; flex: none; }
-
-/* The article is one centred column — hero, byline, text and contents share its left edge. */
-.article,
-.related {
-  width: 100%;
-  max-width: calc(42rem + 16rem + 88px);
-  margin-inline: auto;
-}
-.article:not(:has(.withToc)) { max-width: 42rem; }
-
-/* Byline under the hero: author, dates, reading time — and the share button. */
-.byline {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-2) var(--atlas-space-4);
-  padding: var(--atlas-space-2) 0;
-  border-block: 1px solid var(--atlas-line-soft);
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--atlas-space-1) 0;
-  margin: 0;
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-  font-variant-numeric: lining-nums;
-}
-
-.meta span { display: inline-flex; align-items: center; gap: 6px; }
-/* A dot between facts; the row wraps without a dangling separator at the line start. */
-.meta span + span::before {
-  width: 3px;
-  height: 3px;
-  margin-inline: var(--atlas-space-3);
-  border-radius: 50%;
-  background: var(--atlas-line-strong);
-  content: "";
-}
-.meta svg { width: 14px; height: 14px; color: var(--atlas-accent); }
-
-/* Text column on the left, under the hero copy; the contents beside it on wide screens. */
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--atlas-space-5);
-  margin-top: var(--atlas-space-6);
-}
-
-.body { min-width: 0; max-width: 42rem; }
-
-.cover { margin: 0 0 var(--atlas-space-6); }
-.cover img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 70vh;
-  object-fit: cover;
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: var(--atlas-radius);
-  box-shadow: var(--atlas-shadow-card);
-}
-.cover figcaption { margin-top: var(--atlas-space-2); color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-
-.toc {
-  align-self: start;
-  padding: var(--atlas-space-3) var(--atlas-space-4);
-  border: 1px solid var(--atlas-line-soft);
-  background: var(--atlas-surface);
-  font-size: var(--atlas-text-small);
-}
-
-.toc p {
-  margin: 0 0 var(--atlas-space-2);
-  color: var(--atlas-accent);
-  font-size: var(--atlas-text-label);
-  font-weight: 650;
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-}
-
-.toc ol { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.toc a {
-  display: block;
-  padding: 5px 0 5px var(--atlas-space-3);
-  color: var(--atlas-text-muted);
-  line-height: var(--atlas-leading-snug);
-  box-shadow: inset 1px 0 0 var(--atlas-line-soft);
-  transition: color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
-}
-.toc a:hover { color: var(--atlas-accent-strong); }
-.toc a[aria-current="location"] { color: var(--atlas-text-strong); box-shadow: inset 2px 0 0 var(--atlas-accent); }
+/* The article spans the frame; its reading grid (articles/articles.module.css) centres the columns. */
+.article { width: 100%; }
 
 /* Reading column: 17 px Inter on a ~70-character line, display serif headings like every atlas page. */
 .prose {
@@ -180,7 +60,6 @@
 }
 .prose a:hover { color: var(--atlas-text-strong); text-decoration-color: var(--atlas-accent-strong); }
 .prose a:focus-visible,
-.toc a:focus-visible,
 .back:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .prose code {
   padding: 1px 6px;
@@ -324,40 +203,16 @@
 .back:hover { color: var(--atlas-text-strong); }
 .back:hover svg { transform: translateX(-3px); }
 
-@media (min-width: 1100px) {
-  .layout.withToc {
-    grid-template-columns: minmax(0, 42rem) minmax(13rem, 16rem);
-    grid-template-areas: "body toc";
-    column-gap: clamp(40px, 5vw, 88px);
-  }
-  .layout.withToc .body { grid-area: body; }
-  /* Beside the text the contents is a quiet rail under the toolbar, not a panel. */
-  .layout.withToc .toc {
-    grid-area: toc;
-    position: sticky;
-    top: calc(var(--atlas-sticky-top) + var(--atlas-space-5));
-    max-height: calc(100vh - var(--atlas-sticky-top) - var(--atlas-space-7));
-    padding: 0;
-    overflow-y: auto;
-    border: 0;
-    background: none;
-  }
-}
-
 /* Long reading on phones (roadmap item 56): a size made for the hand, a looser
-   line, the contents as a compact panel that does not push the text away. */
+   line, wide tables run edge to edge. */
 @media (max-width: 600px) {
   .prose { font-size: var(--atlas-text-lead); line-height: 1.7; }
   .prose h2 { margin-top: 1.9em; }
-  .layout { margin-top: var(--atlas-space-5); }
-  .toc ol { max-height: 11.5em; overflow-y: auto; overscroll-behavior: contain; }
   .tableWrap { margin-inline: calc(var(--atlas-gutter) * -1); border-inline: 0; border-radius: 0; }
-  .byline { padding-block: var(--atlas-space-1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .back svg,
-  .toc a { transition: none; }
+  .back svg { transition: none; }
   .back:hover svg { transform: none; }
 }
 

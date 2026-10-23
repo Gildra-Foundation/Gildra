@@ -1,0 +1,268 @@
+.ui-article-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  min-width: 0;
+  color: var(--ui-fg);
+  text-align: start;
+  overflow-wrap: break-word;
+}
+
+/* Links and buttons inside the kicker, excerpt or badge stay clickable above the stretched headline link. */
+.ui-article-card :is(a, button):not(.ui-article-card__link) {
+  position: relative;
+  z-index: 1;
+}
+
+.ui-article-card[data-layout='horizontal'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  align-items: start;
+  gap: var(--ui-space-4);
+}
+
+/* No image: the text takes the whole row, as in a news feed. */
+.ui-article-card[data-layout='horizontal'][data-no-media] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Without a media box the badge sits in the text, before the kicker. */
+.ui-article-card[data-no-media] .ui-article-card__badge {
+  position: static;
+  align-self: flex-start;
+}
+
+.ui-article-card__media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-surface-2);
+}
+
+.ui-article-card[data-layout='horizontal'] .ui-article-card__media {
+  aspect-ratio: 4 / 3;
+}
+
+.ui-article-card__media > :is(img, picture, video),
+/* A <picture> only sizes its box; the image inside has to fill it too. */
+.ui-article-card__media > picture > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ui-article-card__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--ui-duration-slow) var(--ui-ease);
+}
+
+/* Pointer hover only: a tap would leave the zoom stuck on touch screens (e.g. after a back navigation). */
+@media (hover: hover) {
+  .ui-article-card[data-linked]:hover .ui-article-card__img {
+    transform: scale(1.03);
+  }
+}
+
+.ui-article-card__placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--ui-accent-soft), var(--ui-surface-2));
+  color: var(--ui-fg-faint);
+}
+
+.ui-article-card__badge {
+  position: absolute;
+  top: var(--ui-space-2);
+  inset-inline-start: var(--ui-space-2);
+  padding: 2px 8px;
+  border-radius: var(--ui-badge-radius, var(--ui-radius-xs));
+  background: var(--ui-primary);
+  color: var(--ui-primary-fg);
+  font-size: var(--ui-text-xs);
+  font-weight: var(--ui-weight-semibold);
+  letter-spacing: var(--ui-label-tracking, 0.04em);
+  text-transform: var(--ui-label-transform, uppercase);
+}
+
+.ui-article-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+
+.ui-article-card__kicker {
+  margin: 0;
+  color: var(--ui-action-fg);
+  font-size: var(--ui-text-xs);
+  font-weight: var(--ui-weight-semibold);
+  letter-spacing: var(--ui-label-tracking, 0.08em);
+  text-transform: var(--ui-label-transform, uppercase);
+}
+
+.ui-article-card__title {
+  margin: 0;
+  font-family: var(--ui-font-display, inherit);
+  font-size: var(--ui-text-lg);
+  font-weight: var(--ui-weight-heading, var(--ui-weight-semibold));
+  line-height: 1.3;
+  letter-spacing: var(--ui-tracking-tight);
+  text-wrap: pretty;
+}
+
+/* A card in a grid leads with its headline: a size up from the excerpt and the feed's cards. */
+.ui-article-card[data-layout='vertical'] .ui-article-card__title {
+  font-size: var(--ui-text-xl);
+  line-height: var(--ui-leading-tight);
+}
+
+.ui-article-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The headline link covers the whole card. */
+.ui-article-card__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--ui-radius-card);
+}
+
+.ui-article-card__link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.ui-article-card__link:focus-visible {
+  outline: none;
+}
+
+.ui-article-card__link:focus-visible::after {
+  box-shadow: var(--ui-focus-ring);
+}
+
+.ui-article-card__excerpt {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ui-fg-muted);
+  font-size: var(--ui-text-sm);
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.ui-article-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 14px;
+  margin: 0;
+  /* Separators sit in the gap before their item and the row clips its edge, so a wrapped line never
+     starts with "·" (see Byline). */
+  overflow: hidden;
+  color: var(--ui-fg-subtle);
+  font-size: var(--ui-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-article-card__authors {
+  color: var(--ui-fg-muted);
+  font-weight: var(--ui-weight-medium);
+}
+
+.ui-article-card__meta-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.ui-article-card__meta-item > .ui-article-card__dot {
+  position: absolute;
+  inset-inline-end: 100%;
+  width: 14px;
+  text-align: center;
+}
+
+.ui-article-card__dot {
+  color: var(--ui-fg-faint);
+}
+
+.ui-article-card__comments {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Overlay: the text sits on a scrim at the bottom of the image. Image and text share one grid cell, so the
+   stretched link still covers the whole card (an absolutely placed body would contain it). */
+.ui-article-card[data-layout='overlay'] {
+  display: grid;
+  overflow: hidden;
+  border-radius: var(--ui-radius-card);
+  color: #fff;
+}
+
+.ui-article-card[data-layout='overlay'] :is(.ui-article-card__media, .ui-article-card__body) {
+  grid-area: 1 / 1;
+}
+
+.ui-article-card[data-layout='overlay'] .ui-article-card__media {
+  aspect-ratio: 4 / 3;
+  border-radius: 0;
+}
+
+.ui-article-card[data-layout='overlay'] .ui-article-card__body {
+  /* Above the positioned media it shares the grid cell with: a grid item takes z-index unpositioned, and
+     staying static leaves the card as the stretched link's containing block, so the whole card is the
+     target and its focus frame. */
+  position: static;
+  z-index: 1;
+  align-self: end;
+  /* A long, soft fade rather than a solid band over half the photo; a faint shadow keeps the small
+     kicker and meta legible where the fade is thin. */
+  padding: var(--ui-space-16) var(--ui-space-4) var(--ui-space-4);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0, rgba(0, 0, 0, 0.6) 50%, transparent);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+/* The card clips its corners, so the focus ring is drawn inside. */
+.ui-article-card[data-layout='overlay'] .ui-article-card__link:focus-visible::after {
+  box-shadow: inset 0 0 0 3px var(--ui-focus-color);
+}
+
+.ui-article-card[data-layout='overlay'] .ui-article-card__title {
+  font-size: var(--ui-text-xl);
+}
+
+.ui-article-card[data-layout='overlay'] :is(.ui-article-card__kicker, .ui-article-card__excerpt, .ui-article-card__meta, .ui-article-card__authors, .ui-article-card__dot) {
+  color: #fff;
+}
+
+@media (max-width: 480px) {
+  .ui-article-card[data-layout='horizontal'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: var(--ui-space-3);
+  }
+
+  .ui-article-card[data-layout='horizontal'] .ui-article-card__excerpt {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-article-card__img {
+    transition: none;
+  }
+}

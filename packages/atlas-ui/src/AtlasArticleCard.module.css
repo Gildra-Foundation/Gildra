@@ -1,0 +1,106 @@
+/* atlas:strict — Valyro owns the card anatomy, stretched link and meta line; atlas supplies the glass, type and accent. */
+.card {
+  --ui-radius-card: var(--atlas-radius);
+  --ui-action-fg: var(--atlas-accent);
+  --ui-primary: var(--atlas-accent);
+  --ui-primary-fg: var(--atlas-accent-ink);
+  --ui-surface-2: var(--atlas-surface-raised);
+  --ui-accent-soft: var(--atlas-accent-wash);
+  --ui-focus-ring: 0 0 0 2px var(--atlas-accent-strong);
+  --ui-focus-color: var(--atlas-accent-strong);
+  font-family: var(--atlas-font-ui);
+}
+
+.card:global([data-layout="vertical"]),
+.card:global([data-layout="horizontal"]) {
+  padding: var(--atlas-space-3);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-glass-fill);
+  box-shadow: var(--atlas-glass-inset);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .card:global([data-linked]):hover {
+    border-color: var(--atlas-line);
+    background: var(--atlas-glass-raised);
+  }
+}
+
+.card :global(.ui-article-card__title) {
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-weight: var(--atlas-weight-display);
+  letter-spacing: 0;
+}
+
+.card:global([data-layout="vertical"]) :global(.ui-article-card__title) {
+  font-size: var(--atlas-text-title);
+  line-height: var(--atlas-leading-snug);
+}
+
+.card :global(.ui-article-card__kicker) {
+  color: var(--atlas-accent);
+  font-size: var(--atlas-text-label);
+  letter-spacing: var(--atlas-tracking-label);
+}
+
+.card :global(.ui-article-card__excerpt) {
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+}
+
+.card :global(.ui-article-card__meta) {
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-meta);
+}
+
+.card :global(.ui-article-card__media) {
+  border-radius: calc(var(--atlas-radius) - 2px);
+}
+
+/* Lead story: text over the cover, taller on wide screens. */
+.card:global([data-layout="overlay"]) {
+  border: 1px solid var(--atlas-line);
+}
+
+.card:global([data-layout="overlay"]) :global(.ui-article-card__media) {
+  aspect-ratio: 16 / 9;
+}
+
+.card:global([data-layout="overlay"]) :global(.ui-article-card__title) {
+  font-size: var(--atlas-text-h2);
+  line-height: var(--atlas-leading-tight);
+  text-wrap: balance;
+}
+
+.card:global([data-layout="overlay"]) :global(.ui-article-card__kicker) {
+  color: var(--atlas-accent-strong);
+}
+
+/* Horizontal: a thumbnail, not half the card — the text carries the row. */
+.card:global([data-layout="horizontal"]:not([data-no-media])) {
+  grid-template-columns: clamp(112px, 30%, 240px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.card:global([data-layout="horizontal"]) :global(.ui-article-card__media) {
+  aspect-ratio: 16 / 10;
+}
+
+@media (max-width: 640px) {
+  .card:global([data-layout="overlay"]) :global(.ui-article-card__media) {
+    aspect-ratio: 4 / 5;
+  }
+
+  .card:global([data-layout="overlay"]) :global(.ui-article-card__title) {
+    font-size: var(--atlas-text-h3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

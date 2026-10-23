@@ -1,0 +1,26 @@
+/* atlas:strict */
+
+/* Kit tokens the shared bridge does not cover yet. */
+.parts {
+  --ui-action-fg: var(--atlas-accent-strong);
+  --ui-primary: var(--atlas-accent);
+  --ui-divider: var(--atlas-line-soft);
+  --ui-info-soft: var(--atlas-accent-wash);
+  --ui-info-text: var(--atlas-accent-strong);
+  --ui-warning-soft: var(--atlas-accent-wash);
+  --ui-warning-text: var(--atlas-caution);
+  --ui-radius-xs: 4px;
+  --ui-text-xs: var(--atlas-text-meta);
+  --ui-weight-semibold: 600;
+  --ui-weight-bold: 700;
+  --ui-editorial-rule-width: 2px;
+  color: var(--atlas-text);
+}
+
+.toc {
+  padding: var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-glass-fill);
+  box-shadow: var(--atlas-glass-inset);
+}
