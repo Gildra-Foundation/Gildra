@@ -109,6 +109,47 @@ func (s *LocalStore) Put(ctx context.Context, key string, source io.Reader, size
 	return nil
 }
 
+// Adopt publishes an existing regular file under key by hard-linking it, so a
+// 12 GB archive that already sits on the backup volume does not need a second
+// copy. The link is atomic and refuses an existing target like Put. It fails
+// when path is on another filesystem; callers then fall back to Put.
+func (s *LocalStore) Adopt(_ context.Context, key, path string, size int64) error {
+	if err := validateObjectKey(key); err != nil {
+		return err
+	}
+	info, err := os.Lstat(path)
+	if err != nil {
+		return fmt.Errorf("inspect adopted backup object: %w", err)
+	}
+	if !info.Mode().IsRegular() {
+		return errors.New("adopted backup object must be a regular file")
+	}
+	if info.Size() != size {
+		return fmt.Errorf("adopted backup object size mismatch: expected=%d actual=%d", size, info.Size())
+	}
+	target, err := s.objectPath(key, true)
+	if err != nil {
+		return err
+	}
+	if _, err := os.Lstat(target); err == nil {
+		return fmt.Errorf("local backup object %s already exists", filepath.Base(target))
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("inspect local backup object: %w", err)
+	}
+	if err := os.Link(path, target); err != nil {
+		return fmt.Errorf("link adopted backup object: %w", err)
+	}
+	directory, err := os.Open(filepath.Dir(target))
+	if err != nil {
+		return fmt.Errorf("open local backup object directory: %w", err)
+	}
+	defer directory.Close()
+	if err := directory.Sync(); err != nil {
+		return fmt.Errorf("sync local backup object directory: %w", err)
+	}
+	return nil
+}
+
 func (s *LocalStore) Get(ctx context.Context, key string) (StoredObject, error) {
 	if err := validateObjectKey(key); err != nil {
 		return StoredObject{}, err
