@@ -47,6 +47,7 @@ import { routeAbilityIntel, routeEnemyIntel } from "./routeIntel";
 import type { RouteStop } from "./rubyLifePoolsData";
 import styles from "./mythicRouteMap.module.css";
 import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
+import { copyText } from "@gildra/atlas-ui/clipboard";
 
 const MdtPullMap = dynamic(() => import("./MdtPullMap"), { ssr: false, loading: () => <p role="status">MDT…</p> });
 
@@ -687,7 +688,7 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
     url.searchParams.set("key", String(keyLevel));
     url.searchParams.set("pull", String(selectedId));
     try {
-      await navigator.clipboard.writeText(url.toString());
+      await copyText(url.toString());
       announce(copy.linkCopied);
     } catch {
       window.prompt(copy.copyLinkPrompt, url.toString());

@@ -12,6 +12,7 @@
     "./morph": "./src/morph.ts",
     "./format": "./src/format.ts",
     "./clipboard": "./src/clipboard.ts",
+    "./toast": "./src/toast.ts",
     "./*.module.css": "./src/*.module.css"
   },
   "peerDependencies": {

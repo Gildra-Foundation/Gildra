@@ -62,9 +62,9 @@ its paintings; deep imports use `@gildra/atlas-ui/<Component>`.
 | `AtlasCard` | Illustrated link card (raid, dungeon, boss); `layout="feature"` for the wide highlighted entry | `href`, `title`, `image`, `eyebrow`, `subtitle`, `description`, `meta`, `cta` (accessible name of the arrow), `artBadge`, `artCaption`, `accent`, `artRatio`. No numbering, no badge that repeats the section title, no caption that is the same on every card |
 | `AtlasPanel` | Framed surface; never nest panels | `tone: default \| raised \| highlight`, `padding` |
 | `AtlasMetaList` | Labelled facts grid (zone, group, reward) | `items: {label, value, icon}[]`, `columns` |
-| `AtlasBadge` | Short uppercase label | `tone: accent \| neutral \| positive \| negative \| info \| caution`, `icon` |
+| `AtlasBadge` | Short label on Valyro `Badge` (tones mapped to the atlas palette) | `tone: accent \| neutral \| positive \| negative \| info \| caution`, `icon` |
 | `AtlasButton` / `AtlasLinkButton` | Actions | `variant: primary \| secondary \| ghost`, `size`, `icon`, `iconAfter`, `external` |
-| `AtlasNotice` | Status line for drafts, fixtures, missing data | `title`, `tone: info \| caution`, `action` |
+| `AtlasNotice` | Status line for drafts, fixtures, missing data, on Valyro `Alert` (no live region; cautions are `role=note`) | `title`, `tone: info \| caution`, `action` |
 | `AtlasBreadcrumbs` | Trail (also built into the hero) | `items: {label, href}[]` |
 | `AtlasEmblem` | Seal with an icon | `shape: circle \| diamond \| square`, `size` |
 | `AtlasTable` | Data table on tokens: sticky header, numeric columns, row headers; `layout="cards"` turns each row into a labelled card on phones (short tables), `scroll` keeps a horizontal scroll | `columns: {key, header, label, cell, rowHeader, numeric}[]`, `rows`, `rowKey`, `label`, `caption`, `layout`, `maxWidth` |
@@ -72,9 +72,9 @@ its paintings; deep imports use `@gildra/atlas-ui/<Component>`.
 | `AtlasField` + `AtlasInput` / `AtlasSelect` / `AtlasCheckbox` / `AtlasRange` | Native form controls (work in plain GET forms and server components); `AtlasField` adds label, hint and error | `label`, `hint`, `error`, `htmlFor`; `AtlasInput icon` |
 | `AtlasTooltip` | Client: short hover/focus explanation tied by `aria-describedby` | `content`, `placement: top \| bottom`, `focusable` |
 | `AtlasEmpty` / `AtlasError` / `AtlasSkeleton` | Honest states: nothing yet (`role=status`), failure with a code (`role=alert`), loading with the torchlight sweep | `title`, children, `action`; `actions`, `code`; `variant: lines \| cards \| rows`, `count`, `label` |
-| `AtlasDialog` | Client modal on the native `<dialog>` (focus trap, Esc, focus return, backdrop click); `variant="sheet"` rises from the bottom on phones | `open`, `onClose`, `label`, `variant` |
-| `AtlasToast` | Client: short confirmation at the bottom of the screen (`role=status`), hides itself after `duration` | `message` (null hides), `onDone`, `tone: default \| negative`, `duration` |
-| `AtlasShareButton` | Client: "Share" for entity pages — the system share sheet on touch devices, otherwise copies the page link and confirms with `AtlasToast` | `title`, `locale` |
+| `AtlasDialog` | Client modal on Valyro `Dialog` (focus trap, scroll lock, Esc, focus return, backdrop click, no backdrop blur); a bottom sheet on phones, `variant="sheet"` up to 720px | `open`, `onClose`, `label`, `variant` |
+| `notify` (`@gildra/atlas-ui/toast`) | Short confirmation on the Valyro toast stack (bottom centre, `role=status`, swipe/F8); the toaster loads on the first call | `notify(message, { tone: default \| negative, locale })` |
+| `AtlasShareButton` | Client: "Share" for entity pages — the system share sheet on touch devices, otherwise copies the page link and confirms with `notify` | `title`, `locale` |
 | `AtlasArtGlow` | Client: living light on points of a scene painting (lava, crystals), placed with the cover-crop maths; AtlasFrame renders it from the scene registry `glow`; hidden under reduced or less motion | `imageSize`, `focus`, `points: {at, radius, color, tempo}[]` |
 | `AtlasPagination` | Paging of a list: quiet "previous", primary "next" / "show more", optional status; plain links (work without JS, the route runtime still animates) | `label`, `prev`, `next` (`href`, `label`, `attributes`), `status` |
 | `AtlasChart` | Horizontal bar chart in plain HTML (reads as a list, no library); bars scaled to the largest value, grow in on scroll; rows can link | `data: {key, label, value, display, href}[]`, `label`, `max`, `unit` |

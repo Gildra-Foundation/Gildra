@@ -8,6 +8,7 @@ import type { RouteStop } from "./rubyLifePoolsData";
 import { initialAssignments, partyMembers, positions, type PartyAssignment, type PartyMember, type PartyRole, type PartyTalent } from "./testPartyData";
 import { partyPositionLabel, partyRoleLabels, plainPartyText, testPartyCopy, type TestPartyCopy } from "./testPartyCopy";
 import styles from "./testPartyPanel.module.css";
+import { copyText } from "@gildra/atlas-ui/clipboard";
 
 type Locale = "en" | "ru";
 type TalentTreeFilter = "all" | "class" | "spec" | "hero";
@@ -106,7 +107,7 @@ export const TestPartyPanel = memo(function TestPartyPanel({
 
   const copyBuild = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(inspectedMember.buildCode);
+      await copyText(inspectedMember.buildCode);
       announce(copy.buildCopied);
     } catch {
       window.prompt(copy.copyBuildPrompt, inspectedMember.buildCode);

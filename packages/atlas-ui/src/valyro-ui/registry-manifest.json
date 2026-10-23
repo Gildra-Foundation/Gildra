@@ -1,6 +1,6 @@
 {
   "registry": "https://valyro.xyz/r",
-  "retrievedAt": "2026-10-22T22:57:03.582Z",
+  "retrievedAt": "2026-10-22T23:30:49.864Z",
   "components": [
     "stats-card",
     "badge",
@@ -19,7 +19,10 @@
     "spinner",
     "button-group",
     "tooltip",
-    "text-input"
+    "text-input",
+    "toast",
+    "dialog",
+    "alert"
   ],
   "proComponents": [
     "analytics-filter-bar"
@@ -618,6 +621,66 @@
       "path": "theme/createThemeCSS.ts",
       "registrySha256": "aa3f62f6ee457c8e5985280b5cff6e29062d0aebc53af46920ecab2aa5ec6422",
       "installedSha256": "aa3f62f6ee457c8e5985280b5cff6e29062d0aebc53af46920ecab2aa5ec6422",
+      "adapted": false
+    },
+    {
+      "path": "feedback/Alert.css",
+      "registrySha256": "9aada5cc6df7a4b36cfa20262f570a0ded63037357e5614f0da67665554d5b45",
+      "installedSha256": "9aada5cc6df7a4b36cfa20262f570a0ded63037357e5614f0da67665554d5b45",
+      "adapted": false
+    },
+    {
+      "path": "feedback/Alert.tsx",
+      "registrySha256": "914feb3294571422cd4b7357c4e8804c34889ddd5b2de4db5071d5ace23ea4d5",
+      "installedSha256": "914feb3294571422cd4b7357c4e8804c34889ddd5b2de4db5071d5ace23ea4d5",
+      "adapted": false
+    },
+    {
+      "path": "feedback/Dialog.css",
+      "registrySha256": "184ebf5d15148121b72d0d306732ec9024b2dc6700b8d3c4d187873ec3ef71e5",
+      "installedSha256": "184ebf5d15148121b72d0d306732ec9024b2dc6700b8d3c4d187873ec3ef71e5",
+      "adapted": false
+    },
+    {
+      "path": "feedback/Dialog.tsx",
+      "registrySha256": "b8a2a38fe8feab7e019f4da6c77723a733e83e62ebdc4cf184cb9cd466fda8b0",
+      "installedSha256": "b8a2a38fe8feab7e019f4da6c77723a733e83e62ebdc4cf184cb9cd466fda8b0",
+      "adapted": false
+    },
+    {
+      "path": "feedback/Toast.css",
+      "registrySha256": "040964dc950ded3d49ece0ea7258bb8ce559d65d5b062268843d90c62d3361af",
+      "installedSha256": "040964dc950ded3d49ece0ea7258bb8ce559d65d5b062268843d90c62d3361af",
+      "adapted": false
+    },
+    {
+      "path": "feedback/Toaster.tsx",
+      "registrySha256": "51f6bed95658c546eafc4aa7d8fc1999ad15dd8a228266deaee7880726da1633",
+      "installedSha256": "51f6bed95658c546eafc4aa7d8fc1999ad15dd8a228266deaee7880726da1633",
+      "adapted": false
+    },
+    {
+      "path": "feedback/gesture.ts",
+      "registrySha256": "dee463c2d14a3fdb15a8b636938772472f168b7c2f06dd351e7d560ece9cd0c2",
+      "installedSha256": "dee463c2d14a3fdb15a8b636938772472f168b7c2f06dd351e7d560ece9cd0c2",
+      "adapted": false
+    },
+    {
+      "path": "feedback/overlay-parts.tsx",
+      "registrySha256": "c9e781b53c8b0e5087dd1120ed5d14cb2f570ce9e92f94fc01d1b2377a3ef3ed",
+      "installedSha256": "c9e781b53c8b0e5087dd1120ed5d14cb2f570ce9e92f94fc01d1b2377a3ef3ed",
+      "adapted": false
+    },
+    {
+      "path": "feedback/toast-store.ts",
+      "registrySha256": "e3cebfa90cb39f7d43e6abddf4ecc7163624a3b4caf147ccd4ea15c8fe465467",
+      "installedSha256": "e3cebfa90cb39f7d43e6abddf4ecc7163624a3b4caf147ccd4ea15c8fe465467",
+      "adapted": false
+    },
+    {
+      "path": "feedback/useDialog.ts",
+      "registrySha256": "57cc9a1879927ef82fac7b0aa9a4b0216ac35f8fd299a9d95a0ee03abf5dc12b",
+      "installedSha256": "57cc9a1879927ef82fac7b0aa9a4b0216ac35f8fd299a9d95a0ee03abf5dc12b",
       "adapted": false
     }
   ],
