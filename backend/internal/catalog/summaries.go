@@ -216,6 +216,33 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			JOIN selected_categories selected ON selected.id=assignment.category_id
 			GROUP BY assignment.version_id
 			HAVING count(DISTINCT selected.root_path)=(SELECT count(*) FROM requested_paths)
+		), page AS MATERIALIZED (
+			-- Filter, rank and cut the page first: a search can match thousands
+			-- of entities, and the description, spell and icon columns below
+			-- (the icon lookups read the version payload) are only needed for
+			-- the page itself.
+			SELECT entity.id,COALESCE(search_match.rank,0) AS search_rank
+			FROM game_entities entity
+			JOIN game_products product ON product.id=entity.product_id
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
+			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
+			LEFT JOIN search_candidates search_match ON search_match.version_id=version.id
+			LEFT JOIN selected_versions selected ON selected.version_id=version.id
+			LEFT JOIN catalog_items item ON item.version_id=version.id
+			WHERE entity.deleted_at IS NULL AND product.slug=$1
+				` + publicCatalogDisplayNamePredicate("localized", "fallback") + `
+				` + publicCatalogUsabilityPredicate("entity", "version") + `
+				AND ($2='' OR entity.entity_type=$2)
+				AND (cardinality($7::text[])=0 OR selected.version_id IS NOT NULL)
+				AND ($8::int IS NULL OR item.item_level >= $8)
+				AND ($9::int IS NULL OR item.item_level <= $9)
+				AND ($10::int IS NULL OR item.required_level >= $10)
+				AND ($11::int IS NULL OR item.required_level <= $11)
+				AND ($13::int IS NULL OR item.item_class_id=$13)
+				AND ($5='' OR search_match.rank>0)
+				AND (($5='' AND entity.id>$3) OR ($5<>'' AND ($12::int IS NULL OR search_match.rank<$12 OR (search_match.rank=$12 AND entity.id>$3))))
+			ORDER BY ` + summaryOrderBy(query) + ` LIMIT $6
 		)
 		SELECT entity.id,product.slug,entity.entity_type,entity.external_id,
 			COALESCE(NULLIF(localized.slug,''),NULLIF(fallback.slug,''),entity.canonical_slug),$4::text,
@@ -227,14 +254,13 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 				NULLIF(version.payload #>> '{raidbots,icon}',''),NULLIF(version.payload #>> '{raidbots,spellIcon}','')),
 			CASE WHEN item.quality ~ '^[0-9]+$' THEN item.quality::int END,
 			item.item_level,version.build_id,entity.updated_at,
-			item.required_level,item.inventory_type,spell.school,spell.cast_time,spell.cooldown_ms,COALESCE(search_match.rank,0)
-		FROM game_entities entity
+			item.required_level,item.inventory_type,spell.school,spell.cast_time,spell.cooldown_ms,page.search_rank
+		FROM page
+		JOIN game_entities entity ON entity.id=page.id
 		JOIN game_products product ON product.id=entity.product_id
 		JOIN game_entity_versions version ON version.id=entity.published_version_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
-		LEFT JOIN search_candidates search_match ON search_match.version_id=version.id
-		LEFT JOIN selected_versions selected ON selected.version_id=version.id
 		LEFT JOIN catalog_items item ON item.version_id=version.id
 		LEFT JOIN catalog_spells spell ON spell.version_id=version.id
 		LEFT JOIN catalog_entity_icons source_icon ON source_icon.build_id=version.build_id
@@ -246,19 +272,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 				version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}') ~ '^[0-9]+$'
 			THEN COALESCE(version.payload #>> '{db2,InventoryIconFileID}',version.payload #>> '{db2,IconFileID}',
 				version.payload #>> '{db2,IconFileDataID}',version.payload #>> '{db2,SpellIconFileID}')::bigint END
-		WHERE entity.deleted_at IS NULL AND product.slug=$1
-			` + publicCatalogDisplayNamePredicate("localized", "fallback") + `
-			` + publicCatalogUsabilityPredicate("entity", "version") + `
-			AND ($2='' OR entity.entity_type=$2)
-			AND (cardinality($7::text[])=0 OR selected.version_id IS NOT NULL)
-			AND ($8::int IS NULL OR item.item_level >= $8)
-			AND ($9::int IS NULL OR item.item_level <= $9)
-			AND ($10::int IS NULL OR item.required_level >= $10)
-			AND ($11::int IS NULL OR item.required_level <= $11)
-			AND ($13::int IS NULL OR item.item_class_id=$13)
-			AND ($5='' OR search_match.rank>0)
-			AND (($5='' AND entity.id>$3) OR ($5<>'' AND ($12::int IS NULL OR search_match.rank<$12 OR (search_match.rank=$12 AND entity.id>$3))))
-		ORDER BY ` + summaryOrderBy(query) + ` LIMIT $6`
+		ORDER BY ` + summaryPageOrderBy(query)
 	queryArgs := []any{product, strings.TrimSpace(params.Type), cursorID, locale,
 		query, params.Limit + 1, filterPaths, params.MinItemLevel, params.MaxItemLevel,
 		params.MinRequiredLevel, params.MaxRequiredLevel, cursorRank, params.ItemClassID}
@@ -330,6 +344,14 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		nextCursor = encodeSummaryCursor(last.ID, last.SearchRank, strings.TrimSpace(params.Query) != "")
 	}
 	return SummaryPage{Entities: entities, NextCursor: nextCursor, HasMore: hasMore, Total: total}, nil
+}
+
+// summaryPageOrderBy repeats summaryOrderBy over the page CTE of the summary query.
+func summaryPageOrderBy(query string) string {
+	if query == "" {
+		return "entity.id"
+	}
+	return "page.search_rank DESC,entity.id"
 }
 
 func summaryOrderBy(query string) string {
