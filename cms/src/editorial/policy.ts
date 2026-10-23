@@ -6,9 +6,7 @@ import {
   type CollectionBeforeOperationHook,
   type CollectionConfig,
   type CollectionSlug,
-  Forbidden,
   type PayloadRequest,
-  ValidationError,
   type Where,
 } from "payload";
 
@@ -26,6 +24,7 @@ import {
   WRITE_ROLES,
 } from "../access/roles";
 import { queueRevalidation } from "../jobs/revalidateSite";
+import { denied, invalidField } from "./errors";
 
 /** Collections whose documents carry a `site` relationship (multi-tenant plugin). */
 export const SITE_SCOPED_COLLECTIONS = ["guides", "pages", "media", "categories", "tags", "site-settings"] as const;
@@ -199,10 +198,6 @@ export function collectLexicalRefs(value: unknown, path: string, out: Ref[] = []
 
 const LEXICAL_TARGETS = new Set(["media", "guides", "pages"]);
 
-function invalid(collection: string, path: string, message: string): ValidationError {
-  return new ValidationError({ collection, errors: [{ message, path }] });
-}
-
 /**
  * Every referenced document must belong to the same site. Runs for drafts and
  * autosave too (field validation is skipped there, hooks are not).
@@ -228,7 +223,7 @@ export async function assertSameSiteReferences(args: {
   for (const field of args.richTextFields) {
     for (const ref of collectLexicalRefs(data[field], field)) {
       if (!LEXICAL_TARGETS.has(ref.collection)) {
-        throw invalid(collection, field, `Rich text may not reference "${ref.collection}".`);
+        throw invalidField(req, collection, field, (t) => t.richTextTarget(ref.collection));
       }
       refs.push(ref);
     }
@@ -252,16 +247,16 @@ export async function assertSameSiteReferences(args: {
     const docs = new Map(found.docs.map((d) => [String(d.id), d as unknown as Record<string, unknown>]));
     for (const ref of list) {
       const doc = docs.get(String(ref.id));
-      if (!doc) throw invalid(collection, ref.path, `Referenced ${target} #${ref.id} does not exist.`);
+      if (!doc) throw invalidField(req, collection, ref.path, (t) => t.missing(target, ref.id));
       if (target === "admins") {
         // Documents loaded with find() carry no auth `collection`; mark them as staff explicitly.
         if (!hasSiteRole({ ...doc, collection: "admins" }, site, WRITE_ROLES)) {
-          throw invalid(collection, ref.path, "The author has no editorial role on this site.");
+          throw invalidField(req, collection, ref.path, (t) => t.noEditorRole);
         }
         continue;
       }
       if (!sameID(doc.site, site)) {
-        throw invalid(collection, ref.path, `Referenced ${target} #${ref.id} belongs to another site.`);
+        throw invalidField(req, collection, ref.path, (t) => t.otherSite(target, ref.id));
       }
     }
   }
@@ -280,10 +275,10 @@ export function enforceSiteIntegrity(policy: EditorialPolicy, richTextFields: st
     const incoming = data.site === undefined ? undefined : relationID(data.site);
 
     if (operation === "update" && before !== null && incoming !== undefined && !sameID(incoming, before)) {
-      throw new Forbidden(req.t);
+      throw denied(req, (t) => t.moveSite);
     }
     const site = incoming ?? before;
-    if (site === null || site === undefined) throw invalid(slug, "site", "A site is required.");
+    if (site === null || site === undefined) throw invalidField(req, slug, "site", (t) => t.siteRequired);
 
     // originalDoc can be the latest draft. Keep the live row's URL and status
     // before this write so publishing a renamed draft expires the old URL,
@@ -296,7 +291,7 @@ export function enforceSiteIntegrity(policy: EditorialPolicy, richTextFields: st
 
     const user = req.user;
     if (user) {
-      if (!asStaff(user) || !hasSiteRole(user, site, policy.writeRoles)) throw new Forbidden(req.t);
+      if (!asStaff(user) || !hasSiteRole(user, site, policy.writeRoles)) throw denied(req, (t) => t.noRole);
       const canPublish = hasSiteRole(user, site, policy.publishRoles);
 
       if (policy.authorField && !canPublish) {
@@ -304,8 +299,8 @@ export function enforceSiteIntegrity(policy: EditorialPolicy, richTextFields: st
         if (operation === "create") {
           data[field] = user.id;
         } else {
-          if (!sameID(originalDoc?.[field], user.id)) throw new Forbidden(req.t);
-          if (data[field] !== undefined && !sameID(data[field], user.id)) throw new Forbidden(req.t);
+          if (!sameID(originalDoc?.[field], user.id)) throw denied(req, (t) => t.notOwn);
+          if (data[field] !== undefined && !sameID(data[field], user.id)) throw denied(req, (t) => t.notOwn);
         }
       }
 
@@ -315,7 +310,7 @@ export function enforceSiteIntegrity(policy: EditorialPolicy, richTextFields: st
         const liveStatus = publishedBefore?._status;
         const resulting = (data._status as string | undefined) ?? (originalDoc?._status as string | undefined) ?? "draft";
         if (resulting === "published" || liveStatus === "published" || originalDoc?._status === "published") {
-          throw new Forbidden(req.t);
+          throw denied(req, (t) => t.publishDenied);
         }
       }
     }

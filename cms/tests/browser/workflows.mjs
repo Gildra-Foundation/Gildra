@@ -119,7 +119,7 @@ try {
   await workspace.getByRole('textbox', { name: 'Title or address', exact: true }).fill('Needle');
   await workspace.getByRole('link', { name: 'Needle published article', exact: true }).waitFor();
   assert.equal(await workspace.locator('tbody tr').count(), 1);
-  assert.match(await workspace.locator('tbody').innerText(), /Unpublished edits/);
+  assert.match(await workspace.locator('tbody').innerText(), /Changes not on the site/);
   assert.equal(await workspace.getByRole('link', { name: 'Live ↗' }).getAttribute('href'), 'https://gildra.net/wow/articles/workflow-published');
   ok('article pagination and search run on the server and preserve the real live link');
 
@@ -144,7 +144,7 @@ try {
   assert.match(await page.locator('.gd-article-panel__live').innerText(), /EN/);
   ok('copying visibly updates Lexical; edits autosave as a draft without publishing the RU translation');
 
-  await page.getByRole('button', { name: /^Publish changes$/i }).click();
+  await page.getByRole('button', { name: /^Publish (changes|RU and EN)$/i }).click();
   await poll(async () => (await document(fixture.articleID, 'ru', false)).title === 'Русская статья');
   assert.equal((await document(fixture.articleID, 'en', false)).title, 'Needle published article');
   await poll(async () => await page.locator('.gd-article-panel__live a').count() === 2);

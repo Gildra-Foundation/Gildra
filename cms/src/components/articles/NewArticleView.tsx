@@ -8,13 +8,13 @@ import { Workspace } from "../workspace/Workspace";
 import { NewArticlePanel } from "./NewArticlePanel";
 
 /**
- * /admin/articles/new — the first step of a new article. The document is
+ * /admin/new-article — the first step of a new article. The document is
  * created by the first input here, not by opening the page, so abandoning the
  * form leaves no empty draft behind.
  */
 export async function NewArticleView(view: AdminViewServerProps) {
   const { req } = view.initPageResult;
-  if (!canUseAdmin(req.user)) redirect("/admin/login?redirect=%2Fadmin%2Farticles%2Fnew");
+  if (!canUseAdmin(req.user)) redirect("/admin/login?redirect=%2Fadmin%2Fnew-article");
   const lang = adminLang(req.i18n.language);
   const raw = (view.searchParams as Record<string, string | string[] | undefined> | undefined)?.locale;
   const locale = raw === "en" || raw === "ru" ? raw : lang;
