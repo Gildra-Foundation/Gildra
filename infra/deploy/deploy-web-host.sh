@@ -69,7 +69,7 @@ say() { printf 'deploy-web-host[%s]: %s\n' "$label" "$*" >&2; }
 fail() { say "$*"; exit 1; }
 
 # Step timings, printed at the end whether the release succeeds or not.
-steps=() step_name= step_started=0 release_started=$SECONDS
+steps=() step_name= step_started=0 release_started=$SECONDS epoch=$(($(date +%s) - SECONDS))
 step() {
   step_end
   step_name=$1 step_started=$SECONDS
@@ -190,15 +190,24 @@ if [ -z "$image" ]; then
     fi
     build_cmd+=(--cgroup-parent "$build_slice")
   fi
+  slot=$build_dir/slot-acquired
+  rm -f "$slot"
   if [ -n "$heavy" ] && [ -x "$heavy" ]; then
     say "waiting for a heavy-command slot ($heavy)"
-    build_cmd=("$heavy" "${build_cmd[@]}")
+    # The marker splits the queue wait from the build in the timings.
+    # shellcheck disable=SC2016 # expanded by the inner shell
+    build_cmd=("$heavy" sh -c 'date +%s > "$0"; exec "$@"' "$slot" "${build_cmd[@]}")
   fi
   "${build_cmd[@]}" --progress="${GILDRA_BUILD_PROGRESS:-auto}" \
     --label "net.gildra.patch=$label" \
     --label "org.opencontainers.image.revision=$revision" \
     --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     -t "$image" "$build_dir/src"
+  if [ -s "$slot" ]; then
+    acquired=$(($(cat "$slot") - epoch))
+    steps+=("$(printf '%-28s %4ss' "queue wait" $((acquired - step_started)))")
+    step_started=$acquired
+  fi
 else
   revision=$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")
 fi

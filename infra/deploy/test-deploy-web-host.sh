@@ -158,7 +158,8 @@ grep -Eq '^  total +[0-9]+s$' "$test_directory/run.log"
 echo 'test: a healthy release switches only the WEB_* keys and keeps a rollback'
 
 # The build waits for a heavy-command slot and runs in the low-weight build slice.
-grep -qx 'env DOCKER_BUILDKIT=1' "$state/heavy.log"
+grep -qx 'sh -c' "$state/heavy.log"
+grep -Eq '^  queue wait +[0-9]+s$' "$test_directory/run.log"
 grep -qx 'set-property --runtime gildra-build.slice CPUWeight=50 IOWeight=50 MemoryHigh=8G' "$state/systemctl.log"
 grep -q -- '^build --cgroup-parent gildra-build.slice ' "$state/docker.log"
 reset_host
