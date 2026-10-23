@@ -4,16 +4,25 @@
   "private": true,
   "description": "The Gildra atlas kit: page frame, hero, sections, cards, tables, tabs, fields, dialogs and states on the --atlas-* tokens. Source-only TypeScript and CSS modules, compiled by the app (transpilePackages).",
   "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./*": "./src/*.tsx",
     "./placeholders": "./src/placeholders.ts",
     "./motionPreference": "./src/motionPreference.ts",
+    "./motionTier": "./src/motionTier.ts",
     "./morph": "./src/morph.ts",
     "./format": "./src/format.ts",
     "./clipboard": "./src/clipboard.ts",
+    "./toast": "./src/toast.ts",
+    "./valyroParts": "./src/valyroParts.ts",
     "./*.module.css": "./src/*.module.css"
   },
+  "sideEffects": [
+    "**/*.css"
+  ],
   "peerDependencies": {
     "clsx": "*",
     "lucide-react": "*",

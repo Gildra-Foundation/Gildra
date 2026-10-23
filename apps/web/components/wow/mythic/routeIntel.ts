@@ -1,4 +1,4 @@
-import type { RouteAbility, RouteEnemy, RouteStop } from "./rubyLifePoolsData";
+import type { RouteAbility, RouteEnemy, RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 import { targetLabel, type RouteLocale } from "./mythicRouteCopy";
 
 type EnemyRouteIntel = {

@@ -1,47 +1,33 @@
-.dialog {
+/* Valyro owns the layer (focus trap, scroll lock, Escape, enter/exit motion);
+   atlas supplies the panel. */
+.layer {
+  /* A plain veil: a blur under the dialog was recomputed for every frame of the
+     page's living layers and made typing in the dialog sluggish. */
+  --ui-overlay: rgba(3, 4, 5, .78);
+  --ui-overlay-blur: none;
+}
+
+.dialog:global(.ui-dialog) {
+  --ui-dialog-bg: var(--atlas-surface-raised);
   width: min(680px, calc(100vw - 2 * var(--atlas-gutter)));
   max-height: min(78vh, 720px);
-  margin: 12vh auto auto;
-  padding: 0;
-  overflow: hidden;
   color: var(--atlas-text);
   border: 1px solid var(--atlas-line);
+  border-radius: 0;
   background: var(--atlas-surface-raised);
   box-shadow: var(--atlas-shadow-panel), 0 0 60px var(--atlas-accent-glow);
   font-family: var(--atlas-font-ui);
 }
 
-.dialog::backdrop {
-  /* A plain veil: a blur under the dialog was recomputed for every frame of the
-     page's living layers and made typing in the dialog sluggish. */
-  background: rgba(3, 4, 5, .78);
-}
-
-.dialog[open] { animation: atlas-dialog-in var(--atlas-duration) var(--atlas-ease) both; }
-.dialog[open]::backdrop { animation: atlas-backdrop-in var(--atlas-duration) ease both; }
-
-.body { display: grid; max-height: inherit; overflow: hidden; }
-
-@keyframes atlas-dialog-in { from { opacity: 0; translate: 0 10px; scale: .98; } }
-@keyframes atlas-backdrop-in { from { opacity: 0; } }
+.dialog :global(.ui-dialog__body) { display: grid; padding: 0; overflow: hidden; }
 
 /* Phones: the sheet rises from the bottom edge. */
 @media (max-width: 720px) {
-  .dialog { margin-top: 8vh; }
-  .sheet {
+  .sheet:global(.ui-dialog) {
     width: 100vw;
     max-width: 100vw;
     max-height: 86vh;
-    margin: auto 0 0;
     border-width: 1px 0 0;
     padding-bottom: env(safe-area-inset-bottom);
   }
-  .sheet[open] { animation-name: atlas-sheet-in; }
-}
-
-@keyframes atlas-sheet-in { from { translate: 0 100%; } }
-
-@media (prefers-reduced-motion: reduce) {
-  .dialog[open],
-  .dialog[open]::backdrop { animation: none; }
 }

@@ -1,5 +1,6 @@
 import "server-only";
-import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
@@ -92,11 +93,59 @@ function titleSize(title: string) {
 
 /** The card as a JPEG: the painted scene compresses ~7× better than the PNG Satori renders. */
 export async function atlasOgImage(spec: AtlasOgSpec) {
-  const png = await (await renderPng(spec)).arrayBuffer();
-  const jpeg = await sharp(Buffer.from(png)).jpeg({ quality: 84, mozjpeg: true }).toBuffer();
+  const jpeg = buildCacheDir ? await cachedJpeg(spec) : await renderJpeg(spec);
   return new Response(new Uint8Array(jpeg), {
     headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800" },
   });
+}
+
+async function renderJpeg(spec: AtlasOgSpec) {
+  const png = await (await renderPng(spec)).arrayBuffer();
+  return sharp(Buffer.from(png)).jpeg({ quality: 84, mozjpeg: true }).toBuffer();
+}
+
+/**
+ * A card is a pure function of its spec, art, fonts and this renderer (two
+ * builds draw byte-identical cards), yet drawing one costs ~1.6 CPU-seconds
+ * (Satori blurs, mozjpeg): the 322 cards were ~80 % of `next build`. During the
+ * build each card is kept in .next/cache/og under a hash of all of that, so a
+ * rebuild draws only cards whose inputs changed (the Docker build keeps
+ * .next/cache in a cache mount). Bump the version to discard every card.
+ */
+const OG_CACHE_VERSION = 1;
+const buildCacheDir =
+  process.env.NEXT_PHASE === "phase-production-build" ? join(process.cwd(), ".next/cache/og") : null;
+
+// Build-time reads only: keep them out of the standalone trace.
+const fileHash = (path: string) => readFile(/* turbopackIgnore: true */ path).then((data) => createHash("sha256").update(data).digest("hex"));
+
+let rendererHash: Promise<string> | undefined;
+function renderer() {
+  rendererHash ??= Promise.all([
+    ...["/assets/og/fonts/alegreya-500.ttf", "/assets/og/fonts/inter-400.ttf", "/assets/og/fonts/inter-600.ttf"].map((font) => fileHash(publicFile(font))),
+    // Satori/resvg ship inside next and the encoders inside sharp: any dependency change redraws every card.
+    fileHash(join(process.cwd(), "../../package-lock.json")),
+  ]).then((files) =>
+    createHash("sha256")
+      .update(JSON.stringify({ OG_CACHE_VERSION, files, palette, embers, OG_SIZE, sharp: sharp.versions }))
+      .update([renderJpeg, renderPng, sceneDataUrl, iconDataUrl, titleSize].map(String).join("\n"))
+      .digest("hex"),
+  );
+  return rendererHash;
+}
+
+async function cachedJpeg(spec: AtlasOgSpec) {
+  const [code, art, emblem] = await Promise.all([renderer(), fileHash(publicFile(spec.art)), spec.emblem ? fileHash(publicFile(spec.emblem)) : null]);
+  const key = createHash("sha256").update(JSON.stringify({ code, art, emblem, spec })).digest("hex");
+  const file = join(buildCacheDir!, `${key}.jpg`);
+  const cached = await readFile(/* turbopackIgnore: true */ file).catch(() => null);
+  if (cached) return cached;
+  const jpeg = await renderJpeg(spec);
+  await mkdir(/* turbopackIgnore: true */ buildCacheDir!, { recursive: true });
+  const partial = `${file}.${process.pid}.tmp`;
+  await writeFile(/* turbopackIgnore: true */ partial, jpeg);
+  await rename(/* turbopackIgnore: true */ partial, file);
+  return jpeg;
 }
 
 async function renderPng(spec: AtlasOgSpec) {

@@ -10,7 +10,7 @@ const publishedIds = new Set(JSON.parse(await fs.readFile(path.join(root, "data/
 const manifest = JSON.parse(await fs.readFile(path.join(root, "data/wow/content-manifest.json"), "utf8"));
 const publicationProjection = JSON.parse(await fs.readFile(path.join(root, "data/wow/midnight-season-one-publication.json"), "utf8"));
 const manifestAbilityBySpellId = new Map(manifest.abilities.map((ability) => [ability.refs?.spellId, ability]));
-const routeDataSource = await fs.readFile(path.join(root, "components/wow/raid/midnightRaidData.ts"), "utf8");
+const routeDataSource = await fs.readFile(path.join(root, "lib/data/wow/raid/midnightRaidData.ts"), "utf8");
 const publicationSafeIds = new Set(manifest.abilities
   .filter((ability) => ability.season === "midnight-season-1"
     && ability.descriptionVariantStatus === "not_required_verified"

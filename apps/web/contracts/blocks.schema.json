@@ -234,21 +234,6 @@
         "additionalProperties": false
       }
     },
-    "wow.specBody": {
-      "container": false,
-      "props": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "slug"
-        ],
-        "additionalProperties": false
-      }
-    },
     "wow.tierWorkspace": {
       "container": false,
       "props": {

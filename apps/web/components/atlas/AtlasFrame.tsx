@@ -4,10 +4,12 @@ import { AtlasFrameShell } from "@gildra/atlas-ui";
 import { atlasScenes, type AtlasScene, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { GAMES } from "@/lib/games/registry";
 import { t } from "@/lib/i18n";
+import { GildraCrest } from "@/components/brand/GildraCrest";
+import styles from "./AtlasFrame.module.css";
 
 type ShellProps = ComponentProps<typeof AtlasFrameShell>;
 
-export type AtlasFrameProps = Omit<ShellProps, "footer" | "ember" | "glow"> & {
+export type AtlasFrameProps = Omit<ShellProps, "footer" | "ember" | "glow" | "horizon"> & {
   /** Section scene from lib/atlas/scenes.ts (art, crop, shade, tint, sparks, living light); explicit props override it. */
   scene?: AtlasSceneId;
   /** Slim legal line (Blizzard trademark notice, "What's new", privacy) under the content. */
@@ -31,9 +33,11 @@ export function AtlasFrame({ scene, art, artPosition, artShade, tint, footer = t
       artShade={artShade ?? preset.shade ?? "default"}
       tint={tint ?? preset.tint}
       ember={preset.ember}
+      horizon={art ? undefined : preset.horizon}
       // The scene's living light only belongs to the scene's own painting.
       glow={art ? undefined : preset.glow}
       footer={footer ? {
+        brand: <span className={styles.seal}><GildraCrest height={44} className={styles.crest} /><span>GILDRA</span></span>,
         legal: t(locale)(GAMES.wow.legal),
         links: <>
           <Link href={locale === "ru" ? "/ru/wow/whats-new" : "/wow/whats-new"} prefetch={false}>{t(locale)("What's new")}</Link>

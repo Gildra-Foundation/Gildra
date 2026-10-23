@@ -7,4 +7,4 @@ Local, optimized copies used by the Midnight Season 2 route planner. Downloaded 
 - Kings' Rest and Temple of Sethraliss: annotated Blizzard atlas captures from Raider.IO's published route guides.
 - Ruby Life Pools: existing project asset.
 
-The source pages and current dungeon guide links are exposed in each dungeon definition in `components/wow/mythic/dungeonRoutes.ts`.
+The source pages and current dungeon guide links are exposed in each dungeon definition in `lib/data/wow/mythic/dungeonRoutes.ts`.

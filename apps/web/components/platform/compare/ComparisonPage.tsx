@@ -12,11 +12,13 @@ import { catalogGames, isAvailableKind, type CatalogGameId, type ComparisonKind,
 import type { PlatformHomeData } from "@/lib/platform/home/types";
 import { ComparisonMetrics } from "./ComparisonMetrics";
 import styles from "./comparePage.module.css";
+import { copyText } from "@gildra/atlas-ui/clipboard";
+import { notify } from "@gildra/atlas-ui/toast";
 
 const copy = {
   en: {
     title: "Comparison Lab", subtitle: "Compare database items inside one game catalog.", game: "Game",
-    category: "Category", search: "Find an item…", reset: "Reset", share: "Copy link", copied: "Copied",
+    category: "Category", search: "Find an item…", reset: "Reset", share: "Copy link", copied: "Copied", copyFailed: "Could not copy the link",
     scope: "Single-game comparison", scopeHint: "Only items from the selected game and category can enter this comparison.",
     available: "Database items", loading: "Loading catalog…", unavailable: "The database is temporarily unavailable.",
     empty: "No matching records", add: "Add to comparison", added: "Added", max: "Three items selected",
@@ -25,7 +27,7 @@ const copy = {
   },
   ru: {
     title: "Лаборатория сравнения", subtitle: "Сравнивайте записи базы только внутри одной игры.", game: "Игра",
-    category: "Категория", search: "Найти предмет…", reset: "Сбросить", share: "Скопировать ссылку", copied: "Скопировано",
+    category: "Категория", search: "Найти предмет…", reset: "Сбросить", share: "Скопировать ссылку", copied: "Скопировано", copyFailed: "Не удалось скопировать ссылку",
     scope: "Сравнение внутри одной игры", scopeHint: "В сравнение попадут только предметы выбранной игры и категории.",
     available: "Предметы из базы", loading: "Загружаем каталог…", unavailable: "База временно недоступна.",
     empty: "Совпадений в базе нет", add: "Добавить к сравнению", added: "Добавлено", max: "Выбрано три предмета",
@@ -142,7 +144,12 @@ export function ComparisonPage({ lang, home, initialGame = "wow", initialKind = 
     const url = new URL(window.location.href);
     url.searchParams.set("game", gameId);
     url.searchParams.set("kind", kind);
-    await navigator.clipboard?.writeText(url.toString());
+    try {
+      await copyText(url.toString());
+    } catch {
+      notify(t.copyFailed, { tone: "negative", locale: lang });
+      return;
+    }
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
   }

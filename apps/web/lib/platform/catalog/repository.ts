@@ -1,5 +1,5 @@
 import { catalogLocaleView } from "@/lib/catalogLocale";
-import { entityTypeLabel } from "@/components/database/databaseCopy";
+import { entityTypeLabel } from "./entityTypeLabel";
 import "server-only";
 import { getCatalogPage } from "@/lib/api/client";
 import type { ApiLocale } from "@/lib/games/registry";
@@ -11,7 +11,7 @@ import {
   type PlatformCatalogItem,
   type SearchKind,
 } from "./types";
-import { apiInternalUrl } from "@/lib/env";
+import { internalApiJson } from "@/lib/api/internal";
 
 type RemotePage<T> = { data: T[]; pagination?: { hasMore?: boolean; nextCursor?: string } };
 type GenshinWeapon = {
@@ -36,23 +36,17 @@ type LeagueChampion = {
   assets?: { icon?: string };
 };
 
-const apiURL = () => apiInternalUrl();
 // Unfiltered catalog text search ranks every locale and alias and takes
 // 6–20 s on production (2026-10-12); a 3 s cut-off showed "temporarily
 // unavailable" for most queries. Stopgap until the API query is indexed.
 const catalogLookupTimeoutMs = 10_000;
 
-async function request<T>(path: string): Promise<T> {
+function request<T>(path: string): Promise<T> {
   const query = new URLSearchParams(path.split("?", 2)[1] ?? "");
   const cacheOptions = query.has("q") && query.get("q") === ""
     ? { cache: "force-cache" as const, next: { revalidate: 60 } }
     : { cache: "no-store" as const };
-  const response = await fetch(`${apiURL()}${path}`, {
-    ...cacheOptions,
-    signal: AbortSignal.timeout(catalogLookupTimeoutMs),
-  });
-  if (!response.ok) throw new Error(`catalog request failed (${response.status})`);
-  return await response.json() as T;
+  return internalApiJson<T>(path, { label: "catalog", timeoutMs: catalogLookupTimeoutMs, ...cacheOptions });
 }
 
 function compactText(value: string | undefined, fallback: string) {

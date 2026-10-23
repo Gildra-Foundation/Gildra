@@ -1,0 +1,10 @@
+/* atlas:strict — Valyro owns the toast stack, timers, swipe and F8; atlas supplies the surface. */
+.toaster {
+  --ui-toast-bg: var(--atlas-surface-raised);
+  --ui-toast-fg: var(--atlas-text-strong);
+  --ui-toast-radius: var(--atlas-radius);
+  font-family: var(--atlas-font-ui);
+}
+
+.toaster :global(.ui-toast) { border-left: 3px solid var(--atlas-accent); }
+.toaster :global(.ui-toast[data-type="error"]) { border-left-color: var(--atlas-negative); }

@@ -1,7 +1,6 @@
 import path from "node:path";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
-import createNextIntlPlugin from "next-intl/plugin";
 
 const monorepoRoot = path.join(process.cwd(), "../..");
 
@@ -78,7 +77,9 @@ const nextConfig: NextConfig = {
     // along in the layout chunk of every inner page; −30…100 KB CSS per route
     // for the same 5–9 requests (measured 2026-10-11).
     // Bound image prerendering so builds do not exhaust memory on the shared host.
-    cpus: 2,
+    // A prerender worker peaks around 0.4 GB; the Docker build raises this to 4
+    // (GILDRA_BUILD_CPUS in the Dockerfile).
+    cpus: Number(process.env.GILDRA_BUILD_CPUS) || 2,
     staticGenerationMaxConcurrency: 2,
     cssChunking: { type: "graph", requestCost: 6000 },
     // Two root layouts (app/(site), app/ru) for a server-side <html lang>: the
@@ -95,6 +96,9 @@ const nextConfig: NextConfig = {
     root: monorepoRoot,
   },
   poweredByHeader: false,
+  // The Docker image checks types in a parallel stage (Dockerfile, typecheck),
+  // which gates the image; next build then skips its own, serial pass.
+  typescript: { ignoreBuildErrors: process.env.GILDRA_TYPECHECK_STAGE === "1" },
   async headers() {
     const security = [
       { key: "Strict-Transport-Security", value: "max-age=31536000" },
@@ -150,9 +154,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
-
-export default withSentryConfig(withNextIntl(nextConfig), {
+export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,

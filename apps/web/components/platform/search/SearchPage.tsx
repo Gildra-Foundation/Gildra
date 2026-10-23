@@ -4,7 +4,7 @@ import { Search, X } from "lucide-react";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
-import { entityTypeLabel } from "@/components/database/databaseCopy";
+import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
 import { SearchShortcut } from "./SearchShortcut";
 import { SearchRouteForm } from "./SearchRouteForm";
 import { searchCopy } from "./searchCopy";

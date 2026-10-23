@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasSection } from "@/components/atlas";
 import { DungeonCardGrid } from "./DungeonCardGrid";
-import { dungeonSlugs } from "./dungeonRoutes";
+import { dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { trail } from "@/lib/routes/registry";
 
 const copy = {

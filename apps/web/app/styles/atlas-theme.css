@@ -29,6 +29,12 @@
   --atlas-glass-raised: color-mix(in srgb, var(--atlas-surface-raised) 65%, transparent);
   /* Fine grain of worn vellum on every glass surface: a static 160 px tile, painted once. */
   --atlas-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 .075 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  /* Ornament masks (alpha only; paint them with a background in the accent):
+     the seal of runes around the Gildra diamond (foot of every page, the route
+     veil) and a vertical strip of rune marks (the edge of the route veil).
+     Files, not data URIs: fetched only when a layer that uses them is shown. */
+  --atlas-seal: url("/brand/gildra-seal.svg");
+  --atlas-rune-strip: url("/brand/gildra-rune-strip.svg");
   --atlas-glass-sheen: linear-gradient(135deg, color-mix(in srgb, var(--atlas-text-strong) 7%, transparent), transparent 55%), var(--atlas-grain);
   /* Gilded corner brackets of a framed picture (cards, the bar's portals): four L-shaped
      strokes drawn as background layers in the scope's accent; fade them with opacity. */

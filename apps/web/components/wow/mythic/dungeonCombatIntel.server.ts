@@ -1,7 +1,7 @@
 import "server-only";
 import { getMythicSourceReview } from "@/lib/data/wow/mythicReviews.server";
 
-import type { DungeonRoute } from "./dungeonRoutes";
+import type { DungeonRoute } from "@/lib/data/wow/mythic/dungeonRoutes";
 import type { DungeonCombatIntel } from "./dungeonCombatIntel.types";
 import { abilityIntel, abilitySource, enemyIntel } from "./rubyLifePoolsIntel";
 import { enemyMedia, resolveAbilityMedia } from "./rubyLifePoolsMedia";

@@ -8,7 +8,7 @@ import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph, TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
 import { TooltipBody, tooltipClassName } from "@/components/database/TooltipContent";
-import { entityTypeLabel } from "@/components/database/databaseCopy";
+import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
 import { entityDetailCopy, mediaKindLabels, qualityCheckCopy, relationAttributeLabels, relationLabels, rewardTypeLabels, type EntityDetailCopy } from "@/components/database/entityDetailCopy";
 import type { CatalogEntityComparison, CatalogEntityQuality, CatalogEntityType, CatalogEntityVersion, CatalogRelationship, GameEntity } from "@/lib/api/client";
 import { formatQuestText } from "@/lib/gameText";

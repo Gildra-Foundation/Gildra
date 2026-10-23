@@ -1,5 +1,6 @@
 import type { AtlasSceneId } from "@/lib/atlas/scenes";
 import { registryCopy } from "./registryCopy";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
 /**
  * One registry of the site's sections (roadmap items 24, 73): path, parent and
@@ -38,7 +39,6 @@ export const routeSections = {
 } as const satisfies Record<string, RouteSection>;
 
 export type SectionId = keyof typeof routeSections;
-type Locale = "en" | "ru";
 
 /** The section's URL in a language. */
 export function sectionHref(id: SectionId, locale: Locale) {

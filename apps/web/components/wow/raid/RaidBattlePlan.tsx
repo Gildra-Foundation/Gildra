@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import { Flag, Swords } from "lucide-react";
 import { AtlasDisclosure } from "@/components/atlas";
-import type { RaidTactic, TacticalPhase } from "./midnightRaidTactics";
+import type { RaidTactic, TacticalPhase } from "@/lib/data/wow/raid/midnightRaidTactics";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import styles from "./raidGuide.module.css";
 

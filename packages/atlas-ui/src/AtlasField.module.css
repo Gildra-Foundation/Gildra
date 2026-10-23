@@ -61,12 +61,6 @@
   pointer-events: none;
 }
 
-.check { display: inline-flex; align-items: center; gap: 10px; min-height: var(--atlas-control-height); color: var(--atlas-text); font-size: var(--atlas-text-small); cursor: pointer; }
-.checkInput { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.box { display: grid; flex: none; width: 18px; height: 18px; place-items: center; border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); }
-.checkInput:checked + .box { border-color: var(--atlas-accent-strong); background: var(--atlas-accent); box-shadow: 0 0 10px var(--atlas-accent-glow); }
-.checkInput:checked + .box::after { width: 5px; height: 9px; content: ""; border-right: 2px solid var(--atlas-accent-ink); border-bottom: 2px solid var(--atlas-accent-ink); rotate: 45deg; translate: 0 -1px; }
-.checkInput:focus-visible + .box { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
 .range { width: 100%; min-height: var(--atlas-control-height); accent-color: var(--atlas-accent); cursor: pointer; }
 

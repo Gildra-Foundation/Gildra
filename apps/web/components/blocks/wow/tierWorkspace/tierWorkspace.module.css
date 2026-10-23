@@ -637,3 +637,7 @@
   .search,
   .chip { min-height: 44px; }
 }
+
+/* Mythic+ tier board below the table; the placeholder keeps its room until the board loads. */
+.board { margin-top: var(--atlas-space-7); }
+.boardPlaceholder { min-height: 520px; }

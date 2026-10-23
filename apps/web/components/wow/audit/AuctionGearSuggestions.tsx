@@ -6,16 +6,8 @@ import { auctionGearVariantSelectionKey } from "@/lib/wow/auctionGearExclusions"
 import type { AuctionGearSearchItem } from "@/lib/wow/auctionGearTypes";
 import { GearPlannerItem } from "./GearPlannerItem";
 import styles from "./auctionGearOptimizer.module.css";
+import { auctionFormats, formatGold } from "./auctionFormat";
 
-// Formatting is shared across slots and progress renders for each locale.
-const formats = Object.fromEntries((["ru", "en"] as const).map(locale => {
-  const tag = locale === "ru" ? "ru-RU" : "en-US";
-  return [locale, {
-    numeric: new Intl.NumberFormat(tag, { maximumFractionDigits: 2 }),
-    signed: new Intl.NumberFormat(tag, { maximumFractionDigits: 2, signDisplay: "exceptZero" }),
-    gold: new Intl.NumberFormat(tag, { maximumFractionDigits: 4 }),
-  }];
-}));
 
 type Props = {
   groups: AuctionGearRecommendationGroup[];
@@ -38,8 +30,8 @@ function SlotSuggestion({ group, locale, excluded, excludedVariantKeys, running,
   const alternativesId = useId();
   const ru = locale === "ru";
   const t = (r: string, e: string) => ru ? r : e;
-  const { numeric, signed, gold } = formats[locale];
-  const money = (copper: number) => `${gold.format(copper / 10000)} ${t("зол.", "gold")}`;
+  const { numeric, signed } = auctionFormats[locale];
+  const money = (copper: number) => formatGold(copper, locale);
   const row = (item: AuctionGearSearchItem, best: boolean) => <div className={styles.suggestion} data-auction-option={item.optionId} data-auction-evaluation={item.evaluation} data-best-value={best || undefined}>
     <div className={styles.suggestionItem}><GearPlannerItem item={item} locale={locale} /></div>
     <div className={styles.suggestionMetrics}>

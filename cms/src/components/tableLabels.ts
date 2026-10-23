@@ -10,6 +10,7 @@ export function tableLabels(lang: AdminLang): DataTableLabels {
     rows: (n) => `Строк: ${n}`, page: (p, total) => `Страница ${p} из ${total}`,
     previousPage: "Предыдущая страница", nextPage: "Следующая страница",
     empty: "Нет данных", noResults: "Ничего не найдено", noResultsDescription: (query) => `Нет строк по запросу «${query}».`, yes: "Да", no: "Нет",
+    sorted: (column, direction) => `${column}: ${direction === "asc" ? "по возрастанию" : direction === "desc" ? "по убыванию" : "без сортировки"}`,
   };
   return {
     search: (name) => `Search ${name ?? "table"}`, searchPlaceholder: "Search table…",
@@ -18,5 +19,6 @@ export function tableLabels(lang: AdminLang): DataTableLabels {
     rows: (n) => `${n} rows`, page: (p, total) => `Page ${p} of ${total}`,
     previousPage: "Previous page", nextPage: "Next page", empty: "No data", noResults: "No results",
     noResultsDescription: (query) => `No rows match “${query}”.`, yes: "Yes", no: "No",
+    sorted: (column, direction) => `${column}, ${direction === "asc" ? "sorted ascending" : direction === "desc" ? "sorted descending" : "not sorted"}`,
   };
 }

@@ -3,10 +3,9 @@ import type { Lang } from "@/lib/i18n";
 import { fallbackPlatformHome } from "./fallback";
 import { upgradePlatformHomeMedia } from "./media";
 import type { PlatformHomeData } from "./types";
-import { apiInternalUrl } from "@/lib/env";
+import { internalApiJson } from "@/lib/api/internal";
 import { runtimeFlags } from "@/lib/flags";
 
-const apiURL = () => apiInternalUrl();
 
 function isPlatformHomeData(value: unknown): value is PlatformHomeData {
   if (!value || typeof value !== "object") return false;
@@ -38,12 +37,7 @@ export async function getPlatformHomeData(lang: Lang): Promise<PlatformHomeData>
   if (!runtimeFlags().platformHomeApi) return upgradePlatformHomeMedia(fallbackPlatformHome(lang));
   const locale = lang === "ru" ? "ru_RU" : "en_US";
   try {
-    const response = await fetch(`${apiURL()}/v1/platform/home?locale=${locale}`, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(3_000),
-    });
-    if (!response.ok) throw new Error(`platform home request failed (${response.status})`);
-    const payload: unknown = await response.json();
+    const payload = await internalApiJson<unknown>(`/v1/platform/home?locale=${locale}`, { label: "platform home", timeoutMs: 3_000, cache: "no-store" });
     if (!isPlatformHomeData(payload)) throw new Error("platform home response has an invalid shape");
     return upgradePlatformHomeMedia(payload);
   } catch (error) {

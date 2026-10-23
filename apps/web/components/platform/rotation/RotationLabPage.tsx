@@ -10,6 +10,8 @@ import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
 import type { RotationAbility, RotationAplRule, RotationPreset, RotationScenario, RotationSimulationResult, SavedRotationCombo } from "@/lib/platform/rotation/types";
 import { priorityToAplRules } from "@/lib/platform/rotation/apl";
 import { localizeRotationResult, mergeRotationAbility, rotationComboName } from "@/lib/platform/rotation/locale";
+import { loadWowSourceNames } from "@/lib/wow/loadWowSourceNames";
+import type { WowNameTable } from "@/lib/wow/wowNameTable";
 import { gameAbilityName } from "@/lib/platform/rotation/abilityNames";
 import { AbilityIcon, hasAbilityArt } from "./AbilityIcon";
 // Static, not dynamic(): the build form is the first screen of the lab, and a
@@ -128,6 +130,14 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
   const [compactAnalysis, setCompactAnalysis] = useState(false);
   const [trainingActive, setTrainingActive] = useState(false);
   const [selectedCombo, setSelectedCombo] = useState<SavedRotationCombo | null>(null);
+  // Results arrive from the API; Russian pages fetch the source names for them after hydration.
+  const [sourceNames, setSourceNames] = useState<Pick<WowNameTable, "source">>();
+  useEffect(() => {
+    if (lang !== "ru") return;
+    let active = true;
+    loadWowSourceNames().then((names) => { if (active) setSourceNames(names); }, () => undefined);
+    return () => { active = false; };
+  }, [lang]);
   const theme = getTalentSpecTheme(preset.slug);
   const connectedEmbed = embedded && dataMode === "battle-net";
   useEffect(() => {
@@ -169,7 +179,7 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
     return [...catalog.values()];
   }, [preset.abilities, preset.character.iconUrl, result?.abilities, selectedCombo?.abilities, spellbookAbilities]);
   const byId = useMemo(() => new Map(displayAbilities.map((ability) => [ability.id, ability])), [displayAbilities]);
-  const displayResult = useMemo(() => result ? localizeRotationResult(result, displayAbilities, lang, preset.gameLabels) : null, [displayAbilities, lang, preset.gameLabels, result]);
+  const displayResult = useMemo(() => result ? localizeRotationResult(result, displayAbilities, lang, preset.gameLabels, sourceNames) : null, [displayAbilities, lang, preset.gameLabels, result, sourceNames]);
   const selectedComboName = selectedCombo ? rotationComboName(selectedCombo, lang) : undefined;
   const currentConfig = useMemo<SimulationConfig>(() => ({ scenario, fightLength, targets, rules, aplRules, talentLoadout: activeTalentLoadout || undefined }), [activeTalentLoadout, aplRules, fightLength, rules, scenario, targets]);
   const isDirty = Boolean(result && !configsMatch(lastRunConfig, currentConfig));
