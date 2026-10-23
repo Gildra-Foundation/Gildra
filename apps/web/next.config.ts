@@ -1,6 +1,7 @@
 import path from "node:path";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
+import { CMS_IMAGE_ORIGINS, CMS_IMAGE_PATH } from "./lib/cms/images";
 
 const monorepoRoot = path.join(process.cwd(), "../..");
 
@@ -69,6 +70,8 @@ const nextConfig: NextConfig = {
     // Least-recently-used variants are evicted past this size, so the image
     // cache can never fill /app/.next/cache (a 128 MB tmpfs in production).
     maximumDiskCacheSize: 96 * 1024 * 1024,
+    // Article covers from the CMS upload path only (lib/cms/images.ts).
+    remotePatterns: CMS_IMAGE_ORIGINS.map((origin) => new URL(`${origin}${CMS_IMAGE_PATH}**`)),
   },
   experimental: {
     // Group CSS by what each route imports instead of merging every page's

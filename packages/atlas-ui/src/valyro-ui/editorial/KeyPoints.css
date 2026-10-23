@@ -1,0 +1,86 @@
+.ui-key-points {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  margin: 0;
+  padding: var(--ui-space-5);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-accent-soft);
+  color: var(--ui-fg);
+  text-align: start;
+  overflow-wrap: break-word;
+}
+
+.ui-key-points[data-variant='rule'] {
+  padding-block: var(--ui-space-1);
+  padding-inline: var(--ui-space-5) 0;
+  border-inline-start: var(--ui-editorial-rule-width, 3px) solid var(--ui-primary);
+  border-radius: 0;
+  background: none;
+}
+
+.ui-key-points__title {
+  margin: 0;
+  color: var(--ui-action-fg);
+  /* Set in the article's display face, like the other editorial headings. */
+  font-family: var(--ui-font-display, inherit);
+  font-size: var(--ui-text-xs);
+  font-weight: var(--ui-weight-bold);
+  letter-spacing: var(--ui-label-tracking, 0.08em);
+  text-transform: var(--ui-label-transform, uppercase);
+}
+
+.ui-key-points__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ui-key-point;
+}
+
+.ui-key-points__item {
+  position: relative;
+  padding-inline-start: var(--ui-space-6);
+  font-size: var(--ui-text-md);
+  line-height: 1.5;
+}
+
+/* Bullets: a small square in the title's colour; numbers: tabular figures in the same column. */
+.ui-key-points__item::before {
+  content: '';
+  position: absolute;
+  top: 0.6em;
+  inset-inline-start: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--ui-action-fg);
+}
+
+.ui-key-points__list[data-numbered] .ui-key-points__item {
+  counter-increment: ui-key-point;
+}
+
+.ui-key-points__list[data-numbered] .ui-key-points__item::before {
+  content: counter(ui-key-point);
+  top: 0;
+  inset-inline-start: 0;
+  width: auto;
+  height: auto;
+  background: none;
+  color: var(--ui-action-fg);
+  font-weight: var(--ui-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (forced-colors: active) {
+  .ui-key-points {
+    border: 1px solid CanvasText;
+  }
+
+  .ui-key-points__item::before {
+    background: CanvasText;
+  }
+}
