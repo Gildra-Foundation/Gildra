@@ -12,9 +12,10 @@
 .enemies b { color: var(--atlas-accent-strong); font-variant-numeric: tabular-nums; }
 .enemies small, .muted, .mechanics span { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
 .mechanics li + li { margin-top: var(--atlas-space-3); }
-.mechanics li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); column-gap: var(--atlas-space-3); }
-.mechanics b, .mechanics span { grid-column: 1; }
-.mechanics p { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--atlas-accent-strong); }
+.mechanics li { display: flex; flex-direction: column; gap: var(--atlas-space-1); padding: var(--atlas-space-3); background: var(--atlas-surface-raised); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); }
+.mechanics b, .mechanics span { display: block; }
+.mechanics .action { color: var(--atlas-accent-strong); font-size: var(--atlas-text-meta); }
+.mechanics .response { color: var(--atlas-text); }
 .roles { margin: 0; }
 .roles > div + div { margin-top: var(--atlas-space-3); }
 .roles dt { color: var(--atlas-accent-strong); font-weight: 600; }
@@ -34,3 +35,12 @@
 .dialogBody { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--atlas-space-4); }
 .dialogBody:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -3px; }
 @media (max-width: 720px) { .dialogContent { max-height: 82dvh; } }
+
+.enemyIdentity { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.portrait, .portraitFallback { width: 48px; height: 48px; flex-shrink: 0; border-radius: var(--atlas-radius); border: 1px solid var(--atlas-line); background: var(--atlas-surface-raised); object-fit: contain; }
+.portraitFallback { display: grid; place-items: center; color: var(--atlas-text-muted); }
+.entitySource { display: block; width: fit-content; font-size: var(--atlas-text-meta); }
+.eventNote { flex-basis: 100%; color: var(--atlas-text-muted); }
+.abilityIdentity { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.spellIcon { flex-shrink: 0; border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius); }
+.abilitySources { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3); font-size: var(--atlas-text-meta); }
