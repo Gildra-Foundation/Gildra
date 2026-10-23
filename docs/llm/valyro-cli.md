@@ -112,3 +112,7 @@ to add new ones; Pro items it installs are listed in the manifest's `proComponen
 The scripts need Node 22 with `npm`/`npx` on `PATH` (CI and the Dockerfiles use
 22.23.2). On the shared server `/opt/gildra` is not readable for every user; use a
 personal install such as `~/.local/node22` linked into `~/.local/bin`.
+
+On the shared server, run heavy commands (build, typecheck, lint, full tests, CMS build,
+Playwright screenshots) through `/home/zulut/bin/gildra-heavy <command>` — at most two at a
+time across all sessions, at low priority — and stop dev servers right after use.
