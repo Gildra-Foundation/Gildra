@@ -19,14 +19,8 @@
   --ph-bg: #080706;
   --ph-surface: #12100c;
 }
-/* Page hand-over (RouteTransitionRuntime): the click navigates at once. If the
-   next page takes a moment (120 ms), the old one dims in place — opacity only,
-   so nothing is re-rastered — and the new one settles in with a short fade. */
-.frame { transition: opacity 160ms ease-out; }
-.frame[data-route-state="leaving"] {
-  opacity: .55;
-  transition-delay: 120ms;
-}
+/* Page hand-over (RouteTransitionRuntime): the click navigates at once and the
+   old page stays still until the new one fades in (160 ms, opacity only). */
 /* A thin line over the top bar while the next page is on its way: it appears
    after 150 ms, runs towards 85 % and is gone when the page is in. */
 .progress {
@@ -48,8 +42,6 @@
   100% { opacity: 1; transform: scaleX(.85); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .frame,
-  .frame[data-route-state="leaving"] { transition: none; opacity: 1; }
   .system:is([data-route-state="leaving"], [data-route-state="loading"]) .progress {
     animation: none;
     opacity: 1;
@@ -63,4 +55,3 @@
   --route-glow: rgba(var(--site-accent-rgb), .22);
   background: var(--site-bg);
 }
-html:global([data-motion="reduced"]) .frame[data-route-state="leaving"] { opacity: 1; transition: none; }

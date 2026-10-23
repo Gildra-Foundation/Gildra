@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { preconnect } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
-import { isBookPagePath, isCharacterAuthRedirect, navigationDirection, routeTransitionKind } from "./routeTransitionPolicy";
+import { isBookPagePath, isCharacterAuthRedirect, routeTransitionKind } from "./routeTransitionPolicy";
 import { RouteThemeController } from "./RouteThemeController";
 import styles from "./routeTransition.module.css";
 import { lessMotion } from "@/lib/client/motionPreference";
@@ -11,17 +11,14 @@ import { lessMotion } from "@/lib/client/motionPreference";
 /**
  * Persistent navigation shell and the single owner of page hand-overs
  * (routeTransitionKind). A click navigates at once — nothing waits for an
- * animation. While the next page is on its way a thin line runs over the top bar
- * and the old page dims (only if it takes a moment); the new page then settles
- * in with a short fade and a few pixels of slide. The top bar never moves: it
- * lives outside this frame. Opacity and transform only, one layer, ~0.22 s.
+ * animation. While the next page is on its way a thin line runs over the top bar;
+ * the old page stays as it is. The new page then fades in briefly (opacity only:
+ * no slide, so the page is never re-rastered as it moves). The top bar never
+ * moves: it lives outside this frame.
  */
 type RouteState = "idle" | "leaving" | "loading";
-type Direction = ReturnType<typeof navigationDirection>;
 
-const ENTER: KeyframeAnimationOptions = { duration: 220, easing: "cubic-bezier(.2, .7, .2, 1)" };
-/** Deeper slides in from the right, back/up from the left, siblings rise a little. */
-const ENTER_FROM: Record<Direction, string> = { deeper: "translate3d(12px, 0, 0)", up: "translate3d(-12px, 0, 0)", across: "translate3d(0, 8px, 0)" };
+const ENTER: KeyframeAnimationOptions = { duration: 160, easing: "ease-out" };
 /** Give up on a navigation that never commits (aborted, offline). */
 const WATCHDOG_MS = 12000;
 // In development, prefetching a route can make Next compile it before the
@@ -66,7 +63,6 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const router = useRouter();
   const frameRef = useRef<HTMLDivElement>(null);
   const committedPath = useRef(pathname);
-  const poppedHistory = useRef(false);
   const expectedPath = useRef(pathname);
   const quietPath = useRef<string | null>(null);
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -78,24 +74,20 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   }, []);
 
   /** The new page is in place: let it settle in (unless the reader asked for less motion). */
-  const enter = useCallback((direction: Direction) => {
+  const enter = useCallback(() => {
     clearTimeout(watchdog.current);
     setState("idle");
     const frame = frameRef.current;
     if (!frame) return;
     frame.getAnimations().forEach((animation) => animation.cancel());
     if (lessMotion()) return;
-    frame.animate([
-      { opacity: .25, transform: ENTER_FROM[direction] },
-      { opacity: 1, transform: "none" },
-    ], ENTER);
+    frame.animate([{ opacity: .6 }, { opacity: 1 }], ENTER);
   }, []);
 
   /** A route with loading.tsx first commits its skeleton; wait for the real page. */
-  const pendingDirection = useRef<Direction>("across");
   const enterWhenLoaded = useCallback(() => {
     if (frameRef.current?.querySelector("[data-book-route-loading]")) setState("loading");
-    else enter(pendingDirection.current);
+    else enter();
   }, [enter]);
 
   const begin = useCallback((destination: string) => {
@@ -132,12 +124,9 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     if (pathname === committedPath.current) return;
     const from = committedPath.current;
     committedPath.current = pathname;
-    const direction = navigationDirection(from, pathname, poppedHistory.current);
-    poppedHistory.current = false;
     if (isCharacterAuthRedirect(from, pathname) && expectedPath.current === from) {
       // A protected character page resolved through the sign-in redirect: same turn.
       expectedPath.current = pathname;
-      pendingDirection.current = direction;
       enterWhenLoaded();
       return;
     }
@@ -149,7 +138,6 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     }
     // Router.push/replace and history also land here; language switches stay still.
     if (routeTransitionKind(from, pathname) === "still") { settle(); return; }
-    pendingDirection.current = direction;
     enterWhenLoaded();
   }, [pathname, enterWhenLoaded, settle]);
 
@@ -174,7 +162,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       event.preventDefault();
       router.push(destination.pathname + destination.search + destination.hash);
     };
-    const history = () => { poppedHistory.current = true; begin(window.location.pathname); };
+    const history = () => begin(window.location.pathname);
     let prefetchTimer: ReturnType<typeof setTimeout> | undefined;
     const warm = (event: PointerEvent | FocusEvent) => {
       const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
