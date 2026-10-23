@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(grep *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(sed -n *)",
+      "Bash(npm run typecheck:quiet)",
+      "Bash(npm run build:quiet)",
+      "Bash(npm run lint:quiet)",
+      "Bash(npm run atlas:check)",
+      "Bash(npm run routes:check)",
+      "Bash(npm run blocks:contracts)",
+      "Bash(npm run design:compare *)",
+      "Bash(node scripts/quiet.mjs *)",
+      "Bash(go vet *)",
+      "Bash(go test *)",
+      "mcp__context7"
+    ],
+    "ask": [
+      "Bash(git push *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f *)"
+    ]
+  },
+  "skillOverrides": {
+    "accessibility": "name-only",
+    "best-practices": "name-only",
+    "clickhouse-best-practices": "name-only",
+    "core-web-vitals": "name-only",
+    "next-bundle-optimizer": "name-only",
+    "next-cache-components-adoption": "name-only",
+    "next-cache-components-optimizer": "name-only",
+    "next-partial-prefetching-adoption": "name-only",
+    "next-partial-prefetching-optimizer": "name-only",
+    "performance": "name-only",
+    "seo": "name-only",
+    "supabase-postgres-best-practices": "name-only",
+    "vercel-react-best-practices": "name-only",
+    "web-quality-audit": "name-only"
+  },
+  "env": {
+    "BASH_MAX_OUTPUT_LENGTH": "16000",
+    "MAX_MCP_OUTPUT_TOKENS": "15000"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/token-guard.py\""
+          }
+        ]
+      }
+    ]
+  }
+}
