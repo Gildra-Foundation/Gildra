@@ -2,7 +2,7 @@
 
 `combat.json` is the source-reviewed catalogue for the eight dungeon maps, checked
 2026-10-23 against patch 12.1.5. It replaces legacy editor assignments in pull
-briefings. Game names remain English in the UI; role instructions are RU/EN.
+briefings. NPC and spell names use the verified client locale in RU/EN, including pull composition and caster labels. Russian instructions also localize inline game names. Identity keys, NPC/spell IDs and saved route data remain unchanged.
 
 Identity and coverage:
 

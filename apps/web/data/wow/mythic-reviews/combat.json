@@ -292,7 +292,7 @@
             "action": "focus",
             "role": "dps",
             "response": {
-              "ru": "Быстро разбейте щит, прекращая Frost Overload; лекарю держать групповое лечение.",
+              "ru": "Быстро разбейте щит, прекращая «Ледяная перегрузка»; лекарю держать групповое лечение.",
               "en": "Break the shield quickly to end Frost Overload; healer sustains the party."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-ability_mage_coldasice.jpg",
@@ -326,7 +326,7 @@
             "action": "focus",
             "role": "dps",
             "response": {
-              "ru": "Быстро разбейте щит, прекращая Frost Overload; лекарю держать групповое лечение.",
+              "ru": "Быстро разбейте щит, прекращая «Ледяная перегрузка»; лекарю держать групповое лечение.",
               "en": "Break the shield quickly to end Frost Overload; healer sustains the party."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_fire_blueflamering.jpg",
@@ -1022,7 +1022,7 @@
             "action": "dispel",
             "role": "healer",
             "response": {
-              "ru": "Снимайте магическое ослабление танка до следующего Stormslam; танк использует защиту.",
+              "ru": "Снимайте магическое ослабление танка до следующего «Сметающая буря»; танк использует защиту.",
               "en": "Dispel the tank's magic debuff before the next Stormslam; tank uses mitigation."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-ability_shaman_stormstrike.jpg",
@@ -1367,7 +1367,7 @@
             "action": "stop",
             "role": "dps",
             "response": {
-              "ru": "Остановите Evolve контролем: канал лечит моба, а после завершения даёт щит и иммунитет к контролю. При пропуске быстро разбейте щит и прерывайте Mass Envenom.",
+              "ru": "Остановите «Эволюция» контролем: канал лечит моба, а после завершения даёт щит и иммунитет к контролю. При пропуске быстро разбейте щит и прерывайте «Массовое отравление».",
               "en": "Stop Evolve with crowd control: the channel heals the mob and completion grants a shield and CC immunity. If missed, break the shield quickly and interrupt Mass Envenom."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-inv_121_trinket_raid_ulatek_heart.jpg",
@@ -2135,7 +2135,7 @@
             "action": "interrupt",
             "role": "dps",
             "response": {
-              "ru": "Во время тройной серии прервите все три каста, чтобы не получить Toxic Atrophy.",
+              "ru": "Во время тройной серии прервите все три каста, чтобы не получить «Атрофирующий токсин».",
               "en": "Interrupt all three casts in the sequence to prevent Toxic Atrophy."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_shadow_requiem.jpg",
@@ -2182,7 +2182,7 @@
             "action": "defend",
             "role": "all",
             "response": {
-              "ru": "До истечения яда получите физический урон от Boneslicer, чтобы снять стаки; затем уйдите от возникающих луж.",
+              "ru": "До истечения яда получите физический урон от «Костерез», чтобы снять стаки; затем уйдите от возникающих луж.",
               "en": "Before the venom expires, take Boneslicer physical damage to clear stacks, then avoid the resulting puddles."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-inv_ability_poison_beam.jpg",
@@ -2216,7 +2216,7 @@
             "action": "defend",
             "role": "all",
             "response": {
-              "ru": "До истечения яда получите физический урон от Boneslicer, чтобы снять стаки; затем уйдите от возникающих луж.",
+              "ru": "До истечения яда получите физический урон от «Костерез», чтобы снять стаки; затем уйдите от возникающих луж.",
               "en": "Before the venom expires, take Boneslicer physical damage to clear stacks, then avoid the resulting puddles."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-ability_demonhunter_bloodlet.jpg",
@@ -2250,7 +2250,7 @@
             "action": "defend",
             "role": "all",
             "response": {
-              "ru": "До истечения яда получите физический урон от Boneslicer, чтобы снять стаки; затем уйдите от возникающих луж.",
+              "ru": "До истечения яда получите физический урон от «Костерез», чтобы снять стаки; затем уйдите от возникающих луж.",
               "en": "Before the venom expires, take Boneslicer physical damage to clear stacks, then avoid the resulting puddles."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-ability_hunter_swiftstrike.jpg",
@@ -2583,7 +2583,7 @@
             "action": "defend",
             "role": "tank",
             "response": {
-              "ru": "Защита на бросок, особенно со стаками Shield Bash; союзникам не стоять рядом с танком.",
+              "ru": "Защита на бросок, особенно со стаками «Удар щитом»; союзникам не стоять рядом с танком.",
               "en": "Mitigate the throw, especially with Shield Bash stacks; allies stay away from the tank."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-ability_upgrademoonglaive.jpg",
@@ -2647,7 +2647,7 @@
             "action": "defend",
             "role": "tank",
             "response": {
-              "ru": "Защита на бросок, особенно со стаками Shield Bash; союзникам не стоять рядом с танком.",
+              "ru": "Защита на бросок, особенно со стаками «Удар щитом»; союзникам не стоять рядом с танком.",
               "en": "Mitigate the throw, especially with Shield Bash stacks; allies stay away from the tank."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-ability_upgrademoonglaive.jpg",
@@ -3335,7 +3335,7 @@
             "action": "dodge",
             "role": "all",
             "response": {
-              "ru": "Разойдитесь под прыжки и используйте защиту при наложении Demonic Rage.",
+              "ru": "Разойдитесь под прыжки и используйте защиту при наложении «Демоническое неистовство».",
               "en": "Spread for the leaps and use a defensive during Demonic Rage overlaps."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-ability_bossfellord_felspike.jpg",
@@ -3365,7 +3365,7 @@
             "action": "focus",
             "role": "dps",
             "response": {
-              "ru": "Пока на Кистии щит, бейте Nibbles до 20% здоровья; сохраните урон на окно уязвимости.",
+              "ru": "Пока на Кистии щит, бейте «Грызунчик» до 20% здоровья; сохраните урон на окно уязвимости.",
               "en": "While Kystia is shielded, damage Nibbles to 20%; save burst for the vulnerability window."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_fire_felfireward.jpg",
@@ -3433,7 +3433,7 @@
             "action": "defend",
             "role": "healer",
             "response": {
-              "ru": "Подготовьте лечение тяжёлого урона по группе, когда Nibbles становится дружественным.",
+              "ru": "Подготовьте лечение тяжёлого урона по группе, когда «Грызунчик» становится дружественным.",
               "en": "Prepare healing for heavy party damage when Nibbles becomes friendly."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_frost_stun.jpg",
@@ -3578,7 +3578,7 @@
             "action": "dodge",
             "role": "tank",
             "response": {
-              "ru": "Отверните Nibbles от группы; всем обходить вращающийся конус.",
+              "ru": "Отверните «Грызунчик» от группы; всем обходить вращающийся конус.",
               "en": "Face Nibbles away; everyone avoids the rotating frontal."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_fire_felflamebreath.jpg",
@@ -3595,7 +3595,7 @@
             "action": "defend",
             "role": "healer",
             "response": {
-              "ru": "Подготовьте лечение тяжёлого урона по группе, когда Nibbles становится дружественным.",
+              "ru": "Подготовьте лечение тяжёлого урона по группе, когда «Грызунчик» становится дружественным.",
               "en": "Prepare healing for heavy party damage when Nibbles becomes friendly."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_frost_stun.jpg",
@@ -3625,7 +3625,7 @@
             "action": "interrupt",
             "role": "dps",
             "response": {
-              "ru": "Распределите ротацию прерываний каждого Chaos Bolt.",
+              "ru": "Распределите ротацию прерываний каждого «Стрела Хаоса».",
               "en": "Assign an interrupt rotation for every Chaos Bolt."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-ability_warlock_chaosbolt.jpg",
@@ -3761,7 +3761,7 @@
             "action": "focus",
             "role": "dps",
             "response": {
-              "ru": "Пока на Кистии щит, бейте Nibbles до 20% здоровья; сохраните урон на окно уязвимости.",
+              "ru": "Пока на Кистии щит, бейте «Грызунчик» до 20% здоровья; сохраните урон на окно уязвимости.",
               "en": "While Kystia is shielded, damage Nibbles to 20%; save burst for the vulnerability window."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_fire_felfireward.jpg",
@@ -3821,7 +3821,7 @@
             "action": "dodge",
             "role": "all",
             "response": {
-              "ru": "Используйте Fire Bomb босса, чтобы уничтожить груз; держитесь подальше от его взрыва.",
+              "ru": "Используйте «Огненная бомба» босса, чтобы уничтожить груз; держитесь подальше от его взрыва.",
               "en": "Use the boss's Fire Bomb to destroy freight; stay clear of its explosion."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-inv_ember_fel.jpg",
@@ -3838,7 +3838,7 @@
             "action": "dodge",
             "role": "all",
             "response": {
-              "ru": "Используйте Fire Bomb босса, чтобы уничтожить груз; держитесь подальше от его взрыва.",
+              "ru": "Используйте «Огненная бомба» босса, чтобы уничтожить груз; держитесь подальше от его взрыва.",
               "en": "Use the boss's Fire Bomb to destroy freight; stay clear of its explosion."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_fire_felflamering.jpg",
@@ -3868,7 +3868,7 @@
             "action": "dodge",
             "role": "all",
             "response": {
-              "ru": "Обходите доставляемые бочки; сохраняйте бочки-укрытия для Murder in a Row.",
+              "ru": "Обходите доставляемые бочки; сохраняйте бочки-укрытия для «Душегубство».",
               "en": "Dodge delivered barrels and preserve cover barrels for Murder in a Row."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-achievement_brewery_2.jpg",
@@ -3885,7 +3885,7 @@
             "action": "dodge",
             "role": "all",
             "response": {
-              "ru": "Обходите доставляемые бочки; сохраняйте бочки-укрытия для Murder in a Row.",
+              "ru": "Обходите доставляемые бочки; сохраняйте бочки-укрытия для «Душегубство».",
               "en": "Dodge delivered barrels and preserve cover barrels for Murder in a Row."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-achievement_brewery_2.jpg",
@@ -4671,7 +4671,7 @@
             "action": "dodge",
             "role": "all",
             "response": {
-              "ru": "Пережидайте ветер за укрытиями; убийство Winter Squall прекращает ветер.",
+              "ru": "Пережидайте ветер за укрытиями; убийство «Зимний шквал» прекращает ветер.",
               "en": "Use terrain cover during the wind; killing the Winter Squall ends it."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_frost_icestorm.jpg",
@@ -5100,7 +5100,7 @@
           }
         ],
         "note": {
-          "ru": "Смерть детёныша усиливает Territorial Matriarch. Танку заранее подготовить защиту, группе — успокоение.",
+          "ru": "Смерть детёныша усиливает «Территориальный матриарх». Танку заранее подготовить защиту, группе — успокоение.",
           "en": "A cub death enrages the Territorial Matriarch. Prepare tank mitigation and an available soothe."
         },
         "url": "https://www.wowhead.com/npc=241809",
@@ -5747,7 +5747,7 @@
             "action": "defend",
             "role": "all",
             "response": {
-              "ru": "Не допускайте попадания рывков эхо и Forceful Slam в Зул'джарру — это вызывает страх.",
+              "ru": "Не допускайте попадания рывков эхо и «Решительный удар» в Зул'джарру — это вызывает страх.",
               "en": "Prevent echo charges and Forceful Slam from hitting Zul'jarra and triggering the fear."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_shadow_painandsuffering.jpg",
@@ -5808,7 +5808,7 @@
           }
         ],
         "note": {
-          "ru": "Союзник: во время натиска встаньте за её щитом; затем танк перехватывает Forceful Slam. Во время Fury защищайте её от эхо.",
+          "ru": "Союзник: во время натиска встаньте за её щитом; затем танк перехватывает «Решительный удар». Во время «Ярость бога войны» защищайте её от эхо.",
           "en": "Ally: shelter behind her shield during Onslaught; the tank then intercepts Forceful Slam. Protect her from echoes during Fury."
         },
         "url": "https://www.wowhead.com/npc=246409",
@@ -5879,7 +5879,7 @@
             "action": "dodge",
             "role": "all",
             "response": {
-              "ru": "Это объект участка с ветром; безопасно проходите по укрытиям и убейте Winter Squall.",
+              "ru": "Это объект участка с ветром; безопасно проходите по укрытиям и убейте «Зимний шквал».",
               "en": "This belongs to the wind section; travel using cover and defeat the Winter Squall."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-trade_engineering.jpg",
@@ -6293,7 +6293,7 @@
             "action": "focus",
             "role": "dps",
             "response": {
-              "ru": "Не пробуждайте спящих плёточников случайным уроном; остановите Call the Grove у заклинателя.",
+              "ru": "Не пробуждайте спящих плёточников случайным уроном; остановите «Зов рощи» у заклинателя.",
               "en": "Avoid accidentally waking dormant lashers; stop the caster's Call the Grove."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_lifegivingseed.jpg",
@@ -9874,7 +9874,7 @@
             "action": "defend",
             "role": "healer",
             "response": {
-              "ru": "Подготовьте лечение к сильному групповому удару, особенно при наложении Heavy Slams.",
+              "ru": "Подготовьте лечение к сильному групповому удару, особенно при наложении «Тяжелые удары».",
               "en": "Prepare healing for the large party hit, especially during Heavy Slams overlaps."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_shaman_lavasurge.jpg",
@@ -10630,7 +10630,7 @@
             "action": "interrupt",
             "role": "dps",
             "response": {
-              "ru": "Прерывайте каждый рёв Reban.",
+              "ru": "Прерывайте каждый рёв «Ребан».",
               "en": "Interrupt every Deathly Roar from Reban."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-ability_hunter_beastmastery.jpg",
@@ -11723,7 +11723,7 @@
             "action": "interrupt",
             "role": "dps",
             "response": {
-              "ru": "Держите ротацию прерываний на Flame Shock.",
+              "ru": "Держите ротацию прерываний на «Огненный шок».",
               "en": "Maintain an interrupt rotation on Flame Shock."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_fire_flameshock.jpg",
@@ -11762,7 +11762,7 @@
         "portraitUrl": "/assets/wow/mythic/briefings/npc-83203.webp",
         "abilities": [],
         "note": {
-          "ru": "После смерти Essence Defiler лекарь лечит Аватару. Танк и бойцы контролируют и убивают терзателей, не давая им догнать лекаря; каждый убитый терзатель также лечит Аватару.",
+          "ru": "После смерти «Осквернительница сущности» лекарь лечит Аватару. Танк и бойцы контролируют и убивают терзателей, не давая им догнать лекаря; каждый убитый терзатель также лечит Аватару.",
           "en": "After the Essence Defiler dies, the healer heals the Avatar. Tank and damage dealers control and kill tormentors to protect the healer; every slain tormentor also heals the Avatar."
         },
         "url": "https://www.wowhead.com/npc=133392",
@@ -12665,7 +12665,7 @@
             "action": "interrupt",
             "role": "dps",
             "response": {
-              "ru": "Держите ротацию прерываний на Flame Shock.",
+              "ru": "Держите ротацию прерываний на «Огненный шок».",
               "en": "Maintain an interrupt rotation on Flame Shock."
             },
             "iconUrl": "/assets/wow/mythic/briefings/spell-spell_fire_flameshock.jpg",
