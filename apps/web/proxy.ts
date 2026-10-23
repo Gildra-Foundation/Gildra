@@ -4,12 +4,10 @@ import { runtimeFlags } from "@/lib/flags";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 
 export function proxy(request: NextRequest) {
-  const requestHeaders = new Headers(request.headers);
   const locale = request.nextUrl.pathname === "/ru" || request.nextUrl.pathname.startsWith("/ru/")
     ? "ru"
     : "en";
 
-  requestHeaders.set("x-gildra-locale", locale);
   // WoW-only MVP: pages hidden by lib/mvp.ts answer a real HTTP 404. Rewriting
   // to a path no route owns makes Next render the branded not-found page with
   // status 404; `notFound()` inside the page alone would stream a 200 (the root
@@ -18,8 +16,8 @@ export function proxy(request: NextRequest) {
   // Dev galleries (/dev/blocks, /dev/atlas) exist only with GILDRA_DEV_GALLERY=1 in production.
   const devGalleryOff = !runtimeFlags().devGallery && /^\/dev(\/|$)/.test(request.nextUrl.pathname);
   const response = devGalleryOff || isHiddenForMvpPath(request.nextUrl.pathname) || unknownTalentSpec(request.nextUrl.pathname)
-    ? NextResponse.rewrite(Object.assign(request.nextUrl.clone(), { pathname: `${locale === "ru" ? "/ru" : ""}/_hidden-for-mvp/404` }), { request: { headers: requestHeaders } })
-    : NextResponse.next({ request: { headers: requestHeaders } });
+    ? NextResponse.rewrite(Object.assign(request.nextUrl.clone(), { pathname: `${locale === "ru" ? "/ru" : ""}/_hidden-for-mvp/404` }))
+    : NextResponse.next();
   return staging(response);
 }
 
