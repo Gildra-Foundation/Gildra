@@ -59,7 +59,10 @@ economy (model/effort, quiet builds, reading map, brief template):
   `app/styles/*.css`, each legacy block's CSS next to the block. Class names are never renamed; block-level
   compaction uses `@container` (containers: `.section`, `.cards-row`); new UI
   uses Tailwind CSS and shadcn/ui on the same tokens without changing the
-  visual language.
+  visual language. **Valyro first:** a component Valyro has (MCP `valyro`,
+  `npm run valyro -- search …`) is installed with `npm run valyro:add -- <name>`
+  and used through an atlas adapter, not hand-written; snapshots, adaptations
+  and updates: [docs/llm/valyro-cli.md](docs/llm/valyro-cli.md).
 - Data: block `load` functions read server-side data through `lib/`
   (`lib/data/*` — game data, the live season, M+ routes and raid guides —
   and `lib/platform/*`); components receive it as props. `data/site.ts` is

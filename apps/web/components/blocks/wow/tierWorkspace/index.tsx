@@ -1,6 +1,7 @@
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
 import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
 import { TierSection, type TierSpecNames } from "@/components/TierSection";
+import { TierBoard } from "./TierBoard";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
 import { midnightSpecializations } from "@/lib/data/wow/specializations";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
@@ -49,6 +50,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntel
       />
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
       <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} specNames={specNames[lang]} />
+      {sample ? <TierBoard lang={lang} roles={sampleRoles} specNames={specNames[lang]} sample /> : mythic ? <TierBoard lang={lang} roles={mythic} specNames={specNames[lang]} sample={false} /> : null}
     </AtlasFrame>
   );
 }

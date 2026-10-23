@@ -5,6 +5,10 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AtlasButton, AtlasLinkButton } from "../src/AtlasButton.tsx";
+import { AtlasBadge } from "../src/AtlasBadge.tsx";
+import { AtlasNotice } from "../src/AtlasNotice.tsx";
+import { Badge } from "../src/valyro-ui/basic/Badge.tsx";
+import { Alert } from "../src/valyro-ui/feedback/Alert.tsx";
 import { AtlasInput, AtlasSelect } from "../src/AtlasField.tsx";
 import { AtlasValyroSelect } from "../src/AtlasValyroSelect.tsx";
 import { AtlasValyroScope } from "../src/AtlasValyroScope.tsx";
@@ -91,4 +95,24 @@ test("theme scope renders stable atlas and Valyro attributes without a document 
   assert.match(html, /data-atlas-scope="true"/);
   assert.match(html, /data-mode="dark"/);
   assert.match(html, /ui-theme-scope__layers/);
+});
+
+// Valyro classes and data-* hooks in document order: the server-rendered atlas markup must match the vendor's.
+const valyroShape = html => [...html.matchAll(/class="([^"]*)"|data-(color|variant|size)="([^"]*)"/g)]
+  .map(match => match[1] !== undefined ? match[1].split(" ").filter(name => name.startsWith("ui-")).join(" ") : `${match[2]}=${match[3]}`)
+  .filter(Boolean);
+
+test("AtlasBadge renders Valyro Badge's markup on the server", () => {
+  const icon = createElement("svg");
+  assert.deepEqual(valyroShape(render(AtlasBadge, { tone: "positive", icon, children: "Live" })), valyroShape(render(Badge, { color: "green", icon, children: "Live" })));
+  assert.deepEqual(valyroShape(render(AtlasBadge, { children: "Raid" })), valyroShape(render(Badge, { children: "Raid" })));
+});
+
+test("AtlasNotice renders Valyro Alert's markup on the server, without a live region", () => {
+  const props = { title: "Draft", children: "Sample data", action: createElement("a", { href: "/x" }, "Open") };
+  const ours = render(AtlasNotice, { ...props, tone: "caution" });
+  const vendor = render(Alert, { title: props.title, description: props.children, action: props.action, variant: "warning", icon: createElement("svg") });
+  assert.deepEqual(valyroShape(ours), valyroShape(vendor));
+  assert.match(ours, /role="note"/);
+  assert.doesNotMatch(render(AtlasNotice, { children: "Info" }), /role=/);
 });

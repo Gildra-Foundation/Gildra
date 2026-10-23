@@ -1,26 +1,32 @@
-.notice {
-  --notice-color: var(--atlas-accent);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
+/* Valyro owns the alert structure and icons; atlas keeps the Characters notice:
+   a dark band with the tone as a left rule, no blur. */
+.notice:global(.ui-alert) {
+  --_c: var(--atlas-accent);
+  --_text: var(--atlas-text-strong);
+  --ui-alert-padding: var(--atlas-space-4) var(--atlas-space-5);
+  --ui-alert-align: center;
+  --ui-alert-radius: 0;
+  --ui-alert-bg: rgba(5, 6, 7, .82);
+  --ui-alert-bg-wash: ;
+  --ui-alert-border-color: var(--atlas-line-soft);
+  --ui-alert-icon-fg: var(--_c);
+  --ui-alert-body-fg: var(--atlas-text-muted);
+  --ui-raised-shadow: none;
+  --ui-blur: none;
   gap: var(--atlas-space-3) var(--atlas-space-4);
-  padding: var(--atlas-space-4) var(--atlas-space-5);
-  border: 1px solid var(--atlas-line-soft);
-  border-left: 3px solid var(--notice-color);
-  background: rgba(5, 6, 7, .82);
+  border-left: 3px solid var(--_c);
+  font-family: var(--atlas-font-ui);
 }
 
-.caution { --notice-color: var(--atlas-caution); }
+.notice:global(.ui-alert[data-variant="warning"]) { --_c: var(--atlas-caution); }
 
-.icon { display: grid; color: var(--notice-color); }
-.icon svg { width: 20px; height: 20px; }
-
-.copy { display: grid; gap: 4px; min-width: 0; }
-.copy strong { color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; }
-.text { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
-.text a { color: var(--atlas-accent); }
+.notice :global(.ui-alert__icon) svg { width: 20px; height: 20px; }
+.notice :global(.ui-alert__title) { color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; }
+.notice :global(.ui-alert__description) { font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.notice :global(.ui-alert__title + .ui-alert__description) { margin-top: 4px; }
+.notice :global(.ui-alert__description a) { color: var(--atlas-accent); }
 
 @media (max-width: 720px) {
-  .notice { grid-template-columns: auto minmax(0, 1fr); padding: var(--atlas-space-4); }
-  .action { grid-column: 1 / -1; }
+  .notice:global(.ui-alert) { --ui-alert-padding: var(--atlas-space-4); }
+  .notice :global(.ui-alert__action) { flex-basis: 100%; }
 }
